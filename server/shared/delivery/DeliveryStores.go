@@ -77,3 +77,12 @@ func (stores DeliveryStores) Drafts() Drafts {
 	emails := stores.Emails()
 	return Drafts{Emails: emails, Attachments: emails.attachmentsHelper, Users: stores.Users(), Storage: TenantStorage{Fylo: stores.Fylo}}
 }
+
+// Snoozes answers conversation snoozing.
+func (stores DeliveryStores) Snoozes() Snoozes {
+	emails, users := stores.Emails(), stores.Users()
+	return Snoozes{
+		Snoozed: &SnoozeHelper{fyloHelper: stores.Fylo}, Emails: emails, Threads: &ThreadsHelper{emailsHelper: emails}, Users: users,
+		Notices: PushNotices{Users: users, Subscriptions: &PushSubscriptionsHelper{fyloHelper: stores.Fylo}},
+	}
+}

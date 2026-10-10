@@ -16,11 +16,14 @@ export default class BrowserStorageService {
   /** @type {ApplicationEventPublisher} */
   applicationEventPublisher
 
+  ready = false
+
   @OnStart
   start() {
     /** @type {StoredValues} */
     const stored = { session: this._read(sessionStorage), local: this._read(localStorage) }
     this.applicationEventPublisher.publishEvent(stored, true)
+    this.ready = true
   }
 
   /** @param {StorageWritten} written */

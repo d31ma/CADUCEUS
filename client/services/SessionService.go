@@ -50,9 +50,9 @@ func (session *SessionService) HandleLogin(tokens TokenSet) {
 	session.loginOutcome(session.issued(token, address), tokens)(token, address)
 }
 
-// SignOut ends the session on the server, forgets it in this tab and returns
+// signOut ends the session on the server, forgets it in this tab and returns
 // to the landing page.
-func (session *SessionService) SignOut() {
+func (session *SessionService) signOut() {
 	session.endOnServer(session.idToken)
 	session.forget()
 	session.announce()
@@ -62,7 +62,7 @@ func (session *SessionService) SignOut() {
 // RequestSignOut lets another service end the session.
 // @OnEvent
 func (session *SessionService) RequestSignOut(request SignOutRequested) {
-	session.SignOut()
+	session.signOut()
 }
 
 // Check asks the server whether the stored token still speaks for a live
@@ -72,7 +72,7 @@ func (session *SessionService) RequestSignOut(request SignOutRequested) {
 // @OnEvent
 func (session *SessionService) Check(request SessionCheckRequested) {
 	_, failure := session.authClient.Session(session.bearer())
-	session.afterCheck(HTTPUtils{}.Refused(failure))
+	FlowUtils{}.When(HTTPUtils{}.Refused(failure), session.signOut)()
 }
 
 // Refresh rotates the refresh token for a new access token. The original
@@ -171,11 +171,7 @@ func (session *SessionService) endOnServer(idToken string) {
 	session.authClient.Logout(LogoutRequest{IDToken: idToken})
 }
 
-func (session *SessionService) afterCheck(refused bool) {
-	if refused {
-		session.SignOut()
-	}
-}
+
 
 func (session *SessionService) afterRefresh(tokens TokenSet, failure error) {
 	if failure != nil {
@@ -218,6 +214,6 @@ func (SessionService) keys() SessionKeys {
 		Token: "caduceus_token", Email: "caduceus_email", Name: "caduceus_name", Role: "caduceus_role",
 		Domains: "caduceus_domains", Refresh: "caduceus_refresh", IDToken: "caduceus_id_token",
 		MailboxNames: "caduceus_mailbox_names", InterfaceFont: "caduceus_interface_font",
-		ComposerFont: "caduceus_composer_font", Sounds: "caduceus_notification_sounds", Mail: session.keys().Mail,
+		ComposerFont: "caduceus_composer_font", Sounds: "caduceus_notification_sounds", Mail: "caduceus_mail_preferences",
 	}
 }

@@ -5,69 +5,69 @@ type AuthClient interface {
 	// @PostRequest("/login/begin")
 	Begin(
 		// @RequestBody
-		start LoginStart,
+		start BehaviorValue,
 	) (LoginState, error)
 
 	// @PostRequest("/login/password")
 	Password(
 		// @RequestBody
-		factor PasswordFactor,
+		factor BehaviorValue,
 	) (LoginState, error)
 
 	// @PostRequest("/login/totp")
 	AuthenticatorCode(
 		// @RequestBody
-		factor CodeFactor,
+		factor BehaviorValue,
 	) (LoginState, error)
 
 	// @PostRequest("/login/recovery")
 	Recovery(
 		// @RequestBody
-		factor CodeFactor,
+		factor BehaviorValue,
 	) (LoginState, error)
 
 	// @PostRequest("/login/passkey/options")
 	PasskeyOptions(
 		// @RequestBody
-		transaction LoginTransaction,
+		transaction BehaviorValue,
 	) (PasskeyOptions, error)
 
 	// @PostRequest("/login/passkey")
 	Passkey(
 		// @RequestBody
-		assertion PasskeyAssertion,
+		assertion BehaviorValue,
 	) (LoginState, error)
 
 	// @PostRequest("/login/complete")
 	Complete(
 		// @RequestBody
-		transaction LoginTransaction,
+		transaction BehaviorValue,
 	) (TokenSet, error)
 
 	// @PostRequest("/logout")
 	Logout(
 		// @RequestBody
-		logout LogoutRequest,
+		logout BehaviorValue,
 	) (BehaviorValue, error)
 
 	// @PostRequest("/token/refresh")
 	Refresh(
 		// @RequestBody
-		refresh RefreshRequest,
+		refresh BehaviorValue,
 	) (TokenSet, error)
 
 	// @GetRequest("/session")
 	Session(
 		// @RequestHeader("Authorization")
-		authorization string,
+		authorization BehaviorValue,
 	) (BehaviorValue, error)
 
 	// @PutRequest("/credentials/password")
 	ChangePassword(
 		// @RequestHeader("Authorization")
-		authorization string,
+		authorization BehaviorValue,
 		// @RequestBody
-		change CredentialChange,
+		change BehaviorValue,
 	) (BehaviorValue, error)
 
 	// @PostRequest("/credentials/passkey/begin")
@@ -75,14 +75,14 @@ type AuthClient interface {
 		// @RequestHeader("Authorization")
 		authorization string,
 		// @RequestBody
-		change CredentialChange,
+		change BehaviorValue,
 	) (PasskeyEnrollment, error)
 
 	// @PostRequest("/credentials/passkey/finish")
 	FinishPasskeyEnrollment(
 		// @RequestHeader("Authorization")
-		authorization string,
+		authorization BehaviorValue,
 		// @RequestBody
-		attestation PasskeyAttestation,
+		attestation BehaviorValue,
 	) (BehaviorValue, error)
 }

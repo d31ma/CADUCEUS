@@ -159,7 +159,7 @@ func (schedules ScheduledSends) CancelExternal(record *ScheduledRecord, ownerEma
 	if record.Entry["transport"] != "external" || accountId == "" || submissionId == "" {
 		return map[string]any{"conflict": true}, nil
 	}
-	if _, err := (ProviderAccounts{Token: token}).Call("accounts.cancel_submission", accountId, map[string]any{"submissionId": submissionId}); err != nil {
+	if _, err := (DeliveryAccounts{Token: token}).Call("accounts.cancel_submission", accountId, map[string]any{"submissionId": submissionId}); err != nil {
 		return nil, err
 	}
 	if err := schedules.retire(record, ownerEmail); err != nil {
@@ -183,7 +183,7 @@ func (schedules ScheduledSends) retire(record *ScheduledRecord, ownerEmail strin
 // schedule.
 func (ScheduledSends) Submission(record *ScheduledRecord, token string) (map[string]any, error) {
 	values := RecordValues{}
-	return ProviderAccounts{Token: token}.Call("accounts.submission", values.Text(record.Entry["externalAccountId"]), map[string]any{"submissionId": values.Text(record.Entry["externalSubmissionId"])})
+	return DeliveryAccounts{Token: token}.Call("accounts.submission", values.Text(record.Entry["externalAccountId"]), map[string]any{"submissionId": values.Text(record.Entry["externalSubmissionId"])})
 }
 
 func (ScheduledSends) owner(entry map[string]any) string {

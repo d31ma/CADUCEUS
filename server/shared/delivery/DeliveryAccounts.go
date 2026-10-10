@@ -4,18 +4,18 @@ import (
 	"time"
 )
 
-// ProviderAccounts carries the connected-account operations delivery needs
+// DeliveryAccounts carries the connected-account operations delivery needs
 // (accounts.list and the accounts.submit* journal) to the Go owner with the
 // caller's bearer token, as the former ExternalAccounts facade did. The
 // external-accounts area owns the full client; this is the minimal private
 // version delivery needs. Failures answer like accountFailure.
-type ProviderAccounts struct {
+type DeliveryAccounts struct {
 	Token string
 }
 
 // Call runs one accounts operation with params (the token and account id
 // are added) and decodes its result.
-func (accounts ProviderAccounts) Call(operation string, id string, params map[string]any) (map[string]any, error) {
+func (accounts DeliveryAccounts) Call(operation string, id string, params map[string]any) (map[string]any, error) {
 	parameters := DeliveryFields{}.Merged(params, map[string]any{"token": accounts.Token})
 	if id != "" {
 		parameters["id"] = id
@@ -29,7 +29,7 @@ func (accounts ProviderAccounts) Call(operation string, id string, params map[st
 }
 
 // List answers the caller's connected accounts.
-func (accounts ProviderAccounts) List() ([]map[string]any, error) {
+func (accounts DeliveryAccounts) List() ([]map[string]any, error) {
 	raw, err := accounts.raw("accounts.list", map[string]any{"token": accounts.Token})
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (accounts ProviderAccounts) List() ([]map[string]any, error) {
 	return listed, nil
 }
 
-func (accounts ProviderAccounts) raw(operation string, parameters map[string]any) (json.RawMessage, error) {
+func (accounts DeliveryAccounts) raw(operation string, parameters map[string]any) (json.RawMessage, error) {
 	encoded, err := json.Marshal(map[string]any{"op": operation, "params": parameters})
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (accounts ProviderAccounts) raw(operation string, parameters map[string]any
 
 // Failure answers a failed accounts operation: the owner's stable failures
 // keep their status, anything else is the service being unavailable.
-func (ProviderAccounts) Failure(err error) map[string]any {
+func (DeliveryAccounts) Failure(err error) map[string]any {
 	var failure *BoundaryError
 	if !errors.As(err, &failure) {
 		return map[string]any{"error": "External account service unavailable", "unavailable": true}
@@ -80,8 +80,8 @@ func (ProviderAccounts) Failure(err error) map[string]any {
 	return map[string]any{"error": failure.Message, "unavailable": true}
 }
 
-func (ProviderAccounts) requestLimit() int { return 47 << 20 }
+func (DeliveryAccounts) requestLimit() int { return 47 << 20 }
 
-func (ProviderAccounts) responseLimit() int { return 64 << 20 }
+func (DeliveryAccounts) responseLimit() int { return 64 << 20 }
 
-func (ProviderAccounts) timeout() time.Duration { return 15 * time.Second }
+func (DeliveryAccounts) timeout() time.Duration { return 15 * time.Second }

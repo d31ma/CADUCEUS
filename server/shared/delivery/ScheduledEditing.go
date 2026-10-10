@@ -10,7 +10,7 @@ import (
 // delivery or for the caller's connected-account journal.
 type ScheduledEditing struct {
 	Schedules ScheduledSends
-	Senders   SenderAddresses
+	Senders   OwnedSenders
 }
 
 // Edit answers the route answer of one edit.
@@ -161,7 +161,7 @@ func (editing ScheduledEditing) external(record *ScheduledRecord, caller RouteCa
 	if accountId == "" || submissionId == "" {
 		return map[string]any{"error": "Scheduled delivery is being reconciled", "conflict": true}, nil, nil
 	}
-	accounts := ProviderAccounts{Token: caller.Token}
+	accounts := DeliveryAccounts{Token: caller.Token}
 	submission, err := editing.Schedules.Submission(record, caller.Token)
 	if err != nil {
 		return accounts.Failure(err), nil, nil
@@ -210,7 +210,7 @@ func (editing ScheduledEditing) external(record *ScheduledRecord, caller RouteCa
 
 // batch stages, uploads and commits a tracked multi-recipient edit; a
 // failure aborts a staged edit that is still open.
-func (editing ScheduledEditing) batch(record *ScheduledRecord, accounts ProviderAccounts, submission map[string]any, recipients []string, trackingId string, edit ScheduledEdit, notBefore string) error {
+func (editing ScheduledEditing) batch(record *ScheduledRecord, accounts DeliveryAccounts, submission map[string]any, recipients []string, trackingId string, edit ScheduledEdit, notBefore string) error {
 	values := RecordValues{}
 	accountId, submissionId := values.Text(record.Entry["externalAccountId"]), values.Text(record.Entry["externalSubmissionId"])
 	staged, err := accounts.Call("accounts.submit_batch_update_begin", accountId, map[string]any{

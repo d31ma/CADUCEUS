@@ -35,7 +35,7 @@ func (route DraftsRoute) input(caller RouteCaller, body map[string]any) (map[str
 	if problem != "" {
 		return nil, map[string]any{"error": problem}, nil
 	}
-	sender, err := SenderAddresses{Users: route.Users}.Sender(caller.Email, input["from"])
+	sender, err := OwnedSenders{Users: route.Users}.Sender(caller.Email, input["from"])
 	if err != nil {
 		return nil, nil, err
 	}

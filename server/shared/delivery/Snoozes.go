@@ -12,7 +12,7 @@ type Snoozes struct {
 	Emails  *EmailsHelper
 	Threads *ThreadsHelper
 	Users   *UsersHelper
-	Notices PushNotices
+	Notices DeliveryPushGate
 }
 
 // SnoozeThread answers {snoozed, snoozeId, threadId, count, until}; a

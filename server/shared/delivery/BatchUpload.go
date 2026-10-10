@@ -4,7 +4,7 @@
 // submission (and its id when the submission answer does not carry it), and
 // the message to render for each recipient.
 type BatchUpload struct {
-	Accounts     ProviderAccounts
+	Accounts     DeliveryAccounts
 	AccountId    string
 	Operation    string
 	Submission   map[string]any

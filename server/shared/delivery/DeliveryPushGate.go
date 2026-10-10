@@ -1,19 +1,19 @@
 import "log"
 
-// PushNotices decides whether a delivered or unsnoozed message would reach
+// DeliveryPushGate decides whether a delivered or unsnoozed message would reach
 // the owner's devices by Web Push, as the former PushService.notify did:
 // push is opt-in (WEB_PUSH_DISABLED off and VAPID keys configured) and
 // needs a known user with subscriptions. Notifications owns Web Push
 // delivery itself (VAPID signing and payload encryption); this minimal
 // private version stops at that decision and logs it.
-type PushNotices struct {
+type DeliveryPushGate struct {
 	Users         *UsersHelper
 	Subscriptions *PushSubscriptionsHelper
 }
 
 // Notify answers whether the notice is settled for the message's recipient
 // (kind is "new-mail" or "unsnoozed").
-func (notices PushNotices) Notify(email map[string]any, kind string) bool {
+func (notices DeliveryPushGate) Notify(email map[string]any, kind string) bool {
 	settings := Settings{}
 	if settings.Value("WEB_PUSH_DISABLED") == "true" || settings.Value("VAPID_PUBLIC_KEY") == "" || settings.Value("VAPID_PRIVATE_KEY") == "" {
 		return true

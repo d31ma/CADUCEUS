@@ -1,14 +1,14 @@
-// SenderAddresses resolves the exact addresses an authenticated mailbox may
+// OwnedSenders resolves the exact addresses an authenticated mailbox may
 // use as its From identity: its primary address and its aliases. Domain
 // authority is deliberately not enough, so another user of the same hosted
 // domain can never impersonate the mailbox.
-type SenderAddresses struct {
+type OwnedSenders struct {
 	Users *UsersHelper
 }
 
 // Owned answers the owner's sender addresses: the owner alone when it has no
 // user record.
-func (senders SenderAddresses) Owned(ownerEmail string) ([]string, error) {
+func (senders OwnedSenders) Owned(ownerEmail string) ([]string, error) {
 	security := Security{}
 	owner := security.NormalizeEmailAddress(ownerEmail)
 	if owner == "" {
@@ -31,7 +31,7 @@ func (senders SenderAddresses) Owned(ownerEmail string) ([]string, error) {
 
 // Resolved answers the requested From address (or fallback when none is
 // requested) when the mailbox owns it, else "".
-func (SenderAddresses) Resolved(requested any, allowed []string, fallback string) string {
+func (OwnedSenders) Resolved(requested any, allowed []string, fallback string) string {
 	value, isText := requested.(string)
 	if !isText {
 		value = fallback
@@ -44,7 +44,7 @@ func (SenderAddresses) Resolved(requested any, allowed []string, fallback string
 }
 
 // Sender answers the mailbox's resolved From address, or "".
-func (senders SenderAddresses) Sender(ownerEmail string, requested any) (string, error) {
+func (senders OwnedSenders) Sender(ownerEmail string, requested any) (string, error) {
 	allowed, err := senders.Owned(ownerEmail)
 	if err != nil {
 		return "", err

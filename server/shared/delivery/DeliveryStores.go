@@ -52,7 +52,7 @@ func (stores DeliveryStores) Acceptance(smtp *SmtpService, journal SendIdempoten
 	sent := stores.Sent(smtp)
 	return SendAcceptance{
 		Sent: sent, Journal: journal, Reminders: stores.FollowUps(), Archive: stores.Archive(),
-		Suppressed: sent.Queue.Suppressed, Senders: SenderAddresses{Users: sent.Users}, Limits: limits,
+		Suppressed: sent.Queue.Suppressed, Senders: OwnedSenders{Users: sent.Users}, Limits: limits,
 	}
 }
 
@@ -64,7 +64,7 @@ func (stores DeliveryStores) Schedules(smtp *SmtpService) ScheduledSends {
 // Editing answers scheduled-message editing.
 func (stores DeliveryStores) Editing(smtp *SmtpService) ScheduledEditing {
 	schedules := stores.Schedules(smtp)
-	return ScheduledEditing{Schedules: schedules, Senders: SenderAddresses{Users: schedules.Sent.Users}}
+	return ScheduledEditing{Schedules: schedules, Senders: OwnedSenders{Users: schedules.Sent.Users}}
 }
 
 // Undo answers delayed-send undo.
@@ -83,7 +83,7 @@ func (stores DeliveryStores) Snoozes() Snoozes {
 	emails, users := stores.Emails(), stores.Users()
 	return Snoozes{
 		Snoozed: &SnoozeHelper{fyloHelper: stores.Fylo}, Emails: emails, Threads: &ThreadsHelper{emailsHelper: emails}, Users: users,
-		Notices: PushNotices{Users: users, Subscriptions: &PushSubscriptionsHelper{fyloHelper: stores.Fylo}},
+		Notices: DeliveryPushGate{Users: users, Subscriptions: &PushSubscriptionsHelper{fyloHelper: stores.Fylo}},
 	}
 }
 
@@ -98,6 +98,6 @@ func (stores DeliveryStores) Inbound(routing InboundRouting, spam *SpamFilterSer
 	return InboundDelivery{
 		Emails: routing.Emails, Domains: &DomainsHelper{fyloHelper: stores.Fylo}, Users: users, Routing: routing, Spam: spam,
 		FollowUps: stores.FollowUps(), Participants: MailParticipants{Contacts: &ContactsHelper{fyloHelper: stores.Fylo}, Users: users},
-		Notices: PushNotices{Users: users, Subscriptions: &PushSubscriptionsHelper{fyloHelper: stores.Fylo}}, Storage: TenantStorage{Fylo: stores.Fylo},
+		Notices: DeliveryPushGate{Users: users, Subscriptions: &PushSubscriptionsHelper{fyloHelper: stores.Fylo}}, Storage: TenantStorage{Fylo: stores.Fylo},
 	}
 }

@@ -17,7 +17,7 @@ type InboundDelivery struct {
 	Spam         *SpamFilterService
 	FollowUps    FollowUpReminders
 	Participants MailParticipants
-	Notices      PushNotices
+	Notices      DeliveryPushGate
 	Storage      TenantStorage
 }
 

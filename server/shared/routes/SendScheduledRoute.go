@@ -40,7 +40,7 @@ func (route SendScheduledRoute) list(caller RouteCaller) (any, error) {
 		var submission map[string]any
 		if record.Entry["transport"] == "external" {
 			if submission, err = schedules.Submission(record, caller.Token); err != nil {
-				return ProviderAccounts{}.Failure(err), nil
+				return DeliveryAccounts{}.Failure(err), nil
 			}
 			if submission["state"] == "sent" || submission["state"] == "cancelled" {
 				if err := schedules.Sent.Scheduled.Delete(record.DocumentId); err != nil {
@@ -126,7 +126,7 @@ func (route SendScheduledRoute) cancel(caller RouteCaller, schedules ScheduledSe
 		result, err = schedules.Cancel(record, caller.Email)
 	}
 	if err != nil {
-		return ProviderAccounts{}.Failure(err), nil
+		return DeliveryAccounts{}.Failure(err), nil
 	}
 	if result["conflict"] == true {
 		return map[string]any{"error": "Scheduled email is currently being delivered", "conflict": true}, nil
@@ -142,7 +142,7 @@ func (route SendScheduledRoute) detail(caller RouteCaller, schedules ScheduledSe
 	}
 	switch {
 	case err != nil:
-		return ProviderAccounts{}.Failure(err), nil
+		return DeliveryAccounts{}.Failure(err), nil
 	case submission["state"] == "sent" || submission["state"] == "cancelled":
 		return route.missing(), schedules.Sent.Scheduled.Delete(record.DocumentId)
 	}

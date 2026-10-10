@@ -59,7 +59,7 @@ func (undo SendUndo) external(caller RouteCaller, external map[string]any, missi
 	if email == nil || email["ownerEmail"] != caller.Email {
 		return missing, nil
 	}
-	accounts := ProviderAccounts{Token: caller.Token}
+	accounts := DeliveryAccounts{Token: caller.Token}
 	if _, err := accounts.Call("accounts.cancel_submission", values.Text(external["accountId"]), map[string]any{"submissionId": external["submissionId"]}); err != nil {
 		return accounts.Failure(err), nil
 	}

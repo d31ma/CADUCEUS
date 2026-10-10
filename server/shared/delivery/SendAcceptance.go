@@ -17,7 +17,7 @@ type SendAcceptance struct {
 	Reminders  FollowUpReminders
 	Archive    ConversationArchive
 	Suppressed *SuppressedHelper
-	Senders    SenderAddresses
+	Senders    OwnedSenders
 	Limits     *RateLimitService
 }
 
@@ -144,9 +144,9 @@ func (send SendAcceptance) sender(plan *SendPlan, request map[string]any) (any, 
 		return nil, err
 	}
 	if sender == "" && from != "" {
-		accounts, err := ProviderAccounts{Token: plan.Caller.Token}.List()
+		accounts, err := DeliveryAccounts{Token: plan.Caller.Token}.List()
 		if err != nil {
-			return ProviderAccounts{}.Failure(err), nil
+			return DeliveryAccounts{}.Failure(err), nil
 		}
 		for _, account := range accounts {
 			capabilities, _ := RecordValues{}.Object(account["capabilities"])

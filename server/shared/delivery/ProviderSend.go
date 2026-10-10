@@ -17,7 +17,7 @@ type ProviderSend struct {
 // Accept answers the route answer of a connected-account send.
 func (provider ProviderSend) Accept(plan SendPlan) (any, error) {
 	send := provider.Acceptance
-	accounts := ProviderAccounts{Token: plan.Caller.Token}
+	accounts := DeliveryAccounts{Token: plan.Caller.Token}
 	accountId := RecordValues{}.Text(plan.Account["id"])
 	stored, submission, err := provider.submit(plan, accounts, accountId)
 	if err == nil && plan.HasSendAt {
@@ -56,7 +56,7 @@ func (provider ProviderSend) Accept(plan SendPlan) (any, error) {
 }
 
 // submit stores the Sent copy and submits it to the provider journal.
-func (provider ProviderSend) submit(plan SendPlan, accounts ProviderAccounts, accountId string) (map[string]any, map[string]any, error) {
+func (provider ProviderSend) submit(plan SendPlan, accounts DeliveryAccounts, accountId string) (map[string]any, map[string]any, error) {
 	stored, err := provider.Acceptance.Sent.RecordExternalAccepted(plan.Caller.Email, plan.Sender, plan.Request, plan.TrackingId)
 	if err != nil {
 		return nil, nil, err

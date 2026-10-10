@@ -170,7 +170,7 @@
     <div class="event-modal-backdrop" on:click="calendar.modalBackdrop($event.target.classList.value)">
       <div id="calendar-event-dialog" class="event-modal" on:keydown="calendar.modalKey($event.key)" role="dialog" aria-modal="true" tabindex="-1">
         <header class="event-modal-header">
-          <h2 class="w-text-title-medium">{calendar.editingReadOnly ? 'Event details' : (calendar.editingId ? 'Edit event' : 'New event')}</h2>
+          <h2 class="w-text-title-medium">{calendar.editingReadOnly ? 'Event details' : (calendar.editingID ? 'Edit event' : 'New event')}</h2>
           <w-btn variant="icon" on:click="calendar.closeModal()" aria-label="Close">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -178,7 +178,7 @@
           </w-btn>
         </header>
         <div class="event-modal-body">
-          <logic :if="calendar.editingSeriesId && !calendar.editingReadOnly">
+          <logic :if="calendar.editingSeriesID && !calendar.editingReadOnly">
             <label class="event-modal-field" for="calendar-edit-scope">
               <span>Apply changes to</span>
               <select id="calendar-edit-scope" :value="calendar.editScope" on:change="calendar.updateEditScope($event.target.value)">
@@ -214,7 +214,7 @@
             </dl>
           </logic>
           <logic :if="!calendar.editingReadOnly">
-            <logic :if="!calendar.editingId && calendar.calendarOptions.length > 1">
+            <logic :if="!calendar.editingID && calendar.calendarOptions.length > 1">
               <label class="event-modal-field" for="calendar-target">
                 <span>Calendar</span>
                 <select id="calendar-target" :value="calendar.form.calendarId" on:change="calendar.updateFormCalendar($event.target.value)">
@@ -260,14 +260,14 @@
           </logic>
         </div>
         <footer class="event-modal-footer">
-          <logic :if="calendar.editingId && !calendar.editingReadOnly">
-            <w-btn variant="text" on:click="calendarBrowser.confirmDelete(calendar.editingSeriesId)" style="color:var(--ms-error);">Delete</w-btn>
+          <logic :if="calendar.editingID && !calendar.editingReadOnly">
+            <w-btn variant="text" on:click="calendarBrowser.confirmDelete(calendar.editingSeriesID)" style="color:var(--ms-error);">Delete</w-btn>
           </logic>
           <div style="flex:1;"></div>
           <w-btn variant="text" on:click="calendar.closeModal()">Cancel</w-btn>
           <logic :if="!calendar.editingReadOnly">
             <w-btn variant="filled" :disabled="calendar.form.saving" on:click="calendar.saveEvent()">
-              {calendar.form.saving ? 'Saving…' : (calendar.editingId ? 'Save' : 'Create')}
+              {calendar.form.saving ? 'Saving…' : (calendar.editingID ? 'Save' : 'Create')}
             </w-btn>
           </logic>
         </footer>

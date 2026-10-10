@@ -19,8 +19,12 @@ export default class CalendarBrowserService {
   static _DATE = '[data-calendar-date]'
   static _DROP = '[data-calendar-all-day-date], [data-calendar-date]'
   static _DROP_TARGET = 'calendar-drop-target'
+  static _SELECTED = 'keyboard-selected'
   static _QUICK_FORM = '.quick-event-popover'
   static _ARIA_LABEL = 'aria-label'
+  static _BUSY = 'busy'
+  static _ATTEMPTS = 40
+  static _RETRY_MS = 50
   static _LABELLED = '.event-modal w-text-field, .event-modal w-textarea, .quick-event-popover w-text-field'
   static _SHORTCUTS = [
     'calendar:move-event-up', 'calendar:move-event-down', 'calendar:move-event-left', 'calendar:move-event-right',
@@ -35,6 +39,8 @@ export default class CalendarBrowserService {
   calendar
   _dragEventId = ''
   _opened = false
+  /** @type {Promise<unknown>} */
+  _queue = Promise.resolve()
   /** @type {Array<[EventTarget, string, (event: any) => void]>} */
   _bindings = []
   /** @type {MutationObserver | null} */
@@ -103,10 +109,31 @@ export default class CalendarBrowserService {
     setTimeout(() => this._run(() => this.calendar.open(changed, this._narrow())), 0)
   }
 
+  /**
+   * Calls into the Go service one at a time, then render. The Go runtime
+   * answers "Native owner is busy." to a call that arrives while another call
+   * is running between two awaits, so a refused call is tried again shortly.
+   * @param {() => Promise<unknown>} action
+   */
+  _run(action) {
+    return this._enqueue(action).then(() => this.taskScheduler.render())
+  }
+
   /** @param {() => Promise<unknown>} action */
-  async _run(action) {
-    await Promise.resolve().then(action).catch(() => undefined)
-    await this.taskScheduler.render()
+  _enqueue(action) {
+    this._queue = this._queue.then(() => this._attempt(action, CalendarBrowserService._ATTEMPTS))
+    return this._queue
+  }
+
+  /** @param {() => Promise<unknown>} action @param {number} left */
+  _attempt(action, left) {
+    return Promise.resolve().then(action).catch(error => this._retry(error, action, left))
+  }
+
+  /** @param {unknown} error @param {() => Promise<unknown>} action @param {number} left */
+  _retry(error, action, left) {
+    if (left <= 0 || !String(error).includes(CalendarBrowserService._BUSY)) return undefined
+    return new Promise(resolve => setTimeout(resolve, CalendarBrowserService._RETRY_MS)).then(() => this._attempt(action, left - 1))
   }
 
   _narrow() {
@@ -183,7 +210,21 @@ export default class CalendarBrowserService {
   /** @param {HTMLElement | null} chip */
   _focusIn(chip) {
     if (!chip) return
-    this._run(() => this.calendar.focusEvent(String(chip.getAttribute(CalendarBrowserService._EVENT_ID))))
+    this._select(chip)
+  }
+
+  /**
+   * Focus only marks the move and resize target. It must not rerender: a
+   * rerender rebuilds the chips, and a click whose mousedown focused a chip
+   * would then land on a detached node.
+   * @param {HTMLElement} chip
+   */
+  _select(chip) {
+    const type = CalendarBrowserService
+    const id = String(chip.getAttribute(type._EVENT_ID))
+    this._enqueue(() => this.calendar.focusEvent(id))
+    document.querySelectorAll(`.${type._SELECTED}`).forEach(node => node.classList.remove(type._SELECTED))
+    chip.classList.toggle(type._SELECTED, !chip.classList.contains('calendar-event-chip-team'))
   }
 
   /** Tachyon still runs the form's on:submit handler; only the page load is cancelled.
@@ -235,6 +276,6 @@ export default class CalendarBrowserService {
   /** @param {string | null} scope */
   _deleteWhenChosen(scope) {
     if (scope === null) return undefined
-    return this.calendar.deleteEditing(scope)
+    return this._enqueue(() => this.calendar.deleteEditing(scope))
   }
 }

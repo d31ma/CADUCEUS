@@ -111,3 +111,21 @@ func (parts MailboxParts) CategoryAccounts(caller RouteCaller) ([]map[string]any
 func (parts MailboxParts) CreateCategory(caller RouteCaller, input any) (map[string]any, *CategoryRefusal, error) {
 	return parts.Categories.CreateCategory(caller.Email, input)
 }
+
+// AttachmentsByEmail answers the attachment summaries of the allowed
+// domains, by email id.
+func (parts MailboxParts) AttachmentsByEmail(allowed []string) (map[string][]map[string]any, error) {
+	return parts.Attachments.ListSummariesByEmail(allowed)
+}
+
+// Scope answers the validated search scope of a request, or its refusal.
+func (MailboxParts) Scope(caller RouteCaller, request *http.Request) (SearchScope, *http.Response) {
+	scope, err := SearchScope{}.Parsed(RouteQuery{}.Of(request), caller.Domains)
+	if err == nil {
+		return scope, nil
+	}
+	if scope.Status == http.StatusForbidden {
+		return scope, Answer{}.Forbidden(err.Error())
+	}
+	return scope, Answer{}.BadRequest(err.Error())
+}

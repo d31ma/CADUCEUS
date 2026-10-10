@@ -1,7 +1,7 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { createMcpHandler } from '../deps/npm/modelcontextprotocol-server.mjs'
 import { getApp } from '../app.js'
-import { createMailboxMcpServer } from '../shared/mcp/tools.js'
+import { Tools } from '../shared/mcp/Tools.js'
 
 @RequestRoute("/mcp")
 @Public
@@ -101,7 +101,7 @@ export class McpController {
         method: 'POST', headers: normalizedHeaders, body: serialized,
       })
       const handler = createMcpHandler(
-        () => createMailboxMcpServer(app, principal),
+        () => Tools.createMailboxMcpServer(app, principal),
         { legacy: 'stateless', responseMode: 'json', keepAliveMs: 0 },
       )
       try {

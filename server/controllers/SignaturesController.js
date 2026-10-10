@@ -1,9 +1,9 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { Actions } from '../shared/auth/Auth.js'
-import { ownedSenderAddresses } from '../shared/users/sender-addresses.js'
-import { normalizeSignatureInput, resolveUniqueSignatureName } from '../shared/mailbox/signature-content.js'
+import { Auth } from '../shared/auth/Auth.js'
+import { SenderAddresses } from '../shared/users/SenderAddresses.js'
+import { SignatureContent } from '../shared/mailbox/SignatureContent.js'
 
 @RequestRoute("/signatures")
 @SignedIn
@@ -23,10 +23,10 @@ export class SignaturesController {
 
   @PostRoute
   async post(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
       const app = await getApp()
-      const addresses = await ownedSenderAddresses(app.users, auth.email)
-      const input = normalizeSignatureInput(body, { allowedAddresses: addresses })
+      const addresses = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
+      const input = SignatureContent.normalizeSignatureInput(body, { allowedAddresses: addresses })
       if (input instanceof Error) return Respond.r400(input.message)
       const existing = Object.values(await app.signatures.listForOwner(auth.email))
       const now = Date.now()
@@ -34,7 +34,7 @@ export class SignaturesController {
         id: `sig-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`,
         owner: auth.email,
         domain: auth.email.split('@')[1] || auth.domain,
-        name: resolveUniqueSignatureName(input.name ?? '', existing),
+        name: SignatureContent.resolveUniqueSignatureName(input.name ?? '', existing),
         text: input.text ?? '',
         defaultFor: input.defaultFor ?? [],
         createdAt: now,
@@ -48,7 +48,7 @@ export class SignaturesController {
 
   @GetRoute
   async get(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_READ } }, async ({ auth }) => {
       const app = await getApp()
       const records = await app.signatures.listForOwner(auth.email)
       return Object.values(records).sort((left, right) => left.name.localeCompare(right.name)).map(SignaturesController.present)

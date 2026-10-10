@@ -1,8 +1,8 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
-import { externalMailSummaries, isExternalAccountId, mergeUnifiedMail } from '../shared/mailbox/unified-mail.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
+import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
 
 @RequestRoute("/inbox")
 @SignedIn
@@ -45,7 +45,7 @@ export class InboxController {
       const presented = await app.domainMigration.presentEmails(emails)
       const hosted = await app.categoryMappings.presentEmails(auth.email, presented)
       try {
-        let external = filters.domain ? [] : await externalMailSummaries(bearerToken(context), {
+        let external = filters.domain ? [] : await UnifiedMail.externalMailSummaries(ExternalAccounts.bearerToken(context), {
           accountId: filters.accountId,
           folderRole: filters.folder,
           query: filters.query,
@@ -55,9 +55,9 @@ export class InboxController {
         if (typeof filters.hasAttachment === 'boolean') {
           external = external.filter(message => message.hasAttachments === filters.hasAttachment)
         }
-        return mergeUnifiedMail(hosted, external, { offset, limit })
+        return UnifiedMail.mergeUnifiedMail(hosted, external, { offset, limit })
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
     })
   }
@@ -80,7 +80,7 @@ export class InboxController {
     if (domain) filters.domain = domain
 
     const accountId = InboxController._readString(query.account)
-    if (accountId && !isExternalAccountId(accountId)) return new Error('Invalid connected account identifier')
+    if (accountId && !UnifiedMail.isExternalAccountId(accountId)) return new Error('Invalid connected account identifier')
     if (accountId) filters.accountId = accountId
 
     const read = InboxController._readBoolean(query.read)

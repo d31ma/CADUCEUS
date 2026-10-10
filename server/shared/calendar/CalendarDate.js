@@ -1,8 +1,3 @@
-// @ts-check
-
-const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
-const DAY_MS = 24 * 60 * 60 * 1000
-
 /**
  * Calendar-date operations for RFC 5545 DATE values.
  *
@@ -11,10 +6,27 @@ const DAY_MS = 24 * 60 * 60 * 1000
  * neighboring day. All-day `end` values are exclusive.
  */
 export class CalendarDate {
+  // @ts-check
+
+  static #DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/
+
+  static #DAY_MS = 24 * 60 * 60 * 1000
+
+  /** @param {string} value */
+  static #dateEpoch(value) {
+    const match = /** @type {RegExpMatchArray} */ (value.match(CalendarDate.#DATE_PATTERN))
+    return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+  }
+
+  /** @param {Date} value */
+  static #formatUTCDate(value) {
+    return value.toISOString().slice(0, 10)
+  }
+
   /** @param {unknown} value */
   static isDate(value) {
     if (typeof value !== 'string') return false
-    const match = value.match(DATE_PATTERN)
+    const match = value.match(CalendarDate.#DATE_PATTERN)
     if (!match) return false
     const [, year, month, day] = match
     const instant = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)))
@@ -31,13 +43,13 @@ export class CalendarDate {
   /** @param {string} value @param {number} days */
   static addDays(value, days) {
     if (!CalendarDate.isDate(value) || !Number.isInteger(days)) throw new TypeError('calendar date and integer day count are required')
-    return formatUTCDate(new Date(dateEpoch(value) + days * DAY_MS))
+    return CalendarDate.#formatUTCDate(new Date(CalendarDate.#dateEpoch(value) + days * CalendarDate.#DAY_MS))
   }
 
   /** @param {string} start @param {string} end */
   static daysBetween(start, end) {
     if (!CalendarDate.isDate(start) || !CalendarDate.isDate(end)) throw new TypeError('two calendar dates are required')
-    return Math.round((dateEpoch(end) - dateEpoch(start)) / DAY_MS)
+    return Math.round((CalendarDate.#dateEpoch(end) - CalendarDate.#dateEpoch(start)) / CalendarDate.#DAY_MS)
   }
 
   /**
@@ -84,8 +96,8 @@ export class CalendarDate {
   /** @param {Record<string, any>} event @param {number} rangeStart @param {number} rangeEnd */
   static overlaps(event, rangeStart, rangeEnd) {
     if (event.allDay && CalendarDate.isDate(event.start) && CalendarDate.isDate(event.end)) {
-      const start = dateEpoch(event.start)
-      const exclusiveEnd = dateEpoch(event.end)
+      const start = CalendarDate.#dateEpoch(event.start)
+      const exclusiveEnd = CalendarDate.#dateEpoch(event.end)
       return exclusiveEnd > rangeStart && start <= rangeEnd
     }
     const start = Date.parse(event.start)
@@ -123,15 +135,4 @@ export class CalendarDate {
     }
     return `${parts.year}-${parts.month}-${parts.day}`
   }
-}
-
-/** @param {string} value */
-function dateEpoch(value) {
-  const match = /** @type {RegExpMatchArray} */ (value.match(DATE_PATTERN))
-  return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
-}
-
-/** @param {Date} value */
-function formatUTCDate(value) {
-  return value.toISOString().slice(0, 10)
 }

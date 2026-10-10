@@ -2,13 +2,13 @@ import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
 import { isIP } from 'node:net'
 import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
 
-const CONTROL_CHARS = /[\0\r\n]/
-
 /** Stateless security/validation helpers (hashing, normalization, SSRF guards). */
 export class Security {
+  static #CONTROL_CHARS = /[\0\r\n]/
+
   /** @param {string} value @returns {boolean} */
   static hasControlChars(value) {
-    return CONTROL_CHARS.test(value)
+    return Security.#CONTROL_CHARS.test(value)
   }
 
   /** @param {string} s @returns {string} */

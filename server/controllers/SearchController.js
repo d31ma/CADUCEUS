@@ -2,8 +2,8 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
 import { Respond } from '../shared/http/Respond.js'
 import { SearchParser } from '../shared/mailbox/SearchParser.js'
-import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
-import { externalAttachmentSummaries, externalMailSummaries, isExternalAccountId, mergeUnifiedMail } from '../shared/mailbox/unified-mail.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
+import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
 
 @RequestRoute("/search")
 @SignedIn
@@ -45,7 +45,7 @@ export class SearchController {
       const domain = String(query?.domain || '').trim().toLowerCase()
       if (domain && !auth.domains.includes(domain)) return Respond.r403('Mailbox is outside the authenticated account scope')
       const accountId = String(query?.account || '').trim()
-      if (accountId && !isExternalAccountId(accountId)) return Respond.r400('Invalid connected account identifier')
+      if (accountId && !UnifiedMail.isExternalAccountId(accountId)) return Respond.r400('Invalid connected account identifier')
       if (domain && accountId) return Respond.r400('Choose only one mailbox domain or connected account')
       const limit = SearchController.readLimit(query?.limit)
       if (limit instanceof Error) return Respond.r400(limit.message)
@@ -61,9 +61,9 @@ export class SearchController {
       const expression = SearchParser.parseWithFallback(raw)
       let external
       try {
-        external = domain ? [] : await externalMailSummaries(bearerToken(context), { accountId })
+        external = domain ? [] : await UnifiedMail.externalMailSummaries(ExternalAccounts.bearerToken(context), { accountId })
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
       const hostedMatches = presented
         .filter(email => !raw || SearchParser.hasField(expression, 'in') || !['trash', 'spam'].includes(
@@ -72,8 +72,8 @@ export class SearchController {
         .filter(email => SearchParser.matches(expression, email, attachmentsByEmail.get(email.id) || []))
       const externalMatches = external
         .filter(email => !raw || SearchParser.hasField(expression, 'in') || !['trash', 'spam'].includes(String(email.systemFolder || email.folder || 'inbox').toLowerCase()))
-        .filter(email => SearchParser.matches(expression, email, externalAttachmentSummaries(email)))
-      return mergeUnifiedMail(hostedMatches, externalMatches, { limit })
+        .filter(email => SearchParser.matches(expression, email, UnifiedMail.externalAttachmentSummaries(email)))
+      return UnifiedMail.mergeUnifiedMail(hostedMatches, externalMatches, { limit })
     })
   }
 }

@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 
 export class FollowUpRemindersRepository {
   /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
@@ -6,12 +6,12 @@ export class FollowUpRemindersRepository {
 
   /** @param {FollowUpReminder} reminder */
   async put(reminder) {
-    return await this.fylo.putData(Collections.FOLLOW_UP_REMINDERS, reminder)
+    return await this.fylo.putData(Fylo.Collections.FOLLOW_UP_REMINDERS, reminder)
   }
 
   /** @param {string} ownerEmail @returns {Promise<Array<FollowUpReminder & { docId: string }>>} */
   async listForOwner(ownerEmail) {
-    const docs = await collect(this.fylo.findDocs(Collections.FOLLOW_UP_REMINDERS, {
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.FOLLOW_UP_REMINDERS, {
       $ops: [{ ownerEmail: { $eq: ownerEmail } }],
     }).collect())
     return Object.entries(docs).map(([docId, reminder]) => ({
@@ -26,7 +26,7 @@ export class FollowUpRemindersRepository {
 
   /** Return every scheduled reminder for the system-owned due worker. */
   async listPendingAll() {
-    const docs = await collect(this.fylo.findDocs(Collections.FOLLOW_UP_REMINDERS, {
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.FOLLOW_UP_REMINDERS, {
       $ops: [{ status: { $eq: 'scheduled' } }],
     }).collect())
     return Object.entries(docs).map(([docId, reminder]) => ({
@@ -36,7 +36,7 @@ export class FollowUpRemindersRepository {
 
   /** @param {string} id @returns {Promise<[string|null, FollowUpReminder|null]>} */
   async findById(id) {
-    const docs = await collect(this.fylo.findDocs(Collections.FOLLOW_UP_REMINDERS, {
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.FOLLOW_UP_REMINDERS, {
       $ops: [{ id: { $eq: id } }],
     }).collect())
     const entry = Object.entries(docs)[0]
@@ -52,6 +52,6 @@ export class FollowUpRemindersRepository {
 
   /** @param {string} docId @param {Partial<FollowUpReminder>} patch */
   async update(docId, patch) {
-    await this.fylo.patchDoc(Collections.FOLLOW_UP_REMINDERS, { [docId]: patch })
+    await this.fylo.patchDoc(Fylo.Collections.FOLLOW_UP_REMINDERS, { [docId]: patch })
   }
 }

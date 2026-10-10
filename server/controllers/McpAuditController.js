@@ -1,5 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { getApp } from '../app.js'
 
 @RequestRoute("/mcp/audit")
@@ -21,7 +21,7 @@ export class McpAuditController {
 
   @GetRoute
   async get(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_READ } }, async ({ auth }) => {
       const app = await getApp()
       return (await app.mcpAuditEvents.listForOwner(auth.email)).map(McpAuditController.present)
     })
@@ -29,7 +29,7 @@ export class McpAuditController {
 
   @DeleteRoute
   async delete(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ auth }) => {
       const app = await getApp()
       return { cleared: await app.mcpAuditEvents.clearForOwner(auth.email) }
     })

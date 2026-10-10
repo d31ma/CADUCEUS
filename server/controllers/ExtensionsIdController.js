@@ -1,8 +1,8 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { getApp } from '../app.js'
-import { presentExtension } from '../shared/extensions/extensions.js'
+import { Extensions } from '../shared/extensions/Extensions.js'
 
 @RequestRoute("/extensions/{id}")
 @SignedIn
@@ -16,16 +16,16 @@ export class ExtensionsIdController {
 
   @GetRoute
   async get(@FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { id }, guard: { action: Actions.MAILBOX_READ } }, async ({ auth, paths }) => {
+    return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.MAILBOX_READ } }, async ({ auth, paths }) => {
       const record = await ExtensionsIdController.ownedRecord(auth.email, paths?.id)
       if (!record) return Respond.r404('Extension not found')
-      return presentExtension(record, { runtime: true })
+      return Extensions.presentExtension(record, { runtime: true })
     })
   }
 
   @PutRoute
   async put(@FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { id }, guard: { action: Actions.MAILBOX_WRITE } }, async ({ auth, paths, body }) => {
+    return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ auth, paths, body }) => {
       if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).length !== 1 || typeof body.enabled !== 'boolean') return Respond.r400('enabled must be the only field')
       const app = await getApp()
       const record = await ExtensionsIdController.ownedRecord(auth.email, paths?.id)
@@ -37,13 +37,13 @@ export class ExtensionsIdController {
         }
       }
       await app.extensions.update(record.docId, { enabled: body.enabled, updatedAt: now })
-      return presentExtension({ ...record, enabled: body.enabled, updatedAt: now })
+      return Extensions.presentExtension({ ...record, enabled: body.enabled, updatedAt: now })
     })
   }
 
   @DeleteRoute
   async delete(@FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { id }, guard: { action: Actions.MAILBOX_WRITE } }, async ({ auth, paths }) => {
+    return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ auth, paths }) => {
       const app = await getApp()
       const record = await ExtensionsIdController.ownedRecord(auth.email, paths?.id)
       if (!record) return Respond.r404('Extension not found')

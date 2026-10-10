@@ -4,11 +4,7 @@ import {
   applyMailPreferences,
   normalizeMailPreferences as normalizeClient,
 } from '../../client/shared/scripts/mail-preferences.js'
-import {
-  DEFAULT_MAIL_PREFERENCES as SERVER_DEFAULTS,
-  normalizeMailPreferences as normalizeServer,
-  validateMailPreferencePatch,
-} from '../../server/shared/users/mail-preferences.js'
+import { MailPreferences } from '../../server/shared/users/MailPreferences.js'
 
 const originalDocument = globalThis.document
 
@@ -20,8 +16,8 @@ describe('mail preferences', () => {
   }
 
   it('keeps browser and server defaults in lockstep', () => {
-    expect(CLIENT_DEFAULTS).toEqual(SERVER_DEFAULTS)
-    expect(normalizeClient({})).toEqual(normalizeServer({}, user))
+    expect(CLIENT_DEFAULTS).toEqual(MailPreferences.DEFAULT_MAIL_PREFERENCES)
+    expect(normalizeClient({})).toEqual(MailPreferences.normalizeMailPreferences({}, user))
   })
 
   it('normalizes hostile browser values and rejects unknown server fields atomically', () => {
@@ -35,7 +31,7 @@ describe('mail preferences', () => {
       autoCcBySender: { 'sales@example.com': ['person@other.test'] },
       findInMailDisabledDomains: ['example.com'],
     })
-    expect(validateMailPreferencePatch({ workspaceLayout: 'list', injectedCss: 'body{}' }, user)).toEqual({
+    expect(MailPreferences.validateMailPreferencePatch({ workspaceLayout: 'list', injectedCss: 'body{}' }, user)).toEqual({
       ok: false, error: 'Unknown mail preference: injectedCss',
     })
   })

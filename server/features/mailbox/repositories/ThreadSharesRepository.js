@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 
 /** FYLO persistence for mailbox-owned conversation capabilities. */
 export class ThreadSharesRepository {
@@ -7,12 +7,12 @@ export class ThreadSharesRepository {
 
   /** @param {ThreadShareRecord} share */
   async put(share) {
-    return await this.fylo.putData(Collections.THREAD_SHARES, serialize(share))
+    return await this.fylo.putData(Fylo.Collections.THREAD_SHARES, serialize(share))
   }
 
   /** @param {string} ownerEmail @returns {Promise<Array<ThreadShareRecord & { docId: string }>>} */
   async listForOwner(ownerEmail) {
-    const docs = await collect(this.fylo.findDocs(Collections.THREAD_SHARES, {
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.THREAD_SHARES, {
       $ops: [{ ownerEmail: { $eq: ownerEmail.toLowerCase() } }],
     }).collect())
     return Object.entries(docs).map(([docId, value]) => ({ docId, ...deserialize(value) }))
@@ -20,7 +20,7 @@ export class ThreadSharesRepository {
 
   /** @param {string} id @returns {Promise<[string | null, ThreadShareRecord | null]>} */
   async findById(id) {
-    const docs = await collect(this.fylo.findDocs(Collections.THREAD_SHARES, {
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.THREAD_SHARES, {
       $ops: [{ id: { $eq: id } }],
     }).collect())
     const entry = Object.entries(docs)[0]
@@ -29,7 +29,7 @@ export class ThreadSharesRepository {
 
   /** @param {string} tokenHash @returns {Promise<Array<ThreadShareRecord & { docId: string }>>} */
   async findByTokenHash(tokenHash) {
-    const docs = await collect(this.fylo.findDocs(Collections.THREAD_SHARES, {
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.THREAD_SHARES, {
       $ops: [{ tokenHash: { $eq: tokenHash } }],
     }).collect())
     return Object.entries(docs).map(([docId, value]) => ({ docId, ...deserialize(value) }))
@@ -42,7 +42,7 @@ export class ThreadSharesRepository {
       stored.emailIdsJson = JSON.stringify(patch.emailIds)
       delete stored.emailIds
     }
-    await this.fylo.patchDoc(Collections.THREAD_SHARES, { [docId]: stored })
+    await this.fylo.patchDoc(Fylo.Collections.THREAD_SHARES, { [docId]: stored })
   }
 }
 

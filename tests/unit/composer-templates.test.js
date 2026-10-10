@@ -7,11 +7,7 @@ import {
   stripTemplateVariableMarkup,
   templateBodyFromDraft,
 } from '../../client/shared/scripts/composer-templates.js'
-import {
-  normalizeTemplateInput,
-  resolveUniqueTemplateName,
-  sanitizeStoredTemplateHTML,
-} from '../../server/shared/mailbox/template-content.js'
+import { TemplateContent } from '../../server/shared/mailbox/TemplateContent.js'
 
 describe('Mailspring-compatible composer templates', () => {
   it('normalizes editable code regions and detects truly empty blanks', () => {
@@ -38,19 +34,19 @@ describe('Mailspring-compatible composer templates', () => {
 
   it('removes active content and executable attributes at both trust boundaries', () => {
     const hostile = '<script>alert(1)</script><p onclick="steal()"><a href="javascript:steal()">Safe text</a></p>'
-    for (const sanitized of [sanitizeTemplateHTML(hostile), sanitizeStoredTemplateHTML(hostile)]) {
+    for (const sanitized of [sanitizeTemplateHTML(hostile), TemplateContent.sanitizeStoredTemplateHTML(hostile)]) {
       expect(sanitized).not.toMatch(/script|onclick|javascript:/i)
       expect(sanitized).toContain('Safe text')
     }
   })
 
   it('validates bounded input and generates Mailspring-style duplicate suffixes', () => {
-    expect(normalizeTemplateInput(null)).toBeInstanceOf(Error)
-    expect(normalizeTemplateInput({ name: 'Bad/name', text: 'Body' })).toBeInstanceOf(Error)
-    expect(normalizeTemplateInput({ name: ' Follow-up ', text: '<p>Body</p>' })).toEqual({
+    expect(TemplateContent.normalizeTemplateInput(null)).toBeInstanceOf(Error)
+    expect(TemplateContent.normalizeTemplateInput({ name: 'Bad/name', text: 'Body' })).toBeInstanceOf(Error)
+    expect(TemplateContent.normalizeTemplateInput({ name: ' Follow-up ', text: '<p>Body</p>' })).toEqual({
       name: 'Follow-up', subject: '', text: '<p>Body</p>', to: '', cc: '',
     })
-    expect(resolveUniqueTemplateName('Follow-up', [{ id: '1', name: 'follow-up' }, { id: '2', name: 'Follow-up 1' }]))
+    expect(TemplateContent.resolveUniqueTemplateName('Follow-up', [{ id: '1', name: 'follow-up' }, { id: '2', name: 'Follow-up 1' }]))
       .toBe('Follow-up 2')
   })
 })

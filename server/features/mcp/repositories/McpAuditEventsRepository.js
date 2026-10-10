@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 
 const RETAINED_EVENTS = 100
 const RETURNED_EVENTS = 50
@@ -9,14 +9,14 @@ export class McpAuditEventsRepository {
 
   /** @param {import('../../../types').McpAuditEvent} event */
   async put(event) {
-    await this.fylo.putData(Collections.MCP_AUDIT_EVENTS, event)
+    await this.fylo.putData(Fylo.Collections.MCP_AUDIT_EVENTS, event)
     const records = await this.listForOwner(event.ownerEmail, Number.MAX_SAFE_INTEGER)
-    for (const stale of records.slice(RETAINED_EVENTS)) await this.fylo.delDoc(Collections.MCP_AUDIT_EVENTS, stale.docId)
+    for (const stale of records.slice(RETAINED_EVENTS)) await this.fylo.delDoc(Fylo.Collections.MCP_AUDIT_EVENTS, stale.docId)
   }
 
   /** @param {string} ownerEmail @param {number} [limit] @returns {Promise<Array<import('../../../types').McpAuditEvent & {docId:string, parameterKeys:string[]}>>} */
   async listForOwner(ownerEmail, limit = RETURNED_EVENTS) {
-    const docs = await collect(this.fylo.findDocs(Collections.MCP_AUDIT_EVENTS, {
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.MCP_AUDIT_EVENTS, {
       $ops: [{ ownerEmail: { $eq: String(ownerEmail).toLowerCase() } }],
     }).collect())
     return Object.entries(docs)
@@ -31,7 +31,7 @@ export class McpAuditEventsRepository {
   /** @param {string} ownerEmail */
   async clearForOwner(ownerEmail) {
     const records = await this.listForOwner(ownerEmail, Number.MAX_SAFE_INTEGER)
-    for (const record of records) await this.fylo.delDoc(Collections.MCP_AUDIT_EVENTS, record.docId)
+    for (const record of records) await this.fylo.delDoc(Fylo.Collections.MCP_AUDIT_EVENTS, record.docId)
     return records.length
   }
 }

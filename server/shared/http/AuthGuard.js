@@ -1,6 +1,8 @@
 // @ts-check
-import { Auth, AuthBridgeError, Actions } from '../auth/Auth.js'
+import { Auth } from '../auth/Auth.js'
+import { AuthBridgeError } from '../auth/AuthBridgeError.js'
 import { Respond } from './Respond.js'
+
 /** @import { Principal } from '../../models/Principal.js' */
 /** @import { AuthSuccess } from '../../models/AuthSuccess.js' */
 /** @import { AuthFailure } from '../../models/AuthFailure.js' */
@@ -59,7 +61,7 @@ export class AuthGuard {
    * @returns {Promise<AuthResult>}
    */
   static requireDomainAccess(context, domain) {
-    return AuthGuard.requirePermission(context, Actions.DOMAIN_READ, { domain })
+    return AuthGuard.requirePermission(context, Auth.Actions.DOMAIN_READ, { domain })
   }
 
   /**
@@ -70,7 +72,7 @@ export class AuthGuard {
    * @returns {Promise<AuthResult>}
    */
   static requireDomainAdmin(context, domain) {
-    return AuthGuard.requirePermission(context, Actions.DOMAIN_ADMIN, { domain })
+    return AuthGuard.requirePermission(context, Auth.Actions.DOMAIN_ADMIN, { domain })
   }
 
   /**
@@ -105,5 +107,3 @@ export class AuthGuard {
     return Respond.r503('Authentication is unavailable')
   }
 }
-
-export { Actions }

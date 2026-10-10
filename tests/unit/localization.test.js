@@ -1,9 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import {
-  INTERFACE_LOCALE_IDS,
-  normalizeInterfaceLocale as normalizeServerLocale,
-  validateInterfaceLocale,
-} from '../../server/shared/users/locale-preferences.js'
+import { LocalePreferences } from '../../server/shared/users/LocalePreferences.js'
 import {
   INTERFACE_LOCALE_OPTIONS,
   applyInterfaceLocale,
@@ -29,19 +25,19 @@ afterEach(() => {
 
 describe('interface localization', () => {
   it('keeps the browser and persistence locale catalogs in lockstep', () => {
-    expect(INTERFACE_LOCALE_OPTIONS.map(option => option.id)).toEqual([...INTERFACE_LOCALE_IDS])
+    expect(INTERFACE_LOCALE_OPTIONS.map(option => option.id)).toEqual([...LocalePreferences.INTERFACE_LOCALE_IDS])
   })
 
   it('normalizes and validates only fixed catalog identifiers', () => {
     for (const value of ['auto', 'en', 'de', 'es', 'es-419', 'fr', 'ko', 'pl', 'ja', 'zh-CN', 'zh-TW', 'pt', 'pt-BR', 'gl', 'tr', 'ru', 'cs', 'uk', 'hu', 'he', 'ar']) {
       expect(normalizeInterfaceLocale(value)).toBe(value)
-      expect(normalizeServerLocale(value)).toBe(value)
-      expect(validateInterfaceLocale(value)).toEqual({ ok: true, locale: value })
+      expect(LocalePreferences.normalizeInterfaceLocale(value)).toBe(value)
+      expect(LocalePreferences.validateInterfaceLocale(value)).toEqual({ ok: true, locale: value })
     }
     for (const value of ['fr-CA', '../ar', 'en<script>', 42, null]) {
       expect(normalizeInterfaceLocale(value)).toBe('auto')
-      expect(normalizeServerLocale(value)).toBe('auto')
-      expect(validateInterfaceLocale(value).ok).toBe(false)
+      expect(LocalePreferences.normalizeInterfaceLocale(value)).toBe('auto')
+      expect(LocalePreferences.validateInterfaceLocale(value).ok).toBe(false)
     }
   })
 

@@ -3,7 +3,7 @@ import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
 import { ActivityController as Activity } from '@/controllers/ActivityController.js'
 import { TrackClickController as TrackClick } from '@/controllers/TrackClickController.js'
 import { TrackOpenController as TrackOpen } from '@/controllers/TrackOpenController.js'
-import { createTrackingToken } from '@/shared/delivery/tracking-tokens.js'
+import { TrackingTokens } from '@/shared/delivery/TrackingTokens.js'
 import { call } from '../support/controller-call.mjs'
 
 const secret = 'tracking-test-secret-0123456789abcdef'
@@ -84,7 +84,7 @@ describe('public tracking capabilities', () => {
     expect(invalid.status).toBe(200)
     expect(invalid.headers.get('Content-Type')).toBe('image/gif')
 
-    const open = createTrackingToken({
+    const open = TrackingTokens.createTrackingToken({
       type: 'open', trackingId: aliceTrackingId, recipient: 'recipient@outside.test',
     }, { secret })
     expect((await call(TrackOpen, 'GET', req({ query: { t: open } }))).status).toBe(200)
@@ -96,13 +96,13 @@ describe('public tracking capabilities', () => {
 
   it('rejects arbitrary, tampered, mismatched, and type-confused redirects', async () => {
     expect((await call(TrackClick, 'GET', req({ query: { url: 'https://attacker.example' } }))).status).toBe(404)
-    const mismatch = createTrackingToken({
+    const mismatch = TrackingTokens.createTrackingToken({
       type: 'click', trackingId: aliceTrackingId, recipient: 'recipient@outside.test', url: 'https://attacker.example/', linkIndex: 0,
     }, { secret })
     expect((await call(TrackClick, 'GET', req({ query: { t: mismatch } }))).status).toBe(404)
-    const open = createTrackingToken({ type: 'open', trackingId: aliceTrackingId }, { secret })
+    const open = TrackingTokens.createTrackingToken({ type: 'open', trackingId: aliceTrackingId }, { secret })
     expect((await call(TrackClick, 'GET', req({ query: { t: open } }))).status).toBe(404)
-    const valid = createTrackingToken({
+    const valid = TrackingTokens.createTrackingToken({
       type: 'click', trackingId: aliceTrackingId, recipient: 'recipient@outside.test', url: 'https://example.org/proposal', linkIndex: 0,
     }, { secret })
     const tampered = `${valid.slice(0, -1)}${valid.endsWith('a') ? 'b' : 'a'}`
@@ -110,7 +110,7 @@ describe('public tracking capabilities', () => {
   })
 
   it('records an authenticated click and redirects only to the stored original', async () => {
-    const click = createTrackingToken({
+    const click = TrackingTokens.createTrackingToken({
       type: 'click', trackingId: aliceTrackingId, recipient: 'recipient@outside.test', url: 'https://example.org/proposal', linkIndex: 0,
     }, { secret })
     const response = await call(TrackClick, 'GET', req({ query: { t: click } }))
@@ -125,8 +125,8 @@ describe('public tracking capabilities', () => {
   })
 
   it('serializes simultaneous events so neither update is lost', async () => {
-    const one = createTrackingToken({ type: 'open', trackingId: aliceTrackingId, recipient: 'one@outside.test' }, { secret })
-    const two = createTrackingToken({ type: 'open', trackingId: aliceTrackingId, recipient: 'two@outside.test' }, { secret })
+    const one = TrackingTokens.createTrackingToken({ type: 'open', trackingId: aliceTrackingId, recipient: 'one@outside.test' }, { secret })
+    const two = TrackingTokens.createTrackingToken({ type: 'open', trackingId: aliceTrackingId, recipient: 'two@outside.test' }, { secret })
     await Promise.all([
       call(TrackOpen, 'GET', req({ query: { t: one } })),
       call(TrackOpen, 'GET', req({ query: { t: two } })),

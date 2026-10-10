@@ -2,8 +2,8 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { randomUUID } from 'node:crypto'
-import { AuthBridgeError } from '../shared/auth/Auth.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { AuthBridgeError } from '../shared/auth/AuthBridgeError.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/contacts")
 @SignedIn
@@ -27,7 +27,7 @@ export class ContactsController {
       if (source && !['manual', 'mail', 'vcard', 'carddav'].includes(source)) return Respond.r400('source is invalid')
       const app = await getApp()
       let providerContacts = []
-      try { providerContacts = (await ExternalAccounts.contacts(bearerToken(context)))?.contacts || [] } catch { /* hosted contacts remain available while provider sync recovers */ }
+      try { providerContacts = (await ExternalAccounts.contacts(ExternalAccounts.bearerToken(context)))?.contacts || [] } catch { /* hosted contacts remain available while provider sync recovers */ }
       return await app.contacts.list(auth.email, {
         q: String(params.q || '').slice(0, 200),
         source,
@@ -44,7 +44,7 @@ export class ContactsController {
   	  const { source = '', accountId = '', addressBookId = '', idempotencyKey = '', ...contact } = body || {}
   	  if (source === 'carddav') {
   		if (!ContactsController.validIdentifier(accountId, 'ext_') || !ContactsController.validIdentifier(addressBookId, 'book_')) return Respond.r400('A valid CardDAV address book is required')
-  		const mutation = await ExternalAccounts.mutateContact(bearerToken(context), accountId, {
+  		const mutation = await ExternalAccounts.mutateContact(ExternalAccounts.bearerToken(context), accountId, {
   		  idempotencyKey: ContactsController.validIdempotency(idempotencyKey) || `contact-create-${randomUUID()}`,
   		  kind: 'create', addressBookId, contact,
   		})
@@ -59,7 +59,7 @@ export class ContactsController {
         const app = await getApp()
   	  return await app.contacts.create(auth.email, contact)
       } catch (error) {
-  	  if (error instanceof AuthBridgeError) return accountFailure(error)
+  	  if (error instanceof AuthBridgeError) return ExternalAccounts.accountFailure(error)
         return Respond.r400(error instanceof Error ? error.message : 'Invalid contact')
       }
     })

@@ -4,8 +4,8 @@ import { AuthGuard } from '../shared/http/AuthGuard.js'
 import { FyloAccessContext } from '../shared/persistence/FyloAccessContext.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
-import { resolveExternalFolder } from '../shared/mailbox/unified-mail.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
+import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
 
 /**
  * Thin migration adapter that streams the exact RFC 822 sources in one folder.
@@ -35,13 +35,13 @@ export class InboxExportRfc822Controller {
       let iterator
       if (accountId) {
         try {
-          const token = bearerToken(context)
+          const token = ExternalAccounts.bearerToken(context)
           const response = await ExternalAccounts.folders(token, accountId)
-          const providerFolder = resolveExternalFolder(response?.folders, folder)
+          const providerFolder = UnifiedMail.resolveExternalFolder(response?.folders, folder)
           if (!providerFolder) return Respond.r404('Connected mailbox folder not found')
           iterator = InboxExportRfc822Controller._providerRecords(token, accountId, providerFolder.stableId)
         } catch (error) {
-          return accountFailure(error)
+          return ExternalAccounts.accountFailure(error)
         }
       } else {
         const requestedDomain = String(query?.domain || auth.domain || '').trim().toLowerCase()

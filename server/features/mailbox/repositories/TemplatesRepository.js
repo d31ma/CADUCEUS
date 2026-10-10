@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 
 export class TemplatesRepository {
   /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
@@ -11,7 +11,7 @@ export class TemplatesRepository {
    * @returns {Promise<string>}
    */
   async put(entry) {
-    return await this.fylo.putData(Collections.TEMPLATES, entry)
+    return await this.fylo.putData(Fylo.Collections.TEMPLATES, entry)
   }
 
   /**
@@ -20,7 +20,7 @@ export class TemplatesRepository {
    */
   async listForOwner(owner) {
     return /** @type {Promise<Record<string, TemplateEntry>>} */ (
-      collect(this.fylo.findDocs(Collections.TEMPLATES, { $ops: [{ owner: { $eq: owner } }] }).collect())
+      Fylo.collect(this.fylo.findDocs(Fylo.Collections.TEMPLATES, { $ops: [{ owner: { $eq: owner } }] }).collect())
     )
   }
 
@@ -29,7 +29,7 @@ export class TemplatesRepository {
    * @returns {Promise<[string | null, TemplateEntry | null]>}
    */
   async findById(id) {
-    const docs = await collect(this.fylo.findDocs(Collections.TEMPLATES, { $ops: [{ id: { $eq: id } }] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.TEMPLATES, { $ops: [{ id: { $eq: id } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], /** @type {TemplateEntry} */ (entry[1])] : [null, null]
   }
@@ -40,7 +40,7 @@ export class TemplatesRepository {
    * @returns {Promise<void>}
    */
   async update(docId, patch) {
-    await this.fylo.patchDoc(Collections.TEMPLATES, { [docId]: patch })
+    await this.fylo.patchDoc(Fylo.Collections.TEMPLATES, { [docId]: patch })
   }
 
   /**
@@ -48,6 +48,6 @@ export class TemplatesRepository {
    * @returns {Promise<void>}
    */
   async delete(docId) {
-    await this.fylo.delDoc(Collections.TEMPLATES, docId)
+    await this.fylo.delDoc(Fylo.Collections.TEMPLATES, docId)
   }
 }

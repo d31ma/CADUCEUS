@@ -4,9 +4,9 @@ import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { CalendarRecurrence } from '../shared/calendar/CalendarRecurrence.js'
 import { CalendarDate } from '../shared/calendar/CalendarDate.js'
-import { toCalendarEventView } from '../shared/calendar/event-view.js'
+import { EventView } from '../shared/calendar/EventView.js'
 import { mergeCalendarEvents } from '../features/calendar/services/ProviderCalendarService.js'
-import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/calendar/events")
 @SignedIn
@@ -41,7 +41,7 @@ export class CalendarEventsController {
     if (typeof body?.calendarId === 'string' && body.calendarId.trim()) {
       if (!app.providerCalendars) return Respond.r503('Provider calendar service unavailable')
       try {
-        const mutation = await app.providerCalendars.create(bearerToken(context), body.calendarId.trim(), event, idempotencyKey)
+        const mutation = await app.providerCalendars.create(ExternalAccounts.bearerToken(context), body.calendarId.trim(), event, idempotencyKey)
         return { saved: true, id: mutation.resourceId || mutation.id }
       } catch (error) {
         return CalendarEventsController._providerFailure(error)
@@ -65,7 +65,7 @@ export class CalendarEventsController {
     const message = error instanceof Error ? error.message : ''
     if (/changed|conflict/i.test(message)) return Respond.r409(message || 'Provider calendar changed')
     if (/not found/i.test(message)) return Respond.r404(message)
-    return accountFailure(error)
+    return ExternalAccounts.accountFailure(error)
   }
 
   /**
@@ -152,10 +152,10 @@ export class CalendarEventsController {
     let events = localEvents
     if (app.providerCalendars) {
       try {
-        const providerEvents = await app.providerCalendars.list(bearerToken(context))
+        const providerEvents = await app.providerCalendars.list(ExternalAccounts.bearerToken(context))
         events = mergeCalendarEvents(localEvents, providerEvents)
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
     }
 
@@ -167,7 +167,7 @@ export class CalendarEventsController {
     }
     return visible
       .sort((a, b) => Date.parse(a.start) - Date.parse(b.start))
-      .map(event => toCalendarEventView({
+      .map(event => EventView.toCalendarEventView({
         ...event,
         readOnly: event.readOnly === true ||
           (event.source === 'invite' && event.organizer && String(event.organizer).toLowerCase() !== auth.email.toLowerCase()) ||

@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { Respond } from '../shared/http/Respond.js'
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { AuthGuard } from '../shared/http/AuthGuard.js'
-import { authCall, Auth } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { getApp } from '../app.js'
 
 @RequestRoute("/test/seed/user")
@@ -37,7 +37,7 @@ export class TestSeedUserController {
       // Each seeded mailbox gets its own password; the response hands it back.
       const password = randomBytes(24).toString('base64url')
       try {
-        const seeded = await authCall('auth.test.bootstrap', {
+        const seeded = await Auth.authCall('auth.test.bootstrap', {
           address, password, role,
         })
         const tokens = await TestSeedUserController._login(address, password, seeded.recoveryCodes[0])

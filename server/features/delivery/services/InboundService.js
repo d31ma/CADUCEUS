@@ -1,9 +1,9 @@
 import { Security } from '../../../shared/security/Security.js'
 import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
 import { Buffer } from 'node:buffer'
-import { threadMetadataFromHeaders } from '../../../shared/mailbox/threading.js'
-import { recipientsFromHeaders } from '../../../shared/mailbox/personal-level.js'
-import { evaluateInboxRule } from '../../../shared/mailbox/rule-engine.js'
+import { Threading } from '../../../shared/mailbox/Threading.js'
+import { PersonalLevel } from '../../../shared/mailbox/PersonalLevel.js'
+import { RuleEngine } from '../../../shared/mailbox/RuleEngine.js'
 /** @import { RouteRule } from '../../../types' */
 /** @import { InboxRule } from '../../../types' */
 /** @import { RuleCondition } from '../../../types' */
@@ -92,7 +92,7 @@ export class InboundService {
     const inboxFolder = await this.categoryMappings?.pathFor(payload.recipient, domain, 'inbox') || 'inbox'
     return await FyloAccessContext.runForDomain(domain, async () => {
       const parsed = await this.parseMessage(payload.body)
-      const messageRecipients = recipientsFromHeaders(parsed.headers, payload.recipient)
+      const messageRecipients = PersonalLevel.recipientsFromHeaders(parsed.headers, payload.recipient)
       const id = payload.messageId || `email-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
       const email = {
         id,
@@ -105,7 +105,7 @@ export class InboundService {
         ...(messageRecipients.to.length ? { to: messageRecipients.to } : {}),
         ...(messageRecipients.cc.length ? { cc: messageRecipients.cc } : {}),
         ...(messageRecipients.bcc.length ? { bcc: messageRecipients.bcc } : {}),
-        ...threadMetadataFromHeaders(parsed.headers, id, domain),
+        ...Threading.threadMetadataFromHeaders(parsed.headers, id, domain),
         folder: inboxFolder,
         read: false,
         starred: false,
@@ -252,7 +252,7 @@ export class InboundService {
     try {
       const rules = await this.rules.listEnabledForMailbox(ownerEmail, meta.recipient, domain)
       for (const rule of rules) {
-        const evaluation = evaluateInboxRule(rule, meta)
+        const evaluation = RuleEngine.evaluateInboxRule(rule, meta)
         if (!evaluation.matched) continue
         await this._applyInboxRuleActions(rule, messageId, meta)
         if (evaluation.stopProcessing) break

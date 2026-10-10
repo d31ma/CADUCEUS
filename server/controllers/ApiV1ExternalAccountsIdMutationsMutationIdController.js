@@ -1,6 +1,6 @@
 // @ts-check
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 import { Respond } from '../shared/http/Respond.js'
 
 @RequestRoute("/api/v1/external-accounts/{id}/mutations/{mutation_id}")
@@ -13,9 +13,9 @@ export class ApiV1ExternalAccountsIdMutationsMutationIdController {
       const mutationId = String(paths?.mutation_id || '')
       if (!id || !mutationId) return Respond.r404('Provider mutation not found')
       try {
-        return await ExternalAccounts.mutation(bearerToken(context), id, mutationId)
+        return await ExternalAccounts.mutation(ExternalAccounts.bearerToken(context), id, mutationId)
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
     })
   }

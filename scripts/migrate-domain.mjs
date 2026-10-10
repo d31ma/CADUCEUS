@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
-import { Collections, DatabaseRepository, collect } from '../server/shared/persistence/Fylo.js'
+import { Fylo } from '../server/shared/persistence/Fylo.js'
+import { DatabaseRepository } from '../server/shared/persistence/DatabaseRepository.js'
 import { DomainsRepository } from '../server/features/domains/repositories/DomainsRepository.js'
 import { DomainMigrationsRepository } from '../server/features/domains/repositories/DomainMigrationsRepository.js'
 import { RulesRepository } from '../server/features/mailbox/repositories/RulesRepository.js'
@@ -121,7 +122,7 @@ for (const move of primaryMoves) {
   void docId
   void oldEmail
   void newEmail
-  await fylo.patchDoc(Collections.USERS, { [move.docId]: user })
+  await fylo.patchDoc(Fylo.Collections.USERS, { [move.docId]: user })
   await rewriteUserEmailReferences(fylo, move.oldEmail, move.newEmail)
 }
 
@@ -133,7 +134,7 @@ for (const user of users) {
     domains: [...user.domains, toDomain],
   }))
   const { docId, ...patch } = updated
-  await fylo.patchDoc(Collections.USERS, { [docId]: patch })
+  await fylo.patchDoc(Fylo.Collections.USERS, { [docId]: patch })
 }
 
 await domainMigrationsRepo.put({
@@ -186,14 +187,14 @@ function rewriteAddressPattern(value, fromDomain, toDomain) {
 }
 
 async function rewriteUserEmailReferences(fylo, oldEmail, newEmail) {
-  await rewriteCollectionField(fylo, Collections.MFA_SESSIONS, 'email', oldEmail, newEmail)
-  await rewriteCollectionField(fylo, Collections.SETUP_SESSIONS, 'email', oldEmail, newEmail)
-  await rewriteCollectionField(fylo, Collections.PUSH_SUBSCRIPTIONS, 'userEmail', oldEmail, newEmail)
-  await rewriteCollectionField(fylo, Collections.FOLLOW_UP_REMINDERS, 'ownerEmail', oldEmail, newEmail)
+  await rewriteCollectionField(fylo, Fylo.Collections.MFA_SESSIONS, 'email', oldEmail, newEmail)
+  await rewriteCollectionField(fylo, Fylo.Collections.SETUP_SESSIONS, 'email', oldEmail, newEmail)
+  await rewriteCollectionField(fylo, Fylo.Collections.PUSH_SUBSCRIPTIONS, 'userEmail', oldEmail, newEmail)
+  await rewriteCollectionField(fylo, Fylo.Collections.FOLLOW_UP_REMINDERS, 'ownerEmail', oldEmail, newEmail)
 }
 
 async function rewriteCollectionField(fylo, collection, field, oldValue, newValue) {
-  const docs = await collect(
+  const docs = await Fylo.collect(
     fylo.findDocs(collection, {
       $ops: [{ [field]: { $eq: oldValue } }],
     }).collect()

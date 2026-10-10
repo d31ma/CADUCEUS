@@ -2,11 +2,11 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { MailValidation } from '../shared/delivery/MailValidation.js'
-import { ownedSenderAddresses, resolveOwnedSender } from '../shared/users/sender-addresses.js'
-import { cancelExternalScheduled, cancelScheduled, findOwnedScheduled, loadStoredAttachments, presentScheduled } from '../shared/delivery/scheduled-sends.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
-import { buildOutboundMessageSource } from '../shared/mailbox/message-source.js'
-import { externalDeliveryRequest } from '../shared/delivery/external-submission.js'
+import { SenderAddresses } from '../shared/users/SenderAddresses.js'
+import { ScheduledSends } from '../shared/delivery/ScheduledSends.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
+import { MessageSource } from '../shared/mailbox/MessageSource.js'
+import { ExternalSubmission } from '../shared/delivery/ExternalSubmission.js'
 import { Uuid } from '../shared/runtime/Uuid.js'
 
 @RequestRoute("/send/scheduled/{id}")
@@ -16,18 +16,18 @@ export class SendScheduledIdController {
   async get(@FromPath id, request) {
     return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, auth, context }) => {
       const app = await getApp()
-      const record = await findOwnedScheduled(app, String(paths?.id || ''), auth.email)
+      const record = await ScheduledSends.findOwnedScheduled(app, String(paths?.id || ''), auth.email)
   		if (!record) return Respond.r404('Scheduled email not found')
-  		if (record.entry.transport !== 'external') return await presentScheduled(app, record, { includeContent: true })
+  		if (record.entry.transport !== 'external') return await ScheduledSends.presentScheduled(app, record, { includeContent: true })
   		try {
-  			const submission = await ExternalAccounts.submission(bearerToken(context), record.entry.externalAccountId, record.entry.externalSubmissionId)
+  			const submission = await ExternalAccounts.submission(ExternalAccounts.bearerToken(context), record.entry.externalAccountId, record.entry.externalSubmissionId)
   			if (submission.state === 'sent' || submission.state === 'cancelled') {
   				await app.scheduled.delete(record.docId)
   				return Respond.r404('Scheduled email not found')
   			}
-  			return await presentScheduled(app, record, { includeContent: true, externalSubmission: submission })
+  			return await ScheduledSends.presentScheduled(app, record, { includeContent: true, externalSubmission: submission })
   		} catch (error) {
-  			return accountFailure(error)
+  			return ExternalAccounts.accountFailure(error)
   		}
     })
   }
@@ -36,7 +36,7 @@ export class SendScheduledIdController {
   async put(@FromPath id, request) {
     return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, body, auth, context }) => {
       const app = await getApp()
-      const record = await findOwnedScheduled(app, String(paths?.id || ''), auth.email)
+      const record = await ScheduledSends.findOwnedScheduled(app, String(paths?.id || ''), auth.email)
       if (!record) return Respond.r404('Scheduled email not found')
   		const external = record.entry.transport === 'external'
       if (!external && (!record.queueDocId || !record.queue)) return Respond.r409('Scheduled delivery is being reconciled')
@@ -46,7 +46,7 @@ export class SendScheduledIdController {
       const parsed = MailValidation.validateSendRequest(candidate)
       if (!parsed.ok) return Respond.r400(parsed.error)
       const attachments = MailValidation.validateSendAttachments(
-        Object.hasOwn(body || {}, 'attachments') ? body.attachments : await loadStoredAttachments(app, record.entry.id),
+        Object.hasOwn(body || {}, 'attachments') ? body.attachments : await ScheduledSends.loadStoredAttachments(app, record.entry.id),
       )
       if (!attachments.ok) return Respond.r400(attachments.error)
   		let senderEmail
@@ -54,8 +54,8 @@ export class SendScheduledIdController {
   			senderEmail = parsed.value.from ?? record.entry.sender
   			if (senderEmail !== record.entry.sender) senderEmail = undefined
   		} else {
-  			const addresses = await ownedSenderAddresses(app.users, auth.email)
-  			senderEmail = resolveOwnedSender(parsed.value.from ?? record.entry.sender, addresses, auth.email)
+  			const addresses = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
+  			senderEmail = SenderAddresses.resolveOwnedSender(parsed.value.from ?? record.entry.sender, addresses, auth.email)
   		}
       if (!senderEmail) return Respond.r403('From address is not owned by this mailbox')
 
@@ -85,7 +85,7 @@ export class SendScheduledIdController {
   		if (external) {
   			if (!record.entry.externalAccountId || !record.entry.externalSubmissionId) return Respond.r409('Scheduled delivery is being reconciled')
   			try {
-  				const submission = await ExternalAccounts.submission(bearerToken(context), record.entry.externalAccountId, record.entry.externalSubmissionId)
+  				const submission = await ExternalAccounts.submission(ExternalAccounts.bearerToken(context), record.entry.externalAccountId, record.entry.externalSubmissionId)
   				if (submission.state !== 'queued' || !Number.isSafeInteger(submission.revision) || submission.revision < 1) {
   					return Respond.r409('Scheduled email is currently being delivered')
   				}
@@ -96,7 +96,7 @@ export class SendScheduledIdController {
   				if (Number(submission.deliveryCount || 0) > 0) {
   					let staged
   					try {
-  						staged = await ExternalAccounts.beginSubmissionBatchUpdate(bearerToken(context), record.entry.externalAccountId, {
+  						staged = await ExternalAccounts.beginSubmissionBatchUpdate(ExternalAccounts.bearerToken(context), record.entry.externalAccountId, {
   							submissionId: record.entry.externalSubmissionId,
   							revision: submission.revision,
   							idempotencyKey: submission.idempotencyKey,
@@ -106,9 +106,9 @@ export class SendScheduledIdController {
   						})
   						for (let index = Number(staged.deliveryCount || 0); index < recipients.length; index++) {
   							const recipient = recipients[index]
-  							const providerRequest = externalDeliveryRequest(req, trackingId, recipient)
-  							const source = await buildOutboundMessageSource(senderEmail, providerRequest, record.entry.id)
-  							staged = await ExternalAccounts.appendSubmissionBatchUpdate(bearerToken(context), record.entry.externalAccountId, {
+  							const providerRequest = ExternalSubmission.externalDeliveryRequest(req, trackingId, recipient)
+  							const source = await MessageSource.buildOutboundMessageSource(senderEmail, providerRequest, record.entry.id)
+  							staged = await ExternalAccounts.appendSubmissionBatchUpdate(ExternalAccounts.bearerToken(context), record.entry.externalAccountId, {
   								submissionId: record.entry.externalSubmissionId,
   								revision: staged.revision,
   								index,
@@ -116,15 +116,15 @@ export class SendScheduledIdController {
   								rawRFC822Base64: source.toString('base64'),
   							})
   						}
-  						await ExternalAccounts.commitSubmissionBatchUpdate(bearerToken(context), record.entry.externalAccountId, {
+  						await ExternalAccounts.commitSubmissionBatchUpdate(ExternalAccounts.bearerToken(context), record.entry.externalAccountId, {
   							submissionId: record.entry.externalSubmissionId,
   							revision: staged.revision,
   						})
   					} catch (error) {
   						try {
-  							const current = await ExternalAccounts.submission(bearerToken(context), record.entry.externalAccountId, record.entry.externalSubmissionId)
+  							const current = await ExternalAccounts.submission(ExternalAccounts.bearerToken(context), record.entry.externalAccountId, record.entry.externalSubmissionId)
   							if (current.state === 'editing') {
-  								await ExternalAccounts.abortSubmissionBatchUpdate(bearerToken(context), record.entry.externalAccountId, {
+  								await ExternalAccounts.abortSubmissionBatchUpdate(ExternalAccounts.bearerToken(context), record.entry.externalAccountId, {
   									submissionId: record.entry.externalSubmissionId,
   									revision: current.revision,
   								})
@@ -136,9 +136,9 @@ export class SendScheduledIdController {
   					if (trackingId && recipients.length !== 1) {
   						return Respond.r409('This legacy scheduled message must be recreated to track multiple recipients')
   					}
-  					const providerRequest = externalDeliveryRequest(req, trackingId, recipients[0])
-  					const source = await buildOutboundMessageSource(senderEmail, providerRequest, record.entry.id)
-  					await ExternalAccounts.updateSubmission(bearerToken(context), record.entry.externalAccountId, {
+  					const providerRequest = ExternalSubmission.externalDeliveryRequest(req, trackingId, recipients[0])
+  					const source = await MessageSource.buildOutboundMessageSource(senderEmail, providerRequest, record.entry.id)
+  					await ExternalAccounts.updateSubmission(ExternalAccounts.bearerToken(context), record.entry.externalAccountId, {
   						submissionId: record.entry.externalSubmissionId,
   						revision: submission.revision,
   						idempotencyKey: submission.idempotencyKey,
@@ -150,7 +150,7 @@ export class SendScheduledIdController {
   				}
   				result = await app.sendService.updateExternalScheduled(record.docId, record.entry, auth.email, senderEmail, req, sendAtMs, trackingId)
   			} catch (error) {
-  				return accountFailure(error)
+  				return ExternalAccounts.accountFailure(error)
   			}
   		} else {
   			result = await app.sendService.updateScheduled(
@@ -176,15 +176,15 @@ export class SendScheduledIdController {
   async delete(@FromPath id, request) {
     return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, auth, context }) => {
       const app = await getApp()
-      const record = await findOwnedScheduled(app, String(paths?.id || ''), auth.email)
+      const record = await ScheduledSends.findOwnedScheduled(app, String(paths?.id || ''), auth.email)
       if (!record) return Respond.r404('Scheduled email not found')
   		let result
   		try {
   			result = record.entry.transport === 'external'
-  				? await cancelExternalScheduled(app, record, auth.email, bearerToken(context))
-  				: await cancelScheduled(app, record, auth.email)
+  				? await ScheduledSends.cancelExternalScheduled(app, record, auth.email, ExternalAccounts.bearerToken(context))
+  				: await ScheduledSends.cancelScheduled(app, record, auth.email)
   		} catch (error) {
-  			return accountFailure(error)
+  			return ExternalAccounts.accountFailure(error)
   		}
       return result.conflict ? Respond.r409('Scheduled email is currently being delivered') : result
     })

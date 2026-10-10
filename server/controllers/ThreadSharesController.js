@@ -1,6 +1,6 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { getApp } from '../app.js'
 import { ThreadShareInputError } from '../features/mailbox/services/ThreadSharingService.js'
 
@@ -10,7 +10,7 @@ export class ThreadSharesController {
   /** List exact-owner links, optionally narrowed to one authorized thread. */
   @GetRoute
   async get(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ query, auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_READ } }, async ({ query, auth }) => {
       const emailId = query?.emailId == null ? '' : String(query.emailId).trim()
       if (emailId.length > 500) return Respond.r400('emailId is too long')
       const app = await getApp()
@@ -23,7 +23,7 @@ export class ThreadSharesController {
   /** Mint one expiring link and revoke any prior active link for the thread. */
   @PostRoute
   async post(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ body, auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_READ } }, async ({ body, auth }) => {
       try {
         const app = await getApp()
         const result = await app.threadSharing.create({

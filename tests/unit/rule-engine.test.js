@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { evaluateInboxRule } from '@/shared/mailbox/rule-engine.js'
+import { RuleEngine } from '@/shared/mailbox/RuleEngine.js'
 
 const message = {
   from: 'Billing <billing@vendor.example>',
@@ -24,7 +24,7 @@ describe('mailbox rule evaluator', () => {
       ],
       actions: [{ type: 'folder', folder: 'finance' }, { type: 'star', value: true }],
     }
-    const result = evaluateInboxRule(rule, message)
+    const result = RuleEngine.evaluateInboxRule(rule, message)
     expect(result.matched).toBe(true)
     expect(result.conditionResults.every(item => item.matched)).toBe(true)
     expect(result.plannedActions).toEqual(rule.actions)
@@ -33,7 +33,7 @@ describe('mailbox rule evaluator', () => {
   })
 
   it('supports any and withholds actions for a miss', () => {
-    const result = evaluateInboxRule({
+    const result = RuleEngine.evaluateInboxRule({
       conditionMatch: 'any',
       conditions: [{ field: 'subject', op: 'equals', value: 'no' }, { field: 'hasAttachment', op: 'notEquals', value: 'true' }],
       actions: [{ type: 'delete' }],

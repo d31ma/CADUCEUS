@@ -1,8 +1,8 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { Actions } from '../shared/auth/Auth.js'
-import { normalizeTemplateInput, resolveUniqueTemplateName } from '../shared/mailbox/template-content.js'
+import { Auth } from '../shared/auth/Auth.js'
+import { TemplateContent } from '../shared/mailbox/TemplateContent.js'
 
 @RequestRoute("/templates/{id}")
 @SignedIn
@@ -23,10 +23,10 @@ export class TemplatesIdController {
 
   @PutRoute
   async put(@FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { id }, guard: { action: Actions.MAILBOX_WRITE } }, async ({ paths, body, auth }) => {
+    return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ paths, body, auth }) => {
       const id = String(paths?.id || '')
       if (!id) return Respond.r404('Template not found')
-      const input = normalizeTemplateInput(body, { partial: true })
+      const input = TemplateContent.normalizeTemplateInput(body, { partial: true })
       if (input instanceof Error) return Respond.r400(input.message)
 
       const app = await getApp()
@@ -34,7 +34,7 @@ export class TemplatesIdController {
       if (!docId || !existing || existing.owner !== auth.email) return Respond.r404('Template not found')
       if (input.name) {
         const records = Object.values(await app.templates.listForOwner(auth.email))
-        input.name = resolveUniqueTemplateName(input.name, records, id)
+        input.name = TemplateContent.resolveUniqueTemplateName(input.name, records, id)
       }
       const patch = { ...input, updatedAt: Date.now() }
       await app.templates.update(docId, patch)
@@ -44,7 +44,7 @@ export class TemplatesIdController {
 
   @DeleteRoute
   async delete(@FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { id }, guard: { action: Actions.MAILBOX_WRITE } }, async ({ paths, auth }) => {
+    return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ paths, auth }) => {
       const id = String(paths?.id || '')
       if (!id) return Respond.r404('Template not found')
       const app = await getApp()

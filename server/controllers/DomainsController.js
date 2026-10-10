@@ -1,5 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { Security } from '../shared/security/Security.js'
@@ -17,7 +17,7 @@ export class DomainsController {
  */
   @PostRoute
   async post(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.DOMAIN_ADMIN, domain: r => r.body?.domain } }, async ({ body, auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.DOMAIN_ADMIN, domain: r => r.body?.domain } }, async ({ body, auth }) => {
     const config = body
     if (!config?.domain) return Respond.r400('domain required')
 

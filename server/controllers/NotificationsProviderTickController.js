@@ -1,6 +1,6 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
-import { ExternalAccounts, accountFailure } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/notifications/provider/tick")
 @Public
@@ -24,7 +24,7 @@ export class NotificationsProviderTickController {
         if (retried.length) await ExternalAccounts.completeNotifications(claim.token, retried, false, 'push_delivery_failed')
         return { claimed: notifications.length, delivered: delivered.length, retried: retried.length }
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
     })
   }

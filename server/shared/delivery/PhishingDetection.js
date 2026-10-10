@@ -1,12 +1,12 @@
 import { Security } from '../security/Security.js'
 
-const EMAIL_IN_HEADER = /[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi
-
 /**
  * Derive safe, displayable sender metadata and Mailspring-compatible
  * Reply-To mismatch warnings from untrusted RFC headers.
  */
 export class PhishingDetection {
+  static #EMAIL_IN_HEADER = /[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi
+
   /**
    * @param {{ envelopeSender: string, headers?: Record<string, string> }} input
    * @returns {{ headerFrom: string, replyTo: string[], securityWarnings: Array<'reply_to_mismatch'> }}
@@ -31,7 +31,7 @@ export class PhishingDetection {
   static extractAddresses(header) {
     if (typeof header !== 'string' || !header) return []
     const addresses = []
-    for (const match of header.match(EMAIL_IN_HEADER) ?? []) {
+    for (const match of header.match(PhishingDetection.#EMAIL_IN_HEADER) ?? []) {
       const normalized = Security.normalizeEmailAddress(match)
       if (normalized && !addresses.includes(normalized)) addresses.push(normalized)
       if (addresses.length === 10) break

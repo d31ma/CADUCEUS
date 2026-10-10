@@ -2,8 +2,8 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { randomUUID } from 'node:crypto'
-import { AuthBridgeError } from '../shared/auth/Auth.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { AuthBridgeError } from '../shared/auth/AuthBridgeError.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/contacts/{id}")
 @SignedIn
@@ -25,7 +25,7 @@ export class ContactsIdController {
       const id = String(paths?.id || '')
       const local = await app.contacts.get(id, auth.email)
       if (local) return local
-      const remote = await ContactsIdController.remoteContact(bearerToken(context), id)
+      const remote = await ContactsIdController.remoteContact(ExternalAccounts.bearerToken(context), id)
       return remote ?? Respond.r404('Contact not found')
     })
   }
@@ -38,7 +38,7 @@ export class ContactsIdController {
         const id = String(paths?.id || '')
         const local = await app.contacts.update(id, auth.email, body || {})
         if (local) return local
-        const token = bearerToken(context)
+        const token = ExternalAccounts.bearerToken(context)
         const remote = await ContactsIdController.remoteContact(token, id)
         if (!remote) return Respond.r404('Contact not found')
         const { idempotencyKey, ...contact } = body || {}
@@ -48,7 +48,7 @@ export class ContactsIdController {
         })
         return { ...remote, ...contact, source: 'carddav', syncState: mutation.state, mutationId: mutation.id }
       } catch (error) {
-        if (error instanceof AuthBridgeError) return accountFailure(error)
+        if (error instanceof AuthBridgeError) return ExternalAccounts.accountFailure(error)
         return Respond.r400(error instanceof Error ? error.message : 'Invalid contact')
       }
     })
@@ -61,7 +61,7 @@ export class ContactsIdController {
       const id = String(paths?.id || '')
       if (await app.contacts.delete(id, auth.email)) return { deleted: true }
       try {
-        const token = bearerToken(context)
+        const token = ExternalAccounts.bearerToken(context)
         const remote = await ContactsIdController.remoteContact(token, id)
         if (!remote) return Respond.r404('Contact not found')
         const mutation = await ExternalAccounts.mutateContact(token, remote.accountId, {
@@ -70,7 +70,7 @@ export class ContactsIdController {
         })
         return { deleted: false, pending: true, mutationId: mutation.id, accountId: remote.accountId }
       } catch (error) {
-        if (error instanceof AuthBridgeError) return accountFailure(error)
+        if (error instanceof AuthBridgeError) return ExternalAccounts.accountFailure(error)
         return Respond.r400(error instanceof Error ? error.message : 'Contact could not be deleted')
       }
     })

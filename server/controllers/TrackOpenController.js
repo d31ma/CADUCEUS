@@ -1,6 +1,6 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
-import { readTrackingToken } from '../shared/delivery/tracking-tokens.js'
+import { TrackingTokens } from '../shared/delivery/TrackingTokens.js'
 
 @RequestRoute("/track/open")
 @Public
@@ -40,7 +40,7 @@ export class TrackOpenController {
   async get(request) {
     return RouteRequest.handle(request, {  }, async ({ query }) => {
       try {
-        const capability = readTrackingToken(query?.t, { expectedType: 'open' })
+        const capability = TrackingTokens.readTrackingToken(query?.t, { expectedType: 'open' })
         if (capability) {
           const app = await getApp()
           await app.tracking.recordOpen(capability)

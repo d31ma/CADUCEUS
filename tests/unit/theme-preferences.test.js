@@ -1,11 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import {
-  ACTIVE_THEME_IDS,
-  DARK_THEME_IDS,
-  LIGHT_THEME_IDS,
-  normalizeThemePreferences as normalizeServer,
-  validateThemePreferences,
-} from '../../server/shared/users/theme-preferences.js'
+import { ThemePreferences } from '../../server/shared/users/ThemePreferences.js'
 import {
   DARK_THEME_OPTIONS,
   LIGHT_THEME_OPTIONS,
@@ -25,9 +19,9 @@ afterEach(() => {
 
 describe('theme preferences', () => {
   it('keeps browser and persistence catalogs in lockstep', () => {
-    expect(THEME_OPTIONS.map(theme => theme.id)).toEqual([...ACTIVE_THEME_IDS])
-    expect(LIGHT_THEME_OPTIONS.map(theme => theme.id)).toEqual([...LIGHT_THEME_IDS])
-    expect(DARK_THEME_OPTIONS.map(theme => theme.id)).toEqual([...DARK_THEME_IDS])
+    expect(THEME_OPTIONS.map(theme => theme.id)).toEqual([...ThemePreferences.ACTIVE_THEME_IDS])
+    expect(LIGHT_THEME_OPTIONS.map(theme => theme.id)).toEqual([...ThemePreferences.LIGHT_THEME_IDS])
+    expect(DARK_THEME_OPTIONS.map(theme => theme.id)).toEqual([...ThemePreferences.DARK_THEME_IDS])
   })
 
   it('normalizes hostile values and rejects caller-defined theme fields', () => {
@@ -36,11 +30,11 @@ describe('theme preferences', () => {
       lightTheme: 'light; background:red',
       darkTheme: '../../../theme.css',
     }
-    expect(normalizeThemePreferences(hostile)).toEqual(normalizeServer(hostile))
+    expect(normalizeThemePreferences(hostile)).toEqual(ThemePreferences.normalizeThemePreferences(hostile))
     expect(normalizeThemePreferences(hostile)).toEqual({
       activeTheme: 'automatic', lightTheme: 'light', darkTheme: 'dark',
     })
-    expect(validateThemePreferences({ activeTheme: 'light', stylesheet: 'https://evil.test/x.css' })).toEqual({
+    expect(ThemePreferences.validateThemePreferences({ activeTheme: 'light', stylesheet: 'https://evil.test/x.css' })).toEqual({
       ok: false, error: 'Unknown theme preference: stylesheet',
     })
   })

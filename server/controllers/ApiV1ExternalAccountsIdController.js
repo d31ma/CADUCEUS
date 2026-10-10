@@ -1,7 +1,7 @@
 // @ts-check
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/api/v1/external-accounts/{id}")
 @SignedIn
@@ -21,9 +21,9 @@ export class ApiV1ExternalAccountsIdController {
       const id = ApiV1ExternalAccountsIdController.normalizedID(paths?.id)
       if (!id) return Respond.r404('External account not found')
       try {
-        return await ExternalAccounts.get(bearerToken(context), id)
+        return await ExternalAccounts.get(ExternalAccounts.bearerToken(context), id)
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
     })
   }
@@ -44,13 +44,13 @@ export class ApiV1ExternalAccountsIdController {
           if ('label' in (body || {})) update.label = body.label
           if ('color' in (body || {})) update.color = body.color
           if ('order' in (body || {})) update.order = body.order
-          return await ExternalAccounts.updatePresentation(bearerToken(context), id, revision, update)
+          return await ExternalAccounts.updatePresentation(ExternalAccounts.bearerToken(context), id, revision, update)
         }
         return action === 'pause'
-          ? await ExternalAccounts.pause(bearerToken(context), id, revision)
-          : await ExternalAccounts.resume(bearerToken(context), id, revision)
+          ? await ExternalAccounts.pause(ExternalAccounts.bearerToken(context), id, revision)
+          : await ExternalAccounts.resume(ExternalAccounts.bearerToken(context), id, revision)
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
     })
   }
@@ -63,9 +63,9 @@ export class ApiV1ExternalAccountsIdController {
       if (!id) return Respond.r404('External account not found')
       if (!revision) return Respond.r400('positive revision is required')
       try {
-        return await ExternalAccounts.remove(bearerToken(context), id, revision)
+        return await ExternalAccounts.remove(ExternalAccounts.bearerToken(context), id, revision)
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
     })
   }

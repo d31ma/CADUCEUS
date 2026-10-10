@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../shared/persistence/Fylo.js'
+import { Fylo } from '../../shared/persistence/Fylo.js'
 import { Security } from '../../shared/security/Security.js'
 
 /**
@@ -30,7 +30,7 @@ export class RateLimitService {
   async _checkFylo(key, maxRequests, windowSeconds) {
     const hash = hashKey(key)
     const now = Math.floor(Date.now() / 1000)
-    const docs = await collect(this.fylo.findDocs(Collections.RATE_LIMITS, { $ops: [{ key: { $eq: hash } }] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.RATE_LIMITS, { $ops: [{ key: { $eq: hash } }] }).collect())
     const entry = Object.entries(docs)[0]
     let count = 1
     let resetAt = now + windowSeconds
@@ -39,14 +39,14 @@ export class RateLimitService {
       const [docId, record] = entry
       const r = /** @type {{ key: string, count: number, resetAt: number }} */ (record)
       if (r.resetAt <= now) {
-        await this.fylo.patchDoc(Collections.RATE_LIMITS, { [docId]: { count: 1, resetAt } })
+        await this.fylo.patchDoc(Fylo.Collections.RATE_LIMITS, { [docId]: { count: 1, resetAt } })
       } else {
         count = r.count + 1
         resetAt = r.resetAt
-        await this.fylo.patchDoc(Collections.RATE_LIMITS, { [docId]: { count } })
+        await this.fylo.patchDoc(Fylo.Collections.RATE_LIMITS, { [docId]: { count } })
       }
     } else {
-      await this.fylo.putData(Collections.RATE_LIMITS, { key: hash, count: 1, resetAt })
+      await this.fylo.putData(Fylo.Collections.RATE_LIMITS, { key: hash, count: 1, resetAt })
     }
 
     return formatResult(count, maxRequests, resetAt, now)

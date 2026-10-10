@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
-import { DatabaseRepository } from "@/shared/persistence/Fylo.js";
-import { DomainsRepository } from "@/features/domains/repositories/DomainsRepository.js";
-import { DomainMigrationsRepository } from "@/features/domains/repositories/DomainMigrationsRepository.js";
-import { EmailsRepository } from "@/features/mailbox/repositories/EmailsRepository.js";
-import { AttachmentsRepository } from "@/features/mailbox/repositories/AttachmentsRepository.js";
-import { UsersRepository } from "@/features/users/repositories/UsersRepository.js";
-import { PushSubscriptionsRepository } from "@/features/notifications/repositories/PushSubscriptionsRepository.js";
-import { DomainMigrationService } from "@/features/domains/services/DomainMigrationService.js";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test"
+import { mkdtempSync, rmSync } from "node:fs"
+import { join } from "node:path"
+import { tmpdir } from "node:os"
+import { DatabaseRepository } from "@/shared/persistence/DatabaseRepository.js"
+import { DomainsRepository } from "@/features/domains/repositories/DomainsRepository.js"
+import { DomainMigrationsRepository } from "@/features/domains/repositories/DomainMigrationsRepository.js"
+import { EmailsRepository } from "@/features/mailbox/repositories/EmailsRepository.js"
+import { AttachmentsRepository } from "@/features/mailbox/repositories/AttachmentsRepository.js"
+import { UsersRepository } from "@/features/users/repositories/UsersRepository.js"
+import { PushSubscriptionsRepository } from "@/features/notifications/repositories/PushSubscriptionsRepository.js"
+import { DomainMigrationService } from "@/features/domains/services/DomainMigrationService.js"
 let fylo;
 let emailsRepo;
 let usersRepo;

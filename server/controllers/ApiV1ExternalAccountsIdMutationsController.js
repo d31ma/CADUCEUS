@@ -1,6 +1,6 @@
 // @ts-check
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 import { Respond } from '../shared/http/Respond.js'
 
 @RequestRoute("/api/v1/external-accounts/{id}/mutations")
@@ -19,13 +19,13 @@ export class ApiV1ExternalAccountsIdMutationsController {
         return Respond.r400('revision, idempotencyKey, kind, and the required mutation target are required')
       }
       try {
-        return await ExternalAccounts.mutate(bearerToken(context), String(paths?.id || ''), {
+        return await ExternalAccounts.mutate(ExternalAccounts.bearerToken(context), String(paths?.id || ''), {
           revision, idempotencyKey, kind, messageStableIds,
           targetFolderId: String(body?.targetFolderId || ''), value: body?.value === true,
           folderStableId: String(body?.folderStableId || ''), parentStableId: String(body?.parentStableId || ''),
           folderName: String(body?.folderName || ''),
         })
-      } catch (error) { return accountFailure(error) }
+      } catch (error) { return ExternalAccounts.accountFailure(error) }
     })
   }
 }

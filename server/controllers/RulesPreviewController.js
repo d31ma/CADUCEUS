@@ -2,9 +2,9 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { RuleValidation } from '../shared/domains/RuleValidation.js'
-import { evaluateInboxRule } from '../shared/mailbox/rule-engine.js'
-import { normalizeInboxRuleInput } from '../shared/mailbox/rule-input.js'
-import { ownedSenderAddresses } from '../shared/users/sender-addresses.js'
+import { RuleEngine } from '../shared/mailbox/RuleEngine.js'
+import { RuleInput } from '../shared/mailbox/RuleInput.js'
+import { SenderAddresses } from '../shared/users/SenderAddresses.js'
 
 @RequestRoute("/rules/preview")
 @SignedIn
@@ -33,14 +33,14 @@ export class RulesPreviewController {
         if (!existing || existing.ownerEmail !== auth.email.toLowerCase()) return Respond.r404('Rule not found')
         rule = existing
       } else {
-        const owned = await ownedSenderAddresses(app.users, auth.email)
+        const owned = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
         const mailbox = typeof body.rule?.mailbox === 'string' ? body.rule.mailbox.trim().toLowerCase() : auth.email
         if (!owned.includes(mailbox)) return Respond.r403('Mailbox access denied')
-        rule = normalizeInboxRuleInput(body.rule ?? {}, { ownerEmail: auth.email, mailbox, order: 0 })
+        rule = RuleInput.normalizeInboxRuleInput(body.rule ?? {}, { ownerEmail: auth.email, mailbox, order: 0 })
         const result = RuleValidation.validateInboxRule(rule)
         if (result.valid === false) return Respond.r400(result.error)
       }
-      return evaluateInboxRule(/** @type {any} */ (rule), body.message)
+      return RuleEngine.evaluateInboxRule(/** @type {any} */ (rule), body.message)
     })
   }
 }

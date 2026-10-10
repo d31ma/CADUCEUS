@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 /** @import { StoredEmail } from '../../../types' */
 /** @import { EmailAttachmentSummary } from '../../../types' */
 /** @import { AttachmentsRepository } from './AttachmentsRepository.js' */
@@ -23,7 +23,7 @@ export class EmailsRepository {
    * @returns {Promise<StoredEmail[]>}
    */
   async list(allowedDomains, filters = {}) {
-    const docs = await collect(this.fylo.findDocs(Collections.EMAILS, { $ops: [] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.EMAILS, { $ops: [] }).collect())
     const needsAttachments = !!filters.query || filters.hasAttachment != null
     const attachmentsByEmail = needsAttachments
       ? await this.attachments.listSummariesByEmail(allowedDomains)
@@ -67,7 +67,7 @@ export class EmailsRepository {
       let cursor
       do {
         const page = await this.fylo.findDocsPage(
-          Collections.EMAILS,
+          Fylo.Collections.EMAILS,
           { $ops: [{ domain: { $eq: domain } }] },
           { limit: boundedPageSize, ...(cursor ? { cursor } : {}) },
         )
@@ -89,7 +89,7 @@ export class EmailsRepository {
    * @returns {Promise<[string | null, StoredEmail | null]>}
    */
   async findById(id) {
-    const docs = await collect(this.fylo.findDocs(Collections.EMAILS, { $ops: [{ id: { $eq: id } }] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.EMAILS, { $ops: [{ id: { $eq: id } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], normalize(/** @type {StoredEmail} */ (entry[1]))] : [null, null]
   }
@@ -99,7 +99,7 @@ export class EmailsRepository {
    * @returns {Promise<string>}
    */
   async put(email) {
-    return await this.fylo.putData(Collections.EMAILS, email)
+    return await this.fylo.putData(Fylo.Collections.EMAILS, email)
   }
 
   /**
@@ -108,7 +108,7 @@ export class EmailsRepository {
    * @returns {Promise<void>}
    */
   async update(docId, patch) {
-    await this.fylo.patchDoc(Collections.EMAILS, { [docId]: patch })
+    await this.fylo.patchDoc(Fylo.Collections.EMAILS, { [docId]: patch })
   }
 
   /**
@@ -123,7 +123,7 @@ export class EmailsRepository {
   async updateByIds(ids, patch) {
     const wanted = new Set(ids)
     if (wanted.size === 0) return []
-    const docs = await collect(this.fylo.findDocs(Collections.EMAILS, { $ops: [] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.EMAILS, { $ops: [] }).collect())
     const updates = {}
     const matched = []
     for (const [docId, value] of Object.entries(docs)) {
@@ -132,7 +132,7 @@ export class EmailsRepository {
       updates[docId] = patch
       matched.push(email)
     }
-    if (Object.keys(updates).length > 0) await this.fylo.patchDoc(Collections.EMAILS, updates)
+    if (Object.keys(updates).length > 0) await this.fylo.patchDoc(Fylo.Collections.EMAILS, updates)
     return matched
   }
 
@@ -144,7 +144,7 @@ export class EmailsRepository {
   async delete(docId, emailId) {
     if (emailId) await this.attachments.deleteForEmail(emailId)
     if (emailId) await this.rawMessages?.deleteForEmail(emailId)
-    await this.fylo.delDoc(Collections.EMAILS, docId)
+    await this.fylo.delDoc(Fylo.Collections.EMAILS, docId)
   }
 
   static normalize = normalize

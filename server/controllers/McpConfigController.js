@@ -1,5 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { McpPreferenceError } from '../features/mcp/services/McpAccessService.js'
@@ -9,7 +9,7 @@ import { McpPreferenceError } from '../features/mcp/services/McpAccessService.js
 export class McpConfigController {
   @GetRoute
   async get(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_READ } }, async ({ auth }) => {
       const app = await getApp()
       return await app.mcpAccess.config(auth.email) ?? Respond.r404('User not found')
     })
@@ -17,7 +17,7 @@ export class McpConfigController {
 
   @PutRoute
   async put(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
       try {
         const app = await getApp()
         return await app.mcpAccess.updateConfig(auth.email, body) ?? Respond.r404('User not found')

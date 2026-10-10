@@ -1,7 +1,7 @@
 // @ts-check
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/api/v1/external-accounts/{id}/reconnect")
 @SignedIn
@@ -17,9 +17,9 @@ export class ApiV1ExternalAccountsIdReconnectController {
         return Respond.r400('credentials and positive revision are required')
       }
       try {
-        return await ExternalAccounts.reconnect(bearerToken(context), id, revision, credentials)
+        return await ExternalAccounts.reconnect(ExternalAccounts.bearerToken(context), id, revision, credentials)
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
     })
   }

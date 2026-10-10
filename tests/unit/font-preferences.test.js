@@ -9,15 +9,12 @@ import {
   normalizeComposerFont,
   normalizeInterfaceFont,
 } from '../../client/shared/scripts/font-preferences.js'
-import {
-  COMPOSER_FONT_IDS,
-  INTERFACE_FONT_IDS,
-} from '../../server/shared/users/font-preferences.js'
+import { FontPreferences } from '../../server/shared/users/FontPreferences.js'
 
 describe('font preferences', () => {
   it('keeps the browser and persistence catalogs in lockstep', () => {
-    expect(INTERFACE_FONT_OPTIONS.map(option => option.id)).toEqual([...INTERFACE_FONT_IDS])
-    expect(COMPOSER_FONT_OPTIONS.map(option => option.id)).toEqual([...COMPOSER_FONT_IDS])
+    expect(INTERFACE_FONT_OPTIONS.map(option => option.id)).toEqual([...FontPreferences.INTERFACE_FONT_IDS])
+    expect(COMPOSER_FONT_OPTIONS.map(option => option.id)).toEqual([...FontPreferences.COMPOSER_FONT_IDS])
   })
 
   it('fails closed to local defaults for unknown and hostile values', () => {

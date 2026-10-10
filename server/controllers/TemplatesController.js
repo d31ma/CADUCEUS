@@ -1,8 +1,8 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { Actions } from '../shared/auth/Auth.js'
-import { normalizeTemplateInput, resolveUniqueTemplateName } from '../shared/mailbox/template-content.js'
+import { Auth } from '../shared/auth/Auth.js'
+import { TemplateContent } from '../shared/mailbox/TemplateContent.js'
 
 @RequestRoute("/templates")
 @SignedIn
@@ -30,8 +30,8 @@ export class TemplatesController {
  */
   @PostRoute
   async post(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
-    const input = normalizeTemplateInput(body)
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
+    const input = TemplateContent.normalizeTemplateInput(body)
     if (input instanceof Error) return Respond.r400(input.message)
 
     const id = `tpl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
@@ -40,7 +40,7 @@ export class TemplatesController {
     const now = Date.now()
     const entry = {
       id,
-      name: resolveUniqueTemplateName(input.name, existing),
+      name: TemplateContent.resolveUniqueTemplateName(input.name, existing),
       subject: input.subject,
       text: input.text,
       to: input.to,
@@ -63,7 +63,7 @@ export class TemplatesController {
  */
   @DeleteRoute
   async delete(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
     const id = body?.id
     if (!id || typeof id !== 'string') return Respond.r400('id is required')
 
@@ -85,7 +85,7 @@ export class TemplatesController {
  */
   @GetRoute
   async get(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_READ } }, async ({ auth }) => {
     const app = await getApp()
     const records = await app.templates.listForOwner(auth.email)
     return Object.values(records)

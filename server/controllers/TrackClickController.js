@@ -1,6 +1,6 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
-import { readTrackingToken } from '../shared/delivery/tracking-tokens.js'
+import { TrackingTokens } from '../shared/delivery/TrackingTokens.js'
 
 @RequestRoute("/track/click")
 @Public
@@ -31,7 +31,7 @@ export class TrackClickController {
   async get(request) {
     return RouteRequest.handle(request, {  }, async ({ query }) => {
       try {
-        const capability = readTrackingToken(query?.t, { expectedType: 'click' })
+        const capability = TrackingTokens.readTrackingToken(query?.t, { expectedType: 'click' })
         if (!capability || capability.type !== 'click') return TrackClickController.invalidLink()
         const app = await getApp()
         if (!await app.tracking.recordClick(capability)) return TrackClickController.invalidLink()

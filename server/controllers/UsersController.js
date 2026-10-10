@@ -1,5 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { Security } from '../shared/security/Security.js'
@@ -16,7 +16,7 @@ export class UsersController {
  */
   @PostRoute
   async post(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.DOMAIN_ADMIN, domain: r => r.body?.domains?.[0] } }, async ({ body, auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.DOMAIN_ADMIN, domain: r => r.body?.domains?.[0] } }, async ({ body, auth }) => {
     const user = body
     if (!user?.email) return Respond.r400('email required')
     if (!user.domains?.length) return Respond.r400('domains required')
@@ -67,7 +67,7 @@ export class UsersController {
  */
   @GetRoute
   async get(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.DOMAIN_ADMIN } }, async ({ auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.DOMAIN_ADMIN } }, async ({ auth }) => {
     const app = await getApp()
     return await app.users.list()
     })

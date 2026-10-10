@@ -1,12 +1,15 @@
 import { Security } from '../security/Security.js'
 
-const RULE_FIELDS = new Set(['from', 'to', 'cc', 'subject', 'body', 'hasAttachment'])
-const STRING_OPERATORS = new Set(['contains', 'notContains', 'equals', 'notEquals', 'startsWith', 'endsWith'])
-const MAX_CONDITIONS = 20
-const MAX_ACTIONS = 10
-
 /** Validation for domain route rules and inbox rule actions. */
 export class RuleValidation {
+  static #RULE_FIELDS = new Set(['from', 'to', 'cc', 'subject', 'body', 'hasAttachment'])
+
+  static #STRING_OPERATORS = new Set(['contains', 'notContains', 'equals', 'notEquals', 'startsWith', 'endsWith'])
+
+  static #MAX_CONDITIONS = 20
+
+  static #MAX_ACTIONS = 10
+
   /**
    * @param {RouteAction} action
    * @returns {ValidationResult}
@@ -56,7 +59,7 @@ export class RuleValidation {
    */
   static validateInboxRuleActions(actions) {
     if (!Array.isArray(actions) || actions.length === 0) return { valid: false, error: 'At least one action is required' }
-    if (actions.length > MAX_ACTIONS) return { valid: false, error: `At most ${MAX_ACTIONS} actions are allowed` }
+    if (actions.length > RuleValidation.#MAX_ACTIONS) return { valid: false, error: `At most ${RuleValidation.#MAX_ACTIONS} actions are allowed` }
     for (const action of actions) {
       if (!action || typeof action !== 'object' || !action.type) return { valid: false, error: 'Action type is required' }
       if (action.type === 'folder') {
@@ -83,12 +86,12 @@ export class RuleValidation {
   /** @param {Array<{field?:string,op?:string,value?:unknown}>} conditions @returns {ValidationResult} */
   static validateInboxRuleConditions(conditions) {
     if (!Array.isArray(conditions)) return { valid: false, error: 'Conditions must be an array' }
-    if (conditions.length > MAX_CONDITIONS) return { valid: false, error: `At most ${MAX_CONDITIONS} conditions are allowed` }
+    if (conditions.length > RuleValidation.#MAX_CONDITIONS) return { valid: false, error: `At most ${RuleValidation.#MAX_CONDITIONS} conditions are allowed` }
     for (const condition of conditions) {
-      if (!condition || typeof condition !== 'object' || !RULE_FIELDS.has(String(condition.field))) {
+      if (!condition || typeof condition !== 'object' || !RuleValidation.#RULE_FIELDS.has(String(condition.field))) {
         return { valid: false, error: `Unknown condition field: ${String(condition?.field ?? '')}` }
       }
-      if (!STRING_OPERATORS.has(String(condition.op))) {
+      if (!RuleValidation.#STRING_OPERATORS.has(String(condition.op))) {
         return { valid: false, error: `Unknown condition operator: ${String(condition.op ?? '')}` }
       }
       if (condition.field === 'hasAttachment') {

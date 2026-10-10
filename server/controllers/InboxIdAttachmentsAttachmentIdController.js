@@ -2,8 +2,8 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { canAccessEmail } from '../features/mailbox/repositories/EmailsRepository.js'
-import { parseExternalMessageId, readExternalAttachment } from '../shared/mailbox/external-message.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalMessage } from '../shared/mailbox/ExternalMessage.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/inbox/{id}/attachments/{attachment_id}")
 @SignedIn
@@ -22,16 +22,16 @@ export class InboxIdAttachmentsAttachmentIdController {
     const attachmentId = paths?.attachment_id
     if (!emailId || !attachmentId) return Respond.r404('Attachment not found')
 
-    const external = parseExternalMessageId(emailId)
+    const external = ExternalMessage.parseExternalMessageId(emailId)
     if (external) {
       try {
         const source = await ExternalAccounts.messageSource(
-          bearerToken(context), external.accountId, external.stableId,
+          ExternalAccounts.bearerToken(context), external.accountId, external.stableId,
         )
-        const attachment = await readExternalAttachment(source?.rawRFC822Base64, attachmentId)
+        const attachment = await ExternalMessage.readExternalAttachment(source?.rawRFC822Base64, attachmentId)
         return attachment || Respond.r404('Attachment not found')
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
     }
 

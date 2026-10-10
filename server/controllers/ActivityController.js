@@ -1,7 +1,7 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { ownedSenderAddresses } from '../shared/users/sender-addresses.js'
+import { SenderAddresses } from '../shared/users/SenderAddresses.js'
 
 @RequestRoute("/activity")
 @SignedIn
@@ -64,7 +64,7 @@ export class ActivityController {
       const parsed = ActivityController.parseActivityQuery(query)
       if (!parsed.ok) return Respond.r400(parsed.error)
       const app = await getApp()
-      const senders = await ownedSenderAddresses(app.users, auth.email)
+      const senders = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
       const sentFolders = await app.categoryMappings.folderFilter(auth.email, auth.domains || [], 'sent') || {}
       const draftFolders = await app.categoryMappings.folderFilter(auth.email, auth.domains || [], 'drafts') || {}
       return await app.tracking.activity({

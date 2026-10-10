@@ -3,7 +3,8 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
-import { DatabaseRepository, Buckets } from '@/shared/persistence/Fylo.js'
+import { DatabaseRepository } from '@/shared/persistence/DatabaseRepository.js'
+import { Fylo } from '@/shared/persistence/Fylo.js'
 import { RawMessagesRepository } from '@/features/mailbox/repositories/RawMessagesRepository.js'
 
 let fylo
@@ -37,7 +38,7 @@ describe('raw RFC 822 storage', () => {
     const found = await rawMessages.findForEmail('raw-1')
     expect(found?.bucketId).toBeString()
     expect(Buffer.from(await rawMessages.readContent(found)).toString()).toBe(source)
-    const stored = await fylo.getDoc(Buckets.RAW_MESSAGE_FILES, found.bucketId)
+    const stored = await fylo.getDoc(Fylo.Buckets.RAW_MESSAGE_FILES, found.bucketId)
     expect(stored[found.bucketId].key).toMatch(/\/emails\/[a-f0-9]{64}\/source\.eml$/)
   })
 
@@ -45,10 +46,10 @@ describe('raw RFC 822 storage', () => {
     const first = await rawMessages.saveForEmail('raw-2', 'example.com', 'first')
     const second = await rawMessages.saveForEmail('raw-2', 'example.com', 'second')
     expect(second.bucketId).not.toBe(first.bucketId)
-    await expect(fylo.getFileBytes(Buckets.RAW_MESSAGE_FILES, first.bucketId)).rejects.toThrow()
+    await expect(fylo.getFileBytes(Fylo.Buckets.RAW_MESSAGE_FILES, first.bucketId)).rejects.toThrow()
 
     await rawMessages.deleteForEmail('raw-2')
     expect(await rawMessages.findForEmail('raw-2')).toBeNull()
-    await expect(fylo.getFileBytes(Buckets.RAW_MESSAGE_FILES, second.bucketId)).rejects.toThrow()
+    await expect(fylo.getFileBytes(Fylo.Buckets.RAW_MESSAGE_FILES, second.bucketId)).rejects.toThrow()
   })
 })

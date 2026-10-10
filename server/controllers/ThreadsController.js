@@ -2,15 +2,10 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
 import { Respond } from '../shared/http/Respond.js'
 import { SearchParser } from '../shared/mailbox/SearchParser.js'
-import { presentExternalDetail } from '../shared/mailbox/external-message.js'
-import {
-  externalAttachmentSummaries,
-  externalMailSummaries,
-  isExternalAccountId,
-  loadExternalMessage,
-} from '../shared/mailbox/unified-mail.js'
+import { ExternalMessage } from '../shared/mailbox/ExternalMessage.js'
+import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
 import { groupMessagesIntoThreads } from '../features/mailbox/repositories/ThreadsRepository.js'
-import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/threads")
 @SignedIn
@@ -25,7 +20,7 @@ export class ThreadsController {
   static async loadUnifiedThreadMessages(app, auth, token, allowedDomains, scope) {
     const [stored, external] = await Promise.all([
       scope.includeHosted ? app.emails.list(allowedDomains, { folder: 'all', ownerEmail: auth.email }) : Promise.resolve([]),
-      scope.includeExternal ? externalMailSummaries(token, { accountId: scope.accountId }) : Promise.resolve([]),
+      scope.includeExternal ? UnifiedMail.externalMailSummaries(token, { accountId: scope.accountId }) : Promise.resolve([]),
     ])
     const migrated = await app.domainMigration.presentEmails(stored)
     const hosted = await app.categoryMappings.presentEmails(auth.email, migrated)
@@ -47,24 +42,24 @@ export class ThreadsController {
         emails.push({
           ...email,
           body: email.snippet || '',
-          attachments: externalAttachmentSummaries(email),
+          attachments: UnifiedMail.externalAttachmentSummaries(email),
           conversationBodyTruncated: true,
         })
         continue
       }
-      const loaded = await loadExternalMessage(token, email.id)
+      const loaded = await UnifiedMail.loadExternalMessage(token, email.id)
       if (!loaded) continue
       const sourceBytes = Math.floor(loaded.rawRFC822Base64.length * 0.75)
       if (sourceBytes > remainingSourceBytes) {
         emails.push({
           ...email,
           body: email.snippet || '',
-          attachments: externalAttachmentSummaries(email),
+          attachments: UnifiedMail.externalAttachmentSummaries(email),
           conversationBodyTruncated: true,
         })
         continue
       }
-      const detail = await presentExternalDetail(loaded.indexed, loaded.rawRFC822Base64)
+      const detail = await ExternalMessage.presentExternalDetail(loaded.indexed, loaded.rawRFC822Base64)
       if (!detail) continue
       remainingSourceBytes -= sourceBytes
       emails.push(detail)
@@ -113,12 +108,12 @@ export class ThreadsController {
       const domain = String(query?.domain || '').trim().toLowerCase()
       if (domain && !auth.domains.includes(domain)) return Respond.r403('Mailbox is outside the authenticated account scope')
       const accountId = String(query?.account || '').trim()
-      if (accountId && !isExternalAccountId(accountId)) return Respond.r400('Invalid connected account identifier')
+      if (accountId && !UnifiedMail.isExternalAccountId(accountId)) return Respond.r400('Invalid connected account identifier')
       if (domain && accountId) return Respond.r400('Choose only one mailbox domain or connected account')
       const limit = ThreadsController.readLimit(query?.limit)
       if (limit instanceof Error) return Respond.r400(limit.message)
       const allowedDomains = domain ? [domain] : auth.domains
-      const token = bearerToken(context)
+      const token = ExternalAccounts.bearerToken(context)
 
       let messages
       try {
@@ -128,7 +123,7 @@ export class ThreadsController {
           accountId,
         })
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
       const threads = groupMessagesIntoThreads(messages, auth.email)
 
@@ -138,7 +133,7 @@ export class ThreadsController {
         try {
           return [await ThreadsController.presentSelectedThread(app, token, thread, auth.domains)]
         } catch (error) {
-          return accountFailure(error)
+          return ExternalAccounts.accountFailure(error)
         }
       }
 
@@ -156,7 +151,7 @@ export class ThreadsController {
             && SearchParser.matches(
               expression,
               email,
-              email.external ? externalAttachmentSummaries(email) : attachmentsByEmail.get(email.id) || [],
+              email.external ? UnifiedMail.externalAttachmentSummaries(email) : attachmentsByEmail.get(email.id) || [],
             )
           ))) continue
           matching.push({

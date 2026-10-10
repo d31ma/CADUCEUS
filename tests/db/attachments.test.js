@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
-import { Buffer } from "node:buffer";
-import { writeFileSync } from "node:fs";
-import { DatabaseRepository, Buckets } from "@/shared/persistence/Fylo.js";
-import { AttachmentsRepository } from "@/features/mailbox/repositories/AttachmentsRepository.js";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { join } from "node:path"
+import { tmpdir } from "node:os"
+import { Buffer } from "node:buffer"
+import { DatabaseRepository } from "@/shared/persistence/DatabaseRepository.js"
+import { Fylo } from "@/shared/persistence/Fylo.js"
+import { AttachmentsRepository } from "@/features/mailbox/repositories/AttachmentsRepository.js"
 let fylo;
 let attachmentsRepo;
 let testRoot;
@@ -43,7 +43,7 @@ describe("email attachment storage", () => {
     expect(record?.emailId).toBe("msg-1");
     expect(record?.bucketId).toBeString();
     expect(record?.storagePath).toBeUndefined();
-    const stored = await fylo.getDoc(Buckets.ATTACHMENT_FILES, record.bucketId);
+    const stored = await fylo.getDoc(Fylo.Buckets.ATTACHMENT_FILES, record.bucketId);
     expect(stored[record.bucketId].contentLength).toBe("hello attachment".length);
     expect(stored[record.bucketId].key).toContain("/emails/");
     expect(new TextDecoder().decode(await attachmentsRepo.readContent(record))).toBe("hello attachment");
@@ -99,7 +99,7 @@ describe("email attachment storage", () => {
     await attachmentsRepo.deleteForEmail("msg-1");
     const [, record] = await attachmentsRepo.findById(summary.id);
     expect(record).toBeNull();
-    await expect(fylo.getFileBytes(Buckets.ATTACHMENT_FILES, storedRecord.bucketId)).rejects.toThrow();
+    await expect(fylo.getFileBytes(Fylo.Buckets.ATTACHMENT_FILES, storedRecord.bucketId)).rejects.toThrow();
   });
   it("continues reading legacy path-backed attachment records", async () => {
     const legacyRoot = join(testRoot, "attachments");

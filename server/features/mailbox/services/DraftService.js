@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { randomBytes } from 'node:crypto'
 import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
-import { deriveThreadId } from '../../../shared/mailbox/threading.js'
+import { Threading } from '../../../shared/mailbox/Threading.js'
 /** @import { EmailsRepository } from '../repositories/EmailsRepository.js' */
 /** @import { AttachmentsRepository } from '../repositories/AttachmentsRepository.js' */
 /** @import { CategoryMappingService } from './CategoryMappingService.js' */
@@ -116,7 +116,7 @@ export class DraftService {
       ...(input.inReplyTo ? { inReplyTo: input.inReplyTo } : {}),
       ...(input.sourceEmailId ? { sourceEmailId: input.sourceEmailId } : {}),
       ...(references.length ? { references } : {}),
-      threadId: deriveThreadId(domain, root),
+      threadId: Threading.deriveThreadId(domain, root),
       folder,
       read: true,
       starred: false,

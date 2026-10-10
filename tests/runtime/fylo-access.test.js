@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import {
-  FyloAccessContext,
-  posixId,
-  recordDomain,
-} from '../../server/shared/persistence/FyloAccessContext.js'
+import { FyloAccessContext } from '../../server/shared/persistence/FyloAccessContext.js'
 
 let previousEnabled
 
@@ -19,11 +15,11 @@ afterEach(() => {
 
 describe('FyloAccessContext', () => {
   test('derives stable namespace-separated POSIX identities', () => {
-    expect(posixId('mailbox-user', 'alice@example.com')).toBe(
-      posixId('mailbox-user', 'alice@example.com'),
+    expect(FyloAccessContext.posixId('mailbox-user', 'alice@example.com')).toBe(
+      FyloAccessContext.posixId('mailbox-user', 'alice@example.com'),
     )
-    expect(posixId('mailbox-user', 'alice@example.com')).not.toBe(
-      posixId('mail-domain', 'alice@example.com'),
+    expect(FyloAccessContext.posixId('mailbox-user', 'alice@example.com')).not.toBe(
+      FyloAccessContext.posixId('mail-domain', 'alice@example.com'),
     )
   })
 
@@ -34,14 +30,14 @@ describe('FyloAccessContext', () => {
     }, async () => {
       const read = FyloAccessContext.read()
       expect(read).toEqual({
-        uid: posixId('mailbox-user', 'alice@example.com'),
+        uid: FyloAccessContext.posixId('mailbox-user', 'alice@example.com'),
         groups: [
-          posixId('mail-domain', 'example.com'),
-          posixId('mail-domain', 'work.example.com'),
+          FyloAccessContext.posixId('mail-domain', 'example.com'),
+          FyloAccessContext.posixId('mail-domain', 'work.example.com'),
         ],
       })
       expect(FyloAccessContext.write({ domain: 'example.com' })).toEqual({
-        gid: posixId('mail-domain', 'example.com'),
+        gid: FyloAccessContext.posixId('mail-domain', 'example.com'),
         mode: 0o660,
       })
     })
@@ -59,8 +55,8 @@ describe('FyloAccessContext', () => {
   })
 
   test('extracts tenant domains only from recognized record shapes', () => {
-    expect(recordDomain({ meta: { domain: 'Example.com' } })).toBe('example.com')
-    expect(recordDomain({ sender: 'alice@example.com' })).toBe('example.com')
-    expect(recordDomain({ address: 'external@example.net' })).toBeNull()
+    expect(FyloAccessContext.recordDomain({ meta: { domain: 'Example.com' } })).toBe('example.com')
+    expect(FyloAccessContext.recordDomain({ sender: 'alice@example.com' })).toBe('example.com')
+    expect(FyloAccessContext.recordDomain({ address: 'external@example.net' })).toBeNull()
   })
 })

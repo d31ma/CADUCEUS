@@ -1,5 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { RuleValidation } from '../shared/domains/RuleValidation.js'
@@ -16,7 +16,7 @@ export class DomainsDomainRoutesIdController {
  */
   @DeleteRoute
   async delete(@FromPath domain, @FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { domain, id }, guard: { action: Actions.DOMAIN_ADMIN, domain: r => r.paths?.domain } }, async ({ paths, auth }) => {
+    return RouteRequest.handle(request, { paths: { domain, id }, guard: { action: Auth.Actions.DOMAIN_ADMIN, domain: r => r.paths?.domain } }, async ({ paths, auth }) => {
     const { domain, id: ruleId } = paths ?? {}
     if (!domain || !ruleId) return Respond.r400('domain and route id required')
     if (!auth.domains.includes(domain)) return Respond.r403('Access denied')
@@ -41,7 +41,7 @@ export class DomainsDomainRoutesIdController {
  */
   @PutRoute
   async put(@FromPath domain, @FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { domain, id }, guard: { action: Actions.DOMAIN_ADMIN, domain: r => r.paths?.domain } }, async ({ paths, body, auth }) => {
+    return RouteRequest.handle(request, { paths: { domain, id }, guard: { action: Auth.Actions.DOMAIN_ADMIN, domain: r => r.paths?.domain } }, async ({ paths, body, auth }) => {
     const { domain, id: ruleId } = paths ?? {}
     if (!domain || !ruleId) return Respond.r400('domain and route id required')
     if (!auth.domains.includes(domain)) return Respond.r403('Access denied')

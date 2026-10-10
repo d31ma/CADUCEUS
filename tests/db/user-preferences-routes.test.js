@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token as issue } from '../routes/helpers.js'
 import { UsersMePreferencesController as PreferencesHandler } from '@/controllers/UsersMePreferencesController.js'
-import { DEFAULT_MAIL_PREFERENCES } from '@/shared/users/mail-preferences.js'
+import { MailPreferences } from '@/shared/users/MailPreferences.js'
 import { call } from '../support/controller-call.mjs'
 
 const getPreferences = (req) => call(PreferencesHandler, 'GET', req)
@@ -60,7 +60,7 @@ describe('mailbox name preferences', () => {
       newMailNotificationActions: true,
       githubProfileEnrichment: false,
       keyboardShortcutOverrides: {},
-      mailPreferences: DEFAULT_MAIL_PREFERENCES,
+      mailPreferences: MailPreferences.DEFAULT_MAIL_PREFERENCES,
       grammarCheckEnabled: false,
       grammarCheckLanguage: 'auto',
       grammarCheckDisabledRules: [],
@@ -92,7 +92,7 @@ describe('mailbox name preferences', () => {
       newMailNotificationActions: true,
       githubProfileEnrichment: false,
       keyboardShortcutOverrides: {},
-      mailPreferences: DEFAULT_MAIL_PREFERENCES,
+      mailPreferences: MailPreferences.DEFAULT_MAIL_PREFERENCES,
       grammarCheckEnabled: false,
       grammarCheckLanguage: 'auto',
       grammarCheckDisabledRules: [],

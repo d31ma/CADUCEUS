@@ -1,36 +1,30 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  createMessageId,
-  normalizeMessageId,
-  parseMessageIdList,
-  threadMetadataFromHeaders,
-  threadMetadataFromOutbound,
-} from '@/shared/mailbox/threading.js'
+import { Threading } from '@/shared/mailbox/Threading.js'
 import { groupMessagesIntoThreads } from '@/features/mailbox/repositories/ThreadsRepository.js'
 
 describe('RFC message threading metadata', () => {
   it('normalizes one Message-ID and rejects unsafe or ambiguous values', () => {
-    expect(normalizeMessageId(' root@example.test ')).toBe('<root@example.test>')
-    expect(normalizeMessageId('<root@example.test>')).toBe('<root@example.test>')
-    expect(normalizeMessageId('root@example.test\r\nBcc: victim@test')).toBeUndefined()
-    expect(normalizeMessageId('<one@test> <two@test>')).toBeUndefined()
-    expect(normalizeMessageId('not-an-id')).toBeUndefined()
+    expect(Threading.normalizeMessageId(' root@example.test ')).toBe('<root@example.test>')
+    expect(Threading.normalizeMessageId('<root@example.test>')).toBe('<root@example.test>')
+    expect(Threading.normalizeMessageId('root@example.test\r\nBcc: victim@test')).toBeUndefined()
+    expect(Threading.normalizeMessageId('<one@test> <two@test>')).toBeUndefined()
+    expect(Threading.normalizeMessageId('not-an-id')).toBeUndefined()
   })
 
   it('extracts ordered unique references and caps pathological chains', () => {
-    expect(parseMessageIdList('<root@test> <parent@test> <root@test>'))
+    expect(Threading.parseMessageIdList('<root@test> <parent@test> <root@test>'))
       .toEqual(['<root@test>', '<parent@test>'])
-    expect(parseMessageIdList(Array.from({ length: 120 }, (_, i) => `<m${i}@test>`))).toHaveLength(100)
+    expect(Threading.parseMessageIdList(Array.from({ length: 120 }, (_, i) => `<m${i}@test>`))).toHaveLength(100)
   })
 
   it('derives a stable tenant-scoped thread identity from the reference root', () => {
-    const root = threadMetadataFromHeaders({ 'message-id': '<root@outside.test>' }, 'fallback', 'example.com')
-    const reply = threadMetadataFromHeaders({
+    const root = Threading.threadMetadataFromHeaders({ 'message-id': '<root@outside.test>' }, 'fallback', 'example.com')
+    const reply = Threading.threadMetadataFromHeaders({
       'message-id': '<reply@outside.test>',
       'in-reply-to': '<root@outside.test>',
       references: '<root@outside.test>',
     }, 'fallback', 'example.com')
-    const otherTenant = threadMetadataFromHeaders({
+    const otherTenant = Threading.threadMetadataFromHeaders({
       'message-id': '<reply@outside.test>', references: '<root@outside.test>',
     }, 'fallback', 'other.com')
 
@@ -41,9 +35,9 @@ describe('RFC message threading metadata', () => {
   })
 
   it('creates outbound IDs and extends a missing parent into the lineage', () => {
-    const messageId = createMessageId('Example.COM')
+    const messageId = Threading.createMessageId('Example.COM')
     expect(messageId).toMatch(/^<[a-f0-9.]+@example\.com>$/)
-    const metadata = threadMetadataFromOutbound({
+    const metadata = Threading.threadMetadataFromOutbound({
       messageId,
       inReplyTo: '<parent@outside.test>',
       references: ['<root@outside.test>'],

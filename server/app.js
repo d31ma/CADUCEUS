@@ -1,4 +1,4 @@
-import { createDb } from './shared/persistence/Fylo.js'
+import { Fylo } from './shared/persistence/Fylo.js'
 import { AttachmentsRepository } from './features/mailbox/repositories/AttachmentsRepository.js'
 import { CalendarEventsRepository } from './features/calendar/repositories/CalendarEventsRepository.js'
 import { ContactsRepository } from './features/contacts/repositories/ContactsRepository.js'
@@ -148,7 +148,7 @@ export class App {
    * @returns {Promise<App>}
    */
   static async create(root) {
-    const fylo = await createDb(root)
+    const fylo = await Fylo.createDb(root)
     return new App(fylo)
   }
 

@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer'
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
 import { Security } from '../shared/security/Security.js'
 import { getApp } from '../app.js'
@@ -15,7 +15,7 @@ export class InboxImportEmlController {
 
   @PostRoute
   async post(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE, mailbox: request => request.body?.mailbox } }, async ({ body, auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_WRITE, mailbox: request => request.body?.mailbox } }, async ({ body, auth }) => {
       const mailbox = Security.normalizeEmailAddress(body?.mailbox)
       if (!mailbox) return Respond.r400('mailbox is required')
       const domain = mailbox.split('@')[1]

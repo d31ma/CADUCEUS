@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 import { CalendarDate } from '../../../shared/calendar/CalendarDate.js'
 
 export class CalendarEventsRepository {
@@ -26,7 +26,7 @@ export class CalendarEventsRepository {
     delete stored.docId
     stored.attendeesJson = JSON.stringify(Array.isArray(event.attendees) ? event.attendees : [])
     delete (/** @type {any} */ (stored)).attendees
-    return await this.fylo.putData(Collections.CALENDAR_EVENTS, stored)
+    return await this.fylo.putData(Fylo.Collections.CALENDAR_EVENTS, stored)
   }
 
   /**
@@ -40,8 +40,8 @@ export class CalendarEventsRepository {
    * @returns {Promise<Array<CalendarEvent & { docId: string }>>}
    */
   async list(userEmail, range = {}) {
-    const docs = await collect(
-      this.fylo.findDocs(Collections.CALENDAR_EVENTS, { $ops: [{ userEmail: { $eq: userEmail } }] }).collect(),
+    const docs = await Fylo.collect(
+      this.fylo.findDocs(Fylo.Collections.CALENDAR_EVENTS, { $ops: [{ userEmail: { $eq: userEmail } }] }).collect(),
     )
     /** @type {Array<CalendarEvent & { docId: string }>} */
     const out = Object.entries(docs).map(([docId, d]) => ({ docId, ...hydrate(/** @type {Record<string, unknown>} */ (d)) }))
@@ -62,8 +62,8 @@ export class CalendarEventsRepository {
    * @returns {Promise<[string | null, (CalendarEvent & { docId: string }) | null]>}
    */
   async findById(id) {
-    const docs = await collect(
-      this.fylo.findDocs(Collections.CALENDAR_EVENTS, { $ops: [{ id: { $eq: id } }] }).collect(),
+    const docs = await Fylo.collect(
+      this.fylo.findDocs(Fylo.Collections.CALENDAR_EVENTS, { $ops: [{ id: { $eq: id } }] }).collect(),
     )
     const entry = Object.entries(docs)[0]
     if (!entry) return [null, null]
@@ -80,8 +80,8 @@ export class CalendarEventsRepository {
    * @returns {Promise<[string | null, (CalendarEvent & { docId: string }) | null]>}
    */
   async findByIcsUid(userEmail, icsUid) {
-    const docs = await collect(
-      this.fylo.findDocs(Collections.CALENDAR_EVENTS, { $ops: [{ userEmail: { $eq: userEmail } }] }).collect(),
+    const docs = await Fylo.collect(
+      this.fylo.findDocs(Fylo.Collections.CALENDAR_EVENTS, { $ops: [{ userEmail: { $eq: userEmail } }] }).collect(),
     )
     for (const [docId, raw] of Object.entries(docs)) {
       if (/** @type {any} */ (raw)?.icsUid === icsUid && !/** @type {any} */ (raw)?.recurrenceId) {
@@ -108,8 +108,8 @@ export class CalendarEventsRepository {
    * @returns {Promise<[string | null, (CalendarEvent & { docId: string }) | null]>}
    */
   async findException(seriesId, recurrenceId) {
-    const docs = await collect(
-      this.fylo.findDocs(Collections.CALENDAR_EVENTS, { $ops: [{ seriesId: { $eq: seriesId } }] }).collect(),
+    const docs = await Fylo.collect(
+      this.fylo.findDocs(Fylo.Collections.CALENDAR_EVENTS, { $ops: [{ seriesId: { $eq: seriesId } }] }).collect(),
     )
     const normalizedDate = CalendarDate.isDate(recurrenceId) ? recurrenceId : ''
     const normalizedInstant = CalendarDate.isDateTime(recurrenceId) ? new Date(recurrenceId).toISOString() : ''
@@ -144,7 +144,7 @@ export class CalendarEventsRepository {
    * @returns {Promise<void>}
    */
   async delete(docId) {
-    await this.fylo.delDoc(Collections.CALENDAR_EVENTS, docId)
+    await this.fylo.delDoc(Fylo.Collections.CALENDAR_EVENTS, docId)
   }
 }
 

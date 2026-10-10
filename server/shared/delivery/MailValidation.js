@@ -1,23 +1,27 @@
 import { Buffer } from 'node:buffer'
 import { Security } from '../security/Security.js'
-import { normalizeMessageId, parseMessageIdList } from '../mailbox/threading.js'
-import { normalizeAttachmentContentId, sanitizeAttachmentFilename } from '../mailbox/attachment-policy.js'
-
-const MAX_ATTACHMENTS = 10
-const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
-const MAX_TOTAL_ATTACHMENT_BYTES = 25 * 1024 * 1024
-const MAX_RECIPIENTS = 100
-const MAX_TO_FIELD = 50
+import { Threading } from '../mailbox/Threading.js'
+import { AttachmentPolicy } from '../mailbox/AttachmentPolicy.js'
 
 /** Validation for outbound send requests (recipients, subject, attachments). */
 export class MailValidation {
+  static #MAX_ATTACHMENTS = 10
+
+  static #MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
+
+  static #MAX_TOTAL_ATTACHMENT_BYTES = 25 * 1024 * 1024
+
+  static #MAX_RECIPIENTS = 100
+
+  static #MAX_TO_FIELD = 50
+
   /**
    * @param {unknown} to
    * @returns {{ valid: string[], errors: string[] }}
    */
   static validateRecipients(to) {
     if (!Array.isArray(to) || to.length === 0) return { valid: [], errors: ['Missing to field'] }
-    if (to.length > MAX_RECIPIENTS) return { valid: [], errors: [`Too many recipients (max ${MAX_RECIPIENTS})`] }
+    if (to.length > MailValidation.#MAX_RECIPIENTS) return { valid: [], errors: [`Too many recipients (max ${MailValidation.#MAX_RECIPIENTS})`] }
     const valid = []
     const errors = []
     for (const addr of to) {
@@ -49,7 +53,7 @@ export class MailValidation {
   static validateSendAttachments(attachments) {
     if (attachments == null) return { ok: true, value: [] }
     if (!Array.isArray(attachments)) return { ok: false, error: 'attachments must be an array' }
-    if (attachments.length > MAX_ATTACHMENTS) return { ok: false, error: `Too many attachments (max ${MAX_ATTACHMENTS})` }
+    if (attachments.length > MailValidation.#MAX_ATTACHMENTS) return { ok: false, error: `Too many attachments (max ${MailValidation.#MAX_ATTACHMENTS})` }
 
     let totalBytes = 0
     const value = []
@@ -77,14 +81,14 @@ export class MailValidation {
     if (MailValidation.hasHeaderInjection(b.subject)) return { ok: false, error: 'Subject contains invalid characters' }
     const { valid, errors } = MailValidation.validateRecipients(b.to)
     if (errors.length) return { ok: false, error: errors[0] }
-    if (valid.length > MAX_TO_FIELD) return { ok: false, error: `Too many recipients (max ${MAX_TO_FIELD})` }
+    if (valid.length > MailValidation.#MAX_TO_FIELD) return { ok: false, error: `Too many recipients (max ${MailValidation.#MAX_TO_FIELD})` }
     if (!b.text && !b.html) return { ok: false, error: 'text or html required' }
     const cc = MailValidation.#validateOptionalRecipients(b.cc, 'cc')
     if (!cc.ok) return cc
     const bcc = MailValidation.#validateOptionalRecipients(b.bcc, 'bcc')
     if (!bcc.ok) return bcc
-    if (valid.length + cc.value.length + bcc.value.length > MAX_RECIPIENTS) {
-      return { ok: false, error: `Too many recipients (max ${MAX_RECIPIENTS})` }
+    if (valid.length + cc.value.length + bcc.value.length > MailValidation.#MAX_RECIPIENTS) {
+      return { ok: false, error: `Too many recipients (max ${MailValidation.#MAX_RECIPIENTS})` }
     }
     if (b.openTracking != null && typeof b.openTracking !== 'boolean') {
       return { ok: false, error: 'openTracking must be a boolean' }
@@ -114,7 +118,7 @@ export class MailValidation {
     }
     let inReplyTo
     if (b.inReplyTo != null) {
-      inReplyTo = normalizeMessageId(b.inReplyTo)
+      inReplyTo = Threading.normalizeMessageId(b.inReplyTo)
       if (!inReplyTo) return { ok: false, error: 'inReplyTo must be a valid Message-ID' }
     }
     let references
@@ -122,7 +126,7 @@ export class MailValidation {
       if (!Array.isArray(b.references) || b.references.length > 100 || b.references.some(value => typeof value !== 'string')) {
         return { ok: false, error: 'references must be an array of at most 100 Message-IDs' }
       }
-      references = parseMessageIdList(b.references)
+      references = Threading.parseMessageIdList(b.references)
       if (references.length !== b.references.length) {
         return { ok: false, error: 'references must contain valid unique Message-IDs' }
       }
@@ -154,7 +158,7 @@ export class MailValidation {
   static #validateOptionalRecipients(value, field) {
     if (value == null) return { ok: true, value: [] }
     if (!Array.isArray(value)) return { ok: false, error: `${field} must be an array` }
-    if (value.length > MAX_RECIPIENTS) return { ok: false, error: `Too many recipients (max ${MAX_RECIPIENTS})` }
+    if (value.length > MailValidation.#MAX_RECIPIENTS) return { ok: false, error: `Too many recipients (max ${MailValidation.#MAX_RECIPIENTS})` }
     const normalized = []
     for (const address of value) {
       if (typeof address !== 'string') return { ok: false, error: `${field} must contain valid email addresses` }
@@ -183,19 +187,19 @@ export class MailValidation {
       ? a.contentType.trim().toLowerCase()
       : 'application/octet-stream'
     if (!/^[a-z]+\/[a-z0-9.+-]+$/.test(contentType)) return { ok: false, error: 'Attachment contentType is invalid' }
-    const contentId = normalizeAttachmentContentId(a.contentId)
+    const contentId = AttachmentPolicy.normalizeAttachmentContentId(a.contentId)
     if (a.contentId != null && !contentId) return { ok: false, error: 'Attachment contentId is invalid' }
 
     const size = Buffer.from(a.contentBase64, 'base64').byteLength
     if (size <= 0) return { ok: false, error: 'Attachment content is empty' }
-    if (size > MAX_ATTACHMENT_BYTES) return { ok: false, error: 'Attachment is too large (max 10MB)' }
-    if (totalSoFar + size > MAX_TOTAL_ATTACHMENT_BYTES) return { ok: false, error: 'Attachments are too large (max 25MB total)' }
+    if (size > MailValidation.#MAX_ATTACHMENT_BYTES) return { ok: false, error: 'Attachment is too large (max 10MB)' }
+    if (totalSoFar + size > MailValidation.#MAX_TOTAL_ATTACHMENT_BYTES) return { ok: false, error: 'Attachments are too large (max 25MB total)' }
 
     return {
       ok: true,
       size,
       value: {
-        filename: sanitizeAttachmentFilename(a.filename),
+        filename: AttachmentPolicy.sanitizeAttachmentFilename(a.filename),
         contentType,
         contentBase64: a.contentBase64,
         disposition: a.disposition === 'inline' ? 'inline' : 'attachment',

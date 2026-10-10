@@ -1,8 +1,8 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { InboxActionsIdUndoController as MailActions } from './InboxActionsController.js'
-import { bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { InboxActionsController as MailActions } from './InboxActionsController.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/inbox/actions/{id}/undo")
 @SignedIn
@@ -14,13 +14,13 @@ export class InboxActionsIdUndoController {
       if (!paths?.id) return Respond.r404('Mail action not found')
       try {
         const app = await getApp()
-        return await MailActions.present(
+        return await MailActions._present(
           app,
           auth.email,
-          await app.mailActions.undo(paths.id, auth.email, auth.domains, Date.now(), bearerToken(context)),
+          await app.mailActions.undo(paths.id, auth.email, auth.domains, Date.now(), ExternalAccounts.bearerToken(context)),
         )
       } catch (error) {
-        return MailActions.respondError(error)
+        return MailActions._respondError(error)
       }
     })
   }

@@ -2,7 +2,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { Buffer } from 'node:buffer'
 import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
 import { Security } from '../../../shared/security/Security.js'
-import { normalizeMcpPreferences, validateMcpPreferences } from '../../../shared/mcp/preferences.js'
+import { Preferences } from '../../../shared/mcp/Preferences.js'
 
 const TOKEN_BYTES = 32
 const MAX_OLD_TOKENS = 5
@@ -23,7 +23,7 @@ export class McpAccessService {
   async config(ownerEmail) {
     const [, user] = await this.users.findByEmail(ownerEmail)
     if (!user) return null
-    const preferences = normalizeMcpPreferences(user.mcp, user.domains)
+    const preferences = Preferences.normalizeMcpPreferences(user.mcp, user.domains)
     const records = await this.tokens.listForOwner(ownerEmail)
     const active = records.find(record => record.active === true && !record.revokedAt)
     return {
@@ -39,11 +39,11 @@ export class McpAccessService {
   async updateConfig(ownerEmail, patch) {
     const [docId, user] = await this.users.findByEmail(ownerEmail)
     if (!docId || !user) return null
-    const current = normalizeMcpPreferences(user.mcp, user.domains)
+    const current = Preferences.normalizeMcpPreferences(user.mcp, user.domains)
     const merged = patch && typeof patch === 'object' && !Array.isArray(patch)
       ? { ...current, ...patch }
       : patch
-    const parsed = validateMcpPreferences(merged, user.domains)
+    const parsed = Preferences.validateMcpPreferences(merged, user.domains)
     if (!parsed.ok) throw new McpPreferenceError(parsed.error, parsed.forbidden)
     await this.users.updateMcpPreferences(docId, parsed.preferences)
     return await this.config(ownerEmail)
@@ -100,7 +100,7 @@ export class McpAccessService {
       if (!record) return null
       const [, user] = await this.users.findByEmail(record.ownerEmail)
       if (!user) return null
-      const preferences = normalizeMcpPreferences(user.mcp, user.domains)
+      const preferences = Preferences.normalizeMcpPreferences(user.mcp, user.domains)
       if (!preferences.enabled || preferences.allowedDomains.length === 0) return null
       await this.tokens.update(record.docId, { lastUsedAt: new Date().toISOString() })
       return {

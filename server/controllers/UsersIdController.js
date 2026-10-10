@@ -1,5 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 
@@ -15,7 +15,7 @@ export class UsersIdController {
  */
   @DeleteRoute
   async delete(@FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { id }, guard: { action: Actions.DOMAIN_ADMIN, domain: r => r.body?.domains?.[0] } }, async ({ paths, auth }) => {
+    return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.DOMAIN_ADMIN, domain: r => r.body?.domains?.[0] } }, async ({ paths, auth }) => {
     const email = paths?.id
     if (!email) return Respond.r400('email required')
 

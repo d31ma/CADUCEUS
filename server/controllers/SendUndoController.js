@@ -1,8 +1,8 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { parseExternalUndoToken } from '../shared/delivery/external-submission.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalSubmission } from '../shared/delivery/ExternalSubmission.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/send/undo")
 @SignedIn
@@ -21,20 +21,20 @@ export class SendUndoController {
     if (!undoId || typeof undoId !== 'string') return Respond.r400('undoId is required')
 
     const app = await getApp()
-    const external = parseExternalUndoToken(undoId)
+    const external = ExternalSubmission.parseExternalUndoToken(undoId)
     if (external) {
       const [, email] = await app.emails.findById(external.messageId)
       if (!email || email.ownerEmail !== auth.email) return Respond.r404('Undo ID not found or already processed')
       try {
-        await ExternalAccounts.cancelSubmission(bearerToken(context), external.accountId, external.submissionId)
+        await ExternalAccounts.cancelSubmission(ExternalAccounts.bearerToken(context), external.accountId, external.submissionId)
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
       await app.reminders.dismissForEmail(external.messageId, auth.email)
       await app.sendService.rollbackExternalAccepted(external.messageId)
       if (!external.archiveActionId) return { undone: true }
       try {
-        const restored = await app.mailActions.undo(external.archiveActionId, auth.email, auth.domains, Date.now(), bearerToken(context))
+        const restored = await app.mailActions.undo(external.archiveActionId, auth.email, auth.domains, Date.now(), ExternalAccounts.bearerToken(context))
         return { undone: true, archiveRestored: restored.count }
       } catch (error) {
         return { undone: true, archiveRestored: 0, archiveError: error instanceof Error ? error.message : 'Source conversation could not be restored' }

@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { Buffer } from 'node:buffer'
-import { Buckets, Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
 /** @import { RawMessageRecord } from '../../../types' */
 
@@ -36,7 +36,7 @@ export class RawMessagesRepository {
 
     let bucketId
     try {
-      bucketId = await this.fylo.putFile(Buckets.RAW_MESSAGE_FILES, sourcePath, {
+      bucketId = await this.fylo.putFile(Fylo.Buckets.RAW_MESSAGE_FILES, sourcePath, {
         key: `/emails/${createHash('sha256').update(emailId).digest('hex')}/source.eml`,
         maxBytes: bytes.byteLength,
         meta: { domain },
@@ -56,9 +56,9 @@ export class RawMessagesRepository {
       createdAt: new Date().toISOString(),
     }
     try {
-      await this.fylo.putData(Collections.RAW_MESSAGES, record)
+      await this.fylo.putData(Fylo.Collections.RAW_MESSAGES, record)
     } catch (error) {
-      await this.fylo.delDoc(Buckets.RAW_MESSAGE_FILES, bucketId).catch(() => {})
+      await this.fylo.delDoc(Fylo.Buckets.RAW_MESSAGE_FILES, bucketId).catch(() => {})
       throw error
     }
     return record
@@ -66,8 +66,8 @@ export class RawMessagesRepository {
 
   /** @param {string} emailId @returns {Promise<(RawMessageRecord & { docId: string }) | null>} */
   async findForEmail(emailId) {
-    const documents = await collect(
-      this.fylo.findDocs(Collections.RAW_MESSAGES, { $ops: [{ emailId: { $eq: emailId } }] }).collect(),
+    const documents = await Fylo.collect(
+      this.fylo.findDocs(Fylo.Collections.RAW_MESSAGES, { $ops: [{ emailId: { $eq: emailId } }] }).collect(),
     )
     const entry = Object.entries(documents)[0]
     return entry ? { docId: entry[0], .../** @type {RawMessageRecord} */ (entry[1]) } : null
@@ -75,14 +75,14 @@ export class RawMessagesRepository {
 
   /** @param {RawMessageRecord} record @returns {Promise<Uint8Array>} */
   async readContent(record) {
-    return await this.fylo.getFileBytes(Buckets.RAW_MESSAGE_FILES, record.bucketId)
+    return await this.fylo.getFileBytes(Fylo.Buckets.RAW_MESSAGE_FILES, record.bucketId)
   }
 
   /** @param {string} emailId @returns {Promise<void>} */
   async deleteForEmail(emailId) {
     const record = await this.findForEmail(emailId)
     if (!record) return
-    await this.fylo.delDoc(Collections.RAW_MESSAGES, record.docId)
-    await this.fylo.delDoc(Buckets.RAW_MESSAGE_FILES, record.bucketId)
+    await this.fylo.delDoc(Fylo.Collections.RAW_MESSAGES, record.docId)
+    await this.fylo.delDoc(Fylo.Buckets.RAW_MESSAGE_FILES, record.bucketId)
   }
 }

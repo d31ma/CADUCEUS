@@ -4,15 +4,10 @@ import { getApp } from '../app.js'
 import { canAccessEmail } from '../features/mailbox/repositories/EmailsRepository.js'
 import { GitHubNotification } from '../shared/mailbox/GitHubNotification.js'
 import { Ics } from '../shared/calendar/Ics.js'
-import { bestCalendarAttachment, withoutCalendarCardAttachments } from '../shared/calendar/calendar-attachments.js'
-import { parseExternalMessageId, presentExternalDetail } from '../shared/mailbox/external-message.js'
-import {
-  loadExternalMessage,
-  projectExternalPatch,
-  queueExternalMessageDelete,
-  queueExternalMessagePatch,
-} from '../shared/mailbox/unified-mail.js'
-import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { CalendarAttachments } from '../shared/calendar/CalendarAttachments.js'
+import { ExternalMessage } from '../shared/mailbox/ExternalMessage.js'
+import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 import { ExternalFolderError } from '../shared/mailbox/ExternalFolderError.js'
 
 @RequestRoute("/inbox/{id}")
@@ -43,12 +38,12 @@ export class InboxIdController {
       if (!id) return Respond.r404('Email not found')
       if (InboxIdController.isExternalRoute(id)) {
         try {
-          const loaded = await loadExternalMessage(bearerToken(context), id)
+          const loaded = await UnifiedMail.loadExternalMessage(ExternalAccounts.bearerToken(context), id)
           if (!loaded) return Respond.r404('Email not found')
-          const mutation = await queueExternalMessageDelete(bearerToken(context), loaded)
+          const mutation = await UnifiedMail.queueExternalMessageDelete(ExternalAccounts.bearerToken(context), loaded)
           return { deleted: id, pendingRemoteMutation: true, mutationId: mutation?.id || '' }
         } catch (error) {
-          return accountFailure(error)
+          return ExternalAccounts.accountFailure(error)
         }
       }
 
@@ -84,13 +79,13 @@ export class InboxIdController {
       if (patch instanceof Error) return Respond.r400(patch.message)
       if (InboxIdController.isExternalRoute(id)) {
         try {
-          const token = bearerToken(context)
-          const loaded = await loadExternalMessage(token, id)
+          const token = ExternalAccounts.bearerToken(context)
+          const loaded = await UnifiedMail.loadExternalMessage(token, id)
           if (!loaded) return Respond.r404('Email not found')
-          const mutations = await queueExternalMessagePatch(token, loaded, patch)
-          const projected = projectExternalPatch(loaded, patch)
+          const mutations = await UnifiedMail.queueExternalMessagePatch(token, loaded, patch)
+          const projected = UnifiedMail.projectExternalPatch(loaded, patch)
           const detail = projected
-            ? await presentExternalDetail(projected.indexed, projected.rawRFC822Base64)
+            ? await ExternalMessage.presentExternalDetail(projected.indexed, projected.rawRFC822Base64)
             : null
           if (!detail) return Respond.r404('Email not found')
           return {
@@ -101,7 +96,7 @@ export class InboxIdController {
           }
         } catch (error) {
           if (error instanceof ExternalFolderError) return Respond.r400(error.message)
-          return accountFailure(error)
+          return ExternalAccounts.accountFailure(error)
         }
       }
 
@@ -146,12 +141,12 @@ export class InboxIdController {
       if (!id) return Respond.r404('Email not found')
       if (InboxIdController.isExternalRoute(id)) {
         try {
-          const loaded = await loadExternalMessage(bearerToken(context), id)
+          const loaded = await UnifiedMail.loadExternalMessage(ExternalAccounts.bearerToken(context), id)
           if (!loaded) return Respond.r404('Email not found')
-          const detail = await presentExternalDetail(loaded.indexed, loaded.rawRFC822Base64)
+          const detail = await ExternalMessage.presentExternalDetail(loaded.indexed, loaded.rawRFC822Base64)
           return detail ? { ...detail, calendarInvite: null } : Respond.r404('Email not found')
         } catch (error) {
-          return accountFailure(error)
+          return ExternalAccounts.accountFailure(error)
         }
       }
 
@@ -165,12 +160,12 @@ export class InboxIdController {
       const rawSource = await app.rawMessages.findForEmail(id)
       const githubUrl = GitHubNotification.findTarget(presented)
       const attachmentRecords = await app.attachments.list(id)
-      const calendarAttachment = bestCalendarAttachment(attachmentRecords)
+      const calendarAttachment = CalendarAttachments.bestCalendarAttachment(attachmentRecords)
       const calendarInvite = await InboxIdController.findCalendarInvite(app, auth.email, id, {
         email,
         attachment: calendarAttachment,
       })
-      const visibleAttachments = withoutCalendarCardAttachments(attachmentRecords, calendarInvite ? calendarAttachment : null)
+      const visibleAttachments = CalendarAttachments.withoutCalendarCardAttachments(attachmentRecords, calendarInvite ? calendarAttachment : null)
         .map(({ id, filename, contentType, size, disposition, contentId }) => ({ id, filename, contentType, size, disposition, contentId }))
       return await app.categoryMappings.presentEmail(auth.email, /** @type {any} */ ({
         ...presented,
@@ -211,7 +206,7 @@ export class InboxIdController {
   }
 
   static isExternalRoute(value) {
-    return typeof value === 'string' && value.startsWith('extmsg.') && Boolean(parseExternalMessageId(value))
+    return typeof value === 'string' && value.startsWith('extmsg.') && Boolean(ExternalMessage.parseExternalMessageId(value))
   }
 
   /**

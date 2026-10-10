@@ -2,7 +2,7 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { AuthGuard } from '../shared/http/AuthGuard.js'
 import { getApp } from '../app.js'
 import { FyloAccessContext } from '../shared/persistence/FyloAccessContext.js'
-import { externalMailSummaries } from '../shared/mailbox/unified-mail.js'
+import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
 import { Buffer } from 'node:buffer'
 import { ServerEnvironment } from '../shared/runtime/ServerEnvironment.js'
 /** @import { InboxStreamMessage } from '../models/InboxStreamMessage.js' */
@@ -139,7 +139,7 @@ export class InboxStreamController {
     const result = []
     let offset = 0
     while (result.length < InboxStreamController.REPLAY_LIMIT && offset <= 100_000) {
-      const page = await externalMailSummaries(token, {
+      const page = await UnifiedMail.externalMailSummaries(token, {
         folderRole: 'inbox', receivedAtFrom: cursor.at, oldestFirst: true, limit: 1000, offset,
       })
       result.push(...page.filter(email => InboxStreamController._afterCursor(email, cursor)))

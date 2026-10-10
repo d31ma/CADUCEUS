@@ -3,13 +3,13 @@ import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { MailValidation } from '../shared/delivery/MailValidation.js'
 import { SendService } from '../features/delivery/services/SendService.js'
-import { createMessageId } from '../shared/mailbox/threading.js'
-import { ownedSenderAddresses, resolveOwnedSender } from '../shared/users/sender-addresses.js'
+import { Threading } from '../shared/mailbox/Threading.js'
+import { SenderAddresses } from '../shared/users/SenderAddresses.js'
 import { ConversationArchiveError } from '../features/mailbox/services/ConversationArchiveService.js'
-import { buildOutboundMessageSource } from '../shared/mailbox/message-source.js'
-import { externalDeliveryRequest, externalUndoToken } from '../shared/delivery/external-submission.js'
-import { parseExternalMessageId } from '../shared/mailbox/external-message.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { MessageSource } from '../shared/mailbox/MessageSource.js'
+import { ExternalSubmission } from '../shared/delivery/ExternalSubmission.js'
+import { ExternalMessage } from '../shared/mailbox/ExternalMessage.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 import { SendIdempotencyConflict } from '../features/delivery/services/SendIdempotencyService.js'
 import { Uuid } from '../shared/runtime/Uuid.js'
 /** @import { SendRequest } from '../features/delivery/services/SmtpService.js' */
@@ -57,17 +57,17 @@ export class SendController {
       if (!parsed.ok) return Respond.r400(parsed.error)
       const parsedAttachments = MailValidation.validateSendAttachments(body?.attachments)
       if (!parsedAttachments.ok) return Respond.r400(parsedAttachments.error)
-      const senderAddresses = await ownedSenderAddresses(app.users, auth.email)
-      let senderEmail = resolveOwnedSender(parsed.value.from, senderAddresses, auth.email)
+      const senderAddresses = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
+      let senderEmail = SenderAddresses.resolveOwnedSender(parsed.value.from, senderAddresses, auth.email)
       let externalAccount
       if (!senderEmail && parsed.value.from) {
         try {
-          const accounts = await ExternalAccounts.list(bearerToken(context))
+          const accounts = await ExternalAccounts.list(ExternalAccounts.bearerToken(context))
           externalAccount = accounts.find(account => account.mailboxAddress === parsed.value.from && account.capabilities?.send === true
             && ['ready', 'syncing', 'idle', 'degraded'].includes(account.state))
           senderEmail = externalAccount?.mailboxAddress
         } catch (error) {
-          return accountFailure(error)
+          return ExternalAccounts.accountFailure(error)
         }
       }
       if (!senderEmail) return Respond.r403('From address is not owned by this mailbox')
@@ -76,7 +76,7 @@ export class SendController {
       /** @type {SendRequest} */
       const req = {
         ...parsed.value,
-        messageId: createMessageId(selectedSender.split('@')[1] || 'localhost'),
+        messageId: Threading.createMessageId(selectedSender.split('@')[1] || 'localhost'),
         ...(parsedAttachments.value.length ? { attachments: parsedAttachments.value } : {}),
       }
   		const outboundMessageId = /** @type {string} */ (req.messageId)
@@ -95,7 +95,7 @@ export class SendController {
           return Respond.r400('archiveSourceId is required for Send & Archive')
         }
         if (body.sendAt != null) return Respond.r400('Send & Archive cannot be combined with scheduled delivery')
-        externalArchiveSourceId = parseExternalMessageId(body.archiveSourceId.trim()) ? body.archiveSourceId.trim() : ''
+        externalArchiveSourceId = ExternalMessage.parseExternalMessageId(body.archiveSourceId.trim()) ? body.archiveSourceId.trim() : ''
         if (!externalArchiveSourceId) {
           try {
             archivePlan = await app.conversationArchive.plan({
@@ -172,20 +172,20 @@ export class SendController {
   			try {
   				stored = await app.sendService.recordExternalAccepted(auth.email, selectedSender, req, trackingId)
   				if (trackingId) {
-  					submission = await ExternalAccounts.beginSubmissionBatch(bearerToken(context), externalAccount.id, {
+  					submission = await ExternalAccounts.beginSubmissionBatch(ExternalAccounts.bearerToken(context), externalAccount.id, {
   						idempotencyKey: providerIdempotencyKey, envelopeFrom: selectedSender, recipients: envelopeRecipients, notBefore,
   					})
   					if (submission.state === 'building') {
   						for (let index = Number(submission.deliveryCount || 0); index < envelopeRecipients.length; index++) {
   							const recipient = envelopeRecipients[index]
-  							const providerRequest = externalDeliveryRequest(req, trackingId, recipient)
-  							const source = await buildOutboundMessageSource(selectedSender, providerRequest, outboundMessageId)
-  							submission = await ExternalAccounts.appendSubmissionBatch(bearerToken(context), externalAccount.id, {
+  							const providerRequest = ExternalSubmission.externalDeliveryRequest(req, trackingId, recipient)
+  							const source = await MessageSource.buildOutboundMessageSource(selectedSender, providerRequest, outboundMessageId)
+  							submission = await ExternalAccounts.appendSubmissionBatch(ExternalAccounts.bearerToken(context), externalAccount.id, {
   								submissionId: submission.id, revision: submission.revision, index, recipient,
   								rawRFC822Base64: source.toString('base64'),
   							})
   						}
-  						submission = await ExternalAccounts.commitSubmissionBatch(bearerToken(context), externalAccount.id, {
+  						submission = await ExternalAccounts.commitSubmissionBatch(ExternalAccounts.bearerToken(context), externalAccount.id, {
   							submissionId: submission.id, revision: submission.revision,
   						})
   					}
@@ -193,9 +193,9 @@ export class SendController {
   						throw new Error('Connected-account tracking batch is not runnable')
   					}
   				} else {
-  					const providerRequest = externalDeliveryRequest(req, trackingId, envelopeRecipients[0])
-  					const source = await buildOutboundMessageSource(selectedSender, providerRequest, outboundMessageId)
-  					submission = await ExternalAccounts.submit(bearerToken(context), externalAccount.id, {
+  					const providerRequest = ExternalSubmission.externalDeliveryRequest(req, trackingId, envelopeRecipients[0])
+  					const source = await MessageSource.buildOutboundMessageSource(selectedSender, providerRequest, outboundMessageId)
+  					submission = await ExternalAccounts.submit(ExternalAccounts.bearerToken(context), externalAccount.id, {
   						idempotencyKey: providerIdempotencyKey,
   						envelopeFrom: selectedSender,
   						recipients: envelopeRecipients,
@@ -215,16 +215,16 @@ export class SendController {
   			let accepted = sendAtMs != null
   				? { scheduled: true, id: stored.messageId, messageId: stored.messageId, threadId: stored.threadId, externalAccountId: externalAccount.id }
   				: delayMs > 0
-  					? { sent: true, queued: true, messageId: stored.messageId, threadId: stored.threadId, undoId: externalUndoToken(externalAccount.id, submission.id, stored.messageId) }
+  					? { sent: true, queued: true, messageId: stored.messageId, threadId: stored.threadId, undoId: ExternalSubmission.externalUndoToken(externalAccount.id, submission.id, stored.messageId) }
   					: { queued: true, queueId: submission.id, messageId: stored.messageId, threadId: stored.threadId, externalAccountId: externalAccount.id }
   			if (!externalArchiveSourceId) return await accept(await withReminder(accepted))
   			try {
   				const archived = await app.mailActions.apply({
   					ids: [externalArchiveSourceId], patch: { folder: 'archive' }, ownerEmail: auth.email,
-  					domains: auth.domains, providerToken: bearerToken(context),
+  					domains: auth.domains, providerToken: ExternalAccounts.bearerToken(context),
   				})
   				if (delayMs > 0 && submission?.id) {
-  					const undoId = externalUndoToken(externalAccount.id, submission.id, stored.messageId, archived.actionId)
+  					const undoId = ExternalSubmission.externalUndoToken(externalAccount.id, submission.id, stored.messageId, archived.actionId)
   					if (!undoId) throw new Error('Connected-account archive undo identity is invalid')
   					accepted = { ...accepted, undoId }
   				}
@@ -234,11 +234,11 @@ export class SendController {
   			}
   		} catch (error) {
   			if (submission?.id) {
-  				await ExternalAccounts.cancelSubmission(bearerToken(context), externalAccount.id, submission.id).catch(() => {})
+  				await ExternalAccounts.cancelSubmission(ExternalAccounts.bearerToken(context), externalAccount.id, submission.id).catch(() => {})
   			}
   			if (stored?.messageId) await app.sendService.rollbackExternalAccepted(stored.messageId).catch(() => {})
   			if (sendRequestDocumentId) await app.sendIdempotency.markAmbiguous(sendRequestDocumentId).catch(() => {})
-  			return accountFailure(error)
+  			return ExternalAccounts.accountFailure(error)
   		}
   	}
   	try {

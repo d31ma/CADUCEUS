@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  inspectExtensionBundle,
-  presentExtension,
-  trustedExtensionRecord,
-} from '@/shared/extensions/extensions.js'
+import { Extensions } from '@/shared/extensions/Extensions.js'
 
 const pluginBundle = (over = {}) => ({
   manifest: {
@@ -23,8 +19,8 @@ const pluginBundle = (over = {}) => ({
 
 describe('trusted extension packages', () => {
   it('normalizes a plugin into a stable digest and redacted public projection', () => {
-    const first = inspectExtensionBundle(pluginBundle())
-    const reordered = inspectExtensionBundle({
+    const first = Extensions.inspectExtensionBundle(pluginBundle())
+    const reordered = Extensions.inspectExtensionBundle({
       source: pluginBundle().source,
       manifest: { ...pluginBundle().manifest },
     })
@@ -34,10 +30,10 @@ describe('trusted extension packages', () => {
     expect(reordered.digest).toBe(first.digest)
     expect(first.manifest.permissions).toEqual(['mail:metadata', 'ui:notify'])
 
-    const stored = trustedExtensionRecord('Alice@Example.com', first, new Date('2026-08-22T10:00:00.000Z'))
+    const stored = Extensions.trustedExtensionRecord('Alice@Example.com', first, new Date('2026-08-22T10:00:00.000Z'))
     expect(stored).toMatchObject({ owner: 'alice@example.com', domain: 'example.com', enabled: false })
 
-    const projection = presentExtension({
+    const projection = Extensions.presentExtension({
       ...first,
       owner: 'alice@example.com', enabled: true,
       trustedAt: '2026-08-22T10:00:00.000Z', installedAt: '2026-08-22T10:00:00.000Z', updatedAt: '2026-08-22T10:00:00.000Z',
@@ -49,10 +45,10 @@ describe('trusted extension packages', () => {
 
   it('rejects unknown authority, executable themes, unsafe tokens, and unbounded source', () => {
     const unknownPermission = pluginBundle({ manifest: { ...pluginBundle().manifest, permissions: ['mail:delete'] } })
-    expect(inspectExtensionBundle(unknownPermission)).toBeInstanceOf(Error)
+    expect(Extensions.inspectExtensionBundle(unknownPermission)).toBeInstanceOf(Error)
 
     const unknownManifestField = pluginBundle({ manifest: { ...pluginBundle().manifest, homepage: 'https://tracker.test' } })
-    expect(inspectExtensionBundle(unknownManifestField)).toBeInstanceOf(Error)
+    expect(Extensions.inspectExtensionBundle(unknownManifestField)).toBeInstanceOf(Error)
 
     const executableTheme = {
       manifest: {
@@ -62,11 +58,11 @@ describe('trusted extension packages', () => {
       },
       source: 'alert(1)',
     }
-    expect(inspectExtensionBundle(executableTheme)).toBeInstanceOf(Error)
+    expect(Extensions.inspectExtensionBundle(executableTheme)).toBeInstanceOf(Error)
     executableTheme.source = ''
     executableTheme.manifest.theme.tokens.surface = 'url(https://tracker.test/pixel)'
-    expect(inspectExtensionBundle(executableTheme)).toBeInstanceOf(Error)
+    expect(Extensions.inspectExtensionBundle(executableTheme)).toBeInstanceOf(Error)
 
-    expect(inspectExtensionBundle(pluginBundle({ source: 'x'.repeat(131_073) }))).toBeInstanceOf(Error)
+    expect(Extensions.inspectExtensionBundle(pluginBundle({ source: 'x'.repeat(131_073) }))).toBeInstanceOf(Error)
   })
 })

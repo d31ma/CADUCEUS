@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { DatabaseRepository } from '../server/shared/persistence/Fylo.js'
+import { DatabaseRepository } from '../server/shared/persistence/DatabaseRepository.js'
 import { DomainsRepository } from '../server/features/domains/repositories/DomainsRepository.js'
 import { UsersRepository } from '../server/features/users/repositories/UsersRepository.js'
 import { Security } from '../server/shared/security/Security.js'

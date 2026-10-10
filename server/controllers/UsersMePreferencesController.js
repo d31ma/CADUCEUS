@@ -2,47 +2,17 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { Security } from '../shared/security/Security.js'
-import {
-  DEFAULT_COMPOSER_FONT,
-  DEFAULT_INTERFACE_FONT,
-  isComposerFont,
-  isInterfaceFont,
-} from '../shared/users/font-preferences.js'
-import {
-  DEFAULT_NOTIFICATION_SOUNDS,
-  validateNotificationSounds,
-} from '../shared/users/notification-sounds.js'
-import {
-  DEFAULT_THEME_PREFERENCES,
-  validateThemePreferences,
-} from '../shared/users/theme-preferences.js'
-import {
-  DEFAULT_INTERFACE_LOCALE,
-  validateInterfaceLocale,
-} from '../shared/users/locale-preferences.js'
-import {
-  normalizeGrammarPreferences,
-  validateGrammarPreferencePatch,
-} from '../shared/users/grammar-preferences.js'
+import { FontPreferences } from '../shared/users/FontPreferences.js'
+import { NotificationSounds } from '../shared/users/NotificationSounds.js'
+import { ThemePreferences } from '../shared/users/ThemePreferences.js'
+import { LocalePreferences } from '../shared/users/LocalePreferences.js'
+import { GrammarPreferences } from '../shared/users/GrammarPreferences.js'
 import { validateCategoryMappings } from '../features/mailbox/services/CategoryMappingService.js'
-import {
-  normalizeUnreadBadgePreferences,
-  validateUnreadBadgePreferencePatch,
-} from '../shared/users/unread-badge-preferences.js'
-import {
-  normalizeNewMailNotificationPreferences,
-  normalizeNewMailNotificationPreferencesForAccounts,
-  validateNewMailNotificationPreferencePatch,
-} from '../shared/users/new-mail-notification-preferences.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
-import {
-  normalizeKeyboardShortcutOverrides,
-  validateKeyboardShortcutOverrides,
-} from '../shared/users/keyboard-shortcuts.js'
-import {
-  normalizeMailPreferences,
-  validateMailPreferencePatch,
-} from '../shared/users/mail-preferences.js'
+import { UnreadBadgePreferences } from '../shared/users/UnreadBadgePreferences.js'
+import { NewMailNotificationPreferences } from '../shared/users/NewMailNotificationPreferences.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
+import { KeyboardShortcuts } from '../shared/users/KeyboardShortcuts.js'
+import { MailPreferences } from '../shared/users/MailPreferences.js'
 
 @RequestRoute("/users/me/preferences")
 @SignedIn
@@ -102,29 +72,29 @@ export class UsersMePreferencesController {
         next.trustedImageSenders = parsed.senders
       }
       if (body?.interfaceFont !== undefined) {
-        if (!isInterfaceFont(body.interfaceFont)) {
+        if (!FontPreferences.isInterfaceFont(body.interfaceFont)) {
           return Respond.r400('interfaceFont must be one of: plex-sans, system, humanist, serif, monospace')
         }
         next.interfaceFont = body.interfaceFont
       }
       if (body?.composerFont !== undefined) {
-        if (!isComposerFont(body.composerFont)) {
+        if (!FontPreferences.isComposerFont(body.composerFont)) {
           return Respond.r400('composerFont must be one of: interface, plex-sans, system, humanist, serif, monospace')
         }
         next.composerFont = body.composerFont
       }
       if (body?.interfaceLocale !== undefined) {
-        const parsed = validateInterfaceLocale(body.interfaceLocale)
+        const parsed = LocalePreferences.validateInterfaceLocale(body.interfaceLocale)
         if (!parsed.ok) return Respond.r400(parsed.error)
         next.interfaceLocale = parsed.locale
       }
       if (body?.notificationSounds !== undefined) {
-        const parsed = validateNotificationSounds(body.notificationSounds)
+        const parsed = NotificationSounds.validateNotificationSounds(body.notificationSounds)
         if (!parsed.ok) return Respond.r400(parsed.error)
         next.notificationSounds = /** @type {any} */ (parsed.sounds)
       }
       if (body?.themePreferences !== undefined) {
-        const parsed = validateThemePreferences(body.themePreferences)
+        const parsed = ThemePreferences.validateThemePreferences(body.themePreferences)
         if (!parsed.ok) return Respond.r400(parsed.error)
         next.themePreferences = /** @type {any} */ (parsed.preferences)
       }
@@ -135,16 +105,16 @@ export class UsersMePreferencesController {
         next.githubProfileEnrichment = body.githubProfileEnrichment
       }
       if (body?.keyboardShortcutOverrides !== undefined) {
-        const parsed = validateKeyboardShortcutOverrides(body.keyboardShortcutOverrides)
+        const parsed = KeyboardShortcuts.validateKeyboardShortcutOverrides(body.keyboardShortcutOverrides)
         if (!parsed.ok) return Respond.r400(parsed.error)
         next.keyboardShortcutOverrides = parsed.overrides
       }
-      const grammarPatch = validateGrammarPreferencePatch(body || {})
+      const grammarPatch = GrammarPreferences.validateGrammarPreferencePatch(body || {})
       if (!grammarPatch.ok) return Respond.r400(grammarPatch.error || 'Invalid grammar preferences')
       if (body?.grammarCheckEnabled !== undefined) next.grammarCheckEnabled = body.grammarCheckEnabled
       if (body?.grammarCheckLanguage !== undefined) next.grammarCheckLanguage = body.grammarCheckLanguage
       if (body?.grammarCheckDisabledRules !== undefined) next.grammarCheckDisabledRules = [...new Set(body.grammarCheckDisabledRules)]
-      const unreadBadgePatch = validateUnreadBadgePreferencePatch(body, user, user.domains)
+      const unreadBadgePatch = UnreadBadgePreferences.validateUnreadBadgePreferencePatch(body, user, user.domains)
       if (!unreadBadgePatch.ok) {
         return unreadBadgePatch.forbidden
           ? Respond.r403(unreadBadgePatch.error)
@@ -156,13 +126,13 @@ export class UsersMePreferencesController {
         : []
       if (body?.newMailNotificationExternalAccounts !== undefined) {
         try {
-          const listed = await ExternalAccounts.list(bearerToken(context))
+          const listed = await ExternalAccounts.list(ExternalAccounts.bearerToken(context))
           externalAccountIds = (Array.isArray(listed) ? listed : listed?.accounts || []).map(account => account?.id).filter(Boolean)
         } catch (error) {
-          return accountFailure(error)
+          return ExternalAccounts.accountFailure(error)
         }
       }
-      const notificationPatch = validateNewMailNotificationPreferencePatch(body, user, user.domains, externalAccountIds)
+      const notificationPatch = NewMailNotificationPreferences.validateNewMailNotificationPreferencePatch(body, user, user.domains, externalAccountIds)
       if (!notificationPatch.ok) {
         return notificationPatch.forbidden
           ? Respond.r403(notificationPatch.error)
@@ -174,15 +144,15 @@ export class UsersMePreferencesController {
         next.newMailNotificationExternalAccounts = newMailNotificationExternalAccounts
       }
       if (body?.mailPreferences !== undefined) {
-        const mailPatch = validateMailPreferencePatch(body.mailPreferences, user)
+        const mailPatch = MailPreferences.validateMailPreferencePatch(body.mailPreferences, user)
         if (!mailPatch.ok) return Respond.r400(mailPatch.error)
         next.mailPreferences = mailPatch.preferences
       }
 
       const updated = await app.users.updatePreferences(docId, next)
-      const grammarPreferences = normalizeGrammarPreferences(updated)
-      const unreadBadgePreferences = normalizeUnreadBadgePreferences(updated, updated.domains)
-      const newMailNotificationPreferences = normalizeNewMailNotificationPreferencesForAccounts(updated, updated.domains, externalAccountIds)
+      const grammarPreferences = GrammarPreferences.normalizeGrammarPreferences(updated)
+      const unreadBadgePreferences = UnreadBadgePreferences.normalizeUnreadBadgePreferences(updated, updated.domains)
+      const newMailNotificationPreferences = NewMailNotificationPreferences.normalizeNewMailNotificationPreferencesForAccounts(updated, updated.domains, externalAccountIds)
       return {
         updated: true,
         calendarVisibility: updated.calendarVisibility || 'private',
@@ -190,16 +160,16 @@ export class UsersMePreferencesController {
         categoryMappings: updated.categoryMappings || {},
         remoteImagePolicy: updated.remoteImagePolicy || 'block',
         trustedImageSenders: updated.trustedImageSenders || [],
-        interfaceFont: updated.interfaceFont || DEFAULT_INTERFACE_FONT,
-        composerFont: updated.composerFont || DEFAULT_COMPOSER_FONT,
-        interfaceLocale: updated.interfaceLocale || DEFAULT_INTERFACE_LOCALE,
-        notificationSounds: updated.notificationSounds || DEFAULT_NOTIFICATION_SOUNDS,
-        themePreferences: updated.themePreferences || DEFAULT_THEME_PREFERENCES,
+        interfaceFont: updated.interfaceFont || FontPreferences.DEFAULT_INTERFACE_FONT,
+        composerFont: updated.composerFont || FontPreferences.DEFAULT_COMPOSER_FONT,
+        interfaceLocale: updated.interfaceLocale || LocalePreferences.DEFAULT_INTERFACE_LOCALE,
+        notificationSounds: updated.notificationSounds || NotificationSounds.DEFAULT_NOTIFICATION_SOUNDS,
+        themePreferences: updated.themePreferences || ThemePreferences.DEFAULT_THEME_PREFERENCES,
         ...unreadBadgePreferences,
         ...newMailNotificationPreferences,
         githubProfileEnrichment: updated.githubProfileEnrichment === true,
-        keyboardShortcutOverrides: normalizeKeyboardShortcutOverrides(updated.keyboardShortcutOverrides),
-        mailPreferences: normalizeMailPreferences(updated.mailPreferences, updated),
+        keyboardShortcutOverrides: KeyboardShortcuts.normalizeKeyboardShortcutOverrides(updated.keyboardShortcutOverrides),
+        mailPreferences: MailPreferences.normalizeMailPreferences(updated.mailPreferences, updated),
         ...grammarPreferences,
       }
     })
@@ -221,25 +191,25 @@ export class UsersMePreferencesController {
       const app = await getApp()
       const [, user] = await app.users.findByEmail(auth.email)
       if (!user) return Respond.r404('User not found')
-      const grammarPreferences = normalizeGrammarPreferences(user)
-      const unreadBadgePreferences = normalizeUnreadBadgePreferences(user, user.domains)
-      const newMailNotificationPreferences = normalizeNewMailNotificationPreferences(user, user.domains)
+      const grammarPreferences = GrammarPreferences.normalizeGrammarPreferences(user)
+      const unreadBadgePreferences = UnreadBadgePreferences.normalizeUnreadBadgePreferences(user, user.domains)
+      const newMailNotificationPreferences = NewMailNotificationPreferences.normalizeNewMailNotificationPreferences(user, user.domains)
       return {
         calendarVisibility: /** @type {any} */ (user).calendarVisibility || 'private',
         mailboxNames: /** @type {any} */ (user).mailboxNames || {},
         categoryMappings: /** @type {any} */ (user).categoryMappings || {},
         remoteImagePolicy: /** @type {any} */ (user).remoteImagePolicy || 'block',
         trustedImageSenders: /** @type {any} */ (user).trustedImageSenders || [],
-        interfaceFont: /** @type {any} */ (user).interfaceFont || DEFAULT_INTERFACE_FONT,
-        composerFont: /** @type {any} */ (user).composerFont || DEFAULT_COMPOSER_FONT,
-        interfaceLocale: /** @type {any} */ (user).interfaceLocale || DEFAULT_INTERFACE_LOCALE,
-        notificationSounds: /** @type {any} */ (user).notificationSounds || DEFAULT_NOTIFICATION_SOUNDS,
-        themePreferences: /** @type {any} */ (user).themePreferences || DEFAULT_THEME_PREFERENCES,
+        interfaceFont: /** @type {any} */ (user).interfaceFont || FontPreferences.DEFAULT_INTERFACE_FONT,
+        composerFont: /** @type {any} */ (user).composerFont || FontPreferences.DEFAULT_COMPOSER_FONT,
+        interfaceLocale: /** @type {any} */ (user).interfaceLocale || LocalePreferences.DEFAULT_INTERFACE_LOCALE,
+        notificationSounds: /** @type {any} */ (user).notificationSounds || NotificationSounds.DEFAULT_NOTIFICATION_SOUNDS,
+        themePreferences: /** @type {any} */ (user).themePreferences || ThemePreferences.DEFAULT_THEME_PREFERENCES,
         ...unreadBadgePreferences,
         ...newMailNotificationPreferences,
         githubProfileEnrichment: /** @type {any} */ (user).githubProfileEnrichment === true,
-        keyboardShortcutOverrides: normalizeKeyboardShortcutOverrides(/** @type {any} */ (user).keyboardShortcutOverrides),
-        mailPreferences: normalizeMailPreferences(user.mailPreferences, user),
+        keyboardShortcutOverrides: KeyboardShortcuts.normalizeKeyboardShortcutOverrides(/** @type {any} */ (user).keyboardShortcutOverrides),
+        mailPreferences: MailPreferences.normalizeMailPreferences(user.mailPreferences, user),
         ...grammarPreferences,
       }
     })

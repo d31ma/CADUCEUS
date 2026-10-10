@@ -1,6 +1,6 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
-import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/calendar/calendars")
 @SignedIn
@@ -11,9 +11,9 @@ export class CalendarCalendarsController {
       const app = await getApp()
       if (!app.providerCalendars) return { calendars: [] }
       try {
-        return { calendars: await app.providerCalendars.calendars(bearerToken(context)) }
+        return { calendars: await app.providerCalendars.calendars(ExternalAccounts.bearerToken(context)) }
       } catch (error) {
-        return accountFailure(error)
+        return ExternalAccounts.accountFailure(error)
       }
     })
   }

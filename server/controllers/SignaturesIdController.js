@@ -1,9 +1,9 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { Actions } from '../shared/auth/Auth.js'
-import { ownedSenderAddresses } from '../shared/users/sender-addresses.js'
-import { normalizeSignatureInput, resolveUniqueSignatureName } from '../shared/mailbox/signature-content.js'
+import { Auth } from '../shared/auth/Auth.js'
+import { SenderAddresses } from '../shared/users/SenderAddresses.js'
+import { SignatureContent } from '../shared/mailbox/SignatureContent.js'
 
 @RequestRoute("/signatures/{id}")
 @SignedIn
@@ -23,17 +23,17 @@ export class SignaturesIdController {
 
   @PutRoute
   async put(@FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { id }, guard: { action: Actions.MAILBOX_WRITE } }, async ({ paths, body, auth }) => {
+    return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ paths, body, auth }) => {
       const id = String(paths?.id || '')
       if (!id) return Respond.r404('Signature not found')
       const app = await getApp()
       const [docId, existing] = await app.signatures.findById(id)
       if (!docId || !existing || existing.owner !== auth.email) return Respond.r404('Signature not found')
-      const addresses = await ownedSenderAddresses(app.users, auth.email)
-      const input = normalizeSignatureInput(body, { partial: true, allowedAddresses: addresses })
+      const addresses = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
+      const input = SignatureContent.normalizeSignatureInput(body, { partial: true, allowedAddresses: addresses })
       if (input instanceof Error) return Respond.r400(input.message)
       if (input.name) {
-        input.name = resolveUniqueSignatureName(input.name, Object.values(await app.signatures.listForOwner(auth.email)), id)
+        input.name = SignatureContent.resolveUniqueSignatureName(input.name, Object.values(await app.signatures.listForOwner(auth.email)), id)
       }
       const patch = { ...input, updatedAt: Date.now() }
       if (input.defaultFor) await app.signatures.releaseDefaults(auth.email, input.defaultFor, id)
@@ -44,7 +44,7 @@ export class SignaturesIdController {
 
   @DeleteRoute
   async delete(@FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { id }, guard: { action: Actions.MAILBOX_WRITE } }, async ({ paths, auth }) => {
+    return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ paths, auth }) => {
       const id = String(paths?.id || '')
       if (!id) return Respond.r404('Signature not found')
       const app = await getApp()

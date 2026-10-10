@@ -1,7 +1,7 @@
 import { getApp } from '../../../app.js'
-import { buildOutboundMessageSource } from '../../../shared/mailbox/message-source.js'
-import { threadMetadataFromOutbound } from '../../../shared/mailbox/threading.js'
-import { listTrackableLinks } from '../../../shared/delivery/tracking-tokens.js'
+import { MessageSource } from '../../../shared/mailbox/MessageSource.js'
+import { Threading } from '../../../shared/mailbox/Threading.js'
+import { TrackingTokens } from '../../../shared/delivery/TrackingTokens.js'
 /** @import { SendRequest } from './SmtpService.js' */
 
 export class SendService {
@@ -214,7 +214,7 @@ export class SendService {
     const [docId] = await this.emails.findById(messageId)
     const domain = ownerEmail.split('@')[1] || ''
     const receivedAt = new Date()
-    const threadMetadata = threadMetadataFromOutbound(req, messageId, domain)
+    const threadMetadata = Threading.threadMetadataFromOutbound(req, messageId, domain)
     if (!docId) return await this.#storeSentEmail(trackingId, ownerEmail, senderEmail, messageId, req)
     await this.emails.update(docId, {
       ownerEmail,
@@ -229,11 +229,11 @@ export class SendService {
       htmlBody: req.html || '',
       openTracking: req.openTracking === true,
       linkTracking: req.linkTracking === true,
-      trackedLinksJson: JSON.stringify(req.linkTracking ? listTrackableLinks(req.html || '') : []),
+      trackedLinksJson: JSON.stringify(req.linkTracking ? TrackingTokens.listTrackableLinks(req.html || '') : []),
       ...threadMetadata,
     })
     await this.attachments.replaceForEmail(messageId, domain, req.attachments ?? [])
-    const source = await buildOutboundMessageSource(senderEmail, req, messageId, receivedAt)
+    const source = await MessageSource.buildOutboundMessageSource(senderEmail, req, messageId, receivedAt)
     await this.rawMessages.saveForEmail(messageId, domain, source)
     await this.contacts?.observeParticipants(ownerEmail, [...req.to, ...(req.cc || []), ...(req.bcc || [])], senderEmail.split('@')[1])
     return threadMetadata
@@ -249,7 +249,7 @@ export class SendService {
     const domain = ownerEmail.split('@')[1] || ''
     const sentFolder = await this.categoryMappings?.pathFor(ownerEmail, domain, 'sent') || 'sent'
     const receivedAt = new Date()
-    const threadMetadata = threadMetadataFromOutbound(req, messageId, domain)
+    const threadMetadata = Threading.threadMetadataFromOutbound(req, messageId, domain)
     await this.emails.put({
       id: messageId,
       domain,
@@ -272,7 +272,7 @@ export class SendService {
         trackingId,
         openTracking: req.openTracking === true,
         linkTracking: req.linkTracking === true,
-        trackedLinksJson: JSON.stringify(req.linkTracking ? listTrackableLinks(req.html || '') : []),
+        trackedLinksJson: JSON.stringify(req.linkTracking ? TrackingTokens.listTrackableLinks(req.html || '') : []),
         opensJson: '[]',
         clicksJson: '[]',
         openCount: 0,
@@ -283,7 +283,7 @@ export class SendService {
     if (req.attachments?.length) {
       await this.attachments.saveForEmail(messageId, domain, req.attachments)
     }
-    const source = await buildOutboundMessageSource(senderEmail, req, messageId, receivedAt)
+    const source = await MessageSource.buildOutboundMessageSource(senderEmail, req, messageId, receivedAt)
     await this.rawMessages.saveForEmail(messageId, domain, source)
     await this.contacts?.observeParticipants(ownerEmail, [
       ...(req.to || []), ...(req.cc || []), ...(req.bcc || []),

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 
 const MAX_EVENTS_PER_MESSAGE = 100
 const MAX_ACTIVITY_MESSAGES = 500
@@ -37,7 +37,7 @@ export class TrackingRepository {
         recipient: normalizeEmail(capability.recipient),
         openedAt,
       })
-      await this.fylo.patchDoc(Collections.EMAILS, {
+      await this.fylo.patchDoc(Fylo.Collections.EMAILS, {
         [docId]: {
           opensJson: JSON.stringify(opens.slice(-MAX_EVENTS_PER_MESSAGE)),
           openedAt: email.openedAt || openedAt,
@@ -76,7 +76,7 @@ export class TrackingRepository {
         linkIndex: input.linkIndex,
         clickedAt,
       })
-      await this.fylo.patchDoc(Collections.EMAILS, {
+      await this.fylo.patchDoc(Fylo.Collections.EMAILS, {
         [docId]: {
           clicksJson: JSON.stringify(clicks.slice(-MAX_EVENTS_PER_MESSAGE)),
           clickCount: Math.max(0, Number(email.clickCount) || 0) + 1,
@@ -100,7 +100,7 @@ export class TrackingRepository {
     const owner = normalizeEmail(options.ownerEmail)
     const domains = new Set((options.allowedDomains || []).map(value => String(value).toLowerCase()))
     const senders = new Set([owner, ...(options.ownedSenders || []).map(normalizeEmail)].filter(Boolean))
-    const docs = await collect(this.fylo.findDocs(Collections.EMAILS, { $ops: [] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.EMAILS, { $ops: [] }).collect())
     const all = Object.values(docs).filter(email => domains.has(String(email.domain || '').toLowerCase()))
     const sent = all
       .filter(email => isOwnedSent(email, owner, senders, options.sentFolders))
@@ -172,8 +172,8 @@ export class TrackingRepository {
   async findByTrackingId(trackingId) {
     const id = normalizeTrackingId(trackingId)
     if (!id) return null
-    const docs = await collect(
-      this.fylo.findDocs(Collections.EMAILS, { $ops: [{ trackingId: { $eq: id } }] }).collect(),
+    const docs = await Fylo.collect(
+      this.fylo.findDocs(Fylo.Collections.EMAILS, { $ops: [{ trackingId: { $eq: id } }] }).collect(),
     )
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], entry[1]] : null

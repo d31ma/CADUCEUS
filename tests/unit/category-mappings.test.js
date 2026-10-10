@@ -3,10 +3,10 @@ import {
   CATEGORY_ROLES,
   defaultRoleMapping,
   normalizeCategoryMappings,
-  normalizeCategoryPath,
   presentEmailWithMappings,
   validateCategoryMappings,
 } from '@/features/mailbox/services/CategoryMappingService.js'
+import { CategoryPath } from '@/shared/mailbox/CategoryPath.js'
 
 describe('mailbox category-role mappings', () => {
   it('normalizes only assigned domains and repairs ambiguous persisted paths', () => {
@@ -33,11 +33,11 @@ describe('mailbox category-role mappings', () => {
   })
 
   it('accepts bounded nested provider paths and rejects traversal or malformed paths', () => {
-    expect(normalizeCategoryPath('  Team/Support.Inbox  ')).toBe('team/support.inbox')
-    expect(normalizeCategoryPath('../inbox')).toBe('')
-    expect(normalizeCategoryPath('team//inbox')).toBe('')
-    expect(normalizeCategoryPath('team/')).toBe('')
-    expect(normalizeCategoryPath('x'.repeat(61))).toBe('')
+    expect(CategoryPath.normalizeCategoryPath('  Team/Support.Inbox  ')).toBe('team/support.inbox')
+    expect(CategoryPath.normalizeCategoryPath('../inbox')).toBe('')
+    expect(CategoryPath.normalizeCategoryPath('team//inbox')).toBe('')
+    expect(CategoryPath.normalizeCategoryPath('team/')).toBe('')
+    expect(CategoryPath.normalizeCategoryPath('x'.repeat(61))).toBe('')
 
     const mappings = { 'example.com': { ...defaultRoleMapping(), inbox: 'team/support.inbox' } }
     expect(validateCategoryMappings(mappings, ['example.com'])).toEqual({ ok: true, mappings })

@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 
 export class OutboxRepository {
   /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
@@ -11,7 +11,7 @@ export class OutboxRepository {
    * @returns {Promise<string>}
    */
   async put(entry) {
-    return await this.fylo.putData(Collections.OUTBOX, entry)
+    return await this.fylo.putData(Fylo.Collections.OUTBOX, entry)
   }
 
   /**
@@ -19,7 +19,7 @@ export class OutboxRepository {
    * @returns {Promise<[string | null, OutboxEntry | null]>}
    */
   async findById(undoId) {
-    const docs = await collect(this.fylo.findDocs(Collections.OUTBOX, { $ops: [{ id: { $eq: undoId } }] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.OUTBOX, { $ops: [{ id: { $eq: undoId } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], /** @type {OutboxEntry} */ (entry[1])] : [null, null]
   }
@@ -29,7 +29,7 @@ export class OutboxRepository {
    * @returns {Promise<void>}
    */
   async delete(docId) {
-    await this.fylo.delDoc(Collections.OUTBOX, docId)
+    await this.fylo.delDoc(Fylo.Collections.OUTBOX, docId)
   }
 
   /**
@@ -37,7 +37,7 @@ export class OutboxRepository {
    */
   async findExpired() {
     return /** @type {Promise<Record<string, OutboxEntry>>} */ (
-      collect(this.fylo.findDocs(Collections.OUTBOX, { $ops: [{ expiresAt: { $lte: Date.now() } }] }).collect())
+      Fylo.collect(this.fylo.findDocs(Fylo.Collections.OUTBOX, { $ops: [{ expiresAt: { $lte: Date.now() } }] }).collect())
     )
   }
 
@@ -50,7 +50,7 @@ export class OutboxRepository {
    */
   async findDue(now = Date.now()) {
     const all = /** @type {Record<string, OutboxEntry>} */ (
-      await collect(this.fylo.findDocs(Collections.OUTBOX, { $ops: [{ expiresAt: { $lte: now } }] }).collect())
+      await Fylo.collect(this.fylo.findDocs(Fylo.Collections.OUTBOX, { $ops: [{ expiresAt: { $lte: now } }] }).collect())
     )
     /** @type {Record<string, OutboxEntry>} */
     const due = {}
@@ -64,7 +64,7 @@ export class OutboxRepository {
   /** @returns {Promise<Record<string, OutboxEntry>>} */
   async listAll() {
     return /** @type {Promise<Record<string, OutboxEntry>>} */ (
-      collect(this.fylo.findDocs(Collections.OUTBOX, { $ops: [] }).collect())
+      Fylo.collect(this.fylo.findDocs(Fylo.Collections.OUTBOX, { $ops: [] }).collect())
     )
   }
 
@@ -74,6 +74,6 @@ export class OutboxRepository {
    * @returns {Promise<void>}
    */
   async update(docId, patch) {
-    await this.fylo.patchDoc(Collections.OUTBOX, { [docId]: patch })
+    await this.fylo.patchDoc(Fylo.Collections.OUTBOX, { [docId]: patch })
   }
 }

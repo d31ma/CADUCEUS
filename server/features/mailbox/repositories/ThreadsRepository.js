@@ -1,4 +1,4 @@
-import { messageParticipants, personalLevelForThread } from '../../../shared/mailbox/personal-level.js'
+import { PersonalLevel } from '../../../shared/mailbox/PersonalLevel.js'
 /** @import { StoredEmail } from '../../../types' */
 /** @import { EmailsRepository } from './EmailsRepository.js' */
 
@@ -64,9 +64,9 @@ export function groupMessagesIntoThreads(emails, ownerEmail) {
     const persistedId = threadEmails.find(email => email.threadId)?.threadId
     const scope = messageScope(threadEmails[0])
     const id = persistedId ?? `legacy:${scope}:${baseSubject(threadEmails[0].subject).toLowerCase()}`
-    const participants = [...new Set(threadEmails.flatMap(messageParticipants))]
+    const participants = [...new Set(threadEmails.flatMap(PersonalLevel.messageParticipants))]
     const mailbox = threadEmails[0].providerAccountId ? threadEmails[0].mailboxAddress : ownerEmail
-    const personalLevel = personalLevelForThread(threadEmails, mailbox)
+    const personalLevel = PersonalLevel.personalLevelForThread(threadEmails, mailbox)
     threads.push({
       id,
       subject: baseSubject(threadEmails[0].subject),

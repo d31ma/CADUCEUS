@@ -1,9 +1,8 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { cancelScheduled, findOwnedScheduled, presentScheduled } from '../shared/delivery/scheduled-sends.js'
-import { cancelExternalScheduled } from '../shared/delivery/scheduled-sends.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ScheduledSends } from '../shared/delivery/ScheduledSends.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/send/scheduled")
 @SignedIn
@@ -22,15 +21,15 @@ export class SendScheduledController {
     if (!id || typeof id !== 'string') return Respond.r400('id is required')
 
     const app = await getApp()
-    const record = await findOwnedScheduled(app, id, auth.email)
+    const record = await ScheduledSends.findOwnedScheduled(app, id, auth.email)
     if (!record) return Respond.r404('Scheduled email not found')
   	let result
   	try {
   		result = record.entry.transport === 'external'
-  			? await cancelExternalScheduled(app, record, auth.email, bearerToken(context))
-  			: await cancelScheduled(app, record, auth.email)
+  			? await ScheduledSends.cancelExternalScheduled(app, record, auth.email, ExternalAccounts.bearerToken(context))
+  			: await ScheduledSends.cancelScheduled(app, record, auth.email)
   	} catch (error) {
-  		return accountFailure(error)
+  		return ExternalAccounts.accountFailure(error)
   	}
     return result.conflict ? Respond.r409('Scheduled email is currently being delivered') : result
     })
@@ -49,22 +48,22 @@ export class SendScheduledController {
     const records = await app.scheduled.listForOwner(auth.email)
     const list = []
     for (const entry of Object.values(records)) {
-      const record = await findOwnedScheduled(app, entry.id, auth.email)
+      const record = await ScheduledSends.findOwnedScheduled(app, entry.id, auth.email)
   		if (!record) continue
   		if (record.entry.transport === 'external') {
   			try {
-  				const submission = await ExternalAccounts.submission(bearerToken(context), record.entry.externalAccountId, record.entry.externalSubmissionId)
+  				const submission = await ExternalAccounts.submission(ExternalAccounts.bearerToken(context), record.entry.externalAccountId, record.entry.externalSubmissionId)
   				if (submission.state === 'sent' || submission.state === 'cancelled') {
   					await app.scheduled.delete(record.docId)
   					continue
   				}
-  				list.push(await presentScheduled(app, record, { externalSubmission: submission }))
+  				list.push(await ScheduledSends.presentScheduled(app, record, { externalSubmission: submission }))
   			} catch (error) {
-  				return accountFailure(error)
+  				return ExternalAccounts.accountFailure(error)
   			}
   			continue
   		}
-  		list.push(await presentScheduled(app, record))
+  		list.push(await ScheduledSends.presentScheduled(app, record))
     }
     return list.sort((a, b) => a.sendAt.localeCompare(b.sendAt))
     })

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { prepareTrackedHtml } from '../../../shared/delivery/tracking-tokens.js'
+import { TrackingTokens } from '../../../shared/delivery/TrackingTokens.js'
 import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
 /** @import { SendRequest } from '../../../models/SendRequest.js' */
 /** @import { SmtpAdapter } from '../../../models/SmtpAdapter.js' */
@@ -265,7 +265,7 @@ export async function resolveMailExchangers(domain, resolver) {
 /** @param {string} from @param {SendRequest} msg @param {string} [trackedRecipient] */
 export function buildSmtpMessage(from, msg, trackedRecipient) {
   const renderedHtml = trackedRecipient && msg.trackingId && (msg.openTracking || msg.linkTracking)
-    ? prepareTrackedHtml(msg.html || '', {
+    ? TrackingTokens.prepareTrackedHtml(msg.html || '', {
       trackingId: msg.trackingId,
       recipient: trackedRecipient,
       openTracking: msg.openTracking,

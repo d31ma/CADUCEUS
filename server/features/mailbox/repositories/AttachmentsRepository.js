@@ -1,11 +1,10 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, rm, writeFile, readFile } from 'node:fs/promises'
 import { basename, join, relative, resolve } from 'node:path'
 import { createHash, randomBytes } from 'node:crypto'
 import { Buffer } from 'node:buffer'
-import { Buckets, Collections, collect } from '../../../shared/persistence/Fylo.js'
-import { normalizeAttachmentContentId, sanitizeAttachmentFilename } from '../../../shared/mailbox/attachment-policy.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
+import { AttachmentPolicy } from '../../../shared/mailbox/AttachmentPolicy.js'
 import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
-import { readFile } from 'node:fs/promises'
 /** @import { ParsedAttachment } from '../../../models/ParsedAttachment.js' */
 /** @import { EmailAttachmentRecord } from '../../../types' */
 /** @import { EmailAttachmentSummary } from '../../../types' */
@@ -21,7 +20,7 @@ export class AttachmentsRepository {
    * @returns {Promise<Array<EmailAttachmentRecord & { docId: string }>>}
    */
   async list(emailId) {
-    const docs = await collect(this.fylo.findDocs(Collections.ATTACHMENTS, { $ops: [{ emailId: { $eq: emailId } }] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.ATTACHMENTS, { $ops: [{ emailId: { $eq: emailId } }] }).collect())
     return Object.entries(docs).map(([docId, attachment]) => ({ docId, .../** @type {EmailAttachmentRecord} */ (attachment) }))
   }
 
@@ -38,7 +37,7 @@ export class AttachmentsRepository {
    * @returns {Promise<Map<string, EmailAttachmentSummary[]>>}
    */
   async listSummariesByEmail(allowedDomains) {
-    const docs = await collect(this.fylo.findDocs(Collections.ATTACHMENTS, { $ops: [] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.ATTACHMENTS, { $ops: [] }).collect())
     const grouped = new Map()
     for (const attachment of Object.values(docs)) {
       const record = /** @type {EmailAttachmentRecord} */ (attachment)
@@ -55,7 +54,7 @@ export class AttachmentsRepository {
    * @returns {Promise<[string | null, EmailAttachmentRecord | null]>}
    */
   async findById(id) {
-    const docs = await collect(this.fylo.findDocs(Collections.ATTACHMENTS, { $ops: [{ id: { $eq: id } }] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.ATTACHMENTS, { $ops: [{ id: { $eq: id } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], /** @type {EmailAttachmentRecord} */ (entry[1])] : [null, null]
   }
@@ -113,7 +112,7 @@ export class AttachmentsRepository {
    */
   async readContent(attachment) {
     if (attachment.bucketId) {
-      return await this.fylo.getFileBytes(Buckets.ATTACHMENT_FILES, attachment.bucketId)
+      return await this.fylo.getFileBytes(Fylo.Buckets.ATTACHMENT_FILES, attachment.bucketId)
     }
     if (!attachment.storagePath) throw new Error('Attachment has no stored content reference')
     ensureInsideRoot(attachmentRoot(), attachment.storagePath)
@@ -142,7 +141,7 @@ function attachmentRoot() {
  */
 async function persistOne(fylo, emailId, domain, attachment) {
   const id = randomBytes(16).toString('hex')
-  const filename = sanitizeAttachmentFilename(attachment.filename, `attachment-${id}`)
+  const filename = AttachmentPolicy.sanitizeAttachmentFilename(attachment.filename, `attachment-${id}`)
   const content = readBytes(attachment)
   const incomingRoot = resolve(
     ServerEnvironment.value('FYLO_INCOMING_ROOT') || join(fylo.root, '.caduceus-incoming'),
@@ -153,7 +152,7 @@ async function persistOne(fylo, emailId, domain, attachment) {
   await writeFile(sourcePath, content)
   let bucketId
   try {
-    bucketId = await fylo.putFile(Buckets.ATTACHMENT_FILES, sourcePath, {
+    bucketId = await fylo.putFile(Fylo.Buckets.ATTACHMENT_FILES, sourcePath, {
       key: bucketKey(emailId, id, filename),
       maxBytes: content.byteLength,
       meta: { domain },
@@ -170,15 +169,15 @@ async function persistOne(fylo, emailId, domain, attachment) {
     contentType: String(attachment.contentType || 'application/octet-stream').split(';', 1)[0].toLowerCase(),
     size: content.byteLength,
     disposition: attachment.disposition || 'attachment',
-    contentId: normalizeAttachmentContentId(attachment.contentId),
+    contentId: AttachmentPolicy.normalizeAttachmentContentId(attachment.contentId),
     bucketId,
     createdAt: new Date().toISOString(),
   }
   try {
-    const docId = await fylo.putData(Collections.ATTACHMENTS, record)
+    const docId = await fylo.putData(Fylo.Collections.ATTACHMENTS, record)
     return { ...record, docId }
   } catch (error) {
-    await fylo.delDoc(Buckets.ATTACHMENT_FILES, bucketId).catch(() => {})
+    await fylo.delDoc(Fylo.Buckets.ATTACHMENT_FILES, bucketId).catch(() => {})
     throw error
   }
 }
@@ -210,9 +209,9 @@ function readBytes(attachment) {
 /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo @param {EmailAttachmentRecord & { docId?: string }} record */
 async function deleteRecord(fylo, { docId, bucketId, storagePath }) {
   if (!docId) throw new Error('Attachment record is missing its document id')
-  await fylo.delDoc(Collections.ATTACHMENTS, docId)
+  await fylo.delDoc(Fylo.Collections.ATTACHMENTS, docId)
   if (bucketId) {
-    await fylo.delDoc(Buckets.ATTACHMENT_FILES, bucketId)
+    await fylo.delDoc(Fylo.Buckets.ATTACHMENT_FILES, bucketId)
   } else if (storagePath) {
     try {
       ensureInsideRoot(attachmentRoot(), storagePath)

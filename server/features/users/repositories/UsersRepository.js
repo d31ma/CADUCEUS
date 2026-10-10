@@ -1,21 +1,18 @@
 import { randomUUID } from 'node:crypto'
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 import { Security } from '../../../shared/security/Security.js'
-import {
-  normalizeComposerFont,
-  normalizeInterfaceFont,
-} from '../../../shared/users/font-preferences.js'
-import { normalizeNotificationSounds } from '../../../shared/users/notification-sounds.js'
-import { normalizeThemePreferences } from '../../../shared/users/theme-preferences.js'
-import { normalizeInterfaceLocale } from '../../../shared/users/locale-preferences.js'
-import { normalizeGrammarPreferences } from '../../../shared/users/grammar-preferences.js'
+import { FontPreferences } from '../../../shared/users/FontPreferences.js'
+import { NotificationSounds } from '../../../shared/users/NotificationSounds.js'
+import { ThemePreferences } from '../../../shared/users/ThemePreferences.js'
+import { LocalePreferences } from '../../../shared/users/LocalePreferences.js'
+import { GrammarPreferences } from '../../../shared/users/GrammarPreferences.js'
 import { normalizeCategoryMappings } from '../../mailbox/services/CategoryMappingService.js'
-import { normalizeCategoryCatalog } from '../../../shared/mailbox/category-catalog.js'
-import { normalizeMcpPreferences } from '../../../shared/mcp/preferences.js'
-import { normalizeUnreadBadgePreferences } from '../../../shared/users/unread-badge-preferences.js'
-import { normalizeNewMailNotificationPreferences } from '../../../shared/users/new-mail-notification-preferences.js'
-import { normalizeKeyboardShortcutOverrides } from '../../../shared/users/keyboard-shortcuts.js'
-import { normalizeMailPreferences } from '../../../shared/users/mail-preferences.js'
+import { CategoryCatalog } from '../../../shared/mailbox/CategoryCatalog.js'
+import { Preferences } from '../../../shared/mcp/Preferences.js'
+import { UnreadBadgePreferences } from '../../../shared/users/UnreadBadgePreferences.js'
+import { NewMailNotificationPreferences } from '../../../shared/users/NewMailNotificationPreferences.js'
+import { KeyboardShortcuts } from '../../../shared/users/KeyboardShortcuts.js'
+import { MailPreferences } from '../../../shared/users/MailPreferences.js'
 /** @import { User } from '../../../types' */
 
 /**
@@ -39,7 +36,7 @@ export class UsersRepository {
    * @returns {Promise<Array<User & { docId: string }>>}
    */
   async list() {
-    const docs = await collect(this.fylo.findDocs(Collections.USERS, { $ops: [] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.USERS, { $ops: [] }).collect())
     return Object.entries(docs).map(([docId, u]) => ({ docId, ...normalize(/** @type {User} */ (u)) }))
   }
 
@@ -52,7 +49,7 @@ export class UsersRepository {
   async findByEmail(email) {
     const normalized = Security.normalizeEmailAddress(email)
     if (!normalized) return [null, null]
-    const docs = await collect(this.fylo.findDocs(Collections.USERS, { $ops: [{ email: { $eq: normalized } }] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.USERS, { $ops: [{ email: { $eq: normalized } }] }).collect())
     const entry = Object.entries(docs)[0]
     if (entry) return [entry[0], normalize(/** @type {User} */ (entry[1]))]
     const users = await this.list()
@@ -65,7 +62,7 @@ export class UsersRepository {
    * @returns {Promise<string>}
    */
   async put(user) {
-    return await this.fylo.putData(Collections.USERS, normalize(user))
+    return await this.fylo.putData(Fylo.Collections.USERS, normalize(user))
   }
 
   /**
@@ -79,7 +76,7 @@ export class UsersRepository {
     const [docId, existing] = await this.findByEmail(normalized.email)
     if (!docId || !existing) return await this.put(normalized)
 
-    await this.fylo.patchDoc(Collections.USERS, {
+    await this.fylo.patchDoc(Fylo.Collections.USERS, {
       [docId]: normalize({
         ...existing,
         ...normalized,
@@ -142,7 +139,7 @@ export class UsersRepository {
    * @returns {Promise<void>}
    */
   async delete(docId) {
-    await this.fylo.delDoc(Collections.USERS, docId)
+    await this.fylo.delDoc(Fylo.Collections.USERS, docId)
   }
 
   /**
@@ -152,7 +149,7 @@ export class UsersRepository {
    * @returns {Promise<void>}
    */
   async updateAliases(docId, aliases, email = '') {
-    await this.fylo.patchDoc(Collections.USERS, { [docId]: { aliases: normalizeAliases(aliases, email) } })
+    await this.fylo.patchDoc(Fylo.Collections.USERS, { [docId]: { aliases: normalizeAliases(aliases, email) } })
   }
 
   /**
@@ -164,7 +161,7 @@ export class UsersRepository {
    */
   async updatePreferences(docId, user) {
     const normalized = normalize(user)
-    await this.fylo.patchDoc(Collections.USERS, {
+    await this.fylo.patchDoc(Fylo.Collections.USERS, {
       [docId]: {
         calendarVisibility: normalized.calendarVisibility,
         mailboxNames: normalized.mailboxNames ?? {},
@@ -196,12 +193,12 @@ export class UsersRepository {
 
   /** @param {string} docId @param {import('../../../types').McpPreferences} preferences */
   async updateMcpPreferences(docId, preferences) {
-    await this.fylo.patchDoc(Collections.USERS, { [docId]: { mcp: preferences } })
+    await this.fylo.patchDoc(Fylo.Collections.USERS, { [docId]: { mcp: preferences } })
   }
 
   /** Persist an already-normalized exact-domain category catalog. */
   async updateCategoryCatalog(docId, catalog) {
-    await this.fylo.patchDoc(Collections.USERS, { [docId]: { categoryCatalog: catalog } })
+    await this.fylo.patchDoc(Fylo.Collections.USERS, { [docId]: { categoryCatalog: catalog } })
   }
 
   static normalize = normalize
@@ -218,23 +215,23 @@ function normalize(user) {
     : 'private'
   const mailboxNames = normalizeMailboxNames(user.mailboxNames ?? {}, domains)
   const categoryMappings = normalizeCategoryMappings(user.categoryMappings, domains)
-  const categoryCatalog = normalizeCategoryCatalog(user.categoryCatalog, domains)
+  const categoryCatalog = CategoryCatalog.normalizeCategoryCatalog(user.categoryCatalog, domains)
   const remoteImagePolicy = VALID_REMOTE_IMAGE_POLICIES.has(/** @type {any} */ (user.remoteImagePolicy))
     ? /** @type {'block'|'allow'} */ (user.remoteImagePolicy)
     : 'block'
   const trustedImageSenders = normalizeTrustedImageSenders(user.trustedImageSenders ?? [])
-  const interfaceFont = normalizeInterfaceFont(user.interfaceFont)
-  const composerFont = normalizeComposerFont(user.composerFont)
-  const interfaceLocale = normalizeInterfaceLocale(user.interfaceLocale)
-  const notificationSounds = normalizeNotificationSounds(user.notificationSounds)
-  const themePreferences = normalizeThemePreferences(user.themePreferences)
+  const interfaceFont = FontPreferences.normalizeInterfaceFont(user.interfaceFont)
+  const composerFont = FontPreferences.normalizeComposerFont(user.composerFont)
+  const interfaceLocale = LocalePreferences.normalizeInterfaceLocale(user.interfaceLocale)
+  const notificationSounds = NotificationSounds.normalizeNotificationSounds(user.notificationSounds)
+  const themePreferences = ThemePreferences.normalizeThemePreferences(user.themePreferences)
   const githubProfileEnrichment = user.githubProfileEnrichment === true
-  const grammarPreferences = normalizeGrammarPreferences(user)
-  const unreadBadgePreferences = normalizeUnreadBadgePreferences(user, domains)
-  const newMailNotificationPreferences = normalizeNewMailNotificationPreferences(user, domains)
-  const keyboardShortcutOverrides = normalizeKeyboardShortcutOverrides(user.keyboardShortcutOverrides)
-  const mailPreferences = normalizeMailPreferences(user.mailPreferences, { email, aliases, domains })
-  const mcp = normalizeMcpPreferences(user.mcp, domains)
+  const grammarPreferences = GrammarPreferences.normalizeGrammarPreferences(user)
+  const unreadBadgePreferences = UnreadBadgePreferences.normalizeUnreadBadgePreferences(user, domains)
+  const newMailNotificationPreferences = NewMailNotificationPreferences.normalizeNewMailNotificationPreferences(user, domains)
+  const keyboardShortcutOverrides = KeyboardShortcuts.normalizeKeyboardShortcutOverrides(user.keyboardShortcutOverrides)
+  const mailPreferences = MailPreferences.normalizeMailPreferences(user.mailPreferences, { email, aliases, domains })
+  const mcp = Preferences.normalizeMcpPreferences(user.mcp, domains)
   return {
     ...profile,
     id: user.id || randomUUID(),

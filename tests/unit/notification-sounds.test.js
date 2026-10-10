@@ -6,16 +6,12 @@ import {
   normalizeNotificationSounds,
   playNotificationSound,
 } from '../../client/shared/scripts/notification-sounds.js'
-import {
-  SOUND_EVENT_IDS,
-  SOUND_IDS,
-  validateNotificationSounds,
-} from '../../server/shared/users/notification-sounds.js'
+import { NotificationSounds } from '../../server/shared/users/NotificationSounds.js'
 
 describe('notification sounds', () => {
   it('keeps browser and persistence catalogs in lockstep', () => {
-    expect(SOUND_EVENTS.map(event => event.id)).toEqual([...SOUND_EVENT_IDS])
-    expect(SOUND_OPTIONS.map(sound => sound.id)).toEqual([...SOUND_IDS])
+    expect(SOUND_EVENTS.map(event => event.id)).toEqual([...NotificationSounds.SOUND_EVENT_IDS])
+    expect(SOUND_OPTIONS.map(sound => sound.id)).toEqual([...NotificationSounds.SOUND_IDS])
   })
 
   it('normalizes unknown or hostile values to local defaults', () => {
@@ -23,7 +19,7 @@ describe('notification sounds', () => {
       'new-mail': 'url(https://sounds.example.test/leak.ogg)',
       'hit-send': 'pop',
     })).toEqual({ ...DEFAULT_NOTIFICATION_SOUNDS, 'hit-send': 'pop' })
-    expect(validateNotificationSounds({ ...DEFAULT_NOTIFICATION_SOUNDS, surprise: 'bell' })).toMatchObject({ ok: false })
+    expect(NotificationSounds.validateNotificationSounds({ ...DEFAULT_NOTIFICATION_SOUNDS, surprise: 'bell' })).toMatchObject({ ok: false })
   })
 
   it('synthesizes fixed cues and treats muted or unavailable audio as a no-op', async () => {

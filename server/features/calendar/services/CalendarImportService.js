@@ -1,7 +1,7 @@
 // @ts-check
 
 import { Ics } from '../../../shared/calendar/Ics.js'
-import { isCalendarAttachment } from '../../../shared/calendar/calendar-attachments.js'
+import { CalendarAttachments } from '../../../shared/calendar/CalendarAttachments.js'
 /** @import { CalendarEventsRepository } from '../repositories/CalendarEventsRepository.js' */
 /** @import { CalendarEvent } from '../repositories/CalendarEventsRepository.js' */
 /** @import { Attendee } from '../repositories/CalendarEventsRepository.js' */
@@ -225,7 +225,7 @@ function collectIcsCandidates(textBody, attachments) {
     seen.add(textBody)
   }
   for (const a of attachments || []) {
-    if (!isCalendarAttachment(a)) continue
+    if (!CalendarAttachments.isCalendarAttachment(a)) continue
     try {
       const text = new TextDecoder('utf-8').decode(a.content || new Uint8Array())
       if (Ics.looksLikeIcs(text) && !seen.has(text)) {

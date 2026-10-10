@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 
 export class SnoozeRepository {
   /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
@@ -11,7 +11,7 @@ export class SnoozeRepository {
    * @returns {Promise<string>}
    */
   async put(entry) {
-    return await this.fylo.putData(Collections.SNOOZED, entry)
+    return await this.fylo.putData(Fylo.Collections.SNOOZED, entry)
   }
 
   /**
@@ -26,7 +26,7 @@ export class SnoozeRepository {
    */
   async listAll() {
     return /** @type {Promise<Record<string, SnoozeEntry>>} */ (
-      collect(this.fylo.findDocs(Collections.SNOOZED, { $ops: [] }).collect())
+      Fylo.collect(this.fylo.findDocs(Fylo.Collections.SNOOZED, { $ops: [] }).collect())
     )
   }
 
@@ -54,7 +54,7 @@ export class SnoozeRepository {
    * @returns {Promise<[string | null, SnoozeEntry | null]>}
    */
   async findById(id) {
-    const docs = await collect(this.fylo.findDocs(Collections.SNOOZED, { $ops: [{ id: { $eq: id } }] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.SNOOZED, { $ops: [{ id: { $eq: id } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], /** @type {SnoozeEntry} */ (entry[1])] : [null, null]
   }
@@ -76,7 +76,7 @@ export class SnoozeRepository {
 
   /** @param {string} docId @param {Partial<SnoozeEntry>} patch */
   async update(docId, patch) {
-    await this.fylo.patchDoc(Collections.SNOOZED, { [docId]: patch })
+    await this.fylo.patchDoc(Fylo.Collections.SNOOZED, { [docId]: patch })
   }
 
   /**
@@ -84,9 +84,9 @@ export class SnoozeRepository {
    * @returns {Promise<void>}
    */
   async removeForEmail(emailId) {
-    const docs = await collect(this.fylo.findDocs(Collections.SNOOZED, { $ops: [{ emailId: { $eq: emailId } }] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.SNOOZED, { $ops: [{ emailId: { $eq: emailId } }] }).collect())
     for (const docId of Object.keys(docs)) {
-      await this.fylo.delDoc(Collections.SNOOZED, docId)
+      await this.fylo.delDoc(Fylo.Collections.SNOOZED, docId)
     }
   }
 }

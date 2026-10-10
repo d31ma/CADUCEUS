@@ -4,8 +4,8 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { canAccessEmail } from '../features/mailbox/repositories/EmailsRepository.js'
-import { parseExternalMessageId } from '../shared/mailbox/external-message.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalMessage } from '../shared/mailbox/ExternalMessage.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/inbox/{id}/source")
 @SignedIn
@@ -29,11 +29,11 @@ export class InboxIdSourceController {
       const emailId = String(paths?.id || '')
       if (!emailId) return Respond.r404('Message source not found')
 
-      const external = parseExternalMessageId(emailId)
+      const external = ExternalMessage.parseExternalMessageId(emailId)
       if (external) {
         try {
           const source = await ExternalAccounts.messageSource(
-            bearerToken(context), external.accountId, external.stableId,
+            ExternalAccounts.bearerToken(context), external.accountId, external.stableId,
           )
           const encoded = source?.rawRFC822Base64
           if (typeof encoded !== 'string' || encoded.length > 35_000_000) {
@@ -51,7 +51,7 @@ export class InboxIdSourceController {
             contentBase64: bytes.toString('base64'),
           }
         } catch (error) {
-          return accountFailure(error)
+          return ExternalAccounts.accountFailure(error)
         }
       }
 

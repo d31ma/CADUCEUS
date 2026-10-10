@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 
 export class ScheduledRepository {
   /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
@@ -11,7 +11,7 @@ export class ScheduledRepository {
    * @returns {Promise<string>}
    */
   async put(entry) {
-    return await this.fylo.putData(Collections.SCHEDULED, entry)
+    return await this.fylo.putData(Fylo.Collections.SCHEDULED, entry)
   }
 
   /**
@@ -28,7 +28,7 @@ export class ScheduledRepository {
   /** System-owned worker scan used to reconcile pre-queue scheduled records. */
   async listAll() {
     return /** @type {Promise<Record<string, ScheduledEntry>>} */ (
-      collect(this.fylo.findDocs(Collections.SCHEDULED, { $ops: [] }).collect())
+      Fylo.collect(this.fylo.findDocs(Fylo.Collections.SCHEDULED, { $ops: [] }).collect())
     )
   }
 
@@ -37,7 +37,7 @@ export class ScheduledRepository {
    * @returns {Promise<[string | null, ScheduledEntry | null]>}
    */
   async findById(id) {
-    const docs = await collect(this.fylo.findDocs(Collections.SCHEDULED, { $ops: [{ id: { $eq: id } }] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.SCHEDULED, { $ops: [{ id: { $eq: id } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], /** @type {ScheduledEntry} */ (entry[1])] : [null, null]
   }
@@ -47,11 +47,11 @@ export class ScheduledRepository {
    * @returns {Promise<void>}
    */
   async delete(docId) {
-    await this.fylo.delDoc(Collections.SCHEDULED, docId)
+    await this.fylo.delDoc(Fylo.Collections.SCHEDULED, docId)
   }
 
   /** @param {string} docId @param {Partial<ScheduledEntry>} patch */
   async update(docId, patch) {
-    await this.fylo.patchDoc(Collections.SCHEDULED, { [docId]: patch })
+    await this.fylo.patchDoc(Fylo.Collections.SCHEDULED, { [docId]: patch })
   }
 }

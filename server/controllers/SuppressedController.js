@@ -1,5 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { getApp } from '../app.js'
 import { Respond } from '../shared/http/Respond.js'
 
@@ -14,7 +14,7 @@ export class SuppressedController {
  */
   @GetRoute
   async get(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.DOMAIN_ADMIN } }, async ({ auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.DOMAIN_ADMIN } }, async ({ auth }) => {
       const app = await getApp()
       return await app.suppressed.list()
     })
@@ -23,7 +23,7 @@ export class SuppressedController {
   /** Manually suppress an address from outbound delivery. */
   @PostRoute
   async post(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.DOMAIN_ADMIN } }, async ({ body }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.DOMAIN_ADMIN } }, async ({ body }) => {
       const address = String(body?.address || '').trim().toLowerCase()
       if (!address) return Respond.r400('address required')
       const reason = body?.reason === 'complaint' ? 'complaint' : 'bounce'

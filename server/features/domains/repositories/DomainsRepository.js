@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 /** @import { DomainConfig } from '../../../types' */
 /** @import { RouteRule } from '../../../types' */
 
@@ -13,7 +13,7 @@ export class DomainsRepository {
    * @returns {Promise<DomainConfig[]>}
    */
   async list(allowedDomains) {
-    const docs = await collect(this.fylo.findDocs(Collections.DOMAINS, { $ops: [] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.DOMAINS, { $ops: [] }).collect())
     return Object.values(docs)
       .filter(d => allowedDomains.includes(d.domain))
       .map(d => deserialize(/** @type {RawDomainDoc} */ (d)))
@@ -24,7 +24,7 @@ export class DomainsRepository {
    * @returns {Promise<[string | null, DomainConfig | null]>}
    */
   async findEntry(domain) {
-    const docs = await collect(this.fylo.findDocs(Collections.DOMAINS, { $ops: [{ domain: { $eq: domain } }] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.DOMAINS, { $ops: [{ domain: { $eq: domain } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], deserialize(/** @type {RawDomainDoc} */ (entry[1]))] : [null, null]
   }
@@ -34,7 +34,7 @@ export class DomainsRepository {
    * @returns {Promise<string>}
    */
   async put(config) {
-    return await this.fylo.putData(Collections.DOMAINS, serialize(config))
+    return await this.fylo.putData(Fylo.Collections.DOMAINS, serialize(config))
   }
 
   /**
@@ -43,7 +43,7 @@ export class DomainsRepository {
    * @returns {Promise<void>}
    */
   async updateRoutes(docId, routes) {
-    await this.fylo.patchDoc(Collections.DOMAINS, { [docId]: { routes: JSON.stringify(routes) } })
+    await this.fylo.patchDoc(Fylo.Collections.DOMAINS, { [docId]: { routes: JSON.stringify(routes) } })
   }
 
   /**
@@ -51,7 +51,7 @@ export class DomainsRepository {
    * @returns {Promise<void>}
    */
   async delete(docId) {
-    await this.fylo.delDoc(Collections.DOMAINS, docId)
+    await this.fylo.delDoc(Fylo.Collections.DOMAINS, docId)
   }
 }
 

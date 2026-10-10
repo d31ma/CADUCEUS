@@ -1,11 +1,11 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { randomBytes } from 'node:crypto'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { RuleValidation } from '../shared/domains/RuleValidation.js'
-import { ownedSenderAddresses } from '../shared/users/sender-addresses.js'
-import { normalizeInboxRuleInput } from '../shared/mailbox/rule-input.js'
+import { SenderAddresses } from '../shared/users/SenderAddresses.js'
+import { RuleInput } from '../shared/mailbox/RuleInput.js'
 
 @RequestRoute("/rules")
 @SignedIn
@@ -19,13 +19,13 @@ export class RulesController {
  */
   @PostRoute
   async post(request) {
-    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
+    return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
     const app = await getApp()
-    const owned = await ownedSenderAddresses(app.users, auth.email)
+    const owned = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
     const mailbox = typeof body?.mailbox === 'string' ? body.mailbox.trim().toLowerCase() : auth.email
     if (!owned.includes(mailbox)) return Respond.r403('Mailbox access denied')
     const ruleId = randomBytes(16).toString('hex')
-    const rule = normalizeInboxRuleInput(body ?? {}, {
+    const rule = RuleInput.normalizeInboxRuleInput(body ?? {}, {
       id: ruleId,
       ownerEmail: auth.email,
       mailbox,

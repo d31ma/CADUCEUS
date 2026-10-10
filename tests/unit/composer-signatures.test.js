@@ -6,12 +6,8 @@ import {
   sanitizeSignatureHTML as sanitizeBrowserSignature,
   signatureHTMLFromClipboard,
 } from '../../client/shared/scripts/composer-signatures.js'
-import {
-  normalizeSignatureInput,
-  resolveUniqueSignatureName,
-  sanitizeSignatureHTML as sanitizeStoredSignature,
-} from '../../server/shared/mailbox/signature-content.js'
-import { ownedSenderAddresses, resolveOwnedSender } from '../../server/shared/users/sender-addresses.js'
+import { SignatureContent } from '../../server/shared/mailbox/SignatureContent.js'
+import { SenderAddresses } from '../../server/shared/users/SenderAddresses.js'
 
 const signature = { id: 'sig-work', text: '<p>Regards,<br>Alice</p>', defaultFor: ['alice@example.com'] }
 
@@ -40,7 +36,7 @@ describe('Mailspring-compatible composer signatures', () => {
 
   it('sanitizes executable markup at browser, clipboard, and storage boundaries', () => {
     const hostile = '<script>alert(1)</script><p onclick="steal()"><a href="javascript:steal()">Alice</a></p>'
-    for (const html of [sanitizeBrowserSignature(hostile), sanitizeStoredSignature(hostile), signatureHTMLFromClipboard('Alice', hostile)]) {
+    for (const html of [sanitizeBrowserSignature(hostile), SignatureContent.sanitizeSignatureHTML(hostile), signatureHTMLFromClipboard('Alice', hostile)]) {
       expect(html).not.toMatch(/script|onclick|javascript:/i)
       expect(html).toContain('Alice')
     }
@@ -49,20 +45,20 @@ describe('Mailspring-compatible composer signatures', () => {
 
   it('validates exact owned defaults and generates stable duplicate suffixes', () => {
     const allowedAddresses = ['alice@example.com', 'alias@example.com']
-    expect(normalizeSignatureInput({ name: ' Work ', text: '<b>Alice</b>', defaultFor: ['ALIAS@example.com'] }, { allowedAddresses }))
+    expect(SignatureContent.normalizeSignatureInput({ name: ' Work ', text: '<b>Alice</b>', defaultFor: ['ALIAS@example.com'] }, { allowedAddresses }))
       .toEqual({ name: 'Work', text: '<b>Alice</b>', defaultFor: ['alias@example.com'] })
-    expect(normalizeSignatureInput({ name: 'Work', text: 'x', defaultFor: ['other@example.com'] }, { allowedAddresses }))
+    expect(SignatureContent.normalizeSignatureInput({ name: 'Work', text: 'x', defaultFor: ['other@example.com'] }, { allowedAddresses }))
       .toBeInstanceOf(Error)
-    expect(resolveUniqueSignatureName('Work', [{ id: '1', name: 'work' }, { id: '2', name: 'Work 1' }])).toBe('Work 2')
+    expect(SignatureContent.resolveUniqueSignatureName('Work', [{ id: '1', name: 'work' }, { id: '2', name: 'Work 1' }])).toBe('Work 2')
   })
 
   it('authorizes From identities by primary address and aliases, never domain membership', async () => {
     const users = { findByEmail: async () => [
       'doc', { email: 'alice@example.com', aliases: ['sales@example.com'], domains: ['example.com'] },
     ] }
-    const addresses = await ownedSenderAddresses(/** @type {any} */ (users), 'alice@example.com')
+    const addresses = await SenderAddresses.ownedSenderAddresses(/** @type {any} */ (users), 'alice@example.com')
     expect(addresses).toEqual(['alice@example.com', 'sales@example.com'])
-    expect(resolveOwnedSender('sales@example.com', addresses, 'alice@example.com')).toBe('sales@example.com')
-    expect(resolveOwnedSender('bob@example.com', addresses, 'alice@example.com')).toBeNull()
+    expect(SenderAddresses.resolveOwnedSender('sales@example.com', addresses, 'alice@example.com')).toBe('sales@example.com')
+    expect(SenderAddresses.resolveOwnedSender('bob@example.com', addresses, 'alice@example.com')).toBeNull()
   })
 })

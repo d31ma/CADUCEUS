@@ -1,5 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { Buckets, Collections } from '../shared/persistence/Fylo.js'
+import { Fylo } from '../shared/persistence/Fylo.js'
 import { getApp } from '../app.js'
 
 @RequestRoute("/test/reset")
@@ -18,7 +18,7 @@ export class TestResetController {
   async delete(request) {
     return RouteRequest.handle(request, { testOnly: true }, async () => {
     const app = await getApp()
-    for (const collection of [...Object.values(Collections), ...Object.values(Buckets)]) {
+    for (const collection of [...Object.values(Fylo.Collections), ...Object.values(Fylo.Buckets)]) {
       /** @type {Record<string, unknown>} */
       const docs = {}
       for await (const doc of app.fylo.findDocs(collection, { $ops: [] }).collect()) {

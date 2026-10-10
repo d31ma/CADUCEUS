@@ -3,9 +3,9 @@ import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { CalendarRecurrence } from '../shared/calendar/CalendarRecurrence.js'
 import { CalendarDate } from '../shared/calendar/CalendarDate.js'
-import { toCalendarEventView } from '../shared/calendar/event-view.js'
-import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
-import { CalendarEventsIdController as EventsHandler } from './CalendarEventsController.js'
+import { EventView } from '../shared/calendar/EventView.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
+import { CalendarEventsController as EventsHandler } from './CalendarEventsController.js'
 
 @RequestRoute("/calendar/events/{id}")
 @SignedIn
@@ -39,9 +39,9 @@ export class CalendarEventsIdController {
     let provider = false
     if ((!event || !docId) && providerCalendars) {
       try {
-        const found = await providerCalendars.find(bearerToken(context), id)
+        const found = await providerCalendars.find(ExternalAccounts.bearerToken(context), id)
         if (found) { event = found.event; docId = ''; provider = true }
-      } catch (error) { return accountFailure(error) }
+      } catch (error) { return ExternalAccounts.accountFailure(error) }
     }
     if (!event || (!docId && !provider)) return Respond.r404('Event not found')
     if (!provider && event.userEmail !== auth.email) return Respond.r403('Access denied')
@@ -58,9 +58,9 @@ export class CalendarEventsIdController {
         return Respond.r400('instance scope requires a valid recurring occurrence')
       }
       try {
-        await providerCalendars.delete(bearerToken(context), event.id, recurrenceId, EventsHandler.idempotencyKey(context?.query?.idempotencyKey, 'delete'))
+        await providerCalendars.delete(ExternalAccounts.bearerToken(context), event.id, recurrenceId, EventsHandler._idempotencyKey(context?.query?.idempotencyKey, 'delete'))
         return { deleted: true, scope: recurrenceId ? 'instance' : event.recurrence ? 'series' : 'event', remainingSeries: !!recurrenceId }
-      } catch (error) { return EventsHandler.providerFailure(error) }
+      } catch (error) { return EventsHandler._providerFailure(error) }
     }
 
     if (scope === 'instance') {
@@ -122,9 +122,9 @@ export class CalendarEventsIdController {
     let provider = false
     if ((!event || !docId) && providerCalendars) {
       try {
-        const found = await providerCalendars.find(bearerToken(context), id)
+        const found = await providerCalendars.find(ExternalAccounts.bearerToken(context), id)
         if (found) { event = found.event; docId = ''; provider = true }
-      } catch (error) { return accountFailure(error) }
+      } catch (error) { return ExternalAccounts.accountFailure(error) }
     }
     if (!event || (!docId && !provider)) return Respond.r404('Event not found')
     if (!provider && event.userEmail !== auth.email) return Respond.r403('Access denied')
@@ -201,13 +201,13 @@ export class CalendarEventsIdController {
       if (provider) {
         if (!providerCalendars) return Respond.r503('Provider calendar service unavailable')
         try {
-          await providerCalendars.update(bearerToken(context), event.id, exception, occurrenceStart, EventsHandler.idempotencyKey(body?.idempotencyKey, 'update-instance'))
-        } catch (error) { return EventsHandler.providerFailure(error) }
+          await providerCalendars.update(ExternalAccounts.bearerToken(context), event.id, exception, occurrenceStart, EventsHandler._idempotencyKey(body?.idempotencyKey, 'update-instance'))
+        } catch (error) { return EventsHandler._providerFailure(error) }
       } else {
         if (existingDocId) await app.calendarEvents.delete(existingDocId)
         await app.calendarEvents.put(exception)
       }
-      return { updated: true, scope: 'instance', event: toCalendarEventView({ ...exception, isRecurring: true, isException: true }) }
+      return { updated: true, scope: 'instance', event: EventView.toCalendarEventView({ ...exception, isRecurring: true, isException: true }) }
     }
 
     /** @type {import('../features/calendar/repositories/CalendarEventsRepository.js').CalendarEvent} */
@@ -223,8 +223,8 @@ export class CalendarEventsIdController {
     if (provider) {
       if (!providerCalendars) return Respond.r503('Provider calendar service unavailable')
       try {
-        await providerCalendars.update(bearerToken(context), event.id, next, '', EventsHandler.idempotencyKey(body?.idempotencyKey, 'update'))
-      } catch (error) { return EventsHandler.providerFailure(error) }
+        await providerCalendars.update(ExternalAccounts.bearerToken(context), event.id, next, '', EventsHandler._idempotencyKey(body?.idempotencyKey, 'update'))
+      } catch (error) { return EventsHandler._providerFailure(error) }
     } else {
       // Fylo's putData always inserts under a fresh docId — to update in place
       // we delete the prior version first, then write the patched one.
@@ -232,7 +232,7 @@ export class CalendarEventsIdController {
       await app.calendarEvents.delete(docId)
       await app.calendarEvents.put(next)
     }
-    return { updated: true, scope: event.recurrence ? 'series' : 'event', event: toCalendarEventView(next) }
+    return { updated: true, scope: event.recurrence ? 'series' : 'event', event: EventView.toCalendarEventView(next) }
     })
   }
 
@@ -256,14 +256,14 @@ export class CalendarEventsIdController {
     let provider = false
     if (!event && app.providerCalendars) {
       try {
-        const found = await app.providerCalendars.find(bearerToken(context), id)
+        const found = await app.providerCalendars.find(ExternalAccounts.bearerToken(context), id)
         if (found) { event = found.event; provider = true }
-      } catch (error) { return accountFailure(error) }
+      } catch (error) { return ExternalAccounts.accountFailure(error) }
     }
     if (!event) return Respond.r404('Event not found')
     if (!provider && event.userEmail !== auth.email) return Respond.r403('Access denied')
 
-    return toCalendarEventView({
+    return EventView.toCalendarEventView({
       ...event,
         readOnly: (event.source === 'invite' && event.organizer && String(event.organizer).toLowerCase() !== auth.email.toLowerCase()) ||
         (!event.recurrence && CalendarDate.isPast(event)),

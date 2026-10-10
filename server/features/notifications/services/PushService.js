@@ -1,11 +1,6 @@
-import { unreadBadgeDomains } from '../../../shared/users/unread-badge-preferences.js'
-import {
-  newMailNotificationsEnabledForDomain,
-  newMailNotificationsEnabledForExternalAccount,
-  normalizeNewMailNotificationPreferences,
-  normalizeNewMailNotificationPreferencesForAccounts,
-} from '../../../shared/users/new-mail-notification-preferences.js'
-import { externalMessageId } from '../../../shared/mailbox/external-message.js'
+import { UnreadBadgePreferences } from '../../../shared/users/UnreadBadgePreferences.js'
+import { NewMailNotificationPreferences } from '../../../shared/users/NewMailNotificationPreferences.js'
+import { ExternalMessage } from '../../../shared/mailbox/ExternalMessage.js'
 import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
 /** @import { StoredEmail } from '../../../types' */
 /** @import { PushSubscriptionsRepository } from '../repositories/PushSubscriptionsRepository.js' */
@@ -94,7 +89,7 @@ export function buildUnsnoozedPushPayload(email, unreadCount, preferences = {}) 
  */
 export async function countUnreadInbox(emails, user, email, userEmail) {
   const fallbackDomain = notificationDomain(email)
-  const domains = unreadBadgeDomains(user, user?.domains, fallbackDomain)
+  const domains = UnreadBadgePreferences.unreadBadgeDomains(user, user?.domains, fallbackDomain)
   const unread = await emails.list(domains, {
     folder: 'inbox',
     read: false,
@@ -150,7 +145,7 @@ export class PushService {
    * @returns {Promise<boolean>} true when the durable outbox item is terminal
    */
   async notifyProviderNewEmail(notification) {
-    const id = externalMessageId(notification.accountId, notification.stableId)
+    const id = ExternalMessage.externalMessageId(notification.accountId, notification.stableId)
     if (!id) return true
     const ownerAddress = String(notification.ownerAddress || '').toLowerCase()
     const email = /** @type {StoredEmail} */ (/** @type {unknown} */ ({
@@ -201,11 +196,11 @@ export class PushService {
       const domain = notificationDomain(email)
       const policyDomains = user?.domains?.length ? user.domains : [domain]
       if (options.externalAccountId) {
-        if (!newMailNotificationsEnabledForExternalAccount(user, policyDomains, options.externalAccountId)) return true
-      } else if (!newMailNotificationsEnabledForDomain(user, policyDomains, domain)) return true
+        if (!NewMailNotificationPreferences.newMailNotificationsEnabledForExternalAccount(user, policyDomains, options.externalAccountId)) return true
+      } else if (!NewMailNotificationPreferences.newMailNotificationsEnabledForDomain(user, policyDomains, domain)) return true
       const notificationPreferences = options.externalAccountId
-        ? normalizeNewMailNotificationPreferencesForAccounts(user, policyDomains, [options.externalAccountId])
-        : normalizeNewMailNotificationPreferences(user, policyDomains)
+        ? NewMailNotificationPreferences.normalizeNewMailNotificationPreferencesForAccounts(user, policyDomains, [options.externalAccountId])
+        : NewMailNotificationPreferences.normalizeNewMailNotificationPreferences(user, policyDomains)
       const subscriptions = await this.pushSubscriptions.listForAddress(userEmail)
       if (subscriptions.length === 0) return true
 

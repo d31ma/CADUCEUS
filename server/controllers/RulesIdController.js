@@ -1,9 +1,9 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { Actions } from '../shared/auth/Auth.js'
+import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { RuleValidation } from '../shared/domains/RuleValidation.js'
-import { normalizeInboxRuleInput } from '../shared/mailbox/rule-input.js'
+import { RuleInput } from '../shared/mailbox/RuleInput.js'
 
 @RequestRoute("/rules/{id}")
 @SignedIn
@@ -17,7 +17,7 @@ export class RulesIdController {
  */
   @DeleteRoute
   async delete(@FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { id }, guard: { action: Actions.MAILBOX_WRITE } }, async ({ paths, auth }) => {
+    return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ paths, auth }) => {
     const ruleId = paths?.id
     if (!ruleId) return Respond.r400('rule id required')
 
@@ -41,7 +41,7 @@ export class RulesIdController {
  */
   @PutRoute
   async put(@FromPath id, request) {
-    return RouteRequest.handle(request, { paths: { id }, guard: { action: Actions.MAILBOX_WRITE } }, async ({ paths, body, auth }) => {
+    return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ paths, body, auth }) => {
     const ruleId = paths?.id
     if (!ruleId || !body) return Respond.r400('rule id and body required')
 
@@ -51,7 +51,7 @@ export class RulesIdController {
     if (existing.ownerEmail !== auth.email.toLowerCase()) return Respond.r404('Rule not found')
     const allowed = ['name', 'enabled', 'conditionMatch', 'conditions', 'actions', 'stopProcessing']
     const patch = Object.fromEntries(Object.entries(body).filter(([key]) => allowed.includes(key)))
-    const merged = normalizeInboxRuleInput({ ...existing, ...patch }, {
+    const merged = RuleInput.normalizeInboxRuleInput({ ...existing, ...patch }, {
       id: existing.id,
       ownerEmail: existing.ownerEmail ?? auth.email,
       mailbox: existing.mailbox ?? auth.email,

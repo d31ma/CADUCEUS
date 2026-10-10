@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { PhishingDetection } from '../../../shared/delivery/PhishingDetection.js'
 import { ListUnsubscribe } from '../../../shared/delivery/ListUnsubscribe.js'
-import { threadMetadataFromHeaders } from '../../../shared/mailbox/threading.js'
+import { Threading } from '../../../shared/mailbox/Threading.js'
 
 const MAX_SUBJECT_LENGTH = 500
 
@@ -55,7 +55,7 @@ export class EmlImportService {
       ...(unsubscribe.unsubscribeMailto ? { unsubscribeMailto: unsubscribe.unsubscribeMailto } : {}),
       ...(unsubscribe.unsubscribeBodyUrl ? { unsubscribeBodyUrl: unsubscribe.unsubscribeBodyUrl } : {}),
       ...(unsubscribe.unsubscribeOneClick ? { unsubscribeOneClick: true } : {}),
-      ...threadMetadataFromHeaders(parsed.headers, id, domain),
+      ...Threading.threadMetadataFromHeaders(parsed.headers, id, domain),
       ...(to.length ? { to } : {}),
       ...(cc.length ? { cc } : {}),
       subject,

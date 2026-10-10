@@ -16,22 +16,24 @@
 import { CalendarRecurrence } from './CalendarRecurrence.js'
 import { CalendarDate } from './CalendarDate.js'
 
-const PARTSTAT_MAP = /** @type {const} */ ({
-  ACCEPTED: 'accepted',
-  DECLINED: 'declined',
-  TENTATIVE: 'tentative',
-  'NEEDS-ACTION': 'needsAction',
-  DELEGATED: 'delegated',
-  COMPLETED: 'completed',
-})
-
-const STATUS_MAP = /** @type {const} */ ({
-  CONFIRMED: 'confirmed',
-  CANCELLED: 'cancelled',
-  TENTATIVE: 'tentative',
-})
-
 export class Ics {
+  static #PARTSTAT_MAP = /** @type {const} */ ({
+    ACCEPTED: 'accepted',
+    DECLINED: 'declined',
+    TENTATIVE: 'tentative',
+    'NEEDS-ACTION': 'needsAction',
+    DELEGATED: 'delegated',
+    COMPLETED: 'completed',
+  })
+
+  static #STATUS_MAP = /** @type {const} */ ({
+    CONFIRMED: 'confirmed',
+    CANCELLED: 'cancelled',
+    TENTATIVE: 'tentative',
+  })
+
+  static #DAY_MS = 24 * 60 * 60 * 1000
+
   /**
    * Quick check: does this string look like an iCalendar payload? Used to decide
    * whether to bother running the full parser on an attachment body.
@@ -229,7 +231,7 @@ export class Ics {
       case 'ATTENDEE': {
         const email = Ics.#extractEmail(value)
         if (!email) return
-        const status = PARTSTAT_MAP[/** @type {keyof typeof PARTSTAT_MAP} */ (params.PARTSTAT)] || 'needsAction'
+        const status = Ics.#PARTSTAT_MAP[/** @type {keyof typeof PARTSTAT_MAP} */ (params.PARTSTAT)] || 'needsAction'
         event.attendees = event.attendees || []
         event.attendees.push({ email, name: params.CN || '', status })
         return
@@ -250,7 +252,7 @@ export class Ics {
       case 'SEQUENCE': if (/^\d+$/.test(value)) event.sequence = Number(value); return
       case 'DURATION': event.duration = value; return
       case 'STATUS':
-        event.status = STATUS_MAP[/** @type {keyof typeof STATUS_MAP} */ (value.toUpperCase())] || undefined
+        event.status = Ics.#STATUS_MAP[/** @type {keyof typeof STATUS_MAP} */ (value.toUpperCase())] || undefined
         return
     }
   }
@@ -338,7 +340,7 @@ export class Ics {
   /** @param {string} start @param {boolean} allDay @param {string | undefined} duration */
   static #implicitEnd(start, allDay, duration) {
     if (allDay && CalendarDate.isDate(start)) {
-      const days = Math.max(1, Math.round((Ics.#durationMilliseconds(duration) || DAY_MS) / DAY_MS))
+      const days = Math.max(1, Math.round((Ics.#durationMilliseconds(duration) || Ics.#DAY_MS) / Ics.#DAY_MS))
       return CalendarDate.addDays(start, days)
     }
     const base = Date.parse(start)
@@ -475,5 +477,3 @@ export class Ics {
     return v.trim().replace(/^mailto:/i, '').toLowerCase()
   }
 }
-
-const DAY_MS = 24 * 60 * 60 * 1000

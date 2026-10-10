@@ -1,6 +1,6 @@
 // @ts-check
 
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 
 /**
  * Presence tracking — who's online right now, scoped per domain.
@@ -36,8 +36,8 @@ export class PresenceService {
     if (!email) return
     const norm = email.toLowerCase()
     const [prevId] = await this._findByEmail(norm)
-    if (prevId) await this.fylo.delDoc(Collections.PRESENCE, prevId)
-    await this.fylo.putData(Collections.PRESENCE, {
+    if (prevId) await this.fylo.delDoc(Fylo.Collections.PRESENCE, prevId)
+    await this.fylo.putData(Fylo.Collections.PRESENCE, {
       email: norm,
       domains: Array.isArray(domains) ? domains : [],
       lastSeenAt: Date.now(),
@@ -54,7 +54,7 @@ export class PresenceService {
   async snapshotForDomains(viewerDomains) {
     if (!Array.isArray(viewerDomains) || viewerDomains.length === 0) return []
     const viewerSet = new Set(viewerDomains.map(d => d.toLowerCase()))
-    const docs = await collect(this.fylo.findDocs(Collections.PRESENCE, { $ops: [] }).collect())
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.PRESENCE, { $ops: [] }).collect())
     const now = Date.now()
 
     /** @type {Array<{ email: string, online: boolean, lastSeenAt: string }>} */
@@ -62,7 +62,7 @@ export class PresenceService {
     for (const [docId, rec] of Object.entries(docs)) {
       const r = /** @type {PresenceRecord} */ (rec)
       if (now - r.lastSeenAt > PRUNE_AFTER_MS) {
-        this.fylo.delDoc(Collections.PRESENCE, docId).catch(() => {})
+        this.fylo.delDoc(Fylo.Collections.PRESENCE, docId).catch(() => {})
         continue
       }
       if (!(r.domains || []).some(d => viewerSet.has(d.toLowerCase()))) continue
@@ -89,8 +89,8 @@ export class PresenceService {
    * @returns {Promise<[string | null, PresenceRecord | null]>}
    */
   async _findByEmail(email) {
-    const docs = await collect(
-      this.fylo.findDocs(Collections.PRESENCE, { $ops: [{ email: { $eq: email } }] }).collect(),
+    const docs = await Fylo.collect(
+      this.fylo.findDocs(Fylo.Collections.PRESENCE, { $ops: [{ email: { $eq: email } }] }).collect(),
     )
     const entry = Object.entries(docs)[0]
     if (!entry) return [null, null]

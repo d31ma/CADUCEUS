@@ -20,7 +20,7 @@ import { PresenceTeamController as Team } from '@/controllers/PresenceTeamContro
 import { PresenceHeartbeatController as Heartbeat } from '@/controllers/PresenceHeartbeatController.js'
 import { NotificationsSubscriptionsController as Subscriptions } from '@/controllers/NotificationsSubscriptionsController.js'
 import { TestResetController as Reset } from '@/controllers/TestResetController.js'
-import { DEFAULT_MAIL_PREFERENCES } from '@/shared/users/mail-preferences.js'
+import { MailPreferences } from '@/shared/users/MailPreferences.js'
 import { call } from '../support/controller-call.mjs'
 
 let app
@@ -213,7 +213,7 @@ describe('/users/me/preferences', () => {
       interfaceFont: 'plex-sans',
       interfaceLocale: 'auto',
       keyboardShortcutOverrides: {},
-      mailPreferences: DEFAULT_MAIL_PREFERENCES,
+      mailPreferences: MailPreferences.DEFAULT_MAIL_PREFERENCES,
       mailboxNames: {},
       newMailNotificationActions: true,
       newMailNotificationDomains: ['example.com'],
@@ -275,7 +275,7 @@ describe('/users/me/preferences', () => {
       interfaceFont: 'plex-sans',
       interfaceLocale: 'auto',
       keyboardShortcutOverrides: {},
-      mailPreferences: DEFAULT_MAIL_PREFERENCES,
+      mailPreferences: MailPreferences.DEFAULT_MAIL_PREFERENCES,
       mailboxNames: { 'example.com': 'Work' },
       newMailNotificationActions: true,
       newMailNotificationDomains: ['example.com'],

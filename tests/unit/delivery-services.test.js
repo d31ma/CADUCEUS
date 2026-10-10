@@ -7,7 +7,7 @@ import {
   SmtpDeliveryError, loadDkim, groupRecipientsByDomain, resolveMailExchangers, buildSmtpMessage, transportOptions,
 } from '@/features/delivery/services/SmtpService.js'
 import { AcmeService } from '../../background/AcmeService.js'
-import { readTrackingToken } from '@/shared/delivery/tracking-tokens.js'
+import { TrackingTokens } from '@/shared/delivery/TrackingTokens.js'
 import { Security } from '@/shared/security/Security.js'
 import { RuleValidation } from '@/shared/domains/RuleValidation.js'
 import { PushService, buildNewMailPushPayload, buildUnsnoozedPushPayload, countUnreadInbox } from '@/features/notifications/services/PushService.js'
@@ -90,7 +90,7 @@ describe('buildSmtpMessage', () => {
       expect(built.html).toContain('/track/click?t=')
       expect(built.html).toContain('/track/open?t=')
       const token = new URL(built.html.match(/href="([^"]+)/)[1]).searchParams.get('t')
-      expect(readTrackingToken(token, { expectedType: 'click' })).toMatchObject({
+      expect(TrackingTokens.readTrackingToken(token, { expectedType: 'click' })).toMatchObject({
         recipient: 'bob@other.com',
         url: 'https://example.org/x',
       })
@@ -295,7 +295,7 @@ describe('SmtpDirectAdapter.send', () => {
       ])
       const recipients = deliveries.map(item => {
         const token = new URL(item.html.match(/href="([^"]+)/)[1]).searchParams.get('t')
-        return readTrackingToken(token, { expectedType: 'click' }).recipient
+        return TrackingTokens.readTrackingToken(token, { expectedType: 'click' }).recipient
       })
       expect(recipients).toEqual(['one@other.com', 'two@other.com', 'three@elsewhere.com'])
       expect(new Set(deliveries.map(item => item.html)).size).toBe(3)

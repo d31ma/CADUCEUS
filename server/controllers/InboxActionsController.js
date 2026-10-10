@@ -2,7 +2,7 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { MailActionError, MailActionService } from '../features/mailbox/services/MailActionService.js'
-import { bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/inbox/actions")
 @SignedIn
@@ -16,7 +16,7 @@ export class InboxActionsController {
       try {
         const app = await getApp()
         const result = await app.mailActions.apply({
-          ...input, ownerEmail: auth.email, domains: auth.domains, providerToken: bearerToken(context),
+          ...input, ownerEmail: auth.email, domains: auth.domains, providerToken: ExternalAccounts.bearerToken(context),
         })
         return await InboxActionsController._present(app, auth.email, result)
       } catch (error) {

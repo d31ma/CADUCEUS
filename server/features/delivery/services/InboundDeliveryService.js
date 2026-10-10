@@ -2,8 +2,8 @@ import { randomBytes } from 'node:crypto'
 import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
 import { PhishingDetection } from '../../../shared/delivery/PhishingDetection.js'
 import { ListUnsubscribe } from '../../../shared/delivery/ListUnsubscribe.js'
-import { threadMetadataFromHeaders } from '../../../shared/mailbox/threading.js'
-import { recipientsFromHeaders } from '../../../shared/mailbox/personal-level.js'
+import { Threading } from '../../../shared/mailbox/Threading.js'
+import { PersonalLevel } from '../../../shared/mailbox/PersonalLevel.js'
 /** @import { AttachmentsRepository } from '../../mailbox/repositories/AttachmentsRepository.js' */
 /** @import { DomainsRepository } from '../../domains/repositories/DomainsRepository.js' */
 /** @import { EmailsRepository } from '../../mailbox/repositories/EmailsRepository.js' */
@@ -69,8 +69,8 @@ export class InboundDeliveryService {
     const subject = msg.subject ?? '(no subject)'
     const messageId = msg.messageId ?? randomBytes(16).toString('hex')
     const parsedMessage = await this.inbound.parseMessage(msg.body ?? '')
-    const threadMetadata = threadMetadataFromHeaders(parsedMessage.headers, messageId, domainFromAddress(recipient))
-    const messageRecipients = recipientsFromHeaders(parsedMessage.headers, recipient)
+    const threadMetadata = Threading.threadMetadataFromHeaders(parsedMessage.headers, messageId, domainFromAddress(recipient))
+    const messageRecipients = PersonalLevel.recipientsFromHeaders(parsedMessage.headers, recipient)
     const senderSecurity = PhishingDetection.analyze({
       envelopeSender: sender,
       headers: parsedMessage.headers,

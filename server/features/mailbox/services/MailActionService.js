@@ -1,14 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { canAccessEmail } from '../repositories/EmailsRepository.js'
-import { normalizeCategoryPath } from '../../../shared/mailbox/category-path.js'
-import { applyLabelOperation, normalizeStoredLabels, parseLabelOperation } from '../../../shared/mailbox/mail-action-labels.js'
-import { externalMessageId, parseExternalMessageId, presentExternalSummary } from '../../../shared/mailbox/external-message.js'
-import {
-  loadExternalMessageMetadata,
-  projectExternalPatch,
-  queueExternalMessagePatch,
-} from '../../../shared/mailbox/unified-mail.js'
+import { CategoryPath } from '../../../shared/mailbox/CategoryPath.js'
+import { MailActionLabels } from '../../../shared/mailbox/MailActionLabels.js'
+import { ExternalMessage } from '../../../shared/mailbox/ExternalMessage.js'
+import { UnifiedMail } from '../../../shared/mailbox/UnifiedMail.js'
 import { ExternalAccounts } from '../../../shared/accounts/ExternalAccounts.js'
 import { ExternalFolderError } from '../../../shared/mailbox/ExternalFolderError.js'
 
@@ -229,10 +225,10 @@ export class MailActionService {
   async _authorizeMessages(ids, ownerEmail, domains, providerToken = '') {
     const messages = []
     for (const id of ids) {
-      if (parseExternalMessageId(id)) {
+      if (ExternalMessage.parseExternalMessageId(id)) {
         if (!providerToken) throw new MailActionError('Connected account authorization is unavailable', 503)
-        const loaded = await loadExternalMessageMetadata(providerToken, id)
-        const message = loaded ? presentExternalSummary(loaded.indexed) : null
+        const loaded = await UnifiedMail.loadExternalMessageMetadata(providerToken, id)
+        const message = loaded ? ExternalMessage.presentExternalSummary(loaded.indexed) : null
         if (!loaded || !message) throw new MailActionError('Email not found', 404)
         messages.push(message)
         continue
@@ -258,7 +254,7 @@ export class MailActionService {
         if (!(field in patch)) continue
         before[field] = fieldValue(email, field)
         after[field] = field === 'labels'
-          ? applyLabelOperation(before[field], patch[field])
+          ? MailActionLabels.applyLabelOperation(before[field], patch[field])
           : patch[field]
       }
       if (!email.external && typeof after.folder === 'string') {
@@ -284,7 +280,7 @@ export class MailActionService {
     for (const [index, change] of changes.entries()) {
       if (change.source === 'provider') {
         if (!providerToken) throw new MailActionError('Connected account authorization is unavailable', 503)
-        let loaded = await loadExternalMessageMetadata(providerToken, change.id)
+        let loaded = await UnifiedMail.loadExternalMessageMetadata(providerToken, change.id)
         if (!loaded || loaded.identity.accountId !== change.accountId || loaded.identity.stableId !== change.stableId) {
           throw new MailActionError('Email not found', 404)
         }
@@ -295,7 +291,7 @@ export class MailActionService {
           let mutations
           const generation = Number(change.providerGenerations?.[target] || 0) + 1
           try {
-            mutations = await queueExternalMessagePatch(providerToken, loaded, change[target], {
+            mutations = await UnifiedMail.queueExternalMessagePatch(providerToken, loaded, change[target], {
               idempotencyPrefix: `mail-action-${actionId}-${target}-${generation}-${index}`,
             })
           } catch (error) {
@@ -311,16 +307,16 @@ export class MailActionService {
           if (move) {
             const completed = await waitForProviderMutation(providerToken, change.accountId, move.id)
             const replacement = Array.isArray(completed?.resultStableIds) ? completed.resultStableIds[0] : ''
-            const id = externalMessageId(change.accountId, replacement)
+            const id = ExternalMessage.externalMessageId(change.accountId, replacement)
             if (!id) throw new MailActionError('The connected account did not return a safe destination identity', 503)
             change.stableId = replacement
             change.id = id
             await this._updateJournal(actionId, { changesJson: JSON.stringify(changes), updatedAt: Date.now() }, ownerEmail)
-            loaded = await loadExternalMessageMetadata(providerToken, id)
+            loaded = await UnifiedMail.loadExternalMessageMetadata(providerToken, id)
             if (!loaded) throw new MailActionError('The moved provider message is not yet available', 503)
           }
-          const projected = projectExternalPatch(loaded, change[target])
-          const message = projected ? presentExternalSummary(projected.indexed) : null
+          const projected = UnifiedMail.projectExternalPatch(loaded, change[target])
+          const message = projected ? ExternalMessage.presentExternalSummary(projected.indexed) : null
           if (!message) throw new MailActionError('Provider action projection failed', 503)
           updated.push(message)
         } else {
@@ -390,7 +386,7 @@ export class MailActionService {
         const mutation = await ExternalAccounts.mutation(providerToken, change.accountId, mutationId)
         if (mutation?.kind !== 'move' || mutation?.state !== 'applied') continue
         const replacement = Array.isArray(mutation.resultStableIds) ? mutation.resultStableIds[0] : ''
-        const id = externalMessageId(change.accountId, replacement)
+        const id = ExternalMessage.externalMessageId(change.accountId, replacement)
         if (!id) throw new MailActionError('The connected account move journal is missing its destination identity', 503)
         if (change.stableId !== replacement || change.id !== id) {
           change.stableId = replacement
@@ -443,12 +439,12 @@ function parsePatch(input) {
   const patch = {}
   if ('folder' in source) {
     if (typeof source.folder !== 'string' || !source.folder.trim()) throw new MailActionError('folder must be a non-empty string')
-    const folder = normalizeCategoryPath(source.folder)
+    const folder = CategoryPath.normalizeCategoryPath(source.folder)
     if (!folder) throw new MailActionError('folder must be a valid category path')
     patch.folder = folder
   }
   if ('labels' in source) {
-    const result = parseLabelOperation(source.labels)
+    const result = MailActionLabels.parseLabelOperation(source.labels)
     if (!result.ok) throw new MailActionError(result.error)
     patch.labels = result.operation
   }
@@ -502,7 +498,7 @@ function validateStoredState(state) {
   const fields = Object.keys(state)
   if (fields.length === 0 || fields.some(field => !MUTABLE_FIELDS.includes(field))) throw new MailActionError('Mail action record is corrupt', 503)
   if ('folder' in state && (typeof state.folder !== 'string' || !state.folder)) throw new MailActionError('Mail action record is corrupt', 503)
-  if ('labels' in state && (!Array.isArray(state.labels) || state.labels.length > 100 || normalizeStoredLabels(state.labels).length !== state.labels.length)) {
+  if ('labels' in state && (!Array.isArray(state.labels) || state.labels.length > 100 || MailActionLabels.normalizeStoredLabels(state.labels).length !== state.labels.length)) {
     throw new MailActionError('Mail action record is corrupt', 503)
   }
   if ('read' in state && typeof state.read !== 'boolean') throw new MailActionError('Mail action record is corrupt', 503)
@@ -517,7 +513,7 @@ function ensureDomains(changes, domains) {
 
 function fieldValue(email, field) {
   if (field === 'folder') return email.folder || 'inbox'
-  if (field === 'labels') return normalizeStoredLabels(email.labels)
+  if (field === 'labels') return MailActionLabels.normalizeStoredLabels(email.labels)
   return email[field] === true
 }
 
@@ -564,7 +560,7 @@ function actionResult(actionId, record, status, emails) {
       id: email.id,
       domain: email.domain,
       folder: email.folder || 'inbox',
-      labels: normalizeStoredLabels(email.labels),
+      labels: MailActionLabels.normalizeStoredLabels(email.labels),
       read: email.read === true,
       starred: email.starred === true,
       ...(email.external ? { external: true, providerAccountId: email.providerAccountId } : {}),

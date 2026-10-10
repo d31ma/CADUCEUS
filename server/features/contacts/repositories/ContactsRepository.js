@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Fylo } from '../../../shared/persistence/Fylo.js'
 import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
 
 /** Personal contacts and groups, always isolated by exact mailbox owner. */
@@ -9,7 +9,7 @@ export class ContactsRepository {
   /** @returns {Promise<Array<import('../../../types').Contact & {docId: string}>>} */
   async list(ownerEmail) {
     const owner = ownerEmail.toLowerCase()
-    const docs = await collect(this.fylo.findDocs(Collections.CONTACTS, {
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.CONTACTS, {
       $ops: [{ ownerEmail: { $eq: owner } }],
     }).collect())
     return Object.entries(docs)
@@ -19,7 +19,7 @@ export class ContactsRepository {
 
   async findById(id, ownerEmail) {
     const owner = ownerEmail.toLowerCase()
-    const docs = await collect(this.fylo.findDocs(Collections.CONTACTS, {
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.CONTACTS, {
       $ops: [{ id: { $eq: id } }],
     }).collect())
     for (const [docId, raw] of Object.entries(docs)) {
@@ -39,23 +39,23 @@ export class ContactsRepository {
   /** @param {import('../../../types').Contact} contact */
   async put(contact) {
     return await FyloAccessContext.runForDomain(contact.domain, () =>
-      this.fylo.putData(Collections.CONTACTS, serialize(contact)))
+      this.fylo.putData(Fylo.Collections.CONTACTS, serialize(contact)))
   }
 
   /** @param {string} docId @param {import('../../../types').Contact} contact */
   async replace(docId, contact) {
     await FyloAccessContext.runForDomain(contact.domain, () =>
-      this.fylo.patchDoc(Collections.CONTACTS, { [docId]: serialize(contact) }))
+      this.fylo.patchDoc(Fylo.Collections.CONTACTS, { [docId]: serialize(contact) }))
   }
 
   async delete(docId, domain) {
-    await FyloAccessContext.runForDomain(domain, () => this.fylo.delDoc(Collections.CONTACTS, docId))
+    await FyloAccessContext.runForDomain(domain, () => this.fylo.delDoc(Fylo.Collections.CONTACTS, docId))
   }
 
   /** @returns {Promise<Array<import('../../../types').ContactGroup & {docId: string}>>} */
   async listGroups(ownerEmail) {
     const owner = ownerEmail.toLowerCase()
-    const docs = await collect(this.fylo.findDocs(Collections.CONTACT_GROUPS, {
+    const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.CONTACT_GROUPS, {
       $ops: [{ ownerEmail: { $eq: owner } }],
     }).collect())
     return Object.entries(docs)
@@ -76,18 +76,18 @@ export class ContactsRepository {
   /** @param {import('../../../types').ContactGroup} group */
   async putGroup(group) {
     return await FyloAccessContext.runForDomain(group.domain, () =>
-      this.fylo.putData(Collections.CONTACT_GROUPS, group))
+      this.fylo.putData(Fylo.Collections.CONTACT_GROUPS, group))
   }
 
   /** @param {string} docId @param {import('../../../types').ContactGroup} group */
   async replaceGroup(docId, group) {
     await FyloAccessContext.runForDomain(group.domain, () =>
-      this.fylo.patchDoc(Collections.CONTACT_GROUPS, { [docId]: group }))
+      this.fylo.patchDoc(Fylo.Collections.CONTACT_GROUPS, { [docId]: group }))
   }
 
   async deleteGroup(docId, group) {
     await FyloAccessContext.runForDomain(group.domain, async () => {
-      await this.fylo.delDoc(Collections.CONTACT_GROUPS, docId)
+      await this.fylo.delDoc(Fylo.Collections.CONTACT_GROUPS, docId)
       for (const contact of await this.list(group.ownerEmail)) {
         if (!contact.groupIds.includes(group.id)) continue
         await this.replace(contact.docId, {

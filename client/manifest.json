@@ -94,5 +94,19 @@
       "url": "shareUrl"
     }
   },
-  "tac": {}
+  "tac": {
+    "names": {
+      "words": [
+        "caduceus",
+        "mfa",
+        "totp",
+        "passkey",
+        "passkeys",
+        "eml",
+        "mbox",
+        "mailto",
+        "pwa"
+      ]
+    }
+  }
 }

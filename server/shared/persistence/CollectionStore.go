@@ -16,6 +16,13 @@ func (store CollectionStore) Equal(field string, value any) ([]FyloDocument, err
 	return store.Find(store.Condition(field, "$eq", value))
 }
 
+// EqualRecords answers the documents whose field equals value as
+// {docId, ...record}, in FYLO's order.
+func (store CollectionStore) EqualRecords(field string, value any) ([]map[string]any, error) {
+	documents, err := store.Equal(field, value)
+	return StoredRecords{}.WithDocumentIds(documents), err
+}
+
 // Find answers the documents that match any of the conditions.
 func (store CollectionStore) Find(conditions ...map[string]any) ([]FyloDocument, error) {
 	operations := []any{}

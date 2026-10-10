@@ -30,4 +30,16 @@ export class GrammarCheckRules {
     const end = Math.min(text.length, offset + length + 30)
     return { text: text.slice(start, end), offset: offset - start, length }
   }
+
+  static isLanguage(value) { return GrammarCheckRules.VALID_LANGUAGES.has(value) }
+
+  static normalizeDisabledRules(value) {
+    if (!Array.isArray(value) || value.length > 100) return null
+    const rules = []
+    for (const item of value) {
+      if (typeof item !== 'string' || !GrammarCheckRules.RULE_ID.test(item)) return null
+      if (!rules.includes(item)) rules.push(item)
+    }
+    return rules
+  }
 }

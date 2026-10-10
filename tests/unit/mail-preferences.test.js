@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import {
-  DEFAULT_MAIL_PREFERENCES as CLIENT_DEFAULTS,
-  applyMailPreferences,
-  normalizeMailPreferences as normalizeClient,
-} from '../../client/shared/scripts/mail-preferences.js'
+import { MailPreferencesUtils } from '../../client/shared/utils/MailPreferencesUtils.js'
 import { MailPreferences } from '../../server/shared/users/MailPreferences.js'
+
+const CLIENT_DEFAULTS = MailPreferencesUtils.defaultMailPreferences()
+const applyMailPreferences = (...args) => MailPreferencesUtils.applyMailPreferences(...args)
+const normalizeClient = (...args) => MailPreferencesUtils.normalizeMailPreferences(...args)
 
 const originalDocument = globalThis.document
 
@@ -49,8 +49,10 @@ describe('mail preferences', () => {
     expect(globalThis.document.documentElement.dataset).toEqual({
       mailLayout: 'split-vertical', messageWidth: 'restricted', messageTheme: 'dark',
       conversationOrder: 'descending', attachmentPreviews: 'disabled', richComposer: 'disabled', mailSwipe: 'disabled',
+      // themes.css maps the cataloged data-interface-scale / data-clock-format values; no inline style writes.
+      clockFormat: '12h', interfaceScale: '1.2',
     })
-    expect(style.get('--caduceus-interface-scale')).toBe('1.2')
+    expect(style.size).toBe(0)
     expect(applied).toMatchObject({ richText: false, displayAttachmentPreviews: false, swipeEnabled: false })
   })
 })

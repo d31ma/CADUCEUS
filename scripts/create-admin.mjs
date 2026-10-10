@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 import { DatabaseRepository } from '../server/shared/persistence/DatabaseRepository.js'
-import { DomainsRepository } from '../server/features/domains/repositories/DomainsRepository.js'
-import { UsersRepository } from '../server/features/users/repositories/UsersRepository.js'
+import DomainsHelper from '../server/helpers/DomainsHelper.js'
+import UsersHelper from '../server/helpers/UsersHelper.js'
 import { Security } from '../server/shared/security/Security.js'
 import { spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
+import { Providers } from './support/Providers.mjs'
 
 const args = Object.fromEntries(
   process.argv.slice(2).map(arg => {
@@ -28,8 +29,8 @@ if (records.length === 0) {
 }
 
 const fylo = await DatabaseRepository.createDb()
-const domains = new DomainsRepository(fylo)
-const users = new UsersRepository(fylo)
+const domains = Providers.create(DomainsHelper, fylo)
+const users = Providers.create(UsersHelper, fylo)
 const results = []
 
 for (const record of records) {

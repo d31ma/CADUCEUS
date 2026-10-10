@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { EmlImportService } from '../../server/features/mailbox/services/EmlImportService.js'
+import EmlImportService from '../../server/services/EmlImportService.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 
 const parsed = {
   text: 'body',
@@ -17,8 +18,7 @@ const parsed = {
 describe('EmlImportService', () => {
   it('commits the exact source-derived record without delivery side effects', async () => {
     const calls = []
-    const service = new EmlImportService(
-      { put: async email => { calls.push(['email', email]) } },
+    const service = Providers.create(EmlImportService, { put: async email => { calls.push(['email', email]) } },
       {
         replaceForEmail: async (id, domain, attachments) => { calls.push(['attachments', id, domain, attachments]) },
         deleteForEmail: async () => {},
@@ -41,8 +41,7 @@ describe('EmlImportService', () => {
 
   it('removes staged attachment and source objects when the message row fails', async () => {
     const removed = []
-    const service = new EmlImportService(
-      { put: async () => { throw new Error('email write failed') } },
+    const service = Providers.create(EmlImportService, { put: async () => { throw new Error('email write failed') } },
       {
         replaceForEmail: async () => {},
         deleteForEmail: async id => { removed.push(`attachments:${id}`) },

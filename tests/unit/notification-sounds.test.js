@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  DEFAULT_NOTIFICATION_SOUNDS,
-  SOUND_EVENTS,
-  SOUND_OPTIONS,
-  normalizeNotificationSounds,
-  playNotificationSound,
-} from '../../client/shared/scripts/notification-sounds.js'
+import { NotificationSoundsUtils } from '../../client/shared/utils/NotificationSoundsUtils.js'
+import NotificationSoundService from '../../client/services/NotificationSoundService.js'
 import { NotificationSounds } from '../../server/shared/users/NotificationSounds.js'
+
+const DEFAULT_NOTIFICATION_SOUNDS = NotificationSoundsUtils.defaultNotificationSounds()
+const SOUND_EVENTS = NotificationSoundsUtils.soundEvents()
+const SOUND_OPTIONS = NotificationSoundsUtils.soundOptions()
+const normalizeNotificationSounds = (...args) => NotificationSoundsUtils.normalizeNotificationSounds(...args)
+const notificationSound = new NotificationSoundService()
+const playNotificationSound = (...args) => notificationSound.playNotificationSound(...args)
 
 describe('notification sounds', () => {
   it('keeps browser and persistence catalogs in lockstep', () => {

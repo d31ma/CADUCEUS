@@ -3,20 +3,21 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseRepository } from '@/shared/persistence/DatabaseRepository.js'
-import { AttachmentsRepository } from '@/features/mailbox/repositories/AttachmentsRepository.js'
-import { EmailsRepository } from '@/features/mailbox/repositories/EmailsRepository.js'
-import { FollowUpRemindersRepository } from '@/features/delivery/repositories/FollowUpRemindersRepository.js'
-import { FollowUpReminderService } from '@/features/delivery/services/FollowUpReminderService.js'
+import AttachmentsHelper from '@/helpers/AttachmentsHelper.js'
+import EmailsHelper from '@/helpers/EmailsHelper.js'
+import FollowUpRemindersHelper from '@/helpers/FollowUpRemindersHelper.js'
+import FollowUpReminderService from '@/services/FollowUpReminderService.js'
 import { FollowUpReminderRules } from '@/shared/delivery/FollowUpReminderRules.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 
 let root, fylo, emails, reminders, service
 
 beforeEach(async () => {
   root = mkdtempSync(join(tmpdir(), 'caduceus-reminders-'))
   fylo = await DatabaseRepository.createDb(root)
-  emails = new EmailsRepository(fylo, new AttachmentsRepository(fylo))
-  reminders = new FollowUpRemindersRepository(fylo)
-  service = new FollowUpReminderService(reminders, emails)
+  emails = Providers.create(EmailsHelper, fylo, Providers.create(AttachmentsHelper, fylo))
+  reminders = Providers.create(FollowUpRemindersHelper, fylo)
+  service = Providers.create(FollowUpReminderService, reminders, emails)
 })
 
 afterEach(async () => {

@@ -1,12 +1,15 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { Security } from '../shared/security/Security.js'
 
 @RequestRoute("/users")
 @SignedIn
 export class UsersController {
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   /**
  * POST /users
  * @param {object} params
@@ -41,15 +44,15 @@ export class UsersController {
       return Respond.r403('Domain access denied')
     }
 
-    const app = await getApp()
+    const app = this
     for (const address of [email, ...normalizedAliases]) {
-      const [existingDocId, existingUser] = await app.users.findByEmail(address)
+      const [existingDocId, existingUser] = await app.usersHelper.findByEmail(address)
       if (existingDocId && existingUser?.email !== email) {
         return Respond.r400(`address already belongs to another user: ${address}`)
       }
     }
 
-    await app.users.put(/** @type {any} */ ({
+    await app.usersHelper.put(/** @type {any} */ ({
       email,
       aliases: normalizedAliases,
       domains,
@@ -68,8 +71,8 @@ export class UsersController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: { action: Auth.Actions.DOMAIN_ADMIN } }, async ({ auth }) => {
-    const app = await getApp()
-    return await app.users.list()
+    const app = this
+    return await app.usersHelper.list()
     })
   }
 }

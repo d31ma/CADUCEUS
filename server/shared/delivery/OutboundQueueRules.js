@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer'
 import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
 
 export class OutboundQueueRules {
-  /** @import { OutboxEntry } from '../repositories/OutboxRepository.js' */
+  /** @import { OutboxEntry } from '../repositories/OutboxHelper.js' */
 
   /**
    * Outbound delivery queue with retry and bounce handling.

@@ -6,7 +6,7 @@ export class SenderAddresses {
    * From identity. Domain authority is deliberately insufficient: another user
    * on the same hosted domain must never be able to impersonate this mailbox.
    *
-   * @param {import('../../features/users/repositories/UsersRepository.js').UsersRepository} users
+   * @param {import('../../helpers/UsersHelper.js').UsersHelper} users
    * @param {string} ownerEmail
    * @returns {Promise<string[]>}
    */

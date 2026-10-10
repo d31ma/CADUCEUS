@@ -1,16 +1,19 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/categories")
 @SignedIn
 export class CategoriesController {
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
   /** Return exact-owner physical categories and their assigned system roles. */
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
-      const app = await getApp()
-      const accounts = await app.categoryMappings.listAccounts(auth.email, auth.domains)
+      const app = this
+      const accounts = await app.categoryMappingService.listAccounts(auth.email, auth.domains)
       if (!accounts) return Respond.r404('User not found')
       return { roles: ['inbox', 'sent', 'drafts', 'spam', 'archive', 'trash'], accounts }
     })
@@ -20,8 +23,8 @@ export class CategoriesController {
   @PostRoute
   async post(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth, body }) => {
-      const app = await getApp()
-      const result = await app.categoryMappings.createCategory(auth.email, body)
+      const app = this
+      const result = await app.categoryMappingService.createCategory(auth.email, body)
       if (!result.ok) {
         if (result.notFound) return Respond.r404(result.error)
         if (result.forbidden) return Respond.r403(result.error)

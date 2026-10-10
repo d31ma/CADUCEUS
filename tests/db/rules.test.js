@@ -3,14 +3,15 @@ import { mkdtempSync, rmSync } from "node:fs"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { DatabaseRepository } from "@/shared/persistence/DatabaseRepository.js"
-import { RulesRepository } from "@/features/mailbox/repositories/RulesRepository.js"
+import RulesHelper from "@/helpers/RulesHelper.js"
+import { Providers } from '../../scripts/support/Providers.mjs'
 let fylo;
 let rulesRepo;
 let testRoot;
 beforeEach(async () => {
   testRoot = mkdtempSync(join(tmpdir(), "caduceus-test-"));
   fylo = await DatabaseRepository.createDb(testRoot);
-  rulesRepo = new RulesRepository(fylo);
+  rulesRepo = Providers.create(RulesHelper, fylo);
 });
 afterEach(async () => {
   await fylo?.close?.();

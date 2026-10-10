@@ -1,6 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { MailValidation } from '../shared/delivery/MailValidation.js'
 import { SenderAddresses } from '../shared/users/SenderAddresses.js'
 import { ScheduledSends } from '../shared/delivery/ScheduledSends.js'
@@ -12,17 +11,53 @@ import { Uuid } from '../shared/runtime/Uuid.js'
 @RequestRoute("/send/scheduled/{id}")
 @SignedIn
 export class SendScheduledIdController {
+  /** @type {AttachmentsHelper} */
+  @Needs
+  attachmentsHelper
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  /** @type {FollowUpReminderService} */
+  @Needs
+  followUpReminderService
+
+  /** @type {FollowUpRemindersHelper} */
+  @Needs
+  followUpRemindersHelper
+
+  /** @type {OutboxHelper} */
+  @Needs
+  outboxHelper
+
+  /** @type {ScheduledHelper} */
+  @Needs
+  scheduledHelper
+
+  /** @type {SendService} */
+  @Needs
+  sendService
+
+  /** @type {SuppressedHelper} */
+  @Needs
+  suppressedHelper
+
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   @GetRoute
   async get(@FromPath id, request) {
     return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, auth, context }) => {
-      const app = await getApp()
+      const app = this
       const record = await ScheduledSends.findOwnedScheduled(app, String(paths?.id || ''), auth.email)
   		if (!record) return Respond.r404('Scheduled email not found')
   		if (record.entry.transport !== 'external') return await ScheduledSends.presentScheduled(app, record, { includeContent: true })
   		try {
   			const submission = await ExternalAccounts.submission(ExternalAccounts.bearerToken(context), record.entry.externalAccountId, record.entry.externalSubmissionId)
   			if (submission.state === 'sent' || submission.state === 'cancelled') {
-  				await app.scheduled.delete(record.docId)
+  				await app.scheduledHelper.delete(record.docId)
   				return Respond.r404('Scheduled email not found')
   			}
   			return await ScheduledSends.presentScheduled(app, record, { includeContent: true, externalSubmission: submission })
@@ -35,7 +70,7 @@ export class SendScheduledIdController {
   @PutRoute
   async put(@FromPath id, request) {
     return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, body, auth, context }) => {
-      const app = await getApp()
+      const app = this
       const record = await ScheduledSends.findOwnedScheduled(app, String(paths?.id || ''), auth.email)
       if (!record) return Respond.r404('Scheduled email not found')
   		const external = record.entry.transport === 'external'
@@ -54,7 +89,7 @@ export class SendScheduledIdController {
   			senderEmail = parsed.value.from ?? record.entry.sender
   			if (senderEmail !== record.entry.sender) senderEmail = undefined
   		} else {
-  			const addresses = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
+  			const addresses = await SenderAddresses.ownedSenderAddresses(app.usersHelper, auth.email)
   			senderEmail = SenderAddresses.resolveOwnedSender(parsed.value.from ?? record.entry.sender, addresses, auth.email)
   		}
       if (!senderEmail) return Respond.r403('From address is not owned by this mailbox')
@@ -62,7 +97,7 @@ export class SendScheduledIdController {
       const sendAtMs = body?.sendAt == null ? record.entry.sendAt : Date.parse(body.sendAt)
       if (!Number.isFinite(sendAtMs)) return Respond.r400('sendAt must be a valid ISO datetime')
       if (sendAtMs <= Date.now()) return Respond.r400('sendAt must be in the future')
-      const activeReminder = await app.followUpReminders.findActiveForEmail(auth.email, record.entry.id)
+      const activeReminder = await app.followUpRemindersHelper.findActiveForEmail(auth.email, record.entry.id)
       let remindAtMs = activeReminder?.remindAt
       if (body?.remindAt === null) remindAtMs = undefined
       else if (body?.remindAt != null) {
@@ -77,7 +112,7 @@ export class SendScheduledIdController {
         messageId: record.entry.email.messageId,
         ...(attachments.value.length ? { attachments: attachments.value } : {}),
       }
-      const suppressed = await app.suppressed.asSet()
+      const suppressed = await app.suppressedHelper.asSet()
       const blocked = [...req.to, ...(req.cc ?? []), ...(req.bcc ?? [])].filter(address => suppressed.has(address))
       if (blocked.length) return Respond.r422('Recipients are suppressed', blocked)
 
@@ -157,9 +192,9 @@ export class SendScheduledIdController {
   				record.docId, record.entry, record.queueDocId, auth.email, senderEmail, req, sendAtMs,
   			)
   		}
-      if (body?.remindAt === null) await app.reminders.dismissForEmail(record.entry.id, auth.email)
+      if (body?.remindAt === null) await app.followUpReminderService.dismissForEmail(record.entry.id, auth.email)
       else if (remindAtMs != null) {
-        await app.reminders.schedule({
+        await app.followUpReminderService.schedule({
           ownerEmail: auth.email,
           emailId: record.entry.id,
           recipient: req.to.join(', '),
@@ -175,7 +210,7 @@ export class SendScheduledIdController {
   @DeleteRoute
   async delete(@FromPath id, request) {
     return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, auth, context }) => {
-      const app = await getApp()
+      const app = this
       const record = await ScheduledSends.findOwnedScheduled(app, String(paths?.id || ''), auth.email)
       if (!record) return Respond.r404('Scheduled email not found')
   		let result

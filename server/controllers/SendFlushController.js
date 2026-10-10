@@ -1,9 +1,12 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/send/flush")
 @Public
 export class SendFlushController {
+  /** @type {OutboundQueueService} */
+  @Needs
+  outboundQueueService
+
   /**
    * POST /send/flush
    *
@@ -16,10 +19,10 @@ export class SendFlushController {
   @PostRoute
   async post(request) {
     return RouteRequest.handle(request, { signature: 'INBOUND_WEBHOOK_SECRET' }, async () => {
-      const app = await getApp()
-      const before = await app.outboundQueue.status()
-      const result = await app.outboundQueue.processDue()
-      return { flushed: result.delivered, ...result, before, queue: await app.outboundQueue.status() }
+      const app = this
+      const before = await app.outboundQueueService.status()
+      const result = await app.outboundQueueService.processDue()
+      return { flushed: result.delivered, ...result, before, queue: await app.outboundQueueService.status() }
     })
   }
 }

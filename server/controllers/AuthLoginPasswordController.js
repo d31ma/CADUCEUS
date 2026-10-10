@@ -3,11 +3,14 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { AuthGuard } from '../shared/http/AuthGuard.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/auth/login/password")
 @Public
 export class AuthLoginPasswordController {
+  /** @type {RateLimitService} */
+  @Needs
+  rateLimitService
+
   /**
    * POST /auth/login/password — supply the password factor.
    *
@@ -24,8 +27,8 @@ export class AuthLoginPasswordController {
       const password = String(body?.password ?? '').trim()
       if (!password) return Respond.r400('password is required')
 
-      const app = await getApp()
-      const limit = await app.rateLimit.check(
+      const app = this
+      const limit = await app.rateLimitService.check(
         ['login-password', transactionId, context?.ipAddress ?? 'unknown'], 12, 15 * 60 * 1000,
       )
       if (!limit.allowed) return Respond.r429('Too many attempts', limit.retryAfterSeconds)

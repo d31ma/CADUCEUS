@@ -1,12 +1,35 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { ExternalSubmission } from '../shared/delivery/ExternalSubmission.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/send/undo")
 @SignedIn
 export class SendUndoController {
+  /** @type {ConversationArchiveService} */
+  @Needs
+  conversationArchiveService
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  /** @type {FollowUpReminderService} */
+  @Needs
+  followUpReminderService
+
+  /** @type {MailActionService} */
+  @Needs
+  mailActionService
+
+  /** @type {OutboxHelper} */
+  @Needs
+  outboxHelper
+
+  /** @type {SendService} */
+  @Needs
+  sendService
+
   /**
  * POST /send/undo
  * @param {object} params
@@ -20,37 +43,37 @@ export class SendUndoController {
     const undoId = body?.undoId
     if (!undoId || typeof undoId !== 'string') return Respond.r400('undoId is required')
 
-    const app = await getApp()
+    const app = this
     const external = ExternalSubmission.parseExternalUndoToken(undoId)
     if (external) {
-      const [, email] = await app.emails.findById(external.messageId)
+      const [, email] = await app.emailsHelper.findById(external.messageId)
       if (!email || email.ownerEmail !== auth.email) return Respond.r404('Undo ID not found or already processed')
       try {
         await ExternalAccounts.cancelSubmission(ExternalAccounts.bearerToken(context), external.accountId, external.submissionId)
       } catch (error) {
         return ExternalAccounts.accountFailure(error)
       }
-      await app.reminders.dismissForEmail(external.messageId, auth.email)
+      await app.followUpReminderService.dismissForEmail(external.messageId, auth.email)
       await app.sendService.rollbackExternalAccepted(external.messageId)
       if (!external.archiveActionId) return { undone: true }
       try {
-        const restored = await app.mailActions.undo(external.archiveActionId, auth.email, auth.domains, Date.now(), ExternalAccounts.bearerToken(context))
+        const restored = await app.mailActionService.undo(external.archiveActionId, auth.email, auth.domains, Date.now(), ExternalAccounts.bearerToken(context))
         return { undone: true, archiveRestored: restored.count }
       } catch (error) {
         return { undone: true, archiveRestored: 0, archiveError: error instanceof Error ? error.message : 'Source conversation could not be restored' }
       }
     }
-    const [docId, entry] = await app.outbox.findById(undoId)
+    const [docId, entry] = await app.outboxHelper.findById(undoId)
     if (!docId || !entry) return Respond.r404('Undo ID not found or already processed')
     if ((entry.owner ?? entry.sender) !== auth.email) return Respond.r404('Undo ID not found or already processed')
 
     const restored = entry.archiveStateJson
-      ? await app.conversationArchive.restore(entry.archiveStateJson, auth.email, auth.domains)
+      ? await app.conversationArchiveService.restore(entry.archiveStateJson, auth.email, auth.domains)
       : 0
-    await app.outbox.delete(docId)
-    await app.reminders.dismissForEmail(undoId, auth.email)
-    const [emailDocId] = await app.emails.findById(undoId)
-    if (emailDocId) await app.emails.delete(emailDocId, undoId)
+    await app.outboxHelper.delete(docId)
+    await app.followUpReminderService.dismissForEmail(undoId, auth.email)
+    const [emailDocId] = await app.emailsHelper.findById(undoId)
+    if (emailDocId) await app.emailsHelper.delete(emailDocId, undoId)
     return { undone: true, ...(entry.archiveStateJson ? { archiveRestored: restored } : {}) }
     })
   }

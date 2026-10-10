@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test'
-import {
-  loadTranslationPreferences,
-  resetTranslationPreferences,
-  setTranslationPreference,
-  translationPreferenceFor,
-  TRANSLATION_PREFERENCES_KEY,
-} from '../../client/shared/scripts/translation-preferences.js'
+import { TranslationPreferencesUtils } from '../../client/shared/utils/TranslationPreferencesUtils.js'
+
+const loadTranslationPreferences = (...args) => TranslationPreferencesUtils.loadTranslationPreferences(...args)
+const resetTranslationPreferences = (...args) => TranslationPreferencesUtils.resetTranslationPreferences(...args)
+const setTranslationPreference = (...args) => TranslationPreferencesUtils.setTranslationPreference(...args)
+const translationPreferenceFor = (...args) => TranslationPreferencesUtils.translationPreferenceFor(...args)
+const TRANSLATION_PREFERENCES_KEY = TranslationPreferencesUtils.translationPreferencesKey()
 
 function memoryStorage(initial = {}) {
   const values = new Map(Object.entries(initial))

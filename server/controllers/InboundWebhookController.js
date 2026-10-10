@@ -1,10 +1,13 @@
 import { Respond } from '../shared/http/Respond.js'
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/inbound/webhook")
 @Public
 export class InboundWebhookController {
+  /** @type {InboundDeliveryService} */
+  @Needs
+  inboundDeliveryService
+
   /**
  * POST /inbound/webhook
  *
@@ -22,8 +25,8 @@ export class InboundWebhookController {
     return RouteRequest.handle(request, { signature: 'INBOUND_WEBHOOK_SECRET' }, async ({ body }) => {
     if (!body?.recipient || !body.sender) return Respond.r400('recipient and sender required')
 
-    const app = await getApp()
-    const result = await app.inboundDelivery.deliver(body)
+    const app = this
+    const result = await app.inboundDeliveryService.deliver(body)
     return result.body
     })
   }

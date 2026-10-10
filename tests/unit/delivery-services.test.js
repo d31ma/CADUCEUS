@@ -10,9 +10,10 @@ import { AcmeService } from '../../background/AcmeService.js'
 import { TrackingTokens } from '@/shared/delivery/TrackingTokens.js'
 import { Security } from '@/shared/security/Security.js'
 import { RuleValidation } from '@/shared/domains/RuleValidation.js'
-import { PushService } from '@/features/notifications/services/PushService.js'
+import PushService from '@/services/PushService.js'
 import { PushRules } from '@/shared/notifications/PushRules.js'
 import tlsOptions from 'smtp-server/lib/tls-options.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 
 const MSG = { to: ['bob@other.com'], subject: 'Hi', text: 'body' }
 
@@ -412,7 +413,7 @@ describe('RuleValidation.validateInboxRuleActions', () => {
 })
 
 describe('PushService', () => {
-  const service = (over = {}) => Object.assign(new PushService({ listForAddress: async () => [] }, { findByEmail: async () => [null, null] }), over)
+  const service = (over = {}) => Object.assign(Providers.create(PushService, { listForAddress: async () => [] }, { findByEmail: async () => [null, null] }), over)
   const email = { id: 'e1', recipient: 'alice@example.com', sender: 'bob@other.com', subject: 'Hi' }
 
   it('builds a deep-linked notification carrying the exact unread count', () => {

@@ -3,14 +3,15 @@ import { mkdtempSync, rmSync } from "node:fs"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { DatabaseRepository } from "@/shared/persistence/DatabaseRepository.js"
-import { SuppressedRepository } from "@/features/delivery/repositories/SuppressedRepository.js"
+import SuppressedHelper from "@/helpers/SuppressedHelper.js"
+import { Providers } from '../../scripts/support/Providers.mjs'
 let fylo;
 let suppressedRepo;
 let testRoot;
 beforeEach(async () => {
   testRoot = mkdtempSync(join(tmpdir(), "caduceus-test-"));
   fylo = await DatabaseRepository.createDb(testRoot);
-  suppressedRepo = new SuppressedRepository(fylo);
+  suppressedRepo = Providers.create(SuppressedHelper, fylo);
 });
 afterEach(async () => {
   await fylo?.close?.();

@@ -1,19 +1,19 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import { LocalePreferences } from '../../server/shared/users/LocalePreferences.js'
-import {
-  INTERFACE_LOCALE_OPTIONS,
-  applyInterfaceLocale,
-  formatDate,
-  formatNumber,
-  normalizeInterfaceLocale,
-  resolveInterfaceLocale,
-  translate,
-  validateInterfaceLiteralAsset,
-} from '../../client/shared/scripts/localization.js'
+import { LocalizationUtils } from '../../client/shared/utils/LocalizationUtils.js'
 import {
   firstTranslation,
   safeGeneratedTranslation,
 } from '../../scripts/publish-interface-locales.mjs'
+
+const INTERFACE_LOCALE_OPTIONS = LocalizationUtils.interfaceLocaleOptions()
+const applyInterfaceLocale = (...args) => LocalizationUtils.applyInterfaceLocale(...args)
+const formatDate = (...args) => LocalizationUtils.formatDate(...args)
+const formatNumber = (...args) => LocalizationUtils.formatNumber(...args)
+const normalizeInterfaceLocale = (...args) => LocalizationUtils.normalizeInterfaceLocale(...args)
+const resolveInterfaceLocale = (...args) => LocalizationUtils.resolveInterfaceLocale(...args)
+const translate = (...args) => LocalizationUtils.translate(...args)
+const validateInterfaceLiteralAsset = (...args) => LocalizationUtils.validateInterfaceLiteralAsset(...args)
 
 const originalDocument = globalThis.document
 const originalStorage = globalThis.localStorage

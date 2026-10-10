@@ -1,13 +1,16 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { Security } from '../shared/security/Security.js'
 import { RuleValidation } from '../shared/domains/RuleValidation.js'
 
 @RequestRoute("/domains")
 @SignedIn
 export class DomainsController {
+  /** @type {DomainsHelper} */
+  @Needs
+  domainsHelper
+
   /**
  * POST /domains
  * @param {object} params
@@ -29,8 +32,8 @@ export class DomainsController {
     const routeResult = RuleValidation.validateRouteRules(routes)
     if (!routeResult.valid) return Respond.r400(routeResult.error)
 
-    const app = await getApp()
-    await app.domains.put({
+    const app = this
+    await app.domainsHelper.put({
       domain,
       routes,
       inboundEnabled: config.inboundEnabled ?? false,
@@ -48,8 +51,8 @@ export class DomainsController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
-    const app = await getApp()
-    return await app.domains.list(auth.domains)
+    const app = this
+    return await app.domainsHelper.list(auth.domains)
     })
   }
 }

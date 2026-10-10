@@ -1,13 +1,16 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { RuleValidation } from '../shared/domains/RuleValidation.js'
 import { RuleInput } from '../shared/mailbox/RuleInput.js'
 
 @RequestRoute("/rules/{id}")
 @SignedIn
 export class RulesIdController {
+  /** @type {RulesHelper} */
+  @Needs
+  rulesHelper
+
   /**
  * DELETE /rules/_id
  * @param {object} params
@@ -21,12 +24,12 @@ export class RulesIdController {
     const ruleId = paths?.id
     if (!ruleId) return Respond.r400('rule id required')
 
-    const app = await getApp()
-    const [docId, existing] = await app.rules.findById(ruleId)
+    const app = this
+    const [docId, existing] = await app.rulesHelper.findById(ruleId)
     if (!docId || !existing) return Respond.r404('Rule not found')
     if (existing.ownerEmail !== auth.email.toLowerCase()) return Respond.r404('Rule not found')
 
-    await app.rules.delete(docId)
+    await app.rulesHelper.delete(docId)
     return { deleted: ruleId }
     })
   }
@@ -45,8 +48,8 @@ export class RulesIdController {
     const ruleId = paths?.id
     if (!ruleId || !body) return Respond.r400('rule id and body required')
 
-    const app = await getApp()
-    const [docId, existing] = await app.rules.findById(ruleId)
+    const app = this
+    const [docId, existing] = await app.rulesHelper.findById(ruleId)
     if (!docId || !existing) return Respond.r404('Rule not found')
     if (existing.ownerEmail !== auth.email.toLowerCase()) return Respond.r404('Rule not found')
     const allowed = ['name', 'enabled', 'conditionMatch', 'conditions', 'actions', 'stopProcessing']
@@ -62,7 +65,7 @@ export class RulesIdController {
     if (merged.actions.some(action => action.type === 'forward' && action.to?.trim().toLowerCase() === existing.mailbox)) {
       return Respond.r400('A rule cannot forward a message back to its own mailbox')
     }
-    await app.rules.update(docId, /** @type {any} */ ({
+    await app.rulesHelper.update(docId, /** @type {any} */ ({
       name: merged.name,
       enabled: merged.enabled,
       conditionMatch: merged.conditionMatch,

@@ -1,9 +1,12 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/presence/heartbeat")
 @SignedIn
 export class PresenceHeartbeatController {
+  /** @type {PresenceService} */
+  @Needs
+  presenceService
+
   /**
  * POST /presence/heartbeat
  *
@@ -18,8 +21,8 @@ export class PresenceHeartbeatController {
   @PostRoute
   async post(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
-    const app = await getApp()
-    await app.presence.heartbeat(auth.email, auth.domains || [])
+    const app = this
+    await app.presenceService.heartbeat(auth.email, auth.domains || [])
     return { ok: true }
     })
   }

@@ -2,7 +2,6 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { randomBytes } from 'node:crypto'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { RuleValidation } from '../shared/domains/RuleValidation.js'
 import { SenderAddresses } from '../shared/users/SenderAddresses.js'
 import { RuleInput } from '../shared/mailbox/RuleInput.js'
@@ -10,6 +9,14 @@ import { RuleInput } from '../shared/mailbox/RuleInput.js'
 @RequestRoute("/rules")
 @SignedIn
 export class RulesController {
+  /** @type {RulesHelper} */
+  @Needs
+  rulesHelper
+
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   /**
  * POST /rules
  * @param {object} params
@@ -20,8 +27,8 @@ export class RulesController {
   @PostRoute
   async post(request) {
     return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
-    const app = await getApp()
-    const owned = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
+    const app = this
+    const owned = await SenderAddresses.ownedSenderAddresses(app.usersHelper, auth.email)
     const mailbox = typeof body?.mailbox === 'string' ? body.mailbox.trim().toLowerCase() : auth.email
     if (!owned.includes(mailbox)) return Respond.r403('Mailbox access denied')
     const ruleId = randomBytes(16).toString('hex')
@@ -29,14 +36,14 @@ export class RulesController {
       id: ruleId,
       ownerEmail: auth.email,
       mailbox,
-      order: await app.rules.nextOrder(auth.email),
+      order: await app.rulesHelper.nextOrder(auth.email),
     })
     const result = RuleValidation.validateInboxRule(rule)
     if (result.valid === false) return Respond.r400(result.error)
     if (rule.actions.some(action => action.type === 'forward' && action.to === mailbox)) {
       return Respond.r400('A rule cannot forward a message back to its own mailbox')
     }
-    await app.rules.put(/** @type {any} */ (rule))
+    await app.rulesHelper.put(/** @type {any} */ (rule))
     return { id: ruleId }
     })
   }
@@ -50,8 +57,8 @@ export class RulesController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
-    const app = await getApp()
-    return await app.rules.listForOwner(auth.email)
+    const app = this
+    return await app.rulesHelper.listForOwner(auth.email)
     })
   }
 }

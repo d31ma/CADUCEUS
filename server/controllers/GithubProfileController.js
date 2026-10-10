@@ -1,11 +1,26 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { Security } from '../shared/security/Security.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/github/profile")
 @SignedIn
 export class GithubProfileController {
+  /** @type {ContactsHelper} */
+  @Needs
+  contactsHelper
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  /** @type {GitHubProfilesService} */
+  @Needs
+  gitHubProfilesService
+
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   /** @param {Record<string, any>} message */
   static participantAddresses(message) {
     const values = [
@@ -35,16 +50,16 @@ export class GithubProfileController {
       const email = Security.normalizeEmailAddress(params.email)
       if (!email) return Respond.r400('email must be a valid email address')
 
-      const app = await getApp()
-      const [, user] = await app.users.findByEmail(auth.email)
+      const app = this
+      const [, user] = await app.usersHelper.findByEmail(auth.email)
       if (!user) return Respond.r404('User not found')
       if (user.githubProfileEnrichment !== true) return { enabled: false, status: 'disabled' }
 
-      const contact = await app.contactRecords.findByEmail(auth.email, email)
+      const contact = await app.contactsHelper.findByEmail(auth.email, email)
       const related = contact || await GithubProfileController.hasOwnedRelationship(app, auth, email)
       if (!related) return Respond.r404('Contact not found')
 
-      const result = await app.githubProfiles.findByEmail(email)
+      const result = await app.gitHubProfilesService.findByEmail(email)
       return { enabled: true, ...result }
     })
   }
@@ -54,7 +69,7 @@ export class GithubProfileController {
    * address field so a body-text substring can never authorize enrichment.
    */
   static async hasOwnedRelationship(app, auth, email) {
-    const candidates = await app.emails.list(auth.domains, {
+    const candidates = await app.emailsHelper.list(auth.domains, {
       ownerEmail: auth.email,
       query: email,
       limit: 20,

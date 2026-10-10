@@ -1,9 +1,9 @@
 import { describe, expect, it, mock } from 'bun:test'
-import {
-  loadPrintableConversation,
-  openPrintConversation,
-  renderPrintDocument,
-} from '../../client/shared/scripts/print-conversation.js'
+import { PrintConversationUtils } from '../../client/shared/utils/PrintConversationUtils.js'
+
+const loadPrintableConversation = (...args) => PrintConversationUtils.loadPrintableConversation(...args)
+const openPrintConversation = (...args) => PrintConversationUtils.openPrintConversation(...args)
+const renderPrintDocument = (...args) => PrintConversationUtils.renderPrintDocument(...args)
 
 const email = (overrides = {}) => ({
   id: 'message-1',
@@ -95,26 +95,40 @@ describe('renderPrintDocument', () => {
 })
 
 describe('openPrintConversation', () => {
-  it('writes the isolated document and opens the browser print dialog', () => {
-    const written = []
-    const popup = {
-      opener: {},
-      document: {
-        readyState: 'complete',
-        open: mock(() => {}),
-        write: mock(value => written.push(value)),
-        close: mock(() => {}),
-      },
-      focus: mock(() => {}),
-      print: mock(() => {}),
+  it('loads the isolated document from a Blob URL and opens the browser print dialog', async () => {
+    // The popup document is now a text/html Blob URL loaded with location.replace (no document.write).
+    const createObjectURL = URL.createObjectURL
+    const blobs = []
+    URL.createObjectURL = blob => {
+      blobs.push(blob)
+      return createObjectURL.call(URL, blob)
     }
-    const opener = { open: mock(() => popup) }
+    try {
+      const popup = {
+        opener: {},
+        closed: false,
+        document: { URL: 'about:blank', readyState: 'loading' },
+        location: {
+          replace: mock(url => { popup.document = { URL: url, readyState: 'complete' } }),
+        },
+        focus: mock(() => {}),
+        print: mock(() => {}),
+      }
+      const opener = { open: mock(() => popup) }
 
-    expect(openPrintConversation('<!doctype html><p>Print me</p>', opener)).toBe(popup)
-    expect(opener.open).toHaveBeenCalledWith('', '_blank', 'popup')
-    expect(written.join('')).toContain('Print me')
-    expect(popup.opener).toBeNull()
-    expect(popup.print).toHaveBeenCalledTimes(1)
+      expect(openPrintConversation('<!doctype html><p>Print me</p>', opener)).toBe(popup)
+      expect(opener.open).toHaveBeenCalledWith('', '_blank', 'popup')
+      expect(blobs).toHaveLength(1)
+      expect(blobs[0].type).toStartWith('text/html')
+      expect(await blobs[0].text()).toContain('Print me')
+      expect(popup.location.replace).toHaveBeenCalledTimes(1)
+      expect(popup.location.replace.mock.calls[0][0]).toStartWith('blob:')
+      expect(popup.opener).toBeNull()
+      expect(popup.focus).toHaveBeenCalledTimes(1)
+      expect(popup.print).toHaveBeenCalledTimes(1)
+    } finally {
+      URL.createObjectURL = createObjectURL
+    }
   })
 
   it('reports a blocked print window', () => {

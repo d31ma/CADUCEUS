@@ -1,8 +1,11 @@
 import { describe, test, expect } from 'bun:test'
-import {
-  applySearchSuggestion, getCurrentTokenAndTerm, searchTokenSegments,
-  staticSearchSuggestions, wrapSearchTerm,
-} from '../../client/shared/scripts/thread-search.js'
+import { ThreadSearchUtils } from '../../client/shared/utils/ThreadSearchUtils.js'
+
+const applySearchSuggestion = (...args) => ThreadSearchUtils.applySearchSuggestion(...args)
+const getCurrentTokenAndTerm = (...args) => ThreadSearchUtils.getCurrentTokenAndTerm(...args)
+const searchTokenSegments = (...args) => ThreadSearchUtils.searchTokenSegments(...args)
+const staticSearchSuggestions = (...args) => ThreadSearchUtils.staticSearchSuggestions(...args)
+const wrapSearchTerm = (...args) => ThreadSearchUtils.wrapSearchTerm(...args)
 
 describe('thread search interaction model', () => {
   test('identifies complete and partial tokens at the caret', () => {

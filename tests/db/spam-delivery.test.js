@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { getApp, resetApp } from "@/app.js";
+import { TestContainer } from "../support/TestContainer.mjs";
 
 let testRoot;
 let emailsRepo;
@@ -12,8 +12,7 @@ const previousFyloRoot = process.env.FYLO_ROOT;
 beforeEach(async () => {
   testRoot = mkdtempSync(join(tmpdir(), "caduceus-spam-"));
   process.env.FYLO_ROOT = testRoot;
-  await resetApp();
-  const app = await getApp();
+  const app = await TestContainer.open();
   emailsRepo = app.emails;
   domainsRepo = app.domains;
   await domainsRepo.put({
@@ -24,7 +23,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  await resetApp();
+  await TestContainer.close();
   if (previousFyloRoot === undefined) delete process.env.FYLO_ROOT;
   else process.env.FYLO_ROOT = previousFyloRoot;
   rmSync(testRoot, { recursive: true, force: true });
@@ -32,7 +31,7 @@ afterEach(async () => {
 
 describe("inbound spam routing", () => {
   it("delivers clean mail to the inbox", async () => {
-    const app = await getApp();
+    const app = TestContainer.current;
     const res = await app.inboundDelivery.deliver({
       recipient: "alice@example.com",
       sender: "bob@friend.com",
@@ -47,7 +46,7 @@ describe("inbound spam routing", () => {
   });
 
   it("routes a receiver FAIL verdict to the spam folder", async () => {
-    const app = await getApp();
+    const app = TestContainer.current;
     const res = await app.inboundDelivery.deliver({
       recipient: "alice@example.com",
       sender: "newsletter@store.com",
@@ -63,7 +62,7 @@ describe("inbound spam routing", () => {
   });
 
   it("routes mail carrying X-Spam headers to the spam folder", async () => {
-    const app = await getApp();
+    const app = TestContainer.current;
     const mime = [
       "X-Spam-Flag: YES",
       "X-Spam-Status: Yes, score=8.1 required=5.0",
@@ -83,7 +82,7 @@ describe("inbound spam routing", () => {
   });
 
   it("quarantines obvious heuristic junk and skips inbox rules", async () => {
-    const app = await getApp();
+    const app = TestContainer.current;
     await app.inboundDelivery.deliver({
       recipient: "alice@example.com",
       sender: "win@lottery-prize.win",
@@ -96,7 +95,7 @@ describe("inbound spam routing", () => {
   });
 
   it("stores Reply-To metadata and warns when it differs from the visible sender", async () => {
-    const app = await getApp();
+    const app = TestContainer.current;
     const mime = [
       "From: Billing <billing@vendor.example>",
       "Reply-To: attacker@lookalike.test",
@@ -118,7 +117,7 @@ describe("inbound spam routing", () => {
   });
 
   it("stores visible To and Cc recipients instead of replacing them with the SMTP envelope", async () => {
-    const app = await getApp();
+    const app = TestContainer.current;
     const mime = [
       "From: Sender <sender@outside.test>",
       "To: Team List <staff@example.net>",
@@ -142,7 +141,7 @@ describe("inbound spam routing", () => {
   });
 
   it("stores safe List-Unsubscribe methods and RFC 8058 one-click intent", async () => {
-    const app = await getApp();
+    const app = TestContainer.current;
     const mime = [
       "From: Newsletter <news@publisher.example>",
       "List-Unsubscribe: <mailto:leave@publisher.example?subject=unsubscribe>, <https://publisher.example/subscriptions/abc>",
@@ -165,7 +164,7 @@ describe("inbound spam routing", () => {
   });
 
   it("stores a body unsubscribe link when no header method exists", async () => {
-    const app = await getApp();
+    const app = TestContainer.current;
     const mime = [
       "From: Newsletter <news@publisher.example>",
       "Content-Type: text/html",

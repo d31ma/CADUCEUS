@@ -1,11 +1,14 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Auth } from '../shared/auth/Auth.js'
-import { getApp } from '../app.js'
 import { Respond } from '../shared/http/Respond.js'
 
 @RequestRoute("/suppressed")
 @SignedIn
 export class SuppressedController {
+  /** @type {SuppressedHelper} */
+  @Needs
+  suppressedHelper
+
   /**
  * GET /suppressed
  * @param {object} params
@@ -15,8 +18,8 @@ export class SuppressedController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: { action: Auth.Actions.DOMAIN_ADMIN } }, async ({ auth }) => {
-      const app = await getApp()
-      return await app.suppressed.list()
+      const app = this
+      return await app.suppressedHelper.list()
     })
   }
 
@@ -27,8 +30,8 @@ export class SuppressedController {
       const address = String(body?.address || '').trim().toLowerCase()
       if (!address) return Respond.r400('address required')
       const reason = body?.reason === 'complaint' ? 'complaint' : 'bounce'
-      const app = await getApp()
-      await app.suppressed.suppress(address, reason)
+      const app = this
+      await app.suppressedHelper.suppress(address, reason)
       return { suppressed: address, reason }
     })
   }

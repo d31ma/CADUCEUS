@@ -1,11 +1,14 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { SnoozeError } from '../shared/errors/SnoozeError.js'
 
 @RequestRoute("/snooze")
 @SignedIn
 export class SnoozeController {
+  /** @type {SnoozeService} */
+  @Needs
+  snoozeService
+
   /** @param {{body?:{emailId?:unknown,until?:unknown,label?:unknown,clientRequestId?:unknown},auth:any}} params */
   @PostRoute
   async post(request) {
@@ -17,7 +20,7 @@ export class SnoozeController {
         || !/^[A-Za-z0-9._:-]{1,128}$/.test(body.clientRequestId))) return Respond.r400('clientRequestId is invalid')
       const until = Date.parse(body.until)
       if (!Number.isFinite(until)) return Respond.r400('until must be a valid ISO datetime')
-      const app = await getApp()
+      const app = this
       try {
         return await app.snoozeService.snoozeThread({
           emailId: body.emailId,
@@ -37,7 +40,7 @@ export class SnoozeController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
-      const app = await getApp()
+      const app = this
       return await app.snoozeService.listActive(auth.email, auth.domains)
     })
   }

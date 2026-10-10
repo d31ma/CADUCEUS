@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { OutboundQueueService } from '../server/features/delivery/services/OutboundQueueService.js'
+import OutboundQueueService from '../server/services/OutboundQueueService.js'
+import { Providers } from './support/Providers.mjs'
 
 const HOUR_MS = 60 * 60_000
 const START = Date.now()
@@ -42,8 +43,7 @@ const outbox = new MemoryOutbox()
 const smtp = new DeterministicSmtpPeer()
 const bounces = []
 const suppressed = new Set()
-const queue = new OutboundQueueService(
-  /** @type {any} */ (outbox),
+const queue = Providers.create(OutboundQueueService, /** @type {any} */ (outbox),
   /** @type {any} */ (smtp),
   /** @type {any} */ ({ async put(email) { bounces.push(email); return email.id } }),
   undefined,

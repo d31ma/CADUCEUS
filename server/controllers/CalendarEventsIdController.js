@@ -1,6 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { CalendarRecurrence } from '../shared/calendar/CalendarRecurrence.js'
 import { CalendarDate } from '../shared/calendar/CalendarDate.js'
 import { EventView } from '../shared/calendar/EventView.js'
@@ -10,6 +9,14 @@ import { CalendarEventsController as EventsHandler } from './CalendarEventsContr
 @RequestRoute("/calendar/events/{id}")
 @SignedIn
 export class CalendarEventsIdController {
+  /** @type {CalendarEventsHelper} */
+  @Needs
+  calendarEventsHelper
+
+  /** @type {ProviderCalendarService} */
+  @Needs
+  providerCalendarService
+
   /** Fields the client is allowed to patch — identity + ownership are immutable. */
   static PATCHABLE_KEYS = new Set([
     'title', 'start', 'end', 'allDay', 'location', 'description',
@@ -29,13 +36,13 @@ export class CalendarEventsIdController {
     const id = paths?.id
     if (!id) return Respond.r404('Event not found')
 
-    const app = await getApp()
-    const local = await app.calendarEvents.findById(id)
+    const app = this
+    const local = await app.calendarEventsHelper.findById(id)
     /** @type {string | null} */
     let docId = local[0]
     /** @type {Record<string, any> | null} */
     let event = local[1]
-    const providerCalendars = app.providerCalendars
+    const providerCalendars = app.providerCalendarService.available() ? app.providerCalendarService : null
     let provider = false
     if ((!event || !docId) && providerCalendars) {
       try {
@@ -69,9 +76,9 @@ export class CalendarEventsIdController {
       if (!occurrenceStart) return Respond.r400('occurrenceStart must identify a valid series occurrence')
       const occurrence = CalendarEventsIdController._resolveOccurrence(event, occurrenceStart)
       if (!occurrence) return Respond.r404('Occurrence not found')
-      const [existingDocId, existing] = await app.calendarEvents.findException(event.id, occurrenceStart)
-      if (existingDocId) await app.calendarEvents.delete(existingDocId)
-      await app.calendarEvents.put(/** @type {any} */ ({
+      const [existingDocId, existing] = await app.calendarEventsHelper.findException(event.id, occurrenceStart)
+      if (existingDocId) await app.calendarEventsHelper.delete(existingDocId)
+      await app.calendarEventsHelper.put(/** @type {any} */ ({
         ...(existing || occurrence),
         id: existing?.id || CalendarEventsIdController._newExceptionId(),
         userEmail: event.userEmail,
@@ -87,8 +94,8 @@ export class CalendarEventsIdController {
       return { deleted: true, scope: 'instance', remainingSeries: true }
     }
 
-    if (event.recurrence) await app.calendarEvents.deleteSeries(event.id, auth.email)
-    else if (docId) await app.calendarEvents.delete(docId)
+    if (event.recurrence) await app.calendarEventsHelper.deleteSeries(event.id, auth.email)
+    else if (docId) await app.calendarEventsHelper.delete(docId)
     else return Respond.r404('Event not found')
     return { deleted: true, scope: event.recurrence ? 'series' : 'event', remainingSeries: false }
     })
@@ -112,13 +119,13 @@ export class CalendarEventsIdController {
     const id = paths?.id
     if (!id) return Respond.r404('Event not found')
 
-    const app = await getApp()
-    const local = await app.calendarEvents.findById(id)
+    const app = this
+    const local = await app.calendarEventsHelper.findById(id)
     /** @type {string | null} */
     let docId = local[0]
     /** @type {Record<string, any> | null} */
     let event = local[1]
-    const providerCalendars = app.providerCalendars
+    const providerCalendars = app.providerCalendarService.available() ? app.providerCalendarService : null
     let provider = false
     if ((!event || !docId) && providerCalendars) {
       try {
@@ -181,8 +188,8 @@ export class CalendarEventsIdController {
       if (!occurrenceStart) return Respond.r400('occurrenceStart must identify a valid series occurrence')
       const occurrence = CalendarEventsIdController._resolveOccurrence(event, occurrenceStart)
       if (!occurrence) return Respond.r404('Occurrence not found')
-      const [existingDocId, existing] = provider ? [null, null] : await app.calendarEvents.findException(event.id, occurrenceStart)
-      /** @type {import('../features/calendar/repositories/CalendarEventsRepository.js').CalendarEvent} */
+      const [existingDocId, existing] = provider ? [null, null] : await app.calendarEventsHelper.findException(event.id, occurrenceStart)
+      /** @type {import('../helpers/CalendarEventsHelper.js').CalendarEvent} */
       const exception = /** @type {any} */ ({
         ...(existing || occurrence),
         ...patch,
@@ -204,13 +211,13 @@ export class CalendarEventsIdController {
           await providerCalendars.update(ExternalAccounts.bearerToken(context), event.id, exception, occurrenceStart, EventsHandler._idempotencyKey(body?.idempotencyKey, 'update-instance'))
         } catch (error) { return EventsHandler._providerFailure(error) }
       } else {
-        if (existingDocId) await app.calendarEvents.delete(existingDocId)
-        await app.calendarEvents.put(exception)
+        if (existingDocId) await app.calendarEventsHelper.delete(existingDocId)
+        await app.calendarEventsHelper.put(exception)
       }
       return { updated: true, scope: 'instance', event: EventView.toCalendarEventView({ ...exception, isRecurring: true, isException: true }) }
     }
 
-    /** @type {import('../features/calendar/repositories/CalendarEventsRepository.js').CalendarEvent} */
+    /** @type {import('../helpers/CalendarEventsHelper.js').CalendarEvent} */
     const next = /** @type {any} */ ({
       ...event,
       ...patch,
@@ -229,8 +236,8 @@ export class CalendarEventsIdController {
       // Fylo's putData always inserts under a fresh docId — to update in place
       // we delete the prior version first, then write the patched one.
       if (!docId) return Respond.r404('Event not found')
-      await app.calendarEvents.delete(docId)
-      await app.calendarEvents.put(next)
+      await app.calendarEventsHelper.delete(docId)
+      await app.calendarEventsHelper.put(next)
     }
     return { updated: true, scope: event.recurrence ? 'series' : 'event', event: EventView.toCalendarEventView(next) }
     })
@@ -249,14 +256,14 @@ export class CalendarEventsIdController {
     const id = paths?.id
     if (!id) return Respond.r404('Event not found')
 
-    const app = await getApp()
-    const local = await app.calendarEvents.findById(id)
+    const app = this
+    const local = await app.calendarEventsHelper.findById(id)
     /** @type {Record<string, any> | null} */
     let event = local[1]
     let provider = false
-    if (!event && app.providerCalendars) {
+    if (!event && app.providerCalendarService.available()) {
       try {
-        const found = await app.providerCalendars.find(ExternalAccounts.bearerToken(context), id)
+        const found = await app.providerCalendarService.find(ExternalAccounts.bearerToken(context), id)
         if (found) { event = found.event; provider = true }
       } catch (error) { return ExternalAccounts.accountFailure(error) }
     }

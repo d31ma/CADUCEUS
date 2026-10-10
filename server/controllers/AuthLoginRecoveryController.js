@@ -3,11 +3,14 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { AuthGuard } from '../shared/http/AuthGuard.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/auth/login/recovery")
 @Public
 export class AuthLoginRecoveryController {
+  /** @type {RateLimitService} */
+  @Needs
+  rateLimitService
+
   /**
    * POST /auth/login/recovery — supply a single-use recovery code.
    *
@@ -24,8 +27,8 @@ export class AuthLoginRecoveryController {
       const code = String(body?.code ?? '').trim()
       if (!code) return Respond.r400('code is required')
 
-      const app = await getApp()
-      const limit = await app.rateLimit.check(
+      const app = this
+      const limit = await app.rateLimitService.check(
         ['login-recovery', transactionId, context?.ipAddress ?? 'unknown'], 10, 15 * 60 * 1000,
       )
       if (!limit.allowed) return Respond.r429('Too many attempts', limit.retryAfterSeconds)

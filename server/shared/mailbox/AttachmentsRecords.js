@@ -108,4 +108,12 @@ export class AttachmentsRecords {
       }
     }
   }
+
+  /**
+   * @param {string} path
+   * @returns {Promise<Uint8Array>}
+   */
+  static async readFileBytes(path) {
+    return new Uint8Array(await readFile(path))
+  }
 }

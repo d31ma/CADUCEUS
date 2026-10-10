@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
-import { ProviderCalendarService } from '../../server/features/calendar/services/ProviderCalendarService.js'
+import ProviderCalendarService from '../../server/services/ProviderCalendarService.js'
 import { ProviderCalendarRules } from '../../server/shared/calendar/ProviderCalendarRules.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 
 describe('provider calendar projection', () => {
   it('parses recurring CalDAV resources without exposing raw calendar data', async () => {
@@ -12,7 +13,7 @@ describe('provider calendar projection', () => {
         'RRULE:FREQ=WEEKLY;COUNT=2', 'END:VEVENT', 'END:VCALENDAR', '',
       ].join('\r\n'),
     }] }) }
-    const events = await new ProviderCalendarService(boundary).list('secret-token')
+    const events = await Providers.create(ProviderCalendarService, boundary).list('secret-token')
     expect(events).toHaveLength(1)
     expect(events[0]).toMatchObject({ source: 'provider', title: 'Weekly', recurrence: 'FREQ=WEEKLY;COUNT=2', readOnly: false, accountLabel: 'Work', calendarName: 'Work calendar' })
     expect(events[0].rawICalendar).toBeUndefined()
@@ -34,7 +35,7 @@ describe('provider calendar projection', () => {
         'END:VCALENDAR', '',
       ].join('\r\n'),
     }] }) }
-    const events = await new ProviderCalendarService(boundary).list('secret-token')
+    const events = await Providers.create(ProviderCalendarService, boundary).list('secret-token')
     expect(events.map(event => event.icsUid)).toEqual(['first', 'second'])
     expect(new Set(events.map(event => event.id)).size).toBe(2)
   })
@@ -53,7 +54,7 @@ describe('provider calendar projection', () => {
       mutateCalendar: async (token, accountId, input) => { calls.push({ token, accountId, input }); return { id: 'calmut_one', state: 'queued' } },
       calendarMutation: async () => ({ id: 'calmut_one', state: 'applied' }),
     }
-    const service = new ProviderCalendarService(boundary)
+    const service = Providers.create(ProviderCalendarService, boundary)
     const [event] = await service.list('token')
     await service.update('token', event.id, { title: 'After', start: event.start, end: event.end }, '', 'request-1')
     expect(calls).toHaveLength(1)

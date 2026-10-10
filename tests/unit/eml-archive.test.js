@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  emlArchiveEntryName,
-  emlArchiveFilename,
-  writeEmlArchiveFromFrameStream,
-} from '../../client/shared/scripts/eml-archive.js'
+import { EmlArchiveUtils } from '../../client/shared/utils/EmlArchiveUtils.js'
+
+const emlArchiveEntryName = (...args) => EmlArchiveUtils.emlArchiveEntryName(...args)
+const emlArchiveFilename = (...args) => EmlArchiveUtils.emlArchiveFilename(...args)
+const writeEmlArchiveFromFrameStream = (...args) => EmlArchiveUtils.writeEmlArchiveFromFrameStream(...args)
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()

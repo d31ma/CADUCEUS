@@ -8,6 +8,7 @@ function runtime({ badgeSupported = true, existingNotifications = [] } = {}) {
   const badgeCalls = []
   const notifications = []
   const clients = []
+  const lifecycle = []
   const self = {
     location: { origin: 'https://mail.example.test' },
     navigator: badgeSupported ? {
@@ -21,11 +22,13 @@ function runtime({ badgeSupported = true, existingNotifications = [] } = {}) {
     clients: {
       matchAll: async () => clients,
       openWindow: async url => ({ url }),
+      claim: async () => { lifecycle.push('claim') },
     },
+    skipWaiting: async () => { lifecycle.push('skipWaiting') },
     addEventListener: (name, handler) => handlers.set(name, handler),
   }
   new Function('self', source)(self)
-  return { handlers, badgeCalls, notifications, clients, existingNotifications }
+  return { handlers, badgeCalls, notifications, clients, existingNotifications, lifecycle }
 }
 
 async function dispatch(handler, event) {
@@ -35,6 +38,13 @@ async function dispatch(handler, event) {
 }
 
 describe('unread service-worker extension', () => {
+  it('activates immediately and claims its clients as a separately registered worker', async () => {
+    const state = runtime()
+    state.handlers.get('install')({})
+    await dispatch(state.handlers.get('activate'), {})
+    expect(state.lifecycle).toEqual(['skipWaiting', 'claim'])
+  })
+
   it('shows new mail and applies its authoritative unread count', async () => {
     const state = runtime()
     await dispatch(state.handlers.get('push'), {
@@ -106,9 +116,13 @@ describe('unread service-worker extension', () => {
   it('focuses an existing app window at the notification deep link', async () => {
     const state = runtime({ badgeSupported: false })
     const navigated = []
+    const messages = []
     let focused = false
+    // The push worker does not control the page, so it asks the page to navigate
+    // ('caduceus:navigate') instead of calling WindowClient.navigate().
     state.clients.push({
       url: 'https://mail.example.test/inbox',
+      postMessage: message => messages.push(message),
       navigate: async url => { navigated.push(url) },
       focus: async () => { focused = true },
     })
@@ -120,15 +134,18 @@ describe('unread service-worker extension', () => {
       },
     })
     expect(closed).toBe(true)
-    expect(navigated).toEqual(['https://mail.example.test/email/email-1'])
+    expect(messages).toEqual([{ type: 'caduceus:navigate', url: 'https://mail.example.test/email/email-1' }])
+    expect(navigated).toEqual([])
     expect(focused).toBe(true)
   })
 
   it('refuses a cross-origin notification target', async () => {
     const state = runtime({ badgeSupported: false })
     const navigated = []
+    const messages = []
     state.clients.push({
       url: 'https://mail.example.test/settings',
+      postMessage: message => messages.push(message),
       navigate: async url => { navigated.push(url) },
       focus: async () => {},
     })
@@ -138,7 +155,8 @@ describe('unread service-worker extension', () => {
         close: () => {},
       },
     })
-    expect(navigated).toEqual(['https://mail.example.test/inbox'])
+    expect(messages).toEqual([{ type: 'caduceus:navigate', url: 'https://mail.example.test/inbox' }])
+    expect(navigated).toEqual([])
   })
 
   it('forwards an allow-listed action to an authenticated app window without navigating it', async () => {

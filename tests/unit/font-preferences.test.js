@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  COMPOSER_FONT_OPTIONS,
-  DEFAULT_COMPOSER_FONT,
-  DEFAULT_INTERFACE_FONT,
-  INTERFACE_FONT_OPTIONS,
-  composerFontStack,
-  interfaceFontStack,
-  normalizeComposerFont,
-  normalizeInterfaceFont,
-} from '../../client/shared/scripts/font-preferences.js'
+import { FontPreferencesUtils } from '../../client/shared/utils/FontPreferencesUtils.js'
 import { FontPreferences } from '../../server/shared/users/FontPreferences.js'
+
+const COMPOSER_FONT_OPTIONS = FontPreferencesUtils.composerFontOptions()
+const DEFAULT_COMPOSER_FONT = FontPreferencesUtils.defaultComposerFont()
+const DEFAULT_INTERFACE_FONT = FontPreferencesUtils.defaultInterfaceFont()
+const INTERFACE_FONT_OPTIONS = FontPreferencesUtils.interfaceFontOptions()
+const composerFontStack = (...args) => FontPreferencesUtils.composerFontStack(...args)
+const interfaceFontStack = (...args) => FontPreferencesUtils.interfaceFontStack(...args)
+const normalizeComposerFont = (...args) => FontPreferencesUtils.normalizeComposerFont(...args)
+const normalizeInterfaceFont = (...args) => FontPreferencesUtils.normalizeInterfaceFont(...args)
 
 describe('font preferences', () => {
   it('keeps the browser and persistence catalogs in lockstep', () => {

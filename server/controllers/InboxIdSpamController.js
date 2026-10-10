@@ -1,11 +1,22 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { EmailsRecords } from '../shared/mailbox/EmailsRecords.js'
 
 @RequestRoute("/inbox/{id}/spam")
 @SignedIn
 export class InboxIdSpamController {
+  /** @type {AttachmentsHelper} */
+  @Needs
+  attachmentsHelper
+
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
   /**
    * PUT /inbox/_id/spam
    *
@@ -25,28 +36,28 @@ export class InboxIdSpamController {
       if (!id) return Respond.r404('Email not found')
       if (typeof body?.spam !== 'boolean') return Respond.r400('spam must be a boolean')
 
-      const app = await getApp()
-      const [docId, email] = await app.emails.findById(id)
+      const app = this
+      const [docId, email] = await app.emailsHelper.findById(id)
       if (!docId || !email) return Respond.r404('Email not found')
       if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
       if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
 
-      const folder = await app.categoryMappings.pathFor(auth.email, email.domain, body.spam ? 'spam' : 'inbox')
+      const folder = await app.categoryMappingService.pathFor(auth.email, email.domain, body.spam ? 'spam' : 'inbox')
       const patch = body.spam
         ? { folder: folder || 'spam', spamReasons: ['user-reported'] }
         : { folder: folder || 'inbox', spamScore: null, spamReasons: null }
 
-      await app.emails.update(docId, patch)
+      await app.emailsHelper.update(docId, patch)
       const updated = /** @type {any} */ ({
         ...email,
         ...patch,
-        attachments: await app.attachments.listSummaries(id),
+        attachments: await app.attachmentsHelper.listSummaries(id),
       })
       if (!body.spam) {
         delete updated.spamScore
         delete updated.spamReasons
       }
-      return await app.categoryMappings.presentEmail(auth.email, updated)
+      return await app.categoryMappingService.presentEmail(auth.email, updated)
     })
   }
 }

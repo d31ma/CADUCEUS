@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import { ThemePreferences } from '../../server/shared/users/ThemePreferences.js'
-import {
-  DARK_THEME_OPTIONS,
-  LIGHT_THEME_OPTIONS,
-  THEME_OPTIONS,
-  applyThemePreferences,
-  normalizeThemePreferences,
-  resolveTheme,
-} from '../../client/shared/scripts/theme-preferences.js'
+import { ThemePreferencesUtils } from '../../client/shared/utils/ThemePreferencesUtils.js'
+
+const DARK_THEME_OPTIONS = ThemePreferencesUtils.darkThemeOptions()
+const LIGHT_THEME_OPTIONS = ThemePreferencesUtils.lightThemeOptions()
+const THEME_OPTIONS = ThemePreferencesUtils.themeOptions()
+const applyThemePreferences = (...args) => ThemePreferencesUtils.applyThemePreferences(...args)
+const normalizeThemePreferences = (...args) => ThemePreferencesUtils.normalizeThemePreferences(...args)
+const resolveTheme = (...args) => ThemePreferencesUtils.resolveTheme(...args)
 
 const originalDocument = globalThis.document
 const originalMatchMedia = globalThis.matchMedia

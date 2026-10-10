@@ -9,8 +9,11 @@ import { InboxExportRfc822Controller as ExportSources } from '@/controllers/Inbo
 import { InboxImportEmlController as ImportEml } from '@/controllers/InboxImportEmlController.js'
 import { SearchController as Search } from '@/controllers/SearchController.js'
 import { ThreadsController as Threads } from '@/controllers/ThreadsController.js'
-import { writeMboxFromFrameStream } from '../../client/shared/scripts/mbox.js'
+import { MboxUtils } from '../../client/shared/utils/MboxUtils.js'
 import { call } from '../support/controller-call.mjs'
+import { TestContainer } from '../support/TestContainer.mjs'
+
+const writeMboxFromFrameStream = (...args) => MboxUtils.writeMboxFromFrameStream(...args)
 
 let app
 /** SSE route: its window/poll constants are read at module load, so import it
@@ -819,7 +822,7 @@ describe('GET /threads', () => {
 function streamOf(query) {
   const url = new URL('http://caduceus.test/inbox/stream')
   for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value)
-  return new Stream().streamInbox(new Request(url))
+  return TestContainer.current.inject(new Stream()).streamInbox(new Request(url))
 }
 
 describe('GET /inbox/stream', () => {

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  hasEmptyTemplateVariables,
-  insertTemplateBeforeProtectedContent,
-  normalizeTemplateVariables,
-  sanitizeTemplateHTML,
-  stripTemplateVariableMarkup,
-  templateBodyFromDraft,
-} from '../../client/shared/scripts/composer-templates.js'
+import { ComposerTemplatesUtils } from '../../client/shared/utils/ComposerTemplatesUtils.js'
 import { TemplateContent } from '../../server/shared/mailbox/TemplateContent.js'
+
+const hasEmptyTemplateVariables = (...args) => ComposerTemplatesUtils.hasEmptyTemplateVariables(...args)
+const insertTemplateBeforeProtectedContent = (...args) => ComposerTemplatesUtils.insertTemplateBeforeProtectedContent(...args)
+const normalizeTemplateVariables = (...args) => ComposerTemplatesUtils.normalizeTemplateVariables(...args)
+const sanitizeTemplateHTML = (...args) => ComposerTemplatesUtils.sanitizeTemplateHTML(...args)
+const stripTemplateVariableMarkup = (...args) => ComposerTemplatesUtils.stripTemplateVariableMarkup(...args)
+const templateBodyFromDraft = (...args) => ComposerTemplatesUtils.templateBodyFromDraft(...args)
 
 describe('Mailspring-compatible composer templates', () => {
   it('normalizes editable code regions and detects truly empty blanks', () => {

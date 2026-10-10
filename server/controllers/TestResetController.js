@@ -1,10 +1,13 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Fylo } from '../shared/persistence/Fylo.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/test/reset")
 @Public
 export class TestResetController {
+  /** @type {FyloHelper} */
+  @Needs
+  fyloHelper
+
   /**
  * DELETE /test/reset
  *
@@ -17,15 +20,15 @@ export class TestResetController {
   @DeleteRoute
   async delete(request) {
     return RouteRequest.handle(request, { testOnly: true }, async () => {
-    const app = await getApp()
+    const fylo = await this.fyloHelper.database()
     for (const collection of [...Object.values(Fylo.Collections), ...Object.values(Fylo.Buckets)]) {
       /** @type {Record<string, unknown>} */
       const docs = {}
-      for await (const doc of app.fylo.findDocs(collection, { $ops: [] }).collect()) {
+      for await (const doc of fylo.findDocs(collection, { $ops: [] }).collect()) {
         Object.assign(docs, doc)
       }
       for (const docId of Object.keys(docs)) {
-        await app.fylo.delDoc(collection, docId)
+        await fylo.delDoc(collection, docId)
       }
     }
     return { reset: true }

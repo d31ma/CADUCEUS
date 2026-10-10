@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  createInlineContentId,
-  isNeutralPastedColor,
-  isInlineImageFile,
-  normalizeComposeLink,
-  normalizePlainTextForPaste,
-  quotedMessageHTML,
-} from '../../client/shared/scripts/rich-compose-editor.js'
+import { RichComposeEditorUtils } from '../../client/shared/utils/RichComposeEditorUtils.js'
+
+const createInlineContentId = (...args) => RichComposeEditorUtils.createInlineContentId(...args)
+const isNeutralPastedColor = (...args) => RichComposeEditorUtils.isNeutralPastedColor(...args)
+const isInlineImageFile = (...args) => RichComposeEditorUtils.isInlineImageFile(...args)
+const normalizeComposeLink = (...args) => RichComposeEditorUtils.normalizeComposeLink(...args)
+const normalizePlainTextForPaste = (...args) => RichComposeEditorUtils.normalizePlainTextForPaste(...args)
+const quotedMessageHTML = (...args) => RichComposeEditorUtils.quotedMessageHTML(...args)
 
 describe('rich composer policy', () => {
   it('accepts safe link schemes and rejects active or ambiguous URLs', () => {

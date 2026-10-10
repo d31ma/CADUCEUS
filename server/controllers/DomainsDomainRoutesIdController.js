@@ -1,12 +1,15 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { RuleValidation } from '../shared/domains/RuleValidation.js'
 
 @RequestRoute("/domains/{domain}/routes/{id}")
 @SignedIn
 export class DomainsDomainRoutesIdController {
+  /** @type {DomainsHelper} */
+  @Needs
+  domainsHelper
+
   /**
  * DELETE /domains/_domain/routes/_id
  * @param {object} params
@@ -21,12 +24,12 @@ export class DomainsDomainRoutesIdController {
     if (!domain || !ruleId) return Respond.r400('domain and route id required')
     if (!auth.domains.includes(domain)) return Respond.r403('Access denied')
 
-    const app = await getApp()
-    const [docId, config] = await app.domains.findEntry(domain)
+    const app = this
+    const [docId, config] = await app.domainsHelper.findEntry(domain)
     if (!docId || !config) return Respond.r404('Domain not found')
 
     const updated = config.routes.filter(r => r.id !== ruleId)
-    await app.domains.updateRoutes(docId, updated)
+    await app.domainsHelper.updateRoutes(docId, updated)
     return { deleted: ruleId }
     })
   }
@@ -50,12 +53,12 @@ export class DomainsDomainRoutesIdController {
     const actionResult = RuleValidation.validateRouteAction(body.action)
     if (!actionResult.valid) return Respond.r400(actionResult.error)
 
-    const app = await getApp()
-    const [docId, config] = await app.domains.findEntry(domain)
+    const app = this
+    const [docId, config] = await app.domainsHelper.findEntry(domain)
     if (!docId || !config) return Respond.r404('Domain not found')
 
     const updated = [...config.routes.filter(r => r.id !== ruleId), { ...body, id: ruleId }]
-    await app.domains.updateRoutes(docId, /** @type {any} */ (updated))
+    await app.domainsHelper.updateRoutes(docId, /** @type {any} */ (updated))
     return { updated: ruleId }
     })
   }

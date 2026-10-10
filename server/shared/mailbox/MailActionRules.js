@@ -140,7 +140,7 @@ export class MailActionRules {
   /**
    * @param {Record<string, string | boolean>} patch
    * @param {number} count
-   * @returns {import('../repositories/MailActionsRepository.js').MailActionEntry['kind']}
+   * @returns {import('../repositories/MailActionsHelper.js').MailActionEntry['kind']}
    */
   static actionKind(patch, count) {
     const fields = Object.keys(patch)
@@ -178,5 +178,32 @@ export class MailActionRules {
   static requestFingerprint(ids, patch) {
     const normalizedPatch = Object.fromEntries(Object.entries(patch).sort(([left], [right]) => left.localeCompare(right)))
     return createHash('sha256').update(JSON.stringify({ ids, patch: normalizedPatch })).digest('hex')
+  }
+
+  /** Validate the public bulk-action contract at the service boundary. */
+  static parseInput(input) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) {
+      throw new MailActionError('Action payload required')
+    }
+    const body = /** @type {Record<string, unknown>} */ (input)
+    if (!Array.isArray(body.ids) || body.ids.length === 0) {
+      throw new MailActionError('ids must be a non-empty array')
+    }
+    if (body.ids.length > MailActionRules.MAX_ACTION_MESSAGES) {
+      throw new MailActionError(`ids cannot contain more than ${MailActionRules.MAX_ACTION_MESSAGES} messages`)
+    }
+    const ids = body.ids.map(value => typeof value === 'string' ? value.trim() : '')
+    if (ids.some(id => !id || id.length > MailActionRules.MAX_ID_LENGTH)) {
+      throw new MailActionError(`every id must be between 1 and ${MailActionRules.MAX_ID_LENGTH} characters`)
+    }
+    if (new Set(ids).size !== ids.length) throw new MailActionError('ids must not contain duplicates')
+    let clientRequestId
+    if (body.clientRequestId !== undefined) {
+      if (typeof body.clientRequestId !== 'string' || !/^[A-Fa-f0-9-]{36}$/.test(body.clientRequestId)) {
+        throw new MailActionError('clientRequestId must be a UUID')
+      }
+      clientRequestId = body.clientRequestId.toLowerCase()
+    }
+    return { ids, patch: MailActionRules.parsePatch(body.patch), ...(clientRequestId ? { clientRequestId } : {}) }
   }
 }

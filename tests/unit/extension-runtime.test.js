@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  extensionSandboxDocument,
-  extensionThemeDeclarations,
-  filterExtensionContext,
-  filterExtensionResult,
-} from '../../client/shared/scripts/extension-runtime.js'
+import { ExtensionRuntimeUtils } from '../../client/shared/utils/ExtensionRuntimeUtils.js'
+
+const extensionSandboxDocument = (...args) => ExtensionRuntimeUtils.extensionSandboxDocument(...args)
+const extensionThemeDeclarations = (...args) => ExtensionRuntimeUtils.extensionThemeDeclarations(...args)
+const filterExtensionContext = (...args) => ExtensionRuntimeUtils.filterExtensionContext(...args)
+const filterExtensionResult = (...args) => ExtensionRuntimeUtils.filterExtensionResult(...args)
 
 describe('browser extension runtime boundary', () => {
   it('maps declarative theme colors to a fixed CSS-variable allowlist', () => {

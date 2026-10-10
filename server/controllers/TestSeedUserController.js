@@ -4,11 +4,14 @@ import { Respond } from '../shared/http/Respond.js'
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { AuthGuard } from '../shared/http/AuthGuard.js'
 import { Auth } from '../shared/auth/Auth.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/test/seed/user")
 @Public
 export class TestSeedUserController {
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   /**
    * POST /test/seed/user
    *
@@ -44,8 +47,8 @@ export class TestSeedUserController {
 
         // The mail-side profile is CADUCEUS's own record of the mailbox.
         // Identity lives in the engine; this is the address-book entry beside it.
-        const app = await getApp()
-        await app.users.upsertByEmail(/** @type {any} */ ({
+        const app = this
+        await app.usersHelper.upsertByEmail(/** @type {any} */ ({
           ...user,
           email: address,
           principalId: seeded.principalId,

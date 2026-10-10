@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'bun:test'
-import { formatMboxRecord, mboxFilename, writeMboxFromFrameStream } from '../../client/shared/scripts/mbox.js'
+import { MboxUtils } from '../../client/shared/utils/MboxUtils.js'
+
+const formatMboxRecord = (...args) => MboxUtils.formatMboxRecord(...args)
+const mboxFilename = (...args) => MboxUtils.mboxFilename(...args)
+const writeMboxFromFrameStream = (...args) => MboxUtils.writeMboxFromFrameStream(...args)
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder('latin1')

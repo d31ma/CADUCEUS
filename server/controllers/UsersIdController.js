@@ -1,11 +1,14 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/users/{id}")
 @SignedIn
 export class UsersIdController {
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   /**
  * DELETE /users/_id
  * @param {object} params
@@ -19,11 +22,11 @@ export class UsersIdController {
     const email = paths?.id
     if (!email) return Respond.r400('email required')
 
-    const app = await getApp()
-    const [docId] = await app.users.findByEmail(email)
+    const app = this
+    const [docId] = await app.usersHelper.findByEmail(email)
     if (!docId) return Respond.r404('User not found')
 
-    await app.users.delete(docId)
+    await app.usersHelper.delete(docId)
     return { deleted: email }
     })
   }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { SendService } from '@/features/delivery/services/SendService.js'
+import SendService from '@/services/SendService.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 
 const request = {
   to: ['recipient@other.test'],
@@ -10,8 +11,7 @@ const request = {
 describe('SendService immediate-delivery boundary', () => {
   it('never queues a duplicate after SMTP succeeds but Sent-copy persistence fails', async () => {
     let enqueueCount = 0
-    const service = new SendService(
-      { put: async () => {} },
+    const service = Providers.create(SendService, { put: async () => {} },
       { saveForEmail: async () => {} },
       { saveForEmail: async () => { throw new Error('FYLO unavailable') } },
       {},

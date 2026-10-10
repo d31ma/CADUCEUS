@@ -5,7 +5,8 @@ import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
 import { DatabaseRepository } from '@/shared/persistence/DatabaseRepository.js'
 import { Fylo } from '@/shared/persistence/Fylo.js'
-import { RawMessagesRepository } from '@/features/mailbox/repositories/RawMessagesRepository.js'
+import RawMessagesHelper from '@/helpers/RawMessagesHelper.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 
 let fylo
 let rawMessages
@@ -17,7 +18,7 @@ beforeEach(async () => {
   previousFyloRoot = process.env.FYLO_ROOT
   process.env.FYLO_ROOT = testRoot
   fylo = await DatabaseRepository.createDb(testRoot)
-  rawMessages = new RawMessagesRepository(fylo)
+  rawMessages = Providers.create(RawMessagesHelper, fylo)
 })
 
 afterEach(async () => {

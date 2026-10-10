@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'bun:test'
-import { GrammarCheckService } from '@/features/mailbox/services/GrammarCheckService.js'
+import GrammarCheckService from '@/services/GrammarCheckService.js'
+import { GrammarCheckRules } from '@/shared/mailbox/GrammarCheckRules.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 
 describe('standalone LanguageTool-compatible grammar checker', () => {
   it('reports bounded grammar, style, punctuation, and casing issues with exact offsets', () => {
     const text = 'i  think he are ready.We could of left.'
-    const result = new GrammarCheckService().check(text, { language: 'en-GB' })
+    const result = Providers.create(GrammarCheckService).check(text, { language: 'en-GB' })
     expect(result.language).toBe('en-GB')
     expect(result.detectedLanguage).toBe('en-GB')
     expect(result.matches.map(match => match.ruleId)).toEqual([
@@ -23,7 +25,7 @@ describe('standalone LanguageTool-compatible grammar checker', () => {
   })
 
   it('ignores browser spelling, supports disabled rules, and detects unsupported scripts', () => {
-    const service = new GrammarCheckService()
+    const service = Providers.create(GrammarCheckService)
     expect(service.check('Flibbertigibbet').matches).toEqual([])
     expect(service.check('When i am ready', { disabledRules: ['LOWERCASE_I'] }).matches).toEqual([])
     expect(service.check('Привет мир', { language: 'auto' })).toEqual({
@@ -32,10 +34,10 @@ describe('standalone LanguageTool-compatible grammar checker', () => {
   })
 
   it('validates language, ignored rules, and the text bound', () => {
-    expect(GrammarCheckService.isLanguage('auto')).toBe(true)
-    expect(GrammarCheckService.isLanguage('fr')).toBe(false)
-    expect(GrammarCheckService.normalizeDisabledRules(['LOWERCASE_I', 'LOWERCASE_I'])).toEqual(['LOWERCASE_I'])
-    expect(GrammarCheckService.normalizeDisabledRules(['../../unsafe'])).toBeNull()
-    expect(() => new GrammarCheckService().check('x'.repeat(20_001))).toThrow('at most 20000')
+    expect(GrammarCheckRules.isLanguage('auto')).toBe(true)
+    expect(GrammarCheckRules.isLanguage('fr')).toBe(false)
+    expect(GrammarCheckRules.normalizeDisabledRules(['LOWERCASE_I', 'LOWERCASE_I'])).toEqual(['LOWERCASE_I'])
+    expect(GrammarCheckRules.normalizeDisabledRules(['../../unsafe'])).toBeNull()
+    expect(() => Providers.create(GrammarCheckService).check('x'.repeat(20_001))).toThrow('at most 20000')
   })
 })

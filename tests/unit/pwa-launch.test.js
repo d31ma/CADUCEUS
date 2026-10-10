@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'bun:test'
-import { composeLaunchPrefill, isManifestComposeLaunch, mailtoPrefill } from '../../client/shared/scripts/pwa-launch.js'
+import { PwaLaunchUtils } from '../../client/shared/utils/PwaLaunchUtils.js'
+
+const composeLaunchPrefill = (...args) => PwaLaunchUtils.composeLaunchPrefill(...args)
+const isManifestComposeLaunch = (...args) => PwaLaunchUtils.isManifestComposeLaunch(...args)
+const mailtoPrefill = (...args) => PwaLaunchUtils.mailtoPrefill(...args)
 
 describe('installed-app compose launch handling', () => {
   it('parses a standards-encoded mailto URL into bounded composer fields', () => {

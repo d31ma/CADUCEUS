@@ -1,12 +1,19 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { EmailsRecords } from '../shared/mailbox/EmailsRecords.js'
 import { RemoteImages } from '../shared/mailbox/RemoteImages.js'
 
 @RequestRoute("/inbox/{id}/images")
 @SignedIn
 export class InboxIdImagesController {
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  /** @type {RateLimitService} */
+  @Needs
+  rateLimitService
+
   /** @param {string} value */
   static normalizeRequestedUrl(value) {
     try {
@@ -30,13 +37,13 @@ export class InboxIdImagesController {
         return Respond.r400(`urls must contain between 1 and ${RemoteImages.MAX_REMOTE_IMAGES_PER_REQUEST} remote image URLs`)
       }
 
-      const app = await getApp()
-      const [, email] = await app.emails.findById(id)
+      const app = this
+      const [, email] = await app.emailsHelper.findById(id)
       if (!email) return Respond.r404('Email not found')
       if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
       if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
 
-      const limit = await app.rateLimit.check(['remote-images', auth.email], 60, 60_000)
+      const limit = await app.rateLimitService.check(['remote-images', auth.email], 60, 60_000)
       if (!limit.allowed) return Respond.r429('Too many remote image requests', limit.retryAfterSeconds)
 
       const allowed = new Set(RemoteImages.extractRemoteImageUrls(email.htmlBody))

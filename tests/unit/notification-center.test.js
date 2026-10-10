@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  buildSystemNotifications,
-  highestPriorityNotification,
-  normalizeNotification,
-  visibleNotifications,
-} from '../../client/shared/scripts/notification-center.js'
+import { NotificationCenterUtils } from '../../client/shared/utils/NotificationCenterUtils.js'
+
+const buildSystemNotifications = (...args) => NotificationCenterUtils.buildSystemNotifications(...args)
+const highestPriorityNotification = (...args) => NotificationCenterUtils.highestPriorityNotification(...args)
+const normalizeNotification = (...args) => NotificationCenterUtils.normalizeNotification(...args)
+const visibleNotifications = (...args) => NotificationCenterUtils.visibleNotifications(...args)
 
 describe('Mailspring-compatible notification center model', () => {
   it('builds standalone system notices with the pinned priority order', () => {

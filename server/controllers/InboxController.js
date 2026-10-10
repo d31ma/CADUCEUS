@@ -1,12 +1,27 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
 
 @RequestRoute("/inbox")
 @SignedIn
 export class InboxController {
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
+  /** @type {DomainMigrationService} */
+  @Needs
+  domainMigrationService
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  /** @type {FollowUpReminderService} */
+  @Needs
+  followUpReminderService
+
   /**
    * GET /inbox
    * @param {object} params
@@ -24,15 +39,15 @@ export class InboxController {
         return Respond.r403('Mailbox is outside the authenticated account scope')
       }
 
-      const app = await getApp()
+      const app = this
       // Processing is idempotent and scoped to the authenticated mailbox. This
       // guarantees reminders resurface even after a server restart or a period
       // with no browser connected, without relying on an in-memory timer.
-      await app.reminders.processDue(auth.email)
+      await app.followUpReminderService.processDue(auth.email)
       filters.ownerEmail = auth.email
       const allowedDomains = filters.domain ? [filters.domain] : auth.domains
       if (filters.folder && !filters.accountId) {
-        filters.folderByDomain = await app.categoryMappings.folderFilter(auth.email, allowedDomains, filters.folder) || undefined
+        filters.folderByDomain = await app.categoryMappingService.folderFilter(auth.email, allowedDomains, filters.folder) || undefined
       }
       const offset = filters.offset
       const limit = filters.limit
@@ -41,9 +56,9 @@ export class InboxController {
       delete hostedFilters.limit
       delete hostedFilters.domain
       delete hostedFilters.accountId
-      const emails = filters.accountId ? [] : await app.emails.list(allowedDomains, hostedFilters)
-      const presented = await app.domainMigration.presentEmails(emails)
-      const hosted = await app.categoryMappings.presentEmails(auth.email, presented)
+      const emails = filters.accountId ? [] : await app.emailsHelper.list(allowedDomains, hostedFilters)
+      const presented = await app.domainMigrationService.presentEmails(emails)
+      const hosted = await app.categoryMappingService.presentEmails(auth.email, presented)
       try {
         let external = filters.domain ? [] : await UnifiedMail.externalMailSummaries(ExternalAccounts.bearerToken(context), {
           accountId: filters.accountId,

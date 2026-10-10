@@ -1,5 +1,4 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { getApp } from '../app.js'
 import { Respond } from '../shared/http/Respond.js'
 import { SearchParser } from '../shared/mailbox/SearchParser.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
@@ -8,6 +7,22 @@ import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
 @RequestRoute("/search")
 @SignedIn
 export class SearchController {
+  /** @type {AttachmentsHelper} */
+  @Needs
+  attachmentsHelper
+
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
+  /** @type {DomainMigrationService} */
+  @Needs
+  domainMigrationService
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
   static MAX_QUERY_LENGTH = 2_000
 
   static MAX_RESULTS = 1_000
@@ -51,13 +66,13 @@ export class SearchController {
       if (limit instanceof Error) return Respond.r400(limit.message)
       const allowedDomains = domain ? [domain] : auth.domains
 
-      const app = await getApp()
+      const app = this
       const [stored, attachmentsByEmail] = await Promise.all([
-        accountId ? [] : app.emails.list(allowedDomains, { ownerEmail: auth.email }),
-        app.attachments.listSummariesByEmail(allowedDomains),
+        accountId ? [] : app.emailsHelper.list(allowedDomains, { ownerEmail: auth.email }),
+        app.attachmentsHelper.listSummariesByEmail(allowedDomains),
       ])
-      const migrated = await app.domainMigration.presentEmails(stored)
-      const presented = await app.categoryMappings.presentEmails(auth.email, migrated)
+      const migrated = await app.domainMigrationService.presentEmails(stored)
+      const presented = await app.categoryMappingService.presentEmails(auth.email, migrated)
       const expression = SearchParser.parseWithFallback(raw)
       let external
       try {

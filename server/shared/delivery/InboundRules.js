@@ -204,4 +204,9 @@ export class InboundRules {
     }
     return headers
   }
+
+  /** The bundled mailparser `simpleParser`, loaded only for full MIME input. */
+  static async simpleParser() {
+    return (await import('../../deps/npm/mailparser.mjs')).simpleParser
+  }
 }

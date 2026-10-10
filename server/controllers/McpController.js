@@ -1,11 +1,58 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { createMcpHandler } from '../deps/npm/modelcontextprotocol-server.mjs'
-import { getApp } from '../app.js'
 import { Tools } from '../shared/mcp/Tools.js'
 
 @RequestRoute("/mcp")
 @Public
 export class McpController {
+  /** @type {AttachmentsHelper} */
+  @Needs
+  attachmentsHelper
+
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
+  /** @type {DraftService} */
+  @Needs
+  draftService
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  /** @type {McpAccessService} */
+  @Needs
+  mcpAccessService
+
+  /** @type {McpAuditEventsHelper} */
+  @Needs
+  mcpAuditEventsHelper
+
+  /** @type {RateLimitService} */
+  @Needs
+  rateLimitService
+
+  /** @type {ScheduledHelper} */
+  @Needs
+  scheduledHelper
+
+  /** @type {SendService} */
+  @Needs
+  sendService
+
+  /** @type {SuppressedHelper} */
+  @Needs
+  suppressedHelper
+
+  /** @type {ThreadsHelper} */
+  @Needs
+  threadsHelper
+
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   static MAX_REQUEST_BYTES = 1024 * 1024
 
   static AUTH_LIMIT_PER_MINUTE = 600
@@ -57,7 +104,7 @@ export class McpController {
   @PostRoute
   async post(request) {
     return RouteRequest.handle(request, {  }, async ({ body, headers = {}, context = {} }) => {
-      const app = await getApp()
+      const app = this
       const normalizedHeaders = McpController.toHeaders(headers)
       const originFailure = McpController.validateOrigin(normalizedHeaders)
       if (originFailure) return originFailure
@@ -69,13 +116,13 @@ export class McpController {
       if (new TextEncoder().encode(serialized).byteLength > McpController.MAX_REQUEST_BYTES) {
         return McpController.jsonResponse(413, { error: 'MCP request is too large' })
       }
-      const limit = await app.rateLimit.check(
+      const limit = await app.rateLimitService.check(
         ['mcp-auth', String(context.ipAddress || 'unknown')], McpController.AUTH_LIMIT_PER_MINUTE, 60_000,
       )
       if (!limit.allowed) return McpController.jsonResponse(429, { error: 'Too many MCP requests', retryAfterSeconds: limit.retryAfterSeconds })
 
       const token = McpController.bearerToken(normalizedHeaders.get('authorization'))
-      const principal = token ? await app.mcpAccess.authenticate(token) : null
+      const principal = token ? await app.mcpAccessService.authenticate(token) : null
       if (!principal) {
         return new Response(JSON.stringify({ error: 'Invalid or disabled MCP capability' }), {
           status: 401,
@@ -86,7 +133,7 @@ export class McpController {
           },
         })
       }
-      const capabilityLimit = await app.rateLimit.check(
+      const capabilityLimit = await app.rateLimitService.check(
         ['mcp-request', principal.tokenId], McpController.AUTH_LIMIT_PER_MINUTE, 60_000,
       )
       if (!capabilityLimit.allowed) {

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'bun:test'
 import { CalendarDate } from '@/shared/calendar/CalendarDate.js'
-import {
-  allDayRangeForDate,
-  calendarCursorForEvent,
-  eventCoversCalendarDate,
-  moveTimedRangeToDate,
-  shiftAllDayRangeToDate,
-  timedRangeForAllDayDates,
-} from '../../client/shared/scripts/calendar-date.js'
+import { CalendarDateUtils } from '../../client/shared/utils/CalendarDateUtils.js'
+
+const allDayRangeForDate = (...args) => CalendarDateUtils.allDayRangeForDate(...args)
+const calendarCursorForEvent = (...args) => CalendarDateUtils.calendarCursorForEvent(...args)
+const eventCoversCalendarDate = (...args) => CalendarDateUtils.eventCoversCalendarDate(...args)
+const moveTimedRangeToDate = (...args) => CalendarDateUtils.moveTimedRangeToDate(...args)
+const shiftAllDayRangeToDate = (...args) => CalendarDateUtils.shiftAllDayRangeToDate(...args)
+const timedRangeForAllDayDates = (...args) => CalendarDateUtils.timedRangeForAllDayDates(...args)
 
 describe('CalendarDate', () => {
   it('accepts only canonical, real Gregorian dates', () => {

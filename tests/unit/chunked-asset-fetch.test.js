@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 import { createHash } from 'node:crypto'
-import { createChunkedTranslationAssetFetch } from '../../client/shared/scripts/chunked-asset-fetch.js'
+import { ChunkedAssetFetchUtils } from '../../client/shared/utils/ChunkedAssetFetchUtils.js'
+
+const createChunkedTranslationAssetFetch = (...args) => ChunkedAssetFetchUtils.createChunkedTranslationAssetFetch(...args)
 
 const prefix = 'http://localhost/shared/assets/translation-models/casawolice/small100-onnx/onnx/test.onnx'
 const digest = value => createHash('sha256').update(value).digest('hex')

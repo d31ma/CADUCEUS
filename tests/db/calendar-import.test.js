@@ -3,14 +3,15 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { DatabaseRepository } from '@/shared/persistence/DatabaseRepository.js'
-import { CalendarEventsRepository } from '@/features/calendar/repositories/CalendarEventsRepository.js'
-import { CalendarImportService } from '@/features/calendar/services/CalendarImportService.js'
-import { UsersRepository } from '@/features/users/repositories/UsersRepository.js'
-import { InboundService } from '@/features/delivery/services/InboundService.js'
-import { EmailsRepository } from '@/features/mailbox/repositories/EmailsRepository.js'
-import { AttachmentsRepository } from '@/features/mailbox/repositories/AttachmentsRepository.js'
-import { RulesRepository } from '@/features/mailbox/repositories/RulesRepository.js'
-import { SuppressedRepository } from '@/features/delivery/repositories/SuppressedRepository.js'
+import CalendarEventsHelper from '@/helpers/CalendarEventsHelper.js'
+import CalendarImportService from '@/services/CalendarImportService.js'
+import UsersHelper from '@/helpers/UsersHelper.js'
+import InboundService from '@/services/InboundService.js'
+import EmailsHelper from '@/helpers/EmailsHelper.js'
+import AttachmentsHelper from '@/helpers/AttachmentsHelper.js'
+import RulesHelper from '@/helpers/RulesHelper.js'
+import SuppressedHelper from '@/helpers/SuppressedHelper.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 
 let fylo, root, events, service
 
@@ -44,8 +45,8 @@ const ctx = (over = {}) => ({
 beforeEach(async () => {
   root = mkdtempSync(join(tmpdir(), 'caduceus-calimport-'))
   fylo = await DatabaseRepository.createDb(root)
-  events = new CalendarEventsRepository(fylo)
-  service = new CalendarImportService(events)
+  events = Providers.create(CalendarEventsHelper, fylo)
+  service = Providers.create(CalendarImportService, events)
 })
 afterEach(async () => {
   await fylo?.close?.()
@@ -207,7 +208,7 @@ describe('CalendarImportService.importFromInboundEmail', () => {
   })
 
   it('keeps going when one VEVENT fails to store', async () => {
-    const broken = new CalendarImportService({
+    const broken = Providers.create(CalendarImportService, {
       findByIcsUid: async () => { throw new Error('fylo down') },
     })
     expect(await broken.importFromInboundEmail(ctx({ textBody: ics(VEVENT) })))
@@ -215,10 +216,10 @@ describe('CalendarImportService.importFromInboundEmail', () => {
   })
 })
 
-describe('UsersRepository.upsertByEmail', () => {
-  /** @type {UsersRepository} */
+describe('UsersHelper.upsertByEmail', () => {
+  /** @type {UsersHelper} */
   let users
-  beforeEach(() => { users = new UsersRepository(fylo) })
+  beforeEach(() => { users = Providers.create(UsersHelper, fylo) })
 
   const alice = { email: 'Alice@Example.com', aliases: [], domains: ['example.com'], role: 'admin' }
 
@@ -279,11 +280,10 @@ describe('UsersRepository.upsertByEmail', () => {
 
 describe('InboundService dispatch', () => {
   const build = (over = {}) => {
-    const attachments = new AttachmentsRepository(fylo)
-    const service = new InboundService(
-      new EmailsRepository(fylo, attachments),
-      new RulesRepository(fylo),
-      new SuppressedRepository(fylo),
+    const attachments = Providers.create(AttachmentsHelper, fylo)
+    const service = Providers.create(InboundService, Providers.create(EmailsHelper, fylo, attachments),
+      Providers.create(RulesHelper, fylo),
+      Providers.create(SuppressedHelper, fylo),
       attachments,
       { send: async () => ({ messageId: 'x' }) },
       fylo,

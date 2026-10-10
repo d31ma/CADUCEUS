@@ -1,15 +1,22 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/reminders")
 @SignedIn
 export class RemindersController {
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  /** @type {FollowUpReminderService} */
+  @Needs
+  followUpReminderService
+
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
-      const app = await getApp()
-      const reminders = await app.reminders.listForOwner(auth.email)
+      const app = this
+      const reminders = await app.followUpReminderService.listForOwner(auth.email)
       return reminders.map(({ docId, ...item }) => ({
         ...item,
         remindAt: new Date(item.remindAt).toISOString(),
@@ -28,12 +35,12 @@ export class RemindersController {
       if (isNaN(remindAt)) return Respond.r400('remindAt must be a valid ISO datetime')
       if (remindAt <= Date.now()) return Respond.r400('remindAt must be in the future')
 
-      const app = await getApp()
-      const [, email] = await app.emails.findById(body.emailId)
+      const app = this
+      const [, email] = await app.emailsHelper.findById(body.emailId)
       if (!email || email.sender.toLowerCase() !== auth.email || !auth.domains.includes(email.domain)) {
         return Respond.r404('Sent email not found')
       }
-      const reminder = await app.reminders.schedule({
+      const reminder = await app.followUpReminderService.schedule({
         ownerEmail: auth.email,
         emailId: email.id,
         recipient: email.recipient,
@@ -49,8 +56,8 @@ export class RemindersController {
   async delete(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ body, auth }) => {
       if (!body?.id || typeof body.id !== 'string') return Respond.r400('id is required')
-      const app = await getApp()
-      if (!await app.reminders.dismiss(body.id, auth.email)) return Respond.r404('Reminder not found')
+      const app = this
+      if (!await app.followUpReminderService.dismiss(body.id, auth.email)) return Respond.r404('Reminder not found')
       return { dismissed: true }
     })
   }

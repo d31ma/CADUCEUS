@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'bun:test'
-import { isForwardedSubject, searchConversation, splitQuotedText } from '../../client/shared/scripts/message-conversation.js'
+import { MessageConversationUtils } from '../../client/shared/utils/MessageConversationUtils.js'
+
+const isForwardedSubject = (...args) => MessageConversationUtils.isForwardedSubject(...args)
+const searchConversation = (...args) => MessageConversationUtils.searchConversation(...args)
+const splitQuotedText = (...args) => MessageConversationUtils.splitQuotedText(...args)
 
 describe('Mailspring-compatible conversation body behavior', () => {
   it('collapses only established trailing plain-text quote delimiters', () => {

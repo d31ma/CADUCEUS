@@ -1,10 +1,13 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { getApp } from '../app.js'
 import { TrackingTokens } from '../shared/delivery/TrackingTokens.js'
 
 @RequestRoute("/track/click")
 @Public
 export class TrackClickController {
+  /** @type {TrackingHelper} */
+  @Needs
+  trackingHelper
+
   static invalidLink() {
     return new Response('This tracked link is invalid or has expired.', {
       status: 404,
@@ -33,8 +36,8 @@ export class TrackClickController {
       try {
         const capability = TrackingTokens.readTrackingToken(query?.t, { expectedType: 'click' })
         if (!capability || capability.type !== 'click') return TrackClickController.invalidLink()
-        const app = await getApp()
-        if (!await app.tracking.recordClick(capability)) return TrackClickController.invalidLink()
+        const app = this
+        if (!await app.trackingHelper.recordClick(capability)) return TrackClickController.invalidLink()
         return new Response(null, {
           status: 302,
           headers: {

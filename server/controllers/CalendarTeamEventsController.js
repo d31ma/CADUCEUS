@@ -1,11 +1,18 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { CalendarRecurrence } from '../shared/calendar/CalendarRecurrence.js'
 
 @RequestRoute("/calendar/team-events")
 @SignedIn
 export class CalendarTeamEventsController {
+  /** @type {CalendarEventsHelper} */
+  @Needs
+  calendarEventsHelper
+
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   /**
  * GET /calendar/team-events?start=&end=
  *
@@ -28,8 +35,8 @@ export class CalendarTeamEventsController {
     const viewerDomains = (auth.domains || []).map(d => d.toLowerCase())
     if (viewerDomains.length === 0) return []
 
-    const app = await getApp()
-    const allUsers = await app.users.list()
+    const app = this
+    const allUsers = await app.usersHelper.list()
     const sharers = allUsers.filter(u => {
       if ((u.email || '').toLowerCase() === (auth.email || '').toLowerCase()) return false
       const vis = /** @type {any} */ (u).calendarVisibility || 'private'
@@ -46,7 +53,7 @@ export class CalendarTeamEventsController {
     // Sequential per-owner queries are fine for tens of teammates; if this
     // ever needs to scale further it becomes a single multi-user Fylo query.
     for (const owner of sharers) {
-      const stored = await app.calendarEvents.list(owner.email, { start, end })
+      const stored = await app.calendarEventsHelper.list(owner.email, { start, end })
       /** @type {Array<Record<string, any>>} */
       let events = stored
       if (start && end) {

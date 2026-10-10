@@ -3,14 +3,16 @@ import { mkdtempSync, rmSync } from "node:fs"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { DatabaseRepository } from "@/shared/persistence/DatabaseRepository.js"
-import { PushSubscriptionsRepository } from "@/features/notifications/repositories/PushSubscriptionsRepository.js"
+import PushSubscriptionsHelper from "@/helpers/PushSubscriptionsHelper.js"
+import { PushSubscriptionsRecords } from '@/shared/notifications/PushSubscriptionsRecords.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 let fylo;
 let pushRepo;
 let testRoot;
 beforeEach(async () => {
   testRoot = mkdtempSync(join(tmpdir(), "caduceus-push-test-"));
   fylo = await DatabaseRepository.createDb(testRoot);
-  pushRepo = new PushSubscriptionsRepository(fylo);
+  pushRepo = Providers.create(PushSubscriptionsHelper, fylo);
 });
 afterEach(async () => {
   await fylo?.close?.();
@@ -28,7 +30,7 @@ const sampleSubscription = {
 describe("push subscriptions", () => {
   it("stores subscriptions with stable endpoint IDs", async () => {
     const stored = await pushRepo.upsert(sampleSubscription);
-    expect(stored.id).toBe(PushSubscriptionsRepository.subscriptionId(sampleSubscription.endpoint));
+    expect(stored.id).toBe(PushSubscriptionsRecords.subscriptionId(sampleSubscription.endpoint));
     expect(stored.userEmail).toBe("alice@example.com");
     const [docId, found] = await pushRepo.findById(stored.id);
     expect(docId).not.toBeNull();

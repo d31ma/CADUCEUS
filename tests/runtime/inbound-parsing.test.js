@@ -1,9 +1,10 @@
 import { expect, test } from 'bun:test'
-import { InboundService } from '../../server/features/delivery/services/InboundService.js'
+import InboundService from '../../server/services/InboundService.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 
 /** @returns {InboundService} */
 function parser() {
-  return Object.create(InboundService.prototype)
+  return Providers.instance(InboundService)
 }
 
 test('plain inbound content bypasses MIME parsing without losing text', async () => {

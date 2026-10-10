@@ -3,15 +3,16 @@ import { mkdtempSync, rmSync } from "node:fs"
 import { join } from "node:path"
 import { tmpdir } from "node:os"
 import { DatabaseRepository } from "@/shared/persistence/DatabaseRepository.js"
-import { EmailsRepository } from "@/features/mailbox/repositories/EmailsRepository.js"
-import { AttachmentsRepository } from "@/features/mailbox/repositories/AttachmentsRepository.js"
+import EmailsHelper from "@/helpers/EmailsHelper.js"
+import AttachmentsHelper from "@/helpers/AttachmentsHelper.js"
+import { Providers } from '../../scripts/support/Providers.mjs'
 let fylo;
 let emailsRepo;
 let testRoot;
 beforeEach(async () => {
   testRoot = mkdtempSync(join(tmpdir(), "caduceus-test-"));
   fylo = await DatabaseRepository.createDb(testRoot);
-  emailsRepo = new EmailsRepository(fylo, new AttachmentsRepository(fylo));
+  emailsRepo = Providers.create(EmailsHelper, fylo, Providers.create(AttachmentsHelper, fylo));
 });
 afterEach(async () => {
   await fylo?.close?.();

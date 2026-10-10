@@ -5,9 +5,9 @@ import { ExternalAccounts } from '../accounts/ExternalAccounts.js'
 export class ScheduledSends {
   /** Exact-owner lookup for scheduled-management routes. */
   static async findOwnedScheduled(app, id, ownerEmail) {
-    const [docId, entry] = await app.scheduled.findById(id)
+    const [docId, entry] = await app.scheduledHelper.findById(id)
     if (!docId || !entry || (entry.owner ?? entry.sender) !== ownerEmail) return null
-  	const [queueDocId, queue] = entry.transport === 'external' ? [null, null] : await app.outbox.findById(entry.queueId ?? entry.id)
+  	const [queueDocId, queue] = entry.transport === 'external' ? [null, null] : await app.outboxHelper.findById(entry.queueId ?? entry.id)
     return { docId, entry, queueDocId, queue }
   }
 
@@ -15,7 +15,7 @@ export class ScheduledSends {
   static async presentScheduled(app, record, { includeContent = false, externalSubmission = null } = {}) {
     const { entry, queue } = record
   	const submission = /** @type {any} */ (externalSubmission)
-    const reminder = await app.followUpReminders.findActiveForEmail(entry.owner ?? entry.sender, entry.id)
+    const reminder = await app.followUpRemindersHelper.findActiveForEmail(entry.owner ?? entry.sender, entry.id)
     const attachmentList = await ScheduledSends.loadStoredAttachments(app, entry.id, includeContent)
     return {
       id: entry.id,
@@ -51,19 +51,19 @@ export class ScheduledSends {
   		return { conflict: true }
   	}
   	await ExternalAccounts.cancelSubmission(token, record.entry.externalAccountId, record.entry.externalSubmissionId)
-  	await app.scheduled.delete(record.docId)
-  	await app.reminders.dismissForEmail(record.entry.id, ownerEmail)
+  	await app.scheduledHelper.delete(record.docId)
+  	await app.followUpReminderService.dismissForEmail(record.entry.id, ownerEmail)
   	await app.sendService.rollbackExternalAccepted(record.entry.id)
   	return { cancelled: true }
   }
 
   /** Read one normalized bucket-backed attachment set for editing or delivery. */
   static async loadStoredAttachments(app, emailId, includeContent = true) {
-    const records = await app.attachments.list(emailId)
+    const records = await app.attachmentsHelper.list(emailId)
     const result = []
     for (const record of records) {
       const contentBase64 = includeContent
-        ? Buffer.from(await app.attachments.readContent(record)).toString('base64')
+        ? Buffer.from(await app.attachmentsHelper.readContent(record)).toString('base64')
         : undefined
       result.push({
         filename: record.filename,
@@ -82,11 +82,11 @@ export class ScheduledSends {
     if (record.queue?.status === 'sending' && (record.queue.claimedAt ?? 0) > now - OutboundQueueRules.DELIVERY_LEASE_MS) {
       return { conflict: true }
     }
-    if (record.queueDocId) await app.outbox.delete(record.queueDocId)
-    await app.scheduled.delete(record.docId)
-    await app.reminders.dismissForEmail(record.entry.id, ownerEmail)
-    const [emailDocId] = await app.emails.findById(record.entry.id)
-    if (emailDocId) await app.emails.delete(emailDocId, record.entry.id)
+    if (record.queueDocId) await app.outboxHelper.delete(record.queueDocId)
+    await app.scheduledHelper.delete(record.docId)
+    await app.followUpReminderService.dismissForEmail(record.entry.id, ownerEmail)
+    const [emailDocId] = await app.emailsHelper.findById(record.entry.id)
+    if (emailDocId) await app.emailsHelper.delete(emailDocId, record.entry.id)
     return { cancelled: true }
   }
 }

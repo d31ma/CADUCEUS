@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  attachmentPreviewDataUrl,
-  attachmentPreviewKind,
-  decodeAttachmentText,
-  normalizeCidReference,
-} from '../../client/shared/scripts/attachment-content.js'
+import { AttachmentContentUtils } from '../../client/shared/utils/AttachmentContentUtils.js'
+
+const attachmentPreviewDataUrl = (...args) => AttachmentContentUtils.attachmentPreviewDataUrl(...args)
+const attachmentPreviewKind = (...args) => AttachmentContentUtils.attachmentPreviewKind(...args)
+const decodeAttachmentText = (...args) => AttachmentContentUtils.decodeAttachmentText(...args)
+const normalizeCidReference = (...args) => AttachmentContentUtils.normalizeCidReference(...args)
 
 describe('attachment browser content policy', () => {
   it('normalizes encoded CID references and rejects malformed IDs', () => {

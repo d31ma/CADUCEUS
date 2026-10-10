@@ -1,25 +1,28 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import {
-  detectLanguage,
-  isTranslatableMessageText,
-  MAX_TRANSLATION_CHARACTERS,
-  normalizeTranslationLanguage,
-  onDeviceTranslationSupported,
-  preferredTranslationLanguage,
-  TRANSLATION_LANGUAGES,
-  translateText,
-} from '../../client/shared/scripts/on-device-translation.js'
-import {
-  OFFLINE_TRANSLATION_CHUNK_CHARACTERS,
-  buildOfflineTranslationPlan,
-  prependOpusTargetToken,
-  prependSmall100TargetToken,
-  splitOfflineTranslationText,
-} from '../../client/shared/scripts/offline-translation-engine.js'
-import {
-  FRANC_TO_TRANSLATION_LANGUAGE,
-  OPUS_EXTENSION_LANGUAGE_CODES,
-} from '../../client/shared/scripts/translation-languages.js'
+import { OnDeviceTranslationUtils } from '../../client/shared/utils/OnDeviceTranslationUtils.js'
+import { OfflineTranslationEngineUtils } from '../../client/shared/utils/OfflineTranslationEngineUtils.js'
+import { TranslationLanguagesUtils } from '../../client/shared/utils/TranslationLanguagesUtils.js'
+import TranslationService from '../../client/services/TranslationService.js'
+
+const detectLanguage = (...args) => OnDeviceTranslationUtils.detectLanguage(...args)
+const isTranslatableMessageText = (...args) => OnDeviceTranslationUtils.isTranslatableMessageText(...args)
+const MAX_TRANSLATION_CHARACTERS = OnDeviceTranslationUtils.maxTranslationCharacters()
+const normalizeTranslationLanguage = (...args) => OnDeviceTranslationUtils.normalizeTranslationLanguage(...args)
+const onDeviceTranslationSupported = (...args) => OnDeviceTranslationUtils.onDeviceTranslationSupported(...args)
+const preferredTranslationLanguage = (...args) => OnDeviceTranslationUtils.preferredTranslationLanguage(...args)
+const TRANSLATION_LANGUAGES = OnDeviceTranslationUtils.translationLanguages()
+// translateText moved to TranslationService; its shell is only used to fetch self-hosted model assets.
+const translation = Object.assign(new TranslationService(), {
+  shell: { apiFetch: async path => { throw new Error(`unexpected translation asset fetch: ${path}`) } },
+})
+const translateText = (...args) => translation.translateText(...args)
+const OFFLINE_TRANSLATION_CHUNK_CHARACTERS = OfflineTranslationEngineUtils.offlineTranslationChunkCharacters()
+const buildOfflineTranslationPlan = (...args) => OfflineTranslationEngineUtils.buildOfflineTranslationPlan(...args)
+const prependOpusTargetToken = (...args) => OfflineTranslationEngineUtils.prependOpusTargetToken(...args)
+const prependSmall100TargetToken = (...args) => OfflineTranslationEngineUtils.prependSmall100TargetToken(...args)
+const splitOfflineTranslationText = (...args) => OfflineTranslationEngineUtils.splitOfflineTranslationText(...args)
+const FRANC_TO_TRANSLATION_LANGUAGE = TranslationLanguagesUtils.francToTranslationLanguage()
+const OPUS_EXTENSION_LANGUAGE_CODES = TranslationLanguagesUtils.opusExtensionLanguageCodes()
 
 const originalTranslator = globalThis.Translator
 const originalDetector = globalThis.LanguageDetector

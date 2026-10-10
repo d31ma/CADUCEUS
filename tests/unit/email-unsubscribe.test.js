@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
-
-globalThis.onMount = value => value
-const { default: EmailDetail } = await import('../../client/components/email/detail/tac.js')
+import EmailDetailService from '../../client/services/EmailDetailService.js'
 
 const originalWindow = globalThis.window
 const originalConfirm = globalThis.confirm
@@ -10,17 +8,23 @@ const originalFetch = globalThis.fetch
 let composed
 let toast
 
+/** The reader is now EmailDetailService; compose/toast come from its injected shell instead of `window._caduceus`. */
+function emailDetail() {
+  return Object.assign(new EmailDetailService(), {
+    shell: {
+      compose: value => { composed = value },
+      toast: value => { toast = value },
+    },
+    mailbox: { selectedMail: null },
+    taskScheduler: { render: async () => {} },
+  })
+}
+
 beforeEach(() => {
   composed = null
   toast = ''
   globalThis.confirm = () => true
-  globalThis.window = {
-    _caduceus: {
-      compose: value => { composed = value },
-      toast: value => { toast = value },
-    },
-    open: mock(() => null),
-  }
+  globalThis.window = { open: mock(() => null) }
 })
 
 afterEach(() => {
@@ -36,8 +40,8 @@ describe('EmailDetail unsubscribe action', () => {
       request = { url, options }
       return new Response(null, { status: 204 })
     })
-    const detail = new EmailDetail()
-    detail.$email = {
+    const detail = emailDetail()
+    detail.email = {
       unsubscribeUrl: 'https://lists.example.com/unsubscribe/abc',
       unsubscribeOneClick: true,
     }
@@ -52,13 +56,13 @@ describe('EmailDetail unsubscribe action', () => {
       referrerPolicy: 'no-referrer',
       body: 'List-Unsubscribe=One-Click',
     })
-    expect(detail.$unsubscribeState).toBe('success')
+    expect(detail.unsubscribeState).toBe('success')
     expect(toast).toBe('Unsubscribe request sent.')
   })
 
   it('opens a mailto action in the CADUCEUS composer for review', async () => {
-    const detail = new EmailDetail()
-    detail.$email = {
+    const detail = emailDetail()
+    detail.email = {
       unsubscribeMailto: 'mailto:leave@example.com?subject=Remove%20me',
     }
 
@@ -69,29 +73,29 @@ describe('EmailDetail unsubscribe action', () => {
       subject: 'Remove me',
       body: '',
     })
-    expect(detail.$unsubscribeState).toBe('idle')
+    expect(detail.unsubscribeState).toBe('idle')
   })
 
   it('exposes a retryable error when the one-click request fails', async () => {
     globalThis.fetch = mock(async () => { throw new Error('offline') })
-    const detail = new EmailDetail()
-    detail.$email = {
+    const detail = emailDetail()
+    detail.email = {
       unsubscribeUrl: 'https://lists.example.com/unsubscribe/abc',
       unsubscribeOneClick: true,
     }
 
     await detail.unsubscribe()
 
-    expect(detail.$unsubscribeState).toBe('error')
-    expect(detail.$unsubscribeError).toBe('offline')
+    expect(detail.unsubscribeState).toBe('error')
+    expect(detail.unsubscribeError).toBe('offline')
     expect(toast).toBe('Could not send the unsubscribe request.')
   })
 })
 
 describe('EmailDetail reply threading', () => {
   it('carries the selected Message-ID and complete reference chain into the composer', () => {
-    const detail = new EmailDetail()
-    detail.$email = {
+    const detail = emailDetail()
+    detail.email = {
       sender: 'sender@other.test',
       subject: 'Threaded message',
       rfcMessageId: '<parent@other.test>',
@@ -111,8 +115,8 @@ describe('EmailDetail reply threading', () => {
   })
 
   it('bounds a pathological chain while preserving its root and newest ancestors', () => {
-    const detail = new EmailDetail()
-    detail.$email = {
+    const detail = emailDetail()
+    detail.email = {
       rfcMessageId: '<parent@other.test>',
       references: Array.from({ length: 100 }, (_, index) => `<m${index}@other.test>`),
     }
@@ -125,7 +129,7 @@ describe('EmailDetail reply threading', () => {
 
 describe('EmailDetail calendar invite presentation', () => {
   it('presents single and multi-day all-day dates without timezone drift', () => {
-    const detail = new EmailDetail()
+    const detail = emailDetail()
     expect(detail.formatInviteWhen({
       start: '2026-03-01T00:00:00.000Z', end: '2026-03-02T00:00:00.000Z', allDay: true,
     })).toMatch(/Mar 1.*All day/)
@@ -135,7 +139,7 @@ describe('EmailDetail calendar invite presentation', () => {
   })
 
   it('distinguishes the current user response from a reply sender response', () => {
-    const detail = new EmailDetail()
+    const detail = emailDetail()
     expect(detail.inviteDisplayStatus({ myStatus: 'tentative' })).toBe('tentative')
     const reply = { senderResponse: { name: 'Carol', email: 'carol@example.net', status: 'declined' }, myStatus: 'accepted' }
     expect(detail.inviteDisplayStatus(reply)).toBe('declined')

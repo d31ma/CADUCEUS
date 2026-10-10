@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test'
-import {
-  loadCachedMessageTranslation,
-  saveCachedMessageTranslation,
-  setCachedMessageTranslationEnabled,
-  TRANSLATION_CACHE_INDEX_KEY,
-  TRANSLATION_CACHE_LIMIT,
-} from '../../client/shared/scripts/translation-cache.js'
+import { TranslationCacheUtils } from '../../client/shared/utils/TranslationCacheUtils.js'
+
+const loadCachedMessageTranslation = (...args) => TranslationCacheUtils.loadCachedMessageTranslation(...args)
+const saveCachedMessageTranslation = (...args) => TranslationCacheUtils.saveCachedMessageTranslation(...args)
+const setCachedMessageTranslationEnabled = (...args) => TranslationCacheUtils.setCachedMessageTranslationEnabled(...args)
+const TRANSLATION_CACHE_INDEX_KEY = TranslationCacheUtils.translationCacheIndexKey()
+const TRANSLATION_CACHE_LIMIT = TranslationCacheUtils.translationCacheLimit()
 
 class MemoryStorage {
   values = new Map()

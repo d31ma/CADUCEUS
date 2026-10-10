@@ -33,8 +33,11 @@ import { SendUndoController as UndoSend } from '@/controllers/SendUndoController
 import { SendScheduledController as ScheduledSend } from '@/controllers/SendScheduledController.js'
 import { SendScheduledIdController as ScheduledItem } from '@/controllers/SendScheduledIdController.js'
 import { ExternalAccounts as ExternalAccountBridge } from '@/shared/accounts/ExternalAccounts.js'
-import { writeMboxFromFrameStream } from '../../client/shared/scripts/mbox.js'
+import { MboxUtils } from '../../client/shared/utils/MboxUtils.js'
 import { call } from '../support/controller-call.mjs'
+import { TestContainer } from '../support/TestContainer.mjs'
+
+const writeMboxFromFrameStream = (...args) => MboxUtils.writeMboxFromFrameStream(...args)
 
 const alice = () => token()
 const bob = () => token({ email: 'bob@example.com' })
@@ -94,7 +97,7 @@ describe('Go-owned external account boundary', () => {
       expect((await call(ExternalAccounts, 'GET', req({ token: alice() }))).accounts).toEqual([])
       account = await call(ExternalAccounts, 'POST', req({ token: alice(), body: input }))
       if (account.error) throw new Error(`${account.error}\n${routeDiagnostics()}`)
-      const routeApp = await (await import('@/app.js')).getApp()
+      const routeApp = TestContainer.current
       await routeApp.users.put({ email: 'alice@example.com', aliases: [], domains: ['example.com'], role: 'admin' })
       expect(await call(UserPreferences, 'PUT', req({
         token: alice(), body: { newMailNotificationExternalAccounts: [account.id] },

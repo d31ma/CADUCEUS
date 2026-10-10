@@ -1,6 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { RuleValidation } from '../shared/domains/RuleValidation.js'
 import { RuleEngine } from '../shared/mailbox/RuleEngine.js'
 import { RuleInput } from '../shared/mailbox/RuleInput.js'
@@ -9,6 +8,14 @@ import { SenderAddresses } from '../shared/users/SenderAddresses.js'
 @RequestRoute("/rules/preview")
 @SignedIn
 export class RulesPreviewController {
+  /** @type {RulesHelper} */
+  @Needs
+  rulesHelper
+
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   /** @param {Record<string, unknown>} message */
   static validateMessage(message) {
     for (const field of ['from', 'to', 'cc', 'subject']) {
@@ -26,14 +33,14 @@ export class RulesPreviewController {
       if (!body?.message || typeof body.message !== 'object' || Array.isArray(body.message)) return Respond.r400('message required')
       const messageError = RulesPreviewController.validateMessage(body.message)
       if (messageError) return Respond.r400(messageError)
-      const app = await getApp()
+      const app = this
       let rule
       if (body.ruleId) {
-        const [, existing] = await app.rules.findById(String(body.ruleId))
+        const [, existing] = await app.rulesHelper.findById(String(body.ruleId))
         if (!existing || existing.ownerEmail !== auth.email.toLowerCase()) return Respond.r404('Rule not found')
         rule = existing
       } else {
-        const owned = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
+        const owned = await SenderAddresses.ownedSenderAddresses(app.usersHelper, auth.email)
         const mailbox = typeof body.rule?.mailbox === 'string' ? body.rule.mailbox.trim().toLowerCase() : auth.email
         if (!owned.includes(mailbox)) return Respond.r403('Mailbox access denied')
         rule = RuleInput.normalizeInboxRuleInput(body.rule ?? {}, { ownerEmail: auth.email, mailbox, order: 0 })

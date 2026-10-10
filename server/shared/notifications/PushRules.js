@@ -1,3 +1,4 @@
+import { generateKeyPairSync } from 'node:crypto'
 import { UnreadBadgePreferences } from '../users/UnreadBadgePreferences.js'
 import { NewMailNotificationPreferences } from '../users/NewMailNotificationPreferences.js'
 import { ExternalMessage } from '../mailbox/ExternalMessage.js'
@@ -5,9 +6,9 @@ import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
 
 export class PushRules {
   /** @import { StoredEmail } from '../../../types' */
-  /** @import { PushSubscriptionsRepository } from '../repositories/PushSubscriptionsRepository.js' */
-  /** @import { UsersRepository } from '../../users/repositories/UsersRepository.js' */
-  /** @import { EmailsRepository } from '../../mailbox/repositories/EmailsRepository.js' */
+  /** @import { PushSubscriptionsHelper } from '../repositories/PushSubscriptionsHelper.js' */
+  /** @import { UsersHelper } from '../../users/repositories/UsersHelper.js' */
+  /** @import { EmailsHelper } from '../../mailbox/repositories/EmailsHelper.js' */
 
   static NOTIFICATION_ACTIONS = Object.freeze([
     { action: 'mark-read', title: 'Mark read' },
@@ -84,7 +85,7 @@ export class PushRules {
    * This intentionally uses the repository's normal domain and mailbox scope so
    * background state cannot bypass the same boundary as the foreground inbox.
    *
-   * @param {EmailsRepository} emails
+   * @param {EmailsHelper} emails
    * @param {import('../../../types').User | null} user
    * @param {StoredEmail} email
    * @param {string} userEmail
@@ -98,5 +99,16 @@ export class PushRules {
       ownerEmail: userEmail,
     })
     return unread.length
+  }
+
+  /** The bundled web-push module, loaded only when a push is sent. */
+  static async webPush() {
+    return await import('../../deps/npm/web-push.mjs')
+  }
+
+  /** @returns {string} A throwaway VAPID public key for local development. */
+  static ephemeralVapidPublicKey() {
+    const { publicKey } = generateKeyPairSync('ec', { namedCurve: 'prime256v1' })
+    return publicKey.export({ type: 'spki', format: 'der' }).toString('base64url')
   }
 }

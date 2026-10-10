@@ -1,6 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { randomUUID } from 'node:crypto'
 import { AuthBridgeError } from '../shared/auth/AuthBridgeError.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
@@ -8,6 +7,10 @@ import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 @RequestRoute("/contacts")
 @SignedIn
 export class ContactsController {
+  /** @type {ContactsService} */
+  @Needs
+  contactsService
+
   static validIdentifier(value, prefix) {
     const text = typeof value === 'string' ? value.trim() : ''
     return text.startsWith(prefix) && text.length <= 256 && !/[\r\n\0]/.test(text)
@@ -25,10 +28,10 @@ export class ContactsController {
       const params = query || context?.query || {}
       const source = params.source ? String(params.source) : ''
       if (source && !['manual', 'mail', 'vcard', 'carddav'].includes(source)) return Respond.r400('source is invalid')
-      const app = await getApp()
+      const app = this
       let providerContacts = []
       try { providerContacts = (await ExternalAccounts.contacts(ExternalAccounts.bearerToken(context)))?.contacts || [] } catch { /* hosted contacts remain available while provider sync recovers */ }
-      return await app.contacts.list(auth.email, {
+      return await app.contactsService.list(auth.email, {
         q: String(params.q || '').slice(0, 200),
         source,
         groupId: String(params.groupId || ''),
@@ -56,8 +59,8 @@ export class ContactsController {
   		}
   	  }
   	  if (source) return Respond.r400('source is invalid')
-        const app = await getApp()
-  	  return await app.contacts.create(auth.email, contact)
+        const app = this
+  	  return await app.contactsService.create(auth.email, contact)
       } catch (error) {
   	  if (error instanceof AuthBridgeError) return ExternalAccounts.accountFailure(error)
         return Respond.r400(error instanceof Error ? error.message : 'Invalid contact')

@@ -1,12 +1,39 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { ScheduledSends } from '../shared/delivery/ScheduledSends.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/send/scheduled")
 @SignedIn
 export class SendScheduledController {
+  /** @type {AttachmentsHelper} */
+  @Needs
+  attachmentsHelper
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  /** @type {FollowUpReminderService} */
+  @Needs
+  followUpReminderService
+
+  /** @type {FollowUpRemindersHelper} */
+  @Needs
+  followUpRemindersHelper
+
+  /** @type {OutboxHelper} */
+  @Needs
+  outboxHelper
+
+  /** @type {ScheduledHelper} */
+  @Needs
+  scheduledHelper
+
+  /** @type {SendService} */
+  @Needs
+  sendService
+
   /**
  * DELETE /send/scheduled
  * @param {object} params
@@ -20,7 +47,7 @@ export class SendScheduledController {
     const id = body?.id
     if (!id || typeof id !== 'string') return Respond.r400('id is required')
 
-    const app = await getApp()
+    const app = this
     const record = await ScheduledSends.findOwnedScheduled(app, id, auth.email)
     if (!record) return Respond.r404('Scheduled email not found')
   	let result
@@ -44,8 +71,8 @@ export class SendScheduledController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth, context }) => {
-    const app = await getApp()
-    const records = await app.scheduled.listForOwner(auth.email)
+    const app = this
+    const records = await app.scheduledHelper.listForOwner(auth.email)
     const list = []
     for (const entry of Object.values(records)) {
       const record = await ScheduledSends.findOwnedScheduled(app, entry.id, auth.email)
@@ -54,7 +81,7 @@ export class SendScheduledController {
   			try {
   				const submission = await ExternalAccounts.submission(ExternalAccounts.bearerToken(context), record.entry.externalAccountId, record.entry.externalSubmissionId)
   				if (submission.state === 'sent' || submission.state === 'cancelled') {
-  					await app.scheduled.delete(record.docId)
+  					await app.scheduledHelper.delete(record.docId)
   					continue
   				}
   				list.push(await ScheduledSends.presentScheduled(app, record, { externalSubmission: submission }))

@@ -3,7 +3,8 @@
  * Run with: bun test web/tests/unit.test.js
  */
 import { describe, test, expect } from 'bun:test'
-import { SpamFilterService } from '../server/features/delivery/services/SpamFilterService.js'
+import SpamFilterService from '../server/services/SpamFilterService.js'
+import { Providers } from '../scripts/support/Providers.mjs'
 
 // ── Helpers copied verbatim from components ───────────────────────────────
 
@@ -72,7 +73,7 @@ describe('formatDate', () => {
 })
 
 describe('spam filter classify', () => {
-  const filter = new SpamFilterService({ threshold: 5, enabled: true })
+  const filter = Providers.create(SpamFilterService, { threshold: 5, enabled: true })
 
   test('passes ordinary mail', () => {
     const v = filter.classify({ sender: 'bob@friend.com', subject: 'Lunch tomorrow?', text: 'Want to grab lunch next week?' })
@@ -114,7 +115,7 @@ describe('spam filter classify', () => {
   })
 
   test('disabled filter passes everything', () => {
-    const off = new SpamFilterService({ enabled: false })
+    const off = Providers.create(SpamFilterService, { enabled: false })
     expect(off.classify({ sender: 'x@x.win', subject: 'WON LOTTERY JACKPOT', text: 'bitcoin', verdict: 'FAIL' }).isSpam).toBe(false)
   })
 })

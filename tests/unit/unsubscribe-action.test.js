@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'bun:test'
-import { buildUnsubscribeAction } from '../../client/shared/scripts/unsubscribe.js'
+import { UnsubscribeUtils } from '../../client/shared/utils/UnsubscribeUtils.js'
+
+const buildUnsubscribeAction = (...args) => UnsubscribeUtils.buildUnsubscribeAction(...args)
 
 describe('buildUnsubscribeAction', () => {
   it('uses an RFC 8058 one-click POST when explicitly advertised', () => {

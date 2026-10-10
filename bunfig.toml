@@ -1,2 +1,6 @@
+# Tachyon annotations are globals only ty understands; Bun loads them as
+# no-op decorators for the test suites and the operator scripts.
+preload = ["./tests/support/tachyon-markers.mjs"]
+
 [test]
 preload = ["./tests/support/tachyon-markers.mjs"]

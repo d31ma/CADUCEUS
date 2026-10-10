@@ -1,11 +1,13 @@
 #!/usr/bin/env bun
 import { Fylo } from '../server/shared/persistence/Fylo.js'
 import { DatabaseRepository } from '../server/shared/persistence/DatabaseRepository.js'
-import { DomainsRepository } from '../server/features/domains/repositories/DomainsRepository.js'
-import { DomainMigrationsRepository } from '../server/features/domains/repositories/DomainMigrationsRepository.js'
-import { RulesRepository } from '../server/features/mailbox/repositories/RulesRepository.js'
-import { UsersRepository } from '../server/features/users/repositories/UsersRepository.js'
+import DomainsHelper from '../server/helpers/DomainsHelper.js'
+import DomainMigrationsHelper from '../server/helpers/DomainMigrationsHelper.js'
+import RulesHelper from '../server/helpers/RulesHelper.js'
+import UsersHelper from '../server/helpers/UsersHelper.js'
 import { Security } from '../server/shared/security/Security.js'
+import { UsersRecords } from '../server/shared/users/UsersRecords.js'
+import { Providers } from './support/Providers.mjs'
 
 const args = parseArgs(process.argv.slice(2))
 const fromDomain = Security.normalizeDomain(String(args.from ?? args._[0] ?? ''))
@@ -19,10 +21,10 @@ if (!fromDomain || !toDomain || fromDomain === toDomain) {
 }
 
 const fylo = await DatabaseRepository.createDb()
-const domainsRepo = new DomainsRepository(fylo)
-const usersRepo = new UsersRepository(fylo)
-const rulesRepo = new RulesRepository(fylo)
-const domainMigrationsRepo = new DomainMigrationsRepository(fylo)
+const domainsRepo = Providers.create(DomainsHelper, fylo)
+const usersRepo = Providers.create(UsersHelper, fylo)
+const rulesRepo = Providers.create(RulesHelper, fylo)
+const domainMigrationsRepo = Providers.create(DomainMigrationsHelper, fylo)
 
 const [, fromConfig] = await domainsRepo.findEntry(fromDomain)
 const [, existingToConfig] = await domainsRepo.findEntry(toDomain)
@@ -112,7 +114,7 @@ for (const rule of rulesToCopy) {
 }
 
 for (const move of primaryMoves) {
-  const updated = /** @type {any} */ (UsersRepository.normalize({
+  const updated = /** @type {any} */ (UsersRecords.normalize({
     ...move,
     email: move.newEmail,
     aliases: [...(move.aliases ?? []), move.oldEmail],
@@ -129,7 +131,7 @@ for (const move of primaryMoves) {
 for (const user of users) {
   if (!user.domains.includes(fromDomain)) continue
   if (primaryMoves.some(move => move.docId === user.docId)) continue
-  const updated = /** @type {any} */ (UsersRepository.normalize({
+  const updated = /** @type {any} */ (UsersRecords.normalize({
     ...user,
     domains: [...user.domains, toDomain],
   }))

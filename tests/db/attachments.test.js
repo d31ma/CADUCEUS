@@ -5,7 +5,8 @@ import { tmpdir } from "node:os"
 import { Buffer } from "node:buffer"
 import { DatabaseRepository } from "@/shared/persistence/DatabaseRepository.js"
 import { Fylo } from "@/shared/persistence/Fylo.js"
-import { AttachmentsRepository } from "@/features/mailbox/repositories/AttachmentsRepository.js"
+import AttachmentsHelper from "@/helpers/AttachmentsHelper.js"
+import { Providers } from '../../scripts/support/Providers.mjs'
 let fylo;
 let attachmentsRepo;
 let testRoot;
@@ -15,7 +16,7 @@ beforeEach(async () => {
   previousFyloRoot = process.env.FYLO_ROOT;
   process.env.FYLO_ROOT = testRoot;
   fylo = await DatabaseRepository.createDb(testRoot);
-  attachmentsRepo = new AttachmentsRepository(fylo);
+  attachmentsRepo = Providers.create(AttachmentsHelper, fylo);
 });
 afterEach(async () => {
   await fylo?.close?.();

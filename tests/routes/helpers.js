@@ -4,13 +4,14 @@
  * tests/api spawns `ty serve` in a subprocess, so none of its execution shows
  * up in this process's coverage. Route handlers are plain static methods that
  * take `{ paths, query, body, headers, context }` and return a plain object,
- * so they can be called directly against a temp-rooted App.
+ * so they can be called directly against a temp-rooted provider container.
  *
  * ponytail: no HTTP layer, no schema validation, no decorator emulation --
  * the decorators are real, they just run in-process. Add a transport-level
  * suite only if a bug ever escapes through routing itself.
  */
 import { startIdentity, identityRequirements } from '../support/identity.mjs'
+import { TestContainer } from '../support/TestContainer.mjs'
 
 export { identityRequirements }
 
@@ -55,12 +56,8 @@ export async function setupRoutes() {
     process.env[key] = value
   }
 
-  const { App, resetApp } = await import('@/app.js')
-  await resetApp()
-  const app = await App.create()
-  // Hand the same instance to getApp() so handlers see this root.
-  const appModule = await import('@/app.js')
-  appModule.setApp?.(app)
+  // Controllers called by the suites inject their providers from this one.
+  const app = await TestContainer.open()
   const tokens = new Map()
   for (const member of POOL) {
     const seeded = await identity.mint(member.email, member.role)
@@ -72,8 +69,7 @@ export async function setupRoutes() {
 
 export async function teardownRoutes() {
   if (!active) return
-  const { resetApp } = await import('@/app.js')
-  await resetApp()
+  await TestContainer.close()
   active.identity.stop()
   for (const [key, value] of active.restore) {
     if (value === undefined) delete process.env[key]

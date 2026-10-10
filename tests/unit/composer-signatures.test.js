@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  applySignature,
-  currentSignatureId,
-  defaultSignatureForAddress,
-  sanitizeSignatureHTML as sanitizeBrowserSignature,
-  signatureHTMLFromClipboard,
-} from '../../client/shared/scripts/composer-signatures.js'
+import { ComposerSignaturesUtils } from '../../client/shared/utils/ComposerSignaturesUtils.js'
 import { SignatureContent } from '../../server/shared/mailbox/SignatureContent.js'
 import { SenderAddresses } from '../../server/shared/users/SenderAddresses.js'
+
+const applySignature = (...args) => ComposerSignaturesUtils.applySignature(...args)
+const currentSignatureId = (...args) => ComposerSignaturesUtils.currentSignatureId(...args)
+const defaultSignatureForAddress = (...args) => ComposerSignaturesUtils.defaultSignatureForAddress(...args)
+const sanitizeBrowserSignature = (...args) => ComposerSignaturesUtils.sanitizeSignatureHTML(...args)
+const signatureHTMLFromClipboard = (...args) => ComposerSignaturesUtils.signatureHTMLFromClipboard(...args)
 
 const signature = { id: 'sig-work', text: '<p>Regards,<br>Alice</p>', defaultFor: ['alice@example.com'] }
 

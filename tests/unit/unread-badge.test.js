@@ -1,12 +1,26 @@
-import { describe, expect, it } from 'bun:test'
-import {
-  UnreadBadgeController,
-  formatUnreadTitle,
-  normalizeUnreadBadgePreference,
-  normalizeUnreadCount,
-  resolveUnreadBadgeCount,
-  stripUnreadTitle,
-} from '../../client/shared/scripts/unread-badge.js'
+import { afterEach, describe, expect, it } from 'bun:test'
+import UnreadBadgeService from '../../client/services/UnreadBadgeService.js'
+import { UnreadBadgeUtils } from '../../client/shared/utils/UnreadBadgeUtils.js'
+
+const formatUnreadTitle = (...args) => UnreadBadgeUtils.formatUnreadTitle(...args)
+const normalizeUnreadBadgePreference = (...args) => UnreadBadgeUtils.normalizeUnreadBadgePreference(...args)
+const normalizeUnreadCount = (...args) => UnreadBadgeUtils.normalizeUnreadCount(...args)
+const resolveUnreadBadgeCount = (...args) => UnreadBadgeUtils.resolveUnreadBadgeCount(...args)
+const stripUnreadTitle = (...args) => UnreadBadgeUtils.stripUnreadTitle(...args)
+
+const originalGlobals = Object.fromEntries(['window', 'document', 'navigator']
+  .map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]))
+
+function setGlobal(name, value) {
+  Object.defineProperty(globalThis, name, { value, configurable: true, writable: true, enumerable: true })
+}
+
+afterEach(() => {
+  for (const [name, descriptor] of Object.entries(originalGlobals)) {
+    if (descriptor) Object.defineProperty(globalThis, name, descriptor)
+    else delete globalThis[name]
+  }
+})
 
 function harness({ title = '', screenshot = false, navigatorObject = {} } = {}) {
   const windowObject = new EventTarget()
@@ -16,11 +30,11 @@ function harness({ title = '', screenshot = false, navigatorObject = {} } = {}) 
       getAttribute: name => name === 'data-screenshot-mode' && screenshot ? 'true' : null,
     },
   }
-  const controller = new UnreadBadgeController({
-    windowObject,
-    documentObject,
-    navigatorObject,
-  }).install()
+  // UnreadBadgeService reads the page globals (the old controller took them as options).
+  setGlobal('window', windowObject)
+  setGlobal('document', documentObject)
+  setGlobal('navigator', navigatorObject)
+  const controller = new UnreadBadgeService().install()
   return {
     controller,
     documentObject,
@@ -103,13 +117,21 @@ describe('unread badge primitives', () => {
 
   it('consumes authoritative folder events and mirrors them to the active worker', async () => {
     const posted = []
+    // Badge counts now go to the separately registered push worker (PushWorkerUtils.post),
+    // not to serviceWorker.controller.
+    const pushWorker = { scriptURL: 'https://caduceus.test/shared/service-worker/unread.js', postMessage: value => posted.push(value) }
     const state = harness({
-      navigatorObject: { serviceWorker: { controller: { postMessage: value => posted.push(value) } } },
+      navigatorObject: {
+        serviceWorker: {
+          getRegistration: async scope => scope === '/shared/service-worker/' ? { active: pushWorker } : undefined,
+          register: async () => { throw new Error('push worker is already registered') },
+        },
+      },
     })
     state.windowObject.dispatchEvent(new CustomEvent('caduceus:folder-counts', {
       detail: { counts: { inbox: 9 }, unreadInbox: 4 },
     }))
-    await Promise.resolve()
+    await new Promise(resolve => setTimeout(resolve, 0))
     expect(state.controller.count).toBe(4)
     expect(posted).toEqual([{ type: 'caduceus:set-badge', count: 4 }])
     expect(state.documentObject.title).toBe('(4) CADUCEUS')

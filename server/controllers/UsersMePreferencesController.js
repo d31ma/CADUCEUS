@@ -1,6 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { Security } from '../shared/security/Security.js'
 import { FontPreferences } from '../shared/users/FontPreferences.js'
 import { NotificationSounds } from '../shared/users/NotificationSounds.js'
@@ -17,6 +16,10 @@ import { MailPreferences } from '../shared/users/MailPreferences.js'
 @RequestRoute("/users/me/preferences")
 @SignedIn
 export class UsersMePreferencesController {
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   static VALID_CAL_VIS = new Set(['private', 'busy', 'full'])
 
   static VALID_REMOTE_IMAGE_POLICIES = new Set(['block', 'allow'])
@@ -39,8 +42,8 @@ export class UsersMePreferencesController {
   @PutRoute
   async put(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ body, auth, context }) => {
-      const app = await getApp()
-      const [docId, user] = await app.users.findByEmail(auth.email)
+      const app = this
+      const [docId, user] = await app.usersHelper.findByEmail(auth.email)
       if (!docId || !user) return Respond.r404('User not found')
 
       const next = { ...user }
@@ -149,7 +152,7 @@ export class UsersMePreferencesController {
         next.mailPreferences = mailPatch.preferences
       }
 
-      const updated = await app.users.updatePreferences(docId, next)
+      const updated = await app.usersHelper.updatePreferences(docId, next)
       const grammarPreferences = GrammarPreferences.normalizeGrammarPreferences(updated)
       const unreadBadgePreferences = UnreadBadgePreferences.normalizeUnreadBadgePreferences(updated, updated.domains)
       const newMailNotificationPreferences = NewMailNotificationPreferences.normalizeNewMailNotificationPreferencesForAccounts(updated, updated.domains, externalAccountIds)
@@ -188,8 +191,8 @@ export class UsersMePreferencesController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
-      const app = await getApp()
-      const [, user] = await app.users.findByEmail(auth.email)
+      const app = this
+      const [, user] = await app.usersHelper.findByEmail(auth.email)
       if (!user) return Respond.r404('User not found')
       const grammarPreferences = GrammarPreferences.normalizeGrammarPreferences(user)
       const unreadBadgePreferences = UnreadBadgePreferences.normalizeUnreadBadgePreferences(user, user.domains)

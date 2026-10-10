@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  analyzeLinkDestination,
-  buildProtectedEmailDocument,
-  isKnownTrackingUrl,
-  isRemoteContentUrl,
-  protectCss,
-  safeExternalLinkTarget,
-} from '../../client/shared/scripts/email-content-protection.js'
+import { EmailContentProtectionUtils } from '../../client/shared/utils/EmailContentProtectionUtils.js'
+
+const analyzeLinkDestination = (...args) => EmailContentProtectionUtils.analyzeLinkDestination(...args)
+const buildProtectedEmailDocument = (...args) => EmailContentProtectionUtils.buildProtectedEmailDocument(...args)
+const isKnownTrackingUrl = (...args) => EmailContentProtectionUtils.isKnownTrackingUrl(...args)
+const isRemoteContentUrl = (...args) => EmailContentProtectionUtils.isRemoteContentUrl(...args)
+const protectCss = (...args) => EmailContentProtectionUtils.protectCss(...args)
+const safeExternalLinkTarget = (...args) => EmailContentProtectionUtils.safeExternalLinkTarget(...args)
 
 describe('email remote-content protection', () => {
   it('distinguishes network content from inline and content-id resources', () => {

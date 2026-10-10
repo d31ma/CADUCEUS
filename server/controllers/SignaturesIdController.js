@@ -1,6 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { SenderAddresses } from '../shared/users/SenderAddresses.js'
 import { SignatureContent } from '../shared/mailbox/SignatureContent.js'
@@ -8,7 +7,15 @@ import { SignatureContent } from '../shared/mailbox/SignatureContent.js'
 @RequestRoute("/signatures/{id}")
 @SignedIn
 export class SignaturesIdController {
-  /** @param {import('../features/mailbox/repositories/SignaturesRepository.js').SignatureEntry} entry */
+  /** @type {SignaturesHelper} */
+  @Needs
+  signaturesHelper
+
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
+  /** @param {import('../helpers/SignaturesHelper.js').SignatureEntry} entry */
   static present(entry) {
     return {
       id: entry.id,
@@ -26,18 +33,18 @@ export class SignaturesIdController {
     return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ paths, body, auth }) => {
       const id = String(paths?.id || '')
       if (!id) return Respond.r404('Signature not found')
-      const app = await getApp()
-      const [docId, existing] = await app.signatures.findById(id)
+      const app = this
+      const [docId, existing] = await app.signaturesHelper.findById(id)
       if (!docId || !existing || existing.owner !== auth.email) return Respond.r404('Signature not found')
-      const addresses = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
+      const addresses = await SenderAddresses.ownedSenderAddresses(app.usersHelper, auth.email)
       const input = SignatureContent.normalizeSignatureInput(body, { partial: true, allowedAddresses: addresses })
       if (input instanceof Error) return Respond.r400(input.message)
       if (input.name) {
-        input.name = SignatureContent.resolveUniqueSignatureName(input.name, Object.values(await app.signatures.listForOwner(auth.email)), id)
+        input.name = SignatureContent.resolveUniqueSignatureName(input.name, Object.values(await app.signaturesHelper.listForOwner(auth.email)), id)
       }
       const patch = { ...input, updatedAt: Date.now() }
-      if (input.defaultFor) await app.signatures.releaseDefaults(auth.email, input.defaultFor, id)
-      await app.signatures.update(docId, patch)
+      if (input.defaultFor) await app.signaturesHelper.releaseDefaults(auth.email, input.defaultFor, id)
+      await app.signaturesHelper.update(docId, patch)
       return SignaturesIdController.present({ ...existing, ...patch })
     })
   }
@@ -47,10 +54,10 @@ export class SignaturesIdController {
     return RouteRequest.handle(request, { paths: { id }, guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ paths, auth }) => {
       const id = String(paths?.id || '')
       if (!id) return Respond.r404('Signature not found')
-      const app = await getApp()
-      const [docId, existing] = await app.signatures.findById(id)
+      const app = this
+      const [docId, existing] = await app.signaturesHelper.findById(id)
       if (!docId || !existing || existing.owner !== auth.email) return Respond.r404('Signature not found')
-      await app.signatures.delete(docId)
+      await app.signaturesHelper.delete(docId)
       return { deleted: id }
     })
   }

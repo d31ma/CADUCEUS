@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  accountActions,
-  accountProgressLabel,
-  connectionDraft,
-  externalSenderIdentities,
-  normalizeExternalAccounts,
-  normalizeProviderCatalog,
-} from '../../client/shared/scripts/external-accounts-ui.js'
+import { ExternalAccountsUiUtils } from '../../client/shared/utils/ExternalAccountsUiUtils.js'
+
+const accountActions = (...args) => ExternalAccountsUiUtils.accountActions(...args)
+const accountProgressLabel = (...args) => ExternalAccountsUiUtils.accountProgressLabel(...args)
+const connectionDraft = (...args) => ExternalAccountsUiUtils.connectionDraft(...args)
+const externalSenderIdentities = (...args) => ExternalAccountsUiUtils.externalSenderIdentities(...args)
+const normalizeExternalAccounts = (...args) => ExternalAccountsUiUtils.normalizeExternalAccounts(...args)
+const normalizeProviderCatalog = (...args) => ExternalAccountsUiUtils.normalizeProviderCatalog(...args)
 
 describe('external account settings model', () => {
   it('keeps only supported, complete provider choices', () => {

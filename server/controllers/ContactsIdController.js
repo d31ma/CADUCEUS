@@ -1,6 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { randomUUID } from 'node:crypto'
 import { AuthBridgeError } from '../shared/auth/AuthBridgeError.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
@@ -8,6 +7,10 @@ import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 @RequestRoute("/contacts/{id}")
 @SignedIn
 export class ContactsIdController {
+  /** @type {ContactsService} */
+  @Needs
+  contactsService
+
   static async remoteContact(token, id) {
     const contacts = (await ExternalAccounts.contacts(token))?.contacts
     return Array.isArray(contacts) ? contacts.find(contact => contact?.id === id) || null : null
@@ -21,9 +24,9 @@ export class ContactsIdController {
   @GetRoute
   async get(@FromPath id, request) {
     return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, auth, context }) => {
-      const app = await getApp()
+      const app = this
       const id = String(paths?.id || '')
-      const local = await app.contacts.get(id, auth.email)
+      const local = await app.contactsService.get(id, auth.email)
       if (local) return local
       const remote = await ContactsIdController.remoteContact(ExternalAccounts.bearerToken(context), id)
       return remote ?? Respond.r404('Contact not found')
@@ -34,9 +37,9 @@ export class ContactsIdController {
   async put(@FromPath id, request) {
     return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, body, auth, context }) => {
       try {
-        const app = await getApp()
+        const app = this
         const id = String(paths?.id || '')
-        const local = await app.contacts.update(id, auth.email, body || {})
+        const local = await app.contactsService.update(id, auth.email, body || {})
         if (local) return local
         const token = ExternalAccounts.bearerToken(context)
         const remote = await ContactsIdController.remoteContact(token, id)
@@ -57,9 +60,9 @@ export class ContactsIdController {
   @DeleteRoute
   async delete(@FromPath id, request) {
     return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, auth, context, query }) => {
-      const app = await getApp()
+      const app = this
       const id = String(paths?.id || '')
-      if (await app.contacts.delete(id, auth.email)) return { deleted: true }
+      if (await app.contactsService.delete(id, auth.email)) return { deleted: true }
       try {
         const token = ExternalAccounts.bearerToken(context)
         const remote = await ContactsIdController.remoteContact(token, id)

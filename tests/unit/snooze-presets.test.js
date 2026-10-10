@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  resolveSnoozePreset,
-  snoozePresetLabel,
-  snoozedUntilLabel,
-} from '../../client/shared/scripts/snooze-presets.js'
+import { SnoozePresetsUtils } from '../../client/shared/utils/SnoozePresetsUtils.js'
+
+const resolveSnoozePreset = (...args) => SnoozePresetsUtils.resolveSnoozePreset(...args)
+const snoozePresetLabel = (...args) => SnoozePresetsUtils.snoozePresetLabel(...args)
+const snoozedUntilLabel = (...args) => SnoozePresetsUtils.snoozedUntilLabel(...args)
 
 describe('Mailspring-compatible snooze presets', () => {
   const at = (day, hour, minute = 17) => new Date(2026, 7, day, hour, minute, 42, 99)

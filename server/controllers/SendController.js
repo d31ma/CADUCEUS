@@ -1,8 +1,6 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { MailValidation } from '../shared/delivery/MailValidation.js'
-import { SendService } from '../features/delivery/services/SendService.js'
 import { Threading } from '../shared/mailbox/Threading.js'
 import { SenderAddresses } from '../shared/users/SenderAddresses.js'
 import { ConversationArchiveError } from '../shared/errors/ConversationArchiveError.js'
@@ -12,11 +10,47 @@ import { ExternalMessage } from '../shared/mailbox/ExternalMessage.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 import { SendIdempotencyConflict } from '../shared/errors/SendIdempotencyConflict.js'
 import { Uuid } from '../shared/runtime/Uuid.js'
-/** @import { SendRequest } from '../features/delivery/services/SmtpService.js' */
+/** @import { SendRequest } from '../models/SendRequest.js' */
 
 @RequestRoute("/send")
 @SignedIn
 export class SendController {
+  /** @type {ConversationArchiveService} */
+  @Needs
+  conversationArchiveService
+
+  /** @type {FollowUpReminderService} */
+  @Needs
+  followUpReminderService
+
+  /** @type {MailActionService} */
+  @Needs
+  mailActionService
+
+  /** @type {RateLimitService} */
+  @Needs
+  rateLimitService
+
+  /** @type {ScheduledHelper} */
+  @Needs
+  scheduledHelper
+
+  /** @type {SendIdempotencyService} */
+  @Needs
+  sendIdempotencyService
+
+  /** @type {SendService} */
+  @Needs
+  sendService
+
+  /** @type {SuppressedHelper} */
+  @Needs
+  suppressedHelper
+
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   static SEND_LIMIT_PER_HOUR = 60
 
   static HOUR_MS = 60 * 60 * 1000
@@ -31,7 +65,7 @@ export class SendController {
   @PostRoute
   async post(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ body, context, auth }) => {
-      const app = await getApp()
+      const app = this
 
       let idempotencyKey = ''
       let requestHash = ''
@@ -40,9 +74,9 @@ export class SendController {
           return Respond.r400('idempotencyKey must be 1-128 safe characters')
         }
         idempotencyKey = body.idempotencyKey
-        requestHash = app.sendIdempotency.hash(body)
+        requestHash = app.sendIdempotencyService.hash(body)
         try {
-          const existing = await app.sendIdempotency.inspect(auth.email, idempotencyKey, requestHash)
+          const existing = await app.sendIdempotencyService.inspect(auth.email, idempotencyKey, requestHash)
           if (existing.kind === 'replay') return existing.result
         } catch (error) {
           if (error instanceof SendIdempotencyConflict) return Respond.r409(error.message)
@@ -50,14 +84,14 @@ export class SendController {
         }
       }
 
-      const limit = await app.rateLimit.check(['send', auth.email, context.ipAddress], SendController.SEND_LIMIT_PER_HOUR, SendController.HOUR_MS)
+      const limit = await app.rateLimitService.check(['send', auth.email, context.ipAddress], SendController.SEND_LIMIT_PER_HOUR, SendController.HOUR_MS)
       if (!limit.allowed) return Respond.r429('Too many send attempts', limit.retryAfterSeconds)
 
       const parsed = MailValidation.validateSendRequest(body)
       if (!parsed.ok) return Respond.r400(parsed.error)
       const parsedAttachments = MailValidation.validateSendAttachments(body?.attachments)
       if (!parsedAttachments.ok) return Respond.r400(parsedAttachments.error)
-      const senderAddresses = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
+      const senderAddresses = await SenderAddresses.ownedSenderAddresses(app.usersHelper, auth.email)
       let senderEmail = SenderAddresses.resolveOwnedSender(parsed.value.from, senderAddresses, auth.email)
       let externalAccount
       if (!senderEmail && parsed.value.from) {
@@ -81,7 +115,7 @@ export class SendController {
       }
   		const outboundMessageId = /** @type {string} */ (req.messageId)
 
-      const suppressed = await app.suppressed.asSet()
+      const suppressed = await app.suppressedHelper.asSet()
       const recipients = [...req.to, ...(req.cc ?? []), ...(req.bcc ?? [])]
       const blocked = recipients.filter(addr => suppressed.has(addr))
       if (blocked.length > 0) return Respond.r422('Recipients are suppressed', blocked)
@@ -98,7 +132,7 @@ export class SendController {
         externalArchiveSourceId = ExternalMessage.parseExternalMessageId(body.archiveSourceId.trim()) ? body.archiveSourceId.trim() : ''
         if (!externalArchiveSourceId) {
           try {
-            archivePlan = await app.conversationArchive.plan({
+            archivePlan = await app.conversationArchiveService.plan({
               sourceEmailId: body.archiveSourceId.trim(), ownerEmail: auth.email, domains: auth.domains,
             })
           } catch (error) {
@@ -124,7 +158,7 @@ export class SendController {
       const withReminder = async result => {
         if (remindAtMs == null) return result
         const emailId = result.messageId ?? result.undoId ?? result.id
-        const reminder = await app.reminders.schedule({
+        const reminder = await app.followUpReminderService.schedule({
           ownerEmail: auth.email,
           emailId,
           recipient: req.to.join(', '),
@@ -151,7 +185,7 @@ export class SendController {
   	let sendRequestDocumentId = ''
   	if (idempotencyKey) {
   		try {
-  			const started = await app.sendIdempotency.begin(auth.email, idempotencyKey, requestHash)
+  			const started = await app.sendIdempotencyService.begin(auth.email, idempotencyKey, requestHash)
   			if (started.kind === 'replay') return started.result
   			if (started.kind === 'started') sendRequestDocumentId = started.documentId
   		} catch (error) {
@@ -160,7 +194,7 @@ export class SendController {
   		}
   	}
   	const accept = async result => sendRequestDocumentId
-  		? await app.sendIdempotency.accept(sendRequestDocumentId, result)
+  		? await app.sendIdempotencyService.accept(sendRequestDocumentId, result)
   		: result
   	if (externalAccount) {
   		const providerIdempotencyKey = idempotencyKey || `message:${outboundMessageId}`
@@ -205,7 +239,7 @@ export class SendController {
   				}
   			if (sendAtMs != null) {
   				const { attachments: _attachments, ...scheduledEmail } = req
-  				await app.scheduled.put({
+  				await app.scheduledHelper.put({
   					id: stored.messageId, email: { ...scheduledEmail, ...(trackingId ? { trackingId } : {}) }, sender: selectedSender, owner: auth.email,
   					sendAt: sendAtMs, createdAt: Date.now(), status: 'scheduled', transport: 'external',
   					externalAccountId: externalAccount.id, externalSubmissionId: submission.id,
@@ -219,7 +253,7 @@ export class SendController {
   					: { queued: true, queueId: submission.id, messageId: stored.messageId, threadId: stored.threadId, externalAccountId: externalAccount.id }
   			if (!externalArchiveSourceId) return await accept(await withReminder(accepted))
   			try {
-  				const archived = await app.mailActions.apply({
+  				const archived = await app.mailActionService.apply({
   					ids: [externalArchiveSourceId], patch: { folder: 'archive' }, ownerEmail: auth.email,
   					domains: auth.domains, providerToken: ExternalAccounts.bearerToken(context),
   				})
@@ -237,7 +271,7 @@ export class SendController {
   				await ExternalAccounts.cancelSubmission(ExternalAccounts.bearerToken(context), externalAccount.id, submission.id).catch(() => {})
   			}
   			if (stored?.messageId) await app.sendService.rollbackExternalAccepted(stored.messageId).catch(() => {})
-  			if (sendRequestDocumentId) await app.sendIdempotency.markAmbiguous(sendRequestDocumentId).catch(() => {})
+  			if (sendRequestDocumentId) await app.sendIdempotencyService.markAmbiguous(sendRequestDocumentId).catch(() => {})
   			return ExternalAccounts.accountFailure(error)
   		}
   	}
@@ -254,16 +288,16 @@ export class SendController {
   		let finalResult
   		try {
   			if ('undoId' in accepted && accepted.undoId) {
-  				await app.sendService.attachArchiveRollback(accepted.undoId, app.conversationArchive.serialize(archivePlan))
+  				await app.sendService.attachArchiveRollback(accepted.undoId, app.conversationArchiveService.serialize(archivePlan))
   			}
-  			finalResult = { ...result, ...await app.conversationArchive.archive(archivePlan, auth.email) }
+  			finalResult = { ...result, ...await app.conversationArchiveService.archive(archivePlan, auth.email) }
   		} catch (error) {
   			console.error('[send] message accepted but source archive failed:', error)
   			finalResult = { ...result, archived: false, archivedCount: 0, archiveError: 'Source conversation could not be archived' }
   		}
   		return await accept(finalResult)
   	} catch (error) {
-  		if (sendRequestDocumentId) await app.sendIdempotency.markAmbiguous(sendRequestDocumentId).catch(() => {})
+  		if (sendRequestDocumentId) await app.sendIdempotencyService.markAmbiguous(sendRequestDocumentId).catch(() => {})
   		throw error
   	}
     })

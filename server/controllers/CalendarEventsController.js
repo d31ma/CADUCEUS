@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { CalendarRecurrence } from '../shared/calendar/CalendarRecurrence.js'
 import { CalendarDate } from '../shared/calendar/CalendarDate.js'
 import { EventView } from '../shared/calendar/EventView.js'
@@ -11,6 +10,14 @@ import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 @RequestRoute("/calendar/events")
 @SignedIn
 export class CalendarEventsController {
+  /** @type {CalendarEventsHelper} */
+  @Needs
+  calendarEventsHelper
+
+  /** @type {ProviderCalendarService} */
+  @Needs
+  providerCalendarService
+
   static ATTENDEE_STATUSES = ['accepted', 'declined', 'tentative', 'needsAction', 'delegated', 'completed']
 
   /**
@@ -35,21 +42,21 @@ export class CalendarEventsController {
     const recurrence = CalendarRecurrence.validate(body?.recurrence, { start: fields.start, timeZone })
     if (!recurrence.ok) return Respond.r400(recurrence.error)
 
-    const app = await getApp()
+    const app = this
     const idempotencyKey = CalendarEventsController._idempotencyKey(body?.idempotencyKey, 'create')
     const event = CalendarEventsController._buildEvent({ ...body, idempotencyKey, recurrence: recurrence.rule, timeZone }, fields, auth.email)
     if (typeof body?.calendarId === 'string' && body.calendarId.trim()) {
-      if (!app.providerCalendars) return Respond.r503('Provider calendar service unavailable')
+      if (!app.providerCalendarService.available()) return Respond.r503('Provider calendar service unavailable')
       try {
-        const mutation = await app.providerCalendars.create(ExternalAccounts.bearerToken(context), body.calendarId.trim(), event, idempotencyKey)
+        const mutation = await app.providerCalendarService.create(ExternalAccounts.bearerToken(context), body.calendarId.trim(), event, idempotencyKey)
         return { saved: true, id: mutation.resourceId || mutation.id }
       } catch (error) {
         return CalendarEventsController._providerFailure(error)
       }
     }
-    const [, replay] = await app.calendarEvents.findByIdempotencyKey(auth.email, idempotencyKey)
+    const [, replay] = await app.calendarEventsHelper.findByIdempotencyKey(auth.email, idempotencyKey)
     if (replay) return { saved: true, id: replay.id }
-    await app.calendarEvents.put(event)
+    await app.calendarEventsHelper.put(event)
     return { saved: true, id: event.id }
     })
   }
@@ -84,7 +91,7 @@ export class CalendarEventsController {
   /**
    * Drop entries without an email and normalise the rest.
    * @param {unknown} input
-   * @returns {import('../features/calendar/repositories/CalendarEventsRepository.js').Attendee[]}
+   * @returns {import('../helpers/CalendarEventsHelper.js').Attendee[]}
    */
   static _normalizeAttendees(input) {
     if (!Array.isArray(input)) return []
@@ -101,7 +108,7 @@ export class CalendarEventsController {
    * @param {any} body
    * @param {{ title: string, start: string, end: string }} fields
    * @param {string} userEmail
-   * @returns {import('../features/calendar/repositories/CalendarEventsRepository.js').CalendarEvent}
+   * @returns {import('../helpers/CalendarEventsHelper.js').CalendarEvent}
    */
   static _buildEvent(body, fields, userEmail) {
     const now = new Date().toISOString()
@@ -144,15 +151,15 @@ export class CalendarEventsController {
     const start = context.query?.start || ''
     const end = context.query?.end || ''
     if ((start && !end) || (!start && end)) return Respond.r400('calendar range requires both start and end')
-    const app = await getApp()
-    const localEvents = await app.calendarEvents.list(auth.email, {
+    const app = this
+    const localEvents = await app.calendarEventsHelper.list(auth.email, {
       start: start || undefined,
       end: end || undefined,
     })
     let events = localEvents
-    if (app.providerCalendars) {
+    if (app.providerCalendarService.available()) {
       try {
-        const providerEvents = await app.providerCalendars.list(ExternalAccounts.bearerToken(context))
+        const providerEvents = await app.providerCalendarService.list(ExternalAccounts.bearerToken(context))
         events = ProviderCalendarRules.mergeCalendarEvents(localEvents, providerEvents)
       } catch (error) {
         return ExternalAccounts.accountFailure(error)

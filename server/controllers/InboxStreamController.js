@@ -1,6 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { AuthGuard } from '../shared/http/AuthGuard.js'
-import { getApp } from '../app.js'
 import { FyloAccessContext } from '../shared/persistence/FyloAccessContext.js'
 import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
 import { Buffer } from 'node:buffer'
@@ -27,6 +26,14 @@ import { ServerEnvironment } from '../shared/runtime/ServerEnvironment.js'
 @RequestRoute("/inbox/stream")
 @Public
 export class InboxStreamController {
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
   static STREAM_MAX_MS = Number(ServerEnvironment.value('STREAM_MAX_MS') ?? 25_000)
 
   static STREAM_POLL_MS = Number(ServerEnvironment.value('STREAM_POLL_MS') ?? 2_000)
@@ -52,7 +59,7 @@ export class InboxStreamController {
     // The stream is already open, so a refusal is an `unauthorized` message;
     // the client stops reconnecting and signs out.
     yield* auth.ok
-      ? InboxStreamController._streamInbox(auth.principal, query ?? {}, ctx.bearer?.token || '')
+      ? this._streamInbox(auth.principal, query ?? {}, ctx.bearer?.token || '')
       : InboxStreamController._unauthorizedStream()
   }
 
@@ -65,8 +72,8 @@ export class InboxStreamController {
    * @param {{ since?: string }} query
    * @param {string} token
    */
-  static async *_streamInbox(claims, query, token) {
-    const app = await getApp()
+  async *_streamInbox(claims, query, token) {
+    const app = this
     const domains = [claims.domain]
     const cursor = InboxStreamController._parseCursor(typeof query.since === 'string' && query.since ? query.since : new Date().toISOString())
 
@@ -121,15 +128,15 @@ export class InboxStreamController {
   }
 
   static async _freshHostedSince(app, domains, cursor, ownerEmail) {
-    const folderByDomain = await app.categoryMappings.folderFilter(ownerEmail, domains, 'inbox') || undefined
+    const folderByDomain = await app.categoryMappingService.folderFilter(ownerEmail, domains, 'inbox') || undefined
     const since = InboxStreamController._replaySince(cursor.at)
-    const emails = await app.emails.list(domains, {
+    const emails = await app.emailsHelper.list(domains, {
       folder: 'inbox',
       folderByDomain,
       since,
       ownerEmail,
     })
-    return (await app.categoryMappings.presentEmails(ownerEmail, emails))
+    return (await app.categoryMappingService.presentEmails(ownerEmail, emails))
       .filter(email => InboxStreamController._afterCursor(email, cursor))
       .slice().reverse()
       .slice(0, InboxStreamController.REPLAY_LIMIT)

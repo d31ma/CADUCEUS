@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { GitHubProfilesService } from '@/features/contacts/services/GitHubProfilesService.js'
+import GitHubProfilesService from '@/services/GitHubProfilesService.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 
 function json(value, status = 200, headers = {}) {
   return new Response(JSON.stringify(value), {
@@ -21,7 +22,7 @@ describe('GitHub public profile enrichment', () => {
         { name: '../unsafe', owner: { login: 'grace-hopper' }, stargazers_count: 900 },
       ] })
     }
-    const service = new GitHubProfilesService({ fetchImpl })
+    const service = Providers.create(GitHubProfilesService, { fetchImpl })
 
     const first = await service.findByEmail(' Grace@Example.net ')
     const second = await service.findByEmail('grace@example.net')
@@ -47,15 +48,15 @@ describe('GitHub public profile enrichment', () => {
 
   it('negative-caches no match and fails optional lookup closed on malformed or oversized responses', async () => {
     let calls = 0
-    const noMatch = new GitHubProfilesService({ fetchImpl: async () => { calls++; return json({ items: [] }) } })
+    const noMatch = Providers.create(GitHubProfilesService, { fetchImpl: async () => { calls++; return json({ items: [] }) } })
     expect(await noMatch.findByEmail('none@example.net')).toEqual({ status: 'not-found' })
     expect(await noMatch.findByEmail('none@example.net')).toEqual({ status: 'not-found' })
     expect(calls).toBe(1)
 
-    const malformed = new GitHubProfilesService({ fetchImpl: async () => new Response('not-json') })
+    const malformed = Providers.create(GitHubProfilesService, { fetchImpl: async () => new Response('not-json') })
     expect(await malformed.findByEmail('grace@example.net')).toEqual({ status: 'unavailable' })
 
-    const oversized = new GitHubProfilesService({
+    const oversized = Providers.create(GitHubProfilesService, {
       fetchImpl: async () => json({ items: [] }, 200, { 'content-length': '1000001' }),
     })
     expect(await oversized.findByEmail('grace@example.net')).toEqual({ status: 'unavailable' })

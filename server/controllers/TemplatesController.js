@@ -1,13 +1,16 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { TemplateContent } from '../shared/mailbox/TemplateContent.js'
 
 @RequestRoute("/templates")
 @SignedIn
 export class TemplatesController {
-  /** @param {import('../features/mailbox/repositories/TemplatesRepository.js').TemplateEntry} entry */
+  /** @type {TemplatesHelper} */
+  @Needs
+  templatesHelper
+
+  /** @param {import('../helpers/TemplatesHelper.js').TemplateEntry} entry */
   static present(entry) {
     return {
       id: entry.id,
@@ -35,8 +38,8 @@ export class TemplatesController {
     if (input instanceof Error) return Respond.r400(input.message)
 
     const id = `tpl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
-    const app = await getApp()
-    const existing = Object.values(await app.templates.listForOwner(auth.email))
+    const app = this
+    const existing = Object.values(await app.templatesHelper.listForOwner(auth.email))
     const now = Date.now()
     const entry = {
       id,
@@ -49,7 +52,7 @@ export class TemplatesController {
       createdAt: now,
       updatedAt: now,
     }
-    await app.templates.put(entry)
+    await app.templatesHelper.put(entry)
     return TemplatesController.present(entry)
     })
   }
@@ -67,12 +70,12 @@ export class TemplatesController {
     const id = body?.id
     if (!id || typeof id !== 'string') return Respond.r400('id is required')
 
-    const app = await getApp()
-    const [docId, entry] = await app.templates.findById(id)
+    const app = this
+    const [docId, entry] = await app.templatesHelper.findById(id)
     if (!docId || !entry) return Respond.r404('Template not found')
     if (entry.owner !== auth.email) return Respond.r404('Template not found')
 
-    await app.templates.delete(docId)
+    await app.templatesHelper.delete(docId)
     return { deleted: true }
     })
   }
@@ -86,8 +89,8 @@ export class TemplatesController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_READ } }, async ({ auth }) => {
-    const app = await getApp()
-    const records = await app.templates.listForOwner(auth.email)
+    const app = this
+    const records = await app.templatesHelper.listForOwner(auth.email)
     return Object.values(records)
       .sort((left, right) => left.name.localeCompare(right.name))
       .map(TemplatesController.present)

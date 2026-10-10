@@ -1,9 +1,12 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/notifications/vapid-public-key")
 @SignedIn
 export class NotificationsVapidPublicKeyController {
+  /** @type {PushService} */
+  @Needs
+  pushService
+
   /**
  * GET /notifications/vapid-public-key
  * @param {object} params
@@ -13,8 +16,8 @@ export class NotificationsVapidPublicKeyController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
-    const app = await getApp()
-    return { publicKey: await app.push.getVapidPublicKey() }
+    const app = this
+    return { publicKey: await app.pushService.getVapidPublicKey() }
     })
   }
 }

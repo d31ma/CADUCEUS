@@ -1,11 +1,14 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
-import { PushSubscriptionsRepository } from '../features/notifications/repositories/PushSubscriptionsRepository.js'
+import { PushSubscriptionsRecords } from '../shared/notifications/PushSubscriptionsRecords.js'
 
 @RequestRoute("/notifications/subscriptions")
 @SignedIn
 export class NotificationsSubscriptionsController {
+  /** @type {PushSubscriptionsHelper} */
+  @Needs
+  pushSubscriptionsHelper
+
   /**
  * POST /notifications/subscriptions
  * @param {object} params
@@ -22,8 +25,8 @@ export class NotificationsSubscriptionsController {
       return Respond.r400('endpoint, p256dh, and auth are required')
     }
 
-    const app = await getApp()
-    const record = await app.pushSubscriptions.upsert(/** @type {any} */ ({
+    const app = this
+    const record = await app.pushSubscriptionsHelper.upsert(/** @type {any} */ ({
       userEmail: auth.email,
       endpoint: subscription.endpoint,
       keys: { p256dh: subscription.keys.p256dh, auth: subscription.keys.auth },
@@ -46,12 +49,12 @@ export class NotificationsSubscriptionsController {
     return RouteRequest.handle(request, { guard: {} }, async ({ body, auth }) => {
     if (!body?.endpoint) return Respond.r400('endpoint required')
 
-    const app = await getApp()
-    const [docId, subscription] = await app.pushSubscriptions.findById(PushSubscriptionsRepository.subscriptionId(body.endpoint))
+    const app = this
+    const [docId, subscription] = await app.pushSubscriptionsHelper.findById(PushSubscriptionsRecords.subscriptionId(body.endpoint))
     if (!docId || !subscription || subscription.userEmail !== auth.email.toLowerCase()) {
       return Respond.r404('Subscription not found')
     }
-    await app.pushSubscriptions.deleteDoc(docId)
+    await app.pushSubscriptionsHelper.deleteDoc(docId)
     return { deleted: subscription.id }
     })
   }
@@ -65,8 +68,8 @@ export class NotificationsSubscriptionsController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
-    const app = await getApp()
-    const subscriptions = await app.pushSubscriptions.listForUser(auth.email)
+    const app = this
+    const subscriptions = await app.pushSubscriptionsHelper.listForUser(auth.email)
     // Strip secrets (`keys`) and the internal docId from the wire payload.
     return subscriptions.map(({ docId, keys, ...rest }) => rest)
     })

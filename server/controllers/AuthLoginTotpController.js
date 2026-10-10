@@ -3,11 +3,14 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { AuthGuard } from '../shared/http/AuthGuard.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/auth/login/totp")
 @Public
 export class AuthLoginTotpController {
+  /** @type {RateLimitService} */
+  @Needs
+  rateLimitService
+
   /**
    * POST /auth/login/totp — supply a time-based code.
    *
@@ -24,8 +27,8 @@ export class AuthLoginTotpController {
       const code = String(body?.code ?? '').trim()
       if (!code) return Respond.r400('code is required')
 
-      const app = await getApp()
-      const limit = await app.rateLimit.check(
+      const app = this
+      const limit = await app.rateLimitService.check(
         ['login-totp', transactionId, context?.ipAddress ?? 'unknown'], 10, 5 * 60 * 1000,
       )
       if (!limit.allowed) return Respond.r429('Too many attempts', limit.retryAfterSeconds)

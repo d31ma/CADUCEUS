@@ -1,9 +1,28 @@
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import { isIP } from 'node:net'
 import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
 
 /** Stateless security/validation helpers (hashing, normalization, SSRF guards). */
 export class Security {
+  /**
+   * Random bytes as text, for identifiers and tokens.
+   *
+   * @param {number} size
+   * @param {'hex' | 'base64url'} [encoding]
+   * @returns {string}
+   */
+  static randomText(size, encoding = 'hex') {
+    return randomBytes(size).toString(encoding)
+  }
+
+  /**
+   * @param {string | Uint8Array} value
+   * @returns {string} The SHA-256 digest as hex.
+   */
+  static sha256Hex(value) {
+    return createHash('sha256').update(value).digest('hex')
+  }
+
   static #CONTROL_CHARS = /[\0\r\n]/
 
   /** @param {string} value @returns {boolean} */

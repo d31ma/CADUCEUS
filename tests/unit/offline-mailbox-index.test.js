@@ -1,24 +1,27 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { describe, expect, it } from 'bun:test'
+import OfflineMailboxIndexService from '../../client/services/OfflineMailboxIndexService.js'
+import { OfflineMailboxIndexUtils } from '../../client/shared/utils/OfflineMailboxIndexUtils.js'
 
 const snapshots = new Map()
-mock.module(import.meta.resolve('../../client/shared/scripts/offline-write-vault.js'), () => ({
-  loadOfflineSnapshot: async (owner, name) => structuredClone(snapshots.get(`${owner}:${name}`) ?? null),
-  saveOfflineSnapshot: async (owner, name, value) => { snapshots.set(`${owner}:${name}`, structuredClone(value)) },
-  removeOfflineSnapshot: async (owner, name) => { snapshots.delete(`${owner}:${name}`) },
-}))
+// The offline write vault is now an injected service; give the index an in-memory fake.
+const offlineMailboxIndex = Object.assign(new OfflineMailboxIndexService(), {
+  offlineWriteVault: {
+    loadOfflineSnapshot: async (owner, name) => structuredClone(snapshots.get(`${owner}:${name}`) ?? null),
+    saveOfflineSnapshot: async (owner, name, value) => { snapshots.set(`${owner}:${name}`, structuredClone(value)) },
+    removeOfflineSnapshot: async (owner, name) => { snapshots.delete(`${owner}:${name}`) },
+  },
+})
 
-const {
-  cacheOfflineAttachment,
-  cacheOfflineMailboxMessage,
-  cacheOfflineMailboxSummaries,
-  hydrateOfflineMailbox,
-  loadOfflineAttachment,
-  loadOfflineMailboxMessage,
-  normalizeOfflineMailboxIndex,
-  offlineMailboxSummary,
-  searchOfflineMailbox,
-  searchOfflineMailboxIndex,
-} = await import('../../client/shared/scripts/offline-mailbox-index.js')
+const cacheOfflineAttachment = (...args) => offlineMailboxIndex.cacheOfflineAttachment(...args)
+const cacheOfflineMailboxMessage = (...args) => offlineMailboxIndex.cacheOfflineMailboxMessage(...args)
+const cacheOfflineMailboxSummaries = (...args) => offlineMailboxIndex.cacheOfflineMailboxSummaries(...args)
+const hydrateOfflineMailbox = (...args) => offlineMailboxIndex.hydrateOfflineMailbox(...args)
+const loadOfflineAttachment = (...args) => offlineMailboxIndex.loadOfflineAttachment(...args)
+const loadOfflineMailboxMessage = (...args) => offlineMailboxIndex.loadOfflineMailboxMessage(...args)
+const searchOfflineMailbox = (...args) => offlineMailboxIndex.searchOfflineMailbox(...args)
+const normalizeOfflineMailboxIndex = (...args) => OfflineMailboxIndexUtils.normalizeOfflineMailboxIndex(...args)
+const offlineMailboxSummary = (...args) => OfflineMailboxIndexUtils.offlineMailboxSummary(...args)
+const searchOfflineMailboxIndex = (...args) => OfflineMailboxIndexUtils.searchOfflineMailboxIndex(...args)
 
 function entry(overrides = {}) {
   const message = {

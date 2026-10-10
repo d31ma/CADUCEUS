@@ -3,12 +3,19 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
 import { Security } from '../shared/security/Security.js'
-import { getApp } from '../app.js'
 
 /** Authenticated EML import into one explicitly authorized mailbox. */
 @RequestRoute("/inbox/import/eml")
 @SignedIn
 export class InboxImportEmlController {
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
+  /** @type {EmlImportService} */
+  @Needs
+  emlImportService
+
   static MAX_EML_BYTES = 50 * 1024 * 1024
 
   static BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
@@ -27,9 +34,9 @@ export class InboxImportEmlController {
       if (source instanceof Error) return Respond.r400(source.message)
 
       try {
-        const app = await getApp()
-        const mappedFolder = await app.categoryMappings.pathFor(auth.email, domain, folder) || folder
-        const imported = await app.emlImport.importOne({ source, domain, mailbox, folder: mappedFolder })
+        const app = this
+        const mappedFolder = await app.categoryMappingService.pathFor(auth.email, domain, folder) || folder
+        const imported = await app.emlImportService.importOne({ source, domain, mailbox, folder: mappedFolder })
         return { imported: true, ...imported }
       } catch {
         return Respond.r503('The EML file could not be imported')

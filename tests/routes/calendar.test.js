@@ -16,7 +16,7 @@ const END = '2099-03-01T10:00:00.000Z'
 
 beforeAll(async () => {
   app = await setupRoutes()
-  app.providerCalendars = null
+  app.providerCalendars = { available: () => false }
   await app.users.put({ email: 'alice@example.com', aliases: [], domains: ['example.com'], role: 'admin' })
 }, 300_000)
 afterAll(teardownRoutes)
@@ -152,7 +152,7 @@ describe('GET /calendar/events', () => {
 
   it('merges authenticated provider events as read-only calendar entries', async () => {
     let boundaryToken = ''
-    app.providerCalendars = { list: async tokenValue => {
+    app.providerCalendars = { available: () => true, list: async tokenValue => {
       boundaryToken = tokenValue
       return [{
         id: 'provider-calendar-event', userEmail: 'alice@remote.example', title: 'Provider meeting',
@@ -172,7 +172,7 @@ describe('GET /calendar/events', () => {
       })
       expect(provider.rawICalendar).toBeUndefined()
     } finally {
-      app.providerCalendars = null
+      app.providerCalendars = { available: () => false }
     }
   })
 
@@ -232,6 +232,7 @@ describe('writable provider calendars', () => {
   it('lists writable calendars and routes create, update, get, and delete through the provider boundary', async () => {
     const calls = []
     app.providerCalendars = {
+      available: () => true,
       calendars: async boundaryToken => { calls.push(['calendars', boundaryToken]); return [{ accountId: providerEvent.accountId, calendarId: providerEvent.calendarId, calendarName: providerEvent.calendarName, writable: true }] },
       find: async (boundaryToken, id) => { calls.push(['find', boundaryToken, id]); return id === providerEvent.id ? { event: providerEvent, resource: {} } : null },
       create: async (boundaryToken, calendarId, event, key) => { calls.push(['create', boundaryToken, calendarId, event, key]); return { id: 'calmut_create', resourceId: 'caldav_created', state: 'applied' } },
@@ -261,7 +262,7 @@ describe('writable provider calendars', () => {
       expect(calls.find(call => call[0] === 'delete').slice(2)).toEqual([providerEvent.id, '', 'delete-request'])
       expect(calls.every(call => call[1] === callerToken)).toBe(true)
     } finally {
-      app.providerCalendars = null
+      app.providerCalendars = { available: () => false }
     }
   })
 })

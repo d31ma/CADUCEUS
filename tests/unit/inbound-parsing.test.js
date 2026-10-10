@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'bun:test'
-import { InboundService } from '@/features/delivery/services/InboundService.js'
+import InboundService from '@/services/InboundService.js'
 import { InboundRules } from '@/shared/delivery/InboundRules.js'
+import { Providers } from '../../scripts/support/Providers.mjs'
 
 /** Parsing needs no collaborators — build a bare instance. */
-const parser = () => /** @type {InboundService} */ (Object.create(InboundService.prototype))
+const parser = () => /** @type {InboundService} */ (Providers.instance(InboundService))
 
 const rfc = (headers, body) => [...headers, '', body].join('\r\n')
 
@@ -241,7 +242,7 @@ describe('applyInboxRules', () => {
   const spyService = (rules) => {
     const patched = []
     const forwarded = []
-    const service = Object.create(InboundService.prototype)
+    const service = Providers.instance(InboundService)
     service.rules = { listEnabledForMailbox: async () => rules }
     service.emails = {
       findById: async id => [`doc-${id}`, { id }],
@@ -335,7 +336,7 @@ describe('applyInboxRules', () => {
   })
 
   it('survives a failing rule lookup', async () => {
-    const service = Object.create(InboundService.prototype)
+    const service = Providers.instance(InboundService)
     service.rules = { listEnabledForMailbox: async () => { throw new Error('fylo down') } }
     await service.applyInboxRules('m1', 'alice@example.com', 'example.com', meta)
   })
@@ -351,7 +352,7 @@ describe('applyInboxRules', () => {
 })
 
 describe('matchRoute', () => {
-  const service = () => /** @type {InboundService} */ (Object.create(InboundService.prototype))
+  const service = () => /** @type {InboundService} */ (Providers.instance(InboundService))
 
   it('skips disabled routes', () => {
     expect(service().matchRoute([{ id: 'r', match: '*', enabled: false }], 'a@b.com')).toBeNull()
@@ -372,7 +373,7 @@ describe('matchRoute', () => {
 })
 
 describe('applyRouteAction', () => {
-  const service = (over = {}) => Object.assign(Object.create(InboundService.prototype), over)
+  const service = (over = {}) => Object.assign(Providers.instance(InboundService), over)
   const meta = { messageId: 'm1', sender: 'bob@other.com', recipient: 'alice@example.com', subject: 'Hi' }
 
   it('posts to a webhook', async () => {

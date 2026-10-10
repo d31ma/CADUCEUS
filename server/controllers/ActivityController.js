@@ -1,11 +1,22 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { SenderAddresses } from '../shared/users/SenderAddresses.js'
 
 @RequestRoute("/activity")
 @SignedIn
 export class ActivityController {
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
+  /** @type {TrackingHelper} */
+  @Needs
+  trackingHelper
+
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   static DAY_MS = 24 * 60 * 60 * 1000
 
   static RANGES = { '7d': 7, '30d': 30, '90d': 90 }
@@ -63,11 +74,11 @@ export class ActivityController {
     return RouteRequest.handle(request, { guard: {} }, async ({ query = {}, auth }) => {
       const parsed = ActivityController.parseActivityQuery(query)
       if (!parsed.ok) return Respond.r400(parsed.error)
-      const app = await getApp()
-      const senders = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
-      const sentFolders = await app.categoryMappings.folderFilter(auth.email, auth.domains || [], 'sent') || {}
-      const draftFolders = await app.categoryMappings.folderFilter(auth.email, auth.domains || [], 'drafts') || {}
-      return await app.tracking.activity({
+      const app = this
+      const senders = await SenderAddresses.ownedSenderAddresses(app.usersHelper, auth.email)
+      const sentFolders = await app.categoryMappingService.folderFilter(auth.email, auth.domains || [], 'sent') || {}
+      const draftFolders = await app.categoryMappingService.folderFilter(auth.email, auth.domains || [], 'drafts') || {}
+      return await app.trackingHelper.activity({
         allowedDomains: auth.domains || [],
         ownerEmail: auth.email,
         ownedSenders: senders,

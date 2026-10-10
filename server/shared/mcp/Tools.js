@@ -46,7 +46,7 @@ export class Tools {
     }
 
     register('list_accounts', 'read', 'List mail accounts allowed by this MCP capability.', z.object({}), async () => {
-      const [, user] = await app.users.findByEmail(principal.ownerEmail)
+      const [, user] = await app.usersHelper.findByEmail(principal.ownerEmail)
       return principal.allowedDomains.map(domain => ({
         id: domain,
         email: principal.ownerEmail,
@@ -60,7 +60,7 @@ export class Tools {
       accountId: z.string().max(253).optional(),
     }), async ({ accountId }) => {
       const domains = Tools.#scopedDomains(principal, accountId)
-      const accounts = await app.categoryMappings.listAccounts(principal.ownerEmail, domains) ?? []
+      const accounts = await app.categoryMappingService.listAccounts(principal.ownerEmail, domains) ?? []
       return accounts.map(account => ({
         accountId: account.domain,
         folders: account.categories
@@ -81,7 +81,7 @@ export class Tools {
     }), async ({ query, accountId, folder, limit }) => {
       const domains = Tools.#scopedDomains(principal, accountId)
       const category = Tools.#normalizeRequestedFolder(folder)
-      const emails = await app.emails.list(domains, {
+      const emails = await app.emailsHelper.list(domains, {
         folder: category, query, ownerEmail: principal.ownerEmail, limit: Math.min(limit * 2, 200),
       })
       return (await Tools.#presentMessages(app, principal, emails)).slice(0, limit)
@@ -129,7 +129,7 @@ export class Tools {
       accountId: z.string().max(253).optional(),
       limit: z.number().int().min(1).max(Tools.#MAX_RESULT_ITEMS).default(50),
     }), async ({ accountId, limit }) => {
-      const emails = await app.emails.list(Tools.#scopedDomains(principal, accountId), {
+      const emails = await app.emailsHelper.list(Tools.#scopedDomains(principal, accountId), {
         folder: 'all', ownerEmail: principal.ownerEmail,
       })
       return emails.filter(email => !Tools.#isExcluded(principal, email) && (email.openTracking || email.linkTracking))
@@ -142,7 +142,7 @@ export class Tools {
       accountId: z.string().max(253).optional(),
       limit: z.number().int().min(1).max(50).default(20),
     }), async ({ accountId, limit }) => {
-      const emails = await app.emails.list(Tools.#scopedDomains(principal, accountId), {
+      const emails = await app.emailsHelper.list(Tools.#scopedDomains(principal, accountId), {
         folder: 'all', ownerEmail: principal.ownerEmail,
       })
       const links = new Map()
@@ -159,7 +159,7 @@ export class Tools {
     })
 
     register('list_scheduled_sends', 'read', 'List this mailbox’s pending scheduled sends.', z.object({}), async () => {
-      const records = await app.scheduled.listForOwner(principal.ownerEmail)
+      const records = await app.scheduledHelper.listForOwner(principal.ownerEmail)
       const result = []
       for (const entry of Object.values(records)) {
         const record = await ScheduledSends.findOwnedScheduled(app, entry.id, principal.ownerEmail)
@@ -192,7 +192,7 @@ export class Tools {
       const thread = await Tools.#findAllowedThread(app, principal, threadId)
       if (!thread) throw new Error('Thread not found')
       const latest = thread.latestEmail
-      const owned = new Set(await SenderAddresses.ownedSenderAddresses(app.users, principal.ownerEmail))
+      const owned = new Set(await SenderAddresses.ownedSenderAddresses(app.usersHelper, principal.ownerEmail))
       const candidates = [latest.sender, ...(replyAll ? [...(latest.to || []), ...(latest.cc || [])] : [])]
       const to = [...new Set(candidates.map(value => String(value).toLowerCase()).filter(value => value.includes('@') && !owned.has(value)))]
       if (to.length === 0) throw new Error('Thread has no reply recipient')
@@ -285,7 +285,7 @@ export class Tools {
       return { isError: true, content: [{ type: 'text', text: message }] }
     } finally {
       const durationMs = Math.max(0, Math.round(performance.now() - started))
-      await FyloAccessContext.runForDomain(principal.primaryDomain, () => app.mcpAuditEvents.put({
+      await FyloAccessContext.runForDomain(principal.primaryDomain, () => app.mcpAuditEventsHelper.put({
         id: `mcp-audit-${randomBytes(16).toString('base64url')}`,
         ownerEmail: principal.ownerEmail,
         domain: principal.primaryDomain,
@@ -316,7 +316,7 @@ export class Tools {
 
   static async #allowedThreads(app, principal, domains = principal.allowedDomains, folder = 'all') {
     const category = Tools.#normalizeRequestedFolder(folder)
-    const threads = await app.threads.list(domains, category, principal.ownerEmail)
+    const threads = await app.threadsHelper.list(domains, category, principal.ownerEmail)
     return threads.filter(thread => !thread.emails.some(email => Tools.#isExcluded(principal, email)))
   }
 
@@ -341,7 +341,7 @@ export class Tools {
   }
 
   static async #findAllowedMessage(app, principal, id) {
-    const [, email] = await app.emails.findById(id)
+    const [, email] = await app.emailsHelper.findById(id)
     if (!email || !principal.allowedDomains.includes(email.domain) || Tools.#isExcluded(principal, email)
         || !EmailsRecords.canAccessEmail(email, principal.ownerEmail)) return null
     return email
@@ -351,7 +351,7 @@ export class Tools {
     const result = []
     for (const email of messages) {
       if (Tools.#isExcluded(principal, email) || !EmailsRecords.canAccessEmail(email, principal.ownerEmail)) continue
-      const attachments = await app.attachments.listSummaries(email.id)
+      const attachments = await app.attachmentsHelper.listSummaries(email.id)
       result.push({
         id: email.id,
         threadId: email.threadId || '',
@@ -405,20 +405,20 @@ export class Tools {
       ...source,
     })
     if (input instanceof Error) throw input
-    const addresses = await SenderAddresses.ownedSenderAddresses(app.users, principal.ownerEmail)
+    const addresses = await SenderAddresses.ownedSenderAddresses(app.usersHelper, principal.ownerEmail)
     const sender = SenderAddresses.resolveOwnedSender(input.from, addresses, principal.ownerEmail)
     if (!sender) throw new Error('From address is not owned by this mailbox')
     const senderDomain = sender.split('@')[1] || ''
     if (!principal.allowedDomains.includes(senderDomain)) throw new Error('Draft account is outside this MCP scope')
     input.from = sender
-    const result = await app.drafts.create(principal.ownerEmail, input)
+    const result = await app.draftService.create(principal.ownerEmail, input)
     return { draftId: result.draft.id, version: result.draft.draftVersion, recovered: result.recovered }
   }
 
   static async #moveThreadsToRole(app, principal, threadIds, role) {
     const threads = await Tools.#resolveAllThreads(app, principal, threadIds)
     return await Tools.#patchThreads(app, threads, async email => ({
-      folder: await app.categoryMappings.pathFor(principal.ownerEmail, email.domain, role),
+      folder: await app.categoryMappingService.pathFor(principal.ownerEmail, email.domain, role),
     }))
   }
 
@@ -426,9 +426,9 @@ export class Tools {
     let updatedMessages = 0
     for (const thread of threads) {
       for (const email of thread.emails) {
-        const [docId, current] = await app.emails.findById(email.id)
+        const [docId, current] = await app.emailsHelper.findById(email.id)
         if (!docId || !current) throw new Error('Thread changed during the operation')
-        await app.emails.update(docId, await patcher(current))
+        await app.emailsHelper.update(docId, await patcher(current))
         updatedMessages++
       }
     }
@@ -446,7 +446,7 @@ export class Tools {
   }
 
   static async #deliverDraft(app, principal, draftId, sendAt) {
-    const draft = await app.drafts.get(draftId, principal.ownerEmail, principal.allowedDomains)
+    const draft = await app.draftService.get(draftId, principal.ownerEmail, principal.allowedDomains)
     if (!draft) throw new Error('Draft not found')
     const parsed = MailValidation.validateSendRequest({
       from: draft.sender, to: draft.to || [], cc: draft.cc || [], bcc: draft.bcc || [],
@@ -457,12 +457,12 @@ export class Tools {
     if (!parsed.ok) throw new Error(parsed.error)
     const parsedAttachments = MailValidation.validateSendAttachments(draft.attachments || [])
     if (!parsedAttachments.ok) throw new Error(parsedAttachments.error)
-    const addresses = await SenderAddresses.ownedSenderAddresses(app.users, principal.ownerEmail)
+    const addresses = await SenderAddresses.ownedSenderAddresses(app.usersHelper, principal.ownerEmail)
     const sender = SenderAddresses.resolveOwnedSender(parsed.value.from, addresses, principal.ownerEmail)
     if (!sender || !principal.allowedDomains.includes(sender.split('@')[1] || '')) throw new Error('Draft sender is outside this MCP scope')
-    const limit = await app.rateLimit.check(['mcp-send', principal.ownerEmail, principal.tokenId], 60, 60 * 60 * 1000)
+    const limit = await app.rateLimitService.check(['mcp-send', principal.ownerEmail, principal.tokenId], 60, 60 * 60 * 1000)
     if (!limit.allowed) throw new Error(`Too many send attempts; retry in ${limit.retryAfterSeconds} seconds`)
-    const suppressed = await app.suppressed.asSet()
+    const suppressed = await app.suppressedHelper.asSet()
     const blocked = [...parsed.value.to, ...(parsed.value.cc || []), ...(parsed.value.bcc || [])].filter(address => suppressed.has(address))
     if (blocked.length) throw new Error('One or more recipients are suppressed')
     const request = {
@@ -473,7 +473,7 @@ export class Tools {
     const result = sendAt == null
       ? await app.sendService.sendNow(principal.ownerEmail, sender, request)
       : await app.sendService.schedule(principal.ownerEmail, sender, request, sendAt)
-    await app.drafts.discard(draftId, principal.ownerEmail, principal.allowedDomains)
+    await app.draftService.discard(draftId, principal.ownerEmail, principal.allowedDomains)
     return result
   }
 

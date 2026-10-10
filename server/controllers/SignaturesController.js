@@ -1,6 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { SenderAddresses } from '../shared/users/SenderAddresses.js'
 import { SignatureContent } from '../shared/mailbox/SignatureContent.js'
@@ -8,7 +7,15 @@ import { SignatureContent } from '../shared/mailbox/SignatureContent.js'
 @RequestRoute("/signatures")
 @SignedIn
 export class SignaturesController {
-  /** @param {import('../features/mailbox/repositories/SignaturesRepository.js').SignatureEntry} entry */
+  /** @type {SignaturesHelper} */
+  @Needs
+  signaturesHelper
+
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
+  /** @param {import('../helpers/SignaturesHelper.js').SignatureEntry} entry */
   static present(entry) {
     return {
       id: entry.id,
@@ -24,11 +31,11 @@ export class SignaturesController {
   @PostRoute
   async post(request) {
     return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
-      const app = await getApp()
-      const addresses = await SenderAddresses.ownedSenderAddresses(app.users, auth.email)
+      const app = this
+      const addresses = await SenderAddresses.ownedSenderAddresses(app.usersHelper, auth.email)
       const input = SignatureContent.normalizeSignatureInput(body, { allowedAddresses: addresses })
       if (input instanceof Error) return Respond.r400(input.message)
-      const existing = Object.values(await app.signatures.listForOwner(auth.email))
+      const existing = Object.values(await app.signaturesHelper.listForOwner(auth.email))
       const now = Date.now()
       const entry = {
         id: `sig-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`,
@@ -40,8 +47,8 @@ export class SignaturesController {
         createdAt: now,
         updatedAt: now,
       }
-      await app.signatures.releaseDefaults(auth.email, entry.defaultFor, entry.id)
-      await app.signatures.put(entry)
+      await app.signaturesHelper.releaseDefaults(auth.email, entry.defaultFor, entry.id)
+      await app.signaturesHelper.put(entry)
       return SignaturesController.present(entry)
     })
   }
@@ -49,8 +56,8 @@ export class SignaturesController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: { action: Auth.Actions.MAILBOX_READ } }, async ({ auth }) => {
-      const app = await getApp()
-      const records = await app.signatures.listForOwner(auth.email)
+      const app = this
+      const records = await app.signaturesHelper.listForOwner(auth.email)
       return Object.values(records).sort((left, right) => left.name.localeCompare(right.name)).map(SignaturesController.present)
     })
   }

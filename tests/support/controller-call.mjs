@@ -1,4 +1,5 @@
 import { RouteRequest } from '../../server/shared/http/RouteRequest.js'
+import { TestContainer } from './TestContainer.mjs'
 
 /**
  * Calls one Tachyon controller route the way Tachyon would: it builds the
@@ -44,5 +45,7 @@ export async function respond(Controller, verb, input = {}) {
     headers,
     body: hasBody ? (typeof input.body === 'string' ? input.body : JSON.stringify(input.body)) : undefined,
   })
-  return await new Controller()[verb.toLowerCase()](...names.map(name => paths[name]), request)
+  const controller = new Controller()
+  TestContainer.current?.inject(controller)
+  return await controller[verb.toLowerCase()](...names.map(name => paths[name]), request)
 }

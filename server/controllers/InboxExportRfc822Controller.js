@@ -3,7 +3,6 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { AuthGuard } from '../shared/http/AuthGuard.js'
 import { FyloAccessContext } from '../shared/persistence/FyloAccessContext.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
 
@@ -21,6 +20,18 @@ import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
 @RequestRoute("/inbox/export/rfc822")
 @SignedIn
 export class InboxExportRfc822Controller {
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  /** @type {RawMessagesHelper} */
+  @Needs
+  rawMessagesHelper
+
   static MAGIC = Buffer.from('CADUCEUS-RFC822-FRAMES/1\n', 'ascii')
 
   static MAX_METADATA_BYTES = 16 * 1024
@@ -50,8 +61,8 @@ export class InboxExportRfc822Controller {
           const permission = await AuthGuard.requireDomainAccess(context, requestedDomain)
           if (!permission.ok) return permission.response
         }
-        const app = await getApp()
-        const mappedFolder = await app.categoryMappings.pathFor(auth.email, requestedDomain, folder) || folder
+        const app = this
+        const mappedFolder = await app.categoryMappingService.pathFor(auth.email, requestedDomain, folder) || folder
         const access = { email: auth.email, domains: [requestedDomain] }
         iterator = InboxExportRfc822Controller._hostedRecords(app, access, requestedDomain, mappedFolder, auth.email)
       }
@@ -131,16 +142,16 @@ export class InboxExportRfc822Controller {
   }
 
   static async *_hostedRecords(app, access, requestedDomain, mappedFolder, ownerAddress) {
-    const emails = app.emails.iterateFolder([requestedDomain], mappedFolder, ownerAddress)
+    const emails = app.emailsHelper.iterateFolder([requestedDomain], mappedFolder, ownerAddress)
     try {
       for (;;) {
         const next = await FyloAccessContext.run(access, () => emails.next())
         if (next.done) return
         const email = next.value
         const source = await FyloAccessContext.run(access, async () => {
-          const record = await app.rawMessages.findForEmail(email.id)
+          const record = await app.rawMessagesHelper.findForEmail(email.id)
           if (!record || record.domain !== requestedDomain) throw new Error(`RFC 822 source is unavailable for message ${email.id}`)
-          return app.rawMessages.readContent(record)
+          return app.rawMessagesHelper.readContent(record)
         })
         yield { email, source }
       }

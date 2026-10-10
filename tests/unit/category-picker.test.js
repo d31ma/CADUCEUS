@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  buildCategoryPickerItems,
-  categoryLabelPatch,
-  categorySelectionState,
-  singleSelectionDomain,
-} from '../../client/shared/scripts/category-picker.js'
+import { CategoryPickerUtils } from '../../client/shared/utils/CategoryPickerUtils.js'
+
+const buildCategoryPickerItems = (...args) => CategoryPickerUtils.buildCategoryPickerItems(...args)
+const categoryLabelPatch = (...args) => CategoryPickerUtils.categoryLabelPatch(...args)
+const categorySelectionState = (...args) => CategoryPickerUtils.categorySelectionState(...args)
+const singleSelectionDomain = (...args) => CategoryPickerUtils.singleSelectionDomain(...args)
 
 describe('Mailspring-compatible category picker model', () => {
   const account = {

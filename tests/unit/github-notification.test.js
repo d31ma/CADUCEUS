@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 import { GitHubNotification } from '@/shared/mailbox/GitHubNotification.js'
-import { safeGitHubTarget } from '../../client/shared/scripts/github-notification.js'
+import { GithubNotificationUtils } from '../../client/shared/utils/GithubNotificationUtils.js'
+
+const safeGitHubTarget = (...args) => GithubNotificationUtils.safeGitHubTarget(...args)
 
 describe('Mailspring-compatible GitHub notification targets', () => {
   it('extracts a canonical GitHub link from a real GitHub sender and matching anchor text', () => {

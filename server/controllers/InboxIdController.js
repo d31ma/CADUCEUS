@@ -1,6 +1,5 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { EmailsRecords } from '../shared/mailbox/EmailsRecords.js'
 import { GitHubNotification } from '../shared/mailbox/GitHubNotification.js'
 import { Ics } from '../shared/calendar/Ics.js'
@@ -13,6 +12,30 @@ import { ExternalFolderError } from '../shared/mailbox/ExternalFolderError.js'
 @RequestRoute("/inbox/{id}")
 @SignedIn
 export class InboxIdController {
+  /** @type {AttachmentsHelper} */
+  @Needs
+  attachmentsHelper
+
+  /** @type {CalendarEventsHelper} */
+  @Needs
+  calendarEventsHelper
+
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
+  /** @type {DomainMigrationService} */
+  @Needs
+  domainMigrationService
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  /** @type {RawMessagesHelper} */
+  @Needs
+  rawMessagesHelper
+
   static SYSTEM_FOLDERS = new Set(['inbox', 'archive', 'trash'])
 
   /** @param {unknown} sender */
@@ -47,13 +70,13 @@ export class InboxIdController {
         }
       }
 
-      const app = await getApp()
-      const [docId, email] = await app.emails.findById(id)
+      const app = this
+      const [docId, email] = await app.emailsHelper.findById(id)
       if (!docId || !email) return Respond.r404('Email not found')
       if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
       if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
 
-      await app.emails.delete(docId, id)
+      await app.emailsHelper.delete(docId, id)
       return { deleted: id }
     })
   }
@@ -100,24 +123,24 @@ export class InboxIdController {
         }
       }
 
-      const app = await getApp()
-      const [docId, email] = await app.emails.findById(id)
+      const app = this
+      const [docId, email] = await app.emailsHelper.findById(id)
       if (!docId || !email) return Respond.r404('Email not found')
       if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
       if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
 
       const appliedPatch = { ...patch }
       if (typeof appliedPatch.folder === 'string') {
-        appliedPatch.folder = await app.categoryMappings.pathFor(auth.email, email.domain, appliedPatch.folder) || appliedPatch.folder
+        appliedPatch.folder = await app.categoryMappingService.pathFor(auth.email, email.domain, appliedPatch.folder) || appliedPatch.folder
       }
-      await app.emails.update(docId, appliedPatch)
+      await app.emailsHelper.update(docId, appliedPatch)
       const updated = { ...email, ...appliedPatch }
       const githubUrl = GitHubNotification.findTarget(updated)
-      return await app.categoryMappings.presentEmail(auth.email, /** @type {any} */ ({
+      return await app.categoryMappingService.presentEmail(auth.email, /** @type {any} */ ({
         ...updated,
         ...(githubUrl ? { githubUrl } : {}),
-        hasRawSource: Boolean(await app.rawMessages.findForEmail(id)),
-        attachments: await app.attachments.listSummaries(id),
+        hasRawSource: Boolean(await app.rawMessagesHelper.findForEmail(id)),
+        attachments: await app.attachmentsHelper.listSummaries(id),
       }))
     })
   }
@@ -150,16 +173,16 @@ export class InboxIdController {
         }
       }
 
-      const app = await getApp()
-      const [, email] = await app.emails.findById(id)
+      const app = this
+      const [, email] = await app.emailsHelper.findById(id)
       if (!email) return Respond.r404('Email not found')
       if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
       if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
 
-      const presented = await app.domainMigration.presentEmail(email)
-      const rawSource = await app.rawMessages.findForEmail(id)
+      const presented = await app.domainMigrationService.presentEmail(email)
+      const rawSource = await app.rawMessagesHelper.findForEmail(id)
       const githubUrl = GitHubNotification.findTarget(presented)
-      const attachmentRecords = await app.attachments.list(id)
+      const attachmentRecords = await app.attachmentsHelper.list(id)
       const calendarAttachment = CalendarAttachments.bestCalendarAttachment(attachmentRecords)
       const calendarInvite = await InboxIdController.findCalendarInvite(app, auth.email, id, {
         email,
@@ -167,7 +190,7 @@ export class InboxIdController {
       })
       const visibleAttachments = CalendarAttachments.withoutCalendarCardAttachments(attachmentRecords, calendarInvite ? calendarAttachment : null)
         .map(({ id, filename, contentType, size, disposition, contentId }) => ({ id, filename, contentType, size, disposition, contentId }))
-      return await app.categoryMappings.presentEmail(auth.email, /** @type {any} */ ({
+      return await app.categoryMappingService.presentEmail(auth.email, /** @type {any} */ ({
         ...presented,
         ...(githubUrl ? { githubUrl } : {}),
         hasRawSource: Boolean(rawSource),
@@ -221,7 +244,7 @@ export class InboxIdController {
     // We list the user's events and filter by `sourceEmailId` in JS rather than
     // pushing into Fylo's `$ops` — multi-condition `$ops` is OR'd, so the
     // narrow-then-filter pattern avoids false positives.
-    const events = await app.calendarEvents.list(userEmail)
+    const events = await app.calendarEventsHelper.list(userEmail)
     const event = events.find(e => /** @type {any} */ (e).sourceEmailId === emailId ||
       (Array.isArray(/** @type {any} */ (e).sourceEmailIds) && /** @type {any} */ (e).sourceEmailIds.includes(emailId)))
     if (!event) return null
@@ -278,7 +301,7 @@ export class InboxIdController {
   static async readMessageCalendar(app, attachment) {
     if (!attachment) return null
     try {
-      const bytes = await app.attachments.readContent(attachment)
+      const bytes = await app.attachmentsHelper.readContent(attachment)
       return Ics.parseIcs(new TextDecoder('utf-8').decode(bytes))
     } catch {
       return null

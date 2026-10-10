@@ -1,9 +1,16 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/presence/team")
 @SignedIn
 export class PresenceTeamController {
+  /** @type {PresenceService} */
+  @Needs
+  presenceService
+
+  /** @type {UsersHelper} */
+  @Needs
+  usersHelper
+
   /**
  * GET /presence/team
  *
@@ -21,8 +28,8 @@ export class PresenceTeamController {
     return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
     const viewerDomains = (auth.domains || []).map(d => d.toLowerCase())
 
-    const app = await getApp()
-    const allUsers = await app.users.list()
+    const app = this
+    const allUsers = await app.usersHelper.list()
 
     // De-duplicate by email — the dev seed historically produced multiple user
     // records per email, which would render twice in the Team roster.
@@ -40,7 +47,7 @@ export class PresenceTeamController {
       return (u.domains || []).map(d => d.toLowerCase()).some(d => viewerDomains.includes(d))
     })
 
-    const presenceList = await app.presence.snapshotForDomains(viewerDomains)
+    const presenceList = await app.presenceService.snapshotForDomains(viewerDomains)
     const presenceByEmail = new Map(presenceList.map(p => [p.email.toLowerCase(), p]))
 
     return teammates

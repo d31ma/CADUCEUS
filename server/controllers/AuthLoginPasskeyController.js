@@ -3,11 +3,14 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { AuthGuard } from '../shared/http/AuthGuard.js'
-import { getApp } from '../app.js'
 
 @RequestRoute("/auth/login/passkey")
 @Public
 export class AuthLoginPasskeyController {
+  /** @type {RateLimitService} */
+  @Needs
+  rateLimitService
+
   /**
    * POST /auth/login/passkey — supply a WebAuthn assertion.
    *
@@ -30,8 +33,8 @@ export class AuthLoginPasskeyController {
       const signature = String(body?.signature ?? '').trim()
       if (!signature) return Respond.r400('signature is required')
 
-      const app = await getApp()
-      const limit = await app.rateLimit.check(
+      const app = this
+      const limit = await app.rateLimitService.check(
         ['login-passkey', transactionId, context?.ipAddress ?? 'unknown'], 12, 15 * 60 * 1000,
       )
       if (!limit.allowed) return Respond.r429('Too many attempts', limit.retryAfterSeconds)

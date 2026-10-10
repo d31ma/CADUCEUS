@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  externalFolderActions,
-  externalFolderOpenKey,
-  normalizeExternalFolders,
-  visibleExternalFolderRows,
-} from '../../client/shared/scripts/external-folder-tree.js'
+import { ExternalFolderTreeUtils } from '../../client/shared/utils/ExternalFolderTreeUtils.js'
+
+const externalFolderActions = (...args) => ExternalFolderTreeUtils.externalFolderActions(...args)
+const externalFolderOpenKey = (...args) => ExternalFolderTreeUtils.externalFolderOpenKey(...args)
+const normalizeExternalFolders = (...args) => ExternalFolderTreeUtils.normalizeExternalFolders(...args)
+const visibleExternalFolderRows = (...args) => ExternalFolderTreeUtils.visibleExternalFolderRows(...args)
 
 describe('connected-account folder hierarchy', () => {
   const accountId = 'ext_abcdefghijklmnopqrst'

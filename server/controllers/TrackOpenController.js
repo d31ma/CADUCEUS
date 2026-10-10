@@ -1,10 +1,13 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { getApp } from '../app.js'
 import { TrackingTokens } from '../shared/delivery/TrackingTokens.js'
 
 @RequestRoute("/track/open")
 @Public
 export class TrackOpenController {
+  /** @type {TrackingHelper} */
+  @Needs
+  trackingHelper
+
   /** 1×1 transparent GIF (43 bytes) served as the tracking pixel. */
   static PIXEL = Buffer.from([
     0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00,
@@ -42,8 +45,8 @@ export class TrackOpenController {
       try {
         const capability = TrackingTokens.readTrackingToken(query?.t, { expectedType: 'open' })
         if (capability) {
-          const app = await getApp()
-          await app.tracking.recordOpen(capability)
+          const app = this
+          await app.trackingHelper.recordOpen(capability)
         }
       } catch (err) {
         console.error('[track/open] Failed to process tracking capability:', err instanceof Error ? err.message : 'unknown error')

@@ -1,11 +1,18 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
-import { getApp } from '../app.js'
 import { Ics } from '../shared/calendar/Ics.js'
 
 @RequestRoute("/calendar/invites/respond")
 @SignedIn
 export class CalendarInvitesRespondController {
+  /** @type {CalendarEventsHelper} */
+  @Needs
+  calendarEventsHelper
+
+  /** @type {SmtpService} */
+  @Needs
+  smtpService
+
   static VALID_STATUSES = /** @type {const} */ (['accepted', 'declined', 'tentative'])
 
   /**
@@ -31,8 +38,8 @@ export class CalendarInvitesRespondController {
       return Respond.r400('status must be accepted, declined, or tentative')
     }
 
-    const app = await getApp()
-    const [docId, event] = await app.calendarEvents.findById(eventId)
+    const app = this
+    const [docId, event] = await app.calendarEventsHelper.findById(eventId)
     if (!event || !docId) return Respond.r404('Event not found')
     if (event.userEmail !== auth.email) return Respond.r404('Event not found')
     if (event.status === 'cancelled') return Respond.r409('Cancelled invitations cannot be answered')
@@ -45,8 +52,8 @@ export class CalendarInvitesRespondController {
 
     // Fylo's putData always inserts a new docId; update in place by deleting
     // the prior version first.
-    await app.calendarEvents.delete(docId)
-    await app.calendarEvents.put({
+    await app.calendarEventsHelper.delete(docId)
+    await app.calendarEventsHelper.put({
       ...event,
       attendees,
       updatedAt: new Date().toISOString(),
@@ -66,7 +73,7 @@ export class CalendarInvitesRespondController {
           allDay: !!event.allDay,
         })
         const subject = `${status === 'accepted' ? 'Accepted' : status === 'declined' ? 'Declined' : 'Tentative'}: ${event.title}`
-        await app.smtp.sendEmail(auth.email, {
+        await app.smtpService.sendEmail(auth.email, {
           to: [event.organizer],
           subject,
           text: `${auth.email} responded "${status}" to "${event.title}".`,

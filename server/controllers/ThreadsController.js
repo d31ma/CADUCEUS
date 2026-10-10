@@ -1,5 +1,4 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
-import { getApp } from '../app.js'
 import { Respond } from '../shared/http/Respond.js'
 import { SearchParser } from '../shared/mailbox/SearchParser.js'
 import { ExternalMessage } from '../shared/mailbox/ExternalMessage.js'
@@ -10,6 +9,22 @@ import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 @RequestRoute("/threads")
 @SignedIn
 export class ThreadsController {
+  /** @type {AttachmentsHelper} */
+  @Needs
+  attachmentsHelper
+
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
+  /** @type {DomainMigrationService} */
+  @Needs
+  domainMigrationService
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
   static MAX_QUERY_LENGTH = 2_000
 
   static MAX_RESULTS = 1_000
@@ -19,17 +34,17 @@ export class ThreadsController {
   /** Load each store through its own owner boundary before forming any edges. */
   static async loadUnifiedThreadMessages(app, auth, token, allowedDomains, scope) {
     const [stored, external] = await Promise.all([
-      scope.includeHosted ? app.emails.list(allowedDomains, { folder: 'all', ownerEmail: auth.email }) : Promise.resolve([]),
+      scope.includeHosted ? app.emailsHelper.list(allowedDomains, { folder: 'all', ownerEmail: auth.email }) : Promise.resolve([]),
       scope.includeExternal ? UnifiedMail.externalMailSummaries(token, { accountId: scope.accountId }) : Promise.resolve([]),
     ])
-    const migrated = await app.domainMigration.presentEmails(stored)
-    const hosted = await app.categoryMappings.presentEmails(auth.email, migrated)
+    const migrated = await app.domainMigrationService.presentEmails(stored)
+    const hosted = await app.categoryMappingService.presentEmails(auth.email, migrated)
     return [...hosted, ...external]
   }
 
   /** Present one selected conversation, including bounded provider source data. */
   static async presentSelectedThread(app, token, thread, allowedDomains) {
-    const attachments = await app.attachments.listSummariesByEmail(allowedDomains)
+    const attachments = await app.attachmentsHelper.listSummariesByEmail(allowedDomains)
     let remainingSourceBytes = ThreadsController.MAX_EXTERNAL_CONVERSATION_SOURCE_BYTES
     const emails = []
     for (const email of thread.emails) {
@@ -101,7 +116,7 @@ export class ThreadsController {
   @GetRoute
   async get(request) {
     return RouteRequest.handle(request, { guard: {} }, async ({ query, auth, context }) => {
-      const app = await getApp()
+      const app = this
       if (query?.q != null && typeof query.q !== 'string') return Respond.r400('q must be a string')
       const raw = String(query?.q || '').trim()
       if (raw.length > ThreadsController.MAX_QUERY_LENGTH) return Respond.r400('Search queries are limited to 2,000 characters')
@@ -138,7 +153,7 @@ export class ThreadsController {
       }
 
       if (raw) {
-        const attachmentsByEmail = await app.attachments.listSummariesByEmail(allowedDomains)
+        const attachmentsByEmail = await app.attachmentsHelper.listSummariesByEmail(allowedDomains)
         const expression = SearchParser.parseWithFallback(raw)
         const explicitCategory = SearchParser.hasField(expression, 'in')
         const matching = []
@@ -165,7 +180,7 @@ export class ThreadsController {
       }
 
       const folder = query?.folder || 'inbox'
-      const folderByDomain = await app.categoryMappings.folderFilter(auth.email, allowedDomains, folder) || undefined
+      const folderByDomain = await app.categoryMappingService.folderFilter(auth.email, allowedDomains, folder) || undefined
       return threads
         .filter(thread => thread.emails.some(email => ThreadsController.matchesFolder(email, folder, folderByDomain)))
         .slice(0, limit)

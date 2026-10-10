@@ -94,5 +94,30 @@
       "url": "shareUrl"
     }
   },
-  "tac": {}
+  "tac": {
+    "browserApis": [
+      "clipboard"
+    ],
+    "names": {
+      "words": [
+        "mcp",
+        "imap",
+        "smtp",
+        "dav",
+        "carddav",
+        "caldav",
+        "onboarding",
+        "bcc",
+        "unsnooze",
+        "oauth",
+        "totp",
+        "vapid",
+        "github",
+        "passkey",
+        "passkeys",
+        "webauthn",
+        "gmail"
+      ]
+    }
+  }
 }

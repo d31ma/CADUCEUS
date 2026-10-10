@@ -1,0 +1,9 @@
+<logic :if="session.signedIn">
+  <settings-view :keymap="data.keymap" />
+</logic>
+
+<logic :if="session.signedOut">
+  <div class="login-screen">
+    <login-form :brandlogo="'/shared/assets/favicon.svg'" />
+  </div>
+</logic>

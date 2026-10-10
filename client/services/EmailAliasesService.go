@@ -1,5 +1,7 @@
 import "strings"
 
+// EmailAliasesService manages the account's extra addresses. Its primary
+// address and aliases are also the sender identities other sections offer.
 // @Service
 type EmailAliasesService struct {
 	// @Needs
@@ -8,31 +10,25 @@ type EmailAliasesService struct {
 	authorization             string
 	PrimaryEmail              string
 	Aliases                   []string
-	NewAlias                  string
-	AliasError                string
-	AliasSaving               bool
-	Loading                   bool
+	// @SessionState
+	NewAlias    string
+	AliasError  string
+	AliasSaving bool
 }
 
 // @OnEvent({"replay":true})
 func (service *EmailAliasesService) Open(session AccountSession) error {
-	service.Loading = true
 	service.authorization = "Bearer " + session.Token
-	service.announce(true)
 	list, failure := service.usersClient.Aliases(service.authorization)
 	service.showLoaded(list, failure)
-	service.announce(false)
+	service.share()
+	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "aliases"}, false)
 	return nil
 }
 
 func (service *EmailAliasesService) Add() error {
 	alias := strings.TrimSpace(service.NewAlias)
-	service.AliasSaving = true
-	service.AliasError = ""
-	service.announce(true)
-	list, failure := service.usersClient.AddAlias(service.authorization, service.aliasBody(alias))
-	service.showAdded(list, failure)
-	service.announce(false)
+	FlowUtils{}.When(alias != "", func() { service.add(alias) })
 	return nil
 }
 
@@ -42,8 +38,20 @@ func (service *EmailAliasesService) Remove(alias string) error {
 	return nil
 }
 
+// SenderAddresses are the primary address and every alias, once each.
+func (service *EmailAliasesService) SenderAddresses() []string {
+	return PreferenceUtils{}.Unique(append([]string{service.PrimaryEmail}, service.Aliases...))
+}
+
+func (service *EmailAliasesService) add(alias string) {
+	service.AliasSaving = true
+	service.AliasError = ""
+	list, failure := service.usersClient.AddAlias(service.authorization, service.aliasBody(alias))
+	service.AliasSaving = false
+	service.showAdded(list, failure)
+}
+
 func (service *EmailAliasesService) showLoaded(list AliasList, failure error) {
-	service.Loading = false
 	if failure != nil {
 		service.Aliases = []string{}
 		return
@@ -53,7 +61,6 @@ func (service *EmailAliasesService) showLoaded(list AliasList, failure error) {
 }
 
 func (service *EmailAliasesService) showAdded(list AliasList, failure error) {
-	service.AliasSaving = false
 	if failure != nil {
 		service.AliasError = "Could not add alias."
 		return
@@ -61,6 +68,7 @@ func (service *EmailAliasesService) showAdded(list AliasList, failure error) {
 	service.PrimaryEmail = list.Email
 	service.Aliases = list.Aliases
 	service.NewAlias = ""
+	service.share()
 	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Alias added."}, false)
 }
 
@@ -70,13 +78,15 @@ func (service *EmailAliasesService) showRemoved(list AliasList, failure error) {
 		return
 	}
 	service.Aliases = list.Aliases
+	service.share()
 	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Alias removed."}, false)
+}
+
+// share tells the other sections which sender identities exist.
+func (service *EmailAliasesService) share() {
+	service.applicationEventPublisher.PublishEvent(SenderAddresses{Addresses: service.SenderAddresses()}, true)
 }
 
 func (service *EmailAliasesService) aliasBody(alias string) BehaviorValue {
 	return map[string]any{"alias": alias}
-}
-
-func (service *EmailAliasesService) announce(busy bool) {
-	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "aliases", Busy: busy}, false)
 }

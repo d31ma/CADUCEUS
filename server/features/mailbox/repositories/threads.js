@@ -1,18 +1,4 @@
-/** @typedef {import('../../../types').StoredEmail} StoredEmail */
-/** @typedef {import('./emails.js').EmailsRepository} EmailsRepository */
-/** @typedef {StoredEmail & { external?: boolean, providerAccountId?: string, mailboxAddress?: string }} ThreadMessage */
 import { messageParticipants, personalLevelForThread } from '../services/personal-level.js'
-
-/**
- * @typedef {object} Thread
- * @property {string} id
- * @property {string} subject
- * @property {number} count
- * @property {ThreadMessage} latestEmail
- * @property {ThreadMessage[]} emails
- * @property {string[]} participants
- * @property {0 | 1 | 2} personalLevel
- */
 
 export class ThreadsRepository {
   /** @param {EmailsRepository} emails */

@@ -1,8 +1,6 @@
 import { Collections, collect } from '../persistence/fylo.js'
 import { Security } from '../security/security.js'
 
-/** @typedef {{ allowed: boolean, limit: number, remaining: number, resetAt: number, retryAfterSeconds: number }} RateLimitResult */
-
 /**
  * Fylo-backed rate limiter shared by the self-hosted application processes.
  */

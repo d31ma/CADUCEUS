@@ -14,7 +14,8 @@ export default class {
   static __tachyonOnMount = ['init']
 
   /** @type {string} Current active view: 'inbox', 'compose', or 'settings' */
-  $activeView = 'inbox'
+  @SessionState
+  activeView = 'inbox'
 
   t(id) { return translate(id) }
 
@@ -43,8 +44,8 @@ export default class {
    */
   updateActive() {
     const path = location.pathname
-    if (path.startsWith('/compose')) this.$activeView = 'compose'
-    else if (path.startsWith('/settings')) this.$activeView = 'settings'
-    else this.$activeView = 'inbox'
+    if (path.startsWith('/compose')) this.activeView = 'compose'
+    else if (path.startsWith('/settings')) this.activeView = 'settings'
+    else this.activeView = 'inbox'
   }
 }

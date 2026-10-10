@@ -17,8 +17,6 @@ import { normalizeNewMailNotificationPreferences } from '../services/new-mail-no
 import { normalizeKeyboardShortcutOverrides } from '../services/keyboard-shortcuts.js'
 import { normalizeMailPreferences } from '../services/mail-preferences.js'
 
-/** @typedef {import('../../../types').User} User */
-
 /**
  * Allowed calendar-visibility values. Stored on the user record (not a
  * separate collection) so the team-events fan-out doesn't need an extra

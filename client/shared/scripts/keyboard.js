@@ -61,7 +61,7 @@
 
   function isActionAvailable(action, context) {
     if (context === 'dialog') return action.id === 'core:show-shortcuts'
-    return contextsForScope(action.scope).indexOf(context) !== -1
+    return contextsForScope(action.scope).includes(context)
   }
 
   function isInputFocused() {
@@ -91,7 +91,7 @@
       for (var partIndex = 0; partIndex < pieces.length; partIndex++) {
         var piece = MODIFIER_ALIASES[pieces[partIndex]] || pieces[partIndex]
         if (VALID_MODIFIERS.has(piece)) {
-          if (modifiers.indexOf(piece) !== -1) return null
+          if (modifiers.includes(piece)) return null
           modifiers.push(piece)
         } else {
           if (key) return null
@@ -116,7 +116,7 @@
         if (nextBindings[right.id] !== leftBinding) continue
         var leftContexts = contextsForScope(left.scope)
         var rightContexts = contextsForScope(right.scope)
-        if (leftContexts.some(function (context) { return rightContexts.indexOf(context) !== -1 })) {
+        if (leftContexts.some(function (context) { return rightContexts.includes(context) })) {
           conflicts.push({ binding: leftBinding, actionIds: [left.id, right.id], labels: [left.label, right.label] })
         }
       }

@@ -1,8 +1,5 @@
 // @ts-check
 
-/** @typedef {'new-mail'|'hit-send'|'send'|'confirm'} SoundEventId */
-/** @typedef {'none'|'chime'|'bell'|'pop'|'pulse'} SoundId */
-
 export const SOUND_EVENTS = Object.freeze([
   Object.freeze({ id: 'new-mail', label: 'New mail', description: 'A message arrives while CADUCEUS is visible.' }),
   Object.freeze({ id: 'hit-send', label: 'Send pressed', description: 'The send action is accepted for processing.' }),

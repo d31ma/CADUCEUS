@@ -11,19 +11,23 @@ export default class {
   static __tachyonOnMount = ['init']
 
   /** @type {boolean} */
-  $loading = true
+  @SessionState
+  loading = true
   /** @type {string} */
-  $error = ''
+  @SessionState
+  error = ''
   /** @type {Record<string, any> | null} */
   $share = null
   /** @type {string} */
-  $token = ''
+  @SessionState
+  token = ''
   /** @type {string} */
-  $downloadError = ''
+  @SessionState
+  downloadError = ''
 
   async init() {
     this.installNoReferrerPolicy()
-    this.$token = this.resolveToken()
+    this.token = this.resolveToken()
     await this.loadShare()
     window.removeEventListener('visibilitychange', /** @type {EventListener} */ (window._caduceusShareVisibility))
     window._caduceusShareVisibility = () => {
@@ -51,12 +55,12 @@ export default class {
 
   /** @param {{ quiet?: boolean }} [options] */
   async loadShare(options = {}) {
-    if (!this.$token) {
-      this.$loading = false
-      this.$error = 'This shared conversation is unavailable.'
+    if (!this.token) {
+      this.loading = false
+      this.error = 'This shared conversation is unavailable.'
       return
     }
-    if (!options.quiet) this.$loading = true
+    if (!options.quiet) this.loading = true
     try {
       const response = await fetch(this.apiUrl(`/thread-shares/public/${encodeURIComponent(this.$token)}`), {
         credentials: 'omit',
@@ -71,12 +75,12 @@ export default class {
         expiresAtLabel: formatLocalizedDate(share.expiresAt),
         messages: share.messages.map((message, index) => this.decorateMessage(message, index)),
       }
-      this.$error = ''
+      this.error = ''
     } catch {
       this.$share = null
-      this.$error = 'This shared conversation is unavailable. It may have expired or been revoked.'
+      this.error = 'This shared conversation is unavailable. It may have expired or been revoked.'
     } finally {
-      this.$loading = false
+      this.loading = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
@@ -103,8 +107,8 @@ export default class {
   async downloadAttachment(eventOrAttachment, requestedAttachment) {
     const candidate = /** @type {Record<string, any>} */ (eventOrAttachment)
     const attachment = requestedAttachment?.id ? requestedAttachment : candidate?.id ? candidate : null
-    if (!attachment?.id || !this.$token) return
-    this.$downloadError = ''
+    if (!attachment?.id || !this.token) return
+    this.downloadError = ''
     try {
       const response = await fetch(this.apiUrl(
         `/thread-shares/public/${encodeURIComponent(this.$token)}/attachments/${encodeURIComponent(attachment.id)}`,
@@ -121,7 +125,7 @@ export default class {
       link.remove()
       URL.revokeObjectURL(url)
     } catch {
-      this.$downloadError = 'This attachment is unavailable. The link may have expired or been revoked.'
+      this.downloadError = 'This attachment is unavailable. The link may have expired or been revoked.'
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }

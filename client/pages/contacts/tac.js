@@ -1,10 +1,5 @@
 // @ts-check
 
-/** @typedef {{ key: string, value: string, type: string }} EditableValue */
-/** @typedef {{ key: string, type: string, streetAddress: string, extendedAddress: string, city: string, region: string, postalCode: string, country: string }} EditableAddress */
-/** @typedef {{ name: string, givenName: string, familyName: string, company: string, title: string, birthday: string, notes: string, nicknames: string, emails: EditableValue[], phones: EditableValue[], urls: EditableValue[], addresses: EditableAddress[], groupIds: string[] }} ContactForm */
-/** @typedef {{ accountId: string, addressBookId: string, name: string, accountLabel: string, mailboxAddress: string }} RemoteAddressBook */
-
 /** Personal contacts, groups, found-in-mail discovery, and vCard interchange. */
 export default class {
   static __tachyonOnMount = ['init']
@@ -19,21 +14,34 @@ export default class {
   /** @type {RemoteAddressBook[]} */
   $addressBooks = contactCache().addressBooks
   /** @type {string[]} */
-  $checkedIds = []
-  $selectedId = ''
-  $query = ''
-  $sourceFilter = ''
-  $groupFilter = ''
-  $loading = true
-  $editing = false
-  $saving = false
+  @SessionState
+  checkedIds = []
+  @SessionState
+  selectedId = ''
+  @SessionState
+  query = ''
+  @SessionState
+  sourceFilter = ''
+  @SessionState
+  groupFilter = ''
+  @SessionState
+  loading = true
+  @SessionState
+  editing = false
+  @SessionState
+  saving = false
   $error = ''
-  $conflict = false
-  $destination = 'local'
-  $groupDialogOpen = false
-  $groupEditingId = ''
+  @SessionState
+  conflict = false
+  @SessionState
+  destination = 'local'
+  @SessionState
+  groupDialogOpen = false
+  @SessionState
+  groupEditingId = ''
   $groupName = ''
-  $groupError = ''
+  @SessionState
+  groupError = ''
   /** @type {ContactForm} */
   $form = blankForm()
   /** @type {ReturnType<typeof setTimeout> | undefined} */
@@ -42,28 +50,29 @@ export default class {
   _groupDialogReturnFocus = null
   /** @type {{ id: string, tagName: string, ariaLabel: string, title: string } | null} */
   _groupDialogReturnIdentity = null
-  $bootstrapped = false
+  @SessionState
+  bootstrapped = false
 
-  get selectedContact() { return this.$contacts.find(contact => contact.id === this.$selectedId) || null }
+  get selectedContact() { return this.$contacts.find(contact => contact.id === this.selectedId) || null }
   get pageClass() { return `contacts-page${this.$selectedId || this.$editing ? ' has-selection' : ''}` }
   get contactCountLabel() { return `${this.$contacts.length} ${this.$contacts.length === 1 ? 'contact' : 'contacts'}` }
-  get exportLabel() { return this.$checkedIds.length ? `Export selected (${this.$checkedIds.length})` : 'Export all' }
-  get editorTitle() { return this.$selectedId ? 'Edit contact' : 'New contact' }
-  get canAssignGroups() { return this.$selectedId ? this.selectedContact?.source !== 'carddav' : this.$destination === 'local' }
-  get canReviewConflict() { return this.$conflict && !!this.selectedContact && !this.selectedContact.readOnly }
+  get exportLabel() { return this.checkedIds.length ? `Export selected (${this.$checkedIds.length})` : 'Export all' }
+  get editorTitle() { return this.selectedId ? 'Edit contact' : 'New contact' }
+  get canAssignGroups() { return this.selectedId ? this.selectedContact?.source !== 'carddav' : this.destination === 'local' }
+  get canReviewConflict() { return this.conflict && !!this.selectedContact && !this.selectedContact.readOnly }
 
   init() {}
 
   async bootstrap() {
-    if (this.$bootstrapped) return
-    this.$bootstrapped = true
+    if (this.bootstrapped) return
+    this.bootstrapped = true
     await this.loadAll()
   }
 
   async loadAll() {
-    this.$loading = true
+    this.loading = true
     await Promise.all([this.loadGroups(), this.loadAddressBooks(), this.loadContacts()])
-    this.$loading = false
+    this.loading = false
   }
 
   async loadGroups() {
@@ -82,24 +91,24 @@ export default class {
       cache.addressBooks = []
     }
     this.$addressBooks = cache.addressBooks
-    if (this.$destination !== 'local' && !this.$addressBooks.some(book => this.destinationValue(book) === this.$destination)) this.$destination = 'local'
+    if (this.destination !== 'local' && !this.$addressBooks.some(book => this.destinationValue(book) === this.destination)) this.destination = 'local'
   }
 
   async loadContacts() {
     const cache = contactCache()
     const sequence = ++cache.loadSequence
     const params = new URLSearchParams()
-    if (this.$query.trim()) params.set('q', this.$query.trim())
-    if (this.$sourceFilter) params.set('source', this.$sourceFilter)
-    if (this.$groupFilter) params.set('groupId', this.$groupFilter)
+    if (this.query.trim()) params.set('q', this.query.trim())
+    if (this.sourceFilter) params.set('source', this.sourceFilter)
+    if (this.groupFilter) params.set('groupId', this.groupFilter)
     try {
       const response = await window._caduceus?.apiFetch(`/contacts${params.size ? `?${params}` : ''}`)
       const contacts = response?.ok ? await response.json() : []
       if (cache !== contactCache() || sequence !== cache.loadSequence) return
       cache.contacts = contacts
       this.$contacts = cache.contacts
-      this.$checkedIds = this.$checkedIds.filter(id => this.$contacts.some(contact => contact.id === id))
-      if (this.$selectedId && !this.$contacts.some(contact => contact.id === this.$selectedId)) this.$selectedId = ''
+      this.checkedIds = this.checkedIds.filter(id => this.$contacts.some(contact => contact.id === id))
+      if (this.selectedId && !this.$contacts.some(contact => contact.id === this.selectedId)) this.selectedId = ''
     } catch {
       if (cache === contactCache() && sequence === cache.loadSequence) {
         cache.contacts = []
@@ -110,90 +119,90 @@ export default class {
   }
 
   onSearchInput(event) {
-    this.$query = eventValue(event)
+    this.query = eventValue(event)
     clearTimeout(this._searchTimer)
     this._searchTimer = setTimeout(() => void this.loadContacts(), 180)
   }
 
   async setSourceFilter(source) {
-    this.$sourceFilter = String(source || '')
-    this.$groupFilter = ''
-    this.$selectedId = ''
+    this.sourceFilter = String(source || '')
+    this.groupFilter = ''
+    this.selectedId = ''
     await this.loadContacts()
   }
 
   async setGroupFilter(event) {
     const groupId = eventData(event, '[data-contact-group-id]')?.contactGroupId
     if (!groupId) return
-    this.$groupFilter = String(groupId || '')
-    this.$sourceFilter = ''
-    this.$selectedId = ''
+    this.groupFilter = String(groupId || '')
+    this.sourceFilter = ''
+    this.selectedId = ''
     await this.loadContacts()
   }
 
   filterClass(kind, value = '') {
     const active = kind === 'source'
-      ? this.$sourceFilter === value && !this.$groupFilter
-      : this.$groupFilter === value
+      ? this.sourceFilter === value && !this.groupFilter
+      : this.groupFilter === value
     return `contacts-filter${active ? ' active' : ''}`
   }
 
   contactRowClass(contact) { return `contact-row${contact.id === this.$selectedId ? ' active' : ''}` }
-  isChecked(id) { return this.$checkedIds.includes(id) }
+  isChecked(id) { return this.checkedIds.includes(id) }
 
   toggleChecked(event) {
     const target = /** @type {HTMLInputElement | null} */ (event?.target)
     const id = target?.dataset?.contactId
     if (!id) return
     const checked = Boolean(target.checked)
-    this.$checkedIds = checked
-      ? [...new Set([...this.$checkedIds, id])]
-      : this.$checkedIds.filter(current => current !== id)
+    this.checkedIds = checked
+      ? [...new Set([...this.checkedIds, id])]
+      : this.checkedIds.filter(current => current !== id)
   }
 
   selectContact(event) {
     const id = eventData(event, '[data-contact-id]')?.contactId
     if (!id) return
-    this.$selectedId = id
-    this.$editing = false
+    this.selectedId = id
+    this.editing = false
 	this.$error = ''
-	this.$conflict = false
+	this.conflict = false
   }
 
   closeDetail() {
-    this.$selectedId = ''
-    this.$editing = false
+    this.selectedId = ''
+    this.editing = false
 	this.$error = ''
-	this.$conflict = false
+	this.conflict = false
   }
 
   openNew() {
-    this.$selectedId = ''
+    this.selectedId = ''
     this.$form = blankForm()
-	this.$editing = true
+	this.editing = true
 	this.$error = ''
-	this.$conflict = false
-	this.$destination = 'local'
+	this.conflict = false
+	this.destination = 'local'
   }
 
   startEdit() {
     if (!this.selectedContact || this.selectedContact.readOnly) return
     this.$form = editableContact(this.selectedContact)
-	this.$editing = true
+	this.editing = true
 	this.$error = ''
-	this.$conflict = false
+	this.conflict = false
   }
 
   cancelEdit() {
-    this.$editing = false
+    this.editing = false
     this.$error = ''
-    if (!this.$selectedId) this.closeDetail()
+    if (!this.selectedId) this.closeDetail()
   }
 
   updateDestination(event) {
     const value = eventValue(event)
-    this.$destination = value === 'local' || this.$addressBooks.some(book => this.destinationValue(book) === value) ? value : 'local'
-    if (this.$destination !== 'local') this.$form = { ...this.$form, groupIds: [] }
+    this.destination = value === 'local' || this.$addressBooks.some(book => this.destinationValue(book) === value) ? value : 'local'
+    if (this.destination !== 'local') this.$form = { ...this.$form, groupIds: [] }
   }
 
   destinationValue(book) { return `${book.accountId}|${book.addressBookId}` }
@@ -201,7 +210,7 @@ export default class {
 
   dismissOperationError() {
     this.$error = ''
-    this.$conflict = false
+    this.conflict = false
   }
 
   reviewConflict() {
@@ -280,10 +289,10 @@ export default class {
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
 	const body = /** @type {any} */ (contactPayload(this.$form))
-	const remoteBook = !this.$selectedId && this.$destination !== 'local'
-	  ? this.$addressBooks.find(book => this.destinationValue(book) === this.$destination)
+	const remoteBook = !this.selectedId && this.destination !== 'local'
+	  ? this.$addressBooks.find(book => this.destinationValue(book) === this.destination)
 	  : null
-	if (!this.$selectedId && this.$destination !== 'local' && !remoteBook) {
+	if (!this.selectedId && this.destination !== 'local' && !remoteBook) {
 	  this.$error = 'Choose an available address book.'
 	  return
 	}
@@ -293,19 +302,19 @@ export default class {
       this.$error = 'Add a name, email address, or phone number.'
       return
     }
-	this.$saving = true
+	this.saving = true
 	this.$error = ''
-	this.$conflict = false
+	this.conflict = false
     try {
-      const response = await apiFetch(this.$selectedId ? `/contacts/${this.$selectedId}` : '/contacts', {
-        method: this.$selectedId ? 'PUT' : 'POST',
+      const response = await apiFetch(this.selectedId ? `/contacts/${this.$selectedId}` : '/contacts', {
+        method: this.selectedId ? 'PUT' : 'POST',
         body: JSON.stringify(body),
       })
       const data = await response?.json()
       if (!response?.ok) { this.$error = data?.error || 'Contact could not be saved.'; return }
 	  const mutationContactId = data.id
-	  this.$selectedId = mutationContactId
-	  this.$editing = false
+	  this.selectedId = mutationContactId
+	  this.editing = false
 	  if (data.syncState && data.mutationId && data.accountId) {
 		const outcome = await this.waitForCardDAVMutation({ ...data, contactId: mutationContactId })
 		if (outcome === 'conflict' || outcome === 'failed') {
@@ -321,7 +330,7 @@ export default class {
     } catch {
       this.$error = 'Network error while saving the contact.'
     } finally {
-      this.$saving = false
+      this.saving = false
     }
   }
 
@@ -339,7 +348,7 @@ export default class {
 		return
       }
     }
-    this.$checkedIds = this.$checkedIds.filter(id => id !== contact.id)
+    this.checkedIds = this.checkedIds.filter(id => id !== contact.id)
     this.closeDetail()
     await this.loadContacts()
     window._caduceus?.toast('Contact deleted.')
@@ -352,8 +361,8 @@ export default class {
   }
 
   showMutationFailure(outcome, conflictMessage) {
-	this.$conflict = outcome === 'conflict'
-	this.$error = this.$conflict ? conflictMessage : 'The CardDAV server rejected this contact change.'
+	this.conflict = outcome === 'conflict'
+	this.$error = this.conflict ? conflictMessage : 'The CardDAV server rejected this contact change.'
   }
 
   async waitForCardDAVMutation({ mutationId, accountId, contactId }) {
@@ -384,10 +393,10 @@ export default class {
     } : null
     const groupId = eventData(event, '[data-contact-group-id]')?.contactGroupId
     const group = groupId ? this.$groups.find(item => item.id === groupId) : null
-    this.$groupEditingId = group?.id || ''
+    this.groupEditingId = group?.id || ''
     this.$groupName = group?.name || ''
-    this.$groupError = ''
-    this.$groupDialogOpen = true
+    this.groupError = ''
+    this.groupDialogOpen = true
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const input = document.querySelector('[data-contact-group-name]')
       if (input instanceof HTMLElement) input.focus()
@@ -399,10 +408,10 @@ export default class {
     const identity = this._groupDialogReturnIdentity
     this._groupDialogReturnFocus = null
     this._groupDialogReturnIdentity = null
-    this.$groupDialogOpen = false
-    this.$groupEditingId = ''
+    this.groupDialogOpen = false
+    this.groupEditingId = ''
     this.$groupName = ''
-    this.$groupError = ''
+    this.groupError = ''
     void (/** @type {any} */ (globalThis)).__tc_rerender?.().then(() => {
       if (restore?.isConnected) { restore.focus(); return }
       if (!identity) return
@@ -447,13 +456,13 @@ export default class {
 
   async saveGroup() {
     const name = this.$groupName.trim()
-    if (!name) { this.$groupError = 'Group name is required.'; return }
+    if (!name) { this.groupError = 'Group name is required.'; return }
     const response = await window._caduceus?.apiFetch(
-      this.$groupEditingId ? `/contacts/groups/${this.$groupEditingId}` : '/contacts/groups',
-      { method: this.$groupEditingId ? 'PUT' : 'POST', body: JSON.stringify({ name }) },
+      this.groupEditingId ? `/contacts/groups/${this.$groupEditingId}` : '/contacts/groups',
+      { method: this.groupEditingId ? 'PUT' : 'POST', body: JSON.stringify({ name }) },
     )
     const data = await response?.json()
-    if (!response?.ok) { this.$groupError = data?.error || 'Group could not be saved.'; return }
+    if (!response?.ok) { this.groupError = data?.error || 'Group could not be saved.'; return }
     this.closeGroupDialog()
     await this.loadGroups()
     window._caduceus?.toast('Group saved.')
@@ -466,7 +475,7 @@ export default class {
     if (!confirm(`Delete the “${group.name}” group? Contacts will be kept.`)) return
     const response = await window._caduceus?.apiFetch(`/contacts/groups/${group.id}`, { method: 'DELETE' })
     if (!response?.ok) { window._caduceus?.toast('Group could not be deleted.'); return }
-    if (this.$groupFilter === group.id) this.$groupFilter = ''
+    if (this.groupFilter === group.id) this.groupFilter = ''
     await Promise.all([this.loadGroups(), this.loadContacts()])
     window._caduceus?.toast('Group deleted. Contacts were kept.')
   }
@@ -480,7 +489,7 @@ export default class {
     try {
       const response = await window._caduceus?.apiFetch('/contacts/import', {
         method: 'POST',
-        body: JSON.stringify({ content: await file.text(), groupIds: this.$groupFilter ? [this.$groupFilter] : [] }),
+        body: JSON.stringify({ content: await file.text(), groupIds: this.groupFilter ? [this.groupFilter] : [] }),
       })
       const data = await response?.json()
       if (!response?.ok) { window._caduceus?.toast(data?.error || 'vCard import failed.'); return }
@@ -494,7 +503,7 @@ export default class {
   }
 
   async exportContacts() {
-    const ids = [...this.$checkedIds]
+    const ids = [...this.checkedIds]
     const response = await window._caduceus?.apiFetch('/contacts/export', {
       method: 'POST', body: JSON.stringify({ ids }),
     })

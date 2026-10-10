@@ -1,8 +1,6 @@
 import { createHash } from 'node:crypto'
 import { Collections, collect } from '../../../platform/persistence/fylo.js'
 
-/** @typedef {import('../../../types').PushSubscriptionRecord} PushSubscriptionRecord */
-
 export class PushSubscriptionsRepository {
   /** @param {import('../../../platform/persistence/fylo.js').Fylo} fylo */
   constructor(fylo) {

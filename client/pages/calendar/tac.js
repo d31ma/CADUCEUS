@@ -44,11 +44,13 @@ export default class {
   $events = []
 
   /** @type {Array<Record<string, any>>} Writable connected calendar collections. */
-  $providerCalendars = []
+  @SessionState
+  providerCalendars = []
 
   /** @type {Array<Record<string, any>>} Same-domain teammates' events for
    *  the visible month — only fetched when {@link $$showTeam} is true. */
-  $teamEvents = []
+  @SessionState
+  teamEvents = []
 
   /** Cursor day (any day in the month being viewed). Persisted via `$$` so
    *  navigating away and back returns to the same month. */
@@ -56,39 +58,59 @@ export default class {
 
   /** Whether to overlay the same-domain teammates' events on the grid.
    *  localStorage-backed so the user's choice survives reloads. */
-  $$showTeam = false
+  @LocalState
+  showTeam = false
 
   /** @type {'day'|'three-day'|'work-week'|'week'|'month'|'agenda'|'split'} */
-  $$viewMode = 'month'
+  @LocalState
+  viewMode = 'month'
 
   /** Modal state — open + editing-id + form fields. */
-  $modalOpen = false
+  @SessionState
+  modalOpen = false
   /** @type {string} */
-  $editingId = ''
+  @SessionState
+  editingId = ''
   /** @type {string} */
-  $editingSeriesId = ''
+  @SessionState
+  editingSeriesId = ''
   /** @type {string} */
-  $editingRecurrenceId = ''
+  @SessionState
+  editingRecurrenceId = ''
   /** @type {'event'|'instance'|'series'} */
-  $editScope = 'event'
-  $editingReadOnly = false
+  @SessionState
+  editScope = 'event'
+  @SessionState
+  editingReadOnly = false
   /** @type {Record<string, any> | null} */
-  $editingOccurrence = null
+  @SessionState
+  editingOccurrence = null
   /** @type {HTMLElement | null} */
-  $modalReturnFocus = null
+  @SessionState
+  modalReturnFocus = null
   /** @type {string} */
-  $modalReturnSelector = ''
+  @SessionState
+  modalReturnSelector = ''
   /** @type {string} Exact owned event most recently focused for move/resize commands. */
-  $keyboardEventId = ''
+  @SessionState
+  keyboardEventId = ''
   $form = { title: '', start: '', end: '', allDay: false, location: '', description: '', repeat: 'none', recurrence: '', timeZone: 'UTC', calendarId: 'local', error: '', saving: false }
-  $mutationKey = ''
-  $quickCreateOpen = false
-  $quickCreateDate = ''
-  $quickCreateTitle = ''
-  $quickCreateError = ''
-  $quickCreateSaving = false
-  $dragEventId = ''
-  $dragOverDate = ''
+  @SessionState
+  mutationKey = ''
+  @SessionState
+  quickCreateOpen = false
+  @SessionState
+  quickCreateDate = ''
+  @SessionState
+  quickCreateTitle = ''
+  @SessionState
+  quickCreateError = ''
+  @SessionState
+  quickCreateSaving = false
+  @SessionState
+  dragEventId = ''
+  @SessionState
+  dragOverDate = ''
 
   bindOfflineCalendarWrites() {
     if (window._caduceusCalendarOfflineWriteHandler) {
@@ -121,7 +143,7 @@ export default class {
   }
 
   get $quickCreateDateLabel() {
-    if (!this.$quickCreateDate) return ''
+    if (!this.quickCreateDate) return ''
     return formatPreferenceDate(`${this.$quickCreateDate}T12:00:00`, { weekday: 'long', month: 'long', day: 'numeric' })
   }
 
@@ -152,7 +174,7 @@ export default class {
   get $calendarOptions() {
     return [
       { id: 'local', label: 'CADUCEUS calendar', color: '' },
-      ...this.$providerCalendars.map(calendar => ({
+      ...this.providerCalendars.map(calendar => ({
         id: calendar.calendarId,
         label: [calendar.accountLabel, calendar.calendarName].filter(Boolean).join(' · ') || 'Connected calendar',
         color: calendar.calendarColor || calendar.accountColor || '',
@@ -169,7 +191,7 @@ export default class {
           ? [e.accountLabel, e.calendarName].filter(Boolean).join(' · ') || 'Connected calendar'
           : 'Me',
       })),
-      ...((this.$$showTeam && this.$teamEvents) || []).map(e => ({
+      ...((this.showTeam && this.teamEvents) || []).map(e => ({
         ...e,
         source: e.source || 'team',
         ownerLabel: e.ownerEmail || e.userEmail || e.owner || 'Team',
@@ -180,11 +202,11 @@ export default class {
   /** Human-readable title for the toolbar: "May 2026". */
   get $titleLabel() {
     const d = new Date(this.$$cursor)
-    if (this.$$viewMode === 'day')
+    if (this.viewMode === 'day')
       return formatPreferenceDate(d, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-    if (this.$$viewMode === 'month')
+    if (this.viewMode === 'month')
       return formatPreferenceDate(d, { month: 'long', year: 'numeric' })
-    const days = this.visibleDaysForMode(this.$$viewMode)
+    const days = this.visibleDaysForMode(this.viewMode)
     const first = days[0]
     const last = days[days.length - 1]
     const sameMonth = first.getMonth() === last.getMonth()
@@ -194,7 +216,7 @@ export default class {
   }
 
   get $agendaDays() {
-    return this.visibleDaysForMode(this.$$viewMode).map(day => {
+    return this.visibleDaysForMode(this.viewMode).map(day => {
       const events = this.eventsForDay(day)
       return {
         date: day,
@@ -291,7 +313,7 @@ export default class {
       source === 'team' ? 'calendar-event-chip-team' :
       'calendar-event-chip-manual',
       ev.isRecurring ? 'calendar-event-chip-recurring' : '',
-      ev.id === this.$keyboardEventId ? 'keyboard-selected' : '',
+      ev.id === this.keyboardEventId ? 'keyboard-selected' : '',
     ].join(' ')
   }
 
@@ -299,7 +321,7 @@ export default class {
   eventDraggable(event) { return !this.isReadOnlyEvent(event) }
 
   get $editingReadOnlyMessage() {
-    const event = this.$editingOccurrence
+    const event = this.editingOccurrence
     if (event?.source === 'provider') {
       const origin = [event.accountLabel, event.calendarName].filter(Boolean).join(' · ') || 'the connected calendar'
       return `This event is read-only from ${origin}. Changes made at the provider will synchronize here.`
@@ -308,7 +330,7 @@ export default class {
   }
 
   get $editingWhenLabel() {
-    const event = this.$editingOccurrence
+    const event = this.editingOccurrence
     if (!event?.start) return ''
     /** @type {Intl.DateTimeFormatOptions} */
     const options = event.allDay
@@ -322,16 +344,16 @@ export default class {
   async setViewMode(eventOrMode, explicitMode) {
     const mode = typeof explicitMode === 'string' ? explicitMode : eventOrMode
     if (!this.$viewModes.some(candidate => candidate.id === mode)) return
-    const selected = this.$events.find(candidate => candidate.id === this.$keyboardEventId)
+    const selected = this.$events.find(candidate => candidate.id === this.keyboardEventId)
     const selectedCursor = calendarCursorForEvent(selected)
     if (selectedCursor) this.$$cursor = selectedCursor.toISOString()
-    this.$$viewMode = mode
-    if (mode === 'split') this.$$showTeam = true
+    this.viewMode = mode
+    if (mode === 'split') this.showTeam = true
     await this.loadEvents()
     this.scheduleSelectedEventIntoView()
   }
 
-  visibleDaysForMode(mode = this.$$viewMode) {
+  visibleDaysForMode(mode = this.viewMode) {
     const cursor = new Date(this.$$cursor || new Date().toISOString())
     cursor.setHours(0, 0, 0, 0)
     if (mode === 'day') return [cursor]
@@ -382,7 +404,7 @@ export default class {
     } catch {
       this.$events = []
     }
-    if (this.$$showTeam) await this.loadTeamEvents(start.toISOString(), end.toISOString())
+    if (this.showTeam) await this.loadTeamEvents(start.toISOString(), end.toISOString())
     await this.renderCurrentState()
   }
 
@@ -392,21 +414,21 @@ export default class {
     try {
       const response = await apiFetch('/calendar/calendars')
       const payload = response?.ok ? await response.json() : { calendars: [] }
-      this.$providerCalendars = Array.isArray(payload?.calendars) ? payload.calendars.filter(calendar => calendar?.writable !== false) : []
+      this.providerCalendars = Array.isArray(payload?.calendars) ? payload.calendars.filter(calendar => calendar?.writable !== false) : []
     } catch {
-      this.$providerCalendars = []
+      this.providerCalendars = []
     }
   }
 
   fetchRange() {
     const cursor = new Date(this.$$cursor || new Date().toISOString())
-    if (this.$$viewMode === 'month') {
+    if (this.viewMode === 'month') {
       return {
         start: new Date(cursor.getFullYear(), cursor.getMonth() - 1, 25),
         end: new Date(cursor.getFullYear(), cursor.getMonth() + 1, 7, 23, 59, 59),
       }
     }
-    const days = this.visibleDaysForMode(this.$$viewMode)
+    const days = this.visibleDaysForMode(this.viewMode)
     const start = new Date(days[0]); start.setHours(0, 0, 0, 0)
     const end = new Date(days[days.length - 1]); end.setHours(23, 59, 59, 999)
     return { start, end }
@@ -421,12 +443,12 @@ export default class {
    */
   async loadTeamEvents(start, end) {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch) { this.$teamEvents = []; return }
+    if (!apiFetch) { this.teamEvents = []; return }
     try {
       const res = await apiFetch(`/calendar/team-events?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`)
-      this.$teamEvents = res?.ok ? await res.json() : []
+      this.teamEvents = res?.ok ? await res.json() : []
     } catch {
-      this.$teamEvents = []
+      this.teamEvents = []
     }
   }
 
@@ -435,12 +457,12 @@ export default class {
    * new state without needing to re-fetch own events.
    */
   async toggleShowTeam() {
-    this.$$showTeam = !this.$$showTeam
-    if (this.$$showTeam) {
+    this.showTeam = !this.showTeam
+    if (this.showTeam) {
       const { start, end } = this.fetchRange()
       await this.loadTeamEvents(start.toISOString(), end.toISOString())
     } else {
-      this.$teamEvents = []
+      this.teamEvents = []
     }
   }
 
@@ -500,12 +522,12 @@ export default class {
 
   /** Remember only an owned event as the keyboard move/resize target. */
   focusEvent(event, domEvent) {
-    this.$keyboardEventId = event?.source === 'team' ? '' : String(event?.id || '')
+    this.keyboardEventId = event?.source === 'team' ? '' : String(event?.id || '')
     for (const chip of document.querySelectorAll('[data-calendar-event-id].keyboard-selected')) chip.classList.remove('keyboard-selected')
     const target = domEvent?.target instanceof Element
       ? domEvent.target.closest('[data-calendar-event-id]')
       : domEvent?.currentTarget
-    if (this.$keyboardEventId && target instanceof HTMLElement) target.classList.add('keyboard-selected')
+    if (this.keyboardEventId && target instanceof HTMLElement) target.classList.add('keyboard-selected')
   }
 
   /**
@@ -514,7 +536,7 @@ export default class {
    * are one calendar day. Month/agenda vertical commands intentionally no-op.
    */
   async moveSelectedEvent(direction, resize) {
-    const event = this.$events.find(candidate => candidate.id === this.$keyboardEventId)
+    const event = this.$events.find(candidate => candidate.id === this.keyboardEventId)
     if (!event || this.isReadOnlyEvent(event)) return
     if (event.allDay) {
       if (direction === 'up' || direction === 'down') return
@@ -530,7 +552,7 @@ export default class {
     const start = new Date(event.start)
     const end = new Date(event.end || event.start)
     if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) return
-    const timedView = ['day', 'three-day', 'work-week', 'week'].includes(this.$$viewMode)
+    const timedView = ['day', 'three-day', 'work-week', 'week'].includes(this.viewMode)
     if ((direction === 'up' || direction === 'down') && !timedView) return
     const delta = direction === 'up' ? -15 : direction === 'down' ? 15 : direction === 'left' ? -1440 : 1440
     const shift = (date, minutes) => {
@@ -562,8 +584,8 @@ export default class {
 
   syncViewModeForViewport() {
     const isMobile = window.matchMedia?.('(max-width: 760px)').matches
-    if (!isMobile || !['work-week', 'week', 'split'].includes(this.$$viewMode)) return false
-    this.$$viewMode = 'day'
+    if (!isMobile || !['work-week', 'week', 'split'].includes(this.viewMode)) return false
+    this.viewMode = 'day'
     return true
   }
 
@@ -572,10 +594,10 @@ export default class {
     const direction = typeof explicitDirection === 'number' ? explicitDirection : eventOrDirection
     if (direction !== -1 && direction !== 1) return
     const cursor = new Date(this.$$cursor || new Date().toISOString())
-    if (this.$$viewMode === 'month') cursor.setMonth(cursor.getMonth() + direction)
-    else if (this.$$viewMode === 'agenda') cursor.setDate(cursor.getDate() + (direction * 14))
-    else if (this.$$viewMode === 'three-day') cursor.setDate(cursor.getDate() + (direction * 3))
-    else cursor.setDate(cursor.getDate() + (this.$$viewMode === 'day' ? direction : direction * 7))
+    if (this.viewMode === 'month') cursor.setMonth(cursor.getMonth() + direction)
+    else if (this.viewMode === 'agenda') cursor.setDate(cursor.getDate() + (direction * 14))
+    else if (this.viewMode === 'three-day') cursor.setDate(cursor.getDate() + (direction * 3))
+    else cursor.setDate(cursor.getDate() + (this.viewMode === 'day' ? direction : direction * 7))
     this.$$cursor = cursor.toISOString()
     await this.loadEvents()
   }
@@ -594,11 +616,11 @@ export default class {
 
   async openQuickCreate(domEvent, date) {
     this.captureModalReturnFocus(domEvent)
-    this.$quickCreateDate = localIsoDate(new Date(date))
-    this.$quickCreateTitle = ''
-    this.$quickCreateError = ''
-    this.$quickCreateSaving = false
-    this.$quickCreateOpen = true
+    this.quickCreateDate = localIsoDate(new Date(date))
+    this.quickCreateTitle = ''
+    this.quickCreateError = ''
+    this.quickCreateSaving = false
+    this.quickCreateOpen = true
     await this.renderCurrentState()
     requestAnimationFrame(() => {
       const control = document.querySelector('.quick-event-popover input')
@@ -614,12 +636,12 @@ export default class {
     start.setHours(9, 0, 0, 0)
     const end = new Date(date)
     end.setHours(10, 0, 0, 0)
-    this.$editingId = ''
-    this.$editingSeriesId = ''
-    this.$editingRecurrenceId = ''
-    this.$editScope = 'event'
-    this.$editingReadOnly = false
-    this.$mutationKey = crypto.randomUUID()
+    this.editingId = ''
+    this.editingSeriesId = ''
+    this.editingRecurrenceId = ''
+    this.editScope = 'event'
+    this.editingReadOnly = false
+    this.mutationKey = crypto.randomUUID()
     this.$form = {
       title: '',
       start: localDateTimeValue(start),
@@ -634,24 +656,24 @@ export default class {
       error: '',
       saving: false,
     }
-    this.$modalOpen = true
+    this.modalOpen = true
     await this.renderCurrentState()
     this.stabilizeModalFocus()
   }
 
   updateQuickCreateTitle(event) {
-    this.$quickCreateTitle = String(event?.value ?? event?.target?.value ?? '')
+    this.quickCreateTitle = String(event?.value ?? event?.target?.value ?? '')
   }
 
   async createQuickEvent(event) {
     event?.preventDefault?.()
-    const title = this.$quickCreateTitle.trim()
-    if (!title) { this.$quickCreateError = 'Title is required'; return }
+    const title = this.quickCreateTitle.trim()
+    if (!title) { this.quickCreateError = 'Title is required'; return }
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || !this.$quickCreateDate || this.$quickCreateSaving) return
+    if (!apiFetch || !this.quickCreateDate || this.quickCreateSaving) return
     const start = new Date(`${this.$quickCreateDate}T09:00:00`)
     const end = new Date(start); end.setHours(10)
-    this.$quickCreateSaving = true
+    this.quickCreateSaving = true
     const mutation = {
       title, start: start.toISOString(), end: end.toISOString(),
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
@@ -664,8 +686,8 @@ export default class {
       return
     }
     if (!response?.ok) {
-      this.$quickCreateSaving = false
-      this.$quickCreateError = 'Create failed'
+      this.quickCreateSaving = false
+      this.quickCreateError = 'Create failed'
       return
     }
     await this.closeQuickCreate(false)
@@ -681,8 +703,8 @@ export default class {
   }
 
   async closeQuickCreate(restoreFocus = true) {
-    this.$quickCreateOpen = false
-    const returnFocus = this.$modalReturnFocus
+    this.quickCreateOpen = false
+    const returnFocus = this.modalReturnFocus
     await this.renderCurrentState()
     if (restoreFocus) requestAnimationFrame(() => returnFocus?.isConnected && returnFocus.focus())
   }
@@ -712,14 +734,14 @@ export default class {
       domEvent?.preventDefault?.()
       return
     }
-    this.$dragEventId = event.id
+    this.dragEventId = event.id
     domEvent.dataTransfer.effectAllowed = 'move'
     domEvent.dataTransfer.setData('text/plain', event.id)
   }
 
   onEventDragEnd() {
     this.clearDragTarget()
-    this.$dragEventId = ''
+    this.dragEventId = ''
   }
 
   /**
@@ -770,30 +792,30 @@ export default class {
   async onDayDrop(domEvent, day) { await this.dropEventOnDate(domEvent, day?.isoDate) }
 
   setDragTarget(domEvent, isoDate) {
-    if (!this.$dragEventId || !isoDate) return
+    if (!this.dragEventId || !isoDate) return
     domEvent?.preventDefault?.()
     if (domEvent?.dataTransfer) domEvent.dataTransfer.dropEffect = 'move'
-    this.$dragOverDate = isoDate
+    this.dragOverDate = isoDate
     domEvent?.currentTarget?.classList?.add('calendar-drop-target')
   }
 
   leaveDragTarget(domEvent, isoDate) {
-    if (this.$dragOverDate === isoDate) this.$dragOverDate = ''
+    if (this.dragOverDate === isoDate) this.dragOverDate = ''
     domEvent?.currentTarget?.classList?.remove('calendar-drop-target')
   }
 
   clearDragTarget() {
     for (const target of document.querySelectorAll('.calendar-drop-target')) target.classList.remove('calendar-drop-target')
-    this.$dragOverDate = ''
+    this.dragOverDate = ''
   }
 
   async dropEventOnDate(domEvent, isoDate) {
     domEvent?.preventDefault?.()
     domEvent?.stopPropagation?.()
-    const eventId = this.$dragEventId || domEvent?.dataTransfer?.getData('text/plain')
+    const eventId = this.dragEventId || domEvent?.dataTransfer?.getData('text/plain')
     const event = this.$events.find(candidate => candidate.id === eventId)
     this.clearDragTarget()
-    this.$dragEventId = ''
+    this.dragEventId = ''
     if (!event || !isoDate || this.isReadOnlyEvent(event)) return
     const range = { start: String(event.start), end: String(event.end || event.start) }
     const next = event.allDay
@@ -806,10 +828,10 @@ export default class {
   async dropEventOnAllDay(domEvent, isoDate) {
     domEvent?.preventDefault?.()
     domEvent?.stopPropagation?.()
-    const eventId = this.$dragEventId || domEvent?.dataTransfer?.getData('text/plain')
+    const eventId = this.dragEventId || domEvent?.dataTransfer?.getData('text/plain')
     const event = this.$events.find(candidate => candidate.id === eventId)
     this.clearDragTarget()
-    this.$dragEventId = ''
+    this.dragEventId = ''
     if (!event || !isoDate || this.isReadOnlyEvent(event)) return
     // A recurring timed occurrence keeps its representation because converting
     // it would change the recurrence identity and orphan the exception.
@@ -842,12 +864,12 @@ export default class {
     const start = new Date(); start.setMinutes(0, 0, 0)
     if (start.getHours() < 9) start.setHours(9)
     const end = new Date(start); end.setHours(start.getHours() + 1)
-    this.$editingId = ''
-    this.$editingSeriesId = ''
-    this.$editingRecurrenceId = ''
-    this.$editScope = 'event'
-    this.$editingReadOnly = false
-    this.$mutationKey = crypto.randomUUID()
+    this.editingId = ''
+    this.editingSeriesId = ''
+    this.editingRecurrenceId = ''
+    this.editScope = 'event'
+    this.editingReadOnly = false
+    this.mutationKey = crypto.randomUUID()
     this.$form = {
       title: '',
       start: toLocalInputValue(start),
@@ -862,7 +884,7 @@ export default class {
       error: '',
       saving: false,
     }
-    this.$modalOpen = true
+    this.modalOpen = true
     await this.renderCurrentState()
     this.stabilizeModalFocus()
   }
@@ -873,13 +895,13 @@ export default class {
     if (!ev?.id) return
     this.captureModalReturnFocus(domEvent)
     this.focusEvent(ev, domEvent)
-    this.$editingOccurrence = { ...ev }
-    this.$editingSeriesId = ev.seriesId || ''
-    this.$editingRecurrenceId = ev.recurrenceId || ''
-    this.$editScope = ev.isRecurring ? 'instance' : 'event'
-    this.$editingId = ev.seriesId || ev.id
-    this.$editingReadOnly = this.isReadOnlyEvent(ev)
-    this.$mutationKey = crypto.randomUUID()
+    this.editingOccurrence = { ...ev }
+    this.editingSeriesId = ev.seriesId || ''
+    this.editingRecurrenceId = ev.recurrenceId || ''
+    this.editScope = ev.isRecurring ? 'instance' : 'event'
+    this.editingId = ev.seriesId || ev.id
+    this.editingReadOnly = this.isReadOnlyEvent(ev)
+    this.mutationKey = crypto.randomUUID()
     this.$form = {
       title: ev.title || '',
       start: ev.allDay ? calendarDateValue(ev.start) : localDateTimeValue(new Date(ev.start)),
@@ -894,22 +916,22 @@ export default class {
       error: '',
       saving: false,
     }
-    this.$modalOpen = true
+    this.modalOpen = true
     await this.renderCurrentState()
     this.stabilizeModalFocus()
   }
 
   async closeModal() {
-    this.$modalOpen = false
-    this.$editingId = ''
-    this.$editingSeriesId = ''
-    this.$editingRecurrenceId = ''
-    this.$editingOccurrence = null
-    this.$editingReadOnly = false
-    const returnFocus = this.$modalReturnFocus
-    const returnSelector = this.$modalReturnSelector
-    this.$modalReturnFocus = null
-    this.$modalReturnSelector = ''
+    this.modalOpen = false
+    this.editingId = ''
+    this.editingSeriesId = ''
+    this.editingRecurrenceId = ''
+    this.editingOccurrence = null
+    this.editingReadOnly = false
+    const returnFocus = this.modalReturnFocus
+    const returnSelector = this.modalReturnSelector
+    this.modalReturnFocus = null
+    this.modalReturnSelector = ''
     await this.renderCurrentState()
     requestAnimationFrame(() => {
       const target = returnSelector ? document.querySelector(returnSelector) : returnFocus
@@ -992,10 +1014,10 @@ export default class {
 
   async updateEditScope(event) {
     const next = String(event?.target?.value || event?.value || '')
-    if (!['instance', 'series'].includes(next) || !this.$editingSeriesId) return
-    this.$editScope = /** @type {'instance'|'series'} */ (next)
-    if (next === 'instance' && this.$editingOccurrence) {
-      this.applyEventToForm(this.$editingOccurrence)
+    if (!['instance', 'series'].includes(next) || !this.editingSeriesId) return
+    this.editScope = /** @type {'instance'|'series'} */ (next)
+    if (next === 'instance' && this.editingOccurrence) {
+      this.applyEventToForm(this.editingOccurrence)
       this.stabilizeModalFocus(false)
       return
     }
@@ -1042,7 +1064,7 @@ export default class {
 
   async saveEvent() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$editingReadOnly) return
+    if (!apiFetch || this.editingReadOnly) return
     const form = this.$form
     if (!form.title.trim()) { this.$form = { ...form, error: 'Title is required' }; return }
     if (!form.start || !form.end) { this.$form = { ...form, error: 'Start and end are required' }; return }
@@ -1075,29 +1097,29 @@ export default class {
       location: form.location.trim(),
       description: form.description,
       timeZone: form.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-      idempotencyKey: this.$mutationKey || crypto.randomUUID(),
+      idempotencyKey: this.mutationKey || crypto.randomUUID(),
     }
-    if (!this.$editingId && form.calendarId && form.calendarId !== 'local') body.calendarId = form.calendarId
-    if (!this.$editingId || this.$editScope === 'series') body.recurrence = recurrenceRule(form.repeat, form.recurrence)
+    if (!this.editingId && form.calendarId && form.calendarId !== 'local') body.calendarId = form.calendarId
+    if (!this.editingId || this.editScope === 'series') body.recurrence = recurrenceRule(form.repeat, form.recurrence)
     try {
-      const scopeQuery = this.$editingId && this.$editingRecurrenceId
+      const scopeQuery = this.editingId && this.editingRecurrenceId
         ? `?scope=${encodeURIComponent(this.$editScope)}&occurrenceStart=${encodeURIComponent(this.$editingRecurrenceId)}`
         : ''
-      const url = this.$editingId ? `/calendar/events/${encodeURIComponent(this.$editingId)}${scopeQuery}` : '/calendar/events'
-      const method = this.$editingId ? 'PUT' : 'POST'
+      const url = this.editingId ? `/calendar/events/${encodeURIComponent(this.$editingId)}${scopeQuery}` : '/calendar/events'
+      const method = this.editingId ? 'PUT' : 'POST'
       const { response: res, queued } = await this.calendarWrite(
-        url, method, body, this.$editingId ? 'Update calendar event' : 'Create calendar event',
-        this.$editingId ? `calendar:${this.$editingId}` : '',
+        url, method, body, this.editingId ? 'Update calendar event' : 'Create calendar event',
+        this.editingId ? `calendar:${this.$editingId}` : '',
       )
       if (queued) {
-        const wasEditing = !!this.$editingId
+        const wasEditing = !!this.editingId
         await this.closeModal()
         window._caduceus?.toast(wasEditing ? 'Event update queued.' : 'Event creation queued.')
         return
       }
       if (!res?.ok) { this.$form = { ...this.$form, saving: false, error: 'Save failed' }; return }
-      const wasEditing = !!this.$editingId
-      const scope = this.$editScope
+      const wasEditing = !!this.editingId
+      const scope = this.editScope
       await this.closeModal()
       window._caduceus?.toast(wasEditing ? (scope === 'instance' ? 'Occurrence saved.' : 'Event series saved.') : 'Event created.')
       await this.loadEvents()
@@ -1107,20 +1129,20 @@ export default class {
   }
 
   async deleteEditing() {
-    if (!this.$editingId || this.$editingReadOnly) return
-    let scope = this.$editScope
-    if (this.$editingSeriesId) {
+    if (!this.editingId || this.editingReadOnly) return
+    let scope = this.editScope
+    if (this.editingSeriesId) {
       if (confirm('Delete only this occurrence? The rest of the series will remain.')) scope = 'instance'
       else if (confirm('Delete the entire recurring series? This removes every occurrence.')) scope = 'series'
       else return
     } else if (!confirm('Delete this event?')) return
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
-    const idempotencyKey = this.$mutationKey || crypto.randomUUID()
+    const idempotencyKey = this.mutationKey || crypto.randomUUID()
     const query = scope === 'instance'
       ? `?scope=instance&occurrenceStart=${encodeURIComponent(this.$editingRecurrenceId)}&idempotencyKey=${encodeURIComponent(idempotencyKey)}`
       : scope === 'series' ? `?scope=series&idempotencyKey=${encodeURIComponent(idempotencyKey)}` : `?idempotencyKey=${encodeURIComponent(idempotencyKey)}`
-    const targetId = this.$editingId
+    const targetId = this.editingId
     const { response: res, queued } = await this.calendarWrite(
       `/calendar/events/${encodeURIComponent(targetId)}${query}`, 'DELETE', null,
       'Delete calendar event', `calendar:${targetId}`,
@@ -1149,10 +1171,10 @@ export default class {
   captureModalReturnFocus(domEvent) {
     const eventTarget = domEvent?.currentTarget instanceof HTMLElement ? domEvent.currentTarget : null
     const active = eventTarget || (document.activeElement instanceof HTMLElement ? document.activeElement : null)
-    this.$modalReturnFocus = active
+    this.modalReturnFocus = active
     const create = active?.closest('[data-calendar-create]')
     const event = active?.closest('[data-calendar-event-id]')
-    this.$modalReturnSelector = create ? '[data-calendar-create] button' : event?.getAttribute('data-calendar-event-id')
+    this.modalReturnSelector = create ? '[data-calendar-create] button' : event?.getAttribute('data-calendar-event-id')
       ? `[data-calendar-event-id="${CSS.escape(event.getAttribute('data-calendar-event-id') || '')}"]`
       : ''
   }
@@ -1201,7 +1223,7 @@ export default class {
   }
 
   scheduleSelectedEventIntoView() {
-    if (!this.$keyboardEventId) return
+    if (!this.keyboardEventId) return
     setTimeout(() => requestAnimationFrame(() => {
       const selector = `[data-calendar-event-id="${CSS.escape(this.$keyboardEventId)}"]`
       const selected = document.querySelector(`.calendar-agenda-grid ${selector}`) ||

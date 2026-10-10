@@ -1,11 +1,6 @@
 // @ts-check
 
 /**
- * @typedef {object} LoginFormProps
- * @property {string} [brandlogo] - Brand asset passed by the application shell
- */
-
-/**
  * Multi-step authentication / login component.
  *
  * The client drives one authentication transaction and never decides anything
@@ -29,12 +24,17 @@
  */
 export default class {
   /** @type {string} Current step in the login flow */
-  $step = 'start'
+  @SessionState
+  step = 'start'
   /** @type {string} */
-  $email = ''; /** @type {string} */
-  $totpCode = ''; /** @type {string} */
-  $deviceCode = ''; /** @type {string} */
-  $deviceName = ''
+  @SessionState
+  email = ''; /** @type {string} */
+  @SessionState
+  totpCode = ''; /** @type {string} */
+  @SessionState
+  deviceCode = ''; /** @type {string} */
+  @SessionState
+  deviceName = ''
   /** @type {string} The authentication transaction every factor advances */
   $transactionId = ''
   /** @type {string[]} Factors this deployment requires, as the server reports them */
@@ -42,15 +42,20 @@ export default class {
   /** @type {boolean} Whether the transaction may now be completed */
   $satisfied = false
   /** @type {boolean} Whether this transaction has proved its primary password factor */
-  $primarySatisfied = false
+  @SessionState
+  primarySatisfied = false
   /** @type {string} */
   $password = ''; /** @type {string} */
-  $confirmPassword = ''; /** @type {string} */
-  $recoveryCode = ''
+  @SessionState
+  confirmPassword = ''; /** @type {string} */
+  @SessionState
+  recoveryCode = ''
   /** @type {'code' | 'admin'} */
-  $recoveryMethod = 'code'
+  @SessionState
+  recoveryMethod = 'code'
   /** @type {boolean} */
-  $loading = false; /** @type {string} */
+  @SessionState
+  loading = false; /** @type {string} */
   $error = ''
   /**
    * @description Base API URL from the global CADUCEUS_CONFIG.
@@ -128,18 +133,18 @@ export default class {
     this.$satisfied = Boolean(state.satisfied)
     if (state.state === 'failed') {
       this.$error = 'Unable to sign in with those details.'
-      this.$step = 'start'
+      this.step = 'start'
       return
     }
     if (this.$satisfied) {
       await this.complete()
       return
     }
-    if (this.$requiredFactors.includes('password') && this.$step === 'start') {
-      this.$step = 'password'
+    if (this.$requiredFactors.includes('password') && this.step === 'start') {
+      this.step = 'password'
       return
     }
-    this.$step = 'passkey'
+    this.step = 'passkey'
     await this.authenticatePasskey()
   }
 
@@ -169,16 +174,16 @@ export default class {
    * @returns {Promise<void>}
    */
   async requestMfa() {
-    this.$email = this.formValue('[data-login-email]', this.$email)
-    if (!this.$email) { this.$error = 'Email is required.'; return }
-    this.$loading = true; this.$error = ''
+    this.email = this.formValue('[data-login-email]', this.email)
+    if (!this.email) { this.$error = 'Email is required.'; return }
+    this.loading = true; this.$error = ''
     try {
-      const { ok, data } = await this.post('/auth/login/begin', { address: this.$email })
+      const { ok, data } = await this.post('/auth/login/begin', { address: this.email })
       if (!ok) { this.$error = data.error || 'Unable to sign in.'; return }
-      this.$primarySatisfied = false
+      this.primarySatisfied = false
       await this.adopt(data)
     } catch { this.$error = 'Network error. Check your connection.' }
-    finally { this.$loading = false }
+    finally { this.loading = false }
   }
 
   // ── Step: password ───────────────────────────────────────────────────────
@@ -188,18 +193,18 @@ export default class {
     this.$password = this.formValue('[data-login-password]', this.$password)
     if (!this.$transactionId) { this.$error = 'Start again from your email address.'; return }
     if (!this.$password) { this.$error = 'Password is required.'; return }
-    this.$loading = true; this.$error = ''
+    this.loading = true; this.$error = ''
     try {
       const { ok, data } = await this.post('/auth/login/password', {
         transactionId: this.$transactionId, password: this.$password,
       })
       this.$password = ''
       if (!ok) { this.$error = data.error || 'Unable to verify password.'; return }
-      this.$primarySatisfied = true
-      this.$step = 'passkey'
+      this.primarySatisfied = true
+      this.step = 'passkey'
       await this.adopt(data)
     } catch { this.$error = 'Network error. Check your connection.' }
-    finally { this.$loading = false }
+    finally { this.loading = false }
   }
 
   // ── Step: passkey ────────────────────────────────────────────────────────
@@ -211,23 +216,23 @@ export default class {
    */
   async authenticatePasskey() {
     if (typeof PublicKeyCredential === 'undefined') {
-      this.$error = this.$primarySatisfied
+      this.$error = this.primarySatisfied
         ? 'Passkeys are not supported on this device. Use a recovery code.'
         : 'Passkeys are not supported on this device. Enter your password to continue.'
-      this.$step = this.$primarySatisfied ? 'recovery' : 'password'
+      this.step = this.primarySatisfied ? 'recovery' : 'password'
       return
     }
     try {
-      this.$loading = true
+      this.loading = true
       const { ok, data } = await this.post('/auth/login/passkey/options', {
         transactionId: this.$transactionId,
       })
       if (!ok) { this.$error = data.error || 'Unable to start passkey sign-in.'; return }
       if (!data.credentialIds?.length) {
-        this.$error = this.$primarySatisfied
+        this.$error = this.primarySatisfied
           ? 'No passkey is enrolled yet. Use a recovery code to finish signing in.'
           : 'No passkey is enrolled yet. Enter your password to continue.'
-        this.$step = this.$primarySatisfied ? 'recovery' : 'password'
+        this.step = this.primarySatisfied ? 'recovery' : 'password'
         return
       }
       const assertion = /** @type {PublicKeyCredential | null} */ (
@@ -258,43 +263,43 @@ export default class {
       this.$error = name === 'NotAllowedError' || name === 'AbortError'
         ? 'Passkey authentication was cancelled.'
         : 'Passkey error: ' + (error instanceof Error ? error.message : 'Unknown')
-      this.$step = 'passkey'
+      this.step = 'passkey'
     }
-    finally { this.$loading = false }
+    finally { this.loading = false }
   }
 
   // ── Step: TOTP ───────────────────────────────────────────────────────────
 
   /** @returns {Promise<void>} */
   async confirmTotp() {
-    this.$totpCode = this.formValue('[data-login-totp]', this.$totpCode)
-    if (!/^\d{6}$/.test(this.$totpCode)) {
+    this.totpCode = this.formValue('[data-login-totp]', this.totpCode)
+    if (!/^\d{6}$/.test(this.totpCode)) {
       this.$error = 'Enter the 6-digit code from your authenticator app.'
       return
     }
-    this.$loading = true; this.$error = ''
+    this.loading = true; this.$error = ''
     try {
       const { ok, data } = await this.post('/auth/login/totp', {
-        transactionId: this.$transactionId, code: this.$totpCode,
+        transactionId: this.$transactionId, code: this.totpCode,
       })
-      this.$totpCode = ''
+      this.totpCode = ''
       if (!ok) { this.$error = data.error || 'Invalid code.'; return }
       await this.adopt(data)
     } catch { this.$error = 'Network error. Check your connection.' }
-    finally { this.$loading = false }
+    finally { this.loading = false }
   }
 
   // ── Step: recovery ───────────────────────────────────────────────────────
 
   /** @returns {void} */
-  useRecoveryCode() { this.$recoveryMethod = 'code'; this.$recoveryCode = ''; this.$error = ''; this.$step = 'recovery' }
+  useRecoveryCode() { this.recoveryMethod = 'code'; this.recoveryCode = ''; this.$error = ''; this.step = 'recovery' }
 
   /** @returns {void} */
-  useAdminRecovery() { this.$recoveryMethod = 'admin'; this.$recoveryCode = ''; this.$error = ''; this.$step = 'recovery' }
+  useAdminRecovery() { this.recoveryMethod = 'admin'; this.recoveryCode = ''; this.$error = ''; this.step = 'recovery' }
 
   /** @returns {void} */
   toggleRecoveryMethod() {
-    if (this.$recoveryMethod === 'code') this.useAdminRecovery()
+    if (this.recoveryMethod === 'code') this.useAdminRecovery()
     else this.useRecoveryCode()
   }
 
@@ -308,19 +313,19 @@ export default class {
    * @returns {Promise<void>}
    */
   async verifyRecoveryCode() {
-    this.$recoveryCode = this.formValue('[data-login-recovery-code]', this.$recoveryCode)
+    this.recoveryCode = this.formValue('[data-login-recovery-code]', this.recoveryCode)
     if (!this.$transactionId) { this.$error = 'Start again from your email address.'; return }
-    if (!this.$recoveryCode) { this.$error = 'A recovery code is required.'; return }
-    this.$loading = true; this.$error = ''
+    if (!this.recoveryCode) { this.$error = 'A recovery code is required.'; return }
+    this.loading = true; this.$error = ''
     try {
       const { ok, data } = await this.post('/auth/login/recovery', {
-        transactionId: this.$transactionId, code: this.$recoveryCode,
+        transactionId: this.$transactionId, code: this.recoveryCode,
       })
-      this.$recoveryCode = ''
+      this.recoveryCode = ''
       if (!ok) { this.$error = data.error || 'Invalid recovery code.'; return }
       await this.adopt(data)
     } catch { this.$error = 'Network error. Check your connection.' }
-    finally { this.$loading = false }
+    finally { this.loading = false }
   }
 
   /**
@@ -330,8 +335,8 @@ export default class {
    * @returns {Promise<void>}
    */
   async verifyAdminRecovery() {
-    this.$email = this.formValue('[data-login-email]', this.$email)
-    this.$recoveryCode = this.formValue('[data-login-admin-code]', this.$recoveryCode)
+    this.email = this.formValue('[data-login-email]', this.email)
+    this.recoveryCode = this.formValue('[data-login-admin-code]', this.recoveryCode)
     if (!this.$transactionId) {
       await this.requestMfa()
       if (!this.$transactionId) return
@@ -351,13 +356,13 @@ export default class {
    */
   async setupPassword() {
     this.$password = this.formValue('[data-login-new-password]', this.$password)
-    this.$confirmPassword = this.formValue('[data-login-confirm-password]', this.$confirmPassword)
+    this.confirmPassword = this.formValue('[data-login-confirm-password]', this.confirmPassword)
     if (!this.$password) { this.$error = 'Password is required.'; return }
-    if (this.$confirmPassword && this.$confirmPassword !== this.$password) {
+    if (this.confirmPassword && this.confirmPassword !== this.$password) {
       this.$error = 'Passwords do not match.'
       return
     }
-    this.$loading = true; this.$error = ''
+    this.loading = true; this.$error = ''
     try {
       const stepUp = await this.stepUp()
       if (!stepUp) return
@@ -368,12 +373,12 @@ export default class {
       })
       const data = await response.json()
       this.$password = ''
-      this.$confirmPassword = ''
+      this.confirmPassword = ''
       if (!response.ok) { this.$error = data.error || 'Unable to save password.'; return }
-      this.$step = 'passkey-setup'
+      this.step = 'passkey-setup'
       await this.registerPasskey()
     } catch { this.$error = 'Network error. Check your connection.' }
-    finally { this.$loading = false }
+    finally { this.loading = false }
   }
 
   /**
@@ -384,11 +389,11 @@ export default class {
   async registerPasskey() {
     if (typeof PublicKeyCredential === 'undefined') {
       this.$error = 'Passkeys are not supported on this device.'
-      this.$step = 'start'
+      this.step = 'start'
       return
     }
     try {
-      this.$loading = true
+      this.loading = true
       const stepUp = await this.stepUp()
       if (!stepUp) return
       const begun = await this.post(
@@ -402,8 +407,8 @@ export default class {
             rp: { id: begun.data.relyingPartyId, name: 'CADUCEUS' },
             user: {
               id: this.base64UrlToBuffer(begun.data.principalId.replace(/[^A-Za-z0-9_-]/g, '')),
-              name: this.$email,
-              displayName: this.$email,
+              name: this.email,
+              displayName: this.email,
             },
             pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
             authenticatorSelection: { userVerification: 'required', residentKey: 'preferred' },
@@ -418,14 +423,14 @@ export default class {
       }, this.token())
       if (!saved.ok) { this.$error = saved.data.error || 'Failed to save passkey.'; return }
       this.$error = ''
-      this.$step = 'start'
+      this.step = 'start'
     } catch (error) {
       const name = /** @type {Error} */ (error).name
       this.$error = name === 'NotAllowedError' || name === 'AbortError'
         ? 'Passkey registration was cancelled.'
         : 'Passkey error: ' + (error instanceof Error ? error.message : 'Unknown')
     }
-    finally { this.$loading = false }
+    finally { this.loading = false }
   }
 
   /**
@@ -435,13 +440,13 @@ export default class {
    * @returns {Promise<string>} the satisfied transaction, or '' on failure
    */
   async stepUp() {
-    const begun = await this.post('/auth/login/begin', { address: this.$email })
+    const begun = await this.post('/auth/login/begin', { address: this.email })
     if (!begun.ok) { this.$error = begun.data.error || 'Unable to re-authenticate.'; return '' }
     const transactionId = begun.data.transactionId
-    const code = this.formValue('[data-login-recovery-code]', this.$recoveryCode)
+    const code = this.formValue('[data-login-recovery-code]', this.recoveryCode)
     if (!code) {
       this.$error = 'Confirm it is you: enter a recovery code to change credentials.'
-      this.$step = 'recovery'
+      this.step = 'recovery'
       return ''
     }
     const verified = await this.post('/auth/login/recovery', { transactionId, code })
@@ -459,7 +464,7 @@ export default class {
   }
 
   /** @returns {void} */
-  usePassword() { this.$error = ''; this.$step = 'password' }
+  usePassword() { this.$error = ''; this.step = 'password' }
 
   /**
    * Navigate back one step in the login flow. Clears the current error.
@@ -468,9 +473,9 @@ export default class {
    */
   back() {
     this.$error = ''
-    if (this.$step === 'passkey') { this.$step = 'start' }
-    else if (this.$step === 'totp') { this.$totpCode = ''; this.$step = 'start' }
-    else if (this.$step === 'password') { this.$password = ''; this.$step = 'start' }
-    else if (this.$step === 'recovery') { this.$recoveryCode = ''; this.$step = 'start' }
+    if (this.step === 'passkey') { this.step = 'start' }
+    else if (this.step === 'totp') { this.totpCode = ''; this.step = 'start' }
+    else if (this.step === 'password') { this.$password = ''; this.step = 'start' }
+    else if (this.step === 'recovery') { this.recoveryCode = ''; this.step = 'start' }
   }
 }

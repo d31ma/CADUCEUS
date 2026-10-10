@@ -17,9 +17,11 @@ export default class {
   get canShowLogin() { return !this.canUseApp }
 
   /** @type {Array<Record<string, any>>} */
-  $teammates = []
+  @SessionState
+  teammates = []
   /** @type {boolean} */
-  $loading = true
+  @SessionState
+  loading = true
 
   /** @type {?ReturnType<typeof setInterval>} */
   _pollTimer = null
@@ -37,14 +39,14 @@ export default class {
    */
   async refresh() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch) { this.$loading = false; return }
+    if (!apiFetch) { this.loading = false; return }
     try {
       const res = await apiFetch('/presence/team')
-      this.$teammates = res?.ok ? await res.json() : []
+      this.teammates = res?.ok ? await res.json() : []
     } catch {
-      this.$teammates = []
+      this.teammates = []
     } finally {
-      this.$loading = false
+      this.loading = false
     }
   }
 

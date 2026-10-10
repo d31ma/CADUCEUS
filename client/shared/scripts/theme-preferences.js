@@ -1,9 +1,5 @@
 // @ts-check
 
-/** @typedef {'automatic'|'light'|'dark'|'darkside'|'less-is-more'|'taiga'|'ubuntu'} ActiveThemeId */
-/** @typedef {'light'|'less-is-more'|'taiga'|'ubuntu'} LightThemeId */
-/** @typedef {'dark'|'darkside'} DarkThemeId */
-
 export const THEME_OPTIONS = Object.freeze([
   Object.freeze({ id: 'automatic', label: 'Automatic', description: 'Follow this device’s light or dark appearance.', baseMode: 'automatic', colors: ['#f8faf9', '#1f6f8b', '#1c2224'] }),
   Object.freeze({ id: 'light', label: 'Light', description: 'CADUCEUS’s balanced light interface.', baseMode: 'light', colors: ['#f8faf9', '#eef3f1', '#1f6f8b'] }),

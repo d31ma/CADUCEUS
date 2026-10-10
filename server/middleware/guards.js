@@ -56,20 +56,6 @@ import { FyloAccessContext } from '../platform/persistence/fylo-access.js'
 const DOMAIN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i
 const ADDRESS = /^[a-z0-9._-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i
 
-/** @typedef {import('./require-auth.js').Principal} Principal */
-/** @typedef {{ paths?: Record<string, string>, query?: Record<string, any>, context?: { bearer?: { token: string } }, headers?: Record<string, string>, body?: any, auth?: Principal }} HandlerRequest */
-/** @typedef {(request: HandlerRequest) => unknown} StaticMethod */
-
-/**
- * @typedef {object} AuthOptions
- * @property {string} [action] - Action to authorize. Omit to require only a
- *   live session.
- * @property {(request: HandlerRequest) => string | undefined} [mailbox] -
- *   Resolves the mailbox the action applies to. Defaults to the caller's own.
- * @property {(request: HandlerRequest) => string | undefined} [domain] -
- *   Resolves the domain the action applies to.
- */
-
 export class Guards {
   /**
    * Guard a static handler method behind the authorization boundary and inject

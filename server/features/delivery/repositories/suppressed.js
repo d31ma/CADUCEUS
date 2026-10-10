@@ -1,7 +1,5 @@
 import { Collections, collect } from '../../../platform/persistence/fylo.js'
 
-/** @typedef {import('../../../types').SuppressedAddress} SuppressedAddress */
-
 export class SuppressedRepository {
   /** @param {import('../../../platform/persistence/fylo.js').Fylo} fylo */
   constructor(fylo) {

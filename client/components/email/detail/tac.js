@@ -65,16 +65,6 @@ function offlineMailboxOwner() {
 }
 
 /**
- * @typedef {object} EmailDetailProps
- * @property {string} [emailId] - ID of the email to load (parent prop)
- * @property {string} [email-id] - Kebab-case property emitted by Tachyon 26.33
- * @property {string} [emailid] - Alternate casing for email ID
- * @property {Record<string, any>} [email] - Pre-loaded email object (avoids a fetch)
- * @property {() => void} [onBack] - Callback invoked when the user clicks back
- * @property {boolean} [standalone] - Whether this reader owns the full route
- */
-
-/**
  * Email detail / reader component.
  *
  * Displays a single email message with full headers, body, and attachments.
@@ -122,119 +112,171 @@ export default class {
   /** @type {Record<string, any>|null} The loaded email object */
   $email = null
   /** @type {boolean} */
-  $loading = true
+  @SessionState
+  loading = true
   /** @type {string} */
-  $loadError = ''
+  @SessionState
+  loadError = ''
   /** @type {boolean} Prevent duplicate invite responses while SMTP/API work is in flight. */
-  $inviteResponseBusy = false
+  @SessionState
+  inviteResponseBusy = false
   /** @type {boolean} Whether the inline reply form is visible */
-  $showReply = false
+  @SessionState
+  showReply = false
   /** @type {string} Text content of the inline reply */
-  $replyText = ''
+  @SessionState
+  replyText = ''
   /** @type {'idle'|'loading'|'success'|'error'} */
-  $unsubscribeState = 'idle'
+  @SessionState
+  unsubscribeState = 'idle'
   /** @type {string} */
-  $unsubscribeError = ''
+  @SessionState
+  unsubscribeError = ''
   /** @type {boolean} Whether a conversation print document is being prepared. */
-  $printing = false
+  @SessionState
+  printing = false
   /** @type {'block'|'allow'} Account-wide remote-image policy. */
   $remoteImagePolicy = 'block'
   /** @type {string[]} Exact normalized senders trusted by this user. */
   $trustedImageSenders = []
   /** @type {boolean} One-message override granted by an explicit click. */
-  $remoteImagesVisible = false
+  @SessionState
+  remoteImagesVisible = false
   /** @type {string} Complete sanitized iframe document. */
-  $protectedEmailDocument = ''
+  @SessionState
+  protectedEmailDocument = ''
   /** @type {number} Number of network resources discovered in the message. */
-  $remoteContentCount = 0
+  @SessionState
+  remoteContentCount = 0
   /** @type {number} Number of network resources currently blocked. */
-  $blockedRemoteContentCount = 0
+  @SessionState
+  blockedRemoteContentCount = 0
   /** @type {number} Number of tracking elements removed unconditionally. */
-  $removedTrackingCount = 0
+  @SessionState
+  removedTrackingCount = 0
   /** @type {Record<string, string>} Proxy-returned inert raster data URLs keyed by original URL. */
-  $remoteImageSources = {}
+  @SessionState
+  remoteImageSources = {}
   /** @type {string[]} Ordinary remote image URLs found by the sanitizer. */
-  $remoteImageUrls = []
+  @SessionState
+  remoteImageUrls = []
   /** @type {boolean} */
-  $remoteImagesLoading = false
+  @SessionState
+  remoteImagesLoading = false
   /** @type {string} */
-  $remoteImageError = ''
+  @SessionState
+  remoteImageError = ''
   /** @type {number} */
   $suspiciousLinkCount = 0
   /** @type {{ reason: string, target: string, destinationHost: string, displayedHost: string } | null} */
-  $pendingLinkWarning = null
+  @SessionState
+  pendingLinkWarning = null
   /** @type {boolean} Whether recognized quoted reply content is expanded. */
-  $showQuotedText = false
+  @SessionState
+  showQuotedText = false
   /** @type {number} Number of top-level quoted HTML regions in this message. */
-  $quotedTextCount = 0
+  @SessionState
+  quotedTextCount = 0
   /** @type {boolean} */
-  $remotePreferenceSaving = false
+  @SessionState
+  remotePreferenceSaving = false
   /** @type {'html'|'text'|'source'} Reader representation selected by the user. */
-  $renderMode = 'html'
+  @SessionState
+  renderMode = 'html'
   /** @type {string} */
-  $translationTarget = preferredTranslationLanguage()
+  @SessionState
+  translationTarget = preferredTranslationLanguage()
   /** @type {string} */
-  $translationSource = ''
+  @SessionState
+  translationSource = ''
   /** @type {boolean} */
-  $translationBusy = false
+  @SessionState
+  translationBusy = false
   /** @type {number} */
-  $translationProgress = 0
+  @SessionState
+  translationProgress = 0
   /** @type {string} */
-  $translationError = ''
+  @SessionState
+  translationError = ''
   /** @type {boolean} */
-  $translationVisible = false
+  @SessionState
+  translationVisible = false
   /** @type {string} */
-  $translatedHtmlBody = ''
+  @SessionState
+  translatedHtmlBody = ''
   /** @type {string} */
-  $translatedPlainText = ''
+  @SessionState
+  translatedPlainText = ''
   /** @type {number} Invalidates delayed detection when the selected message changes. */
   _translationDetectionSequence = 0
   /** @type {boolean} */
-  $sourceLoading = false
+  @SessionState
+  sourceLoading = false
   /** @type {string} */
-  $sourceError = ''
+  @SessionState
+  sourceError = ''
   /** @type {string} Exact RFC 822 source decoded as UTF-8 for inert display. */
-  $rawSourceText = ''
+  @SessionState
+  rawSourceText = ''
   /** @type {string} Original base64 bytes retained for lossless EML download. */
-  $rawSourceBase64 = ''
+  @SessionState
+  rawSourceBase64 = ''
   /** @type {string} */
-  $rawSourceFilename = ''
+  @SessionState
+  rawSourceFilename = ''
   /** @type {boolean} */
-  $snoozeOpen = false
+  @SessionState
+  snoozeOpen = false
   /** @type {boolean} */
-  $snoozeBusy = false
+  @SessionState
+  snoozeBusy = false
   /** @type {string} */
-  $snoozeCustom = ''
+  @SessionState
+  snoozeCustom = ''
   /** @type {string} */
-  $snoozeError = ''
+  @SessionState
+  snoozeError = ''
   /** @type {boolean} */
-  $shareOpen = false
+  @SessionState
+  shareOpen = false
   /** @type {boolean} */
-  $shareBusy = false
+  @SessionState
+  shareBusy = false
   /** @type {string} */
-  $shareError = ''
+  @SessionState
+  shareError = ''
   /** @type {'1'|'7'|'30'} */
-  $shareExpiresDays = '7'
+  @SessionState
+  shareExpiresDays = '7'
   /** @type {Array<Record<string, any>>} */
-  $threadShares = []
+  @SessionState
+  threadShares = []
   /** @type {Record<string, any> | null} Newly minted secret, held only in this view. */
-  $createdShare = null
+  @SessionState
+  createdShare = null
   /** @type {boolean} */
-  $attachmentPreviewOpen = false
+  @SessionState
+  attachmentPreviewOpen = false
   /** @type {boolean} */
-  $attachmentPreviewLoading = false
+  @SessionState
+  attachmentPreviewLoading = false
   /** @type {string} */
   $attachmentPreviewKind = ''
   /** @type {string} */
-  $attachmentPreviewUrl = ''
+  @SessionState
+  attachmentPreviewUrl = ''
   /** @type {string} */
-  $attachmentPreviewText = ''
+  @SessionState
+  attachmentPreviewText = ''
   /** @type {string} */
-  $attachmentPreviewError = ''
+  @SessionState
+  attachmentPreviewError = ''
   /** @type {Record<string, any> | null} */
-  $attachmentPreviewAttachment = null
+  @SessionState
+  attachmentPreviewAttachment = null
   /** @type {Record<string, string>} Safe raster data URLs keyed by normalized Content-ID. */
-  $inlineAttachmentSources = {}
+  @SessionState
+  inlineAttachmentSources = {}
   /** @type {Map<string, Promise<Record<string, any>>>} */
   _attachmentContent = new Map()
   /** @type {ReturnType<typeof setTimeout> | null} */
@@ -242,45 +284,64 @@ export default class {
   /** @type {WeakSet<HTMLIFrameElement>} */
   _protectedFrames = new WeakSet()
   /** @type {Array<Record<string, any>>} Complete authorized RFC conversation. */
-  $conversationMessages = []
+  @SessionState
+  conversationMessages = []
   /** @type {Record<string, boolean>} Expanded reading cards by message ID. */
-  $conversationExpanded = {}
+  @SessionState
+  conversationExpanded = {}
   /** @type {Record<string, boolean>} Per-card quoted text disclosure. */
-  $conversationQuotes = {}
+  @SessionState
+  conversationQuotes = {}
   /** @type {boolean} */
-  $conversationLoading = false
+  @SessionState
+  conversationLoading = false
   /** @type {boolean} */
-  $findOpen = false
+  @SessionState
+  findOpen = false
   /** @type {string} */
-  $findTerm = ''
+  @SessionState
+  findTerm = ''
   /** @type {number} */
-  $findIndex = -1
+  @SessionState
+  findIndex = -1
   /** @type {number} */
-  $findCount = 0
+  @SessionState
+  findCount = 0
   /** @type {Array<{ index: number, messageId: string, field: string }>} */
-  $findResults = []
+  @SessionState
+  findResults = []
   /** @type {boolean} */
-  $participantSidebarOpen = false
+  @SessionState
+  participantSidebarOpen = false
   /** @type {boolean} */
-  $participantLoading = false
+  @SessionState
+  participantLoading = false
   /** @type {string} */
-  $participantError = ''
+  @SessionState
+  participantError = ''
   /** @type {Record<string, any> | null} */
-  $participantContact = null
+  @SessionState
+  participantContact = null
   /** @type {'disabled'|'found'|'not-found'|'unavailable'} */
-  $participantGithubStatus = 'disabled'
+  @SessionState
+  participantGithubStatus = 'disabled'
   /** @type {Record<string, any> | null} */
-  $participantGithubProfile = null
+  @SessionState
+  participantGithubProfile = null
   /** @type {Array<Record<string, any>>} */
-  $participantThreads = []
+  @SessionState
+  participantThreads = []
   /** @type {boolean} */
-  $participantThreadsExpanded = false
+  @SessionState
+  participantThreadsExpanded = false
   /** @type {number} */
   _participantLoadSequence = 0
   /** @type {Array<Record<string, any>>} Account-scoped folder and label capabilities. */
-  $categoryAccounts = []
+  @SessionState
+  categoryAccounts = []
   /** @type {{open:boolean,mode:'move'|'label',search:string,creating:boolean,error:string}} */
-  $categoryPicker = { open: false, mode: 'move', search: '', creating: false, error: '' }
+  @SessionState
+  categoryPicker = { open: false, mode: 'move', search: '', creating: false, error: '' }
   /** @type {HTMLElement | null} */
   _categoryPickerReturnFocus = null
 
@@ -296,10 +357,10 @@ export default class {
    * @returns {Promise<void>}
    */
   async init() {
-    try { this.$participantSidebarOpen = localStorage.getItem('caduceus-participant-sidebar') === 'open' } catch {}
+    try { this.participantSidebarOpen = localStorage.getItem('caduceus-participant-sidebar') === 'open' } catch {}
     try {
       const target = localStorage.getItem('caduceus-translation-target') || ''
-      if (Object.hasOwn(TRANSLATION_LANGUAGES, target)) this.$translationTarget = target
+      if (Object.hasOwn(TRANSLATION_LANGUAGES, target)) this.translationTarget = target
     } catch {}
     const emailId = this.resolveEmailId()
     await this.loadEmailId(emailId, this.$email)
@@ -347,56 +408,56 @@ export default class {
     this.cancelScheduledMarkRead()
     if (!emailId && !email) {
       this.$email = null
-      this.$loading = false
-      this.$loadError = ''
+      this.loading = false
+      this.loadError = ''
       return
     }
     if (this.$email?.id === emailId && this.$email?.body && !email) return
     this.$email = email ? this.decorateEmail(email) : { id: emailId }
-    this.$showReply = false
-    this.$replyText = ''
-    this.$inviteResponseBusy = false
-    this.$unsubscribeState = 'idle'
-    this.$unsubscribeError = ''
-    this.$remoteImagesVisible = false
-    this.$protectedEmailDocument = ''
-    this.$remoteContentCount = 0
-    this.$blockedRemoteContentCount = 0
-    this.$removedTrackingCount = 0
-    this.$remoteImageSources = {}
-    this.$remoteImageUrls = []
-    this.$remoteImagesLoading = false
-    this.$remoteImageError = ''
+    this.showReply = false
+    this.replyText = ''
+    this.inviteResponseBusy = false
+    this.unsubscribeState = 'idle'
+    this.unsubscribeError = ''
+    this.remoteImagesVisible = false
+    this.protectedEmailDocument = ''
+    this.remoteContentCount = 0
+    this.blockedRemoteContentCount = 0
+    this.removedTrackingCount = 0
+    this.remoteImageSources = {}
+    this.remoteImageUrls = []
+    this.remoteImagesLoading = false
+    this.remoteImageError = ''
     this.$suspiciousLinkCount = 0
-    this.$pendingLinkWarning = null
-    this.$showQuotedText = isForwardedSubject(this.$email?.subject)
-    this.$quotedTextCount = 0
-    this.$renderMode = 'html'
-    this.$translationSource = ''
-    this.$translationBusy = false
-    this.$translationProgress = 0
-    this.$translationError = ''
-    this.$translationVisible = false
-    this.$translatedHtmlBody = ''
-    this.$translatedPlainText = ''
+    this.pendingLinkWarning = null
+    this.showQuotedText = isForwardedSubject(this.$email?.subject)
+    this.quotedTextCount = 0
+    this.renderMode = 'html'
+    this.translationSource = ''
+    this.translationBusy = false
+    this.translationProgress = 0
+    this.translationError = ''
+    this.translationVisible = false
+    this.translatedHtmlBody = ''
+    this.translatedPlainText = ''
     this._translationDetectionSequence += 1
-    this.$sourceLoading = false
-    this.$sourceError = ''
-    this.$rawSourceText = ''
-    this.$rawSourceBase64 = ''
-    this.$rawSourceFilename = ''
+    this.sourceLoading = false
+    this.sourceError = ''
+    this.rawSourceText = ''
+    this.rawSourceBase64 = ''
+    this.rawSourceFilename = ''
     this.closeAttachmentPreview()
-    this.$inlineAttachmentSources = {}
+    this.inlineAttachmentSources = {}
     this._attachmentContent.clear()
-    this.$conversationMessages = []
-    this.$conversationExpanded = {}
-    this.$conversationQuotes = {}
-    this.$participantContact = null
-    this.$participantGithubStatus = 'disabled'
-    this.$participantGithubProfile = null
-    this.$participantThreads = []
-    this.$participantError = ''
-    this.$participantThreadsExpanded = false
+    this.conversationMessages = []
+    this.conversationExpanded = {}
+    this.conversationQuotes = {}
+    this.participantContact = null
+    this.participantGithubStatus = 'disabled'
+    this.participantGithubProfile = null
+    this.participantThreads = []
+    this.participantError = ''
+    this.participantThreadsExpanded = false
     this._participantLoadSequence += 1
     this.closeFindInThread()
     await this.loadEmail()
@@ -412,22 +473,22 @@ export default class {
    */
   async loadEmail() {
     if (!this.$email?.id) {
-      this.$loading = false
-      this.$loadError = ''
+      this.loading = false
+      this.loadError = ''
       return
     }
-    this.$loading = true; this.$loadError = ''
-    const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) { this.$loading = false; return }
+    this.loading = true; this.loadError = ''
+    const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) { this.loading = false; return }
     try {
       const res = await apiFetch(`/inbox/${this.$email.id}`)
       if (res?.ok) {
         this.$email = this.decorateEmail(await res.json())
 		void cacheOfflineMailboxMessage(offlineMailboxOwner(), this.$email)
-        this.$showQuotedText = isForwardedSubject(this.$email?.subject)
-        this.$renderMode = this.$email?.htmlBody ? 'html' : 'text'
+        this.showQuotedText = isForwardedSubject(this.$email?.subject)
+        this.renderMode = this.$email?.htmlBody ? 'html' : 'text'
         await this.prepareAttachmentContent()
         await this.loadConversation(this.$email.id)
-        if (this.$participantSidebarOpen) void this.loadParticipantContext()
+        if (this.participantSidebarOpen) void this.loadParticipantContext()
         if (!this.restoreCachedTranslation()) void this.detectMessageLanguage(this.$email.id)
       }
       else throw new Error('Could not load this email.')
@@ -441,16 +502,16 @@ export default class {
 		const cached = await loadOfflineMailboxMessage(offlineMailboxOwner(), this.$email.id)
 		if (cached) {
 			this.$email = this.decorateEmail(cached)
-			this.$showQuotedText = isForwardedSubject(this.$email?.subject)
-			this.$renderMode = this.$email?.htmlBody ? 'html' : 'text'
+			this.showQuotedText = isForwardedSubject(this.$email?.subject)
+			this.renderMode = this.$email?.htmlBody ? 'html' : 'text'
 			await this.prepareAttachmentContent()
 			this.refreshProtectedEmailDocument()
-			this.$loadError = ''
+			this.loadError = ''
 		} else {
-			this.$loadError = err instanceof Error ? err.message : String(err) || 'Network error'
+			this.loadError = err instanceof Error ? err.message : String(err) || 'Network error'
 		}
     } finally {
-      this.$loading = false
+      this.loading = false
       setTimeout(() => { void (/** @type {any} */ (globalThis)).__tc_rerender?.() }, 0)
     }
   }
@@ -487,26 +548,26 @@ export default class {
     else this._markReadTimer = setTimeout(() => { void mark() }, delay)
   }
 
-  get categoryPickerTitle() { return this.$categoryPicker.mode === 'label' ? 'Apply labels' : 'Move to folder' }
-  get categoryPickerPlaceholder() { return this.$categoryPicker.mode === 'label' ? 'Label as…' : 'Move to…' }
+  get categoryPickerTitle() { return this.categoryPicker.mode === 'label' ? 'Apply labels' : 'Move to folder' }
+  get categoryPickerPlaceholder() { return this.categoryPicker.mode === 'label' ? 'Label as…' : 'Move to…' }
   get categoryPickerAccount() {
-    return this.$categoryAccounts.find(account => account.domain === this.$email?.domain) || null
+    return this.categoryAccounts.find(account => account.domain === this.$email?.domain) || null
   }
   get categoryPickerItems() {
-    const kind = this.$categoryPicker.mode === 'label' ? 'label' : 'folder'
+    const kind = this.categoryPicker.mode === 'label' ? 'label' : 'folder'
     const items = buildCategoryPickerItems(
-      this.categoryPickerAccount, kind, this.$categoryPicker.search, this.$email ? [this.$email] : [],
+      this.categoryPickerAccount, kind, this.categoryPicker.search, this.$email ? [this.$email] : [],
     )
     return kind === 'folder' ? items.filter(item => item.path !== this.$email?.folder) : items
   }
-  get categoryPickerCreatePath() { return normalizePickerPath(this.$categoryPicker.search) }
+  get categoryPickerCreatePath() { return normalizePickerPath(this.categoryPicker.search) }
   get categoryPickerCanCreate() {
     const path = this.categoryPickerCreatePath
     return Boolean(path && this.categoryPickerAccount?.capabilities?.create
       && !this.categoryPickerItems.some(item => item.path === path))
   }
   get categoryPickerCreateText() {
-    const kind = this.$categoryPicker.mode === 'label' ? 'label' : 'folder'
+    const kind = this.categoryPicker.mode === 'label' ? 'label' : 'folder'
     return this.categoryPickerCreatePath ? `Create ${kind} “${this.categoryPickerCreatePath}”` : ''
   }
 
@@ -517,7 +578,7 @@ export default class {
       const response = await apiFetch('/categories')
       const result = await response?.json().catch(() => null)
       if (!response?.ok || !Array.isArray(result?.accounts)) throw new Error('Category catalog is unavailable.')
-      this.$categoryAccounts = result.accounts
+      this.categoryAccounts = result.accounts
       return true
     } catch {
       window._caduceus?.toast('Could not load folders and labels.')
@@ -535,14 +596,14 @@ export default class {
       return
     }
     this._categoryPickerReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    this.$categoryPicker = { open: true, mode, search: '', creating: false, error: '' }
+    this.categoryPicker = { open: true, mode, search: '', creating: false, error: '' }
     setTimeout(() => /** @type {HTMLInputElement | null} */ (
       document.querySelector('[data-detail-category-picker] .detail-category-picker-search')
     )?.focus(), 0)
   }
 
   closeCategoryPicker() {
-    this.$categoryPicker = { open: false, mode: 'move', search: '', creating: false, error: '' }
+    this.categoryPicker = { open: false, mode: 'move', search: '', creating: false, error: '' }
     const returnFocus = this._categoryPickerReturnFocus
     this._categoryPickerReturnFocus = null
     setTimeout(() => returnFocus?.focus(), 0)
@@ -550,7 +611,7 @@ export default class {
 
   stopCategoryPropagation(event) { event?.stopPropagation() }
   categorySearch(event) {
-    this.$categoryPicker = { ...this.$categoryPicker, search: String(event?.target?.value || ''), error: '' }
+    this.categoryPicker = { ...this.categoryPicker, search: String(event?.target?.value || ''), error: '' }
   }
   categoryPickerIndent(item) { return `padding-inline-start:${12 + Math.min(6, Number(item?.depth) || 0) * 18}px` }
   categoryPickerCheck(item) { return item?.selectedState === 'all' ? '✓' : item?.selectedState === 'mixed' ? '−' : '' }
@@ -590,13 +651,13 @@ export default class {
     const path = this.categoryPickerCreatePath
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch || !this.categoryPickerCanCreate || !path || !this.$email) return
-    this.$categoryPicker = { ...this.$categoryPicker, creating: true, error: '' }
+    this.categoryPicker = { ...this.categoryPicker, creating: true, error: '' }
     try {
       const response = await apiFetch('/categories', {
         method: 'POST',
         body: JSON.stringify({
           domain: this.$email.domain,
-          kind: this.$categoryPicker.mode === 'label' ? 'label' : 'folder',
+          kind: this.categoryPicker.mode === 'label' ? 'label' : 'folder',
           path,
         }),
       })
@@ -605,8 +666,8 @@ export default class {
       await this.loadCategoryCatalog()
       await this.applyCategoryPath(result.category.path)
     } catch (error) {
-      this.$categoryPicker = {
-        ...this.$categoryPicker,
+      this.categoryPicker = {
+        ...this.categoryPicker,
         creating: false,
         error: error instanceof Error ? error.message : 'Category creation failed.',
       }
@@ -615,10 +676,10 @@ export default class {
 
   async applyCategoryPath(path) {
     if (!this.$email) return
-    const patch = this.$categoryPicker.mode === 'label'
+    const patch = this.categoryPicker.mode === 'label'
       ? categoryLabelPatch([this.$email], path)
       : { folder: path }
-    const message = this.$categoryPicker.mode === 'label' ? 'Updated labels.' : `Moved to ${path}.`
+    const message = this.categoryPicker.mode === 'label' ? 'Updated labels.' : `Moved to ${path}.`
     if (await this.updateEmail(patch, message)) this.closeCategoryPicker()
   }
 
@@ -688,22 +749,22 @@ export default class {
   async loadConversation(emailId) {
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch || !emailId) return
-    this.$conversationLoading = true
+    this.conversationLoading = true
     try {
       const response = await apiFetch(`/threads?emailId=${encodeURIComponent(emailId)}`)
       const data = await response?.json()
       const messages = response?.ok && Array.isArray(data?.[0]?.emails) ? data[0].emails : []
       const direction = this.mailPreferences.conversationOrder === 'descending' ? -1 : 1
-      this.$conversationMessages = messages
+      this.conversationMessages = messages
         .map(message => this.decorateConversationMessage(message))
         .sort((left, right) => direction * (Date.parse(left.receivedAt || '') - Date.parse(right.receivedAt || '')))
-      this.$conversationExpanded = Object.fromEntries(messages.map(message => [message.id, message.id === emailId]))
+      this.conversationExpanded = Object.fromEntries(messages.map(message => [message.id, message.id === emailId]))
       this.refreshConversationSearch()
     } catch {
-      this.$conversationMessages = this.$email ? [this.decorateConversationMessage(this.$email)] : []
-      this.$conversationExpanded = this.$email ? { [this.$email.id]: true } : {}
+      this.conversationMessages = this.$email ? [this.decorateConversationMessage(this.$email)] : []
+      this.conversationExpanded = this.$email ? { [this.$email.id]: true } : {}
     } finally {
-      this.$conversationLoading = false
+      this.conversationLoading = false
     }
   }
 
@@ -723,24 +784,24 @@ export default class {
   }
 
   get hasConversation() {
-    return this.$conversationMessages.length > 1
+    return this.conversationMessages.length > 1
   }
 
   /** @param {string} id */
   isConversationExpanded(id) {
-    return Boolean(this.$conversationExpanded[id])
+    return Boolean(this.conversationExpanded[id])
   }
 
   /** @param {string} id */
   isConversationQuoteExpanded(id) {
-    return Boolean(this.$conversationQuotes[id])
+    return Boolean(this.conversationQuotes[id])
   }
 
   /** Tachyon supplies the DOM event before static template arguments. */
   toggleConversationMessage(eventOrId, requestedId) {
     const id = typeof eventOrId === 'string' ? eventOrId : requestedId
     if (!id) return
-    this.$conversationExpanded = { ...this.$conversationExpanded, [id]: !this.$conversationExpanded[id] }
+    this.conversationExpanded = { ...this.conversationExpanded, [id]: !this.conversationExpanded[id] }
   }
 
   toggleConversationQuote(eventOrId, requestedId) {
@@ -748,49 +809,49 @@ export default class {
     event?.stopPropagation()
     const id = typeof eventOrId === 'string' ? eventOrId : requestedId
     if (!id) return
-    this.$conversationQuotes = { ...this.$conversationQuotes, [id]: !this.$conversationQuotes[id] }
+    this.conversationQuotes = { ...this.conversationQuotes, [id]: !this.conversationQuotes[id] }
   }
 
   /** @param {Record<string, any>} email */
   conversationBody(email) {
-    return this.$conversationQuotes[email?.id]
+    return this.conversationQuotes[email?.id]
       ? [email.visibleConversationBody, email.quotedConversationBody].filter(Boolean).join('\n\n')
       : email.visibleConversationBody
   }
 
   get findProgressLabel() {
-    return this.$findIndex >= 0 && this.$findCount > 0
+    return this.findIndex >= 0 && this.findCount > 0
       ? `${this.$findIndex + 1} of ${this.$findCount}`
-      : this.$findTerm ? 'No matches' : ''
+      : this.findTerm ? 'No matches' : ''
   }
 
-  refreshConversationSearch(requestedIndex = this.$findIndex) {
-    const result = searchConversation(this.$conversationMessages, this.$findTerm, requestedIndex)
-    this.$conversationMessages = result.messages
-    this.$findTerm = result.term
-    this.$findResults = result.results
-    this.$findIndex = result.index
-    this.$findCount = result.count
+  refreshConversationSearch(requestedIndex = this.findIndex) {
+    const result = searchConversation(this.conversationMessages, this.findTerm, requestedIndex)
+    this.conversationMessages = result.messages
+    this.findTerm = result.term
+    this.findResults = result.results
+    this.findIndex = result.index
+    this.findCount = result.count
   }
 
   openFindInThread() {
     if (!this.hasConversation && !this.$email) return
-    this.$findOpen = true
-    this.$conversationExpanded = Object.fromEntries(this.$conversationMessages.map(message => [message.id, true]))
+    this.findOpen = true
+    this.conversationExpanded = Object.fromEntries(this.conversationMessages.map(message => [message.id, true]))
     this.attachFindInputKeys(true)
   }
 
   closeFindInThread() {
-    this.$findOpen = false
-    this.$findTerm = ''
-    this.$findIndex = -1
-    this.$findCount = 0
-    this.$findResults = []
-    if (this.$conversationMessages.length) this.refreshConversationSearch()
+    this.findOpen = false
+    this.findTerm = ''
+    this.findIndex = -1
+    this.findCount = 0
+    this.findResults = []
+    if (this.conversationMessages.length) this.refreshConversationSearch()
   }
 
   onFindInput(event) {
-    this.$findTerm = String(event?.target?.value || '')
+    this.findTerm = String(event?.target?.value || '')
     this.refreshConversationSearch(0)
     this.focusCurrentConversationMatch()
   }
@@ -816,21 +877,21 @@ export default class {
   }
 
   previousFindResult() {
-    if (!this.$findOpen || !this.$findCount) return
-    this.refreshConversationSearch(this.$findIndex - 1)
+    if (!this.findOpen || !this.findCount) return
+    this.refreshConversationSearch(this.findIndex - 1)
     this.focusCurrentConversationMatch()
   }
 
   nextFindResult() {
-    if (!this.$findOpen || !this.$findCount) return
-    this.refreshConversationSearch(this.$findIndex + 1)
+    if (!this.findOpen || !this.findCount) return
+    this.refreshConversationSearch(this.findIndex + 1)
     this.focusCurrentConversationMatch()
   }
 
   focusCurrentConversationMatch() {
-    const result = this.$findResults[this.$findIndex]
+    const result = this.findResults[this.findIndex]
     if (!result) return
-    this.$conversationExpanded = { ...this.$conversationExpanded, [result.messageId]: true }
+    this.conversationExpanded = { ...this.conversationExpanded, [result.messageId]: true }
     setTimeout(() => {
       const match = document.querySelector(`[data-find-index="${this.$findIndex}"]`)
       match?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
@@ -928,7 +989,7 @@ export default class {
   }
 
   get participantDisplayName() {
-    const contact = this.$participantContact
+    const contact = this.participantContact
     return contact?.name || [contact?.givenName, contact?.familyName].filter(Boolean).join(' ') || this.participantAddress
   }
 
@@ -937,29 +998,29 @@ export default class {
   }
 
   get visibleParticipantThreads() {
-    return this.$participantThreadsExpanded ? this.$participantThreads : this.$participantThreads.slice(0, 3)
+    return this.participantThreadsExpanded ? this.participantThreads : this.participantThreads.slice(0, 3)
   }
 
-  get hasMoreParticipantThreads() { return this.$participantThreads.length > 3 }
+  get hasMoreParticipantThreads() { return this.participantThreads.length > 3 }
 
   get participantSidebarLabel() {
-    return this.$participantSidebarOpen ? 'Hide contact sidebar' : 'Show contact sidebar'
+    return this.participantSidebarOpen ? 'Hide contact sidebar' : 'Show contact sidebar'
   }
 
   async toggleParticipantSidebar() {
-    this.$participantSidebarOpen = !this.$participantSidebarOpen
-    try { localStorage.setItem('caduceus-participant-sidebar', this.$participantSidebarOpen ? 'open' : 'closed') } catch {}
+    this.participantSidebarOpen = !this.participantSidebarOpen
+    try { localStorage.setItem('caduceus-participant-sidebar', this.participantSidebarOpen ? 'open' : 'closed') } catch {}
     await (/** @type {any} */ (globalThis)).__tc_rerender?.()
-    if (this.$participantSidebarOpen) void this.loadParticipantContext()
+    if (this.participantSidebarOpen) void this.loadParticipantContext()
   }
 
   async closeParticipantSidebar() {
-    if (!this.$participantSidebarOpen) return
+    if (!this.participantSidebarOpen) return
     await this.toggleParticipantSidebar()
   }
 
   toggleParticipantThreads() {
-    this.$participantThreadsExpanded = !this.$participantThreadsExpanded
+    this.participantThreadsExpanded = !this.participantThreadsExpanded
     void (/** @type {any} */ (globalThis)).__tc_rerender?.()
   }
 
@@ -967,10 +1028,10 @@ export default class {
   async loadParticipantContext() {
     const address = this.participantAddress
     const apiFetch = window._caduceus?.apiFetch
-    if (!address || !apiFetch || !this.$participantSidebarOpen) return
+    if (!address || !apiFetch || !this.participantSidebarOpen) return
     const sequence = ++this._participantLoadSequence
-    this.$participantLoading = true
-    this.$participantError = ''
+    this.participantLoading = true
+    this.participantError = ''
     try {
       const [contactsResponse, relatedResponse, githubResponse] = await Promise.all([
         apiFetch(`/contacts?q=${encodeURIComponent(address)}`),
@@ -981,17 +1042,17 @@ export default class {
       const related = await relatedResponse?.json()
       const github = await githubResponse?.json()
       if (sequence !== this._participantLoadSequence || address !== this.participantAddress) return
-      this.$participantContact = contactsResponse?.ok && Array.isArray(contacts)
+      this.participantContact = contactsResponse?.ok && Array.isArray(contacts)
         ? contacts.find(contact => Array.isArray(contact?.emails) && contact.emails.some(entry => String(entry?.value || '').toLowerCase() === address)) || null
         : null
-      this.$participantGithubStatus = githubResponse?.ok && ['disabled', 'found', 'not-found', 'unavailable'].includes(github?.status)
+      this.participantGithubStatus = githubResponse?.ok && ['disabled', 'found', 'not-found', 'unavailable'].includes(github?.status)
         ? github.status
         : 'unavailable'
-      this.$participantGithubProfile = this.$participantGithubStatus === 'found' && github?.profile
+      this.participantGithubProfile = this.participantGithubStatus === 'found' && github?.profile
         ? github.profile
         : null
       const seen = new Set()
-      this.$participantThreads = (relatedResponse?.ok && Array.isArray(related) ? related : [])
+      this.participantThreads = (relatedResponse?.ok && Array.isArray(related) ? related : [])
         .filter(email => String(email?.sender || '').toLowerCase() === address)
         .sort((a, b) => String(b.receivedAt || '').localeCompare(String(a.receivedAt || '')))
         .filter(email => {
@@ -1009,13 +1070,13 @@ export default class {
         }))
     } catch {
       if (sequence === this._participantLoadSequence) {
-        this.$participantGithubStatus = 'unavailable'
-        this.$participantGithubProfile = null
-        this.$participantError = 'Contact context is unavailable.'
+        this.participantGithubStatus = 'unavailable'
+        this.participantGithubProfile = null
+        this.participantError = 'Contact context is unavailable.'
       }
     } finally {
       if (sequence === this._participantLoadSequence) {
-        this.$participantLoading = false
+        this.participantLoading = false
         await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       }
     }
@@ -1065,7 +1126,7 @@ export default class {
 
   /** Whether account policy permits ordinary remote content for this email. */
   get shouldLoadRemoteImages() {
-    if (this.$remoteImagesVisible) return true
+    if (this.remoteImagesVisible) return true
     if (this.isSpam(this.$email || undefined)) return false
     return this.$remoteImagePolicy === 'allow' ||
       (Boolean(this.imageSender) && this.$trustedImageSenders.includes(this.imageSender))
@@ -1073,8 +1134,8 @@ export default class {
 
   /** Human-readable privacy report used by the reader status card. */
   get remoteContentSummary() {
-    const blocked = this.$blockedRemoteContentCount
-    const removed = this.$removedTrackingCount
+    const blocked = this.blockedRemoteContentCount
+    const removed = this.removedTrackingCount
     if (blocked && removed) return `${blocked} remote ${blocked === 1 ? 'image is' : 'images are'} blocked and ${removed} tracking ${removed === 1 ? 'pixel was' : 'pixels were'} removed.`
     if (blocked) return `${blocked} remote ${blocked === 1 ? 'image is' : 'images are'} blocked to protect your privacy.`
     if (removed) return `${removed} tracking ${removed === 1 ? 'pixel was' : 'pixels were'} removed.`
@@ -1101,8 +1162,8 @@ export default class {
 
   /** Rewrite the raw MIME HTML before it reaches the sandboxed iframe. */
   refreshProtectedEmailDocument() {
-    const body = this.$translationVisible && this.$translatedHtmlBody
-      ? this.$translatedHtmlBody
+    const body = this.translationVisible && this.translatedHtmlBody
+      ? this.translatedHtmlBody
       : this.$email?.htmlBody || ''
     const requestedMode = this.mailPreferences.emailRenderMode
     const interfaceMode = document.documentElement.getAttribute('w-theme') === 'dark'
@@ -1110,17 +1171,17 @@ export default class {
     const colorMode = /** @type {'light'|'dark'} */ (requestedMode === 'theme' ? interfaceMode : requestedMode)
     const result = buildProtectedEmailDocument(body, {
       allowRemote: this.shouldLoadRemoteImages,
-      cidSources: this.$inlineAttachmentSources,
-      remoteSources: this.$remoteImageSources,
-      showQuoted: this.$showQuotedText,
+      cidSources: this.inlineAttachmentSources,
+      remoteSources: this.remoteImageSources,
+      showQuoted: this.showQuotedText,
       colorMode,
     })
-    this.$protectedEmailDocument = result.documentHtml
-    this.$remoteContentCount = result.remoteCount
-    this.$blockedRemoteContentCount = result.blockedCount
-    this.$removedTrackingCount = result.trackingCount
-    this.$quotedTextCount = result.quotedCount
-    this.$remoteImageUrls = result.remoteUrls
+    this.protectedEmailDocument = result.documentHtml
+    this.remoteContentCount = result.remoteCount
+    this.blockedRemoteContentCount = result.blockedCount
+    this.removedTrackingCount = result.trackingCount
+    this.quotedTextCount = result.quotedCount
+    this.remoteImageUrls = result.remoteUrls
     this.$suspiciousLinkCount = result.suspiciousLinkCount
   }
 
@@ -1129,12 +1190,12 @@ export default class {
   }
 
   get visiblePlainText() {
-    if (this.$translationVisible && this.$translatedPlainText) return this.$translatedPlainText
+    if (this.translationVisible && this.translatedPlainText) return this.translatedPlainText
     return this.plainTextParts.visible || (this.plainTextParts.hasQuoted ? '' : '(No body)')
   }
 
   get translationTargetLabel() {
-    return TRANSLATION_LANGUAGES[this.$translationTarget] || 'selected language'
+    return TRANSLATION_LANGUAGES[this.translationTarget] || 'selected language'
   }
 
   get translationLanguageOptions() {
@@ -1142,16 +1203,16 @@ export default class {
   }
 
   get translationSourceLabel() {
-    return TRANSLATION_LANGUAGES[this.$translationSource] || 'detected language'
+    return TRANSLATION_LANGUAGES[this.translationSource] || 'detected language'
   }
 
   get translationPreference() {
-    return translationPreferenceFor(this.$translationSource)
+    return translationPreferenceFor(this.translationSource)
   }
 
   get translationOfferVisible() {
-    if (this.$translationBusy || this.$translationVisible || this.$translatedHtmlBody || this.$translatedPlainText || this.$translationError) return true
-    if (!this.$translationSource || this.$translationSource === this.$translationTarget || this.isMessageFromCurrentUser) return false
+    if (this.translationBusy || this.translationVisible || this.translatedHtmlBody || this.translatedPlainText || this.translationError) return true
+    if (!this.translationSource || this.translationSource === this.translationTarget || this.isMessageFromCurrentUser) return false
     return this.translationPreference !== 'never'
   }
 
@@ -1164,8 +1225,8 @@ export default class {
   }
 
   get translationStatus() {
-    if (!this.$translationBusy) return ''
-    return this.$translationProgress > 0 && this.$translationProgress < 1
+    if (!this.translationBusy) return ''
+    return this.translationProgress > 0 && this.translationProgress < 1
       ? `Downloading language model… ${Math.round(this.$translationProgress * 100)}%`
       : 'Translating on this device…'
   }
@@ -1174,12 +1235,12 @@ export default class {
   restoreCachedTranslation() {
     const messageId = String(this.$email?.id || '')
     if (!messageId) return false
-    const cached = loadCachedMessageTranslation(messageId, this.$translationTarget)
+    const cached = loadCachedMessageTranslation(messageId, this.translationTarget)
     if (!cached) return false
-    this.$translationSource = cached.sourceLanguage
-    this.$translatedHtmlBody = cached.htmlBody
-    this.$translatedPlainText = cached.plainText
-    this.$translationVisible = cached.enabled
+    this.translationSource = cached.sourceLanguage
+    this.translatedHtmlBody = cached.htmlBody
+    this.translatedPlainText = cached.plainText
+    this.translationVisible = cached.enabled
     return true
   }
 
@@ -1197,29 +1258,29 @@ export default class {
     if (text.length < 20) return
     const result = await detectLanguage(text)
     if (sequence !== this._translationDetectionSequence || this.$email?.id !== emailId) return
-    if (!result.language || result.confidence < 0.3 || result.language === this.$translationTarget) return
-    this.$translationSource = result.language
+    if (!result.language || result.confidence < 0.3 || result.language === this.translationTarget) return
+    this.translationSource = result.language
     await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     if (this.translationPreference === 'always') await this.translateMessage()
   }
 
   async alwaysTranslateDetectedLanguage() {
-    if (!this.$translationSource) return
-    setTranslationPreference(this.$translationSource, 'always')
+    if (!this.translationSource) return
+    setTranslationPreference(this.translationSource, 'always')
     await this.translateMessage()
   }
 
   async stopAutomaticallyTranslatingDetectedLanguage() {
-    if (!this.$translationSource) return
-    setTranslationPreference(this.$translationSource, 'offer')
+    if (!this.translationSource) return
+    setTranslationPreference(this.translationSource, 'offer')
     await (/** @type {any} */ (globalThis)).__tc_rerender?.()
   }
 
   async neverTranslateDetectedLanguage() {
-    if (!this.$translationSource) return
-    setTranslationPreference(this.$translationSource, 'never')
+    if (!this.translationSource) return
+    setTranslationPreference(this.translationSource, 'never')
     this.showOriginalMessage()
-    this.$translationError = ''
+    this.translationError = ''
     await (/** @type {any} */ (globalThis)).__tc_rerender?.()
   }
 
@@ -1232,12 +1293,12 @@ export default class {
   async changeTranslationTarget(event) {
     const value = String(/** @type {HTMLSelectElement} */ (event.target)?.value || '')
     if (!Object.hasOwn(TRANSLATION_LANGUAGES, value)) return
-    this.$translationTarget = value
+    this.translationTarget = value
     try { localStorage.setItem('caduceus-translation-target', value) } catch {}
-    this.$translatedHtmlBody = ''
-    this.$translatedPlainText = ''
-    this.$translationVisible = false
-    this.$translationError = ''
+    this.translatedHtmlBody = ''
+    this.translatedPlainText = ''
+    this.translationVisible = false
+    this.translationError = ''
     this.restoreCachedTranslation()
     this.refreshProtectedEmailDocument()
     await (/** @type {any} */ (globalThis)).__tc_rerender?.()
@@ -1245,63 +1306,63 @@ export default class {
 
   /** Translate the visible message after explicit user activation. */
   async translateMessage() {
-    if (!this.$email || this.$translationBusy) return
-    this.$translationBusy = true
-    this.$translationProgress = 0
-    this.$translationError = ''
+    if (!this.$email || this.translationBusy) return
+    this.translationBusy = true
+    this.translationProgress = 0
+    this.translationError = ''
     try {
       const progress = loaded => {
-        this.$translationProgress = loaded
+        this.translationProgress = loaded
         void (/** @type {any} */ (globalThis)).__tc_rerender?.()
       }
       if (this.$email.htmlBody) {
         const result = await translateHtml(this.$email.htmlBody, {
-          sourceLanguage: this.$translationSource,
-          targetLanguage: this.$translationTarget,
+          sourceLanguage: this.translationSource,
+          targetLanguage: this.translationTarget,
           onProgress: progress,
         })
-        this.$translatedHtmlBody = result.html
-        this.$translationSource = result.sourceLanguage
+        this.translatedHtmlBody = result.html
+        this.translationSource = result.sourceLanguage
       }
       const plain = this.plainTextParts.visible
       if (plain) {
         const result = await translateText(plain, {
-          sourceLanguage: this.$translationSource,
-          targetLanguage: this.$translationTarget,
+          sourceLanguage: this.translationSource,
+          targetLanguage: this.translationTarget,
           onProgress: progress,
         })
-        this.$translatedPlainText = result.text
-        this.$translationSource ||= result.sourceLanguage
+        this.translatedPlainText = result.text
+        this.translationSource ||= result.sourceLanguage
       }
-      if (!this.$translatedHtmlBody && !this.$translatedPlainText) throw new Error('This message has no translatable text.')
-      this.$translationVisible = true
+      if (!this.translatedHtmlBody && !this.translatedPlainText) throw new Error('This message has no translatable text.')
+      this.translationVisible = true
       saveCachedMessageTranslation({
         messageId: String(this.$email.id || ''),
-        sourceLanguage: this.$translationSource,
-        targetLanguage: this.$translationTarget,
-        htmlBody: this.$translatedHtmlBody,
-        plainText: this.$translatedPlainText,
+        sourceLanguage: this.translationSource,
+        targetLanguage: this.translationTarget,
+        htmlBody: this.translatedHtmlBody,
+        plainText: this.translatedPlainText,
         enabled: true,
       })
       this.refreshProtectedEmailDocument()
     } catch (error) {
-      this.$translationError = error instanceof Error ? error.message : 'Translation failed.'
+      this.translationError = error instanceof Error ? error.message : 'Translation failed.'
     } finally {
-      this.$translationBusy = false
-      this.$translationProgress = 0
+      this.translationBusy = false
+      this.translationProgress = 0
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
 
   showOriginalMessage() {
-    this.$translationVisible = false
+    this.translationVisible = false
     if (this.$email?.id) setCachedMessageTranslationEnabled(String(this.$email.id), false)
     this.refreshProtectedEmailDocument()
   }
 
   showTranslatedMessage() {
-    if (!this.$translatedHtmlBody && !this.$translatedPlainText) return
-    this.$translationVisible = true
+    if (!this.translatedHtmlBody && !this.translatedPlainText) return
+    this.translationVisible = true
     if (this.$email?.id) setCachedMessageTranslationEnabled(String(this.$email.id), true)
     this.refreshProtectedEmailDocument()
   }
@@ -1311,21 +1372,21 @@ export default class {
   }
 
   get hasQuotedText() {
-    return this.$renderMode === 'html'
-      ? this.$quotedTextCount > 0
-      : this.$renderMode === 'text' && this.plainTextParts.hasQuoted
+    return this.renderMode === 'html'
+      ? this.quotedTextCount > 0
+      : this.renderMode === 'text' && this.plainTextParts.hasQuoted
   }
 
   toggleQuotedText() {
     if (!this.hasQuotedText) return
-    this.$showQuotedText = !this.$showQuotedText
-    if (this.$renderMode === 'html') this.refreshProtectedEmailDocument()
+    this.showQuotedText = !this.showQuotedText
+    if (this.renderMode === 'html') this.refreshProtectedEmailDocument()
     setTimeout(() => { void (/** @type {any} */ (globalThis)).__tc_rerender?.() }, 0)
   }
 
   /** Grant a one-message remote-image exception after explicit user intent. */
   async showRemoteImages() {
-    this.$remoteImagesVisible = true
+    this.remoteImagesVisible = true
     this.refreshProtectedEmailDocument()
     await this.loadRemoteImageSources()
   }
@@ -1334,10 +1395,10 @@ export default class {
   async loadRemoteImageSources() {
     const apiFetch = window._caduceus?.apiFetch
     const emailId = String(this.$email?.id || '')
-    const urls = this.$remoteImageUrls.filter(url => !this.$remoteImageSources[url])
-    if (!apiFetch || !emailId || !urls.length || this.$remoteImagesLoading) return
-    this.$remoteImagesLoading = true
-    this.$remoteImageError = ''
+    const urls = this.remoteImageUrls.filter(url => !this.remoteImageSources[url])
+    if (!apiFetch || !emailId || !urls.length || this.remoteImagesLoading) return
+    this.remoteImagesLoading = true
+    this.remoteImageError = ''
     try {
       let failures = 0
       for (let index = 0; index < urls.length; index += 6) {
@@ -1353,16 +1414,16 @@ export default class {
         failures += Math.max(0, Number(data.failed) || 0)
         for (const image of data.images) {
           const source = proxyImageDataUrl(image)
-          if (source) this.$remoteImageSources[String(image.url)] = source
+          if (source) this.remoteImageSources[String(image.url)] = source
           else failures += 1
         }
       }
-      if (failures) this.$remoteImageError = `${failures} remote ${failures === 1 ? 'image could' : 'images could'} not be loaded safely.`
+      if (failures) this.remoteImageError = `${failures} remote ${failures === 1 ? 'image could' : 'images could'} not be loaded safely.`
       this.refreshProtectedEmailDocument()
     } catch {
-      this.$remoteImageError = 'Remote images could not be loaded safely.'
+      this.remoteImageError = 'Remote images could not be loaded safely.'
     } finally {
-      this.$remoteImagesLoading = false
+      this.remoteImagesLoading = false
       setTimeout(() => { void (/** @type {any} */ (globalThis)).__tc_rerender?.() }, 0)
     }
   }
@@ -1371,8 +1432,8 @@ export default class {
   async alwaysShowImagesFromSender() {
     const sender = this.imageSender
     const apiFetch = window._caduceus?.apiFetch
-    if (!sender || !apiFetch || this.$remotePreferenceSaving) return
-    this.$remotePreferenceSaving = true
+    if (!sender || !apiFetch || this.remotePreferenceSaving) return
+    this.remotePreferenceSaving = true
     try {
       const trustedImageSenders = [...new Set([...this.$trustedImageSenders, sender])]
       const response = await apiFetch('/users/me/preferences', {
@@ -1392,7 +1453,7 @@ export default class {
     } catch {
       window._caduceus?.toast('Could not save the image preference.')
     } finally {
-      this.$remotePreferenceSaving = false
+      this.remotePreferenceSaving = false
       setTimeout(() => { void (/** @type {any} */ (globalThis)).__tc_rerender?.() }, 0)
     }
   }
@@ -1422,7 +1483,7 @@ export default class {
       click.stopPropagation()
       const safeTarget = safeExternalLinkTarget(target.getAttribute('data-caduceus-link-target'))
       if (!safeTarget) return
-      this.$pendingLinkWarning = {
+      this.pendingLinkWarning = {
         reason: target.getAttribute('data-caduceus-link-warning') || 'This link may disguise its destination.',
         target: safeTarget,
         destinationHost: target.getAttribute('data-caduceus-link-host') || new URL(safeTarget).hostname,
@@ -1432,19 +1493,19 @@ export default class {
     })
   }
 
-  get pendingLinkReason() { return this.$pendingLinkWarning?.reason || '' }
-  get pendingLinkTarget() { return this.$pendingLinkWarning?.target || '' }
-  get pendingLinkDestinationHost() { return this.$pendingLinkWarning?.destinationHost || '' }
-  get pendingLinkDisplayedHost() { return this.$pendingLinkWarning?.displayedHost || '' }
+  get pendingLinkReason() { return this.pendingLinkWarning?.reason || '' }
+  get pendingLinkTarget() { return this.pendingLinkWarning?.target || '' }
+  get pendingLinkDestinationHost() { return this.pendingLinkWarning?.destinationHost || '' }
+  get pendingLinkDisplayedHost() { return this.pendingLinkWarning?.displayedHost || '' }
 
   cancelPendingLink() {
-    this.$pendingLinkWarning = null
+    this.pendingLinkWarning = null
     setTimeout(() => { void (/** @type {any} */ (globalThis)).__tc_rerender?.() }, 0)
   }
 
   openPendingLink() {
-    const target = safeExternalLinkTarget(this.$pendingLinkWarning?.target)
-    this.$pendingLinkWarning = null
+    const target = safeExternalLinkTarget(this.pendingLinkWarning?.target)
+    this.pendingLinkWarning = null
     if (target) window.open(target, '_blank', 'noopener,noreferrer')
     setTimeout(() => { void (/** @type {any} */ (globalThis)).__tc_rerender?.() }, 0)
   }
@@ -1473,49 +1534,49 @@ export default class {
     if (mode !== 'html' && mode !== 'text' && mode !== 'source') return
     if (mode === 'html' && !this.$email?.htmlBody) return
     if (mode === 'source' && !this.$email?.hasRawSource) return
-    this.$renderMode = mode
+    this.renderMode = mode
     if (mode === 'source') await this.loadRawSource()
     setTimeout(() => { void (/** @type {any} */ (globalThis)).__tc_rerender?.() }, 0)
   }
 
   /** Fetch the exact source once; source text is displayed only in a `<pre>`. */
   async loadRawSource() {
-    if (this.$rawSourceBase64 || this.$sourceLoading || !this.$email?.id) return
+    if (this.rawSourceBase64 || this.sourceLoading || !this.$email?.id) return
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
-    this.$sourceLoading = true
-    this.$sourceError = ''
+    this.sourceLoading = true
+    this.sourceError = ''
     try {
       const response = await apiFetch(`/inbox/${this.$email.id}/source`)
       const data = await response?.json()
       if (!response?.ok) {
-        this.$sourceError = data?.error || 'Could not load the original message source.'
+        this.sourceError = data?.error || 'Could not load the original message source.'
         return
       }
-      this.$rawSourceBase64 = String(data.contentBase64 || '')
-      this.$rawSourceFilename = String(data.filename || 'message.eml')
-      this.$rawSourceText = new TextDecoder('utf-8', { fatal: false }).decode(
-        Uint8Array.from(atob(this.$rawSourceBase64), character => character.charCodeAt(0)),
+      this.rawSourceBase64 = String(data.contentBase64 || '')
+      this.rawSourceFilename = String(data.filename || 'message.eml')
+      this.rawSourceText = new TextDecoder('utf-8', { fatal: false }).decode(
+        Uint8Array.from(atob(this.rawSourceBase64), character => character.charCodeAt(0)),
       )
     } catch {
-      this.$sourceError = 'Could not load the original message source.'
+      this.sourceError = 'Could not load the original message source.'
     } finally {
-      this.$sourceLoading = false
+      this.sourceLoading = false
     }
   }
 
   /** Download the exact retained bytes as an RFC 822 `.eml` file. */
   async downloadOriginal() {
     await this.loadRawSource()
-    if (!this.$rawSourceBase64) {
-      window._caduceus?.toast(this.$sourceError || 'Original message source is unavailable.')
+    if (!this.rawSourceBase64) {
+      window._caduceus?.toast(this.sourceError || 'Original message source is unavailable.')
       return
     }
-    const bytes = Uint8Array.from(atob(this.$rawSourceBase64), character => character.charCodeAt(0))
+    const bytes = Uint8Array.from(atob(this.rawSourceBase64), character => character.charCodeAt(0))
     const url = URL.createObjectURL(new Blob([bytes], { type: 'message/rfc822' }))
     const link = document.createElement('a')
     link.href = url
-    link.download = this.$rawSourceFilename || 'message.eml'
+    link.download = this.rawSourceFilename || 'message.eml'
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -1530,7 +1591,7 @@ export default class {
    * @returns {Promise<void>}
    */
   async unsubscribe() {
-    if (this.$unsubscribeState === 'loading' || this.$unsubscribeState === 'success') return
+    if (this.unsubscribeState === 'loading' || this.unsubscribeState === 'success') return
     const action = buildUnsubscribeAction(this.$email)
     if (!action || !confirm('Unsubscribe from future messages from this sender?')) return
 
@@ -1543,8 +1604,8 @@ export default class {
       return
     }
 
-    this.$unsubscribeState = 'loading'
-    this.$unsubscribeError = ''
+    this.unsubscribeState = 'loading'
+    this.unsubscribeError = ''
     try {
       await fetch(action.url, {
         method: 'POST',
@@ -1554,11 +1615,11 @@ export default class {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'List-Unsubscribe=One-Click',
       })
-      this.$unsubscribeState = 'success'
+      this.unsubscribeState = 'success'
       window._caduceus?.toast('Unsubscribe request sent.')
     } catch (error) {
-      this.$unsubscribeState = 'error'
-      this.$unsubscribeError = error instanceof Error ? error.message : 'Network request failed'
+      this.unsubscribeState = 'error'
+      this.unsubscribeError = error instanceof Error ? error.message : 'Network request failed'
       window._caduceus?.toast('Could not send the unsubscribe request.')
     }
   }
@@ -1571,14 +1632,14 @@ export default class {
    * @returns {Promise<void>}
    */
   async printConversation() {
-    if (!this.$email || this.$printing) return
+    if (!this.$email || this.printing) return
     const popup = window.open('', '_blank', 'popup')
     if (!popup) {
       window._caduceus?.toast('Allow pop-ups to print this conversation.')
       return
     }
 
-    this.$printing = true
+    this.printing = true
     try {
       const conversation = await loadPrintableConversation(
         this.$email,
@@ -1592,7 +1653,7 @@ export default class {
       popup.close()
       window._caduceus?.toast('Could not prepare this conversation for printing.')
     } finally {
-      this.$printing = false
+      this.printing = false
     }
   }
 
@@ -1623,17 +1684,17 @@ export default class {
    */
   snooze() {
     if (!this.$email || this.$email.folder !== 'inbox') return
-    this.$snoozeError = ''
-    this.$shareOpen = false
-    this.$shareBusy = false
-    this.$shareError = ''
-    this.$threadShares = []
-    this.$createdShare = null
-    this.$snoozeOpen = true
+    this.snoozeError = ''
+    this.shareOpen = false
+    this.shareBusy = false
+    this.shareError = ''
+    this.threadShares = []
+    this.createdShare = null
+    this.snoozeOpen = true
   }
 
   closeSnooze() {
-    if (!this.$snoozeBusy) this.$snoozeOpen = false
+    if (!this.snoozeBusy) this.snoozeOpen = false
   }
 
   /** @param {Event} event */
@@ -1644,16 +1705,16 @@ export default class {
   /** Open the exact-owner share manager for the current conversation. */
   async openShareDialog() {
     if (!this.$email?.id) return
-    this.$shareOpen = true
-    this.$shareError = ''
-    this.$createdShare = null
+    this.shareOpen = true
+    this.shareError = ''
+    this.createdShare = null
     await this.loadThreadShares()
   }
 
   closeShareDialog() {
-    if (!this.$shareBusy) {
-      this.$shareOpen = false
-      this.$createdShare = null
+    if (!this.shareBusy) {
+      this.shareOpen = false
+      this.createdShare = null
     }
   }
 
@@ -1663,17 +1724,17 @@ export default class {
   async loadThreadShares() {
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch || !this.$email?.id) return
-    this.$shareBusy = true
-    this.$shareError = ''
+    this.shareBusy = true
+    this.shareError = ''
     try {
       const response = await apiFetch(`/thread-shares?emailId=${encodeURIComponent(this.$email.id)}`)
       const data = await response?.json()
       if (!response?.ok || !Array.isArray(data)) throw new Error(data?.error || 'Could not load sharing links.')
-      this.$threadShares = data.map(share => ({ ...share, statusLabel: this.shareStatusLabel(share) }))
+      this.threadShares = data.map(share => ({ ...share, statusLabel: this.shareStatusLabel(share) }))
     } catch (error) {
-      this.$shareError = error instanceof Error ? error.message : 'Could not load sharing links.'
+      this.shareError = error instanceof Error ? error.message : 'Could not load sharing links.'
     } finally {
-      this.$shareBusy = false
+      this.shareBusy = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
@@ -1681,32 +1742,32 @@ export default class {
   /** Mint a new one-time-visible secret and revoke the thread's prior active link. */
   async createThreadShare() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || !this.$email?.id || this.$shareBusy) return
-    this.$shareBusy = true
-    this.$shareError = ''
+    if (!apiFetch || !this.$email?.id || this.shareBusy) return
+    this.shareBusy = true
+    this.shareError = ''
     try {
       const response = await apiFetch('/thread-shares', {
         method: 'POST',
         body: JSON.stringify({
           emailId: this.$email.id,
-          expiresInDays: Number(this.$shareExpiresDays),
+          expiresInDays: Number(this.shareExpiresDays),
         }),
       })
       const data = await response?.json()
       if (!response?.ok || typeof data?.url !== 'string') throw new Error(data?.error || 'Could not create sharing link.')
-      this.$createdShare = { ...data, absoluteUrl: new URL(data.url, location.origin).href }
+      this.createdShare = { ...data, absoluteUrl: new URL(data.url, location.origin).href }
       await this.loadThreadShares()
       window._caduceus?.toast('Private conversation link created.')
     } catch (error) {
-      this.$shareError = error instanceof Error ? error.message : 'Could not create sharing link.'
+      this.shareError = error instanceof Error ? error.message : 'Could not create sharing link.'
     } finally {
-      this.$shareBusy = false
+      this.shareBusy = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
 
   async copyThreadShare() {
-    const value = String(this.$createdShare?.absoluteUrl || '')
+    const value = String(this.createdShare?.absoluteUrl || '')
     if (!value) return
     try {
       if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(value)
@@ -1732,7 +1793,7 @@ export default class {
   }
 
   openThreadShare() {
-    const url = String(this.$createdShare?.absoluteUrl || '')
+    const url = String(this.createdShare?.absoluteUrl || '')
     if (url) window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -1741,20 +1802,20 @@ export default class {
     const candidate = /** @type {Record<string, any>} */ (eventOrShare)
     const share = requestedShare?.id ? requestedShare : candidate?.id ? candidate : null
     const apiFetch = window._caduceus?.apiFetch
-    if (!share?.id || !apiFetch || this.$shareBusy) return
-    this.$shareBusy = true
-    this.$shareError = ''
+    if (!share?.id || !apiFetch || this.shareBusy) return
+    this.shareBusy = true
+    this.shareError = ''
     try {
       const response = await apiFetch(`/thread-shares/${encodeURIComponent(share.id)}`, { method: 'DELETE' })
       const data = await response?.json()
       if (!response?.ok) throw new Error(data?.error || 'Could not revoke sharing link.')
-      if (this.$createdShare?.id === share.id) this.$createdShare = null
+      if (this.createdShare?.id === share.id) this.createdShare = null
       await this.loadThreadShares()
       window._caduceus?.toast('Sharing link revoked.')
     } catch (error) {
-      this.$shareError = error instanceof Error ? error.message : 'Could not revoke sharing link.'
+      this.shareError = error instanceof Error ? error.message : 'Could not revoke sharing link.'
     } finally {
-      this.$shareBusy = false
+      this.shareBusy = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
@@ -1775,9 +1836,9 @@ export default class {
   /** @param {Event} [event] */
   async submitCustomSnooze(event) {
     event?.preventDefault()
-    const date = new Date(this.$snoozeCustom)
-    if (!this.$snoozeCustom || !Number.isFinite(date.getTime()) || date.getTime() <= Date.now()) {
-      this.$snoozeError = 'Choose a future date and time.'
+    const date = new Date(this.snoozeCustom)
+    if (!this.snoozeCustom || !Number.isFinite(date.getTime()) || date.getTime() <= Date.now()) {
+      this.snoozeError = 'Choose a future date and time.'
       return
     }
     await this.performSnooze(date, 'Custom')
@@ -1787,14 +1848,14 @@ export default class {
   async performSnooze(date, label) {
     if (!this.$email || date.getTime() <= Date.now()) return
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
-    this.$snoozeBusy = true; this.$snoozeError = ''
+    this.snoozeBusy = true; this.snoozeError = ''
     const clientRequestId = crypto.randomUUID()
     const body = { emailId: this.$email.id, until: date.toISOString(), label, clientRequestId }
     try {
       const res = await apiFetch('/snooze', { method: 'POST', body: JSON.stringify(body) })
       if (res?.ok) {
         const result = await res.json()
-        this.$snoozeOpen = false
+        this.snoozeOpen = false
         const message = `Snoozed ${result.count === 1 ? 'conversation' : `${result.count} messages`} until ${formatPreferenceDate(date)}`
         const expiresAt = Date.now() + 10_000
         sessionStorage.setItem('caduceus_pending_snooze_undo', JSON.stringify({
@@ -1810,7 +1871,7 @@ export default class {
         window.dispatchEvent(new Event('caduceus:refresh-inbox'))
       } else {
         const result = await res?.json().catch(() => null)
-        this.$snoozeError = result?.error || 'Snooze failed.'
+        this.snoozeError = result?.error || 'Snooze failed.'
       }
     } catch {
       try {
@@ -1820,11 +1881,11 @@ export default class {
           coalesceKey: `snooze:${this.$email.id}`,
           metadata: { emailId: this.$email.id },
         })
-        this.$snoozeOpen = false
+        this.snoozeOpen = false
         window._caduceus?.navigate('inbox')
-      } catch { this.$snoozeError = 'Network error.' }
+      } catch { this.snoozeError = 'Network error.' }
     } finally {
-      this.$snoozeBusy = false
+      this.snoozeBusy = false
     }
   }
 
@@ -1935,9 +1996,9 @@ export default class {
    */
   emailHtmlSrcDoc(html) {
     void html
-    if (!this.$protectedEmailDocument) this.refreshProtectedEmailDocument()
+    if (!this.protectedEmailDocument) this.refreshProtectedEmailDocument()
     setTimeout(() => this.bindProtectedFrames(), 0)
-    return this.$protectedEmailDocument
+    return this.protectedEmailDocument
   }
 
   /**
@@ -1967,9 +2028,9 @@ export default class {
     const status = typeof eventOrStatus === 'string' ? eventOrStatus : requestedStatus
     if (!status) return
     const invite = this.$email?.calendarInvite
-    if (!invite?.id || !invite.canRespond || this.$inviteResponseBusy) return
+    if (!invite?.id || !invite.canRespond || this.inviteResponseBusy) return
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
-    this.$inviteResponseBusy = true
+    this.inviteResponseBusy = true
     try {
       const res = await apiFetch('/calendar/invites/respond', {
         method: 'POST',
@@ -1987,7 +2048,7 @@ export default class {
     } catch {
       window._caduceus?.toast('Network error.')
     } finally {
-      this.$inviteResponseBusy = false
+      this.inviteResponseBusy = false
       // Tachyon coalesces renders requested while an async event callback is
       // still in flight. Queue this state flush after the callback boundary so
       // the status chip and disabled controls reflect the persisted response.
@@ -2024,10 +2085,9 @@ export default class {
       window.dispatchEvent(new Event('caduceus:refresh-inbox'))
       if (message) window._caduceus?.toast(message)
       return true
-    } else {
-      window._caduceus?.toast('Update failed.')
-      return false
     }
+    window._caduceus?.toast('Update failed.')
+    return false
   }
 
   toggleRead() {
@@ -2135,7 +2195,7 @@ export default class {
 
   /** Open the exact validated GitHub notification target in a new tab. */
   openGitHub() {
-    if (this.$findOpen) return
+    if (this.findOpen) return
     const target = safeGitHubTarget(this.$email?.githubUrl)
     if (!target) return
     const popup = window.open(target, '_blank', 'noopener,noreferrer')
@@ -2234,16 +2294,16 @@ export default class {
    * @returns {Promise<void>}
    */
   async sendReply() {
-    if (!this.$email || !this.$replyText) return
+    if (!this.$email || !this.replyText) return
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
     try {
       const res = await apiFetch('/send', { method: 'POST', body: JSON.stringify({
         to: [this.replyTarget],
         subject: `Re: ${this.$email.subject}`,
-        text: this.$replyText,
+        text: this.replyText,
         ...this.replyThreadMetadata(),
       }) })
-      if (res?.ok) { window._caduceus?.toast('Reply sent.'); this.$showReply = false; this.$replyText = '' }
+      if (res?.ok) { window._caduceus?.toast('Reply sent.'); this.showReply = false; this.replyText = '' }
       else { window._caduceus?.toast('Send failed.') }
     } catch { window._caduceus?.toast('Network error.') }
   }
@@ -2352,7 +2412,7 @@ export default class {
       }
     }))
     this.$email = { ...this.$email, attachments }
-    this.$inlineAttachmentSources = cidSources
+    this.inlineAttachmentSources = cidSources
   }
 
   /**
@@ -2368,36 +2428,36 @@ export default class {
     const attachment = /** @type {{ id: string, [key: string]: any }} */ (requestedAttachment || eventOrAttachment)
     const kind = attachmentPreviewKind(attachment?.contentType)
     if (!kind) return
-    this.$attachmentPreviewOpen = true
-    this.$attachmentPreviewLoading = true
+    this.attachmentPreviewOpen = true
+    this.attachmentPreviewLoading = true
     this.$attachmentPreviewKind = kind
-    this.$attachmentPreviewUrl = ''
-    this.$attachmentPreviewText = ''
-    this.$attachmentPreviewError = ''
-    this.$attachmentPreviewAttachment = attachment
+    this.attachmentPreviewUrl = ''
+    this.attachmentPreviewText = ''
+    this.attachmentPreviewError = ''
+    this.attachmentPreviewAttachment = attachment
     try {
       const data = await this.getAttachmentContent(attachment)
-      if (kind === 'text') this.$attachmentPreviewText = decodeAttachmentText(data)
+      if (kind === 'text') this.attachmentPreviewText = decodeAttachmentText(data)
       else {
-        this.$attachmentPreviewUrl = attachmentPreviewDataUrl(data)
-        if (!this.$attachmentPreviewUrl) throw new Error('This attachment cannot be previewed safely.')
+        this.attachmentPreviewUrl = attachmentPreviewDataUrl(data)
+        if (!this.attachmentPreviewUrl) throw new Error('This attachment cannot be previewed safely.')
       }
     } catch (error) {
-      this.$attachmentPreviewError = error instanceof Error ? error.message : 'Attachment preview failed.'
+      this.attachmentPreviewError = error instanceof Error ? error.message : 'Attachment preview failed.'
     } finally {
-      this.$attachmentPreviewLoading = false
+      this.attachmentPreviewLoading = false
       setTimeout(() => { void (/** @type {any} */ (globalThis)).__tc_rerender?.() }, 0)
     }
   }
 
   closeAttachmentPreview() {
-    this.$attachmentPreviewOpen = false
-    this.$attachmentPreviewLoading = false
+    this.attachmentPreviewOpen = false
+    this.attachmentPreviewLoading = false
     this.$attachmentPreviewKind = ''
-    this.$attachmentPreviewUrl = ''
-    this.$attachmentPreviewText = ''
-    this.$attachmentPreviewError = ''
-    this.$attachmentPreviewAttachment = null
+    this.attachmentPreviewUrl = ''
+    this.attachmentPreviewText = ''
+    this.attachmentPreviewError = ''
+    this.attachmentPreviewAttachment = null
   }
 
   stopAttachmentPreviewPropagation(event) {

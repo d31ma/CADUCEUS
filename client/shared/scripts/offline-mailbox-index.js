@@ -213,8 +213,7 @@ function matchesScope(message, filter) {
   if (filter.domain && String(message.domain || '').toLowerCase() !== String(filter.domain).toLowerCase()) return false
   if (filter.account && String(message.providerAccountId || '') !== String(filter.account)) return false
   if (filter.read != null && message.read !== filter.read) return false
-  if (filter.starred != null && message.starred !== filter.starred) return false
-  return true
+  return !(filter.starred != null && message.starred !== filter.starred)
 }
 
 /** @param {string} owner @param {{query?:string,folder?:string,domain?:string,account?:string,read?:boolean,starred?:boolean,limit?:number}} [filter] */

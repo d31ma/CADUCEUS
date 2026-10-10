@@ -1,8 +1,5 @@
 // @ts-check
 
-/** @typedef {'plex-sans'|'system'|'humanist'|'serif'|'monospace'} InterfaceFontId */
-/** @typedef {'interface'|InterfaceFontId} ComposerFontId */
-
 export const DEFAULT_INTERFACE_FONT = 'plex-sans'
 export const DEFAULT_COMPOSER_FONT = 'interface'
 

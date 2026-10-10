@@ -155,15 +155,6 @@
     return mods.length ? mods.join('+') + '+' + lower : lower
   }
 
-  /**
-   * One registered binding.
-   *
-   * @typedef {object} Binding
-   * @property {string} originalSpec
-   * @property {string[]} chords        Canonicalised chord sequence
-   * @property {(ev: KeyboardEvent) => (boolean | void)} callback
-   */
-
   /** @type {Binding[]} */
   var bindings = []
 
@@ -238,15 +229,6 @@
     // At least one binding has more chords to match — wait for the next key.
     sequenceState = { chords: attemptedChords, deadline: Date.now() + SEQUENCE_TIMEOUT_MS }
   }
-
-  /**
-   * Public API mirrored on `window._caduceusShortcuts`.
-   *
-   * @typedef {object} CaduceusShortcuts
-   * @property {(spec: string, cb: (ev: KeyboardEvent) => boolean | void) => void} bind
-   * @property {(spec: string) => void} unbind
-   * @property {() => void} reset
-   */
 
   /**
    * Register a callback for the given key-spec.

@@ -7,16 +7,6 @@ export const TRANSLATION_CACHE_PREFIX = 'caduceus-translated-message-v1:'
 export const TRANSLATION_CACHE_LIMIT = 150
 
 /**
- * @typedef {object} CachedMessageTranslation
- * @property {string} messageId
- * @property {string} sourceLanguage
- * @property {string} targetLanguage
- * @property {string} htmlBody
- * @property {string} plainText
- * @property {boolean} enabled
- */
-
-/**
  * Load and LRU-touch one local translation. A different target language is a
  * cache miss so changing the reader target can never show stale content.
  *

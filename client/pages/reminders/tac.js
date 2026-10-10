@@ -7,8 +7,10 @@ export default class {
   static __tachyonOnMount = ['init']
 
   /** @type {Array<Record<string, any>>} */
-  $items = []
-  $loading = true
+  @SessionState
+  items = []
+  @SessionState
+  loading = true
 
   get canUseApp() {
     return !!(window._caduceus?.auth?.isLoggedIn
@@ -20,21 +22,21 @@ export default class {
   async init() { await this.load() }
 
   async load() {
-    this.$loading = true
+    this.loading = true
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch) { this.$loading = false; return }
+    if (!apiFetch) { this.loading = false; return }
     try {
       const response = await apiFetch('/reminders')
       const reminders = response?.ok ? await response.json() : []
-      this.$items = Array.isArray(reminders) ? reminders.map(item => ({
+      this.items = Array.isArray(reminders) ? reminders.map(item => ({
         ...item,
         recipientLabel: item.recipient || '',
         remindAtLabel: formatPreferenceDate(item.remindAt),
       })) : []
     } catch {
-      this.$items = []
+      this.items = []
     } finally {
-      this.$loading = false
+      this.loading = false
     }
   }
 
@@ -50,7 +52,7 @@ export default class {
         method: 'DELETE', body: JSON.stringify({ id }),
       })
       if (!response?.ok) throw new Error('dismiss failed')
-      this.$items = this.$items.filter(item => item.id !== id)
+      this.items = this.items.filter(item => item.id !== id)
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       window._caduceus?.toast('Reminder dismissed.')
     } catch {

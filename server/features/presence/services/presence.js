@@ -20,13 +20,6 @@ import { Collections, collect } from '../../../platform/persistence/fylo.js'
 const ONLINE_WINDOW_MS = 60_000
 const PRUNE_AFTER_MS = 10 * 60_000
 
-/**
- * @typedef {object} PresenceRecord
- * @property {string} email
- * @property {string[]} domains
- * @property {number} lastSeenAt
- */
-
 export class PresenceService {
   /** @param {import('../../../platform/persistence/fylo.js').Fylo} fylo */
   constructor(fylo) {

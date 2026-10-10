@@ -4,8 +4,6 @@ import { normalizeTranslationLanguage } from './on-device-translation.js'
 
 export const TRANSLATION_PREFERENCES_KEY = 'caduceus-translation-preferences-v1'
 
-/** @typedef {'offer'|'always'|'never'} TranslationPreference */
-
 /** @param {Storage | { getItem: (key: string) => string | null } | undefined} [storage] */
 export function loadTranslationPreferences(storage = globalThis.localStorage) {
   try {

@@ -1,7 +1,5 @@
 import { Collections, collect } from '../../../platform/persistence/fylo.js'
 
-/** @typedef {import('../../../types').DomainMigration} DomainMigration */
-
 export class DomainMigrationsRepository {
   /** @param {import('../../../platform/persistence/fylo.js').Fylo} fylo */
   constructor(fylo) {

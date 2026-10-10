@@ -59,23 +59,6 @@ import {
 } from '../../../shared/scripts/offline-write-vault.js'
 
 /**
- * @typedef {object} ComposePrefill
- * @property {string} [to] - Pre-fill the To field
- * @property {string} [cc] - Pre-fill the CC field
- * @property {string} [bcc] - Pre-fill the BCC field
- * @property {string} [replyTo] - Pre-fill the Reply-To field
- * @property {string} [from] - Pre-select an owned From address
- * @property {string} [subject] - Pre-fill the Subject field
- * @property {string} [body] - Pre-fill the message body
- * @property {string} [inReplyTo] - Canonical Message-ID being answered
- * @property {string[]} [references] - RFC reference chain for conversation threading
- * @property {string} [scheduledId] - Existing scheduled message being edited
- * @property {string} [sendAt] - Existing schedule as an ISO timestamp
- * @property {Array<any>} [attachments] - Bucket-backed attachments loaded for editing
- * @property {string} [sourceEmailId] - Authorized source conversation for Send & Archive
- */
-
-/**
  * Email composition component.
  *
  * Renders a rich-text compose form with support for:
@@ -101,7 +84,8 @@ export default class {
   /** @type {string} Exact primary address or alias used as the RFC From identity. */
   $from = ''
   /** @type {string[]} */
-  $senderAddresses = []
+  @SessionState
+  senderAddresses = []
   /** @type {Array<{ address: string, label: string, accountId: string, provider: string, color: string }>} */
   $externalSenderIdentities = []
   /** @type {string} */
@@ -121,9 +105,11 @@ export default class {
   /** @type {string} */
   $text = ''
   /** @type {boolean} */
-  $loading = false
+  @SessionState
+  loading = false
   /** @type {boolean} Prevent interaction until asynchronous defaults settle. */
-  $ready = false
+  @SessionState
+  ready = false
   /** @type {string} */
   $error = ''
   /** @type {Array<{ id: string, name: string, subject?: string, text?: string, to?: string, cc?: string }>} */
@@ -131,29 +117,38 @@ export default class {
   /** @type {Array<{ id: string, domain: string, name: string, text: string, defaultFor: string[] }>} */
   $signatures = []
   /** @type {string} */
-  $activeSignatureId = ''
+  @SessionState
+  activeSignatureId = ''
   /** @type {string} Template currently inserted into the editor. */
-  $activeTemplateName = ''
+  @SessionState
+  activeTemplateName = ''
   /** @type {boolean} Whether to append a read-receipt tracking pixel */
-  $requestReadReceipt = false
+  @SessionState
+  requestReadReceipt = false
   /** @type {boolean} Whether to rewrite outbound links through the click-tracking proxy */
-  $trackLinks = false
+  @SessionState
+  trackLinks = false
   /** @type {string} ISO timestamp for a no-reply follow-up reminder. */
   $remindAt = ''
   /** @type {boolean} Whether the accessible follow-up chooser is expanded. */
-  $reminderPickerOpen = false
+  @SessionState
+  reminderPickerOpen = false
   /** @type {boolean} Whether the accessible send-time chooser is expanded. */
-  $schedulePickerOpen = false
+  @SessionState
+  schedulePickerOpen = false
   /** @type {string} Existing scheduled message id, when rescheduling. */
-  $scheduledEditId = ''
+  @SessionState
+  scheduledEditId = ''
   /** @type {string} Existing or selected ISO delivery timestamp. */
-  $scheduledSendAt = ''
+  @SessionState
+  scheduledSendAt = ''
   /** @type {string} Source message whose conversation can be archived after send. */
   $sourceEmailId = ''
   /** @type {Array<{ id: string, filename: string, contentType: string, size: number, contentBase64: string, disposition?: 'inline'|'attachment', contentId?: string }>} */
   $attachments = []
   /** @type {boolean} Whether a file drag is currently over the compose surface. */
-  $attachmentDragActive = false
+  @SessionState
+  attachmentDragActive = false
   /** @type {string} ID of the draft being edited, if any. When set, sending
    * removes the original draft so it does not linger in the Drafts folder. */
   $draftId = ''
@@ -162,11 +157,13 @@ export default class {
   /** @type {number} Optimistic-concurrency version last acknowledged by FYLO. */
   $draftVersion = 0
   /** @type {string} Human-readable autosave state. */
-  $draftStatus = ''
+  @SessionState
+  draftStatus = ''
   /** @type {string} Imperative live-region value; deliberately non-reactive so autosave cannot replace the editor. */
   _draftStatusValue = ''
   /** @type {boolean} Whether another tab saved a newer draft version. */
-  $draftConflict = false
+  @SessionState
+  draftConflict = false
   /** @type {ReturnType<typeof setTimeout> | undefined} */
   _draftSaveTimer
   _draftSaving = false
@@ -248,12 +245,12 @@ export default class {
     this.$text = prefill.body || ''
     this._editorHTML = this.$text
     this._editorModelReady = true
-    this.$scheduledEditId = prefill.scheduledId || ''
-    this.$scheduledSendAt = prefill.sendAt || ''
+    this.scheduledEditId = prefill.scheduledId || ''
+    this.scheduledSendAt = prefill.sendAt || ''
     this.$sourceEmailId = prefill.sourceEmailId || ''
     this.$remindAt = prefill.remindAt || ''
-    this.$requestReadReceipt = prefill.openTracking === true
-    this.$trackLinks = prefill.linkTracking === true
+    this.requestReadReceipt = prefill.openTracking === true
+    this.trackLinks = prefill.linkTracking === true
     this.$attachments = Array.isArray(prefill.attachments)
       ? prefill.attachments.map(attachment => ({ ...attachment, id: attachment.id || crypto.randomUUID() }))
       : []
@@ -265,42 +262,42 @@ export default class {
       await this._loadDraft(prefill.draftId)
     } else if (!this._hasExplicitPrefill(prefill)) {
       await this._restoreDraftRecovery()
-      recoveredDraft = Boolean(this.$draftId || this.$draftStatus === 'Recovered locally')
+      recoveredDraft = Boolean(this.$draftId || this.draftStatus === 'Recovered locally')
     }
     if (!this.$draftClientId) this.$draftClientId = crypto.randomUUID()
     await Promise.all([this.loadTemplates(), this.loadSignatures(), this.loadGrammarPreferences()])
-    const newComposition = !this.$draftId && !this.$scheduledEditId && !recoveredDraft
+    const newComposition = !this.$draftId && !this.scheduledEditId && !recoveredDraft
     if (newComposition && !prefill.from && this.mailPreferences.defaultFrom
-      && this.$senderAddresses.includes(this.mailPreferences.defaultFrom)) {
+      && this.senderAddresses.includes(this.mailPreferences.defaultFrom)) {
       this.$from = this.mailPreferences.defaultFrom
     }
     if (newComposition) this.applyAutomaticRecipients(this.$from)
     // New messages, replies, and forwards all receive the exact From address's
     // default before quoted content. Existing drafts retain their saved choice.
-    if (!this.$draftId && !this.$scheduledEditId && !currentSignatureId(this.$text)) {
+    if (!this.$draftId && !this.scheduledEditId && !currentSignatureId(this.$text)) {
       this.$text = applySignature(this.$text, defaultSignatureForAddress(this.$signatures, this.$from))
       this._editorHTML = this.$text
     }
-    this.$activeSignatureId = currentSignatureId(this.$text)
+    this.activeSignatureId = currentSignatureId(this.$text)
     this._rememberReactiveFields()
     this._syncEditorContent()
     this._applyEditorPreferences()
     this._syncNativeFields()
-    this._setDraftStatus(this._draftStatusValue || this.$draftStatus)
+    this._setDraftStatus(this._draftStatusValue || this.draftStatus)
     this._renderGrammarUI()
     if (this._grammarEnabled) this._scheduleGrammarCheck(0)
-    this.$ready = true
+    this.ready = true
     // A server-backed draft already has an authoritative fingerprint. Do not
     // dirty it merely because Tachyon remounted the compose view (for example
     // after an application-level refresh). New prefill and local-only recovery
     // have no fingerprint and still need their first durable save.
-    if (!this.$scheduledEditId && this._hasMeaningfulDraft() && !this._lastDraftSnapshot) this.scheduleDraftSave()
+    if (!this.scheduledEditId && this._hasMeaningfulDraft() && !this._lastDraftSnapshot) this.scheduleDraftSave()
     setTimeout(async () => {
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       this._syncEditorContent()
       this._applyEditorPreferences()
       this._syncNativeFields()
-      this._setDraftStatus(this._draftStatusValue || this.$draftStatus)
+      this._setDraftStatus(this._draftStatusValue || this.draftStatus)
       this._renderTemplateOptions()
       this._renderGrammarUI()
     }, 0)
@@ -358,7 +355,7 @@ export default class {
       editor.innerHTML = result.html
       this.$text = result.html
       this._editorHTML = this.$text
-      this.$activeSignatureId = currentSignatureId(result.html)
+      this.activeSignatureId = currentSignatureId(result.html)
       this._setTranslationStatus(`Translated from ${TRANSLATION_LANGUAGES[result.sourceLanguage] || 'detected language'} to ${TRANSLATION_LANGUAGES[result.targetLanguage] || 'the selected language'}.`)
       this.scheduleDraftSave(0)
       if (this._grammarEnabled) this._scheduleGrammarCheck(0)
@@ -406,7 +403,7 @@ export default class {
       const from = /** @type {HTMLSelectElement | null} */ (document.querySelector('[data-compose-from]'))
       if (from) from.value = values.from
       const signature = /** @type {HTMLSelectElement | null} */ (document.querySelector('[data-compose-signature]'))
-      if (signature) signature.value = this.$activeSignatureId
+      if (signature) signature.value = this.activeSignatureId
     })
   }
 
@@ -465,8 +462,8 @@ export default class {
       this.$draftClientId = draft.draftClientId || this.$draftClientId || crypto.randomUUID()
       this.$draftVersion = Number(draft.draftVersion || 0)
       this._lastDraftSnapshot = JSON.stringify(this._snapshotFromSavedDraft(draft))
-      this.$draftStatus = this.$draftVersion ? 'Saved' : ''
-      this._draftStatusValue = this.$draftStatus
+      this.draftStatus = this.$draftVersion ? 'Saved' : ''
+      this._draftStatusValue = this.draftStatus
       this._rememberReactiveFields()
       this._persistDraftRecovery()
       return true
@@ -509,8 +506,8 @@ export default class {
     this.$inReplyTo = String(snapshot.inReplyTo || '')
     this.$references = Array.isArray(snapshot.references) ? snapshot.references : []
     this.$sourceEmailId = String(snapshot.sourceEmailId || '')
-    this.$draftStatus = 'Recovered locally'
-    this._draftStatusValue = this.$draftStatus
+    this.draftStatus = 'Recovered locally'
+    this._draftStatusValue = this.draftStatus
   }
 
   /** Capture a complete server snapshot; local recovery omits attachment bytes. */
@@ -524,7 +521,7 @@ export default class {
       replyTo: split(this.$replyTo),
       subject: this.$subject || '',
       text: this._getEditorText(),
-      html: this.$ready ? this._getEditorHTML() : this.$text || '',
+      html: this.ready ? this._getEditorHTML() : this.$text || '',
       ...(this.$inReplyTo ? { inReplyTo: this.$inReplyTo } : {}),
       references: [...this.$references],
       ...(this.$sourceEmailId ? { sourceEmailId: this.$sourceEmailId } : {}),
@@ -577,7 +574,7 @@ export default class {
     await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     this._syncEditorContent()
     this._syncNativeFields()
-    this._setDraftStatus(this._draftStatusValue || this.$draftStatus)
+    this._setDraftStatus(this._draftStatusValue || this.draftStatus)
   }
 
   /** Bind one capture listener that survives Tachyon replacing compose controls. */
@@ -612,7 +609,7 @@ export default class {
       const detail = /** @type {CustomEvent<any>} */ (event).detail
       if (detail?.kind !== 'draft' || detail?.metadata?.clientId !== this.$draftClientId) return
       if (detail.status === 'conflict') {
-        this.$draftConflict = true
+        this.draftConflict = true
         this._setDraftStatus('Newer saved version detected')
         void this._rerenderDraftUI()
         return
@@ -621,7 +618,7 @@ export default class {
       this.$draftId = String(detail.response.id)
       this.$draftVersion = Number(detail.response.draftVersion || this.$draftVersion || 1)
       this._lastDraftSnapshot = JSON.stringify(this._snapshotFromSavedDraft(detail.response))
-      this.$draftConflict = false
+      this.draftConflict = false
       this._setDraftStatus('Saved')
       this._persistDraftRecovery()
       window.dispatchEvent(new Event('caduceus:refresh-inbox'))
@@ -1246,7 +1243,7 @@ export default class {
 
   /** Debounce typing bursts while keeping a local recovery pointer immediately. */
   scheduleDraftSave(delay = 750) {
-    if (!this.$ready || this._intentionalExit || this.$scheduledEditId) return
+    if (!this.ready || this._intentionalExit || this.scheduledEditId) return
     this._persistDraftRecovery()
     if (this._draftSaving) { this._draftSaveAgain = true; return }
     clearTimeout(this._draftSaveTimer)
@@ -1256,7 +1253,7 @@ export default class {
 
   /** Persist one complete versioned snapshot to FYLO. */
   async saveDraft() {
-    if (!this.$ready || this.$loading || this._intentionalExit || this.$draftConflict || this.$scheduledEditId) return
+    if (!this.ready || this.loading || this._intentionalExit || this.draftConflict || this.scheduledEditId) return
     if (this._draftSaving) { this._draftSaveAgain = true; return }
     this._syncFormValues()
     const snapshot = this._draftSnapshot(true)
@@ -1282,7 +1279,7 @@ export default class {
       })
       const data = await response?.json()
       if (response?.status === 409 || data?.conflict) {
-        this.$draftConflict = true
+        this.draftConflict = true
         this._setDraftStatus('Newer saved version detected')
         this._persistDraftRecovery(this._draftSnapshot(false))
         await this._rerenderDraftUI()
@@ -1303,7 +1300,7 @@ export default class {
       const serverFingerprint = JSON.stringify(this._snapshotFromSavedDraft(data))
       this._lastDraftSnapshot = serverFingerprint
       this._setDraftStatus('Saved')
-      this.$draftConflict = false
+      this.draftConflict = false
       this._persistDraftRecovery(this._draftSnapshot(false))
       const owner = String(window._caduceus?.auth?.email || '').toLowerCase()
       if (owner) void discardOfflineWrites(owner, `draft:${this.$draftClientId}`)
@@ -1366,7 +1363,7 @@ export default class {
   async reloadSavedDraft() {
     if (!this.$draftId || !confirm('Replace local changes with the newer saved draft?')) return
     if (!await this._loadDraft(this.$draftId)) return
-    this.$draftConflict = false
+    this.draftConflict = false
     this._setDraftStatus('Saved version loaded')
     await this._rerenderDraftUI()
   }
@@ -1378,7 +1375,7 @@ export default class {
     this.$draftId = ''
     this.$draftVersion = 0
     this.$draftClientId = crypto.randomUUID()
-    this.$draftConflict = false
+    this.draftConflict = false
     this._lastDraftSnapshot = ''
     await this.saveDraft()
     await this._rerenderDraftUI()
@@ -1397,9 +1394,9 @@ export default class {
       const external = externalResponse?.ok ? await externalResponse.json() : {}
       const primary = String(aliases?.email || window._caduceus?.auth?.email || this.$from || '').toLowerCase()
       this.$externalSenderIdentities = externalSenderIdentities(external?.accounts)
-      this.$senderAddresses = [...new Set([primary, ...(Array.isArray(aliases?.aliases) ? aliases.aliases : []), ...this.$externalSenderIdentities.map(identity => identity.address)]
+      this.senderAddresses = [...new Set([primary, ...(Array.isArray(aliases?.aliases) ? aliases.aliases : []), ...this.$externalSenderIdentities.map(identity => identity.address)]
         .map(address => String(address || '').toLowerCase()).filter(Boolean))]
-      if (!this.$senderAddresses.includes(this.$from.toLowerCase())) this.$from = primary
+      if (!this.senderAddresses.includes(this.$from.toLowerCase())) this.$from = primary
       this.$signatures = Array.isArray(signatures) ? signatures.map(signature => ({
         ...signature,
         text: sanitizeSignatureHTML(signature.text),
@@ -1417,7 +1414,7 @@ export default class {
   /** Switch From identity and atomically replace its default signature. */
   changeSender(event) {
     const address = String(event?.target?.value || '').toLowerCase()
-    if (!this.$senderAddresses.includes(address)) return
+    if (!this.senderAddresses.includes(address)) return
     this._captureNativeFields()
     if (this._nativeFieldValues) {
       this.$cc = this._nativeFieldValues.cc
@@ -1428,7 +1425,7 @@ export default class {
     this.$from = address
     this.applyAutomaticRecipients(address)
     if (this._nativeFieldValues) this._nativeFieldValues.from = address
-    this.$activeSignatureId = currentSignatureId(this.$text)
+    this.activeSignatureId = currentSignatureId(this.$text)
     this._syncEditorContent()
     this._syncNativeFields()
     this.scheduleDraftSave(0)
@@ -1477,7 +1474,7 @@ export default class {
     const signature = this.$signatures.find(item => item.id === id) ?? null
     this.$text = applySignature(this._getEditorHTML(), signature)
     this._editorHTML = this.$text
-    this.$activeSignatureId = signature?.id || ''
+    this.activeSignatureId = signature?.id || ''
     this._syncEditorContent()
     this._syncNativeFields()
     this.scheduleDraftSave(0)
@@ -1581,8 +1578,8 @@ export default class {
     const linkTracking = input.matches('[data-link-tracking]')
     if (!openTracking && !linkTracking) return
     this._syncFormValues()
-    if (openTracking) this.$requestReadReceipt = input.checked
-    else this.$trackLinks = input.checked
+    if (openTracking) this.requestReadReceipt = input.checked
+    else this.trackLinks = input.checked
     this._syncEditorContent()
     this._syncNativeFields()
     this.scheduleDraftSave(0)
@@ -1622,7 +1619,7 @@ export default class {
       try { await apiFetch(`/drafts/${this.$draftId}`, { method: 'DELETE' }) } catch {}
     }
     this._clearDraftRecovery()
-    window._caduceus?.navigate(this.$scheduledEditId ? 'scheduled' : 'inbox')
+    window._caduceus?.navigate(this.scheduledEditId ? 'scheduled' : 'inbox')
   }
 
   /** Apply semantic inline formatting without deprecated execCommand APIs. */
@@ -1855,19 +1852,19 @@ export default class {
   onAttachmentDragOver(event) {
     if (!Array.from(event?.dataTransfer?.types || []).includes('Files')) return
     event.preventDefault()
-    if (!this.$attachmentDragActive) this.$attachmentDragActive = true
+    if (!this.attachmentDragActive) this.attachmentDragActive = true
   }
 
   onAttachmentDragLeave(event) {
     const current = /** @type {Node | null} */ (event?.currentTarget || null)
     const related = /** @type {Node | null} */ (event?.relatedTarget || null)
     if (current && related && current.contains(related)) return
-    this.$attachmentDragActive = false
+    this.attachmentDragActive = false
   }
 
   async dropAttachments(event) {
     event?.preventDefault?.()
-    this.$attachmentDragActive = false
+    this.attachmentDragActive = false
     const files = transferFiles(event?.dataTransfer)
     const images = files.filter(isInlineImageFile)
     const attachments = files.filter(file => !isInlineImageFile(file))
@@ -1980,7 +1977,7 @@ export default class {
    */
   async chooseFollowUpReminder() {
     this._syncFormValues()
-    this.$reminderPickerOpen = !this.$reminderPickerOpen
+    this.reminderPickerOpen = !this.reminderPickerOpen
     await this._restoreComposeAfterOptionRender()
   }
 
@@ -2011,21 +2008,21 @@ export default class {
       return
     }
     this.$remindAt = date.toISOString()
-    this.$reminderPickerOpen = false
+    this.reminderPickerOpen = false
     await this._restoreComposeAfterOptionRender()
     this.scheduleDraftSave(0)
   }
 
   async closeFollowUpReminder() {
     this._syncFormValues()
-    this.$reminderPickerOpen = false
+    this.reminderPickerOpen = false
     await this._restoreComposeAfterOptionRender()
   }
 
   async clearFollowUpReminder() {
     this._syncFormValues()
     this.$remindAt = ''
-    this.$reminderPickerOpen = false
+    this.reminderPickerOpen = false
     await this._restoreComposeAfterOptionRender()
     this.scheduleDraftSave(0)
   }
@@ -2139,7 +2136,7 @@ export default class {
     this.$text = insertTemplateBeforeProtectedContent(tpl.text || '', currentHTML)
     this._editorHTML = this.$text
     this._rememberReactiveFields()
-    this.$activeTemplateName = tpl.name
+    this.activeTemplateName = tpl.name
     const targetEl = /** @type {HTMLInputElement} */ (event.target);
     targetEl.value = '';
     this._syncEditorContent()
@@ -2197,8 +2194,8 @@ export default class {
     this._syncFormValues()
     if (!this.$to || !this.$subject) { this.$error = 'To and Subject are required.'; return }
     if (!this._confirmCompleteTemplate()) return
-    this.$schedulePickerOpen = !this.$schedulePickerOpen
-    this.$reminderPickerOpen = false
+    this.schedulePickerOpen = !this.schedulePickerOpen
+    this.reminderPickerOpen = false
     await this._restoreComposeAfterOptionRender()
   }
 
@@ -2222,7 +2219,7 @@ export default class {
 
   async closeSendLater() {
     this._syncFormValues()
-    this.$schedulePickerOpen = false
+    this.schedulePickerOpen = false
     await this._restoreComposeAfterOptionRender()
   }
 
@@ -2238,21 +2235,21 @@ export default class {
     const payload = this._buildPayload({
       sendAt,
       idempotencyKey: `send:${crypto.randomUUID()}`,
-      ...(this.$scheduledEditId ? {
+      ...(this.scheduledEditId ? {
         remindAt: this.$remindAt || null,
         replyTo: this.$replyTo ? [this.$replyTo] : null,
-        openTracking: this.$requestReadReceipt,
-        linkTracking: this.$trackLinks,
+        openTracking: this.requestReadReceipt,
+        linkTracking: this.trackLinks,
       } : {}),
     })
-    this.$loading = true; this.$error = ''
+    this.loading = true; this.$error = ''
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch) { this.$loading = false; return }
+    if (!apiFetch) { this.loading = false; return }
     try {
-      const editing = Boolean(this.$scheduledEditId)
+      const editing = Boolean(this.scheduledEditId)
       const res = await apiFetch(editing ? `/send/scheduled/${this.$scheduledEditId}` : '/send', { method: editing ? 'PUT' : 'POST', body: JSON.stringify(payload) })
       if (res?.ok) {
-        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.$requestReadReceipt = false; this.$trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
+        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.requestReadReceipt = false; this.trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
         if (!editing) await this._consumeDraft()
         window._caduceus?.toast((editing ? 'Schedule updated for ' : 'Scheduled for ') + formatPreferenceDate(sendAt))
         window._caduceus?.navigate('scheduled')
@@ -2261,7 +2258,7 @@ export default class {
       }
     } catch {
       try {
-        const editing = Boolean(this.$scheduledEditId)
+        const editing = Boolean(this.scheduledEditId)
         await window._caduceus?.queueOfflineRequest?.({
           kind: 'send',
           path: editing ? `/send/scheduled/${this.$scheduledEditId}` : '/send',
@@ -2271,12 +2268,12 @@ export default class {
           coalesceKey: editing ? `scheduled:${this.$scheduledEditId}` : undefined,
           metadata: { scheduled: true, editing },
         })
-        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.$requestReadReceipt = false; this.$trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
+        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.requestReadReceipt = false; this.trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
         if (!editing) await this._consumeDraft()
         window._caduceus?.navigate('scheduled')
       } catch { this.$error = 'Network error.' }
     }
-    finally { this.$loading = false }
+    finally { this.loading = false }
   }
 
   get scheduleTimeZoneLabel() {
@@ -2284,7 +2281,7 @@ export default class {
   }
 
   get scheduledSendLabel() {
-    return formatPreferenceDate(this.$scheduledSendAt)
+    return formatPreferenceDate(this.scheduledSendAt)
   }
 
   /**
@@ -2336,8 +2333,8 @@ export default class {
           ...(contentId ? { contentId } : {}),
         }))
       } : {}),
-      ...(this.$requestReadReceipt ? { openTracking: true } : {}),
-      ...(this.$trackLinks ? { linkTracking: true } : {}),
+      ...(this.requestReadReceipt ? { openTracking: true } : {}),
+      ...(this.trackLinks ? { linkTracking: true } : {}),
       ...(this.$remindAt ? { remindAt: this.$remindAt } : {}),
       ...extra,
     }
@@ -2391,15 +2388,15 @@ export default class {
       delayMs: this.mailPreferences.undoSendDelay,
       idempotencyKey: `send:${crypto.randomUUID()}`,
     })
-    this.$loading = true; this.$error = ''
+    this.loading = true; this.$error = ''
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch) { this.$loading = false; return }
+    if (!apiFetch) { this.loading = false; return }
     try {
       const res = await apiFetch('/send', { method: 'POST', body: JSON.stringify(payload) })
       if (res?.ok) {
         const data = await res.json()
         void window._caduceus?.playSound?.('send')
-        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.$requestReadReceipt = false; this.$trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
+        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.requestReadReceipt = false; this.trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
         await this._consumeDraft()
         window._caduceus?.navigate('inbox')
         this._showUndoToast(data.undoId, 'Message sent. Undo')
@@ -2410,12 +2407,12 @@ export default class {
           kind: 'send', path: '/send', method: 'POST', body: payload,
           message: 'Send message', metadata: { draftId: this.$draftId, draftClientId: this.$draftClientId },
         })
-        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.$requestReadReceipt = false; this.$trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
+        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.requestReadReceipt = false; this.trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
         await this._consumeDraft()
         window._caduceus?.navigate('inbox')
       } catch { this.$error = 'Network error.' }
     }
-    finally { this.$loading = false }
+    finally { this.loading = false }
   }
 
   /**
@@ -2438,15 +2435,15 @@ export default class {
       delayMs: this.mailPreferences.undoSendDelay,
       idempotencyKey: `send:${crypto.randomUUID()}`,
     })
-    this.$loading = true; this.$error = ''
+    this.loading = true; this.$error = ''
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch) { this.$loading = false; return }
+    if (!apiFetch) { this.loading = false; return }
     try {
       const res = await apiFetch('/send', { method: 'POST', body: JSON.stringify(payload) })
       if (res?.ok) {
         const data = await res.json()
         void window._caduceus?.playSound?.('send')
-        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.$requestReadReceipt = false; this.$trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
+        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.requestReadReceipt = false; this.trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
         await this._consumeDraft()
         window._caduceus?.navigate('inbox')
         this._showUndoToast(data.undoId, data.archived ? 'Sent & archived. Undo' : 'Message sent; source was not archived. Undo')
@@ -2457,12 +2454,12 @@ export default class {
           kind: 'send', path: '/send', method: 'POST', body: payload,
           message: 'Send and archive message', metadata: { draftId: this.$draftId, draftClientId: this.$draftClientId },
         })
-        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.$requestReadReceipt = false; this.$trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
+        this.$to = this.$cc = this.$bcc = this.$replyTo = this.$subject = this.$remindAt = ''; this.$inReplyTo = ''; this.$references = []; this.$attachments = []; this.requestReadReceipt = false; this.trackLinks = false; this._rememberReactiveFields(); this._clearEditor()
         await this._consumeDraft()
         window._caduceus?.navigate('inbox')
       } catch { this.$error = 'Network error.' }
     }
-    finally { this.$loading = false }
+    finally { this.loading = false }
   }
 
   sendDefault() {

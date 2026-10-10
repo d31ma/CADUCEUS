@@ -29,13 +29,15 @@ export default class {
   /** @type {Array<Record<string, any>>} */
   $daily = []
   /** @type {Array<Record<string, any>>} */
-  $subjects = []
+  @SessionState
+  subjects = []
   /** @type {'all'|'open'|'click'} */
   $type = 'all'
   /** @type {'7d'|'30d'|'90d'|'all'} */
   $range = '30d'
   /** @type {boolean} */
-  $loading = true
+  @SessionState
+  loading = true
   /** @type {string} */
   $error = ''
   /** @type {string} */
@@ -58,8 +60,8 @@ export default class {
 
   async load() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch) { this.$loading = false; return }
-    this.$loading = true
+    if (!apiFetch) { this.loading = false; return }
+    this.loading = true
     this.$error = ''
     try {
       const query = new URLSearchParams({ type: this.$type, range: this.$range, limit: '100' })
@@ -69,7 +71,7 @@ export default class {
       this.$events = Array.isArray(data?.events) ? data.events.map(event => this.decorateEvent(event)) : []
       this.$metrics = this.decorateMetrics(data?.metrics)
       this.$daily = this.decorateDaily(this.$metrics.daily)
-      this.$subjects = Array.isArray(this.$metrics.bySubject)
+      this.subjects = Array.isArray(this.$metrics.bySubject)
         ? this.$metrics.bySubject.map(subject => this.decorateSubject(subject))
         : []
       this.$generatedAt = typeof data?.generatedAt === 'string' ? data.generatedAt : new Date().toISOString()
@@ -78,10 +80,10 @@ export default class {
       this.$events = []
       this.$metrics = { ...EMPTY_METRICS }
       this.$daily = []
-      this.$subjects = []
+      this.subjects = []
       this.$error = error instanceof Error ? error.message : 'Activity could not be loaded.'
     } finally {
-      this.$loading = false
+      this.loading = false
     }
   }
 

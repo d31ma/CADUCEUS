@@ -89,55 +89,79 @@ export default class {
 
   /** @type {Array<Record<string, any>>} */
   $domains = []; /** @type {Array<Record<string, any>>} */
-  $users = []; /** @type {Array<Record<string, any>>} */
-  $rules = []; /** @type {Array<Record<string, any>>} */
-  $mfaDevices = []; /** @type {Array<Record<string, any>>} */
+  @SessionState
+  users = []; /** @type {Array<Record<string, any>>} */
+  @SessionState
+  rules = []; /** @type {Array<Record<string, any>>} */
+  @SessionState
+  mfaDevices = []; /** @type {Array<Record<string, any>>} */
   $pushSubscriptions = []; /** @type {boolean} */
-  $loading = true
+  @SessionState
+  loading = true
   /** @type {Array<Record<string, any>>} Redacted external mailbox projections. */
   $externalAccounts = []
   /** @type {Array<Record<string, any>>} Server-owned provider catalog. */
-  $providerCatalog = []
+  @SessionState
+  providerCatalog = []
   /** @type {boolean} */
-  $accountSetupOpen = false
+  @SessionState
+  accountSetupOpen = false
   /** @type {boolean} Whether the explicit first-run account guide is active. */
-  $accountOnboarding = false
+  @SessionState
+  accountOnboarding = false
   /** @type {'address'|'credentials'|'oauth'} */
-  $accountSetupStep = 'address'
+  @SessionState
+  accountSetupStep = 'address'
   /** @type {string} */
-  $accountAddress = ''
+  @SessionState
+  accountAddress = ''
   /** @type {Record<string, any>} Non-secret discovered connection fields. */
-  $accountConnectionDraft = connectionDraft({}, '')
+  @SessionState
+  accountConnectionDraft = connectionDraft({}, '')
   /** @type {string} */
-  $accountSetupStatus = ''
+  @SessionState
+  accountSetupStatus = ''
   /** @type {string} */
-  $accountSetupError = ''
+  @SessionState
+  accountSetupError = ''
   /** @type {boolean} */
-  $accountSetupBusy = false
+  @SessionState
+  accountSetupBusy = false
   /** @type {string} */
-  $accountMutationId = ''
+  @SessionState
+  accountMutationId = ''
   /** @type {string} */
-  $accountReconnectId = ''
+  @SessionState
+  accountReconnectId = ''
   /** @type {string} */
-  $accountRemoveId = ''
+  @SessionState
+  accountRemoveId = ''
   /** @type {string} */
-  $accountDiagnosticsId = ''
+  @SessionState
+  accountDiagnosticsId = ''
   /** @type {Record<string, any>} */
-  $accountDiagnostics = {}
+  @SessionState
+  accountDiagnostics = {}
   /** @type {string} */
-  $externalAccountsError = ''
+  @SessionState
+  externalAccountsError = ''
   /** @type {string} Stable result of a Microsoft authorization redirect. */
-  $externalOAuthNotice = ''
+  @SessionState
+  externalOAuthNotice = ''
   /** @type {string} */
-  $primaryEmail = ''
+  @SessionState
+  primaryEmail = ''
   /** @type {string[]} */
   $aliases = []
   /** @type {string} */
-  $newAlias = ''
+  @SessionState
+  newAlias = ''
   /** @type {string} */
-  $aliasError = ''
+  @SessionState
+  aliasError = ''
   /** @type {boolean} */
-  $aliasSaving = false
+  @SessionState
+  aliasSaving = false
 
   /**
    * Selected calendar-sharing visibility (private | busy | full). Mirrors
@@ -149,43 +173,60 @@ export default class {
   /** @type {Record<string, string>} Personal labels keyed by assigned domain. */
   $mailboxNames = {}
   /** @type {boolean} */
-  $mailboxSaving = false
+  @SessionState
+  mailboxSaving = false
   /** @type {string} */
-  $mailboxError = ''
+  @SessionState
+  mailboxError = ''
   /** @type {Array<Record<string, any>>} Exact-domain physical category catalogs. */
-  $categoryAccounts = []
+  @SessionState
+  categoryAccounts = []
   /** @type {Record<string, Record<string, string>>} */
   $categoryMappings = {}
   /** @type {Record<string, string>} Native category edits awaiting one atomic save. */
   _categoryMappingDrafts = {}
   /** @type {boolean} */
-  $categorySaving = false
+  @SessionState
+  categorySaving = false
   /** @type {string} */
-  $categoryError = ''
+  @SessionState
+  categoryError = ''
   /** @type {boolean} Whether the owner's MCP capability may authenticate. */
-  $mcpEnabled = false
+  @SessionState
+  mcpEnabled = false
   /** @type {'read-only'|'read-write'|'read-write-send'} */
-  $mcpAccessLevel = 'read-only'
+  @SessionState
+  mcpAccessLevel = 'read-only'
   /** @type {string[]} Exact mailbox domains exposed to MCP. */
-  $mcpAllowedDomains = []
+  @SessionState
+  mcpAllowedDomains = []
   /** @type {Record<string, string[]>} Physical folders hidden from every MCP tool. */
-  $mcpExcludedFolders = {}
+  @SessionState
+  mcpExcludedFolders = {}
   /** @type {boolean} */
-  $mcpHasToken = false
+  @SessionState
+  mcpHasToken = false
   /** @type {string} One-time plaintext capability returned by the last rotation. */
-  $mcpToken = ''
+  @SessionState
+  mcpToken = ''
   /** @type {string} */
-  $mcpTokenCreatedAt = ''
+  @SessionState
+  mcpTokenCreatedAt = ''
   /** @type {string} */
-  $mcpEndpointPath = '/mcp'
+  @SessionState
+  mcpEndpointPath = '/mcp'
   /** @type {Array<Record<string, any>>} */
-  $mcpAudit = []
+  @SessionState
+  mcpAudit = []
   /** @type {boolean} Prevent edits while the persisted scope is arriving. */
-  $mcpLoading = true
+  @SessionState
+  mcpLoading = true
   /** @type {boolean} */
-  $mcpSaving = false
+  @SessionState
+  mcpSaving = false
   /** @type {string} */
-  $mcpError = ''
+  @SessionState
+  mcpError = ''
   /** @type {'block'|'allow'} Default policy for ordinary remote email images. */
   $remoteImagePolicy = 'block'
   /** @type {string[]} Exact senders whose images may load automatically. */
@@ -199,59 +240,82 @@ export default class {
   /** @type {ReturnType<typeof normalizeInterfaceLocale>} */
   $interfaceLocale = 'auto'
   /** @type {boolean} */
-  $localeSaving = false
+  @SessionState
+  localeSaving = false
   /** @type {string} */
-  $localeError = ''
+  @SessionState
+  localeError = ''
   /** @type {boolean} */
-  $fontSaving = false
+  @SessionState
+  fontSaving = false
   /** @type {string} */
-  $fontError = ''
+  @SessionState
+  fontError = ''
   /** @type {boolean} */
-  $privacySaving = false
+  @SessionState
+  privacySaving = false
   /** @type {string[]} Languages translated automatically on this device. */
-  $translationAutomaticLanguages = []
+  @SessionState
+  translationAutomaticLanguages = []
   /** @type {string[]} Languages whose translation offer is hidden on this device. */
-  $translationDisabledLanguages = []
+  @SessionState
+  translationDisabledLanguages = []
   /** @type {string} */
-  $privacyError = ''
+  @SessionState
+  privacyError = ''
   /** @type {{ activeTheme: 'automatic'|'light'|'dark'|'darkside'|'less-is-more'|'taiga'|'ubuntu', lightTheme: 'light'|'less-is-more'|'taiga'|'ubuntu', darkTheme: 'dark'|'darkside' }} */
   $themePreferences = normalizeThemePreferences(DEFAULT_THEME_PREFERENCES)
   /** @type {boolean} */
-  $themeSaving = false
+  @SessionState
+  themeSaving = false
   /** @type {string} */
-  $themeError = ''
+  @SessionState
+  themeError = ''
   /** @type {Array<Record<string, any>>} Explicitly trusted owner packages. */
-  $extensions = []
+  @SessionState
+  extensions = []
   /** @type {Record<string, any> | null} Immutable package projection awaiting trust. */
-  $extensionInspection = null
+  @SessionState
+  extensionInspection = null
   /** @type {Record<string, any> | null} Original package paired with the inspected digest. */
   _extensionBundle = null
   /** @type {boolean} */
-  $extensionBusy = false
+  @SessionState
+  extensionBusy = false
   /** @type {string} */
-  $extensionError = ''
+  @SessionState
+  extensionError = ''
   /** @type {ReturnType<typeof normalizeMailPreferences>} */
   $mailPreferences = normalizeMailPreferences(DEFAULT_MAIL_PREFERENCES)
   /** @type {boolean} */
-  $mailPreferencesSaving = false
+  @SessionState
+  mailPreferencesSaving = false
   /** @type {string} */
-  $mailPreferencesError = ''
+  @SessionState
+  mailPreferencesError = ''
   /** @type {string} */
-  $mailPreferencesStatus = ''
+  @SessionState
+  mailPreferencesStatus = ''
   /** @type {Array<Record<string, any>>} */
-  $shortcutCatalog = []
+  @SessionState
+  shortcutCatalog = []
   /** @type {Record<string, string>} Effective editable bindings keyed by command. */
-  $shortcutDraft = {}
+  @SessionState
+  shortcutDraft = {}
   /** @type {Record<string, string>} Compact server-owned override map. */
   $keyboardShortcutOverrides = {}
   /** @type {boolean} Prevent editing defaults before account overrides arrive. */
-  $shortcutLoading = true
+  @SessionState
+  shortcutLoading = true
   /** @type {boolean} */
-  $shortcutSaving = false
+  @SessionState
+  shortcutSaving = false
   /** @type {string} */
-  $shortcutError = ''
+  @SessionState
+  shortcutError = ''
   /** @type {string} */
-  $shortcutStatus = ''
+  @SessionState
+  shortcutStatus = ''
   /** @type {number} Reactive invalidation token for shell-owned appearance state. */
   accentRevision = 0
 
@@ -326,12 +390,12 @@ export default class {
     ]
   }
   get categoryPaths() {
-    return [...new Set(this.$categoryAccounts.flatMap(account => (
+    return [...new Set(this.categoryAccounts.flatMap(account => (
       Array.isArray(account?.categories) ? account.categories.map(category => category.path) : []
     )))].sort()
   }
   get categoryRows() {
-    return this.$categoryAccounts.flatMap(account => CATEGORY_ROLES.map(role => ({
+    return this.categoryAccounts.flatMap(account => CATEGORY_ROLES.map(role => ({
       domain: account.domain,
       role: role.id,
       label: role.label,
@@ -339,25 +403,25 @@ export default class {
     })))
   }
   get mcpDomainRows() {
-    return this.$categoryAccounts.map(account => ({
+    return this.categoryAccounts.map(account => ({
       domain: account.domain,
       label: this.mailboxLabel(account.domain),
-      allowed: this.$mcpAllowedDomains.includes(account.domain),
+      allowed: this.mcpAllowedDomains.includes(account.domain),
     }))
   }
   get mcpFolderRows() {
-    return this.$categoryAccounts.flatMap(account => (
+    return this.categoryAccounts.flatMap(account => (
       Array.isArray(account?.categories) ? account.categories : []
     ).map(category => ({
       domain: account.domain,
       path: category.path,
       role: category.role || '',
-      accountAllowed: this.$mcpAllowedDomains.includes(account.domain),
-      excluded: (this.$mcpExcludedFolders[account.domain] || []).includes(category.path),
+      accountAllowed: this.mcpAllowedDomains.includes(account.domain),
+      excluded: (this.mcpExcludedFolders[account.domain] || []).includes(category.path),
     })))
   }
   get mcpAuditRows() {
-    return this.$mcpAudit.map(event => ({
+    return this.mcpAudit.map(event => ({
       ...event,
       createdAtLabel: dateTimeLabel(event.createdAt),
       parameterLabel: Array.isArray(event.parameterKeys) && event.parameterKeys.length
@@ -366,17 +430,17 @@ export default class {
     }))
   }
   get mcpEndpoint() {
-    try { return new URL(this.$mcpEndpointPath || '/mcp', window.location.origin).href } catch { return '/mcp' }
+    try { return new URL(this.mcpEndpointPath || '/mcp', window.location.origin).href } catch { return '/mcp' }
   }
-  get mcpTokenCreatedAtLabel() { return dateTimeLabel(this.$mcpTokenCreatedAt) }
+  get mcpTokenCreatedAtLabel() { return dateTimeLabel(this.mcpTokenCreatedAt) }
   get activeTheme() { return this.$themePreferences.activeTheme }
   get automaticThemeSelected() { return this.activeTheme === 'automatic' }
   get shortcutGroups() {
     const groups = []
-    for (const action of this.$shortcutCatalog) {
+    for (const action of this.shortcutCatalog) {
       let group = groups.find(candidate => candidate.label === action.group)
       if (!group) { group = { label: action.group, rows: [] }; groups.push(group) }
-      const binding = this.$shortcutDraft[action.id] || action.binding
+      const binding = this.shortcutDraft[action.id] || action.binding
       group.rows.push({
         ...action,
         binding,
@@ -387,10 +451,10 @@ export default class {
     return groups
   }
   get translationAutomaticRows() {
-    return this.$translationAutomaticLanguages.map(id => ({ id, label: TRANSLATION_LANGUAGES[id] || id }))
+    return this.translationAutomaticLanguages.map(id => ({ id, label: TRANSLATION_LANGUAGES[id] || id }))
   }
   get translationDisabledRows() {
-    return this.$translationDisabledLanguages.map(id => ({ id, label: TRANSLATION_LANGUAGES[id] || id }))
+    return this.translationDisabledLanguages.map(id => ({ id, label: TRANSLATION_LANGUAGES[id] || id }))
   }
 
   /** @param {{ colors?: string[] }} theme */
@@ -407,13 +471,13 @@ export default class {
 
   /** @returns {Array<Record<string, any>>} */
   get passkeyDevices() {
-    return this.$mfaDevices
+    return this.mfaDevices
       .filter(device => device.type === 'webauthn' || device.credentialId)
       .map(device => ({ ...device, createdAtLabel: dateLabel(device.createdAt) }))
   }
 
   /** @returns {Array<Record<string, any>>} */
-  get totpDevices() { return this.$mfaDevices.filter(device => device.type === 'totp') }
+  get totpDevices() { return this.mfaDevices.filter(device => device.type === 'totp') }
 
   /** @returns {Array<Record<string, any>>} */
   get pushSubscriptions() {
@@ -425,13 +489,13 @@ export default class {
 
   /** @returns {Array<Record<string, any>>} */
   get usersWithRecovery() {
-    return this.$users.map(user => ({
+    return this.users.map(user => ({
       ...user,
-      adminRecovery: this.$adminRecoveryCodes[user.email] || null,
+      adminRecovery: this.adminRecoveryCodes[user.email] || null,
     }))
   }
 
-  toggleAddUser() { this.$showAddUser = !this.$showAddUser }
+  toggleAddUser() { this.showAddUser = !this.showAddUser }
 
   /**
    * Forward an accent-color choice to the app-shell, which will persist
@@ -465,12 +529,12 @@ export default class {
   /** @param {Record<string, unknown>} patch */
   async saveThemePreferences(patch) {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$themeSaving) return
+    if (!apiFetch || this.themeSaving) return
     const previous = this.$themePreferences
     const next = normalizeThemePreferences({ ...previous, ...patch })
     this.$themePreferences = next
-    this.$themeSaving = true
-    this.$themeError = ''
+    this.themeSaving = true
+    this.themeError = ''
     window._caduceus?.setThemePreferences?.(next)
     try {
       const response = await apiFetch('/users/me/preferences', {
@@ -485,9 +549,9 @@ export default class {
     } catch (error) {
       this.$themePreferences = previous
       window._caduceus?.setThemePreferences?.(previous)
-      this.$themeError = error instanceof Error ? error.message : 'Could not save theme.'
+      this.themeError = error instanceof Error ? error.message : 'Could not save theme.'
     } finally {
-      this.$themeSaving = false
+      this.themeSaving = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       this.syncThemeControls()
     }
@@ -498,14 +562,14 @@ export default class {
     const target = event?.currentTarget instanceof HTMLSelectElement
       ? event.currentTarget
       : document.querySelector('select[data-interface-locale]')
-    if (!(target instanceof HTMLSelectElement) || this.$localeSaving) return
+    if (!(target instanceof HTMLSelectElement) || this.localeSaving) return
     const previous = this.$interfaceLocale
     const next = normalizeInterfaceLocale(target.value)
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
     this.$interfaceLocale = next
-    this.$localeSaving = true
-    this.$localeError = ''
+    this.localeSaving = true
+    this.localeError = ''
     window._caduceus?.setInterfaceLocale?.(next)
     try {
       const response = await apiFetch('/users/me/preferences', {
@@ -521,9 +585,9 @@ export default class {
     } catch (error) {
       this.$interfaceLocale = previous
       window._caduceus?.setInterfaceLocale?.(previous)
-      this.$localeError = error instanceof Error ? error.message : translate('locale.saveError')
+      this.localeError = error instanceof Error ? error.message : translate('locale.saveError')
     } finally {
-      this.$localeSaving = false
+      this.localeSaving = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       const control = document.querySelector('select[data-interface-locale]')
       if (control instanceof HTMLSelectElement) control.value = this.$interfaceLocale
@@ -544,7 +608,7 @@ export default class {
    */
   async loadPreferences() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch) { this.$shortcutLoading = false; return }
+    if (!apiFetch) { this.shortcutLoading = false; return }
     try {
       const res = await apiFetch('/users/me/preferences')
       if (!res?.ok) return
@@ -583,7 +647,7 @@ export default class {
     } catch {
       // Preferences are non-critical — silently keep the default.
     } finally {
-      this.$shortcutLoading = false
+      this.shortcutLoading = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
@@ -592,9 +656,9 @@ export default class {
     const source = overrides && typeof overrides === 'object' && !Array.isArray(overrides) ? overrides : {}
     const applied = await window._caduceusKeyboard?.applyOverrides?.(source)
     this.$keyboardShortcutOverrides = applied?.ok ? { ...applied.overrides } : {}
-    this.$shortcutCatalog = window._caduceusKeyboard?.getCatalog?.() || []
-    this.$shortcutDraft = window._caduceusKeyboard?.getBindings?.() || Object.fromEntries(
-      this.$shortcutCatalog.map(action => [action.id, action.binding]),
+    this.shortcutCatalog = window._caduceusKeyboard?.getCatalog?.() || []
+    this.shortcutDraft = window._caduceusKeyboard?.getBindings?.() || Object.fromEntries(
+      this.shortcutCatalog.map(action => [action.id, action.binding]),
     )
     await (/** @type {any} */ (globalThis)).__tc_rerender?.()
   }
@@ -613,32 +677,32 @@ export default class {
     if (!target) return
     const actionId = target.getAttribute('data-shortcut-action') || ''
     if (!actionId) return
-    this.$shortcutDraft = { ...this.$shortcutDraft, [actionId]: target.value.trim() || 'off' }
-    this.$shortcutError = ''
-    this.$shortcutStatus = ''
+    this.shortcutDraft = { ...this.shortcutDraft, [actionId]: target.value.trim() || 'off' }
+    this.shortcutError = ''
+    this.shortcutStatus = ''
   }
 
   async saveKeyboardShortcuts() {
-    if (this.$shortcutSaving) return
-    const draft = { ...this.$shortcutDraft }
+    if (this.shortcutSaving) return
+    const draft = { ...this.shortcutDraft }
     for (const input of document.querySelectorAll('[data-shortcut-action]')) {
       if (!(input instanceof HTMLInputElement)) continue
       const actionId = input.getAttribute('data-shortcut-action') || ''
       if (actionId) draft[actionId] = input.value.trim() || 'off'
     }
-    this.$shortcutDraft = draft
-    const validation = window._caduceusKeyboard?.validateOverrides?.(this.$shortcutDraft)
+    this.shortcutDraft = draft
+    const validation = window._caduceusKeyboard?.validateOverrides?.(this.shortcutDraft)
     if (!validation?.ok) {
-      this.$shortcutError = validation?.error || 'Keyboard shortcuts are invalid.'
-      this.$shortcutStatus = ''
+      this.shortcutError = validation?.error || 'Keyboard shortcuts are invalid.'
+      this.shortcutStatus = ''
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       return
     }
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
-    this.$shortcutSaving = true
-    this.$shortcutError = ''
-    this.$shortcutStatus = ''
+    this.shortcutSaving = true
+    this.shortcutError = ''
+    this.shortcutStatus = ''
     try {
       const response = await apiFetch('/users/me/preferences', {
         method: 'PUT',
@@ -649,18 +713,18 @@ export default class {
       if (!response?.ok) throw new Error(data?.error || 'Could not save keyboard shortcuts.')
       if (cacheCopy) await window._caduceus?.cachePreferences?.(cacheCopy)
       await this.loadShortcutEditor(data?.keyboardShortcutOverrides)
-      this.$shortcutStatus = 'Keyboard shortcuts saved.'
+      this.shortcutStatus = 'Keyboard shortcuts saved.'
       window._caduceus?.toast('Keyboard shortcuts saved.')
     } catch (error) {
-      this.$shortcutError = error instanceof Error ? error.message : 'Could not save keyboard shortcuts.'
+      this.shortcutError = error instanceof Error ? error.message : 'Could not save keyboard shortcuts.'
     } finally {
-      this.$shortcutSaving = false
+      this.shortcutSaving = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
 
   async resetKeyboardShortcuts() {
-    this.$shortcutDraft = Object.fromEntries(this.$shortcutCatalog.map(action => [action.id, action.binding]))
+    this.shortcutDraft = Object.fromEntries(this.shortcutCatalog.map(action => [action.id, action.binding]))
     await this.saveKeyboardShortcuts()
   }
 
@@ -713,11 +777,11 @@ export default class {
   /** Read every native mail preference control and persist one atomic profile. */
   async saveMailPreferences() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$mailPreferencesSaving) return
+    if (!apiFetch || this.mailPreferencesSaving) return
     const next = this._mailPreferencesFromControls()
-    this.$mailPreferencesSaving = true
-    this.$mailPreferencesError = ''
-    this.$mailPreferencesStatus = ''
+    this.mailPreferencesSaving = true
+    this.mailPreferencesError = ''
+    this.mailPreferencesStatus = ''
     try {
       const response = await apiFetch('/users/me/preferences', {
         method: 'PUT', body: JSON.stringify({ mailPreferences: next }),
@@ -726,12 +790,12 @@ export default class {
       if (!response?.ok) throw new Error(data?.error || 'Could not save mail preferences.')
       this.$mailPreferences = normalizeMailPreferences(data?.mailPreferences)
       window._caduceus?.setMailPreferences?.(this.$mailPreferences)
-      this.$mailPreferencesStatus = 'Mail preferences saved.'
+      this.mailPreferencesStatus = 'Mail preferences saved.'
       window._caduceus?.toast('Mail preferences saved.')
     } catch (error) {
-      this.$mailPreferencesError = error instanceof Error ? error.message : 'Could not save mail preferences.'
+      this.mailPreferencesError = error instanceof Error ? error.message : 'Could not save mail preferences.'
     } finally {
-      this.$mailPreferencesSaving = false
+      this.mailPreferencesSaving = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
@@ -739,8 +803,8 @@ export default class {
   /** Load the least-privilege MCP configuration and its redacted local audit. */
   async loadMcp() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch) { this.$mcpLoading = false; return }
-    this.$mcpLoading = true
+    if (!apiFetch) { this.mcpLoading = false; return }
+    this.mcpLoading = true
     try {
       const [configResponse, auditResponse] = await Promise.all([
         apiFetch('/mcp/config'),
@@ -748,126 +812,126 @@ export default class {
       ])
       if (configResponse?.ok) {
         const config = await configResponse.json()
-        this.$mcpEnabled = config?.enabled === true
-        this.$mcpAccessLevel = ['read-only', 'read-write', 'read-write-send'].includes(config?.accessLevel)
+        this.mcpEnabled = config?.enabled === true
+        this.mcpAccessLevel = ['read-only', 'read-write', 'read-write-send'].includes(config?.accessLevel)
           ? config.accessLevel
           : 'read-only'
-        this.$mcpAllowedDomains = Array.isArray(config?.allowedDomains) ? config.allowedDomains : []
-        this.$mcpExcludedFolders = config?.excludedFolders && typeof config.excludedFolders === 'object'
+        this.mcpAllowedDomains = Array.isArray(config?.allowedDomains) ? config.allowedDomains : []
+        this.mcpExcludedFolders = config?.excludedFolders && typeof config.excludedFolders === 'object'
           ? config.excludedFolders
           : {}
-        this.$mcpHasToken = config?.hasToken === true
-        this.$mcpTokenCreatedAt = config?.tokenCreatedAt || ''
-        this.$mcpEndpointPath = config?.endpoint || '/mcp'
+        this.mcpHasToken = config?.hasToken === true
+        this.mcpTokenCreatedAt = config?.tokenCreatedAt || ''
+        this.mcpEndpointPath = config?.endpoint || '/mcp'
       }
-      this.$mcpAudit = auditResponse?.ok ? await auditResponse.json() : []
+      this.mcpAudit = auditResponse?.ok ? await auditResponse.json() : []
     } catch {
-      this.$mcpError = 'Could not load MCP access settings.'
+      this.mcpError = 'Could not load MCP access settings.'
     } finally {
-      this.$mcpLoading = false
+      this.mcpLoading = false
     }
   }
 
-  setMcpEnabled() { this.$mcpEnabled = !this.$mcpEnabled }
+  setMcpEnabled() { this.mcpEnabled = !this.mcpEnabled }
 
   /** @param {Event} _event @param {string} value */
   setMcpAccessLevel(_event, value) {
     if (['read-only', 'read-write', 'read-write-send'].includes(value)) {
-      this.$mcpAccessLevel = /** @type {'read-only'|'read-write'|'read-write-send'} */ (value)
+      this.mcpAccessLevel = /** @type {'read-only'|'read-write'|'read-write-send'} */ (value)
     }
   }
 
   /** @param {Event} _event @param {string} domain */
   toggleMcpDomain(_event, domain) {
-    const checked = !this.$mcpAllowedDomains.includes(domain)
-    this.$mcpAllowedDomains = checked
-      ? [...new Set([...this.$mcpAllowedDomains, domain])]
-      : this.$mcpAllowedDomains.filter(value => value !== domain)
-    if (!checked && this.$mcpExcludedFolders[domain]) {
-      const next = { ...this.$mcpExcludedFolders }
+    const checked = !this.mcpAllowedDomains.includes(domain)
+    this.mcpAllowedDomains = checked
+      ? [...new Set([...this.mcpAllowedDomains, domain])]
+      : this.mcpAllowedDomains.filter(value => value !== domain)
+    if (!checked && this.mcpExcludedFolders[domain]) {
+      const next = { ...this.mcpExcludedFolders }
       delete next[domain]
-      this.$mcpExcludedFolders = next
+      this.mcpExcludedFolders = next
     }
   }
 
   /** @param {Event} _event @param {{domain:string,path:string}} row */
   toggleMcpFolder(_event, row) {
-    const current = this.$mcpExcludedFolders[row.domain] || []
+    const current = this.mcpExcludedFolders[row.domain] || []
     const excluded = !current.includes(row.path)
     const folders = excluded
       ? [...new Set([...current, row.path])]
       : current.filter(path => path !== row.path)
-    const next = { ...this.$mcpExcludedFolders }
+    const next = { ...this.mcpExcludedFolders }
     if (folders.length) next[row.domain] = folders
     else delete next[row.domain]
-    this.$mcpExcludedFolders = next
+    this.mcpExcludedFolders = next
   }
 
   async saveMcpConfig() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$mcpSaving) return
-    this.$mcpSaving = true
-    this.$mcpError = ''
+    if (!apiFetch || this.mcpSaving) return
+    this.mcpSaving = true
+    this.mcpError = ''
     try {
       const response = await apiFetch('/mcp/config', {
         method: 'PUT',
         body: JSON.stringify({
-          enabled: this.$mcpEnabled,
-          accessLevel: this.$mcpAccessLevel,
-          allowedDomains: this.$mcpAllowedDomains,
-          excludedFolders: this.$mcpExcludedFolders,
+          enabled: this.mcpEnabled,
+          accessLevel: this.mcpAccessLevel,
+          allowedDomains: this.mcpAllowedDomains,
+          excludedFolders: this.mcpExcludedFolders,
         }),
       })
       const data = await response?.json()
       if (!response?.ok) throw new Error(data?.error || 'Could not save MCP access.')
-      this.$mcpEnabled = data.enabled === true
-      this.$mcpAllowedDomains = data.allowedDomains || []
-      this.$mcpExcludedFolders = data.excludedFolders || {}
+      this.mcpEnabled = data.enabled === true
+      this.mcpAllowedDomains = data.allowedDomains || []
+      this.mcpExcludedFolders = data.excludedFolders || {}
       window._caduceus?.toast('MCP access saved.')
     } catch (error) {
-      this.$mcpError = error instanceof Error ? error.message : 'Could not save MCP access.'
+      this.mcpError = error instanceof Error ? error.message : 'Could not save MCP access.'
     } finally {
-      this.$mcpSaving = false
+      this.mcpSaving = false
     }
   }
 
   async rotateMcpToken() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$mcpSaving) return
-    this.$mcpSaving = true
-    this.$mcpError = ''
+    if (!apiFetch || this.mcpSaving) return
+    this.mcpSaving = true
+    this.mcpError = ''
     try {
       const response = await apiFetch('/mcp/token', { method: 'POST' })
       const data = await response?.json()
       if (!response?.ok) throw new Error(data?.error || 'Could not generate the MCP token.')
-      this.$mcpToken = data.token || ''
-      this.$mcpHasToken = true
-      this.$mcpTokenCreatedAt = data.createdAt || ''
+      this.mcpToken = data.token || ''
+      this.mcpHasToken = true
+      this.mcpTokenCreatedAt = data.createdAt || ''
       window._caduceus?.toast('MCP token rotated. Copy it now.')
     } catch (error) {
-      this.$mcpError = error instanceof Error ? error.message : 'Could not generate the MCP token.'
+      this.mcpError = error instanceof Error ? error.message : 'Could not generate the MCP token.'
     } finally {
-      this.$mcpSaving = false
+      this.mcpSaving = false
     }
   }
 
   async revokeMcpToken() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$mcpSaving) return
-    this.$mcpSaving = true
-    this.$mcpError = ''
+    if (!apiFetch || this.mcpSaving) return
+    this.mcpSaving = true
+    this.mcpError = ''
     try {
       const response = await apiFetch('/mcp/token', { method: 'DELETE' })
       const data = await response?.json()
       if (!response?.ok) throw new Error(data?.error || 'Could not revoke the MCP token.')
-      this.$mcpToken = ''
-      this.$mcpHasToken = false
-      this.$mcpTokenCreatedAt = ''
+      this.mcpToken = ''
+      this.mcpHasToken = false
+      this.mcpTokenCreatedAt = ''
       window._caduceus?.toast(data.revoked ? 'MCP token revoked.' : 'No active MCP token.')
     } catch (error) {
-      this.$mcpError = error instanceof Error ? error.message : 'Could not revoke the MCP token.'
+      this.mcpError = error instanceof Error ? error.message : 'Could not revoke the MCP token.'
     } finally {
-      this.$mcpSaving = false
+      this.mcpSaving = false
     }
   }
 
@@ -877,23 +941,23 @@ export default class {
       await navigator.clipboard.writeText(value)
       window._caduceus?.toast(`${label} copied.`)
     } catch {
-      this.$mcpError = `Could not copy ${label.toLowerCase()}.`
+      this.mcpError = `Could not copy ${label.toLowerCase()}.`
     }
   }
 
   async clearMcpAudit() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$mcpSaving) return
-    this.$mcpSaving = true
+    if (!apiFetch || this.mcpSaving) return
+    this.mcpSaving = true
     try {
       const response = await apiFetch('/mcp/audit', { method: 'DELETE' })
       if (!response?.ok) throw new Error('Could not clear MCP activity.')
-      this.$mcpAudit = []
+      this.mcpAudit = []
       window._caduceus?.toast('MCP activity cleared.')
     } catch (error) {
-      this.$mcpError = error instanceof Error ? error.message : 'Could not clear MCP activity.'
+      this.mcpError = error instanceof Error ? error.message : 'Could not clear MCP activity.'
     } finally {
-      this.$mcpSaving = false
+      this.mcpSaving = false
     }
   }
 
@@ -904,7 +968,7 @@ export default class {
       const res = await apiFetch('/users/aliases')
       if (!res?.ok) return
       const data = await res.json()
-      this.$primaryEmail = data?.email || ''
+      this.primaryEmail = data?.email || ''
       this.$aliases = Array.isArray(data?.aliases) ? data.aliases : []
     } catch {
       this.$aliases = []
@@ -912,27 +976,27 @@ export default class {
   }
 
   async addAlias() {
-    const alias = this.$newAlias.trim()
+    const alias = this.newAlias.trim()
     if (!alias) return
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
-    this.$aliasSaving = true
-    this.$aliasError = ''
+    this.aliasSaving = true
+    this.aliasError = ''
     try {
       const res = await apiFetch('/users/aliases', { method: 'POST', body: JSON.stringify({ alias }) })
       const data = await res?.json()
       if (!res?.ok) {
-        this.$aliasError = data?.error || 'Could not add alias.'
+        this.aliasError = data?.error || 'Could not add alias.'
         return
       }
-      this.$primaryEmail = data?.email || this.$primaryEmail
+      this.primaryEmail = data?.email || this.primaryEmail
       this.$aliases = Array.isArray(data?.aliases) ? data.aliases : this.$aliases
-      this.$newAlias = ''
+      this.newAlias = ''
       window._caduceus?.toast('Alias added.')
     } catch {
-      this.$aliasError = 'Network error.'
+      this.aliasError = 'Network error.'
     } finally {
-      this.$aliasSaving = false
+      this.aliasSaving = false
     }
   }
 
@@ -942,7 +1006,7 @@ export default class {
     const res = await apiFetch('/users/aliases', { method: 'DELETE', body: JSON.stringify({ alias }) })
     const data = await res?.json()
     if (!res?.ok) {
-      this.$aliasError = data?.error || 'Could not remove alias.'
+      this.aliasError = data?.error || 'Could not remove alias.'
       return
     }
     this.$aliases = Array.isArray(data?.aliases) ? data.aliases : this.$aliases.filter(item => item !== alias)
@@ -989,7 +1053,7 @@ export default class {
    */
   async saveFontPreferences(patch) {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$fontSaving) return
+    if (!apiFetch || this.fontSaving) return
     const previous = { interfaceFont: this.$interfaceFont, composerFont: this.$composerFont }
     const optimistic = {
       interfaceFont: normalizeInterfaceFont(patch.interfaceFont ?? previous.interfaceFont),
@@ -997,8 +1061,8 @@ export default class {
     }
     this.$interfaceFont = optimistic.interfaceFont
     this.$composerFont = optimistic.composerFont
-    this.$fontSaving = true
-    this.$fontError = ''
+    this.fontSaving = true
+    this.fontError = ''
     window._caduceus?.setFontPreferences?.(optimistic)
     try {
       const response = await apiFetch('/users/me/preferences', {
@@ -1007,7 +1071,7 @@ export default class {
       })
       const data = await response?.json()
       if (!response?.ok) {
-        this.$fontError = data?.error || 'Could not save typography preferences.'
+        this.fontError = data?.error || 'Could not save typography preferences.'
         this.$interfaceFont = previous.interfaceFont
         this.$composerFont = previous.composerFont
         window._caduceus?.setFontPreferences?.(previous)
@@ -1021,12 +1085,12 @@ export default class {
       })
       window._caduceus?.toast('Typography preference saved.')
     } catch {
-      this.$fontError = 'Network error.'
+      this.fontError = 'Network error.'
       this.$interfaceFont = previous.interfaceFont
       this.$composerFont = previous.composerFont
       window._caduceus?.setFontPreferences?.(previous)
     } finally {
-      this.$fontSaving = false
+      this.fontSaving = false
     }
   }
 
@@ -1040,9 +1104,9 @@ export default class {
     this.$notificationSounds = next
     window._caduceus?.setNotificationSounds?.(next)
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$soundSaving) return
-    this.$soundSaving = true
-    this.$soundError = ''
+    if (!apiFetch || this.soundSaving) return
+    this.soundSaving = true
+    this.soundError = ''
     try {
       const response = await apiFetch('/users/me/preferences', {
         method: 'PUT',
@@ -1050,7 +1114,7 @@ export default class {
       })
       const data = await response?.json()
       if (!response?.ok) {
-        this.$soundError = data?.error || 'Could not save notification sounds.'
+        this.soundError = data?.error || 'Could not save notification sounds.'
         this.$notificationSounds = previous
         window._caduceus?.setNotificationSounds?.(previous)
         return
@@ -1059,11 +1123,11 @@ export default class {
       window._caduceus?.setNotificationSounds?.(this.$notificationSounds)
       window._caduceus?.toast('Notification sound saved.')
     } catch {
-      this.$soundError = 'Network error.'
+      this.soundError = 'Network error.'
       this.$notificationSounds = previous
       window._caduceus?.setNotificationSounds?.(previous)
     } finally {
-      this.$soundSaving = false
+      this.soundSaving = false
     }
   }
 
@@ -1072,7 +1136,7 @@ export default class {
     if (!isSoundEventId(soundEvent)) return
     const played = await window._caduceus?.playSound?.(soundEvent, this.$notificationSounds[soundEvent])
     if (!played && this.$notificationSounds[soundEvent] !== 'none') {
-      this.$soundError = 'This browser could not play the preview.'
+      this.soundError = 'This browser could not play the preview.'
     }
   }
 
@@ -1092,19 +1156,19 @@ export default class {
 
   /** @param {'all'|'domain'} scope @param {string} domain */
   async saveUnreadBadgePreference(scope, domain) {
-    if (this.$unreadBadgeSaving) return
+    if (this.unreadBadgeSaving) return
     const previous = { scope: this.$unreadBadgeScope, domain: this.$unreadBadgeDomain }
     const next = normalizeUnreadBadgePreference({ scope, domain }, this.mailboxDomains)
     if (scope === 'domain' && next.scope !== 'domain') {
-      this.$unreadBadgeError = 'Choose an account assigned to your profile.'
+      this.unreadBadgeError = 'Choose an account assigned to your profile.'
       return
     }
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
     this.$unreadBadgeScope = next.scope
     this.$unreadBadgeDomain = next.domain
-    this.$unreadBadgeSaving = true
-    this.$unreadBadgeError = ''
+    this.unreadBadgeSaving = true
+    this.unreadBadgeError = ''
     window._caduceus?.setUnreadBadgePreference?.(next)
     try {
       const response = await apiFetch('/users/me/preferences', {
@@ -1125,9 +1189,9 @@ export default class {
       this.$unreadBadgeScope = previous.scope
       this.$unreadBadgeDomain = previous.domain
       window._caduceus?.setUnreadBadgePreference?.(previous)
-      this.$unreadBadgeError = error instanceof Error ? error.message : 'Could not save unread badge preference.'
+      this.unreadBadgeError = error instanceof Error ? error.message : 'Could not save unread badge preference.'
     } finally {
-      this.$unreadBadgeSaving = false
+      this.unreadBadgeSaving = false
     }
   }
 
@@ -1190,7 +1254,7 @@ export default class {
 
   /** @param {Record<string, unknown>} patch */
   async saveNewMailNotificationPolicy(patch) {
-    if (this.$newMailNotificationSaving) return
+    if (this.newMailNotificationSaving) return
     const previous = {
       domains: this.$newMailNotificationDomains,
       externalAccounts: this.$newMailNotificationExternalAccounts,
@@ -1208,8 +1272,8 @@ export default class {
     this.$newMailNotificationExternalAccounts = optimistic.externalAccounts
     this.$newMailNotificationPrivacy = optimistic.privacy
     this.$newMailNotificationActions = optimistic.actions
-    this.$newMailNotificationSaving = true
-    this.$newMailNotificationError = ''
+    this.newMailNotificationSaving = true
+    this.newMailNotificationError = ''
     try {
       const response = await window._caduceus?.apiFetch('/users/me/preferences', {
         method: 'PUT',
@@ -1228,9 +1292,9 @@ export default class {
       this.$newMailNotificationExternalAccounts = previous.externalAccounts
       this.$newMailNotificationPrivacy = previous.privacy
       this.$newMailNotificationActions = previous.actions
-      this.$newMailNotificationError = error instanceof Error ? error.message : 'Could not save new-mail notifications.'
+      this.newMailNotificationError = error instanceof Error ? error.message : 'Could not save new-mail notifications.'
     } finally {
-      this.$newMailNotificationSaving = false
+      this.newMailNotificationSaving = false
     }
   }
 
@@ -1273,7 +1337,7 @@ export default class {
   async saveMailboxName(domain, name) {
     const normalizedDomain = String(domain || '').trim().toLowerCase()
     if (!this.mailboxDomains.includes(normalizedDomain)) {
-      this.$mailboxError = 'Mailbox is not assigned to your account.'
+      this.mailboxError = 'Mailbox is not assigned to your account.'
       return
     }
     const next = { ...this.$mailboxNames }
@@ -1283,21 +1347,21 @@ export default class {
 
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
-    this.$mailboxSaving = true; this.$mailboxError = ''
+    this.mailboxSaving = true; this.mailboxError = ''
     try {
       const res = await apiFetch('/users/me/preferences', {
         method: 'PUT',
         body: JSON.stringify({ mailboxNames: next }),
       })
       const data = await res?.json()
-      if (!res?.ok) { this.$mailboxError = data?.error || 'Could not save mailbox name.'; return }
+      if (!res?.ok) { this.mailboxError = data?.error || 'Could not save mailbox name.'; return }
       this.$mailboxNames = data?.mailboxNames || {}
       window._caduceus?.setMailboxNames?.(this.$mailboxNames)
       window._caduceus?.toast(normalizedName ? 'Mailbox name saved.' : 'Mailbox name removed.')
     } catch {
-      this.$mailboxError = 'Network error.'
+      this.mailboxError = 'Network error.'
     } finally {
-      this.$mailboxSaving = false
+      this.mailboxSaving = false
     }
   }
 
@@ -1330,7 +1394,7 @@ export default class {
     const inputs = [...(section?.querySelectorAll('.category-role-field input') || [])]
     const rows = this.categoryRows
     if (inputs.length !== rows.length) {
-      this.$categoryError = 'The folder-role form is incomplete.'
+      this.categoryError = 'The folder-role form is incomplete.'
       return
     }
     const next = {}
@@ -1348,7 +1412,7 @@ export default class {
 
   async resetAllCategoryMappings() {
     const previous = this.$categoryMappings
-    this.$categoryMappings = Object.fromEntries(this.$categoryAccounts.map(account => [
+    this.$categoryMappings = Object.fromEntries(this.categoryAccounts.map(account => [
       account.domain,
       Object.fromEntries(CATEGORY_ROLES.map(role => [role.id, role.id])),
     ]))
@@ -1358,9 +1422,9 @@ export default class {
   /** @param {Record<string, Record<string, string>>} previous */
   async saveCategoryMappings(previous) {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$categorySaving) return
-    this.$categorySaving = true
-    this.$categoryError = ''
+    if (!apiFetch || this.categorySaving) return
+    this.categorySaving = true
+    this.categoryError = ''
     try {
       const response = await apiFetch('/users/me/preferences', {
         method: 'PUT',
@@ -1372,13 +1436,13 @@ export default class {
       this._categoryMappingDrafts = {}
       const catalogResponse = await apiFetch('/categories')
       const catalog = await catalogResponse?.json()
-      if (catalogResponse?.ok) this.$categoryAccounts = Array.isArray(catalog?.accounts) ? catalog.accounts : []
+      if (catalogResponse?.ok) this.categoryAccounts = Array.isArray(catalog?.accounts) ? catalog.accounts : []
       window._caduceus?.toast('Folder roles updated.')
     } catch (error) {
       this.$categoryMappings = previous
-      this.$categoryError = error instanceof Error ? error.message : 'Could not save folder roles.'
+      this.categoryError = error instanceof Error ? error.message : 'Could not save folder roles.'
     } finally {
-      this.$categorySaving = false
+      this.categorySaving = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
@@ -1412,9 +1476,9 @@ export default class {
    */
   async saveImagePrivacyPreferences(patch) {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$privacySaving) return
-    this.$privacySaving = true
-    this.$privacyError = ''
+    if (!apiFetch || this.privacySaving) return
+    this.privacySaving = true
+    this.privacyError = ''
     try {
       const response = await apiFetch('/users/me/preferences', {
         method: 'PUT',
@@ -1422,7 +1486,7 @@ export default class {
       })
       const data = await response?.json()
       if (!response?.ok) {
-        this.$privacyError = data?.error || 'Could not save remote-content preferences.'
+        this.privacyError = data?.error || 'Could not save remote-content preferences.'
         return
       }
       this.$remoteImagePolicy = data?.remoteImagePolicy === 'allow' ? 'allow' : 'block'
@@ -1430,90 +1494,137 @@ export default class {
       this.$githubProfileEnrichment = data?.githubProfileEnrichment === true
       window._caduceus?.toast('Privacy preference saved.')
     } catch {
-      this.$privacyError = 'Network error.'
+      this.privacyError = 'Network error.'
     } finally {
-      this.$privacySaving = false
+      this.privacySaving = false
     }
   }
 
   /** @type {boolean} Whether the Add User form is visible */
-  $showAddUser = false; /** @type {boolean} Whether the Add Rule form is visible */
-  $showAddRule = false
+  @SessionState
+  showAddUser = false; /** @type {boolean} Whether the Add Rule form is visible */
+  @SessionState
+  showAddRule = false
   /** @type {string} */
-  $newEmail = ''; /** @type {string} */
-  $newDomains = ''; /** @type {string} */
-  $newRole = 'viewer'
+  @SessionState
+  newEmail = ''; /** @type {string} */
+  @SessionState
+  newDomains = ''; /** @type {string} */
+  @SessionState
+  newRole = 'viewer'
   /** @type {string} */
-  $newRuleName = ''; /** @type {string} */
-  $newRuleMailbox = ''; /** @type {string} */
-  $ruleEditId = ''; /** @type {boolean} */
-  $newStopProcessing = false
-  $newConditionMatch = 'all'
+  @SessionState
+  newRuleName = ''; /** @type {string} */
+  @SessionState
+  newRuleMailbox = ''; /** @type {string} */
+  @SessionState
+  ruleEditId = ''; /** @type {boolean} */
+  @SessionState
+  newStopProcessing = false
+  @SessionState
+  newConditionMatch = 'all'
   /** @type {Array<Record<string, any>>} */
-  $newConditions = []; /** @type {Array<Record<string, any>>} */
-  $newActions = []
+  @SessionState
+  newConditions = []; /** @type {Array<Record<string, any>>} */
+  @SessionState
+  newActions = []
   /** @type {string} */
-  $condField = 'from'; /** @type {string} */
-  $condOp = 'contains'; /** @type {string} */
-  $condValue = ''
+  @SessionState
+  condField = 'from'; /** @type {string} */
+  @SessionState
+  condOp = 'contains'; /** @type {string} */
+  @SessionState
+  condValue = ''
   /** @type {string} */
-  $actionType = 'folder'; /** @type {string} */
-  $actionFolder = ''; /** @type {string} */
-  $actionTo = ''
+  @SessionState
+  actionType = 'folder'; /** @type {string} */
+  @SessionState
+  actionFolder = ''; /** @type {string} */
+  @SessionState
+  actionTo = ''
   /** @type {string} */
-  $previewFrom = ''; /** @type {string} */
-  $previewSubject = ''; /** @type {string} */
-  $previewBody = ''; /** @type {boolean} */
-  $previewHasAttachment = false; /** @type {string} */
-  $rulePreviewResult = ''
+  @SessionState
+  previewFrom = ''; /** @type {string} */
+  @SessionState
+  previewSubject = ''; /** @type {string} */
+  @SessionState
+  previewBody = ''; /** @type {boolean} */
+  @SessionState
+  previewHasAttachment = false; /** @type {string} */
+  @SessionState
+  rulePreviewResult = ''
   /**
    * Step-up state. Changing a credential needs a factor proven again, so the
    * view collects one before it calls any credential operation.
    * @type {boolean}
    */
-  $showStepUp = false; /** @type {string} */
-  $stepUpPassword = ''; /** @type {string} */
-  $stepUpCode = ''; /** @type {string} */
-  $stepUpError = ''
+  @SessionState
+  showStepUp = false; /** @type {string} */
+  @SessionState
+  stepUpPassword = ''; /** @type {string} */
+  @SessionState
+  stepUpCode = ''; /** @type {string} */
+  @SessionState
+  stepUpError = ''
   /** @type {boolean} Whether the Add passkey wizard is open */
   $showAddDevice = false; /** @type {object|null} Challenge from the auth boundary */
   $deviceProvision = null; /** @type {string} */
   $newDeviceName = ''; /** @type {string} */
   $newDeviceCode = ''
   /** @type {boolean} */
-  $deviceLoading = false; /** @type {string} */
+  @SessionState
+  deviceLoading = false; /** @type {string} */
   $deviceError = ''
   /** @type {object|null} */
-  $totpEnrollment = null; /** @type {string} */
-  $totpCode = ''; /** @type {string} */
-  $totpName = 'Authenticator app'; /** @type {boolean} */
-  $totpLoading = false; /** @type {string} */
-  $totpError = ''
+  @SessionState
+  totpEnrollment = null; /** @type {string} */
+  @SessionState
+  totpCode = ''; /** @type {string} */
+  @SessionState
+  totpName = 'Authenticator app'; /** @type {boolean} */
+  @SessionState
+  totpLoading = false; /** @type {string} */
+  @SessionState
+  totpError = ''
   /** @type {Record<string, { operatorCommand: string, note: string }>} */
-  $adminRecoveryCodes = {}
+  @SessionState
+  adminRecoveryCodes = {}
   /** @type {string} */
-  $newPassword = ''; /** @type {string} */
-  $confirmPassword = ''; /** @type {boolean} */
-  $passwordSaving = false; /** @type {string} */
-  $passwordError = ''
+  @SessionState
+  newPassword = ''; /** @type {string} */
+  @SessionState
+  confirmPassword = ''; /** @type {boolean} */
+  @SessionState
+  passwordSaving = false; /** @type {string} */
+  @SessionState
+  passwordError = ''
   /** @type {string[]} Plaintext recovery codes are held only until dismissed. */
-  $recoveryCodes = []; /** @type {boolean} */
-  $recoveryLoading = false; /** @type {string} */
-  $recoveryError = ''
+  @SessionState
+  recoveryCodes = []; /** @type {boolean} */
+  @SessionState
+  recoveryLoading = false; /** @type {string} */
+  @SessionState
+  recoveryError = ''
   /** @type {boolean} Whether the browser supports Web Push */
-  $notificationSupported = false; /** @type {string} Current Notification API permission state */
-  $notificationPermission = 'default'
+  @SessionState
+  notificationSupported = false; /** @type {string} Current Notification API permission state */
+  @SessionState
+  notificationPermission = 'default'
   /** @type {boolean} */
-  $notificationLoading = false; /** @type {string} */
-  $notificationError = ''
+  @SessionState
+  notificationLoading = false; /** @type {string} */
+  @SessionState
+  notificationError = ''
   /** @type {'all'|'domain'} Account set represented by app and push badges. */
   $unreadBadgeScope = 'all'
   /** @type {string} Assigned domain used when the unread badge is focused. */
   $unreadBadgeDomain = ''
   /** @type {boolean} */
-  $unreadBadgeSaving = false
+  @SessionState
+  unreadBadgeSaving = false
   /** @type {string} */
-  $unreadBadgeError = ''
+  @SessionState
+  unreadBadgeError = ''
   /** @type {string[]} Hosted accounts allowed to produce new-mail push alerts. */
   $newMailNotificationDomains = []
   /** @type {string[]} Connected accounts allowed to produce new-mail push alerts. */
@@ -1523,37 +1634,58 @@ export default class {
   /** @type {boolean} */
   $newMailNotificationActions = true
   /** @type {boolean} */
-  $newMailNotificationSaving = false
+  @SessionState
+  newMailNotificationSaving = false
   /** @type {string} */
-  $newMailNotificationError = ''
+  @SessionState
+  newMailNotificationError = ''
   /** @type {Record<'new-mail'|'hit-send'|'send'|'confirm', 'none'|'chime'|'bell'|'pop'|'pulse'>} */
   $notificationSounds = normalizeNotificationSounds(DEFAULT_NOTIFICATION_SOUNDS)
   /** @type {boolean} */
-  $soundSaving = false
+  @SessionState
+  soundSaving = false
   /** @type {string} */
-  $soundError = ''
+  @SessionState
+  soundError = ''
   /** @type {boolean} Whether the current user has the admin role */
-  $isAdmin = false
+  @SessionState
+  isAdmin = false
   /** @type {Array<{ id: string, domain: string, name: string, text: string, defaultFor: string[], createdAt?: string, updatedAt?: string }>} */
-  $signatures = []
+  @SessionState
+  signatures = []
   /** @type {string} */
-  $signatureEditId = ''; /** @type {string} */
-  $signatureName = ''; /** @type {string} */
-  $signatureText = ''; /** @type {string[]} */
-  $signatureDefaults = []; /** @type {string} */
-  $signatureError = ''; /** @type {boolean} */
-  $signatureSaving = false
+  @SessionState
+  signatureEditId = ''; /** @type {string} */
+  @SessionState
+  signatureName = ''; /** @type {string} */
+  @SessionState
+  signatureText = ''; /** @type {string[]} */
+  @SessionState
+  signatureDefaults = []; /** @type {string} */
+  @SessionState
+  signatureError = ''; /** @type {boolean} */
+  @SessionState
+  signatureSaving = false
   /** @type {Array<{ id: string, name: string, subject: string, text: string, to: string, cc: string, createdAt?: string, updatedAt?: string }>} */
-  $templates = []
+  @SessionState
+  templates = []
   /** @type {string} */
-  $templateEditId = ''; /** @type {string} */
-  $templateName = ''; /** @type {string} */
-  $templateSubject = ''; /** @type {string} */
-  $templateTo = ''; /** @type {string} */
-  $templateCc = ''; /** @type {string} */
-  $templateText = ''; /** @type {string} */
-  $templateError = ''; /** @type {boolean} */
-  $templateSaving = false
+  @SessionState
+  templateEditId = ''; /** @type {string} */
+  @SessionState
+  templateName = ''; /** @type {string} */
+  @SessionState
+  templateSubject = ''; /** @type {string} */
+  @SessionState
+  templateTo = ''; /** @type {string} */
+  @SessionState
+  templateCc = ''; /** @type {string} */
+  @SessionState
+  templateText = ''; /** @type {string} */
+  @SessionState
+  templateError = ''; /** @type {boolean} */
+  @SessionState
+  templateSaving = false
 
   /** @type {number} Internal sequence counter for condition IDs */
   _condSeq = 0; /** @type {number} Internal sequence counter for action IDs */
@@ -1573,9 +1705,9 @@ export default class {
    * @returns {string}
    */
   get notificationStatusLabel() {
-    if (!this.$notificationSupported) return 'Not available on this browser'
-    if (this.$notificationPermission === 'granted' && this.$pushSubscriptions.length > 0) return 'On'
-    if (this.$notificationPermission === 'denied') return 'Blocked'
+    if (!this.notificationSupported) return 'Not available on this browser'
+    if (this.notificationPermission === 'granted' && this.$pushSubscriptions.length > 0) return 'On'
+    if (this.notificationPermission === 'denied') return 'Blocked'
     return 'Off'
   }
 
@@ -1585,9 +1717,9 @@ export default class {
    * @returns {string}
    */
   get notificationHelpText() {
-    if (!this.$notificationSupported) return 'Install Caduceus with a browser that supports Web Push to receive new mail alerts.'
-    if (this.$notificationPermission === 'denied') return 'Notifications are blocked in this browser. Allow them in site settings to turn alerts on.'
-    if (this.$notificationPermission === 'granted' && this.$pushSubscriptions.length > 0) return 'This device will alert you when new mail arrives.'
+    if (!this.notificationSupported) return 'Install Caduceus with a browser that supports Web Push to receive new mail alerts.'
+    if (this.notificationPermission === 'denied') return 'Notifications are blocked in this browser. Allow them in site settings to turn alerts on.'
+    if (this.notificationPermission === 'granted' && this.$pushSubscriptions.length > 0) return 'This device will alert you when new mail arrives.'
     return 'Turn this on for an installed desktop or mobile app feel when mail arrives.'
   }
 
@@ -1639,16 +1771,16 @@ export default class {
       delegateIdentity: account.authIdentity && account.authIdentity !== account.mailboxAddress ? account.authIdentity : '',
       canRead: account.capabilities?.mailRead === true,
       canSend: account.capabilities?.send === true,
-      reconnecting: this.$accountReconnectId === account.id,
-      confirmingRemoval: this.$accountRemoveId === account.id,
-      showingDiagnostics: this.$accountDiagnosticsId === account.id,
-      diagnostics: this.$accountDiagnostics[account.id] || null,
-      mutating: this.$accountMutationId === account.id,
+      reconnecting: this.accountReconnectId === account.id,
+      confirmingRemoval: this.accountRemoveId === account.id,
+      showingDiagnostics: this.accountDiagnosticsId === account.id,
+      diagnostics: this.accountDiagnostics[account.id] || null,
+      mutating: this.accountMutationId === account.id,
     }))
   }
 
   get selectedProvider() {
-    return this.$providerCatalog.find(provider => provider.id === this.$accountConnectionDraft.choiceId) || null
+    return this.providerCatalog.find(provider => provider.id === this.accountConnectionDraft.choiceId) || null
   }
 
   get selectedProviderGuidance() {
@@ -1661,7 +1793,7 @@ export default class {
   async loadExternalAccounts() {
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
-    this.$externalAccountsError = ''
+    this.externalAccountsError = ''
     try {
       const [accountsResponse, providersResponse] = await Promise.all([
         apiFetch('/api/v1/external-accounts'), apiFetch('/api/v1/provider-catalog'),
@@ -1671,29 +1803,29 @@ export default class {
       if (!accountsResponse?.ok) throw new Error(accountsBody?.error || 'Could not load connected accounts.')
       if (!providersResponse?.ok) throw new Error(providersBody?.error || 'Could not load providers.')
       this.$externalAccounts = normalizeExternalAccounts(accountsBody?.accounts)
-      this.$providerCatalog = normalizeProviderCatalog(providersBody?.providers)
+      this.providerCatalog = normalizeProviderCatalog(providersBody?.providers)
     } catch (error) {
-      this.$externalAccountsError = error instanceof Error ? error.message : 'Could not load connected accounts.'
+      this.externalAccountsError = error instanceof Error ? error.message : 'Could not load connected accounts.'
     }
   }
 
   openAccountSetup() {
-    this.$accountSetupOpen = true
-    this.$accountSetupStep = 'address'
-    this.$accountSetupError = ''
-    this.$accountSetupStatus = ''
-    this.$accountAddress = ''
-    this.$accountConnectionDraft = connectionDraft({}, '')
+    this.accountSetupOpen = true
+    this.accountSetupStep = 'address'
+    this.accountSetupError = ''
+    this.accountSetupStatus = ''
+    this.accountAddress = ''
+    this.accountConnectionDraft = connectionDraft({}, '')
   }
 
   startAccountOnboarding() {
-	this.$accountOnboarding = true
+	this.accountOnboarding = true
 	try { localStorage.setItem('caduceus_account_onboarding_pending', '1') } catch {}
 	this.openAccountSetup()
   }
 
   dismissAccountOnboarding() {
-	this.$accountOnboarding = false
+	this.accountOnboarding = false
 	try {
 		localStorage.removeItem('caduceus_account_onboarding_pending')
 		localStorage.setItem(`caduceus_account_onboarding_complete:${sessionStorage.getItem('caduceus_email') || 'owner'}`, '1')
@@ -1702,22 +1834,22 @@ export default class {
   }
 
   closeAccountSetupOrOnboarding() {
-	if (this.$accountOnboarding) this.dismissAccountOnboarding()
+	if (this.accountOnboarding) this.dismissAccountOnboarding()
 	else this.closeAccountSetup()
   }
 
   closeAccountSetup() {
-    this.$accountSetupOpen = false
-    this.$accountSetupBusy = false
-    this.$accountSetupError = ''
-    this.$accountSetupStatus = ''
-    this.$accountConnectionDraft = connectionDraft({}, '')
+    this.accountSetupOpen = false
+    this.accountSetupBusy = false
+    this.accountSetupError = ''
+    this.accountSetupStatus = ''
+    this.accountConnectionDraft = connectionDraft({}, '')
   }
 
   /** @param {Event} event */
   updateAccountAddress(event) {
     const target = event.target instanceof HTMLInputElement ? event.target : null
-    if (target) this.$accountAddress = target.value
+    if (target) this.accountAddress = target.value
   }
 
   /** @param {Event | null} _event @param {Record<string, any>} provider */
@@ -1725,63 +1857,63 @@ export default class {
     if (!provider) return
     if (provider.authentication === 'oauth') {
       if (!provider.configured) {
-        this.$accountSetupError = `${provider.name} OAuth must be configured by this server’s administrator before this account can be connected.`
+        this.accountSetupError = `${provider.name} OAuth must be configured by this server’s administrator before this account can be connected.`
         await (/** @type {any} */ (globalThis)).__tc_rerender?.()
         return
       }
-      const address = this.$accountAddress.trim().toLowerCase()
-      this.$accountSetupError = ''
-      this.$accountSetupStatus = ''
-      this.$accountSetupStep = 'oauth'
-      this.$accountConnectionDraft = { ...connectionDraft({}, address), choiceId: provider.id, oauthProvider: provider.provider, authIdentity: address, sharedMailboxAddress: '' }
+      const address = this.accountAddress.trim().toLowerCase()
+      this.accountSetupError = ''
+      this.accountSetupStatus = ''
+      this.accountSetupStep = 'oauth'
+      this.accountConnectionDraft = { ...connectionDraft({}, address), choiceId: provider.id, oauthProvider: provider.provider, authIdentity: address, sharedMailboxAddress: '' }
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       return
     }
-    this.$accountSetupError = ''
-    this.$accountSetupStep = 'credentials'
-    this.$accountConnectionDraft = connectionDraft({
+    this.accountSetupError = ''
+    this.accountSetupStep = 'credentials'
+    this.accountConnectionDraft = connectionDraft({
       choiceId: provider.id, source: provider.preset ? 'preset' : 'manual', connection: provider.preset || {},
-    }, this.$accountAddress)
+    }, this.accountAddress)
     await (/** @type {any} */ (globalThis)).__tc_rerender?.()
   }
 
   async discoverExternalAccount() {
     const apiFetch = window._caduceus?.apiFetch
     const addressInput = /** @type {HTMLInputElement | null} */ (document.querySelector('[data-external-account-address]'))
-    const address = (addressInput?.value || this.$accountAddress).trim().toLowerCase()
-    if (!apiFetch || this.$accountSetupBusy) return
+    const address = (addressInput?.value || this.accountAddress).trim().toLowerCase()
+    if (!apiFetch || this.accountSetupBusy) return
     if (!address || !address.includes('@')) {
-      this.$accountSetupError = 'Enter a complete email address.'
+      this.accountSetupError = 'Enter a complete email address.'
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       return
     }
-    this.$accountAddress = address
-    this.$accountSetupBusy = true
-    this.$accountSetupError = ''
-    this.$accountSetupStatus = 'Discovering secure mail settings…'
+    this.accountAddress = address
+    this.accountSetupBusy = true
+    this.accountSetupError = ''
+    this.accountSetupStatus = 'Discovering secure mail settings…'
     try {
       const response = await apiFetch('/api/v1/provider-discovery', {
         method: 'POST', body: JSON.stringify({ address }),
       })
       const body = await response?.json()
       if (!response?.ok) throw new Error(body?.error || 'Mail settings could not be discovered.')
-      const provider = this.$providerCatalog.find(choice => choice.id === body?.choiceId)
+      const provider = this.providerCatalog.find(choice => choice.id === body?.choiceId)
       if (provider?.authentication === 'oauth') {
         await this.selectAccountProvider(null, provider)
-        if (this.$accountSetupStep !== 'oauth') throw new Error(this.$accountSetupError || `${provider.name} OAuth is not available.`)
-        this.$accountSetupStatus = `${provider.name} settings found. Confirm the sign-in address to continue.`
+        if (this.accountSetupStep !== 'oauth') throw new Error(this.accountSetupError || `${provider.name} OAuth is not available.`)
+        this.accountSetupStatus = `${provider.name} settings found. Confirm the sign-in address to continue.`
         return
       }
-      this.$accountConnectionDraft = connectionDraft(body, address)
-      this.$accountSetupStep = 'credentials'
-      this.$accountSetupStatus = body?.source === 'fallback'
+      this.accountConnectionDraft = connectionDraft(body, address)
+      this.accountSetupStep = 'credentials'
+      this.accountSetupStatus = body?.source === 'fallback'
         ? 'Suggested settings found. Review every server field before connecting.'
         : 'Mail settings discovered. Add your credentials to continue.'
     } catch (error) {
-      this.$accountSetupError = error instanceof Error ? error.message : 'Mail settings could not be discovered.'
-      this.$accountSetupStatus = ''
+      this.accountSetupError = error instanceof Error ? error.message : 'Mail settings could not be discovered.'
+      this.accountSetupStatus = ''
     } finally {
-      this.$accountSetupBusy = false
+      this.accountSetupBusy = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
@@ -1793,15 +1925,15 @@ export default class {
    */
   async beginProviderOAuth(_event, reconnectAccount = null) {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$accountSetupBusy || this.$accountMutationId) return
+    if (!apiFetch || this.accountSetupBusy || this.accountMutationId) return
     const fieldValue = (field) => /** @type {HTMLInputElement | null} */ (document.querySelector(`[data-oauth-account-field="${field}"]`))?.value?.trim() || ''
-    const provider = reconnectAccount?.provider || this.selectedProvider?.provider || this.$accountConnectionDraft.oauthProvider
+    const provider = reconnectAccount?.provider || this.selectedProvider?.provider || this.accountConnectionDraft.oauthProvider
     const authIdentity = reconnectAccount ? reconnectAccount.authIdentity : fieldValue('authIdentity').toLowerCase()
     const sharedMailboxAddress = reconnectAccount ? reconnectAccount.sharedMailboxAddress : fieldValue('sharedMailboxAddress').toLowerCase()
     const mailboxAddress = reconnectAccount ? reconnectAccount.mailboxAddress : (sharedMailboxAddress || authIdentity)
     if (!['microsoft', 'gmail'].includes(provider)) return
     if (!reconnectAccount && (!authIdentity || !authIdentity.includes('@') || (sharedMailboxAddress && !sharedMailboxAddress.includes('@')))) {
-      this.$accountSetupError = 'Enter a complete provider sign-in address and, when used, a complete shared mailbox address.'
+      this.accountSetupError = 'Enter a complete provider sign-in address and, when used, a complete shared mailbox address.'
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       return
     }
@@ -1811,11 +1943,11 @@ export default class {
       provider, authIdentity, mailboxAddress, sharedMailboxAddress,
       label: fieldValue('label') || mailboxAddress, color: fieldValue('color') || (provider === 'gmail' ? '#EA4335' : '#0078D4'), order: this.$externalAccounts.length,
     }
-    this.$accountSetupBusy = !reconnectAccount
-    this.$accountMutationId = reconnectAccount?.id || ''
-    this.$accountSetupError = ''
-    this.$externalAccountsError = ''
-    this.$accountSetupStatus = `Preparing a secure ${provider === 'gmail' ? 'Google' : 'Microsoft'} sign-in…`
+    this.accountSetupBusy = !reconnectAccount
+    this.accountMutationId = reconnectAccount?.id || ''
+    this.accountSetupError = ''
+    this.externalAccountsError = ''
+    this.accountSetupStatus = `Preparing a secure ${provider === 'gmail' ? 'Google' : 'Microsoft'} sign-in…`
     try {
       const response = await apiFetch(`/api/v1/external-accounts/oauth/${provider === 'gmail' ? 'google' : 'microsoft'}/begin`, { method: 'POST', body: JSON.stringify(request) })
       const body = await response?.json()
@@ -1825,17 +1957,17 @@ export default class {
       if (authorization.protocol !== 'https:' || authorization.hostname !== expectedHost) throw new Error('The server returned an invalid provider authorization address.')
       sessionStorage.setItem('caduceus_oauth_provider', provider)
       try { localStorage.setItem(`caduceus_oauth_provider:${body.state}`, provider) } catch {}
-      if (this.$accountOnboarding) {
+      if (this.accountOnboarding) {
         try { localStorage.setItem('caduceus_account_onboarding_pending', '1') } catch {}
       }
       window.location.assign(authorization.href)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Provider authorization could not be started.'
-      if (reconnectAccount) this.$externalAccountsError = message
-      else this.$accountSetupError = message
-      this.$accountSetupStatus = ''
-      this.$accountSetupBusy = false
-      this.$accountMutationId = ''
+      if (reconnectAccount) this.externalAccountsError = message
+      else this.accountSetupError = message
+      this.accountSetupStatus = ''
+      this.accountSetupBusy = false
+      this.accountMutationId = ''
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
@@ -1859,7 +1991,7 @@ export default class {
     for (const name of ['code', 'state', 'error', 'error_description', 'error_uri', 'session_state']) url.searchParams.delete(name)
     window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
     if (providerError || !code || !state) {
-      this.$externalOAuthNotice = 'Provider authorization was not completed. No account credentials were changed.'
+      this.externalOAuthNotice = 'Provider authorization was not completed. No account credentials were changed.'
       return
     }
     try {
@@ -1874,19 +2006,19 @@ export default class {
         if (response?.ok) { body = candidate; break }
       }
       if (!body) throw new Error('Provider authorization could not be completed.')
-      this.$externalOAuthNotice = `${body?.sharedMailboxAddress ? 'Shared mailbox' : body?.provider === 'gmail' ? 'Google account' : 'Microsoft account'} connected successfully.`
+      this.externalOAuthNotice = `${body?.sharedMailboxAddress ? 'Shared mailbox' : body?.provider === 'gmail' ? 'Google account' : 'Microsoft account'} connected successfully.`
       this.completeAccountOnboarding()
-      window._caduceus?.toast(this.$externalOAuthNotice)
+      window._caduceus?.toast(this.externalOAuthNotice)
       window.dispatchEvent(new CustomEvent('caduceus:external-accounts-changed'))
     } catch {
-      this.$externalOAuthNotice = 'Provider authorization could not be completed. Try reconnecting the account.'
+      this.externalOAuthNotice = 'Provider authorization could not be completed. Try reconnecting the account.'
     }
   }
 
   completeAccountOnboarding() {
-	if (!this.$accountOnboarding) return
-	this.$accountOnboarding = false
-	this.$accountSetupOpen = false
+	if (!this.accountOnboarding) return
+	this.accountOnboarding = false
+	this.accountSetupOpen = false
 	try {
 		localStorage.removeItem('caduceus_account_onboarding_pending')
 		localStorage.setItem(`caduceus_account_onboarding_complete:${sessionStorage.getItem('caduceus_email') || 'owner'}`, '1')
@@ -1899,7 +2031,7 @@ export default class {
     const field = target?.dataset.externalAccountField || ''
     if (!target || !field || field === 'password') return
     const passwordValue = /** @type {HTMLInputElement | null} */ (document.querySelector('[data-external-account-field="password"]'))?.value || ''
-    this.$accountConnectionDraft = { ...this.$accountConnectionDraft, [field]: target.value }
+    this.accountConnectionDraft = { ...this.accountConnectionDraft, [field]: target.value }
     // Tachyon replaces the native fieldset after a reactive edit. Keep the
     // secret only in this one-tick closure so a later server-field edit does
     // not silently erase it; it never enters component state or storage.
@@ -1912,7 +2044,7 @@ export default class {
   /** Build one request from native controls. The password exists only in this stack frame. */
   accountRequestFromControls() {
     const value = (field) => /** @type {HTMLInputElement | HTMLSelectElement | null} */ (document.querySelector(`[data-external-account-field="${field}"]`))?.value?.trim() || ''
-    const mailboxAddress = this.$accountConnectionDraft.mailboxAddress || this.$accountAddress.trim().toLowerCase()
+    const mailboxAddress = this.accountConnectionDraft.mailboxAddress || this.accountAddress.trim().toLowerCase()
     const username = value('username')
     const password = value('password')
     const imapPort = Number(value('imapPort'))
@@ -1936,18 +2068,18 @@ export default class {
 
   async validateAndCreateExternalAccount() {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$accountSetupBusy) return
+    if (!apiFetch || this.accountSetupBusy) return
     /** @type {Record<string, any>} */
     let request
     try { request = this.accountRequestFromControls() } catch (error) {
-      this.$accountSetupError = error instanceof Error ? error.message : 'Complete the account form.'
+      this.accountSetupError = error instanceof Error ? error.message : 'Complete the account form.'
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       return
     }
-    this.$accountSetupBusy = true
-    this.$accountSetupError = ''
+    this.accountSetupBusy = true
+    this.accountSetupError = ''
     const davServices = [request.carddav && 'CardDAV', request.caldav && 'CalDAV'].filter(Boolean)
-    this.$accountSetupStatus = davServices.length
+    this.accountSetupStatus = davServices.length
       ? `Validating IMAP, SMTP, and ${davServices.join(' and ')} without sending mail…`
       : 'Validating IMAP and SMTP without sending mail…'
     const fieldset = /** @type {HTMLFieldSetElement | null} */ (document.querySelector('[data-external-account-fieldset]'))
@@ -1958,7 +2090,7 @@ export default class {
       })
       const validationBody = await validationResponse?.json()
       if (!validationResponse?.ok) throw new Error(validationBody?.error || 'The mail servers rejected these settings.')
-      this.$accountSetupStatus = 'Validation passed. Saving the encrypted account credential…'
+      this.accountSetupStatus = 'Validation passed. Saving the encrypted account credential…'
       const createResponse = await apiFetch('/api/v1/external-accounts', {
         method: 'POST', body: JSON.stringify(request),
       })
@@ -1969,13 +2101,13 @@ export default class {
       this.closeAccountSetup()
       window._caduceus?.toast('External account connected.')
     } catch (error) {
-      this.$accountSetupError = error instanceof Error ? error.message : 'The account could not be added.'
-      this.$accountSetupStatus = ''
+      this.accountSetupError = error instanceof Error ? error.message : 'The account could not be added.'
+      this.accountSetupStatus = ''
       const password = /** @type {HTMLInputElement | null} */ (document.querySelector('[data-external-account-field="password"]'))
       if (password) password.value = ''
     } finally {
       request.credentials.password = ''
-      this.$accountSetupBusy = false
+      this.accountSetupBusy = false
       if (fieldset) fieldset.disabled = false
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
@@ -1984,9 +2116,9 @@ export default class {
   /** @param {Event} _event @param {Record<string, any>} account @param {'pause'|'resume'} action */
   async mutateExternalAccount(_event, account, action) {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$accountMutationId) return
-    this.$accountMutationId = account.id
-    this.$externalAccountsError = ''
+    if (!apiFetch || this.accountMutationId) return
+    this.accountMutationId = account.id
+    this.externalAccountsError = ''
     try {
       const response = await apiFetch(`/api/v1/external-accounts/${encodeURIComponent(account.id)}`, {
         method: 'PATCH', body: JSON.stringify({ action, revision: account.revision }),
@@ -1995,10 +2127,10 @@ export default class {
       if (!response?.ok) throw new Error(body?.error || `Could not ${action} this account.`)
       this.replaceExternalAccount(body)
     } catch (error) {
-      this.$externalAccountsError = error instanceof Error ? error.message : `Could not ${action} this account.`
+      this.externalAccountsError = error instanceof Error ? error.message : `Could not ${action} this account.`
       await this.loadExternalAccounts()
     } finally {
-      this.$accountMutationId = ''
+      this.accountMutationId = ''
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
@@ -2006,8 +2138,8 @@ export default class {
   /** @param {Event} _event @param {Record<string, any>} account */
   async retryExternalAccount(_event, account) {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$accountMutationId) return
-    this.$accountMutationId = account.id
+    if (!apiFetch || this.accountMutationId) return
+    this.accountMutationId = account.id
     try {
       const response = await apiFetch(`/api/v1/external-accounts/${encodeURIComponent(account.id)}/retry`, {
         method: 'POST', body: JSON.stringify({ revision: account.revision }),
@@ -2017,9 +2149,9 @@ export default class {
       window._caduceus?.toast('Account retry scheduled.')
       await this.loadAccountDiagnostics(null, account)
     } catch (error) {
-      this.$externalAccountsError = error instanceof Error ? error.message : 'Could not schedule an account retry.'
+      this.externalAccountsError = error instanceof Error ? error.message : 'Could not schedule an account retry.'
     } finally {
-      this.$accountMutationId = ''
+      this.accountMutationId = ''
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
@@ -2028,18 +2160,18 @@ export default class {
   async loadAccountDiagnostics(_event, account) {
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
-    if (_event && this.$accountDiagnosticsId === account.id) {
-      this.$accountDiagnosticsId = ''
+    if (_event && this.accountDiagnosticsId === account.id) {
+      this.accountDiagnosticsId = ''
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       return
     }
-    this.$accountDiagnosticsId = account.id
+    this.accountDiagnosticsId = account.id
     try {
       const response = await apiFetch(`/api/v1/external-accounts/${encodeURIComponent(account.id)}/diagnostics`)
       const body = await response?.json()
       if (!response?.ok) throw new Error(body?.error || 'Could not load account diagnostics.')
       const sync = body?.sync && typeof body.sync === 'object' ? body.sync : {}
-      this.$accountDiagnostics = { ...this.$accountDiagnostics, [account.id]: {
+      this.accountDiagnostics = { ...this.accountDiagnostics, [account.id]: {
         cursorVersion: Number(sync.cursorVersion) || 0,
         attempts: Number(sync.attempts) || 0,
         nextRunAt: dateTimeLabel(sync.nextRunAt) || 'Not scheduled',
@@ -2047,19 +2179,19 @@ export default class {
         updatedAt: dateTimeLabel(sync.scheduleUpdatedAt) || '',
       } }
     } catch (error) {
-      this.$externalAccountsError = error instanceof Error ? error.message : 'Could not load account diagnostics.'
+      this.externalAccountsError = error instanceof Error ? error.message : 'Could not load account diagnostics.'
     }
     await (/** @type {any} */ (globalThis)).__tc_rerender?.()
   }
 
   /** @param {Event} _event @param {Record<string, any>} account */
   async openAccountReconnect(_event, account) {
-    this.$accountReconnectId = account.id
-    this.$accountRemoveId = ''
+    this.accountReconnectId = account.id
+    this.accountRemoveId = ''
     await (/** @type {any} */ (globalThis)).__tc_rerender?.()
   }
 
-  cancelAccountReconnect() { this.$accountReconnectId = '' }
+  cancelAccountReconnect() { this.accountReconnectId = '' }
 
   /** @param {Event} _event @param {Record<string, any>} account */
   async reconnectExternalAccount(_event, account) {
@@ -2070,9 +2202,9 @@ export default class {
     const apiFetch = window._caduceus?.apiFetch
     const username = /** @type {HTMLInputElement | null} */ (document.querySelector(`[data-reconnect-username="${account.id}"]`))
     const password = /** @type {HTMLInputElement | null} */ (document.querySelector(`[data-reconnect-password="${account.id}"]`))
-    if (!apiFetch || this.$accountMutationId || !password?.value) return
-    this.$accountMutationId = account.id
-    this.$externalAccountsError = ''
+    if (!apiFetch || this.accountMutationId || !password?.value) return
+    this.accountMutationId = account.id
+    this.externalAccountsError = ''
     try {
       const response = await apiFetch(`/api/v1/external-accounts/${encodeURIComponent(account.id)}/reconnect`, {
         method: 'POST', body: JSON.stringify({
@@ -2084,32 +2216,32 @@ export default class {
       const body = await response?.json()
       if (!response?.ok) throw new Error(body?.error || 'Could not reconnect this account.')
       this.replaceExternalAccount(body)
-      this.$accountReconnectId = ''
+      this.accountReconnectId = ''
       window._caduceus?.toast('Account reconnected.')
     } catch (error) {
       if (password) password.value = ''
-      this.$externalAccountsError = error instanceof Error ? error.message : 'Could not reconnect this account.'
+      this.externalAccountsError = error instanceof Error ? error.message : 'Could not reconnect this account.'
       await this.loadExternalAccounts()
     } finally {
-      this.$accountMutationId = ''
+      this.accountMutationId = ''
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
 
   /** @param {Event} _event @param {Record<string, any>} account */
   async askRemoveExternalAccount(_event, account) {
-    this.$accountRemoveId = account.id
-    this.$accountReconnectId = ''
+    this.accountRemoveId = account.id
+    this.accountReconnectId = ''
     await (/** @type {any} */ (globalThis)).__tc_rerender?.()
   }
 
-  cancelRemoveExternalAccount() { this.$accountRemoveId = '' }
+  cancelRemoveExternalAccount() { this.accountRemoveId = '' }
 
   /** @param {Event} _event @param {Record<string, any>} account */
   async removeExternalAccount(_event, account) {
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch || this.$accountMutationId) return
-    this.$accountMutationId = account.id
+    if (!apiFetch || this.accountMutationId) return
+    this.accountMutationId = account.id
     try {
       const response = await apiFetch(`/api/v1/external-accounts/${encodeURIComponent(account.id)}`, {
         method: 'DELETE', body: JSON.stringify({ revision: account.revision }),
@@ -2119,13 +2251,13 @@ export default class {
       this.$externalAccounts = this.$externalAccounts.map(candidate => candidate.id === account.id
         ? { ...candidate, state: 'deleting', revision: candidate.revision + 1, progress: null, failure: null }
         : candidate)
-      this.$accountRemoveId = ''
+      this.accountRemoveId = ''
       window._caduceus?.toast('Account removal started.')
     } catch (error) {
-      this.$externalAccountsError = error instanceof Error ? error.message : 'Could not remove this account.'
+      this.externalAccountsError = error instanceof Error ? error.message : 'Could not remove this account.'
       await this.loadExternalAccounts()
     } finally {
-      this.$accountMutationId = ''
+      this.accountMutationId = ''
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
     }
   }
@@ -2148,9 +2280,9 @@ export default class {
    * @returns {Promise<void>}
    */
   async loadAll() {
-    this.$loading = true; this.syncNotificationState(); this.loadLocalTranslationPreferences()
-    this.$isAdmin = sessionStorage.getItem('caduceus_role') === 'admin'
-    const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) { this.$loading = false; return }
+    this.loading = true; this.syncNotificationState(); this.loadLocalTranslationPreferences()
+    this.isAdmin = sessionStorage.getItem('caduceus_role') === 'admin'
+    const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) { this.loading = false; return }
 	const onboardingURL = new URL(window.location.href)
 	let pendingOnboarding = onboardingURL.searchParams.get('onboarding') === 'accounts'
 	try { pendingOnboarding ||= localStorage.getItem('caduceus_account_onboarding_pending') === '1' } catch {}
@@ -2161,20 +2293,20 @@ export default class {
 	if (pendingOnboarding) this.startAccountOnboarding()
     await this.completeProviderOAuthCallback()
     const [dr, rr, mr, nr, sr, tr, cr] = await Promise.all([apiFetch('/domains'), apiFetch('/rules'), apiFetch('/auth/credentials/passkey'), apiFetch('/notifications/subscriptions'), apiFetch('/signatures'), apiFetch('/templates'), apiFetch('/categories')])
-    this.$domains = dr?.ok ? await dr.json() : []; this.$rules = rr?.ok ? await rr.json() : []
-    this.$mfaDevices = mr?.ok ? ((await mr.json())?.passkeys ?? []) : []; this.$signatures = sr?.ok ? await sr.json() : []; this.$pushSubscriptions = nr?.ok ? await nr.json() : []; this.$templates = tr?.ok ? await tr.json() : []
+    this.$domains = dr?.ok ? await dr.json() : []; this.rules = rr?.ok ? await rr.json() : []
+    this.mfaDevices = mr?.ok ? ((await mr.json())?.passkeys ?? []) : []; this.signatures = sr?.ok ? await sr.json() : []; this.$pushSubscriptions = nr?.ok ? await nr.json() : []; this.templates = tr?.ok ? await tr.json() : []
     if (cr?.ok) {
       const catalog = await cr.json()
-      this.$categoryAccounts = Array.isArray(catalog?.accounts) ? catalog.accounts : []
-      this.$categoryMappings = Object.fromEntries(this.$categoryAccounts.map(account => [account.domain, account.mappings]))
+      this.categoryAccounts = Array.isArray(catalog?.accounts) ? catalog.accounts : []
+      this.$categoryMappings = Object.fromEntries(this.categoryAccounts.map(account => [account.domain, account.mappings]))
     }
     if (!('__caduceusTemplateEditId' in window)) (/** @type {any} */ (window)).__caduceusTemplateEditId = ''
     if (!('__caduceusSignatureEditId' in window)) (/** @type {any} */ (window)).__caduceusSignatureEditId = ''
     if (!('__caduceusRuleEditId' in window)) (/** @type {any} */ (window)).__caduceusRuleEditId = ''
-    if (this.$isAdmin) { const ur = await apiFetch('/users'); this.$users = ur?.ok ? await ur.json() : [] }
+    if (this.isAdmin) { const ur = await apiFetch('/users'); this.users = ur?.ok ? await ur.json() : [] }
     await Promise.all([this.loadAliases(), this.loadMcp(), this.loadExternalAccounts(), this.loadExtensions()])
     await this.loadPreferences()
-    this.restoreMfaSetupState(); this.$loading = false
+    this.restoreMfaSetupState(); this.loading = false
     setTimeout(async () => {
       await (/** @type {any} */ (globalThis)).__tc_rerender?.()
       this.syncSoundControls()
@@ -2186,88 +2318,88 @@ export default class {
   /** Load redacted extension projections; executable source stays off this endpoint. */
   async loadExtensions() {
     const response = await window._caduceus?.apiFetch?.('/extensions')
-    this.$extensions = response?.ok ? await response.json() : []
+    this.extensions = response?.ok ? await response.json() : []
   }
 
   /** Inspect a local JSON package without granting it authority or storing it. */
   async inspectExtensionFile(event) {
     const input = /** @type {HTMLInputElement} */ (event?.target)
     const file = input?.files?.[0]
-    this.$extensionError = ''
-    this.$extensionInspection = null
+    this.extensionError = ''
+    this.extensionInspection = null
     this._extensionBundle = null
     if (!file) return
-    if (file.size > 192 * 1024) { this.$extensionError = 'Extension package exceeds 192 KiB.'; return }
-    this.$extensionBusy = true
+    if (file.size > 192 * 1024) { this.extensionError = 'Extension package exceeds 192 KiB.'; return }
+    this.extensionBusy = true
     try {
       const bundle = JSON.parse(await file.text())
       const response = await window._caduceus?.apiFetch?.('/extensions/inspect', {
         method: 'POST', body: JSON.stringify({ bundle }),
       })
       const data = await response?.json()
-      if (!response?.ok) { this.$extensionError = data?.error || 'Extension inspection failed.'; return }
+      if (!response?.ok) { this.extensionError = data?.error || 'Extension inspection failed.'; return }
       this._extensionBundle = bundle
-      this.$extensionInspection = data
+      this.extensionInspection = data
     } catch (error) {
-      this.$extensionError = error instanceof SyntaxError ? 'Extension package is not valid JSON.' : 'Extension inspection failed.'
-    } finally { this.$extensionBusy = false }
+      this.extensionError = error instanceof SyntaxError ? 'Extension package is not valid JSON.' : 'Extension inspection failed.'
+    } finally { this.extensionBusy = false }
   }
 
   /** Install only the exact immutable digest the owner just inspected. */
   async trustExtension() {
-    if (!this._extensionBundle || !this.$extensionInspection?.digest) return
-    this.$extensionBusy = true
-    this.$extensionError = ''
+    if (!this._extensionBundle || !this.extensionInspection?.digest) return
+    this.extensionBusy = true
+    this.extensionError = ''
     try {
       const response = await window._caduceus?.apiFetch?.('/extensions', {
         method: 'POST',
-        body: JSON.stringify({ bundle: this._extensionBundle, trustedDigest: this.$extensionInspection.digest }),
+        body: JSON.stringify({ bundle: this._extensionBundle, trustedDigest: this.extensionInspection.digest }),
       })
       const data = await response?.json()
-      if (!response?.ok) { this.$extensionError = data?.error || 'Extension installation failed.'; return }
-      this.$extensionInspection = null
+      if (!response?.ok) { this.extensionError = data?.error || 'Extension installation failed.'; return }
+      this.extensionInspection = null
       this._extensionBundle = null
       await this.loadExtensions()
       window._caduceus?.toast(`“${data.displayName}” installed disabled.`)
-    } catch { this.$extensionError = 'Extension installation failed.' }
-    finally { this.$extensionBusy = false }
+    } catch { this.extensionError = 'Extension installation failed.' }
+    finally { this.extensionBusy = false }
   }
 
   /** Enable/disable a package, then rebuild the owner runtime from trusted state. */
   async toggleExtension(event) {
     const id = String(/** @type {HTMLElement | null} */ (event?.currentTarget)?.closest?.('[data-extension-id]')?.getAttribute('data-extension-id') || '')
-    const extension = this.$extensions.find(candidate => candidate.id === id)
-    if (!extension) { this.$extensionError = 'Extension state changed; reload settings and try again.'; return }
-    this.$extensionBusy = true
-    this.$extensionError = ''
+    const extension = this.extensions.find(candidate => candidate.id === id)
+    if (!extension) { this.extensionError = 'Extension state changed; reload settings and try again.'; return }
+    this.extensionBusy = true
+    this.extensionError = ''
     try {
       const response = await window._caduceus?.apiFetch?.(`/extensions/${encodeURIComponent(extension.id)}`, {
         method: 'PUT', body: JSON.stringify({ enabled: !extension.enabled }),
       })
       const data = await response?.json()
-      if (!response?.ok) { this.$extensionError = data?.error || 'Extension update failed.'; return }
+      if (!response?.ok) { this.extensionError = data?.error || 'Extension update failed.'; return }
       await this.loadExtensions()
       window.dispatchEvent(new CustomEvent('caduceus:extensions-reload'))
-    } catch { this.$extensionError = 'Extension update failed.' }
-    finally { this.$extensionBusy = false }
+    } catch { this.extensionError = 'Extension update failed.' }
+    finally { this.extensionBusy = false }
   }
 
   /** Permanently remove one exact-owner package. */
   async removeExtension(event) {
     const id = String(/** @type {HTMLElement | null} */ (event?.currentTarget)?.closest?.('[data-extension-id]')?.getAttribute('data-extension-id') || '')
-    const extension = this.$extensions.find(candidate => candidate.id === id)
-    if (!extension) { this.$extensionError = 'Extension state changed; reload settings and try again.'; return }
+    const extension = this.extensions.find(candidate => candidate.id === id)
+    if (!extension) { this.extensionError = 'Extension state changed; reload settings and try again.'; return }
     if (!confirm(`Remove “${extension.displayName}” and its trusted code?`)) return
-    this.$extensionBusy = true
-    this.$extensionError = ''
+    this.extensionBusy = true
+    this.extensionError = ''
     try {
       const response = await window._caduceus?.apiFetch?.(`/extensions/${encodeURIComponent(extension.id)}`, { method: 'DELETE' })
       const data = await response?.json()
-      if (!response?.ok) { this.$extensionError = data?.error || 'Extension removal failed.'; return }
+      if (!response?.ok) { this.extensionError = data?.error || 'Extension removal failed.'; return }
       await this.loadExtensions()
       window.dispatchEvent(new CustomEvent('caduceus:extensions-reload'))
-    } catch { this.$extensionError = 'Extension removal failed.' }
-    finally { this.$extensionBusy = false }
+    } catch { this.extensionError = 'Extension removal failed.' }
+    finally { this.extensionBusy = false }
   }
 
   extensionPermissionLabel(permission) {
@@ -2281,8 +2413,8 @@ export default class {
 
   loadLocalTranslationPreferences() {
     const preferences = loadTranslationPreferences()
-    this.$translationAutomaticLanguages = preferences.automatic
-    this.$translationDisabledLanguages = preferences.disabled
+    this.translationAutomaticLanguages = preferences.automatic
+    this.translationDisabledLanguages = preferences.disabled
   }
 
   /** @param {Event} _event @param {string} language */
@@ -2301,7 +2433,7 @@ export default class {
 
   /** Primary mailbox plus exact aliases available as safe From identities. */
   get senderAddresses() {
-    return [...new Set([this.$primaryEmail, ...this.$aliases].map(address => String(address || '').toLowerCase()).filter(Boolean))]
+    return [...new Set([this.primaryEmail, ...this.$aliases].map(address => String(address || '').toLowerCase()).filter(Boolean))]
   }
 
   /**
@@ -2321,8 +2453,8 @@ export default class {
    * @returns {void}
    */
   syncNotificationState() {
-    this.$notificationSupported = this.canUseNotifications
-    this.$notificationPermission = this.$notificationSupported ? Notification.permission : 'unsupported'
+    this.notificationSupported = this.canUseNotifications
+    this.notificationPermission = this.notificationSupported ? Notification.permission : 'unsupported'
   }
 
   /**
@@ -2411,17 +2543,17 @@ export default class {
     const apiFetch = window._caduceus?.apiFetch
     const address = window._caduceus?.auth?.email ?? sessionStorage.getItem('caduceus_email')
     if (!apiFetch || !address) return ''
-    const code = this.formValue('[data-settings-stepup-code]', this.$stepUpCode).trim()
-    const password = this.formValue('[data-settings-stepup-password]', this.$stepUpPassword)
+    const code = this.formValue('[data-settings-stepup-code]', this.stepUpCode).trim()
+    const password = this.formValue('[data-settings-stepup-password]', this.stepUpPassword)
     if (!password || !code) {
-      this.$stepUpError = 'Confirm it is you: enter your password and one recovery code.'
-      this.$showStepUp = true
+      this.stepUpError = 'Confirm it is you: enter your password and one recovery code.'
+      this.showStepUp = true
       return ''
     }
     const begun = await (await apiFetch('/auth/login/begin', {
       method: 'POST', body: JSON.stringify({ address }),
     }))?.json()
-    if (!begun?.transactionId) { this.$stepUpError = 'Unable to re-authenticate.'; return '' }
+    if (!begun?.transactionId) { this.stepUpError = 'Unable to re-authenticate.'; return '' }
     await apiFetch('/auth/login/password', {
       method: 'POST',
       body: JSON.stringify({ transactionId: begun.transactionId, password }),
@@ -2431,12 +2563,12 @@ export default class {
       body: JSON.stringify({ transactionId: begun.transactionId, code }),
     }))?.json()
     if (!verified?.satisfied) {
-      this.$stepUpError = 'That password and code did not confirm your identity.'
-      this.$showStepUp = true
+      this.stepUpError = 'That password and code did not confirm your identity.'
+      this.showStepUp = true
       return ''
     }
-    this.$stepUpCode = this.$stepUpPassword = this.$stepUpError = ''
-    this.$showStepUp = false
+    this.stepUpCode = this.stepUpPassword = this.stepUpError = ''
+    this.showStepUp = false
     return begun.transactionId
   }
 
@@ -2446,7 +2578,7 @@ export default class {
     if (!apiFetch) return
     const res = await apiFetch('/auth/credentials/passkey')
     const data = res?.ok ? await res.json() : null
-    this.$mfaDevices = Array.isArray(data?.passkeys) ? data.passkeys : []
+    this.mfaDevices = Array.isArray(data?.passkeys) ? data.passkeys : []
   }
 
   /**
@@ -2494,14 +2626,14 @@ export default class {
    * @returns {Promise<void>}
    */
   async enableNotifications() {
-    this.$notificationError = ''; this.syncNotificationState()
-    if (!this.$notificationSupported) { this.$notificationError = 'This browser cannot receive Web Push notifications.'; return }
-    this.$notificationLoading = true
+    this.notificationError = ''; this.syncNotificationState()
+    if (!this.notificationSupported) { this.notificationError = 'This browser cannot receive Web Push notifications.'; return }
+    this.notificationLoading = true
     const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch) { this.$notificationLoading = false; return }
+    if (!apiFetch) { this.notificationLoading = false; return }
     try {
-      const permission = await Notification.requestPermission(); this.$notificationPermission = permission
-      if (permission !== 'granted') { this.$notificationError = 'Notifications were not allowed.'; return }
+      const permission = await Notification.requestPermission(); this.notificationPermission = permission
+      if (permission !== 'granted') { this.notificationError = 'Notifications were not allowed.'; return }
       const keyRes = await apiFetch('/notifications/vapid-public-key'); if (!keyRes?.ok) throw new Error('Unable to load notification key')
       const { publicKey } = await keyRes.json()
       const cb = (s) => { const p = '='.repeat((4 - s.length % 4) % 4); const b = (s + p).replace(/-/g, '+').replace(/_/g, '/'); return Uint8Array.from([...atob(b)].map(c => c.charCodeAt(0))) }
@@ -2510,8 +2642,8 @@ export default class {
       const saveRes = await apiFetch('/notifications/subscriptions', { method: 'POST', body: JSON.stringify(sub.toJSON()) })
       if (!saveRes?.ok) throw new Error('Unable to save notification subscription')
       await this.refreshPushSubscriptions(); window._caduceus?.toast('Notifications enabled.')
-    } catch { this.$notificationError = 'Unable to enable notifications on this device.' }
-    finally { this.$notificationLoading = false }
+    } catch { this.notificationError = 'Unable to enable notifications on this device.' }
+    finally { this.notificationLoading = false }
   }
 
   /**
@@ -2524,15 +2656,15 @@ export default class {
    * @returns {Promise<void>}
    */
   async disableNotifications() {
-    this.$notificationError = ''; this.syncNotificationState(); if (!this.$notificationSupported) return
-    this.$notificationLoading = true; const apiFetch = window._caduceus?.apiFetch
-    if (!apiFetch) { this.$notificationLoading = false; return }
+    this.notificationError = ''; this.syncNotificationState(); if (!this.notificationSupported) return
+    this.notificationLoading = true; const apiFetch = window._caduceus?.apiFetch
+    if (!apiFetch) { this.notificationLoading = false; return }
     try {
       const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription()
       if (sub) { await apiFetch('/notifications/subscriptions', { method: 'DELETE', body: JSON.stringify({ endpoint: sub.endpoint }) }); await sub.unsubscribe() }
       await this.refreshPushSubscriptions(); window._caduceus?.toast('Notifications disabled.')
-    } catch { this.$notificationError = 'Unable to disable notifications on this device.' }
-    finally { this.$notificationLoading = false }
+    } catch { this.notificationError = 'Unable to disable notifications on this device.' }
+    finally { this.notificationLoading = false }
   }
 
   /**
@@ -2544,10 +2676,10 @@ export default class {
    * @returns {Promise<void>}
    */
   async addUser() {
-    if (!this.$newEmail || !this.$newDomains) return
+    if (!this.newEmail || !this.newDomains) return
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
-    const res = await apiFetch('/users', { method: 'POST', body: JSON.stringify({ email: this.$newEmail, domains: this.$newDomains.split(',').map(d => d.trim()).filter(Boolean), role: this.$newRole }) })
-    if (res?.ok) { this.$showAddUser = false; this.$newEmail = this.$newDomains = ''; this.$newRole = 'viewer'; const ur = await apiFetch('/users'); this.$users = ur?.ok ? await ur.json() : []; window._caduceus?.toast('User added. Issue an enrollment code when they are ready.') }
+    const res = await apiFetch('/users', { method: 'POST', body: JSON.stringify({ email: this.newEmail, domains: this.newDomains.split(',').map(d => d.trim()).filter(Boolean), role: this.newRole }) })
+    if (res?.ok) { this.showAddUser = false; this.newEmail = this.newDomains = ''; this.newRole = 'viewer'; const ur = await apiFetch('/users'); this.users = ur?.ok ? await ur.json() : []; window._caduceus?.toast('User added. Issue an enrollment code when they are ready.') }
     else { const data = await res?.json(); window._caduceus?.toast(data?.error || 'Failed to add user.') }
   }
 
@@ -2561,8 +2693,8 @@ export default class {
    * @returns {Promise<void>}
    */
   async issueAdminRecovery(email) {
-    this.$adminRecoveryCodes = {
-      ...this.$adminRecoveryCodes,
+    this.adminRecoveryCodes = {
+      ...this.adminRecoveryCodes,
       [email]: {
         operatorCommand: `caduceus auth credentials --address ${email} --password '<generated>'`,
         note: 'Run this on the server. It prints a recovery code set once; hand it to the mailbox owner out of band.',
@@ -2580,14 +2712,14 @@ export default class {
    */
   async addCondition() {
     this._syncRuleBuilderFields()
-    const value = this.$condValue.trim()
+    const value = this.condValue.trim()
     if (!value) return
-    if (this.$condField === 'hasAttachment' && !['true', 'false'].includes(value.toLowerCase())) {
+    if (this.condField === 'hasAttachment' && !['true', 'false'].includes(value.toLowerCase())) {
       window._caduceus?.toast('Has attachment must be true or false.')
       return
     }
-    this.$newConditions = [...this.$newConditions, { _id: ++this._condSeq, field: this.$condField, op: this.$condOp, value }]
-    this.$condValue = ''
+    this.newConditions = [...this.newConditions, { _id: ++this._condSeq, field: this.condField, op: this.condOp, value }]
+    this.condValue = ''
     await this._rerenderRules()
   }
 
@@ -2598,7 +2730,7 @@ export default class {
    * @param {number} id - The internal `_id` of the condition to remove
    * @returns {Promise<void>}
    */
-  async removeCondition(_event, id) { this.$newConditions = this.$newConditions.filter(c => c._id !== id); await this._rerenderRules() }
+  async removeCondition(_event, id) { this.newConditions = this.newConditions.filter(c => c._id !== id); await this._rerenderRules() }
 
   /**
    * Append an action to the new-rule form.
@@ -2610,24 +2742,24 @@ export default class {
    */
   async addAction() {
     this._syncRuleBuilderFields()
-    if (this.$actionType === 'folder') {
-      const folder = this.normalizeFolderName(this.$actionFolder)
+    if (this.actionType === 'folder') {
+      const folder = this.normalizeFolderName(this.actionFolder)
       if (!folder) { window._caduceus?.toast('Enter a folder name.'); return }
-      this.$newActions = [...this.$newActions, { _id: ++this._actSeq, type: 'folder', folder }]
-      this.$actionFolder = ''
+      this.newActions = [...this.newActions, { _id: ++this._actSeq, type: 'folder', folder }]
+      this.actionFolder = ''
       await this._rerenderRules()
       return
     }
-    if (this.$actionType === 'forward') {
-      const to = this.$actionTo.trim().toLowerCase()
+    if (this.actionType === 'forward') {
+      const to = this.actionTo.trim().toLowerCase()
       if (!to) { window._caduceus?.toast('Enter a forwarding address.'); return }
-      this.$newActions = [...this.$newActions, { _id: ++this._actSeq, type: 'forward', to }]
-      this.$actionTo = ''
+      this.newActions = [...this.newActions, { _id: ++this._actSeq, type: 'forward', to }]
+      this.actionTo = ''
       await this._rerenderRules()
       return
     }
-    const stateAction = /^(markRead|star)(True|False)$/.exec(this.$actionType)
-    this.$newActions = [...this.$newActions, stateAction
+    const stateAction = /^(markRead|star)(True|False)$/.exec(this.actionType)
+    this.newActions = [...this.newActions, stateAction
       ? { _id: ++this._actSeq, type: stateAction[1], value: stateAction[2] === 'True' }
       : { _id: ++this._actSeq, type: 'delete' }]
     await this._rerenderRules()
@@ -2640,13 +2772,13 @@ export default class {
    * @param {number} id - The internal `_id` of the action to remove
    * @returns {Promise<void>}
    */
-  async removeAction(_event, id) { this.$newActions = this.$newActions.filter(a => a._id !== id); await this._rerenderRules() }
+  async removeAction(_event, id) { this.newActions = this.newActions.filter(a => a._id !== id); await this._rerenderRules() }
 
   /** @returns {Promise<void>} */
   async toggleAddRule() {
-    this.$showAddRule = !this.$showAddRule
-    if (this.$showAddRule && !this.$newRuleMailbox) this.$newRuleMailbox = this.senderAddresses[0] || ''
-    if (!this.$showAddRule) this.resetRuleForm()
+    this.showAddRule = !this.showAddRule
+    if (this.showAddRule && !this.newRuleMailbox) this.newRuleMailbox = this.senderAddresses[0] || ''
+    if (!this.showAddRule) this.resetRuleForm()
     await this._rerenderRules()
   }
 
@@ -2677,12 +2809,12 @@ export default class {
    */
   resetRuleForm() {
     ;(/** @type {any} */ (window)).__caduceusRuleEditId = ''
-    this.$ruleEditId = this.$newRuleName = this.$newRuleMailbox = ''
-    this.$newConditionMatch = 'all'; this.$newStopProcessing = false
-    this.$newConditions = []; this.$newActions = []; this.$condField = 'from'; this.$condOp = 'contains'; this.$condValue = ''
-    this.$actionType = 'folder'; this.$actionFolder = this.$actionTo = ''
-    this.$previewFrom = this.$previewSubject = this.$previewBody = this.$rulePreviewResult = ''
-    this.$previewHasAttachment = false; this.$showAddRule = false
+    this.ruleEditId = this.newRuleName = this.newRuleMailbox = ''
+    this.newConditionMatch = 'all'; this.newStopProcessing = false
+    this.newConditions = []; this.newActions = []; this.condField = 'from'; this.condOp = 'contains'; this.condValue = ''
+    this.actionType = 'folder'; this.actionFolder = this.actionTo = ''
+    this.previewFrom = this.previewSubject = this.previewBody = this.rulePreviewResult = ''
+    this.previewHasAttachment = false; this.showAddRule = false
   }
 
   /**
@@ -2696,12 +2828,12 @@ export default class {
    */
   async saveRule() {
     this._syncRuleBuilderFields()
-    this.$newRuleName = this.$newRuleName.trim()
-    this.$newRuleMailbox = this.$newRuleMailbox.trim().toLowerCase()
-    if (!this.$newRuleName || !this.$newRuleMailbox || this.$newActions.length === 0) { window._caduceus?.toast('Name, mailbox, and at least one action are required.'); return }
+    this.newRuleName = this.newRuleName.trim()
+    this.newRuleMailbox = this.newRuleMailbox.trim().toLowerCase()
+    if (!this.newRuleName || !this.newRuleMailbox || this.newActions.length === 0) { window._caduceus?.toast('Name, mailbox, and at least one action are required.'); return }
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
-    const editId = String((/** @type {any} */ (window)).__caduceusRuleEditId || this.$ruleEditId || '')
-    const payload = { name: this.$newRuleName, mailbox: this.$newRuleMailbox, enabled: true, stopProcessing: this.$newStopProcessing, conditionMatch: this.$newConditionMatch, conditions: this.$newConditions.map(({ _id, ...c }) => c), actions: this.$newActions.map(({ _id, ...a }) => a) }
+    const editId = String((/** @type {any} */ (window)).__caduceusRuleEditId || this.ruleEditId || '')
+    const payload = { name: this.newRuleName, mailbox: this.newRuleMailbox, enabled: true, stopProcessing: this.newStopProcessing, conditionMatch: this.newConditionMatch, conditions: this.newConditions.map(({ _id, ...c }) => c), actions: this.newActions.map(({ _id, ...a }) => a) }
     const res = await apiFetch(editId ? `/rules/${editId}` : '/rules', { method: editId ? 'PUT' : 'POST', body: JSON.stringify(payload) })
     if (res?.ok) { await this.reloadRules(); window._caduceus?.toast(editId ? 'Rule updated.' : 'Rule saved.'); this.resetRuleForm(); await this._rerenderRules() }
     else { const data = await res?.json(); window._caduceus?.toast(data?.error || 'Failed to save rule.') }
@@ -2716,7 +2848,7 @@ export default class {
    * @param {string} id - The rule ID to delete
    * @returns {Promise<void>}
    */
-  async deleteRule(_event, id) { if (!confirm('Delete this rule?')) return; const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return; const res = await apiFetch(`/rules/${id}`, { method: 'DELETE' }); if (res?.ok) { this.$rules = this.$rules.filter(r => r.id !== id); window._caduceus?.toast('Rule deleted.'); await this._rerenderRules() } }
+  async deleteRule(_event, id) { if (!confirm('Delete this rule?')) return; const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return; const res = await apiFetch(`/rules/${id}`, { method: 'DELETE' }); if (res?.ok) { this.rules = this.rules.filter(r => r.id !== id); window._caduceus?.toast('Rule deleted.'); await this._rerenderRules() } }
 
   /**
    * Toggle a rule's enabled / disabled state.
@@ -2728,38 +2860,38 @@ export default class {
    */
   async toggleRule(_event, id, enabled) { const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return; await apiFetch(`/rules/${id}`, { method: 'PUT', body: JSON.stringify({ enabled: !enabled }) }); await this.reloadRules(); await this._rerenderRules() }
 
-  async reloadRules() { const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return; const response = await apiFetch('/rules'); this.$rules = response?.ok ? await response.json() : [] }
+  async reloadRules() { const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return; const response = await apiFetch('/rules'); this.rules = response?.ok ? await response.json() : [] }
 
-  canMoveRule(id, delta) { const index = this.$rules.findIndex(rule => rule.id === id); return index >= 0 && index + Number(delta) >= 0 && index + Number(delta) < this.$rules.length }
+  canMoveRule(id, delta) { const index = this.rules.findIndex(rule => rule.id === id); return index >= 0 && index + Number(delta) >= 0 && index + Number(delta) < this.rules.length }
 
   async moveRule(_event, id, delta) {
-    const index = this.$rules.findIndex(rule => rule.id === id); const target = index + Number(delta)
-    if (index < 0 || target < 0 || target >= this.$rules.length) return
-    const next = [...this.$rules]; const [moved] = next.splice(index, 1); next.splice(target, 0, moved)
+    const index = this.rules.findIndex(rule => rule.id === id); const target = index + Number(delta)
+    if (index < 0 || target < 0 || target >= this.rules.length) return
+    const next = [...this.rules]; const [moved] = next.splice(index, 1); next.splice(target, 0, moved)
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
     const response = await apiFetch('/rules/order', { method: 'PUT', body: JSON.stringify({ ids: next.map(rule => rule.id) }) })
     if (!response?.ok) { window._caduceus?.toast('Could not reorder rules.'); return }
-    this.$rules = next; await this._rerenderRules()
+    this.rules = next; await this._rerenderRules()
   }
 
   async editRule(_event, rule) {
     ;(/** @type {any} */ (window)).__caduceusRuleEditId = String(rule?.id || '')
-    this.$ruleEditId = String(rule?.id || ''); this.$newRuleName = String(rule?.name || '')
-    this.$newRuleMailbox = String(rule?.mailbox || this.senderAddresses[0] || '')
-    this.$newConditionMatch = rule?.conditionMatch === 'any' ? 'any' : 'all'; this.$newStopProcessing = Boolean(rule?.stopProcessing)
-    this.$newConditions = (rule?.conditions || []).map(condition => ({ ...condition, _id: ++this._condSeq }))
-    this.$newActions = (rule?.actions || []).map(action => ({ ...action, _id: ++this._actSeq }))
-    this.$showAddRule = true; this.$rulePreviewResult = ''; await this._rerenderRules()
+    this.ruleEditId = String(rule?.id || ''); this.newRuleName = String(rule?.name || '')
+    this.newRuleMailbox = String(rule?.mailbox || this.senderAddresses[0] || '')
+    this.newConditionMatch = rule?.conditionMatch === 'any' ? 'any' : 'all'; this.newStopProcessing = Boolean(rule?.stopProcessing)
+    this.newConditions = (rule?.conditions || []).map(condition => ({ ...condition, _id: ++this._condSeq }))
+    this.newActions = (rule?.actions || []).map(action => ({ ...action, _id: ++this._actSeq }))
+    this.showAddRule = true; this.rulePreviewResult = ''; await this._rerenderRules()
   }
 
   async previewRule() {
     this._syncRuleBuilderFields()
-    if (!this.$newRuleName.trim() || !this.$newRuleMailbox || this.$newActions.length === 0) { this.$rulePreviewResult = 'Add a name, mailbox, and action before previewing.'; await this._rerenderRules(); return }
+    if (!this.newRuleName.trim() || !this.newRuleMailbox || this.newActions.length === 0) { this.rulePreviewResult = 'Add a name, mailbox, and action before previewing.'; await this._rerenderRules(); return }
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
-    const rule = { name: this.$newRuleName.trim(), mailbox: this.$newRuleMailbox, enabled: true, stopProcessing: this.$newStopProcessing, conditionMatch: this.$newConditionMatch, conditions: this.$newConditions.map(({ _id, ...condition }) => condition), actions: this.$newActions.map(({ _id, ...action }) => action) }
-    const response = await apiFetch('/rules/preview', { method: 'POST', body: JSON.stringify({ rule, message: { from: this.$previewFrom, to: this.$newRuleMailbox, subject: this.$previewSubject, body: this.$previewBody, hasAttachment: this.$previewHasAttachment } }) })
+    const rule = { name: this.newRuleName.trim(), mailbox: this.newRuleMailbox, enabled: true, stopProcessing: this.newStopProcessing, conditionMatch: this.newConditionMatch, conditions: this.newConditions.map(({ _id, ...condition }) => condition), actions: this.newActions.map(({ _id, ...action }) => action) }
+    const response = await apiFetch('/rules/preview', { method: 'POST', body: JSON.stringify({ rule, message: { from: this.previewFrom, to: this.newRuleMailbox, subject: this.previewSubject, body: this.previewBody, hasAttachment: this.previewHasAttachment } }) })
     const result = await response?.json()
-    this.$rulePreviewResult = response?.ok
+    this.rulePreviewResult = response?.ok
       ? result.matched ? `Match · ${result.plannedActions.map(action => this.describeAction(action)).join(', ')}` : 'No match · no actions would run'
       : result?.error || 'Preview failed.'
     await this._rerenderRules()
@@ -2771,44 +2903,44 @@ export default class {
   }
 
   _syncRuleBuilderFields() {
-    this.$newRuleName = this._ruleControlValue('[data-rule-name]', this.$newRuleName)
-    this.$newRuleMailbox = this._ruleControlValue('[data-rule-mailbox]', this.$newRuleMailbox).toLowerCase()
-    this.$newConditionMatch = this._ruleControlValue('[data-rule-match]', this.$newConditionMatch)
-    this.$condField = this._ruleControlValue('[data-rule-condition-field]', this.$condField)
-    this.$condOp = this._ruleControlValue('[data-rule-condition-op]', this.$condOp)
-    this.$condValue = this._ruleControlValue('[data-rule-condition-value]', this.$condValue)
-    this.$actionType = this._ruleControlValue('[data-rule-action-type]', this.$actionType)
-    this.$actionFolder = this._ruleControlValue('[data-rule-action-folder]', this.$actionFolder)
-    this.$actionTo = this._ruleControlValue('[data-rule-action-to]', this.$actionTo)
-    this.$previewFrom = this._ruleControlValue('[data-rule-preview-from]', this.$previewFrom)
-    this.$previewSubject = this._ruleControlValue('[data-rule-preview-subject]', this.$previewSubject)
-    this.$previewBody = this._ruleControlValue('[data-rule-preview-body]', this.$previewBody)
-    this.$newStopProcessing = Boolean(/** @type {HTMLInputElement|null} */ (document.querySelector('[data-rule-stop]'))?.checked)
-    this.$previewHasAttachment = Boolean(/** @type {HTMLInputElement|null} */ (document.querySelector('[data-rule-preview-attachment]'))?.checked)
+    this.newRuleName = this._ruleControlValue('[data-rule-name]', this.newRuleName)
+    this.newRuleMailbox = this._ruleControlValue('[data-rule-mailbox]', this.newRuleMailbox).toLowerCase()
+    this.newConditionMatch = this._ruleControlValue('[data-rule-match]', this.newConditionMatch)
+    this.condField = this._ruleControlValue('[data-rule-condition-field]', this.condField)
+    this.condOp = this._ruleControlValue('[data-rule-condition-op]', this.condOp)
+    this.condValue = this._ruleControlValue('[data-rule-condition-value]', this.condValue)
+    this.actionType = this._ruleControlValue('[data-rule-action-type]', this.actionType)
+    this.actionFolder = this._ruleControlValue('[data-rule-action-folder]', this.actionFolder)
+    this.actionTo = this._ruleControlValue('[data-rule-action-to]', this.actionTo)
+    this.previewFrom = this._ruleControlValue('[data-rule-preview-from]', this.previewFrom)
+    this.previewSubject = this._ruleControlValue('[data-rule-preview-subject]', this.previewSubject)
+    this.previewBody = this._ruleControlValue('[data-rule-preview-body]', this.previewBody)
+    this.newStopProcessing = Boolean(/** @type {HTMLInputElement|null} */ (document.querySelector('[data-rule-stop]'))?.checked)
+    this.previewHasAttachment = Boolean(/** @type {HTMLInputElement|null} */ (document.querySelector('[data-rule-preview-attachment]'))?.checked)
   }
 
   /** Preserve native DuVay values across Tachyon's document rerender. */
   captureRuleValue(event, key) {
     const value = String(/** @type {{ target?: { value?: unknown } }} */ (event)?.target?.value ?? '')
-    if (key === 'name') this.$newRuleName = value
-    else if (key === 'mailbox') this.$newRuleMailbox = value
-    else if (key === 'match') this.$newConditionMatch = value
-    else if (key === 'conditionField') this.$condField = value
-    else if (key === 'conditionOp') this.$condOp = value
-    else if (key === 'conditionValue') this.$condValue = value
-    else if (key === 'actionType') this.$actionType = value
-    else if (key === 'actionFolder') this.$actionFolder = value
-    else if (key === 'actionTo') this.$actionTo = value
-    else if (key === 'previewFrom') this.$previewFrom = value
-    else if (key === 'previewSubject') this.$previewSubject = value
-    else if (key === 'previewBody') this.$previewBody = value
+    if (key === 'name') this.newRuleName = value
+    else if (key === 'mailbox') this.newRuleMailbox = value
+    else if (key === 'match') this.newConditionMatch = value
+    else if (key === 'conditionField') this.condField = value
+    else if (key === 'conditionOp') this.condOp = value
+    else if (key === 'conditionValue') this.condValue = value
+    else if (key === 'actionType') this.actionType = value
+    else if (key === 'actionFolder') this.actionFolder = value
+    else if (key === 'actionTo') this.actionTo = value
+    else if (key === 'previewFrom') this.previewFrom = value
+    else if (key === 'previewSubject') this.previewSubject = value
+    else if (key === 'previewBody') this.previewBody = value
     setTimeout(() => this._restoreRuleBuilderFields(), 0)
   }
 
   captureRuleToggle(event, key) {
     const checked = Boolean(/** @type {{ target?: { checked?: unknown } }} */ (event)?.target?.checked)
-    if (key === 'stop') this.$newStopProcessing = checked
-    if (key === 'attachment') this.$previewHasAttachment = checked
+    if (key === 'stop') this.newStopProcessing = checked
+    if (key === 'attachment') this.previewHasAttachment = checked
     setTimeout(() => this._restoreRuleBuilderFields(), 0)
   }
 
@@ -2820,17 +2952,17 @@ export default class {
       if (control) control.value = value
     }
     for (const [selector, value] of [
-      ['[data-rule-name]', this.$newRuleName], ['[data-rule-mailbox]', this.$newRuleMailbox],
-      ['[data-rule-match]', this.$newConditionMatch], ['[data-rule-condition-field]', this.$condField],
-      ['[data-rule-condition-op]', this.$condOp], ['[data-rule-condition-value]', this.$condValue],
-      ['[data-rule-action-type]', this.$actionType], ['[data-rule-action-folder]', this.$actionFolder],
-      ['[data-rule-action-to]', this.$actionTo], ['[data-rule-preview-from]', this.$previewFrom],
-      ['[data-rule-preview-subject]', this.$previewSubject], ['[data-rule-preview-body]', this.$previewBody],
+      ['[data-rule-name]', this.newRuleName], ['[data-rule-mailbox]', this.newRuleMailbox],
+      ['[data-rule-match]', this.newConditionMatch], ['[data-rule-condition-field]', this.condField],
+      ['[data-rule-condition-op]', this.condOp], ['[data-rule-condition-value]', this.condValue],
+      ['[data-rule-action-type]', this.actionType], ['[data-rule-action-folder]', this.actionFolder],
+      ['[data-rule-action-to]', this.actionTo], ['[data-rule-preview-from]', this.previewFrom],
+      ['[data-rule-preview-subject]', this.previewSubject], ['[data-rule-preview-body]', this.previewBody],
     ]) setValue(selector, value)
     const stop = /** @type {HTMLInputElement|null} */ (document.querySelector('[data-rule-stop]'))
     const attachment = /** @type {HTMLInputElement|null} */ (document.querySelector('[data-rule-preview-attachment]'))
-    if (stop) stop.checked = this.$newStopProcessing
-    if (attachment) attachment.checked = this.$previewHasAttachment
+    if (stop) stop.checked = this.newStopProcessing
+    if (attachment) attachment.checked = this.previewHasAttachment
   }
 
   async _rerenderRules() {
@@ -2891,7 +3023,7 @@ export default class {
     const provision = /** @type {{ challenge?: string, relyingPartyId?: string, principalId?: string }|null} */ (this.$deviceProvision)
     if (!provision?.challenge || !provision.relyingPartyId) { this.$deviceError = 'Passkey setup has expired. Start again.'; this.saveMfaSetupState(); return }
     if (typeof PublicKeyCredential === 'undefined') { this.$deviceError = 'Passkeys are not supported on this device.'; return }
-    this.$deviceLoading = true; this.$deviceError = ''
+    this.deviceLoading = true; this.$deviceError = ''
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
     try {
       const address = window._caduceus?.auth?.email ?? sessionStorage.getItem('caduceus_email') ?? 'mailbox'
@@ -2926,44 +3058,44 @@ export default class {
     } catch (e) {
       this.$deviceError = /** @type {Error} */ (e).name === 'NotAllowedError' ? 'Passkey creation was cancelled.' : 'Unable to add passkey.'
       this.saveMfaSetupState()
-    } finally { this.$deviceLoading = false }
+    } finally { this.deviceLoading = false }
   }
 
   /** @returns {Promise<void>} */
   async startTotpEnrollment() {
-    if (this.$totpEnrollment) { this.$totpEnrollment = null; this.$totpCode = ''; this.$totpError = ''; return }
+    if (this.totpEnrollment) { this.totpEnrollment = null; this.totpCode = ''; this.totpError = ''; return }
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
-    this.$totpLoading = true; this.$totpError = ''
+    this.totpLoading = true; this.totpError = ''
     try {
       const stepUpTransactionId = await this.stepUp()
-      if (!stepUpTransactionId) { this.$totpError = 'Confirm it is you before enrolling an authenticator.'; return }
+      if (!stepUpTransactionId) { this.totpError = 'Confirm it is you before enrolling an authenticator.'; return }
       const res = await apiFetch('/auth/credentials/totp/enroll', {
         method: 'POST', body: JSON.stringify({ stepUpTransactionId }),
       })
       const data = await res?.json()
-      if (!res?.ok) { this.$totpError = data?.error || 'Unable to start authenticator enrollment.'; return }
-      this.$totpEnrollment = data
-    } catch { this.$totpError = 'Network error.' }
-    finally { this.$totpLoading = false }
+      if (!res?.ok) { this.totpError = data?.error || 'Unable to start authenticator enrollment.'; return }
+      this.totpEnrollment = data
+    } catch { this.totpError = 'Network error.' }
+    finally { this.totpLoading = false }
   }
 
   /** @returns {Promise<void>} */
   async confirmTotpEnrollment() {
-    const enrollment = /** @type {{ secret?: string }|null} */ (this.$totpEnrollment)
-    this.$totpCode = this.formValue('[data-settings-totp-code]', this.$totpCode)
-    this.$totpName = this.formValue('[data-settings-totp-name]', this.$totpName)
-    if (!enrollment?.secret || !/^\d{6}$/.test(this.$totpCode)) { this.$totpError = 'Enter the current 6-digit authenticator code.'; return }
+    const enrollment = /** @type {{ secret?: string }|null} */ (this.totpEnrollment)
+    this.totpCode = this.formValue('[data-settings-totp-code]', this.totpCode)
+    this.totpName = this.formValue('[data-settings-totp-name]', this.totpName)
+    if (!enrollment?.secret || !/^\d{6}$/.test(this.totpCode)) { this.totpError = 'Enter the current 6-digit authenticator code.'; return }
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
-    this.$totpLoading = true; this.$totpError = ''
+    this.totpLoading = true; this.totpError = ''
     try {
-      const res = await apiFetch('/auth/credentials/totp/activate', { method: 'POST', body: JSON.stringify({ code: this.$totpCode }) })
+      const res = await apiFetch('/auth/credentials/totp/activate', { method: 'POST', body: JSON.stringify({ code: this.totpCode }) })
       const data = await res?.json()
-      if (!res?.ok) { this.$totpError = data?.error || 'Unable to verify authenticator code.'; return }
-      this.$totpEnrollment = null; this.$totpCode = ''
+      if (!res?.ok) { this.totpError = data?.error || 'Unable to verify authenticator code.'; return }
+      this.totpEnrollment = null; this.totpCode = ''
       await this.refreshPasskeys()
       window._caduceus?.toast('Authenticator app enabled.')
-    } catch { this.$totpError = 'Network error.' }
-    finally { this.$totpLoading = false }
+    } catch { this.totpError = 'Network error.' }
+    finally { this.totpLoading = false }
   }
 
   /**
@@ -2994,25 +3126,25 @@ export default class {
    * @returns {Promise<void>}
    */
   async updatePassword() {
-    this.$newPassword = this.formValue('[data-settings-new-password]', this.$newPassword)
-    this.$confirmPassword = this.formValue('[data-settings-confirm-password]', this.$confirmPassword)
-    if (!this.$newPassword) { this.$passwordError = 'Password is required.'; return }
-    if (this.$confirmPassword && this.$confirmPassword !== this.$newPassword) { this.$passwordError = 'Passwords do not match.'; return }
+    this.newPassword = this.formValue('[data-settings-new-password]', this.newPassword)
+    this.confirmPassword = this.formValue('[data-settings-confirm-password]', this.confirmPassword)
+    if (!this.newPassword) { this.passwordError = 'Password is required.'; return }
+    if (this.confirmPassword && this.confirmPassword !== this.newPassword) { this.passwordError = 'Passwords do not match.'; return }
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
-    this.$passwordSaving = true; this.$passwordError = ''
+    this.passwordSaving = true; this.passwordError = ''
     try {
       const stepUpTransactionId = await this.stepUp()
-      if (!stepUpTransactionId) { this.$passwordError = 'Confirm it is you before changing your password.'; return }
+      if (!stepUpTransactionId) { this.passwordError = 'Confirm it is you before changing your password.'; return }
       const res = await apiFetch('/auth/credentials/password', {
         method: 'PUT',
-        body: JSON.stringify({ stepUpTransactionId, password: this.$newPassword }),
+        body: JSON.stringify({ stepUpTransactionId, password: this.newPassword }),
       })
       const data = await res?.json()
-      if (!res?.ok) { this.$passwordError = data?.error || 'Unable to update password.'; return }
-      this.$newPassword = this.$confirmPassword = ''
+      if (!res?.ok) { this.passwordError = data?.error || 'Unable to update password.'; return }
+      this.newPassword = this.confirmPassword = ''
       window._caduceus?.toast('Password updated.')
-    } catch { this.$passwordError = 'Network error.' }
-    finally { this.$passwordSaving = false }
+    } catch { this.passwordError = 'Network error.' }
+    finally { this.passwordSaving = false }
   }
 
   /**
@@ -3023,23 +3155,23 @@ export default class {
    */
   async generateRecoveryCodes() {
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
-    this.$recoveryLoading = true; this.$recoveryError = ''; this.$recoveryCodes = []
+    this.recoveryLoading = true; this.recoveryError = ''; this.recoveryCodes = []
     try {
       const stepUpTransactionId = await this.stepUp()
-      if (!stepUpTransactionId) { this.$recoveryError = 'Confirm it is you before replacing your recovery codes.'; return }
+      if (!stepUpTransactionId) { this.recoveryError = 'Confirm it is you before replacing your recovery codes.'; return }
       const res = await apiFetch('/auth/credentials/recovery', {
         method: 'POST', body: JSON.stringify({ stepUpTransactionId }),
       })
       const data = await res?.json()
-      if (!res?.ok) { this.$recoveryError = data?.error || 'Unable to generate recovery codes.'; return }
-      this.$recoveryCodes = Array.isArray(data?.codes) ? data.codes : []
+      if (!res?.ok) { this.recoveryError = data?.error || 'Unable to generate recovery codes.'; return }
+      this.recoveryCodes = Array.isArray(data?.codes) ? data.codes : []
       window._caduceus?.toast('Recovery codes replaced.')
-    } catch { this.$recoveryError = 'Network error.' }
-    finally { this.$recoveryLoading = false }
+    } catch { this.recoveryError = 'Network error.' }
+    finally { this.recoveryLoading = false }
   }
 
   /** @returns {void} */
-  dismissRecoveryCodes() { this.$recoveryCodes = []; this.$recoveryError = '' }
+  dismissRecoveryCodes() { this.recoveryCodes = []; this.recoveryError = '' }
 
   /** Delegate rich clipboard paste into the raw HTML source editor. */
   bindSignatureEditor() {
@@ -3070,7 +3202,7 @@ export default class {
         event.target instanceof Element ? event.target.closest('[data-signature-html] textarea, textarea[data-signature-html]') : null
       )
       if (!textarea) return
-      this.$signatureText = textarea.value
+      this.signatureText = textarea.value
       this.renderSignaturePreview(textarea.value)
     }
     document.addEventListener('paste', window._caduceusSignaturePasteHandler, true)
@@ -3078,7 +3210,7 @@ export default class {
   }
 
   /** Render only sanitized signature content into the settings preview. */
-  renderSignaturePreview(value = this.$signatureText) {
+  renderSignaturePreview(value = this.signatureText) {
     requestAnimationFrame(() => {
       const preview = document.querySelector('[data-signature-preview]')
       if (preview) preview.innerHTML = sanitizeSignatureHTML(value)
@@ -3088,19 +3220,19 @@ export default class {
   /** Load one signature into the exact-address defaults editor. */
   editSignature(_event, signature) {
     ;(/** @type {any} */ (window)).__caduceusSignatureEditId = String(signature?.id || '')
-    this.$signatureEditId = String(signature?.id || '')
-    this.$signatureName = String(signature?.name || '')
-    this.$signatureText = String(signature?.text || '')
-    this.$signatureDefaults = Array.isArray(signature?.defaultFor) ? [...signature.defaultFor] : []
-    this.$signatureError = ''
+    this.signatureEditId = String(signature?.id || '')
+    this.signatureName = String(signature?.name || '')
+    this.signatureText = String(signature?.text || '')
+    this.signatureDefaults = Array.isArray(signature?.defaultFor) ? [...signature.defaultFor] : []
+    this.signatureError = ''
     this.renderSignaturePreview()
   }
 
   /** Reset signature management to create mode. */
   newSignature() {
     ;(/** @type {any} */ (window)).__caduceusSignatureEditId = ''
-    this.$signatureEditId = this.$signatureName = this.$signatureText = this.$signatureError = ''
-    this.$signatureDefaults = []
+    this.signatureEditId = this.signatureName = this.signatureText = this.signatureError = ''
+    this.signatureDefaults = []
     this.renderSignaturePreview('')
   }
 
@@ -3116,37 +3248,37 @@ export default class {
     const defaults = Array.from(document.querySelectorAll('[data-signature-default]'))
       .filter(control => /** @type {HTMLInputElement} */ (control).checked)
       .map(control => String(/** @type {HTMLInputElement} */ (control).value))
-    this.$signatureName = name
-    this.$signatureText = text
-    this.$signatureDefaults = defaults
+    this.signatureName = name
+    this.signatureText = text
+    this.signatureDefaults = defaults
   }
 
   /** Create or update one mailbox-owned rich signature. */
   async saveSignature() {
     this._syncSignatureEditorFields()
-    if (!this.$signatureName || !this.$signatureText.trim()) {
-      this.$signatureError = 'Name and signature content are required.'
+    if (!this.signatureName || !this.signatureText.trim()) {
+      this.signatureError = 'Name and signature content are required.'
       return
     }
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
-    this.$signatureSaving = true
-    this.$signatureError = ''
-    const editId = String((/** @type {any} */ (window)).__caduceusSignatureEditId || this.$signatureEditId || '')
+    this.signatureSaving = true
+    this.signatureError = ''
+    const editId = String((/** @type {any} */ (window)).__caduceusSignatureEditId || this.signatureEditId || '')
     try {
       const res = await apiFetch(editId ? `/signatures/${editId}` : '/signatures', {
         method: editId ? 'PUT' : 'POST',
-        body: JSON.stringify({ name: this.$signatureName, text: this.$signatureText, defaultFor: this.$signatureDefaults }),
+        body: JSON.stringify({ name: this.signatureName, text: this.signatureText, defaultFor: this.signatureDefaults }),
       })
       const data = await res?.json()
-      if (!res?.ok) { this.$signatureError = data?.error || 'Failed to save signature.'; return }
-      this.$signatures = editId
-        ? this.$signatures.map(signature => signature.id === editId ? data : signature)
-        : [...this.$signatures, data]
+      if (!res?.ok) { this.signatureError = data?.error || 'Failed to save signature.'; return }
+      this.signatures = editId
+        ? this.signatures.map(signature => signature.id === editId ? data : signature)
+        : [...this.signatures, data]
       window._caduceus?.toast(editId ? 'Signature updated.' : 'Signature saved.')
       this.editSignature(null, data)
-    } catch { this.$signatureError = 'Network error.' }
-    finally { this.$signatureSaving = false }
+    } catch { this.signatureError = 'Network error.' }
+    finally { this.signatureSaving = false }
   }
 
   /** Delete an exact-owner signature without exposing foreign IDs. */
@@ -3155,7 +3287,7 @@ export default class {
     const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) return
     const res = await apiFetch(`/signatures/${id}`, { method: 'DELETE' })
     if (res?.ok) {
-      this.$signatures = this.$signatures.filter(signature => signature.id !== id)
+      this.signatures = this.signatures.filter(signature => signature.id !== id)
       if (String((/** @type {any} */ (window)).__caduceusSignatureEditId || '') === id) this.newSignature()
       window._caduceus?.toast('Signature removed.')
     }
@@ -3164,58 +3296,58 @@ export default class {
   /** Load one template into the settings editor. */
   editTemplate(_event, template) {
     ;(/** @type {any} */ (window)).__caduceusTemplateEditId = String(template?.id || '')
-    this.$templateEditId = String(template?.id || '')
-    this.$templateName = String(template?.name || '')
-    this.$templateSubject = String(template?.subject || '')
-    this.$templateTo = String(template?.to || '')
-    this.$templateCc = String(template?.cc || '')
-    this.$templateText = String(template?.text || '')
-    this.$templateError = ''
+    this.templateEditId = String(template?.id || '')
+    this.templateName = String(template?.name || '')
+    this.templateSubject = String(template?.subject || '')
+    this.templateTo = String(template?.to || '')
+    this.templateCc = String(template?.cc || '')
+    this.templateText = String(template?.text || '')
+    this.templateError = ''
   }
 
   /** Reset the management editor to create mode. */
   newTemplate() {
     ;(/** @type {any} */ (window)).__caduceusTemplateEditId = ''
-    this.$templateEditId = this.$templateName = this.$templateSubject = ''
-    this.$templateTo = this.$templateCc = this.$templateText = this.$templateError = ''
+    this.templateEditId = this.templateName = this.templateSubject = ''
+    this.templateTo = this.templateCc = this.templateText = this.templateError = ''
   }
 
   /** Create or update a reusable rich composer template. */
   async saveManagedTemplate() {
     this._syncTemplateEditorFields()
-    if (!this.$templateName.trim() || !this.$templateText.trim()) {
-      this.$templateError = 'Name and template content are required.'
+    if (!this.templateName.trim() || !this.templateText.trim()) {
+      this.templateError = 'Name and template content are required.'
       return
     }
     const apiFetch = window._caduceus?.apiFetch
     if (!apiFetch) return
-    this.$templateSaving = true
-    this.$templateError = ''
+    this.templateSaving = true
+    this.templateError = ''
     try {
-      const editId = String((/** @type {any} */ (window)).__caduceusTemplateEditId || this.$templateEditId || '')
+      const editId = String((/** @type {any} */ (window)).__caduceusTemplateEditId || this.templateEditId || '')
       const editing = Boolean(editId)
       const response = await apiFetch(editing ? `/templates/${editId}` : '/templates', {
         method: editing ? 'PUT' : 'POST',
         body: JSON.stringify({
-          name: this.$templateName.trim(),
-          subject: this.$templateSubject,
-          to: this.$templateTo,
-          cc: this.$templateCc,
-          text: this.$templateText,
+          name: this.templateName.trim(),
+          subject: this.templateSubject,
+          to: this.templateTo,
+          cc: this.templateCc,
+          text: this.templateText,
         }),
       })
       const data = await response?.json()
       if (!response?.ok) {
-        this.$templateError = data?.error || 'Failed to save template.'
+        this.templateError = data?.error || 'Failed to save template.'
         return
       }
-      this.$templates = editing
-        ? this.$templates.map(item => item.id === data.id ? data : item).sort((a, b) => a.name.localeCompare(b.name))
-        : [...this.$templates, data].sort((a, b) => a.name.localeCompare(b.name))
+      this.templates = editing
+        ? this.templates.map(item => item.id === data.id ? data : item).sort((a, b) => a.name.localeCompare(b.name))
+        : [...this.templates, data].sort((a, b) => a.name.localeCompare(b.name))
       this.editTemplate(null, data)
       window._caduceus?.toast(`Template “${data.name}” saved.`)
-    } catch { this.$templateError = 'Network error.' }
-    finally { this.$templateSaving = false }
+    } catch { this.templateError = 'Network error.' }
+    finally { this.templateSaving = false }
   }
 
   /** Read native DuVay controls once, without rerendering between fields. */
@@ -3232,11 +3364,11 @@ export default class {
       cc: value('[data-template-cc]'),
       text: value('[data-template-content]'),
     }
-    this.$templateName = snapshot.name
-    this.$templateSubject = snapshot.subject
-    this.$templateTo = snapshot.to
-    this.$templateCc = snapshot.cc
-    this.$templateText = snapshot.text
+    this.templateName = snapshot.name
+    this.templateSubject = snapshot.subject
+    this.templateTo = snapshot.to
+    this.templateCc = snapshot.cc
+    this.templateText = snapshot.text
   }
 
   /** Permanently remove one exact-owner template. */
@@ -3247,11 +3379,11 @@ export default class {
     const response = await apiFetch(`/templates/${id}`, { method: 'DELETE' })
     if (!response?.ok) {
       const data = await response?.json()
-      this.$templateError = data?.error || 'Failed to delete template.'
+      this.templateError = data?.error || 'Failed to delete template.'
       return
     }
-    this.$templates = this.$templates.filter(item => item.id !== id)
-    if (this.$templateEditId === id || (/** @type {any} */ (window)).__caduceusTemplateEditId === id) this.newTemplate()
+    this.templates = this.templates.filter(item => item.id !== id)
+    if (this.templateEditId === id || (/** @type {any} */ (window)).__caduceusTemplateEditId === id) this.newTemplate()
     window._caduceus?.toast('Template removed.')
   }
 }

@@ -135,8 +135,7 @@ export function isTranslatableMessageText(value, style = {}) {
   if (text.length < 250 && US_ADDRESS.test(text)) return false
   if (MONOSPACE_FONT.test(String(style.fontFamily || ''))) return false
   const fontSize = Number.parseFloat(String(style.fontSize || ''))
-  if (Number.isFinite(fontSize) && fontSize > 0 && fontSize < 12) return false
-  return true
+  return !(Number.isFinite(fontSize) && fontSize > 0 && fontSize < 12)
 }
 
 /**

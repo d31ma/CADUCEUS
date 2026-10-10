@@ -1,19 +1,5 @@
 import { Collections, collect } from '../../../platform/persistence/fylo.js'
 
-/**
- * @typedef {object} ThreadShareRecord
- * @property {string} id
- * @property {string} ownerEmail
- * @property {string} domain
- * @property {string} threadId
- * @property {string} subject
- * @property {string[]} emailIds
- * @property {string} tokenHash
- * @property {string} createdAt
- * @property {string} expiresAt
- * @property {string} [revokedAt]
- */
-
 /** FYLO persistence for mailbox-owned conversation capabilities. */
 export class ThreadSharesRepository {
   /** @param {import('../../../platform/persistence/fylo.js').Fylo} fylo */

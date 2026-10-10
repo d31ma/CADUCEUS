@@ -3,15 +3,6 @@
 import { formatPreferenceDate } from './mail-preferences.js'
 import { formatNumber } from './localization.js'
 
-/** @typedef {Record<string, any>} PrintableEmail */
-/**
- * @typedef {object} PrintableConversation
- * @property {string} subject
- * @property {number} count
- * @property {PrintableEmail} latestEmail
- * @property {PrintableEmail[]} emails
- */
-
 /**
  * Load the complete authorized conversation for a message. Printing remains
  * available offline or during a transient API failure by falling back to the

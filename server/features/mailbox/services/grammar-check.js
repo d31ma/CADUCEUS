@@ -127,6 +127,3 @@ function contextFor(text, offset, length) {
   return { text: text.slice(start, end), offset: offset - start, length }
 }
 
-/**
- * @typedef {{ offset: number, length: number, message: string, shortMessage: string, replacements: string[], ruleId: string, ruleDescription: string, category: string, categoryName: string, issueType: string, context: { text: string, offset: number, length: number } }} GrammarMatch
- */

@@ -3,10 +3,6 @@ import { randomBytes } from 'node:crypto'
 import { FyloAccessContext } from '../../../platform/persistence/fylo-access.js'
 import { deriveThreadId } from './threading.js'
 
-/** @typedef {import('../repositories/emails.js').EmailsRepository} EmailsRepository */
-/** @typedef {import('../repositories/attachments.js').AttachmentsRepository} AttachmentsRepository */
-/** @typedef {import('./category-mappings.js').CategoryMappingService} CategoryMappingService */
-
 /** Durable, optimistic-concurrency draft lifecycle. */
 export class DraftService {
   /** @param {EmailsRepository} emails @param {AttachmentsRepository} attachments @param {CategoryMappingService} categoryMappings */

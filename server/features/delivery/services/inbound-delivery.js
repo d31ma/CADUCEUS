@@ -5,19 +5,6 @@ import { ListUnsubscribe } from './list-unsubscribe.js'
 import { threadMetadataFromHeaders } from '../../mailbox/services/threading.js'
 import { recipientsFromHeaders } from '../../mailbox/services/personal-level.js'
 
-/** @typedef {import('../../mailbox/repositories/attachments.js').AttachmentsRepository} AttachmentsRepository */
-/** @typedef {import('../../domains/repositories/domains.js').DomainsRepository} DomainsRepository */
-/** @typedef {import('../../mailbox/repositories/emails.js').EmailsRepository} EmailsRepository */
-/** @typedef {import('../../mailbox/repositories/raw-messages.js').RawMessagesRepository} RawMessagesRepository */
-/** @typedef {import('./inbound.js').InboundService} InboundService */
-/** @typedef {import('../../notifications/services/push.js').PushService} PushService */
-/** @typedef {import('../../calendar/services/calendar-import.js').CalendarImportService} CalendarImportService */
-/** @typedef {import('./spam-filter.js').SpamFilterService} SpamFilterService */
-/** @typedef {import('./follow-up-reminders.js').FollowUpReminderService} FollowUpReminderService */
-/** @typedef {import('../../contacts/services/contacts.js').ContactsService} ContactsService */
-/** @typedef {import('../../users/repositories/users.js').UsersRepository} UsersRepository */
-/** @typedef {import('../../mailbox/services/category-mappings.js').CategoryMappingService} CategoryMappingService */
-
 /**
  * Orchestrates the full inbound delivery pipeline: domain check → route
  * match → persist email + attachments → apply post-delivery rules → push

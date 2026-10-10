@@ -5,11 +5,6 @@ const STRING_OPERATORS = new Set(['contains', 'notContains', 'equals', 'notEqual
 const MAX_CONDITIONS = 20
 const MAX_ACTIONS = 10
 
-/**
- * @typedef {{ type: 'webhook', url: string, secret?: string } | { type: 'forward', to: string } | { type: 'store' } | { type: 'drop' }} RouteAction
- * @typedef {{ valid: true } | { valid: false, error: string }} ValidationResult
- */
-
 /** Validation for domain route rules and inbox rule actions. */
 export class RuleValidation {
   /**

@@ -5,28 +5,6 @@ import { threadMetadataFromHeaders } from '../../mailbox/services/threading.js'
 import { recipientsFromHeaders } from '../../mailbox/services/personal-level.js'
 import { evaluateInboxRule } from '../../mailbox/services/rule-engine.js'
 
-/** @typedef {import('../../../types').RouteRule} RouteRule */
-/** @typedef {import('../../../types').InboxRule} InboxRule */
-/** @typedef {import('../../../types').RuleCondition} RuleCondition */
-/** @typedef {import('../../mailbox/repositories/attachments.js').ParsedAttachment} ParsedAttachment */
-/** @typedef {import('../../mailbox/repositories/emails.js').EmailsRepository} EmailsRepository */
-/** @typedef {import('../../mailbox/repositories/rules.js').RulesRepository} RulesRepository */
-/** @typedef {import('../repositories/suppressed.js').SuppressedRepository} SuppressedRepository */
-/** @typedef {import('../../mailbox/repositories/attachments.js').AttachmentsRepository} AttachmentsRepository */
-/** @typedef {import('../../mailbox/repositories/raw-messages.js').RawMessagesRepository} RawMessagesRepository */
-/** @typedef {import('./smtp.js').SmtpService} SmtpService */
-
-/**
- * @typedef {object} InboundPayload
- * @property {string} recipient
- * @property {string} sender
- * @property {string} subject
- * @property {string} body
- * @property {string} [htmlBody]
- * @property {string} [messageId]
- * @property {ParsedAttachment[]} [attachments]
- */
-
 /**
  * Inbound mail dispatcher. Validates the recipient, looks up the matching
  * inbox rule for the recipient's domain, and dispatches to one of:

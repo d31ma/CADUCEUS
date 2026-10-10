@@ -4,8 +4,6 @@ import { join, resolve } from 'node:path'
 import { Buffer } from 'node:buffer'
 import { Buckets, Collections, collect } from '../../../platform/persistence/fylo.js'
 
-/** @typedef {import('../../../types').RawMessageRecord} RawMessageRecord */
-
 /** Durable, tenant-owned storage for exact RFC 822 message sources. */
 export class RawMessagesRepository {
   /** @param {import('../../../platform/persistence/fylo.js').Fylo} fylo */

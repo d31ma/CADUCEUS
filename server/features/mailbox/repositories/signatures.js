@@ -1,7 +1,5 @@
 import { Collections, collect } from '../../../platform/persistence/fylo.js'
 
-/** @typedef {{ id: string, owner: string, domain: string, name: string, text: string, defaultFor: string[], createdAt: number, updatedAt: number }} SignatureEntry */
-
 export class SignaturesRepository {
   /** @param {import('../../../platform/persistence/fylo.js').Fylo} fylo */
   constructor(fylo) { this.fylo = fylo }

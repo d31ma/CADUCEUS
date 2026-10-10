@@ -1,6 +1,3 @@
-/** @typedef {import('../repositories/follow-up-reminders.js').FollowUpRemindersRepository} FollowUpRemindersRepository */
-/** @typedef {import('../../mailbox/repositories/emails.js').EmailsRepository} EmailsRepository */
-
 export class FollowUpReminderService {
   /** Serialize browser-triggered and background due passes in this API process. */
   #duePass = Promise.resolve()

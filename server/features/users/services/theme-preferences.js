@@ -25,10 +25,6 @@ const ACTIVE_THEME_ID_SET = new Set(ACTIVE_THEME_IDS)
 const LIGHT_THEME_ID_SET = new Set(LIGHT_THEME_IDS)
 const DARK_THEME_ID_SET = new Set(DARK_THEME_IDS)
 
-/** @typedef {'automatic'|'light'|'dark'|'darkside'|'less-is-more'|'taiga'|'ubuntu'} ActiveThemeId */
-/** @typedef {'light'|'less-is-more'|'taiga'|'ubuntu'} LightThemeId */
-/** @typedef {'dark'|'darkside'} DarkThemeId */
-
 /** @param {unknown} value @returns {value is ActiveThemeId} */
 export function isActiveTheme(value) {
   return typeof value === 'string' && ACTIVE_THEME_ID_SET.has(value)

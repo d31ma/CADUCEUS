@@ -5,10 +5,6 @@ import en from '../locales/en.js'
 import fr from '../locales/fr.js'
 
 export const INTERFACE_LOCALE_STORAGE_KEY = 'caduceus-interface-locale-v1'
-/**
- * @typedef {'auto'|'en'|'de'|'es'|'es-419'|'fr'|'ko'|'pl'|'ja'|'zh-CN'|'zh-TW'|'pt'|'pt-BR'|'gl'|'tr'|'ru'|'cs'|'uk'|'hu'|'he'|'ar'} InterfaceLocaleChoice
- * @typedef {Exclude<InterfaceLocaleChoice, 'auto'>} ResolvedInterfaceLocale
- */
 /** @type {ReadonlyArray<{id:InterfaceLocaleChoice,label?:string,labelKey?:string}>} */
 export const INTERFACE_LOCALE_OPTIONS = Object.freeze([
   { id: 'auto', labelKey: 'locale.automatic' },
@@ -191,8 +187,6 @@ export function translateInterfaceLiteral(value, locale = activeLocale) {
   const generated = generatedLiterals[resolved]?.[source]
   return typeof generated === 'string' && generated.trim() ? generated : source
 }
-
-/** @typedef {string|Readonly<Record<string,string>>} Message */
 
 /** @param {string} id @param {Record<string, unknown>} [values] @param {string} [locale] */
 export function translate(id, values = {}, locale = activeLocale) {

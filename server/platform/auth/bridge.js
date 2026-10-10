@@ -19,8 +19,6 @@ const DEFAULT_MAX_REQUEST_BYTES = 1 << 20
 const DEFAULT_MAX_RESPONSE_BYTES = 1 << 20
 const REQUEST_TIMEOUT_MS = 15_000
 
-/** @typedef {{ code: string, message: string }} AuthErrorShape */
-
 /** An error carrying the boundary's stable code. */
 export class AuthBridgeError extends Error {
   /** @param {string} code @param {string} message */

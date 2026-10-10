@@ -1,7 +1,5 @@
 import { Collections, collect } from '../../../platform/persistence/fylo.js'
 
-/** @typedef {{ id: string, name: string, subject: string, text: string, to: string, cc: string, owner: string, createdAt: number, updatedAt?: number }} TemplateEntry */
-
 export class TemplatesRepository {
   /** @param {import('../../../platform/persistence/fylo.js').Fylo} fylo */
   constructor(fylo) {

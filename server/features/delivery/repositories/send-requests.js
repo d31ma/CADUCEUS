@@ -1,18 +1,5 @@
 import { Collections, collect } from '../../../platform/persistence/fylo.js'
 
-/**
- * @typedef {object} SendRequestRecord
- * @property {string} id
- * @property {string} ownerEmail
- * @property {string} domain
- * @property {string} idempotencyKey
- * @property {string} requestHash
- * @property {'applying'|'accepted'|'ambiguous'} state
- * @property {string} resultJson
- * @property {number} createdAt
- * @property {number} updatedAt
- */
-
 export class SendRequestsRepository {
   /** @param {import('../../../platform/persistence/fylo.js').Fylo} fylo */
   constructor(fylo) { this.fylo = fylo }

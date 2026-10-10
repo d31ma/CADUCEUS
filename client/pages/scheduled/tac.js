@@ -15,7 +15,8 @@ export default class {
   /** @type {Array<{ id: string, [key: string]: any }>} */
   $items = []
   /** @type {boolean} */
-  $loading = true
+  @SessionState
+  loading = true
 
   /**
    * Whether the current user is authenticated and the app can be used.
@@ -47,8 +48,8 @@ export default class {
    * @returns {Promise<void>}
    */
   async load() {
-    this.$loading = true
-    const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) { this.$loading = false; return }
+    this.loading = true
+    const apiFetch = window._caduceus?.apiFetch; if (!apiFetch) { this.loading = false; return }
     try {
       const res = await apiFetch('/send/scheduled')
       if (res?.ok) {
@@ -65,7 +66,7 @@ export default class {
         })) : []
       }
     } catch { this.$items = [] }
-    finally { this.$loading = false }
+    finally { this.loading = false }
   }
 
   /** Load the full exact-owner message and hand it to the compose route. */

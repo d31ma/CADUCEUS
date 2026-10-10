@@ -1,22 +1,5 @@
 import { Collections, collect } from '../../../platform/persistence/fylo.js'
 
-/**
- * @typedef {object} SnoozeEntry
- * @property {string} id
- * @property {string} emailId
- * @property {string} [threadId]
- * @property {string} [ownerEmail]
- * @property {string} [domain]
- * @property {string[]} [emailIds]
- * @property {number} until
- * @property {number} snoozedAt
- * @property {string} [label]
- * @property {'active'|'completed'|'canceled'} [status]
- * @property {number} [completedAt]
- * @property {string} [lastError]
- * @property {string} [clientRequestId]
- */
-
 export class SnoozeRepository {
   /** @param {import('../../../platform/persistence/fylo.js').Fylo} fylo */
   constructor(fylo) {

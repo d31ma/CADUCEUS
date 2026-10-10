@@ -1,11 +1,5 @@
 import { Collections, collect } from '../../../platform/persistence/fylo.js'
 
-/** @typedef {{ query?: string, folder?: string, folderByDomain?: Record<string, string>, read?: boolean, starred?: boolean, hasAttachment?: boolean, limit?: number, offset?: number, since?: string, ownerEmail?: string }} EmailListFilters */
-/** @typedef {import('../../../types').StoredEmail} StoredEmail */
-/** @typedef {import('../../../types').EmailAttachmentSummary} EmailAttachmentSummary */
-/** @typedef {import('./attachments.js').AttachmentsRepository} AttachmentsRepository */
-/** @typedef {import('./raw-messages.js').RawMessagesRepository} RawMessagesRepository */
-
 export class EmailsRepository {
   /**
    * @param {import('../../../platform/persistence/fylo.js').Fylo} fylo

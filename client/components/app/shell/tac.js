@@ -122,32 +122,46 @@ export default class {
   /** @type {ReturnType<typeof restoreMailPreferences>} */
   $mailPreferences = initialMailPreferences
   /** @type {string} */
-  $toastMsg = ''
+  @SessionState
+  toastMsg = ''
   /** @type {boolean} */
-  $toastVisible = false
+  @SessionState
+  toastVisible = false
   /** @type {string} */
-  $toastActionLabel = ''
+  @SessionState
+  toastActionLabel = ''
   /** @type {boolean} Whether the accessible keyboard-command dialog is open. */
-  $shortcutHelpOpen = false
+  @SessionState
+  shortcutHelpOpen = false
   /** @type {boolean} Whether the connected-folder mutation dialog is open. */
-  $externalFolderDialogOpen = false
+  @SessionState
+  externalFolderDialogOpen = false
   /** @type {'create'|'rename'|'delete'} */
-  $externalFolderDialogMode = 'create'
-  $externalFolderDialogName = ''
-  $externalFolderDialogError = ''
-  $externalFolderDialogBusy = false
+  @SessionState
+  externalFolderDialogMode = 'create'
+  @SessionState
+  externalFolderDialogName = ''
+  @SessionState
+  externalFolderDialogError = ''
+  @SessionState
+  externalFolderDialogBusy = false
   /** @type {boolean} Whether the full prioritized notification panel is open. */
   notificationCenterOpen = false
   /** @type {Array<Record<string, any>>} */
-  $notifications = []
+  @SessionState
+  notifications = []
   /** @type {string[]} User-scoped dismissals for optional derived notices. */
-  $dismissedNotifications = []
+  @SessionState
+  dismissedNotifications = []
   /** @type {{online:boolean,updateVersion:string,accountErrors:string[],disabledRuleCount:number,pushPrompt:boolean}} */
-  $notificationState = { online: true, updateVersion: '', accountErrors: [], disabledRuleCount: 0, pushPrompt: false }
+  @SessionState
+  notificationState = { online: true, updateVersion: '', accountErrors: [], disabledRuleCount: 0, pushPrompt: false }
   /** @type {boolean} */
-  $isRoot = true
+  @SessionState
+  isRoot = true
   /** @type {string} */
-  $activeFolder = 'inbox'
+  @SessionState
+  activeFolder = 'inbox'
   /**
    * Domain selected by the current URL's `?domain=` query string, or empty
    * when the user is on an aggregate view ("All Inboxes" / "All Sent").
@@ -155,9 +169,11 @@ export default class {
    * a per-domain row that matches the same folder name.
    * @type {string}
    */
-  $selectedDomain = ''
+  @SessionState
+  selectedDomain = ''
   /** @type {string} Connected-account ID selected by the current URL. */
-  $selectedAccount = ''
+  @SessionState
+  selectedAccount = ''
   /** @type {boolean} Whether the topbar user-menu dropdown is currently open. */
   userMenuOpen = false
   /** @type {boolean} Whether the responsive sidebar drawer is open. */
@@ -210,7 +226,8 @@ export default class {
    * (`mailboxes`, `folders`).
    * @type {{ mailboxes: boolean, folders: boolean }}
    */
-  $$sidebarOpen = { mailboxes: true, folders: true }
+  @LocalState
+  sidebarOpen = { mailboxes: true, folders: true }
 
   /**
    * Open/closed state for the collapsible Favorites groups. Mirrors Apple
@@ -219,7 +236,8 @@ export default class {
    * user's preference survives reloads.
    * @type {{ inboxes: boolean, sent: boolean }}
    */
-  $$favoritesOpen = { inboxes: true, sent: false }
+  @LocalState
+  favoritesOpen = { inboxes: true, sent: false }
 
   /**
    * Expanded connected-account folders keyed by account plus stable provider
@@ -227,7 +245,8 @@ export default class {
    * same IMAP path.
    * @type {Record<string, boolean>}
    */
-  $$externalFolderOpen = {}
+  @LocalState
+  externalFolderOpen = {}
 
   /** @type {boolean} Explicit template-safe authentication state. */
   isAuthenticated = false
@@ -312,9 +331,9 @@ export default class {
       void clearOfflineWriteVault()
     }
 
-    this.$isRoot = location.pathname === '/'
-    this.isRootPath = this.$isRoot
-    if (this.$isRoot && this.isAuthenticated) {
+    this.isRoot = location.pathname === '/'
+    this.isRootPath = this.isRoot
+    if (this.isRoot && this.isAuthenticated) {
       location.replace('/inbox')
     }
     this.updateActiveFolder()
@@ -360,7 +379,7 @@ export default class {
   }
 
   get visibleNotifications() {
-    return visibleNotifications(this.$notifications, this.$dismissedNotifications)
+    return visibleNotifications(this.notifications, this.dismissedNotifications)
   }
 
   get highestNotification() { return highestPriorityNotification(this.visibleNotifications) }
@@ -376,11 +395,11 @@ export default class {
   }
 
   refreshNotifications() {
-    this.$notifications = buildSystemNotifications(this.$notificationState)
+    this.notifications = buildSystemNotifications(this.notificationState)
   }
 
   bindNotificationCenter() {
-    this.$notificationState = { ...this.$notificationState, online: navigator.onLine !== false }
+    this.notificationState = { ...this.notificationState, online: navigator.onLine !== false }
     this.restoreNotificationDismissals()
     this.refreshNotifications()
 
@@ -390,11 +409,11 @@ export default class {
     if (previousOnline) window.removeEventListener('online', previousOnline)
     if (previousOffline) window.removeEventListener('offline', previousOffline)
     browserWindow._caduceusNotificationOnline = () => {
-      this.$notificationState = { ...this.$notificationState, online: true }
+      this.notificationState = { ...this.notificationState, online: true }
       this.refreshNotifications()
     }
     browserWindow._caduceusNotificationOffline = () => {
-      this.$notificationState = { ...this.$notificationState, online: false }
+      this.notificationState = { ...this.notificationState, online: false }
       this.refreshNotifications()
     }
     window.addEventListener('online', browserWindow._caduceusNotificationOnline)
@@ -407,7 +426,7 @@ export default class {
           if (!worker || !navigator.serviceWorker.controller) return
           const reveal = () => {
             if (worker.state !== 'installed') return
-            this.$notificationState = { ...this.$notificationState, updateVersion: 'ready' }
+            this.notificationState = { ...this.notificationState, updateVersion: 'ready' }
             this.refreshNotifications()
           }
           worker.addEventListener('statechange', reveal)
@@ -423,15 +442,15 @@ export default class {
     const key = `caduceus-notification-dismissals:${this.$email || 'anonymous'}`
     try {
       const stored = JSON.parse(localStorage.getItem(key) || '[]')
-      this.$dismissedNotifications = Array.isArray(stored)
+      this.dismissedNotifications = Array.isArray(stored)
         ? stored.filter(value => typeof value === 'string').slice(-100)
         : []
-    } catch { this.$dismissedNotifications = [] }
+    } catch { this.dismissedNotifications = [] }
   }
 
   persistNotificationDismissals() {
     const key = `caduceus-notification-dismissals:${this.$email || 'anonymous'}`
-    localStorage.setItem(key, JSON.stringify(this.$dismissedNotifications.slice(-100)))
+    localStorage.setItem(key, JSON.stringify(this.dismissedNotifications.slice(-100)))
   }
 
   async loadNotificationSources() {
@@ -445,8 +464,8 @@ export default class {
       const subscriptions = subscriptionsResponse?.ok ? await subscriptionsResponse.json() : []
       const pushPrompt = !window.__CADUCEUS_DISABLE_SW && 'Notification' in window
         && Notification.permission === 'default' && Array.isArray(subscriptions) && subscriptions.length === 0
-      this.$notificationState = {
-        ...this.$notificationState,
+      this.notificationState = {
+        ...this.notificationState,
         disabledRuleCount: Array.isArray(rules) ? rules.filter(rule => rule?.enabled === false).length : 0,
         pushPrompt,
       }
@@ -476,7 +495,7 @@ export default class {
     const id = typeof eventOrId === 'string' ? eventOrId : requestedId
     const notice = this.visibleNotifications.find(item => item.id === id)
     if (!notice?.dismissable) return
-    this.$dismissedNotifications = [...new Set([...this.$dismissedNotifications, id])].slice(-100)
+    this.dismissedNotifications = [...new Set([...this.dismissedNotifications, id])].slice(-100)
     this.persistNotificationDismissals()
     this.refreshNotifications()
   }
@@ -484,7 +503,7 @@ export default class {
   runCenterAction(eventOrAction, requestedAction) {
     const action = typeof eventOrAction === 'string' ? eventOrAction : requestedAction
     if (action === 'try-now' || action === 'retry-accounts') {
-      this.$notificationState = { ...this.$notificationState, online: navigator.onLine !== false, accountErrors: [] }
+      this.notificationState = { ...this.notificationState, online: navigator.onLine !== false, accountErrors: [] }
       this.refreshNotifications()
       this.stopMailStream()
       this.startMailStream()
@@ -621,8 +640,8 @@ export default class {
         })
         if (!res.ok || !res.body) throw new Error(`stream ${res.status}`)
         failures = 0
-        if (this.$notificationState.accountErrors.length) {
-          this.$notificationState = { ...this.$notificationState, accountErrors: [] }
+        if (this.notificationState.accountErrors.length) {
+          this.notificationState = { ...this.notificationState, accountErrors: [] }
           this.refreshNotifications()
         }
         backoff = 1000 // healthy connection — reset backoff
@@ -631,7 +650,7 @@ export default class {
         if (ctrl.signal.aborted) return
         failures += 1
         if (failures >= 2) {
-          this.$notificationState = { ...this.$notificationState, accountErrors: [...this.$domains] }
+          this.notificationState = { ...this.notificationState, accountErrors: [...this.$domains] }
           this.refreshNotifications()
         }
       }
@@ -1267,7 +1286,7 @@ export default class {
   }
 
   externalFoldersForAccount(accountId) {
-    return visibleExternalFolderRows(this.$externalFolders?.[accountId] || [], this.$$externalFolderOpen)
+    return visibleExternalFolderRows(this.$externalFolders?.[accountId] || [], this.externalFolderOpen)
   }
 
   externalFolderActions(folder) {
@@ -1284,22 +1303,22 @@ export default class {
   }
 
   get externalFolderDialogTitle() {
-    if (this.$externalFolderDialogMode === 'rename') return 'Rename connected folder'
-    if (this.$externalFolderDialogMode === 'delete') return 'Delete connected folder'
+    if (this.externalFolderDialogMode === 'rename') return 'Rename connected folder'
+    if (this.externalFolderDialogMode === 'delete') return 'Delete connected folder'
     return this.externalFolderDialogFolder ? 'Create subfolder' : 'Create connected folder'
   }
 
   get externalFolderDialogAction() {
-    if (this.$externalFolderDialogBusy) return 'Working…'
-    if (this.$externalFolderDialogMode === 'rename') return 'Rename folder'
-    if (this.$externalFolderDialogMode === 'delete') return 'Delete folder'
+    if (this.externalFolderDialogBusy) return 'Working…'
+    if (this.externalFolderDialogMode === 'rename') return 'Rename folder'
+    if (this.externalFolderDialogMode === 'delete') return 'Delete folder'
     return 'Create folder'
   }
 
   get externalFolderDialogDescription() {
     const folder = this.externalFolderDialogFolder
-    if (this.$externalFolderDialogMode === 'delete') return `Delete “${folder?.displayName || folder?.name || 'this folder'}” from the connected mailbox? The provider may also delete messages it contains.`
-    if (this.$externalFolderDialogMode === 'rename') return `Choose a new name for “${folder?.displayName || folder?.name || 'this folder'}”.`
+    if (this.externalFolderDialogMode === 'delete') return `Delete “${folder?.displayName || folder?.name || 'this folder'}” from the connected mailbox? The provider may also delete messages it contains.`
+    if (this.externalFolderDialogMode === 'rename') return `Choose a new name for “${folder?.displayName || folder?.name || 'this folder'}”.`
     return folder ? `Create a folder inside “${folder.displayName || folder.name}”.` : 'Create a folder at the top level of this connected mailbox.'
   }
 
@@ -1325,10 +1344,10 @@ export default class {
     this._externalFolderDialogReturnFocus = event.currentTarget instanceof HTMLElement ? event.currentTarget : null
     this._externalFolderDialogAccountId = String(resolvedAccount.id || '')
     this._externalFolderDialogFolderId = String(folder?.stableId || '')
-    this.$externalFolderDialogMode = mode
-    this.$externalFolderDialogName = mode === 'rename' ? String(folder?.displayName || folder?.name || '') : ''
-    this.$externalFolderDialogError = ''
-    this.$externalFolderDialogOpen = true
+    this.externalFolderDialogMode = mode
+    this.externalFolderDialogName = mode === 'rename' ? String(folder?.displayName || folder?.name || '') : ''
+    this.externalFolderDialogError = ''
+    this.externalFolderDialogOpen = true
     void (/** @type {any} */ (globalThis)).__tc_rerender?.().then(() => {
       const target = document.querySelector(mode === 'delete' ? '[data-external-folder-submit]' : '[data-external-folder-name]')
       if (target instanceof HTMLElement) target.focus()
@@ -1336,8 +1355,8 @@ export default class {
   }
 
   closeExternalFolderDialog() {
-    if (!this.$externalFolderDialogOpen || this.$externalFolderDialogBusy) return
-    this.$externalFolderDialogOpen = false
+    if (!this.externalFolderDialogOpen || this.externalFolderDialogBusy) return
+    this.externalFolderDialogOpen = false
     const restore = this._externalFolderDialogReturnFocus
     this._externalFolderDialogReturnFocus = null
     this._externalFolderDialogAccountId = ''
@@ -1369,17 +1388,17 @@ export default class {
 
   async submitExternalFolderDialog(event) {
     event.preventDefault()
-    if (this.$externalFolderDialogBusy) return
+    if (this.externalFolderDialogBusy) return
     const account = this.externalFolderDialogAccount
     const folder = this.externalFolderDialogFolder
-    const mode = this.$externalFolderDialogMode
-    const name = this.$externalFolderDialogName
+    const mode = this.externalFolderDialogMode
+    const name = this.externalFolderDialogName
     if (!account || mode !== 'delete' && (!name.trim() || name !== name.trim() || name.length > 128 || /[\0\r\n]/.test(name))) {
-      this.$externalFolderDialogError = 'Enter a folder name of 128 characters or fewer without leading or trailing spaces.'
+      this.externalFolderDialogError = 'Enter a folder name of 128 characters or fewer without leading or trailing spaces.'
       return
     }
-    this.$externalFolderDialogBusy = true
-    this.$externalFolderDialogError = ''
+    this.externalFolderDialogBusy = true
+    this.externalFolderDialogError = ''
     try {
       const body = {
         revision: account.revision,
@@ -1395,28 +1414,28 @@ export default class {
       })
       const result = await response?.json().catch(() => null)
       if (!response?.ok || !result?.id) throw new Error(result?.error || `Could not ${mode} the connected folder.`)
-      this.$externalFolderDialogBusy = false
+      this.externalFolderDialogBusy = false
       this.closeExternalFolderDialog()
       this.toastAction(`Folder ${mode} queued. Provider folders are syncing.`, {
         label: 'Refresh folders', onClick: () => this.loadExternalMailboxes(),
       })
     } catch (error) {
-      this.$externalFolderDialogError = error instanceof Error ? error.message : `Could not ${mode} the connected folder.`
+      this.externalFolderDialogError = error instanceof Error ? error.message : `Could not ${mode} the connected folder.`
     } finally {
-      this.$externalFolderDialogBusy = false
+      this.externalFolderDialogBusy = false
     }
   }
 
   /** @param {Record<string, any>} folder */
   isExternalFolderOpen(folder) {
-    return this.$$externalFolderOpen[externalFolderOpenKey(folder.accountId, folder.stableId)] === true
+    return this.externalFolderOpen[externalFolderOpenKey(folder.accountId, folder.stableId)] === true
   }
 
   /** @param {Event} _event @param {Record<string, any>} folder */
   toggleExternalFolder(_event, folder) {
     if (!folder?.hasChildren) return
     const key = externalFolderOpenKey(folder.accountId, folder.stableId)
-    this.$$externalFolderOpen = { ...this.$$externalFolderOpen, [key]: !this.$$externalFolderOpen[key] }
+    this.externalFolderOpen = { ...this.externalFolderOpen, [key]: !this.externalFolderOpen[key] }
   }
 
   /** @param {Record<string, any>} folder */
@@ -1561,7 +1580,7 @@ export default class {
       // Fall back to the initial shell state during server rendering.
     }
 
-    return this.$$sidebarOpen?.[name] !== false
+    return this.sidebarOpen?.[name] !== false
   }
 
   /**
@@ -1581,8 +1600,8 @@ export default class {
    * @param {'inboxes' | 'sent'} name
    */
   toggleFavorite(_event, name) {
-    const expanded = this.$$favoritesOpen?.[name] !== false
-    this.$$favoritesOpen = { ...this.$$favoritesOpen, [name]: !expanded }
+    const expanded = this.favoritesOpen?.[name] !== false
+    this.favoritesOpen = { ...this.favoritesOpen, [name]: !expanded }
     const group = document.querySelector(`[data-favorite-group="${name}"]`)
     const trigger = document.querySelector(`[data-favorite-group-toggle="${name}"]`)
     group?.classList.toggle('collapsed', expanded)
@@ -1597,7 +1616,7 @@ export default class {
    * @returns {string}
    */
   favoriteGroupClass(name) {
-    return this.$$favoritesOpen?.[name] === false ? 'favorite-group collapsed' : 'favorite-group'
+    return this.favoritesOpen?.[name] === false ? 'favorite-group collapsed' : 'favorite-group'
   }
 
   /**
@@ -1608,28 +1627,28 @@ export default class {
     const parts = location.pathname.split('/')
     const segment = parts[1]
     // /folder/<name> → active folder is <name>
-    if (segment === 'folder') { this.$activeFolder = parts[2] || 'inbox' }
-    else if (segment === 'email' || location.pathname === '/') { this.$activeFolder = 'inbox' }
+    if (segment === 'folder') { this.activeFolder = parts[2] || 'inbox' }
+    else if (segment === 'email' || location.pathname === '/') { this.activeFolder = 'inbox' }
     // The inbox route also hosts the Snoozed folder via `/inbox?folder=snoozed`
     // (every other folder uses `/folder/<name>`), so read the query param here —
     // otherwise the sidebar would keep Inbox highlighted for Snoozed.
     else if (segment === 'inbox') {
-      this.$activeFolder = new URLSearchParams(location.search).get('folder') || 'inbox'
+      this.activeFolder = new URLSearchParams(location.search).get('folder') || 'inbox'
     }
     else {
       const FOLDERS = new Set(['inbox', 'settings', 'compose', 'scheduled', 'reminders', 'snoozed', 'contacts', 'calendar', 'team', 'activity'])
-      if (FOLDERS.has(segment)) this.$activeFolder = segment
+      if (FOLDERS.has(segment)) this.activeFolder = segment
     }
     // Track per-domain selection from `?domain=X` so the sidebar can
     // distinguish "All Inboxes" from "Inbox / caduceus.com" when both
     // share the same activeFolder value.
     try {
       const params = new URLSearchParams(location.search)
-      this.$selectedDomain = (params.get('domain') || '').toLowerCase()
-      this.$selectedAccount = params.get('account') || ''
+      this.selectedDomain = (params.get('domain') || '').toLowerCase()
+      this.selectedAccount = params.get('account') || ''
     } catch {
-      this.$selectedDomain = ''
-      this.$selectedAccount = ''
+      this.selectedDomain = ''
+      this.selectedAccount = ''
     }
   }
 
@@ -1692,7 +1711,7 @@ export default class {
     })
 
     document.addEventListener('keydown', (event) => {
-      if (!this.$shortcutHelpOpen) return
+      if (!this.shortcutHelpOpen) return
       if (event.key === 'Escape') {
         event.preventDefault()
         this.closeShortcutHelp()
@@ -1750,7 +1769,7 @@ export default class {
   get shortcutHelpGroups() { return window._caduceusKeyboard?.getGroups?.() || [] }
 
   openShortcutHelp() {
-    if (this.$shortcutHelpOpen) return
+    if (this.shortcutHelpOpen) return
     const active = document.activeElement instanceof HTMLElement ? document.activeElement : null
     this._shortcutHelpReturnFocus = active
     this._shortcutHelpReturnIdentity = active ? {
@@ -1761,7 +1780,7 @@ export default class {
       name: active.getAttribute('name') || '',
       type: active.getAttribute('type') || '',
     } : null
-    this.$shortcutHelpOpen = true
+    this.shortcutHelpOpen = true
     void (/** @type {any} */ (globalThis)).__tc_rerender?.().then(() => {
       const dialog = document.querySelector('[data-shortcut-help-dialog]')
       if (dialog instanceof HTMLElement) dialog.focus()
@@ -1769,8 +1788,8 @@ export default class {
   }
 
   closeShortcutHelp() {
-    if (!this.$shortcutHelpOpen) return
-    this.$shortcutHelpOpen = false
+    if (!this.shortcutHelpOpen) return
+    this.shortcutHelpOpen = false
     const restore = this._shortcutHelpReturnFocus
     const identity = this._shortcutHelpReturnIdentity
     this._shortcutHelpReturnFocus = null
@@ -1798,7 +1817,7 @@ export default class {
   }
 
   openShortcutSettings() {
-    this.$shortcutHelpOpen = false
+    this.shortcutHelpOpen = false
     this.navigate('/settings#keyboard-shortcuts')
   }
 
@@ -2082,10 +2101,10 @@ export default class {
    */
   toast(msg, duration = 2500) {
     if (this._toastTimer !== null) clearTimeout(this._toastTimer)
-    this.$toastMsg = msg
-    this.$toastActionLabel = ''
+    this.toastMsg = msg
+    this.toastActionLabel = ''
     this._toastAction = null
-    this.$toastVisible = true
+    this.toastVisible = true
     this._toastTimer = setTimeout(() => this.dismissToast(), duration)
   }
 
@@ -2098,10 +2117,10 @@ export default class {
    */
   toastAction(msg, action, duration = 10000) {
     if (this._toastTimer !== null) clearTimeout(this._toastTimer)
-    this.$toastMsg = msg
-    this.$toastActionLabel = action.label
+    this.toastMsg = msg
+    this.toastActionLabel = action.label
     this._toastAction = action.onClick
-    this.$toastVisible = true
+    this.toastVisible = true
     this._toastTimer = setTimeout(() => this.dismissToast(), duration)
   }
 
@@ -2109,8 +2128,8 @@ export default class {
   dismissToast() {
     if (this._toastTimer !== null) clearTimeout(this._toastTimer)
     this._toastTimer = null
-    this.$toastVisible = false
-    this.$toastActionLabel = ''
+    this.toastVisible = false
+    this.toastActionLabel = ''
     this._toastAction = null
   }
 

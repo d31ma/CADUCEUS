@@ -1,7 +1,3 @@
-/** @typedef {import('../../../types').StoredEmail} StoredEmail */
-/** @typedef {import('../../../types').DomainMigration} DomainMigration */
-/** @typedef {import('../repositories/domain-migrations.js').DomainMigrationsRepository} DomainMigrationsRepository */
-
 export class DomainMigrationService {
   /** @param {DomainMigrationsRepository} domainMigrations */
   constructor(domainMigrations) {

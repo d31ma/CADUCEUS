@@ -1,8 +1,3 @@
-/** @typedef {import('../../../types').StoredEmail} StoredEmail */
-/** @typedef {import('../repositories/push.js').PushSubscriptionsRepository} PushSubscriptionsRepository */
-/** @typedef {import('../../users/repositories/users.js').UsersRepository} UsersRepository */
-/** @typedef {import('../../mailbox/repositories/emails.js').EmailsRepository} EmailsRepository */
-
 import { unreadBadgeDomains } from '../../users/services/unread-badge-preferences.js'
 import {
   newMailNotificationsEnabledForDomain,

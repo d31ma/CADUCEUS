@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { Readable } from 'node:stream'
-import { InboundSmtpServer } from '@/features/delivery/services/smtp-inbound-server.js'
-import { SubmissionServer } from '@/features/delivery/services/smtp-submission-server.js'
+import { InboundSmtpServer } from '@/features/delivery/services/InboundSmtpServer.js'
+import { SubmissionServer } from '@/features/delivery/services/SubmissionServer.js'
 
 const RAW = ['From: bob@other.com', 'To: alice@example.com', 'Subject: Hi', '', 'body'].join('\r\n')
 

@@ -1,5 +1,6 @@
 import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'node:crypto'
 import { DomUtils, parseDocument } from 'htmlparser2'
+import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
 
 const TOKEN_VERSION = 1
 const TOKEN_LIFETIME_MS = 2 * 365 * 24 * 60 * 60 * 1000
@@ -158,15 +159,15 @@ export function listTrackableLinks(html) {
 
 /** @param {string | undefined} configured */
 export function resolveTrackingBaseUrl(configured) {
-  const candidate = configured || process.env.CADUCEUS_PUBLIC_URL || process.env.SESAME_ISSUER
-    || (process.env.NODE_ENV === 'production' ? '' : `http://127.0.0.1:${process.env.PORT || 8080}`)
+  const candidate = configured || ServerEnvironment.value('CADUCEUS_PUBLIC_URL') || ServerEnvironment.value('SESAME_ISSUER')
+    || (ServerEnvironment.value('NODE_ENV') === 'production' ? '' : `http://127.0.0.1:${ServerEnvironment.value('PORT') || 8080}`)
   let url
   try { url = new URL(String(candidate || '')) } catch { throw new TypeError('CADUCEUS_PUBLIC_URL must be an absolute HTTP(S) URL') }
   if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) {
     throw new TypeError('CADUCEUS_PUBLIC_URL must be a credential-free HTTP(S) origin')
   }
   const loopback = ['localhost', '127.0.0.1', '::1'].includes(url.hostname)
-  if (process.env.NODE_ENV === 'production' && url.protocol !== 'https:' && !loopback) {
+  if (ServerEnvironment.value('NODE_ENV') === 'production' && url.protocol !== 'https:' && !loopback) {
     throw new TypeError('CADUCEUS_PUBLIC_URL must use HTTPS in production')
   }
   return url.origin
@@ -174,7 +175,7 @@ export function resolveTrackingBaseUrl(configured) {
 
 /** @param {string | undefined} explicit */
 function encryptionKey(explicit) {
-  const secret = explicit || process.env.TRACKING_SECRET || process.env.INBOUND_WEBHOOK_SECRET
+  const secret = explicit || ServerEnvironment.value('TRACKING_SECRET') || ServerEnvironment.value('INBOUND_WEBHOOK_SECRET')
   if (!secret || secret.length < 16) throw new TypeError('TRACKING_SECRET or INBOUND_WEBHOOK_SECRET must contain at least 16 characters')
   return createHmac('sha256', secret).update('caduceus-tracking-aead-v1').digest()
 }

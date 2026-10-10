@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { createHmac } from 'node:crypto'
 import { setupRoutes, teardownRoutes } from './helpers.js'
-import { Handler as ProviderNotificationTick } from '@/routes/notifications/provider/tick/yon.js'
+import { NotificationsProviderTickController as ProviderNotificationTick } from '@/controllers/NotificationsProviderTickController.js'
 import { ExternalAccounts } from '@/platform/accounts/ExternalAccounts.js'
+import { call } from '../support/controller-call.mjs'
 
 let app
 const originals = {
@@ -25,7 +26,7 @@ function signedRequest() {
 
 describe('durable provider new-mail notification tick', () => {
   it('requires the internal HMAC and settles delivered provider alerts', async () => {
-    expect((await ProviderNotificationTick.POST({ body: {}, headers: {} })).unauthorized).toBe(true)
+    expect((await call(ProviderNotificationTick, 'POST', { body: {}, headers: {} })).unauthorized).toBe(true)
     const completed = []
     ExternalAccounts.claimNotifications = async () => ({
       token: 'claim-token',
@@ -42,7 +43,7 @@ describe('durable provider new-mail notification tick', () => {
     ExternalAccounts.completeNotifications = async (...args) => { completed.push(args); return { completed: true } }
     app.push.notifyProviderNewEmail = async notification => notification.subject === 'Provider alert'
 
-    expect(await ProviderNotificationTick.POST(signedRequest())).toEqual({ claimed: 1, delivered: 1, retried: 0 })
+    expect(await call(ProviderNotificationTick, 'POST', signedRequest())).toEqual({ claimed: 1, delivered: 1, retried: 0 })
     expect(completed).toEqual([['claim-token', ['pnot_abcdefghijklmnopqrstuvwx'], true]])
   })
 
@@ -54,7 +55,7 @@ describe('durable provider new-mail notification tick', () => {
     })
     ExternalAccounts.completeNotifications = async (...args) => { completed.push(args); return { completed: true } }
     app.push.notifyProviderNewEmail = async () => false
-    expect(await ProviderNotificationTick.POST(signedRequest())).toEqual({ claimed: 1, delivered: 0, retried: 1 })
+    expect(await call(ProviderNotificationTick, 'POST', signedRequest())).toEqual({ claimed: 1, delivered: 0, retried: 1 })
     expect(completed).toEqual([['retry-token', ['pnot_abcdefghijklmnopqrstuvwx'], false, 'push_delivery_failed']])
   })
 })

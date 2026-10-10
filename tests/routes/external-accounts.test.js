@@ -1,39 +1,40 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { createServer } from 'node:net'
 import { setupRoutes, teardownRoutes, token, req, routeDiagnostics, email } from './helpers.js'
-import { Handler as ProviderCatalog } from '@/routes/api/v1/provider-catalog/yon.js'
-import { Handler as ProviderDiscovery } from '@/routes/api/v1/provider-discovery/yon.js'
-import { Handler as ExternalAccounts } from '@/routes/api/v1/external-accounts/yon.js'
-import { Handler as ExternalAccount } from '@/routes/api/v1/external-accounts/_id/yon.js'
-import { Handler as ValidateExternalAccount } from '@/routes/api/v1/external-accounts/validate/yon.js'
-import { Handler as BeginMicrosoftOAuth } from '@/routes/api/v1/external-accounts/oauth/microsoft/begin/yon.js'
-import { Handler as CompleteMicrosoftOAuth } from '@/routes/api/v1/external-accounts/oauth/microsoft/complete/yon.js'
-import { Handler as BeginGoogleOAuth } from '@/routes/api/v1/external-accounts/oauth/google/begin/yon.js'
-import { Handler as CompleteGoogleOAuth } from '@/routes/api/v1/external-accounts/oauth/google/complete/yon.js'
-import { Handler as ReconnectExternalAccount } from '@/routes/api/v1/external-accounts/_id/reconnect/yon.js'
-import { Handler as RetryExternalAccount } from '@/routes/api/v1/external-accounts/_id/retry/yon.js'
-import { Handler as ExternalAccountDiagnostics } from '@/routes/api/v1/external-accounts/_id/diagnostics/yon.js'
-import { Handler as ExternalAccountFolders } from '@/routes/api/v1/external-accounts/_id/folders/yon.js'
-import { Handler as ExternalAccountMessages } from '@/routes/api/v1/external-accounts/_id/messages/yon.js'
-import { Handler as ExternalAccountMutations } from '@/routes/api/v1/external-accounts/_id/mutations/yon.js'
-import { Handler as ExternalAccountMutation } from '@/routes/api/v1/external-accounts/_id/mutations/_mutation_id/yon.js'
-import { Handler as Inbox } from '@/routes/inbox/yon.js'
-import { Handler as MessageDetail } from '@/routes/inbox/_id/yon.js'
-import { Handler as MessageAttachment } from '@/routes/inbox/_id/attachments/_attachment_id/yon.js'
-import { Handler as MessageSource } from '@/routes/inbox/_id/source/yon.js'
-import { Handler as MailActions } from '@/routes/inbox/actions/yon.js'
-import { Handler as UndoMailAction } from '@/routes/inbox/actions/_id/undo/yon.js'
-import { Handler as RedoMailAction } from '@/routes/inbox/actions/_id/redo/yon.js'
-import { Handler as UserPreferences } from '@/routes/users/me/preferences/yon.js'
-import { Handler as ExportSources } from '@/routes/inbox/export/rfc822/yon.js'
-import { Handler as Threads } from '@/routes/threads/yon.js'
-import { Handler as Search } from '@/routes/search/yon.js'
-import { Handler as Send } from '@/routes/send/yon.js'
-import { Handler as UndoSend } from '@/routes/send/undo/yon.js'
-import { Handler as ScheduledSend } from '@/routes/send/scheduled/yon.js'
-import { Handler as ScheduledItem } from '@/routes/send/scheduled/_id/yon.js'
+import { ApiV1ProviderCatalogController as ProviderCatalog } from '@/controllers/ApiV1ProviderCatalogController.js'
+import { ApiV1ProviderDiscoveryController as ProviderDiscovery } from '@/controllers/ApiV1ProviderDiscoveryController.js'
+import { ApiV1ExternalAccountsController as ExternalAccounts } from '@/controllers/ApiV1ExternalAccountsController.js'
+import { ApiV1ExternalAccountsIdController as ExternalAccount } from '@/controllers/ApiV1ExternalAccountsIdController.js'
+import { ApiV1ExternalAccountsValidateController as ValidateExternalAccount } from '@/controllers/ApiV1ExternalAccountsValidateController.js'
+import { ApiV1ExternalAccountsOauthMicrosoftBeginController as BeginMicrosoftOAuth } from '@/controllers/ApiV1ExternalAccountsOauthMicrosoftBeginController.js'
+import { ApiV1ExternalAccountsOauthMicrosoftCompleteController as CompleteMicrosoftOAuth } from '@/controllers/ApiV1ExternalAccountsOauthMicrosoftCompleteController.js'
+import { ApiV1ExternalAccountsOauthGoogleBeginController as BeginGoogleOAuth } from '@/controllers/ApiV1ExternalAccountsOauthGoogleBeginController.js'
+import { ApiV1ExternalAccountsOauthGoogleCompleteController as CompleteGoogleOAuth } from '@/controllers/ApiV1ExternalAccountsOauthGoogleCompleteController.js'
+import { ApiV1ExternalAccountsIdReconnectController as ReconnectExternalAccount } from '@/controllers/ApiV1ExternalAccountsIdReconnectController.js'
+import { ApiV1ExternalAccountsIdRetryController as RetryExternalAccount } from '@/controllers/ApiV1ExternalAccountsIdRetryController.js'
+import { ApiV1ExternalAccountsIdDiagnosticsController as ExternalAccountDiagnostics } from '@/controllers/ApiV1ExternalAccountsIdDiagnosticsController.js'
+import { ApiV1ExternalAccountsIdFoldersController as ExternalAccountFolders } from '@/controllers/ApiV1ExternalAccountsIdFoldersController.js'
+import { ApiV1ExternalAccountsIdMessagesController as ExternalAccountMessages } from '@/controllers/ApiV1ExternalAccountsIdMessagesController.js'
+import { ApiV1ExternalAccountsIdMutationsController as ExternalAccountMutations } from '@/controllers/ApiV1ExternalAccountsIdMutationsController.js'
+import { ApiV1ExternalAccountsIdMutationsMutationIdController as ExternalAccountMutation } from '@/controllers/ApiV1ExternalAccountsIdMutationsMutationIdController.js'
+import { InboxController as Inbox } from '@/controllers/InboxController.js'
+import { InboxIdController as MessageDetail } from '@/controllers/InboxIdController.js'
+import { InboxIdAttachmentsAttachmentIdController as MessageAttachment } from '@/controllers/InboxIdAttachmentsAttachmentIdController.js'
+import { InboxIdSourceController as MessageSource } from '@/controllers/InboxIdSourceController.js'
+import { InboxActionsController as MailActions } from '@/controllers/InboxActionsController.js'
+import { InboxActionsIdUndoController as UndoMailAction } from '@/controllers/InboxActionsIdUndoController.js'
+import { InboxActionsIdRedoController as RedoMailAction } from '@/controllers/InboxActionsIdRedoController.js'
+import { UsersMePreferencesController as UserPreferences } from '@/controllers/UsersMePreferencesController.js'
+import { InboxExportRfc822Controller as ExportSources } from '@/controllers/InboxExportRfc822Controller.js'
+import { ThreadsController as Threads } from '@/controllers/ThreadsController.js'
+import { SearchController as Search } from '@/controllers/SearchController.js'
+import { SendController as Send } from '@/controllers/SendController.js'
+import { SendUndoController as UndoSend } from '@/controllers/SendUndoController.js'
+import { SendScheduledController as ScheduledSend } from '@/controllers/SendScheduledController.js'
+import { SendScheduledIdController as ScheduledItem } from '@/controllers/SendScheduledIdController.js'
 import { ExternalAccounts as ExternalAccountBridge } from '@/platform/accounts/ExternalAccounts.js'
 import { writeMboxFromFrameStream } from '../../client/shared/scripts/mbox.js'
+import { call } from '../support/controller-call.mjs'
 
 const alice = () => token()
 const bob = () => token({ email: 'bob@example.com' })
@@ -46,25 +47,25 @@ describe('Go-owned external account boundary', () => {
   let imapState
 
   it('requires SESAME authentication for provider catalog and discovery', async () => {
-    expect((await ProviderCatalog.GET(req())).unauthorized).toBe(true)
-    const catalog = await ProviderCatalog.GET(req({ token: alice() }))
+    expect((await call(ProviderCatalog, 'GET', req())).unauthorized).toBe(true)
+    const catalog = await call(ProviderCatalog, 'GET', req({ token: alice() }))
     expect(catalog.providers).toHaveLength(10)
     expect(catalog.providers.map(provider => provider.id)).toContain('imap')
     expect(catalog.providers.find(provider => provider.id === 'office365')).toMatchObject({ authentication: 'oauth', configured: false })
     expect(catalog.providers.find(provider => provider.id === 'gmail')).toMatchObject({ authentication: 'oauth', configured: false })
-    expect((await ExternalAccounts.GET(req({ token: alice() }))).accounts).toEqual([])
+    expect((await call(ExternalAccounts, 'GET', req({ token: alice() }))).accounts).toEqual([])
 
-    expect((await ProviderDiscovery.POST(req({ token: alice(), body: {} }))).error).toMatch(/address/)
-    expect((await BeginMicrosoftOAuth.POST(req({ body: {} }))).unauthorized).toBe(true)
-    expect((await BeginMicrosoftOAuth.POST(req({ token: alice(), body: {
+    expect((await call(ProviderDiscovery, 'POST', req({ token: alice(), body: {} }))).error).toMatch(/address/)
+    expect((await call(BeginMicrosoftOAuth, 'POST', req({ body: {} }))).unauthorized).toBe(true)
+    expect((await call(BeginMicrosoftOAuth, 'POST', req({ token: alice(), body: {
       provider: 'microsoft', mailboxAddress: 'support@example.com', authIdentity: 'delegate@example.com',
       sharedMailboxAddress: 'support@example.com', label: 'Support', color: '#336699', order: 0,
     } }))).unavailable).toBe(true)
-    expect((await CompleteMicrosoftOAuth.POST(req({ token: alice(), body: { state: 'state', code: 'code' } }))).unavailable).toBe(true)
-    expect((await BeginGoogleOAuth.POST(req({ token: alice(), body: {
+    expect((await call(CompleteMicrosoftOAuth, 'POST', req({ token: alice(), body: { state: 'state', code: 'code' } }))).unavailable).toBe(true)
+    expect((await call(BeginGoogleOAuth, 'POST', req({ token: alice(), body: {
       provider: 'gmail', mailboxAddress: 'alice@gmail.com', authIdentity: 'alice@gmail.com', label: 'Gmail', color: '#EA4335', order: 0,
     } }))).unavailable).toBe(true)
-    expect((await CompleteGoogleOAuth.POST(req({ token: alice(), body: { state: 'state', code: 'code' } }))).unavailable).toBe(true)
+    expect((await call(CompleteGoogleOAuth, 'POST', req({ token: alice(), body: { state: 'state', code: 'code' } }))).unavailable).toBe(true)
   })
 
   it('validates real IMAP and SMTP exchanges before persisting a redacted account', async () => {
@@ -88,33 +89,33 @@ describe('Go-owned external account boundary', () => {
         credentials: { username: 'alice@remote.example', password: 'fixture-password' },
         imap: endpoint(imap.port), smtp: endpoint(smtp.port),
       }
-      const validation = await ValidateExternalAccount.POST(req({ token: alice(), body: input }))
+      const validation = await call(ValidateExternalAccount, 'POST', req({ token: alice(), body: input }))
       expect(validation.capabilities).toMatchObject({ mailRead: true, send: true })
-      expect((await ExternalAccounts.GET(req({ token: alice() }))).accounts).toEqual([])
-      account = await ExternalAccounts.POST(req({ token: alice(), body: input }))
+      expect((await call(ExternalAccounts, 'GET', req({ token: alice() }))).accounts).toEqual([])
+      account = await call(ExternalAccounts, 'POST', req({ token: alice(), body: input }))
       if (account.error) throw new Error(`${account.error}\n${routeDiagnostics()}`)
       const routeApp = await (await import('@/app.js')).getApp()
       await routeApp.users.put({ email: 'alice@example.com', aliases: [], domains: ['example.com'], role: 'admin' })
-      expect(await UserPreferences.PUT(req({
+      expect(await call(UserPreferences, 'PUT', req({
         token: alice(), body: { newMailNotificationExternalAccounts: [account.id] },
       }))).toMatchObject({ newMailNotificationExternalAccounts: [account.id] })
-      expect((await UserPreferences.PUT(req({
+      expect((await call(UserPreferences, 'PUT', req({
         token: alice(), body: { newMailNotificationExternalAccounts: ['ext_BBBBBBBBBBBBBBBBBBBB'] },
       }))).forbidden).toBe(true)
       let diagnostics
       const deadline = Date.now() + 15_000
       while (Date.now() < deadline) {
-        diagnostics = await ExternalAccountDiagnostics.GET(req({ token: alice(), paths: { id: account.id } }))
+        diagnostics = await call(ExternalAccountDiagnostics, 'GET', req({ token: alice(), paths: { id: account.id } }))
 		if (diagnostics.state === 'idle' && diagnostics.sync?.cursorVersion >= 3) break
         await Bun.sleep(200)
       }
 		expect(diagnostics).toMatchObject({ state: 'idle', sync: { accountId: account.id } })
 		expect(diagnostics.sync.cursorVersion).toBeGreaterThanOrEqual(3)
       expect((await ExternalAccountBridge.claimNotifications('route-test', 10)).notifications).toEqual([])
-      account = await ExternalAccount.GET(req({ token: alice(), paths: { id: account.id } }))
-      const folders = await ExternalAccountFolders.GET(req({ token: alice(), paths: { id: account.id } }))
+      account = await call(ExternalAccount, 'GET', req({ token: alice(), paths: { id: account.id } }))
+      const folders = await call(ExternalAccountFolders, 'GET', req({ token: alice(), paths: { id: account.id } }))
       expect(folders.folders).toContainEqual(expect.objectContaining({ stableId: 'INBOX', role: 'inbox' }))
-      const messages = await ExternalAccountMessages.GET(req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
+      const messages = await call(ExternalAccountMessages, 'GET', req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
       expect(messages.messages).toContainEqual(expect.objectContaining({
         stableId: 'INBOX:77:9', subject: 'Synced fixture',
       }))
@@ -122,67 +123,67 @@ describe('Go-owned external account boundary', () => {
       expect(Buffer.byteLength(messages.messages[0].snippet)).toBeLessThanOrEqual(4096)
       expect(messages.messages.every(message =>
         !('body' in message) && !('rawRFC822Base64' in message))).toBe(true)
-      expect((await ExternalAccountMessages.GET(req({ token: bob(), paths: { id: account.id }, query: {} }))).notFound).toBe(true)
+      expect((await call(ExternalAccountMessages, 'GET', req({ token: bob(), paths: { id: account.id }, query: {} }))).notFound).toBe(true)
 
-      const unified = await Inbox.GET(req({ token: alice(), query: { folder: 'inbox' } }))
+      const unified = await call(Inbox, 'GET', req({ token: alice(), query: { folder: 'inbox' } }))
       if (!Array.isArray(unified)) throw new Error(`unified inbox failed: ${JSON.stringify(unified)}\n${routeDiagnostics()}`)
       const providerMessage = unified.find(message => message.providerAccountId === account.id)
       expect(providerMessage).toMatchObject({ external: true, mailboxLabel: 'Remote work', hasAttachments: true })
       expect(providerMessage.snippet.startsWith('provider body')).toBe(true)
 
-      const accountInbox = await Inbox.GET(req({ token: alice(), query: { folder: 'inbox', account: account.id } }))
+      const accountInbox = await call(Inbox, 'GET', req({ token: alice(), query: { folder: 'inbox', account: account.id } }))
       expect(accountInbox).toHaveLength(1)
       expect(accountInbox.every(message => message.providerAccountId === account.id)).toBe(true)
-      expect((await Inbox.GET(req({ token: bob(), query: { account: account.id } }))).notFound).toBe(true)
-      expect((await Inbox.GET(req({ token: alice(), query: { account: account.id, domain: 'example.com' } }))).error).toMatch(/one mailbox/i)
+      expect((await call(Inbox, 'GET', req({ token: bob(), query: { account: account.id } }))).notFound).toBe(true)
+      expect((await call(Inbox, 'GET', req({ token: alice(), query: { account: account.id, domain: 'example.com' } }))).error).toMatch(/one mailbox/i)
 
-      const accountSearch = await Search.GET(req({ token: alice(), query: { q: 'provider body', account: account.id } }))
+      const accountSearch = await call(Search, 'GET', req({ token: alice(), query: { q: 'provider body', account: account.id } }))
       expect(accountSearch.map(message => message.id)).toEqual([providerMessage.id])
 
-      const detail = await MessageDetail.GET(req({ token: alice(), paths: { id: providerMessage.id } }))
+      const detail = await call(MessageDetail, 'GET', req({ token: alice(), paths: { id: providerMessage.id } }))
       expect(detail).toMatchObject({ external: true, subject: 'Synced fixture', hasRawSource: true })
       expect(detail.body.startsWith('provider body')).toBe(true)
       expect(Buffer.byteLength(detail.body)).toBeGreaterThan(1 << 20)
       expect(detail.attachments).toContainEqual(expect.objectContaining({ id: 'extatt.0', filename: 'note.txt' }))
-      expect((await MessageDetail.GET(req({ token: bob(), paths: { id: providerMessage.id } }))).notFound).toBe(true)
+      expect((await call(MessageDetail, 'GET', req({ token: bob(), paths: { id: providerMessage.id } }))).notFound).toBe(true)
 
-      const attachment = await MessageAttachment.GET(req({
+      const attachment = await call(MessageAttachment, 'GET', req({
         token: alice(), paths: { id: providerMessage.id, attachment_id: 'extatt.0' },
       }))
       expect(attachment).toMatchObject({ filename: 'note.txt', contentType: 'text/plain' })
       expect(Buffer.from(attachment.contentBase64, 'base64').toString()).toBe('attachment bytes')
-      expect((await MessageAttachment.GET(req({
+      expect((await call(MessageAttachment, 'GET', req({
         token: bob(), paths: { id: providerMessage.id, attachment_id: 'extatt.0' },
       }))).notFound).toBe(true)
 
-      const source = await MessageSource.GET(req({ token: alice(), paths: { id: providerMessage.id } }))
+      const source = await call(MessageSource, 'GET', req({ token: alice(), paths: { id: providerMessage.id } }))
       expect(source).toMatchObject({ contentType: 'message/rfc822', sha256: expect.stringMatching(/^[a-f0-9]{64}$/) })
       expect(Buffer.from(source.contentBase64, 'base64').toString()).toContain('Message-ID: <provider-fixture@example.net>')
-      expect((await MessageSource.GET(req({ token: bob(), paths: { id: providerMessage.id } }))).notFound).toBe(true)
+      expect((await call(MessageSource, 'GET', req({ token: bob(), paths: { id: providerMessage.id } }))).notFound).toBe(true)
 
-      const exportResponse = await ExportSources.GET(req({ token: alice(), query: { account: account.id, folder: 'inbox' } }))
+      const exportResponse = await call(ExportSources, 'GET', req({ token: alice(), query: { account: account.id, folder: 'inbox' } }))
       expect(exportResponse).toBeInstanceOf(Response)
       const exported = []
       const exportResult = await writeMboxFromFrameStream(exportResponse.body, chunk => exported.push(chunk))
       expect(exportResult.messages).toBe(1)
       expect(Buffer.concat(exported.map(chunk => Buffer.from(chunk))).toString()).toContain('Subject: Synced fixture')
-      expect((await ExportSources.GET(req({ token: bob(), query: { account: account.id, folder: 'inbox' } }))).error).toBeTruthy()
+      expect((await call(ExportSources, 'GET', req({ token: bob(), query: { account: account.id, folder: 'inbox' } }))).error).toBeTruthy()
 
-      const conversations = await Threads.GET(req({ token: alice(), query: { emailId: providerMessage.id } }))
+      const conversations = await call(Threads, 'GET', req({ token: alice(), query: { emailId: providerMessage.id } }))
       expect(conversations).toHaveLength(1)
       expect(conversations[0].emails).toContainEqual(expect.objectContaining({
         id: providerMessage.id,
         attachments: [expect.objectContaining({ id: 'extatt.0', filename: 'note.txt' })],
       }))
       expect(conversations[0].emails[0].body.startsWith('provider body')).toBe(true)
-      expect(await Threads.GET(req({ token: bob(), query: { emailId: providerMessage.id } }))).toEqual([])
-      const accountThreads = await Threads.GET(req({ token: alice(), query: { folder: 'inbox', account: account.id } }))
+      expect(await call(Threads, 'GET', req({ token: bob(), query: { emailId: providerMessage.id } }))).toEqual([])
+      const accountThreads = await call(Threads, 'GET', req({ token: alice(), query: { folder: 'inbox', account: account.id } }))
       expect(accountThreads).toHaveLength(1)
       expect(accountThreads[0].emails.every(message => message.providerAccountId === account.id)).toBe(true)
 
       const hostedPeer = email({ id: 'mixed-provider-hosted', ownerEmail: 'alice@example.com', read: true })
       await routeApp.emails.put(hostedPeer)
-      const providerAction = await MailActions.POST(req({
+      const providerAction = await call(MailActions, 'POST', req({
         token: alice(), body: {
           ids: [hostedPeer.id, providerMessage.id], patch: { read: false },
           clientRequestId: '88888888-8888-4888-8888-888888888888',
@@ -200,12 +201,12 @@ describe('Go-owned external account boundary', () => {
       let projected
       const mutationDeadline = Date.now() + 30_000
       while (Date.now() < mutationDeadline) {
-        projected = await ExternalAccountMessages.GET(req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
+        projected = await call(ExternalAccountMessages, 'GET', req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
         if (projected.messages?.[0] && !projected.messages[0].flags.includes('\\Seen')) break
         await Bun.sleep(200)
       }
       expect(projected.messages[0].flags).not.toContain('\\Seen')
-      const providerUndo = await UndoMailAction.POST(req({
+      const providerUndo = await call(UndoMailAction, 'POST', req({
         token: alice(), paths: { id: providerActionId },
       }))
       expect(providerUndo).toMatchObject({
@@ -218,13 +219,13 @@ describe('Go-owned external account boundary', () => {
       expect((await routeApp.emails.findById(hostedPeer.id))[1].read).toBe(true)
       const undoDeadline = Date.now() + 30_000
       while (Date.now() < undoDeadline) {
-        projected = await ExternalAccountMessages.GET(req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
+        projected = await call(ExternalAccountMessages, 'GET', req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
         if (projected.messages?.[0]?.flags.includes('\\Seen')) break
         await Bun.sleep(200)
       }
       expect(projected.messages[0].flags).toContain('\\Seen')
 
-      const providerRedo = await RedoMailAction.POST(req({
+      const providerRedo = await call(RedoMailAction, 'POST', req({
         token: alice(), paths: { id: providerActionId },
       }))
       expect(providerRedo).toMatchObject({
@@ -237,7 +238,7 @@ describe('Go-owned external account boundary', () => {
       expect((await routeApp.emails.findById(hostedPeer.id))[1].read).toBe(false)
       const redoDeadline = Date.now() + 30_000
       while (Date.now() < redoDeadline) {
-        projected = await ExternalAccountMessages.GET(req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
+        projected = await call(ExternalAccountMessages, 'GET', req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
         if (projected.messages?.[0] && !projected.messages[0].flags.includes('\\Seen')) break
         await Bun.sleep(200)
       }
@@ -248,25 +249,25 @@ describe('Go-owned external account boundary', () => {
 		let queued
       let mutationInput
       for (let attempt = 0; attempt < 5; attempt++) {
-        account = await ExternalAccount.GET(req({ token: alice(), paths: { id: account.id } }))
+        account = await call(ExternalAccount, 'GET', req({ token: alice(), paths: { id: account.id } }))
         mutationInput = { revision: account.revision, idempotencyKey: 'route-action-1', kind: 'set_read', messageStableIds: [currentProviderStableId], value: true }
-        queued = await ExternalAccountMutations.POST(req({ token: alice(), paths: { id: account.id }, body: mutationInput }))
+        queued = await call(ExternalAccountMutations, 'POST', req({ token: alice(), paths: { id: account.id }, body: mutationInput }))
         if (!queued.conflict) break
         await Bun.sleep(100)
       }
       if (queued.conflict) throw new Error(`could not obtain a stable account revision\n${routeDiagnostics()}`)
-      const duplicate = await ExternalAccountMutations.POST(req({ token: alice(), paths: { id: account.id }, body: mutationInput }))
+      const duplicate = await call(ExternalAccountMutations, 'POST', req({ token: alice(), paths: { id: account.id }, body: mutationInput }))
       expect(queued).toMatchObject({ state: 'queued', kind: 'set_read', messageStableIds: [currentProviderStableId] })
       expect(duplicate.id).toBe(queued.id)
-	  expect(await ExternalAccountMutation.GET(req({
+	  expect(await call(ExternalAccountMutation, 'GET', req({
 		token: alice(), paths: { id: account.id, mutation_id: queued.id },
 	  }))).toMatchObject({ id: queued.id, kind: 'set_read' })
-	  expect((await ExternalAccountMutation.GET(req({
+	  expect((await call(ExternalAccountMutation, 'GET', req({
 		token: bob(), paths: { id: account.id, mutation_id: queued.id },
 	  }))).notFound).toBe(true)
 		const restoreDeadline = Date.now() + 45_000
 		while (Date.now() < restoreDeadline) {
-			projected = await ExternalAccountMessages.GET(req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
+			projected = await call(ExternalAccountMessages, 'GET', req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
 			if (projected.messages?.[0]?.flags.includes('\\Seen')) break
 			await Bun.sleep(200)
 		}
@@ -277,8 +278,8 @@ describe('Go-owned external account boundary', () => {
 		imapState.fresh = true
 		let notificationRetry
 		for (let attempt = 0; attempt < 5; attempt++) {
-			account = await ExternalAccount.GET(req({ token: alice(), paths: { id: account.id } }))
-			notificationRetry = await RetryExternalAccount.POST(req({ token: alice(), paths: { id: account.id }, body: { revision: account.revision } }))
+			account = await call(ExternalAccount, 'GET', req({ token: alice(), paths: { id: account.id } }))
+			notificationRetry = await call(RetryExternalAccount, 'POST', req({ token: alice(), paths: { id: account.id }, body: { revision: account.revision } }))
 			if (notificationRetry.scheduled) break
 			await Bun.sleep(100)
 		}
@@ -300,8 +301,8 @@ describe('Go-owned external account boundary', () => {
 		imapState.present = false
 		let retry
 		for (let attempt = 0; attempt < 5; attempt++) {
-			account = await ExternalAccount.GET(req({ token: alice(), paths: { id: account.id } }))
-			retry = await RetryExternalAccount.POST(req({ token: alice(), paths: { id: account.id }, body: { revision: account.revision } }))
+			account = await call(ExternalAccount, 'GET', req({ token: alice(), paths: { id: account.id } }))
+			retry = await call(RetryExternalAccount, 'POST', req({ token: alice(), paths: { id: account.id }, body: { revision: account.revision } }))
 			if (retry.scheduled) break
 			await Bun.sleep(100)
 		}
@@ -309,12 +310,12 @@ describe('Go-owned external account boundary', () => {
 		let afterExpunge
 		const expungeDeadline = Date.now() + 15_000
 		while (Date.now() < expungeDeadline) {
-			afterExpunge = await ExternalAccountMessages.GET(req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
+			afterExpunge = await call(ExternalAccountMessages, 'GET', req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))
 			if (afterExpunge.messages?.length === 0) break
 			await Bun.sleep(200)
 		}
 		expect(afterExpunge.messages).toEqual([])
-		account = await ExternalAccount.GET(req({ token: alice(), paths: { id: account.id } }))
+		account = await call(ExternalAccount, 'GET', req({ token: alice(), paths: { id: account.id } }))
     } finally {
       await Promise.all([imap.close(), smtp.close()])
     }
@@ -323,13 +324,13 @@ describe('Go-owned external account boundary', () => {
     expect(['idle', 'syncing']).toContain(account.state)
     expect(account.capabilities).toMatchObject({ mailRead: true, mailWrite: true, send: true })
     expect(JSON.stringify(account)).not.toContain('fixture-password')
-    expect((await ExternalAccounts.GET(req({ token: alice() }))).accounts).toHaveLength(1)
-    expect((await ExternalAccounts.GET(req({ token: bob() }))).accounts).toEqual([])
-    expect((await ExternalAccount.GET(req({ token: bob(), paths: { id: account.id } }))).notFound).toBe(true)
-    const diagnostics = await ExternalAccountDiagnostics.GET(req({ token: alice(), paths: { id: account.id } }))
+    expect((await call(ExternalAccounts, 'GET', req({ token: alice() }))).accounts).toHaveLength(1)
+    expect((await call(ExternalAccounts, 'GET', req({ token: bob() }))).accounts).toEqual([])
+    expect((await call(ExternalAccount, 'GET', req({ token: bob(), paths: { id: account.id } }))).notFound).toBe(true)
+    const diagnostics = await call(ExternalAccountDiagnostics, 'GET', req({ token: alice(), paths: { id: account.id } }))
 	expect(diagnostics).toMatchObject({ state: 'idle', sync: { accountId: account.id, attempts: 0 } })
 	expect(diagnostics.sync.cursorVersion).toBeGreaterThanOrEqual(3)
-    expect((await ExternalAccountDiagnostics.GET(req({ token: bob(), paths: { id: account.id } }))).notFound).toBe(true)
+    expect((await call(ExternalAccountDiagnostics, 'GET', req({ token: bob(), paths: { id: account.id } }))).notFound).toBe(true)
   }, 90_000)
 
   it('journals connected-account SMTP delivery, undo, and scheduled cancellation', async () => {
@@ -342,18 +343,18 @@ describe('Go-owned external account boundary', () => {
 	  imapState.folder = 'INBOX'
 	  imapState.uid = 60
 	  imapState.inboxNext = 61
-	  account = await ExternalAccount.GET(req({ token: alice(), paths: { id: account.id } }))
-	  await RetryExternalAccount.POST(req({ token: alice(), paths: { id: account.id }, body: { revision: account.revision } }))
+	  account = await call(ExternalAccount, 'GET', req({ token: alice(), paths: { id: account.id } }))
+	  await call(RetryExternalAccount, 'POST', req({ token: alice(), paths: { id: account.id }, body: { revision: account.revision } }))
 	  let archiveSource
 	  const sourceDeadline = Date.now() + 15_000
 	  while (Date.now() < sourceDeadline) {
-		const inbox = await Inbox.GET(req({ token: alice(), query: { folder: 'inbox', account: account.id } }))
+		const inbox = await call(Inbox, 'GET', req({ token: alice(), query: { folder: 'inbox', account: account.id } }))
 		archiveSource = inbox.find(message => message.providerAccountId === account.id)
 		if (archiveSource) break
 		await Bun.sleep(200)
 	  }
 	  expect(archiveSource).toMatchObject({ external: true, folder: 'inbox' })
-	  const sendAndArchive = await Send.POST(req({ token: alice(), body: {
+	  const sendAndArchive = await call(Send, 'POST', req({ token: alice(), body: {
 		from: account.mailboxAddress, to: ['recipient@example.net'], subject: 'Undo external archive', text: 'cancel me',
 		delayMs: 60_000, archive: true, archiveSourceId: archiveSource.id, idempotencyKey: 'external-route-send-archive-1',
 	  }}))
@@ -362,9 +363,9 @@ describe('Go-owned external account boundary', () => {
 	  expect(sendAndArchive).toMatchObject({ sent: true, queued: true, archived: true, archivedCount: 1, undoId: expect.stringMatching(/^extundo\./) })
 	  const sendArchiveUndoRequest = req({ token: alice(), body: { undoId: sendArchiveUndoId } })
 	  expect(sendArchiveUndoRequest.body).toEqual({ undoId: sendArchiveUndoId })
-	  expect(await UndoSend.POST(sendArchiveUndoRequest)).toMatchObject({ undone: true, archiveRestored: 1 })
+	  expect(await call(UndoSend, 'POST', sendArchiveUndoRequest)).toMatchObject({ undone: true, archiveRestored: 1 })
 
-      const delayed = await Send.POST(req({ token: alice(), body: {
+      const delayed = await call(Send, 'POST', req({ token: alice(), body: {
         from: account.mailboxAddress, to: ['recipient@example.net'], subject: 'Undo external', text: 'cancel me',
         delayMs: 60_000, idempotencyKey: 'external-route-undo-1',
       }}))
@@ -373,9 +374,9 @@ describe('Go-owned external account boundary', () => {
       expect(typeof delayedUndoId).toBe('string')
       const undoRequest = req({ token: alice(), body: { undoId: delayedUndoId } })
       expect(undoRequest.body).toEqual({ undoId: delayedUndoId })
-      expect(await UndoSend.POST(undoRequest)).toEqual({ undone: true })
+      expect(await call(UndoSend, 'POST', undoRequest)).toEqual({ undone: true })
 
-      const accepted = await Send.POST(req({ token: alice(), body: {
+      const accepted = await call(Send, 'POST', req({ token: alice(), body: {
         from: account.mailboxAddress, to: ['recipient@example.net'], subject: 'External delivery', text: '.provider body',
         idempotencyKey: 'external-route-send-1',
       }}))
@@ -392,7 +393,7 @@ describe('Go-owned external account boundary', () => {
       expect(smtpState.deliveries).toHaveLength(1)
       expect(smtpState.deliveries[0]).toContain('..provider body')
 
-	  const tracked = await Send.POST(req({ token: alice(), body: {
+	  const tracked = await call(Send, 'POST', req({ token: alice(), body: {
 		from: account.mailboxAddress, to: ['tracked@example.net'], subject: 'External tracked', text: 'tracked link',
 		html: '<p><a href="https://example.net/follow-up">Follow up</a></p>', openTracking: true, linkTracking: true,
 		idempotencyKey: 'external-route-tracked-1',
@@ -407,7 +408,7 @@ describe('Go-owned external account boundary', () => {
 	  expect(smtpState.deliveries).toHaveLength(2)
 	  expect(smtpState.deliveries[1]).toContain('/track/click')
 	  expect(smtpState.deliveries[1]).toContain('/track/open')
-	  const trackedGroup = await Send.POST(req({ token: alice(), body: {
+	  const trackedGroup = await call(Send, 'POST', req({ token: alice(), body: {
 		from: account.mailboxAddress, to: ['one@example.net', 'two@example.net'], subject: 'Unsafe grouped tracking',
 		html: '<p>group</p>', openTracking: true, idempotencyKey: 'external-route-tracked-group-1',
 	  }}))
@@ -422,73 +423,73 @@ describe('Go-owned external account boundary', () => {
 	  expect(smtpState.deliveries[2]).toContain('/track/open')
 	  expect(smtpState.deliveries[3]).toContain('/track/open')
 	  expect(smtpState.deliveries[2]).not.toBe(smtpState.deliveries[3])
-	  const delayedTrackedGroup = await Send.POST(req({ token: alice(), body: {
+	  const delayedTrackedGroup = await call(Send, 'POST', req({ token: alice(), body: {
 		from: account.mailboxAddress, to: ['undo-one@example.net', 'undo-two@example.net'], subject: 'Undo grouped tracking',
 		html: '<p>undo group</p>', openTracking: true, delayMs: 60_000, idempotencyKey: 'external-route-tracked-group-undo-1',
 	  }}))
 	  const delayedTrackedGroupUndoId = delayedTrackedGroup.undoId
 	  expect(delayedTrackedGroup).toMatchObject({ sent: true, queued: true, undoId: expect.stringMatching(/^extundo\./) })
-	  expect(await UndoSend.POST(req({ token: alice(), body: { undoId: delayedTrackedGroupUndoId } }))).toEqual({ undone: true })
+	  expect(await call(UndoSend, 'POST', req({ token: alice(), body: { undoId: delayedTrackedGroupUndoId } }))).toEqual({ undone: true })
 	  expect(smtpState.deliveries).toHaveLength(4)
 
-      account = await ExternalAccount.GET(req({ token: alice(), paths: { id: account.id } }))
+      account = await call(ExternalAccount, 'GET', req({ token: alice(), paths: { id: account.id } }))
       const sendAt = new Date(Date.now() + 60_000).toISOString()
-      const scheduled = await Send.POST(req({ token: alice(), body: {
+      const scheduled = await call(Send, 'POST', req({ token: alice(), body: {
         from: account.mailboxAddress, to: ['later@example.net'], subject: 'External later', text: 'later',
 		html: '<p><a href="https://example.net/later">later</a></p>', openTracking: true, linkTracking: true, sendAt,
         idempotencyKey: 'external-route-scheduled-1',
       }}))
       const scheduledId = scheduled.id
       expect(scheduled).toMatchObject({ scheduled: true, id: expect.any(String), externalAccountId: account.id })
-      expect(await ScheduledSend.GET(req({ token: alice() }))).toContainEqual(expect.objectContaining({ id: scheduledId, from: account.mailboxAddress, status: 'scheduled' }))
+      expect(await call(ScheduledSend, 'GET', req({ token: alice() }))).toContainEqual(expect.objectContaining({ id: scheduledId, from: account.mailboxAddress, status: 'scheduled' }))
 	  const editedSendAt = new Date(Date.now() + 120_000).toISOString()
-	  expect(await ScheduledItem.PUT(req({ token: alice(), paths: { id: scheduledId }, body: {
+	  expect(await call(ScheduledItem, 'PUT', req({ token: alice(), paths: { id: scheduledId }, body: {
 		subject: 'External later edited', text: 'replacement body', html: '<p><a href="https://example.net/edited">edited</a></p>',
 		to: ['edited@example.net'], sendAt: editedSendAt,
 	  } }))).toMatchObject({ scheduled: true, id: scheduledId, sendAt: editedSendAt })
-	  expect(await ScheduledSend.GET(req({ token: alice() }))).toContainEqual(expect.objectContaining({
+	  expect(await call(ScheduledSend, 'GET', req({ token: alice() }))).toContainEqual(expect.objectContaining({
 		id: scheduledId, subject: 'External later edited', to: ['edited@example.net'], sendAt: editedSendAt, status: 'scheduled',
 	  }))
-      expect(await ScheduledSend.DELETE(req({ token: alice(), body: { id: scheduledId } }))).toEqual({ cancelled: true })
-	  const groupedScheduled = await Send.POST(req({ token: alice(), body: {
+      expect(await call(ScheduledSend, 'DELETE', req({ token: alice(), body: { id: scheduledId } }))).toEqual({ cancelled: true })
+	  const groupedScheduled = await call(Send, 'POST', req({ token: alice(), body: {
 		from: account.mailboxAddress, to: ['later-one@example.net', 'later-two@example.net'], subject: 'External grouped later',
 		html: '<p>later group</p>', openTracking: true, sendAt: new Date(Date.now() + 120_000).toISOString(),
 		idempotencyKey: 'external-route-scheduled-group-1',
 	  }}))
 	  const groupedScheduledId = groupedScheduled.id
 	  expect(groupedScheduled).toMatchObject({ scheduled: true, id: expect.any(String), externalAccountId: account.id })
-	  expect(await ScheduledSend.GET(req({ token: alice() }))).toContainEqual(expect.objectContaining({ id: groupedScheduledId, status: 'scheduled' }))
-	  expect(await ScheduledSend.DELETE(req({ token: alice(), body: { id: groupedScheduledId } }))).toEqual({ cancelled: true })
-      expect(await ScheduledSend.GET(req({ token: alice() }))).toEqual([])
-      account = await ExternalAccount.GET(req({ token: alice(), paths: { id: account.id } }))
+	  expect(await call(ScheduledSend, 'GET', req({ token: alice() }))).toContainEqual(expect.objectContaining({ id: groupedScheduledId, status: 'scheduled' }))
+	  expect(await call(ScheduledSend, 'DELETE', req({ token: alice(), body: { id: groupedScheduledId } }))).toEqual({ cancelled: true })
+      expect(await call(ScheduledSend, 'GET', req({ token: alice() }))).toEqual([])
+      account = await call(ExternalAccount, 'GET', req({ token: alice(), paths: { id: account.id } }))
     } finally {
 	  await Promise.all([imap.close(), smtp.close()])
     }
   }, 90_000)
 
   it('uses optimistic revisions for pause, resume, and removal', async () => {
-		account = await ExternalAccount.GET(req({ token: alice(), paths: { id: account.id } }))
-    const presented = await ExternalAccount.PATCH(req({
+		account = await call(ExternalAccount, 'GET', req({ token: alice(), paths: { id: account.id } }))
+    const presented = await call(ExternalAccount, 'PATCH', req({
       token: alice(), paths: { id: account.id }, body: {
         action: 'update', revision: account.revision, label: 'Remote personal', color: '#aa55cc', order: 0,
       },
     }))
     expect(presented).toMatchObject({ label: 'Remote personal', color: '#aa55cc', order: 0, revision: account.revision + 1 })
-    expect((await ExternalAccount.PATCH(req({
+    expect((await call(ExternalAccount, 'PATCH', req({
       token: alice(), paths: { id: account.id }, body: { action: 'update', revision: presented.revision, color: 'red' },
     }))).error).toMatch(/invalid/i)
     account = presented
-    const paused = await ExternalAccount.PATCH(req({
+    const paused = await call(ExternalAccount, 'PATCH', req({
       token: alice(), paths: { id: account.id }, body: { action: 'pause', revision: account.revision },
     }))
     expect(paused).toMatchObject({ state: 'paused', revision: account.revision + 1 })
 
-    const stale = await ExternalAccount.PATCH(req({
+    const stale = await call(ExternalAccount, 'PATCH', req({
       token: alice(), paths: { id: account.id }, body: { action: 'resume', revision: account.revision },
     }))
     expect(stale.conflict).toBe(true)
 
-    const resumed = await ExternalAccount.PATCH(req({
+    const resumed = await call(ExternalAccount, 'PATCH', req({
       token: alice(), paths: { id: account.id }, body: { action: 'resume', revision: paused.revision },
     }))
     expect(resumed).toMatchObject({ state: 'ready', revision: paused.revision + 1 })
@@ -497,7 +498,7 @@ describe('Go-owned external account boundary', () => {
     const smtp = await protocolServer(smtpFixture, account.connection.smtp.port)
     let reconnected
     try {
-      reconnected = await ReconnectExternalAccount.POST(req({
+      reconnected = await call(ReconnectExternalAccount, 'POST', req({
         token: alice(), paths: { id: account.id }, body: {
           revision: resumed.revision,
           credentials: { username: 'alice@remote.example', password: 'replacement-password' },
@@ -511,23 +512,23 @@ describe('Go-owned external account boundary', () => {
     if (reconnected.error) throw new Error(`${reconnected.error}\n${routeDiagnostics()}`)
     expect(reconnected).toMatchObject({ state: 'ready', revision: resumed.revision + 1 })
 
-    const removed = await ExternalAccount.DELETE(req({
+    const removed = await call(ExternalAccount, 'DELETE', req({
       token: alice(), paths: { id: account.id }, body: { revision: reconnected.revision },
     }))
     expect(removed.deleting).toBe(true)
     let afterRemoval
     const removalDeadline = Date.now() + 15_000
     while (Date.now() < removalDeadline) {
-      afterRemoval = await ExternalAccount.GET(req({ token: alice(), paths: { id: account.id } }))
+      afterRemoval = await call(ExternalAccount, 'GET', req({ token: alice(), paths: { id: account.id } }))
       if (afterRemoval.notFound) break
       expect(afterRemoval.state).toBe('deleting')
       await Bun.sleep(200)
     }
     if (!afterRemoval.notFound) throw new Error(`external account deletion did not finish: ${JSON.stringify(afterRemoval)}\n${routeDiagnostics()}`)
     expect(afterRemoval.notFound).toBe(true)
-    expect((await ExternalAccounts.GET(req({ token: alice() }))).accounts).toEqual([])
-    expect((await ExternalAccountFolders.GET(req({ token: alice(), paths: { id: account.id } }))).notFound).toBe(true)
-    expect((await ExternalAccountMessages.GET(req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))).notFound).toBe(true)
+    expect((await call(ExternalAccounts, 'GET', req({ token: alice() }))).accounts).toEqual([])
+    expect((await call(ExternalAccountFolders, 'GET', req({ token: alice(), paths: { id: account.id } }))).notFound).toBe(true)
+    expect((await call(ExternalAccountMessages, 'GET', req({ token: alice(), paths: { id: account.id }, query: { folder: 'INBOX' } }))).notFound).toBe(true)
   }, 30_000)
 })
 

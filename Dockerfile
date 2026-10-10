@@ -69,7 +69,6 @@ COPY scripts/migrate-domain.mjs ./scripts/
 COPY scripts/vendor-translation-assets.mjs ./scripts/
 COPY docs/THIRD_PARTY_MODELS.md ./docs/THIRD_PARTY_MODELS.md
 COPY jsconfig.json ./jsconfig.json
-COPY tac.config.js ./tac.config.js
 COPY runtime.lock.json ./runtime.lock.json
 
 # Translation is optional at use time but completely self-hosted. Resolve the
@@ -78,7 +77,8 @@ COPY runtime.lock.json ./runtime.lock.json
 RUN bun run translation:vendor && bun run translation:verify
 
 # Remove test routes — they should never be in production
-RUN rm -rf server/routes/test
+RUN rm -f server/controllers/Test*Controller.js \
+  && ! ls server/controllers | grep -q '^Test.*Controller\.js$'
 
 # Validate the image can actually serve — catch missing deps / broken bundles
 # at build time rather than deploying a broken container that fails at runtime.

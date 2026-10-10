@@ -1,10 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { Handler as Shares } from '@/routes/thread-shares/yon.js'
-import { Handler as Share } from '@/routes/thread-shares/_id/yon.js'
-import { Handler as PublicShare } from '@/routes/thread-shares/public/_token/yon.js'
-import { Handler as PublicAttachment } from '@/routes/thread-shares/public/_token/attachments/_attachment_id/yon.js'
+import { ThreadSharesController as Shares } from '@/controllers/ThreadSharesController.js'
+import { ThreadSharesIdController as Share } from '@/controllers/ThreadSharesIdController.js'
+import { ThreadSharesPublicTokenController as PublicShare } from '@/controllers/ThreadSharesPublicTokenController.js'
+import { ThreadSharesPublicTokenAttachmentsAttachmentIdController as PublicAttachment } from '@/controllers/ThreadSharesPublicTokenAttachmentsAttachmentIdController.js'
 import { FyloAccessContext } from '@/platform/persistence/FyloAccessContext.js'
+import { call } from '../support/controller-call.mjs'
 
 let app
 let attachment
@@ -73,20 +74,20 @@ describe('self-hosted expiring thread shares', () => {
   let second
 
   it('requires auth, validates expiry, and enforces exact mailbox ownership', async () => {
-    expect((await Shares.POST(req({ body: { emailId: 'share-root', expiresInDays: 7 } }))).unauthorized).toBe(true)
-    expect((await Shares.POST(req({ token: alice(), body: { emailId: 'share-root', expiresInDays: 2 } }))).error).toContain('1, 7, 30')
-    expect((await Shares.POST(req({ token: bob(), body: { emailId: 'share-root', expiresInDays: 7 } }))).notFound).toBe(true)
-    expect((await Shares.GET(req({ token: bob(), query: { emailId: 'share-root' } }))).notFound).toBe(true)
+    expect((await call(Shares, 'POST', req({ body: { emailId: 'share-root', expiresInDays: 7 } }))).unauthorized).toBe(true)
+    expect((await call(Shares, 'POST', req({ token: alice(), body: { emailId: 'share-root', expiresInDays: 2 } }))).error).toContain('1, 7, 30')
+    expect((await call(Shares, 'POST', req({ token: bob(), body: { emailId: 'share-root', expiresInDays: 7 } }))).notFound).toBe(true)
+    expect((await call(Shares, 'GET', req({ token: bob(), query: { emailId: 'share-root' } }))).notFound).toBe(true)
   })
 
   it('creates a hash-only capability and exposes a sanitized immutable conversation', async () => {
-    first = await Shares.POST(req({ token: alice(), body: { emailId: 'share-root', expiresInDays: 7 } }))
+    first = await call(Shares, 'POST', req({ token: alice(), body: { emailId: 'share-root', expiresInDays: 7 } }))
     expect(first.id).toMatch(/^share-/)
     expect(first.token).toMatch(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/)
     expect(first.url).toBe(`/share/${first.token}`)
     expect(first.messageCount).toBe(2)
 
-    const managed = await Shares.GET(req({ token: alice(), query: { emailId: 'share-root' } }))
+    const managed = await call(Shares, 'GET', req({ token: alice(), query: { emailId: 'share-root' } }))
     expect(managed).toHaveLength(1)
     expect(managed[0]).not.toHaveProperty('token')
     expect(managed[0]).not.toHaveProperty('tokenHash')
@@ -95,7 +96,7 @@ describe('self-hosted expiring thread shares', () => {
     expect(stored[1].tokenHash).toMatch(/^[a-f0-9]{64}$/)
     expect(JSON.stringify(stored[1])).not.toContain(first.token)
 
-    const publicView = await PublicShare.GET(req({ paths: { token: first.token } }))
+    const publicView = await call(PublicShare, 'GET', req({ paths: { token: first.token } }))
     expect(publicView.subject).toBe('Launch plan')
     expect(publicView.messages).toHaveLength(2)
     expect(publicView.messages.map(message => message.body)).toEqual([
@@ -109,41 +110,41 @@ describe('self-hosted expiring thread shares', () => {
   })
 
   it('re-authorizes attachment membership on every public read', async () => {
-    const downloaded = await PublicAttachment.GET(req({ paths: {
+    const downloaded = await call(PublicAttachment, 'GET', req({ paths: {
       token: first.token, attachment_id: attachment.id,
     } }))
     expect(Buffer.from(downloaded.contentBase64, 'base64').toString()).toBe('attachment secret')
 
-    const unrelated = await PublicAttachment.GET(req({ paths: {
+    const unrelated = await call(PublicAttachment, 'GET', req({ paths: {
       token: first.token, attachment_id: unrelatedAttachment.id,
     } }))
     expect(unrelated.notFound).toBe(true)
 
     const altered = `${first.token.slice(0, -1)}${first.token.endsWith('A') ? 'B' : 'A'}`
-    expect((await PublicShare.GET(req({ paths: { token: altered } }))).notFound).toBe(true)
+    expect((await call(PublicShare, 'GET', req({ paths: { token: altered } }))).notFound).toBe(true)
   })
 
   it('rotates links, hides foreign revocation, and revokes immediately', async () => {
-    second = await Shares.POST(req({ token: alice(), body: { emailId: 'share-root', expiresInDays: 1 } }))
+    second = await call(Shares, 'POST', req({ token: alice(), body: { emailId: 'share-root', expiresInDays: 1 } }))
     expect(second.token).not.toBe(first.token)
-    expect((await PublicShare.GET(req({ paths: { token: first.token } }))).notFound).toBe(true)
-    expect((await PublicShare.GET(req({ paths: { token: second.token } }))).messages).toHaveLength(2)
+    expect((await call(PublicShare, 'GET', req({ paths: { token: first.token } }))).notFound).toBe(true)
+    expect((await call(PublicShare, 'GET', req({ paths: { token: second.token } }))).messages).toHaveLength(2)
 
-    expect((await Share.DELETE(req({ token: bob(), paths: { id: second.id } }))).notFound).toBe(true)
-    expect((await Share.DELETE(req({ token: alice(), paths: { id: second.id } }))).revoked).toBe(second.id)
-    expect((await PublicShare.GET(req({ paths: { token: second.token } }))).notFound).toBe(true)
-    expect((await PublicAttachment.GET(req({ paths: {
+    expect((await call(Share, 'DELETE', req({ token: bob(), paths: { id: second.id } }))).notFound).toBe(true)
+    expect((await call(Share, 'DELETE', req({ token: alice(), paths: { id: second.id } }))).revoked).toBe(second.id)
+    expect((await call(PublicShare, 'GET', req({ paths: { token: second.token } }))).notFound).toBe(true)
+    expect((await call(PublicAttachment, 'GET', req({ paths: {
       token: second.token, attachment_id: attachment.id,
     } }))).notFound).toBe(true)
   })
 
   it('fails closed after expiry without revealing why', async () => {
-    const expiring = await Shares.POST(req({ token: alice(), body: { emailId: 'share-root', expiresInDays: 1 } }))
+    const expiring = await call(Shares, 'POST', req({ token: alice(), body: { emailId: 'share-root', expiresInDays: 1 } }))
     const [docId] = await FyloAccessContext.runForDomain('example.com', () => app.threadShareRecords.findById(expiring.id))
     await FyloAccessContext.runForDomain('example.com', () => app.threadShareRecords.update(docId, {
       expiresAt: new Date(Date.now() - 1000).toISOString(),
     }))
-    const result = await PublicShare.GET(req({ paths: { token: expiring.token } }))
+    const result = await call(PublicShare, 'GET', req({ paths: { token: expiring.token } }))
     expect(result).toEqual({ error: 'Shared conversation not found', notFound: true })
   })
 })

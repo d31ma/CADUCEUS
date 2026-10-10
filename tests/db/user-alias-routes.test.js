@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "bun:test";
 import { setupRoutes, teardownRoutes, token as issue } from "../routes/helpers.js";
-import { Handler as AliasesHandler } from "@/routes/users/aliases/yon.js";
+import { UsersAliasesController as AliasesHandler } from "@/controllers/UsersAliasesController.js";
+import { call } from "../support/controller-call.mjs";
 
-const getAliases = (req) => AliasesHandler.GET(req);
-const addAlias = (req) => AliasesHandler.POST(req);
-const removeAlias = (req) => AliasesHandler.DELETE(req);
+const getAliases = (req) => call(AliasesHandler, 'GET', req);
+const addAlias = (req) => call(AliasesHandler, 'POST', req);
+const removeAlias = (req) => call(AliasesHandler, 'DELETE', req);
 
 let app;
 let usersRepo;

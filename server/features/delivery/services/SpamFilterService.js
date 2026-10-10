@@ -1,4 +1,5 @@
 // @ts-check
+import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
 
 /**
  * Classifies inbound mail as spam.
@@ -15,9 +16,9 @@ export class SpamFilterService {
    */
   constructor(options = {}) {
     /** Score at/above which a message is treated as spam (SpamAssassin default 5). */
-    this.threshold = options.threshold ?? toNumber(process.env.SPAM_SCORE_THRESHOLD) ?? 5
+    this.threshold = options.threshold ?? toNumber(ServerEnvironment.value('SPAM_SCORE_THRESHOLD')) ?? 5
     /** Master switch — set SPAM_FILTER_DISABLED=true to pass everything through. */
-    this.enabled = options.enabled ?? (process.env.SPAM_FILTER_DISABLED !== 'true')
+    this.enabled = options.enabled ?? (ServerEnvironment.value('SPAM_FILTER_DISABLED') !== 'true')
   }
 
   /**

@@ -50,6 +50,7 @@ import { PushService } from './features/notifications/services/PushService.js'
 import { RateLimitService } from './platform/rate-limit/RateLimitService.js'
 import { SmtpService } from './features/delivery/services/SmtpService.js'
 import { McpAccessService } from './features/mcp/services/McpAccessService.js'
+import { ServerEnvironment } from './platform/runtime/ServerEnvironment.js'
 
 /**
  * Application container — owns the Fylo instance and every repo and stateful
@@ -103,7 +104,7 @@ export class App {
     this.push             = new PushService(this.pushSubscriptions, this.users, this.emails)
     this.snoozeService    = new SnoozeService(this.snooze, this.emails, this.threads, this.push, this.categoryMappings, this.users)
     this.calendarImport   = new CalendarImportService(this.calendarEvents)
-    this.providerCalendars = process.env.FYLO_BRIDGE_ADDRESS ? new ProviderCalendarService() : null
+    this.providerCalendars = ServerEnvironment.value('FYLO_BRIDGE_ADDRESS') ? new ProviderCalendarService() : null
     this.contacts         = new ContactsService(this.contactRecords, this.users)
     this.githubProfiles   = new GitHubProfilesService()
     this.conversationArchive = new ConversationArchiveService(this.emails, this.threads, this.categoryMappings)

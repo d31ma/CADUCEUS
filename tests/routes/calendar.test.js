@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req } from './helpers.js'
-import { Handler as Events } from '@/routes/calendar/events/yon.js'
-import { Handler as Event } from '@/routes/calendar/events/_id/yon.js'
-import { Handler as Respond } from '@/routes/calendar/invites/respond/yon.js'
-import { Handler as Team } from '@/routes/calendar/team-events/yon.js'
-import { Handler as Calendars } from '@/routes/calendar/calendars/yon.js'
+import { CalendarEventsController as Events } from '@/controllers/CalendarEventsController.js'
+import { CalendarEventsIdController as Event } from '@/controllers/CalendarEventsIdController.js'
+import { CalendarInvitesRespondController as Respond } from '@/controllers/CalendarInvitesRespondController.js'
+import { CalendarTeamEventsController as Team } from '@/controllers/CalendarTeamEventsController.js'
+import { CalendarCalendarsController as Calendars } from '@/controllers/CalendarCalendarsController.js'
+import { call } from '../support/controller-call.mjs'
 
 let app
 const auth = () => token()
@@ -21,79 +22,79 @@ beforeAll(async () => {
 afterAll(teardownRoutes)
 
 const create = async (over = {}, as = auth()) => {
-  const res = await Events.POST(req({ token: as, body: { title: 'Meeting', start: START, end: END, ...over } }))
+  const res = await call(Events, 'POST', req({ token: as, body: { title: 'Meeting', start: START, end: END, ...over } }))
   return res.id
 }
 
-describe('Events.validateTimes', () => {
+describe('Events._validateTimes', () => {
   it('requires a title', () => {
-    expect(Events.validateTimes({}).message).toMatch(/title/)
-    expect(Events.validateTimes({ title: '   ' }).message).toMatch(/title/)
+    expect(Events._validateTimes({}).message).toMatch(/title/)
+    expect(Events._validateTimes({ title: '   ' }).message).toMatch(/title/)
   })
 
   it('requires a parseable start and end', () => {
-    expect(Events.validateTimes({ title: 'x' }).message).toMatch(/start/)
-    expect(Events.validateTimes({ title: 'x', start: 'nope' }).message).toMatch(/start/)
-    expect(Events.validateTimes({ title: 'x', start: START }).message).toMatch(/end/)
-    expect(Events.validateTimes({ title: 'x', start: START, end: 'nope' }).message).toMatch(/end/)
+    expect(Events._validateTimes({ title: 'x' }).message).toMatch(/start/)
+    expect(Events._validateTimes({ title: 'x', start: 'nope' }).message).toMatch(/start/)
+    expect(Events._validateTimes({ title: 'x', start: START }).message).toMatch(/end/)
+    expect(Events._validateTimes({ title: 'x', start: START, end: 'nope' }).message).toMatch(/end/)
   })
 
   it('rejects an end before the start', () => {
-    expect(Events.validateTimes({ title: 'x', start: END, end: START }).message).toMatch(/on or after/)
+    expect(Events._validateTimes({ title: 'x', start: END, end: START }).message).toMatch(/on or after/)
   })
 
   it('trims and returns the three fields', () => {
-    expect(Events.validateTimes({ title: ' x ', start: ` ${START} `, end: ` ${END} ` }))
+    expect(Events._validateTimes({ title: ' x ', start: ` ${START} `, end: ` ${END} ` }))
       .toEqual({ title: 'x', start: START, end: END })
   })
 
   it('requires canonical dates and an exclusive end for all-day events', () => {
-    expect(Events.validateTimes({ title: 'x', allDay: true, start: '2099-03-01', end: '2099-03-02' }))
+    expect(Events._validateTimes({ title: 'x', allDay: true, start: '2099-03-01', end: '2099-03-02' }))
       .toEqual({ title: 'x', start: '2099-03-01', end: '2099-03-02' })
-    expect(Events.validateTimes({ title: 'x', allDay: true, start: START, end: END }).message).toMatch(/date-only/)
-    expect(Events.validateTimes({ title: 'x', allDay: true, start: '2099-03-01', end: '2099-03-01' }).message)
+    expect(Events._validateTimes({ title: 'x', allDay: true, start: START, end: END }).message).toMatch(/date-only/)
+    expect(Events._validateTimes({ title: 'x', allDay: true, start: '2099-03-01', end: '2099-03-01' }).message)
       .toMatch(/after start/)
   })
 })
 
-describe('Events.normalizeAttendees', () => {
+describe('Events._normalizeAttendees', () => {
   it('returns an empty list for a non-array', () => {
-    expect(Events.normalizeAttendees(undefined)).toEqual([])
-    expect(Events.normalizeAttendees('bob')).toEqual([])
+    expect(Events._normalizeAttendees(undefined)).toEqual([])
+    expect(Events._normalizeAttendees('bob')).toEqual([])
   })
 
   it('drops entries without an email', () => {
-    expect(Events.normalizeAttendees([null, {}, { email: 5 }])).toEqual([])
+    expect(Events._normalizeAttendees([null, {}, { email: 5 }])).toEqual([])
   })
 
   it('lowercases the email and defaults name and status', () => {
-    expect(Events.normalizeAttendees([{ email: 'BOB@X.COM' }]))
+    expect(Events._normalizeAttendees([{ email: 'BOB@X.COM' }]))
       .toEqual([{ email: 'bob@x.com', name: '', status: 'needsAction' }])
   })
 
   it('keeps a recognised status and name', () => {
-    expect(Events.normalizeAttendees([{ email: 'b@x.com', name: 'B', status: 'declined' }]))
+    expect(Events._normalizeAttendees([{ email: 'b@x.com', name: 'B', status: 'declined' }]))
       .toEqual([{ email: 'b@x.com', name: 'B', status: 'declined' }])
   })
 
   it('replaces an unrecognised status', () => {
-    expect(Events.normalizeAttendees([{ email: 'b@x.com', status: 'maybe' }])[0].status).toBe('needsAction')
+    expect(Events._normalizeAttendees([{ email: 'b@x.com', status: 'maybe' }])[0].status).toBe('needsAction')
   })
 })
 
 describe('POST /calendar/events', () => {
   it('requires auth', async () => {
-    expect((await Events.POST(req({ body: {} }))).unauthorized).toBe(true)
+    expect((await call(Events, 'POST', req({ body: {} }))).unauthorized).toBe(true)
   })
 
   it('400s on invalid input', async () => {
-    const res = await Events.POST(req({ token: auth(), body: { title: '' } }))
+    const res = await call(Events, 'POST', req({ token: auth(), body: { title: '' } }))
     expect(res.error).toMatch(/title/)
   })
 
   it('creates an event with defaults', async () => {
     const id = await create()
-    const res = await Event.GET(req({ token: auth(), paths: { id } }))
+    const res = await call(Event, 'GET', req({ token: auth(), paths: { id } }))
     expect(res.title).toBe('Meeting')
     expect(res.organizer).toBe('alice@example.com')
     expect(res.allDay).toBe(false)
@@ -106,8 +107,8 @@ describe('POST /calendar/events', () => {
       title: 'Offline calendar create', start: START, end: END,
       idempotencyKey: 'calendar-offline-create-1',
     }
-    const first = await Events.POST(req({ token: auth(), body }))
-    const replay = await Events.POST(req({ token: auth(), body: { ...body } }))
+    const first = await call(Events, 'POST', req({ token: auth(), body }))
+    const replay = await call(Events, 'POST', req({ token: auth(), body: { ...body } }))
     expect(replay).toEqual(first)
     expect((await app.calendarEvents.list('alice@example.com'))
       .filter(event => event.idempotencyKey === body.idempotencyKey)).toHaveLength(1)
@@ -122,7 +123,7 @@ describe('POST /calendar/events', () => {
       reminderMinutes: 10,
       attendees: [{ email: 'bob@example.com', status: 'accepted' }],
     })
-    const res = await Event.GET(req({ token: auth(), paths: { id } }))
+    const res = await call(Event, 'GET', req({ token: auth(), paths: { id } }))
     expect(res.allDay).toBe(false)
     expect(res.location).toBe('Room 2')
     expect(res.organizer).toBe('boss@example.com')
@@ -133,18 +134,18 @@ describe('POST /calendar/events', () => {
 
   it('persists all-day events as date-only exclusive ranges', async () => {
     const id = await create({ allDay: true, start: '2099-03-01', end: '2099-03-04' })
-    const res = await Event.GET(req({ token: auth(), paths: { id } }))
+    const res = await call(Event, 'GET', req({ token: auth(), paths: { id } }))
     expect(res).toMatchObject({ allDay: true, start: '2099-03-01', end: '2099-03-04' })
   })
 })
 
 describe('GET /calendar/events', () => {
   it('requires auth', async () => {
-    expect((await Events.GET(req())).unauthorized).toBe(true)
+    expect((await call(Events, 'GET', req())).unauthorized).toBe(true)
   })
 
   it('returns the caller events sorted by start', async () => {
-    const res = await Events.GET(req({ token: auth(), query: {} }))
+    const res = await call(Events, 'GET', req({ token: auth(), query: {} }))
     const starts = res.map(e => e.start)
     expect(starts).toEqual([...starts].sort())
   })
@@ -163,7 +164,7 @@ describe('GET /calendar/events', () => {
     } }
     try {
       const callerToken = auth()
-      const res = await Events.GET(req({ token: callerToken, query: {} }))
+      const res = await call(Events, 'GET', req({ token: callerToken, query: {} }))
       const provider = res.find(event => event.id === 'provider-calendar-event')
       expect(boundaryToken).toBe(callerToken)
       expect(provider).toMatchObject({
@@ -176,13 +177,13 @@ describe('GET /calendar/events', () => {
   })
 
   it('clips to a window', async () => {
-    const res = await Events.GET(req({ token: auth(), query: { start: '2030-01-01T00:00:00.000Z', end: '2030-01-02T00:00:00.000Z' } }))
+    const res = await call(Events, 'GET', req({ token: auth(), query: { start: '2030-01-01T00:00:00.000Z', end: '2030-01-02T00:00:00.000Z' } }))
     expect(res).toEqual([])
   })
 
   it('expands recurring masters in a bounded range', async () => {
     const id = await create({ recurrence: 'FREQ=WEEKLY;COUNT=3', timeZone: 'UTC' })
-    const res = await Events.GET(req({ token: auth(), query: {
+    const res = await call(Events, 'GET', req({ token: auth(), query: {
       start: '2099-03-01T00:00:00.000Z',
       end: '2099-03-31T23:59:59.999Z',
     } }))
@@ -196,9 +197,9 @@ describe('GET /calendar/events', () => {
   })
 
   it('rejects incomplete, invalid, and excessive ranges', async () => {
-    expect((await Events.GET(req({ token: auth(), query: { start: START } }))).error).toMatch(/both/)
-    expect((await Events.GET(req({ token: auth(), query: { start: 'bad', end: END } }))).error).toMatch(/range/)
-    expect((await Events.GET(req({ token: auth(), query: {
+    expect((await call(Events, 'GET', req({ token: auth(), query: { start: START } }))).error).toMatch(/both/)
+    expect((await call(Events, 'GET', req({ token: auth(), query: { start: 'bad', end: END } }))).error).toMatch(/range/)
+    expect((await call(Events, 'GET', req({ token: auth(), query: {
       start: '2090-01-01T00:00:00.000Z', end: '2092-01-01T00:00:00.000Z',
     } }))).error).toMatch(/400 days/)
   })
@@ -206,16 +207,16 @@ describe('GET /calendar/events', () => {
 
 describe('GET /calendar/events/:id', () => {
   it('404s without an id', async () => {
-    expect((await Event.GET(req({ token: auth() }))).notFound).toBe(true)
+    expect((await call(Event, 'GET', req({ token: auth() }))).notFound).toBe(true)
   })
 
   it('404s for an unknown id', async () => {
-    expect((await Event.GET(req({ token: auth(), paths: { id: 'ghost' } }))).notFound).toBe(true)
+    expect((await call(Event, 'GET', req({ token: auth(), paths: { id: 'ghost' } }))).notFound).toBe(true)
   })
 
   it('403s for another user event', async () => {
     const id = await create()
-    expect((await Event.GET(req({ token: other(), paths: { id } }))).forbidden).toBe(true)
+    expect((await call(Event, 'GET', req({ token: other(), paths: { id } }))).forbidden).toBe(true)
   })
 })
 
@@ -240,19 +241,19 @@ describe('writable provider calendars', () => {
     }
     try {
       const callerToken = auth()
-      const listed = await Calendars.GET(req({ token: callerToken }))
+      const listed = await call(Calendars, 'GET', req({ token: callerToken }))
       expect(listed.calendars[0]).toMatchObject({ calendarId: 'calendar_work', writable: true })
 
-      const created = await Events.POST(req({ token: callerToken, body: { title: 'Remote created', start: START, end: END, calendarId: 'calendar_work', idempotencyKey: 'create-request' } }))
+      const created = await call(Events, 'POST', req({ token: callerToken, body: { title: 'Remote created', start: START, end: END, calendarId: 'calendar_work', idempotencyKey: 'create-request' } }))
       expect(created).toEqual({ saved: true, id: 'caldav_created' })
 
-      const loaded = await Event.GET(req({ token: callerToken, paths: { id: providerEvent.id } }))
+      const loaded = await call(Event, 'GET', req({ token: callerToken, paths: { id: providerEvent.id } }))
       expect(loaded).toMatchObject({ id: providerEvent.id, source: 'provider', readOnly: false })
 
-      const updated = await Event.PUT(req({ token: callerToken, paths: { id: providerEvent.id }, body: { title: 'Provider renamed', idempotencyKey: 'update-request' } }))
+      const updated = await call(Event, 'PUT', req({ token: callerToken, paths: { id: providerEvent.id }, body: { title: 'Provider renamed', idempotencyKey: 'update-request' } }))
       expect(updated).toMatchObject({ updated: true, scope: 'event', event: { title: 'Provider renamed', source: 'provider' } })
 
-      const deleted = await Event.DELETE(req({ token: callerToken, paths: { id: providerEvent.id }, query: { idempotencyKey: 'delete-request' } }))
+      const deleted = await call(Event, 'DELETE', req({ token: callerToken, paths: { id: providerEvent.id }, query: { idempotencyKey: 'delete-request' } }))
       expect(deleted).toEqual({ deleted: true, scope: 'event', remainingSeries: false })
 
       expect(calls.find(call => call[0] === 'create').slice(2)).toMatchObject(['calendar_work', { title: 'Remote created' }, 'create-request'])
@@ -267,52 +268,52 @@ describe('writable provider calendars', () => {
 
 describe('PUT /calendar/events/:id', () => {
   it('404s without an id', async () => {
-    expect((await Event.PUT(req({ token: auth(), body: {} }))).notFound).toBe(true)
+    expect((await call(Event, 'PUT', req({ token: auth(), body: {} }))).notFound).toBe(true)
   })
 
   it('404s for an unknown id', async () => {
-    expect((await Event.PUT(req({ token: auth(), paths: { id: 'ghost' }, body: {} }))).notFound).toBe(true)
+    expect((await call(Event, 'PUT', req({ token: auth(), paths: { id: 'ghost' }, body: {} }))).notFound).toBe(true)
   })
 
   it('403s for another user event', async () => {
     const id = await create()
-    expect((await Event.PUT(req({ token: other(), paths: { id }, body: {} }))).forbidden).toBe(true)
+    expect((await call(Event, 'PUT', req({ token: other(), paths: { id }, body: {} }))).forbidden).toBe(true)
   })
 
   it('400s on an unparseable start or end', async () => {
     const id = await create()
-    expect((await Event.PUT(req({ token: auth(), paths: { id }, body: { start: 'nope' } }))).error).toMatch(/start/)
-    expect((await Event.PUT(req({ token: auth(), paths: { id }, body: { end: 'nope' } }))).error).toMatch(/end/)
+    expect((await call(Event, 'PUT', req({ token: auth(), paths: { id }, body: { start: 'nope' } }))).error).toMatch(/start/)
+    expect((await call(Event, 'PUT', req({ token: auth(), paths: { id }, body: { end: 'nope' } }))).error).toMatch(/end/)
   })
 
   it('400s when the patched end precedes the start', async () => {
     const id = await create()
-    const res = await Event.PUT(req({ token: auth(), paths: { id }, body: { end: '2020-01-01T00:00:00.000Z' } }))
+    const res = await call(Event, 'PUT', req({ token: auth(), paths: { id }, body: { end: '2020-01-01T00:00:00.000Z' } }))
     expect(res.error).toMatch(/on or after/)
   })
 
   it('applies patchable fields and ignores the rest', async () => {
     const id = await create()
-    const res = await Event.PUT(req({ token: auth(), paths: { id }, body: { title: 'Renamed', userEmail: 'hacker@x.com', source: 'ics' } }))
+    const res = await call(Event, 'PUT', req({ token: auth(), paths: { id }, body: { title: 'Renamed', userEmail: 'hacker@x.com', source: 'ics' } }))
     expect(res.updated).toBe(true)
-    const after = await Event.GET(req({ token: auth(), paths: { id } }))
+    const after = await call(Event, 'GET', req({ token: auth(), paths: { id } }))
     expect(after.title).toBe('Renamed')
     expect(after.source).toBe('manual')
   })
 
   it('converts between timed and all-day event representations atomically', async () => {
     const id = await create()
-    const allDay = await Event.PUT(req({
+    const allDay = await call(Event, 'PUT', req({
       token: auth(), paths: { id }, body: { allDay: true, start: '2099-03-08', end: '2099-03-10' },
     }))
     expect(allDay.event).toMatchObject({ allDay: true, start: '2099-03-08', end: '2099-03-10' })
 
-    const rejectedMixed = await Event.PUT(req({
+    const rejectedMixed = await call(Event, 'PUT', req({
       token: auth(), paths: { id }, body: { allDay: false, start: '2099-03-08', end: '2099-03-10' },
     }))
     expect(rejectedMixed.error).toMatch(/date-time/)
 
-    const timed = await Event.PUT(req({
+    const timed = await call(Event, 'PUT', req({
       token: auth(), paths: { id }, body: { allDay: false, start: START, end: END },
     }))
     expect(timed.event).toMatchObject({ allDay: false, start: START, end: END })
@@ -322,14 +323,14 @@ describe('PUT /calendar/events/:id', () => {
     const id = await create({
       allDay: true, start: '2099-03-01', end: '2099-03-02', recurrence: 'FREQ=DAILY;COUNT=3',
     })
-    const changed = await Event.PUT(req({
+    const changed = await call(Event, 'PUT', req({
       token: auth(), paths: { id }, query: { scope: 'instance', occurrenceStart: '2099-03-02' },
       body: { start: '2099-03-05', end: '2099-03-06', allDay: true },
     }))
     expect(changed.event).toMatchObject({
       allDay: true, recurrenceId: '2099-03-02', start: '2099-03-05', end: '2099-03-06',
     })
-    const deleted = await Event.DELETE(req({
+    const deleted = await call(Event, 'DELETE', req({
       token: auth(), paths: { id }, query: { scope: 'instance', occurrenceStart: '2099-03-03' },
     }))
     expect(deleted).toEqual({ deleted: true, scope: 'instance', remainingSeries: true })
@@ -338,7 +339,7 @@ describe('PUT /calendar/events/:id', () => {
   it('edits one future recurrence without changing the series', async () => {
     const id = await create({ recurrence: 'FREQ=WEEKLY;COUNT=3', timeZone: 'UTC' })
     const occurrenceStart = '2099-03-08T09:00:00.000Z'
-    const res = await Event.PUT(req({
+    const res = await call(Event, 'PUT', req({
       token: auth(), paths: { id },
       query: { scope: 'instance', occurrenceStart },
       body: { title: 'Moved occurrence', start: '2099-03-09T11:00:00.000Z', end: '2099-03-09T12:00:00.000Z' },
@@ -346,7 +347,7 @@ describe('PUT /calendar/events/:id', () => {
     expect(res).toMatchObject({ updated: true, scope: 'instance' })
     expect(res.event).toMatchObject({ title: 'Moved occurrence', seriesId: id, recurrenceId: occurrenceStart, isException: true })
 
-    const listed = await Events.GET(req({ token: auth(), query: {
+    const listed = await call(Events, 'GET', req({ token: auth(), query: {
       start: '2099-03-01T00:00:00.000Z', end: '2099-03-31T23:59:59.999Z',
     } }))
     const series = listed.filter(event => event.seriesId === id)
@@ -358,7 +359,7 @@ describe('PUT /calendar/events/:id', () => {
   it('applies occurrence-relative move and resize edits to the whole timed series', async () => {
     const id = await create({ recurrence: 'FREQ=WEEKLY;COUNT=3', timeZone: 'UTC' })
     const occurrenceStart = '2099-03-08T09:00:00.000Z'
-    const res = await Event.PUT(req({
+    const res = await call(Event, 'PUT', req({
       token: auth(), paths: { id }, query: { scope: 'series', occurrenceStart },
       body: { start: '2099-03-08T11:00:00.000Z', end: '2099-03-08T14:00:00.000Z' },
     }))
@@ -367,7 +368,7 @@ describe('PUT /calendar/events/:id', () => {
       start: '2099-03-01T11:00:00.000Z', end: '2099-03-01T14:00:00.000Z',
     })
 
-    const listed = await Events.GET(req({ token: auth(), query: {
+    const listed = await call(Events, 'GET', req({ token: auth(), query: {
       start: '2099-03-01T00:00:00.000Z', end: '2099-03-31T23:59:59.999Z',
     } }))
     const series = listed.filter(event => event.seriesId === id)
@@ -379,7 +380,7 @@ describe('PUT /calendar/events/:id', () => {
     const id = await create({
       allDay: true, start: '2099-03-01', end: '2099-03-02', recurrence: 'FREQ=DAILY;COUNT=3',
     })
-    const res = await Event.PUT(req({
+    const res = await call(Event, 'PUT', req({
       token: auth(), paths: { id }, query: { scope: 'series', occurrenceStart: '2099-03-02' },
       body: { allDay: true, start: '2099-03-04', end: '2099-03-07' },
     }))
@@ -388,44 +389,44 @@ describe('PUT /calendar/events/:id', () => {
 
   it('rejects invalid recurrence rules, invited-event edits, and past-event edits', async () => {
     const id = await create()
-    expect((await Event.PUT(req({ token: auth(), paths: { id }, body: { recurrence: 'FREQ=HOURLY' } }))).error).toMatch(/frequency/)
+    expect((await call(Event, 'PUT', req({ token: auth(), paths: { id }, body: { recurrence: 'FREQ=HOURLY' } }))).error).toMatch(/frequency/)
 
     const [docId, stored] = await app.calendarEvents.findById(id)
     await app.calendarEvents.delete(docId)
     await app.calendarEvents.put({ ...stored, source: 'invite', organizer: 'boss@other.com' })
-    expect((await Event.PUT(req({ token: auth(), paths: { id }, body: { title: 'Nope' } }))).forbidden).toBe(true)
+    expect((await call(Event, 'PUT', req({ token: auth(), paths: { id }, body: { title: 'Nope' } }))).forbidden).toBe(true)
 
     const pastId = await create({ start: '2020-01-01T09:00:00.000Z', end: '2020-01-01T10:00:00.000Z' })
-    expect((await Event.PUT(req({ token: auth(), paths: { id: pastId }, body: { title: 'Nope' } }))).conflict).toBe(true)
+    expect((await call(Event, 'PUT', req({ token: auth(), paths: { id: pastId }, body: { title: 'Nope' } }))).conflict).toBe(true)
   })
 })
 
 describe('DELETE /calendar/events/:id', () => {
   it('404s without an id', async () => {
-    expect((await Event.DELETE(req({ token: auth() }))).notFound).toBe(true)
+    expect((await call(Event, 'DELETE', req({ token: auth() }))).notFound).toBe(true)
   })
 
   it('404s for an unknown id', async () => {
-    expect((await Event.DELETE(req({ token: auth(), paths: { id: 'ghost' } }))).notFound).toBe(true)
+    expect((await call(Event, 'DELETE', req({ token: auth(), paths: { id: 'ghost' } }))).notFound).toBe(true)
   })
 
   it('403s for another user event', async () => {
     const id = await create()
-    expect((await Event.DELETE(req({ token: other(), paths: { id } }))).forbidden).toBe(true)
+    expect((await call(Event, 'DELETE', req({ token: other(), paths: { id } }))).forbidden).toBe(true)
   })
 
   it('deletes the event', async () => {
     const id = await create()
-    expect((await Event.DELETE(req({ token: auth(), paths: { id } }))).deleted).toBe(true)
-    expect((await Event.GET(req({ token: auth(), paths: { id } }))).notFound).toBe(true)
+    expect((await call(Event, 'DELETE', req({ token: auth(), paths: { id } }))).deleted).toBe(true)
+    expect((await call(Event, 'GET', req({ token: auth(), paths: { id } }))).notFound).toBe(true)
   })
 
   it('deletes one occurrence with an explicit remaining-series disclosure', async () => {
     const id = await create({ recurrence: 'FREQ=WEEKLY;COUNT=3', timeZone: 'UTC' })
     const occurrenceStart = '2099-03-08T09:00:00.000Z'
-    const deleted = await Event.DELETE(req({ token: auth(), paths: { id }, query: { scope: 'instance', occurrenceStart } }))
+    const deleted = await call(Event, 'DELETE', req({ token: auth(), paths: { id }, query: { scope: 'instance', occurrenceStart } }))
     expect(deleted).toEqual({ deleted: true, scope: 'instance', remainingSeries: true })
-    const listed = await Events.GET(req({ token: auth(), query: {
+    const listed = await call(Events, 'GET', req({ token: auth(), query: {
       start: '2099-03-01T00:00:00.000Z', end: '2099-03-31T23:59:59.999Z',
     } }))
     expect(listed.filter(event => event.seriesId === id)).toHaveLength(2)
@@ -434,8 +435,8 @@ describe('DELETE /calendar/events/:id', () => {
   it('deletes a complete series and its exceptions', async () => {
     const id = await create({ recurrence: 'FREQ=WEEKLY;COUNT=3', timeZone: 'UTC' })
     const occurrenceStart = '2099-03-08T09:00:00.000Z'
-    await Event.PUT(req({ token: auth(), paths: { id }, query: { scope: 'instance', occurrenceStart }, body: { title: 'One edit' } }))
-    expect(await Event.DELETE(req({ token: auth(), paths: { id }, query: { scope: 'series' } })))
+    await call(Event, 'PUT', req({ token: auth(), paths: { id }, query: { scope: 'instance', occurrenceStart }, body: { title: 'One edit' } }))
+    expect(await call(Event, 'DELETE', req({ token: auth(), paths: { id }, query: { scope: 'series' } })))
       .toEqual({ deleted: true, scope: 'series', remainingSeries: false })
     expect((await app.calendarEvents.list('alice@example.com')).some(event => event.id === id || event.seriesId === id)).toBe(false)
   })
@@ -443,37 +444,37 @@ describe('DELETE /calendar/events/:id', () => {
 
 describe('POST /calendar/invites/respond', () => {
   it('400s without an eventId', async () => {
-    expect((await Respond.POST(req({ token: auth(), body: {} }))).error).toMatch(/eventId/)
+    expect((await call(Respond, 'POST', req({ token: auth(), body: {} }))).error).toMatch(/eventId/)
   })
 
   it('400s on an unrecognised status', async () => {
-    const res = await Respond.POST(req({ token: auth(), body: { eventId: 'x', status: 'maybe' } }))
+    const res = await call(Respond, 'POST', req({ token: auth(), body: { eventId: 'x', status: 'maybe' } }))
     expect(res.error).toMatch(/accepted, declined, or tentative/)
   })
 
   it('404s for an unknown event', async () => {
-    const res = await Respond.POST(req({ token: auth(), body: { eventId: 'ghost', status: 'accepted' } }))
+    const res = await call(Respond, 'POST', req({ token: auth(), body: { eventId: 'ghost', status: 'accepted' } }))
     expect(res.notFound).toBe(true)
   })
 
   it('404s for another user event', async () => {
     const id = await create()
-    const res = await Respond.POST(req({ token: other(), body: { eventId: id, status: 'accepted' } }))
+    const res = await call(Respond, 'POST', req({ token: other(), body: { eventId: id, status: 'accepted' } }))
     expect(res.notFound).toBe(true)
   })
 
   it('adds the caller as an attendee when absent', async () => {
     const id = await create()
-    const res = await Respond.POST(req({ token: auth(), body: { eventId: id, status: 'tentative' } }))
+    const res = await call(Respond, 'POST', req({ token: auth(), body: { eventId: id, status: 'tentative' } }))
     expect(res).toEqual({ responded: true, status: 'tentative', replySent: false })
-    const after = await Event.GET(req({ token: auth(), paths: { id } }))
+    const after = await call(Event, 'GET', req({ token: auth(), paths: { id } }))
     expect(after.attendees).toEqual([{ email: 'alice@example.com', status: 'tentative' }])
   })
 
   it('updates the caller existing attendee row', async () => {
     const id = await create({ attendees: [{ email: 'alice@example.com', name: 'Alice' }] })
-    await Respond.POST(req({ token: auth(), body: { eventId: id, status: 'declined' } }))
-    const after = await Event.GET(req({ token: auth(), paths: { id } }))
+    await call(Respond, 'POST', req({ token: auth(), body: { eventId: id, status: 'declined' } }))
+    const after = await call(Event, 'GET', req({ token: auth(), paths: { id } }))
     expect(after.attendees[0]).toEqual({ email: 'alice@example.com', name: 'Alice', status: 'declined' })
   })
 
@@ -483,23 +484,23 @@ describe('POST /calendar/invites/respond', () => {
     await app.calendarEvents.delete(docId)
     await app.calendarEvents.put({ ...event, icsUid: 'uid-1@other.com' })
 
-    const res = await Respond.POST(req({ token: auth(), body: { eventId: id, status: 'accepted' } }))
+    const res = await call(Respond, 'POST', req({ token: auth(), body: { eventId: id, status: 'accepted' } }))
     expect(res.replySent).toBe(true)
   })
 })
 
 describe('GET /calendar/team-events', () => {
   it('requires auth', async () => {
-    expect((await Team.GET(req())).unauthorized).toBe(true)
+    expect((await call(Team, 'GET', req())).unauthorized).toBe(true)
   })
 
   it('returns nothing for a caller with no domains', async () => {
-    expect(await Team.GET(req({ token: token({ email: 'viewer@example.com' }), query: {} }))).toEqual([])
+    expect(await call(Team, 'GET', req({ token: token({ email: 'viewer@example.com' }), query: {} }))).toEqual([])
   })
 
   it('excludes private calendars and the caller own events', async () => {
     await app.users.put({ email: 'private@example.com', aliases: [], domains: ['example.com'], role: 'viewer' })
-    const res = await Team.GET(req({ token: auth(), query: {} }))
+    const res = await call(Team, 'GET', req({ token: auth(), query: {} }))
     expect(res.every(e => e.ownerEmail !== 'alice@example.com')).toBe(true)
     expect(res.every(e => e.ownerEmail !== 'private@example.com')).toBe(true)
   })
@@ -510,7 +511,7 @@ describe('GET /calendar/team-events', () => {
     await app.calendarEvents.put({ id: 'busy-1', userEmail: 'busy@example.com', title: 'Secret', location: 'HQ', start: START, end: END, createdAt: START, updatedAt: START })
     await app.calendarEvents.put({ id: 'open-1', userEmail: 'open@example.com', title: 'Public', location: 'HQ', start: START, end: END, createdAt: START, updatedAt: START })
 
-    const res = await Team.GET(req({ token: auth(), query: {} }))
+    const res = await call(Team, 'GET', req({ token: auth(), query: {} }))
     const busy = res.find(e => e.ownerEmail === 'busy@example.com')
     const open = res.find(e => e.ownerEmail === 'open@example.com')
     expect(busy.title).toBe('Busy')
@@ -523,7 +524,7 @@ describe('GET /calendar/team-events', () => {
   it('excludes users from other domains', async () => {
     await app.users.put({ email: 'far@other.com', aliases: [], domains: ['other.com'], role: 'viewer', calendarVisibility: 'full' })
     await app.calendarEvents.put({ id: 'far-1', userEmail: 'far@other.com', title: 'Far', start: START, end: END, createdAt: START, updatedAt: START })
-    const res = await Team.GET(req({ token: auth(), query: {} }))
+    const res = await call(Team, 'GET', req({ token: auth(), query: {} }))
     expect(res.every(e => e.ownerEmail !== 'far@other.com')).toBe(true)
   })
 })

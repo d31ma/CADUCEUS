@@ -1,11 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { randomBytes } from 'node:crypto'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { Handler as Config } from '@/routes/mcp/config/yon.js'
-import { Handler as Token } from '@/routes/mcp/token/yon.js'
-import { Handler as Audit } from '@/routes/mcp/audit/yon.js'
-import { Handler as Mcp } from '@/routes/mcp/yon.js'
+import { McpConfigController as Config } from '@/controllers/McpConfigController.js'
+import { McpTokenController as Token } from '@/controllers/McpTokenController.js'
+import { McpAuditController as Audit } from '@/controllers/McpAuditController.js'
+import { McpController as Mcp } from '@/controllers/McpController.js'
 import { FyloAccessContext } from '@/platform/persistence/FyloAccessContext.js'
+import { call } from '../support/controller-call.mjs'
 
 let app
 let firstToken = ''
@@ -24,8 +25,8 @@ afterAll(teardownRoutes)
 
 describe('mailbox-scoped MCP access boundary', () => {
   it('starts disabled, requires a SESAME session, and exposes no secret', async () => {
-    expect((await Config.GET(req())).unauthorized).toBe(true)
-    expect(await Config.GET(req({ token: token() }))).toEqual({
+    expect((await call(Config, 'GET', req())).unauthorized).toBe(true)
+    expect(await call(Config, 'GET', req({ token: token() }))).toEqual({
       enabled: false,
       accessLevel: 'read-only',
       allowedDomains: ['example.com'],
@@ -38,24 +39,24 @@ describe('mailbox-scoped MCP access boundary', () => {
   })
 
   it('rejects widened domains, unsafe exclusions, unknown fields, and empty enabled scope', async () => {
-    expect((await Config.PUT(req({ token: token(), body: { accessLevel: 'root' } }))).error).toContain('accessLevel')
-    expect((await Config.PUT(req({
+    expect((await call(Config, 'PUT', req({ token: token(), body: { accessLevel: 'root' } }))).error).toContain('accessLevel')
+    expect((await call(Config, 'PUT', req({
       token: token(),
       body: { allowedDomains: ['other.com'] },
     }))).forbidden).toBe(true)
-    expect((await Config.PUT(req({
+    expect((await call(Config, 'PUT', req({
       token: token(),
       body: { enabled: true, allowedDomains: [] },
     }))).error).toContain('At least one')
-    expect((await Config.PUT(req({
+    expect((await call(Config, 'PUT', req({
       token: token(),
       body: { excludedFolders: { 'example.com': ['../secret'] } },
     }))).error).toContain('safe bounded')
-    expect((await Config.PUT(req({ token: token(), body: { mystery: true } }))).error).toContain('unknown field')
+    expect((await call(Config, 'PUT', req({ token: token(), body: { mystery: true } }))).error).toContain('unknown field')
   })
 
   it('persists explicit account, access-level, and folder scope', async () => {
-    const result = await Config.PUT(req({ token: token(), body: {
+    const result = await call(Config, 'PUT', req({ token: token(), body: {
       enabled: true,
       accessLevel: 'read-write',
       allowedDomains: ['EXAMPLE.COM'],
@@ -71,7 +72,7 @@ describe('mailbox-scoped MCP access boundary', () => {
   })
 
   it('returns a capability once, stores only its hash, and rotates immediately', async () => {
-    const first = await Token.POST(req({ token: token() }))
+    const first = await call(Token, 'POST', req({ token: token() }))
     firstToken = first.token
     expect(firstToken).toMatch(/^mcp1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/)
     const records = await FyloAccessContext.runForDomain('example.com', () => app.mcpAccessTokens.listForOwner('alice@example.com'))
@@ -88,12 +89,12 @@ describe('mailbox-scoped MCP access boundary', () => {
     const altered = `${firstToken.slice(0, -1)}${firstToken.endsWith('A') ? 'B' : 'A'}`
     expect(await app.mcpAccess.authenticate(altered)).toBeNull()
 
-    const second = await Token.POST(req({ token: token() }))
+    const second = await call(Token, 'POST', req({ token: token() }))
     secondToken = second.token
     expect(secondToken).not.toBe(firstToken)
     expect(await app.mcpAccess.authenticate(firstToken)).toBeNull()
     expect(await app.mcpAccess.authenticate(secondToken)).not.toBeNull()
-    expect((await Config.GET(req({ token: token() }))).hasToken).toBe(true)
+    expect((await call(Config, 'GET', req({ token: token() }))).hasToken).toBe(true)
   })
 
   it('lists only redacted audit metadata and clears the exact owner log', async () => {
@@ -110,13 +111,13 @@ describe('mailbox-scoped MCP access boundary', () => {
       durationMs: 4,
       createdAt: new Date().toISOString(),
     }))
-    const entries = await Audit.GET(req({ token: token() }))
+    const entries = await call(Audit, 'GET', req({ token: token() }))
     expect(entries).toHaveLength(1)
     expect(entries[0]).toMatchObject({ toolName: 'search_mail', parameterKeys: ['limit', 'query'], resultCount: 2 })
     expect(entries[0]).not.toHaveProperty('ownerEmail')
     expect(entries[0]).not.toHaveProperty('parameterKeysJson')
-    expect((await Audit.DELETE(req({ token: token() }))).cleared).toBe(1)
-    expect(await Audit.GET(req({ token: token() }))).toEqual([])
+    expect((await call(Audit, 'DELETE', req({ token: token() }))).cleared).toBe(1)
+    expect(await call(Audit, 'GET', req({ token: token() }))).toEqual([])
   })
 
   it('serves the official stateless protocol and enforces tool access levels', async () => {
@@ -125,7 +126,7 @@ describe('mailbox-scoped MCP access boundary', () => {
       'content-type': 'application/json',
       accept: 'application/json, text/event-stream',
     }
-    const listResponse = await Mcp.POST(req({ headers, body: {
+    const listResponse = await call(Mcp, 'POST', req({ headers, body: {
       jsonrpc: '2.0', id: 1, method: 'tools/list', params: {},
     } }))
     expect(listResponse).toBeInstanceOf(Response)
@@ -136,7 +137,7 @@ describe('mailbox-scoped MCP access boundary', () => {
     expect(names).toContain('schedule_send')
     expect(names).toHaveLength(21)
 
-    const callResponse = await Mcp.POST(req({ headers, body: {
+    const callResponse = await call(Mcp, 'POST', req({ headers, body: {
       jsonrpc: '2.0', id: 2, method: 'tools/call',
       params: { name: 'list_accounts', arguments: {} },
     } }))
@@ -148,7 +149,7 @@ describe('mailbox-scoped MCP access boundary', () => {
 
     const message = email({ id: 'mcp-label-message', threadId: 'mcp-label-thread', labels: ['old'] })
     await app.emails.put(message)
-    const labelResponse = await Mcp.POST(req({ headers, body: {
+    const labelResponse = await call(Mcp, 'POST', req({ headers, body: {
       jsonrpc: '2.0', id: 21, method: 'tools/call',
       params: {
         name: 'set_labels',
@@ -160,7 +161,7 @@ describe('mailbox-scoped MCP access boundary', () => {
     expect(labeled.result.structuredContent).toEqual({ updatedThreads: 1, updatedMessages: 1 })
     expect((await app.emails.findById(message.id))[1]?.labels).toEqual(['projects/alpha', 'important'])
 
-    const invalidLabelResponse = await Mcp.POST(req({ headers, body: {
+    const invalidLabelResponse = await call(Mcp, 'POST', req({ headers, body: {
       jsonrpc: '2.0', id: 22, method: 'tools/call',
       params: {
         name: 'set_labels',
@@ -172,7 +173,7 @@ describe('mailbox-scoped MCP access boundary', () => {
     expect(invalidLabel.result.content[0].text).toContain('safe label path')
     expect((await app.emails.findById(message.id))[1]?.labels).toEqual(['projects/alpha', 'important'])
 
-    const duplicateLabelResponse = await Mcp.POST(req({ headers, body: {
+    const duplicateLabelResponse = await call(Mcp, 'POST', req({ headers, body: {
       jsonrpc: '2.0', id: 23, method: 'tools/call',
       params: {
         name: 'set_labels',
@@ -183,7 +184,7 @@ describe('mailbox-scoped MCP access boundary', () => {
     expect(duplicateLabel.result.isError).toBe(true)
     expect(duplicateLabel.result.content[0].text).toContain('labels must be unique')
 
-    const deniedResponse = await Mcp.POST(req({ headers, body: {
+    const deniedResponse = await call(Mcp, 'POST', req({ headers, body: {
       jsonrpc: '2.0', id: 3, method: 'tools/call',
       params: { name: 'send_draft', arguments: { draftId: 'missing' } },
     } }))
@@ -191,7 +192,7 @@ describe('mailbox-scoped MCP access boundary', () => {
     expect(denied.result.isError).toBe(true)
     expect(denied.result.content[0].text).toContain('does not permit send')
 
-    const unsafeFolderResponse = await Mcp.POST(req({ headers, body: {
+    const unsafeFolderResponse = await call(Mcp, 'POST', req({ headers, body: {
       jsonrpc: '2.0', id: 4, method: 'tools/call',
       params: {
         name: 'move_to_folder',
@@ -202,20 +203,20 @@ describe('mailbox-scoped MCP access boundary', () => {
     expect(unsafeFolder.result.isError).toBe(true)
     expect(unsafeFolder.result.content[0].text).toContain('safe folder path')
 
-    const missingType = await Mcp.POST(req({ headers: { authorization: `Bearer ${secondToken}` }, body: {} }))
+    const missingType = await call(Mcp, 'POST', req({ headers: { authorization: `Bearer ${secondToken}` }, body: {} }))
     expect(missingType.status).toBe(415)
-    const invalid = await Mcp.POST(req({ headers: { ...headers, authorization: 'Bearer invalid' }, body: {
+    const invalid = await call(Mcp, 'POST', req({ headers: { ...headers, authorization: 'Bearer invalid' }, body: {
       jsonrpc: '2.0', id: 5, method: 'tools/list', params: {},
     } }))
     expect(invalid.status).toBe(401)
   })
 
   it('revokes the active capability and disabling fails closed', async () => {
-    expect((await Token.DELETE(req({ token: token() }))).revoked).toBe(true)
+    expect((await call(Token, 'DELETE', req({ token: token() }))).revoked).toBe(true)
     expect(await app.mcpAccess.authenticate(secondToken)).toBeNull()
-    const third = await Token.POST(req({ token: token() }))
-    await Config.PUT(req({ token: token(), body: { enabled: false } }))
-    const config = await Config.GET(req({ token: token() }))
+    const third = await call(Token, 'POST', req({ token: token() }))
+    await call(Config, 'PUT', req({ token: token(), body: { enabled: false } }))
+    const config = await call(Config, 'GET', req({ token: token() }))
     expect(config).toMatchObject({ enabled: false, hasToken: true })
     const records = await FyloAccessContext.runForDomain('example.com', () => app.mcpAccessTokens.listForOwner('alice@example.com'))
     const active = records.find(record => record.active && !record.revokedAt)

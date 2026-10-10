@@ -1,5 +1,6 @@
 import { Fylo as BinaryFylo } from '../../deps/fylo.mjs'
 import { FyloAccessContext } from './FyloAccessContext.js'
+import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
 
 const FyloBase = /** @type {any} */ (BinaryFylo)
 
@@ -220,7 +221,7 @@ export const Buckets = {
  * @returns {Promise<Fylo>}
  */
 export async function createDb(root) {
-  const fyloRoot = root ?? process.env.FYLO_ROOT
+  const fyloRoot = root ?? ServerEnvironment.value('FYLO_ROOT')
   if (!fyloRoot) {
     throw new Error(
       'FYLO_ROOT environment variable is required. ' +
@@ -229,14 +230,14 @@ export async function createDb(root) {
     )
   }
 
-  const bridgeAddress = process.env.FYLO_BRIDGE_ADDRESS
-  const bridgeSecret = process.env.FYLO_BRIDGE_SECRET
-  if (process.env.NODE_ENV === 'production' && (!bridgeAddress || !bridgeSecret)) {
+  const bridgeAddress = ServerEnvironment.value('FYLO_BRIDGE_ADDRESS')
+  const bridgeSecret = ServerEnvironment.value('FYLO_BRIDGE_SECRET')
+  if (ServerEnvironment.value('NODE_ENV') === 'production' && (!bridgeAddress || !bridgeSecret)) {
     throw new Error(
       'Production persistence requires the Go-owned FYLO_BRIDGE_ADDRESS and FYLO_BRIDGE_SECRET'
     )
   }
-  const binary = process.env.FYLO_BINARY || process.env.FYLO_EXEC_PATH
+  const binary = ServerEnvironment.value('FYLO_BINARY') || ServerEnvironment.value('FYLO_EXEC_PATH')
   const options = bridgeAddress
     ? { bridgeAddress, bridgeSecret }
     : { ...(binary ? { binary } : {}), exclusiveRoot: true }

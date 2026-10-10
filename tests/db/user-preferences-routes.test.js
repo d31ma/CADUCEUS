@@ -1,10 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token as issue } from '../routes/helpers.js'
-import { Handler as PreferencesHandler } from '@/routes/users/me/preferences/yon.js'
+import { UsersMePreferencesController as PreferencesHandler } from '@/controllers/UsersMePreferencesController.js'
 import { DEFAULT_MAIL_PREFERENCES } from '@/features/users/services/mail-preferences.js'
+import { call } from '../support/controller-call.mjs'
 
-const getPreferences = (req) => PreferencesHandler.GET(req)
-const putPreferences = (req) => PreferencesHandler.PUT(req)
+const getPreferences = (req) => call(PreferencesHandler, 'GET', req)
+const putPreferences = (req) => call(PreferencesHandler, 'PUT', req)
 const defaultSounds = { 'new-mail': 'chime', 'hit-send': 'pop', send: 'pulse', confirm: 'bell' }
 const defaultThemes = { activeTheme: 'automatic', lightTheme: 'light', darkTheme: 'dark' }
 const nativeRoles = { inbox: 'inbox', sent: 'sent', drafts: 'drafts', spam: 'spam', archive: 'archive', trash: 'trash' }

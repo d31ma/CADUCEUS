@@ -1,5 +1,6 @@
 import { createConnection } from 'node:net'
 import { createHmac, randomBytes } from 'node:crypto'
+import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
 
 /**
  * Transport to the Go authentication and authorization boundary.
@@ -46,7 +47,7 @@ export class AuthBridgeError extends Error {
 
 /** @returns {{ host: string, port: number } | null} */
 function endpoint() {
-  const address = process.env.FYLO_BRIDGE_ADDRESS
+  const address = ServerEnvironment.value('FYLO_BRIDGE_ADDRESS')
   if (!address) return null
   const match = /^\[(.+)\]:(\d+)$/.exec(address) ?? /^([^:]+):(\d+)$/.exec(address)
   if (!match) return null
@@ -66,7 +67,7 @@ function endpoint() {
 export function boundaryCall(op, params = {}, limits = {}) {
   return new Promise((resolve, reject) => {
     const target = endpoint()
-    const secret = process.env.FYLO_BRIDGE_SECRET
+    const secret = ServerEnvironment.value('FYLO_BRIDGE_SECRET')
     if (!target || typeof secret !== 'string' || Buffer.byteLength(secret) < 32) {
       reject(new AuthBridgeError(
         'EUNAVAILABLE',

@@ -1,15 +1,16 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { Handler as Detail } from '@/routes/inbox/_id/yon.js'
-import { Handler as Spam } from '@/routes/inbox/_id/spam/yon.js'
-import { Handler as Attachment } from '@/routes/inbox/_id/attachments/_attachment_id/yon.js'
-import { Handler as Source } from '@/routes/inbox/_id/source/yon.js'
-import { Handler as RemoteImages } from '@/routes/inbox/_id/images/yon.js'
-import { Handler as ExportSources } from '@/routes/inbox/export/rfc822/yon.js'
-import { Handler as ImportEml } from '@/routes/inbox/import/eml/yon.js'
-import { Handler as Search } from '@/routes/search/yon.js'
-import { Handler as Threads } from '@/routes/threads/yon.js'
+import { InboxIdController as Detail } from '@/controllers/InboxIdController.js'
+import { InboxIdSpamController as Spam } from '@/controllers/InboxIdSpamController.js'
+import { InboxIdAttachmentsAttachmentIdController as Attachment } from '@/controllers/InboxIdAttachmentsAttachmentIdController.js'
+import { InboxIdSourceController as Source } from '@/controllers/InboxIdSourceController.js'
+import { InboxIdImagesController as RemoteImages } from '@/controllers/InboxIdImagesController.js'
+import { InboxExportRfc822Controller as ExportSources } from '@/controllers/InboxExportRfc822Controller.js'
+import { InboxImportEmlController as ImportEml } from '@/controllers/InboxImportEmlController.js'
+import { SearchController as Search } from '@/controllers/SearchController.js'
+import { ThreadsController as Threads } from '@/controllers/ThreadsController.js'
 import { writeMboxFromFrameStream } from '../../client/shared/scripts/mbox.js'
+import { call } from '../support/controller-call.mjs'
 
 let app
 /** SSE route: its window/poll constants are read at module load, so import it
@@ -22,29 +23,29 @@ beforeAll(async () => {
   app = await setupRoutes()
   process.env.STREAM_MAX_MS = '5'
   process.env.STREAM_POLL_MS = '1'
-  Stream = (await import('@/routes/inbox/stream/yon.js')).Handler
+  Stream = (await import('@/controllers/InboxStreamController.js')).InboxStreamController
 }, 300_000)
 afterAll(teardownRoutes)
 
 describe('GET /inbox/:id', () => {
   it('404s without an id', async () => {
-    expect((await Detail.GET(req({ token: auth() }))).notFound).toBe(true)
+    expect((await call(Detail, 'GET', req({ token: auth() }))).notFound).toBe(true)
   })
 
   it('404s for an unknown id', async () => {
-    const res = await Detail.GET(req({ token: auth(), paths: { id: 'nope' } }))
+    const res = await call(Detail, 'GET', req({ token: auth(), paths: { id: 'nope' } }))
     expect(res.notFound).toBe(true)
   })
 
   it('403s when the email is outside the caller domains', async () => {
     await app.emails.put(email({ id: 'g1' }))
-    const res = await Detail.GET(req({ token: foreign(), paths: { id: 'g1' } }))
+    const res = await call(Detail, 'GET', req({ token: foreign(), paths: { id: 'g1' } }))
     expect(res.forbidden).toBe(true)
   })
 
   it('returns the email with attachments and no invite', async () => {
     await app.emails.put(email({ id: 'g2', subject: 'Report' }))
-    const res = await Detail.GET(req({ token: auth(), paths: { id: 'g2' } }))
+    const res = await call(Detail, 'GET', req({ token: auth(), paths: { id: 'g2' } }))
     expect(res.subject).toBe('Report')
     expect(res.attachments).toEqual([])
     expect(res.calendarInvite).toBeNull()
@@ -57,7 +58,7 @@ describe('GET /inbox/:id', () => {
       recipient: 'bob@example.com',
       subject: 'Bob tenant secret',
     }))
-    const res = await Detail.GET(req({ token: auth(), paths: { id: 'same-domain-private-detail' } }))
+    const res = await call(Detail, 'GET', req({ token: auth(), paths: { id: 'same-domain-private-detail' } }))
     expect(res.notFound).toBe(true)
   })
 
@@ -76,7 +77,7 @@ describe('GET /inbox/:id', () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
-    const res = await Detail.GET(req({ token: auth(), paths: { id: 'g3' } }))
+    const res = await call(Detail, 'GET', req({ token: auth(), paths: { id: 'g3' } }))
     expect(res.calendarInvite.title).toBe('Standup')
     expect(res.calendarInvite.myStatus).toBe('tentative')
   })
@@ -94,7 +95,7 @@ describe('GET /inbox/:id', () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
-    const res = await Detail.GET(req({ token: auth(), paths: { id: 'g4' } }))
+    const res = await call(Detail, 'GET', req({ token: auth(), paths: { id: 'g4' } }))
     expect(res.calendarInvite.myStatus).toBe('needsAction')
     expect(res.calendarInvite.location).toBe('')
   })
@@ -123,7 +124,7 @@ describe('GET /inbox/:id', () => {
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     })
 
-    const res = await Detail.GET(req({ token: auth(), paths: { id: 'g-calendar-attachment' } }))
+    const res = await call(Detail, 'GET', req({ token: auth(), paths: { id: 'g-calendar-attachment' } }))
     expect(res.calendarInvite.attachment).toEqual({
       id: saved[1].id, filename: 'event.ics', contentType: 'application/octet-stream', size: bytes.length,
     })
@@ -150,7 +151,7 @@ describe('GET /inbox/:id', () => {
       source: 'invite', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     })
 
-    const res = await Detail.GET(req({ token: auth(), paths: { id: 'g-calendar-reply' } }))
+    const res = await call(Detail, 'GET', req({ token: auth(), paths: { id: 'g-calendar-reply' } }))
     expect(res.calendarInvite.messageMethod).toBe('REPLY')
     expect(res.calendarInvite.canRespond).toBe(false)
     expect(res.calendarInvite.senderResponse).toEqual({ email: 'carol@other.com', name: 'Carol', status: 'declined' })
@@ -168,9 +169,9 @@ describe('GET /inbox/:id', () => {
       sender: 'notifications@github.com.evil.test',
       htmlBody: '<a href="https://github.com/acme/widget/issues/42">View it on GitHub</a>',
     }))
-    expect((await Detail.GET(req({ token: auth(), paths: { id: 'g5' } }))).githubUrl)
+    expect((await call(Detail, 'GET', req({ token: auth(), paths: { id: 'g5' } }))).githubUrl)
       .toBe('https://github.com/acme/widget/issues/42')
-    expect((await Detail.GET(req({ token: auth(), paths: { id: 'g6' } }))).githubUrl).toBeUndefined()
+    expect((await call(Detail, 'GET', req({ token: auth(), paths: { id: 'g6' } }))).githubUrl).toBeUndefined()
   })
 })
 
@@ -213,22 +214,22 @@ describe('Detail.parsePatch', () => {
 
 describe('PUT /inbox/:id', () => {
   it('404s without an id', async () => {
-    expect((await Detail.PUT(req({ token: auth(), body: { read: true } }))).notFound).toBe(true)
+    expect((await call(Detail, 'PUT', req({ token: auth(), body: { read: true } }))).notFound).toBe(true)
   })
 
   it('400s on an invalid patch', async () => {
-    const res = await Detail.PUT(req({ token: auth(), paths: { id: 'x' }, body: {} }))
+    const res = await call(Detail, 'PUT', req({ token: auth(), paths: { id: 'x' }, body: {} }))
     expect(res.error).toMatch(/No supported fields/)
   })
 
   it('404s for an unknown email', async () => {
-    const res = await Detail.PUT(req({ token: auth(), paths: { id: 'gone' }, body: { read: true } }))
+    const res = await call(Detail, 'PUT', req({ token: auth(), paths: { id: 'gone' }, body: { read: true } }))
     expect(res.notFound).toBe(true)
   })
 
   it('403s across domains', async () => {
     await app.emails.put(email({ id: 'p1' }))
-    const res = await Detail.PUT(req({ token: foreign(), paths: { id: 'p1' }, body: { read: true } }))
+    const res = await call(Detail, 'PUT', req({ token: foreign(), paths: { id: 'p1' }, body: { read: true } }))
     expect(res.forbidden).toBe(true)
   })
 
@@ -238,7 +239,7 @@ describe('PUT /inbox/:id', () => {
       sender: 'notifications@github.com',
       htmlBody: '<a href="https://github.com/acme/widget/issues/42">View it on GitHub</a>',
     }))
-    const res = await Detail.PUT(req({ token: auth(), paths: { id: 'p2' }, body: { read: true, starred: true } }))
+    const res = await call(Detail, 'PUT', req({ token: auth(), paths: { id: 'p2' }, body: { read: true, starred: true } }))
     expect(res.read).toBe(true)
     expect(res.starred).toBe(true)
     expect(res.githubUrl).toBe('https://github.com/acme/widget/issues/42')
@@ -250,22 +251,22 @@ describe('PUT /inbox/:id', () => {
 
 describe('DELETE /inbox/:id', () => {
   it('404s without an id', async () => {
-    expect((await Detail.DELETE(req({ token: auth() }))).notFound).toBe(true)
+    expect((await call(Detail, 'DELETE', req({ token: auth() }))).notFound).toBe(true)
   })
 
   it('404s for an unknown email', async () => {
-    expect((await Detail.DELETE(req({ token: auth(), paths: { id: 'gone' } }))).notFound).toBe(true)
+    expect((await call(Detail, 'DELETE', req({ token: auth(), paths: { id: 'gone' } }))).notFound).toBe(true)
   })
 
   it('403s across domains', async () => {
     await app.emails.put(email({ id: 'd1' }))
-    const res = await Detail.DELETE(req({ token: foreign(), paths: { id: 'd1' } }))
+    const res = await call(Detail, 'DELETE', req({ token: foreign(), paths: { id: 'd1' } }))
     expect(res.forbidden).toBe(true)
   })
 
   it('deletes the email', async () => {
     await app.emails.put(email({ id: 'd2' }))
-    const res = await Detail.DELETE(req({ token: auth(), paths: { id: 'd2' } }))
+    const res = await call(Detail, 'DELETE', req({ token: auth(), paths: { id: 'd2' } }))
     expect(res.deleted).toBe('d2')
     const [docId] = await app.emails.findById('d2')
     expect(docId).toBeNull()
@@ -274,35 +275,35 @@ describe('DELETE /inbox/:id', () => {
 
 describe('PUT /inbox/:id/spam', () => {
   it('404s without an id', async () => {
-    expect((await Spam.PUT(req({ token: auth(), body: { spam: true } }))).notFound).toBe(true)
+    expect((await call(Spam, 'PUT', req({ token: auth(), body: { spam: true } }))).notFound).toBe(true)
   })
 
   it('400s when spam is not a boolean', async () => {
-    const res = await Spam.PUT(req({ token: auth(), paths: { id: 's1' }, body: { spam: 'yes' } }))
+    const res = await call(Spam, 'PUT', req({ token: auth(), paths: { id: 's1' }, body: { spam: 'yes' } }))
     expect(res.error).toMatch(/boolean/)
   })
 
   it('404s for an unknown email', async () => {
-    const res = await Spam.PUT(req({ token: auth(), paths: { id: 'gone' }, body: { spam: true } }))
+    const res = await call(Spam, 'PUT', req({ token: auth(), paths: { id: 'gone' }, body: { spam: true } }))
     expect(res.notFound).toBe(true)
   })
 
   it('403s across domains', async () => {
     await app.emails.put(email({ id: 's2' }))
-    const res = await Spam.PUT(req({ token: foreign(), paths: { id: 's2' }, body: { spam: true } }))
+    const res = await call(Spam, 'PUT', req({ token: foreign(), paths: { id: 's2' }, body: { spam: true } }))
     expect(res.forbidden).toBe(true)
   })
 
   it('moves a reported email to spam', async () => {
     await app.emails.put(email({ id: 's3' }))
-    const res = await Spam.PUT(req({ token: auth(), paths: { id: 's3' }, body: { spam: true } }))
+    const res = await call(Spam, 'PUT', req({ token: auth(), paths: { id: 's3' }, body: { spam: true } }))
     expect(res.folder).toBe('spam')
     expect(res.spamReasons).toEqual(['user-reported'])
   })
 
   it('restores a not-spam email and clears spam metadata', async () => {
     await app.emails.put(email({ id: 's4', folder: 'spam', spamScore: 9, spamReasons: ['bayes'] }))
-    const res = await Spam.PUT(req({ token: auth(), paths: { id: 's4' }, body: { spam: false } }))
+    const res = await call(Spam, 'PUT', req({ token: auth(), paths: { id: 's4' }, body: { spam: false } }))
     expect(res.folder).toBe('inbox')
     expect(res.spamScore).toBeUndefined()
     expect(res.spamReasons).toBeUndefined()
@@ -311,15 +312,15 @@ describe('PUT /inbox/:id/spam', () => {
 
 describe('GET /inbox/:id/source', () => {
   it('requires an existing email and retained source', async () => {
-    expect((await Source.GET(req({ token: auth(), paths: { id: 'missing' } }))).notFound).toBe(true)
+    expect((await call(Source, 'GET', req({ token: auth(), paths: { id: 'missing' } }))).notFound).toBe(true)
     await app.emails.put(email({ id: 'source-none' }))
-    expect((await Source.GET(req({ token: auth(), paths: { id: 'source-none' } }))).notFound).toBe(true)
+    expect((await call(Source, 'GET', req({ token: auth(), paths: { id: 'source-none' } }))).notFound).toBe(true)
   })
 
   it('does not expose source across mailbox domains', async () => {
     await app.emails.put(email({ id: 'source-private' }))
     await app.rawMessages.saveForEmail('source-private', 'example.com', 'Subject: Private\r\n\r\nSecret')
-    const result = await Source.GET(req({ token: foreign(), paths: { id: 'source-private' } }))
+    const result = await call(Source, 'GET', req({ token: foreign(), paths: { id: 'source-private' } }))
     expect(result.forbidden).toBe(true)
   })
 
@@ -327,10 +328,10 @@ describe('GET /inbox/:id/source', () => {
     const source = 'From: bob@other.com\r\nSubject: Original\r\n\r\nExact body\r\n'
     await app.emails.put(email({ id: 'source-ok', subject: 'Original / message' }))
     await app.rawMessages.saveForEmail('source-ok', 'example.com', source)
-    const detail = await Detail.GET(req({ token: auth(), paths: { id: 'source-ok' } }))
+    const detail = await call(Detail, 'GET', req({ token: auth(), paths: { id: 'source-ok' } }))
     expect(detail.hasRawSource).toBe(true)
 
-    const result = await Source.GET(req({ token: auth(), paths: { id: 'source-ok' } }))
+    const result = await call(Source, 'GET', req({ token: auth(), paths: { id: 'source-ok' } }))
     expect(result.contentType).toBe('message/rfc822')
     expect(result.filename).toBe('Original - message.eml')
     expect(Buffer.from(result.contentBase64, 'base64').toString()).toBe(source)
@@ -339,13 +340,13 @@ describe('GET /inbox/:id/source', () => {
 })
 
 describe('POST /inbox/:id/images', () => {
-  const originalFetchImage = RemoteImages.fetchImage
+  const originalFetchImage = RemoteImages._fetchImage
 
-  afterAll(() => { RemoteImages.fetchImage = originalFetchImage })
+  afterAll(() => { RemoteImages._fetchImage = originalFetchImage })
 
   it('requires a bounded URL list and an existing exact-owner message', async () => {
-    expect((await RemoteImages.POST(req({ token: auth(), paths: { id: 'missing' }, body: { urls: [] } }))).error).toMatch(/between 1 and 6/)
-    expect((await RemoteImages.POST(req({ token: auth(), paths: { id: 'missing' }, body: { urls: ['https://images.example/a.png'] } }))).notFound).toBe(true)
+    expect((await call(RemoteImages, 'POST', req({ token: auth(), paths: { id: 'missing' }, body: { urls: [] } }))).error).toMatch(/between 1 and 6/)
+    expect((await call(RemoteImages, 'POST', req({ token: auth(), paths: { id: 'missing' }, body: { urls: ['https://images.example/a.png'] } }))).notFound).toBe(true)
 
     await app.emails.put(email({
       id: 'remote-image-private',
@@ -353,7 +354,7 @@ describe('POST /inbox/:id/images', () => {
       recipient: 'bob@example.com',
       htmlBody: '<img src="https://images.example/a.png">',
     }))
-    expect((await RemoteImages.POST(req({
+    expect((await call(RemoteImages, 'POST', req({
       token: auth(), paths: { id: 'remote-image-private' }, body: { urls: ['https://images.example/a.png'] },
     }))).notFound).toBe(true)
   })
@@ -365,17 +366,17 @@ describe('POST /inbox/:id/images', () => {
       id: 'remote-image-owned',
       htmlBody: `<img src="${good}"><div style="background:url('${failed}')"></div>`,
     }))
-    RemoteImages.fetchImage = async url => {
+    RemoteImages._fetchImage = async url => {
       if (url === failed) throw new Error('upstream unavailable')
       return { url, contentType: 'image/png', contentBase64: 'iVBORw0KGgo=', size: 8 }
     }
 
-    const rejected = await RemoteImages.POST(req({
+    const rejected = await call(RemoteImages, 'POST', req({
       token: auth(), paths: { id: 'remote-image-owned' }, body: { urls: ['https://unrelated.example/a.png'] },
     }))
     expect(rejected.error).toMatch(/from this message/)
 
-    const response = await RemoteImages.POST(req({
+    const response = await call(RemoteImages, 'POST', req({
       token: auth(), paths: { id: 'remote-image-owned' }, body: { urls: [good, failed, good] },
     }))
     expect(response).toEqual({
@@ -402,7 +403,7 @@ describe('GET /inbox/export/rfc822', () => {
     await app.rawMessages.saveForEmail('mbox-first', 'example.com', first)
     await app.rawMessages.saveForEmail('mbox-second', 'example.com', second)
 
-    const response = await ExportSources.GET(req({
+    const response = await call(ExportSources, 'GET', req({
       token: auth(),
       query: { folder: 'archive', domain: 'example.com' },
     }))
@@ -418,12 +419,12 @@ describe('GET /inbox/export/rfc822', () => {
   })
 
   it('rejects malformed folders and cross-domain export attempts', async () => {
-    const invalid = await ExportSources.GET(req({
+    const invalid = await call(ExportSources, 'GET', req({
       token: auth(), query: { folder: '../inbox', domain: 'example.com' },
     }))
     expect(invalid.error).toMatch(/folder is invalid/)
 
-    const denied = await ExportSources.GET(req({
+    const denied = await call(ExportSources, 'GET', req({
       token: foreign(), query: { folder: 'inbox', domain: 'example.com' },
     }))
     expect(denied.forbidden).toBe(true)
@@ -455,7 +456,7 @@ describe('POST /inbox/import/eml', () => {
       '',
     ].join('\r\n')
 
-    const result = await ImportEml.POST(req({
+    const result = await call(ImportEml, 'POST', req({
       token: auth(),
       body: {
         mailbox: 'alice@example.com',
@@ -480,13 +481,13 @@ describe('POST /inbox/import/eml', () => {
   })
 
   it('rejects malformed files, drafts, and mailboxes outside caller authority', async () => {
-    const malformed = await ImportEml.POST(req({
+    const malformed = await call(ImportEml, 'POST', req({
       token: auth(),
       body: { mailbox: 'alice@example.com', folder: 'inbox', contentBase64: Buffer.from('not mail').toString('base64') },
     }))
     expect(malformed.error).toMatch(/not a recognizable/)
 
-    const draft = await ImportEml.POST(req({
+    const draft = await call(ImportEml, 'POST', req({
       token: auth(),
       body: {
         mailbox: 'alice@example.com', folder: 'drafts',
@@ -495,7 +496,7 @@ describe('POST /inbox/import/eml', () => {
     }))
     expect(draft.error).toMatch(/cannot be imported as drafts/)
 
-    const denied = await ImportEml.POST(req({
+    const denied = await call(ImportEml, 'POST', req({
       token: foreign(),
       body: {
         mailbox: 'alice@example.com', folder: 'inbox',
@@ -508,23 +509,23 @@ describe('POST /inbox/import/eml', () => {
 
 describe('GET /inbox/:id/attachments/:attachmentId', () => {
   it('404s without ids', async () => {
-    expect((await Attachment.GET(req({ token: auth() }))).notFound).toBe(true)
+    expect((await call(Attachment, 'GET', req({ token: auth() }))).notFound).toBe(true)
   })
 
   it('404s for an unknown email', async () => {
-    const res = await Attachment.GET(req({ token: auth(), paths: { id: 'gone', attachment_id: 'a' } }))
+    const res = await call(Attachment, 'GET', req({ token: auth(), paths: { id: 'gone', attachment_id: 'a' } }))
     expect(res.notFound).toBe(true)
   })
 
   it('403s across domains', async () => {
     await app.emails.put(email({ id: 'a1' }))
-    const res = await Attachment.GET(req({ token: foreign(), paths: { id: 'a1', attachment_id: 'x' } }))
+    const res = await call(Attachment, 'GET', req({ token: foreign(), paths: { id: 'a1', attachment_id: 'x' } }))
     expect(res.forbidden).toBe(true)
   })
 
   it('404s when the attachment belongs to another email', async () => {
     await app.emails.put(email({ id: 'a2' }))
-    const res = await Attachment.GET(req({ token: auth(), paths: { id: 'a2', attachment_id: 'missing' } }))
+    const res = await call(Attachment, 'GET', req({ token: auth(), paths: { id: 'a2', attachment_id: 'missing' } }))
     expect(res.notFound).toBe(true)
   })
 
@@ -535,7 +536,7 @@ describe('GET /inbox/:id/attachments/:attachmentId', () => {
       contentType: 'text/plain',
       content: Buffer.from('hello'),
     }])
-    const res = await Attachment.GET(req({ token: auth(), paths: { id: 'a3', attachment_id: saved.id } }))
+    const res = await call(Attachment, 'GET', req({ token: auth(), paths: { id: 'a3', attachment_id: saved.id } }))
     expect(res.filename).toBe('note.txt')
     expect(Buffer.from(res.contentBase64, 'base64').toString()).toBe('hello')
   })
@@ -543,50 +544,50 @@ describe('GET /inbox/:id/attachments/:attachmentId', () => {
 
 describe('GET /search', () => {
   it('requires auth', async () => {
-    expect((await Search.GET(req())).unauthorized).toBe(true)
+    expect((await call(Search, 'GET', req())).unauthorized).toBe(true)
   })
 
   it('returns everything for an empty query', async () => {
-    const res = await Search.GET(req({ token: auth(), query: {} }))
+    const res = await call(Search, 'GET', req({ token: auth(), query: {} }))
     expect(Array.isArray(res)).toBe(true)
   })
 
   it('filters by sender', async () => {
     await app.emails.put(email({ id: 'q1', sender: 'carol@other.com', subject: 'Invoice' }))
-    const res = await Search.GET(req({ token: auth(), query: { q: 'from:carol@other.com' } }))
+    const res = await call(Search, 'GET', req({ token: auth(), query: { q: 'from:carol@other.com' } }))
     expect(res.map(e => e.id)).toContain('q1')
   })
 
   it('excludes trash and spam from ordinary searches unless in: is explicit', async () => {
     const suffix = Date.now().toString(36)
     await app.emails.put(email({ id: `search-trash-${suffix}`, subject: `Discarded ${suffix}`, folder: 'trash' }))
-    const ordinary = await Search.GET(req({ token: auth(), query: { q: `Discarded ${suffix}` } }))
+    const ordinary = await call(Search, 'GET', req({ token: auth(), query: { q: `Discarded ${suffix}` } }))
     expect(ordinary.map(item => item.id)).not.toContain(`search-trash-${suffix}`)
-    const explicit = await Search.GET(req({ token: auth(), query: { q: `Discarded ${suffix} in:trash` } }))
+    const explicit = await call(Search, 'GET', req({ token: auth(), query: { q: `Discarded ${suffix} in:trash` } }))
     expect(explicit.map(item => item.id)).toContain(`search-trash-${suffix}`)
   })
 
   it('filters by unread and starred flags', async () => {
     await app.emails.put(email({ id: 'q2', starred: true, read: false, subject: 'Pinned' }))
-    const res = await Search.GET(req({ token: auth(), query: { q: 'is:unread is:starred Pinned' } }))
+    const res = await call(Search, 'GET', req({ token: auth(), query: { q: 'is:unread is:starred Pinned' } }))
     expect(res.map(e => e.id)).toContain('q2')
   })
 
   it('honours has:attachment', async () => {
-    const res = await Search.GET(req({ token: auth(), query: { q: 'has:attachment' } }))
+    const res = await call(Search, 'GET', req({ token: auth(), query: { q: 'has:attachment' } }))
     expect(res.every(e => e.id !== 'q2')).toBe(true)
   })
 
   it('clips results with before: and after:', async () => {
     await app.emails.put(email({ id: 'q3', receivedAt: '2020-01-01T00:00:00.000Z', subject: 'Old' }))
-    const before = await Search.GET(req({ token: auth(), query: { q: 'Old before:2021-01-01' } }))
+    const before = await call(Search, 'GET', req({ token: auth(), query: { q: 'Old before:2021-01-01' } }))
     expect(before.map(e => e.id)).toContain('q3')
-    const after = await Search.GET(req({ token: auth(), query: { q: 'Old after:2021-01-01' } }))
+    const after = await call(Search, 'GET', req({ token: auth(), query: { q: 'Old after:2021-01-01' } }))
     expect(after.map(e => e.id)).not.toContain('q3')
   })
 
   it('ignores unparseable before:/after: dates', async () => {
-    const res = await Search.GET(req({ token: auth(), query: { q: 'before:notadate after:alsonot' } }))
+    const res = await call(Search, 'GET', req({ token: auth(), query: { q: 'before:notadate after:alsonot' } }))
     expect(Array.isArray(res)).toBe(true)
   })
 
@@ -598,7 +599,7 @@ describe('GET /search', () => {
       folder: 'archive', read: true, starred: false,
     }))
     const query = `(from:grace OR from:ada) "launch checklist" in:archive is:read is:unstarred NOT in:trash`
-    const res = await Search.GET(req({ token: auth(), query: { q: query } }))
+    const res = await call(Search, 'GET', req({ token: auth(), query: { q: query } }))
     expect(res.map(item => item.id)).toContain(`search-grammar-${suffix}`)
   })
 
@@ -611,33 +612,33 @@ describe('GET /search', () => {
       id: 'search-account-other', ownerEmail: 'alice@example.com', domain: 'other.com',
       recipient: 'alice@example.com', subject: 'Account scoped needle',
     }))
-    const scoped = await Search.GET(req({
+    const scoped = await call(Search, 'GET', req({
       token: token({ email: 'alice@example.com', domains: ['example.com', 'other.com'] }),
       query: { q: '"Account scoped needle"', domain: 'example.com' },
     }))
     expect(scoped.map(item => item.id)).toContain('search-account-example')
     expect(scoped.map(item => item.id)).not.toContain('search-account-other')
-    const forbidden = await Search.GET(req({ token: auth(), query: { q: 'needle', domain: 'other.com' } }))
+    const forbidden = await call(Search, 'GET', req({ token: auth(), query: { q: 'needle', domain: 'other.com' } }))
     expect(forbidden.forbidden).toBe(true)
   })
 
   it('bounds query and result sizes and falls back to literal full-text search on syntax errors', async () => {
-    const tooLong = await Search.GET(req({ token: auth(), query: { q: 'x'.repeat(2001) } }))
+    const tooLong = await call(Search, 'GET', req({ token: auth(), query: { q: 'x'.repeat(2001) } }))
     expect(tooLong.error).toMatch(/2,000/)
-    const badLimit = await Search.GET(req({ token: auth(), query: { limit: '0' } }))
+    const badLimit = await call(Search, 'GET', req({ token: auth(), query: { limit: '0' } }))
     expect(badLimit.error).toMatch(/limit/i)
-    const malformed = await Search.GET(req({ token: auth(), query: { q: 'subject:"unterminated' } }))
+    const malformed = await call(Search, 'GET', req({ token: auth(), query: { q: 'subject:"unterminated' } }))
     expect(Array.isArray(malformed)).toBe(true)
   })
 })
 
 describe('GET /threads', () => {
   it('requires auth', async () => {
-    expect((await Threads.GET(req())).unauthorized).toBe(true)
+    expect((await call(Threads, 'GET', req())).unauthorized).toBe(true)
   })
 
   it('lists threads for the default folder', async () => {
-    const res = await Threads.GET(req({ token: auth(), query: {} }))
+    const res = await call(Threads, 'GET', req({ token: auth(), query: {} }))
     expect(Array.isArray(res)).toBe(true)
   })
 
@@ -657,7 +658,7 @@ describe('GET /threads', () => {
       receivedAt: '2026-01-01T11:00:00.000Z',
     }))
 
-    const res = await Threads.GET(req({
+    const res = await call(Threads, 'GET', req({
       token: auth(),
       query: { q: `(from:grace OR from:ada) "launch checklist" in:archive NOT is:unread` },
     }))
@@ -669,18 +670,18 @@ describe('GET /threads', () => {
   })
 
   it('enforces account scope and search input bounds for threaded results', async () => {
-    const scoped = await Threads.GET(req({
+    const scoped = await call(Threads, 'GET', req({
       token: auth(), query: { q: 'Compiler', domain: 'example.com', limit: '1' },
     }))
     expect(scoped.length).toBeLessThanOrEqual(1)
     expect(scoped.flatMap(item => item.emails).every(item => item.domain === 'example.com')).toBe(true)
-    expect((await Threads.GET(req({
+    expect((await call(Threads, 'GET', req({
       token: auth(), query: { q: 'Compiler', domain: 'other.com' },
     }))).forbidden).toBe(true)
-    expect((await Threads.GET(req({
+    expect((await call(Threads, 'GET', req({
       token: auth(), query: { q: 'x'.repeat(2001) },
     }))).error).toMatch(/2,000/)
-    expect((await Threads.GET(req({ token: auth(), query: { limit: '0' } }))).error).toMatch(/limit/i)
+    expect((await call(Threads, 'GET', req({ token: auth(), query: { limit: '0' } }))).error).toMatch(/limit/i)
   })
 
   it('classifies direct, group, and list conversations for the authenticated mailbox', async () => {
@@ -705,7 +706,7 @@ describe('GET /threads', () => {
       to: ['staff@example.net'],
     }))
 
-    const res = await Threads.GET(req({ token: auth(), query: { folder: 'inbox' } }))
+    const res = await call(Threads, 'GET', req({ token: auth(), query: { folder: 'inbox' } }))
     const only = res.find(thread => thread.id === 'c'.repeat(64))
     const group = res.find(thread => thread.id === 'd'.repeat(64))
     const list = res.find(thread => thread.id === 'e'.repeat(64))
@@ -759,7 +760,7 @@ describe('GET /threads', () => {
       receivedAt: '2026-01-01T13:00:00.000Z',
     }))
 
-    const res = await Threads.GET(req({ token: auth(), query: { emailId: 'print-inbox' } }))
+    const res = await call(Threads, 'GET', req({ token: auth(), query: { emailId: 'print-inbox' } }))
 
     expect(res).toHaveLength(1)
     expect(res[0].emails.map(message => message.id)).toEqual([
@@ -790,12 +791,12 @@ describe('GET /threads', () => {
       threadId: 'b'.repeat(64), receivedAt: '2026-02-01T12:00:00.000Z',
     }))
 
-    const selected = await Threads.GET(req({ token: auth(), query: { emailId: 'rfc-reply' } }))
+    const selected = await call(Threads, 'GET', req({ token: auth(), query: { emailId: 'rfc-reply' } }))
     expect(selected).toHaveLength(1)
     expect(selected[0].id).toBe(threadId)
     expect(selected[0].emails.map(message => message.id)).toEqual(['rfc-root', 'rfc-reply'])
 
-    const inbox = await Threads.GET(req({ token: auth(), query: { folder: 'inbox' } }))
+    const inbox = await call(Threads, 'GET', req({ token: auth(), query: { folder: 'inbox' } }))
     const matching = inbox.filter(thread => thread.subject === subject)
     expect(matching).toHaveLength(2)
   })
@@ -809,53 +810,60 @@ describe('GET /threads', () => {
       subject,
     }))
 
-    expect(await Threads.GET(req({ token: auth(), query: { emailId: 'print-only-foreign' } })))
+    expect(await call(Threads, 'GET', req({ token: auth(), query: { emailId: 'print-only-foreign' } })))
       .toEqual([])
   })
 })
 
+/** @param {Record<string, string>} query */
+function streamOf(query) {
+  const url = new URL('http://caduceus.test/inbox/stream')
+  for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value)
+  return new Stream().streamInbox(new Request(url))
+}
+
 describe('GET /inbox/stream', () => {
   it('emits an unauthorized event without a token', async () => {
     const frames = []
-    for await (const frame of await Stream.GET({ query: {}, context: {} })) frames.push(frame)
-    expect(frames.join('')).toContain('event: unauthorized')
+    for await (const frame of streamOf({})) frames.push(frame)
+    expect(frames.map(frame => frame.event)).toEqual(['unauthorized'])
   })
 
   it('accepts a token via the query string and replays fresh mail', async () => {
     const since = new Date(Date.now() - 60_000).toISOString()
     await app.emails.put(email({ id: 'st1', receivedAt: new Date().toISOString() }))
     const frames = []
-    for await (const frame of await Stream.GET({ query: { token: auth(), since }, context: {} })) frames.push(frame)
-    const out = frames.join('')
-    expect(out).toContain('event: connected')
-    expect(out).toContain('event: reconnect')
+    for await (const frame of streamOf({ token: auth(), since })) frames.push(frame)
+    const events = frames.map(frame => frame.event)
+    expect(events).toContain('connected')
+    expect(events).toContain('reconnect')
   })
 
-  it('formats an SSE frame with and without an id', () => {
-    expect(Stream.sse('ping', { a: 1 }, '7')).toBe('id: 7\nevent: ping\ndata: {"a":1}\n\n')
-    expect(Stream.sse('', { a: 1 }, null)).toBe('data: {"a":1}\n\n')
+  it('builds a stream message with and without a cursor', () => {
+    expect(Stream._sse('ping', { a: 1 }, '7')).toEqual({ event: 'ping', data: { a: 1 }, cursor: '7' })
+    expect(Stream._sse('new-email', { a: 1 }, null)).toEqual({ event: 'new-email', data: { a: 1 }, cursor: null })
   })
 
   it('summarises an email without body or attachments', () => {
-    const s = Stream.summarize({ ...email({ id: 'sum' }), spamScore: 4 })
+    const s = Stream._summarize({ ...email({ id: 'sum' }), spamScore: 4 })
     expect(s.body).toBeUndefined()
     expect(s.spamScore).toBe(4)
-    expect(Stream.summarize(email({ id: 'sum2' })).spamScore).toBeUndefined()
+    expect(Stream._summarize(email({ id: 'sum2' })).spamScore).toBeUndefined()
   })
 
   it('keeps independent hosted and provider replay cursors', () => {
-    const cursor = Stream.parseCursor('2026-08-22T12:00:00.000Z')
+    const cursor = Stream._parseCursor('2026-08-22T12:00:00.000Z')
     cursor.hosted = { at: '2026-08-22T12:00:01.000Z', id: 'hosted-1' }
-    const encoded = Stream.cursorID(cursor)
-    expect(Stream.parseCursor(encoded)).toEqual({
+    const encoded = Stream._cursorID(cursor)
+    expect(Stream._parseCursor(encoded)).toEqual({
       hosted: { at: '2026-08-22T12:00:01.000Z', id: 'hosted-1' },
       external: { at: '2026-08-22T12:00:00.000Z', id: '' },
     })
-    expect(Stream.afterCursor({ receivedAt: '2026-08-22T12:00:00.000Z', id: 'provider-1' }, Stream.parseCursor(encoded).external)).toBe(true)
+    expect(Stream._afterCursor({ receivedAt: '2026-08-22T12:00:00.000Z', id: 'provider-1' }, Stream._parseCursor(encoded).external)).toBe(true)
   })
 
   it('streams a credential-free connected-account summary', () => {
-    expect(Stream.summarize({
+    expect(Stream._summarize({
       id: 'extmsg.route', external: true, providerAccountId: 'ext_AAAAAAAAAAAAAAAAAAAA', providerStableId: 'INBOX:1:2',
       mailboxAddress: 'alice@remote.example', mailboxLabel: 'Remote', mailboxColor: '#336699', sender: 'sender@example.net',
       recipient: 'alice@remote.example', subject: 'Provider mail', folder: 'inbox', systemFolder: 'inbox', read: false,
@@ -870,7 +878,7 @@ describe('GET /inbox/stream', () => {
       recipient: 'bob@example.com',
       subject: 'Bob stream secret',
     }))
-    const fresh = await Stream.freshSince(
+    const fresh = await Stream._freshSince(
       app,
       ['example.com'],
       '2000-01-01T00:00:00.000Z',
@@ -889,7 +897,7 @@ describe('GET /inbox/stream', () => {
         receivedAt: new Date(base + index * 1_000).toISOString(),
       }))
     }
-    const fresh = await Stream.freshSince(app, ['example.com'], '2029-12-31T23:59:59.000Z', 'alice@example.com')
+    const fresh = await Stream._freshSince(app, ['example.com'], '2029-12-31T23:59:59.000Z', 'alice@example.com')
     expect(fresh).toHaveLength(50)
     expect(fresh[0].id).toBe('stream-gap-0')
     expect(fresh[49].id).toBe('stream-gap-49')

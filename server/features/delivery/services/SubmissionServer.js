@@ -1,16 +1,17 @@
 import { readFileSync } from 'node:fs'
 import { AcmeService } from '../../domains/services/AcmeService.js'
 import { listenForConnections } from '../../../platform/runtime/ListenableServer.ts'
+import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
 
 export class SubmissionServer {
   /** @param {SubmissionOptions} options */
   constructor(options) {
     this.secure = !!options.secure
     this.port = Number(options.port ?? (this.secure ? 465 : 587))
-    this.host = options.host ?? process.env.SMTP_SUBMISSION_HOST ?? '0.0.0.0'
-    this.apiUrl = (options.apiUrl ?? `http://127.0.0.1:${process.env.PORT || 8080}`).replace(/\/$/, '')
-    this.hostname = options.hostname ?? process.env.MAIL_HOSTNAME ?? 'localhost'
-    this.maxSize = Number(options.maxSize ?? process.env.SMTP_MAX_SIZE ?? 26_214_400)
+    this.host = options.host ?? ServerEnvironment.value('SMTP_SUBMISSION_HOST') ?? '0.0.0.0'
+    this.apiUrl = (options.apiUrl ?? `http://127.0.0.1:${ServerEnvironment.value('PORT') || 8080}`).replace(/\/$/, '')
+    this.hostname = options.hostname ?? ServerEnvironment.value('MAIL_HOSTNAME') ?? 'localhost'
+    this.maxSize = Number(options.maxSize ?? ServerEnvironment.value('SMTP_MAX_SIZE') ?? 26_214_400)
     this.tls = options.tls ?? SubmissionServer.loadTls()
     this.allowInsecureAuth = !!options.allowInsecureAuth
 
@@ -30,7 +31,7 @@ export class SubmissionServer {
 
     // Serve a fresh context per handshake when TLS lives in files, so ACME
     // renewals apply without restarting the submission server.
-    const keyFile = process.env.MAIL_TLS_KEY_FILE, certFile = process.env.MAIL_TLS_CERT_FILE
+    const keyFile = ServerEnvironment.value('MAIL_TLS_KEY_FILE'), certFile = ServerEnvironment.value('MAIL_TLS_CERT_FILE')
     const sni = this.tls && keyFile && certFile ? AcmeService.sniFromFiles(keyFile, certFile) : null
 
     const server = new SMTPServer({
@@ -147,8 +148,8 @@ export class SubmissionServer {
 
   /** Read TLS material from env (paths or inline PEM). */
   static loadTls() {
-    const key = process.env.MAIL_TLS_KEY || (process.env.MAIL_TLS_KEY_FILE ? SubmissionServer.safeRead(process.env.MAIL_TLS_KEY_FILE) : '')
-    const cert = process.env.MAIL_TLS_CERT || (process.env.MAIL_TLS_CERT_FILE ? SubmissionServer.safeRead(process.env.MAIL_TLS_CERT_FILE) : '')
+    const key = ServerEnvironment.value('MAIL_TLS_KEY') || (ServerEnvironment.value('MAIL_TLS_KEY_FILE') ? SubmissionServer.safeRead(ServerEnvironment.value('MAIL_TLS_KEY_FILE')) : '')
+    const cert = ServerEnvironment.value('MAIL_TLS_CERT') || (ServerEnvironment.value('MAIL_TLS_CERT_FILE') ? SubmissionServer.safeRead(ServerEnvironment.value('MAIL_TLS_CERT_FILE')) : '')
     return key && cert ? { key, cert } : null
   }
 

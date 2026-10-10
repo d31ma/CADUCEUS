@@ -4,22 +4,19 @@ import { getApp } from '../app.js'
 import { FyloAccessContext } from '../platform/persistence/FyloAccessContext.js'
 import { externalMailSummaries } from '../features/mailbox/services/unified-mail.js'
 import { Buffer } from 'node:buffer'
+import { ServerEnvironment } from '../platform/runtime/ServerEnvironment.js'
+/** @import { InboxStreamMessage } from '../models/InboxStreamMessage.js' */
 
 /**
- * GET /inbox/stream — live new-mail via Server-Sent Events.
- *
- * Tachyon streams this when the request carries `Accept: text/event-stream`:
- * the handler RETURNS an async generator (it is not itself a generator, so the
- * inline auth check can short-circuit with a normal JSON 401 before any
- * streaming begins).
+ * GET /inbox/stream — live new mail via Server-Sent Events (`@StreamRoute`).
  *
  * Bounded, cursor-based design:
  *   - The client passes an opaque two-source cursor. Legacy ISO timestamps are
  *     accepted and promoted to independent hosted/provider positions.
  *   - On (re)connect we immediately replay the oldest bounded slice newer than
  *     each position, so advancing one source never skips a gap in the other.
- *   - We then poll for new mail on a short interval, emitting each as an SSE
- *     `new-email` event whose `id:` is the next opaque composite cursor.
+ *   - We then poll for new mail on a short interval, emitting each as a
+ *     `new-email` message whose `cursor` is the next opaque composite cursor.
  *   - The connection periodically self-closes after `STREAM_MAX_MS` (25s by
  *     default) with a `reconnect` event; the client reconnects with its latest
  *     cursor. Operators can raise the value for longer-lived connections.
@@ -30,31 +27,33 @@ import { Buffer } from 'node:buffer'
 @RequestRoute("/inbox/stream")
 @Public
 export class InboxStreamController {
-  static STREAM_MAX_MS = Number(process.env.STREAM_MAX_MS ?? 25_000)
+  static STREAM_MAX_MS = Number(ServerEnvironment.value('STREAM_MAX_MS') ?? 25_000)
 
-  static STREAM_POLL_MS = Number(process.env.STREAM_POLL_MS ?? 2_000)
+  static STREAM_POLL_MS = Number(ServerEnvironment.value('STREAM_POLL_MS') ?? 2_000)
 
-  static REPLAY_LIMIT = Number(process.env.STREAM_REPLAY_LIMIT ?? 50)
+  static REPLAY_LIMIT = Number(ServerEnvironment.value('STREAM_REPLAY_LIMIT') ?? 50)
 
   /**
-   * @param {object} params
-   * @param {{ since?: string, token?: string }} params.query
-   * @param {{ bearer?: { token: string } }} params.context
+   * Live new mail as server-sent events. Each message is an
+   * {@link InboxStreamMessage}; Tachyon ends the stream with `event: end`.
+   *
+   * @param {Request} request
+   * @returns {AsyncGenerator<InboxStreamMessage>}
    */
-  @GetRoute
-  async get(request) {
-    return RouteRequest.handle(request, {  }, async ({ query, context }) => {
-      // EventSource can't set Authorization headers; allow `?token=` as a
-      // fallback to the bearer header so either client style authenticates.
-      const ctx = context?.bearer?.token
-        ? context
-        : { bearer: { token: typeof query?.token === 'string' ? query.token : '' } }
-      const auth = await AuthGuard.requireAuth(ctx)
-      // Tachyon commits to a 200 stream once Accept: text/event-stream is seen,
-      // so a JSON 401 can't be returned mid-stream. Emit an `unauthorized` SSE
-      // event instead; the client stops reconnecting and signs out.
-      return auth.ok ? InboxStreamController._streamInbox(auth.principal, query ?? {}, ctx.bearer?.token || '') : InboxStreamController._unauthorizedStream()
-    })
+  @StreamRoute
+  async *streamInbox(request) {
+    const { query, context } = await RouteRequest.read(request)
+    // EventSource can't set Authorization headers; allow `?token=` as a
+    // fallback to the bearer header so either client style authenticates.
+    const ctx = context?.bearer?.token
+      ? context
+      : { bearer: { token: typeof query?.token === 'string' ? query.token : '' } }
+    const auth = await AuthGuard.requireAuth(ctx)
+    // The stream is already open, so a refusal is an `unauthorized` message;
+    // the client stops reconnecting and signs out.
+    yield* auth.ok
+      ? InboxStreamController._streamInbox(auth.principal, query ?? {}, ctx.bearer?.token || '')
+      : InboxStreamController._unauthorizedStream()
   }
 
   static async *_unauthorizedStream() {
@@ -71,8 +70,7 @@ export class InboxStreamController {
     const domains = [claims.domain]
     const cursor = InboxStreamController._parseCursor(typeof query.since === 'string' && query.since ? query.since : new Date().toISOString())
 
-    // Advise the browser's reconnect backoff and announce the live cursor.
-    yield `retry: ${InboxStreamController.STREAM_POLL_MS}\n`
+    // Announce the live cursor.
     yield InboxStreamController._sse('connected', { since: InboxStreamController._cursorID(cursor) }, null)
 
     const deadline = Date.now() + InboxStreamController.STREAM_MAX_MS
@@ -99,7 +97,7 @@ export class InboxStreamController {
           source.id = String(email.id || '')
           yield InboxStreamController._sse('new-email', InboxStreamController._summarize(email), InboxStreamController._cursorID(cursor))
         }
-        if (fresh.length === 0) yield `: ping\n\n` // heartbeat keeps the pipe warm
+        if (fresh.length === 0) yield InboxStreamController._sse('ping', {}, null) // heartbeat keeps the pipe warm
         await InboxStreamController._sleep(InboxStreamController.STREAM_POLL_MS)
       }
     } catch (err) {
@@ -177,15 +175,12 @@ export class InboxStreamController {
   }
 
   /**
-   * Format one Server-Sent Event frame.
-   * @param {string} event @param {unknown} data @param {string | null} id
+   * One stream message. `cursor` is the position a reconnect resumes from.
+   * @param {string} event @param {unknown} data @param {string | null} cursor
+   * @returns {InboxStreamMessage}
    */
-  static _sse(event, data, id) {
-    let frame = ''
-    if (id != null) frame += `id: ${id}\n`
-    if (event) frame += `event: ${event}\n`
-    frame += `data: ${JSON.stringify(data)}\n\n`
-    return frame
+  static _sse(event, data, cursor) {
+    return { event, data, cursor }
   }
 
   static _parseSourceCursor(value) {

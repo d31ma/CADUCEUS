@@ -6,6 +6,7 @@ import {
   normalizeNewMailNotificationPreferencesForAccounts,
 } from '../../users/services/new-mail-notification-preferences.js'
 import { externalMessageId } from '../../mailbox/services/external-message.js'
+import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
 /** @import { StoredEmail } from '../../../types' */
 /** @import { PushSubscriptionsRepository } from '../repositories/PushSubscriptionsRepository.js' */
 /** @import { UsersRepository } from '../../users/repositories/UsersRepository.js' */
@@ -116,7 +117,7 @@ export class PushService {
 
   /** @returns {Promise<string>} */
   async getVapidPublicKey() {
-    if (process.env.VAPID_PUBLIC_KEY) return process.env.VAPID_PUBLIC_KEY
+    if (ServerEnvironment.value('VAPID_PUBLIC_KEY')) return ServerEnvironment.value('VAPID_PUBLIC_KEY')
     try {
       const wp = await import('web-push')
       const keys = wp.default.generateVAPIDKeys?.() || wp.generateVAPIDKeys?.()
@@ -185,13 +186,13 @@ export class PushService {
    * @returns {Promise<boolean>}
    */
   async notify(email, payloadFor, operation, options = {}) {
-    if (process.env.WEB_PUSH_DISABLED === 'true') return true
-    if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return true
+    if (ServerEnvironment.value('WEB_PUSH_DISABLED') === 'true') return true
+    if (!ServerEnvironment.value('VAPID_PUBLIC_KEY') || !ServerEnvironment.value('VAPID_PRIVATE_KEY')) return true
     try {
       const webPush = await import('web-push')
-      const vapidPublicKey = process.env.VAPID_PUBLIC_KEY
-      const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
-      const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:admin@caduceus.local'
+      const vapidPublicKey = ServerEnvironment.value('VAPID_PUBLIC_KEY')
+      const vapidPrivateKey = ServerEnvironment.value('VAPID_PRIVATE_KEY')
+      const vapidSubject = ServerEnvironment.value('VAPID_SUBJECT') || 'mailto:admin@caduceus.local'
 
       const lookupAddress = options.ownerEmail || email.recipient
       const [, user] = await this.users.findByEmail(lookupAddress)

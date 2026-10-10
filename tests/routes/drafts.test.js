@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req } from './helpers.js'
-import { Handler as Drafts } from '@/routes/drafts/yon.js'
-import { Handler as Draft } from '@/routes/drafts/_id/yon.js'
-import { Handler as Inbox } from '@/routes/inbox/yon.js'
+import { DraftsController as Drafts } from '@/controllers/DraftsController.js'
+import { DraftsIdController as Draft } from '@/controllers/DraftsIdController.js'
+import { InboxController as Inbox } from '@/controllers/InboxController.js'
+import { call } from '../support/controller-call.mjs'
 
 let app
 const alice = () => token()
@@ -29,15 +30,15 @@ describe('durable drafts API', () => {
   let draftId
 
   it('validates and creates a versioned draft idempotently', async () => {
-    expect((await Drafts.POST(req({ token: alice(), body: {} }))).error).toMatch(/clientId/)
-    const created = await Drafts.POST(req({ token: alice(), body: base() }))
+    expect((await call(Drafts, 'POST', req({ token: alice(), body: {} }))).error).toMatch(/clientId/)
+    const created = await call(Drafts, 'POST', req({ token: alice(), body: base() }))
     draftId = created.id
     expect(draftId).toMatch(/^draft-/)
     expect(created.draftVersion).toBe(1)
     expect(created.draftOwner).toBe('alice@example.com')
     expect(created.recovered).toBe(false)
 
-    const retried = await Drafts.POST(req({ token: alice(), body: base({ text: 'response was lost' }) }))
+    const retried = await call(Drafts, 'POST', req({ token: alice(), body: base({ text: 'response was lost' }) }))
     expect(retried.id).toBe(draftId)
     expect(retried.draftVersion).toBe(1)
     expect(retried.recovered).toBe(true)
@@ -45,21 +46,21 @@ describe('durable drafts API', () => {
   })
 
   it('keeps draft bodies private from another user in the same domain', async () => {
-    expect((await Draft.GET(req({ token: bob(), paths: { id: draftId } }))).notFound).toBe(true)
-    const list = await Inbox.GET(req({ token: bob(), query: { folder: 'drafts' } }))
+    expect((await call(Draft, 'GET', req({ token: bob(), paths: { id: draftId } }))).notFound).toBe(true)
+    const list = await call(Inbox, 'GET', req({ token: bob(), query: { folder: 'drafts' } }))
     expect(list.some(item => item.id === draftId)).toBe(false)
   })
 
   it('persists an exact owned From alias and rejects same-domain impersonation', async () => {
-    const denied = await Drafts.POST(req({ token: alice(), body: base({ clientId: 'foreign-from', from: 'bob@example.com' }) }))
+    const denied = await call(Drafts, 'POST', req({ token: alice(), body: base({ clientId: 'foreign-from', from: 'bob@example.com' }) }))
     expect(denied.forbidden).toBe(true)
-    const aliasDraft = await Drafts.POST(req({ token: alice(), body: base({ clientId: 'alias-from', from: 'sales@example.com' }) }))
+    const aliasDraft = await call(Drafts, 'POST', req({ token: alice(), body: base({ clientId: 'alias-from', from: 'sales@example.com' }) }))
     expect(aliasDraft.sender).toBe('sales@example.com')
-    expect((await Draft.DELETE(req({ token: alice(), paths: { id: aliasDraft.id } }))).discarded).toBe(aliasDraft.id)
+    expect((await call(Draft, 'DELETE', req({ token: alice(), paths: { id: aliasDraft.id } }))).discarded).toBe(aliasDraft.id)
   })
 
   it('compare-and-swaps content and the complete attachment set', async () => {
-    const updated = await Draft.PUT(req({
+    const updated = await call(Draft, 'PUT', req({
       token: alice(), paths: { id: draftId },
       body: {
         ...base({
@@ -84,7 +85,7 @@ describe('durable drafts API', () => {
     expect(Buffer.from(updated.attachments[0].contentBase64, 'base64').toString()).toBe('draft attachment')
     expect(updated.attachments[1]).toMatchObject({ disposition: 'inline', contentId: 'draft-logo@example.test' })
 
-    const stale = await Draft.PUT(req({
+    const stale = await call(Draft, 'PUT', req({
       token: alice(), paths: { id: draftId }, body: { ...base(), version: 1 },
     }))
     expect(stale.conflict).toBe(true)
@@ -92,13 +93,13 @@ describe('durable drafts API', () => {
   })
 
   it('loads the latest version and permanently discards its files', async () => {
-    const loaded = await Draft.GET(req({ token: alice(), paths: { id: draftId } }))
+    const loaded = await call(Draft, 'GET', req({ token: alice(), paths: { id: draftId } }))
     expect(loaded.draftVersion).toBe(2)
     expect(loaded.attachments).toHaveLength(2)
     expect(loaded.attachments[1]).toMatchObject({ disposition: 'inline', contentId: 'draft-logo@example.test' })
-    expect((await Draft.DELETE(req({ token: bob(), paths: { id: draftId } }))).notFound).toBe(true)
-    expect((await Draft.DELETE(req({ token: alice(), paths: { id: draftId } }))).discarded).toBe(draftId)
-    expect((await Draft.GET(req({ token: alice(), paths: { id: draftId } }))).notFound).toBe(true)
+    expect((await call(Draft, 'DELETE', req({ token: bob(), paths: { id: draftId } }))).notFound).toBe(true)
+    expect((await call(Draft, 'DELETE', req({ token: alice(), paths: { id: draftId } }))).discarded).toBe(draftId)
+    expect((await call(Draft, 'GET', req({ token: alice(), paths: { id: draftId } }))).notFound).toBe(true)
     expect(await app.attachments.list(draftId)).toEqual([])
   })
 })

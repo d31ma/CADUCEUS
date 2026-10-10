@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { Buffer } from 'node:buffer'
 import { Buckets, Collections, collect } from '../../../platform/persistence/Fylo.js'
+import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
 /** @import { RawMessageRecord } from '../../../types' */
 
 /** Durable, tenant-owned storage for exact RFC 822 message sources. */
@@ -26,7 +27,7 @@ export class RawMessagesRepository {
     const bytes = typeof source === 'string' ? Buffer.from(source, 'utf8') : Buffer.from(source)
     const id = randomBytes(16).toString('hex')
     const incomingRoot = resolve(
-      process.env.FYLO_INCOMING_ROOT || join(this.fylo.root, '.caduceus-incoming'),
+      ServerEnvironment.value('FYLO_INCOMING_ROOT') || join(this.fylo.root, '.caduceus-incoming'),
     )
     await mkdir(incomingRoot, { recursive: true, mode: 0o700 })
     const temporaryRoot = await mkdtemp(join(incomingRoot, 'raw-message-'))

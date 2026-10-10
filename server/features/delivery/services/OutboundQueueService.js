@@ -1,4 +1,5 @@
 import { Buffer } from 'node:buffer'
+import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
 /** @import { OutboxEntry } from '../repositories/OutboxRepository.js' */
 
 /**
@@ -218,7 +219,7 @@ export class OutboundQueueService {
     const domain = sender.split('@')[1] || ''
     const email = entry.email
     const recipients = deliveryRecipients(email).join(', ')
-    const daemon = `mailer-daemon@${process.env.MAIL_HOSTNAME || domain || 'localhost'}`
+    const daemon = `mailer-daemon@${ServerEnvironment.value('MAIL_HOSTNAME') || domain || 'localhost'}`
     const inboxFolder = await this.categoryMappings?.pathFor(sender, domain, 'inbox') || 'inbox'
 
     await this.emails.put({

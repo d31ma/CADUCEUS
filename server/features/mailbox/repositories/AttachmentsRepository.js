@@ -4,6 +4,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { Buffer } from 'node:buffer'
 import { Buckets, Collections, collect } from '../../../platform/persistence/Fylo.js'
 import { normalizeAttachmentContentId, sanitizeAttachmentFilename } from '../services/attachment-policy.js'
+import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
 /** @import { ParsedAttachment } from '../../../models/ParsedAttachment.js' */
 /** @import { EmailAttachmentRecord } from '../../../types' */
 /** @import { EmailAttachmentSummary } from '../../../types' */
@@ -126,8 +127,8 @@ function toSummary({ id, filename, contentType, size, disposition, contentId }) 
 
 function attachmentRoot() {
   // Legacy path-backed records may point at the former dedicated mount.
-  if (process.env.ATTACHMENT_ROOT) return process.env.ATTACHMENT_ROOT
-  if (process.env.FYLO_ROOT) return join(process.env.FYLO_ROOT, 'attachments')
+  if (ServerEnvironment.value('ATTACHMENT_ROOT')) return ServerEnvironment.value('ATTACHMENT_ROOT')
+  if (ServerEnvironment.value('FYLO_ROOT')) return join(ServerEnvironment.value('FYLO_ROOT'), 'attachments')
   throw new Error('FYLO_ROOT or legacy ATTACHMENT_ROOT is required to read a path-backed attachment')
 }
 
@@ -143,7 +144,7 @@ async function persistOne(fylo, emailId, domain, attachment) {
   const filename = sanitizeAttachmentFilename(attachment.filename, `attachment-${id}`)
   const content = readBytes(attachment)
   const incomingRoot = resolve(
-    process.env.FYLO_INCOMING_ROOT || join(fylo.root, '.caduceus-incoming'),
+    ServerEnvironment.value('FYLO_INCOMING_ROOT') || join(fylo.root, '.caduceus-incoming'),
   )
   await mkdir(incomingRoot, { recursive: true, mode: 0o700 })
   const temporaryRoot = await mkdtemp(join(incomingRoot, 'attachment-'))

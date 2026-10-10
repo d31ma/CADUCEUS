@@ -2,18 +2,19 @@ import { createHmac } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { AcmeService } from '../../domains/services/AcmeService.js'
 import { listenForConnections } from '../../../platform/runtime/ListenableServer.ts'
+import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
 
 export class InboundSmtpServer {
   /** @param {InboundSmtpOptions} [options] */
   constructor(options = {}) {
-    this.port = Number(options.port ?? process.env.SMTP_INBOUND_PORT ?? 25)
-    this.host = options.host ?? process.env.SMTP_INBOUND_HOST ?? '0.0.0.0'
-    this.apiUrl = (options.apiUrl ?? process.env.CADUCEUS_API_URL ?? `http://127.0.0.1:${process.env.PORT || 8080}`).replace(/\/$/, '')
-    this.secret = options.secret ?? process.env.INBOUND_WEBHOOK_SECRET
-    this.hostname = options.hostname ?? process.env.MAIL_HOSTNAME ?? 'caduceus'
-    this.maxSize = Number(options.maxSize ?? process.env.SMTP_MAX_SIZE ?? 26_214_400) // 25 MiB
+    this.port = Number(options.port ?? ServerEnvironment.value('SMTP_INBOUND_PORT') ?? 25)
+    this.host = options.host ?? ServerEnvironment.value('SMTP_INBOUND_HOST') ?? '0.0.0.0'
+    this.apiUrl = (options.apiUrl ?? ServerEnvironment.value('CADUCEUS_API_URL') ?? `http://127.0.0.1:${ServerEnvironment.value('PORT') || 8080}`).replace(/\/$/, '')
+    this.secret = options.secret ?? ServerEnvironment.value('INBOUND_WEBHOOK_SECRET')
+    this.hostname = options.hostname ?? ServerEnvironment.value('MAIL_HOSTNAME') ?? 'caduceus'
+    this.maxSize = Number(options.maxSize ?? ServerEnvironment.value('SMTP_MAX_SIZE') ?? 26_214_400) // 25 MiB
     this.tls = options.tls ?? InboundSmtpServer.loadTls()
-    this.verifyAuth = options.verifyAuth ?? process.env.MAIL_AUTH_VERIFY !== 'off'
+    this.verifyAuth = options.verifyAuth ?? ServerEnvironment.value('MAIL_AUTH_VERIFY') !== 'off'
 
     if (!this.secret) throw new Error('INBOUND_WEBHOOK_SECRET is required to run the inbound SMTP server')
   }
@@ -29,7 +30,7 @@ export class InboundSmtpServer {
 
     // Serve a fresh context per handshake when TLS lives in files, so ACME
     // renewals apply without a restart.
-    const keyFile = process.env.MAIL_TLS_KEY_FILE, certFile = process.env.MAIL_TLS_CERT_FILE
+    const keyFile = ServerEnvironment.value('MAIL_TLS_KEY_FILE'), certFile = ServerEnvironment.value('MAIL_TLS_CERT_FILE')
     const sni = this.tls && keyFile && certFile ? AcmeService.sniFromFiles(keyFile, certFile) : null
 
     const server = new SMTPServer({
@@ -173,10 +174,10 @@ export class InboundSmtpServer {
 
   /** Read STARTTLS material from env (paths or inline PEM). Returns null if none. */
   static loadTls() {
-    const keyPath = process.env.MAIL_TLS_KEY_FILE
-    const certPath = process.env.MAIL_TLS_CERT_FILE
-    const key = process.env.MAIL_TLS_KEY || (keyPath ? InboundSmtpServer.safeRead(keyPath) : '')
-    const cert = process.env.MAIL_TLS_CERT || (certPath ? InboundSmtpServer.safeRead(certPath) : '')
+    const keyPath = ServerEnvironment.value('MAIL_TLS_KEY_FILE')
+    const certPath = ServerEnvironment.value('MAIL_TLS_CERT_FILE')
+    const key = ServerEnvironment.value('MAIL_TLS_KEY') || (keyPath ? InboundSmtpServer.safeRead(keyPath) : '')
+    const cert = ServerEnvironment.value('MAIL_TLS_CERT') || (certPath ? InboundSmtpServer.safeRead(certPath) : '')
     return key && cert ? { key, cert } : null
   }
 

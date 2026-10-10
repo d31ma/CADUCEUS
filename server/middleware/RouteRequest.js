@@ -22,6 +22,9 @@ export class RouteRequest {
   static DOMAIN = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i
   static ADDRESS = /^[a-z0-9._-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i
 
+  /** @type {WeakMap<Response, { answer: unknown }>} */
+  static #answers = new WeakMap()
+
   /** Marks a JSON request body that does not parse. */
   static INVALID_JSON = Symbol('invalid JSON body')
 
@@ -79,8 +82,23 @@ export class RouteRequest {
    */
   static respond(answer) {
     if (answer instanceof Response) return answer
-    if (answer === undefined) return new Response(null, { status: 204 })
-    return Response.json(answer, { status: RouteRequest.status(answer) })
+    const response = answer === undefined
+      ? new Response(null, { status: 204 })
+      : Response.json(answer, { status: RouteRequest.status(answer) })
+    RouteRequest.#answers.set(response, { answer })
+    return response
+  }
+
+  /**
+   * What the route returned before {@link respond} wrapped it, for callers in
+   * this process such as the route test suites. A `Response` the route built
+   * itself has no entry.
+   *
+   * @param {Response} response
+   * @returns {{ answer: unknown } | undefined}
+   */
+  static answerOf(response) {
+    return RouteRequest.#answers.get(response)
   }
 
   /**

@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { Handler as MailActions } from '@/routes/inbox/actions/yon.js'
-import { Handler as UndoMailAction } from '@/routes/inbox/actions/_id/undo/yon.js'
-import { Handler as RedoMailAction } from '@/routes/inbox/actions/_id/redo/yon.js'
+import { InboxActionsController as MailActions } from '@/controllers/InboxActionsController.js'
+import { InboxActionsIdUndoController as UndoMailAction } from '@/controllers/InboxActionsIdUndoController.js'
+import { InboxActionsIdRedoController as RedoMailAction } from '@/controllers/InboxActionsIdRedoController.js'
+import { call } from '../support/controller-call.mjs'
 
 let app
 const alice = () => token()
@@ -17,10 +18,10 @@ afterAll(teardownRoutes)
 
 describe('durable reversible mailbox actions', () => {
   it('validates a bounded non-empty action before touching mail', async () => {
-    expect(await MailActions.POST(req({ token: alice(), body: {} }))).toMatchObject({ error: expect.any(String) })
-    expect(await MailActions.POST(req({ token: alice(), body: { ids: [], patch: { read: true } } }))).toMatchObject({ error: expect.any(String) })
-    expect(await MailActions.POST(req({ token: alice(), body: { ids: ['one'], patch: { read: 'yes' } } }))).toMatchObject({ error: expect.any(String) })
-    expect(await MailActions.POST(req({ token: alice(), body: { ids: Array.from({ length: 101 }, (_, index) => `over-${index}`), patch: { read: true } } }))).toMatchObject({ error: expect.any(String) })
+    expect(await call(MailActions, 'POST', req({ token: alice(), body: {} }))).toMatchObject({ error: expect.any(String) })
+    expect(await call(MailActions, 'POST', req({ token: alice(), body: { ids: [], patch: { read: true } } }))).toMatchObject({ error: expect.any(String) })
+    expect(await call(MailActions, 'POST', req({ token: alice(), body: { ids: ['one'], patch: { read: 'yes' } } }))).toMatchObject({ error: expect.any(String) })
+    expect(await call(MailActions, 'POST', req({ token: alice(), body: { ids: Array.from({ length: 101 }, (_, index) => `over-${index}`), patch: { read: true } } }))).toMatchObject({ error: expect.any(String) })
   })
 
   it('authorizes the complete set before applying an all-or-nothing bulk action', async () => {
@@ -29,7 +30,7 @@ describe('durable reversible mailbox actions', () => {
     await app.emails.put(owned)
     await app.emails.put(foreign)
 
-    const denied = await MailActions.POST(req({
+    const denied = await call(MailActions, 'POST', req({
       token: alice(),
       body: { ids: [owned.id, foreign.id], patch: { folder: 'archive' } },
     }))
@@ -44,7 +45,7 @@ describe('durable reversible mailbox actions', () => {
     await app.emails.put(first)
     await app.emails.put(second)
 
-    const applied = await MailActions.POST(req({
+    const applied = await call(MailActions, 'POST', req({
       token: alice(),
       body: { ids: [first.id, second.id], patch: { folder: 'archive', read: true } },
     }))
@@ -59,15 +60,15 @@ describe('durable reversible mailbox actions', () => {
         expect.objectContaining({ id: second.id, folder: 'archive', read: true }),
       ]),
     })
-    expect((await UndoMailAction.POST(req({ token: bob(), paths: { id: actionId } }))).notFound).toBe(true)
+    expect((await call(UndoMailAction, 'POST', req({ token: bob(), paths: { id: actionId } }))).notFound).toBe(true)
     expect((await app.emails.findById(first.id))[1]).toMatchObject({ folder: 'archive', read: true })
 
-    const undone = await UndoMailAction.POST(req({ token: alice(), paths: { id: actionId } }))
+    const undone = await call(UndoMailAction, 'POST', req({ token: alice(), paths: { id: actionId } }))
     expect(undone).toMatchObject({ status: 'undone', count: 2 })
     expect((await app.emails.findById(first.id))[1]).toMatchObject({ folder: 'inbox', read: false })
     expect((await app.emails.findById(second.id))[1]).toMatchObject({ folder: 'inbox', read: false })
 
-    const redone = await RedoMailAction.POST(req({ token: alice(), paths: { id: actionId } }))
+    const redone = await call(RedoMailAction, 'POST', req({ token: alice(), paths: { id: actionId } }))
     expect(redone).toMatchObject({ status: 'applied', count: 2 })
     expect((await app.emails.findById(first.id))[1]).toMatchObject({ folder: 'archive', read: true })
     expect((await app.emails.findById(second.id))[1]).toMatchObject({ folder: 'archive', read: true })
@@ -81,7 +82,7 @@ describe('durable reversible mailbox actions', () => {
     await app.emails.put(first)
     await app.emails.put(second)
 
-    const applied = await MailActions.POST(req({
+    const applied = await call(MailActions, 'POST', req({
       token: alice(),
       body: { ids: [first.id, second.id], patch: { labels: { add: ['Projects/Launch'], remove: [] } } },
     }))
@@ -93,18 +94,18 @@ describe('durable reversible mailbox actions', () => {
       ]),
     })
 
-    const removed = await MailActions.POST(req({
+    const removed = await call(MailActions, 'POST', req({
       token: alice(),
       body: { ids: [first.id, second.id], patch: { labels: { remove: ['projects/launch'] } } },
     }))
     expect((await app.emails.findById(first.id))[1].labels).toEqual(['customers/enterprise'])
     expect((await app.emails.findById(second.id))[1].labels).toEqual([])
 
-    expect(await UndoMailAction.POST(req({ token: alice(), paths: { id: removed.actionId } }))).toMatchObject({
+    expect(await call(UndoMailAction, 'POST', req({ token: alice(), paths: { id: removed.actionId } }))).toMatchObject({
       status: 'undone',
     })
     expect((await app.emails.findById(second.id))[1].labels).toEqual(['projects/launch'])
-    expect(await RedoMailAction.POST(req({ token: alice(), paths: { id: removed.actionId } }))).toMatchObject({
+    expect(await call(RedoMailAction, 'POST', req({ token: alice(), paths: { id: removed.actionId } }))).toMatchObject({
       status: 'applied',
     })
     expect((await app.emails.findById(second.id))[1].labels).toEqual([])
@@ -118,7 +119,7 @@ describe('durable reversible mailbox actions', () => {
       { add: ['team'], remove: ['TEAM'] },
       { add: Array.from({ length: 101 }, (_, index) => `label-${index}`) },
     ]) {
-      expect(await MailActions.POST(req({
+      expect(await call(MailActions, 'POST', req({
         token: alice(), body: { ids: [message.id], patch: { labels } },
       }))).toMatchObject({ error: expect.any(String) })
     }
@@ -130,12 +131,12 @@ describe('durable reversible mailbox actions', () => {
     await app.emails.put(message)
     const clientRequestId = '11111111-1111-4111-8111-111111111111'
     const body = { ids: [message.id], patch: { read: true }, clientRequestId }
-    const first = await MailActions.POST(req({ token: alice(), body }))
-    const replay = await MailActions.POST(req({ token: alice(), body }))
+    const first = await call(MailActions, 'POST', req({ token: alice(), body }))
+    const replay = await call(MailActions, 'POST', req({ token: alice(), body }))
     expect(replay).toMatchObject({ actionId: first.actionId, status: 'applied', count: 1 })
     expect((await app.mailActionRecords.listForOwner('alice@example.com')).filter(([, item]) => item.clientRequestId === clientRequestId)).toHaveLength(1)
 
-    const collision = await MailActions.POST(req({
+    const collision = await call(MailActions, 'POST', req({
       token: alice(), body: { ids: [message.id], patch: { starred: true }, clientRequestId },
     }))
     expect(collision.conflict).toBe(true)
@@ -145,19 +146,19 @@ describe('durable reversible mailbox actions', () => {
     const message = email({ id: 'action-conflict', ownerEmail: 'alice@example.com', read: false, starred: false })
     await app.emails.put(message)
 
-    const marked = await MailActions.POST(req({
+    const marked = await call(MailActions, 'POST', req({
       token: alice(), body: { ids: [message.id], patch: { read: true } },
     }))
     const [docId] = await app.emails.findById(message.id)
     await app.emails.update(docId, { starred: true })
-    expect(await UndoMailAction.POST(req({ token: alice(), paths: { id: marked.actionId } }))).toMatchObject({ status: 'undone' })
+    expect(await call(UndoMailAction, 'POST', req({ token: alice(), paths: { id: marked.actionId } }))).toMatchObject({ status: 'undone' })
     expect((await app.emails.findById(message.id))[1]).toMatchObject({ read: false, starred: true })
 
-    const moved = await MailActions.POST(req({
+    const moved = await call(MailActions, 'POST', req({
       token: alice(), body: { ids: [message.id], patch: { folder: 'archive' } },
     }))
     await app.emails.update(docId, { folder: 'trash' })
-    const conflicted = await UndoMailAction.POST(req({ token: alice(), paths: { id: moved.actionId } }))
+    const conflicted = await call(UndoMailAction, 'POST', req({ token: alice(), paths: { id: moved.actionId } }))
     expect(conflicted.conflict).toBe(true)
     expect((await app.emails.findById(message.id))[1].folder).toBe('trash')
   })
@@ -165,13 +166,13 @@ describe('durable reversible mailbox actions', () => {
   it('finishes an interrupted transition before serving the owner retry', async () => {
     const message = email({ id: 'action-recovery', ownerEmail: 'alice@example.com', read: false })
     await app.emails.put(message)
-    const applied = await MailActions.POST(req({
+    const applied = await call(MailActions, 'POST', req({
       token: alice(), body: { ids: [message.id], patch: { read: true } },
     }))
     const [actionDocId] = await app.mailActionRecords.findById(applied.actionId)
     await app.mailActionRecords.update(actionDocId, { status: 'undoing' })
 
-    const recovered = await UndoMailAction.POST(req({ token: alice(), paths: { id: applied.actionId } }))
+    const recovered = await call(UndoMailAction, 'POST', req({ token: alice(), paths: { id: applied.actionId } }))
     expect(recovered).toMatchObject({ actionId: applied.actionId, status: 'undone', count: 1 })
     expect((await app.emails.findById(message.id))[1].read).toBe(false)
     expect((await app.mailActionRecords.findById(applied.actionId))[1].status).toBe('undone')
@@ -180,13 +181,13 @@ describe('durable reversible mailbox actions', () => {
   it('fails closed after the bounded undo window expires', async () => {
     const message = email({ id: 'action-expired', ownerEmail: 'alice@example.com' })
     await app.emails.put(message)
-    const applied = await MailActions.POST(req({
+    const applied = await call(MailActions, 'POST', req({
       token: alice(), body: { ids: [message.id], patch: { starred: true } },
     }))
     const [actionDocId] = await app.mailActionRecords.findById(applied.actionId)
     await app.mailActionRecords.update(actionDocId, { expiresAt: Date.now() - 1 })
 
-    const expired = await UndoMailAction.POST(req({ token: alice(), paths: { id: applied.actionId } }))
+    const expired = await call(UndoMailAction, 'POST', req({ token: alice(), paths: { id: applied.actionId } }))
     expect(expired.conflict).toBe(true)
     expect((await app.emails.findById(message.id))[1].starred).toBe(true)
   })

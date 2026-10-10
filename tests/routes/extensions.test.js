@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { req, setupRoutes, teardownRoutes, token } from './helpers.js'
-import { Handler as Extensions } from '@/routes/extensions/yon.js'
-import { Handler as Inspect } from '@/routes/extensions/inspect/yon.js'
-import { Handler as Extension } from '@/routes/extensions/_id/yon.js'
+import { ExtensionsController as Extensions } from '@/controllers/ExtensionsController.js'
+import { ExtensionsInspectController as Inspect } from '@/controllers/ExtensionsInspectController.js'
+import { ExtensionsIdController as Extension } from '@/controllers/ExtensionsIdController.js'
+import { call } from '../support/controller-call.mjs'
 
 const alice = () => token()
 const bob = () => token({ email: 'bob@example.com' })
@@ -38,48 +39,48 @@ afterAll(teardownRoutes)
 
 describe('trusted extension lifecycle', () => {
   it('requires inspection and the exact explicit-trust digest before installation', async () => {
-    const inspected = await Inspect.POST(req({ token: alice(), body: { bundle: plugin } }))
+    const inspected = await call(Inspect, 'POST', req({ token: alice(), body: { bundle: plugin } }))
     expect(inspected.digest).toMatch(/^[a-f0-9]{64}$/)
     expect(inspected.manifest.id).toBe('example.follow-up')
     expect(inspected).not.toHaveProperty('source')
 
-    const denied = await Extensions.POST(req({ token: alice(), body: { bundle: plugin, trustedDigest: '0'.repeat(64) } }))
+    const denied = await call(Extensions, 'POST', req({ token: alice(), body: { bundle: plugin, trustedDigest: '0'.repeat(64) } }))
     expect(denied.error).toMatch(/digest/i)
 
-    const installed = await Extensions.POST(req({ token: alice(), body: { bundle: plugin, trustedDigest: inspected.digest } }))
+    const installed = await call(Extensions, 'POST', req({ token: alice(), body: { bundle: plugin, trustedDigest: inspected.digest } }))
     expect(installed).toMatchObject({ id: 'example.follow-up', digest: inspected.digest, enabled: false })
     expect(installed).not.toHaveProperty('source')
   })
 
   it('isolates packages by exact mailbox owner and exposes source only to the runtime endpoint', async () => {
-    expect(await Extensions.GET(req({ token: bob() }))).toEqual([])
-    const aliceList = await Extensions.GET(req({ token: alice() }))
+    expect(await call(Extensions, 'GET', req({ token: bob() }))).toEqual([])
+    const aliceList = await call(Extensions, 'GET', req({ token: alice() }))
     expect(aliceList).toHaveLength(1)
     expect(aliceList[0]).not.toHaveProperty('source')
 
-    const foreign = await Extension.GET(req({ token: bob(), paths: { id: 'example.follow-up' } }))
+    const foreign = await call(Extension, 'GET', req({ token: bob(), paths: { id: 'example.follow-up' } }))
     expect(foreign.notFound).toBe(true)
-    const runtime = await Extension.GET(req({ token: alice(), paths: { id: 'example.follow-up' } }))
+    const runtime = await call(Extension, 'GET', req({ token: alice(), paths: { id: 'example.follow-up' } }))
     expect(runtime.source).toContain('caduceus.activate')
   })
 
   it('enables plugins and keeps only one owner theme active', async () => {
-    const enabled = await Extension.PUT(req({ token: alice(), paths: { id: 'example.follow-up' }, body: { enabled: true } }))
+    const enabled = await call(Extension, 'PUT', req({ token: alice(), paths: { id: 'example.follow-up' }, body: { enabled: true } }))
     expect(enabled.enabled).toBe(true)
 
     for (const bundle of [theme('example.midnight', '#88aaff'), theme('example.ocean', '#00aacc')]) {
-      const inspected = await Inspect.POST(req({ token: alice(), body: { bundle } }))
-      await Extensions.POST(req({ token: alice(), body: { bundle, trustedDigest: inspected.digest } }))
-      await Extension.PUT(req({ token: alice(), paths: { id: bundle.manifest.id }, body: { enabled: true } }))
+      const inspected = await call(Inspect, 'POST', req({ token: alice(), body: { bundle } }))
+      await call(Extensions, 'POST', req({ token: alice(), body: { bundle, trustedDigest: inspected.digest } }))
+      await call(Extension, 'PUT', req({ token: alice(), paths: { id: bundle.manifest.id }, body: { enabled: true } }))
     }
-    const list = await Extensions.GET(req({ token: alice() }))
+    const list = await call(Extensions, 'GET', req({ token: alice() }))
     expect(list.find(item => item.id === 'example.midnight').enabled).toBe(false)
     expect(list.find(item => item.id === 'example.ocean').enabled).toBe(true)
   })
 
   it('removes only an exact-owner package', async () => {
-    expect((await Extension.DELETE(req({ token: bob(), paths: { id: 'example.follow-up' } }))).notFound).toBe(true)
-    expect(await Extension.DELETE(req({ token: alice(), paths: { id: 'example.follow-up' } }))).toEqual({ deleted: true })
-    expect((await Extensions.GET(req({ token: alice() }))).some(item => item.id === 'example.follow-up')).toBe(false)
+    expect((await call(Extension, 'DELETE', req({ token: bob(), paths: { id: 'example.follow-up' } }))).notFound).toBe(true)
+    expect(await call(Extension, 'DELETE', req({ token: alice(), paths: { id: 'example.follow-up' } }))).toEqual({ deleted: true })
+    expect((await call(Extensions, 'GET', req({ token: alice() }))).some(item => item.id === 'example.follow-up')).toBe(false)
   })
 })

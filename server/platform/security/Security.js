@@ -1,5 +1,6 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
 import { isIP } from 'node:net'
+import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
 
 const CONTROL_CHARS = /[\0\r\n]/
 
@@ -37,7 +38,7 @@ export class Security {
 
   /** @param {string} name @returns {string} */
   static requireEnv(name) {
-    const v = process.env[name]
+    const v = ServerEnvironment.value(name)
     if (!v) throw new Error(`${name} is required`)
     return v
   }
@@ -93,7 +94,7 @@ export class Security {
    * @returns {boolean}
    */
   static isTestRoutesEnabled() {
-    return process.env.CADUCEUS_ENABLE_TEST_ROUTES === 'true'
+    return ServerEnvironment.value('CADUCEUS_ENABLE_TEST_ROUTES') === 'true'
   }
 
   /** @param {string[]} userDomains @param {string} domain @returns {boolean} */

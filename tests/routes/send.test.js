@@ -1,14 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req } from './helpers.js'
-import { Handler as Send } from '@/routes/send/yon.js'
-import { Handler as Scheduled } from '@/routes/send/scheduled/yon.js'
-import { Handler as ScheduledItem } from '@/routes/send/scheduled/_id/yon.js'
-import { Handler as Undo } from '@/routes/send/undo/yon.js'
-import { Handler as Reminders } from '@/routes/reminders/yon.js'
-import { Handler as ReminderTick } from '@/routes/reminders/tick/yon.js'
-import { Handler as Flush } from '@/routes/send/flush/yon.js'
+import { SendController as Send } from '@/controllers/SendController.js'
+import { SendScheduledController as Scheduled } from '@/controllers/SendScheduledController.js'
+import { SendScheduledIdController as ScheduledItem } from '@/controllers/SendScheduledIdController.js'
+import { SendUndoController as Undo } from '@/controllers/SendUndoController.js'
+import { RemindersController as Reminders } from '@/controllers/RemindersController.js'
+import { RemindersTickController as ReminderTick } from '@/controllers/RemindersTickController.js'
+import { SendFlushController as Flush } from '@/controllers/SendFlushController.js'
 import { simpleParser } from 'mailparser'
 import { createHmac } from 'node:crypto'
+import { call } from '../support/controller-call.mjs'
 
 let app
 const auth = () => token()
@@ -23,27 +24,27 @@ afterAll(teardownRoutes)
 
 describe('POST /send', () => {
   it('requires auth', async () => {
-    expect((await Send.POST(req({ body: base }))).unauthorized).toBe(true)
+    expect((await call(Send, 'POST', req({ body: base }))).unauthorized).toBe(true)
   })
 
   it('400s on an invalid request', async () => {
-    expect((await Send.POST(req({ token: auth(), body: {} }))).error).toMatch(/Subject is required/)
-    expect((await Send.POST(req({ token: auth(), body: { subject: 'x', to: [] } }))).error).toMatch(/Missing to field/)
+    expect((await call(Send, 'POST', req({ token: auth(), body: {} }))).error).toMatch(/Subject is required/)
+    expect((await call(Send, 'POST', req({ token: auth(), body: { subject: 'x', to: [] } }))).error).toMatch(/Missing to field/)
   })
 
   it('400s on invalid attachments', async () => {
-    const res = await Send.POST(req({ token: auth(), body: { ...base, attachments: 'nope' } }))
+    const res = await call(Send, 'POST', req({ token: auth(), body: { ...base, attachments: 'nope' } }))
     expect(res.error).toMatch(/attachments must be an array/)
   })
 
   it('422s when a recipient is suppressed', async () => {
     await app.suppressed.suppress('blocked@other.com', 'bounce')
-    const res = await Send.POST(req({ token: auth(), body: { ...base, to: ['blocked@other.com'] } }))
+    const res = await call(Send, 'POST', req({ token: auth(), body: { ...base, to: ['blocked@other.com'] } }))
     expect(res.blocked).toEqual(['blocked@other.com'])
   })
 
   it('sends immediately', async () => {
-    const res = await Send.POST(req({ token: auth(), body: base }))
+    const res = await call(Send, 'POST', req({ token: auth(), body: base }))
     expect(res.sent ?? res.messageId ?? res.id).toBeTruthy()
   })
 
@@ -54,8 +55,8 @@ describe('POST /send', () => {
       delayMs: 60_000,
       idempotencyKey: 'offline-send-11111111-1111-4111-8111-111111111111',
     }
-    const first = await Send.POST(req({ token: auth(), ip: '10.0.0.61', body }))
-    const replay = await Send.POST(req({ token: auth(), ip: '10.0.0.61', body: { ...body } }))
+    const first = await call(Send, 'POST', req({ token: auth(), ip: '10.0.0.61', body }))
+    const replay = await call(Send, 'POST', req({ token: auth(), ip: '10.0.0.61', body: { ...body } }))
     expect(replay).toEqual(first)
     expect((await app.emails.list(['example.com'], { folder: 'sent', ownerEmail: 'alice@example.com' }))
       .filter(email => email.subject === body.subject)).toHaveLength(1)
@@ -67,13 +68,13 @@ describe('POST /send', () => {
       subject: 'A separate exactly-once acceptance',
       idempotencyKey: 'offline-send-22222222-2222-4222-8222-222222222222',
     }
-    const second = await Send.POST(req({ token: auth(), ip: '10.0.0.61', body: secondBody }))
+    const second = await call(Send, 'POST', req({ token: auth(), ip: '10.0.0.61', body: secondBody }))
     expect(second).toMatchObject({ sent: true, undoId: expect.any(String) })
     expect(second.undoId).not.toBe(first.undoId)
     expect((await app.sendRequestRecords.find('alice@example.com', secondBody.idempotencyKey))[1])
       .toMatchObject({ state: 'accepted' })
 
-    const reused = await Send.POST(req({
+    const reused = await call(Send, 'POST', req({
       token: auth(), ip: '10.0.0.61', body: { ...body, subject: 'Different message' },
     }))
     expect(reused.conflict).toBe(true)
@@ -81,9 +82,9 @@ describe('POST /send', () => {
   })
 
   it('keeps tracking off by default and validates explicit controls', async () => {
-    expect((await Send.POST(req({ token: auth(), body: { ...base, openTracking: 'yes' } }))).error).toMatch(/boolean/)
-    expect((await Send.POST(req({ token: auth(), body: { ...base, linkTracking: true } }))).error).toMatch(/HTML/)
-    const res = await Send.POST(req({ token: auth(), body: { ...base, subject: 'Untracked default' }, ip: '10.0.0.31' }))
+    expect((await call(Send, 'POST', req({ token: auth(), body: { ...base, openTracking: 'yes' } }))).error).toMatch(/boolean/)
+    expect((await call(Send, 'POST', req({ token: auth(), body: { ...base, linkTracking: true } }))).error).toMatch(/HTML/)
+    const res = await call(Send, 'POST', req({ token: auth(), body: { ...base, subject: 'Untracked default' }, ip: '10.0.0.31' }))
     const [, sent] = await app.emails.findById(res.messageId)
     expect(sent.trackingId).toBeUndefined()
     expect(sent.openTracking).toBeUndefined()
@@ -92,7 +93,7 @@ describe('POST /send', () => {
 
   it('stores clean tracked metadata while leaving capabilities only in SMTP delivery bodies', async () => {
     const html = '<p>Review <a href="https://example.org/proposal">the proposal</a>.</p>'
-    const res = await Send.POST(req({
+    const res = await call(Send, 'POST', req({
       token: auth(),
       ip: '10.0.0.32',
       body: { to: ['bob@other.com'], subject: 'Tracked send', html, openTracking: true, linkTracking: true },
@@ -128,7 +129,7 @@ describe('POST /send', () => {
         contentBase64: Buffer.from('attachment bytes').toString('base64'),
       }],
     }
-    const res = await Send.POST(req({ token: auth(), body: message, ip: '10.0.0.12' }))
+    const res = await call(Send, 'POST', req({ token: auth(), body: message, ip: '10.0.0.12' }))
     const source = await app.rawMessages.findForEmail(res.messageId)
     expect(source).toBeTruthy()
 
@@ -151,7 +152,7 @@ describe('POST /send', () => {
   })
 
   it('accepts an attachment', async () => {
-    const res = await Send.POST(req({
+    const res = await call(Send, 'POST', req({
       token: auth(),
       body: { ...base, attachments: [{ filename: 'a.txt', contentType: 'text/plain', contentBase64: Buffer.from('hi').toString('base64') }] },
     }))
@@ -159,10 +160,10 @@ describe('POST /send', () => {
   })
 
   it('validates, sends, and stores an explicit Reply-To mailbox', async () => {
-    const invalid = await Send.POST(req({ token: auth(), body: { ...base, replyTo: ['not-an-address'] } }))
+    const invalid = await call(Send, 'POST', req({ token: auth(), body: { ...base, replyTo: ['not-an-address'] } }))
     expect(invalid.error).toMatch(/replyTo/)
 
-    const res = await Send.POST(req({
+    const res = await call(Send, 'POST', req({
       token: auth(),
       body: { ...base, replyTo: ['Replies@Example.net'] },
       ip: '10.0.0.11',
@@ -172,12 +173,12 @@ describe('POST /send', () => {
   })
 
   it('sends from an exact owned alias and rejects same-domain impersonation', async () => {
-    const denied = await Send.POST(req({
+    const denied = await call(Send, 'POST', req({
       token: auth(), ip: '10.0.0.21', body: { ...base, from: 'bob@example.com' },
     }))
     expect(denied.forbidden).toBe(true)
 
-    const res = await Send.POST(req({
+    const res = await call(Send, 'POST', req({
       token: auth(), ip: '10.0.0.22', body: { ...base, from: 'Sales@Example.com', subject: 'Alias sender' },
     }))
     const [, sent] = await app.emails.findById(res.messageId)
@@ -199,7 +200,7 @@ describe('POST /send', () => {
       rfcMessageId: '<archive-reply@other.com>', inReplyTo: '<archive-root@other.com>', references: ['<archive-root@other.com>'],
     }
     await app.emails.put(root); await app.emails.put(reply)
-    const sent = await Send.POST(req({ token: auth(), ip: '10.0.0.23', body: {
+    const sent = await call(Send, 'POST', req({ token: auth(), ip: '10.0.0.23', body: {
       ...base, subject: 'Re: Archive source', inReplyTo: reply.rfcMessageId,
       references: [root.rfcMessageId, reply.rfcMessageId], delayMs: 60_000,
       archive: true, archiveSourceId: reply.id,
@@ -211,16 +212,16 @@ describe('POST /send', () => {
 
     const [replyDocId] = await app.emails.findById(reply.id)
     await app.emails.update(replyDocId, { folder: 'trash' })
-    const undone = await Undo.POST(req({ token: auth(), body: { undoId: sent.undoId } }))
+    const undone = await call(Undo, 'POST', req({ token: auth(), body: { undoId: sent.undoId } }))
     expect(undone).toMatchObject({ undone: true, archiveRestored: 1 })
     expect((await app.emails.findById(root.id))[1].folder).toBe('inbox')
     expect((await app.emails.findById(reply.id))[1].folder).toBe('trash')
   })
 
   it('requires an authorized source for Send & Archive', async () => {
-    expect((await Send.POST(req({ token: auth(), ip: '10.0.0.24', body: { ...base, archive: true } }))).error)
+    expect((await call(Send, 'POST', req({ token: auth(), ip: '10.0.0.24', body: { ...base, archive: true } }))).error)
       .toMatch(/archiveSourceId/)
-    const foreign = await Send.POST(req({
+    const foreign = await call(Send, 'POST', req({
       token: token({ email: 'carol@other.com' }), ip: '10.0.0.25',
       body: { ...base, to: ['recipient@example.com'], archive: true, archiveSourceId: 'archive-source-root' },
     }))
@@ -228,14 +229,14 @@ describe('POST /send', () => {
   })
 
   it('400s on an unusable sendAt', async () => {
-    expect((await Send.POST(req({ token: auth(), body: { ...base, sendAt: 'nope' } }))).error).toMatch(/valid ISO/)
-    expect((await Send.POST(req({ token: auth(), body: { ...base, sendAt: '2000-01-01T00:00:00.000Z' } }))).error).toMatch(/in the future/)
+    expect((await call(Send, 'POST', req({ token: auth(), body: { ...base, sendAt: 'nope' } }))).error).toMatch(/valid ISO/)
+    expect((await call(Send, 'POST', req({ token: auth(), body: { ...base, sendAt: '2000-01-01T00:00:00.000Z' } }))).error).toMatch(/in the future/)
   })
 
   it('schedules a future send', async () => {
-    const res = await Send.POST(req({ token: auth(), body: { ...base, sendAt: future() } }))
+    const res = await call(Send, 'POST', req({ token: auth(), body: { ...base, sendAt: future() } }))
     expect(res.error).toBeUndefined()
-    const list = await Scheduled.GET(req({ token: auth() }))
+    const list = await call(Scheduled, 'GET', req({ token: auth() }))
     const item = list.find(entry => entry.id === res.id)
     expect(item.status).toBe('queued')
     expect(item.nextAttempt).toBeTruthy()
@@ -243,20 +244,20 @@ describe('POST /send', () => {
   })
 
   it('loads and edits a scheduled message without changing its canonical id', async () => {
-    const created = await Send.POST(req({ token: auth(), ip: '10.0.0.40', body: {
+    const created = await call(Send, 'POST', req({ token: auth(), ip: '10.0.0.40', body: {
       ...base,
       subject: 'Before edit',
       sendAt: future(),
       attachments: [{ filename: 'before.txt', contentType: 'text/plain', contentBase64: Buffer.from('before').toString('base64') }],
     } }))
-    const detail = await ScheduledItem.GET(req({ token: auth(), paths: { id: created.id } }))
+    const detail = await call(ScheduledItem, 'GET', req({ token: auth(), paths: { id: created.id } }))
     expect(detail.attachments[0].contentBase64).toBeTruthy()
     const later = new Date(Date.now() + 7_200_000).toISOString()
-    const updated = await ScheduledItem.PUT(req({ token: auth(), paths: { id: created.id }, body: {
+    const updated = await call(ScheduledItem, 'PUT', req({ token: auth(), paths: { id: created.id }, body: {
       subject: 'After edit', text: 'updated body', html: '<p>updated body</p>', sendAt: later, attachments: [],
     } }))
     expect(updated.id).toBe(created.id)
-    const after = await ScheduledItem.GET(req({ token: auth(), paths: { id: created.id } }))
+    const after = await call(ScheduledItem, 'GET', req({ token: auth(), paths: { id: created.id } }))
     expect(after.subject).toBe('After edit')
     expect(after.sendAt).toBe(later)
     expect(after.attachments).toEqual([])
@@ -266,103 +267,103 @@ describe('POST /send', () => {
   })
 
   it('protects scheduled detail and edits by exact mailbox owner', async () => {
-    const created = await Send.POST(req({ token: auth(), ip: '10.0.0.41', body: { ...base, subject: 'Private schedule', sendAt: future() } }))
+    const created = await call(Send, 'POST', req({ token: auth(), ip: '10.0.0.41', body: { ...base, subject: 'Private schedule', sendAt: future() } }))
     const other = token({ email: 'bob@example.com' })
-    expect((await ScheduledItem.GET(req({ token: other, paths: { id: created.id } }))).notFound).toBe(true)
-    expect((await ScheduledItem.PUT(req({ token: other, paths: { id: created.id }, body: { subject: 'Stolen' } }))).notFound).toBe(true)
+    expect((await call(ScheduledItem, 'GET', req({ token: other, paths: { id: created.id } }))).notFound).toBe(true)
+    expect((await call(ScheduledItem, 'PUT', req({ token: other, paths: { id: created.id }, body: { subject: 'Stolen' } }))).notFound).toBe(true)
   })
 
   it('validates and schedules a no-reply follow-up reminder', async () => {
-    expect((await Send.POST(req({ token: auth(), body: { ...base, remindAt: 'nope' } }))).error).toMatch(/valid ISO/)
+    expect((await call(Send, 'POST', req({ token: auth(), body: { ...base, remindAt: 'nope' } }))).error).toMatch(/valid ISO/)
     const remindAt = future()
-    const res = await Send.POST(req({ token: auth(), body: { ...base, remindAt } }))
+    const res = await call(Send, 'POST', req({ token: auth(), body: { ...base, remindAt } }))
     expect(res.reminderId).toMatch(/^reminder-/)
-    const list = await Reminders.GET(req({ token: auth() }))
+    const list = await call(Reminders, 'GET', req({ token: auth() }))
     expect(list.some(item => item.id === res.reminderId && item.remindAt === remindAt)).toBe(true)
   })
 
   it('requires a reminder for scheduled mail to occur after delivery', async () => {
     const sendAt = new Date(Date.now() + 7_200_000).toISOString()
     const remindAt = new Date(Date.now() + 3_600_000).toISOString()
-    expect((await Send.POST(req({ token: auth(), body: { ...base, sendAt, remindAt } }))).error)
+    expect((await call(Send, 'POST', req({ token: auth(), body: { ...base, sendAt, remindAt } }))).error)
       .toMatch(/after sendAt/)
   })
 
   it('queues a delayed send that can be undone', async () => {
-    const res = await Send.POST(req({ token: auth(), body: { ...base, delayMs: 60_000 } }))
+    const res = await call(Send, 'POST', req({ token: auth(), body: { ...base, delayMs: 60_000 } }))
     expect(res.undoId ?? res.id).toBeTruthy()
   })
 
   it('429s once the hourly limit is exhausted', async () => {
     let res
-    for (let i = 0; i < 62; i++) res = await Send.POST(req({ token: auth(), body: base, ip: '10.0.0.5' }))
+    for (let i = 0; i < 62; i++) res = await call(Send, 'POST', req({ token: auth(), body: base, ip: '10.0.0.5' }))
     expect(res.rateLimited).toBe(true)
   })
 })
 
 describe('DELETE /send/scheduled', () => {
   it('400s without an id', async () => {
-    expect((await Scheduled.DELETE(req({ token: auth(), body: {} }))).error).toMatch(/id is required/)
+    expect((await call(Scheduled, 'DELETE', req({ token: auth(), body: {} }))).error).toMatch(/id is required/)
   })
 
   it('404s for an unknown id', async () => {
-    expect((await Scheduled.DELETE(req({ token: auth(), body: { id: 'ghost' } }))).notFound).toBe(true)
+    expect((await call(Scheduled, 'DELETE', req({ token: auth(), body: { id: 'ghost' } }))).notFound).toBe(true)
   })
 
   it('404s for another sender scheduled mail', async () => {
-    const [entry] = await Scheduled.GET(req({ token: auth() }))
-    const res = await Scheduled.DELETE(req({ token: token({ email: 'bob@example.com' }), body: { id: entry.id } }))
+    const [entry] = await call(Scheduled, 'GET', req({ token: auth() }))
+    const res = await call(Scheduled, 'DELETE', req({ token: token({ email: 'bob@example.com' }), body: { id: entry.id } }))
     expect(res.notFound).toBe(true)
   })
 
   it('cancels the scheduled send', async () => {
-    const [entry] = await Scheduled.GET(req({ token: auth() }))
-    expect((await Scheduled.DELETE(req({ token: auth(), body: { id: entry.id } }))).cancelled).toBe(true)
+    const [entry] = await call(Scheduled, 'GET', req({ token: auth() }))
+    expect((await call(Scheduled, 'DELETE', req({ token: auth(), body: { id: entry.id } }))).cancelled).toBe(true)
     expect((await app.outbox.findById(entry.id))[1]).toBeNull()
   })
 
   it('refuses cancellation during an active delivery lease', async () => {
-    const created = await Send.POST(req({ token: auth(), ip: '10.0.0.42', body: { ...base, subject: 'Claimed', sendAt: future() } }))
+    const created = await call(Send, 'POST', req({ token: auth(), ip: '10.0.0.42', body: { ...base, subject: 'Claimed', sendAt: future() } }))
     const [queueDocId] = await app.outbox.findById(created.id)
     await app.outbox.update(queueDocId, { status: 'sending', claimedAt: Date.now() })
-    expect((await ScheduledItem.DELETE(req({ token: auth(), paths: { id: created.id } }))).conflict).toBe(true)
+    expect((await call(ScheduledItem, 'DELETE', req({ token: auth(), paths: { id: created.id } }))).conflict).toBe(true)
   })
 })
 
 describe('POST /send/undo', () => {
   it('400s without an undoId', async () => {
-    expect((await Undo.POST(req({ token: auth(), body: {} }))).error).toMatch(/undoId is required/)
+    expect((await call(Undo, 'POST', req({ token: auth(), body: {} }))).error).toMatch(/undoId is required/)
   })
 
   it('404s for an unknown undoId', async () => {
-    expect((await Undo.POST(req({ token: auth(), body: { undoId: 'ghost' } }))).notFound).toBe(true)
+    expect((await call(Undo, 'POST', req({ token: auth(), body: { undoId: 'ghost' } }))).notFound).toBe(true)
   })
 
   it('cancels a delayed send', async () => {
-    const queued = await Send.POST(req({ token: auth(), body: { ...base, delayMs: 60_000 }, ip: '10.0.0.7' }))
+    const queued = await call(Send, 'POST', req({ token: auth(), body: { ...base, delayMs: 60_000 }, ip: '10.0.0.7' }))
     const undoId = queued.undoId ?? queued.id
-    expect((await Undo.POST(req({ token: auth(), body: { undoId } }))).undone).toBe(true)
+    expect((await call(Undo, 'POST', req({ token: auth(), body: { undoId } }))).undone).toBe(true)
   })
 
   it('cannot undo another mailbox send and dismisses its own reminder on undo', async () => {
-    const queued = await Send.POST(req({
+    const queued = await call(Send, 'POST', req({
       token: auth(), ip: '10.0.0.8',
       body: { ...base, delayMs: 60_000, remindAt: future() },
     }))
-    expect((await Undo.POST(req({ token: token({ email: 'bob@example.com' }), body: { undoId: queued.undoId } }))).notFound).toBe(true)
-    expect((await Undo.POST(req({ token: auth(), body: { undoId: queued.undoId } }))).undone).toBe(true)
-    expect((await Reminders.GET(req({ token: auth() }))).some(item => item.id === queued.reminderId)).toBe(false)
+    expect((await call(Undo, 'POST', req({ token: token({ email: 'bob@example.com' }), body: { undoId: queued.undoId } }))).notFound).toBe(true)
+    expect((await call(Undo, 'POST', req({ token: auth(), body: { undoId: queued.undoId } }))).undone).toBe(true)
+    expect((await call(Reminders, 'GET', req({ token: auth() }))).some(item => item.id === queued.reminderId)).toBe(false)
   })
 })
 
 describe('POST /send/flush', () => {
   it('requires a system signature and returns queue health around a recovery pass', async () => {
     await app.outboundQueue.enqueue('alice@example.com', base, { availableAt: 0 })
-    expect((await Flush.POST(req({ token: auth(), body: {} }))).unauthorized).toBe(true)
+    expect((await call(Flush, 'POST', req({ token: auth(), body: {} }))).unauthorized).toBe(true)
 
     const secret = process.env.INBOUND_WEBHOOK_SECRET || ''
     const signature = createHmac('sha256', secret).update('{}').digest('hex')
-    const result = await Flush.POST(req({ body: {}, headers: { 'X-Caduceus-Signature': signature } }))
+    const result = await call(Flush, 'POST', req({ body: {}, headers: { 'X-Caduceus-Signature': signature } }))
     expect(result.before.depth).toBeGreaterThan(0)
     expect(result.delivered).toBeGreaterThan(0)
     expect(result.queue.due).toBe(0)
@@ -371,14 +372,14 @@ describe('POST /send/flush', () => {
 
 describe('/reminders', () => {
   it('sets a reminder on an existing sent message and protects mailbox ownership', async () => {
-    const sent = await Send.POST(req({ token: auth(), ip: '10.0.0.9', body: base }))
+    const sent = await call(Send, 'POST', req({ token: auth(), ip: '10.0.0.9', body: base }))
     const remindAt = future()
-    expect((await Reminders.POST(req({
+    expect((await call(Reminders, 'POST', req({
       token: token({ email: 'bob@example.com' }), body: { emailId: sent.messageId, remindAt },
     }))).notFound).toBe(true)
-    const created = await Reminders.POST(req({ token: auth(), body: { emailId: sent.messageId, remindAt } }))
+    const created = await call(Reminders, 'POST', req({ token: auth(), body: { emailId: sent.messageId, remindAt } }))
     expect(created.scheduled).toBe(true)
-    expect((await Reminders.DELETE(req({ token: auth(), body: { id: created.id } }))).dismissed).toBe(true)
+    expect((await call(Reminders, 'DELETE', req({ token: auth(), body: { id: created.id } }))).dismissed).toBe(true)
   })
 
   it('runs a signed all-mailbox due pass without an inbox read', async () => {
@@ -386,10 +387,10 @@ describe('/reminders', () => {
       ownerEmail: 'alice@example.com', emailId: 'worker-sent', recipient: 'bob@other.com',
       subject: 'Worker follow-up', remindAt: Date.now() - 1,
     })
-    expect((await ReminderTick.POST(req({ body: {} }))).unauthorized).toBe(true)
+    expect((await call(ReminderTick, 'POST', req({ body: {} }))).unauthorized).toBe(true)
     const secret = process.env.INBOUND_WEBHOOK_SECRET || ''
     const signature = createHmac('sha256', secret).update('{}').digest('hex')
-    expect(await ReminderTick.POST(req({ body: {}, headers: { 'X-Caduceus-Signature': signature } })))
+    expect(await call(ReminderTick, 'POST', req({ body: {}, headers: { 'X-Caduceus-Signature': signature } })))
       .toEqual({ due: 1, surfaced: 1, reconciled: 0, failed: 0 })
     expect((await app.emails.findById(`follow-up-${due.id}`))[1]).toMatchObject({
       ownerEmail: 'alice@example.com', folder: 'inbox', read: false,

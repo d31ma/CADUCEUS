@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { prepareTrackedHtml } from './tracking-tokens.js'
+import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
 /** @import { SendRequest } from '../../../models/SendRequest.js' */
 /** @import { SmtpAdapter } from '../../../models/SmtpAdapter.js' */
 
@@ -34,7 +35,7 @@ export class SmtpService {
  * @returns {SmtpAdapter}
  */
 export function createSmtpAdapter() {
-  const mode = process.env.SMTP_ADAPTER || (process.env.NODE_ENV === 'production' ? 'direct' : 'console')
+  const mode = ServerEnvironment.value('SMTP_ADAPTER') || (ServerEnvironment.value('NODE_ENV') === 'production' ? 'direct' : 'console')
   if (mode === 'direct') return new SmtpDirectAdapter()
   if (mode === 'console') return new ConsoleSmtpAdapter()
   throw new Error(`Unsupported SMTP_ADAPTER=${mode}. Use direct or console.`)
@@ -73,8 +74,8 @@ export class SmtpDirectAdapter {
 
   /** @param {SendRequest} msg @param {string} [fromOverride] */
   async send(msg, fromOverride) {
-    const hostname = process.env.MAIL_HOSTNAME || 'localhost'
-    const from = fromOverride || process.env.SMTP_FROM || `postmaster@${hostname}`
+    const hostname = ServerEnvironment.value('MAIL_HOSTNAME') || 'localhost'
+    const from = fromOverride || ServerEnvironment.value('SMTP_FROM') || `postmaster@${hostname}`
     /** @type {(options: any) => { sendMail: (message: any) => Promise<any> }} */
     const createTransport = this.deps.createTransport
       ?? /** @type {any} */ ((await import('nodemailer')).default.createTransport)
@@ -138,7 +139,7 @@ async function deliverToDomain(input) {
 
 /** @param {string} host @param {string} hostname @param {any} dkim */
 export function transportOptions(host, hostname, dkim) {
-  const policy = process.env.SMTP_TLS_POLICY || 'opportunistic'
+  const policy = ServerEnvironment.value('SMTP_TLS_POLICY') || 'opportunistic'
   if (policy !== 'opportunistic' && policy !== 'require') throw Object.assign(new Error('SMTP_TLS_POLICY must be opportunistic or require'), { responseCode: 550 })
   const requireTLS = policy === 'require'
   return {
@@ -208,11 +209,11 @@ function safeSmtpError(value) { return String(value || 'delivery failed').replac
 
 /** @returns {{ domainName: string, keySelector: string, privateKey: string } | undefined} */
 export function loadDkim() {
-  const domainName = process.env.DKIM_DOMAIN
-  const keySelector = process.env.DKIM_SELECTOR
-  let privateKey = process.env.DKIM_PRIVATE_KEY || ''
-  if (!privateKey && process.env.DKIM_PRIVATE_KEY_FILE) {
-    try { privateKey = readFileSync(process.env.DKIM_PRIVATE_KEY_FILE, 'utf8') } catch { /* optional */ }
+  const domainName = ServerEnvironment.value('DKIM_DOMAIN')
+  const keySelector = ServerEnvironment.value('DKIM_SELECTOR')
+  let privateKey = ServerEnvironment.value('DKIM_PRIVATE_KEY') || ''
+  if (!privateKey && ServerEnvironment.value('DKIM_PRIVATE_KEY_FILE')) {
+    try { privateKey = readFileSync(ServerEnvironment.value('DKIM_PRIVATE_KEY_FILE'), 'utf8') } catch { /* optional */ }
   }
   return domainName && keySelector && privateKey ? { domainName, keySelector, privateKey } : undefined
 }

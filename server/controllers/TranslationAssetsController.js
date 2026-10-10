@@ -1,6 +1,7 @@
 import { resolve, sep } from 'node:path'
 import { RouteRequest } from '../middleware/RouteRequest.js'
 import { Respond } from '../platform/http/Respond.js'
+import { ServerEnvironment } from '../platform/runtime/ServerEnvironment.js'
 
 /**
  * Authenticated, allowlisted delivery for the checksum-pinned translation
@@ -19,7 +20,7 @@ export class TranslationAssetsController {
     return RouteRequest.handle(request, { guard: {} }, async ({ query }) => {
       const requested = TranslationAssetsController._readAssetPath(query?.path)
       if (requested instanceof Error) return Respond.r400(requested.message)
-      const root = resolve(process.env.TRANSLATION_ASSET_ROOT || TranslationAssetsController.DEFAULT_ASSET_ROOT)
+      const root = resolve(ServerEnvironment.value('TRANSLATION_ASSET_ROOT') || TranslationAssetsController.DEFAULT_ASSET_ROOT)
       const catalogFile = Bun.file(resolve(root, 'catalog.json'))
       if (!await catalogFile.exists()) return Respond.r503('Self-hosted translation assets are not installed')
 
@@ -29,7 +30,7 @@ export class TranslationAssetsController {
         ? catalog.files.find(file => file?.path === requested && Number.isSafeInteger(file?.bytes) && TranslationAssetsController.SHA256.test(file?.sha256 || ''))
         : null
       if (!entry) return Respond.r404('Translation asset not found')
-      if (process.env.CADUCEUS_TEST_REAL_TRANSLATION === 'true') console.log(`[translation-asset] ${requested} (${entry.bytes})`)
+      if (ServerEnvironment.value('CADUCEUS_TEST_REAL_TRANSLATION') === 'true') console.log(`[translation-asset] ${requested} (${entry.bytes})`)
 
       const path = resolve(root, requested)
       if (!path.startsWith(root + sep)) return Respond.r400('Invalid translation asset path')

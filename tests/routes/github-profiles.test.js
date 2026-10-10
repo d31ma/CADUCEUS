@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { Handler as GitHubProfile } from '@/routes/github/profile/yon.js'
-import { Handler as Preferences } from '@/routes/users/me/preferences/yon.js'
+import { GithubProfileController as GitHubProfile } from '@/controllers/GithubProfileController.js'
+import { UsersMePreferencesController as Preferences } from '@/controllers/UsersMePreferencesController.js'
+import { call } from '../support/controller-call.mjs'
 
 let app
 const alice = () => token()
@@ -18,13 +19,13 @@ describe('mailbox-scoped GitHub contact profile route', () => {
   it('is disabled by default and makes no public lookup', async () => {
     let calls = 0
     app.githubProfiles = { findByEmail: async () => { calls++; return { status: 'not-found' } } }
-    const result = await GitHubProfile.GET(req({ token: alice(), query: { email: 'grace@example.net' } }))
+    const result = await call(GitHubProfile, 'GET', req({ token: alice(), query: { email: 'grace@example.net' } }))
     expect(result).toEqual({ enabled: false, status: 'disabled' })
     expect(calls).toBe(0)
   })
 
   it('returns sanitized service data only for an exact owned contact after opt-in', async () => {
-    await Preferences.PUT(req({ token: alice(), body: { githubProfileEnrichment: true } }))
+    await call(Preferences, 'PUT', req({ token: alice(), body: { githubProfileEnrichment: true } }))
     await app.contacts.create('alice@example.com', { name: 'Grace', emails: [{ value: 'grace@example.net' }] })
     app.githubProfiles = { findByEmail: async value => ({
       status: 'found',
@@ -34,16 +35,16 @@ describe('mailbox-scoped GitHub contact profile route', () => {
       }] },
     }) }
 
-    const result = await GitHubProfile.GET(req({ token: alice(), query: { email: 'GRACE@EXAMPLE.NET' } }))
+    const result = await call(GitHubProfile, 'GET', req({ token: alice(), query: { email: 'GRACE@EXAMPLE.NET' } }))
     expect(result).toMatchObject({ enabled: true, status: 'found', profile: { login: 'grace' } })
     expect(result.profile.repositories[0].stars).toBe(42)
 
-    const unrelated = await GitHubProfile.GET(req({ token: alice(), query: { email: 'stranger@example.net' } }))
+    const unrelated = await call(GitHubProfile, 'GET', req({ token: alice(), query: { email: 'stranger@example.net' } }))
     expect(unrelated.notFound).toBe(true)
   })
 
   it('recognizes exact owned message participants but not another same-domain mailbox copy', async () => {
-    await Preferences.PUT(req({ token: bob(), body: { githubProfileEnrichment: true } }))
+    await call(Preferences, 'PUT', req({ token: bob(), body: { githubProfileEnrichment: true } }))
     await app.emails.put(email({
       id: 'github-owner-boundary',
       ownerEmail: 'alice@example.com',
@@ -53,13 +54,13 @@ describe('mailbox-scoped GitHub contact profile route', () => {
     }))
     app.githubProfiles = { findByEmail: async () => ({ status: 'not-found' }) }
 
-    const aliceResult = await GitHubProfile.GET(req({ token: alice(), query: { email: 'participant@example.net' } }))
+    const aliceResult = await call(GitHubProfile, 'GET', req({ token: alice(), query: { email: 'participant@example.net' } }))
     expect(aliceResult).toEqual({ enabled: true, status: 'not-found' })
-    expect((await GitHubProfile.GET(req({ token: alice(), query: { email: 'stranger@example.net' } }))).notFound).toBe(true)
-    expect((await GitHubProfile.GET(req({ token: bob(), query: { email: 'participant@example.net' } }))).notFound).toBe(true)
+    expect((await call(GitHubProfile, 'GET', req({ token: alice(), query: { email: 'stranger@example.net' } }))).notFound).toBe(true)
+    expect((await call(GitHubProfile, 'GET', req({ token: bob(), query: { email: 'participant@example.net' } }))).notFound).toBe(true)
   })
 
   it('rejects malformed email queries before lookup', async () => {
-    expect((await GitHubProfile.GET(req({ token: alice(), query: { email: 'not-an-email' } }))).error).toContain('valid email')
+    expect((await call(GitHubProfile, 'GET', req({ token: alice(), query: { email: 'not-an-email' } }))).error).toContain('valid email')
   })
 })

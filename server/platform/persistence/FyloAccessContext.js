@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { createHash } from 'node:crypto'
 import { Security } from '../security/Security.js'
+import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
 
 const POSIX_ID_MIN = 100_000
 const POSIX_ID_SPAN = 2_000_000_000
@@ -17,7 +18,7 @@ const storage = new AsyncLocalStorage()
  */
 export class FyloAccessContext {
   static enabled() {
-    return process.env.FYLO_POSIX_ACCESS === 'true'
+    return ServerEnvironment.value('FYLO_POSIX_ACCESS') === 'true'
   }
 
   /**

@@ -62,6 +62,7 @@ if (command === 'serve') {
   const bridgeChild = await startPersistenceBridge(spawn)
 
   await runBootstrapIfConfigured()
+  await writeHandlerSettings()
 
   // Start the standalone Tachyon runtime as a child process.
   const child = spawn('ty', ['serve', ...args], {
@@ -172,7 +173,7 @@ if (command === 'serve') {
         supervisor.register({
           name: 'inbound-smtp',
           start: async () => {
-            const { InboundSmtpServer } = await import('../server/features/delivery/services/smtp-inbound-server.js')
+            const { InboundSmtpServer } = await import('../server/features/delivery/services/InboundSmtpServer.js')
             const server = await new InboundSmtpServer({ apiUrl }).start()
             server.once('error', (error) => supervisor?.reportFailure('inbound-smtp', error))
             return () => closeSmtpServer(server)
@@ -184,7 +185,7 @@ if (command === 'serve') {
         supervisor.register({
           name: 'smtp-submission',
           start: async () => {
-            const { SubmissionServer } = await import('../server/features/delivery/services/smtp-submission-server.js')
+            const { SubmissionServer } = await import('../server/features/delivery/services/SubmissionServer.js')
             /** @type {import('smtp-server').SMTPServer[]} */
             const servers = []
             try {
@@ -324,6 +325,32 @@ if (command === 'serve') {
   console.error(`Unsupported Caduceus container command: ${command}`)
   console.error('Allowed commands: serve, admin:create, domain:migrate')
   process.exit(64)
+}
+
+/**
+ * Tachyon gives its handler processes no application variables; they read
+ * `yon.*` settings from server/application.json and the project `.env`. Hand
+ * them the settings this process holds, with paths made absolute because a
+ * handler runs in its own working directory.
+ */
+async function writeHandlerSettings() {
+  const { readFile, writeFile } = await import('node:fs/promises')
+  const { resolve } = await import('node:path')
+  const { ServerEnvironment } = await import('../server/platform/runtime/ServerEnvironment.js')
+  const target = resolve('.env')
+  const existing = await readFile(target, 'utf8').catch(() => null)
+  if (existing !== null && !existing.startsWith(ServerEnvironment.GENERATED_MARKER)) {
+    throw new Error(`${target} was not written by CADUCEUS; move it aside so the entry point can write the handler settings`)
+  }
+  /** @type {Record<string, string | undefined>} */
+  const environment = { ...process.env }
+  for (const name of ServerEnvironment.HANDLER_SETTINGS) {
+    const value = environment[name]
+    if (value && /(_ROOT|_FILE|_BINARY|_EXEC_PATH)$/.test(name)) environment[name] = resolve(value)
+  }
+  const { text, skipped } = ServerEnvironment.dotenv(environment)
+  for (const name of skipped) console.warn(`[runtime] ${name} spans several lines; set ${name}_FILE for the API handlers instead`)
+  await writeFile(target, text, { mode: 0o600 })
 }
 
 async function startPersistenceBridge(spawn) {

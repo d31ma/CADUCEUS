@@ -3,7 +3,8 @@ import { createHash } from 'node:crypto'
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Handler } from '../../server/routes/translation-assets/yon.js'
+import { TranslationAssetsController as Handler } from '../../server/controllers/TranslationAssetsController.js'
+import { call } from '../support/controller-call.mjs'
 import { req, setupRoutes, teardownRoutes, token } from './helpers.js'
 
 let root
@@ -26,7 +27,7 @@ afterEach(() => {
 
 describe('authenticated translation asset delivery', () => {
   test('requires authentication before inspecting the asset path', async () => {
-    const response = await Handler.GET(req({ query: { path: 'runtime/engine.wasm' } }))
+    const response = await call(Handler, 'GET', req({ query: { path: 'runtime/engine.wasm' } }))
     expect(response.unauthorized).toBe(true)
   })
 
@@ -40,7 +41,7 @@ describe('authenticated translation asset delivery', () => {
       files: [{ path, bytes: bytes.byteLength, sha256 }],
     }))
 
-    const response = await Handler.GET(req({ token: token(), query: { path } }))
+    const response = await call(Handler, 'GET', req({ token: token(), query: { path } }))
 
     expect(response.status).toBe(200)
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes)
@@ -54,22 +55,22 @@ describe('authenticated translation asset delivery', () => {
 
   test('fails closed for missing, invalid, unlisted, and mismatched assets', async () => {
     const request = path => req({ token: token(), query: { path } })
-    expect((await Handler.GET(request(undefined))).error).toBe('Translation asset path is required')
-    expect((await Handler.GET(request('runtime/missing.wasm'))).unavailable).toBe(true)
+    expect((await call(Handler, 'GET', request(undefined))).error).toBe('Translation asset path is required')
+    expect((await call(Handler, 'GET', request('runtime/missing.wasm'))).unavailable).toBe(true)
 
     writeFileSync(join(root, 'catalog.json'), '{')
-    expect((await Handler.GET(request('runtime/missing.wasm'))).error).toContain('catalog is invalid')
+    expect((await call(Handler, 'GET', request('runtime/missing.wasm'))).error).toContain('catalog is invalid')
 
     writeFileSync(join(root, 'catalog.json'), JSON.stringify({ files: [] }))
-    expect((await Handler.GET(request('runtime/missing.wasm'))).notFound).toBe(true)
+    expect((await call(Handler, 'GET', request('runtime/missing.wasm'))).notFound).toBe(true)
 
     writeFileSync(join(root, 'catalog.json'), JSON.stringify({
       files: [{ path: 'runtime/missing.wasm', bytes: 4, sha256: 'a'.repeat(64) }],
     }))
-    expect((await Handler.GET(request('runtime/missing.wasm'))).unavailable).toBe(true)
+    expect((await call(Handler, 'GET', request('runtime/missing.wasm'))).unavailable).toBe(true)
 
     mkdirSync(join(root, 'runtime'))
     writeFileSync(join(root, 'runtime/missing.wasm'), new Uint8Array([0]))
-    expect((await Handler.GET(request('runtime/missing.wasm'))).unavailable).toBe(true)
+    expect((await call(Handler, 'GET', request('runtime/missing.wasm'))).unavailable).toBe(true)
   })
 })

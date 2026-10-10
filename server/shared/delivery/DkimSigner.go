@@ -88,7 +88,7 @@ func (signer DkimSigner) Signed(message []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	header := "DKIM-Signature: " + value + base64.StdEncoding.EncodeToString(signature) + "\r\n"
+	header := "DKIM-Signature: " + strings.ReplaceAll(value, "; ", ";\r\n\t") + base64.StdEncoding.EncodeToString(signature) + "\r\n"
 	return append([]byte(header), message...), nil
 }
 

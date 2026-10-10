@@ -136,6 +136,10 @@ func (direct SmtpDirect) source(from string, message map[string]any, trackedReci
 // transfer runs one SMTP session and answers the accepted recipients and the
 // rejected ones ({recipient, responseCode, error}).
 func (direct SmtpDirect) transfer(host string, hostname string, from string, recipients []string, source []byte) ([]string, []map[string]any, error) {
+	return direct.transferTo(net.JoinHostPort(host, "25"), host, hostname, from, recipients, source)
+}
+
+func (direct SmtpDirect) transferTo(address string, host string, hostname string, from string, recipients []string, source []byte) ([]string, []map[string]any, error) {
 	policy := Settings{}.Value("SMTP_TLS_POLICY")
 	if policy == "" {
 		policy = "opportunistic"
@@ -143,7 +147,7 @@ func (direct SmtpDirect) transfer(host string, hostname string, from string, rec
 	if policy != "opportunistic" && policy != "require" {
 		return nil, nil, &SmtpFailure{Message: "SMTP_TLS_POLICY must be opportunistic or require", ResponseCode: 550}
 	}
-	connection, err := net.DialTimeout("tcp", net.JoinHostPort(host, "25"), 20*time.Second)
+	connection, err := net.DialTimeout("tcp", address, 20*time.Second)
 	if err != nil {
 		return nil, nil, err
 	}

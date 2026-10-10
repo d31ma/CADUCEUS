@@ -15,7 +15,10 @@ type ListUnsubscribe struct{}
 func (unsubscribe ListUnsubscribe) Parsed(headers map[string]any, html string) map[string]any {
 	raw := Security{}.Trim(RecordValues{}.Text(headers["list-unsubscribe"]))
 	httpsUrl, mailto := "", ""
-	for _, match := range regexp.MustCompile(`<([^<>\r\n]{1,2048})>`).FindAllStringSubmatch(raw, -1) {
+	for _, match := range regexp.MustCompile(`<([^<>\r\n]+)>`).FindAllStringSubmatch(raw, -1) {
+		if len(match[1]) > 2048 {
+			continue
+		}
 		parsed, err := url.Parse(Security{}.Trim(match[1]))
 		if err != nil || parsed.Scheme == "" {
 			continue

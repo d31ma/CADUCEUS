@@ -80,6 +80,12 @@ export default class BrowserPageService {
     setTimeout(() => this._focus(request), 0)
   }
 
+  /** @param {ClickRequested} request */
+  @OnEvent
+  click(request) {
+    setTimeout(() => this._click(request.selector), 0)
+  }
+
   /** @param {DragEvent} event */
   dragOver(event) {
     event.preventDefault()
@@ -120,6 +126,12 @@ export default class BrowserPageService {
     if (request.reload) location.reload()
     else if (request.replace) location.replace(request.target)
     else location.assign(request.target)
+  }
+
+  /** @param {string} selector */
+  _click(selector) {
+    const target = document.querySelector(selector)
+    if (target instanceof HTMLElement) target.click()
   }
 
   /** @param {Record<string, string>} attributes */

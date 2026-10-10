@@ -110,3 +110,12 @@
   .team-toolbar { padding: 0.75rem 1rem; }
   .team-row { padding: 0.625rem 1rem; }
 }
+
+/* ── Shared rules this view uses (moved from shared/assets/styles.css) ── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 3rem 2rem; text-align: center; color: var(--ms-text-subtle); min-height: 240px;
+}
+.empty-state-title { font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem; color: var(--ms-text); }
+.empty-state-subtitle { font-size: 0.8125rem; max-width: 280px; }
+:root[data-screenshot-mode="true"] * { color: transparent !important; }

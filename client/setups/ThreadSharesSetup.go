@@ -1,5 +1,5 @@
-// ThreadSharesSetup gives ThreadSharesClient no adapter, so its requests use the browser
-// transport to the page's own server.
+// ThreadSharesSetup gives ThreadSharesClient no adapter, so its
+// requests use the browser transport to the page's own server.
 // @Setup
 type ThreadSharesSetup struct{}
 

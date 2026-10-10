@@ -32,7 +32,7 @@ func (helper *McpAuditEventsHelper) Put(event map[string]any) error {
 // ListForOwner answers the owner's newest events, at most limit, as
 // {docId, ...event, parameterKeys}.
 func (helper *McpAuditEventsHelper) ListForOwner(ownerEmail string, limit int) ([]map[string]any, error) {
-	documents, err := helper.store().Equal(helper.ownerField(), strings.ToLower(ownerEmail))
+	documents, err := helper.store().Where(helper.ownerField(), strings.ToLower(ownerEmail))
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +70,6 @@ func (helper *McpAuditEventsHelper) deleteAll(events []map[string]any) error {
 
 func (McpAuditEventsHelper) ownerField() string { return "ownerEmail" }
 
-func (helper *McpAuditEventsHelper) store() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().McpAuditEvents}
+func (helper *McpAuditEventsHelper) store() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().McpAuditEvents}
 }

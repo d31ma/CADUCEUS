@@ -13,5 +13,5 @@ func (service *RateLimitService) Check(key []string, maxRequests int, windowMill
 }
 
 func (service *RateLimitService) limiter() RateLimiter {
-	return RateLimiter{Store: CollectionStore{Database: service.fyloHelper.Database(), Collection: FyloCollections{}.Named().RateLimits}}
+	return RateLimiter{Store: FyloCollection{Database: service.fyloHelper.Database(), Name: FyloCollections{}.Named().RateLimits}}
 }

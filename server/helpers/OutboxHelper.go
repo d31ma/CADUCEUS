@@ -13,9 +13,7 @@ func (helper *OutboxHelper) Put(entry map[string]any) (string, error) {
 
 // FindById answers the document id and entry with the undo id, or "" and nil.
 func (helper *OutboxHelper) FindById(undoId string) (string, map[string]any, error) {
-	documents, err := helper.store().Equal("id", undoId)
-	id, entry := StoredRecords{}.First(documents)
-	return id, entry, err
+	return helper.store().FindById(undoId)
 }
 
 // Delete deletes one outbox document.
@@ -25,21 +23,21 @@ func (helper *OutboxHelper) Delete(documentId string) error {
 
 // FindExpired answers the entries whose undo window has passed, in FYLO's
 // order (the former {docId: entry} record).
-func (helper *OutboxHelper) FindExpired() ([]FyloDocument, error) {
+func (helper *OutboxHelper) FindExpired() ([]FyloRecord, error) {
 	return helper.expiredBy(EpochTime{}.Now())
 }
 
 // FindDue answers the entries whose next delivery attempt is due at now
 // (milliseconds). Entries written before the retry fields existed fall back
 // to expiresAt.
-func (helper *OutboxHelper) FindDue(now int64) ([]FyloDocument, error) {
+func (helper *OutboxHelper) FindDue(now int64) ([]FyloRecord, error) {
 	documents, err := helper.expiredBy(now)
 	if err != nil {
 		return nil, err
 	}
-	due := []FyloDocument{}
+	due := []FyloRecord{}
 	for _, document := range documents {
-		entry := StoredRecords{}.Decoded(document.Data)
+		entry := document.Data
 		at, isNumber := RecordValues{}.Number(RecordValues{}.Coalesce(entry["nextAttempt"], entry[helper.expiryField()]))
 		if isNumber && at <= float64(now) {
 			due = append(due, document)
@@ -49,7 +47,7 @@ func (helper *OutboxHelper) FindDue(now int64) ([]FyloDocument, error) {
 }
 
 // ListAll answers every outbox entry, in FYLO's order.
-func (helper *OutboxHelper) ListAll() ([]FyloDocument, error) {
+func (helper *OutboxHelper) ListAll() ([]FyloRecord, error) {
 	return helper.store().All()
 }
 
@@ -58,13 +56,13 @@ func (helper *OutboxHelper) Update(documentId string, patch map[string]any) erro
 	return helper.store().Patch(documentId, patch)
 }
 
-func (helper *OutboxHelper) expiredBy(now int64) ([]FyloDocument, error) {
-	store := helper.store()
-	return store.Find(store.Condition(helper.expiryField(), "$lte", now))
+func (helper *OutboxHelper) expiredBy(now int64) ([]FyloRecord, error) {
+	conditions := FyloConditions{}
+	return conditions.Matching(helper.store(), conditions.Condition(helper.expiryField(), "$lte", now))
 }
 
 func (OutboxHelper) expiryField() string { return "expiresAt" }
 
-func (helper *OutboxHelper) store() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().Outbox}
+func (helper *OutboxHelper) store() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().Outbox}
 }

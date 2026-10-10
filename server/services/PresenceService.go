@@ -23,5 +23,5 @@ func (service *PresenceService) IsOnline(email string) (bool, error) {
 }
 
 func (service *PresenceService) registry() PresenceRegistry {
-	return PresenceRegistry{Store: CollectionStore{Database: service.fyloHelper.Database(), Collection: FyloCollections{}.Named().Presence}}
+	return PresenceRegistry{Store: FyloCollection{Database: service.fyloHelper.Database(), Name: FyloCollections{}.Named().Presence}}
 }

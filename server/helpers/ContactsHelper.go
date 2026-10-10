@@ -15,12 +15,12 @@ func (helper *ContactsHelper) List(ownerEmail string) ([]map[string]any, error) 
 }
 
 // owned answers the owner's contacts, read through store.
-func (helper *ContactsHelper) owned(store CollectionStore, ownerEmail string) ([]map[string]any, error) {
+func (helper *ContactsHelper) owned(store FyloCollection, ownerEmail string) ([]map[string]any, error) {
 	owner := strings.ToLower(ownerEmail)
-	documents, err := store.Equal(helper.ownerField(), owner)
+	documents, err := store.Where(helper.ownerField(), owner)
 	contacts := []map[string]any{}
 	for _, document := range documents {
-		contact := StoredRecords{}.WithDocumentId(document.Id, ContactsRecords{}.Hydrated(StoredRecords{}.Decoded(document.Data)))
+		contact := FyloRecord{Id: document.Id, Data: ContactsRecords{}.Hydrated(document.Data)}.WithDocId()
 		if contact[helper.ownerField()] == owner {
 			contacts = append(contacts, contact)
 		}
@@ -32,9 +32,9 @@ func (helper *ContactsHelper) owned(store CollectionStore, ownerEmail string) ([
 // "" and nil.
 func (helper *ContactsHelper) FindById(id string, ownerEmail string) (string, map[string]any, error) {
 	owner := strings.ToLower(ownerEmail)
-	documents, err := helper.contacts().Equal(helper.idField(), id)
+	documents, err := helper.contacts().Where(helper.idField(), id)
 	for _, document := range documents {
-		contact := ContactsRecords{}.Hydrated(StoredRecords{}.Decoded(document.Data))
+		contact := ContactsRecords{}.Hydrated(document.Data)
 		if contact[helper.ownerField()] == owner {
 			return document.Id, contact, nil
 		}
@@ -61,7 +61,7 @@ func (helper *ContactsHelper) FindByEmail(ownerEmail string, address string) (ma
 
 // Put stores a contact and answers its document id.
 func (helper *ContactsHelper) Put(contact map[string]any) (string, error) {
-	store, err := helper.contacts().ForDomain(RecordValues{}.Text(contact[helper.domainField()]))
+	store, err := FyloTenancy{}.ForDomain(helper.contacts(), RecordValues{}.Text(contact[helper.domainField()]))
 	if err != nil {
 		return "", err
 	}
@@ -70,7 +70,7 @@ func (helper *ContactsHelper) Put(contact map[string]any) (string, error) {
 
 // Replace writes a contact over its document.
 func (helper *ContactsHelper) Replace(documentId string, contact map[string]any) error {
-	store, err := helper.contacts().ForDomain(RecordValues{}.Text(contact[helper.domainField()]))
+	store, err := FyloTenancy{}.ForDomain(helper.contacts(), RecordValues{}.Text(contact[helper.domainField()]))
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (helper *ContactsHelper) Replace(documentId string, contact map[string]any)
 
 // Delete deletes one contact document of a domain.
 func (helper *ContactsHelper) Delete(documentId string, domain string) error {
-	store, err := helper.contacts().ForDomain(domain)
+	store, err := FyloTenancy{}.ForDomain(helper.contacts(), domain)
 	if err != nil {
 		return err
 	}
@@ -89,9 +89,9 @@ func (helper *ContactsHelper) Delete(documentId string, domain string) error {
 // ListGroups answers the owner's contact groups as {docId, ...group}.
 func (helper *ContactsHelper) ListGroups(ownerEmail string) ([]map[string]any, error) {
 	owner := strings.ToLower(ownerEmail)
-	groups, err := helper.groups().EqualRecords(helper.ownerField(), owner)
+	records, err := helper.groups().Where(helper.ownerField(), owner)
 	owned := []map[string]any{}
-	for _, group := range groups {
+	for _, group := range (StoredRecords{}).WithDocumentIds(records) {
 		if group[helper.ownerField()] == owner {
 			owned = append(owned, group)
 		}
@@ -113,7 +113,7 @@ func (helper *ContactsHelper) FindGroupById(id string, ownerEmail string) (strin
 
 // PutGroup stores a contact group and answers its document id.
 func (helper *ContactsHelper) PutGroup(group map[string]any) (string, error) {
-	store, err := helper.groups().ForDomain(RecordValues{}.Text(group[helper.domainField()]))
+	store, err := FyloTenancy{}.ForDomain(helper.groups(), RecordValues{}.Text(group[helper.domainField()]))
 	if err != nil {
 		return "", err
 	}
@@ -122,7 +122,7 @@ func (helper *ContactsHelper) PutGroup(group map[string]any) (string, error) {
 
 // ReplaceGroup writes a contact group over its document.
 func (helper *ContactsHelper) ReplaceGroup(documentId string, group map[string]any) error {
-	store, err := helper.groups().ForDomain(RecordValues{}.Text(group[helper.domainField()]))
+	store, err := FyloTenancy{}.ForDomain(helper.groups(), RecordValues{}.Text(group[helper.domainField()]))
 	if err != nil {
 		return err
 	}
@@ -132,14 +132,14 @@ func (helper *ContactsHelper) ReplaceGroup(documentId string, group map[string]a
 // DeleteGroup deletes a contact group and takes it off every contact of its
 // owner.
 func (helper *ContactsHelper) DeleteGroup(documentId string, group map[string]any) error {
-	store, err := helper.groups().ForDomain(RecordValues{}.Text(group[helper.domainField()]))
+	store, err := FyloTenancy{}.ForDomain(helper.groups(), RecordValues{}.Text(group[helper.domainField()]))
 	if err != nil {
 		return err
 	}
 	if err := store.Delete(documentId); err != nil {
 		return err
 	}
-	domainContacts, err := helper.contacts().ForDomain(RecordValues{}.Text(group[helper.domainField()]))
+	domainContacts, err := FyloTenancy{}.ForDomain(helper.contacts(), RecordValues{}.Text(group[helper.domainField()]))
 	if err != nil {
 		return err
 	}
@@ -183,10 +183,10 @@ func (ContactsHelper) groupsField() string { return "groupIds" }
 
 func (ContactsHelper) documentField() string { return "docId" }
 
-func (helper *ContactsHelper) contacts() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().Contacts}
+func (helper *ContactsHelper) contacts() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().Contacts}
 }
 
-func (helper *ContactsHelper) groups() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().ContactGroups}
+func (helper *ContactsHelper) groups() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().ContactGroups}
 }

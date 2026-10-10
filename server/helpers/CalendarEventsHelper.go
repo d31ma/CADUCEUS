@@ -17,7 +17,7 @@ func (helper *CalendarEventsHelper) Put(event map[string]any) (string, error) {
 // and every recurring master and exception, which the recurrence expansion
 // needs whatever their own dates.
 func (helper *CalendarEventsHelper) List(userEmail string, start string, end string) ([]map[string]any, error) {
-	documents, err := helper.store().Equal(helper.userField(), userEmail)
+	documents, err := helper.store().Where(helper.userField(), userEmail)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (helper *CalendarEventsHelper) List(userEmail string, start string, end str
 
 // FindById answers the document id and event with the id, or "" and nil.
 func (helper *CalendarEventsHelper) FindById(id string) (string, map[string]any, error) {
-	documents, err := helper.store().Equal(helper.idField(), id)
+	documents, err := helper.store().Where(helper.idField(), id)
 	if err != nil || len(documents) == 0 {
 		return "", nil, err
 	}
@@ -55,11 +55,11 @@ func (helper *CalendarEventsHelper) FindById(id string) (string, map[string]any,
 // or "" and nil. FYLO joins conditions with OR, so the query narrows by user
 // and the UID is checked here.
 func (helper *CalendarEventsHelper) FindByIcsUid(userEmail string, icsUid string) (string, map[string]any, error) {
-	documents, err := helper.store().Equal(helper.userField(), userEmail)
+	documents, err := helper.store().Where(helper.userField(), userEmail)
 	for _, document := range documents {
-		raw := StoredRecords{}.Decoded(document.Data)
+		raw := document.Data
 		if raw["icsUid"] == icsUid && !(RecordValues{}).Truthy(raw[helper.recurrenceField()]) {
-			return document.Id, StoredRecords{}.WithDocumentId(document.Id, CalendarEventsRecords{}.Hydrated(raw)), nil
+			return document.Id, FyloRecord{Id: document.Id, Data: CalendarEventsRecords{}.Hydrated(raw)}.WithDocId(), nil
 		}
 	}
 	return "", nil, err
@@ -80,7 +80,7 @@ func (helper *CalendarEventsHelper) FindByIdempotencyKey(userEmail string, idemp
 // FindException answers the exception of a series for one occurrence (a
 // date, or an instant compared exactly), or "" and nil.
 func (helper *CalendarEventsHelper) FindException(seriesId string, recurrenceId string) (string, map[string]any, error) {
-	documents, err := helper.store().Equal(helper.seriesField(), seriesId)
+	documents, err := helper.store().Where(helper.seriesField(), seriesId)
 	if err != nil {
 		return "", nil, err
 	}
@@ -89,12 +89,12 @@ func (helper *CalendarEventsHelper) FindException(seriesId string, recurrenceId 
 		return "", nil, nil
 	}
 	for _, document := range documents {
-		raw := StoredRecords{}.Decoded(document.Data)
+		raw := document.Data
 		value := raw[helper.recurrenceField()]
 		matchesDate := date != "" && (CalendarDate{}).Coerce(value) == date
 		matchesInstant := instant != "" && (CalendarDate{}).IsDateTime(value) && helper.instant(value.(string)) == instant
 		if matchesDate || matchesInstant {
-			return document.Id, StoredRecords{}.WithDocumentId(document.Id, CalendarEventsRecords{}.Hydrated(raw)), nil
+			return document.Id, FyloRecord{Id: document.Id, Data: CalendarEventsRecords{}.Hydrated(raw)}.WithDocId(), nil
 		}
 	}
 	return "", nil, nil
@@ -143,11 +143,11 @@ func (CalendarEventsHelper) instant(text string) string {
 	return EpochTime{}.Text(int64(EpochTime{}.Parse(text)))
 }
 
-func (CalendarEventsHelper) hydrated(documents []FyloDocument) []map[string]any {
+func (CalendarEventsHelper) hydrated(documents []FyloRecord) []map[string]any {
 	events := []map[string]any{}
 	for _, document := range documents {
-		event := CalendarEventsRecords{}.Hydrated(StoredRecords{}.Decoded(document.Data))
-		events = append(events, StoredRecords{}.WithDocumentId(document.Id, event))
+		event := CalendarEventsRecords{}.Hydrated(document.Data)
+		events = append(events, FyloRecord{Id: document.Id, Data: event}.WithDocId())
 	}
 	return events
 }
@@ -162,6 +162,6 @@ func (CalendarEventsHelper) recurrenceField() string { return "recurrenceId" }
 
 func (CalendarEventsHelper) documentField() string { return "docId" }
 
-func (helper *CalendarEventsHelper) store() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().CalendarEvents}
+func (helper *CalendarEventsHelper) store() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().CalendarEvents}
 }

@@ -15,12 +15,12 @@ func (helper *McpAccessTokensHelper) Put(record map[string]any) (string, error) 
 
 // ListForOwner answers the token records of one owner as {docId, ...record}.
 func (helper *McpAccessTokensHelper) ListForOwner(ownerEmail string) ([]map[string]any, error) {
-	return helper.store().EqualRecords("ownerEmail", strings.ToLower(ownerEmail))
+	return StoredRecords{}.Where(helper.store(), "ownerEmail", strings.ToLower(ownerEmail))
 }
 
 // FindByHash answers the token records with the token hash.
 func (helper *McpAccessTokensHelper) FindByHash(tokenHash string) ([]map[string]any, error) {
-	return helper.store().EqualRecords("tokenHash", tokenHash)
+	return StoredRecords{}.Where(helper.store(), "tokenHash", tokenHash)
 }
 
 // Update merges a patch into one token record.
@@ -33,6 +33,6 @@ func (helper *McpAccessTokensHelper) Delete(documentId string) error {
 	return helper.store().Delete(documentId)
 }
 
-func (helper *McpAccessTokensHelper) store() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().McpAccessTokens}
+func (helper *McpAccessTokensHelper) store() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().McpAccessTokens}
 }

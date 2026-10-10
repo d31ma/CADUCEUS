@@ -4,7 +4,7 @@ import "strings"
 // worker sees the same presence. FYLO's putData always makes a new document,
 // so a heartbeat deletes the user's earlier record first.
 type PresenceRegistry struct {
-	Store CollectionStore
+	Store FyloCollection
 }
 
 // Heartbeat marks the user online in the given domains.
@@ -47,7 +47,7 @@ func (registry PresenceRegistry) Snapshot(viewerDomains []string) ([]map[string]
 	}
 	now := float64(EpochTime{}.Now())
 	for _, document := range documents {
-		record := StoredRecords{}.Decoded(document.Data)
+		record := document.Data
 		lastSeen := RecordValues{}.Numeric(record["lastSeenAt"])
 		if now-lastSeen > (PresenceRules{}).PruneAfter() {
 			_ = registry.Store.Delete(document.Id)
@@ -74,9 +74,8 @@ func (registry PresenceRegistry) Online(email string) (bool, error) {
 }
 
 func (registry PresenceRegistry) find(email string) (string, map[string]any, error) {
-	documents, err := registry.Store.Equal("email", email)
-	id, record := StoredRecords{}.First(documents)
-	return id, record, err
+	record, err := registry.Store.First("email", email)
+	return record.Id, record.Data, err
 }
 
 func (PresenceRegistry) shares(domains any, viewer map[string]bool) bool {

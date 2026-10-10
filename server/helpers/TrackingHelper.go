@@ -64,11 +64,10 @@ func (helper *TrackingHelper) FindByTrackingId(trackingId string) (string, map[s
 	if id == "" {
 		return "", nil, nil
 	}
-	documents, err := helper.emails().Equal("trackingId", id)
-	documentId, email := StoredRecords{}.First(documents)
-	return documentId, email, err
+	record, err := helper.emails().First("trackingId", id)
+	return record.Id, record.Data, err
 }
 
-func (helper *TrackingHelper) emails() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().Emails}
+func (helper *TrackingHelper) emails() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().Emails}
 }

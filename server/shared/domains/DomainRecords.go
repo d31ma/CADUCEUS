@@ -5,8 +5,8 @@ import "encoding/json"
 type DomainRecords struct{}
 
 // Decoded answers one stored domain document with its routes as a list.
-func (DomainRecords) Decoded(raw json.RawMessage) map[string]any {
-	document := StoredRecords{}.Decoded(raw)
+func (DomainRecords) Decoded(stored map[string]any) map[string]any {
+	document := StoredRecords{}.Without(stored)
 	if text, isText := document["routes"].(string); isText {
 		var routes any
 		_ = json.Unmarshal([]byte(text), &routes)

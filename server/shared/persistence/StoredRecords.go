@@ -8,50 +8,30 @@ import (
 // document id under "docId".
 type StoredRecords struct{}
 
-// Decoded answers one document as a record (empty when it is not an object).
-func (StoredRecords) Decoded(raw json.RawMessage) map[string]any {
-	record := map[string]any{}
-	_ = json.Unmarshal(raw, &record)
-	if record == nil {
-		record = map[string]any{}
-	}
-	return record
-}
-
-// Listed answers every document as a record, in FYLO's order.
-func (records StoredRecords) Listed(documents []FyloDocument) []map[string]any {
+// Listed answers the fields of every record, in FYLO's order.
+func (StoredRecords) Listed(records []FyloRecord) []map[string]any {
 	listed := []map[string]any{}
-	for _, document := range documents {
-		listed = append(listed, records.Decoded(document.Data))
+	for _, record := range records {
+		listed = append(listed, record.Data)
 	}
 	return listed
 }
 
-// WithDocumentIds answers every document as {docId, ...record}: a docId the
+// WithDocumentIds answers every record as {docId, ...record}: a docId the
 // record itself stores wins, as it did in the JavaScript spread.
-func (records StoredRecords) WithDocumentIds(documents []FyloDocument) []map[string]any {
+func (StoredRecords) WithDocumentIds(records []FyloRecord) []map[string]any {
 	listed := []map[string]any{}
-	for _, document := range documents {
-		listed = append(listed, records.WithDocumentId(document.Id, records.Decoded(document.Data)))
+	for _, record := range records {
+		listed = append(listed, record.WithDocId())
 	}
 	return listed
 }
 
-// WithDocumentId answers {docId, ...record}.
-func (StoredRecords) WithDocumentId(id string, record map[string]any) map[string]any {
-	copied := map[string]any{"docId": id}
-	for key, value := range record {
-		copied[key] = value
-	}
-	return copied
-}
-
-// First answers the id and record of the first document, or "" and nil.
-func (records StoredRecords) First(documents []FyloDocument) (string, map[string]any) {
-	if len(documents) == 0 {
-		return "", nil
-	}
-	return documents[0].Id, records.Decoded(documents[0].Data)
+// Where answers the records of the collection whose field equals value, as
+// {docId, ...record}.
+func (records StoredRecords) Where(collection FyloCollection, field string, value any) ([]map[string]any, error) {
+	found, err := collection.Where(field, value)
+	return records.WithDocumentIds(found), err
 }
 
 // Without answers a copy of record without the named fields.

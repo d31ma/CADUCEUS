@@ -16,12 +16,12 @@ func (helper *SendRequestsHelper) Put(record map[string]any) (string, error) {
 // "" and nil. The query narrows by the trusted owner and the key is checked
 // here, so one send is never mistaken for another request of the mailbox.
 func (helper *SendRequestsHelper) Find(ownerEmail string, idempotencyKey string) (string, map[string]any, error) {
-	documents, err := helper.store().Equal("ownerEmail", strings.ToLower(ownerEmail))
+	documents, err := helper.store().Where("ownerEmail", strings.ToLower(ownerEmail))
 	if err != nil {
 		return "", nil, err
 	}
 	for _, document := range documents {
-		record := StoredRecords{}.Decoded(document.Data)
+		record := document.Data
 		if record["idempotencyKey"] == idempotencyKey {
 			return document.Id, record, nil
 		}
@@ -39,6 +39,6 @@ func (helper *SendRequestsHelper) Delete(documentId string) error {
 	return helper.store().Delete(documentId)
 }
 
-func (helper *SendRequestsHelper) store() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().SendRequests}
+func (helper *SendRequestsHelper) store() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().SendRequests}
 }

@@ -9,7 +9,7 @@ type PushSubscriptionsHelper struct {
 
 // ListForUser answers the subscriptions of one user as {docId, ...record}.
 func (helper *PushSubscriptionsHelper) ListForUser(userEmail string) ([]map[string]any, error) {
-	return helper.store().EqualRecords(helper.userField(), strings.ToLower(userEmail))
+	return StoredRecords{}.Where(helper.store(), helper.userField(), strings.ToLower(userEmail))
 }
 
 // ListForAddress answers the subscriptions of the user with the address.
@@ -20,9 +20,7 @@ func (helper *PushSubscriptionsHelper) ListForAddress(address string) ([]map[str
 // FindById answers the document id and subscription with the id, or "" and
 // nil.
 func (helper *PushSubscriptionsHelper) FindById(id string) (string, map[string]any, error) {
-	documents, err := helper.store().Equal(helper.idField(), id)
-	documentId, subscription := StoredRecords{}.First(documents)
-	return documentId, subscription, err
+	return helper.store().FindById(id)
 }
 
 // Upsert stores the subscription under the id of its endpoint, keeping the
@@ -65,6 +63,6 @@ func (PushSubscriptionsHelper) idField() string { return "id" }
 
 func (PushSubscriptionsHelper) userField() string { return "userEmail" }
 
-func (helper *PushSubscriptionsHelper) store() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().PushSubscriptions}
+func (helper *PushSubscriptionsHelper) store() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().PushSubscriptions}
 }

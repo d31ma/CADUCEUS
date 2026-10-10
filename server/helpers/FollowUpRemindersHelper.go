@@ -13,7 +13,7 @@ func (helper *FollowUpRemindersHelper) Put(reminder map[string]any) (string, err
 // ListForOwner answers the reminders of one owner as {...reminder, docId},
 // in FYLO's order.
 func (helper *FollowUpRemindersHelper) ListForOwner(ownerEmail string) ([]map[string]any, error) {
-	documents, err := helper.store().Equal("ownerEmail", ownerEmail)
+	documents, err := helper.store().Where("ownerEmail", ownerEmail)
 	return helper.withDocumentIds(documents), err
 }
 
@@ -32,15 +32,13 @@ func (helper *FollowUpRemindersHelper) ListPending(ownerEmail string) ([]map[str
 // ListPendingAll answers every scheduled reminder, for the system worker that
 // sends due reminders.
 func (helper *FollowUpRemindersHelper) ListPendingAll() ([]map[string]any, error) {
-	documents, err := helper.store().Equal(helper.statusField(), helper.scheduled())
+	documents, err := helper.store().Where(helper.statusField(), helper.scheduled())
 	return helper.withDocumentIds(documents), err
 }
 
 // FindById answers the document id and reminder with the id, or "" and nil.
 func (helper *FollowUpRemindersHelper) FindById(id string) (string, map[string]any, error) {
-	documents, err := helper.store().Equal("id", id)
-	documentId, reminder := StoredRecords{}.First(documents)
-	return documentId, reminder, err
+	return helper.store().FindById(id)
 }
 
 // FindActiveForEmail answers the owner's scheduled or due reminder for one
@@ -62,10 +60,10 @@ func (helper *FollowUpRemindersHelper) Update(documentId string, patch map[strin
 }
 
 // withDocumentIds answers {...reminder, docId}: the document id always wins.
-func (FollowUpRemindersHelper) withDocumentIds(documents []FyloDocument) []map[string]any {
+func (FollowUpRemindersHelper) withDocumentIds(documents []FyloRecord) []map[string]any {
 	reminders := []map[string]any{}
 	for _, document := range documents {
-		reminder := StoredRecords{}.Decoded(document.Data)
+		reminder := document.Data
 		reminder["docId"] = document.Id
 		reminders = append(reminders, reminder)
 	}
@@ -76,6 +74,6 @@ func (FollowUpRemindersHelper) statusField() string { return "status" }
 
 func (FollowUpRemindersHelper) scheduled() string { return "scheduled" }
 
-func (helper *FollowUpRemindersHelper) store() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().FollowUpReminders}
+func (helper *FollowUpRemindersHelper) store() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().FollowUpReminders}
 }

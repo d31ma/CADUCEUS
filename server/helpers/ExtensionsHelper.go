@@ -15,7 +15,7 @@ func (helper *ExtensionsHelper) Put(record map[string]any) (string, error) {
 // ListForOwner answers the extension records of one owner as
 // {docId, ...record}.
 func (helper *ExtensionsHelper) ListForOwner(owner string) ([]map[string]any, error) {
-	return helper.store().EqualRecords("owner", strings.ToLower(owner))
+	return StoredRecords{}.Where(helper.store(), "owner", strings.ToLower(owner))
 }
 
 // FindForOwner answers the owner's record of one extension, or nil.
@@ -39,6 +39,6 @@ func (helper *ExtensionsHelper) Delete(documentId string) error {
 	return helper.store().Delete(documentId)
 }
 
-func (helper *ExtensionsHelper) store() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().Extensions}
+func (helper *ExtensionsHelper) store() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().Extensions}
 }

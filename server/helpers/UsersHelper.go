@@ -14,8 +14,8 @@ func (helper *UsersHelper) List() ([]map[string]any, error) {
 	}
 	users := []map[string]any{}
 	for _, document := range documents {
-		user := UsersRecords{}.Normalized(StoredRecords{}.Decoded(document.Data))
-		users = append(users, StoredRecords{}.WithDocumentId(document.Id, user))
+		user := UsersRecords{}.Normalized(document.Data)
+		users = append(users, FyloRecord{Id: document.Id, Data: user}.WithDocId())
 	}
 	return users, nil
 }
@@ -27,12 +27,12 @@ func (helper *UsersHelper) FindByEmail(email string) (string, map[string]any, er
 	if normalized == "" {
 		return "", nil, nil
 	}
-	documents, err := helper.store().Equal(helper.emailField(), normalized)
+	record, err := helper.store().First(helper.emailField(), normalized)
 	if err != nil {
 		return "", nil, err
 	}
-	if id, user := (StoredRecords{}).First(documents); user != nil {
-		return id, UsersRecords{}.Normalized(user), nil
+	if record.Id != "" {
+		return record.Id, UsersRecords{}.Normalized(record.Data), nil
 	}
 	return helper.aliased(normalized)
 }
@@ -105,6 +105,6 @@ func (UsersHelper) aliasesField() string { return "aliases" }
 
 func (UsersHelper) documentIdField() string { return "docId" }
 
-func (helper *UsersHelper) store() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().Users}
+func (helper *UsersHelper) store() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().Users}
 }

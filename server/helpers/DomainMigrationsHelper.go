@@ -16,10 +16,12 @@ func (helper *DomainMigrationsHelper) List() ([]map[string]any, error) {
 // "" and nil. FYLO joins the two conditions with OR, as the former query did,
 // so the first document matching either one answers.
 func (helper *DomainMigrationsHelper) Find(fromDomain string, toDomain string) (string, map[string]any, error) {
-	store := helper.store()
-	documents, err := store.Find(store.Condition(helper.fromField(), "$eq", fromDomain), store.Condition(helper.toField(), "$eq", toDomain))
-	id, migration := StoredRecords{}.First(documents)
-	return id, migration, err
+	conditions := FyloConditions{}
+	records, err := conditions.Matching(helper.store(), conditions.Condition(helper.fromField(), "$eq", fromDomain), conditions.Condition(helper.toField(), "$eq", toDomain))
+	if err != nil || len(records) == 0 {
+		return "", nil, err
+	}
+	return records[0].Id, records[0].Data, nil
 }
 
 // Put stores a migration, merging it into the stored one for the same pair,
@@ -39,6 +41,6 @@ func (DomainMigrationsHelper) fromField() string { return "fromDomain" }
 
 func (DomainMigrationsHelper) toField() string { return "toDomain" }
 
-func (helper *DomainMigrationsHelper) store() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().DomainMigrations}
+func (helper *DomainMigrationsHelper) store() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().DomainMigrations}
 }

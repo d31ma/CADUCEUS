@@ -28,11 +28,11 @@ func (helper *DomainsHelper) List(allowedDomains []string) ([]map[string]any, er
 // FindEntry answers the document id and configuration of one domain, or ""
 // and nil when it has none.
 func (helper *DomainsHelper) FindEntry(domain string) (string, map[string]any, error) {
-	documents, err := helper.store().Equal("domain", domain)
-	if err != nil || len(documents) == 0 {
+	records, err := helper.store().Where("domain", domain)
+	if err != nil || len(records) == 0 {
 		return "", nil, err
 	}
-	return documents[0].Id, DomainRecords{}.Decoded(documents[0].Data), nil
+	return records[0].Id, DomainRecords{}.Decoded(records[0].Data), nil
 }
 
 // Put stores a configuration and answers its document id.
@@ -50,6 +50,6 @@ func (helper *DomainsHelper) Delete(documentId string) error {
 	return helper.store().Delete(documentId)
 }
 
-func (helper *DomainsHelper) store() CollectionStore {
-	return CollectionStore{Database: helper.fyloHelper.Database(), Collection: FyloCollections{}.Named().Domains}
+func (helper *DomainsHelper) store() FyloCollection {
+	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().Domains}
 }

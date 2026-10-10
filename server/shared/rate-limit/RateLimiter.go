@@ -3,7 +3,7 @@ import "math"
 // RateLimiter counts requests per key in fixed windows stored in FYLO, so
 // every application process shares one count. Times are whole seconds.
 type RateLimiter struct {
-	Store CollectionStore
+	Store FyloCollection
 }
 
 // Checked counts one request against a limit of maximumRequests per window
@@ -12,7 +12,7 @@ func (limiter RateLimiter) Checked(key []string, maximumRequests int, windowMill
 	windowSeconds := int64(math.Ceil(float64(windowMilliseconds) / 1000))
 	hash := RateLimitRules{}.HashKey(key)
 	now := EpochTime{}.Now() / 1000
-	documents, err := limiter.Store.Equal("key", hash)
+	documents, err := limiter.Store.Where("key", hash)
 	if err != nil {
 		return RateLimitResult{}, err
 	}
@@ -21,7 +21,7 @@ func (limiter RateLimiter) Checked(key []string, maximumRequests int, windowMill
 		_, err = limiter.Store.Put(map[string]any{"key": hash, "count": 1, "resetAt": resetAt})
 		return RateLimitRules{}.Result(count, maximumRequests, resetAt, now), err
 	}
-	record := StoredRecords{}.Decoded(documents[0].Data)
+	record := documents[0].Data
 	storedReset, _ := RecordValues{}.Number(record["resetAt"])
 	if storedReset <= float64(now) {
 		err = limiter.Store.Patch(documents[0].Id, map[string]any{"count": 1, "resetAt": resetAt})

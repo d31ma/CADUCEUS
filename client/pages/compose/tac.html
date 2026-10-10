@@ -1,9 +1,9 @@
 <app-shell>
-<logic :if="canUseApp">
+<logic :if="session.canUseApp()">
   <compose-view />
 </logic>
 
-<logic :if="canShowLogin">
+<logic :if="session.canShowLogin()">
   <div class="login-screen">
     <login-form :brandlogo="'/shared/assets/favicon.svg'" />
   </div>

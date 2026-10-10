@@ -464,3 +464,18 @@ function escapeHTML(value) {
 function escapeAttribute(value) {
   return String(value).replace(/[&"<>]/g, character => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' })[character])
 }
+
+/**
+ * Write the editor's user content after Tachyon replaced the contenteditable
+ * node. Tachyon never keeps a contenteditable's children across a render
+ * unless it holds focus, so the composer restores its own HTML model here.
+ * This is user content, not component markup.
+ */
+export function replaceEditorContent(editor, html, attachments) {
+  editor.innerHTML = editableComposerHTML(html, attachments)
+}
+
+/** Remove the editor content (after a send). */
+export function clearEditorContent(editor) {
+  editor.innerHTML = ''
+}

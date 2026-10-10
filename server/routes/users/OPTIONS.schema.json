@@ -1,0 +1,28 @@
+{
+  "GET": {
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    },
+    "403": {
+      "error": "^.*$",
+      "forbidden": "^(true|false)$"
+    }
+  },
+  "POST": {
+    "200": {
+      "email": "^.*$"
+    },
+    "400": {
+      "error": "^.*$"
+    },
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    },
+    "403": {
+      "error": "^.*$",
+      "forbidden": "^(true|false)$"
+    }
+  }
+}

@@ -1,7 +1,0 @@
-{
-  "POST": {
-    "200": { "suppressed": [""] },
-    "400": { "error": "" },
-    "401": { "error": "", "unauthorized": true }
-  }
-}

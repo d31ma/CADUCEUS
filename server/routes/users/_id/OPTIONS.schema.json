@@ -1,0 +1,22 @@
+{
+  "DELETE": {
+    "200": {
+      "deleted": "^.*$"
+    },
+    "400": {
+      "error": "^.*$"
+    },
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    },
+    "403": {
+      "error": "^.*$",
+      "forbidden": "^(true|false)$"
+    },
+    "404": {
+      "error": "^.*$",
+      "notFound": "^(true|false)$"
+    }
+  }
+}

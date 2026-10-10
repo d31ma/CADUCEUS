@@ -1,0 +1,27 @@
+{
+  "GET": {
+    "200": {
+      "id": "^mut_[A-Za-z0-9_-]{20,80}$",
+      "idempotencyKey": "^.+$",
+      "kind": "^(set_read|set_starred|move|delete|folder_create|folder_rename|folder_delete)$",
+      "messageStableIds": ["^.*$"],
+      "targetFolderId?": "^.*$",
+      "folderStableId?": "^.*$",
+      "parentStableId?": "^.*$",
+      "folderName?": "^.*$",
+      "folderPath?": "^.*$",
+      "newFolderPath?": "^.*$",
+      "value": "^(true|false)$",
+      "state": "^(queued|applying|reconciling|applied|failed)$",
+      "attempts": "^\\d+$",
+      "notBefore?": "^.*$",
+      "lastCode?": "^.*$",
+      "createdAt": "^.*$",
+      "updatedAt": "^.*$"
+    },
+    "400": { "error": "^.*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" },
+    "503": { "error": "^.*$", "unavailable": "^(true|false)$" }
+  }
+}

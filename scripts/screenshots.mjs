@@ -35,17 +35,15 @@ process.on('SIGINT', () => cleanup(0))
 process.on('SIGTERM', () => cleanup(0))
 
 // ── Step 1: Start API server (bundles the dist) ──────────────────────────
-const apiServer = spawn('bun', [join(projectRoot, 'node_modules', '.bin', 'yon.serve')], {
+const apiServer = spawn('ty', ['serve'], {
   cwd: projectRoot,
   stdio: 'inherit',
   env: {
     ...process.env,
     FYLO_ROOT: fyloRoot,
-    JWT_SECRET: 'screenshot-test-secret',
     INBOUND_WEBHOOK_SECRET: 'screenshot-test-secret',
     CADUCEUS_ENABLE_TEST_ROUTES: 'true',
     NODE_ENV: 'test',
-    SMS_ADAPTER: 'console',
     SMTP_ADAPTER: 'console',
     PORT: String(API_PORT),
     HOST: '127.0.0.1',
@@ -54,7 +52,7 @@ const apiServer = spawn('bun', [join(projectRoot, 'node_modules', '.bin', 'yon.s
 
 // Wait for bundle to complete (dist appears + API server is ready)
 let attempts = 0
-while (!existsSync(join(projectRoot, 'dist', 'index.html')) && attempts++ < 60) {
+while (!existsSync(join(projectRoot, 'dist', 'web', 'index.html')) && attempts++ < 60) {
   await new Promise(r => setTimeout(r, 500))
 }
 if (attempts >= 60) throw new Error('Timeout waiting for bundle to complete')
@@ -62,10 +60,10 @@ if (attempts >= 60) throw new Error('Timeout waiting for bundle to complete')
 await new Promise(r => setTimeout(r, 2000))
 
 // ── Step 2: Start preview server ──────────────────────────────────────────
-const previewServer = spawn('bun', [join(projectRoot, 'node_modules', '.bin', 'tac.preview')], {
+const previewServer = spawn('ty', ['preview', '--port', String(PREVIEW_PORT)], {
   cwd: projectRoot,
   stdio: 'inherit',
-  env: { ...process.env, YON_PREVIEW_PORT: String(PREVIEW_PORT) },
+  env: { ...process.env },
 })
 await new Promise(r => setTimeout(r, 2000))
 
@@ -98,7 +96,7 @@ for (const route of routes) {
   try {
     await page.goto(url, { waitUntil: 'networkidle', timeout: 15000 })
   } catch (err) {
-    console.error(`  Failed to load ${url}: ${err.message}`)
+    console.error(`  Failed to load ${url}: ${err instanceof Error ? err.message : String(err)}`)
     await page.waitForTimeout(3000)
   }
   await page.waitForTimeout(2000)

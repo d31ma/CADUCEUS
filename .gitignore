@@ -5,22 +5,32 @@ dist/
 test-results/
 playwright-report/
 coverage/
+coverage.out
+build/
 .blackbox-tests/
+.phase0-checkpoints/
+db/.collections/
+db/.buckets/
+db/.fylo-catalog/
+db/.fylo-vcs/
+db/attachments/
+
+# Generated, checksum-verified offline translation assets. Release builds
+# recreate these from translation-models.lock.json and serve them through an
+# authenticated streaming route instead of Tachyon's bounded shared tree.
+translation-assets/
 
 # Graphify
-.graphify_*
+.graphify*
 graphify-out/
-CLAUDE.md
-AGENTS.md
 .github/copilot-instructions.md
 
 # Environment files
 .env
 
-# Untrack markdown except README and DEPLOY
-*.md
-!README.md
-!DEPLOY.md
 dist-bin/
 caduceus-darwin-arm64
 caduceus-lambda
+.claude/
+.codex/
+.vscode/

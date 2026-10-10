@@ -1,0 +1,34 @@
+{
+  "POST": {
+    "200": {
+      "email": "^.*$",
+      "password": "^.*$",
+      "name": "^.*$",
+      "role": "^.*$",
+      "domains": [
+        "^.*$"
+      ],
+      "token": "^.*$",
+      "refreshToken": "^.*$",
+      "idToken": "^.*$",
+      "recoveryCodes": [
+        "^.*$"
+      ]
+    },
+    "400": {
+      "error": "^.*$"
+    },
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    },
+    "403": {
+      "error": "^.*$",
+      "forbidden": "^(true|false)$"
+    },
+    "503": {
+      "error": "^.*$",
+      "unavailable": "^(true|false)$"
+    }
+  }
+}

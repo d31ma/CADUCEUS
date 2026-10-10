@@ -1,7 +1,0 @@
-name: caduceus-compute-engine
-runtime:
-  name: nodejs
-  options:
-    packagemanager: npm
-    typescript: false
-description: CADUCEUS on GCP Compute Engine VM with persistent disk

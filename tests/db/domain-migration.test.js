@@ -2,48 +2,52 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { createDb } from "@/repositories/index.js";
-import { putDomain, findDomainEntry } from "@/repositories/domains.js";
-import { listDomainMigrations } from "@/repositories/domain-migrations.js";
-import { putEmail, findEmailById } from "@/repositories/emails.js";
-import { putUser, findUserByEmail } from "@/repositories/users.js";
-import { putDevice, listDevices } from "@/repositories/mfa.js";
-import { upsertPushSubscription, listPushSubscriptions } from "@/repositories/push.js";
-import { presentEmailForDomainMigrations } from "@/services/domain-migration.js";
+import { DatabaseRepository } from "@/platform/persistence/fylo.js";
+import { DomainsRepository } from "@/features/domains/repositories/domains.js";
+import { DomainMigrationsRepository } from "@/features/domains/repositories/domain-migrations.js";
+import { EmailsRepository } from "@/features/mailbox/repositories/emails.js";
+import { AttachmentsRepository } from "@/features/mailbox/repositories/attachments.js";
+import { UsersRepository } from "@/features/users/repositories/users.js";
+import { PushSubscriptionsRepository } from "@/features/notifications/repositories/push.js";
+import { DomainMigrationService } from "@/features/domains/services/domain-migration.js";
 let fylo;
+let emailsRepo;
+let usersRepo;
+let domainsRepo;
+let pushRepo;
+let domainMigrationsRepo;
 let testRoot;
 beforeEach(async () => {
   testRoot = mkdtempSync(join(tmpdir(), "caduceus-domain-migration-"));
-  fylo = await createDb(testRoot);
+  fylo = await DatabaseRepository.createDb(testRoot);
+  emailsRepo = new EmailsRepository(fylo, new AttachmentsRepository(fylo));
+  usersRepo = new UsersRepository(fylo);
+  domainsRepo = new DomainsRepository(fylo);
+  pushRepo = new PushSubscriptionsRepository(fylo);
+  domainMigrationsRepo = new DomainMigrationsRepository(fylo);
 });
-afterEach(() => {
+afterEach(async () => {
+  await fylo?.close?.();
   rmSync(testRoot, { recursive: true, force: true });
 });
 describe("domain:migrate", () => {
   it("promotes old-domain users to the new suffix while preserving aliases and owned records", async () => {
-    await putDomain(fylo, {
+    await domainsRepo.put({
       domain: "old.example",
       inboundEnabled: true,
       routes: [{ id: "store-old.example", match: "*@old.example", action: { type: "store" }, enabled: true }]
     });
-    await putUser(fylo, {
+    await usersRepo.put({
       email: "alice@old.example",
-      phones: ["+15551234567"],
       domains: ["old.example"],
       role: "admin"
     });
-    await putDevice(fylo, {
-      id: "device-1",
-      userEmail: "alice@old.example",
-      name: "Phone",
-      secret: "secret",
-      createdAt: new Date().toISOString()
-    });
-    await upsertPushSubscription(fylo, {
+    await pushRepo.upsert({
       userEmail: "alice@old.example",
       endpoint: "https://push.example.test/alice",
       keys: { p256dh: "p256dh", auth: "auth" }
     });
+    await fylo.close();
     const dryRun = Bun.spawnSync([
       "bun",
       "scripts/migrate-domain.mjs",
@@ -70,24 +74,48 @@ describe("domain:migrate", () => {
       stderr: "pipe"
     });
     expect(applied.exitCode).toBe(0);
-    const [, newDomain] = await findDomainEntry(fylo, "new.example");
+    fylo = await DatabaseRepository.createDb(testRoot);
+    emailsRepo = new EmailsRepository(fylo, new AttachmentsRepository(fylo));
+    usersRepo = new UsersRepository(fylo);
+    domainsRepo = new DomainsRepository(fylo);
+    pushRepo = new PushSubscriptionsRepository(fylo);
+    domainMigrationsRepo = new DomainMigrationsRepository(fylo);
+    const [, newDomain] = await domainsRepo.findEntry("new.example");
     expect(newDomain).not.toBeNull();
     expect(newDomain.routes[0].match).toBe("*@new.example");
-    const [, byNewEmail] = await findUserByEmail(fylo, "alice@new.example");
+    const [, byNewEmail] = await usersRepo.findByEmail("alice@new.example");
     expect(byNewEmail).not.toBeNull();
     expect(byNewEmail.email).toBe("alice@new.example");
     expect(byNewEmail.aliases).toContain("alice@old.example");
     expect(byNewEmail.domains).toContain("old.example");
     expect(byNewEmail.domains).toContain("new.example");
-    const [, byOldAlias] = await findUserByEmail(fylo, "alice@old.example");
+    const [, byOldAlias] = await usersRepo.findByEmail("alice@old.example");
     expect(byOldAlias.email).toBe("alice@new.example");
-    expect(await listDevices(fylo, "alice@old.example")).toHaveLength(0);
-    expect(await listDevices(fylo, "alice@new.example")).toHaveLength(1);
-    expect(await listPushSubscriptions(fylo, "alice@old.example")).toHaveLength(0);
-    expect(await listPushSubscriptions(fylo, "alice@new.example")).toHaveLength(1);
-    const migrations = await listDomainMigrations(fylo);
+    expect(await pushRepo.listForUser("alice@old.example")).toHaveLength(0);
+    expect(await pushRepo.listForUser("alice@new.example")).toHaveLength(1);
+    const migrations = await domainMigrationsRepo.list();
     expect(migrations.some((migration) => migration.fromDomain === "old.example" && migration.toDomain === "new.example")).toBe(true);
-    await putEmail(fylo, {
+    await fylo.close();
+    const retried = Bun.spawnSync([
+      "bun",
+      "scripts/migrate-domain.mjs",
+      "--from=old.example",
+      "--to=new.example",
+      "--apply"
+    ], {
+      cwd: join(import.meta.dir, "..", ".."),
+      env: { ...process.env, FYLO_ROOT: testRoot },
+      stdout: "pipe",
+      stderr: "pipe"
+    });
+    expect(retried.exitCode).toBe(0);
+    fylo = await DatabaseRepository.createDb(testRoot);
+    domainMigrationsRepo = new DomainMigrationsRepository(fylo);
+    emailsRepo = new EmailsRepository(fylo, new AttachmentsRepository(fylo));
+    expect((await domainMigrationsRepo.list()).filter(
+      migration => migration.fromDomain === "old.example" && migration.toDomain === "new.example"
+    )).toHaveLength(1);
+    await emailsRepo.put({
       id: "old-mail-1",
       domain: "old.example",
       recipient: "alice@old.example",
@@ -100,8 +128,8 @@ describe("domain:migrate", () => {
       receivedAt: new Date().toISOString(),
       processed: true
     });
-    const [, storedEmail] = await findEmailById(fylo, "old-mail-1");
-    const presented = await presentEmailForDomainMigrations(fylo, storedEmail);
+    const [, storedEmail] = await emailsRepo.findById("old-mail-1");
+    const presented = await new DomainMigrationService(domainMigrationsRepo).presentEmail(storedEmail);
     expect(presented.recipient).toBe("alice@new.example");
     expect(presented.originalRecipient).toBe("alice@old.example");
   });

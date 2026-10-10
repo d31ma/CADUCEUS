@@ -1,0 +1,41 @@
+{
+  "GET": {
+    "200": {
+      "roles": ["^(inbox|sent|drafts|spam|archive|trash)$"],
+      "accounts": [{
+        "domain": "^.*$",
+        "mappings": { "^.*$": "^.*$" },
+        "capabilities": {
+          "folders": "^true$",
+          "labels": "^true$",
+          "create": "^true$"
+        },
+        "categories": [{
+          "path": "^.*$",
+          "role?": "^(inbox|sent|drafts|spam|archive|trash)$",
+          "kind": "^(folder|label)$",
+          "displayName": "^.*$",
+          "parentPath?": "^.*$",
+          "depth": "^\\d+$"
+        }]
+      }]
+    },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
+  },
+  "POST": {
+    "200": {
+      "category": {
+        "path": "^.*$",
+        "kind": "^(folder|label)$",
+        "displayName": "^.*$",
+        "parentPath?": "^.*$",
+        "depth": "^\\d+$"
+      }
+    },
+    "400": { "error": "^.*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "403": { "error": "^.*$", "forbidden": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "GET": {
+    "200": {
+      "filename": "^.*\\.eml$",
+      "contentType": "^message/rfc822$",
+      "size": "^\\d+$",
+      "sha256": "^[a-f0-9]{64}$",
+      "contentBase64": "^.*$"
+    },
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    },
+    "403": {
+      "error": "^.*$",
+      "forbidden": "^(true|false)$"
+    },
+    "404": {
+      "error": "^.*$",
+      "notFound": "^(true|false)$"
+    }
+  }
+}

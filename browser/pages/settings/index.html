@@ -1,9 +1,0 @@
-<logic :if="canUseApp">
-  <settings-view_ />
-</logic>
-
-<logic :if="canShowLogin">
-  <div class="login-screen">
-    <login-form_ @login="window._caduceus?.handleLogin($event.detail)" />
-  </div>
-</logic>

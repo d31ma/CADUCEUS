@@ -1,0 +1,60 @@
+{
+  "GET": {
+    "200": {
+      "email": "^.*$",
+      "aliases": [
+        "^.*$"
+      ]
+    },
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    },
+    "404": {
+      "error": "^.*$",
+      "notFound": "^(true|false)$"
+    }
+  },
+  "POST": {
+    "200": {
+      "email": "^.*$",
+      "aliases": [
+        "^.*$"
+      ]
+    },
+    "400": {
+      "error": "^.*$"
+    },
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    },
+    "403": {
+      "error": "^.*$",
+      "forbidden": "^(true|false)$"
+    },
+    "404": {
+      "error": "^.*$",
+      "notFound": "^(true|false)$"
+    }
+  },
+  "DELETE": {
+    "200": {
+      "email": "^.*$",
+      "aliases": [
+        "^.*$"
+      ]
+    },
+    "400": {
+      "error": "^.*$"
+    },
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    },
+    "404": {
+      "error": "^.*$",
+      "notFound": "^(true|false)$"
+    }
+  }
+}

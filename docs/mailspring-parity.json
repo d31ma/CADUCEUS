@@ -1,0 +1,932 @@
+{
+  "schemaVersion": 1,
+  "upstream": {
+    "repository": "https://github.com/Foundry376/Mailspring",
+    "branch": "master",
+    "commit": "d93a0d7f43049dd81e1ff0cdf9957915dd5d62b6",
+    "release": "1.23.0",
+    "inspectedAt": "2026-08-22"
+  },
+  "completionPolicy": "Parity is complete only when every requirement is implemented, cites production code and an observable automated test, and the --require-complete audit passes.",
+  "packages": [
+    {
+      "id": "account-sidebar",
+      "title": "Account and folder sidebar",
+      "upstreamEvidence": ["app/internal_packages/account-sidebar"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/external-folder-tree.js", "client/components/app/shell/tac.html", "client/components/app/shell/tac.js", "client/components/inbox/view/tac.html", "client/components/inbox/view/tac.js", "server/routes/inbox/yon.js", "server/routes/inbox/export/rfc822/yon.js", "server/routes/search/yon.js", "server/routes/threads/yon.js", "server/routes/api/v1/external-accounts/_id/mutations/yon.js", "internal/accountsync/types.go", "internal/accountsync/worker.go", "internal/adapters/bridgeapi/accounts.go", "internal/adapters/mailprovider/imap_sync.go", "internal/adapters/fylostore/accountsync.go", "db/schemas/provider-mutations/history/v2.schema.json", "tests/unit/mailbox-scope.test.js", "tests/unit/external-folder-tree.test.js", "internal/adapters/bridgeapi/accounts_test.go", "internal/adapters/mailprovider/imap_sync_test.go", "internal/adapters/fylostore/accountsync_test.go", "tests/routes/external-accounts.test.js", "tests/e2e/external-mailbox-navigation.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "activity",
+      "title": "Open and link-tracking activity feed",
+      "upstreamEvidence": ["app/internal_packages/activity"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/delivery/repositories/tracking.js", "server/routes/activity/yon.js", "client/pages/activity/tac.js", "client/pages/activity/tac.html", "client/pages/activity/tac.css", "client/components/app/shell/tac.js", "client/components/app/shell/tac.html", "client/components/email/detail/tac.js", "client/components/email/detail/tac.html", "tests/routes/tracking-activity.test.js", "tests/e2e/activity-tracking.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "attachments",
+      "title": "Message attachment viewing and download",
+      "upstreamEvidence": ["app/internal_packages/attachments"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/mailbox/repositories/attachments.js", "server/features/mailbox/services/attachment-policy.js", "server/features/delivery/services/mail-validation.js", "server/routes/inbox/_id/attachments/_attachment_id/yon.js", "client/shared/scripts/attachment-content.js", "client/shared/scripts/email-content-protection.js", "client/components/email/detail/tac.js", "client/components/email/detail/tac.html", "client/components/compose/view/tac.js", "client/components/compose/view/tac.html", "tests/unit/attachment-content.test.js", "tests/unit/attachment-policy.test.js", "tests/unit/email-content-protection.test.js", "tests/unit/mail-validation.test.js", "tests/db/attachments.test.js", "tests/e2e/attachments.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "category-mapper",
+      "title": "Map provider folders and labels to system roles",
+      "upstreamEvidence": ["app/internal_packages/category-mapper"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/mailbox/services/category-mappings.js",
+        "server/routes/categories/yon.js",
+        "server/routes/users/me/preferences/yon.js",
+        "server/routes/inbox/yon.js",
+        "server/routes/inbox/_id/yon.js",
+        "client/components/settings/view/tac.js",
+        "client/components/settings/view/tac.html",
+        "client/components/settings/view/tac.css",
+        "db/schemas/users/history/v10.schema.json",
+        "tests/unit/category-mappings.test.js",
+        "tests/routes/category-mappings.test.js",
+        "tests/e2e/category-mappings.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "category-picker",
+      "title": "Move, label, and folder picker",
+      "upstreamEvidence": ["app/internal_packages/category-picker"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/mailbox/services/category-path.js",
+        "server/features/mailbox/services/category-catalog.js",
+        "server/features/mailbox/services/category-mappings.js",
+        "server/features/mailbox/services/mail-action-labels.js",
+        "server/features/mailbox/services/mail-actions.js",
+        "server/features/mcp/services/tools.js",
+        "server/routes/categories/yon.js",
+        "server/routes/inbox/actions/yon.js",
+        "server/routes/inbox/actions/_id/undo/yon.js",
+        "server/routes/inbox/actions/_id/redo/yon.js",
+        "client/shared/scripts/category-picker.js",
+        "client/components/inbox/view/tac.js",
+        "client/components/inbox/view/tac.html",
+        "client/components/inbox/view/tac.css",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "client/components/email/detail/tac.css",
+        "db/schemas/users/history/v15.schema.json",
+        "db/schemas/emails/history/v5.schema.json",
+        "db/schemas/mail-actions/history/v3.schema.json",
+        "tests/unit/category-picker.test.js",
+        "tests/routes/category-mappings.test.js",
+        "tests/routes/mail-actions.test.js",
+        "tests/routes/mcp.test.js",
+        "tests/e2e/category-picker.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "composer",
+      "title": "Rich mail composer",
+      "upstreamEvidence": ["app/internal_packages/composer"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/rich-compose-editor.js", "client/shared/scripts/external-accounts-ui.js", "client/components/compose/view/tac.js", "client/components/compose/view/tac.html", "client/components/compose/view/tac.css", "client/components/email/detail/tac.js", "server/routes/send/yon.js", "server/routes/contacts/suggestions/yon.js", "tests/unit/rich-compose-editor.test.js", "tests/unit/external-accounts-ui.test.js", "tests/routes/drafts.test.js", "tests/routes/external-accounts.test.js", "tests/e2e/contacts.test.mjs", "tests/e2e/attachments.test.mjs", "tests/e2e/composer-rich-text.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "composer-grammar-check",
+      "title": "LanguageTool-compatible grammar checking",
+      "upstreamEvidence": ["app/internal_packages/composer-grammar-check"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/mailbox/services/grammar-check.js",
+        "server/features/users/services/grammar-preferences.js",
+        "server/routes/grammar/check/yon.js",
+        "server/routes/users/me/preferences/yon.js",
+        "client/shared/scripts/grammar-check.js",
+        "client/components/compose/view/tac.js",
+        "client/components/compose/view/tac.html",
+        "client/components/compose/view/tac.css",
+        "db/schemas/users/history/v9.schema.json",
+        "tests/unit/grammar-check.test.js",
+        "tests/routes/grammar-check.test.js",
+        "tests/e2e/grammar-check.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "composer-signature",
+      "title": "Per-account signatures",
+      "upstreamEvidence": ["app/internal_packages/composer-signature"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/composer-signatures.js", "client/components/compose/view/tac.js", "client/components/compose/view/tac.html", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "server/features/mailbox/services/signature-content.js", "server/features/mailbox/repositories/signatures.js", "server/features/users/services/sender-addresses.js", "server/routes/signatures/yon.js", "server/routes/signatures/_id/yon.js", "server/routes/send/yon.js", "server/routes/drafts/yon.js", "server/routes/drafts/_id/yon.js", "db/schemas/signatures/history/v1.schema.json", "tests/unit/composer-signatures.test.js", "tests/routes/admin.test.js", "tests/routes/send.test.js", "tests/routes/drafts.test.js", "tests/e2e/composer-signatures.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "composer-templates",
+      "title": "Reusable composer templates",
+      "upstreamEvidence": ["app/internal_packages/composer-templates"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/composer-templates.js", "client/components/compose/view/tac.js", "client/components/compose/view/tac.html", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "server/features/mailbox/services/template-content.js", "server/features/mailbox/repositories/templates.js", "server/routes/templates/yon.js", "server/routes/templates/_id/yon.js", "tests/unit/composer-templates.test.js", "tests/routes/admin.test.js", "tests/e2e/composer-templates.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "contacts",
+      "title": "Contacts, groups, found-in-mail, provider sync, and vCard",
+      "upstreamEvidence": ["app/internal_packages/contacts"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/pages/contacts/tac.js", "client/pages/contacts/tac.html", "server/features/contacts/services/contacts.js", "server/features/contacts/repositories/contacts.js", "server/routes/contacts/yon.js", "server/routes/contacts/address-books/yon.js", "server/routes/contacts/_id/yon.js", "server/routes/contacts/_id/mutations/_mutation_id/yon.js", "internal/adapters/carddav/client.go", "internal/adapters/carddav/connector.go", "internal/adapters/carddav/client_test.go", "internal/adapters/carddav/connector_test.go", "internal/adapters/carddav/vcard.go", "internal/adapters/carddav/vcard_test.go", "internal/adapters/googlecontacts/connector.go", "internal/adapters/googlecontacts/connector_test.go", "internal/adapters/microsoftcontacts/connector.go", "internal/adapters/microsoftcontacts/connector_test.go", "internal/adapters/contactapi/vcard.go", "internal/adapters/contactapi/vcard_test.go", "internal/adapters/fylostore/contactsync.go", "internal/adapters/fylostore/contactsync_test.go", "internal/adapters/bridgeapi/accounts.go", "internal/adapters/bridgeapi/accounts_test.go", "internal/contactsync/types.go", "internal/contactsync/types_test.go", "internal/contactsync/router.go", "internal/contactsync/router_test.go", "internal/contactsync/job.go", "internal/contactsync/job_test.go", "internal/platform/cli/run.go", "db/schemas/contacts/history/v1.schema.json", "db/schemas/contact-groups/history/v1.schema.json", "tests/routes/contacts.test.js", "tests/e2e/contacts.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "custom-fonts",
+      "title": "Configurable interface and composer fonts",
+      "upstreamEvidence": ["app/internal_packages/custom-fonts"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/font-preferences.js", "client/shared/assets/styles.css", "client/components/app/shell/tac.js", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "client/components/settings/view/tac.css", "client/components/compose/view/tac.css", "server/features/users/services/font-preferences.js", "server/features/users/repositories/users.js", "server/routes/users/me/preferences/yon.js", "db/schemas/users/history/v5.schema.json", "tests/unit/font-preferences.test.js", "tests/db/user-preferences-routes.test.js", "tests/e2e/custom-fonts.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "custom-sounds",
+      "title": "Custom notification sounds",
+      "upstreamEvidence": ["app/internal_packages/custom-sounds"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/notification-sounds.js", "client/components/app/shell/tac.js", "client/components/compose/view/tac.js", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "client/components/settings/view/tac.css", "server/features/users/services/notification-sounds.js", "server/features/users/repositories/users.js", "server/routes/users/me/preferences/yon.js", "db/schemas/users/history/v6.schema.json", "tests/unit/notification-sounds.test.js", "tests/db/user-preferences-routes.test.js", "tests/e2e/custom-sounds.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "draft-list",
+      "title": "Persistent drafts and draft list",
+      "upstreamEvidence": ["app/internal_packages/draft-list"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/mailbox/services/drafts.js", "server/routes/drafts/yon.js", "server/routes/drafts/_id/yon.js", "client/components/app/shell/tac.html", "client/components/compose/view/tac.js", "client/pages/folder/_name/tac.js", "tests/routes/drafts.test.js", "tests/e2e/app.test.mjs"]
+    },
+    {
+      "id": "events",
+      "title": "Calendar event cards and RSVP from messages",
+      "upstreamEvidence": ["app/internal_packages/events"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/calendar/services/ics.js", "server/features/calendar/services/calendar-attachments.js", "server/features/calendar/services/calendar-import.js", "server/routes/calendar/invites/respond/yon.js", "server/routes/inbox/_id/yon.js", "client/components/email/detail/tac.js", "client/components/email/detail/tac.html", "client/components/email/detail/tac.css", "tests/unit/ics.test.js", "tests/unit/email-unsubscribe.test.js", "tests/db/calendar-import.test.js", "tests/routes/calendar.test.js", "tests/routes/mailbox.test.js", "tests/e2e/calendar-invite-card.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "github-contact-card",
+      "title": "GitHub profile and repository contact card",
+      "upstreamEvidence": ["app/internal_packages/github-contact-card"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/contacts/services/github-profiles.js",
+        "server/routes/github/profile/yon.js",
+        "server/routes/users/me/preferences/yon.js",
+        "client/components/settings/view/tac.js",
+        "client/components/settings/view/tac.html",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "client/components/email/detail/tac.css",
+        "db/schemas/users/history/v8.schema.json",
+        "tests/unit/github-profiles.test.js",
+        "tests/routes/github-profiles.test.js",
+        "tests/e2e/github-contact-card.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "link-tracking",
+      "title": "Tracked outbound links and click events",
+      "upstreamEvidence": ["app/internal_packages/link-tracking"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/delivery/services/tracking-tokens.js", "server/features/delivery/services/smtp.js", "server/features/delivery/services/send.js", "server/features/delivery/repositories/tracking.js", "server/routes/track/click/yon.js", "client/components/compose/view/tac.js", "client/components/compose/view/tac.html", "client/components/email/detail/tac.html", "client/pages/activity/tac.js", "tests/unit/tracking-tokens.test.js", "tests/unit/delivery-services.test.js", "tests/routes/send.test.js", "tests/routes/tracking-activity.test.js", "tests/e2e/activity-tracking.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "list-unsubscribe",
+      "title": "List-Unsubscribe discovery and action",
+      "upstreamEvidence": ["app/internal_packages/list-unsubscribe"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/delivery/services/list-unsubscribe.js",
+        "server/features/delivery/services/inbound-delivery.js",
+        "client/shared/scripts/unsubscribe.js",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "tests/unit/list-unsubscribe.test.js",
+        "tests/unit/unsubscribe-action.test.js",
+        "tests/unit/email-unsubscribe.test.js",
+        "tests/db/spam-delivery.test.js"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "main-calendar",
+      "title": "Integrated calendar",
+      "upstreamEvidence": ["app/internal_packages/main-calendar"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/pages/calendar/tac.js", "client/pages/calendar/tac.html", "client/pages/calendar/tac.css", "client/shared/scripts/calendar-date.js", "client/shared/scripts/external-accounts-ui.js", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "server/features/calendar/services/calendar-date.js", "server/features/calendar/services/recurrence.js", "server/features/calendar/services/ics.js", "server/features/calendar/services/provider-calendars.js", "server/features/calendar/repositories/calendar-events.js", "server/routes/calendar/calendars/yon.js", "server/routes/calendar/events/yon.js", "server/routes/calendar/events/_id/yon.js", "server/platform/accounts/bridge.js", "internal/calendarsync/types.go", "internal/calendarsync/job.go", "internal/calendarsync/router.go", "internal/accounts/capability_validator.go", "internal/adapters/calendarapi/ical.go", "internal/adapters/caldav/client.go", "internal/adapters/caldav/connector.go", "internal/adapters/caldav/validator.go", "internal/adapters/googlecalendar/connector.go", "internal/adapters/microsoftcalendar/connector.go", "internal/adapters/googleoauth/client.go", "internal/adapters/microsoftoauth/client.go", "internal/adapters/fylostore/calendarsync.go", "internal/adapters/bridgeapi/accounts.go", "internal/platform/cli/run.go", "contracts/http/external-accounts.v1.schema.json", "contracts/http/routes.v1.json", "tests/unit/calendar-date.test.js", "tests/unit/calendar-recurrence.test.js", "tests/unit/ics.test.js", "tests/unit/provider-calendars.test.js", "tests/unit/external-accounts-ui.test.js", "tests/routes/calendar.test.js", "tests/e2e/calendar-recurrence.test.mjs", "tests/e2e/provider-calendar.test.mjs", "tests/e2e/external-accounts-settings.test.mjs", "tests/e2e/keyboard-shortcuts.test.mjs", "internal/calendarsync/job_test.go", "internal/calendarsync/router_test.go", "internal/calendarsync/types_test.go", "internal/accounts/capability_validator_test.go", "internal/adapters/calendarapi/ical_test.go", "internal/adapters/caldav/client_test.go", "internal/adapters/caldav/connector_test.go", "internal/adapters/caldav/validator_test.go", "internal/adapters/googlecalendar/connector_test.go", "internal/adapters/microsoftcalendar/connector_test.go", "internal/adapters/googleoauth/client_test.go", "internal/adapters/microsoftoauth/client_test.go", "internal/adapters/fylostore/calendarsync_test.go", "internal/adapters/bridgeapi/accounts_test.go"],
+      "gap": ""
+    },
+    {
+      "id": "mcp-server",
+      "title": "Local Model Context Protocol server",
+      "upstreamEvidence": ["app/internal_packages/mcp-server", "CHANGELOG.md#1230-7192026"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/routes/mcp/yon.js",
+        "server/routes/mcp/config/yon.js",
+        "server/routes/mcp/token/yon.js",
+        "server/routes/mcp/audit/yon.js",
+        "server/features/mcp/services/access.js",
+        "server/features/mcp/services/tools.js",
+        "client/components/settings/view/tac.html",
+        "db/schemas/mcp-access-tokens/manifest.json",
+        "db/schemas/mcp-audit-events/manifest.json",
+        "tests/routes/mcp.test.js",
+        "tests/e2e/mcp-settings.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "message-autoload-images",
+      "title": "Remote image loading policy",
+      "upstreamEvidence": ["app/internal_packages/message-autoload-images"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "client/shared/scripts/email-content-protection.js",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "client/components/settings/view/tac.js",
+        "server/routes/users/me/preferences/yon.js",
+        "db/schemas/users/history/v4.schema.json",
+        "tests/unit/email-content-protection.test.js",
+        "tests/db/user-preferences-routes.test.js",
+        "tests/e2e/app.test.mjs"
+      ]
+    },
+    {
+      "id": "message-list",
+      "title": "Conversation message list and message controls",
+      "upstreamEvidence": ["app/internal_packages/message-list"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "client/shared/scripts/message-conversation.js",
+        "client/shared/scripts/email-content-protection.js",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "client/shared/data/keymap.json",
+        "server/features/mailbox/repositories/threads.js",
+        "server/routes/threads/yon.js",
+        "tests/unit/message-conversation.test.js",
+        "tests/e2e/message-list.test.mjs",
+        "tests/e2e/quoted-content.test.mjs"
+      ]
+    },
+    {
+      "id": "message-view-on-github",
+      "title": "Open GitHub notification targets",
+      "upstreamEvidence": ["app/internal_packages/message-view-on-github"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/mailbox/services/github-notification.js",
+        "server/routes/inbox/_id/yon.js",
+        "client/shared/scripts/github-notification.js",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "client/shared/data/keymap.json",
+        "tests/unit/github-notification.test.js",
+        "tests/routes/mailbox.test.js",
+        "tests/e2e/github-notification.test.mjs"
+      ]
+    },
+    {
+      "id": "mode-switch",
+      "title": "Show or hide the reader context sidebar",
+      "upstreamEvidence": ["app/internal_packages/mode-switch"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "client/components/email/detail/tac.css",
+        "tests/e2e/participant-profile.test.mjs"
+      ]
+    },
+    {
+      "id": "notifications",
+      "title": "Application status and error notifications",
+      "upstreamEvidence": ["app/internal_packages/notifications"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "client/shared/scripts/notification-center.js",
+        "client/shared/scripts/notification-sounds.js",
+        "client/components/app/shell/tac.js",
+        "client/components/app/shell/tac.html",
+        "client/components/app/shell/tac.css",
+        "client/components/settings/view/tac.js",
+        "client/components/settings/view/tac.html",
+        "server/features/notifications/services/push.js",
+        "server/features/users/services/new-mail-notification-preferences.js",
+        "server/routes/notifications/subscriptions/yon.js",
+        "server/routes/users/me/preferences/yon.js",
+        "db/schemas/users/history/v13.schema.json",
+        "tests/unit/notification-center.test.js",
+        "tests/db/user-preferences-routes.test.js",
+        "tests/api/notifications.test.js",
+        "tests/e2e/notification-center.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "onboarding",
+      "title": "Account onboarding and provider setup",
+      "upstreamEvidence": ["app/internal_packages/onboarding"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/components/login/form/tac.js", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "client/components/settings/view/tac.css", "client/shared/scripts/external-accounts-ui.js", "internal/platform/cli/auth.go", "internal/accounts/providers.go", "internal/accounts/discovery.go", "internal/accounts/oauth.go", "internal/adapters/microsoftoauth/client.go", "internal/adapters/googleoauth/client.go", "internal/adapters/providerdiscovery/network.go", "internal/adapters/mailprovider/password_validator.go", "internal/adapters/bridgeapi/accounts.go", "server/routes/api/v1/external-accounts/yon.js", "server/routes/api/v1/external-accounts/oauth/microsoft/begin/yon.js", "server/routes/api/v1/external-accounts/oauth/microsoft/complete/yon.js", "server/routes/api/v1/external-accounts/oauth/google/begin/yon.js", "server/routes/api/v1/external-accounts/oauth/google/complete/yon.js", "internal/accounts/discovery_test.go", "internal/accounts/oauth_test.go", "internal/adapters/googleoauth/client_test.go", "internal/adapters/providerdiscovery/network_test.go", "tests/routes/external-accounts.test.js", "tests/e2e/external-accounts-settings.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "open-tracking",
+      "title": "Read receipts and open events",
+      "upstreamEvidence": ["app/internal_packages/open-tracking"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/delivery/services/tracking-tokens.js", "server/features/delivery/services/smtp.js", "server/features/delivery/services/send.js", "server/features/delivery/repositories/tracking.js", "server/routes/track/open/yon.js", "client/components/compose/view/tac.js", "client/components/compose/view/tac.html", "client/components/email/detail/tac.html", "client/pages/activity/tac.js", "tests/unit/tracking-tokens.test.js", "tests/unit/delivery-services.test.js", "tests/routes/send.test.js", "tests/routes/tracking-activity.test.js", "tests/e2e/activity-tracking.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "participant-profile",
+      "title": "Participant and related-thread profile sidebar",
+      "upstreamEvidence": ["app/internal_packages/participant-profile"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/contacts/repositories/contacts.js",
+        "server/features/mailbox/repositories/emails.js",
+        "server/routes/contacts/yon.js",
+        "server/routes/search/yon.js",
+        "server/routes/inbox/stream/yon.js",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "client/components/email/detail/tac.css",
+        "tests/unit/email-ownership.test.js",
+        "tests/routes/contacts.test.js",
+        "tests/routes/inbox.test.js",
+        "tests/routes/mailbox.test.js",
+        "tests/e2e/participant-profile.test.mjs"
+      ]
+    },
+    {
+      "id": "personal-level-indicators",
+      "title": "Direct and sole-recipient indicators",
+      "upstreamEvidence": ["app/internal_packages/personal-level-indicators"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/mailbox/services/personal-level.js",
+        "server/features/mailbox/repositories/threads.js",
+        "server/features/delivery/services/inbound-delivery.js",
+        "server/features/delivery/services/send.js",
+        "client/components/inbox/view/tac.js",
+        "client/components/inbox/view/tac.html",
+        "client/components/inbox/view/tac.css",
+        "tests/unit/personal-level.test.js",
+        "tests/db/spam-delivery.test.js",
+        "tests/routes/mailbox.test.js",
+        "tests/e2e/personal-level-indicators.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "phishing-detection",
+      "title": "Reply-To and sender mismatch warnings",
+      "upstreamEvidence": ["app/internal_packages/phishing-detection"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/delivery/services/phishing-detection.js", "server/features/delivery/services/inbound-delivery.js", "client/components/email/detail/tac.html", "tests/unit/phishing-detection.test.js", "tests/db/spam-delivery.test.js"]
+    },
+    {
+      "id": "preferences",
+      "title": "Account, appearance, composer, notification, and privacy preferences",
+      "upstreamEvidence": ["app/internal_packages/preferences"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/mail-preferences.js", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "client/components/settings/view/tac.css", "client/components/app/shell/tac.js", "client/components/app/shell/tac.css", "client/components/inbox/view/tac.js", "client/components/email/detail/tac.js", "client/components/email/detail/tac.html", "client/components/email/detail/tac.css", "client/components/compose/view/tac.js", "client/components/compose/view/tac.html", "client/components/compose/view/tac.css", "client/shared/scripts/email-content-protection.js", "server/features/users/services/mail-preferences.js", "server/features/users/repositories/users.js", "server/features/mailbox/services/snooze.js", "server/features/contacts/services/contacts.js", "server/routes/users/me/preferences/yon.js", "db/schemas/users/history/v16.schema.json", "db/schemas/users/upgraders/v15-to-v16.js", "tests/unit/mail-preferences.test.js", "tests/unit/mail-preference-behavior.test.js", "tests/db/user-preferences-routes.test.js", "tests/routes/snooze.test.js", "tests/routes/contacts.test.js", "tests/e2e/mail-preferences.test.mjs", "tests/e2e/attachments.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "print",
+      "title": "Print messages and conversations",
+      "upstreamEvidence": ["app/internal_packages/print"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/mailbox/repositories/threads.js", "server/routes/threads/yon.js", "client/shared/scripts/print-conversation.js", "client/shared/assets/print.css", "client/components/email/detail/tac.js", "client/components/email/detail/tac.html", "tests/unit/print-conversation.test.js", "tests/routes/mailbox.test.js", "tests/e2e/app.test.mjs"]
+    },
+    {
+      "id": "remove-tracking-pixels",
+      "title": "Inbound tracking-pixel protection",
+      "upstreamEvidence": ["app/internal_packages/remove-tracking-pixels"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "client/shared/scripts/email-content-protection.js",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "tests/unit/email-content-protection.test.js",
+        "tests/e2e/app.test.mjs"
+      ]
+    },
+    {
+      "id": "screenshot-mode",
+      "title": "PII-safe screenshot mode",
+      "upstreamEvidence": ["app/internal_packages/screenshot-mode"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "client/shared/scripts/screenshot-mode.js",
+        "client/shared/assets/styles.css",
+        "client/components/app/shell/tac.js",
+        "client/components/app/shell/tac.html",
+        "client/components/app/shell/tac.css",
+        "client/shared/data/keymap.json",
+        "tests/e2e/screenshot-mode.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "send-and-archive",
+      "title": "Send and archive the source conversation",
+      "upstreamEvidence": ["app/internal_packages/send-and-archive"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/mailbox/services/conversation-archive.js", "server/features/mailbox/services/drafts.js", "server/features/delivery/services/send.js", "server/routes/send/yon.js", "server/routes/send/undo/yon.js", "client/components/email/detail/tac.js", "client/components/compose/view/tac.js", "client/components/compose/view/tac.html", "client/components/app/shell/tac.js", "db/schemas/emails/history/v4.schema.json", "tests/routes/send.test.js", "tests/routes/drafts.test.js", "tests/e2e/send-and-archive.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "send-later",
+      "title": "Scheduled sending",
+      "upstreamEvidence": ["app/internal_packages/send-later"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/delivery/repositories/scheduled.js", "server/features/delivery/repositories/outbox.js", "server/features/delivery/services/send.js", "server/features/delivery/services/outbound-queue.js", "server/features/delivery/services/outbound-queue-worker.ts", "server/routes/send/scheduled/yon.js", "server/routes/send/scheduled/_id/yon.js", "client/components/compose/view/tac.js", "client/components/compose/view/tac.html", "client/pages/scheduled/tac.js", "client/pages/scheduled/tac.html", "tests/outbound-queue.test.js", "tests/routes/send.test.js", "tests/e2e/send-later.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "send-reminders",
+      "title": "Follow-up reminders when no reply arrives",
+      "upstreamEvidence": ["app/internal_packages/send-reminders"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/delivery/services/follow-up-reminders.js", "server/features/delivery/services/follow-up-reminder-worker.ts", "server/routes/reminders/yon.js", "server/routes/reminders/tick/yon.js", "client/components/compose/view/tac.js", "client/components/compose/view/tac.html", "client/pages/reminders/tac.js", "client/pages/reminders/tac.html", "tests/db/follow-up-reminders.test.js", "tests/routes/send.test.js", "tests/runtime/service-supervisor.test.ts", "tests/e2e/follow-up-reminders.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "system-tray",
+      "title": "Unread badge and background system integration",
+      "upstreamEvidence": ["app/internal_packages/system-tray", "CHANGELOG.md#1230-7192026"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "client/shared/scripts/unread-badge.js",
+        "client/shared/service-worker/unread.js",
+        "client/components/app/shell/tac.js",
+        "client/components/inbox/view/tac.js",
+        "server/features/notifications/services/push.js",
+        "tac.config.js",
+        "tests/unit/unread-badge.test.js",
+        "tests/unit/service-worker-unread.test.js",
+        "tests/e2e/unread-badge.test.mjs",
+        "tests/e2e/pwa.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "theme-picker",
+      "title": "Theme selection and preview",
+      "upstreamEvidence": ["app/internal_packages/theme-picker"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/theme-preferences.js", "client/shared/assets/themes.css", "client/components/app/shell/tac.js", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "client/components/settings/view/tac.css", "server/features/users/services/theme-preferences.js", "server/routes/users/me/preferences/yon.js", "db/schemas/users/history/v7.schema.json", "tests/unit/theme-preferences.test.js", "tests/db/user-preferences-routes.test.js", "tests/e2e/theme-picker.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "thread-list",
+      "title": "Thread list, bulk actions, columns, and keyboard navigation",
+      "upstreamEvidence": ["app/internal_packages/thread-list"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/components/inbox/view/tac.js", "client/components/inbox/view/tac.html", "client/components/inbox/view/tac.css", "client/components/app/shell/tac.js", "server/routes/threads/yon.js", "server/routes/inbox/actions/yon.js", "tests/routes/mailbox.test.js", "tests/routes/mail-actions.test.js", "tests/e2e/message-list.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "thread-search",
+      "title": "Tokenized thread search",
+      "upstreamEvidence": ["app/internal_packages/thread-search"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/thread-search.js", "client/components/inbox/view/tac.js", "client/components/inbox/view/tac.html", "client/components/inbox/view/tac.css", "server/features/mailbox/services/search-parser.js", "server/routes/search/yon.js", "server/routes/threads/yon.js", "tests/search-parser.test.js", "tests/unit/thread-search.test.js", "tests/routes/mailbox.test.js", "tests/e2e/thread-search.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "thread-sharing",
+      "title": "Secure conversation sharing",
+      "upstreamEvidence": ["app/internal_packages/thread-sharing"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/mailbox/repositories/thread-shares.js",
+        "server/features/mailbox/services/thread-sharing.js",
+        "server/routes/thread-shares/yon.js",
+        "server/routes/thread-shares/_id/yon.js",
+        "server/routes/thread-shares/public/_token/yon.js",
+        "server/routes/thread-shares/public/_token/attachments/_attachment_id/yon.js",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "client/components/email/detail/tac.css",
+        "client/pages/share/_token/tac.js",
+        "client/pages/share/_token/tac.html",
+        "client/pages/share/_token/tac.css",
+        "db/schemas/thread-shares/history/v1.schema.json",
+        "tests/routes/thread-sharing.test.js",
+        "tests/e2e/thread-sharing.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "thread-snooze",
+      "title": "Snooze and automatic return to inbox",
+      "upstreamEvidence": ["app/internal_packages/thread-snooze"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/snooze-presets.js", "client/components/email/detail/tac.js", "client/components/email/detail/tac.html", "client/components/inbox/view/tac.js", "server/features/mailbox/repositories/snooze.js", "server/features/mailbox/services/snooze.js", "server/features/mailbox/services/snooze-worker.ts", "server/features/notifications/services/push.js", "server/routes/snooze/yon.js", "server/routes/snooze/_id/yon.js", "server/routes/snooze/tick/yon.js", "db/schemas/snoozed/history/v1.schema.json", "tests/unit/snooze-presets.test.js", "tests/routes/snooze.test.js", "tests/runtime/service-supervisor.test.ts", "tests/e2e/thread-snooze.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "translation",
+      "title": "Translate drafts and received messages",
+      "upstreamEvidence": ["app/internal_packages/translation"],
+      "status": "implemented",
+      "caduceusEvidence": ["translation-models.lock.json", "scripts/vendor-translation-assets.mjs", "server/routes/translation-assets/yon.js", "client/shared/scripts/chunked-asset-fetch.js", "client/shared/scripts/offline-translation-engine.js", "client/shared/scripts/on-device-translation.js", "client/shared/scripts/translation-languages.js", "client/shared/scripts/translation-preferences.js", "client/shared/scripts/translation-cache.js", "client/components/email/detail/tac.js", "client/components/email/detail/tac.html", "client/components/compose/view/tac.js", "client/components/compose/view/tac.html", "tests/unit/on-device-translation.test.js", "tests/unit/translation-preferences.test.js", "tests/unit/translation-cache.test.js", "tests/unit/translation-assets-route.test.js", "tests/routes/translation-assets.test.js", "tests/e2e/translation.test.mjs", "tests/e2e/translation-runtime.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "ui-automatic",
+      "title": "Automatic system light/dark theme",
+      "upstreamEvidence": ["app/internal_packages/ui-automatic"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/theme-preferences.js", "client/components/app/shell/tac.js", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "server/features/users/services/theme-preferences.js", "server/routes/users/me/preferences/yon.js", "db/schemas/users/history/v7.schema.json", "tests/unit/theme-preferences.test.js", "tests/db/user-preferences-routes.test.js", "tests/e2e/theme-picker.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "ui-dark",
+      "title": "Dark theme",
+      "upstreamEvidence": ["app/internal_packages/ui-dark"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/theme-preferences.js", "client/shared/assets/themes.css", "client/components/settings/view/tac.html", "tests/unit/theme-preferences.test.js", "tests/e2e/theme-picker.test.mjs", "tests/e2e/visual-matrix.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "ui-darkside",
+      "title": "Alternative customizable dark-sidebar theme",
+      "upstreamEvidence": ["app/internal_packages/ui-darkside"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/theme-preferences.js", "client/shared/assets/themes.css", "client/components/settings/view/tac.html", "tests/unit/theme-preferences.test.js", "tests/e2e/theme-picker.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "ui-less-is-more",
+      "title": "Minimal theme",
+      "upstreamEvidence": ["app/internal_packages/ui-less-is-more"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/theme-preferences.js", "client/shared/assets/themes.css", "client/components/settings/view/tac.html", "tests/unit/theme-preferences.test.js", "tests/e2e/theme-picker.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "ui-light",
+      "title": "Light theme",
+      "upstreamEvidence": ["app/internal_packages/ui-light"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/theme-preferences.js", "client/shared/assets/themes.css", "client/components/settings/view/tac.html", "tests/unit/theme-preferences.test.js", "tests/e2e/theme-picker.test.mjs", "tests/e2e/visual-matrix.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "ui-taiga",
+      "title": "Alternative clean theme",
+      "upstreamEvidence": ["app/internal_packages/ui-taiga"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/theme-preferences.js", "client/shared/assets/themes.css", "client/components/settings/view/tac.html", "tests/unit/theme-preferences.test.js", "tests/e2e/theme-picker.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "ui-ubuntu",
+      "title": "Ubuntu-inspired theme",
+      "upstreamEvidence": ["app/internal_packages/ui-ubuntu"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/theme-preferences.js", "client/shared/assets/themes.css", "client/components/settings/view/tac.html", "tests/unit/theme-preferences.test.js", "tests/e2e/theme-picker.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "undo-redo",
+      "title": "Undoable mail actions and feedback toast",
+      "upstreamEvidence": ["app/internal_packages/undo-redo"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/mailbox/repositories/mail-actions.js", "server/features/mailbox/services/mail-actions.js", "server/routes/inbox/actions/yon.js", "server/routes/inbox/actions/_id/undo/yon.js", "server/routes/inbox/actions/_id/redo/yon.js", "db/schemas/mail-actions/history/v1.schema.json", "client/components/app/shell/tac.js", "client/components/inbox/view/tac.js", "client/components/inbox/view/tac.html", "client/components/email/detail/tac.js", "server/routes/send/undo/yon.js", "server/routes/snooze/_id/yon.js", "tests/routes/mail-actions.test.js", "tests/routes/send.test.js", "tests/e2e/message-list.test.mjs", "tests/e2e/thread-snooze.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "unread-notifications",
+      "title": "New-mail desktop and push notifications",
+      "upstreamEvidence": ["app/internal_packages/unread-notifications"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/notifications/services/push.js", "server/features/notifications/services/provider-notification-worker.ts", "server/features/users/services/new-mail-notification-preferences.js", "server/routes/notifications/subscriptions/yon.js", "server/routes/notifications/provider/tick/yon.js", "server/routes/users/me/preferences/yon.js", "db/schemas/provider-notifications/history/v1.schema.json", "db/schemas/users/history/v18.schema.json", "client/shared/service-worker/unread.js", "client/components/app/shell/tac.js", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "internal/adapters/fylostore/accountsync.go", "tests/api/notifications.test.js", "tests/routes/provider-notifications.test.js", "tests/unit/service-worker-unread.test.js", "tests/unit/delivery-services.test.js", "tests/runtime/service-supervisor.test.ts", "tests/db/user-preferences-routes.test.js", "tests/e2e/pwa.test.mjs", "tests/e2e/unread-notifications.test.mjs", "tests/e2e/external-accounts-settings.test.mjs"],
+      "gap": ""
+    }
+  ],
+  "platformCapabilities": [
+    {
+      "id": "platform-unified-multi-account",
+      "title": "Multiple accounts and unified inbox",
+      "upstreamEvidence": ["README.md#features", "CHANGELOG.md#1230-7192026"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/routes/inbox/yon.js", "server/routes/inbox/stream/yon.js", "server/routes/inbox/actions/yon.js", "server/routes/inbox/actions/_id/undo/yon.js", "server/routes/inbox/actions/_id/redo/yon.js", "server/routes/search/yon.js", "server/routes/threads/yon.js", "server/routes/notifications/provider/tick/yon.js", "server/features/mailbox/services/unified-mail.js", "server/features/mailbox/services/mail-actions.js", "server/features/mailbox/repositories/mail-actions.js", "server/features/notifications/services/push.js", "server/features/notifications/services/provider-notification-worker.ts", "server/platform/accounts/bridge.js", "client/components/app/shell/tac.js", "client/components/inbox/view/tac.js", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "internal/accounts/types.go", "internal/accounts/service.go", "internal/accountsync/worker.go", "internal/accountsync/scheduler.go", "internal/platform/accountsecrets/vault.go", "internal/adapters/fylostore/accounts.go", "internal/adapters/fylostore/accountsync.go", "internal/adapters/bridgeapi/accounts.go", "server/routes/api/v1/external-accounts/_id/folders/yon.js", "server/routes/api/v1/external-accounts/_id/messages/yon.js", "server/routes/api/v1/external-accounts/_id/mutations/_mutation_id/yon.js", "db/schemas/provider-accounts/history/v1.schema.json", "db/schemas/provider-folders/history/v1.schema.json", "db/schemas/provider-messages/history/v1.schema.json", "db/schemas/provider-notifications/history/v1.schema.json", "internal/accountsync/worker_test.go", "internal/adapters/fylostore/accountsync_test.go", "internal/adapters/bridgeapi/accounts_test.go", "tests/routes/external-accounts.test.js", "tests/routes/provider-notifications.test.js", "tests/routes/mailbox.test.js", "tests/routes/mail-actions.test.js", "tests/e2e/external-accounts-settings.test.mjs", "tests/e2e/external-mailbox-navigation.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "platform-provider-sync",
+      "title": "IMAP, Gmail, and Microsoft account synchronization",
+      "upstreamEvidence": ["README.md", "app/src/mailsync-process.ts"],
+      "status": "implemented",
+      "caduceusEvidence": ["docs/rfcs/0001-external-account-connectivity.md", "docs/COMPATIBILITY.md", "internal/accounts/types.go", "internal/accounts/service.go", "internal/accountsend/types.go", "internal/accountsend/worker.go", "internal/accountsync/types.go", "internal/accountsync/worker.go", "internal/accountsync/scheduler.go", "internal/accountsync/watcher.go", "internal/calendarsync/router.go", "internal/contactsync/router.go", "internal/platform/accountsecrets/vault.go", "internal/platform/imapwire/mailbox.go", "internal/adapters/mailprovider/imap_sync.go", "internal/adapters/mailprovider/smtp_submit.go", "internal/adapters/googlecalendar/connector.go", "internal/adapters/microsoftcalendar/connector.go", "internal/adapters/googlecontacts/connector.go", "internal/adapters/microsoftcontacts/connector.go", "internal/adapters/fylostore/accounts.go", "internal/adapters/fylostore/accountsync.go", "internal/adapters/fylostore/submissions.go", "internal/platform/fylobridge/bridge.go", "server/features/mailbox/services/external-message.js", "server/features/delivery/services/external-submission.js", "server/features/notifications/services/provider-notification-worker.ts", "server/routes/notifications/provider/tick/yon.js", "server/routes/send/yon.js", "server/routes/send/scheduled/_id/yon.js", "db/schemas/provider-sync-state/history/v1.schema.json", "db/schemas/provider-messages/history/v3.schema.json", "db/schemas/provider-mutations/history/v2.schema.json", "db/schemas/provider-submissions/history/v4.schema.json", "db/schemas/provider-notifications/history/v1.schema.json", "contracts/http/external-accounts.v1.schema.json", "internal/accountsend/worker_test.go", "internal/accountsync/worker_test.go", "internal/accountsync/watcher_test.go", "internal/calendarsync/router_test.go", "internal/contactsync/router_test.go", "internal/platform/imapwire/mailbox_test.go", "internal/adapters/mailprovider/imap_sync_test.go", "internal/adapters/mailprovider/smtp_submit_test.go", "internal/adapters/mailprovider/password_validator_test.go", "internal/adapters/googlecalendar/connector_test.go", "internal/adapters/microsoftcalendar/connector_test.go", "internal/adapters/googlecontacts/connector_test.go", "internal/adapters/microsoftcontacts/connector_test.go", "internal/adapters/fylostore/accountsync_test.go", "internal/adapters/fylostore/submissions_test.go", "internal/adapters/bridgeapi/accounts_test.go", "tests/unit/external-message.test.js", "tests/unit/external-submission.test.js", "tests/routes/external-accounts.test.js", "tests/routes/provider-notifications.test.js"],
+      "gap": ""
+    },
+    {
+      "id": "platform-office365-shared-mailboxes",
+      "title": "Office 365 shared mailboxes",
+      "upstreamEvidence": ["CHANGELOG.md#1230-7192026"],
+      "status": "implemented",
+      "caduceusEvidence": ["docs/rfcs/0001-external-account-connectivity.md", "docs/CONFIGURATION.md", "internal/accounts/types.go", "internal/accounts/oauth.go", "internal/adapters/microsoftoauth/client.go", "internal/adapters/microsoftoauth/credentials.go", "internal/adapters/mailprovider/password_validator.go", "internal/adapters/mailprovider/imap_sync.go", "internal/adapters/mailprovider/smtp_submit.go", "internal/adapters/fylostore/accounts.go", "internal/adapters/bridgeapi/accounts.go", "internal/platform/cli/run.go", "server/routes/api/v1/external-accounts/oauth/microsoft/begin/yon.js", "server/routes/api/v1/external-accounts/oauth/microsoft/complete/yon.js", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "db/schemas/provider-oauth-transactions/history/v1.schema.json", "contracts/http/external-accounts.v1.schema.json", "internal/accounts/oauth_test.go", "internal/adapters/microsoftoauth/client_test.go", "internal/adapters/microsoftoauth/credentials_test.go", "internal/adapters/mailprovider/password_validator_test.go", "internal/adapters/mailprovider/imap_sync_test.go", "internal/adapters/mailprovider/smtp_submit_test.go", "internal/adapters/fylostore/accounts_test.go", "internal/adapters/bridgeapi/accounts_test.go", "tests/e2e/external-accounts-settings.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "platform-offline-sync",
+      "title": "Local offline mailbox index and background synchronization",
+      "upstreamEvidence": ["README.md", "mailsync"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/scripts/fetch-cache.js", "client/shared/scripts/offline-write-vault.js", "client/shared/scripts/offline-mailbox-index.js", "client/shared/service-worker/unread.js", "client/components/compose/view/tac.js", "client/components/email/detail/tac.js", "client/components/inbox/view/tac.js", "client/pages/calendar/tac.js", "client/components/app/shell/tac.js", "server/routes/inbox/stream/yon.js", "server/features/mailbox/services/mail-actions.js", "server/features/mailbox/services/unified-mail.js", "server/features/delivery/services/send-idempotency.js", "server/features/delivery/repositories/send-requests.js", "server/features/mailbox/services/snooze.js", "server/platform/persistence/fylo.js", "internal/accountsync/worker.go", "internal/accountsync/scheduler.go", "internal/adapters/fylostore/accountsync.go", "db/schemas/send-requests/history/v1.schema.json", "db/schemas/snoozed/history/v2.schema.json", "db/schemas/provider-mutations/history/v2.schema.json", "tests/unit/offline-mailbox-index.test.js", "tests/e2e/pwa.test.mjs", "tests/e2e/composer-rich-text.test.mjs", "tests/e2e/thread-snooze.test.mjs", "tests/e2e/calendar-recurrence.test.mjs", "tests/e2e/external-mailbox-navigation.test.mjs", "tests/routes/send.test.js", "tests/routes/snooze.test.js", "tests/routes/calendar.test.js", "tests/routes/external-accounts.test.js", "tests/routes/mailbox.test.js", "internal/accountsync/worker_test.go"],
+      "gap": ""
+    },
+    {
+      "id": "platform-native-mail-transport",
+      "title": "Send and receive mail without a cloud relay",
+      "upstreamEvidence": ["README.md#features"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/delivery/services/smtp-inbound-server.js", "server/features/delivery/services/smtp-submission-server.js", "server/features/delivery/services/smtp.js", "server/features/delivery/services/outbound-queue.js", "server/features/delivery/services/outbound-queue-worker.ts", "server/routes/send/tick/yon.js", "server/routes/send/flush/yon.js", "internal/adapters/mailprovider/smtp_submit.go", "docs/operations/OUTBOUND_QUEUE.md", "scripts/verify-smtp-interoperability.mjs", "scripts/verify-mail-transport-soak.mjs", "tests/unit/smtp-servers.test.js", "tests/unit/delivery-services.test.js", "tests/outbound-queue.test.js", "tests/runtime/service-supervisor.test.ts", "tests/routes/send.test.js", "internal/adapters/mailprovider/smtp_submit_test.go"],
+      "gap": ""
+    },
+    {
+      "id": "platform-rfc-threading",
+      "title": "RFC Message-ID, References, and In-Reply-To threading",
+      "upstreamEvidence": ["app/internal_packages/message-list", "app/internal_packages/thread-list"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/mailbox/services/threading.js",
+        "server/features/delivery/services/inbound-delivery.js",
+        "server/features/delivery/services/send.js",
+        "server/features/mailbox/repositories/threads.js",
+        "server/features/delivery/services/follow-up-reminders.js",
+        "client/components/email/detail/tac.js",
+        "client/components/compose/view/tac.js",
+        "client/components/inbox/view/tac.js",
+        "tests/unit/threading.test.js",
+        "tests/routes/mailbox.test.js",
+        "tests/e2e/app.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "platform-raw-message-source",
+      "title": "Show and export original RFC822 source",
+      "upstreamEvidence": ["CHANGELOG.md#1230-7192026", "app/src/menus"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/mailbox/repositories/raw-messages.js",
+        "server/features/delivery/services/inbound-delivery.js",
+        "server/routes/inbox/_id/source/yon.js",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "tests/db/raw-messages.test.js",
+        "tests/routes/mailbox.test.js",
+        "tests/e2e/app.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "platform-eml-interchange",
+      "title": "EML import and export for messages and folders",
+      "upstreamEvidence": ["CHANGELOG.md#1200-4182026"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/mailbox/services/message-source.js",
+        "server/features/mailbox/services/eml-import.js",
+        "server/routes/inbox/import/eml/yon.js",
+        "server/routes/inbox/_id/source/yon.js",
+        "server/routes/inbox/export/rfc822/yon.js",
+        "client/shared/scripts/eml-archive.js",
+        "client/components/inbox/view/tac.js",
+        "client/components/inbox/view/tac.html",
+        "client/components/email/detail/tac.js",
+        "tests/unit/message-source.test.js",
+        "tests/unit/inbound-parsing.test.js",
+        "tests/unit/eml-import.test.js",
+        "tests/unit/eml-archive.test.js",
+        "tests/routes/mailbox.test.js",
+        "tests/e2e/app.test.mjs",
+        "tests/e2e/eml-import.test.mjs",
+        "tests/e2e/mbox.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "platform-mbox-export",
+      "title": "Folder export to mbox",
+      "upstreamEvidence": ["CHANGELOG.md#1230-7192026"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/mailbox/repositories/emails.js",
+        "server/routes/inbox/export/rfc822/yon.js",
+        "client/shared/scripts/mbox.js",
+        "client/components/inbox/view/tac.js",
+        "client/components/inbox/view/tac.html",
+        "tests/unit/mbox.test.js",
+        "tests/routes/mailbox.test.js",
+        "tests/e2e/mbox.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "platform-vcard-interchange",
+      "title": "VCard contact import and export",
+      "upstreamEvidence": ["CHANGELOG.md#1190-392026"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/contacts/services/vcard.js", "server/features/contacts/services/contacts.js", "server/routes/contacts/import/yon.js", "server/routes/contacts/export/yon.js", "client/pages/contacts/tac.js", "tests/unit/vcard.test.js", "tests/routes/contacts.test.js", "tests/e2e/contacts.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "platform-recurring-calendar",
+      "title": "Recurring calendar event display and editing",
+      "upstreamEvidence": ["CHANGELOG.md#1190-392026"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/calendar/services/recurrence.js",
+        "server/features/calendar/services/ics.js",
+        "server/features/calendar/services/calendar-import.js",
+        "server/features/calendar/services/event-view.js",
+        "server/features/calendar/repositories/calendar-events.js",
+        "server/routes/calendar/events/yon.js",
+        "server/routes/calendar/events/_id/yon.js",
+        "server/routes/calendar/team-events/yon.js",
+        "client/pages/calendar/tac.js",
+        "client/pages/calendar/tac.html",
+        "client/pages/calendar/tac.css",
+        "client/shared/scripts/calendar-date.js",
+        "client/components/email/detail/tac.html",
+        "server/features/calendar/services/calendar-date.js",
+        "tests/unit/calendar-date.test.js",
+        "tests/unit/calendar-recurrence.test.js",
+        "tests/unit/ics.test.js",
+        "tests/db/calendar-import.test.js",
+        "tests/routes/calendar.test.js",
+        "tests/e2e/calendar-recurrence.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "platform-mail-rules",
+      "title": "User mail rules",
+      "upstreamEvidence": ["README.md#features"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/mailbox/services/rule-engine.js",
+        "server/features/mailbox/services/rule-input.js",
+        "server/features/mailbox/repositories/rules.js",
+        "server/features/delivery/services/inbound.js",
+        "server/features/delivery/services/inbound-delivery.js",
+        "server/routes/rules/yon.js",
+        "server/routes/rules/_id/yon.js",
+        "server/routes/rules/preview/yon.js",
+        "server/routes/rules/order/yon.js",
+        "client/components/settings/view/tac.js",
+        "client/components/settings/view/tac.html",
+        "client/components/settings/view/tac.css",
+        "tests/unit/rule-engine.test.js",
+        "tests/db/rules.test.js",
+        "tests/routes/admin.test.js",
+        "tests/e2e/mail-rules.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "platform-mailbox-analytics",
+      "title": "Mailbox and outreach analytics",
+      "upstreamEvidence": ["README.md#features", "app/internal_packages/activity"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/delivery/repositories/tracking.js", "server/routes/activity/yon.js", "client/pages/activity/tac.js", "client/pages/activity/tac.html", "client/pages/activity/tac.css", "client/components/app/shell/tac.js", "tests/routes/tracking-activity.test.js", "tests/e2e/activity-tracking.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "platform-accessibility",
+      "title": "Screen-reader, keyboard, focus, contrast, and reduced-motion support",
+      "upstreamEvidence": ["CHANGELOG.md#1191-462026", "CHANGELOG.md#1190-392026"],
+      "status": "implemented",
+      "caduceusEvidence": ["docs/ACCESSIBILITY.md", "playwright.accessibility.config.mjs", "client/shared/scripts/dialog-focus.js", "client/shared/assets/styles.css", "client/components/app/shell/tac.html", "client/components/app/shell/tac.js", "client/components/inbox/view/tac.html", "client/components/inbox/view/tac.js", "client/pages/contacts/tac.js", "tests/e2e/accessibility.test.mjs", "tests/e2e/interaction-matrix.test.mjs", "tests/e2e/message-list.test.mjs", ".github/workflows/ci.yml"],
+      "gap": ""
+    },
+    {
+      "id": "platform-keyboard-shortcuts",
+      "title": "Complete keyboard command system",
+      "upstreamEvidence": ["app/src/keymaps", "app/internal_packages/main-calendar"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/data/keymap.json", "client/shared/scripts/shortcuts.js", "client/shared/scripts/keyboard.js", "server/features/users/services/keyboard-shortcuts.js", "server/routes/users/me/preferences/yon.js", "client/components/app/shell/tac.js", "client/components/app/shell/tac.html", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "client/pages/calendar/tac.js", "client/pages/calendar/tac.html", "db/schemas/users/history/v14.schema.json", "tests/unit/keyboard-shortcuts.test.js", "tests/db/user-preferences-routes.test.js", "tests/e2e/keyboard-shortcuts.test.mjs", "docs/KEYBOARD.md"],
+      "gap": ""
+    },
+    {
+      "id": "platform-extension-system",
+      "title": "Trusted plugin and theme extension system",
+      "upstreamEvidence": ["README.md#building-a-plugin", "README.md#building-a-theme"],
+      "status": "implemented",
+      "caduceusEvidence": ["server/features/extensions/services/extensions.js", "server/features/extensions/repositories/extensions.js", "server/routes/extensions/yon.js", "server/routes/extensions/inspect/yon.js", "server/routes/extensions/_id/yon.js", "client/shared/scripts/extension-runtime.js", "client/components/app/shell/tac.js", "client/components/app/shell/tac.html", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "client/components/compose/view/tac.html", "client/components/email/detail/tac.html", "db/schemas/extensions/history/v1.schema.json", "contracts/http/routes.v1.json", "contracts/fylo/catalog.v1.json", "docs/EXTENSIONS.md", "docs/THREAT_MODEL.md", "tests/unit/extensions.test.js", "tests/unit/extension-runtime.test.js", "tests/routes/extensions.test.js", "tests/e2e/extensions.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "platform-localization",
+      "title": "Localized interface and locale-aware formatting",
+      "upstreamEvidence": ["app/src/intl.ts", "app/lang"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/locales/en.js", "client/shared/locales/fr.js", "client/shared/locales/ar.js", "client/shared/assets/interface-locales.json", "client/shared/scripts/localization.js", "client/shared/scripts/interface-localizer.js", "client/shared/scripts/imports.js", "client/shared/scripts/mail-preferences.js", "client/components/app/shell/tac.js", "client/components/app/shell/tac.html", "client/components/app/shell/tac.css", "client/components/app/nav/tac.js", "client/components/app/nav/tac.html", "client/components/settings/view/tac.js", "client/components/settings/view/tac.html", "client/pages/calendar/tac.js", "client/pages/activity/tac.js", "client/components/compose/view/tac.js", "client/components/email/detail/tac.js", "scripts/data/interface-locale-overrides.mjs", "scripts/generate-interface-locales.mjs", "scripts/publish-interface-locales.mjs", "server/features/users/services/locale-preferences.js", "server/features/users/repositories/users.js", "server/routes/users/me/preferences/yon.js", "db/schemas/users/history/v19.schema.json", "tests/unit/localization.test.js", "tests/unit/mail-preference-behavior.test.js", "tests/db/user-preferences-routes.test.js", "tests/routes/admin.test.js", "tests/e2e/localization.test.mjs", "tests/e2e/interaction-matrix.test.mjs", "docs/THIRD_PARTY_MODELS.md"],
+      "gap": ""
+    },
+    {
+      "id": "platform-pwa-integration",
+      "title": "Installable application, deep links, badges, and background behavior",
+      "upstreamEvidence": ["app/internal_packages/system-tray", "app/internal_packages/unread-notifications"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/shared/assets/manifest.webmanifest", "client/shared/scripts/unread-badge.js", "client/shared/scripts/pwa-launch.js", "client/shared/scripts/offline-write-vault.js", "client/shared/service-worker/unread.js", "client/components/app/shell/tac.js", "server/features/mailbox/services/mail-actions.js", "server/features/mailbox/repositories/mail-actions.js", "db/schemas/mail-actions/history/v2.schema.json", "tac.config.js", "tests/e2e/pwa.test.mjs", "tests/e2e/unread-badge.test.mjs", "tests/unit/pwa-launch.test.js", "tests/unit/service-worker-unread.test.js", "tests/routes/mail-actions.test.js", "tests/e2e/unread-notifications.test.mjs"],
+      "gap": ""
+    },
+    {
+      "id": "platform-unread-all-accounts",
+      "title": "Configurable unread count across all accounts",
+      "upstreamEvidence": ["CHANGELOG.md#1230-7192026"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/users/services/unread-badge-preferences.js",
+        "server/features/users/repositories/users.js",
+        "server/routes/users/me/preferences/yon.js",
+        "server/features/notifications/services/push.js",
+        "client/shared/scripts/unread-badge.js",
+        "client/components/app/shell/tac.js",
+        "client/components/inbox/view/tac.js",
+        "client/components/settings/view/tac.js",
+        "client/components/settings/view/tac.html",
+        "client/components/settings/view/tac.css",
+        "db/schemas/users/history/v12.schema.json",
+        "tests/unit/unread-badge.test.js",
+        "tests/unit/delivery-services.test.js",
+        "tests/db/user-preferences-routes.test.js",
+        "tests/e2e/unread-badge.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "platform-email-render-mode",
+      "title": "Toggle email rendering mode",
+      "upstreamEvidence": ["CHANGELOG.md#1230-7192026"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "client/shared/scripts/email-content-protection.js",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "server/routes/inbox/_id/source/yon.js",
+        "tests/unit/email-content-protection.test.js",
+        "tests/routes/mailbox.test.js",
+        "tests/e2e/app.test.mjs"
+      ],
+      "gap": ""
+    },
+    {
+      "id": "platform-composer-reply-to",
+      "title": "Reply-To composer field",
+      "upstreamEvidence": ["CHANGELOG.md#1210-552026"],
+      "status": "implemented",
+      "caduceusEvidence": ["client/components/compose/view/tac.html", "server/features/delivery/services/mail-validation.js", "server/features/delivery/services/smtp.js", "tests/unit/mail-validation.test.js", "tests/routes/send.test.js"]
+    },
+    {
+      "id": "platform-content-security",
+      "title": "Safe HTML, URI, attachment, and remote-content rendering",
+      "upstreamEvidence": ["CHANGELOG.md#1210-552026"],
+      "status": "implemented",
+      "caduceusEvidence": [
+        "server/features/delivery/services/mail-validation.js",
+        "server/features/mailbox/repositories/attachments.js",
+        "server/features/mailbox/services/attachment-policy.js",
+        "server/features/mailbox/services/remote-images.js",
+        "server/routes/inbox/_id/images/yon.js",
+        "client/shared/scripts/attachment-content.js",
+        "client/shared/scripts/email-content-protection.js",
+        "client/components/email/detail/tac.js",
+        "client/components/email/detail/tac.html",
+        "client/components/email/detail/tac.css",
+        "tests/unit/attachment-policy.test.js",
+        "tests/unit/email-content-protection.test.js",
+        "tests/unit/remote-images.test.js",
+        "tests/routes/mailbox.test.js",
+        "tests/e2e/app.test.mjs",
+        "tests/e2e/attachments.test.mjs",
+        "docs/THREAT_MODEL.md"
+      ],
+      "gap": ""
+    }
+  ]
+}

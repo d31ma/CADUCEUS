@@ -1,0 +1,9 @@
+{
+  "current": "v4",
+  "versions": [
+    { "v": "v1", "addedAt": "2026-08-21T00:00:00.000Z" },
+    { "v": "v2", "addedAt": "2026-08-22T00:00:00.000Z", "upgrader": "v1-to-v2.js" },
+    { "v": "v3", "addedAt": "2026-08-22T00:00:00.000Z", "upgrader": "v2-to-v3.js" },
+    { "v": "v4", "addedAt": "2026-08-22T00:00:00.000Z", "upgrader": "v3-to-v4.js" }
+  ]
+}

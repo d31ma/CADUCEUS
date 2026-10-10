@@ -1,0 +1,84 @@
+{
+  "contractVersion": "v1",
+  "purpose": "Observable behavior that must remain stable while the legacy server is replaced by Go.",
+  "adapter": {
+    "current": "unversioned Tachyon routes",
+    "target": "/api/v1 Go routes",
+    "rule": "Tests may switch only the base URL and compatibility prefix; expected behavior and fixtures stay unchanged."
+  },
+  "migrationSlices": [
+    {
+      "phase": 1,
+      "name": "runtime foundation and static shell",
+      "externalTests": [
+        "test/blackbox/runtime_test.go",
+        "internal/platform/httpserver/server_test.go",
+        "tests/e2e/smoke.test.mjs",
+        "tests/api/helpers.js"
+      ],
+      "commands": ["bun run verify:phase1", "bun run test:e2e"]
+    },
+    {
+      "phase": 2,
+      "name": "FYLO ownership and tenant storage",
+      "externalTests": [
+        "tests/integration/fylo-local-access.test.js",
+        "tests/runtime/fylo-access.test.js"
+      ],
+      "commands": ["bun run test:fylo-local", "bun run test:runtime"]
+    },
+    {
+      "phase": 3,
+      "name": "authentication and tenant boundary",
+      "externalTests": [
+        "tests/api/auth.test.js",
+        "test/blackbox/auth_phase3_test.go",
+        "tests/e2e/login.test.mjs"
+      ],
+      "commands": ["bun run test:api", "bun run test:routes", "bun run test:e2e"]
+    },
+    {
+      "phase": 4,
+      "name": "mailbox and attachments",
+      "externalTests": [
+        "tests/api/inbox.test.js",
+        "tests/db/attachments.test.js",
+        "tests/routes/mailbox.test.js",
+        "tests/e2e/app.test.mjs"
+      ],
+      "commands": ["bun run test:api", "bun run test:db", "bun run test:routes", "bun run test:e2e"]
+    },
+    {
+      "phase": 5,
+      "name": "outbound delivery",
+      "externalTests": [
+        "tests/api/send.test.js",
+        "tests/outbound-queue.test.js",
+        "tests/routes/send.test.js"
+      ],
+      "commands": ["bun run test:api", "bun run test:routes"]
+    },
+    {
+      "phase": 6,
+      "name": "inbound SMTP and submission",
+      "externalTests": [
+        "tests/unit/smtp-listen.test.js",
+        "tests/unit/smtp-servers.test.js",
+        "tests/runtime/smtp-lifecycle.test.ts",
+        "tests/api/inbox.test.js"
+      ],
+      "commands": ["bun run test:unit", "bun run test:runtime", "bun run test:api"]
+    },
+    {
+      "phase": 7,
+      "name": "production HTTP cutover",
+      "externalTests": [
+        "tests/e2e/smoke.test.mjs",
+        "tests/e2e/app.test.mjs",
+        "tests/e2e/interaction-matrix.test.mjs",
+        "tests/e2e/visual-matrix.test.mjs"
+      ],
+      "commands": ["bun run test:e2e", "bun run test:matrix"]
+    }
+  ]
+}

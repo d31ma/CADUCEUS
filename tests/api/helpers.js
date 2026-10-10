@@ -1,56 +1,63 @@
-import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
+import { createServer } from "node:net";
 import { createHmac } from "node:crypto";
-import { signJwt } from "@/services/auth.js";
+import { startIdentity, identityRequirements } from "../support/identity.mjs";
 const CADUCEUS_ROOT = join(import.meta.dir, "..", "..");
-const TACH_SERVE = join(CADUCEUS_ROOT, "node_modules", ".bin", "yon.serve");
-const JWT_SECRET = process.env.JWT_SECRET || "test-secret";
-const INBOUND_WEBHOOK_SECRET = process.env.INBOUND_WEBHOOK_SECRET || "test-inbound-secret";
-const EVENTS_WEBHOOK_SECRET = process.env.EVENTS_WEBHOOK_SECRET || "test-events-secret";
-const PORT_BASE = 19000;
-let portCounter = 0;
+const INBOUND_WEBHOOK_SECRET = "harness-inbound-secret";
+
+export { identityRequirements };
+export const TEST_SERVER_HOOK_TIMEOUT_MS =
+  (Number(process.env.TEST_SERVER_START_TIMEOUT_MS) || 300_000) + 5_000;
+
 export async function startTestServer() {
-  const port = PORT_BASE + portCounter++ % 100;
-  const testRoot = mkdtempSync(join(tmpdir(), "caduceus-api-test-"));
-  const proc = Bun.spawn(["bun", TACH_SERVE], {
+  const port = await availableLoopbackPort();
+  // The Go owner holds the mail root and the engine. The application server
+  // reaches both through its bridge, exactly as it does in production, and
+  // tokens come from real logins rather than from this file.
+  const identity = await startIdentity();
+  const testRoot = identity.fyloRoot;
+  // Run the decorated route classes through the same bounded Bun adapter used
+  // by Playwright. Tachyon 26.33's isolated Yon supervisor cannot load the
+  // legacy shared-service imports while those routes are migrating to Go.
+  const serveCommand = ["bun", "scripts/e2e-api.mjs"];
+  const proc = Bun.spawn(serveCommand, {
     cwd: CADUCEUS_ROOT,
     env: {
-      ...process.env,
-      NODE_ENV: "test",
-      CADUCEUS_ENABLE_TEST_ROUTES: "true",
-      JWT_SECRET,
-      INBOUND_WEBHOOK_SECRET,
-      EVENTS_WEBHOOK_SECRET,
-      SMTP_ADAPTER: "console",
-      SMS_ADAPTER: "console",
-      WEB_PUSH_DISABLED: "true",
-      PORT: String(port),
-      FYLO_ROOT: testRoot,
+      ...identity.env,
+      E2E_API_PORT: String(port),
+      CADUCEUS_TEST_USE_EXISTING_IDENTITY: "true",
     },
     stdout: "ignore",
     stderr: "ignore"
   });
   const url = `http://127.0.0.1:${port}`;
-  const deadline = Date.now() + 1e4;
+  const startupTimeoutMs = Number(process.env.TEST_SERVER_START_TIMEOUT_MS) || 300_000;
+  const deadline = Date.now() + startupTimeoutMs;
+  let ready = false;
   while (Date.now() < deadline) {
     try {
-      const r = await fetch(`${url}/auth/mfa/request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+      // Tachyon can answer its own health route before CADUCEUS routes finish
+      // loading. Require a stable application response so the first test
+      // cannot be served by the frontend fallback.
+      const r = await fetch(`${url}/domains`, {
         signal: AbortSignal.timeout(500)
       });
-      if (r.status !== 0)
+      if (r.status === 401) {
+        ready = true;
         break;
+      }
     } catch {
       await Bun.sleep(100);
     }
   }
   const stop = () => {
     proc.kill();
-    rmSync(testRoot, { recursive: true, force: true });
+    identity.stop();
   };
+  if (!ready) {
+    stop();
+    throw new Error(`Test server did not become ready at ${url} within ${startupTimeoutMs}ms`);
+  }
   const makeHeaders = (body, opts) => {
     const h = { "Content-Type": "application/json" };
     if (opts?.token)
@@ -65,13 +72,23 @@ export async function startTestServer() {
     url,
     testRoot,
     stop,
-    token: (claims) => signJwt(claims, JWT_SECRET),
+    identity,
+    // Provision one mailbox and sign in as it. `claims` keeps the shape the
+    // suites already pass; only `email` and `role` mean anything now, because
+    // a principal's domain is its address's and its authority is a grant.
+    token: async (claims = {}) => {
+      const seeded = await identity.mint(
+        claims.email ?? "alice@example.com",
+        claims.role ?? "viewer",
+      );
+      return seeded.token;
+    },
+    mint: (address, role) => identity.mint(address, role),
     get: (path, opts) => fetch(`${url}${path}`, { headers: makeHeaders(undefined, opts) }),
     post: (path, body, opts) => fetch(`${url}${path}`, {
       method: "POST",
       headers: makeHeaders(body, { ...opts, secret: opts?.secret ?? (
         path === "/inbound/webhook" ? INBOUND_WEBHOOK_SECRET :
-        path.startsWith("/events/") ? EVENTS_WEBHOOK_SECRET :
         undefined
       ) }),
       body: JSON.stringify(body)
@@ -83,4 +100,21 @@ export async function startTestServer() {
       body: opts?.body ? JSON.stringify(opts.body) : undefined
     })
   };
+}
+
+async function availableLoopbackPort() {
+  return await new Promise((resolve, reject) => {
+    const reservation = createServer();
+    reservation.unref();
+    reservation.once("error", reject);
+    reservation.listen(0, "127.0.0.1", () => {
+      const address = reservation.address();
+      if (!address || typeof address === "string") {
+        reservation.close();
+        reject(new Error("Unable to reserve a loopback test port"));
+        return;
+      }
+      reservation.close(error => error ? reject(error) : resolve(address.port));
+    });
+  });
 }

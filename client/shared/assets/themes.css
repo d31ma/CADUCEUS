@@ -1,0 +1,142 @@
+/* CADUCEUS — Theme system.
+ *
+ * The palette now comes from DuVay (`duvay-css`). DuVay's default theme was
+ * derived from this exact CADUCEUS palette — `--w-primary` is #1f6f8b (light) /
+ * #83cde3 (dark) — so the colours are unchanged; they now switch via DuVay's
+ * `w-theme` attribute (light / dark / auto / high-contrast) on <html>.
+ *
+ * This file is a thin alias layer: it maps the `--ms-*` token names the app's
+ * component CSS still references onto DuVay `--w-*` tokens. Because the `--w-*`
+ * values already track the active `w-theme`, the mapping is theme-independent —
+ * one :root block replaces the old per-`[data-theme]` colour tables. Add DuVay
+ * (duvay.min.css) before this file so the `--w-*` tokens are defined. */
+:root {
+  --ms-surface:               var(--w-surface);
+  --ms-sidebar:               var(--w-sidebar);
+  --ms-toolbar:               var(--w-toolbar);
+  --ms-primary:               var(--w-primary);
+  --ms-on-primary:            var(--w-on-primary);
+  --ms-primary-container:     var(--w-primary-container);
+  --ms-on-primary-container:  var(--w-on-primary-container);
+  --ms-text:                  var(--w-text);
+  --ms-text-subtle:           var(--w-text-subtle);
+  --ms-text-very-subtle:      var(--w-text-very-subtle);
+  --ms-divider:               var(--w-divider);
+  --ms-border:                var(--w-border);
+  --ms-hover-bg:              var(--w-hover);
+  --ms-selected-bg:           var(--w-selected);
+  --ms-selected-color:        var(--w-selected-text);
+  --ms-active-color:          var(--w-selected);
+  --ms-avatar-bg:             var(--w-primary-container);
+  --ms-avatar-text:           var(--w-on-primary-container);
+  --ms-unread-indicator:      var(--w-primary);
+  --ms-error:                 var(--w-error);
+  --ms-error-container:       var(--w-error-container);
+  --ms-on-error-container:    var(--w-on-error-container);
+  --ms-secondary-container:   var(--w-secondary-container);
+  --ms-on-secondary-container:var(--w-on-secondary-container);
+  --ms-surface-container-low: var(--w-surface-container-low);
+  --ms-surface-container-high:var(--w-surface-container-high);
+  --ms-surface-container:     var(--w-surface-container);
+  --ms-inverse-surface:       var(--w-inverse-surface);
+  --ms-inverse-on-surface:    var(--w-inverse-on-surface);
+  --ms-on-surface:            var(--w-text);
+  --ms-on-surface-variant:    var(--w-text-subtle);
+  --ms-outline-variant:       var(--w-divider);
+  --ms-tertiary-container:    var(--w-tertiary-container);
+  --ms-on-tertiary-container: var(--w-on-tertiary-container);
+  --ms-shadow:                var(--w-shadow-color);
+}
+
+/* Built-in Mailspring-equivalent theme profiles. These selectors only map
+ * fixed local tokens; the persisted preference is a catalog id, never CSS. */
+:root[data-ui-theme="darkside"] {
+  --w-primary: #f18260;
+  --w-on-primary: #2b1822;
+  --w-primary-container: #f1826033;
+  --w-on-primary-container: #ffe9e1;
+  --w-surface: #242230;
+  --w-surface-container-low: #1d1b27;
+  --w-surface-container: #2a2837;
+  --w-surface-container-high: #353345;
+  --w-sidebar: #313042;
+  --w-toolbar: #292735;
+  --w-text: #f6f3f8;
+  --w-text-subtle: #c7c0cf;
+  --w-text-very-subtle: #9c93a8;
+  --w-divider: #464357;
+  --w-border: #514d64;
+  --w-hover: #ffffff12;
+  --w-selected: #f1826026;
+  --w-selected-text: #ffd9cd;
+  --w-shadow-color: #100e1880;
+  color-scheme: dark;
+}
+
+:root[data-ui-theme="less-is-more"] {
+  --w-primary: #56636b;
+  --w-on-primary: #fff;
+  --w-primary-container: #e8ecee;
+  --w-on-primary-container: #253138;
+  --w-surface: #fff;
+  --w-surface-container-low: #fbfbfa;
+  --w-surface-container: #f5f5f3;
+  --w-surface-container-high: #eeeeeb;
+  --w-sidebar: #fafaf8;
+  --w-toolbar: #fff;
+  --w-divider: #e6e6e2;
+  --w-border: #d8d8d3;
+  --w-hover: #f1f1ed;
+  --w-selected: #e8ecee;
+  --app-topbar-height: 48px;
+  --ms-shape-sharp: 2px;
+  --ms-shape-card: 2px;
+  --ms-shape-medium: 3px;
+}
+
+:root[data-ui-theme="taiga"] {
+  --w-primary: #4f7c8f;
+  --w-on-primary: #fff;
+  --w-primary-container: #dcebf0;
+  --w-on-primary-container: #173c4b;
+  --w-surface: #f8fafb;
+  --w-surface-container-low: #f3f7f9;
+  --w-surface-container: #edf3f6;
+  --w-surface-container-high: #e3ebef;
+  --w-sidebar: #e8eef2;
+  --w-toolbar: #f5f8fa;
+  --w-divider: #d5e0e5;
+  --w-border: #c7d5dc;
+  --w-hover: #e2ebef;
+  --w-selected: #d5e7ee;
+  --w-selected-text: #173c4b;
+}
+
+:root[data-ui-theme="ubuntu"] {
+  --w-primary: #e95420;
+  --w-on-primary: #fff;
+  --w-primary-container: #ffe1d5;
+  --w-on-primary-container: #5b1b08;
+  --w-surface: #f8f6f4;
+  --w-surface-container-low: #f4f0ed;
+  --w-surface-container: #eee8e4;
+  --w-surface-container-high: #e6ddd8;
+  --w-sidebar: #4b243f;
+  --w-toolbar: #f3efec;
+  --w-divider: #ddd2cc;
+  --w-border: #cfc1ba;
+  --w-hover: #eadfda;
+  --w-selected: #ffe1d5;
+  --w-selected-text: #5b1b08;
+}
+
+:root[data-ui-theme="ubuntu"] .app-sidebar {
+  --ms-text: #fff7fb;
+  --ms-text-subtle: #ead8e3;
+  --ms-text-very-subtle: #c9aebf;
+  --ms-divider: #70425f;
+  --ms-hover-bg: #ffffff12;
+  --ms-selected-bg: #e9542038;
+  --ms-selected-color: #fff;
+  color: var(--ms-text);
+}

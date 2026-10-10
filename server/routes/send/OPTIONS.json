@@ -1,9 +1,0 @@
-{
-  "POST": {
-    "200": { "messageId": "", "sent": true, "undoId": "", "scheduled": true, "id": "" },
-    "400": { "error": "" },
-    "401": { "error": "", "unauthorized": true },
-    "429": { "error": "", "retryAfterSeconds": 0, "rateLimited": true },
-    "422": { "error": "", "blocked": [""] }
-  }
-}

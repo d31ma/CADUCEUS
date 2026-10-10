@@ -2,22 +2,18 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { createDb } from "@/repositories/index.js";
-import {
-  deletePushSubscriptionByEndpoint,
-  findPushSubscriptionById,
-  listPushSubscriptions,
-  listPushSubscriptionsForAddress,
-  pushSubscriptionId,
-  upsertPushSubscription
-} from "@/repositories/push.js";
+import { DatabaseRepository } from "@/platform/persistence/fylo.js";
+import { PushSubscriptionsRepository } from "@/features/notifications/repositories/push.js";
 let fylo;
+let pushRepo;
 let testRoot;
 beforeEach(async () => {
   testRoot = mkdtempSync(join(tmpdir(), "caduceus-push-test-"));
-  fylo = await createDb(testRoot);
+  fylo = await DatabaseRepository.createDb(testRoot);
+  pushRepo = new PushSubscriptionsRepository(fylo);
 });
-afterEach(() => {
+afterEach(async () => {
+  await fylo?.close?.();
   rmSync(testRoot, { recursive: true, force: true });
 });
 const sampleSubscription = {
@@ -31,42 +27,42 @@ const sampleSubscription = {
 };
 describe("push subscriptions", () => {
   it("stores subscriptions with stable endpoint IDs", async () => {
-    const stored = await upsertPushSubscription(fylo, sampleSubscription);
-    expect(stored.id).toBe(pushSubscriptionId(sampleSubscription.endpoint));
+    const stored = await pushRepo.upsert(sampleSubscription);
+    expect(stored.id).toBe(PushSubscriptionsRepository.subscriptionId(sampleSubscription.endpoint));
     expect(stored.userEmail).toBe("alice@example.com");
-    const [docId, found] = await findPushSubscriptionById(fylo, stored.id);
+    const [docId, found] = await pushRepo.findById(stored.id);
     expect(docId).not.toBeNull();
     expect(found?.endpoint).toBe(sampleSubscription.endpoint);
   });
   it("lists subscriptions by user address case-insensitively", async () => {
-    await upsertPushSubscription(fylo, sampleSubscription);
-    await upsertPushSubscription(fylo, {
+    await pushRepo.upsert(sampleSubscription);
+    await pushRepo.upsert({
       ...sampleSubscription,
       userEmail: "bob@example.com",
       endpoint: "https://push.example.test/subscription/2"
     });
-    const byUser = await listPushSubscriptions(fylo, "alice@example.com");
-    const byAddress = await listPushSubscriptionsForAddress(fylo, "ALICE@EXAMPLE.COM");
+    const byUser = await pushRepo.listForUser("alice@example.com");
+    const byAddress = await pushRepo.listForAddress("ALICE@EXAMPLE.COM");
     expect(byUser).toHaveLength(1);
     expect(byAddress).toHaveLength(1);
     expect(byAddress[0].endpoint).toBe(sampleSubscription.endpoint);
   });
   it("updates an existing endpoint instead of duplicating it", async () => {
-    const first = await upsertPushSubscription(fylo, sampleSubscription);
-    const second = await upsertPushSubscription(fylo, {
+    const first = await pushRepo.upsert(sampleSubscription);
+    const second = await pushRepo.upsert({
       ...sampleSubscription,
       userAgent: "updated-browser"
     });
-    const subscriptions = await listPushSubscriptions(fylo, "alice@example.com");
+    const subscriptions = await pushRepo.listForUser("alice@example.com");
     expect(second.id).toBe(first.id);
     expect(second.createdAt).toBe(first.createdAt);
     expect(subscriptions).toHaveLength(1);
     expect(subscriptions[0].userAgent).toBe("updated-browser");
   });
   it("deletes subscriptions by endpoint", async () => {
-    await upsertPushSubscription(fylo, sampleSubscription);
-    const deleted = await deletePushSubscriptionByEndpoint(fylo, sampleSubscription.endpoint);
-    const remaining = await listPushSubscriptions(fylo, "alice@example.com");
+    await pushRepo.upsert(sampleSubscription);
+    const deleted = await pushRepo.deleteByEndpoint(sampleSubscription.endpoint);
+    const remaining = await pushRepo.listForUser("alice@example.com");
     expect(deleted).toBe(true);
     expect(remaining).toHaveLength(0);
   });

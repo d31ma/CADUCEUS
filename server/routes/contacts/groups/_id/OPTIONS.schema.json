@@ -1,0 +1,13 @@
+{
+  "PUT": {
+    "200": { "id": "^group-.*$" },
+    "400": { "error": "^.*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
+  },
+  "DELETE": {
+    "200": { "deleted": "^(true|false)$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
+  }
+}

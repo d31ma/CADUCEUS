@@ -1,0 +1,16 @@
+{
+  "POST": {
+    "200": {
+      "accepted": "^(true|false)$",
+      "emailId?": "^.*$",
+      "reason?": "^.*$"
+    },
+    "400": {
+      "error": "^.*$"
+    },
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    }
+  }
+}

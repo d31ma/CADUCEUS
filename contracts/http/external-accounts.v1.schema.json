@@ -1,0 +1,353 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caduceus.del.ma/contracts/http/external-accounts.v1.schema.json",
+  "title": "CADUCEUS external account public contract",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^ext_[A-Za-z0-9_-]{20,80}$"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "maxLength": 254
+    },
+    "provider": {
+      "enum": ["gmail", "microsoft", "imap"]
+    },
+    "state": {
+      "enum": ["ready", "syncing", "idle", "auth_required", "degraded", "paused", "deleting"]
+    },
+    "connection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "imap": { "$ref": "#/$defs/endpoint" },
+        "smtp": { "$ref": "#/$defs/endpoint" },
+        "carddav": { "$ref": "#/$defs/carddavEndpoint" },
+        "caldav": { "$ref": "#/$defs/caldavEndpoint" },
+        "containerFolder": { "type": "string", "maxLength": 255 }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "required": ["mailRead", "mailWrite", "send", "contacts", "calendar", "labels", "sharedMailbox"],
+      "properties": {
+        "mailRead": { "type": "boolean" },
+        "mailWrite": { "type": "boolean" },
+        "send": { "type": "boolean" },
+        "contacts": { "type": "boolean" },
+        "calendar": { "type": "boolean" },
+        "labels": { "type": "boolean" },
+        "sharedMailbox": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "port", "security", "allowInsecureTLS"],
+      "properties": {
+        "host": { "type": "string", "minLength": 1, "maxLength": 253 },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "security": { "enum": ["tls", "starttls", "none"] },
+        "username": { "type": "string", "maxLength": 254 },
+        "allowInsecureTLS": { "type": "boolean" }
+      }
+    },
+    "carddavEndpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "allowInsecureTLS"],
+      "properties": {
+        "url": { "type": "string", "format": "uri", "pattern": "^https://", "maxLength": 2048 },
+        "username": { "type": "string", "maxLength": 1024 },
+        "allowInsecureTLS": { "type": "boolean" }
+      }
+    },
+    "caldavEndpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "allowInsecureTLS"],
+      "properties": {
+        "url": { "type": "string", "format": "uri", "pattern": "^https://", "maxLength": 2048 },
+        "username": { "type": "string", "maxLength": 1024 },
+        "allowInsecureTLS": { "type": "boolean" }
+      }
+    },
+    "progress": {
+      "type": ["object", "null"],
+      "required": ["phase", "completed", "startedAt", "updatedAt"],
+      "properties": {
+        "phase": { "enum": ["connecting", "folders", "headers", "bodies", "contacts", "calendar", "complete"] },
+        "completed": { "type": "integer", "minimum": 0 },
+        "total": { "type": ["integer", "null"], "minimum": 0 },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "failure": {
+      "type": ["object", "null"],
+      "required": ["code", "message", "retryable", "occurredAt"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "retryable": { "type": "boolean" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "retryAt": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "account": {
+      "type": "object",
+      "required": ["id", "provider", "mailboxAddress", "label", "color", "order", "state", "connection", "capabilities", "progress", "failure", "revision", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "provider": { "$ref": "#/$defs/provider" },
+        "mailboxAddress": { "$ref": "#/$defs/email" },
+        "authIdentity": { "anyOf": [{ "$ref": "#/$defs/email" }, { "type": "null" }] },
+        "sharedMailboxAddress": { "anyOf": [{ "$ref": "#/$defs/email" }, { "type": "null" }] },
+        "label": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "order": { "type": "integer", "minimum": 0, "maximum": 999 },
+        "state": { "$ref": "#/$defs/state" },
+        "connection": { "$ref": "#/$defs/connection" },
+        "capabilities": { "$ref": "#/$defs/capabilities" },
+        "progress": { "$ref": "#/$defs/progress" },
+        "failure": { "$ref": "#/$defs/failure" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "folder": {
+      "type": "object",
+      "required": ["stableId", "revision", "name", "role", "delimiter", "attributes"],
+      "properties": {
+        "stableId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "revision": { "type": "string", "maxLength": 512 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "role": { "type": "string", "maxLength": 60 },
+        "delimiter": { "type": "string", "maxLength": 4 },
+        "attributes": { "type": "array", "maxItems": 50, "items": { "type": "string", "maxLength": 128 } }
+      },
+      "additionalProperties": false
+    },
+    "indexedMessage": {
+      "type": "object",
+      "required": ["stableId", "revision", "folderStableId", "rfcMessageId", "subject", "sender", "receivedAt", "flags", "size"],
+      "properties": {
+        "stableId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "revision": { "type": "string", "maxLength": 512 },
+        "folderStableId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "rfcMessageId": { "type": "string", "maxLength": 998 },
+        "subject": { "type": "string", "maxLength": 998 },
+        "sender": { "type": "string", "maxLength": 512 },
+        "receivedAt": { "type": "string", "format": "date-time" },
+        "flags": { "type": "array", "maxItems": 50, "items": { "type": "string", "maxLength": 128 } },
+        "size": { "type": "integer", "minimum": 1, "maximum": 26214400 }
+      },
+      "additionalProperties": false
+    },
+    "mutation": {
+      "type": "object",
+      "required": ["id", "idempotencyKey", "kind", "messageStableIds", "value", "state", "attempts", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^mut_[A-Za-z0-9_-]{20,80}$" },
+        "idempotencyKey": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "kind": { "enum": ["set_read", "set_starred", "move", "delete", "folder_create", "folder_rename", "folder_delete"] },
+        "messageStableIds": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 512 } },
+        "targetFolderId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "folderStableId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "parentStableId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "folderName": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "folderPath": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "newFolderPath": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "value": { "type": "boolean" },
+        "state": { "enum": ["queued", "applying", "reconciling", "applied", "failed"] },
+        "attempts": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "notBefore": { "type": "string", "format": "date-time" },
+        "lastCode": { "type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "submission": {
+      "type": "object",
+      "required": ["id", "idempotencyKey", "revision", "envelopeFrom", "recipients", "state", "attempts", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^sub_[A-Za-z0-9_-]{20,80}$" },
+        "idempotencyKey": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "revision": { "type": "integer", "minimum": 1 },
+        "envelopeFrom": { "$ref": "#/$defs/email" },
+        "recipients": { "type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true, "items": { "$ref": "#/$defs/email" } },
+        "deliveryCount": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "state": { "enum": ["building", "editing", "queued", "applying", "sent", "failed", "ambiguous", "cancelled"] },
+        "attempts": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "notBefore": { "type": "string", "format": "date-time" },
+        "lastCode": { "type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+	"contactValue": {
+	  "type": "object",
+	  "required": ["value"],
+	  "properties": {
+		"value": { "type": "string", "minLength": 1, "maxLength": 2048 },
+		"type": { "type": "string", "maxLength": 40 }
+	  },
+	  "additionalProperties": false
+	},
+	"contactAddress": {
+	  "type": "object",
+	  "properties": {
+		"streetAddress": { "type": "string", "maxLength": 512 },
+		"extendedAddress": { "type": "string", "maxLength": 512 },
+		"city": { "type": "string", "maxLength": 256 },
+		"region": { "type": "string", "maxLength": 256 },
+		"postalCode": { "type": "string", "maxLength": 128 },
+		"country": { "type": "string", "maxLength": 256 },
+		"type": { "type": "string", "maxLength": 40 }
+	  },
+	  "additionalProperties": false
+	},
+	"contactData": {
+	  "type": "object",
+	  "properties": {
+		"id": { "type": "string", "pattern": "^carddav_[A-Za-z0-9_-]{20,80}$" },
+		"accountId": { "$ref": "#/$defs/id" },
+		"addressBookId": { "type": "string", "pattern": "^book_[A-Za-z0-9_-]{20,80}$" },
+		"href": { "type": "string", "format": "uri", "maxLength": 2048 },
+		"etag": { "type": "string", "maxLength": 1024 },
+		"uid": { "type": "string", "maxLength": 512 },
+		"name": { "type": "string", "maxLength": 512 },
+		"givenName": { "type": "string", "maxLength": 256 },
+		"familyName": { "type": "string", "maxLength": 256 },
+		"company": { "type": "string", "maxLength": 512 },
+		"title": { "type": "string", "maxLength": 512 },
+		"emails": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/contactValue" } },
+		"phones": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/contactValue" } },
+		"addresses": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/contactAddress" } },
+		"urls": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/contactValue" } },
+		"nicknames": { "type": "array", "maxItems": 100, "items": { "type": "string", "maxLength": 256 } },
+		"birthday": { "type": "string", "maxLength": 64 },
+		"notes": { "type": "string", "maxLength": 65536 }
+	  },
+	  "additionalProperties": false
+	},
+	"providerContact": {
+	  "type": "object",
+	  "required": ["id", "source", "accountId", "addressBookId", "href", "etag", "name", "emails", "phones", "addresses", "urls", "nicknames", "groupIds", "readOnly", "createdAt", "updatedAt"],
+	  "properties": {
+		"id": { "type": "string", "pattern": "^carddav_[A-Za-z0-9_-]{20,80}$" },
+		"source": { "const": "carddav" },
+		"accountId": { "$ref": "#/$defs/id" },
+		"addressBookId": { "type": "string", "pattern": "^book_[A-Za-z0-9_-]{20,80}$" },
+		"href": { "type": "string", "format": "uri", "maxLength": 2048 },
+		"etag": { "type": "string", "maxLength": 1024 },
+		"uid": { "type": "string", "maxLength": 512 },
+		"name": { "type": "string", "maxLength": 512 },
+		"givenName": { "type": "string", "maxLength": 256 },
+		"familyName": { "type": "string", "maxLength": 256 },
+		"company": { "type": "string", "maxLength": 512 },
+		"title": { "type": "string", "maxLength": 512 },
+		"emails": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/contactValue" } },
+		"phones": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/contactValue" } },
+		"addresses": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/contactAddress" } },
+		"urls": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/contactValue" } },
+		"nicknames": { "type": "array", "maxItems": 100, "items": { "type": "string", "maxLength": 256 } },
+		"birthday": { "type": "string", "maxLength": 64 },
+		"notes": { "type": "string", "maxLength": 65536 },
+		"groupIds": { "type": "array", "maxItems": 0 },
+		"readOnly": { "const": false },
+		"createdAt": { "type": "string", "format": "date-time" },
+		"updatedAt": { "type": "string", "format": "date-time" }
+	  },
+	  "additionalProperties": false
+	},
+	"contactAddressBook": {
+	  "type": "object",
+	  "required": ["accountId", "addressBookId", "name", "accountLabel", "mailboxAddress"],
+	  "properties": {
+		"accountId": { "$ref": "#/$defs/id" },
+		"addressBookId": { "type": "string", "pattern": "^book_[A-Za-z0-9_-]{20,80}$" },
+		"name": { "type": "string", "minLength": 1, "maxLength": 512 },
+		"accountLabel": { "type": "string", "minLength": 1, "maxLength": 254 },
+		"mailboxAddress": { "$ref": "#/$defs/email" }
+	  },
+	  "additionalProperties": false
+	},
+	"contactMutation": {
+	  "type": "object",
+	  "required": ["id", "idempotencyKey", "kind", "contactId", "expectedEtag", "desired", "state", "attempts", "createdAt", "updatedAt"],
+	  "properties": {
+		"id": { "type": "string", "pattern": "^cmut_[A-Za-z0-9_-]{20,80}$" },
+		"idempotencyKey": { "type": "string", "minLength": 1, "maxLength": 128 },
+		"kind": { "enum": ["create", "update", "delete"] },
+		"contactId": { "type": "string", "pattern": "^carddav_[A-Za-z0-9_-]{20,80}$" },
+		"expectedEtag": { "type": "string", "maxLength": 1024 },
+		"desired": { "$ref": "#/$defs/contactData" },
+		"state": { "enum": ["queued", "applying", "applied", "conflict", "failed"] },
+		"attempts": { "type": "integer", "minimum": 0, "maximum": 65535 },
+		"lastCode": { "type": "string", "maxLength": 64 },
+		"createdAt": { "type": "string", "format": "date-time" },
+		"updatedAt": { "type": "string", "format": "date-time" }
+	  },
+	  "additionalProperties": false
+	},
+    "diagnostics": {
+      "type": "object",
+      "required": ["state", "failure", "progress", "sync"],
+      "properties": {
+        "state": { "$ref": "#/$defs/state" },
+        "failure": { "$ref": "#/$defs/failure" },
+        "progress": { "$ref": "#/$defs/progress" },
+        "sync": {
+          "type": "object",
+          "required": ["accountId", "cursorVersion", "cursorUpdatedAt", "nextRunAt", "attempts", "scheduleUpdatedAt"],
+          "properties": {
+            "accountId": { "$ref": "#/$defs/id" },
+            "cursorVersion": { "type": "integer", "minimum": 0 },
+            "cursorUpdatedAt": { "type": ["string", "null"], "format": "date-time" },
+            "nextRunAt": { "type": "string", "format": "date-time" },
+            "attempts": { "type": "integer", "minimum": 0, "maximum": 65535 },
+            "lastCode": { "type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$" },
+            "scheduleUpdatedAt": { "type": "string", "format": "date-time" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/account" },
+    {
+      "type": "object",
+      "required": ["accounts"],
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "maxItems": 50,
+          "items": { "$ref": "#/$defs/account" }
+        }
+      },
+      "additionalProperties": false
+    },
+    { "type": "object", "required": ["folders"], "properties": { "folders": { "type": "array", "maxItems": 250, "items": { "$ref": "#/$defs/folder" } } }, "additionalProperties": false },
+    { "type": "object", "required": ["messages"], "properties": { "messages": { "type": "array", "maxItems": 500, "items": { "$ref": "#/$defs/indexedMessage" } } }, "additionalProperties": false },
+    { "$ref": "#/$defs/mutation" },
+    { "$ref": "#/$defs/submission" },
+	{ "$ref": "#/$defs/contactMutation" },
+	{ "type": "object", "required": ["contacts"], "properties": { "contacts": { "type": "array", "maxItems": 5000, "items": { "$ref": "#/$defs/providerContact" } } }, "additionalProperties": false },
+	{ "type": "object", "required": ["addressBooks"], "properties": { "addressBooks": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/contactAddressBook" } } }, "additionalProperties": false },
+    { "$ref": "#/$defs/diagnostics" },
+    { "type": "object", "required": ["scheduled"], "properties": { "scheduled": { "const": true } }, "additionalProperties": false }
+  ]
+}

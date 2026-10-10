@@ -4,49 +4,156 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pull-requests: write
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Unit / DB / API tests
+  baseline:
+    name: Phase 0 baseline
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
-          bun-version: latest
+          go-version-file: go.mod
+          cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: Install locked runtime binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          install_release() {
+            local repo="$1" binary="$2" version="$3"
+            local asset="${binary}-linux-x64"
+            local base="https://github.com/d31ma/${repo}/releases/download/v${version}"
+            local tmp
+            tmp="$(mktemp -d)"
+            curl -fsSL "${base}/${asset}" -o "${tmp}/${binary}"
+            curl -fsSL "${base}/SHA256SUMS" -o "${tmp}/SHA256SUMS"
+            local expected actual
+            expected="$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset { print tolower($1) }' "${tmp}/SHA256SUMS")"
+            actual="$(sha256sum "${tmp}/${binary}" | awk '{ print tolower($1) }')"
+            test -n "$expected"
+            test "$expected" = "$actual"
+            sudo install -m 755 "${tmp}/${binary}" "/usr/local/bin/${binary}"
+          }
+          install_release Tachyon ty 26.33.02
+          install_release Fylo fylo 26.33.02
+          install_release Chex chex 26.32.02
+          install_release TTID ttid 26.32.03
+          install_sesame() {
+            local version="26.33.02"
+            local asset="sesame-linux-amd64"
+            local base="https://github.com/d31ma/SESAME/releases/download/v${version}"
+            local tmp
+            tmp="$(mktemp -d)"
+            curl -fsSL "${base}/${asset}" -o "${tmp}/sesame"
+            curl -fsSL "${base}/SHA256SUMS" -o "${tmp}/SHA256SUMS"
+            local expected actual
+            expected="$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset { print tolower($1) }' "${tmp}/SHA256SUMS")"
+            actual="$(sha256sum "${tmp}/sesame" | awk '{ print tolower($1) }')"
+            test -n "$expected"
+            test "$expected" = "$actual"
+            sudo install -m 755 "${tmp}/sesame" /usr/local/bin/sesame
+          }
+          install_sesame
       - run: bun install --frozen-lockfile
-      - run: bun run test
+      - run: bun run go:build
+      - run: bun run verify:phase0
 
   e2e:
     name: Playwright E2E tests
+    needs: baseline
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
+    env:
+      FYLO_TEST_BINARY: /usr/local/bin/fylo
+      SESAME_TEST_BINARY: /usr/local/bin/sesame
     steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
-          bun-version: latest
+          go-version-file: go.mod
+          cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: Install Tachyon runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=26.33.02
+          asset=ty-linux-x64
+          base="https://github.com/d31ma/Tachyon/releases/download/v${version}"
+          tmp="$(mktemp -d)"
+          curl -fsSL "${base}/${asset}" -o "${tmp}/ty"
+          curl -fsSL "${base}/SHA256SUMS" -o "${tmp}/SHA256SUMS"
+          expected="$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset { print tolower($1) }' "${tmp}/SHA256SUMS")"
+          actual="$(sha256sum "${tmp}/ty" | awk '{ print tolower($1) }')"
+          test -n "$expected"
+          test "$expected" = "$actual"
+          sudo install -m 755 "${tmp}/ty" /usr/local/bin/ty
+      - name: Install locked identity and persistence runtimes
+        shell: bash
+        run: |
+          set -euo pipefail
+          install_release() {
+            local repo="$1" binary="$2" version="$3"
+            local asset="${binary}-linux-x64"
+            local base="https://github.com/d31ma/${repo}/releases/download/v${version}"
+            local tmp
+            tmp="$(mktemp -d)"
+            curl -fsSL "${base}/${asset}" -o "${tmp}/${binary}"
+            curl -fsSL "${base}/SHA256SUMS" -o "${tmp}/SHA256SUMS"
+            local expected actual
+            expected="$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset { print tolower($1) }' "${tmp}/SHA256SUMS")"
+            actual="$(sha256sum "${tmp}/${binary}" | awk '{ print tolower($1) }')"
+            test -n "$expected"
+            test "$expected" = "$actual"
+            sudo install -m 755 "${tmp}/${binary}" "/usr/local/bin/${binary}"
+          }
+          install_release Fylo fylo 26.33.02
+          install_release Chex chex 26.32.02
+          install_release TTID ttid 26.32.03
+          install_sesame() {
+            local version="26.33.02"
+            local asset="sesame-linux-amd64"
+            local base="https://github.com/d31ma/SESAME/releases/download/v${version}"
+            local tmp
+            tmp="$(mktemp -d)"
+            curl -fsSL "${base}/${asset}" -o "${tmp}/sesame"
+            curl -fsSL "${base}/SHA256SUMS" -o "${tmp}/SHA256SUMS"
+            local expected actual
+            expected="$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset { print tolower($1) }' "${tmp}/SHA256SUMS")"
+            actual="$(sha256sum "${tmp}/sesame" | awk '{ print tolower($1) }')"
+            test -n "$expected"
+            test "$expected" = "$actual"
+            sudo install -m 755 "${tmp}/sesame" /usr/local/bin/sesame
+          }
+          install_sesame
       - run: bun install --frozen-lockfile
+      - run: bun run go:build
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         id: pw-cache
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ hashFiles('bun.lock') }}
       - run: bun node_modules/.bin/playwright install --with-deps
         if: steps.pw-cache.outputs.cache-hit != 'true'
-      - run: bun run test:e2e
-      - uses: actions/upload-artifact@v4
+      - run: bun run verify:phase0:browser
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
           name: playwright-report
@@ -55,120 +162,188 @@ jobs:
             test-results/
           retention-days: 7
 
-  blackbox-config:
-    name: Detect blackbox configuration
+  go:
+    name: Phase 1 Go runtime
+    needs: baseline
     runs-on: ubuntu-latest
-    outputs:
-      enabled: ${{ steps.detect.outputs.enabled }}
-    env:
-      BLACKBOX_REPOSITORY: ${{ vars.CADUCEUS_BLACKBOX_REPOSITORY || secrets.CADUCEUS_BLACKBOX_REPOSITORY || vars.BLACKBOX_REPOSITORY || secrets.BLACKBOX_REPOSITORY || vars.NIGHTJAR_BLACKBOX_REPOSITORY || secrets.NIGHTJAR_BLACKBOX_REPOSITORY }}
-      BLACKBOX_SSH_KEY: ${{ secrets.CADUCEUS_BLACKBOX_SSH_KEY || secrets.BLACKBOX_SSH_KEY || secrets.NIGHTJAR_BLACKBOX_SSH_KEY }}
-    steps:
-      - id: detect
-        name: Check private suite credentials
-        run: |
-          if [ -n "$BLACKBOX_REPOSITORY" ] && [ -n "$BLACKBOX_SSH_KEY" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "Blackbox configuration not present; skipping private image validation."
-          fi
-
-  image-blackbox:
-    name: Image blackbox tests
-    runs-on: ubuntu-latest
-    needs: blackbox-config
-    if: needs.blackbox-config.outputs.enabled == 'true'
-    continue-on-error: true  # Non-blocking: private NightJar suite may lag behind CADUCEUS changes
     timeout-minutes: 25
     env:
-      CADUCEUS_IMAGE: caduceus:blackbox
-      CADUCEUS_URL: http://127.0.0.1:18080
-      INBOUND_WEBHOOK_SECRET: blackbox-webhook-secret
-      EVENTS_WEBHOOK_SECRET: blackbox-webhook-secret
-      BLACKBOX_REPOSITORY: ${{ vars.CADUCEUS_BLACKBOX_REPOSITORY || secrets.CADUCEUS_BLACKBOX_REPOSITORY || vars.BLACKBOX_REPOSITORY || secrets.BLACKBOX_REPOSITORY || vars.NIGHTJAR_BLACKBOX_REPOSITORY || secrets.NIGHTJAR_BLACKBOX_REPOSITORY }}
-      BLACKBOX_SSH_KEY: ${{ secrets.CADUCEUS_BLACKBOX_SSH_KEY || secrets.BLACKBOX_SSH_KEY || secrets.NIGHTJAR_BLACKBOX_SSH_KEY }}
+      GOFLAGS: -buildvcs=false
     steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
-          bun-version: latest
+          go-version-file: go.mod
+          cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: Install locked Tachyon
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=26.33.02
+          asset=ty-linux-x64
+          base="https://github.com/d31ma/Tachyon/releases/download/v${version}"
+          tmp="$(mktemp -d)"
+          curl -fsSL "${base}/${asset}" -o "${tmp}/ty"
+          curl -fsSL "${base}/SHA256SUMS" -o "${tmp}/SHA256SUMS"
+          expected="$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset { print tolower($1) }' "${tmp}/SHA256SUMS")"
+          actual="$(sha256sum "${tmp}/ty" | awk '{ print tolower($1) }')"
+          test -n "$expected"
+          test "$expected" = "$actual"
+          sudo install -m 755 "${tmp}/ty" /usr/local/bin/ty
       - run: bun install --frozen-lockfile
-
-      - name: Require private blackbox credentials
+      - run: bun run verify:phase1
+      - name: Static and vulnerability analysis
+        shell: bash
         run: |
-          if [ -z "$BLACKBOX_REPOSITORY" ]; then
-            echo "::error::Missing CADUCEUS_BLACKBOX_REPOSITORY, BLACKBOX_REPOSITORY, or NIGHTJAR_BLACKBOX_REPOSITORY variable or secret"
-            exit 1
-          fi
-          if [ -z "$BLACKBOX_SSH_KEY" ]; then
-            echo "::error::Missing CADUCEUS_BLACKBOX_SSH_KEY, BLACKBOX_SSH_KEY, or NIGHTJAR_BLACKBOX_SSH_KEY secret"
-            exit 1
-          fi
-
-      - name: Checkout private blackbox suite
-        uses: actions/checkout@v6
+          GOTOOLCHAIN=local go install honnef.co/go/tools/cmd/staticcheck@v0.7.0
+          staticcheck ./...
+          GOTOOLCHAIN=local go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
+          govulncheck ./...
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          repository: ${{ env.BLACKBOX_REPOSITORY }}
-          ssh-key: ${{ env.BLACKBOX_SSH_KEY }}
-          ref: ${{ vars.CADUCEUS_BLACKBOX_REF || vars.BLACKBOX_REF || vars.NIGHTJAR_BLACKBOX_REF || 'main' }}
-          path: .blackbox-tests
+          name: go-coverage
+          path: coverage.out
+          retention-days: 14
 
-      - uses: docker/setup-buildx-action@v3
-      - name: Build image under test
-        uses: docker/build-push-action@v6
+  phase2:
+    name: Phase 2 FYLO qualification
+    needs: go
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GOFLAGS: -buildvcs=false
+      FYLO_TEST_BINARY: /usr/local/bin/fylo
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
         with:
-          context: .
-          tags: ${{ env.CADUCEUS_IMAGE }}
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Start container
+          go-version-file: go.mod
+          cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: Install locked FYLO runtime and dependencies
+        shell: bash
         run: |
-          docker run -d --name caduceus-blackbox \
-            -p 18080:8080 \
-            -e JWT_SECRET=blackbox-jwt-secret \
-            -e INBOUND_WEBHOOK_SECRET=${{ env.INBOUND_WEBHOOK_SECRET }} \
-            -e EVENTS_WEBHOOK_SECRET=blackbox-events-secret \
-            -e WEB_PUSH_DISABLED=true \
-            "${{ env.CADUCEUS_IMAGE }}"
+          set -euo pipefail
+          install_release() {
+            local repo="$1" binary="$2" version="$3"
+            local asset="${binary}-linux-x64"
+            local base="https://github.com/d31ma/${repo}/releases/download/v${version}"
+            local tmp
+            tmp="$(mktemp -d)"
+            curl -fsSL "${base}/${asset}" -o "${tmp}/${binary}"
+            curl -fsSL "${base}/SHA256SUMS" -o "${tmp}/SHA256SUMS"
+            local expected actual
+            expected="$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset { print tolower($1) }' "${tmp}/SHA256SUMS")"
+            actual="$(sha256sum "${tmp}/${binary}" | awk '{ print tolower($1) }')"
+            test -n "$expected"
+            test "$expected" = "$actual"
+            sudo install -m 755 "${tmp}/${binary}" "/usr/local/bin/${binary}"
+          }
+          install_release Fylo fylo 26.33.02
+          install_release Chex chex 26.32.02
+          install_release TTID ttid 26.32.03
+          install_sesame() {
+            local version="26.33.02"
+            local asset="sesame-linux-amd64"
+            local base="https://github.com/d31ma/SESAME/releases/download/v${version}"
+            local tmp
+            tmp="$(mktemp -d)"
+            curl -fsSL "${base}/${asset}" -o "${tmp}/sesame"
+            curl -fsSL "${base}/SHA256SUMS" -o "${tmp}/SHA256SUMS"
+            local expected actual
+            expected="$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset { print tolower($1) }' "${tmp}/SHA256SUMS")"
+            actual="$(sha256sum "${tmp}/sesame" | awk '{ print tolower($1) }')"
+            test -n "$expected"
+            test "$expected" = "$actual"
+            sudo install -m 755 "${tmp}/sesame" /usr/local/bin/sesame
+          }
+          install_sesame
+      - run: bun install --frozen-lockfile
+      - run: bun run verify:phase2
 
-      - name: Wait for container to become healthy
+  phase3:
+    name: Phase 3 identity qualification
+    needs: go
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GOFLAGS: -buildvcs=false
+      FYLO_TEST_BINARY: /usr/local/bin/fylo
+      SESAME_TEST_BINARY: /usr/local/bin/sesame
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.14
+      - name: Install locked identity and persistence runtimes
+        shell: bash
         run: |
-          for i in $(seq 1 60); do
-            if curl -fsS "${{ env.CADUCEUS_URL }}/" >/dev/null 2>&1; then
-              echo "Container is responding on attempt $i"
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Container did not become healthy in time"
-          docker logs caduceus-blackbox
-          exit 1
+          set -euo pipefail
+          install_release() {
+            local repo="$1" binary="$2" version="$3"
+            local asset="${binary}-linux-x64"
+            local base="https://github.com/d31ma/${repo}/releases/download/v${version}"
+            local tmp
+            tmp="$(mktemp -d)"
+            curl -fsSL "${base}/${asset}" -o "${tmp}/${binary}"
+            curl -fsSL "${base}/SHA256SUMS" -o "${tmp}/SHA256SUMS"
+            local expected actual
+            expected="$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset { print tolower($1) }' "${tmp}/SHA256SUMS")"
+            actual="$(sha256sum "${tmp}/${binary}" | awk '{ print tolower($1) }')"
+            test -n "$expected"
+            test "$expected" = "$actual"
+            sudo install -m 755 "${tmp}/${binary}" "/usr/local/bin/${binary}"
+          }
+          install_release Fylo fylo 26.33.02
+          install_release Chex chex 26.32.02
+          install_release TTID ttid 26.32.03
+          install_sesame() {
+            local version="26.33.02"
+            local asset="sesame-linux-amd64"
+            local base="https://github.com/d31ma/SESAME/releases/download/v${version}"
+            local tmp
+            tmp="$(mktemp -d)"
+            curl -fsSL "${base}/${asset}" -o "${tmp}/sesame"
+            curl -fsSL "${base}/SHA256SUMS" -o "${tmp}/SHA256SUMS"
+            local expected actual
+            expected="$(awk -v asset="$asset" '$2 == asset || $2 == "*" asset { print tolower($1) }' "${tmp}/SHA256SUMS")"
+            actual="$(sha256sum "${tmp}/sesame" | awk '{ print tolower($1) }')"
+            test -n "$expected"
+            test "$expected" = "$actual"
+            sudo install -m 755 "${tmp}/sesame" /usr/local/bin/sesame
+          }
+          install_sesame
+      - run: bun install --frozen-lockfile
+      - run: bun run go:build
+      - run: bun run bundle
+      - run: bun run verify:phase3
 
-      - name: Run blackbox tests
-        continue-on-error: true
-        working-directory: .blackbox-tests
+  required:
+    name: required
+    if: always()
+    needs: [baseline, go, phase2, phase3, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every blocking job
         env:
-          CADUCEUS_IMAGE: ${{ env.CADUCEUS_IMAGE }}
-          CADUCEUS_URL: ${{ env.CADUCEUS_URL }}
-          INBOUND_WEBHOOK_SECRET: ${{ env.INBOUND_WEBHOOK_SECRET }}
+          BASELINE_RESULT: ${{ needs.baseline.result }}
+          GO_RESULT: ${{ needs.go.result }}
+          PHASE2_RESULT: ${{ needs.phase2.result }}
+          PHASE3_RESULT: ${{ needs.phase3.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+        shell: bash
         run: |
-          if [ -f package.json ] || [ -f bun.lock ]; then
-            bun install --frozen-lockfile
-          fi
-
-          if [ -f package.json ] && jq -e '.scripts.blackbox' package.json >/dev/null; then
-            bun run blackbox
-          else
-            bun test . --timeout 120000
-          fi
-
-      - name: Container logs on failure
-        if: failure()
-        run: docker logs caduceus-blackbox || true
-
-      - name: Stop container
-        if: always()
-        run: docker rm -f caduceus-blackbox || true
+          test "$BASELINE_RESULT" = success
+          test "$GO_RESULT" = success
+          test "$PHASE2_RESULT" = success
+          test "$PHASE3_RESULT" = success
+          test "$E2E_RESULT" = success

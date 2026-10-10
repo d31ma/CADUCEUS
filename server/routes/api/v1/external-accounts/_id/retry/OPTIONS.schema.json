@@ -1,0 +1,10 @@
+{
+  "POST": {
+    "200": { "scheduled": "^(true|false)$" },
+    "400": { "error": "^.*$" },
+    "401": { "unauthorized": "^(true|false)$" },
+    "404": { "notFound": "^(true|false)$" },
+    "409": { "conflict": "^(true|false)$" },
+    "503": { "unavailable": "^(true|false)$" }
+  }
+}

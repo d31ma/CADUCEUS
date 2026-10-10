@@ -1,0 +1,310 @@
+{
+  "schemaVersion": 1,
+  "engine": {
+    "package": "@huggingface/transformers",
+    "version": "4.2.0",
+    "runtimePackage": "onnxruntime-web",
+    "runtimeVersion": "1.26.0-dev.20260416-b7804b056c",
+    "modelFileDtype": "fp32",
+    "weightQuantization": "int8",
+    "maxAssetBytes": 15728640
+  },
+  "model": {
+    "id": "casawolice/small100-onnx",
+    "revision": "5c2c73ac70bee9c58f5a7ac5e84a36bee25db8ee",
+    "baseModel": "alirezamsh/small100",
+    "license": "MIT",
+    "source": "https://huggingface.co/casawolice/small100-onnx",
+    "languages": [
+      "af",
+      "sq",
+      "am",
+      "ar",
+      "hy",
+      "az",
+      "ba",
+      "be",
+      "bn",
+      "bs",
+      "bg",
+      "my",
+      "ca",
+      "ceb",
+      "zh",
+      "hr",
+      "cs",
+      "da",
+      "nl",
+      "en",
+      "et",
+      "fi",
+      "fr",
+      "gl",
+      "ka",
+      "de",
+      "el",
+      "gu",
+      "ht",
+      "he",
+      "hi",
+      "hu",
+      "is",
+      "id",
+      "ga",
+      "it",
+      "ja",
+      "jv",
+      "kn",
+      "kk",
+      "km",
+      "ko",
+      "lo",
+      "lv",
+      "lt",
+      "lb",
+      "mk",
+      "mg",
+      "ms",
+      "ml",
+      "mr",
+      "mn",
+      "ne",
+      "no",
+      "fa",
+      "pl",
+      "pt",
+      "pa",
+      "ro",
+      "ru",
+      "gd",
+      "sr",
+      "si",
+      "sk",
+      "sl",
+      "es",
+      "su",
+      "sw",
+      "sv",
+      "tl",
+      "ta",
+      "th",
+      "tr",
+      "uk",
+      "ur",
+      "uz",
+      "vi",
+      "cy",
+      "xh",
+      "yi"
+    ],
+    "files": [
+      {
+        "path": "added_tokens.json",
+        "bytes": 2006,
+        "sha256": "d90c37708272ca7f5b2b10a4635697f57c163a5e01bb3ae1a872f8b29e45e873"
+      },
+      {
+        "path": "config.json",
+        "bytes": 822,
+        "sha256": "4ba2f8f7c5ec286bdb2088ac3b8d0ca3b8b19eb4f107c7c3a44205ba15873bb2"
+      },
+      {
+        "path": "generation_config.json",
+        "bytes": 202,
+        "sha256": "c3ce500734da50626346f8b8737bdcbefb8b00eb6cbc69d0973e9b41867c8342"
+      },
+      {
+        "path": "lang_tokens.json",
+        "bytes": 1885,
+        "sha256": "c638e65941c57577fff6321d5be72b2b25afc39fde7d6a48adecd2e44b504ddf"
+      },
+      {
+        "path": "onnx/decoder_model_merged.onnx",
+        "bytes": 321741340,
+        "sha256": "f966ce4f1f484c2307dc007ef0beadc3a1651220c1ff9b33ea8dddbce468a4b0"
+      },
+      {
+        "path": "onnx/encoder_model.onnx",
+        "bytes": 287317499,
+        "sha256": "a130f553106646e56c1908094074f354353c45d86b3e8d222b037784035e6dcd"
+      },
+      {
+        "path": "special_tokens_map.json",
+        "bytes": 1559,
+        "sha256": "009ea667e0ca903c10dac22cf7ae3a3a0b173ff33f8c64154fddd8c043805622"
+      },
+      {
+        "path": "tokenizer.json",
+        "bytes": 5807639,
+        "sha256": "e4fb8024a6278640a0e4a2f813e4ed4e0b531cadb12a54e10283a2ed5faf6bf3"
+      },
+      {
+        "path": "tokenizer_config.json",
+        "bytes": 19818,
+        "sha256": "4dd6427e2067a1c9e873ed6bd17c7ddf6dc790ed72693f391d9d53ed45beecf8"
+      }
+    ]
+  },
+  "fallbackModels": [
+    {
+      "id": "Xenova/opus-mt-en-mul",
+      "revision": "e57f9759f8e1e9ed97067bfc11e53e1eab63e57e",
+      "baseModel": "Helsinki-NLP/opus-mt-en-mul",
+      "license": "Apache-2.0",
+      "source": "https://huggingface.co/Xenova/opus-mt-en-mul",
+      "fileDtype": "int8",
+      "languages": [
+        "mt",
+        "mi",
+        "mhr",
+        "eu",
+        "pap",
+        "mrj",
+        "tg",
+        "tt",
+        "te",
+        "udm",
+        "ky",
+        "la",
+        "eo"
+      ],
+      "files": [
+        {
+          "path": "config.json",
+          "bytes": 1390,
+          "sha256": "fc12f9f431b4fb8dae1f7776c7ad3f9a5cf0fd6321231e11b45e35a2b11730f3"
+        },
+        {
+          "path": "generation_config.json",
+          "bytes": 293,
+          "sha256": "af75f05c2e4c9fc38166d3061f435b3aeb2abf288576090676ce8e3ee4595e46"
+        },
+        {
+          "path": "source.spm",
+          "bytes": 790473,
+          "sha256": "9129bf81ef9d5fcc1797ea3061e789dc5f9e5602786b0490238d207d4219e0f5"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "bytes": 74,
+          "sha256": "5e4d1f5e759d74cb1c2fe1d165cfc62b5237aa904de759380cd6f43042eec723"
+        },
+        {
+          "path": "target.spm",
+          "bytes": 706659,
+          "sha256": "6a0a52318dac3247455ec889eb3bd8da9bdf234974be8b9b0f99ad5378f474c9"
+        },
+        {
+          "path": "tokenizer.json",
+          "bytes": 6081943,
+          "sha256": "988af0af5cab7758c7548320a8b76c6a264d1ddfeac61e3f08d38d04d7202d6e"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "bytes": 282,
+          "sha256": "2f651940d4cd828071a9c099392b49d31de6608aa328e885821f65b745d7ceb8"
+        },
+        {
+          "path": "vocab.json",
+          "bytes": 1548192,
+          "sha256": "6ded021d39a6bd63339a045a0868f69d29aa8f3b6e53f43af2037246a5aeaca0"
+        },
+        {
+          "path": "onnx/decoder_model_merged_int8.onnx",
+          "bytes": 59553262,
+          "sha256": "9541fd4c5fe94b79c4cacf5f62cbef92360a35d2c8fc86ae9358aabcb0af3079"
+        },
+        {
+          "path": "onnx/encoder_model_int8.onnx",
+          "bytes": 52270361,
+          "sha256": "9395a7fdf54b320b261bc5f0324d6acefdf1d84bc18b70fbedc351c6d17930ef"
+        }
+      ]
+    },
+    {
+      "id": "Xenova/opus-mt-mul-en",
+      "revision": "72a05e47cee89c718a9db4dc70d02fef3bc39de8",
+      "baseModel": "Helsinki-NLP/opus-mt-mul-en",
+      "license": "Apache-2.0",
+      "source": "https://huggingface.co/Xenova/opus-mt-mul-en",
+      "fileDtype": "int8",
+      "languages": [
+        "mt",
+        "mi",
+        "mhr",
+        "eu",
+        "pap",
+        "mrj",
+        "tg",
+        "tt",
+        "te",
+        "udm",
+        "ky",
+        "la",
+        "eo"
+      ],
+      "files": [
+        {
+          "path": "config.json",
+          "bytes": 1390,
+          "sha256": "115093532b9893a6e3ec64951db15bafbad200f34929304f9570c3cd7f1dff94"
+        },
+        {
+          "path": "generation_config.json",
+          "bytes": 293,
+          "sha256": "66300b2138c7a98fe085d16b590ecbc01d64d46e9db240ee3dab4eadd3a3b1b9"
+        },
+        {
+          "path": "source.spm",
+          "bytes": 706917,
+          "sha256": "c4a99ea3602b29fbf901ade8b93a45efa3d7c64eab8fc5fa812383efa327a87d"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "bytes": 74,
+          "sha256": "5e4d1f5e759d74cb1c2fe1d165cfc62b5237aa904de759380cd6f43042eec723"
+        },
+        {
+          "path": "target.spm",
+          "bytes": 791194,
+          "sha256": "c6dce5fa58fcd7dde9e81e279b8c075bf42ee558278f73d6fb48e342029d7f19"
+        },
+        {
+          "path": "tokenizer.json",
+          "bytes": 6089424,
+          "sha256": "7ae61d18c438de0cf069a5cd25edc0d9d899353d710bf0e774819f97201049b9"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "bytes": 282,
+          "sha256": "0e5fceb4caf753096870f0a74ec2a0a9825327cefd1cc06e0b8dc71e75257cf7"
+        },
+        {
+          "path": "vocab.json",
+          "bytes": 1552293,
+          "sha256": "b1a8216e6f605e72eff0ebfbfc4956e3a906f965c18943843650595e7639bafb"
+        },
+        {
+          "path": "onnx/decoder_model_merged_int8.onnx",
+          "bytes": 59585253,
+          "sha256": "6730a1c7e334d778b4bc69f06e5d8dfd0401a10ff7932ce2560ab3835d968f21"
+        },
+        {
+          "path": "onnx/encoder_model_int8.onnx",
+          "bytes": 52302104,
+          "sha256": "5c28eddd51aa948ec8536e9e6e36499bdd363de082e1d02ed34b2154ce9ebd73"
+        }
+      ]
+    }
+  ],
+  "runtime": {
+    "license": "MIT",
+    "files": [
+      {
+        "path": "ort-wasm-simd-threaded.asyncify.wasm",
+        "bytes": 23567050,
+        "sha256": "e0c0c6d3e73d43b8a249972f8358f845b08cc16fec3c80efafdf8bed40366786"
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "email": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "domains": ["^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$"],
+  "role": "^(admin|viewer)$",
+  "aliases?": ["^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"],
+  "calendarVisibility?": "^(private|busy|full)$",
+  "mailboxNames?": { "^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$": "^[^\\u0000-\\u001F\\u007F]{1,64}$" },
+  "categoryMappings?": { "^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$": { "inbox": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$", "sent": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$", "drafts": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$", "spam": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$", "archive": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$", "trash": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$" } },
+  "categoryCatalog?": { "^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$": { "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$": "^(folder|label)$" } },
+  "remoteImagePolicy?": "^(block|allow)$",
+  "trustedImageSenders?": ["^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"],
+  "interfaceFont?": "^(plex-sans|system|humanist|serif|monospace)$",
+  "composerFont?": "^(interface|plex-sans|system|humanist|serif|monospace)$",
+  "interfaceLocale?": "^(auto|en|fr|ar)$",
+  "notificationSounds?": { "new-mail": "^(none|chime|bell|pop|pulse)$", "hit-send": "^(none|chime|bell|pop|pulse)$", "send": "^(none|chime|bell|pop|pulse)$", "confirm": "^(none|chime|bell|pop|pulse)$" },
+  "themePreferences?": { "activeTheme": "^(automatic|light|dark|darkside|less-is-more|taiga|ubuntu)$", "lightTheme": "^(light|less-is-more|taiga|ubuntu)$", "darkTheme": "^(dark|darkside)$" },
+  "githubProfileEnrichment?": "^(true|false)$",
+  "grammarCheckEnabled?": "^(true|false)$",
+  "grammarCheckLanguage?": "^(auto|en-US|en-GB)$",
+  "grammarCheckDisabledRules?": ["^[A-Z0-9_-]{1,64}$"],
+  "mcp?": { "enabled": "^(true|false)$", "accessLevel": "^(read-only|read-write|read-write-send)$", "allowedDomains": ["^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$"], "excludedFolders": { "^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$": ["^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$"] } },
+  "unreadBadgeScope?": "^(all|domain)$",
+  "unreadBadgeDomain?": "^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$",
+  "newMailNotificationDomains?": ["^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$"],
+  "newMailNotificationExternalAccounts?": ["^ext_[A-Za-z0-9_-]{20,80}$"],
+  "newMailNotificationPrivacy?": "^(full|sender|private)$",
+  "newMailNotificationActions?": "^(true|false)$",
+  "keyboardShortcutOverrides?": { "^[a-z][a-z0-9-]*:[a-z0-9][a-z0-9-]*$": "^[A-Za-z0-9?!*#/,._+ -]{1,64}$" },
+  "mailPreferences?": {
+    "workspaceLayout": "^(split|list|split-vertical)$", "use24HourClock": "^(true|false)$", "interfaceScale": "^(0.8|0.9|1|1.1|1.2)$", "showUnreadForAllFolders": "^(true|false)$", "markAsReadDelay": "^(-1|0|500|2000)$", "detailedHeaders": "^(true|false)$", "detailedNames": "^(true|false)$", "restrictMessageWidth": "^(true|false)$", "backspaceAction": "^(archive|trash)$", "swipeEnabled": "^(true|false)$", "conversationOrder": "^(ascending|descending)$", "emailRenderMode": "^(theme|light|dark)$", "richText": "^(true|false)$", "spellcheck": "^(true|false)$", "spellcheckLanguage": "^(|af|bg|ca|cs|da|de|el|en-AU|en-CA|en-GB|en-US|es|et|fo|fr|he|hi|hr|hu|it|ko|lt|lv|nb|nl|pl|pt|pt-BR|ro|ru|sk|sl|sq|sr|sv|tr|uk|vi)$", "defaultSendAction": "^(send|send-and-archive)$", "defaultReplyAction": "^(reply|reply-all)$", "undoSendDelay": "^(0|5000|15000|30000|60000)$", "defaultFrom": "^$|^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", "autoCcBySender": { "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$": ["^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"] }, "autoBccBySender": { "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$": ["^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"] }, "displayAttachmentPreviews": "^(true|false)$", "unsnoozeToTop": "^(true|false)$", "findInMailDisabledDomains": ["^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$"]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "PUT": {
+    "200": {
+      "id": "^.*$",
+      "domain": "^.*$",
+      "recipient": "^.*$",
+      "sender": "^.*$",
+      "subject": "^.*$",
+      "body": "^[\\s\\S]*$",
+      "folder": "^.*$",
+      "read": "^(true|false)$",
+      "starred": "^(true|false)$",
+      "receivedAt": "^.*$",
+      "processed": "^(true|false)$",
+      "spamScore?": "^-?\\d+(\\.\\d+)?$",
+      "spamReasons?": [
+        "^[a-z0-9_.:= -]{1,120}$"
+      ],
+      "attachments": [
+        "^.*$"
+      ]
+    },
+    "400": {
+      "error": "^.*$"
+    },
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    },
+    "403": {
+      "error": "^.*$",
+      "forbidden": "^(true|false)$"
+    },
+    "404": {
+      "error": "^.*$",
+      "notFound": "^(true|false)$"
+    }
+  }
+}

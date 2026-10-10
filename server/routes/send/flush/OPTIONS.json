@@ -1,6 +1,0 @@
-{
-  "POST": {
-    "200": { "flushed": 0 },
-    "401": { "error": "", "unauthorized": true }
-  }
-}

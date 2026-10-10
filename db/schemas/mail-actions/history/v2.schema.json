@@ -1,0 +1,14 @@
+{
+  "id": "^mail-action-[A-Fa-f0-9-]{36}$",
+  "ownerEmail": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "domain": "^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$",
+  "kind": "^(archive|move|trash|mark-read|mark-unread|star|unstar|bulk)$",
+  "status": "^(prepared|applied|undoing|undone|redoing|failed)$",
+  "changesJson": "^[\\s\\S]{2,250000}$",
+  "createdAt": "^\\d{1,16}$",
+  "updatedAt": "^\\d{1,16}$",
+  "expiresAt": "^\\d{1,16}$",
+  "lastError?": "^[\\s\\S]{0,200}$",
+  "clientRequestId?": "^[A-Fa-f0-9-]{36}$",
+  "requestFingerprint?": "^[A-Fa-f0-9]{64}$"
+}

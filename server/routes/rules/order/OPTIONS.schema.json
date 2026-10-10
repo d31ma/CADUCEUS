@@ -1,0 +1,8 @@
+{
+  "PUT": {
+    "200": { "ordered": "^\\d+$" },
+    "400": { "error": "^.*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "403": { "error": "^.*$", "forbidden": "^(true|false)$" }
+  }
+}

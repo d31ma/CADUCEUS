@@ -1,0 +1,17 @@
+{
+  "GET": {
+    "200": {
+      "providers": [{
+        "id": "^[a-z0-9-]+$",
+        "name": "^.+$",
+        "provider": "^(gmail|microsoft|imap)$",
+        "authentication": "^(oauth|password)$",
+        "guidance": "^(none|app_password|enable_imap)$",
+        "preset": "^.*$",
+        "configured": "^(true|false)$"
+      }]
+    },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "503": { "error": "^.*$", "unavailable": "^(true|false)$" }
+  }
+}

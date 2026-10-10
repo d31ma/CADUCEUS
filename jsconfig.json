@@ -4,6 +4,9 @@
     "noImplicitAny": false,
     "allowJs": true,
     "checkJs": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true,
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Bundler",
@@ -15,12 +18,16 @@
   "include": [
     "tachyon-env.d.ts",
     "server/**/*.d.ts",
-    "tests/**/*.js",
-    "server/routes/**/*.js",
-    "server/repositories/**/*.js",
-    "server/services/**/*.js",
-    "browser/**/*.d.ts",
-    "browser/**/*.js",
-    "browser/**/*.ts"
+    "server/**/*.js",
+    "server/**/*.ts",
+    "scripts/**/*.mjs",
+    "client/**/*.d.ts",
+    "client/**/*.js",
+    "client/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "tests"
   ]
 }

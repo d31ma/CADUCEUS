@@ -1,6 +1,0 @@
-{
-  "GET": {
-    "200": { "publicKey": "" },
-    "401": { "error": "", "unauthorized": true }
-  }
-}

@@ -1,0 +1,116 @@
+<div class="login-card">
+  <!-- Brand: custom URL via window.CADUCEUS_CONFIG.brandLogo wins; otherwise
+       fall back to the "CADUCEUS" wordmark. -->
+  <logic :if="brandlogo">
+    <img class="login-logo login-logo-image" :src="brandlogo" alt="CADUCEUS" />
+  </logic>
+  <logic :if="!brandlogo">
+    <div class="login-logo">CADUCEUS</div>
+  </logic>
+
+  <logic :if="$step === 'start'">
+    <p class="login-title w-text-title-medium">Sign in</p>
+
+    <p class="login-subtitle w-text-body-small">Enter your email to continue.</p>
+    <w-text-field data-login-email type="email" label="Email" :value="$email" on:input="$email = $event.target.value" placeholder="you@example.com" autocomplete="email" spellcheck="false" style="width:100%;margin-bottom:1rem;"></w-text-field>
+    <logic :if="$error"><p class="login-error">{$error}</p></logic>
+    <w-btn variant="filled" on:click="requestMfa()" style="width:100%;">{$loading ? 'Checking…' : 'Continue'}</w-btn>
+    <!-- Lost-access escape hatch: a one-time recovery code lets the user
+         replace their password and passkey. -->
+    <w-btn variant="text" on:click="useRecoveryCode()" style="display:block;margin-top:0.75rem;width:100%;text-align:center;">Use a recovery code</w-btn>
+  </logic>
+
+  <logic :if="$step === 'totp'">
+    <p class="login-title w-text-title-medium">Secondary verification</p>
+    <p class="login-subtitle w-text-body-small">Enter the current 6-digit code from your authenticator app.</p>
+    <w-text-field data-login-totp type="text" label="Authenticator code" :value="$totpCode" on:input="$totpCode = $event.target.value" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" style="width:100%;margin-bottom:1rem;"></w-text-field>
+    <logic :if="$error"><p class="login-error">{$error}</p></logic>
+    <w-btn variant="filled" on:click="confirmTotp()" style="width:100%;">{$loading ? 'Verifying…' : 'Verify and sign in'}</w-btn>
+    <div style="display:flex;justify-content:space-between;margin-top:0.75rem;">
+      <w-btn variant="text" on:click="back()">Cancel</w-btn>
+      <w-btn variant="text" on:click="useRecoveryCode()">Use a recovery code</w-btn>
+    </div>
+  </logic>
+
+  <logic :if="$step === 'passkey'">
+    <div class="passkey-prompt">
+      <div class="passkey-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0110 0v4"/>
+          <circle cx="12" cy="16" r="1"/>
+        </svg>
+      </div>
+      <p class="login-title w-text-title-medium">Verify your identity</p>
+      <p class="login-subtitle w-text-body-small">Follow the prompt from your browser or device to sign in with your passkey.</p>
+      <w-progress-circular indeterminate class="passkey-spinner" aria-hidden="true"></w-progress-circular>
+      <logic :if="$error"><p class="login-error">{$error}</p></logic>
+      <div class="passkey-actions">
+        <w-btn variant="text" on:click="back()">Cancel</w-btn>
+        <w-btn variant="text" on:click="useRecoveryCode()">Recover access</w-btn>
+      </div>
+    </div>
+  </logic>
+
+  <logic :if="$step === 'passkey-setup'">
+    <div class="passkey-prompt">
+      <div class="passkey-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          <circle cx="12" cy="16" r="1"/>
+        </svg>
+      </div>
+      <p class="login-title w-text-title-medium">Create a passkey</p>
+      <p class="login-subtitle w-text-body-small">Follow the prompt from your browser to save a passkey for this account.</p>
+      <w-progress-circular indeterminate class="passkey-spinner" aria-hidden="true"></w-progress-circular>
+      <logic :if="$error"><p class="login-error">{$error}</p></logic>
+      <div style="display:flex;justify-content:center;margin-top:0.5rem;">
+        <w-btn variant="text" on:click="back()">Cancel</w-btn>
+      </div>
+    </div>
+  </logic>
+
+  <!-- ── Strict-policy password verification (password-then-passkey).
+       Reached when `/auth/webauthn/auth-request` returns a 401 indicating
+       the user has a password policy. ── -->
+  <logic :if="$step === 'password'">
+    <p class="login-title w-text-title-medium">Enter your password</p>
+    <p class="login-subtitle w-text-body-small">Confirm your password, then approve the passkey prompt that follows.</p>
+    <w-text-field data-login-email type="email" label="Email" :value="$email" readonly style="width:100%;margin-bottom:0.75rem;"></w-text-field>
+    <w-text-field data-login-password type="password" label="Password" :value="$password" on:input="$password = $event.target.value" autocomplete="current-password" style="width:100%;margin-bottom:1rem;"></w-text-field>
+    <logic :if="$error"><p class="login-error">{$error}</p></logic>
+    <w-btn variant="filled" on:click="verifyPassword()" style="width:100%;">{$loading ? 'Verifying…' : 'Continue'}</w-btn>
+    <div style="display:flex;justify-content:space-between;margin-top:0.75rem;">
+      <w-btn variant="text" on:click="back()">Back</w-btn>
+      <w-btn variant="text" on:click="useRecoveryCode()">Use a recovery code</w-btn>
+    </div>
+  </logic>
+
+  <!-- ── Establish a new password after recovery-code or administrator
+       restoration. setupPassword() chains directly into passkey-setup. ── -->
+  <logic :if="$step === 'password-setup'">
+    <p class="login-title w-text-title-medium">Create a password</p>
+    <p class="login-subtitle w-text-body-small">Pick a password you'll remember. You'll register a passkey next.</p>
+    <w-text-field data-login-new-password type="password" label="New password" :value="$password" on:input="$password = $event.target.value" autocomplete="new-password" style="width:100%;margin-bottom:0.75rem;"></w-text-field>
+    <w-text-field data-login-confirm-password type="password" label="Confirm password" :value="$confirmPassword" on:input="$confirmPassword = $event.target.value" autocomplete="new-password" style="width:100%;margin-bottom:1rem;"></w-text-field>
+    <logic :if="$error"><p class="login-error">{$error}</p></logic>
+    <w-btn variant="filled" on:click="setupPassword()" style="width:100%;">{$loading ? 'Saving…' : 'Save and continue'}</w-btn>
+  </logic>
+
+  <!-- ── Recovery code. It is a second factor in the same login, not a
+       separate restoration mode: spending one signs the user in, and they
+       then enrol a passkey on an ordinary session. ── -->
+  <logic :if="$step === 'recovery'">
+    <p class="login-title w-text-title-medium">Sign in with a recovery code</p>
+    <logic :if="$recoveryMethod === 'code'"><p class="login-subtitle w-text-body-small">Enter one of the recovery codes you saved. Each code works only once, and using one signs you in.</p></logic>
+    <logic :if="$recoveryMethod === 'admin'"><p class="login-subtitle w-text-body-small">Enter the code issued by a CADUCEUS administrator when your mailbox was created.</p></logic>
+    <w-text-field data-login-email type="email" label="Email" :value="$email" on:input="$email = $event.target.value" autocomplete="email" style="width:100%;margin-bottom:0.75rem;"></w-text-field>
+    <logic :if="$recoveryMethod === 'code'"><w-text-field data-login-recovery-code type="text" label="Recovery code" :value="$recoveryCode" on:input="$recoveryCode = $event.target.value" autocomplete="one-time-code" spellcheck="false" style="width:100%;margin-bottom:1rem;font-family:monospace;letter-spacing:0.05em;"></w-text-field></logic>
+    <logic :if="$recoveryMethod === 'admin'"><w-text-field data-login-admin-code type="text" label="Administrator code" :value="$recoveryCode" on:input="$recoveryCode = $event.target.value" autocomplete="one-time-code" spellcheck="false" style="width:100%;margin-bottom:1rem;font-family:monospace;letter-spacing:0.05em;"></w-text-field></logic>
+    <logic :if="$error"><p class="login-error">{$error}</p></logic>
+    <logic :if="$recoveryMethod === 'code'"><w-btn variant="filled" on:click="verifyRecoveryCode()" style="width:100%;">{$loading ? 'Verifying…' : 'Verify and sign in'}</w-btn></logic>
+    <logic :if="$recoveryMethod === 'admin'"><w-btn variant="filled" on:click="verifyAdminRecovery()" style="width:100%;">{$loading ? 'Verifying…' : 'Verify and sign in'}</w-btn></logic>
+    <w-btn variant="text" on:click="toggleRecoveryMethod()" style="display:block;margin-top:0.5rem;width:100%;text-align:center;">{$recoveryMethod === 'code' ? 'Use an administrator code' : 'Use a saved recovery code'}</w-btn>
+    <w-btn variant="text" on:click="back()" style="display:block;margin-top:0.75rem;width:100%;text-align:center;">Back to sign in</w-btn>
+  </logic>
+</div>

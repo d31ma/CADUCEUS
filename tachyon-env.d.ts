@@ -1,10 +1,5 @@
-/// <reference types="@d31ma/tachyon/globals" />
+/** Tachyon companion lifecycle decorator. */
+declare const onMount: any
 
-// Tachyon runtime globals available in companion scripts
-// declare const isBrowser: boolean;
-// declare const isServer: boolean;
-// declare const Tac: ...  (from @d31ma/tachyon/globals)
-// declare const onMount: ...
-// declare const emit: ...
-// declare const inject: ...
-// declare const provide: ...
+/** Tachyon companion event-subscription decorator. */
+declare function subscribe(eventName: string): any

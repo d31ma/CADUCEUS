@@ -1,0 +1,5 @@
+{
+  "GET": {
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
+  }
+}

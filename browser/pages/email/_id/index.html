@@ -1,9 +1,0 @@
-<logic :if="canUseApp">
-  <email-detail_ @compose="window._caduceus?.compose($event.detail)" />
-</logic>
-
-<logic :if="canShowLogin">
-  <div class="login-screen">
-    <login-form_ @login="window._caduceus?.handleLogin($event.detail, location.pathname + location.search)" />
-  </div>
-</logic>

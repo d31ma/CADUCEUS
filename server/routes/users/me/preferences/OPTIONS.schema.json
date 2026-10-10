@@ -1,0 +1,140 @@
+{
+  "GET": {
+    "200": {
+      "calendarVisibility": "^.*$",
+      "mailboxNames": {
+        "^.*$": "^.*$"
+      },
+      "categoryMappings": {
+        "^.*$": { "^.*$": "^.*$" }
+      },
+      "remoteImagePolicy": "^(block|allow)$",
+      "trustedImageSenders": ["^.*$"],
+      "interfaceFont": "^(plex-sans|system|humanist|serif|monospace)$",
+      "composerFont": "^(interface|plex-sans|system|humanist|serif|monospace)$",
+      "notificationSounds": {
+        "new-mail": "^(none|chime|bell|pop|pulse)$",
+        "hit-send": "^(none|chime|bell|pop|pulse)$",
+        "send": "^(none|chime|bell|pop|pulse)$",
+        "confirm": "^(none|chime|bell|pop|pulse)$"
+      },
+      "themePreferences": {
+        "activeTheme": "^(automatic|light|dark|darkside|less-is-more|taiga|ubuntu)$",
+        "lightTheme": "^(light|less-is-more|taiga|ubuntu)$",
+        "darkTheme": "^(dark|darkside)$"
+      },
+      "githubProfileEnrichment": "^(true|false)$",
+      "keyboardShortcutOverrides": { "^.*$": "^.*$" },
+      "mailPreferences": {
+        "workspaceLayout": "^(split|list|split-vertical)$",
+        "use24HourClock": "^(true|false)$",
+        "interfaceScale": "^(0.8|0.9|1|1.1|1.2)$",
+        "showUnreadForAllFolders": "^(true|false)$",
+        "markAsReadDelay": "^(-1|0|500|2000)$",
+        "detailedHeaders": "^(true|false)$",
+        "detailedNames": "^(true|false)$",
+        "restrictMessageWidth": "^(true|false)$",
+        "backspaceAction": "^(archive|trash)$",
+        "swipeEnabled": "^(true|false)$",
+        "conversationOrder": "^(ascending|descending)$",
+        "emailRenderMode": "^(theme|light|dark)$",
+        "richText": "^(true|false)$",
+        "spellcheck": "^(true|false)$",
+        "spellcheckLanguage": "^.*$",
+        "defaultSendAction": "^(send|send-and-archive)$",
+        "defaultReplyAction": "^(reply|reply-all)$",
+        "undoSendDelay": "^(0|5000|15000|30000|60000)$",
+        "defaultFrom": "^.*$",
+        "autoCcBySender": { "^.*$": ["^.*$"] },
+        "autoBccBySender": { "^.*$": ["^.*$"] },
+        "displayAttachmentPreviews": "^(true|false)$",
+        "unsnoozeToTop": "^(true|false)$",
+        "findInMailDisabledDomains": ["^.*$"]
+      },
+      "grammarCheckEnabled": "^(true|false)$",
+      "grammarCheckLanguage": "^(auto|en-US|en-GB)$",
+      "grammarCheckDisabledRules": ["^[A-Z0-9_-]{1,64}$"]
+    },
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    },
+    "404": {
+      "error": "^.*$",
+      "notFound": "^(true|false)$"
+    }
+  },
+  "PUT": {
+    "200": {
+      "updated": "^(true|false)$",
+      "calendarVisibility": "^.*$",
+      "mailboxNames": {
+        "^.*$": "^.*$"
+      },
+      "categoryMappings": {
+        "^.*$": { "^.*$": "^.*$" }
+      },
+      "remoteImagePolicy": "^(block|allow)$",
+      "trustedImageSenders": ["^.*$"],
+      "interfaceFont": "^(plex-sans|system|humanist|serif|monospace)$",
+      "composerFont": "^(interface|plex-sans|system|humanist|serif|monospace)$",
+      "notificationSounds": {
+        "new-mail": "^(none|chime|bell|pop|pulse)$",
+        "hit-send": "^(none|chime|bell|pop|pulse)$",
+        "send": "^(none|chime|bell|pop|pulse)$",
+        "confirm": "^(none|chime|bell|pop|pulse)$"
+      },
+      "themePreferences": {
+        "activeTheme": "^(automatic|light|dark|darkside|less-is-more|taiga|ubuntu)$",
+        "lightTheme": "^(light|less-is-more|taiga|ubuntu)$",
+        "darkTheme": "^(dark|darkside)$"
+      },
+      "githubProfileEnrichment": "^(true|false)$",
+      "keyboardShortcutOverrides": { "^.*$": "^.*$" },
+      "mailPreferences": {
+        "workspaceLayout": "^(split|list|split-vertical)$",
+        "use24HourClock": "^(true|false)$",
+        "interfaceScale": "^(0.8|0.9|1|1.1|1.2)$",
+        "showUnreadForAllFolders": "^(true|false)$",
+        "markAsReadDelay": "^(-1|0|500|2000)$",
+        "detailedHeaders": "^(true|false)$",
+        "detailedNames": "^(true|false)$",
+        "restrictMessageWidth": "^(true|false)$",
+        "backspaceAction": "^(archive|trash)$",
+        "swipeEnabled": "^(true|false)$",
+        "conversationOrder": "^(ascending|descending)$",
+        "emailRenderMode": "^(theme|light|dark)$",
+        "richText": "^(true|false)$",
+        "spellcheck": "^(true|false)$",
+        "spellcheckLanguage": "^.*$",
+        "defaultSendAction": "^(send|send-and-archive)$",
+        "defaultReplyAction": "^(reply|reply-all)$",
+        "undoSendDelay": "^(0|5000|15000|30000|60000)$",
+        "defaultFrom": "^.*$",
+        "autoCcBySender": { "^.*$": ["^.*$"] },
+        "autoBccBySender": { "^.*$": ["^.*$"] },
+        "displayAttachmentPreviews": "^(true|false)$",
+        "unsnoozeToTop": "^(true|false)$",
+        "findInMailDisabledDomains": ["^.*$"]
+      },
+      "grammarCheckEnabled": "^(true|false)$",
+      "grammarCheckLanguage": "^(auto|en-US|en-GB)$",
+      "grammarCheckDisabledRules": ["^[A-Z0-9_-]{1,64}$"]
+    },
+    "400": {
+      "error": "^.*$"
+    },
+    "401": {
+      "error": "^.*$",
+      "unauthorized": "^(true|false)$"
+    },
+    "403": {
+      "error": "^.*$",
+      "forbidden": "^(true|false)$"
+    },
+    "404": {
+      "error": "^.*$",
+      "notFound": "^(true|false)$"
+    }
+  }
+}

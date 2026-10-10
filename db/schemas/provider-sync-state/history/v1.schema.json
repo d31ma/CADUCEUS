@@ -1,0 +1,12 @@
+{
+  "accountId": "^ext_[A-Za-z0-9_-]{20,80}$",
+  "tenantId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "principalId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "ownerAddress": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "leaseToken?": "^[A-Za-z0-9_-]{32}$",
+  "leaseHolder?": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "leaseExpiresAt?": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "cursor": "^[^\\u0000]{0,4096}$",
+  "cursorVersion": "^\\d+$",
+  "cursorUpdatedAt?": "^\\d{4}-\\d{2}-\\d{2}T.+Z$"
+}

@@ -1,0 +1,106 @@
+.login-card {
+  /* Padding + border are included in the declared width so the card never
+   * overflows its grid track. Without this the 100%-wide variant used on
+   * small viewports renders 48px (padding) + 2px (border) too wide and
+   * clips past the right edge of the screen.
+   *
+   * `margin-inline: auto` centers the card inside Tac's per-component
+   * wrapper. The wrapper itself fills the login-screen flex track (block
+   * display, no width cap), so without auto-margins the 432px card would
+   * sit at the wrapper's left edge — visually off-center on wide screens.
+   */
+  box-sizing: border-box;
+  /* Fill the sized wrapper (.login-screen > div = min(100%, 432px)); the old
+   * `min(100%, 432px)` here resolved against a shrink-to-fit wrapper and
+   * collapsed the card to its text width. */
+  width: 100%;
+  margin-inline: auto;
+  padding: 2rem;
+  border: 1px solid var(--ms-outline-variant, #d8e0de);
+  border-radius: var(--ms-shape-card, 4px);
+  background: var(--ms-surface, #f8faf9);
+  box-shadow: 0 20px 60px var(--ms-shadow, rgba(24, 33, 37, 0.12));
+}
+
+.login-logo {
+  margin-bottom: 2rem;
+  color: var(--ms-primary, #1f6f8b);
+  font-size: var(--ms-font-2xl, 1.5rem);
+  font-weight: var(--ms-font-weight-bold, 700);
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+/* Custom-logo image variant — kept proportional with a tasteful upper bound
+ * so brand assets of wildly different aspect ratios still look reasonable. */
+.login-logo-image {
+  display: block;
+  height: auto;
+  max-height: 64px;
+  max-width: 220px;
+  width: auto;
+  margin-inline: auto;
+  object-fit: contain;
+}
+
+.login-title {
+  margin: 0 0 0.375rem;
+  color: var(--ms-text);
+  font-weight: 700;
+  text-align: center;
+}
+
+.login-subtitle {
+  max-width: 30rem;
+  margin: 0 auto 1.5rem;
+  color: var(--ms-on-surface-variant, #49454f);
+  line-height: 1.55;
+  text-align: center;
+}
+
+.login-error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--ms-error, #b3261e) 22%, transparent);
+  border-radius: var(--ms-shape-card, 4px);
+  background: var(--ms-error-container, #f9dedc);
+  color: var(--ms-error, #b3261e);
+  font-size: var(--ms-font-base, 0.875rem);
+  line-height: 1.5;
+}
+
+.passkey-prompt { text-align: center; }
+
+.passkey-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  color: var(--ms-primary, #1f6f8b);
+}
+
+.passkey-spinner {
+  display: block;
+  margin: 1.5rem auto;
+}
+
+.passkey-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 760px) {
+  .login-card {
+    align-self: center;
+    width: 100%;
+    padding: 1.5rem;
+    box-shadow: 0 12px 36px var(--ms-shadow, rgba(24, 33, 37, 0.12));
+  }
+
+  .login-logo {
+    margin-bottom: 1.5rem;
+    font-size: var(--ms-font-xl, 1.25rem);
+  }
+}

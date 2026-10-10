@@ -1,0 +1,301 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caduceus.del.ma/contracts/runtime-lock.schema.json",
+  "title": "CADUCEUS runtime lock",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "capturedAt",
+    "artifacts",
+    "dependencyLock",
+    "policy"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "capturedAt": {
+      "type": "string",
+      "format": "date"
+    },
+    "artifacts": {
+      "type": "object",
+      "required": [
+        "tachyon",
+        "fylo",
+        "sesame",
+        "chex",
+        "ttid",
+        "bun",
+        "go"
+      ],
+      "properties": {
+        "tachyon": {
+          "type": "object",
+          "required": [
+            "command",
+            "version",
+            "releaseCommit",
+            "installedArtifact",
+            "releasedArtifacts"
+          ],
+          "properties": {
+            "command": {
+              "const": "ty"
+            },
+            "version": {
+              "const": "26.33.02"
+            },
+            "releaseCommit": {
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "installedArtifact": {
+              "$ref": "#/$defs/artifact"
+            },
+            "releasedArtifacts": {
+              "type": "array",
+              "minItems": 5,
+              "items": {
+                "$ref": "#/$defs/artifact"
+              }
+            }
+          }
+        },
+        "fylo": {
+          "type": "object",
+          "required": [
+            "command",
+            "releasedVersion",
+            "releaseCommit",
+            "installedReleasedArtifact",
+            "releasedArtifacts",
+            "requiredProtocol",
+            "requiredCapabilities",
+            "requiredOperationProbes"
+          ],
+          "properties": {
+            "releasedVersion": {
+              "const": "26.33.02"
+            },
+            "releaseCommit": {
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "requiredProtocol": {
+              "const": 1
+            },
+            "requiredCapabilities": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "requiredOperationProbes": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "machineAccess",
+                  "documentBuckets"
+                ]
+              },
+              "minItems": 2,
+              "uniqueItems": true
+            },
+            "releasedArtifacts": {
+              "type": "array",
+              "minItems": 5,
+              "items": {
+                "$ref": "#/$defs/artifact"
+              }
+            },
+            "installedReleasedArtifact": {
+              "$ref": "#/$defs/artifact"
+            }
+          }
+        },
+        "chex": {
+          "type": "object",
+          "required": [
+            "command",
+            "version",
+            "releaseCommit",
+            "installedArtifact",
+            "releasedArtifacts"
+          ],
+          "properties": {
+            "command": {
+              "const": "chex"
+            },
+            "version": {
+              "const": "26.32.02"
+            },
+            "releaseCommit": {
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "installedArtifact": {
+              "$ref": "#/$defs/artifact"
+            },
+            "releasedArtifacts": {
+              "type": "array",
+              "minItems": 5,
+              "items": {
+                "$ref": "#/$defs/artifact"
+              }
+            }
+          }
+        },
+        "ttid": {
+          "type": "object",
+          "required": [
+            "command",
+            "version",
+            "releaseCommit",
+            "installedArtifact",
+            "releasedArtifacts"
+          ],
+          "properties": {
+            "command": {
+              "const": "ttid"
+            },
+            "version": {
+              "const": "26.32.03"
+            },
+            "releaseCommit": {
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "installedArtifact": {
+              "$ref": "#/$defs/artifact"
+            },
+            "releasedArtifacts": {
+              "type": "array",
+              "minItems": 5,
+              "items": {
+                "$ref": "#/$defs/artifact"
+              }
+            }
+          }
+        },
+        "sesame": {
+          "type": "object",
+          "required": [
+            "command",
+            "releasedVersion",
+            "releaseCommit",
+            "goClientModule",
+            "goClientVersion",
+            "compatibleFYLOVersion",
+            "installedReleasedArtifact",
+            "releasedArtifacts",
+            "requiredProtocol",
+            "requiredOperations"
+          ],
+          "properties": {
+            "releasedVersion": {
+              "const": "26.33.02"
+            },
+            "releaseCommit": {
+              "pattern": "^[a-f0-9]{40}$"
+            },
+            "goClientModule": {
+              "const": "github.com/d31ma/sesame"
+            },
+            "goClientVersion": {
+              "pattern": "^v0\\.0\\.0-[0-9]{14}-[a-f0-9]{12}$"
+            },
+            "compatibleFYLOVersion": {
+              "const": "26.33.02"
+            },
+            "requiredProtocol": {
+              "const": "1"
+            },
+            "requiredOperations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "releasedArtifacts": {
+              "type": "array",
+              "minItems": 5,
+              "items": {
+                "$ref": "#/$defs/artifact"
+              }
+            },
+            "installedReleasedArtifact": {
+              "$ref": "#/$defs/artifact"
+            },
+            "ownsSeparateFYLORoot": {
+              "const": true
+            }
+          }
+        }
+      },
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "dependencyLock": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": [
+        "productionRequiresReleasedArtifacts",
+        "previewArtifactsMayRunOnlyInDevelopmentAndQualification",
+        "digestMismatchFailsClosed",
+        "unknownCapabilityFailsClosed"
+      ],
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": [
+        "target",
+        "sha256"
+      ],
+      "properties": {
+        "target": {
+          "enum": [
+            "linux-x64",
+            "linux-arm64",
+            "macos-x64",
+            "macos-arm64",
+            "windows-x64"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

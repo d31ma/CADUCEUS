@@ -1,0 +1,32 @@
+{
+  "GET": {
+    "200": {
+      "enabled": "^(true|false)$",
+      "accessLevel": "^(read-only|read-write|read-write-send)$",
+      "allowedDomains": ["^.*$"],
+      "excludedFolders": { "^.*$": ["^.*$"] },
+      "hasToken": "^(true|false)$",
+      "tokenCreatedAt": "^[\\s\\S]*$",
+      "endpoint": "^/mcp$",
+      "protocolVersions": ["^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"]
+    },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
+  },
+  "PUT": {
+    "200": {
+      "enabled": "^(true|false)$",
+      "accessLevel": "^(read-only|read-write|read-write-send)$",
+      "allowedDomains": ["^.*$"],
+      "excludedFolders": { "^.*$": ["^.*$"] },
+      "hasToken": "^(true|false)$",
+      "tokenCreatedAt": "^[\\s\\S]*$",
+      "endpoint": "^/mcp$",
+      "protocolVersions": ["^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"]
+    },
+    "400": { "error": "^.*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "403": { "error": "^.*$", "forbidden": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
+  }
+}

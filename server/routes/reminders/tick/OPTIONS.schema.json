@@ -1,0 +1,11 @@
+{
+  "POST": {
+    "200": {
+      "due": "^\\d+$",
+      "surfaced": "^\\d+$",
+      "reconciled": "^\\d+$",
+      "failed": "^\\d+$"
+    },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" }
+  }
+}

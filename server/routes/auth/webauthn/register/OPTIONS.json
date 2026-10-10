@@ -1,7 +1,0 @@
-{
-  "POST": {
-    "200": { "id": "", "credentialId": "", "name": "" },
-    "400": { "error": "" },
-    "401": { "error": "", "unauthorized": true }
-  }
-}

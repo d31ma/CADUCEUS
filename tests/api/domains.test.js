@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import { startTestServer } from "./helpers.js";
+import { startTestServer, TEST_SERVER_HOOK_TIMEOUT_MS } from "./helpers.js";
 let s;
 let admin;
 let viewer;
 beforeAll(async () => {
   s = await startTestServer();
-  admin = s.token({ email: "alice@example.com", domains: ["example.com"], role: "admin" });
-  viewer = s.token({ email: "bob@example.com", domains: ["example.com"], role: "viewer" });
-}, 15000);
-afterAll(() => s.stop());
+  admin = await s.token({ email: "alice@example.com", domains: ["example.com"], role: "admin" });
+  viewer = await s.token({ email: "bob@example.com", domains: ["example.com"], role: "viewer" });
+}, TEST_SERVER_HOOK_TIMEOUT_MS);
+afterAll(() => s?.stop());
 describe("GET /domains", () => {
   it("returns 401 without token", async () => {
     const r = await s.get("/domains");
@@ -72,7 +72,7 @@ describe("GET /domains/:domain/routes", () => {
     expect(r.status).toBe(401);
   });
   it("returns 403 for domain not in claims", async () => {
-    const other = s.token({ email: "x@other.com", domains: ["other.com"], role: "admin" });
+    const other = await s.token({ email: "x@other.com", domains: ["other.com"], role: "admin" });
     const r = await s.get("/domains/example.com/routes", { token: other });
     expect(r.status).toBe(403);
   });

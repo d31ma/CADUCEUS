@@ -3,6 +3,7 @@
  * Run with: bun test web/tests/unit.test.js
  */
 import { describe, test, expect } from 'bun:test'
+import { SpamFilterService } from '../server/features/delivery/services/spam-filter.js'
 
 // ── Helpers copied verbatim from components ───────────────────────────────
 
@@ -67,5 +68,53 @@ describe('formatDate', () => {
     const result = formatDate(iso, now)
     expect(typeof result).toBe('string')
     expect(result.length).toBeGreaterThan(0)
+  })
+})
+
+describe('spam filter classify', () => {
+  const filter = new SpamFilterService({ threshold: 5, enabled: true })
+
+  test('passes ordinary mail', () => {
+    const v = filter.classify({ sender: 'bob@friend.com', subject: 'Lunch tomorrow?', text: 'Want to grab lunch next week?' })
+    expect(v.isSpam).toBe(false)
+    expect(v.score).toBeLessThan(5)
+  })
+
+  test('honors a structured receiver FAIL verdict regardless of content', () => {
+    const v = filter.classify({ sender: 'store@shop.com', subject: 'Your receipt', text: 'Thanks!', verdict: 'FAIL' })
+    expect(v.isSpam).toBe(true)
+    expect(v.reasons).toContain('upstream-verdict')
+  })
+
+  test('adds a structured receiver score', () => {
+    const v = filter.classify({ sender: 'a@b.com', subject: 'hi', text: 'hi', score: 9 })
+    expect(v.isSpam).toBe(true)
+    expect(v.score).toBe(9)
+  })
+
+  test('reads X-Spam-Flag and X-Spam-Status headers', () => {
+    const v = filter.classify({ sender: 'a@b.com', subject: 'x', text: 'x', headers: { 'x-spam-flag': 'YES', 'x-spam-status': 'Yes, score=7.2 required=5.0' } })
+    expect(v.isSpam).toBe(true)
+    expect(v.reasons).toContain('x-spam-flag')
+  })
+
+  test('catches obvious heuristic junk with no structured signal', () => {
+    const v = filter.classify({
+      sender: 'win@lottery-prize.win',
+      subject: 'CONGRATULATIONS YOU HAVE WON!!!',
+      text: 'Claim now! Wire transfer your bitcoin to collect the jackpot.',
+    })
+    expect(v.isSpam).toBe(true)
+    expect(v.reasons.length).toBeGreaterThan(1)
+  })
+
+  test('a single weak heuristic never quarantines on its own', () => {
+    const v = filter.classify({ sender: 'newsletter@store.com', subject: 'Act now on your order', text: 'Your shipment is ready.' })
+    expect(v.isSpam).toBe(false)
+  })
+
+  test('disabled filter passes everything', () => {
+    const off = new SpamFilterService({ enabled: false })
+    expect(off.classify({ sender: 'x@x.win', subject: 'WON LOTTERY JACKPOT', text: 'bitcoin', verdict: 'FAIL' }).isSpam).toBe(false)
   })
 })

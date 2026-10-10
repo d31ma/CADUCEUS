@@ -1,0 +1,12 @@
+{
+  "POST": {
+    "200": {
+      "choiceId": "^[a-z0-9-]+$",
+      "source": "^(mx|autoconfig|preset|fallback)$",
+      "connection": "^.*$"
+    },
+    "400": { "error": "^.*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "503": { "error": "^.*$", "unavailable": "^(true|false)$" }
+  }
+}

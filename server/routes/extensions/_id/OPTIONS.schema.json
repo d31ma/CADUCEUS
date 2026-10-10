@@ -1,0 +1,18 @@
+{
+  "GET": {
+    "200": { "id": "^.*$", "displayName": "^.*$", "version": "^.*$", "kind": "^(plugin|theme)$", "digest": "^[a-f0-9]{64}$", "enabled": "^(true|false)$", "source": "^[\\s\\S]*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
+  },
+  "PUT": {
+    "200": { "id": "^.*$", "displayName": "^.*$", "version": "^.*$", "kind": "^(plugin|theme)$", "digest": "^[a-f0-9]{64}$", "enabled": "^(true|false)$" },
+    "400": { "error": "^.*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
+  },
+  "DELETE": {
+    "200": { "deleted": "^(true|false)$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
+  }
+}

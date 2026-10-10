@@ -1,61 +1,68 @@
-// Compile CADUCEUS to a standalone binary.
-// Usage: bun scripts/compile.mjs [--target linux-amd64|linux-arm64|darwin-arm64]
+// Compile CADUCEUS to a standalone Bun executable.
 //
-// Prerequisites: bun install (all dependencies must be resolved)
+// Usage:
+//   bun scripts/compile.mjs [--target linux-amd64|linux-arm64|darwin-amd64|darwin-arm64]
 //
-// The output binary bundles Bun runtime + tachyon + CADUCEUS.
-// It runs on any host matching the target architecture — no Bun or Node needed.
+// Set CADUCEUS_COMPILE_OUTDIR to override the default `dist-bin` destination.
 
+import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { spawn } from 'node:child_process'
 
-const target = process.argv.includes('--target')
-  ? process.argv[process.argv.indexOf('--target') + 1]
-  : process.platform === 'darwin' ? 'darwin-arm64' : 'linux-amd64'
-
-// In production mode, remove test routes from the bundle
-// The tachyon compiler will not pick up test routes since they're behind CADUCEUS_ENABLE_TEST_ROUTES
-process.env.NODE_ENV = 'production'
-
-// Build the binary with Bun's compiler
-// --compile bundles Bun runtime + all imports into a single executable
-// --target sets the platform (cross-compilation supported for linux-amd64, linux-arm64)
-const result = await Bun.build({
-  entrypoints: ['scripts/entry.mjs'],
-  outdir: './dist-bin',
-  target: 'bun',
-  // Don't externalize anything — bundle everything
-  external: [],
-  // Named after the entrypoint
-  naming: '[dir]/caduceus.[ext]',
-})
-
-if (!result.success) {
-  console.error('Build failed:')
-  for (const log of result.logs) {
-    console.error(log)
-  }
-  process.exit(1)
+const targetAliases = {
+  'linux-amd64': 'linux-x64',
+  'linux-x64': 'linux-x64',
+  'linux-arm64': 'linux-arm64',
+  'darwin-amd64': 'darwin-x64',
+  'darwin-x64': 'darwin-x64',
+  'darwin-arm64': 'darwin-arm64',
 }
 
-console.log(`Compiled CADUCEUS binary for ${target}`)
-console.log(`Output: dist-bin/caduceus`)
+const targetIndex = process.argv.indexOf('--target')
+const requestedTarget = targetIndex >= 0
+  ? process.argv[targetIndex + 1]
+  : defaultTarget()
+const compileTarget = targetAliases[requestedTarget]
 
-// For cross-platform, use Bun's --compile flag which creates a self-extracting binary
-// This is separate from Bun.build — it produces a standalone executable
-const { spawn } = await import('node:child_process')
+if (!compileTarget) {
+  console.error(`Unsupported compile target: ${requestedTarget || '(missing)'}`)
+  console.error(`Allowed targets: ${Object.keys(targetAliases).join(', ')}`)
+  process.exit(64)
+}
+
+const outdir = process.env.CADUCEUS_COMPILE_OUTDIR || 'dist-bin'
+mkdirSync(outdir, { recursive: true })
+const outfile = join(outdir, `caduceus-${requestedTarget}`)
+
+process.env.NODE_ENV = 'production'
+
 const proc = spawn('bun', [
-  'build', '--compile',
-  '--target', `bun-${target}`,
+  'build',
+  '--compile',
+  '--target',
+  `bun-${compileTarget}`,
   'scripts/entry.mjs',
-  '--outfile', `caduceus-${target}`,
+  '--outfile',
+  outfile,
 ], {
   stdio: 'inherit',
   cwd: process.cwd(),
+  env: process.env,
 })
 
-await new Promise((resolve, reject) => {
-  proc.on('exit', code => code === 0 ? resolve() : reject(new Error(`bun build --compile exited ${code}`)))
-  proc.on('error', reject)
+await new Promise(/** @param {(value?: void) => void} resolve */ (resolve, reject) => {
+  proc.once('error', reject)
+  proc.once('exit', (code) => {
+    if (code === 0) resolve()
+    else reject(new Error(`bun build --compile exited ${code}`))
+  })
 })
 
-console.log(`Binary: caduceus-${target}`)
+console.log(`Compiled CADUCEUS for ${requestedTarget}`)
+console.log(`Binary: ${outfile}`)
+
+function defaultTarget() {
+  const platform = process.platform === 'darwin' ? 'darwin' : 'linux'
+  const architecture = process.arch === 'arm64' ? 'arm64' : 'amd64'
+  return `${platform}-${architecture}`
+}

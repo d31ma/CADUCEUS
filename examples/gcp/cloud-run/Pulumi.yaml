@@ -1,7 +1,0 @@
-name: caduceus-cloud-run
-runtime:
-  name: nodejs
-  options:
-    packagemanager: npm
-    typescript: false
-description: CADUCEUS on GCP Cloud Run — serverless container deployment

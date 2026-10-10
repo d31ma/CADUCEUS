@@ -1,0 +1,219 @@
+{
+  "$schema": "./contracts/runtime-lock.schema.json",
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-21",
+  "artifacts": {
+    "tachyon": {
+      "command": "ty",
+      "version": "26.33.02",
+      "releaseCommit": "f96c1589ee33b047044f220448268d32ad86e58f",
+      "productionRole": "frontend builder and development server",
+      "installedArtifact": {
+        "target": "macos-arm64",
+        "sha256": "08b90a516ccb665664c3b986e71769cdcc738960e45a0bd8c73ab691a0cda1cd"
+      },
+      "releasedArtifacts": [
+        {
+          "target": "linux-x64",
+          "sha256": "c662da31be584364b1d0554df232336a047b90ba66ab9bde9c87e248bb184616"
+        },
+        {
+          "target": "linux-arm64",
+          "sha256": "2e78dd4b46a300196e64d6563cbf53b77aa4fc407e51834568f7dccc6167e293"
+        },
+        {
+          "target": "macos-x64",
+          "sha256": "b5fd0495a18a1923a132275d15358e170e66516e0f47b1f54f159031cec5d457"
+        },
+        {
+          "target": "macos-arm64",
+          "sha256": "08b90a516ccb665664c3b986e71769cdcc738960e45a0bd8c73ab691a0cda1cd"
+        },
+        {
+          "target": "windows-x64",
+          "sha256": "00198a58534faff29f2373a2649c58f176e3305aa77242f59cee6530c7c371d5"
+        }
+      ]
+    },
+    "fylo": {
+      "command": "fylo",
+      "releasedVersion": "26.33.02",
+      "releaseCommit": "e236162508f6789f980fa7ca136a6671938030cb",
+      "productionRole": "single-writer document and bucket persistence process (Rust native engine)",
+      "installedReleasedArtifact": {
+        "target": "macos-arm64",
+        "sha256": "2c78f91130863ad797cf7a6062aa1245fa638857fee63b8671fa9e2748974fa3"
+      },
+      "releasedArtifacts": [
+        {
+          "target": "linux-x64",
+          "sha256": "8d60479cc189afb991d969917158d93d78897dcd0ca3aa7e062be186982644e8"
+        },
+        {
+          "target": "linux-arm64",
+          "sha256": "ec161767b411b6a81d59771f43a094d4da22796c3c71301f2cc2a8f0a4db9d17"
+        },
+        {
+          "target": "macos-x64",
+          "sha256": "551e72291a7085536f5de360807dbe93a149826f2c0e6bbd7fe56b2e34abc545"
+        },
+        {
+          "target": "macos-arm64",
+          "sha256": "2c78f91130863ad797cf7a6062aa1245fa638857fee63b8671fa9e2748974fa3"
+        },
+        {
+          "target": "windows-x64",
+          "sha256": "d57a612d5abb770bc3e228a08b6a628341364b19fe8c62a6418bbb178ef41f34"
+        }
+      ],
+      "requiredProtocol": 1,
+      "requiredCapabilities": [
+        "handshake",
+        "exclusiveRoot",
+        "queryPagination",
+        "machineAccess",
+        "documentBuckets",
+        "serverlessQueue"
+      ],
+      "requiredOperationProbes": [
+        "machineAccess",
+        "documentBuckets"
+      ],
+      "missingCapabilities": {
+        "wholeRootBackup": "Retired by the FYLO Rust cutover under ADR 0007 along with backupStatus and backupReconcile. CADUCEUS uses its qualified local filesystem snapshot procedure instead."
+      }
+    },
+    "sesame": {
+      "command": "sesame",
+      "releasedVersion": "26.33.02",
+      "releaseCommit": "e8f36b6cf946a6979b2e2aa6df604e4ef6d8f1cb",
+      "productionRole": "single-owner authentication and authorization engine",
+      "goClientModule": "github.com/d31ma/sesame",
+      "goClientVersion": "v0.0.0-20260811145757-e8f36b6cf946",
+      "goClientNote": "The v26.33.02 tag has a major version that is not valid for the module path, so Go resolves the tagged release commit as this pseudo-version.",
+      "compatibleFYLOVersion": "26.33.02",
+      "compatibleFYLONote": "SESAME 26.33.02 pins and qualifies FYLO 26.33.02 with CHEX 26.32.02 and TTID 26.32.03.",
+      "installedReleasedArtifact": {
+        "target": "macos-arm64",
+        "sha256": "fe2700e6b365763cc7dead36acb4e8b272bc99ac0eac46c6649acbdb01962796"
+      },
+      "releasedArtifacts": [
+        {
+          "target": "linux-x64",
+          "sha256": "d0f2ca94937b73b1cfcf9f89a48783cf0a1cf317cba8a83753be24dea2ef07bc"
+        },
+        {
+          "target": "linux-arm64",
+          "sha256": "cd6c0e5ce0e353690bc9bfc81a30e05ebff11cab4b1f806a83995bc8d12d3ceb"
+        },
+        {
+          "target": "macos-x64",
+          "sha256": "1393fb1c251a33eb02d160e90f89bae8381300968ead2f96da506895e02e8177"
+        },
+        {
+          "target": "macos-arm64",
+          "sha256": "fe2700e6b365763cc7dead36acb4e8b272bc99ac0eac46c6649acbdb01962796"
+        },
+        {
+          "target": "windows-x64",
+          "sha256": "ac6e8608a632d34c858bc5a35a7ce20a08838175f32fc6001843d425e8bdb2ad"
+        }
+      ],
+      "requiredProtocol": "1",
+      "requiredOperations": [
+        "authenticator.passkey_register_begin",
+        "authenticator.passkey_register_finish",
+        "authenticator.passkey_list",
+        "authenticator.passkey_remove",
+        "authenticator.recovery_codes_issue",
+        "authenticator.set_password",
+        "authenticator.totp_activate",
+        "authenticator.totp_enroll",
+        "authn.begin",
+        "authn.complete",
+        "authn.passkey_options",
+        "authn.verify_passkey",
+        "authn.verify_password",
+        "authn.verify_recovery_code",
+        "authn.verify_totp",
+        "authorize.decide",
+        "grant.create",
+        "group.create",
+        "group.member_add",
+        "group.member_remove",
+        "oidc.authorize",
+        "oidc.interaction_complete",
+        "oidc.introspect",
+        "oidc.logout",
+        "oidc.token",
+        "oidc_client.get",
+        "oidc_client.register",
+        "principal.create",
+        "principal.get",
+        "principal.suspend",
+        "role.create",
+        "session.revoke",
+        "session.verify",
+        "tenant.bootstrap",
+        "tenant.get",
+        "token.jwks"
+      ],
+      "ownsSeparateFYLORoot": true,
+      "ownsSeparateFYLORootNote": "SESAME writes its security ledger to its own FYLO root inside the deployment directory. One FYLO process owns one root, so the identity ledger and the mail store are never the same writer."
+    },
+    "chex": {
+      "command": "chex",
+      "version": "26.32.02",
+      "releaseCommit": "86cd79073858258304d1d9882e48c321976f7e94",
+      "productionRole": "FYLO schema validation dependency",
+      "installedArtifact": {
+        "target": "macos-arm64",
+        "sha256": "a3869779fdc12210fdf9c8cc54d4ea136912516a76de47621d304dbbeaac47ce"
+      },
+      "releasedArtifacts": [
+        { "target": "linux-x64", "sha256": "ed0b71cb5d75a35e13e29b4a160e68d6f3e6221e3da6d80ca5a0361f92e5579b" },
+        { "target": "linux-arm64", "sha256": "1ec31aa7201d6ab3af8114725406050dd48fc6ca052c74a7be378510a1ec96af" },
+        { "target": "macos-x64", "sha256": "1b410bf166ffddf2921f661a18c3e90ba2ab74818f7a125fff4d20f0c3566806" },
+        { "target": "macos-arm64", "sha256": "a3869779fdc12210fdf9c8cc54d4ea136912516a76de47621d304dbbeaac47ce" },
+        { "target": "windows-x64", "sha256": "3aa465447849d1f0d43318cd7c0e3c69a7db8cc06055a0c6ba0b4d53c24334bc" }
+      ]
+    },
+    "ttid": {
+      "command": "ttid",
+      "version": "26.32.03",
+      "releaseCommit": "77de0ca95e23721ec05e3b46508681eae048c4a1",
+      "productionRole": "FYLO identifier dependency",
+      "installedArtifact": {
+        "target": "macos-arm64",
+        "sha256": "2aa3c44d180111ced6fd009f63d336450df7c1559c2552ab3044c51be2f65609"
+      },
+      "releasedArtifacts": [
+        { "target": "linux-x64", "sha256": "2ec6d27844720cdbaf7f9b4e06ab20f06cb69aa272930a22eca0edf57ef4dcf4" },
+        { "target": "linux-arm64", "sha256": "3c90dae83d6b94e4aecfa464d47196f8bc0719efa05b62e5d2fa35c419cbf676" },
+        { "target": "macos-x64", "sha256": "24f7d87480b40333429758113108d977604d99f64f8394b919505702ab9ad1bd" },
+        { "target": "macos-arm64", "sha256": "2aa3c44d180111ced6fd009f63d336450df7c1559c2552ab3044c51be2f65609" },
+        { "target": "windows-x64", "sha256": "41c06d2305e40ceb34baefc214610a869defc772501047e39c23427e0ff8565f" }
+      ]
+    },
+    "bun": {
+      "command": "bun",
+      "version": "1.3.14",
+      "productionRole": "legacy server runtime during migration and frontend tool runner"
+    },
+    "go": {
+      "command": "go",
+      "version": "1.26.5",
+      "productionRole": "production backend compiler and test toolchain"
+    }
+  },
+  "dependencyLock": {
+    "path": "bun.lock",
+    "sha256": "b408e4ba68626dfd05af8b14b99d9609b4147942090a104227a0debbce305f49"
+  },
+  "policy": {
+    "productionRequiresReleasedArtifacts": true,
+    "previewArtifactsMayRunOnlyInDevelopmentAndQualification": true,
+    "digestMismatchFailsClosed": true,
+    "unknownCapabilityFailsClosed": true
+  }
+}

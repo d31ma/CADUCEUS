@@ -1,0 +1,1 @@
+{"id":"^send-request-[0-9a-f-]{36}$","ownerEmail":"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$","domain":"^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$","idempotencyKey":"^[^\\r\\n\\0]{1,128}$","requestHash":"^[a-f0-9]{64}$","state":"^(applying|accepted|ambiguous)$","resultJson":"^[\\s\\S]{0,65535}$","createdAt":"^\\d{1,16}$","updatedAt":"^\\d{1,16}$"}

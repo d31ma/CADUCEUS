@@ -1,0 +1,24 @@
+{
+  "GET": {
+    "200": "^.*$",
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" },
+    "503": { "error": "^.*$", "unavailable": "^(true|false)$" }
+  },
+  "PATCH": {
+    "200": "^.*$",
+    "400": { "error": "^.*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" },
+    "409": { "error": "^.*$", "conflict": "^(true|false)$" },
+    "503": { "error": "^.*$", "unavailable": "^(true|false)$" }
+  },
+  "DELETE": {
+    "200": { "deleting": "^(true|false)$" },
+    "400": { "error": "^.*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" },
+    "409": { "error": "^.*$", "conflict": "^(true|false)$" },
+    "503": { "error": "^.*$", "unavailable": "^(true|false)$" }
+  }
+}

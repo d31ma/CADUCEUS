@@ -1,0 +1,22 @@
+{
+  "GET": {
+    "200": { "id": "^(contact-|carddav_).*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
+  },
+  "PUT": {
+    "200": { "id": "^(contact-|carddav_).*$" },
+    "400": { "error": "^.*$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" },
+    "409": { "error": "^.*$", "conflict": "^(true|false)$" },
+    "503": { "error": "^.*$", "unavailable": "^(true|false)$" }
+  },
+  "DELETE": {
+    "200": { "deleted": "^(true|false)$" },
+    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
+    "404": { "error": "^.*$", "notFound": "^(true|false)$" },
+    "409": { "error": "^.*$", "conflict": "^(true|false)$" },
+    "503": { "error": "^.*$", "unavailable": "^(true|false)$" }
+  }
+}

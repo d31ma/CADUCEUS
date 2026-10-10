@@ -1,0 +1,84 @@
+<div class="shared-thread-page">
+  <header class="shared-thread-brand">
+    <a href="/" aria-label="CADUCEUS home">
+      <img src="/shared/assets/favicon.svg" alt="" />
+      <span>CADUCEUS</span>
+    </a>
+    <span>Private conversation link</span>
+  </header>
+
+  <main>
+    <logic :if="$loading">
+      <section class="shared-thread-state" role="status">
+        <div class="shared-thread-spinner" aria-hidden="true"></div>
+        <h1>Loading conversation…</h1>
+      </section>
+    </logic>
+
+    <logic :if="!$loading && $error">
+      <section class="shared-thread-state shared-thread-error" role="alert">
+        <span aria-hidden="true">×</span>
+        <h1>Shared conversation unavailable</h1>
+        <p>{$error}</p>
+      </section>
+    </logic>
+
+    <logic :if="!$loading && $share">
+      <section class="shared-thread-heading">
+        <p>Shared conversation</p>
+        <h1>{$share.subject || '(No subject)'}</h1>
+        <div>
+          <span>{$share.messages.length} {$share.messages.length === 1 ? 'message' : 'messages'}</span>
+          <span>Expires {$share.expiresAtLabel}</span>
+        </div>
+      </section>
+
+      <aside class="shared-thread-privacy" role="note">
+        <strong>Privacy protection is active.</strong>
+        <span>Remote images, tracking pixels, scripts, forms, and embedded media are blocked.</span>
+      </aside>
+
+      <section class="shared-thread-messages" aria-label="Shared conversation messages">
+        <loop :for="message of $share.messages">
+          <article class="shared-thread-message">
+            <header>
+              <div class="shared-thread-avatar" aria-hidden="true">{message.from.slice(0, 1).toUpperCase()}</div>
+              <div class="shared-thread-sender">
+                <strong>{message.from}</strong>
+                <span>To: {message.toLabel || '(undisclosed)'}</span>
+                <logic :if="message.ccLabel"><span>Cc: {message.ccLabel}</span></logic>
+              </div>
+              <time :datetime="message.receivedAt">{message.receivedAtLabel}</time>
+            </header>
+            <h2>{message.subject || '(No subject)'}</h2>
+            <logic :if="message.protectedHtml">
+              <iframe
+                class="shared-thread-html"
+                sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                referrerpolicy="no-referrer"
+                :srcdoc="message.protectedHtml"
+                :title="'Message from ' + message.from">
+              </iframe>
+            </logic>
+            <logic :if="!message.protectedHtml"><div class="shared-thread-text">{message.body || '(No body)'}</div></logic>
+            <logic :if="message.attachments.length > 0">
+              <div class="shared-thread-attachments" aria-label="Message attachments">
+                <loop :for="attachment of message.attachments">
+                  <button type="button" on:click="downloadAttachment(attachment)" :aria-label="'Download ' + attachment.filename">
+                    <span aria-hidden="true">↓</span>
+                    <span><strong>{attachment.filename}</strong><small>{attachment.sizeLabel}</small></span>
+                  </button>
+                </loop>
+              </div>
+            </logic>
+          </article>
+        </loop>
+      </section>
+      <logic :if="$downloadError"><p class="shared-thread-download-error" role="alert">{$downloadError}</p></logic>
+    </logic>
+  </main>
+
+  <footer>
+    This link is a bearer capability. Do not forward it unless you intend to share the conversation.
+  </footer>
+</div>

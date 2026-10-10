@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import { startTestServer } from "./helpers.js";
+import { startTestServer, TEST_SERVER_HOOK_TIMEOUT_MS } from "./helpers.js";
 let s;
 let alice;
 let bob;
 beforeAll(async () => {
   s = await startTestServer();
-  alice = s.token({ email: "alice@example.com", domains: ["example.com"], role: "admin" });
-  bob = s.token({ email: "bob@example.com", domains: ["example.com"], role: "viewer" });
-}, 15000);
-afterAll(() => s.stop());
+  alice = await s.token({ email: "alice@example.com", domains: ["example.com"], role: "admin" });
+  bob = await s.token({ email: "bob@example.com", domains: ["example.com"], role: "viewer" });
+}, TEST_SERVER_HOOK_TIMEOUT_MS);
+afterAll(() => s?.stop());
 const sampleSubscription = {
   endpoint: "https://push.example.test/subscription/alice-device",
   keys: {

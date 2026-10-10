@@ -2,125 +2,101 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { createDb } from "@/repositories/index.js";
-import {
-  listUsers,
-  findUserByEmail,
-  findUserByEmailAndPhone,
-  putUser,
-  deleteUser
-} from "@/repositories/users.js";
+import { DatabaseRepository } from "@/platform/persistence/fylo.js";
+import { UsersRepository } from "@/features/users/repositories/users.js";
 let fylo;
+let usersRepo;
 let testRoot;
 beforeEach(async () => {
   testRoot = mkdtempSync(join(tmpdir(), "caduceus-test-"));
-  fylo = await createDb(testRoot);
+  fylo = await DatabaseRepository.createDb(testRoot);
+  usersRepo = new UsersRepository(fylo);
 });
-afterEach(() => {
+afterEach(async () => {
+  await fylo?.close?.();
   rmSync(testRoot, { recursive: true, force: true });
 });
 const alice = {
   email: "alice@example.com",
   aliases: [],
-  phones: ["+15551234567"],
   domains: ["example.com"],
   role: "admin"
 };
 const bob = {
   email: "bob@example.com",
   aliases: [],
-  phones: ["+15559876543"],
   domains: ["example.com"],
   role: "viewer"
 };
 describe("putUser / listUsers", () => {
   it("stores and retrieves a user", async () => {
-    await putUser(fylo, alice);
-    const users = await listUsers(fylo);
+    await usersRepo.put(alice);
+    const users = await usersRepo.list();
     expect(users).toHaveLength(1);
     expect(users[0].email).toBe("alice@example.com");
-    expect(users[0].phones).toEqual(["+15551234567"]);
     expect(users[0].role).toBe("admin");
   });
   it("normalises email to lowercase on insert", async () => {
-    await putUser(fylo, { ...alice, email: "ALICE@Example.COM" });
-    const [, user] = await findUserByEmail(fylo, "alice@example.com");
+    await usersRepo.put({ ...alice, email: "ALICE@Example.COM" });
+    const [, user] = await usersRepo.findByEmail("alice@example.com");
     expect(user).not.toBeNull();
     expect(user.email).toBe("alice@example.com");
   });
   it("stores multiple users", async () => {
-    await putUser(fylo, alice);
-    await putUser(fylo, bob);
-    const users = await listUsers(fylo);
+    await usersRepo.put(alice);
+    await usersRepo.put(bob);
+    const users = await usersRepo.list();
     expect(users).toHaveLength(2);
   });
 });
 describe("findUserByEmail", () => {
   it("returns the user when found", async () => {
-    await putUser(fylo, alice);
-    const [docId, user] = await findUserByEmail(fylo, "alice@example.com");
+    await usersRepo.put(alice);
+    const [docId, user] = await usersRepo.findByEmail("alice@example.com");
     expect(docId).not.toBeNull();
     expect(user).not.toBeNull();
     expect(user.email).toBe("alice@example.com");
   });
   it("returns [null, null] when not found", async () => {
-    const [docId, user] = await findUserByEmail(fylo, "nobody@example.com");
+    const [docId, user] = await usersRepo.findByEmail("nobody@example.com");
     expect(docId).toBeNull();
     expect(user).toBeNull();
   });
   it("finds user case-insensitively", async () => {
-    await putUser(fylo, alice);
-    const [, user] = await findUserByEmail(fylo, "ALICE@EXAMPLE.COM");
+    await usersRepo.put(alice);
+    const [, user] = await usersRepo.findByEmail("ALICE@EXAMPLE.COM");
     expect(user).not.toBeNull();
   });
   it("finds user by alias", async () => {
-    await putUser(fylo, { ...alice, aliases: ["alice@old.example.com"] });
-    const [, user] = await findUserByEmail(fylo, "ALICE@OLD.EXAMPLE.COM");
+    await usersRepo.put({ ...alice, aliases: ["alice@old.example.com"] });
+    const [, user] = await usersRepo.findByEmail("ALICE@OLD.EXAMPLE.COM");
     expect(user).not.toBeNull();
     expect(user.email).toBe("alice@example.com");
   });
-});
-describe("findUserByEmailAndPhone", () => {
-  it("finds user matching both email and phone", async () => {
-    await putUser(fylo, alice);
-    const [docId, user] = await findUserByEmailAndPhone(fylo, alice.email, alice.phones[0]);
-    expect(docId).not.toBeNull();
-    expect(user.email).toBe("alice@example.com");
-  });
-  it("finds user matching both alias and phone", async () => {
-    await putUser(fylo, { ...alice, aliases: ["alice@old.example.com"] });
-    const [docId, user] = await findUserByEmailAndPhone(fylo, "alice@old.example.com", alice.phones[0]);
-    expect(docId).not.toBeNull();
-    expect(user.email).toBe("alice@example.com");
-  });
-  it("returns null when phone does not match", async () => {
-    await putUser(fylo, alice);
-    const [docId, user] = await findUserByEmailAndPhone(fylo, alice.email, "+19999999999");
-    expect(docId).toBeNull();
-    expect(user).toBeNull();
-  });
-  it("returns null when email does not match", async () => {
-    await putUser(fylo, alice);
-    const [docId, user] = await findUserByEmailAndPhone(fylo, "nobody@example.com", alice.phones[0]);
-    expect(docId).toBeNull();
-    expect(user).toBeNull();
+  it("updates aliases independently from the rest of the user", async () => {
+    await usersRepo.put(alice);
+    const [docId] = await usersRepo.findByEmail(alice.email);
+    await usersRepo.updateAliases(docId, ["Alice+sales@Example.com", alice.email], alice.email);
+    const [, user] = await usersRepo.findByEmail("alice+sales@example.com");
+    expect(user.email).toBe(alice.email);
+    expect(user.aliases).toEqual(["alice+sales@example.com"]);
   });
 });
 describe("deleteUser", () => {
   it("removes the user", async () => {
-    await putUser(fylo, alice);
-    const [docId] = await findUserByEmail(fylo, alice.email);
+    await usersRepo.put(alice);
+    const [docId] = await usersRepo.findByEmail(alice.email);
     expect(docId).not.toBeNull();
-    await deleteUser(fylo, docId);
-    const users = await listUsers(fylo);
+    await usersRepo.delete(docId);
+    const users = await usersRepo.list();
     expect(users).toHaveLength(0);
   });
   it("does not affect other users", async () => {
-    await putUser(fylo, alice);
-    await putUser(fylo, bob);
-    const [aliceDocId] = await findUserByEmail(fylo, alice.email);
-    await deleteUser(fylo, aliceDocId);
-    const [, remaining] = await findUserByEmail(fylo, bob.email);
+    await usersRepo.put(alice);
+    await usersRepo.put(bob);
+    const [aliceDocId] = await usersRepo.findByEmail(alice.email);
+    await usersRepo.delete(aliceDocId);
+    const [, remaining] = await usersRepo.findByEmail(bob.email);
     expect(remaining).not.toBeNull();
   });
 });

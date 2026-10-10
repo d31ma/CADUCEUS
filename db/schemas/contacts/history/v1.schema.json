@@ -1,0 +1,23 @@
+{
+  "id": "^contact-[A-Za-z0-9_-]{8,120}$",
+  "ownerEmail": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "domain": "^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$",
+  "source": "^(manual|mail|vcard)$",
+  "name": "^[\\s\\S]{0,200}$",
+  "givenName?": "^[\\s\\S]{0,100}$",
+  "familyName?": "^[\\s\\S]{0,100}$",
+  "company?": "^[\\s\\S]{0,200}$",
+  "title?": "^[\\s\\S]{0,200}$",
+  "emailsJson": "^[\\s\\S]{2,20000}$",
+  "phonesJson": "^[\\s\\S]{2,20000}$",
+  "addressesJson": "^[\\s\\S]{2,40000}$",
+  "urlsJson": "^[\\s\\S]{2,20000}$",
+  "nicknamesJson": "^[\\s\\S]{2,10000}$",
+  "groupIdsJson": "^[\\s\\S]{2,20000}$",
+  "birthday?": "^.{0,32}$",
+  "notes?": "^[\\s\\S]{0,10000}$",
+  "interactionCount?": "^\\d+$",
+  "lastContactedAt?": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "createdAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "updatedAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$"
+}

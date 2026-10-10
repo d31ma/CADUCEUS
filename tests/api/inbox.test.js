@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import { startTestServer } from "./helpers.js";
+import { startTestServer, TEST_SERVER_HOOK_TIMEOUT_MS } from "./helpers.js";
 let s;
 let adminToken;
 beforeAll(async () => {
   s = await startTestServer();
-  adminToken = s.token({ email: "alice@example.com", domains: ["example.com"], role: "admin" });
-}, 15000);
-afterAll(() => s.stop());
+  adminToken = await s.token({ email: "alice@example.com", domains: ["example.com"], role: "admin" });
+}, TEST_SERVER_HOOK_TIMEOUT_MS);
+afterAll(() => s?.stop());
 async function seedEmail() {
   const r = await s.post("/inbound/webhook", {
     recipient: "alice@example.com",

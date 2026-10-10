@@ -1,15 +1,14 @@
 #!/usr/bin/env bun
-import { randomUUID } from 'node:crypto'
-import { createDb, Collections, collect } from '@/repositories/index.js'
-import { findDomainEntry, putDomain } from '@/repositories/domains.js'
-import { putDomainMigration } from '@/repositories/domain-migrations.js'
-import { listRules, findRuleById, putRule } from '@/repositories/rules.js'
-import { listUsers, findUserByEmail, normalizeUser } from '@/repositories/users.js'
-import { normalizeDomain } from '@/services/security.js'
+import { Collections, DatabaseRepository, collect } from '../server/platform/persistence/fylo.js'
+import { DomainsRepository } from '../server/features/domains/repositories/domains.js'
+import { DomainMigrationsRepository } from '../server/features/domains/repositories/domain-migrations.js'
+import { RulesRepository } from '../server/features/mailbox/repositories/rules.js'
+import { UsersRepository } from '../server/features/users/repositories/users.js'
+import { Security } from '../server/platform/security/security.js'
 
 const args = parseArgs(process.argv.slice(2))
-const fromDomain = normalizeDomain(String(args.from ?? args._[0] ?? ''))
-const toDomain = normalizeDomain(String(args.to ?? args._[1] ?? ''))
+const fromDomain = Security.normalizeDomain(String(args.from ?? args._[0] ?? ''))
+const toDomain = Security.normalizeDomain(String(args.to ?? args._[1] ?? ''))
 const apply = args.apply === true || args.apply === 'true'
 const dryRun = !apply
 
@@ -18,15 +17,21 @@ if (!fromDomain || !toDomain || fromDomain === toDomain) {
   process.exit(1)
 }
 
-const fylo = await createDb()
-const [, fromConfig] = await findDomainEntry(fylo, fromDomain)
-const [, existingToConfig] = await findDomainEntry(fylo, toDomain)
+const fylo = await DatabaseRepository.createDb()
+const domainsRepo = new DomainsRepository(fylo)
+const usersRepo = new UsersRepository(fylo)
+const rulesRepo = new RulesRepository(fylo)
+const domainMigrationsRepo = new DomainMigrationsRepository(fylo)
+
+const [, fromConfig] = await domainsRepo.findEntry(fromDomain)
+const [, existingToConfig] = await domainsRepo.findEntry(toDomain)
 if (!fromConfig) {
   console.error(JSON.stringify({ error: `Source domain not found: ${fromDomain}` }, null, 2))
+  await fylo.close()
   process.exit(1)
 }
 
-const users = await listUsers(fylo)
+const users = await usersRepo.list()
 const primaryMoves = users
   .filter(user => domainOf(user.email) === fromDomain)
   .map(user => ({
@@ -37,7 +42,7 @@ const primaryMoves = users
 
 const conflicts = []
 for (const move of primaryMoves) {
-  const [conflictDocId, conflictUser] = await findUserByEmail(fylo, move.newEmail)
+  const [conflictDocId, conflictUser] = await usersRepo.findByEmail(move.newEmail)
   if (conflictDocId && conflictDocId !== move.docId) {
     conflicts.push({
       oldEmail: move.oldEmail,
@@ -49,6 +54,7 @@ for (const move of primaryMoves) {
 
 if (conflicts.length > 0) {
   console.error(JSON.stringify({ error: 'Migration has conflicting destination users', conflicts }, null, 2))
+  await fylo.close()
   process.exit(1)
 }
 
@@ -56,12 +62,12 @@ const domainAction = existingToConfig ? 'kept-existing' : 'created-from-source'
 const affectedDomainUsers = users
   .filter(user => user.domains.includes(fromDomain) && !primaryMoves.some(move => move.docId === user.docId))
   .map(user => user.email)
-const rulesToCopy = await listRules(fylo, [fromDomain])
+const rulesToCopy = await rulesRepo.list([fromDomain])
 const plannedRules = []
 
 for (const rule of rulesToCopy) {
   const id = `${rule.id}-migrated-${toDomain}`
-  const [existingRuleDocId] = await findRuleById(fylo, id)
+  const [existingRuleDocId] = await rulesRepo.findById(id)
   plannedRules.push({
     from: rule.id,
     to: id,
@@ -81,11 +87,12 @@ const plan = {
 
 if (dryRun) {
   console.log(JSON.stringify(plan, null, 2))
+  await fylo.close()
   process.exit(0)
 }
 
 if (!existingToConfig) {
-  await putDomain(fylo, {
+  await domainsRepo.put({
     ...fromConfig,
     domain: toDomain,
     routes: fromConfig.routes.map(route => rewriteRouteForDomain(route, fromDomain, toDomain)),
@@ -94,9 +101,9 @@ if (!existingToConfig) {
 
 for (const rule of rulesToCopy) {
   const id = `${rule.id}-migrated-${toDomain}`
-  const [existingRuleDocId] = await findRuleById(fylo, id)
+  const [existingRuleDocId] = await rulesRepo.findById(id)
   if (existingRuleDocId) continue
-  await putRule(fylo, {
+  await rulesRepo.put({
     ...rule,
     id,
     domain: toDomain,
@@ -104,12 +111,12 @@ for (const rule of rulesToCopy) {
 }
 
 for (const move of primaryMoves) {
-  const updated = normalizeUser({
+  const updated = /** @type {any} */ (UsersRepository.normalize({
     ...move,
     email: move.newEmail,
     aliases: [...(move.aliases ?? []), move.oldEmail],
     domains: [...move.domains, fromDomain, toDomain],
-  })
+  }))
   const { docId, oldEmail, newEmail, ...user } = updated
   void docId
   void oldEmail
@@ -121,15 +128,15 @@ for (const move of primaryMoves) {
 for (const user of users) {
   if (!user.domains.includes(fromDomain)) continue
   if (primaryMoves.some(move => move.docId === user.docId)) continue
-  const updated = normalizeUser({
+  const updated = /** @type {any} */ (UsersRepository.normalize({
     ...user,
     domains: [...user.domains, toDomain],
-  })
+  }))
   const { docId, ...patch } = updated
   await fylo.patchDoc(Collections.USERS, { [docId]: patch })
 }
 
-await putDomainMigration(fylo, {
+await domainMigrationsRepo.put({
   id: `domain-migration:${fromDomain}->${toDomain}`,
   fromDomain,
   toDomain,
@@ -140,9 +147,10 @@ await putDomainMigration(fylo, {
 })
 
 console.log(JSON.stringify({ ...plan, dryRun: false, applied: true }, null, 2))
+await fylo.close()
 
 function parseArgs(argv) {
-  const parsed = { _: [] }
+  const parsed = /** @type {Record<string, any> & { _: string[] }} */ ({ _: [] })
   for (const arg of argv) {
     if (!arg.startsWith('--')) {
       parsed._.push(arg)
@@ -178,11 +186,10 @@ function rewriteAddressPattern(value, fromDomain, toDomain) {
 }
 
 async function rewriteUserEmailReferences(fylo, oldEmail, newEmail) {
-  await rewriteCollectionField(fylo, Collections.MFA_DEVICES, 'userEmail', oldEmail, newEmail)
   await rewriteCollectionField(fylo, Collections.MFA_SESSIONS, 'email', oldEmail, newEmail)
   await rewriteCollectionField(fylo, Collections.SETUP_SESSIONS, 'email', oldEmail, newEmail)
-  await rewriteCollectionField(fylo, Collections.OTP_SESSIONS, 'email', oldEmail, newEmail)
   await rewriteCollectionField(fylo, Collections.PUSH_SUBSCRIPTIONS, 'userEmail', oldEmail, newEmail)
+  await rewriteCollectionField(fylo, Collections.FOLLOW_UP_REMINDERS, 'ownerEmail', oldEmail, newEmail)
 }
 
 async function rewriteCollectionField(fylo, collection, field, oldValue, newValue) {

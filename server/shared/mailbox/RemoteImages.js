@@ -45,13 +45,13 @@ export class RemoteImages {
       for (const entry of String(attributes.srcset || '').split(',')) {
         add(entry.trim().split(/\s+/)[0])
       }
-      for (const match of String(attributes.style || '').matchAll(/url\(\s*['"]?([^'"\)]+)['"]?\s*\)/gi)) {
+      for (const match of String(attributes.style || '').matchAll(/url\(\s*[\x27\x22]?([^\x27\x22\)]+)[\x27\x22]?\s*\)/gi)) {
         add(match[1])
       }
     }
 
     for (const style of DomUtils.findAll(node => node?.name === 'style', document.children)) {
-      for (const match of DomUtils.textContent(style).matchAll(/url\(\s*['"]?([^'"\)]+)['"]?\s*\)/gi)) {
+      for (const match of DomUtils.textContent(style).matchAll(/url\(\s*[\x27\x22]?([^\x27\x22\)]+)[\x27\x22]?\s*\)/gi)) {
         add(match[1])
       }
     }

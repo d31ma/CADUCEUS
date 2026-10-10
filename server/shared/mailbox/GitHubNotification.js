@@ -64,7 +64,7 @@ export class GitHubNotification {
     for (const match of html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi)) {
       const text = GitHubNotification.#decodeHtml(GitHubNotification.#stripTags(match[2])).replace(/\s+/g, ' ').trim()
       if (!GitHubNotification.#VIEW_ON_GITHUB.test(text)) continue
-      const hrefMatch = match[1].match(/\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i)
+      const hrefMatch = match[1].match(/\bhref\s*=\s*(?:\x22([^\x22]*)\x22|\x27([^\x27]*)\x27|([^\s>]+))/i)
       const target = GitHubNotification.#safeGitHubUrl(GitHubNotification.#decodeHtml(hrefMatch?.[1] || hrefMatch?.[2] || hrefMatch?.[3] || ''))
       if (target) return target
     }

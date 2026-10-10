@@ -5,7 +5,7 @@ export class AttachmentPolicy {
 
   static #HAS_CONTROL_OR_DIRECTIONAL = /[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/
 
-  static #RESERVED_PATH_CHARACTER = /[/\\?%*:|"<>]/g
+  static #RESERVED_PATH_CHARACTER = /[/\\?%*:|\x22<>]/g
 
   /**
    * Convert an untrusted MIME filename into one portable display/download name.

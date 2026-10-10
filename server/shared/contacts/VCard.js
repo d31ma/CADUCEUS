@@ -70,7 +70,7 @@ export class VCard {
     const name = head.shift().split('.').pop().toUpperCase()
     const params = Object.fromEntries(head.map(value => {
       const [key, ...rest] = value.split('=')
-      return [String(key).toUpperCase(), rest.join('=').replace(/^"|"$/g, '')]
+      return [String(key).toUpperCase(), rest.join('=').replace(/^\x22|\x22$/g, '')]
     }))
     return { name, value: line.slice(colon + 1), type: String(params.TYPE || '').split(',')[0].toLowerCase() || undefined }
   }

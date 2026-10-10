@@ -96,7 +96,7 @@ export class InboundRules {
     if (splitAt < 0) return false
     const lines = rawBody.slice(0, splitAt).split(/\r?\n/)
     const validBlock = lines.length > 0 && lines.every((line) =>
-      /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+:\s*/.test(line) || /^[ \t]+/.test(line),
+      /^[!#$%&\x27*+\-.^_\x60|~0-9A-Za-z]+:\s*/.test(line) || /^[ \t]+/.test(line),
     )
     const recognizable = lines.some((line) =>
       /^(?:authentication-results|cc|content-[^:]+|date|from|message-id|mime-version|received|reply-to|subject|to|x-[^:]+):/i.test(line),
@@ -149,7 +149,7 @@ export class InboundRules {
     const splitAt = rawBody.search(/\r?\n\r?\n/)
     if (splitAt < 0) return null
     const topHeaders = InboundRules.parseHeaderBlock(rawBody.slice(0, splitAt))
-    const boundary = topHeaders['content-type']?.match(/boundary=(?:"([^"]+)"|([^;\s]+))/i)?.slice(1).find(Boolean)
+    const boundary = topHeaders['content-type']?.match(/boundary=(?:\x22([^\x22]+)\x22|([^;\s]+))/i)?.slice(1).find(Boolean)
     if (!boundary) return null
 
     const attachments = []
@@ -164,8 +164,8 @@ export class InboundRules {
       const body = part.slice(partSplitAt).replace(/^\r?\n\r?\n/, '').replace(/\r?\n$/, '')
       const disposition = headers['content-disposition'] ?? ''
       const contentType = (headers['content-type'] ?? 'text/plain').split(';', 1)[0].trim().toLowerCase()
-      const filename = disposition.match(/filename=(?:"([^"]+)"|([^;\s]+))/i)?.slice(1).find(Boolean)
-        ?? headers['content-type']?.match(/name=(?:"([^"]+)"|([^;\s]+))/i)?.slice(1).find(Boolean)
+      const filename = disposition.match(/filename=(?:\x22([^\x22]+)\x22|([^;\s]+))/i)?.slice(1).find(Boolean)
+        ?? headers['content-type']?.match(/name=(?:\x22([^\x22]+)\x22|([^;\s]+))/i)?.slice(1).find(Boolean)
 
       if (/attachment/i.test(disposition) || filename) {
         const encoded = headers['content-transfer-encoding']?.toLowerCase() === 'base64'

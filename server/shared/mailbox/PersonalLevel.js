@@ -1,6 +1,6 @@
 export class PersonalLevel {
   /** @import { StoredEmail } from '../../types' */
-  static #ADDRESS_PATTERN = /[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi
+  static #ADDRESS_PATTERN = /[A-Z0-9.!#$%&\x27*+/=?^_\x60{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi
 
   /**
    * Extract normalized mailbox addresses from an RFC address-list value.

@@ -51,7 +51,7 @@ export class EmailsRecords {
     return addresses.length === 1 ? addresses[0].toLowerCase() : ''
   }
 
-  static ADDRESS_PATTERN = /[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi
+  static ADDRESS_PATTERN = /[A-Z0-9.!#$%&\x27*+/=?^_\x60{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi
 
   /** @param {StoredEmail} email @returns {StoredEmail} */
   static normalize(email) {

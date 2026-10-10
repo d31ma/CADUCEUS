@@ -374,7 +374,7 @@ export class Ics {
   }
 
   /** @param {string} value */
-  static #escapeParam(value) { return String(value || '').replace(/["\r\n]/g, '') }
+  static #escapeParam(value) { return String(value || '').replace(/[\x22\r\n]/g, '') }
 
   /** @param {Record<string, any>} event @param {string} uid @param {string} recurrenceId @param {number} sequence */
   static #eventLines(event, uid, recurrenceId, sequence) {

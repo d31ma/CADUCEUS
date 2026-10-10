@@ -5,7 +5,7 @@ import { Security } from '../security/Security.js'
  * Reply-To mismatch warnings from untrusted RFC headers.
  */
 export class PhishingDetection {
-  static #EMAIL_IN_HEADER = /[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi
+  static #EMAIL_IN_HEADER = /[A-Z0-9.!#$%&\x27*+/=?^_\x60{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi
 
   /**
    * @param {{ envelopeSender: string, headers?: Record<string, string> }} input

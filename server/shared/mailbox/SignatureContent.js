@@ -61,9 +61,9 @@ export class SignatureContent {
       .replace(/\u0000/g, '')
       .replace(SignatureContent.#UNSAFE_BLOCK_RE, '')
       .replace(SignatureContent.#UNSAFE_SINGLE_RE, '')
-      .replace(/\s+on[a-z0-9_-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-      .replace(/\s+(href|src|xlink:href)\s*=\s*(["'])\s*(?:javascript|vbscript):[\s\S]*?\2/gi, ' $1="#"')
-      .replace(/\s+style\s*=\s*(["'])[^"']*(?:expression\s*\(|url\s*\(\s*["']?\s*(?:javascript|vbscript):)[^"']*\1/gi, '')
+      .replace(/\s+on[a-z0-9_-]+\s*=\s*(?:\x22[^\x22]*\x22|\x27[^\x27]*\x27|[^\s>]+)/gi, '')
+      .replace(/\s+(href|src|xlink:href)\s*=\s*([\x22\x27])\s*(?:javascript|vbscript):[\s\S]*?\2/gi, ' $1="#"')
+      .replace(/\s+style\s*=\s*([\x22\x27])[^\x22\x27]*(?:expression\s*\(|url\s*\(\s*[\x22\x27]?\s*(?:javascript|vbscript):)[^\x22\x27]*\1/gi, '')
   }
 
   /**

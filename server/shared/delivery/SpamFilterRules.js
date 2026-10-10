@@ -39,7 +39,7 @@ export class SpamFilterRules {
 
   static MONEY_WORDS = /\b(viagra|cialis|lottery|winner|jackpot|crypto|bitcoin|forex|prince|inheritance|wire transfer)\b/i
 
-  static URGENCY = /\b(act now|claim now|urgent|limited time|congratulations|you('| ha)ve won|free money|risk[- ]free)\b/i
+  static URGENCY = /\b(act now|claim now|urgent|limited time|congratulations|you(\x27| ha)ve won|free money|risk[- ]free)\b/i
 
   static SUSPICIOUS_TLD = /\.(?:win|top|loan|click|gq|tk|ml|cf)$/i
 

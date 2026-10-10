@@ -39,7 +39,7 @@ export class GrammarCheckService {
       })
     }
 
-    GrammarCheckRules.scan(text, /\b([A-Za-z][A-Za-z'-]*)\s+\1\b/gi, match => {
+    GrammarCheckRules.scan(text, /\b([A-Za-z][A-Za-z\x27-]*)\s+\1\b/gi, match => {
       const secondOffset = match.index + match[0].lastIndexOf(match[1])
       add(secondOffset, match[1].length, 'REPEATED_WORD', 'This word is repeated.', [], 'STYLE', 'style')
     })
@@ -71,10 +71,10 @@ export class GrammarCheckService {
       const verb = replacements[match[2].toLowerCase()]
       add(match.index, match[0].length, 'PLURAL_VERB_AGREEMENT', 'Use a plural verb with this subject.', [`${match[1]} ${verb}`])
     })
-    GrammarCheckRules.scan(text, /\b(a)\s+([aeiou][A-Za-z'-]*)\b/gi, match => {
+    GrammarCheckRules.scan(text, /\b(a)\s+([aeiou][A-Za-z\x27-]*)\b/gi, match => {
       add(match.index, match[0].length, 'A_VOWEL_SOUND', 'Use “an” before this vowel sound.', [`an ${match[2]}`])
     })
-    GrammarCheckRules.scan(text, /\b(an)\s+([bcdfgjklmnpqrstvwxyz][A-Za-z'-]*)\b/gi, match => {
+    GrammarCheckRules.scan(text, /\b(an)\s+([bcdfgjklmnpqrstvwxyz][A-Za-z\x27-]*)\b/gi, match => {
       add(match.index, match[0].length, 'AN_CONSONANT_SOUND', 'Use “a” before this consonant sound.', [`a ${match[2]}`])
     })
     GrammarCheckRules.scan(text, /(^|[.!?]\s+)([a-z])/g, match => {

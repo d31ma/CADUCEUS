@@ -19,8 +19,8 @@ export class TemplateContent {
       .replace(/\u0000/g, '')
       .replace(TemplateContent.#UNSAFE_BLOCK_RE, '')
       .replace(TemplateContent.#UNSAFE_SINGLE_RE, '')
-      .replace(/\s+on[a-z0-9_-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-      .replace(/\s+(href|src|xlink:href)\s*=\s*(["'])\s*(?:javascript|vbscript):[\s\S]*?\2/gi, ' $1="#"')
+      .replace(/\s+on[a-z0-9_-]+\s*=\s*(?:\x22[^\x22]*\x22|\x27[^\x27]*\x27|[^\s>]+)/gi, '')
+      .replace(/\s+(href|src|xlink:href)\s*=\s*([\x22\x27])\s*(?:javascript|vbscript):[\s\S]*?\2/gi, ' $1="#"')
   }
 
   /**

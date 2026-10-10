@@ -18,7 +18,7 @@ export class ListUnsubscribe {
     /subscription/i, /notification settings/i, /remove yourself from this mailing/i,
     /afmeld/i, /afmelden/i, /af te melden voor/i, /darse de baja/i,
     /désabonnement/i, /désinscrire/i, /désinscription/i, /désabonner/i,
-    /préférences d['’]email/i, /préférences d['’]abonnement/i,
+    /préférences d[\x27’]email/i, /préférences d[\x27’]abonnement/i,
     /отказаться от подписки/i, /одјавити/i, /afskrá/i, /לבטל את המנוי/i,
     /koupe abònman/i, /退订/i, /退訂/i, /إلغاء الاشتراك/i,
     /պետք է նախ միանալ/i, /abbestellen/i, /abbestellung/i, /abmelden/i,
@@ -32,7 +32,7 @@ export class ListUnsubscribe {
     const withoutQuotes = html.replace(/<blockquote\b[^>]*>[\s\S]*?<\/blockquote\s*>/gi, '')
     const candidates = []
     for (const match of withoutQuotes.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi)) {
-      const hrefMatch = match[1].match(/\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i)
+      const hrefMatch = match[1].match(/\bhref\s*=\s*(?:\x22([^\x22]*)\x22|\x27([^\x27]*)\x27|([^\s>]+))/i)
       const href = ListUnsubscribe.#decodeHtmlAttribute(hrefMatch?.[1] || hrefMatch?.[2] || hrefMatch?.[3] || '')
       const url = ListUnsubscribe.#secureHttps(href)
       if (!url) continue

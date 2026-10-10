@@ -46,11 +46,10 @@ func (protocol McpProtocol) Answer(body any, header http.Header) *http.Response 
 		if _, isRequest := request["method"].(string); !isRequest || request["id"] == nil {
 			continue
 		}
-		encoded, _ := json.Marshal(protocol.respond(request))
-		events.WriteString("event: message\ndata: " + string(encoded) + "\n\n")
+		events.WriteString("event: message\ndata: " + protocol.encoded(protocol.respond(request)) + "\n\n")
 	}
 	if events.Len() == 0 {
-		return &http.Response{StatusCode: http.StatusAccepted, Header: http.Header{}, Body: http.NoBody}
+		return &http.Response{StatusCode: http.StatusAccepted, Header: http.Header{"Content-Type": {"text/plain; charset=utf-8"}}, Body: io.NopCloser(bytes.NewReader(nil))}
 	}
 	events.WriteString("\n")
 	header = http.Header{"Content-Type": {"text/event-stream"}, "X-Accel-Buffering": {"no"}}
@@ -161,8 +160,17 @@ func (McpProtocol) error(id any, code int, message string) McpJsonObject {
 }
 
 func (protocol McpProtocol) failure(status int, contentType string, code int, message string, id any) *http.Response {
-	encoded, _ := json.Marshal(McpJsonObject{}.With("jsonrpc", "2.0").With("error", McpJsonObject{}.With("code", code).With("message", message)).With("id", id))
-	return &http.Response{StatusCode: status, Header: http.Header{"Content-Type": {contentType}}, Body: io.NopCloser(bytes.NewReader(encoded)), ContentLength: int64(len(encoded))}
+	encoded := protocol.encoded(McpJsonObject{}.With("jsonrpc", "2.0").With("error", McpJsonObject{}.With("code", code).With("message", message)).With("id", id))
+	return &http.Response{StatusCode: status, Header: http.Header{"Content-Type": {contentType}}, Body: io.NopCloser(strings.NewReader(encoded)), ContentLength: int64(len(encoded))}
+}
+
+// encoded answers value as JSON.stringify wrote it, without HTML escaping.
+func (McpProtocol) encoded(value any) string {
+	var buffer bytes.Buffer
+	encoder := json.NewEncoder(&buffer)
+	encoder.SetEscapeHTML(false)
+	_ = encoder.Encode(value)
+	return strings.TrimRight(buffer.String(), "\n")
 }
 
 func (McpProtocol) jsonType() string { return "application/json;charset=utf-8" }

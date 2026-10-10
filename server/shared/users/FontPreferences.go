@@ -10,3 +10,15 @@ func (FontPreferences) InterfaceFont(value any) string {
 func (FontPreferences) ComposerFont(value any) string {
 	return PreferenceChoices{}.Text(value, []string{"interface", "plex-sans", "system", "humanist", "serif", "monospace"}, "interface")
 }
+
+// IsInterfaceFont reports whether value is an interface font identifier.
+func (fonts FontPreferences) IsInterfaceFont(value any) bool {
+	text, isText := value.(string)
+	return isText && fonts.InterfaceFont(value) == text
+}
+
+// IsComposerFont reports whether value is a composer font identifier.
+func (fonts FontPreferences) IsComposerFont(value any) bool {
+	text, isText := value.(string)
+	return isText && fonts.ComposerFont(value) == text
+}

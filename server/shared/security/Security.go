@@ -1,9 +1,14 @@
 import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"net"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 // Security holds the input checks every route shares.
@@ -11,8 +16,8 @@ type Security struct{}
 
 // NormalizeEmailAddress answers the lower-case address, or "" when it is not
 // one.
-func (Security) NormalizeEmailAddress(email string) string {
-	value := strings.ToLower(strings.TrimSpace(email))
+func (security Security) NormalizeEmailAddress(email string) string {
+	value := strings.ToLower(security.Trim(email))
 	if !regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`).MatchString(value) {
 		return ""
 	}
@@ -21,8 +26,8 @@ func (Security) NormalizeEmailAddress(email string) string {
 
 // NormalizeDomain answers the lower-case domain without trailing dots, or ""
 // when it is not a domain name.
-func (Security) NormalizeDomain(domain string) string {
-	value := strings.TrimRight(strings.ToLower(strings.TrimSpace(domain)), ".")
+func (security Security) NormalizeDomain(domain string) string {
+	value := strings.TrimRight(strings.ToLower(security.Trim(domain)), ".")
 	if !regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$`).MatchString(value) {
 		return ""
 	}
@@ -74,4 +79,27 @@ func (Security) privateIPv4(ip string) bool {
 // TestRoutesEnabled reports whether the /test/* routes answer.
 func (Security) TestRoutesEnabled() bool {
 	return Settings{}.Value("CADUCEUS_ENABLE_TEST_ROUTES") == "true"
+}
+
+// Trim answers value without the leading and trailing white space and line
+// terminators that JavaScript's String.prototype.trim removes.
+func (Security) Trim(value string) string {
+	return strings.TrimFunc(value, func(character rune) bool {
+		return character == '\uFEFF' || (character != '\u0085' && unicode.IsSpace(character))
+	})
+}
+
+// Sha256Hex answers the SHA-256 digest of value as hex.
+func (Security) Sha256Hex(value string) string {
+	digest := sha256.Sum256([]byte(value))
+	return hex.EncodeToString(digest[:])
+}
+
+// RandomUuid answers a random version 4 UUID, as crypto.randomUUID() did.
+func (Security) RandomUuid() string {
+	bytes := make([]byte, 16)
+	_, _ = rand.Read(bytes)
+	bytes[6] = bytes[6]&0x0f | 0x40
+	bytes[8] = bytes[8]&0x3f | 0x80
+	return fmt.Sprintf("%x-%x-%x-%x-%x", bytes[0:4], bytes[4:6], bytes[6:8], bytes[8:10], bytes[10:16])
 }

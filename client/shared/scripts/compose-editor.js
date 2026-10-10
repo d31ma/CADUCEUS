@@ -37,44 +37,6 @@
 /** @import { ToastRequested } from '/models/ToastRequested.ts' */
 /** @import { SoundRequested } from '/models/SoundRequested.ts' */
 
-import { ComposerOpened } from '/models/ComposerOpened.ts' */
-/** @import { SessionChanged } from '/models/SessionChanged.ts' */
-/** @import { ComposeLoaded } from '/models/ComposeLoaded.ts' */
-/** @import { ComposeChanged } from '/models/ComposeChanged.ts' */
-/** @import { ComposeAttachment } from '/models/ComposeAttachment.ts' */
-/** @import { EditorPreferences } from '/models/EditorPreferences.ts' */
-/** @import { SignatureApplyRequested } from '/models/SignatureApplyRequested.ts' */
-/** @import { EditorSignatureChanged } from '/models/EditorSignatureChanged.ts' */
-/** @import { TemplateInsertRequested } from '/models/TemplateInsertRequested.ts' */
-/** @import { TemplateInserted } from '/models/TemplateInserted.ts' */
-/** @import { TemplateDraftRequested } from '/models/TemplateDraftRequested.ts' */
-/** @import { TemplateDraftReady } from '/models/TemplateDraftReady.ts' */
-/** @import { AttachmentsOffered } from '/models/AttachmentsOffered.ts' */
-/** @import { AttachmentsAccepted } from '/models/AttachmentsAccepted.ts' */
-/** @import { AttachmentAcceptance } from '/models/AttachmentAcceptance.ts' */
-/** @import { AttachmentsAdded } from '/models/AttachmentsAdded.ts' */
-/** @import { AttachmentRemoved } from '/models/AttachmentRemoved.ts' */
-/** @import { InlineImageRemoved } from '/models/InlineImageRemoved.ts' */
-/** @import { RecipientQueryChanged } from '/models/RecipientQueryChanged.ts' */
-/** @import { RecipientSuggestionsDismissed } from '/models/RecipientSuggestionsDismissed.ts' */
-/** @import { RecipientSuggestionsShown } from '/models/RecipientSuggestionsShown.ts' */
-/** @import { RecipientChosen } from '/models/RecipientChosen.ts' */
-/** @import { GrammarTextChanged } from '/models/GrammarTextChanged.ts' */
-/** @import { GrammarTextWanted } from '/models/GrammarTextWanted.ts' */
-/** @import { GrammarHighlightsChanged } from '/models/GrammarHighlightsChanged.ts' */
-/** @import { GrammarReplacementRequested } from '/models/GrammarReplacementRequested.ts' */
-/** @import { GrammarFocusRequested } from '/models/GrammarFocusRequested.ts' */
-/** @import { ComposeShortcut } from '/models/ComposeShortcut.ts' */
-/** @import { SendRequested } from '/models/SendRequested.ts' */
-/** @import { SendFinished } from '/models/SendFinished.ts' */
-/** @import { DraftSaveRequested } from '/models/DraftSaveRequested.ts' */
-/** @import { DraftSaveDue } from '/models/DraftSaveDue.ts' */
-/** @import { DraftSaveFinished } from '/models/DraftSaveFinished.ts' */
-/** @import { MessageEnvelope } from '/models/MessageEnvelope.ts' */
-/** @import { NavigationRequested } from '/models/NavigationRequested.ts' */
-/** @import { ToastRequested } from '/models/ToastRequested.ts' */
-/** @import { SoundRequested } from '/models/SoundRequested.ts' */
-
 import {
   decorateTemplateVariables,
   hasEmptyTemplateVariables,
@@ -92,7 +54,7 @@ import {
   paintGrammarHighlights,
   replaceGrammarRange,
 } from './grammar-check.js'
-import { preferredTranslationLanguage, translateHtml, TRANSLATION_LANGUAGES } from './on-device-translation.js'
+import { TRANSLATION_LANGUAGES } from './translation-languages.js'
 import {
   applyBlockFormat,
   applyInlineFormat,
@@ -132,6 +94,16 @@ import { mailRequest } from './mail-transport.js'
  * ComposeService, SenderService, TemplateService and GrammarService own
  * every other part of the composer and talk to it through events.
  */
+/**
+ * The preferred translation target, like preferredTranslationLanguage in
+ * on-device-translation.js. That module (and its language detector) loads
+ * only when the person asks for a translation.
+ */
+export function preferredTranslationTarget() {
+  const primary = String(navigator.language || 'en').trim().toLowerCase().split('-')[0]
+  return Object.hasOwn(TRANSLATION_LANGUAGES, primary) ? primary : 'en'
+}
+
 export class ComposeEditor {
   /** @param {any} view the ComposeEditorService whose fields the view reads */
   constructor(view) {
@@ -218,7 +190,7 @@ export class ComposeEditor {
     this._observeEditor()
     /** @type {ComposerOpened} */
     const opened = { route: location.pathname }
-    this._view.applicationEventPublisher.publishEvent(opened, true)
+    this._view.publishComposerOpened(opened)
   }
 
   stop() {
@@ -271,7 +243,7 @@ export class ComposeEditor {
     this._offered.clear()
     /** @type {AttachmentsAdded} */
     const event = { attachments: added.map(item => this._metadata(item)) }
-    this._view.applicationEventPublisher.publishEvent(event)
+    this._view.publishAttachmentsAdded(event)
   }
 
   /** @param {AttachmentRemoved} removed */
@@ -315,7 +287,7 @@ export class ComposeEditor {
   /** @param {SendRequested} requested */
   async sendRequested(requested) {
     const finished = await this._deliver(requested, this._blanksAccepted())
-    this._view.applicationEventPublisher.publishEvent(finished)
+    this._view.publishSendFinished(finished)
   }
 
   /** @param {DraftSaveRequested} requested */
@@ -459,7 +431,7 @@ export class ComposeEditor {
     this._view.draftConflict = false
     /** @type {DraftSaveFinished} */
     const copied = { status: 'copy', draftId: '', draftClientId: this._draftClientId, draftVersion: 0, message: '' }
-    this._view.applicationEventPublisher.publishEvent(copied)
+    this._view.publishDraftSaveFinished(copied)
     this._requestSave(0)
   }
 
@@ -693,7 +665,7 @@ export class ComposeEditor {
     if (this._started) return
     this._started = true
     const loaded = await this._open(this._consumePrefill())
-    this._view.applicationEventPublisher.publishEvent(loaded)
+    this._view.publishComposeLoaded(loaded)
   }
 
   /** @returns {Record<string, any>} */
@@ -914,7 +886,7 @@ export class ComposeEditor {
     this._view.draftConflict = false
     this._view.draftStatus = 'Saved version loaded'
     this._rewriteEditor()
-    this._view.applicationEventPublisher.publishEvent(this._loadedEvent('reload', headers, false, this._view.draftStatus))
+    this._view.publishComposeLoaded(this._loadedEvent('reload', headers, false, this._view.draftStatus))
   }
 
   /** @param {Record<string, any> | null} snapshot */
@@ -955,7 +927,7 @@ export class ComposeEditor {
   _publishSaveDue(delay) {
     /** @type {DraftSaveDue} */
     const due = { delay }
-    this._view.applicationEventPublisher.publishEvent(due)
+    this._view.publishDraftSaveDue(due)
   }
 
   _mayStartSave() {
@@ -1142,7 +1114,7 @@ export class ComposeEditor {
   _publishDraftSaved() {
     /** @type {DraftSaveFinished} */
     const finished = { status: 'saved', draftId: this._draftId, draftClientId: this._draftClientId, draftVersion: this._draftVersion, message: '' }
-    this._view.applicationEventPublisher.publishEvent(finished)
+    this._view.publishDraftSaveFinished(finished)
   }
 
   _finishSave() {
@@ -1192,7 +1164,7 @@ export class ComposeEditor {
   _shortcut(action) {
     /** @type {ComposeShortcut} */
     const shortcut = { action }
-    this._view.applicationEventPublisher.publishEvent(shortcut)
+    this._view.publishComposeShortcut(shortcut)
   }
 
   /** Confirm sending with empty template blanks, as Mailspring does. */
@@ -1229,7 +1201,7 @@ export class ComposeEditor {
     if (mode !== ComposeEditor._SEND && mode !== ComposeEditor._ARCHIVE) return
     /** @type {SoundRequested} */
     const requested = { sound }
-    this._view.applicationEventPublisher.publishEvent(requested)
+    this._view.publishSoundRequested(requested)
   }
 
   /**
@@ -1401,7 +1373,7 @@ export class ComposeEditor {
   _toast(message) {
     /** @type {ToastRequested} */
     const toast = { message }
-    this._view.applicationEventPublisher.publishEvent(toast)
+    this._view.publishToastRequested(toast)
   }
 
   /** @param {string} route */
@@ -1429,7 +1401,7 @@ export class ComposeEditor {
     requestAnimationFrame(() => this._selectFirstVariable())
     /** @type {TemplateInserted} */
     const inserted = { templateId: requested.templateId }
-    this._view.applicationEventPublisher.publishEvent(inserted)
+    this._view.publishTemplateInserted(inserted)
   }
 
   _resetTemplatePicker() {
@@ -1462,7 +1434,7 @@ export class ComposeEditor {
     if (!name) return
     /** @type {TemplateDraftReady} */
     const ready = { name, text }
-    this._view.applicationEventPublisher.publishEvent(ready)
+    this._view.publishTemplateDraftReady(ready)
   }
 
   /** @param {HTMLInputElement} input */
@@ -1494,7 +1466,7 @@ export class ComposeEditor {
     this._offered.clear()
     /** @type {AttachmentsOffered} */
     const offered = { files: files.map((file, index) => this._offer(file, index, inline)) }
-    this._view.applicationEventPublisher.publishEvent(offered)
+    this._view.publishAttachmentsOffered(offered)
   }
 
   /**
@@ -1779,7 +1751,7 @@ export class ComposeEditor {
     this._editorChanged()
     /** @type {InlineImageRemoved} */
     const removed = { id }
-    this._view.applicationEventPublisher.publishEvent(removed)
+    this._view.publishInlineImageRemoved(removed)
   }
 
   /**
@@ -1810,6 +1782,7 @@ export class ComposeEditor {
     this._translationProgress(0)
     await this._render()
     try {
+      const { translateHtml } = await import('./on-device-translation.js')
       const result = await translateHtml(editor.innerHTML, { targetLanguage: this._view.translationTarget, onProgress: loaded => this._translationProgress(loaded) })
       this._translated(result)
     } catch (error) {
@@ -1832,7 +1805,7 @@ export class ComposeEditor {
     this._view.translationStatus = `Translated from ${languages[result.sourceLanguage] ?? 'detected language'} to ${languages[result.targetLanguage] ?? 'the selected language'}.`
     /** @type {EditorSignatureChanged} */
     const changed = { signatureId: currentSignatureId(result.html) }
-    this._view.applicationEventPublisher.publishEvent(changed)
+    this._view.publishEditorSignatureChanged(changed)
     this._requestSave(0)
     this._scheduleGrammar(0)
     this._editor()?.focus()
@@ -1881,7 +1854,7 @@ export class ComposeEditor {
   _publishGrammarText() {
     /** @type {GrammarTextChanged} */
     const changed = { text: grammarText(this._editor()) }
-    this._view.applicationEventPublisher.publishEvent(changed)
+    this._view.publishGrammarTextChanged(changed)
   }
 
   /**
@@ -1962,7 +1935,7 @@ export class ComposeEditor {
   _publishRecipientQuery(field, value) {
     /** @type {RecipientQueryChanged} */
     const changed = { field, value }
-    this._view.applicationEventPublisher.publishEvent(changed)
+    this._view.publishRecipientQueryChanged(changed)
   }
 
   /** @param {FocusEvent} event */
@@ -1976,7 +1949,7 @@ export class ComposeEditor {
     if (stillInside) return
     /** @type {RecipientSuggestionsDismissed} */
     const dismissed = { field: this._recipient.field }
-    this._view.applicationEventPublisher.publishEvent(dismissed)
+    this._view.publishRecipientSuggestionsDismissed(dismissed)
   }
 
   /** @param {Event} event */

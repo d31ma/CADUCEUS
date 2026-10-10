@@ -38,8 +38,7 @@
 /** @import { SoundRequested } from '/models/SoundRequested.ts' */
 /** @import { ComposeEditor as Editor } from '../shared/scripts/compose-editor.js' */
 
-import { ComposeEditor } from '../shared/scripts/compose-editor.js'
-import { preferredTranslationLanguage } from '../shared/scripts/on-device-translation.js'
+import { ComposeEditor, preferredTranslationTarget } from '../shared/scripts/compose-editor.js'
 
 /**
  * The browser-only half of the composer: the contenteditable rich-text
@@ -77,12 +76,100 @@ export default class ComposeEditorService {
   translationStatus = ''
   translationError = false
   translationBusy = false
-  translationTarget = preferredTranslationLanguage()
+  translationTarget = preferredTranslationTarget()
   /** Whether a file drag is over the compose surface. */
   dragActive = false
 
   /** @type {Editor} */
   _editor = new ComposeEditor(this)
+
+  // Typed publishers for the events that the editor module raises; the
+  // compiler names each event after its model type.
+
+  /** @param {AttachmentsAdded} attachmentsAdded */
+  publishAttachmentsAdded(attachmentsAdded) {
+    this.applicationEventPublisher.publishEvent(attachmentsAdded)
+  }
+
+  /** @param {AttachmentsOffered} attachmentsOffered */
+  publishAttachmentsOffered(attachmentsOffered) {
+    this.applicationEventPublisher.publishEvent(attachmentsOffered)
+  }
+
+  /** @param {ComposeLoaded} composeLoaded */
+  publishComposeLoaded(composeLoaded) {
+    this.applicationEventPublisher.publishEvent(composeLoaded)
+  }
+
+  /** @param {ComposeShortcut} composeShortcut */
+  publishComposeShortcut(composeShortcut) {
+    this.applicationEventPublisher.publishEvent(composeShortcut)
+  }
+
+  /** @param {ComposerOpened} composerOpened */
+  publishComposerOpened(composerOpened) {
+    this.applicationEventPublisher.publishEvent(composerOpened, true)
+  }
+
+  /** @param {DraftSaveDue} draftSaveDue */
+  publishDraftSaveDue(draftSaveDue) {
+    this.applicationEventPublisher.publishEvent(draftSaveDue)
+  }
+
+  /** @param {DraftSaveFinished} draftSaveFinished */
+  publishDraftSaveFinished(draftSaveFinished) {
+    this.applicationEventPublisher.publishEvent(draftSaveFinished)
+  }
+
+  /** @param {EditorSignatureChanged} editorSignatureChanged */
+  publishEditorSignatureChanged(editorSignatureChanged) {
+    this.applicationEventPublisher.publishEvent(editorSignatureChanged)
+  }
+
+  /** @param {GrammarTextChanged} grammarTextChanged */
+  publishGrammarTextChanged(grammarTextChanged) {
+    this.applicationEventPublisher.publishEvent(grammarTextChanged)
+  }
+
+  /** @param {InlineImageRemoved} inlineImageRemoved */
+  publishInlineImageRemoved(inlineImageRemoved) {
+    this.applicationEventPublisher.publishEvent(inlineImageRemoved)
+  }
+
+  /** @param {RecipientQueryChanged} recipientQueryChanged */
+  publishRecipientQueryChanged(recipientQueryChanged) {
+    this.applicationEventPublisher.publishEvent(recipientQueryChanged)
+  }
+
+  /** @param {RecipientSuggestionsDismissed} recipientSuggestionsDismissed */
+  publishRecipientSuggestionsDismissed(recipientSuggestionsDismissed) {
+    this.applicationEventPublisher.publishEvent(recipientSuggestionsDismissed)
+  }
+
+  /** @param {SendFinished} sendFinished */
+  publishSendFinished(sendFinished) {
+    this.applicationEventPublisher.publishEvent(sendFinished)
+  }
+
+  /** @param {SoundRequested} soundRequested */
+  publishSoundRequested(soundRequested) {
+    this.applicationEventPublisher.publishEvent(soundRequested)
+  }
+
+  /** @param {TemplateDraftReady} templateDraftReady */
+  publishTemplateDraftReady(templateDraftReady) {
+    this.applicationEventPublisher.publishEvent(templateDraftReady)
+  }
+
+  /** @param {TemplateInserted} templateInserted */
+  publishTemplateInserted(templateInserted) {
+    this.applicationEventPublisher.publishEvent(templateInserted)
+  }
+
+  /** @param {ToastRequested} toastRequested */
+  publishToastRequested(toastRequested) {
+    this.applicationEventPublisher.publishEvent(toastRequested)
+  }
 
   get translationLanguages() {
     return this._editor.translationLanguages

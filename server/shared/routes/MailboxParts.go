@@ -129,3 +129,9 @@ func (MailboxParts) Scope(caller RouteCaller, request *http.Request) (SearchScop
 	}
 	return scope, Answer{}.BadRequest(err.Error())
 }
+
+// Folder walks one folder of the domains page by page, answering the emails
+// the owner may see.
+func (parts MailboxParts) Folder(domains []string, folder string, ownerEmail string) *FolderEmails {
+	return parts.Emails.IterateFolder(domains, folder, ownerEmail, 0)
+}

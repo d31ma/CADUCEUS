@@ -85,6 +85,10 @@ func Run(
 		return runMigrate(ctx, args[1:], stdout, stderr)
 	case "auth":
 		return runAuth(ctx, args[1:], stdout, stderr)
+	case "entry":
+		return runEntry(ctx, args[1:], stdout, stderr)
+	case "inbound-smtp":
+		return runInboundSMTP(ctx, args[1:], stdout, stderr)
 	default:
 		_, _ = fmt.Fprintf(stderr, "caduceus: unknown command %q\n\n", args[0])
 		writeUsage(stderr)
@@ -775,6 +779,8 @@ Commands:
   backup    Create, verify, or restore an offline local FYLO backup
   attachments  Audit or explicitly repair attachment bucket drift
   auth      Initialize the identity deployment and provision domains and mailboxes
+  entry     Container entry point: serve (default), admin:create, domain:migrate, help
+  inbound-smtp  Run only the inbound SMTP server (MX) from the settings
   migrate   Run the read-only Phase 1 migration preflight
   help      Show this help`)
 }

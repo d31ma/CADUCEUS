@@ -21,7 +21,7 @@ func (EmlImport) longestSubject() int { return 500 }
 // Parsed answers the parsed form of a source as the inbound parser gave it:
 // the text (else the HTML as text, else the whole source), the HTML and the
 // attachments.
-func (EmlImport) Parsed(source []byte) (ParsedMessage, string, string, []ParsedAttachment) {
+func (EmlImport) Parsed(source []byte) (MimeContent, string, string, []ParsedAttachment) {
 	message := MimeParser{}.Parse(source)
 	raw := string(source)
 	if !utf8.ValidString(raw) {

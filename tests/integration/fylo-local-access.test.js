@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Fylo } from '../../server/deps/fylo.mjs'
+import { Fylo } from '../support/legacy-server/deps/fylo.mjs'
 
 const binary = process.env.FYLO_BINARY
 const supportsPosixIdentity = process.platform !== 'win32'

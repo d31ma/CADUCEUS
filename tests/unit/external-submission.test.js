@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { ExternalSubmission } from '../../server/shared/delivery/ExternalSubmission.js'
-import { TrackingTokens } from '../../server/shared/delivery/TrackingTokens.js'
+import { ExternalSubmission } from '../support/legacy-server/shared/delivery/ExternalSubmission.js'
+import { TrackingTokens } from '../support/legacy-server/shared/delivery/TrackingTokens.js'
 
 describe('external submission undo capabilities', () => {
   it('round-trips only bounded account, submission, and Message-ID values', () => {

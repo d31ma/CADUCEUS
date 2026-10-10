@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import EmlImportService from '../../server/services/EmlImportService.js'
+import EmlImportService from '../support/legacy-server/services/EmlImportService.js'
 import { Providers } from '../../scripts/support/Providers.mjs'
 
 const parsed = {

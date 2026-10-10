@@ -6,7 +6,7 @@ import { readdirSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import '../../tests/support/tachyon-markers.mjs'
-import { Fylo } from '../../server/shared/persistence/Fylo.js'
+import { Fylo } from '../../tests/support/legacy-server/shared/persistence/Fylo.js'
 
 export class Providers {
   static ROOT = resolve(import.meta.dirname, '..', '..')
@@ -181,7 +181,7 @@ export class Providers {
     if (Providers.#classes) return Providers.#classes
     const classes = new Map()
     for (const folder of ['services', 'helpers']) {
-      const directory = join(Providers.ROOT, 'server', folder)
+      const directory = join(Providers.ROOT, 'tests', 'support', 'legacy-server', folder)
       for (const file of readdirSync(directory).filter(name => name.endsWith('.js')).sort()) {
         const type = (await import(pathToFileURL(join(directory, file)).href)).default
         classes.set(type.name[0].toLowerCase() + type.name.slice(1), type)

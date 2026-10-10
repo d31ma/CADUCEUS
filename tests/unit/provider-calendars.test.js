@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import ProviderCalendarService from '../../server/services/ProviderCalendarService.js'
-import { ProviderCalendarRules } from '../../server/shared/calendar/ProviderCalendarRules.js'
+import ProviderCalendarService from '../support/legacy-server/services/ProviderCalendarService.js'
+import { ProviderCalendarRules } from '../support/legacy-server/shared/calendar/ProviderCalendarRules.js'
 import { Providers } from '../../scripts/support/Providers.mjs'
 
 describe('provider calendar projection', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { KeyboardShortcuts } from '../../server/shared/users/KeyboardShortcuts.js'
+import { KeyboardShortcuts } from '../support/legacy-server/shared/users/KeyboardShortcuts.js'
 
 describe('keyboard command contract', () => {
   it('loads one unique, normalized action catalog including every upstream calendar command', () => {

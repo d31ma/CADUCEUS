@@ -62,7 +62,7 @@ async function stop(code = 0) {
   stopping = true
   server.stop(true)
   try {
-    const { resetApp } = await import('../server/app.js')
+    const { resetApp } = await import('../tests/support/legacy-server/app.js')
     await resetApp()
   } finally {
     identity.stop()

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { ComposerTemplatesUtils } from '../../client/shared/utils/ComposerTemplatesUtils.js'
-import { TemplateContent } from '../../server/shared/mailbox/TemplateContent.js'
+import { TemplateContent } from '../support/legacy-server/shared/mailbox/TemplateContent.js'
 
 const hasEmptyTemplateVariables = (...args) => ComposerTemplatesUtils.hasEmptyTemplateVariables(...args)
 const insertTemplateBeforeProtectedContent = (...args) => ComposerTemplatesUtils.insertTemplateBeforeProtectedContent(...args)

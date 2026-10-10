@@ -1,0 +1,23 @@
+{
+  "cohesion": {
+    "check": false
+  },
+  "duplication": {
+    "check": false
+  },
+  "dependencies": {
+    "check": false
+  },
+  "names": {
+    "check": false
+  },
+  "signatures": {
+    "check": false
+  },
+  "constants": {
+    "check": false
+  },
+  "visibility": {
+    "check": false
+  }
+}

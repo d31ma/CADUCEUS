@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
-import { Fylo } from '../server/shared/persistence/Fylo.js'
-import { DatabaseRepository } from '../server/shared/persistence/DatabaseRepository.js'
-import DomainsHelper from '../server/helpers/DomainsHelper.js'
-import DomainMigrationsHelper from '../server/helpers/DomainMigrationsHelper.js'
-import RulesHelper from '../server/helpers/RulesHelper.js'
-import UsersHelper from '../server/helpers/UsersHelper.js'
-import { Security } from '../server/shared/security/Security.js'
-import { UsersRecords } from '../server/shared/users/UsersRecords.js'
+import { Fylo } from '../tests/support/legacy-server/shared/persistence/Fylo.js'
+import { DatabaseRepository } from '../tests/support/legacy-server/shared/persistence/DatabaseRepository.js'
+import DomainsHelper from '../tests/support/legacy-server/helpers/DomainsHelper.js'
+import DomainMigrationsHelper from '../tests/support/legacy-server/helpers/DomainMigrationsHelper.js'
+import RulesHelper from '../tests/support/legacy-server/helpers/RulesHelper.js'
+import UsersHelper from '../tests/support/legacy-server/helpers/UsersHelper.js'
+import { Security } from '../tests/support/legacy-server/shared/security/Security.js'
+import { UsersRecords } from '../tests/support/legacy-server/shared/users/UsersRecords.js'
 import { Providers } from './support/Providers.mjs'
 
 const args = parseArgs(process.argv.slice(2))

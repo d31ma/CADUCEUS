@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { FontPreferencesUtils } from '../../client/shared/utils/FontPreferencesUtils.js'
-import { FontPreferences } from '../../server/shared/users/FontPreferences.js'
+import { FontPreferences } from '../support/legacy-server/shared/users/FontPreferences.js'
 
 const COMPOSER_FONT_OPTIONS = FontPreferencesUtils.composerFontOptions()
 const DEFAULT_COMPOSER_FONT = FontPreferencesUtils.defaultComposerFont()

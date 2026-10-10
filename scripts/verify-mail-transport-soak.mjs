@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import OutboundQueueService from '../server/services/OutboundQueueService.js'
+import OutboundQueueService from '../tests/support/legacy-server/services/OutboundQueueService.js'
 import { Providers } from './support/Providers.mjs'
 
 const HOUR_MS = 60 * 60_000

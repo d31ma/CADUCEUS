@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import { MailPreferencesUtils } from '../../client/shared/utils/MailPreferencesUtils.js'
-import { MailPreferences } from '../../server/shared/users/MailPreferences.js'
+import { MailPreferences } from '../support/legacy-server/shared/users/MailPreferences.js'
 
 const CLIENT_DEFAULTS = MailPreferencesUtils.defaultMailPreferences()
 const applyMailPreferences = (...args) => MailPreferencesUtils.applyMailPreferences(...args)

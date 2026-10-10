@@ -3,8 +3,8 @@ import nodemailer from 'nodemailer'
 import { simpleParser } from 'mailparser'
 import { SMTPServer } from 'smtp-server'
 import tlsOptions from 'smtp-server/lib/tls-options.js'
-import { SmtpDeliveryError } from '../server/shared/errors/SmtpDeliveryError.js'
-import { SmtpDirectAdapter } from '../server/shared/delivery/SmtpDirectAdapter.js'
+import { SmtpDeliveryError } from '../tests/support/legacy-server/shared/errors/SmtpDeliveryError.js'
+import { SmtpDirectAdapter } from '../tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js'
 
 const deliveries = []
 const { key, cert } = tlsOptions({})

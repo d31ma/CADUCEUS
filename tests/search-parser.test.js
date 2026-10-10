@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'bun:test'
-import { SearchParser } from '../server/shared/mailbox/SearchParser.js'
+import { SearchParser } from './support/legacy-server/shared/mailbox/SearchParser.js'
 
 const message = (overrides = {}) => ({
   id: 'message-1', ownerEmail: 'alice@example.com', domain: 'example.com',

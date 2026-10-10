@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { ThemePreferences } from '../../server/shared/users/ThemePreferences.js'
+import { ThemePreferences } from '../support/legacy-server/shared/users/ThemePreferences.js'
 import { ThemePreferencesUtils } from '../../client/shared/utils/ThemePreferencesUtils.js'
 
 const DARK_THEME_OPTIONS = ThemePreferencesUtils.darkThemeOptions()

@@ -15,15 +15,15 @@
     ],
     "paths": {
       "@/*": [
-        "./server/*"
+        "./tests/support/legacy-server/*"
       ]
     }
   },
   "include": [
     "tachyon-env.d.ts",
-    "server/**/*.d.ts",
-    "server/**/*.js",
-    "server/**/*.ts",
+    "tests/support/legacy-server/**/*.d.ts",
+    "tests/support/legacy-server/**/*.js",
+    "tests/support/legacy-server/**/*.ts",
     "background/**/*.js",
     "background/**/*.ts",
     "scripts/**/*.mjs",

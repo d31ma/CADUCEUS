@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { NotificationSoundsUtils } from '../../client/shared/utils/NotificationSoundsUtils.js'
 import NotificationSoundService from '../../client/services/NotificationSoundService.js'
-import { NotificationSounds } from '../../server/shared/users/NotificationSounds.js'
+import { NotificationSounds } from '../support/legacy-server/shared/users/NotificationSounds.js'
 
 const DEFAULT_NOTIFICATION_SOUNDS = NotificationSoundsUtils.defaultNotificationSounds()
 const SOUND_EVENTS = NotificationSoundsUtils.soundEvents()

@@ -336,7 +336,7 @@ if (command === 'serve') {
 async function writeHandlerSettings() {
   const { readFile, writeFile } = await import('node:fs/promises')
   const { resolve } = await import('node:path')
-  const { ServerEnvironment } = await import('../server/shared/runtime/ServerEnvironment.js')
+  const { ServerEnvironment } = await import('../tests/support/legacy-server/shared/runtime/ServerEnvironment.js')
   const target = resolve('.env')
   const existing = await readFile(target, 'utf8').catch(() => null)
   if (existing !== null && !existing.startsWith(ServerEnvironment.GENERATED_MARKER)) {

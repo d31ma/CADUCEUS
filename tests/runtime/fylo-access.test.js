@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
-import { FyloAccessContext } from '../../server/shared/persistence/FyloAccessContext.js'
+import { FyloAccessContext } from '../support/legacy-server/shared/persistence/FyloAccessContext.js'
 
 let previousEnabled
 

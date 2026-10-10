@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { LocalePreferences } from '../../server/shared/users/LocalePreferences.js'
+import { LocalePreferences } from '../support/legacy-server/shared/users/LocalePreferences.js'
 import { LocalizationUtils } from '../../client/shared/utils/LocalizationUtils.js'
 import {
   firstTranslation,

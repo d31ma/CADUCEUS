@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { Buffer } from 'node:buffer'
-import { ExternalMessage } from '../../server/shared/mailbox/ExternalMessage.js'
+import { ExternalMessage } from '../support/legacy-server/shared/mailbox/ExternalMessage.js'
 
 describe('external provider message presentation', () => {
   const accountId = 'ext_AAAAAAAAAAAAAAAAAAAA'

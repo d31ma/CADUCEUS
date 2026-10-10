@@ -48,7 +48,7 @@ export async function respond(route, verb, input = {}) {
   const hasBody = input.body !== undefined && method !== 'GET' && method !== 'HEAD'
   // A suite that passes its own headers controls the content type, as the
   // MCP checks rely on; otherwise JSON bodies go as JSON.
-  if (hasBody && !input.headers && !headers.has('content-type')) headers.set('content-type', typeof input.body === 'string' ? 'text/plain' : 'application/json')
+  if (hasBody && Object.keys(input.headers ?? {}).length === 0 && !headers.has('content-type')) headers.set('content-type', typeof input.body === 'string' ? 'text/plain' : 'application/json')
   return await fetch(url, {
     method,
     headers,

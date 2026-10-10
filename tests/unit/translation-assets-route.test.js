@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { TranslationAssetsController as Handler } from '../../server/controllers/TranslationAssetsController.js'
+import { TranslationAssetsController as Handler } from '../support/legacy-server/controllers/TranslationAssetsController.js'
 import { call } from '../support/controller-call.mjs'
 
 describe('translation asset route', () => {

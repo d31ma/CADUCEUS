@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import InboundService from '../../server/services/InboundService.js'
+import InboundService from '../support/legacy-server/services/InboundService.js'
 import { Providers } from '../../scripts/support/Providers.mjs'
 
 /** @returns {InboundService} */

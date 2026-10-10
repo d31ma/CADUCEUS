@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { ComposerSignaturesUtils } from '../../client/shared/utils/ComposerSignaturesUtils.js'
-import { SignatureContent } from '../../server/shared/mailbox/SignatureContent.js'
-import { SenderAddresses } from '../../server/shared/users/SenderAddresses.js'
+import { SignatureContent } from '../support/legacy-server/shared/mailbox/SignatureContent.js'
+import { SenderAddresses } from '../support/legacy-server/shared/users/SenderAddresses.js'
 
 const applySignature = (...args) => ComposerSignaturesUtils.applySignature(...args)
 const currentSignatureId = (...args) => ComposerSignaturesUtils.currentSignatureId(...args)

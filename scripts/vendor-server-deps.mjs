@@ -14,7 +14,7 @@ import { dirname, join, resolve } from 'node:path'
 
 class ServerDependencies {
   static ROOT = resolve(import.meta.dirname, '..')
-  static OUTPUT = join(ServerDependencies.ROOT, 'server', 'deps', 'npm')
+  static OUTPUT = join(ServerDependencies.ROOT, 'tests', 'support', 'legacy-server', 'deps', 'npm')
 
   /** Package specifier and the file it is bundled to. */
   static PACKAGES = [
@@ -38,7 +38,7 @@ class ServerDependencies {
 
   /** Client data the server also reads, copied so the handler snapshot holds it. */
   static DATA = [
-    ['client/shared/data/keymap.json', 'server/deps/data/keymap.json'],
+    ['client/shared/data/keymap.json', 'tests/support/legacy-server/deps/data/keymap.json'],
   ]
 
   static async main() {
@@ -62,7 +62,7 @@ class ServerDependencies {
 
   static check() {
     const missing = [
-      ...ServerDependencies.PACKAGES.map(([, file]) => join('server/deps/npm', file)),
+      ...ServerDependencies.PACKAGES.map(([, file]) => join('tests/support/legacy-server/deps/npm', file)),
       ...ServerDependencies.DATA.map(([, target]) => target),
     ].filter(file => !existsSync(join(ServerDependencies.ROOT, file)))
     if (missing.length) {

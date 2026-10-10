@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
-import { DatabaseRepository } from '../server/shared/persistence/DatabaseRepository.js'
-import DomainsHelper from '../server/helpers/DomainsHelper.js'
-import UsersHelper from '../server/helpers/UsersHelper.js'
-import { Security } from '../server/shared/security/Security.js'
+import { DatabaseRepository } from '../tests/support/legacy-server/shared/persistence/DatabaseRepository.js'
+import DomainsHelper from '../tests/support/legacy-server/helpers/DomainsHelper.js'
+import UsersHelper from '../tests/support/legacy-server/helpers/UsersHelper.js'
+import { Security } from '../tests/support/legacy-server/shared/security/Security.js'
 import { spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 import { Providers } from './support/Providers.mjs'

@@ -55,6 +55,18 @@ func (store CollectionStore) Delete(id string) error {
 	return store.Database.DelDoc(store.Collection, id)
 }
 
+// ForDomain answers the same collection acting as the service member of one
+// managed domain's tenant storage (the former FyloAccessContext.runForDomain).
+// With POSIX access on, a domain that is not valid is refused.
+func (store CollectionStore) ForDomain(domain string) (CollectionStore, error) {
+	normalized := Security{}.NormalizeDomain(domain)
+	access := FyloAccess{}.ForDomain(normalized)
+	if access != nil && normalized == "" {
+		return store, &BoundaryError{Code: "EACCES", Message: "A valid domain is required for tenant storage"}
+	}
+	return store.As(access), nil
+}
+
 // As answers the same collection acting with another access descriptor.
 func (store CollectionStore) As(access *FyloAccess) CollectionStore {
 	store.Database = store.Database.As(access)

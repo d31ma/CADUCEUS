@@ -547,21 +547,33 @@ func (runner *runner) serve(ctx context.Context, args []string) int {
 	defer signal.Stop(signals)
 	go func() {
 		seen := map[os.Signal]bool{}
+		handle := func(received os.Signal) {
+			if seen[received] {
+				// The second identical signal kills, as Node's default
+				// handler did once the one-shot listener had run.
+				session.ty.kill(os.Kill)
+				bridge.kill(os.Kill)
+				os.Exit(128 + int(received.(syscall.Signal)))
+			}
+			seen[received] = true
+			session.Shutdown(received, 0)
+		}
+		done := ctx.Done()
 		for {
 			select {
 			case received := <-signals:
-				if seen[received] {
-					// The second identical signal kills, as Node's default
-					// handler did once the one-shot listener had run.
-					session.ty.kill(os.Kill)
-					bridge.kill(os.Kill)
-					os.Exit(128 + int(received.(syscall.Signal)))
+				handle(received)
+			case <-done:
+				// main's NotifyContext sees the same signal; forward the one
+				// that arrived rather than assuming SIGTERM.
+				done = nil
+				select {
+				case received := <-signals:
+					handle(received)
+				case <-time.After(50 * time.Millisecond):
+					seen[syscall.SIGTERM] = true
+					session.Shutdown(syscall.SIGTERM, 0)
 				}
-				seen[received] = true
-				session.Shutdown(received, 0)
-			case <-ctx.Done():
-				session.Shutdown(syscall.SIGTERM, 0)
-				return
 			case <-session.ty.done:
 				return
 			}

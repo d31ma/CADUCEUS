@@ -6,7 +6,7 @@ import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
  * Compatibility layer for the former in-process FYLO query cursor. The latest
  * runtime returns a complete document record from its binary protocol.
  */
-export class Fylo extends /** @type {any} */ (BinaryFylo) {
+export class Fylo extends BinaryFylo {
 
   static #withAccess(operation, access) {
     return access && typeof operation?.as === 'function' ? operation.as(access) : operation

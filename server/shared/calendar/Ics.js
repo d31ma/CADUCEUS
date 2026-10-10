@@ -109,7 +109,7 @@ export class Ics {
    */
   static buildIcsReply({ uid, organizer, attendee, attendeeName, status, summary, start, end, allDay = false }) {
     const partstat = status === 'accepted' ? 'ACCEPTED' : status === 'declined' ? 'DECLINED' : 'TENTATIVE'
-    const cn = attendeeName ? `;CN="${attendeeName.replace(/"/g, '\\"')}"` : ''
+    const cn = attendeeName ? ';CN="' + attendeeName.replaceAll('"', '\\"') + '"' : ''
     return [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',

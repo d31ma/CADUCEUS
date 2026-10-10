@@ -1,5 +1,6 @@
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -149,6 +150,12 @@ func (KeyboardShortcuts) resolved(actions []KeyboardAction, overrides map[string
 // conflicting reports whether two commands that can be active together share
 // one binding.
 func (shortcuts KeyboardShortcuts) conflicting(actions []KeyboardAction, bindings map[string]string) bool {
+	return len(shortcuts.conflict(actions, bindings)) > 0
+}
+
+// conflict answers the first two commands that can be active together and
+// share one binding, or none.
+func (shortcuts KeyboardShortcuts) conflict(actions []KeyboardAction, bindings map[string]string) []KeyboardAction {
 	for leftIndex, left := range actions {
 		binding := bindings[left.Id]
 		if binding == "" || binding == "off" {
@@ -156,11 +163,55 @@ func (shortcuts KeyboardShortcuts) conflicting(actions []KeyboardAction, binding
 		}
 		for _, right := range actions[leftIndex+1:] {
 			if bindings[right.Id] == binding && shortcuts.sharesContext(left.Scope, right.Scope) {
-				return true
+				return []KeyboardAction{left, right}
 			}
 		}
 	}
-	return false
+	return nil
+}
+
+// Checked answers the overrides a caller sent, or why they are refused. An
+// empty binding disables the command; a default binding is not stored.
+func (shortcuts KeyboardShortcuts) Checked(value any) (map[string]any, *PreferenceProblem) {
+	input, isObject := RecordValues{}.Object(value)
+	if !isObject {
+		return nil, &PreferenceProblem{Message: "keyboardShortcutOverrides must be an object"}
+	}
+	actions := shortcuts.actions()
+	if len(input) > len(actions) {
+		return nil, &PreferenceProblem{Message: fmt.Sprintf("keyboardShortcutOverrides may contain at most %d commands", len(actions))}
+	}
+	byId := map[string]KeyboardAction{}
+	for _, action := range actions {
+		byId[action.Id] = action
+	}
+	accepted := map[string]string{}
+	for _, id := range (PreferenceChoices{}).Keys(input) {
+		action, known := byId[id]
+		if !known {
+			return nil, &PreferenceProblem{Message: "Unknown keyboard command: " + id}
+		}
+		raw := input[id]
+		if raw == "" {
+			raw = "off"
+		}
+		binding := shortcuts.Binding(raw)
+		if binding == "" {
+			return nil, &PreferenceProblem{Message: "Invalid shortcut for " + action.Label}
+		}
+		if binding != action.Binding {
+			accepted[id] = binding
+		}
+	}
+	bindings := shortcuts.resolved(actions, accepted)
+	if pair := shortcuts.conflict(actions, bindings); len(pair) > 0 {
+		return nil, &PreferenceProblem{Message: pair[0].Label + " and " + pair[1].Label + " both use " + bindings[pair[0].Id]}
+	}
+	overrides := map[string]any{}
+	for id, binding := range accepted {
+		overrides[id] = binding
+	}
+	return overrides, nil
 }
 
 func (shortcuts KeyboardShortcuts) sharesContext(left string, right string) bool {

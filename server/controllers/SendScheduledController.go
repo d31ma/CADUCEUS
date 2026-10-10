@@ -7,11 +7,13 @@ type SendScheduledController struct {
 	accessHelper *AccessHelper
 	// @Needs
 	sendService *SendService
+	// @Needs
+	scheduledHelper *ScheduledHelper
 }
 
 // @GetRoute
 func (controller *SendScheduledController) GetScheduled(request *http.Request) *http.Response {
-	return SendScheduledRoute{Access: controller.accessHelper, Send: controller.sendService}.List(request)
+	return SendScheduledRoute{Access: controller.accessHelper, Send: controller.sendService, Scheduled: controller.scheduledHelper}.List(request)
 }
 
 // @DeleteRoute

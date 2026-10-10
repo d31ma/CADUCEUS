@@ -7,8 +7,9 @@ import (
 // caller's scheduled messages, which only their exact owner may see, edit
 // or cancel.
 type SendScheduledRoute struct {
-	Access *AccessHelper
-	Send   *SendService
+	Access    *AccessHelper
+	Send      *SendService
+	Scheduled *ScheduledHelper
 }
 
 // List answers GET /send/scheduled, soonest first. Connected-account
@@ -23,7 +24,7 @@ func (route SendScheduledRoute) List(request *http.Request) *http.Response {
 
 func (route SendScheduledRoute) list(caller RouteCaller) (any, error) {
 	schedules := route.Send.Schedules()
-	records, err := schedules.Sent.Scheduled.ListForOwner(caller.Email)
+	records, err := route.Scheduled.ListForOwner(caller.Email)
 	if err != nil {
 		return nil, err
 	}

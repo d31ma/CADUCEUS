@@ -190,3 +190,4 @@ func (ScheduledSends) owner(entry map[string]any) string {
 	values := RecordValues{}
 	return strings.TrimSpace(values.Text(values.Coalesce(entry["owner"], entry["sender"])))
 }
+

@@ -206,7 +206,7 @@ func EnvPositive(name string, fallback float64) float64 {
 }
 
 // EnvNonNegative reads an environment variable as entry.mjs
-// nonNegativeNumber did; an empty value is Number('') = 0.
+// nonNegativeNumber did; an empty value is Number(”) = 0.
 func EnvNonNegative(name string, fallback float64) float64 {
 	value, ok := os.LookupEnv(name)
 	if !ok {

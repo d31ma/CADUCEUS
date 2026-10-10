@@ -20,7 +20,10 @@ func (UnsubscribeLinks) keywords() *regexp.Regexp {
 func (links UnsubscribeLinks) Parsed(headers map[string]any, html string) map[string]any {
 	raw := TextValue{}.Trim(TextValue{}.Of(headers["list-unsubscribe"]))
 	unsubscribeUrl, unsubscribeMailto := "", ""
-	for _, match := range regexp.MustCompile(`<([^<>\r\n]{1,2048})>`).FindAllStringSubmatch(raw, -1) {
+	for _, match := range regexp.MustCompile(`<([^<>\r\n]+)>`).FindAllStringSubmatch(raw, -1) {
+		if len(match[1]) > 2048 {
+			continue
+		}
 		parsed, err := url.Parse(TextValue{}.Trim(match[1]))
 		if err != nil || parsed.Scheme == "" {
 			continue

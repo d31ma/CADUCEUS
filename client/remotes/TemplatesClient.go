@@ -9,7 +9,7 @@ type TemplatesClient interface {
 	// @PostRequest("/templates")
 	Save(
 		// @RequestBody
-		template TemplateInput,
+		template BehaviorValue,
 		// @RequestHeader("Authorization")
 		authorization string,
 	) (SavedTemplate, error)

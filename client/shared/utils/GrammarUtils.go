@@ -57,7 +57,7 @@ func (GrammarUtils) validOnly(rules []string) []string {
 }
 
 func (GrammarUtils) whenValid(rule string) []string {
-	if GrammarUtils{}.rulePattern().MatchString(rule) {
+	if (GrammarUtils{}).rulePattern().MatchString(rule) {
 		return []string{rule}
 	}
 	return nil

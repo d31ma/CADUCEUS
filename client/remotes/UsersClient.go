@@ -18,5 +18,5 @@ type UsersClient interface {
 		patch BehaviorValue,
 		// @RequestHeader("Authorization")
 		authorization string,
-	) (BehaviorValue, error)
+	) (UserPreferences, error)
 }

@@ -14,13 +14,13 @@ func (MailPreferencesUtils) Normalize(preferences MailPreferences) MailPreferenc
 	preferences.UndoSendDelay = MailPreferencesUtils{}.delay(preferences.UndoSendDelay)
 	preferences.DefaultSendAction = MailPreferencesUtils{}.sendAction(preferences.DefaultSendAction)
 	preferences.AutoCcBySender = MailPreferencesUtils{}.recipientMap(preferences.AutoCcBySender)
-	preferences.AutoBccBySender = MailPreferencesUtils{}.recipientMap(preferences.AutoBccBySender)
+	preferences.AutoBlindCopyBySender = MailPreferencesUtils{}.recipientMap(preferences.AutoBlindCopyBySender)
 	return preferences
 }
 
 // Defaults are the preferences before the server answered.
 func (MailPreferencesUtils) Defaults() MailPreferences {
-	return MailPreferences{RichText: true, Spellcheck: true, DefaultSendAction: MailPreferencesUtils{}.plainSend(), UndoSendDelay: MailPreferencesUtils{}.defaultDelay(), AutoCcBySender: map[string][]string{}, AutoBccBySender: map[string][]string{}}
+	return MailPreferences{RichText: true, Spellcheck: true, DefaultSendAction: MailPreferencesUtils{}.plainSend(), UndoSendDelay: MailPreferencesUtils{}.defaultDelay(), AutoCcBySender: map[string][]string{}, AutoBlindCopyBySender: map[string][]string{}}
 }
 
 func (MailPreferencesUtils) plainSend() string { return "send" }

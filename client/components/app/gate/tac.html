@@ -1,0 +1,8 @@
+<logic :if="session.canUseApp()">
+  <slot />
+</logic>
+<logic :if="session.canShowLogin()">
+  <div class="login-screen">
+    <login-form :brandlogo="'/shared/assets/favicon.svg'" />
+  </div>
+</logic>

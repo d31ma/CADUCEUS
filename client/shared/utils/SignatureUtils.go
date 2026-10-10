@@ -31,7 +31,7 @@ func (SignatureUtils) sanitize(text string) string {
 }
 
 func (SignatureUtils) withoutScriptAttributes(text string) string {
-	for _, quote := range SignatureUtils{}.quotes() {
+	for _, quote := range (SignatureUtils{}).quotes() {
 		text = SignatureUtils{}.scriptAddresses(quote).ReplaceAllString(text, ` ${1}="#"`)
 		text = SignatureUtils{}.scriptStyles(quote).ReplaceAllString(text, "")
 	}
@@ -64,7 +64,7 @@ func (SignatureUtils) whenDefaultFor(signature ComposeSignature, address string)
 }
 
 func (SignatureUtils) withoutBlocks(text string) string {
-	for _, tag := range SignatureUtils{}.blockTags() {
+	for _, tag := range (SignatureUtils{}).blockTags() {
 		text = regexp.MustCompile(`(?i)<` + tag + `\b[^>]*>[\s\S]*?</` + tag + `\s*>`).ReplaceAllString(text, "")
 	}
 	return text

@@ -1,4 +1,6 @@
 import { join } from "node:path";
+import { rmSync } from "node:fs";
+import { ServerEnvironment } from "../../server/platform/runtime/ServerEnvironment.js";
 import { createServer } from "node:net";
 import { createHmac } from "node:crypto";
 import { startIdentity, identityRequirements } from "../support/identity.mjs";
@@ -16,17 +18,25 @@ export async function startTestServer() {
   // tokens come from real logins rather than from this file.
   const identity = await startIdentity();
   const testRoot = identity.fyloRoot;
-  // Run the decorated route classes through the same bounded Bun adapter used
-  // by Playwright. Tachyon 26.33's isolated Yon supervisor cannot load the
-  // legacy shared-service imports while those routes are migrating to Go.
-  const serveCommand = ["bun", "scripts/e2e-api.mjs"];
-  const proc = Bun.spawn(serveCommand, {
+  // Serve the real application with Tachyon. Its handler processes read their
+  // settings from the project .env, exactly as the entry point hands them over.
+  const envFile = join(CADUCEUS_ROOT, ".env");
+  const existing = await Bun.file(envFile).text().catch(() => null);
+  if (existing !== null && !existing.startsWith(ServerEnvironment.GENERATED_MARKER)) {
+    throw new Error(`${envFile} was not written by CADUCEUS; move it aside before running the API suites`);
+  }
+  const settings = ServerEnvironment.dotenv({
+    ...identity.env,
+    INBOUND_WEBHOOK_SECRET,
+    NODE_ENV: "test",
+    CADUCEUS_ENABLE_TEST_ROUTES: "true",
+    STREAM_MAX_MS: "750",
+    STREAM_POLL_MS: "50",
+  });
+  await Bun.write(envFile, settings.text);
+  const proc = Bun.spawn([process.env.TACHYON_BIN || "ty", "serve", "--no-watch", "--port", String(port)], {
     cwd: CADUCEUS_ROOT,
-    env: {
-      ...identity.env,
-      E2E_API_PORT: String(port),
-      CADUCEUS_TEST_USE_EXISTING_IDENTITY: "true",
-    },
+    env: { PATH: process.env.PATH, HOME: process.env.HOME },
     stdout: "ignore",
     stderr: "ignore"
   });
@@ -36,9 +46,8 @@ export async function startTestServer() {
   let ready = false;
   while (Date.now() < deadline) {
     try {
-      // Tachyon can answer its own health route before CADUCEUS routes finish
-      // loading. Require a stable application response so the first test
-      // cannot be served by the frontend fallback.
+      // Tachyon answers 401 for a @SignedIn route once the application is
+      // built, so the first test cannot be served by the frontend fallback.
       const r = await fetch(`${url}/domains`, {
         signal: AbortSignal.timeout(500)
       });
@@ -53,6 +62,7 @@ export async function startTestServer() {
   const stop = () => {
     proc.kill();
     identity.stop();
+    rmSync(envFile, { force: true });
   };
   if (!ready) {
     stop();

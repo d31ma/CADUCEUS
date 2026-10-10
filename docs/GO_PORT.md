@@ -80,7 +80,9 @@ are the reference slice.
   order wherever the JavaScript returned `Object.values(docs)`.
   The JSON fields of each operation must match what
   `tests/support/legacy-server/deps/fylo.mjs` sends for the same call (for
-  example `patchDoc` sends `{"id": {"<docId>": fields}}`).
+  example `patchDoc` sends `{"id": "<docId>", "newDoc": fields}`, one
+  operation per document, as the JavaScript `Fylo.patchDoc` wrapper did with a
+  `{docId: fields}` object; `FyloCollection.PatchEach` does the same in Go).
 - `FyloCollections{}.Named().Emails` — collection and bucket names.
 - `FyloAccess` — POSIX access descriptors when `FYLO_POSIX_ACCESS=true`.
 - `FyloHelper` (@Helper) — the request's database; `AccessHelper` (@Helper)

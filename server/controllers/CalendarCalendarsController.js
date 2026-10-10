@@ -1,6 +1,6 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
-import { accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
+import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/calendar/calendars")
 @SignedIn

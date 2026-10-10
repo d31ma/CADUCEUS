@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { randomBytes } from 'node:crypto'
-import { FyloAccessContext } from '../../../platform/persistence/FyloAccessContext.js'
-import { deriveThreadId } from './threading.js'
+import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
+import { deriveThreadId } from '../../../shared/mailbox/threading.js'
 /** @import { EmailsRepository } from '../repositories/EmailsRepository.js' */
 /** @import { AttachmentsRepository } from '../repositories/AttachmentsRepository.js' */
 /** @import { CategoryMappingService } from './CategoryMappingService.js' */

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import {
   normalizeAttachmentContentId,
   sanitizeAttachmentFilename,
-} from '@/features/mailbox/services/attachment-policy.js'
+} from '@/shared/mailbox/attachment-policy.js'
 
 describe('attachment server policy', () => {
   it('turns path-like and directionally deceptive filenames into portable names', () => {

@@ -4,7 +4,7 @@ import {
   parseAddressList,
   personalLevelForThread,
   recipientsFromHeaders,
-} from '@/features/mailbox/services/personal-level.js'
+} from '@/shared/mailbox/personal-level.js'
 
 const message = (overrides = {}) => ({
   id: 'message-1',

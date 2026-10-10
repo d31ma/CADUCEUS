@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { evaluateInboxRule } from '@/features/mailbox/services/rule-engine.js'
+import { evaluateInboxRule } from '@/shared/mailbox/rule-engine.js'
 
 const message = {
   from: 'Billing <billing@vendor.example>',

@@ -32,7 +32,7 @@ import { SendController as Send } from '@/controllers/SendController.js'
 import { SendUndoController as UndoSend } from '@/controllers/SendUndoController.js'
 import { SendScheduledController as ScheduledSend } from '@/controllers/SendScheduledController.js'
 import { SendScheduledIdController as ScheduledItem } from '@/controllers/SendScheduledIdController.js'
-import { ExternalAccounts as ExternalAccountBridge } from '@/platform/accounts/ExternalAccounts.js'
+import { ExternalAccounts as ExternalAccountBridge } from '@/shared/accounts/ExternalAccounts.js'
 import { writeMboxFromFrameStream } from '../../client/shared/scripts/mbox.js'
 import { call } from '../support/controller-call.mjs'
 

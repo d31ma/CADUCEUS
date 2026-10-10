@@ -1,7 +1,7 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { Ics } from '../features/calendar/services/Ics.js'
+import { Ics } from '../shared/calendar/Ics.js'
 
 @RequestRoute("/calendar/invites/respond")
 @SignedIn

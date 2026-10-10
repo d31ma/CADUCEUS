@@ -1,8 +1,8 @@
-import { Security } from '../../../platform/security/Security.js'
-import { addCategoryToCatalog, normalizeCategoryCatalog } from './category-catalog.js'
-import { normalizeCategoryPath, presentCategory } from './category-path.js'
+import { Security } from '../../../shared/security/Security.js'
+import { addCategoryToCatalog, normalizeCategoryCatalog } from '../../../shared/mailbox/category-catalog.js'
+import { normalizeCategoryPath, presentCategory } from '../../../shared/mailbox/category-path.js'
 
-export { normalizeCategoryPath } from './category-path.js'
+export { normalizeCategoryPath } from '../../../shared/mailbox/category-path.js'
 
 export const CATEGORY_ROLES = Object.freeze(['inbox', 'sent', 'drafts', 'spam', 'archive', 'trash'])
 const CATEGORY_ROLE_SET = new Set(CATEGORY_ROLES)

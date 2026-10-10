@@ -1,8 +1,8 @@
-import { Collections, collect } from '../../../platform/persistence/Fylo.js'
+import { Collections, collect } from '../../../shared/persistence/Fylo.js'
 
 /** FYLO persistence for mailbox-owned conversation capabilities. */
 export class ThreadSharesRepository {
-  /** @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo */
+  /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
   constructor(fylo) { this.fylo = fylo }
 
   /** @param {ThreadShareRecord} share */

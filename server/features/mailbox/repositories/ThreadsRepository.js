@@ -1,4 +1,4 @@
-import { messageParticipants, personalLevelForThread } from '../services/personal-level.js'
+import { messageParticipants, personalLevelForThread } from '../../../shared/mailbox/personal-level.js'
 /** @import { StoredEmail } from '../../../types' */
 /** @import { EmailsRepository } from './EmailsRepository.js' */
 

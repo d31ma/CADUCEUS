@@ -4,7 +4,7 @@ import { ThreadSharesController as Shares } from '@/controllers/ThreadSharesCont
 import { ThreadSharesIdController as Share } from '@/controllers/ThreadSharesIdController.js'
 import { ThreadSharesPublicTokenController as PublicShare } from '@/controllers/ThreadSharesPublicTokenController.js'
 import { ThreadSharesPublicTokenAttachmentsAttachmentIdController as PublicAttachment } from '@/controllers/ThreadSharesPublicTokenAttachmentsAttachmentIdController.js'
-import { FyloAccessContext } from '@/platform/persistence/FyloAccessContext.js'
+import { FyloAccessContext } from '@/shared/persistence/FyloAccessContext.js'
 import { call } from '../support/controller-call.mjs'
 
 let app

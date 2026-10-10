@@ -1,5 +1,5 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Buckets, Collections } from '../platform/persistence/Fylo.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Buckets, Collections } from '../shared/persistence/Fylo.js'
 import { getApp } from '../app.js'
 
 @RequestRoute("/test/reset")

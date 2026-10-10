@@ -1,8 +1,8 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { InboxActionsIdUndoController as MailActions } from './InboxActionsController.js'
-import { bearerToken } from '../platform/accounts/ExternalAccounts.js'
+import { bearerToken } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/inbox/actions/{id}/undo")
 @SignedIn

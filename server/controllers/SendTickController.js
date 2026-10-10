@@ -1,4 +1,4 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
 
 @RequestRoute("/send/tick")

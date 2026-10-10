@@ -10,8 +10,8 @@ import {
   normalizeSignatureInput,
   resolveUniqueSignatureName,
   sanitizeSignatureHTML as sanitizeStoredSignature,
-} from '../../server/features/mailbox/services/signature-content.js'
-import { ownedSenderAddresses, resolveOwnedSender } from '../../server/features/users/services/sender-addresses.js'
+} from '../../server/shared/mailbox/signature-content.js'
+import { ownedSenderAddresses, resolveOwnedSender } from '../../server/shared/users/sender-addresses.js'
 
 const signature = { id: 'sig-work', text: '<p>Regards,<br>Alice</p>', defaultFor: ['alice@example.com'] }
 

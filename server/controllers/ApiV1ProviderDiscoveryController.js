@@ -1,7 +1,7 @@
 // @ts-check
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
+import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/api/v1/provider-discovery")
 @SignedIn

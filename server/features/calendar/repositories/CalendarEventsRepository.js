@@ -1,8 +1,8 @@
-import { Collections, collect } from '../../../platform/persistence/Fylo.js'
-import { CalendarDate } from '../services/CalendarDate.js'
+import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { CalendarDate } from '../../../shared/calendar/CalendarDate.js'
 
 export class CalendarEventsRepository {
-  /** @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo */
+  /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
   constructor(fylo) {
     this.fylo = fylo
   }

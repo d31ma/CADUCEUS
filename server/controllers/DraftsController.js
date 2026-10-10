@@ -1,8 +1,8 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { parseDraftInput } from '../features/mailbox/services/draft-input.js'
-import { ownedSenderAddresses, resolveOwnedSender } from '../features/users/services/sender-addresses.js'
+import { parseDraftInput } from '../shared/mailbox/draft-input.js'
+import { ownedSenderAddresses, resolveOwnedSender } from '../shared/users/sender-addresses.js'
 
 @RequestRoute("/drafts")
 @SignedIn

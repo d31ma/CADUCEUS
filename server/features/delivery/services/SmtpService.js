@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { prepareTrackedHtml } from './tracking-tokens.js'
-import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
+import { prepareTrackedHtml } from '../../../shared/delivery/tracking-tokens.js'
+import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
 /** @import { SendRequest } from '../../../models/SendRequest.js' */
 /** @import { SmtpAdapter } from '../../../models/SmtpAdapter.js' */
 

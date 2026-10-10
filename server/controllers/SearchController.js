@@ -1,9 +1,9 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
-import { Respond } from '../platform/http/Respond.js'
-import { SearchParser } from '../features/mailbox/services/SearchParser.js'
-import { accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
-import { externalAttachmentSummaries, externalMailSummaries, isExternalAccountId, mergeUnifiedMail } from '../features/mailbox/services/unified-mail.js'
+import { Respond } from '../shared/http/Respond.js'
+import { SearchParser } from '../shared/mailbox/SearchParser.js'
+import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { externalAttachmentSummaries, externalMailSummaries, isExternalAccountId, mergeUnifiedMail } from '../shared/mailbox/unified-mail.js'
 
 @RequestRoute("/search")
 @SignedIn

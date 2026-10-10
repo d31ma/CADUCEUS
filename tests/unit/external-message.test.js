@@ -6,7 +6,7 @@ import {
   presentExternalDetail,
   presentExternalSummary,
   readExternalAttachment,
-} from '../../server/features/mailbox/services/external-message.js'
+} from '../../server/shared/mailbox/external-message.js'
 
 describe('external provider message presentation', () => {
   const accountId = 'ext_AAAAAAAAAAAAAAAAAAAA'

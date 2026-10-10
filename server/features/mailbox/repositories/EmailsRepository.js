@@ -1,4 +1,4 @@
-import { Collections, collect } from '../../../platform/persistence/Fylo.js'
+import { Collections, collect } from '../../../shared/persistence/Fylo.js'
 /** @import { StoredEmail } from '../../../types' */
 /** @import { EmailAttachmentSummary } from '../../../types' */
 /** @import { AttachmentsRepository } from './AttachmentsRepository.js' */
@@ -6,7 +6,7 @@ import { Collections, collect } from '../../../platform/persistence/Fylo.js'
 
 export class EmailsRepository {
   /**
-   * @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo
+   * @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo
    * @param {AttachmentsRepository} attachments
    * @param {RawMessagesRepository} [rawMessages]
    */

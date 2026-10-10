@@ -1,8 +1,8 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
 // @ts-check
-import { Respond } from '../platform/http/Respond.js'
-import { Auth } from '../platform/auth/Auth.js'
-import { AuthGuard } from '../middleware/AuthGuard.js'
+import { Respond } from '../shared/http/Respond.js'
+import { Auth } from '../shared/auth/Auth.js'
+import { AuthGuard } from '../shared/http/AuthGuard.js'
 import { getApp } from '../app.js'
 
 @RequestRoute("/auth/login/password")

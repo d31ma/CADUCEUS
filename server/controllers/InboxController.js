@@ -1,8 +1,8 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
-import { externalMailSummaries, isExternalAccountId, mergeUnifiedMail } from '../features/mailbox/services/unified-mail.js'
+import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { externalMailSummaries, isExternalAccountId, mergeUnifiedMail } from '../shared/mailbox/unified-mail.js'
 
 @RequestRoute("/inbox")
 @SignedIn

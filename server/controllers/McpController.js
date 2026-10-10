@@ -1,7 +1,7 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { createMcpHandler } from '../deps/npm/modelcontextprotocol-server.mjs'
 import { getApp } from '../app.js'
-import { createMailboxMcpServer } from '../features/mcp/services/tools.js'
+import { createMailboxMcpServer } from '../shared/mcp/tools.js'
 
 @RequestRoute("/mcp")
 @Public

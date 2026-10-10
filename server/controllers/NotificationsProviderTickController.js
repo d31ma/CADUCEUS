@@ -1,6 +1,6 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
-import { ExternalAccounts, accountFailure } from '../platform/accounts/ExternalAccounts.js'
+import { ExternalAccounts, accountFailure } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/notifications/provider/tick")
 @Public

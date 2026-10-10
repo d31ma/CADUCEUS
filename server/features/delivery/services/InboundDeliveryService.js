@@ -1,9 +1,9 @@
 import { randomBytes } from 'node:crypto'
-import { FyloAccessContext } from '../../../platform/persistence/FyloAccessContext.js'
-import { PhishingDetection } from './PhishingDetection.js'
-import { ListUnsubscribe } from './ListUnsubscribe.js'
-import { threadMetadataFromHeaders } from '../../mailbox/services/threading.js'
-import { recipientsFromHeaders } from '../../mailbox/services/personal-level.js'
+import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
+import { PhishingDetection } from '../../../shared/delivery/PhishingDetection.js'
+import { ListUnsubscribe } from '../../../shared/delivery/ListUnsubscribe.js'
+import { threadMetadataFromHeaders } from '../../../shared/mailbox/threading.js'
+import { recipientsFromHeaders } from '../../../shared/mailbox/personal-level.js'
 /** @import { AttachmentsRepository } from '../../mailbox/repositories/AttachmentsRepository.js' */
 /** @import { DomainsRepository } from '../../domains/repositories/DomainsRepository.js' */
 /** @import { EmailsRepository } from '../../mailbox/repositories/EmailsRepository.js' */

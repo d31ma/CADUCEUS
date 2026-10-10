@@ -20,7 +20,7 @@ import { PresenceTeamController as Team } from '@/controllers/PresenceTeamContro
 import { PresenceHeartbeatController as Heartbeat } from '@/controllers/PresenceHeartbeatController.js'
 import { NotificationsSubscriptionsController as Subscriptions } from '@/controllers/NotificationsSubscriptionsController.js'
 import { TestResetController as Reset } from '@/controllers/TestResetController.js'
-import { DEFAULT_MAIL_PREFERENCES } from '@/features/users/services/mail-preferences.js'
+import { DEFAULT_MAIL_PREFERENCES } from '@/shared/users/mail-preferences.js'
 import { call } from '../support/controller-call.mjs'
 
 let app

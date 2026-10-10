@@ -5,7 +5,7 @@ import {
   LIGHT_THEME_IDS,
   normalizeThemePreferences as normalizeServer,
   validateThemePreferences,
-} from '../../server/features/users/services/theme-preferences.js'
+} from '../../server/shared/users/theme-preferences.js'
 import {
   DARK_THEME_OPTIONS,
   LIGHT_THEME_OPTIONS,

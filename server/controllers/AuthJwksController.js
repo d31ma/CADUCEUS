@@ -1,7 +1,7 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
 // @ts-check
-import { Auth } from '../platform/auth/Auth.js'
-import { AuthGuard } from '../middleware/AuthGuard.js'
+import { Auth } from '../shared/auth/Auth.js'
+import { AuthGuard } from '../shared/http/AuthGuard.js'
 
 @RequestRoute("/auth/jwks")
 @Public

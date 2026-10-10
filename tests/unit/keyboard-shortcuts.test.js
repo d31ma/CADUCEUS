@@ -4,7 +4,7 @@ import {
   normalizeKeyboardBinding,
   normalizeKeyboardShortcutOverrides,
   validateKeyboardShortcutOverrides,
-} from '../../server/features/users/services/keyboard-shortcuts.js'
+} from '../../server/shared/users/keyboard-shortcuts.js'
 
 describe('keyboard command contract', () => {
   it('loads one unique, normalized action catalog including every upstream calendar command', () => {

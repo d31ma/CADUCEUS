@@ -1,11 +1,11 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Actions } from '../platform/auth/Auth.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Actions } from '../shared/auth/Auth.js'
 import { randomBytes } from 'node:crypto'
-import { Respond } from '../platform/http/Respond.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { RuleValidation } from '../features/domains/services/RuleValidation.js'
-import { ownedSenderAddresses } from '../features/users/services/sender-addresses.js'
-import { normalizeInboxRuleInput } from '../features/mailbox/services/rule-input.js'
+import { RuleValidation } from '../shared/domains/RuleValidation.js'
+import { ownedSenderAddresses } from '../shared/users/sender-addresses.js'
+import { normalizeInboxRuleInput } from '../shared/mailbox/rule-input.js'
 
 @RequestRoute("/rules")
 @SignedIn

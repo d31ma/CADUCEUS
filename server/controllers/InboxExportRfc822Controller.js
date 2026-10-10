@@ -1,11 +1,11 @@
 import { Buffer } from 'node:buffer'
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { AuthGuard } from '../middleware/AuthGuard.js'
-import { FyloAccessContext } from '../platform/persistence/FyloAccessContext.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { AuthGuard } from '../shared/http/AuthGuard.js'
+import { FyloAccessContext } from '../shared/persistence/FyloAccessContext.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
-import { resolveExternalFolder } from '../features/mailbox/services/unified-mail.js'
+import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { resolveExternalFolder } from '../shared/mailbox/unified-mail.js'
 
 /**
  * Thin migration adapter that streams the exact RFC 822 sources in one folder.

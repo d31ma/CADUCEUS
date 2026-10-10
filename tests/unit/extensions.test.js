@@ -3,7 +3,7 @@ import {
   inspectExtensionBundle,
   presentExtension,
   trustedExtensionRecord,
-} from '@/features/extensions/services/extensions.js'
+} from '@/shared/extensions/extensions.js'
 
 const pluginBundle = (over = {}) => ({
   manifest: {

@@ -1,5 +1,5 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/contacts/address-books")
 @SignedIn

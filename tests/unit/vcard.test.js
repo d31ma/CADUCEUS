@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { VCard } from '@/features/contacts/services/VCard.js'
+import { VCard } from '@/shared/contacts/VCard.js'
 
 describe('vCard interchange', () => {
   it('imports folded RFC 6350 contact details and skips empty cards', () => {

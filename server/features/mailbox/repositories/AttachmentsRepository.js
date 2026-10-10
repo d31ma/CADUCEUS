@@ -2,16 +2,16 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { basename, join, relative, resolve } from 'node:path'
 import { createHash, randomBytes } from 'node:crypto'
 import { Buffer } from 'node:buffer'
-import { Buckets, Collections, collect } from '../../../platform/persistence/Fylo.js'
-import { normalizeAttachmentContentId, sanitizeAttachmentFilename } from '../services/attachment-policy.js'
-import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
+import { Buckets, Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { normalizeAttachmentContentId, sanitizeAttachmentFilename } from '../../../shared/mailbox/attachment-policy.js'
+import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
 import { readFile } from 'node:fs/promises'
 /** @import { ParsedAttachment } from '../../../models/ParsedAttachment.js' */
 /** @import { EmailAttachmentRecord } from '../../../types' */
 /** @import { EmailAttachmentSummary } from '../../../types' */
 
 export class AttachmentsRepository {
-  /** @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo */
+  /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
   constructor(fylo) {
     this.fylo = fylo
   }
@@ -134,7 +134,7 @@ function attachmentRoot() {
 }
 
 /**
- * @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo
+ * @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo
  * @param {string} emailId
  * @param {string} domain
  * @param {ParsedAttachment} attachment
@@ -207,7 +207,7 @@ function readBytes(attachment) {
   return new Uint8Array()
 }
 
-/** @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo @param {EmailAttachmentRecord & { docId?: string }} record */
+/** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo @param {EmailAttachmentRecord & { docId?: string }} record */
 async function deleteRecord(fylo, { docId, bucketId, storagePath }) {
   if (!docId) throw new Error('Attachment record is missing its document id')
   await fylo.delDoc(Collections.ATTACHMENTS, docId)

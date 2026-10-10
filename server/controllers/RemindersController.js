@@ -1,5 +1,5 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 
 @RequestRoute("/reminders")

@@ -1,16 +1,16 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
-import { Respond } from '../platform/http/Respond.js'
-import { SearchParser } from '../features/mailbox/services/SearchParser.js'
-import { presentExternalDetail } from '../features/mailbox/services/external-message.js'
+import { Respond } from '../shared/http/Respond.js'
+import { SearchParser } from '../shared/mailbox/SearchParser.js'
+import { presentExternalDetail } from '../shared/mailbox/external-message.js'
 import {
   externalAttachmentSummaries,
   externalMailSummaries,
   isExternalAccountId,
   loadExternalMessage,
-} from '../features/mailbox/services/unified-mail.js'
+} from '../shared/mailbox/unified-mail.js'
 import { groupMessagesIntoThreads } from '../features/mailbox/repositories/ThreadsRepository.js'
-import { accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
+import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/threads")
 @SignedIn

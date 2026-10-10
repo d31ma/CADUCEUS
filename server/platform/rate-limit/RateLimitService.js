@@ -1,11 +1,11 @@
-import { Collections, collect } from '../persistence/Fylo.js'
-import { Security } from '../security/Security.js'
+import { Collections, collect } from '../../shared/persistence/Fylo.js'
+import { Security } from '../../shared/security/Security.js'
 
 /**
  * Fylo-backed rate limiter shared by the self-hosted application processes.
  */
 export class RateLimitService {
-  /** @param {import('../persistence/Fylo.js').Fylo} fylo */
+  /** @param {import('../../shared/persistence/Fylo.js').Fylo} fylo */
   constructor(fylo) {
     this.fylo = fylo
   }

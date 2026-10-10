@@ -1,8 +1,8 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { Buffer } from 'node:buffer'
 import { canAccessEmail } from '../repositories/EmailsRepository.js'
-import { FyloAccessContext } from '../../../platform/persistence/FyloAccessContext.js'
-import { Security } from '../../../platform/security/Security.js'
+import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
+import { Security } from '../../../shared/security/Security.js'
 
 const EXPIRY_DAYS = new Set([1, 7, 30])
 const TOKEN_SECRET_BYTES = 32

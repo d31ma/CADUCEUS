@@ -1,5 +1,5 @@
-import { AuthGuard } from '../middleware/AuthGuard.js'
-import { RouteRequest } from '../middleware/RouteRequest.js'
+import { AuthGuard } from '../shared/http/AuthGuard.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
 
 /**
  * Tells Tachyon who is signed in before a `@SignedIn` route runs. The Go

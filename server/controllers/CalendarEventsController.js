@@ -1,12 +1,12 @@
 import { randomUUID } from 'node:crypto'
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { CalendarRecurrence } from '../features/calendar/services/CalendarRecurrence.js'
-import { CalendarDate } from '../features/calendar/services/CalendarDate.js'
-import { toCalendarEventView } from '../features/calendar/services/event-view.js'
+import { CalendarRecurrence } from '../shared/calendar/CalendarRecurrence.js'
+import { CalendarDate } from '../shared/calendar/CalendarDate.js'
+import { toCalendarEventView } from '../shared/calendar/event-view.js'
 import { mergeCalendarEvents } from '../features/calendar/services/ProviderCalendarService.js'
-import { accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
+import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/calendar/events")
 @SignedIn

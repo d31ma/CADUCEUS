@@ -1,48 +1,48 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { Security } from '../platform/security/Security.js'
+import { Security } from '../shared/security/Security.js'
 import {
   DEFAULT_COMPOSER_FONT,
   DEFAULT_INTERFACE_FONT,
   isComposerFont,
   isInterfaceFont,
-} from '../features/users/services/font-preferences.js'
+} from '../shared/users/font-preferences.js'
 import {
   DEFAULT_NOTIFICATION_SOUNDS,
   validateNotificationSounds,
-} from '../features/users/services/notification-sounds.js'
+} from '../shared/users/notification-sounds.js'
 import {
   DEFAULT_THEME_PREFERENCES,
   validateThemePreferences,
-} from '../features/users/services/theme-preferences.js'
+} from '../shared/users/theme-preferences.js'
 import {
   DEFAULT_INTERFACE_LOCALE,
   validateInterfaceLocale,
-} from '../features/users/services/locale-preferences.js'
+} from '../shared/users/locale-preferences.js'
 import {
   normalizeGrammarPreferences,
   validateGrammarPreferencePatch,
-} from '../features/users/services/grammar-preferences.js'
+} from '../shared/users/grammar-preferences.js'
 import { validateCategoryMappings } from '../features/mailbox/services/CategoryMappingService.js'
 import {
   normalizeUnreadBadgePreferences,
   validateUnreadBadgePreferencePatch,
-} from '../features/users/services/unread-badge-preferences.js'
+} from '../shared/users/unread-badge-preferences.js'
 import {
   normalizeNewMailNotificationPreferences,
   normalizeNewMailNotificationPreferencesForAccounts,
   validateNewMailNotificationPreferencePatch,
-} from '../features/users/services/new-mail-notification-preferences.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
+} from '../shared/users/new-mail-notification-preferences.js'
+import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
 import {
   normalizeKeyboardShortcutOverrides,
   validateKeyboardShortcutOverrides,
-} from '../features/users/services/keyboard-shortcuts.js'
+} from '../shared/users/keyboard-shortcuts.js'
 import {
   normalizeMailPreferences,
   validateMailPreferencePatch,
-} from '../features/users/services/mail-preferences.js'
+} from '../shared/users/mail-preferences.js'
 
 @RequestRoute("/users/me/preferences")
 @SignedIn

@@ -8,7 +8,7 @@ import {
   DEFAULT_MAIL_PREFERENCES as SERVER_DEFAULTS,
   normalizeMailPreferences as normalizeServer,
   validateMailPreferencePatch,
-} from '../../server/features/users/services/mail-preferences.js'
+} from '../../server/shared/users/mail-preferences.js'
 
 const originalDocument = globalThis.document
 

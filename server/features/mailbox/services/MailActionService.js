@@ -1,16 +1,16 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { canAccessEmail } from '../repositories/EmailsRepository.js'
-import { normalizeCategoryPath } from './category-path.js'
-import { applyLabelOperation, normalizeStoredLabels, parseLabelOperation } from './mail-action-labels.js'
-import { externalMessageId, parseExternalMessageId, presentExternalSummary } from './external-message.js'
+import { normalizeCategoryPath } from '../../../shared/mailbox/category-path.js'
+import { applyLabelOperation, normalizeStoredLabels, parseLabelOperation } from '../../../shared/mailbox/mail-action-labels.js'
+import { externalMessageId, parseExternalMessageId, presentExternalSummary } from '../../../shared/mailbox/external-message.js'
 import {
   loadExternalMessageMetadata,
   projectExternalPatch,
   queueExternalMessagePatch,
-} from './unified-mail.js'
-import { ExternalAccounts } from '../../../platform/accounts/ExternalAccounts.js'
-import { ExternalFolderError } from './ExternalFolderError.js'
+} from '../../../shared/mailbox/unified-mail.js'
+import { ExternalAccounts } from '../../../shared/accounts/ExternalAccounts.js'
+import { ExternalFolderError } from '../../../shared/mailbox/ExternalFolderError.js'
 
 const MUTABLE_FIELDS = Object.freeze(['folder', 'labels', 'read', 'starred'])
 const INCOMPLETE_STATUSES = new Set(['prepared', 'undoing', 'redoing'])

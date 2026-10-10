@@ -1,9 +1,9 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { Actions } from '../platform/auth/Auth.js'
-import { ownedSenderAddresses } from '../features/users/services/sender-addresses.js'
-import { normalizeSignatureInput, resolveUniqueSignatureName } from '../features/mailbox/services/signature-content.js'
+import { Actions } from '../shared/auth/Auth.js'
+import { ownedSenderAddresses } from '../shared/users/sender-addresses.js'
+import { normalizeSignatureInput, resolveUniqueSignatureName } from '../shared/mailbox/signature-content.js'
 
 @RequestRoute("/signatures")
 @SignedIn

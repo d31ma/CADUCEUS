@@ -1,7 +1,7 @@
 import { getApp } from '../../../app.js'
-import { buildOutboundMessageSource } from '../../mailbox/services/message-source.js'
-import { threadMetadataFromOutbound } from '../../mailbox/services/threading.js'
-import { listTrackableLinks } from './tracking-tokens.js'
+import { buildOutboundMessageSource } from '../../../shared/mailbox/message-source.js'
+import { threadMetadataFromOutbound } from '../../../shared/mailbox/threading.js'
+import { listTrackableLinks } from '../../../shared/delivery/tracking-tokens.js'
 /** @import { SendRequest } from './SmtpService.js' */
 
 export class SendService {

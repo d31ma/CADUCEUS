@@ -1,10 +1,10 @@
 #!/usr/bin/env bun
-import { Collections, DatabaseRepository, collect } from '../server/platform/persistence/Fylo.js'
+import { Collections, DatabaseRepository, collect } from '../server/shared/persistence/Fylo.js'
 import { DomainsRepository } from '../server/features/domains/repositories/DomainsRepository.js'
 import { DomainMigrationsRepository } from '../server/features/domains/repositories/DomainMigrationsRepository.js'
 import { RulesRepository } from '../server/features/mailbox/repositories/RulesRepository.js'
 import { UsersRepository } from '../server/features/users/repositories/UsersRepository.js'
-import { Security } from '../server/platform/security/Security.js'
+import { Security } from '../server/shared/security/Security.js'
 
 const args = parseArgs(process.argv.slice(2))
 const fromDomain = Security.normalizeDomain(String(args.from ?? args._[0] ?? ''))

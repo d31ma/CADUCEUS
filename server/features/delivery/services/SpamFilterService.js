@@ -1,5 +1,5 @@
 // @ts-check
-import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
+import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
 
 /**
  * Classifies inbound mail as spam.

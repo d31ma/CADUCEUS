@@ -1,8 +1,8 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { Buffer } from 'node:buffer'
-import { FyloAccessContext } from '../../../platform/persistence/FyloAccessContext.js'
-import { Security } from '../../../platform/security/Security.js'
-import { normalizeMcpPreferences, validateMcpPreferences } from './preferences.js'
+import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
+import { Security } from '../../../shared/security/Security.js'
+import { normalizeMcpPreferences, validateMcpPreferences } from '../../../shared/mcp/preferences.js'
 
 const TOKEN_BYTES = 32
 const MAX_OLD_TOKENS = 5

@@ -1,7 +1,7 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Actions } from '../platform/auth/Auth.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Actions } from '../shared/auth/Auth.js'
 import { getApp } from '../app.js'
-import { Respond } from '../platform/http/Respond.js'
+import { Respond } from '../shared/http/Respond.js'
 
 @RequestRoute("/suppressed")
 @SignedIn

@@ -1,4 +1,4 @@
-import { RouteRequest } from '../../server/middleware/RouteRequest.js'
+import { RouteRequest } from '../../server/shared/http/RouteRequest.js'
 
 /**
  * Calls one Tachyon controller route the way Tachyon would: it builds the

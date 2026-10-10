@@ -5,7 +5,7 @@ import {
   prepareTrackedHtml,
   readTrackingToken,
   resolveTrackingBaseUrl,
-} from '@/features/delivery/services/tracking-tokens.js'
+} from '@/shared/delivery/tracking-tokens.js'
 
 const secret = '0123456789abcdef0123456789abcdef'
 const trackingId = '0123456789abcdef'

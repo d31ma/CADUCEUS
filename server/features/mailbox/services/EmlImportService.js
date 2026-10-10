@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
-import { PhishingDetection } from '../../delivery/services/PhishingDetection.js'
-import { ListUnsubscribe } from '../../delivery/services/ListUnsubscribe.js'
-import { threadMetadataFromHeaders } from './threading.js'
+import { PhishingDetection } from '../../../shared/delivery/PhishingDetection.js'
+import { ListUnsubscribe } from '../../../shared/delivery/ListUnsubscribe.js'
+import { threadMetadataFromHeaders } from '../../../shared/mailbox/threading.js'
 
 const MAX_SUBJECT_LENGTH = 500
 

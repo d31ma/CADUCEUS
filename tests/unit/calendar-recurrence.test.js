@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { CalendarRecurrence } from '@/features/calendar/services/CalendarRecurrence.js'
+import { CalendarRecurrence } from '@/shared/calendar/CalendarRecurrence.js'
 
 const event = (over = {}) => ({
   id: 'series-1',

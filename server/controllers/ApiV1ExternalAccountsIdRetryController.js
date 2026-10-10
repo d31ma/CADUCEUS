@@ -1,7 +1,7 @@
 // @ts-check
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { Respond } from '../shared/http/Respond.js'
 
 @RequestRoute("/api/v1/external-accounts/{id}/retry")
 @SignedIn

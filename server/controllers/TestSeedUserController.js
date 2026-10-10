@@ -1,9 +1,9 @@
 // @ts-check
 import { randomBytes } from 'node:crypto'
-import { Respond } from '../platform/http/Respond.js'
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { AuthGuard } from '../middleware/AuthGuard.js'
-import { authCall, Auth } from '../platform/auth/Auth.js'
+import { Respond } from '../shared/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { AuthGuard } from '../shared/http/AuthGuard.js'
+import { authCall, Auth } from '../shared/auth/Auth.js'
 import { getApp } from '../app.js'
 
 @RequestRoute("/test/seed/user")

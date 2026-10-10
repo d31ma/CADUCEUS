@@ -3,7 +3,7 @@ import {
   INTERFACE_LOCALE_IDS,
   normalizeInterfaceLocale as normalizeServerLocale,
   validateInterfaceLocale,
-} from '../../server/features/users/services/locale-preferences.js'
+} from '../../server/shared/users/locale-preferences.js'
 import {
   INTERFACE_LOCALE_OPTIONS,
   applyInterfaceLocale,

@@ -1,6 +1,6 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { getApp } from '../app.js'
-import { readTrackingToken } from '../features/delivery/services/tracking-tokens.js'
+import { readTrackingToken } from '../shared/delivery/tracking-tokens.js'
 
 @RequestRoute("/track/click")
 @Public

@@ -1,9 +1,9 @@
-import { Security } from '../../../platform/security/Security.js'
-import { FyloAccessContext } from '../../../platform/persistence/FyloAccessContext.js'
+import { Security } from '../../../shared/security/Security.js'
+import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
 import { Buffer } from 'node:buffer'
-import { threadMetadataFromHeaders } from '../../mailbox/services/threading.js'
-import { recipientsFromHeaders } from '../../mailbox/services/personal-level.js'
-import { evaluateInboxRule } from '../../mailbox/services/rule-engine.js'
+import { threadMetadataFromHeaders } from '../../../shared/mailbox/threading.js'
+import { recipientsFromHeaders } from '../../../shared/mailbox/personal-level.js'
+import { evaluateInboxRule } from '../../../shared/mailbox/rule-engine.js'
 /** @import { RouteRule } from '../../../types' */
 /** @import { InboxRule } from '../../../types' */
 /** @import { RuleCondition } from '../../../types' */
@@ -33,7 +33,7 @@ export class InboundService {
    * @param {SuppressedRepository} suppressed
    * @param {AttachmentsRepository} attachments
    * @param {SmtpService} smtp
-   * @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo
+   * @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo
    * @param {RawMessagesRepository} [rawMessages]
    * @param {import('../../mailbox/services/CategoryMappingService.js').CategoryMappingService} [categoryMappings]
    */

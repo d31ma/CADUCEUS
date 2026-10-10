@@ -1,8 +1,8 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { Actions } from '../platform/auth/Auth.js'
-import { normalizeTemplateInput, resolveUniqueTemplateName } from '../features/mailbox/services/template-content.js'
+import { Actions } from '../shared/auth/Auth.js'
+import { normalizeTemplateInput, resolveUniqueTemplateName } from '../shared/mailbox/template-content.js'
 
 @RequestRoute("/templates")
 @SignedIn

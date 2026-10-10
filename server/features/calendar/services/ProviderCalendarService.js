@@ -1,7 +1,7 @@
 // @ts-check
 import { createHash, randomUUID } from 'node:crypto'
-import { ExternalAccounts } from '../../../platform/accounts/ExternalAccounts.js'
-import { Ics } from './Ics.js'
+import { ExternalAccounts } from '../../../shared/accounts/ExternalAccounts.js'
+import { Ics } from '../../../shared/calendar/Ics.js'
 
 const MAX_RESOURCES = 10_000
 const MAX_EVENTS = 20_000

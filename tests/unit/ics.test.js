@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { Ics } from '@/features/calendar/services/Ics.js'
+import { Ics } from '@/shared/calendar/Ics.js'
 
 const vevent = (body, method = 'METHOD:REQUEST\r\n') => [
   'BEGIN:VCALENDAR',

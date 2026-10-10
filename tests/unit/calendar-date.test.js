@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { CalendarDate } from '@/features/calendar/services/CalendarDate.js'
+import { CalendarDate } from '@/shared/calendar/CalendarDate.js'
 import {
   allDayRangeForDate,
   calendarCursorForEvent,

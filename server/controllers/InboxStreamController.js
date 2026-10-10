@@ -1,10 +1,10 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { AuthGuard } from '../middleware/AuthGuard.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { AuthGuard } from '../shared/http/AuthGuard.js'
 import { getApp } from '../app.js'
-import { FyloAccessContext } from '../platform/persistence/FyloAccessContext.js'
-import { externalMailSummaries } from '../features/mailbox/services/unified-mail.js'
+import { FyloAccessContext } from '../shared/persistence/FyloAccessContext.js'
+import { externalMailSummaries } from '../shared/mailbox/unified-mail.js'
 import { Buffer } from 'node:buffer'
-import { ServerEnvironment } from '../platform/runtime/ServerEnvironment.js'
+import { ServerEnvironment } from '../shared/runtime/ServerEnvironment.js'
 /** @import { InboxStreamMessage } from '../models/InboxStreamMessage.js' */
 
 /**
@@ -61,7 +61,7 @@ export class InboxStreamController {
   }
 
   /**
-   * @param {import('../middleware/AuthGuard.js').Principal} claims
+   * @param {import('../shared/http/AuthGuard.js').Principal} claims
    * @param {{ since?: string }} query
    * @param {string} token
    */

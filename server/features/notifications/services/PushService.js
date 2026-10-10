@@ -1,12 +1,12 @@
-import { unreadBadgeDomains } from '../../users/services/unread-badge-preferences.js'
+import { unreadBadgeDomains } from '../../../shared/users/unread-badge-preferences.js'
 import {
   newMailNotificationsEnabledForDomain,
   newMailNotificationsEnabledForExternalAccount,
   normalizeNewMailNotificationPreferences,
   normalizeNewMailNotificationPreferencesForAccounts,
-} from '../../users/services/new-mail-notification-preferences.js'
-import { externalMessageId } from '../../mailbox/services/external-message.js'
-import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
+} from '../../../shared/users/new-mail-notification-preferences.js'
+import { externalMessageId } from '../../../shared/mailbox/external-message.js'
+import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
 /** @import { StoredEmail } from '../../../types' */
 /** @import { PushSubscriptionsRepository } from '../repositories/PushSubscriptionsRepository.js' */
 /** @import { UsersRepository } from '../../users/repositories/UsersRepository.js' */

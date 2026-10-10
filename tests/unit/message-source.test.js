@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test'
 import { simpleParser } from 'mailparser'
-import { buildOutboundMessageSource } from '@/features/mailbox/services/message-source.js'
+import { buildOutboundMessageSource } from '@/shared/mailbox/message-source.js'
 
 describe('buildOutboundMessageSource', () => {
   it('builds a parseable Unicode multipart EML with attachments', async () => {

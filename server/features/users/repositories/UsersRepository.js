@@ -1,21 +1,21 @@
 import { randomUUID } from 'node:crypto'
-import { Collections, collect } from '../../../platform/persistence/Fylo.js'
-import { Security } from '../../../platform/security/Security.js'
+import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { Security } from '../../../shared/security/Security.js'
 import {
   normalizeComposerFont,
   normalizeInterfaceFont,
-} from '../services/font-preferences.js'
-import { normalizeNotificationSounds } from '../services/notification-sounds.js'
-import { normalizeThemePreferences } from '../services/theme-preferences.js'
-import { normalizeInterfaceLocale } from '../services/locale-preferences.js'
-import { normalizeGrammarPreferences } from '../services/grammar-preferences.js'
+} from '../../../shared/users/font-preferences.js'
+import { normalizeNotificationSounds } from '../../../shared/users/notification-sounds.js'
+import { normalizeThemePreferences } from '../../../shared/users/theme-preferences.js'
+import { normalizeInterfaceLocale } from '../../../shared/users/locale-preferences.js'
+import { normalizeGrammarPreferences } from '../../../shared/users/grammar-preferences.js'
 import { normalizeCategoryMappings } from '../../mailbox/services/CategoryMappingService.js'
-import { normalizeCategoryCatalog } from '../../mailbox/services/category-catalog.js'
-import { normalizeMcpPreferences } from '../../mcp/services/preferences.js'
-import { normalizeUnreadBadgePreferences } from '../services/unread-badge-preferences.js'
-import { normalizeNewMailNotificationPreferences } from '../services/new-mail-notification-preferences.js'
-import { normalizeKeyboardShortcutOverrides } from '../services/keyboard-shortcuts.js'
-import { normalizeMailPreferences } from '../services/mail-preferences.js'
+import { normalizeCategoryCatalog } from '../../../shared/mailbox/category-catalog.js'
+import { normalizeMcpPreferences } from '../../../shared/mcp/preferences.js'
+import { normalizeUnreadBadgePreferences } from '../../../shared/users/unread-badge-preferences.js'
+import { normalizeNewMailNotificationPreferences } from '../../../shared/users/new-mail-notification-preferences.js'
+import { normalizeKeyboardShortcutOverrides } from '../../../shared/users/keyboard-shortcuts.js'
+import { normalizeMailPreferences } from '../../../shared/users/mail-preferences.js'
 /** @import { User } from '../../../types' */
 
 /**
@@ -30,7 +30,7 @@ const MAX_MAILBOX_NAME_LENGTH = 64
 const MAX_TRUSTED_IMAGE_SENDERS = 500
 
 export class UsersRepository {
-  /** @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo */
+  /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
   constructor(fylo) {
     this.fylo = fylo
   }

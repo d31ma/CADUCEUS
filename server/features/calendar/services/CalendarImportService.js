@@ -1,7 +1,7 @@
 // @ts-check
 
-import { Ics } from './Ics.js'
-import { isCalendarAttachment } from './calendar-attachments.js'
+import { Ics } from '../../../shared/calendar/Ics.js'
+import { isCalendarAttachment } from '../../../shared/calendar/calendar-attachments.js'
 /** @import { CalendarEventsRepository } from '../repositories/CalendarEventsRepository.js' */
 /** @import { CalendarEvent } from '../repositories/CalendarEventsRepository.js' */
 /** @import { Attendee } from '../repositories/CalendarEventsRepository.js' */
@@ -61,7 +61,7 @@ export class CalendarImportService {
     return result
   }
 
-  /** @param {ImportContext} ctx @param {import('./Ics.js').IcsEvent} ev */
+  /** @param {ImportContext} ctx @param {import('../../../shared/calendar/Ics.js').IcsEvent} ev */
   async _cancel(ctx, ev) {
     const [, master] = await this.calendarEvents.findByIcsUid(ctx.recipient, ev.uid)
     if (!master) return false
@@ -100,7 +100,7 @@ export class CalendarImportService {
     return true
   }
 
-  /** @param {ImportContext} ctx @param {import('./Ics.js').IcsEvent} ev */
+  /** @param {ImportContext} ctx @param {import('../../../shared/calendar/Ics.js').IcsEvent} ev */
   async _applyReply(ctx, ev) {
     const [docId, existing] = await this.calendarEvents.findByIcsUid(ctx.recipient, ev.uid)
     if (!docId || !existing) return false
@@ -127,7 +127,7 @@ export class CalendarImportService {
     return true
   }
 
-  /** @param {ImportContext} ctx @param {import('./Ics.js').IcsEvent} ev */
+  /** @param {ImportContext} ctx @param {import('../../../shared/calendar/Ics.js').IcsEvent} ev */
   async _upsertRequest(ctx, ev) {
     if (ev.recurrenceId) return await this._upsertException(ctx, ev)
     const [existingDocId, existing] = await this.calendarEvents.findByIcsUid(ctx.recipient, ev.uid)
@@ -162,7 +162,7 @@ export class CalendarImportService {
     return true
   }
 
-  /** @param {ImportContext} ctx @param {import('./Ics.js').IcsEvent} ev */
+  /** @param {ImportContext} ctx @param {import('../../../shared/calendar/Ics.js').IcsEvent} ev */
   async _upsertException(ctx, ev) {
     const [, master] = await this.calendarEvents.findByIcsUid(ctx.recipient, ev.uid)
     if (!master || !ev.recurrenceId) return false

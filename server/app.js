@@ -1,4 +1,4 @@
-import { createDb } from './platform/persistence/Fylo.js'
+import { createDb } from './shared/persistence/Fylo.js'
 import { AttachmentsRepository } from './features/mailbox/repositories/AttachmentsRepository.js'
 import { CalendarEventsRepository } from './features/calendar/repositories/CalendarEventsRepository.js'
 import { ContactsRepository } from './features/contacts/repositories/ContactsRepository.js'
@@ -50,7 +50,7 @@ import { PushService } from './features/notifications/services/PushService.js'
 import { RateLimitService } from './platform/rate-limit/RateLimitService.js'
 import { SmtpService } from './features/delivery/services/SmtpService.js'
 import { McpAccessService } from './features/mcp/services/McpAccessService.js'
-import { ServerEnvironment } from './platform/runtime/ServerEnvironment.js'
+import { ServerEnvironment } from './shared/runtime/ServerEnvironment.js'
 
 /**
  * Application container — owns the Fylo instance and every repo and stateful
@@ -60,7 +60,7 @@ import { ServerEnvironment } from './platform/runtime/ServerEnvironment.js'
  * instances via {@link App.create} pointed at a temp directory.
  */
 export class App {
-  /** @param {import('./platform/persistence/Fylo.js').Fylo} fylo */
+  /** @param {import('./shared/persistence/Fylo.js').Fylo} fylo */
   constructor(fylo) {
     this.fylo = fylo
 

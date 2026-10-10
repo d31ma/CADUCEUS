@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { Buffer } from "node:buffer";
 import { writeFileSync } from "node:fs";
-import { DatabaseRepository, Buckets } from "@/platform/persistence/Fylo.js";
+import { DatabaseRepository, Buckets } from "@/shared/persistence/Fylo.js";
 import { AttachmentsRepository } from "@/features/mailbox/repositories/AttachmentsRepository.js";
 let fylo;
 let attachmentsRepo;

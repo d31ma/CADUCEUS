@@ -1,8 +1,8 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
-import { Actions } from '../platform/auth/Auth.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
+import { Actions } from '../shared/auth/Auth.js'
 import { getApp } from '../app.js'
-import { inspectExtensionBundle, presentExtension, trustedExtensionRecord } from '../features/extensions/services/extensions.js'
+import { inspectExtensionBundle, presentExtension, trustedExtensionRecord } from '../shared/extensions/extensions.js'
 
 @RequestRoute("/extensions")
 @SignedIn

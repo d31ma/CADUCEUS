@@ -1,9 +1,9 @@
-import { Collections, collect } from '../../../platform/persistence/Fylo.js'
-import { FyloAccessContext } from '../../../platform/persistence/FyloAccessContext.js'
+import { Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
 
 /** Personal contacts and groups, always isolated by exact mailbox owner. */
 export class ContactsRepository {
-  /** @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo */
+  /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
   constructor(fylo) { this.fylo = fylo }
 
   /** @returns {Promise<Array<import('../../../types').Contact & {docId: string}>>} */

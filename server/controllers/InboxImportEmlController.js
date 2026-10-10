@@ -1,8 +1,8 @@
 import { Buffer } from 'node:buffer'
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Actions } from '../platform/auth/Auth.js'
-import { Respond } from '../platform/http/Respond.js'
-import { Security } from '../platform/security/Security.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Actions } from '../shared/auth/Auth.js'
+import { Respond } from '../shared/http/Respond.js'
+import { Security } from '../shared/security/Security.js'
 import { getApp } from '../app.js'
 
 /** Authenticated EML import into one explicitly authorized mailbox. */

@@ -1,7 +1,7 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
-import { Actions } from '../platform/auth/Auth.js'
-import { inspectExtensionBundle, presentExtension } from '../features/extensions/services/extensions.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
+import { Actions } from '../shared/auth/Auth.js'
+import { inspectExtensionBundle, presentExtension } from '../shared/extensions/extensions.js'
 
 @RequestRoute("/extensions/inspect")
 @SignedIn

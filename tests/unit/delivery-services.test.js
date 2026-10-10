@@ -7,9 +7,9 @@ import {
   SmtpDeliveryError, loadDkim, groupRecipientsByDomain, resolveMailExchangers, buildSmtpMessage, transportOptions,
 } from '@/features/delivery/services/SmtpService.js'
 import { AcmeService } from '../../background/AcmeService.js'
-import { readTrackingToken } from '@/features/delivery/services/tracking-tokens.js'
-import { Security } from '@/platform/security/Security.js'
-import { RuleValidation } from '@/features/domains/services/RuleValidation.js'
+import { readTrackingToken } from '@/shared/delivery/tracking-tokens.js'
+import { Security } from '@/shared/security/Security.js'
+import { RuleValidation } from '@/shared/domains/RuleValidation.js'
 import { PushService, buildNewMailPushPayload, buildUnsnoozedPushPayload, countUnreadInbox } from '@/features/notifications/services/PushService.js'
 import tlsOptions from 'smtp-server/lib/tls-options.js'
 

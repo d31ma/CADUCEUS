@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { ListUnsubscribe } from '@/features/delivery/services/ListUnsubscribe.js'
+import { ListUnsubscribe } from '@/shared/delivery/ListUnsubscribe.js'
 
 describe('ListUnsubscribe.parse', () => {
   it('prefers a secure web endpoint while retaining a valid mailto fallback', () => {

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { Collections, collect } from '../../../platform/persistence/Fylo.js'
+import { Collections, collect } from '../../../shared/persistence/Fylo.js'
 
 const MAX_EVENTS_PER_MESSAGE = 100
 const MAX_ACTIVITY_MESSAGES = 500
@@ -7,7 +7,7 @@ const MAX_ACTIVITY_EVENTS = 100
 const DAY_MS = 24 * 60 * 60 * 1000
 
 export class TrackingRepository {
-  /** @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo */
+  /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
   constructor(fylo) {
     this.fylo = fylo
     /** @type {Map<string, Promise<unknown>>} */

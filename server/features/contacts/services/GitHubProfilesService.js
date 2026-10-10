@@ -1,4 +1,4 @@
-import { Security } from '../../../platform/security/Security.js'
+import { Security } from '../../../shared/security/Security.js'
 
 const API_ROOT = 'https://api.github.com'
 const MAX_RESPONSE_BYTES = 1_000_000

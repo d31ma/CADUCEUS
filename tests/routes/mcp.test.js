@@ -5,7 +5,7 @@ import { McpConfigController as Config } from '@/controllers/McpConfigController
 import { McpTokenController as Token } from '@/controllers/McpTokenController.js'
 import { McpAuditController as Audit } from '@/controllers/McpAuditController.js'
 import { McpController as Mcp } from '@/controllers/McpController.js'
-import { FyloAccessContext } from '@/platform/persistence/FyloAccessContext.js'
+import { FyloAccessContext } from '@/shared/persistence/FyloAccessContext.js'
 import { call } from '../support/controller-call.mjs'
 
 let app

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { AcmeService } from './AcmeService.js'
 import { listenForConnections } from './ListenableServer.ts'
-import { ServerEnvironment } from '../server/platform/runtime/ServerEnvironment.js'
+import { ServerEnvironment } from '../server/shared/runtime/ServerEnvironment.js'
 
 export class SubmissionServer {
   /** @param {SubmissionOptions} options */

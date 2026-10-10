@@ -10,7 +10,7 @@ import {
   SOUND_EVENT_IDS,
   SOUND_IDS,
   validateNotificationSounds,
-} from '../../server/features/users/services/notification-sounds.js'
+} from '../../server/shared/users/notification-sounds.js'
 
 describe('notification sounds', () => {
   it('keeps browser and persistence catalogs in lockstep', () => {

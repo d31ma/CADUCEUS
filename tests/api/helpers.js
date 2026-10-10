@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { rmSync } from "node:fs";
-import { ServerEnvironment } from "../../server/platform/runtime/ServerEnvironment.js";
+import { ServerEnvironment } from "../../server/shared/runtime/ServerEnvironment.js";
 import { createServer } from "node:net";
 import { createHmac } from "node:crypto";
 import { startIdentity, identityRequirements } from "../support/identity.mjs";

@@ -2,13 +2,13 @@ import { createHash, randomBytes } from 'node:crypto'
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { Buffer } from 'node:buffer'
-import { Buckets, Collections, collect } from '../../../platform/persistence/Fylo.js'
-import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
+import { Buckets, Collections, collect } from '../../../shared/persistence/Fylo.js'
+import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
 /** @import { RawMessageRecord } from '../../../types' */
 
 /** Durable, tenant-owned storage for exact RFC 822 message sources. */
 export class RawMessagesRepository {
-  /** @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo */
+  /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
   constructor(fylo) {
     this.fylo = fylo
   }

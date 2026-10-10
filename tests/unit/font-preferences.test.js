@@ -12,7 +12,7 @@ import {
 import {
   COMPOSER_FONT_IDS,
   INTERFACE_FONT_IDS,
-} from '../../server/features/users/services/font-preferences.js'
+} from '../../server/shared/users/font-preferences.js'
 
 describe('font preferences', () => {
   it('keeps the browser and persistence catalogs in lockstep', () => {

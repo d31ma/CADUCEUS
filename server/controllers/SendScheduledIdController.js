@@ -1,13 +1,13 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { MailValidation } from '../features/delivery/services/MailValidation.js'
-import { ownedSenderAddresses, resolveOwnedSender } from '../features/users/services/sender-addresses.js'
-import { cancelExternalScheduled, cancelScheduled, findOwnedScheduled, loadStoredAttachments, presentScheduled } from '../features/delivery/services/scheduled-sends.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
-import { buildOutboundMessageSource } from '../features/mailbox/services/message-source.js'
-import { externalDeliveryRequest } from '../features/delivery/services/external-submission.js'
-import { Uuid } from '../platform/runtime/Uuid.js'
+import { MailValidation } from '../shared/delivery/MailValidation.js'
+import { ownedSenderAddresses, resolveOwnedSender } from '../shared/users/sender-addresses.js'
+import { cancelExternalScheduled, cancelScheduled, findOwnedScheduled, loadStoredAttachments, presentScheduled } from '../shared/delivery/scheduled-sends.js'
+import { ExternalAccounts, accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { buildOutboundMessageSource } from '../shared/mailbox/message-source.js'
+import { externalDeliveryRequest } from '../shared/delivery/external-submission.js'
+import { Uuid } from '../shared/runtime/Uuid.js'
 
 @RequestRoute("/send/scheduled/{id}")
 @SignedIn

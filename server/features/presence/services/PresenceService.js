@@ -1,6 +1,6 @@
 // @ts-check
 
-import { Collections, collect } from '../../../platform/persistence/Fylo.js'
+import { Collections, collect } from '../../../shared/persistence/Fylo.js'
 
 /**
  * Presence tracking — who's online right now, scoped per domain.
@@ -21,7 +21,7 @@ const ONLINE_WINDOW_MS = 60_000
 const PRUNE_AFTER_MS = 10 * 60_000
 
 export class PresenceService {
-  /** @param {import('../../../platform/persistence/Fylo.js').Fylo} fylo */
+  /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
   constructor(fylo) {
     this.fylo = fylo
   }

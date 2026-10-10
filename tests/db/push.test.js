@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { DatabaseRepository } from "@/platform/persistence/Fylo.js";
+import { DatabaseRepository } from "@/shared/persistence/Fylo.js";
 import { PushSubscriptionsRepository } from "@/features/notifications/repositories/PushSubscriptionsRepository.js";
 let fylo;
 let pushRepo;

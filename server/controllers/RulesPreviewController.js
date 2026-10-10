@@ -1,10 +1,10 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { RuleValidation } from '../features/domains/services/RuleValidation.js'
-import { evaluateInboxRule } from '../features/mailbox/services/rule-engine.js'
-import { normalizeInboxRuleInput } from '../features/mailbox/services/rule-input.js'
-import { ownedSenderAddresses } from '../features/users/services/sender-addresses.js'
+import { RuleValidation } from '../shared/domains/RuleValidation.js'
+import { evaluateInboxRule } from '../shared/mailbox/rule-engine.js'
+import { normalizeInboxRuleInput } from '../shared/mailbox/rule-input.js'
+import { ownedSenderAddresses } from '../shared/users/sender-addresses.js'
 
 @RequestRoute("/rules/preview")
 @SignedIn

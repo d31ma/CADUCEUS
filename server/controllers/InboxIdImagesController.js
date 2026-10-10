@@ -1,12 +1,12 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { canAccessEmail } from '../features/mailbox/repositories/EmailsRepository.js'
 import {
   extractRemoteImageUrls,
   fetchRemoteImage,
   MAX_REMOTE_IMAGES_PER_REQUEST,
-} from '../features/mailbox/services/remote-images.js'
+} from '../shared/mailbox/remote-images.js'
 
 @RequestRoute("/inbox/{id}/images")
 @SignedIn

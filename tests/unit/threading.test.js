@@ -5,7 +5,7 @@ import {
   parseMessageIdList,
   threadMetadataFromHeaders,
   threadMetadataFromOutbound,
-} from '@/features/mailbox/services/threading.js'
+} from '@/shared/mailbox/threading.js'
 import { groupMessagesIntoThreads } from '@/features/mailbox/repositories/ThreadsRepository.js'
 
 describe('RFC message threading metadata', () => {

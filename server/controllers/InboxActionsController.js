@@ -1,8 +1,8 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { MailActionError, MailActionService } from '../features/mailbox/services/MailActionService.js'
-import { bearerToken } from '../platform/accounts/ExternalAccounts.js'
+import { bearerToken } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/inbox/actions")
 @SignedIn

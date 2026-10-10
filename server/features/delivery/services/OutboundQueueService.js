@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer'
-import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
+import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
 /** @import { OutboxEntry } from '../repositories/OutboxRepository.js' */
 
 /**

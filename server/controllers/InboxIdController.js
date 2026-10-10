@@ -1,19 +1,19 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { canAccessEmail } from '../features/mailbox/repositories/EmailsRepository.js'
-import { GitHubNotification } from '../features/mailbox/services/GitHubNotification.js'
-import { Ics } from '../features/calendar/services/Ics.js'
-import { bestCalendarAttachment, withoutCalendarCardAttachments } from '../features/calendar/services/calendar-attachments.js'
-import { parseExternalMessageId, presentExternalDetail } from '../features/mailbox/services/external-message.js'
+import { GitHubNotification } from '../shared/mailbox/GitHubNotification.js'
+import { Ics } from '../shared/calendar/Ics.js'
+import { bestCalendarAttachment, withoutCalendarCardAttachments } from '../shared/calendar/calendar-attachments.js'
+import { parseExternalMessageId, presentExternalDetail } from '../shared/mailbox/external-message.js'
 import {
   loadExternalMessage,
   projectExternalPatch,
   queueExternalMessageDelete,
   queueExternalMessagePatch,
-} from '../features/mailbox/services/unified-mail.js'
-import { accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
-import { ExternalFolderError } from '../features/mailbox/services/ExternalFolderError.js'
+} from '../shared/mailbox/unified-mail.js'
+import { accountFailure, bearerToken } from '../shared/accounts/ExternalAccounts.js'
+import { ExternalFolderError } from '../shared/mailbox/ExternalFolderError.js'
 
 @RequestRoute("/inbox/{id}")
 @SignedIn

@@ -11,7 +11,7 @@ import {
   normalizeTemplateInput,
   resolveUniqueTemplateName,
   sanitizeStoredTemplateHTML,
-} from '../../server/features/mailbox/services/template-content.js'
+} from '../../server/shared/mailbox/template-content.js'
 
 describe('Mailspring-compatible composer templates', () => {
   it('normalizes editable code regions and detects truly empty blanks', () => {

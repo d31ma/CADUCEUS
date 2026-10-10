@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token as issue } from '../routes/helpers.js'
 import { UsersMePreferencesController as PreferencesHandler } from '@/controllers/UsersMePreferencesController.js'
-import { DEFAULT_MAIL_PREFERENCES } from '@/features/users/services/mail-preferences.js'
+import { DEFAULT_MAIL_PREFERENCES } from '@/shared/users/mail-preferences.js'
 import { call } from '../support/controller-call.mjs'
 
 const getPreferences = (req) => call(PreferencesHandler, 'GET', req)

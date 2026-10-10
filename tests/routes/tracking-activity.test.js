@@ -3,7 +3,7 @@ import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
 import { ActivityController as Activity } from '@/controllers/ActivityController.js'
 import { TrackClickController as TrackClick } from '@/controllers/TrackClickController.js'
 import { TrackOpenController as TrackOpen } from '@/controllers/TrackOpenController.js'
-import { createTrackingToken } from '@/features/delivery/services/tracking-tokens.js'
+import { createTrackingToken } from '@/shared/delivery/tracking-tokens.js'
 import { call } from '../support/controller-call.mjs'
 
 const secret = 'tracking-test-secret-0123456789abcdef'

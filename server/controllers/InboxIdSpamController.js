@@ -1,5 +1,5 @@
-import { RouteRequest } from '../middleware/RouteRequest.js'
-import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
 import { canAccessEmail } from '../features/mailbox/repositories/EmailsRepository.js'
 
@@ -15,7 +15,7 @@ export class InboxIdSpamController {
    * @param {object} params
    * @param {{ id: string }} params.paths
    * @param {{ spam: boolean }} params.body
-   * @param {import('../middleware/AuthGuard.js').Principal} params.auth
+   * @param {import('../shared/http/AuthGuard.js').Principal} params.auth
    * @returns {Promise<Record<string, unknown>>}
    */
   @PutRoute

@@ -48,6 +48,7 @@ class ServerDependencies {
       copyFileSync(join(ServerDependencies.ROOT, source), join(ServerDependencies.ROOT, target))
       console.log(`${target} <- ${source}`)
     }
+    rmSync(ServerDependencies.OUTPUT, { recursive: true, force: true })
     mkdirSync(ServerDependencies.OUTPUT, { recursive: true })
     const scratch = mkdtempSync(join(ServerDependencies.ROOT, '.server-deps-'))
     try {

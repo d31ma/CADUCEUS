@@ -12,7 +12,7 @@ func (route InboxRoute) List(request *http.Request) *http.Response {
 	if refusal != nil {
 		return refusal
 	}
-	filters, err := InboxFilters{}.Parsed(RouteQuery{}.Of(request))
+	filters, err := InboxFilters{}.Parsed(MailboxQuery{}.Of(request))
 	if err != nil {
 		return Answer{}.BadRequest(err.Error())
 	}

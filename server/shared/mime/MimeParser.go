@@ -21,15 +21,15 @@ func (MimeParser) deepestNesting() int { return 32 }
 func (MimeParser) mostAttachments() int { return 1000 }
 
 // Parse answers the parsed message.
-func (parser MimeParser) Parse(raw []byte) MimeMessage {
+func (parser MimeParser) Parse(raw []byte) ParsedMessage {
 	block, body := MimeHeaders{}.Split(raw)
 	headers := MimeHeaders{}.Parsed(block)
-	message := MimeMessage{Headers: headers}
+	message := ParsedMessage{Headers: headers}
 	parser.part(&message, headers, body, 0)
 	return message
 }
 
-func (parser MimeParser) part(message *MimeMessage, headers MimeHeaders, body []byte, depth int) {
+func (parser MimeParser) part(message *ParsedMessage, headers MimeHeaders, body []byte, depth int) {
 	kind, parameters := headers.MediaType(headers.Get("content-type"))
 	if kind == "" {
 		kind = "text/plain"

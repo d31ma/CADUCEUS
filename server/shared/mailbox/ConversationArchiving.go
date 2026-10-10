@@ -1,9 +1,9 @@
 import "encoding/json"
 
-// ConversationArchive archives a whole conversation when a reply is sent,
+// ConversationArchiving archives a whole conversation when a reply is sent,
 // from a bounded snapshot taken and authorized before the send, and
 // restores it on undo without overriding later moves.
-type ConversationArchive struct {
+type ConversationArchiving struct {
 	Emails     *EmailsHelper
 	Threads    *ThreadsHelper
 	Categories *CategoryMappingService
@@ -11,7 +11,7 @@ type ConversationArchive struct {
 
 // Plan authorizes the source email and answers the snapshot of the
 // conversation's messages outside the archive, drafts, sent and trash roles.
-func (archive ConversationArchive) Plan(sourceEmailId string, ownerEmail string, domains []string) (map[string]any, error) {
+func (archive ConversationArchiving) Plan(sourceEmailId string, ownerEmail string, domains []string) (map[string]any, error) {
 	notFound := &ConversationArchiveError{Message: "Source conversation not found", Status: 404}
 	_, selected, err := archive.Emails.FindById(sourceEmailId)
 	if err != nil {
@@ -51,7 +51,7 @@ func (archive ConversationArchive) Plan(sourceEmailId string, ownerEmail string,
 
 // Archive moves the planned messages that are still where the plan saw
 // them, and refuses when any of them moved since.
-func (archive ConversationArchive) Archive(plan map[string]any, ownerEmail string) (map[string]any, error) {
+func (archive ConversationArchiving) Archive(plan map[string]any, ownerEmail string) (map[string]any, error) {
 	mappings, err := archive.Categories.ForOwner(ownerEmail)
 	if err != nil {
 		return nil, err
@@ -80,13 +80,13 @@ func (archive ConversationArchive) Archive(plan map[string]any, ownerEmail strin
 }
 
 // Serialized answers the plan as the JSON text a send's undo keeps.
-func (ConversationArchive) Serialized(plan map[string]any) string {
+func (ConversationArchiving) Serialized(plan map[string]any) string {
 	return TextValue{}.Json(map[string]any{"sourceEmailId": plan["sourceEmailId"], "threadId": plan["threadId"], "messages": plan["messages"]})
 }
 
 // Restore moves the messages a serialized plan archived back to their
 // folders, when they are still archived, and answers how many moved.
-func (archive ConversationArchive) Restore(serialized string, ownerEmail string, domains []string) (int, error) {
+func (archive ConversationArchiving) Restore(serialized string, ownerEmail string, domains []string) (int, error) {
 	var state map[string]any
 	if serialized == "" || json.Unmarshal([]byte(serialized), &state) != nil || state == nil {
 		return 0, nil
@@ -124,7 +124,7 @@ func (archive ConversationArchive) Restore(serialized string, ownerEmail string,
 }
 
 // restorable reports whether an email is still archived and the owner's.
-func (ConversationArchive) restorable(email map[string]any, mappings CategoryMappings, ownerEmail string, domains []string) bool {
+func (ConversationArchiving) restorable(email map[string]any, mappings CategoryMappings, ownerEmail string, domains []string) bool {
 	if email == nil {
 		return false
 	}
@@ -132,7 +132,7 @@ func (ConversationArchive) restorable(email map[string]any, mappings CategoryMap
 	return email["folder"] == archived && (TextValue{}).Includes(domains, email["domain"]) && (EmailsRecords{}).CanAccessEmail(email, ownerEmail)
 }
 
-func (archive ConversationArchive) restored(folders []string, byFolder map[string][]string) (int, error) {
+func (archive ConversationArchiving) restored(folders []string, byFolder map[string][]string) (int, error) {
 	restored := 0
 	for _, folder := range folders {
 		matched, err := archive.Emails.UpdateByIds(byFolder[folder], map[string]any{"folder": folder})

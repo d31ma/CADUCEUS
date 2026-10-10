@@ -14,7 +14,7 @@ func (route ActivityRoute) Feed(request *http.Request) *http.Response {
 	if refusal != nil {
 		return refusal
 	}
-	options, err := ActivityQuery{}.Options(RouteQuery{}.Of(request), EpochTime{}.Now())
+	options, err := ActivityQuery{}.Options(MailboxQuery{}.Of(request), EpochTime{}.Now())
 	if err != nil {
 		return Answer{}.BadRequest(err.Error())
 	}

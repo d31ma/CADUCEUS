@@ -47,7 +47,7 @@ func (parts MailboxParts) Presented(caller RouteCaller, emails []map[string]any)
 
 // Provider answers the connected-account mail of the deployment.
 func (MailboxParts) Provider() UnifiedMail {
-	return UnifiedMail{Accounts: ProviderAccounts{}.FromSettings()}
+	return UnifiedMail{Accounts: ProviderMailbox{}.FromSettings()}
 }
 
 // Mappings answers the caller's category role mappings.
@@ -120,7 +120,7 @@ func (parts MailboxParts) AttachmentsByEmail(allowed []string) (map[string][]map
 
 // Scope answers the validated search scope of a request, or its refusal.
 func (MailboxParts) Scope(caller RouteCaller, request *http.Request) (SearchScope, *http.Response) {
-	scope, err := SearchScope{}.Parsed(RouteQuery{}.Of(request), caller.Domains)
+	scope, err := SearchScope{}.Parsed(MailboxQuery{}.Of(request), caller.Domains)
 	if err == nil {
 		return scope, nil
 	}

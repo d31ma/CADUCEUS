@@ -24,7 +24,7 @@ func (route ExportSourcesRoute) Export(request *http.Request) *http.Response {
 	if refusal != nil {
 		return refusal
 	}
-	query := RouteQuery{}.Of(request)
+	query := MailboxQuery{}.Of(request)
 	accountId := TextValue{}.Trim(query["account"])
 	frames := &SourceFrames{}
 	if accountId != "" {

@@ -32,6 +32,6 @@ func (service *ConversationArchiveService) Restore(serialized string, ownerEmail
 	return service.archive().Restore(serialized, ownerEmail, domains)
 }
 
-func (service *ConversationArchiveService) archive() ConversationArchive {
-	return ConversationArchive{Emails: service.emailsHelper, Threads: service.threadsHelper, Categories: service.categoryMappingService}
+func (service *ConversationArchiveService) archive() ConversationArchiving {
+	return ConversationArchiving{Emails: service.emailsHelper, Threads: service.threadsHelper, Categories: service.categoryMappingService}
 }

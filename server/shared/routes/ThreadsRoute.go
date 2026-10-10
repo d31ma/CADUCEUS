@@ -24,7 +24,7 @@ func (route ThreadsRoute) List(request *http.Request) *http.Response {
 	if refusal != nil {
 		return refusal
 	}
-	query := RouteQuery{}.Of(request)
+	query := MailboxQuery{}.Of(request)
 	allowed := scope.Allowed(caller.Domains)
 	messages, refusal := route.messages(caller, scope, allowed)
 	if refusal != nil {

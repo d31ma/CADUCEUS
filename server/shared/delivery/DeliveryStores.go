@@ -86,3 +86,18 @@ func (stores DeliveryStores) Snoozes() Snoozes {
 		Notices: PushNotices{Users: users, Subscriptions: &PushSubscriptionsHelper{fyloHelper: stores.Fylo}},
 	}
 }
+
+// Routing answers inbound route and inbox-rule handling.
+func (stores DeliveryStores) Routing(smtp *SmtpService) InboundRouting {
+	return InboundRouting{Emails: stores.Emails(), Rules: &RulesHelper{fyloHelper: stores.Fylo}, Users: stores.Users(), Smtp: smtp}
+}
+
+// Inbound answers the inbound delivery pipeline.
+func (stores DeliveryStores) Inbound(routing InboundRouting, spam *SpamFilterService) InboundDelivery {
+	users := routing.Users
+	return InboundDelivery{
+		Emails: routing.Emails, Domains: &DomainsHelper{fyloHelper: stores.Fylo}, Users: users, Routing: routing, Spam: spam,
+		FollowUps: stores.FollowUps(), Participants: MailParticipants{Contacts: &ContactsHelper{fyloHelper: stores.Fylo}, Users: users},
+		Notices: PushNotices{Users: users, Subscriptions: &PushSubscriptionsHelper{fyloHelper: stores.Fylo}}, Storage: TenantStorage{Fylo: stores.Fylo},
+	}
+}

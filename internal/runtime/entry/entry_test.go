@@ -225,7 +225,9 @@ func TestServeRunsTheWholeRuntime(t *testing.T) {
 		t.Fatal(err)
 	}
 	logged := func() string { data, _ := os.ReadFile(logPath); return string(data) }
-	waitFor(t, "the webhook delivery", func() bool { return strings.Contains(logged(), "webhook bob@hosted.test alice@sender.test entry smoke") })
+	waitFor(t, "the webhook delivery", func() bool {
+		return strings.Contains(logged(), "webhook bob@hosted.test alice@sender.test entry smoke")
+	})
 	cancel()
 
 	select {

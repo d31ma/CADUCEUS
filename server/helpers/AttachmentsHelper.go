@@ -38,8 +38,7 @@ func (helper *AttachmentsHelper) ListSummariesByEmail(allowedDomains []string) (
 // FindById answers the document id and record of one attachment, or "" and
 // nil when there is none.
 func (helper *AttachmentsHelper) FindById(id string) (string, map[string]any, error) {
-	record, err := helper.attachments().First("id", id)
-	return record.Id, record.Data, err
+	return helper.attachments().FindById(id)
 }
 
 // SaveForEmail stores an email's attachments and answers their summaries.

@@ -30,6 +30,13 @@ func (collection FyloCollection) First(field string, value any) (FyloRecord, err
 	return records[0], nil
 }
 
+// FindById answers the document id and fields of the first document with a
+// logical id, or "" and nil when there is none.
+func (collection FyloCollection) FindById(id string) (string, map[string]any, error) {
+	record, err := collection.First("id", id)
+	return record.Id, record.Data, err
+}
+
 // Equal answers the FYLO query for documents whose field equals value.
 func (FyloCollection) Equal(field string, value any) map[string]any {
 	return map[string]any{"$ops": []any{map[string]any{field: map[string]any{"$eq": value}}}}

@@ -1,4 +1,4 @@
-<logic :if="shell.signedIn">
+<logic :if="session.signedIn">
   <div class="app-shell">
     <header class="app-topbar">
       <!-- Brand: a custom logo (configured via window.CADUCEUS_CONFIG.brandLogo)
@@ -83,9 +83,9 @@
           on:click="shell.toggleUserMenu()"
           aria-haspopup="menu"
           :aria-expanded="shell.userMenuOpen ? 'true' : 'false'"
-          :title="shell.email">
+          :title="session.email">
           <span class="presence-dot online" role="img" :aria-label="shell.text('shell.online')"></span>
-          <span class="app-user-name w-text-body-medium">{shell.displayName}</span>
+          <span class="app-user-name w-text-body-medium">{session.displayName}</span>
           <svg class="app-user-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true">
             <polyline points="6 9 12 15 18 9"/>
           </svg>
@@ -458,7 +458,7 @@
   </div>
 </logic>
 
-<logic :if="shell.restored && !shell.signedIn">
+<logic :if="session.restored && !session.signedIn">
   <div class="login-screen">
     <login-form :brandlogo="'/shared/assets/favicon.svg'" />
   </div>

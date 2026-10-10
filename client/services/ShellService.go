@@ -22,12 +22,8 @@ type ShellService struct {
 	// @Needs
 	sendClient                *SendClient
 	applicationEventPublisher ApplicationEventPublisher
-	SignedIn                  bool
-	Restored                  bool
 	IsRootPath                bool
 	BrandLogo                 string
-	Email                     string
-	DisplayName               string
 	ActiveFolder              string
 	SelectedDomain            string
 	SelectedAccount           string
@@ -43,6 +39,8 @@ type ShellService struct {
 	toastSubject              string
 	toastSerial               int
 	token                     string
+	signedIn                  bool
+	email                     string
 	locale                    string
 	pending                   map[string]PendingUndo
 	sections                  map[string]string
@@ -62,10 +60,8 @@ func (shell *ShellService) Start() {
 // and keeps beating every 30 seconds.
 // @OnEvent({"replay":true})
 func (shell *ShellService) HearSession(changed SessionChanged) {
-	shell.SignedIn = changed.SignedIn
-	shell.Restored = true
-	shell.Email = changed.Email
-	shell.DisplayName = changed.DisplayName
+	shell.signedIn = changed.SignedIn
+	shell.email = changed.Email
 	shell.token = changed.Token
 	shell.ScreenshotMode = shell.keptScreenshotMode(changed.SignedIn)
 	FlowUtils{}.When(changed.SignedIn, shell.beginBeating)()
@@ -261,7 +257,7 @@ func (shell *ShellService) openShortcutHelp() {
 }
 
 func (shell *ShellService) redirectFromRoot() {
-	FlowUtils{}.When(shell.IsRootPath && shell.SignedIn, func() {
+	FlowUtils{}.When(shell.IsRootPath && shell.signedIn, func() {
 		shell.applicationEventPublisher.PublishEvent(NavigationRequested{Target: shell.names().Root + shell.names().Inbox, Replace: true}, false)
 	})()
 }
@@ -272,7 +268,7 @@ func (shell *ShellService) beginBeating() {
 }
 
 func (shell *ShellService) beatWhenSignedIn() {
-	FlowUtils{}.When(shell.SignedIn, shell.beat)()
+	FlowUtils{}.When(shell.signedIn, shell.beat)()
 }
 
 func (shell *ShellService) beat() {
@@ -377,7 +373,7 @@ func (shell *ShellService) pendingFrom(text string) PendingUndo {
 // this user and has not expired, and forgets any other.
 func (shell *ShellService) offerPendingUndo(pending PendingUndo, key string) {
 	remaining := pending.ExpiresAt - time.Now().UnixMilli()
-	FlowUtils{}.Either(!slices.Contains([]bool{pending.Owner != "", pending.Owner == shell.Email, remaining > 0}, false), func() {
+	FlowUtils{}.Either(!slices.Contains([]bool{pending.Owner != "", pending.Owner == shell.email, remaining > 0}, false), func() {
 		shell.pending[key] = pending
 		shell.showToast(ToastRequested{Message: TextUtils{}.FirstOf(pending.Message, pending.Label), ActionLabel: "Undo", Action: key, DurationMs: int(max(250, remaining))})
 	}, func() { shell.forgetPending(key) })()

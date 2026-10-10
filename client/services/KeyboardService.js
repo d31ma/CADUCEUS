@@ -40,9 +40,14 @@ export default class KeyboardService {
     this.applicationEventPublisher.publishEvent(pressed, false)
   }
 
+  /** @param {Array<{label: string, rows: Array<{label: string, displayBinding: string}>}> | undefined} groups @returns {ShortcutGroup[]} */
+  _groups(groups) {
+    return (groups ?? []).map(group => ({ label: group.label, rows: group.rows.map(row => ({ label: row.label, displayBinding: row.displayBinding })) }))
+  }
+
   _listGroups() {
     /** @type {ShortcutGroupsListed} */
-    const listed = { groups: window._caduceusKeyboard?.getGroups?.() || [] }
+    const listed = { groups: this._groups(window._caduceusKeyboard?.getGroups?.()) }
     this.applicationEventPublisher.publishEvent(listed, true)
   }
 }

@@ -17,11 +17,15 @@ export default class PasskeyService {
   /** @type {ApplicationEventPublisher} */
   applicationEventPublisher
 
+  pending = false
+
   /** @param {PasskeyRequested} request */
   @OnEvent
   async ceremony(request) {
+    this.pending = true
     /** @type {PasskeyAnswered} */
     const answer = await this._attempt(request)
+    this.pending = false
     this.applicationEventPublisher.publishEvent(answer, false)
   }
 

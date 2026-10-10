@@ -43,7 +43,7 @@
       </div>
       <p class="login-title w-text-title-medium">Verify your identity</p>
       <p class="login-subtitle w-text-body-small">Follow the prompt from your browser or device to sign in with your passkey.</p>
-      <w-progress-circular indeterminate class="passkey-spinner" aria-hidden="true"></w-progress-circular>
+      <w-progress-circular indeterminate class="passkey-spinner" aria-hidden="true" :data-waiting="passkey.pending"></w-progress-circular>
       <logic :if="login.error"><p class="login-error">{login.error}</p></logic>
       <div class="passkey-actions">
         <w-btn variant="text" on:click="login.back()">Cancel</w-btn>
@@ -62,7 +62,7 @@
       </div>
       <p class="login-title w-text-title-medium">Create a passkey</p>
       <p class="login-subtitle w-text-body-small">Follow the prompt from your browser to save a passkey for this account.</p>
-      <w-progress-circular indeterminate class="passkey-spinner" aria-hidden="true"></w-progress-circular>
+      <w-progress-circular indeterminate class="passkey-spinner" aria-hidden="true" :data-waiting="passkey.pending"></w-progress-circular>
       <logic :if="login.error"><p class="login-error">{login.error}</p></logic>
       <div style="display:flex;justify-content:center;margin-top:0.5rem;">
         <w-btn variant="text" on:click="login.back()">Cancel</w-btn>

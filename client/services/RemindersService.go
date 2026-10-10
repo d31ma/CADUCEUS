@@ -66,4 +66,3 @@ func (reminders *RemindersService) dismissMessage(failure error) string {
 	}
 	return "Reminder dismissed."
 }
-

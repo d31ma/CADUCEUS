@@ -56,6 +56,16 @@ func (activity *ActivityService) Load() {
 	activity.Loaded = true
 }
 
+func (ActivityService) limit() int { return 100 }
+
+func (ActivityService) everyKind() string { return "all" }
+
+func (ActivityService) openKind() string { return "open" }
+
+func (ActivityService) clickKind() string { return "click" }
+
+func (ActivityService) defaultRange() string { return "30d" }
+
 // SetType shows all, open or click events.
 func (activity *ActivityService) SetType(kind string) {
 	activity.loadWhenAllowed(&activity.Type, kind, []string{activity.everyKind(), activity.openKind(), activity.clickKind()})
@@ -120,6 +130,8 @@ func (activity *ActivityService) eventRow(event ActivityEvent) ActivityEventRow 
 	}
 }
 
+func (ActivityService) noSubject() string { return "(No subject)" }
+
 func (activity *ActivityService) clean(text string) string {
 	return strings.TrimSpace(strings.Map(activity.visible, text))
 }
@@ -180,6 +192,10 @@ func (activity *ActivityService) bar(value float64, highest float64) string {
 	return fmt.Sprintf("height:%v%%", height)
 }
 
+func (ActivityService) hundred() float64 { return 100 }
+
+func (ActivityService) shortestBar() float64 { return 4 }
+
 func (activity *ActivityService) subjectRows(subjects []ActivitySubject) []ActivitySubjectRow {
 	rows := []ActivitySubjectRow{}
 	for _, subject := range subjects {
@@ -212,6 +228,10 @@ func (activity *ActivityService) percent(value float64) string {
 	return activity.grouped(text) + "%"
 }
 
+func (ActivityService) tenths() float64 { return 10 }
+
+func (ActivityService) decimalPoint() string { return "." }
+
 func (activity *ActivityService) grouped(text string) string {
 	point := activity.decimalPoint()
 	whole, fraction, _ := strings.Cut(text, point)
@@ -226,6 +246,8 @@ func (activity *ActivityService) grouped(text string) string {
 	return sign + strings.Join(append([]string{digits}, groups...), ",") + strings.TrimSuffix(point+fraction, point)
 }
 
+func (ActivityService) groupSize() int { return 3 }
+
 func (activity *ActivityService) count(value float64) string {
 	return activity.decimal(max(value, 0), -1)
 }
@@ -237,25 +259,3 @@ func (ActivityService) decimal(value float64, digits int) string {
 func (activity *ActivityService) settle() {
 	activity.applicationEventPublisher.PublishEvent(ViewSettled{Source: "activity"}, false)
 }
-
-func (ActivityService) limit() int { return 100 }
-
-func (ActivityService) hundred() float64 { return 100 }
-
-func (ActivityService) tenths() float64 { return 10 }
-
-func (ActivityService) groupSize() int { return 3 }
-
-func (ActivityService) decimalPoint() string { return "." }
-
-func (ActivityService) everyKind() string { return "all" }
-
-func (ActivityService) openKind() string { return "open" }
-
-func (ActivityService) clickKind() string { return "click" }
-
-func (ActivityService) defaultRange() string { return "30d" }
-
-func (ActivityService) shortestBar() float64 { return 4 }
-
-func (ActivityService) noSubject() string { return "(No subject)" }

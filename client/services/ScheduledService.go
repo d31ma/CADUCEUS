@@ -68,6 +68,8 @@ func (scheduled *ScheduledService) loadedRows(found []ScheduledSend, failure err
 	}
 }
 
+func (ScheduledService) refused() string { return "HTTP_STATUS" }
+
 func (scheduled *ScheduledService) rows(found []ScheduledSend) []ScheduledRow {
 	rows := []ScheduledRow{}
 	for _, item := range found {
@@ -80,6 +82,8 @@ func (scheduled *ScheduledService) rows(found []ScheduledSend) []ScheduledRow {
 	}
 	return rows
 }
+
+func (ScheduledService) listSeparator() string { return ", " }
 
 func (ScheduledService) statusLabel(item ScheduledSend) string {
 	next := map[bool]string{true: "pending", false: DateLabelUtils{}.Numeric(item.NextAttempt)}[item.NextAttempt == ""]
@@ -130,6 +134,8 @@ func (scheduled *ScheduledService) explainWhenFailed(failure error) {
 	}
 }
 
+func (ScheduledService) networkError() string { return "Network error." }
+
 func (scheduled *ScheduledService) prefill(message ScheduledSend) ComposeRequested {
 	replyTo := append(scheduled.addresses(message.ReplyTo), "")
 	return ComposeRequested{
@@ -148,6 +154,8 @@ func (scheduled *ScheduledService) cancelWhenAsked(confirmation ConfirmationGive
 	_, failure := scheduled.sendClient.CancelScheduled(scheduled.authorization, confirmation.ID)
 	return true, failure
 }
+
+func (ScheduledService) cancelAction() string { return "cancel-scheduled" }
 
 func (scheduled *ScheduledService) withoutCancelled(id string, asked bool, failure error) []ScheduledRow {
 	if !asked || failure != nil {
@@ -176,11 +184,3 @@ func (scheduled *ScheduledService) toast(message string) {
 func (scheduled *ScheduledService) settle() {
 	scheduled.applicationEventPublisher.PublishEvent(ViewSettled{Source: "scheduled"}, false)
 }
-
-func (ScheduledService) cancelAction() string { return "cancel-scheduled" }
-
-func (ScheduledService) refused() string { return "HTTP_STATUS" }
-
-func (ScheduledService) networkError() string { return "Network error." }
-
-func (ScheduledService) listSeparator() string { return ", " }

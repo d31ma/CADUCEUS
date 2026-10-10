@@ -71,3 +71,9 @@ func (stores DeliveryStores) Editing(smtp *SmtpService) ScheduledEditing {
 func (stores DeliveryStores) Undo(smtp *SmtpService) SendUndo {
 	return SendUndo{Sent: stores.Sent(smtp), Reminders: stores.FollowUps(), Archive: stores.Archive()}
 }
+
+// Drafts answers the durable draft lifecycle.
+func (stores DeliveryStores) Drafts() Drafts {
+	emails := stores.Emails()
+	return Drafts{Emails: emails, Attachments: emails.attachmentsHelper, Users: stores.Users(), Storage: TenantStorage{Fylo: stores.Fylo}}
+}

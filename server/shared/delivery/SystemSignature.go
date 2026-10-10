@@ -7,14 +7,14 @@ import (
 	"net/http"
 )
 
-// WebhookSignature checks the X-Caduceus-Signature HMAC that system callers
+// SystemSignature checks the X-Caduceus-Signature HMAC that system callers
 // (the delivery workers and the inbound receiver) put on their requests.
 // The HMAC covers the exact body bytes, or "{}" when there is no body.
-type WebhookSignature struct{}
+type SystemSignature struct{}
 
 // Body answers the request's decoded body once its signature, made with the
 // named setting's secret, is valid; or the answer that refuses the request.
-func (signature WebhookSignature) Body(request *http.Request, setting string) (any, *http.Response) {
+func (signature SystemSignature) Body(request *http.Request, setting string) (any, *http.Response) {
 	data := []byte{}
 	if request.Body != nil {
 		data, _ = io.ReadAll(io.LimitReader(request.Body, signature.limit()))
@@ -35,7 +35,7 @@ func (signature WebhookSignature) Body(request *http.Request, setting string) (a
 }
 
 // Valid reports whether given is the hex HMAC-SHA256 of the body.
-func (WebhookSignature) Valid(data []byte, secret string, given string) bool {
+func (SystemSignature) Valid(data []byte, secret string, given string) bool {
 	if len(data) == 0 {
 		data = []byte("{}")
 	}
@@ -45,4 +45,4 @@ func (WebhookSignature) Valid(data []byte, secret string, given string) bool {
 	return len(given) == len(expected) && hmac.Equal([]byte(given), []byte(expected))
 }
 
-func (WebhookSignature) limit() int64 { return 64 << 20 }
+func (SystemSignature) limit() int64 { return 64 << 20 }

@@ -19,17 +19,22 @@ class ServerDependencies {
   /** Package specifier and the file it is bundled to. */
   static PACKAGES = [
     ['@modelcontextprotocol/server', 'modelcontextprotocol-server.mjs'],
-    ['acme-client', 'acme-client.mjs'],
     ['htmlparser2', 'htmlparser2.mjs'],
-    ['mailauth', 'mailauth.mjs'],
     ['mailparser', 'mailparser.mjs'],
     ['nodemailer', 'nodemailer.mjs'],
     ['nodemailer/lib/mail-composer/index.js', 'nodemailer-mail-composer.mjs'],
     ['rrule', 'rrule.mjs'],
-    ['smtp-server', 'smtp-server.mjs'],
     ['web-push', 'web-push.mjs'],
     ['zod', 'zod.mjs'],
   ]
+
+  /**
+   * zod (also inside the MCP SDK) probes for `new Function` and, when it
+   * works, compiles validators from generated source. Tachyon refuses code
+   * that runs text (TY1325), so the probe answers false and zod keeps to its
+   * interpreted validators.
+   */
+  static EVAL_PROBE = /try\{return new Function\(""\),!0\}catch\(\w+\)\{return!1\}/g
 
   /** Client data the server also reads, copied so the handler snapshot holds it. */
   static DATA = [
@@ -87,7 +92,9 @@ class ServerDependencies {
     })
     if (!result.success) throw new AggregateError(result.logs, `Cannot bundle ${specifier}`)
     const [output] = result.outputs
-    writeFileSync(join(ServerDependencies.OUTPUT, file), await output.text())
+    const text = (await output.text()).replace(ServerDependencies.EVAL_PROBE, 'return!1')
+    if (/new Function\(|\beval\(/.test(text)) throw new Error(`${specifier} still runs text as code after bundling`)
+    writeFileSync(join(ServerDependencies.OUTPUT, file), text)
     console.log(`server/deps/npm/${file} <- ${specifier}`)
   }
 }

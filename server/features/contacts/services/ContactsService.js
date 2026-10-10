@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { Security } from '../../../platform/security/Security.js'
-import { VCard } from './vcard.js'
+import { VCard } from './VCard.js'
 
 const MAX_VALUES = 50
 

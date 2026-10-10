@@ -10,9 +10,13 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "types": ["bun-types"],
+    "types": [
+      "bun-types"
+    ],
     "paths": {
-      "@/*": ["./server/*"]
+      "@/*": [
+        "./server/*"
+      ]
     }
   },
   "include": [
@@ -20,6 +24,8 @@
     "server/**/*.d.ts",
     "server/**/*.js",
     "server/**/*.ts",
+    "background/**/*.js",
+    "background/**/*.ts",
     "scripts/**/*.mjs",
     "client/**/*.d.ts",
     "client/**/*.js",

@@ -2,11 +2,11 @@ import { describe, expect, test } from 'bun:test'
 import {
   PeriodicWorker,
   ServiceSupervisor,
-} from '../../server/platform/runtime/ServiceSupervisor.ts'
-import { OutboundQueueWorker } from '../../server/features/delivery/services/OutboundQueueWorker.ts'
-import { FollowUpReminderWorker } from '../../server/features/delivery/services/FollowUpReminderWorker.ts'
-import { SnoozeWorker } from '../../server/features/mailbox/services/SnoozeWorker.ts'
-import { ProviderNotificationWorker } from '../../server/features/notifications/services/ProviderNotificationWorker.ts'
+} from '../../background/ServiceSupervisor.ts'
+import { OutboundQueueWorker } from '../../background/OutboundQueueWorker.ts'
+import { FollowUpReminderWorker } from '../../background/FollowUpReminderWorker.ts'
+import { SnoozeWorker } from '../../background/SnoozeWorker.ts'
+import { ProviderNotificationWorker } from '../../background/ProviderNotificationWorker.ts'
 
 describe('ServiceSupervisor', () => {
   test('starts components in order and stops them in reverse order', async () => {

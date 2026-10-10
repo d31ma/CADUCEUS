@@ -62,11 +62,13 @@ RUN bun install --frozen-lockfile
 
 COPY client ./client
 COPY server ./server
+COPY background ./background
 COPY db/schemas ./db/schemas
 COPY scripts/entry.mjs ./scripts/
 COPY scripts/create-admin.mjs ./scripts/
 COPY scripts/migrate-domain.mjs ./scripts/
 COPY scripts/vendor-translation-assets.mjs ./scripts/
+COPY scripts/vendor-server-deps.mjs ./scripts/
 COPY docs/THIRD_PARTY_MODELS.md ./docs/THIRD_PARTY_MODELS.md
 COPY jsconfig.json ./jsconfig.json
 COPY runtime.lock.json ./runtime.lock.json
@@ -75,6 +77,10 @@ COPY runtime.lock.json ./runtime.lock.json
 # immutable model revision during the image build, verify every byte against
 # translation-models.lock.json, and prohibit runtime network model fetches.
 RUN bun run translation:vendor && bun run translation:verify
+
+# Tachyon runs handlers from a snapshot of server/ under Node, so the npm
+# packages they import are bundled into server/deps first.
+RUN bun scripts/vendor-server-deps.mjs
 
 # Remove test routes — they should never be in production
 RUN rm -f server/controllers/Test*Controller.js \

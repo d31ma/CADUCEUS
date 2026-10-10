@@ -1,7 +1,7 @@
 /**
  * @typedef {object} OutboxEntry
  * @property {string} id
- * @property {import('../services/smtp').SendRequest} email
+ * @property {import('./SendRequest.js').SendRequest} email
  * @property {string} sender
  * @property {string} [owner]
  * @property {number} expiresAt          When the entry first becomes eligible (undo window end).

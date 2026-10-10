@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test'
 import { EventEmitter } from 'node:events'
-import { SubmissionServer } from '../../server/features/delivery/services/SubmissionServer.js'
-import { listenForConnections } from '../../server/platform/runtime/ListenableServer.ts'
+import { SubmissionServer } from '../../background/SubmissionServer.js'
+import { listenForConnections } from '../../background/ListenableServer.ts'
 
 test('submission SMTP refuses to start without TLS by default', () => {
   expect(() => new SubmissionServer({

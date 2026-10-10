@@ -7,11 +7,11 @@
 //   ./caduceus domain:migrate --from=...   Migrate domain
 //   ./caduceus help                        Show help
 
-import { OutboundQueueWorker } from '../server/features/delivery/services/OutboundQueueWorker.ts'
-import { FollowUpReminderWorker } from '../server/features/delivery/services/FollowUpReminderWorker.ts'
-import { SnoozeWorker } from '../server/features/mailbox/services/SnoozeWorker.ts'
-import { ProviderNotificationWorker } from '../server/features/notifications/services/ProviderNotificationWorker.ts'
-import { ServiceSupervisor } from '../server/platform/runtime/ServiceSupervisor.ts'
+import { OutboundQueueWorker } from '../background/OutboundQueueWorker.ts'
+import { FollowUpReminderWorker } from '../background/FollowUpReminderWorker.ts'
+import { SnoozeWorker } from '../background/SnoozeWorker.ts'
+import { ProviderNotificationWorker } from '../background/ProviderNotificationWorker.ts'
+import { ServiceSupervisor } from '../background/ServiceSupervisor.ts'
 import { randomBytes } from 'node:crypto'
 
 const command = process.argv[2] || 'serve'
@@ -150,7 +150,7 @@ if (command === 'serve') {
           name: 'acme-renewal',
           required: false,
           start: async () => {
-            const { AcmeService } = await import('../server/features/domains/services/AcmeService.js')
+            const { AcmeService } = await import('../background/AcmeService.js')
             const dir = process.env.MAIL_TLS_DIR || '/data/tls'
             process.env.MAIL_TLS_CERT_FILE ||= `${dir}/${process.env.MAIL_HOSTNAME}.cert.pem`
             process.env.MAIL_TLS_KEY_FILE ||= `${dir}/${process.env.MAIL_HOSTNAME}.key.pem`
@@ -173,7 +173,7 @@ if (command === 'serve') {
         supervisor.register({
           name: 'inbound-smtp',
           start: async () => {
-            const { InboundSmtpServer } = await import('../server/features/delivery/services/InboundSmtpServer.js')
+            const { InboundSmtpServer } = await import('../background/InboundSmtpServer.js')
             const server = await new InboundSmtpServer({ apiUrl }).start()
             server.once('error', (error) => supervisor?.reportFailure('inbound-smtp', error))
             return () => closeSmtpServer(server)
@@ -185,7 +185,7 @@ if (command === 'serve') {
         supervisor.register({
           name: 'smtp-submission',
           start: async () => {
-            const { SubmissionServer } = await import('../server/features/delivery/services/SubmissionServer.js')
+            const { SubmissionServer } = await import('../background/SubmissionServer.js')
             /** @type {import('smtp-server').SMTPServer[]} */
             const servers = []
             try {

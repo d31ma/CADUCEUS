@@ -3,7 +3,7 @@ import {
   PeriodicWorker,
   type StopService,
   type WorkerSnapshot,
-} from '../../../platform/runtime/ServiceSupervisor.ts'
+} from './ServiceSupervisor.ts'
 
 export type SnoozeFetchRequest = (
   input: RequestInfo | URL,

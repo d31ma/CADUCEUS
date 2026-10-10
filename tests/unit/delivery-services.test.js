@@ -6,7 +6,7 @@ import {
   SmtpDirectAdapter, ConsoleSmtpAdapter, createSmtpAdapter,
   SmtpDeliveryError, loadDkim, groupRecipientsByDomain, resolveMailExchangers, buildSmtpMessage, transportOptions,
 } from '@/features/delivery/services/SmtpService.js'
-import { AcmeService } from '@/features/domains/services/AcmeService.js'
+import { AcmeService } from '../../background/AcmeService.js'
 import { readTrackingToken } from '@/features/delivery/services/tracking-tokens.js'
 import { Security } from '@/platform/security/Security.js'
 import { RuleValidation } from '@/features/domains/services/RuleValidation.js'

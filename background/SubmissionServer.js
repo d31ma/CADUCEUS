@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { AcmeService } from '../../domains/services/AcmeService.js'
-import { listenForConnections } from '../../../platform/runtime/ListenableServer.ts'
-import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
+import { AcmeService } from './AcmeService.js'
+import { listenForConnections } from './ListenableServer.ts'
+import { ServerEnvironment } from '../server/platform/runtime/ServerEnvironment.js'
 
 export class SubmissionServer {
   /** @param {SubmissionOptions} options */
@@ -26,8 +26,8 @@ export class SubmissionServer {
    * @returns {Promise<import('smtp-server').SMTPServer>}
    */
   async start() {
-    const { SMTPServer } = await import('../../../deps/npm/smtp-server.mjs')
-    const { simpleParser } = await import('../../../deps/npm/mailparser.mjs')
+    const { SMTPServer } = await import('smtp-server')
+    const { simpleParser } = await import('mailparser')
 
     // Serve a fresh context per handshake when TLS lives in files, so ACME
     // renewals apply without restarting the submission server.

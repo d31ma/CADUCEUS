@@ -1,8 +1,8 @@
 import { createHmac } from 'node:crypto'
 import { readFileSync } from 'node:fs'
-import { AcmeService } from '../../domains/services/AcmeService.js'
-import { listenForConnections } from '../../../platform/runtime/ListenableServer.ts'
-import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
+import { AcmeService } from './AcmeService.js'
+import { listenForConnections } from './ListenableServer.ts'
+import { ServerEnvironment } from '../server/platform/runtime/ServerEnvironment.js'
 
 export class InboundSmtpServer {
   /** @param {InboundSmtpOptions} [options] */
@@ -25,8 +25,8 @@ export class InboundSmtpServer {
    * @returns {Promise<import('smtp-server').SMTPServer>}
    */
   async start() {
-    const { SMTPServer } = await import('../../../deps/npm/smtp-server.mjs')
-    const { simpleParser } = await import('../../../deps/npm/mailparser.mjs')
+    const { SMTPServer } = await import('smtp-server')
+    const { simpleParser } = await import('mailparser')
 
     // Serve a fresh context per handshake when TLS lives in files, so ACME
     // renewals apply without a restart.
@@ -145,7 +145,7 @@ export class InboundSmtpServer {
    */
   async authenticateMessage(raw, session, verifier) {
     try {
-      const authenticate = verifier ?? (await import('../../../deps/npm/mailauth.mjs')).authenticate
+      const authenticate = verifier ?? (await import('mailauth')).authenticate
       const result = await authenticate(raw, {
         ip: session.remoteAddress,
         helo: session.hostNameAppearsAs || session.clientHostname || undefined,

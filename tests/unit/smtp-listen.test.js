@@ -7,9 +7,9 @@ import { describe, it, expect, afterEach } from 'bun:test'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { InboundSmtpServer } from '@/features/delivery/services/InboundSmtpServer.js'
-import { SubmissionServer } from '@/features/delivery/services/SubmissionServer.js'
-import { listenForConnections } from '@/platform/runtime/ListenableServer.ts'
+import { InboundSmtpServer } from '../../background/InboundSmtpServer.js'
+import { SubmissionServer } from '../../background/SubmissionServer.js'
+import { listenForConnections } from '../../background/ListenableServer.ts'
 import tlsOptions from 'smtp-server/lib/tls-options.js'
 
 /** @type {Array<{ close: (cb?: () => void) => void }>} */

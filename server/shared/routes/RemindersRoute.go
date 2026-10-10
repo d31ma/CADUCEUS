@@ -38,11 +38,7 @@ func (route RemindersRoute) List(request *http.Request) *http.Response {
 // Create answers POST /reminders: a reminder on one of the caller's sent
 // messages.
 func (route RemindersRoute) Create(request *http.Request) *http.Response {
-	body, refusal := RequestBody{}.Object(request)
-	if refusal != nil {
-		return refusal
-	}
-	caller, refusal := route.Access.Signed(request)
+	caller, body, refusal := (DeliveryReply{}).Caller(route.Access, request)
 	if refusal != nil {
 		return refusal
 	}
@@ -84,11 +80,7 @@ func (route RemindersRoute) create(caller RouteCaller, body map[string]any) (any
 
 // Dismiss answers DELETE /reminders.
 func (route RemindersRoute) Dismiss(request *http.Request) *http.Response {
-	body, refusal := RequestBody{}.Object(request)
-	if refusal != nil {
-		return refusal
-	}
-	caller, refusal := route.Access.Signed(request)
+	caller, body, refusal := (DeliveryReply{}).Caller(route.Access, request)
 	if refusal != nil {
 		return refusal
 	}

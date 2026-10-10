@@ -45,3 +45,29 @@ func (stores DeliveryStores) Archive() ConversationArchive {
 	emails := stores.Emails()
 	return ConversationArchive{Emails: emails, Threads: &ThreadsHelper{emailsHelper: emails}, Users: stores.Users()}
 }
+
+// Acceptance answers POST /send's acceptance with the request's journal and
+// rate limits.
+func (stores DeliveryStores) Acceptance(smtp *SmtpService, journal SendIdempotency, limits *RateLimitService) SendAcceptance {
+	sent := stores.Sent(smtp)
+	return SendAcceptance{
+		Sent: sent, Journal: journal, Reminders: stores.FollowUps(), Archive: stores.Archive(),
+		Suppressed: sent.Queue.Suppressed, Senders: SenderAddresses{Users: sent.Users}, Limits: limits,
+	}
+}
+
+// Schedules answers scheduled-message management.
+func (stores DeliveryStores) Schedules(smtp *SmtpService) ScheduledSends {
+	return ScheduledSends{Sent: stores.Sent(smtp), Reminders: stores.FollowUps()}
+}
+
+// Editing answers scheduled-message editing.
+func (stores DeliveryStores) Editing(smtp *SmtpService) ScheduledEditing {
+	schedules := stores.Schedules(smtp)
+	return ScheduledEditing{Schedules: schedules, Senders: SenderAddresses{Users: schedules.Sent.Users}}
+}
+
+// Undo answers delayed-send undo.
+func (stores DeliveryStores) Undo(smtp *SmtpService) SendUndo {
+	return SendUndo{Sent: stores.Sent(smtp), Reminders: stores.FollowUps(), Archive: stores.Archive()}
+}

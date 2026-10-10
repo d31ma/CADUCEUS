@@ -70,3 +70,18 @@ func (reply DeliveryReply) Settled(answer any, err error) *http.Response {
 	}
 	return reply.Of(answer)
 }
+
+// Caller answers a signed-in request's JSON body and caller, reading the
+// body first as the former RouteRequest did (malformed JSON is a 400 before
+// authorization), or the answer that refuses the request.
+func (DeliveryReply) Caller(access *AccessHelper, request *http.Request) (RouteCaller, map[string]any, *http.Response) {
+	body, refusal := RequestBody{}.Object(request)
+	if refusal != nil {
+		return RouteCaller{}, nil, refusal
+	}
+	caller, refusal := access.Signed(request)
+	if body == nil {
+		body = map[string]any{}
+	}
+	return caller, body, refusal
+}

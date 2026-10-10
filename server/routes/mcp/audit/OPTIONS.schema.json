@@ -1,9 +1,0 @@
-{
-  "GET": {
-    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" }
-  },
-  "DELETE": {
-    "200": { "cleared": "^-?[0-9]+(?:\\.[0-9]+)?$" },
-    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" }
-  }
-}

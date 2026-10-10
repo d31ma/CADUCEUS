@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { PhishingDetection } from '@/features/delivery/services/phishing-detection.js'
+import { PhishingDetection } from '@/features/delivery/services/PhishingDetection.js'
 
 describe('PhishingDetection.analyze', () => {
   it('extracts display-name addresses without warning when Reply-To matches From', () => {

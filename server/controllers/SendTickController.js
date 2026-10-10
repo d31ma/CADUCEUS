@@ -1,5 +1,5 @@
-import { Guards } from '../../../middleware/guards.js'
-import { getApp } from '../../../app.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { getApp } from '../app.js'
 
 @RequestRoute("/send/tick")
 @Public
@@ -15,11 +15,12 @@ export class SendTickController {
    *
    * @returns {Promise<Record<string, unknown>>}
    */
-  @Guards.webhookSignature('INBOUND_WEBHOOK_SECRET')
   @PostRoute
-  async post() {
-    const app = await getApp()
-    const result = await app.outboundQueue.processDue()
-    return { ...result, queue: await app.outboundQueue.status() }
+  async post(request) {
+    return RouteRequest.handle(request, { signature: 'INBOUND_WEBHOOK_SECRET' }, async () => {
+      const app = await getApp()
+      const result = await app.outboundQueue.processDue()
+      return { ...result, queue: await app.outboundQueue.status() }
+    })
   }
 }

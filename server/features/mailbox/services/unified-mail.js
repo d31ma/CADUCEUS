@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
-import { ExternalAccounts } from '../../../platform/accounts/bridge.js'
-import { AuthBridgeError } from '../../../platform/auth/bridge.js'
+import { ExternalAccounts } from '../../../platform/accounts/ExternalAccounts.js'
+import { AuthBridgeError } from '../../../platform/auth/Auth.js'
 import { parseExternalMessageId, presentExternalSummary } from './external-message.js'
+import { ExternalFolderError } from './ExternalFolderError.js'
 
 const EXTERNAL_ACCOUNT_ID = /^ext_[A-Za-z0-9_-]{20,80}$/
 
@@ -211,13 +212,6 @@ export function projectExternalPatch(loaded, patch) {
     }
   }
   return { ...loaded, indexed }
-}
-
-export class ExternalFolderError extends Error {
-  constructor(folder) {
-    super(`The connected account does not expose a ${String(folder)} folder`)
-    this.name = 'ExternalFolderError'
-  }
 }
 
 function inferFolderRole(value) {

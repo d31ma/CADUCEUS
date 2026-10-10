@@ -9,7 +9,7 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { InboundSmtpServer } from '@/features/delivery/services/smtp-inbound-server.js'
 import { SubmissionServer } from '@/features/delivery/services/smtp-submission-server.js'
-import { listenForConnections } from '@/platform/runtime/listener.ts'
+import { listenForConnections } from '@/platform/runtime/ListenableServer.ts'
 import tlsOptions from 'smtp-server/lib/tls-options.js'
 
 /** @type {Array<{ close: (cb?: () => void) => void }>} */

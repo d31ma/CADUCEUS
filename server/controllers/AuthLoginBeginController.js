@@ -1,8 +1,9 @@
+import { RouteRequest } from '../middleware/RouteRequest.js'
 // @ts-check
-import { Respond } from '../../../../platform/http/respond.js'
-import { Auth } from '../../../../platform/auth/bridge.js'
-import { AuthGuard } from '../../../../middleware/require-auth.js'
-import { getApp } from '../../../../app.js'
+import { Respond } from '../platform/http/Respond.js'
+import { Auth } from '../platform/auth/Auth.js'
+import { AuthGuard } from '../middleware/AuthGuard.js'
+import { getApp } from '../app.js'
 
 @RequestRoute("/auth/login/begin")
 @Public
@@ -16,20 +17,22 @@ export class AuthLoginBeginController {
    * @param {any} request
    */
   @PostRoute
-  async post(/** @type {any} */ { body, context }) {
-    const address = String(body?.address ?? '').trim()
-    if (!address) return Respond.r400('address is required')
+  async post(request) {
+    return RouteRequest.handle(request, {  }, async ({ body, context }) => {
+      const address = String(body?.address ?? '').trim()
+      if (!address) return Respond.r400('address is required')
 
-    const app = await getApp()
-    const limit = await app.rateLimit.check(
-      ['login-begin', address, context?.ipAddress ?? 'unknown'], 20, 15 * 60 * 1000,
-    )
-    if (!limit.allowed) return Respond.r429('Too many attempts', limit.retryAfterSeconds)
+      const app = await getApp()
+      const limit = await app.rateLimit.check(
+        ['login-begin', address, context?.ipAddress ?? 'unknown'], 20, 15 * 60 * 1000,
+      )
+      if (!limit.allowed) return Respond.r429('Too many attempts', limit.retryAfterSeconds)
 
-    try {
-      return await Auth.loginBegin(address)
-    } catch (error) {
-      return AuthGuard.failure(error)
-    }
+      try {
+        return await Auth.loginBegin(address)
+      } catch (error) {
+        return AuthGuard.failure(error)
+      }
+    })
   }
 }

@@ -1,9 +1,6 @@
 import { resolve, sep } from 'node:path'
-import { Guards } from '../../middleware/guards.js'
-import { Respond } from '../../platform/http/respond.js'
-
-const DEFAULT_ASSET_ROOT = resolve(process.cwd(), 'translation-assets')
-const SHA256 = /^[a-f0-9]{64}$/
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Respond } from '../platform/http/Respond.js'
 
 /**
  * Authenticated, allowlisted delivery for the checksum-pinned translation
@@ -11,39 +8,44 @@ const SHA256 = /^[a-f0-9]{64}$/
  * Tachyon's bounded asset tree while preserving a single self-hosted service.
  */
 @RequestRoute("/translation-assets")
-@Public
+@SignedIn
 export class TranslationAssetsController {
-  @Guards.auth()
+  static DEFAULT_ASSET_ROOT = resolve(process.cwd(), 'translation-assets')
+
+  static SHA256 = /^[a-f0-9]{64}$/
+
   @GetRoute
-  async get(/** @type {any} */ { query }) {
-    const requested = TranslationAssetsController._readAssetPath(query?.path)
-    if (requested instanceof Error) return Respond.r400(requested.message)
-    const root = resolve(process.env.TRANSLATION_ASSET_ROOT || DEFAULT_ASSET_ROOT)
-    const catalogFile = Bun.file(resolve(root, 'catalog.json'))
-    if (!await catalogFile.exists()) return Respond.r503('Self-hosted translation assets are not installed')
+  async get(request) {
+    return RouteRequest.handle(request, { guard: {} }, async ({ query }) => {
+      const requested = TranslationAssetsController._readAssetPath(query?.path)
+      if (requested instanceof Error) return Respond.r400(requested.message)
+      const root = resolve(process.env.TRANSLATION_ASSET_ROOT || TranslationAssetsController.DEFAULT_ASSET_ROOT)
+      const catalogFile = Bun.file(resolve(root, 'catalog.json'))
+      if (!await catalogFile.exists()) return Respond.r503('Self-hosted translation assets are not installed')
 
-    let catalog
-    try { catalog = await catalogFile.json() } catch { return Respond.r503('Self-hosted translation asset catalog is invalid') }
-    const entry = Array.isArray(catalog?.files)
-      ? catalog.files.find(file => file?.path === requested && Number.isSafeInteger(file?.bytes) && SHA256.test(file?.sha256 || ''))
-      : null
-    if (!entry) return Respond.r404('Translation asset not found')
-    if (process.env.CADUCEUS_TEST_REAL_TRANSLATION === 'true') console.log(`[translation-asset] ${requested} (${entry.bytes})`)
+      let catalog
+      try { catalog = await catalogFile.json() } catch { return Respond.r503('Self-hosted translation asset catalog is invalid') }
+      const entry = Array.isArray(catalog?.files)
+        ? catalog.files.find(file => file?.path === requested && Number.isSafeInteger(file?.bytes) && TranslationAssetsController.SHA256.test(file?.sha256 || ''))
+        : null
+      if (!entry) return Respond.r404('Translation asset not found')
+      if (process.env.CADUCEUS_TEST_REAL_TRANSLATION === 'true') console.log(`[translation-asset] ${requested} (${entry.bytes})`)
 
-    const path = resolve(root, requested)
-    if (!path.startsWith(root + sep)) return Respond.r400('Invalid translation asset path')
-    const file = Bun.file(path)
-    if (!await file.exists() || file.size !== entry.bytes) return Respond.r503('Translation asset failed its catalog check')
-    return new Response(file, {
-      status: 200,
-      headers: {
-        'Content-Type': TranslationAssetsController._contentType(requested),
-        'Content-Length': String(entry.bytes),
-        'Cache-Control': 'private, max-age=31536000, immutable',
-        'ETag': `"sha256-${entry.sha256}"`,
-        'Vary': 'Authorization',
-        'X-Content-Type-Options': 'nosniff',
-      },
+      const path = resolve(root, requested)
+      if (!path.startsWith(root + sep)) return Respond.r400('Invalid translation asset path')
+      const file = Bun.file(path)
+      if (!await file.exists() || file.size !== entry.bytes) return Respond.r503('Translation asset failed its catalog check')
+      return new Response(file, {
+        status: 200,
+        headers: {
+          'Content-Type': TranslationAssetsController._contentType(requested),
+          'Content-Length': String(entry.bytes),
+          'Cache-Control': 'private, max-age=31536000, immutable',
+          'ETag': `"sha256-${entry.sha256}"`,
+          'Vary': 'Authorization',
+          'X-Content-Type-Options': 'nosniff',
+        },
+      })
     })
   }
 

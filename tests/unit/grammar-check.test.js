@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { GrammarCheckService } from '@/features/mailbox/services/grammar-check.js'
+import { GrammarCheckService } from '@/features/mailbox/services/GrammarCheckService.js'
 
 describe('standalone LanguageTool-compatible grammar checker', () => {
   it('reports bounded grammar, style, punctuation, and casing issues with exact offsets', () => {

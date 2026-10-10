@@ -1,4 +1,4 @@
-import { Security } from '../../../platform/security/security.js'
+import { Security } from '../../../platform/security/Security.js'
 
 export const WORKSPACE_LAYOUTS = Object.freeze(['split', 'list', 'split-vertical'])
 export const INTERFACE_SCALES = Object.freeze([0.8, 0.9, 1, 1.1, 1.2])

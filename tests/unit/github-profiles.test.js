@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { GitHubProfilesService } from '@/features/contacts/services/github-profiles.js'
+import { GitHubProfilesService } from '@/features/contacts/services/GitHubProfilesService.js'
 
 function json(value, status = 200, headers = {}) {
   return new Response(JSON.stringify(value), {

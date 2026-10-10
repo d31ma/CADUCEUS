@@ -5,7 +5,7 @@ import { Handler as Config } from '@/routes/mcp/config/yon.js'
 import { Handler as Token } from '@/routes/mcp/token/yon.js'
 import { Handler as Audit } from '@/routes/mcp/audit/yon.js'
 import { Handler as Mcp } from '@/routes/mcp/yon.js'
-import { FyloAccessContext } from '@/platform/persistence/fylo-access.js'
+import { FyloAccessContext } from '@/platform/persistence/FyloAccessContext.js'
 
 let app
 let firstToken = ''

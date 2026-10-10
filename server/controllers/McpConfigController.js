@@ -1,30 +1,32 @@
-import { Guards } from '../../../middleware/guards.js'
-import { Actions } from '../../../platform/auth/bridge.js'
-import { Respond } from '../../../platform/http/respond.js'
-import { getApp } from '../../../app.js'
-import { McpPreferenceError } from '../../../features/mcp/services/access.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Actions } from '../platform/auth/Auth.js'
+import { Respond } from '../platform/http/Respond.js'
+import { getApp } from '../app.js'
+import { McpPreferenceError } from '../features/mcp/services/McpAccessService.js'
 
 @RequestRoute("/mcp/config")
-@Public
+@SignedIn
 export class McpConfigController {
-  @Guards.auth({ action: Actions.MAILBOX_READ })
   @GetRoute
-  async get(/** @type {any} */ { auth }) {
-    const app = await getApp()
-    return await app.mcpAccess.config(auth.email) ?? Respond.r404('User not found')
+  async get(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ auth }) => {
+      const app = await getApp()
+      return await app.mcpAccess.config(auth.email) ?? Respond.r404('User not found')
+    })
   }
 
-  @Guards.auth({ action: Actions.MAILBOX_WRITE })
   @PutRoute
-  async put(/** @type {any} */ { body, auth }) {
-    try {
-      const app = await getApp()
-      return await app.mcpAccess.updateConfig(auth.email, body) ?? Respond.r404('User not found')
-    } catch (error) {
-      if (error instanceof McpPreferenceError) {
-        return error.forbidden ? Respond.r403(error.message) : Respond.r400(error.message)
+  async put(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
+      try {
+        const app = await getApp()
+        return await app.mcpAccess.updateConfig(auth.email, body) ?? Respond.r404('User not found')
+      } catch (error) {
+        if (error instanceof McpPreferenceError) {
+          return error.forbidden ? Respond.r403(error.message) : Respond.r400(error.message)
+        }
+        throw error
       }
-      throw error
-    }
+    })
   }
 }

@@ -7,10 +7,5 @@
  * @property {string} [verdict]  Structured local verdict ('PASS' | 'FAIL', or
  *   'spam' | 'ham').
  * @property {number|string} [score]  Structured upstream numeric score.
- *
- * @typedef {object} SpamVerdict
- * @property {boolean} isSpam
- * @property {number} score    Aggregate score (threshold-relative).
- * @property {string[]} reasons
  */
 export {}

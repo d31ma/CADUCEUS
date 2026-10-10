@@ -1,7 +1,0 @@
-{
-  "POST": {
-    "200": { "id": "^.*$", "displayName": "^.*$", "version": "^.*$", "kind": "^(plugin|theme)$", "digest": "^[a-f0-9]{64}$", "enabled": "^(true|false)$" },
-    "400": { "error": "^.*$" },
-    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" }
-  }
-}

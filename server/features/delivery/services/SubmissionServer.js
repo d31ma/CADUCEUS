@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { AcmeService } from '../../domains/services/acme.js'
-import { listenForConnections } from '../../../platform/runtime/listener.ts'
+import { AcmeService } from '../../domains/services/AcmeService.js'
+import { listenForConnections } from '../../../platform/runtime/ListenableServer.ts'
 
 export class SubmissionServer {
   /** @param {SubmissionOptions} options */

@@ -5,12 +5,12 @@ import { tmpdir } from 'node:os'
 import {
   SmtpDirectAdapter, ConsoleSmtpAdapter, createSmtpAdapter,
   SmtpDeliveryError, loadDkim, groupRecipientsByDomain, resolveMailExchangers, buildSmtpMessage, transportOptions,
-} from '@/features/delivery/services/smtp.js'
-import { AcmeService } from '@/features/domains/services/acme.js'
+} from '@/features/delivery/services/SmtpService.js'
+import { AcmeService } from '@/features/domains/services/AcmeService.js'
 import { readTrackingToken } from '@/features/delivery/services/tracking-tokens.js'
-import { Security } from '@/platform/security/security.js'
-import { RuleValidation } from '@/features/domains/services/rule-validation.js'
-import { PushService, buildNewMailPushPayload, buildUnsnoozedPushPayload, countUnreadInbox } from '@/features/notifications/services/push.js'
+import { Security } from '@/platform/security/Security.js'
+import { RuleValidation } from '@/features/domains/services/RuleValidation.js'
+import { PushService, buildNewMailPushPayload, buildUnsnoozedPushPayload, countUnreadInbox } from '@/features/notifications/services/PushService.js'
 import tlsOptions from 'smtp-server/lib/tls-options.js'
 
 const MSG = { to: ['bob@other.com'], subject: 'Hi', text: 'body' }

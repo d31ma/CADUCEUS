@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { MailValidation } from '@/features/delivery/services/mail-validation.js'
+import { MailValidation } from '@/features/delivery/services/MailValidation.js'
 
 const base = { to: ['recipient@example.com'], subject: 'Hello', text: 'Body' }
 

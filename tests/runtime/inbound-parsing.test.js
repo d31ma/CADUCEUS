@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { InboundService } from '../../server/features/delivery/services/inbound.js'
+import { InboundService } from '../../server/features/delivery/services/InboundService.js'
 
 /** @returns {InboundService} */
 function parser() {

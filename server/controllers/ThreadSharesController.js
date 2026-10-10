@@ -1,40 +1,42 @@
-import { Guards } from '../../middleware/guards.js'
-import { Respond } from '../../platform/http/respond.js'
-import { Actions } from '../../platform/auth/bridge.js'
-import { getApp } from '../../app.js'
-import { ThreadShareInputError } from '../../features/mailbox/services/thread-sharing.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Respond } from '../platform/http/Respond.js'
+import { Actions } from '../platform/auth/Auth.js'
+import { getApp } from '../app.js'
+import { ThreadShareInputError } from '../features/mailbox/services/ThreadSharingService.js'
 
 @RequestRoute("/thread-shares")
-@Public
+@SignedIn
 export class ThreadSharesController {
   /** List exact-owner links, optionally narrowed to one authorized thread. */
-  @Guards.auth({ action: Actions.MAILBOX_READ })
   @GetRoute
-  async get(/** @type {any} */ { query, auth }) {
-    const emailId = query?.emailId == null ? '' : String(query.emailId).trim()
-    if (emailId.length > 500) return Respond.r400('emailId is too long')
-    const app = await getApp()
-    const result = await app.threadSharing.list(auth.email, emailId, auth.domains)
-    if (result == null) return Respond.r404('Conversation not found')
-    return result
+  async get(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ query, auth }) => {
+      const emailId = query?.emailId == null ? '' : String(query.emailId).trim()
+      if (emailId.length > 500) return Respond.r400('emailId is too long')
+      const app = await getApp()
+      const result = await app.threadSharing.list(auth.email, emailId, auth.domains)
+      if (result == null) return Respond.r404('Conversation not found')
+      return result
+    })
   }
 
   /** Mint one expiring link and revoke any prior active link for the thread. */
-  @Guards.auth({ action: Actions.MAILBOX_READ })
   @PostRoute
-  async post(/** @type {any} */ { body, auth }) {
-    try {
-      const app = await getApp()
-      const result = await app.threadSharing.create({
-        ownerEmail: auth.email,
-        domains: auth.domains,
-        emailId: body?.emailId,
-        expiresInDays: body?.expiresInDays,
-      })
-      return result ?? Respond.r404('Conversation not found')
-    } catch (error) {
-      if (error instanceof ThreadShareInputError) return Respond.r400(error.message)
-      throw error
-    }
+  async post(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ body, auth }) => {
+      try {
+        const app = await getApp()
+        const result = await app.threadSharing.create({
+          ownerEmail: auth.email,
+          domains: auth.domains,
+          emailId: body?.emailId,
+          expiresInDays: body?.expiresInDays,
+        })
+        return result ?? Respond.r404('Conversation not found')
+      } catch (error) {
+        if (error instanceof ThreadShareInputError) return Respond.r400(error.message)
+        throw error
+      }
+    })
   }
 }

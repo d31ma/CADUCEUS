@@ -6,7 +6,7 @@ import {
   normalizeCategoryPath,
   presentEmailWithMappings,
   validateCategoryMappings,
-} from '@/features/mailbox/services/category-mappings.js'
+} from '@/features/mailbox/services/CategoryMappingService.js'
 
 describe('mailbox category-role mappings', () => {
   it('normalizes only assigned domains and repairs ambiguous persisted paths', () => {

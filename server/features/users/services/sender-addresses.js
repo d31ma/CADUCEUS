@@ -1,11 +1,11 @@
-import { Security } from '../../../platform/security/security.js'
+import { Security } from '../../../platform/security/Security.js'
 
 /**
  * Resolve the exact addresses the authenticated mailbox may use as an RFC
  * From identity. Domain authority is deliberately insufficient: another user
  * on the same hosted domain must never be able to impersonate this mailbox.
  *
- * @param {import('../repositories/users.js').UsersRepository} users
+ * @param {import('../repositories/UsersRepository.js').UsersRepository} users
  * @param {string} ownerEmail
  * @returns {Promise<string[]>}
  */

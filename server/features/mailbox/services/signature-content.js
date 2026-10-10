@@ -1,4 +1,4 @@
-import { Security } from '../../../platform/security/security.js'
+import { Security } from '../../../platform/security/Security.js'
 
 const NAME_RE = /^[\p{L}\p{N}_\- ]+$/u
 const MAX_NAME = 100

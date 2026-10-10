@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { createHmac } from 'node:crypto'
 import { setupRoutes, teardownRoutes } from './helpers.js'
 import { Handler as ProviderNotificationTick } from '@/routes/notifications/provider/tick/yon.js'
-import { ExternalAccounts } from '@/platform/accounts/bridge.js'
+import { ExternalAccounts } from '@/platform/accounts/ExternalAccounts.js'
 
 let app
 const originals = {

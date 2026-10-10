@@ -6,7 +6,7 @@ import {
   threadMetadataFromHeaders,
   threadMetadataFromOutbound,
 } from '@/features/mailbox/services/threading.js'
-import { groupMessagesIntoThreads } from '@/features/mailbox/repositories/threads.js'
+import { groupMessagesIntoThreads } from '@/features/mailbox/repositories/ThreadsRepository.js'
 
 describe('RFC message threading metadata', () => {
   it('normalizes one Message-ID and rejects unsafe or ambiguous values', () => {

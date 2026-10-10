@@ -1,14 +1,14 @@
 import { randomBytes } from 'node:crypto'
 import { McpServer } from '@modelcontextprotocol/server'
 import { z } from 'zod'
-import { FyloAccessContext } from '../../../platform/persistence/fylo-access.js'
-import { canAccessEmail } from '../../mailbox/repositories/emails.js'
-import { parseDraftInput } from '../../../routes/drafts/validation.js'
-import { MailValidation } from '../../delivery/services/mail-validation.js'
+import { FyloAccessContext } from '../../../platform/persistence/FyloAccessContext.js'
+import { canAccessEmail } from '../../mailbox/repositories/EmailsRepository.js'
+import { parseDraftInput } from '../../mailbox/services/draft-input.js'
+import { MailValidation } from '../../delivery/services/MailValidation.js'
 import { createMessageId } from '../../mailbox/services/threading.js'
 import { ownedSenderAddresses, resolveOwnedSender } from '../../users/services/sender-addresses.js'
-import { cancelScheduled, findOwnedScheduled, presentScheduled } from '../../../routes/send/scheduled/helpers.js'
-import { normalizeCategoryPath } from '../../mailbox/services/category-mappings.js'
+import { cancelScheduled, findOwnedScheduled, presentScheduled } from '../../delivery/services/scheduled-sends.js'
+import { normalizeCategoryPath } from '../../mailbox/services/CategoryMappingService.js'
 
 const MAX_BATCH_THREADS = 100
 const MAX_RESULT_ITEMS = 100

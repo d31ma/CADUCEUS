@@ -1,8 +1,8 @@
-import { Guards } from '../../../middleware/guards.js'
-import { getApp } from '../../../app.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { getApp } from '../app.js'
 
 @RequestRoute("/presence/heartbeat")
-@Public
+@SignedIn
 export class PresenceHeartbeatController {
   /**
  * POST /presence/heartbeat
@@ -15,11 +15,12 @@ export class PresenceHeartbeatController {
  * @param {{ bearer?: { token: string } }} params.context
  * @returns {Promise<Record<string, unknown>>}
  */
-  @Guards.auth()
   @PostRoute
-  async post(/** @type {any} */ { auth }) {
-  const app = await getApp()
-  await app.presence.heartbeat(auth.email, auth.domains || [])
-  return { ok: true }
-}
+  async post(request) {
+    return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
+    const app = await getApp()
+    await app.presence.heartbeat(auth.email, auth.domains || [])
+    return { ok: true }
+    })
+  }
 }

@@ -1,7 +1,0 @@
-{
-  "DELETE": {
-    "200": { "revoked": "^share-[A-Za-z0-9_-]{20,40}$" },
-    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
-    "404": { "error": "^.*$", "notFound": "^(true|false)$" }
-  }
-}

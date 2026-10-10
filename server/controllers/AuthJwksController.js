@@ -1,6 +1,7 @@
+import { RouteRequest } from '../middleware/RouteRequest.js'
 // @ts-check
-import { Auth } from '../../../platform/auth/bridge.js'
-import { AuthGuard } from '../../../middleware/require-auth.js'
+import { Auth } from '../platform/auth/Auth.js'
+import { AuthGuard } from '../middleware/AuthGuard.js'
 
 @RequestRoute("/auth/jwks")
 @Public
@@ -11,11 +12,13 @@ export class AuthJwksController {
    * service about it. It carries no private material.
    */
   @GetRoute
-  async get() {
-    try {
-      return await Auth.jwks()
-    } catch (error) {
-      return AuthGuard.failure(error)
-    }
+  async get(request) {
+    return RouteRequest.handle(request, {  }, async () => {
+      try {
+        return await Auth.jwks()
+      } catch (error) {
+        return AuthGuard.failure(error)
+      }
+    })
   }
 }

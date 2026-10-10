@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { canAccessEmail } from '@/features/mailbox/repositories/emails.js'
+import { canAccessEmail } from '@/features/mailbox/repositories/EmailsRepository.js'
 
 const message = over => ({
   id: 'message-1',

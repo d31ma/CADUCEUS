@@ -1,10 +1,4 @@
 /**
- * Outbound send orchestration: immediate delivery, delayed (undo-window) send,
- * and scheduled send — plus persisting the "Sent" copy each path needs for
- * tracking. Boundary validation (rate limit, request shape, suppression) stays
- * in the `/send` controller; this service owns what happens once a send is
- * accepted.
- *
- * @typedef {import('./smtp.js').SendRequest} SendRequest
+ * @typedef {{ from?: string, to: string[], cc?: string[], bcc?: string[], envelopeRecipients?: string[], subject: string, text?: string, html?: string, replyTo?: string[], messageId?: string, inReplyTo?: string, references?: string[], attachments?: import('../types').SendAttachment[], trackingId?: string, openTracking?: boolean, linkTracking?: boolean }} SendRequest
  */
 export {}

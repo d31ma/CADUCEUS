@@ -3,8 +3,8 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
-import { DatabaseRepository, Buckets } from '@/platform/persistence/fylo.js'
-import { RawMessagesRepository } from '@/features/mailbox/repositories/raw-messages.js'
+import { DatabaseRepository, Buckets } from '@/platform/persistence/Fylo.js'
+import { RawMessagesRepository } from '@/features/mailbox/repositories/RawMessagesRepository.js'
 
 let fylo
 let rawMessages

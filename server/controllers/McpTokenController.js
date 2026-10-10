@@ -1,22 +1,24 @@
-import { Guards } from '../../../middleware/guards.js'
-import { Actions } from '../../../platform/auth/bridge.js'
-import { Respond } from '../../../platform/http/respond.js'
-import { getApp } from '../../../app.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Actions } from '../platform/auth/Auth.js'
+import { Respond } from '../platform/http/Respond.js'
+import { getApp } from '../app.js'
 
 @RequestRoute("/mcp/token")
-@Public
+@SignedIn
 export class McpTokenController {
-  @Guards.auth({ action: Actions.MAILBOX_WRITE })
   @PostRoute
-  async post(/** @type {any} */ { auth }) {
-    const app = await getApp()
-    return await app.mcpAccess.rotate(auth.email) ?? Respond.r404('User not found')
+  async post(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ auth }) => {
+      const app = await getApp()
+      return await app.mcpAccess.rotate(auth.email) ?? Respond.r404('User not found')
+    })
   }
 
-  @Guards.auth({ action: Actions.MAILBOX_WRITE })
   @DeleteRoute
-  async delete(/** @type {any} */ { auth }) {
-    const app = await getApp()
-    return { revoked: await app.mcpAccess.revoke(auth.email) }
+  async delete(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ auth }) => {
+      const app = await getApp()
+      return { revoked: await app.mcpAccess.revoke(auth.email) }
+    })
   }
 }

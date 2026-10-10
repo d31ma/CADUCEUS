@@ -1,14 +1,11 @@
 import { Buffer } from 'node:buffer'
-import { Guards } from '../../../../middleware/guards.js'
-import { AuthGuard } from '../../../../middleware/require-auth.js'
-import { FyloAccessContext } from '../../../../platform/persistence/fylo-access.js'
-import { Respond } from '../../../../platform/http/respond.js'
-import { getApp } from '../../../../app.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../../../../platform/accounts/bridge.js'
-import { resolveExternalFolder } from '../../../../features/mailbox/services/unified-mail.js'
-
-const MAGIC = Buffer.from('CADUCEUS-RFC822-FRAMES/1\n', 'ascii')
-const MAX_METADATA_BYTES = 16 * 1024
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { AuthGuard } from '../middleware/AuthGuard.js'
+import { FyloAccessContext } from '../platform/persistence/FyloAccessContext.js'
+import { Respond } from '../platform/http/Respond.js'
+import { getApp } from '../app.js'
+import { ExternalAccounts, accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
+import { resolveExternalFolder } from '../features/mailbox/services/unified-mail.js'
 
 /**
  * Thin migration adapter that streams the exact RFC 822 sources in one folder.
@@ -22,91 +19,96 @@ const MAX_METADATA_BYTES = 16 * 1024
  * time, and a canceled response stops before reading the next FYLO bucket.
  */
 @RequestRoute("/inbox/export/rfc822")
-@Public
+@SignedIn
 export class InboxExportRfc822Controller {
-  @Guards.auth()
+  static MAGIC = Buffer.from('CADUCEUS-RFC822-FRAMES/1\n', 'ascii')
+
+  static MAX_METADATA_BYTES = 16 * 1024
+
   @GetRoute
-  async get(/** @type {any} */ { query, context, auth }) {
-    const accountId = String(query?.account || '').trim()
-    const folder = accountId ? InboxExportRfc822Controller._providerFolder(query?.folder) : InboxExportRfc822Controller._folder(query?.folder)
-    if (folder instanceof Error) return Respond.r400(folder.message)
+  async get(request) {
+    return RouteRequest.handle(request, { guard: {} }, async ({ query, context, auth }) => {
+      const accountId = String(query?.account || '').trim()
+      const folder = accountId ? InboxExportRfc822Controller._providerFolder(query?.folder) : InboxExportRfc822Controller._folder(query?.folder)
+      if (folder instanceof Error) return Respond.r400(folder.message)
 
-    let iterator
-    if (accountId) {
-      try {
-        const token = bearerToken(context)
-        const response = await ExternalAccounts.folders(token, accountId)
-        const providerFolder = resolveExternalFolder(response?.folders, folder)
-        if (!providerFolder) return Respond.r404('Connected mailbox folder not found')
-        iterator = InboxExportRfc822Controller._providerRecords(token, accountId, providerFolder.stableId)
-      } catch (error) {
-        return accountFailure(error)
-      }
-    } else {
-      const requestedDomain = String(query?.domain || auth.domain || '').trim().toLowerCase()
-      if (!requestedDomain) return Respond.r400('domain is required')
-      if (requestedDomain !== auth.domain) {
-        const permission = await AuthGuard.requireDomainAccess(context, requestedDomain)
-        if (!permission.ok) return permission.response
-      }
-      const app = await getApp()
-      const mappedFolder = await app.categoryMappings.pathFor(auth.email, requestedDomain, folder) || folder
-      const access = { email: auth.email, domains: [requestedDomain] }
-      iterator = InboxExportRfc822Controller._hostedRecords(app, access, requestedDomain, mappedFolder, auth.email)
-    }
-    let sentMagic = false
-    let cancelled = false
-
-    const body = new ReadableStream({
-      async pull(controller) {
-        if (cancelled) return
-        if (!sentMagic) {
-          sentMagic = true
-          controller.enqueue(MAGIC)
-          return
-        }
-
+      let iterator
+      if (accountId) {
         try {
-          const next = await iterator.next()
-          if (next.done) {
-            controller.close()
+          const token = bearerToken(context)
+          const response = await ExternalAccounts.folders(token, accountId)
+          const providerFolder = resolveExternalFolder(response?.folders, folder)
+          if (!providerFolder) return Respond.r404('Connected mailbox folder not found')
+          iterator = InboxExportRfc822Controller._providerRecords(token, accountId, providerFolder.stableId)
+        } catch (error) {
+          return accountFailure(error)
+        }
+      } else {
+        const requestedDomain = String(query?.domain || auth.domain || '').trim().toLowerCase()
+        if (!requestedDomain) return Respond.r400('domain is required')
+        if (requestedDomain !== auth.domain) {
+          const permission = await AuthGuard.requireDomainAccess(context, requestedDomain)
+          if (!permission.ok) return permission.response
+        }
+        const app = await getApp()
+        const mappedFolder = await app.categoryMappings.pathFor(auth.email, requestedDomain, folder) || folder
+        const access = { email: auth.email, domains: [requestedDomain] }
+        iterator = InboxExportRfc822Controller._hostedRecords(app, access, requestedDomain, mappedFolder, auth.email)
+      }
+      let sentMagic = false
+      let cancelled = false
+
+      const body = new ReadableStream({
+        async pull(controller) {
+          if (cancelled) return
+          if (!sentMagic) {
+            sentMagic = true
+            controller.enqueue(InboxExportRfc822Controller.MAGIC)
             return
           }
-          const { email, source } = next.value
-          if (cancelled) return
-          if (source.byteLength > 0xffff_ffff) throw new Error('RFC 822 source exceeds the export frame limit')
 
-          const metadata = Buffer.from(JSON.stringify({
-            id: email.id,
-            sender: email.sender,
-            subject: email.subject,
-            receivedAt: email.receivedAt,
-          }), 'utf8')
-          if (metadata.byteLength > MAX_METADATA_BYTES) throw new Error('Export metadata exceeds its limit')
-          const header = Buffer.allocUnsafe(8)
-          header.writeUInt32BE(metadata.byteLength, 0)
-          header.writeUInt32BE(source.byteLength, 4)
-          controller.enqueue(header)
-          controller.enqueue(metadata)
-          controller.enqueue(source)
-        } catch (error) {
-          controller.error(error)
-        }
-      },
-      async cancel() {
-        cancelled = true
-        await iterator.return?.(undefined)
-      },
-    })
+          try {
+            const next = await iterator.next()
+            if (next.done) {
+              controller.close()
+              return
+            }
+            const { email, source } = next.value
+            if (cancelled) return
+            if (source.byteLength > 0xffff_ffff) throw new Error('RFC 822 source exceeds the export frame limit')
 
-    return new Response(body, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/vnd.caduceus.rfc822-frames; version=1',
-        'Cache-Control': 'no-store',
-        'X-Content-Type-Options': 'nosniff',
-        'X-Caduceus-Export-Format': 'rfc822-source-frames-v1',
-      },
+            const metadata = Buffer.from(JSON.stringify({
+              id: email.id,
+              sender: email.sender,
+              subject: email.subject,
+              receivedAt: email.receivedAt,
+            }), 'utf8')
+            if (metadata.byteLength > InboxExportRfc822Controller.MAX_METADATA_BYTES) throw new Error('Export metadata exceeds its limit')
+            const header = Buffer.allocUnsafe(8)
+            header.writeUInt32BE(metadata.byteLength, 0)
+            header.writeUInt32BE(source.byteLength, 4)
+            controller.enqueue(header)
+            controller.enqueue(metadata)
+            controller.enqueue(source)
+          } catch (error) {
+            controller.error(error)
+          }
+        },
+        async cancel() {
+          cancelled = true
+          await iterator.return?.(undefined)
+        },
+      })
+
+      return new Response(body, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/vnd.caduceus.rfc822-frames; version=1',
+          'Cache-Control': 'no-store',
+          'X-Content-Type-Options': 'nosniff',
+          'X-Caduceus-Export-Format': 'rfc822-source-frames-v1',
+        },
+      })
     })
   }
 

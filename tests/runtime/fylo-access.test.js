@@ -3,7 +3,7 @@ import {
   FyloAccessContext,
   posixId,
   recordDomain,
-} from '../../server/platform/persistence/fylo-access.js'
+} from '../../server/platform/persistence/FyloAccessContext.js'
 
 let previousEnabled
 

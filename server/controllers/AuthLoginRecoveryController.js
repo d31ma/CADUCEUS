@@ -1,8 +1,9 @@
+import { RouteRequest } from '../middleware/RouteRequest.js'
 // @ts-check
-import { Respond } from '../../../../platform/http/respond.js'
-import { Auth } from '../../../../platform/auth/bridge.js'
-import { AuthGuard } from '../../../../middleware/require-auth.js'
-import { getApp } from '../../../../app.js'
+import { Respond } from '../platform/http/Respond.js'
+import { Auth } from '../platform/auth/Auth.js'
+import { AuthGuard } from '../middleware/AuthGuard.js'
+import { getApp } from '../app.js'
 
 @RequestRoute("/auth/login/recovery")
 @Public
@@ -16,22 +17,24 @@ export class AuthLoginRecoveryController {
    * @param {any} request
    */
   @PostRoute
-  async post(/** @type {any} */ { body, context }) {
-    const transactionId = String(body?.transactionId ?? '').trim()
-    if (!transactionId) return Respond.r400('transactionId is required')
-    const code = String(body?.code ?? '').trim()
-    if (!code) return Respond.r400('code is required')
+  async post(request) {
+    return RouteRequest.handle(request, {  }, async ({ body, context }) => {
+      const transactionId = String(body?.transactionId ?? '').trim()
+      if (!transactionId) return Respond.r400('transactionId is required')
+      const code = String(body?.code ?? '').trim()
+      if (!code) return Respond.r400('code is required')
 
-    const app = await getApp()
-    const limit = await app.rateLimit.check(
-      ['login-recovery', transactionId, context?.ipAddress ?? 'unknown'], 10, 15 * 60 * 1000,
-    )
-    if (!limit.allowed) return Respond.r429('Too many attempts', limit.retryAfterSeconds)
+      const app = await getApp()
+      const limit = await app.rateLimit.check(
+        ['login-recovery', transactionId, context?.ipAddress ?? 'unknown'], 10, 15 * 60 * 1000,
+      )
+      if (!limit.allowed) return Respond.r429('Too many attempts', limit.retryAfterSeconds)
 
-    try {
-      return await Auth.verifyRecoveryCode(transactionId, code)
-    } catch (error) {
-      return AuthGuard.failure(error)
-    }
+      try {
+        return await Auth.verifyRecoveryCode(transactionId, code)
+      } catch (error) {
+        return AuthGuard.failure(error)
+      }
+    })
   }
 }

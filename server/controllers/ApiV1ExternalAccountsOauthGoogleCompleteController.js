@@ -1,17 +1,18 @@
 // @ts-check
-import { Guards } from '../../../../../../../middleware/guards.js'
-import { ExternalAccounts, accountFailure, bearerToken } from '../../../../../../../platform/accounts/bridge.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { ExternalAccounts, accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
 
 @RequestRoute("/api/v1/external-accounts/oauth/google/complete")
-@Public
+@SignedIn
 export class ApiV1ExternalAccountsOauthGoogleCompleteController {
-  @Guards.auth()
   @PostRoute
-  async post(/** @type {any} */ { context, body }) {
-    try {
-      return await ExternalAccounts.completeGoogleOAuth(bearerToken(context), body?.state || '', body?.code || '')
-    } catch (error) {
-      return accountFailure(error)
-    }
+  async post(request) {
+    return RouteRequest.handle(request, { guard: {} }, async ({ context, body }) => {
+      try {
+        return await ExternalAccounts.completeGoogleOAuth(bearerToken(context), body?.state || '', body?.code || '')
+      } catch (error) {
+        return accountFailure(error)
+      }
+    })
   }
 }

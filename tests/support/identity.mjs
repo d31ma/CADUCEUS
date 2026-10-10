@@ -142,7 +142,7 @@ export async function mintToken(env, address, role) {
   process.env.FYLO_BRIDGE_ADDRESS = env.FYLO_BRIDGE_ADDRESS
   process.env.FYLO_BRIDGE_SECRET = env.FYLO_BRIDGE_SECRET
   try {
-    const { authCall, Auth } = await import('../../server/platform/auth/bridge.js')
+    const { authCall, Auth } = await import('../../server/platform/auth/Auth.js')
     const domainRole = role === 'admin' ? 'domain-admin'
       : role === 'viewer' ? 'domain-viewer'
         : ''
@@ -181,7 +181,7 @@ export async function mintToken(env, address, role) {
 export async function grantDomain(env, address, domain, role) {
   process.env.FYLO_BRIDGE_ADDRESS = env.FYLO_BRIDGE_ADDRESS
   process.env.FYLO_BRIDGE_SECRET = env.FYLO_BRIDGE_SECRET
-  const { authCall } = await import('../../server/platform/auth/bridge.js')
+  const { authCall } = await import('../../server/platform/auth/Auth.js')
   await authCall('auth.provision.domain', { domain })
   return authCall('auth.provision.role', { address, domain, role })
 }

@@ -32,7 +32,7 @@ import { Handler as Send } from '@/routes/send/yon.js'
 import { Handler as UndoSend } from '@/routes/send/undo/yon.js'
 import { Handler as ScheduledSend } from '@/routes/send/scheduled/yon.js'
 import { Handler as ScheduledItem } from '@/routes/send/scheduled/_id/yon.js'
-import { ExternalAccounts as ExternalAccountBridge } from '@/platform/accounts/bridge.js'
+import { ExternalAccounts as ExternalAccountBridge } from '@/platform/accounts/ExternalAccounts.js'
 import { writeMboxFromFrameStream } from '../../client/shared/scripts/mbox.js'
 
 const alice = () => token()

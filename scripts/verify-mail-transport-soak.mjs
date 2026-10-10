@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { OutboundQueueService } from '../server/features/delivery/services/outbound-queue.js'
+import { OutboundQueueService } from '../server/features/delivery/services/OutboundQueueService.js'
 
 const HOUR_MS = 60 * 60_000
 const START = Date.now()

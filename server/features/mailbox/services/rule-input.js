@@ -1,4 +1,4 @@
-import { Security } from '../../../platform/security/security.js'
+import { Security } from '../../../platform/security/Security.js'
 
 /**
  * Normalize the user-controlled parts of a mailbox rule before validation and

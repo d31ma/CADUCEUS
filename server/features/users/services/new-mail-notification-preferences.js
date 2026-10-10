@@ -1,4 +1,4 @@
-import { Security } from '../../../platform/security/security.js'
+import { Security } from '../../../platform/security/Security.js'
 
 export const DEFAULT_NEW_MAIL_NOTIFICATION_PRIVACY = 'full'
 export const DEFAULT_NEW_MAIL_NOTIFICATION_ACTIONS = true

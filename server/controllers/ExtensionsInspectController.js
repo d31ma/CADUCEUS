@@ -1,16 +1,17 @@
-import { Guards } from '../../../middleware/guards.js'
-import { Respond } from '../../../platform/http/respond.js'
-import { Actions } from '../../../platform/auth/bridge.js'
-import { inspectExtensionBundle, presentExtension } from '../../../features/extensions/services/extensions.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Respond } from '../platform/http/Respond.js'
+import { Actions } from '../platform/auth/Auth.js'
+import { inspectExtensionBundle, presentExtension } from '../features/extensions/services/extensions.js'
 
 @RequestRoute("/extensions/inspect")
-@Public
+@SignedIn
 export class ExtensionsInspectController {
-  @Guards.auth({ action: Actions.MAILBOX_READ })
   @PostRoute
-  async post(/** @type {any} */ { body }) {
-    const inspected = inspectExtensionBundle(body?.bundle)
-    if (inspected instanceof Error) return Respond.r400(inspected.message)
-    return presentExtension({ ...inspected, enabled: false })
+  async post(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ body }) => {
+      const inspected = inspectExtensionBundle(body?.bundle)
+      if (inspected instanceof Error) return Respond.r400(inspected.message)
+      return presentExtension({ ...inspected, enabled: false })
+    })
   }
 }

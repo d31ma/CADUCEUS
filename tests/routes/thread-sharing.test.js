@@ -4,7 +4,7 @@ import { Handler as Shares } from '@/routes/thread-shares/yon.js'
 import { Handler as Share } from '@/routes/thread-shares/_id/yon.js'
 import { Handler as PublicShare } from '@/routes/thread-shares/public/_token/yon.js'
 import { Handler as PublicAttachment } from '@/routes/thread-shares/public/_token/attachments/_attachment_id/yon.js'
-import { FyloAccessContext } from '@/platform/persistence/fylo-access.js'
+import { FyloAccessContext } from '@/platform/persistence/FyloAccessContext.js'
 
 let app
 let attachment

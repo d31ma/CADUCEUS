@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { SendService } from '@/features/delivery/services/send.js'
+import { SendService } from '@/features/delivery/services/SendService.js'
 
 const request = {
   to: ['recipient@other.test'],

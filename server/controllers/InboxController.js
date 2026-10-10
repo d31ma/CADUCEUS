@@ -1,11 +1,11 @@
-import { Guards } from '../../middleware/guards.js'
-import { Respond } from '../../platform/http/respond.js'
-import { getApp } from '../../app.js'
-import { accountFailure, bearerToken } from '../../platform/accounts/bridge.js'
-import { externalMailSummaries, isExternalAccountId, mergeUnifiedMail } from '../../features/mailbox/services/unified-mail.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Respond } from '../platform/http/Respond.js'
+import { getApp } from '../app.js'
+import { accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
+import { externalMailSummaries, isExternalAccountId, mergeUnifiedMail } from '../features/mailbox/services/unified-mail.js'
 
 @RequestRoute("/inbox")
-@Public
+@SignedIn
 export class InboxController {
   /**
    * GET /inbox
@@ -14,51 +14,52 @@ export class InboxController {
    * @param {{ bearer?: { token: string } }} params.context
    * @returns {Promise<unknown>}
    */
-  @Guards.auth()
   @GetRoute
-  async get(/** @type {any} */ { query, auth, context }) {
-    const filters = InboxController._parseFilters(query ?? {})
-    if (filters instanceof Error) return Respond.r400(filters.message)
-    if (filters.domain && filters.accountId) return Respond.r400('Choose only one mailbox domain or connected account')
-    if (filters.domain && !auth.domains.includes(filters.domain)) {
-      return Respond.r403('Mailbox is outside the authenticated account scope')
-    }
-
-    const app = await getApp()
-    // Processing is idempotent and scoped to the authenticated mailbox. This
-    // guarantees reminders resurface even after a server restart or a period
-    // with no browser connected, without relying on an in-memory timer.
-    await app.reminders.processDue(auth.email)
-    filters.ownerEmail = auth.email
-    const allowedDomains = filters.domain ? [filters.domain] : auth.domains
-    if (filters.folder && !filters.accountId) {
-      filters.folderByDomain = await app.categoryMappings.folderFilter(auth.email, allowedDomains, filters.folder) || undefined
-    }
-    const offset = filters.offset
-    const limit = filters.limit
-    const hostedFilters = { ...filters }
-    delete hostedFilters.offset
-    delete hostedFilters.limit
-    delete hostedFilters.domain
-    delete hostedFilters.accountId
-    const emails = filters.accountId ? [] : await app.emails.list(allowedDomains, hostedFilters)
-    const presented = await app.domainMigration.presentEmails(emails)
-    const hosted = await app.categoryMappings.presentEmails(auth.email, presented)
-    try {
-      let external = filters.domain ? [] : await externalMailSummaries(bearerToken(context), {
-        accountId: filters.accountId,
-        folderRole: filters.folder,
-        query: filters.query,
-        read: filters.read,
-        starred: filters.starred,
-      })
-      if (typeof filters.hasAttachment === 'boolean') {
-        external = external.filter(message => message.hasAttachments === filters.hasAttachment)
+  async get(request) {
+    return RouteRequest.handle(request, { guard: {} }, async ({ query, auth, context }) => {
+      const filters = InboxController._parseFilters(query ?? {})
+      if (filters instanceof Error) return Respond.r400(filters.message)
+      if (filters.domain && filters.accountId) return Respond.r400('Choose only one mailbox domain or connected account')
+      if (filters.domain && !auth.domains.includes(filters.domain)) {
+        return Respond.r403('Mailbox is outside the authenticated account scope')
       }
-      return mergeUnifiedMail(hosted, external, { offset, limit })
-    } catch (error) {
-      return accountFailure(error)
-    }
+
+      const app = await getApp()
+      // Processing is idempotent and scoped to the authenticated mailbox. This
+      // guarantees reminders resurface even after a server restart or a period
+      // with no browser connected, without relying on an in-memory timer.
+      await app.reminders.processDue(auth.email)
+      filters.ownerEmail = auth.email
+      const allowedDomains = filters.domain ? [filters.domain] : auth.domains
+      if (filters.folder && !filters.accountId) {
+        filters.folderByDomain = await app.categoryMappings.folderFilter(auth.email, allowedDomains, filters.folder) || undefined
+      }
+      const offset = filters.offset
+      const limit = filters.limit
+      const hostedFilters = { ...filters }
+      delete hostedFilters.offset
+      delete hostedFilters.limit
+      delete hostedFilters.domain
+      delete hostedFilters.accountId
+      const emails = filters.accountId ? [] : await app.emails.list(allowedDomains, hostedFilters)
+      const presented = await app.domainMigration.presentEmails(emails)
+      const hosted = await app.categoryMappings.presentEmails(auth.email, presented)
+      try {
+        let external = filters.domain ? [] : await externalMailSummaries(bearerToken(context), {
+          accountId: filters.accountId,
+          folderRole: filters.folder,
+          query: filters.query,
+          read: filters.read,
+          starred: filters.starred,
+        })
+        if (typeof filters.hasAttachment === 'boolean') {
+          external = external.filter(message => message.hasAttachments === filters.hasAttachment)
+        }
+        return mergeUnifiedMail(hosted, external, { offset, limit })
+      } catch (error) {
+        return accountFailure(error)
+      }
+    })
   }
 
   /**

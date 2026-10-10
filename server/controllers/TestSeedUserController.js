@@ -1,11 +1,10 @@
 // @ts-check
-import { Respond } from '../../../../platform/http/respond.js'
-import { Guards } from '../../../../middleware/guards.js'
-import { AuthGuard } from '../../../../middleware/require-auth.js'
-import { authCall, Auth } from '../../../../platform/auth/bridge.js'
-import { getApp } from '../../../../app.js'
-
-const SEED_PASSWORD = 'seeded-mailbox-password-0123456789'
+import { randomBytes } from 'node:crypto'
+import { Respond } from '../platform/http/Respond.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { AuthGuard } from '../middleware/AuthGuard.js'
+import { authCall, Auth } from '../platform/auth/Auth.js'
+import { getApp } from '../app.js'
 
 @RequestRoute("/test/seed/user")
 @Public
@@ -25,46 +24,49 @@ export class TestSeedUserController {
    *
    * @param {any} request
    */
-  @Guards.testOnly
   @PostRoute
-  async post(/** @type {any} */ { body }) {
-    const user = body
-    if (!user?.email || !user.domains?.length || !user.role) {
-      return Respond.r400('email, domains, and role required')
-    }
-    const address = String(user.email).toLowerCase()
-    const role = user.role === 'admin' ? 'domain-admin' : 'domain-viewer'
-
-    try {
-      const seeded = await authCall('auth.test.bootstrap', {
-        address, password: SEED_PASSWORD, role,
-      })
-      const tokens = await TestSeedUserController._login(address, seeded.recoveryCodes[0])
-
-      // The mail-side profile is CADUCEUS's own record of the mailbox.
-      // Identity lives in the engine; this is the address-book entry beside it.
-      const app = await getApp()
-      await app.users.upsertByEmail(/** @type {any} */ ({
-        ...user,
-        email: address,
-        principalId: seeded.principalId,
-        tenantId: seeded.tenantId,
-      }))
-
-      return {
-        email: address,
-        password: SEED_PASSWORD,
-        name: user.name || null,
-        role: user.role,
-        domains: [seeded.domain],
-        token: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        idToken: tokens.idToken,
-        recoveryCodes: seeded.recoveryCodes.slice(1),
+  async post(request) {
+    return RouteRequest.handle(request, { testOnly: true }, async ({ body }) => {
+      const user = body
+      if (!user?.email || !user.domains?.length || !user.role) {
+        return Respond.r400('email, domains, and role required')
       }
-    } catch (error) {
-      return AuthGuard.failure(error)
-    }
+      const address = String(user.email).toLowerCase()
+      const role = user.role === 'admin' ? 'domain-admin' : 'domain-viewer'
+
+      // Each seeded mailbox gets its own password; the response hands it back.
+      const password = randomBytes(24).toString('base64url')
+      try {
+        const seeded = await authCall('auth.test.bootstrap', {
+          address, password, role,
+        })
+        const tokens = await TestSeedUserController._login(address, password, seeded.recoveryCodes[0])
+
+        // The mail-side profile is CADUCEUS's own record of the mailbox.
+        // Identity lives in the engine; this is the address-book entry beside it.
+        const app = await getApp()
+        await app.users.upsertByEmail(/** @type {any} */ ({
+          ...user,
+          email: address,
+          principalId: seeded.principalId,
+          tenantId: seeded.tenantId,
+        }))
+
+        return {
+          email: address,
+          password,
+          name: user.name || null,
+          role: user.role,
+          domains: [seeded.domain],
+          token: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          idToken: tokens.idToken,
+          recoveryCodes: seeded.recoveryCodes.slice(1),
+        }
+      } catch (error) {
+        return AuthGuard.failure(error)
+      }
+    })
   }
 
   /**
@@ -72,11 +74,12 @@ export class TestSeedUserController {
    * second factor, then completion.
    *
    * @param {string} address
+   * @param {string} password
    * @param {string} recoveryCode
    */
-  static async _login(address, recoveryCode) {
+  static async _login(address, password, recoveryCode) {
     const begun = await Auth.loginBegin(address)
-    await Auth.verifyPassword(begun.transactionId, SEED_PASSWORD)
+    await Auth.verifyPassword(begun.transactionId, password)
     await Auth.verifyRecoveryCode(begun.transactionId, recoveryCode)
     return await Auth.completeLogin(begun.transactionId)
   }

@@ -1,26 +1,26 @@
-import { Guards } from '../../middleware/guards.js'
-import { Respond } from '../../platform/http/respond.js'
-import { getApp } from '../../app.js'
-import { Actions } from '../../platform/auth/bridge.js'
-import { normalizeTemplateInput, resolveUniqueTemplateName } from '../../features/mailbox/services/template-content.js'
-
-/** @param {import('../../features/mailbox/repositories/templates.js').TemplateEntry} entry */
-function present(entry) {
-  return {
-    id: entry.id,
-    name: entry.name,
-    subject: entry.subject,
-    text: entry.text,
-    to: entry.to,
-    cc: entry.cc,
-    createdAt: new Date(entry.createdAt).toISOString(),
-    updatedAt: new Date(entry.updatedAt || entry.createdAt).toISOString(),
-  }
-}
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Respond } from '../platform/http/Respond.js'
+import { getApp } from '../app.js'
+import { Actions } from '../platform/auth/Auth.js'
+import { normalizeTemplateInput, resolveUniqueTemplateName } from '../features/mailbox/services/template-content.js'
 
 @RequestRoute("/templates")
-@Public
+@SignedIn
 export class TemplatesController {
+  /** @param {import('../features/mailbox/repositories/TemplatesRepository.js').TemplateEntry} entry */
+  static present(entry) {
+    return {
+      id: entry.id,
+      name: entry.name,
+      subject: entry.subject,
+      text: entry.text,
+      to: entry.to,
+      cc: entry.cc,
+      createdAt: new Date(entry.createdAt).toISOString(),
+      updatedAt: new Date(entry.updatedAt || entry.createdAt).toISOString(),
+    }
+  }
+
   /**
  * POST /templates
  * @param {object} params
@@ -28,30 +28,31 @@ export class TemplatesController {
  * @param {{ bearer?: { token: string } }} params.context
  * @returns {Promise<Record<string, unknown>>}
  */
-  @Guards.auth({ action: Actions.MAILBOX_WRITE })
   @PostRoute
-  async post(/** @type {any} */ { body, auth }) {
-  const input = normalizeTemplateInput(body)
-  if (input instanceof Error) return Respond.r400(input.message)
+  async post(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
+    const input = normalizeTemplateInput(body)
+    if (input instanceof Error) return Respond.r400(input.message)
 
-  const id = `tpl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
-  const app = await getApp()
-  const existing = Object.values(await app.templates.listForOwner(auth.email))
-  const now = Date.now()
-  const entry = {
-    id,
-    name: resolveUniqueTemplateName(input.name, existing),
-    subject: input.subject,
-    text: input.text,
-    to: input.to,
-    cc: input.cc,
-    owner: auth.email,
-    createdAt: now,
-    updatedAt: now,
+    const id = `tpl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+    const app = await getApp()
+    const existing = Object.values(await app.templates.listForOwner(auth.email))
+    const now = Date.now()
+    const entry = {
+      id,
+      name: resolveUniqueTemplateName(input.name, existing),
+      subject: input.subject,
+      text: input.text,
+      to: input.to,
+      cc: input.cc,
+      owner: auth.email,
+      createdAt: now,
+      updatedAt: now,
+    }
+    await app.templates.put(entry)
+    return TemplatesController.present(entry)
+    })
   }
-  await app.templates.put(entry)
-  return present(entry)
-}
 
   /**
  * DELETE /templates
@@ -60,20 +61,21 @@ export class TemplatesController {
  * @param {{ bearer?: { token: string } }} params.context
  * @returns {Promise<Record<string, unknown>>}
  */
-  @Guards.auth({ action: Actions.MAILBOX_WRITE })
   @DeleteRoute
-  async delete(/** @type {any} */ { body, auth }) {
-  const id = body?.id
-  if (!id || typeof id !== 'string') return Respond.r400('id is required')
+  async delete(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ body, auth }) => {
+    const id = body?.id
+    if (!id || typeof id !== 'string') return Respond.r400('id is required')
 
-  const app = await getApp()
-  const [docId, entry] = await app.templates.findById(id)
-  if (!docId || !entry) return Respond.r404('Template not found')
-  if (entry.owner !== auth.email) return Respond.r404('Template not found')
+    const app = await getApp()
+    const [docId, entry] = await app.templates.findById(id)
+    if (!docId || !entry) return Respond.r404('Template not found')
+    if (entry.owner !== auth.email) return Respond.r404('Template not found')
 
-  await app.templates.delete(docId)
-  return { deleted: true }
-}
+    await app.templates.delete(docId)
+    return { deleted: true }
+    })
+  }
 
   /**
  * GET /templates
@@ -81,13 +83,14 @@ export class TemplatesController {
  * @param {{ bearer?: { token: string } }} params.context
  * @returns {Promise<unknown>}
  */
-  @Guards.auth({ action: Actions.MAILBOX_READ })
   @GetRoute
-  async get(/** @type {any} */ { auth }) {
-  const app = await getApp()
-  const records = await app.templates.listForOwner(auth.email)
-  return Object.values(records)
-    .sort((left, right) => left.name.localeCompare(right.name))
-    .map(present)
-}
+  async get(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ auth }) => {
+    const app = await getApp()
+    const records = await app.templates.listForOwner(auth.email)
+    return Object.values(records)
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .map(TemplatesController.present)
+    })
+  }
 }

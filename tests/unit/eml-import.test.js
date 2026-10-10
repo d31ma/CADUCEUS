@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { EmlImportService } from '../../server/features/mailbox/services/eml-import.js'
+import { EmlImportService } from '../../server/features/mailbox/services/EmlImportService.js'
 
 const parsed = {
   text: 'body',

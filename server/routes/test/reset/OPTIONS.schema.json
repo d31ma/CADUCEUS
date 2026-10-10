@@ -1,8 +1,0 @@
-{
-  "DELETE": {
-    "403": {
-      "error": "^.*$",
-      "forbidden": "^(true|false)$"
-    }
-  }
-}

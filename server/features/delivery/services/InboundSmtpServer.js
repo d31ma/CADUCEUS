@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto'
 import { readFileSync } from 'node:fs'
-import { AcmeService } from '../../domains/services/acme.js'
-import { listenForConnections } from '../../../platform/runtime/listener.ts'
+import { AcmeService } from '../../domains/services/AcmeService.js'
+import { listenForConnections } from '../../../platform/runtime/ListenableServer.ts'
 
 export class InboundSmtpServer {
   /** @param {InboundSmtpOptions} [options] */

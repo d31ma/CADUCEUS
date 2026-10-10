@@ -1,10 +1,10 @@
-import { Guards } from '../../middleware/guards.js'
-import { Actions } from '../../platform/auth/bridge.js'
-import { getApp } from '../../app.js'
-import { Respond } from '../../platform/http/respond.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Actions } from '../platform/auth/Auth.js'
+import { getApp } from '../app.js'
+import { Respond } from '../platform/http/Respond.js'
 
 @RequestRoute("/suppressed")
-@Public
+@SignedIn
 export class SuppressedController {
   /**
  * GET /suppressed
@@ -12,22 +12,24 @@ export class SuppressedController {
  * @param {{ bearer?: { token: string } }} params.context
  * @returns {Promise<unknown>}
  */
-  @Guards.auth({ action: Actions.DOMAIN_ADMIN })
   @GetRoute
-  async get(/** @type {any} */ { auth }) {
-    const app = await getApp()
-    return await app.suppressed.list()
+  async get(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.DOMAIN_ADMIN } }, async ({ auth }) => {
+      const app = await getApp()
+      return await app.suppressed.list()
+    })
   }
 
   /** Manually suppress an address from outbound delivery. */
-  @Guards.auth({ action: Actions.DOMAIN_ADMIN })
   @PostRoute
-  async post(/** @type {any} */ { body }) {
-    const address = String(body?.address || '').trim().toLowerCase()
-    if (!address) return Respond.r400('address required')
-    const reason = body?.reason === 'complaint' ? 'complaint' : 'bounce'
-    const app = await getApp()
-    await app.suppressed.suppress(address, reason)
-    return { suppressed: address, reason }
+  async post(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.DOMAIN_ADMIN } }, async ({ body }) => {
+      const address = String(body?.address || '').trim().toLowerCase()
+      if (!address) return Respond.r400('address required')
+      const reason = body?.reason === 'complaint' ? 'complaint' : 'bounce'
+      const app = await getApp()
+      await app.suppressed.suppress(address, reason)
+      return { suppressed: address, reason }
+    })
   }
 }

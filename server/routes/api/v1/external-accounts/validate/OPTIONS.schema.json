@@ -1,9 +1,0 @@
-{
-  "POST": {
-    "200": { "capabilities": "^.*$" },
-    "400": { "error": "^.*$" },
-    "401": { "error": "^.*$", "unauthorized": "^(true|false)$" },
-    "422": { "error": "^.*$", "blocked": ["^.*$"] },
-    "503": { "error": "^.*$", "unavailable": "^(true|false)$" }
-  }
-}

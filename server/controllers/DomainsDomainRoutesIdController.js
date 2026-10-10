@@ -1,11 +1,11 @@
-import { Guards } from '../../../../../middleware/guards.js'
-import { Actions } from '../../../../../platform/auth/bridge.js'
-import { Respond } from '../../../../../platform/http/respond.js'
-import { getApp } from '../../../../../app.js'
-import { RuleValidation } from '../../../../../features/domains/services/rule-validation.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Actions } from '../platform/auth/Auth.js'
+import { Respond } from '../platform/http/Respond.js'
+import { getApp } from '../app.js'
+import { RuleValidation } from '../features/domains/services/RuleValidation.js'
 
 @RequestRoute("/domains/{domain}/routes/{id}")
-@Public
+@SignedIn
 export class DomainsDomainRoutesIdController {
   /**
  * DELETE /domains/_domain/routes/_id
@@ -14,21 +14,22 @@ export class DomainsDomainRoutesIdController {
  * @param {{ bearer?: { token: string } }} params.context
  * @returns {Promise<Record<string, unknown>>}
  */
-  @Guards.auth({ action: Actions.DOMAIN_ADMIN, domain: r => r.paths?.domain })
   @DeleteRoute
-  async delete(/** @type {any} */ { paths, auth }) {
-  const { domain, id: ruleId } = paths ?? {}
-  if (!domain || !ruleId) return Respond.r400('domain and route id required')
-  if (!auth.domains.includes(domain)) return Respond.r403('Access denied')
+  async delete(@FromPath domain, @FromPath id, request) {
+    return RouteRequest.handle(request, { paths: { domain, id }, guard: { action: Actions.DOMAIN_ADMIN, domain: r => r.paths?.domain } }, async ({ paths, auth }) => {
+    const { domain, id: ruleId } = paths ?? {}
+    if (!domain || !ruleId) return Respond.r400('domain and route id required')
+    if (!auth.domains.includes(domain)) return Respond.r403('Access denied')
 
-  const app = await getApp()
-  const [docId, config] = await app.domains.findEntry(domain)
-  if (!docId || !config) return Respond.r404('Domain not found')
+    const app = await getApp()
+    const [docId, config] = await app.domains.findEntry(domain)
+    if (!docId || !config) return Respond.r404('Domain not found')
 
-  const updated = config.routes.filter(r => r.id !== ruleId)
-  await app.domains.updateRoutes(docId, updated)
-  return { deleted: ruleId }
-}
+    const updated = config.routes.filter(r => r.id !== ruleId)
+    await app.domains.updateRoutes(docId, updated)
+    return { deleted: ruleId }
+    })
+  }
 
   /**
  * PUT /domains/_domain/routes/_id
@@ -38,23 +39,24 @@ export class DomainsDomainRoutesIdController {
  * @param {{ bearer?: { token: string } }} params.context
  * @returns {Promise<Record<string, unknown>>}
  */
-  @Guards.auth({ action: Actions.DOMAIN_ADMIN, domain: r => r.paths?.domain })
   @PutRoute
-  async put(/** @type {any} */ { paths, body, auth }) {
-  const { domain, id: ruleId } = paths ?? {}
-  if (!domain || !ruleId) return Respond.r400('domain and route id required')
-  if (!auth.domains.includes(domain)) return Respond.r403('Access denied')
-  if (!body) return Respond.r400('Missing body')
+  async put(@FromPath domain, @FromPath id, request) {
+    return RouteRequest.handle(request, { paths: { domain, id }, guard: { action: Actions.DOMAIN_ADMIN, domain: r => r.paths?.domain } }, async ({ paths, body, auth }) => {
+    const { domain, id: ruleId } = paths ?? {}
+    if (!domain || !ruleId) return Respond.r400('domain and route id required')
+    if (!auth.domains.includes(domain)) return Respond.r403('Access denied')
+    if (!body) return Respond.r400('Missing body')
 
-  const actionResult = RuleValidation.validateRouteAction(body.action)
-  if (!actionResult.valid) return Respond.r400(actionResult.error)
+    const actionResult = RuleValidation.validateRouteAction(body.action)
+    if (!actionResult.valid) return Respond.r400(actionResult.error)
 
-  const app = await getApp()
-  const [docId, config] = await app.domains.findEntry(domain)
-  if (!docId || !config) return Respond.r404('Domain not found')
+    const app = await getApp()
+    const [docId, config] = await app.domains.findEntry(domain)
+    if (!docId || !config) return Respond.r404('Domain not found')
 
-  const updated = [...config.routes.filter(r => r.id !== ruleId), { ...body, id: ruleId }]
-  await app.domains.updateRoutes(docId, /** @type {any} */ (updated))
-  return { updated: ruleId }
-}
+    const updated = [...config.routes.filter(r => r.id !== ruleId), { ...body, id: ruleId }]
+    await app.domains.updateRoutes(docId, /** @type {any} */ (updated))
+    return { updated: ruleId }
+    })
+  }
 }

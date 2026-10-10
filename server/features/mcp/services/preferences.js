@@ -1,5 +1,5 @@
-import { Security } from '../../../platform/security/security.js'
-import { normalizeCategoryPath } from '../../mailbox/services/category-mappings.js'
+import { Security } from '../../../platform/security/Security.js'
+import { normalizeCategoryPath } from '../../mailbox/services/CategoryMappingService.js'
 
 export const MCP_ACCESS_LEVELS = Object.freeze(['read-only', 'read-write', 'read-write-send'])
 const ACCESS_LEVEL_SET = new Set(MCP_ACCESS_LEVELS)

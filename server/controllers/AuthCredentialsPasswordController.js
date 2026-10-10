@@ -1,7 +1,8 @@
+import { RouteRequest } from '../middleware/RouteRequest.js'
 // @ts-check
-import { Respond } from '../../../../platform/http/respond.js'
-import { Auth } from '../../../../platform/auth/bridge.js'
-import { AuthGuard } from '../../../../middleware/require-auth.js'
+import { Respond } from '../platform/http/Respond.js'
+import { Auth } from '../platform/auth/Auth.js'
+import { AuthGuard } from '../middleware/AuthGuard.js'
 
 @RequestRoute("/auth/credentials/password")
 @Public
@@ -15,17 +16,19 @@ export class AuthCredentialsPasswordController {
    * @param {any} request
    */
   @PutRoute
-  async put(/** @type {any} */ { body, context }) {
-    const token = context?.bearer?.token
-    if (!token) return Respond.r401('Authentication required')
-    const stepUpTransactionId = String(body?.stepUpTransactionId ?? '').trim()
-    if (!stepUpTransactionId) return Respond.r400('stepUpTransactionId is required')
-    const password = String(body?.password ?? '').trim()
-    if (!password) return Respond.r400('password is required')
-    try {
-      return await Auth.setPassword(token, stepUpTransactionId, password)
-    } catch (error) {
-      return AuthGuard.failure(error)
-    }
+  async put(request) {
+    return RouteRequest.handle(request, {  }, async ({ body, context }) => {
+      const token = context?.bearer?.token
+      if (!token) return Respond.r401('Authentication required')
+      const stepUpTransactionId = String(body?.stepUpTransactionId ?? '').trim()
+      if (!stepUpTransactionId) return Respond.r400('stepUpTransactionId is required')
+      const password = String(body?.password ?? '').trim()
+      if (!password) return Respond.r400('password is required')
+      try {
+        return await Auth.setPassword(token, stepUpTransactionId, password)
+      } catch (error) {
+        return AuthGuard.failure(error)
+      }
+    })
   }
 }

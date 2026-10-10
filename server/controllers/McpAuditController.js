@@ -1,35 +1,37 @@
-import { Guards } from '../../../middleware/guards.js'
-import { Actions } from '../../../platform/auth/bridge.js'
-import { getApp } from '../../../app.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Actions } from '../platform/auth/Auth.js'
+import { getApp } from '../app.js'
 
 @RequestRoute("/mcp/audit")
-@Public
+@SignedIn
 export class McpAuditController {
-  @Guards.auth({ action: Actions.MAILBOX_READ })
+  static present(record) {
+    return {
+      id: record.id,
+      tokenId: record.tokenId,
+      toolName: record.toolName,
+      category: record.category,
+      status: record.status,
+      parameterKeys: record.parameterKeys,
+      resultCount: record.resultCount,
+      durationMs: record.durationMs,
+      createdAt: record.createdAt,
+    }
+  }
+
   @GetRoute
-  async get(/** @type {any} */ { auth }) {
-    const app = await getApp()
-    return (await app.mcpAuditEvents.listForOwner(auth.email)).map(present)
+  async get(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_READ } }, async ({ auth }) => {
+      const app = await getApp()
+      return (await app.mcpAuditEvents.listForOwner(auth.email)).map(McpAuditController.present)
+    })
   }
 
-  @Guards.auth({ action: Actions.MAILBOX_WRITE })
   @DeleteRoute
-  async delete(/** @type {any} */ { auth }) {
-    const app = await getApp()
-    return { cleared: await app.mcpAuditEvents.clearForOwner(auth.email) }
-  }
-}
-
-function present(record) {
-  return {
-    id: record.id,
-    tokenId: record.tokenId,
-    toolName: record.toolName,
-    category: record.category,
-    status: record.status,
-    parameterKeys: record.parameterKeys,
-    resultCount: record.resultCount,
-    durationMs: record.durationMs,
-    createdAt: record.createdAt,
+  async delete(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE } }, async ({ auth }) => {
+      const app = await getApp()
+      return { cleared: await app.mcpAuditEvents.clearForOwner(auth.email) }
+    })
   }
 }

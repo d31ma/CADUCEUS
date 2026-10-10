@@ -3,7 +3,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { App } from '../server/app.js'
-import { OutboundQueueService } from '../server/features/delivery/services/outbound-queue.js'
+import { OutboundQueueService } from '../server/features/delivery/services/OutboundQueueService.js'
 
 /** @param {Error|null} err */
 function mockSmtp(err) {

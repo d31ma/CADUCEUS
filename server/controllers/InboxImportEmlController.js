@@ -1,38 +1,40 @@
 import { Buffer } from 'node:buffer'
-import { Guards } from '../../../../middleware/guards.js'
-import { Actions } from '../../../../platform/auth/bridge.js'
-import { Respond } from '../../../../platform/http/respond.js'
-import { Security } from '../../../../platform/security/security.js'
-import { getApp } from '../../../../app.js'
-
-const MAX_EML_BYTES = 50 * 1024 * 1024
-const BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Actions } from '../platform/auth/Auth.js'
+import { Respond } from '../platform/http/Respond.js'
+import { Security } from '../platform/security/Security.js'
+import { getApp } from '../app.js'
 
 /** Authenticated EML import into one explicitly authorized mailbox. */
 @RequestRoute("/inbox/import/eml")
-@Public
+@SignedIn
 export class InboxImportEmlController {
-  @Guards.auth({ action: Actions.MAILBOX_WRITE, mailbox: request => request.body?.mailbox })
+  static MAX_EML_BYTES = 50 * 1024 * 1024
+
+  static BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
+
   @PostRoute
-  async post(/** @type {any} */ { body, auth }) {
-    const mailbox = Security.normalizeEmailAddress(body?.mailbox)
-    if (!mailbox) return Respond.r400('mailbox is required')
-    const domain = mailbox.split('@')[1]
-    if (domain !== auth.domain) return Respond.r403('Access denied')
+  async post(request) {
+    return RouteRequest.handle(request, { guard: { action: Actions.MAILBOX_WRITE, mailbox: request => request.body?.mailbox } }, async ({ body, auth }) => {
+      const mailbox = Security.normalizeEmailAddress(body?.mailbox)
+      if (!mailbox) return Respond.r400('mailbox is required')
+      const domain = mailbox.split('@')[1]
+      if (domain !== auth.domain) return Respond.r403('Access denied')
 
-    const folder = InboxImportEmlController._folder(body?.folder)
-    if (folder instanceof Error) return Respond.r400(folder.message)
-    const source = InboxImportEmlController._source(body?.contentBase64)
-    if (source instanceof Error) return Respond.r400(source.message)
+      const folder = InboxImportEmlController._folder(body?.folder)
+      if (folder instanceof Error) return Respond.r400(folder.message)
+      const source = InboxImportEmlController._source(body?.contentBase64)
+      if (source instanceof Error) return Respond.r400(source.message)
 
-    try {
-      const app = await getApp()
-      const mappedFolder = await app.categoryMappings.pathFor(auth.email, domain, folder) || folder
-      const imported = await app.emlImport.importOne({ source, domain, mailbox, folder: mappedFolder })
-      return { imported: true, ...imported }
-    } catch {
-      return Respond.r503('The EML file could not be imported')
-    }
+      try {
+        const app = await getApp()
+        const mappedFolder = await app.categoryMappings.pathFor(auth.email, domain, folder) || folder
+        const imported = await app.emlImport.importOne({ source, domain, mailbox, folder: mappedFolder })
+        return { imported: true, ...imported }
+      } catch {
+        return Respond.r503('The EML file could not be imported')
+      }
+    })
   }
 
   /** @param {unknown} value */
@@ -46,12 +48,12 @@ export class InboxImportEmlController {
 
   /** @param {unknown} value */
   static _source(value) {
-    if (typeof value !== 'string' || !value || !BASE64.test(value)) {
+    if (typeof value !== 'string' || !value || !InboxImportEmlController.BASE64.test(value)) {
       return new Error('contentBase64 must contain one EML file')
     }
-    if (value.length > Math.ceil(MAX_EML_BYTES / 3) * 4) return new Error('EML file exceeds 50 MiB')
+    if (value.length > Math.ceil(InboxImportEmlController.MAX_EML_BYTES / 3) * 4) return new Error('EML file exceeds 50 MiB')
     const source = Buffer.from(value, 'base64')
-    if (source.byteLength === 0 || source.byteLength > MAX_EML_BYTES) return new Error('EML file exceeds 50 MiB')
+    if (source.byteLength === 0 || source.byteLength > InboxImportEmlController.MAX_EML_BYTES) return new Error('EML file exceeds 50 MiB')
     if (!InboxImportEmlController._looksLikeEml(source)) return new Error('File is not a recognizable RFC 822 message')
     return source
   }

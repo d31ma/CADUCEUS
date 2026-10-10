@@ -1,27 +1,28 @@
-import { Guards } from '../../../middleware/guards.js'
-import { Respond } from '../../../platform/http/respond.js'
-import { getApp } from '../../../app.js'
-import { MailActionError, MailActionService } from '../../../features/mailbox/services/mail-actions.js'
-import { bearerToken } from '../../../platform/accounts/bridge.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Respond } from '../platform/http/Respond.js'
+import { getApp } from '../app.js'
+import { MailActionError, MailActionService } from '../features/mailbox/services/MailActionService.js'
+import { bearerToken } from '../platform/accounts/ExternalAccounts.js'
 
 @RequestRoute("/inbox/actions")
-@Public
+@SignedIn
 export class InboxActionsController {
   /** @param {{body?:unknown,auth:any,context?:any}} params */
-  @Guards.auth()
   @PostRoute
-  async post({ body, auth, context }) {
-    let input
-    try { input = MailActionService.parseInput(body) } catch (error) { return InboxActionsController._respondError(error) }
-    try {
-      const app = await getApp()
-      const result = await app.mailActions.apply({
-        ...input, ownerEmail: auth.email, domains: auth.domains, providerToken: bearerToken(context),
-      })
-      return await InboxActionsController._present(app, auth.email, result)
-    } catch (error) {
-      return InboxActionsController._respondError(error)
-    }
+  async post(request) {
+    return RouteRequest.handle(request, { guard: {} }, async ({ body, auth, context }) => {
+      let input
+      try { input = MailActionService.parseInput(body) } catch (error) { return InboxActionsController._respondError(error) }
+      try {
+        const app = await getApp()
+        const result = await app.mailActions.apply({
+          ...input, ownerEmail: auth.email, domains: auth.domains, providerToken: bearerToken(context),
+        })
+        return await InboxActionsController._present(app, auth.email, result)
+      } catch (error) {
+        return InboxActionsController._respondError(error)
+      }
+    })
   }
 
   static async _present(app, ownerEmail, result) {

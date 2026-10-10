@@ -1,7 +1,8 @@
+import { RouteRequest } from '../middleware/RouteRequest.js'
 // @ts-check
-import { Respond } from '../../../platform/http/respond.js'
-import { Auth } from '../../../platform/auth/bridge.js'
-import { AuthGuard } from '../../../middleware/require-auth.js'
+import { Respond } from '../platform/http/Respond.js'
+import { Auth } from '../platform/auth/Auth.js'
+import { AuthGuard } from '../middleware/AuthGuard.js'
 
 @RequestRoute("/auth/session")
 @Public
@@ -13,9 +14,11 @@ export class AuthSessionController {
    * @param {any} request
    */
   @GetRoute
-  async get(/** @type {any} */ { context }) {
-    const result = await AuthGuard.requireAuth(context ?? {})
-    return result.ok ? result.principal : result.response
+  async get(request) {
+    return RouteRequest.handle(request, {  }, async ({ context }) => {
+      const result = await AuthGuard.requireAuth(context ?? {})
+      return result.ok ? result.principal : result.response
+    })
   }
 
   /**
@@ -24,13 +27,15 @@ export class AuthSessionController {
    * @param {any} request
    */
   @DeleteRoute
-  async delete(/** @type {any} */ { context }) {
-    const token = context?.bearer?.token
-    if (!token) return Respond.r401('Authentication required')
-    try {
-      return await Auth.revokeSession(token, 'signed out')
-    } catch (error) {
-      return AuthGuard.failure(error)
-    }
+  async delete(request) {
+    return RouteRequest.handle(request, {  }, async ({ context }) => {
+      const token = context?.bearer?.token
+      if (!token) return Respond.r401('Authentication required')
+      try {
+        return await Auth.revokeSession(token, 'signed out')
+      } catch (error) {
+        return AuthGuard.failure(error)
+      }
+    })
   }
 }

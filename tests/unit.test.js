@@ -3,7 +3,7 @@
  * Run with: bun test web/tests/unit.test.js
  */
 import { describe, test, expect } from 'bun:test'
-import { SpamFilterService } from '../server/features/delivery/services/spam-filter.js'
+import { SpamFilterService } from '../server/features/delivery/services/SpamFilterService.js'
 
 // ── Helpers copied verbatim from components ───────────────────────────────
 

@@ -1,4 +1,4 @@
-import { Security } from '../../../platform/security/security.js'
+import { Security } from '../../../platform/security/Security.js'
 import { normalizeCategoryPath } from './category-path.js'
 
 const CATEGORY_KINDS = new Set(['folder', 'label'])

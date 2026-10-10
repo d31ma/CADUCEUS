@@ -7,11 +7,11 @@
 //   ./caduceus domain:migrate --from=...   Migrate domain
 //   ./caduceus help                        Show help
 
-import { OutboundQueueWorker } from '../server/features/delivery/services/outbound-queue-worker.ts'
-import { FollowUpReminderWorker } from '../server/features/delivery/services/follow-up-reminder-worker.ts'
-import { SnoozeWorker } from '../server/features/mailbox/services/snooze-worker.ts'
-import { ProviderNotificationWorker } from '../server/features/notifications/services/provider-notification-worker.ts'
-import { ServiceSupervisor } from '../server/platform/runtime/service-supervisor.ts'
+import { OutboundQueueWorker } from '../server/features/delivery/services/OutboundQueueWorker.ts'
+import { FollowUpReminderWorker } from '../server/features/delivery/services/FollowUpReminderWorker.ts'
+import { SnoozeWorker } from '../server/features/mailbox/services/SnoozeWorker.ts'
+import { ProviderNotificationWorker } from '../server/features/notifications/services/ProviderNotificationWorker.ts'
+import { ServiceSupervisor } from '../server/platform/runtime/ServiceSupervisor.ts'
 import { randomBytes } from 'node:crypto'
 
 const command = process.argv[2] || 'serve'
@@ -149,7 +149,7 @@ if (command === 'serve') {
           name: 'acme-renewal',
           required: false,
           start: async () => {
-            const { AcmeService } = await import('../server/features/domains/services/acme.js')
+            const { AcmeService } = await import('../server/features/domains/services/AcmeService.js')
             const dir = process.env.MAIL_TLS_DIR || '/data/tls'
             process.env.MAIL_TLS_CERT_FILE ||= `${dir}/${process.env.MAIL_HOSTNAME}.cert.pem`
             process.env.MAIL_TLS_KEY_FILE ||= `${dir}/${process.env.MAIL_HOSTNAME}.key.pem`

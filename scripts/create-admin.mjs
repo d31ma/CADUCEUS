@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
-import { DatabaseRepository } from '../server/platform/persistence/fylo.js'
-import { DomainsRepository } from '../server/features/domains/repositories/domains.js'
-import { UsersRepository } from '../server/features/users/repositories/users.js'
-import { Security } from '../server/platform/security/security.js'
+import { DatabaseRepository } from '../server/platform/persistence/Fylo.js'
+import { DomainsRepository } from '../server/features/domains/repositories/DomainsRepository.js'
+import { UsersRepository } from '../server/features/users/repositories/UsersRepository.js'
+import { Security } from '../server/platform/security/Security.js'
 import { spawnSync } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 

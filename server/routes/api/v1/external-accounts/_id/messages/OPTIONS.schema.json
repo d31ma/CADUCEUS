@@ -1,8 +1,0 @@
-{
-  "GET": {
-    "200": "^.*$",
-    "401": { "unauthorized": "^(true|false)$" },
-    "404": { "notFound": "^(true|false)$" },
-    "503": { "unavailable": "^(true|false)$" }
-  }
-}

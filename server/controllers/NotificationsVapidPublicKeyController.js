@@ -1,8 +1,8 @@
-import { Guards } from '../../../middleware/guards.js'
-import { getApp } from '../../../app.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { getApp } from '../app.js'
 
 @RequestRoute("/notifications/vapid-public-key")
-@Public
+@SignedIn
 export class NotificationsVapidPublicKeyController {
   /**
  * GET /notifications/vapid-public-key
@@ -10,10 +10,11 @@ export class NotificationsVapidPublicKeyController {
  * @param {{ bearer?: { token: string } }} params.context
  * @returns {Promise<Record<string, unknown>>}
  */
-  @Guards.auth()
   @GetRoute
-  async get(/** @type {any} */ { auth }) {
-  const app = await getApp()
-  return { publicKey: await app.push.getVapidPublicKey() }
-}
+  async get(request) {
+    return RouteRequest.handle(request, { guard: {} }, async ({ auth }) => {
+    const app = await getApp()
+    return { publicKey: await app.push.getVapidPublicKey() }
+    })
+  }
 }

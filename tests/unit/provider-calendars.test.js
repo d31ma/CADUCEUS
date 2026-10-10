@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { ProviderCalendarService, mergeCalendarEvents } from '../../server/features/calendar/services/provider-calendars.js'
+import { ProviderCalendarService, mergeCalendarEvents } from '../../server/features/calendar/services/ProviderCalendarService.js'
 
 describe('provider calendar projection', () => {
   it('parses recurring CalDAV resources without exposing raw calendar data', async () => {

@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { DatabaseRepository } from '@/platform/persistence/fylo.js'
-import { AttachmentsRepository } from '@/features/mailbox/repositories/attachments.js'
-import { EmailsRepository } from '@/features/mailbox/repositories/emails.js'
-import { FollowUpRemindersRepository } from '@/features/delivery/repositories/follow-up-reminders.js'
-import { FollowUpReminderService, threadKey } from '@/features/delivery/services/follow-up-reminders.js'
+import { DatabaseRepository } from '@/platform/persistence/Fylo.js'
+import { AttachmentsRepository } from '@/features/mailbox/repositories/AttachmentsRepository.js'
+import { EmailsRepository } from '@/features/mailbox/repositories/EmailsRepository.js'
+import { FollowUpRemindersRepository } from '@/features/delivery/repositories/FollowUpRemindersRepository.js'
+import { FollowUpReminderService, threadKey } from '@/features/delivery/services/FollowUpReminderService.js'
 
 let root, fylo, emails, reminders, service
 

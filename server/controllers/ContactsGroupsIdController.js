@@ -1,22 +1,24 @@
-import { Guards } from '../../../../middleware/guards.js'
-import { Respond } from '../../../../platform/http/respond.js'
-import { getApp } from '../../../../app.js'
+import { RouteRequest } from '../middleware/RouteRequest.js'
+import { Respond } from '../platform/http/Respond.js'
+import { getApp } from '../app.js'
 
 @RequestRoute("/contacts/groups/{id}")
-@Public
+@SignedIn
 export class ContactsGroupsIdController {
-  @Guards.auth()
   @PutRoute
-  async put(/** @type {any} */ { paths, body, auth }) {
-    try {
-      return await (await getApp()).contacts.updateGroup(String(paths?.id || ''), auth.email, body?.name) ?? Respond.r404('Contact group not found')
-    } catch (error) { return Respond.r400(error instanceof Error ? error.message : 'Invalid group') }
+  async put(@FromPath id, request) {
+    return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, body, auth }) => {
+      try {
+        return await (await getApp()).contacts.updateGroup(String(paths?.id || ''), auth.email, body?.name) ?? Respond.r404('Contact group not found')
+      } catch (error) { return Respond.r400(error instanceof Error ? error.message : 'Invalid group') }
+    })
   }
 
-  @Guards.auth()
   @DeleteRoute
-  async delete(/** @type {any} */ { paths, auth }) {
-    if (!await (await getApp()).contacts.deleteGroup(String(paths?.id || ''), auth.email)) return Respond.r404('Contact group not found')
-    return { deleted: true }
+  async delete(@FromPath id, request) {
+    return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, auth }) => {
+      if (!await (await getApp()).contacts.deleteGroup(String(paths?.id || ''), auth.email)) return Respond.r404('Contact group not found')
+      return { deleted: true }
+    })
   }
 }

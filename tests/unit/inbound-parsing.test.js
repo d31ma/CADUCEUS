@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { InboundService, parseMultipartMessage } from '@/features/delivery/services/inbound.js'
+import { InboundService, parseMultipartMessage } from '@/features/delivery/services/InboundService.js'
 
 /** Parsing needs no collaborators — build a bare instance. */
 const parser = () => /** @type {InboundService} */ (Object.create(InboundService.prototype))

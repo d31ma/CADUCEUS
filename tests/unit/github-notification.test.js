@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { GitHubNotification } from '@/features/mailbox/services/github-notification.js'
+import { GitHubNotification } from '@/features/mailbox/services/GitHubNotification.js'
 import { safeGitHubTarget } from '../../client/shared/scripts/github-notification.js'
 
 describe('Mailspring-compatible GitHub notification targets', () => {

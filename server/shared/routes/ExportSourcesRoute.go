@@ -43,6 +43,9 @@ func (route ExportSourcesRoute) Export(request *http.Request) *http.Response {
 		return Answer{}.BadRequest("domain is required")
 	}
 	if domain != caller.Domain {
+		if !(RouteAccess{}).domainPattern().MatchString(domain) {
+			return Answer{}.Forbidden("Access denied")
+		}
 		if _, refusal := route.Parts.Access.Allowed(request, (RouteAccess{}).DomainRead(), domain, ""); refusal != nil {
 			return refusal
 		}

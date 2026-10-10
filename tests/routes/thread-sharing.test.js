@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { ThreadSharesController as Shares } from '@/controllers/ThreadSharesController.js'
-import { ThreadSharesIdController as Share } from '@/controllers/ThreadSharesIdController.js'
-import { ThreadSharesPublicTokenController as PublicShare } from '@/controllers/ThreadSharesPublicTokenController.js'
-import { ThreadSharesPublicTokenAttachmentsAttachmentIdController as PublicAttachment } from '@/controllers/ThreadSharesPublicTokenAttachmentsAttachmentIdController.js'
 import { FyloAccessContext } from '@/shared/persistence/FyloAccessContext.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Shares = Routes.ThreadSharesController
+const Share = Routes.ThreadSharesIdController
+const PublicShare = Routes.ThreadSharesPublicTokenController
+const PublicAttachment = Routes.ThreadSharesPublicTokenAttachmentsAttachmentIdController
 
 let app
 let attachment

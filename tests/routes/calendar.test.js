@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req } from './helpers.js'
-import { CalendarEventsController as Events } from '@/controllers/CalendarEventsController.js'
-import { CalendarEventsIdController as Event } from '@/controllers/CalendarEventsIdController.js'
-import { CalendarInvitesRespondController as Respond } from '@/controllers/CalendarInvitesRespondController.js'
-import { CalendarTeamEventsController as Team } from '@/controllers/CalendarTeamEventsController.js'
-import { CalendarCalendarsController as Calendars } from '@/controllers/CalendarCalendarsController.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Events = Routes.CalendarEventsController
+const Event = Routes.CalendarEventsIdController
+const Respond = Routes.CalendarInvitesRespondController
+const Team = Routes.CalendarTeamEventsController
+const Calendars = Routes.CalendarCalendarsController
 
 let app
 const auth = () => token()

@@ -3,9 +3,11 @@ import { createHash } from 'node:crypto'
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { TranslationAssetsController as Handler } from '../../server/controllers/TranslationAssetsController.js'
 import { call } from '../support/controller-call.mjs'
 import { req, setupRoutes, teardownRoutes, token } from './helpers.js'
+import { Routes } from '../support/Routes.mjs'
+
+const Handler = Routes.TranslationAssetsController
 
 let root
 let previousRoot

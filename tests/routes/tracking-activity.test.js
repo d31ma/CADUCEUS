@@ -1,10 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { ActivityController as Activity } from '@/controllers/ActivityController.js'
-import { TrackClickController as TrackClick } from '@/controllers/TrackClickController.js'
-import { TrackOpenController as TrackOpen } from '@/controllers/TrackOpenController.js'
 import { TrackingTokens } from '@/shared/delivery/TrackingTokens.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Activity = Routes.ActivityController
+const TrackClick = Routes.TrackClickController
+const TrackOpen = Routes.TrackOpenController
 
 const secret = 'tracking-test-secret-0123456789abcdef'
 const aliceTrackingId = 'alice-tracking-000001'

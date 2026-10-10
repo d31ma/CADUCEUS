@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req } from './helpers.js'
-import { GrammarCheckController as GrammarCheck } from '@/controllers/GrammarCheckController.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const GrammarCheck = Routes.GrammarCheckController
 
 beforeAll(setupRoutes, 300_000)
 afterAll(teardownRoutes)

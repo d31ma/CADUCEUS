@@ -1,17 +1,19 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { InboxIdController as Detail } from '@/controllers/InboxIdController.js'
-import { InboxIdSpamController as Spam } from '@/controllers/InboxIdSpamController.js'
-import { InboxIdAttachmentsAttachmentIdController as Attachment } from '@/controllers/InboxIdAttachmentsAttachmentIdController.js'
-import { InboxIdSourceController as Source } from '@/controllers/InboxIdSourceController.js'
-import { InboxIdImagesController as RemoteImages } from '@/controllers/InboxIdImagesController.js'
-import { InboxExportRfc822Controller as ExportSources } from '@/controllers/InboxExportRfc822Controller.js'
-import { InboxImportEmlController as ImportEml } from '@/controllers/InboxImportEmlController.js'
-import { SearchController as Search } from '@/controllers/SearchController.js'
-import { ThreadsController as Threads } from '@/controllers/ThreadsController.js'
 import { MboxUtils } from '../../client/shared/utils/MboxUtils.js'
 import { call } from '../support/controller-call.mjs'
 import { TestContainer } from '../support/TestContainer.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Detail = Routes.InboxIdController
+const Spam = Routes.InboxIdSpamController
+const Attachment = Routes.InboxIdAttachmentsAttachmentIdController
+const Source = Routes.InboxIdSourceController
+const RemoteImages = Routes.InboxIdImagesController
+const ExportSources = Routes.InboxExportRfc822Controller
+const ImportEml = Routes.InboxImportEmlController
+const Search = Routes.SearchController
+const Threads = Routes.ThreadsController
 
 const writeMboxFromFrameStream = (...args) => MboxUtils.writeMboxFromFrameStream(...args)
 

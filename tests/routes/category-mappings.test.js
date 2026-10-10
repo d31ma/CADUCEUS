@@ -1,12 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { CategoriesController as Categories } from '@/controllers/CategoriesController.js'
-import { UsersMePreferencesController as Preferences } from '@/controllers/UsersMePreferencesController.js'
-import { InboxController as Inbox } from '@/controllers/InboxController.js'
-import { InboxIdController as Detail } from '@/controllers/InboxIdController.js'
-import { DraftsController as Drafts } from '@/controllers/DraftsController.js'
-import { DraftsIdController as Draft } from '@/controllers/DraftsIdController.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Categories = Routes.CategoriesController
+const Preferences = Routes.UsersMePreferencesController
+const Inbox = Routes.InboxController
+const Detail = Routes.InboxIdController
+const Drafts = Routes.DraftsController
+const Draft = Routes.DraftsIdController
 
 const native = { inbox: 'inbox', sent: 'sent', drafts: 'drafts', spam: 'spam', archive: 'archive', trash: 'trash' }
 const alice = () => token()

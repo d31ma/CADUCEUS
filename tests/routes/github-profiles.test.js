@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { GithubProfileController as GitHubProfile } from '@/controllers/GithubProfileController.js'
-import { UsersMePreferencesController as Preferences } from '@/controllers/UsersMePreferencesController.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const GitHubProfile = Routes.GithubProfileController
+const Preferences = Routes.UsersMePreferencesController
 
 let app
 const alice = () => token()

@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { SnoozeController as Snooze } from '@/controllers/SnoozeController.js'
-import { SnoozeIdController as SnoozeItem } from '@/controllers/SnoozeIdController.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Snooze = Routes.SnoozeController
+const SnoozeItem = Routes.SnoozeIdController
 
 let app
 const alice = () => token()

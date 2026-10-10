@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token as issue } from '../routes/helpers.js'
-import { UsersMePreferencesController as PreferencesHandler } from '@/controllers/UsersMePreferencesController.js'
 import { MailPreferences } from '@/shared/users/MailPreferences.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const PreferencesHandler = Routes.UsersMePreferencesController
 
 const getPreferences = (req) => call(PreferencesHandler, 'GET', req)
 const putPreferences = (req) => call(PreferencesHandler, 'PUT', req)

@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req } from './helpers.js'
-import { DraftsController as Drafts } from '@/controllers/DraftsController.js'
-import { DraftsIdController as Draft } from '@/controllers/DraftsIdController.js'
-import { InboxController as Inbox } from '@/controllers/InboxController.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Drafts = Routes.DraftsController
+const Draft = Routes.DraftsIdController
+const Inbox = Routes.InboxController
 
 let app
 const alice = () => token()

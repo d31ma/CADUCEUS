@@ -1,0 +1,763 @@
+{
+ "ActivityController": {
+  "path": "/activity",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "ApiV1ExternalAccountsController": {
+  "path": "/api/v1/external-accounts",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "ApiV1ExternalAccountsIdController": {
+  "path": "/api/v1/external-accounts/{id}",
+  "verbs": [
+   "DELETE",
+   "GET",
+   "PATCH"
+  ]
+ },
+ "ApiV1ExternalAccountsIdDiagnosticsController": {
+  "path": "/api/v1/external-accounts/{id}/diagnostics",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "ApiV1ExternalAccountsIdFoldersController": {
+  "path": "/api/v1/external-accounts/{id}/folders",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "ApiV1ExternalAccountsIdMessagesController": {
+  "path": "/api/v1/external-accounts/{id}/messages",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "ApiV1ExternalAccountsIdMutationsController": {
+  "path": "/api/v1/external-accounts/{id}/mutations",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "ApiV1ExternalAccountsIdMutationsMutationIdController": {
+  "path": "/api/v1/external-accounts/{id}/mutations/{mutation_id}",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "ApiV1ExternalAccountsIdReconnectController": {
+  "path": "/api/v1/external-accounts/{id}/reconnect",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "ApiV1ExternalAccountsIdRetryController": {
+  "path": "/api/v1/external-accounts/{id}/retry",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "ApiV1ExternalAccountsOauthGoogleBeginController": {
+  "path": "/api/v1/external-accounts/oauth/google/begin",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "ApiV1ExternalAccountsOauthGoogleCompleteController": {
+  "path": "/api/v1/external-accounts/oauth/google/complete",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "ApiV1ExternalAccountsOauthMicrosoftBeginController": {
+  "path": "/api/v1/external-accounts/oauth/microsoft/begin",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "ApiV1ExternalAccountsOauthMicrosoftCompleteController": {
+  "path": "/api/v1/external-accounts/oauth/microsoft/complete",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "ApiV1ExternalAccountsValidateController": {
+  "path": "/api/v1/external-accounts/validate",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "ApiV1ProviderCatalogController": {
+  "path": "/api/v1/provider-catalog",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "ApiV1ProviderDiscoveryController": {
+  "path": "/api/v1/provider-discovery",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthCredentialsPasskeyBeginController": {
+  "path": "/auth/credentials/passkey/begin",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthCredentialsPasskeyController": {
+  "path": "/auth/credentials/passkey",
+  "verbs": [
+   "DELETE",
+   "GET"
+  ]
+ },
+ "AuthCredentialsPasskeyFinishController": {
+  "path": "/auth/credentials/passkey/finish",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthCredentialsPasswordController": {
+  "path": "/auth/credentials/password",
+  "verbs": [
+   "PUT"
+  ]
+ },
+ "AuthCredentialsRecoveryController": {
+  "path": "/auth/credentials/recovery",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthCredentialsTotpActivateController": {
+  "path": "/auth/credentials/totp/activate",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthCredentialsTotpEnrollController": {
+  "path": "/auth/credentials/totp/enroll",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthJwksController": {
+  "path": "/auth/jwks",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "AuthLoginBeginController": {
+  "path": "/auth/login/begin",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthLoginCompleteController": {
+  "path": "/auth/login/complete",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthLoginPasskeyController": {
+  "path": "/auth/login/passkey",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthLoginPasskeyOptionsController": {
+  "path": "/auth/login/passkey/options",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthLoginPasswordController": {
+  "path": "/auth/login/password",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthLoginRecoveryController": {
+  "path": "/auth/login/recovery",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthLoginTotpController": {
+  "path": "/auth/login/totp",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthLogoutController": {
+  "path": "/auth/logout",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "AuthSessionController": {
+  "path": "/auth/session",
+  "verbs": [
+   "DELETE",
+   "GET"
+  ]
+ },
+ "AuthTokenRefreshController": {
+  "path": "/auth/token/refresh",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "CalendarCalendarsController": {
+  "path": "/calendar/calendars",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "CalendarEventsController": {
+  "path": "/calendar/events",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "CalendarEventsIdController": {
+  "path": "/calendar/events/{id}",
+  "verbs": [
+   "DELETE",
+   "GET",
+   "PUT"
+  ]
+ },
+ "CalendarInvitesRespondController": {
+  "path": "/calendar/invites/respond",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "CalendarTeamEventsController": {
+  "path": "/calendar/team-events",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "CategoriesController": {
+  "path": "/categories",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "ContactsAddressBooksController": {
+  "path": "/contacts/address-books",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "ContactsController": {
+  "path": "/contacts",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "ContactsExportController": {
+  "path": "/contacts/export",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "ContactsGroupsController": {
+  "path": "/contacts/groups",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "ContactsGroupsIdController": {
+  "path": "/contacts/groups/{id}",
+  "verbs": [
+   "DELETE",
+   "PUT"
+  ]
+ },
+ "ContactsIdController": {
+  "path": "/contacts/{id}",
+  "verbs": [
+   "DELETE",
+   "GET",
+   "PUT"
+  ]
+ },
+ "ContactsIdMutationsMutationIdController": {
+  "path": "/contacts/{id}/mutations/{mutation_id}",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "ContactsImportController": {
+  "path": "/contacts/import",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "ContactsSuggestionsController": {
+  "path": "/contacts/suggestions",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "DomainsController": {
+  "path": "/domains",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "DomainsDomainRoutesController": {
+  "path": "/domains/{domain}/routes",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "DomainsDomainRoutesIdController": {
+  "path": "/domains/{domain}/routes/{id}",
+  "verbs": [
+   "DELETE",
+   "PUT"
+  ]
+ },
+ "DraftsController": {
+  "path": "/drafts",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "DraftsIdController": {
+  "path": "/drafts/{id}",
+  "verbs": [
+   "DELETE",
+   "GET",
+   "PUT"
+  ]
+ },
+ "ExtensionsController": {
+  "path": "/extensions",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "ExtensionsIdController": {
+  "path": "/extensions/{id}",
+  "verbs": [
+   "DELETE",
+   "GET",
+   "PUT"
+  ]
+ },
+ "ExtensionsInspectController": {
+  "path": "/extensions/inspect",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "GithubProfileController": {
+  "path": "/github/profile",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "GrammarCheckController": {
+  "path": "/grammar/check",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "InboundWebhookController": {
+  "path": "/inbound/webhook",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "InboxActionsController": {
+  "path": "/inbox/actions",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "InboxActionsIdRedoController": {
+  "path": "/inbox/actions/{id}/redo",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "InboxActionsIdUndoController": {
+  "path": "/inbox/actions/{id}/undo",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "InboxController": {
+  "path": "/inbox",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "InboxExportRfc822Controller": {
+  "path": "/inbox/export/rfc822",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "InboxIdAttachmentsAttachmentIdController": {
+  "path": "/inbox/{id}/attachments/{attachment_id}",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "InboxIdController": {
+  "path": "/inbox/{id}",
+  "verbs": [
+   "DELETE",
+   "GET",
+   "PUT"
+  ]
+ },
+ "InboxIdImagesController": {
+  "path": "/inbox/{id}/images",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "InboxIdSourceController": {
+  "path": "/inbox/{id}/source",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "InboxIdSpamController": {
+  "path": "/inbox/{id}/spam",
+  "verbs": [
+   "PUT"
+  ]
+ },
+ "InboxImportEmlController": {
+  "path": "/inbox/import/eml",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "InboxStreamController": {
+  "path": "/inbox/stream",
+  "verbs": [
+   "STREAM"
+  ]
+ },
+ "McpAuditController": {
+  "path": "/mcp/audit",
+  "verbs": [
+   "DELETE",
+   "GET"
+  ]
+ },
+ "McpConfigController": {
+  "path": "/mcp/config",
+  "verbs": [
+   "GET",
+   "PUT"
+  ]
+ },
+ "McpController": {
+  "path": "/mcp",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "McpTokenController": {
+  "path": "/mcp/token",
+  "verbs": [
+   "DELETE",
+   "POST"
+  ]
+ },
+ "NotificationsProviderTickController": {
+  "path": "/notifications/provider/tick",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "NotificationsSubscriptionsController": {
+  "path": "/notifications/subscriptions",
+  "verbs": [
+   "DELETE",
+   "GET",
+   "POST"
+  ]
+ },
+ "NotificationsVapidPublicKeyController": {
+  "path": "/notifications/vapid-public-key",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "PresenceHeartbeatController": {
+  "path": "/presence/heartbeat",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "PresenceTeamController": {
+  "path": "/presence/team",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "RemindersController": {
+  "path": "/reminders",
+  "verbs": [
+   "DELETE",
+   "GET",
+   "POST"
+  ]
+ },
+ "RemindersTickController": {
+  "path": "/reminders/tick",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "RulesController": {
+  "path": "/rules",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "RulesIdController": {
+  "path": "/rules/{id}",
+  "verbs": [
+   "DELETE",
+   "PUT"
+  ]
+ },
+ "RulesOrderController": {
+  "path": "/rules/order",
+  "verbs": [
+   "PUT"
+  ]
+ },
+ "RulesPreviewController": {
+  "path": "/rules/preview",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "SearchController": {
+  "path": "/search",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "SendController": {
+  "path": "/send",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "SendFlushController": {
+  "path": "/send/flush",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "SendScheduledController": {
+  "path": "/send/scheduled",
+  "verbs": [
+   "DELETE",
+   "GET"
+  ]
+ },
+ "SendScheduledIdController": {
+  "path": "/send/scheduled/{id}",
+  "verbs": [
+   "DELETE",
+   "GET",
+   "PUT"
+  ]
+ },
+ "SendTickController": {
+  "path": "/send/tick",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "SendUndoController": {
+  "path": "/send/undo",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "SignaturesController": {
+  "path": "/signatures",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "SignaturesIdController": {
+  "path": "/signatures/{id}",
+  "verbs": [
+   "DELETE",
+   "PUT"
+  ]
+ },
+ "SnoozeController": {
+  "path": "/snooze",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "SnoozeIdController": {
+  "path": "/snooze/{id}",
+  "verbs": [
+   "DELETE"
+  ]
+ },
+ "SnoozeTickController": {
+  "path": "/snooze/tick",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "SuppressedAddressController": {
+  "path": "/suppressed/{address}",
+  "verbs": [
+   "DELETE"
+  ]
+ },
+ "SuppressedController": {
+  "path": "/suppressed",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "TemplatesController": {
+  "path": "/templates",
+  "verbs": [
+   "DELETE",
+   "GET",
+   "POST"
+  ]
+ },
+ "TemplatesIdController": {
+  "path": "/templates/{id}",
+  "verbs": [
+   "DELETE",
+   "PUT"
+  ]
+ },
+ "TestResetController": {
+  "path": "/test/reset",
+  "verbs": [
+   "DELETE"
+  ]
+ },
+ "TestSeedTrackingController": {
+  "path": "/test/seed/tracking",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "TestSeedUserController": {
+  "path": "/test/seed/user",
+  "verbs": [
+   "POST"
+  ]
+ },
+ "ThreadSharesController": {
+  "path": "/thread-shares",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "ThreadSharesIdController": {
+  "path": "/thread-shares/{id}",
+  "verbs": [
+   "DELETE"
+  ]
+ },
+ "ThreadSharesPublicTokenAttachmentsAttachmentIdController": {
+  "path": "/thread-shares/public/{token}/attachments/{attachment_id}",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "ThreadSharesPublicTokenController": {
+  "path": "/thread-shares/public/{token}",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "ThreadsController": {
+  "path": "/threads",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "TrackClickController": {
+  "path": "/track/click",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "TrackOpenController": {
+  "path": "/track/open",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "TranslationAssetsController": {
+  "path": "/translation-assets",
+  "verbs": [
+   "GET"
+  ]
+ },
+ "UsersAliasesController": {
+  "path": "/users/aliases",
+  "verbs": [
+   "DELETE",
+   "GET",
+   "POST"
+  ]
+ },
+ "UsersController": {
+  "path": "/users",
+  "verbs": [
+   "GET",
+   "POST"
+  ]
+ },
+ "UsersIdController": {
+  "path": "/users/{id}",
+  "verbs": [
+   "DELETE"
+  ]
+ },
+ "UsersMePreferencesController": {
+  "path": "/users/me/preferences",
+  "verbs": [
+   "GET",
+   "PUT"
+  ]
+ }
+}

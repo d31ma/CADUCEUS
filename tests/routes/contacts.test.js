@@ -1,14 +1,16 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req } from './helpers.js'
-import { ContactsController as Contacts } from '@/controllers/ContactsController.js'
-import { ContactsIdController as Contact } from '@/controllers/ContactsIdController.js'
-import { ContactsGroupsController as Groups } from '@/controllers/ContactsGroupsController.js'
-import { ContactsGroupsIdController as Group } from '@/controllers/ContactsGroupsIdController.js'
-import { ContactsImportController as ImportContacts } from '@/controllers/ContactsImportController.js'
-import { ContactsExportController as ExportContacts } from '@/controllers/ContactsExportController.js'
-import { ContactsSuggestionsController as Suggestions } from '@/controllers/ContactsSuggestionsController.js'
-import { SendController as Send } from '@/controllers/SendController.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Contacts = Routes.ContactsController
+const Contact = Routes.ContactsIdController
+const Groups = Routes.ContactsGroupsController
+const Group = Routes.ContactsGroupsIdController
+const ImportContacts = Routes.ContactsImportController
+const ExportContacts = Routes.ContactsExportController
+const Suggestions = Routes.ContactsSuggestionsController
+const Send = Routes.SendController
 
 let app
 const alice = () => token()

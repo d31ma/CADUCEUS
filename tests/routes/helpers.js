@@ -12,6 +12,7 @@
  */
 import { startIdentity, identityRequirements } from '../support/identity.mjs'
 import { TestContainer } from '../support/TestContainer.mjs'
+import { TestServer } from '../support/TestServer.mjs'
 
 export { identityRequirements }
 
@@ -56,8 +57,16 @@ export async function setupRoutes() {
     process.env[key] = value
   }
 
-  // Controllers called by the suites inject their providers from this one.
+  // Suites seed and inspect records through this container; the routes run
+  // in the application server over HTTP and share the same FYLO bridge.
   const app = await TestContainer.open()
+  await TestServer.start({
+    ...identity.env,
+    NODE_ENV: 'test',
+    CADUCEUS_ENABLE_TEST_ROUTES: 'true',
+    STREAM_MAX_MS: '750',
+    STREAM_POLL_MS: '50',
+  })
   const tokens = new Map()
   for (const member of POOL) {
     const seeded = await identity.mint(member.email, member.role)
@@ -69,6 +78,7 @@ export async function setupRoutes() {
 
 export async function teardownRoutes() {
   if (!active) return
+  TestServer.stop()
   await TestContainer.close()
   active.identity.stop()
   for (const [key, value] of active.restore) {

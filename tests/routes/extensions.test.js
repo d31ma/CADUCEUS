@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { req, setupRoutes, teardownRoutes, token } from './helpers.js'
-import { ExtensionsController as Extensions } from '@/controllers/ExtensionsController.js'
-import { ExtensionsInspectController as Inspect } from '@/controllers/ExtensionsInspectController.js'
-import { ExtensionsIdController as Extension } from '@/controllers/ExtensionsIdController.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Extensions = Routes.ExtensionsController
+const Inspect = Routes.ExtensionsInspectController
+const Extension = Routes.ExtensionsIdController
 
 const alice = () => token()
 const bob = () => token({ email: 'bob@example.com' })

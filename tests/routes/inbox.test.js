@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req } from './helpers.js'
-import { InboxController as Handler } from '@/controllers/InboxController.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Handler = Routes.InboxController
 
 let app
 

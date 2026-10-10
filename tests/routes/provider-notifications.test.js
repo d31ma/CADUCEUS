@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { createHmac } from 'node:crypto'
 import { setupRoutes, teardownRoutes } from './helpers.js'
-import { NotificationsProviderTickController as ProviderNotificationTick } from '@/controllers/NotificationsProviderTickController.js'
 import { ExternalAccounts } from '@/shared/accounts/ExternalAccounts.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const ProviderNotificationTick = Routes.NotificationsProviderTickController
 
 let app
 const originals = {

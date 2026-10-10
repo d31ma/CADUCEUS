@@ -1,9 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { InboxActionsController as MailActions } from '@/controllers/InboxActionsController.js'
-import { InboxActionsIdUndoController as UndoMailAction } from '@/controllers/InboxActionsIdUndoController.js'
-import { InboxActionsIdRedoController as RedoMailAction } from '@/controllers/InboxActionsIdRedoController.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const MailActions = Routes.InboxActionsController
+const UndoMailAction = Routes.InboxActionsIdUndoController
+const RedoMailAction = Routes.InboxActionsIdRedoController
 
 let app
 const alice = () => token()

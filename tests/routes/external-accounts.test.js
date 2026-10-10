@@ -1,41 +1,43 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { createServer } from 'node:net'
 import { setupRoutes, teardownRoutes, token, req, routeDiagnostics, email } from './helpers.js'
-import { ApiV1ProviderCatalogController as ProviderCatalog } from '@/controllers/ApiV1ProviderCatalogController.js'
-import { ApiV1ProviderDiscoveryController as ProviderDiscovery } from '@/controllers/ApiV1ProviderDiscoveryController.js'
-import { ApiV1ExternalAccountsController as ExternalAccounts } from '@/controllers/ApiV1ExternalAccountsController.js'
-import { ApiV1ExternalAccountsIdController as ExternalAccount } from '@/controllers/ApiV1ExternalAccountsIdController.js'
-import { ApiV1ExternalAccountsValidateController as ValidateExternalAccount } from '@/controllers/ApiV1ExternalAccountsValidateController.js'
-import { ApiV1ExternalAccountsOauthMicrosoftBeginController as BeginMicrosoftOAuth } from '@/controllers/ApiV1ExternalAccountsOauthMicrosoftBeginController.js'
-import { ApiV1ExternalAccountsOauthMicrosoftCompleteController as CompleteMicrosoftOAuth } from '@/controllers/ApiV1ExternalAccountsOauthMicrosoftCompleteController.js'
-import { ApiV1ExternalAccountsOauthGoogleBeginController as BeginGoogleOAuth } from '@/controllers/ApiV1ExternalAccountsOauthGoogleBeginController.js'
-import { ApiV1ExternalAccountsOauthGoogleCompleteController as CompleteGoogleOAuth } from '@/controllers/ApiV1ExternalAccountsOauthGoogleCompleteController.js'
-import { ApiV1ExternalAccountsIdReconnectController as ReconnectExternalAccount } from '@/controllers/ApiV1ExternalAccountsIdReconnectController.js'
-import { ApiV1ExternalAccountsIdRetryController as RetryExternalAccount } from '@/controllers/ApiV1ExternalAccountsIdRetryController.js'
-import { ApiV1ExternalAccountsIdDiagnosticsController as ExternalAccountDiagnostics } from '@/controllers/ApiV1ExternalAccountsIdDiagnosticsController.js'
-import { ApiV1ExternalAccountsIdFoldersController as ExternalAccountFolders } from '@/controllers/ApiV1ExternalAccountsIdFoldersController.js'
-import { ApiV1ExternalAccountsIdMessagesController as ExternalAccountMessages } from '@/controllers/ApiV1ExternalAccountsIdMessagesController.js'
-import { ApiV1ExternalAccountsIdMutationsController as ExternalAccountMutations } from '@/controllers/ApiV1ExternalAccountsIdMutationsController.js'
-import { ApiV1ExternalAccountsIdMutationsMutationIdController as ExternalAccountMutation } from '@/controllers/ApiV1ExternalAccountsIdMutationsMutationIdController.js'
-import { InboxController as Inbox } from '@/controllers/InboxController.js'
-import { InboxIdController as MessageDetail } from '@/controllers/InboxIdController.js'
-import { InboxIdAttachmentsAttachmentIdController as MessageAttachment } from '@/controllers/InboxIdAttachmentsAttachmentIdController.js'
-import { InboxIdSourceController as MessageSource } from '@/controllers/InboxIdSourceController.js'
-import { InboxActionsController as MailActions } from '@/controllers/InboxActionsController.js'
-import { InboxActionsIdUndoController as UndoMailAction } from '@/controllers/InboxActionsIdUndoController.js'
-import { InboxActionsIdRedoController as RedoMailAction } from '@/controllers/InboxActionsIdRedoController.js'
-import { UsersMePreferencesController as UserPreferences } from '@/controllers/UsersMePreferencesController.js'
-import { InboxExportRfc822Controller as ExportSources } from '@/controllers/InboxExportRfc822Controller.js'
-import { ThreadsController as Threads } from '@/controllers/ThreadsController.js'
-import { SearchController as Search } from '@/controllers/SearchController.js'
-import { SendController as Send } from '@/controllers/SendController.js'
-import { SendUndoController as UndoSend } from '@/controllers/SendUndoController.js'
-import { SendScheduledController as ScheduledSend } from '@/controllers/SendScheduledController.js'
-import { SendScheduledIdController as ScheduledItem } from '@/controllers/SendScheduledIdController.js'
 import { ExternalAccounts as ExternalAccountBridge } from '@/shared/accounts/ExternalAccounts.js'
 import { MboxUtils } from '../../client/shared/utils/MboxUtils.js'
 import { call } from '../support/controller-call.mjs'
 import { TestContainer } from '../support/TestContainer.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const ProviderCatalog = Routes.ApiV1ProviderCatalogController
+const ProviderDiscovery = Routes.ApiV1ProviderDiscoveryController
+const ExternalAccounts = Routes.ApiV1ExternalAccountsController
+const ExternalAccount = Routes.ApiV1ExternalAccountsIdController
+const ValidateExternalAccount = Routes.ApiV1ExternalAccountsValidateController
+const BeginMicrosoftOAuth = Routes.ApiV1ExternalAccountsOauthMicrosoftBeginController
+const CompleteMicrosoftOAuth = Routes.ApiV1ExternalAccountsOauthMicrosoftCompleteController
+const BeginGoogleOAuth = Routes.ApiV1ExternalAccountsOauthGoogleBeginController
+const CompleteGoogleOAuth = Routes.ApiV1ExternalAccountsOauthGoogleCompleteController
+const ReconnectExternalAccount = Routes.ApiV1ExternalAccountsIdReconnectController
+const RetryExternalAccount = Routes.ApiV1ExternalAccountsIdRetryController
+const ExternalAccountDiagnostics = Routes.ApiV1ExternalAccountsIdDiagnosticsController
+const ExternalAccountFolders = Routes.ApiV1ExternalAccountsIdFoldersController
+const ExternalAccountMessages = Routes.ApiV1ExternalAccountsIdMessagesController
+const ExternalAccountMutations = Routes.ApiV1ExternalAccountsIdMutationsController
+const ExternalAccountMutation = Routes.ApiV1ExternalAccountsIdMutationsMutationIdController
+const Inbox = Routes.InboxController
+const MessageDetail = Routes.InboxIdController
+const MessageAttachment = Routes.InboxIdAttachmentsAttachmentIdController
+const MessageSource = Routes.InboxIdSourceController
+const MailActions = Routes.InboxActionsController
+const UndoMailAction = Routes.InboxActionsIdUndoController
+const RedoMailAction = Routes.InboxActionsIdRedoController
+const UserPreferences = Routes.UsersMePreferencesController
+const ExportSources = Routes.InboxExportRfc822Controller
+const Threads = Routes.ThreadsController
+const Search = Routes.SearchController
+const Send = Routes.SendController
+const UndoSend = Routes.SendUndoController
+const ScheduledSend = Routes.SendScheduledController
+const ScheduledItem = Routes.SendScheduledIdController
 
 const writeMboxFromFrameStream = (...args) => MboxUtils.writeMboxFromFrameStream(...args)
 

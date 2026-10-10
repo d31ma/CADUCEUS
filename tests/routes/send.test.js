@@ -1,15 +1,17 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req } from './helpers.js'
-import { SendController as Send } from '@/controllers/SendController.js'
-import { SendScheduledController as Scheduled } from '@/controllers/SendScheduledController.js'
-import { SendScheduledIdController as ScheduledItem } from '@/controllers/SendScheduledIdController.js'
-import { SendUndoController as Undo } from '@/controllers/SendUndoController.js'
-import { RemindersController as Reminders } from '@/controllers/RemindersController.js'
-import { RemindersTickController as ReminderTick } from '@/controllers/RemindersTickController.js'
-import { SendFlushController as Flush } from '@/controllers/SendFlushController.js'
 import { simpleParser } from 'mailparser'
 import { createHmac } from 'node:crypto'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Send = Routes.SendController
+const Scheduled = Routes.SendScheduledController
+const ScheduledItem = Routes.SendScheduledIdController
+const Undo = Routes.SendUndoController
+const Reminders = Routes.RemindersController
+const ReminderTick = Routes.RemindersTickController
+const Flush = Routes.SendFlushController
 
 let app
 const auth = () => token()

@@ -1,12 +1,14 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { randomBytes } from 'node:crypto'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { McpConfigController as Config } from '@/controllers/McpConfigController.js'
-import { McpTokenController as Token } from '@/controllers/McpTokenController.js'
-import { McpAuditController as Audit } from '@/controllers/McpAuditController.js'
-import { McpController as Mcp } from '@/controllers/McpController.js'
 import { FyloAccessContext } from '@/shared/persistence/FyloAccessContext.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Config = Routes.McpConfigController
+const Token = Routes.McpTokenController
+const Audit = Routes.McpAuditController
+const Mcp = Routes.McpController
 
 let app
 let firstToken = ''

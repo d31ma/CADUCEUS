@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "bun:test";
 import { setupRoutes, teardownRoutes, token as issue } from "../routes/helpers.js";
-import { UsersAliasesController as AliasesHandler } from "@/controllers/UsersAliasesController.js";
+import { Routes } from "../support/Routes.mjs";
+const AliasesHandler = Routes.UsersAliasesController;
 import { call } from "../support/controller-call.mjs";
 
 const getAliases = (req) => call(AliasesHandler, 'GET', req);

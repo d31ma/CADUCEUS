@@ -1,7 +1,7 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { canAccessEmail } from '../features/mailbox/repositories/EmailsRepository.js'
+import { EmailsRecords } from '../shared/mailbox/EmailsRecords.js'
 import { RemoteImages } from '../shared/mailbox/RemoteImages.js'
 
 @RequestRoute("/inbox/{id}/images")
@@ -34,7 +34,7 @@ export class InboxIdImagesController {
       const [, email] = await app.emails.findById(id)
       if (!email) return Respond.r404('Email not found')
       if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
-      if (!canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
+      if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
 
       const limit = await app.rateLimit.check(['remote-images', auth.email], 60, 60_000)
       if (!limit.allowed) return Respond.r429('Too many remote image requests', limit.retryAfterSeconds)

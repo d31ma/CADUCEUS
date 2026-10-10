@@ -1,5 +1,6 @@
 import { Fylo } from '../../../shared/persistence/Fylo.js'
 import { CalendarDate } from '../../../shared/calendar/CalendarDate.js'
+import { CalendarEventsRecords } from '../../../shared/calendar/CalendarEventsRecords.js'
 
 export class CalendarEventsRepository {
   /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
@@ -44,7 +45,7 @@ export class CalendarEventsRepository {
       this.fylo.findDocs(Fylo.Collections.CALENDAR_EVENTS, { $ops: [{ userEmail: { $eq: userEmail } }] }).collect(),
     )
     /** @type {Array<CalendarEvent & { docId: string }>} */
-    const out = Object.entries(docs).map(([docId, d]) => ({ docId, ...hydrate(/** @type {Record<string, unknown>} */ (d)) }))
+    const out = Object.entries(docs).map(([docId, d]) => ({ docId, ...CalendarEventsRecords.hydrate(/** @type {Record<string, unknown>} */ (d)) }))
     if (!range.start && !range.end) return out
     const windowStart = range.start ? Date.parse(range.start) : -Infinity
     const windowEnd = range.end ? Date.parse(range.end) : Infinity
@@ -67,7 +68,7 @@ export class CalendarEventsRepository {
     )
     const entry = Object.entries(docs)[0]
     if (!entry) return [null, null]
-    return [entry[0], { docId: entry[0], ...hydrate(/** @type {Record<string, unknown>} */ (entry[1])) }]
+    return [entry[0], { docId: entry[0], ...CalendarEventsRecords.hydrate(/** @type {Record<string, unknown>} */ (entry[1])) }]
   }
 
   /**
@@ -85,7 +86,7 @@ export class CalendarEventsRepository {
     )
     for (const [docId, raw] of Object.entries(docs)) {
       if (/** @type {any} */ (raw)?.icsUid === icsUid && !/** @type {any} */ (raw)?.recurrenceId) {
-        return [docId, { docId, ...hydrate(/** @type {Record<string, unknown>} */ (raw)) }]
+        return [docId, { docId, ...CalendarEventsRecords.hydrate(/** @type {Record<string, unknown>} */ (raw)) }]
       }
     }
     return [null, null]
@@ -119,7 +120,7 @@ export class CalendarEventsRepository {
       const matchesDate = normalizedDate && CalendarDate.coerce(value) === normalizedDate
       const matchesInstant = normalizedInstant && CalendarDate.isDateTime(value) && new Date(value).toISOString() === normalizedInstant
       if (matchesDate || matchesInstant) {
-        return [docId, { docId, ...hydrate(/** @type {Record<string, unknown>} */ (raw)) }]
+        return [docId, { docId, ...CalendarEventsRecords.hydrate(/** @type {Record<string, unknown>} */ (raw)) }]
       }
     }
     return [null, null]
@@ -148,18 +149,3 @@ export class CalendarEventsRepository {
   }
 }
 
-/**
- * @param {Record<string, unknown>} raw
- * @returns {CalendarEvent & { docId?: string }}
- */
-function hydrate(raw) {
-  /** @type {any} */
-  const e = { ...raw }
-  if (typeof e.attendeesJson === 'string') {
-    try { e.attendees = JSON.parse(e.attendeesJson) } catch { e.attendees = [] }
-    delete e.attendeesJson
-  } else if (!Array.isArray(e.attendees)) {
-    e.attendees = []
-  }
-  return e
-}

@@ -5,7 +5,7 @@ import { getApp } from '../app.js'
 import { CalendarRecurrence } from '../shared/calendar/CalendarRecurrence.js'
 import { CalendarDate } from '../shared/calendar/CalendarDate.js'
 import { EventView } from '../shared/calendar/EventView.js'
-import { mergeCalendarEvents } from '../features/calendar/services/ProviderCalendarService.js'
+import { ProviderCalendarRules } from '../shared/calendar/ProviderCalendarRules.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/calendar/events")
@@ -153,7 +153,7 @@ export class CalendarEventsController {
     if (app.providerCalendars) {
       try {
         const providerEvents = await app.providerCalendars.list(ExternalAccounts.bearerToken(context))
-        events = mergeCalendarEvents(localEvents, providerEvents)
+        events = ProviderCalendarRules.mergeCalendarEvents(localEvents, providerEvents)
       } catch (error) {
         return ExternalAccounts.accountFailure(error)
       }

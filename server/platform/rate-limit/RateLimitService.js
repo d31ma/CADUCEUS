@@ -1,5 +1,6 @@
 import { Fylo } from '../../shared/persistence/Fylo.js'
 import { Security } from '../../shared/security/Security.js'
+import { RateLimitRules } from '../../shared/rate-limit/RateLimitRules.js'
 
 /**
  * Fylo-backed rate limiter shared by the self-hosted application processes.
@@ -28,7 +29,7 @@ export class RateLimitService {
    * @returns {Promise<RateLimitResult>}
    */
   async _checkFylo(key, maxRequests, windowSeconds) {
-    const hash = hashKey(key)
+    const hash = RateLimitRules.hashKey(key)
     const now = Math.floor(Date.now() / 1000)
     const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.RATE_LIMITS, { $ops: [{ key: { $eq: hash } }] }).collect())
     const entry = Object.entries(docs)[0]
@@ -49,28 +50,7 @@ export class RateLimitService {
       await this.fylo.putData(Fylo.Collections.RATE_LIMITS, { key: hash, count: 1, resetAt })
     }
 
-    return formatResult(count, maxRequests, resetAt, now)
+    return RateLimitRules.formatResult(count, maxRequests, resetAt, now)
   }
 }
 
-/** @param {string | string[]} key @returns {string} */
-function hashKey(key) {
-  return Security.sha256Hex(Array.isArray(key) ? key.join(':') : String(key))
-}
-
-/**
- * @param {number} count
- * @param {number} maxRequests
- * @param {number} resetAt
- * @param {number} now
- * @returns {RateLimitResult}
- */
-function formatResult(count, maxRequests, resetAt, now) {
-  return {
-    allowed: count <= maxRequests,
-    limit: maxRequests,
-    remaining: Math.max(0, maxRequests - count),
-    resetAt,
-    retryAfterSeconds: resetAt - now,
-  }
-}

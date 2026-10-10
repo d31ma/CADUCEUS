@@ -1,12 +1,10 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import { Buffer } from 'node:buffer'
-import { canAccessEmail } from '../repositories/EmailsRepository.js'
+import { EmailsRecords } from '../../../shared/mailbox/EmailsRecords.js'
 import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
 import { Security } from '../../../shared/security/Security.js'
-
-const EXPIRY_DAYS = new Set([1, 7, 30])
-const TOKEN_SECRET_BYTES = 32
-const MAX_EMAIL_IDS_JSON_BYTES = 512 * 1024
+import { ThreadSharingRules } from '../../../shared/mailbox/ThreadSharingRules.js'
+import { ThreadShareInputError } from '../../../shared/errors/ThreadShareInputError.js'
 
 /**
  * Creates and resolves self-hosted conversation-sharing capabilities.
@@ -33,7 +31,7 @@ export class ThreadSharingService {
    */
   async create(input) {
     const expiresInDays = Number(input.expiresInDays)
-    if (!Number.isInteger(expiresInDays) || !EXPIRY_DAYS.has(expiresInDays)) {
+    if (!Number.isInteger(expiresInDays) || !ThreadSharingRules.EXPIRY_DAYS.has(expiresInDays)) {
       throw new ThreadShareInputError('expiresInDays must be one of: 1, 7, 30')
     }
     const emailId = String(input.emailId || '').trim()
@@ -46,7 +44,7 @@ export class ThreadSharingService {
 
     const emailIds = thread.emails.map(email => email.id)
     const serializedIds = JSON.stringify(emailIds)
-    if (Buffer.byteLength(serializedIds) > MAX_EMAIL_IDS_JSON_BYTES) {
+    if (Buffer.byteLength(serializedIds) > ThreadSharingRules.MAX_EMAIL_IDS_JSON_BYTES) {
       throw new ThreadShareInputError('This conversation is too large to share safely')
     }
 
@@ -54,10 +52,10 @@ export class ThreadSharingService {
     const revokedAt = now.toISOString()
     const existing = await this.shares.listForOwner(input.ownerEmail)
     await Promise.all(existing
-      .filter(share => share.threadId === thread.id && isActive(share, now))
+      .filter(share => share.threadId === thread.id && ThreadSharingRules.isActive(share, now))
       .map(share => this.shares.update(share.docId, { revokedAt })))
 
-    const token = createToken(domain)
+    const token = ThreadSharingRules.createToken(domain)
     const record = {
       id: `share-${randomBytes(16).toString('base64url')}`,
       ownerEmail: input.ownerEmail.toLowerCase(),
@@ -65,12 +63,12 @@ export class ThreadSharingService {
       threadId: thread.id,
       subject: String(thread.subject || '(No subject)').slice(0, 500),
       emailIds,
-      tokenHash: hashToken(token),
+      tokenHash: ThreadSharingRules.hashToken(token),
       createdAt: now.toISOString(),
       expiresAt: new Date(now.getTime() + expiresInDays * 86_400_000).toISOString(),
     }
     await this.shares.put(record)
-    return { ...presentManaged(record), token, url: `/share/${encodeURIComponent(token)}` }
+    return { ...ThreadSharingRules.presentManaged(record), token, url: `/share/${encodeURIComponent(token)}` }
   }
 
   /** @param {string} ownerEmail @param {string} [emailId] @param {string[]} [domains] */
@@ -84,7 +82,7 @@ export class ThreadSharingService {
     }
     return selected
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(presentManaged)
+      .map(ThreadSharingRules.presentManaged)
   }
 
   /** @param {string} id @param {string} ownerEmail */
@@ -97,20 +95,20 @@ export class ThreadSharingService {
 
   /** Resolve and re-authorize every message each time a public capability is used. */
   async resolve(token) {
-    const parsed = parseToken(token)
+    const parsed = ThreadSharingRules.parseToken(token)
     if (!parsed) return null
     return await FyloAccessContext.runForDomain(parsed.domain, async () => {
       const records = await this.shares.findByTokenHash(parsed.hash)
       const record = records.find(candidate =>
-        candidate.domain === parsed.domain && equalHash(candidate.tokenHash, parsed.hash))
-      if (!record || !isActive(record, new Date())) return null
+        candidate.domain === parsed.domain && ThreadSharingRules.equalHash(candidate.tokenHash, parsed.hash))
+      if (!record || !ThreadSharingRules.isActive(record, new Date())) return null
 
       const messages = []
       for (const emailId of record.emailIds) {
         const [, email] = await this.emails.findById(emailId)
-        if (!email || email.domain !== record.domain || !canAccessEmail(email, record.ownerEmail)) continue
+        if (!email || email.domain !== record.domain || !EmailsRecords.canAccessEmail(email, record.ownerEmail)) continue
         const attachments = await this.attachments.listSummaries(email.id)
-        messages.push(presentPublicMessage(email, attachments))
+        messages.push(ThreadSharingRules.presentPublicMessage(email, attachments))
       }
       messages.sort((a, b) => a.receivedAt.localeCompare(b.receivedAt))
       if (messages.length === 0) return null
@@ -127,18 +125,18 @@ export class ThreadSharingService {
   /** Attachment reads repeat full capability and immutable membership checks. */
   async readAttachment(token, attachmentId) {
     if (typeof attachmentId !== 'string' || !attachmentId || attachmentId.length > 200) return null
-    const parsed = parseToken(token)
+    const parsed = ThreadSharingRules.parseToken(token)
     if (!parsed) return null
     return await FyloAccessContext.runForDomain(parsed.domain, async () => {
       const records = await this.shares.findByTokenHash(parsed.hash)
       const record = records.find(candidate =>
-        candidate.domain === parsed.domain && equalHash(candidate.tokenHash, parsed.hash))
-      if (!record || !isActive(record, new Date())) return null
+        candidate.domain === parsed.domain && ThreadSharingRules.equalHash(candidate.tokenHash, parsed.hash))
+      if (!record || !ThreadSharingRules.isActive(record, new Date())) return null
 
       const [, attachment] = await this.attachments.findById(attachmentId)
       if (!attachment || attachment.domain !== record.domain || !record.emailIds.includes(attachment.emailId)) return null
       const [, email] = await this.emails.findById(attachment.emailId)
-      if (!email || !canAccessEmail(email, record.ownerEmail)) return null
+      if (!email || !EmailsRecords.canAccessEmail(email, record.ownerEmail)) return null
       const bytes = await this.attachments.readContent(attachment)
       return {
         id: attachment.id,
@@ -151,69 +149,3 @@ export class ThreadSharingService {
   }
 }
 
-export class ThreadShareInputError extends Error {}
-
-/** @param {string} domain */
-function createToken(domain) {
-  return `${Buffer.from(domain, 'utf8').toString('base64url')}.${randomBytes(TOKEN_SECRET_BYTES).toString('base64url')}`
-}
-
-/** @param {unknown} token */
-function parseToken(token) {
-  const value = typeof token === 'string' ? token : ''
-  const match = value.match(/^([A-Za-z0-9_-]{4,340})\.([A-Za-z0-9_-]{43})$/)
-  if (!match || value.length > 400) return null
-  let decoded
-  try { decoded = Buffer.from(match[1], 'base64url').toString('utf8') } catch { return null }
-  const domain = Security.normalizeDomain(decoded)
-  if (!domain || Buffer.from(domain, 'utf8').toString('base64url') !== match[1]) return null
-  return { domain, hash: hashToken(value) }
-}
-
-/** @param {string} token */
-function hashToken(token) { return createHash('sha256').update(token).digest('hex') }
-
-/** @param {string} left @param {string} right */
-function equalHash(left, right) {
-  if (!/^[a-f0-9]{64}$/.test(left) || !/^[a-f0-9]{64}$/.test(right)) return false
-  return timingSafeEqual(Buffer.from(left, 'hex'), Buffer.from(right, 'hex'))
-}
-
-/** @param {{ expiresAt: string, revokedAt?: string }} record @param {Date} now */
-function isActive(record, now) {
-  const expiresAt = Date.parse(record.expiresAt)
-  return !record.revokedAt && Number.isFinite(expiresAt) && expiresAt > now.getTime()
-}
-
-/** @param {any} record */
-function presentManaged(record) {
-  return {
-    id: record.id,
-    threadId: record.threadId,
-    subject: record.subject,
-    messageCount: record.emailIds.length,
-    createdAt: record.createdAt,
-    expiresAt: record.expiresAt,
-    revokedAt: record.revokedAt || '',
-    active: isActive(record, new Date()),
-  }
-}
-
-/** @param {any} email @param {any[]} attachments */
-function presentPublicMessage(email, attachments) {
-  return {
-    from: String(email.headerFrom || email.sender || ''),
-    to: Array.isArray(email.to) && email.to.length ? email.to : [String(email.recipient || '')].filter(Boolean),
-    cc: Array.isArray(email.cc) ? email.cc : [],
-    subject: String(email.subject || ''),
-    body: String(email.body || ''),
-    htmlBody: String(email.htmlBody || ''),
-    receivedAt: String(email.receivedAt || ''),
-    attachments: attachments.map(attachment => ({
-      id: attachment.id,
-      filename: attachment.filename,
-      contentType: attachment.contentType,
-      size: attachment.size,
-    })),
-  }
-}

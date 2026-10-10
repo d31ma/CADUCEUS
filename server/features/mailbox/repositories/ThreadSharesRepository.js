@@ -1,4 +1,5 @@
 import { Fylo } from '../../../shared/persistence/Fylo.js'
+import { ThreadSharesRecords } from '../../../shared/mailbox/ThreadSharesRecords.js'
 
 /** FYLO persistence for mailbox-owned conversation capabilities. */
 export class ThreadSharesRepository {
@@ -7,7 +8,7 @@ export class ThreadSharesRepository {
 
   /** @param {ThreadShareRecord} share */
   async put(share) {
-    return await this.fylo.putData(Fylo.Collections.THREAD_SHARES, serialize(share))
+    return await this.fylo.putData(Fylo.Collections.THREAD_SHARES, ThreadSharesRecords.serialize(share))
   }
 
   /** @param {string} ownerEmail @returns {Promise<Array<ThreadShareRecord & { docId: string }>>} */
@@ -15,7 +16,7 @@ export class ThreadSharesRepository {
     const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.THREAD_SHARES, {
       $ops: [{ ownerEmail: { $eq: ownerEmail.toLowerCase() } }],
     }).collect())
-    return Object.entries(docs).map(([docId, value]) => ({ docId, ...deserialize(value) }))
+    return Object.entries(docs).map(([docId, value]) => ({ docId, ...ThreadSharesRecords.deserialize(value) }))
   }
 
   /** @param {string} id @returns {Promise<[string | null, ThreadShareRecord | null]>} */
@@ -24,7 +25,7 @@ export class ThreadSharesRepository {
       $ops: [{ id: { $eq: id } }],
     }).collect())
     const entry = Object.entries(docs)[0]
-    return entry ? [entry[0], deserialize(entry[1])] : [null, null]
+    return entry ? [entry[0], ThreadSharesRecords.deserialize(entry[1])] : [null, null]
   }
 
   /** @param {string} tokenHash @returns {Promise<Array<ThreadShareRecord & { docId: string }>>} */
@@ -32,7 +33,7 @@ export class ThreadSharesRepository {
     const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.THREAD_SHARES, {
       $ops: [{ tokenHash: { $eq: tokenHash } }],
     }).collect())
-    return Object.entries(docs).map(([docId, value]) => ({ docId, ...deserialize(value) }))
+    return Object.entries(docs).map(([docId, value]) => ({ docId, ...ThreadSharesRecords.deserialize(value) }))
   }
 
   /** @param {string} docId @param {Partial<ThreadShareRecord>} patch */
@@ -46,20 +47,3 @@ export class ThreadSharesRepository {
   }
 }
 
-/** @param {ThreadShareRecord} share */
-function serialize(share) {
-  const { emailIds, ...stored } = share
-  return { ...stored, emailIdsJson: JSON.stringify(emailIds) }
-}
-
-/** @param {any} value @returns {ThreadShareRecord} */
-function deserialize(value) {
-  let emailIds = []
-  try {
-    const parsed = JSON.parse(value.emailIdsJson || '[]')
-    if (Array.isArray(parsed)) emailIds = parsed.filter(item => typeof item === 'string')
-  } catch {}
-  const result = { ...value, emailIds }
-  delete result.emailIdsJson
-  return result
-}

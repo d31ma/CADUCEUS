@@ -1,28 +1,14 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { canAccessEmail } from '../repositories/EmailsRepository.js'
+import { EmailsRecords } from '../../../shared/mailbox/EmailsRecords.js'
 import { CategoryPath } from '../../../shared/mailbox/CategoryPath.js'
 import { MailActionLabels } from '../../../shared/mailbox/MailActionLabels.js'
 import { ExternalMessage } from '../../../shared/mailbox/ExternalMessage.js'
 import { UnifiedMail } from '../../../shared/mailbox/UnifiedMail.js'
 import { ExternalAccounts } from '../../../shared/accounts/ExternalAccounts.js'
 import { ExternalFolderError } from '../../../shared/mailbox/ExternalFolderError.js'
-
-const MUTABLE_FIELDS = Object.freeze(['folder', 'labels', 'read', 'starred'])
-const INCOMPLETE_STATUSES = new Set(['prepared', 'undoing', 'redoing'])
-const ACTION_TTL_MS = 10 * 60 * 1000
-const MAX_ACTION_MESSAGES = 100
-const MAX_ID_LENGTH = 500
-const PROVIDER_MUTATION_TIMEOUT_MS = 60_000
-const PROVIDER_MUTATION_POLL_MS = 100
-
-export class MailActionError extends Error {
-  /** @param {string} message @param {number} [status] */
-  constructor(message, status = 400) {
-    super(message)
-    this.status = status
-  }
-}
+import { MailActionRules } from '../../../shared/mailbox/MailActionRules.js'
+import { MailActionError } from '../../../shared/errors/MailActionError.js'
 
 export class MailActionService {
   /**
@@ -46,12 +32,12 @@ export class MailActionService {
     if (!Array.isArray(body.ids) || body.ids.length === 0) {
       throw new MailActionError('ids must be a non-empty array')
     }
-    if (body.ids.length > MAX_ACTION_MESSAGES) {
-      throw new MailActionError(`ids cannot contain more than ${MAX_ACTION_MESSAGES} messages`)
+    if (body.ids.length > MailActionRules.MAX_ACTION_MESSAGES) {
+      throw new MailActionError(`ids cannot contain more than ${MailActionRules.MAX_ACTION_MESSAGES} messages`)
     }
     const ids = body.ids.map(value => typeof value === 'string' ? value.trim() : '')
-    if (ids.some(id => !id || id.length > MAX_ID_LENGTH)) {
-      throw new MailActionError(`every id must be between 1 and ${MAX_ID_LENGTH} characters`)
+    if (ids.some(id => !id || id.length > MailActionRules.MAX_ID_LENGTH)) {
+      throw new MailActionError(`every id must be between 1 and ${MailActionRules.MAX_ID_LENGTH} characters`)
     }
     if (new Set(ids).size !== ids.length) throw new MailActionError('ids must not contain duplicates')
     let clientRequestId
@@ -61,7 +47,7 @@ export class MailActionService {
       }
       clientRequestId = body.clientRequestId.toLowerCase()
     }
-    return { ids, patch: parsePatch(body.patch), ...(clientRequestId ? { clientRequestId } : {}) }
+    return { ids, patch: MailActionRules.parsePatch(body.patch), ...(clientRequestId ? { clientRequestId } : {}) }
   }
 
   /** @param {{ids:string[],patch:Record<string, any>,clientRequestId?:string,ownerEmail:string,domains:string[],providerToken?:string,now?:number}} input */
@@ -69,21 +55,21 @@ export class MailActionService {
     return await this._serial(input.ownerEmail, async () => {
       await this._reconcileOwner(input.ownerEmail, input.domains, input.providerToken)
       const now = input.now ?? Date.now()
-      const fingerprint = requestFingerprint(input.ids, input.patch)
+      const fingerprint = MailActionRules.requestFingerprint(input.ids, input.patch)
       if (input.clientRequestId) {
         const [existingId, existing] = await this.actions.findByClientRequestId(input.ownerEmail, input.clientRequestId)
         if (existingId && existing) {
           if (existing.requestFingerprint !== fingerprint) {
             throw new MailActionError('clientRequestId was already used for another action', 409)
           }
-          const changes = parseChanges(existing)
-          ensureDomains(changes, input.domains)
+          const changes = MailActionRules.parseChanges(existing)
+          MailActionRules.ensureDomains(changes, input.domains)
           const messages = await this._authorizeMessages(changes.map(change => change.id), input.ownerEmail, input.domains, input.providerToken)
           const target = existing.status === 'undone' ? 'before' : 'after'
           if (!await this._statesAccepted(messages, changes, target, input.providerToken)) {
             throw new MailActionError('Messages changed after this action; no changes were overwritten', 409)
           }
-          return actionResult(existingId, existing, existing.status, messages)
+          return MailActionRules.actionResult(existingId, existing, existing.status, messages)
         }
       }
       const messages = await this._authorizeMessages(input.ids, input.ownerEmail, input.domains, input.providerToken)
@@ -99,12 +85,12 @@ export class MailActionService {
         // FYLO gid ownership on the hosted tenant; remote identities stay in
         // the bounded opaque changes journal and are reauthorized by Go.
         domain: input.ownerEmail.toLowerCase().split('@')[1],
-        kind: actionKind(input.patch, changes.length),
+        kind: MailActionRules.actionKind(input.patch, changes.length),
         status: /** @type {const} */ ('prepared'),
         changesJson: JSON.stringify(changes),
         createdAt: now,
         updatedAt: now,
-        expiresAt: now + ACTION_TTL_MS,
+        expiresAt: now + MailActionRules.ACTION_TTL_MS,
         lastError: '',
         ...(input.clientRequestId ? {
           clientRequestId: input.clientRequestId,
@@ -120,7 +106,7 @@ export class MailActionService {
         await this._updateJournal(actionId, {
           status: 'applied', changesJson: JSON.stringify(changes), updatedAt: Date.now(), lastError: '',
         }, input.ownerEmail)
-        return actionResult(actionId, record, 'applied', updated)
+        return MailActionRules.actionResult(actionId, record, 'applied', updated)
       } catch (error) {
         const detail = error instanceof Error ? error.message : 'mail action failed'
         const rolledBack = await this._rollbackPrepared(changes, input.ownerEmail, input.domains, input.providerToken, actionId)
@@ -159,11 +145,11 @@ export class MailActionService {
     const owner = ownerEmail.toLowerCase()
     const records = await this.actions.listForOwner(owner)
     for (const [actionId, record] of records) {
-      if (!INCOMPLETE_STATUSES.has(record.status)) continue
+      if (!MailActionRules.INCOMPLETE_STATUSES.has(record.status)) continue
       let changes
       try {
-		changes = parseChanges(record)
-		ensureDomains(changes, domains)
+		changes = MailActionRules.parseChanges(record)
+		MailActionRules.ensureDomains(changes, domains)
 		const target = record.status === 'undoing' ? 'before' : 'after'
 		const source = target === 'before' ? 'after' : 'before'
 		await this._refreshProviderIdentities(changes, target, providerToken, actionId, owner)
@@ -197,13 +183,13 @@ export class MailActionService {
     if (typeof record.ownerEmail !== 'string' || record.ownerEmail.toLowerCase() !== ownerEmail.toLowerCase()) {
       throw new MailActionError('Mail action not found', 404)
     }
-    const changes = parseChanges(record)
-    ensureDomains(changes, domains)
+    const changes = MailActionRules.parseChanges(record)
+    MailActionRules.ensureDomains(changes, domains)
     if (record.expiresAt < transition.now) throw new MailActionError('The undo window has expired', 409)
     if (record.status === transition.to) {
       const current = await this._authorizeMessages(changes.map(change => change.id), ownerEmail, domains, providerToken)
       if (await this._statesAccepted(current, changes, transition.target, providerToken)) {
-        return actionResult(id, record, transition.to, current)
+        return MailActionRules.actionResult(id, record, transition.to, current)
       }
     }
     if (record.status !== transition.from) {
@@ -219,7 +205,7 @@ export class MailActionService {
     await this.actions.update(docId, {
       status: transition.to, changesJson: JSON.stringify(changes), updatedAt: Date.now(), lastError: '',
     })
-    return actionResult(id, record, transition.to, updated)
+    return MailActionRules.actionResult(id, record, transition.to, updated)
   }
 
   async _authorizeMessages(ids, ownerEmail, domains, providerToken = '') {
@@ -234,7 +220,7 @@ export class MailActionService {
         continue
       }
       const [, email] = await this.emails.findById(id)
-      if (!email || !domains.includes(email.domain) || !canAccessEmail(email, ownerEmail)) {
+      if (!email || !domains.includes(email.domain) || !EmailsRecords.canAccessEmail(email, ownerEmail)) {
         throw new MailActionError('Email not found', 404)
       }
       messages.push(email)
@@ -250,9 +236,9 @@ export class MailActionService {
       }
       const before = {}
       const after = {}
-      for (const field of MUTABLE_FIELDS) {
+      for (const field of MailActionRules.MUTABLE_FIELDS) {
         if (!(field in patch)) continue
-        before[field] = fieldValue(email, field)
+        before[field] = MailActionRules.fieldValue(email, field)
         after[field] = field === 'labels'
           ? MailActionLabels.applyLabelOperation(before[field], patch[field])
           : patch[field]
@@ -260,7 +246,7 @@ export class MailActionService {
       if (!email.external && typeof after.folder === 'string') {
         after.folder = await this.categoryMappings.pathFor(ownerEmail, email.domain, after.folder) || after.folder
       }
-      if (sameState(before, after)) continue
+      if (MailActionRules.sameState(before, after)) continue
       changes.push({
         id: email.id, domain: email.domain, before, after,
         ...(email.external ? {
@@ -287,7 +273,7 @@ export class MailActionService {
         const opposite = target === 'before' ? 'after' : 'before'
         const mustOrderInverse = Array.isArray(change.providerMutations?.[opposite]) && change.providerMutations[opposite].length > 0
         const current = currentById.get(change.id)
-        if (mustOrderInverse || !matchesState(current, change[target])) {
+        if (mustOrderInverse || !MailActionRules.matchesState(current, change[target])) {
           let mutations
           const generation = Number(change.providerGenerations?.[target] || 0) + 1
           try {
@@ -305,7 +291,7 @@ export class MailActionService {
           await this._updateJournal(actionId, { changesJson: JSON.stringify(changes), updatedAt: Date.now() }, ownerEmail)
           const move = mutations.find(mutation => mutation?.kind === 'move')
           if (move) {
-            const completed = await waitForProviderMutation(providerToken, change.accountId, move.id)
+            const completed = await MailActionRules.waitForProviderMutation(providerToken, change.accountId, move.id)
             const replacement = Array.isArray(completed?.resultStableIds) ? completed.resultStableIds[0] : ''
             const id = ExternalMessage.externalMessageId(change.accountId, replacement)
             if (!id) throw new MailActionError('The connected account did not return a safe destination identity', 503)
@@ -325,10 +311,10 @@ export class MailActionService {
         continue
       }
       const [docId, email] = await this.emails.findById(change.id)
-      if (!docId || !email || !domains.includes(email.domain) || !canAccessEmail(email, ownerEmail)) {
+      if (!docId || !email || !domains.includes(email.domain) || !EmailsRecords.canAccessEmail(email, ownerEmail)) {
         throw new MailActionError('Email not found', 404)
       }
-      if (!matchesState(email, change[target])) await this.emails.update(docId, change[target])
+      if (!MailActionRules.matchesState(email, change[target])) await this.emails.update(docId, change[target])
       updated.push({ ...email, ...change[target] })
     }
     return updated
@@ -342,9 +328,9 @@ export class MailActionService {
       }
       for (const change of changes) {
         const [docId, email] = await this.emails.findById(change.id)
-        if (!docId || !email || !domains.includes(email.domain) || !canAccessEmail(email, ownerEmail)) return false
-        if (matchesState(email, change.after)) await this.emails.update(docId, change.before)
-        else if (!matchesState(email, change.before)) return false
+        if (!docId || !email || !domains.includes(email.domain) || !EmailsRecords.canAccessEmail(email, ownerEmail)) return false
+        if (MailActionRules.matchesState(email, change.after)) await this.emails.update(docId, change.before)
+        else if (!MailActionRules.matchesState(email, change.before)) return false
       }
       return true
     } catch {
@@ -356,20 +342,20 @@ export class MailActionService {
     for (const [index, change] of changes.entries()) {
       const message = messages[index]
       if (change.source !== 'provider') {
-        if (!matchesState(message, change[target])) return false
+        if (!MailActionRules.matchesState(message, change[target])) return false
         continue
       }
       if (!providerToken) throw new MailActionError('Connected account authorization is unavailable', 503)
       const mutationIds = Array.isArray(change.providerMutations?.[target]) ? change.providerMutations[target] : []
       if (mutationIds.length === 0) {
-        if (!matchesState(message, change[target])) return false
+        if (!MailActionRules.matchesState(message, change[target])) return false
         continue
       }
       const states = await Promise.all(mutationIds.map(id => ExternalAccounts.mutation(providerToken, change.accountId, id)))
       if (states.some(mutation => mutation?.state === 'failed')) {
         throw new MailActionError('The connected account rejected this action. Refresh to review the provider version.', 409)
       }
-      if (states.every(mutation => mutation?.state === 'applied') && !matchesState(message, change[target])) {
+      if (states.every(mutation => mutation?.state === 'applied') && !MailActionRules.matchesState(message, change[target])) {
         throw new MailActionError('The connected account changed after this action. Refresh before choosing another result.', 409)
       }
     }
@@ -418,158 +404,3 @@ export class MailActionService {
   }
 }
 
-async function waitForProviderMutation(token, accountId, mutationId) {
-  const deadline = Date.now() + PROVIDER_MUTATION_TIMEOUT_MS
-  while (Date.now() < deadline) {
-    const mutation = await ExternalAccounts.mutation(token, accountId, mutationId)
-    if (mutation?.state === 'applied') return mutation
-    if (mutation?.state === 'failed') {
-      throw new MailActionError('The connected account rejected this action. Refresh to review the provider version.', 409)
-    }
-    await new Promise(resolve => setTimeout(resolve, PROVIDER_MUTATION_POLL_MS))
-  }
-  throw new MailActionError('The connected account action is still reconciling. Try again shortly.', 503)
-}
-
-function parsePatch(input) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new MailActionError('patch is required')
-  const source = /** @type {Record<string, unknown>} */ (input)
-  const unknown = Object.keys(source).filter(key => !MUTABLE_FIELDS.includes(key))
-  if (unknown.length > 0) throw new MailActionError(`Unsupported patch field: ${unknown[0]}`)
-  const patch = {}
-  if ('folder' in source) {
-    if (typeof source.folder !== 'string' || !source.folder.trim()) throw new MailActionError('folder must be a non-empty string')
-    const folder = CategoryPath.normalizeCategoryPath(source.folder)
-    if (!folder) throw new MailActionError('folder must be a valid category path')
-    patch.folder = folder
-  }
-  if ('labels' in source) {
-    const result = MailActionLabels.parseLabelOperation(source.labels)
-    if (!result.ok) throw new MailActionError(result.error)
-    patch.labels = result.operation
-  }
-  for (const field of ['read', 'starred']) {
-    if (!(field in source)) continue
-    if (typeof source[field] !== 'boolean') throw new MailActionError(`${field} must be a boolean`)
-    patch[field] = source[field]
-  }
-  if (Object.keys(patch).length === 0) throw new MailActionError('No supported fields to update')
-  return patch
-}
-
-function parseChanges(record) {
-  let value
-  try { value = JSON.parse(record.changesJson) } catch { throw new MailActionError('Mail action record is corrupt', 503) }
-  if (!Array.isArray(value) || value.length === 0 || value.length > MAX_ACTION_MESSAGES) {
-    throw new MailActionError('Mail action record is corrupt', 503)
-  }
-  for (const change of value) {
-    if (!change || typeof change !== 'object' || typeof change.id !== 'string' || typeof change.domain !== 'string') {
-      throw new MailActionError('Mail action record is corrupt', 503)
-    }
-    validateStoredState(change.before)
-    validateStoredState(change.after)
-    if (Object.keys(change.before).sort().join() !== Object.keys(change.after).sort().join()) {
-      throw new MailActionError('Mail action record is corrupt', 503)
-    }
-    if (change.source !== undefined && change.source !== 'provider') throw new MailActionError('Mail action record is corrupt', 503)
-    if (change.source === 'provider') {
-      if (!/^ext_[A-Za-z0-9_-]{20,80}$/.test(change.accountId || '') || typeof change.stableId !== 'string' ||
-        change.stableId.length < 1 || change.stableId.length > 512 || /[\0\r\n]/.test(change.stableId)) {
-        throw new MailActionError('Mail action record is corrupt', 503)
-      }
-      for (const target of ['before', 'after']) {
-        const ids = change.providerMutations?.[target]
-        if (!Array.isArray(ids) || ids.length > MUTABLE_FIELDS.length || ids.some(id => !/^mut_[A-Za-z0-9_-]{20,80}$/.test(id))) {
-          throw new MailActionError('Mail action record is corrupt', 503)
-        }
-        const generation = change.providerGenerations?.[target]
-        if (!Number.isSafeInteger(generation) || generation < 0 || generation > 10_000) {
-          throw new MailActionError('Mail action record is corrupt', 503)
-        }
-      }
-    }
-  }
-  return value
-}
-
-function validateStoredState(state) {
-  if (!state || typeof state !== 'object' || Array.isArray(state)) throw new MailActionError('Mail action record is corrupt', 503)
-  const fields = Object.keys(state)
-  if (fields.length === 0 || fields.some(field => !MUTABLE_FIELDS.includes(field))) throw new MailActionError('Mail action record is corrupt', 503)
-  if ('folder' in state && (typeof state.folder !== 'string' || !state.folder)) throw new MailActionError('Mail action record is corrupt', 503)
-  if ('labels' in state && (!Array.isArray(state.labels) || state.labels.length > 100 || MailActionLabels.normalizeStoredLabels(state.labels).length !== state.labels.length)) {
-    throw new MailActionError('Mail action record is corrupt', 503)
-  }
-  if ('read' in state && typeof state.read !== 'boolean') throw new MailActionError('Mail action record is corrupt', 503)
-  if ('starred' in state && typeof state.starred !== 'boolean') throw new MailActionError('Mail action record is corrupt', 503)
-}
-
-function ensureDomains(changes, domains) {
-  if (changes.some(change => change.source !== 'provider' && !domains.includes(change.domain))) {
-    throw new MailActionError('Mail action not found', 404)
-  }
-}
-
-function fieldValue(email, field) {
-  if (field === 'folder') return email.folder || 'inbox'
-  if (field === 'labels') return MailActionLabels.normalizeStoredLabels(email.labels)
-  return email[field] === true
-}
-
-function matchesState(email, state) {
-  return Object.entries(state).every(([field, value]) => equalValue(fieldValue(email, field), value))
-}
-
-function sameState(left, right) {
-  const keys = Object.keys(left)
-  return keys.length === Object.keys(right).length && keys.every(key => equalValue(left[key], right[key]))
-}
-
-function equalValue(left, right) {
-  if (!Array.isArray(left) || !Array.isArray(right)) return left === right
-  return left.length === right.length && left.every((value, index) => value === right[index])
-}
-
-/**
- * @param {Record<string, string | boolean>} patch
- * @param {number} count
- * @returns {import('../repositories/MailActionsRepository.js').MailActionEntry['kind']}
- */
-function actionKind(patch, count) {
-  const fields = Object.keys(patch)
-  if (count > 1 || fields.length > 1) return 'bulk'
-  if (patch.folder === 'archive') return 'archive'
-  if (patch.folder === 'trash') return 'trash'
-  if (typeof patch.folder === 'string') return 'move'
-  if (patch.read === true) return 'mark-read'
-  if (patch.read === false) return 'mark-unread'
-  if (patch.starred === true) return 'star'
-  if (patch.labels) return 'label'
-  return 'unstar'
-}
-
-function actionResult(actionId, record, status, emails) {
-  return {
-    actionId,
-    status,
-    kind: record.kind,
-    count: emails.length,
-    expiresAt: record.expiresAt,
-    emails: emails.map(email => ({
-      id: email.id,
-      domain: email.domain,
-      folder: email.folder || 'inbox',
-      labels: MailActionLabels.normalizeStoredLabels(email.labels),
-      read: email.read === true,
-      starred: email.starred === true,
-      ...(email.external ? { external: true, providerAccountId: email.providerAccountId } : {}),
-    })),
-  }
-}
-
-/** @param {string[]} ids @param {Record<string, string|boolean>} patch */
-function requestFingerprint(ids, patch) {
-  const normalizedPatch = Object.fromEntries(Object.entries(patch).sort(([left], [right]) => left.localeCompare(right)))
-  return createHash('sha256').update(JSON.stringify({ ids, patch: normalizedPatch })).digest('hex')
-}

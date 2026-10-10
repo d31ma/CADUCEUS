@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { canAccessEmail } from '@/features/mailbox/repositories/EmailsRepository.js'
+import { EmailsRecords } from '@/shared/mailbox/EmailsRecords.js'
 
 const message = over => ({
   id: 'message-1',
@@ -19,20 +19,20 @@ const message = over => ({
 describe('email mailbox ownership', () => {
   it('treats an explicit owner as authoritative within a shared domain', () => {
     const email = message({ ownerEmail: 'alice@example.com', to: ['bob@example.com'] })
-    expect(canAccessEmail(email, 'alice@example.com')).toBe(true)
-    expect(canAccessEmail(email, 'bob@example.com')).toBe(false)
+    expect(EmailsRecords.canAccessEmail(email, 'alice@example.com')).toBe(true)
+    expect(EmailsRecords.canAccessEmail(email, 'bob@example.com')).toBe(false)
   })
 
   it('supports narrow exact-address fallbacks for historical rows', () => {
-    expect(canAccessEmail(message({ ownerEmail: undefined }), 'alice@example.com')).toBe(true)
-    expect(canAccessEmail(message({ ownerEmail: undefined }), 'bob@example.com')).toBe(false)
-    expect(canAccessEmail(message({
+    expect(EmailsRecords.canAccessEmail(message({ ownerEmail: undefined }), 'alice@example.com')).toBe(true)
+    expect(EmailsRecords.canAccessEmail(message({ ownerEmail: undefined }), 'bob@example.com')).toBe(false)
+    expect(EmailsRecords.canAccessEmail(message({
       ownerEmail: undefined,
       folder: 'sent',
       sender: 'alice@example.com',
       recipient: 'bob@example.com',
     }), 'alice@example.com')).toBe(true)
-    expect(canAccessEmail(message({
+    expect(EmailsRecords.canAccessEmail(message({
       ownerEmail: undefined,
       folder: 'sent',
       sender: 'alice@example.com',
@@ -41,8 +41,8 @@ describe('email mailbox ownership', () => {
   })
 
   it('fails closed for malformed or ambiguous ownership', () => {
-    expect(canAccessEmail(message({ ownerEmail: undefined, recipient: 'not-an-address' }), 'alice@example.com')).toBe(false)
-    expect(canAccessEmail(message({ ownerEmail: 'alice@example.com, bob@example.com' }), 'alice@example.com')).toBe(false)
-    expect(canAccessEmail(message({ ownerEmail: 'alice@example.com' }), '')).toBe(false)
+    expect(EmailsRecords.canAccessEmail(message({ ownerEmail: undefined, recipient: 'not-an-address' }), 'alice@example.com')).toBe(false)
+    expect(EmailsRecords.canAccessEmail(message({ ownerEmail: 'alice@example.com, bob@example.com' }), 'alice@example.com')).toBe(false)
+    expect(EmailsRecords.canAccessEmail(message({ ownerEmail: 'alice@example.com' }), '')).toBe(false)
   })
 })

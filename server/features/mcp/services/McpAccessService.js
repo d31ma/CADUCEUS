@@ -3,9 +3,8 @@ import { Buffer } from 'node:buffer'
 import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
 import { Security } from '../../../shared/security/Security.js'
 import { Preferences } from '../../../shared/mcp/Preferences.js'
-
-const TOKEN_BYTES = 32
-const MAX_OLD_TOKENS = 5
+import { McpAccessRules } from '../../../shared/mcp/McpAccessRules.js'
+import { McpPreferenceError } from '../../../shared/errors/McpPreferenceError.js'
 
 export class McpAccessService {
   /**
@@ -53,7 +52,7 @@ export class McpAccessService {
   async rotate(ownerEmail) {
     const [userDocId, user] = await this.users.findByEmail(ownerEmail)
     if (!userDocId || !user) return null
-    const domain = domainOf(ownerEmail)
+    const domain = McpAccessRules.domainOf(ownerEmail)
     if (!domain) return null
     const now = new Date().toISOString()
     const existing = (await this.tokens.listForOwner(ownerEmail))
@@ -61,14 +60,14 @@ export class McpAccessService {
     for (const record of existing.filter(record => record.active === true && !record.revokedAt)) {
       await this.tokens.update(record.docId, { active: false, revokedAt: now })
     }
-    for (const stale of existing.slice(MAX_OLD_TOKENS - 1)) await this.tokens.delete(stale.docId)
+    for (const stale of existing.slice(McpAccessRules.MAX_OLD_TOKENS - 1)) await this.tokens.delete(stale.docId)
 
-    const token = createToken(domain)
+    const token = McpAccessRules.createToken(domain)
     const record = {
       id: `mcp-token-${randomBytes(16).toString('base64url')}`,
       ownerEmail: String(ownerEmail).toLowerCase(),
       domain,
-      tokenHash: hashToken(token),
+      tokenHash: McpAccessRules.hashToken(token),
       active: true,
       createdAt: now,
     }
@@ -90,13 +89,13 @@ export class McpAccessService {
 
   /** Resolve an MCP bearer without trusting a caller-selected tenant. */
   async authenticate(token) {
-    const parsed = parseToken(token)
+    const parsed = McpAccessRules.parseToken(token)
     if (!parsed) return null
     return await FyloAccessContext.runForDomain(parsed.domain, async () => {
       const candidates = await this.tokens.findByHash(parsed.hash)
       const record = candidates.find(candidate =>
         candidate.active === true && !candidate.revokedAt && candidate.domain === parsed.domain
-        && equalHash(String(candidate.tokenHash || ''), parsed.hash))
+        && McpAccessRules.equalHash(String(candidate.tokenHash || ''), parsed.hash))
       if (!record) return null
       const [, user] = await this.users.findByEmail(record.ownerEmail)
       if (!user) return null
@@ -113,34 +112,3 @@ export class McpAccessService {
   }
 }
 
-export class McpPreferenceError extends Error {
-  constructor(message, forbidden = false) { super(message); this.forbidden = forbidden }
-}
-
-function createToken(domain) {
-  return `mcp1.${Buffer.from(domain, 'utf8').toString('base64url')}.${randomBytes(TOKEN_BYTES).toString('base64url')}`
-}
-
-function parseToken(value) {
-  const token = typeof value === 'string' ? value.trim() : ''
-  if (token.length > 420) return null
-  const match = token.match(/^mcp1\.([A-Za-z0-9_-]{4,340})\.([A-Za-z0-9_-]{43})$/)
-  if (!match) return null
-  let decoded = ''
-  try { decoded = Buffer.from(match[1], 'base64url').toString('utf8') } catch { return null }
-  const domain = Security.normalizeDomain(decoded)
-  if (!domain || Buffer.from(domain, 'utf8').toString('base64url') !== match[1]) return null
-  return { domain, hash: hashToken(token) }
-}
-
-function hashToken(token) { return createHash('sha256').update(token).digest('hex') }
-
-function equalHash(left, right) {
-  if (!/^[a-f0-9]{64}$/.test(left) || !/^[a-f0-9]{64}$/.test(right)) return false
-  return timingSafeEqual(Buffer.from(left, 'hex'), Buffer.from(right, 'hex'))
-}
-
-function domainOf(email) {
-  const normalized = Security.normalizeEmailAddress(email)
-  return normalized?.split('@')[1] || ''
-}

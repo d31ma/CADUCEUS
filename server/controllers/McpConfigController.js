@@ -2,7 +2,7 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { McpPreferenceError } from '../features/mcp/services/McpAccessService.js'
+import { McpPreferenceError } from '../shared/errors/McpPreferenceError.js'
 
 @RequestRoute("/mcp/config")
 @SignedIn

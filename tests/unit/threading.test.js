@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { Threading } from '@/shared/mailbox/Threading.js'
-import { groupMessagesIntoThreads } from '@/features/mailbox/repositories/ThreadsRepository.js'
+import { ThreadsRecords } from '@/shared/mailbox/ThreadsRecords.js'
 
 describe('RFC message threading metadata', () => {
   it('normalizes one Message-ID and rejects unsafe or ambiguous values', () => {
@@ -68,7 +68,7 @@ describe('unified mailbox thread grouping', () => {
   })
 
   it('connects RFC references within one provider account', () => {
-    const threads = groupMessagesIntoThreads([
+    const threads = ThreadsRecords.groupMessagesIntoThreads([
       external(),
       external({
         id: 'external-2',
@@ -86,7 +86,7 @@ describe('unified mailbox thread grouping', () => {
   })
 
   it('never merges equal RFC identities from separate provider accounts on the same domain', () => {
-    const threads = groupMessagesIntoThreads([
+    const threads = ThreadsRecords.groupMessagesIntoThreads([
       external(),
       external({
         id: 'external-other-account',

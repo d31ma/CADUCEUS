@@ -1,3 +1,6 @@
+
+import { FollowUpReminderRules } from '../../../shared/delivery/FollowUpReminderRules.js'
+
 /** @import { FollowUpRemindersRepository } from '../repositories/FollowUpRemindersRepository.js' */
 /** @import { EmailsRepository } from '../../mailbox/repositories/EmailsRepository.js' */
 export class FollowUpReminderService {
@@ -23,7 +26,7 @@ export class FollowUpReminderService {
         remindAt: input.remindAt,
         recipient: input.recipient,
         subject: input.subject,
-        threadKey: threadKey(input.subject),
+        threadKey: FollowUpReminderRules.threadKey(input.subject),
         ...(input.threadId ? { threadId: input.threadId } : {}),
         status: 'scheduled',
       })
@@ -36,7 +39,7 @@ export class FollowUpReminderService {
       emailId: input.emailId,
       recipient: input.recipient.toLowerCase(),
       subject: input.subject,
-      threadKey: threadKey(input.subject),
+      threadKey: FollowUpReminderRules.threadKey(input.subject),
       ...(input.threadId ? { threadId: input.threadId } : {}),
       remindAt: input.remindAt,
       createdAt: Date.now(),
@@ -135,14 +138,14 @@ export class FollowUpReminderService {
   async resolveForReply({ recipient, sender, subject, threadId }) {
     const ownerEmail = recipient.toLowerCase()
     const senderEmail = sender.toLowerCase()
-    const key = threadKey(subject)
+    const key = FollowUpReminderRules.threadKey(subject)
     const pending = await this.repository.listPending(ownerEmail)
     let completed = 0
     for (const reminder of pending) {
       const sameThread = reminder.threadId && threadId
         ? reminder.threadId === threadId
         : reminder.threadKey === key
-      if (!sameThread || !recipientSet(reminder.recipient).has(senderEmail)) continue
+      if (!sameThread || !FollowUpReminderRules.recipientSet(reminder.recipient).has(senderEmail)) continue
       await this.repository.update(reminder.docId, { status: 'completed', completedAt: Date.now() })
       completed += 1
     }
@@ -165,15 +168,3 @@ export class FollowUpReminderService {
   }
 }
 
-/** @param {string} subject */
-export function threadKey(subject) {
-  return String(subject || '')
-    .replace(/^(?:(?:re|fw|fwd):\s*)+/i, '')
-    .trim()
-    .toLowerCase()
-}
-
-/** @param {string} value */
-function recipientSet(value) {
-  return new Set(String(value || '').split(',').map(item => item.trim().toLowerCase()).filter(Boolean))
-}

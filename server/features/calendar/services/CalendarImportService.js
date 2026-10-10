@@ -2,6 +2,8 @@
 
 import { Ics } from '../../../shared/calendar/Ics.js'
 import { CalendarAttachments } from '../../../shared/calendar/CalendarAttachments.js'
+import { CalendarImportRules } from '../../../shared/calendar/CalendarImportRules.js'
+
 /** @import { CalendarEventsRepository } from '../repositories/CalendarEventsRepository.js' */
 /** @import { CalendarEvent } from '../repositories/CalendarEventsRepository.js' */
 /** @import { Attendee } from '../repositories/CalendarEventsRepository.js' */
@@ -33,7 +35,7 @@ export class CalendarImportService {
    * @returns {Promise<ImportResult>}
    */
   async importFromInboundEmail(ctx) {
-    const candidates = collectIcsCandidates(ctx.textBody, ctx.attachments)
+    const candidates = CalendarImportRules.collectIcsCandidates(ctx.textBody, ctx.attachments)
     const result = { imported: 0, cancelled: 0, replyApplied: 0 }
 
     for (const ics of candidates) {
@@ -75,7 +77,7 @@ export class CalendarImportService {
         start: ev.start || existing?.start || ev.recurrenceId,
         end: ev.end || existing?.end || ev.recurrenceId,
         sourceEmailId: ctx.sourceEmailId,
-        sourceEmailIds: sourceEmailHistory(existing || master, ctx.sourceEmailId),
+        sourceEmailIds: CalendarImportRules.sourceEmailHistory(existing || master, ctx.sourceEmailId),
         seriesId: master.id,
         recurrenceId: ev.recurrenceId,
         recurrence: '',
@@ -93,7 +95,7 @@ export class CalendarImportService {
     await this.calendarEvents.put({
       ...master,
       sourceEmailId: ctx.sourceEmailId,
-      sourceEmailIds: sourceEmailHistory(master, ctx.sourceEmailId),
+      sourceEmailIds: CalendarImportRules.sourceEmailHistory(master, ctx.sourceEmailId),
       status: 'cancelled',
       updatedAt: now,
     })
@@ -121,7 +123,7 @@ export class CalendarImportService {
       ...existing,
       attendees,
       sourceEmailId: ctx.sourceEmailId,
-      sourceEmailIds: sourceEmailHistory(existing, ctx.sourceEmailId),
+      sourceEmailIds: CalendarImportRules.sourceEmailHistory(existing, ctx.sourceEmailId),
       updatedAt: new Date().toISOString(),
     })
     return true
@@ -146,7 +148,7 @@ export class CalendarImportService {
       organizer: ev.organizer || '',
       source: 'invite',
       sourceEmailId: ctx.sourceEmailId,
-      sourceEmailIds: sourceEmailHistory(existing, ctx.sourceEmailId),
+      sourceEmailIds: CalendarImportRules.sourceEmailHistory(existing, ctx.sourceEmailId),
       icsUid: ev.uid,
       recurrence: ev.rrule || '',
       recurrenceDates: ev.recurrenceDates || [],
@@ -182,7 +184,7 @@ export class CalendarImportService {
       organizer: ev.organizer || master.organizer || '',
       source: 'invite',
       sourceEmailId: ctx.sourceEmailId,
-      sourceEmailIds: sourceEmailHistory(existing || master, ctx.sourceEmailId),
+      sourceEmailIds: CalendarImportRules.sourceEmailHistory(existing || master, ctx.sourceEmailId),
       icsUid: ev.uid,
       seriesId: master.id,
       recurrenceId: ev.recurrenceId,
@@ -200,41 +202,3 @@ export class CalendarImportService {
   }
 }
 
-/** @param {Partial<CalendarEvent> | null | undefined} event @param {string} current */
-function sourceEmailHistory(event, current) {
-  const values = [...(Array.isArray(event?.sourceEmailIds) ? event.sourceEmailIds : []), event?.sourceEmailId, current]
-    .filter(/** @returns {value is string} */ value => typeof value === 'string' && value.length > 0)
-  return [...new Set(values)].slice(-32)
-}
-
-/**
- * Collect every iCalendar payload from an email — both inline in the text
- * body and as attachments with a calendar MIME type, `.ics`, or legacy `.vcs`
- * filename. Duplicate provider representations are parsed only once.
- *
- * @param {string} textBody
- * @param {ParsedAttachment[]} attachments
- * @returns {string[]}
- */
-function collectIcsCandidates(textBody, attachments) {
-  /** @type {string[]} */
-  const out = []
-  const seen = new Set()
-  if (Ics.looksLikeIcs(textBody)) {
-    out.push(textBody)
-    seen.add(textBody)
-  }
-  for (const a of attachments || []) {
-    if (!CalendarAttachments.isCalendarAttachment(a)) continue
-    try {
-      const text = new TextDecoder('utf-8').decode(a.content || new Uint8Array())
-      if (Ics.looksLikeIcs(text) && !seen.has(text)) {
-        out.push(text)
-        seen.add(text)
-      }
-    } catch {
-      // ignore decode failures
-    }
-  }
-  return out
-}

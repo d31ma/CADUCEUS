@@ -1,4 +1,6 @@
 import { Fylo } from '../../../shared/persistence/Fylo.js'
+import { EmailsRecords } from '../../../shared/mailbox/EmailsRecords.js'
+
 /** @import { StoredEmail } from '../../../types' */
 /** @import { EmailAttachmentSummary } from '../../../types' */
 /** @import { AttachmentsRepository } from './AttachmentsRepository.js' */
@@ -31,14 +33,14 @@ export class EmailsRepository {
     const offset = Math.max(0, filters.offset ?? 0)
     const limit = filters.limit == null ? undefined : Math.max(0, filters.limit)
     const emails = Object.values(docs)
-      .map(d => normalize(/** @type {StoredEmail} */ (d)))
+      .map(d => EmailsRecords.normalize(/** @type {StoredEmail} */ (d)))
       .filter(e => allowedDomains.includes(e.domain))
-      .filter(e => !filters.ownerEmail || canAccessEmail(e, filters.ownerEmail))
-      .filter(e => matchesFolder(e, filters.folder, filters.folderByDomain))
+      .filter(e => !filters.ownerEmail || EmailsRecords.canAccessEmail(e, filters.ownerEmail))
+      .filter(e => EmailsRecords.matchesFolder(e, filters.folder, filters.folderByDomain))
       .filter(e => filters.read == null || e.read === filters.read)
       .filter(e => filters.starred == null || e.starred === filters.starred)
-      .filter(e => matchesHasAttachment(e, filters.hasAttachment, attachmentsByEmail))
-      .filter(e => matchesQuery(e, filters.query, attachmentsByEmail.get(e.id) ?? []))
+      .filter(e => EmailsRecords.matchesHasAttachment(e, filters.hasAttachment, attachmentsByEmail))
+      .filter(e => EmailsRecords.matchesQuery(e, filters.query, attachmentsByEmail.get(e.id) ?? []))
       .filter(e => filters.since == null || e.receivedAt > filters.since)
       .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt))
     return limit == null ? emails.slice(offset) : emails.slice(offset, offset + limit)
@@ -72,9 +74,9 @@ export class EmailsRepository {
           { limit: boundedPageSize, ...(cursor ? { cursor } : {}) },
         )
         for (const document of Object.values(page?.items || {})) {
-          const email = normalize(/** @type {StoredEmail} */ (document))
+          const email = EmailsRecords.normalize(/** @type {StoredEmail} */ (document))
           if ((email.folder || 'inbox') !== selectedFolder) continue
-          if (!canAccessEmail(email, ownerEmail)) continue
+          if (!EmailsRecords.canAccessEmail(email, ownerEmail)) continue
           yield email
         }
         cursor = typeof page?.nextCursor === 'string' && page.nextCursor
@@ -91,7 +93,7 @@ export class EmailsRepository {
   async findById(id) {
     const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.EMAILS, { $ops: [{ id: { $eq: id } }] }).collect())
     const entry = Object.entries(docs)[0]
-    return entry ? [entry[0], normalize(/** @type {StoredEmail} */ (entry[1]))] : [null, null]
+    return entry ? [entry[0], EmailsRecords.normalize(/** @type {StoredEmail} */ (entry[1]))] : [null, null]
   }
 
   /**
@@ -127,7 +129,7 @@ export class EmailsRepository {
     const updates = {}
     const matched = []
     for (const [docId, value] of Object.entries(docs)) {
-      const email = normalize(/** @type {StoredEmail} */ (value))
+      const email = EmailsRecords.normalize(/** @type {StoredEmail} */ (value))
       if (!wanted.has(email.id)) continue
       updates[docId] = patch
       matched.push(email)
@@ -147,129 +149,6 @@ export class EmailsRepository {
     await this.fylo.delDoc(Fylo.Collections.EMAILS, docId)
   }
 
-  static normalize = normalize
+  static normalize = EmailsRecords.normalize
 }
 
-/**
- * Enforce exact mailbox ownership below every caller-controlled query.
- *
- * `ownerEmail` became part of the stored record in schema v3. When it is
- * present it is authoritative: being another visible participant never grants
- * access to that mailbox's copy. Historical records have a deliberately
- * narrow compatibility path. Sent mail belongs to its sender, drafts belong
- * to their draft owner, and every other folder belongs to an envelope or
- * visible recipient. Ambiguous legacy rows fail closed.
- *
- * @param {StoredEmail} email
- * @param {string} ownerEmail
- */
-export function canAccessEmail(email, ownerEmail) {
-  const owner = normalizeAddress(ownerEmail)
-  if (!owner) return false
-
-  if (email.ownerEmail != null && String(email.ownerEmail).trim()) {
-    const explicitOwner = normalizeAddress(email.ownerEmail)
-    return explicitOwner ? explicitOwner === owner : false
-  }
-
-  const folder = String(email.folder || 'inbox').toLowerCase()
-  if (folder === 'drafts') {
-    return normalizeAddress(email.draftOwner) === owner || normalizeAddress(email.sender) === owner
-  }
-  if (folder === 'sent') return normalizeAddress(email.sender) === owner
-
-  return recipientAddresses(email).includes(owner)
-}
-
-/** @param {StoredEmail} email @returns {string[]} */
-function recipientAddresses(email) {
-  const values = [
-    email.originalRecipient,
-    email.recipient,
-    ...(Array.isArray(email.to) ? email.to : []),
-    ...(Array.isArray(email.cc) ? email.cc : []),
-    ...(Array.isArray(email.bcc) ? email.bcc : []),
-  ]
-  const addresses = values.flatMap(value => String(value ?? '').match(ADDRESS_PATTERN) ?? [])
-  return [...new Set(addresses.map(address => address.toLowerCase()))]
-}
-
-/** @param {unknown} value @returns {string} */
-function normalizeAddress(value) {
-  const addresses = String(value ?? '').match(ADDRESS_PATTERN) ?? []
-  return addresses.length === 1 ? addresses[0].toLowerCase() : ''
-}
-
-const ADDRESS_PATTERN = /[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+/gi
-
-/** @param {StoredEmail} email @returns {StoredEmail} */
-function normalize(email) {
-  const normalized = { ...email, folder: email.folder || 'inbox', read: email.read ?? false, starred: email.starred ?? false }
-  normalized.labels = Array.isArray(email.labels) ? [...new Set(email.labels.map(value => String(value).toLowerCase()))] : []
-  normalized.trackedLinks = parseJsonArray(normalized.trackedLinksJson)
-  normalized.opens = parseJsonArray(normalized.opensJson)
-  normalized.clicks = parseJsonArray(normalized.clicksJson || normalized.clicks)
-  delete normalized.trackedLinksJson
-  delete normalized.opensJson
-  delete normalized.clicksJson
-  if (normalized.spamScore == null) delete normalized.spamScore
-  if (normalized.spamReasons == null) delete normalized.spamReasons
-  return normalized
-}
-
-/** @param {unknown} value */
-function parseJsonArray(value) {
-  if (Array.isArray(value)) return value
-  if (typeof value !== 'string' || !value) return []
-  try {
-    const parsed = JSON.parse(value)
-    return Array.isArray(parsed) ? parsed : []
-  } catch { return [] }
-}
-
-/** @param {StoredEmail} email @param {string | undefined} folder @param {Record<string, string> | undefined} folderByDomain */
-function matchesFolder(email, folder, folderByDomain) {
-  const selected = folderByDomain?.[email.domain] || folder
-  return !selected || selected === 'all' || (email.folder || 'inbox') === selected
-}
-
-/** @param {StoredEmail} email @param {boolean | undefined} hasAttachment @param {Map<string, EmailAttachmentSummary[]>} attachmentsByEmail */
-function matchesHasAttachment(email, hasAttachment, attachmentsByEmail) {
-  if (hasAttachment == null) return true
-  const has = (attachmentsByEmail.get(email.id)?.length ?? 0) > 0
-  return has === hasAttachment
-}
-
-/** @param {StoredEmail} email @param {string | undefined} query @param {EmailAttachmentSummary[]} attachments */
-function matchesQuery(email, query, attachments) {
-  const terms = (query ?? '').trim().toLowerCase().split(/\s+/).filter(Boolean)
-  if (terms.length === 0) return true
-  return terms.every(term => matchesTerm(email, term, attachments))
-}
-
-/** @param {StoredEmail} email @param {string} term @param {EmailAttachmentSummary[]} attachments */
-function matchesTerm(email, term, attachments) {
-  if (term === 'has:attachment') return attachments.length > 0
-  if (term === 'is:read') return email.read
-  if (term === 'is:unread') return !email.read
-  if (term === 'is:starred') return email.starred
-  const colon = term.indexOf(':')
-  if (colon > 0) {
-    const field = term.slice(0, colon)
-    const value = term.slice(colon + 1)
-    if (value) {
-      if (field === 'from') return includes(email.sender, value)
-      if (field === 'to') return includes(email.recipient, value)
-      if (field === 'subject') return includes(email.subject, value)
-      if (field === 'body') return includes(email.body, value)
-      if (field === 'filename' || field === 'attachment') return attachments.some(a => includes(a.filename, value))
-    }
-  }
-  const haystacks = [email.sender, email.recipient, email.subject, email.body, ...attachments.map(a => a.filename)]
-  return haystacks.some(field => includes(field, term))
-}
-
-/** @param {string | undefined} value @param {string} term */
-function includes(value, term) {
-  return (value ?? '').toLowerCase().includes(term)
-}

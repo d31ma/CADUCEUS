@@ -1,5 +1,6 @@
 import { Fylo } from '../../../shared/persistence/Fylo.js'
 import { FyloAccessContext } from '../../../shared/persistence/FyloAccessContext.js'
+import { ContactsRecords } from '../../../shared/contacts/ContactsRecords.js'
 
 /** Personal contacts and groups, always isolated by exact mailbox owner. */
 export class ContactsRepository {
@@ -13,7 +14,7 @@ export class ContactsRepository {
       $ops: [{ ownerEmail: { $eq: owner } }],
     }).collect())
     return Object.entries(docs)
-      .map(([docId, raw]) => ({ docId, ...hydrate(raw) }))
+      .map(([docId, raw]) => ({ docId, ...ContactsRecords.hydrate(raw) }))
       .filter(contact => contact.ownerEmail === owner)
   }
 
@@ -23,7 +24,7 @@ export class ContactsRepository {
       $ops: [{ id: { $eq: id } }],
     }).collect())
     for (const [docId, raw] of Object.entries(docs)) {
-      const contact = hydrate(raw)
+      const contact = ContactsRecords.hydrate(raw)
       if (contact.ownerEmail === owner) return [docId, contact]
     }
     return [null, null]
@@ -39,13 +40,13 @@ export class ContactsRepository {
   /** @param {import('../../../types').Contact} contact */
   async put(contact) {
     return await FyloAccessContext.runForDomain(contact.domain, () =>
-      this.fylo.putData(Fylo.Collections.CONTACTS, serialize(contact)))
+      this.fylo.putData(Fylo.Collections.CONTACTS, ContactsRecords.serialize(contact)))
   }
 
   /** @param {string} docId @param {import('../../../types').Contact} contact */
   async replace(docId, contact) {
     await FyloAccessContext.runForDomain(contact.domain, () =>
-      this.fylo.patchDoc(Fylo.Collections.CONTACTS, { [docId]: serialize(contact) }))
+      this.fylo.patchDoc(Fylo.Collections.CONTACTS, { [docId]: ContactsRecords.serialize(contact) }))
   }
 
   async delete(docId, domain) {
@@ -70,7 +71,7 @@ export class ContactsRepository {
     const owner = ownerEmail.toLowerCase()
     const groups = await this.listGroups(owner)
     const group = groups.find(item => item.id === id)
-    return group ? [group.docId, stripDocId(group)] : [null, null]
+    return group ? [group.docId, ContactsRecords.stripDocId(group)] : [null, null]
   }
 
   /** @param {import('../../../types').ContactGroup} group */
@@ -91,7 +92,7 @@ export class ContactsRepository {
       for (const contact of await this.list(group.ownerEmail)) {
         if (!contact.groupIds.includes(group.id)) continue
         await this.replace(contact.docId, {
-          ...stripDocId(contact),
+          ...ContactsRecords.stripDocId(contact),
           groupIds: contact.groupIds.filter(id => id !== group.id),
           updatedAt: new Date().toISOString(),
         })
@@ -100,32 +101,3 @@ export class ContactsRepository {
   }
 }
 
-function serialize(contact) {
-  const { docId: _docId, emails, phones, addresses, urls, nicknames, groupIds, ...record } = contact
-  return {
-    ...record,
-    emailsJson: JSON.stringify(emails || []),
-    phonesJson: JSON.stringify(phones || []),
-    addressesJson: JSON.stringify(addresses || []),
-    urlsJson: JSON.stringify(urls || []),
-    nicknamesJson: JSON.stringify(nicknames || []),
-    groupIdsJson: JSON.stringify(groupIds || []),
-  }
-}
-
-function hydrate(raw) {
-  const contact = { ...raw }
-  for (const [field, stored] of [
-    ['emails', 'emailsJson'], ['phones', 'phonesJson'], ['addresses', 'addressesJson'],
-    ['urls', 'urlsJson'], ['nicknames', 'nicknamesJson'], ['groupIds', 'groupIdsJson'],
-  ]) {
-    try { contact[field] = JSON.parse(String(contact[stored] || '[]')) } catch { contact[field] = [] }
-    delete contact[stored]
-  }
-  return contact
-}
-
-function stripDocId(value) {
-  const { docId: _docId, ...record } = value
-  return record
-}

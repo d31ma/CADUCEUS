@@ -2,101 +2,7 @@ import { UnreadBadgePreferences } from '../../../shared/users/UnreadBadgePrefere
 import { NewMailNotificationPreferences } from '../../../shared/users/NewMailNotificationPreferences.js'
 import { ExternalMessage } from '../../../shared/mailbox/ExternalMessage.js'
 import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
-/** @import { StoredEmail } from '../../../types' */
-/** @import { PushSubscriptionsRepository } from '../repositories/PushSubscriptionsRepository.js' */
-/** @import { UsersRepository } from '../../users/repositories/UsersRepository.js' */
-/** @import { EmailsRepository } from '../../mailbox/repositories/EmailsRepository.js' */
-
-const NOTIFICATION_ACTIONS = Object.freeze([
-  { action: 'mark-read', title: 'Mark read' },
-  { action: 'archive', title: 'Archive' },
-])
-
-/** @param {StoredEmail} email */
-function notificationDomain(email) {
-  return String(email.domain || email.recipient.split('@').pop() || '').toLowerCase()
-}
-
-/**
- * Apply the user's lock-screen privacy level without weakening the deep-link
- * authorization boundary. Message identifiers remain opaque app navigation
- * data and are re-authorized before any action is applied.
- *
- * @param {StoredEmail} email
- * @param {'full'|'sender'|'private'} privacy
- */
-function newMailCopy(email, privacy) {
-  if (privacy === 'private') return { title: 'New mail', body: 'Open CADUCEUS to read it.' }
-  if (privacy === 'sender') {
-    return { title: `New mail from ${email.sender}`, body: 'Open CADUCEUS to read this message.' }
-  }
-  return { title: `New mail from ${email.sender}`, body: email.subject }
-}
-
-/**
- * Build the public Web Push payload. Keeping this deterministic makes the
- * notification and unread-badge contract independently testable from the
- * network transport.
- *
- * @param {StoredEmail} email
- * @param {number | undefined} unreadCount
- * @param {{ newMailNotificationPrivacy?: 'full'|'sender'|'private', newMailNotificationActions?: boolean, soundId?: string }} [preferences]
- */
-export function buildNewMailPushPayload(email, unreadCount, preferences = {}) {
-  const badgeCount = Number.isFinite(unreadCount)
-    ? Math.max(0, Math.trunc(/** @type {number} */ (unreadCount)))
-    : undefined
-  const privacy = preferences.newMailNotificationPrivacy || 'full'
-  const copy = newMailCopy(email, privacy)
-  const soundId = typeof preferences.soundId === 'string' ? preferences.soundId : 'chime'
-  return {
-    ...copy,
-    data: { url: `/email/${email.id}`, emailId: email.id, soundId },
-    tag: `mail:${email.id}`,
-    silent: soundId === 'none',
-    ...(preferences.newMailNotificationActions === false ? {} : { actions: NOTIFICATION_ACTIONS }),
-    ...(badgeCount == null ? {} : { badgeCount }),
-  }
-}
-
-/** @param {StoredEmail} email @param {number | undefined} unreadCount @param {{ newMailNotificationPrivacy?: 'full'|'sender'|'private', newMailNotificationActions?: boolean, soundId?: string }} [preferences] */
-export function buildUnsnoozedPushPayload(email, unreadCount, preferences = {}) {
-  const badgeCount = Number.isFinite(unreadCount)
-    ? Math.max(0, Math.trunc(/** @type {number} */ (unreadCount)))
-    : undefined
-  const privacy = preferences.newMailNotificationPrivacy || 'full'
-  const soundId = typeof preferences.soundId === 'string' ? preferences.soundId : 'chime'
-  return {
-    title: 'Snoozed conversation returned',
-    body: privacy === 'full' ? email.subject : 'Open CADUCEUS to read it.',
-    data: { url: `/email/${email.id}`, emailId: email.id, reason: 'snooze-expired', soundId },
-    tag: `snooze:${email.threadId || email.id}`,
-    silent: soundId === 'none',
-    ...(preferences.newMailNotificationActions === false ? {} : { actions: NOTIFICATION_ACTIONS }),
-    ...(badgeCount == null ? {} : { badgeCount }),
-  }
-}
-
-/**
- * Resolve the exact unread inbox count visible to the notification owner.
- * This intentionally uses the repository's normal domain and mailbox scope so
- * background state cannot bypass the same boundary as the foreground inbox.
- *
- * @param {EmailsRepository} emails
- * @param {import('../../../types').User | null} user
- * @param {StoredEmail} email
- * @param {string} userEmail
- */
-export async function countUnreadInbox(emails, user, email, userEmail) {
-  const fallbackDomain = notificationDomain(email)
-  const domains = UnreadBadgePreferences.unreadBadgeDomains(user, user?.domains, fallbackDomain)
-  const unread = await emails.list(domains, {
-    folder: 'inbox',
-    read: false,
-    ownerEmail: userEmail,
-  })
-  return unread.length
-}
+import { PushRules } from '../../../shared/notifications/PushRules.js'
 
 export class PushService {
   /**
@@ -134,7 +40,7 @@ export class PushService {
    * @returns {Promise<boolean>}
    */
   async notifyNewEmail(email) {
-    return this.notify(email, buildNewMailPushPayload, 'notifyNewEmail')
+    return this.notify(email, PushRules.buildNewMailPushPayload, 'notifyNewEmail')
   }
 
   /**
@@ -162,7 +68,7 @@ export class PushService {
       read: false,
       starred: false,
     }))
-    return this.notify(email, buildNewMailPushPayload, 'notifyProviderNewEmail', {
+    return this.notify(email, PushRules.buildNewMailPushPayload, 'notifyProviderNewEmail', {
       ownerEmail: ownerAddress,
       externalAccountId: notification.accountId,
     })
@@ -170,7 +76,7 @@ export class PushService {
 
   /** @param {StoredEmail} email @returns {Promise<boolean>} */
   async notifyUnsnoozed(email) {
-    return this.notify(email, buildUnsnoozedPushPayload, 'notifyUnsnoozed')
+    return this.notify(email, PushRules.buildUnsnoozedPushPayload, 'notifyUnsnoozed')
   }
 
   /**
@@ -193,7 +99,7 @@ export class PushService {
       const [, user] = await this.users.findByEmail(lookupAddress)
       if (!user) return true
       const userEmail = user.email || lookupAddress
-      const domain = notificationDomain(email)
+      const domain = PushRules.notificationDomain(email)
       const policyDomains = user?.domains?.length ? user.domains : [domain]
       if (options.externalAccountId) {
         if (!NewMailNotificationPreferences.newMailNotificationsEnabledForExternalAccount(user, policyDomains, options.externalAccountId)) return true
@@ -207,7 +113,7 @@ export class PushService {
       let unreadCount
       if (this.emails && !options.externalAccountId) {
         try {
-          unreadCount = await countUnreadInbox(this.emails, user, email, userEmail)
+          unreadCount = await PushRules.countUnreadInbox(this.emails, user, email, userEmail)
         } catch (error) {
           // Delivery notifications still matter when an optional count query
           // fails. The worker will show a generic badge and the next mailbox

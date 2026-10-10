@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto'
 import { McpServer } from '../../deps/npm/modelcontextprotocol-server.mjs'
 import { z } from '../../deps/npm/zod.mjs'
 import { FyloAccessContext } from '../persistence/FyloAccessContext.js'
-import { canAccessEmail } from '../../features/mailbox/repositories/EmailsRepository.js'
+import { EmailsRecords } from '../mailbox/EmailsRecords.js'
 import { DraftInput } from '../mailbox/DraftInput.js'
 import { MailValidation } from '../delivery/MailValidation.js'
 import { Threading } from '../mailbox/Threading.js'
@@ -343,14 +343,14 @@ export class Tools {
   static async #findAllowedMessage(app, principal, id) {
     const [, email] = await app.emails.findById(id)
     if (!email || !principal.allowedDomains.includes(email.domain) || Tools.#isExcluded(principal, email)
-        || !canAccessEmail(email, principal.ownerEmail)) return null
+        || !EmailsRecords.canAccessEmail(email, principal.ownerEmail)) return null
     return email
   }
 
   static async #presentMessages(app, principal, messages) {
     const result = []
     for (const email of messages) {
-      if (Tools.#isExcluded(principal, email) || !canAccessEmail(email, principal.ownerEmail)) continue
+      if (Tools.#isExcluded(principal, email) || !EmailsRecords.canAccessEmail(email, principal.ownerEmail)) continue
       const attachments = await app.attachments.listSummaries(email.id)
       result.push({
         id: email.id,

@@ -6,7 +6,8 @@ import { DatabaseRepository } from '@/shared/persistence/DatabaseRepository.js'
 import { AttachmentsRepository } from '@/features/mailbox/repositories/AttachmentsRepository.js'
 import { EmailsRepository } from '@/features/mailbox/repositories/EmailsRepository.js'
 import { FollowUpRemindersRepository } from '@/features/delivery/repositories/FollowUpRemindersRepository.js'
-import { FollowUpReminderService, threadKey } from '@/features/delivery/services/FollowUpReminderService.js'
+import { FollowUpReminderService } from '@/features/delivery/services/FollowUpReminderService.js'
+import { FollowUpReminderRules } from '@/shared/delivery/FollowUpReminderRules.js'
 
 let root, fylo, emails, reminders, service
 
@@ -34,7 +35,7 @@ const input = (over = {}) => ({
 
 describe('FollowUpReminderService', () => {
   it('normalizes reply and forward subject prefixes into one thread key', () => {
-    expect(threadKey('Re: Fwd: Quarterly Plan')).toBe('quarterly plan')
+    expect(FollowUpReminderRules.threadKey('Re: Fwd: Quarterly Plan')).toBe('quarterly plan')
   })
 
   it('updates an existing active reminder instead of duplicating it', async () => {

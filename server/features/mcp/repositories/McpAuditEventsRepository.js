@@ -1,7 +1,5 @@
 import { Fylo } from '../../../shared/persistence/Fylo.js'
-
-const RETAINED_EVENTS = 100
-const RETURNED_EVENTS = 50
+import { McpAuditEventsRecords } from '../../../shared/mcp/McpAuditEventsRecords.js'
 
 export class McpAuditEventsRepository {
   /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
@@ -11,18 +9,18 @@ export class McpAuditEventsRepository {
   async put(event) {
     await this.fylo.putData(Fylo.Collections.MCP_AUDIT_EVENTS, event)
     const records = await this.listForOwner(event.ownerEmail, Number.MAX_SAFE_INTEGER)
-    for (const stale of records.slice(RETAINED_EVENTS)) await this.fylo.delDoc(Fylo.Collections.MCP_AUDIT_EVENTS, stale.docId)
+    for (const stale of records.slice(McpAuditEventsRecords.RETAINED_EVENTS)) await this.fylo.delDoc(Fylo.Collections.MCP_AUDIT_EVENTS, stale.docId)
   }
 
   /** @param {string} ownerEmail @param {number} [limit] @returns {Promise<Array<import('../../../types').McpAuditEvent & {docId:string, parameterKeys:string[]}>>} */
-  async listForOwner(ownerEmail, limit = RETURNED_EVENTS) {
+  async listForOwner(ownerEmail, limit = McpAuditEventsRecords.RETURNED_EVENTS) {
     const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.MCP_AUDIT_EVENTS, {
       $ops: [{ ownerEmail: { $eq: String(ownerEmail).toLowerCase() } }],
     }).collect())
     return Object.entries(docs)
       .map(([docId, value]) => {
         const event = /** @type {import('../../../types').McpAuditEvent} */ (value)
-        return { docId, ...event, parameterKeys: parseKeys(event.parameterKeysJson) }
+        return { docId, ...event, parameterKeys: McpAuditEventsRecords.parseKeys(event.parameterKeysJson) }
       })
       .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
       .slice(0, Math.max(0, limit))
@@ -36,9 +34,3 @@ export class McpAuditEventsRepository {
   }
 }
 
-function parseKeys(value) {
-  try {
-    const parsed = JSON.parse(String(value || '[]'))
-    return Array.isArray(parsed) ? parsed.filter(item => typeof item === 'string') : []
-  } catch { return [] }
-}

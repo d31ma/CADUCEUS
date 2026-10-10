@@ -1,3 +1,6 @@
+
+import { DomainMigrationRules } from '../../../shared/domains/DomainMigrationRules.js'
+
 /** @import { StoredEmail } from '../../../types' */
 /** @import { DomainMigration } from '../../../types' */
 /** @import { DomainMigrationsRepository } from '../repositories/DomainMigrationsRepository.js' */
@@ -14,7 +17,7 @@ export class DomainMigrationService {
   async presentEmails(emails) {
     const migrations = await this.domainMigrations.list()
     if (migrations.length === 0) return emails
-    return emails.map(email => rewriteForMigration(email, migrations))
+    return emails.map(email => DomainMigrationRules.rewriteForMigration(email, migrations))
   }
 
   /**
@@ -23,26 +26,7 @@ export class DomainMigrationService {
    */
   async presentEmail(email) {
     const migrations = await this.domainMigrations.list()
-    return rewriteForMigration(email, migrations)
+    return DomainMigrationRules.rewriteForMigration(email, migrations)
   }
 }
 
-/**
- * @param {StoredEmail} email
- * @param {Array<DomainMigration & { docId?: string }>} migrations
- * @returns {StoredEmail}
- */
-function rewriteForMigration(email, migrations) {
-  for (const migration of migrations) {
-    const fromSuffix = `@${migration.fromDomain}`
-    const toSuffix = `@${migration.toDomain}`
-    if (email.recipient.endsWith(fromSuffix)) {
-      return {
-        ...email,
-        recipient: email.recipient.replace(new RegExp(`${fromSuffix}$`), toSuffix),
-        originalRecipient: email.originalRecipient || email.recipient,
-      }
-    }
-  }
-  return email
-}

@@ -1,7 +1,8 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { MailActionError, MailActionService } from '../features/mailbox/services/MailActionService.js'
+import { MailActionService } from '../features/mailbox/services/MailActionService.js'
+import { MailActionError } from '../shared/errors/MailActionError.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/inbox/actions")

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'bun:test'
-import { InboundService, parseMultipartMessage } from '@/features/delivery/services/InboundService.js'
+import { InboundService } from '@/features/delivery/services/InboundService.js'
+import { InboundRules } from '@/shared/delivery/InboundRules.js'
 
 /** Parsing needs no collaborators — build a bare instance. */
 const parser = () => /** @type {InboundService} */ (Object.create(InboundService.prototype))
@@ -142,11 +143,11 @@ describe('parseMultipartMessage — the no-mailparser fallback', () => {
   ].join('\r\n')
 
   it('returns null without a header/body separator', () => {
-    expect(parseMultipartMessage('no separator here')).toBeNull()
+    expect(InboundRules.parseMultipartMessage('no separator here')).toBeNull()
   })
 
   it('returns null when the content-type declares no boundary', () => {
-    expect(parseMultipartMessage('Content-Type: multipart/mixed\r\n\r\nbody')).toBeNull()
+    expect(InboundRules.parseMultipartMessage('Content-Type: multipart/mixed\r\n\r\nbody')).toBeNull()
   })
 
   it('accepts an unquoted boundary', () => {
@@ -159,11 +160,11 @@ describe('parseMultipartMessage — the no-mailparser fallback', () => {
       'hello',
       '--SIMPLE--',
     ].join('\r\n')
-    expect(parseMultipartMessage(raw).text).toBe('hello')
+    expect(InboundRules.parseMultipartMessage(raw).text).toBe('hello')
   })
 
   it('collects the text and html alternatives and the top headers', () => {
-    const res = parseMultipartMessage(multipart([
+    const res = InboundRules.parseMultipartMessage(multipart([
       'Content-Type: text/plain\r\n\r\nplain part',
       'Content-Type: text/html\r\n\r\n<p>html part</p>',
     ]))
@@ -173,7 +174,7 @@ describe('parseMultipartMessage — the no-mailparser fallback', () => {
   })
 
   it('extracts a base64 attachment', () => {
-    const [attachment] = parseMultipartMessage(multipart([
+    const [attachment] = InboundRules.parseMultipartMessage(multipart([
       'Content-Type: text/plain\r\n\r\nsee attached',
       [
         'Content-Type: text/plain; name="note.txt"',
@@ -189,7 +190,7 @@ describe('parseMultipartMessage — the no-mailparser fallback', () => {
   })
 
   it('reads an unencoded inline attachment with a content id', () => {
-    const [attachment] = parseMultipartMessage(multipart([
+    const [attachment] = InboundRules.parseMultipartMessage(multipart([
       [
         'Content-Type: image/png',
         'Content-Disposition: inline; filename=logo.png',
@@ -205,31 +206,31 @@ describe('parseMultipartMessage — the no-mailparser fallback', () => {
   })
 
   it('falls back to the content-type name when no filename is given', () => {
-    const res = parseMultipartMessage(multipart([
+    const res = InboundRules.parseMultipartMessage(multipart([
       'Content-Type: application/pdf; name="report.pdf"\r\nContent-Disposition: attachment\r\n\r\nPDF',
     ]))
     expect(res.attachments[0].filename).toBe('report.pdf')
   })
 
   it('names an unnamed attachment part', () => {
-    const res = parseMultipartMessage(multipart([
+    const res = InboundRules.parseMultipartMessage(multipart([
       'Content-Type: application/pdf\r\nContent-Disposition: attachment\r\n\r\nPDF',
     ]))
     expect(res.attachments[0].filename).toBe('attachment')
   })
 
   it('skips parts with no header/body separator', () => {
-    const res = parseMultipartMessage(multipart(['Content-Type: text/plain\r\n\r\nkept', 'malformed-part']))
+    const res = InboundRules.parseMultipartMessage(multipart(['Content-Type: text/plain\r\n\r\nkept', 'malformed-part']))
     expect(res.text).toContain('kept')
     expect(res.attachments).toEqual([])
   })
 
   it('derives text from html when there is no plain part', () => {
-    expect(parseMultipartMessage(multipart(['Content-Type: text/html\r\n\r\n<p>only html</p>'])).text).toBe('only html')
+    expect(InboundRules.parseMultipartMessage(multipart(['Content-Type: text/html\r\n\r\n<p>only html</p>'])).text).toBe('only html')
   })
 
   it('ignores parts with an unhandled content type', () => {
-    const res = parseMultipartMessage(multipart(['Content-Type: application/json\r\n\r\n{}']))
+    const res = InboundRules.parseMultipartMessage(multipart(['Content-Type: application/json\r\n\r\n{}']))
     expect(res.attachments).toEqual([])
     expect(res.text).toBe(multipart(['Content-Type: application/json\r\n\r\n{}']))
   })

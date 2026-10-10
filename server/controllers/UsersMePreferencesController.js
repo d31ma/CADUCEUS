@@ -7,7 +7,7 @@ import { NotificationSounds } from '../shared/users/NotificationSounds.js'
 import { ThemePreferences } from '../shared/users/ThemePreferences.js'
 import { LocalePreferences } from '../shared/users/LocalePreferences.js'
 import { GrammarPreferences } from '../shared/users/GrammarPreferences.js'
-import { validateCategoryMappings } from '../features/mailbox/services/CategoryMappingService.js'
+import { CategoryMappingRules } from '../shared/mailbox/CategoryMappingRules.js'
 import { UnreadBadgePreferences } from '../shared/users/UnreadBadgePreferences.js'
 import { NewMailNotificationPreferences } from '../shared/users/NewMailNotificationPreferences.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
@@ -56,7 +56,7 @@ export class UsersMePreferencesController {
         next.mailboxNames = parsed.mailboxNames
       }
       if (body?.categoryMappings !== undefined) {
-        const parsed = validateCategoryMappings(body.categoryMappings, user.domains)
+        const parsed = CategoryMappingRules.validateCategoryMappings(body.categoryMappings, user.domains)
         if (!parsed.ok) return parsed.forbidden ? Respond.r403(parsed.error) : Respond.r400(parsed.error)
         next.categoryMappings = parsed.mappings
       }

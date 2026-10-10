@@ -1,23 +1,17 @@
 import { describe, expect, it } from 'bun:test'
-import {
-  CATEGORY_ROLES,
-  defaultRoleMapping,
-  normalizeCategoryMappings,
-  presentEmailWithMappings,
-  validateCategoryMappings,
-} from '@/features/mailbox/services/CategoryMappingService.js'
+import { CategoryMappingRules } from '@/shared/mailbox/CategoryMappingRules.js'
 import { CategoryPath } from '@/shared/mailbox/CategoryPath.js'
 
 describe('mailbox category-role mappings', () => {
   it('normalizes only assigned domains and repairs ambiguous persisted paths', () => {
-    const mappings = normalizeCategoryMappings({
+    const mappings = CategoryMappingRules.normalizeCategoryMappings({
       'example.com': {
         inbox: 'sent',
         sent: 'sent',
         drafts: 'system/sent',
         spam: '../unsafe',
       },
-      'foreign.example': { ...defaultRoleMapping(), inbox: 'foreign-secret' },
+      'foreign.example': { ...CategoryMappingRules.defaultRoleMapping(), inbox: 'foreign-secret' },
     }, ['EXAMPLE.COM'])
 
     expect(Object.keys(mappings)).toEqual(['example.com'])
@@ -29,7 +23,7 @@ describe('mailbox category-role mappings', () => {
       archive: 'archive',
       trash: 'trash',
     })
-    expect(new Set(Object.values(mappings['example.com'])).size).toBe(CATEGORY_ROLES.length)
+    expect(new Set(Object.values(mappings['example.com'])).size).toBe(CategoryMappingRules.CATEGORY_ROLES.length)
   })
 
   it('accepts bounded nested provider paths and rejects traversal or malformed paths', () => {
@@ -39,19 +33,19 @@ describe('mailbox category-role mappings', () => {
     expect(CategoryPath.normalizeCategoryPath('team/')).toBe('')
     expect(CategoryPath.normalizeCategoryPath('x'.repeat(61))).toBe('')
 
-    const mappings = { 'example.com': { ...defaultRoleMapping(), inbox: 'team/support.inbox' } }
-    expect(validateCategoryMappings(mappings, ['example.com'])).toEqual({ ok: true, mappings })
-    expect(validateCategoryMappings({
+    const mappings = { 'example.com': { ...CategoryMappingRules.defaultRoleMapping(), inbox: 'team/support.inbox' } }
+    expect(CategoryMappingRules.validateCategoryMappings(mappings, ['example.com'])).toEqual({ ok: true, mappings })
+    expect(CategoryMappingRules.validateCategoryMappings({
       'example.com': { ...mappings['example.com'], archive: 'team/support.inbox' },
     }, ['example.com'])).toMatchObject({ ok: false })
   })
 
   it('presents a physical provider path with its stable logical system role', () => {
     const email = { id: 'message-1', domain: 'example.com', folder: 'Priority' }
-    expect(presentEmailWithMappings(email, {
-      'example.com': { ...defaultRoleMapping(), inbox: 'priority' },
+    expect(CategoryMappingRules.presentEmailWithMappings(email, {
+      'example.com': { ...CategoryMappingRules.defaultRoleMapping(), inbox: 'priority' },
     })).toEqual({ ...email, folder: 'priority', systemFolder: 'inbox' })
-    expect(presentEmailWithMappings(email, {})).toEqual({
+    expect(CategoryMappingRules.presentEmailWithMappings(email, {})).toEqual({
       ...email, folder: 'priority', systemFolder: null,
     })
   })

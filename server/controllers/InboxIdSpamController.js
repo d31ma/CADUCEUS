@@ -1,7 +1,7 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { canAccessEmail } from '../features/mailbox/repositories/EmailsRepository.js'
+import { EmailsRecords } from '../shared/mailbox/EmailsRecords.js'
 
 @RequestRoute("/inbox/{id}/spam")
 @SignedIn
@@ -29,7 +29,7 @@ export class InboxIdSpamController {
       const [docId, email] = await app.emails.findById(id)
       if (!docId || !email) return Respond.r404('Email not found')
       if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
-      if (!canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
+      if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
 
       const folder = await app.categoryMappings.pathFor(auth.email, email.domain, body.spam ? 'spam' : 'inbox')
       const patch = body.spam

@@ -2,8 +2,7 @@ import { randomBytes } from 'node:crypto'
 import { PhishingDetection } from '../../../shared/delivery/PhishingDetection.js'
 import { ListUnsubscribe } from '../../../shared/delivery/ListUnsubscribe.js'
 import { Threading } from '../../../shared/mailbox/Threading.js'
-
-const MAX_SUBJECT_LENGTH = 500
+import { EmlImportRules } from '../../../shared/mailbox/EmlImportRules.js'
 
 /**
  * Import an RFC 822 message into one authorized mailbox without running the
@@ -39,8 +38,8 @@ export class EmlImportService {
     const unsubscribe = ListUnsubscribe.parse(parsed.headers, parsed.html)
     const to = PhishingDetection.extractAddresses(parsed.headers.to)
     const cc = PhishingDetection.extractAddresses(parsed.headers.cc)
-    const receivedAt = validDate(parsed.headers.date) || new Date().toISOString()
-    const subject = safeSubject(parsed.headers.subject)
+    const receivedAt = EmlImportRules.validDate(parsed.headers.date) || new Date().toISOString()
+    const subject = EmlImportRules.safeSubject(parsed.headers.subject)
 
     const email = {
       id,
@@ -89,17 +88,3 @@ export class EmlImportService {
   }
 }
 
-/** @param {unknown} value */
-function safeSubject(value) {
-  return String(value || '(no subject)')
-    .replace(/[\u0000-\u001f\u007f]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, MAX_SUBJECT_LENGTH) || '(no subject)'
-}
-
-/** @param {unknown} value */
-function validDate(value) {
-  const time = Date.parse(String(value || ''))
-  return Number.isFinite(time) ? new Date(time).toISOString() : ''
-}

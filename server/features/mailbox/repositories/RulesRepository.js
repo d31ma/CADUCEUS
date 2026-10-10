@@ -1,4 +1,6 @@
 import { Fylo } from '../../../shared/persistence/Fylo.js'
+import { RulesRecords } from '../../../shared/mailbox/RulesRecords.js'
+
 /** @import { InboxRule } from '../../../types' */
 
 export class RulesRepository {
@@ -15,8 +17,8 @@ export class RulesRepository {
     const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.INBOX_RULES, { $ops: [] }).collect())
     return Object.values(docs)
       .filter(r => allowedDomains.includes(r.domain))
-      .map(r => deserialize(/** @type {RawRuleDoc} */ (r)))
-      .sort(compareRules)
+      .map(r => RulesRecords.deserialize(/** @type {RawRuleDoc} */ (r)))
+      .sort(RulesRecords.compareRules)
   }
 
   /** @param {string} ownerEmail @returns {Promise<InboxRule[]>} */
@@ -26,8 +28,8 @@ export class RulesRepository {
       $ops: [{ ownerEmail: { $eq: owner } }],
     }).collect())
     return Object.values(docs)
-      .map(r => deserialize(/** @type {RawRuleDoc} */ (r)))
-      .sort(compareRules)
+      .map(r => RulesRecords.deserialize(/** @type {RawRuleDoc} */ (r)))
+      .sort(RulesRecords.compareRules)
   }
 
   /**
@@ -38,8 +40,8 @@ export class RulesRepository {
     const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.INBOX_RULES, { $ops: [{ domain: { $eq: domain } }] }).collect())
     return Object.values(docs)
       .filter(r => r.enabled)
-      .map(r => deserialize(/** @type {RawRuleDoc} */ (r)))
-      .sort(compareRules)
+      .map(r => RulesRecords.deserialize(/** @type {RawRuleDoc} */ (r)))
+      .sort(RulesRecords.compareRules)
   }
 
   /**
@@ -55,7 +57,7 @@ export class RulesRepository {
       .filter(rule => rule.ownerEmail
         ? rule.ownerEmail === owner && (!rule.mailbox || rule.mailbox === address)
         : true)
-      .sort(compareRules)
+      .sort(RulesRecords.compareRules)
   }
 
   /**
@@ -65,7 +67,7 @@ export class RulesRepository {
   async findById(ruleId) {
     const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.INBOX_RULES, { $ops: [{ id: { $eq: ruleId } }] }).collect())
     const entry = Object.entries(docs)[0]
-    return entry ? [entry[0], deserialize(/** @type {RawRuleDoc} */ (entry[1]))] : [null, null]
+    return entry ? [entry[0], RulesRecords.deserialize(/** @type {RawRuleDoc} */ (entry[1]))] : [null, null]
   }
 
   /**
@@ -73,7 +75,7 @@ export class RulesRepository {
    * @returns {Promise<string>}
    */
   async put(rule) {
-    return await this.fylo.putData(Fylo.Collections.INBOX_RULES, serialize(rule))
+    return await this.fylo.putData(Fylo.Collections.INBOX_RULES, RulesRecords.serialize(rule))
   }
 
   /**
@@ -125,31 +127,3 @@ export class RulesRepository {
   }
 }
 
-/** @param {RawRuleDoc} raw @returns {InboxRule} */
-function deserialize(raw) {
-  return {
-    ...raw,
-    ...(raw.ownerEmail ? { ownerEmail: String(raw.ownerEmail).toLowerCase() } : {}),
-    ...(raw.mailbox ? { mailbox: String(raw.mailbox).toLowerCase() } : {}),
-    order: Number(raw.order) || 0,
-    stopProcessing: Boolean(raw.stopProcessing),
-    conditions: typeof raw.conditions === 'string' ? JSON.parse(raw.conditions) : (raw.conditions ?? []),
-    actions: typeof raw.actions === 'string' ? JSON.parse(raw.actions) : (raw.actions ?? []),
-  }
-}
-
-/** @param {InboxRule} left @param {InboxRule} right */
-function compareRules(left, right) {
-  return (Number(left.order) || 0) - (Number(right.order) || 0)
-    || left.name.localeCompare(right.name)
-    || left.id.localeCompare(right.id)
-}
-
-/** @param {Omit<InboxRule, 'id'> & { id?: string }} rule @returns {RawRuleDoc} */
-function serialize(rule) {
-  return /** @type {RawRuleDoc} */ ({
-    ...rule,
-    conditions: JSON.stringify(rule.conditions ?? []),
-    actions: JSON.stringify(rule.actions ?? []),
-  })
-}

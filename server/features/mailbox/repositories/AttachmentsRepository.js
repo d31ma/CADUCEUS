@@ -5,6 +5,8 @@ import { Buffer } from 'node:buffer'
 import { Fylo } from '../../../shared/persistence/Fylo.js'
 import { AttachmentPolicy } from '../../../shared/mailbox/AttachmentPolicy.js'
 import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
+import { AttachmentsRecords } from '../../../shared/mailbox/AttachmentsRecords.js'
+
 /** @import { ParsedAttachment } from '../../../models/ParsedAttachment.js' */
 /** @import { EmailAttachmentRecord } from '../../../types' */
 /** @import { EmailAttachmentSummary } from '../../../types' */
@@ -29,7 +31,7 @@ export class AttachmentsRepository {
    * @returns {Promise<EmailAttachmentSummary[]>}
    */
   async listSummaries(emailId) {
-    return (await this.list(emailId)).map(toSummary)
+    return (await this.list(emailId)).map(AttachmentsRecords.toSummary)
   }
 
   /**
@@ -43,7 +45,7 @@ export class AttachmentsRepository {
       const record = /** @type {EmailAttachmentRecord} */ (attachment)
       if (!allowedDomains.includes(record.domain)) continue
       const summaries = grouped.get(record.emailId) ?? []
-      summaries.push(toSummary(record))
+      summaries.push(AttachmentsRecords.toSummary(record))
       grouped.set(record.emailId, summaries)
     }
     return grouped
@@ -69,8 +71,8 @@ export class AttachmentsRepository {
     if (attachments.length === 0) return []
     const saved = []
     for (const attachment of attachments) {
-      const record = await persistOne(this.fylo, emailId, domain, attachment)
-      saved.push(toSummary(record))
+      const record = await AttachmentsRecords.persistOne(this.fylo, emailId, domain, attachment)
+      saved.push(AttachmentsRecords.toSummary(record))
     }
     return saved
   }
@@ -88,13 +90,13 @@ export class AttachmentsRepository {
     /** @type {Array<EmailAttachmentRecord & { docId?: string }>} */
     const saved = []
     try {
-      for (const attachment of attachments) saved.push(await persistOne(this.fylo, emailId, domain, attachment))
+      for (const attachment of attachments) saved.push(await AttachmentsRecords.persistOne(this.fylo, emailId, domain, attachment))
     } catch (error) {
-      await Promise.all(saved.map(record => deleteRecord(this.fylo, record).catch(() => {})))
+      await Promise.all(saved.map(record => AttachmentsRecords.deleteRecord(this.fylo, record).catch(() => {})))
       throw error
     }
-    await Promise.all(previous.map(record => deleteRecord(this.fylo, record)))
-    return saved.map(toSummary)
+    await Promise.all(previous.map(record => AttachmentsRecords.deleteRecord(this.fylo, record)))
+    return saved.map(AttachmentsRecords.toSummary)
   }
 
   /**
@@ -103,7 +105,7 @@ export class AttachmentsRepository {
    */
   async deleteForEmail(emailId) {
     const attachments = await this.list(emailId)
-    await Promise.all(attachments.map(record => deleteRecord(this.fylo, record)))
+    await Promise.all(attachments.map(record => AttachmentsRecords.deleteRecord(this.fylo, record)))
   }
 
   /**
@@ -115,109 +117,8 @@ export class AttachmentsRepository {
       return await this.fylo.getFileBytes(Fylo.Buckets.ATTACHMENT_FILES, attachment.bucketId)
     }
     if (!attachment.storagePath) throw new Error('Attachment has no stored content reference')
-    ensureInsideRoot(attachmentRoot(), attachment.storagePath)
+    AttachmentsRecords.ensureInsideRoot(AttachmentsRecords.attachmentRoot(), attachment.storagePath)
     return new Uint8Array(await readFile(attachment.storagePath))
   }
 }
 
-/** @param {EmailAttachmentRecord} attachment @returns {EmailAttachmentSummary} */
-function toSummary({ id, filename, contentType, size, disposition, contentId }) {
-  return { id, filename, contentType, size, disposition, contentId }
-}
-
-function attachmentRoot() {
-  // Legacy path-backed records may point at the former dedicated mount.
-  if (ServerEnvironment.value('ATTACHMENT_ROOT')) return ServerEnvironment.value('ATTACHMENT_ROOT')
-  if (ServerEnvironment.value('FYLO_ROOT')) return join(ServerEnvironment.value('FYLO_ROOT'), 'attachments')
-  throw new Error('FYLO_ROOT or legacy ATTACHMENT_ROOT is required to read a path-backed attachment')
-}
-
-/**
- * @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo
- * @param {string} emailId
- * @param {string} domain
- * @param {ParsedAttachment} attachment
- * @returns {Promise<EmailAttachmentRecord & { docId: string }>}
- */
-async function persistOne(fylo, emailId, domain, attachment) {
-  const id = randomBytes(16).toString('hex')
-  const filename = AttachmentPolicy.sanitizeAttachmentFilename(attachment.filename, `attachment-${id}`)
-  const content = readBytes(attachment)
-  const incomingRoot = resolve(
-    ServerEnvironment.value('FYLO_INCOMING_ROOT') || join(fylo.root, '.caduceus-incoming'),
-  )
-  await mkdir(incomingRoot, { recursive: true, mode: 0o700 })
-  const temporaryRoot = await mkdtemp(join(incomingRoot, 'attachment-'))
-  const sourcePath = join(temporaryRoot, filename)
-  await writeFile(sourcePath, content)
-  let bucketId
-  try {
-    bucketId = await fylo.putFile(Fylo.Buckets.ATTACHMENT_FILES, sourcePath, {
-      key: bucketKey(emailId, id, filename),
-      maxBytes: content.byteLength,
-      meta: { domain },
-    })
-  } finally {
-    await rm(temporaryRoot, { recursive: true, force: true })
-  }
-  /** @type {EmailAttachmentRecord} */
-  const record = {
-    id,
-    emailId,
-    domain,
-    filename,
-    contentType: String(attachment.contentType || 'application/octet-stream').split(';', 1)[0].toLowerCase(),
-    size: content.byteLength,
-    disposition: attachment.disposition || 'attachment',
-    contentId: AttachmentPolicy.normalizeAttachmentContentId(attachment.contentId),
-    bucketId,
-    createdAt: new Date().toISOString(),
-  }
-  try {
-    const docId = await fylo.putData(Fylo.Collections.ATTACHMENTS, record)
-    return { ...record, docId }
-  } catch (error) {
-    await fylo.delDoc(Fylo.Buckets.ATTACHMENT_FILES, bucketId).catch(() => {})
-    throw error
-  }
-}
-
-/** @param {string} emailId @param {string} id @param {string} filename */
-function bucketKey(emailId, id, filename) {
-  const emailKey = createHash('sha256').update(emailId).digest('hex')
-  return `/emails/${emailKey}/${id}-${basename(filename)}`
-}
-
-/** @param {string} name */
-/** @param {string} root @param {string} target */
-function ensureInsideRoot(root, target) {
-  const resRoot = resolve(root)
-  const resTarget = resolve(target)
-  const rel = relative(resRoot, resTarget)
-  if (rel.startsWith('..') || rel === '..' || rel.startsWith('/')) {
-    throw new Error('Attachment path escapes storage root')
-  }
-}
-
-/** @param {ParsedAttachment} attachment @returns {Uint8Array} */
-function readBytes(attachment) {
-  if (attachment.content instanceof Uint8Array) return attachment.content
-  if (typeof attachment.contentBase64 === 'string') return Buffer.from(attachment.contentBase64, 'base64')
-  return new Uint8Array()
-}
-
-/** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo @param {EmailAttachmentRecord & { docId?: string }} record */
-async function deleteRecord(fylo, { docId, bucketId, storagePath }) {
-  if (!docId) throw new Error('Attachment record is missing its document id')
-  await fylo.delDoc(Fylo.Collections.ATTACHMENTS, docId)
-  if (bucketId) {
-    await fylo.delDoc(Fylo.Buckets.ATTACHMENT_FILES, bucketId)
-  } else if (storagePath) {
-    try {
-      ensureInsideRoot(attachmentRoot(), storagePath)
-      await rm(storagePath, { force: true })
-    } catch (error) {
-      console.error('[attachments] delete legacy attachment file failed:', error)
-    }
-  }
-}

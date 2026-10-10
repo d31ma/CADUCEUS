@@ -1,23 +1,6 @@
 import { Buffer } from 'node:buffer'
 import { ServerEnvironment } from '../../../shared/runtime/ServerEnvironment.js'
-/** @import { OutboxEntry } from '../repositories/OutboxRepository.js' */
-
-/**
- * Outbound delivery queue with retry and bounce handling.
- *
- * A real MTA cannot deliver synchronously and give up on the first hiccup:
- * remote servers greylist, time out, or are briefly unreachable. This service
- * persists outbound messages in the `outbox`, retries transient failures with
- * exponential backoff, and — on a permanent failure or once retries are
- * exhausted — "bounces" by dropping a delivery-failure notice into the sender's
- * mailbox (a local DSN). It uses the direct-to-MX SMTP delivery service.
- *
- */
-
-/** Backoff before attempt N (1-indexed), in ms: ~1m, 5m, 15m, 1h, 4h. */
-const BACKOFF_MS = [60_000, 300_000, 900_000, 3_600_000, 14_400_000]
-const MAX_ATTEMPTS = BACKOFF_MS.length
-export const DELIVERY_LEASE_MS = 5 * 60_000
+import { OutboundQueueRules } from '../../../shared/delivery/OutboundQueueRules.js'
 
 export class OutboundQueueService {
   /**
@@ -37,7 +20,7 @@ export class OutboundQueueService {
     this.attachments = attachments
     this.categoryMappings = categoryMappings
     this.suppressed = suppressed
-    this.maxAttempts = MAX_ATTEMPTS
+    this.maxAttempts = OutboundQueueRules.MAX_ATTEMPTS
     this._processing = null
   }
 
@@ -106,7 +89,7 @@ export class OutboundQueueService {
     let delivered = 0, retried = 0, bounced = 0
 
     for (const [docId, entry] of Object.entries(due)) {
-      if (entry.status === 'sending' && (entry.claimedAt ?? 0) > now - DELIVERY_LEASE_MS) continue
+      if (entry.status === 'sending' && (entry.claimedAt ?? 0) > now - OutboundQueueRules.DELIVERY_LEASE_MS) continue
       await this.outbox.update(docId, { status: 'sending', claimedAt: now })
 
       try {
@@ -116,15 +99,15 @@ export class OutboundQueueService {
         delivered++
       } catch (err) {
         const attempts = (entry.attempts ?? 0) + 1
-        const plan = deliveryFailurePlan(entry.email, err, attempts >= this.maxAttempts)
+        const plan = OutboundQueueRules.deliveryFailurePlan(entry.email, err, attempts >= this.maxAttempts)
         if (plan.permanent.length) {
-          const failedEntry = { ...entry, email: deliveryForRecipients(entry.email, plan.permanent) }
+          const failedEntry = { ...entry, email: OutboundQueueRules.deliveryForRecipients(entry.email, plan.permanent) }
           await this._bounce(failedEntry, err, attempts)
           await this._suppressPermanent(plan.permanent)
           bounced++
         }
         if (plan.transient.length) {
-          await this.outbox.update(docId, retryPatch(entry.email, plan.transient, attempts, now, this._backoff(attempts), this._message(err)))
+          await this.outbox.update(docId, OutboundQueueRules.retryPatch(entry.email, plan.transient, attempts, now, this._backoff(attempts), this._message(err)))
           retried++
         } else {
           await this.outbox.delete(docId)
@@ -192,7 +175,7 @@ export class OutboundQueueService {
 
   /** @param {number} attempts @returns {number} */
   _backoff(attempts) {
-    return BACKOFF_MS[Math.min(attempts, BACKOFF_MS.length) - 1]
+    return OutboundQueueRules.BACKOFF_MS[Math.min(attempts, OutboundQueueRules.BACKOFF_MS.length) - 1]
   }
 
   /** @param {unknown} err @returns {string} */
@@ -218,7 +201,7 @@ export class OutboundQueueService {
     const sender = entry.owner ?? entry.sender
     const domain = sender.split('@')[1] || ''
     const email = entry.email
-    const recipients = deliveryRecipients(email).join(', ')
+    const recipients = OutboundQueueRules.deliveryRecipients(email).join(', ')
     const daemon = `mailer-daemon@${ServerEnvironment.value('MAIL_HOSTNAME') || domain || 'localhost'}`
     const inboxFolder = await this.categoryMappings?.pathFor(sender, domain, 'inbox') || 'inbox'
 
@@ -243,59 +226,3 @@ export class OutboundQueueService {
   }
 }
 
-/** @param {import('./SmtpService.js').SendRequest} email */
-export function deliveryRecipients(email) {
-  const requested = email.envelopeRecipients || [...(email.to || []), ...(email.cc || []), ...(email.bcc || [])]
-  return [...new Map(requested.map(address => [String(address).toLowerCase(), String(address)])).values()]
-}
-
-/** @param {import('./SmtpService.js').SendRequest} email @param {string[]} recipients */
-export function deliveryForRecipients(email, recipients) {
-  return { ...email, envelopeRecipients: [...recipients] }
-}
-
-/** @param {import('./SmtpService.js').SendRequest} email @param {unknown} error @param {boolean} exhausted */
-export function deliveryFailurePlan(email, error, exhausted = false) {
-  const requested = deliveryRecipients(email)
-  if (exhausted) return { permanent: requested, transient: [] }
-  const results = Array.isArray(/** @type {any} */ (error)?.deliveryResults) ? /** @type {any} */ (error).deliveryResults : []
-  if (!results.length) return isPermanentReply(/** @type {any} */ (error)?.responseCode)
-    ? { permanent: requested, transient: [] }
-    : { permanent: [], transient: requested }
-
-  const delivered = resultRecipients(results, 'deliveredRecipients')
-  const failed = resultRecipients(results, 'failedRecipients')
-  const permanent = permanentRecipients(results)
-  return {
-    permanent: requested.filter(value => permanent.has(value.toLowerCase())),
-    // A recipient omitted by an adapter result is unconfirmed, never delivered.
-    // Retain it for retry so malformed diagnostics cannot silently lose mail.
-    transient: requested.filter(value => {
-      const key = value.toLowerCase()
-      return !permanent.has(key) && (failed.has(key) || !delivered.has(key))
-    }),
-  }
-}
-
-/** @param {Array<Record<string, any>>} results @param {'deliveredRecipients'|'failedRecipients'} field */
-function resultRecipients(results, field) {
-  return new Set(results.flatMap(result => result[field] || []).map(value => String(value).toLowerCase()))
-}
-
-/** @param {Array<Record<string, any>>} results */
-function permanentRecipients(results) {
-  return new Set(results.flatMap(result => {
-    if (Array.isArray(result.recipientFailures) && result.recipientFailures.length) {
-      return result.recipientFailures.filter(failure => isPermanentReply(failure.responseCode)).map(failure => failure.recipient)
-    }
-    return isPermanentReply(result.responseCode) ? result.failedRecipients || [] : []
-  }).map(value => String(value).toLowerCase()))
-}
-
-/** @param {unknown} value */
-function isPermanentReply(value) { const code = Number(value); return code >= 500 && code < 600 }
-
-/** @param {import('./SmtpService.js').SendRequest} email @param {string[]} recipients @param {number} attempts @param {number} now @param {number} backoff @param {string} message @returns {Partial<OutboxEntry>} */
-function retryPatch(email, recipients, attempts, now, backoff, message) {
-  return { status: 'queued', attempts, nextAttempt: now + backoff, lastError: message, claimedAt: 0, email: deliveryForRecipients(email, recipients) }
-}

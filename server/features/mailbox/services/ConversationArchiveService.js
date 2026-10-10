@@ -1,9 +1,5 @@
-import { canAccessEmail } from '../repositories/EmailsRepository.js'
-
-export class ConversationArchiveError extends Error {
-  /** @param {string} message @param {number} status */
-  constructor(message, status = 400) { super(message); this.status = status }
-}
+import { EmailsRecords } from '../../../shared/mailbox/EmailsRecords.js'
+import { ConversationArchiveError } from '../../../shared/errors/ConversationArchiveError.js'
 
 /** Conversation-level archive with a bounded, undo-safe folder snapshot. */
 export class ConversationArchiveService {
@@ -13,7 +9,7 @@ export class ConversationArchiveService {
   /** Resolve and authorize the source before a send is accepted. */
   async plan({ sourceEmailId, ownerEmail, domains }) {
     const [, selected] = await this.emails.findById(sourceEmailId)
-    if (!selected || !domains.includes(selected.domain) || !canAccessEmail(selected, ownerEmail)) {
+    if (!selected || !domains.includes(selected.domain) || !EmailsRecords.canAccessEmail(selected, ownerEmail)) {
       throw new ConversationArchiveError('Source conversation not found', 404)
     }
     const thread = await this.threads.findForEmail(domains, sourceEmailId, ownerEmail)
@@ -57,7 +53,7 @@ export class ConversationArchiveService {
       if (!item || typeof item.id !== 'string' || typeof item.folder !== 'string') continue
       const [, email] = await this.emails.findById(item.id)
       const archive = email ? await this.categoryMappings?.pathFor(ownerEmail, email.domain, 'archive') || 'archive' : 'archive'
-      if (!email || email.folder !== archive || !domains.includes(email.domain) || !canAccessEmail(email, ownerEmail)) continue
+      if (!email || email.folder !== archive || !domains.includes(email.domain) || !EmailsRecords.canAccessEmail(email, ownerEmail)) continue
       const ids = byFolder.get(item.folder) ?? []
       ids.push(email.id)
       byFolder.set(item.folder, ids)

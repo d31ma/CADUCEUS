@@ -1,7 +1,7 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { SnoozeError } from '../features/mailbox/services/SnoozeService.js'
+import { SnoozeError } from '../shared/errors/SnoozeError.js'
 
 @RequestRoute("/snooze/{id}")
 @SignedIn

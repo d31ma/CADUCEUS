@@ -4,7 +4,7 @@ import { Respond } from '../shared/http/Respond.js'
 import { SearchParser } from '../shared/mailbox/SearchParser.js'
 import { ExternalMessage } from '../shared/mailbox/ExternalMessage.js'
 import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
-import { groupMessagesIntoThreads } from '../features/mailbox/repositories/ThreadsRepository.js'
+import { ThreadsRecords } from '../shared/mailbox/ThreadsRecords.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
 @RequestRoute("/threads")
@@ -125,7 +125,7 @@ export class ThreadsController {
       } catch (error) {
         return ExternalAccounts.accountFailure(error)
       }
-      const threads = groupMessagesIntoThreads(messages, auth.email)
+      const threads = ThreadsRecords.groupMessagesIntoThreads(messages, auth.email)
 
       if (query?.emailId) {
         const thread = threads.find(candidate => candidate.emails.some(email => email.id === query.emailId))

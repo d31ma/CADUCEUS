@@ -1,7 +1,7 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { canAccessEmail } from '../features/mailbox/repositories/EmailsRepository.js'
+import { EmailsRecords } from '../shared/mailbox/EmailsRecords.js'
 import { GitHubNotification } from '../shared/mailbox/GitHubNotification.js'
 import { Ics } from '../shared/calendar/Ics.js'
 import { CalendarAttachments } from '../shared/calendar/CalendarAttachments.js'
@@ -51,7 +51,7 @@ export class InboxIdController {
       const [docId, email] = await app.emails.findById(id)
       if (!docId || !email) return Respond.r404('Email not found')
       if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
-      if (!canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
+      if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
 
       await app.emails.delete(docId, id)
       return { deleted: id }
@@ -104,7 +104,7 @@ export class InboxIdController {
       const [docId, email] = await app.emails.findById(id)
       if (!docId || !email) return Respond.r404('Email not found')
       if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
-      if (!canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
+      if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
 
       const appliedPatch = { ...patch }
       if (typeof appliedPatch.folder === 'string') {
@@ -154,7 +154,7 @@ export class InboxIdController {
       const [, email] = await app.emails.findById(id)
       if (!email) return Respond.r404('Email not found')
       if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
-      if (!canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
+      if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
 
       const presented = await app.domainMigration.presentEmail(email)
       const rawSource = await app.rawMessages.findForEmail(id)

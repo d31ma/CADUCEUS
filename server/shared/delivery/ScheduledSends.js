@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer'
-import { DELIVERY_LEASE_MS } from '../../features/delivery/services/OutboundQueueService.js'
+import { OutboundQueueRules } from './OutboundQueueRules.js'
 import { ExternalAccounts } from '../accounts/ExternalAccounts.js'
 
 export class ScheduledSends {
@@ -79,7 +79,7 @@ export class ScheduledSends {
 
   /** Cancel queue work first so a deleted management row can never still send. */
   static async cancelScheduled(app, record, ownerEmail, now = Date.now()) {
-    if (record.queue?.status === 'sending' && (record.queue.claimedAt ?? 0) > now - DELIVERY_LEASE_MS) {
+    if (record.queue?.status === 'sending' && (record.queue.claimedAt ?? 0) > now - OutboundQueueRules.DELIVERY_LEASE_MS) {
       return { conflict: true }
     }
     if (record.queueDocId) await app.outbox.delete(record.queueDocId)

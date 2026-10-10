@@ -1,13 +1,5 @@
-import { canAccessEmail } from '../repositories/EmailsRepository.js'
-/** @import { SnoozeEntry } from '../repositories/SnoozeRepository.js' */
-
-export class SnoozeError extends Error {
-  /** @param {string} message @param {number} status */
-  constructor(message, status = 400) {
-    super(message)
-    this.status = status
-  }
-}
+import { EmailsRecords } from '../../../shared/mailbox/EmailsRecords.js'
+import { SnoozeError } from '../../../shared/errors/SnoozeError.js'
 
 export class SnoozeService {
   /**
@@ -44,7 +36,7 @@ export class SnoozeService {
     }
     if (!Number.isFinite(input.until) || input.until <= now) throw new SnoozeError('until must be in the future')
     const [, selected] = await this.emails.findById(input.emailId)
-    if (!selected || !input.domains.includes(selected.domain) || !canAccessEmail(selected, input.ownerEmail)) {
+    if (!selected || !input.domains.includes(selected.domain) || !EmailsRecords.canAccessEmail(selected, input.ownerEmail)) {
       throw new SnoozeError('Email not found', 404)
     }
     const thread = await this.threads.findForEmail(input.domains, input.emailId, input.ownerEmail)
@@ -99,7 +91,7 @@ export class SnoozeService {
     const results = []
     for (const record of Object.values(docs)) {
       const [, selected] = await this.emails.findById(record.emailId)
-      if (!selected || !domains.includes(selected.domain) || !canAccessEmail(selected, ownerEmail)) continue
+      if (!selected || !domains.includes(selected.domain) || !EmailsRecords.canAccessEmail(selected, ownerEmail)) continue
       results.push({
         id: record.id,
         threadId: record.threadId || selected.threadId || selected.id,
@@ -164,7 +156,7 @@ export class SnoozeService {
     const messages = []
     for (const id of ids) {
       const [, email] = await this.emails.findById(id)
-      if (email?.folder === 'snoozed' && (!record.ownerEmail || canAccessEmail(email, record.ownerEmail))) messages.push(email)
+      if (email?.folder === 'snoozed' && (!record.ownerEmail || EmailsRecords.canAccessEmail(email, record.ownerEmail))) messages.push(email)
     }
     for (const email of messages) {
       const [emailDocId] = await this.emails.findById(email.id)

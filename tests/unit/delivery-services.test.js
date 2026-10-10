@@ -2,15 +2,16 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import {
-  SmtpDirectAdapter, ConsoleSmtpAdapter, createSmtpAdapter,
-  SmtpDeliveryError, loadDkim, groupRecipientsByDomain, resolveMailExchangers, buildSmtpMessage, transportOptions,
-} from '@/features/delivery/services/SmtpService.js'
+import { SmtpDirectAdapter } from '@/shared/delivery/SmtpDirectAdapter.js'
+import { ConsoleSmtpAdapter } from '@/shared/delivery/ConsoleSmtpAdapter.js'
+import { SmtpRules } from '@/shared/delivery/SmtpRules.js'
+import { SmtpDeliveryError } from '@/shared/errors/SmtpDeliveryError.js'
 import { AcmeService } from '../../background/AcmeService.js'
 import { TrackingTokens } from '@/shared/delivery/TrackingTokens.js'
 import { Security } from '@/shared/security/Security.js'
 import { RuleValidation } from '@/shared/domains/RuleValidation.js'
-import { PushService, buildNewMailPushPayload, buildUnsnoozedPushPayload, countUnreadInbox } from '@/features/notifications/services/PushService.js'
+import { PushService } from '@/features/notifications/services/PushService.js'
+import { PushRules } from '@/shared/notifications/PushRules.js'
 import tlsOptions from 'smtp-server/lib/tls-options.js'
 
 const MSG = { to: ['bob@other.com'], subject: 'Hi', text: 'body' }
@@ -24,14 +25,14 @@ describe('createSmtpAdapter', () => {
 
   it('selects the adapter named in the environment', () => {
     process.env.SMTP_ADAPTER = 'console'
-    expect(createSmtpAdapter()).toBeInstanceOf(ConsoleSmtpAdapter)
+    expect(SmtpRules.createSmtpAdapter()).toBeInstanceOf(ConsoleSmtpAdapter)
     process.env.SMTP_ADAPTER = 'direct'
-    expect(createSmtpAdapter()).toBeInstanceOf(SmtpDirectAdapter)
+    expect(SmtpRules.createSmtpAdapter()).toBeInstanceOf(SmtpDirectAdapter)
   })
 
   it('rejects an unknown adapter', () => {
     process.env.SMTP_ADAPTER = 'sendgrid'
-    expect(() => createSmtpAdapter()).toThrow(/Unsupported SMTP_ADAPTER/)
+    expect(() => SmtpRules.createSmtpAdapter()).toThrow(/Unsupported SMTP_ADAPTER/)
   })
 })
 
@@ -44,7 +45,7 @@ describe('ConsoleSmtpAdapter', () => {
 
 describe('groupRecipientsByDomain', () => {
   it('groups case-insensitively and skips malformed addresses', () => {
-    const grouped = groupRecipientsByDomain(['a@X.com', 'b@x.com', 'c@y.com', 'nope'])
+    const grouped = SmtpRules.groupRecipientsByDomain(['a@X.com', 'b@x.com', 'c@y.com', 'nope'])
     expect([...grouped.keys()]).toEqual(['x.com', 'y.com'])
     expect(grouped.get('x.com')).toEqual(['a@X.com', 'b@x.com'])
   })
@@ -52,7 +53,7 @@ describe('groupRecipientsByDomain', () => {
 
 describe('buildSmtpMessage', () => {
   it('joins address lists and decodes attachments', () => {
-    const built = buildSmtpMessage('me@x.com', {
+    const built = SmtpRules.buildSmtpMessage('me@x.com', {
       ...MSG,
       cc: ['c@x.com'],
       bcc: ['d@x.com'],
@@ -67,7 +68,7 @@ describe('buildSmtpMessage', () => {
   })
 
   it('leaves optional lists undefined', () => {
-    const built = buildSmtpMessage('me@x.com', MSG)
+    const built = SmtpRules.buildSmtpMessage('me@x.com', MSG)
     expect(built.cc).toBeUndefined()
     expect(built.attachments).toBeUndefined()
   })
@@ -79,7 +80,7 @@ describe('buildSmtpMessage', () => {
     process.env.CADUCEUS_PUBLIC_URL = 'https://mail.example.test'
     try {
       const source = '<p><a href="https://example.org/x">Visit</a></p>'
-      const built = buildSmtpMessage('me@x.com', {
+      const built = SmtpRules.buildSmtpMessage('me@x.com', {
         ...MSG,
         html: source,
         trackingId: 'smtp-tracking-000001',
@@ -105,15 +106,15 @@ describe('buildSmtpMessage', () => {
 
 describe('resolveMailExchangers', () => {
   it('falls back to the domain itself when there is no MX record', async () => {
-    expect(await resolveMailExchangers('invalid.invalid')).toEqual(['invalid.invalid'])
+    expect(await SmtpRules.resolveMailExchangers('invalid.invalid')).toEqual(['invalid.invalid'])
   })
 
 	it('sorts MX preference, rejects null MX, and preserves transient DNS failures', async () => {
-		expect(await resolveMailExchangers('example.test', async () => [
+		expect(await SmtpRules.resolveMailExchangers('example.test', async () => [
 			{ priority: 20, exchange: 'mx2.example.test' }, { priority: 10, exchange: 'mx1.example.test' },
 		])).toEqual(['mx1.example.test', 'mx2.example.test'])
-		await expect(resolveMailExchangers('none.test', async () => [{ priority: 0, exchange: '.' }])).rejects.toMatchObject({ responseCode: 556 })
-		await expect(resolveMailExchangers('later.test', async () => { throw Object.assign(new Error('servfail'), { code: 'ESERVFAIL' }) })).rejects.toMatchObject({ responseCode: 451 })
+		await expect(SmtpRules.resolveMailExchangers('none.test', async () => [{ priority: 0, exchange: '.' }])).rejects.toMatchObject({ responseCode: 556 })
+		await expect(SmtpRules.resolveMailExchangers('later.test', async () => { throw Object.assign(new Error('servfail'), { code: 'ESERVFAIL' }) })).rejects.toMatchObject({ responseCode: 451 })
 	})
 })
 
@@ -126,11 +127,11 @@ describe('outbound SMTP TLS policy', () => {
 
 	it('uses explicit opportunistic TLS by default and validated mandatory TLS when required', () => {
 		delete process.env.SMTP_TLS_POLICY
-		expect(transportOptions('mx.example.test', 'mail.example.test')).toMatchObject({ requireTLS: false, opportunisticTLS: true, tls: { servername: 'mx.example.test', rejectUnauthorized: false } })
+		expect(SmtpRules.transportOptions('mx.example.test', 'mail.example.test')).toMatchObject({ requireTLS: false, opportunisticTLS: true, tls: { servername: 'mx.example.test', rejectUnauthorized: false } })
 		process.env.SMTP_TLS_POLICY = 'require'
-		expect(transportOptions('mx.example.test', 'mail.example.test')).toMatchObject({ requireTLS: true, opportunisticTLS: false, tls: { rejectUnauthorized: true } })
+		expect(SmtpRules.transportOptions('mx.example.test', 'mail.example.test')).toMatchObject({ requireTLS: true, opportunisticTLS: false, tls: { rejectUnauthorized: true } })
 		process.env.SMTP_TLS_POLICY = 'invalid'
-		expect(() => transportOptions('mx.example.test', 'mail.example.test')).toThrow(/SMTP_TLS_POLICY/)
+		expect(() => SmtpRules.transportOptions('mx.example.test', 'mail.example.test')).toThrow(/SMTP_TLS_POLICY/)
 	})
 })
 
@@ -143,17 +144,17 @@ describe('loadDkim', () => {
   })
 
   it('returns undefined until every part is present', () => {
-    expect(loadDkim()).toBeUndefined()
+    expect(SmtpRules.loadDkim()).toBeUndefined()
     process.env.DKIM_DOMAIN = 'example.com'
     process.env.DKIM_SELECTOR = 'mail'
-    expect(loadDkim()).toBeUndefined()
+    expect(SmtpRules.loadDkim()).toBeUndefined()
   })
 
   it('reads an inline key', () => {
     process.env.DKIM_DOMAIN = 'example.com'
     process.env.DKIM_SELECTOR = 'mail'
     process.env.DKIM_PRIVATE_KEY = 'PEM'
-    expect(loadDkim()).toEqual({ domainName: 'example.com', keySelector: 'mail', privateKey: 'PEM' })
+    expect(SmtpRules.loadDkim()).toEqual({ domainName: 'example.com', keySelector: 'mail', privateKey: 'PEM' })
   })
 
   it('reads a key file and tolerates a missing one', () => {
@@ -162,10 +163,10 @@ describe('loadDkim', () => {
     const path = join(root, 'dkim.pem')
     writeFileSync(path, 'FILE-PEM')
     process.env.DKIM_PRIVATE_KEY_FILE = path
-    expect(loadDkim().privateKey).toBe('FILE-PEM')
+    expect(SmtpRules.loadDkim().privateKey).toBe('FILE-PEM')
 
     process.env.DKIM_PRIVATE_KEY_FILE = join(root, 'missing.pem')
-    expect(loadDkim()).toBeUndefined()
+    expect(SmtpRules.loadDkim()).toBeUndefined()
   })
 })
 
@@ -415,7 +416,7 @@ describe('PushService', () => {
   const email = { id: 'e1', recipient: 'alice@example.com', sender: 'bob@other.com', subject: 'Hi' }
 
   it('builds a deep-linked notification carrying the exact unread count', () => {
-    expect(buildNewMailPushPayload(email, 4.8)).toEqual({
+    expect(PushRules.buildNewMailPushPayload(email, 4.8)).toEqual({
       title: 'New mail from bob@other.com',
       body: 'Hi',
       data: { url: '/email/e1', emailId: 'e1', soundId: 'chime' },
@@ -427,8 +428,8 @@ describe('PushService', () => {
       ],
       badgeCount: 4,
     })
-    expect(buildNewMailPushPayload(email, undefined)).not.toHaveProperty('badgeCount')
-    expect(buildUnsnoozedPushPayload({ ...email, threadId: 'thread-1' }, 3)).toEqual({
+    expect(PushRules.buildNewMailPushPayload(email, undefined)).not.toHaveProperty('badgeCount')
+    expect(PushRules.buildUnsnoozedPushPayload({ ...email, threadId: 'thread-1' }, 3)).toEqual({
       title: 'Snoozed conversation returned',
       body: 'Hi',
       data: { url: '/email/e1', emailId: 'e1', reason: 'snooze-expired', soundId: 'chime' },
@@ -443,7 +444,7 @@ describe('PushService', () => {
   })
 
   it('builds privacy-aware notifications and honors sound and action policy', () => {
-    expect(buildNewMailPushPayload(email, 1, {
+    expect(PushRules.buildNewMailPushPayload(email, 1, {
       newMailNotificationPrivacy: 'private',
       newMailNotificationActions: false,
       soundId: 'none',
@@ -455,14 +456,14 @@ describe('PushService', () => {
       silent: true,
       badgeCount: 1,
     })
-    expect(buildNewMailPushPayload(email, 1, {
+    expect(PushRules.buildNewMailPushPayload(email, 1, {
       newMailNotificationPrivacy: 'sender',
     }).body).not.toContain('Hi')
   })
 
   it('counts unread inbox mail through the recipient normal domain scope', async () => {
     const calls = []
-    const count = await countUnreadInbox({
+    const count = await PushRules.countUnreadInbox({
       list: async (domains, filters) => {
         calls.push({ domains, filters })
         return [{ id: 'one' }, { id: 'two' }]
@@ -480,7 +481,7 @@ describe('PushService', () => {
 
   it('counts only the persisted focused hosted account for background badges', async () => {
     const calls = []
-    const count = await countUnreadInbox({
+    const count = await PushRules.countUnreadInbox({
       list: async (domains, filters) => {
         calls.push({ domains, filters })
         return [{ id: 'focused' }]

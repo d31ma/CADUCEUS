@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { ProviderCalendarService, mergeCalendarEvents } from '../../server/features/calendar/services/ProviderCalendarService.js'
+import { ProviderCalendarService } from '../../server/features/calendar/services/ProviderCalendarService.js'
+import { ProviderCalendarRules } from '../../server/shared/calendar/ProviderCalendarRules.js'
 
 describe('provider calendar projection', () => {
   it('parses recurring CalDAV resources without exposing raw calendar data', async () => {
@@ -20,7 +21,7 @@ describe('provider calendar projection', () => {
   it('prefers authoritative provider events over imported invite copies', () => {
     const local = [{ id: 'invite', source: 'invite', icsUid: 'same' }, { id: 'manual', source: 'manual', icsUid: '' }]
     const provider = [{ id: 'provider', source: 'provider', icsUid: 'same' }]
-    expect(mergeCalendarEvents(local, provider).map(event => event.id)).toEqual(['manual', 'provider'])
+    expect(ProviderCalendarRules.mergeCalendarEvents(local, provider).map(event => event.id)).toEqual(['manual', 'provider'])
   })
 
   it('assigns independent stable identities to multiple UIDs in one resource', async () => {

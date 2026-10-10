@@ -1,24 +1,7 @@
 // @ts-check
 
 import { Fylo } from '../../../shared/persistence/Fylo.js'
-
-/**
- * Presence tracking — who's online right now, scoped per domain.
- *
- * Persisted in Fylo under {@link Collections.PRESENCE} so heartbeats from any
- * Tachyon worker share the same view (Tachyon spawns a fresh subprocess per
- * request, so a pure in-memory map can't synchronise across endpoints).
- *
- * One document per user — the `email` field is the primary key. Updates are
- * delete-then-put because Fylo's `putData` always inserts under a fresh
- * docId. A user is "online" if `lastSeenAt` is within ONLINE_WINDOW_MS.
- * Records older than PRUNE_AFTER_MS are pruned lazily on snapshot reads.
- *
- * @module presence
- */
-
-const ONLINE_WINDOW_MS = 60_000
-const PRUNE_AFTER_MS = 10 * 60_000
+import { PresenceRules } from '../../../shared/presence/PresenceRules.js'
 
 export class PresenceService {
   /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo */
@@ -61,14 +44,14 @@ export class PresenceService {
     const out = []
     for (const [docId, rec] of Object.entries(docs)) {
       const r = /** @type {PresenceRecord} */ (rec)
-      if (now - r.lastSeenAt > PRUNE_AFTER_MS) {
+      if (now - r.lastSeenAt > PresenceRules.PRUNE_AFTER_MS) {
         this.fylo.delDoc(Fylo.Collections.PRESENCE, docId).catch(() => {})
         continue
       }
       if (!(r.domains || []).some(d => viewerSet.has(d.toLowerCase()))) continue
       out.push({
         email: r.email,
-        online: now - r.lastSeenAt < ONLINE_WINDOW_MS,
+        online: now - r.lastSeenAt < PresenceRules.ONLINE_WINDOW_MS,
         lastSeenAt: new Date(r.lastSeenAt).toISOString(),
       })
     }
@@ -81,7 +64,7 @@ export class PresenceService {
    */
   async isOnline(email) {
     const [, rec] = await this._findByEmail((email || '').toLowerCase())
-    return !!rec && Date.now() - rec.lastSeenAt < ONLINE_WINDOW_MS
+    return !!rec && Date.now() - rec.lastSeenAt < PresenceRules.ONLINE_WINDOW_MS
   }
 
   /**

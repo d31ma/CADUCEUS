@@ -1,4 +1,6 @@
 import { Fylo } from '../../../shared/persistence/Fylo.js'
+import { DomainsRecords } from '../../../shared/domains/DomainsRecords.js'
+
 /** @import { DomainConfig } from '../../../types' */
 /** @import { RouteRule } from '../../../types' */
 
@@ -16,7 +18,7 @@ export class DomainsRepository {
     const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.DOMAINS, { $ops: [] }).collect())
     return Object.values(docs)
       .filter(d => allowedDomains.includes(d.domain))
-      .map(d => deserialize(/** @type {RawDomainDoc} */ (d)))
+      .map(d => DomainsRecords.deserialize(/** @type {RawDomainDoc} */ (d)))
   }
 
   /**
@@ -26,7 +28,7 @@ export class DomainsRepository {
   async findEntry(domain) {
     const docs = await Fylo.collect(this.fylo.findDocs(Fylo.Collections.DOMAINS, { $ops: [{ domain: { $eq: domain } }] }).collect())
     const entry = Object.entries(docs)[0]
-    return entry ? [entry[0], deserialize(/** @type {RawDomainDoc} */ (entry[1]))] : [null, null]
+    return entry ? [entry[0], DomainsRecords.deserialize(/** @type {RawDomainDoc} */ (entry[1]))] : [null, null]
   }
 
   /**
@@ -34,7 +36,7 @@ export class DomainsRepository {
    * @returns {Promise<string>}
    */
   async put(config) {
-    return await this.fylo.putData(Fylo.Collections.DOMAINS, serialize(config))
+    return await this.fylo.putData(Fylo.Collections.DOMAINS, DomainsRecords.serialize(config))
   }
 
   /**
@@ -55,12 +57,3 @@ export class DomainsRepository {
   }
 }
 
-/** @param {RawDomainDoc} raw @returns {DomainConfig} */
-function deserialize(raw) {
-  return { ...raw, routes: typeof raw.routes === 'string' ? JSON.parse(raw.routes) : (raw.routes ?? []) }
-}
-
-/** @param {DomainConfig} config @returns {RawDomainDoc} */
-function serialize(config) {
-  return { ...config, routes: JSON.stringify(config.routes) }
-}

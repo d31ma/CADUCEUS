@@ -1,7 +1,7 @@
 import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { getApp } from '../app.js'
-import { canAccessEmail } from '../features/mailbox/repositories/EmailsRepository.js'
+import { EmailsRecords } from '../shared/mailbox/EmailsRecords.js'
 import { ExternalMessage } from '../shared/mailbox/ExternalMessage.js'
 import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
 
@@ -39,7 +39,7 @@ export class InboxIdAttachmentsAttachmentIdController {
     const [, email] = await app.emails.findById(emailId)
     if (!email) return Respond.r404('Email not found')
     if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
-    if (!canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
+    if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
 
     const [, attachment] = await app.attachments.findById(attachmentId)
     if (!attachment || attachment.emailId !== emailId) return Respond.r404('Attachment not found')

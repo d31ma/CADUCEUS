@@ -2,7 +2,7 @@ import { RouteRequest } from '../shared/http/RouteRequest.js'
 import { Respond } from '../shared/http/Respond.js'
 import { Auth } from '../shared/auth/Auth.js'
 import { getApp } from '../app.js'
-import { ThreadShareInputError } from '../features/mailbox/services/ThreadSharingService.js'
+import { ThreadShareInputError } from '../shared/errors/ThreadShareInputError.js'
 
 @RequestRoute("/thread-shares")
 @SignedIn

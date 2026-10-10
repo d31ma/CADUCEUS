@@ -1,9 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto'
-
-export class SendIdempotencyConflict extends Error {
-  /** @param {string} message @param {'mismatch'|'applying'|'ambiguous'} kind */
-  constructor(message, kind) { super(message); this.kind = kind }
-}
+import { SendIdempotencyConflict } from '../../../shared/errors/SendIdempotencyConflict.js'
+import { SendIdempotencyRules } from '../../../shared/delivery/SendIdempotencyRules.js'
 
 /** Durable exactly-once HTTP acceptance boundary for outbound mail. */
 export class SendIdempotencyService {
@@ -15,7 +12,7 @@ export class SendIdempotencyService {
 
   /** Stable hash independent of object property order. */
   hash(value) {
-    return createHash('sha256').update(canonicalJson(value)).digest('hex')
+    return createHash('sha256').update(SendIdempotencyRules.canonicalJson(value)).digest('hex')
   }
 
   /** Inspect without creating a journal row, so validation failures remain retryable. */
@@ -76,8 +73,3 @@ export class SendIdempotencyService {
   }
 }
 
-function canonicalJson(value) {
-  if (value == null || typeof value !== 'object') return JSON.stringify(value)
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`
-  return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(',')}}`
-}

@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto'
 import { Fylo } from '../../../shared/persistence/Fylo.js'
+import { PushSubscriptionsRecords } from '../../../shared/notifications/PushSubscriptionsRecords.js'
+
 /** @import { PushSubscriptionRecord } from '../../../types' */
 
 export class PushSubscriptionsRepository {
@@ -45,7 +47,7 @@ export class PushSubscriptionsRepository {
    */
   async upsert(subscription) {
     const now = new Date().toISOString()
-    const id = subscriptionId(subscription.endpoint)
+    const id = PushSubscriptionsRecords.subscriptionId(subscription.endpoint)
     const [docId, existing] = await this.findById(id)
     const record = {
       ...subscription,
@@ -64,7 +66,7 @@ export class PushSubscriptionsRepository {
    * @returns {Promise<boolean>}
    */
   async deleteByEndpoint(endpoint) {
-    const [docId] = await this.findById(subscriptionId(endpoint))
+    const [docId] = await this.findById(PushSubscriptionsRecords.subscriptionId(endpoint))
     if (!docId) return false
     await this.fylo.delDoc(Fylo.Collections.PUSH_SUBSCRIPTIONS, docId)
     return true
@@ -80,11 +82,7 @@ export class PushSubscriptionsRepository {
 
   /** @param {string} endpoint @returns {string} */
   static subscriptionId(endpoint) {
-    return subscriptionId(endpoint)
+    return PushSubscriptionsRecords.subscriptionId(endpoint)
   }
 }
 
-/** @param {string} endpoint @returns {string} */
-function subscriptionId(endpoint) {
-  return createHash('sha256').update(endpoint).digest('hex')
-}

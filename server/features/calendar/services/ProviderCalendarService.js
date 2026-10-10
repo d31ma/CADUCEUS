@@ -2,10 +2,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { ExternalAccounts } from '../../../shared/accounts/ExternalAccounts.js'
 import { Ics } from '../../../shared/calendar/Ics.js'
-
-const MAX_RESOURCES = 10_000
-const MAX_EVENTS = 20_000
-const MAX_ICALENDAR_BYTES = 2 << 20
+import { ProviderCalendarRules } from '../../../shared/calendar/ProviderCalendarRules.js'
 
 /** Parse authenticated CalDAV resources into the normal calendar event model. */
 export class ProviderCalendarService {
@@ -86,23 +83,23 @@ export class ProviderCalendarService {
     const response = await this.boundary.calendarResources(token)
     const resources = Array.isArray(response?.resources) ? response.resources : []
     const calendars = Array.isArray(response?.calendars) ? response.calendars.filter(candidate => candidate?.calendarId && candidate?.accountId) : []
-    if (resources.length > MAX_RESOURCES) throw new Error('provider calendar resource limit exceeded')
+    if (resources.length > ProviderCalendarRules.MAX_RESOURCES) throw new Error('provider calendar resource limit exceeded')
     /** @type {Array<Record<string, any>>} */
     const events = []
     /** @type {Map<string, Record<string, any>>} */
     const resourcesById = new Map()
     for (const resource of resources) {
       const raw = typeof resource?.rawICalendar === 'string' ? resource.rawICalendar : ''
-      if (!raw || Buffer.byteLength(raw) > MAX_ICALENDAR_BYTES) continue
+      if (!raw || Buffer.byteLength(raw) > ProviderCalendarRules.MAX_ICALENDAR_BYTES) continue
       const calendar = Ics.parseIcs(raw)
       if (!calendar) continue
       resourcesById.set(resource.id, resource)
       for (const event of calendar.events) {
-        if (events.length >= MAX_EVENTS) throw new Error('provider calendar event limit exceeded')
-        const masterId = providerEventId(resource.id, event.uid)
+        if (events.length >= ProviderCalendarRules.MAX_EVENTS) throw new Error('provider calendar event limit exceeded')
+        const masterId = ProviderCalendarRules.providerEventId(resource.id, event.uid)
         const recurrenceId = event.recurrenceId || ''
         events.push({
-          id: recurrenceId ? `${masterId}:exception:${shortHash(recurrenceId)}` : masterId,
+          id: recurrenceId ? `${masterId}:exception:${ProviderCalendarRules.shortHash(recurrenceId)}` : masterId,
           userEmail: resource.mailboxAddress,
           title: event.summary,
           start: event.start,
@@ -156,19 +153,3 @@ export class ProviderCalendarService {
   }
 }
 
-/** Keep imported invitation copies from duplicating an authoritative provider event. */
-export function mergeCalendarEvents(localEvents, providerEvents) {
-  const providerUIDs = new Set(providerEvents.map(event => event.icsUid).filter(Boolean))
-  return [
-    ...localEvents.filter(event => event.source !== 'invite' || !providerUIDs.has(event.icsUid)),
-    ...providerEvents,
-  ]
-}
-
-function providerEventId(resourceId, uid) {
-  return `provider-${shortHash(`${resourceId}\x00${uid}`)}`
-}
-
-function shortHash(value) {
-  return createHash('sha256').update(String(value)).digest('base64url').slice(0, 24)
-}

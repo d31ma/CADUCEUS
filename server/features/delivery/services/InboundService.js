@@ -169,7 +169,7 @@ export class InboundService {
     if (simple) return simple
 
     try {
-      const { simpleParser } = await import('mailparser')
+      const { simpleParser } = await import('../../../deps/npm/mailparser.mjs')
       const parsed = await simpleParser(binary ? Buffer.from(rawBody) : rawText)
       const html = typeof parsed.html === 'string'
         ? parsed.html

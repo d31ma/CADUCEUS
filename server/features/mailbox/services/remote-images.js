@@ -2,7 +2,7 @@ import { lookup as dnsLookup } from 'node:dns/promises'
 import http from 'node:http'
 import https from 'node:https'
 import { BlockList, isIP } from 'node:net'
-import { DomUtils, parseDocument } from 'htmlparser2'
+import { DomUtils, parseDocument } from '../../../deps/npm/htmlparser2.mjs'
 
 export const MAX_REMOTE_IMAGE_BYTES = 4 * 1024 * 1024
 export const MAX_REMOTE_IMAGES_PER_REQUEST = 6

@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
-import { McpServer } from '@modelcontextprotocol/server'
-import { z } from 'zod'
+import { McpServer } from '../../../deps/npm/modelcontextprotocol-server.mjs'
+import { z } from '../../../deps/npm/zod.mjs'
 import { FyloAccessContext } from '../../../platform/persistence/FyloAccessContext.js'
 import { canAccessEmail } from '../../mailbox/repositories/EmailsRepository.js'
 import { parseDraftInput } from '../../mailbox/services/draft-input.js'

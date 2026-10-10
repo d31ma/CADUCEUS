@@ -26,8 +26,8 @@ export class SubmissionServer {
    * @returns {Promise<import('smtp-server').SMTPServer>}
    */
   async start() {
-    const { SMTPServer } = await import('smtp-server')
-    const { simpleParser } = await import('mailparser')
+    const { SMTPServer } = await import('../../../deps/npm/smtp-server.mjs')
+    const { simpleParser } = await import('../../../deps/npm/mailparser.mjs')
 
     // Serve a fresh context per handshake when TLS lives in files, so ACME
     // renewals apply without restarting the submission server.

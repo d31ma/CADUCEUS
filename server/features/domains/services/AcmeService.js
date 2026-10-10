@@ -39,7 +39,7 @@ export class AcmeService {
       return { obtained: false, reason: 'cert still valid' }
     }
 
-    const acme = acmeModule ?? await import('acme-client')
+    const acme = acmeModule ?? await import('../../../deps/npm/acme-client.mjs')
     const accountKey = existsSync(this.accountPath)
       ? readFileSync(this.accountPath)
       : await acme.crypto.createPrivateKey()

@@ -11,6 +11,7 @@ import { externalDeliveryRequest, externalUndoToken } from '../features/delivery
 import { parseExternalMessageId } from '../features/mailbox/services/external-message.js'
 import { ExternalAccounts, accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
 import { SendIdempotencyConflict } from '../features/delivery/services/SendIdempotencyService.js'
+import { Uuid } from '../platform/runtime/Uuid.js'
 /** @import { SendRequest } from '../features/delivery/services/SmtpService.js' */
 
 @RequestRoute("/send")
@@ -110,7 +111,7 @@ export class SendController {
 
       // The server is the sole issuer of tracking identities. Never accept a
       // caller-selected id that could collide with another mailbox's history.
-      const trackingId = req.openTracking || req.linkTracking ? Bun.randomUUIDv7() : undefined
+      const trackingId = req.openTracking || req.linkTracking ? Uuid.v7() : undefined
 
       let remindAtMs
       if (body?.remindAt != null) {

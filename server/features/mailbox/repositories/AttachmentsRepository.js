@@ -5,6 +5,7 @@ import { Buffer } from 'node:buffer'
 import { Buckets, Collections, collect } from '../../../platform/persistence/Fylo.js'
 import { normalizeAttachmentContentId, sanitizeAttachmentFilename } from '../services/attachment-policy.js'
 import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
+import { readFile } from 'node:fs/promises'
 /** @import { ParsedAttachment } from '../../../models/ParsedAttachment.js' */
 /** @import { EmailAttachmentRecord } from '../../../types' */
 /** @import { EmailAttachmentSummary } from '../../../types' */
@@ -116,7 +117,7 @@ export class AttachmentsRepository {
     }
     if (!attachment.storagePath) throw new Error('Attachment has no stored content reference')
     ensureInsideRoot(attachmentRoot(), attachment.storagePath)
-    return await Bun.file(attachment.storagePath).bytes()
+    return new Uint8Array(await readFile(attachment.storagePath))
   }
 }
 

@@ -7,6 +7,7 @@ import { cancelExternalScheduled, cancelScheduled, findOwnedScheduled, loadStore
 import { ExternalAccounts, accountFailure, bearerToken } from '../platform/accounts/ExternalAccounts.js'
 import { buildOutboundMessageSource } from '../features/mailbox/services/message-source.js'
 import { externalDeliveryRequest } from '../features/delivery/services/external-submission.js'
+import { Uuid } from '../platform/runtime/Uuid.js'
 
 @RequestRoute("/send/scheduled/{id}")
 @SignedIn
@@ -90,7 +91,7 @@ export class SendScheduledIdController {
   				}
   				const recipients = [...new Set([...req.to, ...(req.cc ?? []), ...(req.bcc ?? [])])]
   				let trackingId = record.entry.email.trackingId
-  				if ((req.openTracking || req.linkTracking) && !trackingId) trackingId = Bun.randomUUIDv7()
+  				if ((req.openTracking || req.linkTracking) && !trackingId) trackingId = Uuid.v7()
   				if (!req.openTracking && !req.linkTracking) trackingId = undefined
   				if (Number(submission.deliveryCount || 0) > 0) {
   					let staged

@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'node:crypto'
-import { DomUtils, parseDocument } from 'htmlparser2'
+import { DomUtils, parseDocument } from '../../../deps/npm/htmlparser2.mjs'
 import { ServerEnvironment } from '../../../platform/runtime/ServerEnvironment.js'
 
 const TOKEN_VERSION = 1

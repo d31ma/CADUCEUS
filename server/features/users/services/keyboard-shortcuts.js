@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 
-const CATALOG_URL = new URL('../../../../client/shared/data/keymap.json', import.meta.url)
+const CATALOG_URL = new URL('../../../deps/data/keymap.json', import.meta.url)
 const VALID_SCOPES = new Set(['global', 'mailbox', 'mail', 'reader', 'reader-find', 'reader-no-find', 'composer', 'calendar'])
 const VALID_MODIFIERS = new Set(['alt', 'ctrl', 'meta', 'mod', 'shift'])
 const MODIFIER_ALIASES = Object.freeze({ control: 'ctrl', option: 'alt', cmd: 'meta', command: 'meta' })

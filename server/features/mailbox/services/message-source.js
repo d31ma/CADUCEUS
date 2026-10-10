@@ -1,4 +1,4 @@
-import MailComposer from 'nodemailer/lib/mail-composer/index.js'
+import MailComposer from '../../../deps/npm/nodemailer-mail-composer.mjs'
 import { Buffer } from 'node:buffer'
 
 /**

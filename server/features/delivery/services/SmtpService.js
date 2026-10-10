@@ -78,7 +78,7 @@ export class SmtpDirectAdapter {
     const from = fromOverride || ServerEnvironment.value('SMTP_FROM') || `postmaster@${hostname}`
     /** @type {(options: any) => { sendMail: (message: any) => Promise<any> }} */
     const createTransport = this.deps.createTransport
-      ?? /** @type {any} */ ((await import('nodemailer')).default.createTransport)
+      ?? /** @type {any} */ ((await import('../../../deps/npm/nodemailer.mjs')).default.createTransport)
     const resolveMx = this.deps.resolveMx ?? resolveMailExchangers
     const dkim = loadDkim()
     const recipients = uniqueRecipients(msg.envelopeRecipients || [...(msg.to || []), ...(msg.cc || []), ...(msg.bcc || [])])

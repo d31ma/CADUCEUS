@@ -2,6 +2,9 @@ import { resolve, sep } from 'node:path'
 import { RouteRequest } from '../middleware/RouteRequest.js'
 import { Respond } from '../platform/http/Respond.js'
 import { ServerEnvironment } from '../platform/runtime/ServerEnvironment.js'
+import { Readable } from 'node:stream'
+import { readFile, stat } from 'node:fs/promises'
+import { createReadStream } from 'node:fs'
 
 /**
  * Authenticated, allowlisted delivery for the checksum-pinned translation
@@ -11,8 +14,6 @@ import { ServerEnvironment } from '../platform/runtime/ServerEnvironment.js'
 @RequestRoute("/translation-assets")
 @SignedIn
 export class TranslationAssetsController {
-  static DEFAULT_ASSET_ROOT = resolve(process.cwd(), 'translation-assets')
-
   static SHA256 = /^[a-f0-9]{64}$/
 
   @GetRoute
@@ -20,12 +21,14 @@ export class TranslationAssetsController {
     return RouteRequest.handle(request, { guard: {} }, async ({ query }) => {
       const requested = TranslationAssetsController._readAssetPath(query?.path)
       if (requested instanceof Error) return Respond.r400(requested.message)
-      const root = resolve(ServerEnvironment.value('TRANSLATION_ASSET_ROOT') || TranslationAssetsController.DEFAULT_ASSET_ROOT)
-      const catalogFile = Bun.file(resolve(root, 'catalog.json'))
-      if (!await catalogFile.exists()) return Respond.r503('Self-hosted translation assets are not installed')
+      const configuredRoot = ServerEnvironment.value('TRANSLATION_ASSET_ROOT')
+      if (!configuredRoot) return Respond.r503('Self-hosted translation assets are not installed')
+      const root = resolve(configuredRoot)
+      const catalogText = await readFile(resolve(root, 'catalog.json'), 'utf8').catch(() => null)
+      if (catalogText === null) return Respond.r503('Self-hosted translation assets are not installed')
 
       let catalog
-      try { catalog = await catalogFile.json() } catch { return Respond.r503('Self-hosted translation asset catalog is invalid') }
+      try { catalog = JSON.parse(catalogText) } catch { return Respond.r503('Self-hosted translation asset catalog is invalid') }
       const entry = Array.isArray(catalog?.files)
         ? catalog.files.find(file => file?.path === requested && Number.isSafeInteger(file?.bytes) && TranslationAssetsController.SHA256.test(file?.sha256 || ''))
         : null
@@ -34,9 +37,9 @@ export class TranslationAssetsController {
 
       const path = resolve(root, requested)
       if (!path.startsWith(root + sep)) return Respond.r400('Invalid translation asset path')
-      const file = Bun.file(path)
-      if (!await file.exists() || file.size !== entry.bytes) return Respond.r503('Translation asset failed its catalog check')
-      return new Response(file, {
+      const size = await stat(path).then(found => (found.isFile() ? found.size : -1), () => -1)
+      if (size !== entry.bytes) return Respond.r503('Translation asset failed its catalog check')
+      return new Response(/** @type {ReadableStream} */ (Readable.toWeb(createReadStream(path))), {
         status: 200,
         headers: {
           'Content-Type': TranslationAssetsController._contentType(requested),

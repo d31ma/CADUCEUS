@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer'
-import { simpleParser } from 'mailparser'
+import { simpleParser } from '../../../deps/npm/mailparser.mjs'
 import { threadMetadataFromHeaders } from './threading.js'
 
 const ACCOUNT_ID = /^ext_[A-Za-z0-9_-]{20,80}$/

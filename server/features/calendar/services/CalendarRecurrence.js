@@ -1,6 +1,6 @@
 // @ts-check
 
-import { rrulestr } from 'rrule'
+import { rrulestr } from '../../../deps/npm/rrule.mjs'
 import { CalendarDate } from './CalendarDate.js'
 
 const MAX_RULE_BYTES = 1024

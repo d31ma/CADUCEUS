@@ -119,7 +119,7 @@ export class PushService {
   async getVapidPublicKey() {
     if (ServerEnvironment.value('VAPID_PUBLIC_KEY')) return ServerEnvironment.value('VAPID_PUBLIC_KEY')
     try {
-      const wp = await import('web-push')
+      const wp = await import('../../../deps/npm/web-push.mjs')
       const keys = wp.default.generateVAPIDKeys?.() || wp.generateVAPIDKeys?.()
       if (keys?.publicKey) return keys.publicKey
     } catch (e) {
@@ -189,7 +189,7 @@ export class PushService {
     if (ServerEnvironment.value('WEB_PUSH_DISABLED') === 'true') return true
     if (!ServerEnvironment.value('VAPID_PUBLIC_KEY') || !ServerEnvironment.value('VAPID_PRIVATE_KEY')) return true
     try {
-      const webPush = await import('web-push')
+      const webPush = await import('../../../deps/npm/web-push.mjs')
       const vapidPublicKey = ServerEnvironment.value('VAPID_PUBLIC_KEY')
       const vapidPrivateKey = ServerEnvironment.value('VAPID_PRIVATE_KEY')
       const vapidSubject = ServerEnvironment.value('VAPID_SUBJECT') || 'mailto:admin@caduceus.local'

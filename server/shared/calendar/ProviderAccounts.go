@@ -79,6 +79,17 @@ func (ProviderAccounts) IsBoundary(err error) bool {
 	return errors.As(err, &failure)
 }
 
+// Defined answers fields without the ones that are undefined, as
+// JSON.stringify left them out of a payload or an answer.
+func (ProviderAccounts) Defined(fields map[string]any) map[string]any {
+	for key, value := range fields {
+		if value == nil {
+			delete(fields, key)
+		}
+	}
+	return fields
+}
+
 // requestLimit keeps a request below the owner's 64 MiB frame ceiling once
 // the signed envelope encodes it again.
 func (ProviderAccounts) requestLimit() int { return 47 << 20 }

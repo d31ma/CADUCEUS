@@ -97,7 +97,7 @@ func (calendars ProviderCalendars) Update(token string, change ProviderChange) (
 	if err != nil {
 		return nil, err
 	}
-	return calendars.mutate(token, found.Event["accountId"], calendars.defined(map[string]any{
+	return calendars.mutate(token, found.Event["accountId"], ProviderAccounts{}.Defined(map[string]any{
 		"idempotencyKey": change.IdempotencyKey, "kind": "update", "calendarId": "", "resourceId": found.Resource["id"], "expectedEtag": found.Resource["etag"], "rawICalendar": resource,
 	}))
 }
@@ -120,7 +120,7 @@ func (calendars ProviderCalendars) Delete(token string, eventId string, recurren
 	if deleteAll {
 		kind = "delete"
 	}
-	return calendars.mutate(token, found.Event["accountId"], calendars.defined(map[string]any{
+	return calendars.mutate(token, found.Event["accountId"], ProviderAccounts{}.Defined(map[string]any{
 		"idempotencyKey": idempotencyKey, "kind": kind, "calendarId": "", "resourceId": found.Resource["id"], "expectedEtag": found.Resource["etag"], "rawICalendar": resource,
 	}))
 }
@@ -188,7 +188,7 @@ func (calendars ProviderCalendars) event(resource map[string]any, event map[stri
 		}
 		return items
 	}
-	return calendars.defined(map[string]any{
+	return ProviderAccounts{}.Defined(map[string]any{
 		"id":                 id,
 		"userEmail":          resource["mailboxAddress"],
 		"title":              event["summary"],
@@ -238,7 +238,7 @@ func (calendars ProviderCalendars) mutate(token string, accountId any, input map
 	current := mutation
 	for attempt := 0; attempt < 40 && (current["state"] == "queued" || current["state"] == "applying"); attempt++ {
 		time.Sleep(time.Duration(50+min(attempt*25, 200)) * time.Millisecond)
-		current, err = calendars.Accounts.Object("accounts.calendar_mutation", calendars.defined(map[string]any{"token": token, "id": accountId, "mutationId": mutation["id"]}))
+		current, err = calendars.Accounts.Object("accounts.calendar_mutation", ProviderAccounts{}.Defined(map[string]any{"token": token, "id": accountId, "mutationId": mutation["id"]}))
 		if err != nil {
 			return nil, err
 		}
@@ -250,15 +250,4 @@ func (calendars ProviderCalendars) mutate(token string, accountId any, input map
 		return nil, errors.New("provider calendar mutation did not complete")
 	}
 	return current, nil
-}
-
-// defined answers fields without the ones that are undefined, as
-// JSON.stringify left them out.
-func (ProviderCalendars) defined(fields map[string]any) map[string]any {
-	for key, value := range fields {
-		if value == nil {
-			delete(fields, key)
-		}
-	}
-	return fields
 }

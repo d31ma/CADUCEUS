@@ -1,4 +1,8 @@
-import "math"
+import (
+	"math"
+	"strconv"
+	"strings"
+)
 
 // RecordValues reads the loosely typed fields of decoded records with the
 // JavaScript meanings the former repositories relied on: truthiness, typeof
@@ -77,11 +81,50 @@ func (RecordValues) Coalesce(value any, fallback any) any {
 	return value
 }
 
+// Numeric answers Number(value): numbers as they are, numeric text parsed,
+// booleans as 0 or 1, and NaN for anything else.
+func (values RecordValues) Numeric(value any) float64 {
+	if number, isNumber := values.Number(value); isNumber {
+		return number
+	}
+	switch typed := value.(type) {
+	case bool:
+		if typed {
+			return 1
+		}
+		return 0
+	case string:
+		text := strings.TrimSpace(typed)
+		if text == "" {
+			return 0
+		}
+		if number, err := strconv.ParseFloat(text, 64); err == nil {
+			return number
+		}
+	}
+	return math.NaN()
+}
+
 // NumberOf answers Number(value) || 0 for a stored counter.
 func (values RecordValues) NumberOf(value any) float64 {
-	number, isNumber := values.Number(value)
-	if !isNumber || math.IsNaN(number) {
+	number := values.Numeric(value)
+	if math.IsNaN(number) {
 		return 0
 	}
 	return number
+}
+
+// String answers String(value) for the text and numbers records hold.
+func (RecordValues) String(value any) string {
+	switch typed := value.(type) {
+	case nil:
+		return "undefined"
+	case string:
+		return typed
+	case float64:
+		return strconv.FormatFloat(typed, 'f', -1, 64)
+	case bool:
+		return strconv.FormatBool(typed)
+	}
+	return "[object Object]"
 }

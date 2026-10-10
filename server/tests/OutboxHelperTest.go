@@ -1,44 +1,56 @@
-// OutboxHelperTest calls the outbox helper without a FYLO bridge: every
-// operation reaches the boundary and answers its refusal. The routes that
-// use the helper test its stored documents over HTTP.
+// OutboxHelperTest calls every method of OutboxHelper on an instance that Tachyon did
+// not build, so it has no request database: each method fails as soon as it
+// reaches FYLO. The route suites check the stored documents over HTTP.
 // @Test(OutboxTestSetup)
 type OutboxHelperTest struct {
 	behaviors *BehaviorContext
 }
 
-func (test *OutboxHelperTest) helper() *OutboxHelper {
-	return &OutboxHelper{fyloHelper: &FyloHelper{}}
+func (test *OutboxHelperTest) TestPutNeedsTheDatabase() {
+	Assert.Throws(func() error {
+		_, err := (&OutboxHelper{}).Put(map[string]any{"id": "undo-1"})
+		return err
+	})
 }
 
-func (test *OutboxHelperTest) TestPutNeedsTheBoundary() {
-	_, err := test.helper().Put(map[string]any{"id": "undo-1"})
-	Assert.IsTrue(err != nil)
+func (test *OutboxHelperTest) TestFindByIdNeedsTheDatabase() {
+	Assert.Throws(func() error {
+		_, _, err := (&OutboxHelper{}).FindById("undo-1")
+		return err
+	})
 }
 
-func (test *OutboxHelperTest) TestFindByIdNeedsTheBoundary() {
-	_, _, err := test.helper().FindById("undo-1")
-	Assert.IsTrue(err != nil)
+func (test *OutboxHelperTest) TestDeleteNeedsTheDatabase() {
+	Assert.Throws(func() error {
+		err := (&OutboxHelper{}).Delete("doc-1")
+		return err
+	})
 }
 
-func (test *OutboxHelperTest) TestDeleteNeedsTheBoundary() {
-	Assert.IsTrue(test.helper().Delete("doc-1") != nil)
+func (test *OutboxHelperTest) TestFindExpiredNeedsTheDatabase() {
+	Assert.Throws(func() error {
+		_, err := (&OutboxHelper{}).FindExpired()
+		return err
+	})
 }
 
-func (test *OutboxHelperTest) TestFindExpiredNeedsTheBoundary() {
-	_, err := test.helper().FindExpired()
-	Assert.IsTrue(err != nil)
+func (test *OutboxHelperTest) TestFindDueNeedsTheDatabase() {
+	Assert.Throws(func() error {
+		_, err := (&OutboxHelper{}).FindDue(EpochTime{}.Now())
+		return err
+	})
 }
 
-func (test *OutboxHelperTest) TestFindDueNeedsTheBoundary() {
-	_, err := test.helper().FindDue(EpochTime{}.Now())
-	Assert.IsTrue(err != nil)
+func (test *OutboxHelperTest) TestListAllNeedsTheDatabase() {
+	Assert.Throws(func() error {
+		_, err := (&OutboxHelper{}).ListAll()
+		return err
+	})
 }
 
-func (test *OutboxHelperTest) TestListAllNeedsTheBoundary() {
-	_, err := test.helper().ListAll()
-	Assert.IsTrue(err != nil)
-}
-
-func (test *OutboxHelperTest) TestUpdateNeedsTheBoundary() {
-	Assert.IsTrue(test.helper().Update("doc-1", map[string]any{"attempts": 1}) != nil)
+func (test *OutboxHelperTest) TestUpdateNeedsTheDatabase() {
+	Assert.Throws(func() error {
+		err := (&OutboxHelper{}).Update("doc-1", map[string]any{"attempts": 1})
+		return err
+	})
 }

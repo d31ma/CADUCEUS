@@ -1,0 +1,9 @@
+<logic :if="session.signedIn">
+  <email-detail :standalone="true" />
+</logic>
+
+<logic :if="!session.signedIn">
+  <div class="login-screen">
+    <login-form :brandlogo="'/shared/assets/favicon.svg'" />
+  </div>
+</logic>

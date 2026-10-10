@@ -12,10 +12,6 @@ func (QuotedMessageUtils) Html(quoted QuotedMessage) string {
 	return `<div><br></div><section data-caduceus-quote="` + quoted.Mode + `">` + heading + `<blockquote>` + body + `</blockquote></section>`
 }
 
-func (QuotedMessageUtils) Escape(value string) string {
-	return QuotedMessageUtils{}.escaped(value)
-}
-
 func (QuotedMessageUtils) escaped(value string) string {
 	return strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", `"`, "&quot;", "'", "&#39;").Replace(value)
 }

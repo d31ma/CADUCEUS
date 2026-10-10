@@ -1,8 +1,7 @@
 /**
  * @typedef {Object} SnoozeCompleted
  * @property {string} snoozeId
- * @property {number} count
- * @property {string} until
+ * @property {string} message
  * @property {boolean} standalone
  */
 export {}

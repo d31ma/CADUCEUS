@@ -20,6 +20,14 @@ func (MessageConversationUtils) SplitQuotedText(value string) QuotedText {
 	return MessageConversationUtils{}.splitAt(text, lines, index)
 }
 
+func (MessageConversationUtils) HasText(parts QuotedText) bool {
+	return MessageConversationUtils{}.hasText(parts)
+}
+
+func (MessageConversationUtils) hasText(parts QuotedText) bool {
+	return parts.Visible != "" || parts.HasQuoted
+}
+
 func (MessageConversationUtils) IsForwardedSubject(value string) bool {
 	return MessageConversationUtils{}.forwardedSubject().MatchString(value)
 }

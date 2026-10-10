@@ -1,11 +1,3 @@
 <app-shell>
-<logic :if="canUseApp">
-  <email-detail :standalone="true" />
-</logic>
-
-<logic :if="canShowLogin">
-  <div class="login-screen">
-    <login-form :brandlogo="'/shared/assets/favicon.svg'" />
-  </div>
-</logic>
+  <email-reader />
 </app-shell>

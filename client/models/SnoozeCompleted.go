@@ -1,6 +1,5 @@
 type SnoozeCompleted struct {
 	SnoozeId   string `json:"snoozeId"`
-	Count      int    `json:"count"`
-	Until      string `json:"until"`
+	Message    string `json:"message"`
 	Standalone bool   `json:"standalone"`
 }

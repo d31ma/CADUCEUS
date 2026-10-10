@@ -8,26 +8,12 @@ export const INTERFACE_LOCALE_STORAGE_KEY = 'caduceus-interface-locale-v1'
 /** @type {ReadonlyArray<{id:InterfaceLocaleChoice,label?:string,labelKey?:string}>} */
 export const INTERFACE_LOCALE_OPTIONS = Object.freeze([
   { id: 'auto', labelKey: 'locale.automatic' },
-  { id: 'en', label: 'English' },
-  { id: 'de', label: 'Deutsch' },
-  { id: 'es', label: 'Español' },
-  { id: 'es-419', label: 'Español (Latinoamérica)' },
-  { id: 'fr', label: 'Français' },
-  { id: 'ko', label: '한국어' },
-  { id: 'pl', label: 'Polski' },
-  { id: 'ja', label: '日本語' },
-  { id: 'zh-CN', label: '简体中文' },
-  { id: 'zh-TW', label: '繁體中文' },
-  { id: 'pt', label: 'Português' },
-  { id: 'pt-BR', label: 'Português (Brasil)' },
-  { id: 'gl', label: 'Galego' },
-  { id: 'tr', label: 'Türkçe' },
-  { id: 'ru', label: 'Русский' },
-  { id: 'cs', label: 'Čeština' },
-  { id: 'uk', label: 'Українська' },
-  { id: 'hu', label: 'Magyar' },
-  { id: 'he', label: 'עברית' },
-  { id: 'ar', label: 'العربية' },
+  ...'en=English|de=Deutsch|es=Español|es-419=Español (Latinoamérica)|fr=Français|ko=한국어|pl=Polski|ja=日本語|zh-CN=简体中文|zh-TW=繁體中文|pt=Português|pt-BR=Português (Brasil)|gl=Galego|tr=Türkçe|ru=Русский|cs=Čeština|uk=Українська|hu=Magyar|he=עברית|ar=العربية'
+    .split('|')
+    .map(entry => {
+      const [id, label] = entry.split('=')
+      return { id: /** @type {InterfaceLocaleChoice} */ (id), label }
+    }),
 ])
 
 /** @type {ReadonlySet<InterfaceLocaleChoice>} */

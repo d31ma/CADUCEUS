@@ -1,7 +1,7 @@
-<div :class="'email-detail-shell' + ($participantSidebarOpen ? ' participant-open' : '')">
+<div :class="'email-detail-shell' + (participant.sidebarOpen ? ' participant-open' : '')">
 <div class="email-reader-content">
 <div class="email-toolbar">
-  <w-btn variant="text" on:click="goBack()" :class="'email-back-btn' + (standalone ? ' standalone' : '')">
+  <w-btn variant="text" on:click="message.goBack()" :class="'email-back-btn' + (standalone ? ' standalone' : '')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     Back
   </w-btn>
@@ -12,112 +12,114 @@
        horizontal scrolling whenever the detail column is too narrow. -->
   <div class="email-action-rows">
     <div class="email-actions email-actions-state">
-      <w-btn variant="text" on:click="toggleRead()">
-        {$email && $email.read ? 'Mark unread' : 'Mark read'}
+      <w-btn variant="text" on:click="message.toggleRead()">
+        {message.email.read ? 'Mark unread' : 'Mark read'}
       </w-btn>
-      <w-btn variant="text" on:click="toggleStar()">
-        {$email && $email.starred ? 'Unstar' : 'Star'}
+      <w-btn variant="text" on:click="message.toggleStar()">
+        {message.email.starred ? 'Unstar' : 'Star'}
       </w-btn>
-      <logic :if="$email && $email.domain">
-        <w-btn variant="text" on:click="openCategoryPicker('move')" aria-haspopup="dialog">Move to…</w-btn>
-        <w-btn variant="text" on:click="openCategoryPicker('label')" aria-haspopup="dialog">Labels…</w-btn>
+      <logic :if="message.hasEmail && message.email.domain">
+        <w-btn variant="text" on:click="categoryPicker.openPicker('move')" aria-haspopup="dialog">Move to…</w-btn>
+        <w-btn variant="text" on:click="categoryPicker.openPicker('label')" aria-haspopup="dialog">Labels…</w-btn>
       </logic>
-      <logic :if="$email && $email.folder !== 'archive' && $email.folder !== 'trash'">
-        <w-btn variant="text" on:click="archive()">Archive</w-btn>
+      <logic :if="message.hasEmail && message.email.folder !== 'archive' && message.email.folder !== 'trash'">
+        <w-btn variant="text" on:click="message.archive()">Archive</w-btn>
       </logic>
-      <logic :if="$email && $email.folder !== 'inbox'">
-        <w-btn variant="text" on:click="moveToInbox()">To inbox</w-btn>
+      <logic :if="message.hasEmail && message.email.folder !== 'inbox'">
+        <w-btn variant="text" on:click="message.moveToInbox()">To inbox</w-btn>
       </logic>
-      <logic :if="$email && !isSpam($email)">
-        <w-btn variant="text" class="email-spam-action" on:click="reportSpam($email.id)">Report spam</w-btn>
+      <logic :if="message.hasEmail && !message.email.spam">
+        <w-btn variant="text" class="email-spam-action" on:click="message.reportSpam()">Report spam</w-btn>
       </logic>
-      <logic :if="$email && isSpam($email)">
-        <w-btn variant="text" class="email-safe-action" on:click="markNotSpam($email.id)">Not spam</w-btn>
+      <logic :if="message.hasEmail && message.email.spam">
+        <w-btn variant="text" class="email-safe-action" on:click="message.markNotSpam()">Not spam</w-btn>
       </logic>
-      <logic :if="$email && $email.folder !== 'trash'">
-        <w-btn variant="text" on:click="moveToTrash()">Trash</w-btn>
+      <logic :if="message.hasEmail && message.email.folder !== 'trash'">
+        <w-btn variant="text" on:click="message.moveToTrash()">Trash</w-btn>
       </logic>
-      <logic :if="$email && ($email.systemFolder || $email.folder) === 'inbox'">
-        <w-btn variant="text" on:click="snooze()" aria-haspopup="dialog">Snooze</w-btn>
+      <logic :if="message.hasEmail && message.currentFolder === 'inbox'">
+        <w-btn variant="text" on:click="snooze.openDialog()" aria-haspopup="dialog">Snooze</w-btn>
       </logic>
-      <logic :if="canUnsubscribe">
-        <logic :if="$unsubscribeState === 'idle'">
-          <w-btn variant="text" on:click="unsubscribe()">Unsubscribe</w-btn>
+      <logic :if="message.canUnsubscribe">
+        <logic :if="message.unsubscribeState === 'idle'">
+          <w-btn variant="text" on:click="message.unsubscribe(browser.confirm('Unsubscribe from future messages from this sender?'))">Unsubscribe</w-btn>
         </logic>
-        <logic :if="$unsubscribeState === 'loading'">
+        <logic :if="message.unsubscribeState === 'loading'">
           <span class="email-unsubscribe-status" role="status">Unsubscribing…</span>
         </logic>
-        <logic :if="$unsubscribeState === 'success'">
+        <logic :if="message.unsubscribeState === 'success'">
           <span class="email-unsubscribe-status email-unsubscribe-success" role="status">Unsubscribed</span>
         </logic>
-        <logic :if="$unsubscribeState === 'error'">
+        <logic :if="message.unsubscribeState === 'error'">
           <span class="email-unsubscribe-status email-unsubscribe-error" role="alert">Unsubscribe failed</span>
-          <w-btn variant="text" on:click="unsubscribe()">Try again</w-btn>
+          <w-btn variant="text" on:click="message.unsubscribe(browser.confirm('Unsubscribe from future messages from this sender?'))">Try again</w-btn>
         </logic>
       </logic>
-      <logic :if="$email && ($email.systemFolder || $email.folder) === 'trash'">
-        <w-btn variant="tonal" color="danger" on:click="deleteEmail()">Delete forever</w-btn>
+      <logic :if="message.hasEmail && message.currentFolder === 'trash'">
+        <w-btn variant="tonal" color="danger" on:click="message.deleteEmail(browser.confirm('Delete this message forever?'))">Delete forever</w-btn>
       </logic>
-      <logic :if="$email && $email.githubUrl">
-        <w-btn variant="text" class="email-github-action" on:click="openGitHub()" title="Visit thread on GitHub" aria-label="Visit thread on GitHub">
+      <logic :if="message.hasEmail && message.email.githubUrl">
+        <w-btn variant="text" class="email-github-action" on:click="message.openGitHub()" title="Visit thread on GitHub" aria-label="Visit thread on GitHub">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 .7a11.5 11.5 0 0 0-3.64 22.4c.58.1.79-.25.79-.56v-2.02c-3.22.7-3.9-1.37-3.9-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.78 1.2 1.78 1.2 1.04 1.77 2.72 1.26 3.38.96.1-.75.4-1.26.74-1.55-2.57-.3-5.27-1.29-5.27-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.16 1.18a10.9 10.9 0 0 1 5.76 0c2.2-1.49 3.16-1.18 3.16-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.09 0 4.41-2.7 5.39-5.28 5.68.42.36.79 1.07.79 2.16v3.2c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .7Z"/></svg>
           GitHub
         </w-btn>
       </logic>
-      <logic :if="$email && participantAddress">
+      <logic :if="message.hasEmail && message.participantAddress">
         <button
           type="button"
           class="w-btn w-btn-text email-contact-toggle"
-          on:click="toggleParticipantSidebar()"
+          on:click="participant.toggle()"
           aria-controls="participant-sidebar"
-          :aria-pressed="$participantSidebarOpen ? 'true' : 'false'"
-          :aria-label="participantSidebarLabel"
-          :title="participantSidebarLabel">
+          :aria-pressed="participant.sidebarOpen ? 'true' : 'false'"
+          :aria-label="participant.sidebarLabel"
+          :title="participant.sidebarLabel">
           Contact
         </button>
       </logic>
       <span
         class="email-extension-toolbar"
+        role="group"
         data-extension-slot="message-toolbar"
-        :data-message-id="$email ? $email.id : ''"
-        :data-message-subject="$email ? $email.subject : ''"
-        :data-message-sender="$email ? $email.sender : ''"
-        :data-message-received-at="$email ? $email.receivedAt : ''"
+        :data-message-id="message.email.id"
+        :data-message-subject="message.email.subject"
+        :data-message-sender="message.email.sender"
+        :data-message-received-at="message.email.receivedAt"
         aria-label="Extension actions"></span>
     </div>
     <div class="email-actions email-actions-reply">
-      <logic :if="isDraft">
-        <w-btn variant="tonal" on:click="editDraft()" style="min-width:80px;">Edit draft</w-btn>
+      <logic :if="message.isDraft">
+        <w-btn variant="tonal" on:click="message.editDraft()" style="min-width:80px;">Edit draft</w-btn>
       </logic>
-      <logic :if="!isDraft">
-        <w-btn variant="tonal" on:click="preferredReply()" style="min-width:80px;">Reply</w-btn>
-        <w-btn variant="text" on:click="replyAll()">Reply All</w-btn>
-        <w-btn variant="text" on:click="forward()">Forward</w-btn>
-        <w-btn variant="text" on:click="openFindInThread()" aria-label="Find in conversation">Find</w-btn>
-        <w-btn variant="text" on:click="openShareDialog()" aria-haspopup="dialog" aria-label="Share conversation">Share</w-btn>
-        <w-btn variant="text" :disabled="$printing" on:click="printConversation()" aria-label="Print conversation">
-          {$printing ? 'Preparing…' : 'Print'}
+      <logic :if="!message.isDraft">
+        <w-btn variant="tonal" on:click="message.preferredReply()" style="min-width:80px;">Reply</w-btn>
+        <w-btn variant="text" on:click="message.replyAll()">Reply All</w-btn>
+        <w-btn variant="text" on:click="message.forward()">Forward</w-btn>
+        <w-btn variant="text" on:click="conversation.openFind()" aria-label="Find in conversation">Find</w-btn>
+        <w-btn variant="text" on:click="share.openDialog()" aria-haspopup="dialog" aria-label="Share conversation">Share</w-btn>
+        <w-btn variant="text" :disabled="browser.printing" on:click="browser.printConversation()" aria-label="Print conversation">
+          {browser.printing ? 'Preparing…' : 'Print'}
         </w-btn>
       </logic>
     </div>
   </div>
 </div>
+<a class="email-download-link" data-message-download hidden :href="message.downloadUrl" :download="message.downloadName">Download</a>
 
-<logic :if="$categoryPicker.open">
-  <div class="detail-category-picker-backdrop" role="presentation" on:click="closeCategoryPicker()">
-    <section class="detail-category-picker-dialog" data-detail-category-picker role="dialog" aria-modal="true" :aria-label="categoryPickerTitle" on:click="stopCategoryPropagation($event)" on:keydown="categoryPickerKeydown($event)">
+<logic :if="categoryPicker.open">
+  <div class="detail-category-picker-backdrop" role="presentation" on:click="categoryPicker.dismiss($event.target.className)">
+    <section class="detail-category-picker-dialog" data-detail-category-picker role="dialog" aria-modal="true" :aria-label="categoryPicker.title" on:keydown="browser.pickerKeys($event)">
       <header class="detail-category-picker-header">
         <div>
-          <h2 class="w-text-title-medium">{categoryPickerTitle}</h2>
-          <p class="w-text-label-small">{$email.domain}</p>
+          <h2 class="w-text-title-medium">{categoryPicker.title}</h2>
+          <p class="w-text-label-small">{categoryPicker.domain}</p>
         </div>
-        <button type="button" class="detail-category-picker-close" on:click="closeCategoryPicker()" aria-label="Close category picker">×</button>
+        <button type="button" class="detail-category-picker-close" on:click="categoryPicker.close()" aria-label="Close category picker">×</button>
       </header>
-      <input class="detail-category-picker-search" type="search" :placeholder="categoryPickerPlaceholder" :value="$categoryPicker.search" on:input="categorySearch($event)" aria-label="Search categories" autocomplete="off" />
-      <div class="detail-category-picker-list" role="listbox" :aria-label="categoryPickerTitle">
-        <loop :for="item of categoryPickerItems">
-          <button type="button" class="detail-category-picker-option" role="option" :aria-selected="categoryPickerAriaSelected(item)" :data-category-path="item.path" :style="categoryPickerIndent(item)" on:click="selectCategory(item.path)">
-            <span class="detail-category-picker-glyph" aria-hidden="true">{$categoryPicker.mode === 'label' ? categoryPickerCheck(item) : '📁'}</span>
+      <input class="detail-category-picker-search" type="search" :placeholder="categoryPicker.placeholder" :value="categoryPicker.search" on:input="categoryPicker.searchInput($event.target.value)" aria-label="Search categories" autocomplete="off" />
+      <div class="detail-category-picker-list" role="listbox" :aria-label="categoryPicker.title">
+        <loop :for="item of categoryPicker.items">
+          <button type="button" class="detail-category-picker-option" role="option" :aria-selected="item.ariaSelected" :data-category-path="item.path" :style="item.indent" on:click="categoryPicker.select(item.path)">
+            <span class="detail-category-picker-glyph" aria-hidden="true">{categoryPicker.mode === 'label' ? item.check : '📁'}</span>
             <span class="detail-category-picker-option-copy">
               <span>{item.displayName}</span>
               <logic :if="item.parentPath"><span class="detail-category-picker-parent">{item.parentPath}</span></logic>
@@ -125,243 +127,243 @@
             <logic :if="item.role"><span class="detail-category-picker-role">{item.role}</span></logic>
           </button>
         </loop>
-        <logic :if="categoryPickerItems.length === 0 && !categoryPickerCanCreate">
-          <p class="detail-category-picker-empty">No matching {$categoryPicker.mode === 'label' ? 'labels' : 'folders'}.</p>
+        <logic :if="categoryPicker.items.length === 0 && !categoryPicker.canCreate">
+          <p class="detail-category-picker-empty">No matching {categoryPicker.emptyKind}.</p>
         </logic>
       </div>
-      <logic :if="categoryPickerCanCreate">
-        <button type="button" class="detail-category-picker-create detail-category-picker-option" :disabled="$categoryPicker.creating" on:click="createCategory()">
+      <logic :if="categoryPicker.canCreate">
+        <button type="button" class="detail-category-picker-create detail-category-picker-option" :disabled="categoryPicker.creating" on:click="categoryPicker.create()">
           <span aria-hidden="true">＋</span>
-          <span>{$categoryPicker.creating ? 'Creating…' : categoryPickerCreateText}</span>
+          <span>{categoryPicker.creating ? 'Creating…' : categoryPicker.createText}</span>
         </button>
       </logic>
-      <logic :if="$categoryPicker.error"><p class="detail-category-picker-error" role="alert">{$categoryPicker.error}</p></logic>
+      <logic :if="categoryPicker.error"><p class="detail-category-picker-error" role="alert">{categoryPicker.error}</p></logic>
     </section>
   </div>
 </logic>
 
-<logic :if="$snoozeOpen">
-  <div class="snooze-backdrop" role="presentation" on:click="closeSnooze()">
-    <section class="snooze-popover" role="dialog" aria-modal="true" aria-labelledby="snooze-title" on:click="stopSnoozePropagation($event)">
+<logic :if="snooze.open">
+  <div class="snooze-backdrop" role="presentation" on:click="snooze.dismiss($event.target.className)">
+    <section class="snooze-popover" role="dialog" aria-modal="true" aria-labelledby="snooze-title">
       <div class="snooze-popover-header">
         <div>
           <h2 id="snooze-title" class="w-text-title-medium">Snooze conversation</h2>
           <p class="w-text-body-small">It will return to Inbox unread at the selected time.</p>
         </div>
-        <button class="snooze-close" type="button" :disabled="$snoozeBusy" on:click="closeSnooze()" aria-label="Close snooze choices">×</button>
+        <button class="snooze-close" type="button" :disabled="snooze.busy" on:click="snooze.close()" aria-label="Close snooze choices">×</button>
       </div>
       <div class="snooze-options" role="group" aria-label="Snooze presets">
-        <button type="button" aria-label="Later Today" :disabled="$snoozeBusy" on:click="chooseSnoozePreset('later-today')"><span aria-hidden="true">◷</span>Later Today</button>
-        <button type="button" aria-label="Tonight" :disabled="$snoozeBusy" on:click="chooseSnoozePreset('tonight')"><span aria-hidden="true">☾</span>Tonight</button>
-        <button type="button" aria-label="Tomorrow" :disabled="$snoozeBusy" on:click="chooseSnoozePreset('tomorrow')"><span aria-hidden="true">☀</span>Tomorrow</button>
-        <button type="button" aria-label="This Weekend" :disabled="$snoozeBusy" on:click="chooseSnoozePreset('this-weekend')"><span aria-hidden="true">▦</span>This Weekend</button>
-        <button type="button" aria-label="Next Week" :disabled="$snoozeBusy" on:click="chooseSnoozePreset('next-week')"><span aria-hidden="true">→</span>Next Week</button>
-        <button type="button" aria-label="Next Month" :disabled="$snoozeBusy" on:click="chooseSnoozePreset('next-month')"><span aria-hidden="true">▣</span>Next Month</button>
+        <button type="button" aria-label="Later Today" :disabled="snooze.busy" on:click="snooze.choosePreset(localization.snoozePreset('later-today'), 'Later Today', localization.snoozePresetLabel('later-today'))"><span aria-hidden="true">◷</span>Later Today</button>
+        <button type="button" aria-label="Tonight" :disabled="snooze.busy" on:click="snooze.choosePreset(localization.snoozePreset('tonight'), 'Tonight', localization.snoozePresetLabel('tonight'))"><span aria-hidden="true">☾</span>Tonight</button>
+        <button type="button" aria-label="Tomorrow" :disabled="snooze.busy" on:click="snooze.choosePreset(localization.snoozePreset('tomorrow'), 'Tomorrow', localization.snoozePresetLabel('tomorrow'))"><span aria-hidden="true">☀</span>Tomorrow</button>
+        <button type="button" aria-label="This Weekend" :disabled="snooze.busy" on:click="snooze.choosePreset(localization.snoozePreset('this-weekend'), 'This Weekend', localization.snoozePresetLabel('this-weekend'))"><span aria-hidden="true">▦</span>This Weekend</button>
+        <button type="button" aria-label="Next Week" :disabled="snooze.busy" on:click="snooze.choosePreset(localization.snoozePreset('next-week'), 'Next Week', localization.snoozePresetLabel('next-week'))"><span aria-hidden="true">→</span>Next Week</button>
+        <button type="button" aria-label="Next Month" :disabled="snooze.busy" on:click="snooze.choosePreset(localization.snoozePreset('next-month'), 'Next Month', localization.snoozePresetLabel('next-month'))"><span aria-hidden="true">▣</span>Next Month</button>
       </div>
-      <form class="snooze-custom" on:submit="submitCustomSnooze($event)">
+      <form class="snooze-custom" on:submit="browser.submitSnooze(localization.localDateTime(snooze.custom), localization.localDateTimeLabel(snooze.custom))">
         <label for="snooze-custom-time" class="w-text-label-medium">Custom date and time</label>
         <div>
-          <input id="snooze-custom-time" type="datetime-local" :value="$snoozeCustom" on:input="$snoozeCustom = $event.target.value" :disabled="$snoozeBusy" />
-          <w-btn variant="tonal" type="submit" :disabled="$snoozeBusy || !$snoozeCustom">{$snoozeBusy ? 'Saving…' : 'Snooze'}</w-btn>
+          <input id="snooze-custom-time" type="datetime-local" :value="snooze.custom" on:input="snooze.custom = $event.target.value" :disabled="snooze.busy" />
+          <w-btn variant="tonal" type="submit" :disabled="snooze.busy || !snooze.custom">{snooze.busy ? 'Saving…' : 'Snooze'}</w-btn>
         </div>
       </form>
-      <logic :if="$snoozeError"><p class="snooze-error" role="alert">{$snoozeError}</p></logic>
+      <logic :if="snooze.error"><p class="snooze-error" role="alert">{snooze.error}</p></logic>
     </section>
   </div>
 </logic>
 
-<logic :if="$shareOpen">
-  <div class="share-backdrop" role="presentation" on:click="closeShareDialog()">
-    <section class="share-dialog" role="dialog" aria-modal="true" aria-labelledby="share-dialog-title" on:click="stopSharePropagation($event)">
+<logic :if="share.open">
+  <div class="share-backdrop" role="presentation" on:click="share.dismiss($event.target.className)">
+    <section class="share-dialog" role="dialog" aria-modal="true" aria-labelledby="share-dialog-title">
       <header class="share-dialog-header">
         <div>
           <h2 id="share-dialog-title" class="w-text-title-medium">Share conversation</h2>
           <p class="w-text-body-small">Anyone with the secret link can read this conversation and download its attachments until it expires or you revoke it.</p>
         </div>
-        <button type="button" class="share-close" on:click="closeShareDialog()" :disabled="$shareBusy" aria-label="Close sharing dialog">×</button>
+        <button type="button" class="share-close" on:click="share.close()" :disabled="share.busy" aria-label="Close sharing dialog">×</button>
       </header>
 
       <div class="share-create-row">
         <label for="share-expiry">Link expires</label>
-        <select id="share-expiry" aria-label="Sharing link expiry" :value="$shareExpiresDays" on:change="$shareExpiresDays = $event.target.value" :disabled="$shareBusy">
+        <select id="share-expiry" aria-label="Sharing link expiry" :value="share.expiresDays" on:change="share.expiresDays = $event.target.value" :disabled="share.busy">
           <option value="1">In 1 day</option>
           <option value="7">In 7 days</option>
           <option value="30">In 30 days</option>
         </select>
-        <w-btn variant="filled" on:click="createThreadShare()" :disabled="$shareBusy">
-          {$shareBusy ? 'Working…' : 'Create new link'}
+        <w-btn variant="filled" on:click="share.create()" :disabled="share.busy">
+          {share.busy ? 'Working…' : 'Create new link'}
         </w-btn>
       </div>
 
-      <logic :if="$createdShare">
+      <logic :if="share.hasCreated">
         <section class="share-secret" aria-labelledby="share-secret-title">
           <h3 id="share-secret-title">Copy this link now</h3>
           <p>The secret is not stored and cannot be shown again. Creating another link revokes this one.</p>
-          <input type="text" readonly :value="$createdShare.absoluteUrl" aria-label="New conversation sharing link" />
+          <input type="text" readonly :value="share.created.absoluteUrl" aria-label="New conversation sharing link" />
           <div>
-            <w-btn variant="tonal" on:click="copyThreadShare()">Copy link</w-btn>
-            <w-btn variant="text" on:click="openThreadShare()">Open link</w-btn>
+            <w-btn variant="tonal" on:click="share.copy()">Copy link</w-btn>
+            <w-btn variant="text" on:click="share.openLink()">Open link</w-btn>
           </div>
         </section>
       </logic>
 
       <section class="share-history" aria-labelledby="share-history-title">
         <h3 id="share-history-title">Links for this conversation</h3>
-        <logic :if="$shareBusy && $threadShares.length === 0"><p role="status">Loading links…</p></logic>
-        <logic :if="!$shareBusy && $threadShares.length === 0"><p>No links have been created.</p></logic>
-        <logic :if="$threadShares.length > 0">
+        <logic :if="share.busy && share.shares.length === 0"><p role="status">Loading links…</p></logic>
+        <logic :if="!share.busy && share.shares.length === 0"><p>No links have been created.</p></logic>
+        <logic :if="share.shares.length > 0">
           <ol>
-            <loop :for="share of $threadShares">
+            <loop :for="link of share.shares">
               <li>
                 <span>
-                  <strong>{share.messageCount} {share.messageCount === 1 ? 'message' : 'messages'}</strong>
-                  <small>{share.statusLabel}</small>
+                  <strong>{link.messageCount} {link.messageCount === 1 ? 'message' : 'messages'}</strong>
+                  <small>{link.statusPrefix}{localization.date(link.statusDate)}</small>
                 </span>
-                <logic :if="share.active">
-                  <w-btn variant="text" color="danger" on:click="revokeThreadShare(share)" :disabled="$shareBusy" :aria-label="'Revoke link for ' + share.subject">Revoke</w-btn>
+                <logic :if="link.active">
+                  <w-btn variant="text" color="danger" on:click="share.revoke(link)" :disabled="share.busy" :aria-label="'Revoke link for ' + link.subject">Revoke</w-btn>
                 </logic>
               </li>
             </loop>
           </ol>
         </logic>
       </section>
-      <logic :if="$shareError"><p class="share-error" role="alert">{$shareError}</p></logic>
+      <logic :if="share.error"><p class="share-error" role="alert">{share.error}</p></logic>
       <p class="share-privacy-note">CADUCEUS stores only a hash of each secret. Message ownership and attachment membership are rechecked on every request.</p>
     </section>
   </div>
 </logic>
 
-<logic :if="$attachmentPreviewOpen">
-  <div class="attachment-preview-backdrop" role="presentation" on:click="closeAttachmentPreview()">
-    <section class="attachment-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="attachment-preview-title" on:click="stopAttachmentPreviewPropagation($event)">
+<logic :if="message.attachmentPreviewOpen">
+  <div class="attachment-preview-backdrop" role="presentation" on:click="message.dismissAttachmentPreview($event.target.className)">
+    <section class="attachment-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="attachment-preview-title">
       <header class="attachment-preview-header">
         <div>
-          <h2 id="attachment-preview-title" class="w-text-title-medium">{$attachmentPreviewAttachment.filename}</h2>
-          <p class="w-text-body-small">{$attachmentPreviewAttachment.sizeLabel}</p>
+          <h2 id="attachment-preview-title" class="w-text-title-medium">{message.attachmentPreview.filename}</h2>
+          <p class="w-text-body-small">{localization.bytes(message.attachmentPreview.size)}</p>
         </div>
         <div class="attachment-preview-actions">
-          <button type="button" class="attachment-action-btn" on:click="downloadAttachment($attachmentPreviewAttachment)" :aria-label="'Download ' + $attachmentPreviewAttachment.filename" title="Download">
+          <button type="button" class="attachment-action-btn" on:click="message.downloadAttachment(message.attachmentPreview)" :aria-label="'Download ' + message.attachmentPreview.filename" title="Download">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           </button>
-          <button type="button" class="attachment-preview-close" on:click="closeAttachmentPreview()" aria-label="Close attachment preview">×</button>
+          <button type="button" class="attachment-preview-close" on:click="message.closeAttachmentPreview()" aria-label="Close attachment preview">×</button>
         </div>
       </header>
       <div class="attachment-preview-content">
-        <logic :if="$attachmentPreviewLoading"><div role="status"><w-progress-circular indeterminate aria-hidden="true"></w-progress-circular><span class="sr-only">Loading attachment preview</span></div></logic>
-        <logic :if="$attachmentPreviewError"><p class="attachment-preview-error" role="alert">{$attachmentPreviewError}</p></logic>
-        <logic :if="!$attachmentPreviewLoading && !$attachmentPreviewError && $attachmentPreviewKind === 'image'">
-          <img class="attachment-preview-image" :src="$attachmentPreviewUrl" :alt="$attachmentPreviewAttachment.filename" />
+        <logic :if="message.attachmentPreviewLoading"><div role="status"><w-progress-circular indeterminate aria-hidden="true"></w-progress-circular><span class="sr-only">Loading attachment preview</span></div></logic>
+        <logic :if="message.attachmentPreviewError"><p class="attachment-preview-error" role="alert">{message.attachmentPreviewError}</p></logic>
+        <logic :if="!message.attachmentPreviewLoading && !message.attachmentPreviewError && message.attachmentPreviewKind === 'image'">
+          <img class="attachment-preview-image" :src="message.attachmentPreviewUrl" :alt="message.attachmentPreview.filename" />
         </logic>
-        <logic :if="!$attachmentPreviewLoading && !$attachmentPreviewError && $attachmentPreviewKind === 'text'">
-          <pre class="attachment-preview-text">{$attachmentPreviewText}</pre>
+        <logic :if="!message.attachmentPreviewLoading && !message.attachmentPreviewError && message.attachmentPreviewKind === 'text'">
+          <pre class="attachment-preview-text">{message.attachmentPreviewText}</pre>
         </logic>
-        <logic :if="!$attachmentPreviewLoading && !$attachmentPreviewError && $attachmentPreviewKind === 'pdf'">
-          <iframe class="attachment-preview-pdf" :src="$attachmentPreviewUrl" sandbox title="PDF attachment preview"></iframe>
+        <logic :if="!message.attachmentPreviewLoading && !message.attachmentPreviewError && message.attachmentPreviewKind === 'pdf'">
+          <iframe class="attachment-preview-pdf" :src="message.attachmentPreviewUrl" sandbox title="PDF attachment preview"></iframe>
         </logic>
       </div>
     </section>
   </div>
 </logic>
 
-<logic :if="$loading">
+<logic :if="message.loading">
   <div class="empty-state" role="status">
     <w-progress-circular indeterminate aria-hidden="true"></w-progress-circular>
     <p class="empty-state-title" style="margin-top:1rem;">Loading email</p>
   </div>
 </logic>
 
-<logic :if="!$loading && $loadError">
+<logic :if="!message.loading && message.loadError">
   <div class="empty-state">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--ms-error);">
       <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
     </svg>
     <p class="empty-state-title">Failed to load email</p>
-    <p class="empty-state-subtitle">{$loadError}</p>
-    <w-btn variant="text" on:click="loadEmail()" style="margin-top:0.75rem;">Try again</w-btn>
+    <p class="empty-state-subtitle">{message.loadError}</p>
+    <w-btn variant="text" on:click="message.loadEmail()" style="margin-top:0.75rem;">Try again</w-btn>
   </div>
 </logic>
 
-<logic :if="!$loading && !$loadError && $email">
-  <logic :if="$findOpen">
+<logic :if="!message.loading && !message.loadError && message.hasEmail">
+  <logic :if="conversation.findOpen">
     <section class="find-in-thread" role="search" aria-label="Find in conversation">
-      <input data-find-thread-input type="search" :value="$findTerm" on:input="onFindInput($event)" on:keydown="onFindKeydown($event)" aria-label="Find in conversation" placeholder="Find in conversation" />
-      <span class="find-in-thread-progress" role="status" aria-live="polite">{findProgressLabel}</span>
-      <button type="button" on:click="previousFindResult()" :disabled="$findCount === 0" aria-label="Previous conversation match">↑</button>
-      <button type="button" on:click="nextFindResult()" :disabled="$findCount === 0" aria-label="Next conversation match">↓</button>
-      <button type="button" on:click="closeFindInThread()" aria-label="Close find in conversation">×</button>
+      <input data-find-thread-input type="search" :value="conversation.findTerm" on:input="conversation.findInput($event.target.value)" on:keydown="conversation.findKey($event.key, $event.shiftKey)" aria-label="Find in conversation" placeholder="Find in conversation" />
+      <span class="find-in-thread-progress" role="status" aria-live="polite">{conversation.findProgressLabel}</span>
+      <button type="button" on:click="conversation.previousResult()" :disabled="conversation.findCount === 0" aria-label="Previous conversation match">↑</button>
+      <button type="button" on:click="conversation.nextResult()" :disabled="conversation.findCount === 0" aria-label="Next conversation match">↓</button>
+      <button type="button" on:click="conversation.closeFind()" aria-label="Close find in conversation">×</button>
     </section>
   </logic>
 
-  <logic :if="$conversationLoading">
+  <logic :if="conversation.loading">
     <div class="conversation-loading" role="status">Loading conversation…</div>
   </logic>
-  <logic :if="hasConversation || $findOpen">
+  <logic :if="conversation.hasConversation || conversation.findOpen">
     <section class="conversation-reader" aria-label="Conversation messages">
       <header class="conversation-reader-heading">
         <span>Conversation</span>
-        <span>{$conversationMessages.length + ($conversationMessages.length === 1 ? ' message' : ' messages')}</span>
+        <span>{conversation.countLabel}</span>
       </header>
-      <loop :for="email of $conversationMessages">
-        <article :class="'conversation-message' + (isConversationExpanded(email.id) ? ' expanded' : '')" :data-conversation-message-id="email.id">
+      <loop :for="email of conversation.messages">
+        <article :class="'conversation-message' + (email.expanded ? ' expanded' : '')" :data-conversation-message-id="email.id">
           <div class="conversation-message-header">
-            <button type="button" class="conversation-message-summary" on:click="toggleConversationMessage(email.id)" :aria-expanded="isConversationExpanded(email.id) ? 'true' : 'false'">
+            <button type="button" class="conversation-message-summary" on:click="conversation.toggleMessage(email.id)" :aria-expanded="email.expanded ? 'true' : 'false'">
               <span class="conversation-message-sender">
-                <logic :if="$findOpen">
+                <logic :if="conversation.findOpen">
                   <loop :for="segment of email.findSenderSegments">
                     <logic :if="segment.match"><mark :class="segment.current ? 'current-match' : ''" :data-find-index="segment.index">{segment.text}</mark></logic>
                     <logic :if="!segment.match"><span>{segment.text}</span></logic>
                   </loop>
                 </logic>
-                <logic :if="!$findOpen">{email.visibleConversationSender}</logic>
+                <logic :if="!conversation.findOpen">{email.visibleConversationSender}</logic>
               </span>
               <span class="conversation-message-subject">
-                <logic :if="$findOpen">
+                <logic :if="conversation.findOpen">
                   <loop :for="segment of email.findSubjectSegments">
                     <logic :if="segment.match"><mark :class="segment.current ? 'current-match' : ''" :data-find-index="segment.index">{segment.text}</mark></logic>
                     <logic :if="!segment.match"><span>{segment.text}</span></logic>
                   </loop>
                 </logic>
-                <logic :if="!$findOpen">{email.subject || '(No subject)'}</logic>
+                <logic :if="!conversation.findOpen">{email.subject || '(No subject)'}</logic>
               </span>
-              <span class="conversation-message-time">{email.receivedAtLabel}</span>
+              <span class="conversation-message-time">{localization.date(email.receivedAt)}</span>
             </button>
-            <div class="conversation-message-actions" aria-label="Actions for this message">
-              <button type="button" on:click="conversationReply(email)" :aria-label="'Reply to ' + email.sender">Reply</button>
-              <button type="button" on:click="conversationReplyAll(email)" :aria-label="'Reply all to ' + email.subject">Reply all</button>
-              <button type="button" on:click="conversationForward(email)" :aria-label="'Forward ' + email.subject">Forward</button>
-              <button type="button" on:click="downloadConversationOriginal(email)" :aria-label="'Download original ' + email.subject">.eml</button>
-              <button type="button" on:click="openConversationMessage(email)" :aria-label="'Open full message ' + email.subject">Open</button>
+            <div class="conversation-message-actions" role="group" aria-label="Actions for this message">
+              <button type="button" on:click="conversation.reply(email.id)" :aria-label="'Reply to ' + email.sender">Reply</button>
+              <button type="button" on:click="conversation.replyAll(email.id)" :aria-label="'Reply all to ' + email.subject">Reply all</button>
+              <button type="button" on:click="conversation.forward(email.id)" :aria-label="'Forward ' + email.subject">Forward</button>
+              <button type="button" on:click="conversation.downloadOriginal(email.id)" :aria-label="'Download original ' + email.subject">.eml</button>
+              <button type="button" on:click="conversation.openMessage(email.id)" :aria-label="'Open full message ' + email.subject">Open</button>
             </div>
           </div>
-          <logic :if="isConversationExpanded(email.id)">
+          <logic :if="email.expanded">
             <div class="conversation-message-meta">
               <span>To: 
-                <logic :if="$findOpen">
+                <logic :if="conversation.findOpen">
                   <loop :for="segment of email.findRecipientSegments">
                     <logic :if="segment.match"><mark :class="segment.current ? 'current-match' : ''" :data-find-index="segment.index">{segment.text}</mark></logic>
                     <logic :if="!segment.match"><span>{segment.text}</span></logic>
                   </loop>
                 </logic>
-                <logic :if="!$findOpen">{email.recipient}</logic>
+                <logic :if="!conversation.findOpen">{email.recipient}</logic>
               </span>
               <span>{email.folder || 'inbox'}</span>
             </div>
             <div class="conversation-message-body">
-              <logic :if="$findOpen">
+              <logic :if="conversation.findOpen">
                 <loop :for="segment of email.findBodySegments">
                   <logic :if="segment.match"><mark :class="segment.current ? 'current-match' : ''" :data-find-index="segment.index">{segment.text}</mark></logic>
                   <logic :if="!segment.match"><span>{segment.text}</span></logic>
                 </loop>
               </logic>
-              <logic :if="!$findOpen">{conversationBody(email)}</logic>
+              <logic :if="!conversation.findOpen">{email.conversationBody}</logic>
             </div>
-            <logic :if="!$findOpen && email.hasConversationQuote">
-              <button type="button" class="conversation-quoted-toggle" on:click="toggleConversationQuote(email.id)" :aria-expanded="isConversationQuoteExpanded(email.id) ? 'true' : 'false'">
-                {isConversationQuoteExpanded(email.id) ? 'Hide quoted content' : 'Show quoted content'}
+            <logic :if="!conversation.findOpen && email.hasConversationQuote">
+              <button type="button" class="conversation-quoted-toggle" on:click="conversation.toggleQuote(email.id)" :aria-expanded="email.quoteExpanded ? 'true' : 'false'">
+                {email.quoteExpanded ? 'Hide quoted content' : 'Show quoted content'}
               </button>
             </logic>
-            <logic :if="email.attachments && email.attachments.length">
-              <div class="conversation-message-attachments" aria-label="Message attachments">
+            <logic :if="email.attachments.length">
+              <div class="conversation-message-attachments" role="group" aria-label="Message attachments">
                 <loop :for="attachment of email.attachments"><span>{attachment.filename}</span></loop>
               </div>
             </logic>
@@ -371,22 +373,21 @@
     </section>
   </logic>
 
-  <logic :if="hasReplyToMismatch">
+  <logic :if="message.email.replyToMismatch">
     <div class="email-security-warning" role="alert">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
       <div>
         <strong>Check the reply address</strong>
-        <p>This message appears to be from {visibleSender}, but replies will go to {replyTarget}. Only reply if you trust that address.</p>
+        <p>This message appears to be from {message.visibleSender}, but replies will go to {message.replyTarget}. Only reply if you trust that address.</p>
       </div>
     </div>
   </logic>
-  <!-- Meeting-invite widget: server attaches `calendarInvite` to the $email
+  <!-- Meeting-invite widget: the server attaches `calendarInvite` to the email
        response when an inbound VEVENT was auto-imported into the user's
-       calendar (see server/services/calendar-import.js). The widget shows
-       the time/location and lets the user RSVP without leaving the $email
-       view; the response is mirrored back to the organizer as an iCal
-       METHOD:REPLY via /calendar/invites/respond. -->
-  <logic :if="$email.calendarInvite">
+       calendar. The widget shows the time and location and lets the user RSVP
+       without leaving the email view; the response is mirrored back to the
+       organizer as an iCal METHOD:REPLY via /calendar/invites/respond. -->
+  <logic :if="invite.hasInvite">
     <div class="invite-card">
       <div class="invite-header">
         <svg class="invite-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
@@ -396,43 +397,43 @@
           <line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
         <div class="invite-meta">
-          <div class="invite-title">{$email.calendarInvite.title}</div>
-          <div class="invite-when">{formatInviteWhen($email.calendarInvite)}</div>
-          <logic :if="$email.calendarInvite.location">
-            <div class="invite-location">{$email.calendarInvite.location}</div>
+          <div class="invite-title">{invite.invite.title}</div>
+          <div class="invite-when">{localization.inviteWhen(invite.invite)}</div>
+          <logic :if="invite.invite.location">
+            <div class="invite-location">{invite.invite.location}</div>
           </logic>
-          <logic :if="$email.calendarInvite.organizer && !$email.calendarInvite.senderResponse">
-            <div class="invite-organizer">Organizer: {$email.calendarInvite.organizer}</div>
+          <logic :if="invite.invite.organizer && !invite.invite.senderResponse">
+            <div class="invite-organizer">Organizer: {invite.invite.organizer}</div>
           </logic>
         </div>
-        <span :class="'invite-status invite-status-' + inviteDisplayStatus($email.calendarInvite)">
-          {$email.calendarInvite.status === 'cancelled' ? 'Canceled' : formatInviteStatus(inviteDisplayStatus($email.calendarInvite))}
+        <span :class="'invite-status invite-status-' + invite.invite.displayStatus">
+          {invite.invite.statusLabel}
         </span>
       </div>
-      <logic :if="$email.calendarInvite.isRecurring">
-        <p class="invite-recurrence">↻ {$email.calendarInvite.recurrenceId ? 'This occurrence belongs to a recurring series.' : 'Recurring event'}</p>
+      <logic :if="invite.invite.isRecurring">
+        <p class="invite-recurrence">↻ {invite.invite.recurrenceId ? 'This occurrence belongs to a recurring series.' : 'Recurring event'}</p>
       </logic>
-      <logic :if="$email.calendarInvite.senderResponse">
-        <p class="invite-sender-response" role="status">{inviteSenderResponseText($email.calendarInvite)}</p>
+      <logic :if="invite.invite.senderResponse">
+        <p class="invite-sender-response" role="status">{invite.invite.senderResponseText}</p>
       </logic>
-      <logic :if="$email.calendarInvite.canRespond">
+      <logic :if="invite.invite.canRespond">
       <div class="invite-actions">
-        <w-btn variant="tonal" on:click="respondToInvite('accepted')" :disabled="$inviteResponseBusy" :class="$email.calendarInvite.myStatus === 'accepted' ? 'invite-btn-active' : ''">
+        <w-btn variant="tonal" on:click="invite.respond('accepted')" :disabled="invite.busy" :class="invite.invite.myStatus === 'accepted' ? 'invite-btn-active' : ''">
           Accept
         </w-btn>
-        <w-btn variant="outlined" on:click="respondToInvite('tentative')" :disabled="$inviteResponseBusy" :class="$email.calendarInvite.myStatus === 'tentative' ? 'invite-btn-active' : ''">
+        <w-btn variant="outlined" on:click="invite.respond('tentative')" :disabled="invite.busy" :class="invite.invite.myStatus === 'tentative' ? 'invite-btn-active' : ''">
           Tentative
         </w-btn>
-        <w-btn variant="outlined" on:click="respondToInvite('declined')" :disabled="$inviteResponseBusy" :class="$email.calendarInvite.myStatus === 'declined' ? 'invite-btn-active' : ''">
+        <w-btn variant="outlined" on:click="invite.respond('declined')" :disabled="invite.busy" :class="invite.invite.myStatus === 'declined' ? 'invite-btn-active' : ''">
           Decline
         </w-btn>
       </div>
       </logic>
-      <logic :if="$email.calendarInvite.status === 'cancelled'">
-        <p class="invite-cancelled" role="status">The organizer canceled this {$email.calendarInvite.recurrenceId ? 'occurrence' : 'event'}.</p>
+      <logic :if="invite.invite.status === 'cancelled'">
+        <p class="invite-cancelled" role="status">The organizer canceled this {invite.invite.recurrenceId ? 'occurrence' : 'event'}.</p>
       </logic>
-      <logic :if="$email.calendarInvite.attachment">
-        <button type="button" class="invite-download" on:click="downloadAttachment($email.calendarInvite.attachment)" :aria-label="'Download invitation ' + $email.calendarInvite.attachment.filename">
+      <logic :if="invite.invite.attachment">
+        <button type="button" class="invite-download" on:click="message.downloadAttachment(invite.invite.attachment)" :aria-label="'Download invitation ' + invite.invite.attachment.filename">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download invitation
         </button>
@@ -442,62 +443,62 @@
 
   <div class="email-header">
     <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
-      <h2 class="w-text-headline-small" style="margin:0;">{$email.subject || ''}<logic :if="!$email.subject"><span class="no-subject">(No subject)</span></logic></h2>
-      <logic :if="isSpam($email) && $email.spamScore != null">
-        <span class="email-spam-score">Score {Number($email.spamScore).toFixed(1)}</span>
+      <h2 class="w-text-headline-small" style="margin:0;">{message.email.subject || ''}<logic :if="!message.email.subject"><span class="no-subject">(No subject)</span></logic></h2>
+      <logic :if="message.email.spam && message.email.hasSpamScore">
+        <span class="email-spam-score">Score {message.email.spamScoreLabel}</span>
       </logic>
-      <logic :if="$email.openedAt && !hasTrackingInsights">
-        <span class="w-text-label-small" style="color:var(--ms-primary);background:var(--ms-primary-container);padding:0.15rem 0.5rem;border-radius:0.5rem;white-space:nowrap;">Opened {openedAtLabel}</span>
+      <logic :if="message.email.openedAt && !message.hasTrackingInsights">
+        <span class="w-text-label-small" style="color:var(--ms-primary);background:var(--ms-primary-container);padding:0.15rem 0.5rem;border-radius:0.5rem;white-space:nowrap;">Opened {localization.date(message.email.openedAt)}</span>
       </logic>
     </div>
     <div class="email-meta">
-      <div class="email-avatar">{senderInitials}</div>
+      <div class="email-avatar">{message.senderInitials}</div>
       <div style="min-width:0;">
         <div class="w-text-body-medium" style="font-weight:500;display:flex;align-items:center;gap:0.5rem;">
-          <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;">{visibleSender}</span>
-          <logic :if="isSpam($email)"><span class="email-spam-badge">Spam</span></logic>
+          <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;">{message.visibleSender}</span>
+          <logic :if="message.email.spam"><span class="email-spam-badge">Spam</span></logic>
         </div>
-        <div class="w-text-body-small" style="color:var(--ms-on-surface-variant);">To: {$email.recipient}</div>
-        <logic :if="$email.originalRecipient && $email.originalRecipient !== $email.recipient">
-          <div class="w-text-body-small" style="color:var(--ms-on-surface-variant);">Originally: {$email.originalRecipient}</div>
+        <div class="w-text-body-small" style="color:var(--ms-on-surface-variant);">To: {message.email.recipient}</div>
+        <logic :if="message.email.originalRecipient && message.email.originalRecipient !== message.email.recipient">
+          <div class="w-text-body-small" style="color:var(--ms-on-surface-variant);">Originally: {message.email.originalRecipient}</div>
         </logic>
       </div>
-      <span class="w-text-label-medium" style="color:var(--ms-on-surface-variant);margin-left:auto;">{receivedAtLabel}</span>
+      <span class="w-text-label-medium" style="color:var(--ms-on-surface-variant);margin-left:auto;">{localization.date(message.email.receivedAt)}</span>
     </div>
-    <logic :if="detailedHeaderRows.length">
+    <logic :if="message.detailedHeaderRows.length">
       <dl class="email-detailed-headers">
-        <loop :for="row of detailedHeaderRows"><div><dt>{row.label}</dt><dd>{row.value}</dd></div></loop>
+        <loop :for="row of message.detailedHeaderRows"><div><dt>{row.label}</dt><dd>{row.value}</dd></div></loop>
       </dl>
     </logic>
   </div>
 
-  <logic :if="hasTrackingInsights">
+  <logic :if="message.hasTrackingInsights">
     <details class="email-tracking-insights" data-tracking-insights>
       <summary>
         <span class="email-tracking-title">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
           Delivery insights
         </span>
-        <span class="email-tracking-summary">{$email.trackingSummary}</span>
+        <span class="email-tracking-summary">{message.email.trackingSummary}</span>
       </summary>
       <div class="email-tracking-body">
-        <div class="email-tracking-enabled" aria-label="Enabled tracking signals">
-          <logic :if="$email.openTracking"><span>Open tracking on</span></logic>
-          <logic :if="$email.linkTracking"><span>Link tracking on</span></logic>
+        <div class="email-tracking-enabled" role="group" aria-label="Enabled tracking signals">
+          <logic :if="message.email.openTracking"><span>Open tracking on</span></logic>
+          <logic :if="message.email.linkTracking"><span>Link tracking on</span></logic>
         </div>
         <p class="email-tracking-disclosure">Signals are self-hosted and recipient-specific. Privacy tools may block images or prefetch links, so activity is useful context rather than proof a person read the message.</p>
-        <logic :if="$email.trackingEvents.length === 0">
+        <logic :if="message.email.trackingEvents.length === 0">
           <p class="email-tracking-empty">No recipient activity has been recorded.</p>
         </logic>
-        <logic :if="$email.trackingEvents.length > 0">
+        <logic :if="message.email.trackingEvents.length > 0">
           <ol class="email-tracking-events">
-            <loop :for="event of $email.trackingEvents">
+            <loop :for="event of message.email.trackingEvents">
               <li>
                 <span :class="'email-tracking-event-icon ' + event.type" aria-hidden="true">{event.eventIcon}</span>
                 <span class="email-tracking-event-copy">
                   <strong>{event.eventLabel} · {event.recipientLabel}</strong>
                   <logic :if="event.type === 'click'"><span>{event.targetLabel}</span></logic>
-                  <time :datetime="event.timestamp">{event.timestampLabel}</time>
+                  <time :datetime="event.timestamp">{localization.date(event.timestamp)}</time>
                 </span>
               </li>
             </loop>
@@ -507,14 +508,14 @@
     </details>
   </logic>
 
-  <logic :if="$email.attachments && $email.attachments.length > 0">
+  <logic :if="message.email.attachments.length > 0">
     <div class="email-attachments">
       <p class="w-text-label-large" style="margin:0 0 0.5rem;">Attachments</p>
-      <loop :for="attachment of $email.attachments">
+      <loop :for="attachment of message.email.attachments">
         <div class="attachment-chip">
           <logic :if="attachment.thumbnailUrl">
-            <button type="button" class="attachment-thumbnail-button" on:click="previewAttachment(attachment)" :aria-label="'Preview ' + attachment.filename">
-              <img class="attachment-thumbnail" :src="attachment.thumbnailUrl" alt="" />
+            <button type="button" class="attachment-thumbnail-button" on:click="message.previewAttachment(attachment)" :aria-label="'Preview ' + attachment.filename">
+              <img class="attachment-thumbnail" :src="attachment.thumbnailUrl" alt="" role="presentation" />
             </button>
           </logic>
           <logic :if="!attachment.thumbnailUrl">
@@ -522,15 +523,15 @@
           </logic>
           <span class="attachment-chip-copy">
             <span class="attachment-chip-name">{attachment.filename}</span>
-            <span class="attachment-chip-size">{attachment.sizeLabel}</span>
+            <span class="attachment-chip-size">{localization.bytes(attachment.size)}</span>
           </span>
           <div class="attachment-chip-actions">
-            <logic :if="attachmentPreviewsEnabled && attachment.previewKind">
-              <button class="attachment-action-btn" on:click="previewAttachment(attachment)" title="Preview" :aria-label="'Preview ' + attachment.filename">
+            <logic :if="message.attachmentPreviewsEnabled && attachment.previewKind">
+              <button class="attachment-action-btn" on:click="message.previewAttachment(attachment)" title="Preview" :aria-label="'Preview ' + attachment.filename">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </logic>
-            <button class="attachment-action-btn" on:click="downloadAttachment(attachment)" title="Download" :aria-label="'Download ' + attachment.filename">
+            <button class="attachment-action-btn" on:click="message.downloadAttachment(attachment)" title="Download" :aria-label="'Download ' + attachment.filename">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             </button>
           </div>
@@ -541,62 +542,62 @@
 
   <div class="email-render-controls" role="group" aria-label="Message display mode">
     <span class="w-text-label-medium">View</span>
-    <w-btn variant="text" :class="$renderMode === 'html' ? 'render-mode-active' : ''" :disabled="!$email.htmlBody" on:click="setRenderMode('html')">HTML</w-btn>
-    <w-btn variant="text" :class="$renderMode === 'text' ? 'render-mode-active' : ''" on:click="setRenderMode('text')">Plain text</w-btn>
-    <w-btn variant="text" :class="$renderMode === 'source' ? 'render-mode-active' : ''" :disabled="!$email.hasRawSource" on:click="setRenderMode('source')">Original</w-btn>
-    <logic :if="$email.hasRawSource">
-      <w-btn variant="text" on:click="downloadOriginal()" aria-label="Download original EML">Download .eml</w-btn>
+    <w-btn variant="text" :class="message.renderMode === 'html' ? 'render-mode-active' : ''" :disabled="!message.email.htmlBody" on:click="message.setRenderMode('html')">HTML</w-btn>
+    <w-btn variant="text" :class="message.renderMode === 'text' ? 'render-mode-active' : ''" on:click="message.setRenderMode('text')">Plain text</w-btn>
+    <w-btn variant="text" :class="message.renderMode === 'source' ? 'render-mode-active' : ''" :disabled="!message.email.hasRawSource" on:click="message.setRenderMode('source')">Original</w-btn>
+    <logic :if="message.email.hasRawSource">
+      <w-btn variant="text" on:click="message.downloadOriginal()" aria-label="Download original EML">Download .eml</w-btn>
     </logic>
   </div>
 
-  <logic :if="translationOfferVisible">
+  <logic :if="message.translationOfferVisible">
   <section class="email-translation" aria-label="Message translation">
-    <logic :if="$translationSource && !$translationVisible">
-      <p class="email-translation-prompt">Translate from {translationSourceLabel} to {translationTargetLabel}?</p>
+    <logic :if="message.translationSource && !message.translationVisible">
+      <p class="email-translation-prompt">Translate from {translationEngine.label(message.translationSource, 'detected language')} to {translationEngine.label(message.translationTarget, 'selected language')}?</p>
     </logic>
     <div class="email-translation-controls">
       <label for="email-translation-target">Translate to</label>
-      <select id="email-translation-target" :value="$translationTarget" on:change="changeTranslationTarget($event)" :disabled="$translationBusy">
-        <loop :for="language of translationLanguageOptions">
-          <option :value="language.id" :selected="language.id === $translationTarget">{language.label}</option>
+      <select id="email-translation-target" :value="message.translationTarget" on:change="translationEngine.changeTarget($event.target.value)" :disabled="message.translationBusy">
+        <loop :for="language of translationEngine.languages">
+          <option :value="language.id" :selected="language.id === message.translationTarget">{language.label}</option>
         </loop>
       </select>
-      <logic :if="!$translationVisible">
-        <logic :if="!$translatedHtmlBody && !$translatedPlainText">
-          <w-btn variant="tonal" on:click="translateMessage()" :disabled="$translationBusy">{$translationBusy ? 'Translating…' : 'Translate'}</w-btn>
+      <logic :if="!message.translationVisible">
+        <logic :if="!message.hasTranslation">
+          <w-btn variant="tonal" on:click="message.translateMessage()" :disabled="message.translationBusy">{message.translationBusy ? 'Translating…' : 'Translate'}</w-btn>
         </logic>
-        <logic :if="$translatedHtmlBody || $translatedPlainText">
-          <w-btn variant="tonal" on:click="showTranslatedMessage()">Show translation</w-btn>
+        <logic :if="message.hasTranslation">
+          <w-btn variant="tonal" on:click="message.showTranslatedMessage()">Show translation</w-btn>
         </logic>
       </logic>
-      <logic :if="$translationVisible">
-        <w-btn variant="text" on:click="showOriginalMessage()">Show original</w-btn>
+      <logic :if="message.translationVisible">
+        <w-btn variant="text" on:click="message.showOriginalMessage()">Show original</w-btn>
       </logic>
-      <logic :if="$translationSource">
+      <logic :if="message.translationSource">
         <details class="email-translation-options">
           <summary>Options</summary>
           <div role="menu" aria-label="Translation preferences">
-            <logic :if="translationPreference !== 'always'">
-              <button type="button" role="menuitem" on:click="alwaysTranslateDetectedLanguage()">Always translate {translationSourceLabel}</button>
+            <logic :if="message.translationPreference !== 'always'">
+              <button type="button" role="menuitem" on:click="translationEngine.always()">Always translate {translationEngine.label(message.translationSource, 'detected language')}</button>
             </logic>
-            <logic :if="translationPreference === 'always'">
-              <button type="button" role="menuitem" on:click="stopAutomaticallyTranslatingDetectedLanguage()">Stop translating {translationSourceLabel}</button>
+            <logic :if="message.translationPreference === 'always'">
+              <button type="button" role="menuitem" on:click="translationEngine.stop()">Stop translating {translationEngine.label(message.translationSource, 'detected language')}</button>
             </logic>
-            <button type="button" role="menuitem" on:click="neverTranslateDetectedLanguage()">Never translate {translationSourceLabel}</button>
-            <button type="button" role="menuitem" on:click="resetTranslationSettings()">Reset translation settings</button>
+            <button type="button" role="menuitem" on:click="translationEngine.never()">Never translate {translationEngine.label(message.translationSource, 'detected language')}</button>
+            <button type="button" role="menuitem" on:click="translationEngine.resetPreferences()">Reset translation settings</button>
           </div>
         </details>
       </logic>
     </div>
-    <logic :if="$translationBusy"><p class="email-translation-status" role="status" aria-live="polite">{translationStatus}</p></logic>
-    <logic :if="$translationVisible"><p class="email-translation-status" role="status">Translated from {translationSourceLabel} to {translationTargetLabel} on this device.</p></logic>
-    <logic :if="$translationError"><p class="email-translation-error" role="alert">{$translationError}</p></logic>
+    <logic :if="message.translationBusy"><p class="email-translation-status" role="status" aria-live="polite">{message.translationStatus}</p></logic>
+    <logic :if="message.translationVisible"><p class="email-translation-status" role="status">Translated from {translationEngine.label(message.translationSource, 'detected language')} to {translationEngine.label(message.translationTarget, 'selected language')} on this device.</p></logic>
+    <logic :if="message.translationError"><p class="email-translation-error" role="alert">{message.translationError}</p></logic>
     <p class="email-translation-privacy">Translation runs in the browser. Message content is not sent to CADUCEUS or a hosted translation service.</p>
   </section>
   </logic>
 
-  <logic :if="$renderMode === 'html' && $email.htmlBody">
-    <logic :if="remoteContentSummary">
+  <logic :if="message.renderMode === 'html' && message.email.htmlBody">
+    <logic :if="message.remoteContentSummary">
       <div class="email-privacy-notice" role="status" aria-live="polite">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>
@@ -604,36 +605,36 @@
         </svg>
         <div class="email-privacy-copy">
           <strong>Remote content protection</strong>
-          <span>{remoteContentSummary}</span>
+          <span>{message.remoteContentSummary}</span>
         </div>
-        <logic :if="$blockedRemoteContentCount > 0">
+        <logic :if="message.blockedRemoteContentCount > 0">
           <div class="email-privacy-actions">
-            <w-btn variant="tonal" :disabled="$remoteImagesLoading" on:click="showRemoteImages()">
-              {$remoteImagesLoading ? 'Loading safely…' : 'Show images safely'}
+            <w-btn variant="tonal" :disabled="message.remoteImagesLoading" on:click="message.showRemoteImages()">
+              {message.remoteImagesLoading ? 'Loading safely…' : 'Show images safely'}
             </w-btn>
-            <logic :if="imageSender">
-              <w-btn variant="text" :disabled="$remotePreferenceSaving" on:click="alwaysShowImagesFromSender()">
-                {$remotePreferenceSaving ? 'Saving…' : 'Always show from ' + imageSender}
+            <logic :if="message.imageSender">
+              <w-btn variant="text" :disabled="message.remotePreferenceSaving" on:click="message.alwaysShowImagesFromSender()">
+                {message.remotePreferenceSaving ? 'Saving…' : 'Always show from ' + message.imageSender}
               </w-btn>
             </logic>
           </div>
         </logic>
       </div>
     </logic>
-    <logic :if="$remoteImageError"><p class="email-remote-image-error" role="alert">{$remoteImageError}</p></logic>
-    <logic :if="$pendingLinkWarning">
-      <div class="email-link-warning-backdrop" role="presentation" on:click="cancelPendingLink()">
-        <section class="email-link-warning-dialog" role="alertdialog" aria-modal="true" aria-labelledby="email-link-warning-title" on:click="stopAttachmentPreviewPropagation($event)">
+    <logic :if="message.remoteImageError"><p class="email-remote-image-error" role="alert">{message.remoteImageError}</p></logic>
+    <logic :if="message.hasPendingLink">
+      <div class="email-link-warning-backdrop" role="presentation" on:click="message.dismissLinkWarning($event.target.className)">
+        <section class="email-link-warning-dialog" role="alertdialog" aria-modal="true" aria-labelledby="email-link-warning-title">
           <h3 id="email-link-warning-title">Check this link before opening it</h3>
-          <p>{pendingLinkReason}</p>
+          <p>{message.pendingLink.reason}</p>
           <dl>
-            <logic :if="pendingLinkDisplayedHost"><div><dt>Displayed host</dt><dd>{pendingLinkDisplayedHost}</dd></div></logic>
-            <div><dt>Actual destination</dt><dd>{pendingLinkDestinationHost}</dd></div>
+            <logic :if="message.pendingLink.displayedHost"><div><dt>Displayed host</dt><dd>{message.pendingLink.displayedHost}</dd></div></logic>
+            <div><dt>Actual destination</dt><dd>{message.pendingLink.destinationHost}</dd></div>
           </dl>
-          <p class="email-link-warning-target">{pendingLinkTarget}</p>
+          <p class="email-link-warning-target">{message.pendingLink.target}</p>
           <div class="email-link-warning-actions">
-            <w-btn variant="outlined" on:click="cancelPendingLink()">Cancel</w-btn>
-            <w-btn variant="tonal" on:click="openPendingLink()">Open destination anyway</w-btn>
+            <w-btn variant="outlined" on:click="message.cancelPendingLink()">Cancel</w-btn>
+            <w-btn variant="tonal" on:click="message.openPendingLink()">Open destination anyway</w-btn>
           </div>
         </section>
       </div>
@@ -642,90 +643,90 @@
       class="email-html-frame"
       sandbox="allow-same-origin"
       referrerpolicy="no-referrer"
-      :srcdoc="emailHtmlSrcDoc($email.htmlBody)"
+      :srcdoc="message.protectedDocument"
       title="Email HTML body">
     </iframe>
   </logic>
-  <logic :if="$renderMode === 'text'">
-    <div class="email-body w-text-body-large">{visiblePlainText}</div>
-    <logic :if="$showQuotedText && quotedPlainText">
-      <div class="email-quoted-plain w-text-body-medium">{quotedPlainText}</div>
+  <logic :if="message.renderMode === 'text'">
+    <div class="email-body w-text-body-large">{message.visiblePlainText}</div>
+    <logic :if="message.showQuotedText && message.quotedPlainText">
+      <div class="email-quoted-plain w-text-body-medium">{message.quotedPlainText}</div>
     </logic>
   </logic>
-  <logic :if="hasQuotedText">
-    <button type="button" class="email-quoted-toggle" on:click="toggleQuotedText()" :aria-expanded="$showQuotedText ? 'true' : 'false'">
+  <logic :if="message.hasQuotedText">
+    <button type="button" class="email-quoted-toggle" on:click="message.toggleQuotedText()" :aria-expanded="message.showQuotedText ? 'true' : 'false'">
       <span aria-hidden="true">•••</span>
-      {$showQuotedText ? 'Hide quoted content' : 'Show quoted content'}
+      {message.showQuotedText ? 'Hide quoted content' : 'Show quoted content'}
     </button>
   </logic>
-  <logic :if="$renderMode === 'source'">
+  <logic :if="message.renderMode === 'source'">
     <div class="email-source-view" aria-live="polite">
-      <logic :if="$sourceLoading">
+      <logic :if="message.sourceLoading">
         <div class="email-source-status" role="status">Loading original message…</div>
       </logic>
-      <logic :if="!$sourceLoading && $sourceError">
-        <div class="email-source-status email-source-error" role="alert">{$sourceError}</div>
+      <logic :if="!message.sourceLoading && message.sourceError">
+        <div class="email-source-status email-source-error" role="alert">{message.sourceError}</div>
       </logic>
-      <logic :if="!$sourceLoading && !$sourceError">
-        <pre tabindex="0" aria-label="Original RFC 822 message source">{$rawSourceText}</pre>
+      <logic :if="!message.sourceLoading && !message.sourceError">
+        <pre tabindex="0" aria-label="Original RFC 822 message source">{message.rawSourceText}</pre>
       </logic>
     </div>
   </logic>
 
-  <logic :if="$showReply">
+  <logic :if="message.showReply">
     <div class="inline-reply">
       <div class="inline-reply-header">
-        <span class="w-text-label-large">Reply to {replyTarget}</span>
-        <w-btn variant="text" on:click="$showReply = false">Cancel</w-btn>
+        <span class="w-text-label-large">Reply to {message.replyTarget}</span>
+        <w-btn variant="text" on:click="message.showReply = false">Cancel</w-btn>
       </div>
-      <w-textarea label="Reply" :value="$replyText" placeholder="Write your reply…" rows="4" spellcheck="true" style="width:100%;min-height:120px;"></w-textarea>
+      <w-textarea label="Reply" :value="message.replyText" on:input="message.replyText = $event.target.value" placeholder="Write your reply…" rows="4" spellcheck="true" style="width:100%;min-height:120px;"></w-textarea>
       <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
-        <w-btn variant="filled" :disabled="!$replyText" on:click="sendReply()">Send reply</w-btn>
+        <w-btn variant="filled" :disabled="!message.replyText" on:click="message.sendReply()">Send reply</w-btn>
       </div>
     </div>
   </logic>
 
-  <logic :if="!$showReply">
+  <logic :if="!message.showReply">
     <div class="inline-reply-bar">
-      <w-btn variant="tonal" on:click="preferredReply()" style="width:100%;">Reply</w-btn>
+      <w-btn variant="tonal" on:click="message.preferredReply()" style="width:100%;">Reply</w-btn>
     </div>
   </logic>
 </logic>
 </div>
 
-<logic :if="$participantSidebarOpen && $email && participantAddress">
+<logic :if="participant.sidebarOpen && message.hasEmail && message.participantAddress">
   <aside id="participant-sidebar" class="participant-sidebar" aria-label="Contact context">
     <header class="participant-sidebar-header">
       <span class="w-text-label-large">Contact</span>
-      <button type="button" on:click="closeParticipantSidebar()" aria-label="Hide contact sidebar">×</button>
+      <button type="button" on:click="participant.close()" aria-label="Hide contact sidebar">×</button>
     </header>
-    <logic :if="$participantLoading">
+    <logic :if="participant.loading">
       <div class="participant-sidebar-status" role="status">Loading local contact context…</div>
     </logic>
-    <logic :if="!$participantLoading">
+    <logic :if="!participant.loading">
       <section class="participant-profile-card">
-        <div class="participant-profile-avatar" aria-hidden="true">{participantInitials}</div>
-        <h2>{participantDisplayName}</h2>
-        <p>{participantAddress}</p>
-        <logic :if="$participantContact && ($participantContact.title || $participantContact.company)">
+        <div class="participant-profile-avatar" aria-hidden="true">{participant.initials}</div>
+        <h2>{participant.displayName}</h2>
+        <p>{participant.address}</p>
+        <logic :if="participant.hasContact && (participant.contact.title || participant.contact.company)">
           <p class="participant-profile-role">
-            {$participantContact.title || ''}<logic :if="$participantContact.title && $participantContact.company"> · </logic>{$participantContact.company || ''}
+            {participant.contact.title || ''}<logic :if="participant.contact.title && participant.contact.company"> · </logic>{participant.contact.company || ''}
           </p>
         </logic>
       </section>
-      <logic :if="$participantContact">
+      <logic :if="participant.hasContact">
         <section class="participant-profile-details" aria-label="Saved contact details">
           <h3>Saved details</h3>
-          <logic :if="$participantContact.phones && $participantContact.phones.length > 0">
-            <loop :for="phone of $participantContact.phones"><p><strong>{phone.type || 'Phone'}</strong><span>{phone.value}</span></p></loop>
+          <logic :if="participant.contact.phones && participant.contact.phones.length > 0">
+            <loop :for="phone of participant.contact.phones"><p><strong>{phone.type || 'Phone'}</strong><span>{phone.value}</span></p></loop>
           </logic>
-          <logic :if="$participantContact.urls && $participantContact.urls.length > 0">
-            <loop :for="url of $participantContact.urls"><p><strong>{url.type || 'Website'}</strong><span>{url.value}</span></p></loop>
+          <logic :if="participant.contact.urls && participant.contact.urls.length > 0">
+            <loop :for="url of participant.contact.urls"><p><strong>{url.type || 'Website'}</strong><span>{url.value}</span></p></loop>
           </logic>
-          <logic :if="$participantContact.notes"><p><strong>Notes</strong><span>{$participantContact.notes}</span></p></logic>
+          <logic :if="participant.contact.notes"><p><strong>Notes</strong><span>{participant.contact.notes}</span></p></logic>
         </section>
       </logic>
-      <logic :if="!$participantContact">
+      <logic :if="!participant.hasContact">
         <p class="participant-sidebar-note">No saved local profile.</p>
       </logic>
       <section class="participant-github" aria-label="Public GitHub profile">
@@ -733,30 +734,30 @@
           <h3>GitHub</h3>
           <span aria-hidden="true">GH</span>
         </div>
-        <logic :if="$participantGithubStatus === 'disabled'">
+        <logic :if="participant.githubStatus === 'disabled'">
           <p>Public profile lookup is off. CADUCEUS has not sent this address to GitHub.</p>
           <a href="/settings">Review privacy setting</a>
         </logic>
-        <logic :if="$participantGithubStatus === 'not-found'">
+        <logic :if="participant.githubStatus === 'not-found'">
           <p>No matching public GitHub profile.</p>
         </logic>
-        <logic :if="$participantGithubStatus === 'unavailable'">
+        <logic :if="participant.githubStatus === 'unavailable'">
           <p>GitHub profile information is temporarily unavailable.</p>
         </logic>
-        <logic :if="$participantGithubStatus === 'found' && $participantGithubProfile">
-          <a class="participant-github-profile" :href="$participantGithubProfile.profileUrl" target="_blank" rel="noopener noreferrer">
-            @{$participantGithubProfile.login}
+        <logic :if="participant.githubStatus === 'found' && participant.hasGithubProfile">
+          <a class="participant-github-profile" :href="participant.githubProfile.profileUrl" target="_blank" rel="noopener noreferrer">
+            @{participant.githubProfile.login}
           </a>
-          <logic :if="$participantGithubProfile.repositories.length === 0">
+          <logic :if="participant.githubProfile.repositories.length === 0">
             <p>No public repositories.</p>
           </logic>
-          <logic :if="$participantGithubProfile.repositories.length > 0">
+          <logic :if="participant.githubProfile.repositories.length > 0">
             <ol>
-              <loop :for="repository of $participantGithubProfile.repositories">
+              <loop :for="repository of participant.githubProfile.repositories">
                 <li>
                   <a :href="repository.url" target="_blank" rel="noopener noreferrer">
                     <strong>{repository.fullName}</strong>
-                    <span aria-label="repository stars">★ {repository.stars}</span>
+                    <span role="group" aria-label="repository stars">★ {repository.stars}</span>
                   </a>
                   <logic :if="repository.description"><p>{repository.description}</p></logic>
                 </li>
@@ -768,29 +769,29 @@
       <section class="participant-related" aria-label="Related conversations">
         <div class="participant-related-heading">
           <h3>Related conversations</h3>
-          <span>{$participantThreads.length}</span>
+          <span>{participant.threads.length}</span>
         </div>
-        <logic :if="$participantThreads.length === 0"><p class="participant-sidebar-note">No other messages from this contact.</p></logic>
-        <logic :if="$participantThreads.length > 0">
+        <logic :if="participant.threads.length === 0"><p class="participant-sidebar-note">No other messages from this contact.</p></logic>
+        <logic :if="participant.threads.length > 0">
           <ol>
-            <loop :for="thread of visibleParticipantThreads">
+            <loop :for="thread of participant.visibleThreads">
               <li>
-                <button type="button" on:click="openParticipantThread(thread)">
+                <button type="button" on:click="participant.openThread(thread)">
                   <strong>{thread.subject}</strong>
                   <span>{thread.snippet}</span>
-                  <time>{thread.receivedAtLabel}</time>
+                  <time>{localization.date(thread.receivedAt)}</time>
                 </button>
               </li>
             </loop>
           </ol>
         </logic>
-        <logic :if="hasMoreParticipantThreads">
-          <button type="button" class="participant-related-toggle" on:click="toggleParticipantThreads()">
-            {$participantThreadsExpanded ? 'Show less' : 'Show all'}
+        <logic :if="participant.hasMoreThreads">
+          <button type="button" class="participant-related-toggle" on:click="participant.toggleThreads()">
+            {participant.threadsExpanded ? 'Show less' : 'Show all'}
           </button>
         </logic>
       </section>
-      <logic :if="$participantError"><p class="participant-sidebar-error" role="alert">{$participantError}</p></logic>
+      <logic :if="participant.error"><p class="participant-sidebar-error" role="alert">{participant.error}</p></logic>
       <p class="participant-sidebar-privacy">
         Local profile and history are tenant-scoped. GitHub data is requested only when its privacy setting is enabled.
       </p>

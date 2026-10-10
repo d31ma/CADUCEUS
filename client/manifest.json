@@ -94,5 +94,9 @@
       "url": "shareUrl"
     }
   },
-  "tac": {}
+  "tac": {
+    "browserApis": [
+      "clipboard"
+    ]
+  }
 }

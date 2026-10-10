@@ -4,33 +4,21 @@ import { formatPreferenceDate } from './mail-preferences.js'
 import { formatNumber } from './localization.js'
 
 /**
- * Load the complete authorized conversation for a message. Printing remains
- * available offline or during a transient API failure by falling back to the
- * open message.
+ * Choose the complete authorized conversation for a message when the reader
+ * already holds it, and fall back to the open message alone.
  *
  * @param {PrintableEmail} currentEmail
- * @param {((path: string) => Promise<Response | null>) | null | undefined} apiFetch
- * @returns {Promise<PrintableConversation>}
+ * @param {PrintableEmail[]} conversation
+ * @returns {PrintableConversation}
  */
-export async function loadPrintableConversation(currentEmail, apiFetch) {
-  const fallback = singleMessageConversation(currentEmail)
-  if (!currentEmail?.id || !apiFetch) return fallback
-
-  try {
-    const response = await apiFetch(`/threads?emailId=${encodeURIComponent(currentEmail.id)}`)
-    if (!response?.ok) return fallback
-    const threads = await response.json()
-    const thread = Array.isArray(threads) ? threads[0] : null
-    if (!thread || !Array.isArray(thread.emails)) return fallback
-    if (!thread.emails.some(email => email?.id === currentEmail.id)) return fallback
-    return {
-      subject: text(thread.subject) || text(currentEmail.subject),
-      count: thread.emails.length,
-      latestEmail: thread.latestEmail || thread.emails[thread.emails.length - 1],
-      emails: thread.emails,
-    }
-  } catch {
-    return fallback
+export function printableConversation(currentEmail, conversation) {
+  const emails = Array.isArray(conversation) ? conversation : []
+  if (!emails.some(email => email?.id === currentEmail?.id)) return singleMessageConversation(currentEmail)
+  return {
+    subject: text(currentEmail?.subject),
+    count: emails.length,
+    latestEmail: emails[emails.length - 1],
+    emails,
   }
 }
 
@@ -97,16 +85,13 @@ export function openPrintConversation(documentHtml, opener = window, reservedWin
   if (!popup) throw new Error('The print window was blocked')
 
   try { popup.opener = null } catch { /* the new document remains script-free */ }
-  popup.document.open()
-  popup.document.write(documentHtml)
-  popup.document.close()
-
-  const print = () => {
+  const address = URL.createObjectURL(new Blob([documentHtml], { type: 'text/html' }))
+  popup.addEventListener('load', () => {
     popup.focus()
     popup.print()
-  }
-  if (popup.document.readyState === 'complete') print()
-  else popup.addEventListener('load', print, { once: true })
+    URL.revokeObjectURL(address)
+  }, { once: true })
+  popup.location.replace(address)
   return popup
 }
 

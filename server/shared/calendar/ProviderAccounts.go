@@ -2,7 +2,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 )
 
 // ProviderAccounts carries the external-account operations the calendar and
@@ -14,23 +13,12 @@ type ProviderAccounts struct{}
 
 // Call runs one accounts.* operation for the caller's bearer token and
 // answers its decoded result.
-func (accounts ProviderAccounts) Call(operation string, parameters map[string]any) (any, error) {
-	payload := map[string]any{"op": operation, "params": parameters}
-	frame, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-	if len(frame) > accounts.requestLimit() {
-		return nil, &BoundaryError{Code: "EBADREQUEST", Message: "Boundary request is too large"}
-	}
-	raw, err := Boundary{}.FromSettings().Call(payload, accounts.responseLimit(), accounts.timeout())
-	if err != nil {
+func (ProviderAccounts) Call(operation string, parameters map[string]any) (any, error) {
+	raw, err := ExternalAccounts{}.FromSettings().Call(operation, parameters)
+	if err != nil || len(raw) == 0 {
 		return nil, err
 	}
 	var result any
-	if len(raw) == 0 {
-		return nil, nil
-	}
 	if err := json.Unmarshal(raw, &result); err != nil {
 		return nil, &BoundaryError{Code: "EUNAVAILABLE", Message: "The Go boundary sent malformed JSON"}
 	}
@@ -51,25 +39,7 @@ func (accounts ProviderAccounts) Object(operation string, parameters map[string]
 // Failure answers a failed account operation with the status of its stable
 // boundary code; anything else reads as the service being unavailable.
 func (ProviderAccounts) Failure(err error) *http.Response {
-	var failure *BoundaryError
-	if !errors.As(err, &failure) {
-		return Answer{}.Unavailable("External account service unavailable")
-	}
-	switch failure.Code {
-	case "EBADREQUEST", "EUNSUPPORTED":
-		return Answer{}.BadRequest(failure.Message)
-	case "EUNAUTHORIZED":
-		return Answer{}.Unauthorized(failure.Message)
-	case "EFORBIDDEN", "EPOLICY":
-		return Answer{}.Forbidden(failure.Message)
-	case "ENOTFOUND":
-		return Answer{}.NotFound(failure.Message)
-	case "ECONFLICT":
-		return Answer{}.Conflict(failure.Message)
-	case "EAUTHREQUIRED":
-		return Answer{}.Blocked(failure.Message, []string{"credentials"})
-	}
-	return Answer{}.Unavailable(failure.Message)
+	return ExternalAccounts{}.Failure(err)
 }
 
 // IsBoundary reports whether err came from the boundary (the former
@@ -89,11 +59,3 @@ func (ProviderAccounts) Defined(fields map[string]any) map[string]any {
 	}
 	return fields
 }
-
-// requestLimit keeps a request below the owner's 64 MiB frame ceiling once
-// the signed envelope encodes it again.
-func (ProviderAccounts) requestLimit() int { return 47 << 20 }
-
-func (ProviderAccounts) responseLimit() int { return 64 << 20 }
-
-func (ProviderAccounts) timeout() time.Duration { return 15 * time.Second }

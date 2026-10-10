@@ -123,10 +123,10 @@ func (ProviderPush) send(subscriptions []map[string]any, payload []byte, vapid W
 	results := make([]error, len(subscriptions))
 	for index, subscription := range subscriptions {
 		group.Add(1)
-		go func() {
+		go func(index int, subscription map[string]any) {
 			defer group.Done()
 			results[index] = WebPush{}.Send(subscription, payload, vapid)
-		}()
+		}(index, subscription)
 	}
 	group.Wait()
 	for _, err := range results {

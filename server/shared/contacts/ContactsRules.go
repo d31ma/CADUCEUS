@@ -286,8 +286,10 @@ func (rules ContactsRules) kind(value any) (string, error) {
 // webAddress answers an http or https URL as the URL parser wrote it back.
 func (ContactsRules) webAddress(value string) (string, error) {
 	problem := errors.New("invalid contact URL")
+	// The URL standard drops tabs and line breaks and escapes spaces.
+	value = strings.ReplaceAll(regexp.MustCompile(`[\t\r\n]`).ReplaceAllString(value, ""), " ", "%20")
 	parsed, err := url.Parse(value)
-	if err != nil || parsed.Host == "" || strings.ContainsAny(value, " \t\n") {
+	if err != nil || parsed.Host == "" {
 		return "", problem
 	}
 	scheme := strings.ToLower(parsed.Scheme)

@@ -408,7 +408,7 @@ func (ics Ics) implicitEnd(start string, allDay bool, duration string) (string, 
 		length = day
 	}
 	if math.IsNaN(base) {
-		return "", errors.New("Invalid time value")
+		return "", errors.New("Invalid Date")
 	}
 	return EpochTime{}.Text(int64(base + length)), nil
 }

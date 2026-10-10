@@ -30,7 +30,7 @@ func (reminders *RemindersService) Load() {
 
 // Dismiss deletes one reminder and says whether that worked.
 func (reminders *RemindersService) Dismiss(id string) {
-	_, failure := reminders.remindersClient.Dismiss(reminders.authorization, ReminderDismissal{ID: id})
+	_, failure := reminders.remindersClient.Dismiss(reminders.authorization, map[string]any{"id": id})
 	reminders.Items = reminders.withoutUnless(id, failure)
 	reminders.applicationEventPublisher.PublishEvent(ToastRequested{Message: reminders.dismissMessage(failure)}, false)
 }

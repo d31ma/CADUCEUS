@@ -39,7 +39,10 @@ export default class MailNavigationService {
     this._go(this._emailPath(request.emailId))
   }
 
-  /** On a phone-sized viewport an opened row leaves for the message page. @param {MailSelected} selected */
+  /**
+   * On a phone-sized viewport an opened row leaves for the message page.
+   * @param {MailSelected} selected
+   */
   @OnEvent
   mailSelected(selected) {
     this._goWhenNarrow(this._emailPath(selected.emailId))
@@ -51,6 +54,14 @@ export default class MailNavigationService {
     this._remember(`caduceus_activity_viewed:${viewed.owner}`, viewed.timestamp)
     dispatchEvent(new CustomEvent('caduceus:activity-viewed', { detail: { timestamp: viewed.timestamp } }))
   }
+
+  /**
+   * A WebAssembly listener that waited for the server announces that it is
+   * done; hearing it renders the page again with the new fields.
+   * @param {ViewSettled} _settled
+   */
+  @OnEvent
+  viewSettled(_settled) {}
 
   /** @param {Record<string, unknown>} prefill */
   _compose(prefill) {

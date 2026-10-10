@@ -20,5 +20,5 @@ type SendClient interface {
 		authorization string,
 		// @PathVariable("id")
 		id string,
-	) (BehaviorValue, error)
+	) (ScheduledCancelled, error)
 }

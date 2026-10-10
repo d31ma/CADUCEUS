@@ -11,6 +11,6 @@ type RemindersClient interface {
 		// @RequestHeader("Authorization")
 		authorization string,
 		// @RequestBody
-		dismissal ReminderDismissal,
-	) (BehaviorValue, error)
+		dismissal BehaviorValue,
+	) (ReminderDismissed, error)
 }

@@ -1,0 +1,45 @@
+<logic :if="reminders.signedIn">
+  <button data-caduceus-page-bootstrap type="button" hidden on:click="reminders.load()" aria-label="Load reminders" tabindex="-1"></button>
+  <div class="mail-layout">
+    <section class="mail-list-panel" style="padding:1rem;" aria-labelledby="reminders-title">
+      <h2 id="reminders-title" class="w-text-headline-small" style="margin:0 0 1rem;">Follow-up reminders</h2>
+
+      <logic :if="!reminders.loaded">
+        <div class="inbox-empty" role="status"><w-progress-circular indeterminate aria-hidden="true"></w-progress-circular><span class="w-text-body-medium" style="margin-left:1rem;">Loading…</span></div>
+      </logic>
+
+      <logic :if="reminders.loaded && reminders.items.length === 0">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--ms-on-surface-variant);" aria-hidden="true"><path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <p class="empty-state-title">No follow-ups waiting</p>
+          <p class="empty-state-subtitle">Set a reminder while composing, and the conversation will resurface if nobody replies.</p>
+        </div>
+      </logic>
+
+      <loop :for="item of reminders.items">
+        <article class="scheduled-item lazy-list-item" style="border:1px solid var(--ms-outline-variant);border-radius:var(--ms-shape-card,4px);padding:0.75rem;margin-bottom:0.5rem;background:var(--ms-surface);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;">
+            <button type="button" class="reminder-open" on:click="mailNavigation.openEmail(item.noticeEmailId || item.emailId)" style="border:0;background:transparent;color:inherit;text-align:left;min-width:0;flex:1;cursor:pointer;">
+              <p class="w-text-body-medium" style="margin:0;font-weight:500;">{item.subject}</p>
+              <p class="w-text-body-small" style="color:var(--ms-on-surface-variant);margin:0.25rem 0;">To: {item.recipientLabel}</p>
+              <p class="w-text-label-small" style="color:var(--ms-primary);margin:0.25rem 0;">{item.status === 'due' ? 'Follow up now' : 'Waiting until ' + item.remindAtLabel}</p>
+            </button>
+            <w-btn variant="text" on:click="reminders.dismiss(item.id)" style="flex-shrink:0;">Dismiss</w-btn>
+          </div>
+        </article>
+      </loop>
+    </section>
+    <div class="column-resizer mail-column-resizer" data-column-resizer="mail" role="separator" aria-label="Resize reminder list" aria-orientation="vertical" aria-valuemin="280" aria-valuemax="640" aria-valuenow="390" tabindex="0"></div>
+    <div class="mail-detail-panel">
+      <div class="mail-detail-empty">
+        <div class="empty-state">
+          <p class="empty-state-title">Never lose a conversation</p>
+          <p class="empty-state-subtitle">Due reminders appear here and as unread messages in your inbox.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</logic>
+<logic :if="!reminders.signedIn">
+  <div class="login-screen"><login-form :brandlogo="'/shared/assets/favicon.svg'" /></div>
+</logic>

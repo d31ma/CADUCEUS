@@ -1,0 +1,60 @@
+<logic :if="scheduled.signedIn">
+  <button data-caduceus-page-bootstrap type="button" hidden on:click="scheduled.load()" aria-label="Load scheduled messages" tabindex="-1"></button>
+  <div class="mail-layout">
+    <div class="mail-list-panel" style="padding:1rem;">
+      <h2 class="w-text-headline-small" style="margin:0 0 1rem;">Scheduled</h2>
+
+      <logic :if="!scheduled.loaded">
+        <div class="inbox-empty" role="status"><w-progress-circular indeterminate aria-hidden="true"></w-progress-circular><span class="w-text-body-medium" style="margin-left:1rem;">Loading…</span></div>
+      </logic>
+
+      <logic :if="scheduled.loaded && scheduled.items.length === 0">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--ms-on-surface-variant);">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <p class="empty-state-title">No scheduled messages</p>
+          <p class="empty-state-subtitle">Scheduled emails will be sent automatically at the times shown.</p>
+        </div>
+      </logic>
+
+      <loop :for="item of scheduled.items">
+        <div class="scheduled-item lazy-list-item" style="border:1px solid var(--ms-outline-variant);border-radius:var(--ms-shape-card,4px);padding:0.75rem;margin-bottom:0.5rem;background:var(--ms-surface);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div style="min-width:0;">
+              <p class="w-text-body-medium" style="margin:0;font-weight:500;">{item.subject}</p>
+              <p class="w-text-body-small" style="color:var(--ms-on-surface-variant);margin:0.25rem 0;">To: {item.recipientLabel}</p>
+              <p class="w-text-label-small" style="color:var(--ms-primary);margin:0.25rem 0;">Scheduled for {item.sendAtLabel}</p>
+              <p class="w-text-label-small" style="color:var(--ms-on-surface-variant);margin:0.25rem 0;">{item.statusLabel}</p>
+              <logic :if="item.lastError">
+                <p class="w-text-body-small" role="status" style="color:var(--ms-error);margin:0.25rem 0;">Last attempt: {item.lastError}</p>
+              </logic>
+            </div>
+            <div style="display:flex;gap:0.25rem;flex-wrap:wrap;justify-content:flex-end;">
+              <w-btn variant="text" on:click="scheduled.edit(item.id)" style="flex-shrink:0;">Edit</w-btn>
+              <w-btn variant="text" on:click="mailNavigation.confirmThen('Cancel this scheduled send?', 'cancel-scheduled', item.id)" style="flex-shrink:0;">Cancel</w-btn>
+            </div>
+          </div>
+          <logic :if="item.text">
+            <p class="w-text-body-small" style="color:var(--ms-on-surface-variant);margin:0.5rem 0 0;white-space:pre-wrap;max-height:4rem;overflow:hidden;">{item.text}</p>
+          </logic>
+        </div>
+      </loop>
+    </div>
+    <div class="column-resizer mail-column-resizer" data-column-resizer="mail" role="separator" aria-label="Resize message list" aria-orientation="vertical" aria-valuemin="280" aria-valuemax="640" aria-valuenow="390" tabindex="0"></div>
+    <div class="mail-detail-panel">
+      <div class="mail-detail-empty">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <p class="empty-state-title">Scheduled messages</p>
+          <p class="empty-state-subtitle">Messages here will be sent at their scheduled times. You can edit, reschedule, or cancel pending delivery.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</logic>
+<logic :if="!scheduled.signedIn">
+  <div class="login-screen"><login-form :brandlogo="'/shared/assets/favicon.svg'" /></div>
+</logic>

@@ -6,7 +6,6 @@ import { SmtpDirectAdapter } from '@/shared/delivery/SmtpDirectAdapter.js'
 import { ConsoleSmtpAdapter } from '@/shared/delivery/ConsoleSmtpAdapter.js'
 import { SmtpRules } from '@/shared/delivery/SmtpRules.js'
 import { SmtpDeliveryError } from '@/shared/errors/SmtpDeliveryError.js'
-import { AcmeService } from '../../background/AcmeService.js'
 import { TrackingTokens } from '@/shared/delivery/TrackingTokens.js'
 import { Security } from '@/shared/security/Security.js'
 import { RuleValidation } from '@/shared/domains/RuleValidation.js'
@@ -589,114 +588,5 @@ describe('PushService', () => {
       users: { findByEmail: async () => [null, { email: 'alice@example.com' }] },
       pushSubscriptions: { listForAddress: async () => { throw new Error('fylo down') } },
     }).notifyNewEmail(email)
-  })
-})
-
-describe('AcmeService', () => {
-  let root
-  const options = () => ({
-    hostname: 'mail.example.com',
-    email: 'admin@example.com',
-    certPath: join(root, 'cert.pem'),
-    keyPath: join(root, 'key.pem'),
-    accountPath: join(root, 'account.pem'),
-    httpPort: 0,
-    staging: true,
-  })
-
-  beforeEach(() => { root = mkdtempSync(join(tmpdir(), 'caduceus-acme-')) })
-  afterEach(() => rmSync(root, { recursive: true, force: true }))
-
-  /** Stand-in for acme-client — issuance talks to Let's Encrypt. */
-  const fakeAcme = (over = {}) => {
-    const { key, cert } = tlsOptions({})
-    return ({
-    crypto: {
-      createPrivateKey: async () => Buffer.from('ACCOUNT-KEY'),
-      createCsr: async () => [Buffer.from(key), Buffer.from('CSR')],
-    },
-    directory: { letsencrypt: { staging: 'https://staging.test/dir', production: 'https://prod.test/dir' } },
-    Client: class {
-      constructor(opts) { this.opts = opts }
-      async auto({ challengeCreateFn, challengeRemoveFn }) {
-        await challengeCreateFn({}, { token: 'tok' }, 'key-auth')
-        await challengeRemoveFn({}, { token: 'tok' })
-        return cert
-      }
-    },
-      ...over,
-    })
-  }
-
-  it('requires a hostname and contact email', () => {
-    expect(() => new AcmeService({ hostname: '', email: 'a@b.com' })).toThrow(/MAIL_HOSTNAME/)
-  })
-
-  it('reports -Infinity remaining for a missing certificate', () => {
-    expect(AcmeService.certMsRemaining(join(root, 'nope.pem'))).toBe(-Infinity)
-  })
-
-  it('obtains a certificate and persists the account key', async () => {
-    const service = new AcmeService(options())
-    expect(await service.ensureCertificate(fakeAcme())).toEqual({ obtained: true })
-    expect(Bun.file(options().certPath).size).toBeGreaterThan(0)
-    expect(Bun.file(options().accountPath).size).toBeGreaterThan(0)
-  })
-
-  it('reuses an existing account key on the next run', async () => {
-    const service = new AcmeService(options())
-    await service.ensureCertificate(fakeAcme())
-    let created = false
-    await service.ensureCertificate(fakeAcme({
-      crypto: {
-        createPrivateKey: async () => { created = true; return Buffer.from('NEW') },
-        createCsr: async () => [Buffer.from(tlsOptions({}).key), Buffer.from('CSR')],
-      },
-    }))
-    expect(created).toBe(false)
-  })
-
-  it('closes the challenge listener when issuance fails', async () => {
-    const service = new AcmeService(options())
-    const failing = fakeAcme({ Client: class { async auto() { throw new Error('order failed') } } })
-    await expect(service.ensureCertificate(failing)).rejects.toThrow('order failed')
-    // A second attempt can bind the challenge port again.
-    expect(await service.ensureCertificate(fakeAcme())).toEqual({ obtained: true })
-  })
-
-  it('skips renewal while the certificate is still fresh', async () => {
-    const service = new AcmeService(options())
-    const original = AcmeService.certMsRemaining
-    AcmeService.certMsRemaining = () => Infinity
-    try {
-      expect(await service.ensureCertificate(fakeAcme())).toEqual({ obtained: false, reason: 'cert still valid' })
-    } finally {
-      AcmeService.certMsRemaining = original
-    }
-  })
-
-  it('serves an SNI context from the cert files and errors when they are missing', async () => {
-    const service = new AcmeService(options())
-    await service.ensureCertificate(fakeAcme())
-    const call = handler => new Promise(resolve => handler('mail.example.com', (err, ctx) => resolve({ err, ctx })))
-
-    const served = await call(AcmeService.sniFromFiles(options().keyPath, options().certPath))
-    expect(served.err).toBeNull()
-    expect(served.ctx).toBeDefined()
-
-    const missing = await call(AcmeService.sniFromFiles(join(root, 'no.pem'), join(root, 'no.pem')))
-    expect(missing.err).toBeInstanceOf(Error)
-  })
-
-  it('starts and stops the renewal timer once', async () => {
-    const service = new AcmeService(options())
-    service.ensureCertificate = async () => ({ obtained: false })
-    await service.startRenewal()
-    const timer = service.renewalTimer
-    await service.startRenewal()
-    expect(service.renewalTimer).toBe(timer)
-    service.stop()
-    service.stop()
-    expect(service.renewalTimer).toBeUndefined()
   })
 })

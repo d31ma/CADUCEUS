@@ -1,6 +1,6 @@
 // Package tickworker drives the API's durable background routes on a timer.
 //
-// It ports background/OutboundQueueWorker.ts, SnoozeWorker.ts,
+// It ports the former background/OutboundQueueWorker.ts, SnoozeWorker.ts,
 // FollowUpReminderWorker.ts and ProviderNotificationWorker.ts. Each worker
 // POSTs `{}` to one signed tick route of the local API, which stays the only
 // FYLO writer; the worker owns scheduling, non-overlap, request signing and

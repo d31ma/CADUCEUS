@@ -62,12 +62,14 @@
       "phase": 6,
       "name": "inbound SMTP and submission",
       "externalTests": [
-        "tests/unit/smtp-listen.test.js",
-        "tests/unit/smtp-servers.test.js",
-        "tests/runtime/smtp-lifecycle.test.ts",
+        "internal/mail/inbound/inbound_test.go",
+        "internal/mail/submission/submission_test.go",
+        "internal/mail/smtpd/smtpd_test.go",
+        "internal/runtime/supervisor/supervisor_test.go",
+        "tests/routes/inbound-smtp.test.js",
         "tests/api/inbox.test.js"
       ],
-      "commands": ["bun run test:unit", "bun run test:runtime", "bun run test:api"]
+      "commands": ["go test ./internal/mail/... ./internal/runtime/...", "bun test tests/routes/inbound-smtp.test.js", "bun run test:api"]
     },
     {
       "phase": 7,

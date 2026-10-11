@@ -1,6 +1,6 @@
 // Package supervisor owns a group of process-level services as one lifecycle.
 //
-// It is the Go port of background/ServiceSupervisor.ts. Required startup
+// It is the Go port of the former background/ServiceSupervisor.ts. Required startup
 // failures roll back the services already started. Optional failures leave
 // the runtime degraded but ready, which suits helpers such as certificate
 // renewal that should not hide an otherwise usable server.

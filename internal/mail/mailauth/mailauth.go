@@ -2,7 +2,7 @@
 // writes the Received-SPF and Authentication-Results headers.
 //
 // It ports the parts of the `mailauth` npm package (v5) that
-// background/InboundSmtpServer.js used through `authenticate`. Not
+// the former background/InboundSmtpServer.js used through `authenticate`. Not
 // reproduced: ARC chain validation and sealing (a message with ARC headers
 // gets no `arc=` comment), BIMI VMC/SVG validation (BIMI is a DNS record
 // check only), and the full Public Suffix List (OrganizationalDomain is a

@@ -3,7 +3,7 @@
 // text and HTML bodies.
 //
 // It replaces the subset of mailparser's simpleParser that
-// background/InboundSmtpServer.js and SubmissionServer.js used. It is
+// the former background/InboundSmtpServer.js and SubmissionServer.js used. It is
 // deliberately lenient, as mailparser was: malformed header lines are
 // skipped rather than failing the whole message.
 package mimeparse

@@ -115,6 +115,11 @@ func TestRefusesUnhostedAndDefersFailures(t *testing.T) {
 	if failure == nil || failure.Code != 451 {
 		t.Fatalf("failure = %+v", failure)
 	}
+	hook.answer = func(delivery) (int, string) { return 413, `Request body is too large.` }
+	failure, _ = server.ProcessMessage(context.Background(), []byte(message), session("x@hosted.test"), false)
+	if failure == nil || failure.Code != 552 {
+		t.Fatalf("a webhook 413 must refuse permanently: %+v", failure)
+	}
 	failure, _ = server.ProcessMessage(context.Background(), []byte(message), session("x@hosted.test"), true)
 	if failure == nil || failure.Code != 552 || failure.Message != "Message exceeds maximum permitted size" {
 		t.Fatalf("failure = %+v", failure)

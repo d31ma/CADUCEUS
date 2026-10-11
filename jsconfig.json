@@ -24,8 +24,6 @@
     "tests/support/legacy-server/**/*.d.ts",
     "tests/support/legacy-server/**/*.js",
     "tests/support/legacy-server/**/*.ts",
-    "background/**/*.js",
-    "background/**/*.ts",
     "scripts/**/*.mjs",
     "client/**/*.d.ts",
     "client/**/*.js",

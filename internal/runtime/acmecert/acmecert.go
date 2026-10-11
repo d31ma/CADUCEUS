@@ -1,7 +1,7 @@
 // Package acmecert keeps the mail TLS certificate current with ACME
 // (Let's Encrypt) HTTP-01, renewing it when fewer than 30 days remain.
 //
-// It ports background/AcmeService.js, which drove acme-client's `auto` flow.
+// It ports the former background/AcmeService.js, which drove acme-client's `auto` flow.
 // Key material stays compatible with what acme-client wrote: RSA 2048 keys
 // as PKCS#8 PEM for the account and the certificate, and the certificate
 // chain as PEM. An existing account key in PKCS#1, PKCS#8 or SEC 1 form is

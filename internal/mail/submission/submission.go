@@ -2,7 +2,7 @@
 // (STARTTLS) and 465 (implicit TLS). An accepted message is pushed through
 // the API's `POST /send` with the submitting user's bearer token.
 //
-// It ports background/SubmissionServer.js. Authentication is refused for
+// It ports the former background/SubmissionServer.js. Authentication is refused for
 // now, exactly as the JavaScript did: a CADUCEUS session needs multi-factor
 // assurance and a mail client offers one secret, so the DATA path is reached
 // only once application passwords ship (Phase 6).

@@ -2,7 +2,7 @@
 // SPF/DKIM/DMARC, and hands each hosted recipient's copy to the API's signed
 // `POST /inbound/webhook`, which owns delivery.
 //
-// It ports background/InboundSmtpServer.js.
+// It ports the former background/InboundSmtpServer.js.
 package inbound
 
 import (
@@ -228,6 +228,11 @@ func (server *Server) ProcessMessage(ctx context.Context, raw []byte, session *s
 		if err != nil {
 			return nil, err
 		}
+		if result.tooLarge {
+			// The server refuses request bodies over its limit (Tachyon's
+			// is 1 MiB). Retrying cannot succeed, so refuse permanently.
+			return &smtpd.Reply{Code: 552, Message: "Message exceeds maximum permitted size"}, nil
+		}
 		if !result.ok {
 			return &smtpd.Reply{Code: 451, Message: "Temporary local delivery failure, try again later"}, nil
 		}
@@ -255,6 +260,7 @@ type webhookPayload struct {
 type webhookResult struct {
 	ok       bool
 	accepted bool
+	tooLarge bool
 	reason   string
 }
 
@@ -288,7 +294,7 @@ func (server *Server) deliverViaWebhook(ctx context.Context, payload webhookPayl
 	defer response.Body.Close()
 	answer, _ := io.ReadAll(response.Body)
 	if response.StatusCode < 200 || response.StatusCode > 299 {
-		return webhookResult{ok: false, reason: fmt.Sprintf("webhook %d", response.StatusCode)}, nil
+		return webhookResult{ok: false, tooLarge: response.StatusCode == http.StatusRequestEntityTooLarge, reason: fmt.Sprintf("webhook %d", response.StatusCode)}, nil
 	}
 	var data map[string]any
 	_ = json.Unmarshal(answer, &data)

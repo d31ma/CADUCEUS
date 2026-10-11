@@ -1,4 +1,7 @@
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
 // TokenUtils checks identifiers by their characters and length. It replaces
 // regular expressions with large repetition counts such as {1,200}: TinyGo
@@ -9,14 +12,10 @@ type TokenUtils struct{}
 // Fits is true when value has between shortest and longest characters, all
 // of them in allowed.
 func (TokenUtils) Fits(value string, allowed string, bounds TokenBounds) bool {
-	return TokenUtils{}.fits(len(value), strings.Trim(value, allowed) == "", bounds)
+	return !slices.Contains([]bool{strings.Trim(value, allowed) == "", len(value) >= bounds.Shortest, len(value) <= bounds.Longest}, false)
 }
 
 // Identifier is the character set of opaque server identifiers.
 func (TokenUtils) Identifier() string {
 	return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-}
-
-func (TokenUtils) fits(length int, allowedOnly bool, bounds TokenBounds) bool {
-	return allowedOnly && length >= bounds.Shortest && length <= bounds.Longest
 }

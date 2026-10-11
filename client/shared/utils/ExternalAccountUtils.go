@@ -49,7 +49,7 @@ func (ExternalAccountUtils) DialogTexts(dialog FolderDialog, inFolder bool, busy
 
 func (ExternalAccountUtils) malformed(account ExternalAccount) bool {
 	return slices.Contains([]bool{
-		strings.HasPrefix(account.ID, "ext_") && TokenUtils{}.Fits(strings.TrimPrefix(account.ID, "ext_"), TokenUtils{}.Identifier()+"_-", TokenBounds{Shortest: 20, Longest: 80}),
+		ExternalAccountUtils{}.identified(account.ID, "ext_"),
 		strings.TrimSpace(account.MailboxAddress) != "",
 		slices.Contains([]string{"gmail", "microsoft", "imap"}, account.Provider),
 		slices.Contains(ExternalAccountUtils{}.states(), account.State),
@@ -64,6 +64,10 @@ func (ExternalAccountUtils) Readable(account ExternalAccount) bool {
 
 func (ExternalAccountUtils) readable(account ExternalAccount) bool {
 	return account.Capabilities.MailRead && account.State != ExternalAccountUtils{}.states()[6]
+}
+
+func (ExternalAccountUtils) identified(id string, prefix string) bool {
+	return strings.HasPrefix(id, prefix) && TokenUtils{}.Fits(strings.TrimPrefix(id, prefix), TokenUtils{}.Identifier()+"_-", TokenBounds{Shortest: 20, Longest: 80})
 }
 
 func (ExternalAccountUtils) cleanedAll(accounts []ExternalAccount) []ExternalAccount {

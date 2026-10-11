@@ -1010,8 +1010,8 @@ Open:
 - **Client.** The browser client is being merged separately (Go on Tachyon
   Tac); its behaviour and the Playwright assertions belong to that merge.
 - **Tachyon release.** The Go server uses Tachyon features that are only on
-  develop (binary Go bodies, `SocketSession.Request()`); the image and CI pin
-  26.36.01, and the image can take an unreleased `ty` through
+  develop (binary Go bodies, `SocketSession.Request()`); the image pins
+  26.36.01 (CI stays on the locked 26.33.02), and the image can take an unreleased `ty` through
   `--build-context tachyon-override=<dir>`. A release is needed before the
   image builds from pinned versions alone.
 - **Visibility rule.** `server/application.json` turns TY1333 off so the
@@ -1031,8 +1031,8 @@ Accepted by Samuel 2026-10-11:
 
 From the switchover (2026-10-11), not yet reviewed:
 
-- Tachyon refuses request bodies over 1 MiB, so inbound mail larger than about 1 MiB is refused with a permanent 552 (and large uploads fail). Needs a Tachyon limit setting or a streamed delivery path.
-- `runtime.lock.json` still locks Tachyon 26.33.02 (and its `bun.lock` digest is stale); re-lock it when the image and CI move to a release that carries the Go-server features.
+- Tachyon refuses request bodies over 1 MiB, so inbound mail larger than about 1 MiB is refused with a permanent 552; large `/send` bodies (submission, attachments) hit the same 413, and the submission server likely answers 451 for them. Needs a Tachyon limit setting or a streamed delivery path.
+- `runtime.lock.json` (and CI) still lock Tachyon 26.33.02 while the image pins 26.36.01 (and its `bun.lock` digest is stale); re-lock it when the image and CI move to a release that carries the Go-server features.
 - A `tachyon-override` ty must link against glibc 2.36 or older (Debian bookworm images); a ty built on Ubuntu 24.04 needs 2.39.
 - The image keeps the Go toolchain because Yon compiles Go handlers on first use; precompile them at build time to drop it.
 - Bun stays in the image only for `create-admin.mjs` and `migrate-domain.mjs`; porting them to the Go binary removes Bun and `tests/support/legacy-server` from the image.

@@ -34,6 +34,10 @@ services:
       # verified against. It is a named volume so a restart keeps them.
       - sesame-deployment:/data/sesame
     environment:
+      # A local test deployment: the production gate refuses the console
+      # adapter and test routes below, so this is not NODE_ENV=production.
+      # `ty serve` then also rebuilds the bundle at start.
+      NODE_ENV: development
       # Secrets — dev-only values; the seed scripts default to this exact secret.
       INBOUND_WEBHOOK_SECRET: caduceus-e2e-inbound-secret
       # Development-only stable credential key. Production must inject a

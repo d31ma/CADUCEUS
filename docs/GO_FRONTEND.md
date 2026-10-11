@@ -157,7 +157,10 @@ or `mailPreferences` must change.
 Go services may use only Tachyon's browser APIs: `Clock`, `SecureRandom`,
 `Connectivity`, `PageVisibility`, `Preferences`, `Clipboard`, `Share`,
 `Notifications` and `Geolocation`. Declare each with `// @Needs`, as in
-`secureRandom SecureRandom`. The built-in events `ConnectivityChanged`,
+`notifications Notifications`. Do not call `SecureRandom` from an event
+listener: in the TinyGo module it crashed the page ("null function", "memory
+access out of bounds"). Use `IdentityUtils{}.UUID()` (`crypto/rand`) for
+request identifiers. The built-in events `ConnectivityChanged`,
 `VisibilityChanged`, `PreferencesChanged` and `NotificationPermissionChanged`
 need no model.
 

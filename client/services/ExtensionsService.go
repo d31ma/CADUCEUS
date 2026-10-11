@@ -128,6 +128,7 @@ func (service *ExtensionsService) showChanged(failure error, message string) {
 		return
 	}
 	service.reload()
+	service.applicationEventPublisher.PublishEvent(ExtensionsChanged{Reason: "settings"}, false)
 }
 
 func (service *ExtensionsService) changed() {

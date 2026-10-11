@@ -32,7 +32,7 @@
         </svg>
       </button>
 
-      <span class="app-extension-toolbar" data-extension-slot="app-toolbar" role="toolbar" aria-label="Extension actions"></span>
+      <span class="app-extension-toolbar" data-extension-slot="app-toolbar" role="toolbar" aria-label="Extension actions"><loop :for="command of extensionRuntime.toolbar"><button type="button" class="caduceus-extension-command" :data-extension-id="command.extensionId" :data-extension-command="command.commandId" :title="command.title" :disabled="command.disabled" on:click="extensionRuntime.invoke(command.extensionId, command.commandId, command.slot)">{command.label}</button></loop></span>
 
       <div class="app-notification-center">
         <button
@@ -463,4 +463,5 @@
     <login-form :brandlogo="'/shared/assets/favicon.svg'" />
   </div>
 </logic>
-<span hidden :data-browser="browserStorage.ready && browserPage.ready && keyboard.ready && device.ready && mailStream.ready"></span>
+<span hidden :data-browser="browserStorage.ready && browserPage.ready && keyboard.ready && device.ready && mailStream.ready && extensionPackage.ready"></span>
+<loop :for="sandbox of extensionRuntime.sandboxes"><iframe hidden tabindex="-1" :data-extension-id="sandbox.id" :title="sandbox.title" sandbox="allow-scripts" referrerpolicy="no-referrer" :srcdoc="sandbox.document"></iframe></loop>

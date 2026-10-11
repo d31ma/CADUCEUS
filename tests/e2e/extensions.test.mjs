@@ -114,10 +114,12 @@ test('runs the complete trusted plugin and declarative theme lifecycle', async (
   const themeRow = settings.locator('[data-extension-id="example.midnight"]')
   await expect(themeRow).toBeVisible()
   await themeRow.getByRole('button', { name: 'Enable' }).click()
-  await expect(page.locator('#caduceus-extension-theme')).toHaveCount(1)
+  // The Go runtime sets the theme's variables on <html> and marks it; the
+  // JavaScript runtime's <style id="caduceus-extension-theme"> is gone.
+  await expect(page.locator('html')).toHaveAttribute('data-extension-theme', 'enabled')
   await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ms-primary').trim())).toBe('#88aaff')
   await themeRow.getByRole('button', { name: 'Disable' }).click()
-  await expect(page.locator('#caduceus-extension-theme')).toHaveCount(0)
+  await expect(page.locator('html')).not.toHaveAttribute('data-extension-theme', 'enabled')
   await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ms-primary').trim())).toBe('#1f6f8b')
   page.once('dialog', dialog => dialog.accept())
   await themeRow.getByRole('button', { name: 'Remove' }).click()

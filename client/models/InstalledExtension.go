@@ -6,4 +6,5 @@ type InstalledExtension struct {
 	Digest      string            `json:"digest"`
 	Enabled     bool              `json:"enabled"`
 	Manifest    ExtensionManifest `json:"manifest"`
+	Source      string            `json:"source"`
 }

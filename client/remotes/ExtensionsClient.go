@@ -6,6 +6,14 @@ type ExtensionsClient interface {
 		authorization string,
 	) ([]InstalledExtension, error)
 
+	// @GetRequest("/extensions/{id}")
+	Extension(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+	) (InstalledExtension, error)
+
 	// @PostRequest("/extensions/inspect")
 	Inspect(
 		// @RequestHeader("Authorization")

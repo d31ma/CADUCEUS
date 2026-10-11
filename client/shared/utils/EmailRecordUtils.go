@@ -88,8 +88,8 @@ func (EmailRecordUtils) Conversation(email Email) ConversationMessage {
 }
 
 func (EmailRecordUtils) addState(email *Email) {
-	email.ReceivedLabel = DateUtils{}.Label(email.ReceivedAt, time.Now())
-	email.OpenedLabel = DateUtils{}.Label(email.OpenedAt, time.Now())
+	email.ReceivedLabel = DateLabelUtils{}.Stamp(email.ReceivedAt, time.Now())
+	email.OpenedLabel = DateLabelUtils{}.Stamp(email.OpenedAt, time.Now())
 	email.HasSpamScore = email.SpamScore != nil
 	email.SpamScoreLabel = strconv.FormatFloat(EmailRecordUtils{}.score(email.SpamScore), 'f', 1, 64)
 	email.Spam = EmailRecordUtils{}.spam(TextUtils{}.FirstOf(TextUtils{}.FirstOf(email.SystemFolder, email.Folder), "inbox"), email.HasSpamScore, email.SpamReasons != nil)
@@ -128,7 +128,7 @@ func (EmailRecordUtils) openType() string { return "open" }
 func (EmailRecordUtils) openEvents(opens []TrackingHit) []TrackingEvent {
 	events := []TrackingEvent{}
 	for _, open := range opens {
-		events = append(events, TrackingEvent{Type: EmailRecordUtils{}.openType(), EventIcon: "◉", EventLabel: "Opened", Timestamp: open.OpenedAt, TimestampLabel: DateUtils{}.Label(open.OpenedAt, time.Now()), RecipientLabel: EmailRecordUtils{}.recipientLabel(open)})
+		events = append(events, TrackingEvent{Type: EmailRecordUtils{}.openType(), EventIcon: "◉", EventLabel: "Opened", Timestamp: open.OpenedAt, TimestampLabel: DateLabelUtils{}.Stamp(open.OpenedAt, time.Now()), RecipientLabel: EmailRecordUtils{}.recipientLabel(open)})
 	}
 	return events
 }
@@ -138,7 +138,7 @@ func (EmailRecordUtils) clickType() string { return "click" }
 func (EmailRecordUtils) clickEvents(clicks []TrackingHit) []TrackingEvent {
 	events := []TrackingEvent{}
 	for _, click := range clicks {
-		events = append(events, TrackingEvent{Type: EmailRecordUtils{}.clickType(), EventIcon: "↗", EventLabel: "Clicked", Timestamp: click.ClickedAt, TimestampLabel: DateUtils{}.Label(click.ClickedAt, time.Now()), RecipientLabel: EmailRecordUtils{}.recipientLabel(click), TargetLabel: TextUtils{}.FirstOf(TextUtils{}.FirstOf(click.Title, click.Url), "Link")})
+		events = append(events, TrackingEvent{Type: EmailRecordUtils{}.clickType(), EventIcon: "↗", EventLabel: "Clicked", Timestamp: click.ClickedAt, TimestampLabel: DateLabelUtils{}.Stamp(click.ClickedAt, time.Now()), RecipientLabel: EmailRecordUtils{}.recipientLabel(click), TargetLabel: TextUtils{}.FirstOf(TextUtils{}.FirstOf(click.Title, click.Url), "Link")})
 	}
 	return events
 }

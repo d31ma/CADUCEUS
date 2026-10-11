@@ -122,7 +122,7 @@ func (ThreadShareService) status(item ThreadShare, now time.Time) ThreadShare {
 	revoked := item.RevokedAt != ""
 	item.Active = LogicUtils{}.All(!expired, !revoked)
 	item.MessageLabel = TextUtils{}.Count(item.MessageCount, "message", "messages")
-	item.StatusLabel = map[bool]string{true: "Revoked " + DateUtils{}.Label(item.RevokedAt, now), false: TextUtils{}.Choose(expired, "Expired", "Expires "+DateUtils{}.Label(item.ExpiresAt, now))}[revoked]
+	item.StatusLabel = map[bool]string{true: "Revoked " + DateLabelUtils{}.Stamp(item.RevokedAt, now), false: TextUtils{}.Choose(expired, "Expired", "Expires "+DateLabelUtils{}.Stamp(item.ExpiresAt, now))}[revoked]
 	return item
 }
 

@@ -217,7 +217,7 @@ func (service *ParticipantService) summaries(messages []Email) []ParticipantThre
 	threads := []ParticipantThread{}
 	for _, message := range messages {
 		snippet := []rune(strings.TrimSpace(whitespace.ReplaceAllString(TextUtils{}.FirstOf(message.Snippet, message.Body), service.space())))
-		threads = append(threads, ParticipantThread{Id: message.ID, Subject: TextUtils{}.FirstOf(message.Subject, "(No subject)"), Snippet: string(snippet[:min(len(snippet), service.maximumSnippet())]), ReceivedAt: message.ReceivedAt, ReceivedLabel: DateUtils{}.Label(message.ReceivedAt, time.Now())})
+		threads = append(threads, ParticipantThread{Id: message.ID, Subject: TextUtils{}.FirstOf(message.Subject, "(No subject)"), Snippet: string(snippet[:min(len(snippet), service.maximumSnippet())]), ReceivedAt: message.ReceivedAt, ReceivedLabel: DateLabelUtils{}.Stamp(message.ReceivedAt, time.Now())})
 	}
 	return threads
 }

@@ -96,7 +96,7 @@ func (service *SnoozeService) perform(until time.Time, label string) {
 	result, failure := service.snoozeClient.Snooze(service.bearer(), map[string]any{"emailId": service.message.EmailId, "until": SnoozePresetsUtils{}.Timestamp(until), "label": label, "clientRequestId": requestID})
 	service.Busy = false
 	subject := TextUtils{}.Choose(result.Count == 1, "conversation", TextUtils{}.Count(result.Count, "message", "messages"))
-	message := "Snoozed " + subject + " until " + DateUtils{}.Label(SnoozePresetsUtils{}.Timestamp(until), time.Now())
+	message := "Snoozed " + subject + " until " + DateLabelUtils{}.Stamp(SnoozePresetsUtils{}.Timestamp(until), time.Now())
 	FlowUtils{}.Either(HTTPUtils{}.Missed(failure, result.SnoozeId), func() {
 		service.Error = HTTPUtils{}.Message(failure, "Snooze failed.", "Network error.")
 	}, func() { service.snoozed(result.SnoozeId, message) })()

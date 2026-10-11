@@ -1,4 +1,5 @@
 <div class="settings-panel">
+  <span hidden :data-preferences="userPreferences.loaded"></span>
   <span hidden :data-settings-bridges="pushSubscription.active && soundPreview.active && !passkey.pending"></span>
 
   <section id="connected-accounts" class="settings-section external-accounts" data-external-account-settings>

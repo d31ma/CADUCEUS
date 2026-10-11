@@ -4,5 +4,6 @@
  * @typedef {Object} MailRowActivated
  * @property {string} emailId
  * @property {string} threadId
+ * @property {boolean} narrow
  */
 export {}

@@ -1,6 +1,6 @@
-// ComposeRequested asks for the composer, prefilled. The shell's compose()
-// stores the prefill in sessionStorage and opens /compose.
-type ComposeRequested struct {
+// ComposeFields is the composer prefill, stored as caduceus_compose_prefill
+// in sessionStorage before /compose opens.
+type ComposeFields struct {
 	DraftID      string           `json:"draftId,omitempty"`
 	ScheduledID  string           `json:"scheduledId,omitempty"`
 	SendAt       string           `json:"sendAt,omitempty"`

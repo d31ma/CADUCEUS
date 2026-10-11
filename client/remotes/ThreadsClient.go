@@ -1,9 +1,9 @@
-// @HTTPClient
+// @HTTPClient("/threads")
 type ThreadsClient interface {
 	// List reads conversations: the ones matching the query, or with an empty
 	// query the ones in the folder.
 	//
-	// @GetRequest("/threads")
+	// @GetRequest
 	List(
 		// @RequestHeader("Authorization")
 		authorization string,

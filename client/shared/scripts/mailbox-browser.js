@@ -18,12 +18,6 @@ const CONTROL = 'a, button, input, select, textarea, label, [role="button"], [ro
 const EDITABLE = 'input, textarea, select, [contenteditable="true"], [role="textbox"], [role="dialog"]'
 const SEARCH_INPUT = '[data-thread-search-input]'
 const ROVING_KEYS = ['ArrowDown', 'ArrowUp', 'Home', 'End']
-const SHORTCUTS = [
-  'navigation:next-email', 'navigation:prev-email', 'navigation:scroll-down', 'navigation:scroll-up',
-  'email:star', 'email:archive', 'email:trash', 'email:report-spam', 'email:mark-read', 'email:mark-unread',
-  'email:open', 'core:select-all', 'core:deselect-all',
-]
-const BODY_FIELDS = ['body', 'htmlBody', 'plainText', 'textBody', 'rawRFC822Base64', 'calendarInvite']
 const SUGGESTION_PAUSE_MS = 90
 const BLUR_GRACE_MS = 140
 const SWIPE_DISTANCE = 64
@@ -31,22 +25,14 @@ const SWIPE_DRIFT = 48
 const MENU_WIDTH = 232
 const MENU_HEIGHT = 320
 const EDGE = 8
-
-/**
- * The address the page was opened with.
- * @returns {{ folder: string, domain: string, account: string }}
- */
-export function mailboxAddress() {
-  const params = new URLSearchParams(location.search)
-  return { folder: params.get('folder') || '', domain: params.get('domain') || '', account: params.get('account') || '' }
-}
+const NARROW = 760
 
 /**
  * Row activation, roving focus and gestures, in the capture phase so a row's
  * checkbox and quick actions keep their own clicks.
  *
  * @param {AbortSignal} signal
- * @param {{ activate: (emailId: string, threadId: string) => void, focus: (id: string) => void, gesture: (kind: string, emailId: string, folder: string) => void }} report
+ * @param {{ activate: (emailId: string, threadId: string, narrow: boolean) => void, focus: (id: string) => void, gesture: (kind: string, emailId: string, folder: string) => void }} report
  */
 export function watchRows(signal, report) {
   /** @type {{ id: string, x: number, y: number, pointerId: number } | null} */
@@ -57,7 +43,7 @@ export function watchRows(signal, report) {
   document.addEventListener('pointerup', event => { swipe = swipeEnd(event, swipe, report) }, { capture: true, signal })
 }
 
-/** @param {MouseEvent} event @param {{ activate: (emailId: string, threadId: string) => void }} report */
+/** @param {MouseEvent} event @param {{ activate: (emailId: string, threadId: string, narrow: boolean) => void }} report */
 function rowClick(event, report) {
   const source = event.target instanceof Element ? event.target : null
   if (!source) return
@@ -70,10 +56,10 @@ function rowClick(event, report) {
   event.preventDefault()
   event.stopImmediatePropagation()
   const emailId = target.dataset.emailOpen || target.dataset.emailId || ''
-  report.activate(emailId, emailId ? '' : target.dataset.threadOpen || target.dataset.threadId || '')
+  report.activate(emailId, emailId ? '' : target.dataset.threadOpen || target.dataset.threadId || '', innerWidth <= NARROW)
 }
 
-/** @param {KeyboardEvent} event @param {{ activate: (emailId: string, threadId: string) => void, focus: (id: string) => void, gesture: (kind: string, emailId: string, folder: string) => void }} report */
+/** @param {KeyboardEvent} event @param {{ activate: (emailId: string, threadId: string, narrow: boolean) => void, focus: (id: string) => void, gesture: (kind: string, emailId: string, folder: string) => void }} report */
 function rowKey(event, report) {
   const source = event.target instanceof Element ? event.target : null
   if (event.key === 'Backspace' && !source?.closest(EDITABLE) && document.querySelector('.email-row, .thread-email-row')) {
@@ -95,7 +81,7 @@ function rowKey(event, report) {
   if (event.key !== 'Enter' && event.key !== ' ') return
   event.preventDefault()
   event.stopImmediatePropagation()
-  report.activate(target.dataset.emailOpen || '', target.dataset.emailOpen ? '' : id)
+  report.activate(target.dataset.emailOpen || '', target.dataset.emailOpen ? '' : id, innerWidth <= NARROW)
 }
 
 /** @param {string} key @param {string} id @param {{ focus: (id: string) => void }} report */
@@ -297,25 +283,4 @@ export function scrollList(top, by) {
   if (by === undefined) list?.scrollTo({ top, behavior: 'smooth' })
   else if (list) list.scrollBy({ top: by, behavior: 'smooth' })
   else scrollBy({ top: by, behavior: 'smooth' })
-}
-
-/**
- * The window events of the shell that predate typed events: live new mail,
- * refresh requests, the reader's Back button and the list shortcuts.
- *
- * @param {AbortSignal} signal
- * @param {{ newMail: (email: Record<string, unknown>) => void, refresh: () => void, closed: () => void, shortcut: (name: string) => void }} report
- */
-export function watchShell(signal, report) {
-  addEventListener('caduceus:new-email', event => report.newMail(summary(/** @type {CustomEvent} */ (event).detail)), { signal })
-  addEventListener('caduceus:refresh-inbox', () => report.refresh(), { signal })
-  addEventListener('caduceus:mail-back', () => report.closed(), { signal })
-  for (const name of SHORTCUTS) addEventListener(`caduceus:shortcut:${name}`, () => report.shortcut(name), { signal })
-}
-
-/** A pushed message without its bodies, so it fits one event. @param {unknown} email */
-function summary(email) {
-  const copy = email && typeof email === 'object' ? { .../** @type {Record<string, unknown>} */ (email) } : {}
-  for (const field of BODY_FIELDS) delete copy[field]
-  return copy
 }

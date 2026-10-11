@@ -3,6 +3,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"net/url"
 	"regexp"
 	"slices"
 	"strings"
@@ -96,24 +97,22 @@ func (inbox *InboxService) SessionChanged(session SessionChanged) {
 	inbox.authorization = "Bearer " + session.Token
 	inbox.owner = strings.ToLower(strings.TrimSpace(session.Email))
 	inbox.domains = inbox.normalizedDomains(session.Domains)
-	inbox.mailboxNames = session.MailboxNames
-	inbox.accounts = session.ExternalAccounts
-	inbox.signedIn = session.Token != ""
-	inbox.SelectedAccount = inbox.connectedAccount(inbox.SelectedAccount)
+	inbox.signedIn = session.SignedIn
 	inbox.SelectedDomain = inbox.allowedDomain()
 	inbox.loadWhenReady()
 	inbox.derive()
 	inbox.settle()
 }
 
-// MailboxOpened applies the address the list was opened with: the folder of a
+// PageLocation applies the address the list was opened with: the folder of a
 // /folder/<name> page wins, then ?folder=, then the inbox; ?account= or
 // ?domain= replace the saved mailbox choice.
 //
 // @OnEvent({"replay":true})
-func (inbox *InboxService) MailboxOpened(opened MailboxOpened) {
-	inbox.SelectedFolder = cmp.Or(inbox.Folder, opened.Folder, inbox.inboxFolder())
-	inbox.SelectedAccount, inbox.SelectedDomain = inbox.mailboxFromAddress(opened)
+func (inbox *InboxService) PageLocation(location PageLocation) {
+	query, _ := url.ParseQuery(location.Search[min(1, len(location.Search)):])
+	inbox.SelectedFolder = cmp.Or(inbox.Folder, query.Get(inbox.folderKey()), inbox.inboxFolder())
+	inbox.SelectedAccount, inbox.SelectedDomain = inbox.mailboxFromAddress(query.Get("account"), query.Get("domain"))
 	inbox.StatusFilter = cmp.Or(inbox.StatusFilter, inbox.everyMessage())
 	inbox.Density = cmp.Or(inbox.Density, inbox.comfortable())
 	inbox.SelectedAccount = inbox.patternedAccount(inbox.SelectedAccount)
@@ -130,11 +129,30 @@ func (InboxService) everyMessage() string { return "all" }
 
 func (InboxService) comfortable() string { return "comfortable" }
 
+// PreferencesLoaded brings the personal mailbox names and the clock style.
+//
 // @OnEvent({"replay":true})
-func (inbox *InboxService) MailPreferencesChanged(preferences MailPreferencesChanged) {
-	inbox.use24HourClock = preferences.Use24HourClock
+func (inbox *InboxService) PreferencesLoaded(loaded PreferencesLoaded) {
+	inbox.mailboxNames = loaded.MailboxNames
+	inbox.use24HourClock = loaded.Use24HourClock
 	inbox.derive()
 }
+
+// ExternalMailboxesChanged brings the connected accounts; a chosen account
+// that is no longer connected falls back to all mailboxes.
+//
+// @OnEvent({"replay":true})
+func (inbox *InboxService) ExternalMailboxesChanged(changed ExternalMailboxesChanged) {
+	inbox.accounts = changed.Accounts
+	inbox.SelectedAccount = inbox.connectedAccount(inbox.SelectedAccount)
+	inbox.SelectedDomain = inbox.allowedDomain()
+	inbox.derive()
+}
+
+// Settled renders the page after a listener that waited for the server.
+//
+// @OnEvent
+func (inbox *InboxService) Settled(_ ViewSettled) {}
 
 // Load reads the list again with the current filters: conversations in
 // threaded mode, the search route while a search is active, the mailbox
@@ -362,12 +380,12 @@ func (inbox *InboxService) ChangeMailboxFilter(value string) {
 	inbox.derive()
 }
 
-func (inbox *InboxService) mailboxFromAddress(opened MailboxOpened) (string, string) {
+func (inbox *InboxService) mailboxFromAddress(account string, domain string) (string, string) {
 	switch {
-	case opened.Account != "":
-		return opened.Account, inbox.everyMailbox()
-	case opened.Domain != "":
-		return "", strings.ToLower(opened.Domain)
+	case account != "":
+		return account, inbox.everyMailbox()
+	case domain != "":
+		return "", strings.ToLower(domain)
 	default:
 		return inbox.SelectedAccount, cmp.Or(inbox.SelectedDomain, inbox.everyMailbox())
 	}
@@ -522,7 +540,7 @@ func (inbox *InboxService) countArrival(valid bool, known bool, visible bool) {
 
 // @OnEvent
 func (inbox *InboxService) MailRowActivated(activated MailRowActivated) {
-	inbox.selectWhenEmail(activated.EmailID)
+	inbox.selectWhenEmail(activated.EmailID, activated.Narrow)
 	inbox.toggleWhenThread(activated.EmailID, activated.ThreadID)
 	inbox.derive()
 }
@@ -553,9 +571,9 @@ func (inbox *InboxService) ToggleAllVisibleSelection() {
 	inbox.derive()
 }
 
-func (inbox *InboxService) selectWhenEmail(id string) {
+func (inbox *InboxService) selectWhenEmail(id string, narrow bool) {
 	if id != "" {
-		inbox.selectEmail(id)
+		inbox.selectEmail(id, narrow)
 	}
 }
 
@@ -569,19 +587,40 @@ func (inbox *InboxService) toggleWhenThread(emailID string, threadID string) {
 	}
 }
 
-func (inbox *InboxService) selectEmail(id string) {
+func (inbox *InboxService) selectEmail(id string, narrow bool) {
 	inbox.FocusedID = id
 	inbox.SelectedID = id
 	folder := cmp.Or(inbox.emailByID(inbox.allEmails, id).Folder, inbox.SelectedFolder)
-	inbox.publishSelection(id, folder)
+	inbox.selections()[inbox.selectionKind(folder == "drafts", narrow)](id)
 }
 
-func (inbox *InboxService) publishSelection(id string, folder string) {
-	if folder == "drafts" {
-		inbox.applicationEventPublisher.PublishEvent(ComposeRequested{DraftID: id}, false)
-		return
+// selections opens a draft in the composer, a message on its own page on a
+// phone-sized window, and otherwise in the reader beside the list.
+func (inbox *InboxService) selections() []func(string) {
+	return []func(string){
+		func(id string) { inbox.applicationEventPublisher.PublishEvent(MailSelected{EmailID: id}, false) },
+		func(id string) { inbox.applicationEventPublisher.PublishEvent(ComposeUtils{}.Message(id), false) },
+		func(id string) { inbox.openComposer(ComposeUtils{}.Stored(ComposeFields{DraftID: id})) },
 	}
-	inbox.applicationEventPublisher.PublishEvent(MailSelected{EmailID: id}, false)
+}
+
+func (InboxService) selectionKind(draft bool, narrow bool) int {
+	if draft {
+		return 2
+	} else if narrow {
+		return 1
+	}
+	return 0
+}
+
+// Compose opens a blank composer.
+func (inbox *InboxService) Compose() {
+	inbox.openComposer(ComposeUtils{}.Cleared())
+}
+
+func (inbox *InboxService) openComposer(stored StorageWritten) {
+	inbox.applicationEventPublisher.PublishEvent(stored, false)
+	inbox.applicationEventPublisher.PublishEvent(ComposeUtils{}.Opened(), false)
 }
 
 func (inbox *InboxService) toggled(id string) []string {
@@ -682,38 +721,17 @@ func (inbox *InboxService) QuickTrash(id string) {
 
 func (InboxService) movedToTrash() string { return "Moved to trash." }
 
-// ReportSpam teaches the spam filter that one message is spam.
+// ReportSpam teaches the spam filter that one message is spam. The shell's
+// MailboxService reports it, says so and asks the list to load again.
 func (inbox *InboxService) ReportSpam(id string) {
-	updated, failure := inbox.inboxClient.MarkSpam(inbox.authorization, id, map[string]any{inbox.spam(): true})
-	replaced, removed := inbox.replacedEmail(updated), inbox.withoutEmail(updated.ID)
-	inbox.allEmails = inbox.afterVerdict(failure, inbox.SelectedFolder == inbox.spam(), replaced, removed)
-	inbox.toast(map[bool]string{true: "Report spam failed.", false: "Reported spam."}[failure != nil])
-	inbox.reloadWhenJudged(failure)
-	inbox.derive()
+	inbox.applicationEventPublisher.PublishEvent(SpamReportRequested{ID: id, Spam: true}, false)
 }
 
 func (InboxService) spam() string { return "spam" }
 
 // MarkNotSpam moves a message the filter caught back to the inbox.
 func (inbox *InboxService) MarkNotSpam(id string) {
-	updated, failure := inbox.inboxClient.MarkSpam(inbox.authorization, id, map[string]any{inbox.spam(): false})
-	replaced, removed := inbox.replacedEmail(updated), inbox.withoutEmail(updated.ID)
-	inbox.allEmails = inbox.afterVerdict(failure, inbox.SelectedFolder != inbox.spam(), replaced, removed)
-	inbox.toast(map[bool]string{true: "Not spam failed.", false: "Moved to inbox."}[failure != nil])
-	inbox.reloadWhenJudged(failure)
-	inbox.derive()
-}
-
-// MailActionApplied merges the changed messages into the list, whoever
-// applied the action (this list, the picker, the reader or an undo).
-//
-// @OnEvent
-func (inbox *InboxService) MailActionApplied(applied MailActionApplied) {
-	changes := inbox.changesByID(applied.Emails)
-	inbox.allEmails = inbox.merged(inbox.allEmails, changes)
-	inbox.threads = inbox.mergedThreads(changes)
-	inbox.publishFolderCounts()
-	inbox.derive()
+	inbox.applicationEventPublisher.PublishEvent(SpamReportRequested{ID: id, Spam: false}, false)
 }
 
 // @OnEvent
@@ -739,26 +757,13 @@ func (inbox *InboxService) afterBulk(applied bool) []string {
 	return inbox.Selection
 }
 
+// applyWhen asks the shell's MailboxService to apply an undoable action; it
+// offers Undo and Redo and asks the list to load again.
 func (inbox *InboxService) applyWhen(wanted bool, ids []string, patch map[string]any, message string) bool {
-	result, failure := inbox.actWhen(wanted, ids, patch)
-	return inbox.announce(wanted, result, failure, message)
-}
-
-func (inbox *InboxService) actWhen(wanted bool, ids []string, patch map[string]any) (MailActionResult, error) {
-	if !wanted {
-		return MailActionResult{}, nil
-	}
-	return inbox.inboxClient.Act(inbox.authorization, map[string]any{"ids": ids, "patch": patch})
-}
-
-func (inbox *InboxService) announce(wanted bool, result MailActionResult, failure error, message string) bool {
 	if !wanted {
 		return false
-	} else if failure != nil || result.ActionID == "" {
-		inbox.toast("Mail action failed.")
-		return false
 	}
-	inbox.applicationEventPublisher.PublishEvent(MailActionApplied{ActionID: result.ActionID, Message: message, ExpiresAt: result.ExpiresAt, Emails: result.Emails}, false)
+	inbox.applicationEventPublisher.PublishEvent(MailActionRequested{Ids: ids, Patch: patch, Message: message}, false)
 	return true
 }
 
@@ -782,23 +787,6 @@ func (inbox *InboxService) starredState(id string) (bool, bool) {
 	return inbox.allEmails[found].Starred, true
 }
 
-func (inbox *InboxService) afterVerdict(failure error, keep bool, replaced []Email, removed []Email) []Email {
-	switch {
-	case failure != nil:
-		return inbox.allEmails
-	case keep:
-		return replaced
-	default:
-		return removed
-	}
-}
-
-func (inbox *InboxService) reloadWhenJudged(failure error) {
-	if failure == nil {
-		inbox.Load()
-	}
-}
-
 func (inbox *InboxService) replacedEmail(updated Email) []Email {
 	emails := slices.Clone(inbox.allEmails)
 	found := slices.IndexFunc(emails, inbox.sameID(updated.ID))
@@ -806,66 +794,6 @@ func (inbox *InboxService) replacedEmail(updated Email) []Email {
 		emails[found] = updated
 	}
 	return emails
-}
-
-func (inbox *InboxService) withoutEmail(id string) []Email {
-	return slices.DeleteFunc(slices.Clone(inbox.allEmails), inbox.sameID(id))
-}
-
-func (inbox *InboxService) changesByID(changes []EmailChange) map[string]EmailChange {
-	byID := map[string]EmailChange{}
-	for _, change := range changes {
-		byID[change.ID] = change
-	}
-	return byID
-}
-
-func (inbox *InboxService) merged(emails []Email, changes map[string]EmailChange) []Email {
-	merged := []Email{}
-	for _, email := range emails {
-		merged = append(merged, inbox.changed(email, changes[email.ID]))
-	}
-	return merged
-}
-
-func (inbox *InboxService) mergedThreads(changes map[string]EmailChange) []MailThread {
-	threads := []MailThread{}
-	for _, thread := range inbox.threads {
-		thread.Emails = inbox.merged(thread.Emails, changes)
-		threads = append(threads, thread)
-	}
-	return threads
-}
-
-func (inbox *InboxService) changed(email Email, change EmailChange) Email {
-	email.Domain = inbox.text(change.Domain, email.Domain)
-	email.Folder = inbox.text(change.Folder, email.Folder)
-	email.SystemFolder = inbox.text(change.SystemFolder, email.SystemFolder)
-	email.Labels = inbox.labels(change.Labels, email.Labels)
-	email.Read = inbox.flag(change.Read, email.Read)
-	email.Starred = inbox.flag(change.Starred, email.Starred)
-	return email
-}
-
-func (InboxService) text(value *string, fallback string) string {
-	if value == nil {
-		return fallback
-	}
-	return *value
-}
-
-func (InboxService) flag(value *bool, fallback bool) bool {
-	if value == nil {
-		return fallback
-	}
-	return *value
-}
-
-func (InboxService) labels(value *[]string, fallback []string) []string {
-	if value == nil {
-		return fallback
-	}
-	return *value
 }
 
 // ---- The row menu ----------------------------------------------------------
@@ -892,7 +820,7 @@ func (inbox *InboxService) CloseContextMenu() {
 // ContextOpen opens the message the menu belongs to.
 func (inbox *InboxService) ContextOpen() {
 	ids := inbox.closeMenu()
-	inbox.selectWhenEmail(append(ids, "")[0])
+	inbox.selectWhenEmail(append(ids, "")[0], false)
 	inbox.derive()
 }
 
@@ -1024,7 +952,7 @@ func (inbox *InboxService) openPicker(mode string, ids []string) {
 func (inbox *InboxService) pickerMessages(ids []string) []PickerMessage {
 	byID := map[string]PickerMessage{}
 	for _, email := range slices.DeleteFunc(inbox.everyEmail(), func(email Email) bool { return !slices.Contains(ids, email.ID) }) {
-		byID[email.ID] = PickerMessage{ID: email.ID, Domain: email.Domain, Folder: email.Folder, Labels: email.Labels}
+		byID[email.ID] = PickerMessage{ID: email.ID, Domain: email.Domain, Folder: email.Folder, Labels: append([]string{}, email.Labels...)}
 	}
 	return slices.SortedFunc(maps.Values(byID), func(left PickerMessage, right PickerMessage) int {
 		return slices.Index(ids, left.ID) - slices.Index(ids, right.ID)
@@ -1034,8 +962,8 @@ func (inbox *InboxService) pickerMessages(ids []string) []PickerMessage {
 // ---- Keyboard shortcuts ----------------------------------------------------
 
 // @OnEvent
-func (inbox *InboxService) MailShortcut(shortcut MailShortcut) {
-	inbox.runShortcut(shortcut.Name)
+func (inbox *InboxService) ShortcutPressed(pressed ShortcutPressed) {
+	inbox.runShortcut(pressed.Command)
 	inbox.derive()
 	inbox.settle()
 }
@@ -1097,7 +1025,7 @@ func (inbox *InboxService) unreadSelected(id string) {
 
 func (inbox *InboxService) openSelected() {
 	if inbox.SelectedID != "" {
-		inbox.applicationEventPublisher.PublishEvent(EmailOpenRequested{EmailID: inbox.SelectedID}, false)
+		inbox.applicationEventPublisher.PublishEvent(ComposeUtils{}.Message(inbox.SelectedID), false)
 	}
 }
 
@@ -1110,7 +1038,7 @@ func (inbox *InboxService) selectWithin(emails []Email, direction int) {
 		return
 	}
 	current := slices.IndexFunc(emails, inbox.sameID(inbox.SelectedID))
-	inbox.selectEmail(emails[max(0, min(current+direction, len(emails)-1))].ID)
+	inbox.selectEmail(emails[max(0, min(current+direction, len(emails)-1))].ID, false)
 	inbox.applicationEventPublisher.PublishEvent(SelectionMoved{EmailID: inbox.SelectedID}, false)
 }
 
@@ -1341,7 +1269,7 @@ func (inbox *InboxService) scope(total int) MailboxScopeChanged {
 	return MailboxScopeChanged{
 		Folder: inbox.SelectedFolder, FolderTitle: inbox.FolderTitle, StatusFilter: inbox.StatusFilter,
 		Domain: inbox.SelectedDomain, Account: inbox.SelectedAccount, AccountLabel: inbox.accountLabel(),
-		DomainLabel: inbox.mailboxLabel(inbox.SelectedDomain), Domains: inbox.domains, Owner: inbox.owner,
+		DomainLabel: inbox.mailboxLabel(inbox.SelectedDomain), Domains: append([]string{}, inbox.domains...), Owner: inbox.owner,
 		Total: total, Searching: strings.TrimSpace(inbox.Search) != "",
 	}
 }
@@ -1426,8 +1354,10 @@ func (InboxService) title(name string) string {
 }
 
 func (inbox *InboxService) toFolder(folder string) map[string]any {
-	return map[string]any{"folder": folder}
+	return map[string]any{inbox.folderKey(): folder}
 }
+
+func (InboxService) folderKey() string { return "folder" }
 
 func (InboxService) readMessage(read bool) string {
 	return map[bool]string{true: "Marked as unread.", false: "Marked as read."}[read]

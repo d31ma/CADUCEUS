@@ -1,107 +1,104 @@
-<logic :if="activity.signedIn">
-  <main class="activity-page" aria-labelledby="activity-title">
-    <button data-caduceus-page-bootstrap type="button" hidden on:click="activity.load()" aria-label="Load activity" tabindex="-1"></button>
-    <header class="activity-toolbar">
-      <div>
-        <p class="activity-eyebrow">Self-hosted delivery insights</p>
-        <h1 id="activity-title" class="activity-title w-text-headline-small">Activity</h1>
+<main class="activity-page" aria-labelledby="activity-title">
+  <button data-caduceus-page-bootstrap type="button" hidden on:click="activity.load()" aria-label="Load activity" tabindex="-1"></button>
+  <header class="activity-toolbar">
+    <div>
+      <p class="activity-eyebrow">Self-hosted delivery insights</p>
+      <h1 id="activity-title" class="activity-title w-text-headline-small">Activity</h1>
+    </div>
+    <div class="activity-toolbar-actions">
+      <label class="activity-range-label" for="activity-range">Time range</label>
+      <select id="activity-range" class="activity-range" :value="activity.range" on:change="activity.changeRange($event.target.value)">
+        <option value="7d">Last 7 days</option>
+        <option value="30d">Last 30 days</option>
+        <option value="90d">Last 90 days</option>
+        <option value="all">All time</option>
+      </select>
+      <button type="button" class="activity-refresh" on:click="activity.load()" :disabled="!activity.loaded" aria-label="Refresh activity">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 11a8.1 8.1 0 1 0 2 5.3"/><path d="M20 4v7h-7"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <logic :if="!activity.loaded">
+    <div class="activity-state" role="status"><w-progress-circular indeterminate aria-hidden="true"></w-progress-circular><span>Loading mailbox activity…</span></div>
+  </logic>
+
+  <logic :if="activity.loaded && activity.error">
+    <div class="activity-state activity-error" role="alert"><strong>Activity unavailable</strong><span>{activity.error}</span><w-btn variant="tonal" on:click="activity.load()">Try again</w-btn></div>
+  </logic>
+
+  <logic :if="activity.loaded && !activity.error">
+    <section class="activity-metrics" aria-label="Mailbox performance summary">
+      <article class="activity-metric"><span class="activity-metric-label">Tracking use</span><strong>{activity.metrics.trackingRateLabel}</strong><span>{activity.metrics.tracked} of {activity.metrics.sent} sent</span></article>
+      <article class="activity-metric"><span class="activity-metric-label">Open rate</span><strong>{activity.metrics.openRateLabel}</strong><span>{activity.metrics.opened} opened</span></article>
+      <article class="activity-metric"><span class="activity-metric-label">Click rate</span><strong>{activity.metrics.clickRateLabel}</strong><span>{activity.metrics.clicked} clicked</span></article>
+      <article class="activity-metric"><span class="activity-metric-label">Reply rate</span><strong>{activity.metrics.replyRateLabel}</strong><span>{activity.metrics.replied} replied</span></article>
+    </section>
+
+    <section class="activity-workload" aria-labelledby="workload-title">
+      <div class="activity-section-heading">
+        <div><p class="activity-eyebrow">Mailbox workload</p><h2 id="workload-title">Volume and signals</h2></div>
+        <div class="activity-volume"><span><strong>{activity.metrics.sent}</strong> sent</span><span><strong>{activity.metrics.received}</strong> received</span></div>
       </div>
-      <div class="activity-toolbar-actions">
-        <label class="activity-range-label" for="activity-range">Time range</label>
-        <select id="activity-range" class="activity-range" :value="activity.range" on:change="activity.changeRange($event.target.value)">
-          <option value="7d">Last 7 days</option>
-          <option value="30d">Last 30 days</option>
-          <option value="90d">Last 90 days</option>
-          <option value="all">All time</option>
-        </select>
-        <button type="button" class="activity-refresh" on:click="activity.load()" :disabled="!activity.loaded" aria-label="Refresh activity">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 11a8.1 8.1 0 1 0 2 5.3"/><path d="M20 4v7h-7"/></svg>
-        </button>
-      </div>
-    </header>
-
-    <logic :if="!activity.loaded">
-      <div class="activity-state" role="status"><w-progress-circular indeterminate aria-hidden="true"></w-progress-circular><span>Loading mailbox activity…</span></div>
-    </logic>
-
-    <logic :if="activity.loaded && activity.error">
-      <div class="activity-state activity-error" role="alert"><strong>Activity unavailable</strong><span>{activity.error}</span><w-btn variant="tonal" on:click="activity.load()">Try again</w-btn></div>
-    </logic>
-
-    <logic :if="activity.loaded && !activity.error">
-      <section class="activity-metrics" aria-label="Mailbox performance summary">
-        <article class="activity-metric"><span class="activity-metric-label">Tracking use</span><strong>{activity.metrics.trackingRateLabel}</strong><span>{activity.metrics.tracked} of {activity.metrics.sent} sent</span></article>
-        <article class="activity-metric"><span class="activity-metric-label">Open rate</span><strong>{activity.metrics.openRateLabel}</strong><span>{activity.metrics.opened} opened</span></article>
-        <article class="activity-metric"><span class="activity-metric-label">Click rate</span><strong>{activity.metrics.clickRateLabel}</strong><span>{activity.metrics.clicked} clicked</span></article>
-        <article class="activity-metric"><span class="activity-metric-label">Reply rate</span><strong>{activity.metrics.replyRateLabel}</strong><span>{activity.metrics.replied} replied</span></article>
-      </section>
-
-      <section class="activity-workload" aria-labelledby="workload-title">
-        <div class="activity-section-heading">
-          <div><p class="activity-eyebrow">Mailbox workload</p><h2 id="workload-title">Volume and signals</h2></div>
-          <div class="activity-volume"><span><strong>{activity.metrics.sent}</strong> sent</span><span><strong>{activity.metrics.received}</strong> received</span></div>
-        </div>
-        <logic :if="activity.daily.length === 0"><p class="activity-empty-inline">No messages in this time range.</p></logic>
-        <logic :if="activity.daily.length > 0">
-          <div class="activity-chart" role="img" aria-label="Daily sent, received, open, and click activity">
-            <loop :for="day of activity.daily">
-              <div class="activity-chart-day" role="group" :aria-label="day.ariaLabel" tabindex="0">
-                <div class="activity-bars" aria-hidden="true">
-                  <span class="bar-sent" :style="day.sentStyle"></span>
-                  <span class="bar-received" :style="day.receivedStyle"></span>
-                  <span class="bar-open" :style="day.opensStyle"></span>
-                  <span class="bar-click" :style="day.clicksStyle"></span>
-                </div>
-                <span class="activity-day-label">{day.dateLabel}</span>
+      <logic :if="activity.daily.length === 0"><p class="activity-empty-inline">No messages in this time range.</p></logic>
+      <logic :if="activity.daily.length > 0">
+        <div class="activity-chart" role="img" aria-label="Daily sent, received, open, and click activity">
+          <loop :for="day of activity.daily">
+            <div class="activity-chart-day" role="group" :aria-label="day.ariaLabel" tabindex="0">
+              <div class="activity-bars" aria-hidden="true">
+                <span class="bar-sent" :style="day.sentStyle"></span>
+                <span class="bar-received" :style="day.receivedStyle"></span>
+                <span class="bar-open" :style="day.opensStyle"></span>
+                <span class="bar-click" :style="day.clicksStyle"></span>
               </div>
-            </loop>
+              <span class="activity-day-label">{day.dateLabel}</span>
+            </div>
+          </loop>
+        </div>
+        <div class="activity-legend" aria-hidden="true"><span class="sent">Sent</span><span class="received">Received</span><span class="open">Opens</span><span class="click">Clicks</span></div>
+      </logic>
+    </section>
+
+    <div class="activity-lower-grid">
+      <section class="activity-feed" aria-labelledby="feed-title">
+        <div class="activity-section-heading activity-feed-heading">
+          <div><p class="activity-eyebrow">Recipient signals</p><h2 id="feed-title">Recent activity</h2></div>
+          <div class="activity-filters" role="tablist" aria-label="Event type">
+            <button type="button" role="tab" :class="activity.type === 'all' ? 'activity-filter active' : 'activity-filter'" :aria-selected="activity.type === 'all' ? 'true' : 'false'" on:click="activity.setType('all')">All</button>
+            <button type="button" role="tab" :class="activity.type === 'open' ? 'activity-filter active' : 'activity-filter'" :aria-selected="activity.type === 'open' ? 'true' : 'false'" on:click="activity.setType('open')">Opens</button>
+            <button type="button" role="tab" :class="activity.type === 'click' ? 'activity-filter active' : 'activity-filter'" :aria-selected="activity.type === 'click' ? 'true' : 'false'" on:click="activity.setType('click')">Clicks</button>
           </div>
-          <div class="activity-legend" aria-hidden="true"><span class="sent">Sent</span><span class="received">Received</span><span class="open">Opens</span><span class="click">Clicks</span></div>
+        </div>
+        <logic :if="activity.events.length === 0"><div class="activity-empty"><span class="activity-empty-icon" aria-hidden="true">◌</span><strong>No {activity.eventFilterLabel}</strong><span>Tracked recipient signals will appear here.</span></div></logic>
+        <logic :if="activity.events.length > 0">
+          <ol class="activity-event-list">
+            <loop :for="event of activity.events">
+              <li>
+                <button type="button" class="activity-event" on:click="activity.open(event.messageId)">
+                  <span :class="'activity-event-icon ' + event.type" aria-hidden="true">{event.eventIcon}</span>
+                  <span class="activity-event-copy"><strong>{event.eventLabel} · {event.recipientLabel}</strong><span>{event.subjectLabel}</span><logic :if="event.targetLabel"><small>{event.targetLabel}</small></logic></span>
+                  <time :datetime="event.timestamp">{event.timestampLabel}</time>
+                </button>
+              </li>
+            </loop>
+          </ol>
         </logic>
       </section>
 
-      <div class="activity-lower-grid">
-        <section class="activity-feed" aria-labelledby="feed-title">
-          <div class="activity-section-heading activity-feed-heading">
-            <div><p class="activity-eyebrow">Recipient signals</p><h2 id="feed-title">Recent activity</h2></div>
-            <div class="activity-filters" role="tablist" aria-label="Event type">
-              <button type="button" role="tab" :class="activity.type === 'all' ? 'activity-filter active' : 'activity-filter'" :aria-selected="activity.type === 'all' ? 'true' : 'false'" on:click="activity.setType('all')">All</button>
-              <button type="button" role="tab" :class="activity.type === 'open' ? 'activity-filter active' : 'activity-filter'" :aria-selected="activity.type === 'open' ? 'true' : 'false'" on:click="activity.setType('open')">Opens</button>
-              <button type="button" role="tab" :class="activity.type === 'click' ? 'activity-filter active' : 'activity-filter'" :aria-selected="activity.type === 'click' ? 'true' : 'false'" on:click="activity.setType('click')">Clicks</button>
-            </div>
+      <section class="activity-subjects" aria-labelledby="subjects-title">
+        <div class="activity-section-heading"><div><p class="activity-eyebrow">Conversation outcomes</p><h2 id="subjects-title">By subject</h2></div></div>
+        <logic :if="activity.subjects.length === 0"><p class="activity-empty-inline">No sent messages in this time range.</p></logic>
+        <logic :if="activity.subjects.length > 0">
+          <div class="activity-table-scroll">
+            <table>
+              <thead><tr><th scope="col">Subject</th><th scope="col">Sent</th><th scope="col">Open</th><th scope="col">Click</th><th scope="col">Reply</th></tr></thead>
+              <tbody><loop :for="subject of activity.subjects"><tr><th scope="row">{subject.subjectLabel}</th><td>{subject.sent}</td><td>{subject.openRateLabel}</td><td>{subject.clickRateLabel}</td><td>{subject.replyRateLabel}</td></tr></loop></tbody>
+            </table>
           </div>
-          <logic :if="activity.events.length === 0"><div class="activity-empty"><span class="activity-empty-icon" aria-hidden="true">◌</span><strong>No {activity.eventFilterLabel}</strong><span>Tracked recipient signals will appear here.</span></div></logic>
-          <logic :if="activity.events.length > 0">
-            <ol class="activity-event-list">
-              <loop :for="event of activity.events">
-                <li>
-                  <button type="button" class="activity-event" on:click="mailNavigation.openEmail(event.messageId)">
-                    <span :class="'activity-event-icon ' + event.type" aria-hidden="true">{event.eventIcon}</span>
-                    <span class="activity-event-copy"><strong>{event.eventLabel} · {event.recipientLabel}</strong><span>{event.subjectLabel}</span><logic :if="event.targetLabel"><small>{event.targetLabel}</small></logic></span>
-                    <time :datetime="event.timestamp">{event.timestampLabel}</time>
-                  </button>
-                </li>
-              </loop>
-            </ol>
-          </logic>
-        </section>
+        </logic>
+      </section>
+    </div>
 
-        <section class="activity-subjects" aria-labelledby="subjects-title">
-          <div class="activity-section-heading"><div><p class="activity-eyebrow">Conversation outcomes</p><h2 id="subjects-title">By subject</h2></div></div>
-          <logic :if="activity.subjects.length === 0"><p class="activity-empty-inline">No sent messages in this time range.</p></logic>
-          <logic :if="activity.subjects.length > 0">
-            <div class="activity-table-scroll">
-              <table>
-                <thead><tr><th scope="col">Subject</th><th scope="col">Sent</th><th scope="col">Open</th><th scope="col">Click</th><th scope="col">Reply</th></tr></thead>
-                <tbody><loop :for="subject of activity.subjects"><tr><th scope="row">{subject.subjectLabel}</th><td>{subject.sent}</td><td>{subject.openRateLabel}</td><td>{subject.clickRateLabel}</td><td>{subject.replyRateLabel}</td></tr></loop></tbody>
-              </table>
-            </div>
-          </logic>
-        </section>
-      </div>
-
-      <p class="activity-privacy-note">Open and click signals are stored on this CADUCEUS server. Image blocking and link prefetching can affect them, so they are contextual indicators, not proof that a person read a message.</p>
-    </logic>
-  </main>
-</logic>
-<logic :if="!activity.signedIn"><div class="login-screen"><login-form :brandlogo="'/shared/assets/favicon.svg'" /></div></logic>
+    <p class="activity-privacy-note">Open and click signals are stored on this CADUCEUS server. Image blocking and link prefetching can affect them, so they are contextual indicators, not proof that a person read a message.</p>
+  </logic>
+</main>

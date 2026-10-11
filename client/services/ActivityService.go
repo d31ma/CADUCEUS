@@ -23,17 +23,15 @@ type ActivityService struct {
 	Range            string
 	Loaded           bool
 	Error            string
-	SignedIn         bool
+	signedIn         bool
 	EventFilterLabel string
 	authorization    string
-	owner            string
 }
 
 // @OnEvent({"replay":true})
 func (activity *ActivityService) SessionChanged(session SessionChanged) {
-	activity.SignedIn = session.Token != ""
+	activity.signedIn = session.SignedIn
 	activity.authorization = "Bearer " + session.Token
-	activity.owner = strings.ToLower(cmp.Or(session.Email, "anonymous"))
 	activity.loadWhenSignedIn()
 	activity.settle()
 }
@@ -66,6 +64,22 @@ func (ActivityService) clickKind() string { return "click" }
 
 func (ActivityService) defaultRange() string { return "30d" }
 
+// Open opens the message an event belongs to.
+func (activity *ActivityService) Open(emailID string) {
+	activity.openWhenGiven(emailID)
+}
+
+// Settled renders the page after a listener that waited for the server.
+//
+// @OnEvent
+func (activity *ActivityService) Settled(_ ViewSettled) {}
+
+func (activity *ActivityService) openWhenGiven(emailID string) {
+	if emailID != "" {
+		activity.applicationEventPublisher.PublishEvent(ComposeUtils{}.Message(emailID), false)
+	}
+}
+
 // SetType shows all, open or click events.
 func (activity *ActivityService) SetType(kind string) {
 	activity.loadWhenAllowed(&activity.Type, kind, []string{activity.everyKind(), activity.openKind(), activity.clickKind()})
@@ -77,7 +91,7 @@ func (activity *ActivityService) ChangeRange(period string) {
 }
 
 func (activity *ActivityService) loadWhenSignedIn() {
-	if activity.SignedIn {
+	if activity.signedIn {
 		activity.Load()
 	}
 }
@@ -105,7 +119,7 @@ func (ActivityService) failureText(failure error) string {
 
 func (activity *ActivityService) markViewedWhenLoaded(generatedAt string, failure error) {
 	if failure == nil {
-		activity.applicationEventPublisher.PublishEvent(ActivityViewed{Owner: activity.owner, Timestamp: generatedAt}, false)
+		activity.applicationEventPublisher.PublishEvent(ActivityViewed{At: generatedAt}, false)
 	}
 }
 

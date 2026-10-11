@@ -137,4 +137,3 @@ func (ExternalFolderUtils) decorated(folder ExternalFolder, expanded map[string]
 	folder.HasActions = folder.Actions != FolderActions{}
 	return folder
 }
-

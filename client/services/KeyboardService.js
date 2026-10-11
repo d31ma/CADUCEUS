@@ -12,6 +12,9 @@ export default class KeyboardService {
   static _COMMANDS = [
     'core:compose', 'core:go-inbox', 'core:go-drafts', 'core:go-sent', 'core:go-archive', 'core:go-spam',
     'core:go-trash', 'core:go-settings', 'core:toggle-screenshot-mode', 'core:refresh', 'core:search', 'core:show-shortcuts',
+    'navigation:next-email', 'navigation:prev-email', 'navigation:scroll-down', 'navigation:scroll-up',
+    'email:star', 'email:archive', 'email:trash', 'email:report-spam', 'email:mark-read', 'email:mark-unread',
+    'email:open', 'core:select-all', 'core:deselect-all',
   ]
 
   /** @type {ApplicationEventPublisher} */

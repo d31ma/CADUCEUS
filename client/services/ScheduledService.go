@@ -13,13 +13,13 @@ type ScheduledService struct {
 	Items                     []ScheduledRow
 	// @SessionState
 	Loaded        bool
-	SignedIn      bool
+	signedIn      bool
 	authorization string
 }
 
 // @OnEvent({"replay":true})
 func (scheduled *ScheduledService) SessionChanged(session SessionChanged) {
-	scheduled.SignedIn = session.Token != ""
+	scheduled.signedIn = session.SignedIn
 	scheduled.authorization = "Bearer " + session.Token
 	scheduled.loadWhenSignedIn()
 	scheduled.settle()
@@ -41,6 +41,11 @@ func (scheduled *ScheduledService) Edit(id string) {
 	scheduled.explainWhenFailed(failure)
 }
 
+// Settled renders the page after a listener that waited for the server.
+//
+// @OnEvent
+func (scheduled *ScheduledService) Settled(_ ViewSettled) {}
+
 // Confirmed cancels the scheduled send the person agreed to cancel.
 //
 // @OnEvent
@@ -52,7 +57,7 @@ func (scheduled *ScheduledService) Confirmed(confirmation ConfirmationGiven) {
 }
 
 func (scheduled *ScheduledService) loadWhenSignedIn() {
-	if scheduled.SignedIn {
+	if scheduled.signedIn {
 		scheduled.Load()
 	}
 }
@@ -118,7 +123,8 @@ func (ScheduledService) texts(values []any) []string {
 
 func (scheduled *ScheduledService) composeWhenLoaded(message ScheduledSend, failure error) {
 	if failure == nil {
-		scheduled.applicationEventPublisher.PublishEvent(scheduled.prefill(message), false)
+		scheduled.applicationEventPublisher.PublishEvent(ComposeUtils{}.Stored(scheduled.prefill(message)), false)
+		scheduled.applicationEventPublisher.PublishEvent(ComposeUtils{}.Opened(), false)
 	}
 }
 
@@ -136,9 +142,9 @@ func (scheduled *ScheduledService) explainWhenFailed(failure error) {
 
 func (ScheduledService) networkError() string { return "Network error." }
 
-func (scheduled *ScheduledService) prefill(message ScheduledSend) ComposeRequested {
+func (scheduled *ScheduledService) prefill(message ScheduledSend) ComposeFields {
 	replyTo := append(scheduled.addresses(message.ReplyTo), "")
-	return ComposeRequested{
+	return ComposeFields{
 		ScheduledID: message.ID, SendAt: message.SendAt, RemindAt: message.RemindAt, From: message.From,
 		To: strings.Join(scheduled.addresses(message.To), scheduled.listSeparator()), Cc: strings.Join(scheduled.addresses(message.Cc), scheduled.listSeparator()),
 		ReplyTo: replyTo[0], Subject: message.Subject, Body: cmp.Or(message.HTML, message.Text),

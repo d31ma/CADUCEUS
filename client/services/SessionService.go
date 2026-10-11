@@ -131,13 +131,13 @@ func (session *SessionService) storeLogin(tokens TokenSet, token string, address
 func (session *SessionService) storedLogin() map[string]string {
 	encoded, _ := json.Marshal(session.Domains)
 	return map[string]string{
-		session.keys().Token:     session.token,
-		session.keys().Email:     session.Email,
-		session.keys().Name:      session.Name,
-		session.keys().Role:      session.Role,
-		session.keys().Domains:   string(encoded),
-		session.keys().Refresh:   session.refreshToken,
-		session.keys().IDToken:   session.idToken,
+		session.keys().Token:   session.token,
+		session.keys().Email:   session.Email,
+		session.keys().Name:    session.Name,
+		session.keys().Role:    session.Role,
+		session.keys().Domains: string(encoded),
+		session.keys().Refresh: session.refreshToken,
+		session.keys().IDToken: session.idToken,
 	}
 }
 
@@ -171,8 +171,6 @@ func (session *SessionService) endOnServer(idToken string) {
 	session.authClient.Logout(LogoutRequest{IDToken: idToken})
 }
 
-
-
 func (session *SessionService) afterRefresh(tokens TokenSet, failure error) {
 	if failure != nil {
 		return
@@ -190,7 +188,6 @@ func (session *SessionService) storeRefresh(tokens TokenSet) {
 func (session *SessionService) issued(token string, address string) bool {
 	return token != "" && address != ""
 }
-
 
 func (session *SessionService) loginDomains(domain string, domains []string) []string {
 	if domain != "" {

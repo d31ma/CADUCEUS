@@ -186,8 +186,6 @@ func (center *NotificationCenterService) enabledRule(rule RuleSummary) bool {
 	return rule.Enabled == nil || *rule.Enabled
 }
 
-
-
 func (center *NotificationCenterService) first(notices []Notice) Notice {
 	if len(notices) == 0 {
 		return Notice{Actions: []NoticeAction{}}

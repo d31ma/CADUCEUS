@@ -50,9 +50,13 @@ func (search *ThreadSearchService) Start() {
 // @OnEvent({"replay":true})
 func (search *ThreadSearchService) SessionChanged(session SessionChanged) {
 	search.authorization = "Bearer " + session.Token
-	search.folders = session.ExternalFolders
 	search.resetWhenOwnerChanged(strings.ToLower(session.Email))
 	search.derive()
+}
+
+// @OnEvent({"replay":true})
+func (search *ThreadSearchService) ExternalMailboxesChanged(changed ExternalMailboxesChanged) {
+	search.folders = changed.Folders
 }
 
 // @OnEvent({"replay":true})

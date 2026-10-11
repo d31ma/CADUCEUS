@@ -1,12 +1,12 @@
-// @HTTPClient
+// @HTTPClient("/reminders")
 type RemindersClient interface {
-	// @GetRequest("/reminders")
+	// @GetRequest
 	List(
 		// @RequestHeader("Authorization")
 		authorization string,
 	) ([]Reminder, error)
 
-	// @DeleteRequest("/reminders")
+	// @DeleteRequest
 	Dismiss(
 		// @RequestHeader("Authorization")
 		authorization string,

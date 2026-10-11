@@ -165,7 +165,6 @@ func (preference *PreferenceService) chosenMail(chosen *MailPreferences) MailPre
 	return AppearanceUtils{}.ChosenMail(chosen)
 }
 
-
 // keys are the legacy storage names of the shared preference scripts.
 func (PreferenceService) themeKey() string { return "caduceus-theme-preferences" }
 

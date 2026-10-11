@@ -8,13 +8,13 @@ type RemindersService struct {
 	// @SessionState
 	Items         []ReminderRow
 	Loaded        bool
-	SignedIn      bool
+	signedIn      bool
 	authorization string
 }
 
 // @OnEvent({"replay":true})
 func (reminders *RemindersService) SessionChanged(session SessionChanged) {
-	reminders.SignedIn = session.Token != ""
+	reminders.signedIn = session.SignedIn
 	reminders.authorization = "Bearer " + session.Token
 	reminders.loadWhenSignedIn()
 	reminders.applicationEventPublisher.PublishEvent(ViewSettled{Source: "reminders"}, false)
@@ -28,6 +28,16 @@ func (reminders *RemindersService) Load() {
 	reminders.Loaded = true
 }
 
+// Open opens the message that a reminder belongs to.
+func (reminders *RemindersService) Open(emailID string) {
+	reminders.applicationEventPublisher.PublishEvent(ComposeUtils{}.Message(emailID), false)
+}
+
+// Settled renders the page after a listener that waited for the server.
+//
+// @OnEvent
+func (reminders *RemindersService) Settled(_ ViewSettled) {}
+
 // Dismiss deletes one reminder and says whether that worked.
 func (reminders *RemindersService) Dismiss(id string) {
 	_, failure := reminders.remindersClient.Dismiss(reminders.authorization, map[string]any{"id": id})
@@ -36,7 +46,7 @@ func (reminders *RemindersService) Dismiss(id string) {
 }
 
 func (reminders *RemindersService) loadWhenSignedIn() {
-	if reminders.SignedIn {
+	if reminders.signedIn {
 		reminders.Load()
 	}
 }

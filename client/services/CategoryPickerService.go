@@ -12,9 +12,7 @@ import (
 // @Service
 type CategoryPickerService struct {
 	// @Needs
-	categoriesClient *CategoriesClient
-	// @Needs
-	inboxClient               *InboxClient
+	categoriesClient          *CategoriesClient
 	applicationEventPublisher ApplicationEventPublisher
 
 	Open        bool
@@ -39,10 +37,14 @@ type CategoryPickerService struct {
 // @OnEvent({"replay":true})
 func (picker *CategoryPickerService) SessionChanged(session SessionChanged) {
 	picker.authorization = "Bearer " + session.Token
-	picker.mailboxNames = session.MailboxNames
 	picker.loadCatalog()
 	picker.derive()
 	picker.applicationEventPublisher.PublishEvent(ViewSettled{Source: "category-picker"}, false)
+}
+
+// @OnEvent({"replay":true})
+func (picker *CategoryPickerService) PreferencesLoaded(loaded PreferencesLoaded) {
+	picker.mailboxNames = loaded.MailboxNames
 }
 
 // @OnEvent
@@ -102,10 +104,12 @@ func (picker *CategoryPickerService) loadCatalog() {
 }
 
 func (CategoryPickerService) accountsUnless(catalog CategoryCatalog, failure error) []CategoryAccount {
-	if failure != nil || catalog.Accounts == nil {
-		return []CategoryAccount{}
+	accounts := []CategoryAccount{}
+	for _, account := range catalog.Accounts {
+		account.Categories = append([]Category{}, account.Categories...)
+		accounts = append(accounts, account)
 	}
-	return catalog.Accounts
+	return map[bool][]CategoryAccount{true: {}, false: accounts}[failure != nil]
 }
 
 func (picker *CategoryPickerService) refusal(domain string, mode string, capable bool) string {
@@ -144,21 +148,12 @@ func (picker *CategoryPickerService) apply(path string) {
 	label := picker.Mode == picker.label()
 	patch := map[bool]BehaviorValue{true: CategoryPickerUtils{}.LabelPatch(picker.messages, path), false: map[string]any{"folder": path}}[label]
 	message := map[bool]string{true: "Updated labels.", false: fmt.Sprintf("Moved to %s.", path)}[label]
-	result, failure := picker.inboxClient.Act(picker.authorization, map[string]any{"ids": picker.ids(), "patch": patch})
-	picker.announce(result, failure, message)
-}
-
-func (CategoryPickerService) label() string { return "label" }
-
-func (picker *CategoryPickerService) announce(result MailActionResult, failure error, message string) {
-	if failure != nil || result.ActionID == "" {
-		picker.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Mail action failed."}, false)
-		return
-	}
-	picker.applicationEventPublisher.PublishEvent(MailActionApplied{ActionID: result.ActionID, Message: message, ExpiresAt: result.ExpiresAt, Emails: result.Emails}, false)
+	picker.applicationEventPublisher.PublishEvent(MailActionRequested{Ids: picker.ids(), Patch: patch.(map[string]any), Message: message}, false)
 	picker.applicationEventPublisher.PublishEvent(CategoryPickerApplied{Mode: picker.Mode}, false)
 	picker.Close()
 }
+
+func (CategoryPickerService) label() string { return "label" }
 
 func (picker *CategoryPickerService) createWhenAllowed(path string) (CategoryCreated, error) {
 	if !picker.CanCreate || path == "" {

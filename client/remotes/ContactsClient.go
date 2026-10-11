@@ -1,6 +1,6 @@
-// @HTTPClient
+// @HTTPClient("/contacts")
 type ContactsClient interface {
-	// @GetRequest("/contacts/suggestions")
+	// @GetRequest("/suggestions")
 	Suggestions(
 		// @RequestHeader("Authorization")
 		authorization string,

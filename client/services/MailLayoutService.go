@@ -8,13 +8,7 @@ import (
 //
 // @Service
 type MailLayoutService struct {
-	SignedIn     bool
 	SelectedMail string
-}
-
-// @OnEvent({"replay":true})
-func (layout *MailLayoutService) SessionChanged(session SessionChanged) {
-	layout.SignedIn = session.Token != ""
 }
 
 // @OnEvent

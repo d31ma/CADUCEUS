@@ -1,6 +1,5 @@
 import {
   focusedElement,
-  mailboxAddress,
   menuKey,
   menuPosition,
   pickerKey,
@@ -10,7 +9,6 @@ import {
   suggestionPressed,
   watchRows,
   watchSearch,
-  watchShell,
   whenRendered,
 } from '/shared/scripts/mailbox-browser.js'
 
@@ -18,8 +16,10 @@ import {
  * The browser side of the mailbox list. The list itself (InboxService,
  * ThreadSearchService, CategoryPickerService) is Go and runs as WebAssembly,
  * so it never receives a DOM event. This service does what needs one —
- * preventDefault, focus, scrolling, drag data, the address query, the shell's
- * window events — and tells the Go services through typed events.
+ * preventDefault, capture-phase row activation, focus, scrolling, drag data
+ * and the search box's keys — and tells the Go services through typed events.
+ * The address, navigation, storage and toasts are the shell's bridges
+ * (BrowserPageService, BrowserStorageService, ShellService).
  */
 @Service
 export default class MailboxBrowserService {
@@ -33,23 +33,14 @@ export default class MailboxBrowserService {
 
   @OnStart
   start() {
-    /** @type {MailboxOpened} */
-    const opened = mailboxAddress()
-    this.applicationEventPublisher.publishEvent(opened, true)
     watchRows(this.lifecycle, {
-      activate: (emailId, threadId) => this._activated(emailId, threadId),
+      activate: (emailId, threadId, narrow) => this._activated(emailId, threadId, narrow),
       focus: (id) => this._focused(id),
       gesture: (kind, emailId, folder) => this._gesture(kind, emailId, folder),
     })
     watchSearch(this.lifecycle, {
       wanted: (value, caret) => this._wanted(value, caret),
       blurred: () => this._blurred(),
-    })
-    watchShell(this.lifecycle, {
-      newMail: (email) => this._newMail(email),
-      refresh: () => this._refresh(),
-      closed: () => this._closed(),
-      shortcut: (name) => this._shortcut(name),
     })
   }
 
@@ -129,10 +120,10 @@ export default class MailboxBrowserService {
     scrollList(0, requested.amount)
   }
 
-  /** @param {string} emailId @param {string} threadId */
-  _activated(emailId, threadId) {
+  /** @param {string} emailId @param {string} threadId @param {boolean} narrow */
+  _activated(emailId, threadId, narrow) {
     /** @type {MailRowActivated} */
-    const activated = { emailId, threadId }
+    const activated = { emailId, threadId, narrow }
     this.applicationEventPublisher.publishEvent(activated, false)
   }
 
@@ -189,29 +180,7 @@ export default class MailboxBrowserService {
     this.applicationEventPublisher.publishEvent(dismissed, false)
   }
 
-  /** @param {Record<string, unknown>} email */
-  _newMail(email) {
-    /** @type {NewMailArrived} */
-    const arrived = { email: /** @type {Email} */ (/** @type {unknown} */ (email)) }
-    this.applicationEventPublisher.publishEvent(arrived, false)
-  }
 
-  _refresh() {
-    /** @type {InboxRefreshRequested} */
-    const refresh = { reason: 'shell' }
-    this.applicationEventPublisher.publishEvent(refresh, false)
-  }
 
-  _closed() {
-    /** @type {MailClosed} */
-    const closed = { emailId: '' }
-    this.applicationEventPublisher.publishEvent(closed, false)
-  }
 
-  /** @param {string} name */
-  _shortcut(name) {
-    /** @type {MailShortcut} */
-    const shortcut = { name }
-    this.applicationEventPublisher.publishEvent(shortcut, false)
-  }
 }

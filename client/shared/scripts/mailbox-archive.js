@@ -234,8 +234,18 @@ export async function searchOffline(request) {
   return slices.length ? slices : [[]]
 }
 
-/** @param {Record<string, any>} email */
+const SUMMARY_FIELDS = ['id', 'domain', 'folder', 'systemFolder', 'sender', 'subject', 'snippet', 'read', 'starred', 'labels',
+  'receivedAt', 'hasAttachments', 'spamScore', 'spamReasons', 'snoozedUntil', 'providerAccountId', 'threadId', 'to', 'cc']
+const NULLABLE = ['spamScore', 'spamReasons', 'labels', 'to', 'cc']
+
+/**
+ * The fields of an Email model (client/models/Email.go) and nothing else: a
+ * Go listener refuses an event with a key its model does not have, or a null
+ * where its field is not a pointer.
+ * @param {Record<string, any>} email
+ */
 function summary(email) {
-  const { body, htmlBody, plainText, textBody, rawRFC822Base64, calendarInvite, ...rest } = email
-  return rest
+  return Object.fromEntries(SUMMARY_FIELDS
+    .filter(field => email[field] !== undefined && (email[field] !== null || NULLABLE.includes(field)))
+    .map(field => [field, email[field]]))
 }

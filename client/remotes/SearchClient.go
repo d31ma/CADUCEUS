@@ -1,6 +1,6 @@
-// @HTTPClient
+// @HTTPClient("/search")
 type SearchClient interface {
-	// @GetRequest("/search")
+	// @GetRequest
 	Search(
 		// @RequestHeader("Authorization")
 		authorization string,

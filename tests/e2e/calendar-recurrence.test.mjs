@@ -241,7 +241,7 @@ test('creates, edits, and date-space drags a multi-day all-day event', async ({ 
   const dialog = page.getByRole('dialog')
   await dialog.getByLabel('Title').fill(title)
   await dialog.getByLabel('All day').click()
-  await expect.poll(() => page.evaluate(() => window.__tachyonTac?.instance?.$form?.allDay)).toBe(true)
+  await expect(dialog.getByLabel('All day')).toBeChecked()
   await expect(dialog.getByLabel('Start')).toHaveAttribute('type', 'date')
   await dialog.getByLabel('Start').fill(start)
   await dialog.getByLabel('End').fill(end)

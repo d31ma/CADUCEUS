@@ -25,24 +25,24 @@ test('renders connected-calendar events as writable without losing provider iden
     providerResourceId: 'caldav_resource', createdAt: start.toISOString(), updatedAt: start.toISOString(),
   }
 
+  // The connected calendar arrives the way the server answers it: the event
+  // in the event list and its calendar in the writable calendar list.
+  const providerCalendar = { accountId: providerEvent.accountId, accountLabel: providerEvent.accountLabel, accountColor: providerEvent.accountColor, calendarId: providerEvent.calendarId, calendarName: providerEvent.calendarName, calendarColor: providerEvent.calendarColor, writable: true }
+  await page.route(/\/calendar\/events(\?|$)/, async route => {
+    if (route.request().method() !== 'GET') return route.fallback()
+    const response = await route.fetch()
+    await route.fulfill({ response, json: [...await response.json(), providerEvent] })
+  })
+  await page.route(/\/calendar\/calendars$/, route => route.fulfill({ json: { calendars: [providerCalendar] } }))
+
   await page.goto('/calendar')
   await waitForUiReady(page)
-  await page.evaluate(async event => {
-    const calendar = window.__tachyonTac?.instance
-    if (!calendar) throw new Error('calendar component is unavailable')
-    calendar.$events = [event]
-    await calendar.renderCurrentState()
-  }, providerEvent)
-  const chip = page.locator('[data-calendar-event-id="provider-calendar-event"]')
+  const chip = page.locator('[data-calendar-event-id="provider-calendar-event"]').first()
   await expect(chip).toBeVisible()
   await expect(chip).toHaveClass(/calendar-event-chip-provider/)
-  expect(await page.evaluate(event => ({
-    draggable: window.__tachyonTac.instance.eventDraggable(event),
-    readOnly: window.__tachyonTac.instance.isReadOnlyEvent(event),
-    domDraggable: document.querySelector('[data-calendar-event-id="provider-calendar-event"]')?.draggable,
-    attribute: document.querySelector('[data-calendar-event-id="provider-calendar-event"]')?.getAttribute('draggable'),
-  }), providerEvent)).toEqual({ draggable: true, readOnly: false, domDraggable: true, attribute: 'true' })
-  await page.evaluate(async event => window.__tachyonTac.instance.onEventClick(null, event), providerEvent)
+  expect(await chip.evaluate(element => ({ domDraggable: element.draggable, attribute: element.getAttribute('draggable') })))
+    .toEqual({ domDraggable: true, attribute: 'true' })
+  await chip.click()
 
   const dialog = page.getByRole('dialog')
   await expect(dialog.getByLabel('Title')).toHaveValue(title)
@@ -51,11 +51,7 @@ test('renders connected-calendar events as writable without losing provider iden
   await expect(dialog.getByRole('button', { name: 'Delete', exact: true })).toBeVisible()
   await dialog.getByRole('button', { name: 'Cancel' }).click()
 
-  await page.evaluate(async calendar => {
-    const component = window.__tachyonTac.instance
-    component.$providerCalendars = [calendar]
-    await component.openCreateModal(null)
-  }, { accountId: providerEvent.accountId, accountLabel: providerEvent.accountLabel, accountColor: providerEvent.accountColor, calendarId: providerEvent.calendarId, calendarName: providerEvent.calendarName, calendarColor: providerEvent.calendarColor, writable: true })
+  await page.getByRole('button', { name: 'New event' }).click()
   const createDialog = page.getByRole('dialog')
   await expect(createDialog.getByLabel('Calendar')).toContainText('Work · Team calendar')
   await createDialog.getByLabel('Calendar').selectOption(providerEvent.calendarId)

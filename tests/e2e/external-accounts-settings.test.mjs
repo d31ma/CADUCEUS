@@ -195,7 +195,7 @@ test('completes and reauthorizes a Microsoft 365 shared mailbox without exposing
 
   await page.goto('/settings?code=authorization-code&state=browser-state&session_state=provider-session')
   await waitForUiReady(page)
-  await expect(page).toHaveURL(/\/settings$/)
+  await expect(page).toHaveURL(/\/settings\/?$/)
   const panel = page.locator('[data-external-account-settings]')
   await expect(panel.getByText('Shared mailbox connected successfully.', { exact: true })).toBeVisible()
   await expect(panel.getByText('support@example.com', { exact: true })).toBeVisible()
@@ -254,7 +254,7 @@ test('onboards Gmail through the Google callback and keeps provider tokens off t
   await waitForUiReady(page)
 
   const panel = page.locator('[data-external-account-settings]')
-  await expect(page).toHaveURL(/\/settings$/)
+  await expect(page).toHaveURL(/\/settings\/?$/)
   await expect(panel.getByText('Google account connected successfully.', { exact: true })).toBeVisible()
   await expect(panel.getByText('owner@gmail.com', { exact: true })).toBeVisible()
   await expect(panel.getByText('SMTP sender ready', { exact: true })).toBeVisible()

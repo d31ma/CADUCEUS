@@ -1,6 +1,5 @@
 import (
 	"encoding/json"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -96,7 +95,7 @@ func (MailboxUtils) NotificationAction(action string) (map[string]any, string) {
 
 // SafeID accepts the message identifiers a notification may carry.
 func (MailboxUtils) SafeID(id string) bool {
-	return regexp.MustCompile(`^[A-Za-z0-9._:-]{1,200}$`).MatchString(id)
+	return TokenUtils{}.Fits(id, TokenUtils{}.Identifier()+"._:-", TokenBounds{Shortest: 1, Longest: 200})
 }
 
 func (MailboxUtils) allowedDomains(domains []string) []string {

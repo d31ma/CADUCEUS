@@ -161,7 +161,10 @@ Go services may use only Tachyon's browser APIs: `Clock`, `SecureRandom`,
 listener: in the TinyGo module it crashed the page ("null function", "memory
 access out of bounds"), and so did importing `crypto/rand`. Use
 `IdentityUtils{}.UUID(seed)` (a digest of the change and the time) for
-request identifiers. The built-in events `ConnectivityChanged`,
+request identifiers. Do not write a regular expression with a large
+repetition count such as `{1,200}`: TinyGo compiles it into a program deep
+enough to overflow a page call's 64 KB stack, with the same crash. Check
+characters and length with `TokenUtils{}.Fits` instead. The built-in events `ConnectivityChanged`,
 `VisibilityChanged`, `PreferencesChanged` and `NotificationPermissionChanged`
 need no model.
 

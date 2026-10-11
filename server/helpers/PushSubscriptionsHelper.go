@@ -44,16 +44,6 @@ func (helper *PushSubscriptionsHelper) Upsert(subscription map[string]any) (map[
 	return record, err
 }
 
-// DeleteByEndpoint deletes the subscription to an endpoint and reports
-// whether there was one.
-func (helper *PushSubscriptionsHelper) DeleteByEndpoint(endpoint string) (bool, error) {
-	documentId, _, err := helper.FindById(PushSubscriptionsRecords{}.SubscriptionId(endpoint))
-	if err != nil || documentId == "" {
-		return false, err
-	}
-	return true, helper.store().Delete(documentId)
-}
-
 // DeleteDocument deletes one subscription document (the former deleteDoc).
 func (helper *PushSubscriptionsHelper) DeleteDocument(documentId string) error {
 	return helper.store().Delete(documentId)

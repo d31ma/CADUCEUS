@@ -15,12 +15,6 @@ func (service *PushService) GetVapidPublicKey() string {
 	return service.notices().VapidPublicKey()
 }
 
-// NotifyNewEmail notifies every device of the mail's owner (inbound
-// delivery calls it); it reports whether the work is finished.
-func (service *PushService) NotifyNewEmail(email map[string]any) bool {
-	return service.notices().NewEmail(email)
-}
-
 // NotifyProviderNewEmail delivers one scheduler-claimed provider
 // notification and answers true when its durable outbox item is terminal.
 func (service *PushService) NotifyProviderNewEmail(notification map[string]any) bool {

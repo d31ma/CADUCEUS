@@ -10,22 +10,15 @@ func (helper *SnoozeHelper) Put(entry map[string]any) (string, error) {
 	return helper.snoozed().Put(entry)
 }
 
-// ListElapsed answers the first 100 active entries whose time has come.
-func (helper *SnoozeHelper) ListElapsed() ([]FyloRecord, error) {
-	return helper.ListDue(RandomText{}.Millis(), helper.duePage())
-}
-
-func (*SnoozeHelper) duePage() int { return 100 }
-
-// ListAll answers every snooze entry.
-func (helper *SnoozeHelper) ListAll() ([]FyloRecord, error) {
+// listAll answers every snooze entry.
+func (helper *SnoozeHelper) listAll() ([]FyloRecord, error) {
 	return helper.snoozed().All()
 }
 
 // ListActive answers the active entries the owner may see ("" for every
 // mailbox).
 func (helper *SnoozeHelper) ListActive(ownerEmail string) ([]FyloRecord, error) {
-	entries, err := helper.ListAll()
+	entries, err := helper.listAll()
 	return SnoozeRecords{}.Active(entries, ownerEmail), err
 }
 
@@ -52,7 +45,7 @@ func (helper *SnoozeHelper) FindActiveForThread(ownerEmail string, threadId stri
 // FindByClientRequestId answers the owner's entry made by one client
 // request, or "" and nil.
 func (helper *SnoozeHelper) FindByClientRequestId(ownerEmail string, clientRequestId string) (string, map[string]any, error) {
-	entries, err := helper.ListAll()
+	entries, err := helper.listAll()
 	record := SnoozeRecords{}.ForClientRequest(entries, ownerEmail, clientRequestId)
 	return record.Id, record.Data, err
 }
@@ -60,20 +53,6 @@ func (helper *SnoozeHelper) FindByClientRequestId(ownerEmail string, clientReque
 // Update merges fields into one snooze entry.
 func (helper *SnoozeHelper) Update(documentId string, patch map[string]any) error {
 	return helper.snoozed().Patch(documentId, patch)
-}
-
-// RemoveForEmail deletes every snooze entry of one email.
-func (helper *SnoozeHelper) RemoveForEmail(emailId string) error {
-	entries, err := helper.snoozed().Where("emailId", emailId)
-	if err != nil {
-		return err
-	}
-	for _, entry := range entries {
-		if err := helper.snoozed().Delete(entry.Id); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (helper *SnoozeHelper) snoozed() FyloCollection {

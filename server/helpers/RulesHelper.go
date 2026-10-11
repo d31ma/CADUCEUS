@@ -22,8 +22,8 @@ func (helper *RulesHelper) ListForOwner(ownerEmail string) ([]map[string]any, er
 	return helper.sorted(stored, err, func(map[string]any) bool { return true })
 }
 
-// ListEnabledForDomain answers the enabled rules of one domain in rule order.
-func (helper *RulesHelper) ListEnabledForDomain(domain string) ([]map[string]any, error) {
+// listEnabledForDomain answers the enabled rules of one domain in rule order.
+func (helper *RulesHelper) listEnabledForDomain(domain string) ([]map[string]any, error) {
 	stored, err := helper.rules().Where(helper.domainField(), domain)
 	return helper.sorted(stored, err, func(raw map[string]any) bool { return TextValue{}.Truthy(raw["enabled"]) })
 }
@@ -31,7 +31,7 @@ func (helper *RulesHelper) ListEnabledForDomain(domain string) ([]map[string]any
 // ListEnabledForMailbox answers the enabled rules that apply to one mailbox
 // of a domain. Historical rules without an owner stay domain-wide.
 func (helper *RulesHelper) ListEnabledForMailbox(ownerEmail string, mailbox string, domain string) ([]map[string]any, error) {
-	rules, err := helper.ListEnabledForDomain(domain)
+	rules, err := helper.listEnabledForDomain(domain)
 	if err != nil {
 		return nil, err
 	}

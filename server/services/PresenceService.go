@@ -17,11 +17,6 @@ func (service *PresenceService) SnapshotForDomains(viewerDomains []string) ([]ma
 	return service.registry().Snapshot(viewerDomains)
 }
 
-// IsOnline reports whether a user is online.
-func (service *PresenceService) IsOnline(email string) (bool, error) {
-	return service.registry().Online(email)
-}
-
 func (service *PresenceService) registry() PresenceRegistry {
 	return PresenceRegistry{Store: FyloCollection{Database: service.fyloHelper.Database(), Name: FyloCollections{}.Named().Presence}}
 }

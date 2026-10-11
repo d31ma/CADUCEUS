@@ -1014,9 +1014,6 @@ Open:
   26.36.01 (CI stays on the locked 26.33.02), and the image can take an unreleased `ty` through
   `--build-context tachyon-override=<dir>`. A release is needed before the
   image builds from pinned versions alone.
-- **Visibility rule.** `server/application.json` turns TY1333 off so the
-  server builds; 13 members the JavaScript workers called in process are
-  unused or test-only in Go and need to be made private or removed.
 
 ## 21. Follow-ups
 
@@ -1036,7 +1033,6 @@ From the switchover (2026-10-11), not yet reviewed:
 - A `tachyon-override` ty must link against glibc 2.36 or older (Debian bookworm images); a ty built on Ubuntu 24.04 needs 2.39.
 - The image keeps the Go toolchain because Yon compiles Go handlers on first use; precompile them at build time to drop it.
 - Bun stays in the image only for `create-admin.mjs` and `migrate-domain.mjs`; porting them to the Go binary removes Bun and `tests/support/legacy-server` from the image.
-- TY1333: make private or delete the 13 members it reports, then turn `visibility.check` back on.
 - `verify:mail-transport` (`verify-smtp-interoperability.mjs`, `verify-mail-transport-soak.mjs`) still exercises the legacy JavaScript SMTP adapter, not the Go transport.
 - The server has two webhook signature checks (`SystemSignature`, `WebhookSignature`); keep one.
 - `server/packages/` could hold the bridge frame signer and the settings reader once for `server/` and `internal/`.

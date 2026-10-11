@@ -34,13 +34,6 @@ func (test *PushSubscriptionsHelperTest) TestUpsertNeedsTheDatabase() {
 	})
 }
 
-func (test *PushSubscriptionsHelperTest) TestDeleteByEndpointNeedsTheDatabase() {
-	Assert.Throws(func() error {
-		_, err := (&PushSubscriptionsHelper{}).DeleteByEndpoint("https://push.example.com/1")
-		return err
-	})
-}
-
 func (test *PushSubscriptionsHelperTest) TestDeleteDocumentNeedsTheDatabase() {
 	Assert.Throws(func() error {
 		err := (&PushSubscriptionsHelper{}).DeleteDocument("doc-1")

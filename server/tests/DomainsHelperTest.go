@@ -33,10 +33,3 @@ func (test *DomainsHelperTest) TestUpdateRoutesNeedsTheDatabase() {
 		return err
 	})
 }
-
-func (test *DomainsHelperTest) TestDeleteNeedsTheDatabase() {
-	Assert.Throws(func() error {
-		err := (&DomainsHelper{}).Delete("doc-1")
-		return err
-	})
-}

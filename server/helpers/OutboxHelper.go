@@ -21,12 +21,6 @@ func (helper *OutboxHelper) Delete(documentId string) error {
 	return helper.store().Delete(documentId)
 }
 
-// FindExpired answers the entries whose undo window has passed, in FYLO's
-// order (the former {docId: entry} record).
-func (helper *OutboxHelper) FindExpired() ([]FyloRecord, error) {
-	return helper.expiredBy(EpochTime{}.Now())
-}
-
 // FindDue answers the entries whose next delivery attempt is due at now
 // (milliseconds). Entries written before the retry fields existed fall back
 // to expiresAt.

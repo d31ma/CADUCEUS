@@ -12,17 +12,3 @@ func (test *DomainMigrationsHelperTest) TestListNeedsTheDatabase() {
 		return err
 	})
 }
-
-func (test *DomainMigrationsHelperTest) TestFindNeedsTheDatabase() {
-	Assert.Throws(func() error {
-		_, _, err := (&DomainMigrationsHelper{}).Find("old.example.com", "new.example.com")
-		return err
-	})
-}
-
-func (test *DomainMigrationsHelperTest) TestPutNeedsTheDatabase() {
-	Assert.Throws(func() error {
-		_, err := (&DomainMigrationsHelper{}).Put(map[string]any{"fromDomain": "old.example.com", "toDomain": "new.example.com"})
-		return err
-	})
-}

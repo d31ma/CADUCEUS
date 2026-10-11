@@ -45,11 +45,6 @@ func (helper *DomainsHelper) UpdateRoutes(documentId string, routes any) error {
 	return helper.store().Patch(documentId, map[string]any{"routes": StoredRecords{}.JsonText(routes)})
 }
 
-// Delete deletes one domain document.
-func (helper *DomainsHelper) Delete(documentId string) error {
-	return helper.store().Delete(documentId)
-}
-
 func (helper *DomainsHelper) store() FyloCollection {
 	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().Domains}
 }

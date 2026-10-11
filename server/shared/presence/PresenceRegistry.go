@@ -64,15 +64,6 @@ func (registry PresenceRegistry) Snapshot(viewerDomains []string) ([]map[string]
 	return entries, nil
 }
 
-// Online reports whether the user sent a heartbeat within the online window.
-func (registry PresenceRegistry) Online(email string) (bool, error) {
-	_, record, err := registry.find(strings.ToLower(email))
-	if err != nil || record == nil {
-		return false, err
-	}
-	return float64(EpochTime{}.Now())-RecordValues{}.Numeric(record["lastSeenAt"]) < PresenceRules{}.OnlineWindow(), nil
-}
-
 func (registry PresenceRegistry) find(email string) (string, map[string]any, error) {
 	record, err := registry.Store.First("email", email)
 	return record.Id, record.Data, err

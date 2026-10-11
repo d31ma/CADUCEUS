@@ -13,7 +13,7 @@ the product.
 
 ```text
 server/                 the Go server; Tachyon compiles it (package main)
-  application.json      Yon settings; the design rules are on except visibility (below)
+  application.json      Yon settings; every design rule is on
   controllers/          @RequestRoute controllers (one per former route)
   services/             @Service providers
   helpers/              @Helper providers (the former repositories, as XHelper)
@@ -70,19 +70,6 @@ tests/
 Tachyon's `server/packages/` (a normal Go module that controllers and
 services may import) is where the frame signer and the settings reader could
 later live once, for both sides.
-
-### Visibility check
-
-`server/application.json` turns Yon's visibility rule (TY1333) off, because
-`ty bundle` and `ty serve` refuse to run while it reports anything. With it on,
-it reports 13 helper and service members (for example
-`SnoozeHelper.ListElapsed`, `OutboxHelper.FindExpired`,
-`PushService.NotifyNewEmail`) that the JavaScript background workers called
-in process; the Go workers reach the server over HTTP, so in Go only the Yon
-test units, or nothing, call them. Making them private or deleting them is a
-follow-up; then turn the rule back on. Until then, check new code with the
-rule on in a probe (set `visibility.check` to true after copying `server/`)
-and accept only that set.
 
 Go rules Tachyon enforces (read the diagnostic help text when one fires):
 

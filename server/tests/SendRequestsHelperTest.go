@@ -26,10 +26,3 @@ func (test *SendRequestsHelperTest) TestUpdateNeedsTheDatabase() {
 		return err
 	})
 }
-
-func (test *SendRequestsHelperTest) TestDeleteNeedsTheDatabase() {
-	Assert.Throws(func() error {
-		err := (&SendRequestsHelper{}).Delete("doc-1")
-		return err
-	})
-}

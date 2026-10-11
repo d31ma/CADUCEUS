@@ -37,7 +37,7 @@ func (helper *TrackingHelper) record(trackingId string, patchOf func(map[string]
 	}
 	helper.pending.Lock()
 	defer helper.pending.Unlock()
-	documentId, email, err := helper.FindByTrackingId(id)
+	documentId, email, err := helper.findByTrackingId(id)
 	if err != nil || documentId == "" {
 		return false, err
 	}
@@ -57,9 +57,9 @@ func (helper *TrackingHelper) Activity(options TrackingActivityOptions) (map[str
 	return TrackingActivity{Options: options, Now: EpochTime{}.Now()}.Built(StoredRecords{}.Listed(documents)), nil
 }
 
-// FindByTrackingId answers the document id and stored email with the
+// findByTrackingId answers the document id and stored email with the
 // tracking id, or "" and nil.
-func (helper *TrackingHelper) FindByTrackingId(trackingId string) (string, map[string]any, error) {
+func (helper *TrackingHelper) findByTrackingId(trackingId string) (string, map[string]any, error) {
 	id := TrackingRecords{}.NormalizeTrackingId(trackingId)
 	if id == "" {
 		return "", nil, nil

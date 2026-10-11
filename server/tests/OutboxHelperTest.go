@@ -27,13 +27,6 @@ func (test *OutboxHelperTest) TestDeleteNeedsTheDatabase() {
 	})
 }
 
-func (test *OutboxHelperTest) TestFindExpiredNeedsTheDatabase() {
-	Assert.Throws(func() error {
-		_, err := (&OutboxHelper{}).FindExpired()
-		return err
-	})
-}
-
 func (test *OutboxHelperTest) TestFindDueNeedsTheDatabase() {
 	Assert.Throws(func() error {
 		_, err := (&OutboxHelper{}).FindDue(EpochTime{}.Now())

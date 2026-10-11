@@ -34,11 +34,6 @@ func (helper *SendRequestsHelper) Update(documentId string, patch map[string]any
 	return helper.store().Patch(documentId, patch)
 }
 
-// Delete deletes one send request record.
-func (helper *SendRequestsHelper) Delete(documentId string) error {
-	return helper.store().Delete(documentId)
-}
-
 func (helper *SendRequestsHelper) store() FyloCollection {
 	return FyloCollection{Database: helper.fyloHelper.Database(), Name: FyloCollections{}.Named().SendRequests}
 }

@@ -26,10 +26,3 @@ func (test *TrackingHelperTest) TestActivityNeedsTheDatabase() {
 		return err
 	})
 }
-
-func (test *TrackingHelperTest) TestFindByTrackingIdNeedsTheDatabase() {
-	Assert.Throws(func() error {
-		_, _, err := (&TrackingHelper{}).FindByTrackingId("tracking-id-0123456789")
-		return err
-	})
-}

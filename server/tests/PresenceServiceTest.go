@@ -19,10 +19,3 @@ func (test *PresenceServiceTest) TestSnapshotForDomainsNeedsTheDatabase() {
 		return err
 	})
 }
-
-func (test *PresenceServiceTest) TestIsOnlineNeedsTheDatabase() {
-	Assert.Throws(func() error {
-		_, err := (&PresenceService{}).IsOnline("ada@example.com")
-		return err
-	})
-}

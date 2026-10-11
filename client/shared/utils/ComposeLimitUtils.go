@@ -49,11 +49,10 @@ func (ComposeLimitUtils) bodyProblem(accepted bool, tooLarge bool) string {
 }
 
 func (ComposeLimitUtils) problem(file AttachmentOffer, count int, total int, wrongImage bool) string {
-	limits := ComposeLimitUtils{}.limits()
 	switch {
-	case count >= limits.Files:
+	case count >= ComposeLimitUtils{}.files():
 		return "You can attach up to 10 files."
-	case total+file.Size > limits.Attachments:
+	case total+file.Size > ComposeLimitUtils{}.attachmentBytes():
 		return file.Filename + " is too large: attachments are limited to 32 KB in total until this client can send larger messages."
 	case wrongImage:
 		return file.Filename + " is not a supported inline image."
@@ -62,12 +61,16 @@ func (ComposeLimitUtils) problem(file AttachmentOffer, count int, total int, wro
 }
 
 func (ComposeLimitUtils) sized(size int) string {
-	if size > (ComposeLimitUtils{}).limits().Request {
+	if size > (ComposeLimitUtils{}).requestBytes() {
 		return ComposeLimitUtils{}.TooLarge()
 	}
 	return ""
 }
 
-func (ComposeLimitUtils) limits() ComposeLimits {
-	return ComposeLimits{Files: 10, Attachments: 32 << 10, Request: 64 << 10}
-}
+func (ComposeLimitUtils) files() int { return 10 }
+
+func (ComposeLimitUtils) attachmentBytes() int { return 32 * ComposeLimitUtils{}.kibibyte() }
+
+func (ComposeLimitUtils) requestBytes() int { return 64 * ComposeLimitUtils{}.kibibyte() }
+
+func (ComposeLimitUtils) kibibyte() int { return 1024 }

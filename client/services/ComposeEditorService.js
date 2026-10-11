@@ -283,24 +283,13 @@ export default class ComposeEditorService {
     return this._editor.link()
   }
 
-  /** @param {Event} event */
-  changeBlockStyle(event) {
-    return this._editor.changeBlockStyle(event)
-  }
-
-  /** @param {Event} event */
-  changeFontFamily(event) {
-    return this._editor.changeFontFamily(event)
-  }
-
-  /** @param {Event} event */
-  changeFontSize(event) {
-    return this._editor.changeFontSize(event)
-  }
-
-  /** @param {Event} event */
-  changeTextColor(event) {
-    return this._editor.changeTextColor(event)
+  /**
+   * Apply the toolbar choice that changed: block, font, size or color.
+   * @param {Event} event
+   * @param {string} kind
+   */
+  style(event, kind) {
+    return this._editor.style(event, kind)
   }
 
   toggleRightToLeft() {
@@ -315,14 +304,13 @@ export default class ComposeEditorService {
     return this._editor.removeQuotedText()
   }
 
-  /** @param {Event} event */
-  addAttachments(event) {
-    return this._editor.addAttachments(event)
-  }
-
-  /** @param {Event} event */
-  addInlineImages(event) {
-    return this._editor.addInlineImages(event)
+  /**
+   * Offer the files picked for attachments or for inline images.
+   * @param {Event} event
+   * @param {string} kind 'attachment' or 'inline-image'
+   */
+  add(event, kind) {
+    return this._editor.add(event, kind)
   }
 
   /** @param {DragEvent} event */

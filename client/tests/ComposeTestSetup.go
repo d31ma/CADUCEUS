@@ -1,4 +1,4 @@
-import "errors"
+import "strings"
 
 // ComposeTestSetup answers the composer's requests in test units with fixed
 // server answers, keyed by method and path. A PUT of draft d2 answers the
@@ -25,9 +25,10 @@ func (ComposeTestSetup) Exchange(request *BehaviorHttpRequest, execution *Behavi
 		"POST /send":                map[string]any{"sent": true, "queued": true, "undoId": "undo-1"},
 		"GET /contacts/suggestions": []any{map[string]any{"email": "grace@example.net", "name": "Grace Hopper"}, map[string]any{"email": "ops@example.net", "source": "mail"}},
 	}
-	answer, found := answers[request.Method+" "+request.Path]
+	key := request.Method + " " + strings.TrimSuffix(request.Path, "/")
+	answer, found := answers[key]
 	if !found {
-		return nil, errors.New("HTTP_STATUS: The browser HTTP request failed.")
+		return nil, &BehaviorError{Code: "HTTP_STATUS", Message: "The browser HTTP request failed.", Path: key}
 	}
 	return answer, nil
 }

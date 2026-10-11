@@ -617,9 +617,10 @@ func (compose *ComposeService) isFuture(at string) bool {
 }
 
 func (compose *ComposeService) problemFor(mode string) string {
-	if strings.TrimSpace(compose.To) == "" || strings.TrimSpace(compose.Subject) == "" {
+	switch {
+	case strings.TrimSpace(compose.To) == "" || strings.TrimSpace(compose.Subject) == "":
 		return "To and Subject are required."
-	} else if mode == compose.names().Archive && compose.SourceEmailID == "" {
+	case mode == compose.names().Archive && compose.SourceEmailID == "":
 		return "Send & Archive is available only from a source conversation."
 	}
 	return ""

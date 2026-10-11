@@ -131,6 +131,7 @@ export function insertEditorHTML(editor, html) {
 export function applyInlineFormat(editor, tagName) {
   const tag = String(tagName || '').toUpperCase()
   if (!editorRange(editor)) return false
+  editor.ownerDocument.execCommand('styleWithCSS', false, 'false')
   if (INLINE_COMMANDS[tag]) return command(editor, INLINE_COMMANDS[tag])
   const text = editor.ownerDocument.getSelection()?.toString() || '​'
   return insertEditorHTML(editor, `<code>${escapeHTML(text)}</code>`)

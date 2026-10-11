@@ -376,14 +376,24 @@ export class ComposeEditor {
     this._editorChanged()
   }
 
-  /** @param {Event} event */
-  addAttachments(event) {
-    this._offerFiles(this._inputFiles(/** @type {HTMLInputElement} */ (event.target)), false)
+  /**
+   * @param {Event} event
+   * @param {string} kind 'attachment' or 'inline-image'
+   */
+  add(event, kind) {
+    this._offerFiles(this._inputFiles(/** @type {HTMLInputElement} */ (event.target)), kind === 'inline-image')
   }
 
-  /** @param {Event} event */
-  addInlineImages(event) {
-    this._offerFiles(this._inputFiles(/** @type {HTMLInputElement} */ (event.target)), true)
+  /**
+   * @param {Event} event
+   * @param {string} kind block, font, size or color
+   */
+  style(event, kind) {
+    const choices = /** @type {Record<string, (event: Event) => void>} */ ({
+      block: changed => this.changeBlockStyle(changed), font: changed => this.changeFontFamily(changed),
+      size: changed => this.changeFontSize(changed), color: changed => this.changeTextColor(changed),
+    })
+    choices[kind]?.(event)
   }
 
   /** @param {DragEvent} event */

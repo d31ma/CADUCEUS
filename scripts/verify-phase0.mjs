@@ -124,18 +124,15 @@ const targetRoutes = new Map(
 )
 const retiredRoutes = new Set(routes.removedLegacyRoutes ?? [])
 let currentRouteCount = 0
-for (const file of listFiles(['server/routes'], ['yon.js'])) {
-  const relative = file.slice('server/routes/'.length, -'/yon.js'.length)
-  if (relative.startsWith('test/')) continue
-  const path = '/' + relative
-    .split('/')
-    .map(segment => segment.startsWith('_') ? `{${segment.slice(1)}}` : segment)
-    .join('/')
-  const source = readFileSync(resolve(root, file), 'utf8')
-  const methods = [...source.matchAll(/static\s+(?:async\s+)?(GET|POST|PUT|DELETE|PATCH)\s*\(/g)]
-    .map(match => match[1])
+// The Go server's routes by controller (tests/support/routes.json). A socket
+// route (STREAM) opens with GET, which the inventory records.
+const serverRoutes = readJson('tests/support/routes.json')
+for (const [controller, route] of Object.entries(serverRoutes)) {
+  if (controller.startsWith('Test')) continue
+  const path = route.path
+  const methods = route.verbs.map(verb => verb === 'STREAM' ? 'GET' : verb)
   if (methods.length === 0) {
-    fail(`could not discover an HTTP method in ${file}`)
+    fail(`could not discover an HTTP method for ${controller}`)
     continue
   }
   currentRouteCount++
@@ -149,7 +146,7 @@ for (const file of listFiles(['server/routes'], ['yon.js'])) {
     if (!expected.has(method)) fail(`${method} ${path} is missing from the v1 route inventory`)
   }
 }
-notes.push(`${currentRouteCount} non-test route modules covered by the compatibility inventory`)
+notes.push(`${currentRouteCount} non-test Go controllers covered by the compatibility inventory`)
 
 const dockerfile = readFileSync(requireFile('Dockerfile'), 'utf8')
 const compose = readFileSync(requireFile('docker-compose.yml'), 'utf8')

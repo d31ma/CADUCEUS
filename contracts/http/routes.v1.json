@@ -133,6 +133,7 @@
     { "path": "/domains", "methods": ["GET", "POST"], "auth": "bearer", "owner": "domains" },
     { "path": "/domains/{domain}/routes", "methods": ["GET"], "auth": "bearer", "owner": "domains" },
     { "path": "/domains/{domain}/routes/{id}", "methods": ["PUT", "DELETE"], "auth": "bearer", "owner": "domains" },
+    { "path": "/translation-assets", "methods": ["GET"], "auth": "bearer", "owner": "system" },
     { "path": "/users", "methods": ["GET", "POST"], "auth": "bearer", "owner": "users" },
     { "path": "/users/{id}", "methods": ["DELETE"], "auth": "bearer", "owner": "users" },
     { "path": "/users/aliases", "methods": ["GET", "POST", "DELETE"], "auth": "bearer", "owner": "users" },

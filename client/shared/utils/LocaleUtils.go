@@ -34,6 +34,15 @@ func (LocaleUtils) Choice(value string) string {
 	return LocaleUtils{}.known(slices.Contains(LocaleUtils{}.choices(), value), value)
 }
 
+// Options are the interface language choices in their own script, with the
+// automatic choice named in locale.
+func (LocaleUtils) Options(locale string) []LocaleOption {
+	options := []LocaleOption{}
+	json.Unmarshal([]byte(LocaleUtils{}.optionLabels()), &options)
+	options[0].Label = LocaleUtils{}.Translate(locale, "locale.automatic", map[string]string{})
+	return options
+}
+
 func (LocaleUtils) requested(choice string, language string) string {
 	if choice == "" || choice == (LocaleUtils{}).automatic() {
 		return strings.ToLower(strings.SplitN(language, "-", 2)[0])
@@ -93,6 +102,12 @@ func (LocaleUtils) list(text string) []string {
 	values := []string{}
 	json.Unmarshal([]byte(text), &values)
 	return values
+}
+
+// optionLabels names each entry of choices() in its own language, in the
+// same order.
+func (LocaleUtils) optionLabels() string {
+	return `[{"id":"auto"},{"id":"en","label":"English"},{"id":"de","label":"Deutsch"},{"id":"es","label":"Español"},{"id":"es-419","label":"Español (Latinoamérica)"},{"id":"fr","label":"Français"},{"id":"ko","label":"한국어"},{"id":"pl","label":"Polski"},{"id":"ja","label":"日本語"},{"id":"zh-CN","label":"简体中文"},{"id":"zh-TW","label":"繁體中文"},{"id":"pt","label":"Português"},{"id":"pt-BR","label":"Português (Brasil)"},{"id":"gl","label":"Galego"},{"id":"tr","label":"Türkçe"},{"id":"ru","label":"Русский"},{"id":"cs","label":"Čeština"},{"id":"uk","label":"Українська"},{"id":"hu","label":"Magyar"},{"id":"he","label":"עברית"},{"id":"ar","label":"العربية"}]`
 }
 
 func (LocaleUtils) automatic() string { return "auto" }

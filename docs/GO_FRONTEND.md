@@ -14,9 +14,9 @@ design rule on.
 | `client/components/<area>/<name>/` | `tac.html` and `tac.css` | A component holds no script (TY1310). `tac.css` is wrapped in `@scope (tachyon-component[data-tac-scope="<area>-<name>"]) to (tachyon-component[data-tac-scope])`, so it styles this component only. It does not style nested components. |
 | `client/services/<Name>Service.go` | One `// @Service` struct and its methods | The view names it `<name>`. For example, `MailboxService` is `mailbox`. |
 | `client/services/<Name>Service.js` | Escape hatches only | Use this only for a browser capability that Go cannot reach. See below. |
-| `client/remotes/<Area>Client.go` | One `// @HTTPClient("/<route group>")` interface for each server route group | Write only the methods your area calls. |
+| `client/remotes/<Area>Client.go` | One `// @HTTPClient("/<route group>")` interface for each server route group | It holds the methods every area calls. Add yours to the existing remote: one method for each request, read into one model. |
 | `client/setups/<Area>Setup.go` | `Configure` returns `NewBehaviorConfiguration(), nil` | With no adapter, the client uses the browser transport to the page's own origin. |
-| `client/models/<Model>.go` | One struct for each file, with `json:"camelCase"` tags | An event that a JavaScript bridge publishes or hears also needs a JSDoc twin, `client/models/<Model>.js`. |
+| `client/models/<Model>.go` | One struct for each file, with `json:"camelCase"` tags | An event that a JavaScript bridge publishes or hears also needs a JSDoc twin, `client/models/<Model>.js`. Reuse the model of a server answer that another area already reads. Tachyon reads at most 256 Go models files (TY1310). |
 | `client/shared/utils/<Name>Utils.go` | Pure logic that several services share | Use `type XUtils struct{}` with value-receiver methods. A utility holds no state. |
 | `client/shared/scripts/page-setup.js` | Page-wide browser setup | It is linked into every page by `tac.scripts`. |
 
@@ -90,8 +90,8 @@ type UsersClient interface {
   fails with `HTTP_LIMIT`. A JavaScript service may not call `fetch` either
   (TY1361). Uploads larger than 64 KiB therefore have no route today. These
   include EML and mbox import, the PWA file handler, and composer
-  attachments. Neither does an authenticated server-sent event stream, such
-  as `/inbox/stream`.
+  attachments. The live inbox stream is a WebSocket instead (see
+  `MailStreamService.js` below).
 
 **Blocker for the merge.** On one origin, the server's API routes `/inbox`,
 `/activity`, `/contacts` and `/reminders` answer the document navigation to
@@ -177,6 +177,7 @@ reads the DOM, makes no decision and talks to Go in events:
 | `BrowserPageService.js` | `PageLocation` and `BrowserFeatures` at start. `NavigationRequested`, `DocumentAttributesChanged` (attributes on `<html>`, replayed from a cache before Go loads), `TimerRequested`/`TimerElapsed`, `FocusRequested{Selector, Remember, Restore}` and `ClickRequested`. A global Escape becomes `EscapePressed` and a click becomes `PageClicked`. View helpers: `browserPage.dragOver/dragLeave/drop(folder, $event, domain)` → `FolderDropped`, `browserPage.backdrop($event, dialog)` → `BackdropClicked`, `browserPage.submit($event, form)` → `FormSubmitted`. |
 | `PasskeyService.js` | WebAuthn: `PasskeyRequested` → `PasskeyAnswered`. |
 | `KeyboardService.js` | The bridge to the keyboard runtime in `shared/scripts/keyboard.js`. |
+| `MailStreamService.js` | The live inbox stream on the Go server: a WebSocket to `/inbox/stream?token=…&since=<cursor>` on the page's origin while `SessionChanged` says someone is signed in. A `new-email` frame becomes `NewMailArrived` and `InboxRefreshRequested`, `unauthorized` becomes `SignOutRequested`, and two failed connections in a row become `MailStreamHealth{Healthy:false}` (retained) until a frame arrives. It reconnects on every close, after 1 s doubling to 15 s, with the newest cursor. |
 | `DeviceService.js` | The Badging API (with the "(n)" tab-title fallback), the push worker `shared/service-worker/unread.js` registered on its own scope `/shared/service-worker/`, notification buttons, and update detection (`UpdateReady`). Tachyon generates the root worker and no longer lets an application append to it. A push subscription must therefore come from `navigator.serviceWorker.getRegistration('/shared/service-worker/')`, not from `ready`. |
 
 Tac scripts may not build markup or write styles (TY1364). Express a style
@@ -244,6 +245,15 @@ declarations:
 Everything else moved out of `shared/assets/styles.css`: DuVay host tweaks
 (`w-btn`, `w-text-field`), focus rings, `.empty-state`, `.spinner`,
 `.text-muted`, the scrollbar and the screenshot masking.
+
+**DuVay.** `shared/assets/duvay/` holds DuVay 26.35.01-1 (MIT). The
+stylesheet is DuVay's own `duvay.min.css`. The script,
+`duvay-wc-caduceus.min.js`, bundles only the components that the views use,
+because the full component bundle alone would take 137 KB of each route's
+200 KB script budget (TY1337). `PROVENANCE.json` lists the tag, the bundler
+and the modules. A view that needs another `w-` component adds its module
+there, rebuilds the file from the same tag, and updates the `sha256` in
+`manifest.json`.
 
 Because component CSS is donut-scoped, **each component copies the rules it
 uses into its own `tac.css`**. The shell, the login form and the team roster

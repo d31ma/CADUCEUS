@@ -415,7 +415,7 @@ func (inbox *InboxService) loadWhenSearching() {
 }
 
 func (inbox *InboxService) patternedAccount(account string) string {
-	if !regexp.MustCompile(`^ext_[A-Za-z0-9_-]{20,80}$`).MatchString(account) {
+	if !(ExternalAccountUtils{}).Identified(account, "ext_") {
 		return ""
 	}
 	return account

@@ -5,4 +5,5 @@ type PasskeyRequested struct {
 	Credentials    []string `json:"credentialIds"`
 	UserID         string   `json:"userId"`
 	UserName       string   `json:"userName"`
+	DisplayName    string   `json:"displayName"`
 }

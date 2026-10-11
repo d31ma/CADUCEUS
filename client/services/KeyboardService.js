@@ -17,6 +17,10 @@ export default class KeyboardService {
     'email:open', 'core:select-all', 'core:deselect-all',
     'email:reply', 'email:reply-all', 'email:forward', 'github:open', 'core:print-thread',
     'core:find-in-thread', 'core:find-in-thread-next', 'core:find-in-thread-previous',
+    'calendar:move-event-up', 'calendar:move-event-down', 'calendar:move-event-left', 'calendar:move-event-right',
+    'calendar:resize-event-up', 'calendar:resize-event-down', 'calendar:resize-event-left', 'calendar:resize-event-right',
+    'calendar:view-day', 'calendar:view-week', 'calendar:view-month', 'calendar:view-agenda',
+    'calendar:go-to-today', 'calendar:navigate-next', 'calendar:navigate-previous', 'calendar:refresh-calendars',
   ]
 
   /** @type {ApplicationEventPublisher} */

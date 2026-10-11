@@ -1,5 +1,4 @@
 import (
-	"regexp"
 	"slices"
 	"strings"
 )
@@ -58,10 +57,19 @@ func (CategoryPickerUtils) isDotPart(part string) bool {
 }
 
 func (CategoryPickerUtils) pathUnlessRefused(path string, dotted bool) string {
-	if !regexp.MustCompile(`^[a-z0-9](?:[a-z0-9._/-]{0,58}[a-z0-9])?$`).MatchString(path) || strings.Contains(path, "//") || dotted {
+	if slices.Contains([]bool{CategoryPickerUtils{}.wellFormed(path), !strings.Contains(path, "//"), !dotted}, false) {
 		return ""
 	}
 	return path
+}
+
+// wellFormed is ^[a-z0-9](?:[a-z0-9._/-]{0,58}[a-z0-9])?$ checked by characters
+// and length: TinyGo compiles a {0,58} repetition into a program that crashed
+// the page.
+func (CategoryPickerUtils) wellFormed(path string) bool {
+	edges := "abcdefghijklmnopqrstuvwxyz0123456789"
+	ends := path[:min(len(path), 1)] + path[max(len(path)-1, 0):]
+	return !slices.Contains([]bool{TokenUtils{}.Fits(path, edges+"._/-", TokenBounds{Shortest: 1, Longest: 60}), strings.Trim(ends, edges) == ""}, false)
 }
 
 func (utils CategoryPickerUtils) matching(categories []Category, kind string, query string) []Category {

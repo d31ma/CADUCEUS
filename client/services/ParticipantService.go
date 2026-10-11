@@ -27,7 +27,7 @@ type ParticipantService struct {
 	Address          string
 	DisplayName      string
 	Initials         string
-	Contact          ParticipantContact
+	Contact          Contact
 	HasContact       bool
 	GithubStatus     string
 	GithubProfile    GithubProfile
@@ -99,7 +99,7 @@ func (ParticipantService) disabled() string { return "disabled" }
 
 func (service *ParticipantService) reset(address string) {
 	service.Address = address
-	service.Contact = ParticipantContact{}
+	service.Contact = Contact{}
 	service.HasContact = false
 	service.GithubStatus = service.disabled()
 	service.GithubProfile = GithubProfile{Repositories: []GithubRepository{}}
@@ -127,8 +127,8 @@ func (service *ParticipantService) authorization() string {
 func (service *ParticipantService) fetch(authorization string) {
 	service.Loading = true
 	service.Error = ""
-	contacts, contactsFailure := service.contactsClient.Search(authorization, service.Address)
-	related, relatedFailure := service.searchClient.Messages(authorization, "from:"+service.Address)
+	contacts, contactsFailure := service.contactsClient.List(authorization, service.Address, "", "")
+	related, relatedFailure := service.searchClient.Search(authorization, "from:"+service.Address, service.searchLimit(), "", "")
 	github, githubFailure := service.githubClient.Profile(authorization, service.Address)
 	service.Contact, service.HasContact = service.matchingContact(contacts)
 	service.showGithub(github, githubFailure == nil)
@@ -138,8 +138,8 @@ func (service *ParticipantService) fetch(authorization string) {
 	service.refreshLabels()
 }
 
-func (service *ParticipantService) matchingContact(contacts []ParticipantContact) (ParticipantContact, bool) {
-	index := slices.IndexFunc(contacts, func(contact ParticipantContact) bool { return service.hasAddress(contact.Emails) })
+func (service *ParticipantService) matchingContact(contacts []Contact) (Contact, bool) {
+	index := slices.IndexFunc(contacts, func(contact Contact) bool { return service.hasAddress(contact.Emails) })
 	return service.contactAt(contacts, index)
 }
 
@@ -147,9 +147,9 @@ func (service *ParticipantService) hasAddress(emails []ContactValue) bool {
 	return slices.ContainsFunc(emails, func(entry ContactValue) bool { return strings.ToLower(entry.Value) == service.Address })
 }
 
-func (service *ParticipantService) contactAt(contacts []ParticipantContact, index int) (ParticipantContact, bool) {
+func (service *ParticipantService) contactAt(contacts []Contact, index int) (Contact, bool) {
 	if index < 0 {
-		return ParticipantContact{}, false
+		return Contact{}, false
 	}
 	return contacts[index], true
 }
@@ -180,41 +180,44 @@ func (service *ParticipantService) profile(profile *GithubProfile, found bool) (
 
 func (ParticipantService) maximumThreads() int { return 25 }
 
-func (service *ParticipantService) threads(related []RelatedMessage) []ParticipantThread {
-	fromSender := slices.DeleteFunc(slices.Clone(related), func(message RelatedMessage) bool { return strings.ToLower(message.Sender) != service.Address })
+func (service *ParticipantService) threads(related []Email) []ParticipantThread {
+	fromSender := slices.DeleteFunc(slices.Clone(related), func(message Email) bool { return strings.ToLower(message.Sender) != service.Address })
 	sort.SliceStable(fromSender, func(left int, right int) bool { return fromSender[left].ReceivedAt > fromSender[right].ReceivedAt })
 	unique := service.unique(fromSender)
 	return service.summaries(unique[:min(len(unique), service.maximumThreads())])
 }
 
-func (service *ParticipantService) unique(messages []RelatedMessage) []RelatedMessage {
+func (service *ParticipantService) unique(messages []Email) []Email {
 	seen := map[string]bool{}
-	kept := []RelatedMessage{}
+	kept := []Email{}
 	for _, message := range messages {
 		kept = append(kept, service.firstOf(message, seen)...)
 	}
 	return kept
 }
 
-func (service *ParticipantService) firstOf(message RelatedMessage, seen map[string]bool) []RelatedMessage {
-	key := TextUtils{}.FirstOf(TextUtils{}.FirstOf(TextUtils{}.FirstOf(message.ThreadId, message.MessageId), message.Subject), message.Id)
+func (service *ParticipantService) firstOf(message Email, seen map[string]bool) []Email {
+	key := TextUtils{}.FirstOf(TextUtils{}.FirstOf(TextUtils{}.FirstOf(message.ThreadID, message.MessageID), message.Subject), message.ID)
 	if (LogicUtils{}).Any(key == "", seen[key]) {
-		return []RelatedMessage{}
+		return []Email{}
 	}
 	seen[key] = true
-	return []RelatedMessage{message}
+	return []Email{message}
 }
 
 func (ParticipantService) space() string { return " " }
 
 func (ParticipantService) maximumSnippet() int { return 120 }
 
-func (service *ParticipantService) summaries(messages []RelatedMessage) []ParticipantThread {
+// searchLimit is the server's largest search answer, which the old client got by sending no limit.
+func (ParticipantService) searchLimit() int { return 1000 }
+
+func (service *ParticipantService) summaries(messages []Email) []ParticipantThread {
 	whitespace := regexp.MustCompile(`\s+`)
 	threads := []ParticipantThread{}
 	for _, message := range messages {
 		snippet := []rune(strings.TrimSpace(whitespace.ReplaceAllString(TextUtils{}.FirstOf(message.Snippet, message.Body), service.space())))
-		threads = append(threads, ParticipantThread{Id: message.Id, Subject: TextUtils{}.FirstOf(message.Subject, "(No subject)"), Snippet: string(snippet[:min(len(snippet), service.maximumSnippet())]), ReceivedAt: message.ReceivedAt, ReceivedLabel: DateUtils{}.Label(message.ReceivedAt, time.Now())})
+		threads = append(threads, ParticipantThread{Id: message.ID, Subject: TextUtils{}.FirstOf(message.Subject, "(No subject)"), Snippet: string(snippet[:min(len(snippet), service.maximumSnippet())]), ReceivedAt: message.ReceivedAt, ReceivedLabel: DateUtils{}.Label(message.ReceivedAt, time.Now())})
 	}
 	return threads
 }

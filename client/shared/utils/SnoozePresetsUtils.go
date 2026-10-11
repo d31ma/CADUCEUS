@@ -19,7 +19,7 @@ func (SnoozePresetsUtils) withDay(moment time.Time, clock string, soon bool) str
 	if soon {
 		return clock
 	}
-	return DateLabelUtils{}.MonthDayOf(moment) + ", " + clock
+	return DateLabelUtils{}.ShortMonthDay(moment) + ", " + clock
 }
 
 func (SnoozePresetsUtils) label(failure error, when string) string {

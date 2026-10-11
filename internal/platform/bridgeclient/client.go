@@ -7,7 +7,10 @@
 // signature} where payload is the base64url request and signature is the
 // hex HMAC-SHA256 of "timestamp.nonce.payload". server/ is compiled by
 // Tachyon as package main and cannot import this package, so the two
-// implementations must be kept in step.
+// implementations are kept in step by a test:
+// internal/platform/fylobridge/frames_test.go sends a handshake through
+// both and the bridge must accept each. Tachyon's server/packages module is
+// the place they could later share one implementation.
 package bridgeclient
 
 import (

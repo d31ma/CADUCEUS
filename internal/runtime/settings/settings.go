@@ -2,8 +2,11 @@
 // names and writes the `.env` that hands them to Tachyon's handler processes.
 //
 // It ports tests/support/legacy-server/shared/runtime/ServerEnvironment.js.
-// The handler-side reader of the Go server (server/shared/runtime) keeps its
-// own copy of HandlerSettings; the two lists must stay identical.
+// HandlerSettings is the one list of what reaches the handlers. The Go
+// server's reader (server/shared/runtime/Settings.go) answers any name from
+// the environment or YON_APPLICATION_JSON and keeps no list of its own;
+// server_settings_test.go checks that every name it reads is listed here and
+// that tests/support/TestServer.mjs hands the suites the same list.
 package settings
 
 import (
@@ -47,6 +50,7 @@ var HandlerSettings = []string{
 	"MAIL_TLS_KEY",
 	"MAIL_TLS_KEY_FILE",
 	"NODE_ENV",
+	"PORT",
 	"SESAME_ISSUER",
 	"SMTP_ADAPTER",
 	"SMTP_FROM",

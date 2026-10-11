@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/d31ma/caduceus/internal/platform/bridgeclient"
+	"github.com/d31ma/caduceus/internal/platform/fylo"
 	"github.com/d31ma/caduceus/internal/runtime/settings"
 	"github.com/d31ma/caduceus/internal/runtime/supervisor"
 	"github.com/d31ma/caduceus/internal/runtime/tickworker"
@@ -40,19 +41,12 @@ const (
 	exitUsage   = 64
 )
 
-// Collections are the FYLO document collections the JavaScript
-// Fylo.createDb created on every open (Fylo.Collections), in its order.
-var Collections = []string{
-	"domains", "domain-migrations", "emails", "attachments", "raw-messages", "suppressed", "users",
-	"inbox-rules", "mfa-devices", "mfa-sessions", "setup-sessions", "auth-credentials",
-	"auth-transactions", "recovery-codes", "auth-audit-events", "push-subscriptions", "rate-limits",
-	"outbox", "send-requests", "snoozed", "mail-actions", "scheduled", "follow-up-reminders",
-	"templates", "signatures", "calendar-events", "presence", "contacts", "contact-groups",
-	"thread-shares", "mcp-access-tokens", "mcp-audit-events", "extensions",
-}
+// Collections are the FYLO document collections the entry point creates, in
+// the order Fylo.createDb created them (internal/platform/fylo owns the list).
+var Collections = fylo.DocumentCollections()
 
 // Buckets are the FYLO file collections (Fylo.Buckets).
-var Buckets = []string{"attachment-files", "raw-message-files"}
+var Buckets = fylo.FileCollections()
 
 // Options are the seams tests replace.
 type Options struct {
@@ -403,6 +397,38 @@ func tachyonBinary() string {
 	return "ty"
 }
 
+// serveArguments answers the `ty serve` command line. Tachyon binds
+// 127.0.0.1:8080 unless told otherwise and reads neither PORT nor HOST, so
+// the entry point passes PORT as --port and a non-loopback HOST (the image
+// sets 0.0.0.0) as --host with --allow-non-loopback. Arguments given to
+// `serve` keep precedence.
+func serveArguments(port string, args []string) []string {
+	given := map[string]bool{}
+	for _, arg := range args {
+		given[strings.SplitN(arg, "=", 2)[0]] = true
+	}
+	command := []string{"serve"}
+	if !given["--port"] {
+		command = append(command, "--port", port)
+	}
+	host := env("HOST")
+	if host != "" && !given["--host"] && !given["--hostname"] && !loopbackHost(host) {
+		command = append(command, "--host", host)
+		if !given["--allow-non-loopback"] {
+			command = append(command, "--allow-non-loopback")
+		}
+	}
+	return append(command, args...)
+}
+
+func loopbackHost(host string) bool {
+	if host == "localhost" {
+		return true
+	}
+	address := net.ParseIP(strings.Trim(host, "[]"))
+	return address != nil && address.IsLoopback()
+}
+
 // Session is one `serve` run: the Tachyon child, the supervisor, and the
 // workers whose metrics the status log reports.
 type Session struct {
@@ -516,7 +542,7 @@ func (runner *runner) serve(ctx context.Context, args []string) int {
 	session := &Session{runner: runner, apiURL: "http://127.0.0.1:" + port, shutdown: make(chan struct{})}
 
 	// Start the standalone Tachyon runtime as a child process.
-	session.ty = spawn(runner.stdout, runner.stderr, tachyonBinary(), append([]string{"serve"}, args...)...)
+	session.ty = spawn(runner.stdout, runner.stderr, tachyonBinary(), serveArguments(port, args)...)
 	if session.ty.startErr != nil {
 		fmt.Fprintf(runner.stderr, "[runtime] Tachyon failed to start: %v\n", session.ty.startErr)
 		one := 1

@@ -380,6 +380,12 @@
    "POST"
   ]
  },
+ "HealthController": {
+  "path": "/health",
+  "verbs": [
+   "GET"
+  ]
+ },
  "InboundWebhookController": {
   "path": "/inbound/webhook",
   "verbs": [

@@ -186,6 +186,7 @@ func configure(t *testing.T) (dir, logPath string) {
 		"FYLO_BRIDGE_SECRET":               "0123456789abcdef0123456789abcdef",
 		"FYLO_INCOMING_ROOT":               "",
 		"PORT":                             freePort(t),
+		"HOST":                             "",
 		"MAIL_SERVER_ENABLED":              "true",
 		"SMTP_INBOUND_HOST":                "127.0.0.1",
 		"SMTP_INBOUND_PORT":                freePort(t),
@@ -267,7 +268,7 @@ func TestServeRunsTheWholeRuntime(t *testing.T) {
 	if lines[2+len(Collections)] != "createCollection attachment-files file" || lines[3+len(Collections)] != "createCollection raw-message-files file" {
 		t.Fatalf("buckets = %q", lines[2+len(Collections):4+len(Collections)])
 	}
-	if lines[4+len(Collections)] != "ty serve" {
+	if lines[4+len(Collections)] != "ty serve --port "+os.Getenv("PORT") {
 		t.Fatalf("ty line = %q", lines[4+len(Collections)])
 	}
 	dotenv, err := os.ReadFile(filepath.Join(dir, ".env"))
@@ -365,5 +366,25 @@ func TestRequiredServiceFailureStopsTheRuntime(t *testing.T) {
 	}
 	if data, _ := os.ReadFile(logPath); !strings.Contains(string(data), "ty serve") {
 		t.Fatal("Tachyon never started")
+	}
+}
+
+func TestServeArguments(t *testing.T) {
+	for _, test := range []struct {
+		host string
+		args []string
+		want string
+	}{
+		{"", nil, "serve --port 8080"},
+		{"127.0.0.1", nil, "serve --port 8080"},
+		{"::1", nil, "serve --port 8080"},
+		{"0.0.0.0", nil, "serve --port 8080 --host 0.0.0.0 --allow-non-loopback"},
+		{"0.0.0.0", []string{"--port", "9000", "--no-watch"}, "serve --host 0.0.0.0 --allow-non-loopback --port 9000 --no-watch"},
+		{"0.0.0.0", []string{"--host=127.0.0.1"}, "serve --port 8080 --host=127.0.0.1"},
+	} {
+		t.Setenv("HOST", test.host)
+		if got := strings.Join(serveArguments("8080", test.args), " "); got != test.want {
+			t.Errorf("HOST=%q args=%q: got %q, want %q", test.host, test.args, got, test.want)
+		}
 	}
 }

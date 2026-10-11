@@ -97,16 +97,7 @@ var defaultOperations = []string{
 	"putData", "batchPutData", "patchDoc", "patchDocs", "delDoc", "delDocs",
 }
 
-var defaultCollections = []string{
-	"domains", "domain-migrations", "emails", "attachments", "raw-messages", "suppressed",
-	"users", "inbox-rules", "mfa-devices", "mfa-sessions", "setup-sessions",
-	"auth-credentials", "auth-transactions", "recovery-codes", "auth-audit-events",
-	"push-subscriptions", "rate-limits", "outbox", "send-requests", "snoozed", "mail-actions", "scheduled",
-	"follow-up-reminders", "templates", "signatures", "calendar-events", "presence",
-	"contacts", "contact-groups", "thread-shares", "mcp-access-tokens", "mcp-audit-events",
-	"extensions",
-	"attachment-files", "raw-message-files",
-}
+var defaultCollections = fylo.AllCollections()
 
 // New returns a fail-closed bridge. Listen performs configuration validation.
 func New(options Options, caller Caller) *Bridge {

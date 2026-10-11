@@ -40,6 +40,7 @@ export class TestServer {
     'MAIL_TLS_KEY',
     'MAIL_TLS_KEY_FILE',
     'NODE_ENV',
+    'PORT',
     'SESAME_ISSUER',
     'SMTP_ADAPTER',
     'SMTP_FROM',

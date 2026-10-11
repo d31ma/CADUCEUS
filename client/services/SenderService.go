@@ -38,7 +38,7 @@ type SenderService struct {
 func (sender *SenderService) Start() {
 	sender.Options = []SenderOption{}
 	sender.Signatures = []MailSignature{}
-	sender.preferences = MailPreferencesUtils{}.Defaults()
+	sender.preferences = MailPreferenceUtils{}.Defaults()
 }
 
 // SessionChanged loads the identities and signatures of the mailbox.
@@ -117,7 +117,7 @@ func (sender *SenderService) load() {
 	aliases, _ := sender.usersClient.Aliases(sender.authorization())
 	external, _ := sender.externalAccountsClient.Accounts(sender.authorization())
 	signatures, signaturesProblem := sender.signaturesClient.Signatures(sender.authorization())
-	identities := ExternalAccountsUtils{}.SenderIdentities(external.Accounts)
+	identities := ExternalAccountUtils{}.SenderIdentities(external.Accounts)
 	primary := strings.ToLower(SenderService{}.firstOf(aliases.Email, sender.owner))
 	sender.addresses = SenderService{}.addressesOf(primary, aliases.Aliases, identities)
 	sender.Options = SenderService{}.optionsOf(sender.addresses, identities)
@@ -169,7 +169,7 @@ func (SenderService) identityLabel(address string, identity SenderIdentity) []st
 
 func (SenderService) preferencesOr(preferences *MailPreferences, problem error, fallback MailPreferences) MailPreferences {
 	if problem == nil {
-		return MailPreferencesUtils{}.Normalize(preferences)
+		return MailPreferenceUtils{}.Normalize(preferences)
 	}
 	return fallback
 }
@@ -260,8 +260,8 @@ func (sender *SenderService) chosen(reason string, apply bool) SenderChosen {
 		Reason:      reason,
 		Address:     sender.From,
 		Apply:       apply,
-		NextCc:      append([]string{}, sender.preferences.AutoCcBySender[sender.From]...),
-		NextBcc:     append([]string{}, sender.preferences.AutoBccBySender[sender.From]...),
+		NextCc:      append([]string{}, sender.preferences.AutoCcBySender[strings.ToLower(sender.From)]...),
+		NextBcc:     append([]string{}, sender.preferences.AutoBccBySender[strings.ToLower(sender.From)]...),
 		Preferences: sender.preferences,
 	}
 }

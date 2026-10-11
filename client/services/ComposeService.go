@@ -84,7 +84,7 @@ type ComposeService struct {
 
 // @OnStart
 func (compose *ComposeService) Start() {
-	compose.preferences = MailPreferencesUtils{}.Defaults()
+	compose.preferences = MailPreferenceUtils{}.Defaults()
 	compose.Attachments = []ComposeAttachment{}
 	compose.RecipientOptions = []RecipientOption{}
 	compose.RecipientIndex = -1

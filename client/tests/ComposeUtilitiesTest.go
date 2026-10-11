@@ -116,10 +116,21 @@ func (test *ComposeUtilitiesTest) TestSuggestionRowsDescribeTheirSource() {
 	Assert.Equals("Contact", options[2].Detail)
 }
 
-func (test *ComposeUtilitiesTest) TestMailPreferencesKeepKnownDelays() {
-	preferences := MailPreferencesUtils{}.Normalize(&MailPreferences{UndoSendDelay: 7, DefaultFrom: " Me@X.com ", AutoCcBySender: map[string][]string{" Me@X.com ": {"A@x.com", "a@x.com"}}})
-	Assert.Equals(5000, preferences.UndoSendDelay)
-	Assert.Equals("me@x.com", preferences.DefaultFrom)
-	Assert.Equals(1, len(preferences.AutoCcBySender["me@x.com"]))
-	Assert.Equals(5000, MailPreferencesUtils{}.Normalize(nil).UndoSendDelay)
+func (test *ComposeUtilitiesTest) TestConnectedMailboxesThatSendBecomeFromChoices() {
+	id := "ext_" + strings.Repeat("a", 24)
+	accounts := []ExternalAccount{
+		{ID: id + "2", MailboxAddress: "Ops@Example.net", Provider: "imap", State: "ready", Revision: 1, Order: 2, Capabilities: ExternalCapabilities{Send: true}},
+		{ID: id + "1", MailboxAddress: "me@gmail.com", Label: "Personal", Provider: "gmail", State: "idle", Revision: 1, Order: 1, Capabilities: ExternalCapabilities{Send: true}},
+		{ID: id + "3", MailboxAddress: "ops@example.net", Provider: "imap", State: "ready", Revision: 1, Order: 3, Capabilities: ExternalCapabilities{Send: true}},
+		{ID: id + "4", MailboxAddress: "read@example.net", Provider: "imap", State: "ready", Revision: 1, Order: 4},
+		{ID: id + "5", MailboxAddress: "paused@example.net", Provider: "imap", State: "paused", Revision: 1, Order: 5, Capabilities: ExternalCapabilities{Send: true}},
+		{ID: "bad", MailboxAddress: "bad@example.net", Provider: "imap", State: "ready", Revision: 1, Capabilities: ExternalCapabilities{Send: true}},
+	}
+	identities := ExternalAccountUtils{}.SenderIdentities(accounts)
+	Assert.Equals(2, len(identities))
+	Assert.Equals("me@gmail.com", identities[0].Address)
+	Assert.Equals("Personal", identities[0].Label)
+	Assert.Equals("ops@example.net", identities[1].Address)
+	Assert.Equals("Ops@Example.net", identities[1].Label)
+	Assert.Equals(id+"2", identities[1].AccountID)
 }

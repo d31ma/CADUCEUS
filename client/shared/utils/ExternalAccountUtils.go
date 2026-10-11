@@ -15,6 +15,27 @@ func (ExternalAccountUtils) Normalize(accounts []ExternalAccount) []ExternalAcco
 	return ExternalAccountUtils{}.sorted(ExternalAccountUtils{}.cleanedAll(kept))
 }
 
+// SenderIdentities lists each sendable connected mailbox once, as the
+// composer's From choices (externalSenderIdentities in the old client).
+func (ExternalAccountUtils) SenderIdentities(accounts []ExternalAccount) []SenderIdentity {
+	identities := []SenderIdentity{}
+	seen := map[string]bool{}
+	listed := ExternalAccountUtils{}.Normalize(accounts)
+	for _, account := range listed {
+		identities = append(identities, ExternalAccountUtils{}.sendable(account, seen)...)
+	}
+	return identities
+}
+
+func (ExternalAccountUtils) sendable(account ExternalAccount, seen map[string]bool) []SenderIdentity {
+	address := strings.ToLower(account.MailboxAddress)
+	if !account.Capabilities.Send || !slices.Contains([]string{"ready", "syncing", "idle", "degraded"}, account.State) || seen[address] {
+		return nil
+	}
+	seen[address] = true
+	return []SenderIdentity{{Address: address, Label: account.Label, AccountID: account.ID, Provider: account.Provider, Color: account.Color}}
+}
+
 // Arranged marks which accounts can move up or down and create folders.
 func (ExternalAccountUtils) Arranged(accounts []ExternalAccount) []ExternalAccount {
 	return ExternalAccountUtils{}.arranged(accounts)

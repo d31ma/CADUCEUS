@@ -28,7 +28,7 @@ func (test *ComposeServiceTest) opened(prefill string, launched map[string]any) 
 }
 
 func (test *ComposeServiceTest) ready(compose *ComposeService) *ComposeService {
-	compose.HearSender(SenderChosen{Reason: "start", Address: "owner@example.com", Apply: true, NextCc: []string{"boss@example.com"}, Preferences: MailPreferencesUtils{}.Defaults()})
+	compose.HearSender(SenderChosen{Reason: "start", Address: "owner@example.com", Apply: true, NextCc: []string{"boss@example.com"}, Preferences: MailPreferenceUtils{}.Defaults()})
 	return compose
 }
 

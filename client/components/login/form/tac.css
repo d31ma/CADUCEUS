@@ -104,3 +104,45 @@
     font-size: var(--ms-font-xl, 1.25rem);
   }
 }
+
+/* ── DuVay host rules (moved from shared/assets/styles.css) ── */
+/* Keep DuVay components on the app's font. */
+w-btn, w-text-field, w-textarea, w-select, w-chip, w-option {
+  font-family: inherit;
+}
+
+w-btn {
+  min-width: 64px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+w-chip {
+  box-sizing: border-box;
+}
+
+/* DuVay form-control hosts are inline by default, so authored `width` and
+ * vertical margins (e.g. `style="width:100%;margin-bottom:1rem"`) are ignored —
+ * fields render content-width and stack with no gap. Make them block-level so
+ * full-width fields and their spacing behave as written. */
+w-text-field,
+w-textarea,
+w-select {
+  display: block;
+}
+
+/* A <w-btn> host is inline by default, so a full-width action written as
+ * `style="width:100%"` (the Material idiom carried over in the migration) was
+ * ignored — the host and its rendered <button> stayed content-width. Make such
+ * hosts block-level and stretch the control to fill them. */
+w-btn[style*="width:100%"],
+w-btn[style*="width: 100%"] {
+  display: block;
+}
+
+w-btn[style*="width:100%"] > button,
+w-btn[style*="width:100%"] > a,
+w-btn[style*="width: 100%"] > button,
+w-btn[style*="width: 100%"] > a {
+  width: 100%;
+}

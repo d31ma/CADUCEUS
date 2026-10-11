@@ -1,10 +1,21 @@
-// CalendarClient is the /calendar route group. Every request carries the
-// session's bearer token, because the browser transport sends no cookies.
-// The writes answer BehaviorValue, so their arguments are BehaviorValue too.
+// CalendarClient is the /calendar route group. The shell counts the events of
+// the next two weeks for the sidebar badge. The calendar page reads and writes
+// the events themselves; its writes answer BehaviorValue, so their arguments
+// are BehaviorValue too.
 // @HTTPClient("/calendar")
 type CalendarClient interface {
 	// @GetRequest("/events")
 	Events(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestParam("start")
+		start string,
+		// @RequestParam("end")
+		end string,
+	) ([]CalendarEventSummary, error)
+
+	// @GetRequest("/events")
+	EventsBetween(
 		// @RequestHeader("Authorization")
 		authorization string,
 		// @RequestParam("start")

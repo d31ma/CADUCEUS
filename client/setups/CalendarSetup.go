@@ -1,5 +1,5 @@
-// CalendarSetup gives CalendarClient no adapter, so its requests use the
-// browser's same-origin transport.
+// CalendarSetup gives CalendarClient no adapter, so its requests use the browser
+// transport to the page's own server.
 // @Setup
 type CalendarSetup struct{}
 

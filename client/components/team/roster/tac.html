@@ -1,0 +1,41 @@
+<div class="team-page">
+  <header class="team-toolbar">
+    <h1 class="team-title w-text-title-large">Team</h1>
+    <span class="team-count">{team.count} members</span>
+  </header>
+
+  <logic :if="team.loading">
+    <div class="team-empty" role="status">
+      <w-progress-circular indeterminate aria-hidden="true"></w-progress-circular>
+      <span class="sr-only">Loading team members</span>
+    </div>
+  </logic>
+
+  <logic :if="!team.loading && team.count === 0">
+    <div class="team-empty">
+      <p class="empty-state-title">No teammates</p>
+      <p class="empty-state-subtitle">You're the only user in this domain.</p>
+    </div>
+  </logic>
+
+  <logic :if="!team.loading && team.count > 0">
+    <ul class="team-roster" role="list">
+      <loop :for="member of team.members">
+        <li class="team-row">
+          <span class="team-avatar">{member.initials}</span>
+          <div class="team-meta">
+            <div class="team-name w-text-body-medium">
+              {member.label}
+              <logic :if="member.isSelf"><span class="team-self">you</span></logic>
+            </div>
+            <div class="team-email w-text-body-small">{member.email}</div>
+          </div>
+          <div class="team-status">
+            <span :class="'presence-dot ' + (member.online ? 'online' : '')"></span>
+            <span class="w-text-label-small">{member.status}</span>
+          </div>
+        </li>
+      </loop>
+    </ul>
+  </logic>
+</div>

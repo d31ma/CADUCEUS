@@ -377,7 +377,7 @@ func (CalendarService) modes() CalendarModes {
 
 func (calendar *CalendarService) loadEvents() {
 	start, end := calendar.fetchRange()
-	events, failure := calendar.calendarClient.Events(calendar.bearer(), CalendarDateUtils{}.InstantText(start), CalendarDateUtils{}.InstantText(end))
+	events, failure := calendar.calendarClient.EventsBetween(calendar.bearer(), CalendarDateUtils{}.InstantText(start), CalendarDateUtils{}.InstantText(end))
 	calendar.events = calendar.eventsOr(events, failure)
 	calendar.teamWhenShown(start, end)
 	calendar.refresh()

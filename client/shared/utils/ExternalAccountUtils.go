@@ -18,10 +18,12 @@ func (ExternalAccountUtils) Normalize(accounts []ExternalAccount) []ExternalAcco
 // SenderIdentities lists each sendable connected mailbox once, as the
 // composer's From choices (externalSenderIdentities in the old client).
 func (ExternalAccountUtils) SenderIdentities(accounts []ExternalAccount) []SenderIdentity {
+	return ExternalAccountUtils{}.identities(ExternalAccountUtils{}.Normalize(accounts), map[string]bool{})
+}
+
+func (ExternalAccountUtils) identities(accounts []ExternalAccount, seen map[string]bool) []SenderIdentity {
 	identities := []SenderIdentity{}
-	seen := map[string]bool{}
-	listed := ExternalAccountUtils{}.Normalize(accounts)
-	for _, account := range listed {
+	for _, account := range accounts {
 		identities = append(identities, ExternalAccountUtils{}.sendable(account, seen)...)
 	}
 	return identities
@@ -29,11 +31,18 @@ func (ExternalAccountUtils) SenderIdentities(accounts []ExternalAccount) []Sende
 
 func (ExternalAccountUtils) sendable(account ExternalAccount, seen map[string]bool) []SenderIdentity {
 	address := strings.ToLower(account.MailboxAddress)
-	if !account.Capabilities.Send || !slices.Contains([]string{"ready", "syncing", "idle", "degraded"}, account.State) || seen[address] {
+	if !account.Capabilities.Send || !slices.Contains(ExternalAccountUtils{}.sendingStates(), account.State) || seen[address] {
 		return nil
 	}
 	seen[address] = true
 	return []SenderIdentity{{Address: address, Label: account.Label, AccountID: account.ID, Provider: account.Provider, Color: account.Color}}
+}
+
+// sendingStates are the states in which a connected account may send: all
+// but auth_required, paused and deleting.
+func (ExternalAccountUtils) sendingStates() []string {
+	states := ExternalAccountUtils{}.states()
+	return []string{states[0], states[1], states[2], states[4]}
 }
 
 // Arranged marks which accounts can move up or down and create folders.

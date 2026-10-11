@@ -59,10 +59,10 @@ type InboxClient interface {
 	// @GetRequest("/{id}")
 	Read(
 		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
+		authorization string,
 		// @PathVariable
-		id BehaviorValue,
-	) (BehaviorValue, error)
+		id string,
+	) (Email, error)
 
 	// @PutRequest("/{id}")
 	Update(

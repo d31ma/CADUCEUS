@@ -91,7 +91,6 @@ type MessageService struct {
 	TranslationPreference     string
 	TranslationStatus         string
 
-	record           map[string]any
 	token            string
 	pendingID        string
 	theme            string
@@ -458,7 +457,6 @@ func (service *MessageService) adoptPreferences(values map[string]string) {
 }
 
 func (service *MessageService) reset() {
-	service.record = map[string]any{}
 	service.Email = Email{}
 	service.HasEmail = false
 	service.LoadError = ""
@@ -521,7 +519,6 @@ func (service *MessageService) openPending() {
 
 func (service *MessageService) openFresh() {
 	service.reset()
-	service.record = map[string]any{"id": service.pendingID}
 	service.Email = Email{ID: service.pendingID}
 	service.HasEmail = true
 	service.load()
@@ -529,10 +526,10 @@ func (service *MessageService) openFresh() {
 
 func (service *MessageService) load() {
 	service.Loading = true
-	raw, failure := service.inboxClient.Read(service.bearer(), service.Email.ID)
+	email, failure := service.inboxClient.Read(service.bearer(), service.Email.ID)
 	service.LoadError = TextUtils{}.Choose(failure == nil, "", HTTPUtils{}.Message(failure, "Could not load this email.", "Network error"))
 	FlowUtils{}.When(HTTPUtils{}.Refused(failure), service.checkSession)()
-	FlowUtils{}.When(failure == nil, func() { service.show(RecordUtils{}.Object(raw)) })()
+	FlowUtils{}.When(failure == nil, func() { service.show(email) })()
 	service.Loading = false
 }
 
@@ -540,9 +537,8 @@ func (service *MessageService) checkSession() {
 	service.applicationEventPublisher.PublishEvent(SessionCheckRequested{Reason: "reader"}, false)
 }
 
-func (service *MessageService) show(record map[string]any) {
-	service.record = record
-	service.Email = EmailRecordUtils{}.Email(record)
+func (service *MessageService) show(email Email) {
+	service.Email = EmailRecordUtils{}.Email(email)
 	service.ShowQuotedText = MessageConversationUtils{}.IsForwardedSubject(service.Email.Subject)
 	service.RenderMode = TextUtils{}.Choose(service.Email.HtmlBody != "", service.names().Html, service.names().Text)
 	service.prepareAttachments(service.rasterAttachments(service.Email.Attachments))
@@ -563,7 +559,7 @@ func (service *MessageService) announce() {
 		Subject:            service.Email.Subject,
 		ParticipantAddress: service.ParticipantAddress,
 		Standalone:         service.Standalone,
-		CalendarInvite:     EmailRecordUtils{}.Invite(service.record),
+		CalendarInvite:     service.Email.CalendarInvite,
 		Account:            service.Account,
 	}, true)
 }
@@ -583,7 +579,7 @@ func (service *MessageService) refreshLabels() {
 	service.ShowOpenedBadge = LogicUtils{}.All(email.OpenedAt != "", !service.HasTrackingInsights)
 	service.HasAttachments = len(email.Attachments) > 0
 	service.ShowOriginalRecipient = LogicUtils{}.All(email.OriginalRecipient != "", email.OriginalRecipient != email.Recipient)
-	service.ParticipantAddress = AddressUtils{}.Participant(email.Sender, append([]string{email.Recipient}, RecordUtils{}.Texts(service.record, service.names().To)...), service.Account)
+	service.ParticipantAddress = AddressUtils{}.Participant(email.Sender, append([]string{email.Recipient}, EmailRecordUtils{}.Addresses(service.Email.To)...), service.Account)
 	service.AttachmentPreviewsEnabled = service.preferences.DisplayAttachmentPreviews
 	service.ImageSender = AddressUtils{}.Valid(AddressUtils{}.Normalized(email.Sender))
 	service.PrintEmail = service.printable()
@@ -607,7 +603,7 @@ func (service *MessageService) refreshActions(shown bool, folder string) {
 func (service *MessageService) printable() string {
 	encoded, _ := json.Marshal(map[string]any{
 		"id": service.Email.ID, "subject": service.Email.Subject, "sender": service.Email.Sender, "recipient": service.Email.Recipient,
-		service.names().To: RecordUtils{}.Texts(service.record, service.names().To), service.names().Cc: RecordUtils{}.Texts(service.record, service.names().Cc), "receivedAt": service.Email.ReceivedAt,
+		service.names().To: EmailRecordUtils{}.Addresses(service.Email.To), service.names().Cc: EmailRecordUtils{}.Addresses(service.Email.Cc), "receivedAt": service.Email.ReceivedAt,
 		"body": service.Email.Body, "htmlBody": service.Email.HtmlBody,
 	})
 	return string(encoded)
@@ -618,8 +614,8 @@ func (MessageService) listSeparator() string { return ", " }
 func (service *MessageService) headerRows(detailed bool) []HeaderRow {
 	rows := []HeaderRow{
 		{Label: "From", Value: TextUtils{}.FirstOf(service.Email.HeaderFrom, service.Email.Sender)},
-		{Label: "To", Value: TextUtils{}.FirstOf(strings.Join(RecordUtils{}.Texts(service.record, service.names().To), service.listSeparator()), service.Email.Recipient)},
-		{Label: "Cc", Value: strings.Join(RecordUtils{}.Texts(service.record, service.names().Cc), service.listSeparator())},
+		{Label: "To", Value: TextUtils{}.FirstOf(strings.Join(EmailRecordUtils{}.Addresses(service.Email.To), service.listSeparator()), service.Email.Recipient)},
+		{Label: "Cc", Value: strings.Join(EmailRecordUtils{}.Addresses(service.Email.Cc), service.listSeparator())},
 		{Label: "Reply-To", Value: strings.Join(service.Email.ReplyTo, service.listSeparator())},
 		{Label: "Message-ID", Value: TextUtils{}.FirstOf(service.Email.InternetMessageID, service.Email.MessageID)},
 	}
@@ -658,13 +654,17 @@ func (service *MessageService) act(patch map[string]any, message string) {
 func (service *MessageService) shownPatch(patch map[string]any) map[string]any {
 	shown := maps.Clone(patch)
 	_, moved := patch[service.names().FolderKey]
-	shown["systemFolder"] = map[bool]any{true: "", false: service.record["systemFolder"]}[moved]
+	shown["systemFolder"] = map[bool]any{true: "", false: service.Email.SystemFolder}[moved]
 	return shown
 }
 
-func (service *MessageService) merge(record map[string]any) {
-	service.record = RecordUtils{}.Merge(service.record, record)
-	service.Email = EmailRecordUtils{}.Email(service.record)
+func (service *MessageService) merge(patch map[string]any) {
+	service.showChanged(EmailRecordUtils{}.Merged(service.Email, patch))
+}
+
+// showChanged shows a changed copy of the open message.
+func (service *MessageService) showChanged(email Email) {
+	service.Email = EmailRecordUtils{}.Email(email)
 	service.applyThumbnails()
 	service.refreshLabels()
 	service.announce()
@@ -673,14 +673,11 @@ func (service *MessageService) merge(record map[string]any) {
 // reloadFlags reads the message again and keeps only its mailbox state, so
 // the open view does not reset.
 func (service *MessageService) reloadFlags() {
-	raw, failure := service.inboxClient.Read(service.bearer(), service.Email.ID)
-	fresh := RecordUtils{}.Object(raw)
-	keys := []string{service.names().FolderKey, "systemFolder", "labels", service.names().Read, "starred", "spamScore", "spamReasons"}
-	flags := map[string]any{}
-	for _, key := range keys {
-		flags[key] = fresh[key]
-	}
-	FlowUtils{}.When(failure == nil, func() { service.merge(flags) })()
+	fresh, failure := service.inboxClient.Read(service.bearer(), service.Email.ID)
+	flags := service.Email
+	flags.Folder, flags.SystemFolder, flags.Labels, flags.Read, flags.Starred = fresh.Folder, fresh.SystemFolder, fresh.Labels, fresh.Read, fresh.Starred
+	flags.SpamScore, flags.SpamReasons = fresh.SpamScore, fresh.SpamReasons
+	FlowUtils{}.When(failure == nil, func() { service.showChanged(flags) })()
 }
 
 func (service *MessageService) removeEmail() {
@@ -958,7 +955,7 @@ func (service *MessageService) applyThumbnails() {
 // attachment finds an attachment of the message or of its invitation; an
 // unknown id gives an attachment with only that id.
 func (service *MessageService) attachment(attachmentID string) EmailAttachment {
-	known := append(slices.Clone(service.Email.Attachments), EmailRecordUtils{}.InviteAttachments(service.record)...)
+	known := append(slices.Clone(service.Email.Attachments), EmailRecordUtils{}.InviteAttachments(service.Email)...)
 	found := slices.IndexFunc(known, func(attachment EmailAttachment) bool { return attachment.Id == attachmentID })
 	return append([]EmailAttachment{{Id: attachmentID}}, known...)[found+1]
 }

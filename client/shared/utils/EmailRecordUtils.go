@@ -1,40 +1,73 @@
 import (
+	"encoding/json"
+	"maps"
 	"slices"
 	"sort"
 	"strconv"
 	"time"
 )
 
-// EmailRecordUtils turns a mail API record into the reader's view model and
-// adds the labels that the view needs, as decorateEmail in the reader did.
+// EmailRecordUtils adds to a message read from the mail API the labels that
+// the reader's view needs, as decorateEmail in the reader did.
 type EmailRecordUtils struct{}
 
-func (EmailRecordUtils) Email(record map[string]any) Email {
-	email := EmailRecordUtils{}.addresses(record)
-	EmailRecordUtils{}.addContent(&email, record)
-	EmailRecordUtils{}.addState(&email, record)
-	EmailRecordUtils{}.addTracking(&email, record)
+func (EmailRecordUtils) Email(email Email) Email {
+	email.GithubUrl = GitHubNotificationUtils{}.SafeTarget(email.GithubUrl)
+	email.Attachments = EmailRecordUtils{}.attachments(email.Attachments)
+	email.CalendarInvite = EmailRecordUtils{}.invite(email.CalendarInvite)
+	EmailRecordUtils{}.addState(&email)
+	EmailRecordUtils{}.addTracking(&email)
 	return email
 }
 
-// InviteAttachments is the invitation's .ics file, or none.
-func (EmailRecordUtils) InviteAttachments(record map[string]any) []EmailAttachment {
-	return EmailRecordUtils{}.attachments(EmailRecordUtils{}.present(RecordUtils{}.Record(RecordUtils{}.Record(record, EmailRecordUtils{}.inviteKey()), EmailRecordUtils{}.attachmentKey())))
+// Merged is the message with a patch of its JSON fields applied, as the
+// server applies a PUT /inbox/{id}.
+func (EmailRecordUtils) Merged(email Email, patch map[string]any) Email {
+	fields := map[string]any{}
+	encoded, _ := json.Marshal(email)
+	_ = json.Unmarshal(encoded, &fields)
+	maps.Copy(fields, patch)
+	merged := Email{}
+	encoded, _ = json.Marshal(fields)
+	_ = json.Unmarshal(encoded, &merged)
+	return merged
 }
 
-func (EmailRecordUtils) present(record map[string]any) []map[string]any {
-	if record == nil {
-		return []map[string]any{}
+// Addresses is a to or cc value, which the server sends as a list or as one
+// address, as a list.
+func (EmailRecordUtils) Addresses(value any) []string {
+	items, listed := value.([]any)
+	return TextUtils{}.NonEmpty(append(EmailRecordUtils{}.texts(items), EmailRecordUtils{}.single(value, listed)...))
+}
+
+func (EmailRecordUtils) texts(items []any) []string {
+	texts := []string{}
+	for _, item := range items {
+		text, _ := item.(string)
+		texts = append(texts, text)
 	}
-	return []map[string]any{record}
+	return texts
 }
 
-func (EmailRecordUtils) Invite(record map[string]any) *CalendarInvite {
-	return EmailRecordUtils{}.invite(RecordUtils{}.Record(record, EmailRecordUtils{}.inviteKey()))
+func (EmailRecordUtils) single(value any, listed bool) []string {
+	text, _ := value.(string)
+	return map[bool][]string{true: {}, false: {text}}[listed]
 }
 
-func (EmailRecordUtils) Conversation(record map[string]any) ConversationMessage {
-	email := EmailRecordUtils{}.Email(record)
+// InviteAttachments is the invitation's .ics file, or none.
+func (EmailRecordUtils) InviteAttachments(email Email) []EmailAttachment {
+	return EmailRecordUtils{}.inviteFile(email.CalendarInvite)
+}
+
+func (EmailRecordUtils) inviteFile(invite *CalendarInvite) []EmailAttachment {
+	if invite == nil || invite.Attachment == nil {
+		return []EmailAttachment{}
+	}
+	return []EmailAttachment{*invite.Attachment}
+}
+
+func (EmailRecordUtils) Conversation(email Email) ConversationMessage {
+	email = EmailRecordUtils{}.Email(email)
 	return ConversationMessage{
 		Id:                email.ID,
 		Subject:           email.Subject,
@@ -54,59 +87,20 @@ func (EmailRecordUtils) Conversation(record map[string]any) ConversationMessage 
 	}
 }
 
-func (EmailRecordUtils) idKey() string { return "id" }
-
-func (EmailRecordUtils) recipientKey() string { return "recipient" }
-
-func (EmailRecordUtils) addresses(record map[string]any) Email {
-	return Email{
-		ID:                RecordUtils{}.Text(record, EmailRecordUtils{}.idKey()),
-		Subject:           RecordUtils{}.Text(record, "subject"),
-		Sender:            RecordUtils{}.Text(record, "sender"),
-		HeaderFrom:        RecordUtils{}.Text(record, "headerFrom"),
-		Recipient:         RecordUtils{}.Text(record, EmailRecordUtils{}.recipientKey()),
-		OriginalRecipient: RecordUtils{}.Text(record, "originalRecipient"),
-		To:                RecordUtils{}.Texts(record, "to"),
-		Cc:                RecordUtils{}.Texts(record, "cc"),
-		ReplyTo:           RecordUtils{}.Texts(record, "replyTo"),
-		InternetMessageID: RecordUtils{}.Text(record, "rfcMessageId"),
-		MessageID:         RecordUtils{}.Text(record, "messageId"),
-		References:        RecordUtils{}.Texts(record, "references"),
-		ThreadID:          RecordUtils{}.Text(record, "threadId"),
-	}
-}
-
-func (EmailRecordUtils) addContent(email *Email, record map[string]any) {
-	email.Body = RecordUtils{}.Text(record, "body")
-	email.HtmlBody = RecordUtils{}.Text(record, "htmlBody")
-	email.HasRawSource = RecordUtils{}.Flag(record, "hasRawSource")
-	email.Attachments = EmailRecordUtils{}.attachments(RecordUtils{}.Records(record, "attachments"))
-	email.GithubUrl = GitHubNotificationUtils{}.SafeTarget(RecordUtils{}.Text(record, "githubUrl"))
-	email.UnsubscribeUrl = RecordUtils{}.Text(record, "unsubscribeUrl")
-	email.UnsubscribeOneClick = RecordUtils{}.Flag(record, "unsubscribeOneClick")
-	email.UnsubscribeMailto = RecordUtils{}.Text(record, "unsubscribeMailto")
-	email.UnsubscribeBodyUrl = RecordUtils{}.Text(record, "unsubscribeBodyUrl")
-}
-
-func (EmailRecordUtils) openedKey() string { return "openedAt" }
-
-func (EmailRecordUtils) scoreKey() string { return "spamScore" }
-
-func (EmailRecordUtils) addState(email *Email, record map[string]any) {
-	email.Folder = RecordUtils{}.Text(record, "folder")
-	email.SystemFolder = RecordUtils{}.Text(record, "systemFolder")
-	email.Domain = RecordUtils{}.Text(record, "domain")
-	email.Labels = RecordUtils{}.Texts(record, "labels")
-	email.Read = RecordUtils{}.Flag(record, "read")
-	email.Starred = RecordUtils{}.Flag(record, "starred")
-	email.ReceivedAt = RecordUtils{}.Text(record, "receivedAt")
-	email.OpenedAt = RecordUtils{}.Text(record, EmailRecordUtils{}.openedKey())
+func (EmailRecordUtils) addState(email *Email) {
 	email.ReceivedLabel = DateUtils{}.Label(email.ReceivedAt, time.Now())
 	email.OpenedLabel = DateUtils{}.Label(email.OpenedAt, time.Now())
-	email.HasSpamScore = RecordUtils{}.HasNumber(record, EmailRecordUtils{}.scoreKey())
-	email.SpamScoreLabel = strconv.FormatFloat(RecordUtils{}.Number(record, EmailRecordUtils{}.scoreKey()), 'f', 1, 64)
-	email.Spam = EmailRecordUtils{}.spam(TextUtils{}.FirstOf(TextUtils{}.FirstOf(email.SystemFolder, email.Folder), "inbox"), email.HasSpamScore, RecordUtils{}.IsList(record, "spamReasons"))
-	email.ReplyToMismatch = slices.Contains(RecordUtils{}.Texts(record, "securityWarnings"), "reply_to_mismatch")
+	email.HasSpamScore = email.SpamScore != nil
+	email.SpamScoreLabel = strconv.FormatFloat(EmailRecordUtils{}.score(email.SpamScore), 'f', 1, 64)
+	email.Spam = EmailRecordUtils{}.spam(TextUtils{}.FirstOf(TextUtils{}.FirstOf(email.SystemFolder, email.Folder), "inbox"), email.HasSpamScore, email.SpamReasons != nil)
+	email.ReplyToMismatch = slices.Contains(email.SecurityWarnings, "reply_to_mismatch")
+}
+
+func (EmailRecordUtils) score(value *float64) float64 {
+	if value == nil {
+		return 0
+	}
+	return *value
 }
 
 func (EmailRecordUtils) spam(mailbox string, hasScore bool, hasReasons bool) bool {
@@ -116,18 +110,10 @@ func (EmailRecordUtils) spam(mailbox string, hasScore bool, hasReasons bool) boo
 	return false
 }
 
-func (EmailRecordUtils) opensKey() string { return "opens" }
-
-func (EmailRecordUtils) clicksKey() string { return "clicks" }
-
-func (EmailRecordUtils) addTracking(email *Email, record map[string]any) {
-	opens := RecordUtils{}.Records(record, EmailRecordUtils{}.opensKey())
-	clicks := RecordUtils{}.Records(record, EmailRecordUtils{}.clicksKey())
-	email.OpenTracking = RecordUtils{}.Flag(record, "openTracking")
-	email.LinkTracking = RecordUtils{}.Flag(record, "linkTracking")
-	email.TrackingEvents = EmailRecordUtils{}.trackingEvents(EmailRecordUtils{}.openEvents(opens), EmailRecordUtils{}.clickEvents(clicks))
-	openCount := max(len(opens), int(max(0, RecordUtils{}.Number(record, "openCount"))))
-	clickCount := max(len(clicks), int(max(0, RecordUtils{}.Number(record, "clickCount"))))
+func (EmailRecordUtils) addTracking(email *Email) {
+	email.TrackingEvents = EmailRecordUtils{}.trackingEvents(EmailRecordUtils{}.openEvents(email.Opens), EmailRecordUtils{}.clickEvents(email.Clicks))
+	openCount := max(len(email.Opens), email.OpenCount)
+	clickCount := max(len(email.Clicks), email.ClickCount)
 	email.TrackingSummary = EmailRecordUtils{}.trackingSummary(openCount, clickCount)
 }
 
@@ -139,107 +125,55 @@ func (EmailRecordUtils) trackingEvents(opens []TrackingEvent, clicks []TrackingE
 
 func (EmailRecordUtils) openType() string { return "open" }
 
-func (EmailRecordUtils) openEvents(opens []map[string]any) []TrackingEvent {
+func (EmailRecordUtils) openEvents(opens []TrackingHit) []TrackingEvent {
 	events := []TrackingEvent{}
 	for _, open := range opens {
-		events = append(events, TrackingEvent{Type: EmailRecordUtils{}.openType(), EventIcon: "◉", EventLabel: "Opened", Timestamp: RecordUtils{}.Text(open, EmailRecordUtils{}.openedKey()), TimestampLabel: DateUtils{}.Label(RecordUtils{}.Text(open, EmailRecordUtils{}.openedKey()), time.Now()), RecipientLabel: EmailRecordUtils{}.recipientLabel(open)})
+		events = append(events, TrackingEvent{Type: EmailRecordUtils{}.openType(), EventIcon: "◉", EventLabel: "Opened", Timestamp: open.OpenedAt, TimestampLabel: DateUtils{}.Label(open.OpenedAt, time.Now()), RecipientLabel: EmailRecordUtils{}.recipientLabel(open)})
 	}
 	return events
 }
 
 func (EmailRecordUtils) clickType() string { return "click" }
 
-func (EmailRecordUtils) clickEvents(clicks []map[string]any) []TrackingEvent {
+func (EmailRecordUtils) clickEvents(clicks []TrackingHit) []TrackingEvent {
 	events := []TrackingEvent{}
 	for _, click := range clicks {
-		events = append(events, TrackingEvent{Type: EmailRecordUtils{}.clickType(), EventIcon: "↗", EventLabel: "Clicked", Timestamp: RecordUtils{}.Text(click, EmailRecordUtils{}.clickedKey()), TimestampLabel: DateUtils{}.Label(RecordUtils{}.Text(click, EmailRecordUtils{}.clickedKey()), time.Now()), RecipientLabel: EmailRecordUtils{}.recipientLabel(click), TargetLabel: EmailRecordUtils{}.targetLabel(click)})
+		events = append(events, TrackingEvent{Type: EmailRecordUtils{}.clickType(), EventIcon: "↗", EventLabel: "Clicked", Timestamp: click.ClickedAt, TimestampLabel: DateUtils{}.Label(click.ClickedAt, time.Now()), RecipientLabel: EmailRecordUtils{}.recipientLabel(click), TargetLabel: TextUtils{}.FirstOf(TextUtils{}.FirstOf(click.Title, click.Url), "Link")})
 	}
 	return events
 }
 
-func (EmailRecordUtils) recipientLabel(event map[string]any) string {
-	return TextUtils{}.FirstOf(RecordUtils{}.Text(event, EmailRecordUtils{}.recipientKey()), "Recipient unavailable")
-}
-
-func (EmailRecordUtils) titleKey() string { return "title" }
-
-func (EmailRecordUtils) targetLabel(event map[string]any) string {
-	return TextUtils{}.FirstOf(TextUtils{}.FirstOf(RecordUtils{}.Text(event, EmailRecordUtils{}.titleKey()), RecordUtils{}.Text(event, "url")), "Link")
+func (EmailRecordUtils) recipientLabel(event TrackingHit) string {
+	return TextUtils{}.FirstOf(event.Recipient, "Recipient unavailable")
 }
 
 func (EmailRecordUtils) trackingSummary(opens int, clicks int) string {
 	if opens == 0 && clicks == 0 {
 		return "No activity yet"
 	}
-	return TextUtils{}.Count(opens, EmailRecordUtils{}.openType(), EmailRecordUtils{}.opensKey()) + " · " + TextUtils{}.Count(clicks, EmailRecordUtils{}.clickType(), EmailRecordUtils{}.clicksKey())
+	return TextUtils{}.Count(opens, EmailRecordUtils{}.openType(), "opens") + " · " + TextUtils{}.Count(clicks, EmailRecordUtils{}.clickType(), "clicks")
 }
 
-func (EmailRecordUtils) attachments(records []map[string]any) []EmailAttachment {
-	attachments := []EmailAttachment{}
-	for _, item := range records {
-		attachments = append(attachments, EmailRecordUtils{}.attachment(item))
+func (EmailRecordUtils) attachments(attachments []EmailAttachment) []EmailAttachment {
+	labelled := []EmailAttachment{}
+	for _, attachment := range attachments {
+		labelled = append(labelled, EmailRecordUtils{}.attachment(attachment))
 	}
-	return attachments
+	return labelled
 }
 
-func (EmailRecordUtils) attachment(record map[string]any) EmailAttachment {
-	contentType := RecordUtils{}.Text(record, "contentType")
-	return EmailAttachment{
-		Id:          RecordUtils{}.Text(record, EmailRecordUtils{}.idKey()),
-		Filename:    RecordUtils{}.Text(record, "filename"),
-		Size:        RecordUtils{}.Number(record, EmailRecordUtils{}.sizeKey()),
-		ContentType: contentType,
-		ContentId:   RecordUtils{}.Text(record, "contentId"),
-		Disposition: RecordUtils{}.Text(record, "disposition"),
-		PreviewKind: AttachmentContentUtils{}.PreviewKind(contentType),
-		SizeLabel:   SizeUtils{}.Label(int(RecordUtils{}.Number(record, EmailRecordUtils{}.sizeKey()))),
-	}
+func (EmailRecordUtils) attachment(attachment EmailAttachment) EmailAttachment {
+	attachment.PreviewKind = AttachmentContentUtils{}.PreviewKind(attachment.ContentType)
+	attachment.SizeLabel = SizeUtils{}.Label(int(attachment.Size))
+	return attachment
 }
 
-func (EmailRecordUtils) statusKey() string { return "status" }
-
-func (EmailRecordUtils) inviteKey() string { return "calendarInvite" }
-
-func (EmailRecordUtils) attachmentKey() string { return "attachment" }
-
-func (EmailRecordUtils) clickedKey() string { return "clickedAt" }
-
-func (EmailRecordUtils) sizeKey() string { return "size" }
-
-func (EmailRecordUtils) invite(record map[string]any) *CalendarInvite {
-	if record == nil {
-		return nil
+func (EmailRecordUtils) invite(invite *CalendarInvite) *CalendarInvite {
+	if invite == nil || invite.Attachment == nil {
+		return invite
 	}
-	invite := &CalendarInvite{
-		Id:           RecordUtils{}.Text(record, EmailRecordUtils{}.idKey()),
-		Title:        RecordUtils{}.Text(record, EmailRecordUtils{}.titleKey()),
-		Start:        RecordUtils{}.Text(record, "start"),
-		End:          RecordUtils{}.Text(record, "end"),
-		AllDay:       RecordUtils{}.Flag(record, "allDay"),
-		Location:     RecordUtils{}.Text(record, "location"),
-		Organizer:    RecordUtils{}.Text(record, "organizer"),
-		Status:       RecordUtils{}.Text(record, EmailRecordUtils{}.statusKey()),
-		MyStatus:     RecordUtils{}.Text(record, "myStatus"),
-		CanRespond:   RecordUtils{}.Flag(record, "canRespond"),
-		IsRecurring:  RecordUtils{}.Flag(record, "isRecurring"),
-		RecurrenceId: RecordUtils{}.Text(record, "recurrenceId"),
-	}
-	invite.SenderResponse = EmailRecordUtils{}.response(RecordUtils{}.Record(record, "senderResponse"))
-	invite.Attachment = EmailRecordUtils{}.inviteAttachment(RecordUtils{}.Record(record, EmailRecordUtils{}.attachmentKey()))
-	return invite
-}
-
-func (EmailRecordUtils) response(record map[string]any) *InviteResponse {
-	if record == nil {
-		return nil
-	}
-	return &InviteResponse{Status: RecordUtils{}.Text(record, EmailRecordUtils{}.statusKey()), Name: RecordUtils{}.Text(record, "name"), Email: RecordUtils{}.Text(record, "email")}
-}
-
-func (EmailRecordUtils) inviteAttachment(record map[string]any) *EmailAttachment {
-	if record == nil {
-		return nil
-	}
-	attachment := EmailRecordUtils{}.attachment(record)
-	return &attachment
+	labelled := *invite
+	attachment := EmailRecordUtils{}.attachment(*invite.Attachment)
+	labelled.Attachment = &attachment
+	return &labelled
 }

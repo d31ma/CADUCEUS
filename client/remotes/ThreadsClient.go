@@ -25,5 +25,5 @@ type ThreadsClient interface {
 		authorization string,
 		// @RequestParam("emailId")
 		emailID string,
-	) ([]ThreadRecord, error)
+	) ([]MailThread, error)
 }

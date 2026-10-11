@@ -46,6 +46,12 @@ type Email struct {
 	UnsubscribeOneClick bool              `json:"unsubscribeOneClick,omitempty"`
 	UnsubscribeMailto   string            `json:"unsubscribeMailto,omitempty"`
 	UnsubscribeBodyUrl  string            `json:"unsubscribeBodyUrl,omitempty"`
+	SecurityWarnings    []string          `json:"securityWarnings,omitempty"`
+	CalendarInvite      *CalendarInvite   `json:"calendarInvite,omitempty"`
+	Opens               []TrackingHit     `json:"opens,omitempty"`
+	Clicks              []TrackingHit     `json:"clicks,omitempty"`
+	OpenCount           int               `json:"openCount,omitempty"`
+	ClickCount          int               `json:"clickCount,omitempty"`
 	ReceivedLabel       string            `json:"receivedLabel,omitempty"`
 	OpenedLabel         string            `json:"openedLabel,omitempty"`
 }

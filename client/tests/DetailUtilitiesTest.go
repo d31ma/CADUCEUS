@@ -53,13 +53,20 @@ func (test *DetailUtilitiesTest) TestRoutesAndRecords() {
 	Assert.Equals("a/b", RouteUtils{}.EmailId("/email/a%2Fb", ""))
 	Assert.Equals("m1", RouteUtils{}.EmailId("/inbox", "?email=m1"))
 	Assert.IsTrue(RouteUtils{}.IsStandalone("/email/m1"))
-	email := EmailRecordUtils{}.Email(map[string]any{"id": "m1", "folder": "spam", "spamScore": 7.25, "securityWarnings": []any{"reply_to_mismatch"}})
+	score := 7.25
+	email := EmailRecordUtils{}.Email(Email{ID: "m1", Folder: "spam", SpamScore: &score, SecurityWarnings: []string{"reply_to_mismatch"}, Opens: []TrackingHit{{OpenedAt: "2026-10-11T13:05:00Z"}}, ClickCount: 2})
 	Assert.Equals("m1", email.ID)
 	Assert.IsTrue(email.Spam)
 	Assert.Equals("7.2", email.SpamScoreLabel)
 	Assert.IsTrue(email.ReplyToMismatch)
-	Assert.Equals(0, len(EmailRecordUtils{}.InviteAttachments(map[string]any{})))
-	Assert.Equals("a.ics", EmailRecordUtils{}.InviteAttachments(map[string]any{"calendarInvite": map[string]any{"attachment": map[string]any{"id": "i1", "filename": "a.ics"}}})[0].Filename)
+	Assert.Equals("1 open · 2 clicks", email.TrackingSummary)
+	Assert.Equals(0, len(EmailRecordUtils{}.InviteAttachments(Email{})))
+	Assert.Equals("a.ics", EmailRecordUtils{}.InviteAttachments(Email{CalendarInvite: &CalendarInvite{Attachment: &EmailAttachment{Id: "i1", Filename: "a.ics"}}})[0].Filename)
+	Assert.Equals(2, len(EmailRecordUtils{}.Addresses([]any{"a@example.com", "b@example.com"})))
+	Assert.Equals("a@example.com", EmailRecordUtils{}.Addresses("a@example.com")[0])
+	Assert.Equals(0, len(EmailRecordUtils{}.Addresses(nil)))
+	Assert.Equals(false, EmailRecordUtils{}.Merged(Email{ID: "m1", Read: true, Subject: "Plans"}, map[string]any{"read": false}).Read)
+	Assert.Equals("Plans", EmailRecordUtils{}.Merged(Email{ID: "m1", Read: true, Subject: "Plans"}, map[string]any{"read": false}).Subject)
 }
 
 func (test *DetailUtilitiesTest) TestContentProtectionBlocksRemoteImages() {

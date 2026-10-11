@@ -188,16 +188,16 @@ func (service *ConversationService) load(emailID string) {
 	service.reset(emailID)
 	service.Loading = true
 	threads, failure := service.threadsClient.Conversation("Bearer "+service.token, emailID)
-	service.Messages = service.sorted(service.records(append(threads, ThreadRecord{})[0].Emails, failure == nil))
+	service.Messages = service.sorted(service.records(append(threads, MailThread{})[0].Emails, failure == nil))
 	service.expanded[emailID] = true
 	service.search(-1)
 	service.Loading = false
 }
 
-func (service *ConversationService) records(emails []BehaviorValue, loaded bool) []ConversationMessage {
+func (service *ConversationService) records(emails []Email, loaded bool) []ConversationMessage {
 	messages := []ConversationMessage{}
 	for _, value := range emails {
-		messages = append(messages, EmailRecordUtils{}.Conversation(RecordUtils{}.Object(value)))
+		messages = append(messages, EmailRecordUtils{}.Conversation(value))
 	}
 	return map[bool][]ConversationMessage{true: messages, false: {}}[loaded]
 }

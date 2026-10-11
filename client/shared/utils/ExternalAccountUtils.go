@@ -70,6 +70,10 @@ func (ExternalAccountUtils) readable(account ExternalAccount) bool {
 // checks characters and length rather than a pattern such as {20,80}, which
 // TinyGo compiles into a program that crashed the page.
 func (ExternalAccountUtils) Identified(id string, prefix string) bool {
+	return ExternalAccountUtils{}.identified(id, prefix)
+}
+
+func (ExternalAccountUtils) identified(id string, prefix string) bool {
 	return strings.HasPrefix(id, prefix) && TokenUtils{}.Fits(strings.TrimPrefix(id, prefix), TokenUtils{}.Identifier()+"_-", TokenBounds{Shortest: 20, Longest: 80})
 }
 

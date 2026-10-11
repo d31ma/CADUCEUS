@@ -12,12 +12,12 @@ type ComposeUtilitiesTest struct {
 	behaviors *BehaviorContext
 }
 
-func (test *ComposeUtilitiesTest) TestThePrefillMergesTheStoredFieldsWithTheLaunch() {
-	prefill := DraftUtils{}.Prefill(`{"to":"ada@example.com","subject":"Stored","references":["<a@x>"]}`, map[string]any{"subject": "Launched"})
+func (test *ComposeUtilitiesTest) TestThePrefillReadsTheLaunchedFields() {
+	prefill := DraftUtils{}.Prefill(map[string]any{"to": "ada@example.com", "subject": "Launched", "references": []any{"<a@x>"}})
 	Assert.Equals("ada@example.com", prefill.To)
 	Assert.Equals("Launched", prefill.Subject)
 	Assert.Equals("<a@x>", prefill.References[0])
-	Assert.Equals("", DraftUtils{}.Prefill("not json", map[string]any{}).To)
+	Assert.Equals("", DraftUtils{}.Prefill(map[string]any{}).To)
 }
 
 func (test *ComposeUtilitiesTest) TestTheOpeningFollowsThePrefillThenThePointer() {

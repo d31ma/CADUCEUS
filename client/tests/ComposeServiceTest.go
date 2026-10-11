@@ -1,4 +1,7 @@
-import "strings"
+import (
+	"maps"
+	"strings"
+)
 
 // ComposeServiceTest covers the composer's Go service with the requests
 // answered by ComposeTestSetup: opening a prefill or a draft, autosave and
@@ -21,8 +24,10 @@ func (test *ComposeServiceTest) opened(prefill string, launched map[string]any) 
 	compose := &ComposeService{}
 	test.construct(compose)
 	compose.Start()
-	compose.HearStorage(StoredValues{Session: map[string]string{"caduceus_compose_prefill": prefill}, Local: map[string]string{}})
-	compose.HearLaunch(ComposeLaunched{Fields: launched})
+	compose.HearStorage(StoredValues{Session: map[string]string{}, Local: map[string]string{}})
+	fields := LaunchUtils{}.ComposePrefill(prefill, "")
+	maps.Copy(fields, launched)
+	compose.HearLaunch(ComposeLaunched{Fields: fields})
 	compose.HearSession(SessionChanged{SignedIn: true, Token: "t", Email: "owner@example.com"})
 	return compose
 }

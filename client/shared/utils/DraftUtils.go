@@ -1,6 +1,5 @@
 import (
 	"encoding/json"
-	"maps"
 	"slices"
 	"strings"
 )
@@ -9,14 +8,10 @@ import (
 // like initFromPrefill and the draft snapshot of the former compose view.
 type DraftUtils struct{}
 
-// Prefill merges the prefill another view stored for the composer (JSON text
-// from StoredValues, read before the shell removed it) with the fields of the
-// compose launch.
-func (DraftUtils) Prefill(stored string, launched map[string]any) ComposePrefill {
-	fields := map[string]any{}
-	json.Unmarshal([]byte(stored), &fields)
-	maps.Copy(fields, launched)
-	encoded, _ := json.Marshal(fields)
+// Prefill reads the fields of the compose launch, which the shell merged from
+// the stored prefill and the launch address.
+func (DraftUtils) Prefill(launched map[string]any) ComposePrefill {
+	encoded, _ := json.Marshal(launched)
 	prefill := ComposePrefill{}
 	json.Unmarshal(encoded, &prefill)
 	return prefill
@@ -56,9 +51,10 @@ func (DraftUtils) Snapshot(fields MessageFields, clientID string, version int) D
 	}
 }
 
-// Fingerprint identifies a snapshot's content, whatever its version.
+// Fingerprint identifies a snapshot's content, whatever its version and the
+// client identifier the server answered.
 func (DraftUtils) Fingerprint(snapshot DraftInput) string {
-	snapshot.Version = 0
+	snapshot.Version, snapshot.ClientID = 0, ""
 	encoded, _ := json.Marshal(snapshot)
 	return string(encoded)
 }

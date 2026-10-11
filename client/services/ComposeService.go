@@ -107,9 +107,7 @@ func (compose *ComposeService) HearLaunch(launched ComposeLaunched) {
 	compose.openWhenReady()
 }
 
-// HearStorage reads the stored prefill and the draft this tab was writing.
-// The shell removes the prefill key once it has published ComposeLaunched,
-// so the composer reads it from this snapshot of the tab's storage.
+// HearStorage reads the draft this tab was writing before a reload.
 // @OnEvent({"replay":true})
 func (compose *ComposeService) HearStorage(stored StoredValues) {
 	compose.stored = stored
@@ -339,7 +337,7 @@ func (ComposeService) names() ComposeNames {
 	return ComposeNames{
 		Changed: "changed", SaveNow: "save-now", SaveSoon: "save-soon", Start: "start", Send: "send", Archive: "archive",
 		Schedule: "schedule", ScheduleEdit: "schedule-edit", Saved: "Saved", ReloadDraft: "compose-reload-draft",
-		Draft: "draft", Recovered: "recovered", Open: "open", Prefill: "caduceus_compose_prefill", Pointer: "caduceus_compose_draft", Undo: "caduceus_pending_send_undo", Session: "session",
+		Draft: "draft", Recovered: "recovered", Open: "open", Pointer: "caduceus_compose_draft", Undo: "caduceus_pending_send_undo", Session: "session",
 	}
 }
 
@@ -359,7 +357,7 @@ func (compose *ComposeService) openWhenReady() {
 // tab was writing, like initFromPrefill in the former compose view.
 func (compose *ComposeService) open() {
 	compose.opened = true
-	prefill := DraftUtils{}.Prefill(compose.stored.Session[compose.names().Prefill], compose.launch.Fields)
+	prefill := DraftUtils{}.Prefill(compose.launch.Fields)
 	pointer := DraftUtils{}.Pointer(compose.stored.Session[compose.names().Pointer])
 	compose.useFields(DraftUtils{}.PrefillFields(prefill))
 	compose.ScheduledEditID, compose.ScheduledSendAt = prefill.ScheduledID, prefill.SendAt

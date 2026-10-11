@@ -238,7 +238,7 @@ func (sent SentMail) store(trackingId string, ownerEmail string, senderEmail str
 		"id": messageId, "domain": domain, "ownerEmail": ownerEmail,
 		"recipient": strings.Join(fields.Strings(request["to"]), ", "), "sender": senderEmail,
 		"subject": request["subject"], "body": sent.plainBody(request),
-		"folder":  CategoryRoles{Users: sent.Users}.PathFor(ownerEmail, domain, "sent"),
+		"folder":  CategoryMappings{}.OfOwner(sent.Users, ownerEmail).PathFor(domain, "sent"),
 		"read":    true, "starred": false, "receivedAt": EpochTime{}.NowText(), "processed": true,
 	}
 	for _, field := range []string{"replyTo"} {

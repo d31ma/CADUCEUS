@@ -281,7 +281,7 @@ func (queue OutboundQueue) bounce(entry map[string]any, failure error, attempts 
 		"subject":   "Undelivered: " + subject,
 		"body": "Your message could not be delivered to " + recipients + " after " + strconv.Itoa(attempts) + " attempt(s).\n\n" +
 			"Reason: " + queue.message(failure) + "\n\n----- Original message -----\nTo: " + recipients + "\nSubject: " + subject + "\n\n" + values.Text(email["text"]),
-		"folder":     CategoryRoles{Users: queue.Users}.PathFor(sender, domain, "inbox"),
+		"folder":     CategoryMappings{}.OfOwner(queue.Users, sender).PathFor(domain, "inbox"),
 		"read":       false,
 		"starred":    false,
 		"receivedAt": EpochTime{}.NowText(),

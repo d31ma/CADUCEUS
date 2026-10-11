@@ -94,7 +94,7 @@ func (routing InboundRouting) applyActions(rule map[string]any, messageId string
 			patch["folder"] = action["folder"]
 		case "delete":
 			recipient := values.Text(meta["recipient"])
-			patch["folder"] = CategoryRoles{Users: routing.Users}.PathFor(recipient, DeliveryFields{}.Domain(recipient), "trash")
+			patch["folder"] = CategoryMappings{}.OfOwner(routing.Users, recipient).PathFor(DeliveryFields{}.Domain(recipient), "trash")
 		case "markRead":
 			patch["read"] = action["value"]
 		case "star":

@@ -19,7 +19,7 @@ type Drafts struct {
 func (drafts Drafts) Create(ownerEmail string, input map[string]any) (map[string]any, bool, error) {
 	owner := strings.ToLower(ownerEmail)
 	domain := DeliveryFields{}.Domain(owner)
-	folder := CategoryRoles{Users: drafts.Users}.PathFor(owner, domain, "drafts")
+	folder := CategoryMappings{}.OfOwner(drafts.Users, owner).PathFor(domain, "drafts")
 	listed, err := drafts.Emails.List([]string{domain}, EmailListFilters{Folder: folder})
 	if err != nil {
 		return nil, false, err
@@ -110,7 +110,7 @@ func (drafts Drafts) FindOwned(id string, ownerEmail string, allowedDomains []st
 	}
 	owner := strings.ToLower(ownerEmail)
 	domain := RecordValues{}.Text(draft["domain"])
-	if draft["folder"] != (CategoryRoles{Users: drafts.Users}).PathFor(owner, domain, "drafts") {
+	if draft["folder"] != (CategoryMappings{}).OfOwner(drafts.Users, owner).PathFor(domain, "drafts") {
 		return "", nil, nil
 	}
 	recorded := strings.ToLower(RecordValues{}.Text(draft["draftOwner"]))

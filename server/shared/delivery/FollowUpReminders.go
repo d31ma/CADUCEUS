@@ -149,7 +149,7 @@ func (reminders FollowUpReminders) surface(reminder map[string]any, now int64) (
 			"id": noticeEmailId, "domain": domain, "ownerEmail": owner, "recipient": owner, "sender": owner,
 			"subject":    "Re: " + text(reminder["subject"]),
 			"body":       "Follow-up reminder: nobody has replied to your message to " + text(reminder["recipient"]) + ".",
-			"folder":     CategoryRoles{Users: reminders.Users}.PathFor(owner, domain, "inbox"),
+			"folder":     CategoryMappings{}.OfOwner(reminders.Users, owner).PathFor(domain, "inbox"),
 			"read":       false,
 			"starred":    false,
 			"receivedAt": EpochTime{}.Text(now),

@@ -17,6 +17,16 @@ func (CategoryMappings) Of(user map[string]any) CategoryMappings {
 	return CategoryMappings{Found: true, Mappings: CategoryMappingRules{}.Normalized(user["categoryMappings"], domains)}
 }
 
+// OfOwner answers the mappings of an owner's user record. An owner whose
+// record cannot be read has none, so every role keeps its own folder name.
+func (mappings CategoryMappings) OfOwner(users *UsersHelper, ownerEmail string) CategoryMappings {
+	_, user, err := users.FindByEmail(ownerEmail)
+	if err != nil {
+		user = nil
+	}
+	return mappings.Of(user)
+}
+
 // Roles answers the system roles in their fixed order.
 func (CategoryMappings) Roles() []string {
 	return CategoryMappingRules{}.roles()

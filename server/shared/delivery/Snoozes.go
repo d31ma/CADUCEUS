@@ -50,10 +50,10 @@ func (snoozes Snoozes) SnoozeThread(input map[string]any, domains []string) (map
 		return nil, &DeliveryRefusal{Message: "Conversation not found", Status: 404}
 	}
 	eligible := []string{}
-	roles := CategoryRoles{Users: snoozes.Users}
+	roles := CategoryMappings{}.OfOwner(snoozes.Users, ownerInput)
 	for _, email := range thread.Emails {
 		folder := values.Text(values.Or(email["folder"], "inbox"))
-		if (TextValue{}).Includes(domains, email["domain"]) && folder == roles.PathFor(ownerInput, values.Text(email["domain"]), "inbox") {
+		if (TextValue{}).Includes(domains, email["domain"]) && folder == roles.PathFor(values.Text(email["domain"]), "inbox") {
 			eligible = append(eligible, values.Text(email["id"]))
 		}
 	}
@@ -257,7 +257,7 @@ func (snoozes Snoozes) returnOne(email map[string]any, owner string, options map
 		return err
 	}
 	recipient := values.Text(values.Or(owner, values.Or(email["ownerEmail"], email["recipient"])))
-	patch := map[string]any{"folder": CategoryRoles{Users: snoozes.Users}.PathFor(recipient, values.Text(email["domain"]), "inbox")}
+	patch := map[string]any{"folder": CategoryMappings{}.OfOwner(snoozes.Users, recipient).PathFor(values.Text(email["domain"]), "inbox")}
 	if options["markUnread"] == true {
 		patch["read"] = false
 		if options["returnToTop"] == true {

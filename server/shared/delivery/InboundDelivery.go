@@ -121,10 +121,10 @@ func (delivery InboundDelivery) email(message InboundMessage) map[string]any {
 	security := PhishingDetection{}.Analyzed(message.Sender, message.Parsed.Headers)
 	unsubscribe := UnsubscribeLinks{}.Parsed(message.Parsed.Headers, message.Parsed.Html)
 	recipients := PersonalLevel{}.RecipientsFromHeaders(message.Parsed.Headers, message.Recipient)
-	roles := CategoryRoles{Users: delivery.Users}
-	folder := roles.PathFor(message.Owner, message.Domain, "inbox")
+	roles := CategoryMappings{}.OfOwner(delivery.Users, message.Owner)
+	folder := roles.PathFor(message.Domain, "inbox")
 	if message.Spam["isSpam"] == true {
-		folder = roles.PathFor(message.Owner, message.Domain, "spam")
+		folder = roles.PathFor(message.Domain, "spam")
 	}
 	email := map[string]any{
 		"id": message.Id, "domain": message.Domain, "recipient": message.Recipient, "ownerEmail": message.Owner, "sender": message.Sender,

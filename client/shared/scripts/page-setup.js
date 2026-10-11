@@ -12,8 +12,6 @@
 import './shortcuts.js'
 import './keyboard.js'
 import './dialog-focus.js'
-import { restoreInterfaceLocale } from './localization.js'
-import { installInterfaceLocalizer } from './interface-localizer.js'
 
 /** @returns {Storage} */
 function memoryStorage() {
@@ -46,9 +44,24 @@ ensureStorage('localStorage')
 window.CADUCEUS_CONFIG ||= { apiUrl: '' }
 window.CADUCEUS_CONFIG.brandLogo ||= '/shared/assets/favicon.svg'
 
-restoreInterfaceLocale()
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installInterfaceLocalizer, { once: true })
-else installInterfaceLocalizer()
+/**
+ * The literal interface localizer (and the generated catalogs it fetches)
+ * matters only when the interface is not in English, so English pages do not
+ * load it. PreferenceService sets lang and dir from Go either way.
+ */
+function interfaceLocale() {
+  let choice = 'auto'
+  try { choice = localStorage.getItem('caduceus-interface-locale-v1') || 'auto' } catch {}
+  return (choice === 'auto' ? navigator.language || 'en' : choice).toLowerCase().split('-')[0]
+}
+
+if (interfaceLocale() !== 'en') {
+  void Promise.all([import('./localization.js'), import('./interface-localizer.js')]).then(([localization, localizer]) => {
+    localization.restoreInterfaceLocale()
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', localizer.installInterfaceLocalizer, { once: true })
+    else localizer.installInterfaceLocalizer()
+  })
+}
 
 /**
  * Resolves after DuVay has registered its custom elements and the browser has

@@ -55,7 +55,8 @@ type Options struct {
 	Self string
 	// Services adds the mail services; nil uses the production set.
 	Services func(*Session) []supervisor.Service
-	// WaitForAPI overrides the /health poll timeout (default 30 s).
+	// APITimeout overrides the /health poll timeout
+	// (default CADUCEUS_API_START_TIMEOUT_MS, else 15 minutes).
 	APITimeout time.Duration
 }
 
@@ -626,7 +627,10 @@ func (session *Session) startBackground(ctx context.Context) {
 	runner := session.runner
 	timeout := runner.options.APITimeout
 	if timeout == 0 {
-		timeout = 30 * time.Second
+		// A cold `ty serve` bundles the client and compiles each Go handler
+		// before /health answers, which takes minutes, not the 30 s the
+		// JavaScript server needed.
+		timeout = milliseconds(settings.EnvPositive("CADUCEUS_API_START_TIMEOUT_MS", 900_000))
 	}
 	fail := func(err error) {
 		fmt.Fprintf(runner.stderr, "[mail] background mail services failed to start: %v\n", err)

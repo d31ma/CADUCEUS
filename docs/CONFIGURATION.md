@@ -165,6 +165,7 @@ listed. The entry point refuses to overwrite a `.env` it did not write.
 | `TACHYON_BIN` | The `ty` to run, default `ty` on `PATH` |
 | `CADUCEUS_GO_BINARY` | The binary that serves `fylo-bridge` and `auth init`, default the running executable |
 | `CADUCEUS_SCRIPT_RUNTIME` | Runtime for the operator scripts, default `bun` |
+| `CADUCEUS_API_START_TIMEOUT_MS` | How long the entry point waits for `GET /health` before it gives up, default `900000` (a cold start compiles every Go handler) |
 | `MAIL_STATUS_INTERVAL_MS` | Interval of the `[mail:status]` log record, default `300000`; `0` disables it |
 
 `caduceus inbound-smtp` runs only the inbound MX against `CADUCEUS_API_URL`

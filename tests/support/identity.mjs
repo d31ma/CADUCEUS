@@ -30,6 +30,15 @@ function binary(envName, command) {
 }
 
 /**
+ * The Go binary that runs the FYLO bridge: CADUCEUS_TEST_BINARY, as the
+ * suites that spawn the mail services use, or dist-bin/caduceus.
+ * @returns {string}
+ */
+function caduceusBinary() {
+  return process.env.CADUCEUS_TEST_BINARY || join(CADUCEUS_ROOT, 'dist-bin', 'caduceus')
+}
+
+/**
  * Report what is missing, so a skipped suite says why rather than failing
  * somewhere deep in a login.
  *
@@ -39,8 +48,8 @@ export function identityRequirements() {
   const missing = []
   if (!binary('SESAME_TEST_BINARY', 'sesame')) missing.push('SESAME_TEST_BINARY (or `sesame` on PATH)')
   if (!binary('FYLO_TEST_BINARY', 'fylo')) missing.push('FYLO_TEST_BINARY (or `fylo` on PATH)')
-  if (!existsSync(join(CADUCEUS_ROOT, 'dist-bin', 'caduceus'))) {
-    missing.push('dist-bin/caduceus (run `bun run go:build`)')
+  if (!existsSync(caduceusBinary())) {
+    missing.push('dist-bin/caduceus (run `bun run go:build`, or set CADUCEUS_TEST_BINARY)')
   }
   return missing.length ? `identity harness needs: ${missing.join(', ')}` : ''
 }
@@ -62,7 +71,7 @@ export async function startIdentity() {
 
   const sesameBinary = binary('SESAME_TEST_BINARY', 'sesame')
   const fyloBinary = binary('FYLO_TEST_BINARY', 'fylo')
-  const caduceus = join(CADUCEUS_ROOT, 'dist-bin', 'caduceus')
+  const caduceus = caduceusBinary()
 
   const root = mkdtempSync(join(tmpdir(), 'caduceus-identity-'))
   const fyloRoot = join(root, 'fylo')

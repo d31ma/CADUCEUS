@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	DefaultMaxRequestBytes  = 1 << 20
-	DefaultMaxResponseBytes = 8 << 20
+	DefaultMaxRequestBytes  = 32 << 20
+	DefaultMaxResponseBytes = 32 << 20
 )
 
 // Options defines the immutable process and framing contract.

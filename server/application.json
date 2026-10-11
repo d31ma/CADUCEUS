@@ -1,5 +1,5 @@
 {
   "names": { "words": ["caduceus", "fylo", "sesame", "smtp", "imap", "mime", "dkim", "mcp", "vapid", "ics", "vcard", "rrule", "eml", "rfc", "uid", "totp", "jwks", "unsnoozed"] },
-  "server": { "proxies": ["127.0.0.1", "::1"] },
+  "server": { "proxies": ["127.0.0.1", "::1"], "maxbody": 12582912 },
   "outgoing": { "hosts": ["api.github.com"] }
 }

@@ -54,8 +54,8 @@ as command flags because process listings are not a secret boundary.
 | `FYLO_BRIDGE_SECRET` | none | HMAC key for split-process use; at least 32 characters |
 | `FYLO_INCOMING_ROOT` | `<FYLO_ROOT>/.caduceus-incoming` | Only directory accepted for attachment ingestion |
 | `FYLO_REQUEST_TIMEOUT` | `10s` | Bound for one machine operation |
-| `FYLO_MAX_REQUEST_BYTES` | `1048576` | Maximum request frame |
-| `FYLO_MAX_RESPONSE_BYTES` | `8388608` | Maximum response frame |
+| `FYLO_MAX_REQUEST_BYTES` | `33554432` | Maximum request frame; holds the document of an 11 MiB message |
+| `FYLO_MAX_RESPONSE_BYTES` | `33554432` | Maximum response frame |
 | `FYLO_RESTART_LIMIT` | `3` | Child restart budget |
 | `FYLO_MAX_ATTACHMENT_BYTES` | `52428800` | Maximum individual attachment |
 | `EXTERNAL_ACCOUNT_CREDENTIAL_KEYS` | none | Write-only JSON map of positive versions to base64-encoded 32-byte AES keys |

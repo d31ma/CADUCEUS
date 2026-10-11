@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"encoding/json"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -115,5 +116,28 @@ func TestHandlerSettingsLeaveTachyonNamesAlone(t *testing.T) {
 		if reservedByTachyon[name] || name == "HOST" || name == "PROFILE" || strings.HasPrefix(name, "SERVER_") {
 			t.Errorf("HandlerSettings hands over %s, which Tachyon reserves", name)
 		}
+	}
+}
+
+// The SMTP size default is derived from server.maxbody, so the two must not
+// drift: a message the MX accepts has to fit one request to the server.
+func TestServerMaxBodyMatchesApplicationJSON(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(repositoryRoot(t), "server", "application.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var application struct {
+		Server struct {
+			MaxBody int `json:"maxbody"`
+		} `json:"server"`
+	}
+	if err := json.Unmarshal(data, &application); err != nil {
+		t.Fatal(err)
+	}
+	if application.Server.MaxBody != ServerMaxBody {
+		t.Fatalf("server/application.json server.maxbody = %d, settings.ServerMaxBody = %d", application.Server.MaxBody, ServerMaxBody)
+	}
+	if DefaultMessageSize >= ServerMaxBody {
+		t.Fatalf("DefaultMessageSize %d leaves no room under server.maxbody %d", DefaultMessageSize, ServerMaxBody)
 	}
 }

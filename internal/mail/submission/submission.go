@@ -60,7 +60,7 @@ func FromSettings(port int, secure bool, apiURL string) Options {
 		}
 		apiURL = "http://127.0.0.1:" + portValue
 	}
-	maxSize, _ := settings.Number(settings.Or("SMTP_MAX_SIZE", "26214400"))
+	maxSize, _ := settings.Number(settings.Or("SMTP_MAX_SIZE", strconv.Itoa(settings.DefaultMessageSize)))
 	return Options{
 		Port:     port,
 		Secure:   secure,

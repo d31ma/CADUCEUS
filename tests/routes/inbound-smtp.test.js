@@ -144,8 +144,18 @@ describe('caduceus inbound-smtp into POST /inbound/webhook', () => {
     expect(reply).toStartWith('550')
   }, 120_000)
 
+  it('accepts a message of about 5 MiB', async () => {
+    const reply = await send('alice@example.com', message('Five MiB inbound', 'y'.repeat(76).concat('\r\n').repeat(68_000)))
+    expect(reply).toStartWith('250')
+
+    const inbox = await call(Routes.InboxController, 'GET', req({ token: token() }))
+    expect(inbox.find(email => email.subject === 'Five MiB inbound')).toBeDefined()
+  }, 180_000)
+
+  // server.maxbody is 12 MiB, and the MX accepts 1 MiB less (one JSON request
+  // carries the message), so 13 MiB is over every limit.
   it('refuses permanently a message over the server request limit', async () => {
-    const reply = await send('alice@example.com', message('Too large', 'x'.repeat(76).concat('\r\n').repeat(20_000)))
+    const reply = await send('alice@example.com', message('Too large', 'x'.repeat(76).concat('\r\n').repeat(175_000)))
     expect(reply).toStartWith('552')
-  }, 120_000)
+  }, 180_000)
 })

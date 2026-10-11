@@ -39,7 +39,7 @@ func (database FyloDatabase) Op(name string, fields map[string]any) (json.RawMes
 	return database.Boundary.Call(payload, database.responseLimit(), database.timeout())
 }
 
-func (FyloDatabase) responseLimit() int { return 8 * 1024 * 1024 }
+func (FyloDatabase) responseLimit() int { return 32 << 20 }
 
 func (FyloDatabase) timeout() time.Duration { return 10 * time.Second }
 

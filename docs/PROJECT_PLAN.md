@@ -1028,7 +1028,7 @@ Accepted by Samuel 2026-10-11:
 
 From the switchover (2026-10-11), not yet reviewed:
 
-- Tachyon refuses request bodies over 1 MiB, so inbound mail larger than about 1 MiB is refused with a permanent 552; large `/send` bodies (submission, attachments) hit the same 413, and the submission server likely answers 451 for them. Needs a Tachyon limit setting or a streamed delivery path.
+- Request size: `server.maxbody` is 12 MiB (Tachyon's ceiling). The inbound MX and submission accept 11 MiB (`SMTP_MAX_SIZE`, one JSON request carries the message) and answer a larger message with a permanent 552; FYLO frames are 32 MiB so the document of such a message fits. Open: `GET /inbox` answers whole documents, bodies included, so a page holding several large messages exceeds the 16 MiB handler answer and fails; the list needs summaries or bodies stored outside the email document.
 - `runtime.lock.json` (and CI) still lock Tachyon 26.33.02 while the image pins 26.36.01 (and its `bun.lock` digest is stale); re-lock it when the image and CI move to a release that carries the Go-server features.
 - A `tachyon-override` ty must link against glibc 2.36 or older (Debian bookworm images); a ty built on Ubuntu 24.04 needs 2.39.
 - The image keeps the Go toolchain because Yon compiles Go handlers on first use; precompile them at build time to drop it.

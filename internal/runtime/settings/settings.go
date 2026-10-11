@@ -23,6 +23,17 @@ import (
 // file that version wrote is still recognized.
 const GeneratedMarker = "# Written by scripts/entry.mjs from the process environment."
 
+// ServerMaxBody is server.maxbody in server/application.json: the largest
+// request body a route reads (Tachyon's ceiling, 12 MiB).
+const ServerMaxBody = 12 << 20
+
+// DefaultMessageSize is the SMTP_MAX_SIZE default for the inbound MX and
+// submission: the largest message they accept. Each accepted message goes to
+// the server as one JSON request (the body escaped, plus the envelope and the
+// Authentication-Results header), so it is 1 MiB under ServerMaxBody. A
+// larger message gets a permanent 552.
+const DefaultMessageSize = ServerMaxBody - 1<<20
+
 // HandlerSettings are the settings a handler process reads; the entry point
 // hands them to Tachyon.
 var HandlerSettings = []string{

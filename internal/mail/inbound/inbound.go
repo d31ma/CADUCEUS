@@ -72,7 +72,7 @@ func FromSettings(apiURL string) (Options, error) {
 	if apiURL == "" {
 		apiURL = settings.Or("CADUCEUS_API_URL", "http://127.0.0.1:"+portSetting())
 	}
-	maxSize, _ := settings.Number(settings.Or("SMTP_MAX_SIZE", "26214400"))
+	maxSize, _ := settings.Number(settings.Or("SMTP_MAX_SIZE", strconv.Itoa(settings.DefaultMessageSize)))
 	options := Options{
 		Port:       int(port),
 		Host:       settings.Or("SMTP_INBOUND_HOST", "0.0.0.0"),
@@ -229,8 +229,8 @@ func (server *Server) ProcessMessage(ctx context.Context, raw []byte, session *s
 			return nil, err
 		}
 		if result.tooLarge {
-			// The server refuses request bodies over its limit (Tachyon's
-			// is 1 MiB). Retrying cannot succeed, so refuse permanently.
+			// The server refuses request bodies over server.maxbody (12 MiB).
+			// Retrying cannot succeed, so refuse permanently.
 			return &smtpd.Reply{Code: 552, Message: "Message exceeds maximum permitted size"}, nil
 		}
 		if !result.ok {

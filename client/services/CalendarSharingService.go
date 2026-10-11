@@ -17,21 +17,19 @@ func (service *CalendarSharingService) Start() {
 }
 
 // @OnEvent({"replay":true})
-func (service *CalendarSharingService) Open(session AccountSession) {
-	service.authorization = "Bearer " + session.Token
+func (service *CalendarSharingService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
 }
 
 // @OnEvent({"replay":true})
 func (service *CalendarSharingService) Load(preferences UserPreferences) {
-	service.Visibility = cmp.Or(PreferenceUtils{}.Text(preferences.Values, service.key()), service.Visibility)
+	service.Visibility = cmp.Or(preferences.CalendarVisibility, service.Visibility)
 }
 
 func (service *CalendarSharingService) Choose(visibility string) error {
 	service.Visibility = visibility
-	_, failure := service.usersClient.SavePreferences(service.authorization, map[string]any{service.key(): visibility})
-	message := FlowUtils{}.Text(failure == nil, "Calendar sharing updated.", "Could not save preference.")
-	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: message}, false)
+	_, failure := service.usersClient.SavePreferences(service.authorization, map[string]any{"calendarVisibility": visibility})
+	message := HTTPUtils{}.Message(failure, "Could not save preference.", "Network error.")
+	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: ChoiceUtils{}.Text(failure == nil, "Calendar sharing updated.", message)}, false)
 	return nil
 }
-
-func (service *CalendarSharingService) key() string { return "calendarVisibility" }

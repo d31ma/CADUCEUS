@@ -1,6 +1,6 @@
 // ThemeSettingsService chooses the interface theme, or the light and dark
-// themes that "Automatic" follows. A choice applies at once and is undone
-// when saving fails.
+// themes that "Automatic" follows. A choice applies at once through
+// PreferenceService and is undone when saving fails.
 // @Service
 type ThemeSettingsService struct {
 	Error  string
@@ -18,13 +18,13 @@ func (service *ThemeSettingsService) Start() {
 }
 
 // @OnEvent({"replay":true})
-func (service *ThemeSettingsService) Open(session AccountSession) {
-	service.authorization = "Bearer " + session.Token
+func (service *ThemeSettingsService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
 }
 
 // @OnEvent({"replay":true})
 func (service *ThemeSettingsService) Load(preferences UserPreferences) {
-	service.Preferences = ThemePreferenceUtils{}.Normalize(preferences.Values[service.key()])
+	service.Preferences = ThemePreferenceUtils{}.Normalize(preferences.ThemePreferences)
 }
 
 func (service *ThemeSettingsService) Select(theme string) error {
@@ -55,36 +55,34 @@ func (service *ThemeSettingsService) PreviewStyle(theme ThemeOption) string {
 }
 
 func (service *ThemeSettingsService) save(patch map[string]any) {
-	FlowUtils{}.When(!service.Saving, func() { service.send(service.Preferences, service.merged(patch)) })
+	FlowUtils{}.When(!service.Saving, func() { service.send(service.Preferences, service.merged(patch)) })()
 }
 
 func (service *ThemeSettingsService) send(previous ThemePreferences, next ThemePreferences) {
 	service.apply(next)
 	service.Saving = true
 	service.Error = ""
-	stored, failure := service.usersClient.SavePreferences(service.authorization, map[string]any{service.key(): next})
+	stored, failure := service.usersClient.SavePreferences(service.authorization, map[string]any{"themePreferences": next})
 	service.Saving = false
-	FlowUtils{}.Choose(failure == nil, func() {
-		service.apply(ThemePreferenceUtils{}.Normalize(PreferenceUtils{}.Object(stored)[service.key()]))
-		service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Theme preference saved."}, false)
-	}, func() {
+	FlowUtils{}.Either(failure == nil, func() { service.saved(stored) }, func() {
 		service.apply(previous)
-		service.Error = "Could not save theme."
-	})
+		service.Error = HTTPUtils{}.Message(failure, "Could not save theme.", "Network error.")
+	})()
+}
+
+func (service *ThemeSettingsService) saved(stored UserPreferences) {
+	service.apply(ThemePreferenceUtils{}.Normalize(stored.ThemePreferences))
+	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Theme preference saved."}, false)
 }
 
 func (service *ThemeSettingsService) merged(patch map[string]any) ThemePreferences {
-	values := map[string]any{}
-	PreferenceUtils{}.Decode(service.Preferences, &values)
-	for key, value := range patch {
-		values[key] = value
-	}
-	return ThemePreferenceUtils{}.Normalize(values)
+	next := service.Preferences
+	PreferenceUtils{}.Decode(patch, &next)
+	return ThemePreferenceUtils{}.Normalize(&next)
 }
 
 func (service *ThemeSettingsService) apply(preferences ThemePreferences) {
 	service.Preferences = preferences
-	service.applicationEventPublisher.PublishEvent(preferences, false)
+	chosen := preferences
+	service.applicationEventPublisher.PublishEvent(PreferencesChosen{ThemePreferences: &chosen}, false)
 }
-
-func (service *ThemeSettingsService) key() string { return "themePreferences" }

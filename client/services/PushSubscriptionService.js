@@ -3,12 +3,17 @@
  * the notification permission prompt, and the service worker's push
  * subscription. PushNotificationsService registers the subscription with
  * the server; Tachyon's Notifications API has no push subscription.
+ * DeviceService.js registers the push worker on its own scope, because
+ * Tachyon generates the root worker, so the subscription comes from that
+ * registration and not from `navigator.serviceWorker.ready`.
  */
 @Service
 export default class PushSubscriptionService {
   /** @type {ApplicationEventPublisher} */
   applicationEventPublisher;
   active = true
+
+  static _SCOPE = '/shared/service-worker/'
 
   @OnStart
   start() {
@@ -52,7 +57,7 @@ export default class PushSubscriptionService {
 
   /** @param {string} publicKey @returns {Promise<PushSubscriptionCreated>} */
   static async _subscribe(publicKey) {
-    const registration = await navigator.serviceWorker.ready
+    const registration = await PushSubscriptionService._registration()
     const existing = await registration.pushManager.getSubscription()
     const subscription = existing ?? await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: PushSubscriptionService._key(publicKey) })
     return { subscription: subscription.toJSON(), problem: '' }
@@ -60,11 +65,18 @@ export default class PushSubscriptionService {
 
   /** @returns {Promise<PushSubscriptionRemoved>} */
   static async _unsubscribe() {
-    const registration = await navigator.serviceWorker.ready
-    const subscription = await registration.pushManager.getSubscription()
+    const registration = await navigator.serviceWorker.getRegistration(PushSubscriptionService._SCOPE)
+    const subscription = await registration?.pushManager.getSubscription()
     const endpoint = [subscription?.endpoint].join('')
     await subscription?.unsubscribe()
     return { endpoint, problem: '' }
+  }
+
+  /** @returns {Promise<ServiceWorkerRegistration>} */
+  static async _registration() {
+    const registration = await navigator.serviceWorker.getRegistration(PushSubscriptionService._SCOPE)
+    if (!registration) throw new Error('The push worker is not registered.')
+    return registration
   }
 
   /** @param {string} value */

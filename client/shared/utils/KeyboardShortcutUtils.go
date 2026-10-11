@@ -35,12 +35,12 @@ func (utils KeyboardShortcutUtils) Validate(catalog []KeymapAction, overrides ma
 func (utils KeyboardShortcutUtils) display(binding string, apple bool) string {
 	names := utils.names(apple)
 	text := regexp.MustCompile(`[^+ ]+`).ReplaceAllStringFunc(binding, func(part string) string { return cmp.Or(names[part], utils.upper(part)) })
-	joined := strings.ReplaceAll(strings.ReplaceAll(text, utils.plus(), FlowUtils{}.Text(apple, "", utils.plus())), utils.space(), " then ")
+	joined := strings.ReplaceAll(strings.ReplaceAll(text, utils.plus(), ChoiceUtils{}.Text(apple, "", utils.plus())), utils.space(), " then ")
 	return cmp.Or(utils.disabled(binding), joined)
 }
 
 // Groups arranges the catalog for the editor, in catalog order.
-func (utils KeyboardShortcutUtils) Groups(catalog []KeymapAction, draft map[string]string, apple bool) []ShortcutGroup {
+func (utils KeyboardShortcutUtils) Groups(catalog []KeymapAction, draft map[string]string, apple bool) []ShortcutEditorGroup {
 	return utils.grouped(utils.labels(catalog), utils.rows(catalog, draft, apple))
 }
 
@@ -154,8 +154,8 @@ func (utils KeyboardShortcutUtils) problem(catalog []KeymapAction, overrides map
 	problems := []string{}
 	for _, id := range ids {
 		problems = append(problems, cmp.Or(
-			FlowUtils{}.Text(labels[id] == "", "Unknown keyboard command: "+id, ""),
-			FlowUtils{}.Text(utils.NormalizeBinding(cmp.Or(overrides[id], utils.Disabled())) == "", utils.sentence("Invalid shortcut for "+labels[id]), ""),
+			ChoiceUtils{}.Text(labels[id] == "", "Unknown keyboard command: "+id, ""),
+			ChoiceUtils{}.Text(utils.NormalizeBinding(cmp.Or(overrides[id], utils.Disabled())) == "", utils.sentence("Invalid shortcut for "+labels[id]), ""),
 		))
 	}
 	return cmp.Or(problems...)
@@ -181,7 +181,7 @@ func (utils KeyboardShortcutUtils) conflict(catalog []KeymapAction, bindings map
 		binding := bindings[action.ID]
 		mask := contexts[action.Scope] * map[bool]int{true: 0, false: 1}[binding == utils.Disabled()]
 		message := utils.sentence(first[binding] + " and " + action.Label + " both use " + utils.display(binding, apple))
-		conflict = cmp.Or(conflict, FlowUtils{}.Text(seen[binding]&mask != 0, message, ""))
+		conflict = cmp.Or(conflict, ChoiceUtils{}.Text(seen[binding]&mask != 0, message, ""))
 		first[binding] = cmp.Or(first[binding], action.Label)
 		seen[binding] |= mask
 	}
@@ -199,7 +199,7 @@ func (utils KeyboardShortcutUtils) names(apple bool) map[string]string {
 }
 
 func (KeyboardShortcutUtils) upper(part string) string {
-	return FlowUtils{}.Text(len(part) == 1, strings.ToUpper(part), part)
+	return ChoiceUtils{}.Text(len(part) == 1, strings.ToUpper(part), part)
 }
 
 func (utils KeyboardShortcutUtils) disabled(binding string) string {
@@ -222,23 +222,23 @@ func (KeyboardShortcutUtils) labels(catalog []KeymapAction) []string {
 	})
 }
 
-func (utils KeyboardShortcutUtils) rows(catalog []KeymapAction, draft map[string]string, apple bool) map[string][]ShortcutRow {
-	rows := map[string][]ShortcutRow{}
+func (utils KeyboardShortcutUtils) rows(catalog []KeymapAction, draft map[string]string, apple bool) map[string][]ShortcutEditorRow {
+	rows := map[string][]ShortcutEditorRow{}
 	for _, action := range catalog {
 		binding := cmp.Or(draft[action.ID], action.Binding)
-		rows[action.Group] = append(rows[action.Group], ShortcutRow{
+		rows[action.Group] = append(rows[action.Group], ShortcutEditorRow{
 			ID: action.ID, Label: action.Label, Binding: binding,
-			InputBinding: FlowUtils{}.Text(binding == utils.Disabled(), "", binding),
+			InputBinding: ChoiceUtils{}.Text(binding == utils.Disabled(), "", binding),
 			DefaultLabel: utils.display(action.Binding, apple),
 		})
 	}
 	return rows
 }
 
-func (KeyboardShortcutUtils) grouped(labels []string, rows map[string][]ShortcutRow) []ShortcutGroup {
-	groups := []ShortcutGroup{}
+func (KeyboardShortcutUtils) grouped(labels []string, rows map[string][]ShortcutEditorRow) []ShortcutEditorGroup {
+	groups := []ShortcutEditorGroup{}
 	for _, label := range labels {
-		groups = append(groups, ShortcutGroup{Label: label, Rows: rows[label]})
+		groups = append(groups, ShortcutEditorGroup{Label: label, Rows: rows[label]})
 	}
 	return groups
 }

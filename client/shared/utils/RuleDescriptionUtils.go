@@ -52,7 +52,9 @@ func (utils RuleDescriptionUtils) actions(actions []RuleAction) string {
 	return strings.Join(labels, ", ")
 }
 
-func (RuleDescriptionUtils) spaced(word string) string { return strings.Join([]string{"", word, ""}, " ") }
+func (RuleDescriptionUtils) spaced(word string) string {
+	return strings.Join([]string{"", word, ""}, " ")
+}
 
 func (RuleDescriptionUtils) flag(value *bool) bool {
 	return value != nil && *value
@@ -65,9 +67,9 @@ func (RuleDescriptionUtils) describe(action RuleAction, value bool) string {
 	case "forward":
 		return "→ forward to " + action.To
 	case "markRead":
-		return "→ mark " + FlowUtils{}.Text(value, "read", "unread")
+		return "→ mark " + ChoiceUtils{}.Text(value, "read", "unread")
 	case "star":
-		return "→ " + FlowUtils{}.Text(value, action.Type, "un"+action.Type)
+		return "→ " + ChoiceUtils{}.Text(value, action.Type, "un"+action.Type)
 	}
 	return "→ delete"
 }

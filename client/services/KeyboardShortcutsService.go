@@ -30,8 +30,8 @@ func (service *KeyboardShortcutsService) Start() {
 }
 
 // @OnEvent({"replay":true})
-func (service *KeyboardShortcutsService) Open(session AccountSession) {
-	service.authorization = "Bearer " + session.Token
+func (service *KeyboardShortcutsService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
 }
 
 // @OnEvent({"replay":true})
@@ -41,13 +41,11 @@ func (service *KeyboardShortcutsService) Learn(platform DevicePlatform) {
 
 // @OnEvent({"replay":true})
 func (service *KeyboardShortcutsService) Load(preferences UserPreferences) {
-	overrides := map[string]string{}
-	PreferenceUtils{}.Decode(preferences.Values[service.key()], &overrides)
-	service.show(overrides)
+	service.show(preferences.KeyboardShortcutOverrides)
 	service.Loading = false
 }
 
-func (service *KeyboardShortcutsService) Groups() []ShortcutGroup {
+func (service *KeyboardShortcutsService) Groups() []ShortcutEditorGroup {
 	return KeyboardShortcutUtils{}.Groups(service.catalog(), service.draft, service.apple)
 }
 
@@ -59,40 +57,37 @@ func (service *KeyboardShortcutsService) Capture(id string, value string) {
 }
 
 func (service *KeyboardShortcutsService) Save() error {
-	FlowUtils{}.When(!service.Saving, service.save)
+	FlowUtils{}.When(!service.Saving, service.save)()
 	return nil
 }
 
 func (service *KeyboardShortcutsService) Reset() error {
 	service.draft = service.defaults()
-	service.Save()
-	return nil
+	return service.Save()
 }
 
 func (service *KeyboardShortcutsService) save() {
 	validation := KeyboardShortcutUtils{}.Validate(service.catalog(), service.draft, service.apple)
 	service.Error = validation.Problem
 	service.Status = ""
-	FlowUtils{}.When(validation.Valid, func() { service.send(validation.Overrides) })
+	FlowUtils{}.When(validation.Valid, func() { service.send(validation.Overrides) })()
 }
 
 func (service *KeyboardShortcutsService) send(overrides map[string]string) {
 	service.Saving = true
-	stored, failure := service.usersClient.SavePreferences(service.authorization, map[string]any{service.key(): overrides})
+	stored, failure := service.usersClient.SavePreferences(service.authorization, map[string]any{"keyboardShortcutOverrides": overrides})
 	service.Saving = false
-	service.showSaved(PreferenceUtils{}.Object(stored), failure)
+	FlowUtils{}.Either(failure == nil, func() { service.showSaved(stored.KeyboardShortcutOverrides) }, func() {
+		service.Error = HTTPUtils{}.Message(failure, "Could not save keyboard shortcuts.", "Network error.")
+	})()
 }
 
-func (service *KeyboardShortcutsService) showSaved(stored map[string]any, failure error) {
-	if failure != nil {
-		service.Error = "Could not save keyboard shortcuts."
-		return
-	}
-	overrides := map[string]string{}
-	PreferenceUtils{}.Decode(stored[service.key()], &overrides)
+// showSaved shows the stored overrides and hands them to the page's key
+// listener through KeyboardService.js.
+func (service *KeyboardShortcutsService) showSaved(overrides map[string]string) {
 	service.show(overrides)
 	service.Status = "Keyboard shortcuts saved."
-	service.applicationEventPublisher.PublishEvent(KeyboardShortcutOverrides{Overrides: overrides}, false)
+	service.applicationEventPublisher.PublishEvent(KeyboardOverridesChanged{Overrides: AppearanceUtils{}.Merged(map[string]string{}, overrides)}, true)
 	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: service.Status}, false)
 }
 
@@ -126,5 +121,3 @@ func (service *KeyboardShortcutsService) catalog() []KeymapAction {
 	}
 	return catalog
 }
-
-func (service *KeyboardShortcutsService) key() string { return "keyboardShortcutOverrides" }

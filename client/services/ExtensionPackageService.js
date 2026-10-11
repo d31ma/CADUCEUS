@@ -2,13 +2,15 @@
  * Reads the extension package the owner chose. A WebAssembly service cannot
  * read a chosen file, so this service reads it and hands the text to
  * ExtensionsService with ExtensionPackageRead. Nothing is installed here.
+ * The browser transport sends at most 64 KiB per request, so a package must
+ * leave room for the request around it.
  */
 @Service
 export default class ExtensionPackageService {
   /** @type {ApplicationEventPublisher} */
   applicationEventPublisher;
 
-  static _LIMIT = 192 * 1024
+  static _LIMIT = 60 * 1024
 
   /** @param {Event} event */
   async read(event) {
@@ -21,7 +23,7 @@ export default class ExtensionPackageService {
 
   /** @param {File | undefined} file */
   static _problem(file) {
-    return Number(file?.size) > ExtensionPackageService._LIMIT ? 'Extension package exceeds 192 KiB.' : ''
+    return Number(file?.size) > ExtensionPackageService._LIMIT ? 'Extension package exceeds 60 KiB.' : ''
   }
 
   /** @param {File | undefined} file @param {string} problem @returns {Promise<string>} */

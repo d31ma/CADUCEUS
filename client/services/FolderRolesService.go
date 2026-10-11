@@ -30,15 +30,15 @@ func (service *FolderRolesService) Start() {
 
 // @OnEvent({"replay":true})
 func (service *FolderRolesService) Load(preferences UserPreferences) {
-	service.names = MailboxUtils{}.Names(preferences.Values)
+	service.names = preferences.MailboxNames
 }
 
 // @OnEvent({"replay":true})
-func (service *FolderRolesService) Open(session AccountSession) error {
-	service.authorization = "Bearer " + session.Token
-	service.reload()
-	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "folder-roles"}, false)
-	return nil
+func (service *FolderRolesService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
+	refused := false
+	FlowUtils{}.When(changed.SignedIn, func() { refused = service.reload() })()
+	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "folder-roles", Refused: refused}, false)
 }
 
 // Rows are one editable field per mailbox and role.
@@ -100,7 +100,7 @@ func (service *FolderRolesService) paths() []string {
 	return paths
 }
 
-func (service *FolderRolesService) categoryPaths(categories []MailCategory) []string {
+func (service *FolderRolesService) categoryPaths(categories []Category) []string {
 	paths := []string{}
 	for _, category := range categories {
 		paths = append(paths, category.Path)
@@ -120,7 +120,7 @@ func (service *FolderRolesService) mappings() map[string]map[string]string {
 func (service *FolderRolesService) fill(mappings map[string]map[string]string, rows []CategoryRow) {
 	for _, row := range rows {
 		edited, present := service.drafts[service.draftKey(row.Domain, row.Role)]
-		mappings[row.Domain][row.Role] = FlowUtils{}.Text(present, edited, row.Value)
+		mappings[row.Domain][row.Role] = ChoiceUtils{}.Text(present, edited, row.Value)
 	}
 }
 
@@ -135,25 +135,28 @@ func (service *FolderRolesService) save(mappings map[string]map[string]string) {
 	service.Error = ""
 	_, failure := service.usersClient.SavePreferences(service.authorization, map[string]any{"categoryMappings": mappings})
 	service.Saving = false
-	service.showSaved(failure)
+	FlowUtils{}.Either(failure == nil, service.saved, func() {
+		service.Error = HTTPUtils{}.Message(failure, "Could not save folder roles.", "Network error.")
+	})()
 }
 
-func (service *FolderRolesService) showSaved(failure error) {
-	if failure != nil {
-		service.Error = "Could not save folder roles."
-		return
-	}
+func (service *FolderRolesService) saved() {
 	service.drafts = map[string]string{}
 	service.reload()
 	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Folder roles updated."}, false)
 }
 
-func (service *FolderRolesService) reload() {
+// reload reads the folder catalog, shares it with the MCP section, and says
+// whether the server refused the read.
+func (service *FolderRolesService) reload() bool {
 	catalog, failure := service.categoriesClient.Catalog(service.authorization)
-	FlowUtils{}.When(failure == nil, func() {
-		service.Accounts = append([]CategoryAccount{}, catalog.Accounts...)
-		service.applicationEventPublisher.PublishEvent(CategoryCatalog{Accounts: service.Accounts}, true)
-	})
+	FlowUtils{}.When(failure == nil, func() { service.share(catalog) })()
+	return HTTPUtils{}.Refused(failure)
+}
+
+func (service *FolderRolesService) share(catalog CategoryCatalog) {
+	service.Accounts = append([]CategoryAccount{}, catalog.Accounts...)
+	service.applicationEventPublisher.PublishEvent(CategoryCatalog{Accounts: service.Accounts}, true)
 }
 
 func (service *FolderRolesService) draftKey(domain string, role string) string {

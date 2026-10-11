@@ -24,19 +24,19 @@ type NewMailAlertsService struct {
 
 // @OnStart
 func (service *NewMailAlertsService) Start() {
-	service.apply(map[string]any{})
+	service.apply(UserPreferences{})
 }
 
 // @OnEvent({"replay":true})
-func (service *NewMailAlertsService) Open(session AccountSession) {
-	service.authorization = "Bearer " + session.Token
-	service.mailboxDomains = MailboxUtils{}.Domains(session)
+func (service *NewMailAlertsService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
+	service.mailboxDomains = MailboxUtils{}.Hosted(changed.Domains)
 }
 
 // @OnEvent({"replay":true})
 func (service *NewMailAlertsService) Load(preferences UserPreferences) {
-	service.names = MailboxUtils{}.Names(preferences.Values)
-	service.apply(preferences.Values)
+	service.names = preferences.MailboxNames
+	service.apply(preferences)
 }
 
 // @OnEvent({"replay":true})
@@ -63,7 +63,7 @@ func (service *NewMailAlertsService) ToggleAccount(id string) error {
 }
 
 func (service *NewMailAlertsService) SetPrivacy(privacy string) error {
-	FlowUtils{}.When(slices.Contains(service.privacyLevels(), privacy), func() { service.save(map[string]any{service.privacyKey(): privacy}) })
+	FlowUtils{}.When(slices.Contains(service.privacyLevels(), privacy), func() { service.save(map[string]any{service.privacyKey(): privacy}) })()
 	return nil
 }
 
@@ -73,48 +73,58 @@ func (service *NewMailAlertsService) SetActions(actions bool) error {
 }
 
 func (service *NewMailAlertsService) save(patch map[string]any) {
-	FlowUtils{}.When(!service.Saving, func() { service.send(patch) })
+	FlowUtils{}.When(!service.Saving, func() { service.send(patch) })()
 }
 
 func (service *NewMailAlertsService) send(patch map[string]any) {
 	restore := service.current()
 	service.Saving, service.Error = true, ""
-	service.apply(service.merged(patch))
+	service.apply(service.merged(restore, patch))
 	stored, failure := service.usersClient.SavePreferences(service.authorization, patch)
 	service.Saving = false
-	FlowUtils{}.Choose(failure == nil, func() {
-		service.apply(PreferenceUtils{}.Object(stored))
-		service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "New-mail notification preference saved."}, false)
-	}, func() {
-		service.Error = "Could not save new-mail notifications."
-		service.apply(restore)
-	})
+	FlowUtils{}.Either(failure == nil, func() { service.saved(stored) }, func() { service.failed(failure, restore) })()
 }
 
-func (service *NewMailAlertsService) apply(values map[string]any) {
-	service.everyDomain = !PreferenceUtils{}.Present(values, service.domainsKey())
-	service.domains = PreferenceUtils{}.Unique(PreferenceUtils{}.Strings(values, service.domainsKey()))
-	service.everyAccount = !PreferenceUtils{}.Present(values, service.accountsKey())
-	service.accounts = PreferenceUtils{}.Strings(values, service.accountsKey())
-	service.Privacy = PreferenceUtils{}.Choice(PreferenceUtils{}.Text(values, service.privacyKey()), service.privacyLevels(), service.privacyLevels()[0])
-	actions, chosen := values[service.actionsKey()].(bool)
-	service.Actions = FlowUtils{}.Either(actions, !chosen)
+func (service *NewMailAlertsService) saved(stored UserPreferences) {
+	service.apply(stored)
+	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "New-mail notification preference saved."}, false)
+}
+
+func (service *NewMailAlertsService) failed(failure error, restore UserPreferences) {
+	service.Error = HTTPUtils{}.Message(failure, "Could not save new-mail notifications.", "Network error.")
+	service.apply(restore)
+}
+
+func (service *NewMailAlertsService) apply(preferences UserPreferences) {
+	service.everyDomain = preferences.NewMailNotificationDomains == nil
+	service.domains = PreferenceUtils{}.Unique(preferences.NewMailNotificationDomains)
+	service.everyAccount = preferences.NewMailNotificationExternalAccounts == nil
+	service.accounts = append([]string{}, preferences.NewMailNotificationExternalAccounts...)
+	service.Privacy = PreferenceUtils{}.Choice(preferences.NewMailNotificationPrivacy, service.privacyLevels(), service.privacyLevels()[0])
+	service.Actions = service.actions(preferences.NewMailNotificationActions)
+}
+
+// actions are on until the account turns them off.
+func (service *NewMailAlertsService) actions(chosen *bool) bool {
+	if chosen == nil {
+		return true
+	}
+	return *chosen
 }
 
 // current writes the effective policy in the shape the server stores.
-func (service *NewMailAlertsService) current() map[string]any {
-	return map[string]any{
-		service.domainsKey(): service.enabledDomains(), service.accountsKey(): service.enabledAccounts(),
-		service.privacyKey(): service.Privacy, service.actionsKey(): service.Actions,
+func (service *NewMailAlertsService) current() UserPreferences {
+	actions := service.Actions
+	return UserPreferences{
+		NewMailNotificationDomains: service.enabledDomains(), NewMailNotificationExternalAccounts: service.enabledAccounts(),
+		NewMailNotificationPrivacy: service.Privacy, NewMailNotificationActions: &actions,
 	}
 }
 
-func (service *NewMailAlertsService) merged(patch map[string]any) map[string]any {
-	merged := service.current()
-	for key, value := range patch {
-		merged[key] = value
-	}
-	return merged
+// merged is the policy with one patch applied, before the server answers.
+func (service *NewMailAlertsService) merged(current UserPreferences, patch map[string]any) UserPreferences {
+	PreferenceUtils{}.Decode(patch, &current)
+	return current
 }
 
 // enabledDomains are the hosted domains that alert: all of them until the
@@ -155,11 +165,15 @@ func (service *NewMailAlertsService) accountOptions(enabled []string) []External
 	return options
 }
 
-func (service *NewMailAlertsService) privacyLevels() []string { return []string{"full", "sender", "private"} }
+func (service *NewMailAlertsService) privacyLevels() []string {
+	return []string{"full", "sender", "private"}
+}
 
 func (service *NewMailAlertsService) domainsKey() string { return "newMailNotificationDomains" }
 
-func (service *NewMailAlertsService) accountsKey() string { return "newMailNotificationExternalAccounts" }
+func (service *NewMailAlertsService) accountsKey() string {
+	return "newMailNotificationExternalAccounts"
+}
 
 func (service *NewMailAlertsService) privacyKey() string { return "newMailNotificationPrivacy" }
 

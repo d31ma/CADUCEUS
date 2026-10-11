@@ -27,12 +27,12 @@ func (service *UserAdministrationService) Start() {
 }
 
 // @OnEvent({"replay":true})
-func (service *UserAdministrationService) Open(session AccountSession) error {
-	service.authorization = "Bearer " + session.Token
-	service.Administrator = session.Role == "admin"
-	FlowUtils{}.When(service.Administrator, service.reload)
-	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "users"}, false)
-	return nil
+func (service *UserAdministrationService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
+	service.Administrator = ChoiceUtils{}.All(changed.SignedIn, changed.Role == "admin")
+	refused := false
+	FlowUtils{}.When(service.Administrator, func() { refused = service.reload() })()
+	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "users", Refused: refused}, false)
 }
 
 func (service *UserAdministrationService) Rows() []UserRow {
@@ -44,7 +44,7 @@ func (service *UserAdministrationService) ToggleForm() {
 }
 
 func (service *UserAdministrationService) Add() error {
-	FlowUtils{}.When(FlowUtils{}.Both(service.Email != "", service.Domains != ""), service.add)
+	FlowUtils{}.When(ChoiceUtils{}.All(service.Email != "", service.Domains != ""), service.add)()
 	return nil
 }
 
@@ -59,19 +59,22 @@ func (service *UserAdministrationService) add() {
 		domains[index] = strings.TrimSpace(domains[index])
 	}
 	_, failure := service.usersClient.AddUser(service.authorization, map[string]any{"email": service.Email, "domains": PreferenceUtils{}.Without(domains, ""), "role": "viewer"})
-	FlowUtils{}.Choose(failure == nil, func() {
-		service.Adding = false
-		service.Email = ""
-		service.Domains = ""
-		service.reload()
-		service.toast("User added. Issue an enrollment code when they are ready.")
-	}, func() { service.toast("Failed to add user.") })
+	FlowUtils{}.Either(failure == nil, service.added, func() {
+		service.toast(HTTPUtils{}.Message(failure, "Failed to add user.", "Network error."))
+	})()
+}
+
+func (service *UserAdministrationService) added() {
+	service.Adding = false
+	service.Email = ""
+	service.Domains = ""
+	service.reload()
+	service.toast("User added. Issue an enrollment code when they are ready.")
 }
 
 func (service *UserAdministrationService) toast(message string) {
 	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: message}, false)
 }
-
 
 func (service *UserAdministrationService) rows() []UserRow {
 	rows := []UserRow{}
@@ -85,7 +88,9 @@ func (service *UserAdministrationService) rows() []UserRow {
 	return rows
 }
 
-func (service *UserAdministrationService) reload() {
-	users, _ := service.usersClient.Users(service.authorization)
+// reload reads the users and says whether the server refused the read.
+func (service *UserAdministrationService) reload() bool {
+	users, failure := service.usersClient.Users(service.authorization)
 	service.Users = append([]UserAccount{}, users...)
+	return HTTPUtils{}.Refused(failure)
 }

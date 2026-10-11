@@ -22,18 +22,18 @@ func (NotificationSoundUtils) Options() []SoundOption {
 }
 
 // Normalize keeps a known sound for every event and the default otherwise.
-func (utils NotificationSoundUtils) Normalize(value any) map[string]string {
-	return utils.sounds(PreferenceUtils{}.Object(value), utils.soundIds())
+func (utils NotificationSoundUtils) Normalize(chosen map[string]string) map[string]string {
+	return utils.sounds(chosen, utils.soundIds())
 }
 
 func (utils NotificationSoundUtils) IsSound(id string) bool {
 	return utils.soundIds()[id] != ""
 }
 
-func (utils NotificationSoundUtils) sounds(input map[string]any, known map[string]string) map[string]string {
+func (utils NotificationSoundUtils) sounds(chosen map[string]string, known map[string]string) map[string]string {
 	sounds := map[string]string{}
 	for _, event := range utils.Events() {
-		sounds[event.ID] = cmp.Or(known[PreferenceUtils{}.Text(input, event.ID)], event.Default)
+		sounds[event.ID] = cmp.Or(known[chosen[event.ID]], event.Default)
 	}
 	return sounds
 }

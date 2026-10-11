@@ -1,6 +1,6 @@
-// AccentColorService offers the accent presets. The application shell keeps
-// and applies the chosen accent; this service hears its choice and asks for
-// a new one with AccentColorChoice.
+// AccentColorService offers the accent presets. PreferenceService keeps the
+// chosen accent on this device and applies it to the document; this service
+// reads the stored choice and asks for a new one with PreferencesChosen.
 // @Service
 type AccentColorService struct {
 	applicationEventPublisher ApplicationEventPublisher
@@ -9,12 +9,12 @@ type AccentColorService struct {
 
 // @OnStart
 func (service *AccentColorService) Start() {
-	service.Current = AccentColorUtils{}.Presets()[0].Key
+	service.Current = AppearanceUtils{}.Accent("")
 }
 
 // @OnEvent({"replay":true})
-func (service *AccentColorService) Hear(choice AccentColorChoice) {
-	FlowUtils{}.When(AccentColorUtils{}.Known(choice.Key), func() { service.Current = choice.Key })
+func (service *AccentColorService) HearStorage(stored StoredValues) {
+	service.Current = AppearanceUtils{}.Accent(stored.Local["caduceus-accent-color"])
 }
 
 func (service *AccentColorService) Presets() []AccentPreset {
@@ -26,8 +26,10 @@ func (service *AccentColorService) CurrentLabel() string {
 }
 
 func (service *AccentColorService) Select(key string) {
-	FlowUtils{}.When(AccentColorUtils{}.Known(key), func() {
-		service.Current = key
-		service.applicationEventPublisher.PublishEvent(AccentColorChoice{Key: key}, true)
-	})
+	FlowUtils{}.When(AccentColorUtils{}.Known(key), func() { service.choose(key) })()
+}
+
+func (service *AccentColorService) choose(key string) {
+	service.Current = key
+	service.applicationEventPublisher.PublishEvent(PreferencesChosen{AccentColor: key}, false)
 }

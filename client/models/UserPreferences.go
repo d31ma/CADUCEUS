@@ -16,5 +16,5 @@ type UserPreferences struct {
 	NewMailNotificationDomains          []string          `json:"newMailNotificationDomains"`
 	NewMailNotificationExternalAccounts []string          `json:"newMailNotificationExternalAccounts"`
 	NewMailNotificationPrivacy          string            `json:"newMailNotificationPrivacy"`
-	NewMailNotificationActions          bool              `json:"newMailNotificationActions"`
+	NewMailNotificationActions          *bool             `json:"newMailNotificationActions"`
 }

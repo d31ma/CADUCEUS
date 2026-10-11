@@ -1,6 +1,6 @@
-// @HTTPClient
+// @HTTPClient("/categories")
 type CategoriesClient interface {
-	// @GetRequest("/categories")
+	// @GetRequest
 	Catalog(
 		// @RequestHeader("Authorization")
 		authorization string,

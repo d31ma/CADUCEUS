@@ -21,13 +21,15 @@ type TemplateEditorService struct {
 	Saving bool
 }
 
+// @OnStart
+func (service *TemplateEditorService) Start() {
+	service.Templates = []MessageTemplate{}
+}
+
 // @OnEvent({"replay":true})
-func (service *TemplateEditorService) Open(session AccountSession) error {
-	service.authorization = "Bearer " + session.Token
-	templates, _ := service.templatesClient.Templates(service.authorization)
-	service.Templates = service.sorted(append([]MessageTemplate{}, templates...))
-	service.announce()
-	return nil
+func (service *TemplateEditorService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
+	FlowUtils{}.When(changed.SignedIn, service.fetch)()
 }
 
 func (service *TemplateEditorService) Edit(id string) {
@@ -48,16 +50,21 @@ func (service *TemplateEditorService) SetField(name string, value string) {
 }
 
 func (service *TemplateEditorService) Save() error {
-	complete := FlowUtils{}.Both(strings.TrimSpace(service.Draft.Name) != "", strings.TrimSpace(service.Draft.Text) != "")
-	FlowUtils{}.Choose(complete, service.save, func() { service.Error = "Name and template content are required." })
+	complete := ChoiceUtils{}.All(strings.TrimSpace(service.Draft.Name) != "", strings.TrimSpace(service.Draft.Text) != "")
+	FlowUtils{}.Either(complete, service.save, func() { service.Error = "Name and template content are required." })()
 	return nil
 }
 
 // @OnEvent
-func (service *TemplateEditorService) Delete(accepted ConfirmationAccepted) error {
-	FlowUtils{}.When(accepted.Topic == "template-remove", func() { service.remove(accepted.Subject) })
-	service.announce()
-	return nil
+func (service *TemplateEditorService) Delete(given ConfirmationGiven) {
+	FlowUtils{}.When(given.Action == "template-remove", func() { service.remove(given.ID) })()
+	service.announce(false)
+}
+
+func (service *TemplateEditorService) fetch() {
+	templates, failure := service.templatesClient.Templates(service.authorization)
+	service.Templates = service.sorted(append([]MessageTemplate{}, templates...))
+	service.announce(HTTPUtils{}.Refused(failure))
 }
 
 func (service *TemplateEditorService) load(template MessageTemplate) {
@@ -85,7 +92,7 @@ func (service *TemplateEditorService) send(request BehaviorValue) (MessageTempla
 
 func (service *TemplateEditorService) showSaved(saved MessageTemplate, failure error) {
 	if failure != nil {
-		service.Error = "Failed to save template."
+		service.Error = HTTPUtils{}.Message(failure, "Failed to save template.", service.network())
 		return
 	}
 	others := slices.DeleteFunc(slices.Clone(service.Templates), func(template MessageTemplate) bool { return template.ID == saved.ID })
@@ -96,11 +103,11 @@ func (service *TemplateEditorService) showSaved(saved MessageTemplate, failure e
 
 func (service *TemplateEditorService) remove(id string) {
 	_, failure := service.templatesClient.Delete(service.authorization, id)
-	FlowUtils{}.Choose(failure == nil, func() {
+	FlowUtils{}.Either(failure == nil, func() {
 		service.Templates = slices.DeleteFunc(slices.Clone(service.Templates), func(template MessageTemplate) bool { return template.ID == id })
-		FlowUtils{}.When(service.EditID == id, service.New)
+		FlowUtils{}.When(service.EditID == id, service.New)()
 		service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Template removed."}, false)
-	}, func() { service.Error = "Failed to delete template." })
+	}, func() { service.Error = HTTPUtils{}.Message(failure, "Failed to delete template.", service.network()) })()
 }
 
 func (service *TemplateEditorService) sorted(templates []MessageTemplate) []MessageTemplate {
@@ -108,6 +115,8 @@ func (service *TemplateEditorService) sorted(templates []MessageTemplate) []Mess
 	return templates
 }
 
-func (service *TemplateEditorService) announce() {
-	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "templates"}, false)
+func (service *TemplateEditorService) announce(refused bool) {
+	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "templates", Refused: refused}, false)
 }
+
+func (service *TemplateEditorService) network() string { return "Network error." }

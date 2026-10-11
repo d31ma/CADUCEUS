@@ -6,7 +6,8 @@ import (
 
 // MailPreferencesService is the "Mail preferences" section: workspace,
 // reading, composing, sending, automatic recipients, snooze and contact
-// learning. Edits collect in a draft and save as one profile.
+// learning. Edits collect in a draft and save as one profile; the saved
+// profile reaches PreferenceService, which applies the layout at once.
 // @Service
 type MailPreferencesService struct {
 	// @Needs
@@ -29,15 +30,15 @@ func (service *MailPreferencesService) Start() {
 }
 
 // @OnEvent({"replay":true})
-func (service *MailPreferencesService) Open(session AccountSession) {
-	service.authorization = "Bearer " + session.Token
-	service.domains = MailboxUtils{}.Domains(session)
+func (service *MailPreferencesService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
+	service.domains = MailboxUtils{}.Hosted(changed.Domains)
 }
 
 // @OnEvent({"replay":true})
 func (service *MailPreferencesService) Load(preferences UserPreferences) {
-	service.names = MailboxUtils{}.Names(preferences.Values)
-	service.show(MailPreferenceUtils{}.Normalize(preferences.Values[service.key()]))
+	service.names = preferences.MailboxNames
+	service.show(MailPreferenceUtils{}.Normalize(preferences.MailPreferences))
 }
 
 // @OnEvent({"replay":true})
@@ -45,12 +46,16 @@ func (service *MailPreferencesService) Learn(addresses SenderAddresses) {
 	service.senders = addresses.Addresses
 }
 
-// Choose records one select or checkbox of the draft by its preference name.
-func (service *MailPreferencesService) Choose(name string, value any) {
-	values := map[string]any{}
-	PreferenceUtils{}.Decode(service.draft, &values)
-	values[name] = service.typed(value)
-	PreferenceUtils{}.Decode(values, &service.draft)
+// Choose records one select of the draft by its preference name. A
+// numeric choice, such as a delay or the interface scale, is kept as a number.
+func (service *MailPreferencesService) Choose(name string, value string) {
+	number, failure := strconv.ParseFloat(value, 64)
+	service.record(name, map[bool]any{true: number, false: value}[failure == nil])
+}
+
+// Toggle records one checkbox of the draft by its preference name.
+func (service *MailPreferencesService) Toggle(name string, enabled bool) {
+	service.record(name, enabled)
 }
 
 // SetRecipients records the automatic CC or BCC list of one sender.
@@ -66,7 +71,7 @@ func (service *MailPreferencesService) ToggleContactLearning(domain string) {
 }
 
 func (service *MailPreferencesService) Save() error {
-	FlowUtils{}.When(!service.Saving, service.save)
+	FlowUtils{}.When(!service.Saving, service.save)()
 	return nil
 }
 
@@ -82,41 +87,37 @@ func (service *MailPreferencesService) SpellcheckLanguages() []LanguageOption {
 	return MailPreferenceUtils{}.SpellcheckLanguages()
 }
 
+func (service *MailPreferencesService) record(name string, value any) {
+	values := map[string]any{}
+	PreferenceUtils{}.Decode(service.draft, &values)
+	values[name] = value
+	PreferenceUtils{}.Decode(values, &service.draft)
+}
+
 func (service *MailPreferencesService) save() {
-	next := MailPreferenceUtils{}.Normalize(service.draft)
+	next := MailPreferenceUtils{}.Normalize(&service.draft)
 	service.Saving = true
 	service.Error = ""
 	service.Status = ""
-	stored, failure := service.usersClient.SavePreferences(service.authorization, map[string]any{service.key(): next})
+	stored, failure := service.usersClient.SavePreferences(service.authorization, map[string]any{"mailPreferences": next})
 	service.Saving = false
-	service.showSaved(PreferenceUtils{}.Object(stored), failure)
+	FlowUtils{}.Either(failure == nil, func() { service.saved(stored) }, func() {
+		service.Error = HTTPUtils{}.Message(failure, "Could not save mail preferences.", "Network error.")
+	})()
 }
 
-func (service *MailPreferencesService) showSaved(stored map[string]any, failure error) {
-	if failure != nil {
-		service.Error = "Could not save mail preferences."
-		return
-	}
-	service.show(MailPreferenceUtils{}.Normalize(stored[service.key()]))
+func (service *MailPreferencesService) saved(stored UserPreferences) {
+	service.show(MailPreferenceUtils{}.Normalize(stored.MailPreferences))
 	service.Status = "Mail preferences saved."
-	service.applicationEventPublisher.PublishEvent(service.Current, false)
+	chosen := service.Current
+	service.applicationEventPublisher.PublishEvent(PreferencesChosen{MailPreferences: &chosen}, false)
 	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: service.Status}, false)
 }
 
 // show replaces the shown profile and starts a fresh draft from it.
 func (service *MailPreferencesService) show(preferences MailPreferences) {
 	service.Current = preferences
-	service.draft = MailPreferenceUtils{}.Normalize(preferences)
-}
-
-// typed reads the text of a numeric select as a number; other values stay.
-func (service *MailPreferencesService) typed(value any) any {
-	text, isText := value.(string)
-	number, failure := strconv.ParseFloat(text, 64)
-	if isText && failure == nil {
-		return number
-	}
-	return value
+	service.draft = MailPreferenceUtils{}.Normalize(&preferences)
 }
 
 func (service *MailPreferencesService) senderRows(senders []string) []SenderRecipientRow {
@@ -138,5 +139,3 @@ func (service *MailPreferencesService) domainRows(domains []string) []DomainTogg
 	}
 	return rows
 }
-
-func (service *MailPreferencesService) key() string { return "mailPreferences" }

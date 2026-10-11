@@ -53,7 +53,7 @@ func (service *McpAccessService) Catalog(catalog CategoryCatalog) {
 
 // @OnEvent({"replay":true})
 func (service *McpAccessService) Load(preferences UserPreferences) {
-	service.names = MailboxUtils{}.Names(preferences.Values)
+	service.names = preferences.MailboxNames
 }
 
 // @OnEvent({"replay":true})
@@ -63,16 +63,9 @@ func (service *McpAccessService) Learn(platform DevicePlatform) {
 }
 
 // @OnEvent({"replay":true})
-func (service *McpAccessService) Open(session AccountSession) error {
-	service.authorization = "Bearer " + session.Token
-	config, configFailure := service.mcpClient.Config(service.authorization)
-	audit, auditFailure := service.mcpClient.Audit(service.authorization)
-	FlowUtils{}.When(configFailure == nil, func() { service.applyConfig(PreferenceUtils{}.Object(config)) })
-	service.Audit = append([]McpAuditEvent{}, audit...)
-	FlowUtils{}.When(auditFailure != nil, func() { service.Audit = []McpAuditEvent{} })
-	service.Loading = false
-	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "mcp"}, false)
-	return nil
+func (service *McpAccessService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
+	FlowUtils{}.When(changed.SignedIn, service.load)()
 }
 
 func (service *McpAccessService) ToggleEnabled() {
@@ -87,7 +80,7 @@ func (service *McpAccessService) SetAccessLevel(level string) {
 func (service *McpAccessService) ToggleDomain(domain string) {
 	service.AllowedDomains = PreferenceUtils{}.Toggle(service.AllowedDomains, domain)
 	excluded := maps.Clone(service.ExcludedFolders)
-	FlowUtils{}.When(!slices.Contains(service.AllowedDomains, domain), func() { delete(excluded, domain) })
+	FlowUtils{}.When(!slices.Contains(service.AllowedDomains, domain), func() { delete(excluded, domain) })()
 	service.ExcludedFolders = excluded
 }
 
@@ -99,22 +92,22 @@ func (service *McpAccessService) ToggleFolder(domain string, path string) {
 }
 
 func (service *McpAccessService) Save() error {
-	FlowUtils{}.When(!service.Saving, service.save)
+	FlowUtils{}.When(!service.Saving, service.save)()
 	return nil
 }
 
 func (service *McpAccessService) RotateToken() error {
-	FlowUtils{}.When(!service.Saving, service.rotate)
+	FlowUtils{}.When(!service.Saving, service.rotate)()
 	return nil
 }
 
 func (service *McpAccessService) RevokeToken() error {
-	FlowUtils{}.When(!service.Saving, service.revoke)
+	FlowUtils{}.When(!service.Saving, service.revoke)()
 	return nil
 }
 
 func (service *McpAccessService) ClearAudit() error {
-	FlowUtils{}.When(!service.Saving, service.clear)
+	FlowUtils{}.When(!service.Saving, service.clear)()
 	return nil
 }
 
@@ -122,12 +115,12 @@ func (service *McpAccessService) ClearAudit() error {
 func (service *McpAccessService) Copy(value string, label string) {
 	service.copied = label
 	problem := service.clipboard.WriteText(value)
-	FlowUtils{}.Choose(problem == nil, func() { service.toast(label + " copied.") }, service.copyFailed)
+	FlowUtils{}.Either(problem == nil, func() { service.toast(label + " copied.") }, service.copyFailed)()
 }
 
 // @OnEvent
 func (service *McpAccessService) Refuse(failed BrowserCallFailed) {
-	FlowUtils{}.When(failed.Api == "clipboard", service.copyFailed)
+	FlowUtils{}.When(failed.Api == "clipboard", service.copyFailed)()
 }
 
 func (service *McpAccessService) DomainRows() []McpDomainRow {
@@ -149,7 +142,16 @@ func (service *McpAccessService) Endpoint() string {
 }
 
 func (service *McpAccessService) TokenCreatedAtLabel() string {
-	return DateLabelUtils{}.DateTime(service.TokenCreatedAt, service.timeZoneOffset)
+	return TimestampLabelUtils{}.DateTime(service.TokenCreatedAt, service.timeZoneOffset)
+}
+
+func (service *McpAccessService) load() {
+	config, configFailure := service.mcpClient.Config(service.authorization)
+	audit, auditFailure := service.mcpClient.Audit(service.authorization)
+	FlowUtils{}.When(configFailure == nil, func() { service.applyConfig(PreferenceUtils{}.Object(config)) })()
+	service.Audit = append([]McpAuditEvent{}, audit...)
+	service.Loading = false
+	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "mcp", Refused: ChoiceUtils{}.Any(HTTPUtils{}.Refused(configFailure), HTTPUtils{}.Refused(auditFailure))}, false)
 }
 
 func (service *McpAccessService) applyConfig(config map[string]any) {
@@ -164,20 +166,28 @@ func (service *McpAccessService) applyConfig(config map[string]any) {
 	service.endpointPath = cmp.Or(PreferenceUtils{}.Text(config, "endpoint"), service.defaultPath())
 }
 
-func (service *McpAccessService) save() {
+// change runs one request with the section busy, and shows the problem
+// when the request failed.
+func (service *McpAccessService) change(request func() error, problem string) {
 	service.Saving = true
 	service.Error = ""
-	body := map[string]any{service.enabledKey(): service.Enabled, "accessLevel": service.AccessLevel, service.domainsKey(): service.AllowedDomains, service.foldersKey(): service.ExcludedFolders}
-	stored, failure := service.mcpClient.SaveConfig(service.authorization, body)
+	failure := request()
 	service.Saving = false
-	service.showSaved(PreferenceUtils{}.Object(stored), failure)
+	FlowUtils{}.When(failure != nil, func() { service.Error = HTTPUtils{}.Message(failure, problem, service.network()) })()
 }
 
-func (service *McpAccessService) showSaved(stored map[string]any, failure error) {
-	if failure != nil {
-		service.Error = "Could not save MCP access."
-		return
-	}
+func (service *McpAccessService) save() {
+	service.change(service.saveConfig, "Could not save MCP access.")
+}
+
+func (service *McpAccessService) saveConfig() error {
+	body := map[string]any{service.enabledKey(): service.Enabled, "accessLevel": service.AccessLevel, service.domainsKey(): service.AllowedDomains, service.foldersKey(): service.ExcludedFolders}
+	stored, failure := service.mcpClient.SaveConfig(service.authorization, body)
+	FlowUtils{}.When(failure == nil, func() { service.showSaved(PreferenceUtils{}.Object(stored)) })()
+	return failure
+}
+
+func (service *McpAccessService) showSaved(stored map[string]any) {
 	service.Enabled = PreferenceUtils{}.Flag(stored, service.enabledKey())
 	service.AllowedDomains = PreferenceUtils{}.Strings(stored, service.domainsKey())
 	excluded := map[string][]string{}
@@ -187,18 +197,16 @@ func (service *McpAccessService) showSaved(stored map[string]any, failure error)
 }
 
 func (service *McpAccessService) rotate() {
-	service.Saving = true
-	service.Error = ""
-	token, failure := service.mcpClient.RotateToken(service.authorization)
-	service.Saving = false
-	service.showRotated(token, failure)
+	service.change(service.rotation, "Could not generate the MCP token.")
 }
 
-func (service *McpAccessService) showRotated(token McpToken, failure error) {
-	if failure != nil {
-		service.Error = "Could not generate the MCP token."
-		return
-	}
+func (service *McpAccessService) rotation() error {
+	token, failure := service.mcpClient.RotateToken(service.authorization)
+	FlowUtils{}.When(failure == nil, func() { service.showRotated(token) })()
+	return failure
+}
+
+func (service *McpAccessService) showRotated(token McpToken) {
 	service.Token = token.Token
 	service.HasToken = true
 	service.TokenCreatedAt = token.CreatedAt
@@ -206,32 +214,33 @@ func (service *McpAccessService) showRotated(token McpToken, failure error) {
 }
 
 func (service *McpAccessService) revoke() {
-	service.Saving = true
-	service.Error = ""
-	revocation, failure := service.mcpClient.RevokeToken(service.authorization)
-	service.Saving = false
-	service.showRevoked(revocation, failure)
+	service.change(service.revocation, "Could not revoke the MCP token.")
 }
 
-func (service *McpAccessService) showRevoked(revocation McpRevocation, failure error) {
-	if failure != nil {
-		service.Error = "Could not revoke the MCP token."
-		return
-	}
+func (service *McpAccessService) revocation() error {
+	revocation, failure := service.mcpClient.RevokeToken(service.authorization)
+	FlowUtils{}.When(failure == nil, func() { service.showRevoked(revocation) })()
+	return failure
+}
+
+func (service *McpAccessService) showRevoked(revocation McpRevocation) {
 	service.Token = ""
 	service.HasToken = false
 	service.TokenCreatedAt = ""
-	service.toast(FlowUtils{}.Text(revocation.Revoked, "MCP token revoked.", "No active MCP token."))
+	service.toast(ChoiceUtils{}.Text(revocation.Revoked, "MCP token revoked.", "No active MCP token."))
 }
 
 func (service *McpAccessService) clear() {
-	service.Saving = true
+	service.change(service.clearing, "Could not clear MCP activity.")
+}
+
+func (service *McpAccessService) clearing() error {
 	_, failure := service.mcpClient.ClearAudit(service.authorization)
-	service.Saving = false
-	FlowUtils{}.Choose(failure == nil, func() {
+	FlowUtils{}.When(failure == nil, func() {
 		service.Audit = []McpAuditEvent{}
 		service.toast("MCP activity cleared.")
-	}, func() { service.Error = "Could not clear MCP activity." })
+	})()
+	return failure
 }
 
 func (service *McpAccessService) copyFailed() {
@@ -271,7 +280,7 @@ func (service *McpAccessService) auditRows() []McpAuditRow {
 	for _, event := range service.Audit {
 		rows = append(rows, McpAuditRow{
 			ToolName: event.ToolName, Status: event.Status, DurationMs: event.DurationMs, ResultCount: event.ResultCount,
-			CreatedAtLabel: DateLabelUtils{}.DateTime(event.CreatedAt, service.timeZoneOffset),
+			CreatedAtLabel: TimestampLabelUtils{}.DateTime(event.CreatedAt, service.timeZoneOffset),
 			ParameterLabel: cmp.Or(strings.Join(event.ParameterKeys, ", "), "none"),
 		})
 	}
@@ -293,6 +302,8 @@ func (service *McpAccessService) levels() []string {
 func (service *McpAccessService) enabledKey() string { return "enabled" }
 
 func (service *McpAccessService) defaultPath() string { return "/mcp" }
+
+func (service *McpAccessService) network() string { return "Network error." }
 
 func (service *McpAccessService) domainsKey() string { return "allowedDomains" }
 

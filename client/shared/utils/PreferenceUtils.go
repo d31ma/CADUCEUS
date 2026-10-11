@@ -36,19 +36,9 @@ func (PreferenceUtils) Strings(values map[string]any, key string) []string {
 	return list
 }
 
-// Present is true when values holds a list under key.
-func (PreferenceUtils) Present(values map[string]any, key string) bool {
-	return PreferenceUtils{}.list(values[key])
-}
-
 // Choice keeps value when allowed lists it and otherwise answers fallback.
 func (PreferenceUtils) Choice(value string, allowed []string, fallback string) string {
 	return PreferenceUtils{}.pick(value, allowed, fallback)
-}
-
-// Number keeps value when allowed lists it and otherwise answers fallback.
-func (PreferenceUtils) Number(value float64, allowed []float64, fallback float64) float64 {
-	return PreferenceUtils{}.pickNumber(value, allowed, fallback)
 }
 
 func (PreferenceUtils) Lower(value string) string {
@@ -78,22 +68,7 @@ func (PreferenceUtils) Toggle(values []string, value string) []string {
 	return PreferenceUtils{}.toggled(values, value)
 }
 
-func (PreferenceUtils) list(value any) bool {
-	switch value.(type) {
-	case []any, []string:
-		return true
-	}
-	return false
-}
-
 func (PreferenceUtils) pick(value string, allowed []string, fallback string) string {
-	if slices.Contains(allowed, value) {
-		return value
-	}
-	return fallback
-}
-
-func (PreferenceUtils) pickNumber(value float64, allowed []float64, fallback float64) float64 {
 	if slices.Contains(allowed, value) {
 		return value
 	}

@@ -22,15 +22,15 @@ func (service *UnreadBadgeService) Start() {
 }
 
 // @OnEvent({"replay":true})
-func (service *UnreadBadgeService) Open(session AccountSession) {
-	service.authorization = "Bearer " + session.Token
-	service.domains = MailboxUtils{}.Domains(session)
+func (service *UnreadBadgeService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
+	service.domains = MailboxUtils{}.Hosted(changed.Domains)
 }
 
 // @OnEvent({"replay":true})
 func (service *UnreadBadgeService) Load(preferences UserPreferences) {
-	service.names = MailboxUtils{}.Names(preferences.Values)
-	service.show(service.normalized(preferences.Values))
+	service.names = preferences.MailboxNames
+	service.show(service.normalized(preferences))
 }
 
 func (service *UnreadBadgeService) DomainOptions() []DomainOption {
@@ -40,51 +40,48 @@ func (service *UnreadBadgeService) DomainOptions() []DomainOption {
 func (service *UnreadBadgeService) SetScope(scope string) error {
 	first := PreferenceUtils{}.Joined(service.domains[:min(1, len(service.domains))])
 	known := slices.Contains([]string{service.everyAccount(), service.oneAccount()}, scope)
-	FlowUtils{}.When(known, func() { service.save(scope, FlowUtils{}.Text(service.Domain != "", service.Domain, first)) })
+	FlowUtils{}.When(known, func() { service.save(scope, ChoiceUtils{}.Text(service.Domain != "", service.Domain, first)) })()
 	return nil
 }
 
 func (service *UnreadBadgeService) SetDomain(domain string) error {
-	FlowUtils{}.When(slices.Contains(service.domains, domain), func() { service.save(service.oneAccount(), domain) })
+	FlowUtils{}.When(slices.Contains(service.domains, domain), func() { service.save(service.oneAccount(), domain) })()
 	return nil
 }
 
 func (service *UnreadBadgeService) save(scope string, domain string) {
 	next := UnreadBadgeUtils{}.Normalize(scope, domain, service.domains)
-	refused := FlowUtils{}.Both(scope == service.oneAccount(), next.Scope != service.oneAccount())
-	FlowUtils{}.Choose(refused, func() { service.Error = "Choose an account assigned to your profile." }, func() {
-		FlowUtils{}.When(!service.Saving, func() { service.send(next) })
-	})
+	refused := ChoiceUtils{}.All(scope == service.oneAccount(), next.Scope != service.oneAccount())
+	FlowUtils{}.Either(refused, func() { service.Error = "Choose an account assigned to your profile." }, func() {
+		FlowUtils{}.When(!service.Saving, func() { service.send(next) })()
+	})()
 }
 
-func (service *UnreadBadgeService) send(next UnreadBadgePreference) {
-	previous := UnreadBadgePreference{Scope: service.Scope, Domain: service.Domain}
-	service.apply(next)
+func (service *UnreadBadgeService) send(next BadgePreference) {
+	previous := BadgePreference{Scope: service.Scope, Domain: service.Domain}
+	service.show(next)
 	service.Saving = true
 	service.Error = ""
-	stored, failure := service.usersClient.SavePreferences(service.authorization, map[string]any{service.scopeKey(): next.Scope, service.domainKey(): next.Domain})
+	stored, failure := service.usersClient.SavePreferences(service.authorization, map[string]any{"unreadBadgeScope": next.Scope, "unreadBadgeDomain": next.Domain})
 	service.Saving = false
-	FlowUtils{}.Choose(failure == nil, func() {
-		service.apply(service.normalized(PreferenceUtils{}.Object(stored)))
-		service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Unread badge preference saved."}, false)
-	}, func() {
-		service.apply(previous)
-		service.Error = "Could not save unread badge preference."
-	})
+	FlowUtils{}.Either(failure == nil, func() { service.saved(stored) }, func() {
+		service.show(previous)
+		service.Error = HTTPUtils{}.Message(failure, "Could not save unread badge preference.", "Network error.")
+	})()
 }
 
-func (service *UnreadBadgeService) normalized(values map[string]any) UnreadBadgePreference {
-	return UnreadBadgeUtils{}.Normalize(PreferenceUtils{}.Text(values, service.scopeKey()), PreferenceUtils{}.Text(values, service.domainKey()), service.domains)
+func (service *UnreadBadgeService) saved(stored UserPreferences) {
+	service.show(service.normalized(stored))
+	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Unread badge preference saved."}, false)
 }
 
-func (service *UnreadBadgeService) show(preference UnreadBadgePreference) {
+func (service *UnreadBadgeService) normalized(preferences UserPreferences) BadgePreference {
+	return UnreadBadgeUtils{}.Normalize(preferences.UnreadBadgeScope, preferences.UnreadBadgeDomain, service.domains)
+}
+
+func (service *UnreadBadgeService) show(preference BadgePreference) {
 	service.Scope = preference.Scope
 	service.Domain = preference.Domain
-}
-
-func (service *UnreadBadgeService) apply(preference UnreadBadgePreference) {
-	service.show(preference)
-	service.applicationEventPublisher.PublishEvent(preference, false)
 }
 
 func (service *UnreadBadgeService) options() []DomainOption {
@@ -98,7 +95,3 @@ func (service *UnreadBadgeService) options() []DomainOption {
 func (service *UnreadBadgeService) everyAccount() string { return "all" }
 
 func (service *UnreadBadgeService) oneAccount() string { return "domain" }
-
-func (service *UnreadBadgeService) scopeKey() string { return "unreadBadgeScope" }
-
-func (service *UnreadBadgeService) domainKey() string { return "unreadBadgeDomain" }

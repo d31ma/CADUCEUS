@@ -15,38 +15,38 @@ type EmailPrivacyService struct {
 
 // @OnStart
 func (service *EmailPrivacyService) Start() {
-	service.apply(map[string]any{})
+	service.apply(UserPreferences{})
 }
 
 // @OnEvent({"replay":true})
-func (service *EmailPrivacyService) Open(session AccountSession) {
-	service.authorization = "Bearer " + session.Token
+func (service *EmailPrivacyService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
 }
 
 // @OnEvent({"replay":true})
 func (service *EmailPrivacyService) Load(preferences UserPreferences) {
-	service.apply(preferences.Values)
+	service.apply(preferences)
 }
 
 func (service *EmailPrivacyService) SetRemoteImagePolicy(policy string) error {
 	service.RemoteImagePolicy = policy
-	service.save(map[string]any{service.policyKey(): policy})
+	service.save(map[string]any{"remoteImagePolicy": policy})
 	return nil
 }
 
 func (service *EmailPrivacyService) RemoveTrustedSender(sender string) error {
-	service.save(map[string]any{service.sendersKey(): PreferenceUtils{}.Without(service.TrustedSenders, sender)})
+	service.save(map[string]any{"trustedImageSenders": PreferenceUtils{}.Without(service.TrustedSenders, sender)})
 	return nil
 }
 
 func (service *EmailPrivacyService) SetGithubProfiles(enabled bool) error {
 	service.GithubProfiles = enabled
-	service.save(map[string]any{service.githubKey(): enabled})
+	service.save(map[string]any{"githubProfileEnrichment": enabled})
 	return nil
 }
 
 func (service *EmailPrivacyService) save(patch map[string]any) {
-	FlowUtils{}.When(!service.Saving, func() { service.send(patch) })
+	FlowUtils{}.When(!service.Saving, func() { service.send(patch) })()
 }
 
 func (service *EmailPrivacyService) send(patch map[string]any) {
@@ -54,27 +54,19 @@ func (service *EmailPrivacyService) send(patch map[string]any) {
 	service.Error = ""
 	stored, failure := service.usersClient.SavePreferences(service.authorization, patch)
 	service.Saving = false
-	service.showSaved(PreferenceUtils{}.Object(stored), failure)
+	FlowUtils{}.Either(failure == nil, func() { service.showSaved(stored) }, func() {
+		service.Error = HTTPUtils{}.Message(failure, "Could not save remote-content preferences.", "Network error.")
+	})()
 }
 
-func (service *EmailPrivacyService) showSaved(stored map[string]any, failure error) {
-	if failure != nil {
-		service.Error = "Could not save remote-content preferences."
-		return
-	}
+func (service *EmailPrivacyService) showSaved(stored UserPreferences) {
 	service.apply(stored)
 	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Privacy preference saved."}, false)
 }
 
-func (service *EmailPrivacyService) apply(values map[string]any) {
+func (service *EmailPrivacyService) apply(preferences UserPreferences) {
 	allow := "allow"
-	service.RemoteImagePolicy = FlowUtils{}.Text(PreferenceUtils{}.Text(values, service.policyKey()) == allow, allow, "block")
-	service.TrustedSenders = PreferenceUtils{}.Strings(values, service.sendersKey())
-	service.GithubProfiles = PreferenceUtils{}.Flag(values, service.githubKey())
+	service.RemoteImagePolicy = ChoiceUtils{}.Text(preferences.RemoteImagePolicy == allow, allow, "block")
+	service.TrustedSenders = append([]string{}, preferences.TrustedImageSenders...)
+	service.GithubProfiles = preferences.GithubProfileEnrichment
 }
-
-func (service *EmailPrivacyService) policyKey() string { return "remoteImagePolicy" }
-
-func (service *EmailPrivacyService) sendersKey() string { return "trustedImageSenders" }
-
-func (service *EmailPrivacyService) githubKey() string { return "githubProfileEnrichment" }

@@ -3,16 +3,16 @@ import (
 	"strings"
 )
 
-// UnreadBadgeUtils is the Go form of normalizeUnreadBadgePreference in
+// UnreadBadgeUtils is the Go form of normalizeBadgePreference in
 // shared/scripts/unread-badge.js: a focused domain that the account no
 // longer holds becomes the aggregate badge.
 type UnreadBadgeUtils struct{}
 
-func (utils UnreadBadgeUtils) Normalize(scope string, domain string, domains []string) UnreadBadgePreference {
+func (utils UnreadBadgeUtils) Normalize(scope string, domain string, domains []string) BadgePreference {
 	allowed := PreferenceUtils{}.Unique(domains)
 	requested := PreferenceUtils{}.Lower(domain)
 	chosen := utils.domain(requested, allowed)
-	return UnreadBadgePreference{Scope: utils.scope(scope, requested, chosen), Domain: chosen}
+	return BadgePreference{Scope: utils.scope(scope, requested, chosen), Domain: chosen}
 }
 
 func (UnreadBadgeUtils) domain(requested string, allowed []string) string {

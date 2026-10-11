@@ -1,4 +1,7 @@
-import "regexp"
+import (
+	"cmp"
+	"regexp"
+)
 
 // AuthenticatorAppService enrolls a time-based authenticator app as the
 // secondary verification factor, after a fresh step-up.
@@ -18,33 +21,34 @@ type AuthenticatorAppService struct {
 
 // @OnStart
 func (service *AuthenticatorAppService) Start() {
-	service.Name = FlowUtils{}.Text(service.Name == "", "Authenticator app", service.Name)
+	service.Name = cmp.Or(service.Name, "Authenticator app")
 }
 
 // @OnEvent({"replay":true})
-func (service *AuthenticatorAppService) Open(session AccountSession) {
-	service.authorization = "Bearer " + session.Token
+func (service *AuthenticatorAppService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
 }
 
 // Toggle opens enrollment after a fresh step-up, or cancels an open one.
 func (service *AuthenticatorAppService) Toggle() {
-	FlowUtils{}.Choose(service.Enrollment != nil, service.cancel, func() {
-		service.Loading = true
-		service.Error = ""
-		service.applicationEventPublisher.PublishEvent(StepUpRequested{Purpose: service.purpose()}, false)
-	})
+	FlowUtils{}.Either(service.Enrollment != nil, service.cancel, service.prove)()
 }
 
 // @OnEvent
-func (service *AuthenticatorAppService) Proven(completed StepUpCompleted) error {
-	FlowUtils{}.When(completed.Purpose == service.purpose(), func() { service.enroll(completed.Transaction) })
-	return nil
+func (service *AuthenticatorAppService) Proven(completed StepUpCompleted) {
+	FlowUtils{}.When(completed.Purpose == service.purpose(), func() { service.enroll(completed.Transaction) })()
 }
 
 func (service *AuthenticatorAppService) Confirm() error {
-	valid := FlowUtils{}.Both(service.secret() != "", regexp.MustCompile(`^\d{6}$`).MatchString(service.Code))
-	FlowUtils{}.Choose(valid, service.activate, func() { service.Error = "Enter the current 6-digit authenticator code." })
+	valid := ChoiceUtils{}.All(service.secret() != "", regexp.MustCompile(`^\d{6}$`).MatchString(service.Code))
+	FlowUtils{}.Either(valid, service.activate, func() { service.Error = "Enter the current 6-digit authenticator code." })()
 	return nil
+}
+
+func (service *AuthenticatorAppService) prove() {
+	service.Loading = true
+	service.Error = ""
+	service.applicationEventPublisher.PublishEvent(StepUpRequested{Purpose: service.purpose()}, false)
 }
 
 func (service *AuthenticatorAppService) cancel() {
@@ -64,7 +68,7 @@ func (service *AuthenticatorAppService) request(transaction string) (Authenticat
 	if transaction == "" {
 		return AuthenticatorEnrollment{}, nil
 	}
-	return service.authClient.EnrollAuthenticator(service.authorization, map[string]any{"stepUpTransactionId": transaction})
+	return service.authClient.EnrollAuthenticator(service.authorization, CredentialChange{StepUpTransactionID: transaction})
 }
 
 func (service *AuthenticatorAppService) showEnrollment(enrollment AuthenticatorEnrollment, failure error, transaction string) {
@@ -72,7 +76,7 @@ func (service *AuthenticatorAppService) showEnrollment(enrollment AuthenticatorE
 	case transaction == "":
 		service.Error = "Confirm it is you before enrolling an authenticator."
 	case failure != nil:
-		service.Error = "Unable to start authenticator enrollment."
+		service.Error = HTTPUtils{}.Message(failure, "Unable to start authenticator enrollment.", service.network())
 	default:
 		service.Enrollment = &enrollment
 	}
@@ -83,11 +87,15 @@ func (service *AuthenticatorAppService) activate() {
 	service.Error = ""
 	_, failure := service.authClient.ActivateAuthenticator(service.authorization, map[string]any{"code": service.Code})
 	service.Loading = false
-	FlowUtils{}.Choose(failure == nil, func() {
-		service.cancel()
-		service.applicationEventPublisher.PublishEvent(SignInDevicesChanged{Reason: service.purpose()}, false)
-		service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Authenticator app enabled."}, false)
-	}, func() { service.Error = "Unable to verify authenticator code." })
+	FlowUtils{}.Either(failure == nil, service.activated, func() {
+		service.Error = HTTPUtils{}.Message(failure, "Unable to verify authenticator code.", service.network())
+	})()
+}
+
+func (service *AuthenticatorAppService) activated() {
+	service.cancel()
+	service.applicationEventPublisher.PublishEvent(SignInDevicesChanged{Reason: service.purpose()}, false)
+	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: "Authenticator app enabled."}, false)
 }
 
 func (service *AuthenticatorAppService) secret() string {
@@ -98,3 +106,5 @@ func (service *AuthenticatorAppService) secret() string {
 }
 
 func (service *AuthenticatorAppService) purpose() string { return "authenticator" }
+
+func (service *AuthenticatorAppService) network() string { return "Network error." }

@@ -1,7 +1,6 @@
-import "cmp"
-
-// FontPreferenceUtils is the Go form of shared/scripts/font-preferences.js.
-// Only local font stacks exist; a preference stores an identifier, never CSS.
+// FontPreferenceUtils describes the local font catalog for the settings
+// view. A preference stores an identifier, never CSS; AppearanceUtils keeps
+// the identifiers and shared/assets/themes.css holds the stacks.
 type FontPreferenceUtils struct{}
 
 func (FontPreferenceUtils) InterfaceOptions() []FontOption {
@@ -18,12 +17,14 @@ func (utils FontPreferenceUtils) ComposerOptions() []FontOption {
 	return append([]FontOption{{ID: "interface", Label: "Match interface", Stack: "var(--caduceus-interface-font)"}}, utils.InterfaceOptions()...)
 }
 
-func (utils FontPreferenceUtils) NormalizeInterface(value any) string {
-	return cmp.Or(utils.knownIds(utils.InterfaceOptions())[utils.text(value)], utils.defaultInterface())
+// NormalizeInterface keeps a catalog interface font and the default otherwise.
+func (FontPreferenceUtils) NormalizeInterface(font string) string {
+	return AppearanceUtils{}.InterfaceFont(font)
 }
 
-func (utils FontPreferenceUtils) NormalizeComposer(value any) string {
-	return cmp.Or(utils.knownIds(utils.ComposerOptions())[utils.text(value)], utils.defaultComposer())
+// NormalizeComposer keeps a catalog composer font and the default otherwise.
+func (FontPreferenceUtils) NormalizeComposer(font string) string {
+	return AppearanceUtils{}.ComposerFont(font)
 }
 
 // InterfacePreview is the inline style of the interface font preview line.
@@ -36,24 +37,6 @@ func (utils FontPreferenceUtils) ComposerPreview(id string) string {
 }
 
 func (FontPreferenceUtils) preview(stack string) string { return "font-family:" + stack }
-
-func (FontPreferenceUtils) defaultInterface() string { return "plex-sans" }
-
-func (FontPreferenceUtils) defaultComposer() string { return "interface" }
-
-func (FontPreferenceUtils) text(value any) string {
-	text, _ := value.(string)
-	return text
-}
-
-// stacks maps each identifier to itself, so an unknown one reads as empty.
-func (FontPreferenceUtils) knownIds(options []FontOption) map[string]string {
-	known := map[string]string{}
-	for _, option := range options {
-		known[option.ID] = option.ID
-	}
-	return known
-}
 
 func (FontPreferenceUtils) stackOf(options []FontOption, id string) string {
 	stacks := map[string]string{}

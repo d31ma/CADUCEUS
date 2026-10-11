@@ -1,11 +1,12 @@
 import (
+	"cmp"
 	"slices"
 	"strings"
 )
 
-// ThemePreferenceUtils is the Go form of the catalog and normalization in
-// shared/scripts/theme-preferences.js. Applying a theme to the document is
-// the page's job (see DocumentAppearanceService.js).
+// ThemePreferenceUtils describes the theme catalog for the settings view:
+// labels, descriptions and preview swatches. AppearanceUtils keeps the
+// catalog's identifiers, and PreferenceService applies the chosen theme.
 type ThemePreferenceUtils struct{}
 
 func (utils ThemePreferenceUtils) Options() []ThemeOption {
@@ -30,13 +31,9 @@ func (utils ThemePreferenceUtils) DarkOptions() []ThemeOption {
 	return slices.DeleteFunc(utils.Options(), func(option ThemeOption) bool { return option.BaseMode != utils.dark() })
 }
 
-func (utils ThemePreferenceUtils) Normalize(value any) ThemePreferences {
-	input := PreferenceUtils{}.Object(value)
-	return ThemePreferences{
-		ActiveTheme: PreferenceUtils{}.Choice(PreferenceUtils{}.Text(input, "activeTheme"), utils.ids(utils.Options()), utils.automatic()),
-		LightTheme:  PreferenceUtils{}.Choice(PreferenceUtils{}.Text(input, "lightTheme"), utils.ids(utils.LightOptions()), utils.light()),
-		DarkTheme:   PreferenceUtils{}.Choice(PreferenceUtils{}.Text(input, "darkTheme"), utils.ids(utils.DarkOptions()), utils.dark()),
-	}
+// Normalize keeps a known theme choice and the defaults for the rest.
+func (ThemePreferenceUtils) Normalize(chosen *ThemePreferences) ThemePreferences {
+	return AppearanceUtils{}.Themes(*cmp.Or(chosen, &ThemePreferences{}))
 }
 
 // PreviewStyle is the inline style that paints one theme's three swatches.
@@ -50,11 +47,3 @@ func (ThemePreferenceUtils) automatic() string { return "automatic" }
 func (ThemePreferenceUtils) light() string { return "light" }
 
 func (ThemePreferenceUtils) dark() string { return "dark" }
-
-func (ThemePreferenceUtils) ids(options []ThemeOption) []string {
-	ids := []string{}
-	for _, option := range options {
-		ids = append(ids, option.ID)
-	}
-	return ids
-}

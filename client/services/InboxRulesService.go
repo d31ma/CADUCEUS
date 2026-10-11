@@ -9,7 +9,7 @@ import (
 // @Service
 type InboxRulesService struct {
 	// @Needs
-	rulesClient *RulesClient
+	rulesClient               *RulesClient
 	applicationEventPublisher ApplicationEventPublisher
 	senders                   []string
 	authorization             string
@@ -35,15 +35,15 @@ type InboxRulesService struct {
 // @OnStart
 func (service *InboxRulesService) Start() {
 	service.Rules = []InboxRule{}
-	FlowUtils{}.When(service.Builder == nil, service.clearForm)
+	FlowUtils{}.When(service.Builder == nil, service.clearForm)()
 }
 
 // @OnEvent({"replay":true})
-func (service *InboxRulesService) Load(session AccountSession) error {
-	service.authorization = "Bearer " + session.Token
-	service.reload()
-	service.announce()
-	return nil
+func (service *InboxRulesService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
+	refused := false
+	FlowUtils{}.When(changed.SignedIn, func() { refused = service.reload() })()
+	service.announce(refused)
 }
 
 // @OnEvent({"replay":true})
@@ -58,9 +58,9 @@ func (service *InboxRulesService) Rows() []RuleRow {
 
 func (service *InboxRulesService) ToggleForm() {
 	service.Open = !service.Open
-	FlowUtils{}.Choose(service.Open, func() {
+	FlowUtils{}.Either(service.Open, func() {
 		service.Draft.Mailbox = cmp.Or(service.Draft.Mailbox, PreferenceUtils{}.Joined(service.firstSender()))
-	}, service.clearForm)
+	}, service.clearForm)()
 }
 
 // SetField records one builder field, such as the condition value or the folder.
@@ -88,10 +88,10 @@ func (service *InboxRulesService) AddCondition() {
 	value := strings.TrimSpace(service.Builder[service.names().Value])
 	field := service.Builder[service.names().Field]
 	flag := slices.Contains([]string{"true", "false"}, strings.ToLower(value))
-	invalid := FlowUtils{}.Both(field == "hasAttachment", !flag)
+	invalid := ChoiceUtils{}.All(field == "hasAttachment", !flag)
 	FlowUtils{}.When(value != "", func() {
-		FlowUtils{}.Choose(invalid, func() { service.toast("Has attachment must be true or false.") }, func() { service.addCondition(field, value) })
-	})
+		FlowUtils{}.Either(invalid, func() { service.toast("Has attachment must be true or false.") }, func() { service.addCondition(field, value) })()
+	})()
 }
 
 func (service *InboxRulesService) RemoveCondition(key float64) {
@@ -100,7 +100,7 @@ func (service *InboxRulesService) RemoveCondition(key float64) {
 
 func (service *InboxRulesService) AddAction() {
 	action, problem := service.action(service.Builder[service.names().Action])
-	FlowUtils{}.Choose(problem == "", func() { service.addAction(action) }, func() { service.toast(problem) })
+	FlowUtils{}.Either(problem == "", func() { service.addAction(action) }, func() { service.toast(problem) })()
 }
 
 func (service *InboxRulesService) RemoveAction(key float64) {
@@ -117,7 +117,7 @@ func (service *InboxRulesService) Edit(id string) {
 	service.Draft = rule
 	service.Draft.Mailbox = cmp.Or(rule.Mailbox, PreferenceUtils{}.Joined(service.firstSender()))
 	any := "any"
-	service.Draft.ConditionMatch = FlowUtils{}.Text(rule.ConditionMatch == any, any, service.names().Every)
+	service.Draft.ConditionMatch = ChoiceUtils{}.Text(rule.ConditionMatch == any, any, service.names().Every)
 	service.Conditions = service.draftConditions(rule.Conditions)
 	service.Actions = service.draftActions(rule.Actions)
 	service.Open = true
@@ -126,16 +126,15 @@ func (service *InboxRulesService) Edit(id string) {
 
 func (service *InboxRulesService) Save() error {
 	rule := service.built()
-	complete := FlowUtils{}.Both(FlowUtils{}.Both(rule.Name != "", rule.Mailbox != ""), len(rule.Actions) > 0)
-	FlowUtils{}.Choose(complete, func() { service.save(rule) }, func() { service.toast("Name, mailbox, and at least one action are required.") })
+	complete := ChoiceUtils{}.All(ChoiceUtils{}.All(rule.Name != "", rule.Mailbox != ""), len(rule.Actions) > 0)
+	FlowUtils{}.Either(complete, func() { service.save(rule) }, func() { service.toast("Name, mailbox, and at least one action are required.") })()
 	return nil
 }
 
 // @OnEvent
-func (service *InboxRulesService) Delete(accepted ConfirmationAccepted) error {
-	FlowUtils{}.When(accepted.Topic == "rule-remove", func() { service.remove(accepted.Subject) })
-	service.announce()
-	return nil
+func (service *InboxRulesService) Delete(given ConfirmationGiven) {
+	FlowUtils{}.When(given.Action == "rule-remove", func() { service.remove(given.ID) })()
+	service.announce(false)
 }
 
 func (service *InboxRulesService) Toggle(id string) error {
@@ -149,21 +148,23 @@ func (service *InboxRulesService) Toggle(id string) error {
 func (service *InboxRulesService) Move(id string, delta float64) error {
 	index := slices.IndexFunc(service.Rules, func(rule InboxRule) bool { return rule.ID == id })
 	target := index + int(delta)
-	inside := FlowUtils{}.Both(index >= 0, FlowUtils{}.Both(target >= 0, target < len(service.Rules)))
-	FlowUtils{}.When(inside, func() { service.move(index, target) })
+	inside := ChoiceUtils{}.All(index >= 0, ChoiceUtils{}.All(target >= 0, target < len(service.Rules)))
+	FlowUtils{}.When(inside, func() { service.move(index, target) })()
 	return nil
 }
 
 func (service *InboxRulesService) Preview() error {
 	rule := service.built()
-	complete := FlowUtils{}.Both(FlowUtils{}.Both(rule.Name != "", rule.Mailbox != ""), len(rule.Actions) > 0)
-	FlowUtils{}.Choose(complete, func() { service.preview(rule) }, func() { service.PreviewResult = "Add a name, mailbox, and action before previewing." })
+	complete := ChoiceUtils{}.All(ChoiceUtils{}.All(rule.Name != "", rule.Mailbox != ""), len(rule.Actions) > 0)
+	FlowUtils{}.Either(complete, func() { service.preview(rule) }, func() { service.PreviewResult = "Add a name, mailbox, and action before previewing." })()
 	return nil
 }
 
-func (service *InboxRulesService) reload() {
-	rules, _ := service.rulesClient.Rules(service.authorization)
-	service.Rules = append([]InboxRule{}, rules...)
+// reload reads the rules and says whether the server refused the read.
+func (service *InboxRulesService) reload() bool {
+	rules, failure := service.rulesClient.Rules(service.authorization)
+	FlowUtils{}.When(failure == nil, func() { service.Rules = append([]InboxRule{}, rules...) })()
+	return HTTPUtils{}.Refused(failure)
 }
 
 func (service *InboxRulesService) rows() []RuleRow {
@@ -172,7 +173,7 @@ func (service *InboxRulesService) rows() []RuleRow {
 		rows = append(rows, RuleRow{
 			ID: rule.ID, Name: rule.Name, Mailbox: rule.Mailbox, Enabled: rule.Enabled,
 			ConditionsLabel: RuleDescriptionUtils{}.Conditions(rule),
-			ActionsLabel:    RuleDescriptionUtils{}.Actions(rule.Actions) + FlowUtils{}.Text(rule.StopProcessing, " · then stop", ""),
+			ActionsLabel:    RuleDescriptionUtils{}.Actions(rule.Actions) + ChoiceUtils{}.Text(rule.StopProcessing, " · then stop", ""),
 		})
 	}
 	return rows
@@ -202,9 +203,9 @@ func (service *InboxRulesService) action(kind string) (RuleAction, string) {
 	forward := PreferenceUtils{}.Lower(service.Builder[service.names().To])
 	switch kind {
 	case service.names().Folder:
-		return RuleAction{Type: kind, Folder: folder}, FlowUtils{}.Text(folder == "", "Enter a folder name.", "")
+		return RuleAction{Type: kind, Folder: folder}, ChoiceUtils{}.Text(folder == "", "Enter a folder name.", "")
 	case "forward":
-		return RuleAction{Type: kind, To: forward}, FlowUtils{}.Text(forward == "", "Enter a forwarding address.", "")
+		return RuleAction{Type: kind, To: forward}, ChoiceUtils{}.Text(forward == "", "Enter a forwarding address.", "")
 	case "markReadTrue", "markReadFalse", "starTrue", "starFalse":
 		enabled := "True"
 		value := strings.HasSuffix(kind, enabled)
@@ -236,11 +237,11 @@ func (service *InboxRulesService) save(rule InboxRule) {
 	body := service.ruleBody(rule)
 	updated := service.EditID != ""
 	_, failure := service.send(body)
-	FlowUtils{}.Choose(failure == nil, func() {
+	FlowUtils{}.Either(failure == nil, func() {
 		service.reload()
-		service.toast(FlowUtils{}.Text(updated, "Rule updated.", "Rule saved."))
+		service.toast(ChoiceUtils{}.Text(updated, "Rule updated.", "Rule saved."))
 		service.clearForm()
-	}, func() { service.toast("Failed to save rule.") })
+	}, func() { service.toast(HTTPUtils{}.Message(failure, "Failed to save rule.", "Network error.")) })()
 }
 
 func (service *InboxRulesService) send(body BehaviorValue) (BehaviorValue, error) {
@@ -255,7 +256,7 @@ func (service *InboxRulesService) remove(id string) {
 	FlowUtils{}.When(failure == nil, func() {
 		service.Rules = slices.DeleteFunc(slices.Clone(service.Rules), func(rule InboxRule) bool { return rule.ID == id })
 		service.toast("Rule deleted.")
-	})
+	})()
 }
 
 func (service *InboxRulesService) move(index int, target int) {
@@ -267,7 +268,7 @@ func (service *InboxRulesService) move(index int, target int) {
 		ids = append(ids, rule.ID)
 	}
 	_, failure := service.rulesClient.Order(service.authorization, map[string]any{"ids": ids})
-	FlowUtils{}.Choose(failure == nil, func() { service.Rules = next }, func() { service.toast("Could not reorder rules.") })
+	FlowUtils{}.Either(failure == nil, func() { service.Rules = next }, func() { service.toast("Could not reorder rules.") })()
 }
 
 func (service *InboxRulesService) preview(rule InboxRule) {
@@ -276,8 +277,8 @@ func (service *InboxRulesService) preview(rule InboxRule) {
 		"body": service.Builder[service.names().SampleBody], "hasAttachment": service.PreviewAttachment,
 	}
 	result, failure := service.rulesClient.Preview(service.authorization, map[string]any{"rule": service.ruleBody(rule), "message": message})
-	matched := FlowUtils{}.Text(result.Matched, "Match · "+RuleDescriptionUtils{}.Actions(result.PlannedActions), "No match · no actions would run")
-	service.PreviewResult = FlowUtils{}.Text(failure == nil, matched, "Preview failed.")
+	matched := ChoiceUtils{}.Text(result.Matched, "Match · "+RuleDescriptionUtils{}.Actions(result.PlannedActions), "No match · no actions would run")
+	service.PreviewResult = ChoiceUtils{}.Text(failure == nil, matched, "Preview failed.")
 }
 
 func (service *InboxRulesService) ruleBody(rule InboxRule) map[string]any {
@@ -334,22 +335,22 @@ func (service *InboxRulesService) toast(message string) {
 	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: message}, false)
 }
 
-func (service *InboxRulesService) announce() {
-	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "inbox-rules"}, false)
+func (service *InboxRulesService) announce(refused bool) {
+	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "inbox-rules", Refused: refused}, false)
 }
 
 func (service *InboxRulesService) names() RuleBuilderNames {
 	return RuleBuilderNames{
-		Field: "field",
-		Operator: "op",
-		Every: "all",
-		Enabled: "enabled",
-		SampleFrom: "previewFrom",
+		Field:         "field",
+		Operator:      "op",
+		Every:         "all",
+		Enabled:       "enabled",
+		SampleFrom:    "previewFrom",
 		SampleSubject: "previewSubject",
-		SampleBody: "previewBody",
-		Value: "value",
-		Action: "action",
-		Folder: "folder",
-		To: "to",
+		SampleBody:    "previewBody",
+		Value:         "value",
+		Action:        "action",
+		Folder:        "folder",
+		To:            "to",
 	}
 }

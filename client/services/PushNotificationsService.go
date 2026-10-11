@@ -6,13 +6,13 @@ import "errors"
 // @Service
 type PushNotificationsService struct {
 	// @Needs
-	notificationsClient *NotificationsClient
+	notificationsClient       *NotificationsClient
 	applicationEventPublisher ApplicationEventPublisher
 	timeZoneOffset            float64
 	authorization             string
 	Supported                 bool
 	Permission                string
-	Subscriptions             []PushSubscriptionRecord
+	Subscriptions             []PushSubscriptionSummary
 	Loading                   bool
 	Error                     string
 }
@@ -20,15 +20,15 @@ type PushNotificationsService struct {
 // @OnStart
 func (service *PushNotificationsService) Start() {
 	service.Permission = "default"
-	service.Subscriptions = []PushSubscriptionRecord{}
+	service.Subscriptions = []PushSubscriptionSummary{}
 }
 
 // @OnEvent({"replay":true})
-func (service *PushNotificationsService) Open(session AccountSession) error {
-	service.authorization = "Bearer " + session.Token
-	service.refresh()
-	service.announce()
-	return nil
+func (service *PushNotificationsService) HearSession(changed SessionChanged) {
+	service.authorization = "Bearer " + changed.Token
+	refused := false
+	FlowUtils{}.When(changed.SignedIn, func() { refused = service.refresh() })()
+	service.announce(refused)
 }
 
 // @OnEvent({"replay":true})
@@ -44,33 +44,31 @@ func (service *PushNotificationsService) Learn(support PushSupport) {
 
 func (service *PushNotificationsService) Enable() {
 	service.Error = ""
-	FlowUtils{}.Choose(service.Supported, func() {
+	FlowUtils{}.Either(service.Supported, func() {
 		service.Loading = true
 		service.applicationEventPublisher.PublishEvent(PushPermissionRequested{Reason: "enable"}, false)
-	}, func() { service.Error = "This browser cannot receive Web Push notifications." })
+	}, func() { service.Error = "This browser cannot receive Web Push notifications." })()
 }
 
 // @OnEvent
-func (service *PushNotificationsService) Permitted(answer PushPermissionAnswered) error {
+func (service *PushNotificationsService) Permitted(answer PushPermissionAnswered) {
 	service.Permission = answer.Permission
-	FlowUtils{}.Choose(answer.Permission == service.granted(), service.subscribe, func() {
+	FlowUtils{}.Either(answer.Permission == service.granted(), service.subscribe, func() {
 		service.Error = "Notifications were not allowed."
 		service.Loading = false
-	})
-	service.announce()
-	return nil
+	})()
+	service.announce(false)
 }
 
 // @OnEvent
-func (service *PushNotificationsService) Subscribed(created PushSubscriptionCreated) error {
+func (service *PushNotificationsService) Subscribed(created PushSubscriptionCreated) {
 	_, failure := service.save(created)
-	FlowUtils{}.Choose(failure == nil, func() {
+	FlowUtils{}.Either(failure == nil, func() {
 		service.refresh()
 		service.toast("Notifications enabled.")
-	}, func() { service.Error = service.enableFailure() })
+	}, func() { service.Error = service.enableFailure() })()
 	service.Loading = false
-	service.announce()
-	return nil
+	service.announce(false)
 }
 
 func (service *PushNotificationsService) Disable() {
@@ -78,19 +76,18 @@ func (service *PushNotificationsService) Disable() {
 	FlowUtils{}.When(service.Supported, func() {
 		service.Loading = true
 		service.applicationEventPublisher.PublishEvent(PushUnsubscribeRequested{Reason: "disable"}, false)
-	})
+	})()
 }
 
 // @OnEvent
-func (service *PushNotificationsService) Unsubscribed(removed PushSubscriptionRemoved) error {
-	FlowUtils{}.Choose(removed.Problem == "", func() {
-		FlowUtils{}.When(removed.Endpoint != "", func() { service.forget(removed.Endpoint) })
+func (service *PushNotificationsService) Unsubscribed(removed PushSubscriptionRemoved) {
+	FlowUtils{}.Either(removed.Problem == "", func() {
+		FlowUtils{}.When(removed.Endpoint != "", func() { service.forget(removed.Endpoint) })()
 		service.refresh()
 		service.toast("Notifications disabled.")
-	}, func() { service.Error = "Unable to disable notifications on this device." })
+	}, func() { service.Error = "Unable to disable notifications on this device." })()
 	service.Loading = false
-	service.announce()
-	return nil
+	service.announce(false)
 }
 
 func (service *PushNotificationsService) StatusLabel() string {
@@ -107,12 +104,12 @@ func (service *PushNotificationsService) Rows() []PushSubscriptionRow {
 
 func (service *PushNotificationsService) subscribe() {
 	key, failure := service.notificationsClient.VapidKey(service.authorization)
-	FlowUtils{}.Choose(failure == nil, func() {
+	FlowUtils{}.Either(failure == nil, func() {
 		service.applicationEventPublisher.PublishEvent(PushSubscribeRequested{PublicKey: key.PublicKey}, false)
 	}, func() {
 		service.Error = service.enableFailure()
 		service.Loading = false
-	})
+	})()
 }
 
 func (service *PushNotificationsService) save(created PushSubscriptionCreated) (BehaviorValue, error) {
@@ -126,13 +123,16 @@ func (service *PushNotificationsService) forget(endpoint string) {
 	_, _ = service.notificationsClient.Unsubscribe(service.authorization, map[string]any{"endpoint": endpoint})
 }
 
-func (service *PushNotificationsService) refresh() {
-	subscriptions, _ := service.notificationsClient.Subscriptions(service.authorization)
-	service.Subscriptions = append([]PushSubscriptionRecord{}, subscriptions...)
+// refresh reads this account's push subscriptions and says whether the
+// server refused the read.
+func (service *PushNotificationsService) refresh() bool {
+	subscriptions, failure := service.notificationsClient.Subscriptions(service.authorization)
+	service.Subscriptions = append([]PushSubscriptionSummary{}, subscriptions...)
+	return HTTPUtils{}.Refused(failure)
 }
 
 func (service *PushNotificationsService) active() bool {
-	return FlowUtils{}.Both(service.Permission == service.granted(), len(service.Subscriptions) > 0)
+	return ChoiceUtils{}.All(service.Permission == service.granted(), len(service.Subscriptions) > 0)
 }
 
 func (service *PushNotificationsService) status(active bool) string {
@@ -162,7 +162,7 @@ func (service *PushNotificationsService) help(active bool) string {
 func (service *PushNotificationsService) rows() []PushSubscriptionRow {
 	rows := []PushSubscriptionRow{}
 	for _, subscription := range service.Subscriptions {
-		rows = append(rows, PushSubscriptionRow{UpdatedAtLabel: DateLabelUtils{}.Date(subscription.UpdatedAt, service.timeZoneOffset)})
+		rows = append(rows, PushSubscriptionRow{UpdatedAtLabel: TimestampLabelUtils{}.Date(subscription.UpdatedAt, service.timeZoneOffset)})
 	}
 	return rows
 }
@@ -179,8 +179,8 @@ func (service *PushNotificationsService) toast(message string) {
 	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: message}, false)
 }
 
-func (service *PushNotificationsService) announce() {
-	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "push-notifications"}, false)
+func (service *PushNotificationsService) announce(refused bool) {
+	service.applicationEventPublisher.PublishEvent(SettingsActivity{Section: "push-notifications", Refused: refused}, false)
 }
 
 func (service *PushNotificationsService) granted() string { return "granted" }

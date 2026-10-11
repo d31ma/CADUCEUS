@@ -18,7 +18,7 @@ test('API server responds to health-like request', async ({ page }) => {
   // The preview server proxies API requests or the page loads API-bound config
   await useTestApi(page)
   await page.goto('/')
-  // Should at minimum load a page with the CADUCEUS config pointing to the test API
-  const config = await page.evaluate(() => window.CADUCEUS_CONFIG?.apiUrl)
-  expect(config).toBe(API)
+  // One origin: the page is served by the API server and calls it on its own origin
+  const config = await page.evaluate(() => [location.origin, window.CADUCEUS_CONFIG?.apiUrl])
+  expect(config).toEqual([API, ''])
 })

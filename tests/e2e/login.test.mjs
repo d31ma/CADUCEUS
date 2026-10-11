@@ -8,7 +8,8 @@ test('shows the provider-free sign-in entry point', async ({ page }) => {
   await useTestApi(page)
   await page.goto('/')
   await waitForUiReady(page, { shell: false })
-  expect(await page.evaluate(() => window.CADUCEUS_CONFIG.apiUrl)).toBe(API)
+  // One origin: the client calls the API on the page's own origin.
+  expect(await page.evaluate(() => [location.origin, window.CADUCEUS_CONFIG.apiUrl])).toEqual([API, ''])
   await expect(page.getByText('Sign in')).toBeVisible()
   await expect(field(page, 'data-login-email')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Use a recovery code' })).toBeVisible()

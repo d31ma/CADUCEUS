@@ -119,7 +119,7 @@ func (delivery InboundDelivery) store(message InboundMessage) error {
 func (delivery InboundDelivery) email(message InboundMessage) map[string]any {
 	fields := DeliveryFields{}
 	security := PhishingDetection{}.Analyzed(message.Sender, message.Parsed.Headers)
-	unsubscribe := ListUnsubscribe{}.Parsed(message.Parsed.Headers, message.Parsed.Html)
+	unsubscribe := UnsubscribeLinks{}.Parsed(message.Parsed.Headers, message.Parsed.Html)
 	recipients := PersonalLevel{}.RecipientsFromHeaders(message.Parsed.Headers, message.Recipient)
 	roles := CategoryRoles{Users: delivery.Users}
 	folder := roles.PathFor(message.Owner, message.Domain, "inbox")

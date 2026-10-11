@@ -4,7 +4,8 @@ import (
 	"strings"
 )
 
-// UnsubscribeLinks reads RFC 2369 and RFC 8058 unsubscribe metadata: the
+// UnsubscribeLinks reads RFC 2369 and RFC 8058 unsubscribe metadata, for
+// delivered and imported mail alike: the
 // first safe https and mailto targets of List-Unsubscribe, whether one-click
 // unsubscribe applies, and otherwise a body link that reads as an
 // unsubscribe link. Unsafe targets are dropped.
@@ -86,7 +87,7 @@ func (links UnsubscribeLinks) bodyLink(html string) string {
 		if found := href.FindStringSubmatch(attributes); found != nil {
 			link = found[1] + found[2] + found[3]
 		}
-		target := links.secureHttps(strings.NewReplacer("&amp;", "&", "&AMP;", "&", "&quot;", `"`, "&#39;", "'", "&apos;", "'").Replace(link))
+		target := links.secureHttps(links.decodedAttribute(link))
 		if target == "" {
 			continue
 		}
@@ -114,4 +115,12 @@ func (UnsubscribeLinks) secureHttps(value string) string {
 
 func (UnsubscribeLinks) stripped(value string) string {
 	return TextValue{}.Trim(TextValue{}.Collapsed(regexp.MustCompile(`<[^>]*>`).ReplaceAllString(value, " ")))
+}
+
+// decodedAttribute decodes the entities an href may carry, in any letter
+// case, as the former ListUnsubscribe did.
+func (UnsubscribeLinks) decodedAttribute(value string) string {
+	value = regexp.MustCompile(`(?i)&amp;`).ReplaceAllString(value, "&")
+	value = regexp.MustCompile(`(?i)&quot;`).ReplaceAllString(value, `"`)
+	return regexp.MustCompile(`(?i)&#39;|&apos;`).ReplaceAllString(value, "'")
 }

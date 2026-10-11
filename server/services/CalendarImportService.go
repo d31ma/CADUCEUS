@@ -6,9 +6,8 @@ type CalendarImportService struct {
 	calendarEventsHelper *CalendarEventsHelper
 }
 
-// importFromInboundEmail applies every invitation in one delivered message.
-// Inbound delivery calls it; it stays lowercase until that route is merged
-// in, because nothing in the calendar slice does.
-func (service *CalendarImportService) importFromInboundEmail(context ImportContext) ImportResult {
+// ImportFromInboundEmail applies every invitation in one delivered message;
+// failures only log and never block delivery.
+func (service *CalendarImportService) ImportFromInboundEmail(context ImportContext) ImportResult {
 	return CalendarImport{Events: service.calendarEventsHelper}.FromMessage(context)
 }

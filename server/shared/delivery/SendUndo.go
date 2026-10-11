@@ -5,7 +5,7 @@
 type SendUndo struct {
 	Sent      SentMail
 	Reminders FollowUpReminders
-	Archive   ConversationArchive
+	Archive   *ConversationArchiveService
 }
 
 // Undo answers the route answer of one undo.

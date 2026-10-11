@@ -18,7 +18,7 @@ type SentMail struct {
 	Scheduled    *ScheduledHelper
 	Outbox       *OutboxHelper
 	Queue        OutboundQueue
-	Participants MailParticipants
+	Participants *ContactsService
 	Users        *UsersHelper
 }
 
@@ -287,7 +287,7 @@ func (sent SentMail) saveSource(senderEmail string, request map[string]any, mess
 func (sent SentMail) observe(ownerEmail string, senderEmail string, request map[string]any) {
 	fields := DeliveryFields{}
 	addresses := append(fields.Strings(request["to"]), fields.Strings(request["cc"])...)
-	sent.Participants.Observe(ownerEmail, append(addresses, fields.Strings(request["bcc"])...), fields.Domain(senderEmail))
+	sent.Participants.ObserveParticipants(ownerEmail, append(addresses, fields.Strings(request["bcc"])...), fields.Domain(senderEmail))
 }
 
 // parsedAttachments answers the request's attachments for the attachment

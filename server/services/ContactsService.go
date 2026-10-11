@@ -40,10 +40,9 @@ func (service *ContactsService) Suggestions(owner string, query string, provider
 	return service.book().Suggestions(owner, query, provider)
 }
 
-// observeParticipants learns found-in-mail contacts from a sent message's
-// addresses. The send routes call it; it stays lowercase until they are
-// merged in, because nothing in this slice does.
-func (service *ContactsService) observeParticipants(owner string, addresses []string, mailboxDomain string) {
+// ObserveParticipants learns found-in-mail contacts from the addresses of
+// mail the owner sends or receives; failures only log.
+func (service *ContactsService) ObserveParticipants(owner string, addresses []string, mailboxDomain string) {
 	service.book().ObserveParticipants(owner, addresses, mailboxDomain)
 }
 

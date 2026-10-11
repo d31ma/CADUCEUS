@@ -2,8 +2,14 @@
 // request's one FyloHelper, so every store acts as the caller the request
 // authorized. Delivery reaches more stores than Tachyon lets one provider
 // need (five), so its services need the FyloHelper and build the rest here.
+// The services other areas own (found-in-mail contacts, the conversation
+// archive, calendar invitations) come from the delivery service that needs
+// them.
 type DeliveryStores struct {
-	Fylo *FyloHelper
+	Fylo     *FyloHelper
+	Contacts *ContactsService
+	Archive  *ConversationArchiveService
+	Calendar *CalendarImportService
 }
 
 // Emails answers the email store (with its attachment and source stores).
@@ -28,10 +34,9 @@ func (stores DeliveryStores) Queue(smtp *SmtpService) OutboundQueue {
 // Sent answers outbound mail acceptance.
 func (stores DeliveryStores) Sent(smtp *SmtpService) SentMail {
 	queue := stores.Queue(smtp)
-	participants := MailParticipants{Contacts: &ContactsHelper{fyloHelper: stores.Fylo}, Users: queue.Users}
 	return SentMail{
 		Emails: queue.Emails, Attachments: queue.Attachments, RawMessages: queue.Emails.rawMessagesHelper,
-		Scheduled: queue.Scheduled, Outbox: queue.Outbox, Queue: queue, Participants: participants, Users: queue.Users,
+		Scheduled: queue.Scheduled, Outbox: queue.Outbox, Queue: queue, Participants: stores.Contacts, Users: queue.Users,
 	}
 }
 
@@ -40,18 +45,12 @@ func (stores DeliveryStores) FollowUps() FollowUpReminders {
 	return FollowUpReminders{Reminders: &FollowUpRemindersHelper{fyloHelper: stores.Fylo}, Emails: stores.Emails(), Users: stores.Users()}
 }
 
-// Archive answers Send & Archive's conversation archive.
-func (stores DeliveryStores) Archive() ConversationArchive {
-	emails := stores.Emails()
-	return ConversationArchive{Emails: emails, Threads: &ThreadsHelper{emailsHelper: emails}, Users: stores.Users()}
-}
-
 // Acceptance answers POST /send's acceptance with the request's journal and
 // rate limits.
 func (stores DeliveryStores) Acceptance(smtp *SmtpService, journal SendIdempotency, limits *RateLimitService) SendAcceptance {
 	sent := stores.Sent(smtp)
 	return SendAcceptance{
-		Sent: sent, Journal: journal, Reminders: stores.FollowUps(), Archive: stores.Archive(),
+		Sent: sent, Journal: journal, Reminders: stores.FollowUps(), Archive: stores.Archive,
 		Suppressed: sent.Queue.Suppressed, Senders: OwnedSenders{Users: sent.Users}, Limits: limits,
 	}
 }
@@ -69,7 +68,7 @@ func (stores DeliveryStores) Editing(smtp *SmtpService) ScheduledEditing {
 
 // Undo answers delayed-send undo.
 func (stores DeliveryStores) Undo(smtp *SmtpService) SendUndo {
-	return SendUndo{Sent: stores.Sent(smtp), Reminders: stores.FollowUps(), Archive: stores.Archive()}
+	return SendUndo{Sent: stores.Sent(smtp), Reminders: stores.FollowUps(), Archive: stores.Archive}
 }
 
 // Drafts answers the durable draft lifecycle.
@@ -97,7 +96,7 @@ func (stores DeliveryStores) Inbound(routing InboundRouting, spam *SpamFilterSer
 	users := routing.Users
 	return InboundDelivery{
 		Emails: routing.Emails, Domains: &DomainsHelper{fyloHelper: stores.Fylo}, Users: users, Routing: routing, Spam: spam,
-		FollowUps: stores.FollowUps(), Participants: MailParticipants{Contacts: &ContactsHelper{fyloHelper: stores.Fylo}, Users: users},
+		FollowUps: stores.FollowUps(), Participants: stores.Contacts, Calendar: stores.Calendar,
 		Notices: PushNotices{Users: users, Subscriptions: &PushSubscriptionsHelper{fyloHelper: stores.Fylo}, Emails: routing.Emails}, Storage: TenantStorage{Fylo: stores.Fylo},
 	}
 }

@@ -15,7 +15,7 @@ type SendAcceptance struct {
 	Sent       SentMail
 	Journal    SendIdempotency
 	Reminders  FollowUpReminders
-	Archive    ConversationArchive
+	Archive    *ConversationArchiveService
 	Suppressed *SuppressedHelper
 	Senders    OwnedSenders
 	Limits     *RateLimitService
@@ -188,9 +188,9 @@ func (send SendAcceptance) archiveSource(plan *SendPlan, body map[string]any) (a
 		return nil, nil
 	}
 	archivePlan, err := send.Archive.Plan(source, plan.Caller.Email, plan.Caller.Domains)
-	var refusal *DeliveryRefusal
+	var refusal *ConversationArchiveError
 	if errors.As(err, &refusal) {
-		return refusal.Answer(), nil
+		return (&DeliveryRefusal{Message: refusal.Message, Status: refusal.Status}).Answer(), nil
 	}
 	plan.ArchivePlan = archivePlan
 	return nil, err
@@ -267,7 +267,7 @@ func (send SendAcceptance) hosted(plan SendPlan) (any, error) {
 
 func (send SendAcceptance) archive(plan SendPlan, accepted map[string]any) (map[string]any, error) {
 	if undoId := (RecordValues{}).Text(accepted["undoId"]); undoId != "" {
-		if err := send.Sent.AttachArchiveRollback(undoId, send.Archive.Serialized(plan.ArchivePlan)); err != nil {
+		if err := send.Sent.AttachArchiveRollback(undoId, send.Archive.Serialize(plan.ArchivePlan)); err != nil {
 			return nil, err
 		}
 	}

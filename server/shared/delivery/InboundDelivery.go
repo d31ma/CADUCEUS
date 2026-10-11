@@ -7,8 +7,7 @@ import (
 // domain check, route match, spam classification, then storing the source,
 // attachments and email in the domain's tenant storage, the route action,
 // and for legitimate mail the owner's inbox rules, a push notice, follow-up
-// reminder completion and found-in-mail contacts. Calendar invitations are
-// not imported here: the calendar area owns that import.
+// reminder completion, calendar invitations and found-in-mail contacts.
 type InboundDelivery struct {
 	Emails       *EmailsHelper
 	Domains      *DomainsHelper
@@ -16,7 +15,8 @@ type InboundDelivery struct {
 	Routing      InboundRouting
 	Spam         *SpamFilterService
 	FollowUps    FollowUpReminders
-	Participants MailParticipants
+	Participants *ContactsService
+	Calendar     *CalendarImportService
 	Notices      PushNotices
 	Storage      TenantStorage
 }
@@ -178,11 +178,14 @@ func (delivery InboundDelivery) legitimate(message InboundMessage) error {
 	if delivered != nil {
 		delivery.Notices.NewEmail(delivered)
 	}
+	delivery.Calendar.ImportFromInboundEmail(ImportContext{
+		Recipient: message.Recipient, SourceEmailId: message.Id, TextBody: message.Parsed.Text, Attachments: message.Parsed.Attachments,
+	})
 	threadId := RecordValues{}.Text(message.Metadata["threadId"])
 	if _, err := delivery.FollowUps.ResolveForReply(message.Owner, message.Sender, message.Subject, threadId); err != nil {
 		log.Printf("[inbound] follow-up reminder resolution failed: %v", err)
 		return err
 	}
-	delivery.Participants.Observe(message.Owner, []string{message.Sender}, message.Domain)
+	delivery.Participants.ObserveParticipants(message.Owner, []string{message.Sender}, message.Domain)
 	return nil
 }

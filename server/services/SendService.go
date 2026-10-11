@@ -6,30 +6,38 @@ type SendService struct {
 	fyloHelper *FyloHelper
 	// @Needs
 	smtpService *SmtpService
+	// @Needs
+	contactsService *ContactsService
+	// @Needs
+	conversationArchiveService *ConversationArchiveService
 }
 
 // Sent answers the request's outbound mail acceptance.
 func (service *SendService) Sent() SentMail {
-	return DeliveryStores{Fylo: service.fyloHelper}.Sent(service.smtpService)
+	return service.stores().Sent(service.smtpService)
 }
 
 // Acceptance answers POST /send's acceptance with the request's journal and
 // rate limits.
 func (service *SendService) Acceptance(journal SendIdempotency, limits *RateLimitService) SendAcceptance {
-	return DeliveryStores{Fylo: service.fyloHelper}.Acceptance(service.smtpService, journal, limits)
+	return service.stores().Acceptance(service.smtpService, journal, limits)
 }
 
 // Schedules answers scheduled-message management.
 func (service *SendService) Schedules() ScheduledSends {
-	return DeliveryStores{Fylo: service.fyloHelper}.Schedules(service.smtpService)
+	return service.stores().Schedules(service.smtpService)
 }
 
 // Editing answers scheduled-message editing.
 func (service *SendService) Editing() ScheduledEditing {
-	return DeliveryStores{Fylo: service.fyloHelper}.Editing(service.smtpService)
+	return service.stores().Editing(service.smtpService)
 }
 
 // Undo answers delayed-send undo.
 func (service *SendService) Undo() SendUndo {
-	return DeliveryStores{Fylo: service.fyloHelper}.Undo(service.smtpService)
+	return service.stores().Undo(service.smtpService)
+}
+
+func (service *SendService) stores() DeliveryStores {
+	return DeliveryStores{Fylo: service.fyloHelper, Contacts: service.contactsService, Archive: service.conversationArchiveService}
 }

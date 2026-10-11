@@ -88,111 +88,68 @@ export function emlArchiveFilename(folder, domain) {
   return `${mailbox}-${name}-eml.zip`
 }
 
+/**
+ * Write one little-endian ZIP record from its [offset, bits, value] fields.
+ * @param {number} size
+ * @param {Array<[number, 16 | 32 | 64, number | bigint]>} fields
+ */
+function record(size, fields) {
+  const bytes = new Uint8Array(size)
+  const view = new DataView(bytes.buffer)
+  for (const [offset, bits, value] of fields) {
+    if (bits === 64) view.setBigUint64(offset, BigInt(value), true)
+    else if (bits === 32) view.setUint32(offset, Number(value), true)
+    else view.setUint16(offset, Number(value), true)
+  }
+  return bytes
+}
+
 /** @param {{ name: Uint8Array, crc: number, size: bigint, time: number, date: number }} entry */
 function localHeader(entry) {
-  const bytes = new Uint8Array(30)
-  const view = new DataView(bytes.buffer)
-  view.setUint32(0, 0x04034b50, true)
-  view.setUint16(4, ZIP64_VERSION, true)
-  view.setUint16(6, UTF8_FLAG, true)
-  view.setUint16(8, 0, true)
-  view.setUint16(10, entry.time, true)
-  view.setUint16(12, entry.date, true)
-  view.setUint32(14, entry.crc, true)
-  view.setUint32(18, UINT32_MAX, true)
-  view.setUint32(22, UINT32_MAX, true)
-  view.setUint16(26, entry.name.byteLength, true)
-  view.setUint16(28, 20, true)
-  return bytes
+  return record(30, [
+    [0, 32, 0x04034b50], [4, 16, ZIP64_VERSION], [6, 16, UTF8_FLAG], [8, 16, 0], [10, 16, entry.time], [12, 16, entry.date], [14, 32, entry.crc], [18, 32, UINT32_MAX], [22, 32, UINT32_MAX], [26, 16, entry.name.byteLength], [28, 16, 20],
+  ])
 }
 
 /** @param {{ size: bigint }} entry */
 function localZip64Extra(entry) {
-  const bytes = new Uint8Array(20)
-  const view = new DataView(bytes.buffer)
-  view.setUint16(0, 0x0001, true)
-  view.setUint16(2, 16, true)
-  view.setBigUint64(4, entry.size, true)
-  view.setBigUint64(12, entry.size, true)
-  return bytes
+  return record(20, [
+    [0, 16, 0x0001], [2, 16, 16], [4, 64, entry.size], [12, 64, entry.size],
+  ])
 }
 
 /** @param {{ name: Uint8Array, crc: number, size: bigint, offset: bigint, time: number, date: number }} entry */
 function centralHeader(entry) {
-  const bytes = new Uint8Array(46)
-  const view = new DataView(bytes.buffer)
-  view.setUint32(0, 0x02014b50, true)
-  view.setUint16(4, (3 << 8) | ZIP64_VERSION, true)
-  view.setUint16(6, ZIP64_VERSION, true)
-  view.setUint16(8, UTF8_FLAG, true)
-  view.setUint16(10, 0, true)
-  view.setUint16(12, entry.time, true)
-  view.setUint16(14, entry.date, true)
-  view.setUint32(16, entry.crc, true)
-  view.setUint32(20, UINT32_MAX, true)
-  view.setUint32(24, UINT32_MAX, true)
-  view.setUint16(28, entry.name.byteLength, true)
-  view.setUint16(30, 28, true)
-  view.setUint16(32, 0, true)
-  view.setUint16(34, 0, true)
-  view.setUint16(36, 0, true)
-  view.setUint32(38, 0, true)
-  view.setUint32(42, UINT32_MAX, true)
-  return bytes
+  return record(46, [
+    [0, 32, 0x02014b50], [4, 16, (3 << 8) | ZIP64_VERSION], [6, 16, ZIP64_VERSION], [8, 16, UTF8_FLAG], [10, 16, 0], [12, 16, entry.time], [14, 16, entry.date], [16, 32, entry.crc], [20, 32, UINT32_MAX], [24, 32, UINT32_MAX], [28, 16, entry.name.byteLength], [30, 16, 28], [32, 16, 0], [34, 16, 0], [36, 16, 0], [38, 32, 0], [42, 32, UINT32_MAX],
+  ])
 }
 
 /** @param {{ size: bigint, offset: bigint }} entry */
 function centralZip64Extra(entry) {
-  const bytes = new Uint8Array(28)
-  const view = new DataView(bytes.buffer)
-  view.setUint16(0, 0x0001, true)
-  view.setUint16(2, 24, true)
-  view.setBigUint64(4, entry.size, true)
-  view.setBigUint64(12, entry.size, true)
-  view.setBigUint64(20, entry.offset, true)
-  return bytes
+  return record(28, [
+    [0, 16, 0x0001], [2, 16, 24], [4, 64, entry.size], [12, 64, entry.size], [20, 64, entry.offset],
+  ])
 }
 
 /** @param {number} count @param {bigint} centralSize @param {bigint} centralOffset */
 function zip64End(count, centralSize, centralOffset) {
-  const bytes = new Uint8Array(56)
-  const view = new DataView(bytes.buffer)
-  view.setUint32(0, 0x06064b50, true)
-  view.setBigUint64(4, 44n, true)
-  view.setUint16(12, (3 << 8) | ZIP64_VERSION, true)
-  view.setUint16(14, ZIP64_VERSION, true)
-  view.setUint32(16, 0, true)
-  view.setUint32(20, 0, true)
-  view.setBigUint64(24, BigInt(count), true)
-  view.setBigUint64(32, BigInt(count), true)
-  view.setBigUint64(40, centralSize, true)
-  view.setBigUint64(48, centralOffset, true)
-  return bytes
+  return record(56, [
+    [0, 32, 0x06064b50], [4, 64, 44n], [12, 16, (3 << 8) | ZIP64_VERSION], [14, 16, ZIP64_VERSION], [16, 32, 0], [20, 32, 0], [24, 64, BigInt(count)], [32, 64, BigInt(count)], [40, 64, centralSize], [48, 64, centralOffset],
+  ])
 }
 
 /** @param {bigint} zip64Offset */
 function zip64Locator(zip64Offset) {
-  const bytes = new Uint8Array(20)
-  const view = new DataView(bytes.buffer)
-  view.setUint32(0, 0x07064b50, true)
-  view.setUint32(4, 0, true)
-  view.setBigUint64(8, zip64Offset, true)
-  view.setUint32(16, 1, true)
-  return bytes
+  return record(20, [
+    [0, 32, 0x07064b50], [4, 32, 0], [8, 64, zip64Offset], [16, 32, 1],
+  ])
 }
 
 function classicEnd() {
-  const bytes = new Uint8Array(22)
-  const view = new DataView(bytes.buffer)
-  view.setUint32(0, 0x06054b50, true)
-  view.setUint16(4, 0, true)
-  view.setUint16(6, 0, true)
-  view.setUint16(8, UINT16_MAX, true)
-  view.setUint16(10, UINT16_MAX, true)
-  view.setUint32(12, UINT32_MAX, true)
-  view.setUint32(16, UINT32_MAX, true)
-  view.setUint16(20, 0, true)
-  return bytes
+  return record(22, [
+    [0, 32, 0x06054b50], [4, 16, 0], [6, 16, 0], [8, 16, UINT16_MAX], [10, 16, UINT16_MAX], [12, 32, UINT32_MAX], [16, 32, UINT32_MAX], [20, 16, 0],
+  ])
 }
 
 /** @param {Uint8Array} bytes */

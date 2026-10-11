@@ -228,8 +228,9 @@ ships, build with an unreleased Linux `ty`:
 docker build --build-context tachyon-override=<dir holding ty> -t caduceus:local .
 ```
 
-The image's entry point is `caduceus entry`; the build compiles the Go handlers
-with `ty bundle`, so the image serves without a compiler.
+The image's entry point is `caduceus entry`. The build bundles the client with
+`ty bundle`; Yon compiles each Go handler on first use, so the image keeps the
+Go toolchain.
 
 The container serves the API on `PORT` and stores data under `FYLO_ROOT`.
 

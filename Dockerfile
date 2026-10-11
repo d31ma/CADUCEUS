@@ -98,10 +98,10 @@ RUN bun run translation:vendor && bun run translation:verify
 RUN rm -f server/controllers/Test*Controller.go \
   && ! ls server/controllers | grep -q '^Test.*Controller\.go$'
 
-# Build the client bundle and compile every Go handler now, so the image
-# serves without a compiler and a broken build fails here, not at start.
-RUN NODE_ENV=production ty bundle \
-  && test -d .tachyon/handlers
+# Build the client bundle now, so a broken build fails here, not at start.
+# Yon compiles each Go handler on first use into .tachyon/handlers, so the
+# runtime image keeps the Go toolchain.
+RUN NODE_ENV=production ty bundle
 
 # Validate the image can actually serve — catch missing deps / broken bundles
 # at build time rather than deploying a broken container that fails at runtime.
@@ -143,12 +143,15 @@ COPY --from=builder /usr/local/bin/sesame /usr/local/bin/sesame
 COPY --from=builder /usr/local/bin/chex /usr/local/bin/chex
 COPY --from=builder /usr/local/bin/ttid /usr/local/bin/ttid
 COPY --from=go-builder /out/caduceus /usr/local/bin/caduceus
+COPY --from=go-builder /usr/local/go /usr/local/go
 
 WORKDIR /app
 ENV HOME=/home/bun
 USER 65532:65532
 
 ENV NODE_ENV=production \
+    PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin \
+    GOTOOLCHAIN=local \
     HOST=0.0.0.0 \
     PORT=8080 \
     FYLO_ROOT=/data/caduceus \

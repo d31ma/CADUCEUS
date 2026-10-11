@@ -27,6 +27,7 @@ export default class CalendarBrowserService {
 
   ready = false
   _dragEventId = ''
+  _pointing = false
   /** @type {Array<[EventTarget, string, (event: any) => void]>} */
   _bindings = []
   /** @type {MutationObserver | null} */
@@ -42,6 +43,7 @@ export default class CalendarBrowserService {
       [document, 'dragleave', event => this._dragLeave(event, this._closest(event.target, type._DROP))],
       [document, 'drop', event => this._drop(event, this._closest(event.target, type._DROP))],
       [document, 'dragend', () => this._clearDrag()],
+      [document, 'pointerdown', () => this._pointed()],
       [document, 'focusin', event => this._focusIn(this._closest(event.target, type._EVENT))],
     ]
     this._bindings.forEach(([target, name, handler]) => target.addEventListener(name, handler))
@@ -141,8 +143,18 @@ export default class CalendarBrowserService {
    * focused a chip would then land on a detached node.
    * @param {HTMLElement | null} chip
    */
+  /**
+   * A pointer press focuses the chip it lands on. Go hears only keyboard
+   * focus: the re-render that a published focus starts replaces the chip
+   * before the press ends, and the click would be lost.
+   */
+  _pointed() {
+    this._pointing = true
+    setTimeout(() => { this._pointing = false }, 0)
+  }
+
   _focusIn(chip) {
-    if (!chip) return
+    if ([!chip, this._pointing].includes(true)) return
     const type = CalendarBrowserService
     /** @type {CalendarEventFocused} */
     const focused = { id: String(chip.getAttribute(type._EVENT_ID)) }

@@ -13,6 +13,10 @@ export default class BrowserPageService {
   static _ATTRIBUTE_CACHE = 'caduceus-document-attributes'
   static _DRAG_TYPE = 'application/x-caduceus-mail-ids'
   static _DRAGGING = 'drag-over'
+  // A click matters to Go only while the user menu is open (to close it).
+  // Publishing every click re-rendered the page mid-click, which replaced
+  // the element being used (a DuVay select's popup, a list row).
+  static _OPEN_MENU = '.app-user-trigger[aria-expanded="true"]'
 
   /** @type {ApplicationEventPublisher} */
   applicationEventPublisher
@@ -208,8 +212,18 @@ export default class BrowserPageService {
   _clicked(target, event) {
     /** @type {PageClicked} */
     const clicked = { insideUserMenu: Boolean(target?.closest('.app-user-menu')) }
-    this.applicationEventPublisher.publishEvent(clicked, false)
+    this._publishClick(clicked)
+    this._signOutFrom(target, event)
+  }
+
+  /** @param {Element | null} target @param {MouseEvent} event */
+  _signOutFrom(target, event) {
     if (target?.closest('[data-sign-out]')) this._signOut(event)
+  }
+
+  /** @param {PageClicked} clicked */
+  _publishClick(clicked) {
+    if (document.querySelector(BrowserPageService._OPEN_MENU)) this.applicationEventPublisher.publishEvent(clicked, false)
   }
 
   /** @param {MouseEvent} event */

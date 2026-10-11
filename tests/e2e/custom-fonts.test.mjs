@@ -21,8 +21,8 @@ test('persists separate local interface and composer fonts across navigation and
   await page.goto('/settings')
   await waitForUiReady(page)
 
-  const interfaceSelect = page.locator('[data-interface-font]')
-  const composerSelect = page.locator('[data-composer-font]')
+  const interfaceSelect = page.locator('select[data-interface-font]')
+  const composerSelect = page.locator('select[data-composer-font]')
   await expect(interfaceSelect).toHaveValue('plex-sans')
   await expect(composerSelect).toHaveValue('interface')
 
@@ -58,7 +58,7 @@ test('persists separate local interface and composer fonts across navigation and
 
   await page.goto('/settings')
   await waitForUiReady(page)
-  await expect(page.locator('[data-interface-font]')).toHaveValue('serif')
-  await expect(page.locator('[data-composer-font]')).toHaveValue('monospace')
+  await expect(page.locator('select[data-interface-font]')).toHaveValue('serif')
+  await expect(page.locator('select[data-composer-font]')).toHaveValue('monospace')
   expect(errors).toEqual([])
 })

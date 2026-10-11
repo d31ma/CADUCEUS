@@ -46,16 +46,9 @@ test('imports multiple EML files with progress and exact mailbox placement', asy
 
 test('cancels a stalled EML import without starting remaining files', async ({ page }) => {
   const { email } = await authenticatedMailbox(page)
-  await page.evaluate(() => {
-    const original = window._caduceus.apiFetch
-    window._caduceus.apiFetch = (path, options) => {
-      if (!String(path).startsWith('/inbox/import/eml')) return original(path, options)
-      return new Promise((resolve, reject) => {
-        const abort = () => reject(options?.signal?.reason || new DOMException('Aborted', 'AbortError'))
-        options?.signal?.addEventListener('abort', abort, { once: true })
-      })
-    }
-  })
+  // The first upload never gets an answer; the browser cancels it when the
+  // import is canceled.
+  await page.route('**/inbox/import/eml', () => {})
   const source = Buffer.from(`From: sender@sender.test\r\nTo: ${email}\r\nSubject: Never committed\r\n\r\nBody`)
   await page.locator('[data-eml-import]').setInputFiles([
     { name: 'stalled.eml', mimeType: 'message/rfc822', buffer: source },

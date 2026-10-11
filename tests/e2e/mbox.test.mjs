@@ -101,17 +101,9 @@ test('cancels a stalled export and installs no partial download', async ({ page 
   await authenticatedMailbox(page)
   await page.goto('/inbox')
   await waitForUiReady(page)
-  await page.evaluate(() => {
-    const original = window._caduceus.apiFetch
-    window._caduceus.apiFetch = (path, options) => {
-      if (!String(path).startsWith('/inbox/export/rfc822')) return original(path, options)
-      const magic = new TextEncoder().encode('CADUCEUS-RFC822-FRAMES/1\n')
-      return Promise.resolve(new Response(new ReadableStream({
-        start(controller) { controller.enqueue(magic) },
-        cancel() {},
-      }), { headers: { 'Content-Type': 'application/vnd.caduceus.rfc822-frames; version=1' } }))
-    }
-  })
+  // The export request never gets an answer, so the export stalls until it
+  // is canceled.
+  await page.route('**/inbox/export/rfc822**', () => {})
 
   let downloaded = false
   page.on('download', () => { downloaded = true })

@@ -13,6 +13,9 @@ async function authenticate(page) {
   const identity = await getToken(email)
   await useTestApi(page)
   await loginAs(page, identity.token, identity.email, identity.role, identity.domains)
+  // The keyboard runtime announces each application of the account's
+  // shortcut overrides, which follows the preferences load on every page.
+  await page.addInitScript(() => addEventListener('caduceus:keyboard-shortcuts-changed', () => { window.__keyboardOverridesApplied = true }))
   return { email, token: identity.token, domain }
 }
 
@@ -20,7 +23,7 @@ async function goto(page, path) {
   await page.goto(path)
   await waitForUiReady(page)
   await page.waitForFunction(() => window._caduceusKeyboard?.getCatalog?.().length > 0)
-  await page.waitForFunction(() => window._caduceusPreferencesReady === true)
+  await page.waitForFunction(() => window.__keyboardOverridesApplied === true)
 }
 
 async function countShortcutEvents(page) {

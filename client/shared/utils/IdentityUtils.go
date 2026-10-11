@@ -1,19 +1,23 @@
 import (
-	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
+	"strconv"
 	"strings"
+	"time"
 )
 
-// IdentityUtils makes the random identifiers that the client sends with a
-// change, such as a mailbox action's clientRequestId or an idempotency key.
-// It reads crypto/rand rather than the SecureRandom browser API, which
-// crashed the TinyGo module when called from an event listener.
+// IdentityUtils makes the identifiers that the client sends with a change,
+// such as a mailbox action's clientRequestId or a folder mutation's
+// idempotency key. They need to be unique, not secret. The SecureRandom
+// browser API crashed the TinyGo module when called from an event listener,
+// and crypto/rand crashed it at start, so the identifier is a digest of the
+// change and the current time.
 type IdentityUtils struct{}
 
-// UUID is a random version 4 UUID.
-func (IdentityUtils) UUID() string {
-	bytes := make([]byte, IdentityUtils{}.size())
-	rand.Read(bytes)
+// UUID is a version-4-shaped identifier derived from seed and the time.
+func (IdentityUtils) UUID(seed string) string {
+	digest := sha256.Sum256([]byte(seed + "|" + strconv.FormatInt(time.Now().UnixNano(), 36)))
+	bytes := digest[:IdentityUtils{}.size()]
 	bytes[IdentityUtils{}.versionByte()] = bytes[IdentityUtils{}.versionByte()]&0x0f | 0x40
 	bytes[IdentityUtils{}.variantByte()] = bytes[IdentityUtils{}.variantByte()]&0x3f | 0x80
 	return IdentityUtils{}.grouped(bytes)

@@ -213,7 +213,7 @@ func (mailbox *MailboxService) startActivity() {
 
 // apply runs one exact-owner mailbox action and offers its undo.
 func (mailbox *MailboxService) apply(ids []string, patch map[string]any, message string) {
-	requestID := IdentityUtils{}.UUID()
+	requestID := IdentityUtils{}.UUID(strings.Join(ids, ","))
 	result, failure := mailbox.inboxClient.Apply(mailbox.bearer(), MailActionRequest{Ids: ids, Patch: patch, ClientRequestID: requestID})
 	mailbox.settled(failure, result, message, mailbox.names().Undo)()
 }

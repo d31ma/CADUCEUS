@@ -159,7 +159,8 @@ Go services may use only Tachyon's browser APIs: `Clock`, `SecureRandom`,
 `Notifications` and `Geolocation`. Declare each with `// @Needs`, as in
 `notifications Notifications`. Do not call `SecureRandom` from an event
 listener: in the TinyGo module it crashed the page ("null function", "memory
-access out of bounds"). Use `IdentityUtils{}.UUID()` (`crypto/rand`) for
+access out of bounds"), and so did importing `crypto/rand`. Use
+`IdentityUtils{}.UUID(seed)` (a digest of the change and the time) for
 request identifiers. The built-in events `ConnectivityChanged`,
 `VisibilityChanged`, `PreferencesChanged` and `NotificationPermissionChanged`
 need no model.

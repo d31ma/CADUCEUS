@@ -5,13 +5,15 @@
  * to run in the page before any service exists and that no Tac service can
  * own: in-memory storage fallbacks, the runtime configuration default, the
  * DuVay readiness promise that the UI tests wait on, the keyboard command
- * runtime, modal focus containment and the literal interface localizer.
+ * runtime, modal focus containment, the column resizers and the literal
+ * interface localizer.
  * Markup and styles stay in the views and in the stylesheets of `tac.styles`.
  */
 
 import './shortcuts.js'
 import './keyboard.js'
 import './dialog-focus.js'
+import './column-resizers.js'
 
 /** @returns {Storage} */
 function memoryStorage() {

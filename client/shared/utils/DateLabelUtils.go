@@ -3,9 +3,10 @@ import (
 	"time"
 )
 
-// DateLabelUtils writes the date and time labels the mailbox views show. It
-// matches what Intl.DateTimeFormat gives for the English interface locale,
-// in the browser's time zone: a WebAssembly service has no Intl.
+// DateLabelUtils writes the date and time labels the mailbox views and the
+// calendar show. Each matches what Intl.DateTimeFormat gives for the English
+// interface locale (Chromium's en-US output), in the browser's time zone,
+// including the 12 or 24 hour clock choice: a WebAssembly service has no Intl.
 type DateLabelUtils struct{}
 
 // Numeric is Intl.DateTimeFormat('en').format(value): "10/11/2026", or ""
@@ -28,9 +29,55 @@ func (DateLabelUtils) Clock(moment time.Time, use24HourClock bool) string {
 	return DateLabelUtils{}.hours(moment, minutes, use24HourClock)
 }
 
-// MonthDayOf is the local month and day of a moment, such as "Oct 11".
-func (DateLabelUtils) MonthDayOf(moment time.Time) string {
-	return moment.Format(DateLabelUtils{}.monthDayLayout())
+// WeekdayMonthDay is { weekday: 'long', month: 'long', day: 'numeric' }: "Saturday, October 10".
+func (labels DateLabelUtils) WeekdayMonthDay(moment time.Time) string {
+	return moment.Format("Monday, January 2")
+}
+
+// MonthYear is { month: 'long', year: 'numeric' }: "October 2026".
+func (labels DateLabelUtils) MonthYear(moment time.Time) string {
+	return moment.Format("January 2006")
+}
+
+// WeekdayMonthDayYear is the long day with its year: "Saturday, October 10, 2026".
+func (labels DateLabelUtils) WeekdayMonthDayYear(moment time.Time) string {
+	return moment.Format("Monday, January 2, 2006")
+}
+
+// ShortMonthDay is { month: 'short', day: 'numeric' }: "Oct 10".
+func (labels DateLabelUtils) ShortMonthDay(moment time.Time) string {
+	return moment.Format(labels.monthDayLayout())
+}
+
+// ShortMonthDayYear is { month: 'short', day: 'numeric', year: 'numeric' }: "Oct 10, 2026".
+func (labels DateLabelUtils) ShortMonthDayYear(moment time.Time) string {
+	return moment.Format("Jan 2, 2006")
+}
+
+// YearAndDay is { day: 'numeric', year: 'numeric' }, which Chromium's en-US
+// pattern writes as "2026 (day: 10)".
+func (labels DateLabelUtils) YearAndDay(moment time.Time) string {
+	return moment.Format("2006 (day: 2)")
+}
+
+// ShortWeekday is { weekday: 'short' }: "Sat".
+func (labels DateLabelUtils) ShortWeekday(moment time.Time) string {
+	return moment.Format("Mon")
+}
+
+// ShortWeekdayMonthDay is { weekday: 'short', month: 'short', day: 'numeric' }: "Sat, Oct 10".
+func (labels DateLabelUtils) ShortWeekdayMonthDay(moment time.Time) string {
+	return moment.Format("Mon, Jan 2")
+}
+
+// HourMinute is { hour: '2-digit', minute: '2-digit' }: "09:05 AM", or "09:05" on a 24 hour clock.
+func (labels DateLabelUtils) HourMinute(moment time.Time, twentyFourHour bool) string {
+	return moment.Format(labels.clockLayouts()[twentyFourHour])
+}
+
+// ShortDateTime is the short weekday, date and clock: "Sat, Oct 10, 2026, 09:05 AM".
+func (labels DateLabelUtils) ShortDateTime(moment time.Time, twentyFourHour bool) string {
+	return moment.Format("Mon, Jan 2, 2006, ") + labels.HourMinute(moment, twentyFourHour)
 }
 
 func (DateLabelUtils) numericUnless(moment time.Time, failure error) string {
@@ -53,6 +100,10 @@ func (DateLabelUtils) hours(moment time.Time, minutes string, use24HourClock boo
 	}
 	half := DateLabelUtils{}.halfDay()
 	return fmt.Sprintf("%d%s %s", (moment.Hour()+half-1)%half+1, minutes, []string{"AM", "PM"}[moment.Hour()/half])
+}
+
+func (DateLabelUtils) clockLayouts() map[bool]string {
+	return map[bool]string{false: "03:04 PM", true: "15:04"}
 }
 
 func (DateLabelUtils) halfDay() int { return 12 }

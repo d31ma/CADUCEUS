@@ -70,7 +70,7 @@ func (test *MailboxUtilitiesTest) TestDateLabelsMatchTheEnglishLocale() {
 	Assert.Equals("Jan 5", DateLabelUtils{}.MonthDay("2026-01-05"))
 	Assert.Equals("1:05 PM", DateLabelUtils{}.Clock(local, false))
 	Assert.Equals("09", DateLabelUtils{}.Clock(time.Date(2026, 10, 11, 9, 0, 0, 0, time.Local), true))
-	Assert.Equals("Oct 11", DateLabelUtils{}.MonthDayOf(local))
+	Assert.Equals("Oct 11", DateLabelUtils{}.ShortMonthDay(local))
 }
 
 func (test *MailboxUtilitiesTest) TestSnoozeBadgeShowsTheDayWhenLater() {

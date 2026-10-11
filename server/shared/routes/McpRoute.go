@@ -105,7 +105,7 @@ func (route McpRoute) execute(principal McpPrincipal, tool McpTool, input map[st
 		answer = McpToolResults{}.Failed(fmt.Sprintf("MCP access level %s does not permit %s tools", principal.AccessLevel, tool.Category))
 	} else {
 		route.Fylo.ActFor(principal.OwnerEmail, principal.AllowedDomains)
-		result, err := route.Mailbox.Run(principal, tool.Name, input)
+		result, err := route.Mailbox.Run(McpToolCall{Principal: principal, Name: tool.Name, Input: input, Fylo: route.Fylo})
 		if err != nil {
 			status = "error"
 			answer = McpToolResults{}.Failed(err.Error())

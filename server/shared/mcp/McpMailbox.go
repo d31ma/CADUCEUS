@@ -1,5 +1,6 @@
 import (
 	"errors"
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -14,6 +15,7 @@ type McpMailbox struct {
 	Threads     *ThreadsHelper
 	Attachments *AttachmentsHelper
 	Scheduled   *ScheduledHelper
+	Fylo        *FyloHelper
 }
 
 // Run answers the result of one tool with already parsed arguments.
@@ -53,12 +55,14 @@ func (mailbox McpMailbox) Run(name string, input map[string]any) (any, error) {
 		return mailbox.patchSelected(input, map[string]any{"starred": input["starred"] == true})
 	case "reply_to_thread":
 		return mailbox.reply(input)
+	case "create_draft":
+		return mailbox.drafts().Create(mailbox.Principal, input)
 	case "schedule_send":
 		if at := (EpochTime{}).Parse(RecordValues{}.Text(input["sendAt"])); at != at || at <= float64(EpochTime{}.Now()) {
 			return nil, errors.New("sendAt must be in the future")
 		}
 	}
-	return nil, errors.New("Drafts and sending over MCP are not available on this server yet")
+	return nil, errors.New("Sending over MCP is not available on this server yet")
 }
 
 func (mailbox McpMailbox) accounts() (any, error) {
@@ -278,7 +282,48 @@ func (mailbox McpMailbox) reply(input map[string]any) (any, error) {
 	if thread == nil {
 		return nil, errors.New("Thread not found")
 	}
-	return nil, errors.New("Drafts and sending over MCP are not available on this server yet")
+	latest := thread.LatestEmail
+	owned, err := SenderAddresses{Users: mailbox.Users}.Owned(mailbox.Principal.OwnerEmail)
+	if err != nil {
+		return nil, err
+	}
+	candidates := []any{latest["sender"]}
+	if input["replyAll"] == true {
+		for _, field := range []string{"to", "cc"} {
+			list, _ := RecordValues{}.List(latest[field])
+			candidates = append(candidates, list...)
+		}
+	}
+	to := []any{}
+	for _, candidate := range candidates {
+		address := strings.ToLower(RecordValues{}.String(candidate))
+		if strings.Contains(address, "@") && !(PreferenceChoices{}).Includes(owned, address) && !(TextValue{}).Includes(mailbox.texts(to), address) {
+			to = append(to, address)
+		}
+	}
+	if len(to) == 0 {
+		return nil, errors.New("Thread has no reply recipient")
+	}
+	references := []any{}
+	listed, _ := RecordValues{}.List(latest["references"])
+	for _, reference := range append(listed, latest["inReplyTo"], latest["rfcMessageId"]) {
+		if (RecordValues{}).Truthy(reference) && !(TextValue{}).Includes(mailbox.texts(references), reference) {
+			references = append(references, reference)
+		}
+	}
+	subject := RecordValues{}.String(latest["subject"])
+	if !regexp.MustCompile(`(?i)^re:`).MatchString(subject) {
+		subject = "Re: " + subject
+	}
+	source := map[string]any{"to": to, "cc": []any{}, "bcc": []any{}, "subject": subject, "text": input["text"], "html": input["html"], "references": references, "sourceEmailId": latest["id"]}
+	if messageId, present := latest["rfcMessageId"]; present {
+		source["inReplyTo"] = messageId
+	}
+	return mailbox.drafts().Create(mailbox.Principal, source)
+}
+
+func (mailbox McpMailbox) drafts() McpDrafts {
+	return McpDrafts{Users: mailbox.Users, Emails: mailbox.Emails, Fylo: mailbox.Fylo}
 }
 
 func (mailbox McpMailbox) moveToRole(threadIds []string, role string) (any, error) {

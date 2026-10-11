@@ -16,12 +16,12 @@ type InviteService struct {
 }
 
 // @OnEvent({"replay":true})
-func (service *InviteService) SessionChanged(changed SessionChanged) {
+func (service *InviteService) HearSession(changed SessionChanged) {
 	service.token = changed.Token
 }
 
 // @OnEvent({"replay":true})
-func (service *InviteService) MessageOpened(opened OpenMessageChanged) {
+func (service *InviteService) HearMessage(opened OpenMessageChanged) {
 	service.show(opened.CalendarInvite)
 }
 
@@ -45,11 +45,12 @@ func (service *InviteService) labelled(invite CalendarInvite) CalendarInvite {
 	invite.DisplayStatus = service.displayStatus(invite)
 	invite.StatusLabel = service.statusLabel(invite.Status == "cancelled", invite.DisplayStatus)
 	invite.SenderResponseText = service.responseText(invite.SenderResponse)
+	invite.WhenLabel = InviteUtils{}.When(invite)
 	return invite
 }
 
 func (service *InviteService) displayStatus(invite CalendarInvite) string {
-	return TextUtils{}.Or(TextUtils{}.Or(service.responseStatus(invite.SenderResponse), invite.MyStatus), "needsAction")
+	return TextUtils{}.FirstOf(TextUtils{}.FirstOf(service.responseStatus(invite.SenderResponse), invite.MyStatus), "needsAction")
 }
 
 func (service *InviteService) responseStatus(response *InviteResponse) string {
@@ -61,7 +62,7 @@ func (service *InviteService) responseStatus(response *InviteResponse) string {
 
 func (service *InviteService) statusLabel(cancelled bool, status string) string {
 	labels := map[string]string{"accepted": "Going", "declined": "Not going", "tentative": "Maybe", "delegated": "Delegated", "completed": "Completed"}
-	return TextUtils{}.Choose(cancelled, "Canceled", TextUtils{}.Or(labels[status], "No response"))
+	return TextUtils{}.Choose(cancelled, "Canceled", TextUtils{}.FirstOf(labels[status], "No response"))
 }
 
 func (service *InviteService) responseText(response *InviteResponse) string {
@@ -69,34 +70,27 @@ func (service *InviteService) responseText(response *InviteResponse) string {
 		return ""
 	}
 	verbs := map[string]string{"accepted": "accepted", "declined": "declined", "tentative": "tentatively accepted", "delegated": "delegated", "completed": "completed"}
-	return TextUtils{}.Or(TextUtils{}.Or(response.Name, response.Email), "The attendee") + TextUtils{}.Choose(verbs[response.Status] == "", " has not responded to", " "+verbs[response.Status]) + " this invitation."
+	return TextUtils{}.FirstOf(TextUtils{}.FirstOf(response.Name, response.Email), "The attendee") + TextUtils{}.Choose(verbs[response.Status] == "", " has not responded to", " "+verbs[response.Status]) + " this invitation."
 }
 
 func (service *InviteService) respond(status string) {
-	if service.Invite.Id != "" && service.Invite.CanRespond && !service.Busy {
+	if (LogicUtils{}).All(service.Invite.Id != "", service.Invite.CanRespond, !service.Busy) {
 		service.send(status)
 	}
 }
 
 func (service *InviteService) send(status string) {
 	service.Busy = true
-	_, failure := service.calendarClient.RespondToInvite(map[string]any{"eventId": service.Invite.Id, "status": status}, "Bearer "+service.token)
-	service.responded(FailureUtils{}.Code(failure), status)
+	_, failure := service.calendarClient.RespondToInvite("Bearer "+service.token, map[string]any{"eventId": service.Invite.Id, "status": status})
+	service.responded(failure, status)
 	service.Busy = false
 }
 
-func (service *InviteService) responded(code string, status string) {
+func (service *InviteService) responded(failure error, status string) {
 	labels := map[string]string{"accepted": "Accepted.", "declined": "Declined.", "tentative": "Tentative."}
-	switch code {
-	case "":
-		service.Invite.MyStatus = status
-		service.Invite = service.labelled(service.Invite)
-		service.toast(labels[status])
-	case FailureUtils{}.OfflineCode():
-		service.toast("Network error.")
-	default:
-		service.toast("Could not record your response.")
-	}
+	service.Invite.MyStatus = TextUtils{}.Choose(failure == nil, status, service.Invite.MyStatus)
+	service.Invite = service.labelled(service.Invite)
+	service.toast(TextUtils{}.Choose(failure == nil, labels[status], HTTPUtils{}.Message(failure, "Could not record your response.", "Network error.")))
 }
 
 func (service *InviteService) toast(message string) {

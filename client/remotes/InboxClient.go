@@ -59,4 +59,62 @@ type InboxClient interface {
 		// @RequestParam("account")
 		account string,
 	) ([]Email, error)
+
+	// Read is the whole message the reader opens.
+	//
+	// @GetRequest("/{id}")
+	Read(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @PathVariable
+		id BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @PutRequest("/{id}")
+	Update(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @PathVariable
+		id BehaviorValue,
+		// @RequestBody
+		patch BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @DeleteRequest("/{id}")
+	Delete(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @PathVariable
+		id BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @GetRequest("/{id}/source")
+	Source(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+	) (MessageSource, error)
+
+	// @GetRequest("/{id}/attachments/{attachmentId}")
+	Attachment(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+		// @PathVariable
+		attachmentId string,
+	) (AttachmentContent, error)
+
+	// Images reads remote images through the server's privacy proxy.
+	//
+	// @PostRequest("/{id}/images")
+	Images(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+		// @RequestBody
+		request BehaviorValue,
+	) (ProxyImages, error)
 }

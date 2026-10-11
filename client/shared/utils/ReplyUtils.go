@@ -30,7 +30,7 @@ func (ReplyUtils) withParent(chain []string, parent string) []string {
 func (ReplyUtils) maximumReferences() int { return 100 }
 
 func (ReplyUtils) capped(chain []string) []string {
-	if len(chain) >= ReplyUtils{}.maximumReferences() {
+	if len(chain) >= (ReplyUtils{}).maximumReferences() {
 		return append([]string{chain[0]}, chain[len(chain)-98:]...)
 	}
 	return chain

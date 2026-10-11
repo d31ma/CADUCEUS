@@ -9,4 +9,12 @@ type SnoozeClient interface {
 		// @PathVariable
 		id BehaviorValue,
 	) (BehaviorValue, error)
+
+	// @PostRequest
+	Snooze(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		snooze BehaviorValue,
+	) (SnoozeResult, error)
 }

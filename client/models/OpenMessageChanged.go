@@ -1,3 +1,5 @@
+// OpenMessageChanged (retained) is the message the reader shows; the
+// conversation, contact, snooze, share and invitation parts follow it.
 type OpenMessageChanged struct {
 	EmailId            string          `json:"emailId"`
 	Domain             string          `json:"domain"`
@@ -8,4 +10,5 @@ type OpenMessageChanged struct {
 	ParticipantAddress string          `json:"participantAddress"`
 	Standalone         bool            `json:"standalone"`
 	CalendarInvite     *CalendarInvite `json:"calendarInvite"`
+	Account            string          `json:"account"`
 }

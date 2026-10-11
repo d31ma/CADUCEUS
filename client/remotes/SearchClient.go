@@ -13,4 +13,14 @@ type SearchClient interface {
 		// @RequestParam("account")
 		account string,
 	) ([]Email, error)
+
+	// Messages reads the messages matching a query, unfiltered.
+	//
+	// @GetRequest
+	Messages(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestParam("q")
+		query string,
+	) ([]RelatedMessage, error)
 }

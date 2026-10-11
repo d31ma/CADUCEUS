@@ -16,4 +16,5 @@ type CalendarInvite struct {
 	DisplayStatus      string           `json:"displayStatus"`
 	StatusLabel        string           `json:"statusLabel"`
 	SenderResponseText string           `json:"senderResponseText"`
+	WhenLabel          string           `json:"whenLabel"`
 }

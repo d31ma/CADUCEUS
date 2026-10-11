@@ -16,4 +16,14 @@ type ThreadsClient interface {
 		// @RequestParam("account")
 		account string,
 	) ([]MailThread, error)
+
+	// Conversation reads the RFC thread of one message.
+	//
+	// @GetRequest
+	Conversation(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestParam("emailId")
+		emailID string,
+	) ([]ThreadRecord, error)
 }

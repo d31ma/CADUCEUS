@@ -1,4 +1,5 @@
 import (
+	"encoding/json"
 	"fmt"
 	"slices"
 	"sort"
@@ -24,57 +25,64 @@ type ConversationService struct {
 	FindTerm          string
 	FindCount         int
 	FindProgressLabel string
-	ComposePrefill    ComposePrefill
+	PrintMessages     string
 
-	emailId     string
+	emailID     string
 	token       string
 	preferences MailPreferences
 	findIndex   int
 	results     []FindResult
 	expanded    map[string]bool
 	quotes      map[string]bool
-	dateLabels  map[string]string
 }
 
 // @OnStart
 func (service *ConversationService) Start() {
-	service.preferences = MailPreferencesUtils{}.Defaults()
+	service.preferences = AppearanceUtils{}.DefaultMail()
 	service.reset("")
 }
 
 // @OnEvent({"replay":true})
-func (service *ConversationService) SessionChanged(changed SessionChanged) {
+func (service *ConversationService) HearSession(changed SessionChanged) {
 	service.token = changed.Token
 }
 
+// HearStorage follows the conversation order and name preferences.
 // @OnEvent({"replay":true})
-func (service *ConversationService) PreferencesChanged(changed MailPreferencesChanged) {
-	service.preferences = MailPreferencesUtils{}.Normalize(changed)
-}
-
-func (ConversationService) owner() string { return "conversation" }
-
-// @OnEvent({"replay":true})
-func (service *ConversationService) MessageOpened(opened OpenMessageChanged) error {
-	failure := service.open(opened.EmailId)
-	service.applicationEventPublisher.PublishEvent(ReaderChanged{Reason: service.owner()}, false)
-	return failure
+func (service *ConversationService) HearStorage(stored StoredValues) {
+	service.adoptPreferences(stored.Session)
 }
 
 // @OnEvent
-func (service *ConversationService) Shortcut(shortcut ShortcutTriggered) {
-	actions := map[string]func(){"core:find-in-thread": service.OpenFind, "core:find-in-thread-next": service.NextResult, "core:find-in-thread-previous": service.PreviousResult}
-	service.run(actions[shortcut.Name])
-	service.applicationEventPublisher.PublishEvent(ReaderChanged{Reason: service.owner()}, false)
+func (service *ConversationService) HearStorageWritten(written StorageWritten) {
+	service.adoptPreferences(written.Values)
 }
 
-func (service *ConversationService) ToggleMessage(messageId string) {
-	service.expanded[messageId] = !service.expanded[messageId]
+// HearMessage loads the thread of the message the reader opened.
+// @OnEvent({"replay":true})
+func (service *ConversationService) HearMessage(opened OpenMessageChanged) {
+	FlowUtils{}.When(opened.EmailId != service.emailID, func() { service.load(opened.EmailId) })()
+	service.applicationEventPublisher.PublishEvent(ViewSettled{Source: "conversation"}, false)
+}
+
+// HearShortcut runs the find-in-conversation commands.
+// @OnEvent
+func (service *ConversationService) HearShortcut(pressed ShortcutPressed) {
+	actions := map[string]func(){"core:find-in-thread": service.OpenFind, "core:find-in-thread-next": service.NextResult, "core:find-in-thread-previous": service.PreviousResult}
+	action, found := actions[pressed.Command]
+	FlowUtils{}.When(LogicUtils{}.All(found, service.emailID != ""), action)()
+}
+
+// @OnEvent
+func (service *ConversationService) Settled(_ ViewSettled) {}
+
+func (service *ConversationService) ToggleMessage(messageID string) {
+	service.expanded[messageID] = !service.expanded[messageID]
 	service.decorate()
 }
 
-func (service *ConversationService) ToggleQuote(messageId string) {
-	service.quotes[messageId] = !service.quotes[messageId]
+func (service *ConversationService) ToggleQuote(messageID string) {
+	service.quotes[messageID] = !service.quotes[messageID]
 	service.decorate()
 }
 
@@ -82,13 +90,12 @@ func (service *ConversationService) OpenFind() {
 	service.FindOpen = true
 	service.expandAll()
 	service.applicationEventPublisher.PublishEvent(FindToggled{Open: true}, false)
-	service.applicationEventPublisher.PublishEvent(FindMatchFocused{Index: -1}, false)
+	service.applicationEventPublisher.PublishEvent(FocusRequested{Selector: "[data-find-thread-input]"}, false)
 }
 
 func (service *ConversationService) CloseFind() {
 	service.FindOpen = false
 	service.FindTerm = ""
-	service.findIndex = -1
 	service.search(-1)
 	service.applicationEventPublisher.PublishEvent(FindToggled{Open: false}, false)
 }
@@ -99,9 +106,12 @@ func (service *ConversationService) FindInput(term string) {
 	service.focusMatch()
 }
 
+// FindKey: Escape closes the find bar; Enter and Shift+Enter step.
 func (service *ConversationService) FindKey(key string, backwards bool) {
-	actions := map[string]func(){"Escape": service.CloseFind, "Enter": service.directionStep(backwards)}
-	service.run(actions[key])
+	steps := map[bool]func(){true: service.PreviousResult, false: service.NextResult}
+	actions := map[string]func(){"Escape": service.CloseFind, "Enter": steps[backwards]}
+	action, found := actions[key]
+	FlowUtils{}.When(found, action)()
 }
 
 func (service *ConversationService) PreviousResult() {
@@ -112,70 +122,61 @@ func (service *ConversationService) NextResult() {
 	service.step(1)
 }
 
+func (service *ConversationService) Reply(messageID string) {
+	message := service.message(messageID)
+	fields := service.thread(message)
+	fields.To = ReplyUtils{}.Target(message.ReplyTo, message.Sender)
+	fields.Subject = service.replyPrefix() + message.Subject
+	fields.Body = service.quoted(message, service.replyMode())
+	service.compose(fields)
+}
+
+func (service *ConversationService) ReplyAll(messageID string) {
+	message := service.message(messageID)
+	fields := service.thread(message)
+	fields.To = strings.Join(TextUtils{}.NonEmpty([]string{ReplyUtils{}.Target(message.ReplyTo, message.Sender), message.Recipient}), ", ")
+	fields.Subject = service.replyPrefix() + message.Subject
+	fields.Body = service.quoted(message, service.replyMode())
+	service.compose(fields)
+}
+
 func (ConversationService) replyPrefix() string { return "Re: " }
 
 func (ConversationService) replyMode() string { return "reply" }
 
-func (service *ConversationService) Reply(messageId string) {
-	message := service.message(messageId)
-	prefill := service.thread(message)
-	prefill.To = ReplyUtils{}.Target(message.ReplyTo, message.Sender)
-	prefill.Subject = service.replyPrefix() + message.Subject
-	prefill.Body = service.quoted(message, service.replyMode())
-	service.compose(prefill)
+func (service *ConversationService) Forward(messageID string) {
+	message := service.message(messageID)
+	service.compose(ComposeFields{Subject: "Fwd: " + message.Subject, Body: service.quoted(message, "forward"), SourceEmailID: message.Id})
 }
 
-func (service *ConversationService) ReplyAll(messageId string) {
-	message := service.message(messageId)
-	prefill := service.thread(message)
-	prefill.To = strings.Join(TextUtils{}.NonEmpty([]string{ReplyUtils{}.Target(message.ReplyTo, message.Sender), message.Recipient}), ", ")
-	prefill.Subject = service.replyPrefix() + message.Subject
-	prefill.Body = service.quoted(message, service.replyMode())
-	service.compose(prefill)
+// DownloadOriginal asks MessageService for the message's .eml.
+func (service *ConversationService) DownloadOriginal(messageID string) {
+	service.applicationEventPublisher.PublishEvent(MessageSourceRequested{EmailId: messageID}, false)
 }
 
-func (service *ConversationService) Forward(messageId string) {
-	message := service.message(messageId)
-	service.compose(ComposePrefill{Subject: "Fwd: " + message.Subject, Body: service.quoted(message, "forward"), SourceEmailId: message.Id, References: []string{}})
+// OpenMessage opens the message on its own page.
+func (service *ConversationService) OpenMessage(messageID string) {
+	service.applicationEventPublisher.PublishEvent(ComposeUtils{}.Message(messageID), false)
 }
 
-func (service *ConversationService) DownloadOriginal(messageId string) {
-	service.applicationEventPublisher.PublishEvent(MessageSourceRequested{EmailId: messageId}, false)
+func (service *ConversationService) adoptPreferences(values map[string]string) {
+	text, found := values["caduceus_mail_preferences"]
+	FlowUtils{}.When(found, func() { service.preferences = AppearanceUtils{}.Mail(text) })()
+	service.decorate()
 }
 
-func (service *ConversationService) OpenMessage(messageId string) {
-	service.applicationEventPublisher.PublishEvent(EmailOpenRequested{EmailId: messageId}, false)
+// message finds a card by id; an unknown id gives an empty message.
+func (service *ConversationService) message(messageID string) ConversationMessage {
+	index := slices.IndexFunc(service.Messages, func(message ConversationMessage) bool { return message.Id == messageID })
+	return append([]ConversationMessage{{References: []string{}, ReplyTo: []string{}}}, service.Messages...)[index+1]
 }
 
-func (service *ConversationService) message(messageId string) ConversationMessage {
-	index := slices.IndexFunc(service.Messages, func(message ConversationMessage) bool { return message.Id == messageId })
-	return service.messageAt(index)
-}
-
-func (service *ConversationService) messageAt(index int) ConversationMessage {
-	if index < 0 {
-		return ConversationMessage{References: []string{}, ReplyTo: []string{}}
-	}
-	return service.Messages[index]
-}
-
-func (service *ConversationService) AcceptDateLabels(values []string, labels []string) {
-	service.acceptDateLabels(values, labels)
-}
-
-func (service *ConversationService) acceptDateLabels(values []string, labels []string) {
-	for index := range min(len(values), len(labels)) {
-		service.dateLabels[values[index]] = labels[index]
-	}
-}
-
-func (service *ConversationService) reset(emailId string) {
-	service.emailId = emailId
+func (service *ConversationService) reset(emailID string) {
+	service.emailID = emailID
 	service.Messages = []ConversationMessage{}
 	service.results = []FindResult{}
 	service.expanded = map[string]bool{}
 	service.quotes = map[string]bool{}
-	service.dateLabels = map[string]string{}
 	service.FindOpen = false
 	service.FindTerm = ""
 	service.findIndex = -1
@@ -183,40 +184,26 @@ func (service *ConversationService) reset(emailId string) {
 	service.refreshLabels()
 }
 
-func (service *ConversationService) open(emailId string) error {
-	if emailId == service.emailId {
-		return nil
-	}
-	return service.load(emailId)
-}
-
-func (service *ConversationService) load(emailId string) error {
-	service.reset(emailId)
+func (service *ConversationService) load(emailID string) {
+	service.reset(emailID)
 	service.Loading = true
-	threads, failure := service.threadsClient.Find(emailId, "Bearer "+service.token)
-	service.Messages = service.sorted(service.records(threads, failure == nil))
-	service.expanded[emailId] = true
-	service.applicationEventPublisher.PublishEvent(DateLabelsRequested{Owner: service.owner(), Values: service.receivedTimes()}, false)
+	threads, failure := service.threadsClient.Conversation("Bearer "+service.token, emailID)
+	service.Messages = service.sorted(service.records(append(threads, ThreadRecord{})[0].Emails, failure == nil))
+	service.expanded[emailID] = true
 	service.search(-1)
 	service.Loading = false
-	return nil
 }
 
-func (service *ConversationService) records(threads []ThreadRecord, loaded bool) []ConversationMessage {
-	if !loaded || len(threads) == 0 {
-		return []ConversationMessage{}
-	}
-	return service.messages(threads[0].Emails)
-}
-
-func (service *ConversationService) messages(emails []BehaviorValue) []ConversationMessage {
+func (service *ConversationService) records(emails []BehaviorValue, loaded bool) []ConversationMessage {
 	messages := []ConversationMessage{}
 	for _, value := range emails {
 		messages = append(messages, EmailRecordUtils{}.Conversation(RecordUtils{}.Object(value)))
 	}
-	return messages
+	return map[bool][]ConversationMessage{true: messages, false: {}}[loaded]
 }
 
+// sorted orders the cards by time, newest last unless the preference says
+// otherwise.
 func (service *ConversationService) sorted(messages []ConversationMessage) []ConversationMessage {
 	descending := service.preferences.ConversationOrder == "descending"
 	sort.SliceStable(messages, func(left int, right int) bool {
@@ -225,21 +212,11 @@ func (service *ConversationService) sorted(messages []ConversationMessage) []Con
 	return messages
 }
 
-func (service *ConversationService) before(left string, right string) bool {
+func (ConversationService) before(left string, right string) bool {
 	leftTime, leftFailure := time.Parse(time.RFC3339Nano, left)
 	rightTime, rightFailure := time.Parse(time.RFC3339Nano, right)
-	if leftFailure != nil || rightFailure != nil {
-		return left < right
-	}
-	return leftTime.Before(rightTime)
-}
-
-func (service *ConversationService) receivedTimes() []string {
-	values := []string{}
-	for _, message := range service.Messages {
-		values = append(values, message.ReceivedAt)
-	}
-	return values
+	parsed := LogicUtils{}.All(leftFailure == nil, rightFailure == nil)
+	return map[bool]bool{true: leftTime.Before(rightTime), false: left < right}[parsed]
 }
 
 func (service *ConversationService) expandAll() {
@@ -259,27 +236,13 @@ func (service *ConversationService) search(requested int) {
 }
 
 func (service *ConversationService) step(offset int) {
-	if service.FindOpen && service.FindCount > 0 {
-		service.move(offset)
-	}
+	FlowUtils{}.When(LogicUtils{}.All(service.FindOpen, service.FindCount > 0), func() {
+		service.search(service.findIndex + offset)
+		service.focusMatch()
+	})()
 }
 
-func (service *ConversationService) move(offset int) {
-	service.search(service.findIndex + offset)
-	service.focusMatch()
-}
-
-func (service *ConversationService) directionStep(backwards bool) func() {
-	steps := map[bool]func(){true: service.PreviousResult, false: service.NextResult}
-	return steps[backwards]
-}
-
-func (service *ConversationService) run(action func()) {
-	if action != nil {
-		action()
-	}
-}
-
+// focusMatch opens the card of the current match and scrolls to it.
 func (service *ConversationService) focusMatch() {
 	for _, result := range service.currentResult() {
 		service.expanded[result.MessageId] = true
@@ -289,10 +252,8 @@ func (service *ConversationService) focusMatch() {
 }
 
 func (service *ConversationService) currentResult() []FindResult {
-	if service.findIndex < 0 || service.findIndex >= len(service.results) {
-		return []FindResult{}
-	}
-	return []FindResult{service.results[service.findIndex]}
+	inside := LogicUtils{}.All(service.findIndex >= 0, service.findIndex < len(service.results))
+	return service.results[min(max(service.findIndex, 0), len(service.results)):][:map[bool]int{true: 1}[inside]]
 }
 
 func (service *ConversationService) decorate() {
@@ -306,52 +267,45 @@ func (service *ConversationService) decorateMessage(message *ConversationMessage
 	parts := MessageConversationUtils{}.SplitQuotedText(message.Body)
 	message.Expanded = service.expanded[message.Id]
 	message.QuoteExpanded = service.quotes[message.Id]
-	message.VisibleConversationSender = service.sender(message.HeaderFrom, message.Sender)
+	message.VisibleConversationSender = TextUtils{}.Choose(LogicUtils{}.All(service.preferences.DetailedNames, message.HeaderFrom != ""), message.HeaderFrom, message.Sender)
 	message.VisibleConversationBody = TextUtils{}.Choose(MessageConversationUtils{}.HasText(parts), parts.Visible, "(No body)")
 	message.QuotedConversationBody = parts.Quoted
 	message.HasConversationQuote = parts.HasQuoted
-	message.ConversationBody = service.body(message.QuoteExpanded, []string{message.VisibleConversationBody, message.QuotedConversationBody})
-}
-
-func (service *ConversationService) sender(headerFrom string, sender string) string {
-	if service.preferences.DetailedNames && headerFrom != "" {
-		return headerFrom
-	}
-	return sender
-}
-
-func (service *ConversationService) body(quoteExpanded bool, parts []string) string {
-	if quoteExpanded {
-		return strings.Join(TextUtils{}.NonEmpty(parts), "\n\n")
-	}
-	return parts[0]
+	whole := strings.Join(TextUtils{}.NonEmpty([]string{message.VisibleConversationBody, message.QuotedConversationBody}), "\n\n")
+	message.ConversationBody = TextUtils{}.Choose(message.QuoteExpanded, whole, message.VisibleConversationBody)
 }
 
 func (service *ConversationService) refreshLabels() {
 	service.HasConversation = len(service.Messages) > 1
 	service.CountLabel = TextUtils{}.Count(len(service.Messages), "message", "messages")
 	service.FindProgressLabel = service.progress()
+	encoded, _ := json.Marshal(service.Messages)
+	service.PrintMessages = string(encoded)
 }
 
 func (service *ConversationService) progress() string {
-	if service.findIndex >= 0 && service.FindCount > 0 {
+	switch {
+	case LogicUtils{}.All(service.findIndex >= 0, service.FindCount > 0):
 		return fmt.Sprintf("%d of %d", service.findIndex+1, service.FindCount)
+	case service.FindTerm != "":
+		return "No matches"
 	}
-	return TextUtils{}.Choose(service.FindTerm != "", "No matches", "")
+	return ""
 }
 
-func (service *ConversationService) thread(message ConversationMessage) ComposePrefill {
-	if message.InternetMessageId == "" {
-		return ComposePrefill{SourceEmailId: message.Id, References: []string{}}
-	}
-	return ComposePrefill{InReplyTo: message.InternetMessageId, References: ReplyUtils{}.References(message.References, message.InternetMessageId), SourceEmailId: message.Id}
+// thread keeps a reply in the message's RFC thread.
+func (ConversationService) thread(message ConversationMessage) ComposeFields {
+	parent := message.InternetMessageId
+	return ComposeFields{InReplyTo: parent, References: ReplyUtils{}.References(message.References, parent), SourceEmailID: message.Id}
 }
 
-func (service *ConversationService) quoted(message ConversationMessage, mode string) string {
-	return QuotedMessageUtils{}.Html(QuotedMessage{Mode: mode, Sender: message.Sender, Subject: message.Subject, DateLabel: service.dateLabels[message.ReceivedAt], Body: message.Body})
+func (ConversationService) quoted(message ConversationMessage, mode string) string {
+	return QuotedMessageUtils{}.Html(QuotedMessage{Mode: mode, Sender: message.Sender, Subject: message.Subject, DateLabel: message.ReceivedLabel, Body: message.Body})
 }
 
-func (service *ConversationService) compose(prefill ComposePrefill) {
-	service.ComposePrefill = prefill
-	service.applicationEventPublisher.PublishEvent(ComposeRequested{Owner: service.owner()}, false)
+// compose hands the fields to the composer: caduceus_compose_prefill in
+// sessionStorage, then /compose.
+func (service *ConversationService) compose(fields ComposeFields) {
+	service.applicationEventPublisher.PublishEvent(ComposeUtils{}.Stored(fields), false)
+	service.applicationEventPublisher.PublishEvent(ComposeUtils{}.Opened(), false)
 }

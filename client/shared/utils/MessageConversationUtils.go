@@ -146,7 +146,7 @@ func (MessageConversationUtils) positions(haystack []rune, needle []rune) []int 
 
 func (MessageConversationUtils) bytePositions(haystack string, needle string) []int {
 	found := []int{}
-	for at := MessageConversationUtils{}.indexFrom(haystack, needle, 0); at >= 0; at = MessageConversationUtils{}.indexFrom(haystack, needle, at+max(len(needle), 1)) {
+	for at := (MessageConversationUtils{}).indexFrom(haystack, needle, 0); at >= 0; at = (MessageConversationUtils{}).indexFrom(haystack, needle, at+max(len(needle), 1)) {
 		found = append(found, at)
 	}
 	return found

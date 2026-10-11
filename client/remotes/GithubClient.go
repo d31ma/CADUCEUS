@@ -1,10 +1,12 @@
-// @HTTPClient
+// GithubClient is the /github route group: the opted-in public profile of a
+// message's participant.
+// @HTTPClient("/github")
 type GithubClient interface {
-	// @GetRequest("/github/profile")
+	// @GetRequest("/profile")
 	Profile(
-		// @RequestParam("email")
-		email string,
 		// @RequestHeader("Authorization")
 		authorization string,
+		// @RequestParam("email")
+		email string,
 	) (GithubLookup, error)
 }

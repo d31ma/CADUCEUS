@@ -71,7 +71,7 @@ func (AttachmentContentUtils) normalizedType(value string) string {
 }
 
 func (AttachmentContentUtils) withoutScheme(value string) string {
-	if strings.HasPrefix(strings.ToLower(value), AttachmentContentUtils{}.scheme()) {
+	if strings.HasPrefix(strings.ToLower(value), (AttachmentContentUtils{}).scheme()) {
 		return value[len(AttachmentContentUtils{}.scheme()):]
 	}
 	return value

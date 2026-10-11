@@ -15,6 +15,8 @@ export default class KeyboardService {
     'navigation:next-email', 'navigation:prev-email', 'navigation:scroll-down', 'navigation:scroll-up',
     'email:star', 'email:archive', 'email:trash', 'email:report-spam', 'email:mark-read', 'email:mark-unread',
     'email:open', 'core:select-all', 'core:deselect-all',
+    'email:reply', 'email:reply-all', 'email:forward', 'github:open', 'core:print-thread',
+    'core:find-in-thread', 'core:find-in-thread-next', 'core:find-in-thread-previous',
   ]
 
   /** @type {ApplicationEventPublisher} */

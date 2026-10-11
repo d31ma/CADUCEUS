@@ -81,6 +81,17 @@ function isLockedModelPath(path) {
   return LOCKED_MODEL_PREFIXES.some(prefix => path.startsWith(prefix))
 }
 
+let assetToken = ''
+
+/**
+ * The reader hands over the signed-in token, which the asset route requires.
+ *
+ * @param {string} token
+ */
+export function setTranslationAssetToken(token) {
+  assetToken = String(token || '')
+}
+
 /**
  * Fetch an allowlisted asset with the current mailbox bearer. The model is
  * unavailable before authentication, which prevents the public login surface
@@ -94,9 +105,10 @@ export async function fetchSelfHostedTranslationAsset(path, init = {}) {
   if (!normalized || normalized.startsWith('/') || normalized.includes('..') || normalized.includes('\0')) {
     throw new Error('Invalid self-hosted translation asset path.')
   }
-  const apiFetch = globalThis.window?._caduceus?.apiFetch
-  if (typeof apiFetch !== 'function') throw new Error('Authenticate before loading the self-hosted translation model.')
-  const response = await apiFetch(`/translation-assets?path=${encodeURIComponent(normalized)}`, init)
+  if (!assetToken) throw new Error('Authenticate before loading the self-hosted translation model.')
+  const headers = new Headers(init.headers)
+  headers.set('Authorization', `Bearer ${assetToken}`)
+  const response = await fetch(`/translation-assets?path=${encodeURIComponent(normalized)}`, { ...init, headers, credentials: 'same-origin' })
   if (!(response instanceof Response)) throw new Error('The self-hosted translation asset service is unavailable.')
   return response
 }

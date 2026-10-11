@@ -9,4 +9,6 @@ type UserPreferences struct {
 	UnreadBadgeDomain         string            `json:"unreadBadgeDomain"`
 	KeyboardShortcutOverrides map[string]string `json:"keyboardShortcutOverrides"`
 	MailPreferences           *MailPreferences  `json:"mailPreferences"`
+	RemoteImagePolicy         string            `json:"remoteImagePolicy,omitempty"`
+	TrustedImageSenders       []string          `json:"trustedImageSenders,omitempty"`
 }

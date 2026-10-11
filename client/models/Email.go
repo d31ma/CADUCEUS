@@ -19,4 +19,33 @@ type Email struct {
 	ThreadID          string    `json:"threadId,omitempty"`
 	To                any       `json:"to,omitempty"`
 	Cc                any       `json:"cc,omitempty"`
+
+	// The reader's whole message: GET /inbox/{id}, and the labels it shows.
+	HeaderFrom          string            `json:"headerFrom,omitempty"`
+	Recipient           string            `json:"recipient,omitempty"`
+	OriginalRecipient   string            `json:"originalRecipient,omitempty"`
+	ReplyTo             []string          `json:"replyTo,omitempty"`
+	InternetMessageID   string            `json:"rfcMessageId,omitempty"`
+	MessageID           string            `json:"messageId,omitempty"`
+	References          []string          `json:"references,omitempty"`
+	Body                string            `json:"body,omitempty"`
+	HtmlBody            string            `json:"htmlBody,omitempty"`
+	HasRawSource        bool              `json:"hasRawSource,omitempty"`
+	OpenedAt            string            `json:"openedAt,omitempty"`
+	Attachments         []EmailAttachment `json:"attachments,omitempty"`
+	Spam                bool              `json:"spam,omitempty"`
+	HasSpamScore        bool              `json:"hasSpamScore,omitempty"`
+	SpamScoreLabel      string            `json:"spamScoreLabel,omitempty"`
+	ReplyToMismatch     bool              `json:"replyToMismatch,omitempty"`
+	OpenTracking        bool              `json:"openTracking,omitempty"`
+	LinkTracking        bool              `json:"linkTracking,omitempty"`
+	TrackingEvents      []TrackingEvent   `json:"trackingEvents,omitempty"`
+	TrackingSummary     string            `json:"trackingSummary,omitempty"`
+	GithubUrl           string            `json:"githubUrl,omitempty"`
+	UnsubscribeUrl      string            `json:"unsubscribeUrl,omitempty"`
+	UnsubscribeOneClick bool              `json:"unsubscribeOneClick,omitempty"`
+	UnsubscribeMailto   string            `json:"unsubscribeMailto,omitempty"`
+	UnsubscribeBodyUrl  string            `json:"unsubscribeBodyUrl,omitempty"`
+	ReceivedLabel       string            `json:"receivedLabel,omitempty"`
+	OpenedLabel         string            `json:"openedLabel,omitempty"`
 }

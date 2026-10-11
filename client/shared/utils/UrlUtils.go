@@ -35,7 +35,7 @@ func (UrlUtils) split(text string) UrlParts {
 }
 
 func (UrlUtils) schemeParts(scheme string, rest string) UrlParts {
-	if UrlUtils{}.isWebScheme(scheme) {
+	if (UrlUtils{}).isWebScheme(scheme) {
 		return UrlUtils{}.authorityParts(scheme, strings.TrimLeft(rest, "/\\"))
 	}
 	return UrlParts{Scheme: scheme, Rest: rest}
@@ -56,7 +56,7 @@ func (UrlUtils) authorityParts(scheme string, rest string) UrlParts {
 func (UrlUtils) userSeparator() string { return "@" }
 
 func (UrlUtils) webAddress(parts UrlParts) WebAddress {
-	if !UrlUtils{}.isWebScheme(parts.Scheme) {
+	if !(UrlUtils{}).isWebScheme(parts.Scheme) {
 		return WebAddress{}
 	}
 	at := strings.LastIndex(parts.Authority, UrlUtils{}.userSeparator())
@@ -86,7 +86,7 @@ func (UrlUtils) bracketClose() string { return "]" }
 
 func (UrlUtils) splitPort(hostAndPort string) (string, string) {
 	colon := strings.LastIndex(hostAndPort, UrlUtils{}.colon())
-	if colon < 0 || strings.HasSuffix(hostAndPort, UrlUtils{}.bracketClose()) {
+	if colon < 0 || strings.HasSuffix(hostAndPort, (UrlUtils{}).bracketClose()) {
 		return hostAndPort, ""
 	}
 	return hostAndPort[:colon], hostAndPort[colon+1:]
@@ -102,7 +102,7 @@ func (UrlUtils) normalizedHost(host string) string {
 }
 
 func (UrlUtils) withoutBrackets(host string) string {
-	if strings.HasPrefix(host, "[") && strings.HasSuffix(host, UrlUtils{}.bracketClose()) {
+	if strings.HasPrefix(host, "[") && strings.HasSuffix(host, (UrlUtils{}).bracketClose()) {
 		return strings.ReplaceAll(host[1:len(host)-1], UrlUtils{}.colon(), "")
 	}
 	return host
@@ -116,7 +116,7 @@ func (UrlUtils) port(scheme string, port string) string {
 	if trimmed == defaults[scheme] || port == "" {
 		return ""
 	}
-	return TextUtils{}.Or(trimmed, UrlUtils{}.zero())
+	return TextUtils{}.FirstOf(trimmed, UrlUtils{}.zero())
 }
 
 func (UrlUtils) portSuffix(port string) string {

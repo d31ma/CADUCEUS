@@ -144,7 +144,8 @@
       }
     },
     "browserApis": [
-      "notifications"
+      "notifications",
+      "clipboard"
     ]
   }
 }

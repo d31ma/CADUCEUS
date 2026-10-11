@@ -7,6 +7,7 @@ type ConversationMessage struct {
 	Folder                    string            `json:"folder"`
 	SystemFolder              string            `json:"systemFolder"`
 	ReceivedAt                string            `json:"receivedAt"`
+	ReceivedLabel             string            `json:"receivedLabel"`
 	Body                      string            `json:"body"`
 	HtmlBody                  string            `json:"htmlBody"`
 	InternetMessageId         string            `json:"rfcMessageId"`

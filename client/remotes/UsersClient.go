@@ -15,4 +15,14 @@ type UsersClient interface {
 		// @RequestBody
 		theme BehaviorValue,
 	) (BehaviorValue, error)
+
+	// SavePreferences saves some of the signed-in user's preferences.
+	//
+	// @PutRequest("/me/preferences")
+	SavePreferences(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		preferences BehaviorValue,
+	) (UserPreferences, error)
 }

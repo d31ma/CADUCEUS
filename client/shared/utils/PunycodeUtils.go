@@ -17,7 +17,7 @@ func (PunycodeUtils) host(host string, dot string) string {
 }
 
 func (PunycodeUtils) label(label string) string {
-	if PunycodeUtils{}.isAscii(label) {
+	if (PunycodeUtils{}).isAscii(label) {
 		return label
 	}
 	return "xn--" + PunycodeUtils{}.encode([]rune(label))
@@ -101,7 +101,7 @@ func (PunycodeUtils) base() int { return 36 }
 
 func (PunycodeUtils) emit(state *PunycodeState) {
 	quotient := state.Delta
-	for step := PunycodeUtils{}.base(); quotient >= PunycodeUtils{}.threshold(step, state.Bias); step += PunycodeUtils{}.base() {
+	for step := (PunycodeUtils{}).base(); quotient >= (PunycodeUtils{}).threshold(step, state.Bias); step += (PunycodeUtils{}).base() {
 		threshold := PunycodeUtils{}.threshold(step, state.Bias)
 		state.Output += PunycodeUtils{}.digit(threshold + (quotient-threshold)%(PunycodeUtils{}.base()-threshold))
 		quotient = (quotient - threshold) / (PunycodeUtils{}.base() - threshold)
@@ -138,7 +138,7 @@ func (PunycodeUtils) adapt(delta int, points int, first bool) int {
 	scaled := PunycodeUtils{}.scaled(delta, first) + PunycodeUtils{}.scaled(delta, first)/points
 	steps := 0
 	limit := ((PunycodeUtils{}.base() - PunycodeUtils{}.smallest()) * PunycodeUtils{}.largest()) / PunycodeUtils{}.half()
-	for ; scaled > limit; steps += PunycodeUtils{}.base() {
+	for ; scaled > limit; steps += (PunycodeUtils{}).base() {
 		scaled /= PunycodeUtils{}.base() - PunycodeUtils{}.smallest()
 	}
 	return steps + (PunycodeUtils{}.base()-PunycodeUtils{}.smallest()+1)*scaled/(scaled+PunycodeUtils{}.skew())

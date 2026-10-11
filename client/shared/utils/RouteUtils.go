@@ -18,7 +18,7 @@ func (RouteUtils) IsStandalone(path string) bool {
 }
 
 func (RouteUtils) emailId(path string, search string) string {
-	if strings.HasPrefix(path, RouteUtils{}.prefix()) {
+	if strings.HasPrefix(path, (RouteUtils{}).prefix()) {
 		return RouteUtils{}.decoded(strings.TrimPrefix(path, RouteUtils{}.prefix()))
 	}
 	return RouteUtils{}.queryEmailId(search)
@@ -34,5 +34,5 @@ func (RouteUtils) decoded(value string) string {
 
 func (RouteUtils) queryEmailId(search string) string {
 	values, _ := url.ParseQuery(strings.TrimPrefix(search, "?"))
-	return TextUtils{}.Or(values.Get("email"), values.Get("id"))
+	return TextUtils{}.FirstOf(values.Get("email"), values.Get("id"))
 }

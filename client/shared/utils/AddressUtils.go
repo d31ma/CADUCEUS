@@ -9,7 +9,7 @@ type AddressUtils struct{}
 
 func (AddressUtils) Initials(address string) string {
 	local, _, _ := strings.Cut(address, "@")
-	return strings.ToUpper(AddressUtils{}.firstTwo(TextUtils{}.Or(local, "?")))
+	return strings.ToUpper(AddressUtils{}.firstTwo(TextUtils{}.FirstOf(local, "?")))
 }
 
 func (AddressUtils) Normalized(value string) string {

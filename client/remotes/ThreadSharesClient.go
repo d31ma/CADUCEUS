@@ -15,4 +15,28 @@ type ThreadSharesClient interface {
 		// @PathVariable
 		id string,
 	) (SharedAttachmentContent, error)
+
+	// @GetRequest
+	List(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestParam("emailId")
+		emailID string,
+	) ([]ThreadShare, error)
+
+	// @PostRequest
+	Create(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		share BehaviorValue,
+	) (CreatedShare, error)
+
+	// @DeleteRequest("/{id}")
+	Revoke(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @PathVariable
+		id BehaviorValue,
+	) (BehaviorValue, error)
 }

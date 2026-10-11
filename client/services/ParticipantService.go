@@ -3,6 +3,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 )
 
 // ParticipantService fills the contact sidebar of the open message: the
@@ -45,30 +46,40 @@ func (service *ParticipantService) Start() {
 }
 
 // @OnEvent({"replay":true})
-func (service *ParticipantService) SessionChanged(changed SessionChanged) {
+func (service *ParticipantService) HearSession(changed SessionChanged) {
 	service.token = changed.Token
 }
 
+// HearStorage restores whether the sidebar was open on this device.
 // @OnEvent({"replay":true})
-func (service *ParticipantService) ReaderOpened(opened ReaderOpened) {
-	service.SidebarOpen = opened.ParticipantSidebar
+func (service *ParticipantService) HearStorage(stored StoredValues) {
+	service.SidebarOpen = stored.Local[service.sidebarKey()] == service.opened()
 	service.refreshLabels()
 }
 
+// HearMessage shows the sender of the message the reader opened.
 // @OnEvent({"replay":true})
-func (service *ParticipantService) MessageOpened(opened OpenMessageChanged) error {
-	service.reset(opened.ParticipantAddress)
-	service.load()
-	service.applicationEventPublisher.PublishEvent(ReaderChanged{Reason: "participant"}, false)
-	return nil
+func (service *ParticipantService) HearMessage(opened OpenMessageChanged) {
+	FlowUtils{}.When(opened.ParticipantAddress != service.Address, func() {
+		service.reset(opened.ParticipantAddress)
+		service.load()
+	})()
+	service.applicationEventPublisher.PublishEvent(ViewSettled{Source: "participant"}, false)
 }
+
+// @OnEvent
+func (service *ParticipantService) Settled(_ ViewSettled) {}
 
 func (service *ParticipantService) Toggle() {
 	service.SidebarOpen = !service.SidebarOpen
-	service.applicationEventPublisher.PublishEvent(ReaderPreferenceChanged{Name: "participantSidebar", Value: TextUtils{}.Choose(service.SidebarOpen, "open", "closed")}, false)
+	service.applicationEventPublisher.PublishEvent(StorageWritten{Area: "local", Values: map[string]string{service.sidebarKey(): TextUtils{}.Choose(service.SidebarOpen, service.opened(), "closed")}, Removed: []string{}}, false)
 	service.refreshLabels()
 	service.load()
 }
+
+func (ParticipantService) sidebarKey() string { return "caduceus-participant-sidebar" }
+
+func (ParticipantService) opened() string { return "open" }
 
 func (service *ParticipantService) Close() {
 	service.close(service.SidebarOpen)
@@ -79,8 +90,9 @@ func (service *ParticipantService) ToggleThreads() {
 	service.refreshLabels()
 }
 
-func (service *ParticipantService) OpenThread(thread ParticipantThread) {
-	service.applicationEventPublisher.PublishEvent(EmailOpenRequested{EmailId: thread.Id}, false)
+// OpenThread opens a related message on its own page.
+func (service *ParticipantService) OpenThread(messageID string) {
+	service.applicationEventPublisher.PublishEvent(ComposeUtils{}.Message(messageID), false)
 }
 
 func (ParticipantService) disabled() string { return "disabled" }
@@ -105,9 +117,7 @@ func (service *ParticipantService) close(visible bool) {
 }
 
 func (service *ParticipantService) load() {
-	if service.Address != "" && service.SidebarOpen {
-		service.fetch(service.authorization())
-	}
+	FlowUtils{}.When(LogicUtils{}.All(service.Address != "", service.SidebarOpen), func() { service.fetch(service.authorization()) })()
 }
 
 func (service *ParticipantService) authorization() string {
@@ -117,13 +127,13 @@ func (service *ParticipantService) authorization() string {
 func (service *ParticipantService) fetch(authorization string) {
 	service.Loading = true
 	service.Error = ""
-	contacts, contactsFailure := service.contactsClient.Search(service.Address, authorization)
-	related, relatedFailure := service.searchClient.Messages("from:"+service.Address, authorization)
-	github, githubFailure := service.githubClient.Profile(service.Address, authorization)
+	contacts, contactsFailure := service.contactsClient.Search(authorization, service.Address)
+	related, relatedFailure := service.searchClient.Messages(authorization, "from:"+service.Address)
+	github, githubFailure := service.githubClient.Profile(authorization, service.Address)
 	service.Contact, service.HasContact = service.matchingContact(contacts)
 	service.showGithub(github, githubFailure == nil)
 	service.Threads = service.threads(related)
-	service.offline(slices.ContainsFunc([]error{contactsFailure, relatedFailure, githubFailure}, func(failure error) bool { return FailureUtils{}.Code(failure) == FailureUtils{}.OfflineCode() }))
+	service.offline(slices.ContainsFunc([]error{contactsFailure, relatedFailure, githubFailure}, func(failure error) bool { return LogicUtils{}.All(failure != nil, !HTTPUtils{}.Refused(failure)) }))
 	service.Loading = false
 	service.refreshLabels()
 }
@@ -155,17 +165,17 @@ func (ParticipantService) unavailable() string { return "unavailable" }
 
 func (service *ParticipantService) githubStatus(status string, loaded bool) string {
 	known := slices.Contains([]string{service.disabled(), service.found(), "not-found", service.unavailable()}, status)
-	if loaded && known {
+	if (LogicUtils{}).All(loaded, known) {
 		return status
 	}
 	return service.unavailable()
 }
 
 func (service *ParticipantService) profile(profile *GithubProfile, found bool) (GithubProfile, bool) {
-	if profile == nil || !found {
+	if profile == nil {
 		return GithubProfile{Repositories: []GithubRepository{}}, false
 	}
-	return *profile, true
+	return *profile, found
 }
 
 func (ParticipantService) maximumThreads() int { return 25 }
@@ -187,8 +197,8 @@ func (service *ParticipantService) unique(messages []RelatedMessage) []RelatedMe
 }
 
 func (service *ParticipantService) firstOf(message RelatedMessage, seen map[string]bool) []RelatedMessage {
-	key := TextUtils{}.Or(TextUtils{}.Or(TextUtils{}.Or(message.ThreadId, message.MessageId), message.Subject), message.Id)
-	if key == "" || seen[key] {
+	key := TextUtils{}.FirstOf(TextUtils{}.FirstOf(TextUtils{}.FirstOf(message.ThreadId, message.MessageId), message.Subject), message.Id)
+	if (LogicUtils{}).Any(key == "", seen[key]) {
 		return []RelatedMessage{}
 	}
 	seen[key] = true
@@ -203,8 +213,8 @@ func (service *ParticipantService) summaries(messages []RelatedMessage) []Partic
 	whitespace := regexp.MustCompile(`\s+`)
 	threads := []ParticipantThread{}
 	for _, message := range messages {
-		snippet := []rune(strings.TrimSpace(whitespace.ReplaceAllString(TextUtils{}.Or(message.Snippet, message.Body), service.space())))
-		threads = append(threads, ParticipantThread{Id: message.Id, Subject: TextUtils{}.Or(message.Subject, "(No subject)"), Snippet: string(snippet[:min(len(snippet), service.maximumSnippet())]), ReceivedAt: message.ReceivedAt})
+		snippet := []rune(strings.TrimSpace(whitespace.ReplaceAllString(TextUtils{}.FirstOf(message.Snippet, message.Body), service.space())))
+		threads = append(threads, ParticipantThread{Id: message.Id, Subject: TextUtils{}.FirstOf(message.Subject, "(No subject)"), Snippet: string(snippet[:min(len(snippet), service.maximumSnippet())]), ReceivedAt: message.ReceivedAt, ReceivedLabel: DateUtils{}.Label(message.ReceivedAt, time.Now())})
 	}
 	return threads
 }
@@ -222,8 +232,8 @@ func (ParticipantService) visibleThreadCount() int { return 3 }
 
 func (service *ParticipantService) refreshLabels() {
 	service.SidebarLabel = TextUtils{}.Choose(service.SidebarOpen, "Hide contact sidebar", "Show contact sidebar")
-	service.DisplayName = TextUtils{}.Or(TextUtils{}.Or(service.Contact.Name, strings.TrimSpace(service.Contact.GivenName+service.space()+service.Contact.FamilyName)), service.Address)
-	service.Initials = AddressUtils{}.Initials(TextUtils{}.Or(service.DisplayName, service.Address))
+	service.DisplayName = TextUtils{}.FirstOf(TextUtils{}.FirstOf(service.Contact.Name, strings.TrimSpace(service.Contact.GivenName+service.space()+service.Contact.FamilyName)), service.Address)
+	service.Initials = AddressUtils{}.Initials(TextUtils{}.FirstOf(service.DisplayName, service.Address))
 	service.HasMoreThreads = len(service.Threads) > service.visibleThreadCount()
 	service.VisibleThreads = service.visibleThreads(service.ThreadsExpanded)
 }

@@ -50,7 +50,7 @@ func (LinkDestinationUtils) visibleHost(label string) string {
 }
 
 func (LinkDestinationUtils) candidate(label string) string {
-	if LinkDestinationUtils{}.pattern("schemed").MatchString(label) {
+	if (LinkDestinationUtils{}).pattern("schemed").MatchString(label) {
 		return label
 	}
 	return "https://" + label

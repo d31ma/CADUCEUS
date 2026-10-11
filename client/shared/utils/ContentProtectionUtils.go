@@ -52,7 +52,7 @@ func (ContentProtectionUtils) protect(html string, options ProtectionOptions) Pr
 }
 
 func (ContentProtectionUtils) removeUnsafe(body *HtmlNode) {
-	for _, element := range HtmlDocumentUtils{}.Elements(body) {
+	for _, element := range (HtmlDocumentUtils{}).Elements(body) {
 		ContentProtectionUtils{}.removeIfUnsafe(element)
 	}
 }
@@ -64,7 +64,7 @@ func (ContentProtectionUtils) removeIfUnsafe(element *HtmlNode) {
 }
 
 func (ContentProtectionUtils) protectStyles(body *HtmlNode, options ProtectionOptions, result *ProtectedDocument) {
-	for _, element := range HtmlDocumentUtils{}.Elements(body) {
+	for _, element := range (HtmlDocumentUtils{}).Elements(body) {
 		ContentProtectionUtils{}.protectStyleElement(element, options, result)
 	}
 }
@@ -72,7 +72,7 @@ func (ContentProtectionUtils) protectStyles(body *HtmlNode, options ProtectionOp
 func (ContentProtectionUtils) styleName() string { return "style" }
 
 func (ContentProtectionUtils) protectStyleElement(element *HtmlNode, options ProtectionOptions, result *ProtectedDocument) {
-	if element.Name != ContentProtectionUtils{}.styleName() {
+	if element.Name != (ContentProtectionUtils{}).styleName() {
 		return
 	}
 	protected := StyleProtectionUtils{}.ProtectCss(HtmlDocumentUtils{}.TextContent(element), options)
@@ -98,7 +98,7 @@ func (ContentProtectionUtils) replaceStyle(element *HtmlNode, css string) {
 }
 
 func (ContentProtectionUtils) protectElements(body *HtmlNode, options ProtectionOptions, result *ProtectedDocument) {
-	for _, element := range HtmlDocumentUtils{}.Elements(body) {
+	for _, element := range (HtmlDocumentUtils{}).Elements(body) {
 		ContentProtectionUtils{}.protectElement(element, options, result)
 	}
 }
@@ -109,7 +109,7 @@ func (ContentProtectionUtils) protectElement(element *HtmlNode, options Protecti
 	ContentProtectionUtils{}.markLink(element, result)
 	style, _ := HtmlDocumentUtils{}.Attribute(element, ContentProtectionUtils{}.styleName())
 	candidates := ContentProtectionUtils{}.candidateUrls(element, style)
-	if ContentProtectionUtils{}.isTracker(element, style, candidates) {
+	if (ContentProtectionUtils{}).isTracker(element, style, candidates) {
 		ContentProtectionUtils{}.removeTracker(element, candidates, result)
 		return
 	}
@@ -179,7 +179,7 @@ func (ContentProtectionUtils) candidateUrls(element *HtmlNode, style string) []s
 
 func (ContentProtectionUtils) attributeUrls(element *HtmlNode) []string {
 	urls := []string{}
-	for _, name := range ContentProtectionUtils{}.remoteAttributes() {
+	for _, name := range (ContentProtectionUtils{}).remoteAttributes() {
 		value, _ := HtmlDocumentUtils{}.Attribute(element, name)
 		urls = append(urls, ContentProtectionUtils{}.remoteOnly(value)...)
 	}
@@ -201,7 +201,7 @@ func (ContentProtectionUtils) comma() string { return "," }
 func (ContentProtectionUtils) sourceSetUrls(element *HtmlNode) []string {
 	sourceSet, _ := HtmlDocumentUtils{}.Attribute(element, ContentProtectionUtils{}.sourceSetName())
 	urls := []string{}
-	for _, entry := range strings.Split(sourceSet, ContentProtectionUtils{}.comma()) {
+	for _, entry := range strings.Split(sourceSet, (ContentProtectionUtils{}).comma()) {
 		urls = append(urls, ContentProtectionUtils{}.remoteOnly(ContentProtectionUtils{}.entryUrl(entry))...)
 	}
 	return urls
@@ -214,7 +214,7 @@ func (ContentProtectionUtils) entryUrl(entry string) string {
 
 func (ContentProtectionUtils) styleUrls(style string) []string {
 	urls := []string{}
-	for _, found := range ContentProtectionUtils{}.pattern("url").FindAllStringSubmatch(style, -1) {
+	for _, found := range (ContentProtectionUtils{}).pattern("url").FindAllStringSubmatch(style, -1) {
 		urls = append(urls, ContentProtectionUtils{}.remoteOnly(found[1])...)
 	}
 	return urls
@@ -222,7 +222,7 @@ func (ContentProtectionUtils) styleUrls(style string) []string {
 
 func (ContentProtectionUtils) isTracker(element *HtmlNode, style string, candidates []string) bool {
 	utils := ContentProtectionUtils{}
-	if slices.ContainsFunc(candidates, StyleProtectionUtils{}.IsKnownTrackingUrl) || (len(candidates) > 0 && utils.isInvisible(element, style)) {
+	if slices.ContainsFunc(candidates, (StyleProtectionUtils{}).IsKnownTrackingUrl) || (len(candidates) > 0 && utils.isInvisible(element, style)) {
 		return true
 	}
 	return false
@@ -270,7 +270,7 @@ func (ContentProtectionUtils) isInvisible(element *HtmlNode, style string) bool 
 
 func (ContentProtectionUtils) dimension(attribute string, style string, name string) (float64, bool) {
 	raw := strings.TrimSpace(attribute)
-	if ContentProtectionUtils{}.pattern("size").MatchString(raw) {
+	if (ContentProtectionUtils{}).pattern("size").MatchString(raw) {
 		return ContentProtectionUtils{}.number(strings.TrimSuffix(strings.ToLower(raw), "px"))
 	}
 	return ContentProtectionUtils{}.styleDimension(style, name)
@@ -290,7 +290,7 @@ func (ContentProtectionUtils) number(text string) (float64, bool) {
 }
 
 func (ContentProtectionUtils) protectRemoteAttributes(element *HtmlNode, options ProtectionOptions, result *ProtectedDocument) {
-	for _, name := range ContentProtectionUtils{}.remoteAttributes() {
+	for _, name := range (ContentProtectionUtils{}).remoteAttributes() {
 		ContentProtectionUtils{}.protectRemoteAttribute(element, name, options, result)
 	}
 }
@@ -314,7 +314,7 @@ func (ContentProtectionUtils) isRemoteValue(value string) bool {
 }
 
 func (ContentProtectionUtils) replaceInline(element *HtmlNode, name string, source string) {
-	if StyleProtectionUtils{}.IsSafeEmbeddedSource(source) {
+	if (StyleProtectionUtils{}).IsSafeEmbeddedSource(source) {
 		HtmlDocumentUtils{}.SetAttribute(element, name, source)
 		return
 	}
@@ -350,7 +350,7 @@ func (ContentProtectionUtils) protectSourceSet(element *HtmlNode, options Protec
 
 func (ContentProtectionUtils) entries(sourceSet string) []string {
 	found := []string{}
-	for _, entry := range strings.Split(sourceSet, ContentProtectionUtils{}.comma()) {
+	for _, entry := range strings.Split(sourceSet, (ContentProtectionUtils{}).comma()) {
 		found = append(found, ContentProtectionUtils{}.nonEmpty(strings.TrimSpace(entry))...)
 	}
 	return found
@@ -373,14 +373,14 @@ func (ContentProtectionUtils) inlineEntries(entries []string, options Protection
 
 func (ContentProtectionUtils) inlineEntry(entry string, options ProtectionOptions) []string {
 	url, descriptor := ContentProtectionUtils{}.splitEntry(entry)
-	if !AttachmentContentUtils{}.IsContentReference(url) {
+	if !(AttachmentContentUtils{}).IsContentReference(url) {
 		return []string{entry}
 	}
 	return ContentProtectionUtils{}.safeEntry(options.InlineSources[AttachmentContentUtils{}.NormalizeContentReference(url)], descriptor)
 }
 
 func (ContentProtectionUtils) safeEntry(source string, descriptor string) []string {
-	if !StyleProtectionUtils{}.IsSafeEmbeddedSource(source) {
+	if !(StyleProtectionUtils{}).IsSafeEmbeddedSource(source) {
 		return []string{}
 	}
 	return []string{strings.TrimSpace(source + ContentProtectionUtils{}.space() + descriptor)}
@@ -401,7 +401,7 @@ func (ContentProtectionUtils) remoteEntries(entries []string, options Protection
 
 func (ContentProtectionUtils) remoteEntry(entry string, options ProtectionOptions, result *ProtectedDocument) []string {
 	url, descriptor := ContentProtectionUtils{}.splitEntry(entry)
-	if !StyleProtectionUtils{}.IsRemoteContentUrl(url) {
+	if !(StyleProtectionUtils{}).IsRemoteContentUrl(url) {
 		return []string{entry}
 	}
 	kept, blocked := ContentProtectionUtils{}.allowedEntry(options.RemoteSources[ContentProtectionUtils{}.remembered(url, result)], descriptor, options.AllowRemote)
@@ -444,7 +444,7 @@ func (ContentProtectionUtils) writeStyle(element *HtmlNode, css string) {
 
 func (ContentProtectionUtils) markQuoted(body *HtmlNode) int {
 	count := 0
-	for _, element := range HtmlDocumentUtils{}.Elements(body) {
+	for _, element := range (HtmlDocumentUtils{}).Elements(body) {
 		count += ContentProtectionUtils{}.markIfQuoted(element)
 	}
 	return count
@@ -474,7 +474,7 @@ func (ContentProtectionUtils) isQuoted(element *HtmlNode) bool {
 
 func (ContentProtectionUtils) hasQuotedAncestor(node *HtmlNode) bool {
 	ancestor := node
-	for ContentProtectionUtils{}.searching(ancestor) {
+	for (ContentProtectionUtils{}).searching(ancestor) {
 		ancestor = ancestor.Parent
 	}
 	return ancestor != nil

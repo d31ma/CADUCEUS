@@ -7,4 +7,5 @@ type EmailAttachment struct {
 	Disposition  string  `json:"disposition"`
 	PreviewKind  string  `json:"previewKind"`
 	ThumbnailUrl string  `json:"thumbnailUrl"`
+	SizeLabel    string  `json:"sizeLabel"`
 }

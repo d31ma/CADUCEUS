@@ -15,14 +15,16 @@ import {
   saveCachedMessageTranslation,
   setCachedMessageTranslationEnabled,
 } from '../shared/scripts/translation-cache.js'
+import { setTranslationAssetToken } from '../shared/scripts/chunked-asset-fetch.js'
 
 /**
- * The on-device translation engine for the Go message reader. Language
- * detection (franc), the vendored WASM translation models, the DOM walk
- * that translates _HTML text nodes, the bounded localStorage cache and the
- * per-language preferences stay in JavaScript; MessageService keeps the
- * reader's translation state. Translated text goes back in parts, because
- * one call into a WebAssembly service holds at most 64 KiB.
+ * Escape hatch: the on-device translation engine of the message reader.
+ * Language detection, the vendored WASM models, the DOM walk that translates
+ * HTML text nodes, the localStorage cache and the per-language preferences
+ * stay in JavaScript; MessageService keeps the reader's translation state.
+ * The message to translate is read from the hidden [data-translation-source]
+ * element, and translated text goes back in TranslationPart events of at
+ * most 8000 characters, because one event holds at most 64 KiB.
  */
 @Service
 export default class TranslationEngineService {
@@ -30,16 +32,16 @@ export default class TranslationEngineService {
   static _DWELL_MILLISECONDS = 500
   static _SAMPLE_CHARACTERS = 2000
   static _MINIMUM_SAMPLE = 20
-  static _ALWAYS = 'always'
-  static _HTML = 'html'
-  static _TEXT = 'text'
 
-  /** @type {TacTaskScheduler} */
-  @Needs
-  taskScheduler
-  /** @type {MessageService} */
-  message
+  /** @type {ApplicationEventPublisher} */
+  applicationEventPublisher
   languages = Object.entries(TRANSLATION_LANGUAGES).map(([id, label]) => ({ id, label }))
+
+  /** @param {SessionChanged} changed */
+  @OnEvent({"replay":true})
+  session(changed) {
+    setTranslationAssetToken(changed.token)
+  }
 
   /**
    * @param {string} language
@@ -47,53 +49,41 @@ export default class TranslationEngineService {
    * @returns {string}
    */
   label(language, fallback) {
-    return this._label(language, fallback)
-  }
-
-  /**
-   * @param {Event} _event
-   * @param {string} target
-   */
-  async changeTarget(_event, target) {
-    await this._changeTarget(target)
+    return [fallback, TRANSLATION_LANGUAGES[language]][Number(Object.hasOwn(TRANSLATION_LANGUAGES, language))]
   }
 
   /** @param {Event} _event */
-  async always(_event) {
-    await this._setPreference(TranslationEngineService._ALWAYS)
-    await this.message.translateMessage()
+  always(_event) {
+    this._choose(this._source().language, 'always', { translate: true })
   }
 
   /** @param {Event} _event */
-  async stop(_event) {
-    await this._setPreference('offer')
+  stop(_event) {
+    this._choose(this._source().language, 'offer', {})
   }
 
   /** @param {Event} _event */
-  async never(_event) {
-    await this._setPreference('never')
-    await this.message.showOriginalMessage()
+  never(_event) {
+    this._choose(this._source().language, 'never', { original: true })
   }
 
   /** @param {Event} _event */
-  async resetPreferences(_event) {
+  resetPreferences(_event) {
     resetTranslationPreferences()
-    await this.message.translationPreferenceChanged(translationPreferenceFor(this.message.translationSource))
+    this._preference(translationPreferenceFor(this._source().language), {})
   }
 
   /** @param {TranslationRestoreRequested} requested */
   @OnEvent
-  async restore(requested) {
+  restore(requested) {
     const cached = loadCachedMessageTranslation(requested.messageId, requested.target)
-    await this._restoreOrDetect(cached, requested)
-    await this.taskScheduler.render()
+    ;[() => this._detectWhen(requested), () => this._restore(/** @type {CachedMessageTranslation} */ (cached))][Number(Boolean(cached))]()
   }
 
   /** @param {TranslationRequested} requested */
   @OnEvent
   async translate(requested) {
-    await this._translate(requested)
-    await this.taskScheduler.render()
+    await this._translate(requested).catch(error => this._failed(requested.messageId, error))
   }
 
   /** @param {TranslationVisibilityChanged} changed */
@@ -102,139 +92,119 @@ export default class TranslationEngineService {
     setCachedMessageTranslationEnabled(changed.messageId, changed.enabled)
   }
 
-  /** @param {string} language @param {string} fallback @returns {string} */
-  _label(language, fallback) {
-    return Object.hasOwn(TRANSLATION_LANGUAGES, language) ? TRANSLATION_LANGUAGES[language] : fallback
-  }
-
-  /** @param {string} target */
-  async _changeTarget(target) {
-    if (!Object.hasOwn(TRANSLATION_LANGUAGES, target)) return
-    await this.message.changeTranslationTarget(target)
-  }
-
-  /** @param {string} preference */
-  async _setPreference(preference) {
-    const source = this.message.translationSource
+  /** @param {string} source @param {string} preference @param {{translate?: boolean, original?: boolean}} next */
+  _choose(source, preference, next) {
     if (!source) return
     setTranslationPreference(source, preference)
-    await this.message.translationPreferenceChanged(preference)
+    this._preference(preference, next)
   }
 
-  /** @param {CachedMessageTranslation | null} cached @param {TranslationRestoreRequested} requested */
-  async _restoreOrDetect(cached, requested) {
-    if (cached) await this._restore(cached)
-    else if (requested.detect) await this._detect(requested.messageId)
+  /** @param {string} preference @param {{translate?: boolean, original?: boolean}} next */
+  _preference(preference, next) {
+    /** @type {TranslationPreferenceChanged} */
+    const changed = { preference, translate: Boolean(next.translate), original: Boolean(next.original) }
+    this.applicationEventPublisher.publishEvent(changed, false)
   }
 
   /** @param {CachedMessageTranslation} cached */
-  async _restore(cached) {
-    await this._send(cached.messageId, cached.htmlBody, cached.plainText, cached.sourceLanguage)
-    await this.message.translationPreferenceChanged(translationPreferenceFor(cached.sourceLanguage))
-    await this._hideUnless(cached.enabled)
+  _restore(cached) {
+    this._send(cached.messageId, cached.htmlBody, cached.plainText, cached.sourceLanguage)
+    this._preference(translationPreferenceFor(cached.sourceLanguage), { original: !cached.enabled })
   }
 
-  /** @param {boolean} enabled */
-  async _hideUnless(enabled) {
-    if (!enabled) await this.message.showOriginalMessage()
+  /** @param {TranslationRestoreRequested} requested */
+  _detectWhen(requested) {
+    if (requested.detect) setTimeout(() => { void this._detect(requested.messageId) }, TranslationEngineService._DWELL_MILLISECONDS)
+  }
+
+  /** @returns {{ messageId: string, html: string, text: string, language: string }} */
+  _source() {
+    const element = /** @type {HTMLElement | null} */ (document.querySelector('[data-translation-source]'))
+    return { messageId: '', html: '', text: '', language: '', ...element?.dataset }
   }
 
   /** @param {string} messageId */
   async _detect(messageId) {
-    await new Promise(resolve => setTimeout(resolve, TranslationEngineService._DWELL_MILLISECONDS))
-    const sample = this._sample(this.message.email)
-    await this._detectSample(messageId, sample)
+    const source = this._source()
+    const sample = this._first([translationDetectionTextFromHtml(source.html), source.text]).replace(/\s+/g, ' ').trim().slice(0, TranslationEngineService._SAMPLE_CHARACTERS)
+    await this._detectSample(messageId, [sample.length >= TranslationEngineService._MINIMUM_SAMPLE, source.messageId === messageId].every(Boolean), sample)
   }
 
-  /** @param {Email} email @returns {string} */
-  _sample(email) {
-    const html = this._htmlSample(email?.htmlBody)
-    const text = [html, this.message.plainTextVisible].filter(Boolean).concat('')[0]
-    return String(text).replace(/\s+/g, ' ').trim().slice(0, TranslationEngineService._SAMPLE_CHARACTERS)
-  }
-
-  /** @param {string | undefined} html @returns {string} */
-  _htmlSample(html) {
-    return html ? translationDetectionTextFromHtml(html) : ''
-  }
-
-  /** @param {string} messageId @param {string} sample */
-  async _detectSample(messageId, sample) {
-    if (sample.length < TranslationEngineService._MINIMUM_SAMPLE || this.message.email?.id !== messageId) return
+  /** @param {string} messageId @param {boolean} usable @param {string} sample */
+  async _detectSample(messageId, usable, sample) {
+    if (!usable) return
     const result = await detectLanguage(sample)
-    await this.message.languageDetected(messageId, result.language, result.confidence, translationPreferenceFor(result.language))
+    const language = this._first([result.language])
+    /** @type {TranslationDetected} */
+    const detected = { messageId, language, confidence: [Number(result.confidence)].filter(Number.isFinite).concat(0)[0], preference: translationPreferenceFor(language) }
+    this.applicationEventPublisher.publishEvent(detected, false)
+  }
+
+  /** @param {unknown[]} values @returns {string} */
+  _first(values) {
+    return values.filter(value => typeof value === 'string').filter(Boolean).concat('')[0]
   }
 
   /** @param {TranslationRequested} requested */
   async _translate(requested) {
-    await this._translateMessage(requested).catch(error => this._failed(requested.messageId, error))
-  }
-
-  /** @param {string} messageId @param {unknown} error */
-  async _failed(messageId, error) {
-    await this.message.translationFailed(messageId, error instanceof Error ? error.message : '')
-  }
-
-  /** @param {TranslationRequested} requested */
-  async _translateMessage(requested) {
-    const onProgress = (/** @type {number} */ loaded) => { void this._progress(loaded) }
+    const source = this._source()
+    const onProgress = (/** @type {number} */ progress) => this._progress(progress)
     const options = { sourceLanguage: requested.source, targetLanguage: requested.target, onProgress }
-    const html = await this._translatedHtml(this._htmlBody(), options)
-    const text = await this._translatedText(this._plainText(), { ...options, sourceLanguage: this._firstSource(html.sourceLanguage, options.sourceLanguage) })
-    const source = this._firstSource(html.sourceLanguage, text.sourceLanguage)
-    this._requireText(html.html, text.text)
-    await this._send(requested.messageId, html.html, text.text, source)
-    saveCachedMessageTranslation({ messageId: requested.messageId, sourceLanguage: source, targetLanguage: requested.target, htmlBody: html.html, plainText: text.text, enabled: true })
+    const html = await this._translatedHtml(source.html, options)
+    const text = await this._translatedText(source.text, { ...options, sourceLanguage: this._first([html.sourceLanguage, options.sourceLanguage]) })
+    const language = this._first([html.sourceLanguage, text.sourceLanguage])
+    this._requireText([html.html, text.text])
+    this._send(requested.messageId, html.html, text.text, language)
+    saveCachedMessageTranslation({ messageId: requested.messageId, sourceLanguage: language, targetLanguage: requested.target, htmlBody: html.html, plainText: text.text, enabled: true })
   }
 
-  /** @returns {string} */
-  _htmlBody() {
-    return String(this.message.email?.htmlBody ?? '')
-  }
-
-  /** @returns {string} */
-  _plainText() {
-    return String(this.message.plainTextVisible ?? '')
-  }
-
-  /** @param {string} first @param {string} fallback @returns {string} */
-  _firstSource(first, fallback) {
-    return first || fallback
-  }
-
-  /** @param {string} html @param {{ sourceLanguage: string, targetLanguage: string, onProgress: (loaded: number) => void }} options */
+  /** @param {string} html @param {{ sourceLanguage: string, targetLanguage: string, onProgress: (progress: number) => void }} options */
   async _translatedHtml(html, options) {
     return html ? translateHtml(html, options) : { html: '', sourceLanguage: '' }
   }
 
-  /** @param {string} text @param {{ sourceLanguage: string, targetLanguage: string, onProgress: (loaded: number) => void }} options */
+  /** @param {string} text @param {{ sourceLanguage: string, targetLanguage: string, onProgress: (progress: number) => void }} options */
   async _translatedText(text, options) {
     return text ? translateText(text, options) : { text: '', sourceLanguage: '' }
   }
 
-  /** @param {string} html @param {string} text */
-  _requireText(html, text) {
-    if (!html && !text) throw new Error('This message has no translatable text.')
+  /** @param {string[]} translated */
+  _requireText(translated) {
+    if (!translated.some(Boolean)) throw new Error('This message has no translatable text.')
   }
 
-  /** @param {number} loaded */
-  async _progress(loaded) {
-    await this.message.translationProgressed(loaded)
-    await this.taskScheduler.render()
+  /** @param {string} messageId @param {unknown} error */
+  _failed(messageId, error) {
+    /** @type {TranslationFailed} */
+    const failed = { messageId, message: error instanceof Error ? error.message : '' }
+    this.applicationEventPublisher.publishEvent(failed, false)
+  }
+
+  /** @param {number} progress */
+  _progress(progress) {
+    /** @type {TranslationProgressed} */
+    const progressed = { progress }
+    this.applicationEventPublisher.publishEvent(progressed, false)
   }
 
   /** @param {string} messageId @param {string} html @param {string} text @param {string} source */
-  async _send(messageId, html, text, source) {
-    await this._sendParts(messageId, TranslationEngineService._HTML, String(html))
-    await this._sendParts(messageId, TranslationEngineService._TEXT, String(text))
-    await this.message.receiveTranslation({ messageId, kind: 'done', index: 0, count: 1, text: source })
+  _send(messageId, html, text, source) {
+    this._sendParts(messageId, 'html', String(html))
+    this._sendParts(messageId, 'text', String(text))
+    /** @type {TranslationPart} */
+    const done = { messageId, kind: 'done', index: 0, count: 1, text: source }
+    this.applicationEventPublisher.publishEvent(done, false)
   }
 
   /** @param {string} messageId @param {string} kind @param {string} value */
-  async _sendParts(messageId, kind, value) {
+  _sendParts(messageId, kind, value) {
     const size = TranslationEngineService._PART_CHARACTERS
     const points = Array.from(value)
-    const parts = Array.from({ length: Math.ceil(points.length / size) }, (_, index) => points.slice(index * size, (index + 1) * size).join(''))
-    for (const [index, text] of parts.entries()) await this.message.receiveTranslation({ messageId, kind, index, count: parts.length, text })
+    const count = Math.ceil(points.length / size)
+    for (let index = 0; index < count; index++) {
+      /** @type {TranslationPart} */
+      const part = { messageId, kind, index, count, text: points.slice(index * size, (index + 1) * size).join('') }
+      this.applicationEventPublisher.publishEvent(part, false)
+    }
   }
 }

@@ -2,6 +2,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 )
@@ -9,36 +10,45 @@ import (
 // MessageService holds the one open message of the reader: loading it, its
 // header and toolbar actions, replies, the protected HTML body, plain text,
 // original source, attachments, remote images, link warnings, unsubscribe
-// and the state of on-device translation. Browser-only effects (downloads,
-// new windows, timers and the translation engine) go to JavaScript
-// services as events.
+// and the state of on-device translation. It opens the message of a
+// /email/<id> page, or the one the mailbox list selected (MailSelected).
+// Mailbox actions go to MailboxService (MailActionRequested,
+// SpamReportRequested); replies hand off to the composer through
+// caduceus_compose_prefill; downloads and new tabs click hidden links.
 //
 // @Service
 type MessageService struct {
 	// @Needs
 	inboxClient *InboxClient
 	// @Needs
-	usersClient *UsersClient
-	// @Needs
-	sendClient                *SendClient
-	secureRandom              SecureRandom
+	usersClient               *UsersClient
 	applicationEventPublisher ApplicationEventPublisher
 
 	Email                     Email
 	HasEmail                  bool
+	Standalone                bool
 	Loading                   bool
 	LoadError                 string
 	CurrentFolder             string
 	IsDraft                   bool
+	CanMove                   bool
+	CanArchive                bool
+	CanMoveToInbox            bool
+	CanTrash                  bool
+	CanSnooze                 bool
+	CanDeleteForever          bool
 	CanUnsubscribe            bool
 	UnsubscribeState          string
-	ShowReply                 bool
-	ReplyText                 string
 	VisibleSender             string
 	ReplyTarget               string
 	SenderInitials            string
 	DetailedHeaderRows        []HeaderRow
+	HasDetailedHeaders        bool
 	HasTrackingInsights       bool
+	HasTrackingEvents         bool
+	ShowOpenedBadge           bool
+	HasAttachments            bool
+	ShowOriginalRecipient     bool
 	ParticipantAddress        string
 	AttachmentPreviewsEnabled bool
 	RenderMode                string
@@ -60,7 +70,6 @@ type MessageService struct {
 	SourceError               string
 	RawSourceText             string
 	AttachmentPreviewOpen     bool
-	AttachmentPreviewLoading  bool
 	AttachmentPreviewKind     string
 	AttachmentPreviewUrl      string
 	AttachmentPreviewText     string
@@ -68,7 +77,9 @@ type MessageService struct {
 	AttachmentPreview         EmailAttachment
 	DownloadUrl               string
 	DownloadName              string
-	ComposePrefill            ComposePrefill
+	ExternalUrl               string
+	PrintEmail                string
+	Account                   string
 	TranslationTarget         string
 	TranslationSource         string
 	TranslationBusy           bool
@@ -82,9 +93,7 @@ type MessageService struct {
 
 	record           map[string]any
 	token            string
-	ownAddress       string
-	path             string
-	pendingId        string
+	pendingID        string
 	theme            string
 	preferences      MailPreferences
 	findOpen         bool
@@ -99,7 +108,6 @@ type MessageService struct {
 	quotedCount      int
 	rawSourceBase64  string
 	rawSourceName    string
-	dateLabels       map[string]string
 	translatedHtml   string
 	translatedPlain  string
 	translationParts map[string][]string
@@ -107,129 +115,172 @@ type MessageService struct {
 
 // @OnStart
 func (service *MessageService) Start() {
-	service.preferences = MailPreferencesUtils{}.Defaults()
+	service.preferences = AppearanceUtils{}.DefaultMail()
 	service.TranslationTarget = "en"
 	service.reset()
 }
 
+// HearSession keeps the token and opens the message the page names.
 // @OnEvent({"replay":true})
-func (service *MessageService) SessionChanged(changed SessionChanged) error {
+func (service *MessageService) HearSession(changed SessionChanged) {
 	service.token = changed.Token
-	service.ownAddress = AddressUtils{}.Normalized(changed.Email)
-	return service.openPending()
+	service.Account = AddressUtils{}.Normalized(changed.Email)
+	service.openPending()
+	service.settle()
 }
 
+// HearLocation reads the message of a /email/<id> page.
 // @OnEvent({"replay":true})
-func (service *MessageService) PreferencesChanged(changed MailPreferencesChanged) {
-	service.preferences = MailPreferencesUtils{}.Normalize(changed)
-	service.applyThumbnails()
-	service.refreshLabels()
+func (service *MessageService) HearLocation(place PageLocation) {
+	service.Standalone = RouteUtils{}.IsStandalone(place.Path)
+	service.pendingID = RouteUtils{}.EmailId(place.Path, place.Search)
+	service.openPending()
+	service.settle()
 }
 
+// HearStorage restores the mail preferences and the translation language.
 // @OnEvent({"replay":true})
-func (service *MessageService) ReaderOpened(opened ReaderOpened) error {
-	service.path = opened.Path
-	service.theme = opened.Theme
-	service.TranslationTarget = TextUtils{}.Or(opened.TranslationTarget, service.TranslationTarget)
-	service.pendingId = RouteUtils{}.EmailId(opened.Path, opened.Search)
-	return service.openPending()
+func (service *MessageService) HearStorage(stored StoredValues) {
+	service.adoptPreferences(stored.Session)
+	service.TranslationTarget = TextUtils{}.FirstOf(stored.Local[service.names().TargetKey], service.TranslationTarget)
+}
+
+// HearStorageWritten follows the mail preferences PreferenceService saves.
+// @OnEvent
+func (service *MessageService) HearStorageWritten(written StorageWritten) {
+	service.adoptPreferences(written.Values)
+}
+
+// HearAttributes follows the theme, for the "match theme" message colours.
+// @OnEvent({"replay":true})
+func (service *MessageService) HearAttributes(changed DocumentAttributesChanged) {
+	service.theme = TextUtils{}.FirstOf(changed.Attributes["data-theme"], service.theme)
+	service.refreshDocument()
+}
+
+// HearSelection opens the message the mailbox list selected.
+// @OnEvent
+func (service *MessageService) HearSelection(selected MailSelected) {
+	service.pendingID = selected.EmailID
+	service.openPending()
+	service.settle()
+}
+
+// HearRefresh reads the open message's folder, labels and flags again after
+// a mailbox action, its undo or a spam report.
+// @OnEvent
+func (service *MessageService) HearRefresh(refresh InboxRefreshRequested) {
+	FlowUtils{}.When(LogicUtils{}.All(service.HasEmail, refresh.Reason != service.names().Owner), service.reloadFlags)()
+	service.settle()
+}
+
+// HearTimer marks the message read when its delay has passed.
+// @OnEvent
+func (service *MessageService) HearTimer(elapsed TimerElapsed) {
+	FlowUtils{}.When(LogicUtils{}.All(elapsed.Name == service.names().MarkReadTimer, service.HasEmail, !service.Email.Read), service.markRead)()
+	service.settle()
+}
+
+// HearShortcut runs the reader's keyboard commands.
+// @OnEvent
+func (service *MessageService) HearShortcut(pressed ShortcutPressed) {
+	service.runShortcut(pressed.Command)
+	service.settle()
+}
+
+// HearConfirmation runs the action the person confirmed.
+// @OnEvent
+func (service *MessageService) HearConfirmation(confirmation ConfirmationGiven) {
+	actions := map[string]func(){service.names().DeleteAction: service.removeEmail, service.names().UnsubscribeAction: service.unsubscribeNow}
+	action, found := actions[confirmation.Action]
+	FlowUtils{}.When(LogicUtils{}.All(found, service.HasEmail, confirmation.ID == service.Email.ID), action)()
+	service.settle()
 }
 
 // @OnEvent
-func (service *MessageService) EmailSelected(selected EmailSelected) error {
-	service.pendingId = selected.EmailId
-	failure := service.openPending()
-	service.changed()
-	return failure
-}
-
-// @OnEvent
-func (service *MessageService) MessageChanged(changed MessageChanged) {
-	service.applyChange(changed)
-}
-
-// @OnEvent
-func (service *MessageService) FindToggled(toggled FindToggled) {
+func (service *MessageService) HearFind(toggled FindToggled) {
 	service.findOpen = toggled.Open
 }
 
+// HearSourceRequest downloads the original of one conversation message.
 // @OnEvent
-func (service *MessageService) SourceRequested(requested MessageSourceRequested) {
-	source, failure := service.inboxClient.Source(requested.EmailId, service.authorization())
+func (service *MessageService) HearSourceRequest(requested MessageSourceRequested) {
+	source, failure := service.inboxClient.Source(service.bearer(), requested.EmailId)
 	service.offerConversationSource(source, failure)
-	service.changed()
+	service.settle()
+}
+
+// HearUnsubscribeAnswer records whether the one-click POST went out.
+// @OnEvent
+func (service *MessageService) HearUnsubscribeAnswer(answered UnsubscribeAnswered) {
+	service.UnsubscribeState = TextUtils{}.Choose(answered.Sent, service.names().Success, "error")
+	service.toast(TextUtils{}.Choose(answered.Sent, "Unsubscribe request sent.", "Could not send the unsubscribe request."))
+}
+
+// HearLinkWarning asks before opening a link that disguises its destination.
+// @OnEvent
+func (service *MessageService) HearLinkWarning(warning PendingLinkWarning) {
+	safe := LinkDestinationUtils{}.SafeExternalTarget(warning.Target)
+	service.PendingLink = PendingLinkWarning{Reason: TextUtils{}.FirstOf(warning.Reason, "This link may disguise its destination."), Target: safe, DestinationHost: TextUtils{}.FirstOf(warning.DestinationHost, UrlUtils{}.ParseWeb(safe).Host), DisplayedHost: warning.DisplayedHost}
+	service.HasPendingLink = safe != ""
+}
+
+// HearBackdrop closes the attachment preview or the link warning on a click
+// outside it.
+// @OnEvent
+func (service *MessageService) HearBackdrop(clicked BackdropClicked) {
+	closers := map[string]func(){"reader-attachment": service.closeAttachmentPreview, "reader-link": service.CancelPendingLink}
+	closer, found := closers[clicked.Dialog]
+	FlowUtils{}.When(found, closer)()
 }
 
 // @OnEvent
-func (service *MessageService) Shortcut(shortcut ShortcutTriggered) {
-	service.runShortcut(shortcut.Name)
-	service.changed()
+func (service *MessageService) Settled(_ ViewSettled) {}
+
+// LoadEmail reads the open message again.
+func (service *MessageService) LoadEmail() {
+	service.load()
 }
 
-func (service *MessageService) LoadEmail() error {
-	return service.load()
-}
-
+// GoBack returns to the list: /inbox from a message page, or the list beside
+// the reader.
 func (service *MessageService) GoBack() {
-	service.goBack(RouteUtils{}.IsStandalone(service.path))
+	service.leave()
 }
-
-func (MessageService) readKey() string { return "read" }
-
-func (MessageService) markedRead() string { return "Marked read." }
-
-func (MessageService) markedUnread() string { return "Marked unread." }
 
 func (service *MessageService) ToggleRead() {
-	service.updateEmail(map[string]any{service.readKey(): !service.Email.Read}, TextUtils{}.Choose(service.Email.Read, service.markedUnread(), service.markedRead()))
+	service.act(map[string]any{service.names().Read: !service.Email.Read}, TextUtils{}.Choose(service.Email.Read, service.names().MarkedUnread, service.names().MarkedRead))
 }
-
-func (MessageService) starredKey() string { return "starred" }
 
 func (service *MessageService) ToggleStar() {
-	service.updateEmail(map[string]any{service.starredKey(): !service.Email.Starred}, TextUtils{}.Choose(service.Email.Starred, "Star removed.", "Starred."))
+	service.act(map[string]any{"starred": !service.Email.Starred}, TextUtils{}.Choose(service.Email.Starred, "Star removed.", "Starred."))
 }
-
-func (MessageService) folderKey() string { return "folder" }
 
 func (service *MessageService) Archive() {
-	service.updateEmail(map[string]any{service.folderKey(): "archive"}, "Archived.")
+	service.act(map[string]any{service.names().FolderKey: service.names().Archive}, "Archived.")
 }
 
-func (MessageService) inboxFolder() string { return "inbox" }
-
-func (MessageService) movedToInbox() string { return "Moved to inbox." }
-
 func (service *MessageService) MoveToInbox() {
-	service.updateEmail(map[string]any{service.folderKey(): service.inboxFolder()}, service.movedToInbox())
+	service.act(map[string]any{service.names().FolderKey: service.names().Inbox}, "Moved to inbox.")
 }
 
 func (service *MessageService) MoveToTrash() {
-	service.updateEmail(map[string]any{service.folderKey(): "trash"}, "Moved to trash.")
+	service.act(map[string]any{service.names().FolderKey: service.names().Trash}, "Moved to trash.")
 }
 
-func (MessageService) spamKey() string { return "spam" }
-
+// ReportSpam and MarkNotSpam go to MailboxService, which reports and toasts.
 func (service *MessageService) ReportSpam() {
-	raw, failure := service.inboxClient.MarkSpam(service.Email.Id, map[string]any{service.spamKey(): true}, service.authorization())
-	service.spamMarked(RecordUtils{}.Object(raw), failure, SpamOutcome{Success: "Reported spam.", Failure: "Report spam failed."})
+	service.applicationEventPublisher.PublishEvent(SpamReportRequested{ID: service.Email.ID, Spam: true}, false)
 }
 
 func (service *MessageService) MarkNotSpam() {
-	raw, failure := service.inboxClient.MarkSpam(service.Email.Id, map[string]any{service.spamKey(): false}, service.authorization())
-	service.spamMarked(RecordUtils{}.Object(raw), failure, SpamOutcome{Success: service.movedToInbox(), Failure: "Not spam failed."})
+	service.applicationEventPublisher.PublishEvent(SpamReportRequested{ID: service.Email.ID, Spam: false}, false)
 }
 
-func (service *MessageService) DeleteEmail(confirmed bool) {
-	service.deleteEmail(confirmed)
-}
-
-func (service *MessageService) Unsubscribe(confirmed bool) {
-	service.unsubscribe(confirmed, UnsubscribeUtils{}.BuildAction(service.Email))
-}
-
-func (service *MessageService) UnsubscribeFinished(sent bool) {
-	service.unsubscribeFinished(sent)
+// OpenPicker opens the shared folder or label picker for this message.
+func (service *MessageService) OpenPicker(mode string) {
+	message := PickerMessage{ID: service.Email.ID, Domain: service.Email.Domain, Folder: service.Email.Folder, Labels: append([]string{}, service.Email.Labels...)}
+	service.applicationEventPublisher.PublishEvent(CategoryPickerRequested{Mode: mode, Messages: []PickerMessage{message}}, false)
 }
 
 func (service *MessageService) OpenGitHub() {
@@ -237,11 +288,11 @@ func (service *MessageService) OpenGitHub() {
 }
 
 func (service *MessageService) EditDraft() {
-	service.compose(ComposePrefill{DraftId: service.Email.Id, References: []string{}})
+	service.compose(ComposeFields{DraftID: service.Email.ID})
 }
 
 func (service *MessageService) PreferredReply() {
-	service.preferredReply(service.preferences.DefaultReplyAction)
+	map[bool]func(){true: service.replyAll, false: service.reply}[service.preferences.DefaultReplyAction == "reply-all"]()
 }
 
 func (service *MessageService) ReplyAll() {
@@ -252,46 +303,31 @@ func (service *MessageService) Forward() {
 	service.forward()
 }
 
-func (service *MessageService) SendReply() {
-	service.sendReply(service.threadPrefill(service.Email.InternetMessageId))
-}
-
-func (MessageService) htmlMode() string { return "html" }
-
-func (MessageService) textMode() string { return "text" }
-
-func (MessageService) sourceMode() string { return "source" }
-
 func (service *MessageService) SetRenderMode(mode string) {
-	allowed := map[string]bool{service.htmlMode(): service.Email.HtmlBody != "", service.textMode(): true, service.sourceMode(): service.Email.HasRawSource}
-	service.chooseMode(mode, allowed[mode])
-	service.loadSourceFor(service.RenderMode == service.sourceMode(), service.needsSource())
+	allowed := map[string]bool{service.names().Html: service.Email.HtmlBody != "", service.names().Text: true, service.names().Source: service.Email.HasRawSource}
+	service.RenderMode = TextUtils{}.Choose(allowed[mode], mode, service.RenderMode)
+	FlowUtils{}.When(service.RenderMode == service.names().Source, service.loadRawSource)()
 	service.refreshText()
 }
 
 func (service *MessageService) DownloadOriginal() {
-	service.loadRawSource(service.needsSource())
+	service.loadRawSource()
 	service.offerSource()
 }
 
 func (service *MessageService) ToggleQuotedText() {
-	service.toggleQuotedText()
+	service.ShowQuotedText = service.HasQuotedText != service.ShowQuotedText
 	service.refreshDocument()
 }
 
 func (service *MessageService) ShowRemoteImages() {
 	service.remoteVisible = true
 	service.refreshDocument()
-	service.loadRemoteImages(service.unloadedUrls())
+	service.loadRemoteImages()
 }
 
 func (service *MessageService) AlwaysShowImagesFromSender() {
-	service.trustSender(service.ImageSender)
-}
-
-func (service *MessageService) ShowLinkWarning(reason string, target string, destinationHost string, displayedHost string) {
-	safe := LinkDestinationUtils{}.SafeExternalTarget(target)
-	service.showLinkWarning(PendingLinkWarning{Reason: TextUtils{}.Or(reason, "This link may disguise its destination."), Target: safe, DestinationHost: TextUtils{}.Or(destinationHost, UrlUtils{}.ParseWeb(safe).Host), DisplayedHost: displayedHost})
+	FlowUtils{}.When(LogicUtils{}.All(service.ImageSender != "", !service.RemotePreferenceSaving), service.trustSender)()
 }
 
 func (service *MessageService) CancelPendingLink() {
@@ -304,75 +340,33 @@ func (service *MessageService) OpenPendingLink() {
 	service.CancelPendingLink()
 }
 
-func (service *MessageService) DismissLinkWarning(className string) {
-	service.dismissWhen(className == "email-link-warning-backdrop", service.CancelPendingLink)
+func (service *MessageService) PreviewAttachment(attachmentID string) {
+	service.previewAttachment(service.attachment(attachmentID))
 }
 
-func (service *MessageService) PreviewAttachment(attachment EmailAttachment) {
-	service.previewAttachment(attachment, AttachmentContentUtils{}.PreviewKind(attachment.ContentType))
-}
-
-func (service *MessageService) DownloadAttachment(attachment EmailAttachment) {
+func (service *MessageService) DownloadAttachment(attachmentID string) {
+	attachment := service.attachment(attachmentID)
 	content, failure := service.attachmentContent(attachment.Id)
-	service.offerAttachment(content, failure, TextUtils{}.Or(content.Filename, TextUtils{}.Or(attachment.Filename, "attachment")))
+	service.offerAttachment(content, failure, TextUtils{}.FirstOf(content.Filename, TextUtils{}.FirstOf(attachment.Filename, "attachment")))
 }
 
 func (service *MessageService) CloseAttachmentPreview() {
 	service.closeAttachmentPreview()
 }
 
-func (service *MessageService) DismissAttachmentPreview(className string) {
-	service.dismissWhen(className == "attachment-preview-backdrop", service.closeAttachmentPreview)
-}
-
-func (service *MessageService) TimerFired(name string, key string) {
-	service.timerFired(name, key)
-	service.changed()
-}
-
-func (service *MessageService) AcceptDateLabels(values []string, labels []string) {
-	service.acceptDateLabels(values, labels)
-}
-
+// ChangeTranslationTarget remembers the language and shows the original
+// until a translation into it exists.
 func (service *MessageService) ChangeTranslationTarget(target string) {
 	service.TranslationTarget = target
-	service.applicationEventPublisher.PublishEvent(ReaderPreferenceChanged{Name: "translationTarget", Value: target}, false)
+	service.applicationEventPublisher.PublishEvent(StorageWritten{Area: "local", Values: map[string]string{service.names().TargetKey: target}, Removed: []string{}}, false)
 	service.clearTranslation()
-	service.applicationEventPublisher.PublishEvent(TranslationRestoreRequested{MessageId: service.Email.Id, Target: target}, false)
+	service.applicationEventPublisher.PublishEvent(TranslationRestoreRequested{MessageId: service.Email.ID, Target: target}, false)
 	service.refreshDocument()
 	service.refreshTranslation()
 }
 
 func (service *MessageService) TranslateMessage() {
 	service.translate()
-	service.refreshTranslation()
-}
-
-func (service *MessageService) LanguageDetected(messageId string, language string, confidence float64, preference string) {
-	accepted := service.detectionAccepted(messageId, language, confidence)
-	service.languageDetected(accepted, language, preference)
-	service.translateWhen(service.automatic(accepted, preference))
-	service.refreshTranslation()
-}
-
-func (service *MessageService) TranslationPreferenceChanged(preference string) {
-	service.TranslationPreference = preference
-	service.refreshTranslation()
-}
-
-func (service *MessageService) TranslationProgressed(progress float64) {
-	service.TranslationProgress = progress
-	service.refreshTranslation()
-}
-
-func (service *MessageService) ReceiveTranslation(part TranslationPart) {
-	service.receiveTranslation(part)
-	service.refreshDocument()
-	service.refreshTranslation()
-}
-
-func (service *MessageService) TranslationFailed(messageId string, message string) {
-	service.translationFailed(messageId == service.Email.Id, TextUtils{}.Or(message, "Translation failed."))
 	service.refreshTranslation()
 }
 
@@ -388,17 +382,88 @@ func (service *MessageService) ShowOriginalMessage() {
 	service.refreshTranslation()
 }
 
-func (MessageService) idleState() string { return "idle" }
+// HearDetection offers, or starts, a translation of the detected language.
+// @OnEvent
+func (service *MessageService) HearDetection(detected TranslationDetected) {
+	accepted := LogicUtils{}.All(detected.MessageId == service.Email.ID, detected.Language != "", detected.Confidence >= service.names().Confidence, detected.Language != service.TranslationTarget)
+	service.TranslationSource = TextUtils{}.Choose(accepted, detected.Language, service.TranslationSource)
+	service.TranslationPreference = TextUtils{}.Choose(accepted, detected.Preference, service.TranslationPreference)
+	FlowUtils{}.When(LogicUtils{}.All(accepted, detected.Preference == "always"), service.translate)()
+	service.refreshTranslation()
+}
+
+// HearTranslationPreference follows a choice from the translation menu.
+// @OnEvent
+func (service *MessageService) HearTranslationPreference(changed TranslationPreferenceChanged) {
+	service.TranslationPreference = changed.Preference
+	FlowUtils{}.When(changed.Translate, service.translate)()
+	FlowUtils{}.When(changed.Original, service.ShowOriginalMessage)()
+	service.refreshTranslation()
+}
+
+// @OnEvent
+func (service *MessageService) HearTranslationProgress(progressed TranslationProgressed) {
+	service.TranslationProgress = progressed.Progress
+	service.refreshTranslation()
+}
+
+// HearTranslationPart collects a translated body, which arrives in parts.
+// @OnEvent
+func (service *MessageService) HearTranslationPart(part TranslationPart) {
+	valid := LogicUtils{}.All(part.MessageId == service.Email.ID, part.Count > 0, part.Index >= 0, part.Index < part.Count)
+	FlowUtils{}.When(valid, func() {
+		service.translationParts[part.Kind] = TranslationPartUtils{}.With(service.translationParts[part.Kind], part)
+	})()
+	FlowUtils{}.When(LogicUtils{}.All(valid, part.Kind == "done"), func() { service.finishTranslation(part.Text) })()
+	service.refreshDocument()
+	service.refreshTranslation()
+}
+
+// @OnEvent
+func (service *MessageService) HearTranslationFailure(failed TranslationFailed) {
+	current := failed.MessageId == service.Email.ID
+	service.TranslationError = TextUtils{}.Choose(current, TextUtils{}.FirstOf(failed.Message, "Translation failed."), service.TranslationError)
+	service.TranslationBusy = LogicUtils{}.All(service.TranslationBusy, !current)
+	service.TranslationProgress = 0
+	service.refreshTranslation()
+}
+
+func (MessageService) names() ReaderNames {
+	return ReaderNames{
+		Owner: "message", Inbox: "inbox", FolderKey: "folder", Html: "html", Text: "text", Source: "source",
+		MarkReadTimer: "reader-mark-read", DeleteAction: "reader-delete", UnsubscribeAction: "reader-unsubscribe",
+		TargetKey: "caduceus-translation-target", MailKey: "caduceus_mail_preferences", Allow: "allow", Sent: "sent",
+		Reply: "reply", RePrefix: "Re: ", MarkedRead: "Marked read.", MarkedUnread: "Marked unread.", Archive: "archive", Trash: "trash",
+		Cc: "cc", To: "to", Dark: "dark", Original: "message.eml", Read: "read", Success: "success", Confidence: 0.3,
+	}
+}
+
+func (service *MessageService) bearer() string {
+	return "Bearer " + service.token
+}
+
+func (service *MessageService) settle() {
+	service.applicationEventPublisher.PublishEvent(ViewSettled{Source: service.names().Owner}, false)
+}
+
+func (service *MessageService) toast(message string) {
+	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: message}, false)
+}
+
+func (service *MessageService) adoptPreferences(values map[string]string) {
+	text, found := values[service.names().MailKey]
+	FlowUtils{}.When(found, func() { service.preferences = AppearanceUtils{}.Mail(text) })()
+	service.applyThumbnails()
+	service.refreshLabels()
+}
 
 func (service *MessageService) reset() {
 	service.record = map[string]any{}
-	service.Email = EmailRecordUtils{}.Email(service.record)
+	service.Email = Email{}
 	service.HasEmail = false
-	service.UnsubscribeState = service.idleState()
-	service.RenderMode = service.htmlMode()
-	service.ComposePrefill = ComposePrefill{References: []string{}}
-	service.ShowReply = false
-	service.ReplyText = ""
+	service.LoadError = ""
+	service.UnsubscribeState = "idle"
+	service.RenderMode = service.names().Html
 	service.resetRemoteContent()
 	service.resetSource()
 	service.resetTranslation()
@@ -415,7 +480,6 @@ func (service *MessageService) resetRemoteContent() {
 	service.inlineSources = map[string]string{}
 	service.thumbnails = map[string]string{}
 	service.attachments = map[string]AttachmentContent{}
-	service.dateLabels = map[string]string{}
 	service.ProtectedDocument = ""
 	service.BlockedRemoteContentCount = 0
 	service.RemoteContentSummary = ""
@@ -449,143 +513,117 @@ func (service *MessageService) clearTranslation() {
 	service.translationParts = map[string][]string{}
 }
 
-func (service *MessageService) authorization() string {
-	return "Bearer " + service.token
+// openPending opens the named message once a token exists, and not again
+// while it is already open.
+func (service *MessageService) openPending() {
+	FlowUtils{}.When(LogicUtils{}.All(service.token != "", service.pendingID != "", service.pendingID != service.Email.ID), service.openFresh)()
 }
 
-func (service *MessageService) openPending() error {
-	if service.token == "" || service.pendingId == "" || (service.pendingId == service.Email.Id && service.Email.Body != "") {
-		return nil
-	}
-	return service.openFresh(service.pendingId)
-}
-
-func (service *MessageService) openFresh(emailId string) error {
+func (service *MessageService) openFresh() {
 	service.reset()
-	service.record = map[string]any{"id": emailId}
-	service.Email = EmailRecordUtils{}.Email(service.record)
+	service.record = map[string]any{"id": service.pendingID}
+	service.Email = Email{ID: service.pendingID}
 	service.HasEmail = true
-	failure := service.load()
-	service.changed()
-	return failure
+	service.load()
 }
 
-func (service *MessageService) load() error {
+func (service *MessageService) load() {
 	service.Loading = true
-	raw, failure := service.inboxClient.Read(service.Email.Id, service.authorization())
-	service.LoadError = service.loadFailure(FailureUtils{}.Code(failure))
-	service.showLoaded(RecordUtils{}.Object(raw), failure == nil)
+	raw, failure := service.inboxClient.Read(service.bearer(), service.Email.ID)
+	service.LoadError = TextUtils{}.Choose(failure == nil, "", HTTPUtils{}.Message(failure, "Could not load this email.", "Network error"))
+	FlowUtils{}.When(HTTPUtils{}.Refused(failure), service.checkSession)()
+	FlowUtils{}.When(failure == nil, func() { service.show(RecordUtils{}.Object(raw)) })()
 	service.Loading = false
-	return nil
 }
 
-func (service *MessageService) loadFailure(code string) string {
-	switch code {
-	case "":
-		return ""
-	case "HTTP_STATUS":
-		return "Could not load this email."
-	}
-	return "Network error"
+func (service *MessageService) checkSession() {
+	service.applicationEventPublisher.PublishEvent(SessionCheckRequested{Reason: "reader"}, false)
 }
-
-func (service *MessageService) showLoaded(record map[string]any, loaded bool) {
-	if loaded {
-		service.show(record)
-	}
-}
-
-func (MessageService) owner() string { return "message" }
 
 func (service *MessageService) show(record map[string]any) {
 	service.record = record
 	service.Email = EmailRecordUtils{}.Email(record)
 	service.ShowQuotedText = MessageConversationUtils{}.IsForwardedSubject(service.Email.Subject)
-	service.RenderMode = TextUtils{}.Choose(service.Email.HtmlBody != "", service.htmlMode(), service.textMode())
+	service.RenderMode = TextUtils{}.Choose(service.Email.HtmlBody != "", service.names().Html, service.names().Text)
 	service.prepareAttachments(service.rasterAttachments(service.Email.Attachments))
 	service.refreshLabels()
 	service.announce()
-	service.applicationEventPublisher.PublishEvent(TranslationRestoreRequested{MessageId: service.Email.Id, Target: service.TranslationTarget, Detect: !service.fromCurrentUser()}, false)
-	service.applicationEventPublisher.PublishEvent(DateLabelsRequested{Owner: service.owner(), Values: []string{service.Email.ReceivedAt}}, false)
-	service.prepareHtml(service.Email.HtmlBody != "")
-	service.scheduleMarkRead()
+	service.applicationEventPublisher.PublishEvent(TranslationRestoreRequested{MessageId: service.Email.ID, Target: service.TranslationTarget, Detect: !service.fromCurrentUser()}, false)
+	FlowUtils{}.When(service.Email.HtmlBody != "", service.prepareRemoteContent)()
+	FlowUtils{}.When(LogicUtils{}.All(!service.Email.Read, service.preferences.MarkAsReadDelay >= 0), service.scheduleMarkRead)()
 }
 
 func (service *MessageService) announce() {
 	service.applicationEventPublisher.PublishEvent(OpenMessageChanged{
-		EmailId:            service.Email.Id,
+		EmailId:            service.Email.ID,
 		Domain:             service.Email.Domain,
 		Folder:             service.Email.Folder,
 		SystemFolder:       service.Email.SystemFolder,
 		Labels:             service.Email.Labels,
 		Subject:            service.Email.Subject,
 		ParticipantAddress: service.ParticipantAddress,
-		Standalone:         RouteUtils{}.IsStandalone(service.path),
+		Standalone:         service.Standalone,
 		CalendarInvite:     EmailRecordUtils{}.Invite(service.record),
+		Account:            service.Account,
 	}, true)
 }
 
-func (service *MessageService) changed() {
-	service.applicationEventPublisher.PublishEvent(ReaderChanged{Reason: service.owner()}, false)
-}
-
-func (service *MessageService) toast(message string) {
-	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: message}, false)
-}
-
-func (service *MessageService) refreshInbox() {
-	service.applicationEventPublisher.PublishEvent(InboxRefreshRequested{Reason: service.owner()}, false)
-}
-
 func (service *MessageService) refreshLabels() {
-	service.CurrentFolder = TextUtils{}.Or(service.Email.SystemFolder, service.Email.Folder)
-	service.IsDraft = service.CurrentFolder == "drafts"
-	service.CanUnsubscribe = UnsubscribeUtils{}.BuildAction(service.Email).Type != ""
-	service.VisibleSender = service.visibleSender()
-	service.ReplyTarget = ReplyUtils{}.Target(service.Email.ReplyTo, service.Email.Sender)
-	service.SenderInitials = TextUtils{}.Choose(service.Email.Sender == "", "", AddressUtils{}.Initials(service.Email.Sender))
-	service.DetailedHeaderRows = service.headerRows(service.preferences.DetailedHeaders, service.headerValues())
-	service.HasTrackingInsights = service.trackingInsights()
-	service.ParticipantAddress = AddressUtils{}.Participant(service.Email.Sender, append([]string{service.Email.Recipient}, service.Email.To...), service.ownAddress)
+	email := service.Email
+	service.CurrentFolder = TextUtils{}.FirstOf(email.SystemFolder, email.Folder)
+	service.refreshActions(service.HasEmail, email.Folder)
+	service.CanUnsubscribe = UnsubscribeUtils{}.BuildAction(email).Type != ""
+	service.VisibleSender = TextUtils{}.Choose(LogicUtils{}.All(service.preferences.DetailedNames, email.HeaderFrom != ""), email.HeaderFrom, email.Sender)
+	service.ReplyTarget = ReplyUtils{}.Target(email.ReplyTo, email.Sender)
+	service.SenderInitials = TextUtils{}.Choose(email.Sender == "", "", AddressUtils{}.Initials(email.Sender))
+	service.DetailedHeaderRows = service.headerRows(service.preferences.DetailedHeaders)
+	service.HasDetailedHeaders = len(service.DetailedHeaderRows) > 0
+	service.HasTrackingInsights = LogicUtils{}.All(service.CurrentFolder == service.names().Sent, LogicUtils{}.Any(email.OpenTracking, email.LinkTracking))
+	service.HasTrackingEvents = len(email.TrackingEvents) > 0
+	service.ShowOpenedBadge = LogicUtils{}.All(email.OpenedAt != "", !service.HasTrackingInsights)
+	service.HasAttachments = len(email.Attachments) > 0
+	service.ShowOriginalRecipient = LogicUtils{}.All(email.OriginalRecipient != "", email.OriginalRecipient != email.Recipient)
+	service.ParticipantAddress = AddressUtils{}.Participant(email.Sender, append([]string{email.Recipient}, RecordUtils{}.Texts(service.record, service.names().To)...), service.Account)
 	service.AttachmentPreviewsEnabled = service.preferences.DisplayAttachmentPreviews
-	service.ImageSender = AddressUtils{}.Valid(AddressUtils{}.Normalized(service.Email.Sender))
+	service.ImageSender = AddressUtils{}.Valid(AddressUtils{}.Normalized(email.Sender))
+	service.PrintEmail = service.printable()
 	service.refreshText()
 	service.refreshTranslation()
 }
 
-func (service *MessageService) visibleSender() string {
-	if service.preferences.DetailedNames && service.Email.HeaderFrom != "" {
-		return service.Email.HeaderFrom
-	}
-	return service.Email.Sender
+// refreshActions decides which toolbar actions this folder offers.
+func (service *MessageService) refreshActions(shown bool, folder string) {
+	names := service.names()
+	service.IsDraft = service.CurrentFolder == "drafts"
+	service.CanMove = LogicUtils{}.All(shown, service.Email.Domain != "")
+	service.CanArchive = LogicUtils{}.All(shown, folder != names.Archive, folder != names.Trash)
+	service.CanMoveToInbox = LogicUtils{}.All(shown, folder != names.Inbox)
+	service.CanTrash = LogicUtils{}.All(shown, folder != names.Trash)
+	service.CanSnooze = LogicUtils{}.All(shown, service.CurrentFolder == names.Inbox)
+	service.CanDeleteForever = LogicUtils{}.All(shown, service.CurrentFolder == names.Trash)
+}
+
+// printable is the message as print-conversation.js reads it.
+func (service *MessageService) printable() string {
+	encoded, _ := json.Marshal(map[string]any{
+		"id": service.Email.ID, "subject": service.Email.Subject, "sender": service.Email.Sender, "recipient": service.Email.Recipient,
+		service.names().To: RecordUtils{}.Texts(service.record, service.names().To), service.names().Cc: RecordUtils{}.Texts(service.record, service.names().Cc), "receivedAt": service.Email.ReceivedAt,
+		"body": service.Email.Body, "htmlBody": service.Email.HtmlBody,
+	})
+	return string(encoded)
 }
 
 func (MessageService) listSeparator() string { return ", " }
 
-func (service *MessageService) headerValues() []HeaderRow {
-	return []HeaderRow{
-		{Label: "From", Value: TextUtils{}.Or(service.Email.HeaderFrom, service.Email.Sender)},
-		{Label: "To", Value: TextUtils{}.Or(strings.Join(service.Email.To, service.listSeparator()), service.Email.Recipient)},
-		{Label: "Cc", Value: strings.Join(service.Email.Cc, service.listSeparator())},
+func (service *MessageService) headerRows(detailed bool) []HeaderRow {
+	rows := []HeaderRow{
+		{Label: "From", Value: TextUtils{}.FirstOf(service.Email.HeaderFrom, service.Email.Sender)},
+		{Label: "To", Value: TextUtils{}.FirstOf(strings.Join(RecordUtils{}.Texts(service.record, service.names().To), service.listSeparator()), service.Email.Recipient)},
+		{Label: "Cc", Value: strings.Join(RecordUtils{}.Texts(service.record, service.names().Cc), service.listSeparator())},
 		{Label: "Reply-To", Value: strings.Join(service.Email.ReplyTo, service.listSeparator())},
-		{Label: "Message-ID", Value: TextUtils{}.Or(service.Email.InternetMessageId, service.Email.MessageId)},
+		{Label: "Message-ID", Value: TextUtils{}.FirstOf(service.Email.InternetMessageID, service.Email.MessageID)},
 	}
-}
-
-func (service *MessageService) headerRows(detailed bool, rows []HeaderRow) []HeaderRow {
-	if !detailed {
-		return []HeaderRow{}
-	}
-	return slices.DeleteFunc(rows, func(row HeaderRow) bool { return row.Value == "" })
-}
-
-func (MessageService) sentFolder() string { return "sent" }
-
-func (service *MessageService) trackingInsights() bool {
-	if service.CurrentFolder == service.sentFolder() && (service.Email.OpenTracking || service.Email.LinkTracking) {
-		return true
-	}
-	return false
+	return slices.DeleteFunc(rows, func(row HeaderRow) bool { return LogicUtils{}.Any(row.Value == "", !detailed) })
 }
 
 func (service *MessageService) refreshText() {
@@ -593,7 +631,7 @@ func (service *MessageService) refreshText() {
 	service.PlainTextVisible = parts.Visible
 	service.QuotedPlainText = parts.Quoted
 	service.VisiblePlainText = service.plainText(parts, service.translatedPlainVisible())
-	service.HasQuotedText = service.hasQuoted(parts.HasQuoted)
+	service.HasQuotedText = map[string]bool{service.names().Html: service.quotedCount > 0, service.names().Text: parts.HasQuoted}[service.RenderMode]
 }
 
 func (service *MessageService) plainText(parts QuotedText, translated bool) string {
@@ -606,64 +644,22 @@ func (service *MessageService) plainText(parts QuotedText, translated bool) stri
 	return "(No body)"
 }
 
-func (service *MessageService) hasQuoted(plainQuoted bool) bool {
-	switch service.RenderMode {
-	case service.htmlMode():
-		return service.quotedCount > 0
-	case service.textMode():
-		return plainQuoted
-	}
-	return false
+// act hands a mailbox action to MailboxService, which offers its undo, and
+// shows the change at once.
+func (service *MessageService) act(patch map[string]any, message string) {
+	FlowUtils{}.When(service.HasEmail, func() {
+		service.applicationEventPublisher.PublishEvent(MailActionRequested{Ids: []string{service.Email.ID}, Patch: patch, Message: message}, false)
+		service.merge(service.shownPatch(patch))
+	})()
 }
 
-func (service *MessageService) updateEmail(patch map[string]any, message string) {
-	for _, emailId := range service.openEmailIds() {
-		requestId, _ := service.secureRandom.UUID()
-		service.performAction(map[string]any{"ids": []string{emailId}, "patch": patch, "clientRequestId": requestId}, OfflineRequestRequested{Id: requestId, Message: message})
-	}
-}
-
-func (service *MessageService) openEmailIds() []string {
-	if service.HasEmail {
-		return []string{service.Email.Id}
-	}
-	return []string{}
-}
-
-func (service *MessageService) performAction(body map[string]any, offline OfflineRequestRequested) {
-	result, failure := service.inboxClient.Act(body, service.authorization())
-	encoded, _ := json.Marshal(body)
-	offline.Kind = "mail-action"
-	offline.Path = "/inbox/actions"
-	offline.Method = "POST"
-	offline.Body = string(encoded)
-	offline.EmailId = service.Email.Id
-	service.actionDone(result, FailureUtils{}.Code(failure), offline)
-}
-
-func (service *MessageService) actionDone(result MailActionResult, code string, offline OfflineRequestRequested) {
-	switch code {
-	case FailureUtils{}.OfflineCode():
-		service.applicationEventPublisher.PublishEvent(offline, false)
-	case "":
-		service.actionApplied(result, offline.Message)
-	default:
-		service.toast("Mail action failed.")
-	}
-}
-
-func (service *MessageService) actionApplied(result MailActionResult, message string) {
-	for _, value := range result.Emails {
-		service.mergeEmail(RecordUtils{}.Object(value))
-	}
-	service.applicationEventPublisher.PublishEvent(MailActionCompleted{ActionId: result.ActionId, ExpiresAt: result.ExpiresAt, Message: message}, false)
-	service.refreshInbox()
-}
-
-func (service *MessageService) mergeEmail(record map[string]any) {
-	if RecordUtils{}.Text(record, "id") == service.Email.Id {
-		service.merge(record)
-	}
+// shownPatch is the change as the reader shows it before the server answers:
+// a move also leaves the system folder, which the next read fills again.
+func (service *MessageService) shownPatch(patch map[string]any) map[string]any {
+	shown := maps.Clone(patch)
+	_, moved := patch[service.names().FolderKey]
+	shown["systemFolder"] = map[bool]any{true: "", false: service.record["systemFolder"]}[moved]
+	return shown
 }
 
 func (service *MessageService) merge(record map[string]any) {
@@ -674,65 +670,54 @@ func (service *MessageService) merge(record map[string]any) {
 	service.announce()
 }
 
-func (service *MessageService) applyChange(changed MessageChanged) {
-	if changed.EmailId == service.Email.Id {
-		service.merge(map[string]any{service.folderKey(): changed.Folder, "systemFolder": changed.SystemFolder, "labels": changed.Labels, service.readKey(): changed.Read, service.starredKey(): changed.Starred})
+// reloadFlags reads the message again and keeps only its mailbox state, so
+// the open view does not reset.
+func (service *MessageService) reloadFlags() {
+	raw, failure := service.inboxClient.Read(service.bearer(), service.Email.ID)
+	fresh := RecordUtils{}.Object(raw)
+	keys := []string{service.names().FolderKey, "systemFolder", "labels", service.names().Read, "starred", "spamScore", "spamReasons"}
+	flags := map[string]any{}
+	for _, key := range keys {
+		flags[key] = fresh[key]
 	}
-}
-
-func (service *MessageService) spamMarked(record map[string]any, failure error, outcome SpamOutcome) {
-	if failure != nil {
-		service.toast(outcome.Failure)
-		return
-	}
-	service.merge(record)
-	service.refreshInbox()
-	service.toast(outcome.Success)
-}
-
-func (service *MessageService) deleteEmail(confirmed bool) {
-	if confirmed && service.HasEmail {
-		service.removeEmail()
-	}
+	FlowUtils{}.When(failure == nil, func() { service.merge(flags) })()
 }
 
 func (service *MessageService) removeEmail() {
-	_, failure := service.inboxClient.Delete(service.Email.Id, service.authorization())
-	service.deleted(failure == nil)
+	_, failure := service.inboxClient.Delete(service.bearer(), service.Email.ID)
+	FlowUtils{}.Either(failure == nil, service.removed, func() { service.toast("Delete failed.") })()
 }
 
-func (service *MessageService) deleted(removed bool) {
-	if !removed {
-		service.toast("Delete failed.")
-		return
-	}
+func (service *MessageService) removed() {
 	service.toast("Message deleted.")
 	service.refreshInbox()
-	service.applicationEventPublisher.PublishEvent(NavigationRequested{Target: service.inboxFolder()}, false)
+	service.leave()
 	service.reset()
 }
 
-func (service *MessageService) goBack(standalone bool) {
-	if standalone {
-		service.applicationEventPublisher.PublishEvent(NavigationRequested{Target: service.inboxFolder()}, false)
-		return
-	}
-	service.applicationEventPublisher.PublishEvent(MailBackRequested{Reason: service.owner()}, false)
+func (service *MessageService) refreshInbox() {
+	service.applicationEventPublisher.PublishEvent(InboxRefreshRequested{Reason: service.names().Owner}, false)
 }
 
-func (service *MessageService) unsubscribe(confirmed bool, action UnsubscribeAction) {
-	if confirmed && action.Type != "" && service.UnsubscribeState != "loading" && service.UnsubscribeState != "success" {
-		service.runUnsubscribe(action)
-	}
+func (service *MessageService) leave() {
+	FlowUtils{}.Either(service.Standalone, func() {
+		service.applicationEventPublisher.PublishEvent(NavigationRequested{Target: "/" + service.names().Inbox}, false)
+	}, func() {
+		service.applicationEventPublisher.PublishEvent(MailClosed{EmailID: service.Email.ID}, false)
+	})()
 }
 
-func (service *MessageService) runUnsubscribe(action UnsubscribeAction) {
+// unsubscribeNow runs the validated unsubscribe path: a mailto draft, a web
+// page in a new tab, or the one-click POST.
+func (service *MessageService) unsubscribeNow() {
+	action := UnsubscribeUtils{}.BuildAction(service.Email)
 	handlers := map[string]func(UnsubscribeAction){"compose": service.composeUnsubscribe, "open": service.openUnsubscribe, "post": service.postUnsubscribe}
-	handlers[action.Type](action)
+	handler, found := handlers[action.Type]
+	FlowUtils{}.When(LogicUtils{}.All(found, !slices.Contains([]string{"loading", service.names().Success}, service.UnsubscribeState)), func() { handler(action) })()
 }
 
 func (service *MessageService) composeUnsubscribe(action UnsubscribeAction) {
-	service.compose(ComposePrefill{To: strings.Join(action.To, service.listSeparator()), Subject: action.Subject, Body: action.Body, References: []string{}})
+	service.compose(ComposeFields{To: strings.Join(action.To, service.listSeparator()), Subject: action.Subject, Body: action.Body})
 }
 
 func (service *MessageService) openUnsubscribe(action UnsubscribeAction) {
@@ -744,303 +729,151 @@ func (service *MessageService) postUnsubscribe(action UnsubscribeAction) {
 	service.applicationEventPublisher.PublishEvent(UnsubscribeRequested{Url: action.Url}, false)
 }
 
-func (service *MessageService) unsubscribeFinished(sent bool) {
-	if sent {
-		service.UnsubscribeState = "success"
-		service.toast("Unsubscribe request sent.")
-		return
-	}
-	service.UnsubscribeState = "error"
-	service.toast("Could not send the unsubscribe request.")
-}
-
+// openExternal opens a web address in a new tab through a hidden link.
 func (service *MessageService) openExternal(target string) {
-	if target != "" {
-		service.applicationEventPublisher.PublishEvent(ExternalLinkRequested{Url: target}, false)
-	}
+	service.ExternalUrl = target
+	FlowUtils{}.When(target != "", func() {
+		service.applicationEventPublisher.PublishEvent(ClickRequested{Selector: "[data-message-external]"}, false)
+	})()
 }
 
 func (service *MessageService) openGitHub() {
-	target := GitHubNotificationUtils{}.SafeTarget(service.Email.GithubUrl)
-	service.openExternal(TextUtils{}.Choose(service.findOpen, "", target))
+	service.openExternal(TextUtils{}.Choose(service.findOpen, "", GitHubNotificationUtils{}.SafeTarget(service.Email.GithubUrl)))
 }
 
-func (service *MessageService) compose(prefill ComposePrefill) {
-	if service.HasEmail {
-		service.ComposePrefill = prefill
-		service.applicationEventPublisher.PublishEvent(ComposeRequested{Owner: service.owner()}, false)
-	}
+// compose hands the fields to the composer: caduceus_compose_prefill in
+// sessionStorage, then /compose.
+func (service *MessageService) compose(fields ComposeFields) {
+	FlowUtils{}.When(service.HasEmail, func() {
+		service.applicationEventPublisher.PublishEvent(ComposeUtils{}.Stored(fields), false)
+		service.applicationEventPublisher.PublishEvent(ComposeUtils{}.Opened(), false)
+	})()
 }
-
-func (service *MessageService) preferredReply(action string) {
-	if action == "reply-all" {
-		service.replyAll()
-		return
-	}
-	service.reply()
-}
-
-func (MessageService) replyMode() string { return "reply" }
-
-func (MessageService) replyPrefix() string { return "Re: " }
 
 func (service *MessageService) reply() {
-	prefill := service.threadPrefill(service.Email.InternetMessageId)
-	prefill.To = service.ReplyTarget
-	prefill.Subject = service.replyPrefix() + service.Email.Subject
-	prefill.Body = service.quoted(service.replyMode())
-	service.compose(prefill)
+	fields := service.threadFields()
+	fields.To = service.ReplyTarget
+	fields.Subject = service.names().RePrefix + service.Email.Subject
+	fields.Body = service.quoted(service.names().Reply)
+	service.compose(fields)
 }
 
 func (service *MessageService) replyAll() {
-	prefill := service.threadPrefill(service.Email.InternetMessageId)
-	prefill.To = strings.Join(TextUtils{}.NonEmpty([]string{service.ReplyTarget, service.Email.Recipient}), service.listSeparator())
-	prefill.Subject = service.replyPrefix() + service.Email.Subject
-	prefill.Body = service.quoted(service.replyMode())
-	service.compose(prefill)
+	fields := service.threadFields()
+	fields.To = strings.Join(TextUtils{}.NonEmpty([]string{service.ReplyTarget, service.Email.Recipient}), service.listSeparator())
+	fields.Subject = service.names().RePrefix + service.Email.Subject
+	fields.Body = service.quoted(service.names().Reply)
+	service.compose(fields)
 }
 
 func (service *MessageService) forward() {
-	service.compose(ComposePrefill{Subject: "Fwd: " + service.Email.Subject, Body: service.quoted("forward"), SourceEmailId: service.Email.Id, References: []string{}})
+	service.compose(ComposeFields{Subject: "Fwd: " + service.Email.Subject, Body: service.quoted("forward"), SourceEmailID: service.Email.ID})
 }
 
 func (service *MessageService) quoted(mode string) string {
-	return QuotedMessageUtils{}.Html(QuotedMessage{Mode: mode, Sender: service.Email.Sender, Subject: service.Email.Subject, DateLabel: service.dateLabels[service.Email.ReceivedAt], Body: service.Email.Body})
+	return QuotedMessageUtils{}.Html(QuotedMessage{Mode: mode, Sender: service.Email.Sender, Subject: service.Email.Subject, DateLabel: service.Email.ReceivedLabel, Body: service.Email.Body})
 }
 
-func (service *MessageService) threadPrefill(parent string) ComposePrefill {
-	if parent == "" {
-		return ComposePrefill{SourceEmailId: service.Email.Id, References: []string{}}
-	}
-	return ComposePrefill{InReplyTo: parent, References: ReplyUtils{}.References(service.Email.References, parent), SourceEmailId: service.Email.Id}
+// threadFields keep a reply in the message's RFC thread.
+func (service *MessageService) threadFields() ComposeFields {
+	parent := service.Email.InternetMessageID
+	return ComposeFields{InReplyTo: parent, References: ReplyUtils{}.References(service.Email.References, parent), SourceEmailID: service.Email.ID}
 }
-
-func (service *MessageService) sendReply(thread ComposePrefill) {
-	if service.HasEmail && service.ReplyText != "" {
-		service.deliverReply(thread)
-	}
-}
-
-func (service *MessageService) deliverReply(thread ComposePrefill) {
-	body := map[string]any{"to": []string{service.ReplyTarget}, "subject": service.replyPrefix() + service.Email.Subject, "text": service.ReplyText, "sourceEmailId": thread.SourceEmailId}
-	service.addThread(body, thread)
-	_, failure := service.sendClient.Send(body, service.authorization())
-	service.replySent(FailureUtils{}.Code(failure))
-}
-
-func (service *MessageService) addThread(body map[string]any, thread ComposePrefill) {
-	if thread.InReplyTo != "" {
-		body["inReplyTo"] = thread.InReplyTo
-		body["references"] = thread.References
-	}
-}
-
-func (service *MessageService) replySent(code string) {
-	switch code {
-	case "":
-		service.toast("Reply sent.")
-		service.ShowReply = false
-		service.ReplyText = ""
-	case FailureUtils{}.OfflineCode():
-		service.toast("Network error.")
-	default:
-		service.toast("Send failed.")
-	}
-}
-
-func (MessageService) markReadTimer() string { return "mark-read" }
 
 func (service *MessageService) scheduleMarkRead() {
-	if !service.Email.Read && service.preferences.MarkAsReadDelay >= 0 {
-		service.applicationEventPublisher.PublishEvent(TimerRequested{Owner: service.owner(), Name: service.markReadTimer(), Key: service.Email.Id, DelayMs: service.preferences.MarkAsReadDelay}, false)
-	}
-}
-
-func (service *MessageService) timerFired(name string, key string) {
-	if name == service.markReadTimer() && key == service.Email.Id && !service.Email.Read {
-		service.markRead()
-	}
+	service.applicationEventPublisher.PublishEvent(TimerRequested{Name: service.names().MarkReadTimer, DelayMs: service.preferences.MarkAsReadDelay}, false)
 }
 
 func (service *MessageService) markRead() {
-	_, failure := service.inboxClient.Update(service.Email.Id, map[string]any{service.readKey(): true}, service.authorization())
-	service.markedReadNow(failure == nil)
-}
-
-func (service *MessageService) markedReadNow(updated bool) {
-	if updated {
-		service.merge(map[string]any{service.readKey(): true})
+	_, failure := service.inboxClient.Update(service.bearer(), service.Email.ID, map[string]any{service.names().Read: true})
+	FlowUtils{}.When(failure == nil, func() {
+		service.merge(map[string]any{service.names().Read: true})
 		service.refreshInbox()
+	})()
+}
+
+// runShortcut runs a reader command. The list beside the reader already
+// acts on its selection for the shared mailbox commands, so the reader takes
+// them only on its own page.
+func (service *MessageService) runShortcut(command string) {
+	actions := map[string]func(){"email:reply": service.PreferredReply, "email:reply-all": service.replyAll, "email:forward": service.forward, "github:open": service.openGitHub}
+	FlowUtils{}.When(service.Standalone, func() { maps.Copy(actions, service.mailboxShortcuts()) })()
+	action, found := actions[command]
+	FlowUtils{}.When(LogicUtils{}.All(found, service.HasEmail), action)()
+}
+
+func (service *MessageService) mailboxShortcuts() map[string]func() {
+	return map[string]func(){
+		"email:star": service.ToggleStar, "email:archive": service.Archive, "email:trash": service.MoveToTrash, "email:report-spam": service.ReportSpam,
+		"email:mark-read":   func() { service.act(map[string]any{service.names().Read: true}, service.names().MarkedRead) },
+		"email:mark-unread": func() { service.act(map[string]any{service.names().Read: false}, service.names().MarkedUnread) },
+		"email:open": func() {
+			service.applicationEventPublisher.PublishEvent(ComposeUtils{}.Message(service.Email.ID), false)
+		},
 	}
 }
 
-func (service *MessageService) runShortcut(name string) {
-	actions := map[string]func(){
-		"email:reply":       service.PreferredReply,
-		"email:reply-all":   service.replyAll,
-		"email:forward":     service.forward,
-		"email:star":        service.ToggleStar,
-		"email:archive":     service.Archive,
-		"email:trash":       service.MoveToTrash,
-		"email:report-spam": service.ReportSpam,
-		"email:mark-read":   service.markReadShortcut,
-		"email:mark-unread": service.markUnreadShortcut,
-		"email:open":        service.openFull,
-		"github:open":       service.openGitHub,
-	}
-	service.runAction(actions[name])
-}
-
-func (service *MessageService) markReadShortcut() {
-	service.updateEmail(map[string]any{service.readKey(): true}, service.markedRead())
-}
-
-func (service *MessageService) markUnreadShortcut() {
-	service.updateEmail(map[string]any{service.readKey(): false}, service.markedUnread())
-}
-
-func (service *MessageService) runAction(action func()) {
-	if action != nil && service.HasEmail {
-		action()
-	}
-}
-
-func (service *MessageService) openFull() {
-	service.applicationEventPublisher.PublishEvent(EmailOpenRequested{EmailId: service.Email.Id}, false)
-}
-
-func (service *MessageService) chooseMode(mode string, allowed bool) {
-	if allowed {
-		service.RenderMode = mode
-	}
-}
-
-func (service *MessageService) loadSourceFor(isSource bool, needed bool) {
-	if isSource && needed {
-		service.fetchRawSource()
-	}
-}
-
-func (service *MessageService) needsSource() bool {
-	if service.rawSourceBase64 == "" && !service.SourceLoading && service.HasEmail {
-		return true
-	}
-	return false
-}
-
-func (service *MessageService) loadRawSource(needed bool) {
-	if needed {
-		service.fetchRawSource()
-	}
+func (service *MessageService) loadRawSource() {
+	FlowUtils{}.When(LogicUtils{}.All(service.rawSourceBase64 == "", !service.SourceLoading, service.HasEmail), service.fetchRawSource)()
 }
 
 func (service *MessageService) fetchRawSource() {
 	service.SourceLoading = true
-	source, failure := service.inboxClient.Source(service.Email.Id, service.authorization())
+	source, failure := service.inboxClient.Source(service.bearer(), service.Email.ID)
 	bytes, decodeFailure := base64.StdEncoding.DecodeString(source.ContentBase64)
-	service.sourceLoaded(source, bytes, []error{failure, decodeFailure})
-	service.SourceLoading = false
-}
-
-func (MessageService) originalFilename() string { return "message.eml" }
-
-func (service *MessageService) sourceLoaded(source MessageSource, bytes []byte, failures []error) {
-	if failures[0] != nil || failures[1] != nil {
-		service.SourceError = "Could not load the original message source."
-		return
-	}
-	service.SourceError = ""
-	service.rawSourceBase64 = source.ContentBase64
-	service.rawSourceName = TextUtils{}.Or(source.Filename, service.originalFilename())
+	loaded := LogicUtils{}.All(failure == nil, decodeFailure == nil)
+	service.SourceError = TextUtils{}.Choose(loaded, "", "Could not load the original message source.")
+	service.rawSourceBase64 = TextUtils{}.Choose(loaded, source.ContentBase64, "")
+	service.rawSourceName = TextUtils{}.FirstOf(source.Filename, service.names().Original)
 	service.RawSourceText = strings.ToValidUTF8(string(bytes), "�")
+	service.SourceLoading = false
 }
 
 func (MessageService) originalData() string { return "data:message/rfc822;base64," }
 
 func (service *MessageService) offerSource() {
-	if service.rawSourceBase64 == "" {
-		service.toast(TextUtils{}.Or(service.SourceError, "Original message source is unavailable."))
-		return
-	}
-	service.download(service.originalData()+service.rawSourceBase64, service.rawSourceName)
+	FlowUtils{}.Either(service.rawSourceBase64 == "", func() {
+		service.toast(TextUtils{}.FirstOf(service.SourceError, "Original message source is unavailable."))
+	}, func() { service.download(service.originalData()+service.rawSourceBase64, service.rawSourceName) })()
 }
 
+// download saves a data address through the hidden download link.
 func (service *MessageService) download(address string, filename string) {
 	service.DownloadUrl = address
 	service.DownloadName = filename
-	service.applicationEventPublisher.PublishEvent(DownloadRequested{Owner: service.owner()}, false)
+	service.applicationEventPublisher.PublishEvent(ClickRequested{Selector: "[data-message-download]"}, false)
 }
 
 func (service *MessageService) offerConversationSource(source MessageSource, failure error) {
-	if failure != nil || source.ContentBase64 == "" {
-		service.toast("Original message is unavailable.")
-		return
-	}
-	service.download(service.originalData()+source.ContentBase64, TextUtils{}.Or(source.Filename, service.originalFilename()))
-}
-
-func (service *MessageService) toggleQuotedText() {
-	if service.HasQuotedText {
-		service.ShowQuotedText = !service.ShowQuotedText
-	}
-}
-
-func (service *MessageService) dismissWhen(onBackdrop bool, close func()) {
-	if onBackdrop {
-		close()
-	}
-}
-
-func (service *MessageService) showLinkWarning(warning PendingLinkWarning) {
-	if warning.Target != "" {
-		service.PendingLink = warning
-		service.HasPendingLink = true
-	}
-}
-
-func (service *MessageService) prepareHtml(hasHtml bool) {
-	if hasHtml {
-		service.prepareRemoteContent()
-	}
+	FlowUtils{}.Either(HTTPUtils{}.Missed(failure, source.ContentBase64), func() { service.toast("Original message is unavailable.") }, func() {
+		service.download(service.originalData()+source.ContentBase64, TextUtils{}.FirstOf(source.Filename, service.names().Original))
+	})()
 }
 
 func (service *MessageService) prepareRemoteContent() {
-	preferences, failure := service.usersClient.Preferences(service.authorization())
-	service.imagePreferences(preferences, failure == nil)
+	preferences, failure := service.usersClient.Preferences(service.bearer())
+	FlowUtils{}.When(failure == nil, func() { service.imagePreferences(preferences) })()
 	service.refreshDocument()
-	service.loadRemoteImages(service.allowedUrls(service.shouldLoadRemote()))
+	FlowUtils{}.When(service.shouldLoadRemote(), service.loadRemoteImages)()
 }
 
-func (MessageService) allowPolicy() string { return "allow" }
-
-func (service *MessageService) imagePreferences(preferences ImagePreferences, loaded bool) {
-	if loaded {
-		service.remotePolicy = TextUtils{}.Choose(preferences.RemoteImagePolicy == service.allowPolicy(), service.allowPolicy(), "block")
-		service.trustedSenders = AddressUtils{}.NormalizedAll(preferences.TrustedImageSenders)
-	}
+func (service *MessageService) imagePreferences(preferences UserPreferences) {
+	service.remotePolicy = TextUtils{}.Choose(preferences.RemoteImagePolicy == service.names().Allow, service.names().Allow, "block")
+	service.trustedSenders = AddressUtils{}.NormalizedAll(preferences.TrustedImageSenders)
 }
 
+// shouldLoadRemote: shown on request; never for spam; always when the
+// policy allows; otherwise only for trusted senders.
 func (service *MessageService) shouldLoadRemote() bool {
-	return service.remoteDecision(AddressUtils{}.Trusted(service.ImageSender, service.trustedSenders))
-}
-
-func (service *MessageService) remoteDecision(trusted bool) bool {
 	switch {
 	case service.remoteVisible:
 		return true
 	case service.Email.Spam:
 		return false
-	case service.remotePolicy == service.allowPolicy():
+	case service.remotePolicy == service.names().Allow:
 		return true
 	}
-	return trusted
-}
-
-func (service *MessageService) allowedUrls(allowed bool) []string {
-	if allowed {
-		return service.unloadedUrls()
-	}
-	return []string{}
+	return AddressUtils{}.Trusted(service.ImageSender, service.trustedSenders)
 }
 
 func (service *MessageService) refreshDocument() {
@@ -1049,7 +882,7 @@ func (service *MessageService) refreshDocument() {
 		InlineSources: service.inlineSources,
 		RemoteSources: service.remoteSources,
 		ShowQuoted:    service.ShowQuotedText,
-		ColorMode:     service.colorMode(service.preferences.EmailRenderMode),
+		ColorMode:     TextUtils{}.Choose(service.preferences.EmailRenderMode == "theme", TextUtils{}.Choose(service.theme == service.names().Dark, service.names().Dark, "light"), service.preferences.EmailRenderMode),
 	})
 	service.ProtectedDocument = document.DocumentHtml
 	service.BlockedRemoteContentCount = document.BlockedCount
@@ -1060,29 +893,12 @@ func (service *MessageService) refreshDocument() {
 }
 
 func (service *MessageService) documentBody() string {
-	if service.TranslationVisible && service.translatedHtml != "" {
-		return service.translatedHtml
-	}
-	return service.Email.HtmlBody
+	return TextUtils{}.Choose(LogicUtils{}.All(service.TranslationVisible, service.translatedHtml != ""), service.translatedHtml, service.Email.HtmlBody)
 }
 
-func (MessageService) darkMode() string { return "dark" }
-
-func (service *MessageService) colorMode(mode string) string {
-	if mode == "theme" {
-		return TextUtils{}.Choose(service.theme == service.darkMode(), service.darkMode(), "light")
-	}
-	return mode
-}
-
-func (service *MessageService) unloadedUrls() []string {
-	return slices.DeleteFunc(slices.Clone(service.remoteUrls), func(address string) bool { return service.remoteSources[address] != "" })
-}
-
-func (service *MessageService) loadRemoteImages(urls []string) {
-	if len(urls) > 0 && !service.RemoteImagesLoading && service.HasEmail {
-		service.fetchRemoteImages(urls)
-	}
+func (service *MessageService) loadRemoteImages() {
+	urls := slices.DeleteFunc(slices.Clone(service.remoteUrls), func(address string) bool { return service.remoteSources[address] != "" })
+	FlowUtils{}.When(LogicUtils{}.All(len(urls) > 0, !service.RemoteImagesLoading, service.HasEmail), func() { service.fetchRemoteImages(urls) })()
 }
 
 func (service *MessageService) fetchRemoteImages(urls []string) {
@@ -1092,40 +908,28 @@ func (service *MessageService) fetchRemoteImages(urls []string) {
 	service.RemoteImagesLoading = false
 }
 
-func (MessageService) remoteBatch() int { return 1 }
-
+// fetchImages asks the proxy for one image at a time: an answer may hold at
+// most 1 MiB.
 func (service *MessageService) fetchImages(urls []string) int {
 	failures := 0
-	for start := 0; start < len(urls); start += service.remoteBatch() {
-		batch := urls[start:min(start+service.remoteBatch(), len(urls))]
-		images, failure := service.inboxClient.Images(service.Email.Id, map[string]any{"urls": batch}, service.authorization())
-		failures += RemoteImageUtils{}.Failures(images, failure, len(batch))
+	for _, address := range urls {
+		images, failure := service.inboxClient.Images(service.bearer(), service.Email.ID, map[string]any{"urls": []string{address}})
+		failures += RemoteImageUtils{}.Failures(images, failure, 1)
 		RemoteImageUtils{}.Keep(service.remoteSources, images.Images)
 	}
 	return failures
 }
 
-func (service *MessageService) trustSender(sender string) {
-	if sender != "" && !service.RemotePreferenceSaving {
-		service.saveTrustedSender(sender)
-	}
-}
-
-func (service *MessageService) saveTrustedSender(sender string) {
+func (service *MessageService) trustSender() {
+	sender := service.ImageSender
 	service.RemotePreferenceSaving = true
-	saved, failure := service.usersClient.SavePreferences(map[string]any{"trustedImageSenders": append(slices.Clone(service.trustedSenders), sender)}, service.authorization())
-	service.senderTrusted(saved, failure == nil, sender)
+	saved, failure := service.usersClient.SavePreferences(service.bearer(), map[string]any{"trustedImageSenders": append(slices.Clone(service.trustedSenders), sender)})
 	service.RemotePreferenceSaving = false
-}
-
-func (service *MessageService) senderTrusted(saved ImagePreferences, stored bool, sender string) {
-	if !stored {
-		service.toast("Could not save the image preference.")
-		return
-	}
-	service.trustedSenders = AddressUtils{}.NormalizedAll(saved.TrustedImageSenders)
-	service.ShowRemoteImages()
-	service.toast("Images from " + sender + " will load automatically.")
+	FlowUtils{}.Either(failure == nil, func() {
+		service.trustedSenders = AddressUtils{}.NormalizedAll(saved.TrustedImageSenders)
+		service.ShowRemoteImages()
+		service.toast("Images from " + sender + " will load automatically.")
+	}, func() { service.toast("Could not save the image preference.") })()
 }
 
 func (service *MessageService) rasterAttachments(attachments []EmailAttachment) []EmailAttachment {
@@ -1134,19 +938,15 @@ func (service *MessageService) rasterAttachments(attachments []EmailAttachment) 
 	})
 }
 
+// prepareAttachments loads the image attachments for thumbnails and for the
+// cid: images of the HTML body.
 func (service *MessageService) prepareAttachments(rasters []EmailAttachment) {
 	for _, attachment := range rasters {
 		content, failure := service.attachmentContent(attachment.Id)
-		service.keepPreview(attachment, AttachmentContentUtils{}.PreviewDataUrl(content.ContentType, content.ContentBase64), failure == nil)
+		service.thumbnails[attachment.Id] = TextUtils{}.Choose(failure == nil, AttachmentContentUtils{}.PreviewDataUrl(content.ContentType, content.ContentBase64), "")
+		service.inlineSources = AttachmentContentUtils{}.WithInlineSource(service.inlineSources, attachment.ContentId, service.thumbnails[attachment.Id])
 	}
 	service.applyThumbnails()
-}
-
-func (service *MessageService) keepPreview(attachment EmailAttachment, source string, loaded bool) {
-	if loaded && source != "" {
-		service.thumbnails[attachment.Id] = source
-		service.inlineSources = AttachmentContentUtils{}.WithInlineSource(service.inlineSources, attachment.ContentId, source)
-	}
 }
 
 func (service *MessageService) applyThumbnails() {
@@ -1155,28 +955,36 @@ func (service *MessageService) applyThumbnails() {
 	}
 }
 
-func (service *MessageService) attachmentContent(attachmentId string) (AttachmentContent, error) {
-	cached, found := service.attachments[attachmentId]
-	if found {
-		return cached, nil
-	}
-	return service.fetchAttachment(attachmentId)
+// attachment finds an attachment of the message or of its invitation; an
+// unknown id gives an attachment with only that id.
+func (service *MessageService) attachment(attachmentID string) EmailAttachment {
+	known := append(slices.Clone(service.Email.Attachments), EmailRecordUtils{}.InviteAttachments(service.record)...)
+	found := slices.IndexFunc(known, func(attachment EmailAttachment) bool { return attachment.Id == attachmentID })
+	return append([]EmailAttachment{{Id: attachmentID}}, known...)[found+1]
 }
 
-func (service *MessageService) fetchAttachment(attachmentId string) (AttachmentContent, error) {
-	content, failure := service.inboxClient.Attachment(service.Email.Id, attachmentId, service.authorization())
-	return service.keepAttachment(attachmentId, content, failure)
+// attachmentContent reads an attachment once and keeps it for the visit.
+func (service *MessageService) attachmentContent(attachmentID string) (AttachmentContent, error) {
+	_, kept := service.attachments[attachmentID]
+	FlowUtils{}.When(!kept, func() { service.fetchAttachment(attachmentID) })()
+	return service.keptAttachment(attachmentID)
 }
 
-func (service *MessageService) keepAttachment(attachmentId string, content AttachmentContent, failure error) (AttachmentContent, error) {
-	if failure != nil || content.Id != attachmentId || content.ContentBase64 == "" {
+func (service *MessageService) fetchAttachment(attachmentID string) {
+	content, failure := service.inboxClient.Attachment(service.bearer(), service.Email.ID, attachmentID)
+	FlowUtils{}.When(LogicUtils{}.All(failure == nil, content.Id == attachmentID, content.ContentBase64 != ""), func() { service.attachments[attachmentID] = content })()
+}
+
+func (service *MessageService) keptAttachment(attachmentID string) (AttachmentContent, error) {
+	content, kept := service.attachments[attachmentID]
+	if !kept {
 		return AttachmentContent{}, fmt.Errorf("Attachment could not be loaded.")
 	}
-	service.attachments[attachmentId] = content
 	return content, nil
 }
 
-func (service *MessageService) previewAttachment(attachment EmailAttachment, kind string) {
+func (service *MessageService) previewAttachment(attachment EmailAttachment) {
+	kind := AttachmentContentUtils{}.PreviewKind(attachment.ContentType)
 	switch {
 	case !service.preferences.DisplayAttachmentPreviews:
 		service.toast("Attachment previews are disabled in Mail preferences.")
@@ -1192,21 +1000,16 @@ func (service *MessageService) openPreview(attachment EmailAttachment, kind stri
 	service.AttachmentPreview = attachment
 	content, failure := service.attachmentContent(attachment.Id)
 	text, textFailure := AttachmentContentUtils{}.DecodeText(content.ContentBase64)
-	preview := AttachmentPreviewContent{Kind: kind, Text: text, Url: AttachmentContentUtils{}.PreviewDataUrl(content.ContentType, content.ContentBase64)}
-	service.showPreview(preview, AttachmentContentUtils{}.PreviewFailure(kind, preview.Url, failure, textFailure))
-}
-
-func (service *MessageService) showPreview(preview AttachmentPreviewContent, failure string) {
-	service.AttachmentPreviewError = failure
-	if failure == "" {
-		service.AttachmentPreviewText = TextUtils{}.Choose(preview.Kind == service.textMode(), preview.Text, "")
-		service.AttachmentPreviewUrl = TextUtils{}.Choose(preview.Kind == service.textMode(), "", preview.Url)
-	}
+	address := AttachmentContentUtils{}.PreviewDataUrl(content.ContentType, content.ContentBase64)
+	service.AttachmentPreviewError = AttachmentContentUtils{}.PreviewFailure(kind, address, failure, textFailure)
+	shown := service.AttachmentPreviewError == ""
+	textual := kind == service.names().Text
+	service.AttachmentPreviewText = TextUtils{}.Choose(LogicUtils{}.All(shown, textual), text, "")
+	service.AttachmentPreviewUrl = TextUtils{}.Choose(LogicUtils{}.All(shown, !textual), address, "")
 }
 
 func (service *MessageService) closeAttachmentPreview() {
 	service.AttachmentPreviewOpen = false
-	service.AttachmentPreviewLoading = false
 	service.AttachmentPreviewKind = ""
 	service.AttachmentPreviewUrl = ""
 	service.AttachmentPreviewText = ""
@@ -1215,147 +1018,58 @@ func (service *MessageService) closeAttachmentPreview() {
 }
 
 func (service *MessageService) offerAttachment(content AttachmentContent, failure error, filename string) {
-	if failure != nil || !service.HasEmail {
-		service.toast("Attachment download failed.")
-		return
-	}
-	service.download("data:"+TextUtils{}.Or(content.ContentType, "application/octet-stream")+";base64,"+content.ContentBase64, filename)
+	FlowUtils{}.Either(LogicUtils{}.Any(failure != nil, !service.HasEmail), func() { service.toast("Attachment download failed.") }, func() {
+		service.download("data:"+TextUtils{}.FirstOf(content.ContentType, "application/octet-stream")+";base64,"+content.ContentBase64, filename)
+	})()
 }
 
-func (service *MessageService) acceptDateLabels(values []string, labels []string) {
-	for index := range min(len(values), len(labels)) {
-		service.dateLabels[values[index]] = labels[index]
-	}
-}
-
+// fromCurrentUser: the user's own messages are never offered a translation.
 func (service *MessageService) fromCurrentUser() bool {
 	sender := AddressUtils{}.Normalized(service.Email.Sender)
-	if strings.ToLower(service.CurrentFolder) == service.sentFolder() || (sender != "" && sender == service.ownAddress) {
-		return true
-	}
-	return false
-}
-
-func (MessageService) minimumConfidence() float64 { return 0.3 }
-
-func (service *MessageService) detectionAccepted(messageId string, language string, confidence float64) bool {
-	if messageId == service.Email.Id && language != "" && confidence >= service.minimumConfidence() && language != service.TranslationTarget {
-		return true
-	}
-	return false
-}
-
-func (service *MessageService) automatic(accepted bool, preference string) bool {
-	return accepted && preference == "always"
-}
-
-func (service *MessageService) languageDetected(accepted bool, language string, preference string) {
-	if accepted {
-		service.TranslationSource = language
-		service.TranslationPreference = preference
-	}
-}
-
-func (service *MessageService) translateWhen(automatic bool) {
-	if automatic {
-		service.startTranslation()
-	}
-}
-
-func (service *MessageService) startTranslation() {
-	service.translate()
+	return LogicUtils{}.Any(strings.ToLower(service.CurrentFolder) == service.names().Sent, LogicUtils{}.All(sender != "", sender == service.Account))
 }
 
 func (service *MessageService) translate() {
-	if service.HasEmail && !service.TranslationBusy {
-		service.TranslationBusy = true
-		service.TranslationProgress = 0
-		service.TranslationError = ""
-		service.translationParts = map[string][]string{}
-		service.applicationEventPublisher.PublishEvent(TranslationRequested{MessageId: service.Email.Id, Source: service.TranslationSource, Target: service.TranslationTarget}, false)
-	}
+	FlowUtils{}.When(LogicUtils{}.All(service.HasEmail, !service.TranslationBusy), service.requestTranslation)()
 }
 
-func (service *MessageService) receiveTranslation(part TranslationPart) {
-	if part.MessageId == service.Email.Id && part.Count > 0 && part.Index >= 0 && part.Index < part.Count {
-		service.keepTranslationPart(part)
-	}
-}
-
-func (service *MessageService) keepTranslationPart(part TranslationPart) {
-	service.translationParts[part.Kind] = TranslationPartUtils{}.With(service.translationParts[part.Kind], part)
-	service.completeTranslation(part.Kind == "done", part.Text)
-}
-
-func (service *MessageService) completeTranslation(done bool, source string) {
-	if done {
-		service.finishTranslation(source)
-	}
+func (service *MessageService) requestTranslation() {
+	service.TranslationBusy = true
+	service.TranslationProgress = 0
+	service.TranslationError = ""
+	service.translationParts = map[string][]string{}
+	service.applicationEventPublisher.PublishEvent(TranslationRequested{MessageId: service.Email.ID, Source: service.TranslationSource, Target: service.TranslationTarget}, false)
 }
 
 func (service *MessageService) finishTranslation(source string) {
-	service.translatedHtml = strings.Join(service.translationParts[service.htmlMode()], "")
-	service.translatedPlain = strings.Join(service.translationParts[service.textMode()], "")
-	service.TranslationSource = TextUtils{}.Or(source, service.TranslationSource)
+	service.translatedHtml = strings.Join(service.translationParts[service.names().Html], "")
+	service.translatedPlain = strings.Join(service.translationParts[service.names().Text], "")
+	service.TranslationSource = TextUtils{}.FirstOf(source, service.TranslationSource)
 	service.TranslationBusy = false
 	service.TranslationProgress = 0
 	service.showTranslation(service.hasTranslatedText())
 }
 
 func (service *MessageService) hasTranslatedText() bool {
-	return service.translatedHtml != "" || service.translatedPlain != ""
-}
-
-func (service *MessageService) translationFailed(current bool, message string) {
-	if current {
-		service.TranslationError = message
-		service.TranslationBusy = false
-		service.TranslationProgress = 0
-	}
+	return LogicUtils{}.Any(service.translatedHtml != "", service.translatedPlain != "")
 }
 
 func (service *MessageService) showTranslation(visible bool) {
 	service.TranslationVisible = visible
-	service.applicationEventPublisher.PublishEvent(TranslationVisibilityChanged{MessageId: service.Email.Id, Enabled: visible}, false)
+	service.applicationEventPublisher.PublishEvent(TranslationVisibilityChanged{MessageId: service.Email.ID, Enabled: visible}, false)
 }
 
 func (service *MessageService) refreshTranslation() {
 	service.HasTranslation = service.hasTranslatedText()
-	service.TranslationOfferVisible = service.offerVisible(service.translationActive(service.HasTranslation), service.translationPointless(service.fromCurrentUser()))
-	service.TranslationStatus = service.translationStatus(service.downloadingModel())
+	active := LogicUtils{}.Any(service.TranslationBusy, service.TranslationVisible, service.HasTranslation, service.TranslationError != "")
+	pointless := LogicUtils{}.Any(service.TranslationSource == "", service.TranslationSource == service.TranslationTarget, service.fromCurrentUser())
+	service.TranslationOfferVisible = LogicUtils{}.Any(active, LogicUtils{}.All(!pointless, service.TranslationPreference != "never"))
+	service.TranslationStatus = service.translationStatus(LogicUtils{}.All(service.TranslationProgress > 0, service.TranslationProgress < 1))
 	service.VisiblePlainText = service.plainText(MessageConversationUtils{}.SplitQuotedText(service.Email.Body), service.translatedPlainVisible())
 }
 
-func (service *MessageService) translationActive(translated bool) bool {
-	if service.TranslationBusy || service.TranslationVisible || translated || service.TranslationError != "" {
-		return true
-	}
-	return false
-}
-
-func (service *MessageService) translationPointless(fromCurrentUser bool) bool {
-	if service.TranslationSource == "" || service.TranslationSource == service.TranslationTarget || fromCurrentUser {
-		return true
-	}
-	return false
-}
-
-func (service *MessageService) downloadingModel() bool {
-	return service.TranslationProgress > 0 && service.TranslationProgress < 1
-}
-
 func (service *MessageService) translatedPlainVisible() bool {
-	return service.TranslationVisible && service.translatedPlain != ""
-}
-
-func (service *MessageService) offerVisible(active bool, pointless bool) bool {
-	switch {
-	case active:
-		return true
-	case pointless:
-		return false
-	}
-	return service.TranslationPreference != "never"
+	return LogicUtils{}.All(service.TranslationVisible, service.translatedPlain != "")
 }
 
 func (service *MessageService) translationStatus(downloading bool) string {

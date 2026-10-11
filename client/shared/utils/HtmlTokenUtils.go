@@ -125,7 +125,7 @@ func (HtmlTokenUtils) startTag(state *HtmlParseState, rest string) HtmlToken {
 }
 
 func (HtmlTokenUtils) attributes(state *HtmlParseState, token *HtmlToken) {
-	for HtmlTokenUtils{}.inTag(state) {
+	for (HtmlTokenUtils{}).inTag(state) {
 		HtmlTokenUtils{}.attributeStep(state, token)
 	}
 	state.Position = min(state.Position+1, len(state.Source))
@@ -213,7 +213,7 @@ func (HtmlTokenUtils) text(state *HtmlParseState, rest string) HtmlToken {
 
 func (HtmlTokenUtils) textEnd(rest string) int {
 	index := 1
-	for HtmlTokenUtils{}.scanning(rest, index) {
+	for (HtmlTokenUtils{}).scanning(rest, index) {
 		index++
 	}
 	return min(index, len(rest))

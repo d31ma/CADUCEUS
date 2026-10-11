@@ -11,4 +11,15 @@ type CalendarClient interface {
 		// @RequestParam("end")
 		end string,
 	) ([]CalendarEventSummary, error)
+
+	// RespondToInvite answers a meeting invitation and mirrors the answer to
+	// the organizer.
+	//
+	// @PostRequest("/invites/respond")
+	RespondToInvite(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @RequestBody
+		response BehaviorValue,
+	) (BehaviorValue, error)
 }

@@ -196,7 +196,7 @@ func (HtmlDocumentUtils) current(state *HtmlParseState) *HtmlNode {
 
 func (HtmlDocumentUtils) appendText(parent *HtmlNode, text string) {
 	last := len(parent.Children) - 1
-	if last >= 0 && parent.Children[last].Kind == HtmlTokenUtils{}.TextKind() {
+	if last >= 0 && parent.Children[last].Kind == (HtmlTokenUtils{}).TextKind() {
 		parent.Children[last].Text += text
 		return
 	}
@@ -273,7 +273,7 @@ func (HtmlDocumentUtils) popThrough(state *HtmlParseState, targets []string, bou
 
 func (HtmlDocumentUtils) openIndex(open []*HtmlNode, targets []string, boundaries []string) int {
 	index := len(open) - 1
-	for HtmlDocumentUtils{}.searching(open, index, targets, boundaries) {
+	for (HtmlDocumentUtils{}).searching(open, index, targets, boundaries) {
 		index--
 	}
 	return HtmlDocumentUtils{}.matchedIndex(open, targets, index)
@@ -323,7 +323,7 @@ func (HtmlDocumentUtils) collect(node *HtmlNode, found *[]*HtmlNode) {
 }
 
 func (HtmlDocumentUtils) collectElement(node *HtmlNode, found *[]*HtmlNode) {
-	if node.Kind == HtmlDocumentUtils{}.elementKind() {
+	if node.Kind == (HtmlDocumentUtils{}).elementKind() {
 		*found = append(*found, node)
 		HtmlDocumentUtils{}.collect(node, found)
 	}
@@ -363,7 +363,7 @@ func (HtmlDocumentUtils) writeText(builder *strings.Builder, node *HtmlNode) {
 }
 
 func (HtmlDocumentUtils) ownText(node *HtmlNode) string {
-	if node.Kind == HtmlTokenUtils{}.TextKind() {
+	if node.Kind == (HtmlTokenUtils{}).TextKind() {
 		return node.Text
 	}
 	return ""

@@ -81,7 +81,7 @@ func (StyleProtectionUtils) httpsRelative(value string) string {
 }
 
 func (StyleProtectionUtils) prefixed(value string, absolute string) string {
-	if strings.HasPrefix(value, StyleProtectionUtils{}.relative()) {
+	if strings.HasPrefix(value, (StyleProtectionUtils{}).relative()) {
 		return absolute
 	}
 	return value
@@ -97,7 +97,7 @@ func (StyleProtectionUtils) validHref(address WebAddress) string {
 func (StyleProtectionUtils) rewriteUrls(css string, options ProtectionOptions, result *ProtectedCss) string {
 	var builder strings.Builder
 	cursor := 0
-	for _, found := range StyleProtectionUtils{}.pattern("function").FindAllStringSubmatchIndex(css, -1) {
+	for _, found := range (StyleProtectionUtils{}).pattern("function").FindAllStringSubmatchIndex(css, -1) {
 		builder.WriteString(css[cursor:found[0]])
 		builder.WriteString(StyleProtectionUtils{}.replacement(css[found[0]:found[1]], StyleProtectionUtils{}.urlValue(css, found), options, result))
 		cursor = found[1]
@@ -127,7 +127,7 @@ func (StyleProtectionUtils) replacement(match string, url string, options Protec
 func (StyleProtectionUtils) blockedValue() string { return "none" }
 
 func (StyleProtectionUtils) embedded(source string) string {
-	if StyleProtectionUtils{}.IsSafeEmbeddedSource(source) {
+	if (StyleProtectionUtils{}).IsSafeEmbeddedSource(source) {
 		return `url("` + source + `")`
 	}
 	return StyleProtectionUtils{}.blockedValue()
@@ -136,7 +136,7 @@ func (StyleProtectionUtils) embedded(source string) string {
 func (StyleProtectionUtils) remoteReplacement(url string, options ProtectionOptions, result *ProtectedCss) string {
 	normalized := StyleProtectionUtils{}.NormalizeRemoteUrl(url)
 	result.RemoteCount++
-	if StyleProtectionUtils{}.IsKnownTrackingUrl(url) {
+	if (StyleProtectionUtils{}).IsKnownTrackingUrl(url) {
 		result.TrackingCount++
 		return StyleProtectionUtils{}.blockedValue()
 	}
@@ -145,7 +145,7 @@ func (StyleProtectionUtils) remoteReplacement(url string, options ProtectionOpti
 }
 
 func (StyleProtectionUtils) allowedSource(source string, allowRemote bool, result *ProtectedCss) string {
-	if !allowRemote || !StyleProtectionUtils{}.IsSafeEmbeddedSource(source) {
+	if !allowRemote || !(StyleProtectionUtils{}).IsSafeEmbeddedSource(source) {
 		result.BlockedCount++
 		return StyleProtectionUtils{}.blockedValue()
 	}

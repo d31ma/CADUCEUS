@@ -40,3 +40,6 @@ tests/support/legacy-server/deps/npm/
 .server-deps-*/
 tests/support/legacy-server/deps/data/
 node_modules
+
+# Tachyon handler builds (ty serve)
+.tachyon/

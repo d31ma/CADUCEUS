@@ -93,11 +93,12 @@ type UsersClient interface {
   attachments. The live inbox stream is a WebSocket instead (see
   `MailStreamService.js` below).
 
-**Blocker for the merge.** On one origin, the server's API routes `/inbox`,
-`/activity`, `/contacts` and `/reminders` answer the document navigation to
-the page of the same path. The server answers `401 Sign in to call this
-route.`. Until the API moves under a prefix, or Tachyon serves the page for
-an HTML navigation, those pages cannot load on one origin.
+**Pages on API paths.** The server's API routes `/inbox`, `/activity`,
+`/contacts` and `/reminders` share their paths with pages. Tachyon (develop
+37e6255 and later) gives a browser navigation (`Sec-Fetch-Mode: navigate`, or
+no fetch mode and an `Accept` that names `text/html`) a 307 to the page at
+`/inbox/` and so on, and every other request reaches the API. The page's own
+`fetch` with a bearer token still gets the API answer.
 
 ## Saved fields are kept per route
 

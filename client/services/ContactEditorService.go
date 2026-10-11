@@ -190,9 +190,14 @@ func (editor *ContactEditorService) withBook(draft ContactDraft, book AddressBoo
 	return draft
 }
 
+// withUpdateKey gives a CardDAV update its idempotency key and names the
+// contact's account and address book. Tac sends empty string fields despite
+// omitempty, so without them the body would say accountId "".
 func (editor *ContactEditorService) withUpdateKey(draft ContactDraft) ContactDraft {
 	if editor.shown.Selected.Source == editor.names().Synced {
 		draft.IdempotencyKey = "contact-update-" + IdentityUtils{}.UUID(editor.contactID)
+		draft.AccountID = editor.shown.Selected.AccountID
+		draft.AddressBookID = editor.shown.Selected.AddressBookID
 	}
 	return draft
 }

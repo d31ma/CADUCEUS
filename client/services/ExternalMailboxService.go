@@ -2,6 +2,7 @@ import (
 	"encoding/json"
 	"regexp"
 	"slices"
+	"strings"
 )
 
 // ExternalMailboxService shows the connected (provider) mailboxes in the
@@ -86,11 +87,13 @@ func (external *ExternalMailboxService) ToggleFolder(accountID string, stableID 
 	external.applicationEventPublisher.PublishEvent(StorageWritten{Area: "local", Values: map[string]string{external.openKey(): string(encoded)}, Removed: []string{}}, false)
 }
 
-// ChangeColor saves a new colour for a connected account.
+// ChangeColor saves a new colour for a connected account. The picker reports
+// a choice more than once (input, then change); the same colour again is not
+// another update.
 func (external *ExternalMailboxService) ChangeColor(accountID string, color string) {
 	account := external.account(accountID)
-	external.guarded(FlowUtils{}.When(regexp.MustCompile(`^#[0-9a-fA-F]{6}$`).MatchString(color), func() {
-		external.update(account, ExternalAccountUpdate{Action: external.updateAction(), Revision: account.Revision, Color: color}, "Account color updated.")
+	external.guarded(FlowUtils{}.When(!slices.Contains([]bool{regexp.MustCompile(`^#[0-9a-fA-F]{6}$`).MatchString(color), !strings.EqualFold(color, account.Color)}, false), func() {
+		external.update(account, external.colored(account.Revision, color), "Account color updated.")
 	}))
 }
 
@@ -168,9 +171,29 @@ func (external *ExternalMailboxService) guarded(change func()) {
 	})()
 }
 
-func (external *ExternalMailboxService) update(account ExternalAccount, update ExternalAccountUpdate, message string) {
+// update sends a map, not a model: Tac sends every field of a model, empty
+// ones included, and a colour or order change must carry only its own field.
+func (external *ExternalMailboxService) update(account ExternalAccount, update map[string]any, message string) {
 	updated, failure := external.externalAccountsClient.Update(external.bearer(), account.ID, update)
 	external.settled(failure, updated.ID, "Could not update connected account.", func() { external.replaced([]ExternalAccount{updated}, message) })()
+}
+
+// change is the body of an account change: its action and the revision it
+// applies to. Colour and order changes add only their own field.
+func (ExternalMailboxService) change(action string, revision int) map[string]any {
+	return map[string]any{"action": action, "revision": revision}
+}
+
+func (external *ExternalMailboxService) colored(revision int, color string) map[string]any {
+	body := external.change(external.updateAction(), revision)
+	body["color"] = color
+	return body
+}
+
+func (external *ExternalMailboxService) ordered(revision int, order int) map[string]any {
+	body := external.change(external.updateAction(), revision)
+	body["order"] = order
+	return body
 }
 
 // mover swaps the order of two neighbouring accounts.
@@ -182,16 +205,16 @@ func (external *ExternalMailboxService) mover(accountID string, direction int) f
 }
 
 func (external *ExternalMailboxService) swap(account ExternalAccount, neighbor ExternalAccount) {
-	moved, failure := external.externalAccountsClient.Update(external.bearer(), neighbor.ID, ExternalAccountUpdate{Action: external.updateAction(), Revision: neighbor.Revision, Order: &account.Order})
+	moved, failure := external.externalAccountsClient.Update(external.bearer(), neighbor.ID, external.ordered(neighbor.Revision, account.Order))
 	external.settled(failure, moved.ID, external.reorderFailure(), func() { external.secondMove(account, neighbor, moved) })()
 }
 
 // secondMove moves the account into its neighbour's place, and gives the
 // neighbour its old order back when this second write fails.
 func (external *ExternalMailboxService) secondMove(account ExternalAccount, neighbor ExternalAccount, movedNeighbor ExternalAccount) {
-	moved, failure := external.externalAccountsClient.Update(external.bearer(), account.ID, ExternalAccountUpdate{Action: external.updateAction(), Revision: account.Revision, Order: &neighbor.Order})
+	moved, failure := external.externalAccountsClient.Update(external.bearer(), account.ID, external.ordered(account.Revision, neighbor.Order))
 	FlowUtils{}.When(HTTPUtils{}.Missed(failure, moved.ID), func() {
-		external.externalAccountsClient.Update(external.bearer(), movedNeighbor.ID, ExternalAccountUpdate{Action: external.updateAction(), Revision: movedNeighbor.Revision, Order: &neighbor.Order})
+		external.externalAccountsClient.Update(external.bearer(), movedNeighbor.ID, external.ordered(movedNeighbor.Revision, neighbor.Order))
 	})()
 	external.settled(failure, moved.ID, external.reorderFailure(), func() {
 		external.replaced([]ExternalAccount{movedNeighbor, moved}, "Account order updated.")
@@ -200,7 +223,7 @@ func (external *ExternalMailboxService) secondMove(account ExternalAccount, neig
 
 func (external *ExternalMailboxService) pause(account ExternalAccount) {
 	action := external.pauseAction(account.State)
-	updated, failure := external.externalAccountsClient.Update(external.bearer(), account.ID, ExternalAccountUpdate{Action: action, Revision: account.Revision})
+	updated, failure := external.externalAccountsClient.Update(external.bearer(), account.ID, external.change(action, account.Revision))
 	external.settled(failure, updated.ID, external.couldNot()+action+" connected account.", func() {
 		external.replaced([]ExternalAccount{updated}, external.pauseNotice(action))
 	})()

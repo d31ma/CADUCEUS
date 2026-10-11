@@ -19,7 +19,7 @@ func (controller *TemplatesIdController) PutTemplate(
 	id string,
 	request *http.Request,
 ) *http.Response {
-	return controller.templates().Update(id, request)
+	return TemplatesRoute{Access: controller.accessHelper, Templates: controller.templatesHelper}.Update(id, request)
 }
 
 // @DeleteRoute

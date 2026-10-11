@@ -13,14 +13,11 @@ type RulesController struct {
 
 // @PostRoute
 func (controller *RulesController) PostRule(request *http.Request) *http.Response {
-	return controller.route().Create(request)
+	rules := RulesRoute{Access: controller.accessHelper, Rules: controller.rulesHelper, Users: controller.usersHelper}
+	return rules.Create(request)
 }
 
 // @GetRoute
 func (controller *RulesController) GetRules(request *http.Request) *http.Response {
-	return controller.route().List(request)
-}
-
-func (controller *RulesController) route() RulesRoute {
-	return RulesRoute{Access: controller.accessHelper, Rules: controller.rulesHelper, Users: controller.usersHelper}
+	return RulesRoute{Access: controller.accessHelper, Rules: controller.rulesHelper}.List(request)
 }

@@ -18,16 +18,16 @@ func (helper *FyloHelper) ActFor(email string, domains []string) {
 	helper.access = FyloAccess{}.ForMailbox(email, domains)
 }
 
-// ActForDomain makes later operations act as the service of one domain's
-// tenant storage (the former FyloAccessContext.runForDomain) and answers the
-// access it replaced, for Restore.
+// ActForDomain makes later operations act as the mail service in one
+// domain's tenant storage (the former FyloAccessContext.runForDomain) and
+// answers the access it replaced, for Restore.
 func (helper *FyloHelper) ActForDomain(domain string) *FyloAccess {
 	previous := helper.access
-	helper.access = FyloAccess{}.ForDomain(domain)
+	helper.access = FyloAccess{}.ForDomain(Security{}.NormalizeDomain(domain))
 	return previous
 }
 
-// Restore puts back the access ActForDomain replaced.
-func (helper *FyloHelper) Restore(access *FyloAccess) {
-	helper.access = access
+// Restore makes later operations act with an access ActForDomain replaced.
+func (helper *FyloHelper) Restore(previous *FyloAccess) {
+	helper.access = previous
 }

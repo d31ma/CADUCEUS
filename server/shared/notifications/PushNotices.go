@@ -1,9 +1,10 @@
 import (
+	"crypto/ecdh"
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"math"
 	"os"
-	"regexp"
 	"strings"
 )
 
@@ -19,56 +20,30 @@ type PushNotices struct {
 
 // VapidPublicKey answers the configured public key, or a throwaway one for
 // local development.
-func (PushNotices) VapidPublicKey() string {
+func (notices PushNotices) VapidPublicKey() string {
 	if configured := (Settings{}).Value("VAPID_PUBLIC_KEY"); configured != "" {
 		return configured
 	}
-	public, _ := WebPush{}.GenerateKeys()
-	return public
+	return notices.generatedKey()
 }
 
 // NewEmail notifies of newly delivered hosted mail; it reports whether the
 // work is finished (sent, or nothing to send).
 func (notices PushNotices) NewEmail(email map[string]any) bool {
-	return notices.notify(email, notices.newMailPayload, "notifyNewEmail", "", "")
+	return notices.notify(email, notices.newMailPayload, "notifyNewEmail")
 }
 
 // Unsnoozed notifies that a snoozed conversation came back.
 func (notices PushNotices) Unsnoozed(email map[string]any) bool {
-	return notices.notify(email, notices.unsnoozedPayload, "notifyUnsnoozed", "", "")
+	return notices.notify(email, notices.unsnoozedPayload, "notifyUnsnoozed")
 }
 
-// ProviderNewEmail notifies of new mail in a connected provider account
-// ({accountId, ownerAddress, stableId, sender, subject, receivedAt}); it
-// reports whether the scheduler's outbox item is finished.
-func (notices PushNotices) ProviderNewEmail(notification map[string]any) bool {
-	accountId, stableId := TextValue{}.Of(notification["accountId"]), notification["stableId"]
-	id := notices.externalMessageId(accountId, stableId)
-	if id == "" {
-		return true
-	}
-	owner := strings.ToLower(TextValue{}.Of(RecordValues{}.Or(notification["ownerAddress"], "")))
-	domain := ""
-	if parts := strings.SplitN(owner, "@", 2); len(parts) == 2 {
-		domain = parts[1]
-	}
-	email := map[string]any{
-		"id": id, "external": true, "providerAccountId": accountId, "recipient": owner, "domain": domain,
-		"sender": RecordValues{}.Or(notification["sender"], ""), "subject": RecordValues{}.Or(notification["subject"], ""),
-		"folder": "inbox", "systemFolder": "inbox", "read": false, "starred": false,
-	}
-	if receivedAt, present := notification["receivedAt"]; present {
-		email["receivedAt"] = receivedAt
-	}
-	return notices.notify(email, notices.newMailPayload, "notifyProviderNewEmail", owner, accountId)
-}
-
-func (notices PushNotices) notify(email map[string]any, payloadFor func(map[string]any, *int, map[string]any) map[string]any, operation string, ownerEmail string, externalAccountId string) bool {
+func (notices PushNotices) notify(email map[string]any, payloadFor func(map[string]any, *int, map[string]any) map[string]any, operation string) bool {
 	settings := Settings{}
 	if settings.Value("WEB_PUSH_DISABLED") == "true" || settings.Value("VAPID_PUBLIC_KEY") == "" || settings.Value("VAPID_PRIVATE_KEY") == "" {
 		return true
 	}
-	sent, err := notices.deliver(email, payloadFor, ownerEmail, externalAccountId)
+	sent, err := notices.deliver(email, payloadFor)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "[push] %s failed: %s\n", operation, err.Error())
 		return false
@@ -76,16 +51,13 @@ func (notices PushNotices) notify(email map[string]any, payloadFor func(map[stri
 	return sent
 }
 
-func (notices PushNotices) deliver(email map[string]any, payloadFor func(map[string]any, *int, map[string]any) map[string]any, ownerEmail string, externalAccountId string) (bool, error) {
+func (notices PushNotices) deliver(email map[string]any, payloadFor func(map[string]any, *int, map[string]any) map[string]any) (bool, error) {
 	settings := Settings{}
-	vapid := VapidDetails{Subject: settings.Value("VAPID_SUBJECT"), PublicKey: settings.Value("VAPID_PUBLIC_KEY"), PrivateKey: settings.Value("VAPID_PRIVATE_KEY")}
+	vapid := WebPushVapid{Subject: settings.Value("VAPID_SUBJECT"), PublicKey: settings.Value("VAPID_PUBLIC_KEY"), PrivateKey: settings.Value("VAPID_PRIVATE_KEY")}
 	if vapid.Subject == "" {
 		vapid.Subject = "mailto:admin@caduceus.local"
 	}
-	lookup := ownerEmail
-	if lookup == "" {
-		lookup = TextValue{}.Of(email["recipient"])
-	}
+	lookup := TextValue{}.Of(email["recipient"])
 	_, user, err := notices.Users.FindByEmail(lookup)
 	if err != nil || user == nil {
 		return true, err
@@ -97,32 +69,18 @@ func (notices PushNotices) deliver(email map[string]any, payloadFor func(map[str
 		policyDomains = PreferenceChoices{}.Domains([]any{domain})
 	}
 	preferences := NewMailNotificationPreferences{}.Normalized(user, policyDomains)
-	if externalAccountId != "" {
-		preferences["newMailNotificationExternalAccounts"] = notices.externalAccounts(user, externalAccountId)
-		if !(PreferenceChoices{}).Includes(preferences["newMailNotificationExternalAccounts"].([]string), externalAccountId) {
-			return true, nil
-		}
-	} else if normalized := (Security{}).NormalizeDomain(domain); normalized == "" || !(PreferenceChoices{}).Includes(preferences["newMailNotificationDomains"].([]string), normalized) {
+	if normalized := (Security{}).NormalizeDomain(domain); normalized == "" || !(PreferenceChoices{}).Includes(preferences["newMailNotificationDomains"].([]string), normalized) {
 		return true, nil
 	}
 	subscriptions, err := notices.Subscriptions.ListForAddress(userEmail)
 	if err != nil || len(subscriptions) == 0 {
 		return true, err
 	}
-	var unread *int
-	if externalAccountId == "" {
-		unread = notices.unreadCount(user, email, userEmail)
-	}
+	unread := notices.unreadCount(user, email, userEmail)
 	sounds, _ := user["notificationSounds"].(map[string]any)
 	preferences["soundId"] = RecordValues{}.Or(sounds["new-mail"], "chime")
-	payload := TextValue{}.Json(payloadFor(email, unread, preferences))
-	delivered := false
-	for _, subscription := range subscriptions {
-		if err := (WebPush{}).Send(subscription, payload, vapid); err == nil {
-			delivered = true
-		}
-	}
-	return delivered, nil
+	payload := []byte(TextValue{}.Json(payloadFor(email, unread, preferences)))
+	return ProviderPush{}.send(subscriptions, payload, vapid), nil
 }
 
 // unreadCount answers the owner's unread inbox count for the badge, or nil
@@ -149,20 +107,6 @@ func (PushNotices) badgeDomains(user map[string]any, fallback string) []string {
 		return []string{badge["unreadBadgeDomain"].(string)}
 	}
 	return available
-}
-
-func (PushNotices) externalAccounts(user map[string]any, accountId string) []string {
-	requested, isList := RecordValues{}.List(user["newMailNotificationExternalAccounts"])
-	if !isList {
-		requested = []any{accountId}
-	}
-	chosen := []string{}
-	for _, entry := range requested {
-		if entry == accountId && !(PreferenceChoices{}).Includes(chosen, accountId) {
-			chosen = append(chosen, accountId)
-		}
-	}
-	return chosen
 }
 
 func (PushNotices) domain(email map[string]any) string {
@@ -227,12 +171,10 @@ func (PushNotices) soundId(preferences map[string]any) string {
 	return "chime"
 }
 
-// externalMessageId answers the opaque id of a provider message, or "".
-func (PushNotices) externalMessageId(accountId string, stableId any) string {
-	stable, isText := stableId.(string)
-	if !regexp.MustCompile(`^ext_[A-Za-z0-9_-]{20,80}$`).MatchString(accountId) || !isText || stable == "" || (TextValue{}).Length(stable) > 512 || strings.ContainsAny(stable, "\x00\r\n") {
-		return ""
-	}
-	identity := `{"accountId":` + StableJson{}.Quote(accountId) + `,"stableId":` + StableJson{}.Quote(stable) + `}`
-	return "extmsg." + base64.RawURLEncoding.EncodeToString([]byte(identity))
+// generatedKey answers a throwaway VAPID public key, as web-push's
+// generateVAPIDKeys made one: the uncompressed P-256 point as unpadded
+// base64url.
+func (PushNotices) generatedKey() string {
+	key, _ := ecdh.P256().GenerateKey(rand.Reader)
+	return base64.RawURLEncoding.EncodeToString(key.PublicKey().Bytes())
 }

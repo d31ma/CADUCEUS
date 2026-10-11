@@ -1,0 +1,385 @@
+{
+ "dns": {
+  "TXT sender.test": [
+   [
+    "v=spf1 ip4:192.0.2.0/24 include:_spf.partner.test ~all"
+   ]
+  ],
+  "TXT _spf.partner.test": [
+   [
+    "v=spf1 ip6:2001:db8::/32 a:mail.partner.test mx -all"
+   ]
+  ],
+  "A mail.partner.test": [
+   "203.0.113.9"
+  ],
+  "MX partner.test": [
+   {
+    "exchange": "mx1.partner.test",
+    "priority": 10
+   }
+  ],
+  "A mx1.partner.test": [
+   "203.0.113.25"
+  ],
+  "TXT _dmarc.sender.test": [
+   [
+    "v=DMARC1; p=reject; sp=quarantine; adkim=r"
+   ]
+  ],
+  "TXT rsa._domainkey.sender.test": [
+   [
+    "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1aDvM4B2eiCRuHS3ZdCXjCUow6wvZh0QqX5lDy+QYX1TbvfDLlLE8hOLJ3KSD2w9N29I13nnhnLC+/6tZ8EP0m/MxRHRsdqbutweOhW298mrdawkni9amu4muaHBNfq81qFhi6j5rhwz6W/hU2zx+B8JCVbWf4QAzVhWcQ5uKRj5A0RPCSu/ZwxAf/czZfZPxNRFojIRVXBCSPiwg/vVU2PV5oBBmBjcXH69l4hpMnFfCpKg7FHt3j2mNohTxKR44mKWDYvT7xj972u5Ncl8ugm1UjShDGfl9O5hLiCn49Lo0MreQM/miTThoxUZ90sZtxoLHyHvXzzE5to29I+VmwIDAQAB"
+   ]
+  ],
+  "TXT ed._domainkey.sender.test": [
+   [
+    "v=DKIM1; k=ed25519; p=AmPsHjQlZ4LMHFrTj4gp57Y7kzLJatQWp4mubCm+IAM="
+   ]
+  ],
+  "TXT weak._domainkey.sender.test": [
+   [
+    "v=DKIM1; k=rsa; p=MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKhjTi1VEl3xFqS5e1T5ipDeuumK1NBcK+TeEbKJsipIe8ISzVCAazef2A2NtQeirdzIOfnGsZoYp5Ce3RTkgucCAwEAAQ=="
+   ]
+  ],
+  "TXT other._domainkey.third.test": [
+   [
+    "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1aDvM4B2eiCRuHS3ZdCXjCUow6wvZh0QqX5lDy+QYX1TbvfDLlLE8hOLJ3KSD2w9N29I13nnhnLC+/6tZ8EP0m/MxRHRsdqbutweOhW298mrdawkni9amu4muaHBNfq81qFhi6j5rhwz6W/hU2zx+B8JCVbWf4QAzVhWcQ5uKRj5A0RPCSu/ZwxAf/czZfZPxNRFojIRVXBCSPiwg/vVU2PV5oBBmBjcXH69l4hpMnFfCpKg7FHt3j2mNohTxKR44mKWDYvT7xj972u5Ncl8ugm1UjShDGfl9O5hLiCn49Lo0MreQM/miTThoxUZ90sZtxoLHyHvXzzE5to29I+VmwIDAQAB"
+   ]
+  ],
+  "TXT default._bimi.sender.test": [
+   [
+    "v=BIMI1; l=https://sender.test/logo.svg"
+   ]
+  ],
+  "TXT strict.test": [
+   [
+    "v=spf1 -all"
+   ]
+  ],
+  "TXT _dmarc.strict.test": [
+   [
+    "v=DMARC1; p=none"
+   ]
+  ],
+  "TXT perm.test": [
+   [
+    "v=spf1 ip4:192.0.2.1 bogus:x"
+   ]
+  ],
+  "TXT loop.test": [
+   [
+    "v=spf1 redirect=loop.test"
+   ]
+  ],
+  "TXT sub.org.test": [],
+  "TXT _dmarc.org.test": [
+   [
+    "v=DMARC1; p=quarantine; sp=reject"
+   ]
+  ]
+ },
+ "cases": [
+  {
+   "name": "unsigned spf pass",
+   "raw": "From: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "mail.sender.test",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) smtp.mailfrom=bounce@sender.test smtp.helo=mail.sender.test;\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=pass header.selector=default header.d=sender.test\r\n",
+   "spf": "pass",
+   "dmarc": "pass",
+   "dkim": [
+    "none"
+   ]
+  },
+  {
+   "name": "unsigned spf softfail",
+   "raw": "From: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "198.51.100.7",
+    "helo": "x.example",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: softfail (mx.test: domain of transitioning bounce@sender.test does not designate 198.51.100.7 as permitted sender) client-ip=198.51.100.7;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=softfail (mx.test: domain of transitioning bounce@sender.test does not designate 198.51.100.7 as permitted sender) smtp.mailfrom=bounce@sender.test\r\n smtp.helo=x.example;\r\n dmarc=fail (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=skipped (message failed DMARC)\r\n",
+   "spf": "softfail",
+   "dmarc": "fail",
+   "dkim": [
+    "none"
+   ]
+  },
+  {
+   "name": "include a mechanism",
+   "raw": "From: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "203.0.113.9",
+    "helo": "mail.partner.test",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of bounce@sender.test designates 203.0.113.9 as permitted sender) client-ip=203.0.113.9;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=pass (mx.test: domain of bounce@sender.test designates 203.0.113.9 as permitted sender) smtp.mailfrom=bounce@sender.test smtp.helo=mail.partner.test;\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=pass header.selector=default header.d=sender.test\r\n",
+   "spf": "pass",
+   "dmarc": "pass",
+   "dkim": [
+    "none"
+   ]
+  },
+  {
+   "name": "include mx mechanism",
+   "raw": "From: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "203.0.113.25",
+    "helo": "mx1.partner.test",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: softfail (mx.test: domain of transitioning bounce@sender.test does not designate 203.0.113.25 as permitted sender) client-ip=203.0.113.25;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=softfail (mx.test: domain of transitioning bounce@sender.test does not designate 203.0.113.25 as permitted sender) smtp.mailfrom=bounce@sender.test\r\n smtp.helo=mx1.partner.test;\r\n dmarc=fail (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=skipped (message failed DMARC)\r\n",
+   "spf": "softfail",
+   "dmarc": "fail",
+   "dkim": [
+    "none"
+   ]
+  },
+  {
+   "name": "include ip6",
+   "raw": "From: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "2001:db8::5",
+    "helo": "v6.partner.test",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of bounce@sender.test designates 2001:db8::5 as permitted sender) client-ip=2001:db8::5;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=pass (mx.test: domain of bounce@sender.test designates 2001:db8::5 as permitted sender) smtp.mailfrom=bounce@sender.test smtp.helo=v6.partner.test;\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=pass header.selector=default header.d=sender.test\r\n",
+   "spf": "pass",
+   "dmarc": "pass",
+   "dkim": [
+    "none"
+   ]
+  },
+  {
+   "name": "relaxed rsa",
+   "raw": "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sender.test;\r\n h=Message-ID: Date: Subject: To: From; q=dns/txt; s=rsa; t=1791626400;\r\n bh=DItgyLmltSHietHRU+SYW0mhgA46msgZQbsQXVWD6Wk=;\r\n b=RWjjT8pDsH8SplmOLBr8Y7K1luhfL93M0gJfJJ9aU1HiQNOO5UE/ee37Ifp1ft6ENrkQw/7n6\r\n ec4DkiZIqaUjYE6yXHNeKvDDAWy6wQr3QkUmPp6d+XmgCRjbtWqZSkqDc6EGlgAfQVEdWM4bBec\r\n Jh0veNPHBBS6eGHMRyqyUA9+FsAkwbf6FALWclv2BtNnpd44K+GYGQ01aDv1Fb2hFPsgfWF9xHU\r\n oYrvX+WTucbvobyW8JqcewSKgkP9Z8ywi6ve4aVvNHSeSVFhVs4kgRqTUbsucKaM3ZEuOrHp+y1\r\n XipriNkJyIwn0md7NdD0z/MqWpntV7cSNz+3Wu78oi7g==\r\nFrom: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "198.51.100.7",
+    "helo": "x.example",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: softfail (mx.test: domain of transitioning bounce@sender.test does not designate 198.51.100.7 as permitted sender) client-ip=198.51.100.7;\r\nAuthentication-Results: mx.test;\r\n dkim=pass header.i=@sender.test header.s=rsa header.a=rsa-sha256 header.b=RWjjT8pD;\r\n spf=softfail (mx.test: domain of transitioning bounce@sender.test does not designate 198.51.100.7 as permitted sender) smtp.mailfrom=bounce@sender.test\r\n smtp.helo=x.example;\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=pass header.selector=default header.d=sender.test\r\n",
+   "spf": "softfail",
+   "dmarc": "pass",
+   "dkim": [
+    "pass"
+   ]
+  },
+  {
+   "name": "simple rsa sha1",
+   "raw": "DKIM-Signature: v=1; a=rsa-sha1; c=simple/simple; d=sender.test;\r\n h=Message-ID: Date: Subject: To: From; q=dns/txt; s=rsa; t=1791626400;\r\n bh=tRESXK+u5D5EceOEiNRRchcXBN8=;\r\n b=KbdKMzJsiSe4uT4UR9BTZbGW7clreEdCYopqaJEgXuY9JXUtl+02DX/Csf3eGUJPLPj2/xSVn\r\n JcGOq31OyHitsewfdI4tV/KX+p1QG47mwqdnHA20pXZUoKa9FJZ3fREXOeg0LpGTheWWoBk7UPJ\r\n Ko7adAEtoFHEIhBkOVUw/gNlu7UvrDfsdvMww4Yra8hGZVxGHzKrFXVWlXJT6n/mo6PnsN5huLQ\r\n ODqYhPd8rGAHLP2ropkpIujDOpSAEEhsBTqvYl/qL16sE3e9le7rtgInq+weIvJ0dhVhOB900ws\r\n gHeGjcR+k3PJhKkOL2hhiEeqvj/irMNf6qiyfurWPWPA==\r\nFrom: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "mail.sender.test",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=pass header.i=@sender.test header.s=rsa header.a=rsa-sha1 header.b=KbdKMzJs;\r\n spf=pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) smtp.mailfrom=bounce@sender.test smtp.helo=mail.sender.test;\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=pass header.selector=default header.d=sender.test\r\n",
+   "spf": "pass",
+   "dmarc": "pass",
+   "dkim": [
+    "pass"
+   ]
+  },
+  {
+   "name": "ed25519 relaxed/simple",
+   "raw": "DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/simple; d=sender.test;\r\n h=Message-ID: Date: Subject: To: From; q=dns/txt; s=ed; t=1791626400;\r\n bh=9NONgQDNqXJs4l2sJlpdb8j0MXda1gq/pCOk+kyQVmA=;\r\n b=N1eE9taKTKSbL7W+FQMmZwB+7JbyyYwluaTnaxkk402UjyYwcl5bOVzGjUuDnvGN2/NU762F1\r\n 0mN9kmrZz1iCA==\r\nFrom: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "mail.sender.test",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=pass header.i=@sender.test header.s=ed header.a=ed25519-sha256 header.b=N1eE9taK;\r\n spf=pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) smtp.mailfrom=bounce@sender.test smtp.helo=mail.sender.test;\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=pass header.selector=default header.d=sender.test\r\n",
+   "spf": "pass",
+   "dmarc": "pass",
+   "dkim": [
+    "pass"
+   ]
+  },
+  {
+   "name": "body length limit",
+   "raw": "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sender.test;\r\n h=Message-ID: Date: Subject: To: From; l=12; q=dns/txt; s=rsa;\r\n t=1791626400; bh=lGP7WgYuC2BfNW+3tXtZjgpRyTmfyliAJh62YXMvN6E=;\r\n b=mbz0DoQE5RqxWhBPc1CGMPpeTXwK/n1QkO/9SUHCGhoQpNkEDrCR6NLQR8Ob1/QnoB2EA6a0Q\r\n qHmSgQu9+bRLqvxwhcROW+1W8rD4Va21QRo4bmgHVSwCWS6eQ3fIPXizexk+/ak3jmAX7tMjqsz\r\n JLmB56gSmjLFW+/OSG8veN/R43irG/P7AsUPB2zXXzPXTd+37kdbE02lkZeT/O5icEjDnWEgEFq\r\n ofoLvDRXJIrfFBKL7NPkScMiD37hD5PhZBUKZRIAceFwO8dZTbCNqR7BFdE6S2k3abuGWgKKtQL\r\n Djxk6kvvm+Cbo1wsSdX542BLpTzOG/je2C1qFstxdkRA==\r\nFrom: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "mail.sender.test",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=pass (undersized signature: 19 bytes unsigned) header.i=@sender.test header.s=rsa header.a=rsa-sha256 header.b=mbz0DoQE;\r\n spf=pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) smtp.mailfrom=bounce@sender.test smtp.helo=mail.sender.test;\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=skipped (undersized DKIM signature)\r\n",
+   "spf": "pass",
+   "dmarc": "pass",
+   "dkim": [
+    "pass"
+   ]
+  },
+  {
+   "name": "tampered body",
+   "raw": "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sender.test;\r\n h=Message-ID: Date: Subject: To: From; q=dns/txt; s=rsa; t=1791626400;\r\n bh=DItgyLmltSHietHRU+SYW0mhgA46msgZQbsQXVWD6Wk=;\r\n b=RWjjT8pDsH8SplmOLBr8Y7K1luhfL93M0gJfJJ9aU1HiQNOO5UE/ee37Ifp1ft6ENrkQw/7n6\r\n ec4DkiZIqaUjYE6yXHNeKvDDAWy6wQr3QkUmPp6d+XmgCRjbtWqZSkqDc6EGlgAfQVEdWM4bBec\r\n Jh0veNPHBBS6eGHMRyqyUA9+FsAkwbf6FALWclv2BtNnpd44K+GYGQ01aDv1Fb2hFPsgfWF9xHU\r\n oYrvX+WTucbvobyW8JqcewSKgkP9Z8ywi6ve4aVvNHSeSVFhVs4kgRqTUbsucKaM3ZEuOrHp+y1\r\n XipriNkJyIwn0md7NdD0z/MqWpntV7cSNz+3Wu78oi7g==\r\nFrom: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNambers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "mail.sender.test",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=neutral (body hash did not verify) header.i=@sender.test header.s=rsa header.a=rsa-sha256 header.b=RWjjT8pD;\r\n spf=pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) smtp.mailfrom=bounce@sender.test smtp.helo=mail.sender.test;\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=pass header.selector=default header.d=sender.test\r\n",
+   "spf": "pass",
+   "dmarc": "pass",
+   "dkim": [
+    "neutral"
+   ]
+  },
+  {
+   "name": "tampered header",
+   "raw": "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sender.test;\r\n h=Message-ID: Date: Subject: To: From; q=dns/txt; s=rsa; t=1791626400;\r\n bh=DItgyLmltSHietHRU+SYW0mhgA46msgZQbsQXVWD6Wk=;\r\n b=RWjjT8pDsH8SplmOLBr8Y7K1luhfL93M0gJfJJ9aU1HiQNOO5UE/ee37Ifp1ft6ENrkQw/7n6\r\n ec4DkiZIqaUjYE6yXHNeKvDDAWy6wQr3QkUmPp6d+XmgCRjbtWqZSkqDc6EGlgAfQVEdWM4bBec\r\n Jh0veNPHBBS6eGHMRyqyUA9+FsAkwbf6FALWclv2BtNnpd44K+GYGQ01aDv1Fb2hFPsgfWF9xHU\r\n oYrvX+WTucbvobyW8JqcewSKgkP9Z8ywi6ve4aVvNHSeSVFhVs4kgRqTUbsucKaM3ZEuOrHp+y1\r\n XipriNkJyIwn0md7NdD0z/MqWpntV7cSNz+3Wu78oi7g==\r\nFrom: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Annual   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "mail.sender.test",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=fail (bad signature) header.i=@sender.test header.s=rsa header.a=rsa-sha256 header.b=RWjjT8pD;\r\n spf=pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) smtp.mailfrom=bounce@sender.test smtp.helo=mail.sender.test;\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=pass header.selector=default header.d=sender.test\r\n",
+   "spf": "pass",
+   "dmarc": "pass",
+   "dkim": [
+    "fail"
+   ]
+  },
+  {
+   "name": "weak key and foreign signer",
+   "raw": "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sender.test;\r\n h=Message-ID: Date: Subject: To: From; q=dns/txt; s=weak; t=1791626400;\r\n bh=DItgyLmltSHietHRU+SYW0mhgA46msgZQbsQXVWD6Wk=;\r\n b=XT85obGGXNtU4y6zz57QjSpJk7h5/iuoaJJuEcIz10m9t/fGlTHMJhxUryU2u+eDKXAh1EC1B\r\n X2RpfvSyz73Tw==\r\nDKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=third.test;\r\n h=Message-ID: Date: Subject: To: From; q=dns/txt; s=other; t=1791626400;\r\n bh=DItgyLmltSHietHRU+SYW0mhgA46msgZQbsQXVWD6Wk=;\r\n b=P40XCbiugJqiJKFCs3joKaPJbMpBUiOCgV4XkncKN8WqrHr51R3LDTwkTd4PiMX6BhxX6NqUW\r\n 2+zvIXnyNPJbTNVNPtB22P8meL/i7YFyYGMdUGMvTXkMQP5tsIDlf4C9xtEzzmIU1gJOMnkXavU\r\n Jmdrt0qHOJ3Q0LarAabA3FEJDuojrZ0MJahtaWdNCI0KX8eBFLOPdC9r8aGMT3oIfGsgYtuSu1j\r\n AQADb5pRpfdwYQ+TV7gxptxRXyZfdwS/0Z9Ag19c3JM6+n5T3FM7CPpjeveAybPquVFXzdDFeTf\r\n E9IJ3LmiLMz/ngL1tjWWDCGkh8ZyvUpuOpafn9C11AFA==\r\nFrom: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "198.51.100.7",
+    "helo": "x.example",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: softfail (mx.test: domain of transitioning bounce@sender.test does not designate 198.51.100.7 as permitted sender) client-ip=198.51.100.7;\r\nAuthentication-Results: mx.test;\r\n dkim=policy policy.dkim-rules=weak-key header.i=@sender.test header.s=weak header.a=rsa-sha256 header.b=XT85obGG;\r\n dkim=pass header.i=@third.test header.s=other header.a=rsa-sha256 header.b=P40XCbiu;\r\n spf=softfail (mx.test: domain of transitioning bounce@sender.test does not designate 198.51.100.7 as permitted sender) smtp.mailfrom=bounce@sender.test\r\n smtp.helo=x.example;\r\n dmarc=fail (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=skipped (message failed DMARC)\r\n",
+   "spf": "softfail",
+   "dmarc": "fail",
+   "dkim": [
+    "policy",
+    "pass"
+   ]
+  },
+  {
+   "name": "missing key",
+   "raw": "DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=sender.test;\r\n h=Message-ID: Date: Subject: To: From; q=dns/txt; s=gone; t=1791626400;\r\n bh=DItgyLmltSHietHRU+SYW0mhgA46msgZQbsQXVWD6Wk=;\r\n b=cB2BXUF3bnLHKY/kLrQH/A+5aawEig1EfjlMffhJO+BxHy2hLlB7cyww6nbhPkraTDihpRS2o\r\n sTd/PxbR8ITYgcAWavduen5w74E0F6ehz1evzZ/Fgqtof8CccFAMFz9pc448M7E+qCTHAxa2NKE\r\n 3R+U1ucvi0PBnMeCG1VNlOn9UzN2kEwRXlqqESEISrv5h6/5nuGkRlyCZC5HShmrVwO6rRoVNVD\r\n MNOamtlr6MLE2cjd0tIPahzicou0dXqpVbsc7Cl6zPspuX5VNoCUg9aQEFd8F5nnEHb7Zf7egom\r\n I7ZXY/XkMRj0wwJvkBZLgTnXwiv8gqvEqowyXjbgYFbQ==\r\nFrom: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "mail.sender.test",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=neutral (no key) header.i=@sender.test header.s=gone header.a=rsa-sha256 header.b=cB2BXUF3;\r\n spf=pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) smtp.mailfrom=bounce@sender.test smtp.helo=mail.sender.test;\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=pass header.selector=default header.d=sender.test\r\n",
+   "spf": "pass",
+   "dmarc": "pass",
+   "dkim": [
+    "neutral"
+   ]
+  },
+  {
+   "name": "spf fail dmarc none policy",
+   "raw": "From: Alice <alice@strict.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "mail.strict.test",
+    "sender": "bounce@strict.test"
+   },
+   "headers": "Received-SPF: fail (mx.test: domain of bounce@strict.test does not designate 192.0.2.10 as permitted sender) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=fail (mx.test: domain of bounce@strict.test does not designate 192.0.2.10 as permitted sender) smtp.mailfrom=bounce@strict.test smtp.helo=mail.strict.test;\r\n dmarc=fail (p=NONE arc=none) header.from=strict.test header.d=strict.test;\r\n bimi=skipped (message failed DMARC)\r\n",
+   "spf": "fail",
+   "dmarc": "fail",
+   "dkim": [
+    "none"
+   ]
+  },
+  {
+   "name": "spf permerror",
+   "raw": "From: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.1",
+    "helo": "h.perm.test",
+    "sender": "x@perm.test"
+   },
+   "headers": "Received-SPF: permerror (mx.test: permanent error in processing during lookup of x@perm.test: Unknown mechanism bogus) client-ip=192.0.2.1;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=permerror (mx.test: permanent error in processing during lookup of x@perm.test: Unknown mechanism bogus) smtp.mailfrom=x@perm.test smtp.helo=h.perm.test;\r\n dmarc=fail (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=skipped (message failed DMARC)\r\n",
+   "spf": "permerror",
+   "dmarc": "fail",
+   "dkim": [
+    "none"
+   ]
+  },
+  {
+   "name": "spf redirect loop",
+   "raw": "From: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.1",
+    "helo": "h.loop.test",
+    "sender": "x@loop.test"
+   },
+   "headers": "Received-SPF: permerror (mx.test: permanent error in processing during lookup of x@loop.test: Too many DNS requests) client-ip=192.0.2.1;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=permerror (mx.test: permanent error in processing during lookup of x@loop.test: Too many DNS requests) smtp.mailfrom=x@loop.test smtp.helo=h.loop.test;\r\n dmarc=fail (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=skipped (message failed DMARC)\r\n",
+   "spf": "permerror",
+   "dmarc": "fail",
+   "dkim": [
+    "none"
+   ]
+  },
+  {
+   "name": "null sender uses helo",
+   "raw": "From: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "sender.test",
+    "sender": ""
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of postmaster@sender.test designates 192.0.2.10 as permitted sender) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=pass (mx.test: domain of postmaster@sender.test designates 192.0.2.10 as permitted sender) smtp.mailfrom=postmaster@sender.test smtp.helo=sender.test;\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=pass header.selector=default header.d=sender.test\r\n",
+   "spf": "pass",
+   "dmarc": "pass",
+   "dkim": [
+    "none"
+   ]
+  },
+  {
+   "name": "no spf record org dmarc",
+   "raw": "From: Alice <alice@sub.org.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "sub.org.test",
+    "sender": "x@sub.org.test"
+   },
+   "headers": "Received-SPF: none (mx.test: sub.org.test does not designate permitted sender hosts) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=none (mx.test: sub.org.test does not designate permitted sender hosts) smtp.mailfrom=x@sub.org.test smtp.helo=sub.org.test;\r\n dmarc=fail (p=QUARANTINE sp=REJECT arc=none) header.from=sub.org.test header.d=org.test;\r\n bimi=skipped (message failed DMARC)\r\n",
+   "spf": "none",
+   "dmarc": "fail",
+   "dkim": [
+    "none"
+   ]
+  },
+  {
+   "name": "ip helo",
+   "raw": "From: Alice <alice@sender.test>\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) smtp.mailfrom=bounce@sender.test smtp.helo=\"[192.0.2.10]\";\r\n dmarc=pass (p=REJECT sp=QUARANTINE arc=none) header.from=sender.test header.d=sender.test;\r\n bimi=pass header.selector=default header.d=sender.test\r\n",
+   "spf": "pass",
+   "dmarc": "pass",
+   "dkim": [
+    "none"
+   ]
+  },
+  {
+   "name": "two from addresses",
+   "raw": "From: alice@sender.test, carol@sender.test\r\nTo: bob@mx.test\r\nSubject: Quarterly   report\r\nDate: Sat, 10 Oct 2026 10:00:00 +0000\r\nMessage-ID: <m1@sender.test>\r\n\r\nHello Bob,  \r\n\r\nNumbers\tattached. \r\n\r\n",
+   "options": {
+    "ip": "192.0.2.10",
+    "helo": "mail.sender.test",
+    "sender": "bounce@sender.test"
+   },
+   "headers": "Received-SPF: pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) client-ip=192.0.2.10;\r\nAuthentication-Results: mx.test;\r\n dkim=none (message not signed);\r\n spf=pass (mx.test: domain of bounce@sender.test designates 192.0.2.10 as permitted sender) smtp.mailfrom=bounce@sender.test smtp.helo=mail.sender.test\r\n",
+   "spf": "pass",
+   "dmarc": null,
+   "dkim": [
+    "none"
+   ]
+  }
+ ]
+}

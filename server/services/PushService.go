@@ -1,5 +1,5 @@
-// PushService sends Web Push notifications for new and unsnoozed mail and
-// answers the VAPID public key browsers subscribe with.
+// PushService sends Web Push notifications for new, provider and unsnoozed
+// mail and answers the VAPID public key browsers subscribe with.
 // @Service
 type PushService struct {
 	// @Needs
@@ -21,10 +21,10 @@ func (service *PushService) NotifyNewEmail(email map[string]any) bool {
 	return service.notices().NewEmail(email)
 }
 
-// NotifyProviderNewEmail notifies of new mail in a connected provider
-// account (the provider notification tick calls it).
+// NotifyProviderNewEmail delivers one scheduler-claimed provider
+// notification and answers true when its durable outbox item is terminal.
 func (service *PushService) NotifyProviderNewEmail(notification map[string]any) bool {
-	return service.notices().ProviderNewEmail(notification)
+	return ProviderPush{Users: service.usersHelper, Subscriptions: service.pushSubscriptionsHelper}.Notify(notification)
 }
 
 // NotifyUnsnoozed notifies that a snoozed conversation returned (the snooze

@@ -9,6 +9,10 @@ type ExtensionsIdController struct {
 	extensionsHelper *ExtensionsHelper
 }
 
+func (controller *ExtensionsIdController) route() ExtensionsRoute {
+	return ExtensionsRoute{Access: controller.accessHelper, Extensions: controller.extensionsHelper}
+}
+
 // @GetRoute
 func (controller *ExtensionsIdController) GetExtension(
 	// @FromPath
@@ -24,7 +28,8 @@ func (controller *ExtensionsIdController) PutExtension(
 	id string,
 	request *http.Request,
 ) *http.Response {
-	return controller.route().Enable(id, request)
+	extensions := controller.route()
+	return extensions.Enable(id, request)
 }
 
 // @DeleteRoute
@@ -34,8 +39,4 @@ func (controller *ExtensionsIdController) DeleteExtension(
 	request *http.Request,
 ) *http.Response {
 	return controller.route().Remove(id, request)
-}
-
-func (controller *ExtensionsIdController) route() ExtensionsRoute {
-	return ExtensionsRoute{Access: controller.accessHelper, Extensions: controller.extensionsHelper}
 }

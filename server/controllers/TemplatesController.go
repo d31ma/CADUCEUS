@@ -11,7 +11,11 @@ type TemplatesController struct {
 
 // @PostRoute
 func (controller *TemplatesController) PostTemplate(request *http.Request) *http.Response {
-	return controller.route().Create(request)
+	return TemplatesRoute{Access: controller.accessHelper, Templates: controller.templatesHelper}.Create(request)
+}
+
+func (controller *TemplatesController) route() TemplatesRoute {
+	return TemplatesRoute{Access: controller.accessHelper, Templates: controller.templatesHelper}
 }
 
 // @DeleteRoute
@@ -22,8 +26,4 @@ func (controller *TemplatesController) DeleteTemplate(request *http.Request) *ht
 // @GetRoute
 func (controller *TemplatesController) GetTemplates(request *http.Request) *http.Response {
 	return controller.route().List(request)
-}
-
-func (controller *TemplatesController) route() TemplatesRoute {
-	return TemplatesRoute{Access: controller.accessHelper, Templates: controller.templatesHelper}
 }

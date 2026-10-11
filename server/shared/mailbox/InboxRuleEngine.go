@@ -13,7 +13,7 @@ func (engine InboxRuleEngine) Evaluated(rule map[string]any, input map[string]an
 	all, some := true, false
 	for _, item := range conditions {
 		condition, _ := item.(map[string]any)
-		matched := engine.matches(condition, message)
+		matched := engine.Matches(condition, message, (RecordValues{}).Truthy(input["hasAttachment"]))
 		result := TextValue{}.Copy(condition)
 		result["matched"] = matched
 		results = append(results, result)
@@ -36,30 +36,32 @@ func (engine InboxRuleEngine) Evaluated(rule map[string]any, input map[string]an
 	}
 }
 
-func (engine InboxRuleEngine) message(input map[string]any) map[string]any {
-	return map[string]any{
-		"from":          engine.text(RecordValues{}.Coalesce(input["from"], input["sender"])),
-		"to":            engine.text(RecordValues{}.Coalesce(input["to"], input["recipient"])),
-		"cc":            engine.text(input["cc"]),
-		"subject":       engine.text(input["subject"]),
-		"body":          engine.text(input["body"]),
-		"hasAttachment": RecordValues{}.Truthy(input["hasAttachment"]),
+func (engine InboxRuleEngine) message(input map[string]any) map[string]string {
+	return map[string]string{
+		"from":    engine.text(RecordValues{}.Coalesce(input["from"], input["sender"])),
+		"to":      engine.text(RecordValues{}.Coalesce(input["to"], input["recipient"])),
+		"cc":      engine.text(input["cc"]),
+		"subject": engine.text(input["subject"]),
+		"body":    engine.text(input["body"]),
 	}
 }
 
-func (InboxRuleEngine) matches(condition map[string]any, message map[string]any) bool {
-	field := condition["field"]
-	if field == "hasAttachment" {
+// Matches reports whether one condition holds for a message's text fields
+// (from, to, cc, subject, body) and attachment flag.
+func (InboxRuleEngine) Matches(condition map[string]any, message map[string]string, hasAttachment bool) bool {
+	if condition["field"] == "hasAttachment" {
 		expected := strings.ToLower(TextValue{}.Of(RecordValues{}.Coalesce(condition["value"], "undefined"))) == "true"
 		if condition["op"] == "notEquals" {
-			return message["hasAttachment"] != expected
+			return hasAttachment != expected
 		}
-		return message["hasAttachment"] == expected
+		return hasAttachment == expected
 	}
-	if !(TextValue{}).Includes([]string{"from", "to", "cc", "subject", "body"}, field) {
+	field, _ := condition["field"].(string)
+	haystack, known := message[field]
+	if !known {
 		return false
 	}
-	value := strings.ToLower(message[field.(string)].(string))
+	value := strings.ToLower(haystack)
 	needle := strings.ToLower(TextValue{}.Of(condition["value"]))
 	switch condition["op"] {
 	case "contains":

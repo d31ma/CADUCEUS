@@ -21,7 +21,7 @@ func (ShareUtils) Unavailable(available bool, token string) string {
 // Decorated adds the labels the view shows and wraps each HTML body in a
 // locked-down document.
 func (ShareUtils) Decorated(thread SharedThread, now time.Time) SharedThread {
-	thread.ExpiresAtLabel = DateUtils{}.Label(thread.ExpiresAt, now)
+	thread.ExpiresAtLabel = DateLabelUtils{}.Stamp(thread.ExpiresAt, now)
 	thread.MessageCount = strconv.Itoa(len(thread.Messages)) + map[bool]string{true: " message", false: " messages"}[len(thread.Messages) == 1]
 	thread.Messages = ShareUtils{}.messages(thread.Messages, now)
 	return thread
@@ -54,7 +54,7 @@ func (ShareUtils) message(message SharedMessage, now time.Time) SharedMessage {
 	separator := ", "
 	message.ToLabel = strings.Join(message.To, separator)
 	message.CcLabel = strings.Join(message.Cc, separator)
-	message.ReceivedAtLabel = DateUtils{}.Label(message.ReceivedAt, now)
+	message.ReceivedAtLabel = DateLabelUtils{}.Stamp(message.ReceivedAt, now)
 	message.ProtectedHTML = ProtectedMailUtils{}.Document(message.HTMLBody)
 	message.Attachments = ShareUtils{}.sized(append([]SharedAttachment{}, message.Attachments...))
 	return message

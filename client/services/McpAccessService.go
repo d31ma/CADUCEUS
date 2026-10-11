@@ -142,7 +142,7 @@ func (service *McpAccessService) Endpoint() string {
 }
 
 func (service *McpAccessService) TokenCreatedAtLabel() string {
-	return TimestampLabelUtils{}.DateTime(service.TokenCreatedAt, service.timeZoneOffset)
+	return DateLabelUtils{}.StoredDateTime(service.TokenCreatedAt, service.timeZoneOffset)
 }
 
 func (service *McpAccessService) load() {
@@ -280,7 +280,7 @@ func (service *McpAccessService) auditRows() []McpAuditRow {
 	for _, event := range service.Audit {
 		rows = append(rows, McpAuditRow{
 			ToolName: event.ToolName, Status: event.Status, DurationMs: event.DurationMs, ResultCount: event.ResultCount,
-			CreatedAtLabel: TimestampLabelUtils{}.DateTime(event.CreatedAt, service.timeZoneOffset),
+			CreatedAtLabel: DateLabelUtils{}.StoredDateTime(event.CreatedAt, service.timeZoneOffset),
 			ParameterLabel: cmp.Or(strings.Join(event.ParameterKeys, ", "), "none"),
 		})
 	}

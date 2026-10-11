@@ -100,9 +100,9 @@ func (ConnectedAccountUtils) Diagnostics(report AccountSyncReport, offsetMinutes
 	sync := report.Sync
 	return AccountDiagnostics{
 		CursorVersion: sync.CursorVersion, Attempts: sync.Attempts,
-		NextRunAt: cmp.Or(TimestampLabelUtils{}.DateTime(sync.NextRunAt, offsetMinutes), "Not scheduled"),
+		NextRunAt: cmp.Or(DateLabelUtils{}.StoredDateTime(sync.NextRunAt, offsetMinutes), "Not scheduled"),
 		LastCode:  sync.LastCode,
-		UpdatedAt: TimestampLabelUtils{}.DateTime(sync.ScheduleUpdatedAt, offsetMinutes),
+		UpdatedAt: DateLabelUtils{}.StoredDateTime(sync.ScheduleUpdatedAt, offsetMinutes),
 	}
 }
 

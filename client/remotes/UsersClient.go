@@ -10,14 +10,6 @@ type UsersClient interface {
 	) (UserPreferences, error)
 
 	// @PutRequest("/me/preferences")
-	SaveTheme(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @RequestBody
-		theme BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PutRequest("/me/preferences")
 	SavePreferences(
 		// @RequestHeader("Authorization")
 		authorization string,

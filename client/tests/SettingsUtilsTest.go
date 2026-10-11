@@ -55,9 +55,9 @@ func (test *SettingsUtilsTest) TestChoicesAnswerConditions() {
 }
 
 func (test *SettingsUtilsTest) TestTimestampLabelsUseTheOffset() {
-	Assert.Equals("Oct 10, 2026", TimestampLabelUtils{}.Date("2026-10-10T23:30:00Z", 0))
-	Assert.Equals("Oct 11, 2026", TimestampLabelUtils{}.Date("2026-10-10T23:30:00Z", 60))
-	Assert.Equals("", TimestampLabelUtils{}.DateTime("yesterday", 0))
+	Assert.Equals("Oct 10, 2026", DateLabelUtils{}.StoredDate("2026-10-10T23:30:00Z", 0))
+	Assert.Equals("Oct 11, 2026", DateLabelUtils{}.StoredDate("2026-10-10T23:30:00Z", 60))
+	Assert.Equals("", DateLabelUtils{}.StoredDateTime("yesterday", 0))
 }
 
 func (test *SettingsUtilsTest) TestShortcutValidationFindsConflicts() {

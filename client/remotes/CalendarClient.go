@@ -12,16 +12,6 @@ type CalendarClient interface {
 		start string,
 		// @RequestParam("end")
 		end string,
-	) ([]CalendarEventSummary, error)
-
-	// @GetRequest("/events")
-	EventsBetween(
-		// @RequestHeader("Authorization")
-		authorization string,
-		// @RequestParam("start")
-		start string,
-		// @RequestParam("end")
-		end string,
 	) ([]CalendarEvent, error)
 
 	// @GetRequest("/team-events")

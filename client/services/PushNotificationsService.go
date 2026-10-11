@@ -162,7 +162,7 @@ func (service *PushNotificationsService) help(active bool) string {
 func (service *PushNotificationsService) rows() []PushSubscriptionRow {
 	rows := []PushSubscriptionRow{}
 	for _, subscription := range service.Subscriptions {
-		rows = append(rows, PushSubscriptionRow{UpdatedAtLabel: TimestampLabelUtils{}.Date(subscription.UpdatedAt, service.timeZoneOffset)})
+		rows = append(rows, PushSubscriptionRow{UpdatedAtLabel: DateLabelUtils{}.StoredDate(subscription.UpdatedAt, service.timeZoneOffset)})
 	}
 	return rows
 }

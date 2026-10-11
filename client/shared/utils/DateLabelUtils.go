@@ -11,15 +11,34 @@ type DateLabelUtils struct{}
 
 // Numeric is Intl.DateTimeFormat('en').format(value): "10/11/2026", or ""
 // when the value is not an ISO date.
-func (DateLabelUtils) Numeric(value string) string {
+func (labels DateLabelUtils) Numeric(value string) string {
 	moment, failure := time.Parse(time.RFC3339Nano, value)
-	return DateLabelUtils{}.numericUnless(moment.Local(), failure)
+	return labels.formatUnless(moment.Local(), failure, "1/2/2006")
 }
 
 // MonthDay is a calendar day such as "2026-01-05" as "Jan 5", read in UTC.
-func (DateLabelUtils) MonthDay(day string) string {
+func (labels DateLabelUtils) MonthDay(day string) string {
 	moment, failure := time.Parse("2006-01-02", day)
-	return DateLabelUtils{}.monthDayUnless(moment, failure)
+	return labels.formatUnless(moment, failure, labels.monthDayLayout())
+}
+
+// Stamp is a stored timestamp as "Jan 5, 2026, 2:30 PM" in the location of
+// now, or "" when the value is not an ISO date.
+func (labels DateLabelUtils) Stamp(value string, now time.Time) string {
+	moment, failure := time.Parse(time.RFC3339Nano, value)
+	return labels.formatUnless(moment.In(now.Location()), failure, labels.stampLayout())
+}
+
+// StoredDate is a stored timestamp as "Oct 10, 2026" at the browser's time
+// zone offset, in minutes east of UTC, or "" when it is not an ISO date.
+func (labels DateLabelUtils) StoredDate(value string, offsetMinutes float64) string {
+	return labels.atOffset(value, offsetMinutes, labels.dateLayout())
+}
+
+// StoredDateTime is a stored timestamp as "Oct 10, 2026, 3:04 PM" at the
+// browser's time zone offset, or "" when it is not an ISO date.
+func (labels DateLabelUtils) StoredDateTime(value string, offsetMinutes float64) string {
+	return labels.atOffset(value, offsetMinutes, labels.stampLayout())
 }
 
 // Clock is {hour: 'numeric', minute: '2-digit'} with the minutes left out
@@ -51,7 +70,7 @@ func (labels DateLabelUtils) ShortMonthDay(moment time.Time) string {
 
 // ShortMonthDayYear is { month: 'short', day: 'numeric', year: 'numeric' }: "Oct 10, 2026".
 func (labels DateLabelUtils) ShortMonthDayYear(moment time.Time) string {
-	return moment.Format("Jan 2, 2006")
+	return moment.Format(labels.dateLayout())
 }
 
 // YearAndDay is { day: 'numeric', year: 'numeric' }, which Chromium's en-US
@@ -80,18 +99,16 @@ func (labels DateLabelUtils) ShortDateTime(moment time.Time, twentyFourHour bool
 	return moment.Format("Mon, Jan 2, 2006, ") + labels.HourMinute(moment, twentyFourHour)
 }
 
-func (DateLabelUtils) numericUnless(moment time.Time, failure error) string {
-	if failure != nil {
-		return ""
-	}
-	return fmt.Sprintf("%d/%d/%d", int(moment.Month()), moment.Day(), moment.Year())
+func (labels DateLabelUtils) atOffset(value string, offsetMinutes float64, layout string) string {
+	moment, failure := time.Parse(time.RFC3339Nano, value)
+	return labels.formatUnless(moment.In(time.FixedZone("", int(offsetMinutes*60))), failure, layout)
 }
 
-func (DateLabelUtils) monthDayUnless(moment time.Time, failure error) string {
+func (DateLabelUtils) formatUnless(moment time.Time, failure error, layout string) string {
 	if failure != nil {
 		return ""
 	}
-	return moment.Format(DateLabelUtils{}.monthDayLayout())
+	return moment.Format(layout)
 }
 
 func (DateLabelUtils) hours(moment time.Time, minutes string, use24HourClock bool) string {
@@ -109,3 +126,7 @@ func (DateLabelUtils) clockLayouts() map[bool]string {
 func (DateLabelUtils) halfDay() int { return 12 }
 
 func (DateLabelUtils) monthDayLayout() string { return "Jan 2" }
+
+func (DateLabelUtils) dateLayout() string { return "Jan 2, 2006" }
+
+func (DateLabelUtils) stampLayout() string { return "Jan 2, 2006, 3:04 PM" }

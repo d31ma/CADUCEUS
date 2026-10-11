@@ -182,7 +182,7 @@ func (mailbox *MailboxService) load() {
 // refreshCounts tallies /inbox per folder, domain and connected account, and
 // counts the calendar events of the next two weeks.
 func (mailbox *MailboxService) refreshCounts() {
-	summaries, failure := mailbox.inboxClient.Summaries(mailbox.bearer())
+	summaries, failure := mailbox.inboxClient.List(mailbox.bearer(), "", "", "", "")
 	FlowUtils{}.When(HTTPUtils{}.Refused(failure), func() {
 		mailbox.applicationEventPublisher.PublishEvent(SessionCheckRequested{Reason: mailbox.names().Inbox}, false)
 	})()

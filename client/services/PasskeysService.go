@@ -183,7 +183,7 @@ func (service *PasskeysService) forget(transaction string, credential string) {
 func (service *PasskeysService) rows(devices []SignInDevice) []DeviceRow {
 	rows := []DeviceRow{}
 	for _, device := range devices {
-		rows = append(rows, DeviceRow{ID: cmp.Or(device.ID, device.CredentialID), Name: device.Name, CreatedAtLabel: TimestampLabelUtils{}.Date(device.CreatedAt, service.timeZoneOffset)})
+		rows = append(rows, DeviceRow{ID: cmp.Or(device.ID, device.CredentialID), Name: device.Name, CreatedAtLabel: DateLabelUtils{}.StoredDate(device.CreatedAt, service.timeZoneOffset)})
 	}
 	return rows
 }

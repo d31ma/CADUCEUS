@@ -12,7 +12,7 @@ type MailboxUtils struct{}
 
 // Tally counts summaries per folder, per domain for hosted mail and per
 // connected account, and the unread inbox messages.
-func (MailboxUtils) Tally(summaries []MailSummary) FolderCountsChanged {
+func (MailboxUtils) Tally(summaries []Email) FolderCountsChanged {
 	counted := FolderCountsChanged{Counts: map[string]int{}, ByDomain: map[string]map[string]int{}, ByAccount: map[string]map[string]int{}, UnreadInboxByDomain: map[string]int{}}
 	return MailboxUtils{}.tallied(counted, summaries)
 }
@@ -102,14 +102,14 @@ func (MailboxUtils) allowedDomains(domains []string) []string {
 	return strings.Fields(strings.ToLower(strings.Join(domains, " ")))
 }
 
-func (MailboxUtils) tallied(counted FolderCountsChanged, summaries []MailSummary) FolderCountsChanged {
+func (MailboxUtils) tallied(counted FolderCountsChanged, summaries []Email) FolderCountsChanged {
 	for _, summary := range summaries {
 		MailboxUtils{}.count(&counted, summary, TextUtils{}.FirstOf(summary.SystemFolder, TextUtils{}.FirstOf(summary.Folder, MailboxUtils{}.inbox())))
 	}
 	return counted
 }
 
-func (MailboxUtils) count(counted *FolderCountsChanged, summary MailSummary, folder string) {
+func (MailboxUtils) count(counted *FolderCountsChanged, summary Email, folder string) {
 	domain := TextUtils{}.FirstOf(strings.ToLower(summary.Domain), "unknown")
 	counted.Counts[folder]++
 	tables, key := MailboxUtils{}.scope(counted, summary.ProviderAccountID, domain)

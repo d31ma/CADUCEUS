@@ -3,12 +3,6 @@
 // @HTTPClient("/rules")
 type RulesClient interface {
 	// @GetRequest
-	All(
-		// @RequestHeader("Authorization")
-		authorization string,
-	) ([]RuleSummary, error)
-
-	// @GetRequest
 	Rules(
 		// @RequestHeader("Authorization")
 		authorization string,

@@ -97,6 +97,8 @@ func (test *ComposeUtilitiesTest) TestTheEditorDocumentShowsInlineImages() {
 	Assert.IsTrue(strings.Contains(document, `src="data:image/png;base64,iVBO" data-caduceus-cid="caduceus.1@inline" data-caduceus-attachment-id="a1"`))
 	Assert.IsTrue(strings.Contains(document, `#missing-inline-image" data-caduceus-cid="gone@x"`))
 	Assert.IsTrue(strings.Contains(document, `<body contenteditable="true" data-compose-editor`))
+	Assert.Equals("caduceus.a-1.b@inline", EditorUtils{}.InlineContentID(true, "a-1.b/<>"))
+	Assert.Equals("", EditorUtils{}.InlineContentID(false, "a1"))
 }
 
 func (test *ComposeUtilitiesTest) TestTheSignatureOfTheEditablePartCounts() {

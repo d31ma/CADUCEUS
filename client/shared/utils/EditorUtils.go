@@ -40,6 +40,19 @@ func (EditorUtils) byContentID(attachments []ComposeAttachment) map[string]Compo
 	return byID
 }
 
+// InlineContentID is the RFC Content-ID of an inline image, or "" for a
+// regular attachment, like createInlineContentId in rich-compose-editor.js.
+func (EditorUtils) InlineContentID(inline bool, id string) string {
+	return EditorUtils{}.contentID(inline, regexp.MustCompile(`[^a-zA-Z0-9.-]`).ReplaceAllString(id, ""))
+}
+
+func (EditorUtils) contentID(inline bool, id string) string {
+	if inline {
+		return "caduceus." + id + "@inline"
+	}
+	return ""
+}
+
 // InlineImage reports whether a file type may be shown inline.
 func (EditorUtils) InlineImage(contentType string) bool {
 	return slices.Contains([]string{"image/png", "image/jpeg", "image/gif", "image/webp", "image/avif"}, strings.ToLower(contentType))

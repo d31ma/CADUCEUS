@@ -214,7 +214,7 @@ func (compose *ComposeService) HearImageRemoved(removed InlineImageRemoved) {
 
 // AttachmentSize writes the size shown on an attachment pill.
 func (compose *ComposeService) AttachmentSize(size int) string {
-	return AttachmentUtils{}.SizeLabel(size)
+	return SizeUtils{}.Label(size)
 }
 
 // ChooseFollowUpReminder opens or closes the follow-up reminder picker.
@@ -596,7 +596,7 @@ func (compose *ComposeService) acceptFile(file AttachmentOffer, problem string, 
 	FlowUtils{}.Either(problem == "", func() {
 		*total += file.Size
 		id := compose.uuid()
-		accepted = append(accepted, AttachmentAcceptance{Index: file.Index, ID: id, ContentID: AttachmentUtils{}.InlineContentID(file.Inline, id)})
+		accepted = append(accepted, AttachmentAcceptance{Index: file.Index, ID: id, ContentID: EditorUtils{}.InlineContentID(file.Inline, id)})
 	}, func() { compose.toast(problem) })()
 	return accepted
 }

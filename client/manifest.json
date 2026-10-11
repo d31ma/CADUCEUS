@@ -107,7 +107,19 @@
         "mailto",
         "pwa",
         "bcc",
-        "unsnooze"
+        "unsnooze",
+        "mcp",
+        "imap",
+        "smtp",
+        "dav",
+        "carddav",
+        "caldav",
+        "onboarding",
+        "oauth",
+        "vapid",
+        "github",
+        "webauthn",
+        "gmail"
       ]
     },
     "styles": [
@@ -144,6 +156,7 @@
       }
     },
     "browserApis": [
+      "clipboard",
       "notifications"
     ]
   }

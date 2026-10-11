@@ -67,7 +67,7 @@ export default class PasskeyService {
       publicKey: {
         challenge: this._buffer(request.challenge),
         rp: { id: request.relyingPartyId, name: 'CADUCEUS' },
-        user: { id: this._buffer(request.userId.replace(/[^A-Za-z0-9_-]/g, '')), name: request.userName, displayName: request.userName },
+        user: { id: this._buffer(request.userId.replace(/[^A-Za-z0-9_-]/g, '')), name: request.userName, displayName: [request.displayName, request.userName].filter(Boolean)[0] },
         pubKeyCredParams: [{ type: PasskeyService._PUBLIC_KEY, alg: -7 }, { type: PasskeyService._PUBLIC_KEY, alg: -257 }],
         authenticatorSelection: { userVerification: PasskeyService._VERIFICATION, residentKey: 'preferred' },
       },

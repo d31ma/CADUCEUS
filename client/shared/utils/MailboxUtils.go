@@ -35,6 +35,19 @@ func (MailboxUtils) Encoded(names map[string]string) string {
 	return string(text)
 }
 
+// Hosted are the signed-in mailbox domains, lower case, once each, sorted.
+func (MailboxUtils) Hosted(domains []string) []string {
+	hosted := MailboxUtils{}.allowedDomains(domains)
+	slices.Sort(hosted)
+	return slices.Compact(hosted)
+}
+
+// Label is the personal name of a mailbox, or its domain.
+func (MailboxUtils) Label(names map[string]string, domain string) string {
+	lower := strings.ToLower(strings.TrimSpace(domain))
+	return TextUtils{}.FirstOf(names[lower], lower)
+}
+
 // WithActivity copies counts with a new Activity badge.
 func (MailboxUtils) WithActivity(counts map[string]int, activity int) map[string]int {
 	copied := MailboxUtils{}.copied(counts)

@@ -33,7 +33,7 @@ type ConnectedAccountsService struct {
 	Accounts                  []ExternalAccount
 	Providers                 []MailProvider
 	AccountsError             string
-	OAuthNotice               string
+	OauthNotice               string
 	// @SessionState
 	SetupOpen bool
 	// @SessionState
@@ -292,7 +292,7 @@ func (service *ConnectedAccountsService) resume() {
 func (service *ConnectedAccountsService) finishAuthorization() {
 	service.callbackHandled = true
 	FlowUtils{}.Either(service.launch.Failed, func() {
-		service.OAuthNotice = "Provider authorization was not completed. No account credentials were changed."
+		service.OauthNotice = "Provider authorization was not completed. No account credentials were changed."
 	}, service.completeAuthorization)()
 }
 
@@ -301,7 +301,7 @@ func (service *ConnectedAccountsService) completeAuthorization() {
 	answer, failure := service.completeWith(cmp.Or(service.launch.Provider, service.names().Microsoft), body)
 	answer, failure = service.completeWithGoogle(answer, failure, body)
 	FlowUtils{}.Either(failure == nil, func() { service.showAuthorized(answer) }, func() {
-		service.OAuthNotice = "Provider authorization could not be completed. Try reconnecting the account."
+		service.OauthNotice = "Provider authorization could not be completed. Try reconnecting the account."
 	})()
 }
 
@@ -322,9 +322,9 @@ func (service *ConnectedAccountsService) completeWithGoogle(answer ExternalAccou
 
 func (service *ConnectedAccountsService) showAuthorized(answer ExternalAccount) {
 	kind := ChoiceUtils{}.Text(answer.Provider == service.names().Gmail, "Google account", "Microsoft account")
-	service.OAuthNotice = ChoiceUtils{}.Text(answer.SharedMailboxAddress != "", "Shared mailbox", kind) + " connected successfully."
+	service.OauthNotice = ChoiceUtils{}.Text(answer.SharedMailboxAddress != "", "Shared mailbox", kind) + " connected successfully."
 	service.completeOnboarding()
-	service.toast(service.OAuthNotice)
+	service.toast(service.OauthNotice)
 	service.load()
 	service.refreshMail()
 }

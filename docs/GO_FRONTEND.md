@@ -90,8 +90,8 @@ type UsersClient interface {
   fails with `HTTP_LIMIT`. A JavaScript service may not call `fetch` either
   (TY1361). Uploads larger than 64 KiB therefore have no route today. These
   include EML and mbox import, the PWA file handler, and composer
-  attachments. Neither does an authenticated server-sent event stream, such
-  as `/inbox/stream`.
+  attachments. The live inbox stream is a WebSocket instead (see
+  `MailStreamService.js` below).
 
 **Blocker for the merge.** On one origin, the server's API routes `/inbox`,
 `/activity`, `/contacts` and `/reminders` answer the document navigation to
@@ -177,6 +177,7 @@ reads the DOM, makes no decision and talks to Go in events:
 | `BrowserPageService.js` | `PageLocation` and `BrowserFeatures` at start. `NavigationRequested`, `DocumentAttributesChanged` (attributes on `<html>`, replayed from a cache before Go loads), `TimerRequested`/`TimerElapsed`, `FocusRequested{Selector, Remember, Restore}` and `ClickRequested`. A global Escape becomes `EscapePressed` and a click becomes `PageClicked`. View helpers: `browserPage.dragOver/dragLeave/drop(folder, $event, domain)` → `FolderDropped`, `browserPage.backdrop($event, dialog)` → `BackdropClicked`, `browserPage.submit($event, form)` → `FormSubmitted`. |
 | `PasskeyService.js` | WebAuthn: `PasskeyRequested` → `PasskeyAnswered`. |
 | `KeyboardService.js` | The bridge to the keyboard runtime in `shared/scripts/keyboard.js`. |
+| `MailStreamService.js` | The live inbox stream on the Go server: a WebSocket to `/inbox/stream?token=…&since=<cursor>` on the page's origin while `SessionChanged` says someone is signed in. A `new-email` frame becomes `NewMailArrived` and `InboxRefreshRequested`, `unauthorized` becomes `SignOutRequested`, and two failed connections in a row become `MailStreamHealth{Healthy:false}` (retained) until a frame arrives. It reconnects on every close, after 1 s doubling to 15 s, with the newest cursor. |
 | `DeviceService.js` | The Badging API (with the "(n)" tab-title fallback), the push worker `shared/service-worker/unread.js` registered on its own scope `/shared/service-worker/`, notification buttons, and update detection (`UpdateReady`). Tachyon generates the root worker and no longer lets an application append to it. A push subscription must therefore come from `navigator.serviceWorker.getRegistration('/shared/service-worker/')`, not from `ready`. |
 
 Tac scripts may not build markup or write styles (TY1364). Express a style

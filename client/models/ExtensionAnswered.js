@@ -1,12 +1,7 @@
 /**
- * What a plugin sandbox said.
+ * One message a plugin sandbox posted to the page, as JSON text.
  *
  * @typedef {object} ExtensionAnswered
- * @property {string} extensionId
- * @property {string} nonce
- * @property {string} kind
- * @property {string} requestId
- * @property {string} result
- * @property {string} error
+ * @property {string} message
  */
 export {}

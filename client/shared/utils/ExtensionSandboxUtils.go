@@ -13,11 +13,11 @@ import (
 // permission-filtered notification of a command result.
 type ExtensionSandboxUtils struct{}
 
-// Document is a plugin's iframe srcdoc. Its only script starts a classic Web
+// document is a plugin's iframe srcdoc. Its only script starts a classic Web
 // Worker from an in-memory Blob, so the package source never runs in the
 // application document or in the iframe's own thread; the source travels
 // base64-encoded and never appears in the document as text.
-func (ExtensionSandboxUtils) Document(extensionID string, source string, nonce string) string {
+func (ExtensionSandboxUtils) document(extensionID string, source string, nonce string) string {
 	utils := ExtensionSandboxUtils{}
 	worker := base64.StdEncoding.EncodeToString([]byte(utils.workerSource(source)))
 	timeout := strconv.Itoa(utils.commandTimeoutMs())
@@ -70,16 +70,30 @@ func (ExtensionSandboxUtils) ThemeVariables(theme ExtensionTheme) map[string]str
 // Notification is the result's notify text when the plugin holds ui:notify,
 // trimmed and bounded, or "".
 func (ExtensionSandboxUtils) Notification(permissions []string, result string) string {
-	var answer struct {
-		Notify string `json:"notify"`
-	}
+	answer := map[string]any{}
 	if len(result) > (ExtensionSandboxUtils{}).maxResultBytes() || json.Unmarshal([]byte(result), &answer) != nil {
 		return ""
 	}
+	notify, _ := answer["notify"].(string)
 	if !slices.Contains(permissions, "ui:notify") {
 		return ""
 	}
-	return ExtensionSandboxUtils{}.bounded(strings.TrimSpace(answer.Notify), 200)
+	return ExtensionSandboxUtils{}.bounded(strings.TrimSpace(notify), ExtensionSandboxUtils{}.noticeLength())
+}
+
+// Reply reads what a sandbox posted (as JSON text) into its fields.
+func (ExtensionSandboxUtils) Reply(message string) ExtensionReply {
+	fields := map[string]any{}
+	_ = json.Unmarshal([]byte(message), &fields)
+	text := func(name string) string {
+		value, _ := fields[name].(string)
+		return value
+	}
+	result, _ := json.Marshal(fields["result"])
+	return ExtensionReply{
+		ExtensionID: text("extensionId"), Nonce: text("sessionNonce"), Kind: text("type"),
+		RequestID: text("requestId"), Result: string(result), Error: text("error"),
+	}
 }
 
 // EnabledTheme is the theme of the enabled theme extension, or no theme.
@@ -103,9 +117,9 @@ func (ExtensionSandboxUtils) EnabledPlugins(extensions []InstalledExtension) []I
 	return plugins
 }
 
-// Commands are a plugin's command buttons, disabled until its sandbox says
+// commands are a plugin's command buttons, disabled until its sandbox says
 // it is ready.
-func (ExtensionSandboxUtils) Commands(extension InstalledExtension, ready bool) []ExtensionCommand {
+func (ExtensionSandboxUtils) commands(extension InstalledExtension, ready bool) []ExtensionCommand {
 	commands := []ExtensionCommand{}
 	for _, contribution := range extension.Manifest.Contributions {
 		commands = append(commands, ExtensionCommand{
@@ -120,7 +134,7 @@ func (ExtensionSandboxUtils) Commands(extension InstalledExtension, ready bool) 
 func (ExtensionSandboxUtils) Toolbar(plugins []InstalledExtension, ready map[string]bool) []ExtensionCommand {
 	commands := []ExtensionCommand{}
 	for _, plugin := range plugins {
-		commands = append(commands, ExtensionSandboxUtils{}.Commands(plugin, ready[plugin.ID])...)
+		commands = append(commands, ExtensionSandboxUtils{}.commands(plugin, ready[plugin.ID])...)
 	}
 	return commands
 }
@@ -140,7 +154,7 @@ func (ExtensionSandboxUtils) Failure(requestID string, failure string) string {
 	if requestID == "" {
 		return "Extension failed to start."
 	}
-	return "Extension failed: " + ExtensionSandboxUtils{}.bounded(failure, 200)
+	return "Extension failed: " + ExtensionSandboxUtils{}.bounded(failure, ExtensionSandboxUtils{}.noticeLength())
 }
 
 // Sandbox is a plugin's iframe.
@@ -149,7 +163,7 @@ func (ExtensionSandboxUtils) Sandbox(extension InstalledExtension, nonce string)
 	if name == "" {
 		name = extension.ID
 	}
-	return ExtensionSandbox{ID: extension.ID, Title: name + " extension sandbox", Document: ExtensionSandboxUtils{}.Document(extension.ID, extension.Source, nonce)}
+	return ExtensionSandbox{ID: extension.ID, Title: name + " extension sandbox", Document: ExtensionSandboxUtils{}.document(extension.ID, extension.Source, nonce)}
 }
 
 func (ExtensionSandboxUtils) workerSource(source string) string {
@@ -207,5 +221,7 @@ func (ExtensionSandboxUtils) bounded(value string, maximum int) string {
 }
 
 func (ExtensionSandboxUtils) commandTimeoutMs() int { return 2000 }
+
+func (ExtensionSandboxUtils) noticeLength() int { return 200 }
 
 func (ExtensionSandboxUtils) maxResultBytes() int { return 16 * 1024 }

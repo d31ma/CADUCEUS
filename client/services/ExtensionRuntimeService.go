@@ -14,7 +14,7 @@ type ExtensionRuntimeService struct {
 	authorization             string
 	signedIn                  bool
 	plugins                   []InstalledExtension
-	nonces                    map[string]string
+	sandboxTokens             map[string]string
 	ready                     map[string]bool
 }
 
@@ -42,14 +42,15 @@ func (runtime *ExtensionRuntimeService) HearChange(changed ExtensionsChanged) {
 // HearAnswer takes what a sandbox said, from the sandbox Go started.
 // @OnEvent
 func (runtime *ExtensionRuntimeService) HearAnswer(answered ExtensionAnswered) {
-	known := ChoiceUtils{}.All(answered.Nonce != "", runtime.nonces[answered.ExtensionID] == answered.Nonce)
-	FlowUtils{}.When(known, runtime.answer(answered))()
+	reply := ExtensionSandboxUtils{}.Reply(answered.Message)
+	known := ChoiceUtils{}.All(reply.Nonce != "", runtime.sandboxTokens[reply.ExtensionID] == reply.Nonce)
+	FlowUtils{}.When(known, runtime.answer(reply))()
 }
 
 // Invoke sends a command button's command to its plugin.
 func (runtime *ExtensionRuntimeService) Invoke(extensionID string, commandID string, slot string) {
 	runtime.applicationEventPublisher.PublishEvent(ExtensionCommandRequested{
-		ExtensionID: extensionID, Nonce: runtime.nonces[extensionID], RequestID: IdentityUtils{}.UUID(extensionID + commandID),
+		ExtensionID: extensionID, Nonce: runtime.sandboxTokens[extensionID], RequestID: IdentityUtils{}.UUID(extensionID + commandID),
 		CommandID: commandID, Slot: slot,
 	}, false)
 }
@@ -58,7 +59,7 @@ func (runtime *ExtensionRuntimeService) reset() {
 	runtime.Toolbar = []ExtensionCommand{}
 	runtime.Sandboxes = []ExtensionSandbox{}
 	runtime.plugins = []InstalledExtension{}
-	runtime.nonces = map[string]string{}
+	runtime.sandboxTokens = map[string]string{}
 	runtime.ready = map[string]bool{}
 }
 
@@ -83,7 +84,7 @@ func (runtime *ExtensionRuntimeService) activate(projection InstalledExtension) 
 	usable := ChoiceUtils{}.All(failure == nil, extension.Enabled, extension.Source != "")
 	FlowUtils{}.When(usable, func() {
 		nonce := IdentityUtils{}.UUID(extension.ID + extension.Digest)
-		runtime.nonces[extension.ID] = nonce
+		runtime.sandboxTokens[extension.ID] = nonce
 		runtime.plugins = append(runtime.plugins, extension)
 		runtime.Sandboxes = append(runtime.Sandboxes, ExtensionSandboxUtils{}.Sandbox(extension, nonce))
 	})()
@@ -93,7 +94,7 @@ func (runtime *ExtensionRuntimeService) refresh() {
 	runtime.Toolbar = ExtensionSandboxUtils{}.Toolbar(runtime.plugins, runtime.ready)
 }
 
-func (runtime *ExtensionRuntimeService) answer(answered ExtensionAnswered) func() {
+func (runtime *ExtensionRuntimeService) answer(answered ExtensionReply) func() {
 	steps := map[string]func(){
 		"ready":  func() { runtime.markReady(answered.ExtensionID) },
 		"result": func() { runtime.notify(answered) },
@@ -107,14 +108,14 @@ func (runtime *ExtensionRuntimeService) markReady(extensionID string) {
 	runtime.refresh()
 }
 
-func (runtime *ExtensionRuntimeService) notify(answered ExtensionAnswered) {
+func (runtime *ExtensionRuntimeService) notify(answered ExtensionReply) {
 	message := ExtensionSandboxUtils{}.Notification(ExtensionSandboxUtils{}.Permissions(runtime.plugins, answered.ExtensionID), answered.Result)
 	FlowUtils{}.When(message != "", func() {
 		runtime.applicationEventPublisher.PublishEvent(ToastRequested{Message: message}, false)
 	})()
 }
 
-func (runtime *ExtensionRuntimeService) fail(answered ExtensionAnswered) {
+func (runtime *ExtensionRuntimeService) fail(answered ExtensionReply) {
 	message := ExtensionSandboxUtils{}.Failure(answered.RequestID, answered.Error)
 	runtime.applicationEventPublisher.PublishEvent(ToastRequested{Message: message}, false)
 }

@@ -48,10 +48,10 @@ export default class ExtensionPackageService {
   /** @param {ExtensionCommandRequested} request */
   @OnEvent
   command(request) {
-    this._sandbox(request.extensionId)?.postMessage({
+    this._sandbox(request.extensionId).forEach(sandbox => sandbox.postMessage({
       channel: 'caduceus-extension-host', type: 'command', extensionId: request.extensionId, sessionNonce: request.nonce,
       requestId: request.requestId, command: { id: request.commandId, slot: request.slot }, context: { slot: request.slot },
-    }, '*')
+    }, '*'))
   }
 
   /** @param {Event} event */
@@ -63,25 +63,22 @@ export default class ExtensionPackageService {
     this.applicationEventPublisher.publishEvent(read, false)
   }
 
-  /** @param {Record<string, string> | undefined} variables @param {string} name */
+  /** @param {Record<string, string>} variables @param {string} name */
   _value(variables, name) {
-    return variables?.[name] || ''
+    return variables[name] || ''
   }
 
-  /** @param {string} extensionId @returns {Window | null | undefined} */
+  /** @param {string} extensionId @returns {Window[]} */
   _sandbox(extensionId) {
-    return /** @type {HTMLIFrameElement | null} */ (document.querySelector(`iframe[data-extension-id="${CSS.escape(extensionId)}"]`))?.contentWindow
+    return Array.from(document.querySelectorAll(`iframe[data-extension-id="${CSS.escape(extensionId)}"]`), frame => /** @type {HTMLIFrameElement} */ (frame).contentWindow).filter(sandbox => sandbox !== null)
   }
 
   /** @param {MessageEvent} event */
   _received(event) {
-    const message = event.data || {}
-    if ([message.channel === 'caduceus-extension', typeof message.extensionId === 'string', event.source === this._sandbox(message.extensionId)].every(Boolean)) {
+    const message = Object(event.data)
+    if ([message.channel === 'caduceus-extension', typeof message.extensionId === 'string', this._sandbox(message.extensionId).includes(/** @type {Window} */ (event.source))].every(Boolean)) {
       /** @type {ExtensionAnswered} */
-      const answered = {
-        extensionId: message.extensionId, nonce: String(message.sessionNonce || ''), kind: String(message.type || ''),
-        requestId: String(message.requestId || ''), result: JSON.stringify(message.result ?? null), error: String(message.error || ''),
-      }
+      const answered = { message: JSON.stringify(message) }
       this.applicationEventPublisher.publishEvent(answered, false)
     }
   }

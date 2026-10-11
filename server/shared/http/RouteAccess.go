@@ -88,10 +88,12 @@ func (RouteAccess) Bearer(request *http.Request) string {
 }
 
 // Failure answers a boundary failure with the status earlier versions used.
+// An error that did not come from the boundary is the server's own failure:
+// it answers 500, not a misleading "Authentication is unavailable".
 func (RouteAccess) Failure(err error) *http.Response {
 	var failure *BoundaryError
 	if !errors.As(err, &failure) {
-		return Answer{}.Unavailable("Authentication is unavailable")
+		return Answer{}.Json(http.StatusInternalServerError, map[string]any{"error": "The server could not complete the request"})
 	}
 	switch failure.Code {
 	case "EBADREQUEST", "EUNSUPPORTED":

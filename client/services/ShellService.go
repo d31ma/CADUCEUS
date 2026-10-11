@@ -39,6 +39,7 @@ type ShellService struct {
 	toastSubject              string
 	toastSerial               int
 	token                     string
+	beatingFor                string
 	signedIn                  bool
 	email                     string
 	locale                    string
@@ -60,14 +61,16 @@ func (shell *ShellService) Start() {
 }
 
 // HearSession mirrors the signed-in user, sends the first presence heartbeat
-// and keeps beating every 30 seconds.
+// and keeps beating every 30 seconds. The same session can be heard more than
+// once at start; it begins beating once per token, because two heartbeats at
+// the same moment race on the user's one presence document.
 // @OnEvent({"replay":true})
 func (shell *ShellService) HearSession(changed SessionChanged) {
 	shell.signedIn = changed.SignedIn
 	shell.email = changed.Email
 	shell.token = changed.Token
 	shell.ScreenshotMode = shell.keptScreenshotMode(changed.SignedIn)
-	FlowUtils{}.When(changed.SignedIn, shell.beginBeating)()
+	FlowUtils{}.When(!slices.Contains([]bool{changed.SignedIn, shell.beatingFor != changed.Token}, false), shell.beginBeating)()
 	shell.redirectFromRoot()
 }
 
@@ -282,6 +285,7 @@ func (shell *ShellService) redirectFromRoot() {
 }
 
 func (shell *ShellService) beginBeating() {
+	shell.beatingFor = shell.token
 	shell.beat()
 	shell.applicationEventPublisher.PublishEvent(TimerRequested{Name: shell.names().Presence, DelayMs: 30000, Repeat: true}, false)
 }

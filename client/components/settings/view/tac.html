@@ -193,15 +193,15 @@
         </span>
         <div class="visibility-options">
           <label class="visibility-option">
-            <input type="radio" name="cal-vis" :checked="calendarSharing.visibility === 'private'" on:change="calendarSharing.choose('private')" />
+            <input type="radio" name="cal-vis" :checked="calendarSharing.visibility === 'private'" on:click="calendarSharing.choose('private')" />
             <span><strong>Private</strong> — no one else can see anything (default)</span>
           </label>
           <label class="visibility-option">
-            <input type="radio" name="cal-vis" :checked="calendarSharing.visibility === 'busy'" on:change="calendarSharing.choose('busy')" />
+            <input type="radio" name="cal-vis" :checked="calendarSharing.visibility === 'busy'" on:click="calendarSharing.choose('busy')" />
             <span><strong>Busy only</strong> — teammates see when you're booked, never the details</span>
           </label>
           <label class="visibility-option">
-            <input type="radio" name="cal-vis" :checked="calendarSharing.visibility === 'full'" on:change="calendarSharing.choose('full')" />
+            <input type="radio" name="cal-vis" :checked="calendarSharing.visibility === 'full'" on:click="calendarSharing.choose('full')" />
             <span><strong>Full details</strong> — teammates see title, location, and attendees</span>
           </label>
         </div>
@@ -476,8 +476,8 @@
           <option value="1.1" :selected="mailPreferences.current.interfaceScale === 1.1">110%</option>
           <option value="1.2" :selected="mailPreferences.current.interfaceScale === 1.2">120%</option>
         </select></label>
-        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="use24HourClock" :checked="mailPreferences.current.use24HourClock" on:change="mailPreferences.toggle('use24HourClock', $event.target.checked)" /><span>Use a 24-hour clock</span></label>
-        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="showUnreadForAllFolders" :checked="mailPreferences.current.showUnreadForAllFolders" on:change="mailPreferences.toggle('showUnreadForAllFolders', $event.target.checked)" /><span>Show counts for every folder</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="use24HourClock" :checked="mailPreferences.current.use24HourClock" on:click="mailPreferences.toggle('use24HourClock', $event.target.checked)" /><span>Use a 24-hour clock</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="showUnreadForAllFolders" :checked="mailPreferences.current.showUnreadForAllFolders" on:click="mailPreferences.toggle('showUnreadForAllFolders', $event.target.checked)" /><span>Show counts for every folder</span></label>
       </fieldset>
 
       <fieldset class="settings-card mail-preference-group" :disabled="settings.loading || mailPreferences.saving">
@@ -501,17 +501,17 @@
           <option value="light" :selected="mailPreferences.current.emailRenderMode === 'light'">Always light</option>
           <option value="dark" :selected="mailPreferences.current.emailRenderMode === 'dark'">Always dark</option>
         </select></label>
-        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="detailedHeaders" :checked="mailPreferences.current.detailedHeaders" on:change="mailPreferences.toggle('detailedHeaders', $event.target.checked)" /><span>Show complete message headers</span></label>
-        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="detailedNames" :checked="mailPreferences.current.detailedNames" on:change="mailPreferences.toggle('detailedNames', $event.target.checked)" /><span>Show names with email addresses</span></label>
-        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="restrictMessageWidth" :checked="mailPreferences.current.restrictMessageWidth" on:change="mailPreferences.toggle('restrictMessageWidth', $event.target.checked)" /><span>Limit message width for readability</span></label>
-        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="swipeEnabled" :checked="mailPreferences.current.swipeEnabled" on:change="mailPreferences.toggle('swipeEnabled', $event.target.checked)" /><span>Enable swipe actions on touch screens</span></label>
-        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="displayAttachmentPreviews" :checked="mailPreferences.current.displayAttachmentPreviews" on:change="mailPreferences.toggle('displayAttachmentPreviews', $event.target.checked)" /><span>Display attachment previews</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="detailedHeaders" :checked="mailPreferences.current.detailedHeaders" on:click="mailPreferences.toggle('detailedHeaders', $event.target.checked)" /><span>Show complete message headers</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="detailedNames" :checked="mailPreferences.current.detailedNames" on:click="mailPreferences.toggle('detailedNames', $event.target.checked)" /><span>Show names with email addresses</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="restrictMessageWidth" :checked="mailPreferences.current.restrictMessageWidth" on:click="mailPreferences.toggle('restrictMessageWidth', $event.target.checked)" /><span>Limit message width for readability</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="swipeEnabled" :checked="mailPreferences.current.swipeEnabled" on:click="mailPreferences.toggle('swipeEnabled', $event.target.checked)" /><span>Enable swipe actions on touch screens</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="displayAttachmentPreviews" :checked="mailPreferences.current.displayAttachmentPreviews" on:click="mailPreferences.toggle('displayAttachmentPreviews', $event.target.checked)" /><span>Display attachment previews</span></label>
       </fieldset>
 
       <fieldset class="settings-card mail-preference-group" :disabled="settings.loading || mailPreferences.saving">
         <legend>Composer and sending</legend>
-        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="richText" :checked="mailPreferences.current.richText" on:change="mailPreferences.toggle('richText', $event.target.checked)" /><span>Compose rich text</span></label>
-        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="spellcheck" :checked="mailPreferences.current.spellcheck" on:change="mailPreferences.toggle('spellcheck', $event.target.checked)" /><span>Check spelling while composing</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="richText" :checked="mailPreferences.current.richText" on:click="mailPreferences.toggle('richText', $event.target.checked)" /><span>Compose rich text</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="spellcheck" :checked="mailPreferences.current.spellcheck" on:click="mailPreferences.toggle('spellcheck', $event.target.checked)" /><span>Check spelling while composing</span></label>
         <label><span>Spelling language</span><select data-mail-preference="spellcheckLanguage" on:change="mailPreferences.choose('spellcheckLanguage', $event.target.value)">
           <loop :for="language of mailPreferences.spellcheckLanguages()"><option :value="language.id" :selected="mailPreferences.current.spellcheckLanguage === language.id">{language.label}</option></loop>
         </select></label>
@@ -550,10 +550,10 @@
 
       <fieldset class="settings-card mail-preference-group" :disabled="settings.loading || mailPreferences.saving">
         <legend>Snooze and contacts</legend>
-        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="unsnoozeToTop" :checked="mailPreferences.current.unsnoozeToTop" on:change="mailPreferences.toggle('unsnoozeToTop', $event.target.checked)" /><span>Return unsnoozed conversations to the top</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="unsnoozeToTop" :checked="mailPreferences.current.unsnoozeToTop" on:click="mailPreferences.toggle('unsnoozeToTop', $event.target.checked)" /><span>Return unsnoozed conversations to the top</span></label>
         <span class="w-text-body-small mail-preference-note">Disable automatic “found in mail” contact learning for selected hosted domains.</span>
         <loop :for="row of mailPreferences.domainRows()">
-          <label class="mail-preference-toggle"><input type="checkbox" data-find-in-mail-domain :value="row.domain" :checked="row.enabled" on:change="mailPreferences.toggleContactLearning(row.domain)" /><span>{row.label}</span></label>
+          <label class="mail-preference-toggle"><input type="checkbox" data-find-in-mail-domain :value="row.domain" :checked="row.enabled" on:click="mailPreferences.toggleContactLearning(row.domain)" /><span>{row.label}</span></label>
         </loop>
       </fieldset>
     </div>
@@ -616,11 +616,11 @@
         </span>
         <div class="visibility-options">
           <label class="visibility-option">
-            <input type="radio" name="remote-images" :checked="emailPrivacy.remoteImagePolicy === 'block'" on:change="emailPrivacy.setRemoteImagePolicy('block')" />
+            <input type="radio" name="remote-images" :checked="emailPrivacy.remoteImagePolicy === 'block'" on:click="emailPrivacy.setRemoteImagePolicy('block')" />
             <span><strong>Ask before loading</strong> — prevent senders from learning when you open mail (recommended)</span>
           </label>
           <label class="visibility-option">
-            <input type="radio" name="remote-images" :checked="emailPrivacy.remoteImagePolicy === 'allow'" on:change="emailPrivacy.setRemoteImagePolicy('allow')" />
+            <input type="radio" name="remote-images" :checked="emailPrivacy.remoteImagePolicy === 'allow'" on:click="emailPrivacy.setRemoteImagePolicy('allow')" />
             <span><strong>Load automatically</strong> — show ordinary remote images except in spam</span>
           </label>
         </div>
@@ -643,7 +643,7 @@
           data-github-profile-enrichment
           :checked="emailPrivacy.githubProfiles"
           :disabled="emailPrivacy.saving"
-          on:change="emailPrivacy.setGithubProfiles($event.target.checked)"
+          on:click="emailPrivacy.setGithubProfiles($event.target.checked)"
           aria-describedby="github-profile-enrichment-help" />
         <label for="github-profile-enrichment" style="display:flex;flex:1;flex-direction:column;gap:0.25rem;">
           <span class="w-text-body-medium">Public GitHub contact profiles</span>
@@ -708,7 +708,7 @@
           <strong class="w-text-body-medium">Allow MCP connections</strong>
           <span class="w-text-body-small">An active token is also required. Turning this off rejects every MCP request immediately.</span>
         </span>
-        <input id="mcp-enabled" type="checkbox" role="switch" :checked="mcpAccess.enabled" :disabled="mcpAccess.saving || mcpAccess.loading" on:change="mcpAccess.toggleEnabled()" />
+        <input id="mcp-enabled" type="checkbox" role="switch" :checked="mcpAccess.enabled" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.toggleEnabled()" />
       </label>
 
       <div class="settings-row mcp-setting-row">
@@ -717,9 +717,9 @@
           <span class="w-text-body-small">Start read-only. Sending includes draft delivery and scheduled delivery.</span>
         </label>
         <div class="mcp-access-options" role="radiogroup" aria-label="MCP access level">
-          <label class="mcp-choice"><input type="radio" name="mcp-access-level" :checked="mcpAccess.accessLevel === 'read-only'" :disabled="mcpAccess.saving || mcpAccess.loading" on:change="mcpAccess.setAccessLevel('read-only')" /> <span>Read only</span></label>
-          <label class="mcp-choice"><input type="radio" name="mcp-access-level" :checked="mcpAccess.accessLevel === 'read-write'" :disabled="mcpAccess.saving || mcpAccess.loading" on:change="mcpAccess.setAccessLevel('read-write')" /> <span>Read and write</span></label>
-          <label class="mcp-choice"><input type="radio" name="mcp-access-level" :checked="mcpAccess.accessLevel === 'read-write-send'" :disabled="mcpAccess.saving || mcpAccess.loading" on:change="mcpAccess.setAccessLevel('read-write-send')" /> <span>Read, write, and send</span></label>
+          <label class="mcp-choice"><input type="radio" name="mcp-access-level" :checked="mcpAccess.accessLevel === 'read-only'" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.setAccessLevel('read-only')" /> <span>Read only</span></label>
+          <label class="mcp-choice"><input type="radio" name="mcp-access-level" :checked="mcpAccess.accessLevel === 'read-write'" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.setAccessLevel('read-write')" /> <span>Read and write</span></label>
+          <label class="mcp-choice"><input type="radio" name="mcp-access-level" :checked="mcpAccess.accessLevel === 'read-write-send'" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.setAccessLevel('read-write-send')" /> <span>Read, write, and send</span></label>
         </div>
       </div>
 
@@ -729,7 +729,7 @@
         <div class="mcp-choice-grid">
           <loop :for="row of mcpAccess.domainRows()">
             <label class="mcp-choice">
-              <input type="checkbox" :checked="row.allowed" :disabled="mcpAccess.saving || mcpAccess.loading" on:change="mcpAccess.toggleDomain(row.domain)" />
+              <input type="checkbox" :checked="row.allowed" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.toggleDomain(row.domain)" />
               <span>{row.label}</span>
             </label>
           </loop>
@@ -742,7 +742,7 @@
         <div class="mcp-folder-grid">
           <loop :for="row of mcpAccess.folderRows()">
             <label :class="'mcp-choice ' + (row.accountAllowed ? '' : 'muted')">
-              <input type="checkbox" :checked="row.excluded" :disabled="mcpAccess.saving || mcpAccess.loading || !row.accountAllowed" on:change="mcpAccess.toggleFolder(row.domain, row.path)" />
+              <input type="checkbox" :checked="row.excluded" :disabled="mcpAccess.saving || mcpAccess.loading || !row.accountAllowed" on:click="mcpAccess.toggleFolder(row.domain, row.path)" />
               <span>{row.domain} · {row.path}<logic :if="row.role"> ({row.role})</logic></span>
             </label>
           </loop>
@@ -853,7 +853,7 @@
                 type="checkbox"
                 :checked="account.enabled"
                 :disabled="newMailAlerts.saving"
-                on:change="newMailAlerts.toggleDomain(account.domain)" />
+                on:click="newMailAlerts.toggleDomain(account.domain)" />
               <span>{account.label}</span>
             </label>
           </loop>
@@ -863,7 +863,7 @@
                 type="checkbox"
                 :checked="account.enabled"
                 :disabled="newMailAlerts.saving"
-                on:change="newMailAlerts.toggleAccount(account.id)" />
+                on:click="newMailAlerts.toggleAccount(account.id)" />
               <span>{account.label} · {account.address}</span>
             </label>
           </loop>
@@ -886,7 +886,7 @@
             role="switch"
             :checked="newMailAlerts.actions"
             :disabled="newMailAlerts.saving"
-            on:change="newMailAlerts.setActions($event.target.checked)" />
+            on:click="newMailAlerts.setActions($event.target.checked)" />
           <span class="w-text-body-small">Show Mark read and Archive actions</span>
         </label>
       </div>
@@ -1088,7 +1088,7 @@
           </logic>
           <loop :for="address of emailAliases.senderAddresses()">
             <label>
-              <input data-signature-default type="checkbox" :value="address" :checked="signatureEditor.defaults.includes(address)" on:change="signatureEditor.toggleDefault(address)" />
+              <input data-signature-default type="checkbox" :value="address" :checked="signatureEditor.defaults.includes(address)" on:click="signatureEditor.toggleDefault(address)" />
               <span>{address}</span>
             </label>
           </loop>
@@ -1259,7 +1259,7 @@
             </logic>
           </div>
 
-          <label class="rule-stop"><input data-rule-stop type="checkbox" :checked="inboxRules.draft.stopProcessing" on:change="inboxRules.setStop($event.target.checked)"> Stop processing later rules after this one matches</label>
+          <label class="rule-stop"><input data-rule-stop type="checkbox" :checked="inboxRules.draft.stopProcessing" on:click="inboxRules.setStop($event.target.checked)"> Stop processing later rules after this one matches</label>
 
           <div class="rule-form-section rule-preview">
             <span class="w-text-label-large">Dry-run preview</span>
@@ -1268,7 +1268,7 @@
               <w-text-field data-rule-preview-subject label="Sample subject" :value="inboxRules.builder.previewSubject" on:input="inboxRules.setField('previewSubject', $event.target.value)" placeholder="August invoice"></w-text-field>
             </div>
             <w-textarea data-rule-preview-body label="Sample body" :value="inboxRules.builder.previewBody" on:input="inboxRules.setField('previewBody', $event.target.value)" rows="3"></w-textarea>
-            <label class="rule-stop"><input data-rule-preview-attachment type="checkbox" :checked="inboxRules.previewAttachment" on:change="inboxRules.previewAttachment = $event.target.checked"> Sample has an attachment</label>
+            <label class="rule-stop"><input data-rule-preview-attachment type="checkbox" :checked="inboxRules.previewAttachment" on:click="inboxRules.previewAttachment = $event.target.checked"> Sample has an attachment</label>
             <div class="rule-form-actions"><w-btn variant="text" on:click="inboxRules.preview()">Preview rule</w-btn></div>
             <logic :if="inboxRules.previewResult"><p class="rule-preview-result" role="status" aria-live="polite">{inboxRules.previewResult}</p></logic>
           </div>

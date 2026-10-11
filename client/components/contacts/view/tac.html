@@ -77,7 +77,7 @@
           <loop :for="contact of contacts.contacts">
             <li :class="contact.className">
               <label class="contact-check" :aria-label="contact.selectLabel">
-                <input type="checkbox" :checked="contact.checked" on:change="contacts.toggleChecked(contact.id, $event.target.checked)" />
+                <input type="checkbox" :checked="contact.checked" on:click="contacts.toggleChecked(contact.id, $event.target.checked)" />
               </label>
               <button type="button" class="contact-row-main" role="option" :aria-selected="contact.selected" on:click="contacts.select(contact.id)">
                 <span class="contact-avatar">{contact.initials}</span>
@@ -227,7 +227,7 @@
             </section>
 
             <logic :if="contactEditor.showGroups">
-              <section class="contact-form-section"><h3>Groups</h3><div class="contact-group-checks"><loop :for="choice of contactEditor.groupChoices"><label><input type="checkbox" :checked="choice.checked" on:change="contactEditor.toggleGroup(choice.id, $event.target.checked)" /><span>{choice.name}</span></label></loop></div></section>
+              <section class="contact-form-section"><h3>Groups</h3><div class="contact-group-checks"><loop :for="choice of contactEditor.groupChoices"><label><input type="checkbox" :checked="choice.checked" on:click="contactEditor.toggleGroup(choice.id, $event.target.checked)" /><span>{choice.name}</span></label></loop></div></section>
             </logic>
 
             <section class="contact-form-section"><h3>Notes</h3><textarea rows="5" maxlength="10000" aria-label="Notes" :value="contactEditor.form.notes" on:input="contactEditor.setField('notes', $event.target.value)" placeholder="Notes about this contact"></textarea></section>

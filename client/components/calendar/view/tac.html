@@ -32,7 +32,7 @@
            paint on the grid alongside the caller's own events with a
            distinct color so attribution is clear. -->
       <label class="calendar-toggle" :title="calendar.showTeam ? 'Hide teammates' : 'Show teammates'">
-        <input type="checkbox" :checked="calendar.showTeam" on:change="calendar.toggleShowTeam()" />
+        <input type="checkbox" :checked="calendar.showTeam" on:click="calendar.toggleShowTeam()" />
         <span>Show team</span>
       </label>
       <w-btn variant="filled" data-calendar-create on:click="calendar.openCreateModal()">
@@ -226,7 +226,7 @@
             </logic>
             <w-text-field label="Title" :value="calendar.form.title" on:input="calendar.updateFormTitle($event.target.value)" style="width:100%;margin-bottom:0.75rem;"></w-text-field>
             <label class="event-modal-all-day">
-              <input type="checkbox" :checked="calendar.form.allDay" on:change="calendar.updateFormAllDay($event.target.checked)" />
+              <input type="checkbox" :checked="calendar.form.allDay" on:click="calendar.updateFormAllDay($event.target.checked)" />
               <span>All day</span>
             </label>
             <div class="event-modal-row">

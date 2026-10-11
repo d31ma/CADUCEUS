@@ -35,7 +35,9 @@ test('persists per-account privacy controls and executes an authenticated notifi
   await page.goto('/settings')
   await waitForUiReady(page)
 
-  const secondary = page.getByRole('checkbox', { name: secondaryDomain, exact: true })
+  // Mail preferences also list each mailbox (for contact learning); the alert
+  // choice is the one under "Alert for".
+  const secondary = page.getByRole('group', { name: 'Alert for' }).getByRole('checkbox', { name: secondaryDomain, exact: true })
   await expect(secondary).toBeChecked()
   const accountSaved = page.waitForResponse(response => {
     if (!response.url().endsWith('/users/me/preferences') || response.request().method() !== 'PUT') return false

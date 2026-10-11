@@ -191,6 +191,8 @@ test('keeps hosted and connected mailboxes distinct across navigation and select
     })
   })
   await page.route(new RegExp(`${API}/inbox(?:\\?.*)?$`), route => {
+    // The page and the API share /inbox on one origin; only the API call is faked.
+    if (route.request().resourceType() === 'document') return route.fallback()
     const url = new URL(route.request().url())
     const scope = url.searchParams.get('account')
     inboxRequests.push(url.search)

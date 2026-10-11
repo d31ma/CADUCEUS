@@ -166,7 +166,8 @@ test('keeps the CardDAV server version on conflict and offers explicit review', 
     groupIds: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), readOnly: false,
   }
   await page.route(`${API}/contacts/address-books`, route => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }))
-  await page.route(new RegExp(`${API}/contacts(?:\\?.*)?$`), route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([contact]) }))
+  // The page and the API share /contacts on one origin; only the API call is faked.
+  await page.route(new RegExp(`${API}/contacts(?:\\?.*)?$`), route => route.request().resourceType() === 'document' ? route.fallback() : route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([contact]) }))
   await page.route(`${API}/contacts/${contact.id}`, async route => {
     if (route.request().method() !== 'PUT') return route.fallback()
     const changed = route.request().postDataJSON()

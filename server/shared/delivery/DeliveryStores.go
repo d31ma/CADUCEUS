@@ -3,13 +3,14 @@
 // authorized. Delivery reaches more stores than Tachyon lets one provider
 // need (five), so its services need the FyloHelper and build the rest here.
 // The services other areas own (found-in-mail contacts, the conversation
-// archive, calendar invitations) come from the delivery service that needs
+// archive, calendar invitations, push) come from the delivery service that needs
 // them.
 type DeliveryStores struct {
 	Fylo     *FyloHelper
 	Contacts *ContactsService
 	Archive  *ConversationArchiveService
 	Calendar *CalendarImportService
+	Push     *PushService
 }
 
 // Emails answers the email store (with its attachment and source stores).
@@ -82,7 +83,7 @@ func (stores DeliveryStores) Snoozes() Snoozes {
 	emails, users := stores.Emails(), stores.Users()
 	return Snoozes{
 		Snoozed: &SnoozeHelper{fyloHelper: stores.Fylo}, Emails: emails, Threads: &ThreadsHelper{emailsHelper: emails}, Users: users,
-		Notices: PushNotices{Users: users, Subscriptions: &PushSubscriptionsHelper{fyloHelper: stores.Fylo}, Emails: emails},
+		Notices: stores.Push,
 	}
 }
 

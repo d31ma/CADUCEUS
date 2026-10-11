@@ -12,7 +12,7 @@ type Snoozes struct {
 	Emails  *EmailsHelper
 	Threads *ThreadsHelper
 	Users   *UsersHelper
-	Notices PushNotices
+	Notices *PushService
 }
 
 // SnoozeThread answers {snoozed, snoozeId, threadId, count, until}; a
@@ -245,7 +245,7 @@ func (snoozes Snoozes) release(documentId string, record map[string]any, options
 		sort.SliceStable(messages, func(left, right int) bool {
 			return (TextOrder{}).Compare(values.Text(messages[right]["receivedAt"]), values.Text(messages[left]["receivedAt"])) < 0
 		})
-		snoozes.Notices.Unsnoozed(messages[0])
+		snoozes.Notices.NotifyUnsnoozed(messages[0])
 	}
 	return len(messages), nil
 }

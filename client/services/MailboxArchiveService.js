@@ -22,11 +22,18 @@ export default class MailboxArchiveService {
   /** @type {AbortController} */
   _importing = new AbortController()
   /** @type {ImportPickRequested} */
-  _target = { mailbox: '', folder: '', authorization: '' }
+  _target = { mailbox: '', folder: '', authorization: '', open: false }
+  /** @type {File[]} */
+  _pending = []
 
-  /** The files chosen in the import picker. @param {Event} event */
+  /**
+   * The files chosen in the import picker. They wait for the import target
+   * when they are chosen before the mailbox list has said where it is.
+   * @param {Event} event
+   */
   importChosenFiles(event) {
-    void this._import(this._takeFiles(/** @type {HTMLInputElement} */ (event.target)))
+    this._pending = this._takeFiles(/** @type {HTMLInputElement} */ (event.target))
+    this._resume()
   }
 
   /** @param {ExportRequested} request */
@@ -42,10 +49,27 @@ export default class MailboxArchiveService {
   }
 
   /** @param {ImportPickRequested} request */
-  @OnEvent
+  @OnEvent({"replay":true})
   importPickRequested(request) {
     this._target = request
-    /** @type {HTMLInputElement | null} */ (document.querySelector('[data-eml-import]'))?.click()
+    this._pickWhen(request.open)
+    this._resume()
+  }
+
+  _resume() {
+    if ([this._pending.length > 0, Boolean(this._target.mailbox), Boolean(this._target.folder)].every(Boolean)) void this._import(this._takePending())
+  }
+
+  /** @returns {File[]} */
+  _takePending() {
+    const files = this._pending
+    this._pending = []
+    return files
+  }
+
+  /** @param {boolean} open */
+  _pickWhen(open) {
+    if (open) /** @type {HTMLInputElement | null} */ (document.querySelector('[data-eml-import]'))?.click()
   }
 
   /** @param {ImportCancelRequested} _request */
@@ -91,7 +115,6 @@ export default class MailboxArchiveService {
 
   /** @param {File[]} files */
   async _import(files) {
-    if (files.length === 0) return
     this._importing = new AbortController()
     /** @type {ImportFinished} */
     const finished = await importFiles(files, this._target, this._importing.signal, (imported, total, current) => this._importProgress(imported, total, current))

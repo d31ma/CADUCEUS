@@ -39,11 +39,20 @@ type MailboxTransferService struct {
 // @OnEvent({"replay":true})
 func (transfer *MailboxTransferService) SessionChanged(session SessionChanged) {
 	transfer.authorization = "Bearer " + session.Token
+	transfer.offerImportTarget()
 }
 
 // @OnEvent({"replay":true})
 func (transfer *MailboxTransferService) MailboxScopeChanged(scope MailboxScopeChanged) {
 	transfer.scope = scope
+	transfer.offerImportTarget()
+}
+
+// offerImportTarget keeps the bridge's import target current, so EML files
+// chosen in the file input import into the folder on screen even when the
+// picker was not opened from the Import button.
+func (transfer *MailboxTransferService) offerImportTarget() {
+	transfer.applicationEventPublisher.PublishEvent(ImportPickRequested{Mailbox: transfer.importMailbox(), Folder: transfer.scope.Folder, Authorization: transfer.authorization}, true)
 }
 
 // ChooseImportFiles opens the file picker once one mailbox is chosen.
@@ -140,7 +149,7 @@ func (transfer *MailboxTransferService) importRefusal(mailbox string) string {
 
 func (transfer *MailboxTransferService) pickWhenAllowed(mailbox string) {
 	if mailbox != "" && !transfer.Importing && !transfer.Exporting {
-		transfer.applicationEventPublisher.PublishEvent(ImportPickRequested{Mailbox: mailbox, Folder: transfer.scope.Folder, Authorization: transfer.authorization}, false)
+		transfer.applicationEventPublisher.PublishEvent(ImportPickRequested{Mailbox: mailbox, Folder: transfer.scope.Folder, Authorization: transfer.authorization, Open: true}, false)
 	}
 }
 

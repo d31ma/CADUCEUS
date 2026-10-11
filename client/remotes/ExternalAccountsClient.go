@@ -1,118 +1,126 @@
-// @HTTPClient("/api/v1")
+// ExternalAccountsClient is the /api/v1/external-accounts route group. The
+// sidebar lists the connected mailboxes and their provider folders, arranges
+// them, and queues folder changes. Settings connects, reconnects, pauses,
+// diagnoses and removes them.
+// @HTTPClient("/api/v1/external-accounts")
 type ExternalAccountsClient interface {
-	// @GetRequest("/external-accounts")
+	// @GetRequest
 	Accounts(
 		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-	) (BehaviorValue, error)
+		authorization string,
+	) (ExternalAccountList, error)
 
-	// @PostRequest("/provider-discovery")
-	Discover(
+	// @GetRequest("/{id}/folders")
+	Folders(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+	) (ExternalFolderList, error)
+
+	// @PatchRequest("/{id}")
+	Update(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+		// @RequestBody
+		update BehaviorValue,
+	) (ExternalAccount, error)
+
+	// @PostRequest("/{id}/retry")
+	Retry(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+		// @RequestBody
+		retry BehaviorValue,
+	) (ExternalRetryAnswer, error)
+
+	// @PostRequest("/{id}/mutations")
+	Mutate(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+		// @RequestBody
+		mutation BehaviorValue,
+	) (MutationAnswer, error)
+
+	// @PostRequest
+	Create(
 		// @RequestHeader("Authorization")
 		authorization string,
 		// @RequestBody
-		body BehaviorValue,
-	) (DiscoveredSettings, error)
+		account BehaviorValue,
+	) (ExternalAccount, error)
 
-	// @PostRequest("/external-accounts/oauth/google/begin")
-	BeginGoogle(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @RequestBody
-		body BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PatchRequest("/external-accounts/{id}")
-	Change(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @PathVariable
-		id BehaviorValue,
-		// @RequestBody
-		body BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PostRequest("/external-accounts/oauth/microsoft/begin")
-	BeginMicrosoft(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @RequestBody
-		body BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PostRequest("/external-accounts/oauth/google/complete")
-	CompleteGoogle(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @RequestBody
-		body BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @GetRequest("/provider-catalog")
-	Providers(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PostRequest("/external-accounts/oauth/microsoft/complete")
-	CompleteMicrosoft(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @RequestBody
-		body BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PostRequest("/external-accounts/{id}/retry")
-	Retry(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @PathVariable
-		id BehaviorValue,
-		// @RequestBody
-		body BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PostRequest("/external-accounts/validate")
+	// @PostRequest("/validate")
 	Validate(
 		// @RequestHeader("Authorization")
 		authorization BehaviorValue,
 		// @RequestBody
-		body BehaviorValue,
+		account BehaviorValue,
 	) (BehaviorValue, error)
 
-	// @PostRequest("/external-accounts")
-	Create(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @RequestBody
-		body BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PostRequest("/external-accounts/{id}/reconnect")
+	// @PostRequest("/{id}/reconnect")
 	Reconnect(
 		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
+		authorization string,
 		// @PathVariable
-		id BehaviorValue,
+		id string,
 		// @RequestBody
-		body BehaviorValue,
-	) (BehaviorValue, error)
+		credentials BehaviorValue,
+	) (ExternalAccount, error)
 
-	// @GetRequest("/external-accounts/{id}/diagnostics")
-	Diagnostics(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @PathVariable
-		id BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @DeleteRequest("/external-accounts/{id}")
+	// @DeleteRequest("/{id}")
 	Remove(
 		// @RequestHeader("Authorization")
 		authorization BehaviorValue,
 		// @PathVariable
 		id BehaviorValue,
 		// @RequestBody
-		body BehaviorValue,
+		revision BehaviorValue,
 	) (BehaviorValue, error)
+
+	// @GetRequest("/{id}/diagnostics")
+	Diagnostics(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+	) (AccountSyncReport, error)
+
+	// @PostRequest("/oauth/google/begin")
+	BeginGoogle(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		request BehaviorValue,
+	) (ProviderAuthorization, error)
+
+	// @PostRequest("/oauth/microsoft/begin")
+	BeginMicrosoft(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		request BehaviorValue,
+	) (ProviderAuthorization, error)
+
+	// @PostRequest("/oauth/google/complete")
+	CompleteGoogle(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		callback BehaviorValue,
+	) (ExternalAccount, error)
+
+	// @PostRequest("/oauth/microsoft/complete")
+	CompleteMicrosoft(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		callback BehaviorValue,
+	) (ExternalAccount, error)
 }

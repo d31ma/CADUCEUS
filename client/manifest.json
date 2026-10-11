@@ -95,11 +95,19 @@
     }
   },
   "tac": {
-    "browserApis": [
-      "clipboard"
-    ],
     "names": {
       "words": [
+        "caduceus",
+        "mfa",
+        "totp",
+        "passkey",
+        "passkeys",
+        "eml",
+        "mbox",
+        "mailto",
+        "pwa",
+        "bcc",
+        "unsnooze",
         "mcp",
         "imap",
         "smtp",
@@ -107,17 +115,49 @@
         "carddav",
         "caldav",
         "onboarding",
-        "bcc",
-        "unsnooze",
         "oauth",
-        "totp",
         "vapid",
         "github",
-        "passkey",
-        "passkeys",
         "webauthn",
         "gmail"
       ]
-    }
+    },
+    "styles": [
+      "/shared/assets/duvay/duvay.min.css",
+      "/shared/assets/styles.css",
+      "/shared/assets/themes.css"
+    ],
+    "styleSources": {
+      "/shared/assets/duvay/duvay.min.css": {
+        "kind": "vendor",
+        "package": "duvay",
+        "version": "0.0.0",
+        "license": "UNLICENSED",
+        "sha256": "67f77f4c8beaa6c3372af0cc54ff127cdeaa4ad9f1314a2aea48a58a1ade9027"
+      },
+      "/shared/assets/styles.css": {
+        "kind": "foundation"
+      },
+      "/shared/assets/themes.css": {
+        "kind": "foundation"
+      }
+    },
+    "scripts": [
+      "/shared/assets/config.js",
+      "/shared/assets/duvay/duvay-wc.min.js",
+      "/shared/scripts/page-setup.js"
+    ],
+    "scriptSources": {
+      "/shared/assets/duvay/duvay-wc.min.js": {
+        "package": "duvay",
+        "version": "0.0.0",
+        "license": "UNLICENSED",
+        "sha256": "67f441e7d55652f6f17a8205e8d8249b980e85533313f79a9934898dfc51a763"
+      }
+    },
+    "browserApis": [
+      "clipboard",
+      "notifications"
+    ]
   }
 }

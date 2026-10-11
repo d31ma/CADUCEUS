@@ -1,19 +1,90 @@
+// AuthClient is the authentication route group: the sign-in transaction, the
+// session token set and the signed-in credential changes, including the
+// passkeys, authenticator app and recovery codes that settings manages.
 // @HTTPClient("/auth")
 type AuthClient interface {
-	// @PostRequest("/credentials/passkey/begin")
-	BeginPasskey(
-		// @RequestHeader("Authorization")
-		authorization string,
+	// @PostRequest("/login/begin")
+	Begin(
 		// @RequestBody
-		body BehaviorValue,
-	) (PasskeyProvision, error)
+		start BehaviorValue,
+	) (LoginState, error)
 
-	// @PostRequest("/credentials/passkey/finish")
-	FinishPasskey(
+	// @PostRequest("/login/password")
+	Password(
+		// @RequestBody
+		factor BehaviorValue,
+	) (LoginState, error)
+
+	// @PostRequest("/login/totp")
+	AuthenticatorCode(
+		// @RequestBody
+		factor BehaviorValue,
+	) (LoginState, error)
+
+	// @PostRequest("/login/recovery")
+	Recovery(
+		// @RequestBody
+		factor BehaviorValue,
+	) (LoginState, error)
+
+	// @PostRequest("/login/passkey/options")
+	PasskeyOptions(
+		// @RequestBody
+		transaction BehaviorValue,
+	) (PasskeyOptions, error)
+
+	// @PostRequest("/login/passkey")
+	Passkey(
+		// @RequestBody
+		assertion BehaviorValue,
+	) (LoginState, error)
+
+	// @PostRequest("/login/complete")
+	Complete(
+		// @RequestBody
+		transaction BehaviorValue,
+	) (TokenSet, error)
+
+	// @PostRequest("/logout")
+	Logout(
+		// @RequestBody
+		logout BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @PostRequest("/token/refresh")
+	Refresh(
+		// @RequestBody
+		refresh BehaviorValue,
+	) (TokenSet, error)
+
+	// @GetRequest("/session")
+	Session(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @PutRequest("/credentials/password")
+	ChangePassword(
 		// @RequestHeader("Authorization")
 		authorization BehaviorValue,
 		// @RequestBody
-		body BehaviorValue,
+		change BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @PostRequest("/credentials/passkey/begin")
+	BeginPasskeyEnrollment(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		change BehaviorValue,
+	) (PasskeyEnrollment, error)
+
+	// @PostRequest("/credentials/passkey/finish")
+	FinishPasskeyEnrollment(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @RequestBody
+		attestation BehaviorValue,
 	) (BehaviorValue, error)
 
 	// @DeleteRequest("/credentials/passkey")
@@ -21,23 +92,7 @@ type AuthClient interface {
 		// @RequestHeader("Authorization")
 		authorization BehaviorValue,
 		// @RequestBody
-		body BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PostRequest("/credentials/totp/enroll")
-	EnrollAuthenticator(
-		// @RequestHeader("Authorization")
-		authorization string,
-		// @RequestBody
-		body BehaviorValue,
-	) (AuthenticatorEnrollment, error)
-
-	// @PostRequest("/credentials/totp/activate")
-	ActivateAuthenticator(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @RequestBody
-		body BehaviorValue,
+		change BehaviorValue,
 	) (BehaviorValue, error)
 
 	// @GetRequest("/credentials/passkey")
@@ -46,12 +101,20 @@ type AuthClient interface {
 		authorization string,
 	) (PasskeyList, error)
 
-	// @PutRequest("/credentials/password")
-	SetPassword(
+	// @PostRequest("/credentials/totp/enroll")
+	EnrollAuthenticator(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		change BehaviorValue,
+	) (AuthenticatorEnrollment, error)
+
+	// @PostRequest("/credentials/totp/activate")
+	ActivateAuthenticator(
 		// @RequestHeader("Authorization")
 		authorization BehaviorValue,
 		// @RequestBody
-		body BehaviorValue,
+		code BehaviorValue,
 	) (BehaviorValue, error)
 
 	// @PostRequest("/credentials/recovery")
@@ -59,30 +122,6 @@ type AuthClient interface {
 		// @RequestHeader("Authorization")
 		authorization string,
 		// @RequestBody
-		body BehaviorValue,
+		change BehaviorValue,
 	) (RecoveryCodeSet, error)
-
-	// @PostRequest("/login/begin")
-	BeginLogin(
-		// @RequestHeader("Authorization")
-		authorization string,
-		// @RequestBody
-		body BehaviorValue,
-	) (LoginTransaction, error)
-
-	// @PostRequest("/login/password")
-	LoginPassword(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @RequestBody
-		body BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PostRequest("/login/recovery")
-	LoginRecovery(
-		// @RequestHeader("Authorization")
-		authorization string,
-		// @RequestBody
-		body BehaviorValue,
-	) (LoginVerification, error)
 }

@@ -3,7 +3,7 @@ type MailPreferences struct {
 	Use24HourClock            bool                `json:"use24HourClock"`
 	InterfaceScale            float64             `json:"interfaceScale"`
 	ShowUnreadForAllFolders   bool                `json:"showUnreadForAllFolders"`
-	MarkAsReadDelay           float64             `json:"markAsReadDelay"`
+	MarkAsReadDelay           int                 `json:"markAsReadDelay"`
 	DetailedHeaders           bool                `json:"detailedHeaders"`
 	DetailedNames             bool                `json:"detailedNames"`
 	RestrictMessageWidth      bool                `json:"restrictMessageWidth"`
@@ -16,7 +16,7 @@ type MailPreferences struct {
 	SpellcheckLanguage        string              `json:"spellcheckLanguage"`
 	DefaultSendAction         string              `json:"defaultSendAction"`
 	DefaultReplyAction        string              `json:"defaultReplyAction"`
-	UndoSendDelay             float64             `json:"undoSendDelay"`
+	UndoSendDelay             int                 `json:"undoSendDelay"`
 	DefaultFrom               string              `json:"defaultFrom"`
 	AutoCcBySender            map[string][]string `json:"autoCcBySender"`
 	AutoBccBySender           map[string][]string `json:"autoBccBySender"`

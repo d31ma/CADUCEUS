@@ -1,30 +1,38 @@
-// @HTTPClient
+// RulesClient is the /rules route group. The notification centre counts the
+// disabled rules; settings edits, orders and previews them.
+// @HTTPClient("/rules")
 type RulesClient interface {
-	// @GetRequest("/rules")
+	// @GetRequest
+	All(
+		// @RequestHeader("Authorization")
+		authorization string,
+	) ([]RuleSummary, error)
+
+	// @GetRequest
 	Rules(
 		// @RequestHeader("Authorization")
 		authorization string,
 	) ([]InboxRule, error)
 
-	// @PostRequest("/rules")
+	// @PostRequest
 	Create(
 		// @RequestHeader("Authorization")
 		authorization BehaviorValue,
 		// @RequestBody
-		body BehaviorValue,
+		rule BehaviorValue,
 	) (BehaviorValue, error)
 
-	// @PutRequest("/rules/{id}")
+	// @PutRequest("/{id}")
 	Update(
 		// @RequestHeader("Authorization")
 		authorization BehaviorValue,
 		// @PathVariable
 		id BehaviorValue,
 		// @RequestBody
-		body BehaviorValue,
+		rule BehaviorValue,
 	) (BehaviorValue, error)
 
-	// @DeleteRequest("/rules/{id}")
+	// @DeleteRequest("/{id}")
 	Delete(
 		// @RequestHeader("Authorization")
 		authorization BehaviorValue,
@@ -32,19 +40,19 @@ type RulesClient interface {
 		id BehaviorValue,
 	) (BehaviorValue, error)
 
-	// @PutRequest("/rules/order")
+	// @PutRequest("/order")
 	Order(
 		// @RequestHeader("Authorization")
 		authorization BehaviorValue,
 		// @RequestBody
-		body BehaviorValue,
+		order BehaviorValue,
 	) (BehaviorValue, error)
 
-	// @PostRequest("/rules/preview")
+	// @PostRequest("/preview")
 	Preview(
 		// @RequestHeader("Authorization")
 		authorization string,
 		// @RequestBody
-		body BehaviorValue,
+		preview BehaviorValue,
 	) (RulePreview, error)
 }

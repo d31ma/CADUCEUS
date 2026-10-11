@@ -1,52 +1,63 @@
-// @HTTPClient
+// UsersClient is the /users route group. The shell reads and saves the
+// signed-in user's preferences; settings also saves the other preferences,
+// manages the user's aliases and lets an administrator add users.
+// @HTTPClient("/users")
 type UsersClient interface {
-	// @GetRequest("/users/aliases")
+	// @GetRequest("/me/preferences")
+	Preferences(
+		// @RequestHeader("Authorization")
+		authorization string,
+	) (UserPreferences, error)
+
+	// @PutRequest("/me/preferences")
+	SaveTheme(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @RequestBody
+		theme BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @PutRequest("/me/preferences")
+	SavePreferences(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		patch BehaviorValue,
+	) (UserPreferences, error)
+
+	// @GetRequest("/aliases")
 	Aliases(
 		// @RequestHeader("Authorization")
 		authorization string,
 	) (AliasList, error)
 
-	// @PostRequest("/users/aliases")
+	// @PostRequest("/aliases")
 	AddAlias(
 		// @RequestHeader("Authorization")
 		authorization string,
 		// @RequestBody
-		body BehaviorValue,
+		alias BehaviorValue,
 	) (AliasList, error)
 
-	// @DeleteRequest("/users/aliases")
+	// @DeleteRequest("/aliases")
 	RemoveAlias(
 		// @RequestHeader("Authorization")
 		authorization string,
 		// @RequestBody
-		body BehaviorValue,
+		alias BehaviorValue,
 	) (AliasList, error)
 
-	// @GetRequest("/users/me/preferences")
-	Preferences(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PutRequest("/users/me/preferences")
-	SavePreferences(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @RequestBody
-		body BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @GetRequest("/users")
+	// @GetRequest
 	Users(
 		// @RequestHeader("Authorization")
 		authorization string,
 	) ([]UserAccount, error)
 
-	// @PostRequest("/users")
+	// @PostRequest
 	AddUser(
 		// @RequestHeader("Authorization")
 		authorization BehaviorValue,
 		// @RequestBody
-		body BehaviorValue,
+		user BehaviorValue,
 	) (BehaviorValue, error)
 }

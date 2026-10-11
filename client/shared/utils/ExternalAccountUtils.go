@@ -1,215 +1,190 @@
 import (
-	"cmp"
 	"regexp"
 	"slices"
-	"strconv"
+	"sort"
 	"strings"
 )
 
-// ExternalAccountUtils is the Go form of shared/scripts/external-accounts-ui.js:
-// it keeps only the redacted account fields and provider catalog entries the
-// settings view renders, and turns discovery output into a form draft.
+// ExternalAccountUtils keeps the bounded fields of connected accounts and
+// the texts of the provider-folder dialog.
 type ExternalAccountUtils struct{}
 
-// NormalizeAccounts keeps at most fifty well-formed accounts, ordered for display.
-func (utils ExternalAccountUtils) NormalizeAccounts(value any) []ExternalAccount {
-	items, _ := value.([]any)
-	records := utils.records(items[:min(50, len(items))])
-	return utils.sorted(utils.accounts(slices.DeleteFunc(records, utils.malformed)))
+// Normalize keeps at most 50 well-formed accounts, in their saved order.
+func (ExternalAccountUtils) Normalize(accounts []ExternalAccount) []ExternalAccount {
+	kept := slices.DeleteFunc(slices.Clone(accounts[:min(50, len(accounts))]), ExternalAccountUtils{}.malformed)
+	return ExternalAccountUtils{}.sorted(ExternalAccountUtils{}.cleanedAll(kept))
 }
 
-func (utils ExternalAccountUtils) NormalizeProviders(value any) []MailProvider {
-	providers := []MailProvider{}
-	PreferenceUtils{}.Decode(value, &providers)
-	return utils.providers(slices.DeleteFunc(providers, utils.unsupported))
+// Arranged marks which accounts can move up or down and create folders.
+func (ExternalAccountUtils) Arranged(accounts []ExternalAccount) []ExternalAccount {
+	return ExternalAccountUtils{}.arranged(accounts)
 }
 
-// Draft converts discovery output into the non-secret connection form values.
-func (utils ExternalAccountUtils) Draft(settings DiscoveredSettings, address string) ConnectionDraft {
-	connection := settings.Connection
-	mailbox := PreferenceUtils{}.Lower(address)
-	return ConnectionDraft{
-		ChoiceID: cmp.Or(settings.ChoiceID, utils.providerKinds()[2]), Source: cmp.Or(settings.Source, utils.manual()),
-		MailboxAddress: mailbox, Label: cmp.Or(strings.TrimSpace(settings.Label), mailbox),
-		Username: cmp.Or(connection.Imap.Username, connection.Smtp.Username, mailbox),
-		ImapHost: connection.Imap.Host, ImapPort: cmp.Or(utils.port(connection.Imap.Port), "993"),
-		ImapSecurity: cmp.Or(connection.Imap.Security, "tls"),
-		SmtpHost: connection.Smtp.Host, SmtpPort: cmp.Or(utils.port(connection.Smtp.Port), "587"),
-		SmtpSecurity: cmp.Or(connection.Smtp.Security, "starttls"),
-		CardDavURL: connection.Carddav.URL, CardDavUsername: connection.Carddav.Username,
-		CalDavURL: connection.Caldav.URL, CalDavUsername: connection.Caldav.Username,
-		ContainerFolder: connection.ContainerFolder,
+// Replaced swaps in the server's copies of updated accounts and reorders.
+func (ExternalAccountUtils) Replaced(accounts []ExternalAccount, updates []ExternalAccount) []ExternalAccount {
+	return ExternalAccountUtils{}.sorted(ExternalAccountUtils{}.replaced(slices.Clone(accounts), updates))
+}
+
+// ValidFolderName accepts 1 to 128 characters without outer spaces or line
+// breaks.
+func (ExternalAccountUtils) ValidFolderName(name string) bool {
+	return ExternalAccountUtils{}.validName(name, len([]rune(name)) <= FolderRuleUtils{}.bounds().Attribute)
+}
+
+// Mutation is the provider folder change that the dialog queues.
+func (ExternalAccountUtils) Mutation(dialog FolderDialog, revision int, key string) FolderMutation {
+	mutation := FolderMutation{Revision: revision, IdempotencyKey: "folder-" + dialog.Mode + "-" + key, Kind: "folder_" + dialog.Mode, MessageStableIds: []string{}, FolderName: dialog.Name}
+	return ExternalAccountUtils{}.placed(mutation, dialog.Mode, dialog.Folder)
+}
+
+// DialogTexts are the title, description and button text of the dialog.
+func (ExternalAccountUtils) DialogTexts(dialog FolderDialog, inFolder bool, busy bool) []string {
+	modes := ExternalAccountUtils{}.modes()
+	return []string{
+		ExternalAccountUtils{}.title(dialog.Mode, inFolder, modes),
+		ExternalAccountUtils{}.description(dialog.Mode, inFolder, dialog.Name, modes),
+		ExternalAccountUtils{}.action(dialog.Mode, busy, modes),
 	}
 }
 
-// PresetSettings is the discovery shape that selecting a catalog entry implies.
-func (utils ExternalAccountUtils) PresetSettings(provider MailProvider) DiscoveredSettings {
-	preset := utils.preset(provider.Preset)
-	return DiscoveredSettings{
-		ChoiceID: provider.ID, Source: utils.presetSource(provider.Preset),
-		Connection: DiscoveredConnection{Imap: preset.Imap, Smtp: preset.Smtp, ContainerFolder: preset.ContainerFolder},
-	}
+func (ExternalAccountUtils) malformed(account ExternalAccount) bool {
+	return slices.Contains([]bool{
+		regexp.MustCompile(`^ext_[A-Za-z0-9_-]{20,80}$`).MatchString(account.ID),
+		strings.TrimSpace(account.MailboxAddress) != "",
+		slices.Contains([]string{"gmail", "microsoft", "imap"}, account.Provider),
+		slices.Contains(ExternalAccountUtils{}.states(), account.State),
+		account.Revision >= 1,
+	}, false)
 }
 
-// ProgressLabel describes an account's synchronization for its card.
-func (utils ExternalAccountUtils) ProgressLabel(account ExternalAccount) string {
-	progress := utils.progress(account.Progress)
-	return cmp.Or(utils.syncing(progress.Phase, utils.count(progress)), utils.stateLabel(account.State))
+// Readable is true when the sidebar may list the account's folders.
+func (ExternalAccountUtils) Readable(account ExternalAccount) bool {
+	return ExternalAccountUtils{}.readable(account)
 }
 
-func (utils ExternalAccountUtils) StateLabel(state string) string {
-	return utils.words(state)
+func (ExternalAccountUtils) readable(account ExternalAccount) bool {
+	return account.Capabilities.MailRead && account.State != ExternalAccountUtils{}.states()[6]
 }
 
-func (utils ExternalAccountUtils) CanPause(state string) bool {
-	return slices.Contains(utils.activeStates(), state)
-}
-
-func (utils ExternalAccountUtils) CanReconnect(state string) bool {
-	return slices.Contains([]string{utils.authRequired(), utils.activeStates()[3], utils.paused()}, state)
-}
-
-func (ExternalAccountUtils) records(items []any) []ExternalAccountRecord {
-	records := []ExternalAccountRecord{}
-	for _, item := range items {
-		record := ExternalAccountRecord{}
-		PreferenceUtils{}.Decode(item, &record)
-		records = append(records, record)
-	}
-	return records
-}
-
-func (utils ExternalAccountUtils) malformed(record ExternalAccountRecord) bool {
-	states := append(utils.activeStates(), utils.authRequired(), utils.paused(), "deleting")
-	whole := record.Revision == float64(int64(record.Revision))
-	if !utils.idPattern().MatchString(strings.TrimSpace(record.ID)) || strings.TrimSpace(record.MailboxAddress) == "" || !slices.Contains(utils.providerKinds(), record.Provider) || !slices.Contains(states, record.State) || record.Revision < 1 || !whole {
-		return true
-	}
-	return false
-}
-
-func (utils ExternalAccountUtils) accounts(records []ExternalAccountRecord) []ExternalAccount {
-	accounts := []ExternalAccount{}
-	color := utils.colorPattern()
-	for _, record := range records {
-		mailbox := strings.TrimSpace(record.MailboxAddress)
-		accounts = append(accounts, ExternalAccount{
-			ID: strings.TrimSpace(record.ID), MailboxAddress: mailbox, Provider: record.Provider, State: record.State,
-			Revision: record.Revision, AuthIdentity: strings.TrimSpace(record.AuthIdentity),
-			SharedMailboxAddress: strings.TrimSpace(record.SharedMailboxAddress),
-			Label: cmp.Or(strings.TrimSpace(record.Label), mailbox),
-			Color: cmp.Or(color.FindString(strings.TrimSpace(record.Color)), "#5f6368"),
-			Order: record.Order, CanReadMail: record.Capabilities.MailRead, CanSend: record.Capabilities.Send,
-			ImapUsername: record.Connection.Imap.Username, Progress: record.Progress, Failure: record.Failure,
-			UpdatedAt: strings.TrimSpace(record.UpdatedAt),
-		})
+func (ExternalAccountUtils) cleanedAll(accounts []ExternalAccount) []ExternalAccount {
+	for index := range accounts {
+		accounts[index] = ExternalAccountUtils{}.cleaned(accounts[index])
 	}
 	return accounts
 }
 
-func (utils ExternalAccountUtils) unsupported(provider MailProvider) bool {
-	if strings.TrimSpace(provider.ID) == "" || strings.TrimSpace(provider.Name) == "" || !slices.Contains(utils.providerKinds(), provider.Provider) || !slices.Contains([]string{"oauth", "password"}, provider.Authentication) {
-		return true
+func (ExternalAccountUtils) cleaned(account ExternalAccount) ExternalAccount {
+	account.MailboxAddress = strings.TrimSpace(account.MailboxAddress)
+	account.Label = TextUtils{}.FirstOf(strings.TrimSpace(account.Label), account.MailboxAddress)
+	account.Color = ExternalAccountUtils{}.color(strings.TrimSpace(account.Color))
+	return account
+}
+
+func (ExternalAccountUtils) color(color string) string {
+	if regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`).MatchString(color) {
+		return color
 	}
-	return false
+	return "#5f6368"
 }
 
-func (ExternalAccountUtils) providers(providers []MailProvider) []MailProvider {
-	for index := range providers {
-		providers[index].Guidance = cmp.Or(strings.TrimSpace(providers[index].Guidance), "none")
+func (ExternalAccountUtils) arranged(accounts []ExternalAccount) []ExternalAccount {
+	for index := range accounts {
+		accounts[index].CanMoveUp = index > 0
+		accounts[index].CanMoveDown = index < len(accounts)-1
+		accounts[index].CanCreateFolder = ExternalFolderUtils{}.Writable(accounts[index])
 	}
-	return providers
-}
-
-func (ExternalAccountUtils) preset(preset *ProviderPreset) ProviderPreset {
-	if preset == nil {
-		return ProviderPreset{}
-	}
-	return *preset
-}
-
-func (utils ExternalAccountUtils) presetSource(preset *ProviderPreset) string {
-	if preset == nil {
-		return utils.manual()
-	}
-	return "preset"
-}
-
-// port renders a stored port, or nothing when the endpoint had none.
-func (utils ExternalAccountUtils) port(port float64) string {
-	return strings.TrimPrefix(utils.number(port), "0")
-}
-
-func (ExternalAccountUtils) progress(progress *AccountProgress) AccountProgress {
-	if progress == nil {
-		return AccountProgress{}
-	}
-	return *progress
-}
-
-func (utils ExternalAccountUtils) count(progress AccountProgress) string {
-	completed := utils.number(progress.Completed)
-	if progress.Total == nil {
-		return completed
-	}
-	return completed + " of " + utils.number(*progress.Total)
-}
-
-func (utils ExternalAccountUtils) syncing(phase string, count string) string {
-	if phase == "" {
-		return ""
-	}
-	return "Syncing " + utils.words(phase) + " · " + count
-}
-
-func (utils ExternalAccountUtils) stateLabel(state string) string {
-	text := utils.words(state)
-	return strings.ToUpper(text[:min(1, len(text))]) + text[min(1, len(text)):]
-}
-
-func (ExternalAccountUtils) idPattern() *regexp.Regexp {
-	return regexp.MustCompile(`^ext_[A-Za-z0-9_-]{20,80}$`)
-}
-
-func (ExternalAccountUtils) colorPattern() *regexp.Regexp {
-	return regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
-}
-
-// Including adds one account that the server just created, in display order.
-func (utils ExternalAccountUtils) Including(accounts []ExternalAccount, value any) []ExternalAccount {
-	return utils.sorted(append(slices.Clone(accounts), utils.NormalizeAccounts([]any{value})...))
-}
-
-// Replacing swaps in the server's newer copy of one account.
-func (utils ExternalAccountUtils) Replacing(accounts []ExternalAccount, value any) []ExternalAccount {
-	replacement := utils.NormalizeAccounts([]any{value})
-	kept := slices.DeleteFunc(slices.Clone(accounts), func(account ExternalAccount) bool {
-		return slices.ContainsFunc(replacement, func(candidate ExternalAccount) bool { return candidate.ID == account.ID })
-	})
-	return utils.sorted(append(kept, replacement...))
+	return accounts
 }
 
 func (ExternalAccountUtils) sorted(accounts []ExternalAccount) []ExternalAccount {
-	slices.SortStableFunc(accounts, func(left ExternalAccount, right ExternalAccount) int {
-		return cmp.Or(cmp.Compare(left.Order, right.Order), strings.Compare(left.Label, right.Label))
+	sort.SliceStable(accounts, func(left int, right int) bool {
+		return ExternalAccountUtils{}.before(accounts[left], accounts[right])
 	})
 	return accounts
 }
 
-func (ExternalAccountUtils) providerKinds() []string { return []string{"gmail", "microsoft", "imap"} }
-
-func (ExternalAccountUtils) activeStates() []string { return []string{"ready", "syncing", "idle", "degraded"} }
-
-func (ExternalAccountUtils) authRequired() string { return "auth_required" }
-
-func (ExternalAccountUtils) paused() string { return "paused" }
-
-func (ExternalAccountUtils) manual() string { return "manual" }
-
-func (ExternalAccountUtils) number(value float64) string {
-	return strconv.FormatFloat(value, 'f', -1, 64)
+func (ExternalAccountUtils) before(left ExternalAccount, right ExternalAccount) bool {
+	if left.Order != right.Order {
+		return left.Order < right.Order
+	}
+	return left.ID < right.ID
 }
 
-func (ExternalAccountUtils) words(text string) string {
-	return strings.ReplaceAll(text, "_", " ")
+func (ExternalAccountUtils) byID(updates []ExternalAccount) map[string]ExternalAccount {
+	byID := map[string]ExternalAccount{}
+	for _, update := range updates {
+		byID[update.ID] = ExternalAccountUtils{}.cleaned(update)
+	}
+	return byID
+}
+
+func (ExternalAccountUtils) replaced(accounts []ExternalAccount, updates []ExternalAccount) []ExternalAccount {
+	byID := ExternalAccountUtils{}.byID(updates)
+	for index, account := range accounts {
+		accounts[index] = map[bool]ExternalAccount{true: byID[account.ID], false: account}[byID[account.ID].ID != ""]
+	}
+	return accounts
+}
+
+func (ExternalAccountUtils) validName(name string, short bool) bool {
+	return !slices.Contains([]bool{name != "", name == strings.TrimSpace(name), short, !strings.ContainsAny(name, "\x00\r\n")}, false)
+}
+
+func (ExternalAccountUtils) placed(mutation FolderMutation, mode string, folder string) FolderMutation {
+	modes := ExternalAccountUtils{}.modes()
+	switch mode {
+	case modes.Create:
+		mutation.ParentStableID = folder
+	case modes.Delete:
+		mutation.FolderStableID = folder
+		mutation.FolderName = ""
+	default:
+		mutation.FolderStableID = folder
+	}
+	return mutation
+}
+
+func (ExternalAccountUtils) title(mode string, inFolder bool, modes FolderModes) string {
+	switch {
+	case mode == modes.Rename:
+		return "Rename connected folder"
+	case mode == modes.Delete:
+		return "Delete connected folder"
+	case inFolder:
+		return "Create subfolder"
+	}
+	return "Create connected folder"
+}
+
+func (ExternalAccountUtils) description(mode string, inFolder bool, folderName string, modes FolderModes) string {
+	quoted, stop := "“"+folderName+"”", "."
+	switch {
+	case mode == modes.Delete:
+		return "Delete " + quoted + " from the connected mailbox? The provider may also delete messages it contains."
+	case mode == modes.Rename:
+		return "Choose a new name for " + quoted + stop
+	case inFolder:
+		return "Create a folder inside " + quoted + stop
+	}
+	return "Create a folder at the top level of this connected mailbox."
+}
+
+func (ExternalAccountUtils) action(mode string, busy bool, modes FolderModes) string {
+	switch {
+	case busy:
+		return "Working…"
+	case mode == modes.Rename:
+		return "Rename folder"
+	case mode == modes.Delete:
+		return "Delete folder"
+	}
+	return "Create folder"
+}
+
+func (ExternalAccountUtils) states() []string {
+	return []string{"ready", "syncing", "idle", "auth_required", "degraded", "paused", "deleting"}
+}
+
+func (ExternalAccountUtils) modes() FolderModes {
+	return FolderModes{Create: "create", Rename: "rename", Delete: "delete"}
 }

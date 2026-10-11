@@ -18,47 +18,7 @@ func (reply DeliveryReply) Of(answer any) *http.Response {
 	case nil:
 		return &http.Response{StatusCode: http.StatusNoContent, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(""))}
 	}
-	return Answer{}.Json(reply.Status(answer), answer)
-}
-
-// Status answers the status of an answer: 200 unless it carries an error
-// text, then the status of its first marker, else 400 when the error is its
-// only field.
-func (reply DeliveryReply) Status(answer any) int {
-	record, isRecord := answer.(map[string]any)
-	if !isRecord {
-		return http.StatusOK
-	}
-	if _, isText := record["error"].(string); !isText {
-		return http.StatusOK
-	}
-	for _, marker := range reply.markers() {
-		if _, marked := record[marker.field]; marked {
-			return marker.status
-		}
-	}
-	if len(record) == 1 {
-		return http.StatusBadRequest
-	}
-	return http.StatusOK
-}
-
-func (DeliveryReply) markers() []struct {
-	field  string
-	status int
-} {
-	return []struct {
-		field  string
-		status int
-	}{
-		{"unauthorized", http.StatusUnauthorized},
-		{"forbidden", http.StatusForbidden},
-		{"notFound", http.StatusNotFound},
-		{"conflict", http.StatusConflict},
-		{"blocked", http.StatusUnprocessableEntity},
-		{"rateLimited", http.StatusTooManyRequests},
-		{"unavailable", http.StatusServiceUnavailable},
-	}
+	return Answer{}.Json(RawAnswer{}.Status(answer), answer)
 }
 
 // Settled answers the response for a route's answer, or the 500 a thrown

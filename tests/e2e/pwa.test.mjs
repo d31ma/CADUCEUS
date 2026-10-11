@@ -17,10 +17,10 @@ async function installWebKitCrossPortHarness(page, browserName) {
 test('exposes installable PWA metadata and the Tachyon service worker', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.locator('head > link[rel="manifest"]')).toHaveAttribute('href', '/manifest.webmanifest')
+  await expect(page.locator('head > link[rel="manifest"]')).toHaveAttribute('href', '/shared/assets/manifest.webmanifest')
   await expect(page.locator('head > meta[name="theme-color"]')).toHaveAttribute('content', '#0d0d0d')
 
-  const manifest = await page.request.get('/manifest.webmanifest').then(res => res.json())
+  const manifest = await page.request.get('/shared/assets/manifest.webmanifest').then(res => res.json())
   expect(manifest.display).toBe('standalone')
   expect(manifest.start_url).toBe('/')
   expect(manifest.icons.some(icon => icon.sizes === '192x192' && icon.type === 'image/png')).toBe(true)

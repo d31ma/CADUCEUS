@@ -1,4 +1,20 @@
-/* CADUCEUS — Mailspring-inspired Mail Client CSS foundation */
+/* CADUCEUS — Mailspring-inspired Mail Client CSS foundation.
+ *
+ * Tachyon publishes this sheet globally only when every selector is a
+ * foundation selector (:root/html/body, a root theme attribute, a universal
+ * reset or a plain HTML element) and every declaration is a colour, font,
+ * theme variable or narrow reset. Application rules (layout, DuVay host
+ * tweaks, focus rings, utility classes, screenshot masking) live in the
+ * tac.css of each component that uses them, because component styles are
+ * scoped with @scope. */
+
+/* CADUCEUS — Mailspring-inspired Mail Client CSS foundation.
+ *
+ * Tachyon publishes this sheet globally only when every selector is a
+ * foundation selector (:root/html/body, a root theme attribute, a universal
+ * reset or a plain HTML element). Application rules (DuVay host tweaks, focus
+ * rings, utility classes, screenshot masking) live in the tac.css of each
+ * component that uses them, because component styles are scoped with @scope. */
 
 /* Shell geometry is document-global state. Tachyon 26.33 wraps component
  * styles in native @scope, where a component-local :root selector cannot
@@ -19,21 +35,24 @@
 
 /* ── Base reset ────────────────────────────────────────────────────────── */
 /* Universal box-sizing is safe (no specificity issue with custom elements). */
-*, :before, :after { box-sizing: border-box; }
+*, ::before, ::after {
+  box-sizing: border-box;
+}
 
 /* Explicit margin/padding reset on built-in elements only — leaves DuVay's
  * light-DOM web components (w-*) free to apply their own internal spacing,
- * rather than a universal `* { padding: 0 }` clobbering component styles. */
-:where(html, body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, dl, dt, dd,
-       blockquote, figure, fieldset, legend, hr,
-       form, button, input, select, textarea, table, th, td) {
+ * rather than a universal `* {
+  padding: 0;
+}
+
+` clobbering component styles. */
+html, body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, dl, dt, dd, blockquote, figure, fieldset, legend, hr, form, button, input, select, textarea, table, th, td {
   margin: 0;
   padding: 0;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: transparent;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -46,24 +65,23 @@ body {
   line-height: 1.6;
   font-weight: 400;
   color: var(--ms-text);
-  background: var(--ms-bg);
-  overscroll-behavior: none;
-  min-height: 100dvh;
+  background-color: var(--ms-bg);
 }
 
-a { color: inherit; text-decoration: none; }
-img, svg, video { max-width: 100%; display: block; }
+a {
+  color: inherit;
+}
 
 /* ── Typography scale ──────────────────────────────────────────────────── */
 :root {
-  --ms-font-xs: 0.6875rem;   /* 11px — captions, overlines */
-  --ms-font-sm: 0.75rem;     /* 12px — labels, timestamps */
-  --ms-font-base: 0.875rem;  /* 14px — body, sidebar */
-  --ms-font-md: 0.9375rem;   /* 15px — list items, buttons */
-  --ms-font-lg: 1.0625rem;   /* 17px — section headers */
-  --ms-font-xl: 1.25rem;     /* 20px — page titles */
-  --ms-font-2xl: 1.5rem;     /* 24px — headings */
-  --ms-font-3xl: 2.25rem;    /* 36px — brand/logo */
+  --ms-font-xs: 0.6875rem;
+  --ms-font-sm: 0.75rem;
+  --ms-font-base: 0.875rem;
+  --ms-font-md: 0.9375rem;
+  --ms-font-lg: 1.0625rem;
+  --ms-font-xl: 1.25rem;
+  --ms-font-2xl: 1.5rem;
+  --ms-font-3xl: 2.25rem;
   --ms-font-weight-normal: 400;
   --ms-font-weight-medium: 500;
   --ms-font-weight-semibold: 600;
@@ -78,32 +96,25 @@ img, svg, video { max-width: 100%; display: block; }
   --ms-primary: var(--ms-primary, #1f6f8b);
   --ms-primary-container: var(--ms-primary-container, #d7edf4);
   --ms-on-primary-container: var(--ms-on-primary-container, #073544);
-
   --ms-bg: var(--ms-surface, #f8faf9);
   --ms-sidebar-bg: var(--ms-sidebar, #eef3f1);
   --ms-list-bg: var(--ms-surface, #f8faf9);
   --ms-detail-bg: var(--ms-surface, #ffffff);
   --ms-toolbar-bg: var(--ms-toolbar, #f1f5f4);
-
   --ms-text: var(--ms-text, #182125);
   --ms-text-subtle: var(--ms-text-subtle, #526066);
   --ms-text-very-subtle: var(--ms-text-very-subtle, #7b878c);
-
   --ms-divider: var(--ms-divider, #d8e0de);
   --ms-border: var(--ms-border, #d0dbd8);
-
   --ms-hover-bg: var(--ms-hover-bg, #eaf1ef);
   --ms-selected-bg: var(--ms-selected-bg, #dceff3);
   --ms-selected-color: var(--ms-selected-color, #102f3a);
   --ms-active-color: var(--ms-active-color, #dceff3);
-
   --ms-avatar-bg: var(--ms-avatar-bg, #d7edf4);
   --ms-avatar-text: var(--ms-avatar-text, #073544);
   --ms-unread-indicator: var(--ms-unread-indicator, #1f6f8b);
-
   --ms-error: var(--ms-error, #b3261e);
   --ms-error-container: var(--ms-error-container, #f9dedc);
-
   --ms-secondary-container: var(--ms-secondary-container, #e6ece9);
   --ms-on-secondary-container: var(--ms-on-secondary-container, #273733);
   --ms-surface-container-low: var(--ms-surface-container-low, #f3f7f5);
@@ -117,21 +128,11 @@ img, svg, video { max-width: 100%; display: block; }
   --ms-tertiary-container: var(--ms-tertiary-container, #f4e4c7);
   --ms-on-tertiary-container: var(--ms-on-tertiary-container, #493116);
   --ms-on-error-container: var(--ms-on-error-container, #410e0b);
-
   --ms-toolbar-height: 48px;
   --ms-sidebar-width: 220px;
   --ms-shape-sharp: 4px;
   --ms-shape-card: 4px;
-
-  /* DuVay reads its type family from --w-font-family; point it at IBM Plex
-   * Sans so every <w-*> component matches the app shell. Colours already flow
-   * from DuVay's own --w-* palette (see themes.css). */
   --w-font-family: var(--caduceus-interface-font);
-
-  /* DuVay's default radius tokens are 0 (fully square). CADUCEUS uses the
-   * Mailspring 4px "sharp" rounding on every control and surface, so restore
-   * it here — this softens buttons, fields, chips, selects, and cards app-wide
-   * to match the pre-DuVay look. */
   --w-radius: var(--ms-shape-sharp);
   --w-radius-sm: var(--ms-shape-sharp);
   --w-radius-md: var(--ms-shape-sharp);
@@ -139,225 +140,8 @@ img, svg, video { max-width: 100%; display: block; }
   --w-radius-xl: 12px;
 }
 
-/* Children of an overflow-menu container must not shrink — the helper at
- * shared/scripts/overflow-menu.js detects overflow via container.scrollWidth
- * vs clientWidth, which only fires if items keep their natural size. */
-[data-overflow-menu] > *:not([data-overflow-injected]) {
-  flex-shrink: 0;
-}
-
-@media (max-width: 1024px) {
-  [data-overflow-menu] {
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: thin;
-    overscroll-behavior-inline: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Defensively override any inline visibility left behind when a row crosses
-   * the breakpoint after the desktop overflow helper has already measured it. */
-  [data-overflow-menu] > *:not([data-overflow-injected]) {
-    display: revert !important;
-  }
-
-  [data-overflow-menu] > .overflow-more-btn,
-  [data-overflow-menu] > .overflow-more-menu {
-    display: none !important;
-  }
-}
-
-/* Keep DuVay components on the app's font. */
-w-btn, w-text-field, w-textarea, w-select, w-chip, w-option {
-  font-family: inherit;
-}
-
-w-btn {
-  min-width: 64px;
-  box-sizing: border-box;
-  white-space: nowrap;
-}
-
-w-chip {
-  box-sizing: border-box;
-}
-
-/* DuVay form-control hosts are inline by default, so authored `width` and
- * vertical margins (e.g. `style="width:100%;margin-bottom:1rem"`) are ignored —
- * fields render content-width and stack with no gap. Make them block-level so
- * full-width fields and their spacing behave as written. */
-w-text-field,
-w-textarea,
-w-select {
-  display: block;
-}
-
-/* A <w-btn> host is inline by default, so a full-width action written as
- * `style="width:100%"` (the Material idiom carried over in the migration) was
- * ignored — the host and its rendered <button> stayed content-width. Make such
- * hosts block-level and stretch the control to fill them. */
-w-btn[style*="width:100%"],
-w-btn[style*="width: 100%"] {
-  display: block;
-}
-w-btn[style*="width:100%"] > button,
-w-btn[style*="width:100%"] > a,
-w-btn[style*="width: 100%"] > button,
-w-btn[style*="width: 100%"] > a {
-  width: 100%;
-}
-
-/* ── Focus ─────────────────────────────────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid var(--ms-primary, #1f6f8b);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* DuVay form controls draw their own focus indicator (a coloured border on the
- * field). The generic outline above stacked a second ring on the inner input —
- * suppress it inside those components so only DuVay's focus border shows. */
-w-text-field :focus-visible,
-w-textarea :focus-visible,
-w-select :focus-visible {
-  outline: none;
-}
-
-/* ── Interactive base states ──────────────────────────────────────────── */
-.email-row:focus-visible,
-.thread-summary:focus-visible,
-.thread-email-row:focus-visible,
-.sidebar-folder:focus-visible,
-.quick-action:focus-visible,
-.toolbar-btn:focus-visible,
-.attachment-chip:focus-visible,
-.sidebar-section-header:focus-visible {
-  outline: 2px solid var(--ms-primary, #1f6f8b);
-  outline-offset: -2px;
-  border-radius: 6px;
-}
-
-/* ── Scrollbar ─────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--ms-divider); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--ms-text-very-subtle); }
-
-/* ── Utility classes ───────────────────────────────────────────────────── */
-.text-muted { color: var(--ms-text-subtle); }
-.text-subtle { color: var(--ms-text-very-subtle); }
-.text-error { color: var(--ms-error); }
-.text-center { text-align: center; }
-.font-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
-.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-/* ── Loading spinner ───────────────────────────────────────────────────── */
-.spinner {
-  width: 24px; height: 24px;
-  border: 3px solid var(--ms-divider);
-  border-top-color: var(--ms-primary);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg) } }
-
-/* Mailspring-compatible screenshot mode belongs at document scope. Tachyon
- * wraps component styles in native @scope, so root-state selectors must live
- * in this shared sheet. Text stays in the accessible DOM but renders as
- * anonymous blocks; visual media and CSS backgrounds are obscured. */
-html[data-screenshot-mode="true"] body *,
-html[data-screenshot-mode="true"] body *::before,
-html[data-screenshot-mode="true"] body *::after {
-  -webkit-text-security: disc !important;
-  word-break: break-word !important;
-  color: transparent !important;
-  text-shadow: 0 0 7px rgba(15, 23, 42, 0.82) !important;
-  background-image: none !important;
-}
-
-/* Composite blur closes Shadow DOM and replaced-element gaps that document
- * selectors cannot pierce. The exit control is a sibling of both regions. */
-html[data-screenshot-mode="true"] body .app-topbar,
-html[data-screenshot-mode="true"] body .app-layout {
-  filter: blur(4px) !important;
-}
-
-html[data-screenshot-mode="true"] body img,
-html[data-screenshot-mode="true"] body video,
-html[data-screenshot-mode="true"] body canvas,
-html[data-screenshot-mode="true"] body iframe,
-html[data-screenshot-mode="true"] body svg {
-  filter: blur(18px) grayscale(1) !important;
-}
-
-html[data-screenshot-mode="true"] body [data-screenshot-mode-control],
-html[data-screenshot-mode="true"] body [data-screenshot-mode-control] *,
-html[data-screenshot-mode="true"] body [data-screenshot-mode-control] *::before,
-html[data-screenshot-mode="true"] body [data-screenshot-mode-control] *::after {
-  -webkit-text-security: none !important;
-  color: var(--ms-on-primary-container, #042f2e) !important;
-  text-shadow: none !important;
-  filter: none !important;
-}
-
-/* ── Skeleton loading ──────────────────────────────────────────────────── */
-.skeleton {
-  background: linear-gradient(90deg, var(--ms-divider) 25%, var(--ms-hover-bg) 50%, var(--ms-divider) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-  border-radius: var(--ms-shape-card);
-}
-@keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
-
-/* ── Empty state ───────────────────────────────────────────────────────── */
-.empty-state {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 3rem 2rem; text-align: center; color: var(--ms-text-subtle); min-height: 240px;
-}
-.empty-state svg { width: 48px; height: 48px; opacity: 0.4; margin-bottom: 1rem; }
-.empty-state-title { font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem; color: var(--ms-text); }
-.empty-state-subtitle { font-size: 0.8125rem; max-width: 280px; }
-
-/* ── Toast notification ────────────────────────────────────────────────── */
-.app-toast {
-  position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 9999;
-  background: var(--ms-inverse-surface, #313033);
-  color: var(--ms-inverse-on-surface, #f4eff4);
-  padding: 0.75rem 1.25rem; border-radius: var(--ms-shape-card); font-size: 0.8125rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
-  pointer-events: none; animation: toast-in 0.2s ease-out; max-width: calc(100vw - 2rem);
-}
-@keyframes toast-in { from { opacity: 0; transform: translateX(-50%) translateY(8px); } }
-
 /* ── Responsive ────────────────────────────────────────────────────────── */
+
 @media (max-width: 760px) {
   body { font-size: calc(14px * var(--caduceus-interface-scale)); }
-  .hide-mobile { display: none !important; }
 }
-@media (display-mode: standalone) and (max-width: 760px) {
-  body { padding-bottom: env(safe-area-inset-bottom); }
-}
-
-/* Explicitly trusted extension commands use one host-owned control style.
- * Package code cannot provide CSS or mutate this class. */
-[data-extension-slot] {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  flex: 0 0 auto;
-}
-
-.caduceus-extension-command {
-  min-height: 36px;
-  padding: 0.4rem 0.7rem;
-  border: 1px solid var(--ms-outline-variant);
-  border-radius: var(--ms-shape-sharp, 4px);
-  background: var(--ms-surface-container);
-  color: var(--ms-on-surface);
-  font: inherit;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.caduceus-extension-command:hover { background: var(--ms-hover-bg); }
-.caduceus-extension-command:focus-visible { outline: 2px solid var(--ms-primary); outline-offset: 2px; }

@@ -1,4 +1,7 @@
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // MailboxUtilitiesTest covers the pure utilities of the mailbox list.
 // @Test(MailboxListTestSetup, {"partition":"tests"})
@@ -43,6 +46,11 @@ func (test *MailboxUtilitiesTest) TestPickerPathsFollowTheServerGrammar() {
 	Assert.Equals("projects/launch", CategoryPickerUtils{}.NormalizePath(" Projects/Launch "))
 	Assert.Equals("", CategoryPickerUtils{}.NormalizePath("a//b"))
 	Assert.Equals("", CategoryPickerUtils{}.NormalizePath("a/../b"))
+	Assert.Equals("a", CategoryPickerUtils{}.NormalizePath("a"))
+	Assert.Equals("", CategoryPickerUtils{}.NormalizePath("-a"))
+	Assert.Equals("", CategoryPickerUtils{}.NormalizePath("a."))
+	Assert.Equals("", CategoryPickerUtils{}.NormalizePath(strings.Repeat("a", 61)))
+	Assert.Equals(strings.Repeat("a", 60), CategoryPickerUtils{}.NormalizePath(strings.Repeat("a", 60)))
 }
 
 func (test *MailboxUtilitiesTest) TestPickerItemsCountTheLabels() {

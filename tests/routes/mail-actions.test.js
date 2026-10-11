@@ -193,4 +193,21 @@ describe('durable reversible mailbox actions', () => {
     expect(expired.conflict).toBe(true)
     expect((await app.emails.findById(message.id))[1].starred).toBe(true)
   })
+
+  it('undoes and redoes a bodiless JSON POST, as the web client sends it', async () => {
+    const message = email({ id: 'action-bodiless', ownerEmail: 'alice@example.com', read: false })
+    await app.emails.put(message)
+    const applied = await call(MailActions, 'POST', req({
+      token: alice(), body: { ids: [message.id], patch: { folder: 'archive', read: true }, clientRequestId: '22222222-2222-4222-8222-222222222222' },
+      headers: { 'content-type': 'application/json' },
+    }))
+    expect(applied.actionId).toEqual(expect.any(String))
+    const bodiless = { token: alice(), paths: { id: applied.actionId }, headers: { 'content-type': 'application/json' } }
+    const undone = await call(UndoMailAction, 'POST', req(bodiless))
+    expect(undone.status).toBe('undone')
+    expect((await app.emails.findById(message.id))[1]).toMatchObject({ folder: 'inbox', read: false })
+    const redone = await call(RedoMailAction, 'POST', req(bodiless))
+    expect(redone.status).toBe('applied')
+    expect((await app.emails.findById(message.id))[1]).toMatchObject({ folder: 'archive', read: true })
+  })
 })

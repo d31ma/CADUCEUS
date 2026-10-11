@@ -9,6 +9,7 @@
  * the ty to run (see tests/support/TestServer.mjs).
  */
 import { startIdentity } from '../tests/support/identity.mjs'
+import { TestContainer } from '../tests/support/TestContainer.mjs'
 import { TestServer } from '../tests/support/TestServer.mjs'
 
 const port = Number(process.env.E2E_PORT) || 19875
@@ -19,6 +20,7 @@ function stop(code = 0) {
   stopping = true
   try {
     TestServer.stop()
+    void TestContainer.close()
   } finally {
     identity.stop()
     process.exit(code)
@@ -27,6 +29,10 @@ function stop(code = 0) {
 for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => stop(0))
 
 try {
+  // The process that starts the server creates the FYLO collections; the
+  // test container does, through the same bridge, as the route suites do.
+  Object.assign(process.env, identity.env)
+  await TestContainer.open()
   await TestServer.start({
     ...identity.env,
     NODE_ENV: 'test',

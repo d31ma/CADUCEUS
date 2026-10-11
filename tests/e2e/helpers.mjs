@@ -98,31 +98,14 @@ export async function getToken(email) {
 // ── Page setup ────────────────────────────────────────────────────────────────
 
 /**
- * Intercepts /assets/config.js to point the app at the local test server.
+ * Prepares a page for the one-origin test server: the Go client calls the
+ * API on the page's own origin, so only the service worker is turned off.
  * Must be called before page.goto().
  */
 export async function useTestApi(page) {
   await page.addInitScript(() => {
     window.__CADUCEUS_DISABLE_SW = true
   })
-  await page.addInitScript(api => {
-    window.CADUCEUS_CONFIG = { apiUrl: api }
-  }, API)
-  await page.route('http://localhost:19875/**', async route => {
-    if (route.request().resourceType() !== 'document') return route.fallback()
-    const response = await route.fetch()
-    const headers = { ...response.headers() }
-    const policy = headers['content-security-policy'] || "default-src 'self'"
-    headers['content-security-policy'] = `${policy}; connect-src 'self' ${API}`
-    await route.fulfill({ response, headers })
-  })
-  await page.route('**/assets/config.js', route =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/javascript',
-      body: `window.CADUCEUS_CONFIG={apiUrl:"${API}"};`,
-    })
-  )
 }
 
 /**

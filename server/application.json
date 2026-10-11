@@ -1,3 +1,4 @@
 {
-  "names": { "words": ["caduceus", "fylo", "sesame", "smtp", "imap", "mime", "dkim", "mcp", "vapid", "ics", "vcard", "rrule", "eml", "rfc", "uid", "totp", "jwks"] }
+  "names": { "words": ["caduceus", "fylo", "sesame", "smtp", "imap", "mime", "dkim", "mcp", "vapid", "ics", "vcard", "rrule", "eml", "rfc", "uid", "totp", "jwks"] },
+  "server": { "proxies": ["127.0.0.1", "::1"] }
 }

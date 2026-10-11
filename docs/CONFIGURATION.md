@@ -135,6 +135,42 @@ supported extended attributes before starting the new image. Never leave the
 old `fylo/` directory nested beneath the new root. The entrypoint deliberately
 does not move a live or existing store automatically.
 
+## Entry Point and Handler Settings
+
+The container entry point is the Go binary: `caduceus entry [serve|admin:create|domain:migrate|help]`
+(`internal/runtime/entry`). `serve` reads the process environment and:
+
+1. starts `caduceus fylo-bridge` (the single FYLO writer) after `caduceus auth init`,
+   generating `FYLO_BRIDGE_SECRET` when it is unset;
+2. creates every FYLO collection (`internal/platform/fylo/collections.go`);
+3. runs the configured bootstrap (`CADUCEUS_BOOTSTRAP_DOMAINS`, or
+   `CADUCEUS_ADMIN_EMAIL` with `CADUCEUS_ADMIN_DOMAIN`) through `scripts/create-admin.mjs`;
+4. writes `.env` with the handler settings as `YON_*` names, because Tachyon
+   gives handler processes no application environment; paths ending in
+   `_ROOT`, `_FILE`, `_BINARY` or `_EXEC_PATH` are made absolute, and a
+   multi-line value (such as a PEM key) is skipped, so set its `*_FILE` form;
+5. runs `ty serve --port $PORT` (default `8080`), adding `--host $HOST
+   --allow-non-loopback` when `HOST` is not a loopback address;
+6. waits for `GET /health`, then supervises the inbound MX
+   (`MAIL_SERVER_ENABLED`), submission (`MAIL_SUBMISSION_ENABLED`), ACME
+   renewal (`MAIL_ACME_ENABLED`) and the outbound-queue, snooze, reminder and
+   provider-notification workers (each `*_WORKER=off` disables one).
+
+The handler settings are listed once, in `internal/runtime/settings`
+(`HandlerSettings`); a test fails when the Go server reads a setting that is not
+listed. The entry point refuses to overwrite a `.env` it did not write.
+
+| Variable | Description |
+|---|---|
+| `TACHYON_BIN` | The `ty` to run, default `ty` on `PATH` |
+| `CADUCEUS_GO_BINARY` | The binary that serves `fylo-bridge` and `auth init`, default the running executable |
+| `CADUCEUS_SCRIPT_RUNTIME` | Runtime for the operator scripts, default `bun` |
+| `MAIL_STATUS_INTERVAL_MS` | Interval of the `[mail:status]` log record, default `300000`; `0` disables it |
+
+`caduceus inbound-smtp` runs only the inbound MX against `CADUCEUS_API_URL`
+(default `http://127.0.0.1:$PORT`). The server refuses request bodies over
+1 MiB, so the MX answers a larger message with a permanent `552`.
+
 ## Secret Handling
 
 Values marked `writeOnly` in the schema must be redacted from diagnostics,

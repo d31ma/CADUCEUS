@@ -1,22 +1,84 @@
 # Porting the CADUCEUS server to Go
 
-The server is being rewritten in Go on Tachyon Yon. The JavaScript server it
-replaces is kept at `tests/support/legacy-server/` as the reference for
-behaviour and as the test suites' way to seed records. Port it faithfully:
-same routes, same request and response JSON, same FYLO documents, same error
-messages and statuses. This is a rewrite of the language, not of the product.
+The server is written in Go on Tachyon Yon, and the repository runs on it:
+the container entry point, the mail services and the server are Go. The
+JavaScript server it replaced is kept at `tests/support/legacy-server/` only as
+the reference for behaviour and as the test suites' way to seed records (and
+for the `admin:create` and `domain:migrate` operator scripts). Port it
+faithfully: same routes, same request and response JSON, same FYLO documents,
+same error messages and statuses. This is a rewrite of the language, not of
+the product.
 
 ## Layout
 
 ```text
-server/
-  application.json     Yon settings; every design rule is on
-  controllers/         @RequestRoute controllers (one per former route)
-  services/            @Service providers
-  helpers/             @Helper providers (the former repositories, as XHelper)
-  shared/<area>/       plain Go types: route logic, records, validation, protocols
-  models/              data-only types used in route signatures
+server/                 the Go server; Tachyon compiles it (package main)
+  application.json      Yon settings; the design rules are on except visibility (below)
+  controllers/          @RequestRoute controllers (one per former route)
+  services/             @Service providers
+  helpers/              @Helper providers (the former repositories, as XHelper)
+  shared/<area>/        plain Go types: route logic, records, validation, protocols
+  models/               data-only types used in route signatures
+  tests/                Yon test units
+cmd/caduceus/           the Go binary (a normal Go module with internal/)
+internal/
+  runtime/entry/        `caduceus entry`: the container entry point (was scripts/entry.mjs)
+  runtime/settings/     HandlerSettings and the .env writer for the handlers
+  runtime/supervisor/, runtime/tickworker/, runtime/acmecert/
+                        the service supervisor, the queue/snooze/reminder/provider
+                        workers and ACME (were background/*.ts, *.js)
+  mail/inbound/, mail/submission/, mail/smtpd/, mail/mailauth/
+                        the inbound MX, submission and SPF/DKIM/DMARC
+  platform/fylo/        the FYLO owner and the one collection list
+  platform/fylobridge/, platform/bridgeclient/
+                        the signed bridge and its Go client
+client/                 the browser client (merged separately)
+scripts/                build-go, create-admin and migrate-domain (Bun), e2e-preview
+tests/
+  routes/, api/, db/    suites that run the Go server over HTTP (tests/support/TestServer.mjs)
+  support/legacy-server/  the JavaScript server: reference and seeding container
+  e2e/                  Playwright against one `ty serve` (scripts/e2e-preview.mjs)
 ```
+
+### What is kept in step across server/ and internal/
+
+`server/` is compiled by Tachyon as package main and cannot import
+`internal/`, so a few things exist on both sides. Tests keep them in step:
+
+- Bridge frames: `server/shared/boundary/Boundary.go` and
+  `internal/platform/bridgeclient` both sign frames for the FYLO owner;
+  `internal/platform/fylobridge/frames_test.go` builds the server's Boundary
+  and checks the bridge accepts both.
+- Settings: `server/shared/runtime/Settings.go` reads any name from the
+  environment or `YON_APPLICATION_JSON`; `internal/runtime/settings` owns the
+  list the entry point hands over (`HandlerSettings`).
+  `server_settings_test.go` fails when the server reads a name not listed, or
+  when `tests/support/TestServer.mjs` lists different names.
+- Collections: `internal/platform/fylo/collections.go` is the one list the
+  entry point creates and the bridge allows. The server names the ones its
+  routes use in `server/shared/persistence/FyloCollections.go`;
+  `collections_test.go` checks the server's names, the test reset's and the
+  legacy container's against it. The seven authentication collections
+  (`mfa-devices` ... `auth-audit-events`) are retired (SESAME owns
+  authentication) but stay created for existing data roots.
+- The inbound webhook: `internal/mail/inbound` posts
+  `{recipient, sender, subject, body, spamVerdict?, spamScore?}` with
+  `X-Caduceus-Signature`, the hex HMAC-SHA256 of the exact body;
+  `SystemSignature` verifies the same bytes. `tests/routes/inbound-smtp.test.js`
+  runs it end to end.
+
+Tachyon's `server/packages/` (a normal Go module that controllers and
+services may import) is where the frame signer and the settings reader could
+later live once, for both sides.
+
+### Visibility check
+
+`server/application.json` turns Yon's visibility rule (TY1333) off. The rule
+does not count calls from the plain route types in `server/shared/`, so it
+flags helper and service methods that only those route types call. Turn it
+back on when Tachyon counts those calls; until then check new members with
+the rule on in a probe (`gocheck.sh` with `visibility.check` true) and accept
+only that known set.
 
 Go rules Tachyon enforces (read the diagnostic help text when one fires):
 
@@ -112,13 +174,13 @@ entry point, or the test container); routes never create them.
 ## Checking your work
 
 - Build with every rule on:
-  `<scratch>/gocheck.sh <your worktree> <your probe dir>` prints every
+  `<work>/gocheck.sh <your worktree> <your probe dir>` prints every
   diagnostic (`OK` when there are none). Fix all of them in your files.
 - Behaviour: run the route suites that cover your routes against your Go
   server over HTTP:
-  `CADUCEUS_SERVE_ROOT=<your probe dir> TACHYON_BIN=<scratch>/tachyon-target/release/ty bun test tests/routes/<suite>.test.js --timeout 60000`
+  `CADUCEUS_SERVE_ROOT=<your probe dir> TACHYON_BIN=<work>/tachyon-target/release/ty bun test tests/routes/<suite>.test.js --timeout 60000`
   (gocheck.sh refreshes the probe's server/ from your worktree first).
-  `<scratch>/baseline-http.txt` lists what each suite scores against the
+  `<work>/baseline-http.txt` lists what each suite scores against the
   JavaScript server over HTTP; match or beat it. Suites that reach into
   in-process fakes (`app.smtp = ...`) or controller statics cannot pass over
   HTTP; list them in your report rather than changing what they assert.

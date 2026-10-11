@@ -75,71 +75,52 @@ model required by the web application. Before attempting a production rollout,
 review the complete support boundaries in
 [`docs/COMPATIBILITY.md`](./docs/COMPATIBILITY.md).
 
-Start the local API and browser app:
+Build the Go binary, then start everything with its entry point. `caduceus
+entry serve` starts the Go FYLO owner, creates the collections, hands the
+settings to the Go server as `YON_*` in `.env`, runs `ty serve` (the Go server
+in `server/` and the browser client on one origin), and supervises the inbound
+MX, submission, ACME and the queue workers:
 
 ```sh
+bun run go:build
 FYLO_ROOT=.data \
-JWT_SECRET=dev-secret-change-me \
+FYLO_BINARY="$(command -v fylo)" \
+SESAME_BINARY="$(command -v sesame)" \
+SESAME_DEPLOYMENT=.sesame \
 INBOUND_WEBHOOK_SECRET=dev-inbound-secret \
-bun run serve
+EXTERNAL_ACCOUNT_CREDENTIAL_KEYS='{"1":"<32 random bytes, base64url>"}' \
+EXTERNAL_ACCOUNT_ACTIVE_KEY=1 \
+dist-bin/caduceus entry serve
 ```
 
-Create the first admin user:
+`bun run start` does the same. The entry point passes `PORT` (default 8080) to
+`ty serve` as `--port`, and a non-loopback `HOST` as `--host` with
+`--allow-non-loopback`.
+
+Create the first admin user (the entry point starts the FYLO owner for the
+operator script):
 
 ```sh
-FYLO_ROOT=.data \
-bun run admin:create \
+dist-bin/caduceus entry admin:create \
   --email=admin@example.com \
   --domain=example.com
 ```
 
-Build the static frontend:
+Build the static frontend and compile the Go handlers:
 
 ```sh
-CADUCEUS_API_URL=https://api.example.com bun run bundle
+bun run bundle
 ```
 
 The frontend build is written to `dist/web/`.
 
-### Phase 1 Go Runtime
+### Go binary
 
-The Go foundation is available alongside the unchanged legacy production
-runtime. Build the exact Tachyon handoff, qualify Go, and compile the operator
-binary:
-
-```sh
-bun run bundle:go
-bun run go:verify
-bun run go:build
-```
-
-`bundle:go` copies `dist/web` to the ignored `build/static` staging directory
-and creates a digest manifest. `doctor`, `serve`, and `migrate` verify every
-manifested frontend file and the locked FYLO artifact before opening a
-listener.
-
-```sh
-HOST=127.0.0.1 \
-PORT=8080 \
-METRICS_HOST=127.0.0.1 \
-METRICS_PORT=9090 \
-STATIC_DIR=build/static \
-RUNTIME_LOCK=runtime.lock.json \
-FYLO_BINARY="$(command -v fylo)" \
-FYLO_ROOT=.data \
-FYLO_SCHEMA=db/schemas \
-JWT_SECRET=dev-secret-change-me \
-INBOUND_WEBHOOK_SECRET=dev-inbound-secret \
-dist-bin/caduceus doctor
-```
-
-Run `dist-bin/caduceus serve` with the same environment to serve the login
-shell, `/api/v1/system`, `/healthz`, and `/readyz`. Prometheus metrics are
-available only from the loopback operations listener on port `9090`.
-
-The default Docker entrypoint and the legacy mail/authentication APIs remain
-unchanged in Phase 1. Production HTTP cutover occurs only after the later
-contract-parity phases.
+`dist-bin/caduceus` is the whole runtime: `entry` (the container entry point),
+`fylo-bridge` (the FYLO owner), `inbound-smtp` (the inbound MX alone), `auth`
+(SESAME deployment and provisioning), `backup`, `attachments`, `migrate` and
+`doctor`. The Go server in `server/` is compiled by Tachyon; see
+[`docs/GO_PORT.md`](./docs/GO_PORT.md).
 
 ---
 
@@ -184,23 +165,17 @@ contract-parity phases.
 
 ## Architecture
 
-The repository follows the current Tachyon workspace layout:
+The repository follows the Tachyon workspace layout, with the server in Go:
 
 ```text
-client/
-  components/
-  pages/
-  shared/{assets,data,scripts,styles}/
-server/
-  routes/      # thin Tachyon transport adapters
-  features/    # feature-first business and persistence packages
-    {auth,calendar,delivery,domains,mailbox,notifications,presence,users}/
-  platform/    # shared HTTP, security, rate-limit, and Fylo infrastructure
-  data/
-  deps/       # FYLO, CHEX, and TTID Node shims
-db/
-  .collections/
-  schemas/
+client/                 # the browser client (Tachyon Tac)
+server/                 # the Go server, compiled by Tachyon Yon
+  controllers/ services/ helpers/ models/
+  shared/<area>/        # route logic, records, protocols (plain Go)
+cmd/caduceus/           # the Go binary: entry point, FYLO owner, mail services
+internal/               # its packages: runtime/entry, mail/{inbound,submission,smtpd}, platform/...
+db/schemas/             # FYLO schemas
+tests/support/legacy-server/  # the former JavaScript server: reference and test seeding only
 ```
 
 ```mermaid
@@ -231,8 +206,9 @@ Published images are available at [`ghcr.io/d31ma/caduceus`](https://ghcr.io/d31
 docker run --rm \
   --cap-add CHOWN \
   -p 8080:8080 \
-  -e JWT_SECRET=change-me \
   -e INBOUND_WEBHOOK_SECRET=change-me-too \
+  -e EXTERNAL_ACCOUNT_CREDENTIAL_KEYS='{"1":"<32 random bytes, base64url>"}' \
+  -e EXTERNAL_ACCOUNT_ACTIVE_KEY=1 \
   -e WEB_PUSH_DISABLED=true \
   -e FYLO_ROOT=/data/caduceus \
   -v caduceus-data:/data \
@@ -244,6 +220,16 @@ Build locally:
 ```sh
 docker build -t caduceus:local .
 ```
+
+The Go server needs Tachyon features newer than the pinned release. Until one
+ships, build with an unreleased Linux `ty`:
+
+```sh
+docker build --build-context tachyon-override=<dir holding ty> -t caduceus:local .
+```
+
+The image's entry point is `caduceus entry`; the build compiles the Go handlers
+with `ty bundle`, so the image serves without a compiler.
 
 The container serves the API on `PORT` and stores data under `FYLO_ROOT`.
 
@@ -312,7 +298,7 @@ CADUCEUS runs as a **true MTA** — receiving mail directly over SMTP and sendin
 it straight to each recipient's MX. Set `MAIL_SERVER_ENABLED=true` and configure
 the standalone mail-server block in `.env.example`.
 
-- **Receiving** — a built-in SMTP server (`server/features/delivery/services/smtp-inbound-server.js`)
+- **Receiving** — a built-in SMTP server (`internal/mail/inbound`, run by `caduceus entry`)
   listens on port 25, accepts mail for your hosted domains, and hands each
   message to the same `/inbound/webhook` pipeline (storage, spam, routing,
   rules, push). Each message is checked for
@@ -632,7 +618,9 @@ operators should follow [`docs/EXTENSIONS.md`](docs/EXTENSIONS.md).
 
 ## Image Hardening
 
-The production image is built on a Bun distroless base.
+The production image is built on a Bun distroless base. The entry point is the
+Go binary; Bun remains only for the `admin:create` and `domain:migrate`
+operator scripts.
 
 - No shell, package manager, or coreutils in the runtime image.
 - Runs as non-root user `65532:65532`.

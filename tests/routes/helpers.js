@@ -47,7 +47,7 @@ let active = null
  * Persistence goes through the same bridge for the same reason it does in
  * production — one writer per FYLO root.
  */
-export async function setupRoutes() {
+export async function setupRoutes(extra = {}) {
   const identity = await startIdentity()
   // Remember what this harness overwrites. A suite that runs after it in the
   // same process must not inherit a pointer to a bridge that has stopped.
@@ -66,6 +66,7 @@ export async function setupRoutes() {
     CADUCEUS_ENABLE_TEST_ROUTES: 'true',
     STREAM_MAX_MS: '750',
     STREAM_POLL_MS: '50',
+    ...extra,
   })
   const tokens = new Map()
   for (const member of POOL) {

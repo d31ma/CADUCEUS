@@ -61,7 +61,7 @@ func (route ContactsRoute) Create(request *http.Request) *http.Response {
 		} {
 			created[key] = value
 		}
-		return Answer{}.Ok(ProviderAccounts{}.Defined(created))
+		return Answer{}.Ok(StoredRecords{}.Defined(created))
 	}
 	if values.Truthy(source) {
 		return Answer{}.BadRequest("source is invalid")
@@ -143,7 +143,7 @@ func (route ContactsRoute) AddressBooks(request *http.Request) *http.Response {
 	}
 	books, err := route.provider().Books(caller.Token)
 	if err != nil {
-		return ProviderAccounts{}.Failure(err)
+		return ExternalAccounts{}.Failure(err)
 	}
 	return Answer{}.Ok(books)
 }
@@ -159,8 +159,8 @@ func (ContactsRoute) answered(value any, err error) *http.Response {
 // failure answers a failed contact change: boundary failures with their
 // status, anything else as a bad request.
 func (ContactsRoute) failure(err error, fallback string) *http.Response {
-	if (ProviderAccounts{}).IsBoundary(err) {
-		return ProviderAccounts{}.Failure(err)
+	if (ExternalAccounts{}).IsBoundary(err) {
+		return ExternalAccounts{}.Failure(err)
 	}
 	if err.Error() == "" {
 		return Answer{}.BadRequest(fallback)
@@ -169,5 +169,5 @@ func (ContactsRoute) failure(err error, fallback string) *http.Response {
 }
 
 func (ContactsRoute) provider() ProviderContacts {
-	return ProviderContacts{Accounts: ProviderAccounts{}}
+	return ProviderContacts{Accounts: ExternalAccounts{}.FromSettings()}
 }

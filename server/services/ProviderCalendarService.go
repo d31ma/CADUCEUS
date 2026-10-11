@@ -40,5 +40,5 @@ func (service *ProviderCalendarService) Delete(token string, eventId string, rec
 }
 
 func (*ProviderCalendarService) calendars() ProviderCalendars {
-	return ProviderCalendars{Accounts: ProviderAccounts{}}
+	return ProviderCalendars{Accounts: ExternalAccounts{}.FromSettings()}
 }

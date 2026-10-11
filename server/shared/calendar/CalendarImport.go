@@ -199,7 +199,7 @@ func (calendar CalendarImport) replace(documentId string, event map[string]any) 
 			return err
 		}
 	}
-	_, err := calendar.Events.Put(ProviderAccounts{}.Defined(event))
+	_, err := calendar.Events.Put(StoredRecords{}.Defined(event))
 	return err
 }
 

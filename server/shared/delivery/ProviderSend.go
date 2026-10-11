@@ -17,7 +17,7 @@ type ProviderSend struct {
 // Accept answers the route answer of a connected-account send.
 func (provider ProviderSend) Accept(plan SendPlan) (any, error) {
 	send := provider.Acceptance
-	accounts := DeliveryAccounts{Token: plan.Caller.Token}
+	accounts := ExternalAccounts{}.For(plan.Caller.Token)
 	accountId := RecordValues{}.Text(plan.Account["id"])
 	stored, submission, err := provider.submit(plan, accounts, accountId)
 	if err == nil && plan.HasSendAt {
@@ -37,13 +37,13 @@ func (provider ProviderSend) Accept(plan SendPlan) (any, error) {
 	}
 	if err != nil {
 		if submissionId := (RecordValues{}).Text(submission["id"]); submissionId != "" {
-			_, _ = accounts.Call("accounts.cancel_submission", accountId, map[string]any{"submissionId": submissionId})
+			_, _ = accounts.OnAccount("accounts.cancel_submission", accountId, map[string]any{"submissionId": submissionId})
 		}
 		if messageId := (RecordValues{}).Text(stored["messageId"]); messageId != "" {
 			_ = send.Sent.RollbackExternalAccepted(messageId)
 		}
 		send.Journal.MarkAmbiguous(plan.JournalId)
-		return accounts.Failure(err), nil
+		return accounts.Refusal(err), nil
 	}
 	if plan.ArchiveSourceId != "" {
 		// Archiving a connected-account source runs through the journaled
@@ -56,7 +56,7 @@ func (provider ProviderSend) Accept(plan SendPlan) (any, error) {
 }
 
 // submit stores the Sent copy and submits it to the provider journal.
-func (provider ProviderSend) submit(plan SendPlan, accounts DeliveryAccounts, accountId string) (map[string]any, map[string]any, error) {
+func (provider ProviderSend) submit(plan SendPlan, accounts ExternalAccounts, accountId string) (map[string]any, map[string]any, error) {
 	stored, err := provider.Acceptance.Sent.RecordExternalAccepted(plan.Caller.Email, plan.Sender, plan.Request, plan.TrackingId)
 	if err != nil {
 		return nil, nil, err
@@ -70,13 +70,13 @@ func (provider ProviderSend) submit(plan SendPlan, accounts DeliveryAccounts, ac
 	notBefore := provider.notBefore(plan)
 	if plan.TrackingId == "" {
 		source := MimeMessage{}.Source(plan.Sender, plan.Request, messageId, time.Now())
-		submission, err := accounts.Call("accounts.submit", accountId, map[string]any{
+		submission, err := accounts.OnAccount("accounts.submit", accountId, map[string]any{
 			"idempotencyKey": key, "envelopeFrom": plan.Sender, "recipients": recipients,
 			"rawRFC822Base64": base64.StdEncoding.EncodeToString(source), "notBefore": notBefore,
 		})
 		return stored, submission, err
 	}
-	submission, err := accounts.Call("accounts.submit_batch_begin", accountId, map[string]any{
+	submission, err := accounts.OnAccount("accounts.submit_batch_begin", accountId, map[string]any{
 		"idempotencyKey": key, "envelopeFrom": plan.Sender, "recipients": recipients, "notBefore": notBefore,
 	})
 	if err != nil {
@@ -113,7 +113,7 @@ func (ProviderSend) Batch(upload BatchUpload) (map[string]any, error) {
 			return submission, err
 		}
 		source := MimeMessage{}.Source(upload.Sender, request, upload.MessageId, time.Now())
-		appended, err := upload.Accounts.Call(upload.Operation+"_append", upload.AccountId, map[string]any{
+		appended, err := upload.Accounts.OnAccount(upload.Operation+"_append", upload.AccountId, map[string]any{
 			"submissionId": submissionId, "revision": submission["revision"], "index": index, "recipient": recipient,
 			"rawRFC822Base64": base64.StdEncoding.EncodeToString(source),
 		})
@@ -122,7 +122,7 @@ func (ProviderSend) Batch(upload BatchUpload) (map[string]any, error) {
 		}
 		submission = DeliveryFields{}.Merged(appended, map[string]any{"id": RecordValues{}.Coalesce(appended["id"], submissionId)})
 	}
-	committed, err := upload.Accounts.Call(upload.Operation+"_commit", upload.AccountId, map[string]any{
+	committed, err := upload.Accounts.OnAccount(upload.Operation+"_commit", upload.AccountId, map[string]any{
 		"submissionId": submissionId, "revision": submission["revision"],
 	})
 	if err != nil {

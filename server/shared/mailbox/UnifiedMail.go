@@ -8,7 +8,7 @@ import (
 // owner-authorized operations of the external account boundary, and maps it
 // onto the hosted mailbox contract.
 type UnifiedMail struct {
-	Accounts ProviderMailbox
+	Accounts ExternalAccounts
 }
 
 // Summaries answers the caller's provider rows as inbox rows (at most 1000).

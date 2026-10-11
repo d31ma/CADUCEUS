@@ -33,6 +33,6 @@ func (service *MailActionService) Mappings(ownerEmail string) (CategoryMappings,
 func (service *MailActionService) actions() MailActions {
 	return MailActions{
 		Actions: service.mailActionsHelper, Emails: service.emailsHelper, Categories: service.categoryMappingService,
-		Provider: UnifiedMail{Accounts: ProviderMailbox{}.FromSettings()},
+		Provider: UnifiedMail{Accounts: ExternalAccounts{}.FromSettings()},
 	}
 }

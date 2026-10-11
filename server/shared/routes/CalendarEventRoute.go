@@ -266,7 +266,7 @@ func (route CalendarEventRoute) located(caller RouteCaller, id string) (string, 
 	if (event == nil || documentId == "") && route.Providers.Available() {
 		found, err := route.Providers.Find(caller.Token, id)
 		if err != nil {
-			return "", nil, false, ProviderAccounts{}.Failure(err)
+			return "", nil, false, ExternalAccounts{}.Failure(err)
 		}
 		if found != nil {
 			event, documentId, provider = found.Event, "", true

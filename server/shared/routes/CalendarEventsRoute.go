@@ -96,7 +96,7 @@ func (route CalendarEventsRoute) List(request *http.Request) *http.Response {
 	if route.Providers.Available() {
 		provided, err := route.Providers.List(caller.Token)
 		if err != nil {
-			return ProviderAccounts{}.Failure(err)
+			return ExternalAccounts{}.Failure(err)
 		}
 		events = ProviderCalendarRules{}.Merged(events, provided)
 	}

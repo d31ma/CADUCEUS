@@ -144,9 +144,9 @@ func (send SendAcceptance) sender(plan *SendPlan, request map[string]any) (any, 
 		return nil, err
 	}
 	if sender == "" && from != "" {
-		accounts, err := DeliveryAccounts{Token: plan.Caller.Token}.List()
+		accounts, err := ExternalAccounts{}.For(plan.Caller.Token).List()
 		if err != nil {
-			return DeliveryAccounts{}.Failure(err), nil
+			return ExternalAccounts{}.Refusal(err), nil
 		}
 		for _, account := range accounts {
 			capabilities, _ := RecordValues{}.Object(account["capabilities"])

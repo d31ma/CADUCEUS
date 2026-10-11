@@ -18,7 +18,7 @@ func (route CalendarCalendarsRoute) List(request *http.Request) *http.Response {
 	}
 	calendars, err := route.Providers.Calendars(caller.Token)
 	if err != nil {
-		return ProviderAccounts{}.Failure(err)
+		return ExternalAccounts{}.Failure(err)
 	}
 	return Answer{}.Ok(map[string]any{"calendars": calendars})
 }

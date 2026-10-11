@@ -123,7 +123,7 @@ func (CalendarEventRules) ProviderFailure(err error) *http.Response {
 	if regexp.MustCompile(`(?i)not found`).MatchString(message) {
 		return Answer{}.NotFound(message)
 	}
-	return ProviderAccounts{}.Failure(err)
+	return ExternalAccounts{}.Failure(err)
 }
 
 // MutationRefusal answers why the caller may not change an event (or one

@@ -57,3 +57,14 @@ func (StoredRecords) JsonText(value any) string {
 	}
 	return string(bytes.TrimRight(buffer.Bytes(), "\n"))
 }
+
+// Defined answers fields without the ones that are undefined, as
+// JSON.stringify left them out of a payload or a stored record.
+func (StoredRecords) Defined(fields map[string]any) map[string]any {
+	for key, value := range fields {
+		if value == nil {
+			delete(fields, key)
+		}
+	}
+	return fields
+}

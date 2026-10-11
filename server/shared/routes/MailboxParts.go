@@ -47,7 +47,7 @@ func (parts MailboxParts) Presented(caller RouteCaller, emails []map[string]any)
 
 // Provider answers the connected-account mail of the deployment.
 func (MailboxParts) Provider() UnifiedMail {
-	return UnifiedMail{Accounts: ProviderMailbox{}.FromSettings()}
+	return UnifiedMail{Accounts: ExternalAccounts{}.FromSettings()}
 }
 
 // Mappings answers the caller's category role mappings.

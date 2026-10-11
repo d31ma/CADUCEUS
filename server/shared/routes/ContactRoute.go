@@ -64,7 +64,7 @@ func (route ContactRoute) Update(id string, request *http.Request) *http.Respons
 		return Answer{}.NotFound("Contact not found")
 	}
 	contact := StoredRecords{}.Without(body, "idempotencyKey")
-	mutation, err := provider.Mutate(caller.Token, remote["accountId"], ProviderAccounts{}.Defined(map[string]any{
+	mutation, err := provider.Mutate(caller.Token, remote["accountId"], StoredRecords{}.Defined(map[string]any{
 		"idempotencyKey": provider.IdempotencyKey(body["idempotencyKey"], "update"), "kind": "update", "contactId": remote["id"], "expectedEtag": remote["etag"], "contact": contact,
 	}))
 	if err != nil {
@@ -75,7 +75,7 @@ func (route ContactRoute) Update(id string, request *http.Request) *http.Respons
 		updated[key] = value
 	}
 	updated["source"], updated["syncState"], updated["mutationId"] = "carddav", mutation["state"], mutation["id"]
-	return Answer{}.Ok(ProviderAccounts{}.Defined(updated))
+	return Answer{}.Ok(StoredRecords{}.Defined(updated))
 }
 
 // Delete deletes the caller's contact, or queues the deletion of their
@@ -100,13 +100,13 @@ func (route ContactRoute) Delete(id string, request *http.Request) *http.Respons
 	if remote == nil {
 		return Answer{}.NotFound("Contact not found")
 	}
-	mutation, err := provider.Mutate(caller.Token, remote["accountId"], ProviderAccounts{}.Defined(map[string]any{
+	mutation, err := provider.Mutate(caller.Token, remote["accountId"], StoredRecords{}.Defined(map[string]any{
 		"idempotencyKey": provider.IdempotencyKey(RouteQuery{}.Value(request, "idempotencyKey"), "delete"), "kind": "delete", "contactId": remote["id"], "expectedEtag": remote["etag"], "contact": map[string]any{},
 	}))
 	if err != nil {
 		return ContactsRoute{}.failure(err, "Contact could not be deleted")
 	}
-	return Answer{}.Ok(ProviderAccounts{}.Defined(map[string]any{"deleted": false, "pending": true, "mutationId": mutation["id"], "accountId": remote["accountId"]}))
+	return Answer{}.Ok(StoredRecords{}.Defined(map[string]any{"deleted": false, "pending": true, "mutationId": mutation["id"], "accountId": remote["accountId"]}))
 }
 
 // Mutation answers the state of one queued change to a provider contact.
@@ -122,8 +122,8 @@ func (route ContactRoute) Mutation(id string, request *http.Request) *http.Respo
 	}
 	mutation, err := route.provider().Mutation(caller.Token, accountId, mutationId)
 	if err != nil {
-		if (ProviderAccounts{}).IsBoundary(err) {
-			return ProviderAccounts{}.Failure(err)
+		if (ExternalAccounts{}).IsBoundary(err) {
+			return ExternalAccounts{}.Failure(err)
 		}
 		return Answer{}.NotFound("Contact mutation not found")
 	}
@@ -152,5 +152,5 @@ func (ContactRoute) unexpected() *http.Response {
 }
 
 func (ContactRoute) provider() ProviderContacts {
-	return ProviderContacts{Accounts: ProviderAccounts{}}
+	return ProviderContacts{Accounts: ExternalAccounts{}.FromSettings()}
 }

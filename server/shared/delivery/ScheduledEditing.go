@@ -161,10 +161,10 @@ func (editing ScheduledEditing) external(record *ScheduledRecord, caller RouteCa
 	if accountId == "" || submissionId == "" {
 		return map[string]any{"error": "Scheduled delivery is being reconciled", "conflict": true}, nil, nil
 	}
-	accounts := DeliveryAccounts{Token: caller.Token}
+	accounts := ExternalAccounts{}.For(caller.Token)
 	submission, err := editing.Schedules.Submission(record, caller.Token)
 	if err != nil {
-		return accounts.Failure(err), nil, nil
+		return accounts.Refusal(err), nil, nil
 	}
 	revision, isNumber := values.Number(submission["revision"])
 	if submission["state"] != "queued" || !isNumber || revision != math.Trunc(revision) || revision < 1 {
@@ -192,28 +192,28 @@ func (editing ScheduledEditing) external(record *ScheduledRecord, caller RouteCa
 		var delivery map[string]any
 		if delivery, err = (ExternalSubmission{}).DeliveryRequest(request, trackingId, recipients[0]); err == nil {
 			source := MimeMessage{}.Source(edit.Sender, delivery, id, time.Now())
-			_, err = accounts.Call("accounts.update_submission", accountId, map[string]any{
+			_, err = accounts.OnAccount("accounts.update_submission", accountId, map[string]any{
 				"submissionId": submissionId, "revision": submission["revision"], "idempotencyKey": submission["idempotencyKey"],
 				"envelopeFrom": edit.Sender, "recipients": recipients, "rawRFC822Base64": base64.StdEncoding.EncodeToString(source), "notBefore": notBefore,
 			})
 		}
 	}
 	if err != nil {
-		return accounts.Failure(err), nil, nil
+		return accounts.Refusal(err), nil, nil
 	}
 	result, err := editing.Schedules.Sent.UpdateExternalScheduled(edit, trackingId)
 	if err != nil {
-		return accounts.Failure(err), nil, nil
+		return accounts.Refusal(err), nil, nil
 	}
 	return nil, result, nil
 }
 
 // batch stages, uploads and commits a tracked multi-recipient edit; a
 // failure aborts a staged edit that is still open.
-func (editing ScheduledEditing) batch(record *ScheduledRecord, accounts DeliveryAccounts, submission map[string]any, recipients []string, trackingId string, edit ScheduledEdit, notBefore string) error {
+func (editing ScheduledEditing) batch(record *ScheduledRecord, accounts ExternalAccounts, submission map[string]any, recipients []string, trackingId string, edit ScheduledEdit, notBefore string) error {
 	values := RecordValues{}
 	accountId, submissionId := values.Text(record.Entry["externalAccountId"]), values.Text(record.Entry["externalSubmissionId"])
-	staged, err := accounts.Call("accounts.submit_batch_update_begin", accountId, map[string]any{
+	staged, err := accounts.OnAccount("accounts.submit_batch_update_begin", accountId, map[string]any{
 		"submissionId": submissionId, "revision": submission["revision"], "idempotencyKey": submission["idempotencyKey"],
 		"envelopeFrom": edit.Sender, "recipients": recipients, "notBefore": notBefore,
 	})
@@ -225,7 +225,7 @@ func (editing ScheduledEditing) batch(record *ScheduledRecord, accounts Delivery
 	}
 	if err != nil {
 		if current, currentErr := editing.Schedules.Submission(record, accounts.Token); currentErr == nil && current["state"] == "editing" {
-			_, _ = accounts.Call("accounts.submit_batch_update_abort", accountId, map[string]any{"submissionId": submissionId, "revision": current["revision"]})
+			_, _ = accounts.OnAccount("accounts.submit_batch_update_abort", accountId, map[string]any{"submissionId": submissionId, "revision": current["revision"]})
 		}
 	}
 	return err

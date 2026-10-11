@@ -6,7 +6,7 @@ import (
 // ProviderContacts reaches the caller's CardDAV address books through the
 // Go owner of external accounts: their contacts, and contact mutations.
 type ProviderContacts struct {
-	Accounts ProviderAccounts
+	Accounts ExternalAccounts
 }
 
 // All answers the caller's provider contacts.

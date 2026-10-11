@@ -77,7 +77,7 @@ func (UsersPreferencesRoute) accounts(body map[string]any, user map[string]any, 
 	if _, named := body["newMailNotificationExternalAccounts"]; !named {
 		return TextList{}.Of(user["newMailNotificationExternalAccounts"]), nil
 	}
-	return ExternalAccountIds{}.Of(caller.Token)
+	return ExternalAccounts{}.FromSettings().Ids(caller.Token)
 }
 
 func (UsersPreferencesRoute) notifications(body map[string]any, user map[string]any, next map[string]any, accounts []string) *PreferenceProblem {

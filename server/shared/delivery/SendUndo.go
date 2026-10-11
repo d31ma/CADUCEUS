@@ -59,9 +59,9 @@ func (undo SendUndo) external(caller RouteCaller, external map[string]any, missi
 	if email == nil || email["ownerEmail"] != caller.Email {
 		return missing, nil
 	}
-	accounts := DeliveryAccounts{Token: caller.Token}
-	if _, err := accounts.Call("accounts.cancel_submission", values.Text(external["accountId"]), map[string]any{"submissionId": external["submissionId"]}); err != nil {
-		return accounts.Failure(err), nil
+	accounts := ExternalAccounts{}.For(caller.Token)
+	if _, err := accounts.OnAccount("accounts.cancel_submission", values.Text(external["accountId"]), map[string]any{"submissionId": external["submissionId"]}); err != nil {
+		return accounts.Refusal(err), nil
 	}
 	if _, err := undo.Reminders.DismissForEmail(messageId, caller.Email); err != nil {
 		return nil, err

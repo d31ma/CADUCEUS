@@ -1014,8 +1014,9 @@ Open:
   26.36.01, and the image can take an unreleased `ty` through
   `--build-context tachyon-override=<dir>`. A release is needed before the
   image builds from pinned versions alone.
-- **Visibility rule.** `server/application.json` turns TY1333 off because it
-  does not count calls from `server/shared/` route types.
+- **Visibility rule.** `server/application.json` turns TY1333 off so the
+  server builds; 13 members the JavaScript workers called in process are
+  unused or test-only in Go and need to be made private or removed.
 
 ## 21. Follow-ups
 

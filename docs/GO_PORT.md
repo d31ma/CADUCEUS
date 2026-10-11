@@ -73,12 +73,16 @@ later live once, for both sides.
 
 ### Visibility check
 
-`server/application.json` turns Yon's visibility rule (TY1333) off. The rule
-does not count calls from the plain route types in `server/shared/`, so it
-flags helper and service methods that only those route types call. Turn it
-back on when Tachyon counts those calls; until then check new members with
-the rule on in a probe (`gocheck.sh` with `visibility.check` true) and accept
-only that known set.
+`server/application.json` turns Yon's visibility rule (TY1333) off, because
+`ty bundle` and `ty serve` refuse to run while it reports anything. With it on,
+it reports 13 helper and service members (for example
+`SnoozeHelper.ListElapsed`, `OutboxHelper.FindExpired`,
+`PushService.NotifyNewEmail`) that the JavaScript background workers called
+in process; the Go workers reach the server over HTTP, so in Go only the Yon
+test units, or nothing, call them. Making them private or deleting them is a
+follow-up; then turn the rule back on. Until then, check new code with the
+rule on in a probe (set `visibility.check` to true after copying `server/`)
+and accept only that set.
 
 Go rules Tachyon enforces (read the diagnostic help text when one fires):
 

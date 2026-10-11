@@ -30,6 +30,11 @@ var (
 	quoted       = regexp.MustCompile(`"([A-Z][A-Z0-9_]+)"`)
 )
 
+// reservedByTachyon are names the server reads that `.env` cannot carry:
+// Tachyon refuses YON_PORT (TY2010) because it owns the endpoint, so a
+// handler reads "" and falls back to its default.
+var reservedByTachyon = map[string]bool{"PORT": true}
+
 // The Go server's handlers read settings by name through Settings{}.Value,
 // which answers "" for a name the entry point did not hand over. Every name
 // they read must be in HandlerSettings.
@@ -70,6 +75,9 @@ func TestServerReadsOnlyHandedOverSettings(t *testing.T) {
 		t.Fatalf("found only %d settings reads under %s; the patterns no longer match the server", len(read), server)
 	}
 	for name, path := range read {
+		if reservedByTachyon[name] {
+			continue
+		}
 		if !slices.Contains(HandlerSettings, name) {
 			t.Errorf("%s reads %s, which is not in HandlerSettings", path, name)
 		}
@@ -97,5 +105,15 @@ func TestTestServerHandsOverTheSameSettings(t *testing.T) {
 	marker := regexp.MustCompile(`static MARKER = '([^']*)'`).FindStringSubmatch(string(data))
 	if marker == nil || marker[1] != GeneratedMarker {
 		t.Fatalf("TestServer.MARKER = %q, want %q", marker, GeneratedMarker)
+	}
+}
+
+// `ty serve` refuses a project .env that sets its own endpoint or profile
+// (TY2010), so the handed-over settings must never include those names.
+func TestHandlerSettingsLeaveTachyonNamesAlone(t *testing.T) {
+	for _, name := range HandlerSettings {
+		if reservedByTachyon[name] || name == "HOST" || name == "PROFILE" || strings.HasPrefix(name, "SERVER_") {
+			t.Errorf("HandlerSettings hands over %s, which Tachyon reserves", name)
+		}
 	}
 }

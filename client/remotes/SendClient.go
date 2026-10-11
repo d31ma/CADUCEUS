@@ -1,24 +1,34 @@
-// @HTTPClient
+// SendClient is the /send route group. The shell undoes a send that the
+// composer left pending across a navigation.
+// @HTTPClient("/send")
 type SendClient interface {
-	// @GetRequest("/send/scheduled")
+	// @PostRequest("/undo")
+	Undo(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @RequestBody
+		undo BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @GetRequest("/scheduled")
 	Scheduled(
 		// @RequestHeader("Authorization")
 		authorization string,
 	) ([]ScheduledSend, error)
 
-	// @GetRequest("/send/scheduled/{id}")
+	// @GetRequest("/scheduled/{id}")
 	ScheduledMessage(
 		// @RequestHeader("Authorization")
 		authorization string,
-		// @PathVariable("id")
+		// @PathVariable
 		id string,
 	) (ScheduledSend, error)
 
-	// @DeleteRequest("/send/scheduled/{id}")
+	// @DeleteRequest("/scheduled/{id}")
 	CancelScheduled(
 		// @RequestHeader("Authorization")
 		authorization string,
-		// @PathVariable("id")
+		// @PathVariable
 		id string,
 	) (ScheduledCancelled, error)
 }

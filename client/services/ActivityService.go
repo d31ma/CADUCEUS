@@ -15,7 +15,7 @@ type ActivityService struct {
 	activityClient            *ActivityClient
 	applicationEventPublisher ApplicationEventPublisher
 	Events                    []ActivityEventRow
-	Metrics                   ActivitySummary
+	Metrics                   ActivityTotals
 	Daily                     []ActivityDayRow
 	// @SessionState
 	Subjects         []ActivitySubjectRow
@@ -153,8 +153,8 @@ func (ActivityService) linkLabel(raw string) string {
 	return target.Hostname() + map[bool]string{true: "", false: separator + rest}[rest == ""]
 }
 
-func (activity *ActivityService) summary(metrics ActivityMetrics) ActivitySummary {
-	return ActivitySummary{
+func (activity *ActivityService) summary(metrics ActivityMetrics) ActivityTotals {
+	return ActivityTotals{
 		Sent: metrics.Sent, Received: metrics.Received, Tracked: metrics.Tracked,
 		Opened: metrics.Opened, Clicked: metrics.Clicked, Replied: metrics.Replied,
 		TrackingRateLabel: activity.percent(metrics.TrackingRate), OpenRateLabel: activity.percent(metrics.OpenRate),

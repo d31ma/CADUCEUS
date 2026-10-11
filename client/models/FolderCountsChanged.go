@@ -1,4 +1,3 @@
-// Per-folder message counts for the sidebar badges.
 type FolderCountsChanged struct {
 	Counts              map[string]int            `json:"counts"`
 	ByDomain            map[string]map[string]int `json:"byDomain"`

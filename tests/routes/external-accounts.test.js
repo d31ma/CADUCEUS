@@ -621,6 +621,10 @@ function imapSyncFixture(connection, state) {
 		connection.write(`${tag} OK [COPYUID ${validity} ${sourceUID} ${state.uid}] moved\r\n`)
 	  }
       else if (operation.startsWith('LOGOUT')) connection.write(`* BYE\r\n${tag} OK logout\r\n`)
+      // A real server answers every command; the sync client asks for
+      // CAPABILITY after LOGIN and waits for the tagged reply.
+      else if (operation === 'CAPABILITY') connection.write(`* CAPABILITY IMAP4rev1 MOVE UIDPLUS\r\n${tag} OK capability\r\n`)
+      else connection.write(`${tag} BAD unsupported by the fixture\r\n`)
     }
   })
 }

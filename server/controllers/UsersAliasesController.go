@@ -14,19 +14,22 @@ type UsersAliasesController struct {
 // PostAlias adds an alias.
 // @PostRoute
 func (controller *UsersAliasesController) PostAlias(request *http.Request) *http.Response {
-	return controller.route().Add(request)
+	aliases := controller.route()
+	return aliases.Add(request)
 }
 
 // DeleteAlias removes an alias.
 // @DeleteRoute
 func (controller *UsersAliasesController) DeleteAlias(request *http.Request) *http.Response {
-	return controller.route().Remove(request)
+	aliases := controller.route()
+	return aliases.Remove(request)
 }
 
 // GetAliases answers the caller's aliases.
 // @GetRoute
 func (controller *UsersAliasesController) GetAliases(request *http.Request) *http.Response {
-	return controller.route().List(request)
+	aliases := controller.route()
+	return aliases.List(request)
 }
 
 func (controller *UsersAliasesController) route() UsersAliasesRoute {

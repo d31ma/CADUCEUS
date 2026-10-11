@@ -17,7 +17,8 @@ func (controller *CalendarEventsIdController) DeleteEvent(
 	id string,
 	request *http.Request,
 ) *http.Response {
-	return controller.route().Delete(id, request)
+	events := controller.route()
+	return events.Delete(id, request)
 }
 
 // @PutRoute
@@ -26,7 +27,8 @@ func (controller *CalendarEventsIdController) PutEvent(
 	id string,
 	request *http.Request,
 ) *http.Response {
-	return controller.route().Update(id, request)
+	events := controller.route()
+	return events.Update(id, request)
 }
 
 // @GetRoute
@@ -35,7 +37,8 @@ func (controller *CalendarEventsIdController) GetEvent(
 	id string,
 	request *http.Request,
 ) *http.Response {
-	return controller.route().Get(id, request)
+	events := controller.route()
+	return events.Get(id, request)
 }
 
 func (controller *CalendarEventsIdController) route() CalendarEventRoute {

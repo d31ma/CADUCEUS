@@ -15,7 +15,7 @@ func (controller *SendScheduledIdController) GetScheduledMessage(
 	id string,
 	request *http.Request,
 ) *http.Response {
-	return controller.route().Detail(id, request)
+	return SendScheduledRoute{Access: controller.accessHelper, Send: controller.sendService}.Detail(id, request)
 }
 
 // @PutRoute
@@ -24,7 +24,7 @@ func (controller *SendScheduledIdController) PutScheduledMessage(
 	id string,
 	request *http.Request,
 ) *http.Response {
-	return controller.route().Edit(id, request)
+	return SendScheduledRoute{Access: controller.accessHelper, Send: controller.sendService}.Edit(id, request)
 }
 
 // @DeleteRoute
@@ -33,9 +33,5 @@ func (controller *SendScheduledIdController) DeleteScheduledMessage(
 	id string,
 	request *http.Request,
 ) *http.Response {
-	return controller.route().Cancel(id, request)
-}
-
-func (controller *SendScheduledIdController) route() SendScheduledRoute {
-	return SendScheduledRoute{Access: controller.accessHelper, Send: controller.sendService}
+	return SendScheduledRoute{Access: controller.accessHelper, Send: controller.sendService}.Cancel(id, request)
 }

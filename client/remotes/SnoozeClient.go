@@ -1,10 +1,12 @@
-// @HTTPClient
+// SnoozeClient is the /snooze route group. The shell undoes a snooze that the
+// reader left pending across a navigation.
+// @HTTPClient("/snooze")
 type SnoozeClient interface {
-	// @PostRequest("/snooze")
-	Snooze(
-		// @RequestBody
-		snooze BehaviorValue,
+	// @DeleteRequest("/{id}")
+	Cancel(
 		// @RequestHeader("Authorization")
-		authorization string,
-	) (SnoozeResult, error)
+		authorization BehaviorValue,
+		// @PathVariable
+		id BehaviorValue,
+	) (BehaviorValue, error)
 }

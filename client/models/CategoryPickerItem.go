@@ -6,7 +6,4 @@ type CategoryPickerItem struct {
 	ParentPath    string `json:"parentPath"`
 	Role          string `json:"role"`
 	SelectedState string `json:"selectedState"`
-	Indent        string `json:"indent"`
-	Check         string `json:"check"`
-	AriaSelected  string `json:"ariaSelected"`
 }

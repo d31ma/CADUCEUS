@@ -1,10 +1,19 @@
-// @HTTPClient
+// @HTTPClient("/threads")
 type ThreadsClient interface {
-	// @GetRequest("/threads")
-	Find(
-		// @RequestParam("emailId")
-		emailId string,
+	// List reads conversations: the ones matching the query, or with an empty
+	// query the ones in the folder.
+	//
+	// @GetRequest
+	List(
 		// @RequestHeader("Authorization")
 		authorization string,
-	) ([]ThreadRecord, error)
+		// @RequestParam("q")
+		query string,
+		// @RequestParam("folder")
+		folder string,
+		// @RequestParam("domain")
+		domain string,
+		// @RequestParam("account")
+		account string,
+	) ([]MailThread, error)
 }

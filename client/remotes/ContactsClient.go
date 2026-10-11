@@ -1,10 +1,10 @@
-// @HTTPClient
+// @HTTPClient("/contacts")
 type ContactsClient interface {
-	// @GetRequest("/contacts")
-	Search(
-		// @RequestParam("q")
-		query string,
+	// @GetRequest("/suggestions")
+	Suggestions(
 		// @RequestHeader("Authorization")
 		authorization string,
-	) ([]ParticipantContact, error)
+		// @RequestParam("q")
+		query string,
+	) ([]ContactSuggestion, error)
 }

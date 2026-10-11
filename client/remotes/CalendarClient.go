@@ -1,10 +1,14 @@
-// @HTTPClient
+// CalendarClient is the /calendar route group. The shell counts the events of
+// the next two weeks for the sidebar badge.
+// @HTTPClient("/calendar")
 type CalendarClient interface {
-	// @PostRequest("/calendar/invites/respond")
-	RespondToInvite(
-		// @RequestBody
-		response BehaviorValue,
+	// @GetRequest("/events")
+	Events(
 		// @RequestHeader("Authorization")
 		authorization string,
-	) (BehaviorValue, error)
+		// @RequestParam("start")
+		start string,
+		// @RequestParam("end")
+		end string,
+	) ([]CalendarEventSummary, error)
 }

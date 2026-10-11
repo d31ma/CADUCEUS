@@ -5,15 +5,33 @@ import en from '../locales/en.js'
 import fr from '../locales/fr.js'
 
 export const INTERFACE_LOCALE_STORAGE_KEY = 'caduceus-interface-locale-v1'
+/** Native names of the interface locales, in menu order. */
+const LOCALE_LABELS = Object.freeze({
+  'en': 'English',
+  'de': 'Deutsch',
+  'es': 'Español',
+  'es-419': 'Español (Latinoamérica)',
+  'fr': 'Français',
+  'ko': '한국어',
+  'pl': 'Polski',
+  'ja': '日本語',
+  'zh-CN': '简体中文',
+  'zh-TW': '繁體中文',
+  'pt': 'Português',
+  'pt-BR': 'Português (Brasil)',
+  'gl': 'Galego',
+  'tr': 'Türkçe',
+  'ru': 'Русский',
+  'cs': 'Čeština',
+  'uk': 'Українська',
+  'hu': 'Magyar',
+  'he': 'עברית',
+  'ar': 'العربية',
+})
 /** @type {ReadonlyArray<{id:InterfaceLocaleChoice,label?:string,labelKey?:string}>} */
 export const INTERFACE_LOCALE_OPTIONS = Object.freeze([
   { id: 'auto', labelKey: 'locale.automatic' },
-  ...'en=English|de=Deutsch|es=Español|es-419=Español (Latinoamérica)|fr=Français|ko=한국어|pl=Polski|ja=日本語|zh-CN=简体中文|zh-TW=繁體中文|pt=Português|pt-BR=Português (Brasil)|gl=Galego|tr=Türkçe|ru=Русский|cs=Čeština|uk=Українська|hu=Magyar|he=עברית|ar=العربية'
-    .split('|')
-    .map(entry => {
-      const [id, label] = entry.split('=')
-      return { id: /** @type {InterfaceLocaleChoice} */ (id), label }
-    }),
+  ...Object.entries(LOCALE_LABELS).map(([id, label]) => ({ id, label })),
 ])
 
 /** @type {ReadonlySet<InterfaceLocaleChoice>} */

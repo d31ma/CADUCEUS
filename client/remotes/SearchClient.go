@@ -1,10 +1,16 @@
-// @HTTPClient
+// @HTTPClient("/search")
 type SearchClient interface {
-	// @GetRequest("/search")
-	Messages(
-		// @RequestParam("q")
-		query string,
+	// @GetRequest
+	Search(
 		// @RequestHeader("Authorization")
 		authorization string,
-	) ([]RelatedMessage, error)
+		// @RequestParam("q")
+		query string,
+		// @RequestParam("limit")
+		limit int,
+		// @RequestParam("domain")
+		domain string,
+		// @RequestParam("account")
+		account string,
+	) ([]Email, error)
 }

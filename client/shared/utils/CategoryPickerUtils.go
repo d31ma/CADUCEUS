@@ -1,92 +1,99 @@
 import (
 	"regexp"
 	"slices"
-	"strconv"
 	"strings"
 )
 
-// CategoryPickerUtils builds the folder and label picker rows for one
-// message, as category-picker.js did.
+// CategoryPickerUtils builds the rows of the move-to-folder and apply-labels
+// picker for one mailbox account, the way Mailspring does.
 type CategoryPickerUtils struct{}
 
-func (CategoryPickerUtils) NormalizePickerPath(value string) string {
+// NormalizePath matches the server's bounded category-path grammar, or gives
+// "" for a path the server would refuse.
+func (CategoryPickerUtils) NormalizePath(value string) string {
 	path := strings.ToLower(strings.TrimSpace(value))
-	return CategoryPickerUtils{}.validPath(path)
+	return CategoryPickerUtils{}.pathUnlessRefused(path, slices.ContainsFunc(strings.Split(path, "/"), CategoryPickerUtils{}.isDotPart))
 }
 
-func (CategoryPickerUtils) BuildItems(account CategoryAccount, kind string, search string, labels []string) []CategoryPickerItem {
+// Items lists the account's categories of one kind that match the search,
+// with how many selected messages carry each label.
+func (CategoryPickerUtils) Items(account CategoryAccount, kind string, search string, messages []PickerMessage) []CategoryPickerItem {
 	query := strings.ToLower(strings.TrimSpace(search))
-	return CategoryPickerUtils{}.items(account, kind, query, labels)
+	return CategoryPickerUtils{}.itemsWhenCapable(account, kind, CategoryPickerUtils{}.matching(account.Categories, kind, query), messages)
 }
 
-func (CategoryPickerUtils) allSelected() string { return "all" }
-
-func (CategoryPickerUtils) LabelPatch(labels []string, path string) map[string]any {
-	remove := CategoryPickerUtils{}.selectionState(labels, path) == CategoryPickerUtils{}.allSelected()
-	return map[string]any{"labels": CategoryPickerUtils{}.labelChange(remove, path)}
+// LabelPatch is the mail action for a label click: a label every selected
+// message has is removed, any other is added to all of them.
+func (CategoryPickerUtils) LabelPatch(messages []PickerMessage, path string) BehaviorValue {
+	remove := CategoryPickerUtils{}.state(messages, path) == CategoryPickerUtils{}.every()
+	both := [][]string{{}, {path}}
+	return map[string]any{"labels": map[string]any{"add": both[CategoryPickerUtils{}.flag(!remove)], "remove": both[CategoryPickerUtils{}.flag(remove)]}}
 }
 
-func (CategoryPickerUtils) categoryPath() *regexp.Regexp {
-	return regexp.MustCompile(`^[a-z0-9](?:[a-z0-9._/-]{0,58}[a-z0-9])?$`)
+// SingleDomain is the one mailbox domain all messages belong to, or "".
+func (CategoryPickerUtils) SingleDomain(messages []PickerMessage) string {
+	return CategoryPickerUtils{}.onlyOne(CategoryPickerUtils{}.domains(messages))
 }
 
-func (CategoryPickerUtils) validPath(path string) string {
-	parts := strings.Split(path, "/")
-	valid := CategoryPickerUtils{}.categoryPath().MatchString(path)
-	if !valid || strings.Contains(path, "//") || slices.Contains(parts, ".") || slices.Contains(parts, "..") {
+func (CategoryPickerUtils) domains(messages []PickerMessage) []string {
+	domains := []string{}
+	for _, message := range messages {
+		domains = append(domains, strings.ToLower(strings.TrimSpace(message.Domain)))
+	}
+	return slices.Compact(slices.Sorted(slices.Values(slices.DeleteFunc(domains, func(domain string) bool { return domain == "" }))))
+}
+
+func (CategoryPickerUtils) onlyOne(domains []string) string {
+	if len(domains) != 1 {
+		return ""
+	}
+	return domains[0]
+}
+
+func (CategoryPickerUtils) isDotPart(part string) bool {
+	if part == "." || part == ".." {
+		return true
+	}
+	return false
+}
+
+func (CategoryPickerUtils) pathUnlessRefused(path string, dotted bool) string {
+	if !regexp.MustCompile(`^[a-z0-9](?:[a-z0-9._/-]{0,58}[a-z0-9])?$`).MatchString(path) || strings.Contains(path, "//") || dotted {
 		return ""
 	}
 	return path
 }
 
-func (CategoryPickerUtils) items(account CategoryAccount, kind string, query string, labels []string) []CategoryPickerItem {
-	if !CategoryPickerUtils{}.supports(account.Capabilities, kind) {
+func (utils CategoryPickerUtils) matching(categories []Category, kind string, query string) []Category {
+	return slices.DeleteFunc(slices.Clone(categories), utils.excluded(kind, query))
+}
+
+func (CategoryPickerUtils) excluded(kind string, query string) func(Category) bool {
+	return func(category Category) bool {
+		if category.Kind != kind || (query != "" && !strings.Contains(strings.ToLower(category.Path), query) && !strings.Contains(strings.ToLower(category.DisplayName), query)) {
+			return true
+		}
+		return false
+	}
+}
+
+func (utils CategoryPickerUtils) itemsWhenCapable(account CategoryAccount, kind string, categories []Category, messages []PickerMessage) []CategoryPickerItem {
+	if !map[string]bool{utils.labelKind(): account.Capabilities.Labels, "folder": account.Capabilities.Folders}[kind] {
 		return []CategoryPickerItem{}
 	}
-	return CategoryPickerUtils{}.matchingItems(account.Categories, kind, query, labels)
+	return utils.items(kind, categories, messages)
 }
 
-func (CategoryPickerUtils) labelKind() string { return "label" }
-
-func (CategoryPickerUtils) supports(capabilities CategoryCapabilities, kind string) bool {
-	if kind == CategoryPickerUtils{}.labelKind() {
-		return capabilities.Labels
-	}
-	return capabilities.Folders
-}
-
-func (CategoryPickerUtils) matchingItems(categories []Category, kind string, query string, labels []string) []CategoryPickerItem {
+func (utils CategoryPickerUtils) items(kind string, categories []Category, messages []PickerMessage) []CategoryPickerItem {
 	items := []CategoryPickerItem{}
 	for _, category := range categories {
-		items = append(items, CategoryPickerUtils{}.matchingItem(category, kind, query, labels)...)
+		items = append(items, CategoryPickerItem{
+			Path: category.Path, Kind: kind, DisplayName: utils.displayName(category), Depth: int(max(0, category.Depth)),
+			ParentPath: category.ParentPath, Role: category.Role,
+			SelectedState: map[bool]string{true: utils.state(messages, category.Path), false: utils.unlabelled()}[kind == utils.labelKind()],
+		})
 	}
 	return items
-}
-
-func (CategoryPickerUtils) matchingItem(category Category, kind string, query string, labels []string) []CategoryPickerItem {
-	if category.Kind != kind || (query != "" && !strings.Contains(strings.ToLower(category.Path), query) && !strings.Contains(strings.ToLower(category.DisplayName), query)) {
-		return []CategoryPickerItem{}
-	}
-	return []CategoryPickerItem{CategoryPickerUtils{}.item(category, kind, labels)}
-}
-
-func (CategoryPickerUtils) maximumDepth() int { return 6 }
-
-func (CategoryPickerUtils) item(category Category, kind string, labels []string) CategoryPickerItem {
-	state := CategoryPickerUtils{}.itemState(kind, labels, category.Path)
-	depth := max(0, category.Depth)
-	return CategoryPickerItem{
-		Path:          category.Path,
-		Kind:          kind,
-		DisplayName:   CategoryPickerUtils{}.displayName(category),
-		Depth:         depth,
-		ParentPath:    category.ParentPath,
-		Role:          category.Role,
-		SelectedState: state,
-		Indent:        "padding-inline-start:" + strconv.Itoa(12+min(CategoryPickerUtils{}.maximumDepth(), depth)*18) + "px",
-		Check:         CategoryPickerUtils{}.check(state),
-		AriaSelected:  strconv.FormatBool(state == CategoryPickerUtils{}.allSelected()),
-	}
 }
 
 func (CategoryPickerUtils) displayName(category Category) string {
@@ -96,34 +103,21 @@ func (CategoryPickerUtils) displayName(category Category) string {
 	return category.DisplayName
 }
 
-func (CategoryPickerUtils) noneSelected() string { return "none" }
+func (utils CategoryPickerUtils) state(messages []PickerMessage, path string) string {
+	usage := len(slices.DeleteFunc(slices.Clone(messages), func(message PickerMessage) bool { return !slices.Contains(message.Labels, path) }))
+	every := map[bool]int{true: 1, false: 0}[usage == len(messages)]
+	return []string{utils.unlabelled(), "mixed", utils.every()}[min(usage, 1)*(1+every)]
+}
 
-func (CategoryPickerUtils) itemState(kind string, labels []string, path string) string {
-	if kind != CategoryPickerUtils{}.labelKind() {
-		return CategoryPickerUtils{}.noneSelected()
+func (CategoryPickerUtils) flag(value bool) int {
+	if value {
+		return 1
 	}
-	return CategoryPickerUtils{}.selectionState(labels, path)
+	return 0
 }
 
-func (CategoryPickerUtils) selectionState(labels []string, path string) string {
-	if slices.Contains(labels, path) {
-		return CategoryPickerUtils{}.allSelected()
-	}
-	return CategoryPickerUtils{}.noneSelected()
-}
+func (CategoryPickerUtils) every() string { return "all" }
 
-func (CategoryPickerUtils) check(state string) string {
-	switch state {
-	case CategoryPickerUtils{}.allSelected():
-		return "✓"
-	case "mixed":
-		return "−"
-	}
-	return ""
-}
+func (CategoryPickerUtils) unlabelled() string { return "none" }
 
-func (CategoryPickerUtils) labelChange(remove bool, path string) map[string]any {
-	changes := map[bool][2][]string{true: {{}, {path}}, false: {{path}, {}}}
-	change := changes[remove]
-	return map[string]any{"add": change[0], "remove": change[1]}
-}
+func (CategoryPickerUtils) labelKind() string { return "label" }

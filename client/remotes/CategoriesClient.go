@@ -1,16 +1,16 @@
-// @HTTPClient
+// @HTTPClient("/categories")
 type CategoriesClient interface {
-	// @GetRequest("/categories")
+	// @GetRequest
 	Catalog(
 		// @RequestHeader("Authorization")
 		authorization string,
 	) (CategoryCatalog, error)
 
-	// @PostRequest("/categories")
+	// @PostRequest
 	Create(
-		// @RequestBody
-		category BehaviorValue,
 		// @RequestHeader("Authorization")
 		authorization string,
-	) (CreatedCategory, error)
+		// @RequestBody
+		category BehaviorValue,
+	) (CategoryCreated, error)
 }

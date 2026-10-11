@@ -1,264 +1,255 @@
 import (
-	"encoding/json"
+	"cmp"
+	"fmt"
 	"slices"
+	"strings"
 )
 
-// CategoryPickerService runs the folder and label picker of the open
-// message: it loads the account's categories, filters them, creates a new
-// one and applies the move or label change as an undoable mail action.
+// CategoryPickerService is the account-scoped "Move to folder" and "Apply
+// labels" dialog, matching Mailspring's account boundary: one picker serves
+// messages of one mailbox domain.
 //
 // @Service
 type CategoryPickerService struct {
 	// @Needs
-	categoriesClient *CategoriesClient
-	// @Needs
-	inboxClient               *InboxClient
-	secureRandom              SecureRandom
+	categoriesClient          *CategoriesClient
 	applicationEventPublisher ApplicationEventPublisher
 
 	Open        bool
 	Mode        string
+	Domain      string
+	DomainLabel string
 	Search      string
 	Creating    bool
 	Error       string
 	Title       string
 	Placeholder string
-	Domain      string
-	Items       []CategoryPickerItem
+	Items       []CategoryPickerRow
 	CanCreate   bool
 	CreateText  string
-	EmptyKind   string
 
-	accounts []CategoryAccount
-	emailId  string
-	folder   string
-	labels   []string
-	token    string
-}
-
-func (CategoryPickerService) moveMode() string { return "move" }
-
-// @OnStart
-func (service *CategoryPickerService) Start() {
-	service.accounts = []CategoryAccount{}
-	service.labels = []string{}
-	service.Mode = service.moveMode()
-	service.refresh()
+	messages      []PickerMessage
+	accounts      []CategoryAccount
+	mailboxNames  map[string]string
+	authorization string
 }
 
 // @OnEvent({"replay":true})
-func (service *CategoryPickerService) SessionChanged(changed SessionChanged) {
-	service.token = changed.Token
+func (picker *CategoryPickerService) SessionChanged(session SessionChanged) {
+	picker.authorization = "Bearer " + session.Token
+	picker.loadCatalog()
+	picker.derive()
+	picker.applicationEventPublisher.PublishEvent(ViewSettled{Source: "category-picker"}, false)
 }
 
 // @OnEvent({"replay":true})
-func (service *CategoryPickerService) MessageOpened(opened OpenMessageChanged) {
-	service.emailId = opened.EmailId
-	service.Domain = opened.Domain
-	service.folder = opened.Folder
-	service.labels = opened.Labels
-	service.refresh()
+func (picker *CategoryPickerService) PreferencesLoaded(loaded PreferencesLoaded) {
+	picker.mailboxNames = loaded.MailboxNames
 }
 
-func (service *CategoryPickerService) OpenPicker(mode string) {
-	service.loadCatalog(service.account().Domain == "")
-	service.openFor(mode, service.capability(mode, service.account().Capabilities), service.ready(mode))
-	service.refresh()
+// @OnEvent
+func (picker *CategoryPickerService) CategoryPickerRequested(requested CategoryPickerRequested) {
+	domain := CategoryPickerUtils{}.SingleDomain(requested.Messages)
+	capable := picker.capabilities(picker.accountFor(domain))[picker.capability(requested.Mode)]
+	picker.openOrRefuse(picker.refusal(domain, requested.Mode, capable), requested, domain)
+	picker.derive()
 }
 
-func (service *CategoryPickerService) Close() {
-	service.Open = false
-	service.Search = ""
-	service.Creating = false
-	service.Error = ""
-	service.refresh()
+// @OnEvent
+func (picker *CategoryPickerService) CategoryPickerDismissed(_ CategoryPickerDismissed) {
+	picker.Close()
 }
 
-func (service *CategoryPickerService) Dismiss(className string) {
-	service.dismiss(className == "detail-category-picker-backdrop")
+// Close closes the picker and gives the focus back.
+func (picker *CategoryPickerService) Close() {
+	mode := picker.Mode
+	picker.Open = false
+	picker.Mode = picker.move()
+	picker.Domain = ""
+	picker.Search = ""
+	picker.Creating = false
+	picker.Error = ""
+	picker.messages = []PickerMessage{}
+	picker.derive()
+	picker.applicationEventPublisher.PublishEvent(CategoryPickerClosed{Mode: mode}, false)
 }
 
-func (service *CategoryPickerService) SearchInput(value string) {
-	service.Search = value
-	service.Error = ""
-	service.refresh()
+func (CategoryPickerService) move() string { return "move" }
+
+// SearchChanged narrows the folders or labels shown.
+func (picker *CategoryPickerService) SearchChanged(value string) {
+	picker.Search = value
+	picker.Error = ""
+	picker.derive()
 }
 
-func (service *CategoryPickerService) Select(path string) {
-	service.apply(path)
+// Select moves the messages to a folder, or applies or removes a label.
+func (picker *CategoryPickerService) Select(path string) {
+	picker.applyWhenGiven(path)
+	picker.derive()
 }
 
-func (service *CategoryPickerService) Create() {
-	service.create(CategoryPickerUtils{}.NormalizePickerPath(service.Search))
+// Create makes the typed folder or label in the mailbox, then applies it.
+func (picker *CategoryPickerService) Create() {
+	path := CategoryPickerUtils{}.NormalizePath(picker.Search)
+	created, failure := picker.createWhenAllowed(path)
+	picker.afterCreate(created, failure)
+	picker.derive()
 }
 
-func (service *CategoryPickerService) authorization() string {
-	return "Bearer " + service.token
+func (picker *CategoryPickerService) loadCatalog() {
+	catalog, failure := picker.categoriesClient.Catalog(picker.authorization)
+	picker.accounts = picker.accountsUnless(catalog, failure)
+	picker.applicationEventPublisher.PublishEvent(CategoryCatalogChanged{Accounts: picker.accounts}, true)
 }
 
-func (CategoryPickerService) labelMode() string { return "label" }
-
-func (service *CategoryPickerService) kind() string {
-	return TextUtils{}.Choose(service.Mode == service.labelMode(), service.labelMode(), "folder")
-}
-
-func (service *CategoryPickerService) account() CategoryAccount {
-	index := slices.IndexFunc(service.accounts, func(account CategoryAccount) bool { return account.Domain == service.Domain })
-	return service.accountAt(index)
-}
-
-func (service *CategoryPickerService) accountAt(index int) CategoryAccount {
-	if index < 0 {
-		return CategoryAccount{Categories: []Category{}}
+func (CategoryPickerService) accountsUnless(catalog CategoryCatalog, failure error) []CategoryAccount {
+	accounts := []CategoryAccount{}
+	for _, account := range catalog.Accounts {
+		account.Categories = append([]Category{}, account.Categories...)
+		accounts = append(accounts, account)
 	}
-	return service.accounts[index]
+	return map[bool][]CategoryAccount{true: {}, false: accounts}[failure != nil]
 }
 
-func (service *CategoryPickerService) loadCatalog(needed bool) {
-	if needed && service.emailId != "" {
-		service.fetchCatalog()
+func (picker *CategoryPickerService) refusal(domain string, mode string, capable bool) string {
+	switch {
+	case domain == "":
+		return "Choose messages from one mailbox to change folders or labels."
+	case !capable:
+		return fmt.Sprintf("This mailbox does not support %s.", picker.capability(mode))
+	default:
+		return ""
 	}
 }
 
-func (service *CategoryPickerService) fetchCatalog() {
-	catalog, failure := service.categoriesClient.Catalog(service.authorization())
-	service.catalogLoaded(catalog, failure == nil)
-}
-
-func (service *CategoryPickerService) catalogLoaded(catalog CategoryCatalog, loaded bool) {
-	if !loaded {
-		service.toast("Could not load folders and labels.")
+func (picker *CategoryPickerService) openOrRefuse(problem string, requested CategoryPickerRequested, domain string) {
+	if problem != "" {
+		picker.applicationEventPublisher.PublishEvent(ToastRequested{Message: problem}, false)
 		return
 	}
-	service.accounts = catalog.Accounts
+	picker.Open = true
+	picker.Mode = requested.Mode
+	picker.Domain = domain
+	picker.Search = ""
+	picker.Creating = false
+	picker.Error = ""
+	picker.messages = requested.Messages
+	picker.applicationEventPublisher.PublishEvent(CategoryPickerOpened{Mode: requested.Mode}, false)
 }
 
-func (service *CategoryPickerService) capability(mode string, capabilities CategoryCapabilities) string {
-	names := map[string]string{service.labelMode(): "labels", service.moveMode(): "folders"}
-	supported := map[string]bool{service.labelMode(): capabilities.Labels, service.moveMode(): capabilities.Folders}
-	return TextUtils{}.Choose(supported[mode], "", names[mode])
-}
-
-func (service *CategoryPickerService) ready(mode string) bool {
-	known := slices.Contains([]string{service.labelMode(), service.moveMode()}, mode)
-	if known && service.account().Domain != "" && service.emailId != "" {
-		return true
+func (picker *CategoryPickerService) applyWhenGiven(path string) {
+	if path != "" {
+		picker.apply(path)
 	}
-	return false
 }
 
-func (CategoryPickerService) period() string { return "." }
+func (picker *CategoryPickerService) apply(path string) {
+	label := picker.Mode == picker.label()
+	patch := map[bool]BehaviorValue{true: CategoryPickerUtils{}.LabelPatch(picker.messages, path), false: map[string]any{"folder": path}}[label]
+	message := map[bool]string{true: "Updated labels.", false: fmt.Sprintf("Moved to %s.", path)}[label]
+	picker.applicationEventPublisher.PublishEvent(MailActionRequested{Ids: picker.ids(), Patch: patch.(map[string]any), Message: message}, false)
+	picker.applicationEventPublisher.PublishEvent(CategoryPickerApplied{Mode: picker.Mode}, false)
+	picker.Close()
+}
 
-func (service *CategoryPickerService) openFor(mode string, missing string, ready bool) {
+func (CategoryPickerService) label() string { return "label" }
+
+func (picker *CategoryPickerService) createWhenAllowed(path string) (CategoryCreated, error) {
+	if !picker.CanCreate || path == "" {
+		return CategoryCreated{}, nil
+	}
+	picker.Creating = true
+	picker.Error = ""
+	kind := map[bool]string{true: picker.label(), false: "folder"}[picker.Mode == picker.label()]
+	return picker.categoriesClient.Create(picker.authorization, map[string]any{"domain": picker.Domain, "kind": kind, "path": path})
+}
+
+func (picker *CategoryPickerService) afterCreate(created CategoryCreated, failure error) {
 	switch {
-	case !ready:
-	case missing != "":
-		service.toast("This mailbox does not support " + missing + service.period())
-	default:
-		service.show(mode)
+	case failure != nil:
+		picker.Creating = false
+		picker.Error = "Category creation failed."
+	case created.Category.Path != "":
+		picker.loadCatalog()
+		picker.apply(created.Category.Path)
 	}
 }
 
-func (service *CategoryPickerService) show(mode string) {
-	service.Mode = mode
-	service.Search = ""
-	service.Creating = false
-	service.Error = ""
-	service.Open = true
-	service.applicationEventPublisher.PublishEvent(FocusRequested{Selector: "[data-detail-category-picker] .detail-category-picker-search"}, false)
+func (picker *CategoryPickerService) derive() {
+	label := picker.Mode == picker.label()
+	kind := map[bool]string{true: picker.label(), false: "folder"}[label]
+	account := picker.accountFor(picker.Domain)
+	items := picker.shownItems(CategoryPickerUtils{}.Items(account, kind, picker.Search, picker.messages), label)
+	createPath := CategoryPickerUtils{}.NormalizePath(picker.Search)
+	picker.Title = map[bool]string{true: "Apply labels", false: "Move to folder"}[label]
+	picker.Placeholder = map[bool]string{true: "Label as…", false: "Move to…"}[label]
+	picker.DomainLabel = cmp.Or(picker.mailboxNames[strings.ToLower(picker.Domain)], strings.ToLower(picker.Domain))
+	picker.Items = picker.rows(items, label)
+	picker.CanCreate = picker.creatable(createPath, account, items)
+	picker.CreateText = map[bool]string{true: "", false: fmt.Sprintf("Create %s “%s”", kind, createPath)}[createPath == ""]
 }
 
-func (service *CategoryPickerService) dismiss(onBackdrop bool) {
-	if onBackdrop {
-		service.Close()
-	}
-}
-
-func (service *CategoryPickerService) refresh() {
-	labelled := service.Mode == service.labelMode()
-	service.Title = TextUtils{}.Choose(labelled, "Apply labels", "Move to folder")
-	service.Placeholder = TextUtils{}.Choose(labelled, "Label as…", "Move to…")
-	service.EmptyKind = TextUtils{}.Choose(labelled, "labels", "folders")
-	service.Items = service.withoutCurrentFolder(CategoryPickerUtils{}.BuildItems(service.account(), service.kind(), service.Search, service.labels))
-	path := CategoryPickerUtils{}.NormalizePickerPath(service.Search)
-	service.CanCreate = service.canCreate(path)
-	service.CreateText = TextUtils{}.Choose(path == "", "", "Create "+service.kind()+" “"+path+"”")
-}
-
-func (service *CategoryPickerService) withoutCurrentFolder(items []CategoryPickerItem) []CategoryPickerItem {
-	if service.Mode == service.labelMode() {
+func (picker *CategoryPickerService) shownItems(items []CategoryPickerItem, label bool) []CategoryPickerItem {
+	if label {
 		return items
 	}
-	return slices.DeleteFunc(items, func(item CategoryPickerItem) bool { return item.Path == service.folder })
+	return slices.DeleteFunc(items, func(item CategoryPickerItem) bool {
+		return !slices.ContainsFunc(picker.messages, func(message PickerMessage) bool { return message.Folder != item.Path })
+	})
 }
 
-func (service *CategoryPickerService) canCreate(path string) bool {
-	exists := slices.ContainsFunc(service.Items, func(item CategoryPickerItem) bool { return item.Path == path })
-	if path != "" && service.account().Capabilities.Create && !exists {
+func (picker *CategoryPickerService) rows(items []CategoryPickerItem, label bool) []CategoryPickerRow {
+	rows := []CategoryPickerRow{}
+	for _, item := range items {
+		check := map[string]string{"all": "✓", "mixed": "−"}[item.SelectedState]
+		rows = append(rows, CategoryPickerRow{
+			Path: item.Path, DisplayName: item.DisplayName, ParentPath: item.ParentPath, Role: item.Role,
+			Glyph:        map[bool]string{true: check, false: "📁"}[label],
+			AriaSelected: map[bool]string{true: "true", false: "false"}[item.SelectedState == "all"],
+			Style:        fmt.Sprintf("padding-inline-start:%dpx", picker.indentBase()+min(picker.deepest(), item.Depth)*picker.indentStep()),
+		})
+	}
+	return rows
+}
+
+func (CategoryPickerService) indentBase() int { return 12 }
+
+func (CategoryPickerService) indentStep() int { return 18 }
+
+func (CategoryPickerService) deepest() int { return 6 }
+
+func (picker *CategoryPickerService) creatable(path string, account CategoryAccount, items []CategoryPickerItem) bool {
+	if path != "" && account.Capabilities.Create && !slices.ContainsFunc(items, func(item CategoryPickerItem) bool { return item.Path == path }) {
 		return true
 	}
 	return false
 }
 
-func (service *CategoryPickerService) create(path string) {
-	if service.CanCreate && path != "" && service.emailId != "" {
-		service.createNow(path)
+func (picker *CategoryPickerService) accountFor(domain string) CategoryAccount {
+	found := slices.IndexFunc(picker.accounts, func(account CategoryAccount) bool { return account.Domain == domain })
+	if found < 0 {
+		return CategoryAccount{}
 	}
+	return picker.accounts[found]
 }
 
-func (service *CategoryPickerService) createNow(path string) {
-	service.Creating = true
-	service.Error = ""
-	created, failure := service.categoriesClient.Create(map[string]any{"domain": service.Domain, "kind": service.kind(), "path": path}, service.authorization())
-	service.created(created, failure)
+func (picker *CategoryPickerService) capabilities(account CategoryAccount) map[string]bool {
+	return map[string]bool{picker.labelsCapability(): account.Capabilities.Labels, picker.foldersCapability(): account.Capabilities.Folders}
 }
 
-func (service *CategoryPickerService) created(created CreatedCategory, failure error) {
-	if failure != nil || created.Category.Path == "" {
-		service.Creating = false
-		service.Error = "Category creation failed."
-		return
+func (CategoryPickerService) labelsCapability() string { return "labels" }
+
+func (CategoryPickerService) foldersCapability() string { return "folders" }
+
+func (picker *CategoryPickerService) capability(mode string) string {
+	return map[bool]string{true: picker.labelsCapability(), false: picker.foldersCapability()}[mode == picker.label()]
+}
+
+func (picker *CategoryPickerService) ids() []string {
+	ids := []string{}
+	for _, message := range picker.messages {
+		ids = append(ids, message.ID)
 	}
-	service.fetchCatalog()
-	service.apply(created.Category.Path)
-}
-
-func (service *CategoryPickerService) apply(path string) {
-	labelled := service.Mode == service.labelMode()
-	patches := map[bool]map[string]any{true: CategoryPickerUtils{}.LabelPatch(service.labels, path), false: {"folder": path}}
-	message := TextUtils{}.Choose(labelled, "Updated labels.", "Moved to "+path+service.period())
-	requestId, _ := service.secureRandom.UUID()
-	body := map[string]any{"ids": []string{service.emailId}, "patch": patches[labelled], "clientRequestId": requestId}
-	result, failure := service.inboxClient.Act(body, service.authorization())
-	encoded, _ := json.Marshal(body)
-	service.applied(result, FailureUtils{}.Code(failure), OfflineRequestRequested{Id: requestId, Kind: "mail-action", Path: "/inbox/actions", Method: "POST", Body: string(encoded), Message: message, EmailId: service.emailId})
-}
-
-func (service *CategoryPickerService) applied(result MailActionResult, code string, offline OfflineRequestRequested) {
-	switch code {
-	case "":
-		service.changed(result, offline.Message)
-	case FailureUtils{}.OfflineCode():
-		service.applicationEventPublisher.PublishEvent(offline, false)
-	default:
-		service.toast("Mail action failed.")
-	}
-}
-
-func (service *CategoryPickerService) changed(result MailActionResult, message string) {
-	for _, value := range result.Emails {
-		service.publishChange(RecordUtils{}.Object(value))
-	}
-	service.applicationEventPublisher.PublishEvent(MailActionCompleted{ActionId: result.ActionId, ExpiresAt: result.ExpiresAt, Message: message}, false)
-	service.applicationEventPublisher.PublishEvent(InboxRefreshRequested{Reason: "category"}, false)
-	service.Close()
-}
-
-func (service *CategoryPickerService) publishChange(record map[string]any) {
-	email := EmailRecordUtils{}.Email(record)
-	service.applicationEventPublisher.PublishEvent(MessageChanged{EmailId: email.Id, Folder: email.Folder, SystemFolder: email.SystemFolder, Labels: email.Labels, Read: email.Read, Starred: email.Starred}, false)
-}
-
-func (service *CategoryPickerService) toast(message string) {
-	service.applicationEventPublisher.PublishEvent(ToastRequested{Message: message}, false)
+	return ids
 }

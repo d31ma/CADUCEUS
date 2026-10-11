@@ -1,16 +1,18 @@
-// @HTTPClient
+// UsersClient is the /users route group. The shell reads and saves the
+// signed-in user's preferences.
+// @HTTPClient("/users")
 type UsersClient interface {
-	// @GetRequest("/users/me/preferences")
+	// @GetRequest("/me/preferences")
 	Preferences(
 		// @RequestHeader("Authorization")
 		authorization string,
-	) (ImagePreferences, error)
+	) (UserPreferences, error)
 
-	// @PutRequest("/users/me/preferences")
-	SavePreferences(
-		// @RequestBody
-		preferences BehaviorValue,
+	// @PutRequest("/me/preferences")
+	SaveTheme(
 		// @RequestHeader("Authorization")
-		authorization string,
-	) (ImagePreferences, error)
+		authorization BehaviorValue,
+		// @RequestBody
+		theme BehaviorValue,
+	) (BehaviorValue, error)
 }

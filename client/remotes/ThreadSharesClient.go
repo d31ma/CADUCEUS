@@ -1,26 +1,18 @@
-// @HTTPClient
+// ThreadSharesClient is the /thread-shares route group. The public share page
+// reads one expiring conversation and its attachments with no credentials.
+// @HTTPClient("/thread-shares")
 type ThreadSharesClient interface {
-	// @GetRequest("/thread-shares")
-	List(
-		// @RequestParam("emailId")
-		emailId string,
-		// @RequestHeader("Authorization")
-		authorization string,
-	) ([]ThreadShare, error)
+	// @GetRequest("/public/{token}")
+	Thread(
+		// @PathVariable
+		token string,
+	) (SharedThread, error)
 
-	// @PostRequest("/thread-shares")
-	Create(
-		// @RequestBody
-		share BehaviorValue,
-		// @RequestHeader("Authorization")
-		authorization string,
-	) (CreatedShare, error)
-
-	// @DeleteRequest("/thread-shares/{id}")
-	Revoke(
+	// @GetRequest("/public/{token}/attachments/{id}")
+	Attachment(
+		// @PathVariable
+		token string,
 		// @PathVariable
 		id string,
-		// @RequestHeader("Authorization")
-		authorization string,
-	) (BehaviorValue, error)
+	) (SharedAttachmentContent, error)
 }

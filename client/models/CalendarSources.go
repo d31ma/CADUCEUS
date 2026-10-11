@@ -1,7 +1,7 @@
 type CalendarSources struct {
-	Manual string
-	Invite string
+	Manual   string
+	Invite   string
 	Provider string
-	Team string
-	Local string
+	Team     string
+	Local    string
 }

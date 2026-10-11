@@ -1,8 +1,8 @@
 type CalendarClasses struct {
-	MobileOnly string
+	MobileOnly  string
 	DesktopOnly string
-	ModalBackdrop string
-	QuickBackdrop string
-	ChipPrefix string
-	Space string
+	EventDialog string
+	QuickDialog string
+	ChipPrefix  string
+	Space       string
 }

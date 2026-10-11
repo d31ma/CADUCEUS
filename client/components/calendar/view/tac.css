@@ -641,3 +641,32 @@
   .calendar-event-chip { font-size: 10px; }
   .event-modal-row { flex-direction: column; }
 }
+
+/* ── DuVay host and focus rules (moved from shared/assets/styles.css) ── */
+w-btn, w-text-field, w-textarea, w-select, w-chip, w-option {
+  font-family: inherit;
+}
+
+w-btn {
+  min-width: 64px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+w-text-field,
+w-textarea,
+w-select {
+  display: block;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ms-primary, #1f6f8b);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+w-text-field :focus-visible,
+w-textarea :focus-visible,
+w-select :focus-visible {
+  outline: none;
+}

@@ -1,7 +1,6 @@
 type CalendarMessages struct {
-	Moved string
-	Created string
-	CreationQueued string
-	CreateEvent string
+	Moved     string
+	Created   string
 	Connected string
+	Offline   string
 }

@@ -1,5 +1,4 @@
 import (
-	"net/url"
 	"slices"
 	"sort"
 	"strconv"
@@ -17,17 +16,15 @@ import (
 // same-domain teammates' events shown by the "Show team" overlay.
 //
 // Every public method ends by recomputing the view state (weeks, chips,
-// labels), so the view only reads fields. Browser work that Go cannot do
-// (confirm dialogs, drag and drop, the viewport, focus decoration) lives in
-// CalendarBrowserService, which calls these methods.
+// labels), so the view only reads fields. It hears the session from
+// SessionService, and the browser work that Go cannot do (drag and drop, the
+// viewport, focus, the delete confirmations) from CalendarBrowserService.
 // @Service
 type CalendarService struct {
 	// @Needs
 	calendarClient *CalendarClient
 	// @Needs
-	clock Clock
-	// @Needs
-	secureRandom              SecureRandom
+	clock                     Clock
 	applicationEventPublisher ApplicationEventPublisher
 	TitleLabel                string
 	Tabs                      []CalendarViewTab
@@ -81,11 +78,13 @@ type CalendarService struct {
 	QuickCreateError string
 	// @SessionState
 	QuickCreateSaving bool
-	events                    []CalendarEvent
-	token                     string
-	zone                      *time.Location
-	timeZone                  string
-	twentyFourHour            bool
+	events            []CalendarEvent
+	token             string
+	opened            bool
+	narrow            bool
+	zone              *time.Location
+	timeZone          string
+	twentyFourHour    bool
 }
 
 // Start restores the browser's time zone and the default view.
@@ -101,49 +100,87 @@ func (calendar *CalendarService) Start() {
 	calendar.refresh()
 }
 
-// Session keeps the bearer token of the signed-in mailbox.
+// HearSession keeps the bearer token and, the first time someone is signed
+// in, loads the connected calendars and the visible events.
 // @OnEvent({"replay":true})
-func (calendar *CalendarService) Session(changed SessionChanged) {
+func (calendar *CalendarService) HearSession(changed SessionChanged) {
 	calendar.token = changed.Token
+	FlowUtils{}.When(!slices.Contains([]bool{changed.SignedIn, !calendar.opened}, false), calendar.open)()
 }
 
-// Preferences follows the 12 or 24 hour clock choice.
+// HearPreferences follows the 12 or 24 hour clock choice.
 // @OnEvent({"replay":true})
-func (calendar *CalendarService) Preferences(loaded PreferencesLoaded) {
+func (calendar *CalendarService) HearPreferences(loaded PreferencesLoaded) {
 	calendar.twentyFourHour = loaded.Use24HourClock
 	calendar.refresh()
 }
 
-// Open is the page's first load: CalendarBrowserService calls it once the
-// session is known, with whether the viewport is phone-sized.
-func (calendar *CalendarService) Open(changed SessionChanged, narrow bool) error {
-	calendar.token = changed.Token
-	calendar.ViewMode = calendar.modeForViewport(narrow)
-	calendar.loadProviderCalendars()
-	calendar.loadEvents()
-	return nil
-}
-
-// Reload fetches the visible events again.
-func (calendar *CalendarService) Reload() error {
-	calendar.loadEvents()
-	return nil
-}
-
-// Viewport switches a wide view to the day view on a phone-sized screen.
-func (calendar *CalendarService) Viewport(narrow bool) error {
-	mode := calendar.modeForViewport(narrow)
+// HearViewport switches a wide view to the day view on a phone-sized screen.
+// @OnEvent({"replay":true})
+func (calendar *CalendarService) HearViewport(measured ViewportMeasured) {
+	calendar.narrow = measured.Narrow
+	mode := calendar.modeForViewport(measured.Narrow)
 	changed := mode != calendar.ViewMode
 	calendar.ViewMode = mode
-	calendar.reloadWhen(changed)
-	return nil
+	FlowUtils{}.When(!slices.Contains([]bool{changed, calendar.opened}, false), calendar.loadEvents)()
+	calendar.refresh()
 }
 
-// Shortcut runs one calendar keyboard command, such as "calendar:view-day".
-func (calendar *CalendarService) Shortcut(command string) error {
-	calendar.shortcutAction(command)()
+// HearShortcut runs one calendar keyboard command, such as "calendar:view-day".
+// @OnEvent
+func (calendar *CalendarService) HearShortcut(pressed ShortcutPressed) {
+	calendar.shortcutAction(pressed.Command)()
 	calendar.refresh()
-	return nil
+}
+
+// HearEventFocus remembers an owned event as the target of the move and
+// resize commands.
+// @OnEvent
+func (calendar *CalendarService) HearEventFocus(focused CalendarEventFocused) {
+	event := calendar.findEvent(calendar.events, focused.ID)
+	calendar.focusWhenFound(event.ID != "", calendar.keyboardTarget(event))
+	calendar.refresh()
+}
+
+// HearDrop moves a dragged owned event to another day, keeping its time, or
+// to a day's all-day row.
+// @OnEvent
+func (calendar *CalendarService) HearDrop(dropped CalendarEventDropped) {
+	event := calendar.findEvent(calendar.events, dropped.ID)
+	span, valid := calendar.dropRange(dropped.AllDay)(event, dropped.Date)
+	calendar.drop(event, dropped.Date, span, valid)
+	calendar.refresh()
+}
+
+// HearDeleteChoice deletes the edited event in the scope the confirmations
+// chose: "instance", "series", or empty for the dialog's own scope.
+// @OnEvent
+func (calendar *CalendarService) HearDeleteChoice(chosen CalendarDeleteChosen) {
+	calendar.deleteWhenWritable(TextUtils{}.FirstOf(chosen.Scope, calendar.EditScope))
+	calendar.refresh()
+}
+
+// HearEscape closes the quick-event popover and the dialog.
+// @OnEvent
+func (calendar *CalendarService) HearEscape(pressed EscapePressed) {
+	calendar.closeQuickWhen(calendar.QuickCreateOpen)
+	calendar.closeModalWhen(calendar.ModalOpen)
+	calendar.refresh()
+}
+
+// HearBackdrop closes the dialog or the popover on a click beside it.
+// @OnEvent
+func (calendar *CalendarService) HearBackdrop(clicked BackdropClicked) {
+	calendar.closeQuickWhen(clicked.Dialog == calendar.classes().QuickDialog)
+	calendar.closeModalWhen(clicked.Dialog == calendar.classes().EventDialog)
+	calendar.refresh()
+}
+
+// HearSubmit creates the quick event when its form is submitted with Enter.
+// @OnEvent
+func (calendar *CalendarService) HearSubmit(submitted FormSubmitted) {
+	FlowUtils{}.When(submitted.Form == calendar.classes().QuickDialog, calendar.createQuick)()
+	calendar.refresh()
 }
 
 // SetViewMode shows another view and keeps the selected event in sight.
@@ -160,8 +197,7 @@ func (calendar *CalendarService) ShiftCursor(direction int) error {
 
 // GoToToday shows the period that contains today.
 func (calendar *CalendarService) GoToToday() error {
-	calendar.Cursor = calendar.nowInstant()
-	calendar.loadEvents()
+	calendar.goToToday()
 	return nil
 }
 
@@ -171,13 +207,6 @@ func (calendar *CalendarService) ToggleShowTeam() error {
 	calendar.syncTeamEvents()
 	calendar.refresh()
 	return nil
-}
-
-// FocusEvent remembers an owned event as the target of move and resize commands.
-func (calendar *CalendarService) FocusEvent(id string) {
-	event := calendar.findEvent(calendar.events, id)
-	calendar.focusWhenFound(event.ID != "", calendar.keyboardTarget(event))
-	calendar.refresh()
 }
 
 // OpenCell opens the quick-event popover for a month cell, unless the click
@@ -205,18 +234,6 @@ func (calendar *CalendarService) OpenCreateModal() {
 // CloseModal closes the dialog and returns focus to what opened it.
 func (calendar *CalendarService) CloseModal() {
 	calendar.closeModal()
-	calendar.refresh()
-}
-
-// ModalBackdrop closes the dialog when the click landed on the backdrop itself.
-func (calendar *CalendarService) ModalBackdrop(classes string) {
-	calendar.closeModalWhen(classes == calendar.classes().ModalBackdrop)
-	calendar.refresh()
-}
-
-// ModalKey closes the dialog on Escape.
-func (calendar *CalendarService) ModalKey(key string) {
-	calendar.closeModalWhen(key == calendar.keys().Escape)
 	calendar.refresh()
 }
 
@@ -274,14 +291,6 @@ func (calendar *CalendarService) SaveEvent() error {
 	return nil
 }
 
-// DeleteEditing deletes the edited event in the scope the confirmations chose:
-// "instance", "series", or empty for the dialog's own scope.
-func (calendar *CalendarService) DeleteEditing(scope string) error {
-	calendar.deleteWhenWritable(TextUtils{}.FirstOf(scope, calendar.EditScope))
-	calendar.refresh()
-	return nil
-}
-
 // UpdateQuickCreateTitle keeps the popover's title field.
 func (calendar *CalendarService) UpdateQuickCreateTitle(value string) {
 	calendar.QuickCreateTitle = value
@@ -289,8 +298,7 @@ func (calendar *CalendarService) UpdateQuickCreateTitle(value string) {
 
 // CreateQuickEvent creates a 09:00 to 10:00 event on the popover's day.
 func (calendar *CalendarService) CreateQuickEvent() error {
-	blocked := slices.Contains([]bool{calendar.QuickCreateDate == "", calendar.QuickCreateSaving}, true)
-	calendar.quickCreateWhenReady(strings.TrimSpace(calendar.QuickCreateTitle), blocked)
+	calendar.createQuick()
 	calendar.refresh()
 	return nil
 }
@@ -301,36 +309,6 @@ func (calendar *CalendarService) OpenQuickCreateDetails() {
 	calendar.closeQuickCreate(false)
 	calendar.openForDate(day)
 	calendar.refresh()
-}
-
-// QuickBackdrop closes the popover when the click landed on its backdrop.
-func (calendar *CalendarService) QuickBackdrop(classes string) {
-	calendar.closeQuickWhen(classes == calendar.classes().QuickBackdrop)
-	calendar.refresh()
-}
-
-// QuickKey closes the popover on Escape.
-func (calendar *CalendarService) QuickKey(key string) {
-	calendar.closeQuickWhen(key == calendar.keys().Escape)
-	calendar.refresh()
-}
-
-// DropOnDate moves a dragged owned event to another day, keeping its time.
-func (calendar *CalendarService) DropOnDate(id string, date string) error {
-	event := calendar.findEvent(calendar.events, id)
-	span, valid := calendar.dateDrop(event, date)
-	calendar.drop(event, date, span, valid)
-	calendar.refresh()
-	return nil
-}
-
-// DropOnAllDay moves a dragged owned event to a day's all-day row.
-func (calendar *CalendarService) DropOnAllDay(id string, date string) error {
-	event := calendar.findEvent(calendar.events, id)
-	span, valid := calendar.allDayDrop(event, date)
-	calendar.drop(event, date, span, valid)
-	calendar.refresh()
-	return nil
 }
 
 func (CalendarService) zoneOr(location *time.Location, failure error) *time.Location {
@@ -348,9 +326,9 @@ func (calendar *CalendarService) nowInstant() string {
 	return CalendarDateUtils{}.InstantText(time.Now())
 }
 
-func (calendar *CalendarService) newKey() string {
-	key, _ := calendar.secureRandom.UUID()
-	return key
+// newKey is an idempotency key for one change, derived from what it changes.
+func (calendar *CalendarService) newKey(seed string) string {
+	return IdentityUtils{}.UUID("calendar|" + seed)
 }
 
 func (calendar *CalendarService) toast(message string) {
@@ -363,24 +341,36 @@ func (calendar *CalendarService) focus(request FocusRequested) {
 
 func (CalendarService) modes() CalendarModes {
 	return CalendarModes{
-		Day: "day",
+		Day:      "day",
 		ThreeDay: "three-day",
 		WorkWeek: "work-week",
-		Week: "week",
-		Month: "month",
-		Agenda: "agenda",
-		Split: "split",
+		Week:     "week",
+		Month:    "month",
+		Agenda:   "agenda",
+		Split:    "split",
 	}
 }
 
 // Loading.
 
+// open is the page's first load, once the session is known.
+func (calendar *CalendarService) open() {
+	calendar.opened = true
+	calendar.ViewMode = calendar.modeForViewport(calendar.narrow)
+	calendar.loadProviderCalendars()
+	calendar.loadEvents()
+}
+
+// loadEvents reads the visible events and ends with CalendarLoaded, so the
+// page renders what an event listener changed.
 func (calendar *CalendarService) loadEvents() {
 	start, end := calendar.fetchRange()
 	events, failure := calendar.calendarClient.EventsBetween(calendar.bearer(), CalendarDateUtils{}.InstantText(start), CalendarDateUtils{}.InstantText(end))
 	calendar.events = calendar.eventsOr(events, failure)
+	calendar.checkWhenRefused(failure)
 	calendar.teamWhenShown(start, end)
 	calendar.refresh()
+	calendar.applicationEventPublisher.PublishEvent(CalendarLoaded{Count: len(calendar.events)}, false)
 }
 
 func (CalendarService) eventsOr(events []CalendarEvent, failure error) []CalendarEvent {
@@ -388,6 +378,21 @@ func (CalendarService) eventsOr(events []CalendarEvent, failure error) []Calenda
 		return []CalendarEvent{}
 	}
 	return events
+}
+
+// checkWhenRefused asks SessionService whether the token still works after a
+// read was refused, because the transport reports every error status alike.
+func (calendar *CalendarService) checkWhenRefused(failure error) {
+	FlowUtils{}.When(HTTPUtils{}.Refused(failure), calendar.checkSession)()
+}
+
+func (calendar *CalendarService) checkSession() {
+	calendar.applicationEventPublisher.PublishEvent(SessionCheckRequested{Reason: calendar.writes().Session}, false)
+}
+
+func (calendar *CalendarService) goToToday() {
+	calendar.Cursor = calendar.nowInstant()
+	calendar.loadEvents()
 }
 
 func (calendar *CalendarService) teamWhenShown(start time.Time, end time.Time) {
@@ -412,6 +417,7 @@ func (calendar *CalendarService) syncTeamEvents() {
 func (calendar *CalendarService) loadProviderCalendars() {
 	list, failure := calendar.calendarClient.Calendars(calendar.bearer())
 	calendar.ProviderCalendars = calendar.writableCalendars(calendar.calendarsOr(list, failure))
+	calendar.checkWhenRefused(failure)
 }
 
 func (CalendarService) calendarsOr(list ProviderCalendarList, failure error) []ProviderCalendar {
@@ -474,11 +480,11 @@ func (calendar *CalendarService) todayDate() string {
 
 func (CalendarService) sources() CalendarSources {
 	return CalendarSources{
-		Manual: "manual",
-		Invite: "invite",
+		Manual:   "manual",
+		Invite:   "invite",
 		Provider: "provider",
-		Team: "team",
-		Local: "local",
+		Team:     "team",
+		Local:    "local",
 	}
 }
 
@@ -626,7 +632,7 @@ func (calendar *CalendarService) cell(day time.Time, month time.Month, all []Cal
 		map[bool]string{true: "calendar-cell-today"}[date == calendar.todayDate()],
 	}
 	return CalendarCell{
-		Date:   date,
+		Date:      date,
 		DayLabel:  strconv.Itoa(day.Day()),
 		ClassName: strings.Join(strings.Fields(strings.Join(classes, calendar.classes().Space)), calendar.classes().Space),
 		Events:    calendar.chips(calendar.covering(all, date)),
@@ -645,7 +651,7 @@ func (calendar *CalendarService) agendaDay(day time.Time, all []CalendarEvent) A
 	date := CalendarDateUtils{}.CivilDate(day)
 	events := calendar.byStart(calendar.covering(all, date))
 	return AgendaDay{
-		Date:      date,
+		Date:         date,
 		Label:        DateLabelUtils{}.ShortWeekdayMonthDay(day),
 		IsToday:      date == calendar.todayDate(),
 		Events:       calendar.chips(events),
@@ -904,10 +910,10 @@ func (CalendarService) whenText(start string, end string) string {
 
 func (CalendarService) scopes() EditScopes {
 	return EditScopes{
-		Event: "event",
-		Instance: "instance",
-		Series: "series",
-		NoRepeat: "none",
+		Event:        "event",
+		Instance:     "instance",
+		Series:       "series",
+		NoRepeat:     "none",
 		CustomRepeat: "custom",
 	}
 }
@@ -948,7 +954,7 @@ func (calendar *CalendarService) openNew(form EventForm, returnSelector string) 
 }
 
 func (calendar *CalendarService) showModal(form EventForm, returnSelector string) {
-	calendar.MutationKey = calendar.newKey()
+	calendar.MutationKey = calendar.newKey(form.Start + returnSelector)
 	calendar.Form = form
 	calendar.ModalReturnSelector = returnSelector
 	calendar.ModalOpen = true
@@ -1055,8 +1061,8 @@ func (calendar *CalendarService) closeModal() {
 	calendar.focus(FocusRequested{Selector: selector, Restore: selector == ""})
 }
 
-func (calendar *CalendarService) closeModalWhen(close bool) {
-	if close {
+func (calendar *CalendarService) closeModalWhen(wanted bool) {
+	if wanted {
 		calendar.closeModal()
 	}
 }
@@ -1218,15 +1224,13 @@ func (calendar *CalendarService) saveWhenValid(problem string, span EventRange) 
 }
 
 func (calendar *CalendarService) submitForm(span EventRange) {
-	editing := calendar.EditingID != ""
-	saved := calendar.savedMessage(editing, calendar.EditScope)
-	queued := map[bool]string{true: "Event update queued.", false: calendar.messages().CreationQueued}[editing]
+	saved := calendar.savedMessage(calendar.EditingID != "", calendar.EditScope)
 	body := calendar.formBody(calendar.Form, span)
 	scope, occurrence := calendar.scopeQuery()
 	calendar.Form.Saving = true
 	calendar.Form.Error = ""
-	_, outcome := calendar.write(calendar.saveRequest(body, scope, occurrence), calendar.saveOffline(body, calendar.eventQuery(scope, occurrence, "")))
-	calendar.afterSave(outcome, queued, saved)
+	_, failure := calendar.saveRequest(body, scope, occurrence)()
+	calendar.afterSave(failure, saved)
 }
 
 func (calendar *CalendarService) savedMessage(editing bool, scope string) string {
@@ -1241,15 +1245,16 @@ func (calendar *CalendarService) savedMessage(editing bool, scope string) string
 }
 
 func (calendar *CalendarService) formBody(form EventForm, span EventRange) map[string]any {
+	title := strings.TrimSpace(form.Title)
 	body := map[string]any{
-		"title":          strings.TrimSpace(form.Title),
-		"start":          span.Start,
-		"end":            span.End,
-		"allDay":         form.AllDay,
-		"location":       strings.TrimSpace(form.Location),
-		"description":    form.Description,
-		"timeZone":       TextUtils{}.FirstOf(TextUtils{}.FirstOf(form.TimeZone, calendar.timeZone), calendar.writes().Universal),
-		calendar.writes().IdempotencyKey: TextUtils{}.FirstOf(calendar.MutationKey, calendar.newKey()),
+		"title":                          title,
+		"start":                          span.Start,
+		"end":                            span.End,
+		"allDay":                         form.AllDay,
+		"location":                       strings.TrimSpace(form.Location),
+		"description":                    form.Description,
+		"timeZone":                       TextUtils{}.FirstOf(TextUtils{}.FirstOf(form.TimeZone, calendar.timeZone), calendar.writes().Universal),
+		calendar.writes().IdempotencyKey: TextUtils{}.FirstOf(calendar.MutationKey, calendar.newKey(title+span.Start)),
 	}
 	calendar.addTarget(body, form.CalendarID)
 	calendar.addRecurrence(body, calendar.repeatRule(form.Repeat, form.Recurrence))
@@ -1257,19 +1262,19 @@ func (calendar *CalendarService) formBody(form EventForm, span EventRange) map[s
 }
 
 func (calendar *CalendarService) addTarget(body map[string]any, target string) {
-	if calendar.EditingID == "" && target != "" && target != calendar.sources().Local {
+	if !slices.Contains([]bool{calendar.EditingID == "", target != "", target != calendar.sources().Local}, false) {
 		body["calendarId"] = target
 	}
 }
 
 func (calendar *CalendarService) addRecurrence(body map[string]any, rule string) {
-	if calendar.EditingID == "" || calendar.EditScope == calendar.scopes().Series {
+	if slices.Contains([]bool{calendar.EditingID == "", calendar.EditScope == calendar.scopes().Series}, true) {
 		body["recurrence"] = rule
 	}
 }
 
 func (calendar *CalendarService) scopeQuery() (string, string) {
-	if calendar.EditingID != "" && calendar.EditingRecurrenceID != "" {
+	if !slices.Contains([]bool{calendar.EditingID != "", calendar.EditingRecurrenceID != ""}, false) {
 		return calendar.EditScope, calendar.EditingRecurrenceID
 	}
 	return "", ""
@@ -1285,46 +1290,33 @@ func (calendar *CalendarService) saveRequest(body map[string]any, scope string, 
 	return func() (BehaviorValue, error) { return calendar.calendarClient.Create(calendar.bearer(), body) }
 }
 
-func (calendar *CalendarService) saveOffline(body map[string]any, query string) OfflineWriteRequested {
-	if calendar.EditingID != "" {
-		return calendar.offline(calendar.eventPath(calendar.EditingID)+query, calendar.writes().Put, body, "Update calendar event")
-	}
-	return calendar.offline(calendar.eventsPath(), calendar.writes().Post, body, calendar.messages().CreateEvent)
-}
-
-func (calendar *CalendarService) afterSave(outcome string, queued string, saved string) {
-	switch outcome {
-	case calendar.writes().Queued:
-		calendar.closeModal()
-		calendar.toast(queued)
-	case calendar.writes().Saved:
-		calendar.closeModal()
-		calendar.toast(saved)
-		calendar.loadEvents()
-	default:
+// afterSave closes the dialog on success; a failure stays in the dialog with
+// a fixed message, because the transport hands over no answer body.
+func (calendar *CalendarService) afterSave(failure error, saved string) {
+	if failure != nil {
 		calendar.Form.Saving = false
-		calendar.Form.Error = "Save failed"
+		calendar.Form.Error = HTTPUtils{}.Message(failure, "Save failed", calendar.messages().Offline)
+		return
 	}
+	calendar.closeModal()
+	calendar.toast(saved)
+	calendar.loadEvents()
 }
 
 func (calendar *CalendarService) deleteWhenWritable(scope string) {
-	if calendar.EditingID == "" || calendar.EditingReadOnly {
+	if slices.Contains([]bool{calendar.EditingID == "", calendar.EditingReadOnly}, true) {
 		return
 	}
 	calendar.deleteEditing(scope)
 }
 
 func (calendar *CalendarService) deleteEditing(scope string) {
-	key := TextUtils{}.FirstOf(calendar.MutationKey, calendar.newKey())
 	id := calendar.EditingID
+	key := TextUtils{}.FirstOf(calendar.MutationKey, calendar.newKey(id+scope))
 	occurrence := map[bool]string{true: calendar.EditingRecurrenceID}[scope == calendar.scopes().Instance]
 	query := map[bool]string{true: scope}[scope != calendar.scopes().Event]
-	send := func() (BehaviorValue, error) {
-		return calendar.calendarClient.Delete(calendar.bearer(), id, query, occurrence, key)
-	}
-	offline := calendar.offline(calendar.eventPath(id)+calendar.eventQuery(query, occurrence, key), "DELETE", nil, "Delete calendar event")
-	_, outcome := calendar.write(send, offline)
-	calendar.afterDelete(outcome, calendar.deletedMessage(scope))
+	_, failure := calendar.calendarClient.Delete(calendar.bearer(), id, query, occurrence, key)
+	calendar.afterDelete(failure, calendar.deletedMessage(scope))
 }
 
 func (calendar *CalendarService) deletedMessage(scope string) string {
@@ -1338,117 +1330,33 @@ func (calendar *CalendarService) deletedMessage(scope string) string {
 	}
 }
 
-func (calendar *CalendarService) afterDelete(outcome string, deleted string) {
-	switch outcome {
-	case calendar.writes().Queued:
-		calendar.closeModal()
-		calendar.toast("Event deletion queued.")
-	case calendar.writes().Saved:
-		calendar.closeModal()
-		calendar.toast(deleted)
-		calendar.loadEvents()
-	default:
-		calendar.toast("Delete failed.")
+func (calendar *CalendarService) afterDelete(failure error, deleted string) {
+	if failure != nil {
+		calendar.toast(HTTPUtils{}.Message(failure, "Delete failed.", calendar.messages().Offline))
+		return
 	}
+	calendar.closeModal()
+	calendar.toast(deleted)
+	calendar.loadEvents()
 }
 
 func (CalendarService) keys() CalendarKeys {
 	return CalendarKeys{
-		Up: "up",
-		Down: "down",
-		Left: "left",
+		Up:    "up",
+		Down:  "down",
+		Left:  "left",
 		Right: "right",
-		Escape: "Escape",
 	}
-}
-
-// Writes queue only transport failures; an error status stays visible.
-
-func (calendar *CalendarService) write(send func() (BehaviorValue, error), offline OfflineWriteRequested) (BehaviorValue, string) {
-	answer, failure := send()
-	outcome := calendar.outcomeOf(failure)
-	calendar.queueWhen(outcome == calendar.writes().Queued, offline)
-	return answer, outcome
-}
-
-func (calendar *CalendarService) outcomeOf(failure error) string {
-	switch {
-	case failure == nil:
-		return calendar.writes().Saved
-	case HTTPUtils{}.Refused(failure):
-		return "failed"
-	default:
-		return calendar.writes().Queued
-	}
-}
-
-func (calendar *CalendarService) queueWhen(queued bool, offline OfflineWriteRequested) {
-	if queued {
-		calendar.applicationEventPublisher.PublishEvent(offline, false)
-	}
-}
-
-func (calendar *CalendarService) offline(path string, method string, body any, message string) OfflineWriteRequested {
-	return OfflineWriteRequested{
-		Kind:        calendar.writes().Kind,
-		Path:        path,
-		Method:      method,
-		Body:        body,
-		Message:     message,
-		CoalesceKey: calendar.coalesceKey(method),
-		Metadata:    map[string]any{calendar.writes().Kind: true},
-	}
-}
-
-func (calendar *CalendarService) coalesceKey(method string) string {
-	if method == calendar.writes().Post {
-		return ""
-	}
-	return calendar.writes().CoalescePrefix + calendar.writeTarget()
-}
-
-func (calendar *CalendarService) writeTarget() string {
-	return TextUtils{}.FirstOf(calendar.EditingID, calendar.KeyboardEventID)
-}
-
-func (calendar *CalendarService) eventsPath() string {
-	return "/calendar/events"
-}
-
-func (calendar *CalendarService) eventPath(id string) string {
-	return calendar.eventsPath() + "/" + url.PathEscape(id)
-}
-
-func (calendar *CalendarService) eventQuery(scope string, occurrence string, key string) string {
-	values := []string{}
-	for _, pair := range [][2]string{{"scope", scope}, {"occurrenceStart", occurrence}, {calendar.writes().IdempotencyKey, key}} {
-		values = calendar.withQuery(values, pair)
-	}
-	return calendar.queryText(values)
-}
-
-func (CalendarService) withQuery(values []string, pair [2]string) []string {
-	if pair[1] == "" {
-		return values
-	}
-	return append(values, pair[0]+"="+url.QueryEscape(pair[1]))
-}
-
-func (CalendarService) queryText(values []string) string {
-	if len(values) == 0 {
-		return ""
-	}
-	return "?" + strings.Join(values, "&")
 }
 
 func (CalendarService) classes() CalendarClasses {
 	return CalendarClasses{
-		MobileOnly: "calendar-mobile-only",
+		MobileOnly:  "calendar-mobile-only",
 		DesktopOnly: "calendar-desktop-only",
-		ModalBackdrop: "event-modal-backdrop",
-		QuickBackdrop: "quick-event-backdrop",
-		ChipPrefix: "calendar-event",
-		Space: " ",
+		EventDialog: "calendar-event-dialog",
+		QuickDialog: "calendar-quick-event",
+		ChipPrefix:  "calendar-event",
+		Space:       " ",
 	}
 }
 
@@ -1482,10 +1390,15 @@ func (calendar *CalendarService) restoreWhen(restore bool) {
 	}
 }
 
-func (calendar *CalendarService) closeQuickWhen(close bool) {
-	if close {
+func (calendar *CalendarService) closeQuickWhen(wanted bool) {
+	if wanted {
 		calendar.closeQuickCreate(true)
 	}
+}
+
+func (calendar *CalendarService) createQuick() {
+	blocked := slices.Contains([]bool{calendar.QuickCreateDate == "", calendar.QuickCreateSaving}, true)
+	calendar.quickCreateWhenReady(strings.TrimSpace(calendar.QuickCreateTitle), blocked)
 }
 
 func (calendar *CalendarService) quickCreateWhenReady(title string, blocked bool) {
@@ -1504,47 +1417,45 @@ func (calendar *CalendarService) submitQuick(title string) {
 	start := time.Date(day.Year(), day.Month(), day.Day(), calendar.bounds().Morning, 0, 0, 0, calendar.zone)
 	end := time.Date(day.Year(), day.Month(), day.Day(), calendar.bounds().Morning+1, 0, 0, 0, calendar.zone)
 	body := map[string]any{
-		"title":          title,
-		"start":          CalendarDateUtils{}.InstantText(start),
-		"end":            CalendarDateUtils{}.InstantText(end),
-		"timeZone":       calendar.timeZone,
-		calendar.writes().IdempotencyKey: calendar.newKey(),
+		"title":                          title,
+		"start":                          CalendarDateUtils{}.InstantText(start),
+		"end":                            CalendarDateUtils{}.InstantText(end),
+		"timeZone":                       calendar.timeZone,
+		calendar.writes().IdempotencyKey: calendar.newKey(title + calendar.QuickCreateDate),
 	}
 	calendar.QuickCreateSaving = true
-	send := func() (BehaviorValue, error) { return calendar.calendarClient.Create(calendar.bearer(), body) }
-	_, outcome := calendar.write(send, calendar.offline(calendar.eventsPath(), calendar.writes().Post, body, calendar.messages().CreateEvent))
-	calendar.afterQuick(outcome)
+	_, failure := calendar.calendarClient.Create(calendar.bearer(), body)
+	calendar.afterQuick(failure)
 }
 
-func (calendar *CalendarService) afterQuick(outcome string) {
-	switch outcome {
-	case calendar.writes().Queued:
-		calendar.closeQuickCreate(false)
-		calendar.toast(calendar.messages().CreationQueued)
-	case calendar.writes().Saved:
-		calendar.closeQuickCreate(false)
-		calendar.toast(calendar.messages().Created)
-		calendar.loadEvents()
-	default:
+func (calendar *CalendarService) afterQuick(failure error) {
+	if failure != nil {
 		calendar.QuickCreateSaving = false
-		calendar.QuickCreateError = "Create failed"
+		calendar.QuickCreateError = HTTPUtils{}.Message(failure, "Create failed", calendar.messages().Offline)
+		return
 	}
+	calendar.closeQuickCreate(false)
+	calendar.toast(calendar.messages().Created)
+	calendar.loadEvents()
 }
 
 func (CalendarService) writes() CalendarWrites {
 	return CalendarWrites{
-		Put: "PUT",
-		Post: "POST",
-		Saved: "saved",
-		Queued: "queued",
-		Kind: "calendar",
-		CoalescePrefix: "calendar:",
 		IdempotencyKey: "idempotencyKey",
-		Universal: "UTC",
+		Universal:      "UTC",
+		Session:        "calendar",
 	}
 }
 
 // Moving events by drag and by keyboard.
+
+// dropRange is the new range of an event dropped on a day or on its all-day row.
+func (calendar *CalendarService) dropRange(allDay bool) func(CalendarEvent, string) (EventRange, bool) {
+	if allDay {
+		return calendar.allDayDrop
+	}
+	return calendar.dateDrop
+}
 
 func (calendar *CalendarService) dateDrop(event CalendarEvent, date string) (EventRange, bool) {
 	span := EventRange{Start: event.Start, End: TextUtils{}.FirstOf(event.End, event.Start)}
@@ -1591,7 +1502,7 @@ func (CalendarService) allDayDropKind(event CalendarEvent) string {
 func (calendar *CalendarService) drop(event CalendarEvent, date string, span EventRange, valid bool) {
 	message := calendar.dropMessage(event, span)
 	allowed := calendar.dropAllowed(event, date, valid)
-	calendar.persistWhen(allowed, event, calendar.timesBody(span), message)
+	calendar.persistWhen(allowed, event, calendar.timesBody(event, span), message)
 }
 
 func (calendar *CalendarService) dropAllowed(event CalendarEvent, date string, valid bool) bool {
@@ -1614,20 +1525,15 @@ func (calendar *CalendarService) dropMessage(event CalendarEvent, span EventRang
 	return calendar.messages().Moved
 }
 
-func (calendar *CalendarService) timesBody(span EventRange) map[string]any {
-	return map[string]any{"start": span.Start, "end": span.End, "allDay": span.AllDay, calendar.writes().IdempotencyKey: calendar.newKey()}
+func (calendar *CalendarService) timesBody(event CalendarEvent, span EventRange) map[string]any {
+	return map[string]any{"start": span.Start, "end": span.End, "allDay": span.AllDay, calendar.writes().IdempotencyKey: calendar.newKey(event.ID + span.Start + span.End)}
 }
 
 func (calendar *CalendarService) persistTimes(event CalendarEvent, body map[string]any, message string) {
 	id := TextUtils{}.FirstOf(event.SeriesID, event.ID)
 	scope, occurrence := calendar.occurrenceQuery(event)
-	send := func() (BehaviorValue, error) {
-		return calendar.calendarClient.Update(calendar.bearer(), id, scope, occurrence, body)
-	}
-	offline := calendar.offline(calendar.eventPath(id)+calendar.eventQuery(scope, occurrence, ""), calendar.writes().Put, body, message)
-	offline.CoalesceKey = calendar.writes().CoalescePrefix + id
-	_, outcome := calendar.write(send, offline)
-	calendar.afterMove(outcome, message)
+	_, failure := calendar.calendarClient.Update(calendar.bearer(), id, scope, occurrence, body)
+	calendar.afterMove(failure, message)
 }
 
 func (calendar *CalendarService) occurrenceQuery(event CalendarEvent) (string, string) {
@@ -1637,16 +1543,13 @@ func (calendar *CalendarService) occurrenceQuery(event CalendarEvent) (string, s
 	return "", ""
 }
 
-func (calendar *CalendarService) afterMove(outcome string, message string) {
-	switch outcome {
-	case calendar.writes().Queued:
-		calendar.toast(strings.TrimSuffix(message, ".") + " queued.")
-	case calendar.writes().Saved:
-		calendar.toast(message)
-		calendar.loadEvents()
-	default:
-		calendar.toast("Could not update event.")
+func (calendar *CalendarService) afterMove(failure error, message string) {
+	if failure != nil {
+		calendar.toast(HTTPUtils{}.Message(failure, "Could not update event.", calendar.messages().Offline))
+		return
 	}
+	calendar.toast(message)
+	calendar.loadEvents()
 }
 
 // moveSelected follows Mailspring: arrows move and Shift+arrows resize;
@@ -1673,7 +1576,7 @@ func (calendar *CalendarService) moveAllDay(event CalendarEvent, move EventMove)
 	next := map[bool]EventRange{true: {Start: current.Start, End: resizedEnd, AllDay: true}, false: shifted}[move.Resize]
 	length, _ := CalendarDateUtils{}.CalendarDaysBetween(next.Start, next.End)
 	checks := []bool{!calendar.verticalDirections()[move.Direction], length >= 1}
-	calendar.persistWhen(!slices.Contains(checks, false), event, calendar.timesBody(next), calendar.moveMessage(move.Resize))
+	calendar.persistWhen(!slices.Contains(checks, false), event, calendar.timesBody(event, next), calendar.moveMessage(move.Resize))
 }
 
 func (calendar *CalendarService) moveTimed(event CalendarEvent, move EventMove) {
@@ -1684,7 +1587,7 @@ func (calendar *CalendarService) moveTimed(event CalendarEvent, move EventMove) 
 	nextStart := map[bool]time.Time{true: start, false: calendar.shifted(start, minutes, days)}[move.Resize]
 	nextEnd := calendar.shifted(end, minutes, days)
 	checks := []bool{startFound, endFound, calendar.directionAllowed(move.Direction), calendar.longEnough(move.Resize, nextStart, nextEnd)}
-	body := map[string]any{"start": CalendarDateUtils{}.InstantText(nextStart), "end": CalendarDateUtils{}.InstantText(nextEnd), calendar.writes().IdempotencyKey: calendar.newKey()}
+	body := map[string]any{"start": CalendarDateUtils{}.InstantText(nextStart), "end": CalendarDateUtils{}.InstantText(nextEnd), calendar.writes().IdempotencyKey: calendar.newKey(event.ID + CalendarDateUtils{}.InstantText(nextStart))}
 	calendar.persistWhen(!slices.Contains(checks, false), event, body, calendar.moveMessage(move.Resize))
 }
 
@@ -1719,7 +1622,7 @@ func (calendar *CalendarService) shortcutAction(command string) func() {
 		"calendar:view-week":          func() { calendar.switchWhenKnown(calendar.modes().Week) },
 		"calendar:view-month":         func() { calendar.switchWhenKnown(calendar.modes().Month) },
 		"calendar:view-agenda":        func() { calendar.switchWhenKnown(calendar.modes().Agenda) },
-		"calendar:go-to-today":        func() { calendar.Cursor = calendar.nowInstant(); calendar.loadEvents() },
+		"calendar:go-to-today":        calendar.goToToday,
 		"calendar:navigate-next":      func() { calendar.shiftWhenStep(1) },
 		"calendar:navigate-previous":  func() { calendar.shiftWhenStep(-1) },
 		"calendar:refresh-calendars":  calendar.loadEvents,
@@ -1737,11 +1640,10 @@ func (CalendarService) actionOr(actions map[string]func(), command string) func(
 
 func (CalendarService) messages() CalendarMessages {
 	return CalendarMessages{
-		Moved: "Event moved.",
-		Created: "Event created.",
-		CreationQueued: "Event creation queued.",
-		CreateEvent: "Create calendar event",
+		Moved:     "Event moved.",
+		Created:   "Event created.",
 		Connected: "Connected calendar",
+		Offline:   "The server could not be reached. Check your connection and try again.",
 	}
 }
 
@@ -1834,11 +1736,11 @@ func (CalendarService) firstMatch(found CalendarEvent, candidate CalendarEvent, 
 
 func (CalendarService) spans() CalendarSpans {
 	return CalendarSpans{
-		Week: 7,
-		WorkWeek: 5,
-		ThreeDays: 3,
-		Agenda: 14,
-		GridRows: 6,
+		Week:        7,
+		WorkWeek:    5,
+		ThreeDays:   3,
+		Agenda:      14,
+		GridRows:    6,
 		StepMinutes: 15,
 	}
 }
@@ -1859,15 +1761,14 @@ func (CalendarService) dateSelector(date string) string {
 
 func (CalendarService) bounds() DayBounds {
 	return DayBounds{
-		Morning: 9,
-		LastHour: 23,
-		LastMinute: 59,
+		Morning:        9,
+		LastHour:       23,
+		LastMinute:     59,
 		LastNanosecond: 999_000_000,
-		MonthLead: 25,
-		ReferenceYear: 2024,
+		MonthLead:      25,
+		ReferenceYear:  2024,
 	}
 }
-
 
 func (calendar *CalendarService) knownModes() map[string]bool {
 	known := map[string]bool{}
@@ -1888,4 +1789,3 @@ func (calendar *CalendarService) timedModes() map[string]bool {
 func (calendar *CalendarService) verticalDirections() map[string]bool {
 	return map[string]bool{calendar.keys().Up: true, calendar.keys().Down: true}
 }
-

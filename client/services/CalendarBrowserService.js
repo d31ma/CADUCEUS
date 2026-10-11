@@ -5,42 +5,28 @@
  * queries, and its template handlers cannot cancel an event. So this service
  * owns the native HTML drag-and-drop transaction (dragover must call
  * preventDefault before a drop can happen), the delete confirmations, the
- * phone-size viewport check, the shell's `caduceus:shortcut:calendar:*` and
- * `caduceus:offline-write-result` window events, the quick-event form's native
- * submit, and the accessible names that DuVay's floating labels leave off
- * their inner controls. It hands every decision to CalendarService.
+ * phone-size viewport check, the chip that holds keyboard focus, scrolling a
+ * chip into view, and the accessible names that DuVay's floating labels leave
+ * off their inner controls. It reads the DOM and talks to CalendarService in
+ * events; every decision stays in Go.
  */
 @Service
 export default class CalendarBrowserService {
   static _NARROW = '(max-width: 760px)'
   static _EVENT = '[data-calendar-event-id]'
   static _EVENT_ID = 'data-calendar-event-id'
-  static _ALL_DAY = '[data-calendar-all-day-date]'
-  static _DATE = '[data-calendar-date]'
+  static _ALL_DAY_DATE = 'data-calendar-all-day-date'
   static _DROP = '[data-calendar-all-day-date], [data-calendar-date]'
   static _DROP_TARGET = 'calendar-drop-target'
   static _SELECTED = 'keyboard-selected'
-  static _QUICK_FORM = '.quick-event-popover'
   static _ARIA_LABEL = 'aria-label'
-  static _BUSY = 'busy'
-  static _ATTEMPTS = 40
-  static _RETRY_MS = 50
   static _LABELLED = '.event-modal w-text-field, .event-modal w-textarea, .quick-event-popover w-text-field'
-  static _SHORTCUTS = [
-    'calendar:move-event-up', 'calendar:move-event-down', 'calendar:move-event-left', 'calendar:move-event-right',
-    'calendar:resize-event-up', 'calendar:resize-event-down', 'calendar:resize-event-left', 'calendar:resize-event-right',
-    'calendar:view-day', 'calendar:view-week', 'calendar:view-month', 'calendar:view-agenda',
-    'calendar:go-to-today', 'calendar:navigate-next', 'calendar:navigate-previous', 'calendar:refresh-calendars',
-  ]
 
-  /** @type {TacTaskScheduler} */
-  @Needs
-  taskScheduler
-  calendar
+  /** @type {ApplicationEventPublisher} */
+  applicationEventPublisher
+
+  ready = false
   _dragEventId = ''
-  _opened = false
-  /** @type {Promise<unknown>} */
-  _queue = Promise.resolve()
   /** @type {Array<[EventTarget, string, (event: any) => void]>} */
   _bindings = []
   /** @type {MutationObserver | null} */
@@ -50,20 +36,19 @@ export default class CalendarBrowserService {
   start() {
     const type = CalendarBrowserService
     this._bindings = [
-      [window, 'resize', () => this._run(() => this.calendar.viewport(this._narrow()))],
-      [window, 'caduceus:offline-write-result', event => this._offlineResult(event.detail)],
+      [window, 'resize', () => this._measure()],
       [document, 'dragstart', event => this._dragStart(event, this._closest(event.target, type._EVENT))],
       [document, 'dragover', event => this._dragOver(event, this._closest(event.target, type._DROP))],
       [document, 'dragleave', event => this._dragLeave(event, this._closest(event.target, type._DROP))],
-      [document, 'drop', event => this._drop(event, this._closest(event.target, type._ALL_DAY), this._closest(event.target, type._DATE))],
+      [document, 'drop', event => this._drop(event, this._closest(event.target, type._DROP))],
       [document, 'dragend', () => this._clearDrag()],
       [document, 'focusin', event => this._focusIn(this._closest(event.target, type._EVENT))],
-      [document, 'submit', event => this._preventQuickSubmit(event, this._closest(event.target, type._QUICK_FORM))],
-      ...type._SHORTCUTS.map(name => this._shortcutBinding(name)),
     ]
     this._bindings.forEach(([target, name, handler]) => target.addEventListener(name, handler))
     this._observer = new MutationObserver(() => this._labelFields())
     this._observer.observe(document.body, { childList: true, subtree: true })
+    this._measure()
+    this.ready = true
   }
 
   @OnStop
@@ -71,16 +56,6 @@ export default class CalendarBrowserService {
     this._bindings.forEach(([target, name, handler]) => target.removeEventListener(name, handler))
     this._bindings = []
     this._observer?.disconnect()
-  }
-
-  /**
-   * The first load waits for the session, because the browser transport
-   * carries the bearer token only once SessionService has it.
-   * @param {SessionChanged} changed
-   */
-  @OnEvent({"replay":true})
-  session(changed) {
-    this._openWhenSignedIn(changed)
   }
 
   /**
@@ -94,66 +69,23 @@ export default class CalendarBrowserService {
 
   /**
    * Ask before deleting: a recurring event offers this occurrence, then the
-   * whole series.
+   * whole series. The chosen scope goes to CalendarService.
    * @param {string} seriesId
    */
   confirmDelete(seriesId) {
-    const scope = this._deleteScope(seriesId)
-    return this._deleteWhenChosen(scope)
+    this._publishScope(this._question(seriesId).call(this))
   }
 
-  /** @param {SessionChanged} changed */
-  _openWhenSignedIn(changed) {
-    if (!changed.signedIn || this._opened) return
-    this._opened = true
-    setTimeout(() => this._run(() => this.calendar.open(changed, this._narrow())), 0)
-  }
-
-  /**
-   * Calls into the Go service one at a time, then render. The Go runtime
-   * answers "Native owner is busy." to a call that arrives while another call
-   * is running between two awaits, so a refused call is tried again shortly.
-   * @param {() => Promise<unknown>} action
-   */
-  _run(action) {
-    return this._enqueue(action).then(() => this.taskScheduler.render())
-  }
-
-  /** @param {() => Promise<unknown>} action */
-  _enqueue(action) {
-    this._queue = this._queue.then(() => this._attempt(action, CalendarBrowserService._ATTEMPTS))
-    return this._queue
-  }
-
-  /** @param {() => Promise<unknown>} action @param {number} left */
-  _attempt(action, left) {
-    return Promise.resolve().then(action).catch(error => this._retry(error, action, left))
-  }
-
-  /** @param {unknown} error @param {() => Promise<unknown>} action @param {number} left */
-  _retry(error, action, left) {
-    if (left <= 0 || !String(error).includes(CalendarBrowserService._BUSY)) return undefined
-    return new Promise(resolve => setTimeout(resolve, CalendarBrowserService._RETRY_MS)).then(() => this._attempt(action, left - 1))
-  }
-
-  _narrow() {
-    return window.matchMedia(CalendarBrowserService._NARROW).matches
-  }
-
-  /** @param {string} name @returns {[EventTarget, string, () => void]} */
-  _shortcutBinding(name) {
-    return [window, `caduceus:shortcut:${name}`, () => this._run(() => this.calendar.shortcut(name))]
+  _measure() {
+    /** @type {ViewportMeasured} */
+    const measured = { narrow: window.matchMedia(CalendarBrowserService._NARROW).matches }
+    this.applicationEventPublisher.publishEvent(measured, true)
   }
 
   /** @param {EventTarget | null} target @param {string} selector @returns {HTMLElement | null} */
   _closest(target, selector) {
     if (!(target instanceof Element)) return null
     return /** @type {HTMLElement | null} */ (target.closest(selector))
-  }
-
-  /** @param {any} detail */
-  _offlineResult(detail) {
-    if (detail?.kind === 'calendar' && detail?.status === 'accepted') this._run(() => this.calendar.reload())
   }
 
   /** @param {DragEvent} event @param {HTMLElement | null} chip */
@@ -176,30 +108,26 @@ export default class CalendarBrowserService {
     target.classList.remove(CalendarBrowserService._DROP_TARGET)
   }
 
-  /** @param {DragEvent} event @param {HTMLElement | null} allDay @param {HTMLElement | null} day */
-  _drop(event, allDay, day) {
+  /** @param {DragEvent} event @param {HTMLElement | null} zone */
+  _drop(event, zone) {
     const id = this._dragEventId
     this._clearDrag()
-    const call = this._dropCall(id, allDay, day)
-    this._runDrop(event, call)
+    if (![id, zone].every(Boolean)) return
+    this._publishDrop(event, id, /** @type {HTMLElement} */ (zone))
   }
 
-  /** @param {string} id @param {HTMLElement | null} allDay @param {HTMLElement | null} day */
-  _dropCall(id, allDay, day) {
-    switch (true) {
-      case !id: return null
-      case !!allDay: return () => this.calendar.dropOnAllDay(id, String(allDay?.dataset.calendarAllDayDate))
-      case !!day: return () => this.calendar.dropOnDate(id, String(day?.dataset.calendarDate))
-      default: return null
-    }
-  }
-
-  /** @param {DragEvent} event @param {(() => Promise<unknown>) | null} call */
-  _runDrop(event, call) {
-    if (!call) return
+  /** @param {DragEvent} event @param {string} id @param {HTMLElement} zone */
+  _publishDrop(event, id, zone) {
     event.preventDefault()
     event.stopPropagation()
-    this._run(call)
+    /** @type {CalendarEventDropped} */
+    const dropped = { id, date: this._zoneDate(zone), allDay: zone.hasAttribute(CalendarBrowserService._ALL_DAY_DATE) }
+    this.applicationEventPublisher.publishEvent(dropped, false)
+  }
+
+  /** @param {HTMLElement} zone */
+  _zoneDate(zone) {
+    return String(zone.dataset.calendarAllDayDate ?? zone.dataset.calendarDate)
   }
 
   _clearDrag() {
@@ -207,30 +135,20 @@ export default class CalendarBrowserService {
     this._dragEventId = ''
   }
 
-  /** @param {HTMLElement | null} chip */
+  /**
+   * Focus only marks the move and resize target, and decorates the chip in
+   * place: a render would rebuild the chips, and a click whose mousedown
+   * focused a chip would then land on a detached node.
+   * @param {HTMLElement | null} chip
+   */
   _focusIn(chip) {
     if (!chip) return
-    this._select(chip)
-  }
-
-  /**
-   * Focus only marks the move and resize target. It must not rerender: a
-   * rerender rebuilds the chips, and a click whose mousedown focused a chip
-   * would then land on a detached node.
-   * @param {HTMLElement} chip
-   */
-  _select(chip) {
     const type = CalendarBrowserService
-    const id = String(chip.getAttribute(type._EVENT_ID))
-    this._enqueue(() => this.calendar.focusEvent(id))
+    /** @type {CalendarEventFocused} */
+    const focused = { id: String(chip.getAttribute(type._EVENT_ID)) }
+    this.applicationEventPublisher.publishEvent(focused, false)
     document.querySelectorAll(`.${type._SELECTED}`).forEach(node => node.classList.remove(type._SELECTED))
     chip.classList.toggle(type._SELECTED, !chip.classList.contains('calendar-event-chip-team'))
-  }
-
-  /** Tachyon still runs the form's on:submit handler; only the page load is cancelled.
-   * @param {Event} event @param {HTMLElement | null} form */
-  _preventQuickSubmit(event, form) {
-    if (form) event.preventDefault()
   }
 
   _labelFields() {
@@ -253,10 +171,9 @@ export default class CalendarBrowserService {
     found?.scrollIntoView({ block: 'center', inline: 'nearest' })
   }
 
-  /** @param {string} seriesId @returns {string | null} */
-  _deleteScope(seriesId) {
-    const ask = seriesId ? this._askSeries : this._askEvent
-    return ask.call(this)
+  /** @param {string} seriesId @returns {() => string | null} */
+  _question(seriesId) {
+    return seriesId ? this._askSeries : this._askEvent
   }
 
   /** @returns {string | null} */
@@ -274,8 +191,10 @@ export default class CalendarBrowserService {
   }
 
   /** @param {string | null} scope */
-  _deleteWhenChosen(scope) {
-    if (scope === null) return undefined
-    return this._enqueue(() => this.calendar.deleteEditing(scope))
+  _publishScope(scope) {
+    if (scope === null) return
+    /** @type {CalendarDeleteChosen} */
+    const chosen = { scope }
+    this.applicationEventPublisher.publishEvent(chosen, false)
   }
 }

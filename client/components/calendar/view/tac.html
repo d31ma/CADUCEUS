@@ -1,5 +1,5 @@
-<logic :if="session.signedIn">
 <div class="calendar-page">
+  <span hidden :data-browser="calendarBrowser.ready"></span>
   <header class="calendar-toolbar">
     <div class="calendar-title-row">
       <h1 class="calendar-title w-text-title-large">{calendar.titleLabel}</h1>
@@ -151,8 +151,8 @@
   </logic>
 
   <logic :if="calendar.quickCreateOpen">
-    <div class="quick-event-backdrop" on:click="calendar.quickBackdrop($event.target.classList.value)">
-      <form class="quick-event-popover" role="dialog" aria-modal="true" aria-labelledby="quick-event-title" on:submit="calendar.createQuickEvent()" on:keydown="calendar.quickKey($event.key)">
+    <div class="quick-event-backdrop" on:click="browserPage.backdrop($event, 'calendar-quick-event')">
+      <form class="quick-event-popover" role="dialog" aria-modal="true" aria-labelledby="quick-event-title" on:submit="browserPage.submit($event, 'calendar-quick-event')">
         <h2 id="quick-event-title" class="w-text-title-medium">Quick event</h2>
         <p class="quick-event-date">{calendar.quickCreateDateLabel}</p>
         <w-text-field label="Title" :value="calendar.quickCreateTitle" on:input="calendar.updateQuickCreateTitle($event.target.value)" style="width:100%;"></w-text-field>
@@ -167,10 +167,10 @@
 
   <!-- Create/edit event modal -->
   <logic :if="calendar.modalOpen">
-    <div class="event-modal-backdrop" on:click="calendar.modalBackdrop($event.target.classList.value)">
-      <div id="calendar-event-dialog" class="event-modal" on:keydown="calendar.modalKey($event.key)" role="dialog" aria-modal="true" tabindex="-1">
+    <div class="event-modal-backdrop" on:click="browserPage.backdrop($event, 'calendar-event-dialog')">
+      <div id="calendar-event-dialog" class="event-modal" role="dialog" aria-modal="true" aria-labelledby="calendar-event-dialog-title" tabindex="-1">
         <header class="event-modal-header">
-          <h2 class="w-text-title-medium">{calendar.editingReadOnly ? 'Event details' : (calendar.editingID ? 'Edit event' : 'New event')}</h2>
+          <h2 id="calendar-event-dialog-title" class="w-text-title-medium">{calendar.editingReadOnly ? 'Event details' : (calendar.editingID ? 'Edit event' : 'New event')}</h2>
           <w-btn variant="icon" on:click="calendar.closeModal()" aria-label="Close">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -275,10 +275,3 @@
     </div>
   </logic>
 </div>
-</logic>
-
-<logic :if="session.restored && !session.signedIn">
-  <div class="login-screen">
-    <login-form :brandlogo="'/shared/assets/favicon.svg'" />
-  </div>
-</logic>

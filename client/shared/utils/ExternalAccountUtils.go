@@ -49,7 +49,7 @@ func (ExternalAccountUtils) DialogTexts(dialog FolderDialog, inFolder bool, busy
 
 func (ExternalAccountUtils) malformed(account ExternalAccount) bool {
 	return slices.Contains([]bool{
-		regexp.MustCompile(`^ext_[A-Za-z0-9_-]{20,80}$`).MatchString(account.ID),
+		strings.HasPrefix(account.ID, "ext_") && TokenUtils{}.Fits(strings.TrimPrefix(account.ID, "ext_"), TokenUtils{}.Identifier()+"_-", TokenBounds{Shortest: 20, Longest: 80}),
 		strings.TrimSpace(account.MailboxAddress) != "",
 		slices.Contains([]string{"gmail", "microsoft", "imap"}, account.Provider),
 		slices.Contains(ExternalAccountUtils{}.states(), account.State),

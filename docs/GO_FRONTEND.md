@@ -171,6 +171,33 @@ choice as an attribute on `<html>` with a CSS rule keyed on it. For example,
 `:style="'--external-account-color:' + account.color"`. To download, set
 `:href`/`:download` on a hidden link and publish `ClickRequested`.
 
+## The message reader (email-detail)
+
+| Need | How |
+| --- | --- |
+| Open a message beside the list | Publish `MailSelected{EmailID}`. A `/email/<id>` page opens its own message from `PageLocation`. |
+| Know which message is open | Hear the retained `OpenMessageChanged{EmailId, Folder, ParticipantAddress, Standalone, Account, ...}`. |
+| The reader went back to the list | It publishes `MailClosed{EmailID}`; on a message page it opens `/inbox` instead. |
+| Reply, reply all, forward, edit a draft | `ComposeUtils{}.Stored(ComposeFields{...})` then `ComposeUtils{}.Opened()`. The composer reads `caduceus_compose_prefill`; `sourceEmailId` names the message replied to. |
+| Mailbox actions of the open message | `MailActionRequested` and `SpamReportRequested` (MailboxService toasts and offers Undo). The reader reads its flags again on `InboxRefreshRequested`. |
+| Snooze undo | On a message page the reader stores `caduceus_pending_snooze_undo` (`PendingUndo`) and opens `/inbox`, where the shell offers Undo. Beside the list it shows its own Undo toast. |
+
+The reader's escape hatches: `ReaderBrowserService.js` (link warnings inside the
+sandboxed message frame, the one-click unsubscribe POST, the print window,
+scrolling to a find match, `PageOrigin`) and `TranslationEngineService.js`
+(on-device translation, which answers in `TranslationPart` events of at most
+8000 characters).
+
+- **Large values for a bridge.** An event holds at most 64 KiB. A bridge that
+  needs a large Go value (a message body to translate or print) reads it from
+  a hidden element the view binds, such as
+  `<span hidden data-translation-source :data-html="message.email.htmlBody">`.
+- **New tabs.** Bind `:href` on a hidden `<a target="_blank" rel="noopener noreferrer">`
+  and publish `ClickRequested`, as for downloads.
+- **`&&` and `||`.** `LogicUtils{}.All(...)` and `LogicUtils{}.Any(...)` join
+  conditions without a decision. Both sides are always evaluated, so never
+  guard a nil pointer with them.
+
 ## The view
 
 - **Service fields.** A view reads a service by its instance name:

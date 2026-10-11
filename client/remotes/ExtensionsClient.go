@@ -1,4 +1,4 @@
-// @HTTPClient
+// @HTTPClient({"setup":"SameOriginSetup"})
 type ExtensionsClient interface {
 	// @GetRequest("/extensions")
 	Extensions(

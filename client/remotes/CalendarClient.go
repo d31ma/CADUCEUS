@@ -2,7 +2,7 @@
 // the next two weeks for the sidebar badge. The calendar page reads and writes
 // the events themselves; its writes answer BehaviorValue, so their arguments
 // are BehaviorValue too.
-// @HTTPClient("/calendar")
+// @HTTPClient({"path":"/calendar","setup":"SameOriginSetup"})
 type CalendarClient interface {
 	// @GetRequest("/events")
 	Events(

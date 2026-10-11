@@ -1,4 +1,4 @@
-// @HTTPClient
+// @HTTPClient({"setup":"SameOriginSetup"})
 type DomainsClient interface {
 	// @GetRequest("/domains")
 	Domains(

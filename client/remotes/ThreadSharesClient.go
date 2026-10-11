@@ -1,6 +1,6 @@
 // ThreadSharesClient is the /thread-shares route group. The public share page
 // reads one expiring conversation and its attachments with no credentials.
-// @HTTPClient("/thread-shares")
+// @HTTPClient({"path":"/thread-shares","setup":"SameOriginSetup"})
 type ThreadSharesClient interface {
 	// @GetRequest("/public/{token}")
 	Thread(

@@ -1,6 +1,6 @@
 // MailProvidersClient reads the catalog of outside mail providers and
 // discovers the server settings of an address.
-// @HTTPClient("/api/v1")
+// @HTTPClient({"path":"/api/v1","setup":"SameOriginSetup"})
 type MailProvidersClient interface {
 	// @GetRequest("/provider-catalog")
 	Catalog(

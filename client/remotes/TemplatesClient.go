@@ -1,4 +1,4 @@
-// @HTTPClient
+// @HTTPClient({"setup":"SameOriginSetup"})
 type TemplatesClient interface {
 	// @GetRequest("/templates")
 	Templates(

@@ -1,4 +1,4 @@
-// @HTTPClient
+// @HTTPClient({"setup":"SameOriginSetup"})
 type McpClient interface {
 	// @GetRequest("/mcp/config")
 	Config(

@@ -1,4 +1,4 @@
-// @HTTPClient("/categories")
+// @HTTPClient({"path":"/categories","setup":"SameOriginSetup"})
 type CategoriesClient interface {
 	// @GetRequest
 	Catalog(

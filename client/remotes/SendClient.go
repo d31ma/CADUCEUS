@@ -1,6 +1,6 @@
 // SendClient is the /send route group. The shell undoes a send that the
 // composer left pending across a navigation.
-// @HTTPClient("/send")
+// @HTTPClient({"path":"/send","setup":"SameOriginSetup"})
 type SendClient interface {
 	// @PostRequest("/undo")
 	Undo(

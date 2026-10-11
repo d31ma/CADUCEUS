@@ -2,7 +2,8 @@
  * Escape hatch: the page facts and page actions that Go services cannot reach.
  *
  * Tachyon gives Go services no location, navigation, document element,
- * timers, focus, drag data or global key and click listeners. This service
+ * timers, focus, drag data, platform or time zone facts, or global key and
+ * click listeners. This service
  * publishes those facts as events and performs the actions Go asks for. It
  * makes no decision of its own beyond reading the DOM.
  */
@@ -38,8 +39,15 @@ export default class BrowserPageService {
       notifications: 'Notification' in window,
       pushDisabled: window.__CADUCEUS_DISABLE_SW === true,
     }
+    /** @type {DevicePlatform} */
+    const platform = {
+      apple: /Mac|iPhone|iPad/i.test(navigator.platform),
+      timeZoneOffset: -new Date().getTimezoneOffset(),
+      origin: location.origin,
+    }
     this.applicationEventPublisher.publishEvent(place, true)
     this.applicationEventPublisher.publishEvent(features, true)
+    this.applicationEventPublisher.publishEvent(platform, true)
     document.addEventListener('click', event => this._clicked(this._element(event.target), event))
     document.addEventListener('keydown', event => this._escape(event))
     this.ready = true

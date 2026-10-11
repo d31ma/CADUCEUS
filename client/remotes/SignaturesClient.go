@@ -1,4 +1,4 @@
-// @HTTPClient
+// @HTTPClient({"setup":"SameOriginSetup"})
 type SignaturesClient interface {
 	// @GetRequest("/signatures")
 	Signatures(

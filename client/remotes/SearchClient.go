@@ -1,4 +1,4 @@
-// @HTTPClient("/search")
+// @HTTPClient({"path":"/search","setup":"SameOriginSetup"})
 type SearchClient interface {
 	// @GetRequest
 	Search(

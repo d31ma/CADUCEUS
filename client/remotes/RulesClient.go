@@ -1,6 +1,6 @@
 // RulesClient is the /rules route group. The notification centre counts the
 // disabled rules; settings edits, orders and previews them.
-// @HTTPClient("/rules")
+// @HTTPClient({"path":"/rules","setup":"SameOriginSetup"})
 type RulesClient interface {
 	// @GetRequest
 	Rules(

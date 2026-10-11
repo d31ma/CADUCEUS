@@ -1,4 +1,4 @@
-// @HTTPClient("/threads")
+// @HTTPClient({"path":"/threads","setup":"SameOriginSetup"})
 type ThreadsClient interface {
 	// List reads conversations: the ones matching the query, or with an empty
 	// query the ones in the folder.

@@ -1,7 +1,7 @@
 // UsersClient is the /users route group. The shell reads and saves the
 // signed-in user's preferences; settings also saves the other preferences,
 // manages the user's aliases and lets an administrator add users.
-// @HTTPClient("/users")
+// @HTTPClient({"path":"/users","setup":"SameOriginSetup"})
 type UsersClient interface {
 	// @GetRequest("/me/preferences")
 	Preferences(

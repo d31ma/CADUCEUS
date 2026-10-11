@@ -1,7 +1,7 @@
 // NotificationsClient is the /notifications route group. The notification
 // centre offers push only when this user has no subscription yet; settings
 // registers and removes this device's Web Push subscription.
-// @HTTPClient("/notifications")
+// @HTTPClient({"path":"/notifications","setup":"SameOriginSetup"})
 type NotificationsClient interface {
 	// @GetRequest("/subscriptions")
 	Subscriptions(

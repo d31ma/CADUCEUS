@@ -1,7 +1,7 @@
 // ContactsClient is the /contacts route group: the contact list, its groups,
 // the CardDAV address books and their queued changes, vCard import and
 // export, and the composer's address suggestions.
-// @HTTPClient("/contacts")
+// @HTTPClient({"path":"/contacts","setup":"SameOriginSetup"})
 type ContactsClient interface {
 	// @GetRequest
 	List(

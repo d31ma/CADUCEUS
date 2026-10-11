@@ -1,7 +1,7 @@
 // AuthClient is the authentication route group: the sign-in transaction, the
 // session token set and the signed-in credential changes, including the
 // passkeys, authenticator app and recovery codes that settings manages.
-// @HTTPClient("/auth")
+// @HTTPClient({"path":"/auth","setup":"SameOriginSetup"})
 type AuthClient interface {
 	// @PostRequest("/login/begin")
 	Begin(

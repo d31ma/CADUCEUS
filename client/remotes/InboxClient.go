@@ -1,7 +1,7 @@
 // InboxClient is the /inbox route group. The shell counts the mailbox for the
 // sidebar badges and applies the mailbox actions it owns: moves, undo, redo
 // and spam reports.
-// @HTTPClient("/inbox")
+// @HTTPClient({"path":"/inbox","setup":"SameOriginSetup"})
 type InboxClient interface {
 	// @PostRequest("/actions")
 	Apply(

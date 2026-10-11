@@ -1,6 +1,6 @@
 // ActivityClient is the /activity route group. The shell reads how many
 // recipient events arrived since the Activity page was last viewed.
-// @HTTPClient("/activity")
+// @HTTPClient({"path":"/activity","setup":"SameOriginSetup"})
 type ActivityClient interface {
 	// @GetRequest
 	Unseen(

@@ -1,4 +1,4 @@
-// @HTTPClient("/reminders")
+// @HTTPClient({"path":"/reminders","setup":"SameOriginSetup"})
 type RemindersClient interface {
 	// @GetRequest
 	List(

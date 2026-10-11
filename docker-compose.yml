@@ -8,6 +8,12 @@
 #   bun scripts/send-test-mail.mjs admin@caduceus.com localhost 25
 #   # or: swaks --to admin@caduceus.com --server localhost:25
 #
+# The image's entry point is the Go binary (`caduceus entry`); `serve` starts
+# the FYLO owner, the Go server under `ty serve` and the mail services. Until a
+# Tachyon release carries the Go-server features, build with an unreleased ty:
+#
+#   docker build --build-context tachyon-override=<dir holding a Linux ty> .
+#
 # The container runs as non-root (UID 65532) and cannot bind ports <1024, so the
 # inbound SMTP daemon listens on 2525 inside and the host maps 25 -> 2525.
 services:

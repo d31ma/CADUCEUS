@@ -28,7 +28,7 @@ jobs:
           bun-version: 1.3.14
       - name: Install locked binary runtime
         run: |
-          curl -fsSL https://github.com/d31ma/Tachyon/releases/download/v26.33.02/install.sh | sudo sh
+          curl -fsSL https://github.com/d31ma/Tachyon/releases/download/v26.36.01/install.sh | sudo sh
           curl -fsSL https://github.com/d31ma/Fylo/releases/download/v26.33.02/install.sh | sudo sh
           curl -fsSL https://github.com/d31ma/Chex/releases/download/v26.32.02/install.sh | sudo sh
           curl -fsSL https://github.com/d31ma/TTID/releases/download/v26.32.03/install.sh | sudo sh
@@ -61,7 +61,7 @@ jobs:
           bun-version: 1.3.14
       - name: Install locked binary runtime
         run: |
-          curl -fsSL https://github.com/d31ma/Tachyon/releases/download/v26.33.02/install.sh | sudo sh
+          curl -fsSL https://github.com/d31ma/Tachyon/releases/download/v26.36.01/install.sh | sudo sh
           curl -fsSL https://github.com/d31ma/Fylo/releases/download/v26.33.02/install.sh | sudo sh
           curl -fsSL https://github.com/d31ma/Chex/releases/download/v26.32.02/install.sh | sudo sh
           curl -fsSL https://github.com/d31ma/TTID/releases/download/v26.32.03/install.sh | sudo sh

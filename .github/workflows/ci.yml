@@ -48,7 +48,7 @@ jobs:
             test "$expected" = "$actual"
             sudo install -m 755 "${tmp}/${binary}" "/usr/local/bin/${binary}"
           }
-          install_release Tachyon ty 26.33.02
+          install_release Tachyon ty 26.36.01
           install_release Fylo fylo 26.33.02
           install_release Chex chex 26.32.02
           install_release TTID ttid 26.32.03
@@ -93,7 +93,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version=26.33.02
+          version=26.36.01
           asset=ty-linux-x64
           base="https://github.com/d31ma/Tachyon/releases/download/v${version}"
           tmp="$(mktemp -d)"
@@ -182,7 +182,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version=26.33.02
+          version=26.36.01
           asset=ty-linux-x64
           base="https://github.com/d31ma/Tachyon/releases/download/v${version}"
           tmp="$(mktemp -d)"

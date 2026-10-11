@@ -15,6 +15,9 @@ build
 dist-bin
 test/
 tests/
+!tests/support/tachyon-markers.mjs
+!tests/support/legacy-server
+tests/support/legacy-server/deps/npm
 tools/
 .claude
 .codex

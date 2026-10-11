@@ -7,16 +7,22 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY cmd ./cmd
 COPY internal ./internal
-RUN CGO_ENABLED=0 go build -buildvcs=false -trimpath -ldflags="-s -w" -o /out/caduceus-go ./cmd/caduceus
+RUN CGO_ENABLED=0 go build -buildvcs=false -trimpath -ldflags="-s -w" -o /out/caduceus ./cmd/caduceus
 
-# ── Build stage: install dependencies and strip test routes ──────────────────
+# An unreleased ty for images built ahead of a Tachyon release. Empty unless
+# the build is given one: docker build --build-context tachyon-override=<dir
+# holding a Linux ty> . The Go server needs Tachyon features newer than the
+# pinned release; see docs/GO_PORT.md.
+FROM scratch AS tachyon-override
+
+# ── Build stage: bundle the client and compile the Go server ────────────────
 FROM oven/bun:1.3.14@sha256:e10577f0db68676a7024391c6e5cb4b879ebd17188ab750cf10024a6d700e5c4 AS builder
 
 WORKDIR /app
 
 # Install the exact standalone binary versions used by this project. Each
 # download is verified against its release SHA256SUMS before installation.
-ARG TACHYON_VERSION=26.33.02
+ARG TACHYON_VERSION=26.36.01
 ARG FYLO_VERSION=26.33.02
 ARG SESAME_VERSION=26.33.02
 ARG CHEX_VERSION=26.32.02
@@ -54,37 +60,48 @@ RUN apt-get update \
      rm -rf "$sesame_tmp" \
   && rm -rf /var/lib/apt/lists/*
 
+COPY --from=tachyon-override /ty* /tmp/tachyon-override/
+RUN if [ -f /tmp/tachyon-override/ty ]; then install -m 755 /tmp/tachyon-override/ty /usr/local/bin/ty; fi \
+  && rm -rf /tmp/tachyon-override
+
+# Tachyon compiles the Go handlers in server/ with the Go toolchain.
+COPY --from=go-builder /usr/local/go /usr/local/go
+ENV PATH=/usr/local/go/bin:$PATH GOTOOLCHAIN=local
+
 COPY package.json bun.lock ./
 COPY translation-models.lock.json ./translation-models.lock.json
-# Tachyon compiles checked JavaScript with the locked TypeScript toolchain at
-# startup, so the compiler is a runtime build dependency during migration.
+# The locked toolchain compiles the client's checked JavaScript; Bun also runs
+# the operator scripts (admin:create, domain:migrate) at run time.
 RUN bun install --frozen-lockfile
 
 COPY client ./client
 COPY server ./server
-COPY background ./background
 COPY db/schemas ./db/schemas
-COPY scripts/entry.mjs ./scripts/
-COPY scripts/create-admin.mjs ./scripts/
-COPY scripts/migrate-domain.mjs ./scripts/
-COPY scripts/vendor-translation-assets.mjs ./scripts/
-COPY scripts/vendor-server-deps.mjs ./scripts/
+COPY scripts/create-admin.mjs scripts/migrate-domain.mjs scripts/vendor-translation-assets.mjs ./scripts/
+COPY scripts/support/Providers.mjs ./scripts/support/
+# The operator scripts still write users and domains through the JavaScript
+# record classes kept with the legacy server.
+COPY tests/support/tachyon-markers.mjs ./tests/support/
+COPY tests/support/legacy-server ./tests/support/legacy-server
 COPY docs/THIRD_PARTY_MODELS.md ./docs/THIRD_PARTY_MODELS.md
 COPY jsconfig.json ./jsconfig.json
 COPY runtime.lock.json ./runtime.lock.json
+RUN mkdir -p tests/support/legacy-server/deps/data \
+  && cp client/shared/data/keymap.json tests/support/legacy-server/deps/data/keymap.json
 
 # Translation is optional at use time but completely self-hosted. Resolve the
 # immutable model revision during the image build, verify every byte against
 # translation-models.lock.json, and prohibit runtime network model fetches.
 RUN bun run translation:vendor && bun run translation:verify
 
-# Tachyon runs handlers from a snapshot of server/ under Node, so the npm
-# packages they import are bundled into server/deps first.
-RUN bun scripts/vendor-server-deps.mjs
-
 # Remove test routes — they should never be in production
-RUN rm -f server/controllers/Test*Controller.js \
-  && ! ls server/controllers | grep -q '^Test.*Controller\.js$'
+RUN rm -f server/controllers/Test*Controller.go \
+  && ! ls server/controllers | grep -q '^Test.*Controller\.go$'
+
+# Build the client bundle and compile every Go handler now, so the image
+# serves without a compiler and a broken build fails here, not at start.
+RUN NODE_ENV=production ty bundle \
+  && test -d .tachyon/handlers
 
 # Validate the image can actually serve — catch missing deps / broken bundles
 # at build time rather than deploying a broken container that fails at runtime.
@@ -93,10 +110,9 @@ RUN command -v ty \
   && command -v sesame \
   && command -v chex \
   && command -v ttid \
-  && test "$(ty --version)" = "${TACHYON_VERSION}" \
+  && ty --version \
   && test "$(fylo --version)" = "${FYLO_VERSION}" \
   && sesame version | grep -F "sesame ${SESAME_VERSION} " \
-  && test -f scripts/entry.mjs \
   && test -f scripts/create-admin.mjs \
   && test -f scripts/migrate-domain.mjs \
   && test -f translation-assets/catalog.json \
@@ -126,7 +142,7 @@ COPY --from=builder /usr/local/bin/fylo /usr/local/bin/fylo
 COPY --from=builder /usr/local/bin/sesame /usr/local/bin/sesame
 COPY --from=builder /usr/local/bin/chex /usr/local/bin/chex
 COPY --from=builder /usr/local/bin/ttid /usr/local/bin/ttid
-COPY --from=go-builder /out/caduceus-go /usr/local/bin/caduceus-go
+COPY --from=go-builder /out/caduceus /usr/local/bin/caduceus
 
 WORKDIR /app
 ENV HOME=/home/bun
@@ -144,7 +160,8 @@ ENV NODE_ENV=production \
     SESAME_BINARY=/usr/local/bin/sesame \
     SESAME_DEPLOYMENT=/data/sesame \
     TRANSLATION_ASSET_ROOT=/app/translation-assets \
-    CADUCEUS_GO_BINARY=/usr/local/bin/caduceus-go \
+    CADUCEUS_GO_BINARY=/usr/local/bin/caduceus \
+    CADUCEUS_BINARY=/usr/local/bin/caduceus \
     RUNTIME_LOCK=/app/runtime.lock.json \
     FYLO_INDEX_BACKEND=local-fs \
     SMTP_ADAPTER=direct
@@ -159,5 +176,5 @@ EXPOSE 8080 25 587 465 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
   CMD ["/usr/local/bin/bun","-e","const r=await fetch('http://127.0.0.1:'+(process.env.PORT||'8080')+'/health');process.exit(r.ok?0:1)"]
 
-ENTRYPOINT ["/usr/local/bin/bun", "scripts/entry.mjs"]
+ENTRYPOINT ["/usr/local/bin/caduceus", "entry"]
 CMD []

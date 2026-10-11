@@ -1,13 +1,13 @@
-// Bundles the npm packages that server code imports into server/deps/npm,
-// and copies the client data the server also reads into server/deps/data.
+// Bundles the npm packages the legacy JavaScript server imports into
+// tests/support/legacy-server/deps/npm, and copies the client data it reads
+// into tests/support/legacy-server/deps/data.
 //
-// Tachyon runs each Yon handler from a snapshot of server/ alone, under Node,
-// so a bare `import 'htmlparser2'` has no node_modules to resolve against.
-// Server code imports these self-contained ESM bundles by relative path
-// instead. Run this after `bun install` and before `ty bundle`, `ty serve` or
-// the test suites; the output is generated and not committed.
+// The product runs the Go server; the legacy server is kept only as the test
+// suites' reference and seeding container (tests/support/TestContainer.mjs),
+// so only the test scripts run this. Its code imports these self-contained
+// ESM bundles by relative path; the output is generated and not committed.
 //
-//   bun scripts/vendor-server-deps.mjs          write server/deps/npm/*.mjs
+//   bun scripts/vendor-server-deps.mjs          write the bundles
 //   bun scripts/vendor-server-deps.mjs --check  fail when a bundle is missing
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'

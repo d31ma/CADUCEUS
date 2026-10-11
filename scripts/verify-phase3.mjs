@@ -210,8 +210,8 @@ const dockerfile = readFileSync(resolve(root, 'Dockerfile'), 'utf8')
 for (const token of ['ARG SESAME_VERSION=26.33.02', 'SESAME_DEPLOYMENT=/data/sesame']) {
   if (!dockerfile.includes(token)) fail(`Dockerfile is missing ${token}`)
 }
-const entry = readFileSync(resolve(root, 'scripts/entry.mjs'), 'utf8')
-if (!entry.includes('ensureIdentityDeployment')) {
+const entry = readFileSync(resolve(root, 'internal/runtime/entry/entry.go'), 'utf8')
+if (!entry.includes('"auth", "init"')) {
   fail('the container entrypoint does not initialize the identity deployment')
 }
 

@@ -40,6 +40,7 @@ type ShellService struct {
 	toastSerial               int
 	token                     string
 	beatingFor                string
+	sessionHeard              bool
 	signedIn                  bool
 	email                     string
 	locale                    string
@@ -69,7 +70,10 @@ func (shell *ShellService) HearSession(changed SessionChanged) {
 	shell.signedIn = changed.SignedIn
 	shell.email = changed.Email
 	shell.token = changed.Token
+	shell.sessionHeard = true
 	shell.ScreenshotMode = shell.keptScreenshotMode(changed.SignedIn)
+	shell.applyScreenshotMode()
+	FlowUtils{}.When(!changed.SignedIn, func() { shell.forgetPending(shell.names().Screenshot) })()
 	FlowUtils{}.When(!slices.Contains([]bool{changed.SignedIn, shell.beatingFor != changed.Token}, false), shell.beginBeating)()
 	shell.redirectFromRoot()
 }
@@ -93,7 +97,7 @@ func (shell *ShellService) HearLocation(place PageLocation) {
 // @OnEvent({"replay":true})
 func (shell *ShellService) HearStorage(stored StoredValues) {
 	names := shell.names()
-	shell.ScreenshotMode = stored.Session[names.Screenshot] == names.On
+	shell.ScreenshotMode = !slices.Contains([]bool{stored.Session[names.Screenshot] == names.On, shell.mayUseScreenshotMode()}, false)
 	shell.sections = stored.Local
 	shell.locale = LocaleUtils{}.Resolve(stored.Local[names.Locale], "")
 	shell.applyScreenshotMode()
@@ -300,6 +304,12 @@ func (shell *ShellService) beat() {
 
 func (shell *ShellService) keptScreenshotMode(signedIn bool) bool {
 	return shell.ScreenshotMode && signedIn
+}
+
+// mayUseScreenshotMode is false once the visitor is known to be signed out:
+// screenshot mode never stays on the login screen.
+func (shell *ShellService) mayUseScreenshotMode() bool {
+	return !shell.sessionHeard || shell.signedIn
 }
 
 func (shell *ShellService) keptUserMenu(inside bool) bool {

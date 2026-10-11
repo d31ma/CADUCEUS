@@ -1,6 +1,7 @@
 import (
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -30,18 +31,34 @@ func (RecipientUtils) ReplaceCurrent(value string, address string) string {
 }
 
 // Unused keeps at most eight suggestions that are not already a recipient.
-func (RecipientUtils) Unused(suggestions []RecipientSuggestion, to string, cc string, blindCopy string) []RecipientSuggestion {
+func (RecipientUtils) Unused(suggestions []ContactSuggestion, to string, cc string, blindCopy string) []ContactSuggestion {
 	separator := RecipientUtils{}.separator()
 	used := RecipientUtils{}.lowered(RecipientUtils{}.Split(to + separator + cc + separator + blindCopy))
 	kept := RecipientUtils{}.notListed(suggestions, used)
 	return kept[:min(len(kept), RecipientUtils{}.mostSuggestions())]
 }
 
-// Initials gives the two letters of a suggestion avatar.
-func (RecipientUtils) Initials(name string, email string) string {
+// initials gives the two letters of a suggestion avatar.
+func (RecipientUtils) initials(name string, email string) string {
 	source := strings.TrimSpace(RecipientUtils{}.firstPresent(name, email))
 	parts := RecipientUtils{}.initialSeparators().Split(source, -1)
 	return strings.ToUpper(RecipientUtils{}.initialsOf(source, RecipientUtils{}.Split(strings.Join(parts, RecipientUtils{}.separator()))))
+}
+
+// Options are the rows of the suggestion list under a recipient field.
+func (RecipientUtils) Options(suggestions []ContactSuggestion, field string, active int) []RecipientOption {
+	return RecipientUtils{}.options(suggestions, field, active)
+}
+
+func (RecipientUtils) options(suggestions []ContactSuggestion, field string, active int) []RecipientOption {
+	options := []RecipientOption{}
+	for index, suggestion := range suggestions {
+		options = append(options, RecipientOption{
+			Index: index, OptionID: "compose-" + field + "-suggestions-" + strconv.Itoa(index), Label: TextUtils{}.FirstOf(suggestion.Name, suggestion.Email),
+			Detail: RecipientUtils{}.detail(suggestion), Initials: RecipientUtils{}.initials(suggestion.Name, suggestion.Email), Active: index == active,
+		})
+	}
+	return options
 }
 
 // MergeAutomatic replaces the previous automatic recipients of a field with the
@@ -76,19 +93,19 @@ func (RecipientUtils) lowered(values []string) []string {
 	return lowered
 }
 
-func (RecipientUtils) notListed(suggestions []RecipientSuggestion, used []string) []RecipientSuggestion {
-	kept := []RecipientSuggestion{}
+func (RecipientUtils) notListed(suggestions []ContactSuggestion, used []string) []ContactSuggestion {
+	kept := []ContactSuggestion{}
 	for _, suggestion := range suggestions {
 		kept = append(kept, RecipientUtils{}.unlisted(suggestion, used)...)
 	}
 	return kept
 }
 
-func (RecipientUtils) unlisted(suggestion RecipientSuggestion, used []string) []RecipientSuggestion {
+func (RecipientUtils) unlisted(suggestion ContactSuggestion, used []string) []ContactSuggestion {
 	if slices.Contains(used, strings.ToLower(suggestion.Email)) {
 		return nil
 	}
-	return []RecipientSuggestion{suggestion}
+	return []ContactSuggestion{suggestion}
 }
 
 func (RecipientUtils) notIn(values []string, removed []string) []string {
@@ -137,4 +154,9 @@ func (RecipientUtils) initialsOf(source string, parts []string) string {
 		return string([]rune(parts[0])[:1]) + string([]rune(parts[1])[:1])
 	}
 	return string([]rune(source)[:min(2, len([]rune(source)))])
+}
+
+func (RecipientUtils) detail(suggestion ContactSuggestion) string {
+	named := map[bool]string{true: suggestion.Email}[suggestion.Name != ""]
+	return TextUtils{}.FirstOf(named, map[bool]string{true: "Found in mail", false: "Contact"}[suggestion.Source == "mail"])
 }

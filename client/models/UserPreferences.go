@@ -9,4 +9,7 @@ type UserPreferences struct {
 	UnreadBadgeDomain         string            `json:"unreadBadgeDomain"`
 	KeyboardShortcutOverrides map[string]string `json:"keyboardShortcutOverrides"`
 	MailPreferences           *MailPreferences  `json:"mailPreferences"`
+	GrammarCheckEnabled       bool              `json:"grammarCheckEnabled"`
+	GrammarCheckLanguage      string            `json:"grammarCheckLanguage"`
+	GrammarCheckDisabledRules []string          `json:"grammarCheckDisabledRules"`
 }

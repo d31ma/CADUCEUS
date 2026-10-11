@@ -2,15 +2,22 @@
 
 import { formatPreferenceDate } from './mail-preferences.js'
 
+/**
+ * Rich-text editing for the composer's editor document.
+ *
+ * The editor is the body of a sandboxed iframe whose document the Go
+ * ComposeService builds (see EditorUtils.go): Tac replaces a contenteditable
+ * element whenever it renders without focus, and a Tac script may not build
+ * markup or write styles (TY1364). Every change here therefore goes through
+ * the browser's own editing commands (document.execCommand) and attribute
+ * writes, and message HTML enters the live editor only through
+ * insertEditorHTML.
+ */
+
 const INLINE_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif'])
-const BLOCK_TAGS = new Set(['DIV', 'P', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'PRE', 'LI'])
-const TRANSPARENT_GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
 const MAX_PASTED_HTML_LENGTH = 1_000_000
-const PASTED_STYLE_ALLOWLIST = new Set([
-  'color', 'direction', 'font-family', 'font-size', 'font-style', 'font-weight',
-  'letter-spacing', 'line-height', 'text-align', 'text-decoration', 'text-indent',
-  'text-transform', 'vertical-align', 'white-space',
-])
+const INLINE_COMMANDS = /** @type {Record<string, string>} */ ({ STRONG: 'bold', EM: 'italic', U: 'underline', S: 'strikeThrough' })
+const BLOCK_TAGS = new Set(['DIV', 'P', 'H1', 'H2', 'H3', 'BLOCKQUOTE', 'PRE', 'LI'])
 
 /** Accept only links that are safe to place in outbound HTML. */
 export function normalizeComposeLink(value) {
@@ -45,78 +52,41 @@ export function isNeutralPastedColor(value) {
   return lightest - darkest <= 12 && (lightest <= 32 || darkest >= 223)
 }
 
-/** Normalize every clipboard newline convention before creating editor nodes. */
+/** Normalize every clipboard newline convention. */
 export function normalizePlainTextForPaste(value) {
   return String(value || '').replace(/\r\n?/g, '\n')
 }
 
 /**
- * Sanitize rich clipboard HTML before it enters the live composer and remove
- * neutral foreground colors that become unreadable when sender and recipient
- * themes differ. Intentional colors and independent font-family styling stay.
+ * Sanitize rich clipboard HTML on a detached document before it enters the
+ * composer. Scripts, embeds, forms, images and event handlers go, links keep
+ * only safe schemes, and neutral colors that turn unreadable across themes
+ * go. Inline CSS goes too: rewriting a style attribute is a style write
+ * (TY1364), so pasted text keeps its tags (bold, links, lists, headings) and
+ * loses its inline CSS.
+ * @param {string} value
  */
 export function normalizePastedComposerHTML(value) {
-  const template = document.createElement('template')
-  template.innerHTML = String(value || '').slice(0, MAX_PASTED_HTML_LENGTH)
-  for (const node of template.content.querySelectorAll('script,style,iframe,object,embed,form,input,button,textarea,select,svg,math,link,meta,base,img')) node.remove()
-  for (const element of template.content.querySelectorAll('*')) {
-    for (const attribute of Array.from(element.attributes)) {
-      const name = attribute.name.toLowerCase()
-      if (name.startsWith('on') || ['src', 'srcset', 'srcdoc', 'formaction', 'contenteditable'].includes(name)) element.removeAttribute(attribute.name)
-    }
-    const colorAttribute = element.getAttribute('color')
-    if (colorAttribute && isNeutralPastedColor(colorAttribute)) element.removeAttribute('color')
-    const href = element.getAttribute('href')
-    if (href != null) {
-      const safeHref = normalizeComposeLink(href)
-      if (safeHref) {
-        element.setAttribute('href', safeHref)
-        element.setAttribute('rel', 'noopener noreferrer')
-      } else element.removeAttribute('href')
-    }
-    const htmlElement = element instanceof HTMLElement ? element : null
-    if (!htmlElement?.style) continue
-    for (const property of Array.from(htmlElement.style)) {
-      if (!PASTED_STYLE_ALLOWLIST.has(property)) htmlElement.style.removeProperty(property)
-    }
-    if (isNeutralPastedColor(htmlElement.style.color)) htmlElement.style.removeProperty('color')
-    if (!htmlElement.style.length) htmlElement.removeAttribute('style')
-  }
-  return template.innerHTML
+  const parsed = new DOMParser().parseFromString(String(value || '').slice(0, MAX_PASTED_HTML_LENGTH), 'text/html')
+  for (const node of parsed.body.querySelectorAll('script,style,iframe,object,embed,form,input,button,textarea,select,svg,math,link,meta,base,img')) node.remove()
+  for (const element of parsed.body.querySelectorAll('*')) cleanPastedElement(element)
+  return parsed.body.innerHTML
 }
 
-/** Insert normalized clipboard content at the current editor selection. */
-export function insertPastedComposerContent(editor, html, plainText) {
-  const range = editorRange(editor)
-  if (!range) return false
-  const safeHTML = html ? normalizePastedComposerHTML(html) : ''
-  const text = normalizePlainTextForPaste(plainText)
-  const fragment = safeHTML
-    ? range.createContextualFragment(safeHTML)
-    : plainTextFragment(text)
-  if (!fragment.childNodes.length) return false
-  const tail = fragment.lastChild
-  range.deleteContents()
-  range.insertNode(fragment)
-  if (tail) {
-    range.setStartAfter(tail)
-    range.collapse(true)
-    const selection = getSelection()
-    selection?.removeAllRanges()
-    selection?.addRange(range)
+/** @param {Element} element */
+function cleanPastedElement(element) {
+  for (const attribute of Array.from(element.attributes)) {
+    const name = attribute.name.toLowerCase()
+    if (name.startsWith('on') || ['src', 'srcset', 'srcdoc', 'formaction', 'contenteditable', 'style', 'class', 'id'].includes(name)) element.removeAttribute(attribute.name)
   }
-  return true
-}
-
-/** @param {string} text */
-function plainTextFragment(text) {
-  const fragment = document.createDocumentFragment()
-  const lines = text.split('\n')
-  lines.forEach((line, index) => {
-    if (index) fragment.append(document.createElement('br'))
-    if (line) fragment.append(document.createTextNode(line))
-  })
-  return fragment
+  if (isNeutralPastedColor(element.getAttribute('color'))) element.removeAttribute('color')
+  const href = element.getAttribute('href')
+  if (href == null) return
+  const safeHref = normalizeComposeLink(href)
+  if (safeHref) {
+    element.setAttribute('href', safeHref)
+    element.setAttribute('rel', 'noopener noreferrer')
+  } else element.removeAttribute('href')
 }
 
 /** @param {{ type?: string }} file */
@@ -141,280 +111,258 @@ export function quotedMessageHTML(message, mode = 'reply') {
   return `<div><br></div><section data-caduceus-quote="${mode}">${heading}<blockquote>${body}</blockquote></section>`
 }
 
-/** Replace one editor selection with a semantic inline element. */
-export function applyInlineFormat(editor, tagName, style = {}) {
-  const range = editorRange(editor)
-  if (!range) return false
+/**
+ * The one way message HTML enters the live editor: the browser's own
+ * insertHTML editing command at the current selection.
+ * @param {HTMLElement} editor
+ * @param {string} html
+ */
+export function insertEditorHTML(editor, html) {
+  focusEditor(editor)
+  return editor.ownerDocument.execCommand('insertHTML', false, html)
+}
+
+/**
+ * Toggle bold, italic, underline or strikethrough, or wrap the selection in
+ * inline code.
+ * @param {HTMLElement} editor
+ * @param {string} tagName
+ */
+export function applyInlineFormat(editor, tagName) {
   const tag = String(tagName || '').toUpperCase()
-  const active = closestWithin(range.commonAncestorContainer, tag, editor)
-  if (active && Object.keys(style).length === 0) {
-    const parent = active.parentNode
-    unwrap(active)
-    selectNodeContents(parent, editor)
-    return true
-  }
-  const wrapper = document.createElement(tag.toLowerCase())
-  for (const [property, value] of Object.entries(style)) wrapper.style.setProperty(property, value)
-  if (range.collapsed) {
-    wrapper.append(document.createTextNode('\u200b'))
-    range.insertNode(wrapper)
-    selectNodeContents(wrapper, editor)
-  } else {
-    wrapper.append(range.extractContents())
-    range.insertNode(wrapper)
-    selectNodeContents(wrapper, editor)
-  }
-  return true
+  if (!editorRange(editor)) return false
+  if (INLINE_COMMANDS[tag]) return command(editor, INLINE_COMMANDS[tag])
+  const text = editor.ownerDocument.getSelection()?.toString() || '​'
+  return insertEditorHTML(editor, `<code>${escapeHTML(text)}</code>`)
 }
 
-/** Apply paragraph, heading, quote, code-block, or direction formatting. */
-export function applyBlockFormat(editor, tagName, attributes = {}) {
+/**
+ * Apply a font family, a size step (1-7) or a text color to the selection.
+ * @param {HTMLElement} editor
+ * @param {'fontName' | 'fontSize' | 'foreColor'} name
+ * @param {string} value
+ */
+export function applyStyleCommand(editor, name, value) {
+  if (!editorRange(editor)) return false
+  editor.ownerDocument.execCommand('styleWithCSS', false, 'true')
+  return command(editor, name, value)
+}
+
+/**
+ * Apply paragraph, heading, quote or code-block formatting, or toggle the
+ * direction of the current block.
+ * @param {HTMLElement} editor
+ * @param {string} tagName
+ * @param {{ dir?: boolean }} [options]
+ */
+export function applyBlockFormat(editor, tagName, options = {}) {
   const range = editorRange(editor)
   if (!range) return false
-  const requested = String(tagName || 'p').toUpperCase()
-  let block = closestBlock(range.startContainer, editor)
-  if (!block) {
-    block = document.createElement(requested.toLowerCase())
-    if (range.collapsed) block.append(document.createElement('br'))
-    else block.append(range.extractContents())
-    range.insertNode(block)
-  } else if (block.tagName !== requested) {
-    const replacement = document.createElement(requested.toLowerCase())
-    replacement.append(...block.childNodes)
-    block.replaceWith(replacement)
-    block = replacement
-  }
-  for (const [name, value] of Object.entries(attributes)) {
-    if (value) block.setAttribute(name, value)
-    else block.removeAttribute(name)
-  }
-  selectNodeContents(block, editor)
+  if (!options.dir) return command(editor, 'formatBlock', `<${String(tagName || 'p').toLowerCase()}>`)
+  const block = closestBlock(range.startContainer, editor) ?? editor
+  if (block.getAttribute('dir') === 'rtl') block.removeAttribute('dir')
+  else block.setAttribute('dir', 'rtl')
   return true
 }
 
-/** Toggle the current block between a semantic list and a paragraph. */
+/**
+ * Toggle the current block between a list and a paragraph.
+ * @param {HTMLElement} editor
+ * @param {boolean} ordered
+ */
 export function applyListFormat(editor, ordered = false) {
-  const range = editorRange(editor)
-  if (!range) return false
-  const list = closestWithin(range.startContainer, ordered ? 'OL' : 'UL', editor)
-  if (list) {
-    const fragment = document.createDocumentFragment()
-    for (const item of Array.from(list.children)) {
-      const paragraph = document.createElement('p')
-      paragraph.append(...item.childNodes)
-      fragment.append(paragraph)
-    }
-    const last = fragment.lastChild
-    list.replaceWith(fragment)
-    selectNodeContents(last, editor)
-    return true
-  }
-  const block = closestBlock(range.startContainer, editor)
-  const container = document.createElement(ordered ? 'ol' : 'ul')
-  const item = document.createElement('li')
-  if (block) {
-    item.append(...block.childNodes)
-    block.replaceWith(container)
-  } else if (!range.collapsed) {
-    item.append(range.extractContents())
-    range.insertNode(container)
-  } else {
-    item.append(document.createElement('br'))
-    range.insertNode(container)
-  }
-  container.append(item)
-  selectNodeContents(item, editor)
-  return true
+  if (!editorRange(editor)) return false
+  return command(editor, ordered ? 'insertOrderedList' : 'insertUnorderedList')
 }
 
-/** Turn a just-typed Markdown line prefix into rich block formatting. */
+/**
+ * Turn a just-typed Markdown line prefix into block formatting.
+ * @param {HTMLElement} editor
+ */
 export function applyMarkdownShortcut(editor) {
   const range = editorRange(editor)
-  if (!range || !range.collapsed) return false
-  const block = closestBlock(range.startContainer, editor)
-  const source = String(block?.textContent ?? textBeforeCaret(range, editor)).replace(/\u200b/g, '')
-  const match = source.match(/^(#{1,3}|>|[-*]|1\.)$/)
+  if (!range || !range.collapsed || range.startContainer.nodeType !== Node.TEXT_NODE) return false
+  const before = /** @type {Text} */ (range.startContainer).data.slice(0, range.startOffset).replace(/​/g, '')
+  const match = before.match(/^(#{1,3}|>|[-*]|1\.)$/)
   if (!match) return false
-  if (block) {
-    block.replaceChildren(document.createElement('br'))
-    selectNodeContents(block, editor)
-  }
-  else deleteBeforeCaret(range, match[0].length)
+  selectBeforeCaret(range, range.startOffset)
+  command(editor, 'delete')
   if (match[1] === '>') return applyBlockFormat(editor, 'blockquote')
   if (match[1] === '-' || match[1] === '*') return applyListFormat(editor, false)
   if (match[1] === '1.') return applyListFormat(editor, true)
   return applyBlockFormat(editor, `h${match[1].length}`)
 }
 
-/** Convert completed inline Markdown marks at the caret. */
+/**
+ * Convert completed inline Markdown marks at the caret.
+ * @param {HTMLElement} editor
+ */
 export function applyInlineMarkdownShortcut(editor) {
   const range = editorRange(editor)
   if (!range?.collapsed || range.startContainer.nodeType !== Node.TEXT_NODE) return false
-  const node = /** @type {Text} */ (range.startContainer)
-  const before = node.data.slice(0, range.startOffset)
+  const before = /** @type {Text} */ (range.startContainer).data.slice(0, range.startOffset)
   const match = before.match(/(?:^|\s)(\*\*|__)([^\n]+?)\1$|(?:^|\s)(\*|_)([^\n*]+?)\3$|(?:^|\s)`([^\n`]+?)`$/)
   if (!match) return false
   const marker = match[1] || match[3] || '`'
   const content = match[2] || match[4] || match[5]
-  const full = match[0]
-  const leading = /^\s/.test(full) ? full[0] : ''
-  const start = range.startOffset - full.length
-  const replacementRange = document.createRange()
-  replacementRange.setStart(node, start)
-  replacementRange.setEnd(node, range.startOffset)
-  const fragment = document.createDocumentFragment()
-  if (leading) fragment.append(document.createTextNode(leading))
-  const wrapper = document.createElement(marker === '`' ? 'code' : marker.length === 2 ? 'strong' : 'em')
-  wrapper.textContent = content
-  fragment.append(wrapper)
-  replacementRange.deleteContents()
-  replacementRange.insertNode(fragment)
-  const next = document.createRange()
-  next.setStartAfter(wrapper)
-  next.collapse(true)
-  const selection = getSelection()
-  selection?.removeAllRanges()
-  selection?.addRange(next)
-  return true
+  const marked = match[0].replace(/^\s/, '')
+  const tag = marker === '`' ? 'code' : marker.length === 2 ? 'strong' : 'em'
+  selectBeforeCaret(range, marked.length)
+  return insertEditorHTML(editor, `<${tag}>${escapeHTML(content)}</${tag}>​`)
 }
 
-/** Link the URL or email immediately before the caret on Space / Enter. */
+/**
+ * Link the URL or email immediately before the caret on Space or Enter.
+ * @param {HTMLElement} editor
+ */
 export function autoLinkBeforeCaret(editor) {
   const range = editorRange(editor)
   if (!range?.collapsed || range.startContainer.nodeType !== Node.TEXT_NODE) return false
   const node = /** @type {Text} */ (range.startContainer)
-  const before = node.data.slice(0, range.startOffset)
-  const token = before.match(/(?:^|\s)((?:https?:\/\/|www\.)[^\s<]+|[\w.+-]+@[\w.-]+\.[a-z]{2,})$/i)?.[1]
+  const caret = range.startOffset
+  const token = node.data.slice(0, caret).match(/(?:^|\s)((?:https?:\/\/|www\.)[^\s<]+|[\w.+-]+@[\w.-]+\.[a-z]{2,})$/i)?.[1]
   if (!token) return false
   const href = normalizeComposeLink(token.includes('@') && !/^https?:|^www\./i.test(token) ? `mailto:${token}` : token)
   if (!href) return false
-  const linkRange = document.createRange()
-  linkRange.setStart(node, range.startOffset - token.length)
-  linkRange.setEnd(node, range.startOffset)
-  const anchor = document.createElement('a')
-  anchor.href = href
-  anchor.rel = 'noopener noreferrer'
-  anchor.target = '_blank'
-  anchor.textContent = token
-  linkRange.deleteContents()
-  linkRange.insertNode(anchor)
-  const next = document.createRange()
-  next.setStartAfter(anchor)
-  next.collapse(true)
-  const selection = getSelection()
-  selection?.removeAllRanges()
-  selection?.addRange(next)
+  selectBeforeCaret(range, token.length)
+  linkSelection(editor, href)
+  collapseAt(editor, node, Math.min(caret, node.length))
   return true
 }
 
-/** Insert a locally visible image whose outbound representation uses cid:. */
+/**
+ * Turn the selection into a link.
+ * @param {HTMLElement} editor
+ * @param {string} href a normalized link (normalizeComposeLink)
+ */
+export function linkSelection(editor, href) {
+  command(editor, 'createLink', href)
+  const anchor = editor.ownerDocument.getSelection()?.anchorNode?.parentElement?.closest?.('a')
+  for (const link of anchor && editor.contains(anchor) ? [anchor] : editor.querySelectorAll(`a[href="${CSS.escape(href)}"]:not([rel])`)) {
+    link.setAttribute('rel', 'noopener noreferrer')
+    link.setAttribute('target', '_blank')
+  }
+  return true
+}
+
+/**
+ * Insert a locally visible image whose outbound representation uses cid:.
+ * @param {HTMLElement} editor
+ * @param {{ id?: string, contentId?: string, contentType?: string, contentBase64?: string, filename?: string }} attachment
+ */
 export function insertInlineImage(editor, attachment) {
   const contentId = String(attachment?.contentId || '')
   if (!contentId || !isInlineImageFile({ type: attachment?.contentType })) return false
-  const image = document.createElement('img')
-  image.src = `data:${attachment.contentType};base64,${attachment.contentBase64}`
-  image.dataset.caduceusCid = contentId
-  image.dataset.caduceusAttachmentId = String(attachment.id || '')
-  image.alt = String(attachment.filename || 'Inline image')
-  image.width = 480
-  image.setAttribute('data-caduceus-inline-image', '')
-  const range = editorRange(editor) || rangeAtEnd(editor)
-  range.insertNode(image)
-  range.setStartAfter(image)
-  range.collapse(true)
-  const selection = getSelection()
-  selection?.removeAllRanges()
-  selection?.addRange(range)
-  editor.focus()
-  return true
+  if (!editorRange(editor)) collapseAt(editor, editor, editor.childNodes.length)
+  const source = `data:${escapeHTML(String(attachment.contentType))};base64,${String(attachment.contentBase64 || '').replace(/[^A-Za-z0-9+/=]/g, '')}`
+  return insertEditorHTML(editor, `<img src="${source}" data-caduceus-cid="${escapeHTML(contentId)}" data-caduceus-attachment-id="${escapeHTML(String(attachment.id || ''))}" data-caduceus-inline-image="" alt="${escapeHTML(String(attachment.filename || 'Inline image'))}" width="480">`)
 }
 
-/** Hydrate persisted cid images from their matching attachment bytes. */
-export function hydrateInlineImages(editor, attachments) {
-  const byCid = new Map((attachments || []).filter(item => item.contentId).map(item => [String(item.contentId).toLowerCase(), item]))
-  for (const image of editor.querySelectorAll('img')) {
-    const cid = String(image.dataset.caduceusCid || image.getAttribute('src') || '').replace(/^cid:/i, '').toLowerCase()
-    const attachment = byCid.get(cid)
-    if (!attachment || !isInlineImageFile({ type: attachment.contentType })) continue
-    image.dataset.caduceusCid = attachment.contentId
-    image.dataset.caduceusAttachmentId = attachment.id || ''
-    image.setAttribute('data-caduceus-inline-image', '')
-    image.src = `data:${attachment.contentType};base64,${attachment.contentBase64}`
-  }
+/**
+ * Insert normalized clipboard content at the current editor selection.
+ * @param {HTMLElement} editor
+ * @param {string} html
+ * @param {string} plainText
+ */
+export function insertPastedComposerContent(editor, html, plainText) {
+  if (!editorRange(editor)) return false
+  const safeHTML = html ? normalizePastedComposerHTML(html) : ''
+  if (safeHTML.trim()) return insertEditorHTML(editor, safeHTML)
+  const text = normalizePlainTextForPaste(plainText)
+  return Boolean(text) && command(editor, 'insertText', text)
 }
 
-/** Build connected-editor HTML with cid sources hydrated while still inert. */
-export function editableComposerHTML(html, attachments) {
-  const byCid = new Map((attachments || []).filter(item => item.contentId).map(item => [String(item.contentId).toLowerCase(), item]))
-  const safeSource = String(html || '').replace(/\bsrc\s*=\s*(["'])cid:([^"']+)\1/gi, (_match, quote, rawCid) => {
-    const cid = String(rawCid).replace(/^<|>$/g, '')
-    const attachment = byCid.get(cid.toLowerCase())
-    const source = attachment && isInlineImageFile({ type: attachment.contentType })
-      ? `data:${attachment.contentType};base64,${attachment.contentBase64}`
-      : `${TRANSPARENT_GIF}#missing-inline-image`
-    return `src=${quote}${source}${quote} data-caduceus-cid=${quote}${escapeAttribute(cid)}${quote}`
-  })
-  const template = document.createElement('template')
-  template.innerHTML = safeSource
-  hydrateInlineImages(template.content, attachments)
-  return template.innerHTML
-}
-
-/** Serialize editor HTML without local data URLs or transient collapsed state. */
+/**
+ * Serialize editor HTML without local data URLs.
+ * @param {HTMLElement} editor
+ */
 export function serializeComposerHTML(editor) {
-  const clone = editor.cloneNode(true)
+  const clone = /** @type {HTMLElement} */ (editor.cloneNode(true))
   const replacements = []
   let index = 0
   for (const image of clone.querySelectorAll('img[data-caduceus-cid]')) {
-    const placeholder = `${TRANSPARENT_GIF}#caduceus-inline-${index++}`
-    replacements.push([placeholder, `cid:${escapeAttribute(image.dataset.caduceusCid || '')}`])
-    // Assign only a browser-safe placeholder while this disconnected clone is
-    // serialized. Setting an unknown cid: scheme directly still emits noisy
-    // Chromium network errors even when the node is never connected.
+    const placeholder = `#caduceus-inline-${index++}`
+    replacements.push([`src="${placeholder}"`, `src="cid:${escapeHTML(image.getAttribute('data-caduceus-cid') || '')}"`])
+    // A placeholder, not the cid: URL: setting an unknown scheme on even a
+    // disconnected image makes Chromium log a network error.
     image.setAttribute('src', placeholder)
     image.removeAttribute('data-caduceus-attachment-id')
+    image.removeAttribute('data-selected')
   }
-  clone.classList.remove('compose-quote-collapsed')
-  clone.removeAttribute('data-quote-expanded')
   let html = clone.innerHTML
   for (const [placeholder, cid] of replacements) html = html.replace(placeholder, cid)
   return html
 }
 
+/**
+ * @param {HTMLImageElement | null} image
+ * @param {number} width
+ */
 export function resizeInlineImage(image, width) {
   if (!image?.matches?.('img[data-caduceus-inline-image]')) return false
-  const safeWidth = Math.max(120, Math.min(960, Number(width) || 480))
-  image.width = safeWidth
-  image.style.maxWidth = '100%'
-  image.style.height = 'auto'
+  image.setAttribute('width', String(Math.max(120, Math.min(960, Number(width) || 480))))
   return true
 }
 
+/** @param {HTMLElement} editor */
+function focusEditor(editor) {
+  editor.ownerDocument.defaultView?.focus()
+  editor.focus()
+}
+
+/**
+ * @param {HTMLElement} editor
+ * @param {string} name
+ * @param {string} [value]
+ */
+function command(editor, name, value) {
+  focusEditor(editor)
+  return editor.ownerDocument.execCommand(name, false, value)
+}
+
+/** @param {HTMLElement} editor */
 function editorRange(editor) {
-  const selection = getSelection()
+  const selection = editor.ownerDocument.getSelection()
   if (!selection?.rangeCount) return null
   const range = selection.getRangeAt(0)
   return editor.contains(range.commonAncestorContainer) ? range : null
 }
 
-function rangeAtEnd(editor) {
-  const range = document.createRange()
-  range.selectNodeContents(editor)
-  range.collapse(false)
-  return range
+/**
+ * @param {Range} range
+ * @param {number} length
+ */
+function selectBeforeCaret(range, length) {
+  const node = range.startContainer
+  const selected = node.ownerDocument?.createRange()
+  if (!selected) return
+  selected.setStart(node, Math.max(0, range.startOffset - length))
+  selected.setEnd(node, range.startOffset)
+  const selection = node.ownerDocument?.getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(selected)
 }
 
-function closestWithin(node, tagName, editor) {
-  let element = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement
-  while (element && element !== editor) {
-    if (element.tagName === tagName) return element
-    element = element.parentElement
-  }
-  return null
+/**
+ * @param {HTMLElement} editor
+ * @param {Node} node
+ * @param {number} offset
+ */
+function collapseAt(editor, node, offset) {
+  const range = editor.ownerDocument.createRange()
+  range.setStart(node, offset)
+  range.collapse(true)
+  const selection = editor.ownerDocument.getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(range)
 }
 
+/**
+ * @param {Node} node
+ * @param {HTMLElement} editor
+ */
 function closestBlock(node, editor) {
-  let element = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement
+  let element = node?.nodeType === Node.ELEMENT_NODE ? /** @type {Element} */ (node) : node?.parentElement
   while (element && element !== editor) {
     if (BLOCK_TAGS.has(element.tagName)) return element
     element = element.parentElement
@@ -422,60 +370,9 @@ function closestBlock(node, editor) {
   return null
 }
 
-function unwrap(element) {
-  const parent = element.parentNode
-  if (!parent) return
-  while (element.firstChild) parent.insertBefore(element.firstChild, element)
-  element.remove()
-}
-
-function selectNodeContents(node, editor) {
-  if (!node || !editor.contains(node)) return
-  const range = document.createRange()
-  range.selectNodeContents(node)
-  range.collapse(false)
-  const selection = getSelection()
-  selection?.removeAllRanges()
-  selection?.addRange(range)
-  editor.focus()
-}
-
-function textBeforeCaret(range, editor) {
-  const probe = range.cloneRange()
-  probe.selectNodeContents(editor)
-  probe.setEnd(range.startContainer, range.startOffset)
-  return probe.toString().split(/\r?\n/).pop() || ''
-}
-
-function deleteBeforeCaret(range, length) {
-  if (range.startContainer.nodeType !== Node.TEXT_NODE) return
-  const start = Math.max(0, range.startOffset - length)
-  range.setStart(range.startContainer, start)
-  range.deleteContents()
-  range.collapse(true)
-}
-
+/** @param {string} value */
 function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, character => ({
+  return String(value).replace(/[&<>"']/g, character => /** @type {Record<string, string>} */ ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
   })[character])
-}
-
-function escapeAttribute(value) {
-  return String(value).replace(/[&"<>]/g, character => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' })[character])
-}
-
-/**
- * Write the editor's user content after Tachyon replaced the contenteditable
- * node. Tachyon never keeps a contenteditable's children across a render
- * unless it holds focus, so the composer restores its own HTML model here.
- * This is user content, not component markup.
- */
-export function replaceEditorContent(editor, html, attachments) {
-  editor.innerHTML = editableComposerHTML(html, attachments)
-}
-
-/** Remove the editor content (after a send). */
-export function clearEditorContent(editor) {
-  editor.innerHTML = ''
 }

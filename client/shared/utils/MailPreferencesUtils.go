@@ -3,46 +3,34 @@ import (
 	"strings"
 )
 
-// MailPreferencesUtils normalizes the mail preferences the composer reads,
-// like normalizeMailPreferences in client/shared/scripts/mail-preferences.js
-// (only the composer fields are ported here).
+// MailPreferencesUtils reads the composer's part of the mail preferences on
+// top of the shell's catalog check (AppearanceUtils.ChosenMail): the undo-send
+// delay and the automatic CC and BCC recipients of each sender.
 type MailPreferencesUtils struct{}
 
-// Normalize keeps catalog values and lowercases addresses.
-func (MailPreferencesUtils) Normalize(preferences MailPreferences) MailPreferences {
-	preferences.DefaultFrom = strings.ToLower(strings.TrimSpace(preferences.DefaultFrom))
-	preferences.UndoSendDelay = MailPreferencesUtils{}.delay(preferences.UndoSendDelay)
-	preferences.DefaultSendAction = MailPreferencesUtils{}.sendAction(preferences.DefaultSendAction)
-	preferences.AutoCcBySender = MailPreferencesUtils{}.recipientMap(preferences.AutoCcBySender)
-	preferences.AutoBlindCopyBySender = MailPreferencesUtils{}.recipientMap(preferences.AutoBlindCopyBySender)
-	return preferences
+// Normalize keeps catalog values and well-formed recipient lists.
+func (MailPreferencesUtils) Normalize(preferences *MailPreferences) MailPreferences {
+	normalized := AppearanceUtils{}.ChosenMail(preferences)
+	normalized.UndoSendDelay = MailPreferencesUtils{}.delay(normalized.UndoSendDelay)
+	normalized.AutoCcBySender = MailPreferencesUtils{}.recipientMap(normalized.AutoCcBySender)
+	normalized.AutoBccBySender = MailPreferencesUtils{}.recipientMap(normalized.AutoBccBySender)
+	return normalized
 }
 
 // Defaults are the preferences before the server answered.
 func (MailPreferencesUtils) Defaults() MailPreferences {
-	return MailPreferences{RichText: true, Spellcheck: true, DefaultSendAction: MailPreferencesUtils{}.plainSend(), UndoSendDelay: MailPreferencesUtils{}.defaultDelay(), AutoCcBySender: map[string][]string{}, AutoBlindCopyBySender: map[string][]string{}}
+	return AppearanceUtils{}.DefaultMail()
 }
 
-func (MailPreferencesUtils) plainSend() string { return "send" }
-
-func (MailPreferencesUtils) defaultDelay() float64 { return 5000 }
-
-func (MailPreferencesUtils) delays() []float64 {
-	return []float64{0, 5000, 15000, 30000, 60000}
-}
-
-func (MailPreferencesUtils) delay(delay float64) float64 {
+func (MailPreferencesUtils) delay(delay int) int {
 	if slices.Contains(MailPreferencesUtils{}.delays(), delay) {
 		return delay
 	}
-	return MailPreferencesUtils{}.defaultDelay()
+	return MailPreferencesUtils{}.delays()[1]
 }
 
-func (MailPreferencesUtils) sendAction(action string) string {
-	if action == "send-and-archive" {
-		return action
-	}
-	return MailPreferencesUtils{}.plainSend()
+func (MailPreferencesUtils) delays() []int {
+	return []int{0, 5000, 15000, 30000, 60000}
 }
 
 func (MailPreferencesUtils) recipientMap(recipients map[string][]string) map[string][]string {

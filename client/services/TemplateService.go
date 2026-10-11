@@ -32,7 +32,8 @@ func (template *TemplateService) Start() {
 // @OnEvent({"replay":true})
 func (template *TemplateService) SessionChanged(changed SessionChanged) {
 	template.token = changed.Token
-	template.reload()
+	FlowUtils{}.When(changed.SignedIn, template.reload)()
+	template.publish(template.changed())
 }
 
 // Filter prefix-filters the template picker.
@@ -58,12 +59,16 @@ func (template *TemplateService) Save(subject string, to string, cc string) {
 func (template *TemplateService) TemplateDraftReady(ready TemplateDraftReady) {
 	template.storePending(ready)
 	template.pending = nil
-	template.publish(ComposeChanged{Reason: "changed"})
+	template.publish(template.changed())
 }
 
 // Manage opens settings, where templates are managed.
 func (template *TemplateService) Manage() {
-	template.publish(NavigationRequested{Route: "settings"})
+	template.publish(NavigationRequested{Target: "/settings"})
+}
+
+func (TemplateService) changed() ComposeChanged {
+	return ComposeChanged{Reason: "changed"}
 }
 
 func (template *TemplateService) publish(value any) {
@@ -144,7 +149,7 @@ func (template *TemplateService) storePending(ready TemplateDraftReady) {
 func (template *TemplateService) store(input TemplateInput, ready TemplateDraftReady) {
 	input.Name = strings.TrimSpace(ready.Name)
 	input.Text = ready.Text
-	saved, problem := template.templatesClient.Save(input, template.authorization())
+	saved, problem := template.templatesClient.Save(template.authorization(), input)
 	template.publish(ToastRequested{Message: TemplateService{}.savedMessage(saved, problem)})
 	template.reload()
 }
@@ -152,8 +157,6 @@ func (template *TemplateService) store(input TemplateInput, ready TemplateDraftR
 func (TemplateService) savedMessage(saved SavedTemplate, problem error) string {
 	if problem == nil {
 		return "Template “" + saved.Name + "” saved."
-	} else if BehaviorErrorCode(problem) == "HTTP_STATUS" {
-		return "Failed to save template."
 	}
-	return "Network error."
+	return HTTPUtils{}.Message(problem, "Failed to save template.", "Network error.")
 }

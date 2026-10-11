@@ -4,7 +4,7 @@ const HIGHLIGHT_NAME = 'caduceus-grammar-errors'
 
 /** Return the exact text sent to the local checker. */
 export function grammarText(root) {
-  return root instanceof Node ? root.textContent || '' : ''
+  return Boolean(root?.nodeType) ? root.textContent || '' : ''
 }
 
 /** Keep only bounded matches whose offsets fit the current editor text. */
@@ -38,7 +38,7 @@ export function normalizeGrammarMatches(value, textLength) {
 
 /** Resolve plain-text offsets to a DOM Range without changing editor markup. */
 export function grammarRange(root, offset, length) {
-  if (!(root instanceof Node) || !Number.isInteger(offset) || !Number.isInteger(length) || length < 1) return null
+  if (!(Boolean(root?.nodeType)) || !Number.isInteger(offset) || !Number.isInteger(length) || length < 1) return null
   const documentRef = root.ownerDocument || document
   const walker = documentRef.createTreeWalker(root, NodeFilter.SHOW_TEXT)
   let consumed = 0
@@ -68,36 +68,43 @@ export function grammarRange(root, offset, length) {
   return range
 }
 
-/** Paint non-serializing CSS highlights when the browser supports them. */
+/**
+ * Paint non-serializing CSS highlights when the browser supports them. The
+ * highlight registry belongs to the window of the editor's document.
+ * @param {Node} root
+ * @param {{ offset: number, length: number }[]} matches
+ */
 export function paintGrammarHighlights(root, matches) {
-  clearGrammarHighlights()
-  const css = /** @type {any} */ (globalThis.CSS)
-  const HighlightCtor = /** @type {any} */ (globalThis).Highlight
-  if (!css?.highlights || typeof HighlightCtor !== 'function') return false
+  clearGrammarHighlights(root)
+  const view = /** @type {any} */ (root?.ownerDocument?.defaultView ?? globalThis)
+  if (!view.CSS?.highlights || typeof view.Highlight !== 'function') return false
   const ranges = matches.map(match => grammarRange(root, match.offset, match.length)).filter(Boolean)
   if (!ranges.length) return true
-  css.highlights.set(HIGHLIGHT_NAME, new HighlightCtor(...ranges))
+  view.CSS.highlights.set(HIGHLIGHT_NAME, new view.Highlight(...ranges))
   return true
 }
 
-export function clearGrammarHighlights() {
-  const css = /** @type {any} */ (globalThis.CSS)
-  css?.highlights?.delete?.(HIGHLIGHT_NAME)
+/** @param {Node | null} [root] */
+export function clearGrammarHighlights(root) {
+  const view = /** @type {any} */ (root?.ownerDocument?.defaultView ?? globalThis)
+  view.CSS?.highlights?.delete?.(HIGHLIGHT_NAME)
 }
 
-/** Apply one correction to the rich editor and place the caret after it. */
+/**
+ * Apply one correction to the editor through the browser's insertText
+ * editing command, and leave the caret after it.
+ * @param {HTMLElement} root
+ * @param {{ offset: number, length: number }} match
+ * @param {string} replacement
+ */
 export function replaceGrammarRange(root, match, replacement) {
   const range = grammarRange(root, match?.offset, match?.length)
   if (!range || typeof replacement !== 'string') return false
-  range.deleteContents()
-  const node = (root.ownerDocument || document).createTextNode(replacement)
-  range.insertNode(node)
-  range.setStartAfter(node)
-  range.collapse(true)
-  const selection = (root.ownerDocument || document).getSelection()
+  const selection = root.ownerDocument.getSelection()
   selection?.removeAllRanges()
   selection?.addRange(range)
-  return true
+  root.focus()
+  return root.ownerDocument.execCommand('insertText', false, replacement)
 }
 
 function safeText(value, max) {

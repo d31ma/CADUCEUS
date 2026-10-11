@@ -1,57 +1,46 @@
 // @ts-check
-/** @import { ComposerOpened } from '/models/ComposerOpened.ts' */
-/** @import { SessionChanged } from '/models/SessionChanged.ts' */
-/** @import { ComposeLoaded } from '/models/ComposeLoaded.ts' */
-/** @import { ComposeChanged } from '/models/ComposeChanged.ts' */
-/** @import { ComposeAttachment } from '/models/ComposeAttachment.ts' */
-/** @import { EditorPreferences } from '/models/EditorPreferences.ts' */
-/** @import { SignatureApplyRequested } from '/models/SignatureApplyRequested.ts' */
-/** @import { EditorSignatureChanged } from '/models/EditorSignatureChanged.ts' */
-/** @import { TemplateInsertRequested } from '/models/TemplateInsertRequested.ts' */
-/** @import { TemplateInserted } from '/models/TemplateInserted.ts' */
-/** @import { TemplateDraftRequested } from '/models/TemplateDraftRequested.ts' */
-/** @import { TemplateDraftReady } from '/models/TemplateDraftReady.ts' */
-/** @import { AttachmentsOffered } from '/models/AttachmentsOffered.ts' */
-/** @import { AttachmentsAccepted } from '/models/AttachmentsAccepted.ts' */
-/** @import { AttachmentAcceptance } from '/models/AttachmentAcceptance.ts' */
-/** @import { AttachmentsAdded } from '/models/AttachmentsAdded.ts' */
-/** @import { AttachmentRemoved } from '/models/AttachmentRemoved.ts' */
-/** @import { InlineImageRemoved } from '/models/InlineImageRemoved.ts' */
-/** @import { RecipientQueryChanged } from '/models/RecipientQueryChanged.ts' */
-/** @import { RecipientSuggestionsDismissed } from '/models/RecipientSuggestionsDismissed.ts' */
-/** @import { RecipientSuggestionsShown } from '/models/RecipientSuggestionsShown.ts' */
-/** @import { RecipientChosen } from '/models/RecipientChosen.ts' */
-/** @import { GrammarTextChanged } from '/models/GrammarTextChanged.ts' */
-/** @import { GrammarTextWanted } from '/models/GrammarTextWanted.ts' */
-/** @import { GrammarHighlightsChanged } from '/models/GrammarHighlightsChanged.ts' */
-/** @import { GrammarReplacementRequested } from '/models/GrammarReplacementRequested.ts' */
-/** @import { GrammarFocusRequested } from '/models/GrammarFocusRequested.ts' */
-/** @import { ComposeShortcut } from '/models/ComposeShortcut.ts' */
-/** @import { SendRequested } from '/models/SendRequested.ts' */
-/** @import { SendFinished } from '/models/SendFinished.ts' */
-/** @import { DraftSaveRequested } from '/models/DraftSaveRequested.ts' */
-/** @import { DraftSaveDue } from '/models/DraftSaveDue.ts' */
-/** @import { DraftSaveFinished } from '/models/DraftSaveFinished.ts' */
-/** @import { MessageEnvelope } from '/models/MessageEnvelope.ts' */
-/** @import { NavigationRequested } from '/models/NavigationRequested.ts' */
-/** @import { ToastRequested } from '/models/ToastRequested.ts' */
-/** @import { SoundRequested } from '/models/SoundRequested.ts' */
+/** @import { ComposeLoaded } from '/models/ComposeLoaded.js' */
+/** @import { ComposeChanged } from '/models/ComposeChanged.js' */
+/** @import { EditorPreferences } from '/models/EditorPreferences.js' */
+/** @import { EditorReplaced } from '/models/EditorReplaced.js' */
+/** @import { SignatureApplyRequested } from '/models/SignatureApplyRequested.js' */
+/** @import { EditorSignatureChanged } from '/models/EditorSignatureChanged.js' */
+/** @import { TemplateInsertRequested } from '/models/TemplateInsertRequested.js' */
+/** @import { TemplateInserted } from '/models/TemplateInserted.js' */
+/** @import { TemplateDraftRequested } from '/models/TemplateDraftRequested.js' */
+/** @import { TemplateDraftReady } from '/models/TemplateDraftReady.js' */
+/** @import { AttachmentsOffered } from '/models/AttachmentsOffered.js' */
+/** @import { AttachmentsAccepted } from '/models/AttachmentsAccepted.js' */
+/** @import { AttachmentsAdded } from '/models/AttachmentsAdded.js' */
+/** @import { AttachmentRemoved } from '/models/AttachmentRemoved.js' */
+/** @import { InlineImageRemoved } from '/models/InlineImageRemoved.js' */
+/** @import { RecipientQueryChanged } from '/models/RecipientQueryChanged.js' */
+/** @import { RecipientSuggestionsDismissed } from '/models/RecipientSuggestionsDismissed.js' */
+/** @import { RecipientSuggestionsShown } from '/models/RecipientSuggestionsShown.js' */
+/** @import { RecipientChosen } from '/models/RecipientChosen.js' */
+/** @import { GrammarTextChanged } from '/models/GrammarTextChanged.js' */
+/** @import { GrammarTextWanted } from '/models/GrammarTextWanted.js' */
+/** @import { GrammarHighlightsChanged } from '/models/GrammarHighlightsChanged.js' */
+/** @import { GrammarReplacementRequested } from '/models/GrammarReplacementRequested.js' */
+/** @import { GrammarFocusRequested } from '/models/GrammarFocusRequested.js' */
+/** @import { ShortcutPressed } from '/models/ShortcutPressed.js' */
+/** @import { SendRequested } from '/models/SendRequested.js' */
+/** @import { SendBodyReady } from '/models/SendBodyReady.js' */
+/** @import { DraftSaveDue } from '/models/DraftSaveDue.js' */
+/** @import { ToastRequested } from '/models/ToastRequested.js' */
+/** @import { SoundRequested } from '/models/SoundRequested.js' */
 /** @import { ComposeEditor as Editor } from '../shared/scripts/compose-editor.js' */
 
 import { ComposeEditor, preferredTranslationTarget } from '../shared/scripts/compose-editor.js'
 
 /**
- * The browser-only half of the composer: the contenteditable rich-text
- * editor, its selection, paste, inline images, quoted text and template
- * blanks, the grammar highlights, file reading, confirm and prompt dialogs,
- * the debounce timers, on-device translation, the encrypted offline vault and
- * the requests that carry the message body and attachment bytes.
- *
- * Everything else (headers, identities, signatures, templates, recipients,
- * reminders, scheduling, validation and the send envelope) lives in the Go
- * ComposeService and GrammarService. Go services cannot reach the DOM, and
- * a Go call, an event and a browser HTTP request each carry at most 64 KiB, so
- * this service keeps the body and the bytes and talks to Go through events.
+ * Escape hatch: the composer's rich-text editor. The message body is the
+ * contenteditable body of an iframe whose document ComposeService builds, and
+ * editing it needs the DOM: the selection, the browser's editing commands,
+ * paste, file reading, confirm and prompt, debounce timers, on-device
+ * translation, grammar highlights and audio. This service does those and
+ * talks to the Go services in events; Go owns the message, the drafts, the
+ * sending and the navigation.
  */
 @Service
 export default class ComposeEditorService {
@@ -61,10 +50,6 @@ export default class ComposeEditorService {
   @Needs
   taskScheduler
 
-  /** Human-readable autosave state shown in the live region. */
-  draftStatus = ''
-  /** Whether another tab saved a newer draft version. */
-  draftConflict = false
   /** Whether the editor holds a quoted reply. */
   quotePresent = false
   /** Whether the quoted reply is expanded. */
@@ -83,8 +68,8 @@ export default class ComposeEditorService {
   /** @type {Editor} */
   _editor = new ComposeEditor(this)
 
-  // Typed publishers for the events that the editor module raises; the
-  // compiler names each event after its model type.
+  // Typed publishers for the events the editor module raises; the compiler
+  // names each event after its model type.
 
   /** @param {AttachmentsAdded} attachmentsAdded */
   publishAttachmentsAdded(attachmentsAdded) {
@@ -96,29 +81,14 @@ export default class ComposeEditorService {
     this.applicationEventPublisher.publishEvent(attachmentsOffered)
   }
 
-  /** @param {ComposeLoaded} composeLoaded */
-  publishComposeLoaded(composeLoaded) {
-    this.applicationEventPublisher.publishEvent(composeLoaded)
-  }
-
-  /** @param {ComposeShortcut} composeShortcut */
-  publishComposeShortcut(composeShortcut) {
-    this.applicationEventPublisher.publishEvent(composeShortcut)
-  }
-
-  /** @param {ComposerOpened} composerOpened */
-  publishComposerOpened(composerOpened) {
-    this.applicationEventPublisher.publishEvent(composerOpened, true)
-  }
-
   /** @param {DraftSaveDue} draftSaveDue */
   publishDraftSaveDue(draftSaveDue) {
     this.applicationEventPublisher.publishEvent(draftSaveDue)
   }
 
-  /** @param {DraftSaveFinished} draftSaveFinished */
-  publishDraftSaveFinished(draftSaveFinished) {
-    this.applicationEventPublisher.publishEvent(draftSaveFinished)
+  /** @param {EditorReplaced} editorReplaced */
+  publishEditorReplaced(editorReplaced) {
+    this.applicationEventPublisher.publishEvent(editorReplaced)
   }
 
   /** @param {EditorSignatureChanged} editorSignatureChanged */
@@ -146,14 +116,14 @@ export default class ComposeEditorService {
     this.applicationEventPublisher.publishEvent(recipientSuggestionsDismissed)
   }
 
-  /** @param {SendFinished} sendFinished */
-  publishSendFinished(sendFinished) {
-    this.applicationEventPublisher.publishEvent(sendFinished)
+  /** @param {SendBodyReady} sendBodyReady */
+  publishSendBodyReady(sendBodyReady) {
+    this.applicationEventPublisher.publishEvent(sendBodyReady)
   }
 
-  /** @param {SoundRequested} soundRequested */
-  publishSoundRequested(soundRequested) {
-    this.applicationEventPublisher.publishEvent(soundRequested)
+  /** @param {ShortcutPressed} shortcutPressed */
+  publishShortcutPressed(shortcutPressed) {
+    this.applicationEventPublisher.publishEvent(shortcutPressed)
   }
 
   /** @param {TemplateDraftReady} templateDraftReady */
@@ -185,10 +155,10 @@ export default class ComposeEditorService {
     return this._editor.stop()
   }
 
-  /** @param {SessionChanged} changed */
+  /** @param {ComposeLoaded} loaded */
   @OnEvent({"replay":true})
-  async sessionChanged(changed) {
-    return this._editor.sessionChanged(changed)
+  composeLoaded(loaded) {
+    return this._editor.composeLoaded(loaded)
   }
 
   /** @param {EditorPreferences} preferences */
@@ -199,7 +169,7 @@ export default class ComposeEditorService {
 
   /** @param {ComposeChanged} changed */
   @OnEvent
-  async composeChanged(changed) {
+  composeChanged(changed) {
     return this._editor.composeChanged(changed)
   }
 
@@ -271,59 +241,41 @@ export default class ComposeEditorService {
 
   /** @param {SendRequested} requested */
   @OnEvent
-  async sendRequested(requested) {
+  sendRequested(requested) {
     return this._editor.sendRequested(requested)
   }
 
-  /** @param {DraftSaveRequested} requested */
+  /** @param {SoundRequested} requested */
   @OnEvent
-  async draftSaveRequested(requested) {
-    return this._editor.draftSaveRequested(requested)
+  soundRequested(requested) {
+    return this._editor.soundRequested(requested)
   }
 
-  /** @param {NavigationRequested} requested */
-  @OnEvent
-  async navigationRequested(requested) {
-    return this._editor.navigationRequested(requested)
+  /**
+   * Toggle an inline format on the selection: strong, em, u, s or code.
+   * @param {Event} _event
+   * @param {string} tag
+   */
+  format(_event, tag) {
+    return this._editor.format(tag)
   }
 
-  /** Bold the selection (toolbar and Ctrl+B). */
-  bold() {
-    return this._editor.bold()
+  /**
+   * Toggle a bulleted or numbered list.
+   * @param {Event} _event
+   * @param {boolean} ordered
+   */
+  list(_event, ordered) {
+    return this._editor.list(ordered)
   }
 
-  italic() {
-    return this._editor.italic()
-  }
-
-  underline() {
-    return this._editor.underline()
-  }
-
-  strike() {
-    return this._editor.strike()
-  }
-
-  code() {
-    return this._editor.code()
-  }
-
-  bulletList() {
-    return this._editor.bulletList()
-  }
-
-  numberedList() {
-    return this._editor.numberedList()
-  }
-
-  /** Open the file picker for attachments. */
-  pickAttachments() {
-    return this._editor.pickAttachments()
-  }
-
-  /** Open the file picker for inline images. */
-  pickInlineImages() {
-    return this._editor.pickInlineImages()
+  /**
+   * Open the file picker for attachments or for inline images.
+   * @param {Event} _event
+   * @param {string} kind 'attachment' or 'inline-image'
+   */
+  pick(_event, kind) {
+    return this._editor.pick(kind)
   }
 
   /** Turn the selection into a link after asking for its address. */
@@ -388,11 +340,6 @@ export default class ComposeEditorService {
     return this._editor.drop(event)
   }
 
-  /** @param {ClipboardEvent} event */
-  paste(event) {
-    return this._editor.paste(event)
-  }
-
   /**
    * @param {Event} _event
    * @param {number} width
@@ -413,16 +360,6 @@ export default class ComposeEditorService {
   /** Replace the draft with an on-device translation the person asked for. */
   async translateDraft() {
     return this._editor.translateDraft()
-  }
-
-  /** Replace local edits with the newer saved draft after a conflict. */
-  async reloadSavedDraft() {
-    return this._editor.reloadSavedDraft()
-  }
-
-  /** Keep local edits by saving them as a new draft after a conflict. */
-  async saveDraftCopy() {
-    return this._editor.saveDraftCopy()
   }
 
   /**
@@ -456,5 +393,4 @@ export default class ComposeEditorService {
   localTime(value) {
     return this._editor.localTime(value)
   }
-
 }

@@ -43,9 +43,7 @@ func (grammar *GrammarService) Start() {
 // @OnEvent({"replay":true})
 func (grammar *GrammarService) SessionChanged(changed SessionChanged) {
 	grammar.token = changed.Token
-	preferences, problem := grammar.usersClient.Preferences(grammar.authorization())
-	grammar.keepPreferences(preferences, grammar.succeeded(problem))
-	grammar.publish(GrammarTextWanted{Reason: "start"})
+	FlowUtils{}.When(changed.SignedIn, grammar.load)()
 }
 
 // GrammarTextChanged checks the editor text when the check is on.
@@ -89,6 +87,12 @@ func (grammar *GrammarService) Ignore(rule string) {
 // Title is the label of the toolbar toggle.
 func (grammar *GrammarService) Title() string {
 	return grammar.titleOf(grammar.Enabled, grammar.Checking, len(grammar.Issues))
+}
+
+func (grammar *GrammarService) load() {
+	preferences, problem := grammar.usersClient.Preferences(grammar.authorization())
+	grammar.keepPreferences(preferences, grammar.succeeded(problem))
+	grammar.publish(GrammarTextWanted{Reason: "start"})
 }
 
 func (grammar *GrammarService) authorization() string {
@@ -162,7 +166,7 @@ func (grammar *GrammarService) idleStatus(enabled bool) string {
 }
 
 func (grammar *GrammarService) saved(patch map[string]any) bool {
-	_, problem := grammar.usersClient.UpdatePreferences(patch, grammar.authorization())
+	_, problem := grammar.usersClient.SavePreferences(grammar.authorization(), patch)
 	return problem == nil
 }
 
@@ -217,7 +221,7 @@ func (grammar *GrammarService) wanted(enabled bool, text string) []bool {
 func (grammar *GrammarService) check(text string, request int) {
 	grammar.Checking = true
 	grammar.Status = "Checking locally…"
-	answer, problem := grammar.grammarClient.Check(GrammarInput{Text: text, Language: grammar.Language, DisabledRules: grammar.disabledRules}, grammar.authorization())
+	answer, problem := grammar.grammarClient.Check(grammar.authorization(), GrammarInput{Text: text, Language: grammar.Language, DisabledRules: grammar.disabledRules})
 	for range grammar.current(request, text) {
 		grammar.answered(answer, problem)
 	}
@@ -296,7 +300,7 @@ func (grammar *GrammarService) ignoreRule(rule string) {
 }
 
 func (grammar *GrammarService) savedProblem(patch map[string]any) error {
-	_, problem := grammar.usersClient.UpdatePreferences(patch, grammar.authorization())
+	_, problem := grammar.usersClient.SavePreferences(grammar.authorization(), patch)
 	return problem
 }
 

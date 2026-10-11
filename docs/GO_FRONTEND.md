@@ -190,6 +190,41 @@ choice as an attribute on `<html>` with a CSS rule keyed on it. For example,
   shell shows the login screen in place of the slot. The old
   `canUseApp`/`canShowLogin` getters are gone.
 
+## Rich-text editing (the composer)
+
+Tac replaces a `contenteditable` element whenever it renders without the
+focus, and a script may not write markup back into it (TY1364). The composer
+therefore edits inside a frame:
+
+- The view holds `<iframe sandbox="allow-same-origin" :srcdoc="compose.editorDocument">`.
+  A Go service builds the document (`EditorUtils{}.Document`), and its body is
+  the `contenteditable` editor. The sandbox runs no script from the message.
+- The JavaScript editor (`ComposeEditorService.js`) edits it with
+  `document.execCommand`. Message HTML enters the live editor only through
+  `insertEditorHTML`. A whole-body change (signature, template, translation)
+  goes to Go as `EditorReplaced{HTML}` and comes back as a new document. A
+  generation number in the document makes the frame reload every time.
+- The frame wears the page's `<html>` attributes and links `themes.css`, so
+  theme, accent and composer font follow the page.
+- Keys typed in the frame do not reach `keyboard.js`. The editor publishes
+  `ShortcutPressed{Command}` itself, for example `composer:send`.
+
+## Message size (the composer)
+
+Drafts and sends go through `DraftsClient` and `SendClient`. One request or
+one event carries at most 64 KiB, so a whole message must fit in 64 KiB: the
+body, the base64 attachments and the headers together.
+
+- Attachments are limited to 32 KB in total. The composer refuses a larger
+  file and says why.
+- An editor body over about 60 KiB arrives in Go as `TooLarge`. The composer
+  then shows `ComposeLimitUtils{}.TooLarge()` and does not send or save it.
+- Larger messages need an upload route that Tachyon does not offer yet.
+
+The composer reads `caduceus_compose_prefill` from `StoredValues` and merges
+`ComposeLaunched.Fields` over it. The shell removes the key once it has
+published the launch.
+
 ## Styles
 
 The global sheets (`tac.styles`) accept only a limited set of selectors and

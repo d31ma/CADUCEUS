@@ -33,7 +33,7 @@ func (ExternalAccountsUtils) whenValid(account ExternalAccount) []ExternalAccoun
 	known := ExternalAccountsUtils{}.identifier().MatchString(strings.TrimSpace(account.ID))
 	providers := []string{"gmail", "microsoft", "imap"}
 	states := []string{"ready", "syncing", "idle", "auth_required", "degraded", "paused", "deleting"}
-	if known && account.MailboxAddress != "" && slices.Contains(providers, account.Provider) && slices.Contains(states, account.State) && account.Revision >= 1 && account.Revision == float64(int64(account.Revision)) {
+	if known && account.MailboxAddress != "" && slices.Contains(providers, account.Provider) && slices.Contains(states, account.State) && account.Revision >= 1 {
 		return []ExternalAccount{account}
 	}
 	return nil

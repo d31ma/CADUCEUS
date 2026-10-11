@@ -1,5 +1,6 @@
-// SendClient is the /send route group. The shell undoes a send that the
-// composer left pending across a navigation.
+// SendClient is the /send route group. The composer sends and schedules,
+// and the shell undoes a send that the composer left pending across a
+// navigation.
 // @HTTPClient("/send")
 type SendClient interface {
 	// @PostRequest("/undo")
@@ -31,4 +32,22 @@ type SendClient interface {
 		// @PathVariable
 		id string,
 	) (ScheduledCancelled, error)
+
+	// @PostRequest
+	Send(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		message BehaviorValue,
+	) (SendAnswer, error)
+
+	// @PutRequest("/scheduled/{id}")
+	Reschedule(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+		// @RequestBody
+		message BehaviorValue,
+	) (SendAnswer, error)
 }

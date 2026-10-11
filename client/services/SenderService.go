@@ -47,7 +47,7 @@ func (sender *SenderService) Start() {
 func (sender *SenderService) SessionChanged(changed SessionChanged) {
 	sender.token = changed.Token
 	sender.owner = strings.ToLower(changed.Email)
-	sender.loadWhen(sender.pendingFetch())
+	sender.loadWhen(sender.pendingFetch(changed.SignedIn))
 	sender.startWhenReady()
 }
 
@@ -82,7 +82,7 @@ func (sender *SenderService) EditorSignatureChanged(changed EditorSignatureChang
 
 // ManageSignatures opens settings, where signatures are managed.
 func (sender *SenderService) ManageSignatures() {
-	sender.publish(NavigationRequested{Route: "settings"})
+	sender.publish(NavigationRequested{Target: "/settings"})
 }
 
 func (sender *SenderService) publish(value any) {
@@ -105,8 +105,8 @@ func (sender *SenderService) loadWhen(pending []bool) {
 	}
 }
 
-func (sender *SenderService) pendingFetch() []bool {
-	if sender.fetched {
+func (sender *SenderService) pendingFetch(signedIn bool) []bool {
+	if sender.fetched || !signedIn {
 		return nil
 	}
 	return []bool{true}
@@ -115,13 +115,14 @@ func (sender *SenderService) pendingFetch() []bool {
 func (sender *SenderService) load() {
 	preferences, preferencesProblem := sender.usersClient.Preferences(sender.authorization())
 	aliases, _ := sender.usersClient.Aliases(sender.authorization())
-	external, _ := sender.externalAccountsClient.List(sender.authorization())
+	external, _ := sender.externalAccountsClient.Accounts(sender.authorization())
 	signatures, signaturesProblem := sender.signaturesClient.List(sender.authorization())
 	identities := ExternalAccountsUtils{}.SenderIdentities(external.Accounts)
 	primary := strings.ToLower(SenderService{}.firstOf(aliases.Email, sender.owner))
 	sender.addresses = SenderService{}.addressesOf(primary, aliases.Aliases, identities)
 	sender.Options = SenderService{}.optionsOf(sender.addresses, identities)
 	sender.preferences = SenderService{}.preferencesOr(preferences.MailPreferences, preferencesProblem, sender.preferences)
+	FlowUtils{}.When(HTTPUtils{}.Refused(preferencesProblem), func() { sender.publish(SessionCheckRequested{Reason: "compose"}) })()
 	sender.Signatures = SenderService{}.signaturesOr(signatures, signaturesProblem)
 	sender.From = primary
 	sender.fetched = true
@@ -166,7 +167,7 @@ func (SenderService) identityLabel(address string, identity SenderIdentity) []st
 	return nil
 }
 
-func (SenderService) preferencesOr(preferences MailPreferences, problem error, fallback MailPreferences) MailPreferences {
+func (SenderService) preferencesOr(preferences *MailPreferences, problem error, fallback MailPreferences) MailPreferences {
 	if problem == nil {
 		return MailPreferencesUtils{}.Normalize(preferences)
 	}
@@ -256,12 +257,12 @@ func (sender *SenderService) useSignature(signature ComposeSignature) {
 
 func (sender *SenderService) chosen(reason string, apply bool) SenderChosen {
 	return SenderChosen{
-		Reason:        reason,
-		Address:       sender.From,
-		Apply:         apply,
-		NextCc:        append([]string{}, sender.preferences.AutoCcBySender[sender.From]...),
-		NextBlindCopy: append([]string{}, sender.preferences.AutoBlindCopyBySender[sender.From]...),
-		Preferences:   sender.preferences,
+		Reason:      reason,
+		Address:     sender.From,
+		Apply:       apply,
+		NextCc:      append([]string{}, sender.preferences.AutoCcBySender[sender.From]...),
+		NextBcc:     append([]string{}, sender.preferences.AutoBccBySender[sender.From]...),
+		Preferences: sender.preferences,
 	}
 }
 

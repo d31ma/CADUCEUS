@@ -14,7 +14,7 @@ export default class KeyboardService {
     'core:go-trash', 'core:go-settings', 'core:toggle-screenshot-mode', 'core:refresh', 'core:search', 'core:show-shortcuts',
     'navigation:next-email', 'navigation:prev-email', 'navigation:scroll-down', 'navigation:scroll-up',
     'email:star', 'email:archive', 'email:trash', 'email:report-spam', 'email:mark-read', 'email:mark-unread',
-    'email:open', 'core:select-all', 'core:deselect-all',
+    'email:open', 'core:select-all', 'core:deselect-all', 'composer:send', 'composer:discard',
   ]
 
   /** @type {ApplicationEventPublisher} */

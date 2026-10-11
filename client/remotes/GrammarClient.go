@@ -1,10 +1,12 @@
-// @HTTPClient
+// GrammarClient is the /grammar route group. The composer checks its draft
+// text with the server's local grammar checker.
+// @HTTPClient("/grammar")
 type GrammarClient interface {
-	// @PostRequest("/grammar/check")
+	// @PostRequest("/check")
 	Check(
-		// @RequestBody
-		input BehaviorValue,
 		// @RequestHeader("Authorization")
 		authorization string,
+		// @RequestBody
+		input BehaviorValue,
 	) (GrammarAnswer, error)
 }

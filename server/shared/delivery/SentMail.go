@@ -1,7 +1,6 @@
 import (
 	"errors"
 	"log"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -345,16 +344,6 @@ func (sent SentMail) plainBody(request map[string]any) string {
 	if text := (RecordValues{}).Text(request["text"]); text != "" {
 		return text
 	}
-	return sent.StrippedHtml(RecordValues{}.Text(request["html"]))
+	return HtmlText{}.Stripped(RecordValues{}.Text(request["html"]))
 }
 
-// StrippedHtml answers HTML as collapsed plain text.
-func (SentMail) StrippedHtml(html string) string {
-	text := regexp.MustCompile(`(?is)<style\b.*?</style>`).ReplaceAllString(html, " ")
-	text = regexp.MustCompile(`(?is)<script\b.*?</script>`).ReplaceAllString(text, " ")
-	text = regexp.MustCompile(`<[^>]+>`).ReplaceAllString(text, " ")
-	for _, entity := range [][2]string{{"(?i)&nbsp;", " "}, {"(?i)&amp;", "&"}, {"(?i)&lt;", "<"}, {"(?i)&gt;", ">"}, {"(?i)&quot;", `"`}, {"&#39;", "'"}} {
-		text = regexp.MustCompile(entity[0]).ReplaceAllString(text, entity[1])
-	}
-	return Security{}.Trim(regexp.MustCompile(`\s+`).ReplaceAllString(text, " "))
-}

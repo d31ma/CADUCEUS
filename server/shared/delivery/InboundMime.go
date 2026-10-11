@@ -20,7 +20,7 @@ func (reader InboundMime) Parsed(raw string) ParsedMessage {
 		if reader.LooksLikeHtml(raw) {
 			html = raw
 		}
-		return ParsedMessage{Text: reader.textOr(SentMail{}.StrippedHtml(html), raw), Html: html, Attachments: []ParsedAttachment{}, Headers: map[string]any{}}
+		return ParsedMessage{Text: reader.textOr(HtmlText{}.Stripped(html), raw), Html: html, Attachments: []ParsedAttachment{}, Headers: map[string]any{}}
 	}
 	if simple, isSimple := reader.simple(raw); isSimple {
 		return simple
@@ -71,7 +71,7 @@ func (reader InboundMime) simple(raw string) (ParsedMessage, bool) {
 	if strings.Contains(contentType, "text/html") || reader.LooksLikeHtml(body) {
 		html = body
 	}
-	return ParsedMessage{Text: reader.textOr(SentMail{}.StrippedHtml(html), body), Html: html, Attachments: []ParsedAttachment{}, Headers: headers}, true
+	return ParsedMessage{Text: reader.textOr(HtmlText{}.Stripped(html), body), Html: html, Attachments: []ParsedAttachment{}, Headers: headers}, true
 }
 
 // full reads a MIME message with the mail-reading MimeParser: its headers
@@ -90,7 +90,7 @@ func (reader InboundMime) full(raw string) ParsedMessage {
 	if parsed.Html == "" && reader.LooksLikeHtml(raw) && len(message.TextParts) == 0 {
 		parsed.Html = raw
 	}
-	parsed.Text = reader.textOr(message.Text(), reader.textOr(SentMail{}.StrippedHtml(parsed.Html), raw))
+	parsed.Text = reader.textOr(message.Text(), reader.textOr(HtmlText{}.Stripped(parsed.Html), raw))
 	return parsed
 }
 

@@ -181,7 +181,7 @@
           <logic :if="calendar.editingSeriesID && !calendar.editingReadOnly">
             <label class="event-modal-field" for="calendar-edit-scope">
               <span>Apply changes to</span>
-              <select id="calendar-edit-scope" :value="calendar.editScope" on:change="calendar.updateEditScope($event.target.value)">
+              <select id="calendar-edit-scope" on:change="calendar.updateEditScope($event.target.value)">
                 <option value="instance" :selected="calendar.editScope === 'instance'">This occurrence</option>
                 <option value="series" :selected="calendar.editScope === 'series'">Entire series</option>
               </select>
@@ -217,7 +217,7 @@
             <logic :if="!calendar.editingID && calendar.calendarOptions.length > 1">
               <label class="event-modal-field" for="calendar-target">
                 <span>Calendar</span>
-                <select id="calendar-target" :value="calendar.form.calendarId" on:change="calendar.updateFormCalendar($event.target.value)">
+                <select id="calendar-target" on:change="calendar.updateFormCalendar($event.target.value)">
                   <loop :for="calendarOption of calendar.calendarOptions">
                     <option :value="calendarOption.id" :selected="calendar.form.calendarId === calendarOption.id">{calendarOption.label}</option>
                   </loop>
@@ -242,7 +242,7 @@
             <logic :if="calendar.editScope !== 'instance'">
               <label class="event-modal-field" for="calendar-repeat">
                 <span>Repeat</span>
-                <select id="calendar-repeat" :value="calendar.form.repeat" on:change="calendar.updateFormRepeat($event.target.value)">
+                <select id="calendar-repeat" on:change="calendar.updateFormRepeat($event.target.value)">
                   <option value="none" :selected="calendar.form.repeat === 'none'">Does not repeat</option>
                   <option value="daily" :selected="calendar.form.repeat === 'daily'">Daily</option>
                   <option value="weekly" :selected="calendar.form.repeat === 'weekly'">Weekly</option>

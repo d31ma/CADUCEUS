@@ -286,7 +286,7 @@
         </div>
         <label>
           <span>{languageSettings.t('locale.label')}</span>
-          <select data-interface-locale :value="languageSettings.choice" :disabled="languageSettings.saving" on:change="languageSettings.select($event.target.value)">
+          <select data-interface-locale :disabled="languageSettings.saving" on:change="languageSettings.select($event.target.value)">
             <loop :for="locale of languageSettings.options()"><option :value="locale.id" :selected="languageSettings.choice === locale.id">{locale.label}</option></loop>
           </select>
         </label>
@@ -321,7 +321,7 @@
             <label>
               <span aria-hidden="true">☀</span>
               <span>When light</span>
-              <select data-automatic-theme="light" :value="themeSettings.preferences.lightTheme" :disabled="themeSettings.saving" on:change="themeSettings.selectAutomatic('light', $event.target.value)">
+              <select data-automatic-theme="light" :disabled="themeSettings.saving" on:change="themeSettings.selectAutomatic('light', $event.target.value)">
                 <loop :for="theme of themeSettings.lightOptions()">
                   <option :value="theme.id" :selected="themeSettings.preferences.lightTheme === theme.id">{theme.label}</option>
                 </loop>
@@ -330,7 +330,7 @@
             <label>
               <span aria-hidden="true">☾</span>
               <span>When dark</span>
-              <select data-automatic-theme="dark" :value="themeSettings.preferences.darkTheme" :disabled="themeSettings.saving" on:change="themeSettings.selectAutomatic('dark', $event.target.value)">
+              <select data-automatic-theme="dark" :disabled="themeSettings.saving" on:change="themeSettings.selectAutomatic('dark', $event.target.value)">
                 <loop :for="theme of themeSettings.darkOptions()">
                   <option :value="theme.id" :selected="themeSettings.preferences.darkTheme === theme.id">{theme.label}</option>
                 </loop>
@@ -366,7 +366,6 @@
             id="interface-font-select"
             data-interface-font
             class="typography-select"
-            :value="typography.interfaceFont"
             :disabled="typography.saving"
             on:change="typography.setInterfaceFont($event.target.value)">
             <loop :for="font of typography.interfaceOptions()">
@@ -382,7 +381,6 @@
             id="composer-font-select"
             data-composer-font
             class="typography-select"
-            :value="typography.composerFont"
             :disabled="typography.saving"
             on:change="typography.setComposerFont($event.target.value)">
             <loop :for="font of typography.composerOptions()">
@@ -875,7 +873,6 @@
           <select
             id="new-mail-notification-privacy"
             class="typography-select"
-            :value="newMailAlerts.privacy"
             :disabled="newMailAlerts.saving"
             on:change="newMailAlerts.setPrivacy($event.target.value)">
             <option value="full" :selected="newMailAlerts.privacy === 'full'">Sender and subject</option>
@@ -904,7 +901,6 @@
             id="unread-badge-scope"
             data-unread-badge-scope
             class="typography-select"
-            :value="unreadBadge.scope"
             :disabled="unreadBadge.saving"
             on:change="unreadBadge.setScope($event.target.value)">
             <option value="all" :selected="unreadBadge.scope === 'all'">All hosted accounts</option>
@@ -918,7 +914,6 @@
               id="unread-badge-domain"
               data-unread-badge-domain
               class="typography-select"
-              :value="unreadBadge.domain"
               :disabled="unreadBadge.saving"
               on:change="unreadBadge.setDomain($event.target.value)">
               <loop :for="account of unreadBadge.domainOptions()">
@@ -942,7 +937,6 @@
             <select
               class="typography-select notification-sound-select"
               :id="'sound-' + soundEvent.id"
-              :value="notificationSounds.sound(soundEvent.id)"
               :disabled="notificationSounds.saving"
               on:change="notificationSounds.choose(soundEvent.id, $event.target.value)">
               <loop :for="sound of notificationSounds.options()">

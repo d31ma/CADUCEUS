@@ -1255,3 +1255,19 @@
 @media (max-width: 360px) {
   .inbox-title { font-size: var(--ms-font-lg, 1.0625rem); }
 }
+
+/* The filter and folder rows scroll natively at compact widths. The shell
+ * carries the same rule, but component styles do not reach nested
+ * components, so the inbox view keeps its own copy. */
+[data-overflow-menu] > * {
+  flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+  [data-overflow-menu] {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    overscroll-behavior-inline: contain;
+  }
+}

@@ -1,5 +1,6 @@
 import (
 	"encoding/json"
+	"maps"
 	"slices"
 	"strings"
 )
@@ -8,10 +9,15 @@ import (
 // like initFromPrefill and the draft snapshot of the former compose view.
 type DraftUtils struct{}
 
-// Prefill reads the fields of the compose launch, which the shell merged from
-// the stored prefill and the launch address.
-func (DraftUtils) Prefill(launched map[string]any) ComposePrefill {
-	encoded, _ := json.Marshal(launched)
+// Prefill merges the prefill another view stored for the composer (JSON text
+// from StoredValues, read before the shell removed it) with the fields of the
+// compose launch. The shell's first ComposeLaunched can come from the address
+// before the shell has read storage, so the composer reads the key too.
+func (DraftUtils) Prefill(stored string, launched map[string]any) ComposePrefill {
+	fields := map[string]any{}
+	json.Unmarshal([]byte(stored), &fields)
+	maps.Copy(fields, launched)
+	encoded, _ := json.Marshal(fields)
 	prefill := ComposePrefill{}
 	json.Unmarshal(encoded, &prefill)
 	return prefill

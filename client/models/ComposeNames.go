@@ -14,6 +14,7 @@ type ComposeNames struct {
 	Draft        string
 	Recovered    string
 	Open         string
+	Prefill      string
 	Pointer      string
 	Undo         string
 	Session      string

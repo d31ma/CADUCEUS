@@ -1,4 +1,5 @@
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +27,8 @@ type MailboxService struct {
 	CountsByDomain            map[string]map[string]int
 	CountsByAccount           map[string]map[string]int
 	ShowUnreadForAllFolders   bool
+	badgeScope                string
+	badgeDomain               string
 	token                     string
 	email                     string
 	activitySince             string
@@ -47,7 +50,7 @@ func (mailbox *MailboxService) HearSession(changed SessionChanged) {
 	mailbox.token = changed.Token
 	mailbox.email = strings.ToLower(changed.Email)
 	mailbox.Domains = append([]string{}, changed.Domains...)
-	FlowUtils{}.When(changed.SignedIn, mailbox.load)()
+	FlowUtils{}.Either(changed.SignedIn, mailbox.load, func() { mailbox.publishBadge(0) })()
 }
 
 // HearStorage restores the cached mailbox labels and when Activity was last
@@ -63,6 +66,8 @@ func (mailbox *MailboxService) HearStorage(stored StoredValues) {
 func (mailbox *MailboxService) HearPreferences(loaded PreferencesLoaded) {
 	mailbox.MailboxNames = MailboxUtils{}.Allowed(loaded.MailboxNames, mailbox.Domains)
 	mailbox.ShowUnreadForAllFolders = loaded.ShowUnreadForAllFolders
+	mailbox.badgeScope = loaded.UnreadBadgeScope
+	mailbox.badgeDomain = loaded.UnreadBadgeDomain
 	mailbox.applicationEventPublisher.PublishEvent(StorageWritten{Area: "session", Values: map[string]string{mailbox.names().LabelsKey: MailboxUtils{}.Encoded(mailbox.MailboxNames)}, Removed: []string{}}, false)
 }
 
@@ -72,6 +77,15 @@ func (mailbox *MailboxService) HearCounts(counted FolderCountsChanged) {
 	mailbox.Counts = MailboxUtils{}.WithActivity(counted.Counts, mailbox.Counts[mailbox.names().Activity])
 	mailbox.CountsByDomain = counted.ByDomain
 	mailbox.CountsByAccount = counted.ByAccount
+	mailbox.publishBadge(MailboxUtils{}.BadgeCount(counted, BadgePreference{Scope: mailbox.badgeScope, Domain: mailbox.badgeDomain}, mailbox.Domains))
+}
+
+// HearNotificationAction applies the Mark read or Archive button of a new-mail
+// notification.
+// @OnEvent
+func (mailbox *MailboxService) HearNotificationAction(received NotificationActionReceived) {
+	patch, message := MailboxUtils{}.NotificationAction(received.Action)
+	FlowUtils{}.When(!slices.Contains([]bool{MailboxUtils{}.SafeID(received.EmailID), patch != nil}, false), func() { mailbox.apply([]string{received.EmailID}, patch, message) })()
 }
 
 // HearRefresh counts again after mail arrived or a mailbox action.
@@ -228,6 +242,10 @@ func (mailbox *MailboxService) toastAction(action string) func(string) {
 		return chosen
 	}
 	return func(string) {}
+}
+
+func (mailbox *MailboxService) publishBadge(count int) {
+	mailbox.applicationEventPublisher.PublishEvent(AppBadgeChanged{Count: count}, true)
 }
 
 func (mailbox *MailboxService) toast(request ToastRequested) {

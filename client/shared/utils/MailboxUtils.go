@@ -1,5 +1,6 @@
 import (
 	"encoding/json"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -26,7 +27,7 @@ func (MailboxUtils) Names(text string, domains []string) map[string]string {
 
 // Allowed keeps the trimmed labels of the signed-in domains, keyed in lower case.
 func (MailboxUtils) Allowed(names map[string]string, domains []string) map[string]string {
-	return MailboxUtils{}.allowed(names, strings.Fields(strings.ToLower(strings.Join(domains, " "))))
+	return MailboxUtils{}.allowed(names, MailboxUtils{}.allowedDomains(domains))
 }
 
 // Encoded is the JSON that the session keeps for the labels.
@@ -62,6 +63,31 @@ func (MailboxUtils) SpamDone(spam bool) string {
 // SpamFailure is the toast text when a spam report fails.
 func (MailboxUtils) SpamFailure(spam bool) string {
 	return MailboxUtils{}.either(spam, "Report spam failed.", "Not spam failed.")
+}
+
+// BadgeCount is the installed-app badge: every unread inbox message, or one
+// signed-in domain's when the user chose that domain.
+func (MailboxUtils) BadgeCount(counted FolderCountsChanged, preference BadgePreference, domains []string) int {
+	domain := strings.ToLower(strings.TrimSpace(preference.Domain))
+	focused := !slices.Contains([]bool{preference.Scope == "domain", slices.Contains(MailboxUtils{}.allowedDomains(domains), domain)}, false)
+	return max(0, map[bool]int{true: counted.UnreadInboxByDomain[domain], false: counted.UnreadInbox}[focused])
+}
+
+// NotificationAction is the mailbox patch and toast of a notification
+// button, or no patch for an unknown button.
+func (MailboxUtils) NotificationAction(action string) (map[string]any, string) {
+	patches := map[string]map[string]any{"mark-read": {"read": true}, "archive": {"folder": "archive"}}
+	messages := map[string]string{"mark-read": "Marked read from notification.", "archive": "Archived from notification."}
+	return patches[action], messages[action]
+}
+
+// SafeID accepts the message identifiers a notification may carry.
+func (MailboxUtils) SafeID(id string) bool {
+	return regexp.MustCompile(`^[A-Za-z0-9._:-]{1,200}$`).MatchString(id)
+}
+
+func (MailboxUtils) allowedDomains(domains []string) []string {
+	return strings.Fields(strings.ToLower(strings.Join(domains, " ")))
 }
 
 func (MailboxUtils) tallied(counted FolderCountsChanged, summaries []MailSummary) FolderCountsChanged {

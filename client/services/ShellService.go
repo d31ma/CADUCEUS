@@ -44,6 +44,9 @@ type ShellService struct {
 	locale                    string
 	pending                   map[string]PendingUndo
 	sections                  map[string]string
+	path                      string
+	search                    string
+	storedPrefill             string
 }
 
 // @OnStart
@@ -77,7 +80,9 @@ func (shell *ShellService) HearLocation(place PageLocation) {
 	shell.ActiveFolder = FolderUtils{}.Active(place.Path, query.Get("folder"), shell.ActiveFolder)
 	shell.SelectedDomain = strings.ToLower(query.Get("domain"))
 	shell.SelectedAccount = query.Get("account")
+	shell.path, shell.search = place.Path, place.Search
 	shell.redirectFromRoot()
+	shell.offerComposePrefill()
 }
 
 // HearStorage restores screenshot mode, the sidebar disclosures and the
@@ -91,6 +96,8 @@ func (shell *ShellService) HearStorage(stored StoredValues) {
 	shell.applyScreenshotMode()
 	shell.offerPendingUndo(shell.pendingFrom(stored.Session[names.Snooze]), names.Snooze)
 	shell.offerPendingUndo(shell.pendingFrom(stored.Session[names.Send]), names.Send)
+	shell.storedPrefill = stored.Session[names.Prefill]
+	shell.offerComposePrefill()
 }
 
 // HearPreferences follows the interface locale of the signed-in user.
@@ -251,6 +258,18 @@ func (shell *ShellService) HearPageClick(clicked PageClicked) {
 	shell.UserMenuOpen = shell.keptUserMenu(clicked.InsideUserMenu)
 }
 
+// offerComposePrefill hands the composer what another view stored for it and
+// what a manifest launch carried, as the shell's consumeComposePrefill did.
+func (shell *ShellService) offerComposePrefill() {
+	FlowUtils{}.When(shell.path == shell.names().Compose, func() {
+		shell.applicationEventPublisher.PublishEvent(ComposeLaunched{Fields: LaunchUtils{}.ComposePrefill(shell.storedPrefill, shell.search)}, true)
+		shell.forgetPending(shell.names().Prefill)
+		FlowUtils{}.When(LaunchUtils{}.IsComposeLaunch(shell.search), func() {
+			shell.applicationEventPublisher.PublishEvent(AddressReplaced{Target: shell.path}, false)
+		})()
+	})()
+}
+
 func (shell *ShellService) openShortcutHelp() {
 	shell.ShortcutHelpOpen = true
 	shell.applicationEventPublisher.PublishEvent(FocusRequested{Selector: "[data-shortcut-help-dialog]", Remember: true}, false)
@@ -323,7 +342,7 @@ func (shell *ShellService) timerAction(name string) func() {
 
 func (shell *ShellService) shortcutAction(command string) func() {
 	actions := map[string]func(){
-		"core:compose":                func() { shell.navigate("/compose") },
+		"core:compose":                func() { shell.navigate(shell.names().Compose) },
 		"core:go-inbox":               func() { shell.navigate(shell.names().Root + shell.names().Inbox) },
 		"core:go-drafts":              func() { shell.navigate("/drafts") },
 		"core:go-sent":                func() { shell.navigate("/sent") },
@@ -467,6 +486,6 @@ func (ShellService) favoriteKey(name string) string { return "caduceus-sidebar-f
 func (ShellService) names() ShellNames {
 	return ShellNames{
 		Inbox: "inbox", Presence: "presence", Session: "session", Local: "local", Open: "open", Closed: "closed",
-		Snooze: "caduceus_pending_snooze_undo", Root: "/", On: "on", Screenshot: "caduceus-screenshot-mode", Send: "caduceus_pending_send_undo", Locale: "caduceus-interface-locale-v1",
+		Snooze: "caduceus_pending_snooze_undo", Root: "/", On: "on", Screenshot: "caduceus-screenshot-mode", Send: "caduceus_pending_send_undo", Locale: "caduceus-interface-locale-v1", Prefill: "caduceus_compose_prefill", Compose: "/compose",
 	}
 }

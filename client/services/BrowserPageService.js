@@ -80,6 +80,12 @@ export default class BrowserPageService {
     setTimeout(() => this._focus(request), 0)
   }
 
+  /** @param {AddressReplaced} replaced */
+  @OnEvent
+  replace(replaced) {
+    history.replaceState(history.state, '', replaced.target)
+  }
+
   /** @param {ClickRequested} request */
   @OnEvent
   click(request) {

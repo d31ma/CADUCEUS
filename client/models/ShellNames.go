@@ -11,4 +11,6 @@ type ShellNames struct {
 	Root     string
 	On       string
 	Screenshot string
+	Prefill    string
+	Compose    string
 }

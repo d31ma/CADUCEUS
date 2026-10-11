@@ -1,17 +1,42 @@
 /**
- * Starts the Tachyon preview server for Playwright E2E tests.
- * Explicitly sets CWD to the project root so `ty preview` finds the bundled
- * `dist/` directory created by `ty bundle`.
+ * The one server the Playwright suites run against: `ty serve` with the Go
+ * server and the client on one origin (http://localhost:19875), backed by a
+ * temporary Go FYLO owner and SESAME deployment. The test routes
+ * (/test/seed/*, /test/reset) are on, and the inbound webhook takes the
+ * secret tests/e2e/helpers.mjs signs with.
+ *
+ * CADUCEUS_SERVE_ROOT serves another project directory, TACHYON_BIN picks
+ * the ty to run (see tests/support/TestServer.mjs).
  */
-import { spawn } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
-import { resolve } from 'node:path'
+import { startIdentity } from '../tests/support/identity.mjs'
+import { TestServer } from '../tests/support/TestServer.mjs'
 
-const projectRoot = resolve(fileURLToPath(new URL('.', import.meta.url)), '..')
-const proc = spawn('ty', ['preview', '--port', '19875'], {
-  cwd: projectRoot,
-  stdio: 'inherit',
-  env: { ...process.env },
-})
+const port = Number(process.env.E2E_PORT) || 19875
+const identity = await startIdentity()
+let stopping = false
+function stop(code = 0) {
+  if (stopping) return
+  stopping = true
+  try {
+    TestServer.stop()
+  } finally {
+    identity.stop()
+    process.exit(code)
+  }
+}
+for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => stop(0))
 
-proc.on('exit', code => process.exit(code ?? 0))
+try {
+  await TestServer.start({
+    ...identity.env,
+    NODE_ENV: 'test',
+    CADUCEUS_ENABLE_TEST_ROUTES: 'true',
+    INBOUND_WEBHOOK_SECRET: 'caduceus-e2e-inbound-secret',
+    STREAM_MAX_MS: '750',
+    STREAM_POLL_MS: '50',
+  }, { port })
+} catch (error) {
+  console.error('[e2e] server failed to start:', error instanceof Error ? error.message : error)
+  stop(1)
+}
+console.log(`[e2e] Go server and client on http://localhost:${port}`)

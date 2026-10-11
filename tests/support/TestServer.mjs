@@ -67,9 +67,10 @@ export class TestServer {
 
   /**
    * @param {Record<string, string | undefined>} settings
+   * @param {{ port?: number }} [options] a fixed port (the Playwright server); a free one by default
    * @returns {Promise<{ url: string, stop: () => void }>}
    */
-  static async start(settings) {
+  static async start(settings, options = {}) {
     TestServer.stop()
     const envFile = join(TestServer.ROOT, '.env')
     TestServer.#refuseForeignEnv(envFile)
@@ -79,7 +80,7 @@ export class TestServer {
       if (value !== undefined && value !== '' && !/[\r\n]/.test(value)) lines.push(`YON_${name}=${value}`)
     }
     writeFileSync(envFile, `${lines.join('\n')}\n`, { mode: 0o600 })
-    const port = await TestServer.#freePort()
+    const port = options.port ?? await TestServer.#freePort()
     const proc = Bun.spawn([process.env.TACHYON_BIN || 'ty', 'serve', '--no-watch', '--port', String(port)], {
       cwd: TestServer.ROOT,
       env: { PATH: process.env.PATH, HOME: process.env.HOME },

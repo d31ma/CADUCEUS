@@ -50,7 +50,7 @@ test('explicitly opts in and shows a sanitized public GitHub contact card', asyn
   expect((await persistedResponse.json()).githubProfileEnrichment).toBe(true)
 
   const profileRequests = []
-  await page.route('http://localhost:19876/github/profile?*', async route => {
+  await page.route('http://localhost:19875/github/profile?*', async route => {
     profileRequests.push(route.request().url())
     await route.fulfill({
       status: 200,

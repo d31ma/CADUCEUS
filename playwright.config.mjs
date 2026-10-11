@@ -11,29 +11,19 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://localhost:19875',
-    // The production app uses same-origin APIs. E2E isolates its API on a
-    // dedicated port, so bypass CSP here while the CORS proxy remains active.
     bypassCSP: true,
     trace: 'on-first-retry',
   },
   projects: [
     { name: 'chrome', use: { ...devices['Desktop Chrome'], channel: 'chrome', permissions: ['local-network-access'] } },
   ],
-  webServer: [
-    {
-      // Static preview of the bundled app
-      command: 'bun scripts/e2e-preview.mjs',
-      url: 'http://localhost:19875',
-      reuseExistingServer: false,
-      timeout: 300_000,
-    },
-    {
-      // Real route handlers via the transitional Bun test adapter, backed by
-      // the Go FYLO owner and temporary released FYLO/SESAME runtimes.
-      command: 'bun scripts/e2e-api.mjs',
-      url: 'http://localhost:19876',
-      reuseExistingServer: false,
-      timeout: 300_000,
-    },
-  ],
+  // One origin: `ty serve` runs the Go server and the client together,
+  // with the test seeding routes on (scripts/e2e-preview.mjs). A cold start
+  // compiles every Go handler, so allow it the suites' startup budget.
+  webServer: {
+    command: 'bun scripts/e2e-preview.mjs',
+    url: 'http://localhost:19875',
+    reuseExistingServer: false,
+    timeout: 900_000,
+  },
 })

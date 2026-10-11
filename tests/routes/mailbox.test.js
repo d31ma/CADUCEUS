@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { setupRoutes, teardownRoutes, token, req, email } from './helpers.js'
-import { MboxUtils } from '../../client/shared/utils/MboxUtils.js'
+import * as MboxUtils from '../support/mbox.mjs'
 import { call } from '../support/controller-call.mjs'
 import { TestContainer } from '../support/TestContainer.mjs'
 import { Routes } from '../support/Routes.mjs'

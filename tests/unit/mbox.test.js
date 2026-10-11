@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { MboxUtils } from '../../client/shared/utils/MboxUtils.js'
+import * as MboxUtils from '../../client/shared/scripts/mbox.js'
 
 const formatMboxRecord = (...args) => MboxUtils.formatMboxRecord(...args)
 const mboxFilename = (...args) => MboxUtils.mboxFilename(...args)

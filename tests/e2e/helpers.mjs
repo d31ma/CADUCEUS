@@ -4,7 +4,7 @@
  */
 import { createHmac } from 'node:crypto'
 
-export const API = 'http://localhost:19876'
+export const API = 'http://localhost:19875'
 const INBOUND_WEBHOOK_SECRET = 'caduceus-e2e-inbound-secret'
 
 // ── Unique test email ─────────────────────────────────────────────────────────

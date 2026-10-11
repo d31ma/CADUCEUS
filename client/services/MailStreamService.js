@@ -9,8 +9,8 @@
  *
  * - new-email becomes NewMailArrived and InboxRefreshRequested (the badges);
  * - unauthorized stops the stream and becomes SignOutRequested;
- * - a frame after a failure, or two failures in a row (an error or close
- *   code 1006), become MailStreamHealth for the notification centre.
+ * - two failed connections in a row (an error or close code 1006) become
+ *   MailStreamHealth for the notification centre, and the next frame clears it.
  */
 @Service
 export default class MailStreamService {
@@ -22,25 +22,28 @@ export default class MailStreamService {
   static _ABNORMAL_CLOSE = 1006
   static _REASON = 'mail-stream'
   static _HANDLERS = { 'new-email': '_arrived', unauthorized: '_unauthorized' }
+  static _IGNORED = '_ignored'
 
   /** @type {ApplicationEventPublisher} */
   applicationEventPublisher
 
   ready = false
-  token = ''
-  cursor = ''
+  _token = ''
+  _cursor = ''
   /** @type {WebSocket | null} */
-  socket = null
+  _socket = null
+  /** @type {AbortController | null} */
+  _listening = null
   /** @type {ReturnType<typeof setTimeout> | undefined} */
-  timer = undefined
-  failures = 0
-  erred = false
-  wait = MailStreamService._FIRST_WAIT_MS
+  _timer = undefined
+  _failures = 0
+  _erred = false
+  _wait = MailStreamService._FIRST_WAIT_MS
 
   @OnStart
   start() {
     // Mail that landed between the first list load and this connection is replayed too.
-    this.cursor = new Date(Date.now() - MailStreamService._REPLAY_MS).toISOString()
+    this._cursor = new Date(Date.now() - MailStreamService._REPLAY_MS).toISOString()
     this.ready = true
   }
 
@@ -48,37 +51,49 @@ export default class MailStreamService {
   @OnEvent({"replay":true})
   session(changed) {
     this._stop()
-    this.token = changed.signedIn ? changed.token : ''
+    this._token = this._tokenOf(changed)
     this._connect()
   }
 
+  /** @param {SessionChanged} changed */
+  _tokenOf(changed) {
+    return changed.signedIn ? changed.token : ''
+  }
+
   _connect() {
-    if (!this.token) return
+    if (this._token) this._open()
+  }
+
+  _open() {
+    const socket = new WebSocket(this._address())
+    const listening = new AbortController()
+    socket.addEventListener('message', event => this._frame(event.data), { signal: listening.signal })
+    socket.addEventListener('error', () => this._markError(), { signal: listening.signal })
+    socket.addEventListener('close', event => this._closed(event.code), { signal: listening.signal })
+    this._socket = socket
+    this._listening = listening
+  }
+
+  _address() {
     const address = new URL(MailStreamService._PATH, location.href)
-    address.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
-    address.search = new URLSearchParams({ token: this.token, since: this.cursor }).toString()
-    const socket = new WebSocket(address)
-    socket.addEventListener('message', event => this._frame(socket, event.data))
-    socket.addEventListener('error', () => this._erred(socket))
-    socket.addEventListener('close', event => this._closed(socket, event.code))
-    this.socket = socket
+    address.protocol = location.protocol.replace('http', 'ws')
+    address.search = new URLSearchParams({ token: this._token, since: this._cursor }).toString()
+    return address
   }
 
   _stop() {
-    clearTimeout(this.timer)
-    const socket = this.socket
-    this.socket = null
-    socket?.close()
+    clearTimeout(this._timer)
+    this._listening?.abort()
+    this._socket?.close()
+    this._socket = null
   }
 
-  /** @param {WebSocket} socket @param {unknown} text */
-  _frame(socket, text) {
+  /** @param {unknown} text */
+  _frame(text) {
     const frame = this._parsed(text)
-    if (!frame || socket !== this.socket) return
-    this.cursor = frame.cursor ?? this.cursor
+    this._cursor = this._cursorOf(frame)
     this._healthy()
-    const handler = MailStreamService._HANDLERS[frame.event]
-    if (handler) this[handler](frame.data)
+    this[this._handler(frame)](frame.data)
   }
 
   /** @param {unknown} text */
@@ -86,9 +101,21 @@ export default class MailStreamService {
     try {
       return JSON.parse(String(text))
     } catch {
-      return null
+      return {}
     }
   }
+
+  /** @param {{cursor?: string}} frame */
+  _cursorOf(frame) {
+    return frame.cursor || this._cursor
+  }
+
+  /** @param {{event?: string}} frame @returns {string} */
+  _handler(frame) {
+    return MailStreamService._HANDLERS[frame.event] || MailStreamService._IGNORED
+  }
+
+  _ignored() {}
 
   /** @param {Email} email */
   _arrived(email) {
@@ -102,7 +129,7 @@ export default class MailStreamService {
   }
 
   _unauthorized() {
-    this.token = ''
+    this._token = ''
     this._stop()
     /** @type {SignOutRequested} */
     const request = { reason: MailStreamService._REASON }
@@ -110,34 +137,33 @@ export default class MailStreamService {
   }
 
   _healthy() {
-    this.wait = MailStreamService._FIRST_WAIT_MS
-    if (this.failures >= MailStreamService._FAILURES_SHOWN) this._health(true)
-    this.failures = 0
+    this._wait = MailStreamService._FIRST_WAIT_MS
+    if (this._failures >= MailStreamService._FAILURES_SHOWN) this._health(true)
+    this._failures = 0
   }
 
-  /** @param {WebSocket} socket */
-  _erred(socket) {
-    this.erred = this.erred || socket === this.socket
+  _markError() {
+    this._erred = true
   }
 
-  /** @param {WebSocket} socket @param {number} code */
-  _closed(socket, code) {
-    if (socket !== this.socket) return
-    this._counted(this.erred || code === MailStreamService._ABNORMAL_CLOSE)
-    this.erred = false
-    this.socket = null
-    this.timer = setTimeout(() => this._connect(), this._backoff())
+  /** @param {number} code */
+  _closed(code) {
+    const failed = [this._erred, code === MailStreamService._ABNORMAL_CLOSE].includes(true)
+    this._failures += Number(failed)
+    this._failing([failed, this._failures === MailStreamService._FAILURES_SHOWN].every(Boolean))
+    this._erred = false
+    this._socket = null
+    this._timer = setTimeout(() => this._connect(), this._backoff())
   }
 
-  /** @param {boolean} failed */
-  _counted(failed) {
-    this.failures = failed ? this.failures + 1 : this.failures
-    if (failed && this.failures === MailStreamService._FAILURES_SHOWN) this._health(false)
+  /** @param {boolean} shown */
+  _failing(shown) {
+    if (shown) this._health(false)
   }
 
   _backoff() {
-    const wait = this.wait
-    this.wait = Math.min(wait * 2, MailStreamService._LONGEST_WAIT_MS)
+    const wait = this._wait
+    this._wait = Math.min(wait * 2, MailStreamService._LONGEST_WAIT_MS)
     return wait
   }
 

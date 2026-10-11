@@ -1,6 +1,6 @@
 // UsersClient is the /users route group. The shell reads and saves the
-// signed-in user's preferences; the composer also reads the sender aliases
-// and saves its grammar choices.
+// signed-in user's preferences; settings also saves the other preferences,
+// manages the user's aliases and lets an administrator add users.
 // @HTTPClient("/users")
 type UsersClient interface {
 	// @GetRequest("/me/preferences")
@@ -10,12 +10,12 @@ type UsersClient interface {
 	) (UserPreferences, error)
 
 	// @PutRequest("/me/preferences")
-	SaveTheme(
+	SavePreferences(
 		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
+		authorization string,
 		// @RequestBody
-		theme BehaviorValue,
-	) (BehaviorValue, error)
+		patch BehaviorValue,
+	) (UserPreferences, error)
 
 	// @GetRequest("/aliases")
 	Aliases(
@@ -23,11 +23,33 @@ type UsersClient interface {
 		authorization string,
 	) (AliasList, error)
 
-	// @PutRequest("/me/preferences")
-	SavePreferences(
+	// @PostRequest("/aliases")
+	AddAlias(
 		// @RequestHeader("Authorization")
 		authorization string,
 		// @RequestBody
-		patch BehaviorValue,
-	) (UserPreferences, error)
+		alias BehaviorValue,
+	) (AliasList, error)
+
+	// @DeleteRequest("/aliases")
+	RemoveAlias(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		alias BehaviorValue,
+	) (AliasList, error)
+
+	// @GetRequest
+	Users(
+		// @RequestHeader("Authorization")
+		authorization string,
+	) ([]UserAccount, error)
+
+	// @PostRequest
+	AddUser(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @RequestBody
+		user BehaviorValue,
+	) (BehaviorValue, error)
 }

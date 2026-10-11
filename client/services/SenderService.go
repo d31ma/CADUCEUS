@@ -22,7 +22,7 @@ type SenderService struct {
 
 	From              string
 	Options           []SenderOption
-	Signatures        []ComposeSignature
+	Signatures        []MailSignature
 	ActiveSignatureID string
 
 	token       string
@@ -37,7 +37,7 @@ type SenderService struct {
 // @OnStart
 func (sender *SenderService) Start() {
 	sender.Options = []SenderOption{}
-	sender.Signatures = []ComposeSignature{}
+	sender.Signatures = []MailSignature{}
 	sender.preferences = MailPreferencesUtils{}.Defaults()
 }
 
@@ -116,7 +116,7 @@ func (sender *SenderService) load() {
 	preferences, preferencesProblem := sender.usersClient.Preferences(sender.authorization())
 	aliases, _ := sender.usersClient.Aliases(sender.authorization())
 	external, _ := sender.externalAccountsClient.Accounts(sender.authorization())
-	signatures, signaturesProblem := sender.signaturesClient.List(sender.authorization())
+	signatures, signaturesProblem := sender.signaturesClient.Signatures(sender.authorization())
 	identities := ExternalAccountsUtils{}.SenderIdentities(external.Accounts)
 	primary := strings.ToLower(SenderService{}.firstOf(aliases.Email, sender.owner))
 	sender.addresses = SenderService{}.addressesOf(primary, aliases.Aliases, identities)
@@ -174,11 +174,11 @@ func (SenderService) preferencesOr(preferences *MailPreferences, problem error, 
 	return fallback
 }
 
-func (SenderService) signaturesOr(signatures []ComposeSignature, problem error) []ComposeSignature {
+func (SenderService) signaturesOr(signatures []MailSignature, problem error) []MailSignature {
 	if problem == nil {
 		return SignatureUtils{}.SanitizeAll(signatures)
 	}
-	return []ComposeSignature{}
+	return []MailSignature{}
 }
 
 func (SenderService) ownedIn(addresses []string, address string) string {
@@ -250,7 +250,7 @@ func (sender *SenderService) defaultSignature(applies bool) {
 	}
 }
 
-func (sender *SenderService) useSignature(signature ComposeSignature) {
+func (sender *SenderService) useSignature(signature MailSignature) {
 	sender.ActiveSignatureID = signature.ID
 	sender.publish(SignatureApplyRequested{SignatureID: signature.ID, Text: signature.Text})
 }
@@ -283,15 +283,15 @@ func (sender *SenderService) switchTo(address string, owned bool) {
 	sender.publish(sender.chosen("change", true))
 }
 
-func (sender *SenderService) signatureNamed(id string) ComposeSignature {
-	found := ComposeSignature{}
+func (sender *SenderService) signatureNamed(id string) MailSignature {
+	found := MailSignature{}
 	for _, signature := range sender.Signatures {
 		found = SenderService{}.namedOr(signature, id, found)
 	}
 	return found
 }
 
-func (SenderService) namedOr(signature ComposeSignature, id string, found ComposeSignature) ComposeSignature {
+func (SenderService) namedOr(signature MailSignature, id string, found MailSignature) MailSignature {
 	if signature.ID == id && id != "" {
 		return signature
 	}

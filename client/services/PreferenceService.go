@@ -77,7 +77,7 @@ func (preference *PreferenceService) ToggleTheme() error {
 	preference.themes.ActiveTheme = AppearanceUtils{}.Opposite(AppearanceUtils{}.BaseMode(AppearanceUtils{}.Resolved(preference.themes, preference.systemDark)))
 	preference.persist()
 	preference.apply()
-	_, failure := preference.usersClient.SaveTheme(preference.bearer(), ThemeSaved{ThemePreferences: preference.themes})
+	_, failure := preference.usersClient.SavePreferences(preference.bearer(), ThemeSaved{ThemePreferences: preference.themes})
 	return failure
 }
 

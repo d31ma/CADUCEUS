@@ -1,18 +1,34 @@
-// TemplatesClient is the /templates route group. The composer lists, inserts
-// and saves message templates.
-// @HTTPClient("/templates")
+// @HTTPClient
 type TemplatesClient interface {
-	// @GetRequest
-	List(
+	// @GetRequest("/templates")
+	Templates(
 		// @RequestHeader("Authorization")
 		authorization string,
-	) ([]ComposeTemplate, error)
+	) ([]MessageTemplate, error)
 
-	// @PostRequest
-	Save(
+	// @PostRequest("/templates")
+	Create(
 		// @RequestHeader("Authorization")
 		authorization string,
 		// @RequestBody
-		template BehaviorValue,
-	) (SavedTemplate, error)
+		body BehaviorValue,
+	) (MessageTemplate, error)
+
+	// @PutRequest("/templates/{id}")
+	Update(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+		// @RequestBody
+		body BehaviorValue,
+	) (MessageTemplate, error)
+
+	// @DeleteRequest("/templates/{id}")
+	Delete(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @PathVariable
+		id BehaviorValue,
+	) (BehaviorValue, error)
 }

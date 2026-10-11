@@ -4,21 +4,38 @@ import (
 	"strings"
 )
 
-// SignatureUtils holds the composer-signatures rules that Go needs:
-// sanitizing a stored signature, choosing the default signature of a From
-// address and finding the signature a body holds. Inserting a signature
-// before quoted mail stays in client/shared/scripts/composer-signatures.js,
-// next to the live editor.
+// SignatureUtils is the Go form of sanitizeSignatureHTML in
+// shared/scripts/composer-signatures.js. Go regular expressions have no
+// back-references, so each paired tag and quote gets its own expression.
+// The composer also picks the default signature of a From address and finds
+// the signature a body holds.
 type SignatureUtils struct{}
+
+func (utils SignatureUtils) Sanitize(input string) string {
+	text := utils.blocks(strings.ReplaceAll(input, "\x00", ""))
+	text = regexp.MustCompile(`(?i)<(?:script|style|iframe|frame|frameset|object|embed|applet|form|input|button|textarea|select|option|base|meta|link)\b[^>]*/?\s*>`).ReplaceAllString(text, "")
+	text = regexp.MustCompile(`(?i)\s+on[a-z0-9_-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)`).ReplaceAllString(text, "")
+	text = regexp.MustCompile(`(?i)\s+(href|src|xlink:href)\s*=\s*"\s*(?:javascript|vbscript):[\s\S]*?"`).ReplaceAllString(text, ` ${1}="#"`)
+	text = regexp.MustCompile(`(?i)\s+(href|src|xlink:href)\s*=\s*'\s*(?:javascript|vbscript):[\s\S]*?'`).ReplaceAllString(text, ` ${1}="#"`)
+	text = regexp.MustCompile(`(?i)\s+style\s*=\s*"[^"']*(?:expression\s*\(|url\s*\(\s*["']?\s*(?:javascript|vbscript):)[^"']*"`).ReplaceAllString(text, "")
+	return regexp.MustCompile(`(?i)\s+style\s*=\s*'[^"']*(?:expression\s*\(|url\s*\(\s*["']?\s*(?:javascript|vbscript):)[^"']*'`).ReplaceAllString(text, "")
+}
+
+func (SignatureUtils) blocks(text string) string {
+	for _, tag := range []string{"script", "style", "iframe", "frame", "frameset", "object", "embed", "applet", "form", "template", "noscript"} {
+		text = regexp.MustCompile(`(?i)<`+tag+`\b[^>]*>[\s\S]*?</`+tag+`\s*>`).ReplaceAllString(text, "")
+	}
+	return text
+}
 
 // SanitizeAll removes executable markup from every signature that the server
 // answered, like sanitizeSignatureHTML in composer-signatures.js.
-func (SignatureUtils) SanitizeAll(signatures []ComposeSignature) []ComposeSignature {
+func (SignatureUtils) SanitizeAll(signatures []MailSignature) []MailSignature {
 	return SignatureUtils{}.sanitized(signatures)
 }
 
 // DefaultFor finds the signature whose defaultFor list holds the address.
-func (SignatureUtils) DefaultFor(signatures []ComposeSignature, address string) ComposeSignature {
+func (SignatureUtils) DefaultFor(signatures []MailSignature, address string) MailSignature {
 	return SignatureUtils{}.firstDefault(signatures, strings.ToLower(strings.TrimSpace(address)))
 }
 
@@ -36,74 +53,27 @@ func (SignatureUtils) divID(editable string) string {
 	return append(regexp.MustCompile(`(?i)\bdata-signature-id\s*=\s*["']([^"']+)["']`).FindStringSubmatch(tag), "", "")[1]
 }
 
-func (SignatureUtils) sanitize(text string) string {
-	cleaned := strings.ReplaceAll(text, string(rune(0)), "")
-	cleaned = SignatureUtils{}.withoutBlocks(cleaned)
-	cleaned = SignatureUtils{}.unsafeSingle().ReplaceAllString(cleaned, "")
-	cleaned = SignatureUtils{}.eventHandlers().ReplaceAllString(cleaned, "")
-	return SignatureUtils{}.withoutScriptAttributes(cleaned)
-}
-
-func (SignatureUtils) withoutScriptAttributes(text string) string {
-	for _, quote := range (SignatureUtils{}).quotes() {
-		text = SignatureUtils{}.scriptAddresses(quote).ReplaceAllString(text, ` ${1}="#"`)
-		text = SignatureUtils{}.scriptStyles(quote).ReplaceAllString(text, "")
-	}
-	return text
-}
-
-func (SignatureUtils) sanitized(signatures []ComposeSignature) []ComposeSignature {
-	cleaned := []ComposeSignature{}
+func (SignatureUtils) sanitized(signatures []MailSignature) []MailSignature {
+	cleaned := []MailSignature{}
 	for _, signature := range signatures {
-		signature.Text = SignatureUtils{}.sanitize(signature.Text)
+		signature.Text = SignatureUtils{}.Sanitize(signature.Text)
 		signature.DefaultFor = append([]string{}, signature.DefaultFor...)
 		cleaned = append(cleaned, signature)
 	}
 	return cleaned
 }
 
-func (SignatureUtils) firstDefault(signatures []ComposeSignature, address string) ComposeSignature {
-	matches := []ComposeSignature{}
+func (SignatureUtils) firstDefault(signatures []MailSignature, address string) MailSignature {
+	matches := []MailSignature{}
 	for _, signature := range signatures {
 		matches = append(matches, SignatureUtils{}.whenDefaultFor(signature, address)...)
 	}
-	return append(matches, ComposeSignature{})[0]
+	return append(matches, MailSignature{})[0]
 }
 
-func (SignatureUtils) whenDefaultFor(signature ComposeSignature, address string) []ComposeSignature {
+func (SignatureUtils) whenDefaultFor(signature MailSignature, address string) []MailSignature {
 	if slices.Contains(RecipientUtils{}.Lowered(signature.DefaultFor), address) {
-		return []ComposeSignature{signature}
+		return []MailSignature{signature}
 	}
 	return nil
-}
-
-func (SignatureUtils) withoutBlocks(text string) string {
-	for _, tag := range (SignatureUtils{}).blockTags() {
-		text = regexp.MustCompile(`(?i)<`+tag+`\b[^>]*>[\s\S]*?</`+tag+`\s*>`).ReplaceAllString(text, "")
-	}
-	return text
-}
-
-func (SignatureUtils) quotes() []string {
-	return []string{`"`, `'`}
-}
-
-func (SignatureUtils) blockTags() []string {
-	return []string{"script", "style", "iframe", "frame", "frameset", "object", "embed", "applet", "form", "template", "noscript"}
-}
-
-func (SignatureUtils) unsafeSingle() *regexp.Regexp {
-	return regexp.MustCompile(`(?i)<(?:script|style|iframe|frame|frameset|object|embed|applet|form|input|button|textarea|select|option|base|meta|link)\b[^>]*/?\s*>`)
-}
-
-func (SignatureUtils) eventHandlers() *regexp.Regexp {
-	return regexp.MustCompile(`(?i)\s+on[a-z0-9_-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)`)
-}
-
-func (SignatureUtils) scriptAddresses(quote string) *regexp.Regexp {
-	return regexp.MustCompile(`(?i)\s+(href|src|xlink:href)\s*=\s*` + quote + `\s*(?:javascript|vbscript):[\s\S]*?` + quote)
-}
-
-func (SignatureUtils) scriptStyles(quote string) *regexp.Regexp {
-	return regexp.MustCompile(`(?i)\s+style\s*=\s*` + quote + `[^"']*(?:expression\s*\(|url\s*\(\s*["']?\s*(?:javascript|vbscript):)[^"']*` + quote)
 }

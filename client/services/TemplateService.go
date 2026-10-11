@@ -14,8 +14,8 @@ type TemplateService struct {
 	templatesClient           *TemplatesClient
 	applicationEventPublisher ApplicationEventPublisher
 
-	Templates []ComposeTemplate
-	Visible   []ComposeTemplate
+	Templates []MessageTemplate
+	Visible   []MessageTemplate
 
 	token   string
 	pending []TemplateInput
@@ -23,8 +23,8 @@ type TemplateService struct {
 
 // @OnStart
 func (template *TemplateService) Start() {
-	template.Templates = []ComposeTemplate{}
-	template.Visible = []ComposeTemplate{}
+	template.Templates = []MessageTemplate{}
+	template.Visible = []MessageTemplate{}
 }
 
 // SessionChanged loads the templates of the signed-in mailbox.
@@ -80,49 +80,49 @@ func (template *TemplateService) authorization() string {
 }
 
 func (template *TemplateService) reload() {
-	templates, problem := template.templatesClient.List(template.authorization())
+	templates, problem := template.templatesClient.Templates(template.authorization())
 	template.Templates = template.listedOr(templates, problem)
-	template.Visible = append([]ComposeTemplate{}, template.Templates...)
+	template.Visible = append([]MessageTemplate{}, template.Templates...)
 }
 
-func (template *TemplateService) listedOr(templates []ComposeTemplate, problem error) []ComposeTemplate {
+func (template *TemplateService) listedOr(templates []MessageTemplate, problem error) []MessageTemplate {
 	if problem == nil {
-		return append([]ComposeTemplate{}, templates...)
+		return append([]MessageTemplate{}, templates...)
 	}
 	return template.Templates
 }
 
-func (template *TemplateService) startingWith(query string) []ComposeTemplate {
-	visible := []ComposeTemplate{}
+func (template *TemplateService) startingWith(query string) []MessageTemplate {
+	visible := []MessageTemplate{}
 	for _, candidate := range template.Templates {
 		visible = append(visible, TemplateService{}.whenStartsWith(candidate, query)...)
 	}
 	return visible
 }
 
-func (TemplateService) whenStartsWith(candidate ComposeTemplate, query string) []ComposeTemplate {
+func (TemplateService) whenStartsWith(candidate MessageTemplate, query string) []MessageTemplate {
 	if strings.HasPrefix(strings.ToLower(candidate.Name), query) {
-		return []ComposeTemplate{candidate}
+		return []MessageTemplate{candidate}
 	}
 	return nil
 }
 
-func (template *TemplateService) named(id string) []ComposeTemplate {
-	found := []ComposeTemplate{}
+func (template *TemplateService) named(id string) []MessageTemplate {
+	found := []MessageTemplate{}
 	for _, candidate := range template.Templates {
 		found = append(found, TemplateService{}.whenNamed(candidate, id)...)
 	}
 	return found[:min(len(found), 1)]
 }
 
-func (TemplateService) whenNamed(candidate ComposeTemplate, id string) []ComposeTemplate {
+func (TemplateService) whenNamed(candidate MessageTemplate, id string) []MessageTemplate {
 	if candidate.ID == id && id != "" {
-		return []ComposeTemplate{candidate}
+		return []MessageTemplate{candidate}
 	}
 	return nil
 }
 
-func (template *TemplateService) insert(found []ComposeTemplate, to string, subject string) {
+func (template *TemplateService) insert(found []MessageTemplate, to string, subject string) {
 	for _, chosen := range found {
 		template.publish(TemplateInsertRequested{TemplateID: chosen.ID, Name: chosen.Name, Text: chosen.Text, To: chosen.To, Cc: chosen.Cc, Subject: chosen.Subject, Confirm: TemplateService{}.hasHeaders(to, subject)})
 	}
@@ -149,12 +149,12 @@ func (template *TemplateService) storePending(ready TemplateDraftReady) {
 func (template *TemplateService) store(input TemplateInput, ready TemplateDraftReady) {
 	input.Name = strings.TrimSpace(ready.Name)
 	input.Text = ready.Text
-	saved, problem := template.templatesClient.Save(template.authorization(), input)
+	saved, problem := template.templatesClient.Create(template.authorization(), input)
 	template.publish(ToastRequested{Message: TemplateService{}.savedMessage(saved, problem)})
 	template.reload()
 }
 
-func (TemplateService) savedMessage(saved SavedTemplate, problem error) string {
+func (TemplateService) savedMessage(saved MessageTemplate, problem error) string {
 	if problem == nil {
 		return "Template “" + saved.Name + "” saved."
 	}

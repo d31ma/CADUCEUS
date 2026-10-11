@@ -59,6 +59,6 @@ func (test *TextUtilsTest) TestSizeLabels() {
 }
 
 func (test *TextUtilsTest) TestDateLabel() {
-	Assert.Equals("Jan 5, 2026, 2:30 PM", DateUtils{}.Label("2026-01-05T14:30:00Z", time.Date(2026, 1, 6, 0, 0, 0, 0, time.UTC)))
-	Assert.Equals("", DateUtils{}.Label("not a date", time.Now()))
+	Assert.Equals("Jan 5, 2026, 2:30 PM", DateLabelUtils{}.Stamp("2026-01-05T14:30:00Z", time.Date(2026, 1, 6, 0, 0, 0, 0, time.UTC)))
+	Assert.Equals("", DateLabelUtils{}.Stamp("not a date", time.Now()))
 }

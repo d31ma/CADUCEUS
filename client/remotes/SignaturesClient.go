@@ -1,10 +1,34 @@
-// SignaturesClient is the /signatures route group. The composer offers the
-// mailbox's signatures.
-// @HTTPClient("/signatures")
+// @HTTPClient
 type SignaturesClient interface {
-	// @GetRequest
-	List(
+	// @GetRequest("/signatures")
+	Signatures(
 		// @RequestHeader("Authorization")
 		authorization string,
-	) ([]ComposeSignature, error)
+	) ([]MailSignature, error)
+
+	// @PostRequest("/signatures")
+	Create(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestBody
+		body BehaviorValue,
+	) (MailSignature, error)
+
+	// @PutRequest("/signatures/{id}")
+	Update(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+		// @RequestBody
+		body BehaviorValue,
+	) (MailSignature, error)
+
+	// @DeleteRequest("/signatures/{id}")
+	Delete(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @PathVariable
+		id BehaviorValue,
+	) (BehaviorValue, error)
 }

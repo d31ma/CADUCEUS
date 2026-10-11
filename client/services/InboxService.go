@@ -549,6 +549,8 @@ func (inbox *InboxService) MailRowActivated(activated MailRowActivated) {
 func (inbox *InboxService) MailRowFocused(focused MailRowFocused) {
 	inbox.FocusedID = focused.ID
 	inbox.derive()
+	// The re-render replaces the row the browser focused, so focus it again afterwards.
+	inbox.applicationEventPublisher.PublishEvent(FocusRequested{Selector: fmt.Sprintf("[data-roving-id=%q]", focused.ID)}, false)
 }
 
 // ToggleBulkSelection adds a message to the selection, or takes it out.

@@ -12,6 +12,11 @@ CADUCEUS will be developed as:
 Tachyon remains the frontend development server and build tool. Production
 serving moves to Go after `ty bundle` emits the versioned static client.
 
+> **Status (2026-10-11):** the server has been rewritten in Go on Tachyon Yon
+> and the repository runs on it; see [section 20](#20-go-rewrite-status). The
+> production process differs from section 4: `caduceus entry` is PID 1 and
+> runs `ty serve`, which serves the client and the Go handlers.
+
 The migration is a strangler migration, not a rewrite branch that remains
 unshippable for months. Each slice must preserve observable behavior, data
 compatibility, rollback, security, and operator documentation.
@@ -972,3 +977,53 @@ Adapted for CADUCEUS:
   deliverability diagnostics add dedicated evidence;
 - no broad language SDK matrix is needed; the browser client and documented
   HTTP/SMTP contracts are the public integration surfaces.
+
+## 20. Go Rewrite Status
+
+As of 2026-10-11 the server, the container entry point and the mail services
+are Go. Layout and conventions: [`docs/GO_PORT.md`](./GO_PORT.md).
+
+Done:
+
+- **Server.** Every former route is a Go controller in `server/` (Tachyon Yon,
+  package main), with the route logic in `server/shared/`; documents, JSON
+  shapes, errors and token formats are unchanged. The route suites run it over
+  HTTP through `ty serve`.
+- **Entry point.** `caduceus entry` (`internal/runtime/entry`) replaces
+  `scripts/entry.mjs`: it starts the Go FYLO owner, creates the collections,
+  writes the handler settings to `.env`, runs `ty serve`, and supervises the
+  inbound MX, submission, ACME and the queue, snooze, reminder and
+  provider-notification workers. The Docker image starts it directly.
+- **Mail services.** The inbound MX, submission, SPF/DKIM/DMARC, ACME and the
+  tick workers are Go under `internal/`; the JavaScript daemons in
+  `background/` are deleted. Inbound SMTP into the Go server's webhook is
+  covered end to end by `tests/routes/inbound-smtp.test.js`.
+- **JavaScript server.** Kept only under `tests/support/legacy-server/`, as the
+  behavioural reference, the suites' seeding container and the record code the
+  `admin:create` and `domain:migrate` scripts still use (Bun stays in the image
+  for those two). Nothing else runs it.
+- **Tests.** Route suites and the Playwright server (`scripts/e2e-preview.mjs`,
+  one origin on `localhost:19875`) run the Go server.
+
+Open:
+
+- **Client.** The browser client is being merged separately (Go on Tachyon
+  Tac); its behaviour and the Playwright assertions belong to that merge.
+- **Tachyon release.** The Go server uses Tachyon features that are only on
+  develop (binary Go bodies, `SocketSession.Request()`); the image and CI pin
+  26.36.01, and the image can take an unreleased `ty` through
+  `--build-context tachyon-override=<dir>`. A release is needed before the
+  image builds from pinned versions alone.
+- **Visibility rule.** `server/application.json` turns TY1333 off because it
+  does not count calls from `server/shared/` route types.
+
+## 21. Follow-ups
+
+Accepted by Samuel 2026-10-11:
+
+- Calendar offline write queue dropped in the Go frontend (failed save shows an error). Restore later.
+- vCard imports over 64 KiB refused in the Go frontend. Lift later.
+- Settings: new account, badge, sound and mailbox-name changes reach the sidebar only on the next page load (accepted on the calcon precedent).
+- Settings: extension packages capped at 60 KiB (was 192 KiB). Lift later.
+- Error toasts use fixed text (calcon, settings).
+- Shell vendor DuVay provenance placeholder (0.0.0, UNLICENSED): real is DuVay 26.35.01-1, MIT (DELMA/DUVAY). Fix at frontend merge.

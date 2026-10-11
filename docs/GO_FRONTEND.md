@@ -207,6 +207,25 @@ choice as an attribute on `<html>` with a CSS rule keyed on it. For example,
   shell shows the login screen in place of the slot. The old
   `canUseApp`/`canShowLogin` getters are gone.
 
+- **Renders rebuild loop items.** Tac builds the page again on every render
+  and keeps only the focused element's ancestors, so an element inside a
+  `<loop>` is a new node after each render. Three rules follow:
+  - Checkboxes and radios call Go from `on:click`, not `on:change`. The
+    click handler runs on the element before the render that the click
+    starts. A `change` would fire on the replaced node and never reach Go.
+  - A bridge publishes only the events that Go needs right now. Do not
+    publish on every pointer press, click or focus. A render that starts
+    while the mouse button is down replaces the pressed element, and the
+    click is lost. `PageClicked` goes out only while the user menu is open,
+    and a calendar chip's focus reaches Go only from the keyboard.
+  - A `<select>` whose `<option>`s come from a `<loop>` shows its last
+    option after a render, with `:value` on the select or `:selected` on
+    the options (Tachyon develop 6381e21). Static options with `:selected`
+    work. This is a Tachyon bug, not worked around here.
+- **Every service needs a view.** Tac creates a service only when a view
+  names it. A service that only listens, such as `UserPreferencesService`,
+  needs a hidden binding (`<span hidden :data-preferences="userPreferences.loaded"></span>`).
+
 ## Styles
 
 The global sheets (`tac.styles`) accept only a limited set of selectors and

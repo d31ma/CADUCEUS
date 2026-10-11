@@ -29,7 +29,9 @@ export default class MailStreamService {
 
   ready = false
   _token = ''
-  _cursor = ''
+  // The replayed session can arrive before @OnStart, so the first cursor is set here:
+  // mail that landed between the first list load and this connection is replayed too.
+  _cursor = new Date(Date.now() - MailStreamService._REPLAY_MS).toISOString()
   /** @type {WebSocket | null} */
   _socket = null
   /** @type {AbortController | null} */
@@ -42,8 +44,6 @@ export default class MailStreamService {
 
   @OnStart
   start() {
-    // Mail that landed between the first list load and this connection is replayed too.
-    this._cursor = new Date(Date.now() - MailStreamService._REPLAY_MS).toISOString()
     this.ready = true
   }
 

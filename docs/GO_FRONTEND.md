@@ -87,7 +87,11 @@ type UsersClient interface {
 - **Origin.** The transport is same-origin only. `CADUCEUS_CONFIG.apiUrl`
   (a separate API origin) cannot be used.
 - **Limits.** A request may hold 64 KiB and an answer 1 MiB. A larger answer
-  fails with `HTTP_LIMIT`.
+  fails with `HTTP_LIMIT`. A JavaScript service may not call `fetch` either
+  (TY1361). Uploads larger than 64 KiB therefore have no route today. These
+  include EML and mbox import, the PWA file handler, and composer
+  attachments. Neither does an authenticated server-sent event stream, such
+  as `/inbox/stream`.
 
 **Blocker for the merge.** On one origin, the server's API routes `/inbox`,
 `/activity`, `/contacts` and `/reminders` answer the document navigation to
@@ -140,6 +144,9 @@ State that must survive a navigation goes through the storage bridge
 | `caduceus:shortcut:<command>` | `ShortcutPressed{Command}` | KeyboardService.js publishes it for the shell's commands. Other areas add theirs to `KeyboardService._COMMANDS`. |
 | `caduceus:external-mailboxes` | `ExternalMailboxesChanged{Accounts, Folders}` (retained) | ExternalMailboxService |
 | `caduceus:activity-viewed` | `ActivityViewed{At}` | MailboxService clears the Activity badge. |
+| `_caduceus.compose(prefill)` / `consumeComposePrefill()` | Store the prefill JSON under `caduceus_compose_prefill` (`StorageWritten`) and navigate to `/compose`. On `/compose`, ShellService publishes the retained `ComposeLaunched{Fields}`: the stored prefill merged with a mailto or share-target launch (`LaunchUtils`). | The composer hears `ComposeLaunched` with `replay`. |
+| `_caduceusUnreadBadge` | `AppBadgeChanged{Count}` (retained) | MailboxService publishes it from the counts and the badge preference. DeviceService.js applies it. |
+| service-worker notification buttons | `NotificationActionReceived{Action, EmailID}` | DeviceService.js publishes it. MailboxService applies `mark-read` and `archive`. |
 
 `window._caduceus` and the old globals no longer exist. The e2e suites that
 call `window._caduceus.apiFetch`, `performMailAction`, `setMailPreferences`
@@ -150,7 +157,14 @@ or `mailPreferences` must change.
 Go services may use only Tachyon's browser APIs: `Clock`, `SecureRandom`,
 `Connectivity`, `PageVisibility`, `Preferences`, `Clipboard`, `Share`,
 `Notifications` and `Geolocation`. Declare each with `// @Needs`, as in
-`secureRandom SecureRandom`. The built-in events `ConnectivityChanged`,
+`notifications Notifications`. Do not call `SecureRandom` from an event
+listener: in the TinyGo module it crashed the page ("null function", "memory
+access out of bounds"), and so did importing `crypto/rand`. Use
+`IdentityUtils{}.UUID(seed)` (a digest of the change and the time) for
+request identifiers. Do not write a regular expression with a large
+repetition count such as `{1,200}`: TinyGo compiles it into a program deep
+enough to overflow a page call's 64 KB stack, with the same crash. Check
+characters and length with `TokenUtils{}.Fits` instead. The built-in events `ConnectivityChanged`,
 `VisibilityChanged`, `PreferencesChanged` and `NotificationPermissionChanged`
 need no model.
 
@@ -163,6 +177,7 @@ reads the DOM, makes no decision and talks to Go in events:
 | `BrowserPageService.js` | `PageLocation` and `BrowserFeatures` at start. `NavigationRequested`, `DocumentAttributesChanged` (attributes on `<html>`, replayed from a cache before Go loads), `TimerRequested`/`TimerElapsed`, `FocusRequested{Selector, Remember, Restore}` and `ClickRequested`. A global Escape becomes `EscapePressed` and a click becomes `PageClicked`. View helpers: `browserPage.dragOver/dragLeave/drop(folder, $event, domain)` → `FolderDropped`, `browserPage.backdrop($event, dialog)` → `BackdropClicked`, `browserPage.submit($event, form)` → `FormSubmitted`. |
 | `PasskeyService.js` | WebAuthn: `PasskeyRequested` → `PasskeyAnswered`. |
 | `KeyboardService.js` | The bridge to the keyboard runtime in `shared/scripts/keyboard.js`. |
+| `DeviceService.js` | The Badging API (with the "(n)" tab-title fallback), the push worker `shared/service-worker/unread.js` registered on its own scope `/shared/service-worker/`, notification buttons, and update detection (`UpdateReady`). Tachyon generates the root worker and no longer lets an application append to it. A push subscription must therefore come from `navigator.serviceWorker.getRegistration('/shared/service-worker/')`, not from `ready`. |
 
 Tac scripts may not build markup or write styles (TY1364). Express a style
 choice as an attribute on `<html>` with a CSS rule keyed on it. For example,

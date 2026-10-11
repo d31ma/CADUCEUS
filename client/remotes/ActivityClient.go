@@ -13,4 +13,18 @@ type ActivityClient interface {
 		// @RequestParam("since")
 		since string,
 	) (ActivitySummary, error)
+
+	// Report reads the Activity page: recipient events and delivery metrics.
+	//
+	// @GetRequest
+	Report(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @RequestParam("type")
+		kind string,
+		// @RequestParam("range")
+		period string,
+		// @RequestParam("limit")
+		limit int,
+	) (ActivityReport, error)
 }

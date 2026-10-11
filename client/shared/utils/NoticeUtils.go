@@ -62,7 +62,7 @@ func (NoticeUtils) update(notices []Notice, version string) []Notice {
 	return append(notices, Notice{ID: "update-" + safe[:min(64, len(safe))], Kind: "update", Priority: 4,
 		Title:    "A CADUCEUS update is ready (" + version[:min(80, len(version))] + ").",
 		Subtitle: "Reload to use the latest locally installed web application.", Dismissable: true,
-		Actions:  []NoticeAction{{ID: "reload-update", Label: "Reload"}}})
+		Actions: []NoticeAction{{ID: "reload-update", Label: "Reload"}}})
 }
 
 func (NoticeUtils) accounts(notices []Notice, errors []string) []Notice {
@@ -88,7 +88,7 @@ func (NoticeUtils) push(notices []Notice, prompt bool) []Notice {
 	}
 	return append(notices, NoticeUtils{}.identified(Notice{Kind: "push-prompt", Priority: 1, Title: "Enable new-mail notifications on this device?",
 		Subtitle: "Notification privacy and account scope remain under your control.", Dismissable: true,
-		Actions:  []NoticeAction{{ID: "notification-settings", Label: "Review settings"}}}))
+		Actions: []NoticeAction{{ID: "notification-settings", Label: "Review settings"}}}))
 }
 
 // identified names a notice after its kind, for the kinds that occur once.

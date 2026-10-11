@@ -9,4 +9,26 @@ type SendClient interface {
 		// @RequestBody
 		undo BehaviorValue,
 	) (BehaviorValue, error)
+
+	// @GetRequest("/scheduled")
+	Scheduled(
+		// @RequestHeader("Authorization")
+		authorization string,
+	) ([]ScheduledSend, error)
+
+	// @GetRequest("/scheduled/{id}")
+	ScheduledMessage(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+	) (ScheduledSend, error)
+
+	// @DeleteRequest("/scheduled/{id}")
+	CancelScheduled(
+		// @RequestHeader("Authorization")
+		authorization string,
+		// @PathVariable
+		id string,
+	) (ScheduledCancelled, error)
 }

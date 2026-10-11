@@ -1,4 +1,5 @@
 import (
+	"slices"
 	"strings"
 )
 
@@ -40,6 +41,23 @@ func (SendUtils) Sent(mode string, answer SendAnswer) string {
 // Sounded says whether a mode plays the send sounds.
 func (SendUtils) Sounded(mode string) bool {
 	return !SendUtils{}.scheduled(mode)
+}
+
+// Problem is why a message cannot leave in a mode, or "".
+func (SendUtils) Problem(fields MessageFields, mode string) string {
+	missing := slices.Contains([]string{strings.TrimSpace(fields.To), strings.TrimSpace(fields.Subject)}, "")
+	orphan := !slices.Contains([]bool{mode == SendUtils{}.names().Archive, fields.SourceEmailID == ""}, false)
+	return SendUtils{}.problem(missing, orphan)
+}
+
+func (SendUtils) problem(missing bool, orphan bool) string {
+	switch {
+	case missing:
+		return "To and Subject are required."
+	case orphan:
+		return "Send & Archive is available only from a source conversation."
+	}
+	return ""
 }
 
 func (SendUtils) forMode(input SendInput, choice SendChoice, source string) SendInput {

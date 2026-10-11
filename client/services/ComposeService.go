@@ -1,7 +1,6 @@
 import (
 	"encoding/json"
 	"slices"
-	"strings"
 	"time"
 )
 
@@ -617,13 +616,7 @@ func (compose *ComposeService) isFuture(at string) bool {
 }
 
 func (compose *ComposeService) problemFor(mode string) string {
-	switch {
-	case strings.TrimSpace(compose.To) == "" || strings.TrimSpace(compose.Subject) == "":
-		return "To and Subject are required."
-	case mode == compose.names().Archive && compose.SourceEmailID == "":
-		return "Send & Archive is available only from a source conversation."
-	}
-	return ""
+	return SendUtils{}.Problem(compose.message(), mode)
 }
 
 func (compose *ComposeService) accepted(problem string) bool {

@@ -69,8 +69,8 @@ func (ComposeLimitUtils) sized(size int) string {
 
 func (ComposeLimitUtils) files() int { return 10 }
 
-func (ComposeLimitUtils) attachmentBytes() int { return 32 * ComposeLimitUtils{}.kibibyte() }
+func (ComposeLimitUtils) attachmentBytes() int { return 32 * ComposeLimitUtils{}.kilobyte() }
 
-func (ComposeLimitUtils) requestBytes() int { return 64 * ComposeLimitUtils{}.kibibyte() }
+func (ComposeLimitUtils) requestBytes() int { return 64 * ComposeLimitUtils{}.kilobyte() }
 
-func (ComposeLimitUtils) kibibyte() int { return 1024 }
+func (ComposeLimitUtils) kilobyte() int { return 1024 }

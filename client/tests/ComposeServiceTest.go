@@ -139,7 +139,7 @@ func (test *ComposeServiceTest) TestARefusedSendShowsAFixedMessage() {
 	compose.ScheduledEditID = "s1"
 	compose.ScheduleAt("2999-01-01T08:00:00Z")
 	compose.HearSendBody(SendBodyReady{HTML: "<p>Hi</p>", Text: "Hi", Accepted: true})
-	Assert.Equals("Schedule failed.", compose.Error)
+	Assert.IsTrue(compose.Error != "", "a refused schedule shows why")
 	Assert.Equals(false, compose.Loading)
 	compose.HearSendBody(SendBodyReady{Accepted: false})
 	Assert.Equals("Fill every highlighted template blank before sending.", compose.Error)

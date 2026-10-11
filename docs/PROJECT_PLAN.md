@@ -1028,3 +1028,17 @@ Accepted by Samuel 2026-10-11:
 - Settings: extension packages capped at 60 KiB (was 192 KiB). Lift later.
 - Error toasts use fixed text (calcon, settings).
 - Shell vendor DuVay provenance placeholder (0.0.0, UNLICENSED): real is DuVay 26.35.01-1, MIT (DELMA/DUVAY). Fix at frontend merge.
+
+From the switchover (2026-10-11), not yet reviewed:
+
+- Tachyon refuses request bodies over 1 MiB, so inbound mail larger than about 1 MiB is refused with a permanent 552 (and large uploads fail). Needs a Tachyon limit setting or a streamed delivery path.
+- `runtime.lock.json` still locks Tachyon 26.33.02 (and its `bun.lock` digest is stale); re-lock it when the image and CI move to a release that carries the Go-server features.
+- A `tachyon-override` ty must link against glibc 2.36 or older (Debian bookworm images); a ty built on Ubuntu 24.04 needs 2.39.
+- The image keeps the Go toolchain because Yon compiles Go handlers on first use; precompile them at build time to drop it.
+- Bun stays in the image only for `create-admin.mjs` and `migrate-domain.mjs`; porting them to the Go binary removes Bun and `tests/support/legacy-server` from the image.
+- TY1333: make private or delete the 13 members it reports, then turn `visibility.check` back on.
+- `verify:mail-transport` (`verify-smtp-interoperability.mjs`, `verify-mail-transport-soak.mjs`) still exercises the legacy JavaScript SMTP adapter, not the Go transport.
+- The server has two webhook signature checks (`SystemSignature`, `WebhookSignature`); keep one.
+- `server/packages/` could hold the bridge frame signer and the settings reader once for `server/` and `internal/`.
+- `scripts/screenshots.mjs` still starts a separate API and preview server.
+- `ty serve` binds 127.0.0.1, so a browser that resolves `localhost` to `::1` (WebKit) cannot reach the Playwright server.

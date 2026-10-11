@@ -111,6 +111,12 @@ export class Auth {
         }
         finish(undefined, parsed.result)
       })
+      // A bridge that drops the connection without a full answer line must
+      // settle the call, or the caller waits until its own timeout.
+      const closedEarly = () =>
+        finish(new AuthBridgeError('EUNAVAILABLE', 'The Go boundary closed the connection before answering'))
+      socket.once('end', closedEarly)
+      socket.once('close', closedEarly)
       socket.once('connect', () => socket.write(frame))
     })
   }

@@ -118,6 +118,9 @@ RUN command -v ty \
   && test -f translation-assets/catalog.json \
   && test -f docs/THIRD_PARTY_MODELS.md
 
+# ty and fylo link libgcc_s, which the distroless runtime lacks.
+RUN mkdir -p /out/lib && cp "$(ls /lib/*-linux-gnu/libgcc_s.so.1 /usr/lib/*-linux-gnu/libgcc_s.so.1 2>/dev/null | head -1)" /out/lib/libgcc_s.so.1
+
 # Pre-create data directory structure (distroless has no shell for RUN)
 # The engine's deployment is a sibling of the mail root, never inside it: one
 # FYLO process owns one root, and these are two.
@@ -144,6 +147,7 @@ COPY --from=builder /usr/local/bin/chex /usr/local/bin/chex
 COPY --from=builder /usr/local/bin/ttid /usr/local/bin/ttid
 COPY --from=go-builder /out/caduceus /usr/local/bin/caduceus
 COPY --from=go-builder /usr/local/go /usr/local/go
+COPY --from=builder /out/lib/libgcc_s.so.1 /usr/lib/libgcc_s.so.1
 
 WORKDIR /app
 ENV HOME=/home/bun

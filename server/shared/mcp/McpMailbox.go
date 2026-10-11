@@ -13,8 +13,8 @@ type McpMailbox struct {
 	Users       *UsersHelper
 	Emails      *EmailsHelper
 	Threads     *ThreadsHelper
-	Attachments *AttachmentsHelper
-	Scheduled   *ScheduledHelper
+	Drafts      *DraftService
+	Categories  *CategoryMappingService
 	Fylo        *FyloHelper
 }
 
@@ -56,7 +56,7 @@ func (mailbox McpMailbox) Run(name string, input map[string]any) (any, error) {
 	case "reply_to_thread":
 		return mailbox.reply(input)
 	case "create_draft":
-		return mailbox.drafts().Create(mailbox.Principal, input)
+		return mailbox.createDraft(input)
 	case "schedule_send":
 		if at := (EpochTime{}).Parse(RecordValues{}.Text(input["sendAt"])); at != at || at <= float64(EpochTime{}.Now()) {
 			return nil, errors.New("sendAt must be in the future")
@@ -89,7 +89,7 @@ func (mailbox McpMailbox) folders(input map[string]any) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	accounts, err := mailbox.categories().Accounts(mailbox.Principal.OwnerEmail, domains)
+	accounts, err := mailbox.Categories.ListAccounts(mailbox.Principal.OwnerEmail, domains)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +239,7 @@ func (mailbox McpMailbox) topLinks(input map[string]any) (any, error) {
 // needs the outbox and follow-up services the JavaScript tool reached for
 // but never had, so an owned entry fails as it did there.
 func (mailbox McpMailbox) scheduledSends() (any, error) {
-	records, err := mailbox.Scheduled.ListForOwner(mailbox.Principal.OwnerEmail)
+	records, err := mailbox.scheduled().ListForOwner(mailbox.Principal.OwnerEmail)
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +267,7 @@ func (mailbox McpMailbox) cancelScheduled(id string) (any, error) {
 }
 
 func (mailbox McpMailbox) ownedScheduled(id string) (map[string]any, error) {
-	documentId, entry, err := mailbox.Scheduled.FindById(id)
+	documentId, entry, err := mailbox.scheduled().FindById(id)
 	if err != nil || documentId == "" || entry == nil || (RecordValues{}).Coalesce(entry["owner"], entry["sender"]) != mailbox.Principal.OwnerEmail {
 		return nil, err
 	}
@@ -319,11 +319,36 @@ func (mailbox McpMailbox) reply(input map[string]any) (any, error) {
 	if messageId, present := latest["rfcMessageId"]; present {
 		source["inReplyTo"] = messageId
 	}
-	return mailbox.drafts().Create(mailbox.Principal, source)
+	return mailbox.createDraft(source)
 }
 
-func (mailbox McpMailbox) drafts() McpDrafts {
-	return McpDrafts{Users: mailbox.Users, Emails: mailbox.Emails, Fylo: mailbox.Fylo}
+// createDraft stores a durable draft from tool input through the draft
+// service, once per client id, and answers {draftId, version, recovered}.
+func (mailbox McpMailbox) createDraft(source map[string]any) (any, error) {
+	request := map[string]any{"clientId": "mcp-" + CapabilityToken{}.Random(16), "to": []any{}, "cc": []any{}, "bcc": []any{}, "subject": "", "text": "", "html": ""}
+	for key, value := range source {
+		request[key] = value
+	}
+	input, problem := DraftInput{}.Parsed(request)
+	if problem != "" {
+		return nil, errors.New(problem)
+	}
+	sender, err := SenderAddresses{Users: mailbox.Users}.Sender(mailbox.Principal.OwnerEmail, input["from"])
+	if err != nil {
+		return nil, err
+	}
+	if sender == "" {
+		return nil, errors.New("From address is not owned by this mailbox")
+	}
+	if !(PreferenceChoices{}).Includes(mailbox.Principal.AllowedDomains, strings.SplitN(sender, "@", 2)[1]) {
+		return nil, errors.New("Draft account is outside this MCP scope")
+	}
+	input["from"] = sender
+	draft, recovered, err := mailbox.Drafts.Drafts().Create(mailbox.Principal.OwnerEmail, input)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"draftId": draft["id"], "version": draft["draftVersion"], "recovered": recovered}, nil
 }
 
 func (mailbox McpMailbox) moveToRole(threadIds []string, role string) (any, error) {
@@ -332,8 +357,8 @@ func (mailbox McpMailbox) moveToRole(threadIds []string, role string) (any, erro
 		return nil, err
 	}
 	return mailbox.patchThreads(threads, func(email map[string]any) (map[string]any, error) {
-		folder, err := mailbox.categories().PathFor(mailbox.Principal.OwnerEmail, RecordValues{}.Text(email["domain"]), role)
-		return map[string]any{"folder": folder}, err
+		mappings, err := mailbox.Categories.ForOwner(mailbox.Principal.OwnerEmail)
+		return map[string]any{"folder": mappings.PathFor(RecordValues{}.Text(email["domain"]), role)}, err
 	})
 }
 
@@ -519,7 +544,7 @@ func (mailbox McpMailbox) presentMessages(emails []map[string]any) ([]any, error
 		if mailbox.excluded(email) || !(EmailsRecords{}).CanAccessEmail(email, mailbox.Principal.OwnerEmail) {
 			continue
 		}
-		attachments, err := mailbox.Attachments.ListSummaries(TextValue{}.Of(email["id"]))
+		attachments, err := mailbox.Emails.attachmentsHelper.ListSummaries(TextValue{}.Of(email["id"]))
 		if err != nil {
 			return nil, err
 		}
@@ -647,10 +672,6 @@ func (mailbox McpMailbox) excluded(email map[string]any) bool {
 	return mailbox.folderExcluded(TextValue{}.Of(email["domain"]), TextValue{}.Of(RecordValues{}.Or(email["folder"], "inbox")))
 }
 
-func (mailbox McpMailbox) categories() McpFolders {
-	return McpFolders{Users: mailbox.Users, Emails: mailbox.Emails}
-}
-
 func (McpMailbox) notFound(err error, message string) error {
 	if err != nil {
 		return err
@@ -677,4 +698,9 @@ func (McpMailbox) first(list []any, limit int) []any {
 		return list[:limit]
 	}
 	return list
+}
+
+// scheduled answers the scheduled-send store over the request's database.
+func (mailbox McpMailbox) scheduled() *ScheduledHelper {
+	return &ScheduledHelper{fyloHelper: mailbox.Fylo}
 }

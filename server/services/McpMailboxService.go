@@ -3,11 +3,11 @@
 // @Service
 type McpMailboxService struct {
 	// @Needs
-	attachmentsHelper *AttachmentsHelper
+	categoryMappingService *CategoryMappingService
+	// @Needs
+	draftService *DraftService
 	// @Needs
 	emailsHelper *EmailsHelper
-	// @Needs
-	scheduledHelper *ScheduledHelper
 	// @Needs
 	threadsHelper *ThreadsHelper
 	// @Needs
@@ -18,7 +18,7 @@ type McpMailboxService struct {
 func (service *McpMailboxService) Run(call McpToolCall) (any, error) {
 	mailbox := McpMailbox{
 		Principal: call.Principal, Users: service.usersHelper, Emails: service.emailsHelper,
-		Threads: service.threadsHelper, Attachments: service.attachmentsHelper, Scheduled: service.scheduledHelper, Fylo: call.Fylo,
+		Threads: service.threadsHelper, Drafts: service.draftService, Categories: service.categoryMappingService, Fylo: call.Fylo,
 	}
 	return mailbox.Run(call.Name, call.Input)
 }

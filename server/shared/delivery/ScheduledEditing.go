@@ -10,7 +10,7 @@ import (
 // delivery or for the caller's connected-account journal.
 type ScheduledEditing struct {
 	Schedules ScheduledSends
-	Senders   OwnedSenders
+	Senders   SenderAddresses
 }
 
 // Edit answers the route answer of one edit.

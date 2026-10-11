@@ -17,7 +17,7 @@ type SendAcceptance struct {
 	Reminders  FollowUpReminders
 	Archive    *ConversationArchiveService
 	Suppressed *SuppressedHelper
-	Senders    OwnedSenders
+	Senders    SenderAddresses
 	Limits     *RateLimitService
 }
 

@@ -29,3 +29,26 @@ func (addresses SenderAddresses) Owned(ownerEmail string) ([]string, error) {
 	}
 	return owned, nil
 }
+
+// Resolved answers the requested From address (or fallback when none is
+// requested) when the mailbox owns it, else "".
+func (SenderAddresses) Resolved(requested any, allowed []string, fallback string) string {
+	value, isText := requested.(string)
+	if !isText {
+		value = fallback
+	}
+	normalized := Security{}.NormalizeEmailAddress(value)
+	if normalized != "" && (TextValue{}).Includes(allowed, normalized) {
+		return normalized
+	}
+	return ""
+}
+
+// Sender answers the mailbox's resolved From address, or "".
+func (addresses SenderAddresses) Sender(ownerEmail string, requested any) (string, error) {
+	allowed, err := addresses.Owned(ownerEmail)
+	if err != nil {
+		return "", err
+	}
+	return addresses.Resolved(requested, allowed, ownerEmail), nil
+}

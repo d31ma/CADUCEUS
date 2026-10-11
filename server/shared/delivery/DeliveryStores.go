@@ -51,7 +51,7 @@ func (stores DeliveryStores) Acceptance(smtp *SmtpService, journal SendIdempoten
 	sent := stores.Sent(smtp)
 	return SendAcceptance{
 		Sent: sent, Journal: journal, Reminders: stores.FollowUps(), Archive: stores.Archive,
-		Suppressed: sent.Queue.Suppressed, Senders: OwnedSenders{Users: sent.Users}, Limits: limits,
+		Suppressed: sent.Queue.Suppressed, Senders: SenderAddresses{Users: sent.Users}, Limits: limits,
 	}
 }
 
@@ -63,7 +63,7 @@ func (stores DeliveryStores) Schedules(smtp *SmtpService) ScheduledSends {
 // Editing answers scheduled-message editing.
 func (stores DeliveryStores) Editing(smtp *SmtpService) ScheduledEditing {
 	schedules := stores.Schedules(smtp)
-	return ScheduledEditing{Schedules: schedules, Senders: OwnedSenders{Users: schedules.Sent.Users}}
+	return ScheduledEditing{Schedules: schedules, Senders: SenderAddresses{Users: schedules.Sent.Users}}
 }
 
 // Undo answers delayed-send undo.

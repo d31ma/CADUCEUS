@@ -14,9 +14,9 @@ design rule on.
 | `client/components/<area>/<name>/` | `tac.html` and `tac.css` | A component holds no script (TY1310). `tac.css` is wrapped in `@scope (tachyon-component[data-tac-scope="<area>-<name>"]) to (tachyon-component[data-tac-scope])`, so it styles this component only. It does not style nested components. |
 | `client/services/<Name>Service.go` | One `// @Service` struct and its methods | The view names it `<name>`. For example, `MailboxService` is `mailbox`. |
 | `client/services/<Name>Service.js` | Escape hatches only | Use this only for a browser capability that Go cannot reach. See below. |
-| `client/remotes/<Area>Client.go` | One `// @HTTPClient("/<route group>")` interface for each server route group | Write only the methods your area calls. |
+| `client/remotes/<Area>Client.go` | One `// @HTTPClient("/<route group>")` interface for each server route group | It holds the methods every area calls. Add yours to the existing remote: one method for each request, read into one model. |
 | `client/setups/<Area>Setup.go` | `Configure` returns `NewBehaviorConfiguration(), nil` | With no adapter, the client uses the browser transport to the page's own origin. |
-| `client/models/<Model>.go` | One struct for each file, with `json:"camelCase"` tags | An event that a JavaScript bridge publishes or hears also needs a JSDoc twin, `client/models/<Model>.js`. |
+| `client/models/<Model>.go` | One struct for each file, with `json:"camelCase"` tags | An event that a JavaScript bridge publishes or hears also needs a JSDoc twin, `client/models/<Model>.js`. Reuse the model of a server answer that another area already reads. Tachyon reads at most 256 Go models files (TY1310). |
 | `client/shared/utils/<Name>Utils.go` | Pure logic that several services share | Use `type XUtils struct{}` with value-receiver methods. A utility holds no state. |
 | `client/shared/scripts/page-setup.js` | Page-wide browser setup | It is linked into every page by `tac.scripts`. |
 
@@ -217,6 +217,15 @@ declarations:
 Everything else moved out of `shared/assets/styles.css`: DuVay host tweaks
 (`w-btn`, `w-text-field`), focus rings, `.empty-state`, `.spinner`,
 `.text-muted`, the scrollbar and the screenshot masking.
+
+**DuVay.** `shared/assets/duvay/` holds DuVay 26.35.01-1 (MIT). The
+stylesheet is DuVay's own `duvay.min.css`. The script,
+`duvay-wc-caduceus.min.js`, bundles only the components that the views use,
+because the full component bundle alone would take 137 KB of each route's
+200 KB script budget (TY1337). `PROVENANCE.json` lists the tag, the bundler
+and the modules. A view that needs another `w-` component adds its module
+there, rebuilds the file from the same tag, and updates the `sha256` in
+`manifest.json`.
 
 Because component CSS is donut-scoped, **each component copies the rules it
 uses into its own `tac.css`**. The shell, the login form and the team roster

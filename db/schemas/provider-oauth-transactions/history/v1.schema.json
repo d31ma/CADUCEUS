@@ -1,0 +1,26 @@
+{
+  "stateHash": "^[0-9a-f]{64}$",
+  "tenantId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "principalId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "ownerAddress": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "provider": "^(?:microsoft|gmail)$",
+  "request": {
+    "accountId?": "^ext_[A-Za-z0-9_-]{20,80}$",
+    "revision?": "^[1-9]\\d*$",
+    "provider": "^(?:microsoft|gmail)$",
+    "mailboxAddress": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+    "authIdentity": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+    "sharedMailboxAddress?": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+    "label": "^[^\\u0000-\\u001F\\u007F]{1,64}$",
+    "color": "^#[0-9A-Fa-f]{6}$",
+    "order": "^\\d{1,3}$"
+  },
+  "verifier": {
+    "keyVersion": "^[1-9]\\d*$",
+    "nonce": "^[A-Za-z0-9_-]{16,64}$",
+    "ciphertext": "^[A-Za-z0-9_-]+$"
+  },
+  "verifierId": "^oauth_[A-Za-z0-9_-]{20,80}$",
+  "createdAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "expiresAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$"
+}

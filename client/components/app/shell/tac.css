@@ -1,0 +1,1544 @@
+.theme-toggle-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  /* This is the first control in the right-side action pair. Its auto start
+   * margin consumes every flexible pixel before Theme + Admin. */
+  margin-inline-start: auto;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--ms-shape-sharp, 4px);
+  background: transparent;
+  color: var(--ms-text);
+  cursor: pointer;
+}
+.theme-toggle-btn:hover { background: var(--ms-hover-bg); }
+.theme-toggle-btn:focus-visible {
+  outline: 2px solid var(--ms-primary);
+  outline-offset: 2px;
+}
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--ms-shape-sharp, 4px);
+  background: transparent;
+  color: var(--ms-text);
+  cursor: pointer;
+}
+.mobile-menu-btn:hover,
+.mobile-menu-btn[aria-expanded="true"] { background: var(--ms-hover-bg); }
+.mobile-menu-btn:focus-visible {
+  outline: 2px solid var(--ms-primary);
+  outline-offset: 2px;
+}
+.sidebar-scrim { display: none; }
+.theme-toggle-btn .theme-icon-sun,
+.theme-toggle-btn .theme-icon-moon {
+  position: absolute;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.theme-icon-moon { opacity: 1; transform: rotate(0deg); }
+.theme-icon-sun { opacity: 0; transform: rotate(-90deg); }
+
+html[data-theme="dark"] .theme-icon-moon,
+[data-theme="dark"] .theme-icon-moon { opacity: 1; transform: rotate(0deg); }
+html[data-theme="dark"] .theme-icon-sun,
+[data-theme="dark"] .theme-icon-sun { opacity: 0; transform: rotate(-90deg); }
+html[data-theme="light"] .theme-icon-moon,
+[data-theme="light"] .theme-icon-moon { opacity: 0; transform: rotate(90deg); }
+html[data-theme="light"] .theme-icon-sun,
+[data-theme="light"] .theme-icon-sun { opacity: 1; transform: rotate(0deg); }
+html[data-theme="auto"] .theme-icon-sun,
+[data-theme="auto"] .theme-icon-sun { opacity: 1; transform: rotate(0deg); }
+html[data-theme="auto"] .theme-icon-moon,
+[data-theme="auto"] .theme-icon-moon { opacity: 0; transform: rotate(90deg); }
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="auto"] .theme-icon-sun,
+  [data-theme="auto"] .theme-icon-sun { opacity: 0; transform: rotate(-90deg); }
+  html[data-theme="auto"] .theme-icon-moon,
+  [data-theme="auto"] .theme-icon-moon { opacity: 1; transform: rotate(0deg); }
+}
+
+.app-shell {
+  display: grid;
+  /* Constrain the single grid column to the viewport — without an explicit
+   * minmax(0, 1fr) the column would size to content width, which lets
+   * `.app-topbar` (flex with an auto inline-start margin on the user info) push the
+   * shell past viewport bounds on narrow screens. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: var(--app-topbar-height) minmax(0, 1fr);
+  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--ms-bg);
+  color: var(--ms-text);
+}
+
+.shell-toast {
+  --shell-safe-inline-start: env(safe-area-inset-left);
+  --shell-safe-inline-end: env(safe-area-inset-right);
+  position: fixed;
+  z-index: 1000;
+  inset-inline-end: max(1rem, var(--shell-safe-inline-end));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  max-width: min(30rem, calc(100vw - 2rem));
+  min-height: 3rem;
+  padding: 0.75rem 0.875rem 0.75rem 1rem;
+  border: 1px solid var(--ms-divider);
+  border-radius: var(--ms-shape-medium, 8px);
+  background: var(--ms-surface);
+  color: var(--ms-text);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
+  pointer-events: none;
+}
+
+:dir(rtl) .shell-toast {
+  --shell-safe-inline-start: env(safe-area-inset-right);
+  --shell-safe-inline-end: env(safe-area-inset-left);
+}
+
+.shell-toast-message {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.shell-toast-action {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: var(--ms-shape-sharp, 4px);
+  background: transparent;
+  color: var(--ms-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.shell-toast-action:hover { background: var(--ms-hover-bg); }
+.shell-toast-action:focus-visible {
+  outline: 2px solid var(--ms-primary);
+  outline-offset: 2px;
+}
+
+.shortcut-help-backdrop {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  background: color-mix(in srgb, #0f172a 58%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.shortcut-help-dialog {
+  display: flex;
+  width: min(900px, 100%);
+  max-height: min(82dvh, 760px);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--ms-outline-variant);
+  border-radius: 14px;
+  background: var(--ms-surface);
+  color: var(--ms-text);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.32);
+}
+
+.shortcut-help-dialog:focus-visible { outline: 3px solid var(--ms-primary); outline-offset: 3px; }
+
+.shortcut-help-header,
+.shortcut-help-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--ms-outline-variant);
+}
+
+.shortcut-help-header h2,
+.shortcut-help-header p,
+.shortcut-help-group h3 { margin: 0; }
+.shortcut-help-header p { margin-top: 0.25rem; color: var(--ms-on-surface-variant); }
+.shortcut-help-close {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1.75rem;
+}
+.shortcut-help-close:hover { background: var(--ms-hover-bg); }
+.shortcut-help-close:focus-visible,
+.shortcut-help-footer button:focus-visible { outline: 2px solid var(--ms-primary); outline-offset: 2px; }
+
+.shortcut-help-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  overflow: auto;
+  padding: 1.25rem;
+}
+.shortcut-help-group h3 { margin-bottom: 0.45rem; color: var(--ms-on-surface-variant); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.shortcut-help-group dl { margin: 0; }
+.shortcut-help-row { display: flex; min-height: 38px; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--ms-outline-variant); }
+.shortcut-help-row dt { min-width: 0; }
+.shortcut-help-row dd { margin: 0; }
+.shortcut-help-dialog kbd {
+  display: inline-flex;
+  min-width: 28px;
+  justify-content: center;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--ms-outline-variant);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--ms-surface-container);
+  color: var(--ms-text);
+  font: 600 0.78rem/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.shortcut-help-footer { border-top: 1px solid var(--ms-outline-variant); border-bottom: 0; color: var(--ms-on-surface-variant); }
+.shortcut-help-footer button { min-height: 40px; padding: 0.45rem 0.8rem; border: 0; border-radius: 6px; background: var(--ms-primary); color: var(--ms-on-primary, #fff); cursor: pointer; font: inherit; font-weight: 650; }
+
+.external-folder-dialog { width: min(32rem, 100%); }
+.external-folder-dialog-form { display: grid; gap: .75rem; padding: 1.25rem; }
+.external-folder-dialog-form label { color: var(--ms-on-surface-variant); font-size: .85rem; font-weight: 650; }
+.external-folder-dialog-form input {
+  min-height: 44px;
+  padding: .65rem .75rem;
+  border: 1px solid var(--ms-outline-variant);
+  border-radius: .5rem;
+  background: var(--ms-surface-container-low);
+  color: var(--ms-on-surface);
+  font: inherit;
+}
+.external-folder-dialog-form input:focus { border-color: var(--ms-primary); outline: 2px solid color-mix(in srgb, var(--ms-primary) 35%, transparent); }
+.external-folder-dialog-error { margin: 0; color: var(--ms-error, #b3261e); }
+.external-folder-dialog-actions { display: flex; justify-content: flex-end; gap: .625rem; margin-top: .25rem; }
+.external-folder-dialog-actions button { min-height: 40px; padding: .5rem .85rem; border: 0; border-radius: .5rem; background: var(--ms-surface-container-high); color: var(--ms-on-surface); cursor: pointer; font: inherit; font-weight: 650; }
+.external-folder-dialog-actions button[type="submit"] { background: var(--ms-primary); color: var(--ms-on-primary, #fff); }
+.external-folder-dialog-actions button.danger { background: var(--ms-error, #b3261e); color: #fff; }
+.external-folder-dialog-actions button:disabled { cursor: wait; opacity: .6; }
+
+@media (max-width: 680px) {
+  .shortcut-help-backdrop { padding: 0; place-items: stretch; }
+  .shortcut-help-dialog { width: 100%; max-height: 100dvh; border: 0; border-radius: 0; }
+  .shortcut-help-groups { grid-template-columns: minmax(0, 1fr); }
+  .shortcut-help-footer { align-items: flex-start; flex-direction: column; }
+  .shortcut-help-footer button { width: 100%; min-height: 44px; }
+}
+
+.app-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0 1rem 0 1.25rem;
+  border-bottom: 1px solid var(--ms-divider);
+  background: var(--ms-topbar-bg, var(--ms-surface));
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+}
+
+.app-brand {
+  flex: 0 0 auto;
+  color: var(--ms-primary);
+  font-size: var(--ms-font-lg, 1.0625rem);
+  font-weight: var(--ms-font-weight-bold, 700);
+  letter-spacing: 0;
+  user-select: none;
+}
+
+.app-user {
+  margin-inline-start: auto;
+  min-width: 0;
+  max-width: 38vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ms-text-subtle);
+  font-size: var(--ms-font-sm, 0.75rem);
+}
+
+/* ── User-menu dropdown (topbar) ─────────────────────────────────────────── */
+.app-user-menu {
+  position: relative;
+  margin-inline-start: 0;
+  flex: 0 0 auto;
+}
+
+.app-notification-center { position: relative; flex: 0 0 auto; }
+.app-notification-trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--ms-shape-sharp, 4px);
+  background: transparent;
+  color: var(--ms-text);
+  cursor: pointer;
+}
+.app-notification-trigger:hover,
+.app-notification-trigger[aria-expanded="true"] { background: var(--ms-hover-bg); }
+.app-notification-trigger:focus-visible { outline: 2px solid var(--ms-primary); outline-offset: 2px; }
+.app-notification-count {
+  position: absolute;
+  inset-block-start: 1px;
+  inset-inline-end: 0;
+  display: grid;
+  min-width: 17px;
+  height: 17px;
+  place-items: center;
+  padding-inline: 3px;
+  border: 2px solid var(--ms-topbar-bg, var(--ms-surface));
+  border-radius: 999px;
+  background: var(--ms-error);
+  color: var(--ms-on-error, #fff);
+  font-size: 0.625rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.app-notification-panel {
+  position: absolute;
+  z-index: 150;
+  inset-block-start: calc(100% + 0.5rem);
+  inset-inline-end: -3rem;
+  width: min(25rem, calc(100vw - 1rem));
+  max-height: min(36rem, calc(100dvh - var(--app-topbar-height) - 1rem));
+  overflow: auto;
+  border: 1px solid var(--ms-outline-variant);
+  border-radius: 10px;
+  background: var(--ms-surface);
+  color: var(--ms-text);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.28);
+}
+.app-notification-panel > header {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid var(--ms-divider);
+  background: var(--ms-surface);
+}
+.app-notification-panel h2 { margin: 0; font-size: 1rem; }
+.app-notification-panel > header button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: 1.5rem/1 inherit;
+}
+.app-notification-panel > header button:hover { background: var(--ms-hover-bg); }
+.app-notification-list { display: grid; gap: 0.625rem; padding: 0.75rem; }
+.app-notification-empty { margin: 0; padding: 1.25rem; color: var(--ms-text-subtle); text-align: center; }
+.shell-notification {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--ms-outline-variant);
+  border-inline-start: 4px solid var(--ms-primary);
+  border-radius: 8px;
+  background: var(--ms-surface-container-low, var(--ms-surface));
+}
+.shell-notification.highest-priority { box-shadow: 0 0 0 1px color-mix(in srgb, var(--ms-primary) 35%, transparent); }
+.shell-notification-offline { border-inline-start-color: #b7791f; }
+.shell-notification-account-error,
+.shell-notification-disabled-rules { border-inline-start-color: var(--ms-error); }
+.shell-notification-update { border-inline-start-color: #15803d; }
+.shell-notification-copy { display: grid; gap: 0.2rem; min-width: 0; }
+.shell-notification-copy strong,
+.shell-notification-copy span { overflow-wrap: anywhere; }
+.shell-notification-copy span { color: var(--ms-text-subtle); font-size: 0.75rem; line-height: 1.45; }
+.shell-notification-actions { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.shell-notification-actions button {
+  min-height: 36px;
+  padding: 0.4rem 0.625rem;
+  border: 0;
+  border-radius: 5px;
+  background: var(--ms-hover-bg);
+  color: var(--ms-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.shell-notification-actions button:hover { background: var(--ms-active-bg); }
+.shell-notification-actions button:focus-visible { outline: 2px solid var(--ms-primary); outline-offset: 2px; }
+.sidebar-notification {
+  position: sticky;
+  bottom: 0;
+  margin-top: 0.75rem;
+  background: var(--ms-sidebar-bg);
+  box-shadow: 0 -8px 16px var(--ms-sidebar-bg);
+  user-select: text;
+}
+
+/* Keep Theme and Admin adjacent and pinned to the trailing edge regardless of
+ * generated-style order or whether the responsive burger is visible. */
+.app-topbar > .theme-toggle-btn {
+  margin-inline-start: auto !important;
+}
+.app-topbar > .theme-toggle-btn + .app-user-menu {
+  margin-inline-start: 0 !important;
+}
+
+/* Small status pip — green when online, gray when stale. Used next to the
+ * user-menu trigger and as a leading badge on team-roster rows. */
+.presence-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--ms-text-very-subtle);
+  box-shadow: 0 0 0 2px var(--ms-surface);
+}
+.presence-dot.online {
+  background: #22c55e; /* green-500 */
+}
+
+.app-user-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 36px;
+  padding: 0.25rem 0.625rem 0.25rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--ms-shape-sharp, 4px);
+  background: transparent;
+  color: var(--ms-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--ms-font-base, 0.875rem);
+  line-height: 1.2;
+  max-width: 38vw;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.app-user-trigger:hover,
+.app-user-trigger[aria-expanded="true"] {
+  background: var(--ms-hover-bg);
+  border-color: var(--ms-divider);
+}
+
+.app-user-trigger:focus-visible {
+  outline: 2px solid var(--ms-primary);
+  outline-offset: 2px;
+}
+
+.app-user-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ms-text);
+  font-weight: 500;
+}
+
+.app-user-caret {
+  flex: 0 0 auto;
+  opacity: 0.7;
+  transition: transform 160ms ease;
+}
+
+.app-user-trigger[aria-expanded="true"] .app-user-caret {
+  transform: rotate(180deg);
+}
+
+.app-user-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline-end: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 200px;
+  padding: 0.375rem;
+  border: 1px solid var(--ms-divider);
+  border-radius: var(--ms-shape-sharp, 4px);
+  /* Solid opaque background — `--ms-surface-container` is intentionally
+   * semi-transparent in dark mode (for tonal elevation over a surface),
+   * which made the dropdown look "transparent" floating over the topbar.
+   * Use the solid `--ms-surface` instead so the panel reads as a stacked
+   * menu in both themes. */
+  background: var(--ms-surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+}
+
+.app-user-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 36px;
+  padding: 0.375rem 0.75rem;
+  border: 0;
+  border-radius: var(--ms-shape-sharp, 4px);
+  background: transparent;
+  color: var(--ms-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--ms-font-base, 0.875rem);
+  text-align: start;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.app-user-item:hover { background: var(--ms-hover-bg); }
+.app-user-item:focus-visible {
+  outline: 2px solid var(--ms-primary);
+  outline-offset: -2px;
+}
+
+.app-user-item svg { flex: 0 0 auto; opacity: 0.8; }
+
+.screenshot-mode-exit {
+  position: fixed;
+  inset-block-start: calc(var(--app-topbar-height, 56px) + 0.75rem);
+  inset-inline-end: 0.75rem;
+  z-index: 1000;
+  min-height: 40px;
+  padding: 0.5rem 0.875rem;
+  border: 1px solid var(--ms-primary);
+  border-radius: var(--ms-shape-sharp, 4px);
+  background: var(--ms-primary-container);
+  color: var(--ms-on-primary-container);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.screenshot-mode-exit:focus-visible {
+  outline: 2px solid var(--ms-primary);
+  outline-offset: 2px;
+}
+
+.app-user-divider {
+  height: 1px;
+  margin: 0.25rem 0.25rem;
+  background: var(--ms-divider);
+}
+
+.app-brand-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 36px;
+  min-height: 36px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.app-brand-link:focus-visible {
+  outline: 2px solid var(--ms-primary, #1f6f8b);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Custom logo image — fits within the topbar height with a sensible cap. */
+.app-brand-logo {
+  display: block;
+  height: clamp(20px, calc(var(--app-topbar-height, 56px) - 20px), 36px);
+  max-width: 180px;
+  width: auto;
+  object-fit: contain;
+}
+
+.app-layout {
+  display: grid;
+  grid-template-columns: var(--app-sidebar-width) minmax(0, 1fr);
+  position: relative;
+  z-index: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.app-sidebar {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  border-inline-end: 1px solid var(--ms-divider);
+  background: var(--ms-sidebar-bg);
+  padding: 0.875rem 0.75rem;
+  user-select: none;
+}
+
+.sidebar-section { margin-bottom: 0.625rem; }
+
+.sidebar-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 0.625rem;
+  border: 0;
+  border-radius: var(--ms-shape-sharp);
+  background: transparent;
+  color: var(--ms-text-very-subtle);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--ms-font-xs, 0.6875rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: start;
+  text-transform: uppercase;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.sidebar-section-header:hover {
+  background: var(--ms-hover-bg);
+  color: var(--ms-text-subtle);
+}
+
+.sidebar-section-header.no-collapse { cursor: default; }
+.sidebar-section-header.no-collapse:hover { background: transparent; }
+.section-label { flex: 1; min-width: 0; }
+.section-chevron { flex-shrink: 0; opacity: 0.68; transition: transform 160ms ease; }
+.sidebar-section.collapsed .section-chevron { transform: rotate(-90deg); }
+:dir(rtl) .sidebar-section.collapsed .section-chevron { transform: rotate(90deg); }
+.sidebar-section.collapsed .sidebar-section-body { display: none; }
+
+/* Per-domain section header: no collapse chevron, lighter weight, more
+ * breathing room above so domain groups don't run into each other.
+ * Mirrors Apple Mail's domain headers (iCloud / Gmail / etc.). */
+.sidebar-section-domain { margin-top: 0.625rem; }
+.sidebar-section-header-domain {
+  cursor: default;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: var(--ms-font-xs, 0.6875rem);
+  color: var(--ms-text-subtle);
+  padding-inline-start: 0.5rem;
+}
+
+.external-account-dot {
+  width: .625rem;
+  height: .625rem;
+  flex: 0 0 .625rem;
+  border-radius: 999px;
+  background: var(--external-account-color, var(--ms-primary));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ms-on-surface) 22%, transparent);
+}
+
+.external-account-sidebar-actions {
+  display: flex;
+  align-items: center;
+  gap: .125rem;
+  margin-inline-start: auto;
+}
+
+.external-account-sidebar-actions input[type="color"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.external-account-sidebar-actions button {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: .375rem;
+  color: var(--ms-on-surface-variant);
+  background: transparent;
+  cursor: pointer;
+}
+
+.external-account-sidebar-actions button:hover:not(:disabled),
+.external-account-sidebar-actions button:focus-visible {
+  color: var(--ms-on-surface);
+  background: var(--ms-surface-container-high);
+}
+
+.external-account-sidebar-actions button:disabled {
+  opacity: .3;
+  cursor: default;
+}
+
+.external-account-sidebar-menu {
+  position: relative;
+}
+
+.external-account-sidebar-menu summary {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: .375rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.external-account-sidebar-menu summary::-webkit-details-marker { display: none; }
+
+.external-account-sidebar-menu[open] summary,
+.external-account-sidebar-menu summary:hover,
+.external-account-sidebar-menu summary:focus-visible {
+  color: var(--ms-on-surface);
+  background: var(--ms-surface-container-high);
+}
+
+.external-account-sidebar-menu > div {
+  position: absolute;
+  z-index: 30;
+  inset-block-start: calc(100% + .25rem);
+  inset-inline-end: 0;
+  display: grid;
+  min-width: 10rem;
+  padding: .25rem;
+  border: 1px solid var(--ms-outline-variant);
+  border-radius: .5rem;
+  background: var(--ms-surface-container);
+  box-shadow: 0 .5rem 1.5rem color-mix(in srgb, #000 20%, transparent);
+}
+
+.external-account-sidebar-menu > div > * {
+  display: block;
+  width: 100%;
+  padding: .5rem .625rem;
+  border: 0;
+  border-radius: .375rem;
+  color: var(--ms-on-surface);
+  background: transparent;
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.external-account-sidebar-menu > div > *:hover,
+.external-account-sidebar-menu > div > *:focus-visible {
+  background: var(--ms-surface-container-high);
+}
+
+.external-folder-row {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  padding-inline-start: calc(var(--external-folder-depth, 0) * 0.75rem);
+}
+
+.external-folder-menu { flex: 0 0 auto; align-self: center; }
+.external-folder-menu summary { width: 2rem; height: 2rem; }
+.external-folder-menu > div { inset-block-start: 100%; min-width: 9.5rem; }
+
+.external-folder-toggle,
+.external-folder-toggle-spacer {
+  width: 1.5rem;
+  min-width: 1.5rem;
+  min-height: 40px;
+}
+
+.external-folder-toggle {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ms-shape-sharp, 4px);
+  background: transparent;
+  color: var(--ms-text-very-subtle);
+  cursor: pointer;
+}
+
+.external-folder-toggle:hover,
+.external-folder-toggle:focus-visible {
+  background: var(--ms-hover-bg);
+  color: var(--ms-text);
+}
+
+.external-folder-toggle:focus-visible {
+  outline: 2px solid var(--ms-primary);
+  outline-offset: -2px;
+}
+
+.external-folder-toggle svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 140ms ease;
+}
+
+.external-folder-toggle[aria-expanded="true"] svg { transform: rotate(90deg); }
+
+.sidebar-folder.external-folder-link {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  padding-inline-start: 0.375rem;
+}
+
+.external-folder-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-folder.external-folder-group {
+  cursor: default;
+  color: var(--ms-text-very-subtle);
+}
+
+.sidebar-folder.external-folder-group:hover { background: transparent; }
+.sidebar-section-header-domain:hover { background: transparent; color: var(--ms-text-subtle); }
+
+/* Nested Favorites rows (per-domain shortcuts) sit visually under their
+ * group's chevron + icon. Compound selector bumps specificity above the
+ * `.sidebar-folder` shorthand `padding`. */
+.sidebar-folder.sidebar-folder-nested { padding-inline-start: 2.5rem; }
+.sidebar-folder-nested svg { opacity: 0.6; }
+
+/* Collapsible Favorites groups ("All Inboxes" / "All Sent" → per-domain
+ * children). Apple-Mail-style: a small chevron sits inline with the group
+ * label, clicking the chevron toggles disclosure of the per-domain rows,
+ * clicking the label navigates to the aggregate view. */
+.favorite-group-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+.favorite-group-toggle {
+  position: absolute;
+  inset-inline-start: 0.125rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ms-text-very-subtle);
+  cursor: pointer;
+  z-index: 1;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.sidebar-section-header[data-sidebar-section-toggle="favorites"] .section-label {
+  color: var(--ms-text-subtle);
+}
+.favorite-group-toggle:hover {
+  background: var(--ms-hover-bg);
+  color: var(--ms-text);
+}
+.favorite-group-chevron {
+  flex-shrink: 0;
+  transition: transform 160ms ease;
+}
+.favorite-group.collapsed .favorite-group-chevron { transform: rotate(-90deg); }
+:dir(rtl) .favorite-group.collapsed .favorite-group-chevron { transform: rotate(90deg); }
+.favorite-group.collapsed .favorite-group-children { display: none; }
+/* Group parent row: just enough left padding to clear the chevron icon.
+ * The chevron itself is absolute-positioned, so this padding only reserves
+ * visual breathing room — child rows then indent further (`.sidebar-folder-nested`)
+ * so the hierarchy reads parent → child instead of the other way around. */
+.sidebar-folder.favorite-group-link { padding-inline-start: 1.5rem; }
+
+.sidebar-folder {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 0.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--ms-shape-sharp);
+  background: transparent;
+  color: var(--ms-text-subtle);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--ms-font-base, 0.875rem);
+  font-weight: 500;
+  text-align: start;
+  text-decoration: none;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.sidebar-folder:hover {
+  background: var(--ms-hover-bg);
+  color: var(--ms-text);
+}
+
+.sidebar-folder.active {
+  border-color: color-mix(in srgb, var(--ms-primary) 32%, transparent);
+  background: var(--ms-selected-bg);
+  color: var(--ms-selected-color);
+  box-shadow: inset 3px 0 0 var(--ms-primary);
+  font-weight: 700;
+}
+
+:dir(rtl) .sidebar-folder.active { box-shadow: inset -3px 0 0 var(--ms-primary); }
+
+.sidebar-folder.drag-over {
+  border-color: var(--ms-primary);
+  background: var(--ms-selected-bg);
+}
+
+.sidebar-folder svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  opacity: 0.78;
+}
+
+.sidebar-folder .folder-count {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 0.4rem;
+  border-radius: var(--ms-shape-sharp, 4px);
+  background: var(--ms-surface-container-high, transparent);
+  color: var(--ms-text-very-subtle);
+  font-size: var(--ms-font-sm, 0.75rem);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hide the badge when there's no count to show — folderCount() returns the
+ * empty string for 0/missing, so :empty matches and removes the chip. */
+.sidebar-folder .folder-count:empty {
+  display: none;
+}
+
+/* On an active (selected) folder, lift the badge against the selected
+ * background so it remains legible. */
+.sidebar-folder.active .folder-count {
+  background: color-mix(in srgb, var(--ms-primary) 14%, transparent);
+  color: var(--ms-selected-color, var(--ms-text));
+}
+
+.sidebar-divider {
+  border-top: 1px solid var(--ms-divider);
+  margin: 0.75rem 0.5rem;
+}
+
+.app-main {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ms-app-bg, var(--ms-surface-container-low));
+}
+
+/* Tachyon mounts the active route inside this page-slot wrapper. Give the
+ * wrapper a definite block size so route layouts using `height: 100%` fill
+ * the main pane even when their content is shorter than the viewport. */
+.app-main > #tc-page-slot {
+  height: 100%;
+  min-height: 0;
+}
+
+inbox-view,
+settings-view,
+email-detail,
+calendar-page,
+team-page {
+  min-height: 0;
+}
+
+inbox-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+email-detail {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.lazy-list-item,
+.email-row,
+.thread-summary,
+.thread-email-row,
+.scheduled-item,
+.team-row,
+.settings-row,
+.calendar-event-chip {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 72px;
+}
+
+.login-screen {
+  /* The login is the only thing on the page when unauthenticated — center
+   * the card in BOTH axes so it sits in the visual middle of the viewport
+   * rather than drifting toward the top edge.
+   *
+   * Flexbox rather than grid: Tac wraps the login-form component in a
+   * scoped div that contains both the actual card and an inline style
+   * block. With display:grid and no explicit template, the grid sizes its
+   * implicit column to the wrapper intrinsic width (which picks up the
+   * style block as content), leaving the 432px card sitting at the left
+   * edge of an oversized track. Flexbox with justify- and align-center
+   * centers the wrapper itself instead, so the card lands on the true
+   * viewport midline regardless of the wrapper intrinsic width.
+   *
+   * box-sizing border-box keeps the 2rem padding inside the 100dvh height;
+   * without it the page renders 64px taller than the viewport and forces
+   * a scrollbar that breaks the centering. */
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100dvh;
+  padding: 2rem;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--ms-primary-container) 42%, transparent), transparent 38%),
+    var(--ms-bg);
+}
+
+/* Tac wraps the login-form component in an unclassed div. Give that wrapper a
+ * definite width so the card doesn't shrink-wrap to its text: DuVay's fields
+ * (unlike the old Material ones) carry no wide intrinsic min-width, so without
+ * this the card collapsed to ~175px. 100% resolves against the login-screen
+ * content box, so it stays within the screen padding on small viewports. */
+.login-screen > div {
+  width: min(100%, 432px);
+}
+
+.mail-layout {
+  display: grid;
+  grid-template-columns: var(--mail-list-width) minmax(0, 1fr);
+  position: relative;
+  min-height: 0;
+  height: 100%;
+}
+
+@media (min-width: 1025px) {
+  html[data-mail-layout="split-vertical"] .mail-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(220px, 42%) minmax(0, 1fr);
+  }
+  html[data-mail-layout="split-vertical"] .mail-list-panel {
+    border-inline-end: 0;
+    border-bottom: 1px solid var(--ms-divider);
+  }
+  html[data-mail-layout="split-vertical"] .mail-detail-panel { min-height: 0; }
+  html[data-mail-layout="split-vertical"] .mail-column-resizer,
+  html[data-mail-layout="list"] .mail-column-resizer { display: none; }
+
+  html[data-mail-layout="list"] .mail-layout { grid-template-columns: minmax(0, 1fr); }
+  html[data-mail-layout="list"] .mail-detail-panel { display: none; }
+  html[data-mail-layout="list"] .mail-layout.show-detail .mail-list-panel { display: none; }
+  html[data-mail-layout="list"] .mail-layout.show-detail .mail-detail-panel {
+    display: block;
+    height: 100%;
+    overflow-y: auto;
+  }
+}
+
+.column-resizer {
+  position: absolute;
+  z-index: 15;
+  top: 0;
+  bottom: 0;
+  width: 9px;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.column-resizer::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: 4px;
+  width: 1px;
+  background: transparent;
+  content: '';
+  transition: background 120ms ease, width 120ms ease;
+}
+
+.app-sidebar-resizer {
+  inset-inline-start: calc(var(--app-sidebar-width) - 4px);
+}
+
+.mail-column-resizer {
+  inset-inline-start: calc(var(--mail-list-width) - 4px);
+}
+
+.column-resizer:hover::after,
+.column-resizer:focus-visible::after,
+.column-resizer.is-active::after {
+  width: 2px;
+  background: var(--ms-primary);
+}
+
+body.column-resize-active {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.mail-list-panel {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  border-inline-end: 1px solid var(--ms-divider);
+  background: var(--ms-list-bg);
+}
+
+.mail-detail-panel {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--ms-detail-bg);
+}
+
+.mail-detail-empty {
+  display: grid;
+  min-height: 100%;
+  place-items: center;
+  color: var(--ms-text-very-subtle);
+}
+
+/* Tablet (761px – 1024px): max two columns. The sidebar is ALWAYS hidden
+ * here — at this width the `.folder-tabs` strip inside inbox-view takes
+ * over as the folder switcher (no duplicate navigation).
+ *   - No selection: just the email-list fills the screen.
+ *   - With selection: email-list + email-detail share two columns.
+ */
+@media (min-width: 761px) and (max-width: 1024px) {
+  .app-sidebar { display: none; }
+  .app-layout { grid-template-columns: minmax(0, 1fr); }
+  .mail-layout { grid-template-columns: minmax(280px, 330px) minmax(0, 1fr); }
+  .column-resizer { display: none; }
+  /* When nothing is selected, the detail pane is collapsed — no point
+     reserving real estate for it; let the list fill the right column. */
+  .mail-layout:not(.show-detail) { grid-template-columns: minmax(0, 1fr); }
+  .mail-layout:not(.show-detail) .mail-detail-panel { display: none; }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    grid-template-rows: 52px minmax(0, 1fr);
+  }
+
+  .app-layout {
+    display: block;
+    min-height: 0;
+    height: 100%;
+  }
+
+  .app-sidebar { display: none; }
+  .column-resizer { display: none; }
+
+  .app-main {
+    height: calc(100dvh - 52px);
+    padding-bottom: env(safe-area-inset-bottom);
+    overflow: hidden;
+  }
+
+  .app-topbar {
+    padding: 0 0.75rem;
+  }
+
+  .shell-toast {
+    inset-inline-end: max(0.75rem, var(--shell-safe-inline-end));
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    inset-inline-start: max(0.75rem, var(--shell-safe-inline-start));
+    max-width: none;
+  }
+
+  /* Keep the two persistent top-bar actions easy to hit without allowing
+   * either one to shrink below a finger-sized target on narrow phones. */
+  .app-brand-link,
+  .app-user-trigger,
+  .theme-toggle-btn,
+  .mobile-menu-btn {
+    min-height: 44px;
+  }
+
+  .app-brand-link {
+    min-width: 44px;
+    justify-content: flex-start;
+  }
+
+  .app-user {
+    max-width: 34vw;
+  }
+
+  .mail-layout {
+    display: block;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .mail-list-panel {
+    width: 100%;
+    height: 100%;
+    border-inline-end: 0;
+  }
+
+  .mail-detail-panel {
+    display: none;
+  }
+
+  .mail-layout.show-detail .mail-list-panel { display: none; }
+  .mail-layout.show-detail .mail-detail-panel {
+    display: block;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .login-screen {
+    /* Keep the card centered on phones too. The base rule already sets
+     * `place-items: center` but we re-state both axes here defensively —
+     * grids inside small viewports otherwise tend to compute `align-items`
+     * as `stretch` once a media query touches the same selector. */
+    align-items: center;
+    justify-items: center;
+    padding: 1rem max(1rem, env(safe-area-inset-right)) calc(1rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  }
+}
+
+/* Reuse the complete desktop sidebar as an off-canvas drawer at tablet and
+ * phone widths so mailbox and app navigation remain available. */
+@media (max-width: 1024px) {
+  .mobile-menu-btn { display: inline-flex; }
+
+  .external-folder-toggle,
+  .external-folder-toggle-spacer {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 44px;
+  }
+
+  .app-sidebar {
+    position: fixed;
+    z-index: 50;
+    top: var(--app-topbar-height);
+    bottom: 0;
+    inset-inline-start: 0;
+    display: block;
+    width: min(320px, 86vw);
+    padding-bottom: max(0.875rem, env(safe-area-inset-bottom));
+    box-shadow: 16px 0 36px rgba(15, 23, 42, 0.2);
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform 180ms ease, visibility 180ms ease;
+  }
+
+  .app-sidebar.mobile-open {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  :dir(rtl) .app-sidebar {
+    box-shadow: -16px 0 36px rgba(15, 23, 42, 0.2);
+    transform: translateX(105%);
+  }
+
+  :dir(rtl) .app-sidebar.mobile-open { transform: translateX(0); }
+
+  .sidebar-scrim {
+    position: fixed;
+    z-index: 40;
+    top: var(--app-topbar-height);
+    inset-inline-end: 0;
+    bottom: 0;
+    inset-inline-start: 0;
+    width: 100vw;
+    height: calc(100dvh - var(--app-topbar-height));
+    display: block;
+    padding: 0;
+    border: 0;
+    background: rgba(15, 23, 42, 0.38);
+    cursor: default;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-sidebar { top: 52px; }
+  .sidebar-scrim { top: 52px; height: calc(100dvh - 52px); }
+  .app-notification-panel {
+    position: fixed;
+    inset: 52px 0 auto 0;
+    width: 100%;
+    max-height: calc(100dvh - 52px);
+    border-inline: 0;
+    border-radius: 0 0 10px 10px;
+  }
+}
+
+/* ── Application rules moved from shared/assets/styles.css ───────────────
+ * Global sheets may hold only foundation selectors, so the shell carries the
+ * rules its own markup needs. */
+/* Children of an overflow-menu container must not shrink — the helper at
+ * shared/scripts/overflow-menu.js detects overflow via container.scrollWidth
+ * vs clientWidth, which only fires if items keep their natural size. */
+[data-overflow-menu] > *:not([data-overflow-injected]) {
+  flex-shrink: 0;
+}
+
+@media (max-width: 1024px) {
+[data-overflow-menu] {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+/* Defensively override any inline visibility left behind when a row crosses
+   * the breakpoint after the desktop overflow helper has already measured it. */
+[data-overflow-menu] > *:not([data-overflow-injected]) {
+    display: revert !important;
+  }
+
+[data-overflow-menu] > .overflow-more-btn,
+  [data-overflow-menu] > .overflow-more-menu {
+    display: none !important;
+  }
+}
+
+/* Keep DuVay components on the app's font. */
+w-btn, w-text-field, w-textarea, w-select, w-chip, w-option {
+  font-family: inherit;
+}
+
+w-btn {
+  min-width: 64px;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+w-chip {
+  box-sizing: border-box;
+}
+
+/* DuVay form-control hosts are inline by default, so authored `width` and
+ * vertical margins (e.g. `style="width:100%;margin-bottom:1rem"`) are ignored —
+ * fields render content-width and stack with no gap. Make them block-level so
+ * full-width fields and their spacing behave as written. */
+w-text-field,
+w-textarea,
+w-select {
+  display: block;
+}
+
+/* A <w-btn> host is inline by default, so a full-width action written as
+ * `style="width:100%"` (the Material idiom carried over in the migration) was
+ * ignored — the host and its rendered <button> stayed content-width. Make such
+ * hosts block-level and stretch the control to fill them. */
+w-btn[style*="width:100%"],
+w-btn[style*="width: 100%"] {
+  display: block;
+}
+
+w-btn[style*="width:100%"] > button,
+w-btn[style*="width:100%"] > a,
+w-btn[style*="width: 100%"] > button,
+w-btn[style*="width: 100%"] > a {
+  width: 100%;
+}
+
+/* ── Focus ─────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--ms-primary, #1f6f8b);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* DuVay form controls draw their own focus indicator (a coloured border on the
+ * field). The generic outline above stacked a second ring on the inner input —
+ * suppress it inside those components so only DuVay's focus border shows. */
+w-text-field :focus-visible,
+w-textarea :focus-visible,
+w-select :focus-visible {
+  outline: none;
+}
+
+/* ── Interactive base states ──────────────────────────────────────────── */
+.email-row:focus-visible,
+.thread-summary:focus-visible,
+.thread-email-row:focus-visible,
+.sidebar-folder:focus-visible,
+.quick-action:focus-visible,
+.toolbar-btn:focus-visible,
+.attachment-chip:focus-visible,
+.sidebar-section-header:focus-visible {
+  outline: 2px solid var(--ms-primary, #1f6f8b);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+
+::-webkit-scrollbar-track { background: transparent; }
+
+::-webkit-scrollbar-thumb { background: var(--ms-divider); border-radius: 3px; }
+
+::-webkit-scrollbar-thumb:hover { background: var(--ms-text-very-subtle); }
+
+/* ── Utility classes ───────────────────────────────────────────────────── */
+.text-muted { color: var(--ms-text-subtle); }
+
+.text-subtle { color: var(--ms-text-very-subtle); }
+
+.text-error { color: var(--ms-error); }
+
+.text-center { text-align: center; }
+
+.font-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+
+.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Loading spinner ───────────────────────────────────────────────────── */
+.spinner {
+  width: 24px; height: 24px;
+  border: 3px solid var(--ms-divider);
+  border-top-color: var(--ms-primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg) } }
+
+/* Mailspring-compatible screenshot mode belongs at document scope. Tachyon
+ * wraps component styles in native @scope, so root-state selectors must live
+ * in this shared sheet. Text stays in the accessible DOM but renders as
+ * anonymous blocks; visual media and CSS backgrounds are obscured. */
+:root[data-screenshot-mode="true"] *,
+:root[data-screenshot-mode="true"] *::before,
+:root[data-screenshot-mode="true"] *::after {
+  -webkit-text-security: disc !important;
+  word-break: break-word !important;
+  color: transparent !important;
+  text-shadow: 0 0 7px rgba(15, 23, 42, 0.82) !important;
+  background-image: none !important;
+}
+
+/* Composite blur closes Shadow DOM and replaced-element gaps that document
+ * selectors cannot pierce. The exit control is a sibling of both regions. */
+:root[data-screenshot-mode="true"] .app-topbar,
+:root[data-screenshot-mode="true"] .app-layout {
+  filter: blur(4px) !important;
+}
+
+:root[data-screenshot-mode="true"] img,
+:root[data-screenshot-mode="true"] video,
+:root[data-screenshot-mode="true"] canvas,
+:root[data-screenshot-mode="true"] iframe,
+:root[data-screenshot-mode="true"] svg {
+  filter: blur(18px) grayscale(1) !important;
+}
+
+:root[data-screenshot-mode="true"] [data-screenshot-mode-control],
+:root[data-screenshot-mode="true"] [data-screenshot-mode-control] *,
+:root[data-screenshot-mode="true"] [data-screenshot-mode-control] *::before,
+:root[data-screenshot-mode="true"] [data-screenshot-mode-control] *::after {
+  -webkit-text-security: none !important;
+  color: var(--ms-on-primary-container, #042f2e) !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+/* ── Skeleton loading ──────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--ms-divider) 25%, var(--ms-hover-bg) 50%, var(--ms-divider) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--ms-shape-card);
+}
+
+@keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+
+/* ── Empty state ───────────────────────────────────────────────────────── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 3rem 2rem; text-align: center; color: var(--ms-text-subtle); min-height: 240px;
+}
+
+.empty-state svg { width: 48px; height: 48px; opacity: 0.4; margin-bottom: 1rem; }
+
+.empty-state-title { font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem; color: var(--ms-text); }
+
+.empty-state-subtitle { font-size: 0.8125rem; max-width: 280px; }
+
+
+
+@media (max-width: 760px) {
+.hide-mobile { display: none !important; }
+}
+
+/* Explicitly trusted extension commands use one host-owned control style.
+ * Package code cannot provide CSS or mutate this class. */
+[data-extension-slot] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+}
+
+.caduceus-extension-command {
+  min-height: 36px;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--ms-outline-variant);
+  border-radius: var(--ms-shape-sharp, 4px);
+  background: var(--ms-surface-container);
+  color: var(--ms-on-surface);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.caduceus-extension-command:hover { background: var(--ms-hover-bg); }
+
+.caduceus-extension-command:focus-visible { outline: 2px solid var(--ms-primary); outline-offset: 2px; }
+
+:root[data-ui-theme="ubuntu"] .app-sidebar {
+  --ms-text: #fff7fb;
+  --ms-text-subtle: #ead8e3;
+  --ms-text-very-subtle: #c9aebf;
+  --ms-divider: #70425f;
+  --ms-hover-bg: #ffffff12;
+  --ms-selected-bg: #e9542038;
+  --ms-selected-color: #fff;
+  color: var(--ms-text);
+}
+
+/* Element defaults that a global sheet may not set (layout properties). */
+a { text-decoration: none; }
+img, svg, video { max-width: 100%; display: block; }

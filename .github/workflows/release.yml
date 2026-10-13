@@ -1,0 +1,201 @@
+name: Release
+
+on:
+  push:
+    branches: [main, 'release/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Unit / runtime / identity contract tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Install locked binary runtime
+        run: |
+          curl -fsSL https://github.com/d31ma/Tachyon/releases/download/v26.33.02/install.sh | sudo sh
+          curl -fsSL https://github.com/d31ma/Fylo/releases/download/v26.33.02/install.sh | sudo sh
+          curl -fsSL https://github.com/d31ma/Chex/releases/download/v26.32.02/install.sh | sudo sh
+          curl -fsSL https://github.com/d31ma/TTID/releases/download/v26.32.03/install.sh | sudo sh
+          tmp="$(mktemp -d)"
+          curl -fsSL https://github.com/d31ma/SESAME/releases/download/v26.33.02/sesame-linux-amd64 -o "${tmp}/sesame"
+          curl -fsSL https://github.com/d31ma/SESAME/releases/download/v26.33.02/SHA256SUMS -o "${tmp}/SHA256SUMS"
+          expected="$(awk '$2 == "sesame-linux-amd64" || $2 == "*sesame-linux-amd64" { print tolower($1) }' "${tmp}/SHA256SUMS")"
+          actual="$(sha256sum "${tmp}/sesame" | awk '{ print tolower($1) }')"
+          test -n "$expected" && test "$expected" = "$actual"
+          sudo install -m 755 "${tmp}/sesame" /usr/local/bin/sesame
+      - run: bun install --frozen-lockfile
+      - run: bun run translation:check
+      - run: bun run go:build
+      - run: bun run test:unit
+      - run: bun run test:runtime
+      - run: bun run verify:phase3
+
+  e2e:
+    name: Playwright E2E tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: false
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - name: Install locked binary runtime
+        run: |
+          curl -fsSL https://github.com/d31ma/Tachyon/releases/download/v26.33.02/install.sh | sudo sh
+          curl -fsSL https://github.com/d31ma/Fylo/releases/download/v26.33.02/install.sh | sudo sh
+          curl -fsSL https://github.com/d31ma/Chex/releases/download/v26.32.02/install.sh | sudo sh
+          curl -fsSL https://github.com/d31ma/TTID/releases/download/v26.32.03/install.sh | sudo sh
+          tmp="$(mktemp -d)"
+          curl -fsSL https://github.com/d31ma/SESAME/releases/download/v26.33.02/sesame-linux-amd64 -o "${tmp}/sesame"
+          curl -fsSL https://github.com/d31ma/SESAME/releases/download/v26.33.02/SHA256SUMS -o "${tmp}/SHA256SUMS"
+          expected="$(awk '$2 == "sesame-linux-amd64" || $2 == "*sesame-linux-amd64" { print tolower($1) }' "${tmp}/SHA256SUMS")"
+          actual="$(sha256sum "${tmp}/sesame" | awk '{ print tolower($1) }')"
+          test -n "$expected" && test "$expected" = "$actual"
+          sudo install -m 755 "${tmp}/sesame" /usr/local/bin/sesame
+      - run: bun install --frozen-lockfile
+      - run: bun run translation:check
+      - run: bun run go:build
+      - run: bun node_modules/.bin/playwright install --with-deps
+      - run: bun run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  version:
+    name: CalVer
+    needs: [test, e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.calver.outputs.version }}
+      tag_exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: calver
+        run: |
+          v=$(date -u +%y.%V.%u)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "CalVer: $v"
+      - id: check
+        env:
+          TAG: v${{ steps.calver.outputs.version }}
+        run: |
+          if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG already exists — skipping publish and release."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    name: Build and push to GHCR
+    needs: version
+    if: needs.version.outputs.tag_exists == 'false' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    uses: d31ma/FOUNDRY/.github/workflows/deploy-ghcr.yml@main
+    with:
+      image_name: ghcr.io/d31ma/caduceus
+      image_tags: |
+        ${{ needs.version.outputs.version }}
+        latest
+      context: .
+      dockerfile: Dockerfile
+      platforms: linux/amd64,linux/arm64
+    secrets:
+      GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  github-release:
+    name: Create git tag and GitHub Release
+    needs: [version, publish]
+    if: needs.version.outputs.tag_exists == 'false' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Create tag
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+      - name: Create GitHub Release
+        run: |
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --generate-notes
+
+  open-release-pr:
+    name: Open release PR
+    if: startsWith(github.ref, 'refs/heads/release/')
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create PR if one doesn't exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          existing=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "PR #$existing already open for $BRANCH"
+            exit 0
+          fi
+          version="${BRANCH#release/}"
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "Release $version" \
+            --body "Automated release PR for \`$BRANCH\`.
+
+          Merging this PR will:
+          - Build and push the Docker image to GitHub Container Registry as \`ghcr.io/d31ma/caduceus:latest\`
+          - Tag the image with a CalVer date (e.g. \`$(date -u +%y.%V.%u)\`)
+          - Tag the commit with the same CalVer
+          - Publish a GitHub Release with generated notes" || {
+            existing=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+            if [ -n "$existing" ]; then
+              echo "PR #$existing already open for $BRANCH (concurrent open)"
+              exit 0
+            fi
+            exit 1
+          }

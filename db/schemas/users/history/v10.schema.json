@@ -1,0 +1,37 @@
+{
+  "email": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "domains": ["^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$"],
+  "role": "^(admin|viewer)$",
+  "aliases?": ["^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"],
+  "calendarVisibility?": "^(private|busy|full)$",
+  "mailboxNames?": { "^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$": "^[^\\u0000-\\u001F\\u007F]{1,64}$" },
+  "categoryMappings?": {
+    "^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$": {
+      "inbox": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$",
+      "sent": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$",
+      "drafts": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$",
+      "spam": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$",
+      "archive": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$",
+      "trash": "^[a-z0-9]([a-z0-9._/-]{0,58}[a-z0-9])?$"
+    }
+  },
+  "remoteImagePolicy?": "^(block|allow)$",
+  "trustedImageSenders?": ["^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"],
+  "interfaceFont?": "^(plex-sans|system|humanist|serif|monospace)$",
+  "composerFont?": "^(interface|plex-sans|system|humanist|serif|monospace)$",
+  "notificationSounds?": {
+    "new-mail": "^(none|chime|bell|pop|pulse)$",
+    "hit-send": "^(none|chime|bell|pop|pulse)$",
+    "send": "^(none|chime|bell|pop|pulse)$",
+    "confirm": "^(none|chime|bell|pop|pulse)$"
+  },
+  "themePreferences?": {
+    "activeTheme": "^(automatic|light|dark|darkside|less-is-more|taiga|ubuntu)$",
+    "lightTheme": "^(light|less-is-more|taiga|ubuntu)$",
+    "darkTheme": "^(dark|darkside)$"
+  },
+  "githubProfileEnrichment?": "^(true|false)$",
+  "grammarCheckEnabled?": "^(true|false)$",
+  "grammarCheckLanguage?": "^(auto|en-US|en-GB)$",
+  "grammarCheckDisabledRules?": ["^[A-Z0-9_-]{1,64}$"]
+}

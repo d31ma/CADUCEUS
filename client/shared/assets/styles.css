@@ -1,0 +1,147 @@
+/* CADUCEUS — Mailspring-inspired Mail Client CSS foundation.
+ *
+ * Tachyon publishes this sheet globally only when every selector is a
+ * foundation selector (:root/html/body, a root theme attribute, a universal
+ * reset or a plain HTML element) and every declaration is a colour, font,
+ * theme variable or narrow reset. Application rules (layout, DuVay host
+ * tweaks, focus rings, utility classes, screenshot masking) live in the
+ * tac.css of each component that uses them, because component styles are
+ * scoped with @scope. */
+
+/* CADUCEUS — Mailspring-inspired Mail Client CSS foundation.
+ *
+ * Tachyon publishes this sheet globally only when every selector is a
+ * foundation selector (:root/html/body, a root theme attribute, a universal
+ * reset or a plain HTML element). Application rules (DuVay host tweaks, focus
+ * rings, utility classes, screenshot masking) live in the tac.css of each
+ * component that uses them, because component styles are scoped with @scope. */
+
+/* Shell geometry is document-global state. Tachyon 26.33 wraps component
+ * styles in native @scope, where a component-local :root selector cannot
+ * match the document root. Keep resizeable layout variables here so both CSS
+ * and the shell's persistence code read the same authoritative values. */
+:root {
+  --app-topbar-height: 56px;
+  --app-sidebar-width: 232px;
+  --mail-list-width: 390px;
+  --caduceus-interface-scale: 1;
+  --caduceus-interface-font: "IBM Plex Sans", Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --caduceus-composer-font: var(--caduceus-interface-font);
+}
+
+@media (max-width: 1120px) {
+  :root { --app-sidebar-width: 216px; }
+}
+
+/* ── Base reset ────────────────────────────────────────────────────────── */
+/* Universal box-sizing is safe (no specificity issue with custom elements). */
+*, ::before, ::after {
+  box-sizing: border-box;
+}
+
+/* Explicit margin/padding reset on built-in elements only — leaves DuVay's
+ * light-DOM web components (w-*) free to apply their own internal spacing,
+ * rather than a universal `* {
+  padding: 0;
+}
+
+` clobbering component styles. */
+html, body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, dl, dt, dd, blockquote, figure, fieldset, legend, hr, form, button, input, select, textarea, table, th, td {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-size: calc(16px * var(--caduceus-interface-scale));
+}
+
+body {
+  font-family: var(--caduceus-interface-font);
+  font-size: calc(14.5px * var(--caduceus-interface-scale));
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--ms-text);
+  background-color: var(--ms-bg);
+}
+
+a {
+  color: inherit;
+}
+
+/* ── Typography scale ──────────────────────────────────────────────────── */
+:root {
+  --ms-font-xs: 0.6875rem;
+  --ms-font-sm: 0.75rem;
+  --ms-font-base: 0.875rem;
+  --ms-font-md: 0.9375rem;
+  --ms-font-lg: 1.0625rem;
+  --ms-font-xl: 1.25rem;
+  --ms-font-2xl: 1.5rem;
+  --ms-font-3xl: 2.25rem;
+  --ms-font-weight-normal: 400;
+  --ms-font-weight-medium: 500;
+  --ms-font-weight-semibold: 600;
+  --ms-font-weight-bold: 700;
+  --ms-letter-spacing-tight: 0;
+  --ms-letter-spacing-normal: 0;
+  --ms-letter-spacing-wide: 0.04em;
+}
+
+/* ── Mailspring-aligned color system ───────────────────────────────────── */
+:root {
+  --ms-primary: var(--ms-primary, #1f6f8b);
+  --ms-primary-container: var(--ms-primary-container, #d7edf4);
+  --ms-on-primary-container: var(--ms-on-primary-container, #073544);
+  --ms-bg: var(--ms-surface, #f8faf9);
+  --ms-sidebar-bg: var(--ms-sidebar, #eef3f1);
+  --ms-list-bg: var(--ms-surface, #f8faf9);
+  --ms-detail-bg: var(--ms-surface, #ffffff);
+  --ms-toolbar-bg: var(--ms-toolbar, #f1f5f4);
+  --ms-text: var(--ms-text, #182125);
+  --ms-text-subtle: var(--ms-text-subtle, #526066);
+  --ms-text-very-subtle: var(--ms-text-very-subtle, #7b878c);
+  --ms-divider: var(--ms-divider, #d8e0de);
+  --ms-border: var(--ms-border, #d0dbd8);
+  --ms-hover-bg: var(--ms-hover-bg, #eaf1ef);
+  --ms-selected-bg: var(--ms-selected-bg, #dceff3);
+  --ms-selected-color: var(--ms-selected-color, #102f3a);
+  --ms-active-color: var(--ms-active-color, #dceff3);
+  --ms-avatar-bg: var(--ms-avatar-bg, #d7edf4);
+  --ms-avatar-text: var(--ms-avatar-text, #073544);
+  --ms-unread-indicator: var(--ms-unread-indicator, #1f6f8b);
+  --ms-error: var(--ms-error, #b3261e);
+  --ms-error-container: var(--ms-error-container, #f9dedc);
+  --ms-secondary-container: var(--ms-secondary-container, #e6ece9);
+  --ms-on-secondary-container: var(--ms-on-secondary-container, #273733);
+  --ms-surface-container-low: var(--ms-surface-container-low, #f3f7f5);
+  --ms-surface-container-high: var(--ms-surface-container-high, #e5ece9);
+  --ms-surface-container: var(--ms-surface-container, #edf3f1);
+  --ms-inverse-surface: var(--ms-inverse-surface, #313033);
+  --ms-inverse-on-surface: var(--ms-inverse-on-surface, #f4eff4);
+  --ms-on-surface: var(--ms-on-surface, #1c1b1f);
+  --ms-on-surface-variant: var(--ms-on-surface-variant, #49454f);
+  --ms-outline-variant: var(--ms-outline-variant, #d8e0de);
+  --ms-tertiary-container: var(--ms-tertiary-container, #f4e4c7);
+  --ms-on-tertiary-container: var(--ms-on-tertiary-container, #493116);
+  --ms-on-error-container: var(--ms-on-error-container, #410e0b);
+  --ms-toolbar-height: 48px;
+  --ms-sidebar-width: 220px;
+  --ms-shape-sharp: 4px;
+  --ms-shape-card: 4px;
+  --w-font-family: var(--caduceus-interface-font);
+  --w-radius: var(--ms-shape-sharp);
+  --w-radius-sm: var(--ms-shape-sharp);
+  --w-radius-md: var(--ms-shape-sharp);
+  --w-radius-lg: 8px;
+  --w-radius-xl: 12px;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+
+@media (max-width: 760px) {
+  body { font-size: calc(14px * var(--caduceus-interface-scale)); }
+}

@@ -1,0 +1,840 @@
+[
+  {
+    "config": "inbound",
+    "name": "basics",
+    "early": false,
+    "exchanges": [
+      {
+        "send": null,
+        "reply": [
+          "220 mx.test ESMTP mx.test ESMTP CADUCEUS"
+        ]
+      },
+      {
+        "send": "EHLO Client.Test",
+        "reply": [
+          "250-mx.test Nice to meet you, [127.0.0.1]",
+          "250-PIPELINING",
+          "250-8BITMIME",
+          "250-SMTPUTF8",
+          "250 SIZE 64"
+        ]
+      },
+      {
+        "send": "HELO",
+        "reply": [
+          "501 Error: Syntax: HELO hostname"
+        ]
+      },
+      {
+        "send": "HELO client.test",
+        "reply": [
+          "250 mx.test Nice to meet you, [127.0.0.1]"
+        ]
+      },
+      {
+        "send": "EHLO a b",
+        "reply": [
+          "501 Error: syntax: EHLO hostname"
+        ]
+      },
+      {
+        "send": "NOOP",
+        "reply": [
+          "250 OK"
+        ]
+      },
+      {
+        "send": "HELP",
+        "reply": [
+          "214 See https://tools.ietf.org/html/rfc5321 for details"
+        ]
+      },
+      {
+        "send": "VRFY someone",
+        "reply": [
+          "252 Try to send something. No promises though"
+        ]
+      },
+      {
+        "send": "RSET",
+        "reply": [
+          "250 Flushed"
+        ]
+      },
+      {
+        "send": "FOO bar",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      },
+      {
+        "send": "WIZ",
+        "reply": [
+          "500 You are no wizard!"
+        ]
+      },
+      {
+        "send": "SHELL",
+        "reply": [
+          "500 Mere mortals must not mutter that mantra"
+        ]
+      },
+      {
+        "send": "WIZ secret",
+        "reply": [
+          "200 Please pass, oh mighty wizard"
+        ]
+      },
+      {
+        "send": "SHELL",
+        "reply": [
+          "500 Error: Invoking shell is not allowed. This incident will be reported."
+        ]
+      },
+      {
+        "send": "KILL",
+        "reply": [
+          "500 Can not kill Mom"
+        ]
+      },
+      {
+        "send": "AUTH PLAIN AGZvbwBiYXI=",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      },
+      {
+        "send": "QUIT",
+        "reply": [
+          "221 Bye"
+        ]
+      }
+    ],
+    "messages": []
+  },
+  {
+    "config": "inbound",
+    "name": "sequence",
+    "early": false,
+    "exchanges": [
+      {
+        "send": null,
+        "reply": [
+          "220 mx.test ESMTP mx.test ESMTP CADUCEUS"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b.test>",
+        "reply": [
+          "503 Error: send HELO/EHLO first"
+        ]
+      },
+      {
+        "send": "RCPT TO:<a@b.test>",
+        "reply": [
+          "503 Error: send HELO/EHLO first"
+        ]
+      },
+      {
+        "send": "DATA",
+        "reply": [
+          "503 Error: send HELO/EHLO first"
+        ]
+      },
+      {
+        "send": "EHLO client.test",
+        "reply": [
+          "250-mx.test Nice to meet you, [127.0.0.1]",
+          "250-PIPELINING",
+          "250-8BITMIME",
+          "250-SMTPUTF8",
+          "250 SIZE 64"
+        ]
+      },
+      {
+        "send": "RCPT TO:<a@b.test>",
+        "reply": [
+          "503 Error: need MAIL command"
+        ]
+      },
+      {
+        "send": "DATA",
+        "reply": [
+          "503 Error: need RCPT command"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<bad>",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL FROM:a@b.test",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL TO:<a@b.test>",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b.test> SIZE=100",
+        "reply": [
+          "552 Error: message exceeds fixed maximum message size 64"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b.test> SIZE",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "RSET",
+        "reply": [
+          "250 Flushed"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b.test> SIZE=abc",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "RSET",
+        "reply": [
+          "250 Flushed"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b.test> BODY=BINARY",
+        "reply": [
+          "501 Invalid BODY parameter value. Must be 7BIT or 8BITMIME"
+        ]
+      },
+      {
+        "send": "RSET",
+        "reply": [
+          "250 Flushed"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b.test> SMTPUTF8=yes",
+        "reply": [
+          "501 Invalid SMTPUTF8 parameter. This flag does not accept a value"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b.test> REQUIRETLS",
+        "reply": [
+          "530 REQUIRETLS not permitted on non-TLS connections"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<.a@b.test>",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a..b@b.test>",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b..test>",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@-b.test>",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "RSET",
+        "reply": [
+          "250 Flushed"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b@c.test>",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@[1.2.3.999]>",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b.test> ENVID=x+0D+0Ay",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b_c.test>",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a b@c.test>",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@[IPv6:zz]>",
+        "reply": [
+          "501 Error: Bad sender address syntax"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b.test> =x X=1=2",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "RSET",
+        "reply": [
+          "250 Flushed"
+        ]
+      },
+      {
+        "send": "MAIL FROM: <a@xn--bcher-kva.test> SIZE=10 BODY=8BITMIME SMTPUTF8",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<x@y.test>",
+        "reply": [
+          "503 Error: nested MAIL command"
+        ]
+      },
+      {
+        "send": "RCPT TO:<>",
+        "reply": [
+          "501 Error: Bad recipient address syntax"
+        ]
+      },
+      {
+        "send": "RCPT TO:<c@[1.2.3.4]>",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "RCPT TO:<c@[IPv6:2001:db8:0::1]>",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "RCPT TO:<C@d.test>",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "RCPT TO:<c@d.test>",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "RSET",
+        "reply": [
+          "250 Flushed"
+        ]
+      },
+      {
+        "send": "DATA",
+        "reply": [
+          "503 Error: need RCPT command"
+        ]
+      },
+      {
+        "send": "QUIT",
+        "reply": [
+          "221 Bye"
+        ]
+      }
+    ],
+    "messages": []
+  },
+  {
+    "config": "inbound",
+    "name": "data",
+    "early": false,
+    "exchanges": [
+      {
+        "send": null,
+        "reply": [
+          "220 mx.test ESMTP mx.test ESMTP CADUCEUS"
+        ]
+      },
+      {
+        "send": "EHLO client.test",
+        "reply": [
+          "250-mx.test Nice to meet you, [127.0.0.1]",
+          "250-PIPELINING",
+          "250-8BITMIME",
+          "250-SMTPUTF8",
+          "250 SIZE 64"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<>",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "RCPT TO:<u@d.test>",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "DATA",
+        "reply": [
+          "354 End data with <CR><LF>.<CR><LF>"
+        ]
+      },
+      {
+        "send": {
+          "raw": "Subject: hi\r\n\r\n..dot\r\n.\nbare\n.\r\nlast\r\n.\r\n"
+        },
+        "reply": [
+          "250 OK: message queued"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<s@d.test>",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "RCPT TO:<u@d.test>",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "DATA",
+        "reply": [
+          "354 End data with <CR><LF>.<CR><LF>"
+        ]
+      },
+      {
+        "send": {
+          "raw": "Subject: big\r\n\r\nyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\r\n.\r\n"
+        },
+        "reply": [
+          "552 Message exceeds maximum permitted size"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<s@d.test>",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "RCPT TO:<u@d.test>",
+        "reply": [
+          "250 Accepted"
+        ]
+      },
+      {
+        "send": "DATA",
+        "reply": [
+          "354 End data with <CR><LF>.<CR><LF>"
+        ]
+      },
+      {
+        "send": {
+          "raw": ".\r\n"
+        },
+        "reply": [
+          "250 OK: message queued"
+        ]
+      },
+      {
+        "send": "QUIT",
+        "reply": [
+          "221 Bye"
+        ]
+      }
+    ],
+    "messages": [
+      "U3ViamVjdDogaGkNCg0KLmRvdA0KLgpiYXJlCi4NCmxhc3QNCg==",
+      "U3ViamVjdDogYmlnDQoNCnl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl5eXkNCg==",
+      ""
+    ]
+  },
+  {
+    "config": "inbound",
+    "name": "http",
+    "early": false,
+    "exchanges": [
+      {
+        "send": null,
+        "reply": [
+          "220 mx.test ESMTP mx.test ESMTP CADUCEUS"
+        ]
+      },
+      {
+        "send": "GET / HTTP/1.1",
+        "reply": [
+          "421 HTTP requests not allowed"
+        ]
+      }
+    ],
+    "messages": []
+  },
+  {
+    "config": "inbound",
+    "name": "unrecognized",
+    "early": false,
+    "exchanges": [
+      {
+        "send": null,
+        "reply": [
+          "220 mx.test ESMTP mx.test ESMTP CADUCEUS"
+        ]
+      },
+      {
+        "send": "NOPE0",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      },
+      {
+        "send": "NOPE1",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      },
+      {
+        "send": "NOPE2",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      },
+      {
+        "send": "NOPE3",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      },
+      {
+        "send": "NOPE4",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      },
+      {
+        "send": "NOPE5",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      },
+      {
+        "send": "NOPE6",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      },
+      {
+        "send": "NOPE7",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      },
+      {
+        "send": "NOPE8",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      },
+      {
+        "send": "NOPE9",
+        "reply": [
+          "421 Error: too many unrecognized commands"
+        ]
+      }
+    ],
+    "messages": []
+  },
+  {
+    "config": "inbound",
+    "name": "long-line",
+    "early": false,
+    "exchanges": [
+      {
+        "send": null,
+        "reply": [
+          "220 mx.test ESMTP mx.test ESMTP CADUCEUS"
+        ]
+      },
+      {
+        "send": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "reply": [
+          "500 Error: command not recognized"
+        ]
+      }
+    ],
+    "messages": []
+  },
+  {
+    "config": "inbound",
+    "name": "early",
+    "early": true,
+    "exchanges": [
+      {
+        "send": "EHLO client.test",
+        "reply": [
+          "421 mx.test You talk too soon"
+        ]
+      },
+      {
+        "send": null,
+        "reply": [
+          "<closed>"
+        ]
+      }
+    ],
+    "messages": []
+  },
+  {
+    "config": "submission",
+    "name": "auth",
+    "early": false,
+    "exchanges": [
+      {
+        "send": null,
+        "reply": [
+          "220 smtp.test ESMTP smtp.test ESMTP CADUCEUS submission"
+        ]
+      },
+      {
+        "send": "AUTH PLAIN x",
+        "reply": [
+          "503 Error: send HELO/EHLO first"
+        ]
+      },
+      {
+        "send": "EHLO client.test",
+        "reply": [
+          "250-smtp.test Nice to meet you, [127.0.0.1]",
+          "250-PIPELINING",
+          "250-8BITMIME",
+          "250-SMTPUTF8",
+          "250-AUTH PLAIN LOGIN",
+          "250-STARTTLS",
+          "250 SIZE 64"
+        ]
+      },
+      {
+        "send": "MAIL FROM:<a@b.test>",
+        "reply": [
+          "530 Error: authentication Required"
+        ]
+      },
+      {
+        "send": "AUTH CRAM-MD5",
+        "reply": [
+          "504 Error: Unrecognized authentication type"
+        ]
+      },
+      {
+        "send": "AUTH XOAUTH2 x",
+        "reply": [
+          "504 Error: Unrecognized authentication type"
+        ]
+      },
+      {
+        "send": "AUTH",
+        "reply": [
+          "504 Error: Unrecognized authentication type"
+        ]
+      },
+      {
+        "send": "AUTH PLAIN a b",
+        "reply": [
+          "501 Error: syntax: AUTH PLAIN token"
+        ]
+      },
+      {
+        "send": "AUTH PLAIN bm9udWxscw==",
+        "reply": [
+          "500 Error: invalid userdata"
+        ]
+      },
+      {
+        "send": "AUTH PLAIN AHVzZXIAcGFzcw==",
+        "reply": [
+          "535 refused PLAIN user pass"
+        ]
+      },
+      {
+        "send": "AUTH PLAIN",
+        "reply": [
+          "334 "
+        ]
+      },
+      {
+        "send": "*",
+        "reply": [
+          "501 Authentication aborted"
+        ]
+      },
+      {
+        "send": "AUTH PLAIN",
+        "reply": [
+          "334 "
+        ]
+      },
+      {
+        "send": "AHVzZXIAcGFzcw==",
+        "reply": [
+          "535 refused PLAIN user pass"
+        ]
+      },
+      {
+        "send": "AUTH LOGIN",
+        "reply": [
+          "334 VXNlcm5hbWU6"
+        ]
+      },
+      {
+        "send": "dXNlcg==",
+        "reply": [
+          "334 UGFzc3dvcmQ6"
+        ]
+      },
+      {
+        "send": "cGFzcw==",
+        "reply": [
+          "535 refused LOGIN user pass"
+        ]
+      },
+      {
+        "send": "AUTH LOGIN",
+        "reply": [
+          "334 VXNlcm5hbWU6"
+        ]
+      },
+      {
+        "send": "",
+        "reply": [
+          "500 Error: missing username"
+        ]
+      },
+      {
+        "send": "AUTH LOGIN dXNlcg==",
+        "reply": [
+          "334 UGFzc3dvcmQ6"
+        ]
+      },
+      {
+        "send": "*",
+        "reply": [
+          "501 Authentication aborted"
+        ]
+      }
+    ],
+    "messages": []
+  },
+  {
+    "config": "submission",
+    "name": "unauthenticated",
+    "early": false,
+    "exchanges": [
+      {
+        "send": null,
+        "reply": [
+          "220 smtp.test ESMTP smtp.test ESMTP CADUCEUS submission"
+        ]
+      },
+      {
+        "send": "NOOP",
+        "reply": [
+          "250 OK"
+        ]
+      },
+      {
+        "send": "NOOP",
+        "reply": [
+          "250 OK"
+        ]
+      },
+      {
+        "send": "NOOP",
+        "reply": [
+          "250 OK"
+        ]
+      },
+      {
+        "send": "NOOP",
+        "reply": [
+          "250 OK"
+        ]
+      },
+      {
+        "send": "NOOP",
+        "reply": [
+          "250 OK"
+        ]
+      },
+      {
+        "send": "NOOP",
+        "reply": [
+          "250 OK"
+        ]
+      },
+      {
+        "send": "NOOP",
+        "reply": [
+          "250 OK"
+        ]
+      },
+      {
+        "send": "NOOP",
+        "reply": [
+          "250 OK"
+        ]
+      },
+      {
+        "send": "NOOP",
+        "reply": [
+          "250 OK"
+        ]
+      },
+      {
+        "send": "NOOP",
+        "reply": [
+          "421 Error: too many unauthenticated commands"
+        ]
+      }
+    ],
+    "messages": []
+  }
+]

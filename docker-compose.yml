@@ -1,0 +1,66 @@
+# Local standalone mail-server test.
+#
+#   docker compose up --build
+#
+# Then open the webmail at http://localhost:8080 (seeded admin@caduceus.com)
+# and send a test message to port 25:
+#
+#   bun scripts/send-test-mail.mjs admin@caduceus.com localhost 25
+#   # or: swaks --to admin@caduceus.com --server localhost:25
+#
+# The image's entry point is the Go binary (`caduceus entry`); `serve` starts
+# the FYLO owner, the Go server under `ty serve` and the mail services. Until a
+# Tachyon release carries the Go-server features, build with an unreleased ty:
+#
+#   docker build --build-context tachyon-override=<dir holding a Linux ty> .
+#
+# The container runs as non-root (UID 65532) and cannot bind ports <1024, so the
+# inbound SMTP daemon listens on 2525 inside and the host maps 25 -> 2525.
+services:
+  caduceus:
+    build: .
+    cap_add:
+      - CHOWN
+    command: ["serve"]
+    ports:
+      - "8080:8080"   # webmail + API
+      - "25:2525"     # inbound MX  (host 25 -> container 2525)
+      - "587:2587"    # submission  (optional; needs MAIL_SUBMISSION_ENABLED + TLS)
+    volumes:
+      # Mount the seeded dev database in as the FYLO data root. Writes (new mail)
+      # persist back to ./db on the host. The prod image never COPYs db/.
+      - ./db:/data/caduceus
+      # The identity deployment holds the signing keys every issued token was
+      # verified against. It is a named volume so a restart keeps them.
+      - sesame-deployment:/data/sesame
+    environment:
+      # A local test deployment: the production gate refuses the console
+      # adapter and test routes below, so this is not NODE_ENV=production.
+      # `ty serve` then also rebuilds the bundle at start.
+      NODE_ENV: development
+      # Secrets — dev-only values; the seed scripts default to this exact secret.
+      INBOUND_WEBHOOK_SECRET: caduceus-e2e-inbound-secret
+      # Development-only stable credential key. Production must inject a
+      # unique random key and back it up independently from the FYLO volume.
+      EXTERNAL_ACCOUNT_CREDENTIAL_KEYS: '{"1":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}'
+      EXTERNAL_ACCOUNT_ACTIVE_KEY: "1"
+      # Identity. The deployment is created by the entrypoint on first start
+      # and persists in the mounted volume; the keys inside it are what every
+      # issued token was verified against.
+      SESAME_BINARY: /usr/local/bin/sesame
+      SESAME_DEPLOYMENT: /data/sesame
+      SESAME_ISSUER: https://localhost:8080
+      SESAME_REDIRECT_URI: https://localhost:8080/auth/callback
+      # Standalone mail server: receive over SMTP, no external provider.
+      MAIL_SERVER_ENABLED: "true"
+      SMTP_INBOUND_PORT: "2525"
+      MAIL_HOSTNAME: mail.caduceus.local
+      # Skip SPF/DKIM/DMARC on localhost sends (no real DNS for the sender domain).
+      MAIL_AUTH_VERIFY: "off"
+      # Local compose logs outbound messages. Production defaults to direct-MX.
+      SMTP_ADAPTER: console
+      # Let the webmail seed script / test tools reach the API from the host.
+      CADUCEUS_ENABLE_TEST_ROUTES: "true"
+
+volumes:
+  sesame-deployment:

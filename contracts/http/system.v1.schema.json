@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caduceus.del.ma/contracts/http/system.v1.schema.json",
+  "title": "CADUCEUS v1 system response",
+  "type": "object",
+  "required": ["apiVersion", "status", "startedAt", "uptimeMs", "build", "requestId"],
+  "properties": {
+    "apiVersion": { "const": "v1" },
+    "status": { "enum": ["starting", "ready"] },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "uptimeMs": { "type": "integer", "minimum": 0 },
+    "requestId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$"
+    },
+    "build": {
+      "type": "object",
+      "required": ["name", "version", "commit", "built_at", "go_version", "os", "arch"],
+      "properties": {
+        "name": { "const": "caduceus" },
+        "version": { "type": "string", "minLength": 1 },
+        "commit": { "type": "string", "minLength": 1 },
+        "built_at": { "type": "string", "minLength": 1 },
+        "go_version": { "type": "string", "minLength": 1 },
+        "os": { "type": "string", "minLength": 1 },
+        "arch": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

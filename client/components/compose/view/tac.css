@@ -1,0 +1,567 @@
+  .compose-panel {
+    position: relative;
+    max-width: 920px;
+    width: 100%;
+    max-height: calc(100dvh - var(--app-topbar-height, 56px) - 3rem);
+    margin: 1.5rem auto;
+    padding: 0 1.5rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .compose-attachment-drop {
+    position: absolute;
+    z-index: 40;
+    inset: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.35rem;
+    border: 2px dashed var(--ms-primary);
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--ms-primary-container) 94%, transparent);
+    color: var(--ms-on-primary-container);
+    pointer-events: none;
+    text-align: center;
+  }
+
+  .compose-attachment-drop span { font-size: var(--ms-font-sm, 0.75rem); }
+  @media (max-width: 760px) {
+    .compose-panel {
+      max-width: none;
+      max-height: calc(100dvh - 52px);
+      margin: 0;
+      padding: 1rem max(1rem, env(safe-area-inset-right)) calc(1rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+    }
+  }
+
+  /* ── Rich text toolbar ────────────────────────────────────────────── */
+  .compose-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 44px;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--ms-outline-variant);
+    border-bottom: none;
+    border-radius: var(--ms-shape-card, 4px) var(--ms-shape-card, 4px) 0 0;
+    background: var(--ms-surface-container-low);
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .compose-format-select {
+    flex: 0 0 auto;
+    min-height: 32px;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: var(--ms-shape-sharp, 4px);
+    background: var(--ms-surface);
+    color: var(--ms-on-surface);
+    font: inherit;
+    font-size: var(--ms-font-sm, 0.75rem);
+  }
+  .compose-block-select { width: 6.5rem; }
+  .compose-font-select { width: 5.75rem; }
+  .compose-size-select { width: 3.5rem; }
+  .compose-color-picker {
+    flex: 0 0 auto;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--ms-shape-sharp, 4px);
+  }
+  .compose-color-picker input { width: 24px; height: 24px; padding: 2px; border: 0; background: transparent; }
+
+.toolbar-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--ms-on-surface-variant);
+    border-radius: var(--ms-shape-sharp, 4px);
+    cursor: pointer;
+    font-size: var(--ms-font-base, 0.875rem);
+    transition: background 150ms, color 150ms;
+  }
+
+  .toolbar-btn:hover {
+    background: var(--ms-surface-container-high);
+    color: var(--ms-on-surface);
+  }
+
+  .toolbar-sep {
+    width: 1px;
+    height: 20px;
+    background: var(--ms-outline-variant);
+    margin: 0 4px;
+  }
+
+  .compose-translation-language { display: inline-flex; flex: 0 0 auto; align-items: center; }
+  .compose-translation-language select {
+    width: 7rem;
+    min-height: 2rem;
+    padding: 0 1.5rem 0 0.45rem;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: var(--ms-shape-sharp, 4px);
+    background: var(--ms-surface);
+    color: var(--ms-on-surface);
+    font: inherit;
+    font-size: var(--ms-font-sm, 0.75rem);
+  }
+  .compose-translate-btn { flex: 0 0 auto; width: auto; min-width: 2.5rem; padding-inline: 0.35rem; font-weight: 600; }
+  .compose-translation-status {
+    margin: 0;
+    padding: 0.45rem 0.625rem;
+    border-inline: 1px solid var(--ms-outline-variant);
+    background: var(--ms-primary-container);
+    color: var(--ms-on-primary-container);
+    font-size: var(--ms-font-sm, 0.75rem);
+  }
+  .compose-translation-error { background: var(--ms-error-container); color: var(--ms-on-error-container); }
+
+  .attachment-input {
+    display: none;
+  }
+
+  .grammar-toggle { position: relative; width: 38px; font-weight: 700; }
+  .grammar-toggle.enabled { background: var(--ms-primary-container); color: var(--ms-on-primary-container); }
+  .grammar-count {
+    position: absolute;
+    top: -3px;
+    inset-inline-end: -3px;
+    min-width: 16px;
+    padding: 1px 4px;
+    border-radius: 999px;
+    background: var(--ms-error);
+    color: var(--ms-on-error);
+    font-size: 9px;
+    line-height: 14px;
+  }
+
+  .grammar-panel {
+    display: grid;
+    gap: 0.65rem;
+    margin: -0.5rem 0 1rem;
+    padding: 0.75rem;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: var(--ms-shape-card, 4px);
+    background: var(--ms-surface-container-low);
+  }
+  .grammar-panel[hidden] { display: none; }
+  .grammar-panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+  .grammar-panel-heading > div,
+  .grammar-panel-heading label { display: flex; flex-direction: column; gap: 0.2rem; }
+  .grammar-panel-heading span,
+  .grammar-privacy { color: var(--ms-on-surface-variant); font-size: var(--ms-font-xs, 0.6875rem); }
+  .grammar-panel-heading select { min-height: 36px; padding: 0 0.5rem; border: 1px solid var(--ms-outline-variant); border-radius: 4px; background: var(--ms-surface); color: var(--ms-on-surface); }
+  .grammar-issues { display: grid; gap: 0.5rem; }
+  .grammar-issue { display: grid; gap: 0.35rem; padding: 0.6rem; border: 1px solid var(--ms-outline-variant); border-radius: 4px; background: var(--ms-surface); }
+  .grammar-issue-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+  .grammar-issue-heading button { border: 0; background: transparent; color: var(--ms-primary); font: inherit; font-weight: 700; text-align: start; cursor: pointer; }
+  .grammar-issue-heading span { color: var(--ms-on-surface-variant); font-size: var(--ms-font-xs, 0.6875rem); }
+  .grammar-issue p { margin: 0; color: var(--ms-on-surface-variant); font-size: var(--ms-font-sm, 0.75rem); }
+  .grammar-issue-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .grammar-issue-actions button { min-height: 32px; padding: 0.25rem 0.55rem; border: 1px solid var(--ms-outline-variant); border-radius: 4px; background: transparent; color: var(--ms-on-surface); font: inherit; font-size: var(--ms-font-sm, 0.75rem); cursor: pointer; }
+  .grammar-issue-actions button:hover,
+  .grammar-issue-actions button:focus-visible { background: var(--ms-primary-container); color: var(--ms-on-primary-container); }
+  .grammar-ignore { margin-inline-start: auto; color: var(--ms-on-surface-variant) !important; }
+  .grammar-privacy { margin: 0; line-height: 1.45; }
+
+
+  .compose-identity-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(180px, 1fr)) auto;
+    align-items: end;
+    gap: 0.625rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .compose-native-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.25rem;
+    color: var(--ms-on-surface-variant);
+    font-size: var(--ms-font-sm, 0.75rem);
+  }
+
+  .compose-native-field select {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 0.65rem;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: var(--ms-shape-sharp, 4px);
+    background: var(--ms-surface-container-lowest, var(--ms-surface));
+    color: var(--ms-on-surface);
+    font: inherit;
+  }
+
+  .compose-tracking {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0 0 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: var(--ms-shape-card, 4px);
+    background: var(--ms-surface-container-low);
+  }
+
+  .compose-tracking legend {
+    padding: 0 0.3rem;
+    color: var(--ms-on-surface);
+    font-size: var(--ms-font-sm, 0.75rem);
+    font-weight: 700;
+  }
+
+  .compose-tracking-options,
+  .compose-send-options {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .compose-tracking-options label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    gap: 0.4rem;
+    color: var(--ms-on-surface);
+    font-size: var(--ms-font-base, 0.875rem);
+    cursor: pointer;
+  }
+
+  .compose-tracking-options input { cursor: pointer; }
+
+  .compose-tracking p {
+    margin: 0;
+    color: var(--ms-on-surface-variant);
+    font-size: var(--ms-font-xs, 0.6875rem);
+    line-height: 1.45;
+  }
+
+  .compose-send-options { margin-bottom: 0.75rem; }
+
+  .follow-up-reminder-picker {
+    display: grid;
+    gap: 0.75rem;
+    margin: -0.25rem 0 0.9rem;
+    padding: 0.8rem;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: var(--ms-shape-card, 4px);
+    background: var(--ms-surface-container-low);
+  }
+
+  .follow-up-reminder-heading,
+  .follow-up-reminder-presets,
+  .follow-up-reminder-custom {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .follow-up-reminder-heading { justify-content: space-between; }
+
+  .follow-up-reminder-custom span {
+    color: var(--ms-on-surface-variant);
+    font-size: var(--ms-font-sm, 0.75rem);
+  }
+
+  .follow-up-reminder-custom input {
+    min-height: 40px;
+    max-width: 100%;
+    padding: 0 0.6rem;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: var(--ms-shape-sharp, 4px);
+    background: var(--ms-surface-container-lowest, var(--ms-surface));
+    color: var(--ms-on-surface);
+    font: inherit;
+  }
+
+  .follow-up-reminder-set { justify-self: start; }
+
+  .compose-recipient-field {
+    position: relative;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .recipient-suggestions {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 2px);
+    inset-inline: 0;
+    max-height: min(320px, 45dvh);
+    overflow-y: auto;
+    padding: 0.25rem;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: var(--ms-shape-card, 4px);
+    background: var(--ms-surface);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.2);
+  }
+
+  .recipient-suggestions[hidden] { display: none; }
+
+  .recipient-suggestion {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.4rem 0.55rem;
+    border: 0;
+    border-radius: var(--ms-shape-sharp, 4px);
+    color: var(--ms-on-surface);
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    text-align: start;
+  }
+
+  .recipient-suggestion:hover,
+  .recipient-suggestion.active {
+    background: var(--ms-secondary-container);
+    color: var(--ms-on-secondary-container);
+  }
+
+  .recipient-suggestion-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--ms-primary-container);
+    color: var(--ms-on-primary-container);
+    font-size: var(--ms-font-xs, 0.6875rem);
+    font-weight: 800;
+  }
+
+  .recipient-suggestion-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .recipient-suggestion-copy strong,
+  .recipient-suggestion-copy span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .recipient-suggestion-copy span {
+    color: var(--ms-on-surface-variant);
+    font-size: var(--ms-font-sm, 0.75rem);
+  }
+
+  /* ── Contenteditable editor ───────────────────────────────────────── */
+.compose-editor-frame {
+    display: block;
+    width: 100%;
+    min-height: 360px;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: 0 0 var(--ms-shape-card, 4px) var(--ms-shape-card, 4px);
+    background: var(--ms-surface);
+    margin-bottom: 1rem;
+  }
+
+  .compose-editor-frame:focus-within {
+    border-color: var(--ms-primary);
+    outline: 1px solid var(--ms-primary);
+  }
+
+  .compose-quoted-text-control,
+  .compose-inline-image-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: -0.5rem 0 1rem;
+  }
+  .compose-quoted-text-control[hidden],
+  .compose-inline-image-controls[hidden] { display: none; }
+  .compose-quoted-text-control button,
+  .compose-inline-image-controls button {
+    min-height: 32px;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: var(--ms-shape-sharp, 4px);
+    background: var(--ms-surface-container-low);
+    color: var(--ms-on-surface);
+  }
+  .compose-inline-image-controls span {
+    max-width: 16rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: var(--ms-font-sm, 0.75rem);
+  }
+
+  .attachment-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: -0.25rem 0 1rem;
+  }
+
+  .attachment-pill {
+    min-height: 36px;
+    max-width: min(100%, 320px);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.35rem 0.25rem 0.75rem;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: var(--ms-shape-card, 4px);
+    background: var(--ms-surface-container-low);
+    color: var(--ms-on-surface);
+  }
+
+  .attachment-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+  }
+
+  .attachment-size {
+    flex: 0 0 auto;
+    color: var(--ms-on-surface-variant);
+    font-size: 0.75rem;
+  }
+  .attachment-kind {
+    flex: 0 0 auto;
+    padding: 0.1rem 0.35rem;
+    border-radius: 999px;
+    background: var(--ms-primary-container);
+    color: var(--ms-on-primary-container);
+    font-size: 0.6875rem;
+  }
+
+  .attachment-remove {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--ms-shape-sharp, 4px);
+    background: transparent;
+    color: var(--ms-on-surface-variant);
+    cursor: pointer;
+  }
+
+  .attachment-remove:hover {
+    background: var(--ms-surface-container-high);
+    color: var(--ms-on-surface);
+  }
+
+  .compose-template-row {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+
+  .compose-template-select {
+    width: min(100%, 260px);
+  }
+
+  .compose-template-search {
+    width: min(100%, 220px);
+    min-height: 40px;
+    border: 1px solid var(--ms-outline-variant);
+    border-radius: var(--ms-shape-sharp, 4px);
+    background: var(--ms-surface-container-lowest, var(--ms-surface));
+    color: var(--ms-on-surface);
+    padding: 0 0.75rem;
+    font: inherit;
+  }
+
+  .compose-template-status {
+    margin: -0.35rem 0 0.75rem;
+    color: var(--ms-on-surface-variant);
+  }
+
+
+
+  @media (max-width: 520px) {
+    .toolbar-btn {
+      flex: 0 0 44px;
+      width: 44px;
+      height: 44px;
+    }
+
+    .attachment-remove {
+      width: 44px;
+      height: 44px;
+    }
+
+    .compose-template-row {
+      align-items: stretch;
+    }
+
+    .compose-template-select,
+    .compose-template-search,
+    .compose-template-row w-btn {
+      width: 100%;
+    }
+  }
+.compose-panel.initializing {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+:root[data-rich-composer="disabled"] .compose-toolbar,
+:root[data-rich-composer="disabled"] [data-inline-image-controls],
+:root[data-rich-composer="disabled"] [data-quoted-text-control] {
+  display: none !important;
+}
+
+.compose-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.compose-heading p { margin: 0; font-weight: 600; }
+
+.compose-draft-status {
+  color: var(--ms-on-surface-variant);
+  min-height: 1.25rem;
+  text-align: end;
+}
+
+.compose-draft-conflict {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--ms-error);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--ms-error) 10%, var(--ms-surface));
+  color: var(--ms-on-surface);
+}
+
+.compose-draft-conflict > div:first-child { display: grid; gap: 0.2rem; }
+.compose-draft-conflict-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+@media (max-width: 640px) {
+  .compose-identity-row { grid-template-columns: minmax(0, 1fr); align-items: stretch; }
+  .compose-draft-conflict { align-items: stretch; flex-direction: column; }
+}

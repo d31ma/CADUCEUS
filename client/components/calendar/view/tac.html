@@ -1,0 +1,277 @@
+<div class="calendar-page">
+  <span hidden :data-browser="calendarBrowser.ready"></span>
+  <header class="calendar-toolbar">
+    <div class="calendar-title-row">
+      <h1 class="calendar-title w-text-title-large">{calendar.titleLabel}</h1>
+      <div class="calendar-nav">
+        <w-btn variant="icon" on:click="calendar.goToToday()" aria-label="Today" title="Today">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;">
+            <circle cx="12" cy="12" r="9"/>
+            <circle cx="12" cy="12" r="2" fill="currentColor"/>
+          </svg>
+        </w-btn>
+        <w-btn variant="icon" on:click="calendar.shiftCursor(-1)" aria-label="Previous month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </w-btn>
+        <w-btn variant="icon" on:click="calendar.shiftCursor(1)" aria-label="Next month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </w-btn>
+      </div>
+    </div>
+    <div class="calendar-actions">
+      <div class="calendar-view-switcher" role="tablist" aria-label="Calendar view">
+        <loop :for="mode of calendar.tabs">
+          <button type="button" role="tab" :aria-selected="mode.selected" :tabindex="mode.tabIndex" :class="mode.className" on:click="calendar.setViewMode(mode.id)">{mode.label}</button>
+        </loop>
+      </div>
+      <!-- Team overlay toggle — when on, /calendar/team-events events
+           paint on the grid alongside the caller's own events with a
+           distinct color so attribution is clear. -->
+      <label class="calendar-toggle" :title="calendar.showTeam ? 'Hide teammates' : 'Show teammates'">
+        <input type="checkbox" :checked="calendar.showTeam" on:click="calendar.toggleShowTeam()" />
+        <span>Show team</span>
+      </label>
+      <w-btn variant="filled" data-calendar-create on:click="calendar.openCreateModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New event
+      </w-btn>
+    </div>
+  </header>
+
+  <logic :if="calendar.viewMode === 'month'">
+  <div class="calendar-month-grid">
+    <div class="calendar-weekday-row">
+      <loop :for="day of calendar.weekdayLabels">
+        <div class="calendar-weekday">{day}</div>
+      </loop>
+    </div>
+    <loop :for="week of calendar.weeks">
+      <div class="calendar-week-row">
+        <loop :for="cell of week">
+          <div :class="cell.className" :data-calendar-date="cell.date" on:click="calendar.openCell(cell.date, $event.target.classList.value)">
+            <div class="calendar-cell-header">
+              <span class="calendar-cell-day">{cell.dayLabel}</span>
+            </div>
+            <div class="calendar-cell-events">
+              <loop :for="ev of cell.events">
+                <button :class="ev.className" :data-calendar-event-id="ev.id" :title="ev.tooltip" :draggable="ev.draggable" on:click="calendar.openEvent(ev.id)">
+                  <span class="calendar-event-time">{ev.timeLabel}</span>
+                  <span class="calendar-event-title">{ev.title}</span>
+                  <logic :if="ev.isRecurring"><span class="calendar-recurrence-indicator" role="img" aria-label="Recurring event">↻</span></logic>
+                </button>
+              </loop>
+            </div>
+          </div>
+        </loop>
+      </div>
+    </loop>
+  </div>
+  </logic>
+
+  <logic :if="calendar.viewMode !== 'month' && calendar.viewMode !== 'split' && calendar.viewMode !== 'agenda'">
+    <div :class="'calendar-agenda-grid calendar-agenda-grid-' + calendar.viewMode">
+      <loop :for="day of calendar.agendaDays">
+        <section :class="'calendar-agenda-column ' + (day.isToday ? 'today' : '')">
+          <header class="calendar-agenda-header">{day.label}</header>
+          <div class="calendar-all-day-drop-zone" role="group" :data-calendar-all-day-date="day.date" :aria-label="'All-day events for ' + day.label">
+            <span class="calendar-all-day-label">All day</span>
+            <loop :for="ev of day.allDayEvents">
+              <button :class="ev.className + ' calendar-agenda-event lazy-list-item'" :data-calendar-event-id="ev.id" :draggable="ev.draggable" on:click="calendar.openEvent(ev.id)">
+                <span class="calendar-event-title">{ev.title}</span>
+                <logic :if="ev.isRecurring"><span class="calendar-recurrence-indicator" role="img" aria-label="Recurring event">↻</span></logic>
+              </button>
+            </loop>
+          </div>
+          <div class="calendar-agenda-body" :data-calendar-date="day.date">
+            <logic :if="day.timedEvents.length === 0">
+              <div class="calendar-agenda-empty">No events</div>
+            </logic>
+            <loop :for="ev of day.timedEvents">
+              <button :class="ev.className + ' calendar-agenda-event lazy-list-item'" :data-calendar-event-id="ev.id" :draggable="ev.draggable" on:click="calendar.openEvent(ev.id)">
+                <span class="calendar-event-time">{ev.timeLabel}</span>
+                <span class="calendar-event-title">{ev.title}</span>
+                <logic :if="ev.isRecurring"><span class="calendar-recurrence-indicator" role="img" aria-label="Recurring event">↻</span></logic>
+              </button>
+            </loop>
+          </div>
+        </section>
+      </loop>
+    </div>
+  </logic>
+
+  <logic :if="calendar.viewMode === 'agenda'">
+    <div class="calendar-agenda-list">
+      <logic :if="calendar.agendaListDays.length === 0">
+        <div class="calendar-agenda-list-empty">No events</div>
+      </logic>
+      <loop :for="day of calendar.agendaListDays">
+        <section :class="'calendar-agenda-list-day ' + (day.isToday ? 'today' : '')">
+          <header class="calendar-agenda-list-header">{day.label}</header>
+          <div class="calendar-agenda-list-events">
+            <loop :for="ev of day.events">
+              <button :class="ev.className + ' calendar-agenda-list-event lazy-list-item'" :data-calendar-event-id="ev.id" :draggable="ev.draggable" on:click="calendar.openEvent(ev.id)">
+                <span class="calendar-event-time">{ev.timeLabel}</span>
+                <span class="calendar-event-title">{ev.title}</span>
+                <logic :if="ev.isRecurring"><span class="calendar-recurrence-indicator" role="img" aria-label="Recurring event">↻</span></logic>
+              </button>
+            </loop>
+          </div>
+        </section>
+      </loop>
+    </div>
+  </logic>
+
+  <logic :if="calendar.viewMode === 'split'">
+    <div class="calendar-split-grid">
+      <loop :for="column of calendar.splitColumns">
+        <section class="calendar-split-column">
+          <header class="calendar-agenda-header">{column.owner}</header>
+          <div class="calendar-agenda-body">
+            <logic :if="column.events.length === 0">
+              <div class="calendar-agenda-empty">No events</div>
+            </logic>
+            <loop :for="ev of column.events">
+              <button :class="ev.className + ' calendar-agenda-event lazy-list-item'" :data-calendar-event-id="ev.id" :draggable="ev.draggable" on:click="calendar.openEvent(ev.id)">
+                <span class="calendar-event-time">{ev.timeLabel}</span>
+                <span class="calendar-event-title">{ev.title}</span>
+                <logic :if="ev.isRecurring"><span class="calendar-recurrence-indicator" role="img" aria-label="Recurring event">↻</span></logic>
+              </button>
+            </loop>
+          </div>
+        </section>
+      </loop>
+    </div>
+  </logic>
+
+  <logic :if="calendar.quickCreateOpen">
+    <div class="quick-event-backdrop" on:click="browserPage.backdrop($event, 'calendar-quick-event')">
+      <form class="quick-event-popover" role="dialog" aria-modal="true" aria-labelledby="quick-event-title" on:submit="browserPage.submit($event, 'calendar-quick-event')">
+        <h2 id="quick-event-title" class="w-text-title-medium">Quick event</h2>
+        <p class="quick-event-date">{calendar.quickCreateDateLabel}</p>
+        <w-text-field label="Title" :value="calendar.quickCreateTitle" on:input="calendar.updateQuickCreateTitle($event.target.value)" style="width:100%;"></w-text-field>
+        <logic :if="calendar.quickCreateError"><p class="event-modal-error">{calendar.quickCreateError}</p></logic>
+        <div class="quick-event-actions">
+          <w-btn variant="text" type="button" on:click="calendar.openQuickCreateDetails()">More options</w-btn>
+          <w-btn variant="filled" type="button" :disabled="calendar.quickCreateSaving" on:click="calendar.createQuickEvent()">{calendar.quickCreateSaving ? 'Creating…' : 'Create'}</w-btn>
+        </div>
+      </form>
+    </div>
+  </logic>
+
+  <!-- Create/edit event modal -->
+  <logic :if="calendar.modalOpen">
+    <div class="event-modal-backdrop" on:click="browserPage.backdrop($event, 'calendar-event-dialog')">
+      <div id="calendar-event-dialog" class="event-modal" role="dialog" aria-modal="true" aria-labelledby="calendar-event-dialog-title" tabindex="-1">
+        <header class="event-modal-header">
+          <h2 id="calendar-event-dialog-title" class="w-text-title-medium">{calendar.editingReadOnly ? 'Event details' : (calendar.editingID ? 'Edit event' : 'New event')}</h2>
+          <w-btn variant="icon" on:click="calendar.closeModal()" aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </w-btn>
+        </header>
+        <div class="event-modal-body">
+          <logic :if="calendar.editingSeriesID && !calendar.editingReadOnly">
+            <label class="event-modal-field" for="calendar-edit-scope">
+              <span>Apply changes to</span>
+              <select id="calendar-edit-scope" on:change="calendar.updateEditScope($event.target.value)">
+                <option value="instance" :selected="calendar.editScope === 'instance'">This occurrence</option>
+                <option value="series" :selected="calendar.editScope === 'series'">Entire series</option>
+              </select>
+            </label>
+            <p class="event-modal-disclosure">{calendar.editScope === 'instance' ? 'Only this occurrence will change; the rest of the series stays the same.' : 'Changes apply to every occurrence in this series.'}</p>
+          </logic>
+          <logic :if="calendar.editingReadOnly">
+            <p class="event-modal-readonly" role="status">{calendar.editingReadOnlyMessage}</p>
+            <dl class="event-modal-readonly-details">
+              <div>
+                <dt>Title</dt>
+                <dd>{calendar.form.title || 'Untitled event'}</dd>
+              </div>
+              <div>
+                <dt>When</dt>
+                <dd>{calendar.editingWhenLabel}</dd>
+              </div>
+              <logic :if="calendar.form.location">
+                <div>
+                  <dt>Location</dt>
+                  <dd>{calendar.form.location}</dd>
+                </div>
+              </logic>
+              <logic :if="calendar.form.description">
+                <div>
+                  <dt>Description</dt>
+                  <dd class="event-modal-readonly-description">{calendar.form.description}</dd>
+                </div>
+              </logic>
+            </dl>
+          </logic>
+          <logic :if="!calendar.editingReadOnly">
+            <logic :if="!calendar.editingID && calendar.calendarOptions.length > 1">
+              <label class="event-modal-field" for="calendar-target">
+                <span>Calendar</span>
+                <select id="calendar-target" on:change="calendar.updateFormCalendar($event.target.value)">
+                  <loop :for="calendarOption of calendar.calendarOptions">
+                    <option :value="calendarOption.id" :selected="calendar.form.calendarId === calendarOption.id">{calendarOption.label}</option>
+                  </loop>
+                </select>
+              </label>
+            </logic>
+            <w-text-field label="Title" :value="calendar.form.title" on:input="calendar.updateFormTitle($event.target.value)" style="width:100%;margin-bottom:0.75rem;"></w-text-field>
+            <label class="event-modal-all-day">
+              <input type="checkbox" :checked="calendar.form.allDay" on:click="calendar.updateFormAllDay($event.target.checked)" />
+              <span>All day</span>
+            </label>
+            <div class="event-modal-row">
+              <logic :if="calendar.form.allDay">
+                <w-text-field type="date" label="Start" :value="calendar.form.start" on:input="calendar.updateFormStart($event.target.value)" style="flex:1;"></w-text-field>
+                <w-text-field type="date" label="End" :value="calendar.form.end" on:input="calendar.updateFormEnd($event.target.value)" style="flex:1;"></w-text-field>
+              </logic>
+              <logic :if="!calendar.form.allDay">
+                <w-text-field type="datetime-local" label="Start" :value="calendar.form.start" on:input="calendar.updateFormStart($event.target.value)" style="flex:1;"></w-text-field>
+                <w-text-field type="datetime-local" label="End" :value="calendar.form.end" on:input="calendar.updateFormEnd($event.target.value)" style="flex:1;"></w-text-field>
+              </logic>
+            </div>
+            <logic :if="calendar.editScope !== 'instance'">
+              <label class="event-modal-field" for="calendar-repeat">
+                <span>Repeat</span>
+                <select id="calendar-repeat" on:change="calendar.updateFormRepeat($event.target.value)">
+                  <option value="none" :selected="calendar.form.repeat === 'none'">Does not repeat</option>
+                  <option value="daily" :selected="calendar.form.repeat === 'daily'">Daily</option>
+                  <option value="weekly" :selected="calendar.form.repeat === 'weekly'">Weekly</option>
+                  <option value="monthly" :selected="calendar.form.repeat === 'monthly'">Monthly</option>
+                  <option value="yearly" :selected="calendar.form.repeat === 'yearly'">Yearly</option>
+                  <logic :if="calendar.form.repeat === 'custom'"><option value="custom" selected>Custom imported recurrence</option></logic>
+                </select>
+              </label>
+            </logic>
+            <w-text-field label="Location" :value="calendar.form.location" on:input="calendar.updateFormLocation($event.target.value)" style="width:100%;margin:0.75rem 0;"></w-text-field>
+            <w-textarea label="Description" :value="calendar.form.description" on:input="calendar.updateFormDescription($event.target.value)" rows="3" style="width:100%;"></w-textarea>
+            <logic :if="calendar.form.error">
+              <p class="event-modal-error">{calendar.form.error}</p>
+            </logic>
+          </logic>
+        </div>
+        <footer class="event-modal-footer">
+          <logic :if="calendar.editingID && !calendar.editingReadOnly">
+            <w-btn variant="text" on:click="calendarBrowser.confirmDelete(calendar.editingSeriesID)" style="color:var(--ms-error);">Delete</w-btn>
+          </logic>
+          <div style="flex:1;"></div>
+          <w-btn variant="text" on:click="calendar.closeModal()">Cancel</w-btn>
+          <logic :if="!calendar.editingReadOnly">
+            <w-btn variant="filled" :disabled="calendar.form.saving" on:click="calendar.saveEvent()">
+              {calendar.form.saving ? 'Saving…' : (calendar.editingID ? 'Save' : 'Create')}
+            </w-btn>
+          </logic>
+        </footer>
+      </div>
+    </div>
+  </logic>
+</div>

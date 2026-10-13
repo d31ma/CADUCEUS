@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": false,
+    "allowJs": true,
+    "checkJs": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": [
+      "bun-types"
+    ],
+    "paths": {
+      "@/*": [
+        "./tests/support/legacy-server/*"
+      ]
+    }
+  },
+  "include": [
+    "tachyon-env.d.ts",
+    "tests/support/legacy-server/**/*.d.ts",
+    "tests/support/legacy-server/**/*.js",
+    "tests/support/legacy-server/**/*.ts",
+    "scripts/**/*.mjs",
+    "client/**/*.d.ts",
+    "client/**/*.js",
+    "client/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "tests"
+  ]
+}

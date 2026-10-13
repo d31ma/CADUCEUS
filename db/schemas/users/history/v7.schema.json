@@ -1,0 +1,23 @@
+{
+  "email": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "domains": ["^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$"],
+  "role": "^(admin|viewer)$",
+  "aliases?": ["^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"],
+  "calendarVisibility?": "^(private|busy|full)$",
+  "mailboxNames?": { "^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$": "^[^\\u0000-\\u001F\\u007F]{1,64}$" },
+  "remoteImagePolicy?": "^(block|allow)$",
+  "trustedImageSenders?": ["^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"],
+  "interfaceFont?": "^(plex-sans|system|humanist|serif|monospace)$",
+  "composerFont?": "^(interface|plex-sans|system|humanist|serif|monospace)$",
+  "notificationSounds?": {
+    "new-mail": "^(none|chime|bell|pop|pulse)$",
+    "hit-send": "^(none|chime|bell|pop|pulse)$",
+    "send": "^(none|chime|bell|pop|pulse)$",
+    "confirm": "^(none|chime|bell|pop|pulse)$"
+  },
+  "themePreferences?": {
+    "activeTheme": "^(automatic|light|dark|darkside|less-is-more|taiga|ubuntu)$",
+    "lightTheme": "^(light|less-is-more|taiga|ubuntu)$",
+    "darkTheme": "^(dark|darkside)$"
+  }
+}

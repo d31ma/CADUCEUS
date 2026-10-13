@@ -1,0 +1,8 @@
+  .nav-item {
+    margin: 0 0.5rem;
+    border-radius: var(--ms-shape-sharp, 4px);
+  }
+  .nav-item.active {
+    background: var(--ms-secondary-container, #e8ebe6);
+    color: var(--ms-on-secondary-container, #29342f);
+  }

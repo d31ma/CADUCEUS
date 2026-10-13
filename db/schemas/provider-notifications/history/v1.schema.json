@@ -1,0 +1,21 @@
+{
+  "id": "^pnot_[A-Za-z0-9_-]{24}$",
+  "accountId": "^ext_[A-Za-z0-9_-]{20,80}$",
+  "tenantId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "principalId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "ownerAddress": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "stableId": "^[^\\r\\n\\u0000]{1,512}$",
+  "sender": "^[^\\r\\n\\u0000]{0,512}$",
+  "subject": "^[\\s\\S]{0,998}$",
+  "receivedAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "state": "^(queued|claimed|delivered)$",
+  "attempts": "^\\d+$",
+  "notBefore": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "claimToken?": "^[A-Za-z0-9_-]{1,128}$",
+  "claimHolder?": "^[^\\u0000\\r\\n]{1,128}$",
+  "claimExpiresAt?": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "lastCode?": "^[a-z][a-z0-9_]{2,63}$",
+  "createdAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "updatedAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "completedAt?": "^\\d{4}-\\d{2}-\\d{2}T.+Z$"
+}

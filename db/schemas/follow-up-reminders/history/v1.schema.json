@@ -1,0 +1,15 @@
+{
+  "id": "^reminder-[a-z0-9-]+$",
+  "ownerEmail": "^[^@\\s]+@[^@\\s]+$",
+  "domain": "^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.[A-Za-z]{2,}$",
+  "emailId": "^.{1,500}$",
+  "recipient": "^.{1,2000}$",
+  "subject": "^.{0,500}$",
+  "threadKey": "^.{0,500}$",
+  "remindAt": "^\\d+$",
+  "createdAt": "^\\d+$",
+  "status": "^(scheduled|due|completed|dismissed)$",
+  "completedAt?": "^\\d+$",
+  "dueAt?": "^\\d+$",
+  "noticeEmailId?": "^.{1,600}$"
+}

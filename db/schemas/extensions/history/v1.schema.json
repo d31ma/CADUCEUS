@@ -1,0 +1,16 @@
+{
+  "id": "^extension-[A-Za-z0-9_-]{20,80}$",
+  "extensionId": "^[a-z][a-z0-9]*(?:\\.[a-z0-9][a-z0-9-]*){1,5}$",
+  "owner": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "domain": "^[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "kind": "^(plugin|theme)$",
+  "displayName": "^[^\\r\\n\\u0000]{1,80}$",
+  "version": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$",
+  "digest": "^[a-f0-9]{64}$",
+  "manifestJson": "^[\\s\\S]{1,32768}$",
+  "source": "^[\\s\\S]{0,131072}$",
+  "enabled": "^(true|false)$",
+  "trustedAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "installedAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "updatedAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$"
+}

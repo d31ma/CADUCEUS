@@ -1,0 +1,121 @@
+.team-page {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - var(--app-topbar-height, 56px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--ms-surface);
+}
+
+.team-toolbar {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--ms-outline-variant);
+  position: sticky;
+  top: 0;
+  background: var(--ms-surface);
+  z-index: 2;
+}
+
+.team-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.team-count {
+  color: var(--ms-text-subtle);
+  font-size: var(--ms-font-sm, 0.75rem);
+}
+
+.team-empty {
+  display: grid;
+  place-items: center;
+  padding: 3rem 1.5rem;
+  color: var(--ms-on-surface-variant);
+  text-align: center;
+}
+
+.team-roster {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.team-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--ms-outline-variant);
+}
+
+.team-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ms-shape-card, 4px);
+  background: var(--ms-primary-container);
+  color: var(--ms-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--ms-font-base, 0.875rem);
+  font-weight: 700;
+}
+
+.team-meta { min-width: 0; }
+
+.team-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.team-self {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 0.4rem;
+  border-radius: var(--ms-shape-sharp, 4px);
+  background: var(--ms-secondary-container);
+  color: var(--ms-on-secondary-container);
+  font-size: var(--ms-font-xs, 0.6875rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.team-email {
+  color: var(--ms-text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ms-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 760px) {
+  .team-toolbar { padding: 0.75rem 1rem; }
+  .team-row { padding: 0.625rem 1rem; }
+}
+
+/* ── Shared rules this view uses (moved from shared/assets/styles.css) ── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 3rem 2rem; text-align: center; color: var(--ms-text-subtle); min-height: 240px;
+}
+.empty-state-title { font-size: 1rem; font-weight: 500; margin-bottom: 0.25rem; color: var(--ms-text); }
+.empty-state-subtitle { font-size: 0.8125rem; max-width: 280px; }
+:root[data-screenshot-mode="true"] * { color: transparent !important; }

@@ -1,0 +1,37 @@
+{
+  "version": "v1",
+  "mediaType": "application/problem+json",
+  "shape": {
+    "type": "absolute URI identifying the error class",
+    "title": "stable human-readable class",
+    "status": "HTTP status",
+    "code": "stable machine-readable CADUCEUS code",
+    "detail": "safe instance-specific explanation",
+    "instance": "request path",
+    "requestId": "trace identifier"
+  },
+  "codes": {
+    "invalid_request": 400,
+    "authentication_required": 401,
+    "authentication_failed": 401,
+    "reauthentication_required": 403,
+    "authorization_denied": 403,
+    "tenant_access_denied": 403,
+    "resource_not_found": 404,
+    "conflict": 409,
+    "message_rejected": 422,
+    "rate_limited": 429,
+    "payload_too_large": 413,
+    "dependency_unavailable": 503,
+    "storage_unavailable": 503,
+    "internal_error": 500
+  },
+  "compatibility": {
+    "legacyUntilPhase": 7,
+    "legacyShape": {
+      "error": "string",
+      "markers": ["unauthorized", "forbidden", "notFound", "blocked", "rateLimited"]
+    },
+    "rule": "New clients consume code and status. Human-readable detail is not an API contract."
+  }
+}

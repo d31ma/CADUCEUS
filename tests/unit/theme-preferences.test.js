@@ -1,0 +1,61 @@
+import { afterEach, describe, expect, it } from 'bun:test'
+import { ThemePreferences } from '../support/legacy-server/shared/users/ThemePreferences.js'
+import { ThemePreferencesUtils } from '../../client/shared/utils/ThemePreferencesUtils.js'
+
+const DARK_THEME_OPTIONS = ThemePreferencesUtils.darkThemeOptions()
+const LIGHT_THEME_OPTIONS = ThemePreferencesUtils.lightThemeOptions()
+const THEME_OPTIONS = ThemePreferencesUtils.themeOptions()
+const applyThemePreferences = (...args) => ThemePreferencesUtils.applyThemePreferences(...args)
+const normalizeThemePreferences = (...args) => ThemePreferencesUtils.normalizeThemePreferences(...args)
+const resolveTheme = (...args) => ThemePreferencesUtils.resolveTheme(...args)
+
+const originalDocument = globalThis.document
+const originalMatchMedia = globalThis.matchMedia
+
+afterEach(() => {
+  globalThis.document = originalDocument
+  globalThis.matchMedia = originalMatchMedia
+})
+
+describe('theme preferences', () => {
+  it('keeps browser and persistence catalogs in lockstep', () => {
+    expect(THEME_OPTIONS.map(theme => theme.id)).toEqual([...ThemePreferences.ACTIVE_THEME_IDS])
+    expect(LIGHT_THEME_OPTIONS.map(theme => theme.id)).toEqual([...ThemePreferences.LIGHT_THEME_IDS])
+    expect(DARK_THEME_OPTIONS.map(theme => theme.id)).toEqual([...ThemePreferences.DARK_THEME_IDS])
+  })
+
+  it('normalizes hostile values and rejects caller-defined theme fields', () => {
+    const hostile = {
+      activeTheme: 'url(https://themes.example.test/steal.css)',
+      lightTheme: 'light; background:red',
+      darkTheme: '../../../theme.css',
+    }
+    expect(normalizeThemePreferences(hostile)).toEqual(ThemePreferences.normalizeThemePreferences(hostile))
+    expect(normalizeThemePreferences(hostile)).toEqual({
+      activeTheme: 'automatic', lightTheme: 'light', darkTheme: 'dark',
+    })
+    expect(ThemePreferences.validateThemePreferences({ activeTheme: 'light', stylesheet: 'https://evil.test/x.css' })).toEqual({
+      ok: false, error: 'Unknown theme preference: stylesheet',
+    })
+  })
+
+  it('resolves automatic light and dark slots and applies only fixed attributes', () => {
+    const attrs = new Map()
+    globalThis.document = {
+      documentElement: { setAttribute: (name, value) => attrs.set(name, value) },
+    }
+    globalThis.matchMedia = () => ({ matches: true })
+    const preferences = { activeTheme: 'automatic', lightTheme: 'taiga', darkTheme: 'darkside' }
+    expect(resolveTheme(preferences, false)).toBe('taiga')
+    expect(resolveTheme(preferences, true)).toBe('darkside')
+    expect(applyThemePreferences(preferences)).toEqual({
+      ...preferences, resolvedTheme: 'darkside', baseMode: 'dark',
+    })
+    expect(Object.fromEntries(attrs)).toEqual({
+      'w-theme': 'dark',
+      'data-theme': 'dark',
+      'data-ui-theme': 'darkside',
+      'data-theme-choice': 'automatic',
+    })
+  })
+})

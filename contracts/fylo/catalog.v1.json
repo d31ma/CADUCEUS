@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 1,
+  "documentCollections": [
+    "domains",
+    "domain-migrations",
+    "emails",
+    "attachments",
+    "raw-messages",
+    "suppressed",
+    "users",
+    "inbox-rules",
+    "mfa-devices",
+    "mfa-sessions",
+    "setup-sessions",
+    "auth-credentials",
+    "auth-transactions",
+    "recovery-codes",
+    "auth-audit-events",
+    "push-subscriptions",
+    "rate-limits",
+    "outbox",
+    "snoozed",
+    "mail-actions",
+    "scheduled",
+    "follow-up-reminders",
+    "templates",
+    "signatures",
+    "calendar-events",
+    "presence",
+    "contacts",
+    "contact-groups",
+    "thread-shares",
+    "mcp-access-tokens",
+    "mcp-audit-events",
+    "extensions"
+  ],
+  "fileCollections": [
+    "attachment-files",
+    "raw-message-files"
+  ]
+}

@@ -1,0 +1,81 @@
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
+import { randomUUID } from 'node:crypto'
+import { AuthBridgeError } from '../shared/auth/AuthBridgeError.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
+
+@RequestRoute("/contacts/{id}")
+@SignedIn
+export class ContactsIdController {
+  /** @type {ContactsService} */
+  @Needs
+  contactsService
+
+  static async remoteContact(token, id) {
+    const contacts = (await ExternalAccounts.contacts(token))?.contacts
+    return Array.isArray(contacts) ? contacts.find(contact => contact?.id === id) || null : null
+  }
+
+  static validIdempotency(value) {
+    const text = typeof value === 'string' ? value.trim() : ''
+    return text && text.length <= 128 && !/[\r\n\0]/.test(text) ? text : ''
+  }
+
+  @GetRoute
+  async get(@FromPath id, request) {
+    return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, auth, context }) => {
+      const app = this
+      const id = String(paths?.id || '')
+      const local = await app.contactsService.get(id, auth.email)
+      if (local) return local
+      const remote = await ContactsIdController.remoteContact(ExternalAccounts.bearerToken(context), id)
+      return remote ?? Respond.r404('Contact not found')
+    })
+  }
+
+  @PutRoute
+  async put(@FromPath id, request) {
+    return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, body, auth, context }) => {
+      try {
+        const app = this
+        const id = String(paths?.id || '')
+        const local = await app.contactsService.update(id, auth.email, body || {})
+        if (local) return local
+        const token = ExternalAccounts.bearerToken(context)
+        const remote = await ContactsIdController.remoteContact(token, id)
+        if (!remote) return Respond.r404('Contact not found')
+        const { idempotencyKey, ...contact } = body || {}
+        const mutation = await ExternalAccounts.mutateContact(token, remote.accountId, {
+          idempotencyKey: ContactsIdController.validIdempotency(idempotencyKey) || `contact-update-${randomUUID()}`,
+          kind: 'update', contactId: remote.id, expectedEtag: remote.etag, contact,
+        })
+        return { ...remote, ...contact, source: 'carddav', syncState: mutation.state, mutationId: mutation.id }
+      } catch (error) {
+        if (error instanceof AuthBridgeError) return ExternalAccounts.accountFailure(error)
+        return Respond.r400(error instanceof Error ? error.message : 'Invalid contact')
+      }
+    })
+  }
+
+  @DeleteRoute
+  async delete(@FromPath id, request) {
+    return RouteRequest.handle(request, { paths: { id }, guard: {} }, async ({ paths, auth, context, query }) => {
+      const app = this
+      const id = String(paths?.id || '')
+      if (await app.contactsService.delete(id, auth.email)) return { deleted: true }
+      try {
+        const token = ExternalAccounts.bearerToken(context)
+        const remote = await ContactsIdController.remoteContact(token, id)
+        if (!remote) return Respond.r404('Contact not found')
+        const mutation = await ExternalAccounts.mutateContact(token, remote.accountId, {
+          idempotencyKey: ContactsIdController.validIdempotency(query?.idempotencyKey) || `contact-delete-${randomUUID()}`,
+          kind: 'delete', contactId: remote.id, expectedEtag: remote.etag, contact: {},
+        })
+        return { deleted: false, pending: true, mutationId: mutation.id, accountId: remote.accountId }
+      } catch (error) {
+        if (error instanceof AuthBridgeError) return ExternalAccounts.accountFailure(error)
+        return Respond.r400(error instanceof Error ? error.message : 'Contact could not be deleted')
+      }
+    })
+  }
+}

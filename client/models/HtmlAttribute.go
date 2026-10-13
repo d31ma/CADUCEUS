@@ -1,0 +1,4 @@
+type HtmlAttribute struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}

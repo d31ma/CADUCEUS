@@ -1,0 +1,18 @@
+{
+  "id": "^sub_[A-Za-z0-9_-]{20,80}$",
+  "idempotencyKey": "^[^\\r\\n\\u0000]{1,128}$",
+  "revision": "^\\d{1,20}$",
+  "accountId": "^ext_[A-Za-z0-9_-]{20,80}$",
+  "tenantId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "principalId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "ownerAddress": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "envelopeFrom": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "recipients": ["^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"],
+  "rawBucketId?": "^[A-Za-z0-9_-]+$",
+  "state": "^(queued|applying|sent|failed|ambiguous|cancelled)$",
+  "attempts": "^\\d{1,5}$",
+  "notBefore?": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "lastCode?": "^[a-z][a-z0-9_]{2,63}$",
+  "createdAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "updatedAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$"
+}

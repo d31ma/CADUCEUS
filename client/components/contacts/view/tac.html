@@ -1,0 +1,250 @@
+<div :class="contacts.pageClass + contactEditor.pageClass">
+  <span hidden :data-sync="contactSync.pending"></span>
+  <header class="contacts-toolbar">
+    <div class="contacts-heading">
+      <h1 class="w-text-title-large">Contacts</h1>
+      <span class="contacts-count">{contacts.countLabel}</span>
+    </div>
+    <label class="contacts-search">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <span class="sr-only">Search contacts</span>
+      <input type="search" placeholder="Search contacts" :value="contacts.query" on:input="contacts.search($event.target.value)" autocomplete="off" />
+    </label>
+    <div class="contacts-toolbar-actions">
+      <input data-contact-import class="contacts-file-input" type="file" aria-label="vCard file to import" tabindex="-1" accept=".vcf,.vcard,text/vcard,text/x-vcard" on:change="contactsBrowser.importFile($event)" />
+      <a data-contact-download class="contacts-file-input" :href="contactTransfer.downloadHref" :download="contactTransfer.downloadName" tabindex="-1">Download the exported vCard file</a>
+      <w-btn variant="text" on:click="contactTransfer.pickImport()">Import vCard</w-btn>
+      <w-btn variant="tonal" on:click="contactTransfer.export()">{contacts.exportLabel}</w-btn>
+      <w-btn variant="filled" on:click="contactEditor.openNew()">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        New contact
+      </w-btn>
+    </div>
+  </header>
+
+  <logic :if="contacts.error && !contactEditor.open">
+    <div class="contact-operation-alert" role="alert">
+      <span>{contacts.error}</span>
+      <div>
+        <logic :if="contacts.canReviewConflict"><w-btn variant="tonal" on:click="contactEditor.edit()">Review and edit</w-btn></logic>
+        <w-btn variant="text" on:click="contacts.dismissError()">{contacts.dismissLabel}</w-btn>
+      </div>
+    </div>
+  </logic>
+
+  <div class="contacts-layout">
+    <aside class="contacts-filters" aria-label="Contact lists">
+      <loop :for="filter of contacts.filters">
+        <button :class="filter.className" type="button" on:click="contacts.setSource(filter.id)">
+          <span>{filter.label}</span>
+          <logic :if="filter.count"><span>{filter.count}</span></logic>
+        </button>
+      </loop>
+
+      <div class="contacts-filter-heading">
+        <span>Groups</span>
+        <button type="button" on:click="contactGroups.openNew()" aria-label="Create contact group" title="Create group">+</button>
+      </div>
+      <loop :for="group of contacts.groups">
+        <div class="contacts-group-row">
+          <button :class="group.className" type="button" on:click="contacts.setGroup(group.id)"><span>{group.name}</span></button>
+          <button class="contacts-group-action" type="button" on:click="contactGroups.openRename(group.id, group.name)" :aria-label="group.renameLabel" title="Rename group">✎</button>
+          <button class="contacts-group-action danger" type="button" on:click="browserPage.confirmThen(group.deleteQuestion, 'contact-group-delete', group.id)" :aria-label="group.deleteLabel" title="Delete group">×</button>
+        </div>
+      </loop>
+      <logic :if="contacts.groups.length === 0">
+        <p class="contacts-filter-empty">No groups yet</p>
+      </logic>
+    </aside>
+
+    <section class="contacts-list-panel" aria-label="Contacts">
+      <div class="contacts-list-header">
+        <span>{contacts.countLabel}</span>
+        <logic :if="contacts.checkedLabel"><span>{contacts.checkedLabel}</span></logic>
+      </div>
+      <logic :if="contacts.loading">
+        <div class="contacts-empty" role="status"><w-progress-circular indeterminate aria-hidden="true"></w-progress-circular><span class="sr-only">Loading contacts</span></div>
+      </logic>
+      <logic :if="contacts.empty">
+        <div class="contacts-empty">
+          <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M19 8v6M16 11h6"/></svg>
+          <strong>No contacts found</strong>
+          <span>Create a contact or import a vCard file.</span>
+        </div>
+      </logic>
+      <logic :if="contacts.contacts.length">
+        <ul class="contacts-list" role="listbox" aria-label="Contact results">
+          <loop :for="contact of contacts.contacts">
+            <li :class="contact.className">
+              <label class="contact-check" :aria-label="contact.selectLabel">
+                <input type="checkbox" :checked="contact.checked" on:click="contacts.toggleChecked(contact.id, $event.target.checked)" />
+              </label>
+              <button type="button" class="contact-row-main" role="option" :aria-selected="contact.selected" on:click="contacts.select(contact.id)">
+                <span class="contact-avatar">{contact.initials}</span>
+                <span class="contact-row-copy">
+                  <strong>{contact.heading}</strong>
+                  <span>{contact.subtitle}</span>
+                </span>
+                <span :class="contact.sourceClass">{contact.sourceLabel}</span>
+              </button>
+            </li>
+          </loop>
+        </ul>
+      </logic>
+    </section>
+
+    <section class="contact-detail" aria-label="Contact details">
+      <logic :if="!contacts.hasSelection && !contactEditor.open">
+        <div class="contact-detail-empty">
+          <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          <strong>Select a contact</strong>
+          <span>View details, send a message, or make changes.</span>
+        </div>
+      </logic>
+
+      <logic :if="contacts.hasSelection && !contactEditor.open">
+        <div class="contact-detail-scroll">
+          <header class="contact-detail-header">
+            <button class="contact-mobile-back" type="button" on:click="contacts.closeDetail()" aria-label="Back to contacts">←</button>
+            <span class="contact-avatar contact-avatar-large">{contacts.detail.initials}</span>
+            <div class="contact-detail-title">
+              <h2>{contacts.detail.heading}</h2>
+              <span>{contacts.detail.sourceLabel}</span>
+            </div>
+            <div class="contact-detail-actions">
+              <w-btn variant="filled" :disabled="!contacts.detail.canMessage" on:click="contacts.compose()">Message</w-btn>
+              <logic :if="!contacts.detail.readOnly"><w-btn variant="tonal" on:click="contactEditor.edit()">Edit</w-btn></logic>
+              <logic :if="!contacts.detail.readOnly"><w-btn variant="text" on:click="browserPage.confirmThen(contacts.detail.deleteQuestion, 'contact-delete', contacts.detail.id)">Delete</w-btn></logic>
+            </div>
+          </header>
+
+          <div class="contact-detail-sections">
+            <logic :if="contacts.detail.showProfile">
+              <section class="contact-detail-card">
+                <h3>Profile</h3>
+                <logic :if="contacts.detail.fullName"><p><span>Name</span><strong>{contacts.detail.fullName}</strong></p></logic>
+                <logic :if="contacts.detail.company"><p><span>Company</span><strong>{contacts.detail.company}</strong></p></logic>
+                <logic :if="contacts.detail.jobTitle"><p><span>Title</span><strong>{contacts.detail.jobTitle}</strong></p></logic>
+                <logic :if="contacts.detail.birthday"><p><span>Birthday</span><strong>{contacts.detail.birthday}</strong></p></logic>
+              </section>
+            </logic>
+            <logic :if="contacts.detail.emails.length">
+              <section class="contact-detail-card"><h3>Email</h3><loop :for="item of contacts.detail.emails"><p><span>{item.type}</span><a :href="item.href">{item.value}</a></p></loop></section>
+            </logic>
+            <logic :if="contacts.detail.phones.length">
+              <section class="contact-detail-card"><h3>Phone</h3><loop :for="item of contacts.detail.phones"><p><span>{item.type}</span><a :href="item.href">{item.value}</a></p></loop></section>
+            </logic>
+            <logic :if="contacts.detail.urls.length">
+              <section class="contact-detail-card"><h3>Links</h3><loop :for="item of contacts.detail.urls"><p><span>{item.type}</span><a :href="item.href" target="_blank" rel="noopener noreferrer">{item.value}</a></p></loop></section>
+            </logic>
+            <logic :if="contacts.detail.addresses.length">
+              <section class="contact-detail-card"><h3>Addresses</h3><loop :for="item of contacts.detail.addresses"><p><span>{item.type}</span><strong>{item.value}</strong></p></loop></section>
+            </logic>
+            <logic :if="contacts.detail.groupNames.length">
+              <section class="contact-detail-card"><h3>Groups</h3><div class="contact-chips"><loop :for="groupName of contacts.detail.groupNames"><span>{groupName}</span></loop></div></section>
+            </logic>
+            <logic :if="contacts.detail.showNotes">
+              <section class="contact-detail-card">
+                <h3>Notes</h3>
+                <logic :if="contacts.detail.nicknames"><p><span>Also known as</span><strong>{contacts.detail.nicknames}</strong></p></logic>
+                <logic :if="contacts.detail.notes"><p class="contact-notes">{contacts.detail.notes}</p></logic>
+              </section>
+            </logic>
+          </div>
+        </div>
+      </logic>
+
+      <logic :if="contactEditor.open">
+        <div class="contact-editor">
+          <header class="contact-editor-header">
+            <button class="contact-mobile-back" type="button" on:click="contactEditor.cancel()" aria-label="Back to contacts">←</button>
+            <h2>{contactEditor.title}</h2>
+            <div><w-btn variant="text" on:click="contactEditor.cancel()">Cancel</w-btn><w-btn variant="filled" :disabled="contactEditor.saving" on:click="contactEditor.save()">{contactEditor.saving ? 'Saving…' : 'Save'}</w-btn></div>
+          </header>
+          <div class="contact-editor-body">
+            <logic :if="contactEditor.error"><p class="contact-error" role="alert">{contactEditor.error}</p></logic>
+            <logic :if="contactEditor.showDestinations">
+              <section class="contact-form-section">
+                <h3>Save to</h3>
+                <label class="contact-destination-label" for="contact-destination">
+                  <span>Address book</span>
+                  <select id="contact-destination" on:change="contactEditor.setDestination($event.target.value)">
+                    <loop :for="option of contactEditor.destinations"><option :value="option.value" :selected="option.selected">{option.label}</option></loop>
+                  </select>
+                </label>
+                <p class="contact-form-help">Remote contacts are written directly to the selected CardDAV address book and remain available to its other clients.</p>
+              </section>
+            </logic>
+            <section class="contact-form-section">
+              <h3>Identity</h3>
+              <div class="contact-form-grid">
+                <label class="span-2"><span>Display name</span><input data-contact-name type="text" maxlength="200" :value="contactEditor.form.name" on:input="contactEditor.setField('name', $event.target.value)" autocomplete="name" /></label>
+                <label><span>Given name</span><input type="text" maxlength="100" :value="contactEditor.form.givenName" on:input="contactEditor.setField('givenName', $event.target.value)" autocomplete="given-name" /></label>
+                <label><span>Family name</span><input type="text" maxlength="100" :value="contactEditor.form.familyName" on:input="contactEditor.setField('familyName', $event.target.value)" autocomplete="family-name" /></label>
+                <label><span>Company</span><input type="text" maxlength="200" :value="contactEditor.form.company" on:input="contactEditor.setField('company', $event.target.value)" autocomplete="organization" /></label>
+                <label><span>Title</span><input type="text" maxlength="200" :value="contactEditor.form.title" on:input="contactEditor.setField('title', $event.target.value)" autocomplete="organization-title" /></label>
+                <label><span>Birthday</span><input type="date" :value="contactEditor.form.birthday" on:input="contactEditor.setField('birthday', $event.target.value)" /></label>
+                <label><span>Nicknames</span><input type="text" :value="contactEditor.form.nicknames" on:input="contactEditor.setField('nicknames', $event.target.value)" placeholder="Comma-separated" /></label>
+              </div>
+            </section>
+
+            <section class="contact-form-section">
+              <div class="contact-form-section-title"><h3>Email addresses</h3><button type="button" on:click="contactEditor.addValue('emails')">Add email</button></div>
+              <loop :for="item of contactEditor.form.emails">
+                <div class="contact-value-row"><input class="contact-type-input" type="text" placeholder="Type" maxlength="40" aria-label="Email type" :value="item.type" on:input="contactEditor.setValueType('emails', item.key, $event.target.value)" /><input type="email" placeholder="name@example.com" aria-label="Email address" :value="item.value" on:input="contactEditor.setValueText('emails', item.key, $event.target.value)" /><button type="button" on:click="contactEditor.removeValue('emails', item.key)" aria-label="Remove email">×</button></div>
+              </loop>
+            </section>
+
+            <section class="contact-form-section">
+              <div class="contact-form-section-title"><h3>Phone numbers</h3><button type="button" on:click="contactEditor.addValue('phones')">Add phone</button></div>
+              <loop :for="item of contactEditor.form.phones">
+                <div class="contact-value-row"><input class="contact-type-input" type="text" placeholder="Type" maxlength="40" aria-label="Phone type" :value="item.type" on:input="contactEditor.setValueType('phones', item.key, $event.target.value)" /><input type="tel" placeholder="Phone number" aria-label="Phone number" :value="item.value" on:input="contactEditor.setValueText('phones', item.key, $event.target.value)" /><button type="button" on:click="contactEditor.removeValue('phones', item.key)" aria-label="Remove phone">×</button></div>
+              </loop>
+            </section>
+
+            <section class="contact-form-section">
+              <div class="contact-form-section-title"><h3>Websites</h3><button type="button" on:click="contactEditor.addValue('urls')">Add website</button></div>
+              <loop :for="item of contactEditor.form.urls">
+                <div class="contact-value-row"><input class="contact-type-input" type="text" placeholder="Type" maxlength="40" aria-label="Website type" :value="item.type" on:input="contactEditor.setValueType('urls', item.key, $event.target.value)" /><input type="url" placeholder="https://example.com" aria-label="Website address" :value="item.value" on:input="contactEditor.setValueText('urls', item.key, $event.target.value)" /><button type="button" on:click="contactEditor.removeValue('urls', item.key)" aria-label="Remove website">×</button></div>
+              </loop>
+            </section>
+
+            <section class="contact-form-section">
+              <div class="contact-form-section-title"><h3>Addresses</h3><button type="button" on:click="contactEditor.addAddress()">Add address</button></div>
+              <loop :for="address of contactEditor.form.addresses">
+                <div class="contact-address-editor">
+                  <div class="contact-address-heading"><input class="contact-type-input" type="text" placeholder="Type" maxlength="40" aria-label="Address type" :value="address.type" on:input="contactEditor.setAddress(address.key, 'type', $event.target.value)" /><button type="button" on:click="contactEditor.removeAddress(address.key)" aria-label="Remove address">×</button></div>
+                  <div class="contact-form-grid">
+                    <label class="span-2"><span>Street</span><input type="text" :value="address.streetAddress" on:input="contactEditor.setAddress(address.key, 'streetAddress', $event.target.value)" /></label>
+                    <label class="span-2"><span>Extended address</span><input type="text" :value="address.extendedAddress" on:input="contactEditor.setAddress(address.key, 'extendedAddress', $event.target.value)" /></label>
+                    <label><span>City</span><input type="text" :value="address.city" on:input="contactEditor.setAddress(address.key, 'city', $event.target.value)" /></label>
+                    <label><span>Region</span><input type="text" :value="address.region" on:input="contactEditor.setAddress(address.key, 'region', $event.target.value)" /></label>
+                    <label><span>Postal code</span><input type="text" :value="address.postalCode" on:input="contactEditor.setAddress(address.key, 'postalCode', $event.target.value)" /></label>
+                    <label><span>Country</span><input type="text" :value="address.country" on:input="contactEditor.setAddress(address.key, 'country', $event.target.value)" /></label>
+                  </div>
+                </div>
+              </loop>
+            </section>
+
+            <logic :if="contactEditor.showGroups">
+              <section class="contact-form-section"><h3>Groups</h3><div class="contact-group-checks"><loop :for="choice of contactEditor.groupChoices"><label><input type="checkbox" :checked="choice.checked" on:click="contactEditor.toggleGroup(choice.id, $event.target.checked)" /><span>{choice.name}</span></label></loop></div></section>
+            </logic>
+
+            <section class="contact-form-section"><h3>Notes</h3><textarea rows="5" maxlength="10000" aria-label="Notes" :value="contactEditor.form.notes" on:input="contactEditor.setField('notes', $event.target.value)" placeholder="Notes about this contact"></textarea></section>
+          </div>
+        </div>
+      </logic>
+    </section>
+  </div>
+
+  <logic :if="contactGroups.open">
+    <div class="contact-dialog-backdrop" on:click="browserPage.backdrop($event, 'contact-group')">
+      <form class="contact-dialog" role="dialog" aria-modal="true" aria-labelledby="contact-group-title" on:submit="browserPage.submit($event, 'contact-group')">
+        <h2 id="contact-group-title">{contactGroups.title}</h2>
+        <label><span>Group name</span><input data-contact-group-name type="text" maxlength="120" :value="contactGroups.name" on:input="contactGroups.setName($event.target.value)" /></label>
+        <logic :if="contactGroups.error"><p class="contact-error" role="alert">{contactGroups.error}</p></logic>
+        <div class="contact-dialog-actions"><w-btn variant="text" type="button" on:click="contactGroups.close()">Cancel</w-btn><w-btn variant="filled" type="button" on:click="contactGroups.save()">Save</w-btn></div>
+      </form>
+    </div>
+  </logic>
+</div>

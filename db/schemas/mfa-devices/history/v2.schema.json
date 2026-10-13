@@ -1,0 +1,16 @@
+{
+  "id": "^.{1,128}$",
+  "userEmail": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "name": "^.{1,100}$",
+  "type": "^(totp|webauthn)$",
+  "secret?": "^(v1\\..+|[A-Z2-7]{16,})$",
+  "credentialId?": "^.*$",
+  "publicKey?": "^.*$",
+  "signCount?": "^\\d+$",
+  "transports?": ["^.*$"],
+  "deviceType?": "^(singleDevice|multiDevice)$",
+  "backedUp?": "^(true|false)$",
+  "lastUsedAt?": "^.*$",
+  "revokedAt?": "^.*$",
+  "createdAt": "^.*$"
+}

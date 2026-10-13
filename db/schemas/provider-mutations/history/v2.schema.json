@@ -1,0 +1,23 @@
+{
+  "accountId": "^ext_[A-Za-z0-9_-]{20,80}$",
+  "tenantId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "principalId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "ownerAddress": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "id": "^mut_[A-Za-z0-9_-]{20,80}$",
+  "idempotencyKey": "^[^\\r\\n\\u0000]{1,128}$",
+  "kind": "^(set_read|set_starred|move|delete|folder_create|folder_rename|folder_delete)$",
+  "messageStableIds": ["^[^\\r\\n\\u0000]{1,512}$"],
+  "targetFolderId?": "^[^\\r\\n\\u0000]{1,512}$",
+  "folderStableId?": "^[^\\r\\n\\u0000]{1,512}$",
+  "parentStableId?": "^[^\\r\\n\\u0000]{1,512}$",
+  "folderName?": "^[^\\r\\n\\u0000]{1,128}$",
+  "folderPath?": "^[^\\r\\n\\u0000]{1,1024}$",
+  "newFolderPath?": "^[^\\r\\n\\u0000]{1,1024}$",
+  "value": "^(true|false)$",
+  "state": "^(queued|applying|reconciling|applied|failed)$",
+  "attempts": "^\\d{1,5}$",
+  "notBefore?": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "lastCode?": "^[a-z][a-z0-9_]{2,63}$",
+  "createdAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "updatedAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$"
+}

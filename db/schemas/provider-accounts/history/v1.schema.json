@@ -1,0 +1,57 @@
+{
+  "id": "^ext_[A-Za-z0-9_-]{20,80}$",
+  "tenantId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "principalId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "ownerAddress": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "provider": "^(gmail|microsoft|imap)$",
+  "mailboxAddress": "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+  "authIdentity?": "^(null|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$",
+  "sharedMailboxAddress?": "^(null|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})$",
+  "label": "^[^\\u0000-\\u001F\\u007F]{1,64}$",
+  "color": "^#[0-9A-Fa-f]{6}$",
+  "order": "^\\d{1,5}$",
+  "state": "^(ready|syncing|idle|auth_required|degraded|paused|deleting)$",
+  "connection": {
+    "imap?": {
+      "host": "^[A-Za-z0-9.-]{1,253}$",
+      "port": "^\\d{1,5}$",
+      "security": "^(tls|starttls|none)$",
+      "username?": "^[^\\u0000-\\u001F\\u007F]{0,254}$",
+      "allowInsecureTLS": "^(true|false)$"
+    },
+    "smtp?": {
+      "host": "^[A-Za-z0-9.-]{1,253}$",
+      "port": "^\\d{1,5}$",
+      "security": "^(tls|starttls|none)$",
+      "username?": "^[^\\u0000-\\u001F\\u007F]{0,254}$",
+      "allowInsecureTLS": "^(true|false)$"
+    },
+    "containerFolder?": "^[^\\r\\n\\u0000]{0,255}$"
+  },
+  "capabilities": {
+    "mailRead": "^(true|false)$",
+    "mailWrite": "^(true|false)$",
+    "send": "^(true|false)$",
+    "contacts": "^(true|false)$",
+    "calendar": "^(true|false)$",
+    "labels": "^(true|false)$",
+    "sharedMailbox": "^(true|false)$"
+  },
+  "progress?": {
+    "phase": "^(connecting|folders|headers|bodies|contacts|calendar|complete)$",
+    "completed": "^\\d+$",
+    "total?": "^(null|\\d+)$",
+    "startedAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+    "updatedAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$"
+  },
+  "failure?": {
+    "code": "^[a-z][a-z0-9_]{2,63}$",
+    "message": "^[\\s\\S]{1,512}$",
+    "retryable": "^(true|false)$",
+    "occurredAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+    "retryAt?": "^(null|\\d{4}-\\d{2}-\\d{2}T.+Z)$"
+  },
+  "revision": "^[1-9]\\d*$",
+  "createdAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$",
+  "updatedAt": "^\\d{4}-\\d{2}-\\d{2}T.+Z$"
+}

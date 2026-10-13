@@ -1,0 +1,1306 @@
+<div class="settings-panel">
+  <span hidden :data-preferences="userPreferences.loaded"></span>
+  <span hidden :data-settings-bridges="pushSubscription.active && soundPreview.active && !passkey.pending"></span>
+
+  <section id="connected-accounts" class="settings-section external-accounts" data-external-account-settings>
+    <div class="settings-section-heading external-account-heading">
+      <div>
+        <p class="w-text-label-large settings-section-title">Connected accounts</p>
+        <p class="w-text-body-small settings-help">Bring outside mailboxes into CADUCEUS. Credentials are encrypted locally and never returned to the browser.</p>
+      </div>
+      <w-btn variant="tonal" :disabled="connectedAccounts.setupOpen" on:click="connectedAccounts.openSetup()">Add account</w-btn>
+    </div>
+
+    <logic :if="connectedAccounts.accountsError"><p class="login-error" role="alert">{connectedAccounts.accountsError}</p></logic>
+    <logic :if="connectedAccounts.oauthNotice"><p class="external-account-notice" role="status" aria-live="polite">{connectedAccounts.oauthNotice}</p></logic>
+    <logic :if="!settings.loading && connectedAccounts.rows().length === 0">
+      <div class="settings-card external-account-empty">
+        <span class="w-text-body-medium">No outside mailboxes connected</span>
+        <span class="w-text-body-small">Your hosted CADUCEUS mailbox remains available. Add an account when you want a unified inbox.</span>
+        <w-btn variant="tonal" on:click="connectedAccounts.startOnboarding()">Start guided setup</w-btn>
+      </div>
+    </logic>
+
+    <div class="external-account-list" role="list" aria-label="Connected external accounts">
+      <loop :for="account of connectedAccounts.rows()">
+        <article class="settings-card external-account-card" role="listitem" :aria-label="account.label + ', ' + account.stateLabel">
+          <div class="external-account-summary">
+            <span class="external-account-color" :style="'--account-color:' + account.color" aria-hidden="true"></span>
+            <div class="external-account-copy">
+              <strong>{account.label}</strong>
+              <span class="w-text-body-small">{account.mailboxAddress}</span>
+              <logic :if="account.isOAuth">
+                <div class="external-account-badges" role="group" aria-label="OAuth account capabilities">
+                  <logic :if="account.isSharedMailbox"><span>Shared mailbox</span></logic>
+                  <span>{account.canRead ? 'Full Access verified' : 'Read unavailable'}</span>
+                  <span>{account.canSend ? (account.isSharedMailbox ? 'SMTP Send As ready' : 'SMTP sender ready') : 'Send unavailable'}</span>
+                </div>
+                <logic :if="account.delegateIdentity"><span class="w-text-body-small">Signed in as {account.delegateIdentity}</span></logic>
+              </logic>
+            </div>
+            <span :class="'external-account-state ' + account.state">{account.stateLabel}</span>
+          </div>
+          <div class="external-account-detail">
+            <span class="w-text-body-small">{account.progressLabel}</span>
+            <logic :if="account.failure"><span class="external-account-failure" role="alert">{account.failure.message}</span></logic>
+          </div>
+          <div class="external-account-actions" role="group" aria-label="Account actions">
+            <logic :if="account.canPause"><w-btn variant="text" :disabled="account.mutating" on:click="connectedAccounts.mutate(account.id, 'pause')">Pause</w-btn></logic>
+            <logic :if="account.canResume"><w-btn variant="text" :disabled="account.mutating" on:click="connectedAccounts.mutate(account.id, 'resume')">Resume</w-btn></logic>
+            <logic :if="account.canReconnect"><w-btn variant="text" :disabled="account.mutating" on:click="connectedAccounts.openReconnect(account.id)">Reconnect</w-btn></logic>
+            <logic :if="account.canRetry"><w-btn variant="text" :disabled="account.mutating" on:click="connectedAccounts.retry(account.id)">Retry now</w-btn></logic>
+            <w-btn variant="text" :disabled="account.mutating" on:click="connectedAccounts.toggleDiagnostics(account.id)">Details</w-btn>
+            <logic :if="account.canRemove"><w-btn variant="text" :disabled="account.mutating" on:click="connectedAccounts.askRemove(account.id)">Remove</w-btn></logic>
+          </div>
+
+          <logic :if="account.showingDiagnostics">
+            <div class="external-account-inline-panel diagnostics" role="status" aria-live="polite">
+              <logic :if="!account.diagnostics"><p>Loading redacted synchronization details…</p></logic>
+              <logic :if="account.diagnostics">
+                <dl class="external-account-diagnostics">
+                  <div><dt>Checkpoint</dt><dd>{account.diagnostics.cursorVersion}</dd></div>
+                  <div><dt>Attempts</dt><dd>{account.diagnostics.attempts}</dd></div>
+                  <div><dt>Next run</dt><dd>{account.diagnostics.nextRunAt}</dd></div>
+                  <div><dt>Last result</dt><dd>{account.diagnostics.lastCode || 'No error'}</dd></div>
+                </dl>
+              </logic>
+            </div>
+          </logic>
+
+          <logic :if="account.reconnecting">
+            <div class="external-account-inline-panel" role="group" :aria-label="'Reconnect ' + account.mailboxAddress">
+              <logic :if="account.isOAuth">
+                <p class="external-account-oauth-copy">Authorize {account.delegateIdentity || account.mailboxAddress} again. CADUCEUS will keep the existing mailbox identity and replace only its encrypted provider tokens.</p>
+              </logic>
+              <logic :if="!account.isOAuth">
+                <label><span>Username</span><input :data-reconnect-username="account.id" type="text" :value="account.reconnectUsername" on:input="connectedAccounts.reconnectUsername = $event.target.value" autocomplete="username" /></label>
+                <label><span>New password</span><input :data-reconnect-password="account.id" type="password" :value="connectedAccounts.reconnectPassword" on:input="connectedAccounts.reconnectPassword = $event.target.value" autocomplete="current-password" /></label>
+              </logic>
+              <div class="external-account-inline-actions">
+                <w-btn variant="text" :disabled="account.mutating" on:click="connectedAccounts.cancelReconnect()">Cancel</w-btn>
+                <w-btn variant="tonal" :disabled="account.mutating" on:click="connectedAccounts.reconnect(account.id)">{account.isOAuth ? (account.provider === 'gmail' ? 'Continue with Google' : 'Continue with Microsoft') : 'Validate and reconnect'}</w-btn>
+              </div>
+            </div>
+          </logic>
+
+          <logic :if="account.confirmingRemoval">
+            <div class="external-account-inline-panel destructive" role="alertdialog" aria-label="Confirm account removal">
+              <p>Remove {account.mailboxAddress}? The saved credential is revoked immediately. Imported data is deleted by the cleanup worker.</p>
+              <div class="external-account-inline-actions">
+                <w-btn variant="text" :disabled="account.mutating" on:click="connectedAccounts.cancelRemove()">Keep account</w-btn>
+                <w-btn variant="tonal" :disabled="account.mutating" on:click="connectedAccounts.remove(account.id)">Confirm removal</w-btn>
+              </div>
+            </div>
+          </logic>
+        </article>
+      </loop>
+    </div>
+
+    <logic :if="connectedAccounts.setupOpen">
+      <div class="settings-card external-account-setup" role="region" aria-labelledby="external-account-setup-title">
+        <div class="external-account-setup-heading">
+          <div>
+            <h2 id="external-account-setup-title">Connect an outside mailbox</h2>
+            <p>CADUCEUS validates IMAP and SMTP access before saving anything. Validation never sends a message.</p>
+            <logic :if="connectedAccounts.onboarding"><ol class="external-account-steps" aria-label="Account setup progress"><li :class="connectedAccounts.setupStep === 'address' ? 'current' : 'done'">Choose provider</li><li :class="connectedAccounts.setupStep === 'address' ? '' : 'current'">Authorize</li><li>Validate and sync</li></ol></logic>
+          </div>
+          <w-btn variant="text" :disabled="connectedAccounts.setupBusy" on:click="connectedAccounts.closeSetupOrOnboarding()">{connectedAccounts.onboarding ? 'Skip for now' : 'Close'}</w-btn>
+        </div>
+
+        <logic :if="connectedAccounts.setupStep === 'address'">
+          <div class="external-account-address-step">
+            <label class="external-account-field wide">
+              <span>Email address</span>
+              <input data-external-account-address type="email" :value="connectedAccounts.address" on:input="connectedAccounts.address = $event.target.value" autocomplete="email" placeholder="you@example.com" />
+            </label>
+            <w-btn variant="tonal" :disabled="connectedAccounts.setupBusy" on:click="connectedAccounts.discover()">{connectedAccounts.setupBusy ? 'Discovering…' : 'Find settings'}</w-btn>
+          </div>
+          <div class="external-provider-grid" role="group" aria-label="Mail providers">
+            <loop :for="provider of connectedAccounts.providers">
+              <button type="button" class="external-provider-card" :disabled="connectedAccounts.setupBusy" on:click="connectedAccounts.selectProvider(provider.id)">
+                <strong>{provider.name}</strong>
+                <span>{provider.authentication === 'oauth' ? (provider.configured ? 'OAuth' : 'OAuth · administrator setup required') : 'Password or app password'}</span>
+              </button>
+            </loop>
+          </div>
+        </logic>
+
+        <logic :if="connectedAccounts.setupStep === 'oauth'">
+          <fieldset class="external-account-fields microsoft" data-external-account-fieldset :disabled="connectedAccounts.setupBusy">
+            <legend>{connectedAccounts.selectedProvider().name} authorization</legend>
+            <label class="external-account-field wide">
+              <span>{connectedAccounts.selectedProvider().provider === 'gmail' ? 'Google sign-in address' : 'Microsoft sign-in address'}</span>
+              <input data-oauth-account-field="authIdentity" type="email" :value="connectedAccounts.draft.authIdentity" on:input="connectedAccounts.setField('authIdentity', $event.target.value)" autocomplete="email" placeholder="you@example.com" />
+              <small>{connectedAccounts.selectedProvider().provider === 'gmail' ? 'This exact Gmail or Google Workspace mailbox will be connected.' : 'The user who already has permission to open and send as the mailbox.'}</small>
+            </label>
+            <logic :if="connectedAccounts.selectedProvider().provider === 'microsoft'">
+              <label class="external-account-field wide">
+                <span>Shared mailbox address (optional)</span>
+                <input data-oauth-account-field="sharedMailboxAddress" type="email" :value="connectedAccounts.draft.sharedMailboxAddress" on:input="connectedAccounts.setField('sharedMailboxAddress', $event.target.value)" autocomplete="off" placeholder="support@example.com" />
+                <small>Leave blank to connect the signed-in user’s own mailbox. Shared mailboxes require Full Access and Send As permissions.</small>
+              </label>
+            </logic>
+            <label class="external-account-field wide"><span>Account label</span><input data-oauth-account-field="label" type="text" maxlength="64" :value="connectedAccounts.draft.oauthLabel" on:input="connectedAccounts.setField('oauthLabel', $event.target.value)" autocomplete="off" /></label>
+            <label class="external-account-field color"><span>Account color</span><input data-oauth-account-field="color" type="color" :value="connectedAccounts.draft.oauthColor" on:input="connectedAccounts.setField('oauthColor', $event.target.value)" /></label>
+          </fieldset>
+          <p class="external-account-guidance">You’ll sign in on {connectedAccounts.selectedProvider().provider === 'gmail' ? 'Google’s' : 'Microsoft’s'} site. CADUCEUS requests offline IMAP and SMTP access, validates the mailbox without sending mail, and stores the resulting tokens encrypted on this server.</p>
+          <div class="external-account-setup-actions">
+            <w-btn variant="text" :disabled="connectedAccounts.setupBusy" on:click="connectedAccounts.setupStep = 'address'">Back</w-btn>
+            <w-btn variant="tonal" :disabled="connectedAccounts.setupBusy" on:click="connectedAccounts.beginOAuth()">{connectedAccounts.setupBusy ? 'Opening provider…' : (connectedAccounts.selectedProvider().provider === 'gmail' ? 'Continue with Google' : 'Continue with Microsoft')}</w-btn>
+          </div>
+        </logic>
+
+        <logic :if="connectedAccounts.setupStep === 'credentials'">
+          <fieldset class="external-account-fields" data-external-account-fieldset :disabled="connectedAccounts.setupBusy">
+            <legend>Account and server settings</legend>
+            <label class="external-account-field wide"><span>Account label</span><input data-external-account-field="label" type="text" maxlength="64" :value="connectedAccounts.draft.label" on:input="connectedAccounts.setField('label', $event.target.value)" autocomplete="off" /></label>
+            <label class="external-account-field"><span>Username</span><input data-external-account-field="username" type="text" :value="connectedAccounts.draft.username" on:input="connectedAccounts.setField('username', $event.target.value)" autocomplete="username" /></label>
+            <label class="external-account-field"><span>Password</span><input data-external-account-field="password" type="password" :value="connectedAccounts.password" on:input="connectedAccounts.password = $event.target.value" autocomplete="current-password" /></label>
+            <label class="external-account-field"><span>IMAP server</span><input data-external-account-field="imapHost" type="text" :value="connectedAccounts.draft.imapHost" on:input="connectedAccounts.setField('imapHost', $event.target.value)" autocomplete="off" /></label>
+            <label class="external-account-field compact"><span>IMAP port</span><input data-external-account-field="imapPort" type="number" min="1" max="65535" :value="connectedAccounts.draft.imapPort" on:input="connectedAccounts.setField('imapPort', $event.target.value)" inputmode="numeric" /></label>
+            <label class="external-account-field"><span>IMAP security</span><select data-external-account-field="imapSecurity" :value="connectedAccounts.draft.imapSecurity" on:change="connectedAccounts.setField('imapSecurity', $event.target.value)"><option value="tls">TLS</option><option value="starttls">STARTTLS</option><option value="none">None</option></select></label>
+            <label class="external-account-field"><span>SMTP server</span><input data-external-account-field="smtpHost" type="text" :value="connectedAccounts.draft.smtpHost" on:input="connectedAccounts.setField('smtpHost', $event.target.value)" autocomplete="off" /></label>
+            <label class="external-account-field compact"><span>SMTP port</span><input data-external-account-field="smtpPort" type="number" min="1" max="65535" :value="connectedAccounts.draft.smtpPort" on:input="connectedAccounts.setField('smtpPort', $event.target.value)" inputmode="numeric" /></label>
+            <label class="external-account-field"><span>SMTP security</span><select data-external-account-field="smtpSecurity" :value="connectedAccounts.draft.smtpSecurity" on:change="connectedAccounts.setField('smtpSecurity', $event.target.value)"><option value="tls">TLS</option><option value="starttls">STARTTLS</option><option value="none">None</option></select></label>
+            <label class="external-account-field"><span>Container folder (optional)</span><input data-external-account-field="containerFolder" type="text" maxlength="255" :value="connectedAccounts.draft.containerFolder" on:input="connectedAccounts.setField('containerFolder', $event.target.value)" autocomplete="off" /></label>
+            <label class="external-account-field wide"><span>CardDAV URL (optional)</span><input data-external-account-field="cardDAVURL" type="url" maxlength="2048" :value="connectedAccounts.draft.cardDAVURL" on:input="connectedAccounts.setField('cardDAVURL', $event.target.value)" autocomplete="url" placeholder="https://contacts.example.com/" /><small>Sync remote address books using this account's encrypted password or app password.</small></label>
+            <label class="external-account-field"><span>CardDAV username (optional)</span><input data-external-account-field="cardDAVUsername" type="text" maxlength="1024" :value="connectedAccounts.draft.cardDAVUsername" on:input="connectedAccounts.setField('cardDAVUsername', $event.target.value)" autocomplete="username" placeholder="Defaults to account username" /></label>
+            <label class="external-account-field wide"><span>CalDAV URL (optional)</span><input data-external-account-field="calDAVURL" type="url" maxlength="2048" :value="connectedAccounts.draft.calDAVURL" on:input="connectedAccounts.setField('calDAVURL', $event.target.value)" autocomplete="url" placeholder="https://calendar.example.com/" /><small>Sync remote calendars as read-only events using this account's encrypted password or app password.</small></label>
+            <label class="external-account-field"><span>CalDAV username (optional)</span><input data-external-account-field="calDAVUsername" type="text" maxlength="1024" :value="connectedAccounts.draft.calDAVUsername" on:input="connectedAccounts.setField('calDAVUsername', $event.target.value)" autocomplete="username" placeholder="Defaults to account username" /></label>
+            <label class="external-account-field color"><span>Account color</span><input data-external-account-field="color" type="color" value="#5f6368" on:input="connectedAccounts.setField('color', $event.target.value)" /></label>
+          </fieldset>
+          <logic :if="connectedAccounts.selectedGuidance()"><p class="external-account-guidance">{connectedAccounts.selectedGuidance()}</p></logic>
+          <div class="external-account-setup-actions">
+            <w-btn variant="text" :disabled="connectedAccounts.setupBusy" on:click="connectedAccounts.setupStep = 'address'">Back</w-btn>
+            <w-btn variant="tonal" :disabled="connectedAccounts.setupBusy" on:click="connectedAccounts.validateAndCreate()">{connectedAccounts.setupBusy ? 'Connecting…' : 'Validate and add'}</w-btn>
+          </div>
+        </logic>
+        <logic :if="connectedAccounts.setupStatus"><p class="external-account-status" role="status" aria-live="polite">{connectedAccounts.setupStatus}</p></logic>
+        <logic :if="connectedAccounts.setupError"><p class="login-error" role="alert">{connectedAccounts.setupError}</p></logic>
+      </div>
+    </logic>
+  </section>
+
+  <!-- Calendar sharing: pick how much of your calendar same-domain teammates
+       see when they enable the "Show team" overlay on /calendar. The setting
+       is persisted on the user record and consumed by the team-events API. -->
+  <div class="settings-section">
+    <p class="w-text-label-large settings-section-title">Calendar sharing</p>
+    <div class="settings-card">
+      <div class="settings-row settings-row-stacked">
+        <span class="w-text-body-medium">Who can see your events</span>
+        <span class="w-text-body-small settings-muted">
+          Only people who share at least one email domain with you can ever see your calendar.
+        </span>
+        <div class="visibility-options">
+          <label class="visibility-option">
+            <input type="radio" name="cal-vis" :checked="calendarSharing.visibility === 'private'" on:click="calendarSharing.choose('private')" />
+            <span><strong>Private</strong> — no one else can see anything (default)</span>
+          </label>
+          <label class="visibility-option">
+            <input type="radio" name="cal-vis" :checked="calendarSharing.visibility === 'busy'" on:click="calendarSharing.choose('busy')" />
+            <span><strong>Busy only</strong> — teammates see when you're booked, never the details</span>
+          </label>
+          <label class="visibility-option">
+            <input type="radio" name="cal-vis" :checked="calendarSharing.visibility === 'full'" on:click="calendarSharing.choose('full')" />
+            <span><strong>Full details</strong> — teammates see title, location, and attendees</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <p class="w-text-label-large settings-section-title">Email aliases</p>
+    <div class="settings-card">
+      <div class="settings-row settings-row-stacked">
+        <span class="w-text-body-medium">Primary address</span>
+        <span class="w-text-body-small settings-muted">{emailAliases.primaryEmail || 'Signed-in user'}</span>
+      </div>
+      <logic :if="emailAliases.aliases.length > 0">
+        <loop :for="alias of emailAliases.aliases">
+          <div class="settings-row lazy-list-item">
+            <span class="w-text-body-medium settings-grow">{alias}</span>
+            <w-btn variant="text" on:click="emailAliases.remove(alias)">Remove</w-btn>
+          </div>
+        </loop>
+      </logic>
+      <logic :if="!settings.loading && emailAliases.aliases.length === 0">
+        <div class="settings-row">
+          <span class="w-text-body-small settings-muted">No aliases configured.</span>
+        </div>
+      </logic>
+    </div>
+    <div class="alias-form">
+      <w-text-field label="New alias" type="email" :value="emailAliases.newAlias" on:input="emailAliases.newAlias = $event.target.value" placeholder="name@example.com"></w-text-field>
+      <w-btn variant="tonal" :disabled="emailAliases.aliasSaving" on:click="emailAliases.add()">{emailAliases.aliasSaving ? 'Adding...' : 'Add alias'}</w-btn>
+    </div>
+    <logic :if="emailAliases.aliasError"><p class="login-error settings-after-sm">{emailAliases.aliasError}</p></logic>
+  </div>
+
+  <div id="mailboxes" class="settings-section" data-category-mapper>
+    <p class="w-text-label-large settings-section-title">Folder roles</p>
+    <p class="w-text-body-small category-mapper-help">
+      Assign each system role to a physical folder for every mailbox. Delivery, search, moves, drafts, spam, and sent mail continue using the role even when a provider uses a different path.
+    </p>
+    <logic :if="folderRoles.accounts.length === 0 && !settings.loading">
+      <p class="w-text-body-small category-mapper-help">No mailbox categories are available.</p>
+    </logic>
+    <div class="settings-card category-account" role="group" aria-label="Folder role mappings">
+      <div class="category-role-grid">
+        <loop :for="row of folderRoles.rows()">
+          <label class="category-role-field">
+            <span>{row.mailbox} · {row.label}</span>
+            <input
+              type="search"
+              list="caduceus-category-paths"
+              autocomplete="off"
+              :data-category-domain="row.domain"
+              :data-category-role="row.role"
+              :value="row.value"
+              on:input="folderRoles.edit(row.domain, row.role, $event.target.value)"
+              :disabled="folderRoles.saving" />
+          </label>
+        </loop>
+      </div>
+      <div class="category-account-actions">
+        <w-btn variant="text" :disabled="folderRoles.saving" on:click="folderRoles.resetAll()">Use native defaults</w-btn>
+        <w-btn variant="tonal" :disabled="folderRoles.saving" on:click="folderRoles.saveAll()">Save folder roles</w-btn>
+      </div>
+    </div>
+    <datalist id="caduceus-category-paths">
+      <loop :for="path of folderRoles.paths()"><option :value="path"></option></loop>
+    </datalist>
+    <logic :if="folderRoles.error"><p class="login-error" role="alert">{folderRoles.error}</p></logic>
+  </div>
+
+  <!-- Appearance: pick an accent color. The choice lives on the app shell as
+       `accentColor` (localStorage) and overrides the `--ms-primary` family
+       of CSS custom properties on `<html>` via `applyAccent()`. -->
+  <div class="settings-section">
+    <p class="w-text-label-large settings-section-title">Appearance</p>
+    <div class="settings-card">
+      <div class="settings-row locale-settings-row" data-locale-settings>
+        <div class="theme-setting-heading">
+          <span class="w-text-body-medium">{languageSettings.t('locale.heading')}</span>
+          <span class="w-text-body-small">{languageSettings.t('locale.description')}</span>
+        </div>
+        <label>
+          <span>{languageSettings.t('locale.label')}</span>
+          <select data-interface-locale :disabled="languageSettings.saving" on:change="languageSettings.select($event.target.value)">
+            <loop :for="locale of languageSettings.options()"><option :value="locale.id" :selected="languageSettings.choice === locale.id">{locale.label}</option></loop>
+          </select>
+        </label>
+      </div>
+      <logic :if="languageSettings.error"><p class="login-error" role="alert">{languageSettings.error}</p></logic>
+      <div class="settings-row theme-settings-row">
+        <div class="theme-setting-heading">
+          <span class="w-text-body-medium">Interface theme</span>
+          <span class="w-text-body-small">Choose a built-in theme, or follow this device automatically.</span>
+        </div>
+        <div class="theme-gallery" role="group" aria-label="Interface themes">
+          <loop :for="theme of themeSettings.options()">
+            <button
+              type="button"
+              :class="'theme-option-card ' + (themeSettings.preferences.activeTheme === theme.id ? 'selected' : '')"
+              :aria-pressed="themeSettings.preferences.activeTheme === theme.id ? 'true' : 'false'"
+              :aria-label="'Use ' + theme.label + ' theme'"
+              :disabled="themeSettings.saving"
+              on:click="themeSettings.select(theme.id)">
+              <span class="theme-option-preview" :style="themeSettings.previewStyle(theme)" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </span>
+              <span class="theme-option-copy">
+                <strong>{theme.label}</strong>
+                <span>{theme.description}</span>
+              </span>
+            </button>
+          </loop>
+        </div>
+        <logic :if="themeSettings.preferences.activeTheme === 'automatic'">
+          <div class="automatic-theme-settings">
+            <label>
+              <span aria-hidden="true">☀</span>
+              <span>When light</span>
+              <select data-automatic-theme="light" :disabled="themeSettings.saving" on:change="themeSettings.selectAutomatic('light', $event.target.value)">
+                <loop :for="theme of themeSettings.lightOptions()">
+                  <option :value="theme.id" :selected="themeSettings.preferences.lightTheme === theme.id">{theme.label}</option>
+                </loop>
+              </select>
+            </label>
+            <label>
+              <span aria-hidden="true">☾</span>
+              <span>When dark</span>
+              <select data-automatic-theme="dark" :disabled="themeSettings.saving" on:change="themeSettings.selectAutomatic('dark', $event.target.value)">
+                <loop :for="theme of themeSettings.darkOptions()">
+                  <option :value="theme.id" :selected="themeSettings.preferences.darkTheme === theme.id">{theme.label}</option>
+                </loop>
+              </select>
+            </label>
+          </div>
+        </logic>
+        <span class="w-text-body-small theme-safety-note">Built-in themes contain only local CSS tokens; no theme can load scripts, fonts, or remote assets.</span>
+      </div>
+      <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:0.75rem;">
+        <span class="w-text-body-medium">Accent color</span>
+        <div class="accent-swatch-row">
+          <loop :for="entry of accentColor.presets()">
+            <button
+              type="button"
+              :class="'accent-swatch ' + (accentColor.current === entry.key ? 'selected' : '')"
+              :style="'--swatch-color: ' + entry.primary"
+              on:click="accentColor.select(entry.key)"
+              :title="entry.label"
+              :aria-label="'Use ' + entry.label">
+            </button>
+          </loop>
+        </div>
+        <span class="w-text-body-small settings-muted">
+          Current: {accentColor.currentLabel()}
+        </span>
+      </div>
+      <div class="settings-row typography-settings-row">
+        <div class="typography-setting">
+          <label class="w-text-body-medium" for="interface-font-select">Interface font</label>
+          <span class="w-text-body-small typography-help">Used by navigation, message lists, settings, and controls.</span>
+          <select
+            id="interface-font-select"
+            data-interface-font
+            class="typography-select"
+            :disabled="typography.saving"
+            on:change="typography.setInterfaceFont($event.target.value)">
+            <loop :for="font of typography.interfaceOptions()">
+              <option :value="font.id" :selected="typography.interfaceFont === font.id">{font.label}</option>
+            </loop>
+          </select>
+          <p class="typography-preview" :style="typography.interfacePreview()">The quick brown fox jumps over the lazy dog.</p>
+        </div>
+        <div class="typography-setting">
+          <label class="w-text-body-medium" for="composer-font-select">Composer font</label>
+          <span class="w-text-body-small typography-help">Used for newly authored message text.</span>
+          <select
+            id="composer-font-select"
+            data-composer-font
+            class="typography-select"
+            :disabled="typography.saving"
+            on:change="typography.setComposerFont($event.target.value)">
+            <loop :for="font of typography.composerOptions()">
+              <option :value="font.id" :selected="typography.composerFont === font.id">{font.label}</option>
+            </loop>
+          </select>
+          <p class="typography-preview" :style="typography.composerPreview()">Write clearly, wherever your mail is hosted.</p>
+        </div>
+        <span class="w-text-body-small typography-help typography-safety-note">
+          Fonts resolve locally on this device. CADUCEUS never contacts a font service or accepts arbitrary CSS.
+        </span>
+      </div>
+    </div>
+    <logic :if="themeSettings.error"><p class="login-error settings-after-sm">{themeSettings.error}</p></logic>
+    <logic :if="typography.error"><p class="login-error settings-after-sm">{typography.error}</p></logic>
+  </div>
+
+  <div id="extensions" class="settings-section" data-extension-settings>
+    <div class="settings-section-heading">
+      <div>
+        <p class="w-text-label-large settings-section-title">Extensions</p>
+        <p class="w-text-body-small settings-help">Sideload local packages for this mailbox. Plugins run in an opaque, network-disabled worker; themes may declare only local color tokens.</p>
+      </div>
+    </div>
+    <div class="settings-card extension-settings-card">
+      <div class="settings-row extension-install-row">
+        <div class="extension-setting-copy">
+          <strong>Inspect a package</strong>
+          <span>Choose a CADUCEUS <code>.json</code> package. Nothing is installed until you review and trust its exact SHA-256 digest.</span>
+        </div>
+        <label class="extension-file-label">
+          <span>{extensions.busy ? 'Working…' : 'Choose package'}</span>
+          <input data-extension-package type="file" accept="application/json,.json" :disabled="extensions.busy" on:change="extensionPackage.read($event)" />
+        </label>
+      </div>
+      <logic :if="extensions.inspection">
+        <div class="settings-row extension-trust-review" data-extension-trust-review>
+          <div class="extension-setting-copy">
+            <strong>{extensions.inspection.displayName} {extensions.inspection.version}</strong>
+            <span>{extensions.inspection.manifest.description || 'No package description.'}</span>
+            <span class="extension-kind">{extensions.inspection.kind === 'theme' ? 'Declarative theme' : 'Sandboxed plugin'}</span>
+            <logic :if="extensions.inspection.manifest.permissions.length">
+              <ul class="extension-permissions" aria-label="Requested permissions">
+                <loop :for="permission of extensions.inspection.manifest.permissions"><li>{extensions.permissionLabel(permission)}</li></loop>
+              </ul>
+            </logic>
+            <logic :if="!extensions.inspection.manifest.permissions.length"><span>Requests no permissions.</span></logic>
+            <code class="extension-digest">{extensions.inspection.digest}</code>
+          </div>
+          <w-btn variant="tonal" :disabled="extensions.busy" on:click="extensions.trust()">Trust exact digest and install</w-btn>
+        </div>
+      </logic>
+      <loop :for="extension of extensions.extensions">
+        <div class="settings-row extension-package-row" :data-extension-id="extension.id">
+          <div class="extension-setting-copy">
+            <strong>{extension.displayName} <span class="extension-version">v{extension.version}</span></strong>
+            <span>{extension.manifest.description || extension.id}</span>
+            <span>{extension.kind === 'theme' ? 'Declarative theme' : 'Sandboxed plugin'} · SHA-256 {extension.digest.slice(0, 12)}…</span>
+          </div>
+          <div class="extension-package-actions">
+            <w-btn variant="text" :disabled="extensions.busy" on:click="extensions.toggle(extension.id)">{extension.enabled ? 'Disable' : 'Enable'}</w-btn>
+            <w-btn variant="text" color="danger" :disabled="extensions.busy" on:click="browserPage.confirmThen('Remove “' + extension.displayName + '” and its trusted code?', 'extension-remove', extension.id)">Remove</w-btn>
+          </div>
+        </div>
+      </loop>
+      <logic :if="extensions.extensions.length === 0 && !extensions.inspection">
+        <div class="settings-row"><span class="w-text-body-small">No trusted extensions are installed for this mailbox.</span></div>
+      </logic>
+    </div>
+    <logic :if="extensions.error"><p class="login-error" role="alert">{extensions.error}</p></logic>
+  </div>
+
+  <div id="mail-preferences" class="settings-section" data-mail-preferences-settings>
+    <div class="settings-section-heading">
+      <div>
+        <p class="w-text-label-large settings-section-title">Mail preferences</p>
+        <p class="w-text-body-small settings-help">Workspace, reading, composing, sending, attachment, snooze, and contact behavior. These choices follow your mailbox on every device.</p>
+      </div>
+    </div>
+
+    <div class="mail-preference-grid">
+      <fieldset class="settings-card mail-preference-group" :disabled="settings.loading || mailPreferences.saving">
+        <legend>Workspace</legend>
+        <label><span>Layout</span><select data-mail-preference="workspaceLayout" on:change="mailPreferences.choose('workspaceLayout', $event.target.value)">
+          <option value="split" :selected="mailPreferences.current.workspaceLayout === 'split'">Message list beside reader</option>
+          <option value="split-vertical" :selected="mailPreferences.current.workspaceLayout === 'split-vertical'">Message list above reader</option>
+          <option value="list" :selected="mailPreferences.current.workspaceLayout === 'list'">Full-width list</option>
+        </select></label>
+        <label><span>Interface size</span><select data-mail-preference="interfaceScale" on:change="mailPreferences.choose('interfaceScale', $event.target.value)">
+          <option value="0.8" :selected="mailPreferences.current.interfaceScale === 0.8">80%</option>
+          <option value="0.9" :selected="mailPreferences.current.interfaceScale === 0.9">90%</option>
+          <option value="1" :selected="mailPreferences.current.interfaceScale === 1">100%</option>
+          <option value="1.1" :selected="mailPreferences.current.interfaceScale === 1.1">110%</option>
+          <option value="1.2" :selected="mailPreferences.current.interfaceScale === 1.2">120%</option>
+        </select></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="use24HourClock" :checked="mailPreferences.current.use24HourClock" on:click="mailPreferences.toggle('use24HourClock', $event.target.checked)" /><span>Use a 24-hour clock</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="showUnreadForAllFolders" :checked="mailPreferences.current.showUnreadForAllFolders" on:click="mailPreferences.toggle('showUnreadForAllFolders', $event.target.checked)" /><span>Show counts for every folder</span></label>
+      </fieldset>
+
+      <fieldset class="settings-card mail-preference-group" :disabled="settings.loading || mailPreferences.saving">
+        <legend>Reading</legend>
+        <label><span>Mark as read</span><select data-mail-preference="markAsReadDelay" on:change="mailPreferences.choose('markAsReadDelay', $event.target.value)">
+          <option value="0" :selected="mailPreferences.current.markAsReadDelay === 0">Immediately</option>
+          <option value="500" :selected="mailPreferences.current.markAsReadDelay === 500">After 0.5 seconds</option>
+          <option value="2000" :selected="mailPreferences.current.markAsReadDelay === 2000">After 2 seconds</option>
+          <option value="-1" :selected="mailPreferences.current.markAsReadDelay < 0">Manually</option>
+        </select></label>
+        <label><span>Backspace key</span><select data-mail-preference="backspaceAction" on:change="mailPreferences.choose('backspaceAction', $event.target.value)">
+          <option value="archive" :selected="mailPreferences.current.backspaceAction === 'archive'">Archive</option>
+          <option value="trash" :selected="mailPreferences.current.backspaceAction === 'trash'">Move to trash</option>
+        </select></label>
+        <label><span>Conversation order</span><select data-mail-preference="conversationOrder" on:change="mailPreferences.choose('conversationOrder', $event.target.value)">
+          <option value="ascending" :selected="mailPreferences.current.conversationOrder === 'ascending'">Oldest first</option>
+          <option value="descending" :selected="mailPreferences.current.conversationOrder === 'descending'">Newest first</option>
+        </select></label>
+        <label><span>Message color mode</span><select data-mail-preference="emailRenderMode" on:change="mailPreferences.choose('emailRenderMode', $event.target.value)">
+          <option value="theme" :selected="mailPreferences.current.emailRenderMode === 'theme'">Match interface</option>
+          <option value="light" :selected="mailPreferences.current.emailRenderMode === 'light'">Always light</option>
+          <option value="dark" :selected="mailPreferences.current.emailRenderMode === 'dark'">Always dark</option>
+        </select></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="detailedHeaders" :checked="mailPreferences.current.detailedHeaders" on:click="mailPreferences.toggle('detailedHeaders', $event.target.checked)" /><span>Show complete message headers</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="detailedNames" :checked="mailPreferences.current.detailedNames" on:click="mailPreferences.toggle('detailedNames', $event.target.checked)" /><span>Show names with email addresses</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="restrictMessageWidth" :checked="mailPreferences.current.restrictMessageWidth" on:click="mailPreferences.toggle('restrictMessageWidth', $event.target.checked)" /><span>Limit message width for readability</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="swipeEnabled" :checked="mailPreferences.current.swipeEnabled" on:click="mailPreferences.toggle('swipeEnabled', $event.target.checked)" /><span>Enable swipe actions on touch screens</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="displayAttachmentPreviews" :checked="mailPreferences.current.displayAttachmentPreviews" on:click="mailPreferences.toggle('displayAttachmentPreviews', $event.target.checked)" /><span>Display attachment previews</span></label>
+      </fieldset>
+
+      <fieldset class="settings-card mail-preference-group" :disabled="settings.loading || mailPreferences.saving">
+        <legend>Composer and sending</legend>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="richText" :checked="mailPreferences.current.richText" on:click="mailPreferences.toggle('richText', $event.target.checked)" /><span>Compose rich text</span></label>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="spellcheck" :checked="mailPreferences.current.spellcheck" on:click="mailPreferences.toggle('spellcheck', $event.target.checked)" /><span>Check spelling while composing</span></label>
+        <label><span>Spelling language</span><select data-mail-preference="spellcheckLanguage" on:change="mailPreferences.choose('spellcheckLanguage', $event.target.value)">
+          <loop :for="language of mailPreferences.spellcheckLanguages()"><option :value="language.id" :selected="mailPreferences.current.spellcheckLanguage === language.id">{language.label}</option></loop>
+        </select></label>
+        <label><span>Primary send action</span><select data-mail-preference="defaultSendAction" on:change="mailPreferences.choose('defaultSendAction', $event.target.value)">
+          <option value="send" :selected="mailPreferences.current.defaultSendAction === 'send'">Send</option>
+          <option value="send-and-archive" :selected="mailPreferences.current.defaultSendAction === 'send-and-archive'">Send and archive</option>
+        </select></label>
+        <label><span>Default reply</span><select data-mail-preference="defaultReplyAction" on:change="mailPreferences.choose('defaultReplyAction', $event.target.value)">
+          <option value="reply" :selected="mailPreferences.current.defaultReplyAction === 'reply'">Reply</option>
+          <option value="reply-all" :selected="mailPreferences.current.defaultReplyAction === 'reply-all'">Reply all</option>
+        </select></label>
+        <label><span>Undo send window</span><select data-mail-preference="undoSendDelay" on:change="mailPreferences.choose('undoSendDelay', $event.target.value)">
+          <option value="0" :selected="mailPreferences.current.undoSendDelay === 0">Off</option>
+          <option value="5000" :selected="mailPreferences.current.undoSendDelay === 5000">5 seconds</option>
+          <option value="15000" :selected="mailPreferences.current.undoSendDelay === 15000">15 seconds</option>
+          <option value="30000" :selected="mailPreferences.current.undoSendDelay === 30000">30 seconds</option>
+          <option value="60000" :selected="mailPreferences.current.undoSendDelay === 60000">60 seconds</option>
+        </select></label>
+        <label><span>Default From address</span><select data-mail-preference="defaultFrom" on:change="mailPreferences.choose('defaultFrom', $event.target.value)">
+          <option value="" :selected="!mailPreferences.current.defaultFrom">Primary address</option>
+          <loop :for="address of emailAliases.senderAddresses()"><option :value="address" :selected="mailPreferences.current.defaultFrom === address">{address}</option></loop>
+        </select></label>
+      </fieldset>
+
+      <fieldset class="settings-card mail-preference-group" :disabled="settings.loading || mailPreferences.saving">
+        <legend>Automatic recipients</legend>
+        <span class="w-text-body-small mail-preference-note">Automatically add CC or BCC recipients for an exact From identity.</span>
+        <loop :for="row of mailPreferences.senderRows()">
+          <div class="mail-preference-sender">
+            <strong>{row.address}</strong>
+            <label><span>CC</span><input type="text" inputmode="email" autocomplete="off" :value="row.cc" :data-auto-recipient-sender="row.address" data-auto-recipient-kind="cc" on:input="mailPreferences.setRecipients(row.address, 'cc', $event.target.value)" placeholder="manager@example.com" /></label>
+            <label><span>BCC</span><input type="text" inputmode="email" autocomplete="off" :value="row.bcc" :data-auto-recipient-sender="row.address" data-auto-recipient-kind="bcc" on:input="mailPreferences.setRecipients(row.address, 'bcc', $event.target.value)" placeholder="archive@example.com" /></label>
+          </div>
+        </loop>
+      </fieldset>
+
+      <fieldset class="settings-card mail-preference-group" :disabled="settings.loading || mailPreferences.saving">
+        <legend>Snooze and contacts</legend>
+        <label class="mail-preference-toggle"><input type="checkbox" data-mail-preference="unsnoozeToTop" :checked="mailPreferences.current.unsnoozeToTop" on:click="mailPreferences.toggle('unsnoozeToTop', $event.target.checked)" /><span>Return unsnoozed conversations to the top</span></label>
+        <span class="w-text-body-small mail-preference-note">Disable automatic “found in mail” contact learning for selected hosted domains.</span>
+        <loop :for="row of mailPreferences.domainRows()">
+          <label class="mail-preference-toggle"><input type="checkbox" data-find-in-mail-domain :value="row.domain" :checked="row.enabled" on:click="mailPreferences.toggleContactLearning(row.domain)" /><span>{row.label}</span></label>
+        </loop>
+      </fieldset>
+    </div>
+    <div class="mail-preference-actions">
+      <span class="w-text-body-small">Changes apply to open mailbox views after saving.</span>
+      <w-btn variant="tonal" :disabled="settings.loading || mailPreferences.saving" on:click="mailPreferences.save()">{mailPreferences.saving ? 'Saving…' : 'Save mail preferences'}</w-btn>
+    </div>
+    <logic :if="mailPreferences.error"><p class="login-error" role="alert">{mailPreferences.error}</p></logic>
+    <logic :if="mailPreferences.status"><p class="mail-preference-status" role="status" aria-live="polite">{mailPreferences.status}</p></logic>
+  </div>
+
+  <div id="keyboard-shortcuts" class="settings-section" data-keyboard-shortcut-settings>
+    <div class="settings-section-heading">
+      <div>
+        <p class="w-text-label-large settings-section-title">Keyboard shortcuts</p>
+        <p class="w-text-body-small settings-help">Use one key, a modifier chord such as <code>mod+enter</code>, or a two-step sequence such as <code>g i</code>. Clear a field to disable that command.</p>
+      </div>
+      <w-btn variant="text" :disabled="keyboardShortcuts.saving || keyboardShortcuts.loading" on:click="keyboardShortcuts.reset()">Restore defaults</w-btn>
+    </div>
+    <div class="shortcut-settings-grid">
+      <loop :for="group of keyboardShortcuts.groups()">
+        <section class="settings-card shortcut-settings-group" :aria-label="group.label">
+          <h3>{group.label}</h3>
+          <loop :for="row of group.rows">
+            <label class="shortcut-settings-row">
+              <span>
+                <strong>{row.label}</strong>
+                <small>Default: {row.defaultLabel}</small>
+              </span>
+              <input
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                :data-shortcut-action="row.id"
+                :value="row.inputBinding"
+                :placeholder="row.binding === 'off' ? 'Disabled' : row.binding"
+                :disabled="keyboardShortcuts.saving || keyboardShortcuts.loading"
+                on:input="keyboardShortcuts.capture(row.id, $event.target.value)"
+                :aria-label="'Shortcut for ' + row.label" />
+            </label>
+          </loop>
+        </section>
+      </loop>
+    </div>
+    <div class="shortcut-settings-actions">
+      <span class="w-text-body-small">Contexts prevent mailbox, conversation, composer, and calendar commands from firing together.</span>
+      <w-btn variant="tonal" :disabled="keyboardShortcuts.saving || keyboardShortcuts.loading" on:click="keyboardShortcuts.save()">{keyboardShortcuts.saving ? 'Saving…' : (keyboardShortcuts.loading ? 'Loading…' : 'Save shortcuts')}</w-btn>
+    </div>
+    <logic :if="keyboardShortcuts.error"><p class="login-error" role="alert">{keyboardShortcuts.error}</p></logic>
+    <logic :if="keyboardShortcuts.status"><p class="shortcut-settings-status" role="status" aria-live="polite">{keyboardShortcuts.status}</p></logic>
+  </div>
+
+  <div class="settings-section">
+    <p class="w-text-label-large settings-section-title">Email privacy</p>
+    <div class="settings-card">
+      <div class="settings-row settings-row-stacked">
+        <span class="w-text-body-medium">Remote images</span>
+        <span class="w-text-body-small settings-muted">
+          Tracking pixels are always removed. Spam never loads remote images automatically.
+        </span>
+        <div class="visibility-options">
+          <label class="visibility-option">
+            <input type="radio" name="remote-images" :checked="emailPrivacy.remoteImagePolicy === 'block'" on:click="emailPrivacy.setRemoteImagePolicy('block')" />
+            <span><strong>Ask before loading</strong> — prevent senders from learning when you open mail (recommended)</span>
+          </label>
+          <label class="visibility-option">
+            <input type="radio" name="remote-images" :checked="emailPrivacy.remoteImagePolicy === 'allow'" on:click="emailPrivacy.setRemoteImagePolicy('allow')" />
+            <span><strong>Load automatically</strong> — show ordinary remote images except in spam</span>
+          </label>
+        </div>
+      </div>
+      <logic :if="emailPrivacy.trustedSenders.length > 0">
+        <div class="settings-row" style="align-items:flex-start;flex-direction:column;">
+          <span class="w-text-body-medium">Trusted senders</span>
+          <loop :for="sender of emailPrivacy.trustedSenders">
+            <div class="trusted-sender-row">
+              <span class="w-text-body-small">{sender}</span>
+              <w-btn variant="text" :disabled="emailPrivacy.saving" on:click="emailPrivacy.removeTrustedSender(sender)">Remove</w-btn>
+            </div>
+          </loop>
+        </div>
+      </logic>
+      <div class="settings-row" style="align-items:flex-start;gap:0.75rem;">
+        <input
+          id="github-profile-enrichment"
+          type="checkbox"
+          data-github-profile-enrichment
+          :checked="emailPrivacy.githubProfiles"
+          :disabled="emailPrivacy.saving"
+          on:click="emailPrivacy.setGithubProfiles($event.target.checked)"
+          aria-describedby="github-profile-enrichment-help" />
+        <label for="github-profile-enrichment" style="display:flex;flex:1;flex-direction:column;gap:0.25rem;">
+          <span class="w-text-body-medium">Public GitHub contact profiles</span>
+          <span id="github-profile-enrichment-help" class="w-text-body-small settings-muted">
+            When you open the contact sidebar, send that participant’s email address to GitHub’s public API and show a matching profile and top repositories. Disabled by default; no GitHub token is required.
+          </span>
+        </label>
+      </div>
+    </div>
+    <logic :if="emailPrivacy.error"><p class="login-error settings-after-sm">{emailPrivacy.error}</p></logic>
+  </div>
+
+  <div class="settings-section" data-translation-settings>
+    <p class="w-text-label-large settings-section-title">Translation</p>
+    <div class="settings-card">
+      <div class="settings-row translation-settings-heading">
+        <div>
+          <span class="w-text-body-medium">Per-language behavior</span>
+          <span class="w-text-body-small">Choose “Always” or “Never” from a translated message. These private choices stay on this device.</span>
+        </div>
+        <w-btn variant="text" on:click="translationPreferences.resetAll()">Reset all</w-btn>
+      </div>
+      <logic :if="translationPreferences.automaticRows.length === 0 && translationPreferences.disabledRows.length === 0">
+        <div class="settings-row"><span class="w-text-body-small">No custom translation behavior.</span></div>
+      </logic>
+      <logic :if="translationPreferences.automaticRows.length > 0">
+        <div class="settings-row translation-language-list">
+          <strong class="w-text-body-medium">Always translate</strong>
+          <loop :for="language of translationPreferences.automaticRows">
+            <span><span>{language.label}</span><w-btn variant="text" on:click="translationPreferences.restore(language.id)">Ask instead</w-btn></span>
+          </loop>
+        </div>
+      </logic>
+      <logic :if="translationPreferences.disabledRows.length > 0">
+        <div class="settings-row translation-language-list">
+          <strong class="w-text-body-medium">Never offer</strong>
+          <loop :for="language of translationPreferences.disabledRows">
+            <span><span>{language.label}</span><w-btn variant="text" on:click="translationPreferences.restore(language.id)">Ask again</w-btn></span>
+          </loop>
+        </div>
+      </logic>
+      <div class="settings-row translation-local-note">
+        <span class="w-text-body-small">Translation uses a checksum-pinned model served by this CADUCEUS installation. Message and draft text never leaves the browser.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-section" data-mcp-settings>
+    <div class="settings-section-heading">
+      <div>
+        <p class="w-text-label-large settings-section-title">AI / MCP access</p>
+        <p class="w-text-body-small settings-help">
+          Connect a local or trusted AI client directly to this mailbox. Access is off by default, scoped below, and never requires another service.
+        </p>
+      </div>
+      <span :class="'mcp-status ' + (mcpAccess.enabled ? 'enabled' : 'disabled')">{mcpAccess.enabled ? 'Enabled' : 'Disabled'}</span>
+    </div>
+
+    <div class="settings-card">
+      <label class="settings-row mcp-toggle-row" for="mcp-enabled">
+        <span class="mcp-setting-copy">
+          <strong class="w-text-body-medium">Allow MCP connections</strong>
+          <span class="w-text-body-small">An active token is also required. Turning this off rejects every MCP request immediately.</span>
+        </span>
+        <input id="mcp-enabled" type="checkbox" role="switch" :checked="mcpAccess.enabled" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.toggleEnabled()" />
+      </label>
+
+      <div class="settings-row mcp-setting-row">
+        <label class="mcp-setting-copy" for="mcp-access-level">
+          <strong class="w-text-body-medium">Access level</strong>
+          <span class="w-text-body-small">Start read-only. Sending includes draft delivery and scheduled delivery.</span>
+        </label>
+        <div class="mcp-access-options" role="radiogroup" aria-label="MCP access level">
+          <label class="mcp-choice"><input type="radio" name="mcp-access-level" :checked="mcpAccess.accessLevel === 'read-only'" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.setAccessLevel('read-only')" /> <span>Read only</span></label>
+          <label class="mcp-choice"><input type="radio" name="mcp-access-level" :checked="mcpAccess.accessLevel === 'read-write'" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.setAccessLevel('read-write')" /> <span>Read and write</span></label>
+          <label class="mcp-choice"><input type="radio" name="mcp-access-level" :checked="mcpAccess.accessLevel === 'read-write-send'" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.setAccessLevel('read-write-send')" /> <span>Read, write, and send</span></label>
+        </div>
+      </div>
+
+      <fieldset class="settings-row mcp-fieldset">
+        <legend class="w-text-body-medium">Exposed accounts</legend>
+        <span class="w-text-body-small mcp-field-help">Only selected domains are visible. A request cannot choose a tenant outside this list.</span>
+        <div class="mcp-choice-grid">
+          <loop :for="row of mcpAccess.domainRows()">
+            <label class="mcp-choice">
+              <input type="checkbox" :checked="row.allowed" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.toggleDomain(row.domain)" />
+              <span>{row.label}</span>
+            </label>
+          </loop>
+        </div>
+      </fieldset>
+
+      <fieldset class="settings-row mcp-fieldset">
+        <legend class="w-text-body-medium">Excluded folders</legend>
+        <span class="w-text-body-small mcp-field-help">Exclusion wins over every tool. If any message is excluded, its whole conversation is hidden.</span>
+        <div class="mcp-folder-grid">
+          <loop :for="row of mcpAccess.folderRows()">
+            <label :class="'mcp-choice ' + (row.accountAllowed ? '' : 'muted')">
+              <input type="checkbox" :checked="row.excluded" :disabled="mcpAccess.saving || mcpAccess.loading || !row.accountAllowed" on:click="mcpAccess.toggleFolder(row.domain, row.path)" />
+              <span>{row.domain} · {row.path}<logic :if="row.role"> ({row.role})</logic></span>
+            </label>
+          </loop>
+        </div>
+      </fieldset>
+
+      <div class="settings-row mcp-actions-row">
+        <span class="w-text-body-small">Configuration changes apply to the next request.</span>
+        <w-btn variant="tonal" :disabled="mcpAccess.saving || mcpAccess.loading || (mcpAccess.enabled && mcpAccess.allowedDomains.length === 0)" on:click="mcpAccess.save()">{mcpAccess.loading ? 'Loading…' : (mcpAccess.saving ? 'Working…' : 'Save MCP access')}</w-btn>
+      </div>
+    </div>
+
+    <div class="settings-card mcp-connection-card">
+      <div class="settings-row mcp-setting-row">
+        <span class="mcp-setting-copy">
+          <strong class="w-text-body-medium">Server endpoint</strong>
+          <code class="mcp-endpoint">{mcpAccess.endpoint()}</code>
+        </span>
+        <w-btn variant="text" on:click="mcpAccess.copy(mcpAccess.endpoint(), 'MCP endpoint')">Copy</w-btn>
+      </div>
+      <div class="settings-row mcp-token-row">
+        <span class="mcp-setting-copy">
+          <strong class="w-text-body-medium">Bearer token</strong>
+          <span class="w-text-body-small">{mcpAccess.hasToken ? 'An active token exists' : 'No active token'}<logic :if="mcpAccess.tokenCreatedAt"> · created {mcpAccess.tokenCreatedAtLabel()}</logic></span>
+        </span>
+        <div class="mcp-button-row">
+          <w-btn variant="tonal" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.rotateToken()">{mcpAccess.hasToken ? 'Rotate token' : 'Generate token'}</w-btn>
+          <logic :if="mcpAccess.hasToken"><w-btn variant="text" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.revokeToken()">Revoke</w-btn></logic>
+        </div>
+      </div>
+      <logic :if="mcpAccess.token">
+        <div class="settings-row mcp-secret-row" role="status">
+          <span class="mcp-setting-copy">
+            <strong class="w-text-body-medium">Copy this token now</strong>
+            <span class="w-text-body-small">It is shown once and only its SHA-256 hash is stored.</span>
+            <code class="mcp-secret">{mcpAccess.token}</code>
+          </span>
+          <w-btn variant="tonal" on:click="mcpAccess.copy(mcpAccess.token, 'MCP token')">Copy token</w-btn>
+        </div>
+      </logic>
+    </div>
+
+    <div class="settings-section-heading mcp-audit-heading">
+      <div>
+        <p class="w-text-body-medium settings-flush">Recent MCP activity</p>
+        <p class="w-text-body-small settings-help">Only tool name, status, timing, count, and parameter names are retained—never message content or addresses.</p>
+      </div>
+      <logic :if="mcpAccess.audit.length > 0"><w-btn variant="text" :disabled="mcpAccess.saving || mcpAccess.loading" on:click="mcpAccess.clearAudit()">Clear activity</w-btn></logic>
+    </div>
+    <div class="settings-card mcp-audit-list">
+      <logic :if="mcpAccess.audit.length === 0">
+        <div class="settings-row"><span class="w-text-body-small">No MCP activity recorded.</span></div>
+      </logic>
+      <loop :for="event of mcpAccess.auditRows()">
+        <div class="settings-row mcp-audit-row">
+          <span class="mcp-setting-copy">
+            <strong class="w-text-body-medium">{event.toolName}</strong>
+            <span class="w-text-body-small">{event.createdAtLabel} · parameters: {event.parameterLabel}</span>
+          </span>
+          <span :class="'mcp-audit-status ' + event.status">{event.status}</span>
+          <span class="w-text-body-small mcp-audit-metric">{event.durationMs} ms · {event.resultCount} result(s)</span>
+        </div>
+      </loop>
+    </div>
+    <logic :if="mcpAccess.error"><p class="login-error settings-after-sm" role="alert">{mcpAccess.error}</p></logic>
+  </div>
+
+  <div class="settings-section">
+    <p class="w-text-label-large settings-section-title">Routing Rules</p>
+    <logic :if="settings.loading"><div class="inbox-empty" role="status"><w-progress-circular indeterminate aria-hidden="true"></w-progress-circular><span class="w-text-body-medium settings-indent">Loading…</span></div></logic>
+    <logic :if="!settings.loading && domainRoutes.domains.length === 0"><p class="w-text-body-medium" style="color:var(--ms-on-surface-variant);padding:1rem;">No domains configured.</p></logic>
+    <loop :for="domain of domainRoutes.domains">
+      <div style="margin-bottom:1rem;">
+        <p class="w-text-title-small" style="margin:0 0 0.5rem;color:var(--ms-on-surface-variant);">{domain.domain}</p>
+        <div class="settings-card">
+          <loop :for="route of domain.routes">
+            <div class="settings-row lazy-list-item"><span class="settings-grow">{route.match}</span><span :class="'route-badge ' + route.action.type">{route.action.type}</span>
+              <logic :if="!route.enabled"><span class="w-text-label-small" style="color:var(--ms-on-surface-variant);margin-left:0.5rem;">(disabled)</span></logic>
+            </div>
+          </loop>
+        </div>
+      </div>
+    </loop>
+  </div>
+
+  <div id="notifications" class="settings-section">
+    <p class="w-text-label-large settings-section-title">Notifications</p>
+    <div class="settings-card">
+      <div class="settings-row" style="align-items:flex-start;">
+        <div style="display:flex;flex-direction:column;gap:0.25rem;"><span class="w-text-body-medium">New mail alerts</span><span class="w-text-body-small settings-muted">{pushNotifications.helpText()}</span></div>
+        <span class="w-text-label-medium settings-muted settings-push-end">{pushNotifications.statusLabel()}</span>
+      </div>
+      <logic :if="pushNotifications.subscriptions.length > 0">
+        <loop :for="pushSubscription of pushNotifications.rows()">
+          <div class="settings-row lazy-list-item"><span class="w-text-body-small">Registered device</span><span class="w-text-body-small settings-muted settings-push-end">{pushSubscription.updatedAtLabel}</span></div>
+        </loop>
+      </logic>
+      <div class="settings-row new-mail-notification-settings">
+        <div class="new-mail-notification-copy">
+          <span class="w-text-body-medium">New-mail privacy and accounts</span>
+          <span class="w-text-body-small">Choose which hosted and connected accounts may alert this device and how much is visible on its lock screen.</span>
+        </div>
+        <fieldset class="notification-account-list" :disabled="newMailAlerts.saving">
+          <legend class="w-text-label-small">Alert for</legend>
+          <loop :for="account of newMailAlerts.domainOptions()">
+            <label class="notification-account-option">
+              <input
+                type="checkbox"
+                :checked="account.enabled"
+                :disabled="newMailAlerts.saving"
+                on:click="newMailAlerts.toggleDomain(account.domain)" />
+              <span>{account.label}</span>
+            </label>
+          </loop>
+          <loop :for="account of newMailAlerts.accountOptions()">
+            <label class="notification-account-option">
+              <input
+                type="checkbox"
+                :checked="account.enabled"
+                :disabled="newMailAlerts.saving"
+                on:click="newMailAlerts.toggleAccount(account.id)" />
+              <span>{account.label} · {account.address}</span>
+            </label>
+          </loop>
+        </fieldset>
+        <label class="new-mail-notification-control" for="new-mail-notification-privacy">
+          <span class="w-text-label-small">Lock-screen detail</span>
+          <select
+            id="new-mail-notification-privacy"
+            class="typography-select"
+            :disabled="newMailAlerts.saving"
+            on:change="newMailAlerts.setPrivacy($event.target.value)">
+            <option value="full" :selected="newMailAlerts.privacy === 'full'">Sender and subject</option>
+            <option value="sender" :selected="newMailAlerts.privacy === 'sender'">Sender only</option>
+            <option value="private" :selected="newMailAlerts.privacy === 'private'">Private</option>
+          </select>
+        </label>
+        <label class="notification-action-toggle">
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="newMailAlerts.actions"
+            :disabled="newMailAlerts.saving"
+            on:click="newMailAlerts.setActions($event.target.checked)" />
+          <span class="w-text-body-small">Show Mark read and Archive actions</span>
+        </label>
+      </div>
+      <div class="settings-row unread-badge-settings">
+        <div class="unread-badge-copy">
+          <span class="w-text-body-medium">Unread badge</span>
+          <span class="w-text-body-small">Choose whether app and notification badges total every hosted account or one account.</span>
+        </div>
+        <label class="unread-badge-control" for="unread-badge-scope">
+          <span class="w-text-label-small">Accounts</span>
+          <select
+            id="unread-badge-scope"
+            data-unread-badge-scope
+            class="typography-select"
+            :disabled="unreadBadge.saving"
+            on:change="unreadBadge.setScope($event.target.value)">
+            <option value="all" :selected="unreadBadge.scope === 'all'">All hosted accounts</option>
+            <option value="domain" :selected="unreadBadge.scope === 'domain'">One hosted account</option>
+          </select>
+        </label>
+        <logic :if="unreadBadge.scope === 'domain'">
+          <label class="unread-badge-control" for="unread-badge-domain">
+            <span class="w-text-label-small">Hosted account</span>
+            <select
+              id="unread-badge-domain"
+              data-unread-badge-domain
+              class="typography-select"
+              :disabled="unreadBadge.saving"
+              on:change="unreadBadge.setDomain($event.target.value)">
+              <loop :for="account of unreadBadge.domainOptions()">
+                <option :value="account.domain" :selected="unreadBadge.domain === account.domain">{account.label}</option>
+              </loop>
+            </select>
+          </label>
+        </logic>
+      </div>
+      <div class="settings-row notification-sound-settings">
+        <div class="notification-sound-heading">
+          <span class="w-text-body-medium">Sound cues</span>
+          <span class="w-text-body-small">Generated locally—no downloaded audio or external service.</span>
+        </div>
+        <loop :for="soundEvent of notificationSounds.events()">
+          <div class="notification-sound-row" :data-sound-event="soundEvent.id">
+            <label class="notification-sound-copy" :for="'sound-' + soundEvent.id">
+              <span class="w-text-body-medium">{soundEvent.label}</span>
+              <span class="w-text-body-small">{soundEvent.description}</span>
+            </label>
+            <select
+              class="typography-select notification-sound-select"
+              :id="'sound-' + soundEvent.id"
+              :disabled="notificationSounds.saving"
+              on:change="notificationSounds.choose(soundEvent.id, $event.target.value)">
+              <loop :for="sound of notificationSounds.options()">
+                <option :value="sound.id" :selected="notificationSounds.sound(soundEvent.id) === sound.id">{sound.label}</option>
+              </loop>
+            </select>
+            <w-btn variant="text" :disabled="notificationSounds.saving || notificationSounds.sound(soundEvent.id) === 'none'" on:click="notificationSounds.preview(soundEvent.id)">Preview</w-btn>
+          </div>
+        </loop>
+      </div>
+    </div>
+    <logic :if="pushNotifications.error"><p class="login-error settings-after">{pushNotifications.error}</p></logic>
+    <logic :if="unreadBadge.error"><p class="login-error settings-after" role="alert">{unreadBadge.error}</p></logic>
+    <logic :if="newMailAlerts.error"><p class="login-error settings-after" role="alert">{newMailAlerts.error}</p></logic>
+    <logic :if="notificationSounds.error"><p class="login-error settings-after">{notificationSounds.error}</p></logic>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem;">
+      <w-btn variant="tonal" :disabled="pushNotifications.loading || !pushNotifications.supported || pushNotifications.permission === 'denied'" on:click="pushNotifications.enable()">{pushNotifications.loading ? 'Working…' : 'Enable notifications'}</w-btn>
+      <logic :if="pushNotifications.supported && pushNotifications.subscriptions.length > 0">
+        <w-btn variant="text" :disabled="pushNotifications.loading" on:click="pushNotifications.disable()">Disable on this device</w-btn>
+      </logic>
+    </div>
+  </div>
+
+  <!-- ────────── Primary authentication ────────── -->
+  <div class="settings-section">
+    <p class="w-text-label-large settings-section-title">Passkeys</p>
+    <p class="w-text-body-small" style="color:var(--ms-on-surface-variant);margin:0 0 0.5rem;">Sign in with biometrics or a hardware key. At least one passkey is required when password-and-passkey policy is enforced.</p>
+    <logic :if="settings.loading"><div class="inbox-empty" role="status"><w-progress-circular indeterminate aria-hidden="true"></w-progress-circular><span class="sr-only">Loading passkeys</span></div></logic>
+    <logic :if="!settings.loading && passkeys.passkeyRows().length > 0">
+      <div class="settings-card">
+        <loop :for="device of passkeys.passkeyRows()">
+          <div class="settings-row lazy-list-item">
+            <span class="w-text-body-medium settings-grow">{device.name}</span>
+            <span class="w-text-body-small settings-muted">Added {device.createdAtLabel}</span>
+            <w-btn variant="text" on:click="browserPage.confirmThen('Remove this passkey?', 'passkey-remove', device.id)">Remove</w-btn>
+          </div>
+        </loop>
+      </div>
+    </logic>
+    <logic :if="!settings.loading && passkeys.passkeyRows().length === 0"><p class="w-text-body-small settings-muted settings-pad-y">No passkeys registered.</p></logic>
+    <!-- Changing any credential needs a factor proven again, so the prompt
+         lives once here and every credential action below goes through it. -->
+    <logic :if="stepUp.shown">
+      <div class="settings-card settings-stack settings-after" data-settings-stepup>
+        <p class="w-text-body-medium settings-flush">Confirm it is you before changing a credential.</p>
+        <w-text-field data-settings-stepup-password type="password" label="Password" :value="stepUp.password" on:input="stepUp.password = $event.target.value" autocomplete="current-password"></w-text-field>
+        <w-text-field data-settings-stepup-code type="text" label="Recovery code" :value="stepUp.code" on:input="stepUp.code = $event.target.value" autocomplete="one-time-code" spellcheck="false" style="font-family:monospace;letter-spacing:0.05em;"></w-text-field>
+        <logic :if="stepUp.error"><p class="login-error settings-flush">{stepUp.error}</p></logic>
+      </div>
+    </logic>
+    <w-btn class="settings-after" variant="tonal" on:click="passkeys.startAdd()">{passkeys.adding ? 'Cancel' : '+ Add passkey'}</w-btn>
+    <logic :if="passkeys.adding && !passkeys.provision"><div class="inbox-empty" role="status" style="padding:1rem;"><w-progress-circular indeterminate aria-hidden="true"></w-progress-circular><span class="settings-indent">Generating…</span></div></logic>
+    <logic :if="passkeys.provision">
+      <div class="settings-card settings-stack settings-after">
+        <p class="w-text-body-medium settings-flush">Give your passkey a name so you can identify it later, then approve the prompt from your browser.</p>
+        <w-text-field label="Passkey name" :value="passkeys.newName" on:input="passkeys.newName = $event.target.value" placeholder="e.g. iPhone 15"></w-text-field>
+        <logic :if="passkeys.error"><p class="login-error settings-flush">{passkeys.error}</p></logic>
+        <w-btn variant="filled" :disabled="passkeys.loading" on:click="passkeys.confirm()">{passkeys.loading ? 'Waiting for your device…' : 'Register passkey'}</w-btn>
+      </div>
+    </logic>
+  </div>
+
+  <div class="settings-section">
+    <p class="w-text-label-large settings-section-title">Secondary verification</p>
+    <p class="w-text-body-small settings-muted settings-lead">Require a time-based code after passkey authentication. Codes are generated locally by your authenticator app.</p>
+    <logic :if="passkeys.authenticatorRows().length > 0"><div class="settings-card" style="margin-bottom:0.75rem;"><loop :for="device of passkeys.authenticatorRows()"><div class="settings-row lazy-list-item"><span class="settings-grow">{device.name}</span><w-btn variant="text" on:click="browserPage.confirmThen('Remove this passkey?', 'passkey-remove', device.id)">Remove</w-btn></div></loop></div></logic>
+    <w-btn variant="tonal" :disabled="authenticatorApp.loading" on:click="authenticatorApp.toggle()">{authenticatorApp.enrollment ? 'Cancel setup' : '+ Add authenticator app'}</w-btn>
+    <logic :if="authenticatorApp.enrollment">
+      <div class="settings-card settings-stack settings-after">
+        <p class="w-text-body-medium settings-flush">Add this secret to your authenticator app, then enter its current code.</p>
+        <code style="padding:0.75rem;background:var(--ms-surface-container);border-radius:4px;overflow-wrap:anywhere;user-select:all;">{authenticatorApp.enrollment.secret}</code>
+        <a :href="authenticatorApp.enrollment.uri" class="w-text-body-small">Open authenticator setup link</a>
+        <w-text-field data-settings-totp-name label="Authenticator name" :value="authenticatorApp.name" on:input="authenticatorApp.name = $event.target.value" placeholder="Authenticator app"></w-text-field>
+        <w-text-field data-settings-totp-code label="6-digit code" :value="authenticatorApp.code" on:input="authenticatorApp.code = $event.target.value" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></w-text-field>
+        <logic :if="authenticatorApp.error"><p class="login-error settings-flush">{authenticatorApp.error}</p></logic>
+        <w-btn variant="filled" :disabled="authenticatorApp.loading" on:click="authenticatorApp.confirm()">{authenticatorApp.loading ? 'Verifying…' : 'Enable secondary verification'}</w-btn>
+      </div>
+    </logic>
+  </div>
+
+  <!-- ────────── Password ──────────
+       Used only when account policy is `password-and-passkey`. Calls
+       `/auth/password/setup` directly so it covers both "set initial
+       password" and "rotate existing password". -->
+  <div class="settings-section">
+    <p class="w-text-label-large settings-section-title">Password</p>
+    <p class="w-text-body-small settings-muted settings-lead">Set or rotate your account password. Required when an admin enables password + passkey policy.</p>
+    <div class="settings-card settings-stack">
+      <label class="settings-native-field"><span>New password</span><input data-settings-new-password type="password" :value="passwordChange.newPassword" on:input="passwordChange.newPassword = $event.target.value" autocomplete="new-password" /></label>
+      <label class="settings-native-field"><span>Confirm password</span><input data-settings-confirm-password type="password" :value="passwordChange.confirmPassword" on:input="passwordChange.confirmPassword = $event.target.value" autocomplete="new-password" /></label>
+      <logic :if="passwordChange.error"><p class="login-error settings-flush">{passwordChange.error}</p></logic>
+      <w-btn variant="filled" :disabled="passwordChange.saving" on:click="passwordChange.update()" style="align-self:flex-start;">{passwordChange.saving ? 'Saving…' : 'Save password'}</w-btn>
+    </div>
+  </div>
+
+  <!-- ────────── Recovery codes ──────────
+       Plaintext codes returned by `/auth/recovery/codes` live in memory
+       only — once dismissed they're gone. Generating new codes invalidates
+       any previously-issued set. -->
+  <div class="settings-section">
+    <p class="w-text-label-large settings-section-title">Recovery codes</p>
+    <p class="w-text-body-small settings-muted settings-lead">Single-use codes that let you sign in if you lose access to your passkey. Keep them somewhere safe — they're shown once.</p>
+    <logic :if="recoveryCodes.codes.length > 0">
+      <div class="settings-card settings-stack">
+        <p class="w-text-body-medium" style="margin:0;font-weight:500;">Save these codes now — they won't be shown again.</p>
+        <div class="recovery-codes-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.375rem;font-family:monospace;letter-spacing:0.06em;font-size:0.9rem;">
+          <loop :for="code of recoveryCodes.codes">
+            <span style="padding:0.375rem 0.5rem;background:var(--ms-surface-container);border-radius:4px;user-select:all;">{code}</span>
+          </loop>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <w-btn variant="text" on:click="recoveryCodes.dismiss()">I've saved them</w-btn>
+        </div>
+      </div>
+    </logic>
+    <logic :if="recoveryCodes.error"><p class="login-error" style="margin:0 0 0.5rem;">{recoveryCodes.error}</p></logic>
+    <w-btn variant="tonal" :disabled="recoveryCodes.loading" on:click="recoveryCodes.generate()">{recoveryCodes.loading ? 'Generating…' : (recoveryCodes.codes.length > 0 ? 'Regenerate codes' : 'Generate recovery codes')}</w-btn>
+  </div>
+
+  <div class="settings-section" data-signature-settings>
+    <div class="settings-section-heading">
+      <div>
+        <p class="w-text-label-large settings-section-title">Signatures</p>
+        <p class="w-text-body-small settings-help">Create safe rich signatures and choose the exact primary address or alias each one belongs to.</p>
+      </div>
+      <w-btn variant="text" on:click="signatureEditor.new()">+ New signature</w-btn>
+    </div>
+    <div class="signature-settings-layout">
+      <div class="settings-card signature-settings-list" role="list" aria-label="Saved signatures">
+        <logic :if="!settings.loading && signatureEditor.signatures.length === 0">
+          <p class="w-text-body-small signature-settings-empty" role="listitem">No signatures yet.</p>
+        </logic>
+        <loop :for="sig of signatureEditor.signatures">
+          <div :class="'settings-row lazy-list-item ' + (signatureEditor.editId === sig.id ? 'selected' : '')" role="listitem">
+            <button type="button" class="signature-settings-select" on:click="signatureEditor.edit(sig.id)">
+              <strong>{sig.name}</strong>
+              <span>{sig.defaultFor.length ? sig.defaultFor.join(', ') : 'Not a default'}</span>
+            </button>
+            <w-btn variant="text" on:click="browserPage.confirmThen('Remove this signature?', 'signature-remove', sig.id)">Remove</w-btn>
+          </div>
+        </loop>
+      </div>
+      <div class="settings-card signature-settings-editor">
+        <w-text-field data-signature-name label="Signature name" :value="signatureEditor.name" on:input="signatureEditor.name = $event.target.value" placeholder="Work"></w-text-field>
+        <fieldset class="signature-defaults">
+          <legend>Default for</legend>
+          <logic :if="emailAliases.senderAddresses().length === 0">
+            <span class="w-text-body-small settings-help">No sender addresses are available.</span>
+          </logic>
+          <loop :for="address of emailAliases.senderAddresses()">
+            <label>
+              <input data-signature-default type="checkbox" :value="address" :checked="signatureEditor.defaults.includes(address)" on:click="signatureEditor.toggleDefault(address)" />
+              <span>{address}</span>
+            </label>
+          </loop>
+        </fieldset>
+        <w-textarea data-signature-html label="Signature HTML" :value="signatureEditor.text" on:input="signatureEditor.text = $event.target.value" on:paste="signaturePaste.paste($event)" placeholder="<p>Best regards,<br>Sender Name</p>" rows="8"></w-textarea>
+        <p class="w-text-body-small settings-help">Paste a formatted signature from another mail app or edit its sanitized HTML source directly.</p>
+        <div class="signature-preview-wrap">
+          <span class="w-text-label-small">Preview</span>
+          <iframe data-signature-preview class="signature-preview" title="Signature preview" sandbox="" :srcdoc="signatureEditor.preview()"></iframe>
+        </div>
+        <logic :if="signatureEditor.error"><p class="login-error">{signatureEditor.error}</p></logic>
+        <w-btn variant="tonal" :disabled="signatureEditor.saving" on:click="signatureEditor.save()">{signatureEditor.saving ? 'Saving…' : (signatureEditor.editId ? 'Update signature' : 'Save signature')}</w-btn>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-section" data-template-settings>
+    <div class="settings-section-heading">
+      <div>
+        <p class="w-text-label-large settings-section-title">Templates</p>
+        <p class="w-text-body-small settings-help">Build reusable rich messages. Wrap editable blanks in <code>&lt;code class=&quot;var&quot;&gt;Name&lt;/code&gt;</code>; empty blanks use <code>class=&quot;var empty&quot;</code>.</p>
+      </div>
+      <w-btn variant="text" on:click="templateEditor.new()">+ New template</w-btn>
+    </div>
+    <div class="template-settings-layout">
+      <div class="settings-card template-settings-list" role="list" aria-label="Saved templates">
+        <logic :if="templateEditor.templates.length === 0">
+          <p class="w-text-body-small template-settings-empty" role="listitem">No templates yet.</p>
+        </logic>
+        <loop :for="template of templateEditor.templates">
+          <div :class="'settings-row lazy-list-item ' + (templateEditor.editId === template.id ? 'selected' : '')" role="listitem">
+            <button type="button" class="template-settings-select" on:click="templateEditor.edit(template.id)">
+              <strong>{template.name}</strong>
+              <span>{template.subject || 'No subject'}</span>
+            </button>
+            <w-btn variant="text" on:click="browserPage.confirmThen('Delete this template permanently?', 'template-remove', template.id)">Remove</w-btn>
+          </div>
+        </loop>
+      </div>
+      <div class="settings-card template-settings-editor">
+        <p class="w-text-title-small">{templateEditor.editId ? 'Edit template' : 'New template'}</p>
+        <div class="template-settings-fields">
+          <w-text-field data-template-name label="Template name" :value="templateEditor.draft.name" on:input="templateEditor.setField('name', $event.target.value)" placeholder="Follow-up"></w-text-field>
+          <w-text-field data-template-subject label="Subject" :value="templateEditor.draft.subject" on:input="templateEditor.setField('subject', $event.target.value)" placeholder="Optional subject"></w-text-field>
+          <w-text-field data-template-to label="To" :value="templateEditor.draft.to" on:input="templateEditor.setField('to', $event.target.value)" placeholder="Optional recipients"></w-text-field>
+          <w-text-field data-template-cc label="CC" :value="templateEditor.draft.cc" on:input="templateEditor.setField('cc', $event.target.value)" placeholder="Optional recipients"></w-text-field>
+        </div>
+        <w-textarea data-template-content label="Template HTML" :value="templateEditor.draft.text" on:input="templateEditor.setField('text', $event.target.value)" rows="8" placeholder="&lt;p&gt;Hello &lt;code class=&quot;var&quot;&gt;Name&lt;/code&gt;,&lt;/p&gt;"></w-textarea>
+        <logic :if="templateEditor.error"><p class="login-error">{templateEditor.error}</p></logic>
+        <div class="template-settings-actions">
+          <w-btn variant="filled" :disabled="templateEditor.saving" on:click="templateEditor.save()">{templateEditor.saving ? 'Saving…' : 'Save template'}</w-btn>
+          <logic :if="templateEditor.editId"><w-btn variant="text" on:click="templateEditor.new()">Cancel editing</w-btn></logic>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="mail-rules" class="settings-section" data-rule-settings>
+      <div class="settings-section-heading">
+        <div>
+          <p class="w-text-label-large settings-section-title">Inbox Rules</p>
+          <p class="w-text-body-small settings-help">Process incoming messages in order. Preview checks conditions without changing or forwarding mail.</p>
+        </div>
+        <w-btn variant="tonal" on:click="inboxRules.toggleForm()">+ Add rule</w-btn>
+      </div>
+      <logic :if="!settings.loading && inboxRules.rules.length > 0">
+        <div class="settings-card" role="list" aria-label="Inbox rules in processing order">
+          <loop :for="rule of inboxRules.rows()">
+            <div class="settings-row lazy-list-item rule-list-row" role="listitem">
+              <div style="display:flex;align-items:center;gap:0.5rem;width:100%;">
+                <span class="w-text-body-medium" style="font-weight:600;">{rule.name}</span>
+                <span class="w-text-body-small settings-muted">{rule.mailbox}</span>
+                <div class="rule-row-actions">
+                  <w-btn variant="text" :aria-label="'Move ' + rule.name + ' earlier'" on:click="inboxRules.move(rule.id, -1)">↑</w-btn>
+                  <w-btn variant="text" :aria-label="'Move ' + rule.name + ' later'" on:click="inboxRules.move(rule.id, 1)">↓</w-btn>
+                  <w-btn variant="text" on:click="inboxRules.edit(rule.id)">Edit</w-btn>
+                  <button type="button" :class="'route-badge ' + (rule.enabled ? 'store' : 'drop')" on:click="inboxRules.toggle(rule.id)" :aria-label="(rule.enabled ? 'Disable ' : 'Enable ') + rule.name">{rule.enabled ? 'on' : 'off'}</button>
+                </div>
+                <w-btn variant="text" on:click="browserPage.confirmThen('Delete this rule?', 'rule-remove', rule.id)">Remove</w-btn>
+              </div>
+              <div class="w-text-body-small settings-muted">If {rule.conditionsLabel}</div>
+              <div class="w-text-body-small">{rule.actionsLabel}</div>
+            </div>
+          </loop>
+        </div>
+      </logic>
+      <logic :if="!settings.loading && inboxRules.rules.length === 0"><p class="w-text-body-small settings-muted settings-pad-y">No inbox rules.</p></logic>
+      <logic :if="inboxRules.open">
+        <div class="settings-card rule-form">
+          <p class="w-text-title-small">{inboxRules.editId ? 'Edit rule' : 'New rule'}</p>
+          <div class="rule-form-grid">
+            <w-text-field data-rule-name label="Rule name" :value="inboxRules.draft.name" on:input="inboxRules.setName($event.target.value)" placeholder="e.g. Move newsletters"></w-text-field>
+            <w-select data-rule-mailbox label="Mailbox" :value="inboxRules.draft.mailbox" on:change="inboxRules.setMailbox($event.target.value)">
+              <w-option value="">
+                Choose mailbox…
+              </w-option>
+              <loop :for="address of emailAliases.senderAddresses()">
+                <w-option :value="address">
+                  {address}
+                </w-option>
+              </loop>
+            </w-select>
+          </div>
+
+          <div class="rule-form-section">
+            <div class="rule-form-header">
+              <span class="w-text-label-large">Conditions</span>
+              <w-select data-rule-match label="Match" :value="inboxRules.draft.conditionMatch" on:change="inboxRules.setMatch($event.target.value)">
+                <w-option value="all">All conditions</w-option>
+                <w-option value="any">Any condition</w-option>
+              </w-select>
+            </div>
+            <div class="rule-builder-row">
+              <w-select data-rule-condition-field label="Field" :value="inboxRules.builder.field" on:change="inboxRules.setField('field', $event.target.value)">
+                <w-option value="from">From</w-option>
+                <w-option value="to">To</w-option>
+                <w-option value="cc">CC</w-option>
+                <w-option value="subject">Subject</w-option>
+                <w-option value="body">Body</w-option>
+                <w-option value="hasAttachment">Has attachment</w-option>
+              </w-select>
+              <w-select data-rule-condition-op label="Operator" :value="inboxRules.builder.op" on:change="inboxRules.setField('op', $event.target.value)">
+                <w-option value="contains">Contains</w-option>
+                <w-option value="notContains">Does not contain</w-option>
+                <w-option value="equals">Equals</w-option>
+                <w-option value="notEquals">Does not equal</w-option>
+                <w-option value="startsWith">Starts with</w-option>
+                <w-option value="endsWith">Ends with</w-option>
+              </w-select>
+              <w-text-field data-rule-condition-value label="Value" :value="inboxRules.builder.value" on:input="inboxRules.setField('value', $event.target.value)" placeholder="newsletter@example.com or true"></w-text-field>
+              <w-btn variant="tonal" on:click="inboxRules.addCondition()">Add</w-btn>
+            </div>
+            <logic :if="inboxRules.conditions.length > 0">
+              <div class="rule-chip-row">
+                <loop :for="condition of inboxRules.conditions">
+                  <span class="rule-chip">{condition.label} <button type="button" on:click="inboxRules.removeCondition(condition.key)" aria-label="Remove condition">×</button></span>
+                </loop>
+              </div>
+            </logic>
+          </div>
+
+          <div class="rule-form-section">
+            <span class="w-text-label-large">Actions</span>
+            <div class="rule-builder-row">
+              <w-select data-rule-action-type label="Action" :value="inboxRules.builder.action" on:change="inboxRules.setField('action', $event.target.value)">
+                <w-option value="folder">Move to folder</w-option>
+                <w-option value="forward">Forward</w-option>
+                <w-option value="delete">Delete</w-option>
+                <w-option value="markReadTrue">Mark read</w-option>
+                <w-option value="markReadFalse">Mark unread</w-option>
+                <w-option value="starTrue">Star</w-option>
+                <w-option value="starFalse">Unstar</w-option>
+              </w-select>
+              <logic :if="inboxRules.builder.action === 'folder'">
+                <w-text-field data-rule-action-folder label="Folder" :value="inboxRules.builder.folder" on:input="inboxRules.setField('folder', $event.target.value)" placeholder="clients/acme"></w-text-field>
+              </logic>
+              <logic :if="inboxRules.builder.action === 'forward'">
+                <w-text-field data-rule-action-to label="Forward to" type="email" :value="inboxRules.builder.to" on:input="inboxRules.setField('to', $event.target.value)" placeholder="ops@example.com"></w-text-field>
+              </logic>
+              <w-btn variant="tonal" on:click="inboxRules.addAction()">Add</w-btn>
+            </div>
+            <logic :if="inboxRules.actions.length > 0">
+              <div class="rule-chip-row">
+                <loop :for="action of inboxRules.actions">
+                  <span class="rule-chip">{action.label} <button type="button" on:click="inboxRules.removeAction(action.key)" aria-label="Remove action">×</button></span>
+                </loop>
+              </div>
+            </logic>
+          </div>
+
+          <label class="rule-stop"><input data-rule-stop type="checkbox" :checked="inboxRules.draft.stopProcessing" on:click="inboxRules.setStop($event.target.checked)"> Stop processing later rules after this one matches</label>
+
+          <div class="rule-form-section rule-preview">
+            <span class="w-text-label-large">Dry-run preview</span>
+            <div class="rule-form-grid">
+              <w-text-field data-rule-preview-from label="Sample from" :value="inboxRules.builder.previewFrom" on:input="inboxRules.setField('previewFrom', $event.target.value)" placeholder="sender@example.com"></w-text-field>
+              <w-text-field data-rule-preview-subject label="Sample subject" :value="inboxRules.builder.previewSubject" on:input="inboxRules.setField('previewSubject', $event.target.value)" placeholder="August invoice"></w-text-field>
+            </div>
+            <w-textarea data-rule-preview-body label="Sample body" :value="inboxRules.builder.previewBody" on:input="inboxRules.setField('previewBody', $event.target.value)" rows="3"></w-textarea>
+            <label class="rule-stop"><input data-rule-preview-attachment type="checkbox" :checked="inboxRules.previewAttachment" on:click="inboxRules.previewAttachment = $event.target.checked"> Sample has an attachment</label>
+            <div class="rule-form-actions"><w-btn variant="text" on:click="inboxRules.preview()">Preview rule</w-btn></div>
+            <logic :if="inboxRules.previewResult"><p class="rule-preview-result" role="status" aria-live="polite">{inboxRules.previewResult}</p></logic>
+          </div>
+
+          <div class="rule-form-actions">
+            <w-btn variant="tonal" on:click="inboxRules.save()">{inboxRules.editId ? 'Update' : 'Save'}</w-btn>
+            <w-btn variant="text" on:click="inboxRules.reset()">Cancel</w-btn>
+          </div>
+        </div>
+      </logic>
+    </div>
+
+  <logic :if="userAdministration.administrator">
+    <div class="settings-section">
+      <p class="w-text-label-large settings-section-title">Users</p>
+      <logic :if="!settings.loading && userAdministration.users.length > 0">
+        <div class="settings-card">
+          <loop :for="user of userAdministration.rows()">
+            <div class="settings-row lazy-list-item" style="flex-wrap:wrap;"><span class="w-text-body-medium settings-grow">{user.email}</span><span class="w-text-body-small settings-muted">{user.role}</span><w-btn variant="text" on:click="userAdministration.issueRecovery(user.email)">Issue recovery code</w-btn></div>
+            <logic :if="user.hasRecovery"><div class="settings-card" style="margin:0.25rem 0.75rem 0.75rem;padding:0.75rem;"><span class="w-text-body-small">{user.note}</span> <code style="user-select:all;display:block;margin-top:0.5rem;">{user.operatorCommand}</code></div></logic>
+          </loop>
+        </div>
+      </logic>
+      <w-btn class="settings-after" variant="tonal" on:click="userAdministration.toggleForm()">+ Add user</w-btn>
+      <logic :if="userAdministration.adding">
+        <div class="settings-card settings-stack settings-after">
+          <w-text-field label="Email" type="email" :value="userAdministration.email" on:input="userAdministration.email = $event.target.value" placeholder="user@example.com"></w-text-field>
+          <w-text-field label="Domains (comma-separated)" :value="userAdministration.domains" on:input="userAdministration.domains = $event.target.value" placeholder="example.com"></w-text-field>
+          <w-btn variant="tonal" on:click="userAdministration.add()">Save</w-btn>
+        </div>
+      </logic>
+    </div>
+  </logic>
+</div>

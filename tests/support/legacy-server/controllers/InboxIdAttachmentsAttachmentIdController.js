@@ -1,0 +1,64 @@
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { Respond } from '../shared/http/Respond.js'
+import { EmailsRecords } from '../shared/mailbox/EmailsRecords.js'
+import { ExternalMessage } from '../shared/mailbox/ExternalMessage.js'
+import { ExternalAccounts } from '../shared/accounts/ExternalAccounts.js'
+
+@RequestRoute("/inbox/{id}/attachments/{attachment_id}")
+@SignedIn
+export class InboxIdAttachmentsAttachmentIdController {
+  /** @type {AttachmentsHelper} */
+  @Needs
+  attachmentsHelper
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  /**
+ * GET /inbox/_id/attachments/_attachment_id
+ * @param {object} params
+ * @param {{ id: string, attachment_id: string }} params.paths
+ * @param {{ bearer?: { token: string } }} params.context
+ * @returns {Promise<Record<string, unknown>>}
+ */
+  @GetRoute
+  async get(@FromPath id, @FromPath attachment_id, request) {
+    return RouteRequest.handle(request, { paths: { id, attachment_id }, guard: {} }, async ({ paths, auth, context }) => {
+    const emailId = paths?.id
+    const attachmentId = paths?.attachment_id
+    if (!emailId || !attachmentId) return Respond.r404('Attachment not found')
+
+    const external = ExternalMessage.parseExternalMessageId(emailId)
+    if (external) {
+      try {
+        const source = await ExternalAccounts.messageSource(
+          ExternalAccounts.bearerToken(context), external.accountId, external.stableId,
+        )
+        const attachment = await ExternalMessage.readExternalAttachment(source?.rawRFC822Base64, attachmentId)
+        return attachment || Respond.r404('Attachment not found')
+      } catch (error) {
+        return ExternalAccounts.accountFailure(error)
+      }
+    }
+
+    const app = this
+    const [, email] = await app.emailsHelper.findById(emailId)
+    if (!email) return Respond.r404('Email not found')
+    if (!auth.domains.includes(email.domain)) return Respond.r403('Access denied')
+    if (!EmailsRecords.canAccessEmail(email, auth.email)) return Respond.r404('Email not found')
+
+    const [, attachment] = await app.attachmentsHelper.findById(attachmentId)
+    if (!attachment || attachment.emailId !== emailId) return Respond.r404('Attachment not found')
+
+    const bytes = await app.attachmentsHelper.readContent(attachment)
+    return {
+      id: attachment.id,
+      filename: attachment.filename,
+      contentType: attachment.contentType,
+      size: attachment.size,
+      contentBase64: Buffer.from(bytes).toString('base64'),
+    }
+    })
+  }
+}

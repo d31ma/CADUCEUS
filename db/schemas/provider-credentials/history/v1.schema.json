@@ -1,0 +1,9 @@
+{
+  "accountId": "^ext_[A-Za-z0-9_-]{20,80}$",
+  "tenantId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "principalId": "^[^\\u0000-\\u001F\\u007F]{1,128}$",
+  "provider": "^(gmail|microsoft|imap)$",
+  "keyVersion": "^[1-9]\\d*$",
+  "nonce": "^[A-Za-z0-9_-]{16,64}$",
+  "ciphertext": "^[A-Za-z0-9_-]+$"
+}

@@ -1,0 +1,239 @@
+import { RouteRequest } from '../shared/http/RouteRequest.js'
+import { AuthGuard } from '../shared/http/AuthGuard.js'
+import { FyloAccessContext } from '../shared/persistence/FyloAccessContext.js'
+import { UnifiedMail } from '../shared/mailbox/UnifiedMail.js'
+import { Buffer } from 'node:buffer'
+import { ServerEnvironment } from '../shared/runtime/ServerEnvironment.js'
+/** @import { InboxStreamMessage } from '../models/InboxStreamMessage.js' */
+
+/**
+ * GET /inbox/stream — live new mail via Server-Sent Events (`@StreamRoute`).
+ *
+ * Bounded, cursor-based design:
+ *   - The client passes an opaque two-source cursor. Legacy ISO timestamps are
+ *     accepted and promoted to independent hosted/provider positions.
+ *   - On (re)connect we immediately replay the oldest bounded slice newer than
+ *     each position, so advancing one source never skips a gap in the other.
+ *   - We then poll for new mail on a short interval, emitting each as a
+ *     `new-email` message whose `cursor` is the next opaque composite cursor.
+ *   - The connection periodically self-closes after `STREAM_MAX_MS` (25s by
+ *     default) with a `reconnect` event; the client reconnects with its latest
+ *     cursor. Operators can raise the value for longer-lived connections.
+ *
+ * Web Push (PushService, already fired from inbound delivery) covers the case
+ * where the client is fully offline/backgrounded.
+ */
+@RequestRoute("/inbox/stream")
+@Public
+export class InboxStreamController {
+  /** @type {CategoryMappingService} */
+  @Needs
+  categoryMappingService
+
+  /** @type {EmailsHelper} */
+  @Needs
+  emailsHelper
+
+  static STREAM_MAX_MS = Number(ServerEnvironment.value('STREAM_MAX_MS') ?? 25_000)
+
+  static STREAM_POLL_MS = Number(ServerEnvironment.value('STREAM_POLL_MS') ?? 2_000)
+
+  static REPLAY_LIMIT = Number(ServerEnvironment.value('STREAM_REPLAY_LIMIT') ?? 50)
+
+  /**
+   * Live new mail as server-sent events. Each message is an
+   * {@link InboxStreamMessage}; Tachyon ends the stream with `event: end`.
+   *
+   * @param {Request} request
+   * @returns {AsyncGenerator<InboxStreamMessage>}
+   */
+  @StreamRoute
+  async *streamInbox(request) {
+    const { query, context } = await RouteRequest.read(request)
+    // EventSource can't set Authorization headers; allow `?token=` as a
+    // fallback to the bearer header so either client style authenticates.
+    const ctx = context?.bearer?.token
+      ? context
+      : { bearer: { token: typeof query?.token === 'string' ? query.token : '' } }
+    const auth = await AuthGuard.requireAuth(ctx)
+    // The stream is already open, so a refusal is an `unauthorized` message;
+    // the client stops reconnecting and signs out.
+    yield* auth.ok
+      ? this._streamInbox(auth.principal, query ?? {}, ctx.bearer?.token || '')
+      : InboxStreamController._unauthorizedStream()
+  }
+
+  static async *_unauthorizedStream() {
+    yield InboxStreamController._sse('unauthorized', { error: 'Authentication required' }, null)
+  }
+
+  /**
+   * @param {import('../shared/http/AuthGuard.js').Principal} claims
+   * @param {{ since?: string }} query
+   * @param {string} token
+   */
+  async *_streamInbox(claims, query, token) {
+    const app = this
+    const domains = [claims.domain]
+    const cursor = InboxStreamController._parseCursor(typeof query.since === 'string' && query.since ? query.since : new Date().toISOString())
+
+    // Announce the live cursor.
+    yield InboxStreamController._sse('connected', { since: InboxStreamController._cursorID(cursor) }, null)
+
+    const deadline = Date.now() + InboxStreamController.STREAM_MAX_MS
+    try {
+      while (Date.now() < deadline) {
+        const hosted = await FyloAccessContext.run(
+          { email: claims.address, domains },
+          () => InboxStreamController._freshHostedSince(app, domains, cursor.hosted, claims.address),
+        )
+        let external = []
+        try {
+          external = await InboxStreamController._freshExternalSince(token, cursor.external)
+        } catch {
+          // Keep the provider cursor unchanged. A later reconnect replays the
+          // gap even if hosted mail advances independently.
+        }
+        const fresh = [...hosted, ...external].sort((left, right) => {
+          const time = String(left.receivedAt || '').localeCompare(String(right.receivedAt || ''))
+          return time || String(left.id || '').localeCompare(String(right.id || ''))
+        }).slice(0, InboxStreamController.REPLAY_LIMIT)
+        for (const email of fresh) {
+          const source = email.external === true ? cursor.external : cursor.hosted
+          source.at = String(email.receivedAt || source.at)
+          source.id = String(email.id || '')
+          yield InboxStreamController._sse('new-email', InboxStreamController._summarize(email), InboxStreamController._cursorID(cursor))
+        }
+        if (fresh.length === 0) yield InboxStreamController._sse('ping', {}, null) // heartbeat keeps the pipe warm
+        await InboxStreamController._sleep(InboxStreamController.STREAM_POLL_MS)
+      }
+    } catch (err) {
+      yield InboxStreamController._sse('error', { message: err instanceof Error ? err.message : 'stream error' }, null)
+    }
+    // Ask the client to reconnect with its now-current cursor.
+    yield InboxStreamController._sse('reconnect', { since: InboxStreamController._cursorID(cursor) }, null)
+  }
+
+  /**
+   * Inbox emails newer than the cursor, oldest-first so the client appends in
+   * order. Capped so a long-offline reconnect can't flood the pipe.
+   *
+   * @param {import('../app.js').App} app
+   * @param {string[]} domains
+   * @param {string} cursor
+   * @param {string} ownerEmail
+   */
+  static async _freshSince(app, domains, cursor, ownerEmail) {
+    return InboxStreamController._freshHostedSince(app, domains, InboxStreamController._parseSourceCursor(cursor), ownerEmail)
+  }
+
+  static async _freshHostedSince(app, domains, cursor, ownerEmail) {
+    const folderByDomain = await app.categoryMappingService.folderFilter(ownerEmail, domains, 'inbox') || undefined
+    const since = InboxStreamController._replaySince(cursor.at)
+    const emails = await app.emailsHelper.list(domains, {
+      folder: 'inbox',
+      folderByDomain,
+      since,
+      ownerEmail,
+    })
+    return (await app.categoryMappingService.presentEmails(ownerEmail, emails))
+      .filter(email => InboxStreamController._afterCursor(email, cursor))
+      .slice().reverse()
+      .slice(0, InboxStreamController.REPLAY_LIMIT)
+  }
+
+  static async _freshExternalSince(token, cursor) {
+    const result = []
+    let offset = 0
+    while (result.length < InboxStreamController.REPLAY_LIMIT && offset <= 100_000) {
+      const page = await UnifiedMail.externalMailSummaries(token, {
+        folderRole: 'inbox', receivedAtFrom: cursor.at, oldestFirst: true, limit: 1000, offset,
+      })
+      result.push(...page.filter(email => InboxStreamController._afterCursor(email, cursor)))
+      if (page.length < 1000) break
+      offset += page.length
+    }
+    return result.slice(0, InboxStreamController.REPLAY_LIMIT)
+  }
+
+  /** Lightweight row payload — never stream full bodies/attachments. */
+  static _summarize(e) {
+    return {
+      id: e.id,
+      domain: e.domain,
+      sender: e.sender,
+      recipient: e.recipient,
+      subject: e.subject,
+      folder: e.folder,
+      systemFolder: e.systemFolder,
+      read: e.read,
+      starred: e.starred,
+      receivedAt: e.receivedAt,
+      ...(e.external === true ? {
+        external: true,
+        providerAccountId: e.providerAccountId,
+        providerStableId: e.providerStableId,
+        mailboxAddress: e.mailboxAddress,
+        mailboxLabel: e.mailboxLabel,
+        mailboxColor: e.mailboxColor,
+      } : {}),
+      ...(e.spamScore != null ? { spamScore: e.spamScore } : {}),
+    }
+  }
+
+  /**
+   * One stream message. `cursor` is the position a reconnect resumes from.
+   * @param {string} event @param {unknown} data @param {string | null} cursor
+   * @returns {InboxStreamMessage}
+   */
+  static _sse(event, data, cursor) {
+    return { event, data, cursor }
+  }
+
+  static _parseSourceCursor(value) {
+    const at = typeof value === 'string' && Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : new Date().toISOString()
+    return { at, id: '' }
+  }
+
+  static _parseCursor(value) {
+    if (typeof value === 'string' && value.startsWith('v1.')) {
+      try {
+        const parsed = JSON.parse(Buffer.from(value.slice(3), 'base64url').toString('utf8'))
+        if (parsed && typeof parsed === 'object') {
+          return {
+            hosted: InboxStreamController._validSourceCursor(parsed.hosted),
+            external: InboxStreamController._validSourceCursor(parsed.external),
+          }
+        }
+      } catch {}
+    }
+    const source = InboxStreamController._parseSourceCursor(value)
+    return { hosted: { ...source }, external: { ...source } }
+  }
+
+  static _validSourceCursor(value) {
+    if (!value || typeof value !== 'object' || typeof value.at !== 'string' || !Number.isFinite(Date.parse(value.at)) || typeof value.id !== 'string' || value.id.length > 2048) {
+      return InboxStreamController._parseSourceCursor('')
+    }
+    return { at: new Date(value.at).toISOString(), id: value.id }
+  }
+
+  static _cursorID(cursor) {
+    return 'v1.' + Buffer.from(JSON.stringify(cursor), 'utf8').toString('base64url')
+  }
+
+  static _replaySince(value) {
+    const parsed = Date.parse(value)
+    return Number.isFinite(parsed) ? new Date(parsed - 1).toISOString() : value
+  }
+
+  static _afterCursor(email, cursor) {
+    const at = String(email?.receivedAt || '')
+    return at > cursor.at || at === cursor.at && String(email?.id || '') > cursor.id
+  }
+
+  /** @param {number} ms */
+  static _sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+  }
+}

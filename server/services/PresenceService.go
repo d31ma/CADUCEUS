@@ -1,0 +1,22 @@
+// PresenceService tells who is online, per domain, from heartbeats stored in
+// FYLO.
+// @Service
+type PresenceService struct {
+	// @Needs
+	fyloHelper *FyloHelper
+}
+
+// Heartbeat marks a user as online now.
+func (service *PresenceService) Heartbeat(email string, domains []string) error {
+	return service.registry().Heartbeat(email, domains)
+}
+
+// SnapshotForDomains answers every recently seen user who shares at least
+// one domain with the viewer.
+func (service *PresenceService) SnapshotForDomains(viewerDomains []string) ([]map[string]any, error) {
+	return service.registry().Snapshot(viewerDomains)
+}
+
+func (service *PresenceService) registry() PresenceRegistry {
+	return PresenceRegistry{Store: FyloCollection{Database: service.fyloHelper.Database(), Name: FyloCollections{}.Named().Presence}}
+}

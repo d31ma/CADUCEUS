@@ -6,7 +6,7 @@ import { Security } from '../shared/security/Security.js'
 /** Durable, tenant-owned storage for exact RFC 822 message sources. */
 @Helper
 export default class RawMessagesHelper {
-  /** @type {FyloHelper} */
+  /** @type {FyloHelper | undefined} */
   @Needs
   fyloHelper
 
@@ -20,7 +20,7 @@ export default class RawMessagesHelper {
    * @returns {Promise<RawMessageRecord>}
    */
   async saveForEmail(emailId, domain, source) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     await this.deleteForEmail(emailId)
     const bytes = typeof source === 'string' ? Buffer.from(source, 'utf8') : Buffer.from(source)
     const id = Security.randomText(16)
@@ -52,7 +52,7 @@ export default class RawMessagesHelper {
 
   /** @param {string} emailId @returns {Promise<(RawMessageRecord & { docId: string }) | null>} */
   async findForEmail(emailId) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const documents = await Fylo.collect(
       fylo.findDocs(Fylo.Collections.RAW_MESSAGES, { $ops: [{ emailId: { $eq: emailId } }] }).collect(),
     )
@@ -62,13 +62,13 @@ export default class RawMessagesHelper {
 
   /** @param {RawMessageRecord} record @returns {Promise<Uint8Array>} */
   async readContent(record) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     return await fylo.getFileBytes(Fylo.Buckets.RAW_MESSAGE_FILES, record.bucketId)
   }
 
   /** @param {string} emailId @returns {Promise<void>} */
   async deleteForEmail(emailId) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const record = await this.findForEmail(emailId)
     if (!record) return
     await fylo.delDoc(Fylo.Collections.RAW_MESSAGES, record.docId)

@@ -1,3 +1,4 @@
+/** @import { RawRuleDoc, InboxRule } from '../../types' */
 import { Fylo } from '../persistence/Fylo.js'
 
 export class RulesRecords {

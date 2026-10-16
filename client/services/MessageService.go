@@ -58,6 +58,7 @@ type MessageService struct {
 	QuotedPlainText           string
 	PlainTextVisible          string
 	ProtectedDocument         string
+	ProtectedRevision         int
 	BlockedRemoteContentCount int
 	RemoteContentSummary      string
 	RemoteImagesLoading       bool
@@ -478,7 +479,7 @@ func (service *MessageService) resetRemoteContent() {
 	service.inlineSources = map[string]string{}
 	service.thumbnails = map[string]string{}
 	service.attachments = map[string]AttachmentContent{}
-	service.ProtectedDocument = ""
+	service.replaceProtectedDocument("")
 	service.BlockedRemoteContentCount = 0
 	service.RemoteContentSummary = ""
 	service.RemoteImagesLoading = false
@@ -881,12 +882,19 @@ func (service *MessageService) refreshDocument() {
 		ShowQuoted:    service.ShowQuotedText,
 		ColorMode:     TextUtils{}.Choose(service.preferences.EmailRenderMode == "theme", TextUtils{}.Choose(service.theme == service.names().Dark, service.names().Dark, "light"), service.preferences.EmailRenderMode),
 	})
-	service.ProtectedDocument = document.DocumentHtml
+	service.replaceProtectedDocument(document.DocumentHtml)
 	service.BlockedRemoteContentCount = document.BlockedCount
 	service.RemoteContentSummary = RemoteImageUtils{}.Summary(document.BlockedCount, document.TrackingCount)
 	service.quotedCount = document.QuotedCount
 	service.remoteUrls = document.RemoteUrls
 	service.refreshText()
+}
+
+func (service *MessageService) replaceProtectedDocument(document string) {
+	if service.ProtectedDocument != document {
+		service.ProtectedRevision++
+	}
+	service.ProtectedDocument = document
 }
 
 func (service *MessageService) documentBody() string {

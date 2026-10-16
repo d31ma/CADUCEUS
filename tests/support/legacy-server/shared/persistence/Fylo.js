@@ -1,3 +1,4 @@
+/** @import { AccessOperation, AccessInput, Document, DocumentRecord, Query, FileOptions, PageOptions } from '../../deps/fylo.mjs' */
 import { Fylo as BinaryFylo } from '../../deps/fylo.mjs'
 import { FyloAccessContext } from './FyloAccessContext.js'
 import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
@@ -8,10 +9,12 @@ import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
  */
 export class Fylo extends BinaryFylo {
 
+  /** @template T @param {AccessOperation<T>} operation @param {AccessInput | undefined} access @returns {AccessOperation<T>} */
   static #withAccess(operation, access) {
     return access && typeof operation?.as === 'function' ? operation.as(access) : operation
   }
 
+  /** @template T @param {(access: AccessInput | undefined) => Promise<T>} task @param {AccessInput | undefined} defaultAccess @returns {AccessOperation<T>} */
   static #deferredAccess(task, defaultAccess) {
     let access = defaultAccess
     let started = false
@@ -19,19 +22,23 @@ export class Fylo extends BinaryFylo {
       started = true
       return task(access)
     })
-    return Object.assign(operation, {
+    /** @type {AccessOperation<T>} */
+    const result = Object.assign(operation, {
+      /** @param {AccessInput} input @returns {AccessOperation<T>} */
       as(input) {
         if (started) throw new Error('as() must be called before the operation starts')
         access = input
-        return operation
+        return result
       },
     })
+    return result
   }
 
+  /** @param {object[]} batch */
   static #oneBatchAccess(batch) {
     const accesses = batch
       .map(record => FyloAccessContext.write(record))
-      .filter(Boolean)
+      .filter(access => access !== undefined)
     if (accesses.length === 0) return undefined
     const [first] = accesses
     if (accesses.some(access => access.gid !== first.gid || access.mode !== first.mode)) {
@@ -160,6 +167,7 @@ export class Fylo extends BinaryFylo {
     super(root, options)
   }
 
+  /** @param {string} collection @param {object} data @param {object} [meta] */
   putData(collection, data, meta) {
     return Fylo.#withAccess(
       super.putData(collection, data, meta),
@@ -167,11 +175,13 @@ export class Fylo extends BinaryFylo {
     )
   }
 
+  /** @param {string} collection @param {object[]} batch */
   batchPutData(collection, batch) {
     const access = Fylo.#oneBatchAccess(batch)
     return Fylo.#withAccess(super.batchPutData(collection, batch), access)
   }
 
+  /** @param {string} collection @param {string} filePath @param {FileOptions} [options] */
   putFile(collection, filePath, options = {}) {
     return Fylo.#withAccess(
       super.putFile(collection, filePath, options),
@@ -179,31 +189,42 @@ export class Fylo extends BinaryFylo {
     )
   }
 
+  /** @param {string} collection @param {string} id */
   getFileBytes(collection, id) {
     return Fylo.#withAccess(super.getFileBytes(collection, id), FyloAccessContext.read())
   }
 
+  /** @param {string} collection @param {string} id */
   getDoc(collection, id) {
     return Fylo.#withAccess(super.getDoc(collection, id), FyloAccessContext.read())
   }
 
+  /** @param {string} collection @param {string} id */
   getMeta(collection, id) {
     return Fylo.#withAccess(super.getMeta(collection, id), FyloAccessContext.read())
   }
 
+  /** @param {string} collection @param {string} id @param {Document} meta */
   setMeta(collection, id, meta) {
     return Fylo.#withAccess(super.setMeta(collection, id, meta), FyloAccessContext.read())
   }
 
+  /** @overload @param {string} collection @param {string} id @param {false} [onlyId] @returns {AccessOperation<DocumentRecord>} */
+  /** @overload @param {string} collection @param {string} id @param {true} onlyId @returns {AccessOperation<string | null>} */
+  /** @overload @param {string} collection @param {string} id @param {boolean} onlyId @returns {AccessOperation<DocumentRecord | string | null>} */
+  /** @param {string} collection @param {string} id @param {boolean} [onlyId] */
   getLatest(collection, id, onlyId = false) {
     return Fylo.#withAccess(super.getLatest(collection, id, onlyId), FyloAccessContext.read())
   }
 
+  /** @param {string} collection @param {Query} query */
   findDocs(collection, query) {
-    let result = super.findDocs(collection, query)
-    const cursor = {
+    const result = super.findDocs(collection, query)
+    const withAccess = result.as.bind(result)
+    const cursor = Object.assign(result, {
+      /** @param {AccessInput} access */
       as(access) {
-        result = result.as(access)
+        withAccess(access)
         return cursor
       },
       async *collect() {
@@ -212,9 +233,10 @@ export class Fylo extends BinaryFylo {
           yield { [id]: document }
         }
       },
-    }
+    })
     const access = FyloAccessContext.read()
-    return access ? cursor.as(access) : cursor
+    if (access) cursor.as(access)
+    return cursor
   }
 
   /**
@@ -225,10 +247,12 @@ export class Fylo extends BinaryFylo {
    * folder.  Keep the native cursor opaque and bind it to the same trusted
    * request identity as every other read.
    */
+  /** @param {string} collection @param {Query} query @param {PageOptions} [page] */
   findDocsPage(collection, query, page = {}) {
     return Fylo.#withAccess(super.findDocsPage(collection, query, page), FyloAccessContext.read())
   }
 
+  /** @param {string} collection @param {Query} [query] */
   findDeletedDocs(collection, query = {}) {
     return Fylo.#withAccess(
       super.findDeletedDocs(collection, query),
@@ -236,15 +260,19 @@ export class Fylo extends BinaryFylo {
     )
   }
 
+  /** @param {Query} join */
   joinDocs(join) {
     return Fylo.#withAccess(super.joinDocs(join), FyloAccessContext.read())
   }
 
+  /** @overload @param {string} collection @param {string} idOrDocuments @param {object} newDocument @param {object} [oldDocument] @returns {AccessOperation<string>} */
+  /** @overload @param {string} collection @param {Record<string, object>} idOrDocuments @returns {AccessOperation<string[]>} */
+  /** @param {string} collection @param {string | Record<string, object>} idOrDocuments @param {object} [newDocument] @param {object} [oldDocument] */
   patchDoc(collection, idOrDocuments, newDocument, oldDocument) {
     const defaultAccess = FyloAccessContext.read()
     if (typeof idOrDocuments === 'string') {
       return Fylo.#withAccess(
-        super.patchDoc(collection, idOrDocuments, newDocument, oldDocument),
+        super.patchDoc(collection, idOrDocuments, /** @type {object} */ (newDocument), oldDocument),
         defaultAccess,
       )
     }
@@ -258,18 +286,22 @@ export class Fylo extends BinaryFylo {
     }, defaultAccess)
   }
 
+  /** @param {string} collection @param {Query} update */
   patchDocs(collection, update) {
     return Fylo.#withAccess(super.patchDocs(collection, update), FyloAccessContext.read())
   }
 
+  /** @param {string} collection @param {string} id */
   delDoc(collection, id) {
     return Fylo.#withAccess(super.delDoc(collection, id), FyloAccessContext.read())
   }
 
+  /** @param {string} collection @param {Query} criteria */
   delDocs(collection, criteria) {
     return Fylo.#withAccess(super.delDocs(collection, criteria), FyloAccessContext.read())
   }
 
+  /** @param {string} collection @param {string} id */
   restoreDoc(collection, id) {
     return Fylo.#withAccess(super.restoreDoc(collection, id), FyloAccessContext.read())
   }

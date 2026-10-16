@@ -9,7 +9,7 @@ import { AttachmentsRecords } from '../shared/mailbox/AttachmentsRecords.js'
 
 @Helper
 export default class AttachmentsHelper {
-  /** @type {FyloHelper} */
+  /** @type {FyloHelper | undefined} */
   @Needs
   fyloHelper
 
@@ -18,7 +18,7 @@ export default class AttachmentsHelper {
    * @returns {Promise<Array<EmailAttachmentRecord & { docId: string }>>}
    */
   async list(emailId) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.ATTACHMENTS, { $ops: [{ emailId: { $eq: emailId } }] }).collect())
     return Object.entries(docs).map(([docId, attachment]) => ({ docId, .../** @type {EmailAttachmentRecord} */ (attachment) }))
   }
@@ -36,7 +36,7 @@ export default class AttachmentsHelper {
    * @returns {Promise<Map<string, EmailAttachmentSummary[]>>}
    */
   async listSummariesByEmail(allowedDomains) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.ATTACHMENTS, { $ops: [] }).collect())
     const grouped = new Map()
     for (const attachment of Object.values(docs)) {
@@ -54,7 +54,7 @@ export default class AttachmentsHelper {
    * @returns {Promise<[string | null, EmailAttachmentRecord | null]>}
    */
   async findById(id) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.ATTACHMENTS, { $ops: [{ id: { $eq: id } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], /** @type {EmailAttachmentRecord} */ (entry[1])] : [null, null]
@@ -67,7 +67,7 @@ export default class AttachmentsHelper {
    * @returns {Promise<EmailAttachmentSummary[]>}
    */
   async saveForEmail(emailId, domain, attachments) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     if (attachments.length === 0) return []
     const saved = []
     for (const attachment of attachments) {
@@ -86,7 +86,7 @@ export default class AttachmentsHelper {
    * @param {ParsedAttachment[]} attachments
    */
   async replaceForEmail(emailId, domain, attachments) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const previous = await this.list(emailId)
     /** @type {Array<EmailAttachmentRecord & { docId?: string }>} */
     const saved = []
@@ -105,7 +105,7 @@ export default class AttachmentsHelper {
    * @returns {Promise<void>}
    */
   async deleteForEmail(emailId) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const attachments = await this.list(emailId)
     await Promise.all(attachments.map(record => AttachmentsRecords.deleteRecord(fylo, record)))
   }
@@ -115,7 +115,7 @@ export default class AttachmentsHelper {
    * @returns {Promise<Uint8Array>}
    */
   async readContent(attachment) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     if (attachment.bucketId) {
       return await fylo.getFileBytes(Fylo.Buckets.ATTACHMENT_FILES, attachment.bucketId)
     }

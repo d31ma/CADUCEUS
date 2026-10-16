@@ -1,5 +1,6 @@
-/** Tachyon companion lifecycle decorator. */
-declare const onMount: any
+/// <reference path="./tachyon-behaviors.d.ts" />
+/// <reference path="./.tachyon/types/client/composed.d.ts" />
+/// <reference path="./tests/support/legacy-server/composed-env.d.ts" />
 
-/** Tachyon companion event-subscription decorator. */
-declare function subscribe(eventName: string): any
+// Decorator contracts are retained from the qualified Tachyon source.
+// Regenerate composed JS declarations with `ty types .` before typechecking.

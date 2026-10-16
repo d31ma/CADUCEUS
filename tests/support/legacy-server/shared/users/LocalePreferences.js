@@ -1,3 +1,4 @@
+/** @import { InterfaceLocaleId } from '../../models/InterfaceLocaleId.js' */
 export class LocalePreferences {
   /** @type {readonly InterfaceLocaleId[]} */
   static INTERFACE_LOCALE_IDS = Object.freeze([
@@ -5,6 +6,7 @@ export class LocalePreferences {
     'zh-TW', 'pt', 'pt-BR', 'gl', 'tr', 'ru', 'cs', 'uk', 'hu', 'he', 'ar',
   ])
 
+  /** @type {'auto'} */
   static DEFAULT_INTERFACE_LOCALE = 'auto'
 
   /** @type {ReadonlySet<InterfaceLocaleId>} */

@@ -1,3 +1,4 @@
+/** @import { RawDomainDoc, DomainConfig } from '../../types' */
 import { Fylo } from '../persistence/Fylo.js'
 
 export class DomainsRecords {

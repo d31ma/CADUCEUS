@@ -11,6 +11,7 @@ import { SmtpDeliveryError } from '../shared/errors/SmtpDeliveryError.js'
 /** Outbound mail delivery for the self-hosted server. */
 @Service
 export default class SmtpService {
+  /** @type {SmtpAdapter | null} */
   _adapter = null
 
   /** @returns {SmtpAdapter} */

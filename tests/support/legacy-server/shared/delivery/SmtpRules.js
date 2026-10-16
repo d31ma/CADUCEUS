@@ -1,3 +1,5 @@
+/** @import { SmtpAdapter } from '../../models/SmtpAdapter.js' */
+/** @import { SendRequest } from '../../models/SendRequest.js' */
 import { readFileSync } from 'node:fs'
 import { TrackingTokens } from './TrackingTokens.js'
 import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
@@ -121,8 +123,9 @@ export class SmtpRules {
     const domainName = ServerEnvironment.value('DKIM_DOMAIN')
     const keySelector = ServerEnvironment.value('DKIM_SELECTOR')
     let privateKey = ServerEnvironment.value('DKIM_PRIVATE_KEY') || ''
-    if (!privateKey && ServerEnvironment.value('DKIM_PRIVATE_KEY_FILE')) {
-      try { privateKey = readFileSync(ServerEnvironment.value('DKIM_PRIVATE_KEY_FILE'), 'utf8') } catch { /* optional */ }
+    const privateKeyFile = ServerEnvironment.value('DKIM_PRIVATE_KEY_FILE')
+    if (!privateKey && privateKeyFile) {
+      try { privateKey = readFileSync(privateKeyFile, 'utf8') } catch { /* optional */ }
     }
     return domainName && keySelector && privateKey ? { domainName, keySelector, privateKey } : undefined
   }

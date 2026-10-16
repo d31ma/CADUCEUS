@@ -56,7 +56,8 @@
                 class="shared-thread-html"
                 sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
                 referrerpolicy="no-referrer"
-                :srcdoc="message.protectedHtml"
+                safe-html-document="{&quot;csp&quot;:&quot;default-src &#x27;none&#x27;; img-src data:; style-src &#x27;unsafe-inline&#x27;; font-src data:; media-src &#x27;none&#x27;; connect-src &#x27;none&#x27;; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;; script-src &#x27;none&#x27;&quot;,&quot;style&quot;:&quot;html{color-scheme:light;background:#fff;color:#111}body{margin:0;padding:16px;font:14px/1.55 -apple-system,BlinkMacSystemFont,&#x27;Segoe UI&#x27;,sans-serif;overflow-wrap:anywhere}a{color:#0645ad}img{max-width:100%;height:auto}table{max-width:100%}&quot;}"
+                :safe-html="message.protectedHtml"
                 :title="'Message from ' + message.from">
               </iframe>
             </logic>

@@ -1,6 +1,7 @@
 import { Security } from '../security/Security.js'
 
 export class NewMailNotificationPreferences {
+  /** @type {'full'} */
   static DEFAULT_NEW_MAIL_NOTIFICATION_PRIVACY = 'full'
 
   static DEFAULT_NEW_MAIL_NOTIFICATION_ACTIONS = true
@@ -89,7 +90,7 @@ export class NewMailNotificationPreferences {
    * @param {unknown} patch
    * @param {unknown} current
    * @param {unknown} domains
-   * @returns {{ ok: true, preferences: ReturnType<typeof normalizeNewMailNotificationPreferences> } | { ok: false, forbidden?: boolean, error: string }}
+   * @returns {{ ok: true, preferences: ReturnType<typeof NewMailNotificationPreferences.normalizeNewMailNotificationPreferences> } | { ok: false, forbidden?: boolean, error: string }}
    */
   static validateNewMailNotificationPreferencePatch(patch, current, domains, externalAccountIds = []) {
     const body = NewMailNotificationPreferences.#preferenceObject(patch)

@@ -1,3 +1,6 @@
+/** @import { ActiveThemeId } from '../../models/ActiveThemeId.js' */
+/** @import { LightThemeId } from '../../models/LightThemeId.js' */
+/** @import { DarkThemeId } from '../../models/DarkThemeId.js' */
 export class ThemePreferences {
   /**
    * Theme preferences cross the untrusted HTTP boundary as catalog identifiers.

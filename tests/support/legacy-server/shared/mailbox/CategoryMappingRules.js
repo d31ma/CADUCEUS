@@ -111,7 +111,7 @@ export class CategoryMappingRules {
     return Object.fromEntries(CategoryMappingRules.CATEGORY_ROLES.map(role => [mapping[role], role]))
   }
 
-  /** @param {import('../../../types').StoredEmail} email @param {Record<string, Record<string, string>>} mappings */
+  /** @param {import('../../types').StoredEmail} email @param {Record<string, Record<string, string>>} mappings */
   static presentEmailWithMappings(email, mappings) {
     const path = CategoryPath.normalizeCategoryPath(email.folder || 'inbox') || 'inbox'
     const role = CategoryMappingRules.invertRoleMapping(mappings[email.domain] || CategoryMappingRules.defaultRoleMapping())[path]

@@ -96,6 +96,15 @@ class ServerDependencies {
     const text = (await output.text()).replace(ServerDependencies.EVAL_PROBE, 'return!1')
     if (/new Function\(|\beval\(/.test(text)) throw new Error(`${specifier} still runs text as code after bundling`)
     writeFileSync(join(ServerDependencies.OUTPUT, file), text)
+    if (specifier === 'htmlparser2') {
+      writeFileSync(join(ServerDependencies.OUTPUT, 'htmlparser2.d.mts'), "export * from 'htmlparser2'\n")
+    }
+    if (specifier === 'mailparser') {
+      writeFileSync(join(ServerDependencies.OUTPUT, 'mailparser.d.mts'), "import * as mailparser from 'mailparser'\nexport default mailparser\nexport { MailParser, simpleParser } from 'mailparser'\n")
+    }
+    if (specifier === 'nodemailer') {
+      writeFileSync(join(ServerDependencies.OUTPUT, 'nodemailer.d.mts'), "import nodemailer from 'nodemailer'\nexport default nodemailer\n")
+    }
     console.log(`server/deps/npm/${file} <- ${specifier}`)
   }
 }

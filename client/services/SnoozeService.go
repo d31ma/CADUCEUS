@@ -107,9 +107,12 @@ func (service *SnoozeService) perform(until time.Time, label string) {
 // clock has not advanced. IdentityUtils adds the current time to that seed.
 func (service *SnoozeService) requestID(until time.Time, label string) string {
 	service.requestSequence++
-	seed := service.message.EmailId + "|" + SnoozePresetsUtils{}.Timestamp(until) + "|" + label + "|" + strconv.Itoa(service.requestSequence)
+	separator := service.requestSeparator()
+	seed := service.message.EmailId + separator + SnoozePresetsUtils{}.Timestamp(until) + separator + label + separator + strconv.Itoa(service.requestSequence)
 	return IdentityUtils{}.UUID(seed)
 }
+
+func (SnoozeService) requestSeparator() string { return "|" }
 
 // snoozed keeps the Undo for ten seconds and returns to the list.
 func (service *SnoozeService) snoozed(snoozeID string, message string) {

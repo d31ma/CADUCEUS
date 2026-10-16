@@ -1,6 +1,10 @@
+/** @import { InterfaceFontId } from '../../models/InterfaceFontId.js' */
+/** @import { ComposerFontId } from '../../models/ComposerFontId.js' */
 export class FontPreferences {
+  /** @type {'plex-sans'} */
   static DEFAULT_INTERFACE_FONT = 'plex-sans'
 
+  /** @type {'interface'} */
   static DEFAULT_COMPOSER_FONT = 'interface'
 
   static INTERFACE_FONT_IDS = Object.freeze([

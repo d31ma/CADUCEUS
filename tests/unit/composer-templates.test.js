@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { ComposerTemplatesUtils } from '../../client/shared/utils/ComposerTemplatesUtils.js'
+import * as ComposerTemplatesUtils from '../../client/shared/scripts/composer-templates.js'
 import { TemplateContent } from '../support/legacy-server/shared/mailbox/TemplateContent.js'
 
 const hasEmptyTemplateVariables = (...args) => ComposerTemplatesUtils.hasEmptyTemplateVariables(...args)

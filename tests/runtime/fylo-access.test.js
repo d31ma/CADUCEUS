@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import { FyloAccessContext } from '../support/legacy-server/shared/persistence/FyloAccessContext.js'
 
+/** @type {string | undefined} */
 let previousEnabled
 
 beforeEach(() => {

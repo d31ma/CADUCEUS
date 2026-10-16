@@ -15,7 +15,7 @@
  */
 @Service
 export default class ExtensionPackageService {
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher;
 
   static _LIMIT = 60 * 1024
@@ -80,7 +80,7 @@ export default class ExtensionPackageService {
 
   /** @param {number} selection @param {ExtensionPackageRead} read */
   _publishRead(selection, read) {
-    if (selection === this._selection) this.applicationEventPublisher.publishEvent(read, false)
+    if (selection === this._selection) /** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(read, false)
   }
 
   _loadPlugins() {
@@ -115,7 +115,7 @@ export default class ExtensionPackageService {
   _answer(message) {
     /** @type {ExtensionAnswered} */
     const answered = { message: JSON.stringify(message) }
-    this.applicationEventPublisher.publishEvent(answered, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(answered, false)
   }
 
   /** @param {File | undefined} file */

@@ -23,9 +23,9 @@ import {
  */
 @Service
 export default class MailboxBrowserService {
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
-  /** @type {AbortSignal} */
+  /** @type {AbortSignal | undefined} Injected before lifecycle methods run. */
   @Needs
   lifecycle
   /** @type {HTMLElement | null} */
@@ -33,12 +33,12 @@ export default class MailboxBrowserService {
 
   @OnStart
   start() {
-    watchRows(this.lifecycle, {
+    watchRows(/** @type {AbortSignal} */ (this.lifecycle), {
       activate: (emailId, threadId, narrow) => this._activated(emailId, threadId, narrow),
       focus: (id) => this._focused(id),
       gesture: (kind, emailId, folder) => this._gesture(kind, emailId, folder),
     })
-    watchSearch(this.lifecycle, {
+    watchSearch(/** @type {AbortSignal} */ (this.lifecycle), {
       wanted: (value, caret) => this._wanted(value, caret),
       blurred: () => this._blurred(),
     })
@@ -48,7 +48,7 @@ export default class MailboxBrowserService {
   openMenu(event, emailId, threadId) {
     /** @type {ContextMenuRequested} */
     const requested = { emailId, threadId, ...menuPosition(event) }
-    this.applicationEventPublisher.publishEvent(requested, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(requested, false)
   }
 
   /** @param {DragEvent} event @param {string} emailId @param {string[] | null} selected */
@@ -124,60 +124,60 @@ export default class MailboxBrowserService {
   _activated(emailId, threadId, narrow) {
     /** @type {MailRowActivated} */
     const activated = { emailId, threadId, narrow }
-    this.applicationEventPublisher.publishEvent(activated, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(activated, false)
   }
 
   /** @param {string} id */
   _focused(id) {
     /** @type {MailRowFocused} */
     const focused = { id }
-    this.applicationEventPublisher.publishEvent(focused, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(focused, false)
   }
 
   /** @param {string} kind @param {string} emailId @param {string} folder */
   _gesture(kind, emailId, folder) {
     /** @type {MailGesture} */
     const gesture = { kind, emailId, folder }
-    this.applicationEventPublisher.publishEvent(gesture, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(gesture, false)
   }
 
   /** @param {string} value @param {number} caret */
   _wanted(value, caret) {
     /** @type {SearchSuggestionsWanted} */
     const wanted = { value, caret }
-    this.applicationEventPublisher.publishEvent(wanted, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(wanted, false)
   }
 
   _blurred() {
     /** @type {SearchBlurred} */
     const blurred = { value: '' }
-    this.applicationEventPublisher.publishEvent(blurred, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(blurred, false)
   }
 
   /** @param {string} key @param {string} value @param {number} caret */
   _searchKey(key, value, caret) {
     /** @type {SearchKeyPressed} */
     const pressed = { key, value, caret }
-    this.applicationEventPublisher.publishEvent(pressed, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(pressed, false)
   }
 
   /** @param {number} index @param {string} value @param {number} caret */
   _chosen(index, value, caret) {
     /** @type {SearchSuggestionChosen} */
     const chosen = { index, value, caret }
-    this.applicationEventPublisher.publishEvent(chosen, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(chosen, false)
   }
 
   _menuDismissed() {
     /** @type {ContextMenuDismissed} */
     const dismissed = { key: 'Escape' }
-    this.applicationEventPublisher.publishEvent(dismissed, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(dismissed, false)
   }
 
   _pickerDismissed() {
     /** @type {CategoryPickerDismissed} */
     const dismissed = { key: 'Escape' }
-    this.applicationEventPublisher.publishEvent(dismissed, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(dismissed, false)
   }
 
 

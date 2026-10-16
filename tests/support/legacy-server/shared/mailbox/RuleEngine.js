@@ -39,7 +39,7 @@ export class RuleEngine {
     }
   }
 
-  /** @param {import('../../types').RuleCondition} condition @param {ReturnType<typeof normalizeRuleMessage>} message */
+  /** @param {import('../../types').RuleCondition} condition @param {ReturnType<typeof RuleEngine.normalizeRuleMessage>} message */
   static #conditionMatches(condition, message) {
     if (condition.field === 'hasAttachment') {
       const expected = String(condition.value).toLowerCase() === 'true'

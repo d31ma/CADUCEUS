@@ -1,6 +1,7 @@
 import { Security } from '../security/Security.js'
 
 export class UnreadBadgePreferences {
+  /** @type {'all'} */
   static DEFAULT_UNREAD_BADGE_SCOPE = 'all'
 
   /** @param {unknown} value */

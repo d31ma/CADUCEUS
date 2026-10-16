@@ -480,3 +480,12 @@ export type InboxRuleAction =
   | { type: 'delete' }
   | { type: 'markRead'; value: boolean }
   | { type: 'star'; value: boolean }
+
+/** Persisted domain row; pre-migration records may contain an array. */
+export type RawDomainDoc = Omit<DomainConfig, 'routes'> & { routes?: string | RouteRule[] }
+
+/** Persisted inbox-rule row; decoded API values use the InboxRule contract. */
+export type RawRuleDoc = Omit<InboxRule, 'conditions' | 'actions'> & {
+  conditions?: string | RuleCondition[]
+  actions?: string | InboxRuleAction[]
+}

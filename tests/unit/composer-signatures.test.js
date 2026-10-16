@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { ComposerSignaturesUtils } from '../../client/shared/utils/ComposerSignaturesUtils.js'
+import * as ComposerSignaturesUtils from '../../client/shared/scripts/composer-signatures.js'
 import { SignatureContent } from '../support/legacy-server/shared/mailbox/SignatureContent.js'
 import { SenderAddresses } from '../support/legacy-server/shared/users/SenderAddresses.js'
 

@@ -6,7 +6,7 @@ import { playNotificationSound } from '../shared/scripts/notification-sounds.js'
  */
 @Service
 export default class SoundPreviewService {
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher;
   active = true
 
@@ -15,6 +15,6 @@ export default class SoundPreviewService {
   async play(requested) {
     /** @type {SoundPreviewFinished} */
     const finished = { sound: requested.sound, played: await playNotificationSound(requested.event, { soundId: requested.sound }) }
-    this.applicationEventPublisher.publishEvent(finished, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(finished, false)
   }
 }

@@ -1,8 +1,13 @@
+/** @import { SmtpAdapter } from '../../models/SmtpAdapter.js' */
+/** @import { SendRequest } from '../../models/SendRequest.js' */
 import { readFileSync } from 'node:fs'
 import { TrackingTokens } from './TrackingTokens.js'
 import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
 import { SmtpDirectAdapter } from './SmtpDirectAdapter.js'
 import { ConsoleSmtpAdapter } from './ConsoleSmtpAdapter.js'
+
+/** @typedef {{domain: string, recipients: string[], trackedRecipient?: string}} DeliveryPlan */
+/** @typedef {{domain: string, recipients: string[], deliveredRecipients: string[], failedRecipients: string[], recipient?: string, host?: string, messageId?: string, accepted?: unknown, rejected?: unknown, response?: unknown, error?: string, responseCode?: number, recipientFailures?: Array<{recipient: string, responseCode: number, error?: string}>}} DeliveryResult */
 
 export class SmtpRules {
   /**
@@ -18,7 +23,7 @@ export class SmtpRules {
     throw new Error(`Unsupported SMTP_ADAPTER=${mode}. Use direct or console.`)
   }
 
-  /** @param {string[]} recipients @param {boolean} tracked */
+  /** @param {string[]} recipients @param {boolean} tracked @returns {DeliveryPlan[]} */
   static deliveryPlan(recipients, tracked) {
     return tracked
       ? recipients.map(recipient => ({ domain: SmtpRules.recipientDomain(recipient), recipients: [recipient], trackedRecipient: recipient }))
@@ -28,7 +33,7 @@ export class SmtpRules {
   /** @param {string} address */
   static recipientDomain(address) { return String(address).split('@')[1]?.toLowerCase() || '' }
 
-  /** @param {{delivery:Record<string,any>,from:string,msg:SendRequest,hostname:string,dkim:any,createTransport:Function,resolveMx:Function}} input */
+  /** @param {{delivery:DeliveryPlan,from:string,msg:SendRequest,hostname:string,dkim:any,createTransport:Function,resolveMx:Function}} input */
   static async deliverToDomain(input) {
     const { delivery, from, msg, hostname, dkim, createTransport, resolveMx } = input
     if (!delivery.domain) return SmtpRules.failedDelivery(delivery, null)
@@ -60,7 +65,7 @@ export class SmtpRules {
     }
   }
 
-  /** @param {Record<string,any>} delivery @param {string} host @param {Record<string,any>} info */
+  /** @param {DeliveryPlan} delivery @param {string} host @param {Record<string,any>} info @returns {DeliveryResult} */
   static acceptedDelivery(delivery, host, info) {
     const accepted = SmtpRules.normalizedAccepted(info.accepted, delivery.recipients)
     const acceptedSet = new Set(accepted.map(value => value.toLowerCase()))
@@ -90,7 +95,7 @@ export class SmtpRules {
   /** @param {Record<string, any>} result */
   static recipientFailures(result) {
     if (Array.isArray(result.recipientFailures) && result.recipientFailures.length) return result.recipientFailures
-    return (result.failedRecipients || []).map(recipient => ({ recipient, responseCode: result.responseCode }))
+    return (result.failedRecipients || []).map((/** @type {string} */ recipient) => ({ recipient, responseCode: result.responseCode }))
   }
 
   /** @param {unknown} accepted @param {string[]} requested */
@@ -100,7 +105,7 @@ export class SmtpRules {
     return SmtpRules.uniqueRecipients(accepted.map(String).filter(value => allowed.has(value.toLowerCase())))
   }
 
-  /** @param {Record<string,any>} delivery @param {unknown} error */
+  /** @param {DeliveryPlan} delivery @param {unknown} error @returns {DeliveryResult} */
   static failedDelivery(delivery, error) {
     return {
       domain: delivery.domain, recipients: delivery.recipients, deliveredRecipients: [], failedRecipients: delivery.recipients,
@@ -121,8 +126,9 @@ export class SmtpRules {
     const domainName = ServerEnvironment.value('DKIM_DOMAIN')
     const keySelector = ServerEnvironment.value('DKIM_SELECTOR')
     let privateKey = ServerEnvironment.value('DKIM_PRIVATE_KEY') || ''
-    if (!privateKey && ServerEnvironment.value('DKIM_PRIVATE_KEY_FILE')) {
-      try { privateKey = readFileSync(ServerEnvironment.value('DKIM_PRIVATE_KEY_FILE'), 'utf8') } catch { /* optional */ }
+    const privateKeyFile = ServerEnvironment.value('DKIM_PRIVATE_KEY_FILE')
+    if (!privateKey && privateKeyFile) {
+      try { privateKey = readFileSync(privateKeyFile, 'utf8') } catch { /* optional */ }
     }
     return domainName && keySelector && privateKey ? { domainName, keySelector, privateKey } : undefined
   }
@@ -152,7 +158,7 @@ export class SmtpRules {
     })
   }
 
-  /** @param {string} domain @returns {Promise<string[]>} */
+  /** @param {string} domain @param {typeof import('node:dns/promises').resolveMx} [resolver] @returns {Promise<string[]>} */
   static async resolveMailExchangers(domain, resolver) {
     if (!resolver) ({ resolveMx: resolver } = await import('node:dns/promises'))
     try {

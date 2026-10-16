@@ -1,52 +1,54 @@
+/** @import { OutboxEntry } from '../models/OutboxEntry.js' */
 import { ServerEnvironment } from '../shared/runtime/ServerEnvironment.js'
 import { OutboundQueueRules } from '../shared/delivery/OutboundQueueRules.js'
 
 @Service
 export default class OutboundQueueService {
-  /** @type {OutboxHelper} */
+  /** @type {OutboxHelper | undefined} */
   @Needs
   outboxHelper
 
-  /** @type {SmtpService} */
+  /** @type {SmtpService | undefined} */
   @Needs
   smtpService
 
-  /** @type {EmailsHelper} */
+  /** @type {EmailsHelper | undefined} */
   @Needs
   emailsHelper
 
-  /** @type {ScheduledHelper} */
+  /** @type {ScheduledHelper | undefined} */
   @Needs
   scheduledHelper
 
-  /** @type {AttachmentsHelper} */
+  /** @type {AttachmentsHelper | undefined} */
   @Needs
   attachmentsHelper
 
-  /** @type {CategoryMappingService} */
+  /** @type {CategoryMappingService | undefined} */
   @Needs
   categoryMappingService
 
-  /** @type {SuppressedHelper} */
+  /** @type {SuppressedHelper | undefined} */
   @Needs
   suppressedHelper
 
   maxAttempts = OutboundQueueRules.MAX_ATTEMPTS
 
+  /** @type {Promise<{ delivered: number, retried: number, bounced: number }> | null} */
   _processing = null
 
   /**
    * Queue a message for delivery.
    *
    * @param {string} sender
-   * @param {import('./SmtpService.js').SendRequest} email
+   * @param {import('../models/SendRequest.js').SendRequest} email
    * @param {{ owner?: string, availableAt?: number, trackingId?: string, id?: string, scheduledId?: string, attachmentEmailId?: string }} [opts]
    * @returns {Promise<string>} The outbox entry id.
    */
   async enqueue(sender, email, opts = {}) {
     const availableAt = opts.availableAt ?? Date.now()
     const id = opts.id || `out-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
-    await this.outboxHelper.put({
+    await (/** @type {OutboxHelper} */ (this.outboxHelper)).put({
       id,
       sender,
       owner: opts.owner ?? sender,
@@ -81,7 +83,7 @@ export default class OutboundQueueService {
 
   /** Secret-free queue health for worker logs and signed operations. */
   async status(now = Date.now()) {
-    const entries = Object.values(await this.outboxHelper.listAll())
+    const entries = Object.values(await (/** @type {OutboxHelper} */ (this.outboxHelper)).listAll())
     const created = entries.map(entry => Number(entry.createdAt) || now)
     return {
       depth: entries.length,
@@ -96,16 +98,16 @@ export default class OutboundQueueService {
   /** @param {number} now */
   async _processDue(now) {
     await this._reconcileScheduled()
-    const due = await this.outboxHelper.findDue(now)
+    const due = await (/** @type {OutboxHelper} */ (this.outboxHelper)).findDue(now)
     let delivered = 0, retried = 0, bounced = 0
 
     for (const [docId, entry] of Object.entries(due)) {
       if (entry.status === 'sending' && (entry.claimedAt ?? 0) > now - OutboundQueueRules.DELIVERY_LEASE_MS) continue
-      await this.outboxHelper.update(docId, { status: 'sending', claimedAt: now })
+      await (/** @type {OutboxHelper} */ (this.outboxHelper)).update(docId, { status: 'sending', claimedAt: now })
 
       try {
-        await this.smtpService.sendEmail(entry.sender, await this._hydrateAttachments(entry))
-        await this.outboxHelper.delete(docId)
+        await (/** @type {SmtpService} */ (this.smtpService)).sendEmail(entry.sender, await this._hydrateAttachments(entry))
+        await (/** @type {OutboxHelper} */ (this.outboxHelper)).delete(docId)
         await this._finishScheduled(entry, 'delivered')
         delivered++
       } catch (err) {
@@ -118,10 +120,10 @@ export default class OutboundQueueService {
           bounced++
         }
         if (plan.transient.length) {
-          await this.outboxHelper.update(docId, OutboundQueueRules.retryPatch(entry.email, plan.transient, attempts, now, this._backoff(attempts), this._message(err)))
+          await (/** @type {OutboxHelper} */ (this.outboxHelper)).update(docId, OutboundQueueRules.retryPatch(entry.email, plan.transient, attempts, now, this._backoff(attempts), this._message(err)))
           retried++
         } else {
-          await this.outboxHelper.delete(docId)
+          await (/** @type {OutboxHelper} */ (this.outboxHelper)).delete(docId)
           await this._finishScheduled(entry, 'failed')
         }
       }
@@ -131,15 +133,15 @@ export default class OutboundQueueService {
 
   /** FYLO bucket objects remain normalized; queue rows store only their owner id. */
   async _hydrateAttachments(entry) {
-    if (!entry.attachmentEmailId || !this.attachmentsHelper) return entry.email
-    const records = await this.attachmentsHelper.list(entry.attachmentEmailId)
+    if (!entry.attachmentEmailId || !(/** @type {AttachmentsHelper} */ (this.attachmentsHelper))) return entry.email
+    const records = await (/** @type {AttachmentsHelper} */ (this.attachmentsHelper)).list(entry.attachmentEmailId)
     if (!records.length) return entry.email
     const attachments = []
     for (const record of records) {
       attachments.push({
         filename: record.filename,
         contentType: record.contentType,
-        contentBase64: Buffer.from(await this.attachmentsHelper.readContent(record)).toString('base64'),
+        contentBase64: Buffer.from(await (/** @type {AttachmentsHelper} */ (this.attachmentsHelper)).readContent(record)).toString('base64'),
         disposition: record.disposition,
         ...(record.contentId ? { contentId: record.contentId } : {}),
       })
@@ -149,12 +151,12 @@ export default class OutboundQueueService {
 
   /** Remove the management record once delivery reaches a terminal state. */
   async _finishScheduled(entry, status) {
-    if (!entry.scheduledId || !this.scheduledHelper) return
+    if (!entry.scheduledId || !(/** @type {ScheduledHelper} */ (this.scheduledHelper))) return
     try {
-      const [docId] = await this.scheduledHelper.findById(entry.scheduledId)
+      const [docId] = await (/** @type {ScheduledHelper} */ (this.scheduledHelper)).findById(entry.scheduledId)
       if (docId) {
-        await this.scheduledHelper.update(docId, { status, updatedAt: Date.now() })
-        await this.scheduledHelper.delete(docId)
+        await (/** @type {ScheduledHelper} */ (this.scheduledHelper)).update(docId, { status, updatedAt: Date.now() })
+        await (/** @type {ScheduledHelper} */ (this.scheduledHelper)).delete(docId)
       }
     } catch (error) {
       // Delivery is already terminal. A stale management row is preferable to
@@ -165,12 +167,12 @@ export default class OutboundQueueService {
 
   /** Upgrade legacy metadata-only schedules into durable queue work. */
   async _reconcileScheduled() {
-    if (!this.scheduledHelper) return
-    const records = await this.scheduledHelper.listAll()
+    if (!(/** @type {ScheduledHelper} */ (this.scheduledHelper))) return
+    const records = await (/** @type {ScheduledHelper} */ (this.scheduledHelper)).listAll()
     for (const [scheduledDocId, entry] of Object.entries(records)) {
       if (entry.transport === 'external') continue
       if (entry.status === 'delivered' || entry.status === 'failed') continue
-      const [queueDocId] = await this.outboxHelper.findById(entry.queueId ?? entry.id)
+      const [queueDocId] = await (/** @type {OutboxHelper} */ (this.outboxHelper)).findById(entry.queueId ?? entry.id)
       if (queueDocId) continue
       const queueId = await this.enqueue(entry.sender, entry.email, {
         id: entry.id,
@@ -180,7 +182,7 @@ export default class OutboundQueueService {
         scheduledId: entry.id,
         attachmentEmailId: entry.id,
       })
-      await this.scheduledHelper.update(scheduledDocId, { queueId, status: 'scheduled', updatedAt: Date.now() })
+      await (/** @type {ScheduledHelper} */ (this.scheduledHelper)).update(scheduledDocId, { queueId, status: 'scheduled', updatedAt: Date.now() })
     }
   }
 
@@ -196,8 +198,8 @@ export default class OutboundQueueService {
 
   /** Suppress only recipients that returned a permanent SMTP failure. */
   async _suppressPermanent(recipients) {
-    if (!this.suppressedHelper) return
-    for (const recipient of recipients) await this.suppressedHelper.suppress(recipient, 'bounce')
+    if (!(/** @type {SuppressedHelper} */ (this.suppressedHelper))) return
+    for (const recipient of recipients) await (/** @type {SuppressedHelper} */ (this.suppressedHelper)).suppress(recipient, 'bounce')
   }
 
   /**
@@ -214,9 +216,9 @@ export default class OutboundQueueService {
     const email = entry.email
     const recipients = OutboundQueueRules.deliveryRecipients(email).join(', ')
     const daemon = `mailer-daemon@${ServerEnvironment.value('MAIL_HOSTNAME') || domain || 'localhost'}`
-    const inboxFolder = await this.categoryMappingService?.pathFor(sender, domain, 'inbox') || 'inbox'
+    const inboxFolder = await (/** @type {CategoryMappingService} */ (this.categoryMappingService))?.pathFor(sender, domain, 'inbox') || 'inbox'
 
-    await this.emailsHelper.put({
+    await (/** @type {EmailsHelper} */ (this.emailsHelper)).put({
       id: `bounce-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
       domain,
       recipient: sender,

@@ -19,7 +19,7 @@ export default class BrowserPageService {
   // the element being used (a DuVay select's popup, a list row).
   static _OPEN_MENU = '.app-user-trigger[aria-expanded="true"]'
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
 
   ready = false
@@ -27,7 +27,7 @@ export default class BrowserPageService {
   /** @type {Map<string, number>} */
   _timers = new Map()
 
-  /** @type {HTMLElement | null} */
+  /** @type {Element | null} */
   _returnFocus = null
 
   @OnStart
@@ -50,9 +50,9 @@ export default class BrowserPageService {
       timeZoneOffset: -new Date().getTimezoneOffset(),
       origin: location.origin,
     }
-    this.applicationEventPublisher.publishEvent(place, true)
-    this.applicationEventPublisher.publishEvent(features, true)
-    this.applicationEventPublisher.publishEvent(platform, true)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(place, true)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(features, true)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(platform, true)
     document.addEventListener('click', event => this._clicked(this._element(event.target), event))
     document.addEventListener('keydown', event => this._escape(event))
     this.ready = true
@@ -83,7 +83,7 @@ export default class BrowserPageService {
     clearInterval(this._timers.get(request.name))
     /** @type {TimerElapsed} */
     const elapsed = { name: request.name }
-    this._timers.set(request.name, this._schedule(request.repeat)(() => this.applicationEventPublisher.publishEvent(elapsed, false), request.delayMs))
+    this._timers.set(request.name, this._schedule(request.repeat)(() => /** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(elapsed, false), request.delayMs))
   }
 
   /** @param {FocusRequested} request */
@@ -107,7 +107,7 @@ export default class BrowserPageService {
 
   /** @param {DragEvent} event */
   dragOver(event) {
-    event.preventDefault()
+    event.preventDefault();
     /** @type {HTMLElement} */ (event.currentTarget).classList.add(BrowserPageService._DRAGGING)
   }
 
@@ -118,18 +118,18 @@ export default class BrowserPageService {
 
   /** @param {string} folder @param {DragEvent} event @param {string} [domain] */
   drop(folder, event, domain = '') {
-    event.preventDefault()
+    event.preventDefault();
     /** @type {HTMLElement} */ (event.currentTarget).classList.remove(BrowserPageService._DRAGGING)
     /** @type {FolderDropped} */
     const dropped = { folder, domain, ids: this._ids(this._listed(event.dataTransfer)) }
-    this.applicationEventPublisher.publishEvent(dropped, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(dropped, false)
   }
 
   /** @param {MouseEvent} event @param {string} dialog */
   backdrop(event, dialog) {
     /** @type {BackdropClicked} */
     const clicked = { dialog: [ '', dialog ][Number(event.target === event.currentTarget)] }
-    this.applicationEventPublisher.publishEvent(clicked, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(clicked, false)
   }
 
   /** @param {SubmitEvent} event @param {string} form */
@@ -137,7 +137,7 @@ export default class BrowserPageService {
     event.preventDefault()
     /** @type {FormSubmitted} */
     const submitted = { form }
-    this.applicationEventPublisher.publishEvent(submitted, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(submitted, false)
   }
 
   /** @param {NavigationRequested} request */
@@ -166,7 +166,7 @@ export default class BrowserPageService {
 
   /** @param {boolean} repeat */
   _schedule(repeat) {
-    return repeat ? setInterval : setTimeout
+    return repeat ? window.setInterval.bind(window) : window.setTimeout.bind(window)
   }
 
   /** @param {string} owner @param {Record<string, string>} attributes */
@@ -234,12 +234,12 @@ export default class BrowserPageService {
 
   /** @param {boolean} confirmed @param {ConfirmationGiven} confirmation */
   _confirmed(confirmed, confirmation) {
-    if (confirmed) this.applicationEventPublisher.publishEvent(confirmation, false)
+    if (confirmed) /** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(confirmation, false)
   }
 
   /** @param {PageClicked} clicked */
   _publishClick(clicked) {
-    if (document.querySelector(BrowserPageService._OPEN_MENU)) this.applicationEventPublisher.publishEvent(clicked, false)
+    if (document.querySelector(BrowserPageService._OPEN_MENU)) /** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(clicked, false)
   }
 
   /** @param {MouseEvent} event */
@@ -247,13 +247,13 @@ export default class BrowserPageService {
     event.preventDefault()
     /** @type {SignOutRequested} */
     const request = { reason: 'user' }
-    this.applicationEventPublisher.publishEvent(request, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(request, false)
   }
 
   /** @param {KeyboardEvent} event */
   _escape(event) {
     /** @type {EscapePressed} */
     const pressed = { inside: '' }
-    if (event.key === 'Escape') this.applicationEventPublisher.publishEvent(pressed, false)
+    if (event.key === 'Escape') /** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(pressed, false)
   }
 }

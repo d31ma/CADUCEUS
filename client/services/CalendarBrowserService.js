@@ -22,7 +22,7 @@ export default class CalendarBrowserService {
   static _ARIA_LABEL = 'aria-label'
   static _LABELLED = '.event-modal w-text-field, .event-modal w-textarea, .quick-event-popover w-text-field'
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
 
   ready = false
@@ -81,7 +81,7 @@ export default class CalendarBrowserService {
   _measure() {
     /** @type {ViewportMeasured} */
     const measured = { narrow: window.matchMedia(CalendarBrowserService._NARROW).matches }
-    this.applicationEventPublisher.publishEvent(measured, true)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(measured, true)
   }
 
   /** @param {EventTarget | null} target @param {string} selector @returns {HTMLElement | null} */
@@ -124,7 +124,7 @@ export default class CalendarBrowserService {
     event.stopPropagation()
     /** @type {CalendarEventDropped} */
     const dropped = { id, date: this._zoneDate(zone), allDay: zone.hasAttribute(CalendarBrowserService._ALL_DAY_DATE) }
-    this.applicationEventPublisher.publishEvent(dropped, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(dropped, false)
   }
 
   /** @param {HTMLElement} zone */
@@ -158,7 +158,7 @@ export default class CalendarBrowserService {
     const type = CalendarBrowserService
     /** @type {CalendarEventFocused} */
     const focused = { id: String(chip.getAttribute(type._EVENT_ID)) }
-    this.applicationEventPublisher.publishEvent(focused, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(focused, false)
     document.querySelectorAll(`.${type._SELECTED}`).forEach(node => node.classList.remove(type._SELECTED))
     chip.classList.toggle(type._SELECTED, !chip.classList.contains('calendar-event-chip-team'))
   }
@@ -207,6 +207,6 @@ export default class CalendarBrowserService {
     if (scope === null) return
     /** @type {CalendarDeleteChosen} */
     const chosen = { scope }
-    this.applicationEventPublisher.publishEvent(chosen, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(chosen, false)
   }
 }

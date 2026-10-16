@@ -1,5 +1,6 @@
 // The complete autosave snapshot that POST and PUT /drafts take.
 type DraftInput struct {
+	QuoteProof    *QuoteProof         `json:"quoteProof,omitempty"`
 	ClientID      string              `json:"clientId"`
 	Version       int                 `json:"version,omitempty"`
 	From          string              `json:"from,omitempty"`

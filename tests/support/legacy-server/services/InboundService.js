@@ -1,3 +1,4 @@
+/** @import { InboundPayload } from '../models/InboundPayload.js' */
 import { Security } from '../shared/security/Security.js'
 import { FyloAccessContext } from '../shared/persistence/FyloAccessContext.js'
 import { Threading } from '../shared/mailbox/Threading.js'
@@ -8,13 +9,13 @@ import { InboundRules } from '../shared/delivery/InboundRules.js'
 /** @import { RouteRule } from '../types' */
 /** @import { InboxRule } from '../types' */
 /** @import { RuleCondition } from '../types' */
-/** @import { ParsedAttachment } from '../helpers/AttachmentsHelper.js' */
-/** @import { EmailsHelper } from '../helpers/EmailsHelper.js' */
-/** @import { RulesHelper } from '../helpers/RulesHelper.js' */
-/** @import { SuppressedHelper } from '../helpers/SuppressedHelper.js' */
-/** @import { AttachmentsHelper } from '../helpers/AttachmentsHelper.js' */
-/** @import { RawMessagesHelper } from '../helpers/RawMessagesHelper.js' */
-/** @import { SmtpService } from './SmtpService.js' */
+/** @import { ParsedAttachment } from '../models/ParsedAttachment.js' */
+/** @import { default as EmailsHelper } from '../helpers/EmailsHelper.js' */
+/** @import { default as RulesHelper } from '../helpers/RulesHelper.js' */
+/** @import { default as SuppressedHelper } from '../helpers/SuppressedHelper.js' */
+/** @import { default as AttachmentsHelper } from '../helpers/AttachmentsHelper.js' */
+/** @import { default as RawMessagesHelper } from '../helpers/RawMessagesHelper.js' */
+/** @import { default as SmtpService } from './SmtpService.js' */
 
 /**
  * Inbound mail dispatcher. Validates the recipient, looks up the matching
@@ -29,35 +30,35 @@ import { InboundRules } from '../shared/delivery/InboundRules.js'
  */
 @Service
 export default class InboundService {
-  /** @type {EmailsHelper} */
+  /** @type {EmailsHelper | undefined} */
   @Needs
   emailsHelper
 
-  /** @type {RulesHelper} */
+  /** @type {RulesHelper | undefined} */
   @Needs
   rulesHelper
 
-  /** @type {SuppressedHelper} */
+  /** @type {SuppressedHelper | undefined} */
   @Needs
   suppressedHelper
 
-  /** @type {AttachmentsHelper} */
+  /** @type {AttachmentsHelper | undefined} */
   @Needs
   attachmentsHelper
 
-  /** @type {SmtpService} */
+  /** @type {SmtpService | undefined} */
   @Needs
   smtpService
 
-  /** @type {FyloHelper} */
+  /** @type {FyloHelper | undefined} */
   @Needs
   fyloHelper
 
-  /** @type {RawMessagesHelper} */
+  /** @type {RawMessagesHelper | undefined} */
   @Needs
   rawMessagesHelper
 
-  /** @type {CategoryMappingService} */
+  /** @type {CategoryMappingService | undefined} */
   @Needs
   categoryMappingService
 
@@ -70,11 +71,11 @@ export default class InboundService {
     if (!recipient) return { ok: false, error: 'Invalid recipient' }
 
     const domain = recipient.split('@')[1]
-    const enabled = await this.rulesHelper.listEnabledForDomain(domain)
+    const enabled = await (/** @type {RulesHelper} */ (this.rulesHelper)).listEnabledForDomain(domain)
     const matched = enabled.find(rule => InboundRules.ruleMatches(recipient, rule))
     if (!matched) return { ok: false, error: 'No matching route' }
 
-    const suppressed = await this.suppressedHelper.asSet()
+    const suppressed = await (/** @type {SuppressedHelper} */ (this.suppressedHelper)).asSet()
     if (suppressed.has(payload.sender)) return { ok: false, error: 'Sender is suppressed' }
 
     return await this._applyAction(matched, { ...payload, recipient })
@@ -102,7 +103,7 @@ export default class InboundService {
   /** @param {InboundPayload} payload */
   async _store(payload) {
     const domain = payload.recipient.split('@')[1]
-    const inboxFolder = await this.categoryMappingService?.pathFor(payload.recipient, domain, 'inbox') || 'inbox'
+    const inboxFolder = await (/** @type {CategoryMappingService} */ (this.categoryMappingService))?.pathFor(payload.recipient, domain, 'inbox') || 'inbox'
     return await FyloAccessContext.runForDomain(domain, async () => {
       const parsed = await this.parseMessage(payload.body)
       const messageRecipients = PersonalLevel.recipientsFromHeaders(parsed.headers, payload.recipient)
@@ -125,10 +126,10 @@ export default class InboundService {
         receivedAt: new Date().toISOString(),
         processed: true,
       }
-      await this.emailsHelper.put(email)
-      await this.rawMessagesHelper?.saveForEmail(email.id, domain, payload.body)
+      await (/** @type {EmailsHelper} */ (this.emailsHelper)).put(email)
+      await (/** @type {RawMessagesHelper} */ (this.rawMessagesHelper))?.saveForEmail(email.id, domain, payload.body)
       if (payload.attachments?.length) {
-        await this.attachmentsHelper.saveForEmail(email.id, domain, payload.attachments)
+        await (/** @type {AttachmentsHelper} */ (this.attachmentsHelper)).saveForEmail(email.id, domain, payload.attachments)
       }
       return { ok: true, emailId: email.id }
     })
@@ -136,7 +137,7 @@ export default class InboundService {
 
   /** @param {string} to @param {InboundPayload} payload */
   async _forward(to, payload) {
-    await this.smtpService.send({ to: [to], subject: `Fwd: ${payload.subject}`, text: payload.body })
+    await (/** @type {SmtpService} */ (this.smtpService)).send({ to: [to], subject: `Fwd: ${payload.subject}`, text: payload.body })
     return await this._store({ ...payload, recipient: to })
   }
 
@@ -243,7 +244,7 @@ export default class InboundService {
         return
       case 'forward':
         if (rule.action.to && rule.action.to !== recipient) {
-          await this.smtpService.send({ to: [rule.action.to], subject: `Fwd: ${subject}`, text: `Forwarded from ${sender} to ${recipient}` })
+          await (/** @type {SmtpService} */ (this.smtpService)).send({ to: [rule.action.to], subject: `Fwd: ${subject}`, text: `Forwarded from ${sender} to ${recipient}` })
         }
         return
       case 'store':
@@ -263,7 +264,7 @@ export default class InboundService {
    */
   async applyInboxRules(messageId, ownerEmail, domain, meta) {
     try {
-      const rules = await this.rulesHelper.listEnabledForMailbox(ownerEmail, meta.recipient, domain)
+      const rules = await (/** @type {RulesHelper} */ (this.rulesHelper)).listEnabledForMailbox(ownerEmail, meta.recipient, domain)
       for (const rule of rules) {
         const evaluation = RuleEngine.evaluateInboxRule(rule, meta)
         if (!evaluation.matched) continue
@@ -281,7 +282,7 @@ export default class InboundService {
    * @param {{ sender: string, recipient: string, subject: string, body?: string }} meta
    */
   async _applyInboxRuleActions(rule, messageId, meta) {
-    const [docId] = await this.emailsHelper.findById(messageId)
+    const [docId] = await (/** @type {EmailsHelper} */ (this.emailsHelper)).findById(messageId)
     if (!docId) return
     /** @type {Record<string, unknown>} */
     const patch = {}
@@ -289,20 +290,20 @@ export default class InboundService {
       if (action.type === 'folder') {
         patch.folder = action.folder
       } else if (action.type === 'delete') {
-        patch.folder = await this.categoryMappingService?.pathFor(meta.recipient, meta.recipient.split('@')[1] || '', 'trash') || 'trash'
+        patch.folder = await (/** @type {CategoryMappingService} */ (this.categoryMappingService))?.pathFor(meta.recipient, meta.recipient.split('@')[1] || '', 'trash') || 'trash'
       } else if (action.type === 'markRead') {
         patch.read = action.value
       } else if (action.type === 'star') {
         patch.starred = action.value
       } else if (action.type === 'forward') {
         try {
-          await this.smtpService.send({ to: [action.to], subject: `Fwd: ${meta.subject}`, text: 'Forwarded' })
+          await (/** @type {SmtpService} */ (this.smtpService)).send({ to: [action.to], subject: `Fwd: ${meta.subject}`, text: 'Forwarded' })
         } catch (e) {
           console.error('[inbound] inbox rule forward failed:', e)
         }
       }
     }
-    if (Object.keys(patch).length) await this.emailsHelper.update(docId, patch)
+    if (Object.keys(patch).length) await (/** @type {EmailsHelper} */ (this.emailsHelper)).update(docId, patch)
   }
 }
 

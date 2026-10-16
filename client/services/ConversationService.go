@@ -127,6 +127,7 @@ func (service *ConversationService) Reply(messageID string) {
 	fields := service.thread(message)
 	fields.To = ReplyUtils{}.Target(message.ReplyTo, message.Sender)
 	fields.Subject = service.replyPrefix() + message.Subject
+	fields.Quote = service.quote(message, service.replyMode())
 	fields.Body = service.quoted(message, service.replyMode())
 	service.compose(fields)
 }
@@ -136,6 +137,7 @@ func (service *ConversationService) ReplyAll(messageID string) {
 	fields := service.thread(message)
 	fields.To = strings.Join(TextUtils{}.NonEmpty([]string{ReplyUtils{}.Target(message.ReplyTo, message.Sender), message.Recipient}), ", ")
 	fields.Subject = service.replyPrefix() + message.Subject
+	fields.Quote = service.quote(message, service.replyMode())
 	fields.Body = service.quoted(message, service.replyMode())
 	service.compose(fields)
 }
@@ -146,7 +148,8 @@ func (ConversationService) replyMode() string { return "reply" }
 
 func (service *ConversationService) Forward(messageID string) {
 	message := service.message(messageID)
-	service.compose(ComposeFields{Subject: "Fwd: " + message.Subject, Body: service.quoted(message, "forward"), SourceEmailID: message.Id})
+	mode := "forward"
+	service.compose(ComposeFields{Subject: "Fwd: " + message.Subject, Body: service.quoted(message, mode), Quote: service.quote(message, mode), SourceEmailID: message.Id})
 }
 
 // DownloadOriginal asks MessageService for the message's .eml.
@@ -300,7 +303,12 @@ func (ConversationService) thread(message ConversationMessage) ComposeFields {
 }
 
 func (ConversationService) quoted(message ConversationMessage, mode string) string {
-	return QuotedMessageUtils{}.Html(QuotedMessage{Mode: mode, Sender: message.Sender, Subject: message.Subject, DateLabel: message.ReceivedLabel, Body: message.Body})
+	return QuotedMessageUtils{}.Html(*ConversationService{}.quote(message, mode))
+}
+
+// quote captures the actual conversation record before prefill serialization.
+func (ConversationService) quote(message ConversationMessage, mode string) *QuotedMessage {
+	return &QuotedMessage{Mode: mode, Sender: message.Sender, Subject: message.Subject, DateLabel: message.ReceivedLabel, Body: message.Body}
 }
 
 // compose hands the fields to the composer: caduceus_compose_prefill in

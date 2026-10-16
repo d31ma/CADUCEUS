@@ -1,22 +1,31 @@
 import { Security } from '../security/Security.js'
 
 export class MailPreferences {
+  /** @type {ReadonlyArray<import('../../types').MailPreferences['workspaceLayout']>} */
   static WORKSPACE_LAYOUTS = Object.freeze(['split', 'list', 'split-vertical'])
 
+  /** @type {ReadonlyArray<import('../../types').MailPreferences['interfaceScale']>} */
   static INTERFACE_SCALES = Object.freeze([0.8, 0.9, 1, 1.1, 1.2])
 
+  /** @type {ReadonlyArray<import('../../types').MailPreferences['markAsReadDelay']>} */
   static MARK_AS_READ_DELAYS = Object.freeze([0, 500, 2000, -1])
 
+  /** @type {ReadonlyArray<import('../../types').MailPreferences['backspaceAction']>} */
   static BACKSPACE_ACTIONS = Object.freeze(['archive', 'trash'])
 
+  /** @type {ReadonlyArray<import('../../types').MailPreferences['conversationOrder']>} */
   static CONVERSATION_ORDERS = Object.freeze(['ascending', 'descending'])
 
+  /** @type {ReadonlyArray<import('../../types').MailPreferences['emailRenderMode']>} */
   static EMAIL_RENDER_MODES = Object.freeze(['theme', 'light', 'dark'])
 
+  /** @type {ReadonlyArray<import('../../types').MailPreferences['defaultSendAction']>} */
   static DEFAULT_SEND_ACTIONS = Object.freeze(['send', 'send-and-archive'])
 
+  /** @type {ReadonlyArray<import('../../types').MailPreferences['defaultReplyAction']>} */
   static DEFAULT_REPLY_ACTIONS = Object.freeze(['reply', 'reply-all'])
 
+  /** @type {ReadonlyArray<import('../../types').MailPreferences['undoSendDelay']>} */
   static UNDO_SEND_DELAYS = Object.freeze([0, 5000, 15000, 30000, 60000])
 
   static SPELLCHECK_LANGUAGES = Object.freeze([
@@ -25,6 +34,7 @@ export class MailPreferences {
     'pl', 'pt', 'pt-BR', 'ro', 'ru', 'sk', 'sl', 'sq', 'sr', 'sv', 'tr', 'uk', 'vi',
   ])
 
+  /** @type {Readonly<import('../../types').MailPreferences>} */
   static DEFAULT_MAIL_PREFERENCES = Object.freeze({
     workspaceLayout: 'split',
     use24HourClock: false,
@@ -124,10 +134,12 @@ export class MailPreferences {
     return { ok: true, preferences: normalized }
   }
 
+  /** @param {string} key @param {unknown} value @param {{email?: string, aliases?: string[], domains?: string[]}} user */
   static #isValidPreferenceField(key, value, user) {
     if (['use24HourClock', 'showUnreadForAllFolders', 'detailedHeaders', 'detailedNames',
       'restrictMessageWidth', 'swipeEnabled', 'richText', 'spellcheck',
       'displayAttachmentPreviews', 'unsnoozeToTop'].includes(key)) return typeof value === 'boolean'
+    /** @type {Record<string, readonly (string | number)[]>} */
     const catalogs = {
       workspaceLayout: MailPreferences.WORKSPACE_LAYOUTS,
       interfaceScale: MailPreferences.INTERFACE_SCALES,
@@ -157,6 +169,7 @@ export class MailPreferences {
     return false
   }
 
+  /** @param {unknown} value @param {ReadonlySet<string | null>} allowedSenders */
   static #validRecipientMap(value, allowedSenders) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return false
     let total = 0
@@ -172,24 +185,28 @@ export class MailPreferences {
     return true
   }
 
+  /** @param {{email?: string, aliases?: string[]}} user */
   static #ownedSenders(user) {
     return new Set([user.email, ...(user.aliases || [])].map(Security.normalizeEmailAddress).filter(Boolean))
   }
 
+  /** @param {unknown} value @param {ReadonlySet<string | null>} allowed */
   static #normalizeOwnedSender(value, allowed) {
     if (value == null || value === '') return ''
     const sender = Security.normalizeEmailAddress(String(value))
     return sender && allowed.has(sender) ? sender : ''
   }
 
+  /** @param {unknown} value @param {ReadonlySet<string | null>} allowedSenders */
   static #normalizeRecipientMap(value, allowedSenders) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+    /** @type {Record<string, string[]>} */
     const output = {}
     let total = 0
     for (const [rawSender, rawRecipients] of Object.entries(value)) {
       const sender = Security.normalizeEmailAddress(rawSender)
       if (!sender || !allowedSenders.has(sender) || !Array.isArray(rawRecipients)) continue
-      const recipients = [...new Set(rawRecipients.map(recipient => Security.normalizeEmailAddress(recipient)).filter(Boolean))].slice(0, 50)
+      const recipients = /** @type {string[]} */ ([...new Set(rawRecipients.map(recipient => Security.normalizeEmailAddress(recipient)).filter(Boolean))].slice(0, 50))
       total += recipients.length
       if (total > 200) break
       if (recipients.length) output[sender] = recipients
@@ -197,9 +214,12 @@ export class MailPreferences {
     return output
   }
 
-  static #pick(value, allowed, fallback) { return allowed.includes(value) ? value : fallback }
+  /** @template {string} Choice @param {unknown} value @param {readonly Choice[]} allowed @param {Choice} fallback @returns {Choice} */
+  static #pick(value, allowed, fallback) { return allowed.includes(/** @type {Choice} */ (value)) ? /** @type {Choice} */ (value) : fallback }
 
-  static #pickNumber(value, allowed, fallback) { return typeof value === 'number' && allowed.includes(value) ? value : fallback }
+  /** @template {number} Choice @param {unknown} value @param {readonly Choice[]} allowed @param {Choice} fallback @returns {Choice} */
+  static #pickNumber(value, allowed, fallback) { return typeof value === 'number' && allowed.includes(/** @type {Choice} */ (value)) ? /** @type {Choice} */ (value) : fallback }
 
+  /** @param {unknown} value @param {boolean} fallback */
   static #bool(value, fallback) { return typeof value === 'boolean' ? value : fallback }
 }

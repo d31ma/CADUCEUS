@@ -26,7 +26,7 @@ export class Threading {
     return `<${candidate}>`
   }
 
-  /** Extract, normalize, de-duplicate, and cap a References-style ID list. */
+  /** Extract, normalize, de-duplicate, and cap a References-style ID list. @param {unknown} value */
   static parseMessageIdList(value) {
     const values = Array.isArray(value) ? value : typeof value === 'string' ? Threading.#extractCandidates(value) : []
     const normalized = []
@@ -41,7 +41,7 @@ export class Threading {
     return normalized
   }
 
-  /** Build persisted thread metadata from normalized MIME headers. */
+  /** Build persisted thread metadata from normalized MIME headers. @param {Record<string, unknown> | undefined} headers @param {string} fallbackId @param {string} domain */
   static threadMetadataFromHeaders(headers, fallbackId, domain) {
     const rfcMessageId = Threading.parseMessageIdList(headers?.['message-id'])[0]
       ?? Threading.createMessageId(domain, fallbackId)
@@ -50,7 +50,7 @@ export class Threading {
     return Threading.#buildMetadata(domain, rfcMessageId, inReplyTo, references)
   }
 
-  /** Build persisted thread metadata for a locally composed message. */
+  /** Build persisted thread metadata for a locally composed message. @param {{messageId?: unknown, inReplyTo?: unknown, references?: unknown} | undefined} message @param {string} fallbackId @param {string} domain */
   static threadMetadataFromOutbound(message, fallbackId, domain) {
     const rfcMessageId = Threading.normalizeMessageId(message?.messageId)
       ?? Threading.createMessageId(domain, fallbackId)
@@ -59,7 +59,7 @@ export class Threading {
     return Threading.#buildMetadata(domain, rfcMessageId, inReplyTo, references)
   }
 
-  /** Generate an unguessable, standards-shaped Message-ID for local delivery. */
+  /** Generate an unguessable, standards-shaped Message-ID for local delivery. @param {string} domain @param {string} [hint] */
   static createMessageId(domain, hint = '') {
     const safeDomain = String(domain || 'localhost').toLowerCase().replace(/[^a-z0-9.-]/g, '') || 'localhost'
     const safeHint = String(hint || '').toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 80)
@@ -67,7 +67,7 @@ export class Threading {
     return `<${token}.${randomBytes(8).toString('hex')}@${safeDomain}>`
   }
 
-  /** Derive the same tenant-scoped identity used by persisted message metadata. */
+  /** Derive the same tenant-scoped identity used by persisted message metadata. @param {string} domain @param {string} root */
   static deriveThreadId(domain, root) {
     return createHash('sha256').update(`${String(domain).toLowerCase()}\0${root}`).digest('hex')
   }

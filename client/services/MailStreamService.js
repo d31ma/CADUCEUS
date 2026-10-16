@@ -24,7 +24,7 @@ export default class MailStreamService {
   static _HANDLERS = { 'new-email': '_arrived', unauthorized: '_unauthorized' }
   static _IGNORED = '_ignored'
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
 
   ready = false
@@ -122,10 +122,10 @@ export default class MailStreamService {
     if (!email?.id) return
     /** @type {NewMailArrived} */
     const arrived = { email }
-    this.applicationEventPublisher.publishEvent(arrived, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(arrived, false)
     /** @type {InboxRefreshRequested} */
     const refresh = { reason: MailStreamService._REASON }
-    this.applicationEventPublisher.publishEvent(refresh, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(refresh, false)
   }
 
   _unauthorized() {
@@ -133,7 +133,7 @@ export default class MailStreamService {
     this._stop()
     /** @type {SignOutRequested} */
     const request = { reason: MailStreamService._REASON }
-    this.applicationEventPublisher.publishEvent(request, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(request, false)
   }
 
   _healthy() {
@@ -171,6 +171,6 @@ export default class MailStreamService {
   _health(healthy) {
     /** @type {MailStreamHealth} */
     const health = { healthy }
-    this.applicationEventPublisher.publishEvent(health, true)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(health, true)
   }
 }

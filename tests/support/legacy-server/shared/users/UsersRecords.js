@@ -15,7 +15,7 @@ import { KeyboardShortcuts } from './KeyboardShortcuts.js'
 import { MailPreferences } from './MailPreferences.js'
 
 export class UsersRecords {
-  /** @import { User } from '../../../types' */
+  /** @import { User } from '../../types' */
 
   /**
    * Allowed calendar-visibility values. Stored on the user record (not a

@@ -1,3 +1,4 @@
+/** @import { ParsedAttachment } from './ParsedAttachment.js' */
 /**
  * @typedef {object} InboundPayload
  * @property {string} recipient

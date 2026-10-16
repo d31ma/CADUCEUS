@@ -170,6 +170,8 @@ func (Drafts) record(id string, owner string, domain string, input map[string]an
 		"folder": folder, "read": true, "starred": false, "receivedAt": now, "processed": true,
 		"hasAttachments": len(attachments) > 0, "draftOwner": owner, "draftClientId": input["clientId"],
 		"draftVersion": version, "draftUpdatedAt": now,
+		// Nil is intentional: FYLO patches merge, so omission would retain an old proof.
+		"quoteProof": input["quoteProof"],
 	}
 	for _, field := range []string{"cc", "bcc", "replyTo", "references"} {
 		if len(fields.Strings(input[field])) > 0 {

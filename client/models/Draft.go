@@ -1,6 +1,7 @@
 // A draft as GET, POST and PUT /drafts answer it. A stale PUT answers
 // Conflict.
 type Draft struct {
+	QuoteProof    *QuoteProof         `json:"quoteProof,omitempty"`
 	ID            string              `json:"id"`
 	Sender        string              `json:"sender"`
 	To            []string            `json:"to"`

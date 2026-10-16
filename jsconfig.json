@@ -16,6 +16,12 @@
     "paths": {
       "@/*": [
         "./tests/support/legacy-server/*"
+      ],
+      "/models/*": [
+        "./client/models/*"
+      ],
+      "/shared/*": [
+        "./client/shared/*"
       ]
     }
   },
@@ -32,6 +38,8 @@
   "exclude": [
     "dist",
     "node_modules",
-    "tests"
+    "tests",
+    "client/shared/vendor/translation-detection-vendor.js",
+    "client/shared/vendor/translation-engine-vendor.js"
   ]
 }

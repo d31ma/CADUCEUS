@@ -69,6 +69,7 @@ export class Providers {
    * Former constructor parameters, in order, as provider fields. `...` copies
    * an options object onto the instance.
    */
+  /** @type {Partial<Record<string, string[]>>} */
   static PARAMETERS = {
     AttachmentsHelper: ['fyloHelper'],
     CalendarEventsHelper: ['fyloHelper'],
@@ -125,6 +126,7 @@ export class Providers {
    * provider fields. Tests still reach a dependency by the old name; each
    * built instance answers it with the field.
    */
+  /** @type {Partial<Record<string, Record<string, string>>>} */
   static FORMER_PROPERTIES = {
     AttachmentsHelper: { fylo: 'fyloHelper' },
     CalendarEventsHelper: { fylo: 'fyloHelper' },

@@ -1,3 +1,6 @@
+import { buildSafeHtmlFrame, SAFE_HTML_FRAME_TAGS, safeHtmlFrameKeepsTag } from '../shared/scripts/safe-html-frame.js'
+/** @import { SafeHtmlFramePackage } from '../models/SafeHtmlFramePackage.js' */
+
 import { postOneClickUnsubscribe } from '../shared/scripts/unsubscribe.js'
 import {
   openPrintConversation,
@@ -16,11 +19,195 @@ import {
 export default class ReaderBrowserService {
   static _FRAME = 'email-html-frame'
   static _WARNING = 'data-caduceus-link-warning'
+  /** @type {string} */
+  static _QUOTED = 'data-caduceus-quoted'
+  /** @type {string} */
+  static _READER_ROOT = 'data-caduceus-reader-root'
+  /** @type {string} */
+  static _READER_MODE = 'data-caduceus-reader-mode'
+  /** @type {string} */
+  static _READER_QUOTED = 'data-caduceus-reader-quoted'
+  /** @type {string} */
+  static _LINK_TARGET = 'data-caduceus-link-target'
+  /** @type {string} */
+  static _LINK_HOST = 'data-caduceus-link-host'
+  /** @type {string} */
+  static _LINK_LABEL_HOST = 'data-caduceus-link-label-host'
+  /** @type {string} */
+  static _DARK = 'dark'
+  /** @type {string} */
+  static _DIV = 'div'
+  /** @type {string} */
+  static _TRUE = 'true'
+  /** @type {string} */
+  static _LINK = 'a'
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
 
   ready = false
+
+  /** @type {SafeHtmlFramePackage | null} */
+  _protectedFrame = null
+  /** @type {string} */
+  _protectedDocument = ''
+  /** @type {number} */
+  _protectedRevision = -1
+
+  /** @param {string} documentHtml @param {number} revision @returns {SafeHtmlFramePackage} */
+  protectedFrame(documentHtml, revision) {
+    const current = this._frameIsCurrent(documentHtml, revision)
+    return this._frameForState(current, documentHtml, revision)
+  }
+
+  /** @param {string} documentHtml @param {number} revision @returns {boolean} */
+  _frameIsCurrent(documentHtml, revision) {
+    return [this._protectedFrame !== null, this._protectedDocument === documentHtml, this._protectedRevision === revision].every(Boolean)
+  }
+
+  /** @param {boolean} current @param {string} documentHtml @param {number} revision @returns {SafeHtmlFramePackage} */
+  _frameForState(current, documentHtml, revision) {
+    if (current) return /** @type {SafeHtmlFramePackage} */ (this._protectedFrame)
+    return this._createProtectedFrame(documentHtml, revision)
+  }
+
+  /** @param {string} documentHtml @param {number} revision @returns {SafeHtmlFramePackage} */
+  _createProtectedFrame(documentHtml, revision) {
+    const frame = buildSafeHtmlFrame(documentHtml, revision, {
+      metadataAttributes: this._readerMetadataNames(),
+      prepare: parsed => this._prepareReaderBody(parsed),
+      authorize: element => this._readerMetadata(element),
+    })
+    this._protectedDocument = documentHtml
+    this._protectedRevision = revision
+    this._protectedFrame = frame
+    return frame
+  }
+
+  /** @returns {Record<string,string[]>} */
+  _readerMetadataNames() {
+    const names = Object.fromEntries(SAFE_HTML_FRAME_TAGS.map(tag => [tag, [ReaderBrowserService._QUOTED]]))
+    names[ReaderBrowserService._DIV] = ['class', ReaderBrowserService._QUOTED]
+    names[ReaderBrowserService._LINK] = ['class', ReaderBrowserService._QUOTED, ...this._readerWarningNames()]
+    return names
+  }
+
+  /** @returns {string[]} */
+  _readerWarningNames() {
+    return [ReaderBrowserService._WARNING, ReaderBrowserService._LINK_TARGET, ReaderBrowserService._LINK_HOST, ReaderBrowserService._LINK_LABEL_HOST]
+  }
+
+  /** @param {Document} parsed */
+  _prepareReaderBody(parsed) {
+    const quoted = parsed.body.classList.contains('show-quoted')
+    const style = this._readerStyle(parsed)
+    const dark = style.startsWith('html{color-scheme:dark;')
+    const mode = this._readerPalette(dark)
+    const elements = this._readerQuotedElements(parsed)
+    this._wrapReaderQuotes(parsed, elements)
+    this._appendReaderRoot(parsed, mode, quoted)
+  }
+
+  /** @param {Document} parsed @returns {string} */
+  _readerStyle(parsed) {
+    return parsed.head.querySelector('style')?.textContent || ''
+  }
+
+  /** @param {boolean} dark @returns {string} */
+  _readerPalette(dark) {
+    return dark ? ReaderBrowserService._DARK : 'light'
+  }
+
+  /** @param {Document} parsed @returns {Element[]} */
+  _readerQuotedElements(parsed) {
+    return [...parsed.body.querySelectorAll(`[${ReaderBrowserService._QUOTED}]`)].filter(this._readerQuoteNeedsWrapper)
+  }
+
+  /** @param {Element} element @returns {boolean} */
+  _readerQuoteNeedsWrapper(element) {
+    return [safeHtmlFrameKeepsTag(element.localName), ![ReaderBrowserService._LINK, 'img'].includes(element.localName)].includes(false)
+  }
+
+  /** @param {Document} parsed @param {Element[]} elements */
+  _wrapReaderQuotes(parsed, elements) {
+    for (const element of elements) this._wrapReaderQuote(parsed, element)
+  }
+
+  /** @param {Document} parsed @param {Element} element */
+  _wrapReaderQuote(parsed, element) {
+    const wrapper = parsed.createElement(ReaderBrowserService._DIV)
+    wrapper.setAttribute(ReaderBrowserService._QUOTED, '')
+    element.removeAttribute(ReaderBrowserService._QUOTED)
+    element.parentNode?.insertBefore(wrapper, element)
+    wrapper.append(element)
+  }
+
+  /** @param {Document} parsed @param {string} mode @param {boolean} quoted */
+  _appendReaderRoot(parsed, mode, quoted) {
+    const root = parsed.createElement(ReaderBrowserService._DIV)
+    root.setAttribute(ReaderBrowserService._READER_ROOT, ReaderBrowserService._TRUE)
+    root.setAttribute(ReaderBrowserService._READER_MODE, mode)
+    root.setAttribute(ReaderBrowserService._READER_QUOTED, String(quoted))
+    root.append(...parsed.body.childNodes)
+    parsed.body.append(root)
+  }
+
+  /** @param {Element} element @returns {Record<string,string>} */
+  _readerMetadata(element) {
+    const root = this._readerIsRoot(element)
+    const classes = this._readerRootClasses(element)
+    const rootAttributes = this._readerRootMetadata(root, classes)
+    const quotedAttributes = this._readerQuotedMetadata(element.hasAttribute(ReaderBrowserService._QUOTED))
+    const warning = this._readerIsWarning(element)
+    const warningValues = this._readerWarningValues(element)
+    const warningAttributes = this._readerWarningMetadata(warning, warningValues)
+    return { ...rootAttributes, ...quotedAttributes, ...warningAttributes }
+  }
+
+  /** @param {Element} element @returns {boolean} */
+  _readerIsRoot(element) {
+    return [element.localName === ReaderBrowserService._DIV, element.getAttribute(ReaderBrowserService._READER_ROOT) === ReaderBrowserService._TRUE, element.parentElement?.localName === 'body'].every(Boolean)
+  }
+
+  /** @param {Element} element @returns {string} */
+  _readerRootClasses(element) {
+    const mode = this._readerPalette(element.getAttribute(ReaderBrowserService._READER_MODE) === ReaderBrowserService._DARK)
+    const quoted = this._readerQuotedClass(element.getAttribute(ReaderBrowserService._READER_QUOTED) === ReaderBrowserService._TRUE)
+    return 'caduceus-reader-root caduceus-reader-' + mode + quoted
+  }
+
+  /** @param {boolean} quoted @returns {string} */
+  _readerQuotedClass(quoted) {
+    return quoted ? ' show-quoted' : ''
+  }
+
+  /** @param {boolean} root @param {string} classes @returns {Record<string,string>} */
+  _readerRootMetadata(root, classes) {
+    if (root) return { class: classes }
+    return {}
+  }
+
+  /** @param {boolean} quoted @returns {Record<string,string>} */
+  _readerQuotedMetadata(quoted) {
+    if (quoted) return { [ReaderBrowserService._QUOTED]: '' }
+    return {}
+  }
+
+  /** @param {Element} element @returns {boolean} */
+  _readerIsWarning(element) {
+    return [element.localName === ReaderBrowserService._LINK, element.hasAttribute(ReaderBrowserService._WARNING)].every(Boolean)
+  }
+
+  /** @param {Element} element @returns {Record<string,string>} */
+  _readerWarningValues(element) {
+    return Object.fromEntries(this._readerWarningNames().map(name => [name, this._attribute(element, name)]))
+  }
+
+  /** @param {boolean} warning @param {Record<string,string>} values @returns {Record<string,string>} */
+  _readerWarningMetadata(warning, values) {
+    if (warning) return { class: 'caduceus-suspicious-link', ...values }
+    return {}
+  }
 
   @OnStart
   start() {
@@ -33,7 +220,7 @@ export default class ReaderBrowserService {
   async unsubscribe(requested) {
     /** @type {UnsubscribeAnswered} */
     const answered = { sent: await postOneClickUnsubscribe(requested.url) }
-    this.applicationEventPublisher.publishEvent(answered, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(answered, false)
   }
 
   /** @param {ShortcutPressed} pressed */
@@ -80,7 +267,7 @@ export default class ReaderBrowserService {
   _toast(message) {
     /** @type {ToastRequested} */
     const requested = { message, actionLabel: '', action: '', subject: '', durationMs: 0 }
-    this.applicationEventPublisher.publishEvent(requested, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(requested, false)
   }
 
   /** @param {EventTarget | null} target */
@@ -109,11 +296,11 @@ export default class ReaderBrowserService {
     /** @type {PendingLinkWarning} */
     const warning = {
       reason: this._attribute(link, ReaderBrowserService._WARNING),
-      target: this._attribute(link, 'data-caduceus-link-target'),
-      destinationHost: this._attribute(link, 'data-caduceus-link-host'),
-      displayedHost: this._attribute(link, 'data-caduceus-link-label-host'),
+      target: this._attribute(link, ReaderBrowserService._LINK_TARGET),
+      destinationHost: this._attribute(link, ReaderBrowserService._LINK_HOST),
+      displayedHost: this._attribute(link, ReaderBrowserService._LINK_LABEL_HOST),
     }
-    this.applicationEventPublisher.publishEvent(warning, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(warning, false)
   }
 
   /** @param {Element} link @param {string} name @returns {string} */

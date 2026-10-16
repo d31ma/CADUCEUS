@@ -20,6 +20,14 @@ func (DraftUtils) Prefill(stored string, launched map[string]any) ComposePrefill
 	encoded, _ := json.Marshal(fields)
 	prefill := ComposePrefill{}
 	json.Unmarshal(encoded, &prefill)
+	return DraftUtils{}.expanded(prefill)
+}
+
+// expanded reconstructs only the separate app-owned reply/forward record, before showBody.
+func (DraftUtils) expanded(prefill ComposePrefill) ComposePrefill {
+	if prefill.Body == "" && prefill.Quote != nil && slices.Contains([]string{"reply", "forward"}, prefill.Quote.Mode) {
+		prefill.Body = QuotedMessageUtils{}.Html(*prefill.Quote)
+	}
 	return prefill
 }
 
@@ -50,7 +58,7 @@ func (DraftUtils) Opening(prefill ComposePrefill, pointer DraftPointer) string {
 // Snapshot is the complete autosave body of the message being written.
 func (DraftUtils) Snapshot(fields MessageFields, clientID string, version int) DraftInput {
 	return DraftInput{
-		ClientID: clientID, Version: version, From: fields.From,
+		ClientID: clientID, Version: version, From: fields.From, QuoteProof: fields.QuoteProof,
 		To: RecipientUtils{}.Split(fields.To), Cc: RecipientUtils{}.Split(fields.Cc), Bcc: RecipientUtils{}.Split(fields.Bcc), ReplyTo: RecipientUtils{}.Split(fields.ReplyTo),
 		Subject: fields.Subject, Text: fields.Text, HTML: fields.HTML, InReplyTo: fields.InReplyTo, References: append([]string{}, fields.References...),
 		SourceEmailID: fields.SourceEmailID, Attachments: append([]ComposeAttachment{}, fields.Attachments...),
@@ -75,7 +83,7 @@ func (DraftUtils) Worth(snapshot DraftInput, saved string, draftID string) bool 
 // Fields are the header fields of a saved draft.
 func (DraftUtils) Fields(draft Draft) MessageFields {
 	return MessageFields{
-		From: draft.Sender, To: RecipientUtils{}.Join(draft.To), Cc: RecipientUtils{}.Join(draft.Cc), Bcc: RecipientUtils{}.Join(draft.Bcc),
+		QuoteProof: draft.QuoteProof, From: draft.Sender, To: RecipientUtils{}.Join(draft.To), Cc: RecipientUtils{}.Join(draft.Cc), Bcc: RecipientUtils{}.Join(draft.Bcc),
 		ReplyTo: strings.Join(append(draft.ReplyTo, "")[:1], ""), Subject: draft.Subject, HTML: TextUtils{}.FirstOf(draft.HTMLBody, draft.Body), Text: draft.Body,
 		InReplyTo: draft.InReplyTo, References: append([]string{}, draft.References...), SourceEmailID: draft.SourceEmailID, Attachments: append([]ComposeAttachment{}, draft.Attachments...),
 	}

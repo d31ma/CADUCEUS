@@ -103,6 +103,7 @@ export class TestServer {
 
   /** @param {string} envFile */
   static #refuseForeignEnv(envFile) {
+    /** @type {string | null} */
     let existing = null
     try { existing = readFileSync(envFile, 'utf8') } catch {}
     if (existing !== null && !existing.startsWith(TestServer.MARKER)) {

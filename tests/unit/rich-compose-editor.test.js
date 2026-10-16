@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { RichComposeEditorUtils } from '../../client/shared/utils/RichComposeEditorUtils.js'
+import * as RichComposeEditorUtils from '../../client/shared/scripts/rich-compose-editor.js'
 
 const createInlineContentId = (...args) => RichComposeEditorUtils.createInlineContentId(...args)
 const isNeutralPastedColor = (...args) => RichComposeEditorUtils.isNeutralPastedColor(...args)

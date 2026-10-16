@@ -2,6 +2,9 @@ import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'node:
 import { DomUtils, parseDocument } from '../../deps/npm/htmlparser2.mjs'
 import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
 
+/** @typedef {ReturnType<typeof parseDocument>['children'][number]} TrackedNode */
+/** @typedef {Extract<TrackedNode, {attribs: Record<string, string>} >} TrackedElement */
+
 export class TrackingTokens {
   static #TOKEN_VERSION = 1
 
@@ -103,6 +106,7 @@ export class TrackingTokens {
     if (!source || Buffer.byteLength(source) > TrackingTokens.#MAX_TRACKED_HTML_BYTES) return { html: source, links: [] }
     const baseUrl = TrackingTokens.resolveTrackingBaseUrl(options.baseUrl)
     const document = parseDocument(source, { decodeEntities: true })
+    /** @type {Array<{index: number, url: string, title: string}>} */
     const links = []
 
     if (options.linkTracking) {
@@ -144,7 +148,7 @@ export class TrackingTokens {
     return { html: DomUtils.getInnerHTML(document), links }
   }
 
-  /** Return the original links that can participate in click analytics. */
+  /** Return the original links that can participate in click analytics. @param {string} html */
   static listTrackableLinks(html) {
     const source = String(html || '')
     if (!source || Buffer.byteLength(source) > TrackingTokens.#MAX_TRACKED_HTML_BYTES) return []
@@ -215,12 +219,12 @@ export class TrackingTokens {
     return Number.isSafeInteger(index) && index >= 0 && index < TrackingTokens.#MAX_TRACKED_LINKS ? index : -1
   }
 
-  /** @param {any} node @param {string} [name] */
+  /** @param {TrackedNode | null | undefined} node @param {string} [name] @returns {node is TrackedElement} */
   static #isElement(node, name) {
-    return Boolean(node && (node.type === 'tag' || node.type === 'script' || node.type === 'style') && (!name || node.name === name))
+    return Boolean(node && (node.type === 'tag' || node.type === 'script' || node.type === 'style') && (!name || /** @type {TrackedElement} */ (node).name === name))
   }
 
-  /** @param {any} node */
+  /** @param {TrackedNode} node */
   static #isInsideQuotedContent(node) {
     for (let current = node?.parent; current; current = current.parent) {
       if (!TrackingTokens.#isElement(current)) continue

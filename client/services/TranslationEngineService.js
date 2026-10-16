@@ -33,7 +33,7 @@ export default class TranslationEngineService {
   static _SAMPLE_CHARACTERS = 2000
   static _MINIMUM_SAMPLE = 20
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
   languages = Object.entries(TRANSLATION_LANGUAGES).map(([id, label]) => ({ id, label }))
 
@@ -98,18 +98,18 @@ export default class TranslationEngineService {
     setCachedMessageTranslationEnabled(changed.messageId, changed.enabled)
   }
 
-  /** @param {string} source @param {string} preference @param {{translate?: boolean, original?: boolean}} next */
+  /** @param {string} source @param {TranslationPreference} preference @param {{translate?: boolean, original?: boolean}} next */
   _choose(source, preference, next) {
     if (!source) return
     setTranslationPreference(source, preference)
     this._preference(preference, next)
   }
 
-  /** @param {string} preference @param {{translate?: boolean, original?: boolean}} next */
+  /** @param {TranslationPreference} preference @param {{translate?: boolean, original?: boolean}} next */
   _preference(preference, next) {
     /** @type {TranslationPreferenceChanged} */
     const changed = { preference, translate: Boolean(next.translate), original: Boolean(next.original) }
-    this.applicationEventPublisher.publishEvent(changed, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(changed, false)
   }
 
   /** @param {CachedMessageTranslation} cached */
@@ -143,7 +143,7 @@ export default class TranslationEngineService {
     const language = this._first([result.language])
     /** @type {TranslationDetected} */
     const detected = { messageId, language, confidence: [Number(result.confidence)].filter(Number.isFinite).concat(0)[0], preference: translationPreferenceFor(language) }
-    this.applicationEventPublisher.publishEvent(detected, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(detected, false)
   }
 
   /** @param {unknown[]} values @returns {string} */
@@ -183,14 +183,14 @@ export default class TranslationEngineService {
   _failed(messageId, error) {
     /** @type {TranslationFailed} */
     const failed = { messageId, message: error instanceof Error ? error.message : '' }
-    this.applicationEventPublisher.publishEvent(failed, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(failed, false)
   }
 
   /** @param {number} progress */
   _progress(progress) {
     /** @type {TranslationProgressed} */
     const progressed = { progress }
-    this.applicationEventPublisher.publishEvent(progressed, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(progressed, false)
   }
 
   /** @param {string} messageId @param {string} html @param {string} text @param {string} source */
@@ -199,7 +199,7 @@ export default class TranslationEngineService {
     this._sendParts(messageId, 'text', String(text))
     /** @type {TranslationPart} */
     const done = { messageId, kind: 'done', index: 0, count: 1, text: source }
-    this.applicationEventPublisher.publishEvent(done, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(done, false)
   }
 
   /** @param {string} messageId @param {string} kind @param {string} value */
@@ -210,7 +210,7 @@ export default class TranslationEngineService {
     for (let index = 0; index < count; index++) {
       /** @type {TranslationPart} */
       const part = { messageId, kind, index, count, text: points.slice(index * size, (index + 1) * size).join('') }
-      this.applicationEventPublisher.publishEvent(part, false)
+      ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(part, false)
     }
   }
 }

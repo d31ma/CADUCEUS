@@ -9,7 +9,7 @@
  */
 @Service
 export default class PushSubscriptionService {
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher;
   active = true
 
@@ -20,7 +20,7 @@ export default class PushSubscriptionService {
     const supported = PushSubscriptionService._supported()
     /** @type {PushSupport} */
     const support = { supported, permission: PushSubscriptionService._permission(supported) }
-    this.applicationEventPublisher.publishEvent(support, true)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(support, true)
   }
 
   /** @param {PushPermissionRequested} _requested */
@@ -28,21 +28,21 @@ export default class PushSubscriptionService {
   async ask(_requested) {
     /** @type {PushPermissionAnswered} */
     const answered = { permission: await Notification.requestPermission().catch(() => 'default') }
-    this.applicationEventPublisher.publishEvent(answered, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(answered, false)
   }
 
   /** @param {PushSubscribeRequested} requested */
   @OnEvent
   async subscribe(requested) {
     const created = await PushSubscriptionService._subscribe(requested.publicKey).catch(() => ({ subscription: {}, problem: 'subscribe' }))
-    this.applicationEventPublisher.publishEvent(/** @type {PushSubscriptionCreated} */ (created), false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(/** @type {PushSubscriptionCreated} */ (created), false)
   }
 
   /** @param {PushUnsubscribeRequested} _requested */
   @OnEvent
   async unsubscribe(_requested) {
     const removed = await PushSubscriptionService._unsubscribe().catch(() => ({ endpoint: '', problem: 'unsubscribe' }))
-    this.applicationEventPublisher.publishEvent(/** @type {PushSubscriptionRemoved} */ (removed), false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(/** @type {PushSubscriptionRemoved} */ (removed), false)
   }
 
   static _supported() {

@@ -1,3 +1,4 @@
+/** @import { RuleCondition } from '../../types' */
 import { Security } from '../security/Security.js'
 import { FyloAccessContext } from '../persistence/FyloAccessContext.js'
 import { Buffer } from 'node:buffer'
@@ -78,7 +79,7 @@ export class InboundRules {
       out[String(key).toLowerCase()] = typeof headerValue === 'string'
         ? headerValue
         : addressValues
-          ? addressValues.map(entry => entry?.address ?? '').filter(Boolean).join(', ')
+          ? addressValues.map((/** @type {{address?: string} | null | undefined} */ entry) => entry?.address ?? '').filter(Boolean).join(', ')
           : String(headerValue?.value ?? headerValue ?? '')
     })
     return out
@@ -205,7 +206,7 @@ export class InboundRules {
     return headers
   }
 
-  /** The bundled mailparser `simpleParser`, loaded only for full MIME input. */
+  /** The bundled mailparser `simpleParser`, loaded only for full MIME input. @returns {Promise<typeof import('../../deps/npm/mailparser.mjs').simpleParser>} */
   static async simpleParser() {
     return (await import('../../deps/npm/mailparser.mjs')).simpleParser
   }

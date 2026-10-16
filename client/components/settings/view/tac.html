@@ -1071,7 +1071,7 @@
           <p class="w-text-body-small signature-settings-empty" role="listitem">No signatures yet.</p>
         </logic>
         <loop :for="sig of signatureEditor.signatures">
-          <div :class="'settings-row lazy-list-item ' + (signatureEditor.editId === sig.id ? 'selected' : '')" role="listitem">
+          <div :class="'settings-row lazy-list-item ' + (signatureEditor.editID === sig.id ? 'selected' : '')" role="listitem">
             <button type="button" class="signature-settings-select" on:click="signatureEditor.edit(sig.id)">
               <strong>{sig.name}</strong>
               <span>{sig.defaultFor.length ? sig.defaultFor.join(', ') : 'Not a default'}</span>
@@ -1101,7 +1101,7 @@
           <iframe data-signature-preview class="signature-preview" title="Signature preview" sandbox="" :srcdoc="signatureEditor.preview()"></iframe>
         </div>
         <logic :if="signatureEditor.error"><p class="login-error">{signatureEditor.error}</p></logic>
-        <w-btn variant="tonal" :disabled="signatureEditor.saving" on:click="signatureEditor.save()">{signatureEditor.saving ? 'Saving…' : (signatureEditor.editId ? 'Update signature' : 'Save signature')}</w-btn>
+        <w-btn variant="tonal" :disabled="signatureEditor.saving" on:click="signatureEditor.save()">{signatureEditor.saving ? 'Saving…' : (signatureEditor.editID ? 'Update signature' : 'Save signature')}</w-btn>
       </div>
     </div>
   </div>
@@ -1120,7 +1120,7 @@
           <p class="w-text-body-small template-settings-empty" role="listitem">No templates yet.</p>
         </logic>
         <loop :for="template of templateEditor.templates">
-          <div :class="'settings-row lazy-list-item ' + (templateEditor.editId === template.id ? 'selected' : '')" role="listitem">
+          <div :class="'settings-row lazy-list-item ' + (templateEditor.editID === template.id ? 'selected' : '')" role="listitem">
             <button type="button" class="template-settings-select" on:click="templateEditor.edit(template.id)">
               <strong>{template.name}</strong>
               <span>{template.subject || 'No subject'}</span>
@@ -1130,7 +1130,7 @@
         </loop>
       </div>
       <div class="settings-card template-settings-editor">
-        <p class="w-text-title-small">{templateEditor.editId ? 'Edit template' : 'New template'}</p>
+        <p class="w-text-title-small">{templateEditor.editID ? 'Edit template' : 'New template'}</p>
         <div class="template-settings-fields">
           <w-text-field data-template-name label="Template name" :value="templateEditor.draft.name" on:input="templateEditor.setField('name', $event.target.value)" placeholder="Follow-up"></w-text-field>
           <w-text-field data-template-subject label="Subject" :value="templateEditor.draft.subject" on:input="templateEditor.setField('subject', $event.target.value)" placeholder="Optional subject"></w-text-field>
@@ -1141,7 +1141,7 @@
         <logic :if="templateEditor.error"><p class="login-error">{templateEditor.error}</p></logic>
         <div class="template-settings-actions">
           <w-btn variant="filled" :disabled="templateEditor.saving" on:click="templateEditor.save()">{templateEditor.saving ? 'Saving…' : 'Save template'}</w-btn>
-          <logic :if="templateEditor.editId"><w-btn variant="text" on:click="templateEditor.new()">Cancel editing</w-btn></logic>
+          <logic :if="templateEditor.editID"><w-btn variant="text" on:click="templateEditor.new()">Cancel editing</w-btn></logic>
         </div>
       </div>
     </div>
@@ -1179,7 +1179,7 @@
       <logic :if="!settings.loading && inboxRules.rules.length === 0"><p class="w-text-body-small settings-muted settings-pad-y">No inbox rules.</p></logic>
       <logic :if="inboxRules.open">
         <div class="settings-card rule-form">
-          <p class="w-text-title-small">{inboxRules.editId ? 'Edit rule' : 'New rule'}</p>
+          <p class="w-text-title-small">{inboxRules.editID ? 'Edit rule' : 'New rule'}</p>
           <div class="rule-form-grid">
             <w-text-field data-rule-name label="Rule name" :value="inboxRules.draft.name" on:input="inboxRules.setName($event.target.value)" placeholder="e.g. Move newsletters"></w-text-field>
             <w-select data-rule-mailbox label="Mailbox" :value="inboxRules.draft.mailbox" on:change="inboxRules.setMailbox($event.target.value)">
@@ -1275,7 +1275,7 @@
           </div>
 
           <div class="rule-form-actions">
-            <w-btn variant="tonal" on:click="inboxRules.save()">{inboxRules.editId ? 'Update' : 'Save'}</w-btn>
+            <w-btn variant="tonal" on:click="inboxRules.save()">{inboxRules.editID ? 'Update' : 'Save'}</w-btn>
             <w-btn variant="text" on:click="inboxRules.reset()">Cancel</w-btn>
           </div>
         </div>

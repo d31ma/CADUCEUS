@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer'
 import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
 
 export class OutboundQueueRules {
-  /** @import { OutboxEntry } from '../repositories/OutboxHelper.js' */
+  /** @import { OutboxEntry } from '../../models/OutboxEntry.js' */
 
   /**
    * Outbound delivery queue with retry and bounce handling.
@@ -23,18 +23,18 @@ export class OutboundQueueRules {
 
   static DELIVERY_LEASE_MS = 5 * 60_000
 
-  /** @param {import('./SmtpService.js').SendRequest} email */
+  /** @param {import('../../models/SendRequest.js').SendRequest} email */
   static deliveryRecipients(email) {
     const requested = email.envelopeRecipients || [...(email.to || []), ...(email.cc || []), ...(email.bcc || [])]
     return [...new Map(requested.map(address => [String(address).toLowerCase(), String(address)])).values()]
   }
 
-  /** @param {import('./SmtpService.js').SendRequest} email @param {string[]} recipients */
+  /** @param {import('../../models/SendRequest.js').SendRequest} email @param {string[]} recipients */
   static deliveryForRecipients(email, recipients) {
     return { ...email, envelopeRecipients: [...recipients] }
   }
 
-  /** @param {import('./SmtpService.js').SendRequest} email @param {unknown} error @param {boolean} exhausted */
+  /** @param {import('../../models/SendRequest.js').SendRequest} email @param {unknown} error @param {boolean} exhausted */
   static deliveryFailurePlan(email, error, exhausted = false) {
     const requested = OutboundQueueRules.deliveryRecipients(email)
     if (exhausted) return { permanent: requested, transient: [] }
@@ -75,7 +75,7 @@ export class OutboundQueueRules {
   /** @param {unknown} value */
   static isPermanentReply(value) { const code = Number(value); return code >= 500 && code < 600 }
 
-  /** @param {import('./SmtpService.js').SendRequest} email @param {string[]} recipients @param {number} attempts @param {number} now @param {number} backoff @param {string} message @returns {Partial<OutboxEntry>} */
+  /** @param {import('../../models/SendRequest.js').SendRequest} email @param {string[]} recipients @param {number} attempts @param {number} now @param {number} backoff @param {string} message @returns {Partial<OutboxEntry>} */
   static retryPatch(email, recipients, attempts, now, backoff, message) {
     return { status: 'queued', attempts, nextAttempt: now + backoff, lastError: message, claimedAt: 0, email: OutboundQueueRules.deliveryForRecipients(email, recipients) }
   }

@@ -3,6 +3,7 @@ export class NotificationSounds {
 
   static SOUND_IDS = Object.freeze(['none', 'chime', 'bell', 'pop', 'pulse'])
 
+  /** @type {Readonly<Record<string, string>>} */
   static DEFAULT_NOTIFICATION_SOUNDS = Object.freeze({
     'new-mail': 'chime',
     'hit-send': 'pop',

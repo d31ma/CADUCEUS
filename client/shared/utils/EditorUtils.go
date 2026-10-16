@@ -9,8 +9,8 @@ import (
 // EditorUtils builds the document of the composer's message editor. Tac
 // replaces a contenteditable element whenever it renders without focus, and a
 // Tac script may not write markup (TY1364), so the message body lives in a
-// sandboxed iframe whose srcdoc the view binds to this document, as the shared
-// conversation page does for message HTML. Inline images show their bytes as
+// sandboxed iframe. The safe-html bridge extracts only the body of this
+// compatibility document; its head and editable shell are authored in the view. Inline images show their bytes as
 // data: URLs; the editor turns them back into cid: references when it reads
 // the body.
 type EditorUtils struct{}

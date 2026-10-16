@@ -26,7 +26,7 @@ export class FyloAccessContext {
     return FyloAccessContext.#POSIX_ID_MIN + (digest.readUInt32BE(0) % FyloAccessContext.#POSIX_ID_SPAN)
   }
 
-  /** @param {unknown} record */
+  /** @param {unknown} record @returns {string | null} */
   static recordDomain(record) {
     if (!record || typeof record !== 'object' || Array.isArray(record)) return null
     const value = /** @type {Record<string, unknown>} */ (record)

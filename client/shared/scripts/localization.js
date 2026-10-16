@@ -31,7 +31,7 @@ const LOCALE_LABELS = Object.freeze({
 /** @type {ReadonlyArray<{id:InterfaceLocaleChoice,label?:string,labelKey?:string}>} */
 export const INTERFACE_LOCALE_OPTIONS = Object.freeze([
   { id: 'auto', labelKey: 'locale.automatic' },
-  ...Object.entries(LOCALE_LABELS).map(([id, label]) => ({ id, label })),
+  ...Object.entries(LOCALE_LABELS).map(([id, label]) => ({ id: /** @type {keyof typeof LOCALE_LABELS} */ (id), label })),
 ])
 
 /** @type {ReadonlySet<InterfaceLocaleChoice>} */

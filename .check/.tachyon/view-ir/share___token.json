@@ -1,0 +1,30 @@
+{
+  "contract_version": 1,
+  "source": "client/pages/share/_token/tac.html",
+  "root": {
+    "kind": "element",
+    "tag": "html",
+    "attributes": {},
+    "children": [
+      {
+        "kind": "element",
+        "tag": "body",
+        "attributes": {},
+        "children": [
+          {
+            "kind": "component",
+            "name": "share-conversation",
+            "properties": {
+              "hydrate": "load"
+            },
+            "children": []
+          },
+          {
+            "kind": "text",
+            "value": "\n"
+          }
+        ]
+      }
+    ]
+  }
+}

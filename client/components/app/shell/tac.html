@@ -1,18 +1,18 @@
-<logic :if="isAuthenticated">
+<logic :if="session.signedIn">
   <div class="app-shell">
     <header class="app-topbar">
       <!-- Brand: a custom logo (configured via window.CADUCEUS_CONFIG.brandLogo)
            takes precedence; otherwise we render the literal "CADUCEUS" wordmark. -->
-      <logic :if="brandLogo">
+      <logic :if="shell.brandLogo">
         <a href="/inbox" class="app-brand-link" aria-label="CADUCEUS">
-          <img class="app-brand-logo" :src="brandLogo" alt="CADUCEUS" />
+          <img class="app-brand-logo" :src="shell.brandLogo" alt="CADUCEUS" />
         </a>
       </logic>
-      <logic :if="!brandLogo">
+      <logic :if="!shell.brandLogo">
         <a href="/inbox" class="app-brand-link"><span class="app-brand w-text-title-large">CADUCEUS</span></a>
       </logic>
 
-      <button class="mobile-menu-btn" type="button" on:click="toggleMobileSidebar()" :aria-label="t('shell.openNavigation')" aria-controls="app-sidebar" :aria-expanded="mobileSidebarOpen ? 'true' : 'false'">
+      <button class="mobile-menu-btn" type="button" on:click="shell.toggleMobileSidebar()" :aria-label="shell.text('shell.openNavigation')" aria-controls="app-sidebar" :aria-expanded="shell.mobileSidebarOpen ? 'true' : 'false'">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true">
           <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/>
         </svg>
@@ -21,9 +21,9 @@
       <button
         class="theme-toggle-btn"
         type="button"
-        on:click="toggleTheme()"
-        :aria-label="themeToggleLabel"
-        :title="themeToggleLabel">
+        on:click="preference.toggleTheme()"
+        :aria-label="preference.themeToggleLabel"
+        :title="preference.themeToggleLabel">
         <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="20" height="20" aria-hidden="true">
           <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
         </svg>
@@ -32,37 +32,37 @@
         </svg>
       </button>
 
-      <span class="app-extension-toolbar" data-extension-slot="app-toolbar" aria-label="Extension actions"></span>
+      <span class="app-extension-toolbar" data-extension-slot="app-toolbar" role="toolbar" aria-label="Extension actions"></span>
 
       <div class="app-notification-center">
         <button
           class="app-notification-trigger"
           type="button"
-          on:click="toggleNotificationCenter()"
+          on:click="notificationCenter.toggle()"
           aria-haspopup="dialog"
-          :aria-expanded="notificationCenterOpen ? 'true' : 'false'"
-          :aria-label="notificationButtonLabel"
-          :title="notificationButtonLabel">
+          :aria-expanded="notificationCenter.open ? 'true' : 'false'"
+          :aria-label="notificationCenter.buttonLabel"
+          :title="notificationCenter.buttonLabel">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="20" height="20" aria-hidden="true"><path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-          <logic :if="notificationCount > 0"><span class="app-notification-count">{notificationCount}</span></logic>
+          <logic :if="notificationCenter.count > 0"><span class="app-notification-count">{notificationCenter.count}</span></logic>
         </button>
-        <logic :if="notificationCenterOpen">
-          <section class="app-notification-panel" role="dialog" aria-modal="false" aria-labelledby="notification-center-title" on:keydown="notificationCenterKeydown($event)">
+        <logic :if="notificationCenter.open">
+          <section class="app-notification-panel" role="dialog" aria-modal="false" aria-labelledby="notification-center-title" >
             <header>
-              <h2 id="notification-center-title">{t('shell.notifications')}</h2>
-              <button type="button" on:click="closeNotificationCenter()" :aria-label="t('shell.closeNotifications')">×</button>
+              <h2 id="notification-center-title">{shell.text('shell.notifications')}</h2>
+              <button type="button" on:click="notificationCenter.close()" :aria-label="shell.text('shell.closeNotifications')">×</button>
             </header>
-            <logic :if="notificationCount === 0"><p class="app-notification-empty">{t('shell.noNotifications')}</p></logic>
+            <logic :if="notificationCenter.count === 0"><p class="app-notification-empty">{shell.text('shell.noNotifications')}</p></logic>
             <div class="app-notification-list">
-              <loop :for="item of visibleNotifications">
-                <article :class="notificationCardClass(item)" :data-notification-id="item.id" :data-priority="item.priority">
+              <loop :for="item of notificationCenter.visible">
+                <article :class="item.classes" :data-notification-id="item.id" :data-priority="item.priority">
                   <div class="shell-notification-copy">
                     <strong>{item.title}</strong>
                     <logic :if="item.subtitle"><span>{item.subtitle}</span></logic>
                   </div>
                   <div class="shell-notification-actions">
-                    <loop :for="action of item.actions"><button type="button" on:click="runCenterAction(action.id)">{action.label}</button></loop>
-                    <logic :if="item.dismissable"><button type="button" on:click="dismissNotification(item.id)" :aria-label="t('shell.dismiss') + ' ' + item.title">{t('shell.dismiss')}</button></logic>
+                    <loop :for="action of item.actions"><button type="button" on:click="notificationCenter.runAction(action.id)">{action.label}</button></loop>
+                    <logic :if="item.dismissable"><button type="button" on:click="notificationCenter.dismiss(item.id)" :aria-label="shell.text('shell.dismiss') + ' ' + item.title">{shell.text('shell.dismiss')}</button></logic>
                   </div>
                 </article>
               </loop>
@@ -73,66 +73,66 @@
 
       <!-- User menu (replaces the old user-label + theme-toggle + sign-out trio).
            Triggered by the user $name; menu items: Settings and Sign out.
-           Toggle state lives on the shell's `userMenuOpen` field;
+           Toggle state lives on the shell's `shell.userMenuOpen` field;
            a global click listener (bindUserMenuOutsideClose) dismisses on
            outside-click. -->
       <div class="app-user-menu">
         <button
           class="app-user-trigger"
           type="button"
-          on:click="toggleUserMenu()"
+          on:click="shell.toggleUserMenu()"
           aria-haspopup="menu"
-          :aria-expanded="userMenuOpen ? 'true' : 'false'"
-          :title="$email">
-          <span class="presence-dot online" :aria-label="t('shell.online')"></span>
-          <span class="app-user-name w-text-body-medium">{displayName}</span>
+          :aria-expanded="shell.userMenuOpen ? 'true' : 'false'"
+          :title="session.email">
+          <span class="presence-dot online" role="img" :aria-label="shell.text('shell.online')"></span>
+          <span class="app-user-name w-text-body-medium">{session.displayName}</span>
           <svg class="app-user-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" aria-hidden="true">
             <polyline points="6 9 12 15 18 9"/>
           </svg>
         </button>
-        <logic :if="userMenuOpen">
+        <logic :if="shell.userMenuOpen">
           <div class="app-user-dropdown" role="menu">
-            <button class="app-user-item" role="menuitem" type="button" data-screenshot-mode-control on:click="toggleScreenshotMode()" :aria-pressed="$screenshotMode ? 'true' : 'false'">
+            <button class="app-user-item" role="menuitem" type="button" data-screenshot-mode-control on:click="shell.toggleScreenshotMode()" :aria-pressed="shell.screenshotMode ? 'true' : 'false'">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18" aria-hidden="true">
                 <rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M8 5l1.5-2h5L16 5"/>
               </svg>
-              {$screenshotMode ? t('shell.exitScreenshotMode') : t('shell.screenshotMode')}
+              {shell.screenshotMode ? shell.text('shell.exitScreenshotMode') : shell.text('shell.screenshotMode')}
             </button>
-            <a class="app-user-item" role="menuitem" href="/settings" on:click="closeUserMenu()">
+            <a class="app-user-item" role="menuitem" href="/settings" on:click="shell.closeUserMenu()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18" aria-hidden="true">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
               </svg>
-              {t('shell.settings')}
+              {shell.text('shell.settings')}
             </a>
-            <button class="app-user-item" role="menuitem" type="button" data-sign-out>
+            <button class="app-user-item" role="menuitem" type="button" data-sign-out on:click="shell.signOut()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18" aria-hidden="true">
                 <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
                 <polyline points="16 17 21 12 16 7"/>
                 <line x1="21" y1="12" x2="9" y2="12"/>
               </svg>
-              {t('shell.signOut')}
+              {shell.text('shell.signOut')}
             </button>
           </div>
         </logic>
       </div>
     </header>
 
-    <logic :if="$screenshotMode">
-      <button class="screenshot-mode-exit" type="button" data-screenshot-mode-control on:click="toggleScreenshotMode()" :aria-label="t('shell.exitScreenshotMode')">
-        {t('shell.exitScreenshotMode')}
+    <logic :if="shell.screenshotMode">
+      <button class="screenshot-mode-exit" type="button" data-screenshot-mode-control on:click="shell.toggleScreenshotMode()" :aria-label="shell.text('shell.exitScreenshotMode')">
+        {shell.text('shell.exitScreenshotMode')}
       </button>
     </logic>
 
     <div class="app-layout">
-      <aside id="app-sidebar" :class="mobileSidebarOpen ? 'app-sidebar mobile-open' : 'app-sidebar'">
+      <aside id="app-sidebar" :class="shell.mobileSidebarOpen ? 'app-sidebar mobile-open' : 'app-sidebar'">
         <!-- ────────── FAVORITES ────────── -->
         <!-- Cross-domain shortcuts: aggregate inbox/sent, a per-domain inbox
              row for each authenticated domain, and cross-domain Calendar /
              Team views. Mirrors Apple Mail's "Favorites" group. -->
-        <div :class="sectionClass('favorites')" data-sidebar-section="favorites">
-          <button type="button" class="sidebar-section-header" data-sidebar-section-toggle="favorites" :aria-expanded="sectionExpanded('favorites') ? 'true' : 'false'">
-            <span class="section-label">{t('shell.favorites')}</span>
+        <div :class="shell.sectionClass('favorites')" data-sidebar-section="favorites">
+          <button type="button" class="sidebar-section-header" data-sidebar-section-toggle="favorites" on:click="shell.toggleSection('favorites')" :aria-expanded="shell.sectionExpanded('favorites') ? 'true' : 'false'">
+            <span class="section-label">{shell.text('shell.favorites')}</span>
             <svg class="section-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
               <polyline points="6 9 12 15 18 9"/>
             </svg>
@@ -141,93 +141,93 @@
             <!-- ── All Inboxes ── collapsible disclosure: clicking the chevron
                  expands the group to reveal per-domain inbox shortcuts;
                  clicking the row label navigates to the aggregate view. -->
-            <div :class="favoriteGroupClass('inboxes')" data-favorite-group="inboxes">
+            <div :class="shell.favoriteGroupClass('inboxes')" data-favorite-group="inboxes">
               <div class="favorite-group-row">
-                <button type="button" class="favorite-group-toggle" data-favorite-group-toggle="inboxes" :aria-label="t('shell.toggleInboxes')" :aria-expanded="$$favoritesOpen.inboxes ? 'true' : 'false'">
+                <button type="button" class="favorite-group-toggle" data-favorite-group-toggle="inboxes" on:click="shell.toggleFavorite('inboxes')" :aria-label="shell.text('shell.toggleInboxes')" :aria-expanded="shell.favoriteExpanded('inboxes') ? 'true' : 'false'">
                   <svg class="favorite-group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
                     <polyline points="6 9 12 15 18 9"/>
                   </svg>
                 </button>
-                <a :class="'sidebar-folder favorite-group-link ' + ($activeFolder === 'inbox' && !$selectedDomain && !$selectedAccount ? 'active' : '')" href="/inbox" data-folder="inbox" on:dragover="onFolderDragOver($event)" on:dragleave="onFolderDragLeave($event)" on:drop="onFolderDrop('inbox', $event)">
+                <a :class="'sidebar-folder favorite-group-link ' + (shell.activeFolder === 'inbox' && !shell.selectedDomain && !shell.selectedAccount ? 'active' : '')" href="/inbox" data-folder="inbox" on:dragover="browserPage.dragOver($event)" on:dragleave="browserPage.dragLeave($event)" on:drop="browserPage.drop('inbox', $event)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
-                  {t('shell.allInboxes')}
-                  <span class="folder-count">{folderCount('inbox')}</span>
+                  {shell.text('shell.allInboxes')}
+                  <span class="folder-count">{mailbox.folderCount('inbox')}</span>
                 </a>
               </div>
               <div class="favorite-group-children">
-                <loop :for="d of $domains">
-                  <a :class="'sidebar-folder sidebar-folder-nested ' + ($activeFolder === 'inbox' && $selectedDomain === d ? 'active' : '')" :href="'/inbox?domain=' + encodeURIComponent(d)" :data-folder="'inbox:' + d" on:dragover="onFolderDragOver($event)" on:dragleave="onFolderDragLeave($event)" on:drop="onFolderDrop('inbox', $event, d)">
+                <loop :for="d of mailbox.domains">
+                  <a :class="'sidebar-folder sidebar-folder-nested ' + (shell.activeFolder === 'inbox' && shell.selectedDomain === d ? 'active' : '')" :href="'/inbox?domain=' + shell.encode(d)" :data-folder="'inbox:' + d" on:dragover="browserPage.dragOver($event)" on:dragleave="browserPage.dragLeave($event)" on:drop="browserPage.drop('inbox', $event, d)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
-                    {mailboxLabel(d)}
-                    <span class="folder-count">{domainFolderCount('inbox', d)}</span>
+                    {mailbox.mailboxLabel(d)}
+                    <span class="folder-count">{mailbox.domainFolderCount('inbox', d)}</span>
                   </a>
                 </loop>
-                <loop :for="account of $externalAccounts">
-                  <a :class="'sidebar-folder sidebar-folder-nested ' + ($activeFolder === 'inbox' && $selectedAccount === account.id ? 'active' : '')" :href="'/inbox?account=' + encodeURIComponent(account.id)">
+                <loop :for="account of externalMailbox.accounts">
+                  <a :class="'sidebar-folder sidebar-folder-nested ' + (shell.activeFolder === 'inbox' && shell.selectedAccount === account.id ? 'active' : '')" :href="'/inbox?account=' + shell.encode(account.id)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
-                    {externalMailboxLabel(account)}
-                    <span class="folder-count">{accountFolderCount('inbox', account.id)}</span>
+                    {account.label}
+                    <span class="folder-count">{mailbox.accountFolderCount('inbox', account.id)}</span>
                   </a>
                 </loop>
               </div>
             </div>
 
             <!-- ── All Sent ── same shape as All Inboxes. -->
-            <div :class="favoriteGroupClass('sent')" data-favorite-group="sent">
+            <div :class="shell.favoriteGroupClass('sent')" data-favorite-group="sent">
               <div class="favorite-group-row">
-                <button type="button" class="favorite-group-toggle" data-favorite-group-toggle="sent" :aria-label="t('shell.toggleSent')" :aria-expanded="$$favoritesOpen.sent ? 'true' : 'false'">
+                <button type="button" class="favorite-group-toggle" data-favorite-group-toggle="sent" on:click="shell.toggleFavorite('sent')" :aria-label="shell.text('shell.toggleSent')" :aria-expanded="shell.favoriteExpanded('sent') ? 'true' : 'false'">
                   <svg class="favorite-group-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
                     <polyline points="6 9 12 15 18 9"/>
                   </svg>
                 </button>
-                <a :class="'sidebar-folder favorite-group-link ' + ($activeFolder === 'sent' && !$selectedDomain && !$selectedAccount ? 'active' : '')" href="/folder/sent">
+                <a :class="'sidebar-folder favorite-group-link ' + (shell.activeFolder === 'sent' && !shell.selectedDomain && !shell.selectedAccount ? 'active' : '')" href="/folder/sent">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  {t('shell.allSent')}
-                  <span class="folder-count">{folderCount('sent')}</span>
+                  {shell.text('shell.allSent')}
+                  <span class="folder-count">{mailbox.folderCount('sent')}</span>
                 </a>
               </div>
               <div class="favorite-group-children">
-                <loop :for="d of $domains">
-                  <a :class="'sidebar-folder sidebar-folder-nested ' + ($activeFolder === 'sent' && $selectedDomain === d ? 'active' : '')" :href="'/folder/sent?domain=' + encodeURIComponent(d)" :data-folder="'sent:' + d">
+                <loop :for="d of mailbox.domains">
+                  <a :class="'sidebar-folder sidebar-folder-nested ' + (shell.activeFolder === 'sent' && shell.selectedDomain === d ? 'active' : '')" :href="'/folder/sent?domain=' + shell.encode(d)" :data-folder="'sent:' + d">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                    {mailboxLabel(d)}
-                    <span class="folder-count">{domainFolderCount('sent', d)}</span>
+                    {mailbox.mailboxLabel(d)}
+                    <span class="folder-count">{mailbox.domainFolderCount('sent', d)}</span>
                   </a>
                 </loop>
-                <loop :for="account of $externalAccounts">
-                  <a :class="'sidebar-folder sidebar-folder-nested ' + ($activeFolder === 'sent' && $selectedAccount === account.id ? 'active' : '')" :href="'/folder/sent?account=' + encodeURIComponent(account.id)">
+                <loop :for="account of externalMailbox.accounts">
+                  <a :class="'sidebar-folder sidebar-folder-nested ' + (shell.activeFolder === 'sent' && shell.selectedAccount === account.id ? 'active' : '')" :href="'/folder/sent?account=' + shell.encode(account.id)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                    {externalMailboxLabel(account)}
-                    <span class="folder-count">{accountFolderCount('sent', account.id)}</span>
+                    {account.label}
+                    <span class="folder-count">{mailbox.accountFolderCount('sent', account.id)}</span>
                   </a>
                 </loop>
               </div>
             </div>
 
-            <a :class="'sidebar-folder ' + ($activeFolder === 'reminders' ? 'active' : '')" href="/reminders">
+            <a :class="'sidebar-folder ' + (shell.activeFolder === 'reminders' ? 'active' : '')" href="/reminders">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-              {t('shell.reminders')}
+              {shell.text('shell.reminders')}
             </a>
 
-            <a :class="'sidebar-folder ' + ($activeFolder === 'activity' ? 'active' : '')" href="/activity">
+            <a :class="'sidebar-folder ' + (shell.activeFolder === 'activity' ? 'active' : '')" href="/activity">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12h4l2.5-7 5 14 2.5-7h4"/><path d="M4 4v16h16" opacity=".35"/></svg>
-              {t('shell.activity')}
-              <span class="folder-count">{folderCount('activity')}</span>
+              {shell.text('shell.activity')}
+              <span class="folder-count">{mailbox.folderCount('activity')}</span>
             </a>
 
-            <a :class="'sidebar-folder ' + ($activeFolder === 'contacts' ? 'active' : '')" href="/contacts">
+            <a :class="'sidebar-folder ' + (shell.activeFolder === 'contacts' ? 'active' : '')" href="/contacts">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/></svg>
-              {t('shell.contacts')}
+              {shell.text('shell.contacts')}
             </a>
 
-            <a :class="'sidebar-folder ' + ($activeFolder === 'calendar' ? 'active' : '')" href="/calendar">
+            <a :class="'sidebar-folder ' + (shell.activeFolder === 'calendar' ? 'active' : '')" href="/calendar">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              {t('shell.calendar')}
-              <span class="folder-count">{folderCount('calendar')}</span>
+              {shell.text('shell.calendar')}
+              <span class="folder-count">{mailbox.folderCount('calendar')}</span>
             </a>
-            <a :class="'sidebar-folder ' + ($activeFolder === 'team' ? 'active' : '')" href="/team">
+            <a :class="'sidebar-folder ' + (shell.activeFolder === 'team' ? 'active' : '')" href="/team">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-              {t('shell.team')}
+              {shell.text('shell.team')}
             </a>
           </div>
         </div>
@@ -237,57 +237,57 @@
              `?domain=` query string so inbox-view loads pre-filtered, and
              drop targets call onFolderDrop with the domain argument so
              drag-moves also retarget the email's domain when needed. -->
-        <loop :for="d of $domains">
+        <loop :for="d of mailbox.domains">
           <div class="sidebar-section sidebar-section-domain">
             <div class="sidebar-section-header sidebar-section-header-domain">
-              <span class="section-label">{mailboxLabel(d)}</span>
+              <span class="section-label">{mailbox.mailboxLabel(d)}</span>
             </div>
             <div class="sidebar-section-body">
-              <a :class="'sidebar-folder ' + ($activeFolder === 'inbox' && $selectedDomain === d ? 'active' : '')" :href="'/inbox?domain=' + encodeURIComponent(d)" :data-folder="'inbox:' + d" on:dragover="onFolderDragOver($event)" on:dragleave="onFolderDragLeave($event)" on:drop="onFolderDrop('inbox', $event, d)">
+              <a :class="'sidebar-folder ' + (shell.activeFolder === 'inbox' && shell.selectedDomain === d ? 'active' : '')" :href="'/inbox?domain=' + shell.encode(d)" :data-folder="'inbox:' + d" on:dragover="browserPage.dragOver($event)" on:dragleave="browserPage.dragLeave($event)" on:drop="browserPage.drop('inbox', $event, d)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
-                {t('shell.inbox')}
-                <span class="folder-count">{domainFolderCount('inbox', d)}</span>
+                {shell.text('shell.inbox')}
+                <span class="folder-count">{mailbox.domainFolderCount('inbox', d)}</span>
               </a>
-              <a :class="'sidebar-folder ' + ($activeFolder === 'drafts' && $selectedDomain === d ? 'active' : '')" :href="'/folder/drafts?domain=' + encodeURIComponent(d)">
+              <a :class="'sidebar-folder ' + (shell.activeFolder === 'drafts' && shell.selectedDomain === d ? 'active' : '')" :href="'/folder/drafts?domain=' + shell.encode(d)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                {t('shell.drafts')}
-                <span class="folder-count">{domainFolderCount('drafts', d)}</span>
+                {shell.text('shell.drafts')}
+                <span class="folder-count">{mailbox.domainFolderCount('drafts', d)}</span>
               </a>
-              <a :class="'sidebar-folder ' + ($activeFolder === 'sent' && $selectedDomain === d ? 'active' : '')" :href="'/folder/sent?domain=' + encodeURIComponent(d)">
+              <a :class="'sidebar-folder ' + (shell.activeFolder === 'sent' && shell.selectedDomain === d ? 'active' : '')" :href="'/folder/sent?domain=' + shell.encode(d)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                {t('shell.sent')}
-                <span class="folder-count">{domainFolderCount('sent', d)}</span>
+                {shell.text('shell.sent')}
+                <span class="folder-count">{mailbox.domainFolderCount('sent', d)}</span>
               </a>
-              <a :class="'sidebar-folder ' + ($activeFolder === 'scheduled' && $selectedDomain === d ? 'active' : '')" :href="'/scheduled?domain=' + encodeURIComponent(d)">
+              <a :class="'sidebar-folder ' + (shell.activeFolder === 'scheduled' && shell.selectedDomain === d ? 'active' : '')" :href="'/scheduled?domain=' + shell.encode(d)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                {t('shell.scheduled')}
-                <span class="folder-count">{domainFolderCount('scheduled', d)}</span>
+                {shell.text('shell.scheduled')}
+                <span class="folder-count">{mailbox.domainFolderCount('scheduled', d)}</span>
               </a>
-              <a :class="'sidebar-folder ' + ($activeFolder === 'snoozed' && $selectedDomain === d ? 'active' : '')" :href="'/inbox?folder=snoozed&domain=' + encodeURIComponent(d)" :data-folder="'snoozed:' + d" on:dragover="onFolderDragOver($event)" on:dragleave="onFolderDragLeave($event)" on:drop="onFolderDrop('snoozed', $event, d)">
+              <a :class="'sidebar-folder ' + (shell.activeFolder === 'snoozed' && shell.selectedDomain === d ? 'active' : '')" :href="'/inbox?folder=snoozed&domain=' + shell.encode(d)" :data-folder="'snoozed:' + d" on:dragover="browserPage.dragOver($event)" on:dragleave="browserPage.dragLeave($event)" on:drop="browserPage.drop('snoozed', $event, d)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 16.2c-1.6-2.9-1.7-4.9-.2-7.8C19.4 5.5 20.5 3.2 20.5 3.2S18.2 4.5 15.6 5.6c-2.9 1.5-4.9 1.4-7.8-.2C4.8 3.8 2.5 2.7 2.5 2.7S3.8 5 4.9 7.6c1.5 2.9 1.4 4.9-.2 7.8-1.6 2.9-2.7 5.2-2.7 5.2s2.2-1.3 4.8-2.4c2.9-1.6 4.9-1.7 7.8-.2 2.9 1.6 5.2 2.7 5.2 2.7s-1.1-2.5-2.4-4.8z"/><circle cx="12" cy="12" r="1"/></svg>
-                {t('shell.snoozed')}
-                <span class="folder-count">{domainFolderCount('snoozed', d)}</span>
+                {shell.text('shell.snoozed')}
+                <span class="folder-count">{mailbox.domainFolderCount('snoozed', d)}</span>
               </a>
-              <a :class="'sidebar-folder ' + ($activeFolder === 'archive' && $selectedDomain === d ? 'active' : '')" :href="'/folder/archive?domain=' + encodeURIComponent(d)" :data-folder="'archive:' + d" on:dragover="onFolderDragOver($event)" on:dragleave="onFolderDragLeave($event)" on:drop="onFolderDrop('archive', $event, d)">
+              <a :class="'sidebar-folder ' + (shell.activeFolder === 'archive' && shell.selectedDomain === d ? 'active' : '')" :href="'/folder/archive?domain=' + shell.encode(d)" :data-folder="'archive:' + d" on:dragover="browserPage.dragOver($event)" on:dragleave="browserPage.dragLeave($event)" on:drop="browserPage.drop('archive', $event, d)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
-                {t('shell.archive')}
-                <span class="folder-count">{domainFolderCount('archive', d)}</span>
+                {shell.text('shell.archive')}
+                <span class="folder-count">{mailbox.domainFolderCount('archive', d)}</span>
               </a>
-              <a :class="'sidebar-folder ' + ($activeFolder === 'spam' && $selectedDomain === d ? 'active' : '')" :href="'/folder/spam?domain=' + encodeURIComponent(d)" :data-folder="'spam:' + d" on:dragover="onFolderDragOver($event)" on:dragleave="onFolderDragLeave($event)" on:drop="onFolderDrop('spam', $event, d)">
+              <a :class="'sidebar-folder ' + (shell.activeFolder === 'spam' && shell.selectedDomain === d ? 'active' : '')" :href="'/folder/spam?domain=' + shell.encode(d)" :data-folder="'spam:' + d" on:dragover="browserPage.dragOver($event)" on:dragleave="browserPage.dragLeave($event)" on:drop="browserPage.drop('spam', $event, d)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                {t('shell.spam')}
-                <span class="folder-count">{domainFolderCount('spam', d)}</span>
+                {shell.text('shell.spam')}
+                <span class="folder-count">{mailbox.domainFolderCount('spam', d)}</span>
               </a>
-              <a :class="'sidebar-folder ' + ($activeFolder === 'trash' && $selectedDomain === d ? 'active' : '')" :href="'/folder/trash?domain=' + encodeURIComponent(d)" :data-folder="'trash:' + d" on:dragover="onFolderDragOver($event)" on:dragleave="onFolderDragLeave($event)" on:drop="onFolderDrop('trash', $event, d)">
+              <a :class="'sidebar-folder ' + (shell.activeFolder === 'trash' && shell.selectedDomain === d ? 'active' : '')" :href="'/folder/trash?domain=' + shell.encode(d)" :data-folder="'trash:' + d" on:dragover="browserPage.dragOver($event)" on:dragleave="browserPage.dragLeave($event)" on:drop="browserPage.drop('trash', $event, d)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                {t('shell.trash')}
-                <span class="folder-count">{domainFolderCount('trash', d)}</span>
+                {shell.text('shell.trash')}
+                <span class="folder-count">{mailbox.domainFolderCount('trash', d)}</span>
               </a>
-              <loop :for="folder of customFoldersForDomain(d)">
-                <a :class="'sidebar-folder ' + ($activeFolder === folder && $selectedDomain === d ? 'active' : '')" :href="'/folder/' + encodeURIComponent(folder) + '?domain=' + encodeURIComponent(d)" :data-folder="folder + ':' + d" on:dragover="onFolderDragOver($event)" on:dragleave="onFolderDragLeave($event)" on:drop="onFolderDrop(folder, $event, d)">
+              <loop :for="folder of mailbox.customFoldersForDomain(d)">
+                <a :class="'sidebar-folder ' + (shell.activeFolder === folder && shell.selectedDomain === d ? 'active' : '')" :href="'/folder/' + shell.encode(folder) + '?domain=' + shell.encode(d)" :data-folder="folder + ':' + d" on:dragover="browserPage.dragOver($event)" on:dragleave="browserPage.dragLeave($event)" on:drop="browserPage.drop(folder, $event, d)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7a2 2 0 012-2h5l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-                  {folderLabel(folder)}
-                  <span class="folder-count">{domainFolderCount(folder, d)}</span>
+                  {mailbox.folderLabel(folder)}
+                  <span class="folder-count">{mailbox.domainFolderCount(folder, d)}</span>
                 </a>
               </loop>
             </div>
@@ -296,45 +296,45 @@
 
         <!-- Connected mailboxes remain account-scoped even when two addresses
              share a domain. Provider folders are read from the Go-owned index. -->
-        <loop :for="account of $externalAccounts">
+        <loop :for="account of externalMailbox.accounts">
           <div class="sidebar-section sidebar-section-domain">
             <div class="sidebar-section-header sidebar-section-header-domain">
               <span class="external-account-dot" :style="'--external-account-color:' + account.color" aria-hidden="true"></span>
-              <span class="section-label">{externalMailboxLabel(account)}</span>
-              <div class="external-account-sidebar-actions" role="group" :aria-label="'Arrange ' + externalMailboxLabel(account)">
-                <input type="color" :value="account.color" :aria-label="'Choose color for ' + externalMailboxLabel(account)" on:change="changeExternalAccountColor(account)" />
-                <button type="button" :disabled="!canMoveExternalAccountUp(account)" :aria-label="'Move ' + externalMailboxLabel(account) + ' up'" on:click="moveExternalAccountUp(account)">↑</button>
-                <button type="button" :disabled="!canMoveExternalAccountDown(account)" :aria-label="'Move ' + externalMailboxLabel(account) + ' down'" on:click="moveExternalAccountDown(account)">↓</button>
+              <span class="section-label">{account.label}</span>
+              <div class="external-account-sidebar-actions" role="group" :aria-label="'Arrange ' + account.label">
+                <input type="color" :value="account.color" :aria-label="'Choose color for ' + account.label" on:change="externalMailbox.changeColor(account.id, $event.target.value)" />
+                <button type="button" :disabled="!account.canMoveUp" :aria-label="'Move ' + account.label + ' up'" on:click="externalMailbox.moveUp(account.id)">↑</button>
+                <button type="button" :disabled="!account.canMoveDown" :aria-label="'Move ' + account.label + ' down'" on:click="externalMailbox.moveDown(account.id)">↓</button>
                 <details class="external-account-sidebar-menu">
-                  <summary :aria-label="'Actions for ' + externalMailboxLabel(account)">⋯</summary>
+                  <summary :aria-label="'Actions for ' + account.label">⋯</summary>
                   <div role="menu">
-                    <button type="button" role="menuitem" on:click="retryExternalAccountFromSidebar(account)">Sync now</button>
-                    <logic :if="canCreateExternalRootFolder(account)"><button type="button" role="menuitem" on:click="openExternalFolderDialog('create', account)">New folder…</button></logic>
-                    <button type="button" role="menuitem" on:click="toggleExternalAccountFromSidebar(account)">{account.state === 'paused' ? 'Resume account' : 'Pause account'}</button>
+                    <button type="button" role="menuitem" on:click="externalMailbox.retry(account.id)">Sync now</button>
+                    <logic :if="account.canCreateFolder"><button type="button" role="menuitem" on:click="externalMailbox.openDialog('create', account.id, '')">New folder…</button></logic>
+                    <button type="button" role="menuitem" on:click="externalMailbox.togglePause(account.id)">{account.state === 'paused' ? 'Resume account' : 'Pause account'}</button>
                     <a role="menuitem" href="/settings#connected-accounts">Account settings</a>
                   </div>
                 </details>
               </div>
             </div>
             <div class="sidebar-section-body">
-              <loop :for="providerFolder of externalFoldersForAccount(account.id)">
-                <div class="external-folder-row" :style="externalFolderRowStyle(providerFolder)">
+              <loop :for="providerFolder of externalMailbox.foldersFor(account.id)">
+                <div class="external-folder-row" :style="providerFolder.rowStyle">
                   <logic :if="providerFolder.hasChildren">
                     <button
                       class="external-folder-toggle"
                       type="button"
-                      :aria-label="(isExternalFolderOpen(providerFolder) ? 'Collapse ' : 'Expand ') + providerFolder.displayName"
-                      :aria-expanded="isExternalFolderOpen(providerFolder) ? 'true' : 'false'"
-                      on:click="toggleExternalFolder(providerFolder)">
+                      :aria-label="(providerFolder.open ? 'Collapse ' : 'Expand ') + providerFolder.displayName"
+                      :aria-expanded="providerFolder.open ? 'true' : 'false'"
+                      on:click="externalMailbox.toggleFolder(providerFolder.accountId, providerFolder.stableId)">
                       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 3.5L10 8l-5 4.5"/></svg>
                     </button>
                   </logic>
                   <logic :if="!providerFolder.hasChildren"><span class="external-folder-toggle-spacer" aria-hidden="true"></span></logic>
                   <logic :if="providerFolder.selectable">
-                    <a :class="'sidebar-folder external-folder-link ' + ($activeFolder === providerFolder.folder && $selectedAccount === providerFolder.accountId ? 'active' : '')" :href="externalFolderHref(providerFolder.folder, providerFolder.accountId)" :title="providerFolder.name">
+                    <a :class="'sidebar-folder external-folder-link ' + (shell.activeFolder === providerFolder.folder && shell.selectedAccount === providerFolder.accountId ? 'active' : '')" :href="providerFolder.href" :title="providerFolder.name">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7a2 2 0 012-2h5l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-                      <span class="external-folder-name">{folderLabel(providerFolder.role || providerFolder.displayName)}</span>
-                      <span class="folder-count">{accountFolderCount(providerFolder.folder, account.id)}</span>
+                      <span class="external-folder-name">{mailbox.folderLabel(providerFolder.role || providerFolder.displayName)}</span>
+                      <span class="folder-count">{mailbox.accountFolderCount(providerFolder.folder, account.id)}</span>
                     </a>
                   </logic>
                   <logic :if="!providerFolder.selectable">
@@ -343,14 +343,14 @@
                       <span class="external-folder-name">{providerFolder.displayName}</span>
                     </span>
                   </logic>
-                  <logic :if="hasExternalFolderActions(providerFolder)">
+                  <logic :if="providerFolder.hasActions">
                     <details class="external-account-sidebar-menu external-folder-menu">
                       <summary :aria-label="'Actions for ' + providerFolder.displayName">⋯</summary>
                       <div role="menu">
-                        <logic :if="externalFolderActions(providerFolder).createChild"><button type="button" role="menuitem" on:click="openExternalFolderDialog('create', account, providerFolder)">New subfolder…</button></logic>
-                        <logic :if="externalFolderActions(providerFolder).rename"><button type="button" role="menuitem" on:click="openExternalFolderDialog('rename', account, providerFolder)">Rename…</button></logic>
-                        <logic :if="externalFolderActions(providerFolder).delete"><button type="button" role="menuitem" on:click="openExternalFolderDialog('delete', account, providerFolder)">Delete…</button></logic>
-                        <logic :if="externalFolderActions(providerFolder).export"><a role="menuitem" :href="externalFolderHref(providerFolder.folder, providerFolder.accountId)" title="Open this folder, then choose EML or mbox from the toolbar">Open to export</a></logic>
+                        <logic :if="providerFolder.actions.createChild"><button type="button" role="menuitem" on:click="externalMailbox.openDialog('create', account.id, providerFolder.stableId)">New subfolder…</button></logic>
+                        <logic :if="providerFolder.actions.rename"><button type="button" role="menuitem" on:click="externalMailbox.openDialog('rename', account.id, providerFolder.stableId)">Rename…</button></logic>
+                        <logic :if="providerFolder.actions.delete"><button type="button" role="menuitem" on:click="externalMailbox.openDialog('delete', account.id, providerFolder.stableId)">Delete…</button></logic>
+                        <logic :if="providerFolder.actions.export"><a role="menuitem" :href="providerFolder.href" title="Open this folder, then choose EML or mbox from the toolbar">Open to export</a></logic>
                       </div>
                     </details>
                   </logic>
@@ -360,15 +360,15 @@
           </div>
         </loop>
 
-        <logic :if="highestNotification">
-          <section :class="notificationCardClass(highestNotification) + ' sidebar-notification'" aria-live="polite" :data-notification-id="highestNotification.id" :data-priority="highestNotification.priority">
+        <logic :if="notificationCenter.hasHighest">
+          <section :class="notificationCenter.highest.classes + ' sidebar-notification'" aria-live="polite" :data-notification-id="notificationCenter.highest.id" :data-priority="notificationCenter.highest.priority">
             <div class="shell-notification-copy">
-              <strong>{highestNotification.title}</strong>
-              <logic :if="highestNotification.subtitle"><span>{highestNotification.subtitle}</span></logic>
+              <strong>{notificationCenter.highest.title}</strong>
+              <logic :if="notificationCenter.highest.subtitle"><span>{notificationCenter.highest.subtitle}</span></logic>
             </div>
             <div class="shell-notification-actions">
-              <loop :for="action of highestNotification.actions"><button type="button" on:click="runCenterAction(action.id)">{action.label}</button></loop>
-              <logic :if="highestNotification.dismissable"><button type="button" on:click="dismissNotification(highestNotification.id)" :aria-label="t('shell.dismiss') + ' ' + highestNotification.title">{t('shell.dismiss')}</button></logic>
+              <loop :for="action of notificationCenter.highest.actions"><button type="button" on:click="notificationCenter.runAction(action.id)">{action.label}</button></loop>
+              <logic :if="notificationCenter.highest.dismissable"><button type="button" on:click="notificationCenter.dismiss(notificationCenter.highest.id)" :aria-label="shell.text('shell.dismiss') + ' ' + notificationCenter.highest.title">{shell.text('shell.dismiss')}</button></logic>
             </div>
           </section>
         </logic>
@@ -377,28 +377,28 @@
              sidebar focused on mailbox navigation. -->
       </aside>
 
-      <logic :if="mobileSidebarOpen">
-        <button class="sidebar-scrim" type="button" :aria-label="t('shell.closeNavigation')" on:click="closeMobileSidebar()"></button>
+      <logic :if="shell.mobileSidebarOpen">
+        <button class="sidebar-scrim" type="button" :aria-label="shell.text('shell.closeNavigation')" on:click="shell.closeMobileSidebar()"></button>
       </logic>
 
-      <div class="column-resizer app-sidebar-resizer" data-column-resizer="sidebar" role="separator" :aria-label="t('shell.resizeSidebar')" aria-orientation="vertical" aria-valuemin="180" aria-valuemax="360" aria-valuenow="232" tabindex="0"></div>
+      <div class="column-resizer app-sidebar-resizer" data-column-resizer="sidebar" role="separator" :aria-label="shell.text('shell.resizeSidebar')" aria-orientation="vertical" aria-valuemin="180" aria-valuemax="360" aria-valuenow="232" tabindex="0"></div>
 
       <main class="app-main">
         <slot />
       </main>
 
-      <logic :if="$shortcutHelpOpen">
-        <div class="shortcut-help-backdrop" on:click="shortcutHelpBackdrop($event)">
+      <logic :if="shell.shortcutHelpOpen">
+        <div class="shortcut-help-backdrop" on:click="browserPage.backdrop($event, 'shortcut-help')">
           <section class="shortcut-help-dialog" data-shortcut-help-dialog role="dialog" aria-modal="true" aria-labelledby="shortcut-help-title" tabindex="-1">
             <header class="shortcut-help-header">
               <div>
                 <h2 id="shortcut-help-title">Keyboard shortcuts</h2>
                 <p>Commands adapt to the mailbox, conversation, composer, and calendar you are using.</p>
               </div>
-              <button class="shortcut-help-close" type="button" on:click="closeShortcutHelp()" aria-label="Close keyboard shortcuts">×</button>
+              <button class="shortcut-help-close" type="button" on:click="shell.closeShortcutHelp()" aria-label="Close keyboard shortcuts">×</button>
             </header>
             <div class="shortcut-help-groups">
-              <loop :for="group of shortcutHelpGroups">
+              <loop :for="group of shell.shortcutGroups">
                 <section class="shortcut-help-group" :aria-label="group.label">
                   <h3>{group.label}</h3>
                   <dl>
@@ -414,42 +414,42 @@
             </div>
             <footer class="shortcut-help-footer">
               <span>Press <kbd>?</kbd> anywhere outside a text field to reopen this guide.</span>
-              <button type="button" on:click="openShortcutSettings()">Customize shortcuts</button>
+              <button type="button" on:click="shell.openShortcutSettings()">Customize shortcuts</button>
             </footer>
           </section>
         </div>
       </logic>
 
-      <logic :if="$externalFolderDialogOpen">
-        <div class="shortcut-help-backdrop" on:click="externalFolderDialogBackdrop($event)">
-          <section class="shortcut-help-dialog external-folder-dialog" data-external-folder-dialog role="dialog" aria-modal="true" aria-labelledby="external-folder-dialog-title" aria-describedby="external-folder-dialog-description" tabindex="-1" on:keydown="externalFolderDialogKeydown($event)">
+      <logic :if="externalMailbox.dialogOpen">
+        <div class="shortcut-help-backdrop" on:click="browserPage.backdrop($event, 'external-folder')">
+          <section class="shortcut-help-dialog external-folder-dialog" data-external-folder-dialog role="dialog" aria-modal="true" aria-labelledby="external-folder-dialog-title" aria-describedby="external-folder-dialog-description" tabindex="-1">
             <header class="shortcut-help-header">
               <div>
-                <h2 id="external-folder-dialog-title">{externalFolderDialogTitle}</h2>
-                <p id="external-folder-dialog-description">{externalFolderDialogDescription}</p>
+                <h2 id="external-folder-dialog-title">{externalMailbox.dialogTitle}</h2>
+                <p id="external-folder-dialog-description">{externalMailbox.dialogDescription}</p>
               </div>
-              <button class="shortcut-help-close" type="button" :disabled="$externalFolderDialogBusy" on:click="closeExternalFolderDialog()" aria-label="Close folder dialog">×</button>
+              <button class="shortcut-help-close" type="button" :disabled="externalMailbox.dialogBusy" on:click="externalMailbox.closeDialog()" aria-label="Close folder dialog">×</button>
             </header>
-            <form class="external-folder-dialog-form" on:submit="submitExternalFolderDialog($event)">
-              <logic :if="$externalFolderDialogMode !== 'delete'">
+            <form class="external-folder-dialog-form" on:submit="browserPage.submit($event, 'external-folder')">
+              <logic :if="externalMailbox.dialogMode !== 'delete'">
                 <label for="external-folder-name">Folder name</label>
-                <input id="external-folder-name" data-external-folder-name name="folderName" type="text" maxlength="128" required :value="$externalFolderDialogName" on:input="$externalFolderDialogName = $event.target.value" :disabled="$externalFolderDialogBusy" autocomplete="off" />
+                <input id="external-folder-name" data-external-folder-name name="folderName" type="text" maxlength="128" required :value="externalMailbox.dialogName" on:input="externalMailbox.dialogName = $event.target.value" :disabled="externalMailbox.dialogBusy" autocomplete="off" />
               </logic>
-              <logic :if="$externalFolderDialogError"><p class="external-folder-dialog-error" role="alert">{$externalFolderDialogError}</p></logic>
+              <logic :if="externalMailbox.dialogError"><p class="external-folder-dialog-error" role="alert">{externalMailbox.dialogError}</p></logic>
               <div class="external-folder-dialog-actions">
-                <button type="button" :disabled="$externalFolderDialogBusy" on:click="closeExternalFolderDialog()">Cancel</button>
-                <button data-external-folder-submit type="button" :disabled="$externalFolderDialogBusy" :class="$externalFolderDialogMode === 'delete' ? 'danger' : ''" on:click="submitExternalFolderDialog($event)">{externalFolderDialogAction}</button>
+                <button type="button" :disabled="externalMailbox.dialogBusy" on:click="externalMailbox.closeDialog()">Cancel</button>
+                <button data-external-folder-submit type="button" :disabled="externalMailbox.dialogBusy" :class="externalMailbox.dialogMode === 'delete' ? 'danger' : ''" on:click="externalMailbox.submitDialog()">{externalMailbox.dialogAction}</button>
               </div>
             </form>
           </section>
         </div>
       </logic>
 
-      <logic :if="$toastVisible">
+      <logic :if="shell.toastVisible">
         <div id="caduceus-toast" class="shell-toast" role="status" aria-live="polite" aria-atomic="true">
-          <span class="shell-toast-message">{$toastMsg}</span>
-          <logic :if="$toastActionLabel">
-            <button id="caduceus-toast-action" class="shell-toast-action" type="button" on:click="runToastAction()">{$toastActionLabel}</button>
+          <span class="shell-toast-message">{shell.toastMessage}</span>
+          <logic :if="shell.toastActionLabel">
+            <button id="caduceus-toast-action" class="shell-toast-action" type="button" on:click="shell.runToastAction()">{shell.toastActionLabel}</button>
           </logic>
         </div>
       </logic>
@@ -458,13 +458,9 @@
   </div>
 </logic>
 
-<logic :if="!isAuthenticated">
-  <logic :if="isRootPath">
-    <div class="login-screen">
-      <login-form :brandlogo="'/shared/assets/favicon.svg'" />
-    </div>
-  </logic>
-  <logic :if="!isRootPath">
-    <slot />
-  </logic>
+<logic :if="session.restored && !session.signedIn">
+  <div class="login-screen">
+    <login-form :brandlogo="'/shared/assets/favicon.svg'" />
+  </div>
 </logic>
+<span hidden :data-browser="browserStorage.ready && browserPage.ready && keyboard.ready && device.ready"></span>

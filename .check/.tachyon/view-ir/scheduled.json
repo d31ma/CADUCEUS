@@ -1,0 +1,43 @@
+{
+  "contract_version": 1,
+  "source": "client/pages/scheduled/tac.html",
+  "root": {
+    "kind": "element",
+    "tag": "html",
+    "attributes": {},
+    "children": [
+      {
+        "kind": "element",
+        "tag": "body",
+        "attributes": {},
+        "children": [
+          {
+            "kind": "component",
+            "name": "app-shell",
+            "properties": {},
+            "children": [
+              {
+                "kind": "text",
+                "value": "\n"
+              },
+              {
+                "kind": "component",
+                "name": "scheduled-page",
+                "properties": {},
+                "children": []
+              },
+              {
+                "kind": "text",
+                "value": "\n"
+              }
+            ]
+          },
+          {
+            "kind": "text",
+            "value": "\n"
+          }
+        ]
+      }
+    ]
+  }
+}

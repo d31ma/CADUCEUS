@@ -1,0 +1,8 @@
+{
+  "contract_version": 1,
+  "output": "team/index.html",
+  "sources": [
+    "client/pages/team/tac.html"
+  ],
+  "mappings": []
+}

@@ -3,6 +3,12 @@
 // and spam reports.
 // @HTTPClient("/inbox")
 type InboxClient interface {
+	// @GetRequest
+	Summaries(
+		// @RequestHeader("Authorization")
+		authorization string,
+	) ([]MailSummary, error)
+
 	// @PostRequest("/actions")
 	Apply(
 		// @RequestHeader("Authorization")
@@ -36,21 +42,4 @@ type InboxClient interface {
 		// @RequestBody
 		mark BehaviorValue,
 	) (BehaviorValue, error)
-
-	// List reads the message summaries the mailbox list shows. An empty value
-	// leaves its filter out.
-	//
-	// @GetRequest
-	List(
-		// @RequestHeader("Authorization")
-		authorization string,
-		// @RequestParam("read")
-		read string,
-		// @RequestParam("starred")
-		starred string,
-		// @RequestParam("domain")
-		domain string,
-		// @RequestParam("account")
-		account string,
-	) ([]Email, error)
 }

@@ -77,7 +77,7 @@ func (preference *PreferenceService) ToggleTheme() error {
 	preference.themes.ActiveTheme = AppearanceUtils{}.Opposite(AppearanceUtils{}.BaseMode(AppearanceUtils{}.Resolved(preference.themes, preference.systemDark)))
 	preference.persist()
 	preference.apply()
-	_, failure := preference.usersClient.SavePreferences(preference.bearer(), ThemeSaved{ThemePreferences: preference.themes})
+	_, failure := preference.usersClient.SaveTheme(preference.bearer(), ThemeSaved{ThemePreferences: preference.themes})
 	return failure
 }
 
@@ -164,6 +164,7 @@ func (preference *PreferenceService) chosenMail(chosen *MailPreferences) MailPre
 	}
 	return AppearanceUtils{}.ChosenMail(chosen)
 }
+
 
 // keys are the legacy storage names of the shared preference scripts.
 func (PreferenceService) themeKey() string { return "caduceus-theme-preferences" }

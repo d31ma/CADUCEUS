@@ -22,7 +22,7 @@ func (test *FolderUtilsTest) TestCustomFoldersSkipSystemFolders() {
 }
 
 func (test *FolderUtilsTest) TestTallyCountsPerFolderDomainAndAccount() {
-	counted := MailboxUtils{}.Tally([]Email{
+	counted := MailboxUtils{}.Tally([]MailSummary{
 		{ID: "1", Folder: "inbox", Domain: "Example.com"},
 		{ID: "2", Folder: "inbox", Domain: "example.com", Read: true},
 		{ID: "3", SystemFolder: "archive", Folder: "x", Domain: "example.com"},

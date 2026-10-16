@@ -1,0 +1,3 @@
+Built 123 routes to /Volumes/ANNEX/Users/iyor/Library/Developer/Build/caduceus-work/wt/feprobe-shell/dist/web (8960adacb6f8d57fb609237624ca3bad7e65b29242bb79845c25e8320eb083c4) compiled=4 reused=0
+Compressed 39 files: 5416 KB -> 971 KB with Brotli (82% smaller).
+Go: TinyGo (the smallest download), then Binaryen wasm-opt

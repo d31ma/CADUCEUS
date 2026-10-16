@@ -12,13 +12,6 @@ export default class KeyboardService {
   static _COMMANDS = [
     'core:compose', 'core:go-inbox', 'core:go-drafts', 'core:go-sent', 'core:go-archive', 'core:go-spam',
     'core:go-trash', 'core:go-settings', 'core:toggle-screenshot-mode', 'core:refresh', 'core:search', 'core:show-shortcuts',
-    'navigation:next-email', 'navigation:prev-email', 'navigation:scroll-down', 'navigation:scroll-up',
-    'email:star', 'email:archive', 'email:trash', 'email:report-spam', 'email:mark-read', 'email:mark-unread',
-    'email:open', 'core:select-all', 'core:deselect-all',
-    'calendar:move-event-up', 'calendar:move-event-down', 'calendar:move-event-left', 'calendar:move-event-right',
-    'calendar:resize-event-up', 'calendar:resize-event-down', 'calendar:resize-event-left', 'calendar:resize-event-right',
-    'calendar:view-day', 'calendar:view-week', 'calendar:view-month', 'calendar:view-agenda',
-    'calendar:go-to-today', 'calendar:navigate-next', 'calendar:navigate-previous', 'calendar:refresh-calendars',
   ]
 
   /** @type {ApplicationEventPublisher} */

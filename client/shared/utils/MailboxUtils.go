@@ -12,7 +12,7 @@ type MailboxUtils struct{}
 
 // Tally counts summaries per folder, per domain for hosted mail and per
 // connected account, and the unread inbox messages.
-func (MailboxUtils) Tally(summaries []Email) FolderCountsChanged {
+func (MailboxUtils) Tally(summaries []MailSummary) FolderCountsChanged {
 	counted := FolderCountsChanged{Counts: map[string]int{}, ByDomain: map[string]map[string]int{}, ByAccount: map[string]map[string]int{}, UnreadInboxByDomain: map[string]int{}}
 	return MailboxUtils{}.tallied(counted, summaries)
 }
@@ -33,19 +33,6 @@ func (MailboxUtils) Allowed(names map[string]string, domains []string) map[strin
 func (MailboxUtils) Encoded(names map[string]string) string {
 	text, _ := json.Marshal(names)
 	return string(text)
-}
-
-// Hosted are the signed-in mailbox domains, lower case, once each, sorted.
-func (MailboxUtils) Hosted(domains []string) []string {
-	hosted := MailboxUtils{}.allowedDomains(domains)
-	slices.Sort(hosted)
-	return slices.Compact(hosted)
-}
-
-// Label is the personal name of a mailbox, or its domain.
-func (MailboxUtils) Label(names map[string]string, domain string) string {
-	lower := strings.ToLower(strings.TrimSpace(domain))
-	return TextUtils{}.FirstOf(names[lower], lower)
 }
 
 // WithActivity copies counts with a new Activity badge.
@@ -102,14 +89,14 @@ func (MailboxUtils) allowedDomains(domains []string) []string {
 	return strings.Fields(strings.ToLower(strings.Join(domains, " ")))
 }
 
-func (MailboxUtils) tallied(counted FolderCountsChanged, summaries []Email) FolderCountsChanged {
+func (MailboxUtils) tallied(counted FolderCountsChanged, summaries []MailSummary) FolderCountsChanged {
 	for _, summary := range summaries {
 		MailboxUtils{}.count(&counted, summary, TextUtils{}.FirstOf(summary.SystemFolder, TextUtils{}.FirstOf(summary.Folder, MailboxUtils{}.inbox())))
 	}
 	return counted
 }
 
-func (MailboxUtils) count(counted *FolderCountsChanged, summary Email, folder string) {
+func (MailboxUtils) count(counted *FolderCountsChanged, summary MailSummary, folder string) {
 	domain := TextUtils{}.FirstOf(strings.ToLower(summary.Domain), "unknown")
 	counted.Counts[folder]++
 	tables, key := MailboxUtils{}.scope(counted, summary.ProviderAccountID, domain)

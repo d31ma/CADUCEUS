@@ -389,6 +389,7 @@ func (login *LoginService) otherRecoveryMethod(method string) string {
 	return login.steps().Saved
 }
 
+
 func (LoginService) factorsOr(factors []string, fallback []string) []string {
 	if factors == nil {
 		return fallback

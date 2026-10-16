@@ -1,6 +1,5 @@
 // AuthClient is the authentication route group: the sign-in transaction, the
-// session token set and the signed-in credential changes, including the
-// passkeys, authenticator app and recovery codes that settings manages.
+// session token set and the signed-in credential changes.
 // @HTTPClient("/auth")
 type AuthClient interface {
 	// @PostRequest("/login/begin")
@@ -86,42 +85,4 @@ type AuthClient interface {
 		// @RequestBody
 		attestation BehaviorValue,
 	) (BehaviorValue, error)
-
-	// @DeleteRequest("/credentials/passkey")
-	RemovePasskey(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @RequestBody
-		change BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @GetRequest("/credentials/passkey")
-	Passkeys(
-		// @RequestHeader("Authorization")
-		authorization string,
-	) (PasskeyList, error)
-
-	// @PostRequest("/credentials/totp/enroll")
-	EnrollAuthenticator(
-		// @RequestHeader("Authorization")
-		authorization string,
-		// @RequestBody
-		change BehaviorValue,
-	) (AuthenticatorEnrollment, error)
-
-	// @PostRequest("/credentials/totp/activate")
-	ActivateAuthenticator(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-		// @RequestBody
-		code BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PostRequest("/credentials/recovery")
-	ReplaceRecoveryCodes(
-		// @RequestHeader("Authorization")
-		authorization string,
-		// @RequestBody
-		change BehaviorValue,
-	) (RecoveryCodeSet, error)
 }

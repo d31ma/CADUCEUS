@@ -13,5 +13,4 @@ type ActivityClient interface {
 		// @RequestParam("since")
 		since string,
 	) (ActivitySummary, error)
-
 }

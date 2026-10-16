@@ -7,10 +7,11 @@
  * The browser transport sends at most 64 KiB per request, so a package must
  * leave room for the request around it.
  *
- * It also carries ExtensionRuntimeService's messages: a command goes to the
- * plugin's sandbox iframe (rendered by the shell) with postMessage, and what
- * a sandbox posts back comes to Go as ExtensionAnswered, only from that
- * sandbox's own window. It sets the enabled theme's CSS variables on <html>.
+ * It also carries ExtensionRuntimeService's messages to the sandbox host, the
+ * one opaque iframe the shell renders: the enabled plugins' sources (again
+ * whenever the host says it is ready) and their commands, by postMessage.
+ * What the host posts back comes to Go as ExtensionAnswered, only from the
+ * host's own window. It sets the enabled theme's CSS variables on <html>.
  */
 @Service
 export default class ExtensionPackageService {
@@ -20,6 +21,12 @@ export default class ExtensionPackageService {
   static _LIMIT = 60 * 1024
 
   ready = false
+
+  /** @type {number} */
+  _selection = 0
+
+  /** @type {ExtensionSandbox[]} */
+  _plugins = []
 
   static _THEME = {
     '--ms-error': value => document.documentElement.style.setProperty('--ms-error', value),
@@ -45,22 +52,45 @@ export default class ExtensionPackageService {
     Object.entries(ExtensionPackageService._THEME).forEach(([name, paint]) => paint(this._value(applied.variables, name)))
   }
 
+  /** @param {ExtensionPluginsLoaded} loaded */
+  @OnEvent({"replay":true})
+  plugins(loaded) {
+    this._plugins = loaded.plugins
+    this._loadPlugins()
+  }
+
   /** @param {ExtensionCommandRequested} request */
   @OnEvent
   command(request) {
-    this._sandbox(request.extensionId).forEach(sandbox => sandbox.postMessage({
-      channel: 'caduceus-extension-host', type: 'command', extensionId: request.extensionId, sessionNonce: request.nonce,
-      requestId: request.requestId, command: { id: request.commandId, slot: request.slot }, context: { slot: request.slot },
-    }, '*'))
+    this._post({
+      type: 'command', extensionId: request.extensionId, sessionNonce: request.nonce, requestId: request.requestId,
+      command: { id: request.commandId, slot: request.slot }, context: { slot: request.slot },
+    })
   }
 
   /** @param {Event} event */
   async read(event) {
+    const selection = ++this._selection
     const file = /** @type {HTMLInputElement} */ (event.target).files?.[0]
     const problem = ExtensionPackageService._problem(file)
     /** @type {ExtensionPackageRead} */
-    const read = { text: await ExtensionPackageService._text(file, problem), problem }
-    this.applicationEventPublisher.publishEvent(read, false)
+    const read = await ExtensionPackageService._readFile(file, problem)
+    this._publishRead(selection, read)
+  }
+
+  /** @param {number} selection @param {ExtensionPackageRead} read */
+  _publishRead(selection, read) {
+    if (selection === this._selection) this.applicationEventPublisher.publishEvent(read, false)
+  }
+
+  _loadPlugins() {
+    this._post({ type: 'reset' })
+    this._plugins.forEach(plugin => this._post({ type: 'load', extensionId: plugin.id, sessionNonce: plugin.nonce, source: plugin.source }))
+  }
+
+  /** @param {Record<string, unknown>} message */
+  _post(message) {
+    this._host().forEach(host => host.postMessage({ channel: 'caduceus-extension-host', ...message }, '*'))
   }
 
   /** @param {Record<string, string>} variables @param {string} name */
@@ -68,24 +98,35 @@ export default class ExtensionPackageService {
     return variables[name] || ''
   }
 
-  /** @param {string} extensionId @returns {Window[]} */
-  _sandbox(extensionId) {
-    return Array.from(document.querySelectorAll(`iframe[data-extension-id="${CSS.escape(extensionId)}"]`), frame => /** @type {HTMLIFrameElement} */ (frame).contentWindow).filter(sandbox => sandbox !== null)
+  /** @returns {Window[]} */
+  _host() {
+    return Array.from(document.querySelectorAll('iframe[data-extension-host]'), frame => /** @type {HTMLIFrameElement} */ (frame).contentWindow).filter(host => host !== null)
   }
 
   /** @param {MessageEvent} event */
   _received(event) {
     const message = Object(event.data)
-    if ([message.channel === 'caduceus-extension', typeof message.extensionId === 'string', this._sandbox(message.extensionId).includes(/** @type {Window} */ (event.source))].every(Boolean)) {
-      /** @type {ExtensionAnswered} */
-      const answered = { message: JSON.stringify(message) }
-      this.applicationEventPublisher.publishEvent(answered, false)
-    }
+    const steps = { 'caduceus-extension-host-ready': () => this._loadPlugins(), 'caduceus-extension': () => this._answer(message) }
+    const channel = ['', String(message.channel)][Number(this._host().includes(/** @type {Window} */ (event.source)))]
+    ;[() => {}, steps[channel]].filter(Boolean).pop()()
+  }
+
+  /** @param {object} message */
+  _answer(message) {
+    /** @type {ExtensionAnswered} */
+    const answered = { message: JSON.stringify(message) }
+    this.applicationEventPublisher.publishEvent(answered, false)
   }
 
   /** @param {File | undefined} file */
   static _problem(file) {
     return Number(file?.size) > ExtensionPackageService._LIMIT ? 'Extension package exceeds 60 KiB.' : ''
+  }
+
+  /** @param {File | undefined} file @param {string} problem @returns {Promise<ExtensionPackageRead>} */
+  static async _readFile(file, problem) {
+    try { return { text: await ExtensionPackageService._text(file, problem), problem } }
+    catch { return { text: '', problem: 'Extension package could not be read.' } }
   }
 
   /** @param {File | undefined} file @param {string} problem @returns {Promise<string>} */

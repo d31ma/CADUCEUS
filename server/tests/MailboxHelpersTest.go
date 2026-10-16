@@ -1,12 +1,13 @@
 // @Test(MailboxTestSetup)
+// @Needs(EmailsHelper, AttachmentsHelper)
 type MailboxHelpersTest struct {
-	behaviors *BehaviorContext
+	behaviors         *BehaviorContext
+	emailsHelper      *EmailsHelper
+	attachmentsHelper *AttachmentsHelper
 }
 
 func (test *MailboxHelpersTest) emails() *EmailsHelper {
-	fylo := &FyloHelper{}
-	attachments := &AttachmentsHelper{fyloHelper: fylo}
-	return &EmailsHelper{fyloHelper: fylo, attachmentsHelper: attachments, rawMessagesHelper: &RawMessagesHelper{fyloHelper: fylo}}
+	return test.emailsHelper
 }
 
 func (test *MailboxHelpersTest) TestWalksEachDomainOnceInPagesOf128() {
@@ -30,24 +31,34 @@ func (test *MailboxHelpersTest) TestUpdatesNoEmailForNoIds() {
 }
 
 func (test *MailboxHelpersTest) TestSavesNoAttachmentsWithoutStorage() {
-	saved, err := (&AttachmentsHelper{fyloHelper: &FyloHelper{}}).SaveForEmail("e1", "example.com", nil)
+	saved, err := test.attachmentsHelper.SaveForEmail("e1", "example.com", nil)
 	Assert.Equals(nil, err)
 	Assert.Equals(0, len(saved))
 }
 
 func (test *MailboxHelpersTest) TestFindsNoThreadForNoEmail() {
-	thread, err := (&ThreadsHelper{emailsHelper: test.emails()}).FindForEmail([]string{"example.com"}, "", "alice@example.com")
+	thread, err := (&ThreadsHelper{}).FindForEmail([]string{"example.com"}, "", "alice@example.com")
 	Assert.Equals(nil, err)
 	Assert.IsTrue(thread == nil)
 }
 
 func (test *MailboxHelpersTest) TestReleasesNoDefaultsForNoAddresses() {
-	Assert.Equals(nil, (&SignaturesHelper{fyloHelper: &FyloHelper{}}).ReleaseDefaults("alice@example.com", nil, "sg1"))
+	Assert.Equals(nil, (&SignaturesHelper{}).ReleaseDefaults("alice@example.com", nil, "sg1"))
 }
 
 func (test *MailboxHelpersTest) TestFindsNoMailActionWithoutAnId() {
-	id, entry, err := (&MailActionsHelper{fyloHelper: &FyloHelper{}}).FindById("", "alice@example.com")
+	id, entry, err := (&MailActionsHelper{}).FindById("", "alice@example.com")
 	Assert.Equals("", id)
 	Assert.IsTrue(entry == nil)
 	Assert.Equals(nil, err)
+}
+
+func (test *MailboxHelpersTest) TestMailboxProvidersShareTheirDependencies() {
+	Assert.IsTrue(test.emailsHelper != nil)
+	Assert.IsTrue(test.attachmentsHelper != nil)
+	Assert.IsTrue(test.emailsHelper.fyloHelper != nil)
+	Assert.IsTrue(test.emailsHelper.attachmentsHelper == test.attachmentsHelper)
+	Assert.IsTrue(test.emailsHelper.fyloHelper == test.attachmentsHelper.fyloHelper)
+	Assert.IsTrue(test.emailsHelper.rawMessagesHelper != nil)
+	Assert.IsTrue(test.emailsHelper.fyloHelper == test.emailsHelper.rawMessagesHelper.fyloHelper)
 }

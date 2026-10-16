@@ -31,7 +31,7 @@
           </div>
           <div style="display:flex;gap:0.25rem;flex-wrap:wrap;justify-content:flex-end;">
             <w-btn variant="text" on:click="scheduled.edit(item.id)" style="flex-shrink:0;">Edit</w-btn>
-            <w-btn variant="text" on:click="confirmation.confirmThen($event, 'Cancel this scheduled send?', 'cancel-scheduled', item.id)" style="flex-shrink:0;">Cancel</w-btn>
+            <w-btn variant="text" on:click="browserPage.confirmThen('Cancel this scheduled send?', 'cancel-scheduled', item.id)" style="flex-shrink:0;">Cancel</w-btn>
           </div>
         </div>
         <logic :if="item.text">

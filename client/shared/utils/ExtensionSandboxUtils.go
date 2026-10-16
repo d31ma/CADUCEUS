@@ -1,6 +1,7 @@
 import (
-	"encoding/base64"
+	"cmp"
 	"encoding/json"
+	"maps"
 	"regexp"
 	"slices"
 	"strconv"
@@ -8,62 +9,87 @@ import (
 )
 
 // ExtensionSandboxUtils builds what the extension runtime puts on the page,
-// as shared/scripts/extension-runtime.js did: the opaque sandbox document a
-// plugin runs in, the CSS variables of a declarative theme, and the
+// as shared/scripts/extension-runtime.js did: the opaque sandbox document the
+// plugins run in, the CSS variables of a declarative theme, and the
 // permission-filtered notification of a command result.
 type ExtensionSandboxUtils struct{}
 
-// document is a plugin's iframe srcdoc. Its only script starts a classic Web
-// Worker from an in-memory Blob, so the package source never runs in the
-// application document or in the iframe's own thread; the source travels
-// base64-encoded and never appears in the document as text.
-func (ExtensionSandboxUtils) document(extensionID string, source string, nonce string) string {
+// HostDocument is the srcdoc of the one opaque sandbox iframe that hosts
+// every enabled plugin. Its only script starts each plugin as a classic Web
+// Worker from an in-memory Blob when the page sends the plugin's source, so
+// package source never runs in the application document or the iframe's own
+// thread, and never appears in the document. The iframe stays the same
+// while plugins come and go, so a page render never restarts them.
+func (ExtensionSandboxUtils) HostDocument(nonce string) string {
 	utils := ExtensionSandboxUtils{}
-	worker := base64.StdEncoding.EncodeToString([]byte(utils.workerSource(source)))
+	marker := utils.sourceMarker()
+	prefix, suffix, _ := strings.Cut(utils.workerSource(marker), marker)
 	timeout := strconv.Itoa(utils.commandTimeoutMs())
 	bootstrap := `
-const extensionId = ` + utils.literal(utils.bounded(extensionID, 128)) + `;
-const sessionNonce = ` + utils.literal(nonce) + `;
-const workerBytes = Uint8Array.from(atob(` + utils.literal(worker) + `), character => character.charCodeAt(0));
-const worker = new Worker(URL.createObjectURL(new Blob([workerBytes], { type: "text/javascript" })));
-const pending = new Map();
-const send = message => parent.postMessage({ channel: "caduceus-extension", extensionId, sessionNonce, ...message }, "*");
-const startupTimeout = setTimeout(() => { worker.terminate(); send({ type: "error", error: "Extension activation timed out" }); }, ` + timeout + `);
-worker.onmessage = event => {
-  const message = event.data || {};
-  let serialized = "";
-  try { serialized = JSON.stringify(message); } catch { worker.terminate(); send({ type: "error", error: "Extension returned an invalid result" }); return; }
-  if (serialized.length > ` + strconv.Itoa(utils.maxResultBytes()) + `) { worker.terminate(); send({ type: "error", error: "Extension result exceeded 16 KiB" }); return; }
-  if (message.type === "ready") clearTimeout(startupTimeout);
-  if (message.requestId) { clearTimeout(pending.get(message.requestId)); pending.delete(message.requestId); }
-  send(message);
+const prefix = ` + utils.literal(prefix) + `;
+const suffix = ` + utils.literal(suffix) + `;
+const workers = new Map();
+const send = (extensionId, sessionNonce, message) => parent.postMessage({ channel: "caduceus-extension", extensionId, sessionNonce, ...message }, "*");
+const stop = extensionId => {
+  const entry = workers.get(extensionId);
+  if (!entry) return;
+  clearTimeout(entry.startupTimeout);
+  entry.pending.forEach(timer => clearTimeout(timer));
+  entry.worker.terminate();
+  URL.revokeObjectURL(entry.sourceUrl);
+  workers.delete(extensionId);
 };
-worker.onerror = () => { clearTimeout(startupTimeout); worker.terminate(); send({ type: "error", error: "Extension worker failed" }); };
+function load(extensionId, sessionNonce, source) {
+  stop(extensionId);
+  const sourceUrl = URL.createObjectURL(new Blob([prefix, source, suffix], { type: "text/javascript" }));
+  let worker;
+  try { worker = new Worker(sourceUrl); }
+  catch { URL.revokeObjectURL(sourceUrl); send(extensionId, sessionNonce, { type: "stopped", error: "Extension worker failed to start" }); return; }
+  const pending = new Map();
+  const startupTimeout = setTimeout(() => { stop(extensionId); send(extensionId, sessionNonce, { type: "stopped", error: "Extension activation timed out" }); }, ` + timeout + `);
+  workers.set(extensionId, { worker, sessionNonce, pending, startupTimeout, sourceUrl });
+  worker.onmessage = event => {
+    const message = event.data || {};
+    let serialized = "";
+    try { serialized = JSON.stringify(message); } catch { stop(extensionId); send(extensionId, sessionNonce, { type: "stopped", error: "Extension returned an invalid result" }); return; }
+    if (serialized.length > ` + strconv.Itoa(utils.maxResultBytes()) + `) { stop(extensionId); send(extensionId, sessionNonce, { type: "stopped", error: "Extension result exceeded 16 KiB" }); return; }
+    if (message.type === "ready") clearTimeout(startupTimeout);
+    if (message.type === "error" && !message.requestId) { stop(extensionId); send(extensionId, sessionNonce, { ...message, type: "stopped" }); return; }
+    if (message.requestId) { clearTimeout(pending.get(message.requestId)); pending.delete(message.requestId); }
+    send(extensionId, sessionNonce, message);
+  };
+  worker.onerror = () => { stop(extensionId); send(extensionId, sessionNonce, { type: "stopped", error: "Extension worker failed" }); };
+}
 addEventListener("message", event => {
   const message = event.data || {};
-  if (event.source !== parent || message.channel !== "caduceus-extension-host" || message.sessionNonce !== sessionNonce || message.extensionId !== extensionId || message.type !== "command") return;
+  if (event.source !== parent || message.channel !== "caduceus-extension-host") return;
+  if (message.type === "reset") { [...workers.keys()].forEach(stop); return; }
+  if (message.type === "load") { load(String(message.extensionId), String(message.sessionNonce), String(message.source || "")); return; }
+  const entry = workers.get(message.extensionId);
+  if (!entry || message.sessionNonce !== entry.sessionNonce || message.type !== "command") return;
   const timeout = setTimeout(() => {
-    worker.terminate(); pending.delete(message.requestId);
-    send({ type: "error", requestId: message.requestId, error: "Extension command timed out" });
+    stop(message.extensionId);
+    send(message.extensionId, entry.sessionNonce, { type: "stopped", requestId: message.requestId, error: "Extension command timed out" });
   }, ` + timeout + `);
-  pending.set(message.requestId, timeout);
-  worker.postMessage({ type: "command", requestId: message.requestId, command: message.command, context: message.context });
-});`
+  entry.pending.set(message.requestId, timeout);
+  entry.worker.postMessage({ type: "command", requestId: message.requestId, command: message.command, context: message.context });
+});
+parent.postMessage({ channel: "caduceus-extension-host-ready" }, "*");`
 	policy := "default-src 'none'; script-src 'nonce-" + nonce + "'; worker-src blob:; connect-src 'none'; img-src 'none'; style-src 'none'; font-src 'none'; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'"
 	return `<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="` + policy + `"><script nonce="` + nonce + `">` + bootstrap + `</script>`
+}
+
+// Title names the plugins the sandbox hosts, for assistive technology.
+func (ExtensionSandboxUtils) Title(plugins []InstalledExtension) string {
+	return ExtensionSandboxUtils{}.title(plugins) + " extension sandbox"
 }
 
 // ThemeVariables maps a theme's colour tokens onto the fixed CSS variables a
 // theme may set; a token that is not a hex colour is dropped.
 func (ExtensionSandboxUtils) ThemeVariables(theme ExtensionTheme) map[string]string {
-	variables := map[string]string{}
+	variables := ExtensionSandboxUtils{}.themeColors(theme)
 	color := regexp.MustCompile(`^#[0-9a-fA-F]{3,8}$`)
-	for token, variable := range (ExtensionSandboxUtils{}).themeVariables() {
-		value := theme.Tokens[token]
-		if color.MatchString(value) {
-			variables[variable] = strings.ToLower(value)
-		}
-	}
+	maps.DeleteFunc(variables, func(_ string, value string) bool { return !color.MatchString(value) })
 	return variables
 }
 
@@ -71,14 +97,10 @@ func (ExtensionSandboxUtils) ThemeVariables(theme ExtensionTheme) map[string]str
 // trimmed and bounded, or "".
 func (ExtensionSandboxUtils) Notification(permissions []string, result string) string {
 	answer := map[string]any{}
-	if len(result) > (ExtensionSandboxUtils{}).maxResultBytes() || json.Unmarshal([]byte(result), &answer) != nil {
-		return ""
-	}
+	parsed := json.Unmarshal([]byte(result), &answer) == nil
 	notify, _ := answer["notify"].(string)
-	if !slices.Contains(permissions, "ui:notify") {
-		return ""
-	}
-	return ExtensionSandboxUtils{}.bounded(strings.TrimSpace(notify), ExtensionSandboxUtils{}.noticeLength())
+	allowed := ChoiceUtils{}.All(len(result) <= ExtensionSandboxUtils{}.maxResultBytes(), parsed, slices.Contains(permissions, "ui:notify"))
+	return ChoiceUtils{}.Text(allowed, ExtensionSandboxUtils{}.bounded(strings.TrimSpace(notify), ExtensionSandboxUtils{}.noticeLength()), "")
 }
 
 // Reply reads what a sandbox posted (as JSON text) into its fields.
@@ -98,72 +120,70 @@ func (ExtensionSandboxUtils) Reply(message string) ExtensionReply {
 
 // EnabledTheme is the theme of the enabled theme extension, or no theme.
 func (ExtensionSandboxUtils) EnabledTheme(extensions []InstalledExtension) ExtensionTheme {
-	for _, extension := range extensions {
-		if extension.Enabled && extension.Kind == "theme" {
-			return extension.Manifest.Theme
-		}
-	}
-	return ExtensionTheme{}
+	index := slices.IndexFunc(extensions, func(extension InstalledExtension) bool {
+		return ChoiceUtils{}.All(extension.Enabled, extension.Kind == "theme")
+	})
+	return ExtensionSandboxUtils{}.at(extensions, index).Manifest.Theme
 }
 
 // EnabledPlugins are the enabled plugin extensions, in the server's order.
 func (ExtensionSandboxUtils) EnabledPlugins(extensions []InstalledExtension) []InstalledExtension {
-	plugins := []InstalledExtension{}
-	for _, extension := range extensions {
-		if extension.Enabled && extension.Kind == "plugin" {
-			plugins = append(plugins, extension)
-		}
-	}
-	return plugins
+	return slices.DeleteFunc(slices.Clone(extensions), func(extension InstalledExtension) bool {
+		return !ChoiceUtils{}.All(extension.Enabled, extension.Kind == "plugin")
+	})
 }
 
-// commands are a plugin's command buttons, disabled until its sandbox says
-// it is ready.
-func (ExtensionSandboxUtils) commands(extension InstalledExtension, ready bool) []ExtensionCommand {
-	commands := []ExtensionCommand{}
-	for _, contribution := range extension.Manifest.Contributions {
-		commands = append(commands, ExtensionCommand{
-			ExtensionID: extension.ID, CommandID: contribution.ID, Label: contribution.Label, Slot: contribution.Slot,
-			Title: extension.DisplayName + ": " + contribution.Label, Disabled: !ready,
-		})
-	}
-	return commands
-}
-
-// Toolbar is every plugin's command buttons.
+// Toolbar is every plugin's command buttons, each disabled until its
+// sandbox says it is ready.
 func (ExtensionSandboxUtils) Toolbar(plugins []InstalledExtension, ready map[string]bool) []ExtensionCommand {
-	commands := []ExtensionCommand{}
-	for _, plugin := range plugins {
-		commands = append(commands, ExtensionSandboxUtils{}.commands(plugin, ready[plugin.ID])...)
-	}
-	return commands
+	return ExtensionSandboxUtils{}.toolbar(plugins, ready)
 }
 
 // Permissions are what the plugin with this id was granted.
 func (ExtensionSandboxUtils) Permissions(plugins []InstalledExtension, extensionID string) []string {
-	for _, plugin := range plugins {
-		if plugin.ID == extensionID {
-			return plugin.Manifest.Permissions
-		}
-	}
-	return []string{}
+	index := slices.IndexFunc(plugins, func(plugin InstalledExtension) bool { return plugin.ID == extensionID })
+	return ExtensionSandboxUtils{}.at(plugins, index).Manifest.Permissions
 }
 
 // Failure is the toast for a sandbox error: at start, or for one command.
 func (ExtensionSandboxUtils) Failure(requestID string, failure string) string {
-	if requestID == "" {
-		return "Extension failed to start."
-	}
-	return "Extension failed: " + ExtensionSandboxUtils{}.bounded(failure, ExtensionSandboxUtils{}.noticeLength())
+	command := "Extension failed: " + ExtensionSandboxUtils{}.bounded(failure, ExtensionSandboxUtils{}.noticeLength())
+	return ChoiceUtils{}.Text(requestID == "", "Extension failed to start.", command)
 }
 
-// Sandbox is a plugin's iframe.
+// Sandbox is what the bridge sends the sandbox host to start one plugin.
 func (ExtensionSandboxUtils) Sandbox(extension InstalledExtension, nonce string) ExtensionSandbox {
-	name := ExtensionSandboxUtils{}.bounded(extension.DisplayName, 80)
-	if name == "" {
-		name = extension.ID
+	return ExtensionSandbox{ID: extension.ID, Nonce: nonce, Source: extension.Source}
+}
+
+func (ExtensionSandboxUtils) title(plugins []InstalledExtension) string {
+	names := []string{}
+	for _, plugin := range plugins {
+		names = append(names, cmp.Or(ExtensionSandboxUtils{}.bounded(plugin.DisplayName, 80), plugin.ID))
 	}
-	return ExtensionSandbox{ID: extension.ID, Title: name + " extension sandbox", Document: ExtensionSandboxUtils{}.document(extension.ID, extension.Source, nonce)}
+	return strings.Join(names, ", ")
+}
+
+func (ExtensionSandboxUtils) themeColors(theme ExtensionTheme) map[string]string {
+	variables := map[string]string{}
+	for token, variable := range (ExtensionSandboxUtils{}).themeVariables() {
+		variables[variable] = strings.ToLower(theme.Tokens[token])
+	}
+	return variables
+}
+
+// at is the extension at index, or an empty one when index is -1.
+func (ExtensionSandboxUtils) at(extensions []InstalledExtension, index int) InstalledExtension {
+	padded := append(slices.Clone(extensions), InstalledExtension{})
+	return padded[map[bool]int{true: index, false: len(extensions)}[index >= 0]]
+}
+
+func (ExtensionSandboxUtils) toolbar(plugins []InstalledExtension, ready map[string]bool) []ExtensionCommand {
+	commands := []ExtensionCommand{}
+	for _, plugin := range plugins {
+		commands = append(commands, ExtensionCommandUtils{}.Commands(plugin, ready[plugin.ID])...)
+	}
+	return commands
 }
 
 func (ExtensionSandboxUtils) workerSource(source string) string {
@@ -223,5 +243,8 @@ func (ExtensionSandboxUtils) bounded(value string, maximum int) string {
 func (ExtensionSandboxUtils) commandTimeoutMs() int { return 2000 }
 
 func (ExtensionSandboxUtils) noticeLength() int { return 200 }
+
+// sourceMarker stands where the plugin source goes in the worker program.
+func (ExtensionSandboxUtils) sourceMarker() string { return "\x00" }
 
 func (ExtensionSandboxUtils) maxResultBytes() int { return 16 * 1024 }

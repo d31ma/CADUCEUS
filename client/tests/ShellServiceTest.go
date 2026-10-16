@@ -76,9 +76,21 @@ func (test *ShellServiceTest) TestScreenshotModeAndDialogs() {
 
 func (test *ShellServiceTest) TestStorageRestoresScreenshotMode() {
 	shell := test.shell()
-	shell.HearSession(SessionChanged{SignedIn: false, Email: "a@x.com"})
+	shell.HearSession(SessionChanged{SignedIn: true, Email: "a@x.com"})
 	shell.HearStorage(StoredValues{Session: map[string]string{"caduceus-screenshot-mode": "on"}, Local: map[string]string{}})
 	Assert.IsTrue(shell.ScreenshotMode)
 	shell.HearToastAction(ToastActionChosen{Action: "nothing"})
 	shell.HearVisibility(VisibilityChanged{Visible: false})
+}
+
+func (test *ShellServiceTest) TestSignOutRejectsStoredScreenshotMode() {
+	shell := test.shell()
+	stored := StoredValues{Session: map[string]string{"caduceus-screenshot-mode": "on"}, Local: map[string]string{}}
+	shell.HearSession(SessionChanged{SignedIn: true, Email: "a@x.com"})
+	shell.HearStorage(stored)
+	Assert.IsTrue(shell.ScreenshotMode)
+	shell.HearSession(SessionChanged{SignedIn: false, Email: "a@x.com"})
+	Assert.Equals(false, shell.ScreenshotMode)
+	shell.HearStorage(stored)
+	Assert.Equals(false, shell.ScreenshotMode)
 }

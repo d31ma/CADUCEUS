@@ -443,7 +443,7 @@
           </div>
           <div class="extension-package-actions">
             <w-btn variant="text" :disabled="extensions.busy" on:click="extensions.toggle(extension.id)">{extension.enabled ? 'Disable' : 'Enable'}</w-btn>
-            <w-btn variant="text" color="danger" :disabled="extensions.busy" on:click="confirmation.confirmThen($event, 'Remove “' + extension.displayName + '” and its trusted code?', 'extension-remove', extension.id)">Remove</w-btn>
+            <w-btn variant="text" color="danger" :disabled="extensions.busy" on:click="browserPage.confirmThen('Remove “' + extension.displayName + '” and its trusted code?', 'extension-remove', extension.id)">Remove</w-btn>
           </div>
         </div>
       </loop>
@@ -972,7 +972,7 @@
           <div class="settings-row lazy-list-item">
             <span class="w-text-body-medium settings-grow">{device.name}</span>
             <span class="w-text-body-small settings-muted">Added {device.createdAtLabel}</span>
-            <w-btn variant="text" on:click="confirmation.confirmThen($event, 'Remove this passkey?', 'passkey-remove', device.id)">Remove</w-btn>
+            <w-btn variant="text" on:click="browserPage.confirmThen('Remove this passkey?', 'passkey-remove', device.id)">Remove</w-btn>
           </div>
         </loop>
       </div>
@@ -1003,7 +1003,7 @@
   <div class="settings-section">
     <p class="w-text-label-large settings-section-title">Secondary verification</p>
     <p class="w-text-body-small settings-muted settings-lead">Require a time-based code after passkey authentication. Codes are generated locally by your authenticator app.</p>
-    <logic :if="passkeys.authenticatorRows().length > 0"><div class="settings-card" style="margin-bottom:0.75rem;"><loop :for="device of passkeys.authenticatorRows()"><div class="settings-row lazy-list-item"><span class="settings-grow">{device.name}</span><w-btn variant="text" on:click="confirmation.confirmThen($event, 'Remove this passkey?', 'passkey-remove', device.id)">Remove</w-btn></div></loop></div></logic>
+    <logic :if="passkeys.authenticatorRows().length > 0"><div class="settings-card" style="margin-bottom:0.75rem;"><loop :for="device of passkeys.authenticatorRows()"><div class="settings-row lazy-list-item"><span class="settings-grow">{device.name}</span><w-btn variant="text" on:click="browserPage.confirmThen('Remove this passkey?', 'passkey-remove', device.id)">Remove</w-btn></div></loop></div></logic>
     <w-btn variant="tonal" :disabled="authenticatorApp.loading" on:click="authenticatorApp.toggle()">{authenticatorApp.enrollment ? 'Cancel setup' : '+ Add authenticator app'}</w-btn>
     <logic :if="authenticatorApp.enrollment">
       <div class="settings-card settings-stack settings-after">
@@ -1076,7 +1076,7 @@
               <strong>{sig.name}</strong>
               <span>{sig.defaultFor.length ? sig.defaultFor.join(', ') : 'Not a default'}</span>
             </button>
-            <w-btn variant="text" on:click="confirmation.confirmThen($event, 'Remove this signature?', 'signature-remove', sig.id)">Remove</w-btn>
+            <w-btn variant="text" on:click="browserPage.confirmThen('Remove this signature?', 'signature-remove', sig.id)">Remove</w-btn>
           </div>
         </loop>
       </div>
@@ -1125,7 +1125,7 @@
               <strong>{template.name}</strong>
               <span>{template.subject || 'No subject'}</span>
             </button>
-            <w-btn variant="text" on:click="confirmation.confirmThen($event, 'Delete this template permanently?', 'template-remove', template.id)">Remove</w-btn>
+            <w-btn variant="text" on:click="browserPage.confirmThen('Delete this template permanently?', 'template-remove', template.id)">Remove</w-btn>
           </div>
         </loop>
       </div>
@@ -1168,7 +1168,7 @@
                   <w-btn variant="text" on:click="inboxRules.edit(rule.id)">Edit</w-btn>
                   <button type="button" :class="'route-badge ' + (rule.enabled ? 'store' : 'drop')" on:click="inboxRules.toggle(rule.id)" :aria-label="(rule.enabled ? 'Disable ' : 'Enable ') + rule.name">{rule.enabled ? 'on' : 'off'}</button>
                 </div>
-                <w-btn variant="text" on:click="confirmation.confirmThen($event, 'Delete this rule?', 'rule-remove', rule.id)">Remove</w-btn>
+                <w-btn variant="text" on:click="browserPage.confirmThen('Delete this rule?', 'rule-remove', rule.id)">Remove</w-btn>
               </div>
               <div class="w-text-body-small settings-muted">If {rule.conditionsLabel}</div>
               <div class="w-text-body-small">{rule.actionsLabel}</div>

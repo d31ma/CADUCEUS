@@ -1,7 +1,7 @@
-// ExtensionSandbox is one enabled plugin's opaque iframe: its title and the
-// srcdoc that starts the plugin in a Blob worker.
+// ExtensionSandbox is what the sandbox host needs to start one enabled
+// plugin: its id, its session nonce and its source.
 type ExtensionSandbox struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	Document string `json:"document"`
+	ID     string `json:"id"`
+	Nonce  string `json:"nonce"`
+	Source string `json:"source"`
 }

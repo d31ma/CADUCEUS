@@ -49,7 +49,7 @@
         <div class="contacts-group-row">
           <button :class="group.className" type="button" on:click="contacts.setGroup(group.id)"><span>{group.name}</span></button>
           <button class="contacts-group-action" type="button" on:click="contactGroups.openRename(group.id, group.name)" :aria-label="group.renameLabel" title="Rename group">✎</button>
-          <button class="contacts-group-action danger" type="button" on:click="confirmation.confirmThen($event, group.deleteQuestion, 'contact-group-delete', group.id)" :aria-label="group.deleteLabel" title="Delete group">×</button>
+          <button class="contacts-group-action danger" type="button" on:click="browserPage.confirmThen(group.deleteQuestion, 'contact-group-delete', group.id)" :aria-label="group.deleteLabel" title="Delete group">×</button>
         </div>
       </loop>
       <logic :if="contacts.groups.length === 0">
@@ -114,7 +114,7 @@
             <div class="contact-detail-actions">
               <w-btn variant="filled" :disabled="!contacts.detail.canMessage" on:click="contacts.compose()">Message</w-btn>
               <logic :if="!contacts.detail.readOnly"><w-btn variant="tonal" on:click="contactEditor.edit()">Edit</w-btn></logic>
-              <logic :if="!contacts.detail.readOnly"><w-btn variant="text" on:click="confirmation.confirmThen($event, contacts.detail.deleteQuestion, 'contact-delete', contacts.detail.id)">Delete</w-btn></logic>
+              <logic :if="!contacts.detail.readOnly"><w-btn variant="text" on:click="browserPage.confirmThen(contacts.detail.deleteQuestion, 'contact-delete', contacts.detail.id)">Delete</w-btn></logic>
             </div>
           </header>
 

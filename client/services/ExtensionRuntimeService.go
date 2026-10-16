@@ -1,7 +1,8 @@
 // ExtensionRuntimeService runs the signed-in user's enabled extensions, as
-// shared/scripts/extension-runtime.js did: each plugin in an opaque sandbox
-// iframe (rendered by the shell from Sandboxes), its commands as buttons in
-// their page slot (Toolbar), and the enabled theme's colours. The extension
+// shared/scripts/extension-runtime.js did: the plugins in one opaque sandbox
+// iframe (rendered by the shell from HostDocument), each in its own worker,
+// their commands as buttons in their page slot (Toolbar), and the enabled
+// theme's colours. The extension
 // bridge (ExtensionPackageService.js) carries messages between Go and the
 // sandboxes and sets the theme's CSS variables; every decision is made here.
 // @Service
@@ -10,7 +11,10 @@ type ExtensionRuntimeService struct {
 	extensionsClient          *ExtensionsClient
 	applicationEventPublisher ApplicationEventPublisher
 	Toolbar                   []ExtensionCommand
-	Sandboxes                 []ExtensionSandbox
+	HasPlugins                bool
+	SandboxTitle              string
+	HostDocument              string
+	sandboxes                 []ExtensionSandbox
 	authorization             string
 	signedIn                  bool
 	plugins                   []InstalledExtension
@@ -21,6 +25,7 @@ type ExtensionRuntimeService struct {
 // @OnStart
 func (runtime *ExtensionRuntimeService) Start() {
 	runtime.reset()
+	runtime.HostDocument = ExtensionSandboxUtils{}.HostDocument(IdentityUtils{}.UUID("extension-host"))
 }
 
 // HearSession runs the extensions of the signed-in user, and none after
@@ -57,7 +62,7 @@ func (runtime *ExtensionRuntimeService) Invoke(extensionID string, commandID str
 
 func (runtime *ExtensionRuntimeService) reset() {
 	runtime.Toolbar = []ExtensionCommand{}
-	runtime.Sandboxes = []ExtensionSandbox{}
+	runtime.sandboxes = []ExtensionSandbox{}
 	runtime.plugins = []InstalledExtension{}
 	runtime.sandboxTokens = map[string]string{}
 	runtime.ready = map[string]bool{}
@@ -68,10 +73,14 @@ func (runtime *ExtensionRuntimeService) load() {
 	extensions := []InstalledExtension{}
 	FlowUtils{}.When(runtime.signedIn, func() { extensions, _ = runtime.extensionsClient.Extensions(runtime.authorization) })()
 	theme := ExtensionSandboxUtils{}.ThemeVariables(ExtensionSandboxUtils{}.EnabledTheme(extensions))
-	for _, plugin := range ExtensionSandboxUtils{}.EnabledPlugins(extensions) {
+	plugins := ExtensionSandboxUtils{}.EnabledPlugins(extensions)
+	for _, plugin := range plugins {
 		runtime.activate(plugin)
 	}
 	runtime.refresh()
+	runtime.HasPlugins = len(runtime.sandboxes) > 0
+	runtime.SandboxTitle = ExtensionSandboxUtils{}.Title(runtime.plugins)
+	runtime.applicationEventPublisher.PublishEvent(ExtensionPluginsLoaded{Plugins: runtime.sandboxes}, true)
 	runtime.applicationEventPublisher.PublishEvent(ExtensionThemeApplied{Variables: theme}, true)
 	runtime.applicationEventPublisher.PublishEvent(DocumentAttributesChanged{
 		Owner: "extension-theme", Attributes: map[string]string{"data-extension-theme": ChoiceUtils{}.Text(len(theme) > 0, "enabled", "")},
@@ -86,7 +95,7 @@ func (runtime *ExtensionRuntimeService) activate(projection InstalledExtension) 
 		nonce := IdentityUtils{}.UUID(extension.ID + extension.Digest)
 		runtime.sandboxTokens[extension.ID] = nonce
 		runtime.plugins = append(runtime.plugins, extension)
-		runtime.Sandboxes = append(runtime.Sandboxes, ExtensionSandboxUtils{}.Sandbox(extension, nonce))
+		runtime.sandboxes = append(runtime.sandboxes, ExtensionSandboxUtils{}.Sandbox(extension, nonce))
 	})()
 }
 
@@ -96,9 +105,10 @@ func (runtime *ExtensionRuntimeService) refresh() {
 
 func (runtime *ExtensionRuntimeService) answer(answered ExtensionReply) func() {
 	steps := map[string]func(){
-		"ready":  func() { runtime.markReady(answered.ExtensionID) },
-		"result": func() { runtime.notify(answered) },
-		"error":  func() { runtime.fail(answered) },
+		"ready":   func() { runtime.markReady(answered.ExtensionID) },
+		"result":  func() { runtime.notify(answered) },
+		"error":   func() { runtime.fail(answered) },
+		"stopped": func() { runtime.stop(answered) },
 	}
 	return FlowUtils{}.Either(steps[answered.Kind] != nil, steps[answered.Kind], func() {})
 }
@@ -118,4 +128,10 @@ func (runtime *ExtensionRuntimeService) notify(answered ExtensionReply) {
 func (runtime *ExtensionRuntimeService) fail(answered ExtensionReply) {
 	message := ExtensionSandboxUtils{}.Failure(answered.RequestID, answered.Error)
 	runtime.applicationEventPublisher.PublishEvent(ToastRequested{Message: message}, false)
+}
+
+func (runtime *ExtensionRuntimeService) stop(answered ExtensionReply) {
+	runtime.ready[answered.ExtensionID] = false
+	runtime.refresh()
+	runtime.fail(answered)
 }

@@ -464,4 +464,4 @@
   </div>
 </logic>
 <span hidden :data-browser="browserStorage.ready && browserPage.ready && keyboard.ready && device.ready && mailStream.ready && extensionPackage.ready"></span>
-<loop :for="sandbox of extensionRuntime.sandboxes"><iframe hidden tabindex="-1" :data-extension-id="sandbox.id" :title="sandbox.title" sandbox="allow-scripts" referrerpolicy="no-referrer" :srcdoc="sandbox.document"></iframe></loop>
+<logic :if="extensionRuntime.hasPlugins"><iframe hidden tabindex="-1" data-extension-host :title="extensionRuntime.sandboxTitle" sandbox="allow-scripts" referrerpolicy="no-referrer" :srcdoc="extensionRuntime.hostDocument"></iframe></logic>

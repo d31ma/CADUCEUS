@@ -53,11 +53,14 @@ test('runs the complete trusted plugin and declarative theme lifecycle', async (
   const settings = page.locator('[data-extension-settings]')
   await expect(settings.getByText('No trusted extensions are installed for this mailbox.')).toBeVisible()
 
+  const inspectedResponse = page.waitForResponse(response => response.url().endsWith('/extensions/inspect') && response.request().method() === 'POST')
   await settings.locator('[data-extension-package]').setInputFiles({
     name: 'command-center.json',
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(packageBundle)),
   })
+  const inspected = await inspectedResponse
+  expect({ status: inspected.status(), body: await inspected.json() }).toMatchObject({ status: 200 })
   const review = settings.locator('[data-extension-trust-review]')
   await expect(review.getByText('Command Center 1.0.0')).toBeVisible()
   await expect(review.getByText('Show a local notification')).toBeVisible()
@@ -97,8 +100,18 @@ test('runs the complete trusted plugin and declarative theme lifecycle', async (
   }))
   expect(dimensions.document - dimensions.viewport).toBeLessThanOrEqual(1)
 
-  page.once('dialog', dialog => dialog.accept())
-  await packageRow.getByRole('button', { name: 'Remove' }).click()
+  const removedResponse = page.waitForResponse(response => response.url().endsWith('/extensions/example.command-center') && response.request().method() === 'DELETE')
+  const removalDialog = page.waitForEvent('dialog').then(async dialog => {
+    const question = dialog.message()
+    await dialog.accept()
+    expect(question).toBe('Remove “Command Center” and its trusted code?')
+  })
+  const [removed] = await Promise.all([
+    removedResponse,
+    removalDialog,
+    packageRow.getByRole('button', { name: 'Remove' }).click(),
+  ])
+  expect({ status: removed.status(), body: await removed.json() }).toMatchObject({ status: 200, body: { deleted: true } })
   await expect(packageRow).toHaveCount(0)
   await expect(command).toHaveCount(0)
   await expect(sandbox).toHaveCount(0)

@@ -1,5 +1,6 @@
 /**
- * Escape hatch: the page facts and page actions that Go services cannot reach.
+ * Escape hatch: the page facts and page actions that Go services cannot reach,
+ * window.confirm() among them.
  *
  * Tachyon gives Go services no location, navigation, document element,
  * timers, focus, drag data, platform or time zone facts, or global key and
@@ -219,6 +220,21 @@ export default class BrowserPageService {
   /** @param {Element | null} target @param {MouseEvent} event */
   _signOutFrom(target, event) {
     if (target?.closest('[data-sign-out]')) this._signOut(event)
+  }
+
+  /**
+   * window.confirm(), which no Go service can reach: a view asks on a click,
+   * and an accepted question becomes ConfirmationGiven for the Go service
+   * that owns the action.
+   * @param {Event} _event @param {string} question @param {string} action @param {string} id
+   */
+  confirmThen(_event, question, action, id) {
+    this._confirmed(confirm(question), { action, id })
+  }
+
+  /** @param {boolean} confirmed @param {ConfirmationGiven} confirmation */
+  _confirmed(confirmed, confirmation) {
+    if (confirmed) this.applicationEventPublisher.publishEvent(confirmation, false)
   }
 
   /** @param {PageClicked} clicked */

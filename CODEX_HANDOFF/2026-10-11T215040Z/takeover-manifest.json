@@ -1,0 +1,121 @@
+{
+  "checkpoint_at": "2026-10-11T21:50:40.888100+00:00",
+  "recovery": {
+    "owner": "Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc",
+    "verified_by_parent": "WSL stopped at 21:38 UTC and restarted at 21:42 UTC; services are not healthy; health diagnosis continues.",
+    "healthy": false,
+    "claude_may_restart": false,
+    "post_recovery_source_verification": "PENDING: actual remote HEADs, dirty paths, surviving processes, Docker state, locks and service health. Restart is not qualification."
+  },
+  "threads": [
+    {
+      "project": "CADUCEUS",
+      "title": "Async Go services in Tachyon build",
+      "local_session_id": "a9801503-5f1e-4006-94ad-8298a4bdcdfd",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLG3FXZ37b6W7T5EtZqfkNG5S",
+      "codex_project_id": null,
+      "codex_chat_id": "01a12ce6-5b1f-71ba-9c28-a0d1d0e350e8",
+      "status": "unfinished_wsl_portion_handed_off_mac_owned",
+      "prior_handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215040Z/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md",
+      "latest_record_at": "2026-10-11T21:50:22.357Z",
+      "notes": {
+        "status": "unfinished_wsl_portion_handed_off_mac_owned",
+        "wsl_scope": "Deferred F# baseline and inbox-shaped pagehide checks only; ongoing Mac landings stay separately owned.",
+        "receipt": "21:49:41 Claude reply: WSL part handed off and closed, no owned WSL jobs, all edits in commits. Final local checkpoint confirms FSHARPCHK cut off with ERROR_NETNAME_DELETED and PAGEHIDE-SHARED wait loop stopped before launch; neither relaunched.",
+        "source": "Route budget claude/tac-route-budget-20261011 f4847d18e1ed79d8cfcdcb14cde18b192689e867, base 6381e21e63767b20c1e899f183849203d734a8e1; shared pagehide scenario 885fb42c3c9b70d20f2ec2699dcfc19021cb1abf atop main fix b9690835fad601f6fa18f944e9426f3681c5c04a; loop/select bbbe6b953f1026eb494d094375dedb7e20706e83.",
+        "pending": "Three transferred checks: F# route-budget comparison on base and branch; inbox-shaped navigation reproduction (never run); Firefox and WebKit authored-node browser gates (earlier WSL launch timeouts). Mac landings remain Claude-owned.",
+        "stale": "21:49 final checkpoint supersedes the missing cancellation receipt. Mac combined landing is now blocked by structure baseline 2954 -> 2955 and Claude is fixing it. Safe-HTML and its related Mac landings are not confirmed landed.",
+        "blockers": [
+          "Services/locks/worker ownership require post-recovery read-only verification",
+          "Original WSL runner force-checkouts/cleans shared source; preserve source and inspect before execution",
+          "Read-only preflight only until parent grants health/ownership clearance; no builds or landing"
+        ],
+        "checkpoint_evidence": "/private/tmp/claude-501/-Volumes-ANNEX-Users-iyor-Library-CloudStorage-Google-Drive-myOrganizations-DELMA-FYLO/a9801503-5f1e-4006-94ad-8298a4bdcdfd/scratchpad/async-go-wsl-handoff.md"
+      },
+      "fresh_local_git": [],
+      "remote_post_recovery_verified": false,
+      "latest_status": {
+        "at": "2026-10-11T21:36:27.754Z",
+        "text": "Tachyon gaps for CADUCEUS Go\n\n\u2713 Go binary bodies, long builds, TinyGo stack, 1 MiB HTTP\n\u2713 Page navigation, Go @Needs, streams/sockets, model limits\n\u2713 server.maxbody and CSS variables (TY1364)\n\u2731 Landing safe-HTML, loop/select and navigation-hang fixes (Mac)\n\u25cb Land theme-color, Go omitempty, Go view-name check (full checks)\n\u25cb Re-run F# and inbox-shaped pagehide checks after WSL recovers\n\u25cb Land route budget\n\u25cb Trim per-service modules and duplicate renders"
+      },
+      "latest_reply": {
+        "at": "2026-10-11T21:49:41.336Z",
+        "text": "The WSL part of this thread is handed off to Codex and closed here. None of my jobs are running on WSL, nothing was relaunched, and every change is in a commit, so there are no uncommitted files. Three WSL checks are left for Codex:\n- the F# base comparison for the route-budget branch\n- the CADUCEUS inbox-shaped navigation-hang test\n- Firefox and WebKit runs for the loop/select fix\n\nThe checkpoint, with exact commits, scripts and paths, is in [async-go-wsl-handoff.md](/mnt/project-files/async-go-wsl-handoff.md). The landing work on the Mac stays with me."
+      },
+      "activation_scope": "read_only_preflight_pending_health_and_ownership_clearance"
+    },
+    {
+      "project": "CADUCEUS",
+      "title": "Refactor CADUCEUS to Tachyon build",
+      "local_session_id": "db51e03e-4e53-49b0-9329-364bb8dae110",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGUuBL1LwdXV8UJNfCtLkC1U",
+      "codex_project_id": null,
+      "codex_chat_id": "01a12ce6-8651-7311-9a1e-e63a929910f4",
+      "status": "unfinished_mac_integration_owned_wsl_handed_off",
+      "prior_handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/db51e03e-4e53-49b0-9329-364bb8dae110.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215040Z/db51e03e-4e53-49b0-9329-364bb8dae110.md",
+      "latest_record_at": "2026-10-11T21:46:51.217Z",
+      "notes": {
+        "status": "unfinished_mac_integration_owned_wsl_handed_off",
+        "wsl_scope": "Historical WSL artifacts handed off; coordinator reports no unfinished or interrupted WSL job. Active integration is on Mac.",
+        "receipt": "21:46:39 reply: WSL runner disabled; original kept as wsl-run.sh.handed-off; no current WSL jobs belong to this thread. Mac integration continues with child aa40159ede393b62f.",
+        "source": "Mac go/integration at d81b1619; last pushed e5046d3d. WSL ~/caduceus/repo go/foundation; detached runs go/go-switchover/go-full hold pushed commits. WSL ty 4d5057b reported at ~/caduceus/tachyon-target/release/ty.",
+        "pending": "Mac extension runtime validation, then freeze integration. Reader then compose. Large-inbox implementation remains dependent on verified integration and approved ownership.",
+        "stale": "Earlier integration e5046d3d is the pushed pin, not latest Mac source. Runner is now disabled. Coordinator handoff incorrectly names reader as restart owner; parent-verified assistant recovery ownership takes precedence.",
+        "blockers": [
+          "Mac integration child remains live and owns dirty extension edits",
+          "Do not create a second app/FYLO writer or shared-file owner",
+          "Reader/compose must use frozen verified integration, not stale pushed pin"
+        ]
+      },
+      "fresh_local_git": [],
+      "remote_post_recovery_verified": false,
+      "latest_status": {
+        "at": "2026-10-11T21:46:41.482Z",
+        "text": "CADUCEUS rewrite in Go\n\n\u2713 Combined app builds and serves; settings, calendar/contacts merged\n\u2713 Large-inbox plan with reader/compose merge ownership\n**\u2713 WSL work checkpointed and handed off to Codex (runner disabled)**\n\u2731 Integration (Mac): IMAP fixture fixed, extension runtime in progress\n\u25cb Freeze integration head, then merge reader, then compose\n\u25cb Large-inbox server phase after the freeze; client phase after reader\n\u2731 Tachyon: navigation hang, loop re-render, looped select, :safe-html"
+      },
+      "latest_reply": {
+        "at": "2026-10-11T21:46:39.944Z",
+        "text": "**WSL checkpoint for this thread: handed off.** None of this thread's jobs are running on WSL now. Its integration agent runs on the Mac only, and I've disabled this thread's WSL runner so nothing new starts there. The two live sessions to IYOR-Surface I can see aren't this thread's: a root `python3` WSL session and a PowerShell `cohesion-14-gate` run.\n\n**Completed on WSL (nothing pending or interrupted):**\n- `ty` builds: the latest is Tachyon develop 4d5057b, at `~/caduceus/tachyon-target/release/ty`, from source in `~/caduceus/tachyon`. The tarballs for each pin are on the Mac in `/Volumes/ANNEX/build/caduceus-work/tachyon-*.tar.gz`.\n- Clone `~/caduceus/repo`, from github.com/d31ma/CADUCEUS, with `go/foundation` checked out. Its deps are vendored and `dist-bin/caduceus` is built.\n- `~/caduceus/bin`: fylo 26.33.02, sesame, ttid and chex, copied from `~/caduceus-fe/bin`.\n- Detached run worktrees `~/caduceus/runs/{go,go-switchover,go-full}` and probes `~/caduceus/probes/*`. These are throwaway checkouts of commits already on GitHub, so they hold no unique work.\n- Route-suite results run there are recorded on the Mac, in `/Volumes/ANNEX/build/caduceus-work/wt/full-logs/wsl-routes*.txt`.\n\n**Scripts:** on the Mac, `/Volumes/ANNEX/build/caduceus-work/wsl-run.sh.handed-off` (the old runner), `wsl-setup.sh` and `wsl-ty-update.sh`. `wsl-run.sh` now refuses to run. I deleted nothing.\n\n**Unresolved approvals:** none from this thread. The WSL restart belongs to the reading-mail thread, under your read-only rule.\n\n**Mac work, unchanged:** the integration agent owns `go/integration` in `/Volumes/ANNEX/build/caduceus-work/wt/go-full`. It's at `d81b1619` (pushed: `e5046d3d`), with uncommitted extension-runtime edits in progress."
+      },
+      "activation_scope": "standby_no_execution"
+    },
+    {
+      "project": "CADUCEUS",
+      "title": "Reading mail and compose",
+      "local_session_id": "1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGPMNMRFCBTMsFTL1bp7YvX2",
+      "codex_project_id": null,
+      "codex_chat_id": "01a12ce6-aed5-7530-84ba-75516d0f30e6",
+      "status": "unfinished_wsl_handed_off_closed_in_claude",
+      "prior_handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215040Z/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md",
+      "latest_record_at": "2026-10-11T21:47:06.271Z",
+      "notes": {
+        "status": "unfinished_wsl_handed_off_closed_in_claude",
+        "wsl_scope": "Reader and compose implementation/validation/integration; logical work remains unfinished despite Claude thread marked resolved.",
+        "receipt": "21:46:53 reply and 21:47:06 assistant: final checkpoint written, WSL work handed off/closed, no coordinator jobs running. Remote child process/source state still requires verification.",
+        "source": "Pushed detail 3b8b11e2ebf1b24fb7273104928840ca554a40c9 and compose f83cd179b6219bab5c1ea885d12d9acc24f38ca0. Remote wt-detail/wt-compose may contain later commits or dirty changes. Mirrored reader receipt f9d3e9b at 20:13; compose check refers to 0717f20 at 20:10. These are evidence of possible newer local state, not verified pushed/current pins.",
+        "pending": "Freeze integration; reader then compose merge; repoint Firefox harness to integrated Go server; tests/browser flows; sanitized-HTML move after actual landing.",
+        "stale": "Claude HANDOFF-CHECKPOINT.md states WSL has not answered, superseded only for restart status by parent 21:42 report. Its pushed pins remain useful, but current local remote heads are unknown. Last SameOriginSetup/EmailDetail note never reached children.",
+        "blockers": [
+          "Remote source/dirty and child processes PENDING verification",
+          "Mac integration freeze and actual safe-HTML landing pending",
+          "KeyboardService composer send/discard commands and stored compose prefill ownership decisions unanswered"
+        ]
+      },
+      "fresh_local_git": [],
+      "remote_post_recovery_verified": false,
+      "latest_status": {
+        "at": "2026-10-11T21:46:55.476Z",
+        "text": "Port reading mail and compose to Go\n\n\u2713 Reading mail pushed at 3b8b11e2; compose pushed at f83cd179\n\u2713 Conflict checklist approved by the main thread\n\u2713 WSL restart attempts reported; recovery is with Samuel's assistant\n**\u2713 Final checkpoint written; WSL work handed off to Codex**\n\u25cb go/integration merge, validation, :safe-html move (Codex now)"
+      },
+      "latest_reply": {
+        "at": "2026-10-11T21:46:53.975Z",
+        "text": "This thread's WSL work is now handed off to Codex and closed here; the final checkpoint is [HANDOFF-CHECKPOINT.md](/mnt/project-files/HANDOFF-CHECKPOINT.md). Nothing was deleted or relaunched, and nothing of mine is running.\n\n- **Pins:** go/client-detail 3b8b11e2 and go/client-compose f83cd179 are pushed. Both contain go/client 122ee918 and not go/integration e5046d3d. The WSL worktrees are ~/caduceus-fe/wt-detail and wt-compose.\n- **Pending:** merge go/integration per the approved checklist (reading mail first, once the integration head is frozen), then ty test and the browser flows against go/integration's Go server, then the `:safe-html` move. Neither branch is ready to merge yet.\n- **Unknown until WSL answers:** whether the agents committed anything after those pins or left uncommitted changes. My last note to them, about SameOriginSetup and EmailDetail, never arrived; those directions are only in the checklist.\n- **Approvals still open:** WSL recovery (with your assistant), the `:safe-html` commit, and two compose changes the owners never answered. Those are the shell-owned KeyboardService.js commands and compose's own read of the stored compose prefill."
+      },
+      "activation_scope": "read_only_preflight_pending_health_and_ownership_clearance"
+    }
+  ]
+}

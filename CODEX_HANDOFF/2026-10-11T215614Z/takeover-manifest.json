@@ -1,0 +1,279 @@
+{
+  "schema_version": 3,
+  "checkpoint_at": "2026-10-11T21:56:14.144606+00:00",
+  "checkpoint_id": "2026-10-11T215614Z",
+  "authorization": "Parent relayed immediate user-authorized takeover of ALL remaining unfinished work, including Mac and native Windows. This supersedes prior standby restrictions for the seven retained threads. This documentation task executes no project work.",
+  "claude_usage_exhausted_reported_by_user": true,
+  "claude_background_processes_stopped_verified": false,
+  "recovery_owner": "Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc",
+  "recovery_last_verified_by_parent": "Stopped 21:38, restarted 21:42, service health diagnosis pending; this inspector has no newer health clearance.",
+  "current_resource_read": "ANNEX 8 GiB available and internal volume 2 GiB available at fresh read. Reconcile shared heavy-job lock and lane floors before heavy execution. This is current pressure, not revival of the old cleanup task.",
+  "new_local_root_sessions": [],
+  "additional_active_logical_threads_found": [],
+  "inventory_coverage": "35 discoverable local root sessions plus one previously corroborated cloud-only completion. The other 28 local roots remain completed, superseded, or historical/unassigned. RC and integration child agents are unfinished scopes within retained chats, not additional logical chats. New cloud-only threads cannot be ruled out without UI access.",
+  "shared_job_artifacts": [
+    {
+      "path": "/private/tmp/claude-501/coh6/gate14-win.txt",
+      "mtime": "2026-10-11T21:47:37.144989+00:00",
+      "bytes": 416,
+      "tail": "lane: b\r\ntip: 6096c4dd refactor(design-check): read classes and apply design switches in one place each\r\nfmt exit 0\r\nclippy exit 0\r\ncore lib exit 101\r\ncore it events exit 0\r\npolicy exit 0\r\ndoc exit 0\r\nlane released\r\ntest result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 522 filtered out; finished in 19.81s\r\ntest result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.97s\r\ndone\n"
+    },
+    {
+      "path": "/private/tmp/claude-501/coh6/g14-core-lib.u8",
+      "mtime": "2026-10-11T21:47:41.763477+00:00",
+      "bytes": 754,
+      "tail": "\ufeffcargo :    Compiling tachyon-core v0.0.0-phase4 (F:\\tachyon-work\\wt\\COHESION-6\\crates\\tachyon-core)\nAt F:\\tachyon-work\\cohesion-14-gate.ps1:11 char:1\n+ cargo test --locked -j 4 -p tachyon-core --lib *> \"$log\\core-lib.log\" ...\n+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    + CategoryInfo          : NotSpecified: (   Compiling ta...s\\tachyon-core):String) [], RemoteException\n    + FullyQualifiedErrorId : NativeCommandError\n \nerror: failed to write file \\\\?\\F:\\tachyon-work\\target-COHESION-6\\debug\\incremental\\tachyon_core-0zlfpgyhtfxul\\s-hn4eh5\nbrpu-0jbmplo-working\\dep-graph.part.bin: The semaphore timeout period has expired. (os error 121)\"\n\nerror: could not compile `tachyon-core` (lib test) due to 1 previous error\n"
+    },
+    {
+      "path": "/Volumes/ANNEX/build/rc-gate/summary.txt",
+      "mtime": "2026-10-11T21:04:30.706023+00:00",
+      "bytes": 1709,
+      "tail": "2026-10-11T20:03:07Z start 674132fb7 ci(release): link to the changelog when release notes exceed GitHub's limit\n2026-10-11T20:07:29Z deps exit=0\n2026-10-11T20:07:31Z content exit=0\n2026-10-11T20:07:31Z styles exit=0\n2026-10-11T20:08:19Z build-debug exit=0\n2026-10-11T20:11:42Z build-release exit=0\n2026-10-11T20:11:45Z types exit=0\n2026-10-11T20:11:47Z phase3-browser exit=0\n2026-10-11T20:11:48Z tac-client exit=0\n2026-10-11T20:11:49Z app-events exit=0\n2026-10-11T20:11:50Z hot-update exit=0\n2026-10-11T20:11:53Z events-browser exit=0\n2026-10-11T20:11:57Z service-worker exit=0\n2026-10-11T20:11:59Z island-expr exit=0\n2026-10-11T20:13:32Z storage-runtime exit=0\n2026-10-11T20:13:41Z web-components exit=0\n2026-10-11T20:13:53Z authored-node exit=0\n2026-10-11T20:13:54Z behavior-adapt exit=0\n2026-10-11T20:13:55Z chex-schema exit=1\n2026-10-11T20:20:24Z responsive exit=0\n2026-10-11T20:20:28Z ledger exit=1\n2026-10-11T20:20:33Z doctor exit=0\n2026-10-11T20:20:33Z runtimes-present exit=0\n2026-10-11T20:20:50Z behavior-jvm-nat exit=0\n2026-10-11T20:22:45Z polyglot exit=0\n2026-10-11T20:22:52Z swift-web exit=0\n2026-10-11T20:22:55Z java-web exit=0\n2026-10-11T20:23:03Z kotlin-web exit=0\n2026-10-11T20:27:35Z ignored-gates exit=0\n2026-10-11T20:28:24Z managed-res exit=0\n2026-10-11T20:28:32Z local-events exit=0\n2026-10-11T20:28:43Z native-events exit=0\n2026-10-11T20:29:00Z website exit=0\n2026-10-11T21:03:09Z snippets exit=1\n2026-10-11T21:03:25Z website-browser exit=0\n2026-10-11T21:04:29Z cached-client exit=0\n2026-10-11T21:04:30Z phase4-macos exit=1\n2026-10-11T21:04:30Z ios-native exit=1\n2026-10-11T21:04:30Z companion exit=1\n2026-10-11T21:04:30Z workspace-test skipped: 11 GiB free\n2026-10-11T21:04:30Z ALLDONE\n"
+    },
+    {
+      "path": "/Volumes/ANNEX/build/caduceus-work/MAC-LOCK/pid",
+      "mtime": "2026-10-11T21:53:44.850205+00:00",
+      "bytes": 6,
+      "tail": "60117\n"
+    },
+    {
+      "path": "/Volumes/ANNEX/build/caduceus-work/wt/full-logs/e2e/hold-server.log",
+      "mtime": "2026-10-11T21:54:57.601485+00:00",
+      "bytes": 53,
+      "tail": "[e2e] Go server and client on http://localhost:19875\n"
+    },
+    {
+      "path": "/Volumes/ANNEX/build/caduceus-work/land-a.log",
+      "mtime": "2026-10-11T21:41:50.652754+00:00",
+      "bytes": 689,
+      "tail": "origin 843de215fc24c5b52c9a0fcf354cbccaaad00bd6 -> 23720147407d97b21ffc0a3de7ca10cb980c08b1\nquick check failed (17)\n    Finished `dev` profile [unoptimized + debuginfo] target(s) in 18.10s\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 549 filtered out; finished in 0.55s\ntest result: ok. 272 passed; 0 failed; 0 ignored; 0 measured; 2708 filtered out; finished in 8.83s\n\ntest structure_violations_cannot_grow_above_the_baseline ... FAILED\nfiles with more than one type, free functions or file-level values grew from 2954 to 2955; run `cargo run -p cohesion-scan` to list them\ntest result: FAILED. 22 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.91s\n"
+    }
+  ],
+  "usage_limit_evidence": [
+    {
+      "thread": "RC version bump and changelog",
+      "at": "2026-10-11T21:55:42.060Z",
+      "text": "You've hit your weekly limit \u00b7 resets Oct 17 at 5am (America/Toronto)"
+    },
+    {
+      "thread": "Async Go services in Tachyon build",
+      "at": "2026-10-11T21:55:21.736Z",
+      "text": "You've hit your weekly limit \u00b7 resets Oct 17 at 5am (America/Toronto)"
+    },
+    {
+      "thread": "Refactor CADUCEUS to Tachyon build",
+      "at": "2026-10-11T21:55:24.790Z",
+      "text": "You've hit your weekly limit \u00b7 resets Oct 17 at 5am (America/Toronto)"
+    }
+  ],
+  "threads": [
+    {
+      "project": "CADUCEUS",
+      "title": "Async Go services in Tachyon build",
+      "local_session_id": "a9801503-5f1e-4006-94ad-8298a4bdcdfd",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLG3FXZ37b6W7T5EtZqfkNG5S",
+      "codex_chat_id": "01a12ce6-5b1f-71ba-9c28-a0d1d0e350e8",
+      "activation_scope": "authorized_takeover_all_unfinished_scope_after_source_process_resource_preflight",
+      "prior_handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215040Z/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215614Z/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md",
+      "latest_record_at": "2026-10-11T21:55:21.736Z",
+      "latest_status": {
+        "at": "2026-10-11T21:51:57.007Z",
+        "text": "Tachyon gaps for CADUCEUS Go\n\n\u2713 Go binary bodies, long builds, TinyGo stack, 1 MiB HTTP\n\u2713 Page navigation, Go @Needs, streams/sockets, model limits\n\u2713 server.maxbody and CSS variables (TY1364)\n\u2713 WSL work handed off to Codex with checkpoint\n\u2731 Landing safe-HTML, loop/select, navigation-hang (blocked: develop red)\n\u25cb Land theme-color, Go omitempty, Go view-name check (full checks)\n\u25cb Trim per-service modules and duplicate renders"
+      },
+      "latest_reply": {
+        "at": "2026-10-11T21:52:29.094Z",
+        "text": "Confirmed. The launcher was task **bzk2bkfmr**, and its stop at 21:28 UTC succeeded. It ended in its first wait for WSL, so FSHARPCHK2 and PAGEHIDE-SHARED never started.\n\nNo replacement launcher is queued or running. Nothing of mine calls `wsl-run.sh`, and no `land-mac.sh` is running. The only process on the Mac talking to IYOR-Surface right now is PID 55938, an ssh into WSL started by the Codex CLI, so I left it alone. I stopped nothing else.\n\nThe WSL portion is handed off to Codex and closed here. That covers the F# comparison, the inbox-shaped pagehide check, and the Firefox and WebKit runs for the loop fix. Pins, scripts and paths are in [async-go-wsl-handoff.md](/mnt/project-files/async-go-wsl-handoff.md). All files, branches and logs are untouched. The Mac landings stay with me and still wait on your call above about develop's structure baseline."
+      },
+      "latest_assistant": {
+        "at": "2026-10-11T21:55:21.736Z",
+        "text": "You've hit your weekly limit \u00b7 resets Oct 17 at 5am (America/Toronto)"
+      },
+      "fresh_local_git": [],
+      "child_agents": [],
+      "background_jobs": [],
+      "last_actions": [
+        {
+          "at": "2026-10-11T21:52:19.899Z",
+          "description": "Confirm no WSL launcher of mine is still running or queued",
+          "command": "pgrep -fl 'wsl-run.sh|FSHARPCHK|PAGEHIDE-SHARED|wsl.exe' | grep -v pgrep; echo ---; pgrep -fl land-mac.sh; echo ---; ps -o pid,etime,command -ax | grep -E 'IYOR-Surface' | grep -v grep | cut -c1-160"
+        },
+        {
+          "at": "2026-10-11T21:52:24.064Z",
+          "description": "Identify the owner of the one running WSL ssh",
+          "command": "p=$(ps -o ppid= -p 55938); ps -o pid,etime,command -p $p | cut -c1-200"
+        },
+        {
+          "at": "2026-10-11T21:55:16.717Z",
+          "description": "Read-only check of the three named PIDs and any jobs of mine",
+          "command": "for p in 49392 60117 60309; do echo \"== $p\"; ps -o pid,ppid,etime,command -p $p | tail -n +2 | cut -c1-220; pp=$(ps -o ppid= -p $p 2>/dev/null | tr -d ' '); [ -n \"$pp\" ] && ps -o pid,ppid,command -p $pp | tail -n +2 | cut -c1-220; done; echo \"== mine\"; pgrep -fl 'land-mac|wsl-run|heavy.sh' | cut -c1-200; cat /Volumes/ANNEX/build/caduceus-work/MAC-LOCK/pid 2>/dev/null"
+        },
+        {
+          "at": "2026-10-11T21:55:20.690Z",
+          "description": "Identify which shell processes belong to this session",
+          "command": "echo self=$$; ps -o pid,ppid,command -p $$ | tail -1 | cut -c1-140; me=$(ps -o ppid= -p $$ | tr -d ' '); echo claude=$me; pgrep -P $me | while read c; do ps -o pid,etime,command -p $c | tail -1 | cut -c1-90; done; echo; for p in 49392 60115; do ps -o ppid= -p $p; done"
+        }
+      ],
+      "unchanged_dependencies_from_previous_checkpoint": [
+        "Services/locks/worker ownership require post-recovery read-only verification",
+        "Original WSL runner force-checkouts/cleans shared source; preserve source and inspect before execution",
+        "Read-only preflight only until parent grants health/ownership clearance; no builds or landing"
+      ],
+      "takeover_findings": "Latest 21:52 receipt names stopped launcher bzk2bkfmr, stopped successfully 21:28 before FSHARPCHK2/PAGEHIDE-SHARED launch; no replacement reported. No land-mac process reported at 21:52. Mac landings now also transferred by user. Develop structure 2955 vs 2954 baseline; owner recommendation was fix the regression before landing. Latest script introduced ALLOW_FAIL allowlisting of that failure: inspect this change and keep required gates effective; takeover is not authority to waive checks. WSL three checks retained.",
+      "retained_prior_source_evidence": "Route budget claude/tac-route-budget-20261011 f4847d18e1ed79d8cfcdcb14cde18b192689e867, base 6381e21e63767b20c1e899f183849203d734a8e1; shared pagehide scenario 885fb42c3c9b70d20f2ec2699dcfc19021cb1abf atop main fix b9690835fad601f6fa18f944e9426f3681c5c04a; loop/select bbbe6b953f1026eb494d094375dedb7e20706e83.",
+      "fresh_local_branch_pins": {
+        "claude/tac-safe-html-20261011": "e384a4506a8e62d13161b6b78c92e3149d56c857",
+        "claude/tac-loop-rendering-20261011": "bbbe6b953f1026eb494d094375dedb7e20706e83",
+        "claude/tac-pagehide-dispose-20261011": "b9690835fad601f6fa18f944e9426f3681c5c04a",
+        "claude/tac-pagehide-shared-scenario-20261011": "885fb42c3c9b70d20f2ec2699dcfc19021cb1abf",
+        "claude/tac-route-budget-20261011": "f4847d18e1ed79d8cfcdcb14cde18b192689e867",
+        "claude/go-view-names-20261011": "fe259c9d8bf542b95f8ba899f6086495c40e8af4",
+        "claude/go-omitempty-20261011": "0b3f0af67269cc776dc24cb3c85059aaa6996139",
+        "claude/theme-color-meta-20261011": "f42ff541882a9f31c0deb1407b6e3d19b4823018"
+      }
+    },
+    {
+      "project": "CADUCEUS",
+      "title": "Refactor CADUCEUS to Tachyon build",
+      "local_session_id": "db51e03e-4e53-49b0-9329-364bb8dae110",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGUuBL1LwdXV8UJNfCtLkC1U",
+      "codex_chat_id": "01a12ce6-8651-7311-9a1e-e63a929910f4",
+      "activation_scope": "authorized_takeover_all_unfinished_scope_after_source_process_resource_preflight",
+      "prior_handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215040Z/db51e03e-4e53-49b0-9329-364bb8dae110.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215614Z/db51e03e-4e53-49b0-9329-364bb8dae110.md",
+      "latest_record_at": "2026-10-11T21:55:29.572Z",
+      "latest_status": {
+        "at": "2026-10-11T21:46:41.482Z",
+        "text": "CADUCEUS rewrite in Go\n\n\u2713 Combined app builds and serves; settings, calendar/contacts merged\n\u2713 Large-inbox plan with reader/compose merge ownership\n**\u2713 WSL work checkpointed and handed off to Codex (runner disabled)**\n\u2731 Integration (Mac): IMAP fixture fixed, extension runtime in progress\n\u25cb Freeze integration head, then merge reader, then compose\n\u25cb Large-inbox server phase after the freeze; client phase after reader\n\u2731 Tachyon: navigation hang, loop re-render, looped select, :safe-html"
+      },
+      "latest_reply": {
+        "at": "2026-10-11T21:46:39.944Z",
+        "text": "**WSL checkpoint for this thread: handed off.** None of this thread's jobs are running on WSL now. Its integration agent runs on the Mac only, and I've disabled this thread's WSL runner so nothing new starts there. The two live sessions to IYOR-Surface I can see aren't this thread's: a root `python3` WSL session and a PowerShell `cohesion-14-gate` run.\n\n**Completed on WSL (nothing pending or interrupted):**\n- `ty` builds: the latest is Tachyon develop 4d5057b, at `~/caduceus/tachyon-target/release/ty`, from source in `~/caduceus/tachyon`. The tarballs for each pin are on the Mac in `/Volumes/ANNEX/build/caduceus-work/tachyon-*.tar.gz`.\n- Clone `~/caduceus/repo`, from github.com/d31ma/CADUCEUS, with `go/foundation` checked out. Its deps are vendored and `dist-bin/caduceus` is built.\n- `~/caduceus/bin`: fylo 26.33.02, sesame, ttid and chex, copied from `~/caduceus-fe/bin`.\n- Detached run worktrees `~/caduceus/runs/{go,go-switchover,go-full}` and probes `~/caduceus/probes/*`. These are throwaway checkouts of commits already on GitHub, so they hold no unique work.\n- Route-suite results run there are recorded on the Mac, in `/Volumes/ANNEX/build/caduceus-work/wt/full-logs/wsl-routes*.txt`.\n\n**Scripts:** on the Mac, `/Volumes/ANNEX/build/caduceus-work/wsl-run.sh.handed-off` (the old runner), `wsl-setup.sh` and `wsl-ty-update.sh`. `wsl-run.sh` now refuses to run. I deleted nothing.\n\n**Unresolved approvals:** none from this thread. The WSL restart belongs to the reading-mail thread, under your read-only rule.\n\n**Mac work, unchanged:** the integration agent owns `go/integration` in `/Volumes/ANNEX/build/caduceus-work/wt/go-full`. It's at `d81b1619` (pushed: `e5046d3d`), with uncommitted extension-runtime edits in progress."
+      },
+      "latest_assistant": {
+        "at": "2026-10-11T21:55:24.790Z",
+        "text": "You've hit your weekly limit \u00b7 resets Oct 17 at 5am (America/Toronto)"
+      },
+      "fresh_local_git": [
+        {
+          "path": "/Volumes/ANNEX/build/caduceus-work/wt/go-full",
+          "exists": true,
+          "verified_git_root": "/Volumes/ANNEX/Users/iyor/Library/Developer/Build/caduceus-work/wt/go-full",
+          "head": "d81b1619fe48c926b58cf3538d5c13b635bd3480",
+          "branch": "go/integration",
+          "dirty_paths": [
+            "M client/components/app/shell/tac.html",
+            " M client/components/contacts/view/tac.html",
+            " M client/components/scheduled/page/tac.html",
+            " M client/components/settings/view/tac.html",
+            " M client/models/ExtensionSandbox.go",
+            " M client/services/BrowserPageService.js",
+            "D  client/services/ConfirmationService.js",
+            " M client/services/ExtensionPackageService.js",
+            " M client/services/ExtensionRuntimeService.go",
+            " M client/shared/utils/ExtensionSandboxUtils.go",
+            "?? client/models/ExtensionPluginsLoaded.go",
+            "?? client/models/ExtensionPluginsLoaded.js",
+            "?? client/models/ExtensionSandbox.js",
+            "?? client/shared/utils/ExtensionCommandUtils.go",
+            "?? dist-bin"
+          ]
+        }
+      ],
+      "child_agents": [
+        {
+          "agent_id": "agent-aa40159ede393b62f",
+          "log": "/Users/iyor/.claude/projects/-Volumes-ANNEX-Users-iyor-Library-CloudStorage-Google-Drive-myOrganizations-DELMA-FYLO--claude-worktrees-infallible-curran-2d50b7/db51e03e-4e53-49b0-9329-364bb8dae110/subagents/agent-aa40159ede393b62f.jsonl",
+          "last_at": "2026-10-11T21:55:29.533Z",
+          "latest_assistant": "You've hit your weekly limit \u00b7 resets Oct 17 at 5am (America/Toronto)",
+          "latest_command": {
+            "at": "2026-10-11T21:53:39.239Z",
+            "command": "W=/Volumes/ANNEX/build/caduceus-work; ( $W/heavy.sh $W/wt/full-tools/hold.sh > /dev/null 2>&1 & ); sleep 5; until [ -f $W/wt/full-tools/READY ] || grep -q \"failed to start\" $W/wt/full-logs/e2e/hold-server.log 2>/dev/null; do sleep 3; done; for i in 1 2; do $W/wt/full-tools/snap.sh extensions 'x' 1 | head -8; done"
+          }
+        }
+      ],
+      "background_jobs": [
+        {
+          "owner": "agent-aa40159ede393b62f",
+          "started_at": "2026-10-11T21:18:34.722Z",
+          "description": "Bundle the extension runtime on the Mac",
+          "task_id": "bns322tde",
+          "output_path": "/private/tmp/claude-501/-Volumes-ANNEX-Users-iyor-Library-CloudStorage-Google-Drive-myOrganizations-DELMA-FYLO--claude-worktrees-infallible-curran-2d50b7/db51e03e-4e53-49b0-9329-364bb8dae110/tasks/bns322tde.output",
+          "process_live_verified": false,
+          "mtime": "2026-10-11T21:26:14.133753+00:00",
+          "bytes": 1927,
+          "tail": "te methods, and it stores or returns their results.\nTY1314 client/shared/utils/ExtensionSandboxUtils.go:101 Public method `EnabledTheme` holds control flow: `&&`, `for`, `if`. A public method only coordinates: it calls injected services and private methods, and it stores or returns their results.\nTY1314 client/shared/utils/ExtensionSandboxUtils.go:112 Public method `EnabledPlugins` holds control flow: `&&`, `for`, `if`. A public method only coordinates: it calls injected services and private methods, and it stores or returns their results.\nTY1314 client/shared/utils/ExtensionSandboxUtils.go:136 Public method `Toolbar` holds control flow: `for`. A public method only coordinates: it calls injected services and private methods, and it stores or returns their results.\nTY1314 client/shared/utils/ExtensionSandboxUtils.go:144 Public method `Permissions` holds control flow: `for`, `if`. A public method only coordinates: it calls injected services and private methods, and it stores or returns their results.\nTY1314 client/shared/utils/ExtensionSandboxUtils.go:154 Public method `Failure` holds control flow: `if`. A public method only coordinates: it calls injected services and private methods, and it stores or returns their results.\nTY1314 client/shared/utils/ExtensionSandboxUtils.go:163 Public method `Sandbox` holds control flow: `if`. A public method only coordinates: it calls injected services and private methods, and it stores or returns their results.\nTOTAL 8\n\n[exited with code 0]\n"
+        }
+      ],
+      "last_actions": [
+        {
+          "at": "2026-10-11T21:46:22.127Z",
+          "description": "Check for running WSL jobs from this thread and the lane's local files",
+          "command": "pgrep -fl \"ssh .*IYOR-Surface|wsl-run.sh\" | cut -c1-150; ls /tmp/caduceus-*.sh /tmp/caduceus-*.cmd /tmp/caduceus-*.bundle 2>/dev/null | head; N=/Volumes/ANNEX/build/caduceus-work; ls $N/wsl-*.sh $N/tachyon-*.tar.gz; git -C $N/wt/go-full log --oneline -1; git -C $N/wt/go-full status --short | grep -v '^??' | head"
+        },
+        {
+          "at": "2026-10-11T21:46:29.560Z",
+          "description": "Stop new WSL work from this thread and keep the old script for reference",
+          "command": "N=/Volumes/ANNEX/build/caduceus-work; cp $N/wsl-run.sh $N/wsl-run.sh.handed-off && printf '#!/bin/zsh\\necho \"WSL work for CADUCEUS was handed off to Codex on 2026-10-11; run heavy jobs on the Mac with heavy.sh. The old script is wsl-run.sh.handed-off.\" >&2\\nexit 3\\n' > $N/wsl-run.sh && chmod +x $N/wsl-run.sh; sed -i '' 's/^## Offload to WSL (Samuel.s request)/## Offload to WSL: HANDED OFF to Codex 2026-10-11, do not use (wsl-run.sh now refuses)/' $N/RESUME.md; grep -n \"HANDED OFF\" $N/RESUME.md | cut -c1-90; git -C $N/wt/go-full log --oneline -3 | cat"
+        },
+        {
+          "at": "2026-10-11T21:55:18.787Z",
+          "description": "Inspect the three named processes and their parents, read-only",
+          "command": "for p in 49392 60117 60309; do echo \"== $p\"; ps -o pid,ppid,etime,command -p $p | cut -c1-200 | tail -1; done; echo \"== parents\"; for p in 49392 60117 60309; do pp=$(ps -o ppid= -p $p 2>/dev/null | tr -d ' '); [ -n \"$pp\" ] && ps -o pid,ppid,command -p $pp | tail -1 | cut -c1-200; done; cat /Volumes/ANNEX/build/caduceus-work/MAC-LOCK/pid 2>/dev/null"
+        },
+        {
+          "at": "2026-10-11T21:55:23.628Z",
+          "description": "See what the waiting loop and the e2e server parent are",
+          "command": "ps -o command= -p 49392 | tr '&' '\\n' | grep -v \"^\\s*$\" | tail -4 | cut -c1-300; echo; ps -o pid,ppid,command -p 60250 | tail -1 | cut -c1-200; pp=$(ps -o ppid= -p 60250 | tr -d ' '); ps -o pid,ppid,command -p $pp | tail -1 | cut -c1-250; cat /Volumes/ANNEX/build/caduceus-work/wt/full-tools/hold.sh 2>/dev/null | head -20"
+        }
+      ],
+      "unchanged_dependencies_from_previous_checkpoint": [
+        "Mac integration child remains live and owns dirty extension edits",
+        "Do not create a second app/FYLO writer or shared-file owner",
+        "Reader/compose must use frozen verified integration, not stale pushed pin"
+      ],
+      "takeover_findings": "Mac go/integration has more dirty extension edits than prior checkpoint. Child aa40159ede393b62f launched heavy.sh full-tools/hold.sh at 21:53:39, then waits for READY before snapshots. MAC-LOCK pid file updated at 21:53:44 to 60117; existence is not live-process proof. Inspect existing holder/server before replacements. Freeze integration before reader/compose merges; one authoritative app/FYLO writer. Weekly limit error is observed in both coordinator and integration child at 21:55. The background holder may survive that error; no owner-stop proof exists for it.",
+      "retained_prior_source_evidence": "Mac go/integration at d81b1619; last pushed e5046d3d. WSL ~/caduceus/repo go/foundation; detached runs go/go-switchover/go-full hold pushed commits. WSL ty 4d5057b reported at ~/caduceus/tachyon-target/release/ty."
+    },
+    {
+      "project": "CADUCEUS",
+      "title": "Reading mail and compose",
+      "local_session_id": "1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGPMNMRFCBTMsFTL1bp7YvX2",
+      "codex_chat_id": "01a12ce6-aed5-7530-84ba-75516d0f30e6",
+      "activation_scope": "authorized_takeover_all_unfinished_scope_after_source_process_resource_preflight",
+      "prior_handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215040Z/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215614Z/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md",
+      "latest_record_at": "2026-10-11T21:47:06.271Z",
+      "latest_status": {
+        "at": "2026-10-11T21:46:55.476Z",
+        "text": "Port reading mail and compose to Go\n\n\u2713 Reading mail pushed at 3b8b11e2; compose pushed at f83cd179\n\u2713 Conflict checklist approved by the main thread\n\u2713 WSL restart attempts reported; recovery is with Samuel's assistant\n**\u2713 Final checkpoint written; WSL work handed off to Codex**\n\u25cb go/integration merge, validation, :safe-html move (Codex now)"
+      },
+      "latest_reply": {
+        "at": "2026-10-11T21:46:53.975Z",
+        "text": "This thread's WSL work is now handed off to Codex and closed here; the final checkpoint is [HANDOFF-CHECKPOINT.md](/mnt/project-files/HANDOFF-CHECKPOINT.md). Nothing was deleted or relaunched, and nothing of mine is running.\n\n- **Pins:** go/client-detail 3b8b11e2 and go/client-compose f83cd179 are pushed. Both contain go/client 122ee918 and not go/integration e5046d3d. The WSL worktrees are ~/caduceus-fe/wt-detail and wt-compose.\n- **Pending:** merge go/integration per the approved checklist (reading mail first, once the integration head is frozen), then ty test and the browser flows against go/integration's Go server, then the `:safe-html` move. Neither branch is ready to merge yet.\n- **Unknown until WSL answers:** whether the agents committed anything after those pins or left uncommitted changes. My last note to them, about SameOriginSetup and EmailDetail, never arrived; those directions are only in the checklist.\n- **Approvals still open:** WSL recovery (with your assistant), the `:safe-html` commit, and two compose changes the owners never answered. Those are the shell-owned KeyboardService.js commands and compose's own read of the stored compose prefill."
+      },
+      "latest_assistant": {
+        "at": "2026-10-11T21:47:06.271Z",
+        "text": "I've written the final checkpoint for the reading mail and compose work, handed it to Codex, and marked this thread resolved. Nothing was deleted or relaunched, and nothing I started is still running.\n\n- **Where the branches stand:** `go/client-detail` is pushed at 3b8b11e2 and `go/client-compose` at f83cd179. Both contain go/client 122ee918 but not go/integration e5046d3d. Their worktrees on WSL are `~/caduceus-fe/wt-detail` and `~/caduceus-fe/wt-compose`.\n- **What's left:** merge go/integration using the conflict checklist the main thread approved, reading mail first, and only once the integration head is frozen. Then run the tests and the browser flows against go/integration's Go server, then move email bodies and pasted text onto the `:safe-html` binding. Neither branch is ready to merge yet.\n- **Unknown until WSL comes back:** whether the agents committed anything after those two commits or left changes uncommitted. My last note to them never arrived because WSL had already timed out. It said to keep the shared setup file and put the reader's full message in its own model. Those two instructions now exist only in the checklist.\n- **Still waiting on others:**\n  - WSL recovery, which is with your assistant.\n  - The `:safe-html` commit from the Tachyon thread.\n  - Two compose changes the main thread never answered: new composer commands in the shell's `KeyboardService.js`, and compose reading its stored prefill itself to work around a timing race.\n\nFiles are in /Volumes/ANNEX/build/caduceus-work/fe-wsl:\n- HANDOFF-CHECKPOINT.md\n- INTEGRATION-REVIEW.md"
+      },
+      "fresh_local_git": [],
+      "child_agents": [],
+      "background_jobs": [],
+      "last_actions": [
+        {
+          "at": "2026-10-11T21:46:16.742Z",
+          "description": "Gather exact pins and Mac-side state",
+          "command": "cd /Volumes/ANNEX/build/caduceus-work/wt/fe-shell; for r in origin/go/client-detail origin/go/client-compose wsl/go/client-detail wsl/go/client-compose origin/go/integration origin/go/client; do echo \"$r $(git rev-parse $r)\"; done; git -C /Volumes/ANNEX/build/caduceus-work/wt/fe-shell status --short | head -3; echo \"fe-shell branch: $(git branch --show-current) $(git rev-parse --short HEAD)\"; ls -la /Volumes/ANNEX/build/caduceus-work/fe-wsl | awk '{print $NF}' | tr '\\n' ' '; echo; tail -3 /private/tmp/claude-501/-Volumes-ANNEX-Users-iyor-Library-CloudStorage-Google-Drive-myOrganizations-DELMA-FYLO/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52/tasks/bgp0wdaze.output | head -2"
+        }
+      ],
+      "unchanged_dependencies_from_previous_checkpoint": [
+        "Remote source/dirty and child processes PENDING verification",
+        "Mac integration freeze and actual safe-HTML landing pending",
+        "KeyboardService composer send/discard commands and stored compose prefill ownership decisions unanswered"
+      ],
+      "takeover_findings": "Coordinator closed WSL work with receipt 21:46/21:47, but local remote child HEAD/dirty/process state still unverified after recovery. Preserve possible newer mirrored f9d3e9b reader and 0717f20 compose. Integrated Go server, integration freeze, safe-HTML landing and two compose ownership decisions remain dependencies.",
+      "retained_prior_source_evidence": "Pushed detail 3b8b11e2ebf1b24fb7273104928840ca554a40c9 and compose f83cd179b6219bab5c1ea885d12d9acc24f38ca0. Remote wt-detail/wt-compose may contain later commits or dirty changes. Mirrored reader receipt f9d3e9b at 20:13; compose check refers to 0717f20 at 20:10. These are evidence of possible newer local state, not verified pushed/current pins."
+    }
+  ]
+}

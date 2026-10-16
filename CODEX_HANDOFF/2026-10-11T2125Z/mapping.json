@@ -1,0 +1,344 @@
+{
+  "snapshot_id": "2026-10-11T2125Z",
+  "project": {
+    "name": "CADUCEUS",
+    "claude_project_id": "chan_01MS2GURoJZzwx7pw3gzwsLG",
+    "codex_project_id": null,
+    "canonical_repo": {
+      "path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS",
+      "exists": true,
+      "verified_git_root": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS",
+      "head": "8001ae7339586d939c190714003dbc454cd83efb",
+      "branch": "go/rewrite",
+      "dirty_paths": [
+        "M .DS_Store",
+        " M tests/unit/translation-assets-route.test.js",
+        "?? ..fylo-data.fylo-root-owner.lock",
+        "?? ..fylo-data.fylo-root-owner.lock.json",
+        "?? .dropboxignore",
+        "?? .tachyon/",
+        "?? client/shared/vendor/",
+        "?? coverage.phase2.out"
+      ]
+    },
+    "origin_develop_cached": "refs/remotes/origin/develop",
+    "local_develop": "42a710c5119d0bf6908defa12d96d2e48b58044c",
+    "index_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/INDEX.md",
+    "preserved_files_sha256": {
+      "AGENTS.md": "00b075fbd81c5bc8191cd2ac9555f8527e57079dd252bbf6106ee1ebbdef2cdc",
+      "CLAUDE.md": "00b075fbd81c5bc8191cd2ac9555f8527e57079dd252bbf6106ee1ebbdef2cdc"
+    },
+    "thread_count": 4,
+    "priority_batch_1_count": 3
+  },
+  "threads": [
+    {
+      "project": "CADUCEUS",
+      "implementation_project": "TACHYON",
+      "title": "Async Go services in Tachyon build",
+      "title_verified": false,
+      "title_source": "task label from previously inspected session; current UI title unverified",
+      "claude_project_id": "chan_01MS2GURoJZzwx7pw3gzwsLG",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLG3FXZ37b6W7T5EtZqfkNG5S",
+      "claude_session_id": null,
+      "local_session_id": "a9801503-5f1e-4006-94ad-8298a4bdcdfd",
+      "claude_url": "https://claude.ai/epitaxy/project/chan_01MS2GURoJZzwx7pw3gzwsLG?thread=cmsg_01MS2GURoJZzwx7pw3gzwsLG3FXZ37b6W7T5EtZqfkNG5S",
+      "state": "waiting",
+      "priority_batch": 1,
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md",
+      "actual_repo_root": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/TACHYON",
+      "source_pin_reported": null,
+      "source_pin_object": null,
+      "actual_worktrees": [],
+      "session_wrapper_cwd": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/FYLO",
+      "session_wrapper_is_source": false,
+      "latest_record_at": "2026-10-11T21:30:42.267Z",
+      "latest_status": {
+        "at": "2026-10-11T21:30:36.490Z",
+        "text": "Tachyon gaps for CADUCEUS Go\n\n\u2713 Go binary bodies, long builds, TinyGo stack, 1 MiB HTTP\n\u2713 Page navigation, Go @Needs, streams/sockets, model limits\n\u2713 server.maxbody and CSS variables (TY1364)\n\u2731 Landing safe-HTML (Mac slot busy with another session's RC gate)\n\u2731 Queued: loop/select fix and navigation-hang fix\n\u2731 Queued: theme-color, Go omitempty, Go view-name check (full checks)\n\u25cb Re-run F# and inbox-shaped pagehide checks after WSL recovers\n\u25cb Land route budget\n\u25cb Trim per-service modules and duplicate renders"
+      },
+      "latest_reply": {
+        "at": "2026-10-11T21:11:38.693Z",
+        "text": "Quick update: the Windows WSL box has stopped answering for about 30 minutes, and ANNEX is down to 9 GiB, under the lane's 10 GiB floor. Restarting WSL would kill other sessions' runs there, so I'm leaving it alone. The safe-HTML binding passed its full check on the Mac instead. I'm landing it on develop from the Mac now, and the loop/select fix will follow the same way."
+      },
+      "latest_assistant": {
+        "at": "2026-10-11T21:30:42.267Z",
+        "text": "The three small fixes (theme-color, Go omitempty and the Go view-name check) came back committed but unchecked. Nothing ran on WSL before it went down. I've queued all three to be checked on the Mac and landed on develop together, after the safe-HTML binding and then the loop/select and navigation-hang fixes.\n\nThe Mac check covers formatting, the full lint, each fix's own tests including the Go and TinyGo runtime tests, the website content check and the repository policy, all on the merged code. A fix lands only if all of that passes. The Mac's single heavy-job slot is still held by another session's release check, so nothing new is on develop yet.\n\nWhat each fix does:\n- **Go view names:** a Go page that reads a service member with the wrong capitalisation, like `oauthNotice` for `oAuthNotice`, now fails to build with a \"did you mean\" message instead of silently showing nothing. It only catches case slips, and only for Go services.\n- **Go omitempty:** Go services now follow standard Go JSON tags (`omitempty`, `omitzero`, `string`, `-`) when sending data.\n  - This changes behaviour: a required-field check now rejects an empty string on an `omitempty` field.\n  - The same encoding also writes query values, cache keys and stored entities.\n- **Theme colour:** a `theme_color` in the web app manifest now adds the matching `<meta name=\"theme-color\">` tag to every page.\n\nThe route-budget branch and the inbox-shaped navigation-hang test both still need the Windows machine, so they wait until it is working again."
+      },
+      "session_log": "/Users/iyor/.claude/projects/-Volumes-ANNEX-Users-iyor-Library-CloudStorage-Google-Drive-myOrganizations-DELMA-FYLO/a9801503-5f1e-4006-94ad-8298a4bdcdfd.jsonl",
+      "recent_human_scope": [
+        {
+          "at": "2026-10-11T20:31:45.999Z",
+          "text": "What&#39;s happening here? Um, it seems you&#39;ve been stuck for a while on this state."
+        },
+        {
+          "at": "2026-10-11T20:33:16.203Z",
+          "text": "Um, okay. What about the the this machine, this Mac mini machine? Is there, you know, space for it to run it instead of waiting for Windows?"
+        }
+      ],
+      "dormant": true,
+      "details": {
+        "pending": "Land safe-html, loop/select and navigation patches only after merged-tree checks; route budget, theme-color, omitempty, Go view-name checks; later module trim, repeated renders and retry-after-cancel mismatch.",
+        "next": "Inspect archived commit pins and latest landing receipts after Claude ownership ends. Do not requeue WSL jobs until the single restart owner reports recovery and inventories interruptions.",
+        "dependencies": [
+          "Mac FIFO heavy slot; WSL recovery owned by Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc (parent-verified current owner)",
+          "Main CADUCEUS integration and reader need sanitized HTML and renderer fixes",
+          "Navigation real-browser CADUCEUS repro still unverified",
+          "Current WSL recovery belongs directly to Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc (parent-verified current owner); Claude and this dormant mirror must issue no further restart."
+        ],
+        "tests": "Sanitizer Chromium: 20 attacks refused at 17:05; queued final checks. Navigation regression reproduced old behavior under Go/TinyGo and passed focused Windows gates, but not verified in a real CADUCEUS browser. Loop/select Chromium green. Route budget simulated ~115\u2013136 KB versus 200 KB; F# baseline comparison remains.",
+        "approvals": [
+          "Sanitized HTML binding with explicit sanitization approved and delivered 16:43; do not resend",
+          "12 MiB request size/CSS variables/type limits already landed",
+          "No new WSL restart ownership for this thread"
+        ],
+        "hints": [],
+        "evidence": [
+          "/Volumes/ANNEX/build/caduceus-work/safe-html",
+          "/Volumes/ANNEX/build/caduceus-work/tac-pagehide",
+          "/Volumes/ANNEX/build/caduceus-work/tac-loops",
+          "/Volumes/ANNEX/build/caduceus-work/tac-budget"
+        ]
+      },
+      "initial_prompt": "Dormant mirror of Claude CADUCEUS / Async Go services in Tachyon build (thread cmsg_01MS2GURoJZzwx7pw3gzwsLG3FXZ37b6W7T5EtZqfkNG5S). Handoff: /Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md. Do not run tools, edit files, build, resume jobs, send messages, merge, push, release or restart anything now. Acknowledge standby only. On explicit later takeover, first read this handoff and refresh session/source/dirty-state/ownership/resource evidence; Claude and local jobs may still be active. Historical completion and approvals do not authorize duplicate work.",
+      "current_wsl_recovery_owner": "Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc (parent-verified current owner)",
+      "exported_source_pins": [
+        {
+          "directory": "/Volumes/ANNEX/build/caduceus-work/safe-html",
+          "git_worktree_verified": false,
+          "commit.txt": "e384a4506a8e62d13161b6b78c92e3149d56c857",
+          "base-commit.txt": "4d5057b085c76f25532927dbf86f9806206568a8"
+        },
+        {
+          "directory": "/Volumes/ANNEX/build/caduceus-work/tac-pagehide",
+          "git_worktree_verified": false,
+          "commit.txt": "b9690835fad601f6fa18f944e9426f3681c5c04a",
+          "base-commit.txt": "6381e21e63767b20c1e899f183849203d734a8e1"
+        },
+        {
+          "directory": "/Volumes/ANNEX/build/caduceus-work/tac-loops",
+          "git_worktree_verified": false,
+          "commit.txt": "bbbe6b953f1026eb494d094375dedb7e20706e83",
+          "base-commit.txt": "6381e21e63767b20c1e899f183849203d734a8e1"
+        },
+        {
+          "directory": "/Volumes/ANNEX/build/caduceus-work/tac-budget",
+          "git_worktree_verified": false,
+          "base-commit.txt": "6381e21e63767b20c1e899f183849203d734a8e1"
+        }
+      ]
+    },
+    {
+      "project": "CADUCEUS",
+      "implementation_project": "CADUCEUS",
+      "title": "Refactor CADUCEUS to Tachyon build",
+      "title_verified": true,
+      "title_source": "recorded Claude project inventory 2026-10-10T20:16:12.668Z",
+      "claude_project_id": "chan_01MS2GURoJZzwx7pw3gzwsLG",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGUuBL1LwdXV8UJNfCtLkC1U",
+      "claude_session_id": "cse_01DAT4bUDk18nqc2sRCcd4bU",
+      "local_session_id": "db51e03e-4e53-49b0-9329-364bb8dae110",
+      "claude_url": "https://claude.ai/epitaxy/project/chan_01MS2GURoJZzwx7pw3gzwsLG?thread=cmsg_01MS2GURoJZzwx7pw3gzwsLGUuBL1LwdXV8UJNfCtLkC1U",
+      "state": "waiting",
+      "priority_batch": 1,
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/db51e03e-4e53-49b0-9329-364bb8dae110.md",
+      "actual_repo_root": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS",
+      "source_pin_reported": "e5046d3d",
+      "source_pin_object": "e5046d3d7b20f6dd66503efc4528b120db5010b3",
+      "actual_worktrees": [],
+      "session_wrapper_cwd": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/FYLO/.claude/worktrees/infallible-curran-2d50b7",
+      "session_wrapper_is_source": false,
+      "latest_record_at": "2026-10-11T21:28:04.570Z",
+      "latest_status": {
+        "at": "2026-10-11T21:11:48.860Z",
+        "text": "CADUCEUS rewrite in Go\n\n\u2713 Combined app builds and serves; settings, calendar/contacts merged\n\u2713 Mail up to 11 MiB accepted; EML import, presence, OAuth, contacts fixed\n**\u2713 Large-inbox plan now includes reader/compose merge ownership**\n\u2731 Integration queue: IMAP failure trace, then the extension runtime\n\u25cb Freeze integration head, then merge reader, then compose\n\u25cb Large-inbox server phase after the freeze; client phase after reader\n\u2731 Tachyon: navigation hang, loop re-render, looped select, :safe-html"
+      },
+      "latest_reply": {
+        "at": "2026-10-11T21:11:47.208Z",
+        "text": "I've folded the reader and compose merge notes into the same plan as a new section 7, keeping the reader thread's checklist: [LARGE-INBOX-PLAN](/mnt/project-files/LARGE-INBOX-PLAN-20261011T211136-1d5a.md).\n\n- **One owner per shared file.**\n  - The reader owns its screens, `EmailDetail`, `translation-languages.js` and `email-content-protection.js`. Compose owns its screens and `rich-compose-editor.js`.\n  - This thread owns `Email.go`, every `client/remotes` file, `SameOriginSetup`, `ToastRequested.js` and the other shell events, `KeyboardService.js`, `GO_FRONTEND.md`, and all server and route-test files.\n  - In its merge, each area starts from integration's remote files and re-adds only its own methods, once. After that, changes go through the owner.\n- **Merge order.** First the integration head holds still, once its IMAP trace and extension runtime are validated. Then the reader merges. Then compose merges on top of the reader, so `ToastRequested.js` and `translation-languages.js` are resolved once, not twice.\n- **Large-inbox work.** The server phase touches no reader or compose files, so it can start after the head freezes. The client phase waits until the reader has merged.\n\nDefault responses stay unchanged throughout. There's no storage migration and no WSL restart, and implementation stays blocked until each step is verified. I ran no builds, merges or pushes."
+      },
+      "latest_assistant": {
+        "at": "2026-10-11T21:11:56.685Z",
+        "text": "I've added the reader and compose merge notes to the existing large-inbox plan as a new section 7: [LARGE-INBOX-PLAN](/mnt/project-files/LARGE-INBOX-PLAN-20261011T211136-1d5a.md). It keeps the reader thread's own checklist, including the shared `SameOriginSetup` and the separate `EmailDetail` model.\n\n**One owner per shared file:**\n\n| Owner | Files |\n|---|---|\n| Reader | its screens, `EmailDetail`, `translation-languages.js`, `email-content-protection.js` |\n| Compose | its screens, `rich-compose-editor.js` |\n| This thread | `Email.go`, every `client/remotes` file, `SameOriginSetup`, `ToastRequested.js` and the other shared app-frame event files, `KeyboardService.js`, `GO_FRONTEND.md`, all server and route-test files |\n\nEach area's merge starts from integration's version of the remote files and adds back only its own methods. From then on, changes to those files go through their owner.\n\n**Merge order:**\n1. **Freeze the integration branch.** That happens once its agent's current work (the connected-mailbox sync bug, then the extension plugin system) is validated.\n2. **The reader merges.**\n3. **Compose merges second.** It merges the integration branch with the reader already in it, so `ToastRequested.js` and `translation-languages.js` only need resolving once.\n\n**Where the large-inbox work fits:**\n- **Server phase:** it touches none of the reader's or compose's files, so it can start once the branch is frozen.\n- **Client phase:** it touches `Email.go` and the inbox, threads and search remotes, so it waits until the reader has merged.\n\nDefault responses stay unchanged throughout. There's no storage migration and no restart of the Windows machine. Nothing starts until each step is verified, and I ran no builds, merges or pushes."
+      },
+      "session_log": "/Users/iyor/.claude/projects/-Volumes-ANNEX-Users-iyor-Library-CloudStorage-Google-Drive-myOrganizations-DELMA-FYLO--claude-worktrees-infallible-curran-2d50b7/db51e03e-4e53-49b0-9329-364bb8dae110.jsonl",
+      "recent_human_scope": [
+        {
+          "at": "2026-10-11T20:51:30.454Z",
+          "text": "While extension bundle validation waits, prepare a read-only plan for the identified large-inbox failure where listing whole message bodies exceeds response size. Map the inbox-list route, response model and reader/compose consumers; propose list summaries and separately fetched bodies with compatibility and test cases. Do not duplicate the IMAP fixture investigation completed around 20:00 UTC or alter shared client/API contracts. Keep existing owners and queued validation intact. No second app/FYLO writer, new builds, agents, merge or push. Return the plan and ownership boundaries."
+        },
+        {
+          "at": "2026-10-11T21:10:45.078Z",
+          "text": "The reader thread has already added SameOriginSetup and separate EmailDetail to its checklist, so keep that alignment rather than restart planning. Its local review pins reader 3b8b11e2 and compose f83cd179 against integration e5046d3d: 3 reader conflicts, 6 compose conflicts, plus shared ToastRequested.js and translation-languages.js overlap. Consolidate these ownership/conflict notes into your existing additive plan for tenant-filtered pagination, summary Email, detail reads and counts, with one owner per shared file and unchanged default responses. Keep implementation blocked on verified integration state and existing validation. No competing edits, storage migration, new heavy tests, WSL restart, merge or push."
+        }
+      ],
+      "dormant": true,
+      "details": {
+        "pending": "Validate current extension/runtime integration; preserve/additive large-inbox plan; freeze integration head, integrate reader then compose; server pagination/summary/counts phase only after verified integration state.",
+        "next": "Read latest large-inbox plan and current go/integration/head state. Main thread owns shared remotes, Email summary, SameOriginSetup, shell events, KeyboardService, GO_FRONTEND and server/tests; do not duplicate integration owner edits.",
+        "dependencies": [
+          "Existing integration agent and bundle validation",
+          "Reader owns EmailDetail/reader pages and translation/protection scripts; compose owns its pages/rich editor",
+          "Reader then compose merge order; default responses unchanged; no storage migration",
+          "Current WSL recovery belongs directly to Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc (parent-verified current owner); Claude and this dormant mirror must issue no further restart."
+        ],
+        "tests": "Mail \u226411 MiB accepted; 4/4 incoming-mail and 2/2 EML import passed. IMAP fixture CAPABILITY correction committed 20:00; extensions validation pending. Plan finds 32 MiB installation-wide FYLO read cap before 16 MiB response cap. Code has not implemented the plan.",
+        "approvals": [
+          "21:10 plan consolidation only; implementation stays blocked on verified integration and existing validation",
+          "Data/body migration requires separate approval",
+          "Current WSL recovery owner: Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc (parent-verified current owner). This supersedes the earlier Claude reader/compose assignment. Claude and all dormant mirrors must issue no further restart and must not repeat or consume the earlier one-shot approval."
+        ],
+        "hints": [
+          "/Volumes/ANNEX/build/caduceus-work/wt/go-full"
+        ],
+        "evidence": [
+          "/Volumes/ANNEX/build/caduceus-work/LARGE-INBOX-PLAN.md",
+          "/Volumes/ANNEX/build/caduceus-work/wt/full-logs"
+        ]
+      },
+      "initial_prompt": "Dormant mirror of Claude CADUCEUS / Refactor CADUCEUS to Tachyon build (thread cmsg_01MS2GURoJZzwx7pw3gzwsLGUuBL1LwdXV8UJNfCtLkC1U). Handoff: /Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/db51e03e-4e53-49b0-9329-364bb8dae110.md. Do not run tools, edit files, build, resume jobs, send messages, merge, push, release or restart anything now. Acknowledge standby only. On explicit later takeover, first read this handoff and refresh session/source/dirty-state/ownership/resource evidence; Claude and local jobs may still be active. Historical completion and approvals do not authorize duplicate work.",
+      "current_wsl_recovery_owner": "Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc (parent-verified current owner)"
+    },
+    {
+      "project": "CADUCEUS",
+      "implementation_project": "CADUCEUS",
+      "title": "Reading mail and compose",
+      "title_verified": false,
+      "title_source": "task label from previously inspected session; current UI title unverified",
+      "claude_project_id": "chan_01MS2GURoJZzwx7pw3gzwsLG",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGPMNMRFCBTMsFTL1bp7YvX2",
+      "claude_session_id": null,
+      "local_session_id": "1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52",
+      "claude_url": "https://claude.ai/epitaxy/project/chan_01MS2GURoJZzwx7pw3gzwsLG?thread=cmsg_01MS2GURoJZzwx7pw3gzwsLGPMNMRFCBTMsFTL1bp7YvX2",
+      "state": "waiting",
+      "priority_batch": 1,
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md",
+      "actual_repo_root": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS",
+      "source_pin_reported": "3b8b11e2",
+      "source_pin_object": "3b8b11e2ebf1b24fb7273104928840ca554a40c9",
+      "actual_worktrees": [],
+      "session_wrapper_cwd": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/FYLO",
+      "session_wrapper_is_source": false,
+      "latest_record_at": "2026-10-11T21:31:24.580Z",
+      "latest_status": {
+        "at": "2026-10-11T21:27:16.571Z",
+        "text": "Restart WSL on IYOR-Surface (approved once)\n\n\u2713 Took the single restart role; coordinator told the other threads\n\u2713 Tried to save WSL /tmp from Windows (nothing reachable; home files persist)\n\u2713 Ran wsl --shutdown, then --force (WSL service still hung, VM still up)\n\u2731 Restarting the WSL service once\n\u25cb Start Ubuntu-24.04-ANNEX and verify it responds\n\u25cb Inventory interrupted tasks before resuming"
+      },
+      "latest_reply": {
+        "at": "2026-10-11T21:13:27.583Z",
+        "text": "I need you to decide whether WSL can be restarted. The status query from 20:31 UTC came back with an error, \"Wsl/Service/ERROR_TIMEOUT\", so the distro on IYOR-Surface isn't responding. That means I can't see whether the agents' go/integration merges or tests finished, or whether they're still running. You asked for no WSL restart, so I've left it alone. Until you allow a restart or it recovers, the WSL state stays unverified. The pushed branches (detail 3b8b11e2, compose f83cd179) and the checklist on the Mac are unaffected."
+      },
+      "latest_assistant": {
+        "at": "2026-10-11T21:13:32.670Z",
+        "text": "I need you to decide whether WSL on the Windows machine (IYOR-Surface) can be restarted. My status check from 20:31 UTC came back with \"Wsl/Service/ERROR_TIMEOUT\", so the distro isn't responding.\n\nBecause of that, I can't see whether either agent finished merging `go/integration` or running tests, or whether they're still running. You asked for no WSL restart, so I've left it alone, and that state stays unknown until you allow one or it recovers.\n\nUnaffected by the outage:\n- **Pushed branches:** reading mail (`go/client-detail` 3b8b11e2) and compose (`go/client-compose` f83cd179).\n- **Checklist:** the review file on the Mac, which the main thread has approved. It now says behaviour checks run against go/integration's Go server, and the merge waits for a frozen integration head, reading mail first, then compose."
+      },
+      "session_log": "/Users/iyor/.claude/projects/-Volumes-ANNEX-Users-iyor-Library-CloudStorage-Google-Drive-myOrganizations-DELMA-FYLO/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.jsonl",
+      "recent_human_scope": [
+        {
+          "at": "2026-10-11T20:31:14.173Z",
+          "text": "Um, merging shouldn&#39;t take this long."
+        },
+        {
+          "at": "2026-10-11T20:52:07.615Z",
+          "text": "While existing WSL status queries and tests are pending, review locally available branch snapshots for integration work. Record exact commits and observation dates, identify reader/compose overlap with go/integration, and prepare a conflict-resolution and validation checklist. Preserve ownership and distinguish code on go/client from unverified integration/test completion. Do not duplicate the pending remote query, merge or alter shared files. Report locally established facts and remaining dependencies."
+        },
+        {
+          "at": "2026-10-11T21:11:16.856Z",
+          "text": "Your checklist already preserves SameOriginSetup, summary Email and separate EmailDetail; keep that alignment. Refactor\u2019s plan adds tenant-filtered paged FYLO reads, opt-in summaries and /inbox/counts while preserving default responses. Refactor owns server/list/sidebar/search work; this thread owns reader detail and compose. I\u2019ve asked Refactor to consolidate your pinned conflict findings. Update only the existing checklist with one owner and proposed resolution for each shared-file conflict, including ToastRequested.js and translation-languages.js; do not restart planning or edit shared code. Implementation remains blocked on verified integration state and existing validation. No duplicate WSL query, WSL restart, new heavy tests, storage migration, merge or push."
+        },
+        {
+          "at": "2026-10-11T21:17:51.727Z",
+          "text": "Samuel explicitly approves the WSL restart on IYOR-Surface despite unknown active jobs and the risk of terminating runs or losing unfinished results. Coordinate a single restart owner with the other threads and preserve any accessible logs first, without delaying indefinitely on the hung distro. This authorizes the normal WSL shutdown/restart needed to restore Ubuntu-24.04-ANNEX, including its effect on running distributions. It does not authorize a Windows reboot, data deletion, security-setting changes or repeated restart loops. Verify WSL responds afterward and inventory interrupted tasks before resuming them; report the outcome and any further blocker."
+        },
+        {
+          "at": "2026-10-11T21:29:03.818Z",
+          "text": "Do not issue further shutdown attempts, force commands, service resets or Windows reboot without reporting the current outcome and obtaining additional approval. Preserve the existing attempt&#39;s status and use read-only checks to determine whether it completed. Report exact blocker and next recovery option; do not run a restart loop."
+        }
+      ],
+      "dormant": true,
+      "details": {
+        "pending": "Await the assistant SSH recovery owner outcome; reconcile actual remote reader/compose state; reading mail then compose integration remains pending with validation against the integrated Go server. Claude must issue no further restart.",
+        "next": "First inspect the assistant SSH recovery outcome and inventory of interrupted jobs. Do not issue shutdown, service restart or Windows reboot. Preserve remote branch work, the local checklist and summary/detail contract; reconcile actual remote state before any takeover implementation.",
+        "dependencies": [
+          "WSL query returned Wsl/Service/ERROR_TIMEOUT at 21:13",
+          "Normal shutdown pending at 21:20; no successful recovery receipt at snapshot",
+          "Safe-html final validation and a coordinated frozen go/integration head",
+          "Current WSL recovery belongs directly to Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc (parent-verified current owner); Claude and this dormant mirror must issue no further restart."
+        ],
+        "tests": "Cached detail 3b8b11e2 and compose f83cd179 contain go/client 122ee918; integration e5046d3d 115 commits ahead. Dry-run: 3 detail conflicts, 6 compose conflicts, plus ToastRequested.js and translation-languages.js overlap. Full tests/remote merges remain unverified.",
+        "approvals": [
+          "Historical user approval at 21:17:51 allowed one WSL recovery attempt. Current ownership has since transferred to the assistant SSH task; that historical permission must not be reused by Claude or this mirror.",
+          "No Windows reboot, deletion, security changes or repeated restart loops",
+          "Verify response and inventory interrupted jobs before resuming"
+        ],
+        "hints": [],
+        "evidence": [
+          "/Volumes/ANNEX/build/caduceus-work/fe-wsl/INTEGRATION-REVIEW.md",
+          "/Volumes/ANNEX/build/caduceus-work/fe-wsl",
+          "/Users/iyor/.claude/projects/-home-ayode-caduceus-fe-wt-compose/ddb22972-3f61-45c4-a54d-f58b66bfab54.jsonl",
+          "/Users/iyor/.claude/projects/-home-ayode-caduceus-fe-wt-detail/d303166f-520c-414a-b6e7-adab295a6ff5.jsonl"
+        ]
+      },
+      "initial_prompt": "Dormant mirror of Claude CADUCEUS / Reading mail and compose (thread cmsg_01MS2GURoJZzwx7pw3gzwsLGPMNMRFCBTMsFTL1bp7YvX2). Handoff: /Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md. Do not run tools, edit files, build, resume jobs, send messages, merge, push, release or restart anything now. Acknowledge standby only. On explicit later takeover, first read this handoff and refresh session/source/dirty-state/ownership/resource evidence; Claude and local jobs may still be active. Historical completion and approvals do not authorize duplicate work.",
+      "current_wsl_recovery_owner": "Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc (parent-verified current owner)",
+      "remote_worktrees": [
+        {
+          "path": "/home/ayode/caduceus-fe/wt-detail",
+          "branch": "go/client-detail",
+          "reported_pin": "3b8b11e2",
+          "current_state_verified": false
+        },
+        {
+          "path": "/home/ayode/caduceus-fe/wt-compose",
+          "branch": "go/client-compose",
+          "reported_pin": "f83cd179",
+          "current_state_verified": false
+        }
+      ]
+    },
+    {
+      "project": "CADUCEUS",
+      "implementation_project": "CADUCEUS",
+      "title": "Settings and calendar/contacts",
+      "title_verified": true,
+      "title_source": "Previously inspected Claude UI; completion corroborated by coordinator at 17:54 UTC",
+      "claude_project_id": "chan_01MS2GURoJZzwx7pw3gzwsLG",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGKVwQUWNxSPN9WCAciXNZTu",
+      "claude_session_id": null,
+      "local_session_id": null,
+      "state": "completed",
+      "priority_batch": 2,
+      "actual_repo_root": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS",
+      "source_pin_reported": "settings 0732065; calendar/contacts 7c274c3",
+      "source_pin_object": null,
+      "actual_worktrees": [],
+      "session_wrapper_cwd": null,
+      "session_wrapper_is_source": false,
+      "latest_record_at": "2026-10-11T17:54:08.594Z",
+      "latest_status": {
+        "at": "2026-10-11T17:54:08.594Z",
+        "text": "Coordinator verified both branches in go/integration; waiting on nothing."
+      },
+      "latest_reply": null,
+      "latest_assistant": null,
+      "session_log": null,
+      "recent_human_scope": [],
+      "dormant": true,
+      "details": {
+        "pending": "None; mirror historical completion only.",
+        "next": "Remain dormant; no task to resume.",
+        "dependencies": [],
+        "tests": "Earlier cloud report: settings 283/283 and calendar/contacts 272/272. Latest completion was coordinator ancestry verification, not a fresh test run.",
+        "approvals": [
+          "No execution granted by migration."
+        ],
+        "evidence": [
+          "/Users/iyor/.claude/projects/-Volumes-ANNEX-Users-iyor-Library-CloudStorage-Google-Drive-myOrganizations-DELMA-FYLO--claude-worktrees-infallible-curran-2d50b7/db51e03e-4e53-49b0-9329-364bb8dae110.jsonl"
+        ]
+      },
+      "claude_url": "https://claude.ai/epitaxy/project/chan_01MS2GURoJZzwx7pw3gzwsLG?thread=cmsg_01MS2GURoJZzwx7pw3gzwsLGKVwQUWNxSPN9WCAciXNZTu",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/settings-calendar-contacts.md",
+      "initial_prompt": "Dormant completed mirror of CADUCEUS / Settings and calendar/contacts (Claude thread cmsg_01MS2GURoJZzwx7pw3gzwsLGKVwQUWNxSPN9WCAciXNZTu). Handoff: /Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T2125Z/settings-calendar-contacts.md. Do not run tools or resume work. Acknowledge standby only; there is no current task to execute."
+    }
+  ]
+}

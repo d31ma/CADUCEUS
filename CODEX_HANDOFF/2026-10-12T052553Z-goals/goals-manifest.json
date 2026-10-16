@@ -1,0 +1,221 @@
+{
+  "schema_version": 6,
+  "checkpoint_id": "2026-10-12T052553Z-goals",
+  "observed_at": "2026-10-12T05:25:53.182847+00:00",
+  "goals_count": 9,
+  "policy": {
+    "takeover": "Full unfinished-work takeover authorized21:52UTC Oct11. Historical standby-only and old Claude-owner claims are superseded for these goals; unrelated old workers stay stopped.",
+    "resource": "Do not copy stale ANNEX-below-floor holds. Independent approved cleanup at05:10UTC Oct12 reported CORE15.302GiB/ANNEX21.615GiB. SWARX admission subsequently used15.292/21.615. These are timestamped receipts, not perpetual capacity guarantees. Latest SWARX goal card confirms build cleanup and slot release; all further heavy operations need fresh parent admission.",
+    "windows": "F:/WSL safety holds remain real. Windows PowerShell execution-policy denial for stage-source.ps1 remains real; no retry/alternate policy workaround is approved. WSL recovery remains assistant-owned with no additional force/retry grant.",
+    "access": "Respect access prompts/denials; no automatic click-through or alternate route. New document reads were supported and successful; no application was launched.",
+    "app": "SWARX remains closed. Later UI qualification requires separate approval for exact artifact, at most one instance; close existing before replacement launch.",
+    "closure": "This pass defines goals only. It performs no resolution, Claude relay, archival, source/build/test/deployment action. Parent verifies accepted original scope, exact identity and closure receipt before archiving. Original merge/release/deployment requirements cannot disappear behind a partial passing milestone."
+  },
+  "goals": [
+    {
+      "project": "CADUCEUS",
+      "local_session_id": "a9801503-5f1e-4006-94ad-8298a4bdcdfd",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLG3FXZ37b6W7T5EtZqfkNG5S",
+      "codex_chat_id": "01a12ce6-5b1f-71ba-9c28-a0d1d0e350e8",
+      "title": "Async Go services in Tachyon build",
+      "codex_cwd": "/Users/iyor/Documents/Codex/2026-10-11/task-7",
+      "goal_card_turns": [
+        {
+          "id": "01a12e87-1e9b-7205-b8ec-34a0edf71a18",
+          "status": "completed",
+          "startedAt": 1791781970,
+          "completedAt": 1791782007,
+          "messages": [
+            {
+              "text": "**Goal:** Qualify the original Tachyon fixes needed by CADUCEUS, record their exact integration status, and close only this thread\u2019s remaining work.\n\n**Completion checklist**\n\n- Confirm whether safe-HTML, loop/select, navigation-hang, theme-color, Go `omitempty` and Go view-name fixes have since integrated. Qualify remaining changes on their final combined source; avoid duplicate application.\n- Complete the F# baseline comparison for route-budget candidate `f4847d18\u2026`.\n- Complete the inbox-shaped shared pagehide scenario at `885fb42c3\u2026`.\n- Complete Firefox and WebKit loop/select gates at `bbbe6b953\u2026`.\n- Account for the original later items: per-service module trimming, repeated renders and retry-after-cancel mismatch. Each needs completed evidence or an explicit disposition from the parent.\n\n**Latest verified evidence**\n\n- **Completed Mac repair:** one-file structure fix at base `aaf0e354\u2026`; unchanged policy limits pass. Both Swift lifetime tests passed, exit 0. Repair remains uncommitted in the reserved worktree; the heavy slot was released.\n- **Partial Mac qualification:** safe-HTML standalone checks and Chromium loop/select checks passed. Combined landing and the three small fixes were not confirmed integrated at the last inspection.\n- **Already recorded as integrated:** earlier Go/navigation/request-limit work, Go dependency injection, streams/sockets, model limits, and server body/CSS-variable changes. Preserve those results rather than reopening them.\n\n**Blockers:** WSL access and qualification remain under the USB-storage safety hold. Fresh source/integration reconciliation is still needed before further execution.\n\n**Next executable step:** after parent authorization, inspect Mac-local commit ancestry and receipts to produce the remaining-only patch/gate list. Schedule bounded validation through the parent; keep WSL paused until explicit clearance.\n\nBroader native-platform RC qualification, CADUCEUS integration, WSL recovery, deployment and release exceed this thread\u2019s original scope.\n\n**Whole-task status: unfinished.** The structure-repair subset is qualified; that does not complete the matching Claude task. No resolution or archival performed.",
+              "phase": "final_answer"
+            }
+          ]
+        },
+        {
+          "id": "01a12d10-6999-737d-b73b-66a4610df7ed",
+          "status": "completed",
+          "startedAt": 1791757414,
+          "completedAt": 1791757420,
+          "messages": [
+            {
+              "text": "Remote inspection and WSL work remain paused. The completed Mac validation stands; this lane is idle.",
+              "phase": "final_answer"
+            }
+          ]
+        }
+      ],
+      "goal": "Qualify and account for all remaining original Tachyon fixes required by CADUCEUS, without reopening integrated work.",
+      "acceptance_checks": [
+        "Reconcile exact integration status of safe-HTML, loop/select, navigation-hang, theme-color, Go omitempty and view-name fixes; qualify remaining changes on their final combined source.",
+        "Complete F# base comparison for route budget f4847d18, inbox-shaped pagehide scenario885fb42c3, and Firefox/WebKit loop/select gates bbbe6b953 when storage clearance permits.",
+        "Account for original per-service trimming, repeated renders and retry-after-cancel mismatch through evidence or explicit approved follow-up disposition.",
+        "Record final landing/integration status and exact commands; preserve ownership and any applicable landing authority."
+      ],
+      "current_evidence": [
+        "Uncommitted one-file structure repair at APPLE base aaf0e354 passed unchanged policy limits and both Swift lifetime tests; heavy slot released.",
+        "Safe-HTML standalone and Chromium loop/select subsets passed. Combined landing and three small fixes were not verified integrated at last inspection.",
+        "Earlier Go/navigation/DI/streams/sockets/model/body/CSS work is already recorded integrated."
+      ],
+      "unresolved_blockers": [
+        "Fresh remaining-only ancestry and source reconciliation.",
+        "Deferred WSL/browser/F# qualification remains under storage hold.",
+        "Later original renderer/module items need explicit disposition; registry repair subset is not task completion."
+      ],
+      "next_step": "Inspect permitted Mac-local ancestry and receipts to produce a remaining-only patch/gate list, including accepted task31 dependency. Schedule each bounded execution through parent.",
+      "closure_prerequisite": "Parent verifies every original remaining item completed or explicitly dispositioned, with required integration/landing under current authority; then resolve the exact Async Claude thread and archive its matching chat. RC/recovery/release remain separately owned.",
+      "status": "unfinished",
+      "prior_checkpoint": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T232213Z/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md",
+      "receipt_paths": [],
+      "downstream_owner": null,
+      "closure_claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLG3FXZ37b6W7T5EtZqfkNG5S",
+      "mapping_note": "Exact historical Claude-to-Codex identity retained. Parent must verify actual completion/resolution state; handed-off/idle labels are insufficient.",
+      "goal_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-12T052553Z-goals/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md"
+    },
+    {
+      "project": "CADUCEUS",
+      "local_session_id": "db51e03e-4e53-49b0-9329-364bb8dae110",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGUuBL1LwdXV8UJNfCtLkC1U",
+      "codex_chat_id": "01a12ce6-8651-7311-9a1e-e63a929910f4",
+      "title": "Refactor CADUCEUS to Tachyon build",
+      "codex_cwd": "/Users/iyor/Documents/Codex/2026-10-11/task-8",
+      "goal_card_turns": [
+        {
+          "id": "01a12e8c-f29d-7288-bbfc-3a074dc6c1ff",
+          "status": "inProgress",
+          "startedAt": 1791782352,
+          "completedAt": null,
+          "messages": []
+        },
+        {
+          "id": "01a12e87-33ca-7355-a1b6-03ef10953afe",
+          "status": "completed",
+          "startedAt": 1791781976,
+          "completedAt": 1791782301,
+          "messages": [
+            {
+              "text": "I\u2019ll define the finish line from this integration thread\u2019s original scope and current evidence, separating required acceptance checks from follow-up work. I\u2019ll keep the current holds in place and return the goal card without starting validation.",
+              "phase": "commentary"
+            },
+            {
+              "text": "**CADUCEUS integration \u2014 not complete.**\n\nFinish line:\n\n- Pass all **326 cases** after the reviewed screenshot correction.\n- Preserve the passing mailbox/runtime regressions and browser lifecycle evidence.\n- Close the original IMAP acceptance and required frontend/backend checks on final source/tool pins.\n- Establish a qualified integration pin, then complete the agreed **reader \u2192 compose** reconciliation with their owners.\n\nCurrent evidence: **324/325 passed** before the correction; all **11 mailbox and five runtime cases passed**. The correction is applied, **19 hashes verified**, production unchanged. Its validation remains unrun.\n\nBrowser extension toast rendering is in scope and already demonstrated. Additional **desktop/native-companion toast delivery is a separate follow-up**. Requiring 100% method coverage, production release/soak qualification or large-inbox implementation would expand this finish line.\n\nNext step: after SWARX and explicit admission, run the prepared 326-case plan with fresh resource, ownership and cache checks.\n\nThe cleanup subtask is complete; the whole integration task is not. Holds remain unchanged, and I have not resolved or archived anything.\n\n[Documented goal card](/Users/iyor/Documents/Codex/2026-10-11/task-8/INTEGRATION_GOAL_CARD.md)",
+              "phase": "final_answer"
+            }
+          ]
+        },
+        {
+          "id": "01a12e7c-05cc-77cd-904b-5e20d196cf51",
+          "status": "completed",
+          "startedAt": 1791781243,
+          "completedAt": 1791781632,
+          "messages": [
+            {
+              "text": "I\u2019ll revalidate the unchanged allowlist, every target\u2019s contents, and current process/open-file ownership before deleting only the approved CADUCEUS paths. Then I\u2019ll record disk recovery and independently verify removal and preservation. I won\u2019t run tests or regenerate outputs; SWARX remains next.",
+              "phase": "commentary"
+            },
+            {
+              "text": "Revalidation passed: the 135 runtime folders contain only their single native binary, and `handlers-v1` contains the same 148 binary artifacts. No running consumers or open handles were found. I\u2019ll now remove those exact targets and journal each path.",
+              "phase": "commentary"
+            },
+            {
+              "text": "Deletion completed: only the approved cache and 135 binary-only runtime folders were removed. CORE free space rose from **12.116 GiB to 14.475 GiB**, a measured **2.359 GiB recovery**. I\u2019m independently checking target absence and preservation before handing the space verification back to the parent.",
+              "phase": "commentary"
+            },
+            {
+              "text": "Approved CADUCEUS cleanup completed: `handlers-v1` plus **135 binary-only runtime folders**, removing **283 files**.\n\nCORE free space increased from **12.116 to 14.475 GiB**\u2014**2.359 GiB recovered**. The latest check shows **14.472 GiB** free.\n\nIndependent verification confirmed all targets absent, all **19 source hashes unchanged**, and preservation of warm Go build cache, WASM/web proof, receipts, snapshots, fixtures and owner locks. No active consumers or open handles remain.\n\n[Deletion receipt and exact paths](/Users/iyor/Documents/Codex/2026-10-11/task-8/approved-cache-cleanup-result.json) \u00b7 [preservation verification](/Users/iyor/Documents/Codex/2026-10-11/task-8/approved-cache-cleanup-independent-verification.json)\n\nNo tests or cache regeneration ran. SWARX remains next after combined space verification.",
+              "phase": "final_answer"
+            }
+          ]
+        }
+      ],
+      "goal": "Qualify original CADUCEUS IMAP/extensions integration, freeze a verified integration pin, and complete reader then compose reconciliation with their owners.",
+      "acceptance_checks": [
+        "All49 units and326 expected cases execute and pass after the reviewed screenshot-test correction.",
+        "Preserve11 mailbox/five-runtime,14 host/package/three-confirmation and browser lifecycle evidence; close original IMAP acceptance on final source/tool pins.",
+        "Pass required frontend typecheck/bundle and affected native/backend gates; preserve applicable evidence provenance.",
+        "Verify Tachyon dependencies, freeze integration and complete agreed reader then compose reconciliation. Landing actions follow separate current authority."
+      ],
+      "current_evidence": [
+        "Prior complete run:49 units,325 cases,324 passed. The sole screenshot-mode fixture was independently reviewed and corrected;19 hashes verified, production unchanged.326-case rerun has not executed.",
+        "Browser extension toast/lifecycle already demonstrated. Non-strict method coverage475/1207 is advisory; desktop/native-companion toast is a separate follow-up.",
+        "Approved CADUCEUS cleanup completed and independently verified; not a feature-completion receipt."
+      ],
+      "unresolved_blockers": [
+        "Post-correction326-case validation and final IMAP/required project gates.",
+        "No verified frozen integration baseline yet; reader/compose and Tachyon dependency reconciliation pending.",
+        "Fresh admission/source/cache/owner checks required; F:/WSL holds affect remote areas."
+      ],
+      "next_step": "After scheduler clearance, run the prepared screenshot-full-test-plan.json with fresh candidate/hash/cache/resource checks; then qualify required gates and freeze integration.",
+      "closure_prerequisite": "Cleanup and partial test passes cannot close the whole integration task. Parent must verify this bounded integration finish line and applicable landing approval, resolve the exact Refactor Claude thread, then archive this Codex chat. Large-inbox implementation,100% coverage and production release/soak are not added here.",
+      "status": "unfinished",
+      "prior_checkpoint": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T232213Z/db51e03e-4e53-49b0-9329-364bb8dae110.md",
+      "receipt_paths": [
+        "/Users/iyor/Documents/Codex/2026-10-11/task-8/INTEGRATION_GOAL_CARD.md",
+        "/Users/iyor/Documents/Codex/2026-10-11/task-8/full-test-run/outcome.json"
+      ],
+      "downstream_owner": null,
+      "closure_claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGUuBL1LwdXV8UJNfCtLkC1U",
+      "mapping_note": "Exact historical Claude-to-Codex identity retained. Parent must verify actual completion/resolution state; handed-off/idle labels are insufficient.",
+      "goal_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-12T052553Z-goals/db51e03e-4e53-49b0-9329-364bb8dae110.md"
+    },
+    {
+      "project": "CADUCEUS",
+      "local_session_id": "1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGPMNMRFCBTMsFTL1bp7YvX2",
+      "codex_chat_id": "01a12ce6-aed5-7530-84ba-75516d0f30e6",
+      "title": "Reading mail and compose",
+      "codex_cwd": "/Users/iyor/Documents/Codex/2026-10-11/task-9",
+      "goal_card_turns": [
+        {
+          "id": "01a12e87-4a9a-730b-a144-fcc25c9e5da0",
+          "status": "completed",
+          "startedAt": 1791781981,
+          "completedAt": 1791782005,
+          "messages": [
+            {
+              "text": "**Goal:** Qualify reader and compose against the agreed integration snapshot, with evidence that both are ready for integration.\n\n**Completion checklist**\n\n- Verify current source, staged/dirty work and existing merge results; reconcile reader before compose against the frozen integration commit.\n- Preserve summary `Email`; use reader-owned `EmailDetail` for full messages and reply/forward prefill.\n- Confirm coordinator-owned keyboard and prefill contracts. Test replay and event ordering so late initialization events cannot overwrite compose edits.\n- Complete the safe-HTML migration once the binding lands; verify sanitization, reader protection and rich-text editing.\n- Pass area design checks and service/utility tests, then Firefox reader/compose flows against the integrated Go server. Record exact commits, results and remaining limitations.\n\n**Current evidence:** Remote HEADs were observed as reader `f9d3e9b\u2026` and compose `0717f20\u2026`; both already contain integration merges. Older snapshots had passing subsets, but integrated tests and browser behavior remain unverified. Neither whole task is complete.\n\n**Blockers:** WSL/F: storage hold; inaccessible fresh dirty state, notes and tools; unresolved job ownership; integration freeze/qualification; safe-HTML landing; coordinator decisions for keyboard forwarding and stored prefill. Existing resource holds remain.\n\n**Scope boundary:** Reader/compose event-order regression checks fit the original behavior-validation scope. General shell replay hardening or changes to shared contracts would expand this lane\u2019s scope and require coordinator ownership.\n\n**Next executable step:** After explicit storage/access clearance, reconcile current source and preserved work with the coordinator\u2019s agreed frozen snapshot before selecting the remaining fixes or validation runs.\n\nNo new execution performed. Resolution and archival remain with the parent.",
+              "phase": "final_answer"
+            }
+          ]
+        },
+        {
+          "id": "01a12d10-4c67-768c-baf2-6faa0cc8bb79",
+          "status": "completed",
+          "startedAt": 1791757406,
+          "completedAt": 1791757410,
+          "messages": [
+            {
+              "text": "Storage hold acknowledged. Remote inspection and launchers are paused; idle pending explicit parent clearance.",
+              "phase": "final_answer"
+            }
+          ]
+        }
+      ],
+      "goal": "Qualify reader and compose against the agreed frozen integration snapshot and deliver both ready for integration.",
+      "acceptance_checks": [
+        "Reconcile source/dirty work and existing merges: reader first, compose second, against verified frozen integration.",
+        "Keep summary Email and reader-owned EmailDetail for full messages/reply/forward prefill.",
+        "Confirm coordinator-owned keyboard and stored-prefill contracts; verify replay/event ordering cannot overwrite edits.",
+        "Complete landed safe-HTML migration with sanitization/protection/rich-text checks.",
+        "Pass area design/service/utility tests and Firefox flows against integrated Go server; record exact source/results."
+      ],
+      "current_evidence": [
+        "Observed remote reader f9d3e9b and compose0717f20 already contain integration merges. Older passing subsets do not qualify integrated behavior.",
+        "Coordinator handoff closure did not establish actual engineering completion; whole reader/compose remains unfinished."
+      ],
+      "unresolved_blockers": [
+        "F:/WSL hold prevents fresh remote dirty/notes/tool/job verification.",
+        "Integration freeze/qualification, safe-HTML landing and coordinator keyboard/prefill decisions remain."
+      ],
+      "next_step": "After explicit storage clearance, reconcile preserved remote work against the coordinator freeze before selecting remaining fixes and validation.",
+      "closure_prerequisite": "Parent verifies integrated area readiness and any original approved landing requirement, confirms engineering completion in the exact Reader/compose Claude thread even if it was earlier marked handed-off/resolved, then archives matching Codex chat. General shell replay hardening/shared contract changes require their owner.",
+      "status": "unfinished",
+      "prior_checkpoint": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T232213Z/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md",
+      "receipt_paths": [],
+      "downstream_owner": null,
+      "closure_claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGPMNMRFCBTMsFTL1bp7YvX2",
+      "mapping_note": "Exact historical Claude-to-Codex identity retained. Parent must verify actual completion/resolution state; handed-off/idle labels are insufficient.",
+      "goal_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-12T052553Z-goals/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md"
+    }
+  ]
+}

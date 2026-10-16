@@ -1,0 +1,136 @@
+{
+  "schema_version": 5,
+  "checkpoint_id": "2026-10-11T232213Z",
+  "checkpoint_at": "2026-10-11T23:22:13.150186+00:00",
+  "supersedes_activation_and_current_status": "2026-10-11T215614Z",
+  "policy": {
+    "user_takeover_authorization": "2026-10-11 21:52 UTC: all remaining unfinished work, including Mac/native Windows/WSL, transferred to the existing seven Codex chats. This supersedes earlier standby-only scope; no lane is fully resolved.",
+    "ownership": "Codex owns the seven retained unfinished scopes. Historical Claude ownership/standby claims are provenance, not current activation restrictions. Do not revive unrelated old workers.",
+    "claude_auto_continue": "Parent verified all four projects OFF at 22:23 UTC. This inspector did not read credential-bearing settings or change them.",
+    "old_jobs": "Parent verified old Mac jobs stopped at 22:02 UTC; source/logs preserved. Do not resurrect or repeat old cancellation loops. Current Codex test jobs are distinct and may be running.",
+    "cleanup": "Parent verified four approved caches cleaned and 34.81 GiB recovered at 22:11 UTC; audit archived. Recovery amount is not current free-space measurement. No additional cleanup was performed by this task.",
+    "windows_hold": "Remote project commands remain held because of Windows F: USB/JMicron I/O timeouts. The one approved orderly WSL shutdown returned exit 0 at 23:17:13 UTC in 1.95 seconds. Verification at 23:17:48 still showed Running, VM 8B6DC689-DCF7-46C9-A82D-DBCD526500AA and vmmem PID 111332. Shutdown is NOT verified. No retry, force termination, disk removal or extra reboot/reset is approved. Windows-only launcher diagnosis is active under the assistant recovery owner.",
+    "recovery_owner": "Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc; current Windows hold takes precedence over earlier recovery polling plans.",
+    "approval_boundaries": "FYLO merge hold persists. RC release cut/tag/RC PR and hosting deployment/destination must follow their explicit approval boundaries. Takeover grants implementation/qualification scope, not permission to waive gates or erase protected data.",
+    "local_scope": "This refresh reads local metadata and creates only continuity documentation; no source/build/Claude actions.",
+    "swarx_instance": "User requires at most ONE SWARX app instance. Close the existing SWARX instance before launching a replacement; inspect ownership first and do not spawn parallel app instances."
+  },
+  "disk_verified_locally": {
+    "/Volumes/ANNEX": {
+      "available_gib": 22.19,
+      "observed_at": "2026-10-11T23:22:13.150186+00:00"
+    },
+    "/": {
+      "available_gib": 17.37,
+      "observed_at": "2026-10-11T23:22:13.150186+00:00"
+    }
+  },
+  "parent_receipt_at": "Parent updates at 23:14 UTC and subsequent approval/status steering, read during this checkpoint",
+  "receipt_access_limit": "RC candidate provenance, source hashes, result.json and native-tests.log were read directly. Other updated child receipts are supplied by the parent and attributed as such. Earlier denied Codex app access was not retried.",
+  "previous_checkpoint_id": "2026-10-11T231816Z",
+  "retained_takeover_threads": 7,
+  "additional_codex_tasks": 2,
+  "mapped_tasks": 9,
+  "threads": [
+    {
+      "project": "CADUCEUS",
+      "title": "Async Go services in Tachyon build",
+      "local_session_id": "a9801503-5f1e-4006-94ad-8298a4bdcdfd",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLG3FXZ37b6W7T5EtZqfkNG5S",
+      "codex_chat_id": "01a12ce6-5b1f-71ba-9c28-a0d1d0e350e8",
+      "status": "unfinished_codex_owned",
+      "prior_checkpoint": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T231816Z/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T232213Z/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md",
+      "owner_receipt": {
+        "parent_reported": "Registry repair applied in existing APPLE worktree at aaf0e354; policies and two Swift tests passed. Source now dirty at native/registry.rs. WSL/Windows checks remain subject to remote hold.",
+        "next": "Coordinate registry source ownership with RC; inspect latest policy/Swift receipt and current combined candidate usage. Preserve pending renderer/landing and three deferred browser/F# checks.",
+        "missing": [
+          "Exact policy/two-Swift receipt paths or child report",
+          "Latest Mac landing/source readiness receipt"
+        ]
+      },
+      "fresh_local_git": [
+        {
+          "path": "/Volumes/ANNEX/Users/iyor/Library/Developer/Build/worktrees/CLAUDE-TACHYON-APPLE-WEBVIEW-20261011",
+          "exists": true,
+          "verified_git_root": "/Volumes/ANNEX/Users/iyor/Library/Developer/Build/worktrees/CLAUDE-TACHYON-APPLE-WEBVIEW-20261011",
+          "head": "aaf0e35407a20476226f514e2d0b2ea76ed89d73",
+          "branch": "claude/apple-webview-20261011",
+          "dirty_paths": [
+            "M crates/tachyon-core/src/native/registry.rs"
+          ]
+        }
+      ],
+      "latest_test_results_independently_read": false
+    },
+    {
+      "project": "CADUCEUS",
+      "title": "Refactor CADUCEUS to Tachyon build",
+      "local_session_id": "db51e03e-4e53-49b0-9329-364bb8dae110",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGUuBL1LwdXV8UJNfCtLkC1U",
+      "codex_chat_id": "01a12ce6-8651-7311-9a1e-e63a929910f4",
+      "status": "unfinished_codex_owned",
+      "prior_checkpoint": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T231816Z/db51e03e-4e53-49b0-9329-364bb8dae110.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T232213Z/db51e03e-4e53-49b0-9329-364bb8dae110.md",
+      "owner_receipt": {
+        "parent_reported": "TY2015 root cause: server-test assembly includes 173 unique managed declarations. The 129th is FollowUpRemindersHelper, byte 125915, matching the diagnostic log. Production routes exclude peer controllers. Separate TACHYON task 01a12d42-bea1-77dc-b347-170551f640c5 owns an isolated fix WITHOUT changing the 128 limit.",
+        "next": "Preserve integration source and previous lightweight/browser passes. Coordinate with the isolated TACHYON assembly fix, then rerun the blocked project test to establish the five new cases actually execute.",
+        "missing": [
+          "Exact isolated-fix source/checkpoint and focused validation receipt",
+          "Project-test receipt after preflight repair; prior five new cases remain unexecuted"
+        ]
+      },
+      "fresh_local_git": [
+        {
+          "path": "/Volumes/ANNEX/build/caduceus-work/wt/go-full",
+          "exists": true,
+          "verified_git_root": "/Volumes/ANNEX/Users/iyor/Library/Developer/Build/caduceus-work/wt/go-full",
+          "head": "d81b1619fe48c926b58cf3538d5c13b635bd3480",
+          "branch": "go/integration",
+          "dirty_paths": [
+            "M client/components/app/shell/tac.html",
+            " M client/components/contacts/view/tac.html",
+            " M client/components/scheduled/page/tac.html",
+            " M client/components/settings/view/tac.html",
+            " M client/models/ExtensionSandbox.go",
+            " M client/services/BrowserPageService.js",
+            "D  client/services/ConfirmationService.js",
+            " M client/services/ExtensionPackageService.js",
+            " M client/services/ExtensionRuntimeService.go",
+            " M client/shared/utils/ExtensionSandboxUtils.go",
+            " M tests/e2e/extensions.test.mjs",
+            "?? client/models/ExtensionPluginsLoaded.go",
+            "?? client/models/ExtensionPluginsLoaded.js",
+            "?? client/models/ExtensionSandbox.js",
+            "?? client/shared/utils/ExtensionCommandUtils.go",
+            "?? client/tests/ExtensionRuntimeServiceTest.go",
+            "?? dist-bin",
+            "?? tests/unit/extension-package-selection.test.js",
+            "?? tests/unit/extension-sandbox-lifecycle.test.js"
+          ]
+        }
+      ],
+      "latest_test_results_independently_read": false
+    },
+    {
+      "project": "CADUCEUS",
+      "title": "Reading mail and compose",
+      "local_session_id": "1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGPMNMRFCBTMsFTL1bp7YvX2",
+      "codex_chat_id": "01a12ce6-aed5-7530-84ba-75516d0f30e6",
+      "status": "unfinished_codex_owned",
+      "prior_checkpoint": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T231816Z/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T232213Z/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md",
+      "owner_receipt": {
+        "parent_reported": "No newer lane-specific receipt supplied; retained unfinished reader/compose scope remains with matching Codex chat.",
+        "next": "Wait for verified integration freeze and safe-HTML landing; preserve exact pushed versus potentially newer local source evidence. Remote commands remain held.",
+        "missing": [
+          "Post-recovery exact remote HEAD/dirty/source checkpoint when remote hold permits",
+          "Latest reader/compose child progress and shared compose decision receipt"
+        ]
+      },
+      "fresh_local_git": [],
+      "latest_test_results_independently_read": false
+    }
+  ]
+}

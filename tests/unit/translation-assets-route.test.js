@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test'
-import { TranslationAssetsController as Handler } from '../../server/controllers/TranslationAssetsController.js'
 import { call } from '../support/controller-call.mjs'
+import { Routes } from '../support/Routes.mjs'
+
+const Handler = Routes.TranslationAssetsController
 
 describe('translation asset route', () => {
   test('accepts only bounded model and runtime paths', () => {

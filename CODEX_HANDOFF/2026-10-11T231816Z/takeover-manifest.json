@@ -1,0 +1,131 @@
+{
+  "schema_version": 4,
+  "checkpoint_id": "2026-10-11T231816Z",
+  "checkpoint_at": "2026-10-11T23:18:16.243154+00:00",
+  "supersedes_activation_and_current_status": "2026-10-11T215614Z",
+  "policy": {
+    "user_takeover_authorization": "2026-10-11 21:52 UTC: all remaining unfinished work, including Mac/native Windows/WSL, transferred to the existing seven Codex chats. This supersedes earlier standby-only scope; no lane is fully resolved.",
+    "ownership": "Codex owns the seven retained unfinished scopes. Historical Claude ownership/standby claims are provenance, not current activation restrictions. Do not revive unrelated old workers.",
+    "claude_auto_continue": "Parent verified all four projects OFF at 22:23 UTC. This inspector did not read credential-bearing settings or change them.",
+    "old_jobs": "Parent verified old Mac jobs stopped at 22:02 UTC; source/logs preserved. Do not resurrect or repeat old cancellation loops. Current Codex test jobs are distinct and may be running.",
+    "cleanup": "Parent verified four approved caches cleaned and 34.81 GiB recovered at 22:11 UTC; audit archived. Recovery amount is not current free-space measurement. No additional cleanup was performed by this task.",
+    "windows_hold": "Windows F: USB/JMicron I/O timeouts: remote project commands remain held. At 23:16 UTC the user explicitly approved ONE orderly WSL shutdown, owned and attempted by the assistant SSH recovery task; outcome is UNKNOWN. This supersedes the earlier pending-clarification note. No force termination, disk removal or additional restart/shutdown loop is approved. Project owners must not duplicate the recovery action or infer remote health.",
+    "recovery_owner": "Assistant SSH task 01a12c31-5976-747d-845c-00610048b0cc; current Windows hold takes precedence over earlier recovery polling plans.",
+    "approval_boundaries": "FYLO merge hold persists. RC release cut/tag/RC PR and hosting deployment/destination must follow their explicit approval boundaries. Takeover grants implementation/qualification scope, not permission to waive gates or erase protected data.",
+    "local_scope": "This refresh reads local metadata and creates only continuity documentation; no source/build/Claude actions."
+  },
+  "disk_verified_locally": {
+    "/Volumes/ANNEX": {
+      "available_gib": 22.17,
+      "observed_at": "2026-10-11T23:18:16.243154+00:00"
+    },
+    "/": {
+      "available_gib": 17.41,
+      "observed_at": "2026-10-11T23:18:16.243154+00:00"
+    }
+  },
+  "parent_receipt_at": "Parent updates at 23:14 UTC and subsequent approval/status steering, read during this checkpoint",
+  "receipt_access_limit": "Direct Codex app access had been denied earlier and was not retried. Parent-supplied receipts are explicitly attributed; current local Git metadata is independently verified. Request missing child receipt paths/absolute candidate path from parent; do not seek another route around access denial.",
+  "threads": [
+    {
+      "project": "CADUCEUS",
+      "title": "Async Go services in Tachyon build",
+      "local_session_id": "a9801503-5f1e-4006-94ad-8298a4bdcdfd",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLG3FXZ37b6W7T5EtZqfkNG5S",
+      "codex_chat_id": "01a12ce6-5b1f-71ba-9c28-a0d1d0e350e8",
+      "status": "unfinished_codex_owned",
+      "prior_checkpoint": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215614Z/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T231816Z/a9801503-5f1e-4006-94ad-8298a4bdcdfd.md",
+      "owner_receipt": {
+        "parent_reported": "Registry repair applied in existing APPLE worktree at aaf0e354; policies and two Swift tests passed. Source now dirty at native/registry.rs. WSL/Windows checks remain subject to remote hold.",
+        "next": "Coordinate registry source ownership with RC; inspect latest policy/Swift receipt and current combined candidate usage. Preserve pending renderer/landing and three deferred browser/F# checks.",
+        "missing": [
+          "Exact policy/two-Swift receipt paths or child report",
+          "Latest Mac landing/source readiness receipt"
+        ]
+      },
+      "fresh_local_git": [
+        {
+          "path": "/Volumes/ANNEX/Users/iyor/Library/Developer/Build/worktrees/CLAUDE-TACHYON-APPLE-WEBVIEW-20261011",
+          "exists": true,
+          "verified_git_root": "/Volumes/ANNEX/Users/iyor/Library/Developer/Build/worktrees/CLAUDE-TACHYON-APPLE-WEBVIEW-20261011",
+          "head": "aaf0e35407a20476226f514e2d0b2ea76ed89d73",
+          "branch": "claude/apple-webview-20261011",
+          "dirty_paths": [
+            "M crates/tachyon-core/src/native/registry.rs"
+          ]
+        }
+      ],
+      "latest_test_results_independently_read": false
+    },
+    {
+      "project": "CADUCEUS",
+      "title": "Refactor CADUCEUS to Tachyon build",
+      "local_session_id": "db51e03e-4e53-49b0-9329-364bb8dae110",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGUuBL1LwdXV8UJNfCtLkC1U",
+      "codex_chat_id": "01a12ce6-8651-7311-9a1e-e63a929910f4",
+      "status": "unfinished_codex_owned",
+      "prior_checkpoint": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215614Z/db51e03e-4e53-49b0-9329-364bb8dae110.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T231816Z/db51e03e-4e53-49b0-9329-364bb8dae110.md",
+      "owner_receipt": {
+        "parent_reported": "Actual go/integration d81b1619 remains dirty. Lifecycle/confirmation/package/toolbar fixes applied; 14+3 lightweight tests passed; full browser lifecycle passed. Next project test failed preflight TY2015 at AttachmentPolicyTest before five new cases; diagnostics active.",
+        "next": "Inspect the active diagnostic receipt and fix the preflight blocker before claiming the five new cases ran. Preserve shared-file ownership, then qualify and freeze integration before reader/compose.",
+        "missing": [
+          "Diagnostic task/output receipt and current result",
+          "Project-test rerun receipt; five cases not yet demonstrated"
+        ]
+      },
+      "fresh_local_git": [
+        {
+          "path": "/Volumes/ANNEX/build/caduceus-work/wt/go-full",
+          "exists": true,
+          "verified_git_root": "/Volumes/ANNEX/Users/iyor/Library/Developer/Build/caduceus-work/wt/go-full",
+          "head": "d81b1619fe48c926b58cf3538d5c13b635bd3480",
+          "branch": "go/integration",
+          "dirty_paths": [
+            "M client/components/app/shell/tac.html",
+            " M client/components/contacts/view/tac.html",
+            " M client/components/scheduled/page/tac.html",
+            " M client/components/settings/view/tac.html",
+            " M client/models/ExtensionSandbox.go",
+            " M client/services/BrowserPageService.js",
+            "D  client/services/ConfirmationService.js",
+            " M client/services/ExtensionPackageService.js",
+            " M client/services/ExtensionRuntimeService.go",
+            " M client/shared/utils/ExtensionSandboxUtils.go",
+            " M tests/e2e/extensions.test.mjs",
+            "?? client/models/ExtensionPluginsLoaded.go",
+            "?? client/models/ExtensionPluginsLoaded.js",
+            "?? client/models/ExtensionSandbox.js",
+            "?? client/shared/utils/ExtensionCommandUtils.go",
+            "?? client/tests/ExtensionRuntimeServiceTest.go",
+            "?? dist-bin",
+            "?? tests/unit/extension-package-selection.test.js",
+            "?? tests/unit/extension-sandbox-lifecycle.test.js"
+          ]
+        }
+      ],
+      "latest_test_results_independently_read": false
+    },
+    {
+      "project": "CADUCEUS",
+      "title": "Reading mail and compose",
+      "local_session_id": "1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52",
+      "claude_thread_id": "cmsg_01MS2GURoJZzwx7pw3gzwsLGPMNMRFCBTMsFTL1bp7YvX2",
+      "codex_chat_id": "01a12ce6-aed5-7530-84ba-75516d0f30e6",
+      "status": "unfinished_codex_owned",
+      "prior_checkpoint": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T215614Z/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md",
+      "handoff_path": "/Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/myOrganizations/DELMA/CADUCEUS/CODEX_HANDOFF/2026-10-11T231816Z/1069a8e3-4dfd-41a8-ad10-aa70a2bb3a52.md",
+      "owner_receipt": {
+        "parent_reported": "No newer lane-specific receipt supplied; retained unfinished reader/compose scope remains with matching Codex chat.",
+        "next": "Wait for verified integration freeze and safe-HTML landing; preserve exact pushed versus potentially newer local source evidence. Remote commands remain held.",
+        "missing": [
+          "Post-recovery exact remote HEAD/dirty/source checkpoint when remote hold permits",
+          "Latest reader/compose child progress and shared compose decision receipt"
+        ]
+      },
+      "fresh_local_git": [],
+      "latest_test_results_independently_read": false
+    }
+  ]
+}

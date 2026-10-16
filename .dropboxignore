@@ -1,0 +1,18 @@
+# Per-machine Claude Code worktrees — agents spin these up to run in isolated
+# branches. They contain duplicated source + node_modules and shouldn't be
+# synced across machines. Recreate locally on each device as needed.
+.claude/worktrees
+
+# Build outputs and dependencies — derivable from source, no reason to sync.
+node_modules
+dist
+.next
+.cache
+
+# Local FYLO development data — fixtures from .claude/seed-emails.mjs.
+# Production uses FYLO_ROOT=/data/caduceus on a /data volume, never these paths.
+db/.collections
+db/.buckets
+db/.fylo-catalog
+db/.fylo-vcs
+db/attachments

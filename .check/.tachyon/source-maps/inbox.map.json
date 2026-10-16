@@ -1,8 +1,0 @@
-{
-  "contract_version": 1,
-  "output": "inbox/index.html",
-  "sources": [
-    "client/pages/inbox/tac.html"
-  ],
-  "mappings": []
-}

@@ -1,5 +1,7 @@
 // CalendarClient is the /calendar route group. The shell counts the events of
-// the next two weeks for the sidebar badge.
+// the next two weeks for the sidebar badge. The calendar page reads and writes
+// the events themselves; its writes answer BehaviorValue, so their arguments
+// are BehaviorValue too.
 // @HTTPClient("/calendar")
 type CalendarClient interface {
 	// @GetRequest("/events")
@@ -10,5 +12,44 @@ type CalendarClient interface {
 		start string,
 		// @RequestParam("end")
 		end string,
-	) ([]CalendarEventSummary, error)
+	) ([]CalendarEvent, error)
+
+
+
+
+	// @PostRequest("/events")
+	Create(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @RequestBody
+		event BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @PutRequest("/events/{id}")
+	Update(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @PathVariable
+		id BehaviorValue,
+		// @RequestParam("scope")
+		scope BehaviorValue,
+		// @RequestParam("occurrenceStart")
+		occurrenceStart BehaviorValue,
+		// @RequestBody
+		change BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @DeleteRequest("/events/{id}")
+	Delete(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @PathVariable
+		id BehaviorValue,
+		// @RequestParam("scope")
+		scope BehaviorValue,
+		// @RequestParam("occurrenceStart")
+		occurrenceStart BehaviorValue,
+		// @RequestParam("idempotencyKey")
+		idempotencyKey BehaviorValue,
+	) (BehaviorValue, error)
 }

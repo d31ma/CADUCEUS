@@ -11,8 +11,6 @@ import (
 type ExternalMailboxService struct {
 	// @Needs
 	externalAccountsClient *ExternalAccountsClient
-	// @Needs
-	secureRandom              SecureRandom
 	applicationEventPublisher ApplicationEventPublisher
 	Accounts                  []ExternalAccount
 	DialogOpen                bool
@@ -262,7 +260,7 @@ func (external *ExternalMailboxService) submit() {
 
 func (external *ExternalMailboxService) mutate() {
 	account := external.account(external.dialogAccount)
-	key, _ := external.secureRandom.UUID()
+	key := IdentityUtils{}.UUID(account.ID + external.dialogFolder + external.DialogName)
 	external.DialogBusy = true
 	external.DialogError = ""
 	external.describe(external.folder(external.dialogAccount, external.dialogFolder))

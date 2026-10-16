@@ -18,8 +18,6 @@ type MailboxService struct {
 	calendarClient *CalendarClient
 	// @Needs
 	activityClient *ActivityClient
-	// @Needs
-	secureRandom              SecureRandom
 	applicationEventPublisher ApplicationEventPublisher
 	Domains                   []string
 	MailboxNames              map[string]string
@@ -29,6 +27,7 @@ type MailboxService struct {
 	ShowUnreadForAllFolders   bool
 	badgeScope                string
 	badgeDomain               string
+	pendingAction             NotificationActionReceived
 	token                     string
 	email                     string
 	activitySince             string
@@ -84,8 +83,8 @@ func (mailbox *MailboxService) HearCounts(counted FolderCountsChanged) {
 // notification.
 // @OnEvent
 func (mailbox *MailboxService) HearNotificationAction(received NotificationActionReceived) {
-	patch, message := MailboxUtils{}.NotificationAction(received.Action)
-	FlowUtils{}.When(!slices.Contains([]bool{MailboxUtils{}.SafeID(received.EmailID), patch != nil}, false), func() { mailbox.apply([]string{received.EmailID}, patch, message) })()
+	mailbox.pendingAction = received
+	FlowUtils{}.When(mailbox.token != "", mailbox.applyNotificationAction)()
 }
 
 // HearRefresh counts again after mail arrived or a mailbox action.
@@ -164,7 +163,17 @@ func (mailbox *MailboxService) FolderLabel(name string) string {
 	return FolderUtils{}.Label(name)
 }
 
+// applyNotificationAction applies a notification button once the session is
+// known, because the launch address can be read before the session.
+func (mailbox *MailboxService) applyNotificationAction() {
+	received := mailbox.pendingAction
+	mailbox.pendingAction = NotificationActionReceived{}
+	patch, message := MailboxUtils{}.NotificationAction(received.Action)
+	FlowUtils{}.When(!slices.Contains([]bool{MailboxUtils{}.SafeID(received.EmailID), patch != nil}, false), func() { mailbox.apply([]string{received.EmailID}, patch, message) })()
+}
+
 func (mailbox *MailboxService) load() {
+	mailbox.applyNotificationAction()
 	mailbox.refreshCounts()
 	mailbox.refreshActivity()
 	mailbox.applicationEventPublisher.PublishEvent(TimerRequested{Name: mailbox.names().Activity, DelayMs: 60000, Repeat: true}, false)
@@ -173,7 +182,7 @@ func (mailbox *MailboxService) load() {
 // refreshCounts tallies /inbox per folder, domain and connected account, and
 // counts the calendar events of the next two weeks.
 func (mailbox *MailboxService) refreshCounts() {
-	summaries, failure := mailbox.inboxClient.Summaries(mailbox.bearer())
+	summaries, failure := mailbox.inboxClient.List(mailbox.bearer(), "", "", "", "")
 	FlowUtils{}.When(HTTPUtils{}.Refused(failure), func() {
 		mailbox.applicationEventPublisher.PublishEvent(SessionCheckRequested{Reason: mailbox.names().Inbox}, false)
 	})()
@@ -204,7 +213,7 @@ func (mailbox *MailboxService) startActivity() {
 
 // apply runs one exact-owner mailbox action and offers its undo.
 func (mailbox *MailboxService) apply(ids []string, patch map[string]any, message string) {
-	requestID, _ := mailbox.secureRandom.UUID()
+	requestID := IdentityUtils{}.UUID(strings.Join(ids, ","))
 	result, failure := mailbox.inboxClient.Apply(mailbox.bearer(), MailActionRequest{Ids: ids, Patch: patch, ClientRequestID: requestID})
 	mailbox.settled(failure, result, message, mailbox.names().Undo)()
 }

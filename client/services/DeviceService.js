@@ -78,7 +78,7 @@ export default class DeviceService {
   _action(action, emailId) {
     /** @type {NotificationActionReceived} */
     const received = { action, emailId }
-    this.applicationEventPublisher.publishEvent(received, false)
+    this.applicationEventPublisher.publishEvent(received, true)
   }
 
   /** @param {ServiceWorker | null} worker @param {boolean} controlled */

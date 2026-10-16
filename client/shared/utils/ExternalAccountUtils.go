@@ -49,7 +49,7 @@ func (ExternalAccountUtils) DialogTexts(dialog FolderDialog, inFolder bool, busy
 
 func (ExternalAccountUtils) malformed(account ExternalAccount) bool {
 	return slices.Contains([]bool{
-		regexp.MustCompile(`^ext_[A-Za-z0-9_-]{20,80}$`).MatchString(account.ID),
+		ExternalAccountUtils{}.Identified(account.ID, "ext_"),
 		strings.TrimSpace(account.MailboxAddress) != "",
 		slices.Contains([]string{"gmail", "microsoft", "imap"}, account.Provider),
 		slices.Contains(ExternalAccountUtils{}.states(), account.State),
@@ -64,6 +64,17 @@ func (ExternalAccountUtils) Readable(account ExternalAccount) bool {
 
 func (ExternalAccountUtils) readable(account ExternalAccount) bool {
 	return account.Capabilities.MailRead && account.State != ExternalAccountUtils{}.states()[6]
+}
+
+// Identified is true for an identifier such as ext_<20 to 80 characters>. It
+// checks characters and length rather than a pattern such as {20,80}, which
+// TinyGo compiles into a program that crashed the page.
+func (ExternalAccountUtils) Identified(id string, prefix string) bool {
+	return ExternalAccountUtils{}.identified(id, prefix)
+}
+
+func (ExternalAccountUtils) identified(id string, prefix string) bool {
+	return strings.HasPrefix(id, prefix) && TokenUtils{}.Fits(strings.TrimPrefix(id, prefix), TokenUtils{}.Identifier()+"_-", TokenBounds{Shortest: 20, Longest: 80})
 }
 
 func (ExternalAccountUtils) cleanedAll(accounts []ExternalAccount) []ExternalAccount {

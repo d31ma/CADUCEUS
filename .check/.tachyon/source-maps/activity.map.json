@@ -1,8 +1,0 @@
-{
-  "contract_version": 1,
-  "output": "activity/index.html",
-  "sources": [
-    "client/pages/activity/tac.html"
-  ],
-  "mappings": []
-}

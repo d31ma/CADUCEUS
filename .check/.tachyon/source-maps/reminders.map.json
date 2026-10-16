@@ -1,8 +1,0 @@
-{
-  "contract_version": 1,
-  "output": "reminders/index.html",
-  "sources": [
-    "client/pages/reminders/tac.html"
-  ],
-  "mappings": []
-}

@@ -1,8 +1,0 @@
-{
-  "contract_version": 1,
-  "output": "scheduled/index.html",
-  "sources": [
-    "client/pages/scheduled/tac.html"
-  ],
-  "mappings": []
-}

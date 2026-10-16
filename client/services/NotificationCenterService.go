@@ -115,7 +115,7 @@ func (center *NotificationCenterService) openPanel() {
 }
 
 func (center *NotificationCenterService) loadSources() {
-	rules, _ := center.rulesClient.All(center.bearer())
+	rules, _ := center.rulesClient.Rules(center.bearer())
 	subscriptions, failure := center.notificationsClient.Subscriptions(center.bearer())
 	permission, _ := center.notifications.Permission()
 	center.state.DisabledRuleCount = center.disabledRules(rules)
@@ -177,13 +177,13 @@ func (center *NotificationCenterService) failingMailboxes(healthy bool) []string
 	return []string{center.email}
 }
 
-func (center *NotificationCenterService) disabledRules(rules []RuleSummary) int {
+func (center *NotificationCenterService) disabledRules(rules []InboxRule) int {
 	return len(slices.DeleteFunc(slices.Clone(rules), center.enabledRule))
 }
 
-// enabledRule is true unless the rule says enabled: false.
-func (center *NotificationCenterService) enabledRule(rule RuleSummary) bool {
-	return rule.Enabled == nil || *rule.Enabled
+// enabledRule is true when the rule is on; the rule engine skips a rule without enabled.
+func (center *NotificationCenterService) enabledRule(rule InboxRule) bool {
+	return rule.Enabled
 }
 
 func (center *NotificationCenterService) first(notices []Notice) Notice {

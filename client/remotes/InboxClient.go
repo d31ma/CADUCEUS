@@ -3,12 +3,6 @@
 // and spam reports.
 // @HTTPClient("/inbox")
 type InboxClient interface {
-	// @GetRequest
-	Summaries(
-		// @RequestHeader("Authorization")
-		authorization string,
-	) ([]MailSummary, error)
-
 	// @PostRequest("/actions")
 	Apply(
 		// @RequestHeader("Authorization")

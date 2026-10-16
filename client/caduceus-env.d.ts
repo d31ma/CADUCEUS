@@ -1,8 +1,13 @@
-type InterfaceLocaleChoice = 'auto' | 'en' | 'de' | 'es' | 'es-419' | 'fr' | 'ko' | 'pl' | 'ja' | 'zh-CN' | 'zh-TW' | 'pt' | 'pt-BR' | 'gl' | 'tr' | 'ru' | 'cs' | 'uk' | 'hu' | 'he' | 'ar'
-type ResolvedInterfaceLocale = Exclude<InterfaceLocaleChoice, 'auto'>
-
 declare global {
+  type ResolvedInterfaceLocale = Exclude<InterfaceLocaleChoice, 'auto'>
+  type InterfaceLocaleId = InterfaceLocaleChoice
+
+  /** Browser-only payloads shared with their Go model twins. */
+  interface GrammarRange { offset: number; length: number }
+  interface AttachmentOffer { index: number; filename: string; contentType: string; size: number; inline: boolean }
+
   interface Window {
+    launchQueue?: { setConsumer: (consumer: (launch: { targetURL?: string; files: FileSystemHandle[] }) => void) => void }
     _caduceus?: {
       auth: {
         token: string | null
@@ -157,7 +162,7 @@ declare global {
       getCatalog: () => Array<Record<string, any>>
       getBindings: () => Record<string, string>
       getOverrides: () => Record<string, string>
-      getGroups: () => Array<{ label: string, rows: Array<Record<string, any>> }>
+      getGroups: () => Array<{ label: string, rows: Array<{ label: string; displayBinding: string }> }>
       getContext: () => string
     }
     CADUCEUS_CONFIG?: {

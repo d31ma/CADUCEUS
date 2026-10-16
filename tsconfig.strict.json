@@ -4,9 +4,10 @@
     "noImplicitAny": true
   },
   "include": [
-    "server/platform/runtime/**/*.ts",
-    "server/features/delivery/services/outbound-queue-worker.ts",
-    "tests/runtime/**/*.ts"
+    "tachyon-behaviors.d.ts",
+    "tests/support/legacy-server/composed-env.d.ts",
+    "tests/support/legacy-server/shared/runtime/**/*.js",
+    "tests/runtime/**/*.js"
   ],
   "exclude": [
     "dist",

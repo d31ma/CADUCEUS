@@ -8,7 +8,7 @@ type DraftInput struct{}
 
 // Parsed answers the normalized snapshot ({clientId, from?, to, cc, bcc,
 // replyTo, subject, text, html, inReplyTo?, sourceEmailId?, references,
-// attachments}), or the reason it is invalid.
+// attachments, quoteProof?}), or the reason it is invalid.
 func (input DraftInput) Parsed(value any) (map[string]any, string) {
 	body, isObject := value.(map[string]any)
 	if !isObject {
@@ -54,6 +54,12 @@ func (input DraftInput) Parsed(value any) (map[string]any, string) {
 	if problem := input.threading(body, draft); problem != "" {
 		return nil, problem
 	}
+	quoteProof, problem := DraftQuoteProof{}.Parsed(body["quoteProof"])
+	if problem != "" {
+		return nil, problem
+	}
+	// Every complete snapshot clears omitted provenance on a merge update.
+	draft["quoteProof"] = quoteProof
 	attachmentsInput := RecordValues{}.Coalesce(body["attachments"], []any{})
 	attachments, problem := MailValidation{}.Attachments(attachmentsInput)
 	if problem != "" {

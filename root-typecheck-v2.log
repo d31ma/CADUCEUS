@@ -1,0 +1,138 @@
+$ tsc --noEmit && tsc -p tsconfig.strict.json
+client/services/BrowserPageService.js(23,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/BrowserPageService.js(86,36): error TS2345: Argument of type 'Timeout' is not assignable to parameter of type 'number'.
+client/services/BrowserPageService.js(92,5): error TS2322: Type 'Element | null' is not assignable to type 'HTMLElement | null'.
+  Type 'Element' is missing the following properties from type 'HTMLElement': accessKey, accessKeyLabel, autocapitalize, autocorrect, and 131 more.
+client/services/BrowserPageService.js(110,5): error TS2349: This expression is not callable.
+  Type 'void' has no call signatures.
+client/services/BrowserPageService.js(121,5): error TS2349: This expression is not callable.
+  Type 'void' has no call signatures.
+client/services/BrowserStorageService.js(17,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/CalendarBrowserService.js(26,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/ComposeEditorService.js(50,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/ComposeEditorService.js(53,3): error TS2564: Property 'taskScheduler' has no initializer and is not definitely assigned in the constructor.
+client/services/ContactsBrowserService.js(9,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/DeviceService.js(24,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/ExtensionPackageService.js(19,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/KeyboardService.js(26,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/MailStreamService.js(28,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/MailboxArchiveService.js(16,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/MailboxArchiveService.js(19,3): error TS2564: Property 'lifecycle' has no initializer and is not definitely assigned in the constructor.
+client/services/MailboxBrowserService.js(27,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/MailboxBrowserService.js(30,3): error TS2564: Property 'lifecycle' has no initializer and is not definitely assigned in the constructor.
+client/services/PasskeyService.js(18,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/PasskeyService.js(49,9): error TS2322: Type 'string' is not assignable to type 'UserVerificationRequirement | undefined'.
+client/services/PasskeyService.js(50,35): error TS2551: Property 'credentials' does not exist on type 'PasskeyRequested'. Did you mean 'credentialIds'?
+client/services/PasskeyService.js(70,106): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+client/services/PasskeyService.js(71,30): error TS2322: Type 'string' is not assignable to type '"public-key"'.
+client/services/PasskeyService.js(71,77): error TS2322: Type 'string' is not assignable to type '"public-key"'.
+client/services/PasskeyService.js(72,35): error TS2322: Type 'string' is not assignable to type 'UserVerificationRequirement | undefined'.
+client/services/PushSubscriptionService.js(13,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/ReaderBrowserService.js(21,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/SoundPreviewService.js(10,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/TranslationEngineService.js(37,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/TranslationEngineService.js(104,38): error TS2345: Argument of type 'string' is not assignable to parameter of type 'TranslationPreference'.
+client/shared/scripts/compose-editor.js(992,5): error TS2349: This expression is not callable.
+  Type 'void' has no call signatures.
+client/shared/scripts/localization.js(32,14): error TS2322: Type 'readonly ({ id: "auto"; labelKey: string; } | { id: string; label: "Deutsch" | "English" | "Español" | "Español (Latinoamérica)" | "Français" | "Galego" | "Magyar" | "Polski" | "Português" | ... 10 more ... | "한국어"; })[]' is not assignable to type 'readonly { id: InterfaceLocaleChoice; label?: string | undefined; labelKey?: string | undefined; }[]'.
+  Type '{ id: "auto"; labelKey: string; } | { id: string; label: "Deutsch" | "English" | "Español" | "Español (Latinoamérica)" | "Français" | "Galego" | "Magyar" | "Polski" | "Português" | ... 10 more ... | "한국어"; }' is not assignable to type '{ id: InterfaceLocaleChoice; label?: string | undefined; labelKey?: string | undefined; }'.
+    Type '{ id: string; label: "Deutsch" | "English" | "Español" | "Español (Latinoamérica)" | "Français" | "Galego" | "Magyar" | "Polski" | "Português" | "Português (Brasil)" | "Türkçe" | ... 8 more ... | "한국어"; }' is not assignable to type '{ id: InterfaceLocaleChoice; label?: string | undefined; labelKey?: string | undefined; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type 'InterfaceLocaleChoice'.
+scripts/verify-smtp-interoperability.mjs(70,5): error TS2353: Object literal may only specify known properties, and 'attachments' does not exist in type 'SendRequest'.
+tests/support/TestServer.mjs(107,11): error TS2322: Type 'string' is not assignable to type 'null'.
+tests/support/TestServer.mjs(108,40): error TS2339: Property 'startsWith' does not exist on type 'never'.
+tests/support/legacy-server/helpers/AttachmentsHelper.js(14,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/AttachmentsHelper.js(123,41): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/support/legacy-server/helpers/DomainMigrationsHelper.js(8,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/DomainsHelper.js(11,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/DomainsHelper.js(22,55): error TS2304: Cannot find name 'RawDomainDoc'.
+tests/support/legacy-server/helpers/DomainsHelper.js(33,69): error TS2304: Cannot find name 'RawDomainDoc'.
+tests/support/legacy-server/helpers/EmailsHelper.js(6,15): error TS2614: Module '"./AttachmentsHelper.js"' has no exported member 'AttachmentsHelper'. Did you mean to use 'import AttachmentsHelper from "./AttachmentsHelper.js"' instead?
+tests/support/legacy-server/helpers/EmailsHelper.js(7,15): error TS2614: Module '"./RawMessagesHelper.js"' has no exported member 'RawMessagesHelper'. Did you mean to use 'import RawMessagesHelper from "./RawMessagesHelper.js"' instead?
+tests/support/legacy-server/helpers/EmailsHelper.js(13,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/OutboxHelper.js(7,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/RawMessagesHelper.js(11,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/RulesHelper.js(10,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/RulesHelper.js(21,53): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/helpers/RulesHelper.js(33,53): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/helpers/RulesHelper.js(46,53): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/helpers/RulesHelper.js(74,67): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/helpers/ScheduledHelper.js(7,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/SuppressedHelper.js(8,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/UsersHelper.js(21,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/CategoryMappingService.js(16,3): error TS2564: Property 'usersHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/CategoryMappingService.js(20,3): error TS2564: Property 'emailsHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/OutboundQueueService.js(8,3): error TS2564: Property 'outboxHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/OutboundQueueService.js(12,3): error TS2564: Property 'smtpService' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/OutboundQueueService.js(16,3): error TS2564: Property 'emailsHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/OutboundQueueService.js(20,3): error TS2564: Property 'scheduledHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/OutboundQueueService.js(24,3): error TS2564: Property 'attachmentsHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/OutboundQueueService.js(28,3): error TS2564: Property 'categoryMappingService' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/OutboundQueueService.js(32,3): error TS2564: Property 'suppressedHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/OutboundQueueService.js(42,41): error TS2694: Namespace '"/Volumes/ANNEX/Runs/CADUCEUS/typing-fix-8f448ae2-c0863030-20261013/typing-root/tests/support/legacy-server/services/SmtpService"' has no exported member 'SendRequest'.
+tests/support/legacy-server/services/OutboundQueueService.js(78,5): error TS2322: Type 'Promise<{ delivered: number; retried: number; bounced: number; }>' is not assignable to type 'null'.
+tests/support/legacy-server/services/OutboundQueueService.js(79,11): error TS2322: Type 'null' is not assignable to type '{ delivered: number; retried: number; bounced: number; }'.
+tests/support/legacy-server/services/SmtpService.js(18,25): error TS2322: Type 'SmtpAdapter' is not assignable to type 'null'.
+tests/support/legacy-server/services/SmtpService.js(19,5): error TS2322: Type 'null' is not assignable to type 'SmtpAdapter'.
+tests/support/legacy-server/shared/delivery/ConsoleSmtpAdapter.js(8,92): error TS2339: Property 'attachments' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/ConsoleSmtpAdapter.js(14,105): error TS2339: Property 'attachments' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/OutboundQueueRules.js(5,36): error TS2307: Cannot find module '../repositories/OutboxHelper.js' or its corresponding type declarations.
+tests/support/legacy-server/shared/delivery/OutboundQueueRules.js(26,22): error TS2307: Cannot find module './SmtpService.js' or its corresponding type declarations.
+tests/support/legacy-server/shared/delivery/OutboundQueueRules.js(32,22): error TS2307: Cannot find module './SmtpService.js' or its corresponding type declarations.
+tests/support/legacy-server/shared/delivery/OutboundQueueRules.js(37,22): error TS2307: Cannot find module './SmtpService.js' or its corresponding type declarations.
+tests/support/legacy-server/shared/delivery/OutboundQueueRules.js(78,22): error TS2307: Cannot find module './SmtpService.js' or its corresponding type declarations.
+tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js(30,44): error TS2307: Cannot find module '../../../deps/npm/nodemailer.mjs' or its corresponding type declarations.
+tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js(33,55): error TS2339: Property 'envelopeRecipients' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js(34,33): error TS2339: Property 'trackingId' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js(34,52): error TS2339: Property 'openTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js(34,72): error TS2339: Property 'linkTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(125,39): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'PathOrFileDescriptor'.
+      Type 'undefined' is not assignable to type 'PathOrFileDescriptor'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(176,50): error TS2339: Property 'trackingId' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(176,69): error TS2339: Property 'openTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(176,89): error TS2339: Property 'linkTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(178,25): error TS2339: Property 'trackingId' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(180,27): error TS2339: Property 'openTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(181,27): error TS2339: Property 'linkTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(196,24): error TS2339: Property 'attachments' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/TrackingTokens.js(2,41): error TS2307: Cannot find module '../../deps/npm/htmlparser2.mjs' or its corresponding type declarations.
+tests/support/legacy-server/shared/domains/DomainsRecords.js(4,15): error TS2304: Cannot find name 'RawDomainDoc'.
+tests/support/legacy-server/shared/domains/DomainsRecords.js(9,46): error TS2304: Cannot find name 'RawDomainDoc'.
+tests/support/legacy-server/shared/mailbox/AttachmentsRecords.js(18,59): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/support/legacy-server/shared/mailbox/AttachmentsRecords.js(23,21): error TS2307: Cannot find module '../../../shared/persistence/Fylo.js' or its corresponding type declarations.
+tests/support/legacy-server/shared/mailbox/AttachmentsRecords.js(96,22): error TS2307: Cannot find module '../../../shared/persistence/Fylo.js' or its corresponding type declarations.
+tests/support/legacy-server/shared/mailbox/AttachmentsRecords.js(104,45): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/support/legacy-server/shared/mailbox/CategoryMappingRules.js(114,22): error TS2307: Cannot find module '../../../types' or its corresponding type declarations.
+tests/support/legacy-server/shared/mailbox/EmailsRecords.js(14,14): error TS2304: Cannot find name 'StoredEmail'.
+tests/support/legacy-server/shared/mailbox/EmailsRecords.js(35,15): error TS2304: Cannot find name 'StoredEmail'.
+tests/support/legacy-server/shared/mailbox/EmailsRecords.js(56,15): error TS2304: Cannot find name 'StoredEmail'.
+tests/support/legacy-server/shared/mailbox/EmailsRecords.js(56,44): error TS2304: Cannot find name 'StoredEmail'.
+tests/support/legacy-server/shared/mailbox/EmailsRecords.js(81,15): error TS2304: Cannot find name 'StoredEmail'.
+tests/support/legacy-server/shared/mailbox/EmailsRecords.js(87,15): error TS2304: Cannot find name 'StoredEmail'.
+tests/support/legacy-server/shared/mailbox/EmailsRecords.js(94,15): error TS2304: Cannot find name 'StoredEmail'.
+tests/support/legacy-server/shared/mailbox/EmailsRecords.js(101,15): error TS2304: Cannot find name 'StoredEmail'.
+tests/support/legacy-server/shared/mailbox/RulesRecords.js(4,15): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/shared/mailbox/RulesRecords.js(24,71): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/shared/mailbox/RulesRecords.js(26,23): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/shared/persistence/Fylo.js(202,3): error TS2416: Property 'findDocs' in type 'Fylo' is not assignable to the same property in base type 'Fylo'.
+  Type '(collection: any, query: any) => { as(access: any): ...; collect(): AsyncGenerator<{ [x: string]: any; }, void, unknown>; }' is not assignable to type '(collection: any, query: any) => Promise<any> & { as(input: any): Promise<any>; }'.
+    Type '{ as(access: any): ...; collect(): AsyncGenerator<{ [x: string]: any; }, void, unknown>; }' is not assignable to type 'Promise<any> & { as(input: any): Promise<any>; }'.
+      Type '{ as(access: any): ...; collect(): AsyncGenerator<{ [x: string]: any; }, void, unknown>; }' is missing the following properties from type 'Promise<any>': then, catch, [Symbol.toStringTag], finally
+tests/support/legacy-server/shared/persistence/Fylo.js(206,9): error TS2322: Type 'Promise<any>' is not assignable to type 'Promise<any> & { as(input: any): Promise<any>; }'.
+  Property 'as' is missing in type 'Promise<any>' but required in type '{ as(input: any): Promise<any>; }'.
+tests/support/legacy-server/shared/security/Security.js(22,10): error TS2393: Duplicate function implementation.
+tests/support/legacy-server/shared/security/Security.js(34,10): error TS2393: Duplicate function implementation.
+tests/support/legacy-server/shared/users/FontPreferences.js(39,61): error TS2322: Type 'string' is not assignable to type 'InterfaceFontId'.
+tests/support/legacy-server/shared/users/FontPreferences.js(44,60): error TS2322: Type 'string' is not assignable to type 'ComposerFontId'.
+tests/support/legacy-server/shared/users/LocalePreferences.js(20,65): error TS2322: Type 'string' is not assignable to type 'InterfaceLocaleChoice'.
+tests/support/legacy-server/shared/users/NewMailNotificationPreferences.js(92,59): error TS2552: Cannot find name 'normalizeNewMailNotificationPreferences'. Did you mean 'NewMailNotificationPreferences'?
+tests/support/legacy-server/shared/users/UnreadBadgePreferences.js(41,14): error TS2322: Type 'string' is not assignable to type '"all" | "domain"'.
+tests/support/legacy-server/shared/users/UsersRecords.js(18,29): error TS2307: Cannot find module '../../../types' or its corresponding type declarations.
+error: script "typecheck" exited with code 1

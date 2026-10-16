@@ -8,13 +8,15 @@
 @Service
 export default class PasskeyService {
   static _REGISTRATION = 'create'
+  /** @type {PublicKeyCredentialType} */
   static _PUBLIC_KEY = 'public-key'
+  /** @type {UserVerificationRequirement} */
   static _VERIFICATION = 'required'
   static _NO_CREDENTIAL = 'error:No passkey credential was returned.'
   static _CANCELLATIONS = ['NotAllowedError', 'AbortError']
   static _BASE64_BLOCK = 4
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
 
   pending = false
@@ -23,15 +25,16 @@ export default class PasskeyService {
   @OnEvent
   async ceremony(request) {
     this.pending = true
+    const displayName = this._displayName(request)
     /** @type {PasskeyAnswered} */
-    const answer = await this._attempt(request)
+    const answer = await this._attempt(request, displayName)
     this.pending = false
-    this.applicationEventPublisher.publishEvent(answer, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(answer, false)
   }
 
-  /** @param {PasskeyRequested} request @returns {Promise<PasskeyAnswered>} */
-  _attempt(request) {
-    return this._ceremony(request.mode)(request)
+  /** @param {PasskeyRequested} request @param {string} displayName @returns {Promise<PasskeyAnswered>} */
+  _attempt(request, displayName) {
+    return this._ceremony(request.mode)(request, displayName)
       .catch(error => this._failed(request.mode, this._reason(this._cancelled(error), this._detail(error))))
   }
 
@@ -40,14 +43,14 @@ export default class PasskeyService {
     return mode === PasskeyService._REGISTRATION ? this._create.bind(this) : this._get.bind(this)
   }
 
-  /** @param {PasskeyRequested} request @returns {Promise<PasskeyAnswered>} */
-  async _get(request) {
+  /** @param {PasskeyRequested} request @param {string} _displayName @returns {Promise<PasskeyAnswered>} */
+  async _get(request, _displayName) {
     const assertion = /** @type {PublicKeyCredential | null} */ (await navigator.credentials.get({
       publicKey: {
         challenge: this._buffer(request.challenge),
         rpId: request.relyingPartyId,
         userVerification: PasskeyService._VERIFICATION,
-        allowCredentials: request.credentials.map(id => ({ id: this._buffer(id), type: PasskeyService._PUBLIC_KEY })),
+        allowCredentials: request.credentialIds.map(id => ({ id: this._buffer(id), type: PasskeyService._PUBLIC_KEY })),
       },
     }))
     if (!assertion) return this._failed(request.mode, PasskeyService._NO_CREDENTIAL)
@@ -61,13 +64,13 @@ export default class PasskeyService {
     }
   }
 
-  /** @param {PasskeyRequested} request @returns {Promise<PasskeyAnswered>} */
-  async _create(request) {
+  /** @param {PasskeyRequested} request @param {string} displayName @returns {Promise<PasskeyAnswered>} */
+  async _create(request, displayName) {
     const credential = /** @type {PublicKeyCredential | null} */ (await navigator.credentials.create({
       publicKey: {
         challenge: this._buffer(request.challenge),
         rp: { id: request.relyingPartyId, name: 'CADUCEUS' },
-        user: { id: this._buffer(request.userId.replace(/[^A-Za-z0-9_-]/g, '')), name: request.userName, displayName: [request.displayName, request.userName].filter(Boolean)[0] },
+        user: { id: this._buffer(request.userId.replace(/[^A-Za-z0-9_-]/g, '')), name: request.userName, displayName },
         pubKeyCredParams: [{ type: PasskeyService._PUBLIC_KEY, alg: -7 }, { type: PasskeyService._PUBLIC_KEY, alg: -257 }],
         authenticatorSelection: { userVerification: PasskeyService._VERIFICATION, residentKey: 'preferred' },
       },
@@ -79,6 +82,11 @@ export default class PasskeyService {
       attestationObject: this._text(response.attestationObject),
       clientDataJSON: this._text(response.clientDataJSON),
     }
+  }
+
+  /** @param {PasskeyRequested} request @returns {string} */
+  _displayName(request) {
+    return request.displayName || request.userName
   }
 
   /** @param {unknown} error */

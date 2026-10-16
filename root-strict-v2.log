@@ -1,0 +1,536 @@
+client/services/BrowserPageService.js(23,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/BrowserPageService.js(86,36): error TS2345: Argument of type 'Timeout' is not assignable to parameter of type 'number'.
+client/services/BrowserPageService.js(92,5): error TS2322: Type 'Element | null' is not assignable to type 'HTMLElement | null'.
+  Type 'Element' is missing the following properties from type 'HTMLElement': accessKey, accessKeyLabel, autocapitalize, autocorrect, and 131 more.
+client/services/BrowserPageService.js(110,5): error TS2349: This expression is not callable.
+  Type 'void' has no call signatures.
+client/services/BrowserPageService.js(121,5): error TS2349: This expression is not callable.
+  Type 'void' has no call signatures.
+client/services/BrowserStorageService.js(17,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/CalendarBrowserService.js(26,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/CalendarBrowserService.js(156,12): error TS7006: Parameter 'chip' implicitly has an 'any' type.
+client/services/ComposeEditorService.js(50,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/ComposeEditorService.js(53,3): error TS2564: Property 'taskScheduler' has no initializer and is not definitely assigned in the constructor.
+client/services/ContactsBrowserService.js(9,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/DeviceService.js(24,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/ExtensionPackageService.js(19,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/ExtensionPackageService.js(32,19): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/services/ExtensionPackageService.js(33,24): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/services/ExtensionPackageService.js(34,21): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/services/ExtensionPackageService.js(35,31): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/services/ExtensionPackageService.js(36,21): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/services/ExtensionPackageService.js(37,31): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/services/ExtensionPackageService.js(38,36): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/services/ExtensionPackageService.js(39,24): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/services/ExtensionPackageService.js(40,32): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/services/ExtensionPackageService.js(111,17): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ 'caduceus-extension-host-ready': () => void; 'caduceus-extension': () => void; }'.
+  No index signature with a parameter of type 'string' was found on type '{ 'caduceus-extension-host-ready': () => void; 'caduceus-extension': () => void; }'.
+client/services/KeyboardService.js(26,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/MailStreamService.js(28,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/MailStreamService.js(96,5): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'MailStreamService'.
+  No index signature with a parameter of type 'string' was found on type 'MailStreamService'.
+client/services/MailStreamService.js(115,40): error TS2538: Type 'undefined' cannot be used as an index type.
+client/services/MailboxArchiveService.js(16,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/MailboxArchiveService.js(19,3): error TS2564: Property 'lifecycle' has no initializer and is not definitely assigned in the constructor.
+client/services/MailboxBrowserService.js(27,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/MailboxBrowserService.js(30,3): error TS2564: Property 'lifecycle' has no initializer and is not definitely assigned in the constructor.
+client/services/PasskeyService.js(18,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/PasskeyService.js(49,9): error TS2322: Type 'string' is not assignable to type 'UserVerificationRequirement | undefined'.
+client/services/PasskeyService.js(50,35): error TS2551: Property 'credentials' does not exist on type 'PasskeyRequested'. Did you mean 'credentialIds'?
+client/services/PasskeyService.js(50,51): error TS7006: Parameter 'id' implicitly has an 'any' type.
+client/services/PasskeyService.js(70,106): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+client/services/PasskeyService.js(71,30): error TS2322: Type 'string' is not assignable to type '"public-key"'.
+client/services/PasskeyService.js(71,77): error TS2322: Type 'string' is not assignable to type '"public-key"'.
+client/services/PasskeyService.js(72,35): error TS2322: Type 'string' is not assignable to type 'UserVerificationRequirement | undefined'.
+client/services/PushSubscriptionService.js(13,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/ReaderBrowserService.js(21,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/SoundPreviewService.js(10,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/TranslationEngineService.js(37,3): error TS2564: Property 'applicationEventPublisher' has no initializer and is not definitely assigned in the constructor.
+client/services/TranslationEngineService.js(104,38): error TS2345: Argument of type 'string' is not assignable to parameter of type 'TranslationPreference'.
+client/shared/scripts/compose-editor.js(992,5): error TS2349: This expression is not callable.
+  Type 'void' has no call signatures.
+client/shared/scripts/composer-templates.js(102,39): error TS7006: Parameter 'input' implicitly has an 'any' type.
+client/shared/scripts/composer-templates.js(121,40): error TS7006: Parameter 'node' implicitly has an 'any' type.
+client/shared/scripts/grammar-check.js(6,29): error TS7006: Parameter 'root' implicitly has an 'any' type.
+client/shared/scripts/grammar-check.js(11,41): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/shared/scripts/grammar-check.js(11,48): error TS7006: Parameter 'textLength' implicitly has an 'any' type.
+client/shared/scripts/grammar-check.js(18,33): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/shared/scripts/grammar-check.js(40,30): error TS7006: Parameter 'root' implicitly has an 'any' type.
+client/shared/scripts/grammar-check.js(40,36): error TS7006: Parameter 'offset' implicitly has an 'any' type.
+client/shared/scripts/grammar-check.js(40,44): error TS7006: Parameter 'length' implicitly has an 'any' type.
+client/shared/scripts/grammar-check.js(110,19): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/shared/scripts/grammar-check.js(110,26): error TS7006: Parameter 'max' implicitly has an 'any' type.
+client/shared/scripts/localization.js(32,14): error TS2322: Type 'readonly ({ id: "auto"; labelKey: string; } | { id: string; label: "Deutsch" | "English" | "Español" | "Español (Latinoamérica)" | "Français" | "Galego" | "Magyar" | "Polski" | "Português" | ... 10 more ... | "한국어"; })[]' is not assignable to type 'readonly { id: InterfaceLocaleChoice; label?: string | undefined; labelKey?: string | undefined; }[]'.
+  Type '{ id: "auto"; labelKey: string; } | { id: string; label: "Deutsch" | "English" | "Español" | "Español (Latinoamérica)" | "Français" | "Galego" | "Magyar" | "Polski" | "Português" | ... 10 more ... | "한국어"; }' is not assignable to type '{ id: InterfaceLocaleChoice; label?: string | undefined; labelKey?: string | undefined; }'.
+    Type '{ id: string; label: "Deutsch" | "English" | "Español" | "Español (Latinoamérica)" | "Français" | "Galego" | "Magyar" | "Polski" | "Português" | "Português (Brasil)" | "Türkçe" | ... 8 more ... | "한국어"; }' is not assignable to type '{ id: InterfaceLocaleChoice; label?: string | undefined; labelKey?: string | undefined; }'.
+      Types of property 'id' are incompatible.
+        Type 'string' is not assignable to type 'InterfaceLocaleChoice'.
+client/shared/scripts/localization.js(183,43): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/shared/scripts/localization.js(188,75): error TS7053: Element implicitly has an 'any' type because expression of type 'ResolvedInterfaceLocale' can't be used to index type 'Readonly<{ en: Readonly<{ 'locale.automatic': "Automatic (device language)"; 'locale.en': "English"; 'locale.fr': "French"; 'locale.ar': "Arabic"; 'locale.heading': "Language and region"; 'locale.description': "Choose the language used by CADUCEUS. Dates and numbers follow the same locale."; ... 35 more ...; 'notifi...'.
+  Property 'cs' does not exist on type 'Readonly<{ en: Readonly<{ 'locale.automatic': "Automatic (device language)"; 'locale.en': "English"; 'locale.fr': "French"; 'locale.ar': "Arabic"; 'locale.heading': "Language and region"; 'locale.description': "Choose the language used by CADUCEUS. Dates and numbers follow the same locale."; ... 35 more ...; 'notifi...'.
+client/shared/scripts/localization.js(198,58): error TS7053: Element implicitly has an 'any' type because expression of type 'ResolvedInterfaceLocale' can't be used to index type 'Readonly<{ en: Readonly<{ 'locale.automatic': "Automatic (device language)"; 'locale.en': "English"; 'locale.fr': "French"; 'locale.ar': "Arabic"; 'locale.heading': "Language and region"; 'locale.description': "Choose the language used by CADUCEUS. Dates and numbers follow the same locale."; ... 35 more ...; 'notifi...'.
+  Property 'cs' does not exist on type 'Readonly<{ en: Readonly<{ 'locale.automatic': "Automatic (device language)"; 'locale.en': "English"; 'locale.fr': "French"; 'locale.ar': "Arabic"; 'locale.heading': "Language and region"; 'locale.description': "Choose the language used by CADUCEUS. Dates and numbers follow the same locale."; ... 35 more ...; 'notifi...'.
+client/shared/scripts/localization.js(200,32): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Readonly<{ 'locale.automatic': "Automatic (device language)"; 'locale.en': "English"; 'locale.fr': "French"; 'locale.ar': "Arabic"; 'locale.heading': "Language and region"; 'locale.description': "Choose the language used by CADUCEUS. Dates and numbers follow the same locale."; ... 35 more ...; 'notification.count': ...'.
+  No index signature with a parameter of type 'string' was found on type 'Readonly<{ 'locale.automatic': "Automatic (device language)"; 'locale.en': "English"; 'locale.fr': "French"; 'locale.ar': "Arabic"; 'locale.heading': "Language and region"; 'locale.description': "Choose the language used by CADUCEUS. Dates and numbers follow the same locale."; ... 35 more ...; 'notification.count': ...'.
+client/shared/scripts/mail-preferences.js(45,39): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'MailPreferences'.
+  No index signature with a parameter of type 'string' was found on type 'MailPreferences'.
+client/shared/scripts/mail-preferences.js(48,42): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'MailPreferences'.
+  No index signature with a parameter of type 'string' was found on type 'MailPreferences'.
+client/shared/scripts/mbox.js(121,17): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/shared/scripts/mbox.js(318,15): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(67,50): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(108,47): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(115,76): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(120,43): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(120,82): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(131,40): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(136,84): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(137,53): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(170,53): error TS7006: Parameter 'id' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(230,13): error TS7006: Parameter 'entry' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(232,8): error TS7006: Parameter 'entry' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(244,41): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/shared/scripts/offline-mailbox-index.js(264,68): error TS7006: Parameter 'item' implicitly has an 'any' type.
+client/shared/scripts/offline-translation-engine.js(78,21): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/shared/scripts/offline-translation-engine.js(121,3): error TS2322: Type '{ model: string; sourceLanguage: string; targetLanguage: string; }[]' is not assignable to type '{ model: "opus-en-mul" | "opus-mul-en" | "small100"; sourceLanguage: string; targetLanguage: string; }[]'.
+  Type '{ model: string; sourceLanguage: string; targetLanguage: string; }' is not assignable to type '{ model: "opus-en-mul" | "opus-mul-en" | "small100"; sourceLanguage: string; targetLanguage: string; }'.
+    Types of property 'model' are incompatible.
+      Type 'string' is not assignable to type '"opus-en-mul" | "opus-mul-en" | "small100"'.
+client/shared/scripts/offline-translation-engine.js(216,17): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Readonly<{ mt: "mlt"; mi: "mri"; mhr: "mhr"; eu: "eus"; pap: "pap"; mrj: "mhr"; tg: "tgk_Cyrl"; tt: "tat"; te: "tel"; udm: "udm"; ky: "kir_Cyrl"; la: "lat_Latn"; eo: "epo"; }>'.
+  No index signature with a parameter of type 'string' was found on type 'Readonly<{ mt: "mlt"; mi: "mri"; mhr: "mhr"; eu: "eus"; pap: "pap"; mrj: "mhr"; tg: "tgk_Cyrl"; tt: "tat"; te: "tel"; udm: "udm"; ky: "kir_Cyrl"; la: "lat_Latn"; eo: "epo"; }>'.
+client/shared/scripts/offline-translation-engine.js(238,12): error TS7006: Parameter 'index' implicitly has an 'any' type.
+client/shared/scripts/offline-translation-engine.js(238,19): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/shared/scripts/offline-translation-engine.js(362,10): error TS7006: Parameter 'event' implicitly has an 'any' type.
+client/shared/scripts/offline-write-vault.js(334,55): error TS7006: Parameter 'owner' implicitly has an 'any' type.
+client/shared/scripts/on-device-translation.js(241,19): error TS7006: Parameter 'monitor' implicitly has an 'any' type.
+client/shared/scripts/on-device-translation.js(242,58): error TS7006: Parameter 'event' implicitly has an 'any' type.
+client/shared/scripts/on-device-translation.js(257,21): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/shared/scripts/print-conversation.js(25,29): error TS7006: Parameter 'email' implicitly has an 'any' type.
+client/shared/scripts/rich-compose-editor.js(23,38): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/shared/scripts/rich-compose-editor.js(36,38): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/shared/scripts/rich-compose-editor.js(56,44): error TS7006: Parameter 'value' implicitly has an 'any' type.
+client/shared/scripts/rich-compose-editor.js(103,35): error TS7006: Parameter 'message' implicitly has an 'any' type.
+client/shared/scripts/unread-badge.js(102,29): error TS7006: Parameter 'event' implicitly has an 'any' type.
+client/shared/scripts/unread-badge.js(113,28): error TS7006: Parameter 'event' implicitly has an 'any' type.
+client/shared/scripts/unread-badge.js(117,31): error TS7006: Parameter 'event' implicitly has an 'any' type.
+client/shared/scripts/unread-badge.js(124,27): error TS7006: Parameter 'event' implicitly has an 'any' type.
+scripts/support/Providers.mjs(203,19): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ AttachmentsHelper: string[]; CalendarEventsHelper: string[]; CalendarImportService: string[]; CategoryMappingService: string[]; ContactsHelper: string[]; ContactsService: string[]; ConversationArchiveService: string[]; ... 40 more ...; UsersHelper: string[]; }'.
+scripts/support/Providers.mjs(204,20): error TS7006: Parameter 'name' implicitly has an 'any' type.
+scripts/support/Providers.mjs(204,26): error TS7006: Parameter 'index' implicitly has an 'any' type.
+scripts/support/Providers.mjs(219,50): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ AttachmentsHelper: { fylo: string; }; CalendarEventsHelper: { fylo: string; }; CalendarImportService: { calendarEvents: string; }; CategoryMappingService: { emails: string; users: string; }; ContactsHelper: { ...; }; ... 39 more ...; UsersHelper: { ...; }; }'.
+tests/runtime/fylo-access.test.js(4,5): error TS7034: Variable 'previousEnabled' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/runtime/fylo-access.test.js(12,7): error TS7005: Variable 'previousEnabled' implicitly has an 'any' type.
+tests/runtime/fylo-access.test.js(13,40): error TS7005: Variable 'previousEnabled' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(20,24): error TS7006: Parameter 'code' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(20,30): error TS7006: Parameter 'message' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(26,21): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(26,28): error TS7006: Parameter 'fallback' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(26,38): error TS7006: Parameter 'name' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(26,44): error TS7006: Parameter 'minimum' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(34,27): error TS7006: Parameter 'path' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(34,33): error TS7006: Parameter 'line' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(34,39): error TS7006: Parameter 'message' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(38,33): error TS7006: Parameter 'path' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(38,39): error TS7006: Parameter 'line' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(38,45): error TS7006: Parameter 'input' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(38,52): error TS7006: Parameter 'quote' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(71,31): error TS7006: Parameter 'path' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(103,27): error TS7006: Parameter 'config' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(135,7): error TS7006: Parameter 'target' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(135,15): error TS7006: Parameter 'prop' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(135,21): error TS7006: Parameter 'receiver' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(170,5): error TS7008: Member '_queue' implicitly has an 'any[]' type.
+tests/support/legacy-server/deps/fylo.mjs(176,17): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(176,24): error TS7006: Parameter 'payload' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(177,15): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(177,22): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(178,13): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(178,20): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(178,27): error TS7006: Parameter 'delivery' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(178,37): error TS7006: Parameter 'receipt' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(182,14): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(182,21): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(182,28): error TS7006: Parameter 'delivery' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(184,48): error TS2339: Property 'receipt' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(186,16): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(186,23): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(186,30): error TS7006: Parameter 'delivery' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(186,40): error TS7006: Parameter 'receiptOrTimeout' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(186,58): error TS7006: Parameter 'visibilityTimeoutMs' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(191,15): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(191,22): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(192,21): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(192,28): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(192,35): error TS7006: Parameter 'limit' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(277,14): error TS7006: Parameter 'name' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(279,15): error TS7006: Parameter 'kind' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(283,13): error TS7006: Parameter 'data' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(283,19): error TS7006: Parameter 'meta' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(284,17): error TS7006: Parameter 'filePath' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(284,27): error TS7006: Parameter 'options' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(285,14): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(286,12): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(287,16): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(288,17): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(288,21): error TS7006: Parameter 'meta' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(289,16): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(289,20): error TS7006: Parameter 'onlyId' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(290,15): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(290,19): error TS7006: Parameter 'newDoc' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(290,27): error TS7006: Parameter 'oldDoc' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(291,15): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(292,16): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(293,13): error TS7006: Parameter 'query' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(294,18): error TS7006: Parameter 'query' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(294,25): error TS7006: Parameter 'page' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(298,11): error TS7006: Parameter 'chunk' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(336,19): error TS7006: Parameter 'bytes' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(347,18): error TS7006: Parameter 'error' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(352,11): error TS7006: Parameter 'op' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(376,18): error TS7006: Parameter 'op' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(418,23): error TS7006: Parameter 'error' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(418,30): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(448,17): error TS7006: Parameter 'op' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(448,21): error TS7006: Parameter 'fields' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(451,32): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ op: any; }'.
+  No index signature with a parameter of type 'string' was found on type '{ op: any; }'.
+tests/support/legacy-server/deps/fylo.mjs(465,13): error TS7006: Parameter 'op' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(465,17): error TS7006: Parameter 'fields' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(474,13): error TS7006: Parameter 'op' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(474,17): error TS7006: Parameter 'fields' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(475,29): error TS7006: Parameter 'access' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(478,15): error TS7006: Parameter 'task' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(479,9): error TS7034: Variable 'access' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/support/legacy-server/deps/fylo.mjs(483,19): error TS7005: Variable 'access' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(486,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(494,20): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(497,18): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(500,21): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(503,21): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(506,16): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(506,23): error TS7006: Parameter 'payload' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(508,40): error TS2339: Property 'delayMs' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(508,73): error TS2339: Property 'idempotencyKey' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(511,14): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(511,21): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(513,42): error TS2339: Property 'maxMessages' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(514,36): error TS2339: Property 'visibilityTimeoutMs' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(514,78): error TS2339: Property 'maxAttempts' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(517,12): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(517,19): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(517,26): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(517,30): error TS7006: Parameter 'receipt' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(520,13): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(520,20): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(520,27): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(520,31): error TS7006: Parameter 'receipt' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(522,51): error TS2339: Property 'delayMs' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(522,76): error TS2339: Property 'reason' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(525,15): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(525,22): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(525,29): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(525,33): error TS7006: Parameter 'receipt' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(525,42): error TS7006: Parameter 'visibilityTimeoutMs' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(528,14): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(528,21): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(531,20): error TS7006: Parameter 'topic' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(531,27): error TS7006: Parameter 'group' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(531,34): error TS7006: Parameter 'limit' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(534,11): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(534,23): error TS7006: Parameter 'data' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(534,29): error TS7006: Parameter 'meta' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(537,11): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(537,23): error TS7006: Parameter 'filePath' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(541,44): error TS2339: Property 'key' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(542,28): error TS2339: Property 'maxBytes' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(542,85): error TS2339: Property 'maxBytes' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(543,21): error TS2339: Property 'meta' does not exist on type '{}'.
+tests/support/legacy-server/deps/fylo.mjs(546,16): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(546,28): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(547,35): error TS7006: Parameter 'access' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(585,16): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(585,28): error TS7006: Parameter 'batch' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(588,10): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(588,22): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(591,15): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(591,27): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(591,31): error TS7006: Parameter 'path' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(594,11): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(594,23): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(597,11): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(597,23): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(597,27): error TS7006: Parameter 'meta' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(600,13): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(600,25): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(603,12): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(603,24): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(603,28): error TS7006: Parameter 'newDoc' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(603,36): error TS7006: Parameter 'oldDoc' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(606,13): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(606,25): error TS7006: Parameter 'update' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(609,10): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(609,22): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(612,11): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(612,23): error TS7006: Parameter 'criteria' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(615,14): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(615,26): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(618,12): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(618,24): error TS7006: Parameter 'query' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(621,19): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(624,16): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(624,28): error TS7006: Parameter 'query' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(627,23): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(630,12): error TS7006: Parameter 'join' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(633,14): error TS7006: Parameter 'sql' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(633,19): error TS7006: Parameter 'access' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(636,7): error TS7006: Parameter 'strings' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(636,16): error TS7019: Rest parameter 'values' implicitly has an 'any[]' type.
+tests/support/legacy-server/deps/fylo.mjs(641,9): error TS7034: Variable 'access' implicitly has type 'any' in some locations where its type cannot be determined.
+tests/support/legacy-server/deps/fylo.mjs(645,41): error TS7005: Variable 'access' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(648,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(655,20): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(667,18): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(667,30): error TS7006: Parameter 'url' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(667,35): error TS7006: Parameter 'limitOrOptions' implicitly has an 'any' type.
+tests/support/legacy-server/deps/fylo.mjs(681,29): error TS7006: Parameter 'address' implicitly has an 'any' type.
+tests/support/legacy-server/helpers/AttachmentsHelper.js(14,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/AttachmentsHelper.js(123,41): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/support/legacy-server/helpers/EmailsHelper.js(6,15): error TS2614: Module '"./AttachmentsHelper.js"' has no exported member 'AttachmentsHelper'. Did you mean to use 'import AttachmentsHelper from "./AttachmentsHelper.js"' instead?
+tests/support/legacy-server/helpers/EmailsHelper.js(7,15): error TS2614: Module '"./RawMessagesHelper.js"' has no exported member 'RawMessagesHelper'. Did you mean to use 'import RawMessagesHelper from "./RawMessagesHelper.js"' instead?
+tests/support/legacy-server/helpers/EmailsHelper.js(13,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/EmailsHelper.js(142,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/support/legacy-server/helpers/OutboxHelper.js(7,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/RawMessagesHelper.js(11,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/RulesHelper.js(10,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/RulesHelper.js(21,53): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/helpers/RulesHelper.js(33,53): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/helpers/RulesHelper.js(46,53): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/helpers/RulesHelper.js(74,67): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/helpers/ScheduledHelper.js(7,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/SuppressedHelper.js(8,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/UsersHelper.js(21,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/helpers/UsersHelper.js(196,31): error TS7006: Parameter 'docId' implicitly has an 'any' type.
+tests/support/legacy-server/helpers/UsersHelper.js(196,38): error TS7006: Parameter 'catalog' implicitly has an 'any' type.
+tests/support/legacy-server/services/CategoryMappingService.js(16,3): error TS2564: Property 'usersHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/CategoryMappingService.js(20,3): error TS2564: Property 'emailsHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/CategoryMappingService.js(50,49): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/support/legacy-server/services/CategoryMappingService.js(68,24): error TS7006: Parameter 'ownerEmail' implicitly has an 'any' type.
+tests/support/legacy-server/services/CategoryMappingService.js(68,36): error TS7006: Parameter 'input' implicitly has an 'any' type.
+tests/support/legacy-server/services/InboundService.js(11,15): error TS2614: Module '"../helpers/AttachmentsHelper.js"' has no exported member 'ParsedAttachment'. Did you mean to use 'import ParsedAttachment from "../helpers/AttachmentsHelper.js"' instead?
+tests/support/legacy-server/services/InboundService.js(12,15): error TS2614: Module '"../helpers/EmailsHelper.js"' has no exported member 'EmailsHelper'. Did you mean to use 'import EmailsHelper from "../helpers/EmailsHelper.js"' instead?
+tests/support/legacy-server/services/InboundService.js(13,15): error TS2614: Module '"../helpers/RulesHelper.js"' has no exported member 'RulesHelper'. Did you mean to use 'import RulesHelper from "../helpers/RulesHelper.js"' instead?
+tests/support/legacy-server/services/InboundService.js(14,15): error TS2614: Module '"../helpers/SuppressedHelper.js"' has no exported member 'SuppressedHelper'. Did you mean to use 'import SuppressedHelper from "../helpers/SuppressedHelper.js"' instead?
+tests/support/legacy-server/services/InboundService.js(15,15): error TS2614: Module '"../helpers/AttachmentsHelper.js"' has no exported member 'AttachmentsHelper'. Did you mean to use 'import AttachmentsHelper from "../helpers/AttachmentsHelper.js"' instead?
+tests/support/legacy-server/services/InboundService.js(16,15): error TS2614: Module '"../helpers/RawMessagesHelper.js"' has no exported member 'RawMessagesHelper'. Did you mean to use 'import RawMessagesHelper from "../helpers/RawMessagesHelper.js"' instead?
+tests/support/legacy-server/services/InboundService.js(17,15): error TS2614: Module '"./SmtpService.js"' has no exported member 'SmtpService'. Did you mean to use 'import SmtpService from "./SmtpService.js"' instead?
+tests/support/legacy-server/services/InboundService.js(54,3): error TS2564: Property 'fyloHelper' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/InboundService.js(62,3): error TS2564: Property 'categoryMappingService' has no initializer and is not definitely assigned in the constructor.
+tests/support/legacy-server/services/InboundService.js(65,14): error TS2304: Cannot find name 'InboundPayload'.
+tests/support/legacy-server/services/InboundService.js(74,34): error TS7006: Parameter 'rule' implicitly has an 'any' type.
+tests/support/legacy-server/services/InboundService.js(85,14): error TS2304: Cannot find name 'InboundPayload'.
+tests/support/legacy-server/services/InboundService.js(102,15): error TS2304: Cannot find name 'InboundPayload'.
+tests/support/legacy-server/services/InboundService.js(137,34): error TS2304: Cannot find name 'InboundPayload'.
+tests/support/legacy-server/services/InboundService.js(143,70): error TS2304: Cannot find name 'InboundPayload'.
+tests/support/legacy-server/services/InboundService.js(190,58): error TS7006: Parameter 'a' implicitly has an 'any' type.
+tests/support/legacy-server/services/SmtpService.js(18,25): error TS2322: Type 'SmtpAdapter' is not assignable to type 'null'.
+tests/support/legacy-server/services/SmtpService.js(19,5): error TS2322: Type 'null' is not assignable to type 'SmtpAdapter'.
+tests/support/legacy-server/shared/delivery/ConsoleSmtpAdapter.js(8,92): error TS2339: Property 'attachments' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/ConsoleSmtpAdapter.js(14,105): error TS2339: Property 'attachments' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/InboundRules.js(22,14): error TS2304: Cannot find name 'RuleCondition'.
+tests/support/legacy-server/shared/delivery/InboundRules.js(81,31): error TS7006: Parameter 'entry' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/InboundRules.js(210,26): error TS2307: Cannot find module '../../deps/npm/mailparser.mjs' or its corresponding type declarations.
+tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js(30,44): error TS2307: Cannot find module '../../../deps/npm/nodemailer.mjs' or its corresponding type declarations.
+tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js(33,55): error TS2339: Property 'envelopeRecipients' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js(34,33): error TS2339: Property 'trackingId' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js(34,52): error TS2339: Property 'openTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js(34,72): error TS2339: Property 'linkTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpDirectAdapter.js(43,45): error TS2339: Property 'messageId' does not exist on type '{ domain: any; recipients: any; deliveredRecipients: string[]; failedRecipients: any; recipient?: any; host: string; messageId: any; accepted: any; rejected: any; response: any; error?: string | undefined; responseCode?: number | undefined; recipientFailures?: any; } | { ...; }'.
+  Property 'messageId' does not exist on type '{ domain: any; recipients: any; deliveredRecipients: never[]; failedRecipients: any; recipient?: any; error: string; responseCode: number; }'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(67,47): error TS7006: Parameter 'recipient' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(68,33): error TS7006: Parameter 'recipient' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(69,41): error TS7006: Parameter 'failure' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(93,48): error TS7006: Parameter 'recipient' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(125,39): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'PathOrFileDescriptor'.
+      Type 'undefined' is not assignable to type 'PathOrFileDescriptor'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(156,46): error TS7006: Parameter 'resolver' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(161,26): error TS7006: Parameter 'record' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(164,30): error TS7006: Parameter 'a' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(164,33): error TS7006: Parameter 'b' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(164,68): error TS7006: Parameter 'record' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(176,50): error TS2339: Property 'trackingId' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(176,69): error TS2339: Property 'openTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(176,89): error TS2339: Property 'linkTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(178,25): error TS2339: Property 'trackingId' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(180,27): error TS2339: Property 'openTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(181,27): error TS2339: Property 'linkTracking' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(196,24): error TS2339: Property 'attachments' does not exist on type 'SendRequest'.
+tests/support/legacy-server/shared/delivery/SmtpRules.js(196,41): error TS7006: Parameter 'attachment' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/TrackingTokens.js(2,41): error TS2307: Cannot find module '../../deps/npm/htmlparser2.mjs' or its corresponding type declarations.
+tests/support/legacy-server/shared/delivery/TrackingTokens.js(110,9): error TS7006: Parameter 'node' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/TrackingTokens.js(117,15): error TS7022: 'index' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+tests/support/legacy-server/shared/delivery/TrackingTokens.js(148,29): error TS7006: Parameter 'html' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/TrackingTokens.js(153,7): error TS7006: Parameter 'node' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/TrackingTokens.js(155,15): error TS7006: Parameter 'anchor' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/TrackingTokens.js(164,57): error TS7006: Parameter 'link' implicitly has an 'any' type.
+tests/support/legacy-server/shared/delivery/TrackingTokens.js(164,63): error TS7006: Parameter 'index' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/AttachmentsRecords.js(18,59): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/support/legacy-server/shared/mailbox/AttachmentsRecords.js(23,21): error TS2307: Cannot find module '../../../shared/persistence/Fylo.js' or its corresponding type declarations.
+tests/support/legacy-server/shared/mailbox/AttachmentsRecords.js(96,22): error TS2307: Cannot find module '../../../shared/persistence/Fylo.js' or its corresponding type declarations.
+tests/support/legacy-server/shared/mailbox/AttachmentsRecords.js(104,45): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/support/legacy-server/shared/mailbox/CategoryCatalog.js(10,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/CategoryCatalog.js(10,42): error TS7006: Parameter 'assignedDomains' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/CategoryCatalog.js(19,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/support/legacy-server/shared/mailbox/CategoryCatalog.js(28,31): error TS7006: Parameter 'catalog' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/CategoryCatalog.js(28,40): error TS7006: Parameter 'input' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/CategoryCatalog.js(28,47): error TS7006: Parameter 'assignedDomains' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/CategoryCatalog.js(33,49): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/CategoryCatalog.js(40,21): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/support/legacy-server/shared/mailbox/CategoryCatalog.js(49,5): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/support/legacy-server/shared/mailbox/CategoryMappingRules.js(43,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/support/legacy-server/shared/mailbox/CategoryMappingRules.js(101,9): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/support/legacy-server/shared/mailbox/CategoryMappingRules.js(103,7): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/support/legacy-server/shared/mailbox/CategoryMappingRules.js(114,22): error TS2307: Cannot find module '../../../types' or its corresponding type declarations.
+tests/support/legacy-server/shared/mailbox/CategoryPath.js(7,32): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/CategoryPath.js(16,26): error TS7006: Parameter 'path' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/CategoryPath.js(16,32): error TS7006: Parameter 'kind' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/CategoryPath.js(16,38): error TS7006: Parameter 'role' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/RuleEngine.js(42,88): error TS2304: Cannot find name 'normalizeRuleMessage'.
+tests/support/legacy-server/shared/mailbox/RulesRecords.js(4,15): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/shared/mailbox/RulesRecords.js(24,71): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/shared/mailbox/RulesRecords.js(26,23): error TS2304: Cannot find name 'RawRuleDoc'.
+tests/support/legacy-server/shared/mailbox/Threading.js(30,29): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/Threading.js(45,36): error TS7006: Parameter 'headers' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/Threading.js(45,45): error TS7006: Parameter 'fallbackId' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/Threading.js(45,57): error TS7006: Parameter 'domain' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/Threading.js(54,37): error TS7006: Parameter 'message' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/Threading.js(54,46): error TS7006: Parameter 'fallbackId' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/Threading.js(54,58): error TS7006: Parameter 'domain' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/Threading.js(63,26): error TS7006: Parameter 'domain' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/Threading.js(71,25): error TS7006: Parameter 'domain' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mailbox/Threading.js(71,33): error TS7006: Parameter 'root' implicitly has an 'any' type.
+tests/support/legacy-server/shared/mcp/Preferences.js(67,11): error TS7034: Variable 'allowedDomains' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/support/legacy-server/shared/mcp/Preferences.js(74,12): error TS7005: Variable 'allowedDomains' implicitly has an 'any[]' type.
+tests/support/legacy-server/shared/mcp/Preferences.js(92,13): error TS7034: Variable 'folders' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/support/legacy-server/shared/mcp/Preferences.js(96,14): error TS7005: Variable 'folders' implicitly has an 'any[]' type.
+tests/support/legacy-server/shared/mcp/Preferences.js(102,27): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/support/legacy-server/shared/mcp/Preferences.js(124,13): error TS7034: Variable 'folders' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/support/legacy-server/shared/mcp/Preferences.js(127,24): error TS7005: Variable 'folders' implicitly has an 'any[]' type.
+tests/support/legacy-server/shared/mcp/Preferences.js(132,27): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/support/legacy-server/shared/persistence/Fylo.js(11,22): error TS7006: Parameter 'operation' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(11,33): error TS7006: Parameter 'access' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(15,26): error TS7006: Parameter 'task' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(15,32): error TS7006: Parameter 'defaultAccess' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(23,10): error TS7006: Parameter 'input' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(31,26): error TS7006: Parameter 'batch' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(33,12): error TS7006: Parameter 'record' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(37,23): error TS7006: Parameter 'access' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(163,11): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(163,23): error TS7006: Parameter 'data' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(163,29): error TS7006: Parameter 'meta' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(170,16): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(170,28): error TS7006: Parameter 'batch' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(175,11): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(175,23): error TS7006: Parameter 'filePath' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(178,39): error TS2339: Property 'meta' does not exist on type '{}'.
+tests/support/legacy-server/shared/persistence/Fylo.js(182,16): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(182,28): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(186,10): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(186,22): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(190,11): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(190,23): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(194,11): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(194,23): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(194,27): error TS7006: Parameter 'meta' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(198,13): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(198,25): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(202,3): error TS2416: Property 'findDocs' in type 'Fylo' is not assignable to the same property in base type 'Fylo'.
+  Type '(collection: any, query: any) => { as(access: any): ...; collect(): AsyncGenerator<{ [x: string]: any; }, void, unknown>; }' is not assignable to type '(collection: any, query: any) => Promise<any> & { as(input: any): Promise<any>; }'.
+    Type '{ as(access: any): ...; collect(): AsyncGenerator<{ [x: string]: any; }, void, unknown>; }' is not assignable to type 'Promise<any> & { as(input: any): Promise<any>; }'.
+      Type '{ as(access: any): ...; collect(): AsyncGenerator<{ [x: string]: any; }, void, unknown>; }' is missing the following properties from type 'Promise<any>': then, catch, [Symbol.toStringTag], finally
+tests/support/legacy-server/shared/persistence/Fylo.js(202,12): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(202,24): error TS7006: Parameter 'query' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(205,10): error TS7006: Parameter 'access' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(206,9): error TS2322: Type 'Promise<any>' is not assignable to type 'Promise<any> & { as(input: any): Promise<any>; }'.
+  Property 'as' is missing in type 'Promise<any>' but required in type '{ as(input: any): Promise<any>; }'.
+tests/support/legacy-server/shared/persistence/Fylo.js(228,16): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(228,28): error TS7006: Parameter 'query' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(232,19): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(239,12): error TS7006: Parameter 'join' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(243,12): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(243,24): error TS7006: Parameter 'idOrDocuments' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(243,39): error TS7006: Parameter 'newDocument' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(243,52): error TS7006: Parameter 'oldDocument' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(252,39): error TS7006: Parameter 'access' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(261,13): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(261,25): error TS7006: Parameter 'update' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(265,10): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(265,22): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(269,11): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(269,23): error TS7006: Parameter 'criteria' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(273,14): error TS7006: Parameter 'collection' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/Fylo.js(273,26): error TS7006: Parameter 'id' implicitly has an 'any' type.
+tests/support/legacy-server/shared/persistence/FyloAccessContext.js(30,10): error TS7023: 'recordDomain' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+tests/support/legacy-server/shared/security/Security.js(22,10): error TS2393: Duplicate function implementation.
+tests/support/legacy-server/shared/security/Security.js(34,10): error TS2393: Duplicate function implementation.
+tests/support/legacy-server/shared/users/FontPreferences.js(39,61): error TS2322: Type 'string' is not assignable to type 'InterfaceFontId'.
+tests/support/legacy-server/shared/users/FontPreferences.js(44,60): error TS2322: Type 'string' is not assignable to type 'ComposerFontId'.
+tests/support/legacy-server/shared/users/GrammarPreferences.js(13,34): error TS2339: Property 'grammarCheckEnabled' does not exist on type '{}'.
+tests/support/legacy-server/shared/users/GrammarPreferences.js(14,72): error TS2339: Property 'grammarCheckLanguage' does not exist on type '{}'.
+tests/support/legacy-server/shared/users/GrammarPreferences.js(14,102): error TS2339: Property 'grammarCheckLanguage' does not exist on type '{}'.
+tests/support/legacy-server/shared/users/GrammarPreferences.js(15,75): error TS2339: Property 'grammarCheckDisabledRules' does not exist on type '{}'.
+tests/support/legacy-server/shared/users/GrammarPreferences.js(20,41): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/GrammarPreferences.js(33,26): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/GrammarPreferences.js(35,11): error TS7034: Variable 'rules' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/support/legacy-server/shared/users/GrammarPreferences.js(38,12): error TS7005: Variable 'rules' implicitly has an 'any[]' type.
+tests/support/legacy-server/shared/users/KeyboardShortcuts.js(54,35): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/KeyboardShortcuts.js(65,13): error TS7034: Variable 'modifiers' implicitly has type 'any[]' in some locations where its type cannot be determined.
+tests/support/legacy-server/shared/users/KeyboardShortcuts.js(68,23): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Readonly<{ control: "ctrl"; option: "alt"; cmd: "meta"; command: "meta"; }>'.
+  No index signature with a parameter of type 'string' was found on type 'Readonly<{ control: "ctrl"; option: "alt"; cmd: "meta"; command: "meta"; }>'.
+tests/support/legacy-server/shared/users/KeyboardShortcuts.js(70,15): error TS7005: Variable 'modifiers' implicitly has an 'any[]' type.
+tests/support/legacy-server/shared/users/KeyboardShortcuts.js(84,28): error TS7006: Parameter 'scope' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/LocalePreferences.js(20,65): error TS2322: Type 'string' is not assignable to type 'InterfaceLocaleChoice'.
+tests/support/legacy-server/shared/users/MailPreferences.js(127,34): error TS7006: Parameter 'key' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(127,39): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(127,46): error TS7006: Parameter 'user' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(143,33): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ workspaceLayout: readonly string[]; interfaceScale: readonly number[]; markAsReadDelay: readonly number[]; backspaceAction: readonly string[]; conversationOrder: readonly string[]; emailRenderMode: readonly string[]; spellcheckLanguage: readonly string[]; defaultSendAction: readonly string[]; defaultReplyAction: r...'.
+tests/support/legacy-server/shared/users/MailPreferences.js(154,56): error TS7006: Parameter 'domain' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(160,29): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(160,36): error TS7006: Parameter 'allowedSenders' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(175,24): error TS7006: Parameter 'user' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(179,32): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(179,39): error TS7006: Parameter 'allowed' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(185,33): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(185,40): error TS7006: Parameter 'allowedSenders' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(195,30): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+tests/support/legacy-server/shared/users/MailPreferences.js(200,16): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(200,23): error TS7006: Parameter 'allowed' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(200,32): error TS7006: Parameter 'fallback' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(202,22): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(202,29): error TS7006: Parameter 'allowed' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(202,38): error TS7006: Parameter 'fallback' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(204,16): error TS7006: Parameter 'value' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/MailPreferences.js(204,23): error TS7006: Parameter 'fallback' implicitly has an 'any' type.
+tests/support/legacy-server/shared/users/NewMailNotificationPreferences.js(92,59): error TS2552: Cannot find name 'normalizeNewMailNotificationPreferences'. Did you mean 'NewMailNotificationPreferences'?
+tests/support/legacy-server/shared/users/NewMailNotificationPreferences.js(94,78): error TS7006: Parameter 'externalAccountIds' implicitly has an 'any[]' type.
+tests/support/legacy-server/shared/users/NotificationSounds.js(39,67): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'Readonly<{ 'new-mail': "chime"; 'hit-send': "pop"; send: "pulse"; confirm: "bell"; }>'.
+  No index signature with a parameter of type 'string' was found on type 'Readonly<{ 'new-mail': "chime"; 'hit-send': "pop"; send: "pulse"; confirm: "bell"; }>'.
+tests/support/legacy-server/shared/users/UnreadBadgePreferences.js(41,14): error TS2322: Type 'string' is not assignable to type '"all" | "domain"'.
+tests/support/legacy-server/shared/users/UsersRecords.js(18,29): error TS2307: Cannot find module '../../../types' or its corresponding type declarations.
+tests/support/legacy-server/shared/users/UsersRecords.js(39,58): error TS7006: Parameter 'domain' implicitly has an 'any' type.

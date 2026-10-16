@@ -7,6 +7,7 @@ export class KeyboardShortcuts {
 
   static #VALID_MODIFIERS = new Set(['alt', 'ctrl', 'meta', 'mod', 'shift'])
 
+  /** @type {Readonly<Record<string, string>>} */
   static #MODIFIER_ALIASES = Object.freeze({ control: 'ctrl', option: 'alt', cmd: 'meta', command: 'meta' })
 
   static #NAMED_KEYS = new Set(['backspace', 'delete', 'down', 'enter', 'esc', 'left', 'right', 'space', 'tab', 'up'])
@@ -50,7 +51,7 @@ export class KeyboardShortcuts {
 
   static #ACTION_BY_ID = new Map(KeyboardShortcuts.KEYBOARD_ACTIONS.map(action => [action.id, action]))
 
-  /** Normalize one portable shortcut or return null when its grammar is unsafe. */
+  /** Normalize one portable shortcut or return null when its grammar is unsafe. @param {unknown} value */
   static normalizeKeyboardBinding(value) {
     if (typeof value !== 'string') return null
     const source = value.trim().toLowerCase().replace(/\s*\+\s*/g, '+').replace(/\s+/g, ' ')
@@ -62,6 +63,7 @@ export class KeyboardShortcuts {
     for (const chord of sequence) {
       const pieces = chord.split('+').map(piece => piece.trim())
       if (pieces.some(piece => !piece)) return null
+      /** @type {string[]} */
       const modifiers = []
       let key = ''
       for (const rawPiece of pieces) {
@@ -81,6 +83,7 @@ export class KeyboardShortcuts {
     return normalized.join(' ')
   }
 
+  /** @param {string} scope */
   static #contextsForScope(scope) {
     if (scope === 'global') return ['other', 'mailbox', 'reader', 'reader-find', 'composer', 'calendar']
     if (scope === 'mail') return ['mailbox', 'reader', 'reader-find']

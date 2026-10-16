@@ -1,3 +1,4 @@
+/** @import { RawDomainDoc } from '../types' */
 import { Fylo } from '../shared/persistence/Fylo.js'
 import { DomainsRecords } from '../shared/domains/DomainsRecords.js'
 
@@ -6,7 +7,7 @@ import { DomainsRecords } from '../shared/domains/DomainsRecords.js'
 
 @Helper
 export default class DomainsHelper {
-  /** @type {FyloHelper} */
+  /** @type {FyloHelper | undefined} */
   @Needs
   fyloHelper
 
@@ -15,7 +16,7 @@ export default class DomainsHelper {
    * @returns {Promise<DomainConfig[]>}
    */
   async list(allowedDomains) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.DOMAINS, { $ops: [] }).collect())
     return Object.values(docs)
       .filter(d => allowedDomains.includes(d.domain))
@@ -27,7 +28,7 @@ export default class DomainsHelper {
    * @returns {Promise<[string | null, DomainConfig | null]>}
    */
   async findEntry(domain) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.DOMAINS, { $ops: [{ domain: { $eq: domain } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], DomainsRecords.deserialize(/** @type {RawDomainDoc} */ (entry[1]))] : [null, null]
@@ -38,7 +39,7 @@ export default class DomainsHelper {
    * @returns {Promise<string>}
    */
   async put(config) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     return await fylo.putData(Fylo.Collections.DOMAINS, DomainsRecords.serialize(config))
   }
 
@@ -48,7 +49,7 @@ export default class DomainsHelper {
    * @returns {Promise<void>}
    */
   async updateRoutes(docId, routes) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     await fylo.patchDoc(Fylo.Collections.DOMAINS, { [docId]: { routes: JSON.stringify(routes) } })
   }
 
@@ -57,7 +58,7 @@ export default class DomainsHelper {
    * @returns {Promise<void>}
    */
   async delete(docId) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     await fylo.delDoc(Fylo.Collections.DOMAINS, docId)
   }
 }

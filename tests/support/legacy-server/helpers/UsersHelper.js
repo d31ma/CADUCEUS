@@ -1,3 +1,4 @@
+/** @import { User } from '../types' */
 import { Fylo } from '../shared/persistence/Fylo.js'
 import { Security } from '../shared/security/Security.js'
 import { FontPreferences } from '../shared/users/FontPreferences.js'
@@ -16,7 +17,7 @@ import { UsersRecords } from '../shared/users/UsersRecords.js'
 
 @Helper
 export default class UsersHelper {
-  /** @type {FyloHelper} */
+  /** @type {FyloHelper | undefined} */
   @Needs
   fyloHelper
 
@@ -24,7 +25,7 @@ export default class UsersHelper {
    * @returns {Promise<Array<User & { docId: string }>>}
    */
   async list() {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.USERS, { $ops: [] }).collect())
     return Object.entries(docs).map(([docId, u]) => ({ docId, ...UsersRecords.normalize(/** @type {User} */ (u)) }))
   }
@@ -36,7 +37,7 @@ export default class UsersHelper {
    * @returns {Promise<[string | null, User | null]>}
    */
   async findByEmail(email) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const normalized = Security.normalizeEmailAddress(email)
     if (!normalized) return [null, null]
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.USERS, { $ops: [{ email: { $eq: normalized } }] }).collect())
@@ -52,7 +53,7 @@ export default class UsersHelper {
    * @returns {Promise<string>}
    */
   async put(user) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     return await fylo.putData(Fylo.Collections.USERS, UsersRecords.normalize(user))
   }
 
@@ -63,7 +64,7 @@ export default class UsersHelper {
    * @returns {Promise<string>}
    */
   async upsertByEmail(user) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const normalized = UsersRecords.normalize(user)
     const [docId, existing] = await this.findByEmail(normalized.email)
     if (!docId || !existing) return await this.put(normalized)
@@ -131,7 +132,7 @@ export default class UsersHelper {
    * @returns {Promise<void>}
    */
   async delete(docId) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     await fylo.delDoc(Fylo.Collections.USERS, docId)
   }
 
@@ -142,7 +143,7 @@ export default class UsersHelper {
    * @returns {Promise<void>}
    */
   async updateAliases(docId, aliases, email = '') {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     await fylo.patchDoc(Fylo.Collections.USERS, { [docId]: { aliases: UsersRecords.normalizeAliases(aliases, email) } })
   }
 
@@ -154,7 +155,7 @@ export default class UsersHelper {
    * @returns {Promise<User>}
    */
   async updatePreferences(docId, user) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const normalized = UsersRecords.normalize(user)
     await fylo.patchDoc(Fylo.Collections.USERS, {
       [docId]: {
@@ -188,13 +189,13 @@ export default class UsersHelper {
 
   /** @param {string} docId @param {import('../types').McpPreferences} preferences */
   async updateMcpPreferences(docId, preferences) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     await fylo.patchDoc(Fylo.Collections.USERS, { [docId]: { mcp: preferences } })
   }
 
   /** Persist an already-normalized exact-domain category catalog. */
   async updateCategoryCatalog(docId, catalog) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     await fylo.patchDoc(Fylo.Collections.USERS, { [docId]: { categoryCatalog: catalog } })
   }
 

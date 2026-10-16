@@ -24,7 +24,7 @@ type ComposeService struct {
 	// @Needs
 	sendClient *SendClient
 	// @Needs
-	clock Clock
+	clock                     Clock
 	applicationEventPublisher ApplicationEventPublisher
 
 	To                 string
@@ -39,6 +39,10 @@ type ComposeService struct {
 	DraftStatus        string
 	DraftConflict      bool
 	EditorDocument     string
+	EditorSnapshot     ComposeEditorSnapshot
+	EditorBody         string
+	EditorQuoteHTML    string
+	EditorRevision     int
 	RemindAt           string
 	ReminderPickerOpen bool
 	SchedulePickerOpen bool
@@ -71,6 +75,7 @@ type ComposeService struct {
 	saved            string
 	firstSave        string
 	generation       int
+	quoteProof       *QuoteProof
 	exiting          bool
 	choice           SendChoice
 	automaticCc      []string
@@ -290,7 +295,10 @@ func (compose *ComposeService) HearSendBody(ready SendBodyReady) {
 // HearSaveDue autosaves once the editor's debounce timer fires.
 // @OnEvent
 func (compose *ComposeService) HearSaveDue(due DraftSaveDue) {
-	FlowUtils{}.When(!due.TooLarge, func() { compose.html, compose.text = due.HTML, due.Text })()
+	FlowUtils{}.When(!due.TooLarge, func() {
+		compose.html, compose.text, compose.quoteProof = due.HTML, due.Text, due.QuoteProof
+		compose.clearQuoteWithoutProof()
+	})()
 	FlowUtils{}.Either(due.TooLarge, func() { compose.DraftStatus = ComposeLimitUtils{}.TooLarge() }, compose.autosave)()
 	compose.publish(ComposeChanged{Reason: compose.names().Changed})
 }
@@ -359,6 +367,7 @@ func (compose *ComposeService) open() {
 	prefill := DraftUtils{}.Prefill(compose.stored.Session[compose.names().Prefill], compose.launch.Fields)
 	pointer := DraftUtils{}.Pointer(compose.stored.Session[compose.names().Pointer])
 	compose.useFields(DraftUtils{}.PrefillFields(prefill))
+	compose.rememberQuote(prefill.Quote)
 	compose.ScheduledEditID, compose.ScheduledSendAt = prefill.ScheduledID, prefill.SendAt
 	opening := DraftUtils{}.Opening(prefill, pointer)
 	map[string]func(){
@@ -370,6 +379,21 @@ func (compose *ComposeService) open() {
 	compose.clientID = TextUtils{}.FirstOf(compose.clientID, compose.uuid())
 	compose.showBody()
 	compose.announceLoaded(compose.names().Open, opening == compose.names().Recovered)
+}
+
+// clearQuoteWithoutProof revokes the original prefill authority after a checked body loses it.
+func (compose *ComposeService) clearQuoteWithoutProof() {
+	if compose.quoteProof == nil {
+		compose.EditorQuoteHTML = ""
+	}
+}
+
+// rememberQuote accepts only the app-owned prefill record, never a marker in Body.
+// Mailto launch fields have no quote record. Both strings are regenerated with escaping.
+func (compose *ComposeService) rememberQuote(quote *QuotedMessage) {
+	if quote != nil && slices.Contains([]string{"reply", "forward"}, quote.Mode) {
+		compose.EditorQuoteHTML = QuotedMessageUtils{}.Html(*quote)
+	}
 }
 
 func (compose *ComposeService) keepPrefill() {
@@ -408,7 +432,7 @@ func (compose *ComposeService) useDraft(draft Draft) {
 func (compose *ComposeService) useFields(fields MessageFields) {
 	compose.from = fields.From
 	compose.To, compose.Cc, compose.Bcc, compose.ReplyTo, compose.Subject = fields.To, fields.Cc, fields.Bcc, fields.ReplyTo, fields.Subject
-	compose.html, compose.text = fields.HTML, fields.Text
+	compose.html, compose.text, compose.quoteProof = fields.HTML, fields.Text, fields.QuoteProof
 	compose.inReplyTo, compose.references, compose.SourceEmailID = fields.InReplyTo, fields.References, fields.SourceEmailID
 	compose.Attachments = compose.identified(fields.Attachments)
 	compose.RequestReadReceipt, compose.TrackLinks, compose.RemindAt = fields.OpenTracking, fields.LinkTracking, fields.RemindAt
@@ -426,7 +450,7 @@ func (compose *ComposeService) identified(attachments []ComposeAttachment) []Com
 func (compose *ComposeService) message() MessageFields {
 	return MessageFields{
 		From: compose.from, To: compose.To, Cc: compose.Cc, Bcc: compose.Bcc, ReplyTo: compose.ReplyTo, Subject: compose.Subject,
-		HTML: compose.html, Text: compose.text, InReplyTo: compose.inReplyTo, References: compose.references, SourceEmailID: compose.SourceEmailID,
+		HTML: compose.html, Text: compose.text, QuoteProof: compose.quoteProof, InReplyTo: compose.inReplyTo, References: compose.references, SourceEmailID: compose.SourceEmailID,
 		Attachments: compose.Attachments, OpenTracking: compose.RequestReadReceipt, LinkTracking: compose.TrackLinks, RemindAt: compose.RemindAt,
 	}
 }
@@ -434,7 +458,10 @@ func (compose *ComposeService) message() MessageFields {
 // showBody hands the editor a new document for the current body.
 func (compose *ComposeService) showBody() {
 	compose.generation++
+	compose.EditorRevision = compose.generation
+	compose.EditorBody = compose.html
 	compose.EditorDocument = EditorUtils{}.Document(compose.html, compose.Attachments, compose.generation)
+	compose.EditorSnapshot = ComposeEditorSnapshot{Document: compose.EditorDocument, Revision: compose.EditorRevision, Body: compose.EditorBody, Quote: compose.EditorQuoteHTML, Proof: compose.quoteProof, Attachments: append([]ComposeAttachment{}, compose.Attachments...)}
 }
 
 func (compose *ComposeService) announceLoaded(reason string, recovered bool) {
@@ -637,7 +664,7 @@ func (compose *ComposeService) requestSend(choice SendChoice) {
 
 func (compose *ComposeService) deliver(ready SendBodyReady) {
 	fields := compose.message()
-	fields.HTML, fields.Text = ready.HTML, ready.Text
+	fields.HTML, fields.Text, fields.QuoteProof = ready.HTML, ready.Text, ready.QuoteProof
 	input := SendUtils{}.Input(fields, compose.choice)
 	problem := ComposeLimitUtils{}.RequestProblem(input)
 	FlowUtils{}.Either(problem == "", func() { compose.post(input) }, func() { compose.Loading, compose.Error = false, problem })()

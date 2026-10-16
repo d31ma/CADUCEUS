@@ -3,7 +3,7 @@ export class CategoryPath {
 
   static #CATEGORY_PATH = /^[a-z0-9](?:[a-z0-9._/-]{0,58}[a-z0-9])?$/
 
-  /** Normalize a bounded provider folder or label path. */
+  /** Normalize a bounded provider folder or label path. @param {unknown} value */
   static normalizeCategoryPath(value) {
     if (typeof value !== 'string') return ''
     const path = value.trim().toLowerCase()
@@ -12,7 +12,7 @@ export class CategoryPath {
     return path
   }
 
-  /** Add hierarchy metadata without exposing caller-provided markup. */
+  /** Add hierarchy metadata without exposing caller-provided markup. @param {string} path @param {string} kind @param {string | undefined} [role] */
   static presentCategory(path, kind, role) {
     const parts = path.split('/')
     const leaf = parts.at(-1) || path

@@ -42,9 +42,9 @@ func (SignatureUtils) DefaultFor(signatures []MailSignature, address string) Mai
 // CurrentID is the id of the signature in the editable part of a body, like
 // currentSignatureId in composer-signatures.js.
 func (SignatureUtils) CurrentID(body string) string {
-	quote := regexp.MustCompile(`(?i)<(?:blockquote\b|[^>]+class\s*=\s*["'][^"']*(?:gmail_quote|quoted-message)[^"']*["'])`).FindStringIndex(body)
+	quote := regexp.MustCompile(`(?i)<(?:section\b[^>]*\bdata-caduceus-quote\s*=|blockquote\b|[^>]+class\s*=\s*["'][^"']*(?:gmail_quote|quoted-message)[^"']*["'])`).FindStringIndex(body)
 	editable := body[:append(quote, len(body))[0]]
-	found := append(regexp.MustCompile(`(?i)<signature\b[^>]*\bid\s*=\s*["']([^"']+)["']`).FindStringSubmatch(editable), "", "")
+	found := append(regexp.MustCompile(`(?i)<signature\b[^>]*\b(?:data-signature-id|id)\s*=\s*["']([^"']+)["']`).FindStringSubmatch(editable), "", "")
 	return TextUtils{}.FirstOf(found[1], SignatureUtils{}.divID(editable))
 }
 

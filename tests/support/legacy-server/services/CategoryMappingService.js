@@ -11,17 +11,17 @@ import { CategoryMappingRules } from '../shared/mailbox/CategoryMappingRules.js'
  */
 @Service
 export default class CategoryMappingService {
-  /** @type {UsersHelper} */
+  /** @type {UsersHelper | undefined} */
   @Needs
   usersHelper
 
-  /** @type {EmailsHelper} */
+  /** @type {EmailsHelper | undefined} */
   @Needs
   emailsHelper
 
   /** @param {string} ownerEmail */
   async forOwner(ownerEmail) {
-    const [, user] = await this.usersHelper.findByEmail(ownerEmail)
+    const [, user] = await (/** @type {UsersHelper} */ (this.usersHelper)).findByEmail(ownerEmail)
     if (!user) return null
     return CategoryMappingRules.normalizeCategoryMappings(user.categoryMappings, user.domains)
   }
@@ -34,11 +34,11 @@ export default class CategoryMappingService {
    * @param {string[]} allowedDomains
    */
   async listAccounts(ownerEmail, allowedDomains) {
-    const [, user] = await this.usersHelper.findByEmail(ownerEmail)
+    const [, user] = await (/** @type {UsersHelper} */ (this.usersHelper)).findByEmail(ownerEmail)
     if (!user) return null
     const mappings = CategoryMappingRules.normalizeCategoryMappings(user.categoryMappings, user.domains)
     const catalog = CategoryCatalog.normalizeCategoryCatalog(user.categoryCatalog, user.domains)
-    const emails = await this.emailsHelper.list(allowedDomains, { folder: 'all', ownerEmail })
+    const emails = await (/** @type {EmailsHelper} */ (this.emailsHelper)).list(allowedDomains, { folder: 'all', ownerEmail })
     return allowedDomains.slice().sort().map(domain => {
       const assigned = mappings[domain] || CategoryMappingRules.defaultRoleMapping()
       const owned = emails.filter(email => email.domain === domain)
@@ -66,12 +66,12 @@ export default class CategoryMappingService {
 
   /** Create one exact-owner category without granting any new mailbox authority. */
   async createCategory(ownerEmail, input) {
-    const [docId, user] = await this.usersHelper.findByEmail(ownerEmail)
+    const [docId, user] = await (/** @type {UsersHelper} */ (this.usersHelper)).findByEmail(ownerEmail)
     if (!docId || !user) return { ok: false, notFound: true, error: 'User not found' }
     const result = CategoryCatalog.addCategoryToCatalog(user.categoryCatalog, input, user.domains)
     if (!result.ok) return result
     if (!result.category) return { ok: false, error: 'Category could not be normalized' }
-    await this.usersHelper.updateCategoryCatalog(docId, result.catalog)
+    await (/** @type {UsersHelper} */ (this.usersHelper)).updateCategoryCatalog(docId, result.catalog)
     return { ok: true, category: CategoryPath.presentCategory(result.category.path, result.category.kind) }
   }
 

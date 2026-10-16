@@ -17,7 +17,7 @@ export default class ReaderBrowserService {
   static _FRAME = 'email-html-frame'
   static _WARNING = 'data-caduceus-link-warning'
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
 
   ready = false
@@ -33,7 +33,7 @@ export default class ReaderBrowserService {
   async unsubscribe(requested) {
     /** @type {UnsubscribeAnswered} */
     const answered = { sent: await postOneClickUnsubscribe(requested.url) }
-    this.applicationEventPublisher.publishEvent(answered, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(answered, false)
   }
 
   /** @param {ShortcutPressed} pressed */
@@ -80,7 +80,7 @@ export default class ReaderBrowserService {
   _toast(message) {
     /** @type {ToastRequested} */
     const requested = { message, actionLabel: '', action: '', subject: '', durationMs: 0 }
-    this.applicationEventPublisher.publishEvent(requested, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(requested, false)
   }
 
   /** @param {EventTarget | null} target */
@@ -113,7 +113,7 @@ export default class ReaderBrowserService {
       destinationHost: this._attribute(link, 'data-caduceus-link-host'),
       displayedHost: this._attribute(link, 'data-caduceus-link-label-host'),
     }
-    this.applicationEventPublisher.publishEvent(warning, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(warning, false)
   }
 
   /** @param {Element} link @param {string} name @returns {string} */

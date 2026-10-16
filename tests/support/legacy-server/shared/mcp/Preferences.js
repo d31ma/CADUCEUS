@@ -64,6 +64,7 @@ export class Preferences {
       return { ok: false, error: `allowedDomains must contain at most ${Preferences.#MAX_DOMAINS} domains` }
     }
     const assigned = new Set(Preferences.#normalizeDomains(assignedDomains))
+    /** @type {string[]} */
     const allowedDomains = []
     for (const raw of value.allowedDomains) {
       if (typeof raw !== 'string') return { ok: false, error: 'Each allowed domain must be text' }
@@ -79,6 +80,7 @@ export class Preferences {
     if (!value.excludedFolders || typeof value.excludedFolders !== 'object' || Array.isArray(value.excludedFolders)) {
       return { ok: false, error: 'excludedFolders must be an object' }
     }
+    /** @type {Record<string, string[]>} */
     const excludedFolders = {}
     let total = 0
     for (const [rawDomain, rawFolders] of Object.entries(value.excludedFolders)) {
@@ -89,6 +91,7 @@ export class Preferences {
       if (!Array.isArray(rawFolders) || rawFolders.length > Preferences.#MAX_EXCLUDED_FOLDERS_PER_DOMAIN) {
         return { ok: false, error: `Each domain may exclude at most ${Preferences.#MAX_EXCLUDED_FOLDERS_PER_DOMAIN} folders` }
       }
+      /** @type {string[]} */
       const folders = []
       for (const rawFolder of rawFolders) {
         const folder = CategoryPath.normalizeCategoryPath(rawFolder)
@@ -116,11 +119,13 @@ export class Preferences {
   static #normalizeExcludedFolders(value, allowedDomains) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
     const allowed = new Set(allowedDomains)
+    /** @type {Record<string, string[]>} */
     const result = {}
     let total = 0
     for (const [rawDomain, rawFolders] of Object.entries(value)) {
       const domain = Security.normalizeDomain(rawDomain)
       if (!domain || !allowed.has(domain) || !Array.isArray(rawFolders)) continue
+      /** @type {string[]} */
       const folders = []
       for (const rawFolder of rawFolders.slice(0, Preferences.#MAX_EXCLUDED_FOLDERS_PER_DOMAIN)) {
         const folder = CategoryPath.normalizeCategoryPath(rawFolder)

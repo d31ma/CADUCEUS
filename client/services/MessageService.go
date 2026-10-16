@@ -58,6 +58,7 @@ type MessageService struct {
 	QuotedPlainText           string
 	PlainTextVisible          string
 	ProtectedDocument         string
+	ProtectedRevision         int
 	BlockedRemoteContentCount int
 	RemoteContentSummary      string
 	RemoteImagesLoading       bool
@@ -478,7 +479,7 @@ func (service *MessageService) resetRemoteContent() {
 	service.inlineSources = map[string]string{}
 	service.thumbnails = map[string]string{}
 	service.attachments = map[string]AttachmentContent{}
-	service.ProtectedDocument = ""
+	service.replaceProtectedDocument("")
 	service.BlockedRemoteContentCount = 0
 	service.RemoteContentSummary = ""
 	service.RemoteImagesLoading = false
@@ -751,6 +752,7 @@ func (service *MessageService) reply() {
 	fields := service.threadFields()
 	fields.To = service.ReplyTarget
 	fields.Subject = service.names().RePrefix + service.Email.Subject
+	fields.Quote = service.quote(service.names().Reply)
 	fields.Body = service.quoted(service.names().Reply)
 	service.compose(fields)
 }
@@ -759,16 +761,23 @@ func (service *MessageService) replyAll() {
 	fields := service.threadFields()
 	fields.To = strings.Join(TextUtils{}.NonEmpty([]string{service.ReplyTarget, service.Email.Recipient}), service.listSeparator())
 	fields.Subject = service.names().RePrefix + service.Email.Subject
+	fields.Quote = service.quote(service.names().Reply)
 	fields.Body = service.quoted(service.names().Reply)
 	service.compose(fields)
 }
 
 func (service *MessageService) forward() {
-	service.compose(ComposeFields{Subject: "Fwd: " + service.Email.Subject, Body: service.quoted("forward"), SourceEmailID: service.Email.ID})
+	mode := "forward"
+	service.compose(ComposeFields{Subject: "Fwd: " + service.Email.Subject, Body: service.quoted(mode), Quote: service.quote(mode), SourceEmailID: service.Email.ID})
 }
 
 func (service *MessageService) quoted(mode string) string {
-	return QuotedMessageUtils{}.Html(QuotedMessage{Mode: mode, Sender: service.Email.Sender, Subject: service.Email.Subject, DateLabel: service.Email.ReceivedLabel, Body: service.Email.Body})
+	return QuotedMessageUtils{}.Html(*service.quote(mode))
+}
+
+// quote captures the actual reader record before HTML enters the prefill.
+func (service *MessageService) quote(mode string) *QuotedMessage {
+	return &QuotedMessage{Mode: mode, Sender: service.Email.Sender, Subject: service.Email.Subject, DateLabel: service.Email.ReceivedLabel, Body: service.Email.Body}
 }
 
 // threadFields keep a reply in the message's RFC thread.
@@ -881,12 +890,19 @@ func (service *MessageService) refreshDocument() {
 		ShowQuoted:    service.ShowQuotedText,
 		ColorMode:     TextUtils{}.Choose(service.preferences.EmailRenderMode == "theme", TextUtils{}.Choose(service.theme == service.names().Dark, service.names().Dark, "light"), service.preferences.EmailRenderMode),
 	})
-	service.ProtectedDocument = document.DocumentHtml
+	service.replaceProtectedDocument(document.DocumentHtml)
 	service.BlockedRemoteContentCount = document.BlockedCount
 	service.RemoteContentSummary = RemoteImageUtils{}.Summary(document.BlockedCount, document.TrackingCount)
 	service.quotedCount = document.QuotedCount
 	service.remoteUrls = document.RemoteUrls
 	service.refreshText()
+}
+
+func (service *MessageService) replaceProtectedDocument(document string) {
+	if service.ProtectedDocument != document {
+		service.ProtectedRevision++
+	}
+	service.ProtectedDocument = document
 }
 
 func (service *MessageService) documentBody() string {

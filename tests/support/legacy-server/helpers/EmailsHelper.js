@@ -3,20 +3,20 @@ import { EmailsRecords } from '../shared/mailbox/EmailsRecords.js'
 
 /** @import { StoredEmail } from '../types' */
 /** @import { EmailAttachmentSummary } from '../types' */
-/** @import { AttachmentsHelper } from './AttachmentsHelper.js' */
-/** @import { RawMessagesHelper } from './RawMessagesHelper.js' */
+/** @import { default as AttachmentsHelper } from './AttachmentsHelper.js' */
+/** @import { default as RawMessagesHelper } from './RawMessagesHelper.js' */
 
 @Helper
 export default class EmailsHelper {
-  /** @type {FyloHelper} */
+  /** @type {FyloHelper | undefined} */
   @Needs
   fyloHelper
 
-  /** @type {AttachmentsHelper} */
+  /** @type {AttachmentsHelper | undefined} */
   @Needs
   attachmentsHelper
 
-  /** @type {RawMessagesHelper} */
+  /** @type {RawMessagesHelper | undefined} */
   @Needs
   rawMessagesHelper
 
@@ -27,11 +27,11 @@ export default class EmailsHelper {
    * @returns {Promise<StoredEmail[]>}
    */
   async list(allowedDomains, filters = {}) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.EMAILS, { $ops: [] }).collect())
     const needsAttachments = !!filters.query || filters.hasAttachment != null
     const attachmentsByEmail = needsAttachments
-      ? await this.attachmentsHelper.listSummariesByEmail(allowedDomains)
+      ? await (/** @type {AttachmentsHelper} */ (this.attachmentsHelper)).listSummariesByEmail(allowedDomains)
       : new Map()
     const offset = Math.max(0, filters.offset ?? 0)
     const limit = filters.limit == null ? undefined : Math.max(0, filters.limit)
@@ -64,7 +64,7 @@ export default class EmailsHelper {
    * @returns {AsyncGenerator<StoredEmail>}
    */
   async *iterateFolder(allowedDomains, folder, ownerEmail, pageSize = 128) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const domains = [...new Set(allowedDomains.map(value => String(value).toLowerCase()))]
     const selectedFolder = String(folder || 'inbox').toLowerCase()
     const boundedPageSize = Math.max(1, Math.min(512, Math.trunc(pageSize) || 128))
@@ -95,7 +95,7 @@ export default class EmailsHelper {
    * @returns {Promise<[string | null, StoredEmail | null]>}
    */
   async findById(id) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.EMAILS, { $ops: [{ id: { $eq: id } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], EmailsRecords.normalize(/** @type {StoredEmail} */ (entry[1]))] : [null, null]
@@ -106,7 +106,7 @@ export default class EmailsHelper {
    * @returns {Promise<string>}
    */
   async put(email) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     return await fylo.putData(Fylo.Collections.EMAILS, email)
   }
 
@@ -116,7 +116,7 @@ export default class EmailsHelper {
    * @returns {Promise<void>}
    */
   async update(docId, patch) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     await fylo.patchDoc(Fylo.Collections.EMAILS, { [docId]: patch })
   }
 
@@ -130,7 +130,7 @@ export default class EmailsHelper {
    * @returns {Promise<StoredEmail[]>}
    */
   async updateByIds(ids, patch) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const wanted = new Set(ids)
     if (wanted.size === 0) return []
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.EMAILS, { $ops: [] }).collect())
@@ -152,9 +152,9 @@ export default class EmailsHelper {
    * @returns {Promise<void>}
    */
   async delete(docId, emailId) {
-    const fylo = await this.fyloHelper.database()
-    if (emailId) await this.attachmentsHelper.deleteForEmail(emailId)
-    if (emailId) await this.rawMessagesHelper?.deleteForEmail(emailId)
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
+    if (emailId) await (/** @type {AttachmentsHelper} */ (this.attachmentsHelper)).deleteForEmail(emailId)
+    if (emailId) await (/** @type {RawMessagesHelper} */ (this.rawMessagesHelper))?.deleteForEmail(emailId)
     await fylo.delDoc(Fylo.Collections.EMAILS, docId)
   }
 

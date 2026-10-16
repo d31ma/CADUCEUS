@@ -200,10 +200,11 @@ export class Fylo extends BinaryFylo {
   }
 
   findDocs(collection, query) {
-    let result = super.findDocs(collection, query)
-    const cursor = {
+    const result = super.findDocs(collection, query)
+    const withAccess = result.as.bind(result)
+    const cursor = Object.assign(result, {
       as(access) {
-        result = result.as(access)
+        withAccess(access)
         return cursor
       },
       async *collect() {
@@ -212,9 +213,10 @@ export class Fylo extends BinaryFylo {
           yield { [id]: document }
         }
       },
-    }
+    })
     const access = FyloAccessContext.read()
-    return access ? cursor.as(access) : cursor
+    if (access) cursor.as(access)
+    return cursor
   }
 
   /**

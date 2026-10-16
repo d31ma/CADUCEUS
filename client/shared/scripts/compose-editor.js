@@ -2,6 +2,7 @@
 /** @import { ComposeLoaded } from '/models/ComposeLoaded.js' */
 /** @import { ComposeChanged } from '/models/ComposeChanged.js' */
 /** @import { ComposeAttachment } from '/models/ComposeAttachment.js' */
+/** @import { ComposeEditorSnapshot } from '/models/ComposeEditorSnapshot.js' */
 /** @import { EditorPreferences } from '/models/EditorPreferences.js' */
 /** @import { EditorReplaced } from '/models/EditorReplaced.js' */
 /** @import { SignatureApplyRequested } from '/models/SignatureApplyRequested.js' */
@@ -42,6 +43,11 @@ import {
   templateBodyFromDraft,
 } from './composer-templates.js'
 import { applySignature, currentSignatureId } from './composer-signatures.js'
+import { prepareComposerFrame, templateVariableKeys } from './composer-frame.js'
+/** @import { QuoteProof } from '/models/QuoteProof.js' */
+/** @import { MatchedQuote } from '/models/MatchedQuote.js' */
+import { matchQuoteProof } from './composer-quote-proof.js'
+/** @import { SafeHtmlFramePackage } from '../../models/SafeHtmlFramePackage.js' */
 import {
   clearGrammarHighlights,
   grammarRange,
@@ -99,6 +105,7 @@ export class ComposeEditor {
   static _FRAME = '[data-compose-editor-frame]'
   static _PANEL = '.compose-panel'
   static _RECIPIENT_FIELD = '[data-recipient-field]'
+  static _PREPARE_ERROR = 'The message editor could not prepare safely. Reload to retry.'
   static _TRANSLATION_TARGET = 'caduceus-translation-target'
   static _SAVE_DELAY = 750
   static _GRAMMAR_DELAY = 700
@@ -112,6 +119,18 @@ export class ComposeEditor {
   static _SELECTED = 'data-selected'
   static _EXPANDED = 'aria-expanded'
   static _COLLAPSED = 'compose-quote-collapsed'
+
+  /** @type {SafeHtmlFramePackage | null} */
+  _safeFrame = null
+  _preparingRevision = -1
+  /** @type {Promise<void>|null} */
+  _framePreparation = null
+  _stopped = false
+  _saveCapture = 0
+  /** @type {QuoteProof|null} */
+  _quoteProof = null
+  /** Content keys originate only in the template service’s catalog-backed insertion event. @type {Set<string>} */
+  _templateVariables = new Set()
 
   _ready = false
   _opened = false
@@ -151,11 +170,48 @@ export class ComposeEditor {
   /** @type {MutationObserver | null} */
   _observer = null
 
+  /**
+   * Same-revision renders must preserve the live document and selection.
+   * @param {ComposeEditorSnapshot} snapshot
+   * @param {Array<{id:string,text:string}>} signatures
+   * @returns {SafeHtmlFramePackage}
+   */
+  frame(snapshot, signatures) {
+    if (!this._safeFrame || this._safeFrame.metadata.revision !== snapshot.revision) throw new Error('Editor frame has not completed safe preparation.')
+    return this._safeFrame
+  }
+
+  /**
+   * Complete proof validation before the first frame for a revision is published.
+   * @param {ComposeEditorSnapshot} snapshot
+   * @param {Array<{id:string,text:string}>} signatures
+   * @returns {boolean}
+   */
+  frameReady(snapshot, signatures) {
+    if (this._stopped) return false
+    if (this._safeFrame?.metadata.revision === snapshot.revision) return true
+    if (this._preparingRevision !== snapshot.revision) {
+      this._preparingRevision = snapshot.revision
+      this._view.editorError = ''
+      this._framePreparation = prepareComposerFrame(snapshot, signatures, this._templateVariables).then(prepared => {
+        if (this._stopped || this._preparingRevision !== snapshot.revision) return
+        this._safeFrame = prepared.frame
+        this._quoteProof = prepared.quoteProof
+        this._rerender()
+      }).catch(() => {
+        if (this._stopped || this._preparingRevision !== snapshot.revision) return
+        this._preparationFailed()
+      })
+    }
+    return false
+  }
+
   get translationLanguages() {
     return Object.entries(TRANSLATION_LANGUAGES).map(([id, label]) => ({ id, label }))
   }
 
   start() {
+    this._stopped = false
     this._restoreTranslationTarget()
     this._bindDocument()
     this._observer = new MutationObserver(() => this._findFrame())
@@ -164,6 +220,8 @@ export class ComposeEditor {
   }
 
   stop() {
+    this._stopped = true
+    this._saveCapture++
     this._listeners?.abort()
     this._frameListeners?.abort()
     this._observer?.disconnect()
@@ -209,6 +267,7 @@ export class ComposeEditor {
   /** @param {TemplateInsertRequested} requested */
   templateInsertRequested(requested) {
     if (!this._templateAllowed(requested.confirm)) return
+    for (const key of templateVariableKeys(requested.text)) this._templateVariables.add(key)
     this._replaceBody(insertTemplateBeforeProtectedContent(requested.text, this._currentHTML()), 'template')
     this._afterLoad.push(() => this._selectFirstVariable())
     /** @type {TemplateInserted} */
@@ -293,15 +352,36 @@ export class ComposeEditor {
    * Hand Go the body of a send. A body with an empty template blank goes
    * only when the person confirms it, as in Mailspring.
    * @param {SendRequested} _requested
+   * @returns {Promise<void>}
    */
-  sendRequested(_requested) {
+  async sendRequested(_requested) {
+    if (!this._live()) {
+      this._afterLoad.push(() => { void this.sendRequested(_requested) })
+      return
+    }
     const html = this._currentHTML()
     const accepted = !hasEmptyTemplateVariables(html) || confirm('The message contains an empty template area. Send anyway?')
     if (!accepted) this._selectFirstVariable('code.empty[data-template-var]')
     const body = { html: stripTemplateVariableMarkup(html), text: this._currentText() }
+    const revision = this._safeFrame?.metadata.revision
     const tooLarge = this._tooLarge(body)
+    /** @type {MatchedQuote|null} */
+    let proof = null
+    try {
+      proof = tooLarge ? null : await matchQuoteProof(body.html, this._quoteProof)
+    } catch {
+      if (this._stopped) return
+      this._preparationFailed()
+      /** @type {SendBodyReady} */
+      const failed = {html:'',text:'',quoteProof:null,accepted:false,tooLarge:false}
+      this._view.publishSendBodyReady(failed)
+      return
+    }
+    if (this._stopped) return
+    const unchanged = this._safeFrame?.metadata.revision === revision && this._live() && stripTemplateVariableMarkup(this._currentHTML()) === body.html && this._currentText() === body.text
+    if (!unchanged) this._toast('The message changed while preparing. Send again.')
     /** @type {SendBodyReady} */
-    const ready = { html: tooLarge ? '' : body.html, text: tooLarge ? '' : body.text, accepted, tooLarge }
+    const ready = { html: tooLarge ? '' : body.html, text: tooLarge ? '' : body.text, quoteProof:proof?.proof || null, accepted:accepted && unchanged, tooLarge }
     this._view.publishSendBodyReady(ready)
   }
 
@@ -546,9 +626,11 @@ export class ComposeEditor {
 
   /** @param {HTMLIFrameElement} frame */
   _frameLoaded(frame) {
+    if (this._stopped || frame !== this._frame || !frame.isConnected) return
     const doc = frame.contentDocument
     const body = /** @type {HTMLElement | null} */ (doc?.querySelector('body[data-compose-editor]') ?? null)
-    if (!doc || !body) return
+    const revision = doc?.querySelector('meta[name="tachyon-safe-html-revision"]')?.getAttribute('content')
+    if (!doc || !body || !this._safeFrame || revision !== String(this._safeFrame.metadata.revision) || body === this._body) return
     this._frameListeners?.abort()
     this._frameListeners = new AbortController()
     this._body = body
@@ -564,6 +646,12 @@ export class ComposeEditor {
     for (const step of steps) step()
     this._scheduleGrammar(0)
     if (this._savePending) this._publishSaveDue()
+    this._rerender()
+  }
+
+  /** Report actual preparation failure; no unvalidated frame or save is substituted. @returns {void} */
+  _preparationFailed() {
+    this._view.editorError = ComposeEditor._PREPARE_ERROR
     this._rerender()
   }
 
@@ -598,7 +686,7 @@ export class ComposeEditor {
   }
 
   _live() {
-    return Boolean(this._body?.isConnected) && !this._stale
+    return !this._stopped && this._safeFrame?.metadata.revision === this._preparingRevision && Boolean(this._frame?.isConnected && this._body?.isConnected) && !this._stale
   }
 
   /** @returns {string} */
@@ -708,13 +796,31 @@ export class ComposeEditor {
     this._saveTimer = setTimeout(() => this._publishSaveDue(), delay)
   }
 
-  _publishSaveDue() {
-    this._savePending = this._stale
-    if (this._stale) return
+  /** Capture proof and body as one revision; superseded captures never publish. @returns {Promise<void>} */
+  async _publishSaveDue() {
+    this._savePending = !this._live()
+    if (this._savePending) return
     const body = { html: this._currentHTML(), text: this._currentText() }
+    const revision = this._safeFrame?.metadata.revision
+    const capture = ++this._saveCapture
     const tooLarge = this._tooLarge(body)
+    /** @type {MatchedQuote|null} */
+    let proof = null
+    try {
+      proof = tooLarge ? null : await matchQuoteProof(body.html, this._quoteProof)
+    } catch {
+      if (this._stopped) return
+      this._preparationFailed()
+      return
+    }
+    if (this._stopped || capture !== this._saveCapture) return
+    if (this._safeFrame?.metadata.revision !== revision || !this._live() || this._currentHTML() !== body.html || this._currentText() !== body.text) {
+      this._requestSave(0)
+      return
+    }
+    this._quoteProof = proof?.proof || null
     /** @type {DraftSaveDue} */
-    const due = { html: tooLarge ? '' : body.html, text: tooLarge ? '' : body.text, tooLarge }
+    const due = { html: tooLarge ? '' : body.html, text: tooLarge ? '' : body.text, quoteProof:this._quoteProof, tooLarge }
     this._view.publishDraftSaveDue(due)
   }
 
@@ -989,7 +1095,7 @@ export class ComposeEditor {
     if (!selector) return false
     const host = document.querySelector(selector)
     const control = host?.matches('input, select') ? host : host?.querySelector('input, select')
-    event.preventDefault()
+    event.preventDefault();
     /** @type {HTMLElement | null | undefined} */ (control)?.focus()
     return true
   }

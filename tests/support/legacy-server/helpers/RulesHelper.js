@@ -1,3 +1,4 @@
+/** @import { RawRuleDoc } from '../types' */
 import { Fylo } from '../shared/persistence/Fylo.js'
 import { RulesRecords } from '../shared/mailbox/RulesRecords.js'
 
@@ -5,7 +6,7 @@ import { RulesRecords } from '../shared/mailbox/RulesRecords.js'
 
 @Helper
 export default class RulesHelper {
-  /** @type {FyloHelper} */
+  /** @type {FyloHelper | undefined} */
   @Needs
   fyloHelper
 
@@ -14,7 +15,7 @@ export default class RulesHelper {
    * @returns {Promise<InboxRule[]>}
    */
   async list(allowedDomains) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.INBOX_RULES, { $ops: [] }).collect())
     return Object.values(docs)
       .filter(r => allowedDomains.includes(r.domain))
@@ -24,7 +25,7 @@ export default class RulesHelper {
 
   /** @param {string} ownerEmail @returns {Promise<InboxRule[]>} */
   async listForOwner(ownerEmail) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const owner = ownerEmail.trim().toLowerCase()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.INBOX_RULES, {
       $ops: [{ ownerEmail: { $eq: owner } }],
@@ -39,7 +40,7 @@ export default class RulesHelper {
    * @returns {Promise<InboxRule[]>}
    */
   async listEnabledForDomain(domain) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.INBOX_RULES, { $ops: [{ domain: { $eq: domain } }] }).collect())
     return Object.values(docs)
       .filter(r => r.enabled)
@@ -68,7 +69,7 @@ export default class RulesHelper {
    * @returns {Promise<[string | null, InboxRule | null]>}
    */
   async findById(ruleId) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.INBOX_RULES, { $ops: [{ id: { $eq: ruleId } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], RulesRecords.deserialize(/** @type {RawRuleDoc} */ (entry[1]))] : [null, null]
@@ -79,7 +80,7 @@ export default class RulesHelper {
    * @returns {Promise<string>}
    */
   async put(rule) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     return await fylo.putData(Fylo.Collections.INBOX_RULES, RulesRecords.serialize(rule))
   }
 
@@ -89,7 +90,7 @@ export default class RulesHelper {
    * @returns {Promise<void>}
    */
   async update(docId, patch) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     /** @type {Record<string, unknown>} */
     const serialized = {}
     if (patch.name !== undefined) serialized.name = patch.name
@@ -109,7 +110,7 @@ export default class RulesHelper {
    * @returns {Promise<void>}
    */
   async delete(docId) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     await fylo.delDoc(Fylo.Collections.INBOX_RULES, docId)
   }
 
@@ -122,7 +123,7 @@ export default class RulesHelper {
   /** Replace the exact owner's complete order in one FYLO patch operation. */
   /** @param {string} ownerEmail @param {string[]} ids */
   async reorder(ownerEmail, ids) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const rules = await this.listForOwner(ownerEmail)
     const byId = new Map(rules.map(rule => [rule.id, rule]))
     if (new Set(ids).size !== ids.length || ids.length !== rules.length || ids.some(id => !byId.has(id))) return false

@@ -14,13 +14,15 @@ export class AttachmentsRecords {
 
   static attachmentRoot() {
     // Legacy path-backed records may point at the former dedicated mount.
-    if (ServerEnvironment.value('ATTACHMENT_ROOT')) return ServerEnvironment.value('ATTACHMENT_ROOT')
-    if (ServerEnvironment.value('FYLO_ROOT')) return join(ServerEnvironment.value('FYLO_ROOT'), 'attachments')
+    const attachmentRoot = ServerEnvironment.value('ATTACHMENT_ROOT')
+    if (attachmentRoot) return attachmentRoot
+    const fyloRoot = ServerEnvironment.value('FYLO_ROOT')
+    if (fyloRoot) return join(fyloRoot, 'attachments')
     throw new Error('FYLO_ROOT or legacy ATTACHMENT_ROOT is required to read a path-backed attachment')
   }
 
   /**
-   * @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo
+   * @param {import('../persistence/Fylo.js').Fylo} fylo
    * @param {string} emailId
    * @param {string} domain
    * @param {ParsedAttachment} attachment
@@ -93,7 +95,7 @@ export class AttachmentsRecords {
     return new Uint8Array()
   }
 
-  /** @param {import('../../../shared/persistence/Fylo.js').Fylo} fylo @param {EmailAttachmentRecord & { docId?: string }} record */
+  /** @param {import('../persistence/Fylo.js').Fylo} fylo @param {EmailAttachmentRecord & { docId?: string }} record */
   static async deleteRecord(fylo, { docId, bucketId, storagePath }) {
     if (!docId) throw new Error('Attachment record is missing its document id')
     await fylo.delDoc(Fylo.Collections.ATTACHMENTS, docId)

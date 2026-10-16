@@ -30,11 +30,6 @@ export class Security {
     return Security.#CONTROL_CHARS.test(value)
   }
 
-  /** @param {string} s @returns {string} */
-  static sha256Hex(s) {
-    return createHash('sha256').update(s).digest('hex')
-  }
-
   /**
    * Constant-time string comparison. Returns `false` on length mismatch or
    * invalid input rather than throwing.
@@ -62,7 +57,7 @@ export class Security {
     return v
   }
 
-  /** @param {string} email @returns {string | null} */
+  /** @param {unknown} email @returns {string | null} */
   static normalizeEmailAddress(email) {
     const t = String(email ?? '').trim().toLowerCase()
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t) ? t : null

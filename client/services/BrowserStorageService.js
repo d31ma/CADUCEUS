@@ -13,7 +13,7 @@ export default class BrowserStorageService {
   static _LOCAL = 'local'
   static _LARGEST_VALUE = 8192
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
 
   ready = false
@@ -22,7 +22,7 @@ export default class BrowserStorageService {
   start() {
     /** @type {StoredValues} */
     const stored = { session: this._read(sessionStorage), local: this._read(localStorage) }
-    this.applicationEventPublisher.publishEvent(stored, true)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(stored, true)
     this.ready = true
   }
 

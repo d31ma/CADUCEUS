@@ -25,6 +25,7 @@ export class CategoryMappingRules {
     const source = value && typeof value === 'object' && !Array.isArray(value)
       ? /** @type {Record<string, unknown>} */ (value)
       : {}
+    /** @type {Record<string, Record<string, string>>} */
     const result = {}
     for (const rawDomain of assignedDomains) {
       const domain = Security.normalizeDomain(rawDomain)
@@ -81,6 +82,7 @@ export class CategoryMappingRules {
         return { ok: false, forbidden: true, error: 'Category mapping domain is not assigned to this user' }
       }
     }
+    /** @type {Record<string, Record<string, string>>} */
     const mappings = {}
     for (const domain of allowed) {
       const supplied = input[domain]
@@ -91,6 +93,7 @@ export class CategoryMappingRules {
       if (Object.keys(record).some(role => !CategoryMappingRules.CATEGORY_ROLE_SET.has(role))) {
         return { ok: false, error: 'Category mappings contain an unknown system role' }
       }
+      /** @type {Record<string, string>} */
       const mapping = {}
       const used = new Set()
       for (const role of CategoryMappingRules.CATEGORY_ROLES) {
@@ -106,12 +109,12 @@ export class CategoryMappingRules {
   }
 
   /** @param {unknown} value @returns {string} */
-  /** @param {Record<string, string>} mapping */
+  /** @param {Record<string, string>} mapping @returns {Record<string, string>} */
   static invertRoleMapping(mapping) {
     return Object.fromEntries(CategoryMappingRules.CATEGORY_ROLES.map(role => [mapping[role], role]))
   }
 
-  /** @param {import('../../../types').StoredEmail} email @param {Record<string, Record<string, string>>} mappings */
+  /** @param {import('../../types').StoredEmail} email @param {Record<string, Record<string, string>>} mappings */
   static presentEmailWithMappings(email, mappings) {
     const path = CategoryPath.normalizeCategoryPath(email.folder || 'inbox') || 'inbox'
     const role = CategoryMappingRules.invertRoleMapping(mappings[email.domain] || CategoryMappingRules.defaultRoleMapping())[path]

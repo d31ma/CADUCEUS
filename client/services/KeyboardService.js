@@ -22,7 +22,7 @@ export default class KeyboardService {
     'calendar:go-to-today', 'calendar:navigate-next', 'calendar:navigate-previous', 'calendar:refresh-calendars',
   ]
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
 
   ready = false
@@ -45,7 +45,7 @@ export default class KeyboardService {
   _pressed(command) {
     /** @type {ShortcutPressed} */
     const pressed = { command }
-    this.applicationEventPublisher.publishEvent(pressed, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(pressed, false)
   }
 
   /** @param {Array<{label: string, rows: Array<{label: string, displayBinding: string}>}> | undefined} groups @returns {ShortcutGroup[]} */
@@ -56,6 +56,6 @@ export default class KeyboardService {
   _listGroups() {
     /** @type {ShortcutGroupsListed} */
     const listed = { groups: this._groups(window._caduceusKeyboard?.getGroups?.()) }
-    this.applicationEventPublisher.publishEvent(listed, true)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(listed, true)
   }
 }

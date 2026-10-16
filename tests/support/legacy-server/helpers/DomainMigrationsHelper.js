@@ -3,7 +3,7 @@ import { Fylo } from '../shared/persistence/Fylo.js'
 
 @Helper
 export default class DomainMigrationsHelper {
-  /** @type {FyloHelper} */
+  /** @type {FyloHelper | undefined} */
   @Needs
   fyloHelper
 
@@ -11,7 +11,7 @@ export default class DomainMigrationsHelper {
    * @returns {Promise<Array<DomainMigration & { docId: string }>>}
    */
   async list() {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.DOMAIN_MIGRATIONS, { $ops: [] }).collect())
     return Object.entries(docs).map(([docId, migration]) => ({ docId, .../** @type {DomainMigration} */ (migration) }))
   }
@@ -22,7 +22,7 @@ export default class DomainMigrationsHelper {
    * @returns {Promise<[string | null, DomainMigration | null]>}
    */
   async find(fromDomain, toDomain) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.DOMAIN_MIGRATIONS, {
       $ops: [{ fromDomain: { $eq: fromDomain } }, { toDomain: { $eq: toDomain } }],
     }).collect())
@@ -35,7 +35,7 @@ export default class DomainMigrationsHelper {
    * @returns {Promise<string>}
    */
   async put(migration) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const [docId] = await this.find(migration.fromDomain, migration.toDomain)
     if (docId) {
       await fylo.patchDoc(Fylo.Collections.DOMAIN_MIGRATIONS, { [docId]: migration })

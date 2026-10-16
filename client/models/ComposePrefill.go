@@ -1,6 +1,8 @@
 // The composer fields that ComposeLaunched carries: a reply, a forward, a
 // draft or a scheduled message to edit, or a manifest launch.
 type ComposePrefill struct {
+	// Quote is app-generated reply/forward provenance, separate from untrusted Body.
+	Quote         *QuotedMessage      `json:"quote,omitempty"`
 	DraftID       string              `json:"draftId"`
 	ScheduledID   string              `json:"scheduledId"`
 	SendAt        string              `json:"sendAt"`

@@ -1,3 +1,4 @@
+/** @import { SendRequest } from '../../models/SendRequest.js' */
 import { readFileSync } from 'node:fs'
 import { TrackingTokens } from './TrackingTokens.js'
 import { ServerEnvironment } from '../runtime/ServerEnvironment.js'
@@ -27,7 +28,7 @@ export class SmtpDirectAdapter {
     const from = fromOverride || ServerEnvironment.value('SMTP_FROM') || `postmaster@${hostname}`
     /** @type {(options: any) => { sendMail: (message: any) => Promise<any> }} */
     const createTransport = this.deps.createTransport
-      ?? /** @type {any} */ ((await import('../../../deps/npm/nodemailer.mjs')).default.createTransport)
+      ?? /** @type {any} */ ((await import('../../deps/npm/nodemailer.mjs')).default.createTransport)
     const resolveMx = this.deps.resolveMx ?? SmtpRules.resolveMailExchangers
     const dkim = SmtpRules.loadDkim()
     const recipients = SmtpRules.uniqueRecipients(msg.envelopeRecipients || [...(msg.to || []), ...(msg.cc || []), ...(msg.bcc || [])])

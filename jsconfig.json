@@ -16,6 +16,12 @@
     "paths": {
       "@/*": [
         "./tests/support/legacy-server/*"
+      ],
+      "/models/*": [
+        "./client/models/*"
+      ],
+      "/shared/*": [
+        "./client/shared/*"
       ]
     }
   },

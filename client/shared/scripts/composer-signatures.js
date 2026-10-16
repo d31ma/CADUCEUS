@@ -2,8 +2,8 @@
 
 const UNSAFE_BLOCK_RE = /<(script|style|iframe|frame|frameset|object|embed|applet|form|template|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi
 const UNSAFE_SINGLE_RE = /<(?:script|style|iframe|frame|frameset|object|embed|applet|form|input|button|textarea|select|option|base|meta|link)\b[^>]*\/?\s*>/gi
-const QUOTE_START_RE = /<(?:blockquote\b|[^>]+class\s*=\s*["'][^"']*(?:gmail_quote|quoted-message)[^"']*["'])/i
-const SIGNATURE_RE = /(?:<signature\b[^>]*\bid\s*=\s*["']([^"']+)["'][^>]*>[\s\S]*?<\/signature\s*>|<div\b(?=[^>]*\bclass\s*=\s*["'][^"']*\bcaduceus-signature\b[^"']*["'])(?=[^>]*\bdata-signature-id\s*=\s*["']([^"']+)["'])[^>]*>[\s\S]*?<\/div\s*>)/i
+const QUOTE_START_RE = /<(?:section\b[^>]*\bdata-caduceus-quote\s*=|blockquote\b|[^>]+class\s*=\s*["'][^"']*(?:gmail_quote|quoted-message)[^"']*["'])/i
+const SIGNATURE_RE = /(?:<signature\b[^>]*\b(?:data-signature-id|id)\s*=\s*["']([^"']+)["'][^>]*>[\s\S]*?<\/signature\s*>|<div\b(?=[^>]*\bclass\s*=\s*["'][^"']*\bcaduceus-signature\b[^"']*["'])(?=[^>]*\bdata-signature-id\s*=\s*["']([^"']+)["'])[^>]*>[\s\S]*?<\/div\s*>)/i
 
 /** @param {unknown} input */
 export function sanitizeSignatureHTML(input) {
@@ -63,7 +63,7 @@ export function applySignature(body, signature) {
   if (trailingBreaks(before) > 1) spacer = ''
   const id = String(signature.id).replace(/[^A-Za-z0-9._:-]/g, '')
   const content = sanitizeSignatureHTML(signature.text)
-  return `${before}${spacer}<signature id="${id}" class="caduceus-signature" contenteditable="false">${content}</signature>${after}`
+  return `${before}${spacer}<signature data-signature-id="${id}" class="caduceus-signature" contenteditable="false">${content}</signature>${after}`
 }
 
 /** @param {Array<{ id: string, text: string, defaultFor?: string[] }>} signatures @param {string} address */

@@ -3,7 +3,7 @@
 const TEMPLATE_CODE_RE = /<code\b([^>]*)>([\s\S]*?)<\/code\s*>/gi
 const UNSAFE_BLOCK_RE = /<(script|style|iframe|frame|frameset|object|embed|applet|form|template|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi
 const UNSAFE_SINGLE_RE = /<(?:script|style|iframe|frame|frameset|object|embed|applet|form|input|button|textarea|select|option|base|meta|link)\b[^>]*\/?\s*>/gi
-const TEMPLATE_BOUNDARY_RE = /<(?:signature\b|blockquote\b[^>]*class\s*=\s*["'][^"']*gmail_quote)|<[^>]+class\s*=\s*["'][^"']*(?:mailspring-signature|caduceus-signature|gmail_quote|quoted-message)[^"']*["']/i
+const TEMPLATE_BOUNDARY_RE = /<(?:section\b[^>]*\bdata-caduceus-quote\s*=|signature\b|blockquote\b[^>]*class\s*=\s*["'][^"']*gmail_quote)|<[^>]+class\s*=\s*["'][^"']*(?:mailspring-signature|caduceus-signature|gmail_quote|quoted-message)[^"']*["']/i
 
 /** @param {string} attributes */
 function isVariableAttributes(attributes) {

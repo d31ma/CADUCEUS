@@ -5,7 +5,7 @@
  */
 @Service
 export default class ContactsBrowserService {
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
 
   /** @param {Event} event */
@@ -25,6 +25,6 @@ export default class ContactsBrowserService {
   _publish(file, content) {
     /** @type {ContactsFileChosen} */
     const chosen = { name: file.name, size: file.size, content }
-    this.applicationEventPublisher.publishEvent(chosen, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(chosen, false)
   }
 }

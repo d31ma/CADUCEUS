@@ -1,6 +1,8 @@
 // ComposeFields is the composer prefill, stored as caduceus_compose_prefill
 // in sessionStorage before /compose opens.
 type ComposeFields struct {
+	// Quote is app-generated reply/forward provenance, separate from untrusted Body.
+	Quote         *QuotedMessage   `json:"quote,omitempty"`
 	DraftID       string           `json:"draftId,omitempty"`
 	ScheduledID   string           `json:"scheduledId,omitempty"`
 	SendAt        string           `json:"sendAt,omitempty"`

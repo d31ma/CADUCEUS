@@ -8,13 +8,15 @@
 @Service
 export default class PasskeyService {
   static _REGISTRATION = 'create'
+  /** @type {PublicKeyCredentialType} */
   static _PUBLIC_KEY = 'public-key'
+  /** @type {UserVerificationRequirement} */
   static _VERIFICATION = 'required'
   static _NO_CREDENTIAL = 'error:No passkey credential was returned.'
   static _CANCELLATIONS = ['NotAllowedError', 'AbortError']
   static _BASE64_BLOCK = 4
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
 
   pending = false
@@ -26,7 +28,7 @@ export default class PasskeyService {
     /** @type {PasskeyAnswered} */
     const answer = await this._attempt(request)
     this.pending = false
-    this.applicationEventPublisher.publishEvent(answer, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(answer, false)
   }
 
   /** @param {PasskeyRequested} request @returns {Promise<PasskeyAnswered>} */
@@ -47,7 +49,7 @@ export default class PasskeyService {
         challenge: this._buffer(request.challenge),
         rpId: request.relyingPartyId,
         userVerification: PasskeyService._VERIFICATION,
-        allowCredentials: request.credentials.map(id => ({ id: this._buffer(id), type: PasskeyService._PUBLIC_KEY })),
+        allowCredentials: request.credentialIds.map(id => ({ id: this._buffer(id), type: PasskeyService._PUBLIC_KEY })),
       },
     }))
     if (!assertion) return this._failed(request.mode, PasskeyService._NO_CREDENTIAL)
@@ -67,7 +69,7 @@ export default class PasskeyService {
       publicKey: {
         challenge: this._buffer(request.challenge),
         rp: { id: request.relyingPartyId, name: 'CADUCEUS' },
-        user: { id: this._buffer(request.userId.replace(/[^A-Za-z0-9_-]/g, '')), name: request.userName, displayName: [request.displayName, request.userName].filter(Boolean)[0] },
+        user: { id: this._buffer(request.userId.replace(/[^A-Za-z0-9_-]/g, '')), name: request.userName, displayName: request.displayName || request.userName },
         pubKeyCredParams: [{ type: PasskeyService._PUBLIC_KEY, alg: -7 }, { type: PasskeyService._PUBLIC_KEY, alg: -257 }],
         authenticatorSelection: { userVerification: PasskeyService._VERIFICATION, residentKey: 'preferred' },
       },

@@ -1,6 +1,7 @@
 // MessageFields is the message being written, as the composer sends or
 // autosaves it.
 type MessageFields struct {
+	QuoteProof    *QuoteProof
 	From          string
 	To            string
 	Cc            string

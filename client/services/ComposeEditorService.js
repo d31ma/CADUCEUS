@@ -1,5 +1,7 @@
 // @ts-check
 /** @import { SessionChanged } from '/models/SessionChanged.js' */
+/** @import { SafeHtmlMetadata } from '../models/SafeHtmlMetadata.js' */
+/** @import { ComposeEditorSnapshot } from '/models/ComposeEditorSnapshot.js' */
 /** @import { ComposeLoaded } from '/models/ComposeLoaded.js' */
 /** @import { ComposeChanged } from '/models/ComposeChanged.js' */
 /** @import { EditorPreferences } from '/models/EditorPreferences.js' */
@@ -46,9 +48,9 @@ import { setTranslationAssetToken } from '../shared/scripts/chunked-asset-fetch.
  */
 @Service
 export default class ComposeEditorService {
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
-  /** @type {{ render: () => Promise<void> }} */
+  /** @type {{ render: () => Promise<void> } | undefined} Injected before lifecycle methods run. */
   @Needs
   taskScheduler
 
@@ -59,6 +61,7 @@ export default class ComposeEditorService {
   /** Whether an inline image is selected for the sizing controls. */
   imageSelected = false
   selectedImageName = 'Inline image'
+  editorError = ''
   templateStatus = ''
   translationStatus = ''
   translationError = false
@@ -70,77 +73,105 @@ export default class ComposeEditorService {
   /** @type {Editor} */
   _editor = new ComposeEditor(this)
 
+  /** The framework injects this resource before lifecycle methods run. @returns {ApplicationEventPublisher} */
+  get _publisher() {
+    return /** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher)
+  }
+
+  /**
+   * @param {ComposeEditorSnapshot} snapshot
+   * @param {Array<{id:string,text:string}>} signatures
+   * @returns {string}
+   */
+  frameBody(snapshot, signatures) {
+    return this._editor.frame(snapshot, signatures).body
+  }
+
+  /**
+   * @param {ComposeEditorSnapshot} snapshot
+   * @param {Array<{id:string,text:string}>} signatures
+   * @returns {SafeHtmlMetadata}
+   */
+  frameMetadata(snapshot, signatures) {
+    return this._editor.frame(snapshot, signatures).metadata
+  }
+
+  /** @param {ComposeEditorSnapshot} snapshot @param {Array<{id:string,text:string}>} signatures @returns {boolean} */
+  frameReady(snapshot, signatures) {
+    return this._editor.frameReady(snapshot, signatures)
+  }
+
   // Typed publishers for the events the editor module raises; the compiler
   // names each event after its model type.
 
   /** @param {AttachmentsAdded} attachmentsAdded */
   publishAttachmentsAdded(attachmentsAdded) {
-    this.applicationEventPublisher.publishEvent(attachmentsAdded)
+    this._publisher.publishEvent(attachmentsAdded)
   }
 
   /** @param {AttachmentsOffered} attachmentsOffered */
   publishAttachmentsOffered(attachmentsOffered) {
-    this.applicationEventPublisher.publishEvent(attachmentsOffered)
+    this._publisher.publishEvent(attachmentsOffered)
   }
 
   /** @param {DraftSaveDue} draftSaveDue */
   publishDraftSaveDue(draftSaveDue) {
-    this.applicationEventPublisher.publishEvent(draftSaveDue)
+    this._publisher.publishEvent(draftSaveDue)
   }
 
   /** @param {EditorReplaced} editorReplaced */
   publishEditorReplaced(editorReplaced) {
-    this.applicationEventPublisher.publishEvent(editorReplaced)
+    this._publisher.publishEvent(editorReplaced)
   }
 
   /** @param {EditorSignatureChanged} editorSignatureChanged */
   publishEditorSignatureChanged(editorSignatureChanged) {
-    this.applicationEventPublisher.publishEvent(editorSignatureChanged)
+    this._publisher.publishEvent(editorSignatureChanged)
   }
 
   /** @param {GrammarTextChanged} grammarTextChanged */
   publishGrammarTextChanged(grammarTextChanged) {
-    this.applicationEventPublisher.publishEvent(grammarTextChanged)
+    this._publisher.publishEvent(grammarTextChanged)
   }
 
   /** @param {InlineImageRemoved} inlineImageRemoved */
   publishInlineImageRemoved(inlineImageRemoved) {
-    this.applicationEventPublisher.publishEvent(inlineImageRemoved)
+    this._publisher.publishEvent(inlineImageRemoved)
   }
 
   /** @param {RecipientQueryChanged} recipientQueryChanged */
   publishRecipientQueryChanged(recipientQueryChanged) {
-    this.applicationEventPublisher.publishEvent(recipientQueryChanged)
+    this._publisher.publishEvent(recipientQueryChanged)
   }
 
   /** @param {RecipientSuggestionsDismissed} recipientSuggestionsDismissed */
   publishRecipientSuggestionsDismissed(recipientSuggestionsDismissed) {
-    this.applicationEventPublisher.publishEvent(recipientSuggestionsDismissed)
+    this._publisher.publishEvent(recipientSuggestionsDismissed)
   }
 
   /** @param {SendBodyReady} sendBodyReady */
   publishSendBodyReady(sendBodyReady) {
-    this.applicationEventPublisher.publishEvent(sendBodyReady)
+    this._publisher.publishEvent(sendBodyReady)
   }
 
   /** @param {ShortcutPressed} shortcutPressed */
   publishShortcutPressed(shortcutPressed) {
-    this.applicationEventPublisher.publishEvent(shortcutPressed)
+    this._publisher.publishEvent(shortcutPressed)
   }
 
   /** @param {TemplateDraftReady} templateDraftReady */
   publishTemplateDraftReady(templateDraftReady) {
-    this.applicationEventPublisher.publishEvent(templateDraftReady)
+    this._publisher.publishEvent(templateDraftReady)
   }
 
   /** @param {TemplateInserted} templateInserted */
   publishTemplateInserted(templateInserted) {
-    this.applicationEventPublisher.publishEvent(templateInserted)
+    this._publisher.publishEvent(templateInserted)
   }
 
   /** @param {ToastRequested} toastRequested */
   publishToastRequested(toastRequested) {
-    this.applicationEventPublisher.publishEvent(toastRequested)
+    this._publisher.publishEvent(toastRequested)
   }
 
   get translationLanguages() {

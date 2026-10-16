@@ -2,7 +2,7 @@ import { Fylo } from '../shared/persistence/Fylo.js'
 
 @Helper
 export default class OutboxHelper {
-  /** @type {FyloHelper} */
+  /** @type {FyloHelper | undefined} */
   @Needs
   fyloHelper
 
@@ -11,7 +11,7 @@ export default class OutboxHelper {
    * @returns {Promise<string>}
    */
   async put(entry) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     return await fylo.putData(Fylo.Collections.OUTBOX, entry)
   }
 
@@ -20,7 +20,7 @@ export default class OutboxHelper {
    * @returns {Promise<[string | null, OutboxEntry | null]>}
    */
   async findById(undoId) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const docs = await Fylo.collect(fylo.findDocs(Fylo.Collections.OUTBOX, { $ops: [{ id: { $eq: undoId } }] }).collect())
     const entry = Object.entries(docs)[0]
     return entry ? [entry[0], /** @type {OutboxEntry} */ (entry[1])] : [null, null]
@@ -31,7 +31,7 @@ export default class OutboxHelper {
    * @returns {Promise<void>}
    */
   async delete(docId) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     await fylo.delDoc(Fylo.Collections.OUTBOX, docId)
   }
 
@@ -39,7 +39,7 @@ export default class OutboxHelper {
    * @returns {Promise<Record<string, OutboxEntry>>}
    */
   async findExpired() {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     return /** @type {Promise<Record<string, OutboxEntry>>} */ (
       Fylo.collect(fylo.findDocs(Fylo.Collections.OUTBOX, { $ops: [{ expiresAt: { $lte: Date.now() } }] }).collect())
     )
@@ -53,7 +53,7 @@ export default class OutboxHelper {
    * @returns {Promise<Record<string, OutboxEntry>>}
    */
   async findDue(now = Date.now()) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     const all = /** @type {Record<string, OutboxEntry>} */ (
       await Fylo.collect(fylo.findDocs(Fylo.Collections.OUTBOX, { $ops: [{ expiresAt: { $lte: now } }] }).collect())
     )
@@ -68,7 +68,7 @@ export default class OutboxHelper {
 
   /** @returns {Promise<Record<string, OutboxEntry>>} */
   async listAll() {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     return /** @type {Promise<Record<string, OutboxEntry>>} */ (
       Fylo.collect(fylo.findDocs(Fylo.Collections.OUTBOX, { $ops: [] }).collect())
     )
@@ -80,7 +80,7 @@ export default class OutboxHelper {
    * @returns {Promise<void>}
    */
   async update(docId, patch) {
-    const fylo = await this.fyloHelper.database()
+    const fylo = await (/** @type {FyloHelper} */ (this.fyloHelper)).database()
     await fylo.patchDoc(Fylo.Collections.OUTBOX, { [docId]: patch })
   }
 }

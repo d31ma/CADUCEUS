@@ -20,7 +20,7 @@ export default class DeviceService {
   static _ACTION = 'notificationAction'
   static _EMAIL = 'notificationEmail'
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
 
   ready = false
@@ -78,7 +78,7 @@ export default class DeviceService {
   _action(action, emailId) {
     /** @type {NotificationActionReceived} */
     const received = { action, emailId }
-    this.applicationEventPublisher.publishEvent(received, true)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(received, true)
   }
 
   /** @param {ServiceWorker | null} worker @param {boolean} controlled */
@@ -92,7 +92,7 @@ export default class DeviceService {
   _reveal(state) {
     /** @type {UpdateReady} */
     const ready = { version: 'ready' }
-    ;[ready].filter(() => state === 'installed').forEach(value => this.applicationEventPublisher.publishEvent(/** @type {UpdateReady} */ (value), false))
+    ;[ready].filter(() => state === 'installed').forEach(value => /** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(/** @type {UpdateReady} */ (value), false))
   }
 
   /** @param {number} count */

@@ -12,9 +12,9 @@ import { exportFolder, importFiles, rememberSummaries, searchOffline } from '/sh
 export default class MailboxArchiveService {
   static _ABORT = 'AbortError'
 
-  /** @type {ApplicationEventPublisher} */
+  /** @type {ApplicationEventPublisher | undefined} Injected before lifecycle methods run. */
   applicationEventPublisher
-  /** @type {AbortSignal} */
+  /** @type {AbortSignal | undefined} Injected before lifecycle methods run. */
   @Needs
   lifecycle
   /** @type {AbortController} */
@@ -96,14 +96,14 @@ export default class MailboxArchiveService {
     const link = /** @type {HTMLAnchorElement | null} */ (document.querySelector('[data-mailbox-download]'))
     /** @type {ExportFinished} */
     const finished = await exportFolder(request, this._exporting.signal, (messages, bytesLabel) => this._exportProgress(messages, bytesLabel), link)
-    this.applicationEventPublisher.publishEvent(finished, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(finished, false)
   }
 
   /** @param {number} messages @param {string} bytesLabel */
   _exportProgress(messages, bytesLabel) {
     /** @type {ExportProgressed} */
     const progressed = { messages, bytesLabel }
-    this.applicationEventPublisher.publishEvent(progressed, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(progressed, false)
   }
 
   /** @param {HTMLInputElement} input @returns {File[]} */
@@ -118,14 +118,14 @@ export default class MailboxArchiveService {
     this._importing = new AbortController()
     /** @type {ImportFinished} */
     const finished = await importFiles(files, this._target, this._importing.signal, (imported, total, current) => this._importProgress(imported, total, current))
-    this.applicationEventPublisher.publishEvent(finished, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(finished, false)
   }
 
   /** @param {number} imported @param {number} total @param {string} current */
   _importProgress(imported, total, current) {
     /** @type {ImportProgressed} */
     const progressed = { imported, total, current }
-    this.applicationEventPublisher.publishEvent(progressed, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(progressed, false)
   }
 
   /** @param {OfflineSearchRequested} request */
@@ -138,6 +138,6 @@ export default class MailboxArchiveService {
   _offlineSlice(request, emails, done) {
     /** @type {OfflineSearchFinished} */
     const finished = { request, emails: /** @type {Email[]} */ (/** @type {unknown} */ (emails)), done }
-    this.applicationEventPublisher.publishEvent(finished, false)
+    ;/** @type {ApplicationEventPublisher} */ (this.applicationEventPublisher).publishEvent(finished, false)
   }
 }

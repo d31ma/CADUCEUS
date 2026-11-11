@@ -2,6 +2,7 @@
   "realm": "mesail-operators",
   "users": [
     {
+      "id": "3e5a11d0-0000-4000-8000-000000000401",
       "username": "operator@mesail.test",
       "email": "operator@mesail.test",
       "emailVerified": true,

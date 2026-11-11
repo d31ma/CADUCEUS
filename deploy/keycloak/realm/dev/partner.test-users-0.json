@@ -2,6 +2,7 @@
   "realm": "partner.test",
   "users": [
     {
+      "id": "3e5a11d0-0000-4000-8000-000000000301",
       "username": "member@partner.test",
       "email": "member@partner.test",
       "emailVerified": true,
@@ -20,6 +21,7 @@
       ]
     },
     {
+      "id": "3e5a11d0-0000-4000-8000-000000000302",
       "username": "admin@partner.test",
       "email": "admin@partner.test",
       "emailVerified": true,

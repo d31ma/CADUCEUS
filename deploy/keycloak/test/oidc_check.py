@@ -25,6 +25,13 @@ class MesailRealmCheck:
         "carol": "dev-carol-password",
         "operator": "dev-operator-password",
     }
+    FIXED_IDS = {
+        "ana": "3e5a11d0-0000-4000-8000-000000000001",
+        "bo": "3e5a11d0-0000-4000-8000-000000000002",
+        "eve": "3e5a11d0-0000-4000-8000-000000000003",
+        "carol": "3e5a11d0-0000-4000-8000-000000000004",
+        "operator": "3e5a11d0-0000-4000-8000-000000000005",
+    }
     OTP_PERSON = "bo"
     LOCK_PERSON = "eve"
     NEW_PERSON = "dan.new-person_1"
@@ -91,6 +98,7 @@ class MesailRealmCheck:
         self.expect(f"{username}: typ", claims.get("typ"), "Bearer")
         self.expect(f"{username}: preferred_username is the prefix", claims.get("preferred_username"), username)
         self.expect(f"{username}: access token lifetime (s)", claims.get("exp", 0) - claims.get("iat", 0), self.TOKEN_LIFETIME)
+        self.expect(f"{username}: sub is the fixed dev id", claims.get("sub"), self.FIXED_IDS[username])
         self.expect(f"{username}: sid present", bool(claims.get("sid")), True)
         self.expect(f"{username}: no old domain roles", sorted(set(self.roles(claims)) & set(self.OLD_ROLES)), [])
         self.expect(f"{username}: mesail-operator only for the operator",

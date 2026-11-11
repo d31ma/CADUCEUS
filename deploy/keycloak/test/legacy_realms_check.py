@@ -28,6 +28,15 @@ class LegacyRealmsCheck:
     ADMIN_PASSWORD = "dev-admin-password"
     OPERATOR_USERNAME = "operator@mesail.test"
     OPERATOR_PASSWORD = "dev-operator-password"
+    FIXED_IDS = {
+        "member@example.com": "3e5a11d0-0000-4000-8000-000000000101",
+        "admin@example.com": "3e5a11d0-0000-4000-8000-000000000102",
+        "member@example.org": "3e5a11d0-0000-4000-8000-000000000201",
+        "admin@example.org": "3e5a11d0-0000-4000-8000-000000000202",
+        "member@partner.test": "3e5a11d0-0000-4000-8000-000000000301",
+        "admin@partner.test": "3e5a11d0-0000-4000-8000-000000000302",
+        "operator@mesail.test": "3e5a11d0-0000-4000-8000-000000000401",
+    }
     TOKEN_LIFETIME = 60
     CALLBACK = "http://localhost/cb"
     LOGIN_FORM = 'id="kc-form-login"'
@@ -94,6 +103,8 @@ class LegacyRealmsCheck:
         self.expect(f"{realm}: preferred_username", claims.get("preferred_username"), username)
         self.expect(f"{realm}: access token lifetime (s)", claims.get("exp", 0) - claims.get("iat", 0), self.TOKEN_LIFETIME)
         self.expect(f"{realm}: sub present", bool(claims.get("sub")), True)
+        if username in self.FIXED_IDS:
+            self.expect(f"{realm}: sub of {username} is the fixed dev id", claims.get("sub"), self.FIXED_IDS[username])
 
     def check_admin_roles(self, urls: "RealmUrls") -> None:
         token = self.password_grant(urls, f"admin@{urls.realm}", self.ADMIN_PASSWORD)
@@ -142,6 +153,7 @@ class LegacyRealmsCheck:
         token = self.password_grant(urls, self.OPERATOR_USERNAME, self.OPERATOR_PASSWORD)
         claims = self.check_signature(urls, token["access_token"])
         self.expect(f"{urls.realm}: role mesail-operator", self.OPERATOR_ROLE in self.roles(claims), True)
+        self.expect(f"{urls.realm}: sub of the operator is the fixed dev id", claims.get("sub"), self.FIXED_IDS[self.OPERATOR_USERNAME])
         self.expect(f"{urls.realm}: azp", claims.get("azp"), self.IDENTITY_CLIENT)
         self.check_service_token(urls)
 

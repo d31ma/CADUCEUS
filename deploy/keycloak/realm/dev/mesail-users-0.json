@@ -2,6 +2,7 @@
   "realm": "mesail",
   "users": [
     {
+      "id": "3e5a11d0-0000-4000-8000-000000000001",
       "username": "ana",
       "firstName": "Ana",
       "lastName": "Admin",
@@ -17,6 +18,7 @@
       "emailVerified": true
     },
     {
+      "id": "3e5a11d0-0000-4000-8000-000000000002",
       "username": "bo",
       "firstName": "Bo",
       "lastName": "Member",
@@ -32,6 +34,7 @@
       "emailVerified": true
     },
     {
+      "id": "3e5a11d0-0000-4000-8000-000000000003",
       "username": "eve",
       "firstName": "Eve",
       "lastName": "Member",
@@ -47,6 +50,7 @@
       "emailVerified": true
     },
     {
+      "id": "3e5a11d0-0000-4000-8000-000000000004",
       "username": "carol",
       "firstName": "Carol",
       "lastName": "Partner",
@@ -62,6 +66,7 @@
       "emailVerified": true
     },
     {
+      "id": "3e5a11d0-0000-4000-8000-000000000005",
       "username": "operator",
       "firstName": "Dev",
       "lastName": "Operator",

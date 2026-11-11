@@ -19,7 +19,7 @@ in production.
 | `providers/sqlite/` | Java source of `mesail-keycloak-sqlite.jar` (SQLite support), compiled in the `keycloak-providers` stage. Left out of the PostgreSQL image. |
 | `providers/mesail/` | Java source of `mesail-keycloak-mesail.jar`: the admin API endpoint that stores a TOTP. In both images. |
 | `realm/mesail-realm.json` | The one realm `mesail`: every person and every Operator (ADR 0005). |
-| `realm/dev/mesail-users-0.json` | Dev-only people `ana`, `bo`, `eve`, `carol` and `operator`. Imported only with `MESAIL_KEYCLOAK_DEV_USERS=true`. |
+| `realm/dev/mesail-users-0.json` | Dev-only people `ana`, `bo`, `eve`, `carol` and `operator`, with fixed Keycloak ids `3e5a11d0-0000-4000-8000-00000000000N` (N = 1 to 5 in that order). Imported only with `MESAIL_KEYCLOAK_DEV_USERS=true`. |
 | `realm/domain-realm.json`, `realm/mesail-operators-realm.json`, `realm/dev/<domain>-users-0.json` | **Transition only, until Wave 3's switch (L5):** the old realm per mail domain and `mesail-operators` (ADR 0004). Imported only while `MESAIL_KEYCLOAK_DOMAINS` is set. Deleted after L5. |
 | `bin/mesail-supervisor` | The image entrypoint. Starts Keycloak, waits until it is ready, runs the provisioning step, then starts `MESAIL_APP_COMMAND`. |
 | `bin/mesail-keycloak-start` | Checks the environment, prepares the realm `mesail` (and, in the transition, one realm per domain), chooses the database, runs `kc.sh start --optimized --import-realm`. |
@@ -73,6 +73,16 @@ Operator explicitly. The default role `default-roles-mesail` is empty, so a
 person's token and the two service accounts' tokens carry no other realm
 role. `mesail-member`, `mesail-admin` and `mesail-service` are roles of
 Mesail's own token, set by the identity service.
+
+**Fixed dev ids.** A person's id is their Keycloak `sub`, and it never
+changes: `directory` never links a person to a new `sub` (ADR 0005, DOMAIN
+"Person"). Every dev user file therefore sets each user's `id`, so a fresh
+Keycloak database gives the same subjects as the last one and matches the
+directory's dev seed: `ana` `...0001`, `bo` `...0002`, `eve` `...0003`,
+`carol` `...0004`, `operator` `...0005` (all `3e5a11d0-0000-4000-8000-00000000000N`).
+The old realms' dev users use `...0101` and up. Keycloak user ids are unique
+across realms, so a new dev user needs an id no other file uses. Real people
+get Keycloak's random ids from `directory`.
 
 **User attributes.** The realm's user profile declares
 `mesail.mustChangePassword` (`true` or `false`; only admins see or change it).

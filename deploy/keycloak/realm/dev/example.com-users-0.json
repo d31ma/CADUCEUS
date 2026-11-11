@@ -2,6 +2,7 @@
   "realm": "example.com",
   "users": [
     {
+      "id": "3e5a11d0-0000-4000-8000-000000000101",
       "username": "member@example.com",
       "email": "member@example.com",
       "emailVerified": true,
@@ -20,6 +21,7 @@
       ]
     },
     {
+      "id": "3e5a11d0-0000-4000-8000-000000000102",
       "username": "admin@example.com",
       "email": "admin@example.com",
       "emailVerified": true,

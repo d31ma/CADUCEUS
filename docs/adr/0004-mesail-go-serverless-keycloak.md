@@ -233,9 +233,11 @@ kit/            shared plain Go packages (source of truth)
   seconds and are kept in memory; refresh uses refresh token rotation. A
   person with addresses in two domains has two accounts and a domain
   switcher in the UI.
-- Every Yon app has one `OidcIdentityProvider` that calls
-  `oidc.Configured().Identify(...)` from `kit/oidc`, and a `CallerService`
-  that routes use to read the same verified caller. The gate checks
+- Every Yon app has one `TokenIdentityProvider` that calls
+  `oidc.Configured().Identify(...)` from `kit/oidc`. A route that needs
+  the caller (domain and member) gets it from a `CallerService` (`@Service`)
+  that calls the same gate, because Tachyon does not pass the identity to
+  the route; each slice adds that service when its first route needs it. The gate checks
   signature (JWKS, cached in the warm handler), issuer, audience, expiry and
   `azp`, and maps realm roles to `Member`, `DomainAdmin`, `Operator` and
   `Service`. Until a verifier is configured the gate refuses every token

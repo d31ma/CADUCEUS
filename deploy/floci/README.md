@@ -33,6 +33,14 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
 - It prints `export MESAIL_BASE_URL=http://127.0.0.1:<port>` (also in
   `$TMPDIR/mesail-native/<owner>/env`).
 - An app that fails to start is a warning: its tests fail, the others run.
+- Services reach each other through the router: in the copied `.env`, every
+  `http://127.0.0.1:81xx` address becomes the router's address.
+- When `attachments` runs, the run makes a blob folder in the FYLO test image
+  and a random link secret, writes `YON_ATTACHMENTS_ADAPTER=local`,
+  `_FOLDER`, `_LINK_BASE` (`<router>/blobs`) and `_LINK_SECRET` into its
+  `.env`, and gives the router the same values.
+- `MESAIL_ROUTER_PASSTHROUGH` in your environment reaches the router, for the
+  realtime gateway until the run starts it itself.
 - Tokens: set `MESAIL_TOKENS_FILE` to a file of `export MESAIL_TOKEN_ANA=...`
   lines; without it, tests that need a token skip. With
   `MESAIL_KEYCLOAK_URL` set (a native Keycloak, see `deploy/keycloak`), the
@@ -71,9 +79,12 @@ scripts/floci/run-all.sh identity directory    # build and deploy only these fun
    `--vm=colima`, starts Colima and its own Floci instead. `stack.sh` builds
    the images, starts Keycloak and the router, deploys the functions, seeds
    the realms, runs `go test -tags blackbox` in `tests/blackbox`, removes
-   what it started (in the dev host's Floci it deletes the `mesail-*`
-   functions), and takes the dev host down or stops Colima only if it
-   started it. An image that fails to build is a warning: that function is
+   what it started, and takes the dev host down or stops Colima only if it
+   started it. In the dev host it removes only its own compose containers
+   and deletes, through the Lambda API, exactly the functions named in
+   `stack.json`; it never removes the host's containers, volumes or
+   networks. Only with `MESAIL_VM=colima`, where it started Floci itself,
+   does it also remove Floci's function containers, EFS volumes and network. An image that fails to build is a warning: that function is
    not deployed and its tests fail.
 
 Logs: `~/Library/Logs/local/CADUCEUS/<MESAIL_OWNER>/floci-<time>/`, one file
@@ -152,6 +163,9 @@ One HTTP origin, like FitNest's gateway:
 | Path | Goes to |
 | --- | --- |
 | `/_router/ready` | The router itself. |
+| `/api/v1/realtime/gateway/...` (and any `MESAIL_ROUTER_BLOCKED` prefix) | Always 404: the realtime gateway's private routes are never public. |
+| `MESAIL_ROUTER_PASSTHROUGH` prefixes | Proxied as they are, with streaming and WebSocket upgrades. For the realtime gateway (`edge/realtime`, slice R1): `/api/v1/realtime/socket=http://127.0.0.1:8116,/api/v1/realtime/stream=http://127.0.0.1:8116`. Every other `/api/v1/realtime/*` goes to the realtime Yon app. The gateway's management port 8117 is never routed. |
+| `/blobs/<domain>/<name>?<signature>` | `kit/blobs` `LocalHandler` (GET and PUT only) when `MESAIL_ROUTER_BLOBS_FOLDER`, `_BASE` and `_SECRET` (32+ characters) are set: the signed upload and download links of the local blob store. The values match the attachments app's `YON_ATTACHMENTS_FOLDER`, `_LINK_BASE` and `_LINK_SECRET`. Without them, 404. |
 | `/api/v1/<service>/...` | Lambda `mesail-<service>`, invoked with an HTTP API v2.0 event. The event's `host` header is `localhost` (Tachyon answers only local names) and the original host is in `x-forwarded-host`. Unknown service: 404. Body over 6 MiB: 413. A function error: 502. |
 | `/idp/...` | Keycloak (served under `/idp`), with the original `Host`. |
 | `/admin`, `/admin/...` | The `web-admin` bundle in the bucket `mesail-static` under `admin/`. |

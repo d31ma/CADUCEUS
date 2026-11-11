@@ -9,6 +9,7 @@ colima_env() {
 
 use_colima() {
   export DOCKER_HOST="unix:///Volumes/HANGAR/colima/default/docker.sock"
+  export MESAIL_FLOCI_PORT=4566 MESAIL_FLOCI_URL=http://127.0.0.1:4566
 }
 
 devhost() {
@@ -28,11 +29,12 @@ start_devhost() {
 use_devhost() {
   start_devhost
   eval "$(devhost env)"
-  export MESAIL_FLOCI_PORT=14566
+  export MESAIL_FLOCI_PORT=14566 MESAIL_FLOCI_URL=http://127.0.0.1:14566
 }
 
 choose_engine() {
-  case "${MESAIL_VM:-mesail}" in
+  export MESAIL_VM="${MESAIL_VM:-mesail}"
+  case "$MESAIL_VM" in
     colima) use_colima; start_engine ;;
     mesail) use_devhost ;;
     *) echo "MESAIL_VM must be mesail or colima, not ${MESAIL_VM}"; return 1 ;;

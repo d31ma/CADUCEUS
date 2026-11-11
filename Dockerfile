@@ -103,11 +103,12 @@ ENV YON_PROFILE=lambda \
 ENTRYPOINT ["/usr/local/bin/mesail-lambda-start"]
 
 FROM ${GOLANG_IMAGE} AS router-build
-WORKDIR /src
+WORKDIR /src/deploy/router
+COPY kit /src/kit
 COPY deploy/router/go.mod ./
 COPY deploy/router/*.go ./
 RUN rm -f ./*_test.go \
- && CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" -o /out/mesail-router .
+ && GOTOOLCHAIN=local GOPROXY=off CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" -o /out/mesail-router .
 
 FROM scratch AS router
 COPY --from=lambda-tools /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt

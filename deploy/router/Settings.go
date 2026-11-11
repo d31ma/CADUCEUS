@@ -18,4 +18,7 @@ type Settings struct {
 	SingleWriters  []string
 	Limited        []string
 	RateLimit      int
+	Passthrough    map[string]string
+	Blocked        []string
+	Blobs          BlobSettings
 }

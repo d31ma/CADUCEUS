@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+
+	"mesail.dev/packages/blobs"
 	"net/url"
 	"time"
 )
@@ -15,11 +17,18 @@ func (assembly Assembly) Handler(settings Settings) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+	passthroughs, err := Passthroughs{}.Of(settings.Passthrough)
+	if err != nil {
+		return nil, err
+	}
 	return AccessLog{Next: Router{
-		Ready:    ReadyHandler{},
-		Api:      RateLimitHandler{Limited: settings.Limited, Limiter: RateLimiter{}.New(settings.RateLimit, assembly.rateWindow(), time.Now), Next: api},
-		Keycloak: assembly.keycloak(settings.KeycloakUrl),
-		Static:   StaticHandler{Storage: assembly.storage(settings, client), Paths: StaticPaths{}, Security: SecurityHeaders{}},
+		Ready:        ReadyHandler{},
+		Blocked:      BlockedPaths{Prefixes: settings.Blocked},
+		Passthroughs: passthroughs,
+		Blobs:        assembly.blobs(settings.Blobs),
+		Api:          RateLimitHandler{Limited: settings.Limited, Limiter: RateLimiter{}.New(settings.RateLimit, assembly.rateWindow(), time.Now), Next: api},
+		Keycloak:     assembly.keycloak(settings.KeycloakUrl),
+		Static:       StaticHandler{Storage: assembly.storage(settings, client), Paths: StaticPaths{}, Security: SecurityHeaders{}},
 	}}, nil
 }
 
@@ -45,6 +54,14 @@ func (Assembly) storage(settings Settings, client *http.Client) ObjectStore {
 		return FolderStore{Folders: settings.StaticFolders}
 	}
 	return S3Client{Endpoint: settings.S3Endpoint, Bucket: settings.StaticBucket, Client: client, Signer: Signer{Credentials: settings.Credentials, Service: "s3"}, Now: time.Now}
+}
+
+func (Assembly) blobs(settings BlobSettings) http.Handler {
+	if settings.Folder == "" {
+		return NotFoundHandler{}
+	}
+	folder := blobs.NewLocalFolder(settings.Folder, settings.Base, blobs.NewLocalSigner([]byte(settings.Secret)))
+	return BlobsHandler{Next: blobs.NewLocalHandler(folder, Router{}.blobsPrefix(), time.Now)}
 }
 
 func (Assembly) rateWindow() time.Duration {

@@ -31,15 +31,22 @@ remove_file_system_volumes() {
   docker volume rm $volumes
 }
 
+remove_function() {
+  local name="$1"
+  if ! mesail_aws lambda get-function --function-name "$name" > /dev/null 2>&1; then return 0; fi
+  mesail_aws lambda delete-function --function-name "$name"
+  echo "deleted $name"
+}
+
 remove_functions_in_floci() {
-  local name
-  for name in $(mesail_aws lambda list-functions --query "Functions[?starts_with(FunctionName, '$(mesail_stack .functionPrefix)')].FunctionName" --output text); do
-    mesail_aws lambda delete-function --function-name "$name" && echo "deleted $name"
+  local service
+  for service in $(mesail_services); do
+    remove_function "$(mesail_stack .functionPrefix)$service"
   done
 }
 
 own_floci() {
-  grep -q -- '--profile floci' "$(mesail_log_dir)/compose-profile" 2> /dev/null
+  [ "${MESAIL_VM:-mesail}" = colima ] && grep -q -- '--profile floci' "$(mesail_log_dir)/compose-profile" 2> /dev/null
 }
 
 main() {

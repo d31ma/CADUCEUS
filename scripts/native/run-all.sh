@@ -20,6 +20,8 @@ Settings (environment):
   MESAIL_SKIP_STATIC  1 skips the Tac bundles
   MESAIL_KEYCLOAK_URL a running Keycloak (for example http://127.0.0.1:8180);
                       the router then proxies /idp/ to it
+  MESAIL_ROUTER_PASSTHROUGH  extra routes for the router, for example the realtime gateway:
+                      /api/v1/realtime/socket=http://127.0.0.1:8116,/api/v1/realtime/stream=http://127.0.0.1:8116
   MESAIL_TOKENS_FILE  a file of `export MESAIL_TOKEN_<NAME>=...` lines to load
 FYLO roots: ~/Developer/AtlasFylo/mesail/<owner>/native/<service> (emptied at each start).
 Logs: ~/Library/Logs/local/CADUCEUS/<owner>/native-<time>/
@@ -93,6 +95,11 @@ write_profile() {
   local app="$1"
   printf '{ "server": { "host": "127.0.0.1" } }\n' > "$(run_folder)/apps/$app/server/application-native.json"
   add_datasource "$app"
+  add_blob_store "$app"
+}
+
+router_base() {
+  echo "http://127.0.0.1:$(cat "$(run_folder)/router-port")"
 }
 
 copy_env_file() {
@@ -100,7 +107,24 @@ copy_env_file() {
   : > "$(run_folder)/apps/$app/.env"
   chmod 600 "$(run_folder)/apps/$app/.env"
   if [ ! -f "$(mesail_root)/apps/$app/.env" ]; then return 0; fi
-  grep -v -E '^YON_DATASOURCE_(DRIVER|URL)=' "$(mesail_root)/apps/$app/.env" >> "$(run_folder)/apps/$app/.env" || true
+  grep -v -E '^YON_(DATASOURCE_(DRIVER|URL)|ATTACHMENTS_(ADAPTER|FOLDER|LINK_BASE|LINK_SECRET))=' "$(mesail_root)/apps/$app/.env" \
+    | sed -E "s#http://127\.0\.0\.1:81[0-9][0-9]#$(router_base)#g" >> "$(run_folder)/apps/$app/.env" || true
+}
+
+blob_folder() {
+  echo "$(data_folder)/blobs"
+}
+
+blob_secret() {
+  cat "$(run_folder)/blob-secret"
+}
+
+add_blob_store() {
+  local app="$1"
+  if [ "$app" != attachments ]; then return 0; fi
+  mkdir -p "$(blob_folder)"
+  printf 'YON_ATTACHMENTS_ADAPTER=local\nYON_ATTACHMENTS_FOLDER=%s\nYON_ATTACHMENTS_LINK_BASE=%s/blobs\nYON_ATTACHMENTS_LINK_SECRET=%s\n' \
+    "$(cd "$(blob_folder)" && pwd -P)" "$(router_base)" "$(blob_secret)" >> "$(run_folder)/apps/$app/.env"
 }
 
 prepare_app() {
@@ -157,16 +181,24 @@ joined() {
   paste -sd, "$1"
 }
 
+blob_settings() {
+  if ! grep -q '^attachments ' "$(run_folder)/servers"; then return 0; fi
+  echo "MESAIL_ROUTER_BLOBS_FOLDER=$(cd "$(blob_folder)" && pwd -P)"
+  echo "MESAIL_ROUTER_BLOBS_BASE=$(router_base)/blobs"
+  echo "MESAIL_ROUTER_BLOBS_SECRET=$(blob_secret)"
+}
+
 start_router() {
-  local port
-  port="$(free_port)"
+  local settings
   (cd "$(mesail_root)/deploy/router" && GOFLAGS=-buildvcs=false go build -o "$(run_folder)/mesail-router" .)
-  MESAIL_ROUTER_LISTEN="127.0.0.1:$port" MESAIL_ROUTER_UPSTREAMS="$(joined "$(run_folder)/upstreams")" \
-    MESAIL_ROUTER_STATIC_FOLDERS="$(joined "$(run_folder)/static")" MESAIL_ROUTER_KEYCLOAK_URL="${MESAIL_KEYCLOAK_URL:-}" \
+  read -ra settings <<< "$(blob_settings | tr '\n' ' ')"
+  env ${settings[@]+"${settings[@]}"} MESAIL_ROUTER_LISTEN="127.0.0.1:$(cat "$(run_folder)/router-port")" \
+    MESAIL_ROUTER_UPSTREAMS="$(joined "$(run_folder)/upstreams")" MESAIL_ROUTER_STATIC_FOLDERS="$(joined "$(run_folder)/static")" \
+    MESAIL_ROUTER_KEYCLOAK_URL="${MESAIL_KEYCLOAK_URL:-}" \
     "$(run_folder)/mesail-router" > "$(mesail_log_dir)/router.log" 2>&1 &
   echo "$!" >> "$(run_folder)/pids"
-  echo "export MESAIL_BASE_URL=http://127.0.0.1:$port" > "$(run_folder)/env"
-  echo "router on http://127.0.0.1:$port (pid $!)"
+  echo "export MESAIL_BASE_URL=$(router_base)" > "$(run_folder)/env"
+  echo "router on $(router_base) (pid $!)"
 }
 
 service_answers() {
@@ -215,6 +247,8 @@ start_all() {
   : > "$(run_folder)/pids"
   : > "$(run_folder)/upstreams"
   : > "$(run_folder)/servers"
+  free_port > "$(run_folder)/router-port"
+  (umask 077 && openssl rand -hex 32 > "$(run_folder)/blob-secret")
   reset_data
   # shellcheck disable=SC2046
   mesail_step prepare-apps prepare_apps $(yon_apps "$@")

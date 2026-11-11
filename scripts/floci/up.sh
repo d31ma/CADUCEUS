@@ -20,12 +20,16 @@ compose() {
 }
 
 compose_options() {
-  if floci_ready; then
-    echo "Floci already answers at $MESAIL_FLOCI_URL; using it and its network" >&2
-    echo "--file $(mesail_root)/docker-compose.yml --file $(mesail_root)/deploy/floci/compose.devhost.yaml"
+  if [ "${MESAIL_VM:-mesail}" = colima ]; then
+    echo "--file $(mesail_root)/docker-compose.yml --profile floci"
     return
   fi
-  echo "--file $(mesail_root)/docker-compose.yml --profile floci"
+  echo "--file $(mesail_root)/docker-compose.yml --file $(mesail_root)/deploy/floci/compose.devhost.yaml"
+}
+
+wait_for_devhost_floci() {
+  if [ "${MESAIL_VM:-mesail}" = colima ]; then return 0; fi
+  mesail_wait_for "the dev host's Floci at $MESAIL_FLOCI_URL" 120 floci_ready
 }
 
 single_writers() {
@@ -37,6 +41,7 @@ main() {
   mesail_load_settings
   MESAIL_SINGLE_WRITERS="$(single_writers)"
   export MESAIL_SINGLE_WRITERS
+  mesail_step wait-devhost-floci wait_for_devhost_floci
   profile="$(compose_options)"
   echo "$profile" > "$(mesail_log_dir)/compose-profile"
   # shellcheck disable=SC2086

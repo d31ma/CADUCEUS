@@ -26,13 +26,44 @@ func (reader SettingsReader) Read() (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
+	blobs, err := reader.blobs()
+	if err != nil {
+		return Settings{}, err
+	}
 	settings, err := reader.forMode(len(upstreams) > 0)
+	settings.Passthrough = reader.routes("MESAIL_ROUTER_PASSTHROUGH")
+	settings.Blocked = reader.list("MESAIL_ROUTER_BLOCKED", "/api/v1/realtime/gateway/")
+	settings.Blobs = blobs
 	settings.Upstreams = upstreams
 	settings.StaticFolders = staticFolders
 	settings.SingleWriters = reader.list("MESAIL_ROUTER_SINGLE_WRITERS", "")
 	settings.Limited = reader.list("MESAIL_ROUTER_LIMITED_ROUTES", "POST /api/v1/identity/session,POST /api/v1/identity/session/refresh")
 	settings.RateLimit = rateLimit
 	return settings, err
+}
+
+func (reader SettingsReader) routes(name string) map[string]string {
+	routes := map[string]string{}
+	for _, entry := range reader.list(name, "") {
+		reader.addPair(routes, entry)
+	}
+	return routes
+}
+
+func (reader SettingsReader) blobs() (BlobSettings, error) {
+	blobs := BlobSettings{
+		Folder: reader.optional("MESAIL_ROUTER_BLOBS_FOLDER", ""),
+		Base:   reader.optional("MESAIL_ROUTER_BLOBS_BASE", ""),
+		Secret: reader.optional("MESAIL_ROUTER_BLOBS_SECRET", ""),
+	}
+	return blobs, reader.checkBlobs(blobs)
+}
+
+func (SettingsReader) checkBlobs(blobs BlobSettings) error {
+	if blobs.Folder != "" && (blobs.Base == "" || len(blobs.Secret) < 32) {
+		return InvalidSetting{Name: "MESAIL_ROUTER_BLOBS_FOLDER", Reason: "set MESAIL_ROUTER_BLOBS_BASE and a MESAIL_ROUTER_BLOBS_SECRET of at least 32 characters"}
+	}
+	return nil
 }
 
 func (reader SettingsReader) list(name string, fallback string) []string {

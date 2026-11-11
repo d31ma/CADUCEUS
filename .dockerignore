@@ -1,6 +1,7 @@
 *
 !apps/
 !deploy/
+!kit/
 **/.tachyon
 **/dist
 **/data

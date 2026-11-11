@@ -56,7 +56,7 @@ func TestDirectoryDomainNotHosted(t *testing.T) {
 	}
 }
 
-func TestDirectoryOtherNotFoundIsUnknown(t *testing.T) {
+func TestDirectoryNotFoundCodeIsUnknown(t *testing.T) {
 	address := directoryServer(t, http.StatusNotFound, `{"code":"not_found","message":"no"}`, &seenRequest{})
 	_, err := NewHttpDirectory(address, NewStaticTokens("t"), http.DefaultClient).Lookup(context.Background(), "x@example.com")
 	if !errors.Is(err, reception.UnknownAddress{}) {
@@ -64,11 +64,21 @@ func TestDirectoryOtherNotFoundIsUnknown(t *testing.T) {
 	}
 }
 
-func TestDirectoryNotFoundWithoutBodyIsUnknown(t *testing.T) {
+func TestDirectoryNotFoundWithoutACodeIsTemporary(t *testing.T) {
 	address := directoryServer(t, http.StatusNotFound, ``, &seenRequest{})
 	_, err := NewHttpDirectory(address, NewStaticTokens("t"), http.DefaultClient).Lookup(context.Background(), "x@example.com")
-	if !errors.Is(err, reception.UnknownAddress{}) {
-		t.Fatalf("want UnknownAddress, got %v", err)
+	var unexpected UnexpectedStatus
+	if !errors.As(err, &unexpected) || unexpected.Status != http.StatusNotFound {
+		t.Fatalf("want UnexpectedStatus 404, got %v", err)
+	}
+}
+
+func TestDirectoryNotFoundWithAnotherCodeIsTemporary(t *testing.T) {
+	address := directoryServer(t, http.StatusNotFound, `{"code":"route_missing","message":"no"}`, &seenRequest{})
+	_, err := NewHttpDirectory(address, NewStaticTokens("t"), http.DefaultClient).Lookup(context.Background(), "x@example.com")
+	var unexpected UnexpectedStatus
+	if !errors.As(err, &unexpected) || unexpected.Status != http.StatusNotFound {
+		t.Fatalf("want UnexpectedStatus 404, got %v", err)
 	}
 }
 

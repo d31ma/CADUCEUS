@@ -10,8 +10,9 @@ domain, and hands each copy to `mail-in`.
 1. `RCPT TO` asks `directory` (`GET /api/v1/directory/addresses/{address}`):
    - 200: the address is hosted, the recipient is accepted.
    - 404 with code `domain_not_hosted`: `550 5.7.1` (no open relay).
-   - any other 404: `550 5.1.1` (unknown user).
-   - any other answer: `451 4.4.3` (try again later).
+   - 404 with code `not_found`: `550 5.1.1` (unknown user).
+   - any other answer, including a 404 with another code or no code:
+     `451 4.4.3` (temporary; the sender retries).
 2. `DATA` reads the message up to the size limit, then:
    - checks SPF, DKIM and DMARC (`kit/mailauth`). A DMARC fail with a
      `reject` policy answers `550 5.7.1` and stores nothing.

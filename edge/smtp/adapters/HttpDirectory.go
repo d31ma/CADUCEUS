@@ -61,10 +61,18 @@ func (directory HttpDirectory) notFound(response *http.Response) (reception.Addr
 }
 
 func (directory HttpDirectory) notFoundError(code string) error {
-	if code == directory.domainNotHostedCode() {
-		return reception.DomainNotHosted{}
+	known, found := directory.notFoundAnswers()[code]
+	if !found {
+		return UnexpectedStatus{Service: directory.serviceName(), Status: http.StatusNotFound}
 	}
-	return reception.UnknownAddress{}
+	return known
+}
+
+func (directory HttpDirectory) notFoundAnswers() map[string]error {
+	return map[string]error{
+		directory.domainNotHostedCode(): reception.DomainNotHosted{},
+		directory.unknownAddressCode():  reception.UnknownAddress{},
+	}
 }
 
 func (directory HttpDirectory) unexpected(response *http.Response) (reception.Address, error) {
@@ -73,6 +81,10 @@ func (directory HttpDirectory) unexpected(response *http.Response) (reception.Ad
 
 func (HttpDirectory) domainNotHostedCode() string {
 	return "domain_not_hosted"
+}
+
+func (HttpDirectory) unknownAddressCode() string {
+	return "not_found"
 }
 
 func (HttpDirectory) serviceName() string {

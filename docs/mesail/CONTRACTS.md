@@ -448,8 +448,9 @@ owns it; M3 uses it):
   get `550 5.1.1`. Mail for a domain that is not hosted, or not `active`,
   gets `550 5.7.1` (no open relay). The edge tells the two apart by the
   404 body: `ApiError{code:"domain_not_hosted"}` means the domain is not
-  hosted or not active; any other 404 means an unknown address in a hosted
-  domain.
+  hosted or not active, and `ApiError{code:"not_found"}` means an unknown
+  address in an active domain. Any other answer (a 404 with another code
+  or none, a 5xx, a timeout) gets `451 4.4.3`, so the sender retries.
 - The edge checks SPF, DKIM and DMARC (`kit/mailauth`) and parses the
   headers (`kit/mime`). A DMARC failure under a `reject` policy gets
   `550 5.7.1` and nothing is stored (AC-IN-4).

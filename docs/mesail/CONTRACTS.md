@@ -465,9 +465,15 @@ owns it; M3 uses it):
     retried SMTP transaction is stored once.
 - After the message is stored, `mail-in` publishes one `email.received`
   event per recipient domain: envelope `domainId` is that domain, payload
-  `{inboundId, rcpts[] (only that domain's), rawBlobKey, headers:
-  InboundHeaders, authResults: AuthResults}`. Its `eventId` is fixed per
-  stored message (`evt_<inboundId>_received`).
+  `events.EmailReceived{inboundId, rcpts[] (only that domain's), rawBlobKey,
+  headers: EmailHeaders, authResults: {spf, dkim, dmarc, handoff}}`
+  (EVENTS.md section 7); `from`, `to[]` and `cc[]` are address strings, and
+  empty lists are `[]`. A retried accept of the same message stages no
+  second event (`eventQueued`).
+- `mail-in` stages `email.received` with `kit/outbox` in the `inbound-raw`
+  document (registered in `outbox-collections`) and drains it on write.
+  Outbox routes, all `Allow(Service)`: `POST /api/v1/mail-in/outbox/relay`,
+  `GET /api/v1/mail-in/outbox/dead`, `POST /api/v1/mail-in/outbox/dead/requeue`.
 
 ## mail-out (worker, no public routes)
 

@@ -16,4 +16,7 @@ type InboundRaw struct {
 	State         string      `json:"state"`
 	EventQueued   bool        `json:"eventQueued"`
 	PendingEvents []string    `json:"pendingEvents"`
+	DeadEvents    []string    `json:"deadEvents"`
+	OutboxPending int         `json:"outboxPending"`
+	OutboxDead    int         `json:"outboxDead"`
 }

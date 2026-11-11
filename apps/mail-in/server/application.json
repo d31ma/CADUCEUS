@@ -8,8 +8,23 @@
     "jwks": "http://keycloak:8080/idp/realms/{realm}/protocol/openid-connect/certs",
     "audience": "mesail-api"
   },
+  "outbox": {
+    "producer": "mail-in",
+    "subscribers": [
+      {
+        "name": "messaging",
+        "url": "http://127.0.0.1:8104/api/v1/messaging/events"
+      }
+    ],
+    "retry": {
+      "basedelayseconds": 5,
+      "maxdelayseconds": 900,
+      "maxattempts": 12
+    }
+  },
   "outgoing": {
     "hosts": [
+      "127.0.0.1",
       "keycloak"
     ]
   },

@@ -9,6 +9,12 @@ func (test *InboundErrorHandlerTest) TestInvalidAnswersInvalidRequestWithTheFiel
 	Assert.Equals("size", answer.Field)
 }
 
+func (test *InboundErrorHandlerTest) TestMissingAnswersNotFound() {
+	answer := (&InboundErrorHandler{}).Missing(&NotFound{Message: "no such outbox document"})
+	Assert.Equals("not_found", answer.Code)
+	Assert.Equals("no such outbox document", answer.Message)
+}
+
 func (test *InboundErrorHandlerTest) TestUnavailableAnswersUnavailable() {
 	answer := (&InboundErrorHandler{}).Unavailable(&StorageUnavailable{Operation: "insert"})
 	Assert.Equals("unavailable", answer.Code)

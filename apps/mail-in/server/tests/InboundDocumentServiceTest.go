@@ -1,7 +1,4 @@
-import (
-	"encoding/json"
-	"strings"
-)
+import "mesail.dev/packages/outbox"
 
 // @Test(InboundTestSetup, {"partition":"tests"})
 type InboundDocumentServiceTest struct {
@@ -30,35 +27,25 @@ func (test *InboundDocumentServiceTest) TestNewCopiesTheEnvelope() {
 	Assert.Equals("dan@outside.test", document.FromAddress)
 	Assert.Equals("fail", document.AuthResults.Dmarc)
 	Assert.Equals("accepted", document.State)
+	Assert.Equals(0, len(document.PendingEvents))
 	Assert.IsTrue(!document.EventQueued)
 }
 
-func (test *InboundDocumentServiceTest) TestEventPatchHoldsOneEmailReceivedEvent() {
-	service := &InboundDocumentService{}
-	stored := service.New("example.com", test.envelope(), "2026-11-10T22:00:00Z")
-	stored.ID = "t1"
-	patch, err := service.EventPatch(stored, test.envelope(), "2026-11-10T22:00:01Z")
-	event := PendingEvent{}
-	json.Unmarshal([]byte(patch.PendingEvents[0]), &event)
-	Assert.IsTrue(err == nil)
-	Assert.IsTrue(patch.EventQueued)
-	Assert.Equals("email.received", event.Type)
-	Assert.Equals("example.com", event.DomainId)
-	Assert.Equals("mail-in", event.Producer)
-	Assert.Equals("in_t1", event.Payload.InboundId)
-	Assert.Equals("Hello", event.Payload.Headers.Subject)
-	Assert.Equals("ana@example.com", strings.Join(event.Payload.Rcpts, ","))
+func (test *InboundDocumentServiceTest) TestOutboxFieldsComeFromTheDocument() {
+	stored := InboundRaw{PendingEvents: []string{"a"}, DeadEvents: []string{"b"}, OutboxPending: 1, OutboxDead: 1}
+	fields := (&InboundDocumentService{}).OutboxFields(stored)
+	Assert.Equals("a", fields.PendingEvents[0])
+	Assert.Equals("b", fields.DeadEvents[0])
+	Assert.Equals(1, fields.OutboxPending)
+	Assert.Equals(1, fields.OutboxDead)
 }
 
-func (test *InboundDocumentServiceTest) TestEventIdIsTheSameForTheSameMessage() {
-	service := &InboundDocumentService{}
-	stored := InboundRaw{ID: "t1", DomainId: "example.com"}
-	first, _ := service.EventPatch(stored, test.envelope(), "a")
-	second, _ := service.EventPatch(stored, test.envelope(), "b")
-	firstEvent, secondEvent := PendingEvent{}, PendingEvent{}
-	json.Unmarshal([]byte(first.PendingEvents[0]), &firstEvent)
-	json.Unmarshal([]byte(second.PendingEvents[0]), &secondEvent)
-	Assert.Equals(firstEvent.EventId, secondEvent.EventId)
+func (test *InboundDocumentServiceTest) TestEventPatchCarriesTheFieldsAndMarksTheEventQueued() {
+	patch := (&InboundDocumentService{}).EventPatch(outbox.Fields{PendingEvents: []string{"a"}, DeadEvents: []string{}, OutboxPending: 1})
+	Assert.Equals("a", patch.PendingEvents[0])
+	Assert.Equals(1, patch.OutboxPending)
+	Assert.Equals(0, patch.OutboxDead)
+	Assert.IsTrue(patch.EventQueued)
 }
 
 func (test *InboundDocumentServiceTest) TestWireIdHasTheInboundPrefix() {

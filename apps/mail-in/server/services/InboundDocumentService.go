@@ -1,4 +1,4 @@
-import "encoding/json"
+import "mesail.dev/packages/outbox"
 
 // @Service
 type InboundDocumentService struct{}
@@ -20,12 +20,22 @@ func (service *InboundDocumentService) New(domainId string, envelope InboundEnve
 		AuthResults:   envelope.AuthResults,
 		State:         service.AcceptedState(),
 		PendingEvents: []string{},
+		DeadEvents:    []string{},
 	}
 }
 
-func (service *InboundDocumentService) EventPatch(stored InboundRaw, envelope InboundEnvelope, occurredAt string) (InboundEventPatch, error) {
-	encoded, err := json.Marshal(service.event(stored, envelope, occurredAt))
-	return InboundEventPatch{PendingEvents: []string{string(encoded)}, EventQueued: true}, err
+func (service *InboundDocumentService) OutboxFields(stored InboundRaw) outbox.Fields {
+	return outbox.Fields{PendingEvents: stored.PendingEvents, DeadEvents: stored.DeadEvents, OutboxPending: stored.OutboxPending, OutboxDead: stored.OutboxDead}
+}
+
+func (service *InboundDocumentService) EventPatch(fields outbox.Fields) InboundEventPatch {
+	return InboundEventPatch{
+		PendingEvents: fields.PendingEvents,
+		DeadEvents:    fields.DeadEvents,
+		OutboxPending: fields.OutboxPending,
+		OutboxDead:    fields.OutboxDead,
+		EventQueued:   true,
+	}
 }
 
 func (service *InboundDocumentService) WireId(stored InboundRaw) string {
@@ -34,25 +44,4 @@ func (service *InboundDocumentService) WireId(stored InboundRaw) string {
 
 func (service *InboundDocumentService) AcceptedState() string {
 	return "accepted"
-}
-
-func (service *InboundDocumentService) event(stored InboundRaw, envelope InboundEnvelope, occurredAt string) PendingEvent {
-	return PendingEvent{
-		EventId:    "evt_" + service.WireId(stored) + "_received",
-		Type:       "email.received",
-		DomainId:   stored.DomainId,
-		Producer:   "mail-in",
-		OccurredAt: occurredAt,
-		Payload:    service.payload(stored, envelope),
-	}
-}
-
-func (service *InboundDocumentService) payload(stored InboundRaw, envelope InboundEnvelope) EmailReceivedPayload {
-	return EmailReceivedPayload{
-		InboundId:   service.WireId(stored),
-		Rcpts:       stored.Rcpts,
-		RawBlobKey:  stored.RawBlobKey,
-		Headers:     envelope.Headers,
-		AuthResults: stored.AuthResults,
-	}
 }

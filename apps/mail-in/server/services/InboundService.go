@@ -1,8 +1,4 @@
-import (
-	"time"
-
-	"mesail.dev/packages/collections"
-)
+import "time"
 
 // @Service
 type InboundService struct {
@@ -12,6 +8,8 @@ type InboundService struct {
 	inboundDocumentService *InboundDocumentService
 	// @Needs
 	inboundRawService *InboundRawService
+	// @Needs
+	inboundEventService *InboundEventService
 }
 
 func (service *InboundService) Accept(envelope InboundEnvelope) (InboundAccepted, error) {
@@ -19,8 +17,7 @@ func (service *InboundService) Accept(envelope InboundEnvelope) (InboundAccepted
 	if err != nil {
 		return InboundAccepted{}, err
 	}
-	collection := collections.CollectionName{}.ForDomain(service.collectionBase(), domainId)
-	err = service.inboundRawService.EnsureCollection(collection)
+	collection, err := service.inboundRawService.Collection(domainId)
 	if err != nil {
 		return InboundAccepted{}, err
 	}
@@ -57,15 +54,11 @@ func (service *InboundService) queueEvent(collection string, stored InboundRaw, 
 }
 
 func (service *InboundService) addEvent(collection string, stored InboundRaw, envelope InboundEnvelope) error {
-	patch, err := service.inboundDocumentService.EventPatch(stored, envelope, service.now())
+	patch, err := service.inboundEventService.Stage(stored, envelope)
 	if err != nil {
 		return err
 	}
-	return service.inboundRawService.AddEvent(collection, stored.ID, patch)
-}
-
-func (service *InboundService) collectionBase() string {
-	return "inbound-raw"
+	return service.inboundRawService.SaveEvent(collection, stored.ID, patch)
 }
 
 func (service *InboundService) now() string {

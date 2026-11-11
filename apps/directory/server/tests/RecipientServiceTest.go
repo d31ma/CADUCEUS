@@ -66,9 +66,8 @@ func (test *RecipientServiceTest) resolve(service *RecipientService, caller oidc
 
 func (test *RecipientServiceTest) world() (*RecipientService, oidc.Caller, map[string]string) {
 	os.Setenv("YON_APPLICATION_JSON", `{"yon":{}}`)
-	run := test.unique()
-	domain := "one-" + run + ".test"
-	otherDomain := "two-" + run + ".test"
+	domain := test.reset("one-service.test")
+	otherDomain := test.reset("two-service.test")
 	documents := &DocumentsService{dataSource: DataSource{}}
 	domains := &DomainStorageService{documents: documents, names: &CollectionNamesService{}}
 	members := &MemberStorageService{documents: documents, names: &CollectionNamesService{}}
@@ -108,4 +107,14 @@ func (test *RecipientServiceTest) relay(documents *DocumentsService) *OutboxRela
 	names := &CollectionNamesService{}
 	store := &OutboxStoreService{domains: &DomainStorageService{documents: documents, names: names}, members: &MemberStorageService{documents: documents, names: names}, names: names}
 	return &OutboxRelayService{store: store, settings: &SettingsService{}, domains: &DomainStorageService{documents: documents, names: names}}
+}
+
+func (test *RecipientServiceTest) reset(domainId string) string {
+	documents := &DocumentsService{dataSource: DataSource{}}
+	names := &CollectionNamesService{}
+	domains := &DomainStorageService{documents: documents, names: names}
+	old, _, _ := domains.Find(domainId)
+	domains.Delete(old)
+	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId)
+	return domainId
 }

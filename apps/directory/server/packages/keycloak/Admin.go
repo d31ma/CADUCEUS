@@ -25,7 +25,7 @@ func (admin Admin) CreateRealm(realm string) error {
 	if err != nil {
 		return err
 	}
-	body, err := Template{}.Realm(realm, admin.settings.PublicUrl)
+	body, err := Template{}.Realm(realm, admin.settings.Secrets)
 	if err != nil {
 		return err
 	}

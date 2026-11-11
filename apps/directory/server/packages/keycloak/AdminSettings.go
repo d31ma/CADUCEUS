@@ -4,5 +4,5 @@ type AdminSettings struct {
 	BaseUrl      string
 	ClientId     string
 	ClientSecret string
-	PublicUrl    string
+	Secrets      RealmSecrets
 }

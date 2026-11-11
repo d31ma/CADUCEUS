@@ -37,13 +37,23 @@ func (storage *MemberStorageService) ById(ref outbox.Ref) (MemberDocument, bool,
 	return member, found, failure
 }
 
-func (storage *MemberStorageService) Outbox(domainId string) ([]outbox.Document, error) {
-	members, failure := storage.All(domainId)
-	return storage.asDocuments(storage.names.Members(domainId), members), failure
+func (storage *MemberStorageService) Waiting(domainId string) ([]outbox.Document, error) {
+	return storage.outboxWhere(domainId, storage.waitingField())
+}
+
+func (storage *MemberStorageService) WithDead(domainId string) ([]outbox.Document, error) {
+	return storage.outboxWhere(domainId, storage.hasDeadField())
 }
 
 func (storage *MemberStorageService) SaveOutbox(ref outbox.Ref, fields outbox.Fields) error {
-	return storage.documents.Replace(ref.Collection, ref.Id, fields)
+	document := OutboxFieldsDocument{PendingEvents: fields.PendingEvents, DeadEvents: fields.DeadEvents, OutboxPending: fields.OutboxPending, OutboxDead: fields.OutboxDead, OutboxWaiting: fields.OutboxPending > 0, OutboxHasDead: fields.OutboxDead > 0}
+	return storage.documents.Replace(ref.Collection, ref.Id, document)
+}
+
+func (storage *MemberStorageService) outboxWhere(domainId string, flag string) ([]outbox.Document, error) {
+	members := []MemberDocument{}
+	failure := storage.documents.All(storage.names.Members(domainId), map[string]any{flag: true}, &members)
+	return storage.asDocuments(storage.names.Members(domainId), members), failure
 }
 
 func (storage *MemberStorageService) asDocuments(collection string, members []MemberDocument) []outbox.Document {
@@ -57,6 +67,14 @@ func (storage *MemberStorageService) asDocuments(collection string, members []Me
 
 func (storage *MemberStorageService) ref(domainId string, id string) outbox.Ref {
 	return outbox.Ref{Collection: storage.names.Members(domainId), Id: id}
+}
+
+func (storage *MemberStorageService) waitingField() string {
+	return "outboxWaiting"
+}
+
+func (storage *MemberStorageService) hasDeadField() string {
+	return "outboxHasDead"
 }
 
 func (storage *MemberStorageService) memberField() string {

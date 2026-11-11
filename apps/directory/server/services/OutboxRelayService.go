@@ -43,7 +43,9 @@ func (service *OutboxRelayService) Retry(request RetryRequest) error {
 
 func (service *OutboxRelayService) relay(settings outbox.Settings, domainId string) outbox.Relay {
 	pusher := outbox.NewHTTPPusher(RealmServiceToken{Realm: domainId}, outbox.HTTPPusher{}.DefaultTimeout())
-	return outbox.NewRelay(OutboxStore{Service: service.store, DomainId: domainId}, pusher, settings, time.Now)
+	pending := func(limit int) ([]outbox.Document, error) { return service.store.PendingIn(domainId, limit) }
+	store := OutboxStore{PendingOf: pending, LoadOf: service.store.Load, SaveOf: service.store.Save}
+	return outbox.NewRelay(store, pusher, settings, time.Now)
 }
 
 func (service *OutboxRelayService) sweep(settings outbox.Settings, domains []DomainDocument) (outbox.Report, error) {

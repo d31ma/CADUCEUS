@@ -20,7 +20,7 @@ type DomainServiceTest struct {
 func (test *DomainServiceTest) TestAddingADomainCreatesItsRealmAndStoresItPending() {
 	service, calls, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
-	name := "Add-" + test.unique() + ".TEST"
+	name := "Add-" + test.reset("add-unit.test")[4:]
 	domain, err := service.Add(CreateDomainRequest{Name: name})
 	Assert.IsTrue(err == nil, "add failed")
 	Assert.Equals(strings.ToLower(name), domain.DomainId)
@@ -33,7 +33,7 @@ func (test *DomainServiceTest) TestAddingADomainCreatesItsRealmAndStoresItPendin
 func (test *DomainServiceTest) TestAddingADomainTwiceIsADuplicate() {
 	service, _, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
-	name := "twice-" + test.unique() + ".test"
+	name := test.reset("twice-unit.test")
 	service.Add(CreateDomainRequest{Name: name})
 	_, err := service.Add(CreateDomainRequest{Name: name})
 	var duplicate *Duplicate
@@ -43,14 +43,14 @@ func (test *DomainServiceTest) TestAddingADomainTwiceIsADuplicate() {
 func (test *DomainServiceTest) TestARealmThatAlreadyExistsIsAdopted() {
 	service, _, closeAll := test.world(http.StatusConflict)
 	defer closeAll()
-	_, err := service.Add(CreateDomainRequest{Name: "adopt-" + test.unique() + ".test"})
+	_, err := service.Add(CreateDomainRequest{Name: test.reset("adopt-unit.test")})
 	Assert.IsTrue(err == nil, "add failed")
 }
 
 func (test *DomainServiceTest) TestAKeycloakFailureLeavesNoDomain() {
 	service, _, closeAll := test.world(http.StatusInternalServerError)
 	defer closeAll()
-	name := "fail-" + test.unique() + ".test"
+	name := test.reset("fail-unit.test")
 	_, err := service.Add(CreateDomainRequest{Name: name})
 	_, getErr := service.Get(name)
 	var unavailable *Unavailable
@@ -71,7 +71,7 @@ func (test *DomainServiceTest) TestANameWithoutADotIsRefused() {
 func (test *DomainServiceTest) TestVerifyWithEveryRecordRightMakesTheDomainActive() {
 	service, _, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
-	added, _ := service.Add(CreateDomainRequest{Name: "good-" + test.unique() + ".test"})
+	added, _ := service.Add(CreateDomainRequest{Name: test.reset("good-unit.test")})
 	domain, err := service.Verify(added.DomainId)
 	stored, _ := service.Get(added.DomainId)
 	Assert.IsTrue(err == nil, "verify failed")
@@ -83,7 +83,7 @@ func (test *DomainServiceTest) TestVerifyWithEveryRecordRightMakesTheDomainActiv
 func (test *DomainServiceTest) TestVerifyWithAMissingRecordKeepsTheDomainPending() {
 	service, _, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
-	added, _ := service.Add(CreateDomainRequest{Name: "partial-" + test.unique() + ".test"})
+	added, _ := service.Add(CreateDomainRequest{Name: test.reset("partial-unit.test")})
 	domain, err := service.Verify(added.DomainId)
 	Assert.IsTrue(err == nil, "verify failed")
 	Assert.Equals("pending", domain.State)
@@ -102,7 +102,7 @@ func (test *DomainServiceTest) TestVerifyOfAnUnknownDomainIsNotFound() {
 func (test *DomainServiceTest) TestListShowsAnAddedDomain() {
 	service, _, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
-	added, _ := service.Add(CreateDomainRequest{Name: "list-" + test.unique() + ".test"})
+	added, _ := service.Add(CreateDomainRequest{Name: test.reset("list-unit.test")})
 	domains, err := service.List()
 	encoded, _ := json.Marshal(domains)
 	Assert.IsTrue(err == nil, "list failed")
@@ -112,7 +112,7 @@ func (test *DomainServiceTest) TestListShowsAnAddedDomain() {
 func (test *DomainServiceTest) TestRemovingADomainDeletesItsRealmAndRecord() {
 	service, calls, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
-	added, _ := service.Add(CreateDomainRequest{Name: "remove-" + test.unique() + ".test"})
+	added, _ := service.Add(CreateDomainRequest{Name: test.reset("remove-unit.test")})
 	err := service.Remove(added.DomainId)
 	_, getErr := service.Get(added.DomainId)
 	var missing *NotFound
@@ -148,7 +148,8 @@ func (test *DomainServiceTest) world(createStatus int) (*DomainService, func() s
 	dns := httptest.NewServer(http.HandlerFunc(test.dns))
 	settings := map[string]any{"yon": map[string]any{"directory": map[string]any{
 		"publicurl": "https://mail.example.test", "keycloakurl": keycloak.URL + "/idp", "admin": map[string]any{"client": "mesail-directory", "secret": "example-secret"},
-		"mailhost": "mx.mesail.test", "spfmechanism": "mx", "dkimselector": "mesail",
+		"realmsecrets": map[string]any{"identity": "example-identity", "service": "example-service", "account": "example-account"},
+		"mailhost":     "mx.mesail.test", "spfmechanism": "mx", "dkimselector": "mesail",
 		"dnsresolver": dns.URL + "/dns-query",
 	}}}
 	encoded, _ := json.Marshal(settings)
@@ -211,4 +212,14 @@ func (test *DomainServiceTest) unique() string {
 	random := make([]byte, 6)
 	rand.Read(random)
 	return hex.EncodeToString(random)
+}
+
+func (test *DomainServiceTest) reset(domainId string) string {
+	documents := &DocumentsService{dataSource: DataSource{}}
+	names := &CollectionNamesService{}
+	domains := &DomainStorageService{documents: documents, names: names}
+	old, _, _ := domains.Find(domainId)
+	domains.Delete(old)
+	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId)
+	return domainId
 }

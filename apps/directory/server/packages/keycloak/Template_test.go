@@ -1,31 +1,30 @@
 package keycloak
 
+// tachyon: example secrets
+
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"os"
 	"strings"
 	"testing"
 )
 
 type filledRealm struct {
-	Realm              string `json:"realm"`
-	DisplayName        string `json:"displayName"`
-	EventsEnabled      *bool  `json:"eventsEnabled"`
-	AdminEventsEnabled *bool  `json:"adminEventsEnabled"`
-	DefaultRole        struct {
-		Name string `json:"name"`
-	} `json:"defaultRole"`
+	Realm   string `json:"realm"`
 	Clients []struct {
-		RootUrl      string   `json:"rootUrl"`
-		RedirectUris []string `json:"redirectUris"`
-		Secret       *string  `json:"secret"`
+		ClientId string `json:"clientId"`
+		Secret   string `json:"secret"`
 	} `json:"clients"`
-	Users []struct {
-		RealmRoles []string `json:"realmRoles"`
-	} `json:"users"`
 }
 
-func fill(t *testing.T, realm string, publicUrl string) (filledRealm, string) {
-	content, err := Template{}.Realm(realm, publicUrl)
+func exampleSecrets() RealmSecrets {
+	return RealmSecrets{Identity: "example-identity", Service: "example-service", Account: "example-account"}
+}
+
+func fill(t *testing.T, realm string, secrets RealmSecrets) (filledRealm, string) {
+	content, err := Template{}.Realm(realm, secrets)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,43 +36,53 @@ func fill(t *testing.T, realm string, publicUrl string) (filledRealm, string) {
 	return filled, string(content)
 }
 
+func secretOf(filled filledRealm, clientId string) string {
+	for _, client := range filled.Clients {
+		if client.ClientId == clientId {
+			return client.Secret
+		}
+	}
+	return ""
+}
+
 func TestTemplateFillsTheRealmName(t *testing.T) {
-	filled, _ := fill(t, "example.com", "https://mail.example.com")
-	if filled.Realm != "example.com" || filled.DisplayName != "example.com" {
-		t.Fatalf("got %q, %q", filled.Realm, filled.DisplayName)
-	}
-	if filled.DefaultRole.Name != "default-roles-example.com" || filled.Users[0].RealmRoles[0] != "default-roles-example.com" {
-		t.Fatalf("got %q, %v", filled.DefaultRole.Name, filled.Users[0].RealmRoles)
+	filled, content := fill(t, "example.com", exampleSecrets())
+	if filled.Realm != "example.com" || !strings.Contains(content, "default-roles-example.com") {
+		t.Fatalf("got %q", filled.Realm)
 	}
 }
 
-func TestTemplateFillsThePublicUrl(t *testing.T) {
-	filled, _ := fill(t, "example.com", "https://mail.example.com")
-	if filled.Clients[0].RootUrl != "https://mail.example.com" || filled.Clients[0].RedirectUris[0] != "https://mail.example.com/*" {
-		t.Fatalf("got %q, %v", filled.Clients[0].RootUrl, filled.Clients[0].RedirectUris)
+func TestTemplateFillsTheClientSecrets(t *testing.T) {
+	filled, _ := fill(t, "example.com", exampleSecrets())
+	if secretOf(filled, "mesail-identity") != "example-identity" || secretOf(filled, "mesail-service") != "example-service" {
+		t.Fatalf("got %+v", filled.Clients)
 	}
 }
 
-func TestTemplateLeavesNoPlaceholderOrOldName(t *testing.T) {
-	_, content := fill(t, "example.com", "https://mail.example.com")
-	if strings.Contains(content, "${") || strings.Contains(content, "default-roles-mesail") || strings.Contains(content, "mesail-workspace-admin") {
+func TestTemplateLeavesNoPlaceholder(t *testing.T) {
+	_, content := fill(t, "example.com", exampleSecrets())
+	if strings.Contains(content, "${") {
 		t.Fatalf("got %s", content)
 	}
 }
 
-func TestTemplateTurnsEventsOffAndSetsNoClientSecret(t *testing.T) {
-	filled, _ := fill(t, "example.com", "https://mail.example.com")
-	if filled.EventsEnabled == nil || *filled.EventsEnabled || filled.AdminEventsEnabled == nil || *filled.AdminEventsEnabled {
-		t.Fatal("events must be set to false")
-	}
-	if filled.Clients[1].Secret != nil || filled.Clients[2].Secret != nil {
-		t.Fatal("the template must not set a client secret")
+func TestTemplateRefusesAnEmptySecret(t *testing.T) {
+	_, err := Template{}.Realm("example.com", RealmSecrets{Identity: "example-identity", Service: "example-service"})
+	if !errors.As(err, &NotConfigured{}) {
+		t.Fatalf("got %v", err)
 	}
 }
 
 func TestTemplateEscapesValuesForJson(t *testing.T) {
-	filled, _ := fill(t, `odd"name\`, `https://mail.example.com/"quoted"`)
-	if filled.Realm != `odd"name\` || filled.Clients[0].RootUrl != `https://mail.example.com/"quoted"` {
-		t.Fatalf("got %q, %q", filled.Realm, filled.Clients[0].RootUrl)
+	filled, _ := fill(t, `odd"name\`, exampleSecrets())
+	if filled.Realm != `odd"name\` {
+		t.Fatalf("got %q", filled.Realm)
+	}
+}
+
+func TestTemplateIsTheKeycloakDomainRealm(t *testing.T) {
+	source, err := os.ReadFile("../../../../../deploy/keycloak/realm/domain-realm.json")
+	if err != nil || !bytes.Equal(source, realmTemplate) {
+		t.Fatalf("realm-template.json differs from deploy/keycloak/realm/domain-realm.json (%v); copy it again", err)
 	}
 }

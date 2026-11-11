@@ -95,6 +95,17 @@
   for a domain that is not hosted or not active and `404 not_found` for an
   unknown address (M1); `GET /api/v1/directory/members/{memberId}` and
   `POST`/`DELETE /api/v1/directory/channel-addresses` for channels (C2).
+- Adding a domain now creates its realm from mesail-keycloak's
+  `deploy/keycloak/realm/domain-realm.json` (a copy embedded in the
+  directory, checked by a test), with the `mesail-identity`,
+  `mesail-service` and `mesail-account` secrets from directory's `.env`;
+  an empty secret refuses the call. A `@Schedule` worker triggers
+  `POST /api/v1/directory/outbox/relay` every 60 s with a
+  `mesail-operators` service token.
+- The outbox sweep reads only member documents with `outboxWaiting: true`
+  (and the dead-letter view `outboxHasDead: true`), set with the counts in
+  every write. The directory tests reuse fixed domains per test unit and
+  reset them, so a test FYLO root no longer grows.
 
 ### Slice A1: attachments and blob store
 

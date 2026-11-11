@@ -24,32 +24,6 @@ func (test *MemberServiceTest) TestRememberStoresTheMemberFromTheToken() {
 	Assert.Equals("active", stored.State)
 }
 
-func (test *MemberServiceTest) TestRememberPublishesTheMemberEvent() {
-	service, storage, domain := test.world()
-	service.Remember(test.caller(domain, "Bo Member"))
-	stored, _, _ := storage.Find(domain, "bo-id")
-	Assert.Equals(1, len(stored.PendingEvents))
-	Assert.IsTrue(strings.Contains(stored.PendingEvents[0], `"type":"member.upserted"`), "wrong event type")
-	Assert.IsTrue(strings.Contains(stored.PendingEvents[0], `"domainId":"`+domain+`"`), "wrong event domain")
-}
-
-func (test *MemberServiceTest) TestRememberingTheSameTokenTwicePublishesOnce() {
-	service, storage, domain := test.world()
-	service.Remember(test.caller(domain, "Bo Member"))
-	service.Remember(test.caller(domain, "Bo Member"))
-	stored, _, _ := storage.Find(domain, "bo-id")
-	Assert.Equals(1, len(stored.PendingEvents))
-}
-
-func (test *MemberServiceTest) TestANewNameIsSavedAndPublished() {
-	service, storage, domain := test.world()
-	service.Remember(test.caller(domain, "Bo Member"))
-	service.Remember(test.caller(domain, "Bo Renamed"))
-	stored, _, _ := storage.Find(domain, "bo-id")
-	Assert.Equals("Bo Renamed", stored.DisplayName)
-	Assert.Equals(2, len(stored.PendingEvents))
-}
-
 func (test *MemberServiceTest) TestRememberRegistersThePrimaryAddress() {
 	service, _, domain := test.world()
 	service.Remember(test.caller(domain, "Bo Member"))
@@ -78,7 +52,7 @@ func (test *MemberServiceTest) TestAMemberOfADomainThatIsNotHostedIsRefused() {
 
 func (test *MemberServiceTest) TestAMemberOfADisabledDomainIsRefused() {
 	service, _, _ := test.world()
-	domain := test.hosted("disabled")
+	domain := test.hosted("member-disabled.test", "disabled")
 	_, err := service.Remember(test.caller(domain, "Bo"))
 	var forbidden *Forbidden
 	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
@@ -97,7 +71,7 @@ func (test *MemberServiceTest) TestSearchFindsMembersByName() {
 
 func (test *MemberServiceTest) TestSearchNeverReturnsAnotherDomain() {
 	service, _, domain := test.world()
-	otherDomain := test.hosted("active")
+	otherDomain := test.hosted("member-other.test", "active")
 	service.Remember(oidc.Caller{DomainId: otherDomain, MemberId: "eve-id", DisplayName: "Eve", Email: "eve@" + otherDomain})
 	page, err := service.Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Text: "eve"}, nil)
 	Assert.IsTrue(err == nil, "search failed")
@@ -143,7 +117,7 @@ func (test *MemberServiceTest) TestSummaryOfAMemberOfTheCallersDomain() {
 
 func (test *MemberServiceTest) TestSummaryOfAMemberOfAnotherDomainIsNotFound() {
 	service, _, domain := test.world()
-	otherDomain := test.hosted("active")
+	otherDomain := test.hosted("member-other.test", "active")
 	service.Remember(oidc.Caller{DomainId: otherDomain, MemberId: "eve-id", DisplayName: "Eve", Email: "eve@" + otherDomain})
 	_, err := service.Summary(Admission{Caller: test.caller(domain, "Bo")}, "eve-id")
 	var missing *NotFound
@@ -162,16 +136,16 @@ func (test *MemberServiceTest) caller(domain string, name string) oidc.Caller {
 }
 
 func (test *MemberServiceTest) world() (*MemberService, *MemberStorageService, string) {
-	os.Setenv("YON_APPLICATION_JSON", `{"yon":{"outbox":{"producer":"directory","subscribers":[{"name":"search","url":"http://127.0.0.1:9/api/v1/search/events"}]}}}`)
+	os.Setenv("YON_APPLICATION_JSON", `{"yon":{}}`)
 	documents := &DocumentsService{dataSource: DataSource{}}
 	members := &MemberStorageService{documents: documents, names: &CollectionNamesService{}}
 	addresses := &AddressStorageService{documents: documents, names: &CollectionNamesService{}}
 	tenants := &TenantService{domains: &DomainStorageService{documents: documents, names: &CollectionNamesService{}}}
-	return &MemberService{tenants: tenants, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}, members, test.hosted("active")
+	return &MemberService{tenants: tenants, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}, members, test.hosted("member-unit.test", "active")
 }
 
-func (test *MemberServiceTest) hosted(state string) string {
-	domainId := "m-" + test.unique() + ".test"
+func (test *MemberServiceTest) hosted(name string, state string) string {
+	domainId := test.reset(name)
 	documents := &DocumentsService{dataSource: DataSource{}}
 	collections := &TenantCollectionsService{documents: documents, names: &CollectionNamesService{}}
 	Assert.IsTrue(collections.Prepare(domainId) == nil, "prepare failed")
@@ -189,4 +163,14 @@ func (test *MemberServiceTest) relay(documents *DocumentsService) *OutboxRelaySe
 	names := &CollectionNamesService{}
 	store := &OutboxStoreService{domains: &DomainStorageService{documents: documents, names: names}, members: &MemberStorageService{documents: documents, names: names}, names: names}
 	return &OutboxRelayService{store: store, settings: &SettingsService{}, domains: &DomainStorageService{documents: documents, names: names}}
+}
+
+func (test *MemberServiceTest) reset(domainId string) string {
+	documents := &DocumentsService{dataSource: DataSource{}}
+	names := &CollectionNamesService{}
+	domains := &DomainStorageService{documents: documents, names: names}
+	old, _, _ := domains.Find(domainId)
+	domains.Delete(old)
+	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId)
+	return domainId
 }

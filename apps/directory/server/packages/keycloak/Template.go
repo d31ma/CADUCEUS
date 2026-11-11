@@ -11,34 +11,53 @@ var realmTemplate []byte
 
 type Template struct{}
 
-func (template Template) Realm(realm string, publicUrl string) ([]byte, error) {
-	escapedRealm, err := template.escaped(realm)
+func (template Template) Realm(realm string, secrets RealmSecrets) ([]byte, error) {
+	err := template.complete(secrets)
 	if err != nil {
 		return nil, err
 	}
-	escapedUrl, err := template.escaped(publicUrl)
-	if err != nil {
-		return nil, err
+	pairs := []string{}
+	for placeholder, value := range template.values(realm, secrets) {
+		pairs = append(pairs, placeholder, template.escaped(value))
 	}
-	replacer := strings.NewReplacer(template.realmPlaceholder(), escapedRealm, template.publicUrlPlaceholder(), escapedUrl)
-	return []byte(replacer.Replace(string(realmTemplate))), nil
+	return []byte(strings.NewReplacer(pairs...).Replace(string(realmTemplate))), nil
 }
 
-func (template Template) escaped(value string) (string, error) {
-	quoted, err := json.Marshal(value)
-	if err != nil {
-		return "", err
+func (template Template) values(realm string, secrets RealmSecrets) map[string]string {
+	return map[string]string{
+		template.realmPlaceholder():    realm,
+		template.identityPlaceholder(): secrets.Identity,
+		template.servicePlaceholder():  secrets.Service,
+		template.accountPlaceholder():  secrets.Account,
 	}
-	unquoted := strings.TrimSuffix(strings.TrimPrefix(string(quoted), template.quote()), template.quote())
-	return unquoted, nil
+}
+
+func (Template) complete(secrets RealmSecrets) error {
+	if secrets.Identity == "" || secrets.Service == "" || secrets.Account == "" {
+		return NotConfigured{}
+	}
+	return nil
+}
+
+func (template Template) escaped(value string) string {
+	quoted, _ := json.Marshal(value)
+	return strings.TrimSuffix(strings.TrimPrefix(string(quoted), template.quote()), template.quote())
 }
 
 func (Template) realmPlaceholder() string {
-	return "${REALM}"
+	return "${MESAIL_REALM}"
 }
 
-func (Template) publicUrlPlaceholder() string {
-	return "${MESAIL_PUBLIC_URL}"
+func (Template) identityPlaceholder() string {
+	return "${MESAIL_IDENTITY_CLIENT_SECRET}"
+}
+
+func (Template) servicePlaceholder() string {
+	return "${MESAIL_SERVICE_SECRET}"
+}
+
+func (Template) accountPlaceholder() string {
+	return "${MESAIL_ACCOUNT_CLIENT_SECRET}"
 }
 
 func (Template) quote() string {

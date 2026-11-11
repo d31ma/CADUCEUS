@@ -17,14 +17,12 @@ type OutboxStoreService struct {
 }
 
 func (store *OutboxStoreService) PendingIn(domainId string, limit int) ([]outbox.Document, error) {
-	documents, failure := store.members.Outbox(domainId)
-	waiting := store.waiting(documents)
+	waiting, failure := store.members.Waiting(domainId)
 	return waiting[:min(max(limit, 0), len(waiting))], failure
 }
 
 func (store *OutboxStoreService) Dead() ([]outbox.Document, error) {
-	documents, failure := store.all()
-	return store.deadOnly(documents), failure
+	return store.withDead()
 }
 
 func (store *OutboxStoreService) Load(ref outbox.Ref) (outbox.Fields, error) {
@@ -39,15 +37,7 @@ func (store *OutboxStoreService) Save(ref outbox.Ref, fields outbox.Fields) erro
 	return store.saveUnless(cmp.Or(failure, store.unknown(known)), ref, fields)
 }
 
-func (store *OutboxStoreService) waiting(documents []outbox.Document) []outbox.Document {
-	return slices.DeleteFunc(documents, func(document outbox.Document) bool { return document.Fields.OutboxPending == 0 })
-}
-
-func (store *OutboxStoreService) deadOnly(documents []outbox.Document) []outbox.Document {
-	return slices.DeleteFunc(documents, func(document outbox.Document) bool { return document.Fields.OutboxDead == 0 })
-}
-
-func (store *OutboxStoreService) all() ([]outbox.Document, error) {
+func (store *OutboxStoreService) withDead() ([]outbox.Document, error) {
 	domains, failure := store.domains.All()
 	documents, readFailure := store.documentsOf(domains)
 	return documents, cmp.Or(failure, readFailure)
@@ -57,7 +47,7 @@ func (store *OutboxStoreService) documentsOf(domains []DomainDocument) ([]outbox
 	documents := []outbox.Document{}
 	failures := []error{}
 	for _, domain := range domains {
-		found, failure := store.members.Outbox(domain.DomainId)
+		found, failure := store.members.WithDead(domain.DomainId)
 		documents, failures = append(documents, found...), append(failures, failure)
 	}
 	return documents, errors.Join(failures...)

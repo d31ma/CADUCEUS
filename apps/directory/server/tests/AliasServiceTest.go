@@ -2,6 +2,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"os"
 
 	"mesail.dev/packages/oidc"
 )
@@ -59,7 +60,8 @@ func (test *AliasServiceTest) TestARefusedCallerAddsNothing() {
 }
 
 func (test *AliasServiceTest) world() (*AliasService, oidc.Caller, string) {
-	domainId := "a-" + test.unique() + ".test"
+	os.Setenv("YON_APPLICATION_JSON", `{"yon":{}}`)
+	domainId := test.reset("alias-unit.test")
 	documents := &DocumentsService{dataSource: DataSource{}}
 	members := &MemberStorageService{documents: documents, names: &CollectionNamesService{}}
 	addresses := &AddressStorageService{documents: documents, names: &CollectionNamesService{}}
@@ -83,4 +85,14 @@ func (test *AliasServiceTest) relay(documents *DocumentsService) *OutboxRelaySer
 	names := &CollectionNamesService{}
 	store := &OutboxStoreService{domains: &DomainStorageService{documents: documents, names: names}, members: &MemberStorageService{documents: documents, names: names}, names: names}
 	return &OutboxRelayService{store: store, settings: &SettingsService{}, domains: &DomainStorageService{documents: documents, names: names}}
+}
+
+func (test *AliasServiceTest) reset(domainId string) string {
+	documents := &DocumentsService{dataSource: DataSource{}}
+	names := &CollectionNamesService{}
+	domains := &DomainStorageService{documents: documents, names: names}
+	old, _, _ := domains.Find(domainId)
+	domains.Delete(old)
+	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId)
+	return domainId
 }

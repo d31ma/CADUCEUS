@@ -68,7 +68,7 @@ func (fake *fakeKeycloak) snapshot() (recordedRequest, recordedRequest, int) {
 }
 
 func (fake *fakeKeycloak) settings() AdminSettings {
-	return AdminSettings{BaseUrl: fake.server.URL + "/idp", ClientId: "mesail-directory", ClientSecret: "example-secret", PublicUrl: "https://mail.example.com"}
+	return AdminSettings{BaseUrl: fake.server.URL + "/idp", ClientId: "mesail-directory", ClientSecret: "example-secret", Secrets: RealmSecrets{Identity: "example-identity", Service: "example-service", Account: "example-account"}}
 }
 
 func (fake *fakeKeycloak) client() Admin {

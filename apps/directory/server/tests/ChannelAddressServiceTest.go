@@ -91,7 +91,7 @@ func (test *ChannelAddressServiceTest) TestARefusedCallerChangesNothing() {
 }
 
 func (test *ChannelAddressServiceTest) world() (*ChannelAddressService, Admission, string) {
-	domainId := "c-" + test.unique() + ".test"
+	domainId := test.reset("channel-unit.test")
 	documents := &DocumentsService{dataSource: DataSource{}}
 	names := &CollectionNamesService{}
 	addresses := &AddressStorageService{documents: documents, names: names}
@@ -105,4 +105,14 @@ func (test *ChannelAddressServiceTest) unique() string {
 	random := make([]byte, 6)
 	rand.Read(random)
 	return hex.EncodeToString(random)
+}
+
+func (test *ChannelAddressServiceTest) reset(domainId string) string {
+	documents := &DocumentsService{dataSource: DataSource{}}
+	names := &CollectionNamesService{}
+	domains := &DomainStorageService{documents: documents, names: names}
+	old, _, _ := domains.Find(domainId)
+	domains.Delete(old)
+	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId)
+	return domainId
 }

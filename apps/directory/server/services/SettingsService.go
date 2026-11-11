@@ -16,7 +16,7 @@ func (service *SettingsService) Settings() DirectorySettings {
 }
 
 func (service *SettingsService) Outbox() (outbox.Settings, error) {
-	return outbox.SettingsReader{}.FromApplicationJSON(string(service.yon()))
+	return outbox.SettingsReader{}.FromEnvironment()
 }
 
 func (service *SettingsService) yon() []byte {

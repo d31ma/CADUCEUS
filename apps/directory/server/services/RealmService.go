@@ -21,8 +21,12 @@ func (service *RealmService) Delete(domainId string) error {
 
 func (service *RealmService) admin() keycloak.Admin {
 	settings := service.settings.Settings()
-	adminSettings := keycloak.AdminSettings{BaseUrl: settings.KeycloakUrl, ClientId: settings.Admin.Client, ClientSecret: settings.Admin.Secret, PublicUrl: settings.PublicUrl}
+	adminSettings := keycloak.AdminSettings{BaseUrl: settings.KeycloakUrl, ClientId: settings.Admin.Client, ClientSecret: settings.Admin.Secret, Secrets: service.secrets(settings.RealmSecrets)}
 	return keycloak.NewAdmin(adminSettings, http.DefaultClient)
+}
+
+func (service *RealmService) secrets(secrets DirectoryRealmSecrets) keycloak.RealmSecrets {
+	return keycloak.RealmSecrets{Identity: secrets.Identity, Service: secrets.Service, Account: secrets.Account}
 }
 
 func (service *RealmService) adopted(failure error) error {

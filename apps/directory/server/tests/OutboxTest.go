@@ -77,7 +77,7 @@ func (test *OutboxTest) TestTheOutboxRoutesRefuseAnUnverifiedCaller() {
 
 func (test *OutboxTest) world() (*OutboxRelayService, outbox.Ref, string) {
 	os.Setenv("YON_APPLICATION_JSON", `{"yon":{"outbox":{"producer":"directory","subscribers":[{"name":"search","url":"http://127.0.0.1:9/api/v1/search/events"}]}}}`)
-	domainId := "o-" + test.unique() + ".test"
+	domainId := test.reset("outbox-unit.test")
 	documents := &DocumentsService{dataSource: DataSource{}}
 	names := &CollectionNamesService{}
 	members := &MemberStorageService{documents: documents, names: names}
@@ -86,7 +86,7 @@ func (test *OutboxTest) world() (*OutboxRelayService, outbox.Ref, string) {
 	Assert.IsTrue(err == nil, "stage failed")
 	eventId := test.unique()
 	dead, _ := outbox.Codec{}.EncodeDead([]outbox.DeadLetter{{Envelope: events.Envelope{EventID: eventId, Type: events.Types{}.MemberUpserted(), DomainId: domainId, Producer: "directory"}, Subscriber: "search", Attempts: 12, LastError: "gone", DeadAt: "2026-11-10T00:00:00Z"}})
-	staged.DeadEvents, staged.OutboxDead = dead, 1
+	staged.DeadEvents, staged.OutboxDead, staged.OutboxHasDead = dead, 1, true
 	ref, insertErr := members.Insert(staged)
 	Assert.IsTrue(insertErr == nil, "member insert failed")
 	store := &OutboxStoreService{domains: &DomainStorageService{documents: documents, names: names}, members: members, names: names}
@@ -97,4 +97,14 @@ func (test *OutboxTest) unique() string {
 	random := make([]byte, 6)
 	rand.Read(random)
 	return hex.EncodeToString(random)
+}
+
+func (test *OutboxTest) reset(domainId string) string {
+	documents := &DocumentsService{dataSource: DataSource{}}
+	names := &CollectionNamesService{}
+	domains := &DomainStorageService{documents: documents, names: names}
+	old, _, _ := domains.Find(domainId)
+	domains.Delete(old)
+	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId)
+	return domainId
 }

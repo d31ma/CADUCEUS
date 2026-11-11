@@ -35,7 +35,7 @@ func (test *AddressServiceTest) TestAnAddressOfADomainThatIsNotHostedIsDomainNot
 
 func (test *AddressServiceTest) TestAnAddressOfAPendingDomainIsDomainNotHosted() {
 	service, _ := test.world()
-	pending := "p-" + test.unique() + ".test"
+	pending := test.reset("address-pending.test")
 	Assert.IsTrue(service.domains.Insert(DomainDocument{DomainId: pending, Name: pending, State: "pending"}) == nil, "insert failed")
 	_, err := service.Find("team@" + pending)
 	var notHosted *DomainNotHosted
@@ -57,7 +57,7 @@ func (test *AddressServiceTest) TestAnInvalidAddressIsNotFound() {
 }
 
 func (test *AddressServiceTest) world() (*AddressService, string) {
-	domainId := "s-" + test.unique() + ".test"
+	domainId := test.reset("address-unit.test")
 	documents := &DocumentsService{dataSource: DataSource{}}
 	addresses := &AddressStorageService{documents: documents, names: &CollectionNamesService{}}
 	domains := &DomainStorageService{documents: documents, names: &CollectionNamesService{}}
@@ -71,4 +71,14 @@ func (test *AddressServiceTest) unique() string {
 	random := make([]byte, 6)
 	rand.Read(random)
 	return hex.EncodeToString(random)
+}
+
+func (test *AddressServiceTest) reset(domainId string) string {
+	documents := &DocumentsService{dataSource: DataSource{}}
+	names := &CollectionNamesService{}
+	domains := &DomainStorageService{documents: documents, names: names}
+	old, _, _ := domains.Find(domainId)
+	domains.Delete(old)
+	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId)
+	return domainId
 }

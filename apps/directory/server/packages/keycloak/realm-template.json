@@ -1,6 +1,6 @@
 {
-  "realm": "${REALM}",
-  "displayName": "${REALM}",
+  "realm": "${MESAIL_REALM}",
+  "displayName": "${MESAIL_REALM}",
   "enabled": true,
   "sslRequired": "external",
   "registrationAllowed": false,
@@ -12,51 +12,65 @@
   "bruteForceProtected": true,
   "permanentLockout": false,
   "failureFactor": 10,
+  "maxFailureWaitSeconds": 900,
   "passwordPolicy": "length(12) and notUsername and notEmail",
+  "defaultSignatureAlgorithm": "RS256",
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA1",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
   "accessTokenLifespan": 60,
-  "accessTokenLifespanForImplicitFlow": 60,
   "ssoSessionIdleTimeout": 1800,
   "ssoSessionMaxLifespan": 36000,
   "revokeRefreshToken": true,
   "refreshTokenMaxReuse": 0,
-  "eventsEnabled": false,
-  "adminEventsEnabled": false,
   "roles": {
     "realm": [
-      { "name": "mesail-member", "description": "A member of the organization. Every user gets it by default." },
-      { "name": "mesail-admin", "description": "Organization admin: domains, members and settings." },
-      { "name": "mesail-service", "description": "A Mesail service calling another service (client credentials)." },
       {
-        "name": "default-roles-${REALM}",
+        "name": "mesail-member",
+        "description": "A member of this mail domain. Every user gets it."
+      },
+      {
+        "name": "mesail-admin",
+        "description": "Admin of this mail domain."
+      },
+      {
+        "name": "mesail-service",
+        "description": "A Mesail service calling another service."
+      },
+      {
+        "name": "default-roles-${MESAIL_REALM}",
         "description": "Roles every new user gets.",
         "composite": true,
         "composites": {
-          "realm": ["mesail-member"],
-          "client": { "account": ["view-profile", "manage-account"] }
+          "realm": [
+            "mesail-member"
+          ]
         }
       }
     ]
   },
-  "defaultRole": { "name": "default-roles-${REALM}", "composite": true, "clientRole": false },
+  "defaultRole": {
+    "name": "default-roles-${MESAIL_REALM}",
+    "composite": true,
+    "clientRole": false
+  },
   "clients": [
     {
-      "clientId": "mesail-web",
-      "name": "Mesail web app",
-      "description": "Public browser client. Authorization code flow with PKCE (S256) only.",
+      "clientId": "mesail-identity",
+      "name": "Mesail identity service",
+      "description": "The only client that signs users in: the identity service, server to server, with the password grant. Keycloak asks for a TOTP code when the user has one.",
       "enabled": true,
-      "publicClient": true,
-      "standardFlowEnabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${MESAIL_IDENTITY_CLIENT_SECRET}",
+      "standardFlowEnabled": false,
       "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
+      "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
-      "frontchannelLogout": true,
-      "rootUrl": "${MESAIL_PUBLIC_URL}",
-      "baseUrl": "/",
-      "redirectUris": ["${MESAIL_PUBLIC_URL}/*"],
-      "webOrigins": ["${MESAIL_PUBLIC_URL}"],
+      "frontchannelLogout": false,
       "attributes": {
-        "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "${MESAIL_PUBLIC_URL}/*"
+        "use.refresh.tokens": "true"
       },
       "protocolMappers": [
         {
@@ -69,28 +83,28 @@
             "introspection.token.claim": "true",
             "id.token.claim": "false"
           }
+        },
+        {
+          "name": "mesail-identity audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "mesail-identity",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "id.token.claim": "false"
+          }
         }
       ]
     },
     {
-      "clientId": "mesail-api",
-      "name": "Mesail API",
-      "description": "The audience of every Mesail access token. Its secret is used only to call token introspection.",
-      "enabled": true,
-      "publicClient": false,
-      "clientAuthenticatorType": "client-secret",
-      "standardFlowEnabled": false,
-      "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
-      "serviceAccountsEnabled": false
-    },
-    {
       "clientId": "mesail-service",
       "name": "Mesail services",
-      "description": "Client credentials for service-to-service calls. Tokens carry the mesail-service role.",
+      "description": "Client credentials for service-to-service calls.",
       "enabled": true,
       "publicClient": false,
       "clientAuthenticatorType": "client-secret",
+      "secret": "${MESAIL_SERVICE_SECRET}",
       "standardFlowEnabled": false,
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
@@ -108,6 +122,37 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "mesail-account",
+      "name": "Mesail account settings",
+      "description": "The identity service changes a user's own password, TOTP and sessions through the admin API of this realm. Client credentials only; its service account may only view and manage users.",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${MESAIL_ACCOUNT_CLIENT_SECRET}",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": [
+        "basic",
+        "roles",
+        "kc-admin-api"
+      ],
+      "optionalClientScopes": []
+    },
+    {
+      "clientId": "mesail-api",
+      "name": "Mesail API",
+      "description": "The audience of every Mesail access token. No sign-in.",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false
     }
   ],
   "users": [
@@ -115,7 +160,20 @@
       "username": "service-account-mesail-service",
       "enabled": true,
       "serviceAccountClientId": "mesail-service",
-      "realmRoles": ["default-roles-${REALM}", "mesail-service"]
+      "realmRoles": [
+        "mesail-service"
+      ]
+    },
+    {
+      "username": "service-account-mesail-account",
+      "enabled": true,
+      "serviceAccountClientId": "mesail-account",
+      "clientRoles": {
+        "realm-management": [
+          "view-users",
+          "manage-users"
+        ]
+      }
     }
   ]
 }

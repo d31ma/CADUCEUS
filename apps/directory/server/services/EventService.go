@@ -19,6 +19,7 @@ func (service *EventService) StageMemberSaved(member MemberDocument) (MemberDocu
 	settings, _ := service.settings.Outbox()
 	fields, stageFailure := outbox.NewOutbox(settings).Stage(service.fields(member), envelope)
 	member.PendingEvents, member.DeadEvents, member.OutboxPending, member.OutboxDead = fields.PendingEvents, fields.DeadEvents, fields.OutboxPending, fields.OutboxDead
+	member.OutboxWaiting, member.OutboxHasDead = fields.OutboxPending > 0, fields.OutboxDead > 0
 	return member, cmp.Or(failure, stageFailure)
 }
 

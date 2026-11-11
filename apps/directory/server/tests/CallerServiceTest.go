@@ -21,8 +21,12 @@ func (test *CallerServiceTest) TestAnOperatorFromTheOperatorRealmIsAccepted() {
 	Assert.Equals("<nil>", fmt.Sprint(err))
 }
 
-func (test *CallerServiceTest) TestAnOperatorRoleInsideAMailDomainIsRefused() {
-	err := (&CallerService{}).Operator(oidc.Caller{DomainId: "example.com", Roles: []string{"Operator"}})
+func (test *CallerServiceTest) TestAnOperatorWithAnActiveDomainIsAccepted() {
+	Assert.Equals("<nil>", fmt.Sprint((&CallerService{}).Operator(oidc.Caller{DomainId: "example.com", Roles: []string{"Operator"}})))
+}
+
+func (test *CallerServiceTest) TestACallerWithoutTheOperatorRoleIsRefused() {
+	err := (&CallerService{}).Operator(oidc.Caller{DomainId: "mesail-operators", Roles: []string{"Member"}})
 	var forbidden *Forbidden
 	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
 }
@@ -37,6 +41,24 @@ func (test *CallerServiceTest) TestAServiceOfTheOperatorRealmIsAllowedEverywhere
 
 func (test *CallerServiceTest) TestAServiceOfAnotherDomainGetsNotFound() {
 	err := (&CallerService{}).ServiceFor(oidc.Caller{DomainId: "example.org"}, "example.com")
+	var missing *NotFound
+	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
+}
+
+func (test *CallerServiceTest) TestAnInstallWideServiceIsAllowedEverywhere() {
+	Assert.Equals("<nil>", fmt.Sprint((&CallerService{}).ServiceFor(oidc.Caller{DomainId: "*"}, "example.com")))
+}
+
+func (test *CallerServiceTest) TestAnOperatorReadsAnyDomain() {
+	Assert.Equals("<nil>", fmt.Sprint((&CallerService{}).ServiceFor(oidc.Caller{DomainId: "example.org", Roles: []string{"Operator"}}, "example.com")))
+}
+
+func (test *CallerServiceTest) TestInstallWideAcceptsTheInstallWideDomain() {
+	Assert.Equals("<nil>", fmt.Sprint((&CallerService{}).InstallWide(oidc.Caller{DomainId: "*"})))
+}
+
+func (test *CallerServiceTest) TestInstallWideRefusesAMailDomain() {
+	err := (&CallerService{}).InstallWide(oidc.Caller{DomainId: "example.com"})
 	var missing *NotFound
 	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
 }

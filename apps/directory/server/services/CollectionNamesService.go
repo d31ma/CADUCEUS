@@ -8,6 +8,14 @@ func (names *CollectionNamesService) Domains() string {
 	return "domains"
 }
 
+func (names *CollectionNamesService) People() string {
+	return "people"
+}
+
+func (names *CollectionNamesService) LocalParts() string {
+	return "local-parts"
+}
+
 func (names *CollectionNamesService) Members(domainId string) string {
 	return collections.CollectionName{}.ForDomain("members", domainId)
 }

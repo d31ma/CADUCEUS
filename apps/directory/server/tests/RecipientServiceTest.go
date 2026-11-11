@@ -74,7 +74,7 @@ func (test *RecipientServiceTest) world() (*RecipientService, oidc.Caller, map[s
 	members := &MemberStorageService{documents: documents, names: &CollectionNamesService{}}
 	addresses := &AddressStorageService{documents: documents, names: &CollectionNamesService{}}
 	tenants := &TenantService{domains: domains}
-	memberService := &MemberService{tenants: tenants, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}
+	memberService := &TokenMemberService{tenants: tenants, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}
 	test.host(domains, &TenantCollectionsService{documents: documents, names: &CollectionNamesService{}}, domain)
 	test.host(domains, &TenantCollectionsService{documents: documents, names: &CollectionNamesService{}}, otherDomain)
 	caller := oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain}
@@ -93,7 +93,7 @@ func (test *RecipientServiceTest) host(domains *DomainStorageService, collection
 	Assert.Equals("<nil>", fmt.Sprint(domains.Insert(DomainDocument{DomainId: domainId, Name: domainId, State: "active"})))
 }
 
-func (test *RecipientServiceTest) remember(service *MemberService, caller oidc.Caller) {
+func (test *RecipientServiceTest) remember(service *TokenMemberService, caller oidc.Caller) {
 	_, err := service.Remember(caller)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 }

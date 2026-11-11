@@ -21,9 +21,15 @@ func (handler *DirectoryErrorHandler) Forbidden(failure *Forbidden) ApiError {
 }
 
 // @HandlesError
-// @ResponseStatus(403)
-func (handler *DirectoryErrorHandler) NotManaged(failure *RealmNotManaged) ApiError {
-	return ApiError{Code: handler.forbidden(), Message: failure.Message}
+// @ResponseStatus(400)
+func (handler *DirectoryErrorHandler) PasswordPolicy(failure *PasswordPolicy) ApiError {
+	return ApiError{Code: "password_policy", Message: failure.Message, Field: "password"}
+}
+
+// @HandlesError
+// @ResponseStatus(409)
+func (handler *DirectoryErrorHandler) LastAdmin(failure *LastAdmin) ApiError {
+	return ApiError{Code: "last_admin", Message: failure.Message}
 }
 
 // @HandlesError

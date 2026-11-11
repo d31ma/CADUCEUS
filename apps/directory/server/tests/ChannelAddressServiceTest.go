@@ -99,7 +99,7 @@ func (test *ChannelAddressServiceTest) world() (*ChannelAddressService, Admissio
 	Assert.Equals("<nil>", fmt.Sprint((&TenantCollectionsService{documents: documents, names: names}).Prepare(domainId)))
 	Assert.Equals("<nil>", fmt.Sprint(addresses.Insert(AddressDocument{Address: "ana@" + domainId, DomainId: domainId, Kind: "member", TargetId: "ana-id"})))
 	admission := Admission{Caller: oidc.Caller{DomainId: domainId, MemberId: "ana-id", Roles: []string{"DomainAdmin"}}}
-	return &ChannelAddressService{addresses: addresses, rules: &AddressRulesService{}}, admission, domainId
+	return &ChannelAddressService{addresses: addresses, rules: &AddressRulesService{}, reservations: &ReservationService{localParts: &LocalPartStorageService{documents: &DocumentsService{dataSource: DataSource{}}, names: &CollectionNamesService{}}}}, admission, domainId
 }
 
 func (test *ChannelAddressServiceTest) unique() string {

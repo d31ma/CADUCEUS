@@ -17,10 +17,10 @@ func (test *DirectoryErrorHandlerTest) TestForbiddenHasItsCode() {
 	Assert.Equals("forbidden", (&DirectoryErrorHandler{}).Forbidden(&Forbidden{}).Code)
 }
 
-func (test *DirectoryErrorHandlerTest) TestARealmNotManagedIsForbidden() {
-	answer := (&DirectoryErrorHandler{}).NotManaged(&RealmNotManaged{Message: "the directory did not create this realm"})
-	Assert.Equals("forbidden", answer.Code)
-	Assert.Equals("the directory did not create this realm", answer.Message)
+func (test *DirectoryErrorHandlerTest) TestALastAdminIsAConflict() {
+	answer := (&DirectoryErrorHandler{}).LastAdmin(&LastAdmin{Message: "a domain must keep at least one admin"})
+	Assert.Equals("last_admin", answer.Code)
+	Assert.Equals("a domain must keep at least one admin", answer.Message)
 }
 
 func (test *DirectoryErrorHandlerTest) TestNotFoundHasItsCode() {

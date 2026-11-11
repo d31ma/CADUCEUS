@@ -69,11 +69,11 @@ func (test *AliasServiceTest) world() (*AliasService, oidc.Caller, string) {
 	domains := &DomainStorageService{documents: documents, names: &CollectionNamesService{}}
 	Assert.Equals("<nil>", fmt.Sprint((&TenantCollectionsService{documents: documents, names: &CollectionNamesService{}}).Prepare(domainId)))
 	Assert.Equals("<nil>", fmt.Sprint(domains.Insert(DomainDocument{DomainId: domainId, Name: domainId, State: "active"})))
-	memberService := &MemberService{tenants: &TenantService{domains: domains}, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}
+	memberService := &TokenMemberService{tenants: &TenantService{domains: domains}, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}
 	caller := oidc.Caller{DomainId: domainId, MemberId: "ana-id", DisplayName: "Ana", Email: "ana@" + domainId}
 	memberService.Remember(caller)
 	memberService.Remember(oidc.Caller{DomainId: domainId, MemberId: "bo-id", DisplayName: "Bo", Email: "bo@" + domainId})
-	return &AliasService{addresses: addresses, members: members, rules: &AddressRulesService{}}, caller, domainId
+	return &AliasService{addresses: addresses, members: members, rules: &AddressRulesService{}, reservations: &ReservationService{localParts: &LocalPartStorageService{documents: &DocumentsService{dataSource: DataSource{}}, names: &CollectionNamesService{}}}}, caller, domainId
 }
 
 func (test *AliasServiceTest) unique() string {

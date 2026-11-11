@@ -15,11 +15,20 @@ func (service *CallerService) Caller(authorization string) (oidc.Caller, error) 
 }
 
 func (service *CallerService) Operator(caller oidc.Caller) error {
-	return service.operatorRefusal(caller.DomainId == service.operatorRealm())
+	return service.operatorRefusal(slices.Contains(caller.Roles, service.operatorRole()))
 }
 
 func (service *CallerService) ServiceFor(caller oidc.Caller, domainId string) error {
-	return service.notFoundUnless(slices.Contains([]string{strings.ToLower(domainId), service.operatorRealm()}, caller.DomainId))
+	allowed := append(service.installWide(), strings.ToLower(domainId))
+	return service.notFoundUnless(service.permitted(caller, allowed))
+}
+
+func (service *CallerService) permitted(caller oidc.Caller, allowed []string) bool {
+	return slices.Contains(allowed, caller.DomainId) || slices.Contains(caller.Roles, service.operatorRole())
+}
+
+func (service *CallerService) InstallWide(caller oidc.Caller) error {
+	return service.notFoundUnless(slices.Contains(service.installWide(), caller.DomainId))
 }
 
 func (service *CallerService) notFoundUnless(allowed bool) error {
@@ -36,13 +45,21 @@ func (service *CallerService) refusal(failure error) error {
 	return nil
 }
 
-func (service *CallerService) operatorRefusal(fromOperatorRealm bool) error {
-	if fromOperatorRealm {
+func (service *CallerService) operatorRefusal(operator bool) error {
+	if operator {
 		return nil
 	}
-	return &Forbidden{Message: "domains are managed from the operator realm only"}
+	return &Forbidden{Message: "only an Operator may do this"}
 }
 
-func (service *CallerService) operatorRealm() string {
+func (service *CallerService) installWide() []string {
+	return []string{oidc.InstallWide{}.DomainId(), service.legacyOperatorRealm()}
+}
+
+func (service *CallerService) legacyOperatorRealm() string {
 	return "mesail-operators"
+}
+
+func (service *CallerService) operatorRole() string {
+	return "Operator"
 }

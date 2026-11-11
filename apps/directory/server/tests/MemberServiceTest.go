@@ -63,7 +63,7 @@ func (test *MemberServiceTest) TestSearchFindsMembersByName() {
 	service, _, domain := test.world()
 	service.Remember(test.caller(domain, "Bo Member"))
 	service.Remember(oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain})
-	page, err := service.Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Text: "ana"}, nil)
+	page, err := test.lister().Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Text: "ana"}, nil)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(1, len(page.Items))
 	Assert.Equals("ana-id", page.Items[0].MemberId)
@@ -74,14 +74,14 @@ func (test *MemberServiceTest) TestSearchNeverReturnsAnotherDomain() {
 	service, _, domain := test.world()
 	otherDomain := test.hosted("member-other.test", "active")
 	service.Remember(oidc.Caller{DomainId: otherDomain, MemberId: "eve-id", DisplayName: "Eve", Email: "eve@" + otherDomain})
-	page, err := service.Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Text: "eve"}, nil)
+	page, err := test.lister().Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Text: "eve"}, nil)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(0, len(page.Items))
 }
 
 func (test *MemberServiceTest) TestSearchRefusesALimitAboveOneHundred() {
-	service, _, domain := test.world()
-	_, err := service.Search(Admission{Caller: test.caller(domain, "Bo")}, MemberQuery{Limit: 101}, nil)
+	_, _, domain := test.world()
+	_, err := test.lister().Search(Admission{Caller: test.caller(domain, "Bo")}, MemberQuery{Limit: 101}, nil)
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
 	Assert.Equals("limit", invalid.Field)
@@ -91,8 +91,8 @@ func (test *MemberServiceTest) TestSearchPagesWithACursor() {
 	service, _, domain := test.world()
 	service.Remember(test.caller(domain, "Bo Member"))
 	service.Remember(oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain})
-	first, _ := service.Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Limit: 1}, nil)
-	second, err := service.Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Limit: 1, Cursor: first.NextCursor}, nil)
+	first, _ := test.lister().Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Limit: 1}, nil)
+	second, err := test.lister().Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Limit: 1, Cursor: first.NextCursor}, nil)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("1", first.NextCursor)
 	Assert.Equals(1, len(second.Items))
@@ -100,8 +100,8 @@ func (test *MemberServiceTest) TestSearchPagesWithACursor() {
 }
 
 func (test *MemberServiceTest) TestSearchRefusesACursorItDidNotGiveOut() {
-	service, _, domain := test.world()
-	_, err := service.Search(Admission{Caller: test.caller(domain, "Bo")}, MemberQuery{Cursor: "abc"}, nil)
+	_, _, domain := test.world()
+	_, err := test.lister().Search(Admission{Caller: test.caller(domain, "Bo")}, MemberQuery{Cursor: "abc"}, nil)
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
 	Assert.Equals("cursor", invalid.Field)
@@ -110,7 +110,7 @@ func (test *MemberServiceTest) TestSearchRefusesACursorItDidNotGiveOut() {
 func (test *MemberServiceTest) TestSummaryOfAMemberOfTheCallersDomain() {
 	service, _, domain := test.world()
 	service.Remember(oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain})
-	summary, err := service.Summary(Admission{Caller: test.caller(domain, "Bo")}, "ana-id")
+	summary, err := test.lister().Summary(Admission{Caller: test.caller(domain, "Bo")}, "ana-id")
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("Ana Admin", summary.DisplayName)
 	Assert.Equals("ana@"+domain, summary.PrimaryAddress)
@@ -120,14 +120,14 @@ func (test *MemberServiceTest) TestSummaryOfAMemberOfAnotherDomainIsNotFound() {
 	service, _, domain := test.world()
 	otherDomain := test.hosted("member-other.test", "active")
 	service.Remember(oidc.Caller{DomainId: otherDomain, MemberId: "eve-id", DisplayName: "Eve", Email: "eve@" + otherDomain})
-	_, err := service.Summary(Admission{Caller: test.caller(domain, "Bo")}, "eve-id")
+	_, err := test.lister().Summary(Admission{Caller: test.caller(domain, "Bo")}, "eve-id")
 	var missing *NotFound
 	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
 }
 
 func (test *MemberServiceTest) TestSummaryForARefusedCallerIsTheRefusal() {
-	service, _, domain := test.world()
-	_, err := service.Summary(Admission{Caller: test.caller(domain, "Bo"), Refusal: &Unauthenticated{}}, "bo-id")
+	_, _, domain := test.world()
+	_, err := test.lister().Summary(Admission{Caller: test.caller(domain, "Bo"), Refusal: &Unauthenticated{}}, "bo-id")
 	var refused *Unauthenticated
 	Assert.IsTrue(errors.As(err, &refused), "want Unauthenticated")
 }
@@ -136,13 +136,13 @@ func (test *MemberServiceTest) caller(domain string, name string) oidc.Caller {
 	return oidc.Caller{DomainId: domain, MemberId: "bo-id", DisplayName: name, Email: "Bo@" + strings.ToUpper(domain)}
 }
 
-func (test *MemberServiceTest) world() (*MemberService, *MemberStorageService, string) {
+func (test *MemberServiceTest) world() (*TokenMemberService, *MemberStorageService, string) {
 	os.Setenv("YON_APPLICATION_JSON", `{"yon":{}}`)
 	documents := &DocumentsService{dataSource: DataSource{}}
 	members := &MemberStorageService{documents: documents, names: &CollectionNamesService{}}
 	addresses := &AddressStorageService{documents: documents, names: &CollectionNamesService{}}
 	tenants := &TenantService{domains: &DomainStorageService{documents: documents, names: &CollectionNamesService{}}}
-	return &MemberService{tenants: tenants, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}, members, test.hosted("member-unit.test", "active")
+	return &TokenMemberService{tenants: tenants, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}, members, test.hosted("member-unit.test", "active")
 }
 
 func (test *MemberServiceTest) hosted(name string, state string) string {
@@ -174,4 +174,10 @@ func (test *MemberServiceTest) reset(domainId string) string {
 	domains.Delete(old)
 	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId)
 	return domainId
+}
+
+func (test *MemberServiceTest) lister() *MemberService {
+	documents := &DocumentsService{dataSource: DataSource{}}
+	people := &PeopleStorageService{documents: documents, names: &CollectionNamesService{}}
+	return &MemberService{members: &MemberStorageService{documents: documents, names: &CollectionNamesService{}}, people: people, access: &PersonAccessService{people: people}}
 }

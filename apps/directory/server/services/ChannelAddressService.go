@@ -6,6 +6,8 @@ type ChannelAddressService struct {
 	addresses *AddressStorageService
 	// @Needs
 	rules *AddressRulesService
+	// @Needs
+	reservations *ReservationService
 }
 
 func (service *ChannelAddressService) Add(admission Admission, request ChannelAddressRequest) (Address, error) {
@@ -13,13 +15,15 @@ func (service *ChannelAddressService) Add(admission Admission, request ChannelAd
 	existing, found, readFailure := service.addresses.Find(address)
 	channel := AddressDocument{Address: address, DomainId: admission.Caller.DomainId, Kind: service.channelKind(), TargetId: request.ChannelId}
 	failure := cmp.Or(admission.Refusal, invalid, readFailure, service.channelNamed(request.ChannelId))
+	failure = Steps{}.Unless(failure, func() error { return service.reservations.ForAddress(channel.Address) })
 	return service.wire(channel), service.storeUnless(failure, found, existing, channel)
 }
 
 func (service *ChannelAddressService) Remove(admission Admission, raw string) error {
 	address, _ := service.rules.OwnAddress(admission.Caller.DomainId, raw)
 	existing, found, readFailure := service.addresses.Find(address)
-	return service.deleteUnless(cmp.Or(admission.Refusal, readFailure, service.channelOnly(found, existing.Kind)), existing)
+	failure := service.deleteUnless(cmp.Or(admission.Refusal, readFailure, service.channelOnly(found, existing.Kind)), existing)
+	return Steps{}.Unless(failure, func() error { return service.reservations.Release(existing.Address) })
 }
 
 func (service *ChannelAddressService) storeUnless(failure error, found bool, existing AddressDocument, channel AddressDocument) error {

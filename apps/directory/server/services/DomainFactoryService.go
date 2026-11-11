@@ -1,5 +1,3 @@
-import "strings"
-
 // @Service
 type DomainFactoryService struct {
 	// @Needs
@@ -12,15 +10,10 @@ func (factory *DomainFactoryService) New(domainId string) DomainDocument {
 	return DomainDocument{
 		DomainId:     domainId,
 		Name:         domainId,
-		Issuer:       strings.TrimSuffix(settings.PublicUrl, "/") + factory.realmsPath() + domainId,
 		State:        factory.pending(),
 		DkimSelector: settings.DkimSelector,
 		Dns:          DnsState{Mx: unknown, Spf: unknown, Dkim: unknown, Dmarc: unknown},
 	}
-}
-
-func (factory *DomainFactoryService) realmsPath() string {
-	return "/idp/realms/"
 }
 
 func (factory *DomainFactoryService) pending() string {

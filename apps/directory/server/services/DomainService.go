@@ -12,7 +12,7 @@ type DomainService struct {
 	// @Needs
 	collections *TenantCollectionsService
 	// @Needs
-	realms *RealmService
+	memberships *MembershipService
 	// @Needs
 	dns *DnsService
 	// @Needs
@@ -33,7 +33,6 @@ func (service *DomainService) Add(request CreateDomainRequest) (Domain, error) {
 	domainId, invalid := service.name(request.Name)
 	_, found, readFailure := service.domains.Find(domainId)
 	failure := cmp.Or(invalid, readFailure, service.duplicate(found, domainId))
-	failure = service.unless(failure, func() error { return service.realms.Create(domainId) })
 	failure = service.unless(failure, func() error { return service.collections.Prepare(domainId) })
 	document := service.factory.New(domainId)
 	return service.wire(document), service.unless(failure, func() error { return service.domains.Insert(document) })
@@ -49,7 +48,7 @@ func (service *DomainService) Verify(domainId string) (Domain, error) {
 
 func (service *DomainService) Remove(domainId string) error {
 	document, failure := service.existing(domainId)
-	failure = service.unless(failure, func() error { return service.realms.Delete(document.DomainId) })
+	failure = service.unless(failure, func() error { return service.memberships.RemoveDomain(document.DomainId) })
 	failure = service.unless(failure, func() error { return service.collections.Drop(document.DomainId) })
 	return service.unless(failure, func() error { return service.domains.Delete(document) })
 }

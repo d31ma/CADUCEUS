@@ -349,8 +349,9 @@ Members and people (ADR 0005, SPEC AC-ID-10 to AC-ID-13):
   part, creates the Keycloak user in the realm `mesail` (username = the
   prefix, `firstPassword` not temporary, attribute
   `mesail.mustChangePassword` `true`) through the client
-  `mesail-directory` (secret `YON_DIRECTORY_ADMIN_SECRET`, app setting
-  `oidc.admin`), then writes `people`, `members` and `addresses` in the
+  `mesail-directory` (secret `YON_DIRECTORY_ADMIN_SECRET`; Keycloak base
+  URL from the app setting `directory.keycloakurl`, realm `mesail`), then
+  writes `people`, `members` and `addresses` in the
   order of DOMAIN.md. With a prefix that has a person: adds the domain to
   that person; `displayName` and `firstPassword` are ignored and
   `existingPerson` is `true`. The first domain added becomes the person's
@@ -359,7 +360,15 @@ Members and people (ADR 0005, SPEC AC-ID-10 to AC-ID-13):
   refuse to leave a domain without an admin (`409 last_admin`).
 - The person routes check SPEC AC-ID-13 on `directory`'s data: an Operator
   always passes; a DomainAdmin passes only when every domain in the
-  person's `domainIds` is also in the caller's own `adminDomainIds`.
+  person's `domainIds` (at least one) is also in the caller's own
+  `adminDomainIds`, and the person does not have the Keycloak role
+  `mesail-operator` (so a DomainAdmin can never take over an Operator).
+- When Keycloak already has a user with the new prefix but `directory` has
+  no person for it, both add routes answer `409 duplicate`: `directory`
+  never takes over a Keycloak user it did not create (DOMAIN "Person").
+- `GET /members` gives `username`, `admin` and `accountManaged` when the
+  caller has the role `DomainAdmin` or `Operator`, and never lists removed
+  members.
 - A password reset, a 2-step code removal, `state: disabled` and a
   deletion also set the person's `sessionsEndedAt`, so the person's kept
   devices delete their copies (ADR 0006).

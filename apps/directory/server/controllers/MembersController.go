@@ -1,7 +1,4 @@
-import (
-	"net/http"
-	"strconv"
-)
+import "net/http"
 
 // @RequestRoute("/api/v1/directory/members")
 // @SignedIn
@@ -10,14 +7,14 @@ type MembersController struct {
 	admission *AdmissionService
 	// @Needs
 	members *MemberService
+	// @Needs
+	memberships *MembershipService
 }
 
 // @GetRoute
 func (controller *MembersController) GetMembers(request *http.Request) (MemberPage, error) {
 	admission := controller.admission.Admit(request.Header.Get(controller.authorizationHeader()))
-	values := request.URL.Query()
-	limit, invalid := controller.limit(values.Get(controller.limitName()))
-	query := MemberQuery{Text: values.Get(controller.queryName()), Cursor: values.Get(controller.cursorName()), Limit: limit}
+	query, invalid := PageWindow{}.Query(request.URL.Query())
 	return controller.members.Search(admission, query, invalid)
 }
 
@@ -31,29 +28,64 @@ func (controller *MembersController) GetMember(
 	return controller.members.Summary(controller.admission.Admit(authorization), memberId)
 }
 
-func (controller *MembersController) limit(raw string) (int, error) {
-	limit, failure := strconv.Atoi(raw)
-	switch {
-	case raw == "":
-		return 0, nil
-	case failure != nil:
-		return 0, &InvalidRequest{Field: controller.limitName(), Message: "limit must be a whole number"}
+// @PostRoute
+// @Allow(DomainAdmin)
+// @ResponseStatus(201)
+func (controller *MembersController) PostMember(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromBody
+	request AddMemberRequest,
+) (AddedMember, error) {
+	return controller.postMemberUnless(controller.admission.Admit(authorization), request)
+}
+
+// @PatchRoute("/{member_id}")
+// @Allow(DomainAdmin)
+func (controller *MembersController) PatchMember(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromPath("member_id")
+	memberId string,
+	// @FromBody
+	change MemberChange,
+) (MemberSummary, error) {
+	return controller.patchMemberUnless(controller.admission.Admit(authorization), memberId, change)
+}
+
+// @DeleteRoute("/{member_id}")
+// @Allow(DomainAdmin)
+// @ResponseStatus(204)
+func (controller *MembersController) DeleteMember(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromPath("member_id")
+	memberId string,
+) error {
+	return controller.deleteMemberUnless(controller.admission.Admit(authorization), memberId)
+}
+
+func (controller *MembersController) postMemberUnless(admission Admission, request AddMemberRequest) (AddedMember, error) {
+	if admission.Refusal != nil {
+		return AddedMember{}, admission.Refusal
 	}
-	return limit, nil
+	return controller.memberships.Add(admission.Caller, admission.Caller.DomainId, request)
+}
+
+func (controller *MembersController) patchMemberUnless(admission Admission, memberId string, change MemberChange) (MemberSummary, error) {
+	if admission.Refusal != nil {
+		return MemberSummary{}, admission.Refusal
+	}
+	return controller.memberships.Change(admission.Caller, memberId, change)
+}
+
+func (controller *MembersController) deleteMemberUnless(admission Admission, memberId string) error {
+	if admission.Refusal != nil {
+		return admission.Refusal
+	}
+	return controller.memberships.Remove(admission.Caller, memberId)
 }
 
 func (controller *MembersController) authorizationHeader() string {
 	return "Authorization"
-}
-
-func (controller *MembersController) limitName() string {
-	return "limit"
-}
-
-func (controller *MembersController) queryName() string {
-	return "query"
-}
-
-func (controller *MembersController) cursorName() string {
-	return "cursor"
 }

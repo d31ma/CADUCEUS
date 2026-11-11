@@ -44,6 +44,22 @@
   routes), EVENTS, SERVICE-TOKENS and SLICES (Wave 3: LU, L0 to L7) are
   updated. No code changes yet.
 
+### Slice L3: directory people, members and the reserved prefix
+
+- `directory` keeps people (`people`) and the install-wide prefix
+  reservation (`local-parts`, ADR 0005). New routes: member admin (`POST`,
+  `PATCH`, `DELETE /members`, `POST /domains/{domainId}/members` for the
+  Operator, `409 last_admin`), people (`GET /people/{personId}` for
+  `identity`, `GET /people`, rename, disable, password reset, 2-step code
+  removal, delete) with the AC-ID-13 check, and `PUT /me/default-domain`.
+  `accountManaged` on member summaries for admins.
+- Keycloak users in the realm `mesail` through the client
+  `mesail-directory`; adding or removing a domain no longer touches
+  Keycloak (realm creation and the realm template are gone).
+- Aliases and channel addresses refuse a person's prefix (`409 duplicate`).
+  Every membership change publishes `member.upserted` (`removed` on
+  removal). The old per-realm mode keeps working until L5.
+
 ### Slice L2: one Keycloak realm
 
 - Keycloak has the realm `mesail` for every person (ADR 0005): the

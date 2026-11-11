@@ -18,7 +18,7 @@ type DomainServiceTest struct {
 	behaviors *BehaviorContext
 }
 
-func (test *DomainServiceTest) TestAddingADomainCreatesItsRealmAndStoresItPending() {
+func (test *DomainServiceTest) TestAddingADomainStoresItPendingWithoutCallingKeycloak() {
 	service, calls, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
 	name := "Add-" + test.reset("add-unit.test")[4:]
@@ -28,7 +28,7 @@ func (test *DomainServiceTest) TestAddingADomainCreatesItsRealmAndStoresItPendin
 	Assert.Equals("pending", domain.State)
 	Assert.Equals("mesail", domain.DkimSelector)
 	Assert.Equals("missing", domain.Dns.Mx)
-	Assert.IsTrue(strings.Contains(calls(), "POST /idp/admin/realms realm="+strings.ToLower(name)), calls())
+	Assert.Equals("", calls())
 }
 
 func (test *DomainServiceTest) TestAddingADomainTwiceIsADuplicate() {
@@ -39,47 +39,6 @@ func (test *DomainServiceTest) TestAddingADomainTwiceIsADuplicate() {
 	_, err := service.Add(CreateDomainRequest{Name: name})
 	var duplicate *Duplicate
 	Assert.IsTrue(errors.As(err, &duplicate), "want Duplicate")
-}
-
-func (test *DomainServiceTest) TestARealmThatAlreadyExistsIsAdopted() {
-	service, _, closeAll := test.world(http.StatusConflict)
-	defer closeAll()
-	_, err := service.Add(CreateDomainRequest{Name: test.reset("adopt-unit.test")})
-	Assert.Equals("<nil>", fmt.Sprint(err))
-}
-
-func (test *DomainServiceTest) TestARealmThatKeycloakWillNotCreateButThatExistsIsAdopted() {
-	service, calls, closeAll := test.worldWith(http.StatusForbidden, http.StatusNoContent, http.StatusOK)
-	defer closeAll()
-	name := test.reset("seeded-unit.test")
-	domain, err := service.Add(CreateDomainRequest{Name: name})
-	Assert.Equals("<nil>", fmt.Sprint(err))
-	Assert.Equals(name, domain.DomainId)
-	Assert.IsTrue(strings.Contains(calls(), "GET /idp/realms/"+name+"/.well-known/openid-configuration"), calls())
-}
-
-func (test *DomainServiceTest) TestARealmThatKeycloakWillNotCreateAndThatIsMissingLeavesNoDomain() {
-	service, _, closeAll := test.worldWith(http.StatusForbidden, http.StatusNoContent, http.StatusNotFound)
-	defer closeAll()
-	name := test.reset("refused-unit.test")
-	_, err := service.Add(CreateDomainRequest{Name: name})
-	_, getErr := service.Get(name)
-	var unavailable *Unavailable
-	var missing *NotFound
-	Assert.IsTrue(errors.As(err, &unavailable), "want Unavailable")
-	Assert.IsTrue(errors.As(getErr, &missing), "want NotFound")
-}
-
-func (test *DomainServiceTest) TestAKeycloakFailureLeavesNoDomain() {
-	service, _, closeAll := test.world(http.StatusInternalServerError)
-	defer closeAll()
-	name := test.reset("fail-unit.test")
-	_, err := service.Add(CreateDomainRequest{Name: name})
-	_, getErr := service.Get(name)
-	var unavailable *Unavailable
-	var missing *NotFound
-	Assert.IsTrue(errors.As(err, &unavailable), "want Unavailable")
-	Assert.IsTrue(errors.As(getErr, &missing), "want NotFound")
 }
 
 func (test *DomainServiceTest) TestANameWithoutADotIsRefused() {
@@ -132,7 +91,7 @@ func (test *DomainServiceTest) TestListShowsAnAddedDomain() {
 	Assert.IsTrue(strings.Contains(string(encoded), `"domainId":"`+added.DomainId+`"`), "domain not listed")
 }
 
-func (test *DomainServiceTest) TestRemovingADomainDeletesItsRealmAndRecord() {
+func (test *DomainServiceTest) TestRemovingADomainDeletesItsRecordWithoutCallingKeycloak() {
 	service, calls, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
 	added, _ := service.Add(CreateDomainRequest{Name: test.reset("remove-unit.test")})
@@ -141,20 +100,7 @@ func (test *DomainServiceTest) TestRemovingADomainDeletesItsRealmAndRecord() {
 	var missing *NotFound
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.IsTrue(errors.As(getErr, &missing), "want NotFound")
-	Assert.IsTrue(strings.Contains(calls(), "DELETE /idp/admin/realms/"+added.DomainId), calls())
-}
-
-func (test *DomainServiceTest) TestRemovingADomainWhoseRealmKeycloakWillNotDeleteKeepsTheDomain() {
-	service, _, closeAll := test.worldWith(http.StatusCreated, http.StatusForbidden, http.StatusOK)
-	defer closeAll()
-	added, _ := service.Add(CreateDomainRequest{Name: test.reset("seeded-remove-unit.test")})
-	err := service.Remove(added.DomainId)
-	stored, getErr := service.Get(added.DomainId)
-	var notManaged *RealmNotManaged
-	Assert.IsTrue(errors.As(err, &notManaged), "want RealmNotManaged")
-	Assert.IsTrue(strings.Contains(err.Error(), added.DomainId), err.Error())
-	Assert.Equals("<nil>", fmt.Sprint(getErr))
-	Assert.Equals(added.DomainId, stored.DomainId)
+	Assert.Equals("", calls())
 }
 
 func (test *DomainServiceTest) TestRemovingAnUnknownDomainIsNotFound() {
@@ -189,8 +135,7 @@ func (test *DomainServiceTest) worldWith(createStatus int, deleteStatus int, dis
 	dns := httptest.NewServer(http.HandlerFunc(test.dns))
 	settings := map[string]any{"yon": map[string]any{"directory": map[string]any{
 		"publicurl": "https://mail.example.test", "keycloakurl": keycloak.URL + "/idp", "admin": map[string]any{"client": "mesail-directory", "secret": "example-secret"},
-		"realmsecrets": map[string]any{"identity": "example-identity", "service": "example-service", "account": "example-account"},
-		"mailhost":     "mx.mesail.test", "spfmechanism": "mx", "dkimselector": "mesail",
+		"mailhost": "mx.mesail.test", "spfmechanism": "mx", "dkimselector": "mesail",
 		"dnsresolver": dns.URL + "/dns-query",
 	}}}
 	encoded, _ := json.Marshal(settings)
@@ -200,7 +145,7 @@ func (test *DomainServiceTest) worldWith(createStatus int, deleteStatus int, dis
 	service := &DomainService{
 		domains:     &DomainStorageService{documents: documents, names: &CollectionNamesService{}},
 		collections: &TenantCollectionsService{documents: documents, names: &CollectionNamesService{}},
-		realms:      &RealmService{settings: settingsService},
+		memberships: &MembershipService{people: &PeopleStorageService{documents: documents, names: &CollectionNamesService{}}},
 		dns:         &DnsService{settings: settingsService},
 		factory:     &DomainFactoryService{settings: settingsService},
 	}

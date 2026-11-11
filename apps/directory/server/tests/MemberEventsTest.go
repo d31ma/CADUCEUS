@@ -43,13 +43,13 @@ func (test *MemberEventsTest) caller(domain string, name string) oidc.Caller {
 	return oidc.Caller{DomainId: domain, MemberId: "bo-id", DisplayName: name, Email: "Bo@" + strings.ToUpper(domain)}
 }
 
-func (test *MemberEventsTest) world() (*MemberService, *MemberStorageService, string) {
+func (test *MemberEventsTest) world() (*TokenMemberService, *MemberStorageService, string) {
 	os.Setenv("YON_APPLICATION_JSON", `{"yon":{"outbox":{"producer":"directory","subscribers":[{"name":"search","url":"http://127.0.0.1:9/api/v1/search/events"}]}}}`)
 	documents := &DocumentsService{dataSource: DataSource{}}
 	members := &MemberStorageService{documents: documents, names: &CollectionNamesService{}}
 	addresses := &AddressStorageService{documents: documents, names: &CollectionNamesService{}}
 	tenants := &TenantService{domains: &DomainStorageService{documents: documents, names: &CollectionNamesService{}}}
-	return &MemberService{tenants: tenants, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}, members, test.hosted("events-unit.test", "active")
+	return &TokenMemberService{tenants: tenants, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}, members, test.hosted("events-unit.test", "active")
 }
 
 func (test *MemberEventsTest) hosted(name string, state string) string {

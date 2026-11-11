@@ -1,4 +1,8 @@
-import "cmp"
+import (
+	"cmp"
+
+	"mesail.dev/packages/oidc"
+)
 
 // @RequestRoute("/api/v1/directory/domains")
 // @Allow(Operator)
@@ -7,6 +11,8 @@ type DomainsController struct {
 	callers *CallerService
 	// @Needs
 	domains *DomainService
+	// @Needs
+	memberships *MembershipService
 }
 
 // @GetRoute
@@ -59,6 +65,27 @@ func (controller *DomainsController) DeleteDomain(
 	domainId string,
 ) error {
 	return controller.removeUnless(controller.operator(authorization), domainId)
+}
+
+// @PostRoute("/{domain_id}/members")
+// @ResponseStatus(201)
+func (controller *DomainsController) PostMember(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromPath("domain_id")
+	domainId string,
+	// @FromBody
+	request AddMemberRequest,
+) (AddedMember, error) {
+	caller, refused := controller.callers.Caller(authorization)
+	return controller.addMemberUnless(cmp.Or(refused, controller.callers.Operator(caller)), caller, domainId, request)
+}
+
+func (controller *DomainsController) addMemberUnless(refused error, caller oidc.Caller, domainId string, request AddMemberRequest) (AddedMember, error) {
+	if refused != nil {
+		return AddedMember{}, refused
+	}
+	return controller.memberships.Add(caller, domainId, request)
 }
 
 func (controller *DomainsController) operator(authorization string) error {

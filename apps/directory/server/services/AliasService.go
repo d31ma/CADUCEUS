@@ -12,6 +12,8 @@ type AliasService struct {
 	members *MemberStorageService
 	// @Needs
 	rules *AddressRulesService
+	// @Needs
+	reservations *ReservationService
 }
 
 func (service *AliasService) Add(admission Admission, request CreateAliasRequest) (Address, error) {
@@ -32,6 +34,7 @@ func (service *AliasService) add(caller oidc.Caller, request CreateAliasRequest)
 	_, taken, addressFailure := service.addresses.Find(address)
 	alias := AddressDocument{Address: address, DomainId: caller.DomainId, Kind: service.aliasKind(), TargetId: memberId}
 	failure := cmp.Or(invalid, memberFailure, addressFailure, service.knownMember(found), service.free(taken, address))
+	failure = Steps{}.Unless(failure, func() error { return service.reservations.ForAddress(alias.Address) })
 	return service.wire(alias), service.insertUnless(failure, alias)
 }
 

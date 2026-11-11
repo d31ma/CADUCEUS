@@ -4,12 +4,6 @@ import "strings"
 type SessionAccountService struct {
 	Accounts      []SessionAccount
 	CurrentDomain string
-	// @Needs
-	identity *IdentityClient
-}
-
-func (service *SessionAccountService) Load(accessToken string) (Me, error) {
-	return BehaviorsAnswer[Me](service.identity.Me("Bearer " + accessToken))
 }
 
 func (service *SessionAccountService) Add(me Me) {
@@ -27,6 +21,11 @@ func (service *SessionAccountService) Remove(domainId string) {
 	service.Switch(service.firstDomain())
 }
 
+func (service *SessionAccountService) Restore(signedIn []Me) {
+	service.Accounts = service.accountsOf(signedIn)
+	service.Switch(service.firstDomain())
+}
+
 func (service *SessionAccountService) Current() SessionAccount {
 	return service.find(service.CurrentDomain)
 }
@@ -38,6 +37,14 @@ func (service *SessionAccountService) accountOf(me Me) SessionAccount {
 		DisplayName: me.DisplayName,
 		Initials:    service.initials(me.DomainId),
 	}
+}
+
+func (service *SessionAccountService) accountsOf(signedIn []Me) []SessionAccount {
+	accounts := []SessionAccount{}
+	for _, me := range signedIn {
+		accounts = append(accounts, service.accountOf(me))
+	}
+	return accounts
 }
 
 func (service *SessionAccountService) without(domainId string) []SessionAccount {

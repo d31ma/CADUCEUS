@@ -1,4 +1,3 @@
 type SessionRefreshRequest struct {
-	DomainId     string `json:"domainId"`
-	RefreshToken string `json:"refreshToken"`
+	SessionKey string `json:"sessionKey"`
 }

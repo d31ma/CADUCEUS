@@ -1,7 +1,6 @@
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
+	"errors"
 )
 
 // @TestSetup
@@ -11,76 +10,56 @@ func (setup SessionTestSetup) Configure(execution *BehaviorExecution) (*Behavior
 	configuration := NewBehaviorConfiguration()
 	configuration.Http["identity"] = setup
 	configuration.Http["IdentityClient"] = setup
-	configuration.Http["Identity"] = setup
 	return configuration, nil
 }
 
-func (fake SessionTestSetup) Exchange(request *BehaviorHttpRequest, execution *BehaviorExecution) (BehaviorValue, error) {
-	route := request.Path[strings.LastIndex(request.Path, "/"):]
-	switch route {
-	case "/config":
-		return fake.config(), nil
-	case "/me":
-		return fake.me(fmt.Sprint(request.Headers["Authorization"]))
-	case "/token":
-		return fake.token(fake.tokenRequestOf(request).Code)
-	case "/refresh":
-		return fake.refresh(fake.refreshRequestOf(request).RefreshToken)
+func (setup SessionTestSetup) Exchange(request *BehaviorHttpRequest, execution *BehaviorExecution) (BehaviorValue, error) {
+	switch request.Method + " " + request.Path {
+	case "POST /api/v1/identity/session":
+		return setup.signIn(setup.signInRequestOf(request))
+	case "POST /api/v1/identity/session/refresh":
+		return setup.refresh(setup.refreshRequestOf(request).SessionKey)
+	case "DELETE /api/v1/identity/session":
+		return nil, nil
 	}
-	return nil, fake.status(404)
+	return nil, errors.New("no fake answer for " + request.Method + " " + request.Path)
 }
 
-func (fake SessionTestSetup) config() ClientConfig {
-	return ClientConfig{
-		Issuer:      "https://sign-in.example.test/realms/{domainId}",
-		ClientId:    "mesail-web",
-		Scopes:      []string{"openid", "email"},
-		ApiBase:     "/api/v1",
-		RedirectUri: "https://mesail.example.test/",
+func (setup SessionTestSetup) signIn(request SessionSignInRequest) (BehaviorValue, error) {
+	switch request.Address + " " + request.Password + " " + request.OneTimeCode {
+	case "ana@example.com right ", "ana@example.com right 123456":
+		return setup.session("example.com", "access-1", "key-1"), nil
+	case "ana@example.org right ":
+		return setup.session("example.org", "access-org", "key-org"), nil
 	}
+	return nil, errors.New("unauthenticated")
 }
 
-func (fake SessionTestSetup) me(authorization string) (BehaviorValue, error) {
-	switch authorization {
-	case "Bearer access-1", "Bearer access-2":
-		return Me{MemberId: "m-1", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}, nil
-	case "Bearer access-disabled":
-		return nil, fake.status(403)
+func (setup SessionTestSetup) refresh(sessionKey string) (BehaviorValue, error) {
+	switch sessionKey {
+	case "key-1":
+		return setup.session("example.com", "access-2", "key-2"), nil
+	case "key-org":
+		return setup.session("example.org", "access-org-2", "key-org-2"), nil
 	}
-	return nil, fake.status(401)
+	return nil, errors.New("unauthenticated")
 }
 
-func (fake SessionTestSetup) token(code string) (BehaviorValue, error) {
-	switch code {
-	case "good-code":
-		return SessionTokenAnswer{AccessToken: "access-1", RefreshToken: "refresh-1", IdToken: "id-1", ExpiresIn: 60}, nil
-	case "disabled-code":
-		return SessionTokenAnswer{AccessToken: "access-disabled", RefreshToken: "refresh-x", IdToken: "id-x", ExpiresIn: 60}, nil
-	}
-	return nil, fake.status(400)
+func (setup SessionTestSetup) session(domainId string, accessToken string, sessionKey string) Session {
+	me := Me{MemberId: "m-1", DomainId: domainId, DisplayName: "Ana Ruiz", PrimaryAddress: "ana@" + domainId, Roles: []string{}}
+	return Session{Me: me, AccessToken: accessToken, ExpiresIn: 60, SessionKey: sessionKey}
 }
 
-func (fake SessionTestSetup) refresh(refreshToken string) (BehaviorValue, error) {
-	if refreshToken == "refresh-1" {
-		return SessionTokenAnswer{AccessToken: "access-2", RefreshToken: "refresh-2", IdToken: "id-2", ExpiresIn: 60}, nil
-	}
-	return nil, fake.status(400)
-}
-
-func (fake SessionTestSetup) tokenRequestOf(request *BehaviorHttpRequest) SessionTokenRequest {
+func (setup SessionTestSetup) signInRequestOf(request *BehaviorHttpRequest) SessionSignInRequest {
 	text, _ := json.Marshal(request.Body)
-	body := SessionTokenRequest{}
+	body := SessionSignInRequest{}
 	_ = json.Unmarshal(text, &body)
 	return body
 }
 
-func (fake SessionTestSetup) refreshRequestOf(request *BehaviorHttpRequest) SessionRefreshRequest {
+func (setup SessionTestSetup) refreshRequestOf(request *BehaviorHttpRequest) SessionRefreshRequest {
 	text, _ := json.Marshal(request.Body)
 	body := SessionRefreshRequest{}
 	_ = json.Unmarshal(text, &body)
 	return body
-}
-
-func (fake SessionTestSetup) status(code int) error {
-	return &BehaviorError{Code: "HTTP_STATUS", Message: "fake answer", Status: code}
 }

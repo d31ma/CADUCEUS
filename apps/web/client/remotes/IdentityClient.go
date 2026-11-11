@@ -1,22 +1,19 @@
 // @HTTPClient("/api/v1/identity")
 type IdentityClient interface {
-	// @GetRequest("/config")
-	Config() (BehaviorValue, error)
-
-	// @GetRequest("/me")
-	Me(
-		// @RequestHeader("Authorization")
-		authorization BehaviorValue,
-	) (BehaviorValue, error)
-
-	// @PostRequest("/token")
-	Token(
+	// @PostRequest("/session")
+	SignIn(
 		// @RequestBody
 		request BehaviorValue,
 	) (BehaviorValue, error)
 
-	// @PostRequest("/refresh")
+	// @PostRequest("/session/refresh")
 	Refresh(
+		// @RequestBody
+		request BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @DeleteRequest("/session")
+	SignOut(
 		// @RequestBody
 		request BehaviorValue,
 	) (BehaviorValue, error)

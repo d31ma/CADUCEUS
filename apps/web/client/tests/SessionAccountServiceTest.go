@@ -48,15 +48,16 @@ func (test *SessionAccountServiceTest) TestRemoveOfTheLastAccountLeavesNoCurrent
 	Assert.Equals("", accounts.Current().DomainId)
 }
 
-func (test *SessionAccountServiceTest) TestLoadAsksWhoIsSignedIn() {
-	client := NewIdentityClientWith(test.behaviors)
-	me, failure := (&SessionAccountService{identity: client}).Load("access-1")
-	Assert.Equals(nil, failure)
-	Assert.Equals("ana@example.com", me.PrimaryAddress)
+func (test *SessionAccountServiceTest) TestRestoreMakesTheFirstAccountCurrent() {
+	accounts := &SessionAccountService{}
+	accounts.Restore([]Me{test.me("example.com", "ana@example.com"), test.me("example.org", "ana@example.org")})
+	Assert.Equals(2, len(accounts.Accounts))
+	Assert.Equals("example.com", accounts.CurrentDomain)
+	Assert.IsTrue(accounts.Accounts[0].Current)
 }
 
-func (test *SessionAccountServiceTest) TestLoadReportsARefusedToken() {
-	client := NewIdentityClientWith(test.behaviors)
-	_, failure := (&SessionAccountService{identity: client}).Load("stale")
-	Assert.IsTrue(failure != nil)
+func (test *SessionAccountServiceTest) TestRestoreOfNothingLeavesNoAccount() {
+	accounts := &SessionAccountService{}
+	accounts.Restore([]Me{})
+	Assert.Equals("", accounts.CurrentDomain)
 }

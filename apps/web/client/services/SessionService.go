@@ -1,19 +1,15 @@
 // @Service
 type SessionService struct {
-	Email        string
-	Step         string
-	Problem      string
-	DomainId     string
-	SignInHost   string
-	AuthorizeUrl string
-	SignOutUrl   string
-	Remember     bool
+	Email           string
+	Password        string
+	OneTimeCode     string
+	Remember        bool
+	Step            string
+	Problem         string
+	Adding          bool
+	SignedOutDomain string
 	// @LocalState
 	RecentDomains []SessionRecentDomain
-	// @SessionState
-	Pending SessionPending
-	// @Needs
-	proof *SessionProofService
 	// @Needs
 	realm *SessionRealmService
 	// @Needs
@@ -27,21 +23,19 @@ type SessionService struct {
 // @OnStart
 func (session *SessionService) Start() {
 	session.Remember = true
-	session.Step = session.stepEmail()
-	session.Problem = session.unavailableWhen(session.realm.Load())
-	session.Step = session.stepFor(session.Problem, session.Step)
+	session.accounts.Restore(session.tokens.Restore())
+	session.Step = session.stepForAccounts()
 }
 
-func (session *SessionService) Continue() {
-	session.DomainId = session.realm.DomainOf(session.Email)
-	session.Problem = session.invalidWhenEmpty(session.DomainId)
-	session.Step = session.domainStepWhenClear(session.Problem)
-	session.prepareWhenClear(session.Problem)
+func (session *SessionService) SignIn() {
+	domainId := session.realm.DomainOf(session.Email)
+	session.Problem = session.invalidWhenEmpty(domainId)
+	session.signInWhenClear(domainId)
 }
 
-func (session *SessionService) ContinueAs(recent SessionRecentDomain) {
+func (session *SessionService) UseRecent(recent SessionRecentDomain) {
 	session.Email = recent.Email
-	session.Continue()
+	session.Problem = ""
 }
 
 func (session *SessionService) Forget(domainId string) {
@@ -52,48 +46,81 @@ func (session *SessionService) ForgetAll() {
 	session.RecentDomains = []SessionRecentDomain{}
 }
 
-func (session *SessionService) UseDifferentEmail() {
-	session.Problem = ""
-	session.Step = session.stepEmail()
+func (session *SessionService) AddDomain() {
+	session.Adding = true
+	session.clearForm()
+	session.Step = session.stepSignIn()
 }
 
-func (session *SessionService) Leave() {
-	session.Step = "redirecting"
-	session.rememberWhenAsked()
+func (session *SessionService) CancelAdd() {
+	session.Adding = false
+	session.clearForm()
+	session.Step = session.stepForAccounts()
 }
 
-func (session *SessionService) Cancel() {
-	session.Step = session.stepDomain()
-}
-
-func (session *SessionService) Finish(code string, state string) {
-	problem := session.problems.OfState(session.Pending.State, state)
-	problem = session.exchangeWhenClear(problem, code)
-	me, problem := session.loadWhenClear(problem)
-	session.Problem = problem
-	session.Step = session.stepFor(problem, session.stepSignedIn())
-	session.addWhenClear(me, problem)
-}
-
-func (session *SessionService) Fail(signInError string) {
-	session.Problem = session.problems.OfSignInError(signInError)
-	session.Step = session.stepProblem()
+func (session *SessionService) SignInAgain() {
+	session.Email = session.accounts.Current().Address
+	session.Adding = false
+	session.Step = session.stepSignIn()
 }
 
 func (session *SessionService) Switch(domainId string) {
 	session.accounts.Switch(domainId)
-	session.SignOutUrl = session.realm.LogoutUrl(domainId, session.tokens.IdToken(domainId))
 }
 
 func (session *SessionService) SignOut() {
-	session.tokens.Forget(session.accounts.CurrentDomain)
-	session.Step = "signedOut"
+	session.SignedOutDomain = session.accounts.CurrentDomain
+	session.signOutOf(session.accounts.CurrentDomain)
+	session.Step = session.stepAfterSignOut()
+}
+
+func (session *SessionService) SignOutAll() {
+	session.SignedOutDomain = ""
+	session.signOutEach(session.accounts.Accounts)
+	session.Step = session.stepAfterSignOut()
 }
 
 // @OnEvent
 func (session *SessionService) Shown(changed VisibilityChanged) {
 	failure := session.checkWhenShown(changed.Visible)
 	session.Step = session.expiredWhenFailed(failure)
+}
+
+func (session *SessionService) signInWhenClear(domainId string) {
+	if session.Problem != "" {
+		return
+	}
+	session.signInTo(domainId)
+}
+
+func (session *SessionService) signInTo(domainId string) {
+	request := SessionSignInRequest{Address: session.Email, Password: session.Password, OneTimeCode: session.OneTimeCode}
+	me, failure := session.tokens.SignIn(request)
+	session.Problem = session.problems.OfFailure(failure)
+	session.Password = ""
+	session.OneTimeCode = ""
+	session.rememberWhenAsked(domainId)
+	session.addWhenClear(me)
+}
+
+func (session *SessionService) addWhenClear(me Me) {
+	if session.Problem != "" {
+		return
+	}
+	session.accounts.Add(me)
+	session.Adding = false
+	session.Step = session.stepSignedIn()
+}
+
+func (session *SessionService) signOutEach(accounts []SessionAccount) {
+	for _, account := range accounts {
+		session.signOutOf(account.DomainId)
+	}
+}
+
+func (session *SessionService) signOutOf(domainId string) {
+	session.tokens.SignOut(domainId)
+	session.accounts.Remove(domainId)
 }
 
 func (session *SessionService) checkWhenShown(visible bool) error {
@@ -104,45 +131,11 @@ func (session *SessionService) checkWhenShown(visible bool) error {
 	return failure
 }
 
-func (session *SessionService) prepareWhenClear(problem string) {
-	if problem != "" {
-		return
-	}
-	session.prepare()
-}
-
-func (session *SessionService) prepare() {
-	key, failure := session.proof.NewKey()
-	session.Pending = SessionPending{DomainId: session.DomainId, Email: session.Email, State: key.State, Verifier: key.Verifier}
-	session.AuthorizeUrl = session.realm.AuthorizeUrl(session.Pending, key.Challenge)
-	session.SignInHost = session.realm.SignInHost(session.DomainId)
-	session.Problem = session.unavailableWhen(failure)
-	session.Step = session.stepFor(session.Problem, session.Step)
-}
-
-func (session *SessionService) exchangeWhenClear(problem string, code string) string {
-	if problem != "" {
-		return problem
-	}
-	return session.problems.OfFailure(session.tokens.Exchange(session.Pending, code, session.realm.RedirectUri()))
-}
-
-func (session *SessionService) loadWhenClear(problem string) (Me, string) {
-	if problem != "" {
-		return Me{}, problem
-	}
-	accessToken, _ := session.tokens.AccessToken(session.Pending.DomainId)
-	me, failure := session.accounts.Load(accessToken)
-	return me, session.problems.OfFailure(failure)
-}
-
-func (session *SessionService) addWhenClear(me Me, problem string) {
-	if problem != "" {
-		return
-	}
-	session.accounts.Add(me)
-	session.Pending = SessionPending{}
-	session.Switch(me.DomainId)
+func (session *SessionService) clearForm() {
+	session.Email = ""
+	session.Password = ""
+	session.OneTimeCode = ""
+	session.Problem = ""
 }
 
 func (session *SessionService) invalidWhenEmpty(domainId string) string {
@@ -152,25 +145,18 @@ func (session *SessionService) invalidWhenEmpty(domainId string) string {
 	return ""
 }
 
-func (session *SessionService) domainStepWhenClear(problem string) string {
-	if problem != "" {
-		return session.stepEmail()
+func (session *SessionService) stepForAccounts() string {
+	if len(session.accounts.Accounts) == 0 {
+		return session.stepSignIn()
 	}
-	return session.stepDomain()
+	return session.stepSignedIn()
 }
 
-func (session *SessionService) unavailableWhen(failure error) string {
-	if failure != nil {
-		return session.problems.Unavailable()
+func (session *SessionService) stepAfterSignOut() string {
+	if len(session.accounts.Accounts) == 0 {
+		return "signedOut"
 	}
-	return ""
-}
-
-func (session *SessionService) stepFor(problem string, otherwise string) string {
-	if problem != "" {
-		return session.stepProblem()
-	}
-	return otherwise
+	return session.stepSignedIn()
 }
 
 func (session *SessionService) expiredWhenFailed(failure error) string {
@@ -180,12 +166,12 @@ func (session *SessionService) expiredWhenFailed(failure error) string {
 	return session.Step
 }
 
-func (session *SessionService) rememberWhenAsked() {
-	if !session.Remember {
+func (session *SessionService) rememberWhenAsked(domainId string) {
+	if !session.Remember || session.Problem != "" {
 		return
 	}
-	recent := SessionRecentDomain{DomainId: session.DomainId, Email: session.Email}
-	session.RecentDomains = append([]SessionRecentDomain{recent}, session.recentWithout(session.DomainId)...)
+	recent := SessionRecentDomain{DomainId: domainId, Email: session.Email}
+	session.RecentDomains = append([]SessionRecentDomain{recent}, session.recentWithout(domainId)...)
 }
 
 func (session *SessionService) recentWithout(domainId string) []SessionRecentDomain {
@@ -203,16 +189,8 @@ func (session *SessionService) keepRecent(kept []SessionRecentDomain, recent Ses
 	return append(kept, recent)
 }
 
-func (session *SessionService) stepEmail() string {
-	return "email"
-}
-
-func (session *SessionService) stepDomain() string {
-	return "domain"
-}
-
-func (session *SessionService) stepProblem() string {
-	return "problem"
+func (session *SessionService) stepSignIn() string {
+	return "signIn"
 }
 
 func (session *SessionService) stepSignedIn() string {

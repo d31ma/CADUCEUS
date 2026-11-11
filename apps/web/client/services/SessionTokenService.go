@@ -1,5 +1,9 @@
+import "sort"
+
 // @Service
 type SessionTokenService struct {
+	// @SessionState
+	Keys   map[string]string
 	tokens map[string]SessionTokens
 	// @Needs
 	identity *IdentityClient
@@ -7,67 +11,109 @@ type SessionTokenService struct {
 	clock Clock
 }
 
-func (service *SessionTokenService) Exchange(pending SessionPending, code string, redirectUri string) error {
-	request := SessionTokenRequest{DomainId: pending.DomainId, Code: code, CodeVerifier: pending.Verifier, RedirectUri: redirectUri}
-	answer, failure := BehaviorsAnswer[SessionTokenAnswer](service.identity.Token(request))
-	return service.keepUnlessFailed(pending.DomainId, answer, failure)
+func (service *SessionTokenService) SignIn(request SessionSignInRequest) (Me, error) {
+	session, failure := BehaviorsAnswer[Session](service.identity.SignIn(request))
+	return session.Me, service.keepUnlessFailed(session, failure)
+}
+
+func (service *SessionTokenService) Restore() []Me {
+	return service.restoreAll(service.domains())
 }
 
 func (service *SessionTokenService) AccessToken(domainId string) (string, error) {
 	failure := service.refreshWhenDue(domainId)
-	return service.saved(domainId).AccessToken, failure
+	return service.tokens[domainId].AccessToken, failure
 }
 
-func (service *SessionTokenService) IdToken(domainId string) string {
-	return service.saved(domainId).IdToken
+func (service *SessionTokenService) SignOut(domainId string) error {
+	_, failure := service.identity.SignOut(SessionRefreshRequest{SessionKey: service.Keys[domainId]})
+	service.Forget(domainId)
+	return failure
 }
 
 func (service *SessionTokenService) Forget(domainId string) {
-	delete(service.store(), domainId)
+	delete(service.Keys, domainId)
+	delete(service.tokens, domainId)
 }
 
-func (service *SessionTokenService) refresh(domainId string) error {
-	request := SessionRefreshRequest{DomainId: domainId, RefreshToken: service.saved(domainId).RefreshToken}
-	answer, failure := BehaviorsAnswer[SessionTokenAnswer](service.identity.Refresh(request))
-	service.Forget(domainId)
-	return service.keepUnlessFailed(domainId, answer, failure)
+func (service *SessionTokenService) restoreAll(domainIds []string) []Me {
+	signedIn := []Me{}
+	for _, domainId := range domainIds {
+		signedIn = service.addRestored(signedIn, domainId)
+	}
+	return signedIn
 }
 
-func (service *SessionTokenService) keepUnlessFailed(domainId string, answer SessionTokenAnswer, failure error) error {
+func (service *SessionTokenService) addRestored(signedIn []Me, domainId string) []Me {
+	me, failure := service.refresh(domainId)
 	if failure != nil {
-		return failure
+		return signedIn
 	}
-	return service.keep(domainId, answer)
+	return append(signedIn, me)
 }
 
-func (service *SessionTokenService) keep(domainId string, answer SessionTokenAnswer) error {
-	now, failure := service.clock.NowMs()
-	service.store()[domainId] = SessionTokens{
-		AccessToken:  answer.AccessToken,
-		RefreshToken: answer.RefreshToken,
-		IdToken:      answer.IdToken,
-		ExpiresAtMs:  now + answer.ExpiresIn*service.millisecondsPerSecond(),
-	}
-	return failure
+func (service *SessionTokenService) refresh(domainId string) (Me, error) {
+	request := SessionRefreshRequest{SessionKey: service.Keys[domainId]}
+	session, failure := BehaviorsAnswer[Session](service.identity.Refresh(request))
+	service.forgetWhenFailed(domainId, failure)
+	return session.Me, service.keepUnlessFailed(session, failure)
 }
 
 func (service *SessionTokenService) refreshWhenDue(domainId string) error {
 	now, failure := service.clock.NowMs()
-	if failure != nil || now < service.saved(domainId).ExpiresAtMs-service.refreshMarginMs() {
+	if failure != nil || now < service.tokens[domainId].ExpiresAtMs-service.refreshMarginMs() {
 		return failure
 	}
-	return service.refresh(domainId)
+	_, failure = service.refresh(domainId)
+	return failure
 }
 
-func (service *SessionTokenService) saved(domainId string) SessionTokens {
-	return service.store()[domainId]
+func (service *SessionTokenService) keepUnlessFailed(session Session, failure error) error {
+	if failure != nil {
+		return failure
+	}
+	return service.keep(session)
 }
 
-func (service *SessionTokenService) store() map[string]SessionTokens {
+func (service *SessionTokenService) keep(session Session) error {
+	now, failure := service.clock.NowMs()
+	domainId := session.Me.DomainId
+	service.makeKeys()
+	service.makeTokens()
+	service.Keys[domainId] = session.SessionKey
+	service.tokens[domainId] = SessionTokens{
+		AccessToken: session.AccessToken,
+		ExpiresAtMs: now + session.ExpiresIn*service.millisecondsPerSecond(),
+	}
+	return failure
+}
+
+func (service *SessionTokenService) forgetWhenFailed(domainId string, failure error) {
+	if failure == nil {
+		return
+	}
+	service.Forget(domainId)
+}
+
+func (service *SessionTokenService) domains() []string {
+	domainIds := []string{}
+	for domainId := range service.Keys {
+		domainIds = append(domainIds, domainId)
+	}
+	sort.Strings(domainIds)
+	return domainIds
+}
+
+func (service *SessionTokenService) makeKeys() {
+	if service.Keys == nil {
+		service.Keys = map[string]string{}
+	}
+}
+
+func (service *SessionTokenService) makeTokens() {
 	if service.tokens == nil {
 		service.tokens = map[string]SessionTokens{}
 	}
-	return service.tokens
 }
 
 func (service *SessionTokenService) refreshMarginMs() float64 {

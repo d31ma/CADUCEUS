@@ -1,174 +1,190 @@
-import "strings"
-
 // @Test(SessionTestSetup, {"partition":"tests"})
 type SessionServiceTest struct {
 	behaviors *BehaviorContext
 }
 
-func (test *SessionServiceTest) session() *SessionService {
-	BrowserFakes{}.Answer("secureRandom", "bytes", []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32})
+func (test *SessionServiceTest) build(keys map[string]string) *SessionService {
 	BrowserFakes{}.Answer("clock", "now", 1000)
 	client := NewIdentityClientWith(test.behaviors)
-	session := &SessionService{
-		proof:    &SessionProofService{},
-		realm:    &SessionRealmService{identity: client},
-		tokens:   &SessionTokenService{identity: client},
-		accounts: &SessionAccountService{identity: client},
+	return &SessionService{
+		realm:    &SessionRealmService{},
+		tokens:   &SessionTokenService{identity: client, Keys: keys},
+		accounts: &SessionAccountService{},
 		problems: &SessionProblemService{},
 	}
+}
+
+func (test *SessionServiceTest) started() *SessionService {
+	session := test.build(nil)
 	session.Start()
 	return session
 }
 
-func (test *SessionServiceTest) found() *SessionService {
-	session := test.session()
-	session.Email = "ana@example.com"
-	session.Continue()
-	return session
-}
-
 func (test *SessionServiceTest) signedIn() *SessionService {
-	session := test.found()
-	session.Leave()
-	session.Finish("good-code", session.Pending.State)
+	session := test.started()
+	session.Email = "ana@example.com"
+	session.Password = "right"
+	session.SignIn()
 	return session
 }
 
-func (test *SessionServiceTest) TestStartAsksForTheEmail() {
-	session := test.session()
-	Assert.Equals("email", session.Step)
-	Assert.Equals("", session.Problem)
+func (test *SessionServiceTest) signedInTwice() *SessionService {
+	session := test.signedIn()
+	session.AddDomain()
+	session.Email = "ana@example.org"
+	session.Password = "right"
+	session.SignIn()
+	return session
+}
+
+func (test *SessionServiceTest) TestStartWithoutSessionsShowsTheForm() {
+	session := test.started()
+	Assert.Equals("signIn", session.Step)
 	Assert.IsTrue(session.Remember)
 }
 
-func (test *SessionServiceTest) TestContinueRefusesAnIncompleteEmail() {
-	session := test.session()
+func (test *SessionServiceTest) TestStartRestoresStoredSessions() {
+	session := test.build(map[string]string{"example.com": "key-1"})
+	session.Start()
+	Assert.Equals("signedIn", session.Step)
+	Assert.Equals("example.com", session.accounts.CurrentDomain)
+}
+
+func (test *SessionServiceTest) TestStartWithAnEndedSessionShowsTheForm() {
+	session := test.build(map[string]string{"example.com": "ended"})
+	session.Start()
+	Assert.Equals("signIn", session.Step)
+}
+
+func (test *SessionServiceTest) TestSignInRefusesAnIncompleteEmail() {
+	session := test.started()
 	session.Email = "ana"
-	session.Continue()
-	Assert.Equals("email", session.Step)
+	session.Password = "right"
+	session.SignIn()
+	Assert.Equals("signIn", session.Step)
 	Assert.Equals("invalidEmail", session.Problem)
-	Assert.Equals("", session.AuthorizeUrl)
 }
 
-func (test *SessionServiceTest) TestContinueFindsTheDomainRealm() {
-	session := test.found()
-	Assert.Equals("domain", session.Step)
-	Assert.Equals("example.com", session.DomainId)
-	Assert.Equals("sign-in.example.test", session.SignInHost)
-	Assert.IsTrue(strings.Contains(session.AuthorizeUrl, "/realms/example.com/"), session.AuthorizeUrl)
+func (test *SessionServiceTest) TestSignInOpensTheShell() {
+	session := test.signedIn()
+	Assert.Equals("signedIn", session.Step)
+	Assert.Equals("", session.Problem)
+	Assert.Equals("example.com", session.accounts.CurrentDomain)
 }
 
-func (test *SessionServiceTest) TestContinueKeepsTheProofForTheReturn() {
-	session := test.found()
-	Assert.Equals("example.com", session.Pending.DomainId)
-	Assert.Equals(43, len(session.Pending.Verifier))
-	Assert.IsTrue(strings.Contains(session.AuthorizeUrl, "state="+session.Pending.State), session.AuthorizeUrl)
+func (test *SessionServiceTest) TestSignInClearsThePasswordAndCode() {
+	session := test.started()
+	session.Email = "ana@example.com"
+	session.Password = "right"
+	session.OneTimeCode = "123456"
+	session.SignIn()
+	Assert.Equals("", session.Password)
+	Assert.Equals("", session.OneTimeCode)
 }
 
-func (test *SessionServiceTest) TestContinueAsUsesARecentDomain() {
-	session := test.session()
-	session.ContinueAs(SessionRecentDomain{DomainId: "example.org", Email: "ana@example.org"})
-	Assert.Equals("example.org", session.DomainId)
-	Assert.Equals("ana@example.org", session.Email)
-}
-
-func (test *SessionServiceTest) TestLeaveRemembersTheDomain() {
-	session := test.found()
-	session.Leave()
-	Assert.Equals("redirecting", session.Step)
+func (test *SessionServiceTest) TestSignInRemembersOnlyTheDomainAndEmail() {
+	session := test.signedIn()
 	Assert.Equals([]SessionRecentDomain{{DomainId: "example.com", Email: "ana@example.com"}}, session.RecentDomains)
 }
 
-func (test *SessionServiceTest) TestLeaveWithoutRememberKeepsNothing() {
-	session := test.found()
+func (test *SessionServiceTest) TestSignInWithoutRememberKeepsNothing() {
+	session := test.started()
 	session.Remember = false
-	session.Leave()
+	session.Email = "ana@example.com"
+	session.Password = "right"
+	session.SignIn()
 	Assert.Equals(0, len(session.RecentDomains))
 }
 
-func (test *SessionServiceTest) TestLeavePutsTheDomainFirstOnce() {
-	session := test.found()
-	session.RecentDomains = []SessionRecentDomain{{DomainId: "example.org", Email: "ana@example.org"}, {DomainId: "example.com", Email: "old@example.com"}}
-	session.Leave()
-	Assert.Equals([]SessionRecentDomain{{DomainId: "example.com", Email: "ana@example.com"}, {DomainId: "example.org", Email: "ana@example.org"}}, session.RecentDomains)
+func (test *SessionServiceTest) TestSignInRefusedShowsAProblem() {
+	session := test.started()
+	session.Email = "ana@example.com"
+	session.Password = "wrong"
+	session.SignIn()
+	Assert.Equals("signIn", session.Step)
+	Assert.Equals("unavailable", session.Problem)
+	Assert.Equals("", session.Password)
+	Assert.Equals(0, len(session.RecentDomains))
+}
+
+func (test *SessionServiceTest) TestUseRecentFillsTheEmail() {
+	session := test.started()
+	session.UseRecent(SessionRecentDomain{DomainId: "example.org", Email: "ana@example.org"})
+	Assert.Equals("ana@example.org", session.Email)
 }
 
 func (test *SessionServiceTest) TestForgetRemovesOneRecentDomain() {
-	session := test.found()
-	session.Leave()
+	session := test.signedIn()
 	session.Forget("example.com")
 	Assert.Equals(0, len(session.RecentDomains))
 }
 
 func (test *SessionServiceTest) TestForgetAllRemovesEveryRecentDomain() {
-	session := test.found()
-	session.Leave()
+	session := test.signedIn()
 	session.ForgetAll()
 	Assert.Equals(0, len(session.RecentDomains))
 }
 
-func (test *SessionServiceTest) TestUseDifferentEmailGoesBack() {
-	session := test.found()
-	session.UseDifferentEmail()
-	Assert.Equals("email", session.Step)
-}
-
-func (test *SessionServiceTest) TestCancelReturnsToTheDomain() {
-	session := test.found()
-	session.Leave()
-	session.Cancel()
-	Assert.Equals("domain", session.Step)
-}
-
-func (test *SessionServiceTest) TestFinishSignsIn() {
+func (test *SessionServiceTest) TestAddDomainShowsAnEmptyForm() {
 	session := test.signedIn()
+	session.AddDomain()
+	Assert.Equals("signIn", session.Step)
+	Assert.IsTrue(session.Adding)
+	Assert.Equals("", session.Email)
+}
+
+func (test *SessionServiceTest) TestCancelAddReturnsToTheShell() {
+	session := test.signedIn()
+	session.AddDomain()
+	session.CancelAdd()
 	Assert.Equals("signedIn", session.Step)
-	Assert.Equals("", session.Problem)
-	Assert.Equals("example.com", session.accounts.CurrentDomain)
-	Assert.Equals("", session.Pending.Verifier)
-	Assert.IsTrue(strings.Contains(session.SignOutUrl, "id_token_hint=id-1"), session.SignOutUrl)
+	Assert.IsTrue(!session.Adding)
 }
 
-func (test *SessionServiceTest) TestFinishRefusesAnotherState() {
-	session := test.found()
-	session.Finish("good-code", "forged-state")
-	Assert.Equals("problem", session.Step)
-	Assert.Equals("startAgain", session.Problem)
-	Assert.Equals(0, len(session.accounts.Accounts))
-}
-
-func (test *SessionServiceTest) TestFinishReportsARefusedCode() {
-	session := test.found()
-	session.Finish("used-code", session.Pending.State)
-	Assert.Equals("idpDown", session.Problem)
-}
-
-func (test *SessionServiceTest) TestFinishReportsAnAccountThatCannotLoad() {
-	session := test.found()
-	session.Finish("disabled-code", session.Pending.State)
-	Assert.Equals("idpDown", session.Problem)
-	Assert.Equals(0, len(session.accounts.Accounts))
-}
-
-func (test *SessionServiceTest) TestFailNamesACancelledSignIn() {
-	session := test.found()
-	session.Fail("access_denied")
-	Assert.Equals("problem", session.Step)
-	Assert.Equals("cancelled", session.Problem)
-}
-
-func (test *SessionServiceTest) TestSwitchChangesTheSignOutLink() {
-	session := test.signedIn()
-	session.Switch("example.org")
+func (test *SessionServiceTest) TestSecondDomainBecomesCurrent() {
+	session := test.signedInTwice()
+	Assert.Equals(2, len(session.accounts.Accounts))
 	Assert.Equals("example.org", session.accounts.CurrentDomain)
-	Assert.IsTrue(strings.Contains(session.SignOutUrl, "/realms/example.org/"), session.SignOutUrl)
+	Assert.IsTrue(!session.Adding)
 }
 
-func (test *SessionServiceTest) TestSignOutForgetsTheTokens() {
+func (test *SessionServiceTest) TestSwitchChangesTheCurrentDomain() {
+	session := test.signedInTwice()
+	session.Switch("example.com")
+	Assert.Equals("example.com", session.accounts.CurrentDomain)
+}
+
+func (test *SessionServiceTest) TestSignOutKeepsTheOtherDomain() {
+	session := test.signedInTwice()
+	session.SignOut()
+	Assert.Equals("signedIn", session.Step)
+	Assert.Equals("example.org", session.SignedOutDomain)
+	Assert.Equals("example.com", session.accounts.CurrentDomain)
+	Assert.Equals(1, len(session.tokens.Keys))
+}
+
+func (test *SessionServiceTest) TestSignOutOfTheLastDomainShowsSignedOut() {
 	session := test.signedIn()
 	session.SignOut()
 	Assert.Equals("signedOut", session.Step)
-	Assert.Equals("", session.tokens.IdToken("example.com"))
+	Assert.Equals("example.com", session.SignedOutDomain)
+}
+
+func (test *SessionServiceTest) TestSignOutAllEndsEverySession() {
+	session := test.signedInTwice()
+	session.SignOutAll()
+	Assert.Equals("signedOut", session.Step)
+	Assert.Equals("", session.SignedOutDomain)
+	Assert.Equals(0, len(session.tokens.Keys))
+	Assert.Equals(0, len(session.accounts.Accounts))
+}
+
+func (test *SessionServiceTest) TestSignInAgainFillsTheCurrentAddress() {
+	session := test.signedIn()
+	session.Step = "expired"
+	session.SignInAgain()
+	Assert.Equals("signIn", session.Step)
+	Assert.Equals("ana@example.com", session.Email)
 }
 
 func (test *SessionServiceTest) TestShownKeepsAWorkingSession() {
@@ -179,14 +195,16 @@ func (test *SessionServiceTest) TestShownKeepsAWorkingSession() {
 
 func (test *SessionServiceTest) TestShownEndsASessionThatCannotRefresh() {
 	session := test.signedIn()
-	session.tokens.Forget("example.com")
+	session.tokens.Keys["example.com"] = "ended"
+	BrowserFakes{}.Answer("clock", "now", 50000)
 	session.Shown(VisibilityChanged{Visible: true})
 	Assert.Equals("expired", session.Step)
 }
 
 func (test *SessionServiceTest) TestShownIgnoresAHiddenPage() {
 	session := test.signedIn()
-	session.tokens.Forget("example.com")
+	session.tokens.Keys["example.com"] = "ended"
+	BrowserFakes{}.Answer("clock", "now", 50000)
 	session.Shown(VisibilityChanged{Visible: false})
 	Assert.Equals("signedIn", session.Step)
 }

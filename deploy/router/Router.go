@@ -13,6 +13,7 @@ type Router struct {
 	Api          http.Handler
 	Keycloak     http.Handler
 	Static       http.Handler
+	DevDns       http.Handler
 }
 
 func (router Router) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -25,6 +26,8 @@ func (router Router) handlerFor(path string) http.Handler {
 		return router.Ready
 	case router.Blocked.Covers(path):
 		return NotFoundHandler{}
+	case path == router.devDnsPath():
+		return router.DevDns
 	case router.Passthroughs.Has(path):
 		return router.Passthroughs.For(path)
 	case strings.HasPrefix(path, router.blobsPrefix()+"/"):
@@ -36,6 +39,10 @@ func (router Router) handlerFor(path string) http.Handler {
 	default:
 		return router.Static
 	}
+}
+
+func (Router) devDnsPath() string {
+	return "/_dev/dns-query"
 }
 
 func (Router) blobsPrefix() string {

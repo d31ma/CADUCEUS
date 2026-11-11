@@ -62,6 +62,7 @@ start_engine() {
 finish() {
   local code=$?
   "$(dirname "$0")/down.sh" || code=1
+  if [ "${MESAIL_GENERATED_SECRETS:-0}" = 1 ]; then rm -f "$MESAIL_SECRETS_FILE"; fi
   if [ "${MESAIL_STARTED_ENGINE:-0}" = 1 ]; then mesail_step colima-stop stop_colima || code=1; fi
   if [ "${MESAIL_STARTED_DEVHOST:-0}" = 1 ]; then mesail_step devhost-down devhost down || code=1; fi
   echo "=== stack rc=$code (logs in $(mesail_log_dir))"
@@ -73,14 +74,22 @@ build_images() {
   "$(dirname "$0")/build.sh" "$@"
 }
 
+use_secrets() {
+  if [ -n "${MESAIL_SECRETS_FILE:-}" ]; then echo "using the secrets in MESAIL_SECRETS_FILE"; return; fi
+  MESAIL_SECRETS_FILE="$(mesail_generate_secrets)"
+  MESAIL_GENERATED_SECRETS=1
+  export MESAIL_SECRETS_FILE
+  echo "generated this run's secrets (kept out of the logs; removed at the end)"
+}
+
 main() {
   trap finish EXIT
   choose_engine
   mesail_load_settings
+  use_secrets
   build_images "$@"
   "$(dirname "$0")/up.sh"
   "$(dirname "$0")/deploy.sh" "$@"
-  "$(dirname "$0")/seed-realms.sh"
   "$(dirname "$0")/test.sh"
 }
 

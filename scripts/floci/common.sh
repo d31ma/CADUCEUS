@@ -21,11 +21,6 @@ mesail_load_settings() {
   export MESAIL_PUBLIC_URL="${MESAIL_PUBLIC_URL:-http://127.0.0.1:18080}"
   export MESAIL_ROUTER_PORT="${MESAIL_ROUTER_PORT:-18080}"
   export MESAIL_KEYCLOAK_PORT="${MESAIL_KEYCLOAK_PORT:-18180}"
-  export MESAIL_KEYCLOAK_ADMIN="${MESAIL_KEYCLOAK_ADMIN:-admin}"
-  export MESAIL_KEYCLOAK_ADMIN_PASSWORD="${MESAIL_KEYCLOAK_ADMIN_PASSWORD:-mesail-dev-admin}"
-  export MESAIL_SEED_PASSWORD="${MESAIL_SEED_PASSWORD:-mesail-dev-password}"
-  export MESAIL_SERVICE_SECRET="${MESAIL_SERVICE_SECRET:-mesail-dev-service-secret}"
-  export MESAIL_IDENTITY_SECRET="${MESAIL_IDENTITY_SECRET:-mesail-dev-identity-secret}"
   export MESAIL_ISSUER_ORIGIN="${MESAIL_ISSUER_ORIGIN:-https://mesail.localhost}"
   export MESAIL_FLOCI_PORT="${MESAIL_FLOCI_PORT:-4566}"
   export MESAIL_FLOCI_URL="${MESAIL_FLOCI_URL:-http://127.0.0.1:$MESAIL_FLOCI_PORT}"
@@ -76,4 +71,38 @@ mesail_services() {
 
 mesail_service_field() {
   jq -r --arg name "$1" ".services[] | select(.name == \$name) | .$2" "$(mesail_stack_file)"
+}
+
+mesail_generate_secrets() {
+  local file name
+  file="$(mktemp "${TMPDIR:-/tmp}/mesail-secrets.XXXXXX")"
+  chmod 600 "$file"
+  for name in $(mesail_stack '.generatedSecrets[]'); do
+    echo "$name=$(openssl rand -hex 32)" >> "$file"
+  done
+  echo "$file"
+}
+
+mesail_load_secrets() {
+  if [ -z "${MESAIL_SECRETS_FILE:-}" ]; then echo "MESAIL_SECRETS_FILE is not set" >&2; return 1; fi
+  set -a
+  # shellcheck disable=SC1090
+  . "$MESAIL_SECRETS_FILE"
+  set +a
+}
+
+mesail_dotted() {
+  echo "${1#YON_}" | tr 'A-Z_' 'a-z.'
+}
+
+mesail_app_uses() {
+  local folder="$1" name="$2"
+  grep -rqsE --exclude-dir=.tachyon --exclude-dir=dist -e "$name" -e "$(mesail_dotted "$name")" "$folder"
+}
+
+mesail_app_secrets() {
+  local folder="$1" name source
+  while read -r name source; do
+    if mesail_app_uses "$folder" "$name"; then echo "$name=${!source}"; fi
+  done < <(mesail_stack '.secrets | to_entries[] | "\(.key) \(.value)"')
 }

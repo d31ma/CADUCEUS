@@ -116,3 +116,6 @@ COPY --from=router-build /out/mesail-router /mesail-router
 USER 10001:10001
 EXPOSE 8080
 ENTRYPOINT ["/mesail-router"]
+
+FROM mesail-keycloak AS keycloak-blackbox
+COPY --chown=0:0 deploy/floci/keycloak-users/ /opt/mesail/keycloak/realm/dev/

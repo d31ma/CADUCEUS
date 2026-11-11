@@ -52,22 +52,38 @@ storage_arguments() {
   echo "--file-system-configs Arn=$(access_point_arn "$service"),LocalMountPath=$(mesail_stack .fileSystem.mountPath)"
 }
 
+environment_file() {
+  local service="$1" file
+  file="$(mktemp "${TMPDIR:-/tmp}/mesail-environment.XXXXXX")"
+  chmod 600 "$file"
+  mesail_app_secrets "$(mesail_root)/apps/$service" | jq -R 'split("=") | {(.[0]): (.[1:] | join("="))}' \
+    | jq -s '{Variables: (add // {})}' > "$file"
+  echo "$file"
+}
+
 create_function() {
-  local service="$1"
+  local service="$1" environment
+  environment="$(environment_file "$service")"
   # shellcheck disable=SC2046
   mesail_aws lambda create-function --function-name "$(function_name "$service")" \
     --package-type Image --code "ImageUri=$(image_uri "$service")" --role "$(role_arn)" \
     --architectures "$(mesail_stack .architecture)" \
     --memory-size "$(mesail_service_field "$service" memory)" --timeout "$(mesail_service_field "$service" timeout)" \
-    --tags project=mesail,service="$service" \
+    --tags project=mesail,service="$service" --environment "file://$environment" \
     $(storage_arguments "$service") \
-    --query '{name: FunctionName, state: State, image: Code.ImageUri}'
+    --query '{name: FunctionName, state: State}'
+  rm -f "$environment"
 }
 
 update_function() {
-  local service="$1"
+  local service="$1" environment
+  environment="$(environment_file "$service")"
   mesail_aws lambda update-function-code --function-name "$(function_name "$service")" \
     --image-uri "$(image_uri "$service")" --query '{name: FunctionName, state: State}'
+  mesail_aws lambda wait function-updated-v2 --function-name "$(function_name "$service")"
+  mesail_aws lambda update-function-configuration --function-name "$(function_name "$service")" \
+    --environment "file://$environment" --query '{name: FunctionName, state: LastUpdateStatus}'
+  rm -f "$environment"
 }
 
 ensure_function() {
@@ -127,6 +143,7 @@ chosen_services() {
 main() {
   local service
   mesail_load_settings
+  mesail_load_secrets
   mesail_step deploy-role ensure_role
   mesail_step deploy-file-system ensure_file_system
   for service in $(chosen_services "$@"); do

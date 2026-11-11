@@ -8,7 +8,7 @@ floci_ready() {
 }
 
 keycloak_ready() {
-  curl --fail --silent "$MESAIL_KEYCLOAK_URL/realms/master" > /dev/null
+  curl --fail --silent "$MESAIL_KEYCLOAK_URL/realms/$(mesail_stack '.keycloak.domains[0]')/.well-known/openid-configuration" > /dev/null
 }
 
 router_ready() {
@@ -39,6 +39,9 @@ single_writers() {
 main() {
   local profile
   mesail_load_settings
+  mesail_load_secrets
+  MESAIL_KEYCLOAK_DOMAINS="$(mesail_stack '.keycloak.domains | join(",")')"
+  export MESAIL_KEYCLOAK_DOMAINS
   MESAIL_SINGLE_WRITERS="$(single_writers)"
   export MESAIL_SINGLE_WRITERS
   mesail_step wait-devhost-floci wait_for_devhost_floci
@@ -47,7 +50,7 @@ main() {
   # shellcheck disable=SC2086
   mesail_step compose-up compose $profile up --detach
   mesail_step wait-floci mesail_wait_for Floci 120 floci_ready
-  mesail_step wait-keycloak mesail_wait_for Keycloak 240 keycloak_ready
+  mesail_step wait-keycloak mesail_wait_for Keycloak 300 keycloak_ready
   mesail_step wait-router mesail_wait_for router 60 router_ready
 }
 

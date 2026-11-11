@@ -1,0 +1,23 @@
+{
+  "realm": "partner.test",
+  "users": [
+    {
+      "username": "carol@partner.test",
+      "email": "carol@partner.test",
+      "emailVerified": true,
+      "firstName": "Carol",
+      "lastName": "Partner",
+      "enabled": true,
+      "realmRoles": [
+        "default-roles-partner.test"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-blackbox-password",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

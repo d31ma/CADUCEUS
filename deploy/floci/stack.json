@@ -14,47 +14,164 @@
   },
   "staticBucket": "mesail-static",
   "staticApps": [
-    { "app": "web", "prefix": "web" },
-    { "app": "web-admin", "prefix": "admin" }
-  ],
-  "services": [
-    { "name": "identity", "fylo": false, "memory": 1024, "timeout": 30 },
-    { "name": "directory", "fylo": true, "memory": 1024, "timeout": 30 },
-    { "name": "channels", "fylo": true, "memory": 1024, "timeout": 30 },
-    { "name": "messaging", "fylo": true, "memory": 1024, "timeout": 30 },
-    { "name": "attachments", "fylo": true, "memory": 1024, "timeout": 60 },
-    { "name": "realtime", "fylo": true, "memory": 1024, "timeout": 30 },
-    { "name": "notify", "fylo": true, "memory": 1024, "timeout": 30 },
-    { "name": "search", "fylo": true, "memory": 1024, "timeout": 30 },
-    { "name": "mail-in", "fylo": true, "memory": 1024, "timeout": 60 },
-    { "name": "mail-out", "fylo": true, "memory": 1024, "timeout": 60 }
-  ],
-  "realms": [
     {
-      "name": "example.com",
-      "users": [
-        { "username": "ana", "email": "ana@example.com", "roles": ["mesail-member", "mesail-admin"], "token": "ANA" },
-        { "username": "bo", "email": "bo@example.com", "roles": ["mesail-member"], "token": "BO" }
-      ]
+      "app": "web",
+      "prefix": "web"
     },
     {
-      "name": "example.org",
-      "users": [
-        { "username": "eve", "email": "eve@example.org", "roles": ["mesail-member"], "token": "EVE" }
-      ]
-    },
-    {
-      "name": "partner.test",
-      "users": [
-        { "username": "carol", "email": "carol@partner.test", "roles": ["mesail-member"], "token": "CAROL" }
-      ]
-    },
-    {
-      "name": "mesail-operators",
-      "users": [
-        { "username": "operator", "email": "operator@mesail.test", "roles": ["mesail-operator"], "token": "OPERATOR" }
-      ]
+      "app": "web-admin",
+      "prefix": "admin"
     }
   ],
-  "realmRoles": ["mesail-member", "mesail-admin", "mesail-service", "mesail-operator"]
+  "services": [
+    {
+      "name": "identity",
+      "fylo": false,
+      "memory": 1024,
+      "timeout": 30
+    },
+    {
+      "name": "directory",
+      "fylo": true,
+      "memory": 1024,
+      "timeout": 30
+    },
+    {
+      "name": "channels",
+      "fylo": true,
+      "memory": 1024,
+      "timeout": 30
+    },
+    {
+      "name": "messaging",
+      "fylo": true,
+      "memory": 1024,
+      "timeout": 30
+    },
+    {
+      "name": "attachments",
+      "fylo": true,
+      "memory": 1024,
+      "timeout": 60
+    },
+    {
+      "name": "realtime",
+      "fylo": true,
+      "memory": 1024,
+      "timeout": 30
+    },
+    {
+      "name": "notify",
+      "fylo": true,
+      "memory": 1024,
+      "timeout": 30
+    },
+    {
+      "name": "search",
+      "fylo": true,
+      "memory": 1024,
+      "timeout": 30
+    },
+    {
+      "name": "mail-in",
+      "fylo": true,
+      "memory": 1024,
+      "timeout": 60
+    },
+    {
+      "name": "mail-out",
+      "fylo": true,
+      "memory": 1024,
+      "timeout": 60
+    }
+  ],
+  "keycloak": {
+    "domains": [
+      "example.com",
+      "example.org",
+      "partner.test"
+    ],
+    "image": "mesail-keycloak-blackbox"
+  },
+  "secrets": {
+    "YON_SERVICE_CLIENT_SECRET": "MESAIL_SERVICE_SECRET",
+    "YON_IDENTITY_CLIENT_SECRET": "MESAIL_IDENTITY_CLIENT_SECRET",
+    "YON_IDENTITY_ACCOUNT_SECRET": "MESAIL_ACCOUNT_CLIENT_SECRET",
+    "YON_DIRECTORY_ADMIN_SECRET": "MESAIL_KEYCLOAK_DIRECTORY_SECRET",
+    "YON_DIRECTORY_REALMSECRETS_IDENTITY": "MESAIL_IDENTITY_CLIENT_SECRET",
+    "YON_DIRECTORY_REALMSECRETS_SERVICE": "MESAIL_SERVICE_SECRET",
+    "YON_DIRECTORY_REALMSECRETS_ACCOUNT": "MESAIL_ACCOUNT_CLIENT_SECRET",
+    "YON_ATTACHMENTS_LINK_SECRET": "MESAIL_LINK_SECRET"
+  },
+  "generatedSecrets": [
+    "MESAIL_IDENTITY_CLIENT_SECRET",
+    "MESAIL_SERVICE_SECRET",
+    "MESAIL_ACCOUNT_CLIENT_SECRET",
+    "MESAIL_KEYCLOAK_DIRECTORY_SECRET",
+    "KC_BOOTSTRAP_ADMIN_CLIENT_SECRET",
+    "MESAIL_LINK_SECRET"
+  ],
+  "testUsers": [
+    {
+      "realm": "example.com",
+      "username": "ana@example.com",
+      "name": [
+        "Ana",
+        "Example"
+      ],
+      "roles": [
+        "mesail-admin"
+      ],
+      "password": "dev-blackbox-password",
+      "token": "ANA",
+      "fixture": true
+    },
+    {
+      "realm": "example.com",
+      "username": "bo@example.com",
+      "name": [
+        "Bo",
+        "Example"
+      ],
+      "roles": [],
+      "password": "dev-blackbox-password",
+      "token": "BO",
+      "fixture": true
+    },
+    {
+      "realm": "example.org",
+      "username": "eve@example.org",
+      "name": [
+        "Eve",
+        "Example"
+      ],
+      "roles": [],
+      "password": "dev-blackbox-password",
+      "token": "EVE",
+      "fixture": true
+    },
+    {
+      "realm": "partner.test",
+      "username": "carol@partner.test",
+      "name": [
+        "Carol",
+        "Partner"
+      ],
+      "roles": [],
+      "password": "dev-blackbox-password",
+      "token": "CAROL",
+      "fixture": true
+    },
+    {
+      "realm": "mesail-operators",
+      "username": "operator@mesail.test",
+      "password": "dev-operator-password",
+      "token": "OPERATOR",
+      "fixture": false
+    }
+  ],
+  "hostedDomains": [
+    "example.com",
+    "example.org"
+  ]
 }

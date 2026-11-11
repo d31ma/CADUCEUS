@@ -46,10 +46,31 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
   `.env`, and gives the router the same values.
 - `MESAIL_ROUTER_PASSTHROUGH` in your environment reaches the router, for the
   realtime gateway until the run starts it itself.
-- Tokens: set `MESAIL_TOKENS_FILE` to a file of `export MESAIL_TOKEN_ANA=...`
-  lines; without it, tests that need a token skip. With
-  `MESAIL_KEYCLOAK_URL` set (a native Keycloak, see `deploy/keycloak`), the
-  router also proxies `/idp/` to it.
+- **Keycloak and tokens (default `MESAIL_KEYCLOAK=native`):**
+  - Keycloak 26.8.2 is built once into `~/Developer/Tools/mesail-keycloak`
+    (by `deploy/keycloak/dev/build-native-keycloak.sh`, shared by every
+    slice) and started for the run on free ports, with its SQLite file in the
+    run's FYLO folder. It imports the realms `example.com`, `example.org`,
+    `partner.test` and `mesail-operators`, the Keycloak dev users and the
+    blackbox users (`ana`, `bo`, `eve`, `carol`, `operator`; see the table
+    under "Keycloak, secrets and test users"), with this run's secrets, then
+    `mesail-keycloak-provision` creates the `mesail-directory` admin client.
+  - The router proxies `/idp/` to it. In each copied app, `oidc.issuer`
+    becomes `https://mesail.localhost/idp/realms/{realm}` (the issuer in every
+    token) and `http://keycloak:8080/idp` or `http://127.0.0.1:8180/idp`
+    becomes this Keycloak.
+  - After the apps answer, the run writes the tokens to
+    `~/Developer/AtlasFylo/mesail/<owner>/tokens.env` (mode 600; set
+    `MESAIL_TOKENS_FILE` for another place; never in a log), adds
+    `example.com` and `example.org` to the directory as the operator, and
+    calls the directory once as `ana`, `bo` and `eve` so it knows them.
+    `carol@partner.test` stays external.
+  - Tokens last 60 seconds. The run writes fresh ones just before the tests;
+    with `--up`, run `--tokens` before you load the file.
+  - Domain verification uses the router's dev DNS responder
+    (`MESAIL_ROUTER_DEV_DNS_*`, below), reached as `directory.localhost`.
+  - `MESAIL_KEYCLOAK=none` skips all of this; then a `MESAIL_TOKENS_FILE` you
+    made yourself is loaded if it exists.
 - The FYLO test image must be attached at `~/Developer/AtlasFylo/mesail`;
   the script says how when it is not.
 - A whole run with ten apps takes about 25 seconds once warm.
@@ -66,7 +87,7 @@ kestrel (through PaaS, like FitNest) and in AWS Lambda.
 ## Quick start
 
 ```sh
-scripts/floci/run-all.sh                       # build, deploy, seed, run every blackbox test, tear down
+scripts/floci/run-all.sh                       # build, deploy, run every blackbox test, tear down
 MESAIL_TEST_RUN=TestEveryService scripts/floci/run-all.sh
 scripts/floci/run-all.sh identity directory    # build and deploy only these functions
 ```
@@ -82,8 +103,7 @@ scripts/floci/run-all.sh identity directory    # build and deploy only these fun
    `127.0.0.1:14566`, joining Floci's network `mesail_floci_backend`
    (`deploy/floci/compose.devhost.yaml`). With `MESAIL_VM=colima` it takes
    `--vm=colima`, starts Colima and its own Floci instead. `stack.sh` builds
-   the images, starts Keycloak and the router, deploys the functions, seeds
-   the realms, runs `go test -tags blackbox` in `tests/blackbox`, removes
+   the images, starts Keycloak and the router, deploys the functions, runs `go test -tags blackbox` in `tests/blackbox`, removes
    what it started, and takes the dev host down or stops Colima only if it
    started it. In the dev host it removes only its own compose containers
    and deletes, through the Lambda API, exactly the functions named in
@@ -113,9 +133,9 @@ Settings (environment, or a `.env` file copied from `.env.example`):
 | `Dockerfile` target `router` | The public origin (`deploy/router`). |
 | `deploy/lambda/` | Image helpers: tool install with checksums, the Lambda profile, the start script. |
 | `deploy/floci/stack.json` | The Floci description: functions, memory, timeouts, FYLO owners, file system, bucket, realms and test users. |
-| `deploy/floci/realm.jq` | Turns one realm of `stack.json` into a Keycloak realm. |
+| `deploy/floci/keycloak-users/` | The blackbox test users, added to the Keycloak image by the target `keycloak-blackbox`. |
 | `docker-compose.yml` | Floci, Keycloak and the router on the network `mesail_floci_backend`. |
-| `scripts/floci/*.sh` | `build`, `up`, `deploy`, `seed-realms`, `tokens`, `test`, `down`, `stack`, `run-all`. |
+| `scripts/floci/*.sh` | `build`, `up`, `deploy`, `tokens`, `test`, `down`, `stack`, `run-all`. |
 
 ### Lambda image (`Dockerfile` target `lambda`)
 
@@ -173,6 +193,7 @@ One HTTP origin, like FitNest's gateway:
 | `/blobs/<domain>/<name>?<signature>` | `kit/blobs` `LocalHandler` (GET and PUT only) when `MESAIL_ROUTER_BLOBS_FOLDER`, `_BASE` and `_SECRET` (32+ characters) are set: the signed upload and download links of the local blob store. The values match the attachments app's `YON_ATTACHMENTS_FOLDER`, `_LINK_BASE` and `_LINK_SECRET`. Without them, 404. |
 | `/api/v1/<service>/...` | Lambda `mesail-<service>`, invoked with an HTTP API v2.0 event. The event's `host` header is `localhost` (Tachyon answers only local names) and the original host is in `x-forwarded-host`. Unknown service: 404. Body over 6 MiB: 413. A function error: 502. |
 | `/idp/...` | Keycloak (served under `/idp`), with the original `Host`. |
+| `GET /_dev/dns-query` | Only when `MESAIL_ROUTER_DEV_DNS_DOMAINS` is set (native runs): a DNS-over-HTTPS (JSON) responder for those test domains, so the directory's domain check can pass locally: MX `10 <MESAIL_ROUTER_DEV_DNS_MAIL_HOST>.`, TXT `v=spf1 <MESAIL_ROUTER_DEV_DNS_SPF> -all`, any `<selector>._domainkey` a placeholder DKIM key, `_dmarc` `v=DMARC1; p=reject`; anything else NXDOMAIN. Otherwise 404. |
 | `/admin`, `/admin/...` | The `web-admin` bundle in the bucket `mesail-static` under `admin/`. |
 | everything else | The `web` bundle under `web/`. A missing page (no file extension, or a browser asking for HTML) gets the app's `index.html`. |
 
@@ -196,41 +217,58 @@ Static replies carry `Content-Security-Policy`, `X-Content-Type-Options`,
 In AWS the same routes become an API Gateway HTTP API (Lambda proxy
 integrations, payload 2.0) plus S3 and CloudFront for the static files.
 
-### Keycloak and test users
+### Keycloak, secrets and test users
 
-Upstream Keycloak 26.8.2 in `start-dev`, under the path `/idp`, until the
-`mesail-keycloak` image target can be built here (`MESAIL_KEYCLOAK_IMAGE`
-switches it). Its hostname is `${MESAIL_ISSUER_ORIGIN}/idp` (default
-`https://mesail.localhost/idp`), so every token's issuer is
-`https://mesail.localhost/idp/realms/<domain>`, the value the apps put in
-their `oidc.issuer`. Lambdas fetch keys inside the Docker network from
+Keycloak is the `mesail-keycloak` image (Keycloak 26.8.2 on SQLite, owned by
+`deploy/keycloak`), extended by the test-only target `keycloak-blackbox`,
+which adds the blackbox users from `deploy/floci/keycloak-users/`. It runs
+with `MESAIL_KEYCLOAK_DOMAINS=example.com,example.org,partner.test`, the dev
+users on, its SQLite file on a tmpfs (no volume), and listens on port 8080
+under `/idp` inside the network. Its hostname is
+`${MESAIL_ISSUER_ORIGIN}/idp` (default `https://mesail.localhost/idp`), so
+every token's issuer is `https://mesail.localhost/idp/realms/<domain>`, the
+value the apps put in their `oidc.issuer`; Lambdas fetch keys from
 `http://keycloak:8080/idp/realms/<domain>/protocol/openid-connect/certs`.
 
-`seed-realms.sh` creates one realm per entry of `stack.json`:
+**Secrets.** Each run makes one set of random client secrets in a private
+temporary file (mode 600, removed at the end, never in a log), or uses the
+file named by `MESAIL_SECRETS_FILE`:
 
-| Realm | Users (password `MESAIL_SEED_PASSWORD`) |
-| --- | --- |
-| `example.com` | `ana` (`mesail-member`, `mesail-admin`), `bo` (`mesail-member`) |
-| `example.org` | `eve` (`mesail-member`) |
-| `partner.test` | `carol` (`mesail-member`) |
-| `mesail-operators` | `operator` (`mesail-operator`) |
+| Generated | Keycloak reads | Services read (only the apps that use the name) |
+| --- | --- | --- |
+| `MESAIL_IDENTITY_CLIENT_SECRET` | same name | `YON_IDENTITY_CLIENT_SECRET`, `YON_DIRECTORY_REALMSECRETS_IDENTITY` |
+| `MESAIL_SERVICE_SECRET` | same name | `YON_SERVICE_CLIENT_SECRET`, `YON_DIRECTORY_REALMSECRETS_SERVICE` |
+| `MESAIL_ACCOUNT_CLIENT_SECRET` | same name | `YON_IDENTITY_ACCOUNT_SECRET`, `YON_DIRECTORY_REALMSECRETS_ACCOUNT` |
+| `MESAIL_KEYCLOAK_DIRECTORY_SECRET` | same name | `YON_DIRECTORY_ADMIN_SECRET` |
+| `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` | same name (first start: creates `mesail-directory`) | none |
+| `MESAIL_LINK_SECRET` | none | `YON_ATTACHMENTS_LINK_SECRET` (and the router's `/blobs`) |
 
-Each realm has the roles `mesail-member`, `mesail-admin`, `mesail-service`
-and `mesail-operator`, access tokens of 60 seconds, refresh token rotation,
-and the clients `mesail-web` (public, PKCE S256), `mesail-api` (the
-audience), `mesail-identity` (confidential, password grant, used by the
-identity service and by `tokens.sh`) and `mesail-service` (client
-credentials, role `mesail-service`). Every token carries the audience
-`mesail-api`. `tokens.sh` prints `MESAIL_TOKEN_ANA`, `_BO`, `_EVE`, `_CAROL`
-and `_OPERATOR` for the blackbox tests. The realm templates of production
-belong to `deploy/keycloak`; this seed is a test fixture.
+The map is `secrets` in `stack.json`. A service gets a name when its app
+folder mentions it (in `.env.example`, code or `application.json`). In Floci
+the values are the functions' environment variables, which the start script
+writes into the app's `.env` at cold start; natively they go straight into
+the copied `.env` (an app's own `.env` value wins).
+
+**Test users** (tokens from the confidential client `mesail-identity`,
+password grant, by `tokens.sh`):
+
+| Token | User | Realm | Roles |
+| --- | --- | --- | --- |
+| `MESAIL_TOKEN_ANA` | `ana@example.com` | `example.com` | `mesail-member`, `mesail-admin` |
+| `MESAIL_TOKEN_BO` | `bo@example.com` | `example.com` | `mesail-member` |
+| `MESAIL_TOKEN_EVE` | `eve@example.org` | `example.org` | `mesail-member` |
+| `MESAIL_TOKEN_CAROL` | `carol@partner.test` | `partner.test` | `mesail-member` |
+| `MESAIL_TOKEN_OPERATOR` | `operator@mesail.test` | `mesail-operators` | `mesail-operator` |
+
+The Keycloak image's own dev users (`member@<domain>`, `admin@<domain>`)
+exist too. Passwords are in `stack.json` (dev only).
 
 ## Ports on the Mac (127.0.0.1 only)
 
 | Port | Service |
 | --- | --- |
 | 18080 | Router (`MESAIL_BASE_URL` of the blackbox tests) |
-| 18180 | Keycloak under `/idp` (admin API for seeding) |
+| 18180 | Keycloak under `/idp` |
 | 14566 / 4566 | Floci (AWS API) in the dev host / in Colima |
 
 ## Not done yet

@@ -2,6 +2,8 @@
 set -euo pipefail
 # shellcheck source-path=SCRIPTDIR/../floci
 . "$(dirname "$0")/../floci/common.sh"
+# shellcheck source-path=SCRIPTDIR
+. "$(dirname "$0")/keycloak.sh"
 
 usage() {
   cat << 'TEXT'
@@ -11,18 +13,24 @@ Starts every Yon app (or the named ones) with `ty start` on this Mac, the Tac
 apps as static files, and the Mesail router on one origin, then runs the
 blackbox tests in tests/blackbox against it and stops everything.
 
-  --up    start and keep running; prints MESAIL_BASE_URL (stop with --down)
-  --down  stop what --up started
+  --up      start and keep running; prints MESAIL_BASE_URL (stop with --down)
+  --tokens  write fresh tokens for the running --up stack (they last 60 s)
+  --down    stop what --up started
 
 Settings (environment):
   MESAIL_OWNER        your slice, for example slice-m3 (lock owner, FYLO roots, logs)
   MESAIL_TEST_RUN     go test -run filter for tests/blackbox
   MESAIL_SKIP_STATIC  1 skips the Tac bundles
-  MESAIL_KEYCLOAK_URL a running Keycloak (for example http://127.0.0.1:8180);
-                      the router then proxies /idp/ to it
+  MESAIL_KEYCLOAK      native (default): start Keycloak 26.8.2 natively with the realms
+                      example.com, example.org, partner.test, mesail-operators and the
+                      blackbox users (ana, bo, eve, carol, operator), then write the tokens
+                      file and add example.com and example.org to the directory; none: skip
   MESAIL_ROUTER_PASSTHROUGH  extra routes for the router, for example the realtime gateway:
                       /api/v1/realtime/socket=http://127.0.0.1:8116,/api/v1/realtime/stream=http://127.0.0.1:8116
-  MESAIL_TOKENS_FILE  a file of `export MESAIL_TOKEN_<NAME>=...` lines to load
+  MESAIL_TOKENS_FILE  where the tokens go (default ~/Developer/AtlasFylo/mesail/<owner>/tokens.env,
+                      mode 600); with MESAIL_KEYCLOAK=none, a file you made to load instead
+  MESAIL_SECRETS_FILE NAME=value client secrets (as in .env.example); generated per run when unset.
+                      Each app gets the ones it uses unless its own .env already sets them.
 FYLO roots: ~/Developer/AtlasFylo/mesail/<owner>/native/<service> (emptied at each start).
 Logs: ~/Library/Logs/local/CADUCEUS/<owner>/native-<time>/
 TEXT
@@ -97,7 +105,9 @@ point_copy_at_this_run() {
   local app="$1" file
   file="$(run_folder)/apps/$app/server/application.json"
   sed -E -i '' -e "s#fylo:///mnt/data/$app#fylo://$(app_root_of "$app")#g" \
-    -e "s#http://127\.0\.0\.1:81[0-9][0-9]#$(router_base)#g" "$file"
+    -e "s#http://127\.0\.0\.1:81(0[1-9]|1[0-9])#$(router_base)#g" \
+    -e "s#\"dnsresolver\": *\"[^\"]*\"#\"dnsresolver\": \"http://directory.localhost:$(cat "$(run_folder)/router-port")/_dev/dns-query\"#" "$file"
+  point_copy_at_keycloak "$file"
 }
 
 add_datasource() {
@@ -112,6 +122,7 @@ write_profile() {
   printf '{ "server": { "host": "127.0.0.1" } }\n' > "$(run_folder)/apps/$app/server/application-native.json"
   add_datasource "$app"
   add_blob_store "$app"
+  add_secrets "$app"
 }
 
 router_base() {
@@ -124,7 +135,23 @@ copy_env_file() {
   chmod 600 "$(run_folder)/apps/$app/.env"
   if [ ! -f "$(mesail_root)/apps/$app/.env" ]; then return 0; fi
   grep -v -E '^YON_(DATASOURCE_(DRIVER|URL)|ATTACHMENTS_(ADAPTER|FOLDER|LINK_BASE|LINK_SECRET))=' "$(mesail_root)/apps/$app/.env" \
-    | sed -E "s#http://127\.0\.0\.1:81[0-9][0-9]#$(router_base)#g" >> "$(run_folder)/apps/$app/.env" || true
+    | sed -E "s#http://127\.0\.0\.1:81(0[1-9]|1[0-9])#$(router_base)#g" >> "$(run_folder)/apps/$app/.env" || true
+}
+
+add_secrets() {
+  local app="$1" line
+  mesail_load_secrets
+  while read -r line; do
+    if grep -q "^${line%%=*}=" "$(run_folder)/apps/$app/.env"; then continue; fi
+    echo "$line" >> "$(run_folder)/apps/$app/.env"
+  done < <(mesail_app_secrets "$(run_folder)/apps/$app")
+}
+
+use_secrets() {
+  if [ -n "${MESAIL_SECRETS_FILE:-}" ]; then return 0; fi
+  MESAIL_SECRETS_FILE="$(run_folder)/secrets"
+  mv "$(mesail_generate_secrets)" "$MESAIL_SECRETS_FILE"
+  export MESAIL_SECRETS_FILE
 }
 
 blob_folder() {
@@ -132,15 +159,16 @@ blob_folder() {
 }
 
 blob_secret() {
-  cat "$(run_folder)/blob-secret"
+  mesail_load_secrets
+  echo "$MESAIL_LINK_SECRET"
 }
 
 add_blob_store() {
   local app="$1"
   if [ "$app" != attachments ]; then return 0; fi
   mkdir -p "$(blob_folder)"
-  printf 'YON_ATTACHMENTS_ADAPTER=local\nYON_ATTACHMENTS_FOLDER=%s\nYON_ATTACHMENTS_LINK_BASE=%s/blobs\nYON_ATTACHMENTS_LINK_SECRET=%s\n' \
-    "$(cd "$(blob_folder)" && pwd -P)" "$(router_base)" "$(blob_secret)" >> "$(run_folder)/apps/$app/.env"
+  printf 'YON_ATTACHMENTS_ADAPTER=local\nYON_ATTACHMENTS_FOLDER=%s\nYON_ATTACHMENTS_LINK_BASE=%s/blobs\n' \
+    "$(cd "$(blob_folder)" && pwd -P)" "$(router_base)" >> "$(run_folder)/apps/$app/.env"
 }
 
 prepare_app() {
@@ -197,6 +225,15 @@ joined() {
   paste -sd, "$1"
 }
 
+dev_dns_settings() {
+  local directory
+  directory="$(mesail_root)/apps/directory/server/application.json"
+  if [ ! -f "$directory" ]; then return 0; fi
+  echo "MESAIL_ROUTER_DEV_DNS_DOMAINS=$(mesail_stack '.hostedDomains | join(",")')"
+  echo "MESAIL_ROUTER_DEV_DNS_MAIL_HOST=$(jq -r '.directory.mailhost' "$directory")"
+  echo "MESAIL_ROUTER_DEV_DNS_SPF=$(jq -r '.directory.spfmechanism' "$directory")"
+}
+
 blob_settings() {
   if ! grep -q '^attachments ' "$(run_folder)/servers"; then return 0; fi
   echo "MESAIL_ROUTER_BLOBS_FOLDER=$(cd "$(blob_folder)" && pwd -P)"
@@ -204,13 +241,18 @@ blob_settings() {
   echo "MESAIL_ROUTER_BLOBS_SECRET=$(blob_secret)"
 }
 
+router_keycloak() {
+  if ! keycloak_wanted; then return 0; fi
+  keycloak_base
+}
+
 start_router() {
   local settings
   (cd "$(mesail_root)/deploy/router" && GOFLAGS=-buildvcs=false go build -o "$(run_folder)/mesail-router" .)
-  read -ra settings <<< "$(blob_settings | tr '\n' ' ')"
+  read -ra settings <<< "$({ blob_settings; dev_dns_settings; } | tr '\n' ' ')"
   env ${settings[@]+"${settings[@]}"} MESAIL_ROUTER_LISTEN="127.0.0.1:$(cat "$(run_folder)/router-port")" \
     MESAIL_ROUTER_UPSTREAMS="$(joined "$(run_folder)/upstreams")" MESAIL_ROUTER_STATIC_FOLDERS="$(joined "$(run_folder)/static")" \
-    MESAIL_ROUTER_KEYCLOAK_URL="${MESAIL_KEYCLOAK_URL:-}" \
+    MESAIL_ROUTER_KEYCLOAK_URL="$(router_keycloak)" \
     "$(run_folder)/mesail-router" > "$(mesail_log_dir)/router.log" 2>&1 &
   echo "$!" >> "$(run_folder)/pids"
   echo "export MESAIL_BASE_URL=$(router_base)" > "$(run_folder)/env"
@@ -264,8 +306,9 @@ start_all() {
   : > "$(run_folder)/upstreams"
   : > "$(run_folder)/servers"
   free_port > "$(run_folder)/router-port"
-  (umask 077 && openssl rand -hex 32 > "$(run_folder)/blob-secret")
+  use_secrets
   reset_data
+  launch_keycloak
   # shellcheck disable=SC2046
   mesail_step prepare-apps prepare_apps $(yon_apps "$@")
   for app in $(yon_apps "$@"); do
@@ -274,6 +317,7 @@ start_all() {
   bundle_static_apps
   mesail_step start-router start_router
   mesail_step wait-services wait_for_services
+  finish_keycloak
   cat "$(run_folder)/env"
 }
 
@@ -287,10 +331,30 @@ stop_all() {
   echo "stopped the native Mesail of $MESAIL_OWNER"
 }
 
+launch_keycloak() {
+  if ! keycloak_wanted; then echo "no Keycloak (MESAIL_KEYCLOAK=${MESAIL_KEYCLOAK})"; return 0; fi
+  mesail_step keycloak-build build_keycloak
+  mesail_step keycloak-start start_keycloak
+}
+
+finish_keycloak() {
+  if ! keycloak_wanted; then return 0; fi
+  mesail_step keycloak-wait mesail_wait_for Keycloak 300 keycloak_answers
+  mesail_step keycloak-provision provision_keycloak
+  mesail_step tokens write_tokens
+  mesail_step seed-directory seed_directory
+}
+
 load_tokens() {
-  if [ -z "${MESAIL_TOKENS_FILE:-}" ]; then echo "no MESAIL_TOKENS_FILE: tests that need a token skip"; return 0; fi
+  if keycloak_wanted; then mesail_step tokens write_tokens; fi
+  if [ ! -f "$(tokens_file)" ]; then echo "no tokens file: tests that need a token skip"; return 0; fi
   # shellcheck disable=SC1090
-  . "$MESAIL_TOKENS_FILE"
+  . "$(tokens_file)"
+}
+
+fresh_tokens() {
+  export MESAIL_SECRETS_FILE="${MESAIL_SECRETS_FILE:-$(run_folder)/secrets}"
+  write_tokens
 }
 
 run_blackbox() {
@@ -317,6 +381,7 @@ main() {
   case "${1:-}" in
     -h|--help) usage ;;
     --down) stop_all ;;
+    --tokens) fresh_tokens ;;
     --up) shift; echo "native: logs in $(mesail_log_dir)"; heavy_job "$0" --start-only "$@" ;;
     --start-only) shift; start_all "$@" ;;
     --test-only) shift; start_test_stop "$@" ;;

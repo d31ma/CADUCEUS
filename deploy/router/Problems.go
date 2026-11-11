@@ -42,6 +42,10 @@ func (Problems) MethodNotAllowed() Problem {
 	return Problem{Status: http.StatusMethodNotAllowed, Code: "method-not-allowed", Message: "only GET and HEAD are allowed here"}
 }
 
+func (Problems) OnlyGet() Problem {
+	return Problem{Status: http.StatusMethodNotAllowed, Code: "method-not-allowed", Message: "only GET is allowed here"}
+}
+
 func (problems Problems) Reply(err error) Reply {
 	var problem Problem
 	if !errors.As(err, &problem) {

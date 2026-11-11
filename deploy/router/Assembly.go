@@ -29,6 +29,7 @@ func (assembly Assembly) Handler(settings Settings) (http.Handler, error) {
 		Api:          RateLimitHandler{Limited: settings.Limited, Limiter: RateLimiter{}.New(settings.RateLimit, assembly.rateWindow(), time.Now), Next: api},
 		Keycloak:     assembly.keycloak(settings.KeycloakUrl),
 		Static:       StaticHandler{Storage: assembly.storage(settings, client), Paths: StaticPaths{}, Security: SecurityHeaders{}},
+		DevDns:       assembly.devDns(settings.DevDns),
 	}}, nil
 }
 
@@ -62,6 +63,13 @@ func (Assembly) blobs(settings BlobSettings) http.Handler {
 	}
 	folder := blobs.NewLocalFolder(settings.Folder, settings.Base, blobs.NewLocalSigner([]byte(settings.Secret)))
 	return BlobsHandler{Next: blobs.NewLocalHandler(folder, Router{}.blobsPrefix(), time.Now)}
+}
+
+func (Assembly) devDns(settings DevDnsSettings) http.Handler {
+	if settings.On() {
+		return DevDnsHandler{Zone: DevDnsZone{Settings: settings}}
+	}
+	return NotFoundHandler{}
 }
 
 func (Assembly) rateWindow() time.Duration {

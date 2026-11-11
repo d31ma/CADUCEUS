@@ -52,9 +52,10 @@ own_floci() {
 main() {
   local profile
   mesail_load_settings
+  mesail_load_secrets
   profile="$(used_profile)"
   # shellcheck disable=SC2086
-  mesail_step compose-down compose $profile down --volumes --remove-orphans
+  mesail_step compose-down compose $profile down --remove-orphans
   if ! own_floci; then mesail_step remove-functions remove_functions_in_floci; return; fi
   mesail_step remove-functions remove_function_containers
   mesail_step remove-volumes remove_file_system_volumes

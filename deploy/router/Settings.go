@@ -21,4 +21,5 @@ type Settings struct {
 	Passthrough    map[string]string
 	Blocked        []string
 	Blobs          BlobSettings
+	DevDns         DevDnsSettings
 }

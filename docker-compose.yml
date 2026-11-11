@@ -22,17 +22,21 @@ services:
     networks: [backend]
 
   keycloak:
-    image: ${MESAIL_KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.8.2@sha256:723b1d6e254c0fc96d5cffec860c7e0744d6a3277822b865bb538cf891575e41}
-    command: ["start-dev", "--http-port=8080"]
+    image: mesail-keycloak-blackbox:${MESAIL_IMAGE_TAG:-dev}
     environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: ${MESAIL_KEYCLOAK_ADMIN:-admin}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${MESAIL_KEYCLOAK_ADMIN_PASSWORD:-mesail-dev-admin}
-      KC_HOSTNAME: ${MESAIL_ISSUER_ORIGIN:-https://mesail.localhost}/idp
-      KC_HTTP_RELATIVE_PATH: /idp
-      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
-      KC_HTTP_ENABLED: "true"
-      KC_PROXY_HEADERS: xforwarded
-      KC_HEALTH_ENABLED: "true"
+      MESAIL_KEYCLOAK_URL: ${MESAIL_ISSUER_ORIGIN:-https://mesail.localhost}/idp
+      MESAIL_KEYCLOAK_DOMAINS: ${MESAIL_KEYCLOAK_DOMAINS:-example.com,example.org,partner.test}
+      MESAIL_KEYCLOAK_DEV_USERS: "true"
+      KC_HTTP_HOST: 0.0.0.0
+      KC_HTTP_PORT: "8080"
+      MESAIL_IDENTITY_CLIENT_SECRET: ${MESAIL_IDENTITY_CLIENT_SECRET:?run scripts/floci/run-all.sh}
+      MESAIL_SERVICE_SECRET: ${MESAIL_SERVICE_SECRET:?run scripts/floci/run-all.sh}
+      MESAIL_ACCOUNT_CLIENT_SECRET: ${MESAIL_ACCOUNT_CLIENT_SECRET:?run scripts/floci/run-all.sh}
+      MESAIL_KEYCLOAK_DIRECTORY_SECRET: ${MESAIL_KEYCLOAK_DIRECTORY_SECRET:?run scripts/floci/run-all.sh}
+      KC_BOOTSTRAP_ADMIN_CLIENT_ID: mesail-bootstrap
+      KC_BOOTSTRAP_ADMIN_CLIENT_SECRET: ${KC_BOOTSTRAP_ADMIN_CLIENT_SECRET:?run scripts/floci/run-all.sh}
+    tmpfs:
+      - /data/keycloak:uid=1000,gid=0,mode=0770
     ports:
       - "127.0.0.1:${MESAIL_KEYCLOAK_PORT:-18180}:8080"
     networks: [backend]

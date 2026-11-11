@@ -30,6 +30,10 @@ func (reader SettingsReader) Read() (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
+	devDns, err := reader.devDns()
+	if err != nil {
+		return Settings{}, err
+	}
 	settings, err := reader.forMode(len(upstreams) > 0)
 	settings.Passthrough = reader.routes("MESAIL_ROUTER_PASSTHROUGH")
 	settings.Blocked = reader.list("MESAIL_ROUTER_BLOCKED", "/api/v1/realtime/gateway/")
@@ -39,7 +43,22 @@ func (reader SettingsReader) Read() (Settings, error) {
 	settings.SingleWriters = reader.list("MESAIL_ROUTER_SINGLE_WRITERS", "")
 	settings.Limited = reader.list("MESAIL_ROUTER_LIMITED_ROUTES", "POST /api/v1/identity/session,POST /api/v1/identity/session/refresh")
 	settings.RateLimit = rateLimit
+	settings.DevDns = devDns
 	return settings, err
+}
+
+func (reader SettingsReader) devDns() (DevDnsSettings, error) {
+	names := DevDnsSettings{}
+	settings := DevDnsSettings{
+		Domains:  strings.FieldsFunc(reader.optional(names.DomainsName(), ""), reader.isDomainSeparator),
+		MailHost: reader.optional(names.MailHostName(), ""),
+		Spf:      reader.optional(names.SpfName(), ""),
+	}
+	return settings, settings.Problem()
+}
+
+func (SettingsReader) isDomainSeparator(letter rune) bool {
+	return strings.ContainsRune(", \t\n", letter)
 }
 
 func (reader SettingsReader) routes(name string) map[string]string {

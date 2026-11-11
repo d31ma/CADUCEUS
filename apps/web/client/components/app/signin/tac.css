@@ -194,10 +194,6 @@
   color: var(--w-on-primary-container, var(--w-text));
 }
 
-a.w-btn-filled {
-  color: var(--w-on-primary);
-}
-
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer properties;

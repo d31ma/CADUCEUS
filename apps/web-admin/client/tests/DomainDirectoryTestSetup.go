@@ -46,7 +46,8 @@ func (DomainDirectoryTestSetup) removed(path string) (BehaviorValue, error) {
 	case "/api/v1/directory/domains/new.example.net":
 		return nil, &BehaviorError{Code: "HTTP_NETWORK", Message: "offline"}
 	}
-	return nil, nil
+	name := strings.TrimPrefix(path, "/api/v1/directory/domains/")
+	return DomainDirectoryTestSetup{}.domain(name, "removing", "ok", "ok", "ok", "ok"), nil
 }
 
 func (DomainDirectoryTestSetup) verified(path string) (BehaviorValue, error) {

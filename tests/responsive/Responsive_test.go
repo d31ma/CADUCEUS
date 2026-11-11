@@ -126,7 +126,11 @@ func label(options VisitOptions) string {
 	if options.Coarse {
 		pointer = "coarse pointer"
 	}
-	return fmt.Sprintf("%s screen at %dx%d (%s)", options.State, options.Width, options.Height, pointer)
+	screen := string(options.State)
+	if options.View != nil {
+		screen += " " + options.View.MenuLabel
+	}
+	return fmt.Sprintf("%s screen at %dx%d (%s)", screen, options.Width, options.Height, pointer)
 }
 
 func report(t *testing.T, options VisitOptions, findings []string) {
@@ -197,6 +201,36 @@ func TestEveryWidth(t *testing.T) {
 		for _, size := range everyWidth {
 			t.Run(fmt.Sprintf("%s/%dpx", state, size.width), func(t *testing.T) {
 				checkScreen(t, openVisit(t, VisitOptions{Width: size.width, Height: size.height, State: state}))
+			})
+		}
+	}
+}
+
+func TestViews(t *testing.T) {
+	requireSuite(t)
+	views := shared.site.Profile.Views
+	if len(views) == 0 {
+		t.Skipf("the %s app has no extra pages to open", shared.site.Profile.Name)
+	}
+	dark := []*emulation.MediaFeature{{Name: "prefers-color-scheme", Value: "dark"}}
+	for _, view := range views {
+		for _, size := range everyWidth {
+			t.Run(fmt.Sprintf("%s/%dpx/light", view.MenuLabel, size.width), func(t *testing.T) {
+				checkScreen(t, openVisit(t, VisitOptions{Width: size.width, Height: size.height, State: SignedInState, View: &view}))
+			})
+			t.Run(fmt.Sprintf("%s/%dpx/dark", view.MenuLabel, size.width), func(t *testing.T) {
+				options := VisitOptions{Width: size.width, Height: size.height, State: SignedInState, View: &view, MediaFeatures: dark}
+				visit := openVisit(t, options)
+				requireMedia(t, visit, "(prefers-color-scheme: dark)")
+				report(t, options, CheckDarkBackground(takeSnapshot(t, visit)))
+				checkScreen(t, visit)
+			})
+		}
+		for _, size := range []viewport{{375, 812}, {1024, 768}} {
+			t.Run(fmt.Sprintf("%s/%dpx/coarse", view.MenuLabel, size.width), func(t *testing.T) {
+				visit := openVisit(t, VisitOptions{Width: size.width, Height: size.height, State: SignedInState, View: &view, Coarse: true})
+				requireMedia(t, visit, "(pointer: coarse)")
+				checkScreen(t, visit)
 			})
 		}
 	}

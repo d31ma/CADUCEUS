@@ -9,6 +9,7 @@ type PersonRow struct {
 	StateColor     string   `json:"stateColor"`
 	NoDomains      bool     `json:"noDomains"`
 	Deleted        bool     `json:"deleted"`
+	Deleting       bool     `json:"deleting"`
 	Disabled       bool     `json:"disabled"`
 	AccountManaged bool     `json:"accountManaged"`
 }

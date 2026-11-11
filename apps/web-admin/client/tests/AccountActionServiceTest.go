@@ -99,7 +99,8 @@ func (test *AccountActionServiceTest) TestDeleteWithNeedsTheTypedUsername() {
 	Assert.Equals("Type dan to confirm.", account.ConfirmProblem)
 	account.DeleteWith(" dan ")
 	Assert.Equals("done", account.Dialog)
-	Assert.Equals("The username dan is never given to anyone else.", account.DoneText)
+	Assert.Equals("Person deleted", account.DoneTitle)
+	Assert.Equals("Dan can no longer sign in. Mesail now removes Dan from every domain, in the background. The username dan is never given to anyone else.", account.DoneText)
 }
 
 func (test *AccountActionServiceTest) TestCloseHidesTheDialog() {

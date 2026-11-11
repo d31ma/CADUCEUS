@@ -443,6 +443,9 @@ h1 w-icon,
   .flex-1 {
     flex: 1;
   }
+  .flex-\[1_1_16rem\] {
+    flex: 1 1 16rem;
+  }
   .grid-cols-1 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }

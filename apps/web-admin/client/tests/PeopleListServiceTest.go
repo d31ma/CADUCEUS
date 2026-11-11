@@ -37,6 +37,29 @@ func (test *PeopleListServiceTest) TestStatesHavePlainNames() {
 	Assert.Equals("success", people.Rows[0].StateColor)
 	Assert.Equals("warning", people.Rows[1].StateColor)
 	Assert.Equals(true, people.Rows[2].NoDomains)
+	Assert.Equals(false, people.Rows[2].Deleting)
+	Assert.Equals(false, people.Deleting)
+}
+
+func (test *PeopleListServiceTest) TestADeletedPersonWithDomainsLeftIsDeleting() {
+	people := test.opened()
+	people.SearchWith("leaving", "")
+	Assert.Equals(true, people.Deleting)
+	Assert.Equals("Deleting", people.Rows[0].StateText)
+	Assert.Equals("error", people.Rows[0].StateColor)
+	Assert.Equals(true, people.Rows[0].Deleting)
+	Assert.Equals(true, people.Rows[0].Deleted)
+	Assert.Equals(false, people.Rows[0].AccountManaged)
+	Assert.Equals(1, len(people.Rows[0].DomainIds))
+	Assert.Equals("Deleted", people.Rows[1].StateText)
+	Assert.Equals(false, people.Rows[1].Deleting)
+}
+
+func (test *PeopleListServiceTest) TestTheDeletedFilterKeepsDeletingPeople() {
+	people := test.opened()
+	people.SearchWith("leaving", "deleted")
+	Assert.Equals(2, len(people.Rows))
+	Assert.Equals("Deleting", people.Rows[0].StateText)
 }
 
 func (test *PeopleListServiceTest) TestTheStateFilterKeepsMatchingPeople() {

@@ -80,6 +80,12 @@
                   </td>
                 </tr></loop></tbody>
               </table>
+              <logic :if="peopleList.deleting">
+                <div class="panel-foot flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
+                  <p class="meta min-w-0 flex-[1_1_16rem]" role="status">A deleted person can no longer sign in. Mesail removes them from their domains in the background. Refresh to see when it is done.</p>
+                  <w-btn variant="outlined" size="small" prepend-icon="refresh" on:click="peopleList.retry()">Refresh</w-btn>
+                </div>
+              </logic>
               <logic :if="peopleList.hasMore">
                 <p class="meta panel-foot px-4 py-3 sm:px-6">More people exist than this page shows. Search by name or username to find them.</p>
               </logic>

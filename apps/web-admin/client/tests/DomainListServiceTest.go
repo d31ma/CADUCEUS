@@ -29,6 +29,7 @@ func (test *DomainListServiceTest) TestOpenedCountsTheDomains() {
 	list.Opened(AdminViewOpened{View: "domains"})
 	Assert.Equals("3 domains", list.Heading)
 	Assert.Equals("", list.ProblemText)
+	Assert.Equals(false, list.Removing)
 }
 
 func (test *DomainListServiceTest) TestRowsShowStateAndMarks() {

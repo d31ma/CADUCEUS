@@ -19,6 +19,12 @@ type AppProfile struct {
 	DomainRoles       map[string][]string
 	DefaultRoles      []string
 	DataAnswers       map[string]any
+	Views             []AppView
+}
+
+type AppView struct {
+	MenuLabel string
+	ReadyText string
 }
 
 type fakeConversationPage struct {
@@ -38,6 +44,7 @@ const (
 	operatorRole      = "mesail-operator"
 	firstHostedDomain = "example.com"
 	otherHostedDomain = "example.org"
+	removingDomain    = "gone.example.org"
 )
 
 func AppProfiles() []AppProfile {
@@ -74,12 +81,26 @@ func AdminProfile() AppProfile {
 		},
 		DefaultRoles: []string{memberRole},
 		DataAnswers: map[string]any{
-			"GET /api/v1/directory/domains": []any{},
+			"GET /api/v1/directory/domains": []any{fakeDomain(firstHostedDomain, "active"), fakeDomain(removingDomain, "removing")},
 			"GET /api/v1/directory/members": fakeMemberPage{Items: []any{}},
-			"GET /api/v1/directory/people":  fakeMemberPage{Items: []any{}},
-			"GET /api/v1/channels":          []any{},
+			"GET /api/v1/directory/people": fakeMemberPage{Items: []any{
+				fakePerson("ana", "Ana Ruiz", "active", []any{firstHostedDomain, otherHostedDomain}),
+				fakePerson("gail", "Gail Leaving", "deleted", []any{firstHostedDomain}),
+				fakePerson("finn", "Former person", "deleted", []any{}),
+			}},
+			"GET /api/v1/channels": []any{},
 		},
+		Views: []AppView{{MenuLabel: "Domains", ReadyText: "Removing"}, {MenuLabel: "People", ReadyText: "Deleting"}},
 	}
+}
+
+func fakeDomain(name string, state string) map[string]any {
+	dns := map[string]any{"mx": "ok", "spf": "ok", "dkim": "ok", "dmarc": "ok"}
+	return map[string]any{"domainId": name, "name": name, "state": state, "dkimSelector": "ms2026a", "dns": dns}
+}
+
+func fakePerson(username string, name string, state string, domainIds []any) map[string]any {
+	return map[string]any{"personId": username + "-id", "username": username, "displayName": name, "domainIds": domainIds, "state": state}
 }
 
 func SelectAppProfile(name string) (AppProfile, error) {

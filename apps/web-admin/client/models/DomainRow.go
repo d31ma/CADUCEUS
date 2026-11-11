@@ -13,4 +13,5 @@ type DomainRow struct {
 	ActionText    string    `json:"actionText"`
 	ActionVariant string    `json:"actionVariant"`
 	ActionLabel   string    `json:"actionLabel"`
+	ActionOff     bool      `json:"actionOff"`
 }

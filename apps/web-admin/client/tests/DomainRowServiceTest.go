@@ -45,6 +45,23 @@ func (test *DomainRowServiceTest) TestADisabledRowIsMuted() {
 	Assert.Equals("Manage", row.ActionText)
 }
 
+func (test *DomainRowServiceTest) TestARemovingRowTurnsManageOff() {
+	row := test.rows().Row(Domain{DomainId: "gone.example.org", Name: "gone.example.org", State: "removing"})
+	Assert.Equals("Removing", row.StateText)
+	Assert.Equals("error", row.StateColor)
+	Assert.Equals("trash", row.StateIcon)
+	Assert.Equals("Mail to this domain is refused. Mesail removes its members and addresses in the background.", row.StateNote)
+	Assert.Equals("muted", row.Tone)
+	Assert.Equals("Manage", row.ActionText)
+	Assert.Equals(true, row.ActionOff)
+	Assert.Equals("Manage is off while Mesail removes gone.example.org", row.ActionLabel)
+}
+
+func (test *DomainRowServiceTest) TestAnActiveRowKeepsManageOn() {
+	row := test.rows().Row(Domain{DomainId: "example.com", Name: "example.com", State: "active"})
+	Assert.Equals(false, row.ActionOff)
+}
+
 func (test *DomainRowServiceTest) TestViewOfAnUnknownStateIsAnOutline() {
 	view := test.rows().View(Domain{DomainId: "x.example", State: "moving"})
 	Assert.Equals("Unknown", view.StateText)

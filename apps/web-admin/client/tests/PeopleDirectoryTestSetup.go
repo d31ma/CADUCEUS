@@ -38,6 +38,9 @@ func (PeopleDirectoryTestSetup) people(query any) (BehaviorValue, error) {
 		return map[string]any{"items": []any{}, "nextCursor": ""}, nil
 	case "dan":
 		return map[string]any{"items": []any{dan}, "nextCursor": "more"}, nil
+	case "leaving":
+		gail := PeopleDirectoryTestSetup{}.person("gail", "Gail Leaving", []any{"example.com"}, "deleted")
+		return map[string]any{"items": []any{gail, finn}, "nextCursor": ""}, nil
 	}
 	return map[string]any{"items": []any{ana, dan, finn}, "nextCursor": ""}, nil
 }

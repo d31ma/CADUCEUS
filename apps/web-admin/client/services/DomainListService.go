@@ -1,4 +1,7 @@
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // @Service
 type DomainListService struct {
@@ -6,6 +9,7 @@ type DomainListService struct {
 	Heading     string
 	ProblemText string
 	Rows        []DomainRow
+	Removing    bool
 	// @Needs
 	session *AdminSessionService
 	// @Needs
@@ -33,6 +37,7 @@ func (list *DomainListService) load() {
 	domains, failure := list.directoryClient.Domains(list.session.Authorization())
 	problem := list.problems.Of(failure)
 	list.Rows = list.rows(domains)
+	list.Removing = slices.ContainsFunc(domains, list.removing)
 	list.Heading = list.heading(len(domains))
 	list.ProblemText = list.problemText(problem)
 	list.Step = list.failedWhen(problem, list.emptyWhen(len(domains)))
@@ -44,6 +49,10 @@ func (list *DomainListService) rows(domains []Domain) []DomainRow {
 		rows = append(rows, list.domainRows.Row(domain))
 	}
 	return rows
+}
+
+func (list *DomainListService) removing(domain Domain) bool {
+	return domain.State == "removing"
 }
 
 func (list *DomainListService) heading(count int) string {

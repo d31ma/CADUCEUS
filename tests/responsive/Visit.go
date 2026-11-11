@@ -36,6 +36,7 @@ type VisitOptions struct {
 	MediaFeatures []*emulation.MediaFeature
 	SafeArea      *emulation.SafeAreaInsets
 	SignInByForm  bool
+	View          *AppView
 }
 
 type Visit struct {
@@ -74,7 +75,34 @@ func OpenVisit(browser *Browser, site *Site, options VisitOptions) (*Visit, erro
 		visit.Close()
 		return nil, err
 	}
+	if err := visit.openView(site); err != nil {
+		visit.Close()
+		return nil, err
+	}
 	return visit, nil
+}
+
+func (visit *Visit) openView(site *Site) error {
+	view := visit.Options.View
+	if view == nil {
+		return nil
+	}
+	encoded, _ := json.Marshal(view.MenuLabel)
+	script := "(() => { const button = [...document.querySelectorAll('button.nav-item')].find((item) => item.textContent.trim() === " + string(encoded) + "); if (!button) return false; button.click(); return true })()"
+	clicked, err := chromedp.Run(visit.context, chromedp.Evaluate[bool](script))
+	if err != nil {
+		return fmt.Errorf("opening the %s page: %w", view.MenuLabel, err)
+	}
+	if !clicked {
+		return fmt.Errorf("the shell has no %q menu button; the page shows: %s", view.MenuLabel, visit.visibleText())
+	}
+	readyPath := fmt.Sprintf(`//*[contains(concat(" ", normalize-space(@class), " "), " tag ") and contains(normalize-space(.), %q)]`, view.ReadyText)
+	waitContext, cancelWait := context.WithTimeout(visit.context, readyTimeout)
+	defer cancelWait()
+	if err := chromedp.Do(waitContext, chromedp.WaitVisible(chromedp.Search(readyPath)), chromedp.Sleep(settleTime)); err != nil {
+		return fmt.Errorf("the %s page showed no %q tag within %s; the page shows: %s; API calls so far: %s", view.MenuLabel, view.ReadyText, readyTimeout, visit.visibleText(), strings.Join(site.ApiCalls(), ", "))
+	}
+	return nil
 }
 
 func (visit *Visit) listenToConsole() {

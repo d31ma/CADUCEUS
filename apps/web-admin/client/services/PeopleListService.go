@@ -13,6 +13,7 @@ type PeopleListService struct {
 	Rows          []PersonRow
 	Heading       string
 	HasMore       bool
+	Deleting      bool
 	// @Needs
 	session *AdminSessionService
 	// @Needs
@@ -62,6 +63,7 @@ func (people *PeopleListService) load() {
 	problem := people.problems.Of(failure)
 	people.Rows = people.rowsOf(slices.DeleteFunc(slices.Clone(page.Items), people.filteredOut))
 	people.HasMore = page.NextCursor != ""
+	people.Deleting = slices.ContainsFunc(people.Rows, people.rowDeleting)
 	people.Heading = people.countText(len(people.Rows)) + people.shownSuffix(people.HasMore)
 	people.State = people.emptyState(people.SearchedQuery + people.StateFilter)
 	people.State = people.filledState(len(people.Rows), people.State)
@@ -89,6 +91,7 @@ func (people *PeopleListService) rowsOf(items []PersonSummary) []PersonRow {
 }
 
 func (people *PeopleListService) rowOf(item PersonSummary) PersonRow {
+	state := people.shownState(item)
 	return PersonRow{
 		PersonId:       item.PersonId,
 		Name:           item.DisplayName,
@@ -96,17 +99,29 @@ func (people *PeopleListService) rowOf(item PersonSummary) PersonRow {
 		Initials:       people.initials.Of(item.DisplayName + " " + item.Username),
 		DomainIds:      item.DomainIds,
 		State:          item.State,
-		StateText:      people.stateText(item.State),
-		StateColor:     map[string]string{people.active(): "success", people.disabled(): "warning"}[item.State],
+		StateText:      people.stateText(state),
+		StateColor:     map[string]string{people.active(): "success", people.disabled(): "warning", people.deleting(): "error"}[state],
 		NoDomains:      len(item.DomainIds) == 0,
 		Deleted:        item.State == people.deleted(),
+		Deleting:       state == people.deleting(),
 		Disabled:       item.State == people.disabled(),
 		AccountManaged: item.State != people.deleted(),
 	}
 }
 
+func (people *PeopleListService) shownState(item PersonSummary) string {
+	if item.State == people.deleted() && len(item.DomainIds) > 0 {
+		return people.deleting()
+	}
+	return item.State
+}
+
+func (people *PeopleListService) rowDeleting(row PersonRow) bool {
+	return row.Deleting
+}
+
 func (people *PeopleListService) stateText(state string) string {
-	text, known := map[string]string{people.active(): "Active", people.disabled(): "Turned off", people.deleted(): "Deleted"}[state]
+	text, known := map[string]string{people.active(): "Active", people.disabled(): "Turned off", people.deleted(): "Deleted", people.deleting(): "Deleting"}[state]
 	if !known {
 		return state
 	}
@@ -169,4 +184,8 @@ func (people *PeopleListService) disabled() string {
 
 func (people *PeopleListService) deleted() string {
 	return "deleted"
+}
+
+func (people *PeopleListService) deleting() string {
+	return "deleting"
 }

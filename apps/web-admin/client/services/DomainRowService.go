@@ -21,6 +21,7 @@ func (rows *DomainRowService) Row(domain Domain) DomainRow {
 		ActionText:    state.ActionText,
 		ActionVariant: state.ActionVariant,
 		ActionLabel:   state.ActionPrefix + domain.Name,
+		ActionOff:     state.Locked,
 	}
 }
 
@@ -47,7 +48,7 @@ func (rows *DomainRowService) stateLook(state string) DomainStateLook {
 }
 
 func (rows *DomainRowService) looks() map[string]DomainStateLook {
-	return map[string]DomainStateLook{"pending": rows.pendingLook(), "active": rows.activeLook(), "disabled": rows.disabledLook()}
+	return map[string]DomainStateLook{"pending": rows.pendingLook(), "active": rows.activeLook(), "disabled": rows.disabledLook(), "removing": rows.removingLook()}
 }
 
 func (rows *DomainRowService) pendingLook() DomainStateLook {
@@ -80,10 +81,24 @@ func (rows *DomainRowService) disabledLook() DomainStateLook {
 		Variant:       rows.outlined(),
 		Icon:          rows.offIcon(),
 		Note:          "Mail to this domain is refused. Messages are kept.",
-		Tone:          "muted",
+		Tone:          rows.muted(),
 		ActionText:    rows.manage(),
 		ActionVariant: rows.outlined(),
 		ActionPrefix:  rows.managePrefix(),
+	}
+}
+
+func (rows *DomainRowService) removingLook() DomainStateLook {
+	return DomainStateLook{
+		Text:          "Removing",
+		Color:         "error",
+		Icon:          "trash",
+		Note:          "Mail to this domain is refused. Mesail removes its members and addresses in the background.",
+		Tone:          rows.muted(),
+		ActionText:    rows.manage(),
+		ActionVariant: rows.outlined(),
+		ActionPrefix:  "Manage is off while Mesail removes ",
+		Locked:        true,
 	}
 }
 
@@ -104,6 +119,10 @@ func (rows *DomainRowService) manage() string {
 
 func (rows *DomainRowService) managePrefix() string {
 	return "DNS and settings for "
+}
+
+func (rows *DomainRowService) muted() string {
+	return "muted"
 }
 
 func (rows *DomainRowService) outlined() string {

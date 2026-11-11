@@ -61,7 +61,8 @@ the app's data calls. To test another app, add one profile to
 | Hosted domains | `example.com`, `example.org` | `example.com`, `example.org` |
 | Default domain (the first hosted domain; a login without `@` opens it) | `example.com` | `example.com` |
 | Roles | `["mesail-member"]` | `example.com`: `["mesail-admin","mesail-member","mesail-operator"]` (both admin menus show); `example.org`: `["mesail-member"]` (no admin rights) |
-| Fixed data answers | none | `GET /api/v1/directory/domains`: `200 []`; `GET /api/v1/directory/members`: `200 {"items":[]}`; `GET /api/v1/directory/people`: `200 {"items":[]}`; `GET /api/v1/channels`: `200 []` |
+| Fixed data answers | none | `GET /api/v1/directory/domains`: `200` with `example.com` (active) and `gone.example.org` (removing); `GET /api/v1/directory/members`: `200 {"items":[]}`; `GET /api/v1/directory/people`: `200` with ana (active), gail (deleted, one domain left: Deleting) and finn (deleted, no domain left); `GET /api/v1/channels`: `200 []` |
+| Extra pages (`TestViews`) | none | Domains (waits for the "Removing" tag), People (waits for the "Deleting" tag) |
 
 Both apps use the same shell-ready selector (`nav[aria-label="Domains"]`),
 the same sign-in form (the username field `autocomplete="username"`, the
@@ -137,6 +138,11 @@ From then on, the other signed-in checks sign in through the form instead
 
 Extra runs:
 
+- `TestViews`: each extra page of the app profile (`Views`; the admin app
+  only). The test signs in, presses the page's menu button and waits for
+  its tag. Then it runs the checks of `TestEveryWidth` at every width, in
+  light and dark (dark also checks the background), and at 375 and 1024 px
+  with a coarse pointer (44 px targets). For the web app it skips.
 - `TestCoarsePointer`: 375 and 1024 px with touch and mobile emulation
   (`pointer: coarse`), all checks, 44 px targets.
 - `TestReducedMotion`: `prefers-reduced-motion: reduce`; no visible element

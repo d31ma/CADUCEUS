@@ -67,13 +67,19 @@
                     </td>
                     <td class="w-px px-4 py-3 text-right whitespace-nowrap @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:px-0 @max-2xl/page:pt-2 @max-2xl/page:pb-1 @max-2xl/page:text-left">
                       <div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start">
-                        <w-btn :variant="row.actionVariant" size="small" :aria-label="row.actionLabel" on:click="adminShell.open('domain', row.domainId)">{row.actionText}</w-btn>
+                        <w-btn :variant="row.actionVariant" size="small" :aria-label="row.actionLabel" :disabled="row.actionOff" on:click="adminShell.open('domain', row.domainId)">{row.actionText}</w-btn>
                       </div>
                     </td>
                   </tr>
                 </loop>
               </tbody>
             </table>
+            <logic :if="domainList.removing">
+              <div class="panel-foot flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
+                <p class="meta min-w-0 flex-[1_1_16rem]" role="status">Mesail removes a domain in the background. This can take a few minutes. Refresh to see when it is gone.</p>
+                <w-btn variant="outlined" size="small" prepend-icon="refresh" on:click="domainList.refresh()">Refresh</w-btn>
+              </div>
+            </logic>
           </section>
         </case>
         <case default>

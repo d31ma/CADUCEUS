@@ -85,7 +85,7 @@ func (account *AccountActionService) DeleteWith(typed string) {
 		_, failure := account.directoryClient.DeletePerson(account.session.Authorization(), account.PersonId)
 		return failure
 	})
-	account.done("Person deleted", "The username "+account.Username+" is never given to anyone else.")
+	account.done("Person deleted", account.FirstName+" can no longer sign in. Mesail now removes "+account.FirstName+" from every domain, in the background. The username "+account.Username+" is never given to anyone else.")
 }
 
 func (account *AccountActionService) Close() {

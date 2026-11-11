@@ -9,4 +9,5 @@ type DomainStateLook struct {
 	ActionVariant string `json:"actionVariant"`
 	ActionPrefix  string `json:"actionPrefix"`
 	Pending       bool   `json:"pending"`
+	Locked        bool   `json:"locked"`
 }

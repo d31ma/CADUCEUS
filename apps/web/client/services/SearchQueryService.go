@@ -89,13 +89,13 @@ func (service *SearchQueryService) cursorAfter(page SearchHitPage, filter Search
 func (service *SearchQueryService) stateOf(failure error, count int) string {
 	switch {
 	case BehaviorErrorStatus(failure) == service.unauthorizedStatus():
-		return service.stateSession()
+		return service.states().Session
 	case failure != nil:
-		return service.stateError()
+		return service.states().Error
 	case count == 0:
-		return service.stateEmpty()
+		return service.states().Empty
 	}
-	return service.stateResults()
+	return service.states().Results
 }
 
 func (service *SearchQueryService) flagText(value bool) string {
@@ -121,18 +121,6 @@ func (service *SearchQueryService) sessionEndedMessage() string {
 	return "the session ended and could not be renewed"
 }
 
-func (service *SearchQueryService) stateSession() string {
-	return "session"
-}
-
-func (service *SearchQueryService) stateError() string {
-	return "error"
-}
-
-func (service *SearchQueryService) stateEmpty() string {
-	return "empty"
-}
-
-func (service *SearchQueryService) stateResults() string {
-	return "results"
+func (service *SearchQueryService) states() SearchHitStates {
+	return SearchHitStates{Session: "session", Error: "error", Empty: "empty", Results: "results"}
 }

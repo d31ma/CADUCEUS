@@ -342,8 +342,8 @@ stable; tests name them.
 - **AC-ID-13** Resetting a person's password, removing their 2-step code,
   disabling or deleting the person, or changing their display name affects
   every domain of that person. An Operator may do it. A DomainAdmin may do
-  it only when they administer every domain the person belongs to;
-  otherwise `403`.
+  it only when they administer every domain the person belongs to (at
+  least one), and never to an Operator; otherwise `403`.
 - **AC-ID-14** An Operator is a person with the Keycloak role
   `mesail-operator`, and signs in with the same form. An Operator who is in
   no domain gets an install-wide session (domain `*`) that works only in

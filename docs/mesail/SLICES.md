@@ -694,7 +694,11 @@ an earlier slice text in this file says "realm of the domain",
 - **Blackbox:** all of L0.
 - **Done when:** `scripts/gates.sh` passes for every app, the native stack
   and the Floci stack start, and the L0 tests pass against the running
-  stack.
+  stack. This is also L3's live check: L3 tested its Keycloak calls only
+  against a fake, so L5 runs `directory`'s member and person routes against
+  the L2 image (create, disable, delete, password reset, 2-step code
+  removal, `mesail.mustChangePassword`) and reports any gap to the
+  directory owner.
 
 ### L6. Web: sign-in and domain switcher (F1's successor)
 - **Owns:** F1's patterns in `apps/web/client/**` (`Session*`, `Shell*`,
@@ -729,6 +733,45 @@ an earlier slice text in this file says "realm of the domain",
    the apps it touches.
 4. After L5: L6 and L7 finish their live checks; L0's tests pass against
    the stack.
+5. After L3, any time (does not block L5): **D2**.
+
+### D2. Directory: long operations in batches, and repairs (L3's successor)
+Open items from L3 (develop 3d984bc, hand-over
+`~/Library/Logs/local/CADUCEUS/mesail/l3-directory-note.md`). None needs
+the owner.
+- **Owns:** `apps/directory/**` (except kit copies).
+- **Builds:**
+  - **Batches (SLICES rule 9: at most 25 writes per call).** Removing a
+    domain and deleting a person first write one state change, then finish
+    in a scheduled job (rule 13) in batches of at most 25 writes, each step
+    idempotent. `DELETE /domains/{domainId}` sets `state: removing` and
+    answers `202` with the `Domain`; a removing domain is left out of every
+    `PersonRecord.domainIds` at once, so no sign-in, refresh or switch
+    reaches it, and mail for it is refused. `DELETE /people/{personId}`
+    deletes the Keycloak user and sets `state: deleted` first (that ends
+    every sign-in), answers `202`, and removes the memberships in batches.
+    CONTRACTS changes both rows from `204` to `202` in the same commit.
+  - **Release alias reservations of a removed domain.** The removal job
+    drops the domain from each `local-parts` document with `owner:
+    addresses`, and deletes a document whose `domainIds` becomes empty. A
+    person's prefix is never released (SPEC Q5).
+  - **Recover a Keycloak user left by a failed add.** `directory` makes
+    each Keycloak user with the attribute `mesail.addRequest` = an id it
+    also writes into the prefix's `local-parts` reservation before the
+    call. When a later add of the same prefix gets Keycloak's "user
+    exists" and no person has that username, `directory` reads that user:
+    if its `mesail.addRequest` matches the reservation, `directory` made
+    it, so it finishes the add with that user's `sub`; otherwise it answers
+    `409 duplicate` as now (CONTRACTS "directory", no take-over of a user it
+    did not make).
+- **Not here:** `people.sessionsEndedAt` and its route are slice O2 (Wave
+  4); L3 left them out on purpose.
+- **Depends on:** L3 merged. The batch job follows the scheduled-work rule
+  (EVENTS.md section 4).
+- **Done when:** a test removes a domain with 200 members in batches of at
+  most 25 writes with no member left; a test deletes a person in 5
+  domains; a test makes Keycloak fail after the user is made and shows the
+  next add of the same prefix finishes; gates pass.
 
 ## Wave 3b: browser push (SPEC AC-PN-3, decided 2026-11-11)
 

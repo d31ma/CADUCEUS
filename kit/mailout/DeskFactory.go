@@ -3,7 +3,6 @@ package mailout
 import (
 	"errors"
 	"net"
-	"net/http"
 	"strconv"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
 	"mesail.dev/packages/smtpclient"
+	"mesail.dev/packages/transport"
 )
 
 type DeskFactory struct {
@@ -25,15 +25,15 @@ func (factory DeskFactory) Desk(documents Documents) Desk {
 	settings := SettingsReader{Environment: factory.Environment}.Read()
 	outboxSettings, err := outbox.SettingsReader{}.FromApplicationJSON(factory.Environment(factory.variable()))
 	dialer, dialErr := smtpclient.ProxyDialers{}.FromEnvironment()
-	authorize := oidc.ServiceTokensFactory{}.FromJson(factory.Environment(factory.variable())).Authorization
+	authorize := factory.tokens(settings).Authorization
 	store := DocumentStore{Documents: documents}
 	registry := Registry{Store: store}
-	client := ServiceClient{Client: &http.Client{Timeout: settings.Timeout()}, Authorize: authorize}
+	client := ServiceClient{Client: transport.SingleUseTransport{}.Client(settings.Timeout()), Authorize: authorize}
 	directory := Directory{Client: client, BaseUrl: settings.DirectoryUrl}
 	services := events.Services{}
 	sources := Sources{Client: client, Bases: map[string]string{services.Messaging(): settings.MessagingUrl, services.Notify(): settings.NotifyUrl}}
 	queue := Queue{Store: store, Registry: registry, Outbox: outboxSettings, Lease: settings.Lease()}
-	relayer := Relayer{Store: OutboxStore{Store: store, Registry: registry}, Settings: outboxSettings, Authorize: authorize, Timeout: settings.Timeout(), Now: time.Now}
+	relayer := Relayer{Store: OutboxStore{Store: store, Registry: registry}, Settings: outboxSettings, Client: client, Now: time.Now}
 	changes := ChangeEvents{Now: time.Now}
 	builder := Builder{Directory: directory, Sources: sources, Blobs: factory.blobs(settings), Keys: dkim.KeyStore{Source: factory.secrets(settings)}}
 	transport := Transport{Directory: directory, MailIn: MailIn{Client: client, BaseUrl: settings.MailInUrl}, Relay: factory.relay(settings, dialer), Direct: factory.direct(settings), DirectEnabled: settings.DirectEnabled, Timeout: settings.Timeout()}
@@ -46,6 +46,12 @@ func (factory DeskFactory) Desk(documents Documents) Desk {
 		Run: QueueRun{Registry: registry, Queue: queue, Delivery: delivery, Batch: 50}, Relayer: relayer, Now: time.Now, Limit: 100,
 		Failure: errors.Join(err, dialErr),
 	}
+}
+
+func (factory DeskFactory) tokens(settings Settings) oidc.ServiceTokens {
+	tokens := oidc.ServiceTokensFactory{}.FromJson(factory.Environment(factory.variable()))
+	tokens.Client = transport.SingleUseTransport{}.Client(settings.Timeout())
+	return tokens
 }
 
 func (DeskFactory) blobs(settings Settings) blobs.Store {

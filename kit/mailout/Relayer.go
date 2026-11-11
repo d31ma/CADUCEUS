@@ -2,34 +2,28 @@ package mailout
 
 import (
 	"errors"
-	"strings"
 	"time"
 
 	"mesail.dev/packages/outbox"
 )
 
 type Relayer struct {
-	Store     OutboxStore
-	Settings  outbox.Settings
-	Authorize func(realm string) (string, error)
-	Timeout   time.Duration
-	Now       func() time.Time
+	Store    OutboxStore
+	Settings outbox.Settings
+	Client   ServiceClient
+	Now      func() time.Time
 }
 
-func (Relayer) bearerPrefix() string { return "Bearer " }
-
 func (relayer Relayer) RunOnce(limit int) (outbox.Report, error) {
-	pusher := outbox.NewDomainHTTPPusher(outbox.DomainTokenFunc(relayer.token), relayer.Timeout)
-	return relayer.relay(pusher).RunOnce(limit)
+	return relayer.relay().RunOnce(limit)
 }
 
 func (relayer Relayer) RelayDocument(ref outbox.Ref, domainId string) (outbox.Report, error) {
-	token, err := relayer.token(domainId)
+	_, err := relayer.Client.Authorize(domainId)
 	if err != nil {
 		return outbox.Report{}, err
 	}
-	pusher := outbox.NewHTTPPusher(outbox.StaticToken{Value: token}, relayer.Timeout)
-	return relayer.relay(pusher).RelayDocument(ref)
+	return relayer.relay().RelayDocument(ref)
 }
 
 func (relayer Relayer) Pending(limit int) ([]outbox.Document, error) {
@@ -59,13 +53,8 @@ func (relayer Relayer) Requeue(request RequeueRequest) (outbox.Report, error) {
 	return relayer.RelayDocument(ref, request.DomainId)
 }
 
-func (relayer Relayer) token(domainId string) (string, error) {
-	authorization, err := relayer.Authorize(domainId)
-	return strings.TrimPrefix(authorization, relayer.bearerPrefix()), err
-}
-
-func (relayer Relayer) relay(pusher outbox.Pusher) outbox.Relay {
-	return outbox.NewRelay(relayer.Store, pusher, relayer.Settings, relayer.Now)
+func (relayer Relayer) relay() outbox.Relay {
+	return outbox.NewRelay(relayer.Store, SubscriberPusher{Client: relayer.Client}, relayer.Settings, relayer.Now)
 }
 
 func (Relayer) letters(documents []outbox.Document) ([]outbox.DeadLetter, error) {

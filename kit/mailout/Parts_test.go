@@ -209,7 +209,7 @@ func TestDirectoryReportsServerErrors(t *testing.T) {
 }
 
 func TestRelayerReportsTokenProblems(t *testing.T) {
-	relayer := Relayer{Authorize: func(string) (string, error) { return "", errors.New("no token") }}
+	relayer := Relayer{Client: ServiceClient{Authorize: func(string) (string, error) { return "", errors.New("no token") }}}
 	_, err := relayer.RelayDocument(outbox.Ref{Collection: "c", Id: "i"}, "example.com")
 	equal(t, "no token", err.Error())
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/oidc"
+	"mesail.dev/packages/transport"
 )
 
 // @Schedule({"fixedDelaySeconds":30,"initialDelaySeconds":10})
@@ -24,7 +25,7 @@ func (handler Handler) POST() {
 	}
 	json.Unmarshal([]byte(os.Getenv("YON_APPLICATION_JSON")), &snapshot)
 	authorization, failure := oidc.ServiceTokensFactory{}.Configured().Authorization("mesail-operators")
-	base := "http://mail-out.localhost:" + strconv.Itoa(snapshot.Yon.Server.Port) + "/api/v1/mail-out"
+	base := "http://127.0.0.1:" + strconv.Itoa(snapshot.Yon.Server.Port) + "/api/v1/mail-out"
 	handler.post(base+"/jobs/deliver", authorization, failure)
 	handler.post(base+"/outbox/relay", authorization, failure)
 }
@@ -39,7 +40,7 @@ func (handler Handler) send(request *http.Request, authorization string, failure
 		return
 	}
 	request.Header.Set("Authorization", authorization)
-	response, sendErr := (&http.Client{Timeout: handler.timeout()}).Do(request)
+	response, sendErr := transport.SingleUseTransport{}.Client(handler.timeout()).Do(request)
 	handler.close(response, sendErr)
 }
 

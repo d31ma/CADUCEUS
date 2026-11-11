@@ -23,25 +23,21 @@
   },
   "outgoing": {
     "hosts": [
-      "keycloak",
-      "mail-in.localhost",
-      "mail-out.localhost",
-      "messaging.localhost",
-      "notify.localhost",
-      "directory.localhost"
+      "127.0.0.1",
+      "keycloak"
     ]
   },
   "outbox": {
     "producer": "mail-out",
     "subscribers": [
-      { "name": "messaging", "url": "http://messaging.localhost:8104/api/v1/messaging/events" }
+      { "name": "messaging", "url": "http://127.0.0.1:8104/api/v1/messaging/events" }
     ]
   },
   "mailout": {
-    "mailinurl": "http://mail-in.localhost:8109",
-    "messagingurl": "http://messaging.localhost:8104",
-    "notifyurl": "http://notify.localhost:8107",
-    "directoryurl": "http://directory.localhost:8102",
+    "mailinurl": "http://127.0.0.1:8109",
+    "messagingurl": "http://127.0.0.1:8104",
+    "notifyurl": "http://127.0.0.1:8107",
+    "directoryurl": "http://127.0.0.1:8102",
     "relayaddress": "",
     "relayrequiretls": true,
     "heloname": "mail-out.localhost",

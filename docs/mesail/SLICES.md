@@ -68,7 +68,13 @@ wave run at the same time.
    A1). So every Yon slice puts its workflows in its own plain-Go package
    `kit/<service>/` (for example `kit/messaging`), copied only into its own
    app by `scripts/kit-sync.sh`, tested with `go test`, and held to the
-   CRAP limit by the gate. Role files stay thin: a public method makes one
+   CRAP limit by the gate. **Or** it lives in app-local plain-Go packages
+   `apps/<app>/server/packages/<package>/` (decided 2026-11-11 for slice
+   M3): allowed for code that only that app uses, when the package is not
+   named in `kit.list` and not under `vendor/`. `scripts/gates.sh` (slice
+   C1) runs `go vet`, `go test` with coverage and the CRAP check on every
+   such package, exactly as on `kit/`, so both places get the same checks.
+   Code that a second app needs moves to `kit/`. Role files stay thin: a public method makes one
    call into that package and returns; a private helper holds at most one
    decision. The package talks to FYLO, HTTP clients and the clock through
    small Go interfaces that the role files fill in, so it is testable

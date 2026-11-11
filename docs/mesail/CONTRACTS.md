@@ -417,18 +417,31 @@ Gateway WebSocket API. The other routes are the `realtime` Yon app.
 | `POST /api/v1/realtime/events` | Service (the envelope's domain) | `events.Envelope` | `EventReceipt{eventId, status}` |
 | `POST /api/v1/realtime/jobs/sweep` | Service (install-wide, realm `mesail-operators`) | - | `SweepReport{closedConnections, offlineMembers, endedDoNotDisturb, writes, more}` |
 
-Socket protocol:
+Socket protocol (agreed with slice F2: a Go Tac socket client gets no open
+or close callback and has no timer):
+- On every new connection, reconnects included, the server first sends
+  `RealtimeEvent{type: "hello"}`. The client answers with `auth`. The
+  server sends no other event before an accepted `auth`; without one within
+  10 seconds it sends `auth.expired` and closes with 4401.
 - Client frames: `RealtimeClientMessage{type, token?, conversationId?,
   state?, doNotDisturbUntil?}` with `type` one of `auth` (`token`: the
   access token; the first message, within 10 seconds), `typing`
-  (`conversationId`) and `presence` (`state`, `doNotDisturbUntil?`).
+  (`conversationId`), `presence` (`state`, `doNotDisturbUntil?`) and
+  `ping` (keeps an idle socket open; send one every 5 minutes).
 - After each accepted `auth` the server sends
   `RealtimeEvent{type: "auth.accepted", state: <RFC 3339 time>}`. The
   socket closes with code 4401 at that time unless the client sent `auth`
   again with a newer token. The time is the token's expiry, at most 60
   seconds ahead, so the token is re-checked at least every 60 seconds
-  (SPEC AC-ID-4). A refused `auth`, or `typing`/`presence` before an
-  accepted `auth`, closes the socket with 4401.
+  (SPEC AC-ID-4). 20 seconds before that time the server sends
+  `RealtimeEvent{type: "reauth"}`; the client answers with `auth` and a
+  fresh token. A refused `auth`, or `typing`/`presence` before an accepted
+  `auth`, also ends the socket.
+- Before such an end the server sends
+  `RealtimeEvent{type: "auth.expired", state: "4401"}`, then closes with
+  code 4401. The client treats `auth.expired` like 4401 (get a fresh token,
+  reconnect), because an API Gateway WebSocket API (the later serverless
+  form) can only close with 1000 or 1001.
 - The event stream sends the same events. It ends with `event: close` and
   `data: {"code":4401}` when the token behind the ticket ends; the client
   then gets a new ticket and reconnects.
@@ -444,7 +457,8 @@ ids only, never message bodies; the client fetches what it needs.
 `RealtimeEvent.type` is one of `message.created`, `message.edited`,
 `message.deleted`, `reaction.changed` (`state` = the emoji),
 `read.moved` (only to the reader's own connections), `presence.changed`,
-`typing`, `notification` and `auth.accepted`.
+`typing`, `notification`, `hello`, `reauth`, `auth.accepted` and
+`auth.expired`.
 
 Internal routes between the gateway and the Yon app (never routed
 publicly; shared secret in the header `X-Realtime-Gateway`):

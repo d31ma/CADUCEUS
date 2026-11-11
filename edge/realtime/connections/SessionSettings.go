@@ -8,6 +8,7 @@ type SessionSettings struct {
 	KeepAliveInterval time.Duration
 	WriteTimeout      time.Duration
 	QueueLimit        int
+	ReauthLead        time.Duration
 }
 
 func DefaultSessionSettings() SessionSettings {
@@ -17,5 +18,6 @@ func DefaultSessionSettings() SessionSettings {
 		KeepAliveInterval: 25 * time.Second,
 		WriteTimeout:      10 * time.Second,
 		QueueLimit:        64,
+		ReauthLead:        20 * time.Second,
 	}
 }

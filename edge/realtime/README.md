@@ -20,9 +20,12 @@ management API. It is the local stand-in for AWS API Gateway WebSocket APIs.
 - `GET /api/v1/realtime/socket`: WebSocket. The `Origin` header must be in
   `MESAIL_REALTIME_ORIGINS` (a request without `Origin` is allowed; it is not
   a browser). Every client text frame goes to the backend `message` route.
+  - Every new connection first gets `{"type":"hello",...}`, so a client
+    without an open callback knows to send its token.
   - The first accepted auth must arrive within 10 s. The backend's
     `expiresAt` sets the time when the authentication ends; a newer auth moves
-    it. At that time the gateway sends
+    it. 20 s before that time the gateway sends `{"type":"reauth",...}`.
+    At that time the gateway sends
     `{"type":"auth.expired",...,"state":"4401"}` and closes with 4401.
   - Binary frame: close 1003. Frame over 16 KiB: close 1009. 64 events
     waiting for a slow reader: close 1013. Backend `connect` failed: close

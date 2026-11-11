@@ -21,6 +21,8 @@ import (
 const testSecret = "a-test-secret-that-is-long-enough-1234"
 const allowedOrigin = "https://mail.example"
 const waitLimit = 5 * time.Second
+const helloFrame = `{"type":"hello","conversationId":"","messageId":"","state":""}`
+const reauthFrame = `{"type":"reauth","conversationId":"","messageId":"","state":""}`
 
 type FakeBackend struct {
 	mutex         sync.Mutex
@@ -164,6 +166,7 @@ func testSessionSettings() connections.SessionSettings {
 		KeepAliveInterval: 50 * time.Millisecond,
 		WriteTimeout:      2 * time.Second,
 		QueueLimit:        64,
+		ReauthLead:        100 * time.Millisecond,
 	}
 }
 
@@ -245,6 +248,15 @@ func (harness *Harness) sendAndWait(connection *websocket.Conn, text string) {
 }
 
 func (harness *Harness) read(connection *websocket.Conn) string {
+	for {
+		frame := harness.readRaw(connection)
+		if frame != helloFrame && frame != reauthFrame {
+			return frame
+		}
+	}
+}
+
+func (harness *Harness) readRaw(connection *websocket.Conn) string {
 	ctx, cancel := context.WithTimeout(context.Background(), waitLimit)
 	defer cancel()
 	_, data, err := connection.Read(ctx)
@@ -347,7 +359,7 @@ func (client *StreamClient) next() string {
 			if !open {
 				client.t.Fatalf("stream ended")
 			}
-			if line != "" && line != ": keep-alive" {
+			if line != "" && line != ": keep-alive" && line != "data: "+helloFrame && line != "data: "+reauthFrame {
 				return line
 			}
 		case <-timeout:

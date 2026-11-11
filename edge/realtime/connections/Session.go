@@ -17,6 +17,8 @@ type Session struct {
 	mutex     sync.Mutex
 	domainId  string
 	deadline  *time.Timer
+	reauth    *time.Timer
+	lead      time.Duration
 }
 
 func NewSession(id string, settings SessionSettings) *Session {
@@ -24,8 +26,12 @@ func NewSession(id string, settings SessionSettings) *Session {
 		id:      id,
 		events:  make(chan []byte, settings.QueueLimit),
 		closing: make(chan struct{}),
+		lead:    settings.ReauthLead,
 	}
 	session.deadline = time.AfterFunc(settings.AuthWindow, session.expire)
+	session.reauth = time.AfterFunc(settings.AuthWindow, session.askReauth)
+	session.reauth.Stop()
+	session.offerOrClose(session.encoded(session.hello()))
 	return session
 }
 
@@ -75,14 +81,27 @@ func (session *Session) closeWith(code int, farewell []byte) {
 		session.code = code
 		session.farewell = farewell
 		session.deadline.Stop()
+		session.reauth.Stop()
 		close(session.closing)
 	})
 }
 
 func (session *Session) expire() {
 	event := RealtimeEvent{Type: "auth.expired", State: strconv.Itoa(CloseCodes{}.Unauthorized())}
+	session.closeWith(CloseCodes{}.Unauthorized(), session.encoded(event))
+}
+
+func (session *Session) askReauth() {
+	session.offerOrClose(session.encoded(RealtimeEvent{Type: "reauth"}))
+}
+
+func (*Session) hello() RealtimeEvent {
+	return RealtimeEvent{Type: "hello"}
+}
+
+func (*Session) encoded(event RealtimeEvent) []byte {
 	encoded, _ := json.Marshal(event)
-	session.closeWith(CloseCodes{}.Unauthorized(), encoded)
+	return encoded
 }
 
 func (session *Session) keepDomain(domainId string) {
@@ -100,6 +119,7 @@ func (session *Session) moveDeadline(expiresAt string) {
 		return
 	}
 	session.deadline.Reset(time.Until(deadline))
+	session.reauth.Reset(time.Until(deadline) - session.lead)
 }
 
 func (session *Session) offerOrClose(event []byte) bool {

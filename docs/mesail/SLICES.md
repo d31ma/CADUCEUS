@@ -141,6 +141,11 @@ below) once `scripts/native/run-all.sh` exists (slice P1); until then, the
 compile check is enough.
 `ty test --coverage` fails when a public method has no test (TY2022).
 
+**Push only after a green gate on that exact commit.** Run the gates on the
+commit you will push (after the rebase), wait for the result, and push only
+when that run's log shows `rc=0` for that commit's SHA. Never push while a
+gate is still running or after a gate of an older commit.
+
 **A slice is done only when its app builds and starts.** `ty test` does not
 apply every build rule (TY1314 is enforced by `ty bundle` and `ty start`).
 So every slice, server-only apps included, also runs `ty bundle apps/<app>`
@@ -204,6 +209,12 @@ C1, not before each slice merge.
   each domain's events with that domain's service token (EVENTS.md
   section 4), and `SettingsReader` reads under `yon` if I2 has not fixed
   it.
+- **Owner M2's second change:** `kit/outbox` computes all six outbox
+  fields together, including the booleans `outboxWaiting` and
+  `outboxHasDead`, and offers the sweep filter `{"outboxWaiting": true}`
+  (EVENTS.md section 2.1), so every producer gets the same bounded sweep.
+  Producers that already copied C2's read-everything sweep (C2, M1) switch
+  to it when it lands.
 - **Builds:** one Go payload type per event in `kit/events` (today only
   the names exist in `Types.go`; payload fields are in DOMAIN.md and
   CONTRACTS.md), the outbox relay library (pending events stored in the

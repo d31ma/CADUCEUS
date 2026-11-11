@@ -29,15 +29,32 @@ consumers is `kit/events` `Catalog` (the same table as DOMAIN.md section 4).
 
 ### 2.1 Document fields
 
-Every FYLO document that can carry events has four more fields (FYLO
+Every FYLO document that can carry events has six more fields (FYLO
 rejects arrays of objects, so each pending event is one JSON string):
 
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `pendingEvents` | string[] | `outbox.PendingEvent` as JSON: the envelope, the subscribers still waiting, attempts, next attempt time, last error |
 | `deadEvents` | string[] | `outbox.DeadLetter` as JSON: one per event and subscriber that gave up |
-| `outboxPending` | int | number of pending events; the relay finds documents with `outboxPending > 0` (indexed numeric range) |
+| `outboxPending` | int | number of pending events |
 | `outboxDead` | int | number of dead letters |
+| `outboxWaiting` | bool | `true` while `outboxPending > 0`; the sweep finds documents with the exact match `outboxWaiting: true` |
+| `outboxHasDead` | bool | `true` while `outboxDead > 0`; the dead-letter view finds documents with `outboxHasDead: true` |
+
+The two booleans are set in the SAME patch as the counts, every time
+(`kit/outbox` computes all six fields together). They exist because
+Tachyon's `Scroll` filters only by exact match (`$eq`, at most 8 fields),
+so `outboxPending > 0` cannot be written, and a sweep that reads every
+document and filters in memory grows with all stored data (found by slice
+M1, whose gate timed out on a grown test root). `$eq` on a field is also
+what FYLO indexes.
+
+**The sweep rule for every producer** (D1, C2, M1, M2, M3, N1, R1, S1 when
+they produce): scroll each registered collection with
+`{"outboxWaiting": true}` only, stop after the SLICES rule 9 limit (25
+writes or 20 seconds), answer `more: true` when it stopped early, and
+never scroll a collection without that filter. Tests remove the documents
+and collections they create, so a test root does not grow across runs.
 
 The entity model in `server/models/` declares these four fields with these
 JSON names. The store adapter converts them to and from `outbox.Fields`.
@@ -97,7 +114,7 @@ the scheduled sweep retries it.
 
 | File | What it does |
 | --- | --- |
-| `server/services/OutboxStoreService.go` (`@Service`, `@Needs dataSource DataSource`) | implements `outbox.Store`: `Pending(limit)` scrolls the service's collections with `outboxPending > 0`; `Load(ref)` reads one document's four fields; `Save(ref, fields)` patches exactly those four fields |
+| `server/services/OutboxStoreService.go` (`@Service`, `@Needs dataSource DataSource`) | implements `outbox.Store`: `Pending(limit)` scrolls the service's collections with the exact match `outboxWaiting: true`, at most `limit` documents; `Load(ref)` reads one document's six fields; `Save(ref, fields)` patches exactly those six fields |
 | `server/services/OutboxRelayService.go` (`@Service`, `@Needs` the store service) | builds `outbox.NewRelay(store, outbox.NewHTTPPusher(tokens, timeout), settings, time.Now)` and exposes `RunOnce` and `RelayDocument` |
 | `server/controllers/OutboxController.go` (`@RequestRoute("/api/v1/<service>/outbox")`, `@Allow(Service)`) | `POST /relay` runs `RunOnce` and returns `outbox.Report`; `GET /dead` lists dead letters; `POST /dead/requeue` moves one back (`DeadLetters.Requeue`) |
 | `server/workers/outbox-relay.go` (`@Schedule({"fixedDelaySeconds":60})`) | the sweep while the service runs as a long-lived `ty start` process (see section 4) |

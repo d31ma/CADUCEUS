@@ -6,20 +6,20 @@ import (
 // @Service
 type ConversationTimeService struct{}
 
-func (service *ConversationTimeService) Time(iso string) string {
-	moment, valid := service.parse(iso)
+func (service *ConversationTimeService) Time(timestamp string) string {
+	moment, valid := service.parse(timestamp)
 	return service.onlyWhenValid(valid, moment.Format(service.timeLayout()))
 }
 
-func (service *ConversationTimeService) Day(iso string, nowMs float64) string {
-	moment, valid := service.parse(iso)
+func (service *ConversationTimeService) Day(timestamp string, nowMs float64) string {
+	moment, valid := service.parse(timestamp)
 	now := time.UnixMilli(int64(nowMs)).UTC()
 	label := cmp.Or(service.nearDays(now)[service.dateKey(moment)], moment.Format(service.dayLayout(moment, now)))
 	return service.onlyWhenValid(valid, label)
 }
 
-func (service *ConversationTimeService) parse(iso string) (time.Time, bool) {
-	moment, failure := time.Parse(time.RFC3339, iso)
+func (service *ConversationTimeService) parse(timestamp string) (time.Time, bool) {
+	moment, failure := time.Parse(time.RFC3339, timestamp)
 	return moment.UTC(), failure == nil
 }
 

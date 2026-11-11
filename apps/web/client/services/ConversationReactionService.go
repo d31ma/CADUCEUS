@@ -94,15 +94,19 @@ func (service *ConversationReactionService) kinds() []MessageReaction {
 	return []MessageReaction{
 		{Emoji: "thumbs_up", Glyph: "👍", Label: "thumbs up"},
 		{Emoji: "thumbs_down", Glyph: "👎", Label: "thumbs down"},
-		{Emoji: "heart", Glyph: "❤️", Label: "heart"},
-		{Emoji: "laugh", Glyph: "😂", Label: "laugh"},
-		{Emoji: "surprised", Glyph: "😮", Label: "surprised"},
-		{Emoji: "sad", Glyph: "😢", Label: "sad"},
-		{Emoji: "party", Glyph: "🎉", Label: "party"},
-		{Emoji: "eyes", Glyph: "👀", Label: "eyes"},
+		service.sameLabel("heart", "❤️"),
+		service.sameLabel("laugh", "😂"),
+		service.sameLabel("surprised", "😮"),
+		service.sameLabel("sad", "😢"),
+		service.sameLabel("party", "🎉"),
+		service.sameLabel("eyes", "👀"),
 		{Emoji: "check", Glyph: "✅", Label: "check mark"},
 		{Emoji: "pray", Glyph: "🙏", Label: "thank you"},
-		{Emoji: "fire", Glyph: "🔥", Label: "fire"},
-		{Emoji: "rocket", Glyph: "🚀", Label: "rocket"},
+		service.sameLabel("fire", "🔥"),
+		service.sameLabel("rocket", "🚀"),
 	}
+}
+
+func (service *ConversationReactionService) sameLabel(name string, glyph string) MessageReaction {
+	return MessageReaction{Emoji: name, Glyph: glyph, Label: name}
 }

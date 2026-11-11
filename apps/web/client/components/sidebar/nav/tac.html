@@ -14,6 +14,10 @@
     </logic>
   </div>
 
+  <div class="new-message px-2 pt-1">
+    <w-btn block class="min-h-11" prepend-icon="edit" on:click="sidebar.newMessage()">New message</w-btn>
+  </div>
+
   <switch :value="sidebar.state">
     <case :when="'loading'">
       <div class="nav-loading flex flex-col gap-2 px-2">

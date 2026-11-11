@@ -12,11 +12,13 @@ func (test *SidebarServiceTest) sidebar(accessToken string) *SidebarService {
 	tokens := &SessionTokenService{identity: NewIdentityClientWith(test.behaviors)}
 	tokens.tokens = map[string]SessionTokens{"example.com": {AccessToken: accessToken, ExpiresAtMs: 100000000}}
 	return &SidebarService{
-		messaging:      NewMessagingClientWith(test.behaviors),
-		channelsClient: NewChannelsClientWith(test.behaviors),
-		token:          &ConversationTokenService{session: &SessionService{tokens: tokens, accounts: accounts}, accounts: accounts},
-		shell:          &ShellService{},
-		rows:           &SidebarRowService{},
+		loader: &SidebarLoadService{
+			messaging:      NewMessagingClientWith(test.behaviors),
+			channelsClient: NewChannelsClientWith(test.behaviors),
+			token:          &ConversationTokenService{session: &SessionService{tokens: tokens, accounts: accounts}, accounts: accounts},
+		},
+		shell: &ShellService{},
+		rows:  &SidebarRowService{},
 	}
 }
 
@@ -27,7 +29,7 @@ func (test *SidebarServiceTest) loaded() *SidebarService {
 }
 
 func (test *SidebarServiceTest) useToken(sidebar *SidebarService, accessToken string) {
-	sidebar.token.session.tokens.tokens["example.com"] = SessionTokens{AccessToken: accessToken, ExpiresAtMs: 100000000}
+	sidebar.loader.token.session.tokens.tokens["example.com"] = SessionTokens{AccessToken: accessToken, ExpiresAtMs: 100000000}
 }
 
 func (test *SidebarServiceTest) ids(rows []ConversationRow) []string {
@@ -63,7 +65,7 @@ func (test *SidebarServiceTest) TestDomainSelectedShowsAnErrorWhenConversationsF
 
 func (test *SidebarServiceTest) TestDomainSelectedShowsAnErrorWhenTheSessionEnded() {
 	sidebar := test.sidebar("access-1")
-	sidebar.token.session.tokens.tokens["example.com"] = SessionTokens{AccessToken: "access-1", ExpiresAtMs: 0}
+	sidebar.loader.token.session.tokens.tokens["example.com"] = SessionTokens{AccessToken: "access-1", ExpiresAtMs: 0}
 	sidebar.DomainSelected(ConversationDomainSelected{DomainId: "example.com"})
 	Assert.Equals("error", sidebar.State)
 }
@@ -90,7 +92,7 @@ func (test *SidebarServiceTest) TestAnAnswerForAnotherDomainIsDropped() {
 func (test *SidebarServiceTest) TestRowsStayWhenTheChannelListFails() {
 	sidebar := test.sidebar("access-1")
 	sidebar.DomainId = "example.com"
-	channels := sidebar.channelsOrNone(nil, errors.New("channels are down"))
+	channels := sidebar.loader.channelsOrNone(nil, errors.New("channels are down"))
 	sidebar.applyWhenCurrent("example.com", ConversationTestSetup{}.Summaries(), channels, nil)
 	Assert.Equals("ready", sidebar.State)
 	Assert.Equals(2, len(sidebar.Channels))
@@ -232,4 +234,15 @@ func (test *SidebarServiceTest) TestViewMountedAnswersTheOpenConversation() {
 func (test *SidebarServiceTest) TestViewMountedBeforeAnyOpenAnswersNothing() {
 	opened := test.loaded().ViewMounted(ConversationViewMounted{Mounted: true})
 	Assert.Equals("", opened.ConversationId)
+}
+
+func (test *SidebarServiceTest) TestNewMessageClearsTheCurrentConversation() {
+	sidebar := test.loaded()
+	sidebar.Open("cnv_general")
+	sidebar.NewMessage()
+	Assert.Equals("", sidebar.CurrentId)
+	Assert.IsTrue(!sidebar.Channels[0].Current)
+	Assert.Equals("main", sidebar.shell.Pane)
+	Assert.Equals("New message", sidebar.shell.Heading)
+	Assert.Equals("", sidebar.ViewMounted(ConversationViewMounted{Mounted: true}).ConversationId)
 }

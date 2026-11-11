@@ -51,7 +51,7 @@ func (test *ConversationViewServiceTest) fromCarol(messageId string, createdAt s
 			From:        "Carol Diaz <Carol@Partner.org>",
 			To:          []string{"ana@example.com", "bo@example.com"},
 			Cc:          []string{"legal@partner.org"},
-			AuthResults: MessageAuthResults{Spf: "pass", Dkim: "pass", Dmarc: "pass"},
+			AuthResults: MessageAuthResults{SenderPolicy: "pass", SignatureCheck: "pass", DomainPolicy: "pass"},
 		},
 	}
 }
@@ -277,14 +277,14 @@ func (test *ConversationViewServiceTest) TestPassingDmarcIsAVerifiedSender() {
 }
 
 func (test *ConversationViewServiceTest) TestSuspiciousEmailIsAWarning() {
-	message := test.withResults(test.fromCarol("m1", "2026-11-10T08:47:00Z"), true, MessageAuthResults{Spf: "pass", Dkim: "pass", Dmarc: "pass"})
+	message := test.withResults(test.fromCarol("m1", "2026-11-10T08:47:00Z"), true, MessageAuthResults{SenderPolicy: "pass", SignatureCheck: "pass", DomainPolicy: "pass"})
 	email := test.one(message).Email
 	Assert.Equals("warning", email.SenderCheck)
 	Assert.Equals("Could not verify the sender", email.SenderCheckLabel)
 }
 
 func (test *ConversationViewServiceTest) TestFailingChecksAreAWarningWithTheirResults() {
-	message := test.withResults(test.fromCarol("m1", "2026-11-10T08:47:00Z"), false, MessageAuthResults{Spf: "softfail", Dmarc: "fail"})
+	message := test.withResults(test.fromCarol("m1", "2026-11-10T08:47:00Z"), false, MessageAuthResults{SenderPolicy: "softfail", DomainPolicy: "fail"})
 	email := test.one(message).Email
 	Assert.Equals("warning", email.SenderCheck)
 	Assert.Equals("SPF softfail · DKIM none · DMARC fail", email.SenderCheckInfo)

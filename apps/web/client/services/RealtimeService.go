@@ -15,22 +15,34 @@ func (service *RealtimeService) Start() {
 // @OnEvent
 // @InBackground
 func (service *RealtimeService) Received(event RealtimeEvent) {
-	service.State = service.answer(event.Type)
+	service.State = service.answerFor(event.Type)()
 }
 
 // @OnEvent({"replay":true})
 // @InBackground
 func (service *RealtimeService) DomainChanged(changed SessionDomainChanged) {
-	service.State = service.stateAfter(service.authenticate())
+	service.State = service.reconnect()
 }
 
-func (service *RealtimeService) answer(eventType string) string {
+func (service *RealtimeService) answerFor(eventType string) func() string {
 	switch eventType {
 	case "hello", "reauth", "auth.expired":
-		return service.stateAfter(service.authenticate())
+		return service.reconnect
 	case "auth.accepted":
-		return "live"
+		return service.live
 	}
+	return service.unchanged
+}
+
+func (service *RealtimeService) reconnect() string {
+	return service.stateAfter(service.authenticate())
+}
+
+func (service *RealtimeService) live() string {
+	return "live"
+}
+
+func (service *RealtimeService) unchanged() string {
 	return service.State
 }
 

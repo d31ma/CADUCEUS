@@ -76,7 +76,7 @@ func (setup ConversationTestSetup) EmailMessage() Message {
 	message.Author = Author{Kind: "external", Address: "carol@outside.test", DisplayName: "Carol Diaz"}
 	message.BodyFormat = "email"
 	message.Truncated = true
-	message.Email = &MessageEmailSummary{Subject: "Quote", From: "carol@outside.test", To: []string{"ana@example.com"}, Cc: []string{}, AuthResults: MessageAuthResults{Spf: "pass", Dkim: "pass", Dmarc: "pass"}}
+	message.Email = &MessageEmailSummary{Subject: "Quote", From: "carol@outside.test", To: []string{"ana@example.com"}, Cc: []string{}, AuthResults: MessageAuthResults{SenderPolicy: "pass", SignatureCheck: "pass", DomainPolicy: "pass"}}
 	message.Blocks = append(message.Blocks,
 		Block{Kind: "image", Image: &ImageRef{Alt: "Logo", RemoteUrl: "https://outside.test/logo.png"}},
 		Block{Kind: "quote", Level: 1, Spans: []Span{{Text: "Earlier message"}}},

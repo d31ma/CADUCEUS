@@ -1,6 +1,6 @@
 type MessageAuthResults struct {
-	Spf     string `json:"spf"`
-	Dkim    string `json:"dkim"`
-	Dmarc   string `json:"dmarc"`
-	Handoff bool   `json:"handoff,omitempty"`
+	SenderPolicy   string `json:"spf"`
+	SignatureCheck string `json:"dkim"`
+	DomainPolicy   string `json:"dmarc"`
+	Handoff        bool   `json:"handoff,omitempty"`
 }

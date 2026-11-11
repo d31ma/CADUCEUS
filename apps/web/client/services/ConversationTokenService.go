@@ -6,21 +6,12 @@ type ConversationTokenService struct {
 	accounts *SessionAccountService
 }
 
-func (service *ConversationTokenService) Authorization() (string, error) {
-	accessToken, failure := service.session.AccessToken()
-	return service.bearerPrefix() + accessToken, failure
+func (service *ConversationTokenService) WithRenewal(call func(authorization string) error) error {
+	return service.retryWhenUnauthorized(call, service.firstCall(call))
 }
 
 func (service *ConversationTokenService) AccessToken() (string, error) {
 	return service.session.AccessToken()
-}
-
-func (service *ConversationTokenService) WithRenewal(call func(authorization string) error) error {
-	authorization, failure := service.Authorization()
-	if failure != nil {
-		return failure
-	}
-	return service.retryWhenUnauthorized(call, call(authorization))
 }
 
 func (service *ConversationTokenService) DomainId() string {
@@ -29,6 +20,19 @@ func (service *ConversationTokenService) DomainId() string {
 
 func (service *ConversationTokenService) MyAddress() string {
 	return service.accounts.Current().Address
+}
+
+func (service *ConversationTokenService) authorization() (string, error) {
+	accessToken, failure := service.session.AccessToken()
+	return service.bearerPrefix() + accessToken, failure
+}
+
+func (service *ConversationTokenService) firstCall(call func(authorization string) error) error {
+	authorization, failure := service.authorization()
+	if failure != nil {
+		return failure
+	}
+	return call(authorization)
 }
 
 func (service *ConversationTokenService) retryWhenUnauthorized(call func(authorization string) error, failure error) error {
@@ -43,10 +47,10 @@ func (service *ConversationTokenService) renewedAuthorization() string {
 	return service.bearerPrefix() + accessToken
 }
 
-func (service *ConversationTokenService) bearerPrefix() string {
-	return "Bearer "
-}
-
 func (service *ConversationTokenService) unauthorizedStatus() int {
 	return 401
+}
+
+func (service *ConversationTokenService) bearerPrefix() string {
+	return "Bearer "
 }

@@ -14,11 +14,7 @@ type SidebarService struct {
 	channelInfo    []Channel
 	opened         ConversationOpened
 	// @Needs
-	messaging *MessagingClient
-	// @Needs
-	channelsClient *ChannelsClient
-	// @Needs
-	token *ConversationTokenService
+	loader *SidebarLoadService
 	// @Needs
 	shell *ShellService
 	// @Needs
@@ -29,7 +25,7 @@ type SidebarService struct {
 // @OnStart
 func (sidebar *SidebarService) Start() {
 	sidebar.State = sidebar.stateLoading()
-	sidebar.applicationEventPublisher.PublishEvent(ConversationDomainSelected{DomainId: sidebar.token.DomainId()}, false)
+	sidebar.applicationEventPublisher.PublishEvent(ConversationDomainSelected{DomainId: sidebar.loader.DomainId()}, false)
 }
 
 // @OnEvent({"replay":true})
@@ -61,6 +57,14 @@ func (sidebar *SidebarService) Open(conversationId string) {
 	sidebar.openWhenKnown(sidebar.rowOf(conversationId))
 }
 
+func (sidebar *SidebarService) NewMessage() {
+	sidebar.markCurrent("")
+	sidebar.opened = ConversationOpened{}
+	sidebar.shell.Pane = sidebar.paneMain()
+	sidebar.shell.Heading = sidebar.newMessageHeading()
+	sidebar.applicationEventPublisher.PublishEvent(ConversationComposeRequested{DomainId: sidebar.DomainId}, false)
+}
+
 func (sidebar *SidebarService) ToggleSection(section string) {
 	sidebar.toggle(section)
 }
@@ -81,39 +85,19 @@ func (sidebar *SidebarService) clear(domainId string) {
 	sidebar.opened = ConversationOpened{}
 }
 
+func (sidebar *SidebarService) stateLoading() string {
+	return "loading"
+}
+
 func (sidebar *SidebarService) load(domainId string) {
-	channels := sidebar.fetchChannels()
-	summaries, failure := sidebar.fetchSummaries()
+	channels := sidebar.loader.Channels()
+	summaries, failure := sidebar.loader.Summaries()
 	sidebar.applyWhenCurrent(domainId, summaries, channels, failure)
 }
 
 func (sidebar *SidebarService) refresh(domainId string) {
-	summaries, failure := sidebar.fetchSummaries()
+	summaries, failure := sidebar.loader.Summaries()
 	sidebar.applyLive(domainId, summaries, failure)
-}
-
-func (sidebar *SidebarService) fetchChannels() []Channel {
-	authorization, failure := sidebar.token.Authorization()
-	if failure != nil {
-		return []Channel{}
-	}
-	return sidebar.channelsOrNone(BehaviorsAnswer[[]Channel](sidebar.channelsClient.List(authorization)))
-}
-
-func (sidebar *SidebarService) fetchSummaries() ([]ConversationSummary, error) {
-	authorization, failure := sidebar.token.Authorization()
-	if failure != nil {
-		return []ConversationSummary{}, failure
-	}
-	page, failure := sidebar.messaging.Conversations(authorization, "", sidebar.pageSize())
-	return page.Items, failure
-}
-
-func (sidebar *SidebarService) channelsOrNone(channels []Channel, failure error) []Channel {
-	if failure != nil {
-		return []Channel{}
-	}
-	return channels
 }
 
 func (sidebar *SidebarService) applyWhenCurrent(domainId string, summaries []ConversationSummary, channels []Channel, failure error) {
@@ -149,9 +133,28 @@ func (sidebar *SidebarService) stateOf(rowCount int, failure error) string {
 	return sidebar.stateReady()
 }
 
+func (sidebar *SidebarService) stateReady() string {
+	return "ready"
+}
+
+func (sidebar *SidebarService) stateEmpty() string {
+	return "empty"
+}
+
 func (sidebar *SidebarService) wantsRefresh(eventType string) bool {
-	loaded := sidebar.State == sidebar.stateReady() || sidebar.State == sidebar.stateEmpty()
-	return loaded && slices.Contains(sidebar.refreshTypes(), eventType)
+	return sidebar.allTrue(sidebar.isLoaded(), slices.Contains(sidebar.refreshTypes(), eventType))
+}
+
+func (sidebar *SidebarService) isLoaded() bool {
+	return slices.Contains([]string{sidebar.stateReady(), sidebar.stateEmpty()}, sidebar.State)
+}
+
+func (sidebar *SidebarService) refreshTypes() []string {
+	return []string{"message.created", "message.deleted", "read.moved"}
+}
+
+func (sidebar *SidebarService) allTrue(conditions ...bool) bool {
+	return !slices.Contains(conditions, false)
 }
 
 func (sidebar *SidebarService) refreshWhen(wanted bool) {
@@ -184,10 +187,7 @@ func (sidebar *SidebarService) openWhenKnown(row ConversationRow) {
 }
 
 func (sidebar *SidebarService) open(row ConversationRow) {
-	sidebar.CurrentId = row.ConversationId
-	sidebar.Channels = sidebar.marked(sidebar.Channels, row.ConversationId)
-	sidebar.Directs = sidebar.marked(sidebar.Directs, row.ConversationId)
-	sidebar.Emails = sidebar.marked(sidebar.Emails, row.ConversationId)
+	sidebar.markCurrent(row.ConversationId)
 	sidebar.shell.Pane = sidebar.paneMain()
 	sidebar.shell.Heading = row.Title
 	sidebar.opened = ConversationOpened{
@@ -198,6 +198,21 @@ func (sidebar *SidebarService) open(row ConversationRow) {
 		UnreadCount:    row.UnreadCount,
 	}
 	sidebar.applicationEventPublisher.PublishEvent(sidebar.opened, false)
+}
+
+func (sidebar *SidebarService) markCurrent(conversationId string) {
+	sidebar.CurrentId = conversationId
+	sidebar.Channels = sidebar.marked(sidebar.Channels, conversationId)
+	sidebar.Directs = sidebar.marked(sidebar.Directs, conversationId)
+	sidebar.Emails = sidebar.marked(sidebar.Emails, conversationId)
+}
+
+func (sidebar *SidebarService) newMessageHeading() string {
+	return "New message"
+}
+
+func (sidebar *SidebarService) paneMain() string {
+	return "main"
 }
 
 func (sidebar *SidebarService) marked(rows []ConversationRow, conversationId string) []ConversationRow {
@@ -228,30 +243,6 @@ func (sidebar *SidebarService) toggle(section string) {
 	case sidebar.sectionEmail():
 		sidebar.EmailsClosed = !sidebar.EmailsClosed
 	}
-}
-
-func (sidebar *SidebarService) refreshTypes() []string {
-	return []string{"message.created", "message.deleted", "read.moved"}
-}
-
-func (sidebar *SidebarService) pageSize() int {
-	return 50
-}
-
-func (sidebar *SidebarService) paneMain() string {
-	return "main"
-}
-
-func (sidebar *SidebarService) stateLoading() string {
-	return "loading"
-}
-
-func (sidebar *SidebarService) stateReady() string {
-	return "ready"
-}
-
-func (sidebar *SidebarService) stateEmpty() string {
-	return "empty"
 }
 
 func (sidebar *SidebarService) sectionChannels() string {

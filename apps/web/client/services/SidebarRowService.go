@@ -80,7 +80,11 @@ func (service *SidebarRowService) personLetters(title string) string {
 	for _, word := range strings.Fields(title) {
 		letters += string([]rune(word)[0])
 	}
-	return letters + string([]rune(title + " ")[1:])
+	return letters + string([]rune(title + service.space())[1:])
+}
+
+func (service *SidebarRowService) space() string {
+	return " "
 }
 
 func (service *SidebarRowService) twoLetters(text string) string {
@@ -98,7 +102,7 @@ func (service *SidebarRowService) unreadText(count int) string {
 }
 
 func (service *SidebarRowService) mentionText(count int) string {
-	return service.pick(count > 0, strconv.Itoa(count)+" "+service.mentionWord(count), "")
+	return service.pick(count > 0, strconv.Itoa(count)+service.space()+service.mentionWord(count), "")
 }
 
 func (service *SidebarRowService) mentionWord(count int) string {
@@ -120,7 +124,7 @@ func (service *SidebarRowService) pick(first bool, chosen string, otherwise stri
 }
 
 func (service *SidebarRowService) inSection(rows []ConversationRow, section string) []ConversationRow {
-	return slices.DeleteFunc(slices.Clone(rows), func(row ConversationRow) bool {
+	return slices.DeleteFunc(append([]ConversationRow{}, rows...), func(row ConversationRow) bool {
 		return row.Section != section
 	})
 }

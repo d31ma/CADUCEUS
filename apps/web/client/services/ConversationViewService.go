@@ -66,8 +66,12 @@ func (service *ConversationViewService) within(previous Message, current Message
 	return service.moment(current.CreatedAt).Sub(service.moment(previous.CreatedAt)) <= service.groupWindow()
 }
 
-func (service *ConversationViewService) moment(iso string) time.Time {
-	moment, _ := time.Parse(time.RFC3339, iso)
+func (service *ConversationViewService) groupWindow() time.Duration {
+	return 5 * time.Minute
+}
+
+func (service *ConversationViewService) moment(timestamp string) time.Time {
+	moment, _ := time.Parse(time.RFC3339, timestamp)
 	return moment
 }
 
@@ -101,13 +105,35 @@ func (service *ConversationViewService) basics(message Message, context Conversa
 	}
 }
 
+func (service *ConversationViewService) memberKind() string {
+	return "member"
+}
+
+func (service *ConversationViewService) emailSection() string {
+	return "email"
+}
+
 func (service *ConversationViewService) addBody(view *MessageView, message Message, visible Message, context ConversationViewContext) {
 	start := service.pickNumber(message.Email != nil, service.trailingQuoteStart(visible.Blocks), len(visible.Blocks))
-	view.Blocks = append([]Block{}, visible.Blocks[:start]...)
-	view.QuotedBlocks = append([]Block{}, visible.Blocks[start:]...)
+	view.Blocks = service.filledBlocks(visible.Blocks[:start])
+	view.QuotedBlocks = service.filledBlocks(visible.Blocks[start:])
 	view.ShowQuoted = slices.Contains(context.ShowQuoted, message.MessageId)
 	view.MentionsMe = service.mentions(visible.Blocks, context.MyAddress)
 	view.Email = service.emailView(message, visible.Blocks, len(view.QuotedBlocks) > 0, context.AllowedSenders)
+}
+
+func (service *ConversationViewService) filledBlocks(blocks []Block) []Block {
+	filled := []Block{}
+	for _, block := range blocks {
+		filled = append(filled, service.filledBlock(block))
+	}
+	return filled
+}
+
+func (service *ConversationViewService) filledBlock(block Block) Block {
+	block.Spans = append([]Span{}, block.Spans...)
+	block.Cells = append([]string{}, block.Cells...)
+	return block
 }
 
 func (service *ConversationViewService) addExtras(view *MessageView, message Message, visible Message) {
@@ -145,8 +171,16 @@ func (service *ConversationViewService) firstLetters(words []string) string {
 }
 
 func (service *ConversationViewService) afterFirstLetter(name string) string {
-	letters := []rune(strings.TrimSpace(name) + " ")
+	letters := []rune(strings.TrimSpace(name) + service.space())
 	return string(letters[1:])
+}
+
+func (service *ConversationViewService) initialsLength() int {
+	return 2
+}
+
+func (service *ConversationViewService) space() string {
+	return " "
 }
 
 func (service *ConversationViewService) trailingQuoteStart(blocks []Block) int {
@@ -168,6 +202,10 @@ func (service *ConversationViewService) mentions(blocks []Block, myAddress strin
 	localPart, _, _ := strings.Cut(strings.ToLower(myAddress), service.atSign())
 	text := strings.ToLower(service.plainText(blocks))
 	return service.allTrue(localPart != "", strings.Contains(text, service.atSign()+localPart))
+}
+
+func (service *ConversationViewService) atSign() string {
+	return "@"
 }
 
 func (service *ConversationViewService) plainText(blocks []Block) string {
@@ -223,6 +261,10 @@ func (service *ConversationViewService) onlyForEmail(isEmail bool, card MessageE
 	return MessageEmailView{}
 }
 
+func (service *ConversationViewService) listSeparator() string {
+	return ", "
+}
+
 func (service *ConversationViewService) senderAddress(from string) string {
 	start := strings.LastIndex(from, "<") + 1
 	return strings.ToLower(strings.TrimSuffix(strings.TrimSpace(from[start:]), ">"))
@@ -270,11 +312,19 @@ func (service *ConversationViewService) senderCheck(summary MessageEmailSummary)
 	return cmp.Or(service.verifiedWhen(summary), service.handoffWhen(summary), service.warningCheck())
 }
 
+func (service *ConversationViewService) warningCheck() string {
+	return "warning"
+}
+
 func (service *ConversationViewService) verifiedWhen(summary MessageEmailSummary) string {
-	if service.allTrue(strings.EqualFold(summary.AuthResults.Dmarc, "pass"), !summary.Suspicious) {
+	if service.allTrue(strings.EqualFold(summary.AuthResults.DomainPolicy, "pass"), !summary.Suspicious) {
 		return service.verifiedCheck()
 	}
 	return ""
+}
+
+func (service *ConversationViewService) verifiedCheck() string {
+	return "verified"
 }
 
 func (service *ConversationViewService) handoffWhen(summary MessageEmailSummary) string {
@@ -282,6 +332,10 @@ func (service *ConversationViewService) handoffWhen(summary MessageEmailSummary)
 		return service.handoffCheck()
 	}
 	return ""
+}
+
+func (service *ConversationViewService) handoffCheck() string {
+	return "handoff"
 }
 
 func (service *ConversationViewService) senderLabels() map[string]string {
@@ -298,9 +352,13 @@ func (service *ConversationViewService) handoffInfo(sender string) map[string]st
 }
 
 func (service *ConversationViewService) resultsLine(results MessageAuthResults) string {
-	return "SPF " + cmp.Or(results.Spf, service.missingResult()) +
-		" · DKIM " + cmp.Or(results.Dkim, service.missingResult()) +
-		" · DMARC " + cmp.Or(results.Dmarc, service.missingResult())
+	return "SPF " + cmp.Or(results.SenderPolicy, service.missingResult()) +
+		" · DKIM " + cmp.Or(results.SignatureCheck, service.missingResult()) +
+		" · DMARC " + cmp.Or(results.DomainPolicy, service.missingResult())
+}
+
+func (service *ConversationViewService) missingResult() string {
+	return "none"
 }
 
 func (service *ConversationViewService) countLabel(count int, singular string, plural string) string {
@@ -308,7 +366,7 @@ func (service *ConversationViewService) countLabel(count int, singular string, p
 	if known {
 		return label
 	}
-	return strconv.Itoa(count) + " " + plural
+	return strconv.Itoa(count) + service.space() + plural
 }
 
 func (service *ConversationViewService) pickNumber(first bool, chosen int, otherwise int) int {
@@ -320,44 +378,4 @@ func (service *ConversationViewService) pickNumber(first bool, chosen int, other
 
 func (service *ConversationViewService) allTrue(conditions ...bool) bool {
 	return !slices.Contains(conditions, false)
-}
-
-func (service *ConversationViewService) groupWindow() time.Duration {
-	return 5 * time.Minute
-}
-
-func (service *ConversationViewService) initialsLength() int {
-	return 2
-}
-
-func (service *ConversationViewService) memberKind() string {
-	return "member"
-}
-
-func (service *ConversationViewService) emailSection() string {
-	return "email"
-}
-
-func (service *ConversationViewService) listSeparator() string {
-	return ", "
-}
-
-func (service *ConversationViewService) missingResult() string {
-	return "none"
-}
-
-func (service *ConversationViewService) verifiedCheck() string {
-	return "verified"
-}
-
-func (service *ConversationViewService) handoffCheck() string {
-	return "handoff"
-}
-
-func (service *ConversationViewService) warningCheck() string {
-	return "warning"
-}
-
-func (service *ConversationViewService) atSign() string {
-	return "@"
 }

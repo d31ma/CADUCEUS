@@ -13,13 +13,13 @@ func (test *ConversationTokenServiceTest) token(expiresAtMs float64) *Conversati
 }
 
 func (test *ConversationTokenServiceTest) TestAuthorizationIsABearerHeader() {
-	authorization, failure := test.token(100000000).Authorization()
+	authorization, failure := test.token(100000000).authorization()
 	Assert.Equals(nil, failure)
 	Assert.Equals("Bearer access-1", authorization)
 }
 
 func (test *ConversationTokenServiceTest) TestAuthorizationFailsWhenTheSessionEnded() {
-	_, failure := test.token(0).Authorization()
+	_, failure := test.token(0).authorization()
 	Assert.IsTrue(failure != nil)
 }
 

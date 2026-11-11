@@ -62,6 +62,11 @@ func (service *ConversationService) DomainChanged(changed SessionDomainChanged) 
 }
 
 // @OnEvent
+func (service *ConversationService) ComposeRequested(requested ConversationComposeRequested) {
+	service.reset()
+}
+
+// @OnEvent
 // @InBackground
 func (service *ConversationService) Live(event RealtimeEvent) {
 	service.refreshWhenRelevant(event)
@@ -84,10 +89,11 @@ func (service *ConversationService) LoadOlder() {
 	page, failure := service.requests.OlderPage(conversationId, service.NextCursor)
 	service.LoadingOlder = false
 	service.Problem = service.problemOf(failure, service.loadFailed())
-	if failure != nil {
-		return
-	}
-	service.addOlderWhenStill(conversationId, domainId, page)
+	service.addOlderWhenStill(conversationId, domainId, page, failure)
+}
+
+func (service *ConversationService) loadFailed() string {
+	return "We could not load this conversation. Check your connection and try again."
 }
 
 func (service *ConversationService) StartEdit(messageId string) {
@@ -124,11 +130,19 @@ func (service *ConversationService) ConfirmDelete() {
 	service.Problem = service.problemOf(errors.Join(failure, service.refetch()), service.deleteFailed())
 }
 
+func (service *ConversationService) deleteFailed() string {
+	return "We could not delete the message. Try again."
+}
+
 func (service *ConversationService) ToggleReaction(messageId string, name string) {
 	isMine := service.messageList.HasReaction(service.raw, messageId, name)
 	failure := service.requests.SetReaction(messageId, name, isMine)
 	service.ClosePicker()
 	service.Problem = service.problemOf(errors.Join(failure, service.refetch()), service.reactionFailed())
+}
+
+func (service *ConversationService) reactionFailed() string {
+	return "We could not update the reaction. Try again."
 }
 
 func (service *ConversationService) OpenPicker(messageId string) {
@@ -155,6 +169,10 @@ func (service *ConversationService) FetchOriginal(messageId string) {
 	download, failure := service.requests.Original(messageId)
 	service.Problem = service.problemOf(failure, service.originalFailed())
 	service.keepOriginal(messageId, download, failure)
+}
+
+func (service *ConversationService) originalFailed() string {
+	return "We could not get the original email. Try again."
 }
 
 func (service *ConversationService) OpenThread(messageId string) {
@@ -184,6 +202,10 @@ func (service *ConversationService) open(opened ConversationOpened) {
 	service.showWhenStill(opened, page, failure)
 }
 
+func (service *ConversationService) stateLoading() string {
+	return "loading"
+}
+
 func (service *ConversationService) showWhenStill(opened ConversationOpened, page MessagePage, failure error) {
 	if !service.still(opened.ConversationId, opened.DomainId) {
 		return
@@ -199,6 +221,10 @@ func (service *ConversationService) show(page MessagePage, failure error) {
 	service.State = cmp.Or(service.errorWhen(failure), service.emptyWhen(len(service.raw)), service.stateReady())
 	service.rebuild()
 	service.readyWhenLoaded(failure)
+}
+
+func (service *ConversationService) stateReady() string {
+	return "ready"
 }
 
 func (service *ConversationService) readyWhenLoaded(failure error) {
@@ -219,8 +245,8 @@ func (service *ConversationService) announceReady() {
 	}, true)
 }
 
-func (service *ConversationService) addOlderWhenStill(conversationId string, domainId string, page MessagePage) {
-	if !service.still(conversationId, domainId) {
+func (service *ConversationService) addOlderWhenStill(conversationId string, domainId string, page MessagePage, failure error) {
+	if !service.allTrue(failure == nil, service.still(conversationId, domainId)) {
 		return
 	}
 	service.addOlder(page)
@@ -244,6 +270,10 @@ func (service *ConversationService) save() {
 	edited, failure := service.requests.Edit(service.EditingId, service.EditBody)
 	service.Problem = service.problemOf(failure, service.saveFailed())
 	service.applyEdit(edited, failure)
+}
+
+func (service *ConversationService) saveFailed() string {
+	return "We could not save your change. Try again."
 }
 
 func (service *ConversationService) applyEdit(edited Message, failure error) {
@@ -301,6 +331,10 @@ func (service *ConversationService) greetWhenCreated(event RealtimeEvent) {
 		return
 	}
 	service.greet(event.MessageId)
+}
+
+func (service *ConversationService) createdType() string {
+	return "message.created"
 }
 
 func (service *ConversationService) greet(messageId string) {
@@ -373,6 +407,10 @@ func (service *ConversationService) reset() {
 	service.unreadCount = 0
 }
 
+func (service *ConversationService) stateIdle() string {
+	return "idle"
+}
+
 func (service *ConversationService) problemOf(failure error, sentence string) string {
 	if failure != nil {
 		return sentence
@@ -387,11 +425,19 @@ func (service *ConversationService) errorWhen(failure error) string {
 	return ""
 }
 
+func (service *ConversationService) stateError() string {
+	return "error"
+}
+
 func (service *ConversationService) emptyWhen(count int) string {
 	if count == 0 {
 		return service.stateEmpty()
 	}
 	return ""
+}
+
+func (service *ConversationService) stateEmpty() string {
+	return "empty"
 }
 
 func (service *ConversationService) allTrue(conditions ...bool) bool {
@@ -400,48 +446,4 @@ func (service *ConversationService) allTrue(conditions ...bool) bool {
 
 func (service *ConversationService) liveTypes() []string {
 	return []string{service.createdType(), "message.edited", "message.deleted", "reaction.changed"}
-}
-
-func (service *ConversationService) createdType() string {
-	return "message.created"
-}
-
-func (service *ConversationService) stateIdle() string {
-	return "idle"
-}
-
-func (service *ConversationService) stateLoading() string {
-	return "loading"
-}
-
-func (service *ConversationService) stateReady() string {
-	return "ready"
-}
-
-func (service *ConversationService) stateEmpty() string {
-	return "empty"
-}
-
-func (service *ConversationService) stateError() string {
-	return "error"
-}
-
-func (service *ConversationService) loadFailed() string {
-	return "We could not load this conversation. Check your connection and try again."
-}
-
-func (service *ConversationService) saveFailed() string {
-	return "We could not save your change. Try again."
-}
-
-func (service *ConversationService) deleteFailed() string {
-	return "We could not delete the message. Try again."
-}
-
-func (service *ConversationService) reactionFailed() string {
-	return "We could not update the reaction. Try again."
-}
-
-func (service *ConversationService) originalFailed() string {
-	return "We could not get the original email. Try again."
 }

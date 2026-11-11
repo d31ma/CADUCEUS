@@ -284,3 +284,10 @@ func (test *ConversationServiceTest) TestLiveKeepsOlderPages() {
 	Assert.Equals(4, len(service.Messages))
 	Assert.Equals("", service.shellAnnounce.Message)
 }
+
+func (test *ConversationServiceTest) TestComposeRequestedClearsTheConversation() {
+	service := test.general()
+	service.ComposeRequested(ConversationComposeRequested{DomainId: "example.com"})
+	Assert.Equals("idle", service.State)
+	Assert.Equals(0, len(service.Messages))
+}

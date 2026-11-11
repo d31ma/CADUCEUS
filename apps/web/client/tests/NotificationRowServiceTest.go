@@ -16,6 +16,7 @@ func (test *NotificationRowServiceTest) TestTabsAndCounts() {
 	Assert.Equals("activity-tab-dm", rows.TabId("dm"))
 	Assert.Equals(5, len(tabs))
 	Assert.IsTrue(tabs[2].Selected)
+	Assert.Equals("1 unread", tabs[2].UnreadLabel)
 	Assert.Equals(3, rows.Count(items, "all"))
 	Assert.Equals(0, rows.Count(items, "thread_reply"))
 }
@@ -24,6 +25,7 @@ func (test *NotificationRowServiceTest) TestDaysKeepReadRows() {
 	days := test.rows().Days(NotificationTestSetup{}.firstItems(), "thread_reply")
 	Assert.Equals(1, len(days))
 	Assert.IsTrue(!days[0].Rows[0].Unread)
+	Assert.Equals("thread", days[0].Rows[0].Icon)
 	Assert.Equals("Mark as read: New reply in a thread, 09:31", days[0].Rows[0].MarkLabel)
 }
 

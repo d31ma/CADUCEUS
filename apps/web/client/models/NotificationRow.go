@@ -4,6 +4,7 @@ type NotificationRow struct {
 	ConversationId string `json:"conversationId"`
 	MessageId      string `json:"messageId"`
 	Title          string `json:"title"`
+	Icon           string `json:"icon"`
 	Time           string `json:"time"`
 	Stamp          string `json:"stamp"`
 	Day            string `json:"day"`

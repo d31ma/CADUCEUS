@@ -3,6 +3,7 @@ type NotificationTab struct {
 	Id          string `json:"id"`
 	Label       string `json:"label"`
 	UnreadCount int    `json:"unreadCount"`
+	UnreadLabel string `json:"unreadLabel"`
 	HasUnread   bool   `json:"hasUnread"`
 	Selected    bool   `json:"selected"`
 }

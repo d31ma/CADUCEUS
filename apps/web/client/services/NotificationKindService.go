@@ -5,6 +5,10 @@ func (kinds *NotificationKindService) Text(kind string) string {
 	return kinds.lookup(kinds.texts(), kind, "New activity")
 }
 
+func (kinds *NotificationKindService) Icon(kind string) string {
+	return kinds.lookup(kinds.icons(), kind, "bell")
+}
+
 func (kinds *NotificationKindService) TabLabel(name string) string {
 	return kinds.lookup(kinds.labels(), name, name)
 }
@@ -23,6 +27,15 @@ func (kinds *NotificationKindService) texts() map[string]string {
 		kinds.direct():      "New direct message",
 		kinds.threadReply(): "New reply in a thread",
 		kinds.email():       "New email",
+	}
+}
+
+func (kinds *NotificationKindService) icons() map[string]string {
+	return map[string]string{
+		kinds.mention():     "at",
+		kinds.direct():      "chat",
+		kinds.threadReply(): "thread",
+		kinds.email():       "mail",
 	}
 }
 

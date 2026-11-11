@@ -10,6 +10,8 @@ func (test *NotificationKindServiceTest) TestTextNamesEachKind() {
 	Assert.Equals("New reply in a thread", kinds.Text("thread_reply"))
 	Assert.Equals("New email", kinds.Text("email"))
 	Assert.Equals("New activity", kinds.Text("something"))
+	Assert.Equals("at", kinds.Icon("mention"))
+	Assert.Equals("bell", kinds.Icon("something"))
 }
 
 func (test *NotificationKindServiceTest) TestTabs() {

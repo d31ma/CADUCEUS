@@ -1,126 +1,108 @@
-<section class="activity" aria-labelledby="activity-title">
-  <header class="activity-head">
-    <h2 class="activity-title" id="activity-title">
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9" /><path d="M10 20.5a2 2 0 0 0 4 0" /></svg>
-      <span>Activity</span>
-    </h2>
-    <button type="button" class="text-button" on:click="notification.markAllRead()">
-      <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12l5 5 9-10M12 16l1 1 9-10" /></svg>
-      <span>Mark all as read</span>
-    </button>
+<section class="flex h-full min-h-0 min-w-0 flex-col bg-surface text-text safe-l safe-r @container/activity" aria-labelledby="activity-title">
+  <header class="flex min-h-13 flex-wrap items-center gap-2 border-b border-divider px-3 py-2 sm:px-4">
+    <h2 id="activity-title" class="flex min-w-0 flex-1 items-center gap-1 text-lg font-bold"><w-icon name="bell" class="ms-icon-sm"></w-icon><span>Activity</span></h2>
+    <w-btn variant="text" size="small" prepend-icon="check-double" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notification.markAllRead()">Mark all as read</w-btn>
   </header>
 
   <logic :if="notificationPush.panel == 'notAsked'">
-    <div class="push-prompt" role="region" aria-labelledby="push-prompt-text">
-      <svg class="icon push-prompt-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9" /><path d="M10 20.5a2 2 0 0 0 4 0" /></svg>
-      <p class="push-prompt-text" id="push-prompt-text">Get a notification on this device when someone mentions you or sends you a message while Mesail is in the background.</p>
-      <button type="button" class="button button-primary" on:click="notificationPush.turnOn()">Turn on notifications</button>
+    <div class="mx-3 mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-mid p-3 sm:mx-4 sm:p-4" role="region" aria-labelledby="push-prompt-text">
+      <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="bell"></w-icon></span>
+      <p id="push-prompt-text" class="min-w-0 flex-[1_1_14rem] text-sm [overflow-wrap:anywhere]">Get a notification on this device when someone mentions you or sends you a message while Mesail is in the background.</p>
+      <w-btn variant="filled" prepend-icon="bell" class="max-sm:w-full pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notificationPush.turnOn()">Turn on notifications</w-btn>
     </div>
   </logic>
   <logic :if="notificationPush.problem == 'notAllowed'">
-    <p class="inline-problem" role="status">Mesail could not ask for permission. Try again, or allow notifications in your browser settings.</p>
+    <p class="mx-3 mt-2 rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container sm:mx-4" role="status">Mesail could not ask for permission. Try again, or allow notifications in your browser settings.</p>
   </logic>
 
-  <div class="tabs" role="tablist" aria-label="Show activity">
+  <w-tabs :value="notification.tab" class="px-2 sm:px-4 [&_w-tab]:pointer-coarse:min-h-11 max-sm:[&_w-tab]:min-h-11" aria-label="Show activity">
     <loop :for="tab of notification.tabs">
-      <button type="button" class="tab" role="tab" :id="tab.id" aria-controls="activity-panel" :aria-selected="shell.flag(tab.selected)" on:click="notification.chooseTab(tab.name)">
-        <span>{tab.label}</span>
+      <w-tab :value="tab.name" :id="tab.id" on:click="notification.chooseTab(tab.name)">
+        {tab.label}
         <logic :if="tab.hasUnread">
-          <span class="badge">{tab.unreadCount}<span class="screen-reader-only"> unread</span></span>
+          <w-badge :content="tab.unreadCount" inline class="ms-count" :label="tab.unreadLabel"></w-badge>
         </logic>
-      </button>
+      </w-tab>
     </loop>
-  </div>
+  </w-tabs>
 
-  <div class="activity-panel" id="activity-panel" role="tabpanel" tabindex="0" :aria-labelledby="notification.tabId">
-    <switch :value="notification.status">
-      <case :when="'ready'">
-        <logic :if="notification.empty">
-          <div class="state">
-            <svg class="icon state-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" /><path d="M8 12l3 3 5-6" /></svg>
-            <p class="state-title">You're all caught up</p>
-            <p class="state-text">Mentions, direct messages, thread replies and new email show up here.</p>
-          </div>
-        </logic>
-        <loop :for="day of notification.days">
-          <h3 class="day">{day.label}</h3>
-          <ul class="rows" :aria-label="day.label">
-            <loop :for="row of day.rows">
-              <li class="row" :data-unread="shell.flag(row.unread)">
-                <button type="button" class="row-open" on:click="notification.open(row)">
-                  <span class="unread-mark" aria-hidden="true"></span>
-                  <span class="kind" :data-kind="row.kind" aria-hidden="true">
-                    <switch :value="row.kind">
-                      <case :when="'mention'">
-                        <svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" /></svg>
-                      </case>
-                      <case :when="'dm'">
-                        <svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z" /></svg>
-                      </case>
-                      <case :when="'thread_reply'">
-                        <svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><path d="M4 5h12v8H9l-5 4zM18 9h2v10l-3-3h-6" /></svg>
-                      </case>
-                      <case :when="'email'">
-                        <svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><path d="M3 6h18v12H3z" /><path d="M3 7l9 6 9-6" /></svg>
-                      </case>
-                      <case default>
-                        <svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9" /></svg>
-                      </case>
-                    </switch>
-                  </span>
-                  <span class="row-body">
-                    <span class="row-title">
-                      <logic :if="row.unread"><span class="screen-reader-only">Unread. </span></logic>
-                      {row.title}
+  <div class="min-h-0 flex-1 overflow-y-auto pb-8 safe-b" id="activity-panel" role="tabpanel" tabindex="0" :aria-labelledby="notification.tabId">
+    <div class="mx-auto w-full max-w-3xl">
+      <switch :value="notification.status">
+        <case :when="'ready'">
+          <logic :if="notification.empty">
+            <div class="grid place-items-center px-4 py-10">
+              <w-empty-state class="block max-w-lg">
+                <w-icon slot="media" name="check-circle" class="[--ms-icon-size:2.5rem]"></w-icon>
+                <h3 slot="title">You're all caught up</h3>
+                <span slot="text">Mentions, direct messages, thread replies and new email show up here.</span>
+              </w-empty-state>
+            </div>
+          </logic>
+          <loop :for="day of notification.days">
+            <h3 class="mx-3 mb-1 mt-4 text-xs font-semibold uppercase tracking-wide text-subtle sm:mx-5">{day.label}</h3>
+            <w-list class="ms-plain-list px-1 sm:px-3" :aria-label="day.label">
+              <loop :for="row of day.rows">
+                <div role="listitem" class="group flex items-start rounded-lg hover:bg-msg-hover focus-within:bg-msg-hover" :data-unread="shell.flag(row.unread)">
+                  <button type="button" class="flex min-h-11 min-w-0 flex-1 items-start gap-2 rounded-lg px-2 py-2 text-start focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus" on:click="notification.open(row)">
+                    <span class="grid h-9 w-2 flex-none place-items-center" aria-hidden="true"><span class="size-2 rounded-full group-data-[unread=true]:bg-accent-bg"></span></span>
+                    <span class="grid size-9 flex-none place-items-center rounded-lg bg-surface-high text-text" :data-kind="row.kind" aria-hidden="true"><w-icon :name="row.icon" class="ms-icon-sm"></w-icon></span>
+                    <span class="grid min-w-0 flex-1 gap-0.5 py-1">
+                      <span class="flex flex-wrap items-baseline gap-x-2">
+                        <span class="min-w-0 flex-1 text-subtle [overflow-wrap:anywhere] group-data-[unread=true]:font-semibold group-data-[unread=true]:text-text">
+                          <logic :if="row.unread"><span class="sr-only">Unread. </span></logic>
+                          {row.title}
+                        </span>
+                        <time class="text-xs text-subtle" :datetime="row.stamp">{row.time}</time>
+                      </span>
                     </span>
-                    <time class="row-time" :datetime="row.stamp">{row.time}</time>
-                  </span>
-                </button>
-                <logic :if="row.unread">
-                  <button type="button" class="icon-button row-mark" :aria-label="row.markLabel" on:click="notification.markRead(row.notificationId)">
-                    <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>
                   </button>
-                </logic>
-              </li>
-            </loop>
-          </ul>
-        </loop>
-        <logic :if="notification.hasMore">
-          <div class="more">
-            <button type="button" class="button" on:click="notification.loadMore()">Load more</button>
+                  <logic :if="row.unread">
+                    <w-icon-btn icon="check" size="small" class="me-1 mt-2 flex-none pointer-coarse:size-11 max-sm:size-11" :aria-label="row.markLabel" on:click="notification.markRead(row.notificationId)"></w-icon-btn>
+                  </logic>
+                </div>
+              </loop>
+            </w-list>
+          </loop>
+          <logic :if="notification.hasMore">
+            <div class="flex justify-center p-4">
+              <w-btn variant="outlined" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notification.loadMore()">Load more</w-btn>
+            </div>
+          </logic>
+          <logic :if="notification.actionProblem == 'error'">
+            <p class="mx-3 mt-2 rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container sm:mx-5" role="status">That did not work. Check your connection and try again.</p>
+          </logic>
+          <logic :if="notification.actionProblem == 'session'">
+            <p class="mx-3 mt-2 rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container sm:mx-5" role="status">Your session ended. Sign in again, then try again.</p>
+          </logic>
+        </case>
+        <case :when="'error'">
+          <div class="grid place-items-center px-4 py-10">
+            <w-empty-state class="block max-w-lg">
+              <w-icon slot="media" name="alert" class="[--ms-icon-size:2.5rem]"></w-icon>
+              <h3 slot="title">Activity could not load</h3>
+              <span slot="text" role="alert">Check your connection, then try again.</span>
+              <div slot="actions"><w-btn variant="outlined" prepend-icon="refresh" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notification.retry()">Retry</w-btn></div>
+            </w-empty-state>
           </div>
-        </logic>
-        <logic :if="notification.actionProblem == 'error'">
-          <p class="inline-problem" role="status">That did not work. Check your connection and try again.</p>
-        </logic>
-        <logic :if="notification.actionProblem == 'session'">
-          <p class="inline-problem" role="status">Your session ended. Sign in again, then try again.</p>
-        </logic>
-      </case>
-      <case :when="'error'">
-        <div class="state" role="alert">
-          <svg class="icon state-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" /><path d="M12 7v6M12 16.5v.5" /></svg>
-          <p class="state-title">Activity could not load</p>
-          <p class="state-text">Check your connection, then try again.</p>
-          <button type="button" class="button" on:click="notification.retry()">Retry</button>
-        </div>
-      </case>
-      <case :when="'session'">
-        <div class="state" role="alert">
-          <svg class="icon state-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z" /></svg>
-          <p class="state-title">Your session ended</p>
-          <p class="state-text">Sign in again to see your activity.</p>
-        </div>
-      </case>
-      <case default>
-        <div class="skeleton" aria-busy="true">
-          <span class="screen-reader-only">Loading activity</span>
-          <span class="skeleton-day" aria-hidden="true"></span>
-          <span class="skeleton-row" aria-hidden="true"></span>
-          <span class="skeleton-row" aria-hidden="true"></span>
-          <span class="skeleton-row" aria-hidden="true"></span>
-        </div>
-      </case>
-    </switch>
+        </case>
+        <case :when="'session'">
+          <div class="grid place-items-center px-4 py-10">
+            <w-empty-state class="block max-w-lg">
+              <w-icon slot="media" name="lock" class="[--ms-icon-size:2.5rem]"></w-icon>
+              <h3 slot="title">Your session ended</h3>
+              <span slot="text" role="alert">Sign in again to see your activity.</span>
+            </w-empty-state>
+          </div>
+        </case>
+        <case default>
+          <p class="sr-only" role="status">Loading activity</p>
+          <div class="grid content-start gap-4 px-3 pt-4" aria-hidden="true">
+            <w-skeleton-loader type="subtitle, list-item-avatar@3"></w-skeleton-loader>
+            <w-skeleton-loader type="subtitle, list-item-avatar@2"></w-skeleton-loader>
+          </div>
+        </case>
+      </switch>
+    </div>
   </div>
 </section>

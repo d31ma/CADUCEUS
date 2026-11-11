@@ -1,6 +1,7 @@
 import (
 	"maps"
 	"slices"
+	"strconv"
 )
 
 // @Service
@@ -64,6 +65,7 @@ func (service *NotificationRowService) tabOf(items []Notification, name string, 
 		Id:          service.TabId(name),
 		Label:       service.kinds.TabLabel(name),
 		UnreadCount: count,
+		UnreadLabel: strconv.Itoa(count) + " unread",
 		HasUnread:   count > 0,
 		Selected:    name == selected,
 	}
@@ -112,6 +114,7 @@ func (service *NotificationRowService) rowOf(item Notification) NotificationRow 
 		ConversationId: item.ConversationId,
 		MessageId:      item.MessageId,
 		Title:          title,
+		Icon:           service.kinds.Icon(item.Kind),
 		Time:           clockText,
 		Stamp:          item.CreatedAt,
 		Day:            service.times.DayText(item.CreatedAt),

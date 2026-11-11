@@ -1,85 +1,71 @@
-<div class="presence">
-  <button type="button" class="me-button" id="presence-button" aria-haspopup="dialog" aria-controls="presence-panel" :aria-expanded="shell.flag(notificationPresence.menuOpen)" :aria-label="notificationPresence.buttonLabel()" on:click="notificationPresence.toggleMenu()">
-    <span class="avatar" aria-hidden="true">
-      <span>{notificationPresence.initials()}</span>
+<div class="relative flex min-w-0">
+  <button type="button" class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1 text-start hover:bg-hover aria-expanded:bg-hover focus-visible:outline-2 focus-visible:outline-focus" id="presence-button" aria-haspopup="dialog" aria-controls="presence-panel" :aria-expanded="shell.flag(notificationPresence.menuOpen)" :aria-label="notificationPresence.buttonLabel()" on:click="notificationPresence.toggleMenu()">
+    <span class="relative inline-flex flex-none" aria-hidden="true">
+      <w-avatar :text="notificationPresence.initials()" size="28" alt=""></w-avatar>
       <span class="presence-mark" :data-state="notificationPresence.myState"></span>
     </span>
-    <span class="me-text" aria-hidden="true">
-      <span class="me-name">{notificationPresence.name()}</span>
-      <span class="me-status" :data-state="notificationPresence.myState">{notificationPresence.statusText()}</span>
+    <span class="grid min-w-0 flex-1" aria-hidden="true">
+      <span class="truncate text-sm font-semibold">{notificationPresence.name()}</span>
+      <span class="truncate text-xs text-subtle">{notificationPresence.statusText()}</span>
     </span>
   </button>
 
   <logic :if="notificationPresence.menuOpen">
-    <div class="backdrop" on:click="notificationPresence.closeMenu()"></div>
-    <div class="panel" id="presence-panel" role="dialog" aria-labelledby="presence-title">
-      <span class="grip" aria-hidden="true"></span>
-      <div class="panel-head">
-        <span class="avatar avatar-large" aria-hidden="true">
-          <span>{notificationPresence.initials()}</span>
+    <div class="fixed inset-0 z-50 bg-scrim sm:hidden" on:click="notificationPresence.closeMenu()"></div>
+    <div class="fixed inset-x-0 bottom-0 z-[51] max-h-[85dvh] overflow-y-auto rounded-t-2xl border-t border-border bg-surface p-1 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-xl safe-l safe-r sm:absolute sm:inset-x-auto sm:bottom-[calc(100%+0.25rem)] sm:start-0 sm:z-40 sm:max-h-[calc(100dvh-6rem)] sm:w-80 sm:max-w-[calc(100vw-2rem)] sm:rounded-xl sm:border sm:pb-1 motion-safe:max-sm:animate-[sheet-in_var(--ms-duration-panel)_var(--ms-ease)]" id="presence-panel" role="dialog" aria-labelledby="presence-title">
+      <div class="mx-auto mt-1 h-1 w-10 rounded-full bg-outline sm:hidden" aria-hidden="true"></div>
+      <div class="mb-1 flex items-center gap-3 border-b border-divider py-2 ps-3 pe-1">
+        <span class="relative inline-flex flex-none" aria-hidden="true">
+          <w-avatar :text="notificationPresence.initials()" size="36" alt=""></w-avatar>
           <span class="presence-mark" :data-state="notificationPresence.myState"></span>
         </span>
-        <div class="panel-who">
-          <h2 class="panel-title" id="presence-title">{notificationPresence.name()}</h2>
-          <span class="meta">{notificationPresence.statusText()}</span>
-        </div>
-        <button type="button" class="icon-button" aria-label="Close status menu" on:click="notificationPresence.closeMenu()">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
-        </button>
+        <span class="grid min-w-0 flex-1">
+          <h2 id="presence-title" class="truncate text-sm font-semibold">{notificationPresence.name()}</h2>
+          <span class="truncate text-xs text-subtle">{notificationPresence.statusText()}</span>
+        </span>
+        <w-icon-btn icon="close" size="small" class="pointer-coarse:size-11 max-sm:size-11" aria-label="Close status menu" on:click="notificationPresence.closeMenu()"></w-icon-btn>
       </div>
 
-      <ul class="menu" role="menu" aria-label="Your status">
+      <ul class="m-0 list-none p-0" role="menu" aria-label="Your status">
         <li role="none">
-          <button type="button" class="menu-item" role="menuitemradio" :aria-checked="shell.flag(notificationPresence.myState != 'dnd')" on:click="notificationPresence.setActive()">
-            <span class="presence-mark presence-mark-inline" data-state="active" aria-hidden="true"></span>
-            <span class="menu-text">
-              <span>Active</span>
-              <span class="menu-description">Automatic. Shows Idle while Mesail is in the background.</span>
-            </span>
-            <svg class="icon icon-small menu-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>
+          <button type="button" class="group flex min-h-9 w-full items-start gap-2 rounded-md px-3 py-2 text-start text-sm hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold pointer-coarse:min-h-11 max-sm:min-h-11" role="menuitemradio" :aria-checked="shell.flag(notificationPresence.myState != 'dnd')" on:click="notificationPresence.setActive()">
+            <span class="presence-mark presence-mark-inline mt-1.5" data-state="active" aria-hidden="true"></span>
+            <span class="min-w-0 flex-1">Active<span class="block text-xs font-normal text-subtle">Automatic. Shows Idle while Mesail is in the background.</span></span>
+            <w-icon name="check" class="ms-icon-sm ms-auto invisible text-accent group-aria-checked:visible"></w-icon>
           </button>
         </li>
         <li role="none">
-          <span class="menu-group-label" id="presence-dnd-label">
-            <span class="presence-mark presence-mark-inline" data-state="dnd" aria-hidden="true"></span>
-            <span class="menu-text">
-              <span>Do not disturb</span>
-              <span class="menu-description">No notifications. Mentions wait in Activity.</span>
-            </span>
-          </span>
-          <ul class="menu" role="group" aria-labelledby="presence-dnd-label">
+          <div class="flex items-start gap-2 px-3 pb-1 pt-2 text-sm font-medium" id="presence-dnd-label">
+            <span class="presence-mark presence-mark-inline mt-1.5" data-state="dnd" aria-hidden="true"></span>
+            <span>Do not disturb<span class="block text-xs font-normal text-subtle">No notifications. Mentions wait in Activity.</span></span>
+          </div>
+          <ul class="m-0 list-none p-0" role="group" aria-labelledby="presence-dnd-label">
             <loop :for="choice of notificationPresence.choices">
               <li role="none">
-                <button type="button" class="menu-item menu-item-indent" role="menuitemradio" :aria-checked="shell.flag(choice.selected)" on:click="notificationPresence.doNotDisturb(choice.name)">
-                  <span class="menu-text">
-                    <span>{choice.label}</span>
-                    <span class="menu-description">{choice.endText}</span>
-                  </span>
-                  <svg class="icon icon-small menu-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>
+                <button type="button" class="group flex min-h-9 w-full items-start gap-2 rounded-md py-2 ps-8 pe-3 text-start text-sm hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold pointer-coarse:min-h-11 max-sm:min-h-11" role="menuitemradio" :aria-checked="shell.flag(choice.selected)" on:click="notificationPresence.doNotDisturb(choice.name)">
+                  <span class="min-w-0 flex-1">{choice.label}<span class="block text-xs font-normal text-subtle">{choice.endText}</span></span>
+                  <w-icon name="check" class="ms-icon-sm ms-auto invisible text-accent group-aria-checked:visible"></w-icon>
                 </button>
               </li>
             </loop>
           </ul>
         </li>
         <logic :if="notificationPresence.myState == 'dnd'">
-          <li class="menu-separator" role="separator"></li>
+          <li class="my-1 h-px bg-divider" role="separator"></li>
           <li role="none">
-            <button type="button" class="menu-item" role="menuitem" on:click="notificationPresence.setActive()">
-              <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9" /><path d="M10 20.5a2 2 0 0 0 4 0" /></svg>
-              <span class="menu-text">
-                <span>Clear do not disturb</span>
-                <span class="menu-description">{notificationPresence.statusText()}</span>
-              </span>
+            <button type="button" class="flex min-h-9 w-full items-start gap-2 rounded-md px-3 py-2 text-start text-sm hover:bg-hover focus-visible:bg-hover pointer-coarse:min-h-11 max-sm:min-h-11" role="menuitem" on:click="notificationPresence.setActive()">
+              <w-icon name="bell" class="ms-icon-sm mt-0.5"></w-icon>
+              <span class="min-w-0 flex-1">Clear do not disturb<span class="block text-xs font-normal text-subtle">{notificationPresence.statusText()}</span></span>
             </button>
           </li>
         </logic>
       </ul>
 
       <logic :if="notificationPresence.problem == 'error'">
-        <p class="problem" role="alert">Your status did not change. Check your connection and try again.</p>
+        <p class="mx-2 my-1 rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container" role="alert">Your status did not change. Check your connection and try again.</p>
       </logic>
       <logic :if="notificationPresence.problem == 'session'">
-        <p class="problem" role="alert">Your session ended. Sign in again to change your status.</p>
+        <p class="mx-2 my-1 rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container" role="alert">Your session ended. Sign in again to change your status.</p>
       </logic>
     </div>
   </logic>

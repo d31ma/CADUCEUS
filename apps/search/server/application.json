@@ -3,10 +3,6 @@
     "host": "127.0.0.1",
     "port": 8108
   },
-  "datasource": {
-    "driver": "fylo",
-    "url": "fylo:///mnt/data/search"
-  },
   "oidc": {
     "issuer": "https://mesail.localhost/idp/realms/{realm}",
     "jwks": "http://keycloak:8080/idp/realms/{realm}/protocol/openid-connect/certs",

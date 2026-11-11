@@ -25,7 +25,7 @@
           </switch>
           <div class="auth-field">
             <label class="auth-label" for="signin-email">Work email</label>
-            <input class="auth-input" id="signin-email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" aria-describedby="signin-email-error" :aria-invalid="session.problem == 'invalidEmail'" :value="session.email" on:input="session.email = $event.target.value">
+            <input class="auth-input" id="signin-email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" aria-describedby="signin-email-error" :aria-invalid="shell.flag(session.problem == 'invalidEmail')" :value="session.email" on:input="session.email = $event.target.value">
             <logic :if="session.problem == 'invalidEmail'">
               <p class="auth-error-text" id="signin-email-error" role="alert"><span class="auth-icon auth-icon-alert auth-icon-small" aria-hidden="true"></span>Enter your full work email, like ana@example.com.</p>
             </logic>
@@ -33,16 +33,16 @@
           <div class="auth-field">
             <label class="auth-label" for="signin-password">Password</label>
             <logic :if="session.showPassword">
-              <input class="auth-input" id="signin-password" name="password" type="text" autocomplete="current-password" aria-describedby="signin-credentials-error" :aria-invalid="session.problem == 'wrongCredentials'" :value="session.password" on:input="session.password = $event.target.value">
+              <input class="auth-input" id="signin-password" name="password" type="text" autocomplete="current-password" aria-describedby="signin-credentials-error" :aria-invalid="shell.flag(session.problem == 'wrongCredentials')" :value="session.password" on:input="session.password = $event.target.value">
             </logic>
             <logic else>
-              <input class="auth-input" id="signin-password" name="password" type="password" autocomplete="current-password" aria-describedby="signin-credentials-error" :aria-invalid="session.problem == 'wrongCredentials'" :value="session.password" on:input="session.password = $event.target.value">
+              <input class="auth-input" id="signin-password" name="password" type="password" autocomplete="current-password" aria-describedby="signin-credentials-error" :aria-invalid="shell.flag(session.problem == 'wrongCredentials')" :value="session.password" on:input="session.password = $event.target.value">
             </logic>
-            <button type="button" class="auth-button auth-button-ghost" aria-controls="signin-password" :aria-pressed="session.showPassword" on:click="session.togglePassword()">Show password</button>
+            <button type="button" class="auth-button auth-button-ghost" aria-controls="signin-password" :aria-pressed="shell.flag(session.showPassword)" on:click="session.togglePassword()">Show password</button>
           </div>
           <div class="auth-field">
             <label class="auth-label" for="signin-code">2-step code</label>
-            <input class="auth-input" id="signin-code" name="one-time-code" type="text" inputmode="numeric" autocomplete="one-time-code" aria-describedby="signin-code-help signin-credentials-error" :aria-invalid="session.problem == 'wrongCredentials'" :value="session.oneTimeCode" on:input="session.oneTimeCode = $event.target.value">
+            <input class="auth-input" id="signin-code" name="one-time-code" type="text" inputmode="numeric" autocomplete="one-time-code" aria-describedby="signin-code-help signin-credentials-error" :aria-invalid="shell.flag(session.problem == 'wrongCredentials')" :value="session.oneTimeCode" on:input="session.oneTimeCode = $event.target.value">
             <p class="auth-help" id="signin-code-help">Only if your account uses one.</p>
             <logic :if="session.problem == 'wrongCredentials'">
               <p class="auth-error-text" id="signin-credentials-error" role="alert"><span class="auth-icon auth-icon-alert auth-icon-small" aria-hidden="true"></span>The email, password or 2-step code is not right.</p>

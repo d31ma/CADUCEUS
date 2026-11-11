@@ -17,6 +17,7 @@ func (service *SessionAccountService) Add(me Me) {
 func (service *SessionAccountService) Switch(domainId string) {
 	service.CurrentDomain = domainId
 	service.markCurrent()
+	service.label()
 }
 
 func (service *SessionAccountService) Remove(domainId string) {
@@ -38,7 +39,6 @@ func (service *SessionAccountService) accountOf(me Me) SessionAccount {
 		DomainId:    me.DomainId,
 		Address:     me.PrimaryAddress,
 		DisplayName: me.DisplayName,
-		Initials:    service.initials(me.DomainId),
 	}
 }
 
@@ -82,6 +82,41 @@ func (service *SessionAccountService) firstDomain() string {
 		return ""
 	}
 	return service.Accounts[0].DomainId
+}
+
+func (service *SessionAccountService) label() {
+	for index := range service.Accounts {
+		domainId := service.Accounts[index].DomainId
+		shared := service.countInitials(service.initials(domainId)) > 1
+		service.Accounts[index].Initials = service.pick(shared, service.initialsWithEnding(domainId), service.initials(domainId))
+	}
+}
+
+func (service *SessionAccountService) countInitials(initials string) int {
+	count := 0
+	for _, account := range service.Accounts {
+		count += service.oneWhenSame(service.initials(account.DomainId), initials)
+	}
+	return count
+}
+
+func (service *SessionAccountService) oneWhenSame(left string, right string) int {
+	if left == right {
+		return 1
+	}
+	return 0
+}
+
+func (service *SessionAccountService) pick(first bool, chosen string, otherwise string) string {
+	if first {
+		return chosen
+	}
+	return otherwise
+}
+
+func (service *SessionAccountService) initialsWithEnding(domainId string) string {
+	ending := domainId[strings.LastIndex(domainId, ".")+1:]
+	return string([]rune(service.initials(domainId))[0]) + string([]rune(ending + " ")[0])
 }
 
 func (service *SessionAccountService) initials(domainId string) string {

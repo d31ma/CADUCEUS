@@ -51,3 +51,11 @@ func (test *ShellServiceTest) TestCloseMenusClosesTheDomainMenu() {
 	shell.CloseMenus()
 	Assert.IsTrue(!shell.DomainMenuOpen)
 }
+
+func (test *ShellServiceTest) TestFlagWritesTrueForScreenReaders() {
+	Assert.Equals("true", test.shell().Flag(true))
+}
+
+func (test *ShellServiceTest) TestFlagWritesFalseForScreenReaders() {
+	Assert.Equals("false", test.shell().Flag(false))
+}

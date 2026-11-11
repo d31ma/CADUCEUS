@@ -61,3 +61,13 @@ func (test *SessionAccountServiceTest) TestRestoreOfNothingLeavesNoAccount() {
 	accounts.Restore([]Me{})
 	Assert.Equals("", accounts.CurrentDomain)
 }
+
+func (test *SessionAccountServiceTest) TestDomainsWithTheSameStartGetTheirEndingLetter() {
+	accounts := &SessionAccountService{}
+	accounts.Add(test.me("example.com", "ana@example.com"))
+	accounts.Add(test.me("example.org", "ana@example.org"))
+	accounts.Add(test.me("lab.example.net", "ana@lab.example.net"))
+	Assert.Equals("Ec", accounts.Accounts[0].Initials)
+	Assert.Equals("Eo", accounts.Accounts[1].Initials)
+	Assert.Equals("La", accounts.Accounts[2].Initials)
+}

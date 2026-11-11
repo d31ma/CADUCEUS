@@ -32,6 +32,17 @@ func (shell *ShellService) CloseMenus() {
 	shell.DomainMenuOpen = false
 }
 
+func (shell *ShellService) Flag(value bool) string {
+	return shell.flagText(value)
+}
+
+func (shell *ShellService) flagText(value bool) string {
+	if value {
+		return "true"
+	}
+	return "false"
+}
+
 func (shell *ShellService) paneList() string {
 	return "list"
 }

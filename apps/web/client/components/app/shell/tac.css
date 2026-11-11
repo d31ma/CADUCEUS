@@ -139,7 +139,7 @@
   margin-left: auto;
 }
 
-.back-button {
+.icon-button.back-button {
   display: none;
 }
 
@@ -258,7 +258,7 @@
     padding-right: max(var(--w-space-2), env(safe-area-inset-right));
   }
 
-  .back-button {
+  .icon-button.back-button {
     display: inline-grid;
   }
 

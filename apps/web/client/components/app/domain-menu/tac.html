@@ -1,5 +1,5 @@
 <div class="domain-switch">
-  <button type="button" class="domain-name" id="domain-button" aria-haspopup="menu" aria-controls="domain-menu" :aria-expanded="shell.domainMenuOpen" on:click="shell.toggleDomainMenu()">
+  <button type="button" class="domain-name" id="domain-button" aria-haspopup="menu" aria-controls="domain-menu" :aria-expanded="shell.flag(shell.domainMenuOpen)" on:click="shell.toggleDomainMenu()">
     <span class="domain-name-text">{sessionAccount.currentDomain}</span>
     <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6" /></svg>
   </button>
@@ -10,12 +10,12 @@
         <span class="popover-title">Your domains</span>
         <span class="meta">You sign in to each domain on its own.</span>
       </div>
-      <ul class="menu" role="menu" id="domain-menu" aria-labelledby="domain-button">
+      <ul class="menu" role="menu" id="domain-menu" aria-labelledby="domain-button" on:click="shell.closeMenus()">
         <li role="none">
           <ul class="menu" role="group" aria-label="Switch domain">
             <loop :for="account of sessionAccount.accounts">
               <li role="none">
-                <button type="button" class="menu-item" role="menuitemradio" :aria-checked="account.current" on:click="session.switch(account.domainId)">
+                <button type="button" class="menu-item" role="menuitemradio" :aria-checked="shell.flag(account.current)" on:click="session.switch(account.domainId)">
                   <span class="domain-mark" aria-hidden="true">{account.initials}</span>
                   <span class="menu-text"><span>{account.domainId}</span><span class="menu-description">{account.address}</span></span>
                   <svg class="icon icon-small menu-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>
@@ -59,12 +59,12 @@
       </div>
       <div class="sheet-body">
         <p class="meta">You sign in to each domain on its own.</p>
-        <ul class="menu" role="menu" aria-labelledby="sheet-title">
+        <ul class="menu" role="menu" aria-labelledby="sheet-title" on:click="shell.closeMenus()">
           <li role="none">
             <ul class="menu" role="group" aria-label="Switch domain">
               <loop :for="account of sessionAccount.accounts">
                 <li role="none">
-                  <button type="button" class="menu-item" role="menuitemradio" :aria-checked="account.current" on:click="session.switch(account.domainId)">
+                  <button type="button" class="menu-item" role="menuitemradio" :aria-checked="shell.flag(account.current)" on:click="session.switch(account.domainId)">
                     <span class="domain-mark" aria-hidden="true">{account.initials}</span>
                     <span class="menu-text"><span>{account.domainId}</span><span class="menu-description">{account.address}</span></span>
                     <svg class="icon icon-small menu-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>

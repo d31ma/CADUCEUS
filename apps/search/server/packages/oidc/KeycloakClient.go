@@ -30,6 +30,10 @@ func (keycloak KeycloakClient) Refresh(refreshToken string) (TokenGrant, error) 
 	return keycloak.grant(form)
 }
 
+func (keycloak KeycloakClient) ClientCredentials() (TokenGrant, error) {
+	return keycloak.grant(keycloak.form("client_credentials"))
+}
+
 func (keycloak KeycloakClient) SignOut(refreshToken string) error {
 	form := keycloak.credentials()
 	form.Set(keycloak.refreshField(), refreshToken)

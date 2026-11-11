@@ -58,8 +58,8 @@ func newKeycloakRealm(t *testing.T) keycloakRealm {
 
 func (realm keycloakRealm) document() string {
 	key := base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{9}, 32))
-	return `{"yon":{"oidc":{"issuer":"https://id.mesail.test/realms/{realm}","jwks":"` + realm.server.URL + `/realms/{realm}/certs","audience":"mesail-api"},` +
-		`"identity":{"keycloak":"` + realm.server.URL + `/realms/{realm}/protocol/openid-connect","client":{"secret":"client-secret"},"session":{"key":"` + key + `"}}}}`
+	return `{"yon":{"oidc":{"issuer":"https://id.mesail.test/realms/{realm}","jwks":"` + realm.server.URL + `/realms/{realm}/certs","audience":"mesail-api","keycloak":"` + realm.server.URL + `/realms/{realm}/protocol/openid-connect"},` +
+		`"identity":{"client":{"secret":"client-secret"},"session":{"key":"` + key + `"}}}}`
 }
 
 func (realm keycloakRealm) issuer(t *testing.T) SessionIssuer {
@@ -205,7 +205,7 @@ func TestSignOutRefusesASessionKeyWithAnotherDomain(t *testing.T) {
 }
 
 func TestSessionIssuerFactoryNeedsTheSessionKey(t *testing.T) {
-	err := SessionIssuerFactory{}.FromJson(`{"yon":{"oidc":{"issuer":"https://x/realms/{realm}","jwks":"https://x/realms/{realm}/certs","audience":"mesail-api"},"identity":{"keycloak":"https://x/realms/{realm}","client":{"secret":"s"}}}}`).Problem
+	err := SessionIssuerFactory{}.FromJson(`{"yon":{"oidc":{"issuer":"https://x/realms/{realm}","jwks":"https://x/realms/{realm}/certs","audience":"mesail-api","keycloak":"https://x/realms/{realm}"},"identity":{"client":{"secret":"s"}}}}`).Problem
 	if !errors.Is(err, NotConfigured{}) {
 		t.Fatalf("got %v", err)
 	}

@@ -19,12 +19,12 @@ func (factory SessionIssuerFactory) FromJson(document string) SessionIssuer {
 	key, keyErr := base64.StdEncoding.DecodeString(snapshot.Yon.Identity.Session.Key)
 	settings, settingsErr := SettingsReader{}.FromJson(document)
 	gate := NewGate(VerifierFactory{}.Jwks(settings), time.Now)
-	problem := factory.complete(snapshot.Yon.Identity, len(key), keyErr, settingsErr)
-	return SessionIssuer{Gate: gate, Settings: snapshot.Yon.Identity, Sealer: SealedCookie{Key: key}, Client: VerifierFactory{}.client(), Problem: problem}
+	problem := factory.complete(snapshot.Yon, len(key), keyErr, settingsErr)
+	return SessionIssuer{Gate: gate, Settings: snapshot.Yon.Identity, Keycloak: snapshot.Yon.Oidc.Keycloak, Sealer: SealedCookie{Key: key}, Client: VerifierFactory{}.client(), Problem: problem}
 }
 
-func (factory SessionIssuerFactory) complete(settings SessionSettings, keyLength int, keyErr error, settingsErr error) error {
-	if keyErr != nil || settingsErr != nil || keyLength != factory.keyLength() || settings.Keycloak == "" || settings.Client.Secret == "" {
+func (factory SessionIssuerFactory) complete(settings ApplicationSettings, keyLength int, keyErr error, settingsErr error) error {
+	if keyErr != nil || settingsErr != nil || keyLength != factory.keyLength() || settings.Oidc.Keycloak == "" || settings.Identity.Client.Secret == "" {
 		return NotConfigured{}
 	}
 	return nil

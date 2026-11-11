@@ -4,7 +4,7 @@ import "time"
 
 type CachedKeySource struct {
 	Fetcher KeyFetcher
-	Cache   FileKeyCache
+	Cache   JsonFileCache
 	Now     func() time.Time
 }
 
@@ -17,7 +17,8 @@ func (source CachedKeySource) Key(jwksUrl string, keyId string) (JsonWebKey, err
 }
 
 func (source CachedKeySource) current(jwksUrl string, keyId string) (KeySet, error) {
-	cached := source.Cache.Load(jwksUrl)
+	cached := CachedKeySet{}
+	source.Cache.Load(jwksUrl, &cached)
 	if source.usable(cached, keyId) {
 		return cached.Keys, nil
 	}

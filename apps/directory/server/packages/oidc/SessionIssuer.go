@@ -8,6 +8,7 @@ import (
 type SessionIssuer struct {
 	Gate     Gate
 	Settings SessionSettings
+	Keycloak string
 	Sealer   SealedCookie
 	Client   *http.Client
 	Problem  error
@@ -100,7 +101,7 @@ func (issuer SessionIssuer) opened(sessionKey string) (SessionContent, error) {
 }
 
 func (issuer SessionIssuer) keycloak(domain string) (KeycloakClient, error) {
-	endpoint, err := IssuerPattern{Pattern: issuer.Settings.Keycloak}.Expand(domain)
+	endpoint, err := IssuerPattern{Pattern: issuer.Keycloak}.Expand(domain)
 	return KeycloakClient{Client: issuer.Client, Endpoint: endpoint, ClientId: issuer.clientId(), ClientSecret: issuer.Settings.Client.Secret}, err
 }
 

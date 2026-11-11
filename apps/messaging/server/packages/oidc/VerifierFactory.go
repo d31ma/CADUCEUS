@@ -34,8 +34,8 @@ func (factory VerifierFactory) client() *http.Client {
 	return &http.Client{Timeout: factory.fetchTimeout()}
 }
 
-func (factory VerifierFactory) cache() FileKeyCache {
-	return FileKeyCache{Folder: filepath.Join(os.TempDir(), factory.cacheFolderName())}
+func (factory VerifierFactory) cache() JsonFileCache {
+	return JsonFileCache{Folder: filepath.Join(os.TempDir(), factory.cacheFolderName())}
 }
 
 func (VerifierFactory) fetchTimeout() time.Duration {

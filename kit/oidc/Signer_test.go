@@ -179,6 +179,6 @@ func (current *clock) Now() time.Time {
 
 func (keys keyServer) verifier(t *testing.T, current *clock) JwksVerifier {
 	t.Helper()
-	source := CachedKeySource{Fetcher: HttpKeyFetcher{Client: keys.server.Client()}, Cache: FileKeyCache{Folder: t.TempDir()}, Now: current.Now}
+	source := CachedKeySource{Fetcher: HttpKeyFetcher{Client: keys.server.Client()}, Cache: JsonFileCache{Folder: t.TempDir()}, Now: current.Now}
 	return JwksVerifier{Settings: keys.settings(), Keys: source}
 }

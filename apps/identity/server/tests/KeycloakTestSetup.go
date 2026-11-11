@@ -40,10 +40,10 @@ func (setup KeycloakTestSetup) Keycloak(realm oidc.SigningRealm) {
 		setup.answer(writer, request.URL.Path, request.PostForm.Get("password"), request.PostForm.Get("refresh_token"), realm)
 	}))
 	key := base64.StdEncoding.EncodeToString([]byte(strings.Repeat("k", 32)))
+	realm.Settings.Keycloak = server.URL + "/realms/{realm}/protocol/openid-connect"
 	setup.useSettings(realm, oidc.SessionSettings{
-		Keycloak: server.URL + "/realms/{realm}/protocol/openid-connect",
-		Client:   oidc.ClientSetting{Secret: "client-secret"},
-		Session:  oidc.KeySetting{Key: key},
+		Client:  oidc.ClientSetting{Secret: "client-secret"},
+		Session: oidc.KeySetting{Key: key},
 	})
 }
 

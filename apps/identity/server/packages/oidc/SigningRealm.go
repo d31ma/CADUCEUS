@@ -92,7 +92,7 @@ func (SigningRealm) settings() Settings {
 	}
 }
 
-func (SigningRealm) cache() FileKeyCache {
+func (SigningRealm) cache() JsonFileCache {
 	return VerifierFactory{}.cache()
 }
 

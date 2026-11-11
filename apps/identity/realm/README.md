@@ -61,7 +61,7 @@ Without all three `oidc` keys a service refuses every token.
 
 The identity service also needs:
 
-- `identity.keycloak` in `server/application.json`: the base of the token
+- `oidc.keycloak` in `server/application.json`: the base of the token
   and logout endpoints, `http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect`.
 - In its `.env` (never committed): `YON_IDENTITY_CLIENT_SECRET` (the
   `mesail-identity` secret) and `YON_IDENTITY_SESSION_KEY` (32 random bytes

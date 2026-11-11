@@ -203,46 +203,48 @@ func TestConfiguredGateChecksTokensWhenConfigured(t *testing.T) {
 	refusedBy(t, err)
 }
 
-func TestFileKeyCacheRoundTrips(t *testing.T) {
-	cache := FileKeyCache{Folder: filepath.Join(t.TempDir(), "keys")}
+func TestJsonFileCacheRoundTrips(t *testing.T) {
+	cache := JsonFileCache{Folder: filepath.Join(t.TempDir(), "keys")}
 	stored := CachedKeySet{FetchedAt: 42, Keys: KeySet{Keys: []JsonWebKey{{KeyType: "RSA", KeyId: "k"}}}}
 	err := cache.Store("https://kc/certs", stored)
-	loaded := cache.Load("https://kc/certs")
+	loaded := CachedKeySet{}
+	cache.Load("https://kc/certs", &loaded)
 	if err != nil || loaded.FetchedAt != 42 || !loaded.Keys.Has("k") {
 		t.Fatalf("got %+v, %v", loaded, err)
 	}
 }
 
-func TestFileKeyCacheLoadsNothingForAnUnknownUrl(t *testing.T) {
-	loaded := (FileKeyCache{Folder: t.TempDir()}).Load("https://kc/certs")
+func TestJsonFileCacheLoadsNothingForAnUnknownUrl(t *testing.T) {
+	loaded := CachedKeySet{}
+	JsonFileCache{Folder: t.TempDir()}.Load("https://kc/certs", &loaded)
 	if loaded.FetchedAt != 0 {
 		t.Fatalf("got %+v", loaded)
 	}
 }
 
-func TestFileKeyCacheReportsAFolderItCannotCreate(t *testing.T) {
+func TestJsonFileCacheReportsAFolderItCannotCreate(t *testing.T) {
 	blocker := filepath.Join(t.TempDir(), "file")
 	if err := os.WriteFile(blocker, []byte("x"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := (FileKeyCache{Folder: filepath.Join(blocker, "keys")}).Store("u", CachedKeySet{}); err == nil {
+	if err := (JsonFileCache{Folder: filepath.Join(blocker, "keys")}).Store("u", CachedKeySet{}); err == nil {
 		t.Fatal("expected a failure")
 	}
 }
 
-func TestFileKeyCacheReportsAFolderItCannotWrite(t *testing.T) {
+func TestJsonFileCacheReportsAFolderItCannotWrite(t *testing.T) {
 	folder := t.TempDir()
 	if err := os.Chmod(folder, 0o500); err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = os.Chmod(folder, 0o700) })
-	if err := (FileKeyCache{Folder: folder}).Store("u", CachedKeySet{}); err == nil {
+	if err := (JsonFileCache{Folder: folder}).Store("u", CachedKeySet{}); err == nil {
 		t.Fatal("expected a failure")
 	}
 }
 
-func TestFileKeyCacheStoresJson(t *testing.T) {
-	cache := FileKeyCache{Folder: t.TempDir()}
+func TestJsonFileCacheStoresJson(t *testing.T) {
+	cache := JsonFileCache{Folder: t.TempDir()}
 	if err := cache.Store("u", CachedKeySet{FetchedAt: 1}); err != nil {
 		t.Fatal(err)
 	}

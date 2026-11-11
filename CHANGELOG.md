@@ -53,6 +53,10 @@
 - The identity service signs people in server to server through Keycloak
   (`POST`/`DELETE /api/v1/identity/session`, `POST .../session/refresh`)
   with an AES-GCM encrypted `sessionKey`, and answers `GET /identity/me`.
+- `oidc.ServiceTokensFactory{}.Configured().Authorization(realm)` gives a
+  service a cached `mesail-service` token (client credentials) for calling
+  another service. Guide: `docs/mesail/SERVICE-TOKENS.md`. The Keycloak
+  token endpoint is the shared setting `oidc.keycloak`.
 
 - Completed account-synchronized interface localization across 20 closed,
   persisted locale choices. A reproducible, checksum-pinned SMaLL-100 pipeline

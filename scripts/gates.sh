@@ -101,8 +101,8 @@ blackbox_compiles() {
   (cd "$root/tests/blackbox" && go vet -tags blackbox ./...)
 }
 
-app_kind_has_client() {
-  [ -d "$1/client" ]
+app_kind_has_server() {
+  [ -d "$1/server" ]
 }
 
 atlas_mount_point() {
@@ -189,10 +189,73 @@ app_gates() {
   fi
   run_step "$name migrate check" "$log" "$ty" migrate check "$app" || status=1
   run_step "$name test" "$log" "$ty" test "$app" --coverage || status=1
-  if app_kind_has_client "$app"; then
-    run_step "$name bundle" "$log" "$ty" bundle "$app" --target web || status=1
+  run_step "$name bundle" "$log" "$ty" bundle "$app" --target web || return 1
+  if app_kind_has_server "$app"; then
+    run_step "$name starts" "$log" app_starts "$ty" "$app" || status=1
   fi
   return "$status"
+}
+
+start_wait_seconds() {
+  echo "${MESAIL_START_TIMEOUT:-120}"
+}
+
+ready_address() {
+  sed -n 's|^Tachyon production server ready at \(http://[^/ ]*\)/.*|\1|p' "$1" | head -1
+}
+
+address_when_ready() {
+  local log="$1" pid="$2" waited=0 address=""
+  while [ -z "$address" ] && [ "$waited" -lt "$(start_wait_seconds)" ] && kill -0 "$pid" 2> /dev/null; do
+    sleep 1
+    waited=$((waited + 1))
+    address="$(ready_address "$log")"
+  done
+  echo "$address"
+}
+
+health_code() {
+  curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$1"
+}
+
+health_code_after_retries() {
+  local url="$1" attempt code=""
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    code="$(health_code "$url")"
+    [ "$code" = 200 ] && break
+    sleep 1
+  done
+  echo "$code"
+}
+
+health_answers() {
+  local address="$1" app="$2" url code
+  [ -n "$address" ] || { echo "ty start did not report a ready address within $(start_wait_seconds) s"; return 1; }
+  url="$address/api/v1/$(basename "$app")/health"
+  code="$(health_code_after_retries "$url")"
+  echo "GET $url -> $code"
+  [ "$code" = 200 ]
+}
+
+stop_app() {
+  kill "$1" 2> /dev/null
+  wait "$1" 2> /dev/null
+  trap - EXIT
+  return 0
+}
+
+app_starts() {
+  local ty="$1" app="$2" log pid code
+  log="$(mktemp)"
+  "$ty" start "$app" --port 0 > "$log" 2>&1 &
+  pid=$!
+  trap "kill $pid 2> /dev/null" EXIT
+  health_answers "$(address_when_ready "$log" "$pid")" "$app"
+  code=$?
+  stop_app "$pid"
+  cat "$log"
+  rm -f "$log"
+  return "$code"
 }
 
 existing_app() {

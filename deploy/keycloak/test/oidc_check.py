@@ -1,4 +1,8 @@
 import base64
+import hashlib
+import hmac
+import struct
+import time
 import json
 import os
 import re
@@ -17,6 +21,10 @@ class OidcCheck:
     OPERATORS_REALM = "mesail-operators"
     IDENTITY_CLIENT = "mesail-identity"
     SERVICE_CLIENT = "mesail-service"
+    ACCOUNT_CLIENT = "mesail-account"
+    TEMPORARY_PASSWORD = "temporary-password-1"
+    FAILURES_BEFORE_LOCK = 10
+    QUICK_FAILURE_GAP_SECONDS = 1.5
     API_CLIENT = "mesail-api"
     MEMBER_ROLE = "mesail-member"
     ADMIN_ROLE = "mesail-admin"
@@ -31,10 +39,11 @@ class OidcCheck:
     LOGIN_FORM = 'id="kc-form-login"'
     SHOWN_CLAIMS = ["iss", "sub", "aud", "azp", "typ", "realm_access", "preferred_username", "exp", "iat"]
 
-    def __init__(self, base_url: str, identity_secret: str, service_secret: str, domains: list[str]) -> None:
+    def __init__(self, base_url: str, identity_secret: str, service_secret: str, account_secret: str, domains: list[str]) -> None:
         self.base_url = base_url.rstrip("/")
         self.identity_secret = identity_secret
         self.service_secret = service_secret
+        self.account_secret = account_secret
         self.domains = domains
         self.http = Http()
         self.verifier = TokenVerifier(self.http)
@@ -58,6 +67,9 @@ class OidcCheck:
         self.check_refresh_rotation(urls, member["refresh_token"])
         self.check_service_token(urls)
         self.check_no_browser_login(urls)
+        self.check_account_settings(urls, other_realm)
+        if show_claims:
+            self.check_lockout(urls)
 
     def check_discovery(self, urls: "RealmUrls") -> None:
         discovery = self.http.send(urls.discovery).json()
@@ -121,6 +133,8 @@ class OidcCheck:
         self.expect(f"{urls.realm}: service token azp", claims.get("azp"), self.SERVICE_CLIENT)
         self.expect(f"{urls.realm}: service token aud contains mesail-api", self.API_CLIENT in self.as_list(claims.get("aud")), True)
         self.expect(f"{urls.realm}: service token role mesail-service", self.SERVICE_ROLE in self.roles(claims), True)
+        self.expect(f"{urls.realm}: service token has no member or operator role",
+                    sorted(set(self.roles(claims)) & {self.MEMBER_ROLE, self.OPERATOR_ROLE}), [])
 
     def check_no_browser_login(self, urls: "RealmUrls") -> None:
         query = urllib.parse.urlencode({
@@ -135,6 +149,45 @@ class OidcCheck:
         claims = self.check_signature(urls, token["access_token"])
         self.expect(f"{urls.realm}: role mesail-operator", self.OPERATOR_ROLE in self.roles(claims), True)
         self.expect(f"{urls.realm}: azp", claims.get("azp"), self.IDENTITY_CLIENT)
+        self.check_service_token(urls)
+
+    def check_account_settings(self, urls: "RealmUrls", other_realm: str) -> None:
+        account = AccountSettings(self.http, self.base_url, urls.realm, self.account_secret)
+        realm = urls.realm
+        username = f"member@{realm}"
+        self.expect(f"{realm}: mesail-account token (HTTP)", account.sign_in(), 200)
+        user_id = account.user_id(username)
+        self.expect(f"{realm}: mesail-account finds the user", bool(user_id), True)
+        secret = base64.b32encode(os.urandom(20)).decode().rstrip("=")
+        self.expect(f"{realm}: store a TOTP with a given base32 secret (HTTP)", account.store_totp(user_id, secret), 204)
+        time.sleep(self.QUICK_FAILURE_GAP_SECONDS)
+        self.expect(f"{realm}: sign-in without the TOTP code (HTTP)", self.password_reply(urls, username, self.MEMBER_PASSWORD).status, 400)
+        self.expect(f"{realm}: sign-in with the TOTP code (HTTP)", self.password_reply(urls, username, self.MEMBER_PASSWORD, self.totp(secret)).status, 200)
+        self.expect(f"{realm}: delete the TOTP credential (HTTP)", account.delete_credentials(user_id, "otp"), 204)
+        self.expect(f"{realm}: sign-in without TOTP after removal (HTTP)", self.password_reply(urls, username, self.MEMBER_PASSWORD).status, 200)
+        self.expect(f"{realm}: reset the password (HTTP)", account.reset_password(user_id, self.TEMPORARY_PASSWORD), 204)
+        self.expect(f"{realm}: sign-in with the new password (HTTP)", self.password_reply(urls, username, self.TEMPORARY_PASSWORD).status, 200)
+        self.expect(f"{realm}: set the password back (HTTP)", account.reset_password(user_id, self.MEMBER_PASSWORD), 204)
+        refresh_token = self.password_grant(urls, username, self.MEMBER_PASSWORD)["refresh_token"]
+        self.expect(f"{realm}: log the user out everywhere (HTTP)", account.logout(user_id), 204)
+        self.expect(f"{realm}: refresh after the logout (HTTP)", self.refresh_reply(urls, refresh_token).status, 400)
+        self.expect(f"{realm}: mesail-account may not list clients (HTTP)", account.get(f"/{realm}/clients"), 403)
+        self.expect(f"{realm}: mesail-account may not read another realm (HTTP)", account.get(f"/{other_realm}/users"), 403)
+
+    def check_lockout(self, urls: "RealmUrls") -> None:
+        realm = urls.realm
+        username = f"admin@{realm}"
+        for _ in range(self.FAILURES_BEFORE_LOCK):
+            self.password_reply(urls, username, "wrong-password-0")
+        locked = self.password_reply(urls, username, self.ADMIN_PASSWORD)
+        self.expect(f"{realm}: locked account with the right password (HTTP, error, description)",
+                    (locked.status, locked.json().get("error"), locked.json().get("error_description")), (400, "invalid_grant", "Invalid user credentials"))
+        account = AccountSettings(self.http, self.base_url, realm, self.account_secret)
+        account.sign_in()
+        user_id = account.user_id(username)
+        self.expect(f"{realm}: lock status says disabled", account.lock_status(user_id).get("disabled"), True)
+        self.expect(f"{realm}: clear the lock (HTTP)", account.clear_lock(user_id), 204)
+        self.expect(f"{realm}: sign-in after the lock is cleared (HTTP)", self.password_reply(urls, username, self.ADMIN_PASSWORD).status, 200)
 
     def check_added_domain(self, directory: "RealmDirectory") -> None:
         realm = directory.domain
@@ -152,6 +205,7 @@ class OidcCheck:
         self.check_discovery(urls)
         member = self.check_member_token(urls, False)
         self.check_introspection(urls, member["access_token"])
+        self.check_account_settings(urls, self.OPERATORS_REALM)
 
     def browser_outcome(self, reply: "Reply") -> tuple[str, bool]:
         if 300 <= reply.status < 400:
@@ -165,11 +219,21 @@ class OidcCheck:
     def password_grant(self, urls: "RealmUrls", username: str, password: str) -> dict:
         return self.require_ok(self.password_reply(urls, username, password), f"{urls.realm}: password grant for {username}")
 
-    def password_reply(self, urls: "RealmUrls", username: str, password: str) -> "Reply":
-        return self.http.post_form(urls.token, {
+    def password_reply(self, urls: "RealmUrls", username: str, password: str, totp: str | None = None) -> "Reply":
+        fields = {
             "grant_type": "password", "client_id": self.IDENTITY_CLIENT, "client_secret": self.identity_secret,
             "username": username, "password": password, "scope": "openid",
-        })
+        }
+        if totp is not None:
+            fields["totp"] = totp
+        return self.http.post_form(urls.token, fields)
+
+    @staticmethod
+    def totp(secret: str) -> str:
+        key = base64.b32decode(secret + "=" * (-len(secret) % 8))
+        digest = hmac.new(key, struct.pack(">Q", int(time.time()) // 30), hashlib.sha1).digest()
+        offset = digest[-1] & 15
+        return str((struct.unpack(">I", digest[offset:offset + 4])[0] & 0x7FFFFFFF) % 1000000).zfill(6)
 
     def refresh_reply(self, urls: "RealmUrls", refresh_token: str) -> "Reply":
         return self.http.post_form(urls.token, {
@@ -235,6 +299,62 @@ class RealmUrls:
         self.introspection = f"{connect}/token/introspect"
         self.jwks = f"{connect}/certs"
         self.auth = f"{connect}/auth"
+
+
+class AccountSettings:
+    CLIENT = "mesail-account"
+
+    def __init__(self, http: "Http", base_url: str, realm: str, secret: str) -> None:
+        self.http = http
+        self.base_url = base_url
+        self.realm = realm
+        self.secret = secret
+        self.token = ""
+
+    def sign_in(self) -> int:
+        reply = self.http.post_form(f"{self.base_url}/realms/{self.realm}/protocol/openid-connect/token",
+                                    {"grant_type": "client_credentials"}, (self.CLIENT, self.secret))
+        self.token = reply.json().get("access_token", "")
+        return reply.status
+
+    def user_id(self, username: str) -> str:
+        reply = self.call("GET", f"/{self.realm}/users?" + urllib.parse.urlencode({"username": username, "exact": "true"}))
+        users = reply.json_list()
+        return users[0]["id"] if users else ""
+
+    def store_totp(self, user_id: str, secret: str) -> int:
+        credential = {
+            "type": "otp", "userLabel": "Mesail",
+            "secretData": json.dumps({"value": secret}),
+            "credentialData": json.dumps({"subType": "totp", "digits": 6, "period": 30, "algorithm": "HmacSHA1", "counter": 0, "secretEncoding": "BASE32"}),
+        }
+        return self.call("PUT", f"/{self.realm}/users/{user_id}", {"credentials": [credential]}).status
+
+    def delete_credentials(self, user_id: str, credential_type: str) -> int:
+        credentials = self.call("GET", f"/{self.realm}/users/{user_id}/credentials").json_list()
+        statuses = [self.call("DELETE", f"/{self.realm}/users/{user_id}/credentials/{credential['id']}").status
+                    for credential in credentials if credential["type"] == credential_type]
+        return statuses[0] if statuses else 404
+
+    def reset_password(self, user_id: str, password: str) -> int:
+        return self.call("PUT", f"/{self.realm}/users/{user_id}/reset-password", {"type": "password", "value": password, "temporary": False}).status
+
+    def logout(self, user_id: str) -> int:
+        return self.call("POST", f"/{self.realm}/users/{user_id}/logout").status
+
+    def lock_status(self, user_id: str) -> dict:
+        return self.call("GET", f"/{self.realm}/attack-detection/brute-force/users/{user_id}").json()
+
+    def clear_lock(self, user_id: str) -> int:
+        return self.call("DELETE", f"/{self.realm}/attack-detection/brute-force/users/{user_id}").status
+
+    def get(self, path: str) -> int:
+        return self.call("GET", path).status
+
+    def call(self, method: str, path: str, body: object = None) -> "Reply":
+        headers = {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
+        data = None if body is None else json.dumps(body).encode()
+        return self.http.send(f"{self.base_url}/admin/realms{path}", data, headers, method)
 
 
 class RealmDirectory:
@@ -360,6 +480,13 @@ class Reply(NamedTuple):
             return {}
         return value if isinstance(value, dict) else {}
 
+    def json_list(self) -> list:
+        try:
+            value = json.loads(self.body)
+        except ValueError:
+            return []
+        return value if isinstance(value, list) else []
+
 
 class Http:
     def __init__(self) -> None:
@@ -388,6 +515,6 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 if __name__ == "__main__":
     keycloak_url = os.environ["MESAIL_KEYCLOAK_URL"]
     sys.exit(OidcCheck(
-        keycloak_url, os.environ["MESAIL_IDENTITY_CLIENT_SECRET"], os.environ["MESAIL_SERVICE_SECRET"],
+        keycloak_url, os.environ["MESAIL_IDENTITY_CLIENT_SECRET"], os.environ["MESAIL_SERVICE_SECRET"], os.environ["MESAIL_ACCOUNT_CLIENT_SECRET"],
         OidcCheck.domains_from(os.environ.get("CHECK_DOMAINS", OidcCheck.DEFAULT_DOMAINS)),
     ).run(RealmDirectory.from_environment(keycloak_url)))

@@ -124,6 +124,25 @@
       ]
     },
     {
+      "clientId": "mesail-account",
+      "name": "Mesail account settings",
+      "description": "The identity service changes a user's own password, TOTP and sessions through the admin API of this realm. Client credentials only; its service account may only view and manage users.",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${MESAIL_ACCOUNT_CLIENT_SECRET}",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "defaultClientScopes": [
+        "basic",
+        "roles",
+        "kc-admin-api"
+      ],
+      "optionalClientScopes": []
+    },
+    {
       "clientId": "mesail-api",
       "name": "Mesail API",
       "description": "The audience of every Mesail access token. No sign-in.",
@@ -142,9 +161,19 @@
       "enabled": true,
       "serviceAccountClientId": "mesail-service",
       "realmRoles": [
-        "default-roles-${MESAIL_REALM}",
         "mesail-service"
       ]
+    },
+    {
+      "username": "service-account-mesail-account",
+      "enabled": true,
+      "serviceAccountClientId": "mesail-account",
+      "clientRoles": {
+        "realm-management": [
+          "view-users",
+          "manage-users"
+        ]
+      }
     }
   ]
 }

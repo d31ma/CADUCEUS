@@ -9,7 +9,7 @@
       "lastName": "Operator",
       "enabled": true,
       "realmRoles": [
-        "default-roles-mesail-operators"
+        "mesail-operator"
       ],
       "credentials": [
         {

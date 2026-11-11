@@ -43,7 +43,8 @@ users in server to server.
 | Client | In | Type | Use |
 | --- | --- | --- | --- |
 | `mesail-identity` | every realm | confidential, password grant only | The identity service signs a user in. Keycloak's built-in direct grant flow asks for a TOTP code (`totp` form field) when the user has one set up. Brute-force detection locks an account for a while after 10 failures. |
-| `mesail-service` | domain realms | confidential, client credentials | Service-to-service calls. Tokens carry the role `mesail-service`. |
+| `mesail-service` | every realm | confidential, client credentials | Service-to-service calls. Tokens carry only the role `mesail-service`. A call about one domain uses that domain's realm; install-wide calls use `mesail-operators`. |
+| `mesail-account` | domain realms | confidential, client credentials; service account with `realm-management` `view-users` and `manage-users` only | The identity service changes a user's own settings through this realm's admin API: password reset, TOTP set and remove, logout everywhere, lock status and unlock. It gets 403 on anything else and on other realms. |
 | `mesail-api` | every realm | audience only | Every access token's `aud` contains `mesail-api`. |
 | `mesail-directory` | `master` | confidential, client credentials, role `create-realm` | The directory service creates a new domain's realm through the admin API. Created by `mesail-keycloak-provision`. Keycloak makes the creator an admin of each realm it creates. |
 
@@ -52,8 +53,30 @@ There is no browser client. Keycloak's own `account-console` and
 creates them), but nothing routes browsers to them.
 
 Realm roles (in `realm_access.roles`): `mesail-member` (every user of a domain
-gets it), `mesail-admin` (admin of that domain), `mesail-service`, and in
-`mesail-operators` the role `mesail-operator`.
+gets it), `mesail-admin` (admin of that domain), `mesail-service` (service
+accounts only; they get no default role), and in `mesail-operators` the role
+`mesail-operator` (given to each operator explicitly; that realm's default role
+is empty).
+
+**Account settings through the admin API** (all tested, with a
+`mesail-account` client-credentials token of the user's realm):
+
+| Action | Call |
+| --- | --- |
+| Find the user | `GET /admin/realms/<domain>/users?username=<address>&exact=true` |
+| Set up TOTP with a secret the identity service made | `PUT /admin/realms/<domain>/users/<id>` with `{"credentials":[{"type":"otp","userLabel":"Mesail","secretData":"{\"value\":\"<base32>\"}","credentialData":"{\"subType\":\"totp\",\"digits\":6,\"period\":30,\"algorithm\":\"HmacSHA1\",\"counter\":0,\"secretEncoding\":\"BASE32\"}"}]}` |
+| List or remove TOTP | `GET .../users/<id>/credentials`, `DELETE .../users/<id>/credentials/<credential id>` |
+| Change the password | `PUT .../users/<id>/reset-password` with `{"type":"password","value":"...","temporary":false}` |
+| Log out everywhere | `POST .../users/<id>/logout` |
+| Lock status, unlock | `GET` / `DELETE /admin/realms/<domain>/attack-detection/brute-force/users/<id>` |
+
+**Sign-in answers.** A wrong password, a missing or wrong TOTP code and a
+locked account all get the same answer: HTTP 400 `invalid_grant`,
+"Invalid user credentials". Keycloak does not say which (so nobody can probe
+accounts). The identity service can ask for the lock status with
+`mesail-account`. Lockout: 10 failures lock the account for up to 15 minutes,
+and two failures within 1 second lock it for 60 seconds (Keycloak's quick login
+check).
 
 Tokens: RS256, access token 60 seconds, refresh token rotation on (a refresh
 token works once), SSO idle 30 minutes, at most 10 hours. Passwords need 12
@@ -75,8 +98,10 @@ example `http://keycloak:8180/idp`. Keys:
   already is skipped, so restarts change nothing.
 
 The realm templates use the placeholders `${MESAIL_REALM}` (filled by
-`mesail-keycloak-start` for each domain), `${MESAIL_IDENTITY_CLIENT_SECRET}`
-and `${MESAIL_SERVICE_SECRET}` (filled by Keycloak from the environment). The
+`mesail-keycloak-start` for each domain), `${MESAIL_IDENTITY_CLIENT_SECRET}`,
+`${MESAIL_SERVICE_SECRET}` and `${MESAIL_ACCOUNT_CLIENT_SECRET}` (filled by
+Keycloak from the environment; the directory service fills them itself when it
+creates a realm). The
 import runs only for realms that do not exist yet, so changing a secret later
 changes nothing: change it through the admin API.
 
@@ -98,10 +123,11 @@ docker run -d --name mesail-keycloak -v mesail-keycloak:/data/keycloak \
 | Variable | Required | Meaning |
 | --- | --- | --- |
 | `MESAIL_IDENTITY_CLIENT_SECRET` | yes | Secret of `mesail-identity`, the same in every realm (the identity service's `YON_IDENTITY_CLIENT_SECRET`). Used when a realm is imported. |
-| `MESAIL_SERVICE_SECRET` | yes | Secret of `mesail-service` in each imported domain realm. |
+| `MESAIL_SERVICE_SECRET` | yes | Secret of `mesail-service` in every imported realm (the services' `YON_SERVICE_CLIENT_SECRET`). |
+| `MESAIL_ACCOUNT_CLIENT_SECRET` | yes | Secret of `mesail-account` in every imported domain realm (the identity service's `YON_IDENTITY_ACCOUNT_SECRET`). |
 | `MESAIL_KEYCLOAK_DOMAINS` | no | Mail domains whose realms are imported at start, separated by commas or spaces. Existing realms are skipped. |
 | `MESAIL_KEYCLOAK_URL` | no | Keycloak's backend address and the issuer base. Default `http://127.0.0.1:8180/idp`. |
-| `MESAIL_KEYCLOAK_DIRECTORY_SECRET` | no | Turns on the `mesail-directory` admin client and is its secret. |
+| `MESAIL_KEYCLOAK_DIRECTORY_SECRET` | no | Turns on the `mesail-directory` admin client and is its secret (the directory service's `YON_DIRECTORY_ADMIN_SECRET`). |
 | `KC_BOOTSTRAP_ADMIN_CLIENT_ID`, `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` | first start | A temporary admin client of the `master` realm. The provisioning step uses it once to create `mesail-directory`. Remove it from the environment after the first start. |
 | `KC_BOOTSTRAP_ADMIN_USERNAME`, `KC_BOOTSTRAP_ADMIN_PASSWORD` | no | A temporary admin user of the `master` realm, for the admin console (reach it through a tunnel, never the public address). |
 | `MESAIL_APP_COMMAND` | no | The app the supervisor starts after Keycloak is ready. Without it the container runs Keycloak only. |
@@ -247,8 +273,9 @@ VM lock) and `python3` and `openssl` on the host. It:
    `mesail-identity`; the RS256 signature against the realm's keys; `iss`,
    `aud`, `azp`, `typ`, roles and the 60-second lifetime; a wrong password;
    refresh token rotation; introspection (a tampered token is not active, and
-   a token of one domain is not active in another); a `mesail-service` token;
-   no browser login offered; then it creates the realm `added.test` through
+   a token of one domain is not active in another); a `mesail-service` token
+   without member or operator roles; no browser login offered; every
+   `mesail-account` action above, and its 403s; a locked account and unlocking it; then it creates the realm `added.test` through
    the admin API with `mesail-directory`, adds a user and signs in to it;
 4. restarts the container and runs the checks again;
 5. replaces the container, keeping the volume, without the bootstrap admin

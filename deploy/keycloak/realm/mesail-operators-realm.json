@@ -31,13 +31,15 @@
         "description": "Runs the Mesail installation: adds and removes domains."
       },
       {
+        "name": "mesail-service",
+        "description": "A Mesail service calling another service (install-wide calls)."
+      },
+      {
         "name": "default-roles-mesail-operators",
-        "description": "Roles every new user gets.",
+        "description": "No roles: operators get mesail-operator explicitly.",
         "composite": true,
         "composites": {
-          "realm": [
-            "mesail-operator"
-          ]
+          "realm": []
         }
       }
     ]
@@ -90,6 +92,32 @@
       ]
     },
     {
+      "clientId": "mesail-service",
+      "name": "Mesail services",
+      "description": "Client credentials for service-to-service calls.",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${MESAIL_SERVICE_SECRET}",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "mesail-api audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "mesail-api",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
       "clientId": "mesail-api",
       "name": "Mesail API",
       "description": "The audience of every Mesail access token. No sign-in.",
@@ -100,6 +128,16 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-mesail-service",
+      "enabled": true,
+      "serviceAccountClientId": "mesail-service",
+      "realmRoles": [
+        "mesail-service"
+      ]
     }
   ]
 }

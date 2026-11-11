@@ -91,6 +91,7 @@ choose_database() {
 main() {
   require MESAIL_IDENTITY_CLIENT_SECRET
   require MESAIL_SERVICE_SECRET
+  require MESAIL_ACCOUNT_CLIENT_SECRET
   export KC_HOSTNAME=${MESAIL_KEYCLOAK_URL:-$DEFAULT_KEYCLOAK_URL}
   choose_database
   prepare_import

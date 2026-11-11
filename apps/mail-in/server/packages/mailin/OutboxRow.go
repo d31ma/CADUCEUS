@@ -14,10 +14,10 @@ func (row OutboxRow) Fields() outbox.Fields {
 	return outbox.Fields{PendingEvents: row.PendingEvents, DeadEvents: row.DeadEvents, OutboxPending: row.OutboxPending, OutboxDead: row.OutboxDead}
 }
 
-func (row OutboxRow) IsWaiting() bool {
-	return row.OutboxPending > 0
+func (OutboxRow) Waiting() map[string]any {
+	return map[string]any{"outboxWaiting": true}
 }
 
-func (row OutboxRow) IsDead() bool {
-	return row.OutboxDead > 0
+func (OutboxRow) HasDead() map[string]any {
+	return map[string]any{"outboxHasDead": true}
 }

@@ -107,6 +107,29 @@ func (world *InboundTestSetup) ifDocument(event DeadEvent, documentId string) []
 	return []DeadEvent{}
 }
 
+func (world *InboundTestSetup) Cleanup() {
+	world.Forget(world.Collection())
+}
+
+func (world *InboundTestSetup) Forget(collection string) {
+	registry := mailin.CollectionRegistry{}.Name()
+	for _, record := range world.RegistryRecords(collection) {
+		_, err := DataSource{}.DeleteById(registry, record.Id)
+		world.Must(err)
+	}
+	DataSource{}.DropCollection(collection)
+}
+
+func (world *InboundTestSetup) RegistryRecords(collection string) []mailin.CollectionRecord {
+	window, err := DataSource{}.Scroll(mailin.CollectionRegistry{}.Name(), map[string]any{"name": collection}, "", 8)
+	world.Must(err)
+	records := []mailin.CollectionRecord{}
+	if len(window.Content) > 0 {
+		world.Must(json.Unmarshal(window.Content, &records))
+	}
+	return records
+}
+
 func (world *InboundTestSetup) Must(err error) {
 	if err != nil {
 		panic(err)

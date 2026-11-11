@@ -1,6 +1,9 @@
 package mailin
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"math"
+)
 
 type Storage struct {
 	Documents Documents
@@ -34,7 +37,11 @@ func (storage Storage) Replace(collection string, id string, document any) error
 }
 
 func (storage Storage) All(collection string, where map[string]any, target any) error {
-	rows, err := storage.rows(collection, where)
+	return storage.First(collection, where, storage.Everything(), target)
+}
+
+func (storage Storage) First(collection string, where map[string]any, limit int, target any) error {
+	rows, err := storage.rows(collection, where, limit)
 	if err != nil {
 		return Unavailable{Operation: "scroll"}
 	}
@@ -42,11 +49,15 @@ func (storage Storage) All(collection string, where map[string]any, target any) 
 	return storage.failure("decode", json.Unmarshal(encoded, target))
 }
 
-func (storage Storage) rows(collection string, where map[string]any) ([]json.RawMessage, error) {
+func (Storage) Everything() int {
+	return math.MaxInt
+}
+
+func (storage Storage) rows(collection string, where map[string]any, limit int) ([]json.RawMessage, error) {
 	rows := []json.RawMessage{}
 	cursor := ""
-	for {
-		page, err := storage.Pages(collection, where, cursor, storage.batch())
+	for len(rows) < limit {
+		page, err := storage.Pages(collection, where, cursor, min(storage.batch(), limit-len(rows)))
 		if err != nil {
 			return nil, err
 		}
@@ -56,10 +67,11 @@ func (storage Storage) rows(collection string, where map[string]any) ([]json.Raw
 		}
 		rows = append(rows, more...)
 		if page.NextCursor == "" {
-			return rows, nil
+			break
 		}
 		cursor = page.NextCursor
 	}
+	return rows[:min(limit, len(rows))], nil
 }
 
 func (Storage) decoded(content json.RawMessage) ([]json.RawMessage, error) {

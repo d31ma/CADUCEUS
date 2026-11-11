@@ -18,6 +18,7 @@ func TestStageAddsOneEventToTheDocumentFields(t *testing.T) {
 	check(t, envelope.DomainId == "example.com" && envelope.Producer == "mail-in", "wrong envelope")
 	check(t, payload.InboundId == "in_t1", "wrong payload")
 	check(t, patch.OutboxPending == 1 && patch.EventQueued, "event not marked")
+	check(t, patch.OutboxWaiting && !patch.OutboxHasDead, "wrong flags")
 }
 
 func TestStageReportsMissingSettings(t *testing.T) {

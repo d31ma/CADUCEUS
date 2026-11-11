@@ -11,6 +11,7 @@ type WorkflowServiceTest struct {
 
 func (test *WorkflowServiceTest) TestInboxRegistersTheCollectionForTheOutbox() {
 	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
 	collection, err := world.Workflows.Inbox().Collection(world.Domain)
 	Assert.IsTrue(err == nil, "collection not created")
 	Assert.Equals(world.Collection(), collection)

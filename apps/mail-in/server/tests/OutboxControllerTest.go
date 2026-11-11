@@ -10,6 +10,7 @@ type OutboxControllerTest struct {
 
 func (test *OutboxControllerTest) TestARefusedEventBecomesADeadLetterThatTheRelayDeliversAfterARetry() {
 	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
 	world.Pusher.FailFor("messaging", outbox.DeliveryFailure{Subscriber: "messaging", Status: 400, Permanent: true, Detail: "bad"})
 	key := world.FreshKey()
 	_, err := world.Inbound.PostMessage(world.Envelope(key))
@@ -38,6 +39,7 @@ func (test *OutboxControllerTest) TestRetryOfAnUnknownCollectionIsNotFound() {
 
 func (test *OutboxControllerTest) TestRetryOfAnUnknownLetterIsNotFound() {
 	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
 	key := world.FreshKey()
 	_, err := world.Inbound.PostMessage(world.Envelope(key))
 	world.Must(err)
@@ -47,6 +49,7 @@ func (test *OutboxControllerTest) TestRetryOfAnUnknownLetterIsNotFound() {
 
 func (test *OutboxControllerTest) TestRetryOfAMissingDocumentIsNotFound() {
 	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
 	_, err := world.Workflows.Inbox().Collection(world.Domain)
 	world.Must(err)
 	missing := world.Outbox.PostRetry(RetryRequest{Collection: world.Collection(), DocumentId: "00000000000000", EventId: "evt_1", Subscriber: "messaging"})
@@ -56,7 +59,9 @@ func (test *OutboxControllerTest) TestRetryOfAMissingDocumentIsNotFound() {
 func (test *OutboxControllerTest) TestTheSweepSurvivesARegisteredCollectionThatIsMissing() {
 	world := InboundTestSetup{}.World()
 	registry := mailin.CollectionRegistry{Storage: world.Workflows.Inbox().Storage}
-	world.Must(registry.Register("inbound-raw-missing-" + world.RandomText()))
+	missing := "inbound-raw-missing-" + world.RandomText()
+	world.Must(registry.Register(missing))
+	defer world.Forget(missing)
 	_, err := world.Outbox.PostRelay()
 	Assert.IsTrue(err == nil, "the sweep failed")
 }

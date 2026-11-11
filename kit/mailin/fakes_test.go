@@ -18,10 +18,12 @@ type memoryDocuments struct {
 	badContent  bool
 	failPagesIn string
 	created     int
+	pageReads   map[string]int
+	patches     int
 }
 
 func newMemory() *memoryDocuments {
-	return &memoryDocuments{collections: map[string][]string{}, rows: map[string]map[string]map[string]any{}}
+	return &memoryDocuments{collections: map[string][]string{}, rows: map[string]map[string]map[string]any{}, pageReads: map[string]int{}}
 }
 
 func (memory *memoryDocuments) failure(operation string) error {
@@ -66,6 +68,7 @@ func (memory *memoryDocuments) Patch(collection string, id string, fields any, t
 	if err := memory.failure("patch"); err != nil {
 		return false, err
 	}
+	memory.patches++
 	for key, value := range memory.asMap(fields) {
 		memory.rows[collection][id][key] = value
 	}
@@ -76,6 +79,7 @@ func (memory *memoryDocuments) Page(collection string, where map[string]any, cur
 	if err := memory.failure("page"); err != nil {
 		return Page{}, err
 	}
+	memory.pageReads[collection]++
 	if collection == memory.failPagesIn {
 		return Page{}, errors.New("page failed")
 	}

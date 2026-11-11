@@ -12,12 +12,11 @@ type OutboxStore struct {
 }
 
 func (store OutboxStore) Pending(limit int) ([]outbox.Document, error) {
-	documents, err := store.matching(OutboxRow.IsWaiting)
-	return documents[:min(limit, len(documents))], err
+	return store.matching(OutboxRow{}.Waiting(), limit)
 }
 
 func (store OutboxStore) Dead() ([]outbox.Document, error) {
-	return store.matching(OutboxRow.IsDead)
+	return store.matching(OutboxRow{}.HasDead(), store.Storage.Everything())
 }
 
 func (store OutboxStore) Load(ref outbox.Ref) (outbox.Fields, error) {
@@ -41,10 +40,10 @@ func (store OutboxStore) Save(ref outbox.Ref, fields outbox.Fields) error {
 	if err != nil {
 		return err
 	}
-	return store.Storage.Replace(ref.Collection, ref.Id, fields)
+	return store.Storage.Replace(ref.Collection, ref.Id, OutboxPatch{}.From(fields))
 }
 
-func (store OutboxStore) matching(keep func(OutboxRow) bool) ([]outbox.Document, error) {
+func (store OutboxStore) matching(where map[string]any, limit int) ([]outbox.Document, error) {
 	names, err := store.Registry.All()
 	if err != nil {
 		return []outbox.Document{}, err
@@ -52,28 +51,29 @@ func (store OutboxStore) matching(keep func(OutboxRow) bool) ([]outbox.Document,
 	found := []outbox.Document{}
 	failures := []error{}
 	for _, name := range names {
-		documents, err := store.documentsIn(name, keep)
+		if len(found) >= limit {
+			break
+		}
+		documents, err := store.documentsIn(name, where, limit-len(found))
 		found, failures = append(found, documents...), append(failures, err)
 	}
 	return found, errors.Join(failures...)
 }
 
-func (store OutboxStore) documentsIn(collection string, keep func(OutboxRow) bool) ([]outbox.Document, error) {
+func (store OutboxStore) documentsIn(collection string, where map[string]any, limit int) ([]outbox.Document, error) {
 	err := store.Storage.Ensure(collection)
 	if err != nil {
 		return nil, err
 	}
 	rows := []OutboxRow{}
-	err = store.Storage.All(collection, map[string]any{}, &rows)
-	return store.kept(collection, rows, keep), err
+	err = store.Storage.First(collection, where, limit, &rows)
+	return store.documents(collection, rows), err
 }
 
-func (OutboxStore) kept(collection string, rows []OutboxRow, keep func(OutboxRow) bool) []outbox.Document {
+func (OutboxStore) documents(collection string, rows []OutboxRow) []outbox.Document {
 	documents := []outbox.Document{}
 	for _, row := range rows {
-		if keep(row) {
-			documents = append(documents, outbox.Document{Ref: outbox.Ref{Collection: collection, Id: row.Id}, Fields: row.Fields()})
-		}
+		documents = append(documents, outbox.Document{Ref: outbox.Ref{Collection: collection, Id: row.Id}, Fields: row.Fields()})
 	}
 	return documents
 }

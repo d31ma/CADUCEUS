@@ -24,6 +24,7 @@ func (test *InboundControllerTest) TestPostMessageRefusesAKeyOfAnotherDomain() {
 
 func (test *InboundControllerTest) TestPostMessageStoresTheMessageOnce() {
 	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
 	key := world.FreshKey()
 	first, err := world.Inbound.PostMessage(world.Envelope(key))
 	second, again := world.Inbound.PostMessage(world.Envelope(key))
@@ -38,6 +39,7 @@ func (test *InboundControllerTest) TestPostMessageStoresTheMessageOnce() {
 
 func (test *InboundControllerTest) TestPostMessageStagesOneEmailReceivedEvent() {
 	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
 	world.Pusher.FailFor("messaging", errors.New("connection refused"))
 	key := world.FreshKey()
 	accepted, err := world.Inbound.PostMessage(world.Envelope(key))
@@ -62,6 +64,7 @@ func (test *InboundControllerTest) TestPostMessageStagesOneEmailReceivedEvent() 
 
 func (test *InboundControllerTest) TestARetriedMessageStagesNoSecondEvent() {
 	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
 	world.Pusher.FailFor("messaging", errors.New("connection refused"))
 	key := world.FreshKey()
 	_, first := world.Inbound.PostMessage(world.Envelope(key))
@@ -75,6 +78,7 @@ func (test *InboundControllerTest) TestARetriedMessageStagesNoSecondEvent() {
 
 func (test *InboundControllerTest) TestPostMessagePushesTheEventToMessagingAtOnce() {
 	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
 	key := world.FreshKey()
 	accepted, err := world.Inbound.PostMessage(world.Envelope(key))
 	world.Must(err)

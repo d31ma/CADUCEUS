@@ -95,6 +95,24 @@ func TestAcceptReportsMissingSettingsAfterStoring(t *testing.T) {
 	check(t, isUnavailable(err, "outbox settings"), "want outbox settings")
 }
 
+func TestAcceptInsertsTheRecordWithBothFlagsOff(t *testing.T) {
+	memory := newMemory()
+	inbox := testInbox(memory, outbox.NewRecordingPusher(), testEnvironment(nil))
+	inbox.Accept(testEnvelope("example.com", "example.com/inbound-1"))
+	collection, _ := inbox.Collection("example.com")
+	row := memory.rows[collection]["D1"]
+	check(t, row["outboxWaiting"] == false && row["outboxHasDead"] == false, "want both flags off")
+}
+
+func TestAcceptMarksAnUndeliveredEventAsWaiting(t *testing.T) {
+	pusher := outbox.NewRecordingPusher()
+	pusher.FailFor("messaging", outbox.DeliveryFailure{Subscriber: "messaging", Status: 503, Detail: "down"})
+	inbox := testInbox(newMemory(), pusher, goodSettings())
+	inbox.Accept(testEnvelope("example.com", "example.com/inbound-1"))
+	stored := storedRecord(t, inbox, "example.com/inbound-1")
+	check(t, stored.OutboxWaiting && !stored.OutboxHasDead, "want waiting and no dead letters")
+}
+
 func TestAcceptReportsAFailedPatch(t *testing.T) {
 	memory := newMemory()
 	inbox := testInbox(memory, outbox.NewRecordingPusher(), goodSettings())

@@ -1,0 +1,250 @@
+import "strings"
+
+// @Service
+type SearchService struct {
+	PaletteOpen   bool
+	PaletteQuery  string
+	PaletteState  string
+	PaletteRows   []SearchHitRow
+	PageState     string
+	PageRows      []SearchHitRow
+	NextCursor    string
+	MoreState     string
+	SearchedQuery string
+	paletteNumber int
+	pageNumber    int
+	searched      SearchHitFilter
+	// @LocalState
+	RecentSearches []string
+	// @SessionState
+	Query string
+	// @SessionState
+	ConversationId string
+	// @SessionState
+	ConversationTitle string
+	// @SessionState
+	Author string
+	// @SessionState
+	From string
+	// @SessionState
+	To string
+	// @SessionState
+	HasAttachment bool
+	// @SessionState
+	IsEmail bool
+	// @Needs
+	queries *SearchQueryService
+	// @Needs
+	recent                    *SearchRecentService
+	applicationEventPublisher ApplicationEventPublisher
+}
+
+// @OnStart
+func (search *SearchService) Start() {
+	search.PaletteState = search.stateIdle()
+	search.PageState = search.stateIdle()
+}
+
+func (search *SearchService) OpenPalette() {
+	search.PaletteOpen = true
+}
+
+func (search *SearchService) ClosePalette() {
+	search.PaletteOpen = false
+}
+
+func (search *SearchService) SearchPalette() {
+	search.RecentSearches = search.recent.With(search.RecentSearches, search.PaletteQuery)
+	search.askPalette(search.paletteFilter())
+}
+
+func (search *SearchService) ClearPaletteQuery() {
+	search.PaletteQuery = ""
+	search.askPalette(search.paletteFilter())
+}
+
+func (search *SearchService) UseRecent(query string) {
+	search.PaletteQuery = query
+	search.SearchPalette()
+}
+
+func (search *SearchService) ClearRecent() {
+	search.RecentSearches = []string{}
+}
+
+// @OnEvent
+// @InBackground
+func (search *SearchService) FindPalette(requested SearchHitPaletteRequested) {
+	answer := search.queries.Find(requested.Filter)
+	search.keepPalette(requested.Number, answer)
+}
+
+func (search *SearchService) Open(row SearchHitRow) {
+	opened := SearchHitOpenRequested{ConversationId: row.ConversationId, MessageId: row.MessageId}
+	search.applicationEventPublisher.PublishEvent(opened, false)
+	search.PaletteOpen = false
+}
+
+func (search *SearchService) SeeAll() {
+	search.Query = search.PaletteQuery
+	search.PaletteOpen = false
+	search.Search()
+}
+
+func (search *SearchService) Search() {
+	search.RecentSearches = search.recent.With(search.RecentSearches, search.Query)
+	search.askPage(search.pageFilter())
+}
+
+func (search *SearchService) ClearQuery() {
+	search.Query = ""
+	search.Search()
+}
+
+// @OnEvent
+// @InBackground
+func (search *SearchService) FindPage(requested SearchHitPageRequested) {
+	answer := search.queries.Find(requested.Filter)
+	search.keepPage(requested.Number, answer)
+}
+
+func (search *SearchService) LoadMore() {
+	search.MoreState = search.stateLoading()
+	search.searched.Cursor = search.NextCursor
+	more := SearchHitMoreRequested{Number: search.pageNumber, Filter: search.searched}
+	search.applicationEventPublisher.PublishEvent(more, false)
+}
+
+// @OnEvent
+// @InBackground
+func (search *SearchService) FindMore(requested SearchHitMoreRequested) {
+	answer := search.queries.Find(requested.Filter)
+	search.keepMore(requested.Number, answer)
+}
+
+// @OnEvent
+func (search *SearchService) ScopeTo(requested SearchHitScopeRequested) {
+	search.ConversationId = requested.ConversationId
+	search.ConversationTitle = requested.Title
+	search.Search()
+}
+
+func (search *SearchService) ClearScope() {
+	search.ScopeTo(SearchHitScopeRequested{})
+}
+
+func (search *SearchService) ToggleAttachment() {
+	search.HasAttachment = !search.HasAttachment
+	search.Search()
+}
+
+func (search *SearchService) ToggleEmail() {
+	search.IsEmail = !search.IsEmail
+	search.Search()
+}
+
+func (search *SearchService) ChooseFrom(day string) {
+	search.From = day
+	search.Search()
+}
+
+func (search *SearchService) ChooseTo(day string) {
+	search.To = day
+	search.Search()
+}
+
+func (search *SearchService) ClearFilters() {
+	search.ConversationId = ""
+	search.ConversationTitle = ""
+	search.Author = ""
+	search.From = ""
+	search.To = ""
+	search.HasAttachment = false
+	search.IsEmail = false
+	search.Search()
+}
+
+func (search *SearchService) paletteFilter() SearchHitFilter {
+	return SearchHitFilter{Query: strings.TrimSpace(search.PaletteQuery), Limit: search.paletteLimit()}
+}
+
+func (search *SearchService) pageFilter() SearchHitFilter {
+	return SearchHitFilter{
+		Query:          strings.TrimSpace(search.Query),
+		ConversationId: search.ConversationId,
+		Author:         strings.TrimSpace(search.Author),
+		From:           search.From,
+		To:             search.To,
+		HasAttachment:  search.HasAttachment,
+		IsEmail:        search.IsEmail,
+		Limit:          search.pageLimit(),
+	}
+}
+
+func (search *SearchService) askPalette(filter SearchHitFilter) {
+	search.paletteNumber++
+	search.PaletteRows = []SearchHitRow{}
+	search.PaletteState = search.stateIdle()
+	if filter.Query == "" {
+		return
+	}
+	search.PaletteState = search.stateLoading()
+	search.applicationEventPublisher.PublishEvent(SearchHitPaletteRequested{Number: search.paletteNumber, Filter: filter}, false)
+}
+
+func (search *SearchService) askPage(filter SearchHitFilter) {
+	search.pageNumber++
+	search.searched = filter
+	search.SearchedQuery = filter.Query
+	search.PageRows = []SearchHitRow{}
+	search.NextCursor = ""
+	search.MoreState = ""
+	search.PageState = search.stateIdle()
+	if filter.Query == "" {
+		return
+	}
+	search.PageState = search.stateLoading()
+	search.applicationEventPublisher.PublishEvent(SearchHitPageRequested{Number: search.pageNumber, Filter: filter}, false)
+}
+
+func (search *SearchService) keepPalette(number int, answer SearchHitAnswer) {
+	if number != search.paletteNumber {
+		return
+	}
+	search.PaletteRows = answer.Rows
+	search.PaletteState = answer.State
+}
+
+func (search *SearchService) keepPage(number int, answer SearchHitAnswer) {
+	if number != search.pageNumber {
+		return
+	}
+	search.PageRows = answer.Rows
+	search.NextCursor = answer.NextCursor
+	search.PageState = answer.State
+}
+
+func (search *SearchService) keepMore(number int, answer SearchHitAnswer) {
+	if number != search.pageNumber {
+		return
+	}
+	search.PageRows = append(search.PageRows, answer.Rows...)
+	search.NextCursor = answer.NextCursor
+	search.MoreState = answer.State
+}
+
+func (search *SearchService) paletteLimit() string {
+	return "5"
+}
+
+func (search *SearchService) pageLimit() string {
+	return "20"
+}
+
+func (search *SearchService) stateIdle() string {
+	return "idle"
+}
+
+func (search *SearchService) stateLoading() string {
+	return "loading"
+}

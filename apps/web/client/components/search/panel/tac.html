@@ -1,3 +1,9 @@
-<section class="search-panel" aria-label="Search">
-  <h2>Search</h2>
-</section>
+<div class="search-panel">
+  <button type="button" class="search-trigger" aria-haspopup="dialog" aria-controls="search-palette" :aria-expanded="shell.flag(search.paletteOpen)" on:click="search.openPalette()">
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" /></svg>
+    <span class="search-trigger-text">Search {sessionAccount.currentDomain}</span>
+  </button>
+  <logic :if="search.paletteOpen">
+    <search-palette />
+  </logic>
+</div>

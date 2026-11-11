@@ -1,0 +1,277 @@
+// @Test(SearchTestSetup, {"partition":"tests"})
+type SearchServiceTest struct {
+	behaviors *BehaviorContext
+}
+
+func (test *SearchServiceTest) search() *SearchService {
+	search := &SearchService{queries: SearchTestSetup{}.Queries(test.behaviors), recent: &SearchRecentService{}}
+	search.Start()
+	return search
+}
+
+func (test *SearchServiceTest) paletteFound(query string) *SearchService {
+	search := test.search()
+	search.OpenPalette()
+	search.PaletteQuery = query
+	search.SearchPalette()
+	search.FindPalette(SearchHitPaletteRequested{Number: search.paletteNumber, Filter: search.paletteFilter()})
+	return search
+}
+
+func (test *SearchServiceTest) pageFound(query string) *SearchService {
+	search := test.search()
+	search.Query = query
+	search.Search()
+	search.FindPage(SearchHitPageRequested{Number: search.pageNumber, Filter: search.pageFilter()})
+	return search
+}
+
+func (test *SearchServiceTest) TestStartIsIdle() {
+	search := test.search()
+	Assert.Equals("idle", search.PaletteState)
+	Assert.Equals("idle", search.PageState)
+	Assert.IsTrue(!search.PaletteOpen)
+}
+
+func (test *SearchServiceTest) TestOpenPaletteShowsIt() {
+	search := test.search()
+	search.OpenPalette()
+	Assert.IsTrue(search.PaletteOpen)
+}
+
+func (test *SearchServiceTest) TestClosePaletteHidesIt() {
+	search := test.search()
+	search.OpenPalette()
+	search.ClosePalette()
+	Assert.IsTrue(!search.PaletteOpen)
+}
+
+func (test *SearchServiceTest) TestSearchPaletteShowsLoadingAndRemembersTheSearch() {
+	search := test.search()
+	search.PaletteQuery = " invoice "
+	search.SearchPalette()
+	Assert.Equals("loading", search.PaletteState)
+	Assert.Equals([]string{"invoice"}, search.RecentSearches)
+	Assert.Equals("invoice", search.paletteFilter().Query)
+	Assert.Equals("5", search.paletteFilter().Limit)
+}
+
+func (test *SearchServiceTest) TestSearchPaletteWithoutTextStaysIdle() {
+	search := test.search()
+	search.PaletteQuery = "  "
+	search.SearchPalette()
+	Assert.Equals("idle", search.PaletteState)
+	Assert.Equals(0, len(search.RecentSearches))
+}
+
+func (test *SearchServiceTest) TestFindPaletteShowsTheQuickResults() {
+	search := test.paletteFound("invoice")
+	Assert.Equals("results", search.PaletteState)
+	Assert.Equals(2, len(search.PaletteRows))
+	Assert.Equals(SearchHitPart{Text: "invoice", Match: true}, search.PaletteRows[0].Parts[5])
+}
+
+func (test *SearchServiceTest) TestFindPaletteShowsTheEmptyState() {
+	Assert.Equals("empty", test.paletteFound("nothing").PaletteState)
+}
+
+func (test *SearchServiceTest) TestFindPaletteShowsTheErrorState() {
+	search := test.paletteFound("broken")
+	Assert.Equals("error", search.PaletteState)
+	Assert.Equals(0, len(search.PaletteRows))
+}
+
+func (test *SearchServiceTest) TestFindPaletteIgnoresAnOldAnswer() {
+	search := test.search()
+	search.PaletteQuery = "invoice"
+	search.SearchPalette()
+	old := SearchHitPaletteRequested{Number: search.paletteNumber, Filter: search.paletteFilter()}
+	search.PaletteQuery = "nothing"
+	search.SearchPalette()
+	search.FindPalette(old)
+	Assert.Equals("loading", search.PaletteState)
+	Assert.Equals(0, len(search.PaletteRows))
+}
+
+func (test *SearchServiceTest) TestClearPaletteQueryReturnsToRecentSearches() {
+	search := test.paletteFound("invoice")
+	search.ClearPaletteQuery()
+	Assert.Equals("", search.PaletteQuery)
+	Assert.Equals("idle", search.PaletteState)
+	Assert.Equals(0, len(search.PaletteRows))
+	Assert.Equals([]string{"invoice"}, search.RecentSearches)
+}
+
+func (test *SearchServiceTest) TestUseRecentSearchesAgain() {
+	search := test.search()
+	search.RecentSearches = []string{"march", "invoice"}
+	search.UseRecent("invoice")
+	Assert.Equals("invoice", search.PaletteQuery)
+	Assert.Equals("loading", search.PaletteState)
+	Assert.Equals([]string{"invoice", "march"}, search.RecentSearches)
+}
+
+func (test *SearchServiceTest) TestClearRecentForgetsEverySearch() {
+	search := test.search()
+	search.RecentSearches = []string{"march", "invoice"}
+	search.ClearRecent()
+	Assert.Equals(0, len(search.RecentSearches))
+}
+
+func (test *SearchServiceTest) TestOpenClosesThePalette() {
+	search := test.paletteFound("invoice")
+	search.Open(search.PaletteRows[0])
+	Assert.IsTrue(!search.PaletteOpen)
+}
+
+func (test *SearchServiceTest) TestSeeAllMovesThePaletteSearchToThePage() {
+	search := test.search()
+	search.OpenPalette()
+	search.PaletteQuery = "invoice"
+	search.SeeAll()
+	Assert.Equals("invoice", search.Query)
+	Assert.Equals("loading", search.PageState)
+	Assert.IsTrue(!search.PaletteOpen)
+}
+
+func (test *SearchServiceTest) TestSearchWithoutTextStaysIdle() {
+	search := test.search()
+	search.Search()
+	Assert.Equals("idle", search.PageState)
+	Assert.Equals("", search.SearchedQuery)
+}
+
+func (test *SearchServiceTest) TestFindPageShowsResultsNewestFirstWithMore() {
+	search := test.pageFound("invoice")
+	Assert.Equals("results", search.PageState)
+	Assert.Equals("m-1", search.PageRows[0].MessageId)
+	Assert.Equals("page-2", search.NextCursor)
+	Assert.Equals("invoice", search.SearchedQuery)
+	Assert.Equals("20", search.searched.Limit)
+}
+
+func (test *SearchServiceTest) TestFindPageShowsTheEmptyState() {
+	search := test.pageFound("nothing")
+	Assert.Equals("empty", search.PageState)
+	Assert.Equals("nothing", search.SearchedQuery)
+}
+
+func (test *SearchServiceTest) TestFindPageIgnoresAnOldAnswer() {
+	search := test.search()
+	search.Query = "invoice"
+	search.Search()
+	old := SearchHitPageRequested{Number: search.pageNumber, Filter: search.pageFilter()}
+	search.ClearQuery()
+	search.FindPage(old)
+	Assert.Equals("idle", search.PageState)
+	Assert.Equals(0, len(search.PageRows))
+}
+
+func (test *SearchServiceTest) TestLoadMoreAddsTheNextPage() {
+	search := test.pageFound("invoice")
+	search.LoadMore()
+	Assert.Equals("loading", search.MoreState)
+	search.FindMore(SearchHitMoreRequested{Number: search.pageNumber, Filter: search.searched})
+	Assert.Equals(3, len(search.PageRows))
+	Assert.Equals("m-3", search.PageRows[2].MessageId)
+	Assert.Equals("", search.NextCursor)
+	Assert.Equals("results", search.MoreState)
+}
+
+func (test *SearchServiceTest) TestFindMoreFailureKeepsTheRowsAndTheCursor() {
+	search := test.pageFound("invoice")
+	search.LoadMore()
+	search.FindMore(SearchHitMoreRequested{Number: search.pageNumber, Filter: SearchHitFilter{Query: "broken", Cursor: "page-2"}})
+	Assert.Equals(2, len(search.PageRows))
+	Assert.Equals("page-2", search.NextCursor)
+	Assert.Equals("error", search.MoreState)
+}
+
+func (test *SearchServiceTest) TestFindMoreIgnoresAnOldAnswer() {
+	search := test.pageFound("invoice")
+	search.LoadMore()
+	old := SearchHitMoreRequested{Number: search.pageNumber, Filter: search.searched}
+	search.Search()
+	search.FindMore(old)
+	Assert.Equals(0, len(search.PageRows))
+	Assert.Equals("", search.MoreState)
+}
+
+func (test *SearchServiceTest) TestScopeToSearchesOneConversation() {
+	search := test.search()
+	search.Query = "invoice"
+	search.ScopeTo(SearchHitScopeRequested{ConversationId: "c-1", Title: "support"})
+	Assert.Equals("c-1", search.pageFilter().ConversationId)
+	Assert.Equals("support", search.ConversationTitle)
+	Assert.Equals("loading", search.PageState)
+}
+
+func (test *SearchServiceTest) TestClearScopeSearchesEveryConversation() {
+	search := test.search()
+	search.ScopeTo(SearchHitScopeRequested{ConversationId: "c-1", Title: "support"})
+	search.ClearScope()
+	Assert.Equals("", search.ConversationId)
+	Assert.Equals("", search.ConversationTitle)
+}
+
+func (test *SearchServiceTest) TestToggleAttachmentTurnsTheFilterOnAndOff() {
+	search := test.search()
+	search.ToggleAttachment()
+	Assert.IsTrue(search.pageFilter().HasAttachment)
+	search.ToggleAttachment()
+	Assert.IsTrue(!search.HasAttachment)
+}
+
+func (test *SearchServiceTest) TestToggleEmailTurnsTheFilterOnAndOff() {
+	search := test.search()
+	search.ToggleEmail()
+	Assert.IsTrue(search.pageFilter().IsEmail)
+	search.ToggleEmail()
+	Assert.IsTrue(!search.IsEmail)
+}
+
+func (test *SearchServiceTest) TestChooseFromAndChooseToSetTheDates() {
+	search := test.search()
+	search.ChooseFrom("2026-11-01")
+	search.ChooseTo("2026-11-10")
+	Assert.Equals("2026-11-01", search.pageFilter().From)
+	Assert.Equals("2026-11-10", search.pageFilter().To)
+}
+
+func (test *SearchServiceTest) TestEveryFilterReachesTheSearch() {
+	search := test.search()
+	search.Query = "filtered"
+	search.Author = " bo "
+	search.ChooseFrom("2026-11-01")
+	search.ChooseTo("2026-11-10")
+	search.ToggleAttachment()
+	search.ToggleEmail()
+	search.ScopeTo(SearchHitScopeRequested{ConversationId: "c-1", Title: "support"})
+	search.FindPage(SearchHitPageRequested{Number: search.pageNumber, Filter: search.searched})
+	Assert.Equals("results", search.PageState)
+	Assert.Equals("m-9", search.PageRows[0].MessageId)
+}
+
+func (test *SearchServiceTest) TestClearFiltersKeepsTheQuery() {
+	search := test.search()
+	search.Query = "invoice"
+	search.Author = "bo"
+	search.ChooseFrom("2026-11-01")
+	search.ChooseTo("2026-11-10")
+	search.ToggleAttachment()
+	search.ToggleEmail()
+	search.ScopeTo(SearchHitScopeRequested{ConversationId: "c-1", Title: "support"})
+	search.ClearFilters()
+	Assert.Equals(SearchHitFilter{Query: "invoice", Limit: "20"}, search.pageFilter())
+	Assert.Equals("", search.ConversationTitle)
+	Assert.Equals("loading", search.PageState)
+}
+
+func (test *SearchServiceTest) TestClearQueryEmptiesThePage() {
+	search := test.pageFound("invoice")
+	search.ClearQuery()
+	Assert.Equals("", search.Query)
+	Assert.Equals("idle", search.PageState)
+	Assert.Equals(0, len(search.PageRows))
+	Assert.Equals("", search.NextCursor)
+}

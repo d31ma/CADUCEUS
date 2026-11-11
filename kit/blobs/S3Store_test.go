@@ -163,3 +163,14 @@ func TestS3EnsureBucketReportsFailures(t *testing.T) {
 		t.Fatal("expected errors")
 	}
 }
+
+func TestS3SignsLinksForThePublicEndpointAndReadsInside(t *testing.T) {
+	store, seen := fakeS3(t, http.StatusOK, "x")
+	store.settings.PublicEndpoint = "https://files.mesail.test"
+	signed, _ := store.SignDownload(Key{DomainId: "example.com", Name: "a1"}, DownloadTerms{FileName: "a", MediaType: "text/plain"}, testNow().Add(time.Minute))
+	reader, err := store.Read(Key{DomainId: "example.com", Name: "a1"})
+	if err != nil || !strings.HasPrefix(signed, "https://files.mesail.test/mesail-attachments/example.com/a1?") || len(*seen) != 1 {
+		t.Fatalf("got %s, %v", signed, err)
+	}
+	reader.Close()
+}

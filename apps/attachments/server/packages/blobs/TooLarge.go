@@ -1,6 +1,9 @@
 package blobs
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type TooLarge struct {
 	Limit int64
@@ -8,4 +11,8 @@ type TooLarge struct {
 
 func (large TooLarge) Error() string {
 	return fmt.Sprintf("the blob is larger than %d bytes", large.Limit)
+}
+
+func (TooLarge) HttpStatus() int {
+	return http.StatusRequestEntityTooLarge
 }

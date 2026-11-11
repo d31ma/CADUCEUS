@@ -1,6 +1,30 @@
 {
   "server": {
     "host": "127.0.0.1",
-    "port": 8105
+    "port": 8105,
+    "environment": [
+      "AWS_*"
+    ]
+  },
+  "oidc": {
+    "issuer": "https://mesail.localhost/idp/realms/{realm}",
+    "jwks": "http://keycloak:8080/idp/realms/{realm}/protocol/openid-connect/certs",
+    "audience": "mesail-api"
+  },
+  "outgoing": {
+    "hosts": [
+      "keycloak",
+      "messaging",
+      "floci"
+    ]
+  },
+  "attachments": {
+    "bucket": "mesail-attachments",
+    "link": {
+      "seconds": 300
+    },
+    "limit": {
+      "bytes": 26214400
+    }
   }
 }

@@ -19,7 +19,7 @@ func NewS3Store(settings S3Settings, client *http.Client, now func() time.Time) 
 }
 
 func (store S3Store) SignUpload(key Key, upload UploadTerms, expiresAt time.Time) (string, error) {
-	target, err := store.objectUrl(key, url.Values{})
+	target, err := store.objectUrl(store.settings.PublicUrl(), key, url.Values{})
 	if err != nil {
 		return "", err
 	}
@@ -33,7 +33,7 @@ func (store S3Store) SignDownload(key Key, download DownloadTerms, expiresAt tim
 	query := url.Values{}
 	query.Set("response-content-disposition", Disposition{}.Attachment(download.FileName))
 	query.Set("response-content-type", download.MediaType)
-	target, err := store.objectUrl(key, query)
+	target, err := store.objectUrl(store.settings.PublicUrl(), key, query)
 	if err != nil {
 		return "", err
 	}
@@ -77,7 +77,7 @@ func (store S3Store) EnsureBucket() error {
 }
 
 func (store S3Store) send(method string, key Key) (*http.Response, error) {
-	target, err := store.objectUrl(key, url.Values{})
+	target, err := store.objectUrl(store.settings.BaseUrl(), key, url.Values{})
 	if err != nil {
 		return nil, err
 	}
@@ -93,12 +93,12 @@ func (store S3Store) sendTo(method string, target *url.URL) (*http.Response, err
 	return store.client.Do(request)
 }
 
-func (store S3Store) objectUrl(key Key, query url.Values) (*url.URL, error) {
+func (store S3Store) objectUrl(base string, key Key, query url.Values) (*url.URL, error) {
 	err := KeyRules{}.Check(key)
 	if err != nil {
 		return nil, err
 	}
-	target, err := url.Parse(store.settings.BaseUrl())
+	target, err := url.Parse(base)
 	if err != nil {
 		return nil, err
 	}

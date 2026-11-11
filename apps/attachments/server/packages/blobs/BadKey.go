@@ -1,6 +1,9 @@
 package blobs
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type BadKey struct {
 	Part  string
@@ -9,4 +12,8 @@ type BadKey struct {
 
 func (bad BadKey) Error() string {
 	return fmt.Sprintf("the blob key %s %q is not allowed", bad.Part, bad.Value)
+}
+
+func (BadKey) HttpStatus() int {
+	return http.StatusNotFound
 }

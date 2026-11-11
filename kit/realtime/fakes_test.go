@@ -210,3 +210,13 @@ func (tokens fixedTokens) Grant(token string, now time.Time) (Grant, error) {
 func fixedClock(at time.Time) func() time.Time {
 	return func() time.Time { return at }
 }
+
+func (gateway *recordingGateway) eventsOfType(connectionId string, eventType string) []Event {
+	found := []Event{}
+	for _, event := range gateway.eventsOf(connectionId) {
+		if event.Type == eventType {
+			found = append(found, event)
+		}
+	}
+	return found
+}

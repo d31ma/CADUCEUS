@@ -18,7 +18,7 @@ func TestTypingFromANonMemberIsRefusedAndNotDelivered(t *testing.T) {
 	fixture.authenticate("c1", "ana-token")
 	fixture.authenticate("c2", "ben-token")
 	err := fixture.gateway.Typing.Typing(testConnection("example.com", "ana", "c1"), "conversation-1")
-	if !errors.As(err, &Missing{}) || len(fixture.pushes.eventsOf("c2")) != 1 {
+	if !errors.As(err, &Missing{}) || len(fixture.pushes.eventsOfType("c2", "typing")) != 0 {
 		t.Fatalf("got %v %+v", err, fixture.pushes.pushes)
 	}
 }

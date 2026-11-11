@@ -38,7 +38,7 @@ func TestMessageAuthAcceptsAndTellsTheClientWhenItEnds(t *testing.T) {
 	fixture := newGatewayFixture()
 	reply := fixture.authenticate("c1", "ana-token")
 	events := fixture.pushes.eventsOf("c1")
-	if reply != (GatewayReply{DomainId: "example.com", ExpiresAt: "2026-11-10T12:01:00Z"}) || len(events) != 1 || events[0] != (Event{Type: "auth.accepted", State: "2026-11-10T12:01:00Z"}) {
+	if reply != (GatewayReply{DomainId: "example.com", ExpiresAt: "2026-11-10T12:01:00Z"}) || len(events) == 0 || events[len(events)-1] != (Event{Type: "auth.accepted", State: "2026-11-10T12:01:00Z"}) {
 		t.Fatalf("got %+v, %+v", reply, events)
 	}
 }

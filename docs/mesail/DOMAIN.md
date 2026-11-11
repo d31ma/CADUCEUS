@@ -29,7 +29,7 @@ own TACHYON Go app in `apps/<service>/`, with the route prefix
 | `identity` | none (stateless; signs in through Keycloak and issues Mesail access tokens, ADR 0005) | users and credentials (Keycloak owns them), membership (directory owns it) |
 | `directory` | `domains`, `people` and `local-parts` (install-wide), `members` (with the admin flag), `addresses` (aliases are addresses) | DKIM private keys (secret store), passwords and 2-step codes (Keycloak owns them) |
 | `channels` | `channels`, `channel-members` | messages |
-| `messaging` | `conversations`, `participants` (with the read position), `messages` (with the deliveries), `reactions`, `mentions`, `attachment-uses` (one row per attachment of a message, for the attachment access check; at most 10 per message), `members` (a cache filled from `member.upserted`, for @mention lookup), `email-threads` | raw email bytes, attachments |
+| `messaging` | `conversations`, `participants` (with the read position), `messages` (with the deliveries), `changes` (the sync log, ADR 0006), `reactions`, `mentions`, `attachment-uses` (one row per attachment of a message, for the attachment access check; at most 10 per message), `members` (a cache filled from `member.upserted`, for @mention lookup), `email-threads` | raw email bytes, attachments |
 | `attachments` | `attachments` (metadata) and the blob bucket | message bodies |
 | `realtime` | `connections`, `presence` | messages |
 | `notify` | `notifications`, `push-subscriptions`, `notify-settings`, `notify-threads`, `notify-summaries`, `notify-fanout`, `events-seen` | messages |
@@ -142,6 +142,7 @@ One human with one login (ADR 0005). Keycloak holds the credentials.
 | `adminDomainIds` | string[] | The domains the person administers. Always a subset of `domainIds`. |
 | `defaultDomainId` | string | The domain opened after a sign-in with the prefix only. The first domain added, until the person chooses another; `""` when `domainIds` is empty. |
 | `state` | `active` \| `disabled` \| `deleted` | `disabled` mirrors the Keycloak user's `enabled: false`. `deleted` keeps the document (and the reserved prefix) after the Keycloak user is deleted. |
+| `sessionsEndedAt` | time | Every session that started before it is ended for good (`403 access_revoked`), and kept devices delete their copies (ADR 0006). Set by "Sign out on all devices", the person's own password change, and the admin account actions. `""` when never set. |
 
 ### LocalPart (`directory/local-parts`, install-wide)
 The install-wide reservation of local parts (SPEC AC-ID-10).
@@ -254,12 +255,30 @@ from `channels` through events, plus email senders into the channel.
 | `attachmentIds` | []string | |
 | `email` | `EmailMeta?` | set when the message was sent or received as email |
 | `editedAt`, `deletedAt` | time? | |
+| `version` | int | 1 at creation, plus one on each edit and on the deletion; an edit with another `ifVersion` is refused (`409 edit_conflict`, ADR 0006) |
+| `writtenAt` | time? | the device time of a message written offline; shown only, never used for order |
 | `replyCount`, `lastReplyAt` | int, time | on roots only |
 | `createdAt` | time | |
 
 `EmailMeta{messageIdHeader, inReplyTo, references[], subject, from, to[],
 cc[], authResults{spf, dkim, dmarc}, suspicious, rawId}`. Bcc is stored only
 on the outbound queue item, never on the message.
+
+### Change (`messaging/changes`, split by domain and month)
+The sync log of a domain (ADR 0006 section 3). Append-only.
+| Field | Type | Rule |
+| --- | --- | --- |
+| `id` | TTID | The change id and the sync cursor. Time-ordered; rows are appended by the one writer of the domain's root, in order. |
+| `domainId`, `conversationId` | string | `conversationId` is indexed. |
+| `messageId` | string | the message whose current state the sync answer carries |
+| `eventId` | string | indexed; the event that caused the row, so a repeated relay adds no second row |
+
+Written by `messaging`'s outbox relay for every `message.created`,
+`message.edited`, `message.deleted` and `reaction.changed` (and a thread
+root whose reply count changed), before the event is pushed. Kept at least
+30 days: the collections of the current and the two previous months; a
+scheduled job deletes older months. A cursor older than that answers
+`reset`.
 
 ### Delivery (stored on the message)
 One entry per recipient per message, kept on the Message document as one
@@ -364,6 +383,13 @@ at index time. A search reads only the caller's domain.
     while that domain is in the person's `people.domainIds`; removing it
     ends the person's access to that domain at the next refresh (60
     seconds at most).
+
+13. **The server wins.** A device copy (ADR 0006) is a cache of server
+    data, split by person and domain. The server never reads it, and every
+    sync answer replaces the device's message with the server's. Every
+    operation a device queues is safe to repeat (send by
+    `clientMessageId`, edit by `ifVersion`, delete, reactions as a set,
+    read positions forward only).
 
 ## 4. Events
 

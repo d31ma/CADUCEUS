@@ -32,6 +32,7 @@ documentation.
   names the active domain (ADR 0005). Mesail stores no credentials.
 - Follow `docs/adr/0004-mesail-go-serverless-keycloak.md`,
   `docs/adr/0005-one-login-per-person.md`,
+  `docs/adr/0006-offline-first-clients.md`,
   `docs/mesail/SPEC.md`, `docs/mesail/DOMAIN.md`,
   `docs/mesail/CONTRACTS.md` and `docs/mesail/SLICES.md`. ADRs 0002 and
   0003 are superseded.

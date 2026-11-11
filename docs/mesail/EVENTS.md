@@ -126,6 +126,13 @@ example `channels-a379a6f6eeafb9a5`). Keep them in a small install-wide collecti
 document is written into that collection. Collection names come only from
 the service's own code, never from a request.
 
+**The sync log (ADR 0006).** `messaging`'s relay also appends one row to
+its `changes-<domainKey>-<YYYYMM>` collection for every `message.created`,
+`message.edited`, `message.deleted` and `reaction.changed` it relays,
+before it pushes the event, keyed by `eventId` so a repeated relay adds no
+second row (DOMAIN.md "Change"). Devices sync from this log, not from the
+events; realtime events are only a sign to sync. No event type changes.
+
 The service token for pushes comes from `identity`'s service token route
 (ADR 0005; token role `mesail-service`) through `outbox.TokenSource`.
 

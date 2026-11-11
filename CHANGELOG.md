@@ -20,6 +20,19 @@
   kit/channels, kit/realtime (its own copy is gone), kit/search and the
   directory, messaging and notify apps; mail-in and mail-out follow in M1.
 
+### Architecture: offline-first clients (design)
+
+- ADR 0006: on a kept device the web app keeps a copy of the person's
+  recent conversations and mail per domain in TACHYON's IndexedDB `Store`
+  behind a `DeviceStore` port, works offline, queues every change and
+  syncs from a per-conversation change log in `messaging` (`POST
+  /messaging/sync`). Kept devices use Keycloak offline sessions; "Sign
+  out on all devices" and admin account actions end them for good
+  (`403 access_revoked`). SPEC (S15 to S17, AC-OF-1 to AC-OF-17, Q8 to
+  Q14), DOMAIN (`changes`, `sessionsEndedAt`, `version`), CONTRACTS,
+  EVENTS and SLICES (Wave 4: OU, O0 to O5) are updated, with the TACHYON,
+  FYLO and DuVay requests. No code changes yet.
+
 ### Architecture: one login per person (design)
 
 - ADR 0005 amends ADR 0004: one Keycloak realm `mesail` for every person,

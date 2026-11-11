@@ -35,6 +35,10 @@ and server. It replaces CADUCEUS.
   and to and from outside addresses. Chat never crosses a domain.
 - Email that arrives shows up as a conversation, next to chat conversations,
   with the same reading and reply experience.
+- **Offline first** (ADR 0006): on a device the person keeps signed in,
+  Mesail keeps a copy of their recent conversations and mail, works
+  offline (read, search, write), queues what they write and sends it when
+  the device is online again. The server stays the source of truth.
 - Sign-in and identity come from Keycloak (OpenID Connect), reached only by
   Mesail's backend. A person has **one login** for every domain: their
   username is their email prefix (the part before `@`), which is the same
@@ -63,6 +67,9 @@ These terms are used the same way in the spec, the code and the API.
 | Thread | The replies to one message (the thread root). Replies stay in the same conversation. |
 | Delivery | How one recipient receives one message: `chat` or `email`. Each delivery has its own status. |
 | Email conversation | A direct conversation that has at least one participant who takes part by email (an `otherDomain` or `external` address, or a member switched to email). It is still a conversation; email is how those participants take part. |
+| Device copy | The recent conversations, messages and lists of one person and one domain that a kept device stores, so Mesail works offline (ADR 0006). The server's data always wins over the copy. |
+| Kept device | A device where the person ticked "Keep me signed in on this device" at sign-in. Only a kept device has a device copy and a session that survives closing the app. |
+| Queue | The changes a person made on a device that are not yet accepted by the server: sends, edits, deletions, reactions, read positions. Each shows "Waiting to send" until accepted, or "Needs your attention" when refused. |
 | Domain switcher | The control at the top of the interface that lists the person's domains and changes the active domain of the current tab, without a password. |
 
 ## 3. Actors
@@ -206,6 +213,35 @@ everywhere. Bo removes Eve from `example.com`. Within a minute she no
 longer sees `example.com`, and mail to `eve@example.com` is refused. Her
 account and `eve@example.org` are unchanged.
 
+### S15. Reading and writing offline
+Ana signed in on her phone with "Keep me signed in on this device". On a
+train with no network she opens Mesail. She sees her conversations and
+mail of the last 14 days and the threads in them (and, once attachments
+are kept on devices, the pictures she opened before; ADR 0006 T2). The top of the screen says "Offline - updated 08:12". She searches
+for "budget" and gets the hits on this device, marked "On this device".
+She replies in #design, edits a message she sent yesterday, adds a
+reaction and writes a new email to `carol@partner.test`. Each shows
+"Waiting to send". She switches to `example.org` and reads it too. Back
+online, everything is sent in the order she wrote it, the new messages of
+the last hours appear, and her reply in #design shows the time it reached
+the server with "Written offline at 09:40".
+
+### S16. A queued item cannot be sent
+While Ana was offline, `bo@example.com` was removed from `example.com`.
+Her queued chat message to Bo comes back with "Bo is no longer in
+example.com". It stays on her phone under "Needs your attention", with
+Edit, Send by email and Discard. Nothing was sent. Her other queued items
+were sent. Later an admin removes Ana from `example.org`. The next time
+her phone is online it deletes the copy of `example.org` from the phone,
+and tells her once that 2 queued items for `example.org` were not sent.
+
+### S17. Signing out on a shared computer
+Bo signs in on a library computer without "Keep me signed in on this
+device". Mesail keeps nothing on that computer after the tab closes. At
+home he signs in with the box ticked; Mesail keeps a copy there. When he
+signs out at home with 1 message still queued, Mesail warns him, and
+after he confirms it deletes every Mesail copy of his on that computer.
+
 ## 5. Acceptance criteria
 
 Each criterion is testable from the outside (HTTP, SMTP, browser). IDs are
@@ -244,7 +280,9 @@ stable; tests name them.
   only, and keeps only an encrypted, opaque session key in per-tab session
   storage, which is gone when the tab closes. No token or key ever appears
   in a URL or a log. (When TACHYON can send same-origin cookies, the
-  session key moves to an HttpOnly cookie.)
+  session key moves to an HttpOnly cookie.) On a kept device (AC-OF-1)
+  the session key is kept in the device copy instead, so the app opens
+  offline after a restart.
 - **AC-ID-6** One sign-in gives a person every domain they are a member
   of. The domain switcher lists those domains; choosing one needs no
   password and changes only the current tab. Another tab keeps its own
@@ -478,6 +516,119 @@ stable; tests name them.
   appears as an email conversation on both sides. A reply comes back the
   same way and joins the sender's email conversation (AC-IN-3).
 
+### Offline first (AC-OF)
+The server stays the source of truth (ADR 0006). A device keeps a copy of
+recent data, works offline, and syncs when it is back online.
+
+- **AC-OF-1 Device copy only on a kept device.** At sign-in the person
+  chooses "Keep me signed in on this device" (on by default in the
+  installed apps, off by default in a browser, Q8). Only then does Mesail
+  keep a device copy and a long-lived session on that device. Without it,
+  nothing of the person stays on the device after the tab or app closes
+  (AC-ID-5 as before).
+- **AC-OF-2 Recent window.** For each domain of the person, the device copy
+  holds the conversations the person can read (channels, direct
+  conversations, email conversations), with every message of the last 30
+  days on a computer and 14 days on a phone (the person may choose 7, 14,
+  30 or 90), and at least the last 20 messages of each conversation; the
+  thread replies of those messages; the person's read positions and
+  reactions; the domain's member list (names and addresses) and channel
+  list. Older messages and attachments are fetched when the person opens
+  them, and are kept only while space allows (AC-OF-13). **First build**
+  (until TACHYON requests T1, T2 and T9 of ADR 0006 are delivered): 7 days,
+  at most 5,000 messages and 40 MiB per person, and no attachments in the
+  copy.
+- **AC-OF-3 Reading offline.** With no network, the person can open every
+  conversation, thread, message and attachment in the device copy, and
+  their drafts. The interface says "Offline" and when the copy was last
+  updated. Anything not in the copy says "Not on this device" instead of
+  failing silently.
+- **AC-OF-4 Writing offline.** With no network, the person can send a
+  message or an email (new or reply), edit and delete their own messages,
+  add and remove reactions, and move their read position. Each change is
+  queued on the device, shown at once with "Waiting to send", and sent
+  automatically when the device is online, in the order it was made for
+  each conversation. Retrying never sends anything twice (AC-MS-8).
+  Creating, joining or leaving a channel, admin actions and settings need
+  the network.
+- **AC-OF-5 Recipients offline.** The composer resolves names and
+  addresses from the device copy of the domain's member and channel
+  lists. Any other address shows the chip "Checked when online". When the
+  queued item is sent, the server checks every recipient again
+  (AC-CP-5); if a kind changed, the item is not sent and goes to "Needs
+  your attention" with the reason.
+- **AC-OF-6 Needs your attention.** A queued item that the server refuses
+  (recipients changed, chat not allowed, too large, the conversation is
+  gone or no longer readable, an attachment refused) is never dropped
+  silently and never sent with a changed choice. It stays on the device
+  with the reason and the actions Edit, Retry and Discard. Other items
+  continue. Edits and reactions that depend on a refused send are dropped
+  with it, and the person is told.
+- **AC-OF-7 Catch-up.** Within 15 seconds of being online again (for up
+  to 1,000 changes), the device shows every change made elsewhere while it
+  was offline: new messages and replies, edits, deletions, reactions, read
+  positions moved on the person's other devices, conversations and
+  channels added or removed. Messages are ordered by the time the server
+  received them; a message written offline also shows "Written offline at
+  <time>".
+- **AC-OF-8 Conflicts.**
+  - An offline edit of a message that was edited again elsewhere (by the
+    same author on another device) is refused (`409 edit_conflict`); the
+    device shows the newer text and keeps the offline edit as a draft the
+    person may apply again (Q12).
+  - A deletion wins over any edit or reaction; an offline edit or
+    reaction on a deleted message is dropped, and the person is told.
+  - Reactions are a set per person: adding twice or removing a missing
+    reaction changes nothing.
+  - A read position only moves forward: an older position from an
+    offline device never moves it back.
+- **AC-OF-9 Access lost.** When the device is next online and finds that
+  the person was removed from a domain, it deletes that domain's copy and
+  queued items. When the person is disabled or deleted, or an admin ended
+  their sessions with "Sign out on all devices", it deletes every copy of
+  the person. Before deleting queued items it tells the person once how
+  many were not sent, with the first words of each (Q13).
+- **AC-OF-10 Sign-out and another person.** Signing out deletes every
+  device copy of the person, queued items and drafts included; when
+  queued items exist the person is warned first. When another person
+  signs in on the device, every copy of the previous person is deleted
+  first. One person never sees another person's copy.
+- **AC-OF-11 Domains.** Each domain of the person has its own copy, sync
+  position and queue. Switching domains works offline between domains
+  that have a copy. A queued item is sent only with a token for its own
+  domain.
+- **AC-OF-12 Search offline.** Offline, search runs on the device copy
+  with the same query rules (AC-SR) and marks its results "On this
+  device". Online, search uses the server.
+- **AC-OF-13 Space.** The device copy stays within a budget (default 1 GiB
+  on a computer and 300 MiB on a phone, attachments included; Q9). When it
+  is full (first build: AC-OF-2's limits), Mesail removes, in this order: attachments and messages
+  fetched on demand, attachments in the window (least recently opened
+  first), messages older than the window. It never removes queued items
+  or drafts. Settings show the space used per domain and offer "Remove
+  the copy on this device".
+- **AC-OF-14 At rest.** The copy holds no password and no Keycloak token,
+  and the stored session key is sealed by the server. After 30 days
+  without a successful sync, the copy is locked until the person signs in
+  online again (Q10). When TACHYON offers a key store (requests T6 and T7
+  of ADR 0006), the copy is encrypted with a key that never leaves the
+  device and is held by the system's key store (Keychain, Android
+  Keystore, Windows DPAPI, the Linux secret service). Until then the copy
+  relies on the device's disk encryption, and the release notes say so.
+- **AC-OF-15 Long offline.** When a device was offline longer than the
+  server keeps changes (30 days), each conversation's copy is reloaded
+  from its recent window instead of synced; queued items are kept and sent
+  as usual.
+- **AC-OF-16 Several windows.** Windows and tabs of the same app on one
+  device share the copy and the queue. A queued item is accepted by the
+  server once, whichever tab sends it. (Until TACHYON request T11 of ADR
+  0006, another open tab shows changes of the copy only after its next
+  sync or reload.)
+- **AC-OF-17 Email offline.** Email conversations follow the same rules.
+  A queued email is checked on the device for what the device can check
+  (a subject for a new email conversation, attachment sizes); a later
+  bounce is a delivery status (AC-DM-3), not a queue failure.
+
 ### Interface quality (AC-UI)
 - **AC-UI-1** Layout: a domain switcher at the top, a sidebar (channels,
   DMs, email), a conversation pane, and an optional thread pane. Works from
@@ -543,6 +694,33 @@ Decided by the owner on 2026-11-11 (one login, ADR 0005):
 - **Q7 (decided: the default domain).** A sign-in with the prefix only
   opens the person's default domain: the first domain they were added to,
   until they choose another in their settings (AC-ID-9).
+
+Open questions of the offline-first design (ADR 0006; the spec uses the
+stated default until the owner decides):
+
+- **Q8** Should "Keep me signed in on this device" be on by default in a
+  browser? This spec says off in a browser (a shared computer keeps
+  nothing) and on in the installed apps.
+- **Q9** The default space budget and window: 1 GiB and 30 days on a
+  computer, 300 MiB and 14 days on a phone. Smaller saves space; larger
+  shows more offline.
+- **Q10** How long may a device read its copy without reaching the
+  server? This spec says 30 days, then the copy is locked until an online
+  sign-in. Shorter is safer for a lost device; longer is better for long
+  trips.
+- **Q11** Should attachments in the recent window be downloaded ahead of
+  time? This spec says: on a computer, images and files up to 2 MiB are
+  downloaded ahead; on a phone, only when opened (or on Wi-Fi when the
+  person allows it in settings).
+- **Q12** An offline edit that meets a newer edit: this spec refuses it
+  and keeps the offline text as a draft. The alternative is "last edit
+  wins", which can silently undo the newer edit.
+- **Q13** When access to a domain is lost, should the one-time notice show
+  the first words of the unsent items (this spec) or only how many there
+  were? Showing words keeps the person's own writing visible for one last
+  time after the access ended.
+- **Q14** Should drafts follow the person to their other devices (stored
+  on the server) or stay on the device (this spec, first release)?
 
 Q1 (one shared conversation or one per member) is closed: one email to two
 members of the same domain is one shared conversation (AC-IN-6).

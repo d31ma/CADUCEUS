@@ -710,6 +710,121 @@ an earlier slice text in this file says "realm of the domain",
 4. After L5: L6 and L7 finish their live checks; L0's tests pass against
    the stack.
 
+## Wave 4: offline first (ADR 0006)
+
+Starts after Wave 3 (one login) is merged; LU-style design work (OU) and
+the blackbox tests (O0) may start earlier. SPEC S15 to S17 and AC-OF-1 to
+AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
+`DELETE /sessions`, ended elsewhere), "directory" (`sessionsEndedAt`).
+
+### What changes where
+
+| Area | Change |
+| --- | --- |
+| `apps/messaging`, `kit/messaging` | The `changes` log (written by the relay, kept 30 days, a monthly cleanup job), `POST /sync`, `lastChangeId` and `readMessageId` in the conversation list, `Message.version` and `writtenAt`, `ifVersion` and `409 edit_conflict`, `409 message_deleted`, idempotent delete and reactions, forward-only read positions. |
+| `apps/identity` | `keepSignedIn` (Keycloak `offline_access`), `Session.kept`, `signedInAt` in the `sessionKey`, `403 access_revoked` for ended-elsewhere sessions, `DELETE /sessions`, `sessions-ended` call on the person's own password change. |
+| `apps/directory` | `people.sessionsEndedAt`, `POST /people/{personId}/sessions-ended`, set on the AC-ID-13 account actions; `PersonRecord.sessionsEndedAt`. |
+| `deploy/keycloak` | Client scope `offline_access` for `mesail-identity`; offline session idle 30 days and at most 90 days; revoking offline sessions through the admin API. |
+| `apps/web/client` | The `DeviceStore` port and its TACHYON `Store` adapter (partitions per person and domain, page rows, budget, wipe), the sync engine, the queue, "Needs your attention", offline recipient chips, offline search, the kept-device sign-in and storage of the `sessionKey`, the offline states of every screen. |
+| `realtime`, `channels`, `search`, `attachments`, `notify`, `web-admin` | No change. Realtime events become pokes on the client side. |
+| `docs/mesail/ux/**` | The offline states (OU). |
+| `tests/blackbox` | O0. |
+
+### OU. UX for offline (`mesail-ux`)
+- **Owns:** `docs/mesail/ux/**`.
+- **Builds:** "Keep me signed in on this device" at sign-in; the offline
+  status ("Offline, updated 08:12"); "Waiting to send" and "Written
+  offline at" on messages; the "Needs your attention" list with Edit,
+  Retry, Send by email and Discard; "Not on this device"; "On this
+  device" search results; the edit-conflict screen (newer text, the
+  offline text as a draft); the one-time "not sent" notice when access is
+  lost; the sign-out warning with queued items; the space settings (used
+  per domain, window, "Remove the copy on this device"); every width.
+- **Depends on:** nothing.
+
+### O0. Blackbox tests for sync (architecture, `mesail-arch`)
+- **Owns:** `tests/blackbox/**`.
+- **Builds:** contract tests for the sync route (`changed`, `unchanged`,
+  `reset`, `gone`, paging, the 5-second overlap), `lastChangeId`,
+  `ifVersion` and `edit_conflict`, `message_deleted`, idempotent delete and
+  reactions, forward-only read positions, `writtenAt`, `keepSignedIn`,
+  `DELETE /identity/sessions` and `403 access_revoked`.
+- **Depends on:** nothing; the tests fail until O1 and O2 land.
+
+### O1. Messaging: change log and sync (M3's successor)
+- **Owns:** `apps/messaging/**` (except kit copies of other slices),
+  `kit/messaging/**`.
+- **Builds:** CONTRACTS "messaging" sync rules and the changed routes;
+  DOMAIN.md "Change"; the relay step that appends change rows before
+  pushing, idempotent by `eventId` (rule 9: one write per row, at most 25
+  per call); the monthly cleanup as a scheduled job (rule 13).
+- **Depends on:** Wave 3 merged (Mesail tokens).
+- **Blackbox:** O0's sync and conflict tests.
+- **Done when:** the app bundles, starts and answers `GET /health` 200,
+  and a client that was offline for 1,000 changes catches up within 15
+  seconds on the dev stack.
+
+### O2. Kept devices and ended sessions (identity's and directory's successors, with `mesail-keycloak`)
+- **Owns:** `apps/identity/**`, the `sessionsEndedAt` part of
+  `apps/directory/**` (coordinate with the directory owner),
+  `deploy/keycloak/**` for the offline session settings (`mesail-keycloak`
+  does that part).
+- **Builds:** CONTRACTS "identity" `keepSignedIn`, `kept`, `signedInAt`,
+  `DELETE /sessions`, ended elsewhere; CONTRACTS "directory"
+  `sessionsEndedAt` and its route.
+- **Depends on:** Wave 3 merged.
+- **Blackbox:** O0's session tests.
+- **Done when:** a kept session refreshes after a restart of `identity`, and
+  "Sign out on all devices" makes the other kept session answer `403
+  access_revoked`.
+
+### O3. Web: the device store (F1's successor)
+- **Owns:** `apps/web/client/**` files named `DeviceStore*`,
+  `DevicePartition*`, `DeviceBudget*`, `DeviceWipe*` and the `Device*`
+  entities and models; the kept-device parts of `Session*`.
+- **Builds:** the `DeviceStore` port and its adapter on TACHYON's `Store`
+  with the IndexedDB adapter (ADR 0006 sections 1 and 6): partitions
+  `<personId>/<domainId>`, one row per conversation and day, the queue and
+  cursor tables, `@AllOrNothing` wipes, the first-build budget (7 days,
+  5,000 messages, 40 MiB, no attachments), the `keyId` field for later
+  encryption, the 30-day lock; storing the kept `sessionKey`; wiping on
+  sign-out, another person, `access_revoked` and a lost domain.
+- **Depends on:** OU; Wave 3's L6 merged.
+- **Done when:** gates pass, the copy survives a restart of the app in a
+  browser and in the macOS and Android shells, and every wipe case leaves
+  no row of the person.
+
+### O4. Web: sync engine and queue (F2's and F3's successors)
+- **Owns:** `apps/web/client/**` files named `Sync*`, `Queue*`,
+  `Attention*`, and the offline parts of `Conversation*` and `Composer*`.
+- **Builds:** catch-up and pokes (ADR 0006 section 3), the queue with
+  ordering per conversation, backoff and "Needs your attention" (section
+  4), conflict handling (AC-OF-8), offline recipient chips (AC-OF-5),
+  access-lost handling (AC-OF-9), the offline states from OU.
+- **Depends on:** O1, O2 and O3.
+- **Done when:** S15 and S16 work on the dev stack with the network turned
+  off and on, and two tabs never send an item twice.
+
+### O5. Web: offline search (F4's successor)
+- **Owns:** `apps/web/client/**` files named `OfflineSearch*`, and the
+  offline parts of `Search*`.
+- **Builds:** the in-memory word index of the device copy with AC-SR's
+  query rules, "On this device" results, the switch between device and
+  server search on `ConnectivityChanged`.
+- **Depends on:** O3.
+- **Done when:** a search offline finds every message of the copy that the
+  same query finds on the server.
+
+### Order
+
+1. At once, after the coordinator's go: **OU** and **O0** (they may run
+   during Wave 3).
+2. After Wave 3 is merged, in parallel: **O1**, **O2**, **O3**.
+3. After O3: **O5**. After O1, O2 and O3: **O4**.
+4. When TACHYON delivers T1, T2 and T9 (ADR 0006): a follow-up slice
+   raises the window to AC-OF-2's full size and keeps attachments; when it
+   delivers T6 and T7: a follow-up slice encrypts the copy.
+
 ## Later (after the first release)
 
 - **X1** SMTP submission for third-party mail clients (app passwords or
@@ -734,6 +849,7 @@ an earlier slice text in this file says "realm of the domain",
 | `edge/realtime/**` | R1 |
 | `Dockerfile` (non-Keycloak stages), `docker-compose.yml`, `.dockerignore`, `.env.example`, `deploy/lambda/**`, `deploy/floci/**`, `deploy/router/**`, `scripts/floci/**`, `scripts/native/**` | P1 |
 | `docs/mesail/ux/**` | `mesail-ux` |
+| Wave 4 files (`DeviceStore*`, `Sync*`, `Queue*`, `Attention*`, `OfflineSearch*` in `apps/web/client/**`; the `changes` log in `apps/messaging`) | the Wave 4 slice named in "Wave 4: offline first" |
 | `Dockerfile` Keycloak stages, `deploy/keycloak/**` (including the realm templates in `deploy/keycloak/realm/`) | `mesail-keycloak` |
 | `.github/workflows/**`, `scripts/gates.sh`, `scripts/ci/**` | C1 |
 | `scripts/vendor/**`, `tools/styles/**`, `tests/responsive/**` | F1 (C1 calls them from `scripts/gates.sh` for Tac apps) |

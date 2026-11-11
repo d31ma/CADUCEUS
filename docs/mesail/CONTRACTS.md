@@ -50,7 +50,8 @@ field may be empty or left out.
   lowercase snake case and stable. Status codes: `400 invalid_request`,
   `401 unauthenticated`, `403 forbidden`, `404 not_found` (also for data in
   another domain or a private channel the caller is not in),
-  `409 conflict` / `recipients_changed` / `duplicate`, `413 too_large`,
+  `409 conflict` / `recipients_changed` / `duplicate` / `edit_conflict` /
+  `message_deleted` / `last_admin`, `413 too_large`,
   `422 chat_not_allowed`, `429 rate_limited`, `503 unavailable`.
 - **One exception, from TACHYON 26.46.02:** a request with a missing or
   forged token is answered `401` by TACHYON itself, with the plain text
@@ -84,16 +85,22 @@ own access token, which names the active domain.
 
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
-| `POST /api/v1/identity/session` | Public | `SignInRequest{login, password, oneTimeCode?}` | `200 Session`; `401 unauthenticated` (one message for an unknown prefix, a wrong password and a wrong code); after a correct password only: `403 not_a_member` (the address names a domain the person is not in) or `403 no_domain` (the person is in no domain and is not an Operator); `429 rate_limited` |
+| `POST /api/v1/identity/session` | Public | `SignInRequest{login, password, oneTimeCode?, keepSignedIn?}` | `200 Session`; `401 unauthenticated` (one message for an unknown prefix, a wrong password and a wrong code); after a correct password only: `403 not_a_member` (the address names a domain the person is not in) or `403 no_domain` (the person is in no domain and is not an Operator); `429 rate_limited` |
 | `POST /api/v1/identity/session/refresh` | Public | `RefreshRequest{sessionKey}` | `200 Session` for the same active domain; `401 unauthenticated` when the Keycloak session has ended; `403 access_revoked` when the person is disabled or deleted; `403 not_a_member` when the session is alive but the active domain was removed from the person (the same `sessionKey` may still switch) |
 | `POST /api/v1/identity/session/domain` | Public | `DomainSwitch{sessionKey, domainId}` | `200 Session` for `domainId` (no password); `domainId` `""` means the person's default domain (or, when that one is gone too, the first of `domainIds`); `401` and `403 access_revoked` as for refresh; `403 no_domain` when the person has no domain left and is not an Operator; `404 not_found` when the person is not a member of `domainId` |
-| `DELETE /api/v1/identity/session` | Public | `RefreshRequest{sessionKey}` | `204`; ends the Keycloak session |
+| `DELETE /api/v1/identity/session` | Public | `RefreshRequest{sessionKey}` | `204`; ends the Keycloak session (also an offline session) |
+| `DELETE /api/v1/identity/sessions` | SignedIn | - | `204`: "Sign out on all devices". Ends every Keycloak session of the caller, offline sessions included, and records `sessionsEndedAt` in `directory`, so every kept device deletes its copy at its next refresh (SPEC AC-OF-9) |
 | `GET /api/v1/identity/me` | SignedIn | - | `Me{memberId, domainId, username, displayName, primaryAddress, roles[]}` from the token only (`domainId` `*` and `primaryAddress` `""` for an Operator session with no domain) |
 | `GET /api/v1/identity/jwks` | Public | - | `KeySet{keys[]: PublicKey}`: the JSON Web Key Set (RFC 7517) with the current signing key and, during a rotation, the previous one. `PublicKey{kty, crv, x, y, kid, alg, use}` uses the standard JWK names (`EC`, `P-256`, `ES256`, `sig`); add them to `names.words`. Cache header `max-age=300`. |
 | `POST /api/v1/identity/service-token` | Public | `ServiceTokenRequest{clientId, clientSecret, domainId}` | `200 ServiceToken{accessToken, expiresIn}`; `401` for a wrong client or secret; `400 invalid_request` (`domainId`) when it is neither a domain name nor `*` |
 
 `Session{me: Me, domains[]: DomainChoice{domainId, admin}, accessToken,
-expiresIn (seconds), sessionKey, mustChangePassword}`. `domains` lists every
+expiresIn (seconds), sessionKey, mustChangePassword, kept}`. `kept` is
+true when the sign-in asked `keepSignedIn` (ADR 0006 section 2): the
+`sessionKey` then seals a Keycloak offline session (scope
+`offline_access`, idle 30 days, at most 90 days), and the client stores it
+in its device copy instead of `@SessionState`. A refresh, a switch and
+`DELETE /session` keep `kept` as it was. `domains` lists every
 domain of the person, for the domain switcher, in `people.domainIds` order.
 
 How sign-in works (SPEC AC-ID-9):
@@ -145,10 +152,20 @@ The Mesail access token (ADR 0005 section 3):
   `domain` claim.
 
 Sessions:
-- The `sessionKey` is the Keycloak refresh token and the active domain
-  id, sealed with AES-GCM under `YON_IDENTITY_SESSION_KEY`. `identity`
-  keeps no state; a `sessionKey` stops working when Keycloak ends the
-  session (sign-out, person disabled, idle 30 minutes, at most 10 hours).
+- The `sessionKey` is the Keycloak refresh token, the active domain id,
+  the `kept` flag and the time of the sign-in (`signedInAt`), sealed with
+  AES-GCM under `YON_IDENTITY_SESSION_KEY`. `identity` keeps no state; a
+  `sessionKey` stops working when Keycloak ends the session (sign-out,
+  person disabled, idle 30 minutes and at most 10 hours; for a kept
+  device, idle 30 days and at most 90 days).
+- **Ended elsewhere** (ADR 0006 section 2): a refresh or switch whose
+  `signedInAt` is before the person's `sessionsEndedAt` answers `403
+  access_revoked`, like a disabled or deleted person. `sessionsEndedAt` is
+  set by `DELETE /identity/sessions`, by the person's own password change
+  (`POST /identity/password`; its own fresh session starts after it), and
+  by the admin actions of SPEC AC-ID-13 (password reset, 2-step code
+  removal, disable, delete). A client deletes every device copy of the
+  person on `403 access_revoked`, and keeps it (locked) on `401`.
 - **Refresh** refreshes the Keycloak session, reads the person again, and
   answers `403 not_a_member` when the active domain is no longer in
   `domainIds`. So removing a member cuts their access to that domain within
@@ -275,7 +292,8 @@ change the person's one account, so they apply to every domain:
 | `POST /api/v1/directory/members` | Allow(DomainAdmin) | `AddMemberRequest{username, displayName?, firstPassword?, admin}` | `201 AddedMember{member: MemberSummary, existingPerson}`; `400 invalid_request` (`username` breaks SPEC AC-ID-11 or is a role name; `displayName` or `firstPassword` missing for a new person); `400 password_policy`; `409 duplicate` (already a member of this domain, or the prefix is an alias or channel address in any domain) |
 | `PATCH /api/v1/directory/members/{memberId}` | Allow(DomainAdmin) | `MemberChange{admin}` | `200 MemberSummary`; `409 last_admin`; `404 not_found` |
 | `DELETE /api/v1/directory/members/{memberId}` | Allow(DomainAdmin) | - | `204`; `409 last_admin`; `404 not_found` |
-| `GET /api/v1/directory/people/{personId}` | Allow(Service), install-wide | - | `PersonRecord{personId, username, displayName, domainIds[], adminDomainIds[], defaultDomainId, state}`; `404 not_found` (used by `identity` on every sign-in, refresh and switch) |
+| `GET /api/v1/directory/people/{personId}` | Allow(Service), install-wide | - | `PersonRecord{personId, username, displayName, domainIds[], adminDomainIds[], defaultDomainId, state, sessionsEndedAt}`; `404 not_found` (used by `identity` on every sign-in, refresh and switch) |
+| `POST /api/v1/directory/people/{personId}/sessions-ended` | Allow(Service), install-wide | - | `204`: sets `sessionsEndedAt` to now (called by `identity` for "Sign out on all devices" and the person's own password change; ADR 0006) |
 | `GET /api/v1/directory/people?query=` | Allow(Operator) | - | `PersonPage` of `PersonSummary{personId, username, displayName, domainIds[], state}` |
 | `PATCH /api/v1/directory/people/{personId}` | Allow(DomainAdmin, Operator) | `PersonChange{displayName?, state?}` (`state`: `active` or `disabled`) | `200 PersonSummary`; `403 forbidden` (SPEC AC-ID-13) |
 | `POST /api/v1/directory/people/{personId}/password` | Allow(DomainAdmin, Operator) | `PasswordReset{newPassword}` | `204`: sets the password, sets `mesail.mustChangePassword`, ends the person's sessions; `400 password_policy`; `403 forbidden` (AC-ID-13) |
@@ -318,6 +336,9 @@ Members and people (ADR 0005, SPEC AC-ID-10 to AC-ID-13):
 - The person routes check SPEC AC-ID-13 on `directory`'s data: an Operator
   always passes; a DomainAdmin passes only when every domain in the
   person's `domainIds` is also in the caller's own `adminDomainIds`.
+- A password reset, a 2-step code removal, `state: disabled` and a
+  deletion also set the person's `sessionsEndedAt`, so the person's kept
+  devices delete their copies (ADR 0006).
 - Every change of a person or membership publishes `member.upserted` into
   each affected domain (`state: removed` for a removed member).
 
@@ -407,20 +428,21 @@ receives `channel.created`.
 
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
-| `GET /api/v1/messaging/conversations` | SignedIn | - | `ConversationPage` of `ConversationSummary{conversationId, kind, title, hasExternal, unreadCount, mentionCount, lastMessageAt}` |
+| `GET /api/v1/messaging/conversations` | SignedIn | - | `ConversationPage` of `ConversationSummary{conversationId, kind, title, hasExternal, unreadCount, mentionCount, lastMessageAt, lastChangeId, readMessageId}` (`lastChangeId`: the newest change row of the conversation, `""` when none; `readMessageId`: the caller's read position) |
+| `POST /api/v1/messaging/sync` | SignedIn | `SyncRequest{cursors[]: SyncCursor{conversationId, after}}` (1 to 50) | `200 SyncResponse{conversations[]: ConversationSync}`; see "Sync" below (ADR 0006) |
 | `GET /api/v1/messaging/conversations/{conversationId}/messages` | SignedIn | `?threadRootId=` | `MessagePage` of `Message`, newest first. Without `threadRootId`: the roots of the conversation plus replies sent with `alsoToConversation`. With `threadRootId`: only the replies of that thread, never the root itself |
 | `GET /api/v1/messaging/messages/{messageId}` | SignedIn (a participant) | - | `Message`; used for a thread's root and for links to one message |
 | `POST /api/v1/messaging/messages` | SignedIn | `SendRequest` | `201 SendResult{message, deliveries[]}` |
-| `PATCH /api/v1/messaging/messages/{messageId}` | SignedIn | `EditRequest{body}` | `Message` |
-| `DELETE /api/v1/messaging/messages/{messageId}` | SignedIn | - | `204` |
+| `PATCH /api/v1/messaging/messages/{messageId}` | SignedIn | `EditRequest{body, ifVersion?}` | `Message`; `409 edit_conflict` with `EditConflict{code, message, current: Message}` when `ifVersion` is not the message's `version`; `409 message_deleted` |
+| `DELETE /api/v1/messaging/messages/{messageId}` | SignedIn | - | `204`, also when it is already deleted |
 | `GET /api/v1/messaging/messages/{messageId}/original` | SignedIn (a participant) | - | `Download{url, expiresAt}` for the raw email as a `.eml` file; `404` for a chat message. messaging asks `GET /api/v1/mail-in/messages/{inboundId}/original` (`Allow(Service)`) for it. The client opens it as a download link and never renders it. |
-| `PUT /api/v1/messaging/messages/{messageId}/reactions/{reaction}` | SignedIn | - | `204` |
-| `DELETE /api/v1/messaging/messages/{messageId}/reactions/{reaction}` | SignedIn | - | `204` |
-| `PUT /api/v1/messaging/conversations/{conversationId}/read` | SignedIn | `ReadRequest{messageId}` | `204` |
+| `PUT /api/v1/messaging/messages/{messageId}/reactions/{reaction}` | SignedIn | - | `204` (also when the caller already has it); `409 message_deleted` |
+| `DELETE /api/v1/messaging/messages/{messageId}/reactions/{reaction}` | SignedIn | - | `204` (also when the caller does not have it); `409 message_deleted` |
+| `PUT /api/v1/messaging/conversations/{conversationId}/read` | SignedIn | `ReadRequest{messageId}` | `204`; a position older than the stored one changes nothing (read positions only move forward) |
 | `GET /api/v1/messaging/attachments/{attachmentId}/access` | SignedIn | - | `204` when the caller can read a message of its domain that carries the attachment, else `404` (called by `attachments` with the caller's own token). messaging answers it from one `attachment-uses` row per attachment of a message, so a message carries at most 10 attachments; more answers `400 invalid_request` with `field: attachmentIds` |
 
 `SendRequest{clientMessageId, conversationId?, threadRootId?,
-alsoToConversation, body,
+alsoToConversation, writtenAt?, body,
 attachmentIds[], recipients[]: RecipientChoice, email?: EmailOptions}`.
 `RecipientChoice{address, role: to|cc|bcc, delivery: chat|email|both,
 expectedKind: member|channel|otherDomain|external}`.
@@ -472,12 +494,43 @@ invalid_request` with `field: reaction`. `Message.reactions` and
 accessible labels.
 
 `Message{messageId, conversationId, threadRootId?, alsoToConversation,
-author: Author, body, bodyFormat: markdown|text|email, blocks[]: Block,
+version, writtenAt?, author: Author, body, bodyFormat: markdown|text|email, blocks[]: Block,
 truncated, attachments[]: AttachmentRef, email?: EmailSummary, reactions:
 map[string]int, myReactions[], replyCount, lastReplyAt?, editedAt?,
 deletedAt?, createdAt, deliveries[]: DeliveryStatus}`.
 `Author{kind: member|otherDomain|external, memberId?, address,
-displayName}`. `AttachmentRef{attachmentId, fileName, mediaType, size}`.
+displayName}`. `version` starts at 1 and goes up by one on each edit and on
+the deletion. `writtenAt` is the device time a queued message was written
+(ADR 0006), stored only when it is before the server's `createdAt` and at
+most 30 days before it; it is shown ("Written offline at ..."), never used
+for order.
+
+**Sync** (ADR 0006 section 3, SPEC AC-OF-7):
+- `messaging` appends one change row to `changes-<domainKey>-<YYYYMM>`
+  for every `message.created`, `message.edited`, `message.deleted` and
+  `reaction.changed` it relays, and for a thread root whose `replyCount`
+  changed. Rows are kept at least 30 days.
+- `ConversationSync{conversationId, state: changed|unchanged|reset|gone,
+  messages[]: Message, next, more}`. For `changed`: the current full
+  `Message` of every message with a change row after `after` (a message
+  appears once, in its current state; deleted messages with `deletedAt`
+  and no body), oldest change first, at most 200; `next` is the cursor to
+  send next time; `more` is true when another call is needed. `unchanged`:
+  no rows after `after`. `reset`: `after` is empty or older than the log
+  keeps; the client reloads the conversation's window with `GET
+  .../messages` and then uses `next` (the newest change id). `gone`: the
+  caller can no longer read the conversation, or it is in another domain;
+  the client deletes its copy. A conversation that does not exist answers
+  `gone` too, so a batch never fails for one id.
+- The server reads from 5 seconds before `after`, and the client applies
+  each `Message` by `messageId` (the server's state replaces the copy), so
+  a change row committed late is never missed and a repeated one changes
+  nothing.
+- Cursors are opaque strings. A client compares `lastChangeId` with its
+  cursor only for equality.
+- The realtime events `message.*` and `reaction.changed` are only a sign
+  that a conversation changed: the client calls `POST /sync` for it
+  rather than trusting the event (see "realtime"). `AttachmentRef{attachmentId, fileName, mediaType, size}`.
 `EmailSummary{subject, from, to[], cc[], suspicious, authResults:
 AuthResults{spf, dkim, dmarc, handoff}}`. `handoff` is true when another
 domain of this install handed the email over (AC-DM-6); then `spf`, `dkim`
@@ -590,7 +643,11 @@ of another domain gets `404` (SPEC AC-PN-1). The socket sends only events
 of the caller's domain. Typing goes only to the conversation's members.
 
 `RealtimeEvent{type, conversationId, messageId, memberId?, state}` carries
-ids only, never message bodies; the client fetches what it needs.
+ids only, never message bodies; the client fetches what it needs. A client
+with a device copy (ADR 0006) treats `message.*` and `reaction.changed`
+as a sign to call `POST /api/v1/messaging/sync` for that conversation (at
+most once per second per conversation), and starts a full catch-up after
+every reconnect, because events sent while it was away are not replayed.
 `RealtimeEvent.type` is one of `message.created`, `message.edited`,
 `message.deleted`, `reaction.changed` (`state` = the emoji),
 `read.moved` (only to the reader's own connections), `presence.changed`,

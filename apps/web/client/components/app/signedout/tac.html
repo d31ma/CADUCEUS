@@ -2,16 +2,16 @@
   <header class="flex justify-center">
     <p class="inline-flex items-center gap-2"><span class="auth-wordmark-mark relative size-8 flex-none" aria-hidden="true"></span><span class="auth-wordmark-text">Mesail</span></p>
   </header>
-  <main class="grid w-full max-w-[26rem] self-center">
+  <main class="grid w-full max-w-[var(--ms-auth-card-max)] self-center">
     <div class="auth-card grid justify-items-center gap-5 px-6 py-8 text-center max-[480px]:px-0 max-[480px]:py-2">
-      <span class="auth-art grid size-14 place-items-center"><w-icon name="logout"></w-icon></span>
+      <span class="auth-art grid size-16 place-items-center"><w-icon name="logout"></w-icon></span>
       <div class="grid gap-2" role="status" aria-live="polite">
         <h1 class="auth-title">You signed out</h1>
         <p class="auth-lead">Your session ended in every domain.</p>
       </div>
       <w-btn class="w-full" variant="flat" size="large" block on:click="session.signInAgain()">Sign in again</w-btn>
-      <div class="auth-notice flex w-full items-start gap-2 p-3 text-start">
-        <w-icon name="shield" class="auth-notice-icon mt-0.5"></w-icon>
+      <div class="auth-notice flex w-full items-center gap-2 p-3 text-start">
+        <w-icon name="shield" class="auth-notice-icon"></w-icon>
         <p class="m-0">On a shared computer, also close this browser window.</p>
       </div>
       <logic :if="session.rememberedUsername != ''">

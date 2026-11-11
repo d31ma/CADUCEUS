@@ -41,7 +41,12 @@
 .pane-title {
   font-size: var(--ms-text-title);
   font-weight: var(--w-font-weight-bold);
-  line-height: 1.25;
+  line-height: var(--ms-line-tight);
+}
+
+.pane-header w-icon-btn .w-btn {
+  --w-icon-btn-size: var(--ms-control-md);
+  --w-icon-btn-icon: var(--ms-icon-md);
 }
 
 .thread-title {
@@ -65,7 +70,7 @@
     border: 0;
   }
 
-  .pane-header w-icon-btn {
+  .pane-header w-icon-btn .w-btn {
     --w-icon-btn-size: var(--ms-touch-min);
   }
 }

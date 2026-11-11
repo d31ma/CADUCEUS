@@ -7,7 +7,7 @@
 .expired .w-dialog-title {
   font-size: var(--ms-text-heading);
   font-weight: var(--w-font-weight-semibold);
-  line-height: 1.25;
+  line-height: var(--ms-line-tight);
 }
 
 .expired-art {
@@ -16,9 +16,13 @@
   color: var(--w-on-warning-container);
 }
 
+.expired-art {
+  font-size: var(--ms-icon-lg);
+}
+
 .expired-art w-icon {
-  width: 1.375rem;
-  height: 1.375rem;
+  width: var(--ms-icon-lg);
+  height: var(--ms-icon-lg);
 }
 
 .expired-text {
@@ -27,6 +31,7 @@
 
 .expired-meta {
   font-size: var(--ms-text-meta);
+  line-height: var(--ms-line-body);
   color: var(--w-text-subtle);
 }
 

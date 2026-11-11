@@ -1,5 +1,5 @@
 <logic :if="sidebar.state == 'empty'">
-  <w-empty-state class="empty m-auto block max-w-[26rem] px-4 py-8">
+  <w-empty-state class="empty m-auto block max-w-[var(--ms-auth-card-max)] px-4 py-8">
     <span slot="media" class="empty-art grid size-16 place-items-center"><w-icon name="chat"></w-icon></span>
     <h2 slot="title" class="empty-heading">Start a conversation</h2>
     <span slot="text" class="empty-message">Nobody has written to you yet. Write to a person, a channel or any email address.</span>
@@ -9,7 +9,7 @@
   </w-empty-state>
 </logic>
 <logic else>
-  <w-empty-state class="empty m-auto block max-w-[26rem] px-4 py-8">
+  <w-empty-state class="empty m-auto block max-w-[var(--ms-auth-card-max)] px-4 py-8">
     <span slot="media" class="empty-art grid size-16 place-items-center"><w-icon name="chat"></w-icon></span>
     <h2 slot="title" class="empty-heading">Pick a conversation</h2>
     <span slot="text" class="empty-message">Choose a channel, a person or an email on the left. Or start something new.</span>

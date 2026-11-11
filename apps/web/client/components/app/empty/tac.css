@@ -81,8 +81,8 @@
     width: calc(var(--spacing, 0.25rem) * 16);
     height: calc(var(--spacing, 0.25rem) * 16);
   }
-  .max-w-\[26rem\] {
-    max-width: 26rem;
+  .max-w-\[var\(--ms-auth-card-max\)\] {
+    max-width: var(--ms-auth-card-max);
   }
   .place-items-center {
     place-items: center;

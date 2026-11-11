@@ -71,7 +71,13 @@ wave run at the same time.
     Only the integration run in Lambda form (Floci, AWS later) puts a
     service's root on its
     EFS mount: `/mnt/data/<service>/`.
-12. **UX.** The screens, states and copy come from `docs/mesail/ux/**`
+12. **Scheduled work.** A `@Schedule` worker gets no injected providers in
+    TACHYON 26.46.02, so it only triggers: it fetches a service token
+    (`kit/oidc`, slice I1) and POSTs to its own `@Allow(Service)` route
+    (`/outbox/relay` or `/jobs/<job>`), where the work runs with injected
+    services. In Lambda form an EventBridge schedule calls the same route
+    (P1). Details: `docs/mesail/EVENTS.md` section 4.
+13. **UX.** The screens, states and copy come from `docs/mesail/ux/**`
     (owned by the `mesail-ux` session). Frontend slices follow it and do not
     edit it.
 

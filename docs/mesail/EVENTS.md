@@ -134,20 +134,46 @@ Answers the relay understands:
 So the error handler maps `InvalidEnvelope` and `NotSubscribed` to `400`,
 `NotService` to `403`, and storage errors to `503`.
 
-## 4. Running the relay
+## 4. Running the relay (and any other scheduled work)
 
-- **Lambda (Floci locally, AWS later).** An EventBridge schedule (every
-  minute) calls `POST /api/v1/<service>/outbox/relay` with a service token.
-  With reserved concurrency 1 the sweep never runs beside a route
-  invocation. P1 owns the schedule.
-- **Long-running `ty start`.** The `@Schedule` worker runs the sweep.
-  Open point: TACHYON 26.46.02's docs do not say whether a worker gets
-  `@Needs` providers (`ty migrate check` accepts the worker file but does
-  not check that). The first producing slice checks this under `ty start`.
-  If workers get no providers, the worker instead calls
-  `POST /api/v1/<service>/outbox/relay` on its own service.
-- **Drain on write.** In both forms the service calls `RelayDocument` right
-  after its own write, so most events leave within the same request.
+Decided by architecture on 2026-11-10, after slice M2 measured that in
+TACHYON 26.46.02 a `// @Schedule` worker is compiled alone and gets no
+injected providers.
+
+**The standard pattern for all scheduled work** (the outbox relay, the
+outbound delivery queue, retries, email summaries, cleanup):
+
+1. The work lives in an ordinary controller route of the service, so it has
+   its injected services and stores:
+   - the outbox relay: `POST /api/v1/<service>/outbox/relay`;
+   - any other job: `POST /api/v1/<service>/jobs/<job>` (for example
+     `/api/v1/mail-out/jobs/deliver`).
+   The route is `@Allow(Service)`, takes no body (or a small typed one),
+   does a bounded amount of work per call, is safe to call twice at the same
+   time, and answers a typed `Report` of what it did.
+2. Something only triggers that route:
+   - **Long-running `ty start`** (native development and tests): a
+     `@Schedule` worker in `server/workers/` gets a service token from
+     `kit/oidc` (below) and POSTs to its own service's route on the local
+     origin. The worker holds no logic beyond that call.
+   - **Lambda (Floci, AWS later):** an EventBridge schedule calls the same
+     route through the gateway with a service token (slice P1 owns the
+     schedules and the small trigger that fetches the token).
+3. **Drain on write** stays: a producing route calls `RelayDocument` right
+   after its own write, so most events leave within the same request; the
+   schedule only sweeps what is left.
+
+**Service tokens** (slice I1 builds this in `kit/oidc`): services sign in
+to the realm `mesail-operators` with the confidential client
+`mesail-service` (client credentials grant; secret
+`YON_SERVICE_CLIENT_SECRET` in the app's `.env`; the Keycloak host in
+`outgoing.hosts`). The token carries the realm role `mesail-service`, which
+`RoleMap` maps to `Service`. A warm handler process caches the token until
+30 seconds before it expires. `kit/outbox`'s `TokenSource` is the port; I1's
+client-credentials source is the real one, `StaticToken` stays for tests.
+A `Service` caller's `Caller.DomainId` is `mesail-operators`, never a mail
+domain: a route called by a service takes the target domain from the
+envelope or the request body, and only `Service` callers may do that.
 
 ## 5. Tests other slices use
 

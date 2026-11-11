@@ -364,11 +364,12 @@ C1, not before each slice merge.
 - **Owns:** `apps/web/client/components/{sidebar,conversation}/**`,
   `apps/web/client/services/{Sidebar,Conversation,Realtime}*.go`,
   `apps/web/client/remotes/{Messaging,Realtime,Channels}*.go`,
-  `apps/web/client/models/{Conversation,Message,Channel,Realtime,Delivery,Author,Attachment}*.go`,
+  `apps/web/client/models/{Conversation,Message,Channel,Realtime,Delivery,Author,Attachment,Block,Span,ImageRef}*.go`,
   `apps/web/client/tests/{Sidebar,Conversation,Realtime}*.go`.
 - **Builds:** the sidebar (the domain switcher for people with accounts in
   several domains, channels, DMs, email conversations,
-  unread and mention counts), the message list with live updates, reactions,
+  unread and mention counts), the message list with live updates (bodies
+  rendered only from the server's typed blocks, CONTRACTS "Rich text"), reactions,
   edit and delete, delivery status badges, sanitized email display
   (AC-IN-5).
 - **Depends on:** F1, M3, R1, C2.

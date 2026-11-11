@@ -140,3 +140,29 @@ func TestAcId11AliasWithAPlusIsRefused(t *testing.T) {
 	ana := fixture(t, stack, "ANA")
 	createAliasReply(t, stack, ana.AccessToken, freshPrefix()+"+news@example.com", ana.Me.MemberId).Expect(t, http.StatusBadRequest)
 }
+
+func memberListed(t *testing.T, stack Stack, adminToken string, username string) memberSummary {
+	t.Helper()
+	var page struct {
+		Items []memberSummary `json:"items"`
+	}
+	stack.Call(t, http.MethodGet, "/api/v1/directory/members?query="+username, adminToken, nil).Expect(t, http.StatusOK).Decode(t, &page)
+	if len(page.Items) != 1 {
+		t.Fatalf("want one member %s, got %+v", username, page.Items)
+	}
+	return page.Items[0]
+}
+
+func TestAcId13MemberListSaysWhetherTheAdminManagesTheAccount(t *testing.T) {
+	stack := NewStack(t)
+	ana := fixture(t, stack, "ANA")
+	dan := createPerson(t, stack, ana.AccessToken)
+	if !memberListed(t, stack, ana.AccessToken, dan.Username).AccountManaged {
+		t.Fatal("want accountManaged for a person only in ana's domain")
+	}
+	operator := operatorToken(t, stack)
+	added(t, operatorAddReply(t, stack, operator, createDomain(t, stack, operator), dan.Username, false))
+	if memberListed(t, stack, ana.AccessToken, dan.Username).AccountManaged {
+		t.Fatal("want no accountManaged once the person is also in a domain ana does not administer")
+	}
+}

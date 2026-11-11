@@ -662,6 +662,12 @@ an earlier slice text in this file says "realm of the domain",
   `oidc.InstallWide`, the old mode removed from `kit/oidc` (`Realm`,
   `IssuerPattern`, the `{realm}` settings), the P1 changes in the "What
   changes where" table.
+- **Keycloak transition (from L2, develop 345a816):** while
+  `MESAIL_KEYCLOAK_DOMAINS` is set, the Keycloak image still imports the
+  old realms beside `mesail`. L5 stops setting it (`docker-compose.yml`,
+  `scripts/floci/up.sh`, the native scripts); then `mesail-keycloak`
+  deletes the transition files (see
+  `~/Library/Logs/local/CADUCEUS/mesail/keycloak-l2-note.md`).
 - **Depends on:** L1, L2, L3, L4 on `develop`. The coordinator asks the
   owners of the apps listed above to merge nothing during the switch
   (about one working session).

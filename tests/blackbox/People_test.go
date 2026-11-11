@@ -58,7 +58,7 @@ func TestAcId4DisabledPersonLosesEveryDomain(t *testing.T) {
 	danSession := signIn(t, stack, dan.Username, dan.Password)
 	change := map[string]string{"state": "disabled"}
 	stack.Call(t, http.MethodPatch, "/api/v1/directory/people/"+dan.Id, operatorToken(t, stack), change).Expect(t, http.StatusOK)
-	refreshReply(t, stack, danSession.SessionKey).Expect(t, http.StatusUnauthorized)
+	refreshReply(t, stack, danSession.SessionKey).ExpectError(t, http.StatusForbidden, "access_revoked")
 	signInReply(t, stack, dan.Username, dan.Password).Expect(t, http.StatusUnauthorized)
 }
 

@@ -71,9 +71,15 @@ func TestAcId4And12RemovedMemberLosesOnlyThatDomain(t *testing.T) {
 	inCom := signIn(t, stack, dan.Username+"@example.com", dan.Password)
 	inOrg := signIn(t, stack, dan.Username+"@example.org", dan.Password)
 	removeMemberReply(t, stack, ana.AccessToken, dan.Id).Expect(t, http.StatusNoContent)
-	stack.Eventually(t, 70*time.Second, "the example.com session to end", func() bool {
-		return refreshReply(t, stack, inCom.SessionKey).Status == http.StatusUnauthorized
+	stack.Eventually(t, 70*time.Second, "the example.com session to lose its domain", func() bool {
+		return refreshReply(t, stack, inCom.SessionKey).Status == http.StatusForbidden
 	})
+	refreshReply(t, stack, inCom.SessionKey).ExpectError(t, http.StatusForbidden, "not_a_member")
+	var moved session
+	switchReply(t, stack, inCom.SessionKey, "").Expect(t, http.StatusOK).Decode(t, &moved)
+	if moved.Me.DomainId != "example.org" {
+		t.Fatalf("want the same session to open example.org, got %+v", moved.Me)
+	}
 	refreshReply(t, stack, inOrg.SessionKey).Expect(t, http.StatusOK)
 	switchReply(t, stack, inOrg.SessionKey, "example.com").Expect(t, http.StatusNotFound)
 }

@@ -234,8 +234,10 @@ stable; tests name them.
   routes. The check is on the server; the client only hides buttons.
 - **AC-ID-4** A person disabled or signed out in Keycloak loses access to
   every domain within 60 seconds. A person removed from a domain loses
-  access to that domain within 60 seconds and keeps their other domains.
-  In both cases API calls get `401` and open realtime connections close.
+  access to that domain within 60 seconds and keeps their other domains:
+  the tab that showed it opens the person's default domain without a
+  password. In both cases API calls with the old token get `401` and open
+  realtime connections close.
 - **AC-ID-5** Mesail stores no password, passkey, TOTP secret or recovery
   code. The browser never talks to Keycloak and never receives a Keycloak
   token. The browser keeps the Mesail access token (60 seconds) in memory

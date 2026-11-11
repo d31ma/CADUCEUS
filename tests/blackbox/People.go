@@ -13,6 +13,7 @@ type memberSummary struct {
 	DisplayName    string `json:"displayName"`
 	PrimaryAddress string `json:"primaryAddress"`
 	Admin          bool   `json:"admin"`
+	AccountManaged bool   `json:"accountManaged"`
 }
 
 type addedMember struct {

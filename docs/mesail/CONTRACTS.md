@@ -85,8 +85,8 @@ own access token, which names the active domain.
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
 | `POST /api/v1/identity/session` | Public | `SignInRequest{login, password, oneTimeCode?}` | `200 Session`; `401 unauthenticated` (one message for an unknown prefix, a wrong password and a wrong code); after a correct password only: `403 not_a_member` (the address names a domain the person is not in) or `403 no_domain` (the person is in no domain and is not an Operator); `429 rate_limited` |
-| `POST /api/v1/identity/session/refresh` | Public | `RefreshRequest{sessionKey}` | `200 Session` for the same active domain; `401` when the Keycloak session has ended, the person is disabled, or the person is no longer a member of the active domain |
-| `POST /api/v1/identity/session/domain` | Public | `DomainSwitch{sessionKey, domainId}` | `200 Session` for `domainId` (no password); `401` as for refresh; `404 not_found` when the person is not a member of `domainId` |
+| `POST /api/v1/identity/session/refresh` | Public | `RefreshRequest{sessionKey}` | `200 Session` for the same active domain; `401 unauthenticated` when the Keycloak session has ended; `403 access_revoked` when the person is disabled or deleted; `403 not_a_member` when the session is alive but the active domain was removed from the person (the same `sessionKey` may still switch) |
+| `POST /api/v1/identity/session/domain` | Public | `DomainSwitch{sessionKey, domainId}` | `200 Session` for `domainId` (no password); `domainId` `""` means the person's default domain (or, when that one is gone too, the first of `domainIds`); `401` and `403 access_revoked` as for refresh; `403 no_domain` when the person has no domain left and is not an Operator; `404 not_found` when the person is not a member of `domainId` |
 | `DELETE /api/v1/identity/session` | Public | `RefreshRequest{sessionKey}` | `204`; ends the Keycloak session |
 | `GET /api/v1/identity/me` | SignedIn | - | `Me{memberId, domainId, username, displayName, primaryAddress, roles[]}` from the token only (`domainId` `*` and `primaryAddress` `""` for an Operator session with no domain) |
 | `GET /api/v1/identity/jwks` | Public | - | `KeySet{keys[]: PublicKey}`: the JSON Web Key Set (RFC 7517) with the current signing key and, during a rotation, the previous one. `PublicKey{kty, crv, x, y, kid, alg, use}` uses the standard JWK names (`EC`, `P-256`, `ES256`, `sig`); add them to `names.words`. Cache header `max-age=300`. |
@@ -144,8 +144,15 @@ Sessions:
   keeps no state; a `sessionKey` stops working when Keycloak ends the
   session (sign-out, person disabled, idle 30 minutes, at most 10 hours).
 - **Refresh** refreshes the Keycloak session, reads the person again, and
-  answers `401` when the active domain is no longer in `domainIds`. So
-  removing a member cuts their access to that domain within 60 seconds.
+  answers `403 not_a_member` when the active domain is no longer in
+  `domainIds`. So removing a member cuts their access to that domain within
+  60 seconds. The Keycloak session is still alive, so the client then calls
+  `POST /session/domain` with the same `sessionKey` and `domainId` `""`,
+  which opens the person's default domain without a password; only
+  `401`, `403 access_revoked` or `403 no_domain` sends the person to the
+  sign-in form. (Decided 2026-11-11 for the LU question.) These are the
+  only `401` and `403` bodies a client reads: the public session routes
+  are answered by `identity`, never by TACHYON's own plain-text `401`.
 - **Domain switch** does the same refresh and then issues the token and a
   new `sessionKey` for the wanted domain. No password, no second Keycloak
   session.
@@ -232,8 +239,13 @@ change the person's one account, so they apply to every domain:
   checking password and code.
 - Keycloak's stock admin API cannot always create an OTP credential with a
   given secret. If it cannot, `mesail-keycloak` adds a narrow admin endpoint
-  in its provider (set the OTP credential of one user, callable only by
-  `mesail-account`); slice I1 and `mesail-keycloak` settle which one.
+  in its provider (set the OTP credential of one user). Slice L2 made it
+  check the realm-management role `manage-users`, so both `mesail-account`
+  and `mesail-directory` may call it. That is accepted (2026-11-11): a
+  client with `manage-users` can already set any credential through the
+  stock admin API, so it adds no power. `identity` uses it only for the
+  caller's own `sub`; `directory` never sets an OTP secret, it only removes
+  one (AC-ID-13).
 - Limits and logs: the per-IP limit at the gateway (P1) covers these routes;
   Keycloak brute-force detection covers the password checks. Passwords,
   codes, secrets, `setupKey` and `qrImage` never appear in logs. Every
@@ -272,8 +284,14 @@ change the person's one account, so they apply to every domain:
 dmarc}}`. `domainId` is the domain name in lowercase (for example
 `example.com`). `Address.kind` is `member|alias|channel`. An alias address
 and its member are both in the caller's domain. `MemberSummary{memberId?,
-username?, displayName, primaryAddress, admin}` (`username` and `admin` only
-on the admin routes). Every address in a request is trimmed; the domain
+username?, displayName, primaryAddress, admin, accountManaged}` (`username`,
+`admin` and `accountManaged` only on the admin routes). `accountManaged` is
+`true` when the caller may do the account actions of SPEC AC-ID-13 for this
+person (reset the password, remove the 2-step code, rename, disable): the
+caller is an Operator, or administers every domain of the person. The
+admin app disables those actions when it is `false`; the person routes
+still check it and answer `403`. (Decided 2026-11-11 for the LU
+question.) Every address in a request is trimmed; the domain
 part and, for hosted domains, the local part are lowercased before any
 lookup (SPEC AC-ID-11).
 

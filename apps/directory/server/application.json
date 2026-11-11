@@ -3,6 +3,46 @@
     "host": "127.0.0.1",
     "port": 8102
   },
+  "oidc": {
+    "issuer": "https://mesail.localhost/idp/realms/{realm}",
+    "jwks": "http://keycloak:8080/idp/realms/{realm}/protocol/openid-connect/certs",
+    "audience": "mesail-api"
+  },
+  "outbox": {
+    "producer": "directory",
+    "subscribers": [
+      {
+        "name": "messaging",
+        "url": "http://127.0.0.1:8104/api/v1/messaging/events"
+      },
+      {
+        "name": "notify",
+        "url": "http://127.0.0.1:8107/api/v1/notify/events"
+      },
+      {
+        "name": "search",
+        "url": "http://127.0.0.1:8108/api/v1/search/events"
+      }
+    ]
+  },
+  "outgoing": {
+    "hosts": [
+      "keycloak",
+      "cloudflare-dns.com",
+      "127.0.0.1"
+    ]
+  },
+  "directory": {
+    "publicurl": "https://mesail.localhost",
+    "keycloakurl": "http://keycloak:8080/idp",
+    "admin": {
+      "client": "mesail-directory"
+    },
+    "mailhost": "mx.mesail.localhost",
+    "spfmechanism": "mx",
+    "dkimselector": "mesail",
+    "dnsresolver": "https://cloudflare-dns.com/dns-query"
+  },
   "names": {
     "words": [
       "dkim",

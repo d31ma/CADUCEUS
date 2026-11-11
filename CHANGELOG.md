@@ -58,6 +58,26 @@
   another service. Guide: `docs/mesail/SERVICE-TOKENS.md`. The Keycloak
   token endpoint is the shared setting `oidc.keycloak`.
 
+### Mesail D1: directory
+
+- Added the `directory` service: hosted domains (an Operator from the
+  `mesail-operators` realm adds one, which creates its Keycloak realm
+  through the admin API as `mesail-directory`; verify checks MX, SPF, DKIM
+  and DMARC over DNS over HTTPS and activates a pending domain; remove
+  deletes the realm and the domain's collections), members remembered from
+  the caller's token, aliases, the `Service` address and domain lookups,
+  member search inside the caller's domain, and
+  `POST /api/v1/directory/recipients/resolve`. A member of the caller's
+  domain is `member` (chat), any address of another hosted domain is
+  `otherDomain` (email only, no name or id), anything else is `external`.
+- A changed member stages `member.upserted` with `kit/outbox` in the member
+  document and pushes it right after the write; `POST
+  /api/v1/directory/outbox/relay`, `GET .../outbox/dead` and `POST
+  .../outbox/dead/requeue` (`Allow(Service)`) sweep and manage it. Pushes
+  wait for slice I1's service tokens.
+- `kit/recipients` gained address and domain-name checks and the recipient
+  classifier, which decides the kind from the caller's domain.
+
 - Completed account-synchronized interface localization across 20 closed,
   persisted locale choices. A reproducible, checksum-pinned SMaLL-100 pipeline
   now catalogs 755 audited static interface literals for 19 non-English

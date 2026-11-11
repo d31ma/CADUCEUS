@@ -1,0 +1,121 @@
+{
+  "realm": "${REALM}",
+  "displayName": "${REALM}",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "rememberMe": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 10,
+  "passwordPolicy": "length(12) and notUsername and notEmail",
+  "accessTokenLifespan": 60,
+  "accessTokenLifespanForImplicitFlow": 60,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "eventsEnabled": false,
+  "adminEventsEnabled": false,
+  "roles": {
+    "realm": [
+      { "name": "mesail-member", "description": "A member of the organization. Every user gets it by default." },
+      { "name": "mesail-admin", "description": "Organization admin: domains, members and settings." },
+      { "name": "mesail-service", "description": "A Mesail service calling another service (client credentials)." },
+      {
+        "name": "default-roles-${REALM}",
+        "description": "Roles every new user gets.",
+        "composite": true,
+        "composites": {
+          "realm": ["mesail-member"],
+          "client": { "account": ["view-profile", "manage-account"] }
+        }
+      }
+    ]
+  },
+  "defaultRole": { "name": "default-roles-${REALM}", "composite": true, "clientRole": false },
+  "clients": [
+    {
+      "clientId": "mesail-web",
+      "name": "Mesail web app",
+      "description": "Public browser client. Authorization code flow with PKCE (S256) only.",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "rootUrl": "${MESAIL_PUBLIC_URL}",
+      "baseUrl": "/",
+      "redirectUris": ["${MESAIL_PUBLIC_URL}/*"],
+      "webOrigins": ["${MESAIL_PUBLIC_URL}"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "${MESAIL_PUBLIC_URL}/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "mesail-api audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "mesail-api",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "mesail-api",
+      "name": "Mesail API",
+      "description": "The audience of every Mesail access token. Its secret is used only to call token introspection.",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false
+    },
+    {
+      "clientId": "mesail-service",
+      "name": "Mesail services",
+      "description": "Client credentials for service-to-service calls. Tokens carry the mesail-service role.",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "mesail-api audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "mesail-api",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-mesail-service",
+      "enabled": true,
+      "serviceAccountClientId": "mesail-service",
+      "realmRoles": ["default-roles-${REALM}", "mesail-service"]
+    }
+  ]
+}

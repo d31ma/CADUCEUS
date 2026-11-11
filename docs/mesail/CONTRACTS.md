@@ -168,6 +168,7 @@ in Mesail's own settings; the browser still never talks to Keycloak):
 | `POST /api/v1/directory/recipients/resolve` | SignedIn | `ResolveRequest{addresses[] (max 100)}` | `ResolveResponse{recipients[]: ResolvedRecipient}` |
 | `GET /api/v1/directory/members?query=` | SignedIn | - | `MemberPage` of `MemberSummary{memberId?, displayName, primaryAddress}`, only members of the caller's domain |
 | `GET /api/v1/directory/domains` | Allow(Operator) | - | `[]Domain` |
+| `GET /api/v1/directory/domains/{domainId}` | Allow(Operator, Service) | - | `Domain` or `404` (used by `mail-out` for `dkimSelector` and the hosted check) |
 | `POST /api/v1/directory/domains` | Allow(Operator) | `CreateDomainRequest{name}` | `201 Domain` (also creates the domain's Keycloak realm) |
 | `POST /api/v1/directory/domains/{domainId}/verify` | Allow(Operator) | - | `Domain` (with `dns` states) |
 | `DELETE /api/v1/directory/domains/{domainId}` | Allow(Operator) | - | `204` |
@@ -179,6 +180,16 @@ dmarc}}`. `domainId` is the domain name in lowercase (for example
 `example.com`) and is also the realm name. `Address.kind` is
 `member|alias|channel`. An alias address and its member are both in the
 caller's domain.
+
+Operator routes also require a token from the operator realm
+`mesail-operators`; an `mesail-operator` role inside a mail domain's realm
+answers `403`. A signed-in request from a realm that is not a hosted domain,
+or from a `disabled` domain, answers `403`. The `Service` routes
+(`addresses/{address}`, `domains/{domainId}`) accept a token from the target
+domain's realm or from `mesail-operators`; any other realm answers `404`.
+The outbox routes (`POST /api/v1/directory/outbox/relay`,
+`GET .../outbox/dead`, `POST .../outbox/dead/requeue`, EVENTS.md) are
+install-wide and accept only `mesail-operators`.
 
 `ResolvedRecipient{address, displayName, kind:
 member|channel|otherDomain|external, memberId?, channelId?, defaultDelivery:

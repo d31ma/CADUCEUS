@@ -1,9 +1,9 @@
 import (
 	"cmp"
 	"errors"
-	"net/http"
 
 	"mesail.dev/packages/keycloak"
+	"mesail.dev/packages/transport"
 )
 
 // @Service
@@ -24,7 +24,7 @@ func (service *RealmService) Delete(domainId string) error {
 func (service *RealmService) admin() keycloak.Admin {
 	settings := service.settings.Settings()
 	adminSettings := keycloak.AdminSettings{BaseUrl: settings.KeycloakUrl, ClientId: settings.Admin.Client, ClientSecret: settings.Admin.Secret, Secrets: service.secrets(settings.RealmSecrets)}
-	return keycloak.NewAdmin(adminSettings, http.DefaultClient)
+	return keycloak.NewAdmin(adminSettings, transport.SingleUseTransport{}.Client(0))
 }
 
 func (service *RealmService) secrets(secrets DirectoryRealmSecrets) keycloak.RealmSecrets {

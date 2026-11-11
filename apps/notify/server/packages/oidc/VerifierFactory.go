@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"mesail.dev/packages/transport"
 )
 
 type VerifierFactory struct{}
@@ -31,7 +33,7 @@ func (factory VerifierFactory) Jwks(settings Settings) JwksVerifier {
 }
 
 func (factory VerifierFactory) client() *http.Client {
-	return &http.Client{Timeout: factory.fetchTimeout()}
+	return transport.SingleUseTransport{}.Client(factory.fetchTimeout())
 }
 
 func (factory VerifierFactory) cache() JsonFileCache {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/events"
+	"mesail.dev/packages/transport"
 )
 
 type HTTPPusher struct {
@@ -20,7 +21,7 @@ func NewHTTPPusher(tokens TokenSource, timeout time.Duration) HTTPPusher {
 }
 
 func NewDomainHTTPPusher(tokens DomainTokenSource, timeout time.Duration) HTTPPusher {
-	return HTTPPusher{tokens: tokens, client: &http.Client{Transport: http.DefaultTransport, Timeout: timeout}}
+	return HTTPPusher{tokens: tokens, client: transport.SingleUseTransport{}.Client(timeout)}
 }
 
 func (HTTPPusher) DefaultTimeout() time.Duration {

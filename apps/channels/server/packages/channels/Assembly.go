@@ -1,11 +1,11 @@
 package channels
 
 import (
-	"net/http"
 	"time"
 
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
+	"mesail.dev/packages/transport"
 )
 
 type Assembly struct {
@@ -46,5 +46,5 @@ func (assembly Assembly) directory(settings Settings) Directory {
 	if assembly.Directory != nil {
 		return assembly.Directory
 	}
-	return NewDirectoryClient(settings.DirectoryUrl, http.DefaultClient)
+	return NewDirectoryClient(settings.DirectoryUrl, transport.SingleUseTransport{}.Client(0))
 }

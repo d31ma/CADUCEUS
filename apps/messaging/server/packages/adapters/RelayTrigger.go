@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/core"
+	"mesail.dev/packages/transport"
 )
 
 type RelayTrigger struct {
@@ -14,7 +15,7 @@ type RelayTrigger struct {
 }
 
 func NewRelayTrigger(tokens ServiceAuthorizer, timeout time.Duration) RelayTrigger {
-	return RelayTrigger{tokens: tokens, client: &http.Client{Transport: http.DefaultTransport, Timeout: timeout}}
+	return RelayTrigger{tokens: tokens, client: transport.SingleUseTransport{}.Client(timeout)}
 }
 
 func (trigger RelayTrigger) Run(relayUrl string) error {

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"mesail.dev/packages/oidc"
+	"mesail.dev/packages/transport"
 )
 
 type ScheduledSweep struct {
@@ -14,7 +15,7 @@ type ScheduledSweep struct {
 }
 
 func NewScheduledSweep() ScheduledSweep {
-	return ScheduledSweep{Tokens: oidc.ServiceTokensFactory{}.Configured(), Client: &http.Client{}}
+	return ScheduledSweep{Tokens: oidc.ServiceTokensFactory{}.Configured(), Client: transport.SingleUseTransport{}.Client(0)}
 }
 
 func (sweep ScheduledSweep) Run() error {

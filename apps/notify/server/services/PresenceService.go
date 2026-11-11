@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/oidc"
+	"mesail.dev/packages/transport"
 )
 
 // @Service
@@ -48,7 +49,7 @@ func (service *PresenceService) send(request *http.Request, authorization string
 		return nil, failure
 	}
 	request.Header.Set("Authorization", authorization)
-	return (&http.Client{Timeout: service.timeout()}).Do(request)
+	return transport.SingleUseTransport{}.Client(service.timeout()).Do(request)
 }
 
 func (service *PresenceService) checked(response *http.Response, failure error) error {

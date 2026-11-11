@@ -11,6 +11,14 @@
   acceptance tests and `scripts/gates.sh`. Removed the CADUCEUS JavaScript
   server and client, the Go monolith, SESAME and their tooling (kept in git
   history at 4ef82f72).
+- Every outgoing HTTP client now uses `kit/transport`
+  (`SingleUseTransport`): a copy of Go's default transport with keep-alive
+  connections off, so the egress proxy stays in place. This works around a
+  TACHYON 26.46.02 bug: its egress guard sends a reused plain-HTTP
+  connection to the first host it saw, so a later request could reach the
+  wrong service. Covers kit/oidc, the outbox pusher, kit/attachments,
+  kit/channels, kit/realtime (its own copy is gone), kit/search and the
+  directory, messaging and notify apps; mail-in and mail-out follow in M1.
 
 ### Slice R1: realtime and presence
 

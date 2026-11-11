@@ -1,9 +1,8 @@
 package search
 
 import (
-	"net/http"
-
 	"mesail.dev/packages/oidc"
+	"mesail.dev/packages/transport"
 )
 
 type ServiceFactory struct {
@@ -12,6 +11,6 @@ type ServiceFactory struct {
 
 func (factory ServiceFactory) Service(documents Documents) Service {
 	settings := SettingsReader{Environment: factory.Environment}.Read()
-	reader := NewMembershipClient(settings.MessagingUrl, settings.ChannelsUrl, http.DefaultClient)
+	reader := NewMembershipClient(settings.MessagingUrl, settings.ChannelsUrl, transport.SingleUseTransport{}.Client(0))
 	return NewService(documents, reader, oidc.Configured())
 }

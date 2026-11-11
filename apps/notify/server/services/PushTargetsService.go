@@ -3,6 +3,7 @@ import (
 	"net/http"
 	"time"
 
+	"mesail.dev/packages/transport"
 	"mesail.dev/packages/webpush"
 )
 
@@ -32,7 +33,7 @@ func (service *PushTargetsService) clientOrDefault() *http.Client {
 	if service.client != nil {
 		return service.client
 	}
-	return &http.Client{Timeout: service.timeout()}
+	return transport.SingleUseTransport{}.Client(service.timeout())
 }
 
 func (service *PushTargetsService) timeout() time.Duration {

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/core"
+	"mesail.dev/packages/transport"
 )
 
 type JsonCall struct {
@@ -16,7 +17,7 @@ type JsonCall struct {
 }
 
 func NewJsonCall(timeout time.Duration) JsonCall {
-	return JsonCall{client: &http.Client{Transport: http.DefaultTransport, Timeout: timeout}}
+	return JsonCall{client: transport.SingleUseTransport{}.Client(timeout)}
 }
 
 func (JsonCall) DefaultTimeout() time.Duration {

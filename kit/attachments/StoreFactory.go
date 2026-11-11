@@ -1,10 +1,10 @@
 package attachments
 
 import (
-	"net/http"
 	"time"
 
 	"mesail.dev/packages/blobs"
+	"mesail.dev/packages/transport"
 )
 
 type StoreFactory struct {
@@ -42,7 +42,7 @@ func (factory StoreFactory) s3(settings Settings) blobs.Store {
 		Endpoint: settings.Endpoint, PublicEndpoint: settings.Public, Region: settings.Region, Bucket: settings.Bucket,
 		AccessKeyId: factory.Environment("AWS_ACCESS_KEY_ID"), SecretAccessKey: factory.Environment("AWS_SECRET_ACCESS_KEY"), SessionToken: factory.Environment("AWS_SESSION_TOKEN"),
 	}
-	return blobs.NewS3Store(s3Settings, http.DefaultClient, time.Now)
+	return blobs.NewS3Store(s3Settings, transport.SingleUseTransport{}.Client(0), time.Now)
 }
 
 func (StoreFactory) localAdapter() string {

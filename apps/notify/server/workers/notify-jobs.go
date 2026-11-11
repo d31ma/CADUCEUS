@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/oidc"
+	"mesail.dev/packages/transport"
 )
 
 // @Schedule({"fixedDelaySeconds":30})
@@ -25,7 +26,7 @@ func (handler Handler) send(request *http.Request, authorization string, failure
 		return
 	}
 	request.Header.Set("Authorization", authorization)
-	response, sendFailure := (&http.Client{Timeout: handler.timeout()}).Do(request)
+	response, sendFailure := transport.SingleUseTransport{}.Client(handler.timeout()).Do(request)
 	handler.closeBody(response, sendFailure)
 }
 

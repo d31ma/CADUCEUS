@@ -134,6 +134,21 @@
   The delivery job and the relay are `Allow(Service)` routes that a
   scheduled worker or an EventBridge schedule triggers.
 
+### Slice S1: search
+
+- Added the `search` service: `GET /api/v1/search` finds messages by words of
+  the body, email subject, sender and file names, with conversation, author,
+  date, attachment and email filters, newest first, paged by cursor. Results
+  come only from the caller's domain and only from conversations the caller
+  can read at query time (checked with `messaging` and `channels` using the
+  caller's token; when that check fails, the answer is `503` with no hits).
+  `POST /api/v1/search/events` indexes `message.created`, `message.edited`
+  and `message.deleted` through the `kit/events` receiver. The index keeps one
+  FYLO collection per domain and month, named by `kit/collections`.
+- The workflow is the plain-Go package `kit/search` (rule 8b); the Yon role
+  files are thin. `kit/textindex` holds word splitting, prefix matching,
+  snippets and cursors.
+
 - Completed account-synchronized interface localization across 20 closed,
   persisted locale choices. A reproducible, checksum-pinned SMaLL-100 pipeline
   now catalogs 755 audited static interface literals for 19 non-English

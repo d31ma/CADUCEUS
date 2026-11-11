@@ -376,9 +376,24 @@ and closes with code 4401 when it is no longer valid (SPEC AC-ID-4).
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
 | `GET /api/v1/search?q=&conversationId=&author=&from=&to=&hasAttachment=&isEmail=` | SignedIn | - | `SearchPage` of `SearchHit{messageId, conversationId, snippet, createdAt}` |
+| `POST /api/v1/search/events` | Allow(Service) | `Envelope` | `EventReceipt{eventId, status}` (EVENTS.md section 3; indexes `message.created`, `message.edited` and `message.deleted`, and applies the other subscribed types without change) |
 
 A search reads only the caller's domain, and only conversations the caller
 can read now.
+
+Query rules (slice S1):
+
+- `q` has at most 500 characters and 16 words. Every word must start a word
+  of the message body, email subject, sender name or address, or attachment
+  file name. An empty `q` matches every readable message.
+- `from` and `to` take an RFC 3339 time or a date (`2026-11-10`); a date in
+  `to` includes the whole day. `author` is an address or a member id.
+  `hasAttachment` and `isEmail` take `true` or `false`. Paging uses
+  `cursor` and `limit` (1..100, default 20), newest first.
+- Bad values answer `400 invalid_request` with `field`. When membership
+  cannot be checked, the search answers `503 unavailable` and shows nothing.
+- Membership is read at query time with the caller's own token:
+  `GET /api/v1/messaging/conversations` (all pages) and `GET /api/v1/channels`.
 
 ## Rich text: one block format for chat and email
 

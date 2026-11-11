@@ -1,3 +1,6 @@
 oidc
 events
 outbox
+collections
+textindex
+search

@@ -2,5 +2,24 @@
   "server": {
     "host": "127.0.0.1",
     "port": 8108
+  },
+  "datasource": {
+    "driver": "fylo",
+    "url": "fylo:///mnt/data/search"
+  },
+  "oidc": {
+    "issuer": "https://mesail.localhost/idp/realms/{realm}",
+    "jwks": "http://keycloak:8080/idp/realms/{realm}/protocol/openid-connect/certs",
+    "audience": "mesail-api"
+  },
+  "outgoing": {
+    "hosts": [
+      "keycloak",
+      "127.0.0.1"
+    ]
+  },
+  "search": {
+    "messagingurl": "http://127.0.0.1:8104",
+    "channelsurl": "http://127.0.0.1:8103"
   }
 }

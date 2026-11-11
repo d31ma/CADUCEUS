@@ -29,6 +29,7 @@ func (test *AliasFormServiceTest) TestOpenedOffersTheMembersAsChoices() {
 	Assert.Equals("ana-id", form.Choices[0].MemberId)
 	Assert.Equals("Ana Ruiz (ana@example.com)", form.Choices[0].Label)
 	Assert.Equals("", form.Problem)
+	Assert.Equals("", form.ListProblem)
 }
 
 func (test *AliasFormServiceTest) TestAddCreatesTheAlias() {

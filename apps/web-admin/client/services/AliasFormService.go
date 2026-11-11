@@ -6,6 +6,7 @@ type AliasFormService struct {
 	Address     string
 	MemberId    string
 	Choices     []MemberChoice
+	ListProblem string
 	Busy        bool
 	Problem     string
 	Status      string
@@ -29,7 +30,8 @@ func (form *AliasFormService) Opened(opened AdminViewOpened) {
 	page, failure := form.directoryClient.Members(form.session.Authorization(), "")
 	form.Choices = form.choicesOf(page.Items)
 	form.memberNames = form.namesOf(page.Items)
-	form.Problem = form.problems.Of(failure)
+	form.ListProblem = form.problems.Of(failure)
+	form.Problem = ""
 	form.applicationEventPublisher.PublishEvent(AdminViewLoaded{View: opened.View, Message: ""}, false)
 }
 

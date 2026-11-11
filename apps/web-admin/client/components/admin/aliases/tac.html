@@ -2,47 +2,58 @@
   <div class="panel-head px-4 py-3 sm:px-6"><h2 id="aliases-title" class="section-title">Aliases</h2></div>
   <div class="grid gap-4 p-4 sm:p-6">
     <p class="subtle">An alias is another address for a member, such as sales@{aliasForm.domainId}. Mail to it reaches the member.</p>
-    <form method="dialog" class="grid gap-4" aria-labelledby="aliases-title" on:submit="aliasForm.addWith($event.target.elements.address.value, $event.target.elements.member.value)">
-      <w-text-field label="Alias address" name="address" placeholder="sales" autocomplete="off" persistent-hint :suffix="aliasForm.suffix()" :hint="aliasForm.addressHint()" :error="aliasForm.addressError(aliasForm.problem)" :value="aliasForm.address"></w-text-field>
-      <p class="sr-only" role="alert">{aliasForm.addressError(aliasForm.problem)}</p>
-      <div class="grid gap-1.5">
-        <label class="aliases-label" for="alias-member">Member</label>
-        <span class="select-box relative block">
-          <select class="aliases-select w-full" id="alias-member" name="member" aria-describedby="alias-member-error" :aria-invalid="adminShell.flag(aliasForm.problem == 'noMember')">
-            <option value="" :selected="aliasForm.memberId == ''">Choose a member</option>
-            <loop :for="choice of aliasForm.choices"><option :value="choice.memberId" :selected="choice.memberId == aliasForm.memberId">{choice.label}</option></loop>
-          </select>
-        </span>
-        <div id="alias-member-error" role="alert">
-          <logic :if="aliasForm.problem == 'noMember'">
-            <p class="aliases-error flex items-start gap-1"><w-icon name="alert" class="icon-sm" aria-hidden="true"></w-icon><span>Choose the member who gets mail sent to this alias.</span></p>
-          </logic>
+    <logic :if="aliasForm.listProblem != ''">
+      <div class="note note--info flex items-start gap-3 px-4 py-3" role="status">
+        <w-icon name="info" class="mt-0.5" aria-hidden="true"></w-icon>
+        <div class="grid min-w-0 gap-1">
+          <p class="strong">The member list could not load.</p>
+          <p>You can add an alias when the list loads. Reload the page to try again.</p>
         </div>
       </div>
-      <switch :value="aliasForm.problem">
-        <case :when="'forbidden'">
-          <w-alert type="error" title="You need admin rights">Only an admin of {aliasForm.domainId} can add aliases.</w-alert>
-        </case>
-        <case :when="'unavailable'">
-          <w-alert type="error" title="The alias was not added.">Mesail could not reach the server. Check your connection, then try again.</w-alert>
-        </case>
-        <case :when="'signedOut'">
-          <w-alert type="error" title="The alias was not added.">Your session ended. Sign in again, then try again.</w-alert>
-        </case>
-        <case :when="'notFound'">
-          <w-alert type="error" title="The alias was not added.">This member is no longer in {aliasForm.domainId}. Reload the page, then choose a member again.</w-alert>
-        </case>
-        <case :when="'rateLimited'">
-          <w-alert type="error" title="The alias was not added.">Too many changes in a short time. Wait a minute, then try again.</w-alert>
-        </case>
-      </switch>
-      <div class="flex flex-wrap items-center gap-3">
-        <w-btn variant="flat" type="submit" :disabled="aliasForm.busy">
-          <logic :if="aliasForm.busy">Adding&hellip;</logic>
-          <logic else>Add alias</logic>
-        </w-btn>
-      </div>
-    </form>
+    </logic>
+    <logic else>
+      <form method="dialog" class="grid gap-4" aria-labelledby="aliases-title" on:submit="aliasForm.addWith($event.target.elements.address.value, $event.target.elements.member.value)">
+        <w-text-field label="Alias address" name="address" placeholder="sales" autocomplete="off" persistent-hint :suffix="aliasForm.suffix()" :hint="aliasForm.addressHint()" :error="aliasForm.addressError(aliasForm.problem)" :value="aliasForm.address"></w-text-field>
+        <p class="sr-only" role="alert">{aliasForm.addressError(aliasForm.problem)}</p>
+        <div class="grid gap-1.5">
+          <label class="aliases-label" for="alias-member">Member</label>
+          <span class="select-box relative block">
+            <select class="aliases-select w-full" id="alias-member" name="member" aria-describedby="alias-member-error" :aria-invalid="adminShell.flag(aliasForm.problem == 'noMember')">
+              <option value="" :selected="aliasForm.memberId == ''">Choose a member</option>
+              <loop :for="choice of aliasForm.choices"><option :value="choice.memberId" :selected="choice.memberId == aliasForm.memberId">{choice.label}</option></loop>
+            </select>
+          </span>
+          <div id="alias-member-error" role="alert">
+            <logic :if="aliasForm.problem == 'noMember'">
+              <p class="aliases-error flex items-start gap-1"><w-icon name="alert" class="icon-sm" aria-hidden="true"></w-icon><span>Choose the member who gets mail sent to this alias.</span></p>
+            </logic>
+          </div>
+        </div>
+        <switch :value="aliasForm.problem">
+          <case :when="'forbidden'">
+            <w-alert type="error" title="You need admin rights">Only an admin of {aliasForm.domainId} can add aliases.</w-alert>
+          </case>
+          <case :when="'unavailable'">
+            <w-alert type="error" title="The alias was not added.">Mesail could not reach the server. Check your connection, then try again.</w-alert>
+          </case>
+          <case :when="'signedOut'">
+            <w-alert type="error" title="The alias was not added.">Your session ended. Sign in again, then try again.</w-alert>
+          </case>
+          <case :when="'notFound'">
+            <w-alert type="error" title="The alias was not added.">This member is no longer in {aliasForm.domainId}. Reload the page, then choose a member again.</w-alert>
+          </case>
+          <case :when="'rateLimited'">
+            <w-alert type="error" title="The alias was not added.">Too many changes in a short time. Wait a minute, then try again.</w-alert>
+          </case>
+        </switch>
+        <div class="flex flex-wrap items-center gap-3">
+          <w-btn variant="flat" type="submit" :disabled="aliasForm.busy">
+            <logic :if="aliasForm.busy">Adding&hellip;</logic>
+            <logic else>Add alias</logic>
+          </w-btn>
+        </div>
+      </form>
+    </logic>
     <div role="status">
       <logic :if="aliasForm.status != ''">
         <p class="note note--ok flex items-start gap-2 px-3 py-2"><w-icon name="check" class="mt-0.5" aria-hidden="true"></w-icon><span class="min-w-0 break-words">{aliasForm.status}</span></p>

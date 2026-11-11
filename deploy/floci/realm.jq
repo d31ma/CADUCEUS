@@ -3,7 +3,7 @@ def audience: {
   protocol: "openid-connect",
   protocolMapper: "oidc-audience-mapper",
   config: {
-    "included.custom.audience": "mesail",
+    "included.custom.audience": "mesail-api",
     "access.token.claim": "true",
     "id.token.claim": "false",
     "introspection.token.claim": "true"
@@ -44,11 +44,18 @@ def person($password; $realm): {
         protocolMappers: [audience]
       },
       {
-        clientId: "mesail-blackbox",
-        publicClient: true,
+        clientId: "mesail-api",
+        publicClient: false,
+        bearerOnly: false,
+        standardFlowEnabled: false,
+        directAccessGrantsEnabled: false
+      },
+      {
+        clientId: "mesail-identity",
+        publicClient: false,
+        secret: $identitySecret,
         standardFlowEnabled: false,
         directAccessGrantsEnabled: true,
-        attributes: { "access.token.lifespan": "1800" },
         protocolMappers: [audience]
       },
       {

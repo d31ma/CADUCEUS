@@ -6,7 +6,7 @@ import (
 )
 
 type StaticHandler struct {
-	Storage  S3Client
+	Storage  ObjectStore
 	Paths    StaticPaths
 	Security SecurityHeaders
 }

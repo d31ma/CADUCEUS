@@ -9,17 +9,28 @@ import (
 type Assembly struct {
 }
 
-func (assembly Assembly) Handler(settings Settings) http.Handler {
+func (assembly Assembly) Handler(settings Settings) (http.Handler, error) {
 	client := &http.Client{Timeout: settings.Timeout}
+	api, err := assembly.api(settings, client)
+	if err != nil {
+		return nil, err
+	}
 	return AccessLog{Next: Router{
 		Ready:    ReadyHandler{},
-		Api:      assembly.api(settings, client),
+		Api:      api,
 		Keycloak: assembly.keycloak(settings.KeycloakUrl),
-		Static:   assembly.static(settings, client),
-	}}
+		Static:   StaticHandler{Storage: assembly.storage(settings, client), Paths: StaticPaths{}, Security: SecurityHeaders{}},
+	}}, nil
 }
 
-func (Assembly) api(settings Settings, client *http.Client) http.Handler {
+func (assembly Assembly) api(settings Settings, client *http.Client) (http.Handler, error) {
+	if len(settings.Upstreams) > 0 {
+		return UpstreamHandler{}.Of(settings.Upstreams)
+	}
+	return assembly.lambda(settings, client), nil
+}
+
+func (Assembly) lambda(settings Settings, client *http.Client) http.Handler {
 	return ApiHandler{
 		Routes:     Routes{}.Of(settings.Services, settings.FunctionPrefix),
 		Bodies:     BodyReader{Limit: settings.BodyLimit},
@@ -29,9 +40,11 @@ func (Assembly) api(settings Settings, client *http.Client) http.Handler {
 	}
 }
 
-func (Assembly) static(settings Settings, client *http.Client) http.Handler {
-	storage := S3Client{Endpoint: settings.S3Endpoint, Bucket: settings.StaticBucket, Client: client, Signer: Signer{Credentials: settings.Credentials, Service: "s3"}, Now: time.Now}
-	return StaticHandler{Storage: storage, Paths: StaticPaths{}, Security: SecurityHeaders{}}
+func (Assembly) storage(settings Settings, client *http.Client) ObjectStore {
+	if len(settings.StaticFolders) > 0 {
+		return FolderStore{Folders: settings.StaticFolders}
+	}
+	return S3Client{Endpoint: settings.S3Endpoint, Bucket: settings.StaticBucket, Client: client, Signer: Signer{Credentials: settings.Credentials, Service: "s3"}, Now: time.Now}
 }
 
 func (Assembly) keycloak(address string) http.Handler {

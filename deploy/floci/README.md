@@ -1,4 +1,49 @@
-# Mesail on Floci (local AWS)
+# Mesail on this Mac: native and Floci
+
+There are two ways to run the whole of Mesail on this Mac:
+
+| Script | What runs | Who uses it |
+| --- | --- | --- |
+| `scripts/native/run-all.sh` | Every Yon app with `ty start` on macOS, the Tac apps as static files, and the router, all native. No VM. | Every slice gate (SLICES.md "Gates"). |
+| `scripts/floci/run-all.sh` | The Lambda images in Floci (local AWS) in Colima, with Keycloak. | The integration and release gates (P1, C1). |
+
+## Native (slice gates)
+
+```sh
+MESAIL_OWNER=slice-m3 scripts/native/run-all.sh                          # start all, run every blackbox test, stop
+MESAIL_OWNER=slice-m3 MESAIL_TEST_RUN='TestAcMs' scripts/native/run-all.sh
+MESAIL_OWNER=slice-m3 scripts/native/run-all.sh messaging directory      # only these Yon apps
+MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --up                     # start and keep running
+MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop what --up started
+```
+
+- It runs as one `tachyon-build` heavy job (`mac-heavy`), unless it already
+  runs inside one.
+- Each Yon app is copied to `$TMPDIR/mesail-native/<owner>/apps/<app>`
+  (your worktree stays clean), given a profile
+  `server/application-native.json` (loopback host and, for a FYLO owner, a
+  root at `~/Developer/AtlasFylo/mesail/<owner>/native/<service>`, emptied
+  at each start), bundled (`ty bundle`, all apps at once) and started with
+  `YON_PROFILE=native ty start --port <free port>`. An app's own `.env` is
+  copied too.
+- The Tac apps (`web`, `web-admin`) are bundled with `--target web` and
+  served by the router from their `dist/web` folders.
+- The router (`deploy/router`, built with `go build`) runs in native mode:
+  `/api/v1/<service>/` goes to that app's `ty start` port.
+- It prints `export MESAIL_BASE_URL=http://127.0.0.1:<port>` (also in
+  `$TMPDIR/mesail-native/<owner>/env`).
+- An app that fails to start is a warning: its tests fail, the others run.
+- Tokens: set `MESAIL_TOKENS_FILE` to a file of `export MESAIL_TOKEN_ANA=...`
+  lines; without it, tests that need a token skip. With
+  `MESAIL_KEYCLOAK_URL` set (a native Keycloak, see `deploy/keycloak`), the
+  router also proxies `/idp/` to it.
+- The FYLO test image must be attached at `~/Developer/AtlasFylo/mesail`;
+  the script says how when it is not.
+- A whole run with ten apps takes about 25 seconds once warm.
+- Logs: `~/Library/Logs/local/CADUCEUS/<owner>/native-<time>/`
+  (`app-<app>.log`, `prepare-<app>.log`, `router.log`).
+
+## Floci (integration)
 
 Every Yon app runs as an AWS Lambda container image. On this Mac the images run
 in [Floci](https://hub.docker.com/r/floci/floci) 2.4.0, a local AWS emulator,
@@ -92,7 +137,7 @@ One HTTP origin, like FitNest's gateway:
 | --- | --- |
 | `/_router/ready` | The router itself. |
 | `/api/v1/<service>/...` | Lambda `mesail-<service>`, invoked with an HTTP API v2.0 event. The event's `host` header is `localhost` (Tachyon answers only local names) and the original host is in `x-forwarded-host`. Unknown service: 404. Body over 6 MiB: 413. A function error: 502. |
-| `/realms/...`, `/resources/...` | Keycloak, with the original `Host`. |
+| `/idp/...` | Keycloak (served under `/idp`), with the original `Host`. |
 | `/admin`, `/admin/...` | The `web-admin` bundle in the bucket `mesail-static` under `admin/`. |
 | everything else | The `web` bundle under `web/`. A missing page (no file extension, or a browser asking for HTML) gets the app's `index.html`. |
 
@@ -104,11 +149,13 @@ integrations, payload 2.0) plus S3 and CloudFront for the static files.
 
 ### Keycloak and test users
 
-Upstream Keycloak 26.8.2 in `start-dev` until the Keycloak stages of the
-`Dockerfile` exist (`MESAIL_KEYCLOAK_IMAGE` switches it). Its hostname is the
-router's public URL, so every token's issuer is
-`http://127.0.0.1:18080/realms/<domain>`; Lambdas reach it inside the Docker
-network at `http://keycloak:8080` (back-channel).
+Upstream Keycloak 26.8.2 in `start-dev`, under the path `/idp`, until the
+`mesail-keycloak` image target can be built here (`MESAIL_KEYCLOAK_IMAGE`
+switches it). Its hostname is `${MESAIL_ISSUER_ORIGIN}/idp` (default
+`https://mesail.localhost/idp`), so every token's issuer is
+`https://mesail.localhost/idp/realms/<domain>`, the value the apps put in
+their `oidc.issuer`. Lambdas fetch keys inside the Docker network from
+`http://keycloak:8080/idp/realms/<domain>/protocol/openid-connect/certs`.
 
 `seed-realms.sh` creates one realm per entry of `stack.json`:
 
@@ -121,23 +168,27 @@ network at `http://keycloak:8080` (back-channel).
 
 Each realm has the roles `mesail-member`, `mesail-admin`, `mesail-service`
 and `mesail-operator`, access tokens of 60 seconds, refresh token rotation,
-and three clients: `mesail-web` (public, PKCE S256), `mesail-blackbox`
-(public, password grant, 30-minute tokens, tests only) and `mesail-service`
-(client credentials, role `mesail-service`). Every client adds the audience
-`mesail`. `tokens.sh` prints `MESAIL_TOKEN_ANA`, `_BO`, `_EVE`, `_CAROL` and
-`_OPERATOR` for the blackbox tests.
+and the clients `mesail-web` (public, PKCE S256), `mesail-api` (the
+audience), `mesail-identity` (confidential, password grant, used by the
+identity service and by `tokens.sh`) and `mesail-service` (client
+credentials, role `mesail-service`). Every token carries the audience
+`mesail-api`. `tokens.sh` prints `MESAIL_TOKEN_ANA`, `_BO`, `_EVE`, `_CAROL`
+and `_OPERATOR` for the blackbox tests. The realm templates of production
+belong to `deploy/keycloak`; this seed is a test fixture.
 
 ## Ports on the Mac (127.0.0.1 only)
 
 | Port | Service |
 | --- | --- |
 | 18080 | Router (`MESAIL_BASE_URL` of the blackbox tests) |
-| 18180 | Keycloak (admin API for seeding) |
+| 18180 | Keycloak under `/idp` (admin API for seeding) |
 | 4566 | Floci (AWS API) |
 
 ## Not done yet
 
 - The `mesail` Lima VM as the engine (`MESAIL_VM=mesail`).
+- EventBridge schedules that call each service's `/outbox/relay` and
+  `/jobs/<job>` routes in Lambda form.
 - The SMTP edge container (`edge/smtp`, slice M1) and `MESAIL_SMTP_ADDR`.
 - Event relay schedules (EventBridge) and the realtime WebSocket API.
 - Deployment to kestrel through PaaS.

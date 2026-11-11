@@ -6,7 +6,8 @@ set -euo pipefail
 user_token() {
   local realm="$1" username="$2"
   curl --fail --silent --show-error "$MESAIL_KEYCLOAK_URL/realms/$realm/protocol/openid-connect/token" \
-    --data-urlencode grant_type=password --data-urlencode client_id=mesail-blackbox \
+    --data-urlencode grant_type=password --data-urlencode client_id=mesail-identity \
+    --data-urlencode "client_secret=$MESAIL_IDENTITY_SECRET" \
     --data-urlencode "username=$username" --data-urlencode "password=$MESAIL_SEED_PASSWORD" \
     --data-urlencode scope=openid \
     | jq -r .access_token

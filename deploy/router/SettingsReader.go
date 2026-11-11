@@ -1,6 +1,7 @@
 package main
 
 import (
+	"maps"
 	"regexp"
 	"slices"
 	"strconv"
@@ -13,6 +14,41 @@ type SettingsReader struct {
 }
 
 func (reader SettingsReader) Read() (Settings, error) {
+	upstreams, err := reader.pairs("MESAIL_ROUTER_UPSTREAMS")
+	if err != nil {
+		return Settings{}, err
+	}
+	staticFolders, err := reader.pairs("MESAIL_ROUTER_STATIC_FOLDERS")
+	if err != nil {
+		return Settings{}, err
+	}
+	settings, err := reader.forMode(len(upstreams) > 0)
+	settings.Upstreams = upstreams
+	settings.StaticFolders = staticFolders
+	return settings, err
+}
+
+func (reader SettingsReader) forMode(native bool) (Settings, error) {
+	if native {
+		return reader.native()
+	}
+	return reader.lambda()
+}
+
+func (reader SettingsReader) native() (Settings, error) {
+	timeout, err := reader.seconds("MESAIL_ROUTER_TIMEOUT_SECONDS", "70")
+	if err != nil {
+		return Settings{}, err
+	}
+	return Settings{
+		Listen:      reader.optional("MESAIL_ROUTER_LISTEN", ":8080"),
+		KeycloakUrl: strings.TrimSuffix(reader.optional("MESAIL_ROUTER_KEYCLOAK_URL", ""), "/"),
+		Timeout:     timeout,
+		BodyLimit:   reader.bodyLimit(),
+	}, nil
+}
+
+func (reader SettingsReader) lambda() (Settings, error) {
 	services, err := reader.services()
 	if err != nil {
 		return Settings{}, err
@@ -43,6 +79,25 @@ func (reader SettingsReader) Read() (Settings, error) {
 	}, nil
 }
 
+func (reader SettingsReader) pairs(name string) (map[string]string, error) {
+	pairs := map[string]string{}
+	for _, entry := range strings.Split(reader.optional(name, ""), ",") {
+		reader.addPair(pairs, entry)
+	}
+	return pairs, reader.checkPairs(name, pairs)
+}
+
+func (SettingsReader) addPair(pairs map[string]string, entry string) {
+	key, value, found := strings.Cut(strings.TrimSpace(entry), "=")
+	if found {
+		pairs[key] = value
+	}
+}
+
+func (reader SettingsReader) checkPairs(name string, pairs map[string]string) error {
+	return reader.checkNamesOf(name, slices.Collect(maps.Keys(pairs)))
+}
+
 func (reader SettingsReader) credentials() (Credentials, error) {
 	accessKey, err := reader.required("AWS_ACCESS_KEY_ID")
 	if err != nil {
@@ -66,13 +121,13 @@ func (reader SettingsReader) services() ([]string, error) {
 		return nil, err
 	}
 	names := strings.Split(list, ",")
-	return names, reader.checkNames(names)
+	return names, reader.checkNamesOf("MESAIL_ROUTER_SERVICES", names)
 }
 
-func (reader SettingsReader) checkNames(names []string) error {
+func (reader SettingsReader) checkNamesOf(setting string, names []string) error {
 	index := slices.IndexFunc(names, reader.badName)
 	if index >= 0 {
-		return InvalidSetting{Name: "MESAIL_ROUTER_SERVICES", Reason: "bad service name " + strconv.Quote(names[index])}
+		return InvalidSetting{Name: setting, Reason: "bad name " + strconv.Quote(names[index])}
 	}
 	return nil
 }

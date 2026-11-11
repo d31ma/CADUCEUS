@@ -12,11 +12,23 @@ func (Routes) ApiPrefix() string {
 }
 
 func (routes Routes) Function(path string) (string, error) {
+	service, err := routes.Service(path)
+	if err != nil {
+		return "", err
+	}
+	return routes.Prefix + service, nil
+}
+
+func (routes Routes) Service(path string) (string, error) {
 	service, _, _ := strings.Cut(strings.TrimPrefix(path, routes.ApiPrefix()), "/")
+	return routes.known(service)
+}
+
+func (routes Routes) known(service string) (string, error) {
 	if !routes.Known[service] {
 		return "", Problems{}.UnknownService(service)
 	}
-	return routes.Prefix + service, nil
+	return service, nil
 }
 
 func (Routes) Of(services []string, prefix string) Routes {

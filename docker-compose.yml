@@ -27,7 +27,8 @@ services:
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${MESAIL_KEYCLOAK_ADMIN:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${MESAIL_KEYCLOAK_ADMIN_PASSWORD:-mesail-dev-admin}
-      KC_HOSTNAME: ${MESAIL_PUBLIC_URL:-http://127.0.0.1:18080}
+      KC_HOSTNAME: ${MESAIL_ISSUER_ORIGIN:-https://mesail.localhost}/idp
+      KC_HTTP_RELATIVE_PATH: /idp
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded

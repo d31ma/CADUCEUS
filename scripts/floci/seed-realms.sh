@@ -12,7 +12,7 @@ admin_token() {
 
 realm_json() {
   jq --arg realm "$1" --arg public "$MESAIL_PUBLIC_URL" --arg password "$MESAIL_SEED_PASSWORD" \
-    --arg secret "$MESAIL_SERVICE_SECRET" --from-file "$(mesail_root)/deploy/floci/realm.jq" "$(mesail_stack_file)"
+    --arg secret "$MESAIL_SERVICE_SECRET" --arg identitySecret "$MESAIL_IDENTITY_SECRET" --from-file "$(mesail_root)/deploy/floci/realm.jq" "$(mesail_stack_file)"
 }
 
 admin_call() {

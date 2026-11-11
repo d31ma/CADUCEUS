@@ -23,12 +23,16 @@ func (program Program) run() error {
 	if err != nil {
 		return err
 	}
-	server := &http.Server{Addr: settings.Listen, Handler: Assembly{}.Handler(settings), ReadHeaderTimeout: program.headerTimeout()}
+	handler, err := Assembly{}.Handler(settings)
+	if err != nil {
+		return err
+	}
+	server := &http.Server{Addr: settings.Listen, Handler: handler, ReadHeaderTimeout: program.headerTimeout()}
 	signals, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, os.Interrupt)
 	defer stop()
 	failures := make(chan error, 1)
 	go program.listen(server, failures)
-	slog.Info("router listening", "address", settings.Listen, "services", len(settings.Services))
+	slog.Info("router listening", "address", settings.Listen, "lambdas", len(settings.Services), "upstreams", len(settings.Upstreams))
 	return program.wait(signals, server, failures)
 }
 

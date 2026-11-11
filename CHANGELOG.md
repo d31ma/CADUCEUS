@@ -12,6 +12,30 @@
   server and client, the Go monolith, SESAME and their tooling (kept in git
   history at 4ef82f72).
 
+### Slice P1: Lambda images, the Floci stack and the native run
+
+- `scripts/native/run-all.sh`: the path every slice gate uses. It starts
+  every Yon app with `ty start` on macOS (FYLO roots in the ATLAS test
+  image), serves the Tac apps, puts the Mesail router in front on one
+  origin, runs the blackbox tests and stops everything. `--up` and
+  `--down` keep it running for manual work.
+- `deploy/router`: the Mesail router, a standard-library Go program. Native
+  mode proxies `/api/v1/<service>/` to each `ty start`; Lambda mode invokes
+  `mesail-<service>` with API Gateway HTTP API v2 events (FitNest's design).
+  `/idp/` goes to Keycloak, everything else is the `web` and `web-admin`
+  bundles (from folders or S3) with security headers.
+- `Dockerfile` target `lambda`: one arm64 AWS Lambda container image per Yon
+  app (Ubuntu 24.04, Go 1.27.3, `ty` 26.46.02, `fylo` 26.45.07, all checksum
+  pinned, AWS Lambda Web Adapter 0.9.1). It runs on Lambda's read-only
+  filesystem as a non-root user, and each FYLO owner keeps its root at
+  `/mnt/data/<service>`. Target `router` builds the router image.
+- `deploy/floci/stack.json`, `docker-compose.yml` and `scripts/floci/`:
+  the Floci 2.4.0 integration run in Colima with Keycloak under `/idp`,
+  one function per service (reserved concurrency 1 and one EFS access point
+  for every FYLO owner), static hosting in S3, seeded realms `example.com`,
+  `example.org`, `partner.test` and `mesail-operators`, and test tokens.
+  Guide: `deploy/floci/README.md`.
+
 ### Slice I2: events and outbox
 
 - `kit/events`: one payload type per event, the producer and consumer

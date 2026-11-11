@@ -22,7 +22,7 @@ func (router Router) handlerFor(path string) http.Handler {
 		return router.Ready
 	case strings.HasPrefix(path, Routes{}.ApiPrefix()):
 		return router.Api
-	case strings.HasPrefix(path, "/realms/"), strings.HasPrefix(path, "/resources/"):
+	case strings.HasPrefix(path, "/idp/"):
 		return router.Keycloak
 	default:
 		return router.Static

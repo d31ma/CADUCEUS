@@ -85,6 +85,15 @@ func settingsFor(fake *fakeAws, keycloak string) Settings {
 	}
 }
 
+func handlerFor(t *testing.T, settings Settings) http.Handler {
+	t.Helper()
+	handler, err := Assembly{}.Handler(settings)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return handler
+}
+
 func call(t *testing.T, handler http.Handler, method string, target string, body string) *httptest.ResponseRecorder {
 	t.Helper()
 	request := httptest.NewRequest(method, target, strings.NewReader(body))
@@ -97,7 +106,7 @@ func call(t *testing.T, handler http.Handler, method string, target string, body
 
 func TestReadyAnswersWithoutBackend(t *testing.T) {
 	fake := newFakeAws(t)
-	reply := call(t, Assembly{}.Handler(settingsFor(fake, "")), http.MethodGet, "/_router/ready", "")
+	reply := call(t, handlerFor(t, settingsFor(fake, "")), http.MethodGet, "/_router/ready", "")
 	if reply.Code != http.StatusOK || reply.Body.String() != `{"status":"ok"}` || len(fake.functions) != 0 {
 		t.Fatalf("got %d %s", reply.Code, reply.Body.String())
 	}
@@ -106,7 +115,7 @@ func TestReadyAnswersWithoutBackend(t *testing.T) {
 func TestApiCallInvokesTheServiceFunctionWithAVersionTwoEvent(t *testing.T) {
 	fake := newFakeAws(t)
 	fake.answer = `{"statusCode":201,"headers":{"content-type":"application/json"},"multiValueHeaders":{"x-list":["a","b"]},"cookies":["session=1"],"body":"eyJvayI6dHJ1ZX0=","isBase64Encoded":true}`
-	reply := call(t, Assembly{}.Handler(settingsFor(fake, "")), http.MethodPost, "/api/v1/mail-in/messages?folder=inbox&folder=sent", "hello")
+	reply := call(t, handlerFor(t, settingsFor(fake, "")), http.MethodPost, "/api/v1/mail-in/messages?folder=inbox&folder=sent", "hello")
 	event := fake.invocations[0]
 	body, _ := base64.StdEncoding.DecodeString(event.Body)
 	checks := map[string]bool{
@@ -135,7 +144,7 @@ func TestApiCallInvokesTheServiceFunctionWithAVersionTwoEvent(t *testing.T) {
 func TestPlainPayloadBecomesAJsonReply(t *testing.T) {
 	fake := newFakeAws(t)
 	fake.answer = `{"service":"identity","status":"ok"}`
-	reply := call(t, Assembly{}.Handler(settingsFor(fake, "")), http.MethodGet, "/api/v1/identity/health", "")
+	reply := call(t, handlerFor(t, settingsFor(fake, "")), http.MethodGet, "/api/v1/identity/health", "")
 	if reply.Code != http.StatusOK || reply.Body.String() != fake.answer || reply.Header().Get("Content-Type") != "application/json" {
 		t.Fatalf("got %d %s", reply.Code, reply.Body.String())
 	}
@@ -144,7 +153,7 @@ func TestPlainPayloadBecomesAJsonReply(t *testing.T) {
 func TestPlainTextBodyIsKept(t *testing.T) {
 	fake := newFakeAws(t)
 	fake.answer = `{"statusCode":200,"body":"plain"}`
-	reply := call(t, Assembly{}.Handler(settingsFor(fake, "")), http.MethodGet, "/api/v1/identity/health", "")
+	reply := call(t, handlerFor(t, settingsFor(fake, "")), http.MethodGet, "/api/v1/identity/health", "")
 	if reply.Code != http.StatusOK || reply.Body.String() != "plain" {
 		t.Fatalf("got %d %s", reply.Code, reply.Body.String())
 	}
@@ -175,7 +184,7 @@ func TestApiProblems(t *testing.T) {
 			fake.failure = testCase.failure
 			fake.status = testCase.status
 			fake.answer = testCase.answer
-			reply := call(t, Assembly{}.Handler(settingsFor(fake, "")), http.MethodPost, testCase.target, testCase.body)
+			reply := call(t, handlerFor(t, settingsFor(fake, "")), http.MethodPost, testCase.target, testCase.body)
 			var problem Problem
 			_ = json.Unmarshal(reply.Body.Bytes(), &problem)
 			if reply.Code != testCase.want || problem.Code != testCase.code {
@@ -189,7 +198,7 @@ func TestUnreachableLambdaIsABadGateway(t *testing.T) {
 	fake := newFakeAws(t)
 	settings := settingsFor(fake, "")
 	settings.LambdaEndpoint = "http://127.0.0.1:1"
-	reply := call(t, Assembly{}.Handler(settings), http.MethodGet, "/api/v1/identity/health", "")
+	reply := call(t, handlerFor(t, settings), http.MethodGet, "/api/v1/identity/health", "")
 	if reply.Code != http.StatusBadGateway {
 		t.Fatalf("got %d %s", reply.Code, reply.Body.String())
 	}
@@ -227,7 +236,7 @@ func TestStaticFiles(t *testing.T) {
 			request := httptest.NewRequest(testCase.method, testCase.target, nil)
 			request.Header.Set("Accept", testCase.accept)
 			reply := httptest.NewRecorder()
-			Assembly{}.Handler(settingsFor(fake, "")).ServeHTTP(reply, request)
+			handlerFor(t, settingsFor(fake, "")).ServeHTTP(reply, request)
 			if reply.Code != testCase.want || !strings.HasPrefix(reply.Body.String(), testCase.body) {
 				t.Fatalf("got %d %s", reply.Code, reply.Body.String())
 			}
@@ -241,7 +250,7 @@ func TestStaticFiles(t *testing.T) {
 func TestStaticStorageFailureIsABadGateway(t *testing.T) {
 	fake := newFakeAws(t)
 	fake.storageCode = http.StatusInternalServerError
-	reply := call(t, Assembly{}.Handler(settingsFor(fake, "")), http.MethodGet, "/", "")
+	reply := call(t, handlerFor(t, settingsFor(fake, "")), http.MethodGet, "/", "")
 	if reply.Code != http.StatusBadGateway {
 		t.Fatalf("got %d %s", reply.Code, reply.Body.String())
 	}
@@ -251,7 +260,7 @@ func TestStaticStorageUnreachable(t *testing.T) {
 	fake := newFakeAws(t)
 	settings := settingsFor(fake, "")
 	settings.S3Endpoint = "http://127.0.0.1:1"
-	reply := call(t, Assembly{}.Handler(settings), http.MethodGet, "/", "")
+	reply := call(t, handlerFor(t, settings), http.MethodGet, "/", "")
 	if reply.Code != http.StatusBadGateway {
 		t.Fatalf("got %d %s", reply.Code, reply.Body.String())
 	}
@@ -265,7 +274,7 @@ func TestKeycloakPathsAreProxiedWithTheOriginalHost(t *testing.T) {
 	}))
 	defer keycloak.Close()
 	fake := newFakeAws(t)
-	reply := call(t, Assembly{}.Handler(settingsFor(fake, keycloak.URL)), http.MethodGet, "/realms/example.com/.well-known/openid-configuration", "")
+	reply := call(t, handlerFor(t, settingsFor(fake, keycloak.URL)), http.MethodGet, "/idp/realms/example.com/.well-known/openid-configuration", "")
 	if reply.Code != http.StatusOK || reply.Body.String() != "realm" || seen.Host != "example.com" || seen.Header.Get("X-Forwarded-Host") != "example.com" || seen.Header.Get("X-Forwarded-Proto") != "http" {
 		t.Fatalf("got %d %s, keycloak saw %+v", reply.Code, reply.Body.String(), seen)
 	}
@@ -273,7 +282,7 @@ func TestKeycloakPathsAreProxiedWithTheOriginalHost(t *testing.T) {
 
 func TestKeycloakPathsAreMissingWithoutKeycloak(t *testing.T) {
 	fake := newFakeAws(t)
-	reply := call(t, Assembly{}.Handler(settingsFor(fake, "")), http.MethodGet, "/resources/x", "")
+	reply := call(t, handlerFor(t, settingsFor(fake, "")), http.MethodGet, "/idp/resources/x", "")
 	if reply.Code != http.StatusNotFound {
 		t.Fatalf("got %d", reply.Code)
 	}
@@ -318,7 +327,7 @@ func TestSettings(t *testing.T) {
 		want   string
 	}{
 		{name: "no services", change: map[string]string{"MESAIL_ROUTER_SERVICES": ""}, want: "MESAIL_ROUTER_SERVICES is required"},
-		{name: "bad service", change: map[string]string{"MESAIL_ROUTER_SERVICES": "identity,Bad"}, want: `bad service name "Bad"`},
+		{name: "bad service", change: map[string]string{"MESAIL_ROUTER_SERVICES": "identity,Bad"}, want: `bad name "Bad"`},
 		{name: "no endpoint", change: map[string]string{"MESAIL_ROUTER_LAMBDA_ENDPOINT": ""}, want: "MESAIL_ROUTER_LAMBDA_ENDPOINT is required"},
 		{name: "no access key", change: map[string]string{"AWS_ACCESS_KEY_ID": ""}, want: "AWS_ACCESS_KEY_ID is required"},
 		{name: "no secret", change: map[string]string{"AWS_SECRET_ACCESS_KEY": ""}, want: "AWS_SECRET_ACCESS_KEY is required"},

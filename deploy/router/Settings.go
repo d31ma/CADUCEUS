@@ -13,4 +13,6 @@ type Settings struct {
 	Credentials    Credentials
 	Timeout        time.Duration
 	BodyLimit      int64
+	Upstreams      map[string]string
+	StaticFolders  map[string]string
 }

@@ -15,6 +15,12 @@ func (handler *RealtimeErrorHandler) Unauthenticated(failure *Unauthenticated) A
 }
 
 // @HandlesError
+// @ResponseStatus(403)
+func (handler *RealtimeErrorHandler) Refused(failure *Forbidden) ApiError {
+	return ApiError{Code: "forbidden", Message: "This caller may not use this route."}
+}
+
+// @HandlesError
 // @ResponseStatus(404)
 func (handler *RealtimeErrorHandler) Missing(failure *NotFound) ApiError {
 	return ApiError{Code: "not_found", Message: "Nothing was found."}
@@ -22,12 +28,6 @@ func (handler *RealtimeErrorHandler) Missing(failure *NotFound) ApiError {
 
 // @HandlesError
 // @ResponseStatus(503)
-func (handler *RealtimeErrorHandler) Storage(failure *StorageUnavailable) ApiError {
-	return ApiError{Code: "unavailable", Message: "Realtime storage is not available. Try again later."}
-}
-
-// @HandlesError
-// @ResponseStatus(503)
-func (handler *RealtimeErrorHandler) Gateway(failure *GatewayUnavailable) ApiError {
-	return ApiError{Code: "unavailable", Message: "The connection gateway is not available. Try again later."}
+func (handler *RealtimeErrorHandler) Unavailable(failure *Unavailable) ApiError {
+	return ApiError{Code: "unavailable", Message: "Realtime is not available right now. Try again later."}
 }

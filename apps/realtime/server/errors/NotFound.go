@@ -1,7 +1,5 @@
-type NotFound struct {
-	What string
-}
+type NotFound struct{}
 
 func (failure *NotFound) Error() string {
-	return "not found: " + failure.What
+	return "not found"
 }

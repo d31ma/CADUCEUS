@@ -7,17 +7,19 @@ import (
 
 type Hub struct {
 	mutex        sync.Mutex
+	idle         *sync.Cond
 	sessions     map[string]*Session
-	running      sync.WaitGroup
+	running      int
 	shutdownCode int
 }
 
 func NewHub() *Hub {
-	return &Hub{sessions: make(map[string]*Session)}
+	hub := &Hub{sessions: make(map[string]*Session)}
+	hub.idle = sync.NewCond(&hub.mutex)
+	return hub
 }
 
 func (hub *Hub) Add(session *Session) {
-	hub.running.Add(1)
 	hub.closeWhenShuttingDown(session, hub.track(session))
 }
 
@@ -28,7 +30,10 @@ func (hub *Hub) Remove(session *Session) {
 }
 
 func (hub *Hub) Finished() {
-	hub.running.Done()
+	hub.mutex.Lock()
+	defer hub.mutex.Unlock()
+	hub.running--
+	hub.idle.Broadcast()
 }
 
 func (hub *Hub) Find(connectionId string) (*Session, bool) {
@@ -47,6 +52,7 @@ func (hub *Hub) track(session *Session) int {
 	hub.mutex.Lock()
 	defer hub.mutex.Unlock()
 	hub.sessions[session.Id()] = session
+	hub.running++
 	return hub.shutdownCode
 }
 
@@ -86,6 +92,10 @@ func (hub *Hub) wait(ctx context.Context) error {
 }
 
 func (hub *Hub) signalWhenIdle(done chan<- struct{}) {
-	hub.running.Wait()
+	hub.mutex.Lock()
+	for hub.running > 0 {
+		hub.idle.Wait()
+	}
+	hub.mutex.Unlock()
 	close(done)
 }

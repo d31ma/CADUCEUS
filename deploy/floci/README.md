@@ -105,10 +105,10 @@ scripts/floci/run-all.sh identity directory    # build and deploy only these fun
    `--vm=colima`, starts Colima and its own Floci instead. `stack.sh` builds
    the images, starts Keycloak and the router, deploys the functions, runs `go test -tags blackbox` in `tests/blackbox`, removes
    what it started, and takes the dev host down or stops Colima only if it
-   started it. In the dev host it removes only its own compose containers
-   and deletes, through the Lambda API, exactly the functions named in
-   `stack.json`; it never removes the host's containers, volumes or
-   networks. Only with `MESAIL_VM=colima`, where it started Floci itself,
+   started it. In the dev host it only stops its own compose containers
+   (`compose stop`; the next run starts them again) and deletes, through the
+   Lambda API, exactly the functions named in `stack.json`; it never removes
+   any container, volume or network there. Only with `MESAIL_VM=colima`, where it started Floci itself,
    does it also remove Floci's function containers, EFS volumes and network. An image that fails to build is a warning: that function is
    not deployed and its tests fail.
 

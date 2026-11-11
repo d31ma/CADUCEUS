@@ -54,9 +54,14 @@ main() {
   mesail_load_settings
   mesail_load_secrets
   profile="$(used_profile)"
+  if ! own_floci; then
+    # shellcheck disable=SC2086
+    mesail_step compose-stop compose $profile stop
+    mesail_step remove-functions remove_functions_in_floci
+    return
+  fi
   # shellcheck disable=SC2086
   mesail_step compose-down compose $profile down --remove-orphans
-  if ! own_floci; then mesail_step remove-functions remove_functions_in_floci; return; fi
   mesail_step remove-functions remove_function_containers
   mesail_step remove-volumes remove_file_system_volumes
   mesail_step remove-network docker network rm --force mesail_floci_backend

@@ -16,20 +16,21 @@ type LambdaInvoker struct {
 	Signer   Signer
 	Now      func() time.Time
 	Limits   ConcurrencyLimits
+	Entries  EntryRule
 }
 
-func (invoker LambdaInvoker) Invoke(context context.Context, function string, event HttpEvent) ([]byte, error) {
+func (invoker LambdaInvoker) Invoke(caller context.Context, function string, event HttpEvent) ([]byte, error) {
 	payload, err := json.Marshal(event)
 	if err != nil {
 		return nil, err
 	}
-	request, err := http.NewRequestWithContext(context, http.MethodPost, invoker.Endpoint+"/2015-03-31/functions/"+function+"/invocations", bytes.NewReader(payload))
+	request, err := http.NewRequestWithContext(context.WithoutCancel(caller), http.MethodPost, invoker.Endpoint+"/2015-03-31/functions/"+function+"/invocations", bytes.NewReader(payload))
 	if err != nil {
 		return nil, err
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("X-Amz-Invocation-Type", "RequestResponse")
-	release, err := invoker.Limits.Enter(context, function)
+	release, err := invoker.Entries.For(event).Take(caller, invoker.Limits.Slot(function))
 	if err != nil {
 		return nil, err
 	}
@@ -49,13 +50,13 @@ func (invoker LambdaInvoker) Invoke(context context.Context, function string, ev
 
 func (invoker LambdaInvoker) checked(function string, response *http.Response, answer []byte) ([]byte, error) {
 	failed := response.StatusCode != http.StatusOK || response.Header.Get("X-Amz-Function-Error") != ""
-	return invoker.unlessFailed(function, failed, answer)
+	return invoker.unlessFailed(function, failed, answer, Problems{}.InvokeFailed(response.StatusCode))
 }
 
-func (LambdaInvoker) unlessFailed(function string, failed bool, answer []byte) ([]byte, error) {
+func (LambdaInvoker) unlessFailed(function string, failed bool, answer []byte, problem Problem) ([]byte, error) {
 	if failed {
 		slog.Error("function failed", "function", function, "answer", string(answer))
-		return nil, Problems{}.FunctionFailed()
+		return nil, problem
 	}
 	return answer, nil
 }

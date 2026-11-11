@@ -301,7 +301,17 @@ Limits at the router:
 - **One writer per FYLO root:** in Lambda mode the router sends one request
   at a time to each FYLO-owning function (`MESAIL_ROUTER_SINGLE_WRITERS`,
   filled from `stack.json`) and queues the others, so reserved concurrency 1
-  never answers 429 to a user. Other functions take up to 1000 at once.
+  never answers 429 to a user. A request keeps its function's place until
+  the function answers, even when the caller stops waiting, because the
+  function keeps running. Other functions take up to 1000 at once.
+- **Event pushes never wait:** `POST /api/v1/<service>/events` to a
+  FYLO-owning function that is busy gets 429 `function-busy` at once, as a
+  throttled Lambda does in AWS. The producer's outbox keeps the event and
+  the relay schedule sends it again. Without this, drain on write deadlocks:
+  a send in `messaging` pushes to `mail-out/events`, mail-out's intake
+  pushes `email.queued` back to `messaging/events`, and that push would wait
+  for the slot the send still holds. Floci's own throttle (429
+  `TooManyRequestsException`) is also answered as 429 `function-busy`.
 
 Static replies carry `Content-Security-Policy`, `X-Content-Type-Options`,
 `X-Frame-Options` and `Referrer-Policy`.

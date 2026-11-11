@@ -51,16 +51,16 @@ func TestClientWithoutPortIsKeptWhole(t *testing.T) {
 
 func TestSingleWriterFunctionGetsOneRequestAtATime(t *testing.T) {
 	limits := ConcurrencyLimits{}.Of([]string{"identity", "directory"}, []string{"directory"}, "mesail-", 1000)
-	release, err := limits.Enter(context.Background(), "mesail-directory")
+	release, err := QueuedEntry{}.Take(context.Background(), limits.Slot("mesail-directory"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	waiting, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
-	_, blocked := limits.Enter(waiting, "mesail-directory")
-	other, otherErr := limits.Enter(context.Background(), "mesail-identity")
+	_, blocked := QueuedEntry{}.Take(waiting, limits.Slot("mesail-directory"))
+	other, otherErr := QueuedEntry{}.Take(context.Background(), limits.Slot("mesail-identity"))
 	release()
-	again, againErr := limits.Enter(context.Background(), "mesail-directory")
+	again, againErr := QueuedEntry{}.Take(context.Background(), limits.Slot("mesail-directory"))
 	if blocked == nil || otherErr != nil || againErr != nil || cap(limits.Slots["mesail-identity"]) != 1000 {
 		t.Fatalf("blocked %v, other %v, again %v", blocked, otherErr, againErr)
 	}

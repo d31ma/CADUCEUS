@@ -175,7 +175,7 @@ func TestApiProblems(t *testing.T) {
 		{name: "empty service", target: "/api/v1/", want: http.StatusNotFound, code: "unknown-service"},
 		{name: "body too large", target: "/api/v1/identity/x", body: strings.Repeat("a", 17), want: http.StatusRequestEntityTooLarge, code: "body-too-large"},
 		{name: "function error", target: "/api/v1/identity/x", failure: "Unhandled", status: http.StatusOK, want: http.StatusBadGateway, code: "function-error"},
-		{name: "invoke refused", target: "/api/v1/identity/x", status: http.StatusTooManyRequests, want: http.StatusBadGateway, code: "function-error"},
+		{name: "invoke throttled", target: "/api/v1/identity/x", status: http.StatusTooManyRequests, want: http.StatusTooManyRequests, code: "function-busy"},
 		{name: "broken result", target: "/api/v1/identity/x", status: http.StatusOK, answer: `{"statusCode":"x"}`, want: http.StatusBadGateway, code: "function-error"},
 		{name: "broken base64", target: "/api/v1/identity/x", status: http.StatusOK, answer: `{"statusCode":200,"body":"%%%","isBase64Encoded":true}`, want: http.StatusBadGateway, code: "function-error"},
 	}

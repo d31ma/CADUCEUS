@@ -22,6 +22,21 @@ func (Problems) FunctionFailed() Problem {
 	return Problem{Status: http.StatusBadGateway, Code: "function-error", Message: "the service failed to answer"}
 }
 
+func (Problems) FunctionBusy() Problem {
+	return Problem{Status: http.StatusTooManyRequests, Code: "function-busy", Message: "the service is busy; try again later"}
+}
+
+func (problems Problems) InvokeFailed(status int) Problem {
+	return problems.invokeProblem(status == http.StatusTooManyRequests)
+}
+
+func (problems Problems) invokeProblem(throttled bool) Problem {
+	if throttled {
+		return problems.FunctionBusy()
+	}
+	return problems.FunctionFailed()
+}
+
 func (Problems) UpstreamFailed() Problem {
 	return Problem{Status: http.StatusBadGateway, Code: "upstream-error", Message: "the storage failed to answer"}
 }

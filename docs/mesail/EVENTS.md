@@ -192,7 +192,11 @@ outbound delivery queue, retries, email summaries, cleanup):
      schedules and the small trigger that fetches the token).
 3. **Drain on write** stays: a producing route calls `RelayDocument` right
    after its own write, so most events leave within the same request; the
-   schedule only sweeps what is left.
+   schedule only sweeps what is left. A push to a FYLO-owning service that
+   is busy (reserved concurrency 1) is answered 429 at once and stays
+   pending; it never waits, because drain on write can call back into the
+   service that is pushing (messaging -> mail-out -> messaging). The Floci
+   router does the same (`deploy/floci/README.md`, router limits).
 
 **Service tokens** (`kit/oidc`, documented in
 `docs/mesail/SERVICE-TOKENS.md`; changed by ADR 0005 on 2026-11-11):

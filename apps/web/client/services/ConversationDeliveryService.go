@@ -60,11 +60,27 @@ func (service *ConversationDeliveryService) problemLabel(worst DeliveryLine) str
 	return worst.StatusLabel + service.forWord() + worst.Recipient
 }
 
+func (service *ConversationDeliveryService) forWord() string {
+	return " for "
+}
+
+func (service *ConversationDeliveryService) toWord() string {
+	return " to "
+}
+
+func (service *ConversationDeliveryService) byWord() string {
+	return " by "
+}
+
 func (service *ConversationDeliveryService) countedLabel(worst DeliveryLine, count int) string {
 	if count <= service.onePerson() {
 		return worst.StatusLabel
 	}
 	return worst.StatusLabel + worst.Connector + strconv.Itoa(count) + " people"
+}
+
+func (service *ConversationDeliveryService) onePerson() int {
+	return 1
 }
 
 func (service *ConversationDeliveryService) states() map[string]DeliveryLine {
@@ -92,10 +108,6 @@ func (service *ConversationDeliveryService) ranks() map[string]int {
 	}
 }
 
-func (service *ConversationDeliveryService) onePerson() int {
-	return 1
-}
-
 func (service *ConversationDeliveryService) okTone() string {
 	return "ok"
 }
@@ -110,16 +122,4 @@ func (service *ConversationDeliveryService) warningTone() string {
 
 func (service *ConversationDeliveryService) dangerTone() string {
 	return "danger"
-}
-
-func (service *ConversationDeliveryService) forWord() string {
-	return " for "
-}
-
-func (service *ConversationDeliveryService) toWord() string {
-	return " to "
-}
-
-func (service *ConversationDeliveryService) byWord() string {
-	return " by "
 }

@@ -36,6 +36,7 @@ func (service *SessionAccountService) Current() SessionAccount {
 
 func (service *SessionAccountService) accountOf(me Me) SessionAccount {
 	return SessionAccount{
+		MemberId:    me.MemberId,
 		DomainId:    me.DomainId,
 		Address:     me.PrimaryAddress,
 		DisplayName: me.DisplayName,

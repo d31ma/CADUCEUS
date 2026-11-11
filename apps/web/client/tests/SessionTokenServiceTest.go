@@ -103,3 +103,9 @@ func (test *SessionTokenServiceTest) TestRenewRefreshesNow() {
 	accessToken, _ := tokens.AccessToken("example.com")
 	Assert.Equals("access-2", accessToken)
 }
+
+func (test *SessionTokenServiceTest) TestRenewSkipsWhenAnotherRefreshFinishedFirst() {
+	tokens := test.signedIn()
+	Assert.Equals(nil, tokens.renewUnlessRefreshedSince("example.com", tokens.refreshes-1))
+	Assert.Equals("key-1", tokens.SavedKeys()["example.com"])
+}

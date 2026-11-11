@@ -71,3 +71,9 @@ func (test *SessionAccountServiceTest) TestDomainsWithTheSameStartGetTheirEnding
 	Assert.Equals("Eo", accounts.Accounts[1].Initials)
 	Assert.Equals("La", accounts.Accounts[2].Initials)
 }
+
+func (test *SessionAccountServiceTest) TestAddKeepsTheMemberId() {
+	accounts := &SessionAccountService{}
+	accounts.Add(test.me("example.com", "ana@example.com"))
+	Assert.Equals("m-1", accounts.Current().MemberId)
+}

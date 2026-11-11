@@ -29,6 +29,9 @@
         "license": "MIT",
         "sha256": "62e97288962ba9bf9143b3723f06d8fab7dbdfd4359ea27a66746dba0a679896"
       }
-    }
+    },
+    "browserApis": [
+      "notifications"
+    ]
   }
 }

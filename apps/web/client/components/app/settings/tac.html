@@ -1,10 +1,10 @@
 <section class="mx-auto flex w-full max-w-[50rem] flex-col gap-6 px-4 py-6 md:px-8" aria-label="Account settings">
-  <w-card variant="outlined" class="flex flex-col">
+  <section class="settings-card flex flex-col" aria-label="Account and sign-in">
     <div class="flex flex-col gap-1 p-4 md:px-6">
       <h2 class="settings-heading">Account and sign-in</h2>
       <p class="settings-help">Mesail never stores your password. Your domain's sign-in system checks it.</p>
     </div>
-    <w-divider></w-divider>
+    <hr class="settings-rule">
     <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
       <div class="flex min-w-0 flex-col gap-1">
         <h3 class="settings-subheading">Password</h3>
@@ -12,7 +12,7 @@
       </div>
       <w-btn variant="outlined" on:click="sessionSettings.startPasswordChange()">Change password</w-btn>
     </div>
-    <w-divider></w-divider>
+    <hr class="settings-rule">
     <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
       <div class="flex min-w-0 flex-col gap-1">
         <div class="flex flex-wrap items-center gap-2">
@@ -45,7 +45,7 @@
         </case>
       </switch>
     </div>
-  </w-card>
+  </section>
 
   <switch :value="sessionSettings.step">
     <case :when="'password'">

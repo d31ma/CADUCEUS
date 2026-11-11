@@ -2,12 +2,15 @@ import (
 	"errors"
 	"maps"
 	"sort"
+	"sync"
 )
 
 // @Service
 type SessionTokenService struct {
-	keys   map[string]string
-	tokens map[string]SessionTokens
+	keys       map[string]string
+	tokens     map[string]SessionTokens
+	refreshes  int
+	refreshing sync.Mutex
 	// @Needs
 	identity *IdentityClient
 	// @Needs
@@ -34,8 +37,10 @@ func (service *SessionTokenService) AccessToken(domainId string) (string, error)
 }
 
 func (service *SessionTokenService) Renew(domainId string) error {
-	_, failure := service.refresh(domainId)
-	return failure
+	seen := service.refreshes
+	service.refreshing.Lock()
+	defer service.refreshing.Unlock()
+	return service.renewUnlessRefreshedSince(domainId, seen)
 }
 
 func (service *SessionTokenService) ChangePassword(domainId string, change SessionPasswordChange) error {
@@ -79,6 +84,20 @@ func (service *SessionTokenService) refresh(domainId string) (Me, error) {
 }
 
 func (service *SessionTokenService) refreshWhenDue(domainId string) error {
+	service.refreshing.Lock()
+	defer service.refreshing.Unlock()
+	return service.refreshIfDue(domainId)
+}
+
+func (service *SessionTokenService) renewUnlessRefreshedSince(domainId string, seen int) error {
+	if service.refreshes != seen {
+		return nil
+	}
+	_, failure := service.refresh(domainId)
+	return failure
+}
+
+func (service *SessionTokenService) refreshIfDue(domainId string) error {
 	now, failure := service.clock.NowMs()
 	if failure != nil || now < service.tokens[domainId].ExpiresAtMs-service.refreshMarginMs() {
 		return failure
@@ -99,6 +118,7 @@ func (service *SessionTokenService) keep(session Session) error {
 	domainId := session.Me.DomainId
 	service.makeKeys()
 	service.makeTokens()
+	service.refreshes++
 	service.keys[domainId] = session.SessionKey
 	service.tokens[domainId] = SessionTokens{
 		AccessToken: session.AccessToken,

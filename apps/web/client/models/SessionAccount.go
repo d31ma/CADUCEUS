@@ -1,4 +1,5 @@
 type SessionAccount struct {
+	MemberId    string `json:"memberId"`
 	DomainId    string `json:"domainId"`
 	Address     string `json:"address"`
 	DisplayName string `json:"displayName"`

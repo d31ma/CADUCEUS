@@ -233,6 +233,9 @@ func TestJsonFileCacheReportsAFolderItCannotCreate(t *testing.T) {
 }
 
 func TestJsonFileCacheReportsAFolderItCannotWrite(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root can write to a read-only folder")
+	}
 	folder := t.TempDir()
 	if err := os.Chmod(folder, 0o500); err != nil {
 		t.Fatal(err)

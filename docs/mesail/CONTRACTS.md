@@ -121,7 +121,7 @@ in Mesail's own settings; the browser still never talks to Keycloak):
 | --- | --- | --- | --- |
 | `POST /api/v1/identity/password` | SignedIn | `PasswordChange{currentPassword, newPassword, oneTimeCode?}` | `200 Session` (fresh tokens); `401` wrong current password or code; `400 password_policy` with `ApiError.message` naming the failed rule |
 | `GET /api/v1/identity/totp` | SignedIn | - | `200 TotpStatus{enabled}`: whether the caller's account has an OTP credential (read through the `mesail-account` client; `Me` stays token-only) |
-| `POST /api/v1/identity/totp/setup` | SignedIn | `TotpSetupRequest{currentPassword}` | `200 TotpSetup{secret, otpauthUri, qrImage, setupKey}` |
+| `POST /api/v1/identity/totp/setup` | SignedIn | `TotpSetupRequest{currentPassword}` (no `oneTimeCode`: setup is only for an account without a 2-step code; to replace a code, `DELETE /totp` first) | `200 TotpSetup{secret, otpauthUri, qrImage, setupKey}`; `401` wrong password, or the account already has a 2-step code |
 | `POST /api/v1/identity/totp/confirm` | SignedIn | `TotpConfirm{setupKey, code}` | `204`; `400 invalid_code` |
 | `DELETE /api/v1/identity/totp` | SignedIn | `TotpRemove{currentPassword, oneTimeCode}` | `204`; `401` |
 

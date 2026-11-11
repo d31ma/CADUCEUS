@@ -36,3 +36,16 @@ func (test *ComposerSendServiceTest) TestResetStartsANewMessage() {
 	sender.Reset()
 	Assert.Equals("", sender.PendingId)
 }
+
+func (test *ComposerSendServiceTest) TestASignedOutAnswerRenewsTheTokenAndSendsAgain() {
+	sender := test.sender()
+	result, failure := sender.againWhenSignedOut(SendRequest{ClientMessageId: "id-9", Body: "hello"}, SendResult{}, &BehaviorError{Code: "HTTP_STATUS", Status: 401})
+	Assert.Equals(nil, failure)
+	Assert.Equals("msg-id-9", result.Message.MessageId)
+}
+
+func (test *ComposerSendServiceTest) TestOtherFailuresAreNotSentAgain() {
+	sender := test.sender()
+	_, failure := sender.againWhenSignedOut(SendRequest{Body: "hello"}, SendResult{}, &BehaviorError{Code: "HTTP_STATUS", Status: 503})
+	Assert.Equals(503, BehaviorErrorStatus(failure))
+}

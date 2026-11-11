@@ -1,3 +1,24 @@
+.composer-chip-remove,
+.composer-row-toggle {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--w-radius-md);
+}
+
+.composer-row-input {
+  border: 0;
+  background: transparent;
+  color: var(--w-text);
+  font: inherit;
+  outline: none;
+}
+
+.composer-row:focus-within {
+  box-shadow: inset 0 -2px 0 var(--w-focus-ring-color);
+}
+
 .composer-row {
   min-height: 2.5rem;
   border-bottom: 1px solid var(--w-divider);
@@ -80,7 +101,7 @@
 }
 
 .composer-chip .w-menu-activator:focus-visible,
-.composer-chip-remove .w-btn:focus-visible {
+.composer-chip-remove:focus-visible {
   outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
   outline-offset: var(--w-focus-ring-offset);
 }
@@ -127,7 +148,7 @@
   color: var(--w-error);
 }
 
-.composer-chip-remove .w-btn {
+.composer-chip-remove {
   width: 1.375rem;
   height: 1.375rem;
   min-width: 0;
@@ -137,7 +158,7 @@
   color: var(--w-text-subtle);
 }
 
-.composer-chip-remove .w-btn:hover {
+.composer-chip-remove:hover {
   background: var(--w-hover);
   color: var(--w-text);
 }
@@ -228,28 +249,28 @@
   color: var(--w-error);
 }
 
-.composer-row-input input {
+.composer-row-input {
   min-height: 2rem;
   font-size: var(--w-font-base);
 }
 
-.composer-row-input input::placeholder {
+.composer-row-input::placeholder {
   color: var(--w-text-very-subtle);
 }
 
-.composer-row-toggle .w-btn {
+.composer-row-toggle {
   min-height: 1.75rem;
   padding: 0 var(--w-space-2);
   color: var(--w-text-subtle);
   font-size: var(--w-font-sm);
 }
 
-.composer-row-toggle .w-btn[aria-expanded="true"] {
+.composer-row-toggle[aria-expanded="true"] {
   background: var(--w-selected);
   color: var(--w-selected-text);
 }
 
-.composer-row-toggle .w-btn:focus-visible {
+.composer-row-toggle:focus-visible {
   outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
   outline-offset: var(--w-focus-ring-offset);
 }
@@ -303,14 +324,14 @@
   }
 
   .composer-chip .w-menu-activator,
-  .composer-chip-remove .w-btn,
-  .composer-row-toggle .w-btn,
-  .composer-row-input input,
+  .composer-chip-remove,
+  .composer-row-toggle,
+  .composer-row-input,
   .composer-menu-item {
     min-height: var(--ms-touch-min);
   }
 
-  .composer-chip-remove .w-btn {
+  .composer-chip-remove {
     width: var(--ms-touch-min);
     height: var(--ms-touch-min);
   }
@@ -321,3 +342,89 @@
     animation: none;
   }
 }
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .mx-3 {
+    margin-inline: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .my-1 {
+    margin-block: var(--spacing, 0.25rem);
+  }
+  .mt-0\.5 {
+    margin-top: calc(var(--spacing, 0.25rem) * 0.5);
+  }
+  .ml-auto {
+    margin-left: auto;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .inline-flex {
+    display: inline-flex;
+  }
+  .w-14 {
+    width: calc(var(--spacing, 0.25rem) * 14);
+  }
+  .max-w-full {
+    max-width: 100%;
+  }
+  .min-w-0 {
+    min-width: 0px;
+  }
+  .min-w-32 {
+    min-width: calc(var(--spacing, 0.25rem) * 32);
+  }
+  .flex-1 {
+    flex: 1;
+  }
+  .shrink-0 {
+    flex-shrink: 0;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .items-start {
+    align-items: flex-start;
+  }
+  .justify-center {
+    justify-content: center;
+  }
+  .gap-0\.5 {
+    gap: calc(var(--spacing, 0.25rem) * 0.5);
+  }
+  .gap-1 {
+    gap: var(--spacing, 0.25rem);
+  }
+  .gap-1\.5 {
+    gap: calc(var(--spacing, 0.25rem) * 1.5);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .px-2 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .py-1 {
+    padding-block: var(--spacing, 0.25rem);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing, 0.25rem) * 2);
+  }
+}
+/* @tachyon-generated-tailwind:end */

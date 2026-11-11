@@ -1,6 +1,6 @@
-<div class="composer-recipients">
+<div class="composer-recipients" :hidden="!composer.newConversation">
   <loop :for="row of composer.rows">
-    <div class="composer-row-block" :id="'composer-row-' + row.role">
+    <div class="composer-row-block" :id="'composer-row-' + row.role" :hidden="!row.shown">
       <div class="composer-row flex flex-wrap items-center gap-2 px-3 py-1" role="group" :aria-label="row.label">
         <span class="composer-row-label w-14 shrink-0" aria-hidden="true">{row.label}</span>
         <loop :for="item of row.recipients">
@@ -119,16 +119,17 @@
                 <span>Remove {item.displayName}</span>
               </button>
             </w-menu>
-            <w-icon-btn class="composer-chip-remove" size="x-small" variant="text" :aria-label="'Remove ' + item.displayName" on:click="composer.remove(item.address, item.role)">
+            <button type="button" class="composer-chip-remove inline-flex items-center justify-center" :aria-label="'Remove ' + item.displayName" on:click="composer.remove(item.address, item.role)">
               <svg class="composer-icon composer-icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
-            </w-icon-btn>
+            </button>
           </span>
         </loop>
-        <w-text-field class="composer-row-input min-w-32 flex-1" variant="plain" density="compact" single-line hide-details autocomplete="off" :label="row.label" :placeholder="row.placeholder" :value="row.text" on:input="composer.typeText(row.role, $event.detail.value)" on:keydown="composer.recipientKey(row.role, $event.key, $event.target.value)" on:change="composer.addTyped(row.role)"></w-text-field>
+        <label class="composer-sr-only" :for="'composer-input-' + row.role">{row.label}</label>
+        <input class="composer-row-input min-w-32 flex-1" type="text" :id="'composer-input-' + row.role" :name="row.role" inputmode="email" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" :placeholder="row.placeholder" :value="row.text">
         <logic :if="row.role == 'to'">
           <span class="ml-auto inline-flex items-center gap-1">
-            <w-btn class="composer-row-toggle" size="small" variant="text" aria-controls="composer-row-cc" :aria-expanded="shell.flag(composer.showCc)" on:click="composer.toggleCc()">Cc</w-btn>
-            <w-btn class="composer-row-toggle" size="small" variant="text" aria-controls="composer-row-bcc" :aria-expanded="shell.flag(composer.showBlindCopy)" on:click="composer.toggleBlindCopy()">Bcc</w-btn>
+            <button type="button" class="composer-row-toggle px-2" aria-controls="composer-row-cc" :aria-expanded="shell.flag(composer.showCc)" on:click="composer.toggleCc($event.target.form.to.value)">Cc</button>
+            <button type="button" class="composer-row-toggle px-2" aria-controls="composer-row-bcc" :aria-expanded="shell.flag(composer.showBlindCopy)" on:click="composer.toggleBlindCopy($event.target.form.to.value, $event.target.form.cc.value)">Bcc</button>
           </span>
         </logic>
       </div>

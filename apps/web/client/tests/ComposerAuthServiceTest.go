@@ -9,6 +9,12 @@ func (test *ComposerAuthServiceTest) TestAuthorizationIsABearerToken() {
 	Assert.Equals("Bearer access-1", authorization)
 }
 
+func (test *ComposerAuthServiceTest) TestRenewedAsksForAFreshToken() {
+	authorization, failure := ComposerTestSetup{}.Auth(test.behaviors).Renewed()
+	Assert.Equals(nil, failure)
+	Assert.Equals("Bearer access-2", authorization)
+}
+
 func (test *ComposerAuthServiceTest) TestDomainIdIsTheCurrentDomain() {
 	Assert.Equals("example.com", ComposerTestSetup{}.Auth(test.behaviors).DomainId())
 }

@@ -9,9 +9,13 @@ func (test *ComposerServiceTest) composer() *ComposerService {
 
 func (test *ComposerServiceTest) with(addresses string) *ComposerService {
 	composer := test.composer()
-	composer.ToText = addresses
-	composer.AddTyped("to")
+	composer.SubmitWith(addresses, "", "")
 	return composer
+}
+
+func (test *ComposerServiceTest) sendWith(composer *ComposerService, body string) {
+	composer.KeepBody(body)
+	composer.SubmitWith("", "", "")
 }
 
 func (test *ComposerServiceTest) deliverPending(composer *ComposerService) {
@@ -21,7 +25,8 @@ func (test *ComposerServiceTest) deliverPending(composer *ComposerService) {
 func (test *ComposerServiceTest) TestStartOpensANewConversationWithAToRow() {
 	composer := test.composer()
 	Assert.IsTrue(composer.NewConversation)
-	Assert.Equals(1, len(composer.Rows))
+	Assert.IsTrue(composer.Rows[0].Shown)
+	Assert.IsTrue(!composer.Rows[1].Shown)
 	Assert.Equals("Name, channel or email address", composer.Rows[0].Placeholder)
 }
 
@@ -29,7 +34,7 @@ func (test *ComposerServiceTest) TestOpenAnExistingConversationHidesTheRows() {
 	composer := test.composer()
 	composer.Open(SendTarget{ConversationId: "conv-1", Title: "#releases"})
 	Assert.IsTrue(!composer.NewConversation)
-	Assert.Equals(0, len(composer.Rows))
+	Assert.IsTrue(!composer.Rows[0].Shown)
 	Assert.IsTrue(!composer.EmailMode)
 }
 
@@ -46,9 +51,22 @@ func (test *ComposerServiceTest) TestOpenKeepsAnExistingReplyPrefix() {
 	Assert.Equals("RE: Contract", composer.Subject)
 }
 
-func (test *ComposerServiceTest) TestAddTypedShowsChipsAndSummary() {
-	composer := test.with("bo@example.com carol@partner.org")
+func (test *ComposerServiceTest) TestDomainChangedStartsAnEmptyNewMessage() {
+	composer := test.with("bo@example.com")
+	composer.Open(SendTarget{ConversationId: "conv-1"})
+	composer.KeepBody("draft")
+	composer.DomainChanged(SessionDomainChanged{DomainId: "example.org"})
+	Assert.IsTrue(composer.NewConversation)
+	Assert.Equals("", composer.Body)
+	Assert.Equals(0, len(composer.To))
+}
+
+func (test *ComposerServiceTest) TestSubmitWithTypedAddressesAddsChipsAndDoesNotSend() {
+	composer := test.composer()
+	composer.KeepBody("hello")
+	composer.SubmitWith("bo@example.com carol@partner.org", "", "")
 	Assert.Equals(2, len(composer.To))
+	Assert.IsTrue(!composer.Sending)
 	Assert.Equals("", composer.ToText)
 	Assert.Equals("Add more people", composer.Rows[0].Placeholder)
 	Assert.Equals([]string{"Bo Lee gets a chat message.", "carol@partner.org gets an email."}, composer.Summary)
@@ -56,45 +74,42 @@ func (test *ComposerServiceTest) TestAddTypedShowsChipsAndSummary() {
 	Assert.IsTrue(composer.EmailMode)
 }
 
-func (test *ComposerServiceTest) TestRecipientKeyEnterAddsTheTypedAddress() {
+func (test *ComposerServiceTest) TestSubmitWithResolvesCcAndBlindCopyLikeTo() {
 	composer := test.composer()
-	composer.RecipientKey("to", "Enter", "eve@example.org")
-	Assert.Equals("Email · other domain", composer.To[0].Label)
-	Assert.Equals("", composer.ToText)
-}
-
-func (test *ComposerServiceTest) TestRecipientKeyBackspaceInAnEmptyFieldRemovesTheLastChip() {
-	composer := test.with("bo@example.com carol@partner.org")
-	composer.RecipientKey("to", "Backspace", "")
-	Assert.Equals(1, len(composer.To))
-}
-
-func (test *ComposerServiceTest) TestRecipientKeyOtherKeysOnlyKeepTheText() {
-	composer := test.composer()
-	composer.RecipientKey("cc", "a", "bo@exa")
-	Assert.Equals("bo@exa", composer.CcText)
-	Assert.Equals(0, len(composer.Cc))
-}
-
-func (test *ComposerServiceTest) TestTypeTextKeepsTheText() {
-	composer := test.composer()
-	composer.TypeText("bcc", "carol@")
-	Assert.Equals("carol@", composer.BlindCopyText)
-}
-
-func (test *ComposerServiceTest) TestToggleCcAndBlindCopyShowTheirRows() {
-	composer := test.composer()
-	composer.ToggleCc()
-	composer.ToggleBlindCopy()
-	Assert.Equals(3, len(composer.Rows))
-	Assert.Equals("Hidden from everyone else", composer.Rows[2].Placeholder)
-}
-
-func (test *ComposerServiceTest) TestCcRecipientsAreResolvedLikeTo() {
-	composer := test.composer()
-	composer.ToggleCc()
-	composer.RecipientKey("cc", "Enter", "eve@example.org")
+	composer.SubmitWith("", "eve@example.org", "carol@partner.org")
 	Assert.Equals("otherDomain", composer.Cc[0].Kind)
+	Assert.Equals("external", composer.BlindCopy[0].Kind)
+	Assert.IsTrue(composer.Rows[1].Shown)
+	Assert.IsTrue(composer.Rows[2].Shown)
+}
+
+func (test *ComposerServiceTest) TestAnotherDomainShowsTheEmailOnlyChip() {
+	composer := test.with("eve@example.org")
+	Assert.Equals("Email · other domain", composer.To[0].Label)
+	Assert.Equals("Chat stays inside example.com", composer.To[0].ChatReason)
+}
+
+func (test *ComposerServiceTest) TestToggleCcKeepsTheTypedText() {
+	composer := test.composer()
+	composer.ToggleCc("bo@exa")
+	Assert.Equals("bo@exa", composer.Rows[0].Text)
+	Assert.IsTrue(composer.Rows[1].Shown)
+}
+
+func (test *ComposerServiceTest) TestToggleBlindCopyKeepsTheTypedText() {
+	composer := test.composer()
+	composer.ToggleBlindCopy("bo@exa", "carol@")
+	Assert.Equals("carol@", composer.CcText)
+	Assert.Equals("Hidden from everyone else", composer.Rows[2].Placeholder)
+	Assert.IsTrue(composer.Rows[2].Shown)
+}
+
+func (test *ComposerServiceTest) TestKeepSubjectAndBodyKeepTheText() {
+	composer := test.composer()
+	composer.KeepSubject("Plan")
+	composer.KeepBody("hello")
+	Assert.Equals("Plan", composer.Subject)
+	Assert.Equals("hello", composer.Body)
 }
 
 func (test *ComposerServiceTest) TestChooseAnnouncesTheNewChoice() {
@@ -112,8 +127,7 @@ func (test *ComposerServiceTest) TestRemoveTakesTheChipAway() {
 
 func (test *ComposerServiceTest) TestSendWithoutRecipientsAsksForOne() {
 	composer := test.composer()
-	composer.Body = "hello"
-	composer.Send()
+	test.sendWith(composer, "hello")
 	Assert.Equals("addRecipient", composer.Problem)
 	Assert.Equals("Add a recipient to send.", composer.ProblemText)
 	Assert.IsTrue(!composer.Sending)
@@ -121,62 +135,54 @@ func (test *ComposerServiceTest) TestSendWithoutRecipientsAsksForOne() {
 
 func (test *ComposerServiceTest) TestSendRefusesMoreThanTwentyRecipients() {
 	composer := test.with("p0@partner.org p1@partner.org p2@partner.org p3@partner.org p4@partner.org p5@partner.org p6@partner.org p7@partner.org p8@partner.org p9@partner.org p10@partner.org p11@partner.org p12@partner.org p13@partner.org p14@partner.org p15@partner.org p16@partner.org p17@partner.org p18@partner.org p19@partner.org p20@partner.org")
-	composer.Body = "hello"
-	composer.Send()
+	test.sendWith(composer, "hello")
 	Assert.Equals("tooManyRecipients", composer.Problem)
 }
 
 func (test *ComposerServiceTest) TestSendRefusesAnInvalidAddress() {
 	composer := test.with("carol@partner")
-	composer.Body = "hello"
-	composer.Send()
+	test.sendWith(composer, "hello")
 	Assert.Equals("fixRecipients", composer.Problem)
 }
 
 func (test *ComposerServiceTest) TestSendEmailWithoutSubjectMarksTheSubject() {
 	composer := test.with("carol@partner.org")
-	composer.Body = "hello"
-	composer.Send()
+	test.sendWith(composer, "hello")
 	Assert.Equals("subjectMissing", composer.Problem)
 	Assert.IsTrue(composer.SubjectMissing)
 }
 
 func (test *ComposerServiceTest) TestSendWithoutContentAsksForAMessage() {
 	composer := test.with("bo@example.com")
-	composer.Body = "   "
-	composer.Send()
+	test.sendWith(composer, "   ")
 	Assert.Equals("emptyMessage", composer.Problem)
 }
 
 func (test *ComposerServiceTest) TestSendWaitsForUploads() {
 	composer := test.with("bo@example.com")
-	composer.Body = "hello"
 	composer.Picked(UploadPicked{FileName: "plan.pdf", Size: 10})
-	composer.Send()
+	test.sendWith(composer, "hello")
 	Assert.Equals("waitForUploads", composer.Problem)
 }
 
 func (test *ComposerServiceTest) TestSendRefusesFailedUploads() {
 	composer := test.with("bo@example.com")
-	composer.Body = "hello"
 	composer.Picked(UploadPicked{FileName: "broken.pdf", Size: 10})
-	composer.Send()
+	test.sendWith(composer, "hello")
 	Assert.Equals("fixAttachments", composer.Problem)
 }
 
 func (test *ComposerServiceTest) TestSendWhileSendingWaits() {
 	composer := test.with("bo@example.com")
-	composer.Body = "hello"
 	composer.Sending = true
-	composer.Send()
+	test.sendWith(composer, "hello")
 	Assert.Equals("stillSending", composer.Problem)
 }
 
 func (test *ComposerServiceTest) TestSendStartsSendingAMixedMessage() {
 	composer := test.with("bo@example.com carol@partner.org")
-	composer.Subject = "Plan"
-	composer.Body = "hello"
-	composer.Send()
+	composer.KeepSubject("Plan")
+	test.sendWith(composer, "hello")
 	Assert.Equals("", composer.Problem)
 	Assert.IsTrue(composer.Sending)
 	request := composer.request(true)
@@ -187,8 +193,7 @@ func (test *ComposerServiceTest) TestSendStartsSendingAMixedMessage() {
 
 func (test *ComposerServiceTest) TestDeliverClearsTheComposerAfterSuccess() {
 	composer := test.with("bo@example.com")
-	composer.Body = "hello"
-	composer.Send()
+	test.sendWith(composer, "hello")
 	test.deliverPending(composer)
 	Assert.IsTrue(!composer.Sending)
 	Assert.Equals("", composer.Body)
@@ -200,21 +205,19 @@ func (test *ComposerServiceTest) TestDeliverClearsTheComposerAfterSuccess() {
 
 func (test *ComposerServiceTest) TestDeliverKeepsTheMessageAndItsIdAfterAFailure() {
 	composer := test.with("bo@example.com")
-	composer.Body = "offline"
-	composer.Send()
+	test.sendWith(composer, "offline")
 	test.deliverPending(composer)
 	Assert.Equals("unavailable", composer.Problem)
 	Assert.Equals("offline", composer.Body)
 	Assert.Equals("id-1", composer.send.PendingId)
 }
 
-func (test *ComposerServiceTest) TestARetryAfterAFailureReusesTheClientMessageId() {
+func (test *ComposerServiceTest) TestARetryAfterAFailureSucceedsAndForgetsTheId() {
 	composer := test.with("bo@example.com")
-	composer.Body = "offline"
+	test.sendWith(composer, "offline")
 	test.deliverPending(composer)
 	BrowserFakes{}.Answer("secureRandom", "uuid", "id-2")
-	composer.Body = "hello"
-	composer.Send()
+	test.sendWith(composer, "hello")
 	test.deliverPending(composer)
 	Assert.Equals("", composer.Problem)
 	Assert.Equals("", composer.send.PendingId)
@@ -247,20 +250,6 @@ func (test *ComposerServiceTest) TestCloseChangedClosesTheDialog() {
 	Assert.IsTrue(!composer.ChangedOpen)
 }
 
-func (test *ComposerServiceTest) TestBodyKeyControlEnterSends() {
-	composer := test.with("bo@example.com")
-	composer.Body = "hello"
-	composer.BodyKey("Enter", true, false)
-	Assert.IsTrue(composer.Sending)
-}
-
-func (test *ComposerServiceTest) TestBodyKeyPlainEnterOnlyAddsALine() {
-	composer := test.with("bo@example.com")
-	composer.Body = "hello"
-	composer.BodyKey("Enter", false, false)
-	Assert.IsTrue(!composer.Sending)
-}
-
 func (test *ComposerServiceTest) TestUploadsShowInTheComposer() {
 	composer := test.composer()
 	composer.Picked(UploadPicked{FileName: "plan.pdf", Size: 10})
@@ -270,21 +259,6 @@ func (test *ComposerServiceTest) TestUploadsShowInTheComposer() {
 	Assert.Equals(1, len(composer.Uploads))
 	composer.RemoveUpload("plan.pdf")
 	Assert.Equals(0, len(composer.Uploads))
-}
-
-func (test *ComposerServiceTest) TestRecipientKeyTabAddsAndOtherKeysDoNot() {
-	composer := test.composer()
-	composer.RecipientKey("to", "Tab", "bo@example.com")
-	composer.RecipientKey("to", "Escape", "carol@partner.org")
-	Assert.Equals(1, len(composer.To))
-	Assert.Equals("carol@partner.org", composer.ToText)
-}
-
-func (test *ComposerServiceTest) TestBodyKeyCommandEnterSends() {
-	composer := test.with("bo@example.com")
-	composer.Body = "hello"
-	composer.BodyKey("Enter", false, true)
-	Assert.IsTrue(composer.Sending)
 }
 
 func (test *ComposerServiceTest) TestTheSenderAddressIsShown() {

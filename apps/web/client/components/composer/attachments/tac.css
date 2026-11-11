@@ -1,3 +1,12 @@
+.composer-attach-remove,
+.composer-attach-action {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--w-radius-md);
+}
+
 .composer-attachments {
   font-size: var(--w-font-sm);
 }
@@ -47,14 +56,14 @@
   color: var(--w-accent-bg);
 }
 
-.composer-attach-remove .w-btn,
-.composer-attach-action .w-btn {
+.composer-attach-remove,
+.composer-attach-action {
   min-height: 1.5rem;
   color: inherit;
 }
 
-.composer-attach-remove .w-btn:focus-visible,
-.composer-attach-action .w-btn:focus-visible {
+.composer-attach-remove:focus-visible,
+.composer-attach-action:focus-visible {
   outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
   outline-offset: var(--w-focus-ring-offset);
 }
@@ -70,9 +79,68 @@
     min-height: var(--ms-touch-min);
   }
 
-  .composer-attach-remove .w-btn,
-  .composer-attach-action .w-btn {
+  .composer-attach-remove,
+  .composer-attach-action {
     min-width: var(--ms-touch-min);
     min-height: var(--ms-touch-min);
   }
 }
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .m-0 {
+    margin: 0px;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .inline-flex {
+    display: inline-flex;
+  }
+  .w-12 {
+    width: calc(var(--spacing, 0.25rem) * 12);
+  }
+  .max-w-full {
+    max-width: 100%;
+  }
+  .basis-full {
+    flex-basis: 100%;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .justify-center {
+    justify-content: center;
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .p-0 {
+    padding: 0px;
+  }
+  .px-2 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .py-1 {
+    padding-block: var(--spacing, 0.25rem);
+  }
+  .pb-2 {
+    padding-bottom: calc(var(--spacing, 0.25rem) * 2);
+  }
+}
+/* @tachyon-generated-tailwind:end */

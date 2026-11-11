@@ -100,22 +100,6 @@ func (test *ComposerRecipientServiceTest) TestRemoveTakesTheChipAway() {
 	Assert.Equals("carol@partner.org", recipients.Recipients[0].Address)
 }
 
-func (test *ComposerRecipientServiceTest) TestRemoveLastTakesTheLastChipOfTheRow() {
-	recipients := test.recipients()
-	recipients.Add("bo@example.com", "to")
-	recipients.Add("carol@partner.org", "cc")
-	recipients.RemoveLast("to")
-	Assert.Equals(1, len(recipients.Recipients))
-	Assert.Equals("cc", recipients.Recipients[0].Role)
-}
-
-func (test *ComposerRecipientServiceTest) TestRemoveLastOfAnEmptyRowChangesNothing() {
-	recipients := test.recipients()
-	recipients.Add("bo@example.com", "to")
-	recipients.RemoveLast("bcc")
-	Assert.Equals(1, len(recipients.Recipients))
-}
-
 func (test *ComposerRecipientServiceTest) TestRefreshReportsAKindThatChanged() {
 	recipients := test.recipients()
 	recipients.Add("eve@example.org bo@example.com", "to")

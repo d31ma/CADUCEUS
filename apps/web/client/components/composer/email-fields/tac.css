@@ -54,3 +54,47 @@
     min-height: var(--ms-touch-min);
   }
 }
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .m-0 {
+    margin: 0px;
+  }
+  .flex {
+    display: flex;
+  }
+  .w-14 {
+    width: calc(var(--spacing, 0.25rem) * 14);
+  }
+  .min-w-0 {
+    min-width: 0px;
+  }
+  .flex-1 {
+    flex: 1;
+  }
+  .shrink-0 {
+    flex-shrink: 0;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .py-1 {
+    padding-block: var(--spacing, 0.25rem);
+  }
+}
+/* @tachyon-generated-tailwind:end */

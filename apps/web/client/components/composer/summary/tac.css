@@ -10,3 +10,30 @@
 .composer-summary-info {
   color: var(--w-text-subtle);
 }
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .mx-3 {
+    margin-inline: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .mt-0 {
+    margin-top: 0px;
+  }
+  .mb-2 {
+    margin-bottom: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .grid {
+    display: grid;
+  }
+  .gap-1 {
+    gap: var(--spacing, 0.25rem);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing, 0.25rem) * 2);
+  }
+}
+/* @tachyon-generated-tailwind:end */

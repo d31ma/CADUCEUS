@@ -32,10 +32,6 @@ func (service *ComposerRecipientService) Remove(address string, role string) {
 	service.Recipients = slices.DeleteFunc(slices.Clone(service.Recipients), service.matching(address, role))
 }
 
-func (service *ComposerRecipientService) RemoveLast(role string) {
-	service.Recipients = service.withoutLast(service.InRole(role))
-}
-
 func (service *ComposerRecipientService) Choose(address string, role string, delivery string) {
 	service.Recipients = service.mapped(service.choosing(service.keyOf(address, role), delivery))
 }
@@ -203,14 +199,6 @@ func (service *ComposerRecipientService) byAddress(resolved []ResolvedRecipient)
 		found[strings.ToLower(recipient.Address)] = recipient
 	}
 	return found
-}
-
-func (service *ComposerRecipientService) withoutLast(inRole []Recipient) []Recipient {
-	if len(inRole) == 0 {
-		return service.Recipients
-	}
-	last := inRole[len(inRole)-1]
-	return slices.DeleteFunc(slices.Clone(service.Recipients), service.matching(last.Address, last.Role))
 }
 
 func (service *ComposerRecipientService) recipientAt(index int) Recipient {

@@ -1,5 +1,6 @@
 import (
 	"encoding/json"
+	"fmt"
 	"errors"
 	"strings"
 )
@@ -18,7 +19,9 @@ func (setup ComposerTestSetup) Configure(execution *BehaviorExecution) (*Behavio
 func (setup ComposerTestSetup) Exchange(request *BehaviorHttpRequest, execution *BehaviorExecution) (BehaviorValue, error) {
 	switch request.Method + " " + request.Path {
 	case "POST /api/v1/identity/session":
-		return setup.session(), nil
+		return setup.session("access-1"), nil
+	case "POST /api/v1/identity/session/refresh":
+		return setup.session("access-2"), nil
 	case "POST /api/v1/directory/recipients/resolve":
 		return setup.resolve(request)
 	case "POST /api/v1/messaging/messages":
@@ -29,13 +32,13 @@ func (setup ComposerTestSetup) Exchange(request *BehaviorHttpRequest, execution 
 	return setup.completeUpload(request)
 }
 
-func (setup ComposerTestSetup) session() Session {
+func (setup ComposerTestSetup) session(accessToken string) Session {
 	me := Me{MemberId: "m-1", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}
-	return Session{Me: me, AccessToken: "access-1", ExpiresIn: 60, SessionKey: "key-1"}
+	return Session{Me: me, AccessToken: accessToken, ExpiresIn: 60, SessionKey: "key-1"}
 }
 
 func (setup ComposerTestSetup) resolve(request *BehaviorHttpRequest) (BehaviorValue, error) {
-	if request.Headers["Authorization"] != "Bearer access-1" {
+	if !strings.HasPrefix(fmt.Sprint(request.Headers["Authorization"]), "Bearer access-") {
 		return nil, errors.New("unauthenticated")
 	}
 	body := ResolveRequest{}
@@ -98,7 +101,8 @@ func (setup ComposerTestSetup) Auth(behaviors *BehaviorContext) *ComposerAuthSer
 	me, _ := tokens.SignIn(SessionSignInRequest{Address: "ana@example.com", Password: "right"})
 	accounts := &SessionAccountService{}
 	accounts.Add(me)
-	return &ComposerAuthService{tokens: tokens, accounts: accounts}
+	session := &SessionService{realm: &SessionRealmService{}, tokens: tokens, accounts: accounts, problems: &SessionProblemService{}}
+	return &ComposerAuthService{session: session, accounts: accounts}
 }
 
 func (setup ComposerTestSetup) Resolve(behaviors *BehaviorContext) *ComposerResolveService {

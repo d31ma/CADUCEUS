@@ -1,18 +1,14 @@
 <div class="composer-email-fields">
-  <p class="composer-field flex flex-wrap items-center gap-2 px-3 py-1">
+  <p class="composer-field m-0 flex flex-wrap items-center gap-2 px-3 py-1">
     <span class="composer-field-label w-14 shrink-0">From</span>
     <span class="composer-from min-w-0 truncate">{composer.senderAddress}</span>
   </p>
   <div class="composer-field flex flex-wrap items-center gap-2 px-3 py-1" :data-invalid="composer.subjectMissing">
-    <span class="composer-field-label w-14 shrink-0" aria-hidden="true">Subject</span>
     <logic :if="composer.subjectMissing">
-      <w-text-field class="composer-subject min-w-0 flex-1" variant="plain" density="compact" single-line hide-details="auto" label="Subject" placeholder="What is this email about?" error="Add a subject. An email needs one." :required="composer.newConversation" :value="composer.subject" on:input="composer.subject = $event.detail.value"></w-text-field>
+      <w-text-field class="composer-subject min-w-0 flex-1" name="subject" density="compact" label="Subject" placeholder="What is this email about?" error="Add a subject. An email needs one." :value="composer.subject" on:change="composer.keepSubject($event.target.value)"></w-text-field>
     </logic>
     <logic else>
-      <w-text-field class="composer-subject min-w-0 flex-1" variant="plain" density="compact" single-line hide-details="auto" label="Subject" placeholder="What is this email about?" :required="composer.newConversation" :value="composer.subject" on:input="composer.subject = $event.detail.value"></w-text-field>
-    </logic>
-    <logic :if="composer.newConversation">
-      <span class="composer-field-meta" aria-hidden="true">Required</span>
+      <w-text-field class="composer-subject min-w-0 flex-1" name="subject" density="compact" label="Subject" placeholder="What is this email about?" :hint="composer.newConversation ? 'Required' : ''" :value="composer.subject" on:change="composer.keepSubject($event.target.value)"></w-text-field>
     </logic>
   </div>
 </div>

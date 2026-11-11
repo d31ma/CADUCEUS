@@ -1,8 +1,4 @@
-import (
-	"slices"
-	"strconv"
-	"strings"
-)
+import "strings"
 
 // @Service
 type ComposerService struct {
@@ -70,19 +66,28 @@ func (composer *ComposerService) Uploaded(finished UploadFinished) {
 	composer.refresh()
 }
 
-func (composer *ComposerService) AddTyped(role string) {
-	composer.addText(role)
+// @OnEvent
+func (composer *ComposerService) DomainChanged(changed SessionDomainChanged) {
+	composer.clear()
+	composer.Target = SendTarget{}
+	composer.NewConversation = true
 	composer.refresh()
 }
 
-func (composer *ComposerService) RecipientKey(role string, key string, value string) {
-	composer.setText(role, value)
-	composer.keyAction(composer.keyName(key, value))(role)
+func (composer *ComposerService) SubmitWith(to string, cc string, blindCopy string) {
+	composer.recipients.Add(to, composer.roleTo())
+	composer.recipients.Add(cc, composer.roleCc())
+	composer.recipients.Add(blindCopy, composer.roleBlindCopy())
+	composer.sendUnlessTyped(strings.TrimSpace(to+cc+blindCopy) != "")
 	composer.refresh()
 }
 
-func (composer *ComposerService) TypeText(role string, value string) {
-	composer.setText(role, value)
+func (composer *ComposerService) KeepSubject(subject string) {
+	composer.Subject = subject
+}
+
+func (composer *ComposerService) KeepBody(body string) {
+	composer.Body = body
 }
 
 func (composer *ComposerService) Remove(address string, role string) {
@@ -96,21 +101,34 @@ func (composer *ComposerService) Choose(address string, role string, delivery st
 	composer.refresh()
 }
 
-func (composer *ComposerService) ToggleCc() {
+func (composer *ComposerService) ToggleCc(to string) {
+	composer.ToText = to
 	composer.ShowCc = !composer.ShowCc
 	composer.refresh()
 }
 
-func (composer *ComposerService) ToggleBlindCopy() {
+func (composer *ComposerService) ToggleBlindCopy(to string, cc string) {
+	composer.ToText = to
+	composer.CcText = cc
 	composer.ShowBlindCopy = !composer.ShowBlindCopy
 	composer.refresh()
 }
 
-func (composer *ComposerService) BodyKey(key string, control bool, command bool) {
-	composer.sendWhenShortcut(composer.sendShortcuts()[composer.shortcutName(key, control, command)])
+func (composer *ComposerService) sendUnlessTyped(typed bool) {
+	composer.ToText = ""
+	composer.CcText = ""
+	composer.BlindCopyText = ""
+	composer.startWhenNothingTyped(typed)
 }
 
-func (composer *ComposerService) Send() {
+func (composer *ComposerService) startWhenNothingTyped(typed bool) {
+	if typed {
+		return
+	}
+	composer.startSending()
+}
+
+func (composer *ComposerService) startSending() {
 	composer.recipients.ResolvePending()
 	composer.Problem = composer.firstProblem(composer.checks())
 	composer.SubjectMissing = composer.Problem == composer.problemSubjectMissing()
@@ -149,7 +167,7 @@ func (composer *ComposerService) refresh() {
 	composer.BlindCopy = composer.recipients.InRole(composer.roleBlindCopy())
 	composer.ShowCc = composer.rowShown(composer.ShowCc, composer.Cc)
 	composer.ShowBlindCopy = composer.rowShown(composer.ShowBlindCopy, composer.BlindCopy)
-	composer.Rows = composer.shownRows(composer.rows())
+	composer.Rows = composer.rows()
 	composer.Uploads = composer.uploads.Items
 	composer.UploadsUsed = composer.uploads.UsedText()
 	composer.Summary = composer.recipients.Summary()
@@ -172,18 +190,12 @@ func (composer *ComposerService) rows() []RecipientRow {
 	}
 }
 
-func (composer *ComposerService) shownRows(rows []RecipientRow) []RecipientRow {
-	return slices.DeleteFunc(rows, func(row RecipientRow) bool {
-		return !row.Shown
-	})
+func (composer *ComposerService) rowShown(shown bool, recipients []Recipient) bool {
+	return shown || len(recipients) > 0
 }
 
 func (composer *ComposerService) shownWithNew(shown bool) bool {
 	return composer.NewConversation && shown
-}
-
-func (composer *ComposerService) rowShown(shown bool, recipients []Recipient) bool {
-	return shown || len(recipients) > 0
 }
 
 func (composer *ComposerService) toPlaceholder() string {
@@ -200,60 +212,8 @@ func (composer *ComposerService) replySubject(subject string) string {
 	return "Re: " + subject
 }
 
-func (composer *ComposerService) textOf(role string) string {
-	texts := map[string]string{composer.roleTo(): composer.ToText, composer.roleCc(): composer.CcText, composer.roleBlindCopy(): composer.BlindCopyText}
-	return texts[role]
-}
-
-func (composer *ComposerService) setText(role string, value string) {
-	fields := map[string]*string{composer.roleTo(): &composer.ToText, composer.roleCc(): &composer.CcText, composer.roleBlindCopy(): &composer.BlindCopyText}
-	*fields[role] = value
-}
-
-func (composer *ComposerService) addText(role string) {
-	composer.recipients.Add(composer.textOf(role), role)
-	composer.setText(role, "")
-}
-
-func (composer *ComposerService) keyName(key string, value string) string {
-	return key + composer.separator() + strconv.FormatBool(value == "")
-}
-
-func (composer *ComposerService) keyAction(name string) func(string) {
-	actions := map[string]func(string){
-		"Enter false":    composer.addText,
-		", false":        composer.addText,
-		"; false":        composer.addText,
-		"Tab false":      composer.addText,
-		"Backspace true": composer.recipients.RemoveLast,
-	}
-	action, found := actions[name]
-	if !found {
-		return composer.ignoreKey
-	}
-	return action
-}
-
-func (composer *ComposerService) ignoreKey(role string) {
-}
-
-func (composer *ComposerService) shortcutName(key string, control bool, command bool) string {
-	return strings.Join([]string{key, strconv.FormatBool(control), strconv.FormatBool(command)}, composer.separator())
-}
-
-func (composer *ComposerService) sendShortcuts() map[string]bool {
-	return map[string]bool{"Enter true false": true, "Enter false true": true, "Enter true true": true}
-}
-
 func (composer *ComposerService) choiceAnnouncement(chosen Recipient) string {
 	return chosen.DisplayName + " now gets: " + chosen.Label + "."
-}
-
-func (composer *ComposerService) sendWhenShortcut(pressed bool) {
-	if !pressed {
-		return
-	}
-	composer.Send()
 }
 
 func (composer *ComposerService) checks() []string {

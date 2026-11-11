@@ -19,11 +19,11 @@
           </switch>
           <logic :if="upload.state == 'failed'">
             <span class="composer-attach-problem">{upload.fileName} did not finish uploading.</span>
-            <w-btn class="composer-attach-action" size="small" variant="text" :aria-label="'Retry ' + upload.fileName" on:click="composer.retryUpload(upload.fileName)">Retry</w-btn>
+            <button type="button" class="composer-attach-action px-2" :aria-label="'Retry ' + upload.fileName" on:click="composer.retryUpload(upload.fileName)">Retry</button>
           </logic>
-          <w-icon-btn class="composer-attach-remove" size="x-small" variant="text" :aria-label="'Remove ' + upload.fileName" on:click="composer.removeUpload(upload.fileName)">
+          <button type="button" class="composer-attach-remove inline-flex items-center justify-center" :aria-label="'Remove ' + upload.fileName" on:click="composer.removeUpload(upload.fileName)">
             <svg class="composer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </w-icon-btn>
+          </button>
         </li>
       </loop>
     </ul>

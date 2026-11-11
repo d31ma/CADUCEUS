@@ -110,8 +110,10 @@ issues Mesail's own access token that names the active domain.** Chosen.
 - `identity` signs in to the realm `mesail` server to server (direct
   access grants, as before) and answers with **its own access token**: a
   JWT signed with ES256 under `identity`'s key (secret store,
-  `YON_IDENTITY_SIGNING_KEY`, with `YON_IDENTITY_SIGNING_KEY_PREVIOUS` kept
-  during a rotation). Keycloak's own tokens never leave `identity`.
+  `YON_IDENTITY_SIGNING_KEY`: base64 of the PKCS #8 DER on one line, with
+  `YON_IDENTITY_SIGNING_PREVIOUS` kept during a rotation; not
+  `..._KEY_PREVIOUS`, because TACHYON maps `.env` names to setting paths at
+  `_` and refuses a path that is both a value and a folder). Keycloak's own tokens never leave `identity`.
 - Claims: `iss` (the configured Mesail issuer), `aud` `mesail-api`, `sub`
   (the person id, or `service` for a service token), `azp` (`mesail-web` or
   `mesail-service`), **`domain`** (the active domain id, or `*`),

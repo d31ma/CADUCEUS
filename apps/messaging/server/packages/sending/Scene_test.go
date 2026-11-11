@@ -30,6 +30,9 @@ func newScene(t *testing.T) *scene {
 	for _, name := range []string{"ana", "bo", "cy"} {
 		world.Stores.Members.Save(core.Member{DomainId: "example.com", MemberId: name, LocalPart: name, DisplayName: name, PrimaryAddress: name + "@example.com"})
 	}
+	for index := 0; index < 10; index++ {
+		world.Attachments.Ready("example.com", fmt.Sprintf("att_%d", index), fmt.Sprintf("file-%d.txt", index), 1000)
+	}
 	ana := oidc.Caller{DomainId: "example.com", MemberId: "ana", DisplayName: "Ana", Email: "Ana@Example.com"}
 	return &scene{world: world, sender: NewSender(world.Stores, world.Ports), ana: ana}
 }

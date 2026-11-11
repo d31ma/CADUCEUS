@@ -122,6 +122,7 @@ func (world *MessagingTestSetup) Reply(conversationId string, clientMessageId st
 }
 
 func (world *MessagingTestSetup) WithAttachment(memberId string, attachmentId string) SendResult {
+	world.Fakes.Attachments.Ready(world.Domain, attachmentId, attachmentId+".txt", 100)
 	request := SendRequest{ClientMessageId: "c-" + attachmentId, Body: "file", AttachmentIds: []string{attachmentId}, Recipients: []RecipientChoice{{Address: world.Address(memberId), Role: "to", Delivery: "chat", ExpectedKind: "member"}}}
 	result, err := world.Messages.PostMessage(world.MemberBearer("ana"), request)
 	world.Must(err)
@@ -181,6 +182,11 @@ func (world *MessagingTestSetup) IsNotFound(err error) bool {
 
 func (world *MessagingTestSetup) IsUnavailable(err error) bool {
 	var failure *Unavailable
+	return errors.As(err, &failure)
+}
+
+func (world *MessagingTestSetup) IsTooLarge(err error) bool {
+	var failure *TooLarge
 	return errors.As(err, &failure)
 }
 

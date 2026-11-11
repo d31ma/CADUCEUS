@@ -47,6 +47,7 @@
     ]
   },
   "messaging": {
+    "attachmentsurl": "http://127.0.0.1:8105",
     "directoryurl": "http://127.0.0.1:8102",
     "mailinurl": "http://127.0.0.1:8109",
     "relayurl": "http://127.0.0.1:8104/api/v1/messaging/outbox/relay"

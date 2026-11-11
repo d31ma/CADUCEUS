@@ -12,6 +12,10 @@ func (Failures) directory(cause error) error {
 	return &core.Unavailable{Message: "the directory is not available", Cause: cause}
 }
 
+func (Failures) attachments(cause error) error {
+	return &core.Unavailable{Message: "the attachments service is not available", Cause: cause}
+}
+
 func (Failures) renderer(cause error) error {
 	return &core.Unavailable{Message: "the text renderer is not available", Cause: cause}
 }

@@ -19,6 +19,7 @@ type Message struct {
 	BlocksJson         string    `json:"blocksJson"`
 	Truncated          bool      `json:"truncated"`
 	AttachmentIds      []string  `json:"attachmentIds"`
+	AttachmentsJson    string    `json:"attachmentsJson"`
 	MentionedMemberIds []string  `json:"mentionedMemberIds"`
 	IsEmail            bool      `json:"isEmail"`
 	Email              EmailMeta `json:"email"`

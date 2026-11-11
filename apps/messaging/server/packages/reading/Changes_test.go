@@ -132,12 +132,13 @@ func TestTheAuthorDeletesAMessage(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
 	message.AttachmentIds = []string{"att_1"}
+	message.AttachmentsJson = `[{"attachmentId":"att_1","fileName":"plan.pdf","mediaType":"application/pdf","size":2048}]`
 	s.world.Stores.Messages.Save(message)
 	err := reading.NewChanges(s.stores, s.world.Ports).Delete(s.caller("ana"), msgId(message))
 	wantNoError(t, err)
 	stored := s.stored(message)
-	got := fmt.Sprint(stored.Body == "", stored.BlocksJson, len(stored.AttachmentIds), stored.DeletedAt)
-	if got != fmt.Sprint(true, "[]", 0, "2026-11-10T12:00:00Z") {
+	got := fmt.Sprint(stored.Body == "", stored.BlocksJson, len(stored.AttachmentIds), stored.AttachmentsJson, stored.DeletedAt)
+	if got != fmt.Sprint(true, "[]", 0, "[]", "2026-11-10T12:00:00Z") {
 		t.Fatalf("got %s", got)
 	}
 }

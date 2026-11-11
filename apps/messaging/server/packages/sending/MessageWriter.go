@@ -111,6 +111,7 @@ func (writer MessageWriter) message(caller oidc.Caller, draft Draft, conversatio
 		BlocksJson:         string(blocks),
 		Truncated:          draft.Rich.Truncated,
 		AttachmentIds:      lists.copied(draft.Request.AttachmentIds),
+		AttachmentsJson:    core.AttachmentCodec{}.Encode(draft.Attachments),
 		MentionedMemberIds: lists.copied(draft.Mentions),
 		IsEmail:            draft.IsEmail,
 		Email:              draft.Email,

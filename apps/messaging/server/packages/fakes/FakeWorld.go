@@ -9,19 +9,20 @@ import (
 )
 
 type FakeWorld struct {
-	Stores    core.Stores
-	Ports     core.Ports
-	Directory *FakeDirectory
-	Renderer  *FakeRenderer
-	Inbound   *FakeInbound
-	Clock     *Clock
+	Stores      core.Stores
+	Ports       core.Ports
+	Directory   *FakeDirectory
+	Renderer    *FakeRenderer
+	Inbound     *FakeInbound
+	Attachments *FakeAttachments
+	Clock       *Clock
 }
 
 func NewFakeWorld() *FakeWorld {
-	world := &FakeWorld{Stores: core.MemoryStores{}.New(), Directory: NewFakeDirectory(), Renderer: &FakeRenderer{}, Inbound: NewFakeInbound()}
+	world := &FakeWorld{Stores: core.MemoryStores{}.New(), Directory: NewFakeDirectory(), Renderer: &FakeRenderer{}, Inbound: NewFakeInbound(), Attachments: NewFakeAttachments()}
 	world.Clock = &Clock{At: time.Date(2026, time.November, 10, 12, 0, 0, 0, time.UTC)}
 	stager := core.NewStager(world.OutboxSettings(), world.Clock.Now, rand.Reader)
-	world.Ports = core.Ports{Directory: world.Directory, Renderer: world.Renderer, Inbound: world.Inbound, Stager: stager, Now: world.Clock.Now}
+	world.Ports = core.Ports{Directory: world.Directory, Renderer: world.Renderer, Inbound: world.Inbound, Attachments: world.Attachments, Stager: stager, Now: world.Clock.Now}
 	return world
 }
 

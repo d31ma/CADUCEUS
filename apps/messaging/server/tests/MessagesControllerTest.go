@@ -157,3 +157,25 @@ func (test *MessagesControllerTest) TestAServiceTokenIsForbiddenOnChatRoutes() {
 	_, err := world.Messages.PostMessage(world.ServiceBearer(world.Home), SendRequest{ClientMessageId: "c1", Body: "hi"})
 	Assert.IsTrue(world.IsForbidden(err), "want Forbidden")
 }
+
+func (test *MessagesControllerTest) TestPostMessageAnswersTheAttachmentDetails() {
+	world := MessagingTestSetup{}.World()
+	result := world.WithAttachment("bo", "att_1")
+	Assert.Equals([]AttachmentRef{{AttachmentId: "att_1", FileName: "att_1.txt", MediaType: "application/octet-stream", Size: 100}}, result.Message.Attachments)
+}
+
+func (test *MessagesControllerTest) TestPostMessageWithAnUnknownAttachmentIsInvalid() {
+	world := MessagingTestSetup{}.World()
+	request := SendRequest{ClientMessageId: "c1", Body: "file", AttachmentIds: []string{"att_missing"}, Recipients: []RecipientChoice{{Address: world.Address("bo"), Role: "to", Delivery: "chat", ExpectedKind: "member"}}}
+	_, err := world.Messages.PostMessage(world.MemberBearer("ana"), request)
+	Assert.Equals("attachmentIds", world.InvalidField(err))
+}
+
+func (test *MessagesControllerTest) TestPostMessageWithTooLargeAttachmentsAnswersTooLarge() {
+	world := MessagingTestSetup{}.World()
+	world.Fakes.Attachments.Ready(world.Domain, "att_1", "a.bin", 30<<20)
+	world.Fakes.Attachments.Ready(world.Domain, "att_2", "b.bin", 30<<20)
+	request := SendRequest{ClientMessageId: "c1", Body: "files", AttachmentIds: []string{"att_1", "att_2"}, Recipients: []RecipientChoice{{Address: world.Address("bo"), Role: "to", Delivery: "chat", ExpectedKind: "member"}}}
+	_, err := world.Messages.PostMessage(world.MemberBearer("ana"), request)
+	Assert.IsTrue(world.IsTooLarge(err), "the send must answer too_large")
+}

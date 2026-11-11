@@ -33,7 +33,7 @@ func (service *WireService) Message(view core.MessageView) Message {
 		BodyFormat:         message.BodyFormat,
 		Blocks:             service.blocks(view.Blocks),
 		Truncated:          message.Truncated,
-		Attachments:        service.attachments(message.AttachmentIds),
+		Attachments:        service.attachments(core.AttachmentCodec{}.Refs(message)),
 		Email:              service.email(message),
 		Reactions:          service.counts(view.Reactions),
 		MyReactions:        service.texts(view.MyReactions),
@@ -137,10 +137,10 @@ func (service *WireService) image(image *core.ImageRef) *ImageRef {
 	return &ImageRef{Alt: image.Alt, AttachmentId: image.AttachmentId, RemoteUrl: image.RemoteUrl}
 }
 
-func (service *WireService) attachments(attachmentIds []string) []AttachmentRef {
+func (service *WireService) attachments(refs []core.AttachmentRef) []AttachmentRef {
 	references := []AttachmentRef{}
-	for _, attachmentId := range attachmentIds {
-		references = append(references, AttachmentRef{AttachmentId: attachmentId})
+	for _, ref := range refs {
+		references = append(references, AttachmentRef{AttachmentId: ref.AttachmentId, FileName: ref.FileName, MediaType: ref.MediaType, Size: ref.Size})
 	}
 	return references
 }

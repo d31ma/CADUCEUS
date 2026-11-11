@@ -65,7 +65,7 @@ func (messageEvents MessageEvents) created(message core.Message, conversation co
 		Body:               message.Body,
 		Subject:            message.Email.Subject,
 		AttachmentIds:      lists.copied(message.AttachmentIds),
-		FileNames:          []string{},
+		FileNames:          messageEvents.fileNames(message),
 		IsEmail:            message.IsEmail,
 		MentionedMemberIds: lists.copied(message.MentionedMemberIds),
 		MemberIds:          lists.copied(readers),
@@ -89,6 +89,22 @@ func (messageEvents MessageEvents) sendRequested(message core.Message, row core.
 		AttachmentIds:  lists.copied(message.AttachmentIds),
 		IdempotencyKey: wireId + messageEvents.keySeparator() + row.Recipient,
 	}
+}
+
+func (messageEvents MessageEvents) fileNames(message core.Message) []string {
+	refs := core.AttachmentCodec{}.Refs(message)
+	names := []string{}
+	for _, ref := range refs {
+		names = messageEvents.withName(names, ref.FileName)
+	}
+	return names
+}
+
+func (MessageEvents) withName(names []string, fileName string) []string {
+	if fileName == "" {
+		return names
+	}
+	return append(names, fileName)
 }
 
 func (messageEvents MessageEvents) header(message core.Message) string {

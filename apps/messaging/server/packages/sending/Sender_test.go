@@ -617,6 +617,9 @@ func TestARetryWritesTheUsesOfAMessageThatWasNotFinished(t *testing.T) {
 	if len(uses) != 1 || uses[0].AttachmentId != "att_1" {
 		t.Fatalf("uses %+v", uses)
 	}
+	if names := created(t, s.messages()[0]).FileNames; len(names) != 0 {
+		t.Fatalf("an old message has no file names, got %v", names)
+	}
 }
 
 func TestAttachmentsCountInTheWriteBudget(t *testing.T) {

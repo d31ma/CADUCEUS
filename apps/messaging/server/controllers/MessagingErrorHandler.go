@@ -39,6 +39,12 @@ func (handler *MessagingErrorHandler) RecipientsChanged(failure *ChangedRecipien
 }
 
 // @HandlesError
+// @ResponseStatus(413)
+func (handler *MessagingErrorHandler) TooLarge(failure *TooLarge) ApiError {
+	return ApiError{Code: "too_large", Message: failure.Message}
+}
+
+// @HandlesError
 // @ResponseStatus(422)
 func (handler *MessagingErrorHandler) ChatNotAllowed(failure *ChatNotAllowed) ApiError {
 	return ApiError{Code: "chat_not_allowed", Message: failure.Message, Field: failure.Address}

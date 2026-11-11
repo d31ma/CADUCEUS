@@ -1,5 +1,6 @@
 type MessagingSettings struct {
-	DirectoryUrl string `json:"directoryurl"`
-	MailInUrl    string `json:"mailinurl"`
-	RelayUrl     string `json:"relayurl"`
+	AttachmentsUrl string `json:"attachmentsurl"`
+	DirectoryUrl   string `json:"directoryurl"`
+	MailInUrl      string `json:"mailinurl"`
+	RelayUrl       string `json:"relayurl"`
 }

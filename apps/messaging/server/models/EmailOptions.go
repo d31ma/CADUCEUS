@@ -1,5 +1,5 @@
 type EmailOptions struct {
-	Subject        string `json:"subject"`
+	Subject        string `json:"subject,omitempty"`
 	FromAddress    string `json:"fromAddress,omitempty"`
-	SendToExternal bool   `json:"sendToExternal"`
+	SendToExternal bool   `json:"sendToExternal,omitempty"`
 }

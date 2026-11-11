@@ -49,6 +49,13 @@ func (test *WireServiceTest) TestAnEmailMessageCarriesItsSummary() {
 	Assert.Equals([]AttachmentRef{{AttachmentId: "att_1"}}, message.Attachments)
 }
 
+func (test *WireServiceTest) TestAttachmentsCarryTheirStoredDetails() {
+	stored := `[{"attachmentId":"att_1","fileName":"plan.pdf","mediaType":"application/pdf","size":2048}]`
+	view := core.MessageView{Message: core.Message{Id: "000000000004", Month: "202611", AttachmentIds: []string{"att_1"}, AttachmentsJson: stored}}
+	message := (&WireService{}).Message(view)
+	Assert.Equals([]AttachmentRef{{AttachmentId: "att_1", FileName: "plan.pdf", MediaType: "application/pdf", Size: 2048}}, message.Attachments)
+}
+
 func (test *WireServiceTest) TestAHandedOffEmailSaysSo() {
 	email := core.EmailMeta{Subject: "Hello", From: "eve@example.org", Handoff: true}
 	view := core.MessageView{Message: core.Message{Id: "000000000003", Month: "202611", IsEmail: true, Email: email}}

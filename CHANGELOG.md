@@ -227,8 +227,12 @@
   `Message-ID`, only inside the same domain; a new email to several
   members of one domain is one shared conversation.
 - `kit/messaging` holds the fixed list of reaction names.
-- Body blocks come from a plain-text renderer until `kit/richtext` lands;
-  attachment names and sizes come later from `attachments`.
+- Body blocks come from a plain-text renderer until `kit/richtext` lands.
+- A send reads each attachment from `attachments` (`/meta`) before any
+  write: an unknown or not-ready file answers `400` (`attachmentIds`), more
+  than 50 MiB together answers `413 too_large`. The message keeps each
+  file's name, media type and size, answers them in `attachments[]`, and
+  puts the file names in `message.created` for search.
 
 ### Slice M2: outbound mail
 

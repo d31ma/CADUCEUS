@@ -47,6 +47,11 @@ func (sender Sender) again(caller oidc.Caller, authorization string, draft Draft
 }
 
 func (sender Sender) fresh(caller oidc.Caller, authorization string, draft Draft, earlier core.Message) (core.SendOutcome, error) {
+	attachments, err := NewAttachmentCheck(sender.ports.Attachments).refs(caller.DomainId, draft.Request.AttachmentIds)
+	if err != nil {
+		return core.SendOutcome{}, err
+	}
+	draft.Attachments = attachments
 	now := sender.ports.Now()
 	placed, err := sender.place(caller, authorization, draft, now)
 	if err != nil {

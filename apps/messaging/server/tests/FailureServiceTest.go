@@ -51,6 +51,7 @@ func (test *FailureServiceTest) TestCoreFailuresBecomeAnswerFailures() {
 	Assert.Equals(&Conflict{Message: "archived"}, service.Known(&core.Conflict{Message: "archived"}))
 	Assert.Equals(&ChangedRecipients{Message: "the recipients changed: a", Addresses: []string{"a"}}, service.Known(&core.RecipientsChanged{Addresses: []string{"a"}}))
 	Assert.Equals(&ChatNotAllowed{Message: "chat is not allowed for a", Address: "a"}, service.Known(&core.ChatNotAllowed{Address: "a"}))
+	Assert.Equals(&TooLarge{Message: "big"}, service.Known(&core.TooLarge{Message: "big"}))
 }
 
 func (test *FailureServiceTest) TestAnswerFailuresKeepTheirPointers() {
@@ -59,6 +60,8 @@ func (test *FailureServiceTest) TestAnswerFailuresKeepTheirPointers() {
 	forbidden := &Forbidden{Message: "no"}
 	missing := &NotFound{Message: "no"}
 	invalid := &InvalidRequest{Field: "limit"}
+	tooLarge := &TooLarge{Message: "big"}
+	Assert.IsTrue(service.Known(tooLarge) == error(tooLarge), "too large")
 	Assert.IsTrue(service.Known(unauthenticated) == error(unauthenticated), "unauthenticated")
 	Assert.IsTrue(service.Known(forbidden) == error(forbidden), "forbidden")
 	Assert.IsTrue(service.Known(missing) == error(missing), "not found")

@@ -355,3 +355,49 @@ func hasLink(spans []core.Span, href string) bool {
 	}
 	return false
 }
+
+func TestDescribeReadsTheMetaWithAServiceTokenOfTheDomain(t *testing.T) {
+	base, seen := serve(t, http.StatusOK, `{"attachmentId":"att_1","fileName":"plan.pdf","mediaType":"application/pdf","size":2048,"sha256":"ab","state":"ready"}`)
+	tokens := &fixedTokens{}
+	info, found, err := NewAttachmentsClient(base+"/", tokens, call()).Describe("example.com", "att 1")
+	if err != nil || !found {
+		t.Fatalf("got %v %v", found, err)
+	}
+	want := core.AttachmentInfo{AttachmentId: "att_1", FileName: "plan.pdf", MediaType: "application/pdf", Size: 2048, State: "ready"}
+	if info != want {
+		t.Fatalf("got %+v", info)
+	}
+	if seen.method != http.MethodGet || seen.path != "/api/v1/attachments/att%201/meta" || seen.authorization != "Bearer token-for-example.com" || seen.body != "" {
+		t.Fatalf("got %+v", seen)
+	}
+}
+
+func TestDescribeOfAnUnknownAttachmentIsNotFound(t *testing.T) {
+	base, _ := serve(t, http.StatusNotFound, `{"code":"not_found"}`)
+	_, found, err := NewAttachmentsClient(base, &fixedTokens{}, call()).Describe("example.com", "att_1")
+	if err != nil || found {
+		t.Fatalf("want not found, got %v %v", found, err)
+	}
+}
+
+func TestDescribeFailureIsUnavailable(t *testing.T) {
+	base, _ := serve(t, http.StatusForbidden, `{"code":"forbidden"}`)
+	_, found, err := NewAttachmentsClient(base, &fixedTokens{}, call()).Describe("example.com", "att_1")
+	if !isUnavailable(err) || found {
+		t.Fatalf("want Unavailable, got %v %v", found, err)
+	}
+}
+
+func TestDescribeWhenTheServiceIsDownIsUnavailable(t *testing.T) {
+	_, _, err := NewAttachmentsClient("http://127.0.0.1:1", &fixedTokens{}, call()).Describe("example.com", "att_1")
+	if !isUnavailable(err) {
+		t.Fatalf("want Unavailable, got %v", err)
+	}
+}
+
+func TestDescribeWithoutAServiceTokenIsUnavailable(t *testing.T) {
+	_, _, err := NewAttachmentsClient("http://127.0.0.1:1", &fixedTokens{failure: errors.New("no keycloak")}, call()).Describe("example.com", "att_1")
+	if !isUnavailable(err) {
+		t.Fatalf("want Unavailable, got %v", err)
+	}
+}

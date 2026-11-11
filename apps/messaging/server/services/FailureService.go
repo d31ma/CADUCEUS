@@ -40,8 +40,8 @@ func (service *FailureService) children(failure error) []error {
 func (service *FailureService) isKnown(failure error) bool {
 	switch failure.(type) {
 	case *Unauthenticated, *Forbidden, *NotFound, *InvalidRequest, *Conflict, *Unavailable, *ChangedRecipients, *ChatNotAllowed,
-		*core.Forbidden, *core.Unavailable, *core.InvalidRequest, *core.NotFound, *core.Conflict, *core.RecipientsChanged,
-		*core.ChatNotAllowed, events.NotService, events.InvalidEnvelope, events.NotSubscribed, events.UnknownEventType,
+		*TooLarge, *core.Forbidden, *core.Unavailable, *core.InvalidRequest, *core.NotFound, *core.Conflict, *core.RecipientsChanged,
+		*core.ChatNotAllowed, *core.TooLarge, events.NotService, events.InvalidEnvelope, events.NotSubscribed, events.UnknownEventType,
 		inbound.UnhandledEvent:
 		return true
 	}
@@ -73,6 +73,8 @@ func (service *FailureService) answered(failure error) error {
 		return &ChangedRecipients{Message: known.Error(), Addresses: known.Addresses}
 	case *core.ChatNotAllowed:
 		return &ChatNotAllowed{Message: known.Error(), Address: known.Address}
+	case *core.TooLarge:
+		return &TooLarge{Message: known.Message}
 	case *core.Unavailable:
 		return &Unavailable{Message: known.Message}
 	}

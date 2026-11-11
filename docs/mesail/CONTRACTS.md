@@ -314,6 +314,15 @@ Rules (SPEC AC-CP):
   like any other email (DOMAIN.md invariant 3).
 - When any delivery is `email`, `email.subject` is required for a new
   conversation.
+- Attachments (AC-MS-5): before it writes anything, `messaging` reads every
+  `attachmentIds` entry with `GET /api/v1/attachments/{attachmentId}/meta`
+  (a `Service` token of the caller's domain). An unknown id, an attachment
+  of another domain or one whose `state` is not `ready` answers `400
+  invalid_request` with `field: attachmentIds`; sizes that add up to more
+  than 50 MiB (52,428,800 bytes) answer `413 too_large`. The message stores
+  each `AttachmentRef` and answers it in `attachments[]`; `message.created`
+  carries the file names in `fileNames[]`. A retry with the same
+  `clientMessageId` does not ask `attachments` again.
 
 Reactions are identified by a NAME, not an emoji character, because a Tac
 path value may only use `A-Z a-z 0-9 . _ ~ -` (found by slice F2). A name

@@ -45,10 +45,11 @@ func (service *CoreService) builtPorts() core.Ports {
 	call := adapters.NewJsonCall(adapters.JsonCall{}.DefaultTimeout())
 	outboxSettings, _ := service.settings.Outbox()
 	return core.Ports{
-		Directory: adapters.NewDirectoryClient(urls.DirectoryUrl, tokens, call),
-		Renderer:  adapters.RichTextRenderer{},
-		Inbound:   adapters.NewMailInClient(urls.MailInUrl, tokens, call),
-		Stager:    core.NewStager(outboxSettings, time.Now, rand.Reader),
-		Now:       time.Now,
+		Directory:   adapters.NewDirectoryClient(urls.DirectoryUrl, tokens, call),
+		Renderer:    adapters.RichTextRenderer{},
+		Inbound:     adapters.NewMailInClient(urls.MailInUrl, tokens, call),
+		Attachments: adapters.NewAttachmentsClient(urls.AttachmentsUrl, tokens, call),
+		Stager:      core.NewStager(outboxSettings, time.Now, rand.Reader),
+		Now:         time.Now,
 	}
 }

@@ -81,6 +81,7 @@ func (changes Changes) erased(message core.Message) core.Message {
 	message.BlocksJson = messageBlocks{}.none()
 	message.Truncated = false
 	message.AttachmentIds = []string{}
+	message.AttachmentsJson = core.AttachmentCodec{}.Encode(nil)
 	message.DeletedAt = clock{now: changes.ports.Now}.stamp()
 	return message
 }

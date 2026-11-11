@@ -42,6 +42,13 @@ func (test *MessagingErrorHandlerTest) TestChatNotAllowedNamesTheAddress() {
 	Assert.Equals("chat is not allowed for carol@partner.org", failure.Error())
 }
 
+func (test *MessagingErrorHandlerTest) TestTooLargeHasItsCode() {
+	failure := &TooLarge{Message: "the attachments of a message may have at most 50 MiB together"}
+	answer := (&MessagingErrorHandler{}).TooLarge(failure)
+	Assert.Equals(ApiError{Code: "too_large", Message: "the attachments of a message may have at most 50 MiB together"}, answer)
+	Assert.Equals("the attachments of a message may have at most 50 MiB together", failure.Error())
+}
+
 func (test *MessagingErrorHandlerTest) TestUnavailableHasItsCode() {
 	failure := &Unavailable{Message: "the message store is not available"}
 	answer := (&MessagingErrorHandler{}).Unavailable(failure)

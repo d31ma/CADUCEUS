@@ -5,9 +5,10 @@ import (
 )
 
 type Ports struct {
-	Directory Directory
-	Renderer  Renderer
-	Inbound   InboundMail
-	Stager    Stager
-	Now       func() time.Time
+	Directory   Directory
+	Renderer    Renderer
+	Inbound     InboundMail
+	Attachments AttachmentCatalog
+	Stager      Stager
+	Now         func() time.Time
 }

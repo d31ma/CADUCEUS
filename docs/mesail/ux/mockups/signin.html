@@ -1,344 +1,262 @@
 <!doctype html>
-<html lang="en" w-theme="light">
+<html lang="en" w-theme="light" w-density="comfortable">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sign in to Mesail</title>
-<link rel="stylesheet" href="assets/duvay/tokens.css">
-<link rel="stylesheet" href="assets/duvay/themes.css">
-<link rel="stylesheet" href="assets/mesail-tokens.css">
-<link rel="stylesheet" href="assets/icons.css">
-<link rel="stylesheet" href="assets/mesail.css">
+<link rel="stylesheet" href="assets/app.css">
 <link rel="stylesheet" href="assets/screens/auth.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
 <script src="assets/mockup.js" defer></script>
 </head>
-<body>
+<body class="bg-surface-low text-text">
 <a class="ms-skip-link" href="#s1-email">Skip to the email field</a>
 
-<div class="ms-auth ms-auth--states">
-  <header class="ms-auth__brand">
-    <p class="ms-wordmark"><span class="ms-wordmark__mark" aria-hidden="true"></span><span class="ms-wordmark__text">Mesail</span></p>
-  </header>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
+    <header>
+      <p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p>
+    </header>
 
-  <main class="ms-auth__main ms-auth__main--states">
+    <!-- Mockup: labelled states side by side; each card is w-full max-w-md -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr))]">
 
-    <section class="ms-mock-state" aria-label="State 1 · Default, with recent domains">
-      <p class="ms-mock-state__label">State 1 · Default, with recent domains</p>
-      <div class="ms-auth__card">
-        <div class="ms-auth__head">
-          <h1 class="ms-auth__title">Sign in to Mesail</h1>
-          <p class="ms-auth__lead">Use your work email and password.</p>
-        </div>
-        <form class="ms-auth__form" action="messenger.html" method="post" novalidate>
-          <div class="ms-field">
-            <label class="ms-label" for="s1-email">Work email</label>
-            <input class="ms-input is-active" id="s1-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" required>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s1-password">Password</label>
-            <div class="ms-password">
-              <input class="ms-input" id="s1-password" name="password" type="password" autocomplete="current-password" required>
-              <button type="button" class="ms-icon-btn ms-password__toggle" aria-label="Show password" aria-pressed="false" aria-controls="s1-password"><span class="ms-icon ms-i-eye-off ms-icon--sm" aria-hidden="true"></span></button>
+      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 1 · Default, with recent domains">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 · Default, with recent domains</p>
+        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
+          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+            <div class="grid gap-2">
+              <h1 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h1>
+              <p class="text-subtle short:hidden">Use your work email and password.</p>
             </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="s1-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" active required></w-text-field>
+              <w-text-field id="s1-password" type="password" label="Password" name="password" autocomplete="current-password" required>
+                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s1-password"></w-icon-btn>
+              </w-text-field>
+              <w-text-field id="s1-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my email on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block>Sign in</w-btn>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+            </form>
+            <div role="presentation" class="flex items-center gap-3 text-xs text-subtle before:h-px before:flex-1 before:bg-divider after:h-px after:flex-1 after:bg-divider">or</div>
+            <section class="grid gap-3" aria-labelledby="s1-recent">
+              <h2 class="text-sm font-semibold text-subtle" id="s1-recent">Recent domains</h2>
+              <ul class="grid gap-1">
+                <li class="flex items-center gap-1">
+                  <button type="button" class="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 text-left hover:border-outline hover:bg-surface-low" aria-label="Use ana@example.com">
+                    <span class="grid size-9 flex-none place-items-center rounded-lg bg-rail text-sm font-bold text-on-rail" aria-hidden="true">Ex</span>
+                    <span class="grid min-w-0 flex-1"><span class="truncate font-semibold">example.com</span><span class="truncate text-xs text-subtle">ana@example.com</span></span>
+                    <w-icon name="chevron-right" class="text-subtle"></w-icon>
+                  </button>
+                  <w-icon-btn icon="close" class="touch-target" aria-label="Forget example.com on this device"></w-icon-btn>
+                </li>
+                <li class="flex items-center gap-1">
+                  <button type="button" class="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 text-left hover:border-outline hover:bg-surface-low" aria-label="Use ana@example.org">
+                    <span class="grid size-9 flex-none place-items-center rounded-lg bg-rail text-sm font-bold text-on-rail" aria-hidden="true">Eo</span>
+                    <span class="grid min-w-0 flex-1"><span class="truncate font-semibold">example.org</span><span class="truncate text-xs text-subtle">ana@example.org</span></span>
+                    <w-icon name="chevron-right" class="text-subtle"></w-icon>
+                  </button>
+                  <w-icon-btn icon="close" class="touch-target" aria-label="Forget example.org on this device"></w-icon-btn>
+                </li>
+              </ul>
+              <p class="text-xs text-subtle short:hidden">Picking a domain fills in the email. This device keeps only the email, never the password.</p>
+            </section>
           </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s1-code">2-step code <span class="ms-subtle">(optional)</span></label>
-            <input class="ms-input ms-code-input" id="s1-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" aria-describedby="s1-code-help">
-            <p class="ms-help" id="s1-code-help">Only if your account uses one.</p>
-          </div>
-          <label class="ms-check"><input type="checkbox" name="remember"> Remember my email on this device</label>
-          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block">Sign in</button>
-          <p class="ms-auth__note"><span class="ms-icon ms-i-key ms-icon--sm" aria-hidden="true"></span>Forgot your password? Ask an admin of your domain to reset it.</p>
-        </form>
-        <div class="ms-auth__divider" role="presentation">or</div>
-        <section aria-labelledby="s1-recent" class="ms-auth__form">
-          <h2 class="ms-section-title" id="s1-recent">Recent domains</h2>
-          <ul class="ms-domain-list">
-            <li class="ms-domain-item">
-              <button type="button" class="ms-domain-row" aria-label="Use ana@example.com">
-                <span class="ms-domain-mark" aria-hidden="true">Ex</span>
-                <span class="ms-domain-row__main"><span class="ms-domain-row__name">example.com</span><span class="ms-domain-row__sub">ana@example.com</span></span>
-                <span class="ms-icon ms-i-chevron-right ms-domain-row__go" aria-hidden="true"></span>
-              </button>
-              <button class="ms-icon-btn" type="button" aria-label="Forget example.com on this device"><span class="ms-icon ms-i-close ms-icon--sm" aria-hidden="true"></span></button>
-            </li>
-            <li class="ms-domain-item">
-              <button type="button" class="ms-domain-row" aria-label="Use ana@example.org">
-                <span class="ms-domain-mark" aria-hidden="true">Eo</span>
-                <span class="ms-domain-row__main"><span class="ms-domain-row__name">example.org</span><span class="ms-domain-row__sub">ana@example.org</span></span>
-                <span class="ms-icon ms-i-chevron-right ms-domain-row__go" aria-hidden="true"></span>
-              </button>
-              <button class="ms-icon-btn" type="button" aria-label="Forget example.org on this device"><span class="ms-icon ms-i-close ms-icon--sm" aria-hidden="true"></span></button>
-            </li>
-          </ul>
-          <p class="ms-meta">Picking a domain fills in the email. This device keeps only the email, never the password.</p>
-        </section>
-      </div>
-    </section>
-
-    <section class="ms-mock-state" aria-label="State 2 · First visit (no recent domains)">
-      <p class="ms-mock-state__label">State 2 · First visit (no recent domains)</p>
-      <div class="ms-auth__card">
-        <div class="ms-auth__head">
-          <h2 class="ms-auth__title">Sign in to Mesail</h2>
-          <p class="ms-auth__lead">Use your work email and password.</p>
         </div>
-        <form class="ms-auth__form" action="messenger.html" method="post" novalidate>
-          <div class="ms-field">
-            <label class="ms-label" for="s2-email">Work email</label>
-            <input class="ms-input" id="s2-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" required>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s2-password">Password</label>
-            <div class="ms-password">
-              <input class="ms-input" id="s2-password" name="password" type="password" autocomplete="current-password" required>
-              <button type="button" class="ms-icon-btn ms-password__toggle" aria-label="Show password" aria-pressed="false" aria-controls="s2-password"><span class="ms-icon ms-i-eye-off ms-icon--sm" aria-hidden="true"></span></button>
-            </div>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s2-code">2-step code <span class="ms-subtle">(optional)</span></label>
-            <input class="ms-input ms-code-input" id="s2-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" aria-describedby="s2-code-help">
-            <p class="ms-help" id="s2-code-help">Only if your account uses one.</p>
-          </div>
-          <label class="ms-check"><input type="checkbox" name="remember"> Remember my email on this device</label>
-          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block">Sign in</button>
-          <p class="ms-auth__note"><span class="ms-icon ms-i-key ms-icon--sm" aria-hidden="true"></span>Forgot your password? Ask an admin of your domain to reset it.</p>
-        </form>
-      </div>
-    </section>
+      </section>
 
-    <section class="ms-mock-state" aria-label="State 3 · Recent domain picked: email filled, focus on Password">
-      <p class="ms-mock-state__label">State 3 · Recent domain picked: email filled, focus on Password</p>
-      <div class="ms-auth__card">
-        <div class="ms-auth__head">
-          <h2 class="ms-auth__title">Sign in to Mesail</h2>
-          <p class="ms-auth__lead">Use your work email and password.</p>
+      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 2 · First visit (no recent domains)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 · First visit (no recent domains)</p>
+        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
+          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your work email and password.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="s2-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" required></w-text-field>
+              <w-text-field id="s2-password" type="password" label="Password" name="password" autocomplete="current-password" required>
+                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s2-password"></w-icon-btn>
+              </w-text-field>
+              <w-text-field id="s2-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my email on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block>Sign in</w-btn>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+            </form>
+          </div>
         </div>
-        <form class="ms-auth__form" action="messenger.html" method="post" novalidate>
-          <div class="ms-field">
-            <label class="ms-label" for="s3-email">Work email</label>
-            <input class="ms-input" id="s3-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" value="ana@example.com" required>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s3-password">Password</label>
-            <div class="ms-password">
-              <input class="ms-input is-active" id="s3-password" name="password" type="password" autocomplete="current-password" required>
-              <button type="button" class="ms-icon-btn ms-password__toggle" aria-label="Show password" aria-pressed="false" aria-controls="s3-password"><span class="ms-icon ms-i-eye-off ms-icon--sm" aria-hidden="true"></span></button>
-            </div>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s3-code">2-step code <span class="ms-subtle">(optional)</span></label>
-            <input class="ms-input ms-code-input" id="s3-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" aria-describedby="s3-code-help">
-            <p class="ms-help" id="s3-code-help">Only if your account uses one.</p>
-          </div>
-          <label class="ms-check"><input type="checkbox" name="remember" checked> Remember my email on this device</label>
-          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block">Sign in</button>
-          <p class="ms-auth__note"><span class="ms-icon ms-i-key ms-icon--sm" aria-hidden="true"></span>Forgot your password? Ask an admin of your domain to reset it.</p>
-        </form>
-      </div>
-    </section>
+      </section>
 
-    <section class="ms-mock-state" aria-label="State 4 · Error before sending: the email is not complete">
-      <p class="ms-mock-state__label">State 4 · Error before sending: the email is not complete</p>
-      <div class="ms-auth__card">
-        <div class="ms-auth__head">
-          <h2 class="ms-auth__title">Sign in to Mesail</h2>
-          <p class="ms-auth__lead">Use your work email and password.</p>
+      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 3 · Recent domain picked: email filled, focus on Password">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 · Recent domain picked: email filled, focus on Password</p>
+        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
+          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your work email and password.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="s3-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@example.com" required></w-text-field>
+              <w-text-field id="s3-password" type="password" label="Password" name="password" autocomplete="current-password" active required>
+                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s3-password"></w-icon-btn>
+              </w-text-field>
+              <w-text-field id="s3-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my email on this device" name="remember" checked></w-checkbox>
+              <w-btn variant="filled" size="large" block>Sign in</w-btn>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+            </form>
+          </div>
         </div>
-        <form class="ms-auth__form" action="messenger.html" method="post" novalidate>
-          <div class="ms-field">
-            <label class="ms-label" for="s4-email">Work email</label>
-            <input class="ms-input" id="s4-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" value="ana@" aria-invalid="true" aria-describedby="s4-email-err" required>
-            <p class="ms-error-text" id="s4-email-err"><span class="ms-icon ms-i-alert ms-icon--sm" aria-hidden="true"></span>Enter your full work email, like ana@example.com.</p>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s4-password">Password</label>
-            <div class="ms-password">
-              <input class="ms-input" id="s4-password" name="password" type="password" autocomplete="current-password" required>
-              <button type="button" class="ms-icon-btn ms-password__toggle" aria-label="Show password" aria-pressed="false" aria-controls="s4-password"><span class="ms-icon ms-i-eye-off ms-icon--sm" aria-hidden="true"></span></button>
-            </div>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s4-code">2-step code <span class="ms-subtle">(optional)</span></label>
-            <input class="ms-input ms-code-input" id="s4-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" aria-describedby="s4-code-help">
-            <p class="ms-help" id="s4-code-help">Only if your account uses one.</p>
-          </div>
-          <label class="ms-check"><input type="checkbox" name="remember"> Remember my email on this device</label>
-          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block">Sign in</button>
-          <p class="ms-auth__note"><span class="ms-icon ms-i-key ms-icon--sm" aria-hidden="true"></span>Forgot your password? Ask an admin of your domain to reset it.</p>
-        </form>
-      </div>
-    </section>
+      </section>
 
-    <section class="ms-mock-state" aria-label="State 5 · Loading: signing in">
-      <p class="ms-mock-state__label">State 5 · Loading: signing in</p>
-      <div class="ms-auth__card">
-        <div class="ms-auth__head">
-          <h2 class="ms-auth__title">Sign in to Mesail</h2>
-          <p class="ms-auth__lead">Use your work email and password.</p>
+      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 4 · Error before sending: the email is not complete">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 · Error before sending: the email is not complete</p>
+        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
+          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your work email and password.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="s4-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@" error="Enter your full work email, like ana@example.com." required></w-text-field>
+              <w-text-field id="s4-password" type="password" label="Password" name="password" autocomplete="current-password" required>
+                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s4-password"></w-icon-btn>
+              </w-text-field>
+              <w-text-field id="s4-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my email on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block>Sign in</w-btn>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+            </form>
+          </div>
         </div>
-        <form class="ms-auth__form" action="messenger.html" method="post" novalidate aria-busy="true">
-          <div class="ms-field">
-            <label class="ms-label" for="s5-email">Work email</label>
-            <input class="ms-input" id="s5-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" value="ana@example.com" readonly required>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s5-password">Password</label>
-            <div class="ms-password">
-              <input class="ms-input" id="s5-password" name="password" type="password" autocomplete="current-password" value="secretpassword" readonly required>
-              <button type="button" class="ms-icon-btn ms-password__toggle" aria-label="Show password" aria-pressed="false" aria-controls="s5-password"><span class="ms-icon ms-i-eye-off ms-icon--sm" aria-hidden="true"></span></button>
-            </div>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s5-code">2-step code <span class="ms-subtle">(optional)</span></label>
-            <input class="ms-input ms-code-input" id="s5-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" aria-describedby="s5-code-help" readonly>
-            <p class="ms-help" id="s5-code-help">Only if your account uses one.</p>
-          </div>
-          <label class="ms-check"><input type="checkbox" name="remember" checked> Remember my email on this device</label>
-          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block" aria-disabled="true" aria-busy="true"><span class="ms-spinner" aria-hidden="true"></span>Signing in…</button>
-          <p class="ms-sr-only" role="status">Signing in to example.com…</p>
-          <p class="ms-auth__note"><span class="ms-icon ms-i-key ms-icon--sm" aria-hidden="true"></span>Forgot your password? Ask an admin of your domain to reset it.</p>
-        </form>
-      </div>
-    </section>
+      </section>
 
-    <section class="ms-mock-state" aria-label="State 6 · Error: wrong email, password or code (one answer for every failure)">
-      <p class="ms-mock-state__label">State 6 · Error: wrong email, password or code (one answer for every failure)</p>
-      <div class="ms-auth__card">
-        <div class="ms-auth__head">
-          <h2 class="ms-auth__title">Sign in to Mesail</h2>
-          <p class="ms-auth__lead">Use your work email and password.</p>
+      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 5 · Loading: signing in">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 5 · Loading: signing in</p>
+        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
+          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your work email and password.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate aria-busy="true">
+              <w-text-field id="s5-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@example.com" readonly required></w-text-field>
+              <w-text-field id="s5-password" type="password" label="Password" name="password" autocomplete="current-password" value="secretpassword" readonly required>
+                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s5-password"></w-icon-btn>
+              </w-text-field>
+              <w-text-field id="s5-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my email on this device" name="remember" checked></w-checkbox>
+              <w-btn variant="filled" size="large" block loading disabled>Signing in…</w-btn>
+              <p class="sr-only" role="status">Signing in to example.com…</p>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+            </form>
+          </div>
         </div>
-        <form class="ms-auth__form" action="messenger.html" method="post" novalidate>
-          <div class="ms-auth__notice ms-auth__notice--error" role="alert" id="s6-notice"><span class="ms-icon ms-i-alert ms-icon--sm" aria-hidden="true"></span><p>The email, password or 2-step code is not right.</p></div>
-          <div class="ms-field">
-            <label class="ms-label" for="s6-email">Work email</label>
-            <input class="ms-input" id="s6-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" value="ana@example.com" required>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s6-password">Password</label>
-            <div class="ms-password">
-              <input class="ms-input is-active" id="s6-password" name="password" type="password" autocomplete="current-password" aria-describedby="s6-notice" required>
-              <button type="button" class="ms-icon-btn ms-password__toggle" aria-label="Show password" aria-pressed="false" aria-controls="s6-password"><span class="ms-icon ms-i-eye-off ms-icon--sm" aria-hidden="true"></span></button>
-            </div>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s6-code">2-step code <span class="ms-subtle">(optional)</span></label>
-            <input class="ms-input ms-code-input" id="s6-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" aria-describedby="s6-code-help">
-            <p class="ms-help" id="s6-code-help">Only if your account uses one.</p>
-          </div>
-          <label class="ms-check"><input type="checkbox" name="remember" checked> Remember my email on this device</label>
-          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block">Sign in</button>
-          <p class="ms-auth__note"><span class="ms-icon ms-i-key ms-icon--sm" aria-hidden="true"></span>Forgot your password? Ask an admin of your domain to reset it.</p>
-        </form>
-      </div>
-    </section>
+      </section>
 
-    <section class="ms-mock-state" aria-label="State 7 · Error: too many tries">
-      <p class="ms-mock-state__label">State 7 · Error: too many tries</p>
-      <div class="ms-auth__card">
-        <div class="ms-auth__head">
-          <h2 class="ms-auth__title">Sign in to Mesail</h2>
-          <p class="ms-auth__lead">Use your work email and password.</p>
+      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 6 · Error: wrong email, password or code (one answer for every failure)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 6 · Error: wrong email, password or code (one answer for every failure)</p>
+        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
+          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your work email and password.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-alert type="error" variant="tonal" text="The email, password or 2-step code is not right."></w-alert>
+              <w-text-field id="s6-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@example.com" required></w-text-field>
+              <w-text-field id="s6-password" type="password" label="Password" name="password" autocomplete="current-password" active required>
+                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s6-password"></w-icon-btn>
+              </w-text-field>
+              <w-text-field id="s6-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my email on this device" name="remember" checked></w-checkbox>
+              <w-btn variant="filled" size="large" block>Sign in</w-btn>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+            </form>
+          </div>
         </div>
-        <form class="ms-auth__form" action="messenger.html" method="post" novalidate>
-          <div class="ms-auth__notice ms-auth__notice--warn" role="alert" id="s7-notice"><span class="ms-icon ms-i-clock ms-icon--sm" aria-hidden="true"></span><p>Too many tries. Wait a minute, then try again.</p></div>
-          <div class="ms-field">
-            <label class="ms-label" for="s7-email">Work email</label>
-            <input class="ms-input" id="s7-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" value="ana@example.com" required>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s7-password">Password</label>
-            <div class="ms-password">
-              <input class="ms-input" id="s7-password" name="password" type="password" autocomplete="current-password" aria-describedby="s7-notice" required>
-              <button type="button" class="ms-icon-btn ms-password__toggle" aria-label="Show password" aria-pressed="false" aria-controls="s7-password"><span class="ms-icon ms-i-eye-off ms-icon--sm" aria-hidden="true"></span></button>
-            </div>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s7-code">2-step code <span class="ms-subtle">(optional)</span></label>
-            <input class="ms-input ms-code-input" id="s7-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" aria-describedby="s7-code-help">
-            <p class="ms-help" id="s7-code-help">Only if your account uses one.</p>
-          </div>
-          <label class="ms-check"><input type="checkbox" name="remember" checked> Remember my email on this device</label>
-          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block" aria-disabled="true">Sign in <span class="ms-meta">(wait 1 minute)</span></button>
-          <p class="ms-auth__note"><span class="ms-icon ms-i-key ms-icon--sm" aria-hidden="true"></span>Forgot your password? Ask an admin of your domain to reset it.</p>
-        </form>
-      </div>
-    </section>
+      </section>
 
-    <section class="ms-mock-state" aria-label="State 8 · Error: sign-in service cannot be reached">
-      <p class="ms-mock-state__label">State 8 · Error: sign-in service cannot be reached</p>
-      <div class="ms-auth__card">
-        <div class="ms-auth__head">
-          <h2 class="ms-auth__title">Sign in to Mesail</h2>
-          <p class="ms-auth__lead">Use your work email and password.</p>
+      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 7 · Error: too many tries">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 7 · Error: too many tries</p>
+        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
+          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your work email and password.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-alert type="warning" variant="tonal" icon="clock" text="Too many tries. Wait a minute, then try again."></w-alert>
+              <w-text-field id="s7-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@example.com" required></w-text-field>
+              <w-text-field id="s7-password" type="password" label="Password" name="password" autocomplete="current-password" required>
+                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s7-password"></w-icon-btn>
+              </w-text-field>
+              <w-text-field id="s7-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my email on this device" name="remember" checked></w-checkbox>
+              <w-btn variant="filled" size="large" block disabled>Sign in (wait 1 minute)</w-btn>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+            </form>
+          </div>
         </div>
-        <form class="ms-auth__form" action="messenger.html" method="post" novalidate>
-          <div class="ms-auth__notice ms-auth__notice--error" role="alert" id="s8-notice"><span class="ms-icon ms-i-wifi-off ms-icon--sm" aria-hidden="true"></span><p>We cannot reach sign-in right now. Try again in a minute.</p></div>
-          <div class="ms-field">
-            <label class="ms-label" for="s8-email">Work email</label>
-            <input class="ms-input" id="s8-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" value="ana@example.com" required>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s8-password">Password</label>
-            <div class="ms-password">
-              <input class="ms-input" id="s8-password" name="password" type="password" autocomplete="current-password" value="secretpassword" aria-describedby="s8-notice" required>
-              <button type="button" class="ms-icon-btn ms-password__toggle" aria-label="Show password" aria-pressed="false" aria-controls="s8-password"><span class="ms-icon ms-i-eye-off ms-icon--sm" aria-hidden="true"></span></button>
-            </div>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s8-code">2-step code <span class="ms-subtle">(optional)</span></label>
-            <input class="ms-input ms-code-input" id="s8-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" aria-describedby="s8-code-help">
-            <p class="ms-help" id="s8-code-help">Only if your account uses one.</p>
-          </div>
-          <label class="ms-check"><input type="checkbox" name="remember" checked> Remember my email on this device</label>
-          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block">Sign in</button>
-          <p class="ms-auth__note"><span class="ms-icon ms-i-key ms-icon--sm" aria-hidden="true"></span>Forgot your password? Ask an admin of your domain to reset it.</p>
-        </form>
-      </div>
-    </section>
+      </section>
 
-    <section class="ms-mock-state" aria-label="State 9 · Already signed in: &quot;Sign in to another domain&quot; (from the domain menu)">
-      <p class="ms-mock-state__label">State 9 · Already signed in: &quot;Sign in to another domain&quot; (from the domain menu)</p>
-      <div class="ms-auth__card">
-        <div class="ms-auth__head">
-          <h2 class="ms-auth__title">Sign in to another domain</h2>
-          <p class="ms-auth__lead">You stay signed in to example.com. Use the email and password for the other domain.</p>
+      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 8 · Error: sign-in service cannot be reached">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 8 · Error: sign-in service cannot be reached</p>
+        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
+          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your work email and password.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-alert type="error" variant="tonal" icon="wifi-off" text="We cannot reach sign-in right now. Try again in a minute."></w-alert>
+              <w-text-field id="s8-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@example.com" required></w-text-field>
+              <w-text-field id="s8-password" type="password" label="Password" name="password" autocomplete="current-password" value="secretpassword" required>
+                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s8-password"></w-icon-btn>
+              </w-text-field>
+              <w-text-field id="s8-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my email on this device" name="remember" checked></w-checkbox>
+              <w-btn variant="filled" size="large" block>Sign in</w-btn>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+            </form>
+          </div>
         </div>
-        <form class="ms-auth__form" action="messenger.html" method="post" novalidate>
-          <div class="ms-field">
-            <label class="ms-label" for="s9-email">Work email</label>
-            <input class="ms-input is-active" id="s9-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" required>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s9-password">Password</label>
-            <div class="ms-password">
-              <input class="ms-input" id="s9-password" name="password" type="password" autocomplete="current-password" required>
-              <button type="button" class="ms-icon-btn ms-password__toggle" aria-label="Show password" aria-pressed="false" aria-controls="s9-password"><span class="ms-icon ms-i-eye-off ms-icon--sm" aria-hidden="true"></span></button>
-            </div>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="s9-code">2-step code <span class="ms-subtle">(optional)</span></label>
-            <input class="ms-input ms-code-input" id="s9-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" aria-describedby="s9-code-help">
-            <p class="ms-help" id="s9-code-help">Only if your account uses one.</p>
-          </div>
-          <label class="ms-check"><input type="checkbox" name="remember"> Remember my email on this device</label>
-          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block">Sign in</button>
-          <a class="ms-btn ms-btn--lg ms-btn--block ms-btn--ghost" href="messenger.html">Cancel</a>
-          <p class="ms-auth__note"><span class="ms-icon ms-i-key ms-icon--sm" aria-hidden="true"></span>Forgot your password? Ask an admin of your domain to reset it.</p>
-        </form>
-      </div>
-    </section>
-  </main>
+      </section>
 
-  <footer class="ms-auth__foot">
-    <nav aria-label="Help and legal">
-      <ul>
-        <li><a href="#">Help</a></li>
-        <li><a href="#">Privacy</a></li>
-      </ul>
-    </nav>
-  </footer>
+      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 9 · Already signed in: &quot;Sign in to another domain&quot; (from the domain menu)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 9 · Already signed in: &quot;Sign in to another domain&quot; (from the domain menu)</p>
+        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
+          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to another domain</h2>
+              <p class="text-subtle">You stay signed in to example.com. Use the email and password for the other domain.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="s9-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" active required></w-text-field>
+              <w-text-field id="s9-password" type="password" label="Password" name="password" autocomplete="current-password" required>
+                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s9-password"></w-icon-btn>
+              </w-text-field>
+              <w-text-field id="s9-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my email on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block>Sign in</w-btn>
+              <w-btn variant="text" size="large" block href="messenger.html">Cancel</w-btn>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Help and legal">
+        <ul class="flex gap-2">
+          <li><w-btn variant="text" size="small" href="#">Help</w-btn></li>
+          <li><w-btn variant="text" size="small" href="#">Privacy</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
 </div>
 </body>
 </html>

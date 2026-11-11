@@ -1,284 +1,261 @@
 <!doctype html>
-<html lang="en" w-theme="light">
+<html lang="en" w-theme="light" w-density="comfortable">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mesail mockup: settings, appearance</title>
-<link rel="stylesheet" href="assets/duvay/tokens.css">
-<link rel="stylesheet" href="assets/duvay/themes.css">
-<link rel="stylesheet" href="assets/mesail-tokens.css">
-<link rel="stylesheet" href="assets/icons.css">
-<link rel="stylesheet" href="assets/mesail.css">
-<link rel="stylesheet" href="assets/screens/settings.css">
+<link rel="stylesheet" href="assets/app.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
 <script src="assets/mockup.js" defer></script>
 </head>
-<body>
+<body class="bg-surface text-text">
 <a class="ms-skip-link" href="#settings-page">Skip to settings</a>
 
-<div class="ms-app" data-pane="main">
+<!-- App shell. Under 600 px one pane shows (data-pane); 600 px: list + settings; 960 px: + domain rail.
+     Settings has no right pane, so the main pane takes the rest of the width. -->
+<div class="group/app relative grid h-dvh overflow-hidden
+  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
+  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main">
 
-  <!-- Domain rail: one tile per messaging domain the user belongs to -->
-  <nav class="ms-rail" aria-label="Domains">
-    <ul class="ms-rail__list">
+  <!-- Domain rail (960 px and up) -->
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Domains">
+    <ul class="flex flex-col gap-2">
       <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
-      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
-      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<w-badge content="3" inline class="absolute -top-1 -right-1.5"></w-badge></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="absolute -left-2.5 size-2 rounded-full bg-on-rail" aria-hidden="true"></span>La</a></li>
     </ul>
-    <div class="ms-rail__sep" role="presentation"></div>
-    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
-    <div class="ms-rail__spacer"></div>
-    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+    <div class="h-px w-8 bg-on-rail/20" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><w-icon name="plus"></w-icon></a>
+    <div class="flex-1"></div>
+    <a class="ms-domain-tile" href="settings-appearance.html" aria-label="Help and keyboard shortcuts" title="Help"><w-icon name="info"></w-icon></a>
   </nav>
 
-  <!-- Sidebar -->
-  <aside class="ms-sidebar" aria-label="Conversations in example.com">
-    <div class="ms-sidebar__head">
-      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
-      <div class="ms-header__actions">
-        <button class="ms-icon-btn" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
-      </div>
-    </div>
-    <div class="ms-sidebar__search">
-      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
-    </div>
-    <div class="ms-sidebar__scroll">
-      <ul class="ms-nav-list">
-        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
-        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
-      </ul>
-
-      <section class="ms-nav-section" aria-labelledby="sec-channels">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
-          <button class="ms-icon-btn" aria-label="Add or browse channels"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">general</span></a></li>
-          <li><a class="ms-nav-item" href="messenger.html"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">releases</span></a></li>
-          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">support</span><span class="ms-icon ms-i-mail ms-icon--sm" style="color:var(--ms-email)" aria-label="Has an email address" role="img"></span><span class="ms-badge" aria-label="4 unread">4</span></a></li>
-          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-lock" aria-label="Private channel" role="img"></span><span class="ms-nav-item__label">design</span><span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span></a></li>
-          <li><a class="ms-nav-item is-muted" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">random</span><span class="ms-icon ms-i-bell-off ms-icon--sm" aria-label="Muted" role="img"></span></a></li>
-        </ul>
-      </section>
-
-      <section class="ms-nav-section" aria-labelledby="sec-dms">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
-          <button class="ms-icon-btn" aria-label="New direct message"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:20">BL<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span><span class="ms-nav-item__label">Bo Lee</span><span class="ms-sr-only">, active</span><span class="ms-badge ms-badge--mention" aria-label="1 unread">1</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:280">CW<span class="ms-presence ms-presence--idle" aria-hidden="true"></span></span><span class="ms-nav-item__label">Chen Wu</span><span class="ms-sr-only">, idle</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:140">DO<span class="ms-presence ms-presence--dnd" aria-hidden="true"></span></span><span class="ms-nav-item__label">Dara Okafor</span><span class="ms-sr-only">, do not disturb</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs ms-avatar--channel" aria-hidden="true">3</span><span class="ms-nav-item__label">Bo, Chen, Dara</span></a></li>
-        </ul>
-      </section>
-
-      <section class="ms-nav-section" aria-labelledby="sec-email">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
-          <button class="ms-icon-btn" aria-label="New email"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email is-unread" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">DH</span><span class="ms-nav-item__label">Dan Hale<span class="ms-nav-item__sub">Question about invoice 2291</span></span><span class="ms-badge" aria-label="1 unread">1</span></a></li>
-          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-nav-item__label">Carol Diaz, Bo Lee<span class="ms-nav-item__sub">Contract renewal 2027</span></span></a></li>
-        </ul>
-      </section>
-    </div>
-    <div class="ms-sidebar__foot">
-      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
-        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
-        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+  <!-- Sidebar: list pane on phones, always visible from 600 px -->
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations in example.com">
+    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-t safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
+      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
+      <span class="flex-1"></span>
+      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+    </header>
+    <div class="px-3 py-2">
+      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
+        <w-icon name="search" class="ms-icon-sm"></w-icon>Search<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
       </button>
-      <a class="ms-icon-btn" href="settings.html" aria-label="Settings" aria-current="page"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
     </div>
+    <div class="flex-1 overflow-y-auto px-2 pb-4">
+      <w-list nav density="compact" aria-label="Shortcuts">
+        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline label="2 mentions"></w-badge></w-list-item>
+        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
+      </w-list>
+
+      <section class="mt-3" aria-labelledby="sec-channels">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-channels"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Channels</button>
+          <w-icon-btn icon="plus" size="small" aria-label="Add or browse channels"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-channels">
+          <w-list-item href="#" title="general"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="messenger.html" title="releases"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="channel-email.html" title="support" class="ms-unread"><w-icon slot="prepend" name="hash"></w-icon><span slot="append" class="flex items-center gap-1"><w-icon name="mail" class="ms-icon-sm text-email" role="img" aria-label="Has an email address"></w-icon><w-badge content="4" inline class="ms-count" label="4 unread"></w-badge></span></w-list-item>
+          <w-list-item href="#" title="design" class="ms-unread"><w-icon slot="prepend" name="lock" role="img" aria-label="Private channel"></w-icon><w-badge slot="append" content="1" inline label="1 mention"></w-badge></w-list-item>
+          <w-list-item href="#" title="random" class="ms-muted"><w-icon slot="prepend" name="hash"></w-icon><w-icon slot="append" name="bell-off" class="ms-icon-sm" role="img" aria-label="Muted"></w-icon></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-dms">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-dms"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Direct messages</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New direct message"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-dms">
+          <w-list-item href="mobile-conversation.html" title="Bo Lee" class="ms-unread"><w-avatar slot="prepend" text="BL" size="20" status="online" style="--h:20" alt="Bo Lee, active"></w-avatar><w-badge slot="append" content="1" inline label="1 unread"></w-badge></w-list-item>
+          <w-list-item href="#" title="Chen Wu"><w-avatar slot="prepend" text="CW" size="20" status="away" style="--h:280" alt="Chen Wu, idle"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Dara Okafor"><w-avatar slot="prepend" text="DO" size="20" status="busy" style="--h:140" alt="Dara Okafor, do not disturb"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Bo, Chen, Dara"><w-avatar slot="prepend" text="3" size="20" alt="Group of 3"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-email">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-email"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Email</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New email"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" lines="two" aria-labelledby="sec-email">
+          <w-list-item href="email-inbound-new.html" title="Dan Hale" subtitle="Question about invoice 2291" class="ms-unread"><w-avatar slot="prepend" text="DH" size="20" class="ms-external" alt="Dan Hale, outside example.com"></w-avatar><w-badge slot="append" content="1" inline class="ms-count" label="1 unread"></w-badge></w-list-item>
+          <w-list-item href="email-conversation.html" title="Carol Diaz, Bo Lee" subtitle="Contract renewal 2027"><w-avatar slot="prepend" text="CD" size="20" class="ms-external" alt="Carol Diaz, outside example.com"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+    </div>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <w-avatar text="AR" size="28" status="online" style="--h:195" alt=""></w-avatar>
+        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">ana@example.com</span></span>
+      </button>
+      <w-icon-btn icon="settings" href="settings.html" aria-label="Settings"></w-icon-btn>
+    </footer>
   </aside>
 
   <!-- Settings for the current domain -->
-  <main class="ms-main" aria-labelledby="settings-title">
-    <header class="ms-header">
-      <a class="ms-icon-btn ms-header__back" href="messenger.html?pane=list" aria-label="Back to conversations"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
-      <h1 class="ms-header__title" id="settings-title"><span class="ms-icon ms-i-settings" aria-hidden="true"></span><span class="ms-settings-title">Settings<span class="ms-settings-title__sep"> · </span><span class="ms-settings-title__domain">example.com</span></span></h1>
-      <div class="ms-header__actions">
-        <p class="ms-save-status ms-save-status--saved" id="save-status" role="status" aria-live="polite"><span class="ms-icon ms-i-check" aria-hidden="true"></span>Saved</p>
+  <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="settings-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="messenger.html?pane=list" aria-label="Back to conversations"></w-icon-btn>
+      <h1 id="settings-title" class="flex min-w-0 items-center gap-1 text-lg font-bold">
+        <w-icon name="settings" class="ms-icon-sm hidden @md/main:inline-flex"></w-icon>
+        <span class="grid min-w-0 leading-tight @md/main:flex @md/main:items-baseline @md/main:gap-1"><span class="truncate">Settings</span><span class="hidden font-normal text-subtle @md/main:inline"> · </span><span class="truncate text-xs font-normal text-subtle @md/main:text-lg">example.com</span></span>
+      </h1>
+      <div class="ml-auto flex items-center gap-1 no-drag">
+        <p class="empty:hidden inline-flex min-h-7 items-center gap-1 whitespace-nowrap rounded-full pl-2 pr-3 text-xs font-medium bg-success-container text-on-success-container" id="save-status" role="status" aria-live="polite"><w-icon name="check" class="ms-icon-xs"></w-icon>Saved</p>
       </div>
     </header>
-    <nav class="ms-tabs ms-settings-tabs" aria-label="Settings sections">
-      <a class="ms-tab" href="settings.html">Profile</a>
-      <a class="ms-tab" href="settings-notifications.html">Notifications</a>
-      <a class="ms-tab" href="settings-email.html">Email</a>
-      <a class="ms-tab" href="settings-appearance.html" aria-current="page">Appearance</a>
+
+    <!-- Settings sections: a tab strip while the pane is narrow, a left column from 48rem -->
+    <nav class="flex-none border-b border-divider safe-l safe-r @2xl/main:hidden" style="--ms-edge: 0.25rem" aria-label="Settings sections">
+      <w-tabs value="appearance">
+        <w-tab value="profile" href="settings.html">Profile</w-tab>
+        <w-tab value="notifications" href="settings-notifications.html">Notifications</w-tab>
+        <w-tab value="email" href="settings-email.html">Email</w-tab>
+        <w-tab value="appearance" href="settings-appearance.html" active>Appearance</w-tab>
+      </w-tabs>
     </nav>
-    <div class="ms-settings">
-      <nav class="ms-settings__nav" aria-label="Settings sections">
-        <p class="ms-settings-nav__head">Your settings</p>
-        <ul class="ms-nav-list">
-        <li><a class="ms-nav-item" href="settings.html"><span class="ms-icon ms-i-user" aria-hidden="true"></span><span class="ms-nav-item__label">Profile and account</span></a></li>
-        <li><a class="ms-nav-item" href="settings-notifications.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Notifications</span></a></li>
-        <li><a class="ms-nav-item" href="settings-email.html"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span class="ms-nav-item__label">Email</span></a></li>
-        <li><a class="ms-nav-item" href="settings-appearance.html" aria-current="page"><span class="ms-icon ms-i-sun" aria-hidden="true"></span><span class="ms-nav-item__label">Appearance</span></a></li>
-        </ul>
-        <p class="ms-settings-nav__scope"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span>Profile, notifications and email are for <strong>example.com</strong> only. Appearance is for this device.</span></p>
+    <div class="flex min-h-0 flex-1">
+      <nav class="hidden w-56 flex-none overflow-y-auto border-r border-divider px-2 py-4 safe-b @2xl/main:block" aria-label="Settings sections">
+        <p class="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-subtle">Your settings</p>
+        <w-list nav class="ms-plain-list">
+          <w-list-item href="settings.html" title="Profile and account"><w-icon slot="prepend" name="user"></w-icon></w-list-item>
+          <w-list-item href="settings-notifications.html" title="Notifications"><w-icon slot="prepend" name="bell"></w-icon></w-list-item>
+          <w-list-item href="settings-email.html" title="Email"><w-icon slot="prepend" name="mail"></w-icon></w-list-item>
+          <w-list-item href="settings-appearance.html" title="Appearance" active><w-icon slot="prepend" name="sun"></w-icon></w-list-item>
+        </w-list>
+        <p class="mx-2 mt-6 flex items-start gap-2 border-t border-divider pt-3 text-xs text-subtle"><w-icon name="globe" class="ms-icon-sm mt-px"></w-icon><span>Profile, notifications and email are for <strong>example.com</strong> only. Appearance is for this device.</span></p>
       </nav>
-      <div class="ms-page" id="settings-page">
-        <div class="ms-page__inner">
-          <div class="ms-page__head">
-            <h2 class="ms-page__title">Appearance</h2>
-            <p class="ms-scope-note"><span class="ms-icon ms-i-info" aria-hidden="true"></span><span>Saved on this device and used for all your domains: example.com, example.org and lab.example.net.</span></p>
+      <div class="min-w-0 flex-1 overflow-y-auto @container/page safe-b safe-r" id="settings-page">
+        <div class="mx-auto grid w-full max-w-2xl gap-6 px-4 pt-6 pb-10 @xl/page:px-6">
+          <div class="grid gap-1">
+            <h2 class="text-xl font-bold @xl/page:text-2xl">Appearance</h2>
+            <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="info" class="ms-icon-sm mt-0.5"></w-icon><span>Saved on this device and used for all your domains: example.com, example.org and lab.example.net. The look of buttons and menus follows your device (macOS, Windows, Linux, iOS or Android) by itself.</span></p>
           </div>
 
-          <!-- Theme -->
-          <section class="ms-card" aria-labelledby="theme-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="theme-h">Theme</h3></div>
+          <!-- Theme: custom radio cards; each preview is drawn in its own theme with w-theme -->
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="theme-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="theme-h" class="text-lg font-semibold">Theme</h3></div>
             </div>
-            <div class="ms-card__body">
-              <fieldset class="ms-setting__group">
-                <legend class="ms-sr-only">Theme</legend>
-                <div class="ms-theme-grid">
-                  <label class="ms-theme-card">
-                    <span class="ms-theme-preview" w-theme="light" aria-hidden="true">
-                      <span class="ms-theme-preview__rail"></span>
-                      <span class="ms-theme-preview__side"><span class="ms-theme-preview__line ms-theme-preview__line--accent"></span><span class="ms-theme-preview__line"></span><span class="ms-theme-preview__line ms-theme-preview__line--short"></span></span>
-                      <span class="ms-theme-preview__main"><span class="ms-theme-preview__msg"></span><span class="ms-theme-preview__msg ms-theme-preview__msg--email"></span><span class="ms-theme-preview__line ms-theme-preview__line--short"></span></span>
-                    </span>
-                    <span class="ms-theme-card__foot"><input type="radio" name="theme" value="light">Light<span class="ms-theme-card__state" aria-hidden="true">In use</span></span>
+            <div class="grid gap-4 px-4 py-4 @xl/page:px-5">
+              <fieldset class="m-0 border-0 p-0">
+                <legend class="sr-only">Theme</legend>
+                <div class="grid grid-cols-2 gap-3 @xl/page:grid-cols-4">
+                  <label class="group grid cursor-pointer gap-2 rounded-lg border-2 border-border bg-surface p-2 hover:border-outline has-checked:border-accent-bg has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent forced-colors:has-checked:outline-2 forced-colors:has-checked:outline-[Highlight]">
+                    <span w-theme="light" aria-hidden="true" class="grid h-20 grid-cols-[1rem_2.5rem_minmax(0,1fr)] overflow-hidden rounded-md border border-border bg-surface"><span class="bg-rail"></span><span class="grid content-start gap-1.5 border-r border-divider bg-sidebar px-1 py-1.5"><span class="block h-1 rounded-sm bg-accent-bg"></span><span class="block h-1 rounded-sm bg-subtle/55"></span><span class="block h-1 rounded-sm bg-subtle/55 w-3/5"></span></span><span class="grid content-start gap-1.5 p-1.5"><span class="block h-2.5 rounded-sm bg-surface-high"></span><span class="block h-4 rounded-sm border-l-[3px] border-email-rule bg-surface-low"></span><span class="block h-1 w-3/5 rounded-sm bg-subtle/55"></span></span></span>
+                    <span class="flex items-center gap-2 px-1 pb-1 font-medium"><input type="radio" name="theme" value="light" class="m-0 size-4.5 accent-[var(--w-accent-bg)]">Light<span class="invisible ml-auto text-xs font-semibold text-accent group-has-checked:visible" aria-hidden="true">In use</span></span>
                   </label>
-                  <label class="ms-theme-card">
-                    <span class="ms-theme-preview" w-theme="dark" aria-hidden="true">
-                      <span class="ms-theme-preview__rail"></span>
-                      <span class="ms-theme-preview__side"><span class="ms-theme-preview__line ms-theme-preview__line--accent"></span><span class="ms-theme-preview__line"></span><span class="ms-theme-preview__line ms-theme-preview__line--short"></span></span>
-                      <span class="ms-theme-preview__main"><span class="ms-theme-preview__msg"></span><span class="ms-theme-preview__msg ms-theme-preview__msg--email"></span><span class="ms-theme-preview__line ms-theme-preview__line--short"></span></span>
-                    </span>
-                    <span class="ms-theme-card__foot"><input type="radio" name="theme" value="dark">Dark<span class="ms-theme-card__state" aria-hidden="true">In use</span></span>
+                  <label class="group grid cursor-pointer gap-2 rounded-lg border-2 border-border bg-surface p-2 hover:border-outline has-checked:border-accent-bg has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent forced-colors:has-checked:outline-2 forced-colors:has-checked:outline-[Highlight]">
+                    <span w-theme="dark" aria-hidden="true" class="grid h-20 grid-cols-[1rem_2.5rem_minmax(0,1fr)] overflow-hidden rounded-md border border-border bg-surface"><span class="bg-rail"></span><span class="grid content-start gap-1.5 border-r border-divider bg-sidebar px-1 py-1.5"><span class="block h-1 rounded-sm bg-accent-bg"></span><span class="block h-1 rounded-sm bg-subtle/55"></span><span class="block h-1 rounded-sm bg-subtle/55 w-3/5"></span></span><span class="grid content-start gap-1.5 p-1.5"><span class="block h-2.5 rounded-sm bg-surface-high"></span><span class="block h-4 rounded-sm border-l-[3px] border-email-rule bg-surface-low"></span><span class="block h-1 w-3/5 rounded-sm bg-subtle/55"></span></span></span>
+                    <span class="flex items-center gap-2 px-1 pb-1 font-medium"><input type="radio" name="theme" value="dark" class="m-0 size-4.5 accent-[var(--w-accent-bg)]">Dark<span class="invisible ml-auto text-xs font-semibold text-accent group-has-checked:visible" aria-hidden="true">In use</span></span>
                   </label>
-                  <label class="ms-theme-card">
-                    <span class="ms-theme-preview ms-theme-preview--split" aria-hidden="true">
-                      <span class="ms-theme-preview__half" w-theme="light"><span class="ms-theme-preview__rail"></span><span class="ms-theme-preview__main"><span class="ms-theme-preview__msg"></span><span class="ms-theme-preview__msg ms-theme-preview__msg--email"></span><span class="ms-theme-preview__line ms-theme-preview__line--accent ms-theme-preview__line--short"></span></span></span>
-                      <span class="ms-theme-preview__half" w-theme="dark"><span class="ms-theme-preview__rail"></span><span class="ms-theme-preview__main"><span class="ms-theme-preview__msg"></span><span class="ms-theme-preview__msg ms-theme-preview__msg--email"></span><span class="ms-theme-preview__line ms-theme-preview__line--accent ms-theme-preview__line--short"></span></span></span>
-                    </span>
-                    <span class="ms-theme-card__foot"><input type="radio" name="theme" value="auto" checked aria-describedby="theme-auto-help">Match system<span class="ms-theme-card__state" aria-hidden="true">In use</span></span>
+                  <label class="group grid cursor-pointer gap-2 rounded-lg border-2 border-border bg-surface p-2 hover:border-outline has-checked:border-accent-bg has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent forced-colors:has-checked:outline-2 forced-colors:has-checked:outline-[Highlight]">
+                    <span aria-hidden="true" class="grid h-20 grid-cols-2 overflow-hidden rounded-md border border-border"><span w-theme="light" class="grid grid-cols-[0.75rem_minmax(0,1fr)] bg-surface"><span class="bg-rail"></span><span class="grid content-start gap-1.5 p-1.5"><span class="block h-2.5 rounded-sm bg-surface-high"></span><span class="block h-4 rounded-sm border-l-[3px] border-email-rule bg-surface-low"></span><span class="block h-1 w-3/5 rounded-sm bg-accent-bg"></span></span></span><span w-theme="dark" class="grid grid-cols-[0.75rem_minmax(0,1fr)] bg-surface"><span class="bg-rail"></span><span class="grid content-start gap-1.5 p-1.5"><span class="block h-2.5 rounded-sm bg-surface-high"></span><span class="block h-4 rounded-sm border-l-[3px] border-email-rule bg-surface-low"></span><span class="block h-1 w-3/5 rounded-sm bg-accent-bg"></span></span></span></span>
+                    <span class="flex items-center gap-2 px-1 pb-1 font-medium"><input type="radio" name="theme" value="auto" checked aria-describedby="theme-auto-help" class="m-0 size-4.5 accent-[var(--w-accent-bg)]">Match system<span class="invisible ml-auto text-xs font-semibold text-accent group-has-checked:visible" aria-hidden="true">In use</span></span>
                   </label>
-                  <label class="ms-theme-card">
-                    <span class="ms-theme-preview" w-theme="high-contrast" aria-hidden="true">
-                      <span class="ms-theme-preview__rail"></span>
-                      <span class="ms-theme-preview__side"><span class="ms-theme-preview__line ms-theme-preview__line--accent"></span><span class="ms-theme-preview__line"></span><span class="ms-theme-preview__line ms-theme-preview__line--short"></span></span>
-                      <span class="ms-theme-preview__main"><span class="ms-theme-preview__msg"></span><span class="ms-theme-preview__msg ms-theme-preview__msg--email"></span><span class="ms-theme-preview__line ms-theme-preview__line--short"></span></span>
-                    </span>
-                    <span class="ms-theme-card__foot"><input type="radio" name="theme" value="high-contrast">High contrast<span class="ms-theme-card__state" aria-hidden="true">In use</span></span>
+                  <label class="group grid cursor-pointer gap-2 rounded-lg border-2 border-border bg-surface p-2 hover:border-outline has-checked:border-accent-bg has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-accent forced-colors:has-checked:outline-2 forced-colors:has-checked:outline-[Highlight]">
+                    <span w-theme="high-contrast" aria-hidden="true" class="grid h-20 grid-cols-[1rem_2.5rem_minmax(0,1fr)] overflow-hidden rounded-md border border-border bg-surface"><span class="bg-rail"></span><span class="grid content-start gap-1.5 border-r border-divider bg-sidebar px-1 py-1.5"><span class="block h-1 rounded-sm bg-accent-bg"></span><span class="block h-1 rounded-sm bg-subtle/55"></span><span class="block h-1 rounded-sm bg-subtle/55 w-3/5"></span></span><span class="grid content-start gap-1.5 p-1.5"><span class="block h-2.5 rounded-sm bg-surface-high"></span><span class="block h-4 rounded-sm border-l-[3px] border-email-rule bg-surface-low"></span><span class="block h-1 w-3/5 rounded-sm bg-subtle/55"></span></span></span>
+                    <span class="flex items-center gap-2 px-1 pb-1 font-medium"><input type="radio" name="theme" value="high-contrast" class="m-0 size-4.5 accent-[var(--w-accent-bg)]">High contrast<span class="invisible ml-auto text-xs font-semibold text-accent group-has-checked:visible" aria-hidden="true">In use</span></span>
                   </label>
                 </div>
               </fieldset>
-              <p class="ms-help" id="theme-auto-help">Match system follows your device: light now, dark when your device is in dark mode.</p>
+              <p class="text-xs text-subtle" id="theme-auto-help">Match system follows your device: light now, dark when your device is in dark mode.</p>
             </div>
           </section>
 
           <!-- Density -->
-          <section class="ms-card" aria-labelledby="density-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="density-h">Message density</h3><p class="ms-card__desc">Compact shows more messages on the screen.</p></div>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="density-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="density-h" class="text-lg font-semibold">Message density</h3><p class="mt-0.5 text-sm text-subtle">Compact shows more messages on the screen.</p></div>
             </div>
-            <div class="ms-setting ms-setting--stack">
-              <fieldset class="ms-setting__group">
-                <legend class="ms-sr-only">Message density</legend>
-                <div class="ms-segmented">
-                  <label class="ms-segmented__option"><input type="radio" name="density" value="comfortable" checked>Comfortable</label>
-                  <label class="ms-segmented__option"><input type="radio" name="density" value="compact">Compact</label>
-                </div>
-              </fieldset>
-              <div class="ms-sample" aria-hidden="true">
-                <span class="ms-sample__label">Preview</span>
-                <span class="ms-sample__row"><span class="ms-avatar ms-avatar--sm" style="--h:20">BL</span><span><strong>Bo Lee</strong> <span class="ms-meta">09:20</span><br>Tagged v26.46.02. Publishing now.</span></span>
-                <span class="ms-sample__row"><span class="ms-avatar ms-avatar--sm" style="--h:195">AR</span><span><strong>Ana Ruiz</strong> <span class="ms-meta">09:31</span><br>Thanks!</span></span>
+            <div class="grid gap-4 px-4 py-4 @xl/page:px-5 @2xl/page:grid-cols-2 @2xl/page:items-start">
+              <div role="group" aria-labelledby="density-h" class="grid justify-items-start">
+                <w-btn-toggle value="comfortable" mandatory variant="outlined" class="pointer-coarse:[&_w-btn]:min-h-11">
+                  <w-btn value="comfortable">Comfortable</w-btn>
+                  <w-btn value="compact">Compact</w-btn>
+                </w-btn-toggle>
+              </div>
+              <div class="grid gap-2 rounded-md border border-divider bg-surface-low px-4 py-3" aria-hidden="true">
+                <span class="text-xs font-semibold text-subtle">Preview</span>
+                <span class="flex items-center gap-2"><w-avatar text="BL" size="24" style="--h:20" alt=""></w-avatar><span><strong>Bo Lee</strong> <span class="text-xs text-subtle">09:20</span><br>Tagged v26.46.02. Publishing now.</span></span>
+                <span class="flex items-center gap-2"><w-avatar text="AR" size="24" style="--h:195" alt=""></w-avatar><span><strong>Ana Ruiz</strong> <span class="text-xs text-subtle">09:31</span><br>Thanks!</span></span>
               </div>
             </div>
           </section>
 
           <!-- Text size -->
-          <section class="ms-card" aria-labelledby="text-size-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="text-size-h">Text size</h3><p class="ms-card__desc">Changes text in messages, lists and menus. Your browser zoom works too.</p></div>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="text-size-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="text-size-h" class="text-lg font-semibold">Text size</h3><p class="mt-0.5 text-sm text-subtle">Changes text in messages, lists and menus. Your browser zoom works too.</p></div>
             </div>
-            <div class="ms-setting ms-setting--stack">
-              <fieldset class="ms-setting__group">
-                <legend class="ms-sr-only">Text size</legend>
-                <div class="ms-segmented">
-                  <label class="ms-segmented__option"><input type="radio" name="text-size" value="small">Small</label>
-                  <label class="ms-segmented__option"><input type="radio" name="text-size" value="default" checked>Default</label>
-                  <label class="ms-segmented__option"><input type="radio" name="text-size" value="large">Large</label>
-                  <label class="ms-segmented__option"><input type="radio" name="text-size" value="larger">Larger</label>
-                </div>
-              </fieldset>
-              <p class="ms-sample"><span class="ms-sample__label">Preview</span><span>Build 42 is green on all three lanes. Can you tag it?</span></p>
+            <div class="grid gap-4 px-4 py-4 @xl/page:px-5">
+              <div role="group" aria-labelledby="text-size-h" class="grid justify-items-start">
+                <w-btn-toggle value="default" mandatory variant="outlined" class="flex flex-wrap pointer-coarse:[&_w-btn]:min-h-11">
+                  <w-btn value="small">Small</w-btn>
+                  <w-btn value="default">Default</w-btn>
+                  <w-btn value="large">Large</w-btn>
+                  <w-btn value="larger">Larger</w-btn>
+                </w-btn-toggle>
+              </div>
+              <p class="grid gap-1 rounded-md border border-divider bg-surface-low px-4 py-3"><span class="text-xs font-semibold text-subtle">Preview</span><span>Build 42 is green on all three lanes. Can you tag it?</span></p>
             </div>
           </section>
 
           <!-- Motion -->
-          <section class="ms-card" aria-labelledby="motion-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="motion-h">Motion</h3></div>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="motion-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="motion-h" class="text-lg font-semibold">Motion</h3></div>
             </div>
-            <div class="ms-setting ms-setting--stack">
-              <fieldset class="ms-setting__group">
-                <legend class="ms-sr-only">Reduce motion</legend>
-                <div class="ms-choice-list">
-                  <label class="ms-choice">
-                    <input type="radio" name="motion" value="system" checked>
-                    <span class="ms-choice__text"><span class="ms-choice__title">Follow my device setting</span><span class="ms-choice__desc">Your device allows motion now, so panels slide and lists scroll smoothly.</span></span>
-                  </label>
-                  <label class="ms-choice">
-                    <input type="radio" name="motion" value="reduce">
-                    <span class="ms-choice__text"><span class="ms-choice__title">Always reduce motion</span><span class="ms-choice__desc">No sliding panels, no smooth scrolling, no loading shimmer.</span></span>
-                  </label>
-                </div>
-              </fieldset>
+            <div class="grid gap-4 px-4 py-4 @xl/page:px-5">
+              <w-radio-group name="motion" value="system" label="Reduce motion" class="[&_w-radio]:block [&_w-radio]:py-1.5">
+                <w-radio value="system" label="Follow my device setting" checked><span class="block text-xs text-subtle">Your device allows motion now, so panels slide and lists scroll smoothly.</span></w-radio>
+                <w-radio value="reduce" label="Always reduce motion"><span class="block text-xs text-subtle">No sliding panels, no smooth scrolling, no loading shimmer.</span></w-radio>
+              </w-radio-group>
             </div>
           </section>
 
-          <!-- Presence colours -->
-          <section class="ms-card" aria-labelledby="presence-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="presence-h">Status</h3></div>
+          <!-- Status colours -->
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="presence-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="presence-h" class="text-lg font-semibold">Status</h3></div>
             </div>
-            <div class="ms-setting ms-setting--inline">
-              <div class="ms-setting__text">
-                <p class="ms-setting__label" id="presence-label">Show status colours</p>
-                <p class="ms-help" id="presence-help">When off, status shows as a grey shape. The word is always in the profile and in menus.</p>
-              </div>
-              <div class="ms-setting__control">
-                <label class="ms-switch"><input type="checkbox" role="switch" checked aria-labelledby="presence-label" aria-describedby="presence-help"></label>
-              </div>
-            </div>
-            <div class="ms-setting ms-setting--stack">
-              <ul class="ms-keywords" aria-label="Status shapes">
-                <li class="ms-tag ms-tag--outline"><span class="ms-presence ms-presence--inline ms-presence--active" aria-hidden="true"></span>Active</li>
-                <li class="ms-tag ms-tag--outline"><span class="ms-presence ms-presence--inline ms-presence--idle" aria-hidden="true"></span>Idle</li>
-                <li class="ms-tag ms-tag--outline"><span class="ms-presence ms-presence--inline ms-presence--dnd" aria-hidden="true"></span>Do not disturb</li>
-                <li class="ms-tag ms-tag--outline"><span class="ms-presence ms-presence--inline ms-presence--offline" aria-hidden="true"></span>Offline</li>
+            <div class="grid gap-4 px-4 py-4 @xl/page:px-5">
+              <w-switch label="Show status colours" checked hint="When off, status shows as a grey shape. The word is always in the profile and in menus." persistent-hint></w-switch>
+              <ul class="flex flex-wrap gap-2" aria-label="Status shapes">
+                <li class="inline-flex h-7 items-center gap-1.5 rounded-sm border border-border px-2 text-xs font-semibold"><span class="ms-presence ms-presence--inline ms-presence--active" aria-hidden="true"></span>Active</li>
+                <li class="inline-flex h-7 items-center gap-1.5 rounded-sm border border-border px-2 text-xs font-semibold"><span class="ms-presence ms-presence--inline ms-presence--idle" aria-hidden="true"></span>Idle</li>
+                <li class="inline-flex h-7 items-center gap-1.5 rounded-sm border border-border px-2 text-xs font-semibold"><span class="ms-presence ms-presence--inline ms-presence--dnd" aria-hidden="true"></span>Do not disturb</li>
+                <li class="inline-flex h-7 items-center gap-1.5 rounded-sm border border-border px-2 text-xs font-semibold"><span class="ms-presence ms-presence--inline ms-presence--offline" aria-hidden="true"></span>Offline</li>
               </ul>
             </div>
           </section>
 
           <!-- Keyboard shortcuts -->
-          <section class="ms-card" aria-labelledby="keys-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="keys-h">Keyboard shortcuts</h3><p class="ms-card__desc">Open this list anywhere: press <kbd>?</kbd>. On a Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</p></div>
-              <button class="ms-btn ms-btn--sm" type="button" aria-haspopup="dialog" aria-keyshortcuts="?">Open shortcuts <kbd>?</kbd></button>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="keys-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="keys-h" class="text-lg font-semibold">Keyboard shortcuts</h3><p class="mt-0.5 text-sm text-subtle">Open this list anywhere: press <w-kbd>?</w-kbd>. Keys show the way your device names them.</p></div>
+              <w-btn variant="outlined" size="small" aria-haspopup="dialog" aria-keyshortcuts="?">Open shortcuts <w-kbd>?</w-kbd></w-btn>
             </div>
-            <div class="ms-card__body">
-              <dl class="ms-shortcuts">
-                <div class="ms-shortcut"><dt>Show shortcuts</dt><dd><kbd>?</kbd></dd></div>
-                <div class="ms-shortcut"><dt>Search</dt><dd><kbd>Ctrl</kbd>+<kbd>K</kbd></dd></div>
-                <div class="ms-shortcut"><dt>New message</dt><dd><kbd>N</kbd></dd></div>
-                <div class="ms-shortcut"><dt>Previous or next conversation</dt><dd><kbd>Alt</kbd>+<kbd>↑</kbd> <kbd>↓</kbd></dd></div>
-                <div class="ms-shortcut"><dt>Next unread conversation</dt><dd><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↓</kbd></dd></div>
-                <div class="ms-shortcut"><dt>Switch domain</dt><dd><kbd>Ctrl</kbd>+<kbd>1</kbd>…<kbd>9</kbd></dd></div>
-                <div class="ms-shortcut"><dt>Send</dt><dd><kbd>Enter</kbd></dd></div>
-                <div class="ms-shortcut"><dt>New line</dt><dd><kbd>Shift</kbd>+<kbd>Enter</kbd></dd></div>
-                <div class="ms-shortcut"><dt>Edit your last message</dt><dd><kbd>↑</kbd> in an empty composer</dd></div>
-                <div class="ms-shortcut"><dt>Bold or italic</dt><dd><kbd>Ctrl</kbd>+<kbd>B</kbd> <kbd>Ctrl</kbd>+<kbd>I</kbd></dd></div>
-                <div class="ms-shortcut"><dt>Mark all as read</dt><dd><kbd>Shift</kbd>+<kbd>Esc</kbd></dd></div>
-                <div class="ms-shortcut"><dt>Close a thread, menu or dialog</dt><dd><kbd>Esc</kbd></dd></div>
+            <div class="grid gap-4 px-4 py-4 @xl/page:px-5">
+              <dl class="m-0 grid gap-x-6 @2xl/page:grid-cols-2">
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">Show shortcuts</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-kbd>?</w-kbd></dd></div>
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">Search</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-hotkey keys="cmd+k"></w-hotkey></dd></div>
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">New message</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-kbd>N</w-kbd></dd></div>
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">Previous or next conversation</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-hotkey keys="alt+up"></w-hotkey> <w-hotkey keys="alt+down"></w-hotkey></dd></div>
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">Next unread conversation</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-hotkey keys="alt+shift+down"></w-hotkey></dd></div>
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">Switch domain</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-hotkey keys="cmd+1"></w-hotkey> … <w-hotkey keys="cmd+9"></w-hotkey></dd></div>
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">Send</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-hotkey keys="enter"></w-hotkey></dd></div>
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">New line</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-hotkey keys="shift+enter"></w-hotkey></dd></div>
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">Edit your last message</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-hotkey keys="up"></w-hotkey> in an empty composer</dd></div>
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">Bold or italic</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-hotkey keys="cmd+b"></w-hotkey> <w-hotkey keys="cmd+i"></w-hotkey></dd></div>
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">Mark all as read</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-hotkey keys="shift+esc"></w-hotkey></dd></div>
+                <div class="flex min-h-10 items-center justify-between gap-3 border-b border-divider"><dt class="min-w-0">Close a thread, menu or dialog</dt><dd class="m-0 flex flex-none flex-wrap items-center justify-end gap-1 text-xs text-subtle"><w-hotkey keys="esc"></w-hotkey></dd></div>
               </dl>
             </div>
           </section>
@@ -287,12 +264,16 @@
     </div>
   </main>
 
-  <nav class="ms-bottom-nav" aria-label="Main">
-    <a class="ms-bottom-nav__item" href="messenger.html?pane=list"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
-    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
-    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
-    <a class="ms-bottom-nav__item" href="settings.html" aria-current="page"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
-  </nav>
+  <!-- Bottom navigation: phones, list pane only -->
+  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden group-data-[pane=thread]/app:hidden" value="you" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" href="messenger.html?pane=list"><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="search" label="Search" href="search.html"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="you" label="You" href="settings.html" active><w-icon name="user"></w-icon></w-bottom-nav-item>
+  </w-bottom-navigation>
+
 </div>
+
+<div class="sr-only" aria-live="polite" id="announcer"></div>
 </body>
 </html>

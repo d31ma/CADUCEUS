@@ -1,18 +1,58 @@
 # Mesail design tokens
 
-Mesail uses two token layers. The source files are in the mockups folder, and the frontend copies
-them unchanged:
+Mesail uses two token layers, plus a Tailwind theme that points at them:
 
-1. **DuVay** `--w-*` tokens: [mockups/assets/duvay/tokens.css](mockups/assets/duvay/tokens.css)
-   and [mockups/assets/duvay/themes.css](mockups/assets/duvay/themes.css), copied unchanged from
-   DuVay (version and commit in `mockups/assets/duvay/SOURCE.txt`). Type scale, spacing, radii,
-   shadows, focus ring, motion, breakpoints and every theme colour.
+1. **DuVay** `--w-*` tokens, pinned to DuVay **v26.35.01-1** (github `d31ma/DUVAY`, commit `bc8b56a`):
+   `src/tokens.css` and `src/themes.css`, shipped inside Mesail's DuVay CSS subset
+   (`mockups/assets/vendor/duvay-mesail.css`, built by `mockups/build/build.sh`). Type scale, spacing,
+   radii, shadows, focus ring, motion, breakpoints, touch target and every theme colour. They are the
+   source of truth.
 2. **Mesail** `--ms-*` tokens: [mockups/assets/mesail-tokens.css](mockups/assets/mesail-tokens.css).
    Only what DuVay has no name for.
+3. **Tailwind theme** ([mockups/build/tailwind.input.css](mockups/build/tailwind.input.css), Tailwind CSS
+   4.3.5): breakpoints, colours, fonts, radii and text sizes are DuVay or Mesail tokens (`@theme inline`,
+   so a theme switch repaints utilities too). Tailwind's default palette and breakpoints are removed.
 
 Rule for code: use a `--w-*` token when one says what you mean; use an `--ms-*` token otherwise;
-never a raw value. Themes switch with DuVay's `w-theme` attribute on `<html>`: `light`, `dark`,
-`auto` (follows the system) and `high-contrast`. Every `--ms-*` colour has a value for each.
+never a raw value. In markup, use the Tailwind names below. Themes switch with DuVay's `w-theme`
+attribute on `<html>`: `light`, `dark`, `auto` (follows the system) and `high-contrast`. Every `--ms-*`
+colour has a value for each. Density (`w-density`) and platform skin (`w-os`) are DuVay's too.
+
+## Breakpoints
+
+| Tailwind | DuVay token | Width | Mesail layout |
+| --- | --- | --- | --- |
+| (base) | | under 600 px | phones: one pane, bottom navigation |
+| `sm` | `--w-bp-sm` | 600 px | list + conversation |
+| `md` | `--w-bp-md` | 960 px | + domain rail |
+| `lg` | `--w-bp-lg` | 1280 px | + docked thread or details pane |
+| `xl` | `--w-bp-xl` | 1920 px | wider panes |
+| `2xl` | `--w-bp-xxl` | 2560 px | wider panes, UI scaled to 112.5 % |
+| `short:` | | height under 520 px | landscape phones: 44 px headers, no hint lines |
+| `pointer-coarse:` | `--w-touch-min` | touch screens | 44 px targets |
+
+Containers (for `@container` queries on panes and cards) use Tailwind's `@xs` 20rem to `@3xl` 64rem plus
+its larger defaults.
+
+## Tailwind names for tokens
+
+| Tailwind utility root | Token |
+| --- | --- |
+| `surface`, `surface-low`, `surface-mid`, `surface-high`, `sidebar` | `--w-surface`, `--w-surface-container-low`, `-container`, `-container-high`, `--w-sidebar` |
+| `text`, `subtle`, `very-subtle` | `--w-text`, `--w-text-subtle`, `--w-text-very-subtle` |
+| `divider`, `border`, `outline` | `--w-divider`, `--w-border`, `--w-outline` |
+| `hover`, `selected`, `on-selected` | `--w-hover`, `--w-selected`, `--w-selected-text` |
+| `accent`, `accent-bg`, `on-accent`, `primary-container`, `on-primary-container` | DuVay accent and primary pairs |
+| `error`, `error-container`, `warning-container`, `success-container` (+ `on-…`) | DuVay feedback pairs |
+| `chat`, `chat-bg`, `on-chat-bg`, `email`, `email-bg`, `on-email-bg`, `email-rule` | Mesail delivery colours |
+| `rail`, `on-rail`, `msg-hover`, `msg-highlight` | Mesail rail and message colours |
+| `font-sans`, `font-mono` | `--w-font-family`, `--w-font-family-mono` |
+| `rounded-sm|md|lg|xl` | `--w-radius`, `-md`, `-lg`, `-xl` |
+| `text-xs|sm|base|lg|xl|2xl` | `--w-font-xs` (12), `-base` (14), `-md` (15), `-lg` (17), `-xl` (20), `-2xl` (24) |
+| spacing (`p-4`, `gap-2`, …) | Tailwind's 0.25rem step, the same 4 px grid as `--w-space-*` |
+
+Mesail utilities: `safe-t`, `safe-b`, `safe-l`, `safe-r` (Tac title-bar insets, else `env(safe-area-inset-*)`),
+`touch-target` (44 px), `drag-region` / `no-drag` (window drag areas).
 
 ## DuVay tokens Mesail relies on
 
@@ -43,10 +83,9 @@ never a raw value. Themes switch with DuVay's `w-theme` attribute on `<html>`: `
 | `--ms-content-max` | 50rem | settings and admin pages |
 | `--ms-dialog-max` | 32rem | dialogs |
 | `--ms-row-height` | 2rem | sidebar rows with a pointer |
-| `--ms-touch-min` | 2.75rem (44 px) | every target on touch screens and under 768 px |
+| `--ms-touch-min` | 2.75rem (44 px) | alias of DuVay `--w-touch-min`; every target on touch screens |
 
-Breakpoints (from DuVay's scale): **768 px** (one pane below it) and **1200 px** (thread pane
-beside the conversation at and above it).
+Breakpoints: see the table above (DuVay's 600, 960, 1280, 1920 and 2560 px).
 
 ### Avatars and tiles
 `--ms-avatar-xs` 20 px, `-sm` 24, `-md` 36 (messages), `-lg` 48, `-xl` 80 (profile);

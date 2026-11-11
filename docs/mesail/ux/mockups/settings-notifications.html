@@ -1,338 +1,317 @@
 <!doctype html>
-<html lang="en" w-theme="light">
+<html lang="en" w-theme="light" w-density="comfortable">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mesail mockup: settings, notifications</title>
-<link rel="stylesheet" href="assets/duvay/tokens.css">
-<link rel="stylesheet" href="assets/duvay/themes.css">
-<link rel="stylesheet" href="assets/mesail-tokens.css">
-<link rel="stylesheet" href="assets/icons.css">
-<link rel="stylesheet" href="assets/mesail.css">
-<link rel="stylesheet" href="assets/screens/settings.css">
+<link rel="stylesheet" href="assets/app.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
 <script src="assets/mockup.js" defer></script>
 </head>
-<body>
+<body class="bg-surface text-text">
 <a class="ms-skip-link" href="#settings-page">Skip to settings</a>
 
-<div class="ms-app" data-pane="main">
+<!-- App shell. Under 600 px one pane shows (data-pane); 600 px: list + settings; 960 px: + domain rail.
+     Settings has no right pane, so the main pane takes the rest of the width. -->
+<div class="group/app relative grid h-dvh overflow-hidden
+  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
+  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main">
 
-  <!-- Domain rail: one tile per messaging domain the user belongs to -->
-  <nav class="ms-rail" aria-label="Domains">
-    <ul class="ms-rail__list">
+  <!-- Domain rail (960 px and up) -->
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Domains">
+    <ul class="flex flex-col gap-2">
       <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
-      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
-      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<w-badge content="3" inline class="absolute -top-1 -right-1.5"></w-badge></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="absolute -left-2.5 size-2 rounded-full bg-on-rail" aria-hidden="true"></span>La</a></li>
     </ul>
-    <div class="ms-rail__sep" role="presentation"></div>
-    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
-    <div class="ms-rail__spacer"></div>
-    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+    <div class="h-px w-8 bg-on-rail/20" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><w-icon name="plus"></w-icon></a>
+    <div class="flex-1"></div>
+    <a class="ms-domain-tile" href="settings-appearance.html" aria-label="Help and keyboard shortcuts" title="Help"><w-icon name="info"></w-icon></a>
   </nav>
 
-  <!-- Sidebar -->
-  <aside class="ms-sidebar" aria-label="Conversations in example.com">
-    <div class="ms-sidebar__head">
-      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
-      <div class="ms-header__actions">
-        <button class="ms-icon-btn" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
-      </div>
-    </div>
-    <div class="ms-sidebar__search">
-      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
-    </div>
-    <div class="ms-sidebar__scroll">
-      <ul class="ms-nav-list">
-        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
-        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
-      </ul>
-
-      <section class="ms-nav-section" aria-labelledby="sec-channels">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
-          <button class="ms-icon-btn" aria-label="Add or browse channels"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">general</span></a></li>
-          <li><a class="ms-nav-item" href="messenger.html"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">releases</span></a></li>
-          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">support</span><span class="ms-icon ms-i-mail ms-icon--sm" style="color:var(--ms-email)" aria-label="Has an email address" role="img"></span><span class="ms-badge" aria-label="4 unread">4</span></a></li>
-          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-lock" aria-label="Private channel" role="img"></span><span class="ms-nav-item__label">design</span><span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span></a></li>
-          <li><a class="ms-nav-item is-muted" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">random</span><span class="ms-icon ms-i-bell-off ms-icon--sm" aria-label="Muted" role="img"></span></a></li>
-        </ul>
-      </section>
-
-      <section class="ms-nav-section" aria-labelledby="sec-dms">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
-          <button class="ms-icon-btn" aria-label="New direct message"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:20">BL<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span><span class="ms-nav-item__label">Bo Lee</span><span class="ms-sr-only">, active</span><span class="ms-badge ms-badge--mention" aria-label="1 unread">1</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:280">CW<span class="ms-presence ms-presence--idle" aria-hidden="true"></span></span><span class="ms-nav-item__label">Chen Wu</span><span class="ms-sr-only">, idle</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:140">DO<span class="ms-presence ms-presence--dnd" aria-hidden="true"></span></span><span class="ms-nav-item__label">Dara Okafor</span><span class="ms-sr-only">, do not disturb</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs ms-avatar--channel" aria-hidden="true">3</span><span class="ms-nav-item__label">Bo, Chen, Dara</span></a></li>
-        </ul>
-      </section>
-
-      <section class="ms-nav-section" aria-labelledby="sec-email">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
-          <button class="ms-icon-btn" aria-label="New email"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email is-unread" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">DH</span><span class="ms-nav-item__label">Dan Hale<span class="ms-nav-item__sub">Question about invoice 2291</span></span><span class="ms-badge" aria-label="1 unread">1</span></a></li>
-          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-nav-item__label">Carol Diaz, Bo Lee<span class="ms-nav-item__sub">Contract renewal 2027</span></span></a></li>
-        </ul>
-      </section>
-    </div>
-    <div class="ms-sidebar__foot">
-      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
-        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
-        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+  <!-- Sidebar: list pane on phones, always visible from 600 px -->
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations in example.com">
+    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-t safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
+      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
+      <span class="flex-1"></span>
+      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+    </header>
+    <div class="px-3 py-2">
+      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
+        <w-icon name="search" class="ms-icon-sm"></w-icon>Search<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
       </button>
-      <a class="ms-icon-btn" href="settings.html" aria-label="Settings" aria-current="page"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
     </div>
+    <div class="flex-1 overflow-y-auto px-2 pb-4">
+      <w-list nav density="compact" aria-label="Shortcuts">
+        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline label="2 mentions"></w-badge></w-list-item>
+        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
+      </w-list>
+
+      <section class="mt-3" aria-labelledby="sec-channels">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-channels"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Channels</button>
+          <w-icon-btn icon="plus" size="small" aria-label="Add or browse channels"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-channels">
+          <w-list-item href="#" title="general"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="messenger.html" title="releases"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="channel-email.html" title="support" class="ms-unread"><w-icon slot="prepend" name="hash"></w-icon><span slot="append" class="flex items-center gap-1"><w-icon name="mail" class="ms-icon-sm text-email" role="img" aria-label="Has an email address"></w-icon><w-badge content="4" inline class="ms-count" label="4 unread"></w-badge></span></w-list-item>
+          <w-list-item href="#" title="design" class="ms-unread"><w-icon slot="prepend" name="lock" role="img" aria-label="Private channel"></w-icon><w-badge slot="append" content="1" inline label="1 mention"></w-badge></w-list-item>
+          <w-list-item href="#" title="random" class="ms-muted"><w-icon slot="prepend" name="hash"></w-icon><w-icon slot="append" name="bell-off" class="ms-icon-sm" role="img" aria-label="Muted"></w-icon></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-dms">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-dms"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Direct messages</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New direct message"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-dms">
+          <w-list-item href="mobile-conversation.html" title="Bo Lee" class="ms-unread"><w-avatar slot="prepend" text="BL" size="20" status="online" style="--h:20" alt="Bo Lee, active"></w-avatar><w-badge slot="append" content="1" inline label="1 unread"></w-badge></w-list-item>
+          <w-list-item href="#" title="Chen Wu"><w-avatar slot="prepend" text="CW" size="20" status="away" style="--h:280" alt="Chen Wu, idle"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Dara Okafor"><w-avatar slot="prepend" text="DO" size="20" status="busy" style="--h:140" alt="Dara Okafor, do not disturb"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Bo, Chen, Dara"><w-avatar slot="prepend" text="3" size="20" alt="Group of 3"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-email">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-email"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Email</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New email"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" lines="two" aria-labelledby="sec-email">
+          <w-list-item href="email-inbound-new.html" title="Dan Hale" subtitle="Question about invoice 2291" class="ms-unread"><w-avatar slot="prepend" text="DH" size="20" class="ms-external" alt="Dan Hale, outside example.com"></w-avatar><w-badge slot="append" content="1" inline class="ms-count" label="1 unread"></w-badge></w-list-item>
+          <w-list-item href="email-conversation.html" title="Carol Diaz, Bo Lee" subtitle="Contract renewal 2027"><w-avatar slot="prepend" text="CD" size="20" class="ms-external" alt="Carol Diaz, outside example.com"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+    </div>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <w-avatar text="AR" size="28" status="online" style="--h:195" alt=""></w-avatar>
+        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">ana@example.com</span></span>
+      </button>
+      <w-icon-btn icon="settings" href="settings.html" aria-label="Settings"></w-icon-btn>
+    </footer>
   </aside>
 
   <!-- Settings for the current domain -->
-  <main class="ms-main" aria-labelledby="settings-title">
-    <header class="ms-header">
-      <a class="ms-icon-btn ms-header__back" href="messenger.html?pane=list" aria-label="Back to conversations"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
-      <h1 class="ms-header__title" id="settings-title"><span class="ms-icon ms-i-settings" aria-hidden="true"></span><span class="ms-settings-title">Settings<span class="ms-settings-title__sep"> · </span><span class="ms-settings-title__domain">example.com</span></span></h1>
-      <div class="ms-header__actions">
-        <p class="ms-save-status ms-save-status--error" id="save-status" role="status" aria-live="polite"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>Not saved<span class="ms-sr-only">. Check the keyword field.</span></p>
+  <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="settings-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="messenger.html?pane=list" aria-label="Back to conversations"></w-icon-btn>
+      <h1 id="settings-title" class="flex min-w-0 items-center gap-1 text-lg font-bold">
+        <w-icon name="settings" class="ms-icon-sm hidden @md/main:inline-flex"></w-icon>
+        <span class="grid min-w-0 leading-tight @md/main:flex @md/main:items-baseline @md/main:gap-1"><span class="truncate">Settings</span><span class="hidden font-normal text-subtle @md/main:inline"> · </span><span class="truncate text-xs font-normal text-subtle @md/main:text-lg">example.com</span></span>
+      </h1>
+      <div class="ml-auto flex items-center gap-1 no-drag">
+        <p class="empty:hidden inline-flex min-h-7 items-center gap-1 whitespace-nowrap rounded-full pl-2 pr-3 text-xs font-medium bg-error-container text-on-error-container" id="save-status" role="status" aria-live="polite"><w-icon name="alert" class="ms-icon-xs"></w-icon>Not saved<span class="sr-only">. Check the keyword field.</span></p>
       </div>
     </header>
-    <nav class="ms-tabs ms-settings-tabs" aria-label="Settings sections">
-      <a class="ms-tab" href="settings.html">Profile</a>
-      <a class="ms-tab" href="settings-notifications.html" aria-current="page">Notifications</a>
-      <a class="ms-tab" href="settings-email.html">Email</a>
-      <a class="ms-tab" href="settings-appearance.html">Appearance</a>
+
+    <!-- Settings sections: a tab strip while the pane is narrow, a left column from 48rem -->
+    <nav class="flex-none border-b border-divider safe-l safe-r @2xl/main:hidden" style="--ms-edge: 0.25rem" aria-label="Settings sections">
+      <w-tabs value="notifications">
+        <w-tab value="profile" href="settings.html">Profile</w-tab>
+        <w-tab value="notifications" href="settings-notifications.html" active>Notifications</w-tab>
+        <w-tab value="email" href="settings-email.html">Email</w-tab>
+        <w-tab value="appearance" href="settings-appearance.html">Appearance</w-tab>
+      </w-tabs>
     </nav>
-    <div class="ms-settings">
-      <nav class="ms-settings__nav" aria-label="Settings sections">
-        <p class="ms-settings-nav__head">Your settings</p>
-        <ul class="ms-nav-list">
-        <li><a class="ms-nav-item" href="settings.html"><span class="ms-icon ms-i-user" aria-hidden="true"></span><span class="ms-nav-item__label">Profile and account</span></a></li>
-        <li><a class="ms-nav-item" href="settings-notifications.html" aria-current="page"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Notifications</span></a></li>
-        <li><a class="ms-nav-item" href="settings-email.html"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span class="ms-nav-item__label">Email</span></a></li>
-        <li><a class="ms-nav-item" href="settings-appearance.html"><span class="ms-icon ms-i-sun" aria-hidden="true"></span><span class="ms-nav-item__label">Appearance</span></a></li>
-        </ul>
-        <p class="ms-settings-nav__scope"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span>Profile, notifications and email are for <strong>example.com</strong> only. Appearance is for this device.</span></p>
+    <div class="flex min-h-0 flex-1">
+      <nav class="hidden w-56 flex-none overflow-y-auto border-r border-divider px-2 py-4 safe-b @2xl/main:block" aria-label="Settings sections">
+        <p class="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-subtle">Your settings</p>
+        <w-list nav class="ms-plain-list">
+          <w-list-item href="settings.html" title="Profile and account"><w-icon slot="prepend" name="user"></w-icon></w-list-item>
+          <w-list-item href="settings-notifications.html" title="Notifications" active><w-icon slot="prepend" name="bell"></w-icon></w-list-item>
+          <w-list-item href="settings-email.html" title="Email"><w-icon slot="prepend" name="mail"></w-icon></w-list-item>
+          <w-list-item href="settings-appearance.html" title="Appearance"><w-icon slot="prepend" name="sun"></w-icon></w-list-item>
+        </w-list>
+        <p class="mx-2 mt-6 flex items-start gap-2 border-t border-divider pt-3 text-xs text-subtle"><w-icon name="globe" class="ms-icon-sm mt-px"></w-icon><span>Profile, notifications and email are for <strong>example.com</strong> only. Appearance is for this device.</span></p>
       </nav>
-      <div class="ms-page" id="settings-page">
-        <div class="ms-page__inner">
-          <div class="ms-page__head">
-            <h2 class="ms-page__title">Notifications</h2>
-            <p class="ms-scope-note"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span>For example.com only. Each domain sends its own notifications. Changes save on their own.</span></p>
+      <div class="min-w-0 flex-1 overflow-y-auto @container/page safe-b safe-r" id="settings-page">
+        <div class="mx-auto grid w-full max-w-2xl gap-6 px-4 pt-6 pb-10 @xl/page:px-6">
+          <div class="grid gap-1">
+            <h2 class="text-xl font-bold @xl/page:text-2xl">Notifications</h2>
+            <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="globe" class="ms-icon-sm mt-0.5"></w-icon><span>For example.com only. Each domain sends its own notifications. Changes save on their own.</span></p>
           </div>
 
           <!-- Push on this device -->
-          <section class="ms-card" aria-labelledby="push-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="push-h">Notifications on this device</h3><p class="ms-card__desc">Mesail notifies you when no Mesail tab is in front. Nothing is sent during quiet hours or while you are set to Do not disturb.</p></div>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="push-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="push-h" class="text-lg font-semibold">Notifications on this device</h3><p class="mt-0.5 text-sm text-subtle">Mesail notifies you when no Mesail tab is in front. Nothing is sent during quiet hours or while you are set to Do not disturb.</p></div>
             </div>
-            <div class="ms-card__body">
-              <div class="ms-perm">
-                <span class="ms-perm__icon"><span class="ms-icon ms-i-bell" aria-hidden="true"></span></span>
-                <div class="ms-perm__body">
-                  <p class="ms-perm__title">Notifications are off on this device</p>
-                  <p class="ms-help">Your browser will ask if Mesail may show notifications. Choose Allow.</p>
-                  <button class="ms-btn ms-btn--primary" type="button"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Turn on notifications</button>
+            <div class="px-4 py-4 @xl/page:px-5">
+              <div class="flex items-start gap-3 rounded-lg bg-surface-mid p-4">
+                <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="bell"></w-icon></span>
+                <div class="grid min-w-0 flex-1 justify-items-start gap-2">
+                  <p class="font-semibold">Notifications are off on this device</p>
+                  <p class="text-xs text-subtle">Your browser will ask if Mesail may show notifications. Choose Allow.</p>
+                  <w-btn variant="filled" prepend-icon="bell" class="pointer-coarse:min-h-11">Turn on notifications</w-btn>
                 </div>
               </div>
             </div>
           </section>
 
           <!-- Default level -->
-          <section class="ms-card" aria-labelledby="level-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="level-h">What notifies you</h3><p class="ms-card__desc">Your default for every conversation. Change it for one conversation with its bell button.</p></div>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="level-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="level-h" class="text-lg font-semibold">What notifies you</h3><p class="mt-0.5 text-sm text-subtle">Your default for every conversation. Change it for one conversation with its bell button.</p></div>
             </div>
-            <div class="ms-setting ms-setting--stack">
-              <fieldset class="ms-setting__group">
-                <legend class="ms-sr-only">Default notification level</legend>
-                <div class="ms-choice-list">
-                  <label class="ms-choice">
-                    <input type="radio" name="level" value="all">
-                    <span class="ms-choice__text"><span class="ms-choice__title">All messages</span><span class="ms-choice__desc">Every new message in your channels, direct messages and email.</span></span>
-                  </label>
-                  <label class="ms-choice">
-                    <input type="radio" name="level" value="mentions" checked>
-                    <span class="ms-choice__text"><span class="ms-choice__title">Mentions and DMs <span class="ms-tag ms-tag--outline">Default</span></span><span class="ms-choice__desc">When someone writes @Ana Ruiz, sends you a direct message or a new email, or replies in a thread you are in.</span></span>
-                  </label>
-                  <label class="ms-choice">
-                    <input type="radio" name="level" value="nothing">
-                    <span class="ms-choice__text"><span class="ms-choice__title">Nothing</span><span class="ms-choice__desc">No notifications. Unread counts still show in the sidebar.</span></span>
-                  </label>
-                </div>
-              </fieldset>
+            <div class="px-4 py-4 @xl/page:px-5">
+              <w-radio-group name="level" value="mentions" label="Default notification level" class="[&_w-radio]:block [&_w-radio]:py-1.5">
+                <w-radio value="all" label="All messages"><span class="block text-xs text-subtle">Every new message in your channels, direct messages and email.</span></w-radio>
+                <w-radio value="mentions" label="Mentions and DMs (default)" checked><span class="block text-xs text-subtle">When someone writes @Ana Ruiz, sends you a direct message or a new email, or replies in a thread you are in.</span></w-radio>
+                <w-radio value="nothing" label="Nothing"><span class="block text-xs text-subtle">No notifications. Unread counts still show in the sidebar.</span></w-radio>
+              </w-radio-group>
             </div>
           </section>
 
           <!-- Keywords: one field in error -->
-          <section class="ms-card" aria-labelledby="keywords-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="keywords-h">Keywords</h3><p class="ms-card__desc">Also notify me when a message in example.com contains one of these words.</p></div>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="keywords-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="keywords-h" class="text-lg font-semibold">Keywords</h3><p class="mt-0.5 text-sm text-subtle">Also notify me when a message in example.com contains one of these words.</p></div>
             </div>
-            <div class="ms-setting ms-setting--stack">
-              <ul class="ms-keywords" aria-label="Your keywords">
-                <li class="ms-keyword">deploy<button class="ms-chip__remove" type="button" aria-label="Remove keyword deploy"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></li>
-                <li class="ms-keyword">outage<button class="ms-chip__remove" type="button" aria-label="Remove keyword outage"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></li>
-                <li class="ms-keyword">invoice<button class="ms-chip__remove" type="button" aria-label="Remove keyword invoice"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></li>
-              </ul>
-              <div class="ms-field">
-                <label class="ms-label" for="keyword-new">Add a keyword</label>
-                <div class="ms-add-row">
-                  <input class="ms-input" id="keyword-new" type="text" value="a" aria-invalid="true" aria-describedby="keyword-error keyword-help">
-                  <button class="ms-btn" type="button">Add</button>
-                </div>
-                <p class="ms-error-text" id="keyword-error"><span class="ms-icon ms-i-alert ms-icon--sm" aria-hidden="true"></span>"a" is too short. Use 2 to 40 letters or numbers.</p>
-                <p class="ms-help" id="keyword-help">Up to 20 keywords. Upper and lower case do not matter.</p>
+            <div class="grid gap-4 px-4 py-4 @xl/page:px-5">
+              <div role="group" aria-label="Your keywords" aria-describedby="keyword-remove-help">
+                <w-chip-group class="flex flex-wrap gap-2">
+                  <w-chip closable close-label="Remove keyword deploy">deploy</w-chip>
+                  <w-chip closable close-label="Remove keyword outage">outage</w-chip>
+                  <w-chip closable close-label="Remove keyword invoice">invoice</w-chip>
+                </w-chip-group>
+              </div>
+              <p class="text-xs text-subtle" id="keyword-remove-help">To remove a keyword, select it and press Delete or Backspace, or select its ×.</p>
+              <div class="flex flex-col gap-2 @md/page:flex-row @md/page:items-start">
+                <w-text-field label="Add a keyword" value="a" error="&quot;a&quot; is too short. Use 2 to 40 letters or numbers." hint="Up to 20 keywords. Upper and lower case do not matter." persistent-hint class="min-w-0 flex-1 @2xl/page:max-w-sm"></w-text-field>
+                <w-btn variant="outlined" class="self-start @md/page:mt-1 pointer-coarse:min-h-11">Add</w-btn>
               </div>
             </div>
           </section>
 
           <!-- Quiet hours -->
-          <section class="ms-card" aria-labelledby="quiet-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="quiet-h">Quiet hours</h3><p class="ms-card__desc">During quiet hours your status shows Do not disturb and you get no notifications. Mentions wait for you in Activity.</p></div>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="quiet-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="quiet-h" class="text-lg font-semibold">Quiet hours</h3><p class="mt-0.5 text-sm text-subtle">During quiet hours your status shows Do not disturb and you get no notifications. Mentions wait for you in Activity.</p></div>
             </div>
-            <div class="ms-setting ms-setting--inline">
-              <div class="ms-setting__text">
-                <p class="ms-setting__label" id="quiet-label">Pause notifications on a schedule</p>
-                <p class="ms-help">Uses your time zone: Europe/Madrid. <a href="settings.html#time-zone">Change it in Profile</a></p>
+            <div class="divide-y divide-divider">
+              <div class="grid gap-1 px-4 py-4 @xl/page:px-5">
+                <w-switch label="Pause notifications on a schedule" checked hint="Uses your time zone: Europe/Madrid." persistent-hint></w-switch>
+                <a class="text-xs text-accent underline" href="settings.html">Change the time zone in Profile</a>
               </div>
-              <div class="ms-setting__control">
-                <label class="ms-switch"><input type="checkbox" role="switch" checked aria-labelledby="quiet-label"></label>
+              <div class="grid gap-5 px-4 py-4 @xl/page:px-5 @2xl/page:grid-cols-2">
+                <div role="group" aria-labelledby="days-label" class="grid gap-2">
+                  <p id="days-label" class="text-sm font-semibold">Days</p>
+                  <w-btn-toggle multiple value="mon,tue,wed,thu,fri" variant="outlined" class="flex flex-wrap [&_w-btn]:min-w-11 pointer-coarse:[&_w-btn]:min-h-11">
+                    <w-btn value="mon" aria-label="Monday">Mon</w-btn>
+                    <w-btn value="tue" aria-label="Tuesday">Tue</w-btn>
+                    <w-btn value="wed" aria-label="Wednesday">Wed</w-btn>
+                    <w-btn value="thu" aria-label="Thursday">Thu</w-btn>
+                    <w-btn value="fri" aria-label="Friday">Fri</w-btn>
+                    <w-btn value="sat" aria-label="Saturday">Sat</w-btn>
+                    <w-btn value="sun" aria-label="Sunday">Sun</w-btn>
+                  </w-btn-toggle>
+                </div>
+                <div role="group" aria-labelledby="hours-label" class="grid gap-2">
+                  <p id="hours-label" class="text-sm font-semibold">Hours</p>
+                  <div class="grid grid-cols-2 gap-3">
+                    <w-text-field label="From" type="time" value="19:00"></w-text-field>
+                    <w-text-field label="To" type="time" value="08:00" hint="Ends at 08:00 the next morning." persistent-hint></w-text-field>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="ms-setting ms-setting--stack">
-              <fieldset class="ms-setting__group">
-                <legend class="ms-legend">Days</legend>
-                <div class="ms-weekdays">
-                  <label class="ms-weekday"><input type="checkbox" checked><span class="ms-icon ms-i-check" aria-hidden="true"></span><span aria-hidden="true">Mon</span><span class="ms-sr-only">Monday</span></label>
-                  <label class="ms-weekday"><input type="checkbox" checked><span class="ms-icon ms-i-check" aria-hidden="true"></span><span aria-hidden="true">Tue</span><span class="ms-sr-only">Tuesday</span></label>
-                  <label class="ms-weekday"><input type="checkbox" checked><span class="ms-icon ms-i-check" aria-hidden="true"></span><span aria-hidden="true">Wed</span><span class="ms-sr-only">Wednesday</span></label>
-                  <label class="ms-weekday"><input type="checkbox" checked><span class="ms-icon ms-i-check" aria-hidden="true"></span><span aria-hidden="true">Thu</span><span class="ms-sr-only">Thursday</span></label>
-                  <label class="ms-weekday"><input type="checkbox" checked><span class="ms-icon ms-i-check" aria-hidden="true"></span><span aria-hidden="true">Fri</span><span class="ms-sr-only">Friday</span></label>
-                  <label class="ms-weekday"><input type="checkbox"><span class="ms-icon ms-i-check" aria-hidden="true"></span><span aria-hidden="true">Sat</span><span class="ms-sr-only">Saturday</span></label>
-                  <label class="ms-weekday"><input type="checkbox"><span class="ms-icon ms-i-check" aria-hidden="true"></span><span aria-hidden="true">Sun</span><span class="ms-sr-only">Sunday</span></label>
-                </div>
-              </fieldset>
-              <fieldset class="ms-setting__group">
-                <legend class="ms-legend">Hours</legend>
-                <div class="ms-time-range">
-                  <div class="ms-field"><label class="ms-label" for="quiet-from">From</label><input class="ms-input" id="quiet-from" type="time" value="19:00"></div>
-                  <span class="ms-time-range__sep" aria-hidden="true">to</span>
-                  <div class="ms-field"><label class="ms-label" for="quiet-to">To</label><input class="ms-input" id="quiet-to" type="time" value="08:00" aria-describedby="quiet-to-help"></div>
-                </div>
-                <p class="ms-help" id="quiet-to-help">Ends at 08:00 the next morning.</p>
-              </fieldset>
             </div>
           </section>
 
           <!-- Email summary (AC-PN-4) -->
-          <section class="ms-card" aria-labelledby="summary-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="summary-h">Email summary</h3><p class="ms-card__desc">If you miss something, get one email instead of many.</p></div>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="summary-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="summary-h" class="text-lg font-semibold">Email summary</h3><p class="mt-0.5 text-sm text-subtle">If you miss something, get one email instead of many.</p></div>
             </div>
-            <div class="ms-setting ms-setting--inline">
-              <div class="ms-setting__text">
-                <p class="ms-setting__label" id="summary-label">Email me about unread notifications</p>
-                <p class="ms-help" id="summary-help">One email to ana@example.com that lists what you missed, with links back to Mesail. Not sent if you read everything first.</p>
-              </div>
-              <div class="ms-setting__control">
-                <label class="ms-switch"><input type="checkbox" role="switch" checked aria-labelledby="summary-label" aria-describedby="summary-help"></label>
-              </div>
-            </div>
-            <div class="ms-setting">
-              <div class="ms-setting__text">
-                <label class="ms-setting__label" for="summary-delay">Send it when a notification is unread for</label>
-              </div>
-              <div class="ms-setting__control">
-                <select class="ms-select" id="summary-delay">
-                  <option>15 minutes</option>
-                  <option selected>30 minutes</option>
-                  <option>1 hour</option>
-                  <option>2 hours</option>
-                  <option>4 hours</option>
-                  <option>8 hours</option>
-                  <option>24 hours</option>
-                </select>
-              </div>
+            <div class="grid gap-4 px-4 py-4 @xl/page:px-5 @2xl/page:grid-cols-2 @2xl/page:items-start">
+              <w-switch label="Email me about unread notifications" checked hint="One email to ana@example.com that lists what you missed, with links back to Mesail. Not sent if you read everything first." persistent-hint></w-switch>
+              <w-select label="Send it when a notification is unread for" value="30m">
+                <w-option value="15m">15 minutes</w-option>
+                <w-option value="30m">30 minutes</w-option>
+                <w-option value="1h">1 hour</w-option>
+                <w-option value="2h">2 hours</w-option>
+                <w-option value="4h">4 hours</w-option>
+                <w-option value="8h">8 hours</w-option>
+                <w-option value="24h">24 hours</w-option>
+              </w-select>
             </div>
           </section>
 
           <!-- Muted conversations -->
-          <section class="ms-card" aria-labelledby="muted-h">
-            <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="muted-h">Muted conversations</h3><p class="ms-card__desc">Muted conversations still notify you when someone mentions you by name.</p></div>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="muted-h">
+            <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
+              <div class="min-w-0 flex-1"><h3 id="muted-h" class="text-lg font-semibold">Muted conversations</h3><p class="mt-0.5 text-sm text-subtle">Muted conversations still notify you when someone mentions you by name.</p></div>
             </div>
-            <ul class="ms-nav-list" aria-labelledby="muted-h">
-              <li class="ms-row">
-                <span class="ms-avatar ms-avatar--sm ms-avatar--channel" aria-hidden="true">#</span>
-                <span class="ms-row__main"><span class="ms-row__title">#random</span><span class="ms-meta">Muted since 2 November</span></span>
-                <button class="ms-btn ms-btn--sm" type="button" aria-label="Unmute #random">Unmute</button>
+            <ul class="divide-y divide-divider" aria-labelledby="muted-h">
+              <li class="flex items-center gap-3 px-4 py-3 @xl/page:px-5">
+                <w-avatar text="#" size="28" alt=""></w-avatar>
+                <span class="grid min-w-0 flex-1"><span class="truncate font-semibold">#random</span><span class="text-xs text-subtle">Muted since 2 November</span></span>
+                <w-btn variant="outlined" size="small" aria-label="Unmute #random" class="pointer-coarse:min-h-11">Unmute</w-btn>
               </li>
-              <li class="ms-row">
-                <span class="ms-avatar ms-avatar--sm ms-avatar--external" aria-hidden="true">NV</span>
-                <span class="ms-row__main"><span class="ms-row__title">Weekly news <span class="ms-tag ms-tag--email"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span></span><span class="ms-meta">news@vendor.example · muted until 1 December</span></span>
-                <button class="ms-btn ms-btn--sm" type="button" aria-label="Unmute Weekly news">Unmute</button>
+              <li class="flex items-center gap-3 px-4 py-3 @xl/page:px-5">
+                <w-avatar text="NV" size="28" class="ms-external" alt=""></w-avatar>
+                <span class="grid min-w-0 flex-1"><span class="flex flex-wrap items-center gap-2 font-semibold">Weekly news <span class="ms-how ms-how--email"><w-icon name="mail"></w-icon>Email</span></span><span class="truncate text-xs text-subtle">news@vendor.example · muted until 1 December</span></span>
+                <w-btn variant="outlined" size="small" aria-label="Unmute Weekly news" class="pointer-coarse:min-h-11">Unmute</w-btn>
               </li>
             </ul>
           </section>
 
           <!-- Mockup only -->
-          <section class="ms-mock-states" aria-labelledby="mock-h">
-            <h2 id="mock-h">Other states (mockup only)</h2>
+          <section class="grid gap-6 border-t-2 border-dashed border-outline pt-4" aria-labelledby="mock-h">
+            <h2 id="mock-h" class="text-lg font-semibold text-subtle">Other states (mockup only)</h2>
 
-            <figure class="ms-mock-state">
-              <figcaption>Device notifications: on</figcaption>
-              <div class="ms-perm ms-perm--on">
-                <span class="ms-perm__icon"><span class="ms-icon ms-i-check" aria-hidden="true"></span></span>
-                <div class="ms-perm__body">
-                  <p class="ms-perm__title">Notifications are on for this browser</p>
-                  <p class="ms-help">To stop them on this device, turn them off here. Your other devices keep their own setting.</p>
-                  <div class="ms-profile__actions">
-                    <button class="ms-btn" type="button">Send a test notification</button>
-                    <button class="ms-btn ms-btn--ghost" type="button">Turn off on this device</button>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Device notifications: on</figcaption>
+              <div class="flex items-start gap-3 rounded-lg bg-surface-mid p-4">
+                <span class="grid size-10 flex-none place-items-center rounded-md bg-success-container text-on-success-container"><w-icon name="check"></w-icon></span>
+                <div class="grid min-w-0 flex-1 justify-items-start gap-2">
+                  <p class="font-semibold">Notifications are on for this browser</p>
+                  <p class="text-xs text-subtle">To stop them on this device, turn them off here. Your other devices keep their own setting.</p>
+                  <div class="flex flex-wrap gap-2">
+                    <w-btn variant="outlined" class="pointer-coarse:min-h-11">Send a test notification</w-btn>
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Turn off on this device</w-btn>
                   </div>
                 </div>
               </div>
             </figure>
 
-            <figure class="ms-mock-state">
-              <figcaption>Device notifications: blocked by the browser</figcaption>
-              <div class="ms-perm ms-perm--denied">
-                <span class="ms-perm__icon"><span class="ms-icon ms-i-bell-off" aria-hidden="true"></span></span>
-                <div class="ms-perm__body">
-                  <p class="ms-perm__title">Your browser blocks notifications from Mesail</p>
-                  <p class="ms-help">Mesail cannot ask again. To allow them:</p>
-                  <ol class="ms-steps">
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Device notifications: blocked by the browser</figcaption>
+              <div class="flex items-start gap-3 rounded-lg bg-surface-mid p-4">
+                <span class="grid size-10 flex-none place-items-center rounded-md bg-warning-container text-on-warning-container"><w-icon name="bell-off"></w-icon></span>
+                <div class="grid min-w-0 flex-1 justify-items-start gap-2">
+                  <p class="font-semibold">Your browser blocks notifications from Mesail</p>
+                  <p class="text-xs text-subtle">Mesail cannot ask again. To allow them:</p>
+                  <ol class="grid list-decimal gap-1 pl-5 text-sm">
                     <li>Select the icon to the left of the web address (a lock or a settings icon).</li>
                     <li>Find <strong>Notifications</strong> and choose <strong>Allow</strong>.</li>
                     <li>Come back here and select <strong>Check again</strong>.</li>
                   </ol>
-                  <button class="ms-btn" type="button"><span class="ms-icon ms-i-refresh" aria-hidden="true"></span>Check again</button>
+                  <w-btn variant="outlined" prepend-icon="refresh" class="pointer-coarse:min-h-11">Check again</w-btn>
                 </div>
               </div>
             </figure>
 
-            <figure class="ms-mock-state">
-              <figcaption>Device notifications: not available in this browser</figcaption>
-              <div class="ms-perm">
-                <span class="ms-perm__icon"><span class="ms-icon ms-i-info" aria-hidden="true"></span></span>
-                <div class="ms-perm__body">
-                  <p class="ms-perm__title">This browser cannot show notifications</p>
-                  <p class="ms-help">On iPhone and iPad, first add Mesail to your Home Screen: select Share, then Add to Home Screen. Then open Mesail from there.</p>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Device notifications: not available in this browser</figcaption>
+              <div class="flex items-start gap-3 rounded-lg bg-surface-mid p-4">
+                <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="info"></w-icon></span>
+                <div class="grid min-w-0 flex-1 gap-2">
+                  <p class="font-semibold">This browser cannot show notifications</p>
+                  <p class="text-xs text-subtle">On iPhone and iPad, first add Mesail to your Home Screen: select Share, then Add to Home Screen. Then open Mesail from there.</p>
                 </div>
               </div>
             </figure>
 
-            <figure class="ms-mock-state">
-              <figcaption>Muted conversations: empty</figcaption>
-              <p class="ms-subtle">You have not muted any conversations. To mute one, open its bell button and choose Mute.</p>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Muted conversations: empty</figcaption>
+              <w-empty-state title="No muted conversations" text="To mute one, open its bell button and choose Mute."></w-empty-state>
             </figure>
           </section>
         </div>
@@ -340,12 +319,16 @@
     </div>
   </main>
 
-  <nav class="ms-bottom-nav" aria-label="Main">
-    <a class="ms-bottom-nav__item" href="messenger.html?pane=list"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
-    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
-    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
-    <a class="ms-bottom-nav__item" href="settings.html" aria-current="page"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
-  </nav>
+  <!-- Bottom navigation: phones, list pane only -->
+  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden group-data-[pane=thread]/app:hidden" value="you" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" href="messenger.html?pane=list"><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="search" label="Search" href="search.html"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="you" label="You" href="settings.html" active><w-icon name="user"></w-icon></w-bottom-nav-item>
+  </w-bottom-navigation>
+
 </div>
+
+<div class="sr-only" aria-live="polite" id="announcer"></div>
 </body>
 </html>

@@ -1,302 +1,253 @@
 <!doctype html>
-<html lang="en" w-theme="light">
+<html lang="en" w-theme="light" w-density="comfortable">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mesail mockup: Admin, channels of example.com</title>
-<link rel="stylesheet" href="assets/duvay/tokens.css">
-<link rel="stylesheet" href="assets/duvay/themes.css">
-<link rel="stylesheet" href="assets/mesail-tokens.css">
-<link rel="stylesheet" href="assets/icons.css">
-<link rel="stylesheet" href="assets/mesail.css">
-<link rel="stylesheet" href="assets/screens/admin.css">
+<link rel="stylesheet" href="assets/app.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
 <script src="assets/mockup.js" defer></script>
 </head>
-<body>
+<body class="bg-surface text-text">
 <a class="ms-skip-link" href="#admin-content">Skip to admin content</a>
 
-<div class="ms-app" data-pane="main">
+<!-- App shell without a right pane. Under 600 px one pane shows (data-pane); 600 px: list + page; 960 px: + domain rail;
+     1920 and 2560 px: wider sidebar. -->
+<div class="group/app relative grid h-dvh overflow-hidden
+  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
+  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main">
 
-  <!-- Domain rail -->
-  <nav class="ms-rail" aria-label="Domains">
-    <ul class="ms-rail__list">
+  <!-- Domain rail (960 px and up) -->
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Domains">
+    <ul class="flex flex-col gap-2">
       <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
-      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
-      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<w-badge content="3" inline class="absolute -top-1 -right-1.5"></w-badge></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="absolute -left-2.5 size-2 rounded-full bg-on-rail" aria-hidden="true"></span>La</a></li>
     </ul>
-    <div class="ms-rail__sep" role="presentation"></div>
-    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
-    <div class="ms-rail__spacer"></div>
-    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+    <div class="h-px w-8 bg-on-rail/20" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><w-icon name="plus"></w-icon></a>
+    <div class="flex-1"></div>
+    <a class="ms-domain-tile" href="settings-appearance.html" aria-label="Help and keyboard shortcuts" title="Help"><w-icon name="info"></w-icon></a>
   </nav>
 
   <!-- Sidebar: the Admin section shows only for users with an admin role -->
-  <aside class="ms-sidebar" aria-label="Conversations and admin in example.com">
-    <div class="ms-sidebar__head">
-      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
-      <div class="ms-header__actions">
-        <button class="ms-icon-btn" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
-      </div>
-    </div>
-    <div class="ms-sidebar__search">
-      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
-    </div>
-    <div class="ms-sidebar__scroll">
-      <ul class="ms-nav-list">
-        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
-        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
-      </ul>
-
-      <section class="ms-nav-section" aria-labelledby="sec-channels">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
-          <span class="ms-badge" aria-label="4 unread">4</span>
-        </div>
-      </section>
-      <section class="ms-nav-section" aria-labelledby="sec-dms">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
-          <span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span>
-        </div>
-      </section>
-      <section class="ms-nav-section" aria-labelledby="sec-email">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
-          <span class="ms-badge" aria-label="1 unread">1</span>
-        </div>
-      </section>
-
-      <section class="ms-nav-section" aria-labelledby="sec-admin">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-admin"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Admin</button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item" href="admin-domains.html"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span class="ms-nav-item__label">Domains</span></a></li>
-          <li><a class="ms-nav-item" href="admin-members.html"><span class="ms-icon ms-i-users" aria-hidden="true"></span><span class="ms-nav-item__label">Members</span></a></li>
-          <li><a class="ms-nav-item" href="admin-channels.html" aria-current="page"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">Channels</span></a></li>
-          <li><a class="ms-nav-item" href="admin-mail.html"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span class="ms-nav-item__label">Mail delivery</span></a></li>
-        </ul>
-      </section>
-    </div>
-    <div class="ms-sidebar__foot">
-      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
-        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
-        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations and admin in example.com">
+    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-t safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
+      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
+      <span class="flex-1"></span>
+      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+    </header>
+    <div class="px-3 py-2">
+      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
+        <w-icon name="search" class="ms-icon-sm"></w-icon>Search<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
       </button>
-      <a class="ms-icon-btn" href="settings.html" aria-label="Settings"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
     </div>
+    <div class="flex-1 overflow-y-auto px-2 pb-4">
+      <w-list nav density="compact" aria-label="Shortcuts">
+        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline label="2 mentions"></w-badge></w-list-item>
+        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
+      </w-list>
+
+      <section class="mt-3" aria-labelledby="sec-channels">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-channels"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Channels</button>
+          <w-badge content="4" inline class="ms-count" label="4 unread"></w-badge>
+        </div>
+      </section>
+      <section class="mt-3" aria-labelledby="sec-dms">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-dms"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Direct messages</button>
+          <w-badge content="1" inline label="1 mention"></w-badge>
+        </div>
+      </section>
+      <section class="mt-3" aria-labelledby="sec-email">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-email"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Email</button>
+          <w-badge content="1" inline class="ms-count" label="1 unread"></w-badge>
+        </div>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-admin">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-admin"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Admin</button>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-admin">
+          <w-list-item href="admin-domains.html" title="Domains"><w-icon slot="prepend" name="globe"></w-icon></w-list-item>
+          <w-list-item href="admin-members.html" title="Members"><w-icon slot="prepend" name="users"></w-icon></w-list-item>
+          <w-list-item href="admin-channels.html" title="Channels" active><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="admin-mail.html" title="Mail delivery"><w-icon slot="prepend" name="mail"></w-icon></w-list-item>
+        </w-list>
+      </section>
+    </div>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <w-avatar text="AR" size="28" status="online" style="--h:195" alt=""></w-avatar>
+        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">ana@example.com</span></span>
+      </button>
+      <w-icon-btn icon="settings" href="settings.html" aria-label="Settings"></w-icon-btn>
+    </footer>
   </aside>
 
-  <!-- Admin: channels of one domain -->
-  <main class="ms-main ms-admin" aria-labelledby="page-title">
-    <header class="ms-header">
-      <a class="ms-icon-btn ms-header__back" href="?pane=list" aria-label="Back to menu"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
-      <h1 class="ms-header__title" id="page-title"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span>Channels</span></h1>
-      <p class="ms-header__topic">example.com &middot; visibility, members and email addresses</p>
+  <!-- Admin page -->
+  <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="page-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="?pane=list" aria-label="Back to menu"></w-icon-btn>
+      <h1 id="page-title" class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="hash" class="ms-icon-sm"></w-icon><span class="truncate">Channels</span></h1>
+      <p class="hidden @2xl/main:block min-w-0 flex-1 truncate border-l border-divider pl-3 text-sm text-subtle">example.com &middot; visibility, members and email addresses</p>
+      <div class="ml-auto flex items-center gap-1 no-drag"></div>
     </header>
 
-    <div class="ms-page" id="admin-content">
-      <div class="ms-page__inner">
-        <div class="ms-callout ms-callout--email">
-          <span class="ms-icon ms-i-mail" aria-hidden="true"></span>
-          <div class="ms-callout__text">
-            <strong>A channel can have an email address.</strong>
-            <p>People outside example.com can then email the channel. The address ends with @example.com and must not belong to a person or another channel.</p>
-          </div>
+    <div class="flex-1 min-h-0 overflow-y-auto py-6 safe-l safe-r safe-b" style="--ms-edge: 1rem" id="admin-content">
+      <div class="@container/page mx-auto grid w-full max-w-3xl gap-6 pb-10">
+        <div class="flex items-start gap-3 rounded-xl bg-email-bg px-4 py-3 text-on-email-bg">
+          <w-icon name="mail" class="mt-0.5"></w-icon>
+          <div class="grid min-w-0 gap-1"><strong class="font-semibold">A channel can have an email address.</strong><p>People outside example.com can then email the channel. The address ends with @example.com and must not belong to a person or another channel.</p></div>
         </div>
 
-        <form class="ms-toolbar" role="search" aria-label="Filter channels" onsubmit="return false">
-          <div class="ms-field ms-toolbar__search">
-            <label class="ms-label" for="chan-search">Search</label>
-            <div class="ms-input-icon"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span><input class="ms-input" id="chan-search" type="search" placeholder="Channel name or address"></div>
-          </div>
-          <div class="ms-field">
-            <label class="ms-label" for="chan-filter">Show</label>
-            <select class="ms-select" id="chan-filter"><option>All channels</option><option>Public</option><option>Private</option><option>With email address</option><option>Archived</option></select>
-          </div>
+        <form role="search" aria-label="Filter channels" class="grid grid-cols-1 gap-3 @xl/page:grid-cols-[minmax(0,1fr)_13rem]" onsubmit="return false">
+          <w-text-field type="search" label="Search" placeholder="Channel name or address" prepend-inner-icon="search"></w-text-field>
+          <w-select label="Show" value="all"><w-option value="all">All channels</w-option><w-option value="public">Public</w-option><w-option value="private">Private</w-option><w-option value="email">With email address</w-option><w-option value="archived">Archived</w-option></w-select>
         </form>
 
-        <section class="ms-card" aria-labelledby="chan-title">
-          <div class="ms-card__head"><h2 id="chan-title">7 channels</h2><span class="ms-meta">1 with an email address &middot; 1 archived</span></div>
-          <div class="ms-table-wrap">
-            <table class="ms-table ms-table--cards">
-              <caption class="ms-sr-only">Channels of example.com</caption>
-              <thead>
-                <tr><th scope="col">Channel</th><th scope="col">Visibility</th><th scope="col">Members</th><th scope="col">Email address</th><th scope="col"><span class="ms-sr-only">Actions</span></th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="ms-table__lead"><span class="ms-person__name"><span class="ms-icon ms-i-hash ms-icon--sm" aria-hidden="true"></span> general</span><span class="ms-table__sub">Company news</span></td>
-                  <td data-label="Visibility"><div><span class="ms-tag ms-tag--outline"><span class="ms-icon ms-i-globe" aria-hidden="true"></span>Public</span></div></td>
-                  <td data-label="Members">24</td>
-                  <td data-label="Email address"><div><span class="ms-subtle">None</span></div></td>
-                  <td class="ms-table__actions"><div class="ms-page__actions">
-                    <button class="ms-btn ms-btn--sm" type="button" aria-haspopup="dialog" aria-label="Add address for #general"><span class="ms-icon ms-i-mail ms-icon--sm" aria-hidden="true"></span>Add address</button>
-                    <button class="ms-btn ms-btn--sm ms-btn--ghost" type="button" aria-haspopup="dialog" aria-label="Archive #general">Archive</button>
-                  </div></td>
+        <section class="rounded-xl border border-border bg-surface " aria-labelledby="chan-title">
+          <div class="flex flex-wrap items-center gap-3 border-b border-divider px-4 py-3 @xl/page:px-5"><h2 id="chan-title" class="flex-1 text-lg font-semibold">7 channels</h2><span class="text-xs text-subtle">1 with an email address &middot; 1 archived</span></div>
+          <table role="table" class="w-full border-collapse text-sm @max-2xl/page:block">
+              <caption class="sr-only">Channels of example.com</caption>
+              <thead role="rowgroup" class="@max-2xl/page:sr-only"><tr role="row"><th scope="col" role="columnheader" class="border-b border-divider px-4 py-2 text-left text-xs font-semibold whitespace-nowrap text-subtle">Channel</th><th scope="col" role="columnheader" class="border-b border-divider px-4 py-2 text-left text-xs font-semibold whitespace-nowrap text-subtle">Visibility</th><th scope="col" role="columnheader" class="border-b border-divider px-4 py-2 text-left text-xs font-semibold whitespace-nowrap text-subtle">Members</th><th scope="col" role="columnheader" class="border-b border-divider px-4 py-2 text-left text-xs font-semibold whitespace-nowrap text-subtle">Email address</th><th scope="col" role="columnheader" class="border-b border-divider px-4 py-2 text-left text-xs font-semibold whitespace-nowrap text-subtle"><span class="sr-only">Actions</span></th></tr></thead>
+              <tbody role="rowgroup" class="@max-2xl/page:block">
+                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent">
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><span class="flex items-center gap-1 font-semibold"><w-icon name="hash" class="ms-icon-sm"></w-icon>general</span><span class="block text-xs text-subtle">Company news</span></td>
+                  <td role="cell" data-label="Visibility" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><div class="flex flex-wrap gap-1"><span class="inline-flex"><w-chip size="small" variant="outlined" prepend-icon="globe" inert aria-hidden="true">Public</w-chip><span class="sr-only">Public</span></span></div></td>
+                  <td role="cell" data-label="Members" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]">24</td>
+                  <td role="cell" data-label="Email address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="text-subtle">None</span></td>
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-btn variant="outlined" size="small" prepend-icon="mail" aria-haspopup="dialog" aria-label="Add address for #general">Add address</w-btn><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Archive #general">Archive</w-btn></div></td>
                 </tr>
-                <tr>
-                  <td class="ms-table__lead"><span class="ms-person__name"><span class="ms-icon ms-i-hash ms-icon--sm" aria-hidden="true"></span> releases</span><span class="ms-table__sub">Build and release status</span></td>
-                  <td data-label="Visibility"><div><span class="ms-tag ms-tag--outline"><span class="ms-icon ms-i-globe" aria-hidden="true"></span>Public</span></div></td>
-                  <td data-label="Members">12</td>
-                  <td data-label="Email address"><div><span class="ms-subtle">None</span></div></td>
-                  <td class="ms-table__actions"><div class="ms-page__actions">
-                    <button class="ms-btn ms-btn--sm" type="button" aria-haspopup="dialog" aria-label="Add address for #releases"><span class="ms-icon ms-i-mail ms-icon--sm" aria-hidden="true"></span>Add address</button>
-                    <button class="ms-btn ms-btn--sm ms-btn--ghost" type="button" aria-haspopup="dialog" aria-label="Archive #releases">Archive</button>
-                  </div></td>
+                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent">
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><span class="flex items-center gap-1 font-semibold"><w-icon name="hash" class="ms-icon-sm"></w-icon>releases</span><span class="block text-xs text-subtle">Build and release status</span></td>
+                  <td role="cell" data-label="Visibility" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><div class="flex flex-wrap gap-1"><span class="inline-flex"><w-chip size="small" variant="outlined" prepend-icon="globe" inert aria-hidden="true">Public</w-chip><span class="sr-only">Public</span></span></div></td>
+                  <td role="cell" data-label="Members" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]">12</td>
+                  <td role="cell" data-label="Email address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="text-subtle">None</span></td>
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-btn variant="outlined" size="small" prepend-icon="mail" aria-haspopup="dialog" aria-label="Add address for #releases">Add address</w-btn><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Archive #releases">Archive</w-btn></div></td>
                 </tr>
-                <tr>
-                  <td class="ms-table__lead"><span class="ms-person__name"><span class="ms-icon ms-i-hash ms-icon--sm" aria-hidden="true"></span> support</span><span class="ms-table__sub">Customer questions</span></td>
-                  <td data-label="Visibility"><div><span class="ms-tag ms-tag--outline"><span class="ms-icon ms-i-globe" aria-hidden="true"></span>Public</span></div></td>
-                  <td data-label="Members">8</td>
-                  <td data-label="Email address"><div><span class="ms-tag ms-tag--email"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span> <span class="ms-addr">support@example.com</span></div></td>
-                  <td class="ms-table__actions"><div class="ms-page__actions">
-                    <button class="ms-btn ms-btn--sm" type="button" aria-haspopup="dialog" aria-label="Edit address for #support"><span class="ms-icon ms-i-mail ms-icon--sm" aria-hidden="true"></span>Edit address</button>
-                    <button class="ms-btn ms-btn--sm ms-btn--ghost" type="button" aria-haspopup="dialog" aria-label="Archive #support">Archive</button>
-                  </div></td>
+                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent">
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><span class="flex items-center gap-1 font-semibold"><w-icon name="hash" class="ms-icon-sm"></w-icon>support</span><span class="block text-xs text-subtle">Customer questions</span></td>
+                  <td role="cell" data-label="Visibility" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><div class="flex flex-wrap gap-1"><span class="inline-flex"><w-chip size="small" variant="outlined" prepend-icon="globe" inert aria-hidden="true">Public</w-chip><span class="sr-only">Public</span></span></div></td>
+                  <td role="cell" data-label="Members" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]">8</td>
+                  <td role="cell" data-label="Email address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><div class="flex min-w-0 flex-wrap items-center gap-1"><span class="ms-how ms-how--email"><w-icon name="mail"></w-icon>Email</span><span class="font-mono text-xs break-all">support@example.com</span></div></td>
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-btn variant="outlined" size="small" prepend-icon="mail" aria-haspopup="dialog" aria-label="Edit address for #support">Edit address</w-btn><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Archive #support">Archive</w-btn></div></td>
                 </tr>
-                <tr>
-                  <td class="ms-table__lead"><span class="ms-person__name"><span class="ms-icon ms-i-lock ms-icon--sm" aria-hidden="true"></span> design</span><span class="ms-table__sub">Design reviews</span></td>
-                  <td data-label="Visibility"><div><span class="ms-tag"><span class="ms-icon ms-i-lock" aria-hidden="true"></span>Private</span></div></td>
-                  <td data-label="Members">5</td>
-                  <td data-label="Email address"><div><span class="ms-subtle">None</span></div></td>
-                  <td class="ms-table__actions"><div class="ms-page__actions">
-                    <button class="ms-btn ms-btn--sm" type="button" aria-haspopup="dialog" aria-label="Add address for #design"><span class="ms-icon ms-i-mail ms-icon--sm" aria-hidden="true"></span>Add address</button>
-                    <button class="ms-btn ms-btn--sm ms-btn--ghost" type="button" aria-haspopup="dialog" aria-label="Archive #design">Archive</button>
-                  </div></td>
+                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent">
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><span class="flex items-center gap-1 font-semibold"><w-icon name="lock" class="ms-icon-sm"></w-icon>design</span><span class="block text-xs text-subtle">Design reviews</span></td>
+                  <td role="cell" data-label="Visibility" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><div class="flex flex-wrap gap-1"><span class="inline-flex"><w-chip size="small" prepend-icon="lock" inert aria-hidden="true">Private</w-chip><span class="sr-only">Private</span></span></div></td>
+                  <td role="cell" data-label="Members" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]">5</td>
+                  <td role="cell" data-label="Email address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="text-subtle">None</span></td>
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-btn variant="outlined" size="small" prepend-icon="mail" aria-haspopup="dialog" aria-label="Add address for #design">Add address</w-btn><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Archive #design">Archive</w-btn></div></td>
                 </tr>
-                <tr>
-                  <td class="ms-table__lead"><span class="ms-person__name"><span class="ms-icon ms-i-hash ms-icon--sm" aria-hidden="true"></span> random</span><span class="ms-table__sub">Anything else</span></td>
-                  <td data-label="Visibility"><div><span class="ms-tag ms-tag--outline"><span class="ms-icon ms-i-globe" aria-hidden="true"></span>Public</span></div></td>
-                  <td data-label="Members">20</td>
-                  <td data-label="Email address"><div><span class="ms-subtle">None</span></div></td>
-                  <td class="ms-table__actions"><div class="ms-page__actions">
-                    <button class="ms-btn ms-btn--sm" type="button" aria-haspopup="dialog" aria-label="Add address for #random"><span class="ms-icon ms-i-mail ms-icon--sm" aria-hidden="true"></span>Add address</button>
-                    <button class="ms-btn ms-btn--sm ms-btn--ghost" type="button" aria-haspopup="dialog" aria-label="Archive #random">Archive</button>
-                  </div></td>
+                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent">
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><span class="flex items-center gap-1 font-semibold"><w-icon name="hash" class="ms-icon-sm"></w-icon>random</span><span class="block text-xs text-subtle">Anything else</span></td>
+                  <td role="cell" data-label="Visibility" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><div class="flex flex-wrap gap-1"><span class="inline-flex"><w-chip size="small" variant="outlined" prepend-icon="globe" inert aria-hidden="true">Public</w-chip><span class="sr-only">Public</span></span></div></td>
+                  <td role="cell" data-label="Members" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]">20</td>
+                  <td role="cell" data-label="Email address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="text-subtle">None</span></td>
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-btn variant="outlined" size="small" prepend-icon="mail" aria-haspopup="dialog" aria-label="Add address for #random">Add address</w-btn><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Archive #random">Archive</w-btn></div></td>
                 </tr>
-                <tr>
-                  <td class="ms-table__lead"><span class="ms-person__name"><span class="ms-icon ms-i-hash ms-icon--sm" aria-hidden="true"></span> events-2025</span><span class="ms-table__sub">Last year&rsquo;s events</span></td>
-                  <td data-label="Visibility"><div><span class="ms-tag ms-tag--outline"><span class="ms-icon ms-i-globe" aria-hidden="true"></span>Public</span></div></td>
-                  <td data-label="Members">15</td>
-                  <td data-label="Email address"><div><span class="ms-subtle">None</span></div></td>
-                  <td class="ms-table__actions"><div class="ms-page__actions">
-                    <button class="ms-btn ms-btn--sm" type="button" aria-haspopup="dialog" aria-label="Add address for #events-2025"><span class="ms-icon ms-i-mail ms-icon--sm" aria-hidden="true"></span>Add address</button>
-                    <button class="ms-btn ms-btn--sm ms-btn--ghost" type="button" aria-haspopup="dialog" aria-label="Archive #events-2025">Archive</button>
-                  </div></td>
+                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent">
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><span class="flex items-center gap-1 font-semibold"><w-icon name="hash" class="ms-icon-sm"></w-icon>events-2025</span><span class="block text-xs text-subtle">Last year&rsquo;s events</span></td>
+                  <td role="cell" data-label="Visibility" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><div class="flex flex-wrap gap-1"><span class="inline-flex"><w-chip size="small" variant="outlined" prepend-icon="globe" inert aria-hidden="true">Public</w-chip><span class="sr-only">Public</span></span></div></td>
+                  <td role="cell" data-label="Members" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]">15</td>
+                  <td role="cell" data-label="Email address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="text-subtle">None</span></td>
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-btn variant="outlined" size="small" prepend-icon="mail" aria-haspopup="dialog" aria-label="Add address for #events-2025">Add address</w-btn><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Archive #events-2025">Archive</w-btn></div></td>
                 </tr>
-                <tr class="is-muted">
-                  <td class="ms-table__lead"><span class="ms-person__name"><span class="ms-icon ms-i-hash ms-icon--sm" aria-hidden="true"></span> launch-q3</span><span class="ms-table__sub">Archived 30 Sep 2026</span></td>
-                  <td data-label="Visibility"><div><span class="ms-tag ms-tag--outline"><span class="ms-icon ms-i-globe" aria-hidden="true"></span>Public</span> <span class="ms-tag ms-tag--warn"><span class="ms-icon ms-i-eye-off" aria-hidden="true"></span>Archived, read-only</span></div></td>
-                  <td data-label="Members">9</td>
-                  <td data-label="Email address"><div><span class="ms-subtle">None</span></div></td>
-                  <td class="ms-table__actions"><div class="ms-page__actions">
-                    <button class="ms-btn ms-btn--sm" type="button" aria-label="Unarchive #launch-q3">Unarchive</button>
-                  </div></td>
+                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent text-subtle">
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><span class="flex items-center gap-1 font-semibold"><w-icon name="hash" class="ms-icon-sm"></w-icon>launch-q3</span><span class="block text-xs text-subtle">Archived 30 Sep 2026</span></td>
+                  <td role="cell" data-label="Visibility" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><div class="flex flex-wrap gap-1"><span class="inline-flex"><w-chip size="small" variant="outlined" prepend-icon="globe" inert aria-hidden="true">Public</w-chip><span class="sr-only">Public</span></span><span class="inline-flex"><w-chip size="small" color="warning" prepend-icon="eye-off" inert aria-hidden="true">Archived, read-only</w-chip><span class="sr-only">Archived, read-only</span></span></div></td>
+                  <td role="cell" data-label="Members" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]">9</td>
+                  <td role="cell" data-label="Email address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="text-subtle">None</span></td>
+                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-btn variant="outlined" size="small" aria-label="Unarchive #launch-q3">Unarchive</w-btn></div></td>
                 </tr>
               </tbody>
             </table>
-          </div>
-          <div class="ms-list-foot"><span>Showing 1&ndash;7 of 7. Up to 50 per page.</span></div>
+          <div class="flex flex-wrap items-center gap-2 px-4 py-3 text-xs text-subtle @xl/page:px-5"><span>Showing 1&ndash;7 of 7. Up to 50 per page.</span></div>
         </section>
-        <p class="ms-meta">Private channels show here for admins only, so you can manage them. Their messages stay private.</p>
+        <p class="text-xs text-subtle">Private channels show here for admins only, so you can manage them. Their messages stay private.</p>
 
-        <section class="ms-state" aria-labelledby="st-edit">
-          <h2 class="ms-state__label" id="st-edit">State: Edit address dialog open (#support)</h2>
-          <div class="ms-exhibit">
-            <div class="ms-dialog" role="dialog" aria-labelledby="edit-title">
-              <div class="ms-dialog__head">
-                <h2 id="edit-title">Email address for #support</h2>
-                <button class="ms-icon-btn ms-dialog__close" aria-label="Close"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
-              </div>
-              <form class="ms-dialog__body" id="edit-form" onsubmit="return false">
-                <div class="ms-field">
-                  <label class="ms-label" for="edit-addr">Email address</label>
-                  <div class="ms-input-group"><input class="ms-input ms-mono" id="edit-addr" type="text" value="support" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="edit-help"><span class="ms-input-group__suffix" aria-hidden="true">@example.com</span></div>
-                  <p class="ms-ok-text"><span class="ms-icon ms-i-check" aria-hidden="true"></span>This is the current address of #support.</p>
-                  <p class="ms-help" id="edit-help">Ends with @example.com. The address must not belong to a person, an alias or another channel.</p>
-                </div>
-                <div class="ms-callout ms-callout--email">
-                  <span class="ms-icon ms-i-mail" aria-hidden="true"></span>
-                  <div class="ms-callout__text"><p>Mail sent to this address shows in #support as an email conversation. Members reply as email. Chat in #support stays inside example.com.</p></div>
-                </div>
-              </form>
-              <div class="ms-dialog__foot ms-dialog__foot--split">
-                <button class="ms-btn ms-btn--ghost" type="button"><span class="ms-icon ms-i-trash ms-icon--sm" aria-hidden="true"></span>Remove address</button>
-                <div class="ms-page__actions">
-                  <button class="ms-btn" type="button">Cancel</button>
-                  <button class="ms-btn ms-btn--primary" type="submit" form="edit-form">Save</button>
-                </div>
-              </div>
+        <section class="grid gap-3" aria-labelledby="st-edit">
+          <h2 id="st-edit" class="justify-self-start rounded-sm border border-dashed border-outline px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-subtle">State: Edit address dialog open (#support)</h2>
+          <div class="rounded-xl bg-scrim px-4 py-6 max-sm:bg-transparent max-sm:p-0">
+          <div role="dialog" aria-modal="false" aria-labelledby="edit-title" data-duvay="w-dialog" class="@container/dialog relative mx-auto w-full max-w-lg rounded-xl border border-border bg-surface shadow-xl max-sm:rounded-b-none">
+            <div class="flex items-center gap-2 px-5 pt-4 pb-2">
+              <h3 id="edit-title" class="flex-1 text-xl font-semibold">Email address for #support</h3>
+              <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
             </div>
+            <form id="edit-form" class="grid gap-4 px-5 pb-4 pt-2" onsubmit="return false">
+              <w-text-field label="Email address" value="support" suffix="@example.com" class="font-mono" hint="Ends with @example.com. The address must not belong to a person, an alias or another channel." persistent-hint autocomplete="off" autocapitalize="none" spellcheck="false"></w-text-field>
+              <p class="flex items-center gap-1 text-xs text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon>This is the current address of #support.</p>
+              <div class="flex items-start gap-2 rounded-xl bg-email-bg px-3 py-2 text-sm text-on-email-bg"><w-icon name="mail" class="ms-icon-sm mt-0.5"></w-icon><p>Mail sent to this address shows in #support as an email conversation. Members reply as email. Chat in #support stays inside example.com.</p></div>
+            </form>
+            <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-5 pb-5 pt-3 safe-b max-sm:[&>*]:flex-1">
+              <w-btn variant="text" prepend-icon="trash" class="mr-auto">Remove address</w-btn>
+              <w-btn variant="text">Cancel</w-btn>
+              <w-btn variant="filled">Save</w-btn>
+            </div>
+          </div>
           </div>
         </section>
 
-        <section class="ms-state" aria-labelledby="st-taken">
-          <h2 class="ms-state__label" id="st-taken">State: address already used</h2>
-          <div class="ms-exhibit">
-            <div class="ms-dialog" role="dialog" aria-labelledby="taken-title">
-              <div class="ms-dialog__head">
-                <h2 id="taken-title">Email address for #support</h2>
-                <button class="ms-icon-btn ms-dialog__close" aria-label="Close"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
-              </div>
-              <form class="ms-dialog__body" id="taken-form" onsubmit="return false">
-                <div class="ms-field">
-                  <label class="ms-label" for="taken-addr">Email address</label>
-                  <div class="ms-input-group"><input class="ms-input ms-mono" id="taken-addr" type="text" value="bo" autocomplete="off" autocapitalize="none" spellcheck="false" aria-invalid="true" aria-describedby="taken-err taken-help"><span class="ms-input-group__suffix" aria-hidden="true">@example.com</span></div>
-                  <p class="ms-error-text" id="taken-err"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>This address already belongs to Bo Lee. Choose another address.</p>
-                  <p class="ms-help" id="taken-help">Ends with @example.com. The address must not belong to a person, an alias or another channel.</p>
-                </div>
-                <div class="ms-callout ms-callout--email">
-                  <span class="ms-icon ms-i-mail" aria-hidden="true"></span>
-                  <div class="ms-callout__text"><p>Mail sent to this address shows in #support as an email conversation. Members reply as email. Chat in #support stays inside example.com.</p></div>
-                </div>
-              </form>
-              <div class="ms-dialog__foot ms-dialog__foot--split">
-                <button class="ms-btn ms-btn--ghost" type="button"><span class="ms-icon ms-i-trash ms-icon--sm" aria-hidden="true"></span>Remove address</button>
-                <div class="ms-page__actions">
-                  <button class="ms-btn" type="button">Cancel</button>
-                  <button class="ms-btn ms-btn--primary" type="submit" form="taken-form">Save</button>
-                </div>
-              </div>
+        <section class="grid gap-3" aria-labelledby="st-taken">
+          <h2 id="st-taken" class="justify-self-start rounded-sm border border-dashed border-outline px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-subtle">State: address already used</h2>
+          <div class="rounded-xl bg-scrim px-4 py-6 max-sm:bg-transparent max-sm:p-0">
+          <div role="dialog" aria-modal="false" aria-labelledby="taken-title" data-duvay="w-dialog" class="@container/dialog relative mx-auto w-full max-w-lg rounded-xl border border-border bg-surface shadow-xl max-sm:rounded-b-none">
+            <div class="flex items-center gap-2 px-5 pt-4 pb-2">
+              <h3 id="taken-title" class="flex-1 text-xl font-semibold">Email address for #support</h3>
+              <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
             </div>
+            <form id="taken-form" class="grid gap-4 px-5 pb-4 pt-2" onsubmit="return false">
+              <w-text-field label="Email address" value="bo" suffix="@example.com" class="font-mono" hint="Ends with @example.com. The address must not belong to a person, an alias or another channel." persistent-hint error="This address already belongs to Bo Lee. Choose another address." autocomplete="off" autocapitalize="none" spellcheck="false"></w-text-field>
+              <div class="flex items-start gap-2 rounded-xl bg-email-bg px-3 py-2 text-sm text-on-email-bg"><w-icon name="mail" class="ms-icon-sm mt-0.5"></w-icon><p>Mail sent to this address shows in #support as an email conversation. Members reply as email. Chat in #support stays inside example.com.</p></div>
+            </form>
+            <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-5 pb-5 pt-3 safe-b max-sm:[&>*]:flex-1">
+              <w-btn variant="text" prepend-icon="trash" class="mr-auto">Remove address</w-btn>
+              <w-btn variant="text">Cancel</w-btn>
+              <w-btn variant="filled">Save</w-btn>
+            </div>
+          </div>
           </div>
         </section>
 
-        <section class="ms-state" aria-labelledby="st-archive">
-          <h2 class="ms-state__label" id="st-archive">State: Archive dialog open (#events-2025)</h2>
-          <div class="ms-exhibit">
-            <div class="ms-dialog" role="dialog" aria-labelledby="arch-title" aria-describedby="arch-desc">
-              <div class="ms-dialog__head">
-                <h2 id="arch-title">Archive #events-2025?</h2>
-                <button class="ms-icon-btn ms-dialog__close" aria-label="Close"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
-              </div>
-              <form class="ms-dialog__body" id="arch-form" onsubmit="return false">
-                <p id="arch-desc">Archived channels are read-only and still searchable. Members can read old messages and files, but nobody can post. You can unarchive it later.</p>
-                <p class="ms-meta">#events-2025 has no email address. When a channel with an address is archived, mail to that address is refused.</p>
-              </form>
-              <div class="ms-dialog__foot ms-dialog__foot--split">
-                <span></span>
-                <div class="ms-page__actions">
-                  <button class="ms-btn" type="button">Cancel</button>
-                  <button class="ms-btn ms-btn--primary" type="submit" form="arch-form">Archive channel</button>
-                </div>
-              </div>
+        <section class="grid gap-3" aria-labelledby="st-archive">
+          <h2 id="st-archive" class="justify-self-start rounded-sm border border-dashed border-outline px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-subtle">State: Archive dialog open (#events-2025)</h2>
+          <div class="rounded-xl bg-scrim px-4 py-6 max-sm:bg-transparent max-sm:p-0">
+          <div role="dialog" aria-modal="false" aria-labelledby="arch-title" aria-describedby="arch-desc" data-duvay="w-dialog" class="@container/dialog relative mx-auto w-full max-w-lg rounded-xl border border-border bg-surface shadow-xl max-sm:rounded-b-none">
+            <div class="flex items-center gap-2 px-5 pt-4 pb-2">
+              <h3 id="arch-title" class="flex-1 text-xl font-semibold">Archive #events-2025?</h3>
+              <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
             </div>
+            <form id="arch-form" class="grid gap-4 px-5 pb-4 pt-2" onsubmit="return false">
+              <p id="arch-desc">Archived channels are read-only and still searchable. Members can read old messages and files, but nobody can post. You can unarchive it later.</p>
+              <p class="text-xs text-subtle">#events-2025 has no email address. When a channel with an address is archived, mail to that address is refused.</p>
+            </form>
+            <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-5 pb-5 pt-3 safe-b max-sm:[&>*]:flex-1">
+              <w-btn variant="text">Cancel</w-btn>
+              <w-btn variant="filled">Archive channel</w-btn>
+            </div>
+          </div>
           </div>
         </section>
       </div>
     </div>
   </main>
 
-  <nav class="ms-bottom-nav" aria-label="Main">
-    <a class="ms-bottom-nav__item" href="messenger.html?pane=list"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
-    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
-    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
-    <a class="ms-bottom-nav__item" href="settings.html" aria-current="page"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
-  </nav>
+  <!-- Bottom navigation: phones, list pane only -->
+  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden" value="you" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" href="messenger.html?pane=list"><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="search" label="Search" href="search.html"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="you" label="You" href="settings.html" active><w-icon name="user"></w-icon></w-bottom-nav-item>
+  </w-bottom-navigation>
 </div>
 
-<div class="ms-sr-only" aria-live="polite" id="announcer"></div>
+<div class="sr-only" aria-live="polite" id="announcer"></div>
 </body>
 </html>

@@ -15,7 +15,7 @@
   --ms-content-max: 50rem;
   --ms-dialog-max: 32rem;
   --ms-row-height: 2rem;
-  --ms-touch-min: 2.75rem;
+  --ms-touch-min: var(--w-touch-min, 2.75rem);
 
   /* Avatars */
   --ms-avatar-xs: 1.25rem;

@@ -1,312 +1,267 @@
 <!doctype html>
-<html lang="en" w-theme="light">
+<html lang="en" w-theme="light" w-density="comfortable">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mesail mockup: Admin, DNS setup for new.example.net</title>
-<link rel="stylesheet" href="assets/duvay/tokens.css">
-<link rel="stylesheet" href="assets/duvay/themes.css">
-<link rel="stylesheet" href="assets/mesail-tokens.css">
-<link rel="stylesheet" href="assets/icons.css">
-<link rel="stylesheet" href="assets/mesail.css">
-<link rel="stylesheet" href="assets/screens/admin.css">
+<link rel="stylesheet" href="assets/app.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
 <script src="assets/mockup.js" defer></script>
 </head>
-<body>
+<body class="bg-surface text-text">
 <a class="ms-skip-link" href="#admin-content">Skip to admin content</a>
 
-<div class="ms-app" data-pane="main">
+<!-- App shell without a right pane. Under 600 px one pane shows (data-pane); 600 px: list + page; 960 px: + domain rail;
+     1920 and 2560 px: wider sidebar. -->
+<div class="group/app relative grid h-dvh overflow-hidden
+  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
+  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main">
 
-  <!-- Domain rail -->
-  <nav class="ms-rail" aria-label="Domains">
-    <ul class="ms-rail__list">
+  <!-- Domain rail (960 px and up) -->
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Domains">
+    <ul class="flex flex-col gap-2">
       <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
-      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
-      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<w-badge content="3" inline class="absolute -top-1 -right-1.5"></w-badge></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="absolute -left-2.5 size-2 rounded-full bg-on-rail" aria-hidden="true"></span>La</a></li>
     </ul>
-    <div class="ms-rail__sep" role="presentation"></div>
-    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
-    <div class="ms-rail__spacer"></div>
-    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+    <div class="h-px w-8 bg-on-rail/20" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><w-icon name="plus"></w-icon></a>
+    <div class="flex-1"></div>
+    <a class="ms-domain-tile" href="settings-appearance.html" aria-label="Help and keyboard shortcuts" title="Help"><w-icon name="info"></w-icon></a>
   </nav>
 
   <!-- Sidebar: the Admin section shows only for users with an admin role -->
-  <aside class="ms-sidebar" aria-label="Conversations and admin in example.com">
-    <div class="ms-sidebar__head">
-      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
-      <div class="ms-header__actions">
-        <button class="ms-icon-btn" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
-      </div>
-    </div>
-    <div class="ms-sidebar__search">
-      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
-    </div>
-    <div class="ms-sidebar__scroll">
-      <ul class="ms-nav-list">
-        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
-        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
-      </ul>
-
-      <section class="ms-nav-section" aria-labelledby="sec-channels">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
-          <span class="ms-badge" aria-label="4 unread">4</span>
-        </div>
-      </section>
-      <section class="ms-nav-section" aria-labelledby="sec-dms">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
-          <span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span>
-        </div>
-      </section>
-      <section class="ms-nav-section" aria-labelledby="sec-email">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
-          <span class="ms-badge" aria-label="1 unread">1</span>
-        </div>
-      </section>
-
-      <section class="ms-nav-section" aria-labelledby="sec-admin">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-admin"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Admin</button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item" href="admin-domains.html" aria-current="page"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span class="ms-nav-item__label">Domains</span></a></li>
-          <li><a class="ms-nav-item" href="admin-members.html"><span class="ms-icon ms-i-users" aria-hidden="true"></span><span class="ms-nav-item__label">Members</span></a></li>
-          <li><a class="ms-nav-item" href="admin-channels.html"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">Channels</span></a></li>
-          <li><a class="ms-nav-item" href="admin-mail.html"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span class="ms-nav-item__label">Mail delivery</span></a></li>
-        </ul>
-      </section>
-    </div>
-    <div class="ms-sidebar__foot">
-      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
-        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
-        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations and admin in example.com">
+    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-t safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
+      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
+      <span class="flex-1"></span>
+      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+    </header>
+    <div class="px-3 py-2">
+      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
+        <w-icon name="search" class="ms-icon-sm"></w-icon>Search<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
       </button>
-      <a class="ms-icon-btn" href="settings.html" aria-label="Settings"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
     </div>
+    <div class="flex-1 overflow-y-auto px-2 pb-4">
+      <w-list nav density="compact" aria-label="Shortcuts">
+        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline label="2 mentions"></w-badge></w-list-item>
+        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
+      </w-list>
+
+      <section class="mt-3" aria-labelledby="sec-channels">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-channels"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Channels</button>
+          <w-badge content="4" inline class="ms-count" label="4 unread"></w-badge>
+        </div>
+      </section>
+      <section class="mt-3" aria-labelledby="sec-dms">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-dms"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Direct messages</button>
+          <w-badge content="1" inline label="1 mention"></w-badge>
+        </div>
+      </section>
+      <section class="mt-3" aria-labelledby="sec-email">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-email"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Email</button>
+          <w-badge content="1" inline class="ms-count" label="1 unread"></w-badge>
+        </div>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-admin">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-admin"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Admin</button>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-admin">
+          <w-list-item href="admin-domains.html" title="Domains" active><w-icon slot="prepend" name="globe"></w-icon></w-list-item>
+          <w-list-item href="admin-members.html" title="Members"><w-icon slot="prepend" name="users"></w-icon></w-list-item>
+          <w-list-item href="admin-channels.html" title="Channels"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="admin-mail.html" title="Mail delivery"><w-icon slot="prepend" name="mail"></w-icon></w-list-item>
+        </w-list>
+      </section>
+    </div>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <w-avatar text="AR" size="28" status="online" style="--h:195" alt=""></w-avatar>
+        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">ana@example.com</span></span>
+      </button>
+      <w-icon-btn icon="settings" href="settings.html" aria-label="Settings"></w-icon-btn>
+    </footer>
   </aside>
 
-  <!-- Admin: DNS setup for one domain -->
-  <main class="ms-main ms-admin" aria-labelledby="page-title">
-    <header class="ms-header">
-      <a class="ms-icon-btn ms-header__back" href="admin-domains.html" aria-label="Back to domains"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
-      <h1 class="ms-header__title" id="page-title"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span>new.example.net</span></h1>
-      <span class="ms-tag ms-tag--warn"><span class="ms-icon ms-i-clock" aria-hidden="true"></span>Pending</span>
-      <p class="ms-header__topic">DNS setup</p>
+  <!-- Admin page -->
+  <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="page-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="admin-domains.html" aria-label="Back to domains"></w-icon-btn>
+      <h1 id="page-title" class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="globe" class="ms-icon-sm"></w-icon><span class="truncate">new.example.net</span></h1>
+      <span class="inline-flex"><w-chip size="small" color="warning" prepend-icon="clock" inert aria-hidden="true">Pending</w-chip><span class="sr-only">Pending</span></span>
+      <p class="hidden @2xl/main:block min-w-0 flex-1 truncate border-l border-divider pl-3 text-sm text-subtle">DNS setup</p>
+      <div class="ml-auto flex items-center gap-1 no-drag"></div>
     </header>
 
-    <div class="ms-page" id="admin-content">
-      <div class="ms-page__inner">
-        <nav aria-label="Breadcrumb"><p><a href="admin-domains.html">Domains</a> <span aria-hidden="true">/</span> <span aria-current="page">new.example.net</span></p></nav>
+    <div class="flex-1 min-h-0 overflow-y-auto py-6 safe-l safe-r safe-b" style="--ms-edge: 1rem" id="admin-content">
+      <div class="@container/page mx-auto grid w-full max-w-3xl gap-6 pb-10">
+        <nav aria-label="Breadcrumb"><p class="text-sm"><a class="text-accent underline" href="admin-domains.html">Domains</a> <span aria-hidden="true">/</span> <span aria-current="page">new.example.net</span></p></nav>
 
-        <div class="ms-callout ms-callout--warn">
-          <span class="ms-icon ms-i-alert" aria-hidden="true"></span>
-          <div class="ms-callout__text">
-            <strong>Mail for new.example.net is not accepted yet.</strong>
-            <p>MX is OK. DKIM is missing. Create the DKIM record below, then check again. People can join this domain after mail is accepted.</p>
-          </div>
-        </div>
+        <w-alert type="warning" icon="alert" title="Mail for new.example.net is not accepted yet.">MX is OK. DKIM is missing. Create the DKIM record below, then check again. People can join this domain after mail is accepted.</w-alert>
 
-        <section class="ms-section" aria-labelledby="records-title">
-          <h2 class="ms-section-title" id="records-title">DNS records to create</h2>
-          <p class="ms-subtle">Add these 4 records at the company that hosts DNS for new.example.net. DNS changes can take up to 48 hours to appear. Mesail checks again every 15 minutes.</p>
-          <div class="ms-card">
-            <div class="ms-card__body">
-              <div class="ms-checkbar">
-                <p class="ms-checkbar__status" role="status"><span class="ms-icon ms-i-clock ms-icon--sm" aria-hidden="true"></span>Last checked today at 10:42. 2 of 4 records are OK.</p>
-                <button class="ms-btn" type="button"><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Check again</button>
-              </div>
-              <div class="ms-state">
-                <p class="ms-state__label">State: while checking</p>
-                <div class="ms-checkbar">
-                  <p class="ms-checkbar__status"><span class="ms-spinner" aria-hidden="true"></span>Checking 4 records&hellip;</p>
-                  <button class="ms-btn" type="button" aria-busy="true" aria-disabled="true"><span class="ms-spinner" aria-hidden="true"></span>Checking&hellip;</button>
-                </div>
+        <section class="grid gap-3" aria-labelledby="records-title">
+          <h2 class="text-lg font-semibold" id="records-title">DNS records to create</h2>
+          <p class="text-subtle">Add these 4 records at the company that hosts DNS for new.example.net. DNS changes can take up to 48 hours to appear. Mesail checks again every 15 minutes.</p>
+          <div class="grid gap-4 rounded-xl border border-border bg-surface px-4 py-4 @xl/page:px-5">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <p class="flex flex-[1_1_14rem] items-center gap-2 text-sm text-subtle" role="status"><w-icon name="clock" class="ms-icon-sm"></w-icon>Last checked today at 10:42. 2 of 4 records are OK.</p>
+              <w-btn variant="outlined" prepend-icon="refresh">Check again</w-btn>
+            </div>
+            <div class="grid gap-2">
+              <p class="justify-self-start rounded-sm border border-dashed border-outline px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-subtle">State: while checking</p>
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <p class="flex flex-[1_1_14rem] items-center gap-2 text-sm text-subtle"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Checking 4 records&hellip;</p>
+                <w-btn variant="outlined" loading disabled aria-busy="true">Checking&hellip;</w-btn>
               </div>
             </div>
           </div>
-        <section class="ms-card ms-record" aria-labelledby="rec-mx">
-          <div class="ms-card__head">
-            <span class="ms-record__type" aria-hidden="true">MX</span>
-            <div class="ms-record__name"><h3 id="rec-mx">MX record <span class="ms-sr-only">(type MX)</span></h3><span class="ms-record__need">Required to receive mail</span></div>
-            <span class="ms-tag ms-tag--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>OK</span>
+        <section class="rounded-xl border border-border bg-surface" aria-labelledby="rec-mx">
+          <div class="flex flex-wrap items-center gap-3 border-b border-divider px-4 py-3 @xl/page:px-5">
+            <span class="grid h-7 min-w-13 place-items-center rounded-md bg-surface-high px-2 font-mono text-sm font-bold" aria-hidden="true">MX</span>
+            <div class="grid min-w-0 flex-[1_1_12rem] gap-0.5"><h3 id="rec-mx" class="text-base font-semibold">MX record <span class="sr-only">(type MX)</span></h3><span class="text-xs text-subtle">Required to receive mail</span></div>
+            <span class="inline-flex"><w-chip size="small" color="success" prepend-icon="check" inert aria-hidden="true">OK</w-chip><span class="sr-only">OK</span></span>
           </div>
-          <div class="ms-card__body">
-            <dl class="ms-kv">
-              <dt>Type</dt>
-              <dd>MX</dd>
-              <dt>Host</dt>
-              <dd><div class="ms-copy-field"><code class="ms-copy-field__value" id="v-mx-host">new.example.net</code><button class="ms-btn ms-btn--sm" type="button" aria-label="Copy MX host" aria-describedby="v-mx-host"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button></div></dd>
-              <dt>Priority</dt>
-              <dd>10</dd>
-              <dt>Value</dt>
-              <dd><div class="ms-copy-field"><code class="ms-copy-field__value" id="v-mx-value">mx.mesail.example</code><button class="ms-btn ms-btn--sm is-done" type="button" aria-label="Copied MX value" aria-describedby="v-mx-value"><span class="ms-icon ms-i-check ms-icon--sm" aria-hidden="true"></span>Copied</button></div></dd>
-            </dl>
-            <p class="ms-ok-text"><span class="ms-icon ms-i-check" aria-hidden="true"></span>Found the right value.</p>
-            <p class="ms-meta">Some DNS providers want <code class="ms-mono">@</code> as the host for the domain itself.</p>
+          <div class="grid gap-3 px-4 py-4 @xl/page:px-5">
+            <p class="text-sm text-subtle">Type MX &middot; Priority 10</p>
+            <div class="flex items-start gap-2"><w-text-field label="Host" value="new.example.net" readonly class="min-w-0 flex-1 font-mono" spellcheck="false"></w-text-field><w-icon-btn icon="copy" class="mt-2" aria-label="Copy MX host"></w-icon-btn></div>
+            <div class="flex items-start gap-2"><w-text-field label="Value" value="mx.mesail.example" readonly class="min-w-0 flex-1 font-mono" spellcheck="false"></w-text-field><w-icon-btn icon="check" class="mt-2 text-on-success-container" aria-label="Copied MX value"></w-icon-btn></div>
+            <p class="flex items-center gap-1 text-xs text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon>Found the right value.</p>
+            <p class="text-xs text-subtle">Some DNS providers want <code class="font-mono">@</code> as the host for the domain itself.</p>
           </div>
         </section>
-        <section class="ms-card ms-record" aria-labelledby="rec-spf">
-          <div class="ms-card__head">
-            <span class="ms-record__type" aria-hidden="true">TXT</span>
-            <div class="ms-record__name"><h3 id="rec-spf">SPF record <span class="ms-sr-only">(type TXT)</span></h3><span class="ms-record__need">Needed so other servers trust your mail</span></div>
-            <span class="ms-tag ms-tag--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>OK</span>
+        <section class="rounded-xl border border-border bg-surface" aria-labelledby="rec-spf">
+          <div class="flex flex-wrap items-center gap-3 border-b border-divider px-4 py-3 @xl/page:px-5">
+            <span class="grid h-7 min-w-13 place-items-center rounded-md bg-surface-high px-2 font-mono text-sm font-bold" aria-hidden="true">TXT</span>
+            <div class="grid min-w-0 flex-[1_1_12rem] gap-0.5"><h3 id="rec-spf" class="text-base font-semibold">SPF record <span class="sr-only">(type TXT)</span></h3><span class="text-xs text-subtle">Needed so other servers trust your mail</span></div>
+            <span class="inline-flex"><w-chip size="small" color="success" prepend-icon="check" inert aria-hidden="true">OK</w-chip><span class="sr-only">OK</span></span>
           </div>
-          <div class="ms-card__body">
-            <dl class="ms-kv">
-              <dt>Type</dt>
-              <dd>TXT</dd>
-              <dt>Host</dt>
-              <dd><div class="ms-copy-field"><code class="ms-copy-field__value" id="v-spf-host">new.example.net</code><button class="ms-btn ms-btn--sm" type="button" aria-label="Copy SPF host" aria-describedby="v-spf-host"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button></div></dd>
-              <dt>Value</dt>
-              <dd><div class="ms-copy-field"><code class="ms-copy-field__value" id="v-spf-value">v=spf1 include:_spf.mesail.example ~all</code><button class="ms-btn ms-btn--sm" type="button" aria-label="Copy SPF value" aria-describedby="v-spf-value"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button></div></dd>
-            </dl>
-            <p class="ms-ok-text"><span class="ms-icon ms-i-check" aria-hidden="true"></span>Found the right value.</p>
+          <div class="grid gap-3 px-4 py-4 @xl/page:px-5">
+            <p class="text-sm text-subtle">Type TXT</p>
+            <div class="flex items-start gap-2"><w-text-field label="Host" value="new.example.net" readonly class="min-w-0 flex-1 font-mono" spellcheck="false"></w-text-field><w-icon-btn icon="copy" class="mt-2" aria-label="Copy SPF host"></w-icon-btn></div>
+            <div class="flex items-start gap-2"><w-text-field label="Value" value="v=spf1 include:_spf.mesail.example ~all" readonly class="min-w-0 flex-1 font-mono" spellcheck="false"></w-text-field><w-icon-btn icon="copy" class="mt-2" aria-label="Copy SPF value"></w-icon-btn></div>
+            <p class="flex items-center gap-1 text-xs text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon>Found the right value.</p>
           </div>
         </section>
-        <section class="ms-card ms-record ms-record--bad" aria-labelledby="rec-dkim">
-          <div class="ms-card__head">
-            <span class="ms-record__type" aria-hidden="true">TXT</span>
-            <div class="ms-record__name"><h3 id="rec-dkim">DKIM record <span class="ms-sr-only">(type TXT)</span></h3><span class="ms-record__need">Required to receive and sign mail &middot; selector ms2026a</span></div>
-            <span class="ms-tag ms-tag--danger"><span class="ms-icon ms-i-close" aria-hidden="true"></span>Missing</span>
+        <section class="rounded-xl border border-error bg-surface" aria-labelledby="rec-dkim">
+          <div class="flex flex-wrap items-center gap-3 border-b border-divider px-4 py-3 @xl/page:px-5">
+            <span class="grid h-7 min-w-13 place-items-center rounded-md bg-surface-high px-2 font-mono text-sm font-bold" aria-hidden="true">TXT</span>
+            <div class="grid min-w-0 flex-[1_1_12rem] gap-0.5"><h3 id="rec-dkim" class="text-base font-semibold">DKIM record <span class="sr-only">(type TXT)</span></h3><span class="text-xs text-subtle">Required to receive and sign mail &middot; selector ms2026a</span></div>
+            <span class="inline-flex"><w-chip size="small" color="error" prepend-icon="close" inert aria-hidden="true">Missing</w-chip><span class="sr-only">Missing</span></span>
           </div>
-          <div class="ms-card__body">
-            <dl class="ms-kv">
-              <dt>Type</dt>
-              <dd>TXT</dd>
-              <dt>Selector</dt>
-              <dd><code class="ms-mono">ms2026a</code></dd>
-              <dt>Host</dt>
-              <dd><div class="ms-copy-field"><code class="ms-copy-field__value" id="v-dkim-host">ms2026a._domainkey.new.example.net</code><button class="ms-btn ms-btn--sm" type="button" aria-label="Copy DKIM host" aria-describedby="v-dkim-host"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button></div></dd>
-              <dt>Value</dt>
-              <dd><div class="ms-copy-field"><code class="ms-copy-field__value" id="v-dkim-value">v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAJ8wUdU0QDyOjGw9Fl6gvy/W4T/HuJus43XOs44xONrUjq+vPXsSatmg6f6AhkTu8XbtXYSHJM6xZAF6azgsRZXi7KybI4VtFw4/xwUzEn8JDwhQ3G2U9waONoR3PfovH/ZyWF3sBqMiLHfofqZbfBiZKaQi+l1YACcstdT28B9FLbR2uT/6Cx1CSPF2od5iXqbcq+/OKetT22d1cLXndT0Ag2RakI2CnNhRCaY68+pDc7EtwqZnWoa6zaVayAH3xGE+sLEeQL+d4C09wUFpquT0BeajzgWDHk8q8pjWnuyV7IDAQAB</code><button class="ms-btn ms-btn--sm" type="button" aria-label="Copy DKIM value" aria-describedby="v-dkim-value"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button></div></dd>
-            </dl>
-            <p class="ms-error-text"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>No TXT record found at ms2026a._domainkey.new.example.net. Create it, then select Check again.</p>
-            <p class="ms-meta">Some DNS providers split long values into parts. That is fine: paste the whole value once.</p>
+          <div class="grid gap-3 px-4 py-4 @xl/page:px-5">
+            <p class="text-sm text-subtle">Type TXT &middot; Selector <code class="font-mono">ms2026a</code></p>
+            <div class="flex items-start gap-2"><w-text-field label="Host" value="ms2026a._domainkey.new.example.net" readonly class="min-w-0 flex-1 font-mono" spellcheck="false"></w-text-field><w-icon-btn icon="copy" class="mt-2" aria-label="Copy DKIM host"></w-icon-btn></div>
+            <div class="flex items-start gap-2"><w-textarea label="Value" value="v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAJ8wUdU0QDyOjGw9Fl6gvy/W4T/HuJus43XOs44xONrUjq+vPXsSatmg6f6AhkTu8XbtXYSHJM6xZAF6azgsRZXi7KybI4VtFw4/xwUzEn8JDwhQ3G2U9waONoR3PfovH/ZyWF3sBqMiLHfofqZbfBiZKaQi+l1YACcstdT28B9FLbR2uT/6Cx1CSPF2od5iXqbcq+/OKetT22d1cLXndT0Ag2RakI2CnNhRCaY68+pDc7EtwqZnWoa6zaVayAH3xGE+sLEeQL+d4C09wUFpquT0BeajzgWDHk8q8pjWnuyV7IDAQAB" readonly rows="3" auto-grow no-resize class="min-w-0 flex-1 font-mono" spellcheck="false"></w-textarea><w-icon-btn icon="copy" class="mt-2" aria-label="Copy DKIM value"></w-icon-btn></div>
+            <p class="flex items-start gap-1 text-xs text-error"><w-icon name="alert" class="ms-icon-xs mt-0.5"></w-icon><span>No TXT record found at ms2026a._domainkey.new.example.net. Create it, then select Check again.</span></p>
+            <p class="text-xs text-subtle">Some DNS providers split long values into parts. That is fine: paste the whole value once.</p>
           </div>
         </section>
-        <section class="ms-card ms-record ms-record--wrong" aria-labelledby="rec-dmarc">
-          <div class="ms-card__head">
-            <span class="ms-record__type" aria-hidden="true">TXT</span>
-            <div class="ms-record__name"><h3 id="rec-dmarc">DMARC record <span class="ms-sr-only">(type TXT)</span></h3><span class="ms-record__need">Recommended: tells other servers what to do with fake mail</span></div>
-            <span class="ms-tag ms-tag--warn"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>Wrong value</span>
+        <section class="rounded-xl border border-outline bg-surface" aria-labelledby="rec-dmarc">
+          <div class="flex flex-wrap items-center gap-3 border-b border-divider px-4 py-3 @xl/page:px-5">
+            <span class="grid h-7 min-w-13 place-items-center rounded-md bg-surface-high px-2 font-mono text-sm font-bold" aria-hidden="true">TXT</span>
+            <div class="grid min-w-0 flex-[1_1_12rem] gap-0.5"><h3 id="rec-dmarc" class="text-base font-semibold">DMARC record <span class="sr-only">(type TXT)</span></h3><span class="text-xs text-subtle">Recommended: tells other servers what to do with fake mail</span></div>
+            <span class="inline-flex"><w-chip size="small" color="warning" prepend-icon="alert" inert aria-hidden="true">Wrong value</w-chip><span class="sr-only">Wrong value</span></span>
           </div>
-          <div class="ms-card__body">
-            <dl class="ms-kv">
-              <dt>Type</dt>
-              <dd>TXT</dd>
-              <dt>Host</dt>
-              <dd><div class="ms-copy-field"><code class="ms-copy-field__value" id="v-dmarc-host">_dmarc.new.example.net</code><button class="ms-btn ms-btn--sm" type="button" aria-label="Copy DMARC host" aria-describedby="v-dmarc-host"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button></div></dd>
-              <dt>Value</dt>
-              <dd><div class="ms-copy-field"><code class="ms-copy-field__value" id="v-dmarc-value">v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@new.example.net</code><button class="ms-btn ms-btn--sm" type="button" aria-label="Copy DMARC value" aria-describedby="v-dmarc-value"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button></div></dd>
-              <dt>Found</dt>
-              <dd><code class="ms-copy-field__value ms-copy-field__value--found">v=DMARC1; p=none</code></dd>
-            </dl>
-            <p class="ms-error-text"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>The record has a different value. Replace the found value with the value above.</p>
+          <div class="grid gap-3 px-4 py-4 @xl/page:px-5">
+            <p class="text-sm text-subtle">Type TXT</p>
+            <div class="flex items-start gap-2"><w-text-field label="Host" value="_dmarc.new.example.net" readonly class="min-w-0 flex-1 font-mono" spellcheck="false"></w-text-field><w-icon-btn icon="copy" class="mt-2" aria-label="Copy DMARC host"></w-icon-btn></div>
+            <div class="flex items-start gap-2"><w-textarea label="Value" value="v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@new.example.net" readonly rows="3" auto-grow no-resize class="min-w-0 flex-1 font-mono" spellcheck="false"></w-textarea><w-icon-btn icon="copy" class="mt-2" aria-label="Copy DMARC value"></w-icon-btn></div>
+            <w-text-field label="Found in DNS" value="v=DMARC1; p=none" readonly class="font-mono" error="The record has a different value. Replace the found value with the value above."></w-text-field>
+            
           </div>
         </section>
         </section>
 
-        <section class="ms-card" aria-labelledby="dkim-title">
-          <div class="ms-card__head">
-            <span class="ms-icon ms-i-key" aria-hidden="true"></span>
-            <h2 id="dkim-title">DKIM key</h2>
-          </div>
-          <div class="ms-card__body">
-            <dl class="ms-kv ms-kv--plain">
-              <dt>Current key</dt><dd>Selector <code class="ms-mono">ms2026a</code>, RSA 2048, made today at 10:31</dd>
-              <dt>Private key</dt><dd>Kept in the secure key store. Mesail never shows it, stores it with messages or writes it to logs.</dd>
+        <section class="rounded-xl border border-border bg-surface" aria-labelledby="dkim-title">
+          <div class="flex items-center gap-3 border-b border-divider px-4 py-3 @xl/page:px-5"><w-icon name="key"></w-icon><h2 id="dkim-title" class="flex-1 text-lg font-semibold">DKIM key</h2></div>
+          <div class="grid gap-4 px-4 py-4 @xl/page:px-5">
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-1 @md/page:grid-cols-[7rem_minmax(0,1fr)] @md/page:gap-y-3">
+              <dt class="text-sm font-semibold text-subtle">Current key</dt><dd>Selector <code class="font-mono">ms2026a</code>, RSA 2048, made today at 10:31</dd>
+              <dt class="mt-2 text-sm font-semibold text-subtle @md/page:mt-0">Private key</dt><dd>Kept in the secure key store. Mesail never shows it, stores it with messages or writes it to logs.</dd>
             </dl>
-            <div class="ms-checkbar">
-              <p class="ms-checkbar__status" id="rotate-why"><span class="ms-icon ms-i-info ms-icon--sm" aria-hidden="true"></span>You can rotate the key after the current DKIM record is OK.</p>
-              <button class="ms-btn" type="button" disabled aria-describedby="rotate-why"><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Rotate key</button>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <p class="flex flex-[1_1_14rem] items-center gap-2 text-sm text-subtle" id="rotate-why"><w-icon name="info" class="ms-icon-sm"></w-icon>You can rotate the key after the current DKIM record is OK.</p>
+              <w-btn variant="outlined" prepend-icon="refresh" disabled aria-describedby="rotate-why">Rotate key</w-btn>
             </div>
-
-            <div class="ms-state">
-              <p class="ms-state__label">State: rotation in progress (after you select Rotate key)</p>
+            <div class="grid gap-3 border-t border-divider pt-4">
+              <p class="justify-self-start rounded-sm border border-dashed border-outline px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-subtle">State: rotation in progress (after you select Rotate key)</p>
               <p>No mail is lost. Mesail keeps signing with the old key until the new record is live. Then it switches by itself.</p>
-              <ol class="ms-steps">
-                <li class="ms-steps__item is-current">
-                  <span class="ms-steps__num" aria-hidden="true">1</span>
-                  <div class="ms-steps__body">
-                    <h4>Publish the new record <span class="ms-sr-only">(current step)</span></h4>
-                    <dl class="ms-kv">
-              <dt>Host</dt>
-              <dd><div class="ms-copy-field"><code class="ms-copy-field__value" id="v-dkim2-host">ms2026b._domainkey.new.example.net</code><button class="ms-btn ms-btn--sm" type="button" aria-label="Copy new DKIM host" aria-describedby="v-dkim2-host"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button></div></dd>
-              <dt>Value</dt>
-              <dd><div class="ms-copy-field"><code class="ms-copy-field__value" id="v-dkim2-value">v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx4cTNUykHFqemhcRvN1hEqGluUfduM9avlR6NqmrX6XQWU6kTbO18NRjSH4a2vu4zI87nfQu57bXNtXyPkd23PPXHHP+WXFduG/LZpZS5Tj8q8pa3I9nq6Qxc5J8RE7/+Wf/De+jD9SxDa5lHkFa8PETUvDWmiea/ltjDck33jG5jT67lJeA0h5D/e1Fc/xsytK9DDqfQHiLOT4mUxIU3zbi12wqo3bOdDEt8Al7Gy4jy/Njtxy5bA5D3UAtAZcUl0/ZWcKEaKnQWfu/w9K1XsmBazHUVUY41ZlEKI/XrkcaIDAQAB</code><button class="ms-btn ms-btn--sm" type="button" aria-label="Copy new DKIM value" aria-describedby="v-dkim2-value"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button></div></dd>
-                    </dl>
-                    <p class="ms-meta"><span class="ms-tag ms-tag--danger"><span class="ms-icon ms-i-close" aria-hidden="true"></span>Missing</span> Keep the old record ms2026a in place.</p>
+              <ol class="grid gap-3">
+                <li class="grid grid-cols-[2rem_minmax(0,1fr)] gap-3">
+                  <span class="grid size-8 place-items-center rounded-full border-2 border-accent text-sm font-bold text-accent" aria-hidden="true">1</span>
+                  <div class="grid min-w-0 gap-2 pt-1">
+                    <h4 class="text-sm font-semibold">Publish the new record <span class="sr-only">(current step)</span></h4>
+                    <div class="flex items-start gap-2"><w-text-field label="New host" value="ms2026b._domainkey.new.example.net" readonly class="min-w-0 flex-1 font-mono" spellcheck="false"></w-text-field><w-icon-btn icon="copy" class="mt-2" aria-label="Copy new DKIM host"></w-icon-btn></div>
+                    <div class="flex items-start gap-2"><w-textarea label="New value" value="v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx4cTNUykHFqemhcRvN1hEqGluUfduM9avlR6NqmrX6XQWU6kTbO18NRjSH4a2vu4zI87nfQu57bXNtXyPkd23PPXHHP+WXFduG/LZpZS5Tj8q8pa3I9nq6Qxc5J8RE7/+Wf/De+jD9SxDa5lHkFa8PETUvDWmiea/ltjDck33jG5jT67lJeA0h5D/e1Fc/xsytK9DDqfQHiLOT4mUxIU3zbi12wqo3bOdDEt8Al7Gy4jy/Njtxy5bA5D3UAtAZcUl0/ZWcKEaKnQWfu/w9K1XsmBazHUVUY41ZlEKI/XrkcaIDAQAB" readonly rows="3" auto-grow no-resize class="min-w-0 flex-1 font-mono" spellcheck="false"></w-textarea><w-icon-btn icon="copy" class="mt-2" aria-label="Copy new DKIM value"></w-icon-btn></div>
+                    <p class="flex flex-wrap items-center gap-2 text-xs text-subtle"><span class="inline-flex"><w-chip size="small" color="error" prepend-icon="close" inert aria-hidden="true">Missing</w-chip><span class="sr-only">Missing</span></span> Keep the old record ms2026a in place.</p>
                   </div>
                 </li>
-                <li class="ms-steps__item">
-                  <span class="ms-steps__num" aria-hidden="true">2</span>
-                  <div class="ms-steps__body"><h4>Mesail switches to the new key</h4><p class="ms-meta">Happens by itself when the new record is OK.</p></div>
+                <li class="grid grid-cols-[2rem_minmax(0,1fr)] gap-3">
+                  <span class="grid size-8 place-items-center rounded-full border-2 border-border text-sm font-bold text-subtle" aria-hidden="true">2</span>
+                  <div class="grid min-w-0 gap-1 pt-1"><h4 class="text-sm font-semibold">Mesail switches to the new key</h4><p class="text-xs text-subtle">Happens by itself when the new record is OK.</p></div>
                 </li>
-                <li class="ms-steps__item">
-                  <span class="ms-steps__num" aria-hidden="true">3</span>
-                  <div class="ms-steps__body"><h4>Remove the old record</h4><p class="ms-meta">After 7 days, when no mail signed with the old key is still on its way. Mesail tells you when.</p></div>
+                <li class="grid grid-cols-[2rem_minmax(0,1fr)] gap-3">
+                  <span class="grid size-8 place-items-center rounded-full border-2 border-border text-sm font-bold text-subtle" aria-hidden="true">3</span>
+                  <div class="grid min-w-0 gap-1 pt-1"><h4 class="text-sm font-semibold">Remove the old record</h4><p class="text-xs text-subtle">After 7 days, when no mail signed with the old key is still on its way. Mesail tells you when.</p></div>
                 </li>
               </ol>
-              <div class="ms-page__actions"><button class="ms-btn ms-btn--ghost" type="button">Cancel rotation</button></div>
+              <div><w-btn variant="text">Cancel rotation</w-btn></div>
             </div>
           </div>
         </section>
 
-        <section class="ms-card ms-danger-zone" id="danger" aria-labelledby="danger-title">
-          <div class="ms-card__head"><h2 id="danger-title">Danger zone</h2></div>
-          <div class="ms-row">
-            <div class="ms-row__main">
-              <span class="ms-row__title">Disable domain</span>
-              <span class="ms-meta">Mail to new.example.net is refused and members cannot sign in. Messages are kept. You can enable it again.</span>
-            </div>
-            <button class="ms-btn" type="button"><span class="ms-icon ms-i-minus-circle ms-icon--sm" aria-hidden="true"></span>Disable</button>
+        <section class="rounded-xl border border-error bg-surface" id="danger" aria-labelledby="danger-title">
+          <div class="border-b border-divider px-4 py-3 @xl/page:px-5"><h2 id="danger-title" class="text-lg font-semibold text-error">Danger zone</h2></div>
+          <div class="flex flex-wrap items-center gap-3 px-4 py-3 @xl/page:px-5">
+            <div class="grid min-w-0 flex-[1_1_16rem] gap-0.5"><span class="font-semibold">Disable domain</span><span class="text-xs text-subtle">Mail to new.example.net is refused and members cannot sign in. Messages are kept. You can enable it again.</span></div>
+            <w-btn variant="outlined" prepend-icon="minus-circle">Disable</w-btn>
           </div>
-          <div class="ms-row">
-            <div class="ms-row__main">
-              <span class="ms-row__title">Remove domain</span>
-              <span class="ms-meta">Deletes the domain, its channels, messages and DKIM keys. This cannot be undone.</span>
-            </div>
-            <button class="ms-btn ms-btn--danger" type="button" aria-haspopup="dialog"><span class="ms-icon ms-i-trash ms-icon--sm" aria-hidden="true"></span>Remove</button>
+          <div class="flex flex-wrap items-center gap-3 border-t border-divider px-4 py-3 @xl/page:px-5">
+            <div class="grid min-w-0 flex-[1_1_16rem] gap-0.5"><span class="font-semibold">Remove domain</span><span class="text-xs text-subtle">Deletes the domain, its channels, messages and DKIM keys. This cannot be undone.</span></div>
+            <w-btn variant="filled" color="danger" prepend-icon="trash" aria-haspopup="dialog">Remove</w-btn>
           </div>
         </section>
 
-        <section class="ms-state" aria-labelledby="dlg-states">
-          <h2 class="ms-state__label" id="dlg-states">State: Remove dialog open</h2>
-          <div class="ms-exhibit">
-            <div class="ms-dialog" role="dialog" aria-labelledby="remove-title" aria-describedby="remove-desc">
-              <div class="ms-dialog__head">
-                <h2 id="remove-title">Remove new.example.net?</h2>
-                <button class="ms-icon-btn ms-dialog__close" aria-label="Close"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
-              </div>
-              <form class="ms-dialog__body" id="remove-form" onsubmit="return false">
-                <p id="remove-desc">This deletes the domain, its channels, its messages and its DKIM keys. Mail to new.example.net will be refused. This cannot be undone.</p>
-                <div class="ms-field">
-                  <label class="ms-label" for="remove-confirm">Type <strong class="ms-mono">new.example.net</strong> to confirm</label>
-                  <input class="ms-input ms-mono" id="remove-confirm" type="text" value="new.example.ne" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="remove-hint">
-                  <p class="ms-help" id="remove-hint">The Remove button works when the name matches.</p>
-                </div>
-              </form>
-              <div class="ms-dialog__foot">
-                <button class="ms-btn" type="button">Cancel</button>
-                <button class="ms-btn ms-btn--danger" type="submit" form="remove-form" disabled>Remove domain</button>
-              </div>
+        <section class="grid gap-3" aria-labelledby="dlg-state">
+          <h2 id="dlg-state" class="justify-self-start rounded-sm border border-dashed border-outline px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-subtle">State: Remove dialog open</h2>
+          <div class="rounded-xl bg-scrim px-4 py-6 max-sm:bg-transparent max-sm:p-0">
+          <div role="dialog" aria-modal="false" aria-labelledby="remove-title" aria-describedby="remove-desc" data-duvay="w-alert-dialog" class="@container/dialog relative mx-auto w-full max-w-lg rounded-xl border border-border bg-surface shadow-xl max-sm:rounded-b-none">
+            <div class="flex items-center gap-2 px-5 pt-4 pb-2">
+              <h3 id="remove-title" class="flex-1 text-xl font-semibold">Remove new.example.net?</h3>
+              <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
             </div>
+            <form id="remove-form" class="grid gap-4 px-5 pb-4 pt-2" onsubmit="return false">
+              <p id="remove-desc">This deletes the domain, its channels, its messages and its DKIM keys. Mail to new.example.net will be refused. This cannot be undone.</p>
+              <w-text-field label="Type new.example.net to confirm" value="new.example.ne" class="font-mono" hint="The Remove button works when the name matches." persistent-hint autocomplete="off" autocapitalize="none" spellcheck="false"></w-text-field>
+            </form>
+            <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-5 pb-5 pt-3 safe-b max-sm:[&>*]:flex-1">
+              <w-btn variant="text">Cancel</w-btn>
+              <w-btn variant="filled" color="danger" disabled>Remove domain</w-btn>
+            </div>
+          </div>
           </div>
         </section>
       </div>
     </div>
   </main>
 
-  <nav class="ms-bottom-nav" aria-label="Main">
-    <a class="ms-bottom-nav__item" href="messenger.html?pane=list"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
-    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
-    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
-    <a class="ms-bottom-nav__item" href="settings.html" aria-current="page"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
-  </nav>
+  <!-- Bottom navigation: phones, list pane only -->
+  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden" value="you" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" href="messenger.html?pane=list"><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="search" label="Search" href="search.html"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="you" label="You" href="settings.html" active><w-icon name="user"></w-icon></w-bottom-nav-item>
+  </w-bottom-navigation>
 </div>
 
-<div class="ms-sr-only" aria-live="polite" id="announcer">MX value copied.</div>
+<div class="sr-only" aria-live="polite" id="announcer">MX value copied.</div>
 </body>
 </html>

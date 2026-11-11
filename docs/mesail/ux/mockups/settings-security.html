@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: settings, password and 2-step sign-in states</title>
+<link rel="stylesheet" href="assets/app.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface text-text">
+<a class="ms-skip-link" href="#settings-page">Skip to settings</a>
+
+<!-- App shell. Under 600 px one pane shows (data-pane); 600 px: list + settings; 960 px: + domain rail.
+     Settings has no right pane, so the main pane takes the rest of the width. -->
+<div class="group/app relative grid h-dvh overflow-hidden
+  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
+  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main">
+
+  <!-- Domain rail (960 px and up) -->
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Domains">
+    <ul class="flex flex-col gap-2">
+      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<w-badge content="3" inline class="absolute -top-1 -right-1.5"></w-badge></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="absolute -left-2.5 size-2 rounded-full bg-on-rail" aria-hidden="true"></span>La</a></li>
+    </ul>
+    <div class="h-px w-8 bg-on-rail/20" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><w-icon name="plus"></w-icon></a>
+    <div class="flex-1"></div>
+    <a class="ms-domain-tile" href="settings-appearance.html" aria-label="Help and keyboard shortcuts" title="Help"><w-icon name="info"></w-icon></a>
+  </nav>
+
+  <!-- Sidebar: list pane on phones, always visible from 600 px -->
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations in example.com">
+    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-t safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
+      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
+      <span class="flex-1"></span>
+      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+    </header>
+    <div class="px-3 py-2">
+      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
+        <w-icon name="search" class="ms-icon-sm"></w-icon>Search<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-2 pb-4">
+      <w-list nav density="compact" aria-label="Shortcuts">
+        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline label="2 mentions"></w-badge></w-list-item>
+        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
+      </w-list>
+
+      <section class="mt-3" aria-labelledby="sec-channels">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-channels"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Channels</button>
+          <w-icon-btn icon="plus" size="small" aria-label="Add or browse channels"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-channels">
+          <w-list-item href="#" title="general"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="messenger.html" title="releases"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="channel-email.html" title="support" class="ms-unread"><w-icon slot="prepend" name="hash"></w-icon><span slot="append" class="flex items-center gap-1"><w-icon name="mail" class="ms-icon-sm text-email" role="img" aria-label="Has an email address"></w-icon><w-badge content="4" inline class="ms-count" label="4 unread"></w-badge></span></w-list-item>
+          <w-list-item href="#" title="design" class="ms-unread"><w-icon slot="prepend" name="lock" role="img" aria-label="Private channel"></w-icon><w-badge slot="append" content="1" inline label="1 mention"></w-badge></w-list-item>
+          <w-list-item href="#" title="random" class="ms-muted"><w-icon slot="prepend" name="hash"></w-icon><w-icon slot="append" name="bell-off" class="ms-icon-sm" role="img" aria-label="Muted"></w-icon></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-dms">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-dms"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Direct messages</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New direct message"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-dms">
+          <w-list-item href="mobile-conversation.html" title="Bo Lee" class="ms-unread"><w-avatar slot="prepend" text="BL" size="20" status="online" style="--h:20" alt="Bo Lee, active"></w-avatar><w-badge slot="append" content="1" inline label="1 unread"></w-badge></w-list-item>
+          <w-list-item href="#" title="Chen Wu"><w-avatar slot="prepend" text="CW" size="20" status="away" style="--h:280" alt="Chen Wu, idle"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Dara Okafor"><w-avatar slot="prepend" text="DO" size="20" status="busy" style="--h:140" alt="Dara Okafor, do not disturb"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Bo, Chen, Dara"><w-avatar slot="prepend" text="3" size="20" alt="Group of 3"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-email">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-email"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Email</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New email"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" lines="two" aria-labelledby="sec-email">
+          <w-list-item href="email-inbound-new.html" title="Dan Hale" subtitle="Question about invoice 2291" class="ms-unread"><w-avatar slot="prepend" text="DH" size="20" class="ms-external" alt="Dan Hale, outside example.com"></w-avatar><w-badge slot="append" content="1" inline class="ms-count" label="1 unread"></w-badge></w-list-item>
+          <w-list-item href="email-conversation.html" title="Carol Diaz, Bo Lee" subtitle="Contract renewal 2027"><w-avatar slot="prepend" text="CD" size="20" class="ms-external" alt="Carol Diaz, outside example.com"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+    </div>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <w-avatar text="AR" size="28" status="online" style="--h:195" alt=""></w-avatar>
+        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">ana@example.com</span></span>
+      </button>
+      <w-icon-btn icon="settings" href="settings.html" aria-label="Settings"></w-icon-btn>
+    </footer>
+  </aside>
+
+  <!-- Settings for the current domain -->
+  <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="settings-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="messenger.html?pane=list" aria-label="Back to conversations"></w-icon-btn>
+      <h1 id="settings-title" class="flex min-w-0 items-center gap-1 text-lg font-bold">
+        <w-icon name="settings" class="ms-icon-sm hidden @md/main:inline-flex"></w-icon>
+        <span class="grid min-w-0 leading-tight @md/main:flex @md/main:items-baseline @md/main:gap-1"><span class="truncate">Settings</span><span class="hidden font-normal text-subtle @md/main:inline"> · </span><span class="truncate text-xs font-normal text-subtle @md/main:text-lg">example.com</span></span>
+      </h1>
+      <div class="ml-auto flex items-center gap-1 no-drag">
+        <p class="empty:hidden inline-flex min-h-7 items-center gap-1 whitespace-nowrap rounded-full pl-2 pr-3 text-xs font-medium" id="save-status" role="status" aria-live="polite"></p>
+      </div>
+    </header>
+
+    <!-- Settings sections: a tab strip while the pane is narrow, a left column from 48rem -->
+    <nav class="flex-none border-b border-divider safe-l safe-r @2xl/main:hidden" style="--ms-edge: 0.25rem" aria-label="Settings sections">
+      <w-tabs value="profile">
+        <w-tab value="profile" href="settings.html" active>Profile</w-tab>
+        <w-tab value="notifications" href="settings-notifications.html">Notifications</w-tab>
+        <w-tab value="email" href="settings-email.html">Email</w-tab>
+        <w-tab value="appearance" href="settings-appearance.html">Appearance</w-tab>
+      </w-tabs>
+    </nav>
+    <div class="flex min-h-0 flex-1">
+      <nav class="hidden w-56 flex-none overflow-y-auto border-r border-divider px-2 py-4 safe-b @2xl/main:block" aria-label="Settings sections">
+        <p class="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-subtle">Your settings</p>
+        <w-list nav class="ms-plain-list">
+          <w-list-item href="settings.html" title="Profile and account" active><w-icon slot="prepend" name="user"></w-icon></w-list-item>
+          <w-list-item href="settings-notifications.html" title="Notifications"><w-icon slot="prepend" name="bell"></w-icon></w-list-item>
+          <w-list-item href="settings-email.html" title="Email"><w-icon slot="prepend" name="mail"></w-icon></w-list-item>
+          <w-list-item href="settings-appearance.html" title="Appearance"><w-icon slot="prepend" name="sun"></w-icon></w-list-item>
+        </w-list>
+        <p class="mx-2 mt-6 flex items-start gap-2 border-t border-divider pt-3 text-xs text-subtle"><w-icon name="globe" class="ms-icon-sm mt-px"></w-icon><span>Profile, notifications and email are for <strong>example.com</strong> only. Appearance is for this device.</span></p>
+      </nav>
+      <div class="min-w-0 flex-1 overflow-y-auto @container/page safe-b safe-r" id="settings-page">
+        <div class="mx-auto grid w-full max-w-2xl gap-6 px-4 pt-6 pb-10 @xl/page:px-6">
+          <div class="grid gap-1">
+            <p class="text-sm"><a class="inline-flex items-center gap-1 text-accent underline" href="settings.html"><w-icon name="arrow-left" class="ms-icon-sm"></w-icon>Profile and account</a></p>
+            <h2 class="text-xl font-bold @xl/page:text-2xl">Password and 2-step sign-in: states</h2>
+            <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="info" class="ms-icon-sm mt-0.5"></w-icon><span>Mockup only. Each frame is one state. In the product the dialogs open from Profile and account, centred on wide screens and full screen on phones. 2-step sign-in is for example.com only.</span></p>
+          </div>
+
+          <section class="grid gap-6" aria-labelledby="a-h">
+            <div class="grid gap-1">
+              <h2 id="a-h" class="text-lg font-semibold">A. The 2-step sign-in row</h2>
+              <p class="text-sm text-subtle">Shown in Account and sign-in. Buttons appear only when the state is known.</p>
+            </div>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Checking (loading)</figcaption>
+              <div class="flex flex-col gap-3 @xl/page:flex-row @xl/page:items-center @xl/page:justify-between @xl/page:gap-6" aria-busy="true">
+                <div class="flex min-w-0 items-start gap-3">
+                  <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="shield-check"></w-icon></span>
+                  <div class="grid min-w-0 gap-0.5">
+                    <p class="flex flex-wrap items-center gap-2 font-semibold">2-step sign-in <span class="sr-only">: checking</span><span class="sr-only" role="status">Checking 2-step sign-in</span><w-skeleton-loader type="text" class="w-24"></w-skeleton-loader></p>
+                    <p class="text-xs text-subtle">When you sign in, Mesail asks for a code from the authenticator app on your phone.</p>
+                  </div>
+                </div>
+                <div class="flex flex-none flex-wrap items-center gap-2"></div>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Check failed</figcaption>
+              <div class="flex flex-col gap-3 @xl/page:flex-row @xl/page:items-center @xl/page:justify-between @xl/page:gap-6">
+                <div class="flex min-w-0 items-start gap-3">
+                  <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="shield-check"></w-icon></span>
+                  <div class="grid min-w-0 gap-0.5">
+                    <p class="flex flex-wrap items-center gap-2 font-semibold">2-step sign-in </p>
+                    <p class="text-xs text-subtle">When you sign in, Mesail asks for a code from the authenticator app on your phone.</p>
+                  </div>
+                </div>
+                <div class="flex flex-none flex-wrap items-center gap-2"><p class="flex flex-wrap items-center gap-2 text-sm text-on-error-container"><w-icon name="alert" class="ms-icon-sm"></w-icon>Could not check 2-step sign-in.<w-btn variant="text" size="small" prepend-icon="refresh" class="pointer-coarse:min-h-11">Try again</w-btn></p></div>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Off</figcaption>
+              <div class="flex flex-col gap-3 @xl/page:flex-row @xl/page:items-center @xl/page:justify-between @xl/page:gap-6">
+                <div class="flex min-w-0 items-start gap-3">
+                  <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="shield-check"></w-icon></span>
+                  <div class="grid min-w-0 gap-0.5">
+                    <p class="flex flex-wrap items-center gap-2 font-semibold">2-step sign-in <w-chip size="small" inert>Off</w-chip><span class="sr-only">: off</span></p>
+                    <p class="text-xs text-subtle">When you sign in, Mesail asks for a code from the authenticator app on your phone.</p>
+                  </div>
+                </div>
+                <div class="flex flex-none flex-wrap items-center gap-2"><w-btn variant="filled" prepend-icon="shield-check" aria-haspopup="dialog" class="pointer-coarse:min-h-11">Turn on</w-btn></div>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">On</figcaption>
+              <div class="flex flex-col gap-3 @xl/page:flex-row @xl/page:items-center @xl/page:justify-between @xl/page:gap-6">
+                <div class="flex min-w-0 items-start gap-3">
+                  <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="shield-check"></w-icon></span>
+                  <div class="grid min-w-0 gap-0.5">
+                    <p class="flex flex-wrap items-center gap-2 font-semibold">2-step sign-in <w-chip size="small" prepend-icon="check" inert>On</w-chip><span class="sr-only">: on</span></p>
+                    <p class="text-xs text-subtle">When you sign in, Mesail asks for a code from the authenticator app on your phone.</p>
+                  </div>
+                </div>
+                <div class="flex flex-none flex-wrap items-center gap-2"><w-btn variant="outlined" prepend-icon="refresh" aria-haspopup="dialog" class="pointer-coarse:min-h-11">Set up on a new phone</w-btn><w-btn variant="text" color="danger" aria-haspopup="dialog" class="pointer-coarse:min-h-11">Turn off</w-btn></div>
+              </div>
+            </figure>
+          </section>
+
+          <section class="grid gap-6" aria-labelledby="b-h">
+            <div class="grid gap-1">
+              <h2 id="b-h" class="text-lg font-semibold">B. Change your password</h2>
+              <p class="text-sm text-subtle">One dialog. No repeat field: each password field has its own Show button.</p>
+            </div>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Default (2-step sign-in is on, so the code field shows)</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="b1-h" aria-describedby="b1-desc" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="b1-h" class="flex-1 text-xl font-semibold">Change your password</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <form class="grid gap-4" aria-labelledby="b1-h">
+                  <p class="text-sm text-subtle" id="b1-desc">Your other devices will be signed out. This one stays signed in.</p>
+                  <w-text-field label="Current password" type="password" autocomplete="current-password" required><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show current password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="New password" type="password" autocomplete="new-password" required hint="Use at least 12 characters." persistent-hint><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show new password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="2-step code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required hint="The 6-digit code from your authenticator app." persistent-hint></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" class="pointer-coarse:min-h-11">Change password</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Sending</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="b2-h" aria-describedby="b2-desc" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="b2-h" class="flex-1 text-xl font-semibold">Change your password</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <form class="grid gap-4" aria-labelledby="b2-h">
+                  <p class="text-sm text-subtle" id="b2-desc">Your other devices will be signed out. This one stays signed in.</p>
+                  <w-text-field label="Current password" type="password" autocomplete="current-password" required readonly><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show current password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="New password" type="password" autocomplete="new-password" required hint="Use at least 12 characters." persistent-hint readonly><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show new password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="2-step code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required hint="The 6-digit code from your authenticator app." persistent-hint readonly></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" loading disabled class="pointer-coarse:min-h-11">Changing password…</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Wrong current password or code (401): the two fields are cleared, focus goes to Current password</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="b3-h" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="b3-h" class="flex-1 text-xl font-semibold">Change your password</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <form class="grid gap-4" aria-labelledby="b3-h">
+                  <w-alert type="error">The current password or 2-step code is not right.</w-alert>
+                  <w-text-field label="Current password" type="password" autocomplete="current-password" required><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show current password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="New password" type="password" autocomplete="new-password" required hint="Use at least 12 characters." persistent-hint><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show new password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="2-step code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required hint="The 6-digit code from your authenticator app." persistent-hint></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" class="pointer-coarse:min-h-11">Change password</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Server password rule (400 password_policy)</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="b4-h" aria-describedby="b4-desc" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="b4-h" class="flex-1 text-xl font-semibold">Change your password</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <form class="grid gap-4" aria-labelledby="b4-h">
+                  <p class="text-sm text-subtle" id="b4-desc">Your other devices will be signed out. This one stays signed in.</p>
+                  <w-text-field label="Current password" type="password" autocomplete="current-password" required><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show current password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="New password" type="password" autocomplete="new-password" required error="Choose another password. Use at least 12 characters, with no part of your name."><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show new password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="2-step code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required hint="The 6-digit code from your authenticator app." persistent-hint></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" class="pointer-coarse:min-h-11">Change password</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Too many tries (429)</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="b5-h" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="b5-h" class="flex-1 text-xl font-semibold">Change your password</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <form class="grid gap-4" aria-labelledby="b5-h">
+                  <w-alert type="warning">Too many tries. Wait a minute, then try again.</w-alert>
+                  <w-text-field label="Current password" type="password" autocomplete="current-password" required><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show current password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="New password" type="password" autocomplete="new-password" required hint="Use at least 12 characters." persistent-hint><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show new password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="2-step code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required hint="The 6-digit code from your authenticator app." persistent-hint></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" disabled class="pointer-coarse:min-h-11">Change password</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Success: the dialog closes and a snackbar shows</figcaption>
+              <div data-duvay="w-snackbar" role="status" class="mx-auto flex w-full max-w-lg flex-wrap items-center gap-3 rounded-lg bg-text px-4 py-3 text-sm text-surface shadow-xl">
+                <w-icon name="check" class="ms-icon-sm"></w-icon><span class="min-w-0 flex-1">Password changed. Your other devices were signed out. You are still signed in here.</span>
+              </div>
+            </figure>
+          </section>
+
+          <section class="grid gap-6" aria-labelledby="c-h">
+            <div class="grid gap-1">
+              <h2 id="c-h" class="text-lg font-semibold">C. Turn on 2-step sign-in</h2>
+              <p class="text-sm text-subtle">One dialog in 3 steps. Back keeps what was typed. There are no recovery codes.</p>
+            </div>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Step 1: confirm it's you</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="c1-h c1-step-h" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="c1-h" class="flex-1 text-xl font-semibold">Turn on 2-step sign-in</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <div class="grid gap-2">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 1 of 3</p>
+                  <ol class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs" aria-label="Steps">
+                  <li class="flex items-center gap-1.5 font-semibold text-accent" aria-current="step"><span class="grid size-6 flex-none place-items-center rounded-full bg-accent-bg text-on-accent" aria-hidden="true">1</span><span>Confirm it's you</span></li>
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full border border-outline" aria-hidden="true">2</span><span class="max-sm:sr-only">Scan the code</span></li>
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full border border-outline" aria-hidden="true">3</span><span class="max-sm:sr-only">Type the code</span></li>
+                  </ol>
+                  <h4 id="c1-step-h" class="text-base font-semibold">Confirm it's you</h4>
+                </div>
+                <form class="grid gap-4" aria-labelledby="c1-h c1-step-h">
+                  <w-text-field label="Current password" type="password" autocomplete="current-password" required><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show current password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" class="pointer-coarse:min-h-11">Continue</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Step 1: wrong password (401)</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="c2-h c2-step-h" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="c2-h" class="flex-1 text-xl font-semibold">Turn on 2-step sign-in</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <div class="grid gap-2">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 1 of 3</p>
+                  <ol class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs" aria-label="Steps">
+                  <li class="flex items-center gap-1.5 font-semibold text-accent" aria-current="step"><span class="grid size-6 flex-none place-items-center rounded-full bg-accent-bg text-on-accent" aria-hidden="true">1</span><span>Confirm it's you</span></li>
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full border border-outline" aria-hidden="true">2</span><span class="max-sm:sr-only">Scan the code</span></li>
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full border border-outline" aria-hidden="true">3</span><span class="max-sm:sr-only">Type the code</span></li>
+                  </ol>
+                  <h4 id="c2-step-h" class="text-base font-semibold">Confirm it's you</h4>
+                </div>
+                <form class="grid gap-4" aria-labelledby="c2-h c2-step-h">
+                  <w-text-field label="Current password" type="password" autocomplete="current-password" required error="That password is not right."><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show current password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" class="pointer-coarse:min-h-11">Continue</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Step 2: scan the code</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="c3-h c3-step-h" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="c3-h" class="flex-1 text-xl font-semibold">Turn on 2-step sign-in</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <div class="grid gap-2">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 3</p>
+                  <ol class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs" aria-label="Steps">
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full bg-success-container text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon></span><span class="max-sm:sr-only">Confirm it's you</span><span class="sr-only">, done</span></li>
+                  <li class="flex items-center gap-1.5 font-semibold text-accent" aria-current="step"><span class="grid size-6 flex-none place-items-center rounded-full bg-accent-bg text-on-accent" aria-hidden="true">2</span><span>Scan the code</span></li>
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full border border-outline" aria-hidden="true">3</span><span class="max-sm:sr-only">Type the code</span></li>
+                  </ol>
+                  <h4 id="c3-step-h" class="text-base font-semibold">Scan this code with your authenticator app</h4>
+                </div>
+                <form class="grid gap-4" aria-labelledby="c3-h c3-step-h">
+                  <div class="mx-auto grid size-48 place-items-center rounded-md border border-border bg-[white] p-3">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 29 29' shape-rendering='crispEdges'%3E%3Crect width='29' height='29' fill='white'/%3E%3Cpath fill='black' d='M0 0h7v7H0zM22 0h7v7h-7zM0 22h7v7H0z'/%3E%3Cpath fill='white' d='M1 1h5v5H1zM23 1h5v5h-5zM1 23h5v5H1z'/%3E%3Cpath fill='black' d='M2 2h3v3H2zM24 2h3v3h-3zM2 24h3v3H2zM9 1h2v2H9zM13 0h1v4h-1zM16 2h3v1h-3zM9 9h4v2H9zM15 8h2v4h-2zM19 10h3v1h-3zM24 9h3v2h-3zM8 14h2v3H8zM12 13h4v1h-4zM18 13h1v5h-1zM21 14h4v2h-4zM10 19h3v2h-3zM14 17h2v4h-2zM20 19h2v3h-2zM24 18h4v1h-4zM9 24h2v4H9zM13 23h4v2h-4zM18 25h3v3h-3zM23 23h2v2h-2zM26 26h3v3h-3z'/%3E%3C/svg%3E" alt="QR code for your authenticator app" width="168" height="168" class="size-full">
+                  </div>
+                  <div class="grid gap-1">
+                    <p class="text-sm" id="c3-key-label">Can't scan it? Type this key:</p>
+                    <p class="flex flex-wrap items-center gap-2"><code class="rounded-sm bg-surface-mid px-2 py-1 font-mono text-base tracking-wider" aria-labelledby="c3-key-label">JBSW Y3DP EHPK 3PXP</code><w-icon-btn icon="copy" aria-label="Copy the key"></w-icon-btn></p>
+                    <p class="text-xs text-subtle">Any authenticator app works. Add a new account in the app, then scan the code or type the key.</p>
+                  </div>
+                  <w-alert type="info">If you lose your phone, ask an admin of example.com to reset 2-step sign-in.</w-alert>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" prepend-icon="arrow-left" class="mr-auto pointer-coarse:min-h-11">Back</w-btn>
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" class="pointer-coarse:min-h-11">Continue</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Step 3: type the code</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="c4-h c4-step-h" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="c4-h" class="flex-1 text-xl font-semibold">Turn on 2-step sign-in</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <div class="grid gap-2">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 3 of 3</p>
+                  <ol class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs" aria-label="Steps">
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full bg-success-container text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon></span><span class="max-sm:sr-only">Confirm it's you</span><span class="sr-only">, done</span></li>
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full bg-success-container text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon></span><span class="max-sm:sr-only">Scan the code</span><span class="sr-only">, done</span></li>
+                  <li class="flex items-center gap-1.5 font-semibold text-accent" aria-current="step"><span class="grid size-6 flex-none place-items-center rounded-full bg-accent-bg text-on-accent" aria-hidden="true">3</span><span>Type the code</span></li>
+                  </ol>
+                  <h4 id="c4-step-h" class="text-base font-semibold">Type the 6-digit code from your app</h4>
+                </div>
+                <form class="grid gap-4" aria-labelledby="c4-h c4-step-h">
+                  <w-text-field label="6-digit code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required hint="Open your authenticator app and type the code it shows for example.com." persistent-hint></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" prepend-icon="arrow-left" class="mr-auto pointer-coarse:min-h-11">Back</w-btn>
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" class="pointer-coarse:min-h-11">Turn on</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Step 3: wrong code (400 invalid_code)</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="c5-h c5-step-h" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="c5-h" class="flex-1 text-xl font-semibold">Turn on 2-step sign-in</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <div class="grid gap-2">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 3 of 3</p>
+                  <ol class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs" aria-label="Steps">
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full bg-success-container text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon></span><span class="max-sm:sr-only">Confirm it's you</span><span class="sr-only">, done</span></li>
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full bg-success-container text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon></span><span class="max-sm:sr-only">Scan the code</span><span class="sr-only">, done</span></li>
+                  <li class="flex items-center gap-1.5 font-semibold text-accent" aria-current="step"><span class="grid size-6 flex-none place-items-center rounded-full bg-accent-bg text-on-accent" aria-hidden="true">3</span><span>Type the code</span></li>
+                  </ol>
+                  <h4 id="c5-step-h" class="text-base font-semibold">Type the 6-digit code from your app</h4>
+                </div>
+                <form class="grid gap-4" aria-labelledby="c5-h c5-step-h">
+                  <w-text-field label="6-digit code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required hint="" persistent-hint error="That code is not right. Codes change every 30 seconds; type the newest one."></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" prepend-icon="arrow-left" class="mr-auto pointer-coarse:min-h-11">Back</w-btn>
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" class="pointer-coarse:min-h-11">Turn on</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Success</figcaption>
+              <div data-duvay="w-snackbar" role="status" class="mx-auto flex w-full max-w-lg flex-wrap items-center gap-3 rounded-lg bg-text px-4 py-3 text-sm text-surface shadow-xl">
+                <w-icon name="check" class="ms-icon-sm"></w-icon><span class="min-w-0 flex-1">2-step sign-in is on. Mesail will ask for a code when you sign in.</span>
+              </div>
+            </figure>
+          </section>
+
+          <section class="grid gap-6" aria-labelledby="d-h">
+            <div class="grid gap-1">
+              <h2 id="d-h" class="text-lg font-semibold">D. Set up on a new phone</h2>
+              <p class="text-sm text-subtle">The same 3 steps as C. Step 1 also asks for a 2-step code.</p>
+            </div>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Step 1: confirm it's you with your password and a code from the old phone</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="d1-h d1-step-h" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="d1-h" class="flex-1 text-xl font-semibold">Set up on a new phone</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <div class="grid gap-2">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 1 of 3</p>
+                  <ol class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs" aria-label="Steps">
+                  <li class="flex items-center gap-1.5 font-semibold text-accent" aria-current="step"><span class="grid size-6 flex-none place-items-center rounded-full bg-accent-bg text-on-accent" aria-hidden="true">1</span><span>Confirm it's you</span></li>
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full border border-outline" aria-hidden="true">2</span><span class="max-sm:sr-only">Scan the code</span></li>
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full border border-outline" aria-hidden="true">3</span><span class="max-sm:sr-only">Type the code</span></li>
+                  </ol>
+                  <h4 id="d1-step-h" class="text-base font-semibold">Confirm it's you</h4>
+                </div>
+                <form class="grid gap-4" aria-labelledby="d1-h d1-step-h">
+                  <w-text-field label="Current password" type="password" autocomplete="current-password" required><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show current password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="2-step code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required hint="From the app on your old phone. If you no longer have it, ask an admin of example.com to reset 2-step sign-in." persistent-hint></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" class="pointer-coarse:min-h-11">Continue</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Step 2: scan the code (steps 2 and 3 are the same as C)</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="d2-h d2-step-h" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="d2-h" class="flex-1 text-xl font-semibold">Set up on a new phone</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <div class="grid gap-2">
+                  <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 3</p>
+                  <ol class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs" aria-label="Steps">
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full bg-success-container text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon></span><span class="max-sm:sr-only">Confirm it's you</span><span class="sr-only">, done</span></li>
+                  <li class="flex items-center gap-1.5 font-semibold text-accent" aria-current="step"><span class="grid size-6 flex-none place-items-center rounded-full bg-accent-bg text-on-accent" aria-hidden="true">2</span><span>Scan the code</span></li>
+                  <li class="flex items-center gap-1.5 text-subtle"><span class="grid size-6 flex-none place-items-center rounded-full border border-outline" aria-hidden="true">3</span><span class="max-sm:sr-only">Type the code</span></li>
+                  </ol>
+                  <h4 id="d2-step-h" class="text-base font-semibold">Scan this code with your authenticator app</h4>
+                </div>
+                <form class="grid gap-4" aria-labelledby="d2-h d2-step-h">
+                  <div class="mx-auto grid size-48 place-items-center rounded-md border border-border bg-[white] p-3">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 29 29' shape-rendering='crispEdges'%3E%3Crect width='29' height='29' fill='white'/%3E%3Cpath fill='black' d='M0 0h7v7H0zM22 0h7v7h-7zM0 22h7v7H0z'/%3E%3Cpath fill='white' d='M1 1h5v5H1zM23 1h5v5h-5zM1 23h5v5H1z'/%3E%3Cpath fill='black' d='M2 2h3v3H2zM24 2h3v3h-3zM2 24h3v3H2zM9 1h2v2H9zM13 0h1v4h-1zM16 2h3v1h-3zM9 9h4v2H9zM15 8h2v4h-2zM19 10h3v1h-3zM24 9h3v2h-3zM8 14h2v3H8zM12 13h4v1h-4zM18 13h1v5h-1zM21 14h4v2h-4zM10 19h3v2h-3zM14 17h2v4h-2zM20 19h2v3h-2zM24 18h4v1h-4zM9 24h2v4H9zM13 23h4v2h-4zM18 25h3v3h-3zM23 23h2v2h-2zM26 26h3v3h-3z'/%3E%3C/svg%3E" alt="QR code for your authenticator app" width="168" height="168" class="size-full">
+                  </div>
+                  <div class="grid gap-1">
+                    <p class="text-sm" id="d2-key-label">Can't scan it? Type this key:</p>
+                    <p class="flex flex-wrap items-center gap-2"><code class="rounded-sm bg-surface-mid px-2 py-1 font-mono text-base tracking-wider" aria-labelledby="d2-key-label">JBSW Y3DP EHPK 3PXP</code><w-icon-btn icon="copy" aria-label="Copy the key"></w-icon-btn></p>
+                    <p class="text-xs text-subtle">Any authenticator app works. Add a new account in the app, then scan the code or type the key.</p>
+                  </div>
+                  <w-alert type="info">If you lose your phone, ask an admin of example.com to reset 2-step sign-in.</w-alert>
+                  <w-alert type="warning">When you finish, codes from your old phone stop working.</w-alert>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" prepend-icon="arrow-left" class="mr-auto pointer-coarse:min-h-11">Back</w-btn>
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" type="submit" class="pointer-coarse:min-h-11">Continue</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Success</figcaption>
+              <div data-duvay="w-snackbar" role="status" class="mx-auto flex w-full max-w-lg flex-wrap items-center gap-3 rounded-lg bg-text px-4 py-3 text-sm text-surface shadow-xl">
+                <w-icon name="check" class="ms-icon-sm"></w-icon><span class="min-w-0 flex-1">2-step sign-in now uses your new phone.</span>
+              </div>
+            </figure>
+          </section>
+
+          <section class="grid gap-6" aria-labelledby="e-h">
+            <div class="grid gap-1">
+              <h2 id="e-h" class="text-lg font-semibold">E. Turn off 2-step sign-in</h2>
+              <p class="text-sm text-subtle">Needs the password and a code, so a borrowed, unlocked device cannot turn it off.</p>
+            </div>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Default</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="e1-h" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="e1-h" class="flex-1 text-xl font-semibold">Turn off 2-step sign-in?</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <form class="grid gap-4" aria-labelledby="e1-h">
+                  <w-alert type="warning">Without it, anyone with your password can sign in.</w-alert>
+                  <w-text-field label="Current password" type="password" autocomplete="current-password" required><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show current password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="2-step code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required hint="The 6-digit code from your authenticator app." persistent-hint></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" color="danger" type="submit" class="pointer-coarse:min-h-11">Turn off</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Wrong password or code (401): the fields are cleared</figcaption>
+              <div data-duvay="w-dialog" role="dialog" aria-modal="false" aria-labelledby="e2-h" class="mx-auto grid w-full max-w-lg gap-4 rounded-xl border border-border bg-surface p-5 shadow-xl max-sm:max-w-none max-sm:min-h-[70dvh] max-sm:content-start max-sm:rounded-none max-sm:border-x-0 max-sm:shadow-none max-sm:safe-l max-sm:safe-r">
+                <div class="flex items-start gap-2">
+                  <h3 id="e2-h" class="flex-1 text-xl font-semibold">Turn off 2-step sign-in?</h3>
+                  <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+                </div>
+                <form class="grid gap-4" aria-labelledby="e2-h">
+                  <w-alert type="error">The current password or 2-step code is not right.</w-alert>
+                  <w-text-field label="Current password" type="password" autocomplete="current-password" required><w-btn slot="append-inner" variant="text" size="small" aria-pressed="false" aria-label="Show current password" class="pointer-coarse:min-h-11">Show</w-btn></w-text-field>
+                  <w-text-field label="2-step code" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" required hint="The 6-digit code from your authenticator app." persistent-hint></w-text-field>
+                  <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+                    <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
+                    <w-btn variant="filled" color="danger" type="submit" class="pointer-coarse:min-h-11">Turn off</w-btn>
+                  </div>
+                </form>
+              </div>
+            </figure>
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6 max-sm:px-0 max-sm:border-x-0 max-sm:rounded-none">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Success</figcaption>
+              <div data-duvay="w-snackbar" role="status" class="mx-auto flex w-full max-w-lg flex-wrap items-center gap-3 rounded-lg bg-text px-4 py-3 text-sm text-surface shadow-xl">
+                <w-icon name="check" class="ms-icon-sm"></w-icon><span class="min-w-0 flex-1">2-step sign-in is off.</span>
+              </div>
+            </figure>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom navigation: phones, list pane only -->
+  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden group-data-[pane=thread]/app:hidden" value="you" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" href="messenger.html?pane=list"><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="search" label="Search" href="search.html"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="you" label="You" href="settings.html" active><w-icon name="user"></w-icon></w-bottom-nav-item>
+  </w-bottom-navigation>
+
+</div>
+
+<div class="sr-only" aria-live="polite" id="announcer"></div>
+</body>
+</html>

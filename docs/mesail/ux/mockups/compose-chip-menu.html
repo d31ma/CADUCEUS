@@ -1,244 +1,268 @@
 <!doctype html>
-<html lang="en" w-theme="light">
+<html lang="en" w-theme="light" w-density="comfortable">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mesail mockup: changing how a recipient gets the message</title>
-<link rel="stylesheet" href="assets/duvay/tokens.css">
-<link rel="stylesheet" href="assets/duvay/themes.css">
-<link rel="stylesheet" href="assets/mesail-tokens.css">
-<link rel="stylesheet" href="assets/icons.css">
-<link rel="stylesheet" href="assets/mesail.css">
+<link rel="stylesheet" href="assets/app.css">
 <link rel="stylesheet" href="assets/screens/composer.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
 <script src="assets/mockup.js" defer></script>
 </head>
-<body>
+<body class="bg-surface text-text">
 <a class="ms-skip-link" href="#compose">Skip to the new message</a>
-<div class="ms-app" data-pane="main">
 
-  <!-- Domain rail: one tile per messaging domain the user belongs to -->
-  <nav class="ms-rail" aria-label="Domains">
-    <ul class="ms-rail__list">
+<!-- App shell. Under 600 px one pane shows (data-pane); 600 px: list + conversation; 960 px: + domain rail;
+     1280 px: + thread pane docked; 1920 and 2560 px: wider panes. The thread overlays the conversation below 1280 px. -->
+<div class="group/app relative grid h-dvh overflow-hidden
+  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
+  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  lg:grid-cols-[4.25rem_17rem_minmax(0,1fr)_25rem]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)_28rem]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)_34rem]" data-pane="main">
+
+  <!-- Domain rail (960 px and up) -->
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Domains">
+    <ul class="flex flex-col gap-2">
       <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
-      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
-      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<w-badge content="3" inline class="absolute -top-1 -right-1.5"></w-badge></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="absolute -left-2.5 size-2 rounded-full bg-on-rail" aria-hidden="true"></span>La</a></li>
     </ul>
-    <div class="ms-rail__sep" role="presentation"></div>
-    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
-    <div class="ms-rail__spacer"></div>
-    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+    <div class="h-px w-8 bg-on-rail/20" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><w-icon name="plus"></w-icon></a>
+    <div class="flex-1"></div>
+    <a class="ms-domain-tile" href="settings-appearance.html" aria-label="Help and keyboard shortcuts" title="Help"><w-icon name="info"></w-icon></a>
   </nav>
 
-  <!-- Sidebar -->
-  <aside class="ms-sidebar" aria-label="Conversations in example.com">
-    <div class="ms-sidebar__head">
-      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
-      <div class="ms-header__actions">
-        <button class="ms-icon-btn" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
-      </div>
-    </div>
-    <div class="ms-sidebar__search">
-      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
-    </div>
-    <div class="ms-sidebar__scroll">
-      <ul class="ms-nav-list">
-        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
-        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
-      </ul>
-
-      <section class="ms-nav-section" aria-labelledby="sec-channels">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
-          <button class="ms-icon-btn" aria-label="Add or browse channels"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">general</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">releases</span></a></li>
-          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">support</span><span class="ms-icon ms-i-mail ms-icon--sm ms-nav-item__email" aria-label="Has an email address" role="img"></span><span class="ms-badge" aria-label="4 unread">4</span></a></li>
-          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-lock" aria-label="Private channel" role="img"></span><span class="ms-nav-item__label">design</span><span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span></a></li>
-          <li><a class="ms-nav-item is-muted" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">random</span><span class="ms-icon ms-i-bell-off ms-icon--sm" aria-label="Muted" role="img"></span></a></li>
-        </ul>
-      </section>
-
-      <section class="ms-nav-section" aria-labelledby="sec-dms">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
-          <button class="ms-icon-btn" aria-label="New direct message"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:20">BL<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span><span class="ms-nav-item__label">Bo Lee</span><span class="ms-sr-only">, active</span><span class="ms-badge ms-badge--mention" aria-label="1 unread">1</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:280">CW<span class="ms-presence ms-presence--idle" aria-hidden="true"></span></span><span class="ms-nav-item__label">Chen Wu</span><span class="ms-sr-only">, idle</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:140">DO<span class="ms-presence ms-presence--dnd" aria-hidden="true"></span></span><span class="ms-nav-item__label">Dara Okafor</span><span class="ms-sr-only">, do not disturb</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs ms-avatar--channel" aria-hidden="true">3</span><span class="ms-nav-item__label">Bo, Chen, Dara</span></a></li>
-        </ul>
-      </section>
-
-      <section class="ms-nav-section" aria-labelledby="sec-email">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
-          <button class="ms-icon-btn" aria-label="New email"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email is-unread" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">DH</span><span class="ms-nav-item__label">Dan Hale<span class="ms-nav-item__sub">Question about invoice 2291</span></span><span class="ms-badge" aria-label="1 unread">1</span></a></li>
-          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-nav-item__label">Carol Diaz, Bo Lee<span class="ms-nav-item__sub">Contract renewal 2027</span></span></a></li>
-        </ul>
-      </section>
-    </div>
-    <div class="ms-sidebar__foot">
-      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
-        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
-        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+  <!-- Sidebar: list pane on phones, always visible from 600 px -->
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations in example.com">
+    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-t safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
+      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
+      <span class="flex-1"></span>
+      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+    </header>
+    <div class="px-3 py-2">
+      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
+        <w-icon name="search" class="ms-icon-sm"></w-icon>Search<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
       </button>
-      <a class="ms-icon-btn" href="settings.html" aria-label="Settings"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
     </div>
+    <div class="flex-1 overflow-y-auto px-2 pb-4">
+      <w-list nav density="compact" aria-label="Shortcuts">
+        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline label="2 mentions"></w-badge></w-list-item>
+        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
+      </w-list>
+
+      <section class="mt-3" aria-labelledby="sec-channels">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-channels"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Channels</button>
+          <w-icon-btn icon="plus" size="small" aria-label="Add or browse channels"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-channels">
+          <w-list-item href="#" title="general"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="#" title="releases"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="channel-email.html" title="support" class="ms-unread"><w-icon slot="prepend" name="hash"></w-icon><span slot="append" class="flex items-center gap-1"><w-icon name="mail" class="ms-icon-sm text-email" role="img" aria-label="Has an email address"></w-icon><w-badge content="4" inline class="ms-count" label="4 unread"></w-badge></span></w-list-item>
+          <w-list-item href="#" title="design" class="ms-unread"><w-icon slot="prepend" name="lock" role="img" aria-label="Private channel"></w-icon><w-badge slot="append" content="1" inline label="1 mention"></w-badge></w-list-item>
+          <w-list-item href="#" title="random" class="ms-muted"><w-icon slot="prepend" name="hash"></w-icon><w-icon slot="append" name="bell-off" class="ms-icon-sm" role="img" aria-label="Muted"></w-icon></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-dms">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-dms"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Direct messages</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New direct message"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-dms">
+          <w-list-item href="mobile-conversation.html" title="Bo Lee" class="ms-unread"><w-avatar slot="prepend" text="BL" size="20" status="online" style="--h:20" alt="Bo Lee, active"></w-avatar><w-badge slot="append" content="1" inline label="1 unread"></w-badge></w-list-item>
+          <w-list-item href="#" title="Chen Wu"><w-avatar slot="prepend" text="CW" size="20" status="away" style="--h:280" alt="Chen Wu, idle"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Dara Okafor"><w-avatar slot="prepend" text="DO" size="20" status="busy" style="--h:140" alt="Dara Okafor, do not disturb"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Bo, Chen, Dara"><w-avatar slot="prepend" text="3" size="20" alt="Group of 3"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-email">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-email"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Email</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New email"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" lines="two" aria-labelledby="sec-email">
+          <w-list-item href="email-inbound-new.html" title="Dan Hale" subtitle="Question about invoice 2291" class="ms-unread"><w-avatar slot="prepend" text="DH" size="20" class="ms-external" alt="Dan Hale, outside example.com"></w-avatar><w-badge slot="append" content="1" inline class="ms-count" label="1 unread"></w-badge></w-list-item>
+          <w-list-item href="email-conversation.html" title="Carol Diaz, Bo Lee" subtitle="Contract renewal 2027"><w-avatar slot="prepend" text="CD" size="20" class="ms-external" alt="Carol Diaz, outside example.com"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+    </div>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <w-avatar text="AR" size="28" status="online" style="--h:195" alt=""></w-avatar>
+        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">ana@example.com</span></span>
+      </button>
+      <w-icon-btn icon="settings" href="settings.html" aria-label="Settings"></w-icon-btn>
+    </footer>
   </aside>
 
-  <!-- New message -->
-  <main class="ms-main ms-compose-main" aria-labelledby="page-title">
-<header class="ms-header">
-  <a class="ms-icon-btn ms-header__back" href="?pane=list" aria-label="Back to conversations"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
-  <h1 class="ms-header__title" id="page-title"><span class="ms-icon ms-i-edit" aria-hidden="true"></span><span>New message</span></h1>
-  <div class="ms-header__actions">
-    <span class="ms-compose__status" role="status"><span class="ms-icon ms-i-check" aria-hidden="true"></span>Draft saved</span>
-    <button class="ms-icon-btn" aria-label="Close. Your draft is kept." title="Close (Esc)" aria-keyshortcuts="Escape"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
-  </div>
-</header>
-<div class="ms-compose" id="compose">
-<div class="ms-compose__inner">
-<p class="ms-compose__intro"><span class="ms-tag ms-tag--outline">State A</span> Bo's chip menu is open. Chat is chosen. Focus is on it.</p>
-<form class="ms-composer ms-composer--page ms-composer--email" aria-labelledby="page-title" onsubmit="return false">
-<div class="ms-composer__mode ms-composer__mode--email"><span class="ms-icon ms-i-mail ms-icon--sm" aria-hidden="true"></span><span>This is a chat and an email. Chat stays inside example.com, so Carol Diaz and Finn Moss get an email.</span></div>
-<div class="ms-composer__row ms-compose__to">
+  <!-- New message: the composer fills the main pane -->
+  <main class="relative hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="page-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="?pane=list" aria-label="Back to conversations"></w-icon-btn>
+      <h1 id="page-title" class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="edit" class="ms-icon-sm" aria-hidden="true"></w-icon><span class="truncate">New message</span></h1>
+      <div class="ml-auto flex items-center gap-2 no-drag">
+        <span role="status" class="hidden @sm/main:inline-flex items-center gap-1 text-xs text-subtle"><w-icon name="check" class="ms-icon-xs" aria-hidden="true"></w-icon>Draft saved</span>
+        <w-icon-btn icon="close" aria-label="Close. Your draft is kept." title="Close (Esc)" aria-keyshortcuts="Escape"></w-icon-btn>
+      </div>
+    </header>
+    <div class="flex-1 min-h-0 overflow-y-auto @sm/main:p-5 @sm/main:pb-6 safe-l safe-r" id="compose">
+    <div class="mx-auto grid w-full max-w-[52rem] gap-3">
+<p class="px-3 pt-3 text-sm text-subtle @sm/main:px-1 @sm/main:pt-0"><span class="mr-1 rounded-sm border border-border px-1.5 text-xs">State A</span>Bo's chip menu is open. Chat is chosen. Focus is on it. On phones the menu is a bottom sheet.</p>
+<form class="ms-composer ms-composer--email @container/composer flex flex-col @max-sm/main:rounded-none @max-sm/main:border-x-0 @max-sm/main:border-t-0" aria-labelledby="page-title" onsubmit="return false">
+<div class="ms-composer__mode ms-composer__mode--email"><w-icon name="mail" class="ms-icon-sm" aria-hidden="true"></w-icon><span>This is a chat and an email. Chat stays inside example.com, so Carol Diaz and Finn Moss get an email.</span></div>
+<div class="ms-composer__row relative max-sm:static">
   <label class="ms-composer__row-label" for="to-input">To</label>
-  <div class="ms-recipients"><div class="ms-chip-anchor"><span class="ms-chip ms-chip--chat"><button type="button" class="ms-chip__main" aria-haspopup="menu" aria-expanded="true" aria-controls="menu-bo" aria-label="Bo Lee, Chat, bo@example.com. Open menu"><span class="ms-avatar ms-avatar--xs" style="--h:20" aria-hidden="true">BL</span><span class="ms-chip__name">Bo Lee</span><span class="ms-chip__how"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Chat</span></button><button type="button" class="ms-chip__remove" aria-label="Remove Bo Lee"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></span><div class="ms-popover ms-chip-menu" id="menu-bo">
-  <div class="ms-popover__head"><span class="ms-avatar ms-avatar--sm" style="--h:20" aria-hidden="true">BL</span><span class="ms-chip-menu__who"><span class="ms-chip-menu__name">Bo Lee</span><span class="ms-chip-menu__addr">bo@example.com · Member of example.com</span></span></div>
-  <div class="ms-chip-menu__label" id="menu-bo-label">How Bo gets this</div>
-  <div class="ms-menu" role="menu" aria-labelledby="menu-bo-label">
-    <button type="button" class="ms-menu__item is-active" role="menuitemradio" tabindex="0" aria-checked="true"><span class="ms-menu__check ms-icon ms-i-check" aria-hidden="true"></span><span class="ms-menu__text"><span class="ms-menu__name"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Chat</span><span class="ms-menu__desc">Bo sees it in Mesail</span></span></button>
-    <button type="button" class="ms-menu__item" role="menuitemradio" tabindex="-1" aria-checked="false"><span class="ms-menu__check ms-icon ms-i-check" aria-hidden="true"></span><span class="ms-menu__text"><span class="ms-menu__name"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span><span class="ms-menu__desc">Bo gets it in his mailbox</span></span></button>
-    <button type="button" class="ms-menu__item" role="menuitemradio" tabindex="-1" aria-checked="false"><span class="ms-menu__check ms-icon ms-i-check" aria-hidden="true"></span><span class="ms-menu__text"><span class="ms-menu__name"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Chat and email</span><span class="ms-menu__desc">Bo sees it in Mesail and gets an email</span></span></button>
-    <div class="ms-menu__sep" role="separator"></div>
-    <button type="button" class="ms-menu__item ms-menu__item--danger" role="menuitem" tabindex="-1"><span class="ms-icon ms-i-trash" aria-hidden="true"></span><span class="ms-menu__text"><span>Remove Bo Lee</span></span></button>
+  <div class="ms-recipients"><div class="relative inline-flex max-w-full max-sm:static"><w-chip closable close-label="Remove Bo Lee" selected><w-avatar slot="prepend" text="BL" size="20" style="--h:20" alt=""></w-avatar>Bo Lee<span class="ms-how ms-how--chat ml-1"><w-icon name="chat" aria-hidden="true"></w-icon>Chat</span><span class="sr-only">, bo@example.com. Opens a menu.</span></w-chip><div class="absolute left-0 top-full z-30 mt-1 w-[21rem] max-sm:inset-x-0 max-sm:bottom-0 max-sm:top-auto max-sm:w-auto max-sm:rounded-b-none max-sm:rounded-t-2xl max-sm:pb-[max(0.25rem,env(safe-area-inset-bottom))] rounded-xl border border-border bg-surface p-1 shadow-xl" id="menu-bo" data-duvay="w-menu" data-duvay-phone="w-bottom-sheet">
+  <div class="mb-1 flex items-center gap-2 border-b border-divider px-3 py-2"><w-avatar text="BL" size="24" style="--h:20" alt=""></w-avatar><span class="grid min-w-0"><span class="font-semibold">Bo Lee</span><span class="text-xs text-subtle [overflow-wrap:anywhere]">bo@example.com · Member of example.com</span></span></div>
+  <div class="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-subtle" id="menu-bo-label">How Bo gets this</div>
+  <div role="menu" aria-labelledby="menu-bo-label">
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 bg-hover outline-2 -outline-offset-2 outline-[var(--w-focus-ring-color)]" role="menuitemradio" tabindex="0" aria-checked="true"><w-icon name="check" class="ms-icon-sm mt-0.5 text-accent" aria-hidden="true"></w-icon><span class="grid flex-1 gap-0.5"><span class="inline-flex items-center gap-1 font-semibold"><w-icon name="chat" class="ms-icon-sm text-chat" aria-hidden="true"></w-icon>Chat</span><span class="text-xs text-subtle">Bo sees it in Mesail</span></span></button>
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2" role="menuitemradio" tabindex="-1" aria-checked="false"><span class="size-4 flex-none" aria-hidden="true"></span><span class="grid flex-1 gap-0.5"><span class="inline-flex items-center gap-1 "><w-icon name="mail" class="ms-icon-sm text-email" aria-hidden="true"></w-icon>Email</span><span class="text-xs text-subtle">Bo gets it in his mailbox</span></span></button>
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2" role="menuitemradio" tabindex="-1" aria-checked="false"><span class="size-4 flex-none" aria-hidden="true"></span><span class="grid flex-1 gap-0.5"><span class="inline-flex items-center gap-1 "><w-icon name="chat" class="ms-icon-sm text-chat" aria-hidden="true"></w-icon>Chat and email</span><span class="text-xs text-subtle">Bo sees it in Mesail and gets an email</span></span></button>
+    <div class="my-1 h-px bg-divider" role="separator"></div>
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 text-error" role="menuitem" tabindex="-1"><w-icon name="trash" class="ms-icon-sm mt-0.5" aria-hidden="true"></w-icon><span class="grid flex-1 gap-0.5"><span>Remove Bo Lee</span></span></button>
   </div>
 </div>
-</div><span class="ms-chip ms-chip--email"><button type="button" class="ms-chip__main" aria-haspopup="menu" aria-expanded="false" aria-label="Carol Diaz, Email, carol@partner.org. Open menu"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-chip__name">Carol Diaz</span><span class="ms-chip__how"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span></button><button type="button" class="ms-chip__remove" aria-label="Remove Carol Diaz"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></span><span class="ms-chip ms-chip--email"><button type="button" class="ms-chip__main" aria-haspopup="menu" aria-expanded="false" aria-label="Finn Moss, Email, finn@example.org, other domain. Open menu"><span class="ms-avatar ms-avatar--xs" style="--h:100" aria-hidden="true">FM</span><span class="ms-chip__name">Finn Moss</span><span class="ms-chip__how"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span></button><button type="button" class="ms-chip__remove" aria-label="Remove Finn Moss"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></span><input id="to-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-describedby="keys" autocomplete="off" spellcheck="false" placeholder="Add more people"></div>
-  <div class="ms-composer__row-actions"><button type="button" class="ms-btn ms-btn--ghost ms-btn--sm ms-cc-toggle" aria-expanded="true" aria-controls="cc-row">Cc</button><button type="button" class="ms-btn ms-btn--ghost ms-btn--sm ms-cc-toggle" aria-expanded="false">Bcc</button></div>
+</div><w-chip closable close-label="Remove Carol Diaz" class="ms-recipient--email"><w-avatar slot="prepend" text="CD" size="20" class="ms-external" alt=""></w-avatar>Carol Diaz<span class="ms-how ms-how--email ml-1"><w-icon name="mail" aria-hidden="true"></w-icon>Email</span><span class="sr-only">, carol@partner.org. Opens a menu.</span></w-chip><w-chip closable close-label="Remove Finn Moss" class="ms-recipient--email"><w-avatar slot="prepend" text="FM" size="20" style="--h:100" alt=""></w-avatar>Finn Moss<span class="ms-how ms-how--email ml-1"><w-icon name="mail" aria-hidden="true"></w-icon>Email</span><span class="sr-only">, finn@example.org, other domain. Opens a menu.</span></w-chip><input id="to-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-describedby="keys" autocomplete="off" spellcheck="false" placeholder="Add more people"></div>
+  <div class="ms-composer__row-actions"><w-btn variant="tonal" size="small" aria-expanded="true" aria-controls="cc-row">Cc</w-btn><w-btn variant="text" size="small" aria-expanded="false">Bcc</w-btn></div>
 </div>
-<div id="cc-row"><div class="ms-composer__row ms-compose__to">
+<div class="ms-composer__row relative" id="cc-row">
   <label class="ms-composer__row-label" for="cc-input">Cc</label>
-  <div class="ms-recipients"><span class="ms-chip ms-chip--chat ms-chip--linked"><span class="ms-chip__main"><span class="ms-avatar ms-avatar--xs" style="--h:20" aria-hidden="true">BL</span><span class="ms-chip__name">Bo Lee</span><span class="ms-chip__note">added so replies reach him</span></span><button type="button" class="ms-chip__remove" aria-label="Remove Bo Lee from Cc. He still gets the chat message."><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></span><input id="cc-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-describedby="keys" autocomplete="off" spellcheck="false" placeholder="Add more people"></div>
+  <div class="ms-recipients"><w-chip variant="outlined" closable close-label="Remove Bo Lee from Cc. He still gets the chat message." class="ms-recipient--linked"><w-avatar slot="prepend" text="BL" size="20" style="--h:20" alt=""></w-avatar>Bo Lee<span class="ml-1 text-xs text-subtle">added so replies reach him</span></w-chip><input id="cc-input" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-describedby="keys" autocomplete="off" spellcheck="false" placeholder="Add more people"></div>
   
 </div>
+<div class="grid gap-3 border-b border-divider px-3 py-3 @lg/composer:grid-cols-2">
+<w-text-field id="subject" label="Subject" required value="Launch plan for the partner portal" hint="Required" persistent-hint placeholder="What is this email about?" density="compact"></w-text-field>
 </div>
-<div class="ms-composer__row ms-composer__row--stack">
-  <label class="ms-composer__row-label" for="subject">Subject</label>
-  <input id="subject" type="text" required aria-required="true" value="Launch plan for the partner portal" placeholder="What is this email about?">
-  <span class="ms-compose__row-note ms-compose__row-note--required" aria-hidden="true">Required</span>
-</div>
-<div class="ms-composer__editor ms-composer__editor--tall" id="body" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Message" data-placeholder="Write a message"><p>Hi all, here is the launch plan for the partner portal. Bo leads the rollout on our side.</p><p>Carol and Finn, please check the dates for your teams.</p></div>
-<div class="ms-composer__summary" role="status"><ul class="ms-summary" aria-label="Who gets what"><li class="ms-summary__item ms-summary__item--chat"><span class="ms-icon ms-i-chat" aria-hidden="true"></span><span>Bo Lee gets a chat message.</span></li><li class="ms-summary__item ms-summary__item--email"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span>Carol Diaz and Finn Moss get an email.</span></li><li class="ms-summary__item ms-summary__item--info"><span class="ms-icon ms-i-info" aria-hidden="true"></span><span>Bo Lee is also added to Cc so replies reach him.</span></li><li class="ms-summary__option"><label class="ms-switch"><input type="checkbox" role="switch" id="cc-switch" checked>Put chat recipients on the email's Cc</label></li></ul></div>
-<div class="ms-composer__toolbar ms-composer__toolbar--sticky">
-  <span class="ms-compose__format" role="group" aria-label="Text format"><button type="button" class="ms-icon-btn" aria-label="Bold" aria-keyshortcuts="Control+B"><span class="ms-icon ms-i-bold ms-icon--sm" aria-hidden="true"></span></button><button type="button" class="ms-icon-btn" aria-label="Italic" aria-keyshortcuts="Control+I"><span class="ms-icon ms-i-italic ms-icon--sm" aria-hidden="true"></span></button><button type="button" class="ms-icon-btn" aria-label="Code"><span class="ms-icon ms-i-code ms-icon--sm" aria-hidden="true"></span></button><button type="button" class="ms-icon-btn" aria-label="Link"><span class="ms-icon ms-i-link ms-icon--sm" aria-hidden="true"></span></button><span class="ms-divider-v" role="presentation"></span></span>
-  <button type="button" class="ms-icon-btn ms-compose__format-toggle" aria-label="Text format" aria-expanded="false"><span class="ms-icon ms-i-bold ms-icon--sm" aria-hidden="true"></span></button>
-  <button type="button" class="ms-icon-btn" aria-label="Attach files"><span class="ms-icon ms-i-paperclip" aria-hidden="true"></span></button>
-  <button type="button" class="ms-icon-btn" aria-label="Mention someone"><span class="ms-icon ms-i-at" aria-hidden="true"></span></button>
-  <button type="button" class="ms-icon-btn ms-compose__wide-only" aria-label="Emoji"><span class="ms-icon ms-i-smile" aria-hidden="true"></span></button>
-  <div class="ms-composer__send"><button type="submit" class="ms-send"><span class="ms-icon ms-i-send ms-icon--sm" aria-hidden="true"></span>Send · 1 chat, 2 emails</button></div>
+<div class="ms-editor min-h-36 overflow-y-auto p-3 [&_p+p]:mt-2" id="body" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Message" data-placeholder="Write a message"><p>Hi all, here is the launch plan for the partner portal. Bo leads the rollout on our side.</p><p>Carol and Finn, please check the dates for your teams.</p></div>
+<div class="ms-composer__summary" role="status"><ul class="grid min-w-0 flex-1 gap-1" aria-label="Who gets what"><li class="flex items-start gap-2"><w-icon name="chat" class="ms-icon-sm mt-0.5 text-chat" aria-hidden="true"></w-icon><span>Bo Lee gets a chat message.</span></li><li class="flex items-start gap-2"><w-icon name="mail" class="ms-icon-sm mt-0.5 text-email" aria-hidden="true"></w-icon><span>Carol Diaz and Finn Moss get an email.</span></li><li class="flex items-start gap-2"><w-icon name="info" class="ms-icon-sm mt-0.5 text-subtle" aria-hidden="true"></w-icon><span>Bo Lee is also added to Cc so replies reach him.</span></li><li class="pt-1"><w-switch id="cc-switch" label="Put chat recipients on the email's Cc" checked hide-details></w-switch></li></ul></div>
+<div class="flex flex-wrap items-center gap-0.5 gap-y-2 px-2 sticky bottom-0 z-[2] border-t border-divider bg-surface rounded-b-[inherit] pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+  <span class="hidden @md/composer:contents">
+    <w-icon-btn icon="bold" size="small" aria-label="Bold" aria-keyshortcuts="Control+B Meta+B"></w-icon-btn>
+    <w-icon-btn icon="italic" size="small" aria-label="Italic" aria-keyshortcuts="Control+I Meta+I"></w-icon-btn>
+    <w-icon-btn icon="code" size="small" aria-label="Code"></w-icon-btn>
+    <w-icon-btn icon="link" size="small" aria-label="Link"></w-icon-btn>
+    <span class="mx-1 h-5 w-px bg-divider" role="presentation"></span>
+  </span>
+  <w-icon-btn icon="bold" size="small" class="@md/composer:hidden" aria-label="Text format" aria-expanded="false"></w-icon-btn>
+  <w-icon-btn icon="paperclip" size="small" aria-label="Attach files"></w-icon-btn>
+  <w-icon-btn icon="at" size="small" aria-label="Mention someone"></w-icon-btn>
+  <w-icon-btn icon="smile" size="small" class="hidden @sm/composer:inline-flex" aria-label="Emoji"></w-icon-btn>
+  <div class="ml-auto flex flex-wrap items-center justify-end gap-2"><w-btn variant="filled" size="small" prepend-icon="send">Send · 1 chat, 2 emails</w-btn></div>
 </div>
 </form>
-<ul class="ms-compose__keys" id="keys" aria-label="Keyboard keys"><li><kbd>Enter</kbd> adds a recipient</li><li><kbd>Backspace</kbd> in an empty field selects the last chip</li><li><kbd>Space</kbd> or <kbd>Enter</kbd> on a chip opens its menu</li><li><kbd>↑</kbd> <kbd>↓</kbd> move in lists and menus</li><li><kbd>Esc</kbd> closes a menu</li><li><kbd>Ctrl</kbd>+<kbd>Enter</kbd> sends · <kbd>Enter</kbd> adds a line in an email</li></ul>
-</div>
-</div>
-<div class="ms-compose__scrim" aria-hidden="true"></div>
+<ul class="hidden pointer-fine:@sm/main:flex flex-wrap gap-x-4 gap-y-1 px-1 text-xs text-subtle" id="keys" aria-label="Keyboard keys"><li><w-kbd>Enter</w-kbd> adds a recipient</li><li><w-kbd>Backspace</w-kbd> in an empty field selects the last chip</li><li><w-kbd>Space</w-kbd> or <w-kbd>Enter</w-kbd> on a chip opens its menu</li><li><w-kbd>Backspace</w-kbd> or <w-kbd>Delete</w-kbd> on a chip removes it</li><li><w-kbd>↑</w-kbd> <w-kbd>↓</w-kbd> move in lists and menus</li><li><w-kbd>Esc</w-kbd> closes a menu</li><li><w-hotkey keys="cmd+enter"></w-hotkey> sends · <w-kbd>Enter</w-kbd> adds a line in an email</li></ul>
+    </div>
+    </div>
+  <div class="absolute inset-0 z-20 bg-scrim sm:hidden" aria-hidden="true"></div>
   </main>
 
-  <nav class="ms-bottom-nav" aria-label="Main">
-    <a class="ms-bottom-nav__item" href="?pane=list" aria-current="page"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
-    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
-    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
-    <a class="ms-bottom-nav__item" href="settings.html"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
-  </nav>
+  <!-- Bottom navigation: phones, list pane only -->
+  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden group-data-[pane=thread]/app:hidden" value="home" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" href="?pane=list" active><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="search" label="Search" href="search.html"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="you" label="You" href="settings.html"><w-icon name="user"></w-icon></w-bottom-nav-item>
+  </w-bottom-navigation>
 </div>
 
-<section class="ms-states" aria-labelledby="states-title">
-<div class="ms-states__inner">
-<div><h2 class="ms-states__title" id="states-title">Other states of this screen</h2><p class="ms-states__intro">Each chip has a menu. Space or Enter opens it, arrow keys move, Enter chooses, Esc closes. On phones it is a bottom sheet.</p></div>
-<div class="ms-states__grid"><section class="ms-state" aria-labelledby="state-b">
-  <h3 class="ms-state__label" id="state-b"><span class="ms-tag ms-tag--outline">State B</span>Finn's menu: chat not possible</h3>
-  <p class="ms-state__note">Chat is shown but disabled, with the reason in plain words. Arrow keys skip nothing: the user can still read it.</p>
-  <div class="ms-state__frame">
-<div class="ms-popover ms-chip-menu ms-chip-menu--static" id="menu-finn">
-  <div class="ms-popover__head"><span class="ms-avatar ms-avatar--sm" style="--h:100" aria-hidden="true">FM</span><span class="ms-chip-menu__who"><span class="ms-chip-menu__name">Finn Moss</span><span class="ms-chip-menu__addr">finn@example.org · Other domain</span></span></div>
-  <div class="ms-chip-menu__label" id="menu-finn-label">How Finn gets this</div>
-  <div class="ms-menu" role="menu" aria-labelledby="menu-finn-label">
-    <button type="button" class="ms-menu__item" role="menuitemradio" tabindex="-1" aria-checked="false" aria-disabled="true"><span class="ms-menu__check ms-icon ms-i-check" aria-hidden="true"></span><span class="ms-menu__text"><span class="ms-menu__name"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Chat</span><span class="ms-menu__reason"><span class="ms-icon ms-i-lock" aria-hidden="true"></span>Chat stays inside example.com. Finn is in example.org.</span></span></button>
-    <button type="button" class="ms-menu__item" role="menuitemradio" tabindex="0" aria-checked="true"><span class="ms-menu__check ms-icon ms-i-check" aria-hidden="true"></span><span class="ms-menu__text"><span class="ms-menu__name"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span><span class="ms-menu__desc">Finn gets it in his mailbox at example.org</span></span></button>
-    <button type="button" class="ms-menu__item" role="menuitemradio" tabindex="-1" aria-checked="false" aria-disabled="true"><span class="ms-menu__check ms-icon ms-i-check" aria-hidden="true"></span><span class="ms-menu__text"><span class="ms-menu__name"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Chat and email</span><span class="ms-menu__reason"><span class="ms-icon ms-i-lock" aria-hidden="true"></span>Not possible: Finn is in example.org.</span></span></button>
-    <div class="ms-menu__sep" role="separator"></div>
-    <button type="button" class="ms-menu__item ms-menu__item--danger" role="menuitem" tabindex="-1"><span class="ms-icon ms-i-trash" aria-hidden="true"></span><span class="ms-menu__text"><span>Remove Finn Moss</span></span></button>
+<section class="border-t-4 border-divider bg-surface-low px-4 py-8 pb-10 sm:px-5" aria-labelledby="states-title">
+<div class="mx-auto grid max-w-[72rem] gap-8">
+<div><h2 class="text-xl font-semibold" id="states-title">Other states of this screen</h2><p class="mt-1 text-subtle">Each chip has a menu. Space or Enter opens it, arrow keys move, Enter chooses, Esc closes. On phones it is a bottom sheet.</p></div>
+<div class="grid items-start gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(22rem,100%),1fr))]">
+<section class="grid min-w-0 gap-3" aria-labelledby="state-b">
+  <h3 class="flex items-center gap-2 text-base font-semibold" id="state-b"><span class="rounded-sm border border-border px-1.5 text-xs">State B</span>Finn's menu: chat not possible</h3>
+  <p class="text-xs text-subtle">Chat is shown but disabled, with the reason in plain words. Arrow keys still stop on it, so it can be read.</p>
+  <div class="relative min-w-0 rounded-xl border border-dashed border-outline bg-surface p-4">
+<div class="w-full max-w-[24rem] rounded-xl border border-border bg-surface p-1 shadow-xl" id="menu-finn" data-duvay="w-menu" data-duvay-phone="w-bottom-sheet">
+  <div class="mb-1 flex items-center gap-2 border-b border-divider px-3 py-2"><w-avatar text="FM" size="24" style="--h:100" alt=""></w-avatar><span class="grid min-w-0"><span class="font-semibold">Finn Moss</span><span class="text-xs text-subtle [overflow-wrap:anywhere]">finn@example.org · Other domain</span></span></div>
+  <div class="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-subtle" id="menu-finn-label">How Finn gets this</div>
+  <div role="menu" aria-labelledby="menu-finn-label">
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 cursor-not-allowed text-subtle hover:bg-transparent" role="menuitemradio" tabindex="-1" aria-checked="false" aria-disabled="true"><span class="size-4 flex-none" aria-hidden="true"></span><span class="grid flex-1 gap-0.5"><span class="inline-flex items-center gap-1 "><w-icon name="chat" class="ms-icon-sm " aria-hidden="true"></w-icon>Chat</span><span class="flex items-start gap-1 text-xs text-subtle"><w-icon name="lock" class="ms-icon-xs mt-0.5" aria-hidden="true"></w-icon>Chat stays inside example.com. Finn is in example.org.</span></span></button>
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2" role="menuitemradio" tabindex="0" aria-checked="true"><w-icon name="check" class="ms-icon-sm mt-0.5 text-accent" aria-hidden="true"></w-icon><span class="grid flex-1 gap-0.5"><span class="inline-flex items-center gap-1 font-semibold"><w-icon name="mail" class="ms-icon-sm text-email" aria-hidden="true"></w-icon>Email</span><span class="text-xs text-subtle">Finn gets it in his mailbox at example.org</span></span></button>
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 cursor-not-allowed text-subtle hover:bg-transparent" role="menuitemradio" tabindex="-1" aria-checked="false" aria-disabled="true"><span class="size-4 flex-none" aria-hidden="true"></span><span class="grid flex-1 gap-0.5"><span class="inline-flex items-center gap-1 "><w-icon name="chat" class="ms-icon-sm " aria-hidden="true"></w-icon>Chat and email</span><span class="flex items-start gap-1 text-xs text-subtle"><w-icon name="lock" class="ms-icon-xs mt-0.5" aria-hidden="true"></w-icon>Not possible: Finn is in example.org.</span></span></button>
+    <div class="my-1 h-px bg-divider" role="separator"></div>
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 text-error" role="menuitem" tabindex="-1"><w-icon name="trash" class="ms-icon-sm mt-0.5" aria-hidden="true"></w-icon><span class="grid flex-1 gap-0.5"><span>Remove Finn Moss</span></span></button>
   </div>
 </div>
   </div>
 </section>
-<section class="ms-state" aria-labelledby="state-c">
-  <h3 class="ms-state__label" id="state-c"><span class="ms-tag ms-tag--outline">State C</span>Carol's menu: no Mesail account</h3>
-  <p class="ms-state__note">Same pattern for an outside address (S5, AC-CP-2).</p>
-  <div class="ms-state__frame">
-<div class="ms-popover ms-chip-menu ms-chip-menu--static" id="menu-carol">
-  <div class="ms-popover__head"><span class="ms-avatar ms-avatar--sm ms-avatar--external" aria-hidden="true">CD</span><span class="ms-chip-menu__who"><span class="ms-chip-menu__name">Carol Diaz</span><span class="ms-chip-menu__addr">carol@partner.org · Outside address</span></span></div>
-  <div class="ms-chip-menu__label" id="menu-carol-label">How Carol gets this</div>
-  <div class="ms-menu" role="menu" aria-labelledby="menu-carol-label">
-    <button type="button" class="ms-menu__item" role="menuitemradio" tabindex="-1" aria-checked="false" aria-disabled="true"><span class="ms-menu__check ms-icon ms-i-check" aria-hidden="true"></span><span class="ms-menu__text"><span class="ms-menu__name"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Chat</span><span class="ms-menu__reason"><span class="ms-icon ms-i-lock" aria-hidden="true"></span>carol@partner.org has no Mesail account.</span></span></button>
-    <button type="button" class="ms-menu__item" role="menuitemradio" tabindex="0" aria-checked="true"><span class="ms-menu__check ms-icon ms-i-check" aria-hidden="true"></span><span class="ms-menu__text"><span class="ms-menu__name"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span><span class="ms-menu__desc">Carol gets a normal email</span></span></button>
-    <button type="button" class="ms-menu__item" role="menuitemradio" tabindex="-1" aria-checked="false" aria-disabled="true"><span class="ms-menu__check ms-icon ms-i-check" aria-hidden="true"></span><span class="ms-menu__text"><span class="ms-menu__name"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Chat and email</span><span class="ms-menu__reason"><span class="ms-icon ms-i-lock" aria-hidden="true"></span>Not possible without a Mesail account.</span></span></button>
-    <div class="ms-menu__sep" role="separator"></div>
-    <button type="button" class="ms-menu__item ms-menu__item--danger" role="menuitem" tabindex="-1"><span class="ms-icon ms-i-trash" aria-hidden="true"></span><span class="ms-menu__text"><span>Remove Carol Diaz</span></span></button>
+<section class="grid min-w-0 gap-3" aria-labelledby="state-c">
+  <h3 class="flex items-center gap-2 text-base font-semibold" id="state-c"><span class="rounded-sm border border-border px-1.5 text-xs">State C</span>Carol's menu: no Mesail account</h3>
+  <p class="text-xs text-subtle">Same pattern for an outside address (S5, AC-CP-2).</p>
+  <div class="relative min-w-0 rounded-xl border border-dashed border-outline bg-surface p-4">
+<div class="w-full max-w-[24rem] rounded-xl border border-border bg-surface p-1 shadow-xl" id="menu-carol" data-duvay="w-menu" data-duvay-phone="w-bottom-sheet">
+  <div class="mb-1 flex items-center gap-2 border-b border-divider px-3 py-2"><w-avatar text="CD" size="24" class="ms-external" alt=""></w-avatar><span class="grid min-w-0"><span class="font-semibold">Carol Diaz</span><span class="text-xs text-subtle [overflow-wrap:anywhere]">carol@partner.org · Outside address</span></span></div>
+  <div class="px-3 pt-1 text-xs font-semibold uppercase tracking-wide text-subtle" id="menu-carol-label">How Carol gets this</div>
+  <div role="menu" aria-labelledby="menu-carol-label">
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 cursor-not-allowed text-subtle hover:bg-transparent" role="menuitemradio" tabindex="-1" aria-checked="false" aria-disabled="true"><span class="size-4 flex-none" aria-hidden="true"></span><span class="grid flex-1 gap-0.5"><span class="inline-flex items-center gap-1 "><w-icon name="chat" class="ms-icon-sm " aria-hidden="true"></w-icon>Chat</span><span class="flex items-start gap-1 text-xs text-subtle"><w-icon name="lock" class="ms-icon-xs mt-0.5" aria-hidden="true"></w-icon>carol@partner.org has no Mesail account.</span></span></button>
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2" role="menuitemradio" tabindex="0" aria-checked="true"><w-icon name="check" class="ms-icon-sm mt-0.5 text-accent" aria-hidden="true"></w-icon><span class="grid flex-1 gap-0.5"><span class="inline-flex items-center gap-1 font-semibold"><w-icon name="mail" class="ms-icon-sm text-email" aria-hidden="true"></w-icon>Email</span><span class="text-xs text-subtle">Carol gets a normal email</span></span></button>
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 cursor-not-allowed text-subtle hover:bg-transparent" role="menuitemradio" tabindex="-1" aria-checked="false" aria-disabled="true"><span class="size-4 flex-none" aria-hidden="true"></span><span class="grid flex-1 gap-0.5"><span class="inline-flex items-center gap-1 "><w-icon name="chat" class="ms-icon-sm " aria-hidden="true"></w-icon>Chat and email</span><span class="flex items-start gap-1 text-xs text-subtle"><w-icon name="lock" class="ms-icon-xs mt-0.5" aria-hidden="true"></w-icon>Not possible without a Mesail account.</span></span></button>
+    <div class="my-1 h-px bg-divider" role="separator"></div>
+    <button type="button" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm pointer-coarse:min-h-11 hover:bg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 text-error" role="menuitem" tabindex="-1"><w-icon name="trash" class="ms-icon-sm mt-0.5" aria-hidden="true"></w-icon><span class="grid flex-1 gap-0.5"><span>Remove Carol Diaz</span></span></button>
   </div>
 </div>
   </div>
 </section>
-<section class="ms-state" aria-labelledby="state-d">
-  <h3 class="ms-state__label" id="state-d"><span class="ms-tag ms-tag--outline">State D</span>After Bo is switched to Email</h3>
-  <p class="ms-state__note">The chip and the summary change at once. Screen readers hear: “Bo Lee now gets an email.”</p>
-  <div class="ms-state__frame">
-<div class="ms-composer ms-composer--email">
-<div class="ms-composer__mode ms-composer__mode--email"><span class="ms-icon ms-i-mail ms-icon--sm" aria-hidden="true"></span><span>This is an email. Everyone gets it in their mailbox.</span></div>
-<div class="ms-composer__row ms-compose__to">
+<section class="grid min-w-0 gap-3" aria-labelledby="state-d">
+  <h3 class="flex items-center gap-2 text-base font-semibold" id="state-d"><span class="rounded-sm border border-border px-1.5 text-xs">State D</span>After Bo is switched to Email</h3>
+  <p class="text-xs text-subtle">The chip and the summary change at once. Screen readers hear: “Bo Lee now gets an email.”</p>
+  <div class="relative min-w-0 rounded-xl border border-dashed border-outline bg-surface p-4">
+<div class="ms-composer ms-composer--email @container/composer flex flex-col">
+<div class="ms-composer__mode ms-composer__mode--email"><w-icon name="mail" class="ms-icon-sm" aria-hidden="true"></w-icon><span>This is an email. Everyone gets it in their mailbox.</span></div>
+<div class="ms-composer__row relative">
   <label class="ms-composer__row-label" for="to-d">To</label>
-  <div class="ms-recipients"><span class="ms-chip ms-chip--email"><button type="button" class="ms-chip__main" aria-haspopup="menu" aria-expanded="false" aria-label="Bo Lee, Email, bo@example.com. Open menu"><span class="ms-avatar ms-avatar--xs" style="--h:20" aria-hidden="true">BL</span><span class="ms-chip__name">Bo Lee</span><span class="ms-chip__how"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span></button><button type="button" class="ms-chip__remove" aria-label="Remove Bo Lee"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></span><span class="ms-chip ms-chip--email"><button type="button" class="ms-chip__main" aria-haspopup="menu" aria-expanded="false" aria-label="Carol Diaz, Email, carol@partner.org. Open menu"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-chip__name">Carol Diaz</span><span class="ms-chip__how"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span></button><button type="button" class="ms-chip__remove" aria-label="Remove Carol Diaz"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></span><span class="ms-chip ms-chip--email"><button type="button" class="ms-chip__main" aria-haspopup="menu" aria-expanded="false" aria-label="Finn Moss, Email, finn@example.org, other domain. Open menu"><span class="ms-avatar ms-avatar--xs" style="--h:100" aria-hidden="true">FM</span><span class="ms-chip__name">Finn Moss</span><span class="ms-chip__how"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span></button><button type="button" class="ms-chip__remove" aria-label="Remove Finn Moss"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></span><input id="to-d" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-describedby="keys" autocomplete="off" spellcheck="false" placeholder="Add more people"></div>
-  <div class="ms-composer__row-actions"><button type="button" class="ms-btn ms-btn--ghost ms-btn--sm ms-cc-toggle" aria-expanded="false">Cc</button><button type="button" class="ms-btn ms-btn--ghost ms-btn--sm ms-cc-toggle" aria-expanded="false">Bcc</button></div>
+  <div class="ms-recipients"><w-chip closable close-label="Remove Bo Lee" class="ms-recipient--email"><w-avatar slot="prepend" text="BL" size="20" style="--h:20" alt=""></w-avatar>Bo Lee<span class="ms-how ms-how--email ml-1"><w-icon name="mail" aria-hidden="true"></w-icon>Email</span><span class="sr-only">, bo@example.com. Opens a menu.</span></w-chip><w-chip closable close-label="Remove Carol Diaz" class="ms-recipient--email"><w-avatar slot="prepend" text="CD" size="20" class="ms-external" alt=""></w-avatar>Carol Diaz<span class="ms-how ms-how--email ml-1"><w-icon name="mail" aria-hidden="true"></w-icon>Email</span><span class="sr-only">, carol@partner.org. Opens a menu.</span></w-chip><w-chip closable close-label="Remove Finn Moss" class="ms-recipient--email"><w-avatar slot="prepend" text="FM" size="20" style="--h:100" alt=""></w-avatar>Finn Moss<span class="ms-how ms-how--email ml-1"><w-icon name="mail" aria-hidden="true"></w-icon>Email</span><span class="sr-only">, finn@example.org, other domain. Opens a menu.</span></w-chip><input id="to-d" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-describedby="keys" autocomplete="off" spellcheck="false" placeholder="Add more people"></div>
+  <div class="ms-composer__row-actions"><w-btn variant="text" size="small" aria-expanded="false">Cc</w-btn><w-btn variant="text" size="small" aria-expanded="false">Bcc</w-btn></div>
 </div>
-<div class="ms-composer__summary" role="status"><ul class="ms-summary" aria-label="Who gets what"><li class="ms-summary__item ms-summary__item--email"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span>Bo Lee, Carol Diaz and Finn Moss get an email.</span></li><li class="ms-summary__item ms-summary__item--info"><span class="ms-icon ms-i-info" aria-hidden="true"></span><span>Bo Lee no longer gets a chat message.</span></li></ul></div>
-<div class="ms-composer__toolbar ms-composer__toolbar--sticky">
-  <span class="ms-compose__format" role="group" aria-label="Text format"><button type="button" class="ms-icon-btn" aria-label="Bold" aria-keyshortcuts="Control+B"><span class="ms-icon ms-i-bold ms-icon--sm" aria-hidden="true"></span></button><button type="button" class="ms-icon-btn" aria-label="Italic" aria-keyshortcuts="Control+I"><span class="ms-icon ms-i-italic ms-icon--sm" aria-hidden="true"></span></button><button type="button" class="ms-icon-btn" aria-label="Code"><span class="ms-icon ms-i-code ms-icon--sm" aria-hidden="true"></span></button><button type="button" class="ms-icon-btn" aria-label="Link"><span class="ms-icon ms-i-link ms-icon--sm" aria-hidden="true"></span></button><span class="ms-divider-v" role="presentation"></span></span>
-  <button type="button" class="ms-icon-btn ms-compose__format-toggle" aria-label="Text format" aria-expanded="false"><span class="ms-icon ms-i-bold ms-icon--sm" aria-hidden="true"></span></button>
-  <button type="button" class="ms-icon-btn" aria-label="Attach files"><span class="ms-icon ms-i-paperclip" aria-hidden="true"></span></button>
-  <button type="button" class="ms-icon-btn" aria-label="Mention someone"><span class="ms-icon ms-i-at" aria-hidden="true"></span></button>
-  <button type="button" class="ms-icon-btn ms-compose__wide-only" aria-label="Emoji"><span class="ms-icon ms-i-smile" aria-hidden="true"></span></button>
-  <div class="ms-composer__send"><button type="submit" class="ms-send ms-send--email"><span class="ms-icon ms-i-mail ms-icon--sm" aria-hidden="true"></span>Send email</button></div>
+<div class="ms-composer__summary" role="status"><ul class="grid min-w-0 flex-1 gap-1" aria-label="Who gets what"><li class="flex items-start gap-2"><w-icon name="mail" class="ms-icon-sm mt-0.5 text-email" aria-hidden="true"></w-icon><span>Bo Lee, Carol Diaz and Finn Moss get an email.</span></li><li class="flex items-start gap-2"><w-icon name="info" class="ms-icon-sm mt-0.5 text-subtle" aria-hidden="true"></w-icon><span>Bo Lee no longer gets a chat message.</span></li></ul></div>
+<div class="flex flex-wrap items-center gap-0.5 gap-y-2 px-2 pt-1 pb-2">
+  <span class="hidden @md/composer:contents">
+    <w-icon-btn icon="bold" size="small" aria-label="Bold" aria-keyshortcuts="Control+B Meta+B"></w-icon-btn>
+    <w-icon-btn icon="italic" size="small" aria-label="Italic" aria-keyshortcuts="Control+I Meta+I"></w-icon-btn>
+    <w-icon-btn icon="code" size="small" aria-label="Code"></w-icon-btn>
+    <w-icon-btn icon="link" size="small" aria-label="Link"></w-icon-btn>
+    <span class="mx-1 h-5 w-px bg-divider" role="presentation"></span>
+  </span>
+  <w-icon-btn icon="bold" size="small" class="@md/composer:hidden" aria-label="Text format" aria-expanded="false"></w-icon-btn>
+  <w-icon-btn icon="paperclip" size="small" aria-label="Attach files"></w-icon-btn>
+  <w-icon-btn icon="at" size="small" aria-label="Mention someone"></w-icon-btn>
+  <w-icon-btn icon="smile" size="small" class="hidden @sm/composer:inline-flex" aria-label="Emoji"></w-icon-btn>
+  <div class="ml-auto flex flex-wrap items-center justify-end gap-2"><w-btn variant="filled" size="small" prepend-icon="mail" class="ms-btn-email">Send email</w-btn></div>
 </div>
 </div>
   </div>
 </section>
-<section class="ms-state" aria-labelledby="state-e">
-  <h3 class="ms-state__label" id="state-e"><span class="ms-tag ms-tag--outline">State E</span>After Bo is switched to Chat and email</h3>
-  <p class="ms-state__note">Bo gets both. He is on the email's To line, so the Cc option is not needed.</p>
-  <div class="ms-state__frame">
-<div class="ms-composer ms-composer--email">
-<div class="ms-composer__mode ms-composer__mode--email"><span class="ms-icon ms-i-mail ms-icon--sm" aria-hidden="true"></span><span>This is a chat and an email. Chat stays inside example.com, so Carol Diaz and Finn Moss get an email.</span></div>
-<div class="ms-composer__row ms-compose__to">
+<section class="grid min-w-0 gap-3" aria-labelledby="state-e">
+  <h3 class="flex items-center gap-2 text-base font-semibold" id="state-e"><span class="rounded-sm border border-border px-1.5 text-xs">State E</span>After Bo is switched to Chat and email</h3>
+  <p class="text-xs text-subtle">Bo gets both. He is on the email's To line, so the Cc option is not needed.</p>
+  <div class="relative min-w-0 rounded-xl border border-dashed border-outline bg-surface p-4">
+<div class="ms-composer ms-composer--email @container/composer flex flex-col">
+<div class="ms-composer__mode ms-composer__mode--email"><w-icon name="mail" class="ms-icon-sm" aria-hidden="true"></w-icon><span>This is a chat and an email. Chat stays inside example.com, so Carol Diaz and Finn Moss get an email.</span></div>
+<div class="ms-composer__row relative">
   <label class="ms-composer__row-label" for="to-e">To</label>
-  <div class="ms-recipients"><span class="ms-chip ms-chip--both"><button type="button" class="ms-chip__main" aria-haspopup="menu" aria-expanded="false" aria-label="Bo Lee, Chat + email, bo@example.com. Open menu"><span class="ms-avatar ms-avatar--xs" style="--h:20" aria-hidden="true">BL</span><span class="ms-chip__name">Bo Lee</span><span class="ms-chip__how"><span class="ms-icon ms-i-chat" aria-hidden="true"></span><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Chat + email</span></button><button type="button" class="ms-chip__remove" aria-label="Remove Bo Lee"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></span><span class="ms-chip ms-chip--email"><button type="button" class="ms-chip__main" aria-haspopup="menu" aria-expanded="false" aria-label="Carol Diaz, Email, carol@partner.org. Open menu"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-chip__name">Carol Diaz</span><span class="ms-chip__how"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span></button><button type="button" class="ms-chip__remove" aria-label="Remove Carol Diaz"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></span><span class="ms-chip ms-chip--email"><button type="button" class="ms-chip__main" aria-haspopup="menu" aria-expanded="false" aria-label="Finn Moss, Email, finn@example.org, other domain. Open menu"><span class="ms-avatar ms-avatar--xs" style="--h:100" aria-hidden="true">FM</span><span class="ms-chip__name">Finn Moss</span><span class="ms-chip__how"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span></button><button type="button" class="ms-chip__remove" aria-label="Remove Finn Moss"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button></span><input id="to-e" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-describedby="keys" autocomplete="off" spellcheck="false" placeholder="Add more people"></div>
-  <div class="ms-composer__row-actions"><button type="button" class="ms-btn ms-btn--ghost ms-btn--sm ms-cc-toggle" aria-expanded="false">Cc</button><button type="button" class="ms-btn ms-btn--ghost ms-btn--sm ms-cc-toggle" aria-expanded="false">Bcc</button></div>
+  <div class="ms-recipients"><w-chip closable close-label="Remove Bo Lee" class="ms-recipient--email"><w-avatar slot="prepend" text="BL" size="20" style="--h:20" alt=""></w-avatar>Bo Lee<span class="ms-how ms-how--both ml-1"><w-icon name="chat" aria-hidden="true"></w-icon><w-icon name="mail" aria-hidden="true"></w-icon>Chat + email</span><span class="sr-only">, bo@example.com. Opens a menu.</span></w-chip><w-chip closable close-label="Remove Carol Diaz" class="ms-recipient--email"><w-avatar slot="prepend" text="CD" size="20" class="ms-external" alt=""></w-avatar>Carol Diaz<span class="ms-how ms-how--email ml-1"><w-icon name="mail" aria-hidden="true"></w-icon>Email</span><span class="sr-only">, carol@partner.org. Opens a menu.</span></w-chip><w-chip closable close-label="Remove Finn Moss" class="ms-recipient--email"><w-avatar slot="prepend" text="FM" size="20" style="--h:100" alt=""></w-avatar>Finn Moss<span class="ms-how ms-how--email ml-1"><w-icon name="mail" aria-hidden="true"></w-icon>Email</span><span class="sr-only">, finn@example.org, other domain. Opens a menu.</span></w-chip><input id="to-e" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-describedby="keys" autocomplete="off" spellcheck="false" placeholder="Add more people"></div>
+  <div class="ms-composer__row-actions"><w-btn variant="text" size="small" aria-expanded="false">Cc</w-btn><w-btn variant="text" size="small" aria-expanded="false">Bcc</w-btn></div>
 </div>
-<div class="ms-composer__summary" role="status"><ul class="ms-summary" aria-label="Who gets what"><li class="ms-summary__item ms-summary__item--chat"><span class="ms-icon ms-i-chat" aria-hidden="true"></span><span>Bo Lee gets a chat message and an email.</span></li><li class="ms-summary__item ms-summary__item--email"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span>Carol Diaz and Finn Moss get an email.</span></li></ul></div>
-<div class="ms-composer__toolbar ms-composer__toolbar--sticky">
-  <span class="ms-compose__format" role="group" aria-label="Text format"><button type="button" class="ms-icon-btn" aria-label="Bold" aria-keyshortcuts="Control+B"><span class="ms-icon ms-i-bold ms-icon--sm" aria-hidden="true"></span></button><button type="button" class="ms-icon-btn" aria-label="Italic" aria-keyshortcuts="Control+I"><span class="ms-icon ms-i-italic ms-icon--sm" aria-hidden="true"></span></button><button type="button" class="ms-icon-btn" aria-label="Code"><span class="ms-icon ms-i-code ms-icon--sm" aria-hidden="true"></span></button><button type="button" class="ms-icon-btn" aria-label="Link"><span class="ms-icon ms-i-link ms-icon--sm" aria-hidden="true"></span></button><span class="ms-divider-v" role="presentation"></span></span>
-  <button type="button" class="ms-icon-btn ms-compose__format-toggle" aria-label="Text format" aria-expanded="false"><span class="ms-icon ms-i-bold ms-icon--sm" aria-hidden="true"></span></button>
-  <button type="button" class="ms-icon-btn" aria-label="Attach files"><span class="ms-icon ms-i-paperclip" aria-hidden="true"></span></button>
-  <button type="button" class="ms-icon-btn" aria-label="Mention someone"><span class="ms-icon ms-i-at" aria-hidden="true"></span></button>
-  <button type="button" class="ms-icon-btn ms-compose__wide-only" aria-label="Emoji"><span class="ms-icon ms-i-smile" aria-hidden="true"></span></button>
-  <div class="ms-composer__send"><button type="submit" class="ms-send"><span class="ms-icon ms-i-send ms-icon--sm" aria-hidden="true"></span>Send · 1 chat, 3 emails</button></div>
+<div class="ms-composer__summary" role="status"><ul class="grid min-w-0 flex-1 gap-1" aria-label="Who gets what"><li class="flex items-start gap-2"><w-icon name="chat" class="ms-icon-sm mt-0.5 text-chat" aria-hidden="true"></w-icon><span>Bo Lee gets a chat message and an email.</span></li><li class="flex items-start gap-2"><w-icon name="mail" class="ms-icon-sm mt-0.5 text-email" aria-hidden="true"></w-icon><span>Carol Diaz and Finn Moss get an email.</span></li></ul></div>
+<div class="flex flex-wrap items-center gap-0.5 gap-y-2 px-2 pt-1 pb-2">
+  <span class="hidden @md/composer:contents">
+    <w-icon-btn icon="bold" size="small" aria-label="Bold" aria-keyshortcuts="Control+B Meta+B"></w-icon-btn>
+    <w-icon-btn icon="italic" size="small" aria-label="Italic" aria-keyshortcuts="Control+I Meta+I"></w-icon-btn>
+    <w-icon-btn icon="code" size="small" aria-label="Code"></w-icon-btn>
+    <w-icon-btn icon="link" size="small" aria-label="Link"></w-icon-btn>
+    <span class="mx-1 h-5 w-px bg-divider" role="presentation"></span>
+  </span>
+  <w-icon-btn icon="bold" size="small" class="@md/composer:hidden" aria-label="Text format" aria-expanded="false"></w-icon-btn>
+  <w-icon-btn icon="paperclip" size="small" aria-label="Attach files"></w-icon-btn>
+  <w-icon-btn icon="at" size="small" aria-label="Mention someone"></w-icon-btn>
+  <w-icon-btn icon="smile" size="small" class="hidden @sm/composer:inline-flex" aria-label="Emoji"></w-icon-btn>
+  <div class="ml-auto flex flex-wrap items-center justify-end gap-2"><w-btn variant="filled" size="small" prepend-icon="send">Send · 1 chat, 3 emails</w-btn></div>
 </div>
 </div>
   </div>
@@ -246,6 +270,6 @@
 </div>
 </div>
 </section>
-<div class="ms-sr-only" aria-live="polite" id="announcer"></div>
+<div class="sr-only" aria-live="polite" id="announcer"></div>
 </body>
 </html>

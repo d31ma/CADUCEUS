@@ -1,0 +1,7 @@
+/* Mockup entry stylesheet. Cascade order (lowest first): Mesail reset, DuVay, Mesail components, Tailwind utilities. */
+@layer reset, duvay, theme, base, components, utilities;
+@import url("mesail-reset.css") layer(reset);
+@import url("vendor/duvay-mesail.css") layer(duvay);
+@import url("mesail-tokens.css");
+@import url("mesail-components.css") layer(components);
+@import url("vendor/tailwind.css");

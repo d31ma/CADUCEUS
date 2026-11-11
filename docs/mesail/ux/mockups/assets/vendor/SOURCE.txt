@@ -1,0 +1,3 @@
+Built by ../../build/build.sh for the mockups only (the app bundle is built by scripts/vendor/duvay.sh).
+duvay-mesail.js / duvay-mesail.css: DuVay v26.35.01-1 (github d31ma/DUVAY, commit bc8b56a), MIT licence, subset listed in build/duvay-mesail.entry.js and .entry.css.
+tailwind.css: Tailwind CSS 4.3.5 (MIT), input build/tailwind.input.css.

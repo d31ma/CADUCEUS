@@ -1,345 +1,216 @@
 <!doctype html>
-<html lang="en" w-theme="light">
+<html lang="en" w-theme="light" w-density="comfortable">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mesail mockup: Admin, add a domain</title>
-<link rel="stylesheet" href="assets/duvay/tokens.css">
-<link rel="stylesheet" href="assets/duvay/themes.css">
-<link rel="stylesheet" href="assets/mesail-tokens.css">
-<link rel="stylesheet" href="assets/icons.css">
-<link rel="stylesheet" href="assets/mesail.css">
-<link rel="stylesheet" href="assets/screens/admin.css">
+<link rel="stylesheet" href="assets/app.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
 <script src="assets/mockup.js" defer></script>
 </head>
-<body>
+<body class="bg-surface text-text">
 <a class="ms-skip-link" href="#admin-content">Skip to admin content</a>
 
-<div class="ms-app" data-pane="main" inert>
+<!-- App shell without a right pane. Under 600 px one pane shows (data-pane); 600 px: list + page; 960 px: + domain rail;
+     1920 and 2560 px: wider sidebar. -->
+<div class="group/app relative grid h-dvh overflow-hidden
+  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
+  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main">
 
-  <!-- Domain rail -->
-  <nav class="ms-rail" aria-label="Domains">
-    <ul class="ms-rail__list">
+  <!-- Domain rail (960 px and up) -->
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Domains">
+    <ul class="flex flex-col gap-2">
       <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
-      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
-      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<w-badge content="3" inline class="absolute -top-1 -right-1.5"></w-badge></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="absolute -left-2.5 size-2 rounded-full bg-on-rail" aria-hidden="true"></span>La</a></li>
     </ul>
-    <div class="ms-rail__sep" role="presentation"></div>
-    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
-    <div class="ms-rail__spacer"></div>
-    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+    <div class="h-px w-8 bg-on-rail/20" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><w-icon name="plus"></w-icon></a>
+    <div class="flex-1"></div>
+    <a class="ms-domain-tile" href="settings-appearance.html" aria-label="Help and keyboard shortcuts" title="Help"><w-icon name="info"></w-icon></a>
   </nav>
 
   <!-- Sidebar: the Admin section shows only for users with an admin role -->
-  <aside class="ms-sidebar" aria-label="Conversations and admin in example.com">
-    <div class="ms-sidebar__head">
-      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
-      <div class="ms-header__actions">
-        <button class="ms-icon-btn" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
-      </div>
-    </div>
-    <div class="ms-sidebar__search">
-      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
-    </div>
-    <div class="ms-sidebar__scroll">
-      <ul class="ms-nav-list">
-        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
-        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
-      </ul>
-
-      <section class="ms-nav-section" aria-labelledby="sec-channels">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
-          <span class="ms-badge" aria-label="4 unread">4</span>
-        </div>
-      </section>
-      <section class="ms-nav-section" aria-labelledby="sec-dms">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
-          <span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span>
-        </div>
-      </section>
-      <section class="ms-nav-section" aria-labelledby="sec-email">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
-          <span class="ms-badge" aria-label="1 unread">1</span>
-        </div>
-      </section>
-
-      <section class="ms-nav-section" aria-labelledby="sec-admin">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-admin"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Admin</button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item" href="admin-domains.html" aria-current="page"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span class="ms-nav-item__label">Domains</span></a></li>
-          <li><a class="ms-nav-item" href="admin-members.html"><span class="ms-icon ms-i-users" aria-hidden="true"></span><span class="ms-nav-item__label">Members</span></a></li>
-          <li><a class="ms-nav-item" href="admin-channels.html"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">Channels</span></a></li>
-          <li><a class="ms-nav-item" href="admin-mail.html"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span class="ms-nav-item__label">Mail delivery</span></a></li>
-        </ul>
-      </section>
-    </div>
-    <div class="ms-sidebar__foot">
-      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
-        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
-        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations and admin in example.com">
+    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-t safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
+      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
+      <span class="flex-1"></span>
+      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+    </header>
+    <div class="px-3 py-2">
+      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
+        <w-icon name="search" class="ms-icon-sm"></w-icon>Search<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
       </button>
-      <a class="ms-icon-btn" href="settings.html" aria-label="Settings"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
     </div>
+    <div class="flex-1 overflow-y-auto px-2 pb-4">
+      <w-list nav density="compact" aria-label="Shortcuts">
+        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline label="2 mentions"></w-badge></w-list-item>
+        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
+      </w-list>
+
+      <section class="mt-3" aria-labelledby="sec-channels">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-channels"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Channels</button>
+          <w-badge content="4" inline class="ms-count" label="4 unread"></w-badge>
+        </div>
+      </section>
+      <section class="mt-3" aria-labelledby="sec-dms">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-dms"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Direct messages</button>
+          <w-badge content="1" inline label="1 mention"></w-badge>
+        </div>
+      </section>
+      <section class="mt-3" aria-labelledby="sec-email">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-email"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Email</button>
+          <w-badge content="1" inline class="ms-count" label="1 unread"></w-badge>
+        </div>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-admin">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-admin"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Admin</button>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-admin">
+          <w-list-item href="admin-domains.html" title="Domains" active><w-icon slot="prepend" name="globe"></w-icon></w-list-item>
+          <w-list-item href="admin-members.html" title="Members"><w-icon slot="prepend" name="users"></w-icon></w-list-item>
+          <w-list-item href="admin-channels.html" title="Channels"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="admin-mail.html" title="Mail delivery"><w-icon slot="prepend" name="mail"></w-icon></w-list-item>
+        </w-list>
+      </section>
+    </div>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <w-avatar text="AR" size="28" status="online" style="--h:195" alt=""></w-avatar>
+        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">ana@example.com</span></span>
+      </button>
+      <w-icon-btn icon="settings" href="settings.html" aria-label="Settings"></w-icon-btn>
+    </footer>
   </aside>
 
-  <!-- Admin: domains of the organization (organization admins only) -->
-  <main class="ms-main ms-admin" aria-labelledby="page-title">
-    <header class="ms-header">
-      <a class="ms-icon-btn ms-header__back" href="?pane=list" aria-label="Back to menu"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
-      <h1 class="ms-header__title" id="page-title"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span>Domains</span></h1>
-      <p class="ms-header__topic">Organization admin · all domains of your organization</p>
-      <div class="ms-header__actions">
-        <a class="ms-btn ms-btn--primary" href="admin-domain-add.html"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span><span class="ms-btn__text">Add domain</span></a>
-      </div>
+  <!-- Admin page -->
+  <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="page-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="admin-domains.html" aria-label="Back to domains"></w-icon-btn>
+      <h1 id="page-title" class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="globe" class="ms-icon-sm"></w-icon><span class="truncate">Domains</span></h1>
+      <p class="hidden @2xl/main:block min-w-0 flex-1 truncate border-l border-divider pl-3 text-sm text-subtle">Organization admin &middot; add a domain</p>
+      <div class="ml-auto flex items-center gap-1 no-drag"></div>
     </header>
 
-    <div class="ms-page" id="admin-content">
-      <div class="ms-page__inner">
-
-        <div class="ms-callout ms-callout--info">
-          <span class="ms-icon ms-i-info" aria-hidden="true"></span>
-          <div class="ms-callout__text">
-            <strong>Each domain is its own messaging space.</strong>
-            <p>People chat inside a domain and email across domains. A person in example.com can chat with Bo Lee, but gets email from finn@example.org.</p>
+    <div class="flex-1 min-h-0 overflow-y-auto py-6 safe-l safe-r safe-b" style="--ms-edge: 1rem" id="admin-content">
+      <div class="@container/page mx-auto grid w-full max-w-3xl gap-6 pb-10">
+        <nav aria-label="Breadcrumb"><p class="text-sm"><a class="text-accent underline" href="admin-domains.html">Domains</a> <span aria-hidden="true">/</span> <span aria-current="page">Add a domain</span></p></nav>
+        <p class="text-subtle">The Add domain dialog, in every state. In the product it opens over the domain list as a <code>w-dialog</code>, and as a <code>w-bottom-sheet</code> under 600 px.</p>
+        <section class="grid gap-3" aria-label="State 1 of 5">
+          <p class="justify-self-start rounded-sm border border-dashed border-outline px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-subtle">State 1 of 5: empty (opened from &ldquo;Add domain&rdquo;)</p>
+          <div role="dialog" aria-modal="false" aria-labelledby="add1-title" data-duvay="w-dialog" class="@container/dialog relative mx-auto w-full max-w-lg rounded-xl border border-border bg-surface shadow-xl max-sm:rounded-b-none">
+            <div class="flex items-center gap-2 px-5 pt-4 pb-2">
+              <h2 id="add1-title" class="flex-1 text-xl font-semibold">Add a domain</h2>
+              <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+            </div>
+            <form id="add1-form" class="grid gap-4 px-5 pb-4 pt-2" onsubmit="return false">
+              <p>Add a mail domain your organization owns. It becomes its own messaging space, with its own members and channels.</p>
+              <w-text-field label="Domain name" name="domain" class="font-mono" placeholder="example.net" hint="Use the domain only, without www or @. Letters from any language are fine: b&uuml;cher.example is saved as xn--bcher-kva.example." persistent-hint autocomplete="off" autocapitalize="none" spellcheck="false" autofocus></w-text-field>
+            </form>
+            <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-5 pb-5 pt-3 safe-b max-sm:[&>*]:flex-1">
+              <w-btn variant="text">Cancel</w-btn>
+              <w-btn variant="filled">Add domain</w-btn>
+            </div>
           </div>
-        </div>
-
-        <section class="ms-card" aria-labelledby="domains-title">
-          <div class="ms-card__head">
-            <h2 id="domains-title">4 domains</h2>
-            <span class="ms-meta">Up to 50 domains per organization</span>
+        </section>
+        <section class="grid gap-3" aria-label="State 2 of 5">
+          <p class="justify-self-start rounded-sm border border-dashed border-outline px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-subtle">State 2 of 5: not a valid domain</p>
+          <div role="dialog" aria-modal="false" aria-labelledby="add2-title" data-duvay="w-dialog" class="@container/dialog relative mx-auto w-full max-w-lg rounded-xl border border-border bg-surface shadow-xl max-sm:rounded-b-none">
+            <div class="flex items-center gap-2 px-5 pt-4 pb-2">
+              <h2 id="add2-title" class="flex-1 text-xl font-semibold">Add a domain</h2>
+              <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+            </div>
+            <form id="add2-form" class="grid gap-4 px-5 pb-4 pt-2" onsubmit="return false">
+              <w-text-field label="Domain name" name="domain" class="font-mono" placeholder="example.net" hint="Use the domain only, without www or @. Letters from any language are fine: b&uuml;cher.example is saved as xn--bcher-kva.example." persistent-hint value="new example.net" error="This is not a valid domain name. Remove the space. Use letters, digits, hyphens and dots, like example.net." autocomplete="off" autocapitalize="none" spellcheck="false"></w-text-field>
+            </form>
+            <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-5 pb-5 pt-3 safe-b max-sm:[&>*]:flex-1">
+              <w-btn variant="text">Cancel</w-btn>
+              <w-btn variant="filled">Add domain</w-btn>
+            </div>
           </div>
-          <div class="ms-table-wrap">
-            <table class="ms-table ms-table--cards">
-              <caption class="ms-sr-only">Domains, their state, members and DNS checks</caption>
-              <thead>
-                <tr><th scope="col">Domain</th><th scope="col">State</th><th scope="col">Members</th><th scope="col">DNS records</th><th scope="col"><span class="ms-sr-only">Actions</span></th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="ms-table__lead"><span class="ms-person__name">example.com</span><span class="ms-table__sub">Added 3 Mar 2026</span></td>
-                  <td data-label="State"><span class="ms-tag ms-tag--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>Active</span></td>
-                  <td data-label="Members">5</td>
-                  <td data-label="DNS records">
-                    <ul class="ms-dns-marks" aria-label="DNS: all 4 records OK">
-                      <li class="ms-mark ms-mark--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>MX<span class="ms-sr-only"> OK</span></li>
-                      <li class="ms-mark ms-mark--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>SPF<span class="ms-sr-only"> OK</span></li>
-                      <li class="ms-mark ms-mark--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>DKIM<span class="ms-sr-only"> OK</span></li>
-                      <li class="ms-mark ms-mark--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>DMARC<span class="ms-sr-only"> OK</span></li>
-                    </ul>
-                  </td>
-                  <td class="ms-table__actions"><div class="ms-page__actions">
-                    <a class="ms-btn ms-btn--sm" href="admin-domain-dns.html" aria-label="DNS and settings for example.com">Manage</a>
-                    <a class="ms-btn ms-btn--sm ms-btn--ghost" href="admin-members.html" aria-label="Members of example.com">Members</a>
-                  </div></td>
-                </tr>
-                <tr>
-                  <td class="ms-table__lead"><span class="ms-person__name">example.org</span><span class="ms-table__sub">Added 12 May 2026</span></td>
-                  <td data-label="State"><span class="ms-tag ms-tag--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>Active</span></td>
-                  <td data-label="Members">2</td>
-                  <td data-label="DNS records">
-                    <ul class="ms-dns-marks" aria-label="DNS: MX, SPF and DKIM OK, DMARC missing">
-                      <li class="ms-mark ms-mark--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>MX<span class="ms-sr-only"> OK</span></li>
-                      <li class="ms-mark ms-mark--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>SPF<span class="ms-sr-only"> OK</span></li>
-                      <li class="ms-mark ms-mark--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>DKIM<span class="ms-sr-only"> OK</span></li>
-                      <li class="ms-mark ms-mark--missing"><span class="ms-icon ms-i-close" aria-hidden="true"></span>DMARC<span class="ms-sr-only"> missing</span></li>
-                    </ul>
-                  </td>
-                  <td class="ms-table__actions"><div class="ms-page__actions">
-                    <a class="ms-btn ms-btn--sm" href="admin-domain-dns.html" aria-label="DNS and settings for example.org">Manage</a>
-                    <a class="ms-btn ms-btn--sm ms-btn--ghost" href="admin-members.html" aria-label="Members of example.org">Members</a>
-                  </div></td>
-                </tr>
-                <tr>
-                  <td class="ms-table__lead"><span class="ms-person__name">new.example.net</span><span class="ms-table__sub">Added today, 10:31</span></td>
-                  <td data-label="State"><div>
-                    <span class="ms-tag ms-tag--warn"><span class="ms-icon ms-i-clock" aria-hidden="true"></span>Pending</span>
-                    <span class="ms-table__sub">Mail is not accepted yet: MX and DKIM must be OK.</span>
-                  </div></td>
-                  <td data-label="Members">0</td>
-                  <td data-label="DNS records">
-                    <ul class="ms-dns-marks" aria-label="DNS: MX and SPF OK, DKIM missing, DMARC wrong value">
-                      <li class="ms-mark ms-mark--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>MX<span class="ms-sr-only"> OK</span></li>
-                      <li class="ms-mark ms-mark--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>SPF<span class="ms-sr-only"> OK</span></li>
-                      <li class="ms-mark ms-mark--missing"><span class="ms-icon ms-i-close" aria-hidden="true"></span>DKIM<span class="ms-sr-only"> missing</span></li>
-                      <li class="ms-mark ms-mark--wrong"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>DMARC<span class="ms-sr-only"> wrong value</span></li>
-                    </ul>
-                  </td>
-                  <td class="ms-table__actions"><div class="ms-page__actions">
-                    <a class="ms-btn ms-btn--sm ms-btn--primary" href="admin-domain-dns.html" aria-label="Set up DNS for new.example.net">Set up DNS</a>
-                  </div></td>
-                </tr>
-                <tr class="is-muted">
-                  <td class="ms-table__lead"><span class="ms-person__name">old.example.com</span><span class="ms-table__sub">Disabled 2 Oct 2026 by Ana Ruiz</span></td>
-                  <td data-label="State"><div>
-                    <span class="ms-tag ms-tag--outline"><span class="ms-icon ms-i-minus-circle" aria-hidden="true"></span>Disabled</span>
-                    <span class="ms-table__sub">Mail to this domain is refused. Messages are kept.</span>
-                  </div></td>
-                  <td data-label="Members">3</td>
-                  <td data-label="DNS records">
-                    <ul class="ms-dns-marks" aria-label="DNS: not checked while the domain is disabled">
-                      <li class="ms-mark ms-mark--off"><span class="ms-icon ms-i-minus-circle" aria-hidden="true"></span>MX<span class="ms-sr-only"> not checked</span></li>
-                      <li class="ms-mark ms-mark--off"><span class="ms-icon ms-i-minus-circle" aria-hidden="true"></span>SPF<span class="ms-sr-only"> not checked</span></li>
-                      <li class="ms-mark ms-mark--off"><span class="ms-icon ms-i-minus-circle" aria-hidden="true"></span>DKIM<span class="ms-sr-only"> not checked</span></li>
-                      <li class="ms-mark ms-mark--off"><span class="ms-icon ms-i-minus-circle" aria-hidden="true"></span>DMARC<span class="ms-sr-only"> not checked</span></li>
-                    </ul>
-                  </td>
-                  <td class="ms-table__actions"><div class="ms-page__actions">
-                    <button class="ms-btn ms-btn--sm" aria-label="Enable old.example.com">Enable</button>
-                    <a class="ms-btn ms-btn--sm ms-btn--ghost" href="admin-domain-dns.html#danger" aria-label="Remove old.example.com">Remove</a>
-                  </div></td>
-                </tr>
-              </tbody>
-            </table>
+        </section>
+        <section class="grid gap-3" aria-label="State 3 of 5">
+          <p class="justify-self-start rounded-sm border border-dashed border-outline px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-subtle">State 3 of 5: used by another organization</p>
+          <div role="dialog" aria-modal="false" aria-labelledby="add3-title" data-duvay="w-dialog" class="@container/dialog relative mx-auto w-full max-w-lg rounded-xl border border-border bg-surface shadow-xl max-sm:rounded-b-none">
+            <div class="flex items-center gap-2 px-5 pt-4 pb-2">
+              <h2 id="add3-title" class="flex-1 text-xl font-semibold">Add a domain</h2>
+              <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+            </div>
+            <form id="add3-form" class="grid gap-4 px-5 pb-4 pt-2" onsubmit="return false">
+              <w-text-field label="Domain name" name="domain" class="font-mono" placeholder="example.net" hint="Use the domain only, without www or @. Letters from any language are fine: b&uuml;cher.example is saved as xn--bcher-kva.example." persistent-hint value="partner.org" error="Another organization already uses this domain. If you own it, ask Mesail support to move it." autocomplete="off" autocapitalize="none" spellcheck="false"></w-text-field>
+            </form>
+            <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-5 pb-5 pt-3 safe-b max-sm:[&>*]:flex-1">
+              <w-btn variant="text">Cancel</w-btn>
+              <w-btn variant="filled">Add domain</w-btn>
+            </div>
           </div>
-          <div class="ms-list-foot">
-            <span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>
-            <span>DNS checked every 15 minutes. Last check 10:42.</span>
+        </section>
+        <section class="grid gap-3" aria-label="State 4 of 5">
+          <p class="justify-self-start rounded-sm border border-dashed border-outline px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-subtle">State 4 of 5: adding (busy)</p>
+          <div role="dialog" aria-modal="false" aria-labelledby="add4-title" data-duvay="w-dialog" class="@container/dialog relative mx-auto w-full max-w-lg rounded-xl border border-border bg-surface shadow-xl max-sm:rounded-b-none">
+            <div class="flex items-center gap-2 px-5 pt-4 pb-2">
+              <h2 id="add4-title" class="flex-1 text-xl font-semibold">Add a domain</h2>
+              <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+            </div>
+            <form id="add4-form" class="grid gap-4 px-5 pb-4 pt-2" onsubmit="return false">
+              <w-text-field label="Domain name" name="domain" class="font-mono" placeholder="example.net" hint="Use the domain only, without www or @. Letters from any language are fine: b&uuml;cher.example is saved as xn--bcher-kva.example." persistent-hint value="new.example.net" autocomplete="off" autocapitalize="none" spellcheck="false" readonly></w-text-field>
+              <p class="flex items-center gap-2 text-xs text-subtle" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Adding new.example.net and making its DKIM key&hellip;</p>
+            </form>
+            <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-5 pb-5 pt-3 safe-b max-sm:[&>*]:flex-1">
+              <w-btn variant="text" disabled>Cancel</w-btn>
+              <w-btn variant="filled" loading disabled aria-busy="true">Adding&hellip;</w-btn>
+            </div>
+          </div>
+        </section>
+        <section class="grid gap-3" aria-label="State 5 of 5">
+          <p class="justify-self-start rounded-sm border border-dashed border-outline px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-subtle">State 5 of 5: success</p>
+          <div role="dialog" aria-modal="false" aria-labelledby="add5-title" data-duvay="w-dialog" class="@container/dialog relative mx-auto w-full max-w-lg rounded-xl border border-border bg-surface shadow-xl max-sm:rounded-b-none">
+            <div class="flex items-center gap-2 px-5 pt-4 pb-2">
+              <h2 id="add5-title" class="flex-1 text-xl font-semibold">Domain added</h2>
+              <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+            </div>
+            <form id="add5-form" class="grid gap-4 px-5 pb-4 pt-2" onsubmit="return false">
+              <w-alert type="success" icon="check" title="new.example.net is added.">Its state is Pending. Mail is not accepted until MX and DKIM are OK.</w-alert>
+              <div class="grid gap-3">
+                <h3 class="text-lg font-semibold">Next step: create these DNS records</h3>
+                <p>Add them at the company that hosts DNS for new.example.net. The next page shows each value with a Copy button.</p>
+                <ul class="flex flex-wrap gap-1" aria-label="Records to create">
+                  <li><w-chip size="small" prepend-icon="mail" inert>MX</w-chip><span class="sr-only">MX</span></li>
+                  <li><w-chip size="small" prepend-icon="shield" inert>SPF (TXT)</w-chip><span class="sr-only">SPF, a TXT record</span></li>
+                  <li><w-chip size="small" prepend-icon="key" inert>DKIM (TXT)</w-chip><span class="sr-only">DKIM, a TXT record</span></li>
+                  <li><w-chip size="small" prepend-icon="shield-check" inert>DMARC (TXT)</w-chip><span class="sr-only">DMARC, a TXT record</span></li>
+                </ul>
+                <p class="text-xs text-subtle">Mesail made a DKIM key just for this domain. The private key stays in the secure key store and is never shown.</p>
+              </div>
+            </form>
+            <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-5 pb-5 pt-3 safe-b max-sm:[&>*]:flex-1">
+              <w-btn variant="text">Close</w-btn>
+              <w-btn variant="filled" append-icon="chevron-right" href="admin-domain-dns.html">Show DNS records</w-btn>
+            </div>
           </div>
         </section>
 
-        <section class="ms-section" aria-labelledby="legend-title">
-          <h2 class="ms-section-title" id="legend-title">What the DNS marks mean</h2>
-          <dl class="ms-kv ms-kv--plain">
-            <dt><span class="ms-mark ms-mark--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>OK</span></dt>
-            <dd>The record is published and has the right value.</dd>
-            <dt><span class="ms-mark ms-mark--missing"><span class="ms-icon ms-i-close" aria-hidden="true"></span>Missing</span></dt>
-            <dd>Mesail could not find the record. Create it at your DNS provider.</dd>
-            <dt><span class="ms-mark ms-mark--wrong"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>Wrong</span></dt>
-            <dd>A record exists, but its value is different. Open the domain to compare.</dd>
-          </dl>
-          <p class="ms-meta">Mail for a domain is accepted only when MX and DKIM are OK. SPF and DMARC help your mail reach inboxes.</p>
-        </section>
       </div>
     </div>
   </main>
 
-  <nav class="ms-bottom-nav" aria-label="Main">
-    <a class="ms-bottom-nav__item" href="messenger.html?pane=list"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
-    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
-    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
-    <a class="ms-bottom-nav__item" href="settings.html" aria-current="page"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
-  </nav>
+  <!-- Bottom navigation: phones, list pane only -->
+  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden" value="you" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" href="messenger.html?pane=list"><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="search" label="Search" href="search.html"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="you" label="You" href="settings.html" active><w-icon name="user"></w-icon></w-bottom-nav-item>
+  </w-bottom-navigation>
 </div>
 
-<!-- Add-domain dialog: every state, stacked and labelled -->
-<div class="ms-scrim ms-scrim--sheet ms-scrim--stack">
-  <div class="ms-dialog-stack">
-      <p class="ms-state__label">State 1 of 5: empty (opened from &ldquo;Add domain&rdquo;)</p>
-      <div class="ms-dialog" role="dialog" aria-modal="true" aria-labelledby="add-title-1">
-        <div class="ms-dialog__head">
-          <h2 id="add-title-1">Add a domain</h2>
-          <button class="ms-icon-btn ms-dialog__close" aria-label="Close"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
-        </div>
-        <form class="ms-dialog__body" onsubmit="return false" id="add-form-1">
-          <p>Add a mail domain your organization owns. It becomes its own messaging space, with its own members and channels.</p>
-          <div class="ms-field">
-            <label class="ms-label" for="domain-name-1">Domain name</label>
-            <input class="ms-input ms-mono" id="domain-name-1" name="domain" type="text" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="example.net" aria-describedby="domain-help-1" autofocus>
-            <p class="ms-help" id="domain-help-1">Use the domain only, without www or @. Letters from any language are fine: b&uuml;cher.example is saved as xn--bcher-kva.example.</p>
-          </div>
-        </form>
-        <div class="ms-dialog__foot">
-          <button class="ms-btn" type="button">Cancel</button>
-          <button class="ms-btn ms-btn--primary" type="submit" form="add-form-1">Add domain</button>
-        </div>
-      </div>
-      <p class="ms-state__label">State 2 of 5: not a valid domain</p>
-      <div class="ms-dialog" role="dialog" aria-labelledby="add-title-2">
-        <div class="ms-dialog__head">
-          <h2 id="add-title-2">Add a domain</h2>
-          <button class="ms-icon-btn ms-dialog__close" aria-label="Close"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
-        </div>
-        <form class="ms-dialog__body" onsubmit="return false" id="add-form-2">
-          <div class="ms-field">
-            <label class="ms-label" for="domain-name-2">Domain name</label>
-            <input class="ms-input ms-mono" id="domain-name-2" name="domain" type="text" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="example.net" value="new example.net" aria-invalid="true" aria-describedby="domain-error-2 domain-help-2">
-            <p class="ms-error-text" id="domain-error-2"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>This is not a valid domain name. Remove the space. Use letters, digits, hyphens and dots, like example.net.</p>
-            <p class="ms-help" id="domain-help-2">Use the domain only, without www or @. Letters from any language are fine: b&uuml;cher.example is saved as xn--bcher-kva.example.</p>
-          </div>
-        </form>
-        <div class="ms-dialog__foot">
-          <button class="ms-btn" type="button">Cancel</button>
-          <button class="ms-btn ms-btn--primary" type="submit" form="add-form-2">Add domain</button>
-        </div>
-      </div>
-      <p class="ms-state__label">State 3 of 5: used by another organization</p>
-      <div class="ms-dialog" role="dialog" aria-labelledby="add-title-3">
-        <div class="ms-dialog__head">
-          <h2 id="add-title-3">Add a domain</h2>
-          <button class="ms-icon-btn ms-dialog__close" aria-label="Close"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
-        </div>
-        <form class="ms-dialog__body" onsubmit="return false" id="add-form-3">
-          <div class="ms-field">
-            <label class="ms-label" for="domain-name-3">Domain name</label>
-            <input class="ms-input ms-mono" id="domain-name-3" name="domain" type="text" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="example.net" value="partner.org" aria-invalid="true" aria-describedby="domain-error-3 domain-help-3">
-            <p class="ms-error-text" id="domain-error-3"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>Another organization already uses this domain. If you own it, ask Mesail support to move it.</p>
-            <p class="ms-help" id="domain-help-3">Use the domain only, without www or @. Letters from any language are fine: b&uuml;cher.example is saved as xn--bcher-kva.example.</p>
-          </div>
-        </form>
-        <div class="ms-dialog__foot">
-          <button class="ms-btn" type="button">Cancel</button>
-          <button class="ms-btn ms-btn--primary" type="submit" form="add-form-3">Add domain</button>
-        </div>
-      </div>
-      <p class="ms-state__label">State 4 of 5: adding (busy)</p>
-      <div class="ms-dialog" role="dialog" aria-labelledby="add-title-4">
-        <div class="ms-dialog__head">
-          <h2 id="add-title-4">Add a domain</h2>
-          <button class="ms-icon-btn ms-dialog__close" aria-label="Close"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
-        </div>
-        <form class="ms-dialog__body" onsubmit="return false" id="add-form-4">
-          <div class="ms-field">
-            <label class="ms-label" for="domain-name-4">Domain name</label>
-            <input class="ms-input ms-mono" id="domain-name-4" name="domain" type="text" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="example.net" value="new.example.net" aria-describedby="domain-help-4" readonly>
-            <p class="ms-help" id="domain-help-4">Use the domain only, without www or @. Letters from any language are fine: b&uuml;cher.example is saved as xn--bcher-kva.example.</p>
-          </div>
-          <p class="ms-meta" role="status"><span class="ms-spinner" aria-hidden="true"></span> Adding new.example.net and making its DKIM key&hellip;</p>
-        </form>
-        <div class="ms-dialog__foot">
-          <button class="ms-btn" type="button" disabled>Cancel</button>
-          <button class="ms-btn ms-btn--primary" type="submit" form="add-form-4" aria-busy="true" aria-disabled="true"><span class="ms-spinner" aria-hidden="true"></span>Adding&hellip;</button>
-        </div>
-      </div>
-      <p class="ms-state__label">State 5 of 5: success</p>
-      <div class="ms-dialog" role="dialog" aria-labelledby="add-title-5">
-        <div class="ms-dialog__head">
-          <h2 id="add-title-5">Domain added</h2>
-          <button class="ms-icon-btn ms-dialog__close" aria-label="Close"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
-        </div>
-        <form class="ms-dialog__body" onsubmit="return false" id="add-form-5">
-          <div class="ms-callout ms-callout--ok" role="status">
-            <span class="ms-icon ms-i-check" aria-hidden="true"></span>
-            <div class="ms-callout__text">
-              <strong>new.example.net is added.</strong>
-              <p>Its state is Pending. Mail is not accepted until MX and DKIM are OK.</p>
-            </div>
-          </div>
-          <div class="ms-section">
-            <h3 class="ms-section-title">Next step: create these DNS records</h3>
-            <p>Add them at the company that hosts DNS for new.example.net. The next page shows each value with a Copy button.</p>
-            <ul class="ms-dns-marks" aria-label="Records to create">
-              <li class="ms-mark"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>MX</li>
-              <li class="ms-mark"><span class="ms-icon ms-i-shield" aria-hidden="true"></span>SPF (TXT)</li>
-              <li class="ms-mark"><span class="ms-icon ms-i-key" aria-hidden="true"></span>DKIM (TXT)</li>
-              <li class="ms-mark"><span class="ms-icon ms-i-shield-check" aria-hidden="true"></span>DMARC (TXT)</li>
-            </ul>
-            <p class="ms-meta">Mesail made a DKIM key just for this domain. The private key stays in the secure key store and is never shown.</p>
-          </div>
-        </form>
-        <div class="ms-dialog__foot">
-          <button class="ms-btn" type="button">Close</button>
-          <a class="ms-btn ms-btn--primary" href="admin-domain-dns.html">Show DNS records<span class="ms-icon ms-i-chevron-right ms-icon--sm" aria-hidden="true"></span></a>
-        </div>
-      </div>
-  </div>
-</div>
-
-<div class="ms-sr-only" aria-live="polite" id="announcer"></div>
+<div class="sr-only" aria-live="polite" id="announcer"></div>
 </body>
 </html>

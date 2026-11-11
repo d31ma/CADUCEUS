@@ -1,113 +1,117 @@
 <!doctype html>
-<html lang="en" w-theme="light">
+<html lang="en" w-theme="light" w-density="comfortable">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mesail mockup: show original email</title>
-<link rel="stylesheet" href="assets/duvay/tokens.css">
-<link rel="stylesheet" href="assets/duvay/themes.css">
-<link rel="stylesheet" href="assets/mesail-tokens.css">
-<link rel="stylesheet" href="assets/icons.css">
-<link rel="stylesheet" href="assets/mesail.css">
+<link rel="stylesheet" href="assets/app.css">
 <link rel="stylesheet" href="assets/screens/email.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
 <script src="assets/mockup.js" defer></script>
 </head>
-<body>
+<body class="bg-surface text-text">
 
-<div class="ms-app" data-pane="main" inert>
+<!-- App shell. Under 600 px one pane shows (data-pane); 600 px: list + conversation; 960 px: + domain rail;
+     1280 px: + thread pane docked; 1920 and 2560 px: wider panes. The thread overlays the conversation below 1280 px. -->
+<div class="group/app relative grid h-dvh overflow-hidden
+  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
+  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main" inert>
 
-  <!-- Domain rail: one tile per messaging domain the user belongs to -->
-  <nav class="ms-rail" aria-label="Domains">
-    <ul class="ms-rail__list">
+  <!-- Domain rail (960 px and up) -->
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Domains">
+    <ul class="flex flex-col gap-2">
       <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
-      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
-      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<w-badge content="3" inline class="absolute -top-1 -right-1.5"></w-badge></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="absolute -left-2.5 size-2 rounded-full bg-on-rail" aria-hidden="true"></span>La</a></li>
     </ul>
-    <div class="ms-rail__sep" role="presentation"></div>
-    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
-    <div class="ms-rail__spacer"></div>
-    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+    <div class="h-px w-8 bg-on-rail/20" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><w-icon name="plus"></w-icon></a>
+    <div class="flex-1"></div>
+    <a class="ms-domain-tile" href="settings-appearance.html" aria-label="Help and keyboard shortcuts" title="Help"><w-icon name="info"></w-icon></a>
   </nav>
 
-  <!-- Sidebar -->
-  <aside class="ms-sidebar" aria-label="Conversations in example.com">
-    <div class="ms-sidebar__head">
-      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
-      <div class="ms-header__actions">
-        <button class="ms-icon-btn" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
-      </div>
-    </div>
-    <div class="ms-sidebar__search">
-      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
-    </div>
-    <div class="ms-sidebar__scroll">
-      <ul class="ms-nav-list">
-        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
-        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
-      </ul>
-
-      <section class="ms-nav-section" aria-labelledby="sec-channels">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
-          <button class="ms-icon-btn" aria-label="Add or browse channels"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">general</span></a></li>
-          <li><a class="ms-nav-item" href="messenger.html"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">releases</span></a></li>
-          <li><a class="ms-nav-item is-unread" href="channel-email.html"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">support</span><span class="ms-icon ms-i-mail ms-icon--sm ms-nav-item__email" aria-label="Has an email address: support@example.com" role="img"></span><span class="ms-badge" aria-label="4 unread">4</span></a></li>
-          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-lock" aria-label="Private channel" role="img"></span><span class="ms-nav-item__label">design</span><span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span></a></li>
-          <li><a class="ms-nav-item is-muted" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">random</span><span class="ms-icon ms-i-bell-off ms-icon--sm" aria-label="Muted" role="img"></span></a></li>
-        </ul>
-      </section>
-
-      <section class="ms-nav-section" aria-labelledby="sec-dms">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
-          <button class="ms-icon-btn" aria-label="New direct message"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:20">BL<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span><span class="ms-nav-item__label">Bo Lee</span><span class="ms-sr-only">, active</span><span class="ms-badge ms-badge--mention" aria-label="1 unread">1</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:280">CW<span class="ms-presence ms-presence--idle" aria-hidden="true"></span></span><span class="ms-nav-item__label">Chen Wu</span><span class="ms-sr-only">, idle</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:140">DO<span class="ms-presence ms-presence--dnd" aria-hidden="true"></span></span><span class="ms-nav-item__label">Dara Okafor</span><span class="ms-sr-only">, do not disturb</span></a></li>
-          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs ms-avatar--channel" aria-hidden="true">3</span><span class="ms-nav-item__label">Bo, Chen, Dara</span></a></li>
-        </ul>
-      </section>
-
-      <section class="ms-nav-section" aria-labelledby="sec-email">
-        <div class="ms-nav-section__head">
-          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
-          <button class="ms-icon-btn" aria-label="New email"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
-        </div>
-        <ul class="ms-nav-list">
-          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email is-unread" href="email-inbound-new.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">DH</span><span class="ms-nav-item__label">Dan Hale<span class="ms-nav-item__sub">Question about invoice 2291</span></span><span class="ms-badge" aria-label="1 unread">1</span></a></li>
-          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email" href="email-conversation.html" aria-current="page"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-nav-item__label">Carol Diaz, Bo Lee<span class="ms-nav-item__sub">Contract renewal 2027</span></span></a></li>
-        </ul>
-      </section>
-    </div>
-    <div class="ms-sidebar__foot">
-      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
-        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
-        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+  <!-- Sidebar: list pane on phones, always visible from 600 px -->
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations in example.com">
+    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-t safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
+      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
+      <span class="flex-1"></span>
+      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+    </header>
+    <div class="px-3 py-2">
+      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
+        <w-icon name="search" class="ms-icon-sm"></w-icon>Search<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
       </button>
-      <a class="ms-icon-btn" href="settings.html" aria-label="Settings"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
     </div>
-  </aside>
+    <div class="flex-1 overflow-y-auto px-2 pb-4">
+      <w-list nav density="compact" aria-label="Shortcuts">
+        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline label="2 mentions"></w-badge></w-list-item>
+        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
+      </w-list>
 
+      <section class="mt-3" aria-labelledby="sec-channels">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-channels"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Channels</button>
+          <w-icon-btn icon="plus" size="small" aria-label="Add or browse channels"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-channels">
+          <w-list-item href="#" title="general"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="messenger.html" title="releases"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="channel-email.html" title="support" class="ms-unread"><w-icon slot="prepend" name="hash"></w-icon><span slot="append" class="flex items-center gap-1"><w-icon name="mail" class="ms-icon-sm text-email" role="img" aria-label="Has an email address"></w-icon><w-badge content="4" inline class="ms-count" label="4 unread"></w-badge></span></w-list-item>
+          <w-list-item href="#" title="design" class="ms-unread"><w-icon slot="prepend" name="lock" role="img" aria-label="Private channel"></w-icon><w-badge slot="append" content="1" inline label="1 mention"></w-badge></w-list-item>
+          <w-list-item href="#" title="random" class="ms-muted"><w-icon slot="prepend" name="hash"></w-icon><w-icon slot="append" name="bell-off" class="ms-icon-sm" role="img" aria-label="Muted"></w-icon></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-dms">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-dms"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Direct messages</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New direct message"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-dms">
+          <w-list-item href="mobile-conversation.html" title="Bo Lee" class="ms-unread"><w-avatar slot="prepend" text="BL" size="20" status="online" style="--h:20" alt="Bo Lee, active"></w-avatar><w-badge slot="append" content="1" inline label="1 unread"></w-badge></w-list-item>
+          <w-list-item href="#" title="Chen Wu"><w-avatar slot="prepend" text="CW" size="20" status="away" style="--h:280" alt="Chen Wu, idle"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Dara Okafor"><w-avatar slot="prepend" text="DO" size="20" status="busy" style="--h:140" alt="Dara Okafor, do not disturb"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Bo, Chen, Dara"><w-avatar slot="prepend" text="3" size="20" alt="Group of 3"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-email">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-email"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Email</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New email"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" lines="two" aria-labelledby="sec-email">
+          <w-list-item href="email-inbound-new.html" title="Dan Hale" subtitle="Question about invoice 2291" class="ms-unread"><w-avatar slot="prepend" text="DH" size="20" class="ms-external" alt="Dan Hale, outside example.com"></w-avatar><w-badge slot="append" content="1" inline class="ms-count" label="1 unread"></w-badge></w-list-item>
+          <w-list-item href="email-conversation.html" title="Carol Diaz, Bo Lee" subtitle="Contract renewal 2027" active><w-avatar slot="prepend" text="CD" size="20" class="ms-external" alt="Carol Diaz, outside example.com"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+    </div>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <w-avatar text="AR" size="28" status="online" style="--h:195" alt=""></w-avatar>
+        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">ana@example.com</span></span>
+      </button>
+      <w-icon-btn icon="settings" href="settings.html" aria-label="Settings"></w-icon-btn>
+    </footer>
+  </aside>
   <!-- Background: the email conversation, inert while the dialog is open -->
-  <main class="ms-main" aria-labelledby="conv-title">
-    <header class="ms-header">
-      <a class="ms-icon-btn ms-header__back" href="?pane=list" aria-label="Back to conversations"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
-      <h1 class="ms-header__title" id="conv-title"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span>Contract renewal 2027</span></h1>
-      <div class="ms-header__actions">
-        <button class="ms-icon-btn" aria-label="More actions" aria-haspopup="menu" aria-expanded="false"><span class="ms-icon ms-i-more" aria-hidden="true"></span></button>
+  <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="conv-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="?pane=list" aria-label="Back to conversations"></w-icon-btn>
+      <h1 id="conv-title" class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="mail" class="ms-icon-sm text-email"></w-icon><span class="truncate">Contract renewal 2027</span></h1>
+      <div class="ml-auto flex items-center gap-1 no-drag">
+        <w-icon-btn icon="more" aria-label="More actions" aria-haspopup="menu" aria-expanded="false"></w-icon-btn>
       </div>
     </header>
-    <div class="ms-timeline" role="log" aria-label="Messages in Contract renewal 2027">
+    <div class="flex-1 min-h-0 overflow-y-auto py-4 [&_.ms-msg]:px-4 @xl/main:[&_.ms-msg]:px-5" role="log" aria-label="Messages in Contract renewal 2027">
       <div class="ms-day"><span>Today</span></div>
       <article class="ms-msg ms-msg--email" aria-label="Email from Carol Diaz, 08:47">
-        <span class="ms-avatar ms-avatar--external" aria-hidden="true">CD</span>
-        <div>
-          <div class="ms-msg__meta"><span class="ms-msg__author">Carol Diaz</span><span class="ms-msg__addr">carol@partner.org</span><span class="ms-tag ms-tag--email"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span><time class="ms-msg__time" datetime="2026-11-10T08:47">08:47</time></div>
+        <w-avatar text="CD" size="36" class="ms-external" alt=""></w-avatar>
+        <div class="min-w-0 max-w-[80ch]">
+          <div class="ms-msg__meta"><span class="ms-msg__author">Carol Diaz</span><span class="ms-msg__addr">carol@partner.org</span><span class="ms-how ms-how--email"><w-icon name="mail"></w-icon>Email</span><time class="ms-msg__time" datetime="2026-11-10T08:47">08:47</time></div>
           <div class="ms-email-card">
             <div class="ms-email-card__head"><p class="ms-email-card__subject">Re: Contract renewal 2027</p><span>From Carol Diaz &lt;carol@partner.org&gt;</span></div>
             <div class="ms-email-card__body"><p>Hi Ana, hi Bo, here is the renewal draft for 2027…</p></div>
@@ -117,50 +121,52 @@
     </div>
   </main>
 
-  <nav class="ms-bottom-nav" aria-label="Main">
-    <a class="ms-bottom-nav__item" href="?pane=list" aria-current="page"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
-    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
-    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
-    <a class="ms-bottom-nav__item" href="settings.html"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
-  </nav>
+  <!-- Bottom navigation: phones, list pane only -->
+  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden group-data-[pane=thread]/app:hidden" value="home" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" href="?pane=list" active><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="search" label="Search" href="search.html"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="you" label="You" href="settings.html"><w-icon name="user"></w-icon></w-bottom-nav-item>
+  </w-bottom-navigation>
 </div>
 
-<!-- Show original: modal dialog (a bottom sheet under 768 px) -->
-<div class="ms-scrim ms-scrim--sheet">
-  <div class="ms-dialog ms-dialog--wide" role="dialog" aria-modal="true" aria-labelledby="original-title" aria-describedby="original-sub">
-    <div class="ms-dialog__head">
-      <h2 id="original-title">Original email</h2>
-      <button type="button" class="ms-icon-btn" aria-label="Close" aria-keyshortcuts="Escape" autofocus><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
+
+<!-- Show original: live w-dialog. Centred from 600 px; under 600 px it sits at the bottom like a sheet. -->
+<w-dialog open scrollable class="[&_.w-dialog]:[--w-dialog-width:44rem]
+  max-sm:[&_.w-dialog-wrapper]:items-end max-sm:[&_.w-dialog-wrapper]:p-0
+  max-sm:[&_.w-dialog]:w-full max-sm:[&_.w-dialog]:max-w-none max-sm:[&_.w-dialog]:max-h-[92dvh]
+  max-sm:[&_.w-dialog]:rounded-b-none max-sm:[&_.w-dialog]:rounded-t-2xl max-sm:[&_.w-dialog-footer]:pb-[max(1rem,env(safe-area-inset-bottom))]">
+  <span slot="title">Original email</span>
+  <div class="grid gap-4 @container/original">
+    <p class="text-sm text-subtle">Re: Contract renewal 2027 · from Carol Diaz · 48 KB, received 10 November 2026, 08:47</p>
+
+    <ul class="flex flex-wrap gap-2" aria-label="Sender checks">
+      <li class="inline-flex h-6 items-center gap-1 rounded-sm bg-success-container px-2 text-xs font-semibold text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon>SPF: pass</li>
+      <li class="inline-flex h-6 items-center gap-1 rounded-sm bg-success-container px-2 text-xs font-semibold text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon>DKIM: pass (partner.org)</li>
+      <li class="inline-flex h-6 items-center gap-1 rounded-sm bg-success-container px-2 text-xs font-semibold text-on-success-container"><w-icon name="check" class="ms-icon-xs"></w-icon>DMARC: pass</li>
+    </ul>
+
+    <w-table density="compact" responsive="scroll" class="block">
+      <table class="w-full text-sm">
+        <caption class="sr-only">Main headers of the email</caption>
+        <tbody class="[&_th]:w-28 [&_th]:align-top [&_th]:text-left [&_th]:font-semibold [&_th]:text-subtle @lg/original:[&_th]:w-48 [&_td]:[overflow-wrap:anywhere]">
+          <tr><th scope="row">From</th><td>Carol Diaz &lt;carol@partner.org&gt;</td></tr>
+          <tr><th scope="row">To</th><td>Ana Ruiz &lt;ana@example.com&gt;, Bo Lee &lt;bo@example.com&gt;</td></tr>
+          <tr><th scope="row">Cc</th><td>legal@partner.org</td></tr>
+          <tr><th scope="row">Subject</th><td>Re: Contract renewal 2027</td></tr>
+          <tr><th scope="row">Date</th><td>Tue, 10 Nov 2026 08:47:05 +0000 <span class="text-xs text-subtle">(08:47 your time)</span></td></tr>
+          <tr><th scope="row">Message-ID</th><td class="font-mono text-xs">&lt;a81c2f0e.5d7b@mail.partner.org&gt;</td></tr>
+          <tr><th scope="row">Authentication-Results</th><td>mx.example.com: SPF pass for partner.org, DKIM pass (signed by partner.org), DMARC pass</td></tr>
+        </tbody>
+      </table>
+    </w-table>
+
+    <div class="flex items-center gap-2">
+      <h4 id="raw-title" class="flex-1 text-base font-semibold">Plain text</h4>
+      <w-btn variant="outlined" size="small" prepend-icon="copy" aria-describedby="copy-status">Copy</w-btn>
+      <span class="sr-only" role="status" id="copy-status"></span>
     </div>
-    <div class="ms-dialog__body">
-      <p class="ms-dialog__sub" id="original-sub">Re: Contract renewal 2027 · from Carol Diaz · 48 KB, received 10 November 2026, 08:47</p>
-
-      <div class="ms-auth-summary" role="group" aria-label="Sender checks">
-        <span class="ms-tag ms-tag--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>SPF: pass</span>
-        <span class="ms-tag ms-tag--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>DKIM: pass (partner.org)</span>
-        <span class="ms-tag ms-tag--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>DMARC: pass</span>
-      </div>
-
-      <div class="ms-table-wrap">
-        <table class="ms-table ms-headers">
-          <caption class="ms-sr-only">Main headers of the email</caption>
-          <tbody>
-            <tr><th scope="row">From</th><td>Carol Diaz &lt;carol@partner.org&gt;</td></tr>
-            <tr><th scope="row">To</th><td>Ana Ruiz &lt;ana@example.com&gt;, Bo Lee &lt;bo@example.com&gt;</td></tr>
-            <tr><th scope="row">Cc</th><td>legal@partner.org</td></tr>
-            <tr><th scope="row">Subject</th><td>Re: Contract renewal 2027</td></tr>
-            <tr><th scope="row">Date</th><td>Tue, 10 Nov 2026 08:47:05 +0000 <span class="ms-meta">(08:47 your time)</span></td></tr>
-            <tr><th scope="row">Message-ID</th><td class="ms-mono">&lt;a81c2f0e.5d7b@mail.partner.org&gt;</td></tr>
-            <tr><th scope="row">Authentication-Results</th><td>mx.example.com: SPF pass for partner.org, DKIM pass (signed by partner.org), DMARC pass</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="ms-raw-head">
-        <h3 id="raw-title">Plain text</h3>
-        <button type="button" class="ms-btn ms-btn--sm"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button>
-      </div>
-      <pre class="ms-raw" tabindex="0" aria-labelledby="raw-title">Return-Path: &lt;carol@partner.org&gt;
+    <pre class="max-h-72 overflow-auto rounded-md border border-border bg-surface-mid p-3 font-mono text-xs leading-normal whitespace-pre-wrap [overflow-wrap:anywhere]" tabindex="0" aria-labelledby="raw-title">Return-Path: &lt;carol@partner.org&gt;
 Received: from mail.partner.org (mail.partner.org [203.0.113.25])
         by mx.example.com with ESMTPS; Tue, 10 Nov 2026 08:47:12 +0000
 Authentication-Results: mx.example.com;
@@ -197,14 +203,13 @@ Content-Transfer-Encoding: base64
 JVBERi0xLjcKJcfsj6IKNSAwIG9iago8PC9MZW5ndGggNiAwIFI+Pg...
 (attachment shortened here: 212 KB)
 --b1--</pre>
-    </div>
-    <div class="ms-dialog__foot">
-      <a class="ms-btn ms-dialog__foot-start" href="#" download="contract-renewal-2027.eml"><span class="ms-icon ms-i-file ms-icon--sm" aria-hidden="true"></span>Download .eml</a>
-      <button type="button" class="ms-btn ms-btn--primary">Close</button>
-    </div>
   </div>
-</div>
+  <div slot="footer" class="flex w-full flex-wrap gap-2">
+    <w-btn variant="outlined" prepend-icon="file" href="#" class="mr-auto max-sm:flex-1">Download .eml</w-btn>
+    <w-btn variant="filled" class="max-sm:flex-1">Close</w-btn>
+  </div>
+</w-dialog>
 
-<div class="ms-sr-only" aria-live="polite" id="announcer"></div>
+<div class="sr-only" aria-live="polite" id="announcer"></div>
 </body>
 </html>

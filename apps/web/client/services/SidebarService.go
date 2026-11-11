@@ -52,6 +52,14 @@ func (sidebar *SidebarService) Refreshed(refreshed ConversationRefreshed) {
 }
 
 // @OnEvent
+// @InBackground
+func (sidebar *SidebarService) Sent(completed SendCompleted) {
+	sidebar.refresh(sidebar.DomainId)
+	sidebar.Open(sidebar.newConversationId(completed.ConversationId))
+	sidebar.announceRefresh()
+}
+
+// @OnEvent
 func (sidebar *SidebarService) ViewMounted(mounted ConversationViewMounted) ConversationOpened {
 	return sidebar.opened
 }
@@ -72,7 +80,7 @@ func (sidebar *SidebarService) NewMessage() {
 	sidebar.opened = ConversationOpened{}
 	sidebar.shell.Pane = sidebar.paneMain()
 	sidebar.shell.Heading = sidebar.newMessageHeading()
-	sidebar.applicationEventPublisher.PublishEvent(ConversationComposeRequested{DomainId: sidebar.DomainId}, false)
+	sidebar.applicationEventPublisher.PublishEvent(SendTarget{}, true)
 }
 
 func (sidebar *SidebarService) ToggleSection(section string) {
@@ -101,6 +109,13 @@ func (sidebar *SidebarService) resetShellWhenOtherDomain(domainId string) {
 	}
 	sidebar.shell.ShowList()
 	sidebar.shell.Heading = sidebar.listHeading()
+}
+
+func (sidebar *SidebarService) newConversationId(conversationId string) string {
+	if sidebar.CurrentId != "" {
+		return ""
+	}
+	return conversationId
 }
 
 func (sidebar *SidebarService) listHeading() string {

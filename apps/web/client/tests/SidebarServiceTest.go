@@ -284,3 +284,18 @@ func (test *SidebarServiceTest) TestDomainChangedToTheSameDomainKeepsTheShell() 
 	Assert.Equals("main", sidebar.shell.Pane)
 	Assert.Equals("general", sidebar.shell.Heading)
 }
+
+func (test *SidebarServiceTest) TestSentFromANewMessageOpensTheConversation() {
+	sidebar := test.loaded()
+	sidebar.NewMessage()
+	sidebar.Sent(SendCompleted{ConversationId: "cnv_bo", MessageId: "m-9"})
+	Assert.Equals("cnv_bo", sidebar.CurrentId)
+	Assert.Equals("Bo Lee", sidebar.shell.Heading)
+}
+
+func (test *SidebarServiceTest) TestSentInAnOpenConversationKeepsIt() {
+	sidebar := test.loaded()
+	sidebar.Open("cnv_general")
+	sidebar.Sent(SendCompleted{ConversationId: "cnv_bo", MessageId: "m-9"})
+	Assert.Equals("cnv_general", sidebar.CurrentId)
+}

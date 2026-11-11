@@ -302,9 +302,9 @@ func (test *ConversationServiceTest) TestLiveKeepsOlderPages() {
 	Assert.Equals("", service.shellAnnounce.Message)
 }
 
-func (test *ConversationServiceTest) TestComposeRequestedClearsTheConversation() {
+func (test *ConversationServiceTest) TestNewMessageTargetClearsTheConversation() {
 	service := test.general()
-	service.ComposeRequested(ConversationComposeRequested{DomainId: "example.com"})
+	service.Targeted(SendTarget{})
 	Assert.Equals("idle", service.State)
 	Assert.Equals(0, len(service.Messages))
 }
@@ -341,10 +341,10 @@ func (test *ConversationServiceTest) TestOpenedClosesTheActions() {
 	Assert.Equals("", service.ActionsForId)
 }
 
-func (test *ConversationServiceTest) TestComposeRequestedClosesTheActions() {
+func (test *ConversationServiceTest) TestNewMessageTargetClosesTheActions() {
 	service := test.general()
 	service.ToggleActions("m-2")
-	service.ComposeRequested(ConversationComposeRequested{DomainId: "example.com"})
+	service.Targeted(SendTarget{})
 	Assert.Equals("", service.ActionsForId)
 }
 
@@ -377,4 +377,18 @@ func (test *ConversationServiceTest) TestOpenThreadClosesTheActions() {
 	service.ToggleActions("m-3")
 	service.OpenThread("m-3")
 	Assert.Equals("", service.ActionsForId)
+}
+
+func (test *ConversationServiceTest) TestTargetOfAnOpenConversationKeepsIt() {
+	service := test.general()
+	service.Targeted(SendTarget{ConversationId: "cnv_general", Title: "general"})
+	Assert.Equals("ready", service.State)
+	Assert.Equals("cnv_general", service.ConversationId)
+}
+
+func (test *ConversationServiceTest) TestSentInTheOpenConversationReloadsIt() {
+	service := test.general()
+	service.Sent(SendCompleted{ConversationId: "cnv_general", MessageId: "m-3"})
+	Assert.Equals("ready", service.State)
+	Assert.Equals(3, len(service.Messages))
 }

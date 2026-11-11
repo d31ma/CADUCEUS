@@ -65,8 +65,15 @@ func (service *ConversationService) DomainChanged(changed SessionDomainChanged) 
 }
 
 // @OnEvent
-func (service *ConversationService) ComposeRequested(requested ConversationComposeRequested) {
-	service.reset()
+func (service *ConversationService) Targeted(target SendTarget) {
+	service.resetWhenNewMessage(target.ConversationId)
+}
+
+// @OnEvent
+// @InBackground
+func (service *ConversationService) Sent(completed SendCompleted) {
+	service.refreshWhenRelevant(RealtimeEvent{Type: service.createdType(), ConversationId: completed.ConversationId, MessageId: completed.MessageId})
+	service.announceRefresh()
 }
 
 // @OnEvent
@@ -259,11 +266,9 @@ func (service *ConversationService) readyWhenLoaded(failure error) {
 
 func (service *ConversationService) announceReady() {
 	service.markRead()
-	service.applicationEventPublisher.PublishEvent(ConversationReady{
-		DomainId:       service.DomainId,
+	service.applicationEventPublisher.PublishEvent(SendTarget{
 		ConversationId: service.ConversationId,
 		Title:          service.Title,
-		Section:        service.Section,
 		Subject:        service.messageList.Subject(service.raw),
 	}, true)
 }
@@ -405,6 +410,13 @@ func (service *ConversationService) rebuild() {
 
 func (service *ConversationService) resetWhenOtherDomain(domainId string) {
 	if domainId == service.DomainId {
+		return
+	}
+	service.reset()
+}
+
+func (service *ConversationService) resetWhenNewMessage(conversationId string) {
+	if conversationId != "" {
 		return
 	}
 	service.reset()

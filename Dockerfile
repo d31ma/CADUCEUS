@@ -1,5 +1,45 @@
 # syntax=docker/dockerfile:1.7
 
+# ── Keycloak (identity provider) ─────────────────────────────────────────────
+# Owned by deploy/keycloak. Build the identity-only image with
+#   docker build --target mesail-keycloak .
+# The all-in-one Mesail image starts FROM mesail-keycloak and sets
+# MESAIL_APP_COMMAND; see deploy/keycloak/README.md.
+ARG KEYCLOAK_DB=sqlite
+
+FROM eclipse-temurin:21-jdk-noble@sha256:114cabb73033ca4ce7ceec3deb62396bc1b716282bae051ed3c1d82e38fcab2d AS keycloak-providers
+COPY --from=quay.io/keycloak/keycloak:26.8.2@sha256:723b1d6e254c0fc96d5cffec860c7e0744d6a3277822b865bb538cf891575e41 /opt/keycloak/lib/lib/main /keycloak-lib
+COPY deploy/keycloak/providers/sqlite /src
+ADD --checksum=sha256:f8dce420a6016278497f4f0560f65602b9db858de141b541cf91a4644ebe4639 \
+  https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.54.1.0/sqlite-jdbc-3.54.1.0.jar /providers/sqlite-jdbc.jar
+RUN javac --release 21 -Xlint:all -Werror -cp '/keycloak-lib/*' -d /classes $(find /src/src/main/java -name '*.java') \
+  && cp -R /src/src/main/resources/. /classes/ \
+  && jar --create --file /providers/mesail-keycloak-sqlite.jar -C /classes .
+
+FROM quay.io/keycloak/keycloak:26.8.2@sha256:723b1d6e254c0fc96d5cffec860c7e0744d6a3277822b865bb538cf891575e41 AS keycloak-build
+ARG KEYCLOAK_DB
+COPY --from=keycloak-providers --chown=1000:0 /providers/ /opt/keycloak/providers/
+COPY --chown=1000:0 deploy/keycloak/conf/keycloak-${KEYCLOAK_DB}.conf /opt/keycloak/conf/keycloak.conf
+COPY --chown=1000:0 deploy/keycloak/conf/quarkus.properties /opt/keycloak/conf/quarkus.properties
+RUN if [ "$KEYCLOAK_DB" != sqlite ]; then rm -f /opt/keycloak/providers/*.jar; fi \
+  && /opt/keycloak/bin/kc.sh build \
+  && /opt/keycloak/bin/kc.sh show-config | grep -F "kc.db "
+
+FROM quay.io/keycloak/keycloak:26.8.2@sha256:723b1d6e254c0fc96d5cffec860c7e0744d6a3277822b865bb538cf891575e41 AS mesail-keycloak
+ARG KEYCLOAK_DB
+COPY --from=keycloak-build /opt/keycloak/ /opt/keycloak/
+COPY --chown=0:0 deploy/keycloak/realm /opt/mesail/keycloak/realm
+COPY --chown=0:0 --chmod=755 deploy/keycloak/bin /opt/mesail/keycloak/bin
+USER 0
+RUN mkdir -p /data/keycloak && chown 1000:0 /data/keycloak && chmod 0770 /data/keycloak
+USER 1000
+ENV MESAIL_KEYCLOAK_DB=${KEYCLOAK_DB} \
+    MESAIL_KEYCLOAK_DATA=/data/keycloak
+VOLUME ["/data/keycloak"]
+HEALTHCHECK --interval=15s --timeout=8s --start-period=180s --retries=3 \
+  CMD ["/opt/mesail/keycloak/bin/mesail-healthcheck"]
+ENTRYPOINT ["/opt/mesail/keycloak/bin/mesail-supervisor"]
+
 FROM golang:1.26.5-bookworm@sha256:6c5605ab3a9a9fb3c4eafe5b3d63cdbf3881caf113262b67862547b54a9db599 AS go-builder
 
 WORKDIR /src

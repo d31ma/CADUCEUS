@@ -1,0 +1,8 @@
+org.mesail.keycloak.sqlite.liquibase.SqliteAddPrimaryKeyGenerator
+org.mesail.keycloak.sqlite.liquibase.SqliteAddColumnGenerator
+org.mesail.keycloak.sqlite.liquibase.SqliteAddUniqueConstraintGenerator
+org.mesail.keycloak.sqlite.liquibase.SqliteDropUniqueConstraintGenerator
+org.mesail.keycloak.sqlite.liquibase.SqliteAddForeignKeyGenerator
+org.mesail.keycloak.sqlite.liquibase.SqliteDropForeignKeyGenerator
+org.mesail.keycloak.sqlite.liquibase.SqliteModifyDataTypeGenerator
+org.mesail.keycloak.sqlite.liquibase.SqliteDropDefaultValueGenerator

@@ -1,0 +1,4 @@
+org.mesail.keycloak.sqlite.liquibase.SqliteDropPrimaryKeyChange
+org.mesail.keycloak.sqlite.liquibase.SqliteDropNotNullConstraintChange
+org.mesail.keycloak.sqlite.liquibase.SqliteAddNotNullConstraintChange
+org.mesail.keycloak.sqlite.liquibase.SqliteDropColumnChange

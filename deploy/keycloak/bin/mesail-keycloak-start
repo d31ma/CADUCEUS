@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+readonly KEYCLOAK_HOME=${KEYCLOAK_HOME:-/opt/keycloak}
+readonly MESAIL_KEYCLOAK_HOME=${MESAIL_KEYCLOAK_HOME:-/opt/mesail/keycloak}
+readonly REALM_SOURCE=${MESAIL_KEYCLOAK_IMPORT_DIR:-${MESAIL_KEYCLOAK_HOME}/realm}
+readonly IMPORT_DIR=${KEYCLOAK_HOME}/data/import
+readonly DOMAIN_TEMPLATE=domain-realm.json
+# shellcheck disable=SC2016
+readonly REALM_PLACEHOLDER='${MESAIL_REALM}'
+readonly DOMAIN_PATTERN='^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'
+readonly DEFAULT_KEYCLOAK_URL=http://127.0.0.1:8180/idp
+readonly SQLITE_OPTIONS='journal_mode=WAL&synchronous=NORMAL&busy_timeout=15000&transaction_mode=IMMEDIATE'
+readonly CONFIG_ERROR=64
+
+log() {
+  printf '[mesail-keycloak] %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >&2
+}
+
+fail() {
+  log "ERROR: $*"
+  exit "$CONFIG_ERROR"
+}
+
+require() {
+  local name=$1
+  [[ -n ${!name:-} ]] || fail "$name is not set"
+}
+
+domains() {
+  tr ',' ' ' <<<"${MESAIL_KEYCLOAK_DOMAINS:-}" | tr -s ' ' '\n' | tr '[:upper:]' '[:lower:]'
+}
+
+check_domain() {
+  [[ $1 =~ $DOMAIN_PATTERN ]] || fail "not a mail domain name: $1"
+}
+
+render_domain_realm() {
+  local domain=$1 template
+  check_domain "$domain"
+  template=$(<"$REALM_SOURCE/$DOMAIN_TEMPLATE")
+  printf '%s\n' "${template//"$REALM_PLACEHOLDER"/$domain}" >"$IMPORT_DIR/${domain}-realm.json"
+  log "realm ${domain}: ready to import (skipped if it exists)"
+}
+
+copy_fixed_realms() {
+  local file
+  for file in "$REALM_SOURCE"/*-realm.json; do
+    [[ ${file##*/} == "$DOMAIN_TEMPLATE" ]] || cp "$file" "$IMPORT_DIR/"
+  done
+}
+
+copy_dev_users() {
+  [[ ${MESAIL_KEYCLOAK_DEV_USERS:-false} == true ]] || return 0
+  log "WARNING: MESAIL_KEYCLOAK_DEV_USERS=true imports the dev-only test users. Never set it in production."
+  cp "$REALM_SOURCE"/dev/*-users-*.json "$IMPORT_DIR/"
+}
+
+prepare_import() {
+  local domain
+  rm -rf "$IMPORT_DIR"
+  mkdir -p "$IMPORT_DIR"
+  copy_fixed_realms
+  for domain in $(domains); do
+    render_domain_realm "$domain"
+  done
+  copy_dev_users
+}
+
+use_sqlite() {
+  local data_dir=${MESAIL_KEYCLOAK_DATA:-/data/keycloak}
+  mkdir -p "$data_dir"
+  [[ -w $data_dir ]] || fail "$data_dir is not writable by uid $(id -u)"
+  export KC_DB_URL="jdbc:sqlite:${data_dir}/keycloak.db?${SQLITE_OPTIONS}"
+  log "database: SQLite file ${data_dir}/keycloak.db"
+}
+
+use_postgres() {
+  require KC_DB_URL
+  log "database: PostgreSQL"
+}
+
+choose_database() {
+  case ${MESAIL_KEYCLOAK_DB:-sqlite} in
+    sqlite) use_sqlite ;;
+    postgres) use_postgres ;;
+    *) fail "MESAIL_KEYCLOAK_DB must be sqlite or postgres, not ${MESAIL_KEYCLOAK_DB}" ;;
+  esac
+}
+
+main() {
+  require MESAIL_IDENTITY_CLIENT_SECRET
+  require MESAIL_SERVICE_SECRET
+  export KC_HOSTNAME=${MESAIL_KEYCLOAK_URL:-$DEFAULT_KEYCLOAK_URL}
+  choose_database
+  prepare_import
+  log "issuers: ${KC_HOSTNAME}/realms/<domain>"
+  exec "$KEYCLOAK_HOME/bin/kc.sh" start --optimized --import-realm "$@"
+}
+
+main "$@"

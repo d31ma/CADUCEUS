@@ -1,0 +1,42 @@
+{
+  "realm": "partner.test",
+  "users": [
+    {
+      "username": "member@partner.test",
+      "email": "member@partner.test",
+      "emailVerified": true,
+      "firstName": "Dev",
+      "lastName": "Member",
+      "enabled": true,
+      "realmRoles": [
+        "default-roles-partner.test"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-member-password",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "admin@partner.test",
+      "email": "admin@partner.test",
+      "emailVerified": true,
+      "firstName": "Dev",
+      "lastName": "Admin",
+      "enabled": true,
+      "realmRoles": [
+        "default-roles-partner.test",
+        "mesail-admin"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-admin-password",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

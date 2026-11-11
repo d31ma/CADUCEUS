@@ -10,11 +10,15 @@ readonly PORT=${MESAIL_TEST_PORT:-18180}
 readonly HEALTH_TIMEOUT=300
 readonly STOP_TIMEOUT=30
 
-export MESAIL_PUBLIC_URL=http://localhost:${PORT}
-MESAIL_KEYCLOAK_API_SECRET=$(openssl rand -hex 24)
-MESAIL_KEYCLOAK_SERVICE_SECRET=$(openssl rand -hex 24)
-BOOTSTRAP_ADMIN_PASSWORD=$(openssl rand -hex 16)
-export MESAIL_KEYCLOAK_API_SECRET MESAIL_KEYCLOAK_SERVICE_SECRET
+readonly DOMAINS=example.com,example.org,partner.test
+readonly ADDED_DOMAIN=added.test
+
+export MESAIL_KEYCLOAK_URL=http://127.0.0.1:${PORT}/idp
+MESAIL_IDENTITY_CLIENT_SECRET=$(openssl rand -hex 24)
+MESAIL_SERVICE_SECRET=$(openssl rand -hex 24)
+MESAIL_KEYCLOAK_DIRECTORY_SECRET=$(openssl rand -hex 24)
+BOOTSTRAP_CLIENT_SECRET=$(openssl rand -hex 24)
+export MESAIL_IDENTITY_CLIENT_SECRET MESAIL_SERVICE_SECRET MESAIL_KEYCLOAK_DIRECTORY_SECRET
 
 step() {
   printf '=== %s %s\n' "$1" "$(date +%H:%M:%S)"
@@ -31,12 +35,17 @@ build_image() {
 }
 
 start_container() {
-  step "start container on volume ${VOLUME}"
+  step "start container on volume ${VOLUME} ($1)"
   docker run -d --name "$CONTAINER" --stop-timeout "$STOP_TIMEOUT" \
     -p "127.0.0.1:${PORT}:8180" -v "${VOLUME}:/data/keycloak" \
-    -e KC_HTTP_HOST=0.0.0.0 -e MESAIL_PUBLIC_URL -e MESAIL_KEYCLOAK_API_SECRET -e MESAIL_KEYCLOAK_SERVICE_SECRET \
-    -e MESAIL_KEYCLOAK_DEV_USERS=true -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD="$BOOTSTRAP_ADMIN_PASSWORD" \
-    -e MESAIL_APP_COMMAND='sleep infinity' "$IMAGE" >/dev/null
+    -e KC_HTTP_HOST=0.0.0.0 -e MESAIL_KEYCLOAK_URL -e MESAIL_KEYCLOAK_DOMAINS="$DOMAINS" -e MESAIL_KEYCLOAK_DEV_USERS=true \
+    -e MESAIL_IDENTITY_CLIENT_SECRET -e MESAIL_SERVICE_SECRET -e MESAIL_KEYCLOAK_DIRECTORY_SECRET \
+    "${@:2}" -e MESAIL_APP_COMMAND='sleep infinity' "$IMAGE" >/dev/null
+}
+
+start_first_container() {
+  start_container "first start, with the bootstrap admin client" \
+    -e KC_BOOTSTRAP_ADMIN_CLIENT_ID=bootstrap-admin -e KC_BOOTSTRAP_ADMIN_CLIENT_SECRET="$BOOTSTRAP_CLIENT_SECRET"
 }
 
 wait_healthy() {
@@ -51,11 +60,27 @@ wait_healthy() {
 
 check_oidc() {
   step "oidc check: $1"
-  python3 "$REPO_ROOT/deploy/keycloak/test/oidc_check.py"
+  CHECK_DOMAINS="$DOMAINS" CHECK_ADD_DOMAIN="$ADDED_DOMAIN" MESAIL_KEYCLOAK_DIRECTORY_CLIENT_ID=mesail-directory \
+    CHECK_REALM_TEMPLATE="$REPO_ROOT/deploy/keycloak/realm/domain-realm.json" \
+    python3 "$REPO_ROOT/deploy/keycloak/test/oidc_check.py"
+}
+
+app_started() {
+  docker logs "$CONTAINER" 2>&1 | grep -qF 'app started'
+}
+
+show_provisioning() {
+  local deadline=$((SECONDS + HEALTH_TIMEOUT))
+  until app_started; do
+    [[ $(docker inspect -f '{{.State.Running}}' "$CONTAINER") == true ]] || { docker logs --tail 20 "$CONTAINER"; echo "the container stopped"; return 1; }
+    (( SECONDS < deadline )) || { docker logs --tail 40 "$CONTAINER"; echo "the app did not start after provisioning"; return 1; }
+    sleep 2
+  done
+  docker logs "$CONTAINER" 2>&1 | grep -F '[mesail-keycloak-provision]' | tail -1
 }
 
 check_import_skipped() {
-  docker logs "$CONTAINER" 2>&1 | grep -E "Realm 'mesail' already exists|Import skipped" | tail -1
+  docker logs "$CONTAINER" 2>&1 | grep -E "already exists. Import skipped" | tail -4
 }
 
 check_supervisor_stops_container() {
@@ -69,8 +94,9 @@ main() {
   trap remove_test_state EXIT
   remove_test_state
   build_image
-  start_container
+  start_first_container
   wait_healthy
+  show_provisioning
   check_oidc "first start"
   step "restart the same container"
   docker restart -t "$STOP_TIMEOUT" "$CONTAINER" >/dev/null
@@ -79,8 +105,9 @@ main() {
   check_oidc "after restart"
   step "replace the container, keep the volume"
   docker rm -f "$CONTAINER" >/dev/null
-  start_container
+  start_container "no bootstrap admin client"
   wait_healthy
+  show_provisioning
   check_import_skipped
   check_oidc "new container on the same volume"
   docker exec "$CONTAINER" ls -la /data/keycloak

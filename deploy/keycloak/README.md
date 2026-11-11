@@ -17,43 +17,68 @@ in production.
 | `conf/keycloak-postgres.conf` | Options for the PostgreSQL image (`--build-arg KEYCLOAK_DB=postgres`). |
 | `conf/quarkus.properties` | Turns off Hibernate's database version check (it expects PostgreSQL 14+). |
 | `providers/sqlite/` | Java source of `mesail-keycloak-sqlite.jar`, compiled in the `keycloak-providers` stage. |
-| `realm/mesail-realm.json` | The `mesail` realm: roles, clients, token lifetimes. Imported on the first start. |
-| `realm/dev/mesail-users-0.json` | Dev-only test users. Imported only with `MESAIL_KEYCLOAK_DEV_USERS=true`. |
-| `bin/mesail-supervisor` | The image entrypoint. Starts Keycloak, waits until it is ready, then starts `MESAIL_APP_COMMAND`. |
-| `bin/mesail-keycloak-start` | Checks the environment, prepares the realm import, chooses the database, runs `kc.sh start --optimized`. |
+| `realm/domain-realm.json` | The template of one mail domain's realm (`${MESAIL_REALM}` = the domain). |
+| `realm/mesail-operators-realm.json` | The `mesail-operators` realm, for the people who run the installation. |
+| `realm/dev/<realm>-users-0.json` | Dev-only test users for `example.com`, `example.org`, `partner.test` and `mesail-operators`. Imported only with `MESAIL_KEYCLOAK_DEV_USERS=true`. |
+| `bin/mesail-supervisor` | The image entrypoint. Starts Keycloak, waits until it is ready, runs the provisioning step, then starts `MESAIL_APP_COMMAND`. |
+| `bin/mesail-keycloak-start` | Checks the environment, renders one realm per domain, chooses the database, runs `kc.sh start --optimized --import-realm`. |
+| `bin/mesail-keycloak-provision` | Creates the master-realm client `mesail-directory` once, so the directory service can create realms through the admin API. |
+| `dev/build-native-keycloak.sh` | Builds the same Keycloak natively on macOS or Linux (no Docker), for development. |
 | `bin/mesail-healthcheck` | Docker `HEALTHCHECK`: Keycloak readiness, plus `MESAIL_APP_HEALTH_URL` when set. |
 | `test/run-image-test.sh` | Builds the image and proves it works (see [Testing](#testing)). |
 | `test/oidc_check.py` | The OIDC checks the test runs (Python standard library and `openssl`). |
 
-## The realm
+## Realms: one per mail domain
 
-Realm `mesail`. Issuer: `${MESAIL_PUBLIC_URL}/idp/realms/mesail`.
+Each hosted mail domain has its own realm, named after the domain (for
+example `example.com`). The realm keeps that domain's users apart: a token
+from one realm is never valid in another, and its issuer names the domain.
+People who run the installation sign in to the separate realm
+`mesail-operators`.
 
-| Client | Type | Use |
-| --- | --- | --- |
-| `mesail-web` | public | The Tac frontend. Authorization code flow with PKCE (`S256`) only. Redirect URIs `${MESAIL_PUBLIC_URL}/*`. |
-| `mesail-api` | confidential, no flows | The audience of every Mesail access token. The Yon services check `aud` contains `mesail-api`. Its secret is used only for token introspection. |
-| `mesail-service` | confidential, client credentials | Service-to-service calls. Tokens carry the role `mesail-service`. |
+**Keycloak is reached only from the backend.** No browser talks to it, and
+`/idp` is not routed from the public address. The identity service signs
+users in server to server.
 
-Realm roles (in the `realm_access.roles` claim): `mesail-member` (every user
-gets it by default), `mesail-workspace-admin`, `mesail-admin`,
-`mesail-service`. They match `kit/oidc` `RoleMap`.
+| Client | In | Type | Use |
+| --- | --- | --- | --- |
+| `mesail-identity` | every realm | confidential, password grant only | The identity service signs a user in. Keycloak's built-in direct grant flow asks for a TOTP code (`totp` form field) when the user has one set up. Brute-force detection locks an account for a while after 10 failures. |
+| `mesail-service` | domain realms | confidential, client credentials | Service-to-service calls. Tokens carry the role `mesail-service`. |
+| `mesail-api` | every realm | audience only | Every access token's `aud` contains `mesail-api`. |
+| `mesail-directory` | `master` | confidential, client credentials, role `create-realm` | The directory service creates a new domain's realm through the admin API. Created by `mesail-keycloak-provision`. Keycloak makes the creator an admin of each realm it creates. |
+
+There is no browser client. Keycloak's own `account-console` and
+`security-admin-console` clients still exist in each realm (Keycloak always
+creates them), but nothing routes browsers to them.
+
+Realm roles (in `realm_access.roles`): `mesail-member` (every user of a domain
+gets it), `mesail-admin` (admin of that domain), `mesail-service`, and in
+`mesail-operators` the role `mesail-operator`.
 
 Tokens: RS256, access token 60 seconds, refresh token rotation on (a refresh
-token works once), SSO idle 30 minutes, at most 10 hours. Self-registration and
-password reset by email are off. Brute-force protection is on. Passwords need
-12 characters.
+token works once), SSO idle 30 minutes, at most 10 hours. Passwords need 12
+characters. Self-registration and password reset by email are off.
 
-The realm content is owned by the identity service; this file is the
-default the image imports and the test uses. To import other realm files
-(for example one realm per mail domain), mount them and set
-`MESAIL_KEYCLOAK_IMPORT_DIR`.
+**Issuer:** `${MESAIL_KEYCLOAK_URL}/realms/<domain>`. `MESAIL_KEYCLOAK_URL`
+is the backend address of Keycloak, default `http://127.0.0.1:8180/idp` (the
+all-in-one image). If Keycloak runs as its own host, use that host, for
+example `http://keycloak:8180/idp`. Keys:
+`${MESAIL_KEYCLOAK_URL}/realms/<domain>/protocol/openid-connect/certs`.
 
-The realm file uses `${MESAIL_PUBLIC_URL}`, `${MESAIL_KEYCLOAK_API_SECRET}` and
-`${MESAIL_KEYCLOAK_SERVICE_SECRET}` placeholders, which Keycloak fills from the
-environment. The import runs only when the realm does not exist yet, so changing
-these variables later changes nothing: change the realm in the admin console
-instead.
+**Adding a domain.** Two ways, both tested on SQLite:
+- at run time: the directory service takes a client-credentials token from
+  the `master` realm with `mesail-directory`, renders `domain-realm.json`
+  itself (the admin API does not fill `${...}` placeholders), and posts it to
+  `${MESAIL_KEYCLOAK_URL}/admin/realms`; then it creates users with
+  `POST /admin/realms/<domain>/users`;
+- at start: add the domain to `MESAIL_KEYCLOAK_DOMAINS`. A realm that exists
+  already is skipped, so restarts change nothing.
+
+The realm templates use the placeholders `${MESAIL_REALM}` (filled by
+`mesail-keycloak-start` for each domain), `${MESAIL_IDENTITY_CLIENT_SECRET}`
+and `${MESAIL_SERVICE_SECRET}` (filled by Keycloak from the environment). The
+import runs only for realms that do not exist yet, so changing a secret later
+changes nothing: change it through the admin API.
 
 ## Running the image
 
@@ -63,31 +88,34 @@ docker build --target mesail-keycloak -t mesail-keycloak .
 
 ```bash
 docker run -d --name mesail-keycloak -v mesail-keycloak:/data/keycloak \
-  -e MESAIL_PUBLIC_URL=https://mail.example.com \
-  -e MESAIL_KEYCLOAK_API_SECRET=... -e MESAIL_KEYCLOAK_SERVICE_SECRET=... \
-  -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=... \
+  -e MESAIL_KEYCLOAK_DOMAINS=example.com,example.org \
+  -e MESAIL_IDENTITY_CLIENT_SECRET=... -e MESAIL_SERVICE_SECRET=... \
+  -e MESAIL_KEYCLOAK_DIRECTORY_SECRET=... \
+  -e KC_BOOTSTRAP_ADMIN_CLIENT_ID=bootstrap-admin -e KC_BOOTSTRAP_ADMIN_CLIENT_SECRET=... \
   -e MESAIL_APP_COMMAND='/path/to/mesail-front' mesail-keycloak
 ```
 
 | Variable | Required | Meaning |
 | --- | --- | --- |
-| `MESAIL_PUBLIC_URL` | yes | The public origin, for example `https://mail.example.com`. Keycloak's public URL is this plus `/idp`. |
-| `MESAIL_KEYCLOAK_API_SECRET` | with the built-in realm | Secret of `mesail-api` (first start only). |
-| `MESAIL_KEYCLOAK_SERVICE_SECRET` | with the built-in realm | Secret of `mesail-service` (first start only). |
-| `MESAIL_KEYCLOAK_IMPORT_DIR` | no | A folder of realm files (`*.json`, users in `dev/*.json`) to import instead of the built-in `mesail` realm, for example the identity app's realm templates. Their placeholders come from the environment too. |
-| `KC_BOOTSTRAP_ADMIN_USERNAME`, `KC_BOOTSTRAP_ADMIN_PASSWORD` | first start | A temporary admin of the `master` realm. Replace it with a real admin, then remove it. |
+| `MESAIL_IDENTITY_CLIENT_SECRET` | yes | Secret of `mesail-identity`, the same in every realm (the identity service's `YON_IDENTITY_CLIENT_SECRET`). Used when a realm is imported. |
+| `MESAIL_SERVICE_SECRET` | yes | Secret of `mesail-service` in each imported domain realm. |
+| `MESAIL_KEYCLOAK_DOMAINS` | no | Mail domains whose realms are imported at start, separated by commas or spaces. Existing realms are skipped. |
+| `MESAIL_KEYCLOAK_URL` | no | Keycloak's backend address and the issuer base. Default `http://127.0.0.1:8180/idp`. |
+| `MESAIL_KEYCLOAK_DIRECTORY_SECRET` | no | Turns on the `mesail-directory` admin client and is its secret. |
+| `KC_BOOTSTRAP_ADMIN_CLIENT_ID`, `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` | first start | A temporary admin client of the `master` realm. The provisioning step uses it once to create `mesail-directory`. Remove it from the environment after the first start. |
+| `KC_BOOTSTRAP_ADMIN_USERNAME`, `KC_BOOTSTRAP_ADMIN_PASSWORD` | no | A temporary admin user of the `master` realm, for the admin console (reach it through a tunnel, never the public address). |
 | `MESAIL_APP_COMMAND` | no | The app the supervisor starts after Keycloak is ready. Without it the container runs Keycloak only. |
 | `MESAIL_APP_HEALTH_URL` | no | `http://127.0.0.1:<port>/<path>` of the app's health route, added to the image health check. |
 | `MESAIL_KEYCLOAK_DATA` | no | Folder of the SQLite file. Default `/data/keycloak` (a volume). |
-| `MESAIL_KEYCLOAK_DEV_USERS` | no | `true` imports `member@mesail.test` (password `dev-member-password`) and `admin@mesail.test` (`dev-admin-password`). Dev and tests only. |
+| `MESAIL_KEYCLOAK_IMPORT_DIR` | no | Another folder of realm files laid out like `realm/`. |
+| `MESAIL_KEYCLOAK_DEV_USERS` | no | `true` imports the dev users: `member@<domain>` (password `dev-member-password`) and `admin@<domain>` (`dev-admin-password`) in each dev domain, and `operator@mesail.test` (`dev-operator-password`). Dev and tests only. |
 | `MESAIL_KEYCLOAK_START_TIMEOUT` | no | Seconds the supervisor waits for Keycloak (default 300). |
 
 Inside the container Keycloak listens on `127.0.0.1:8180` under `/idp`, and
-its health endpoints on `127.0.0.1:9180/idp/health/*`. The all-in-one front
-must proxy `/idp/*` to `http://127.0.0.1:8180/idp/*` with `X-Forwarded-Proto`,
-`X-Forwarded-Host` and `X-Forwarded-Port` (Keycloak runs with
-`proxy-headers=xforwarded`). To reach Keycloak without a front (tests), set
-`KC_HTTP_HOST=0.0.0.0` and publish port 8180.
+its health endpoints on `127.0.0.1:9180/idp/health/*`. Only processes in the
+same container reach it. The front must not route `/idp`. When Keycloak runs
+as its own host for other services, set `KC_HTTP_HOST=0.0.0.0` and keep port
+8180 on a private network.
 
 **Supervisor.** `mesail-supervisor` is the entrypoint (process 1). It starts
 Keycloak, waits up to `MESAIL_KEYCLOAK_START_TIMEOUT` for readiness, then
@@ -182,6 +210,29 @@ docker build --target mesail-keycloak --build-arg KEYCLOAK_DB=postgres -t mesail
 Run it with `KC_DB_URL=jdbc:postgresql://host:5432/keycloak`,
 `KC_DB_USERNAME`, `KC_DB_PASSWORD` and the variables above.
 
+## Native development (no Docker)
+
+```bash
+deploy/keycloak/dev/build-native-keycloak.sh ~/Developer/Tools/mesail-keycloak
+```
+
+It downloads Keycloak 26.8.2 and the SQLite driver (both checksum-checked),
+compiles the provider with the local JDK (21 or newer), and runs
+`kc.sh build`. Then start it with the same script the image uses (bash 3.2 is
+enough; the supervisor itself needs bash 5.1):
+
+```bash
+export KEYCLOAK_HOME=~/Developer/Tools/mesail-keycloak/keycloak
+export MESAIL_KEYCLOAK_HOME=$PWD/deploy/keycloak
+export MESAIL_KEYCLOAK_DATA=~/Developer/AtlasFylo/mesail/keycloak/dev
+export MESAIL_KEYCLOAK_DOMAINS=example.com,example.org,partner.test MESAIL_KEYCLOAK_DEV_USERS=true
+export MESAIL_IDENTITY_CLIENT_SECRET=dev-identity-secret MESAIL_SERVICE_SECRET=dev-service-secret
+deploy/keycloak/bin/mesail-keycloak-start
+```
+
+Keep the SQLite file on a local disk or a local disk image, never on a
+network share.
+
 ## Testing
 
 `test/run-image-test.sh` needs Docker (on this Mac, Colima: source
@@ -189,14 +240,18 @@ Run it with `KC_DB_URL=jdbc:postgresql://host:5432/keycloak`,
 VM lock) and `python3` and `openssl` on the host. It:
 
 1. builds the `mesail-keycloak` stage;
-2. starts it on a fresh volume with the dev users and a stand-in app
-   (`sleep infinity`);
-3. runs `test/oidc_check.py`: discovery and issuer; a PKCE login of
-   `member@mesail.test` through the login form; the access token's RS256
-   signature against the JWKS; `iss`, `aud`, `azp`, roles and the 60-second
-   lifetime; introspection with the `mesail-api` secret (a real token is active,
-   a tampered one is not); a `mesail-service` client-credentials token;
+2. starts it on a fresh volume with three domain realms, the dev users, the
+   bootstrap admin client and a stand-in app (`sleep infinity`);
+3. runs `test/oidc_check.py` against every domain realm and
+   `mesail-operators`: discovery and issuer; the password grant through
+   `mesail-identity`; the RS256 signature against the realm's keys; `iss`,
+   `aud`, `azp`, `typ`, roles and the 60-second lifetime; a wrong password;
+   refresh token rotation; introspection (a tampered token is not active, and
+   a token of one domain is not active in another); a `mesail-service` token;
+   no browser login offered; then it creates the realm `added.test` through
+   the admin API with `mesail-directory`, adds a user and signs in to it;
 4. restarts the container and runs the checks again;
-5. replaces the container, keeping the volume, and runs the checks again;
+5. replaces the container, keeping the volume, without the bootstrap admin
+   client, and runs the checks again;
 6. ends the stand-in app and checks that the supervisor stops the container;
 7. removes the container and the volume.

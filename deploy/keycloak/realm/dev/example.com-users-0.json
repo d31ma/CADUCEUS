@@ -1,0 +1,42 @@
+{
+  "realm": "example.com",
+  "users": [
+    {
+      "username": "member@example.com",
+      "email": "member@example.com",
+      "emailVerified": true,
+      "firstName": "Dev",
+      "lastName": "Member",
+      "enabled": true,
+      "realmRoles": [
+        "default-roles-example.com"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-member-password",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "admin@example.com",
+      "email": "admin@example.com",
+      "emailVerified": true,
+      "firstName": "Dev",
+      "lastName": "Admin",
+      "enabled": true,
+      "realmRoles": [
+        "default-roles-example.com",
+        "mesail-admin"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-admin-password",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

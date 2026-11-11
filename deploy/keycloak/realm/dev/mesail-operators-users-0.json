@@ -1,0 +1,23 @@
+{
+  "realm": "mesail-operators",
+  "users": [
+    {
+      "username": "operator@mesail.test",
+      "email": "operator@mesail.test",
+      "emailVerified": true,
+      "firstName": "Dev",
+      "lastName": "Operator",
+      "enabled": true,
+      "realmRoles": [
+        "default-roles-mesail-operators"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-operator-password",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

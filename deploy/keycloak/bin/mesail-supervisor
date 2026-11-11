@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+set -Euo pipefail
+
+readonly BIN=${MESAIL_KEYCLOAK_HOME:-/opt/mesail/keycloak}/bin
+readonly START_TIMEOUT=${MESAIL_KEYCLOAK_START_TIMEOUT:-300}
+readonly STOP_TIMEOUT=${MESAIL_STOP_TIMEOUT:-10}
+readonly NOT_READY=70
+readonly STOPPED_BY_SIGNAL=143
+keycloak_pid=''
+app_pid=''
+
+log() {
+  printf '[mesail-supervisor] %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >&2
+}
+
+is_running() {
+  [[ -n $1 ]] && kill -0 "$1" 2>/dev/null
+}
+
+stop_process() {
+  local pid=$1 name=$2 waited=0
+  is_running "$pid" || return 0
+  log "stopping $name (pid $pid)"
+  kill -TERM "$pid" 2>/dev/null
+  while is_running "$pid" && (( waited < STOP_TIMEOUT )); do
+    sleep 1
+    waited=$((waited + 1))
+  done
+  is_running "$pid" && log "$name did not stop in ${STOP_TIMEOUT}s; killing it" && kill -KILL "$pid" 2>/dev/null
+  wait "$pid" 2>/dev/null
+}
+
+stop_all() {
+  stop_process "$app_pid" app
+  stop_process "$keycloak_pid" keycloak
+}
+
+# shellcheck disable=SC2329
+on_signal() {
+  log "received $1"
+  stop_all
+  exit "$STOPPED_BY_SIGNAL"
+}
+
+start_keycloak() {
+  "$BIN/mesail-keycloak-start" &
+  keycloak_pid=$!
+  log "keycloak started (pid $keycloak_pid)"
+}
+
+check_keycloak_alive() {
+  is_running "$keycloak_pid" && return 0
+  wait "$keycloak_pid"
+  local status=$?
+  log "keycloak exited with status $status before it was ready"
+  exit "$status"
+}
+
+check_start_deadline() {
+  (( SECONDS < $1 )) && return 0
+  log "keycloak was not ready after ${START_TIMEOUT}s"
+  stop_all
+  exit "$NOT_READY"
+}
+
+wait_for_keycloak() {
+  local deadline=$((SECONDS + START_TIMEOUT))
+  until "$BIN/mesail-healthcheck" keycloak; do
+    check_keycloak_alive
+    check_start_deadline "$deadline"
+    sleep 2
+  done
+  log "keycloak is ready"
+}
+
+provision_keycloak() {
+  "$BIN/mesail-keycloak-provision" && return 0
+  local status=$?
+  log "provisioning failed with status $status"
+  stop_all
+  exit "$status"
+}
+
+start_app() {
+  [[ -n ${MESAIL_APP_COMMAND:-} ]] || { log "MESAIL_APP_COMMAND is not set; running Keycloak only"; return 0; }
+  bash -c "exec ${MESAIL_APP_COMMAND}" &
+  app_pid=$!
+  log "app started (pid $app_pid): ${MESAIL_APP_COMMAND}"
+}
+
+process_name() {
+  [[ $1 == "$keycloak_pid" ]] && echo keycloak && return 0
+  echo app
+}
+
+watch_processes() {
+  local exited_pid='' status
+  wait -n -p exited_pid "$keycloak_pid" ${app_pid:+"$app_pid"}
+  status=$?
+  log "$(process_name "$exited_pid") exited with status $status; stopping the container"
+  stop_all
+  exit "$status"
+}
+
+main() {
+  trap 'on_signal TERM' TERM
+  trap 'on_signal INT' INT
+  start_keycloak
+  wait_for_keycloak
+  provision_keycloak
+  start_app
+  watch_processes
+}
+
+main "$@"

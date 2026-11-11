@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -Euo pipefail
+
+readonly KEYCLOAK_HOST=127.0.0.1
+readonly KEYCLOAK_PORT=${KC_HTTP_MANAGEMENT_PORT:-9180}
+readonly KEYCLOAK_READY_PATH=/idp/health/ready
+readonly URL_PATTERN='^http://([^:/]+):([0-9]+)(/.*)?$'
+readonly READ_TIMEOUT=5
+
+http_ok() {
+  local host=$1 port=$2 path=$3 status=000
+  exec 3<>"/dev/tcp/${host}/${port}" || return 1
+  printf 'GET %s HTTP/1.0\r\nHost: %s\r\nConnection: close\r\n\r\n' "$path" "$host" >&3
+  IFS=' ' read -r -t "$READ_TIMEOUT" _ status _ <&3 || status=000
+  exec 3<&- 3>&-
+  [[ $status == 200 ]]
+}
+
+keycloak_ok() {
+  http_ok "$KEYCLOAK_HOST" "$KEYCLOAK_PORT" "$KEYCLOAK_READY_PATH"
+}
+
+app_ok() {
+  [[ -n ${MESAIL_APP_HEALTH_URL:-} ]] || return 0
+  [[ $MESAIL_APP_HEALTH_URL =~ $URL_PATTERN ]] || { echo "MESAIL_APP_HEALTH_URL must look like http://host:port/path" >&2; return 1; }
+  http_ok "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]:-/}"
+}
+
+main() {
+  case ${1:-all} in
+    keycloak) keycloak_ok ;;
+    app) app_ok ;;
+    all) keycloak_ok && app_ok ;;
+    *) echo "usage: mesail-healthcheck [all|keycloak|app]" >&2; return 2 ;;
+  esac
+}
+
+main "$@"

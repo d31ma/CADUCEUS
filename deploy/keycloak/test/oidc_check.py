@@ -238,6 +238,17 @@ class OidcCheck:
         member = self.check_member_token(urls, False)
         self.check_introspection(urls, member["access_token"])
         self.check_account_settings(urls, self.OPERATORS_REALM)
+        self.check_directory_limits(directory)
+
+    def check_directory_limits(self, directory: "RealmDirectory") -> None:
+        seeded = self.domains[0]
+        directory.sign_in()
+        reply = directory.create_realm_named(seeded)
+        self.expect(f"{seeded}: directory create of a seeded realm (HTTP, message)",
+                    (reply.status, reply.json().get("errorMessage")), (409, f"Realm {seeded} already exists"))
+        self.expect(f"{directory.domain}: directory create of its own realm again (HTTP)", directory.create_realm_named(directory.domain).status, 409)
+        self.expect(f"{seeded}: directory may not delete a seeded realm (HTTP)", directory.admin("DELETE", f"/{seeded}").status, 403)
+        self.expect("missing realm: discovery answers 404", directory.discovery_status("no-such-domain.test"), 404)
 
     def browser_outcome(self, reply: "Reply") -> tuple[str, bool]:
         if 300 <= reply.status < 400:
@@ -447,6 +458,12 @@ class RealmDirectory:
     def create_realm(self) -> int:
         return self.admin("POST", "", self.rendered_template().encode()).status
 
+    def create_realm_named(self, realm: str) -> "Reply":
+        return self.admin("POST", "", self.rendered_template(realm).encode())
+
+    def discovery_status(self, realm: str) -> int:
+        return self.http.send(f"{self.base_url}/realms/{realm}/.well-known/openid-configuration").status
+
     def create_member(self) -> int:
         username = f"member@{self.domain}"
         user = {
@@ -456,8 +473,8 @@ class RealmDirectory:
         }
         return self.admin("POST", f"/{self.domain}/users", json.dumps(user).encode()).status
 
-    def rendered_template(self) -> str:
-        values = dict(os.environ, MESAIL_REALM=self.domain)
+    def rendered_template(self, realm: str = "") -> str:
+        values = dict(os.environ, MESAIL_REALM=realm or self.domain)
         with open(self.template_path, encoding="utf-8") as handle:
             text = handle.read()
         return self.PLACEHOLDER.sub(lambda match: json.dumps(values[match.group(1)])[1:-1], text)

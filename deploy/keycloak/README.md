@@ -115,6 +115,10 @@ example `http://keycloak:8180/idp`. Keys:
   itself (the admin API does not fill `${...}` placeholders), and posts it to
   `${MESAIL_KEYCLOAK_URL}/admin/realms`; then it creates users with
   `POST /admin/realms/<domain>/users`;
+- a realm that exists already, seeded or created earlier, answers the `POST`
+  with 409 `{"errorMessage":"Realm <domain> already exists"}`; Keycloak also
+  logs that as an ERROR line ("Conflict detected"), which is expected. The
+  directory client may delete only realms it created (403 on seeded ones);
 - at start: add the domain to `MESAIL_KEYCLOAK_DOMAINS`. A realm that exists
   already is skipped, so restarts change nothing.
 

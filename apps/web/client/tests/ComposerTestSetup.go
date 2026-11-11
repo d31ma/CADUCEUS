@@ -128,3 +128,9 @@ func (setup ComposerTestSetup) Composer(behaviors *BehaviorContext) *ComposerSer
 	composer.Start()
 	return composer
 }
+
+func (setup ComposerTestSetup) Thread(behaviors *BehaviorContext) *ComposerThreadService {
+	BrowserFakes{}.Answer("secureRandom", "uuid", "id-1")
+	sender := setup.Sender(behaviors)
+	return &ComposerThreadService{send: sender, problems: &ComposerProblemService{}, auth: sender.auth}
+}

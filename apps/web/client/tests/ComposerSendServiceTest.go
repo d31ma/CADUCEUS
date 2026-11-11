@@ -9,32 +9,32 @@ func (test *ComposerSendServiceTest) sender() *ComposerSendService {
 }
 
 func (test *ComposerSendServiceTest) TestSendGivesTheMessageAClientId() {
-	result, failure := test.sender().Send(SendRequest{Body: "hello"})
+	result, failure := test.sender().Send("conversation", SendRequest{Body: "hello"})
 	Assert.Equals(nil, failure)
 	Assert.Equals("msg-id-1", result.Message.MessageId)
 }
 
 func (test *ComposerSendServiceTest) TestSendForgetsTheIdAfterSuccess() {
 	sender := test.sender()
-	sender.Send(SendRequest{Body: "hello"})
-	Assert.Equals("", sender.PendingId)
+	sender.Send("conversation", SendRequest{Body: "hello"})
+	Assert.Equals("", sender.PendingIds["conversation"])
 }
 
 func (test *ComposerSendServiceTest) TestSendKeepsTheIdForARetryAfterAFailure() {
 	sender := test.sender()
-	_, failure := sender.Send(SendRequest{Body: "offline"})
+	_, failure := sender.Send("conversation", SendRequest{Body: "offline"})
 	Assert.IsTrue(failure != nil)
-	Assert.Equals("id-1", sender.PendingId)
+	Assert.Equals("id-1", sender.PendingIds["conversation"])
 	BrowserFakes{}.Answer("secureRandom", "uuid", "id-2")
-	result, _ := sender.Send(SendRequest{Body: "hello"})
+	result, _ := sender.Send("conversation", SendRequest{Body: "hello"})
 	Assert.Equals("msg-id-1", result.Message.MessageId)
 }
 
 func (test *ComposerSendServiceTest) TestResetStartsANewMessage() {
 	sender := test.sender()
-	sender.Send(SendRequest{Body: "offline"})
-	sender.Reset()
-	Assert.Equals("", sender.PendingId)
+	sender.Send("conversation", SendRequest{Body: "offline"})
+	sender.Reset("conversation")
+	Assert.Equals("", sender.PendingIds["conversation"])
 }
 
 func (test *ComposerSendServiceTest) TestASignedOutAnswerRenewsTheTokenAndSendsAgain() {
@@ -48,4 +48,13 @@ func (test *ComposerSendServiceTest) TestOtherFailuresAreNotSentAgain() {
 	sender := test.sender()
 	_, failure := sender.againWhenSignedOut(SendRequest{Body: "hello"}, SendResult{}, &BehaviorError{Code: "HTTP_STATUS", Status: 503})
 	Assert.Equals(503, BehaviorErrorStatus(failure))
+}
+
+func (test *ComposerSendServiceTest) TestEachComposerKeepsItsOwnPendingId() {
+	sender := test.sender()
+	sender.Send("conversation", SendRequest{Body: "offline"})
+	BrowserFakes{}.Answer("secureRandom", "uuid", "id-2")
+	sender.Send("thread", SendRequest{Body: "offline"})
+	Assert.Equals("id-1", sender.PendingIds["conversation"])
+	Assert.Equals("id-2", sender.PendingIds["thread"])
 }

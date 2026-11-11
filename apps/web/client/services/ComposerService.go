@@ -268,7 +268,7 @@ func (composer *ComposerService) deliverWhenClear(request SendRequest) {
 }
 
 func (composer *ComposerService) deliver(request SendRequest) {
-	result, failure := composer.send.Send(request)
+	result, failure := composer.send.Send(composer.composerName(), request)
 	composer.Problem = composer.problems.OfFailure(failure)
 	composer.afterSend(result)
 }
@@ -317,7 +317,7 @@ func (composer *ComposerService) showChanges() {
 func (composer *ComposerService) clear() {
 	composer.recipients.Clear()
 	composer.uploads.Clear()
-	composer.send.Reset()
+	composer.send.Reset(composer.composerName())
 	composer.Body = ""
 	composer.Subject = ""
 	composer.ShowCc = false
@@ -332,6 +332,10 @@ func (composer *ComposerService) mostRecipients() int {
 
 func (composer *ComposerService) problemSubjectMissing() string {
 	return "subjectMissing"
+}
+
+func (composer *ComposerService) composerName() string {
+	return "conversation"
 }
 
 func (composer *ComposerService) roleTo() string {

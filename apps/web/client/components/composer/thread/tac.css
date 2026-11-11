@@ -1,0 +1,243 @@
+.composer-thread {
+  width: 100%;
+  border: 1px solid var(--w-outline);
+  border-radius: var(--ms-radius-card);
+  background: var(--w-surface);
+  color: var(--w-text);
+  transition: border-color var(--ms-duration) var(--ms-ease), box-shadow var(--ms-duration) var(--ms-ease);
+}
+
+.composer-thread:focus-within {
+  border-color: var(--w-focus-ring-color);
+  box-shadow: 0 0 0 1px var(--w-focus-ring-color);
+}
+
+.composer-thread[data-email] {
+  border-color: var(--ms-email-rule);
+}
+
+.composer-thread-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.composer-thread-icon-small {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.composer-thread-check .w-checkbox,
+.composer-thread-check.w-checkbox {
+  min-height: 1.5rem;
+  align-items: center;
+}
+
+.composer-thread-note {
+  color: var(--w-text-subtle);
+  font-size: var(--w-font-sm);
+  line-height: var(--ms-line-body);
+}
+
+.composer-thread-note-email {
+  border-radius: var(--w-radius-md);
+  background: var(--ms-email-bg);
+  color: var(--ms-on-email-bg);
+}
+
+.composer-thread-tag {
+  min-height: 1.375rem;
+  border-radius: var(--ms-radius-chip);
+  background: var(--w-surface-container-high);
+  color: var(--w-text-subtle);
+  font-size: var(--w-font-xs);
+  font-weight: var(--w-font-weight-bold);
+  white-space: nowrap;
+}
+
+.composer-thread-textarea {
+  min-height: 2.5rem;
+  max-height: 30vh;
+  border: 0;
+  background: transparent;
+  color: var(--w-text);
+  font: inherit;
+  font-size: var(--ms-text-body);
+  line-height: var(--ms-line-body);
+  resize: vertical;
+  outline: none;
+}
+
+.composer-thread-textarea::placeholder {
+  color: var(--w-text-very-subtle);
+}
+
+.composer-thread-editor:focus-within {
+  box-shadow: inset 0 0 0 2px var(--w-focus-ring-color);
+  border-radius: var(--w-radius-md);
+}
+
+.composer-thread-toolbar {
+  position: sticky;
+  bottom: 0;
+  border-top: 1px solid var(--w-divider);
+  border-radius: 0 0 var(--ms-radius-card) var(--ms-radius-card);
+  background: var(--w-surface);
+  padding-bottom: max(var(--w-space-2), env(safe-area-inset-bottom));
+}
+
+.composer-thread-problem {
+  border-radius: var(--w-radius-md);
+  background: var(--w-error-container);
+  color: var(--w-on-error-container);
+  font-size: var(--w-font-sm);
+}
+
+.composer-thread-send .w-btn {
+  min-height: 2rem;
+  padding: 0 var(--w-space-3);
+  gap: var(--w-space-2);
+  border-radius: var(--w-radius-md);
+  background: var(--w-accent-bg);
+  color: var(--w-on-accent);
+  font-weight: var(--w-font-weight-semibold);
+}
+
+.composer-thread[data-email] .composer-thread-send .w-btn {
+  background: var(--ms-email);
+  color: var(--w-surface);
+}
+
+.composer-thread-send .w-btn:focus-visible {
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
+  outline-offset: var(--w-focus-ring-offset);
+}
+
+@media (max-width: 767px) {
+  .composer-thread {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .composer-thread:focus-within {
+    box-shadow: none;
+  }
+
+  .composer-thread-toolbar {
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .composer-thread-check .w-checkbox,
+  .composer-thread-check.w-checkbox,
+  .composer-thread-send .w-btn {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer-thread,
+  .composer-thread * {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  .m-0 {
+    margin: 0px;
+  }
+  .mt-0\.5 {
+    margin-top: calc(var(--spacing, 0.25rem) * 0.5);
+  }
+  .mt-1 {
+    margin-top: var(--spacing, 0.25rem);
+  }
+  .ml-auto {
+    margin-left: auto;
+  }
+  .block {
+    display: block;
+  }
+  .contents {
+    display: contents;
+  }
+  .flex {
+    display: flex;
+  }
+  .inline-flex {
+    display: inline-flex;
+  }
+  .w-full {
+    width: 100%;
+  }
+  .min-w-0 {
+    min-width: 0px;
+  }
+  .shrink-0 {
+    flex-shrink: 0;
+  }
+  .basis-full {
+    flex-basis: 100%;
+  }
+  .flex-col {
+    flex-direction: column;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .items-start {
+    align-items: flex-start;
+  }
+  .gap-1 {
+    gap: var(--spacing, 0.25rem);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .gap-x-3 {
+    column-gap: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .gap-y-2 {
+    row-gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .px-2 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .py-1 {
+    padding-block: var(--spacing, 0.25rem);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .pt-2 {
+    padding-top: calc(var(--spacing, 0.25rem) * 2);
+  }
+}
+/* @tachyon-generated-tailwind:end */

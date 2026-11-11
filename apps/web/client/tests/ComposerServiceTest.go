@@ -191,7 +191,7 @@ func (test *ComposerServiceTest) TestDeliverKeepsTheMessageAndItsIdAfterAFailure
 	test.sendWith(composer, "offline")
 	Assert.Equals("unavailable", composer.Problem)
 	Assert.Equals("offline", composer.Body)
-	Assert.Equals("id-1", composer.send.PendingId)
+	Assert.Equals("id-1", composer.send.PendingIds["conversation"])
 }
 
 func (test *ComposerServiceTest) TestARetryAfterAFailureSucceedsAndForgetsTheId() {
@@ -200,7 +200,7 @@ func (test *ComposerServiceTest) TestARetryAfterAFailureSucceedsAndForgetsTheId(
 	BrowserFakes{}.Answer("secureRandom", "uuid", "id-2")
 	test.sendWith(composer, "hello")
 	Assert.Equals("", composer.Problem)
-	Assert.Equals("", composer.send.PendingId)
+	Assert.Equals("", composer.send.PendingIds["conversation"])
 }
 
 func (test *ComposerServiceTest) TestRecipientsChangedOpensTheDialogWithTheChanges() {

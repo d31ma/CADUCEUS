@@ -956,7 +956,21 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
    during Wave 3).
 2. After Wave 3 is merged, in parallel: **O1**, **O2**, **O3**.
 3. After O3: **O5**. After O1, O2 and O3: **O4**.
-4. **Release gate** (SPEC Q16, decided "Wait for encryption"; ADR 0006
+4. **DuVay D1** (offline-state components, requested in ADR 0006): on
+   DuVay `develop`, web only, styled per OS skin, not yet in a DuVay
+   release (spec and helpers 5991376, `docs/offline-states.md`;
+   `w-storage-meter` 0c6aa9a and ca38bee; `w-send-status` and the "Needs
+   your attention" list pattern 64be0b7; `w-sync-status` d68028d). Until
+   a DuVay release has them, O3 and O4 build Mesail's own parts with
+   Tailwind, as `docs/mesail/ux/COMPONENTS.md` "Offline and sync" says.
+   At the DuVay pin move to that release (the slice that moves the pin,
+   rule 14), they replace, one for one: the sync bar (`.ms-sync-bar`,
+   `SyncStatusService`) by `w-sync-status`; the message queue notes
+   ("Waiting to send") by `w-send-status`; the attention page cards
+   (`.ms-attention-card`) by DuVay's "Needs your attention" list pattern;
+   the space meter (`.ms-space-meter`) by `w-storage-meter`. If that DuVay
+   release comes before O3 or O4 build these parts, they use D1 at once.
+5. **Release gate** (SPEC Q16, decided "Wait for encryption"; ADR 0006
    section 9): O1 and O2 are server changes and ship as soon as they
    merge. O3 needs TACHYON's T1, T9 and T2 (waves 1 and 2) to build, and
    sealed tables (wave 3) to finish. O3, O4 and O5 may merge earlier, but

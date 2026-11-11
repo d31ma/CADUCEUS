@@ -216,6 +216,17 @@ stable; tests name them.
   with the domain switcher. Each account keeps its own session and token.
   A request made with one domain's token never returns data of the other
   domain.
+- **AC-ID-7** A member changes their own password in Mesail's settings. They
+  must type the current password (and their one-time code when 2-step
+  sign-in is on). The new password must meet the domain's password policy;
+  a refusal says which rule failed. After the change, every other session
+  of that account ends; this session continues. The browser never talks to
+  Keycloak.
+- **AC-ID-8** A member turns on 2-step sign-in in Mesail's settings: Mesail
+  shows a QR code and the same secret as text, and turns it on only after
+  the member types a valid code from their app. Turning it off or resetting
+  it needs the current password and a valid code. A lost authenticator is
+  reset by a DomainAdmin (Keycloak admin), not by the member.
 
 ### Channels of a domain (AC-CH)
 - **AC-CH-1** A member can create a public channel in their domain, join

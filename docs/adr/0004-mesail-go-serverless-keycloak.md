@@ -317,6 +317,14 @@ Friction found while designing, to raise with the dependency owners:
 - TACHYON: an `@HTTPClient` option for same-origin credentials, so a
   session key can live in an HttpOnly cookie instead of script-readable
   storage.
+- TACHYON (found by slice F1 in the 26.46.02 Tac runtime): a `Navigation`
+  capability for Go services (read the query, assign, replace the path); a
+  page timer (`@Every`) that runs inside a page call; HTTP calls from
+  `@OnStart`; ARIA attributes that take Go booleans; key filters on events
+  (`on:keydown.escape`) and focus control (focus, focus trap, focus
+  return). Details: `slice-f1-tachyon-gaps.md` in the planning notes.
+- TACHYON: `viewport-fit=cover` in the injected viewport meta (or a manifest
+  option), so `env(safe-area-inset-*)` works on iOS.
 - TACHYON: mount separately built Tac apps under route prefixes, or split
   Go Wasm per route, so a frontend feature can be deployed alone.
 - TACHYON: more than one FYLO datasource per app, so a service can keep one

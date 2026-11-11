@@ -122,14 +122,20 @@ C1, not before each slice merge.
   CONTRACTS.md "identity" (sign in with address, password and optional
   one-time code through direct access grants; refresh and sign-out with the
   encrypted `sessionKey`; brute-force limits; nothing secret in logs) and
-  `GET /identity/me`, and the client-credentials service token in
+  `GET /identity/me`, the account settings routes (change password, set up,
+  confirm and remove the 2-step code; CONTRACTS.md "identity", SPEC
+  AC-ID-7 and AC-ID-8), and the client-credentials service token in
   `kit/oidc` (EVENTS.md section 4). The realm templates are NOT I1's: they
   live in `deploy/keycloak/realm/` and belong to `mesail-keycloak` (one
   realm per domain plus `mesail-operators`; clients `mesail-identity` with
   direct access grants and conditional OTP, and `mesail-service` with client
   credentials; 60 s access tokens; brute-force detection on; no browser
-  client; a master-realm client `mesail-directory` that slice D1 uses to
-  create a realm at run time). I1 states what the templates must contain
+  client; a confidential client `mesail-account` per realm whose service
+  account has only `manage-users` and `view-users`, for the account
+  settings routes, and, if the stock admin API cannot set an OTP credential
+  with a given secret, a narrow admin endpoint in its provider for that; a
+  master-realm client `mesail-directory` that slice D1 uses to create a
+  realm at run time). I1 states what the templates must contain
   and checks them against its code.
 - **Depends on:** `mesail-keycloak` for the realm templates.
 - **Blackbox:** `Identity_test.go`.
@@ -232,8 +238,10 @@ C1, not before each slice merge.
   code) calling `identity`'s session routes; the access token in memory and
   sent with `// @RequestHeader("Authorization")`; the `sessionKey` in a
   `// @SessionState` field; refresh after a `401` and retry once; sign-out;
-  the domain switcher; the three-pane layout (AC-UI-1, 2, 4) and the feature
-  slots the shell already places. Other web slices get the token from F1's
+  the domain switcher; the account settings screens (change password, set
+  up and remove the 2-step code, following `mesail-ux`'s settings mockups,
+  AC-ID-7 and AC-ID-8); the three-pane layout (AC-UI-1, 2, 4) and the
+  feature slots the shell already places. Other web slices get the token from F1's
   `SessionService`.
 - **Depends on:** I1.
 

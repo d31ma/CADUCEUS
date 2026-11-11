@@ -39,6 +39,42 @@
   padding-inline: var(--w-space-2);
 }
 
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 1px;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--w-space-2);
+  min-height: var(--ms-row-height);
+}
+
+.skeleton-avatar {
+  flex: none;
+  width: var(--ms-avatar-xs);
+  height: var(--ms-avatar-xs);
+  border-radius: var(--w-radius-lg);
+}
+
+.skeleton-bar {
+  flex: 1;
+  max-width: 60%;
+  height: var(--w-space-3);
+  border-radius: var(--w-radius-sm);
+}
+
+.skeleton-row:nth-child(even) .skeleton-bar {
+  max-width: 45%;
+}
+
+.skeleton-row:nth-child(3n) .skeleton-bar {
+  max-width: 75%;
+}
+
 .empty-title {
   margin: 0;
   font-size: var(--w-font-md);
@@ -157,6 +193,15 @@
   flex: none;
 }
 
+.row-avatar .w-avatar {
+  width: var(--ms-avatar-xs);
+  height: var(--ms-avatar-xs);
+  min-width: var(--ms-avatar-xs);
+  border-radius: var(--w-radius-lg);
+  font-size: var(--ms-text-meta);
+  font-weight: var(--w-font-weight-semibold);
+}
+
 .outside-avatar .w-avatar {
   background: var(--ms-email-bg);
   color: var(--ms-on-email-bg);
@@ -208,14 +253,16 @@
 
 @media (pointer: coarse) {
   .section-toggle > .w-btn,
-  .nav-row > .w-btn {
+  .nav-row > .w-btn,
+  .skeleton-row {
     min-height: var(--ms-touch-min);
   }
 }
 
 @media (max-width: 959px) {
   .section-toggle > .w-btn,
-  .nav-row > .w-btn {
+  .nav-row > .w-btn,
+  .skeleton-row {
     min-height: var(--ms-touch-min);
   }
 }

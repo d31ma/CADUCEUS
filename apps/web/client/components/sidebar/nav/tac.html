@@ -20,10 +20,15 @@
 
   <switch :value="sidebar.state">
     <case :when="'loading'">
-      <div class="nav-loading flex flex-col gap-2 px-2">
+      <div class="nav-loading flex flex-col px-2">
         <p class="sr-only" role="status">Loading conversations…</p>
-        <div aria-hidden="true">
-          <w-skeleton-loader type="list-item-avatar@6" loading-text="Loading conversations"></w-skeleton-loader>
+        <div class="skeleton-list flex flex-col gap-px" aria-hidden="true">
+          <div class="skeleton-row flex items-center gap-2"><span class="w-skeleton skeleton-avatar"></span><span class="w-skeleton skeleton-bar"></span></div>
+          <div class="skeleton-row flex items-center gap-2"><span class="w-skeleton skeleton-avatar"></span><span class="w-skeleton skeleton-bar"></span></div>
+          <div class="skeleton-row flex items-center gap-2"><span class="w-skeleton skeleton-avatar"></span><span class="w-skeleton skeleton-bar"></span></div>
+          <div class="skeleton-row flex items-center gap-2"><span class="w-skeleton skeleton-avatar"></span><span class="w-skeleton skeleton-bar"></span></div>
+          <div class="skeleton-row flex items-center gap-2"><span class="w-skeleton skeleton-avatar"></span><span class="w-skeleton skeleton-bar"></span></div>
+          <div class="skeleton-row flex items-center gap-2"><span class="w-skeleton skeleton-avatar"></span><span class="w-skeleton skeleton-bar"></span></div>
         </div>
       </div>
     </case>

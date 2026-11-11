@@ -1,8 +1,7 @@
-<section class="notify-page flex h-full min-h-0 min-w-0 flex-col @container/activity" aria-labelledby="activity-title">
-  <header class="notify-divider-below flex min-h-13 flex-wrap items-center gap-2 px-3 py-2 sm:px-4">
-    <h2 id="activity-title" class="notify-title flex min-w-0 flex-1 items-center gap-1"><w-icon name="bell" class="notify-icon-small"></w-icon><span>Activity</span></h2>
+<section class="notify-page flex h-full min-h-0 min-w-0 flex-col @container/activity">
+  <div class="notify-divider-below flex min-h-11 flex-wrap items-center justify-end gap-2 px-3 py-1 sm:px-4">
     <w-btn variant="text" size="small" prepend-icon="check-double" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notification.markAllRead()">Mark all as read</w-btn>
-  </header>
+  </div>
 
   <logic :if="notificationPush.panel == 'notAsked'">
     <div class="notify-prompt mx-3 mt-3 flex flex-wrap items-center gap-3 p-3 sm:mx-4 sm:p-4" role="region" aria-labelledby="push-prompt-text">
@@ -15,9 +14,9 @@
     <p class="notify-problem mx-3 mt-2 px-3 py-2 sm:mx-4" role="status">Mesail could not ask for permission. Try again, or allow notifications in your browser settings.</p>
   </logic>
 
-  <w-tabs :value="notification.tab" class="px-2 sm:px-4" aria-label="Show activity">
+  <w-tabs :value="notification.tab" class="notify-tabs block min-w-0 max-w-full" aria-label="Show activity">
     <loop :for="tab of notification.tabs">
-      <w-tab :value="tab.name" :id="tab.id" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notification.chooseTab(tab.name)">
+      <w-tab :value="tab.name" :id="tab.id" on:click="notification.chooseTab(tab.name)">
         {tab.label}
         <logic :if="tab.hasUnread">
           <w-badge :content="tab.unreadCount" inline class="ms-1" :label="tab.unreadLabel"></w-badge>

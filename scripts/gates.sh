@@ -92,13 +92,39 @@ role_files_formatted() {
 
 kit_checks() {
   local root="$1" profile="$2"
-  (cd "$root/kit" && go vet ./... && go test -coverprofile="$profile" ./...) && crap_from_tool "$root" "$profile"
+  (cd "$root/kit" && go vet ./... && go test -coverprofile="$profile" ./...) && crap_from_tool "$root" "$profile" "$root/kit"
 }
 
 crap_from_tool() {
-  local root="$1" profile="$2" binary
+  local root="$1" profile="$2" module="$3" binary
   binary="$(mktemp -d)/crap"
-  (cd "$root/tools/crap" && go build -o "$binary" .) && (cd "$root/kit" && "$binary" -profile "$profile" -max 15)
+  (cd "$root/tools/crap" && go build -o "$binary" .) && (cd "$module" && "$binary" -profile "$profile" -max 15)
+}
+
+is_local_package() {
+  local packages="$1" name="$2"
+  [ "$name" != vendor ] && ! grep -qx "$name" "$packages/kit.list" 2> /dev/null
+}
+
+local_packages() {
+  local packages="$1" folder name
+  for folder in "$packages"/*/; do
+    name="$(basename "$folder")"
+    if is_local_package "$packages" "$name"; then echo "./$name/..."; fi
+  done
+}
+
+has_local_packages() {
+  local packages="$1/server/packages"
+  [ -f "$packages/go.mod" ] && [ -n "$(local_packages "$packages")" ]
+}
+
+local_package_checks() {
+  local app="$1" profile="$2" packages list
+  packages="$app/server/packages"
+  list="$(local_packages "$packages" | tr '\n' ' ')"
+  echo "app-local packages: $list"
+  (cd "$packages" && go vet $list && go test -coverprofile="$profile" $list) && crap_from_tool "$(repository_root)" "$profile" "$packages"
 }
 
 blackbox_compiles() {
@@ -194,6 +220,9 @@ app_gates() {
   fi
   run_step "$name migrate check" "$log" "$ty" migrate check "$app" || status=1
   run_step "$name test" "$log" "$ty" test "$app" --coverage || status=1
+  if has_local_packages "$app"; then
+    run_step "$name packages" "$log" local_package_checks "$app" "$(dirname "$log")/$name-packages.cover" || status=1
+  fi
   if app_kind_has_client "$app"; then
     client_checks "$app" "$log" || status=1
   fi

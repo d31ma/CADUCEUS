@@ -1,5 +1,7 @@
 .settings-card > .w-card {
+  border-color: var(--w-border);
   border-radius: var(--ms-radius-card, 0.5rem);
+  background: var(--w-surface);
 }
 
 .settings-heading {
@@ -34,10 +36,6 @@
   font-size: var(--ms-text-body, 0.9375rem);
   letter-spacing: 0.1em;
   color: var(--w-text);
-}
-
-.w-text-field-control {
-  min-height: 1.5rem;
 }
 
 .w-checkbox {

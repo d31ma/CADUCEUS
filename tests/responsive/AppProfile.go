@@ -49,18 +49,16 @@ func WebProfile() AppProfile {
 	return AppProfile{
 		Name:              webAppName,
 		DefaultDist:       "../../apps/web/dist/web",
-		SessionStorageKey: "tac:service:session:/:sessionKeys",
-		StoredSession: map[string]string{
-			firstHostedDomain: sessionKeyPrefix + firstHostedDomain,
-			otherHostedDomain: sessionKeyPrefix + otherHostedDomain,
-		},
-		HostedDomains: []string{firstHostedDomain, otherHostedDomain},
-		DomainRoles:   map[string][]string{},
-		DefaultRoles:  []string{memberRole},
+		SessionStorageKey: "tac:service:session:/:sessionKey",
+		StoredSession:     sessionKeyPrefix + firstHostedDomain,
+		HostedDomains:     []string{firstHostedDomain, otherHostedDomain},
+		DomainRoles:       map[string][]string{},
+		DefaultRoles:      []string{memberRole},
 		DataAnswers: map[string]any{
-			"GET /api/v1/channels":                []any{},
-			"GET /api/v1/messaging/conversations": fakeConversationPage{Items: []any{}},
-			"PUT /api/v1/realtime/presence":       nil,
+			"GET /api/v1/channels":                    []any{},
+			"GET /api/v1/messaging/conversations":     fakeConversationPage{Items: []any{}},
+			"PUT /api/v1/realtime/presence":           nil,
+			"PUT /api/v1/directory/me/default-domain": nil,
 		},
 	}
 }

@@ -25,12 +25,8 @@ func (rows *ThreadRowService) Row(message ThreadMessage) ThreadRow {
 	}
 }
 
-func (rows *ThreadRowService) Replies(messages []ThreadMessage, rootId string) []ThreadRow {
-	return rows.repliesOf(messages, rootId)
-}
-
-func (rows *ThreadRowService) Root(messages []ThreadMessage, rootId string, known ThreadMessage) ThreadMessage {
-	return rows.rootOf(messages, rootId, known)
+func (rows *ThreadRowService) Replies(messages []ThreadMessage) []ThreadRow {
+	return rows.oldestFirst(messages)
 }
 
 func (rows *ThreadRowService) RepliesLabel(root ThreadMessage, shown int) string {
@@ -68,34 +64,12 @@ func (rows *ThreadRowService) rootOrNothing(message ThreadMessage) ThreadMessage
 	return message
 }
 
-func (rows *ThreadRowService) repliesOf(messages []ThreadMessage, rootId string) []ThreadRow {
+func (rows *ThreadRowService) oldestFirst(messages []ThreadMessage) []ThreadRow {
 	replies := []ThreadRow{}
 	for index := len(messages) - 1; index >= 0; index-- {
-		replies = rows.appendReply(replies, messages[index], rootId)
+		replies = append(replies, rows.Row(messages[index]))
 	}
 	return replies
-}
-
-func (rows *ThreadRowService) rootOf(messages []ThreadMessage, rootId string, known ThreadMessage) ThreadMessage {
-	found := known
-	for _, message := range messages {
-		found = rows.matching(found, message, rootId)
-	}
-	return found
-}
-
-func (rows *ThreadRowService) appendReply(replies []ThreadRow, message ThreadMessage, rootId string) []ThreadRow {
-	if message.MessageId == rootId {
-		return replies
-	}
-	return append(replies, rows.Row(message))
-}
-
-func (rows *ThreadRowService) matching(found ThreadMessage, message ThreadMessage, rootId string) ThreadMessage {
-	if message.MessageId == rootId {
-		return message
-	}
-	return found
 }
 
 func (rows *ThreadRowService) repliesWord(count int) string {

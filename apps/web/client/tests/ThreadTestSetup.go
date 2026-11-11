@@ -24,6 +24,8 @@ func (setup ThreadTestSetup) Exchange(request *BehaviorHttpRequest, execution *B
 	switch request.Method + " " + request.Path {
 	case "GET /api/v1/messaging/conversations/conv-1/messages":
 		return setup.page(fmt.Sprint(request.Query["threadRootId"]), fmt.Sprint(request.Query["cursor"]))
+	case "GET /api/v1/messaging/messages/root-1":
+		return setup.root(), nil
 	case "POST /api/v1/messaging/messages":
 		return setup.send(request)
 	}
@@ -33,7 +35,7 @@ func (setup ThreadTestSetup) Exchange(request *BehaviorHttpRequest, execution *B
 func (setup ThreadTestSetup) page(rootId string, cursor string) (BehaviorValue, error) {
 	switch rootId + " " + cursor {
 	case "root-1 <nil>", "root-1 ":
-		items := []ThreadMessage{setup.reply("reply-3", "Bo Lee", "09:31"), setup.reply("reply-2", "Bo Lee", "09:20"), setup.root()}
+		items := []ThreadMessage{setup.reply("reply-3", "Bo Lee", "09:31"), setup.reply("reply-2", "Bo Lee", "09:20")}
 		return ThreadMessagePage{Items: items, NextCursor: "c-2"}, nil
 	case "root-1 c-2":
 		return ThreadMessagePage{Items: []ThreadMessage{setup.reply("reply-1", "Cy Diaz", "09:15")}, NextCursor: ""}, nil
@@ -61,6 +63,6 @@ func (setup ThreadTestSetup) send(request *BehaviorHttpRequest) (BehaviorValue, 
 		return nil, errors.New("offline")
 	}
 	author := ThreadAuthor{Kind: "member", Address: "ana@example.com", DisplayName: "Ana Ruiz"}
-	message := ThreadMessage{MessageId: "msg-" + body.ClientMessageId, ConversationId: body.ConversationId, ThreadRootId: body.ThreadRootId, Author: author, Body: body.Body, CreatedAt: "2026-11-10T09:40:00Z"}
+	message := ThreadMessage{MessageId: "msg-" + body.ClientMessageId, ConversationId: body.ConversationId, ThreadRootId: body.ThreadRootId, AlsoToConversation: body.AlsoToConversation, Author: author, Body: body.Body, CreatedAt: "2026-11-10T09:40:00Z"}
 	return ThreadSendResult{Message: message, Deliveries: []ThreadDelivery{}}, nil
 }

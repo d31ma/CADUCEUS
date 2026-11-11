@@ -32,6 +32,19 @@
       </div>
     </case>
 
+    <case :when="'gone'">
+      <div class="grid flex-1 place-items-center px-4 py-8 max-sm:px-3">
+        <w-empty-state class="block max-w-md">
+          <w-icon slot="media" name="thread" class="[--ms-icon-size:2rem]"></w-icon>
+          <h3 slot="title" class="text-base font-semibold">This message is no longer available</h3>
+          <span slot="text">It was removed, or you are no longer in this conversation.</span>
+          <div slot="actions" class="flex justify-center">
+            <w-btn variant="text" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="thread.close()">Close thread</w-btn>
+          </div>
+        </w-empty-state>
+      </div>
+    </case>
+
     <case :when="'ready'">
       <div class="flex-1 min-w-0 py-4 [&_.ms-msg]:px-4 max-sm:[&_.ms-msg]:px-3" role="log" aria-label="Thread replies">
         <logic :if="thread.hasRoot">
@@ -54,9 +67,6 @@
               </logic>
             </div>
           </article>
-        </logic>
-        <logic else>
-          <p class="px-4 py-2 text-subtle max-sm:px-3">Original message</p>
         </logic>
 
         <p class="mx-4 my-2 flex items-center gap-2 text-sm text-subtle after:h-px after:flex-1 after:bg-divider max-sm:mx-3">{thread.repliesLabel}</p>
@@ -127,7 +137,8 @@
             <w-alert type="error" class="block">Your session ended, so the reply was not sent. Sign in again, then send it.</w-alert>
           </logic>
           <w-textarea label="Reply in thread" name="reply" rows="2" auto-grow no-resize placeholder="Reply…" class="block min-w-0 [&_textarea]:max-h-[30vh]" :readonly="thread.sendStatus == 'sending'" :value="thread.draft" on:input="thread.write($event.target.value)"></w-textarea>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <w-checkbox label="Also send to the conversation" name="also-to-conversation" density="compact" class="min-w-0 pointer-coarse:min-h-11 max-sm:min-h-11" :checked="thread.alsoToConversation" on:change="thread.alsoToConversation = $event.target.checked"></w-checkbox>
             <w-btn variant="filled" size="small" prepend-icon="send" class="ml-auto pointer-coarse:min-h-11 max-sm:min-h-11" :disabled="!thread.canSend" on:click="thread.reply()">Send</w-btn>
           </div>
         </form>

@@ -22,6 +22,14 @@ type ThreadClient interface {
 		cursor BehaviorValue,
 	) (BehaviorValue, error)
 
+	// @GetRequest("/messages/{messageId}")
+	Message(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @PathVariable("messageId")
+		messageId BehaviorValue,
+	) (BehaviorValue, error)
+
 	// @PostRequest("/messages")
 	Send(
 		// @RequestHeader("Authorization")

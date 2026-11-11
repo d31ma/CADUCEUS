@@ -2,23 +2,25 @@ import "strings"
 
 // @Service
 type ThreadService struct {
-	ConversationId string
-	RootId         string
-	Root           ThreadRow
-	HasRoot        bool
-	Replies        []ThreadRow
-	RepliesLabel   string
-	Status         string
-	NextCursor     string
-	LoadingOlder   bool
-	Draft          string
-	CanSend        bool
-	SendStatus     string
-	Pending        ThreadRow
-	root           ThreadMessage
-	messages       []ThreadMessage
-	pendingId      string
-	pendingBody    string
+	ConversationId     string
+	RootId             string
+	Root               ThreadRow
+	HasRoot            bool
+	Replies            []ThreadRow
+	RepliesLabel       string
+	Status             string
+	NextCursor         string
+	LoadingOlder       bool
+	Draft              string
+	CanSend            bool
+	SendStatus         string
+	Pending            ThreadRow
+	AlsoToConversation bool
+	root               ThreadMessage
+	messages           []ThreadMessage
+	pendingId          string
+	pendingBody        string
+	pendingAlso        bool
 	// @Needs
 	shell *ShellService
 	// @Needs
@@ -54,12 +56,12 @@ func (thread *ThreadService) Close() {
 
 func (thread *ThreadService) Reload() {
 	thread.Status = thread.statusLoading()
-	thread.publishLoad("")
+	thread.publishLoad()
 }
 
 func (thread *ThreadService) ShowOlder() {
 	thread.LoadingOlder = true
-	thread.publishLoad(thread.NextCursor)
+	thread.applicationEventPublisher.PublishEvent(ThreadOlderRequested{ConversationId: thread.ConversationId, RootId: thread.RootId, Cursor: thread.NextCursor}, false)
 }
 
 func (thread *ThreadService) Write(text string) {
@@ -79,8 +81,16 @@ func (thread *ThreadService) Retry() {
 // @OnEvent
 // @InBackground
 func (thread *ThreadService) Load(requested ThreadLoadRequested) {
-	page, failure := thread.remote.Page(requested)
-	thread.applyWhenCurrent(requested, page, failure)
+	root, rootFailure := thread.remote.Message(requested.RootId)
+	page, failure := thread.remote.Page(ThreadPageRequest{ConversationId: requested.ConversationId, RootId: requested.RootId})
+	thread.applyWhenCurrent(requested, root, page, thread.firstFailure(rootFailure, failure))
+}
+
+// @OnEvent
+// @InBackground
+func (thread *ThreadService) LoadOlder(requested ThreadOlderRequested) {
+	page, failure := thread.remote.Page(ThreadPageRequest(requested))
+	thread.applyOlderWhenCurrent(requested, page, failure)
 }
 
 // @OnEvent
@@ -100,7 +110,7 @@ func (thread *ThreadService) begin(conversationId string, rootId string) {
 	thread.Status = thread.statusLoading()
 	thread.shell.ThreadOpen = true
 	thread.shell.Pane = thread.paneThread()
-	thread.publishLoad("")
+	thread.publishLoad()
 }
 
 func (thread *ThreadService) reset(conversationId string, rootId string) {
@@ -121,10 +131,12 @@ func (thread *ThreadService) reset(conversationId string, rootId string) {
 	thread.Pending = ThreadRow{}
 	thread.pendingId = ""
 	thread.pendingBody = ""
+	thread.pendingAlso = false
+	thread.AlsoToConversation = false
 }
 
-func (thread *ThreadService) publishLoad(cursor string) {
-	requested := ThreadLoadRequested{ConversationId: thread.ConversationId, RootId: thread.RootId, Cursor: cursor}
+func (thread *ThreadService) publishLoad() {
+	requested := ThreadLoadRequested{ConversationId: thread.ConversationId, RootId: thread.RootId}
 	thread.applicationEventPublisher.PublishEvent(requested, false)
 }
 
@@ -132,43 +144,51 @@ func (thread *ThreadService) refreshWhenOpen(conversationId string) {
 	if thread.RootId == "" || conversationId != thread.ConversationId {
 		return
 	}
-	thread.publishLoad("")
+	thread.publishLoad()
 }
 
 func (thread *ThreadService) refreshWhenShown(visible bool) {
 	if !visible || thread.RootId == "" {
 		return
 	}
-	thread.publishLoad("")
+	thread.publishLoad()
 }
 
-func (thread *ThreadService) applyWhenCurrent(requested ThreadLoadRequested, page ThreadMessagePage, failure error) {
+func (thread *ThreadService) firstFailure(rootFailure error, failure error) error {
+	if rootFailure != nil {
+		return rootFailure
+	}
+	return failure
+}
+
+func (thread *ThreadService) applyWhenCurrent(requested ThreadLoadRequested, root ThreadMessage, page ThreadMessagePage, failure error) {
 	if requested.RootId != thread.RootId || requested.ConversationId != thread.ConversationId {
 		return
 	}
-	thread.apply(requested.Cursor, page, failure)
+	thread.root = root
+	thread.messages = page.Items
+	thread.applyPage(page, failure)
 }
 
-func (thread *ThreadService) apply(cursor string, page ThreadMessagePage, failure error) {
+func (thread *ThreadService) applyOlderWhenCurrent(requested ThreadOlderRequested, page ThreadMessagePage, failure error) {
+	if requested.RootId != thread.RootId || requested.ConversationId != thread.ConversationId {
+		return
+	}
+	thread.messages = append(thread.messages, page.Items...)
+	thread.applyPage(page, failure)
+}
+
+func (thread *ThreadService) applyPage(page ThreadMessagePage, failure error) {
 	thread.Status = thread.chosen(thread.codeOf(failure), thread.loadStates(), thread.statusError())
-	thread.messages = thread.messagesWith(cursor, page.Items)
 	thread.NextCursor = page.NextCursor
 	thread.LoadingOlder = false
 	thread.showMessages()
 }
 
-func (thread *ThreadService) messagesWith(cursor string, items []ThreadMessage) []ThreadMessage {
-	if cursor == "" {
-		return items
-	}
-	return append(thread.messages, items...)
-}
-
 func (thread *ThreadService) showMessages() {
-	thread.root = thread.rows.Root(thread.messages, thread.RootId, thread.root)
 	thread.Root = thread.rows.Row(thread.root)
 	thread.HasRoot = thread.Root.MessageId != ""
-	thread.Replies = thread.rows.Replies(thread.messages, thread.RootId)
+	thread.Replies = thread.rows.Replies(thread.messages)
 	thread.RepliesLabel = thread.rows.RepliesLabel(thread.root, len(thread.Replies))
 }
 
@@ -193,6 +213,7 @@ func (thread *ThreadService) sendWhen(allowed bool) {
 
 func (thread *ThreadService) startSend() {
 	thread.pendingBody = strings.TrimSpace(thread.Draft)
+	thread.pendingAlso = thread.AlsoToConversation
 	thread.pendingId = thread.idForPending()
 	thread.sendPending()
 }
@@ -220,11 +241,12 @@ func (thread *ThreadService) sendPending() {
 
 func (thread *ThreadService) replyRequest() ThreadReplyRequest {
 	return ThreadReplyRequest{
-		ClientMessageId: thread.pendingId,
-		ConversationId:  thread.ConversationId,
-		ThreadRootId:    thread.RootId,
-		Body:            thread.pendingBody,
-		AttachmentIds:   []string{},
+		ClientMessageId:    thread.pendingId,
+		ConversationId:     thread.ConversationId,
+		ThreadRootId:       thread.RootId,
+		AlsoToConversation: thread.pendingAlso,
+		Body:               thread.pendingBody,
+		AttachmentIds:      []string{},
 	}
 }
 
@@ -251,6 +273,8 @@ func (thread *ThreadService) keepWhenSent(message ThreadMessage, failure error) 
 	thread.Draft = ""
 	thread.pendingId = ""
 	thread.pendingBody = ""
+	thread.pendingAlso = false
+	thread.AlsoToConversation = false
 	thread.Pending = ThreadRow{}
 	thread.showMessages()
 }
@@ -271,7 +295,7 @@ func (thread *ThreadService) chosen(code int, choices map[int]string, otherwise 
 }
 
 func (thread *ThreadService) loadStates() map[int]string {
-	return map[int]string{thread.codeOk(): thread.statusReady(), thread.codeUnauthorized(): thread.stateSession()}
+	return map[int]string{thread.codeOk(): thread.statusReady(), thread.codeUnauthorized(): thread.stateSession(), thread.codeNotFound(): thread.statusGone()}
 }
 
 func (thread *ThreadService) sendStates() map[int]string {
@@ -294,12 +318,20 @@ func (thread *ThreadService) codeUnauthorized() int {
 	return 401
 }
 
+func (thread *ThreadService) codeNotFound() int {
+	return 404
+}
+
 func (thread *ThreadService) statusLoading() string {
 	return "loading"
 }
 
 func (thread *ThreadService) statusReady() string {
 	return "ready"
+}
+
+func (thread *ThreadService) statusGone() string {
+	return "gone"
 }
 
 func (thread *ThreadService) statusError() string {

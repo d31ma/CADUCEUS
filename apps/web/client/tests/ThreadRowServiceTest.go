@@ -55,24 +55,13 @@ func (test *ThreadRowServiceTest) TestRowSummarizesReactionsInOrder() {
 	Assert.Equals("+1 2, tada 1", (&ThreadRowService{}).Row(message).Reactions)
 }
 
-func (test *ThreadRowServiceTest) TestRepliesSkipTheRootAndShowOldestFirst() {
-	root := test.message()
+func (test *ThreadRowServiceTest) TestRepliesShowOldestFirst() {
 	newer := ThreadMessage{MessageId: "m-3"}
 	older := ThreadMessage{MessageId: "m-2"}
-	replies := (&ThreadRowService{}).Replies([]ThreadMessage{newer, older, root}, "m-1")
+	replies := (&ThreadRowService{}).Replies([]ThreadMessage{newer, older})
 	Assert.Equals(2, len(replies))
 	Assert.Equals("m-2", replies[0].MessageId)
 	Assert.Equals("m-3", replies[1].MessageId)
-}
-
-func (test *ThreadRowServiceTest) TestRootIsFoundInThePage() {
-	found := (&ThreadRowService{}).Root([]ThreadMessage{{MessageId: "m-2"}, test.message()}, "m-1", ThreadMessage{})
-	Assert.Equals("Hello", found.Body)
-}
-
-func (test *ThreadRowServiceTest) TestRootKeepsTheKnownRootWhenMissing() {
-	found := (&ThreadRowService{}).Root([]ThreadMessage{{MessageId: "m-2"}}, "m-1", test.message())
-	Assert.Equals("m-1", found.MessageId)
 }
 
 func (test *ThreadRowServiceTest) TestRepliesLabelForOneReply() {

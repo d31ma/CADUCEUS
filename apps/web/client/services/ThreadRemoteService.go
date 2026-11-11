@@ -10,9 +10,14 @@ type ThreadRemoteService struct {
 	random SecureRandom
 }
 
-func (remote *ThreadRemoteService) Page(requested ThreadLoadRequested) (ThreadMessagePage, error) {
+func (remote *ThreadRemoteService) Page(requested ThreadPageRequest) (ThreadMessagePage, error) {
 	authorization, failure := remote.authorization()
 	return BehaviorsAnswer[ThreadMessagePage](remote.fetch(authorization, failure, requested))
+}
+
+func (remote *ThreadRemoteService) Message(messageId string) (ThreadMessage, error) {
+	authorization, failure := remote.authorization()
+	return BehaviorsAnswer[ThreadMessage](remote.read(authorization, failure, messageId))
 }
 
 func (remote *ThreadRemoteService) Send(request ThreadReplyRequest) (ThreadSendResult, error) {
@@ -37,7 +42,7 @@ func (remote *ThreadRemoteService) authorization() (string, error) {
 	return "Bearer " + token, nil
 }
 
-func (remote *ThreadRemoteService) fetch(authorization string, failure error, requested ThreadLoadRequested) (BehaviorValue, error) {
+func (remote *ThreadRemoteService) fetch(authorization string, failure error, requested ThreadPageRequest) (BehaviorValue, error) {
 	switch {
 	case failure != nil:
 		return nil, failure
@@ -45,6 +50,13 @@ func (remote *ThreadRemoteService) fetch(authorization string, failure error, re
 		return remote.client.Replies(authorization, requested.ConversationId, requested.RootId)
 	}
 	return remote.client.OlderReplies(authorization, requested.ConversationId, requested.RootId, requested.Cursor)
+}
+
+func (remote *ThreadRemoteService) read(authorization string, failure error, messageId string) (BehaviorValue, error) {
+	if failure != nil {
+		return nil, failure
+	}
+	return remote.client.Message(authorization, messageId)
 }
 
 func (remote *ThreadRemoteService) post(authorization string, failure error, request ThreadReplyRequest) (BehaviorValue, error) {

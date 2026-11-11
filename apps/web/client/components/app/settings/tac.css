@@ -1,13 +1,5 @@
-.settings-card {
-  border: 1px solid var(--w-border);
+.settings-card > .w-card {
   border-radius: var(--ms-radius-card, 0.5rem);
-  background: var(--w-surface);
-}
-
-.settings-rule {
-  margin: 0;
-  border: 0;
-  border-top: 1px solid var(--w-border);
 }
 
 .settings-heading {

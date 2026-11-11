@@ -1,55 +1,59 @@
 <section class="mx-auto flex w-full max-w-[50rem] flex-col gap-6 px-4 py-6 md:px-8" aria-label="Account settings">
-  <section class="settings-card flex flex-col" aria-label="Account and sign-in">
-    <div class="flex flex-col gap-1 p-4 md:px-6">
-      <h2 class="settings-heading">Account and sign-in</h2>
-      <p class="settings-help">Mesail never stores your password. Your domain's sign-in system checks it.</p>
-    </div>
-    <hr class="settings-rule">
-    <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
-      <div class="flex min-w-0 flex-col gap-1">
-        <h3 class="settings-subheading">Password</h3>
-        <p class="settings-help">Change it here. Other devices are signed out; this one stays signed in.</p>
+  <section aria-label="Account and sign-in">
+    <w-card variant="outlined" class="settings-card flex flex-col">
+      <div class="flex flex-col gap-1 p-4 md:px-6">
+        <h2 class="settings-heading">Account and sign-in</h2>
+        <p class="settings-help">Mesail never stores your password. Your domain's sign-in system checks it.</p>
       </div>
-      <w-btn variant="outlined" on:click="sessionSettings.startPasswordChange()">Change password</w-btn>
-    </div>
-    <hr class="settings-rule">
-    <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
-      <div class="flex min-w-0 flex-col gap-1">
-        <div class="flex flex-wrap items-center gap-2">
-          <h3 class="settings-subheading">2-step sign-in</h3>
-          <switch :value="sessionSettings.twoStep">
-            <case :when="'on'"><w-chip static size="small" color="success">On</w-chip></case>
-            <case :when="'off'"><w-chip static size="small">Off</w-chip></case>
-          </switch>
+      <w-divider></w-divider>
+      <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
+        <div class="flex min-w-0 flex-col gap-1">
+          <h3 class="settings-subheading">Password</h3>
+          <p class="settings-help">Change it here. Other devices are signed out; this one stays signed in.</p>
         </div>
-        <p class="settings-help">Lost your phone? Ask an admin of your domain to reset 2-step sign-in.</p>
+        <w-btn variant="outlined" on:click="sessionSettings.startPasswordChange()">Change password</w-btn>
       </div>
-      <switch :value="sessionSettings.twoStep">
-        <case :when="'on'">
-          <div class="flex flex-col gap-2 sm:flex-row">
-            <w-btn variant="outlined" on:click="sessionSettings.startTwoStepReset()">Set up on a new phone</w-btn>
-            <w-btn variant="text" on:click="sessionSettings.startTwoStepRemoval()">Turn off</w-btn>
+      <w-divider></w-divider>
+      <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
+        <div class="flex min-w-0 flex-col gap-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="settings-subheading">2-step sign-in</h3>
+            <switch :value="sessionSettings.twoStep">
+              <case :when="'on'"><w-chip static size="small" color="success">On</w-chip></case>
+              <case :when="'off'"><w-chip static size="small">Off</w-chip></case>
+            </switch>
           </div>
-        </case>
-        <case :when="'off'">
-          <w-btn variant="flat" on:click="sessionSettings.startTwoStep()">Turn on</w-btn>
-        </case>
-        <case :when="'unknown'">
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center" role="alert">
-            <p class="settings-help">Could not check 2-step sign-in.</p>
-            <w-btn variant="text" on:click="sessionSettings.retryTwoStep()">Try again</w-btn>
-          </div>
-        </case>
-        <case default>
-          <w-skeleton-loader type="button" class="w-40" announce loading-text="Checking 2-step sign-in"></w-skeleton-loader>
-        </case>
-      </switch>
-    </div>
+          <p class="settings-help">Lost your phone? Ask an admin of your domain to reset 2-step sign-in.</p>
+        </div>
+        <switch :value="sessionSettings.twoStep">
+          <case :when="'on'">
+            <div class="flex flex-col gap-2 sm:flex-row">
+              <w-btn variant="outlined" on:click="sessionSettings.startTwoStepReset()">Set up on a new phone</w-btn>
+              <w-btn variant="text" on:click="sessionSettings.startTwoStepRemoval()">Turn off</w-btn>
+            </div>
+          </case>
+          <case :when="'off'">
+            <w-btn variant="flat" on:click="sessionSettings.startTwoStep()">Turn on</w-btn>
+          </case>
+          <case :when="'unknown'">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center" role="alert">
+              <p class="settings-help">Could not check 2-step sign-in.</p>
+              <w-btn variant="text" on:click="sessionSettings.retryTwoStep()">Try again</w-btn>
+            </div>
+          </case>
+          <case default>
+            <w-skeleton-loader type="button" class="w-40" announce loading-text="Checking 2-step sign-in"></w-skeleton-loader>
+          </case>
+        </switch>
+      </div>
+    </w-card>
   </section>
 
-  <section class="settings-card flex flex-col gap-4 p-4 md:px-6" aria-labelledby="notifications-title">
-    <h2 id="notifications-title" class="settings-heading">Notifications</h2>
-    <notifications-push />
+  <section aria-labelledby="notifications-title">
+    <w-card variant="outlined" class="settings-card flex flex-col gap-4 p-4 md:px-6">
+      <h2 id="notifications-title" class="settings-heading">Notifications</h2>
+      <notifications-push />
+    </w-card>
   </section>
 
   <switch :value="sessionSettings.step">

@@ -18,7 +18,11 @@ func (rules AccessRules) Check(caller oidc.Caller, record Record, question ReadQ
 }
 
 func (rules AccessRules) grantedHere(caller oidc.Caller, record Record) bool {
-	return caller.MemberId == record.UploaderId || slices.Contains(caller.Roles, rules.serviceRole())
+	return caller.MemberId == record.UploaderId || rules.isService(caller)
+}
+
+func (rules AccessRules) isService(caller oidc.Caller) bool {
+	return slices.Contains(caller.Roles, rules.serviceRole())
 }
 
 func (AccessRules) serviceRole() string {

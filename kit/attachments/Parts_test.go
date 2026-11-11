@@ -192,8 +192,8 @@ func TestDeskFactoryBuildsAFailClosedDesk(t *testing.T) {
 }
 
 func TestErrorsExplainThemselves(t *testing.T) {
-	messages := []string{Invalid{Field: "size", Reason: "too small"}.Error(), Conflict{Field: "state", Reason: "not ready"}.Error(), Missing{}.Error(), Unavailable{Operation: "read"}.Error(), Unauthenticated{}.Error()}
-	wanted := []string{"size: too small", "state: not ready", "the attachment was not found", "attachment storage failed during read", "the access token was refused"}
+	messages := []string{Invalid{Field: "size", Reason: "too small"}.Error(), Conflict{Field: "state", Reason: "not ready"}.Error(), Missing{}.Error(), Unavailable{Operation: "read"}.Error(), Unauthenticated{}.Error(), Forbidden{}.Error()}
+	wanted := []string{"size: too small", "state: not ready", "the attachment was not found", "attachment storage failed during read", "the access token was refused", "only a service may read attachment details"}
 	for index, message := range messages {
 		if message != wanted[index] {
 			t.Fatalf("got %q", message)

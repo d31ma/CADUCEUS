@@ -19,6 +19,14 @@ func (AttachmentsTestSetup) Configure(execution *BehaviorExecution) (*BehaviorCo
 }
 
 func (setup AttachmentsTestSetup) SignedIn(domainId string, memberId string, secret string) string {
+	return setup.token(setup.started(domainId, secret), memberId, "mesail-member")
+}
+
+func (setup AttachmentsTestSetup) SignedInService(domainId string) string {
+	return setup.token(setup.started(domainId, "secret"), "messaging", "mesail-service")
+}
+
+func (setup AttachmentsTestSetup) started(domainId string, secret string) oidc.SigningRealm {
 	base := cmp.Or(attachments.SettingsReader{Environment: os.Getenv}.Read().Folder, os.TempDir())
 	folder, _ := os.MkdirTemp(base, "test-")
 	keys, _ := os.MkdirTemp("", "a1-keys-")
@@ -35,11 +43,11 @@ func (setup AttachmentsTestSetup) SignedIn(domainId string, memberId string, sec
 	text, _ := json.Marshal(snapshot)
 	os.Setenv("YON_APPLICATION_JSON", string(text))
 	realm.Publish(time.Now())
-	return setup.token(realm, memberId)
+	return realm
 }
 
-func (setup AttachmentsTestSetup) token(realm oidc.SigningRealm, memberId string) string {
-	request := oidc.TokenRequest{Subject: memberId, Email: memberId + "@" + realm.Name, Name: memberId, RealmRoles: []string{"mesail-member"}, Audience: "mesail-api", AuthorizedParty: "mesail-identity", ExpiresAt: time.Now().Unix() + 60}
+func (setup AttachmentsTestSetup) token(realm oidc.SigningRealm, memberId string, realmRole string) string {
+	request := oidc.TokenRequest{Subject: memberId, Email: memberId + "@" + realm.Name, Name: memberId, RealmRoles: []string{realmRole}, Audience: "mesail-api", AuthorizedParty: "mesail-identity", ExpiresAt: time.Now().Unix() + 60}
 	token, _ := realm.Token(request)
 	return "Bearer " + token
 }

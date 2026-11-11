@@ -164,6 +164,10 @@
 - `kit/attachments` holds the upload, complete and download workflow in
   plain Go, so the Yon role files stay thin enough for TACHYON's
   cohesion check (`ty bundle` enforces TY1314).
+- `GET /api/v1/attachments/{attachmentId}/meta` lets a `Service` caller
+  (`messaging`, at send time) read an attachment's name, type, size,
+  SHA-256 and state in its own domain; another domain or an unknown id
+  answers `404`, any other caller `403`.
 
 ### Slice M3: messaging
 

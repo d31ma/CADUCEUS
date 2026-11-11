@@ -12,6 +12,11 @@ func (test *AttachmentsErrorHandlerTest) TestRefusedAsksToSignIn() {
 	Assert.Equals("unauthenticated", (&AttachmentsErrorHandler{}).Refused(&Unauthenticated{}).Code)
 }
 
+func (test *AttachmentsErrorHandlerTest) TestForbiddenKeepsTheMessage() {
+	answer := (&AttachmentsErrorHandler{}).Forbidden(&Forbidden{Message: "no"})
+	Assert.Equals(ApiError{Code: "forbidden", Message: "no"}, answer)
+}
+
 func (test *AttachmentsErrorHandlerTest) TestMissingIsNotFound() {
 	Assert.Equals("not_found", (&AttachmentsErrorHandler{}).Missing(&AttachmentNotFound{}).Code)
 }
@@ -36,4 +41,5 @@ func (test *AttachmentsErrorHandlerTest) TestErrorsDescribeThemselves() {
 	Assert.Equals("sha256: bad", (&InvalidUpload{Field: "sha256", Reason: "bad"}).Error())
 	Assert.Equals("attachment storage failed during read", (&StorageUnavailable{Operation: "read"}).Error())
 	Assert.Equals("the access token was refused", (&Unauthenticated{}).Error())
+	Assert.Equals("no", (&Forbidden{Message: "no"}).Error())
 }

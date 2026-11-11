@@ -343,6 +343,7 @@ chat|email, status, detail?}`.
 | `POST /api/v1/attachments` | SignedIn | `CreateUploadRequest{fileName, mediaType, size, sha256}` | `201 Upload{attachmentId, uploadUrl, expiresAt}` |
 | `POST /api/v1/attachments/{attachmentId}/complete` | SignedIn | - | `Attachment{attachmentId, fileName, mediaType, size, sha256, state}` |
 | `GET /api/v1/attachments/{attachmentId}` | SignedIn | - | `Download{url, expiresAt}` (short-lived signed URL) |
+| `GET /api/v1/attachments/{attachmentId}/meta` | Service | - | `Attachment{attachmentId, fileName, mediaType, size, sha256, state}` |
 
 An attachment in another domain answers `404`.
 
@@ -372,6 +373,13 @@ An attachment in another domain answers `404`.
   everyone else gets `404`. The `url` is a signed `GET` link that lives
   `attachments.link.seconds` and answers with `Content-Disposition:
   attachment`.
+- **Meta.** For `messaging` at send time: a `Service` caller reads the
+  details of an attachment of its own domain (the token's realm), in any
+  state (`pending`, `ready` or `blocked`), to refuse a missing or not-ready
+  file, to check the 50 MiB per message sum and to store `fileName`,
+  `mediaType` and `size` on the message. An unknown id, or an attachment
+  of another domain, answers `404 not_found`; any other caller `403
+  forbidden`; no valid token `401`.
 - **Blob links.** With the S3 adapter the links are AWS Signature V4
   presigned URLs (path style, `<public endpoint>/<bucket>/<domainId>/<name>`).
   With the local-folder adapter (all-in-one image, native dev) they are

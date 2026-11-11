@@ -15,6 +15,12 @@ func (handler *AttachmentsErrorHandler) Refused(failure *Unauthenticated) ApiErr
 }
 
 // @HandlesError
+// @ResponseStatus(403)
+func (handler *AttachmentsErrorHandler) Forbidden(failure *Forbidden) ApiError {
+	return ApiError{Code: "forbidden", Message: failure.Message}
+}
+
+// @HandlesError
 // @ResponseStatus(404)
 func (handler *AttachmentsErrorHandler) Missing(failure *AttachmentNotFound) ApiError {
 	return ApiError{Code: "not_found", Message: "The attachment was not found."}

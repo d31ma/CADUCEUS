@@ -70,6 +70,22 @@ func (desk Desk) Download(authorization string, attachmentId string) (Download, 
 	return desk.download(record)
 }
 
+func (desk Desk) Meta(authorization string, attachmentId string) (View, error) {
+	caller, err := desk.identify(authorization)
+	if err != nil {
+		return View{}, err
+	}
+	err = desk.checkService(caller)
+	if err != nil {
+		return View{}, err
+	}
+	record, err := desk.Book.Lookup(caller.DomainId, attachmentId)
+	if err != nil {
+		return View{}, err
+	}
+	return desk.Book.View(record), nil
+}
+
 func (desk Desk) caller(authorization string) (oidc.Caller, error) {
 	caller, err := desk.identify(authorization)
 	if err != nil {
@@ -107,6 +123,13 @@ func (desk Desk) upload(record Record) (Upload, error) {
 func (Desk) checkUploader(caller oidc.Caller, record Record) error {
 	if caller.MemberId != record.UploaderId {
 		return Missing{}
+	}
+	return nil
+}
+
+func (desk Desk) checkService(caller oidc.Caller) error {
+	if !desk.Access.isService(caller) {
+		return Forbidden{}
 	}
 	return nil
 }

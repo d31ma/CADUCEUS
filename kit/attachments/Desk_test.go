@@ -209,3 +209,77 @@ func TestDownloadReportsASigningFailure(t *testing.T) {
 		t.Fatalf("got %v", err)
 	}
 }
+
+func TestMetaAnswersAServiceOfTheDomainForAPendingUpload(t *testing.T) {
+	desk := newTestDesk(t)
+	upload := desk.uploaded(t, token("example.com", "ana"), "hello", "hello")
+	view, err := desk.desk.Meta("Bearer example.com|messaging|Service", upload.AttachmentId)
+	want := View{AttachmentId: upload.AttachmentId, FileName: "plan.txt", MediaType: "text/plain", Size: 5, Sha256: request("hello", "text/plain").Sha256, State: "pending"}
+	if err != nil || view != want {
+		t.Fatalf("got %+v, %v", view, err)
+	}
+}
+
+func TestMetaAnswersAServiceOfTheDomainForAReadyAttachment(t *testing.T) {
+	desk := newTestDesk(t)
+	upload := desk.uploaded(t, token("example.com", "ana"), "hello", "hello")
+	completed, _ := desk.desk.Complete(token("example.com", "ana"), upload.AttachmentId)
+	view, err := desk.desk.Meta("Bearer example.com|messaging|Service", upload.AttachmentId)
+	if err != nil || view != completed || view.State != "ready" {
+		t.Fatalf("got %+v, %v", view, err)
+	}
+}
+
+func TestMetaAnswersAServiceOfTheDomainForABlockedAttachment(t *testing.T) {
+	desk := newTestDesk(t)
+	content := "<!DOCTYPE html><html><script>alert(1)</script></html>"
+	upload, _ := desk.desk.Create(token("example.com", "ana"), request(content, "image/png"))
+	record, _ := desk.desk.Book.Lookup("example.com", upload.AttachmentId)
+	desk.folder.Write(desk.desk.Book.Key(record), strings.NewReader(content), int64(len(content)))
+	desk.desk.Complete(token("example.com", "ana"), upload.AttachmentId)
+	view, err := desk.desk.Meta("Bearer example.com|messaging|Service", upload.AttachmentId)
+	if err != nil || view.State != "blocked" || view.MediaType != "image/png" {
+		t.Fatalf("got %+v, %v", view, err)
+	}
+}
+
+func TestMetaHidesAnAttachmentOfAnotherDomain(t *testing.T) {
+	desk := newTestDesk(t)
+	upload := desk.uploaded(t, token("example.com", "ana"), "hello", "hello")
+	if _, err := desk.desk.Meta("Bearer example.org|messaging|Service", upload.AttachmentId); !errors.Is(err, Missing{}) {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestMetaOfAnUnknownAttachmentIsMissing(t *testing.T) {
+	desk := newTestDesk(t)
+	_, unknown := desk.desk.Meta("Bearer example.com|messaging|Service", "att_D9")
+	_, malformed := desk.desk.Meta("Bearer example.com|messaging|Service", "not-an-id")
+	if !errors.Is(unknown, Missing{}) || !errors.Is(malformed, Missing{}) {
+		t.Fatalf("got %v and %v", unknown, malformed)
+	}
+}
+
+func TestMetaRefusesAMemberEvenTheUploader(t *testing.T) {
+	desk := newTestDesk(t)
+	upload := desk.uploaded(t, token("example.com", "ana"), "hello", "hello")
+	if _, err := desk.desk.Meta(token("example.com", "ana"), upload.AttachmentId); !errors.Is(err, Forbidden{}) {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestMetaRefusesAForgedToken(t *testing.T) {
+	desk := newTestDesk(t)
+	if _, err := desk.desk.Meta("Bearer forged", "att_D1"); !errors.Is(err, Unauthenticated{}) {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestMetaReportsAStorageFailure(t *testing.T) {
+	desk := newTestDesk(t)
+	upload := desk.uploaded(t, token("example.com", "ana"), "hello", "hello")
+	desk.memory.failOn = "find"
+	if _, err := desk.desk.Meta("Bearer example.com|messaging|Service", upload.AttachmentId); !errors.Is(err, Unavailable{Operation: "find"}) {
+		t.Fatalf("got %v", err)
+	}
+}

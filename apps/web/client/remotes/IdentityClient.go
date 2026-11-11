@@ -17,4 +17,36 @@ type IdentityClient interface {
 		// @RequestBody
 		request BehaviorValue,
 	) (BehaviorValue, error)
+
+	// @PostRequest("/password")
+	ChangePassword(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @RequestBody
+		request BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @PostRequest("/totp/setup")
+	SetUpTwoStep(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @RequestBody
+		request BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @PostRequest("/totp/confirm")
+	ConfirmTwoStep(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @RequestBody
+		request BehaviorValue,
+	) (BehaviorValue, error)
+
+	// @DeleteRequest("/totp")
+	RemoveTwoStep(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @RequestBody
+		request BehaviorValue,
+	) (BehaviorValue, error)
 }

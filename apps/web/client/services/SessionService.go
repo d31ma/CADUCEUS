@@ -99,6 +99,25 @@ func (session *SessionService) SignOutAll() {
 	session.Step = session.stepAfterSignOut()
 }
 
+func (session *SessionService) AccessToken() (string, error) {
+	accessToken, failure := session.tokens.AccessToken(session.accounts.CurrentDomain)
+	session.SessionKeys = session.tokens.SavedKeys()
+	return accessToken, failure
+}
+
+func (session *SessionService) Renew() (string, error) {
+	failure := session.tokens.Renew(session.accounts.CurrentDomain)
+	session.SessionKeys = session.tokens.SavedKeys()
+	session.Step = session.expiredWhenFailed(failure)
+	return session.AccessToken()
+}
+
+func (session *SessionService) ChangePassword(change SessionPasswordChange) error {
+	failure := session.tokens.ChangePassword(session.accounts.CurrentDomain, change)
+	session.SessionKeys = session.tokens.SavedKeys()
+	return failure
+}
+
 // @OnEvent
 // @InBackground
 func (session *SessionService) Shown(changed VisibilityChanged) {

@@ -1,6 +1,7 @@
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 // @TestSetup
@@ -21,6 +22,14 @@ func (setup SessionTestSetup) Exchange(request *BehaviorHttpRequest, execution *
 		return setup.refresh(setup.refreshRequestOf(request).SessionKey)
 	case "DELETE /api/v1/identity/session":
 		return nil, nil
+	case "POST /api/v1/identity/password":
+		return setup.changePassword(fmt.Sprint(request.Headers["Authorization"]), setup.bodyOf(request))
+	case "POST /api/v1/identity/totp/setup":
+		return setup.setUpTwoStep(setup.bodyOf(request))
+	case "POST /api/v1/identity/totp/confirm":
+		return setup.confirmTwoStep(setup.bodyOf(request))
+	case "DELETE /api/v1/identity/totp":
+		return setup.removeTwoStep(setup.bodyOf(request))
 	}
 	return nil, errors.New("no fake answer for " + request.Method + " " + request.Path)
 }
@@ -62,4 +71,39 @@ func (setup SessionTestSetup) refreshRequestOf(request *BehaviorHttpRequest) Ses
 	body := SessionRefreshRequest{}
 	_ = json.Unmarshal(text, &body)
 	return body
+}
+
+func (setup SessionTestSetup) bodyOf(request *BehaviorHttpRequest) map[string]string {
+	text, _ := json.Marshal(request.Body)
+	body := map[string]string{}
+	_ = json.Unmarshal(text, &body)
+	return body
+}
+
+func (setup SessionTestSetup) changePassword(authorization string, body map[string]string) (BehaviorValue, error) {
+	if authorization != "Bearer access-1" || body["currentPassword"] != "right" || body["sessionKey"] != "key-1" || body["newPassword"] == "weak" {
+		return nil, errors.New("refused")
+	}
+	return setup.session("example.com", "access-new", "key-new"), nil
+}
+
+func (setup SessionTestSetup) setUpTwoStep(body map[string]string) (BehaviorValue, error) {
+	if body["currentPassword"] != "right" {
+		return nil, errors.New("refused")
+	}
+	return SessionTwoStepSetup{Secret: "JBSWY3DPEHPK3PXP", AppLink: "otpauth://totp/Mesail:ana@example.com", QrImage: "data:image/png;base64,AAAA", SetupKey: "setup-1"}, nil
+}
+
+func (setup SessionTestSetup) confirmTwoStep(body map[string]string) (BehaviorValue, error) {
+	if body["setupKey"] != "setup-1" || body["code"] != "123456" {
+		return nil, errors.New("invalid code")
+	}
+	return nil, nil
+}
+
+func (setup SessionTestSetup) removeTwoStep(body map[string]string) (BehaviorValue, error) {
+	if body["currentPassword"] != "right" || body["oneTimeCode"] != "123456" {
+		return nil, errors.New("refused")
+	}
+	return nil, nil
 }

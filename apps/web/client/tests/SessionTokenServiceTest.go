@@ -80,3 +80,26 @@ func (test *SessionTokenServiceTest) TestSignOutForgetsTheSession() {
 	Assert.Equals("", accessToken)
 	Assert.Equals(0, len(tokens.SavedKeys()))
 }
+
+func (test *SessionTokenServiceTest) TestRenewRefreshesNow() {
+	tokens := test.signedIn()
+	Assert.Equals(nil, tokens.Renew("example.com"))
+	accessToken, _ := tokens.AccessToken("example.com")
+	Assert.Equals("access-2", accessToken)
+}
+
+func (test *SessionTokenServiceTest) TestChangePasswordKeepsTheFreshSession() {
+	tokens := test.signedIn()
+	failure := tokens.ChangePassword("example.com", SessionPasswordChange{CurrentPassword: "right", NewPassword: "longer-and-better"})
+	accessToken, _ := tokens.AccessToken("example.com")
+	Assert.Equals(nil, failure)
+	Assert.Equals("access-new", accessToken)
+	Assert.Equals("key-new", tokens.SavedKeys()["example.com"])
+}
+
+func (test *SessionTokenServiceTest) TestChangePasswordKeepsTheOldSessionWhenRefused() {
+	tokens := test.signedIn()
+	failure := tokens.ChangePassword("example.com", SessionPasswordChange{CurrentPassword: "wrong", NewPassword: "longer-and-better"})
+	Assert.IsTrue(failure != nil)
+	Assert.Equals("key-1", tokens.SavedKeys()["example.com"])
+}

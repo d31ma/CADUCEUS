@@ -1,4 +1,5 @@
 import (
+	"errors"
 	"maps"
 	"sort"
 )
@@ -30,6 +31,18 @@ func (service *SessionTokenService) SavedKeys() map[string]string {
 func (service *SessionTokenService) AccessToken(domainId string) (string, error) {
 	failure := service.refreshWhenDue(domainId)
 	return service.tokens[domainId].AccessToken, failure
+}
+
+func (service *SessionTokenService) Renew(domainId string) error {
+	_, failure := service.refresh(domainId)
+	return failure
+}
+
+func (service *SessionTokenService) ChangePassword(domainId string, change SessionPasswordChange) error {
+	accessToken, failure := service.AccessToken(domainId)
+	change.SessionKey = service.keys[domainId]
+	session, answerFailure := BehaviorsAnswer[Session](service.identity.ChangePassword("Bearer "+accessToken, change))
+	return service.keepUnlessFailed(session, errors.Join(failure, answerFailure))
 }
 
 func (service *SessionTokenService) SignOut(domainId string) error {

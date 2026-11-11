@@ -24,3 +24,19 @@ func (test *SessionProblemServiceTest) TestOfFailureCallsOtherStatusesUnavailabl
 func (test *SessionProblemServiceTest) TestOfFailureCallsPlainErrorsUnavailable() {
 	Assert.Equals("unavailable", (&SessionProblemService{}).OfFailure(errors.New("offline")))
 }
+
+func (test *SessionProblemServiceTest) TestOfAccountChangeIsEmptyWithoutFailure() {
+	Assert.Equals("", (&SessionProblemService{}).OfAccountChange(nil, "passwordPolicy"))
+}
+
+func (test *SessionProblemServiceTest) TestOfAccountChangeNamesAWrongPassword() {
+	Assert.Equals("wrongPassword", (&SessionProblemService{}).OfAccountChange(&BehaviorError{Code: "HTTP_STATUS", Status: 401}, "passwordPolicy"))
+}
+
+func (test *SessionProblemServiceTest) TestOfAccountChangeNamesTheRefusal() {
+	Assert.Equals("passwordPolicy", (&SessionProblemService{}).OfAccountChange(&BehaviorError{Code: "HTTP_STATUS", Status: 400}, "passwordPolicy"))
+}
+
+func (test *SessionProblemServiceTest) TestOfAccountChangeNamesTooManyTries() {
+	Assert.Equals("rateLimited", (&SessionProblemService{}).OfAccountChange(&BehaviorError{Code: "HTTP_STATUS", Status: 429}, "invalidCode"))
+}

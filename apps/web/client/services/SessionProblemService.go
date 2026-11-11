@@ -5,6 +5,21 @@ func (problems *SessionProblemService) OfFailure(failure error) string {
 	return problems.named(problems.statusOf(failure))
 }
 
+func (problems *SessionProblemService) OfAccountChange(failure error, refused string) string {
+	return problems.namedChange(problems.statusOf(failure), refused)
+}
+
+func (problems *SessionProblemService) namedChange(status int, refused string) string {
+	known := map[int]string{
+		problems.noStatus(): "",
+		400:                 refused,
+		401:                 "wrongPassword",
+		429:                 "rateLimited",
+	}
+	problem, found := known[status]
+	return problems.foundOrUnavailable(problem, found)
+}
+
 func (problems *SessionProblemService) statusOf(failure error) int {
 	if failure == nil {
 		return problems.noStatus()

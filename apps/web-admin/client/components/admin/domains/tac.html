@@ -1,0 +1,173 @@
+<main class="ms-main ms-admin" aria-labelledby="domains-page-title">
+  <header class="ms-header">
+    <button class="ms-icon-btn ms-header__back" type="button" aria-label="Back to menu" on:click="adminShell.showMenu()"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></button>
+    <h1 class="ms-header__title" id="domains-page-title"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span>Domains</span></h1>
+    <p class="ms-header__topic">Operator · all mail domains on this Mesail</p>
+    <div class="ms-header__actions">
+      <button class="ms-btn ms-btn--primary" type="button" aria-haspopup="dialog" on:click="domainAdd.show()"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span><span class="ms-btn__text">Add domain</span></button>
+    </div>
+  </header>
+
+  <div class="ms-page" id="admin-content">
+    <div class="ms-page__inner">
+
+      <div class="ms-callout ms-callout--info">
+        <span class="ms-icon ms-i-info" aria-hidden="true"></span>
+        <div class="ms-callout__text">
+          <strong>Each domain is its own messaging space.</strong>
+          <p>People chat inside a domain and email across domains. A person in example.com can chat with Bo Lee, but gets email from finn@example.org.</p>
+        </div>
+      </div>
+
+      <switch :value="domainList.step">
+        <case :when="'failed'">
+          <section class="ms-card" aria-labelledby="domains-error-title">
+            <div class="ms-empty" role="alert">
+              <span class="ms-empty__art ms-empty__art--error" aria-hidden="true"><span class="ms-icon ms-i-alert ms-icon--xl"></span></span>
+              <h2 id="domains-error-title">Domains could not load</h2>
+              <p>{domainList.problemText}</p>
+              <div class="ms-empty__actions"><button class="ms-btn ms-btn--primary" type="button" on:click="domainList.refresh()"><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Try again</button></div>
+            </div>
+          </section>
+        </case>
+        <case :when="'empty'">
+          <section class="ms-card" aria-labelledby="domains-empty-title">
+            <div class="ms-empty">
+              <span class="ms-empty__art" aria-hidden="true"><span class="ms-icon ms-i-globe ms-icon--xl"></span></span>
+              <h2 id="domains-empty-title">No domains yet</h2>
+              <p>Add a mail domain. It becomes its own messaging space, with its own members and channels.</p>
+              <div class="ms-empty__actions"><button class="ms-btn ms-btn--primary" type="button" aria-haspopup="dialog" on:click="domainAdd.show()"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span>Add domain</button></div>
+            </div>
+          </section>
+        </case>
+        <case :when="'ready'">
+          <section class="ms-card" aria-labelledby="domains-title">
+            <div class="ms-card__head">
+              <h2 id="domains-title">{domainList.heading}</h2>
+            </div>
+            <div class="ms-table-wrap">
+              <table class="ms-table ms-table--cards">
+                <caption class="ms-sr-only">Domains, their state and DNS checks</caption>
+                <thead>
+                  <tr><th scope="col">Domain</th><th scope="col">State</th><th scope="col">DNS records</th><th scope="col"><span class="ms-sr-only">Actions</span></th></tr>
+                </thead>
+                <tbody>
+                  <loop :for="row of domainList.rows">
+                    <tr :class="row.rowClass">
+                      <td class="ms-table__lead"><span class="ms-person__name">{row.name}</span></td>
+                      <td data-label="State"><div>
+                        <span :class="row.stateClass"><span :class="row.stateIcon" aria-hidden="true"></span>{row.stateText}</span>
+                        <logic :if="row.hasNote"><span class="ms-table__sub">{row.stateNote}</span></logic>
+                      </div></td>
+                      <td data-label="DNS records">
+                        <ul class="ms-dns-marks" :aria-label="row.marksLabel">
+                          <loop :for="mark of row.marks">
+                            <li :class="mark.markClass"><span :class="mark.iconClass" aria-hidden="true"></span>{mark.name}<span class="ms-sr-only"> {mark.words}</span></li>
+                          </loop>
+                        </ul>
+                      </td>
+                      <td class="ms-table__actions"><div class="ms-page__actions">
+                        <button :class="row.actionClass" type="button" :aria-label="row.actionLabel" on:click="adminShell.open('domain', row.domainId)">{row.actionText}</button>
+                      </div></td>
+                    </tr>
+                  </loop>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </case>
+        <case default>
+          <section class="ms-card" aria-labelledby="domains-loading-title" aria-busy="true">
+            <div class="ms-card__head"><h2 id="domains-loading-title">Domains</h2><span class="ms-meta" role="status"><span class="ms-spinner" aria-hidden="true"></span> Loading domains…</span></div>
+            <div aria-hidden="true">
+              <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line"></span><span class="ms-skeleton ms-skeleton--line"></span></div></div>
+              <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line"></span><span class="ms-skeleton ms-skeleton--line"></span></div></div>
+              <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line"></span><span class="ms-skeleton ms-skeleton--line"></span></div></div>
+            </div>
+          </section>
+        </case>
+      </switch>
+
+      <section class="ms-section" aria-labelledby="legend-title">
+        <h2 class="ms-section-title" id="legend-title">What the DNS marks mean</h2>
+        <dl class="ms-kv ms-kv--plain">
+          <dt><span class="ms-mark ms-mark--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>OK</span></dt>
+          <dd>The record is published and has the right value.</dd>
+          <dt><span class="ms-mark ms-mark--missing"><span class="ms-icon ms-i-close" aria-hidden="true"></span>Missing</span></dt>
+          <dd>Mesail could not find the record. Create it at your DNS provider.</dd>
+          <dt><span class="ms-mark ms-mark--wrong"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>Wrong</span></dt>
+          <dd>A record exists, but its value is different. Open the domain to compare.</dd>
+          <dt><span class="ms-mark ms-mark--off"><span class="ms-icon ms-i-minus-circle" aria-hidden="true"></span>Not checked</span></dt>
+          <dd>Mesail has not checked the record yet. Open the domain and select Check again.</dd>
+        </dl>
+        <p class="ms-meta">Mail for a domain is accepted only when MX and DKIM are OK. SPF and DMARC help your mail reach inboxes.</p>
+      </section>
+    </div>
+  </div>
+
+  <logic :if="domainAdd.open">
+    <div class="ms-scrim ms-scrim--sheet">
+      <div class="ms-dialog" role="dialog" aria-modal="true" aria-labelledby="domain-add-title">
+        <switch :value="domainAdd.step">
+          <case :when="'added'">
+            <div class="ms-dialog__head">
+              <h2 id="domain-add-title">Domain added</h2>
+              <button class="ms-icon-btn ms-dialog__close" type="button" aria-label="Close" on:click="domainAdd.close()"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
+            </div>
+            <div class="ms-dialog__body">
+              <div class="ms-callout ms-callout--ok" role="status">
+                <span class="ms-icon ms-i-check" aria-hidden="true"></span>
+                <div class="ms-callout__text">
+                  <strong>{domainAdd.addedName} is added.</strong>
+                  <p>Its state is Pending. Mail is not accepted until MX and DKIM are OK.</p>
+                </div>
+              </div>
+              <div class="ms-section">
+                <h3 class="ms-section-title">Next step: create these DNS records</h3>
+                <p>Add them at the company that hosts DNS for {domainAdd.addedName}. The next page shows the host of each record with a Copy button.</p>
+                <ul class="ms-dns-marks" aria-label="Records to create">
+                  <li class="ms-mark"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>MX</li>
+                  <li class="ms-mark"><span class="ms-icon ms-i-shield" aria-hidden="true"></span>SPF (TXT)</li>
+                  <li class="ms-mark"><span class="ms-icon ms-i-key" aria-hidden="true"></span>DKIM (TXT)</li>
+                  <li class="ms-mark"><span class="ms-icon ms-i-shield-check" aria-hidden="true"></span>DMARC (TXT)</li>
+                </ul>
+                <p class="ms-meta">Mesail made a DKIM key just for this domain. The private key stays in the secure key store and is never shown.</p>
+              </div>
+            </div>
+            <div class="ms-dialog__foot">
+              <button class="ms-btn" type="button" on:click="domainAdd.close()">Close</button>
+              <button class="ms-btn ms-btn--primary" type="button" on:click="domainAdd.showDns()">Show DNS records<span class="ms-icon ms-i-chevron-right ms-icon--sm" aria-hidden="true"></span></button>
+            </div>
+          </case>
+          <case default>
+            <div class="ms-dialog__head">
+              <h2 id="domain-add-title">Add a domain</h2>
+              <button class="ms-icon-btn ms-dialog__close" type="button" aria-label="Close" :disabled="domainAdd.step == 'busy'" on:click="domainAdd.close()"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
+            </div>
+            <div class="ms-dialog__body">
+              <p>Add a mail domain. It becomes its own messaging space, with its own members and channels.</p>
+              <div class="ms-field">
+                <label class="ms-label" for="domain-add-name">Domain name</label>
+                <input class="ms-input ms-mono" id="domain-add-name" name="domain" type="text" inputmode="url" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="example.net" aria-describedby="domain-add-error domain-add-help" :aria-invalid="adminShell.flag(domainAdd.hasProblem)" :readonly="domainAdd.step == 'busy'" :value="domainAdd.name" on:input="domainAdd.name = $event.target.value">
+                <logic :if="domainAdd.hasProblem">
+                  <p class="ms-error-text" id="domain-add-error"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>{domainAdd.problem}</p>
+                </logic>
+                <p class="ms-help" id="domain-add-help">Use the domain only, without www or @. Letters from any language are fine: bücher.example is saved as xn--bcher-kva.example.</p>
+              </div>
+              <logic :if="domainAdd.step == 'busy'">
+                <p class="ms-meta" role="status"><span class="ms-spinner" aria-hidden="true"></span> {domainAdd.busyText}</p>
+              </logic>
+            </div>
+            <div class="ms-dialog__foot">
+              <button class="ms-btn" type="button" :disabled="domainAdd.step == 'busy'" on:click="domainAdd.close()">Cancel</button>
+              <button class="ms-btn ms-btn--primary" type="button" :aria-busy="adminShell.flag(domainAdd.step == 'busy')" :disabled="domainAdd.step == 'busy'" on:click="domainAdd.add()">
+                <logic :if="domainAdd.step == 'busy'"><span class="ms-spinner" aria-hidden="true"></span>Adding…</logic>
+                <logic else>Add domain</logic>
+              </button>
+            </div>
+          </case>
+        </switch>
+      </div>
+    </div>
+  </logic>
+</main>

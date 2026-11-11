@@ -1,0 +1,59 @@
+<main class="ms-main ms-admin admin-gate" id="admin-content" aria-labelledby="gate-title">
+  <div class="ms-page">
+    <div class="ms-page__inner admin-gate__inner">
+      <switch :value="adminSession.step">
+        <case :when="'noRights'">
+          <section class="ms-card">
+            <div class="ms-empty">
+              <span class="ms-empty__art" aria-hidden="true"></span>
+              <h1 id="gate-title">You need admin rights</h1>
+              <p>{adminSession.displayName} is signed in to {adminSession.domainId}, but has no admin role. Ask an admin of your domain or the operator of this Mesail install.</p>
+              <div class="ms-empty__actions">
+                <button class="ms-btn" type="button" on:click="adminSession.signOut()">Sign out</button>
+              </div>
+            </div>
+          </section>
+        </case>
+        <case default>
+          <section class="ms-card">
+            <div class="ms-card__head">
+              <h1 id="gate-title">Sign in to Mesail admin</h1>
+            </div>
+            <form class="ms-card__body admin-gate__form" on:submit="adminSession.signIn()">
+              <p class="ms-subtle">Domain admins sign in with their work email. Operators sign in with their operator account, such as you@mesail-operators.</p>
+              <switch :value="adminSession.problem">
+                <case :when="'expired'">
+                  <div class="ms-callout ms-callout--warn" role="alert"><div class="ms-callout__text"><strong>Your session ended.</strong><p>Sign in again to keep working.</p></div></div>
+                </case>
+                <case :when="'rateLimited'">
+                  <div class="ms-callout ms-callout--error" role="alert"><div class="ms-callout__text"><strong>Too many tries.</strong><p>Wait a minute, then try again.</p></div></div>
+                </case>
+                <case :when="'unavailable'">
+                  <div class="ms-callout ms-callout--error" role="alert"><div class="ms-callout__text"><strong>We cannot reach sign-in right now.</strong><p>Check your connection, then try again in a minute.</p></div></div>
+                </case>
+              </switch>
+              <div class="ms-field">
+                <label class="ms-label" for="gate-address">Email or operator account</label>
+                <input class="ms-input" id="gate-address" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana@example.com" :value="adminSession.address" on:input="adminSession.address = $event.target.value">
+              </div>
+              <div class="ms-field">
+                <label class="ms-label" for="gate-password">Password</label>
+                <input class="ms-input" id="gate-password" name="password" type="password" autocomplete="current-password" aria-describedby="gate-credentials-error" :aria-invalid="adminShell.flag(adminSession.problem == 'refused')" :value="adminSession.password" on:input="adminSession.password = $event.target.value">
+              </div>
+              <div class="ms-field">
+                <label class="ms-label" for="gate-code">2-step code</label>
+                <input class="ms-input" id="gate-code" name="one-time-code" type="text" inputmode="numeric" autocomplete="one-time-code" aria-describedby="gate-code-help gate-credentials-error" :value="adminSession.oneTimeCode" on:input="adminSession.oneTimeCode = $event.target.value">
+                <p class="ms-help" id="gate-code-help">Only if your account uses one.</p>
+                <logic :if="adminSession.problem == 'refused'">
+                  <p class="ms-error-text" id="gate-credentials-error" role="alert">The email, password or 2-step code is not right.</p>
+                </logic>
+              </div>
+              <button class="ms-btn ms-btn--primary" type="submit" :disabled="adminSession.busy" :aria-busy="adminShell.flag(adminSession.busy)">Sign in</button>
+              <p class="ms-meta">Forgot your password? Ask an admin of your domain to reset it.</p>
+            </form>
+          </section>
+        </case>
+      </switch>
+    </div>
+  </div>
+</main>

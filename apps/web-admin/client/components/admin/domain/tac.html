@@ -1,0 +1,161 @@
+<main class="ms-main ms-admin" aria-labelledby="domain-page-title">
+  <header class="ms-header">
+    <button class="ms-icon-btn ms-header__back" type="button" aria-label="Back to menu" on:click="adminShell.showMenu()"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></button>
+    <h1 class="ms-header__title" id="domain-page-title"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span>{domainDns.name}</span></h1>
+    <logic :if="domainDns.step == 'ready'">
+      <span :class="domainDns.stateClass"><span :class="domainDns.stateIcon" aria-hidden="true"></span>{domainDns.stateText}</span>
+    </logic>
+    <p class="ms-header__topic">DNS setup</p>
+  </header>
+
+  <div class="ms-page" id="admin-content">
+    <div class="ms-page__inner">
+      <logic :if="adminSession.operator">
+        <nav aria-label="Breadcrumb"><p><button class="ms-btn ms-btn--ghost ms-btn--sm" type="button" on:click="adminShell.open('domains', adminSession.domainId)">Domains</button> <span aria-hidden="true">/</span> <span aria-current="page">{domainDns.name}</span></p></nav>
+      </logic>
+
+      <switch :value="domainDns.step">
+        <case :when="'operatorsOnly'">
+          <div class="ms-callout ms-callout--info" role="status">
+            <span class="ms-icon ms-i-info" aria-hidden="true"></span>
+            <div class="ms-callout__text">
+              <strong>DNS checks are for operators.</strong>
+              <p>{domainDns.problemText}</p>
+            </div>
+          </div>
+        </case>
+        <case :when="'notFound'">
+          <section class="ms-card" aria-labelledby="domain-missing-title">
+            <div class="ms-empty" role="alert">
+              <span class="ms-empty__art ms-empty__art--error" aria-hidden="true"><span class="ms-icon ms-i-alert ms-icon--xl"></span></span>
+              <h2 id="domain-missing-title">Domain not found</h2>
+              <p>This domain was not found. It may have been removed.</p>
+            </div>
+          </section>
+        </case>
+        <case :when="'failed'">
+          <section class="ms-card" aria-labelledby="domain-error-title">
+            <div class="ms-empty" role="alert">
+              <span class="ms-empty__art ms-empty__art--error" aria-hidden="true"><span class="ms-icon ms-i-alert ms-icon--xl"></span></span>
+              <h2 id="domain-error-title">The domain could not load</h2>
+              <p>{domainDns.problemText}</p>
+              <div class="ms-empty__actions"><button class="ms-btn ms-btn--primary" type="button" on:click="domainDns.refresh()"><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Try again</button></div>
+            </div>
+          </section>
+        </case>
+        <case :when="'ready'">
+          <logic :if="domainDns.pending">
+            <div class="ms-callout ms-callout--warn">
+              <span class="ms-icon ms-i-alert" aria-hidden="true"></span>
+              <div class="ms-callout__text">
+                <strong>Mail for {domainDns.name} is not accepted yet.</strong>
+                <p>{domainDns.waiting}</p>
+              </div>
+            </div>
+          </logic>
+
+          <section class="ms-section" aria-labelledby="records-title">
+            <h2 class="ms-section-title" id="records-title">DNS records to create</h2>
+            <p class="ms-subtle">Add these 4 records at the company that hosts DNS for {domainDns.name}. DNS changes can take up to 48 hours to appear.</p>
+            <div class="ms-card">
+              <div class="ms-card__body">
+                <div class="ms-checkbar">
+                  <logic :if="domainDns.checking">
+                    <p class="ms-checkbar__status" role="status"><span class="ms-spinner" aria-hidden="true"></span>Checking 4 records…</p>
+                  </logic>
+                  <logic else>
+                    <p class="ms-checkbar__status" role="status"><span class="ms-icon ms-i-clock ms-icon--sm" aria-hidden="true"></span>{domainDns.status}</p>
+                  </logic>
+                  <logic :if="adminSession.operator">
+                    <button class="ms-btn" type="button" :aria-busy="adminShell.flag(domainDns.checking)" :disabled="domainDns.checking" on:click="domainDns.check()">
+                      <logic :if="domainDns.checking"><span class="ms-spinner" aria-hidden="true"></span>Checking…</logic>
+                      <logic else><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Check again</logic>
+                    </button>
+                  </logic>
+                </div>
+                <logic :if="domainDns.checkProblem != ''">
+                  <p class="ms-error-text" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>{domainDns.checkProblem}</p>
+                </logic>
+                <logic :if="domainCopy.problem != ''">
+                  <p class="ms-error-text" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>{domainCopy.problem}</p>
+                </logic>
+              </div>
+            </div>
+
+            <loop :for="record of domainDns.records">
+              <section :class="record.cardClass" :aria-labelledby="record.titleId">
+                <div class="ms-card__head">
+                  <span class="ms-record__type" aria-hidden="true">{record.type}</span>
+                  <div class="ms-record__name"><h3 :id="record.titleId">{record.title} <span class="ms-sr-only">(type {record.type})</span></h3><span class="ms-record__need">{record.need}</span></div>
+                  <span :class="record.tagClass"><span :class="record.tagIcon" aria-hidden="true"></span>{record.tagText}</span>
+                </div>
+                <div class="ms-card__body">
+                  <dl class="ms-kv">
+                    <dt>Type</dt>
+                    <dd>{record.type}</dd>
+                    <logic :if="record.hasSelector">
+                      <dt>Selector</dt>
+                      <dd><code class="ms-mono">{record.selector}</code></dd>
+                    </logic>
+                    <dt>Host</dt>
+                    <dd><div class="ms-copy-field"><code class="ms-copy-field__value" :id="record.hostId">{record.host}</code>
+                      <logic :if="domainCopy.copied == record.host">
+                        <button class="ms-btn ms-btn--sm is-done" type="button" :aria-label="record.copiedLabel" :aria-describedby="record.hostId" on:click="domainCopy.copy(record.host)"><span class="ms-icon ms-i-check ms-icon--sm" aria-hidden="true"></span>Copied</button>
+                      </logic>
+                      <logic else>
+                        <button class="ms-btn ms-btn--sm" type="button" :aria-label="record.copyLabel" :aria-describedby="record.hostId" on:click="domainCopy.copy(record.host)"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button>
+                      </logic>
+                    </div></dd>
+                  </dl>
+                  <p :class="record.resultClass"><span :class="record.resultIcon" aria-hidden="true"></span>{record.resultText}</p>
+                </div>
+              </section>
+            </loop>
+            <p class="ms-meta">Some DNS providers want <code class="ms-mono">@</code> as the host for the domain itself.</p>
+          </section>
+
+          <logic :if="adminSession.operator">
+            <section class="ms-card ms-danger-zone" aria-labelledby="danger-title">
+              <div class="ms-card__head"><h2 id="danger-title">Danger zone</h2></div>
+              <div class="ms-row">
+                <div class="ms-row__main">
+                  <span class="ms-row__title">Remove domain</span>
+                  <span class="ms-meta">Deletes the domain, its channels, messages and DKIM keys. This cannot be undone.</span>
+                </div>
+                <button class="ms-btn ms-btn--danger" type="button" :aria-expanded="adminShell.flag(domainRemove.confirming)" aria-controls="remove-confirm-area" on:click="domainRemove.start(domainDns.domainId, domainDns.name)"><span class="ms-icon ms-i-trash ms-icon--sm" aria-hidden="true"></span>Remove</button>
+              </div>
+              <div id="remove-confirm-area">
+                <logic :if="domainRemove.confirming">
+                  <div class="ms-card__body">
+                    <p id="remove-desc">This deletes the domain, its channels, its messages and its DKIM keys. Mail to {domainRemove.name} will be refused. This cannot be undone.</p>
+                    <div class="ms-field">
+                      <label class="ms-label" for="remove-confirm">Type <strong class="ms-mono">{domainRemove.name}</strong> to confirm</label>
+                      <input class="ms-input ms-mono" id="remove-confirm" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="remove-desc remove-hint" :value="domainRemove.typed" on:input="domainRemove.type($event.target.value)">
+                      <p class="ms-help" id="remove-hint">The Remove button works when the name matches.</p>
+                    </div>
+                    <logic :if="domainRemove.problem != ''">
+                      <p class="ms-error-text" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>{domainRemove.problem}</p>
+                    </logic>
+                    <div class="ms-page__actions">
+                      <button class="ms-btn" type="button" :disabled="domainRemove.removing" on:click="domainRemove.cancel()">Cancel</button>
+                      <button class="ms-btn ms-btn--danger" type="button" :aria-busy="adminShell.flag(domainRemove.removing)" :disabled="domainRemove.locked" on:click="domainRemove.remove()">Remove domain</button>
+                    </div>
+                  </div>
+                </logic>
+              </div>
+            </section>
+          </logic>
+        </case>
+        <case default>
+          <section class="ms-card" aria-labelledby="domain-loading-title" aria-busy="true">
+            <div class="ms-card__head"><h2 id="domain-loading-title">DNS records</h2><span class="ms-meta" role="status"><span class="ms-spinner" aria-hidden="true"></span> Loading the domain…</span></div>
+            <div aria-hidden="true">
+              <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line"></span><span class="ms-skeleton ms-skeleton--line"></span></div></div>
+              <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line"></span><span class="ms-skeleton ms-skeleton--line"></span></div></div>
+            </div>
+          </section>
+        </case>
+      </switch>
+    </div>
+  </div>
+</main>

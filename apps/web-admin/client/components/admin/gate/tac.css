@@ -1,0 +1,14 @@
+.admin-gate {
+  min-height: 100dvh;
+}
+
+.admin-gate__inner {
+  max-width: 28rem;
+  margin-inline: auto;
+  padding-block: var(--w-space-8);
+}
+
+.admin-gate__form {
+  display: grid;
+  gap: var(--w-space-4);
+}

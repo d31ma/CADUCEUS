@@ -1,0 +1,102 @@
+<main class="ms-main ms-admin" aria-labelledby="members-page-title">
+  <header class="ms-header">
+    <button class="ms-icon-btn ms-header__back" type="button" aria-label="Back to menu" on:click="adminShell.showMenu()"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></button>
+    <h1 class="ms-header__title" id="members-page-title"><span class="ms-icon ms-i-users" aria-hidden="true"></span><span>Members</span></h1>
+    <p class="ms-header__topic">{memberList.domainId} &middot; people who signed in to this domain</p>
+  </header>
+
+  <div class="ms-page" id="admin-content">
+    <div class="ms-page__inner">
+      <logic :if="memberList.state == 'forbidden'">
+        <section class="ms-card" aria-labelledby="members-no-access-title">
+          <div class="ms-empty">
+            <span class="ms-empty__art ms-empty__art--lock" aria-hidden="true"><span class="ms-icon ms-i-lock ms-icon--xl"></span></span>
+            <h2 id="members-no-access-title">You need admin rights for this page</h2>
+            <p>Ask an admin of {memberList.domainId} to give you the Domain admin role.</p>
+          </div>
+        </section>
+      </logic>
+      <logic else>
+        <div class="ms-callout ms-callout--info">
+          <span class="ms-icon ms-i-key" aria-hidden="true"></span>
+          <div class="ms-callout__text">
+            <strong>To add people, create them in Keycloak.</strong>
+            <p>They appear here after their first sign-in. Disable a person or reset their sign-in in Keycloak too. Mesail never stores passwords.</p>
+          </div>
+        </div>
+
+        <form class="ms-toolbar" role="search" aria-label="Filter members" on:submit="memberList.search()">
+          <div class="ms-field ms-toolbar__search">
+            <label class="ms-label" for="member-search">Search</label>
+            <div class="ms-input-icon"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span><input class="ms-input" id="member-search" type="search" placeholder="Name or address" autocomplete="off" spellcheck="false" :value="memberList.query" on:input="memberList.query = $event.target.value"></div>
+          </div>
+          <button class="ms-btn" type="submit" :disabled="memberList.state == 'loading'">Search</button>
+        </form>
+
+        <switch :value="memberList.state">
+          <case :when="'ready'">
+            <section class="ms-card" aria-labelledby="members-title">
+              <div class="ms-card__head"><h2 id="members-title">{memberList.heading}</h2></div>
+              <div class="ms-table-wrap">
+                <table class="ms-table ms-table--cards">
+                  <caption class="ms-sr-only">Members of {memberList.domainId}</caption>
+                  <thead>
+                    <tr><th scope="col">Name</th><th scope="col">Address</th></tr>
+                  </thead>
+                  <tbody><loop :for="row of memberList.rows"><tr>
+                    <td class="ms-table__lead"><div class="ms-person"><span class="ms-avatar ms-avatar--sm" aria-hidden="true">{row.initials}</span><div><span class="ms-person__name">{row.name}</span></div></div></td>
+                    <td data-label="Address"><span class="ms-addr">{row.address}</span></td>
+                  </tr></loop></tbody>
+                </table>
+              </div>
+              <logic :if="memberList.hasMore">
+                <div class="ms-list-foot"><span>More members exist than this page shows. Search by name or address to find them.</span></div>
+              </logic>
+            </section>
+          </case>
+          <case :when="'empty'">
+            <section class="ms-card" aria-labelledby="members-empty-title">
+              <div class="ms-empty">
+                <span class="ms-empty__art" aria-hidden="true"><span class="ms-icon ms-i-users ms-icon--xl"></span></span>
+                <h2 id="members-empty-title">No one has signed in yet</h2>
+                <p>Create people in Keycloak for {memberList.domainId}. Each person appears here after their first sign-in.</p>
+              </div>
+            </section>
+          </case>
+          <case :when="'noResults'">
+            <section class="ms-card" aria-labelledby="members-no-results-title">
+              <div class="ms-empty" role="status">
+                <span class="ms-empty__art" aria-hidden="true"><span class="ms-icon ms-i-search ms-icon--xl"></span></span>
+                <h2 id="members-no-results-title">No members match &ldquo;{memberList.searchedQuery}&rdquo;</h2>
+                <p>Check the spelling, or clear the search and the filters. New people appear after their first sign-in.</p>
+                <div class="ms-empty__actions"><button class="ms-btn" type="button" on:click="memberList.clearSearch()">Clear search and filters</button></div>
+              </div>
+            </section>
+          </case>
+          <case :when="'failed'">
+            <section class="ms-card" aria-labelledby="members-error-title">
+              <div class="ms-empty" role="alert">
+                <span class="ms-empty__art ms-empty__art--error" aria-hidden="true"><span class="ms-icon ms-i-alert ms-icon--xl"></span></span>
+                <h2 id="members-error-title">Members could not load</h2>
+                <p>Mesail could not reach the server. Check your connection, then try again.</p>
+                <div class="ms-empty__actions"><button class="ms-btn ms-btn--primary" type="button" on:click="memberList.retry()"><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Try again</button></div>
+              </div>
+            </section>
+          </case>
+          <case default>
+            <section class="ms-card" aria-busy="true" aria-labelledby="members-loading-title">
+              <div class="ms-card__head"><h2 id="members-loading-title">Members</h2><span class="ms-meta" role="status"><span class="ms-spinner" aria-hidden="true"></span> Loading members&hellip;</span></div>
+              <div aria-hidden="true">
+                <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line" style="width:40%"></span><span class="ms-skeleton ms-skeleton--line" style="width:60%"></span></div></div>
+                <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line" style="width:35%"></span><span class="ms-skeleton ms-skeleton--line" style="width:55%"></span></div></div>
+                <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line" style="width:45%"></span><span class="ms-skeleton ms-skeleton--line" style="width:50%"></span></div></div>
+              </div>
+            </section>
+          </case>
+        </switch>
+
+        <admin-aliases hydrate="load" />
+      </logic>
+    </div>
+  </div>
+</main>

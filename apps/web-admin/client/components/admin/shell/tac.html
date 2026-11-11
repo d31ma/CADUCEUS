@@ -1,8 +1,47 @@
-<div class="admin">
-  <header class="admin-header">
-    <h1>{adminShell.heading}</h1>
-  </header>
-  <main class="admin-main">
-    <p>{adminShell.summary}</p>
-  </main>
+<div class="admin-root">
+  <a class="ms-skip-link" href="#admin-content">Skip to admin content</a>
+  <logic :if="adminSession.step == 'ready'">
+    <div class="ms-app" :data-pane="adminShell.pane">
+      <nav class="ms-rail" aria-label="Domains">
+        <ul class="ms-rail__list">
+          <li><span class="ms-domain-tile" aria-current="true">{adminSession.domainId}</span></li>
+        </ul>
+      </nav>
+      <aside class="ms-sidebar" :aria-label="adminSession.domainId">
+        <div class="ms-sidebar__head">
+          <p class="ms-domain-name"><span>{adminSession.domainId}</span></p>
+        </div>
+        <div class="ms-sidebar__scroll">
+          <section class="ms-nav-section" aria-labelledby="admin-nav-title">
+            <div class="ms-nav-section__head">
+              <h2 class="ms-nav-section__toggle" id="admin-nav-title">Admin</h2>
+            </div>
+            <ul class="ms-nav-list">
+              <logic :if="adminSession.operator">
+                <li><button class="ms-nav-item" type="button" :aria-current="adminShell.flag(adminShell.view == 'domains')" on:click="adminShell.open('domains', adminSession.domainId)"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span class="ms-nav-item__label">Domains</span></button></li>
+              </logic>
+              <logic :if="adminSession.domainAdmin">
+                <li><button class="ms-nav-item" type="button" :aria-current="adminShell.flag(adminShell.view == 'domain')" on:click="adminShell.open('domain', adminSession.domainId)"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span class="ms-nav-item__label">Domain</span></button></li>
+                <li><button class="ms-nav-item" type="button" :aria-current="adminShell.flag(adminShell.view == 'members')" on:click="adminShell.open('members', adminSession.domainId)"><span class="ms-icon ms-i-users" aria-hidden="true"></span><span class="ms-nav-item__label">Members</span></button></li>
+                <li><button class="ms-nav-item" type="button" :aria-current="adminShell.flag(adminShell.view == 'channels')" on:click="adminShell.open('channels', adminSession.domainId)"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">Channels</span></button></li>
+              </logic>
+            </ul>
+          </section>
+        </div>
+        <div class="ms-sidebar__foot">
+          <p class="ms-me"><span><span class="ms-me__name">{adminSession.displayName}</span><br><span class="ms-me__status">{adminSession.domainId}</span></span></p>
+          <button class="ms-icon-btn" type="button" aria-label="Sign out" title="Sign out" on:click="adminSession.signOut()"><span class="ms-icon ms-i-logout" aria-hidden="true"></span></button>
+        </div>
+      </aside>
+      <switch :value="adminShell.view">
+        <case :when="'domains'"><admin-domains hydrate="load" /></case>
+        <case :when="'domain'"><admin-domain hydrate="load" /></case>
+        <case :when="'members'"><admin-members hydrate="load" /></case>
+        <case :when="'channels'"><admin-channels hydrate="load" /></case>
+      </switch>
+    </div>
+  </logic>
+  <logic else>
+    <admin-gate hydrate="load" />
+  </logic>
 </div>

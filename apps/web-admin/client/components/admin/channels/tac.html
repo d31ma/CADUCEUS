@@ -1,0 +1,182 @@
+<main class="ms-main ms-admin" aria-labelledby="channels-page-title">
+  <header class="ms-header">
+    <button class="ms-icon-btn ms-header__back" type="button" aria-label="Back to menu" on:click="adminShell.showMenu()"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></button>
+    <h1 class="ms-header__title" id="channels-page-title"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span>Channels</span></h1>
+    <p class="ms-header__topic">{channelList.domain} &middot; visibility and email addresses</p>
+  </header>
+
+  <div class="ms-page" id="admin-content">
+    <div class="ms-page__inner">
+      <div class="ms-callout ms-callout--email">
+        <span class="ms-icon ms-i-mail" aria-hidden="true"></span>
+        <div class="ms-callout__text">
+          <strong>A channel can have an email address.</strong>
+          <p>People outside {channelList.domain} can then email the channel. The address ends with @{channelList.domain} and must not belong to a person or another channel.</p>
+        </div>
+      </div>
+
+      <div class="ms-toolbar" role="search" aria-label="Filter channels">
+        <div class="ms-field ms-toolbar__search">
+          <label class="ms-label" for="channel-search">Search</label>
+          <div class="ms-input-icon"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span><input class="ms-input" id="channel-search" type="search" placeholder="Channel name or address" autocomplete="off" spellcheck="false" :value="channelList.search" on:input="channelList.searchFor($event.target.value)"></div>
+        </div>
+        <div class="ms-field">
+          <label class="ms-label" for="channel-filter">Show</label>
+          <select class="ms-select" id="channel-filter" on:change="channelList.showOnly($event.target.value)">
+            <option value="all" :selected="channelList.show == 'all'">All channels</option>
+            <option value="public" :selected="channelList.show == 'public'">Public</option>
+            <option value="private" :selected="channelList.show == 'private'">Private</option>
+            <option value="email" :selected="channelList.show == 'email'">With email address</option>
+            <option value="archived" :selected="channelList.show == 'archived'">Archived</option>
+          </select>
+        </div>
+      </div>
+
+      <logic :if="channelArchive.notice != ''">
+        <div class="ms-callout ms-callout--error" role="alert">
+          <span class="ms-icon ms-i-alert" aria-hidden="true"></span>
+          <div class="ms-callout__text"><p>{channelArchive.notice}</p></div>
+        </div>
+      </logic>
+
+      <switch :value="channelList.state">
+        <case :when="'loading'">
+          <section class="ms-card" aria-busy="true" aria-labelledby="channels-loading-title">
+            <div class="ms-card__head"><h2 id="channels-loading-title">Channels</h2><span class="ms-meta" role="status"><span class="ms-spinner" aria-hidden="true"></span> Loading channels&hellip;</span></div>
+            <div aria-hidden="true">
+              <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line"></span><span class="ms-skeleton ms-skeleton--line"></span></div></div>
+              <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line"></span><span class="ms-skeleton ms-skeleton--line"></span></div></div>
+              <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line"></span><span class="ms-skeleton ms-skeleton--line"></span></div></div>
+            </div>
+          </section>
+        </case>
+        <case :when="'ready'">
+          <section class="ms-card" aria-labelledby="channels-title">
+            <div class="ms-card__head"><h2 id="channels-title">{channelList.heading}</h2><span class="ms-meta">{channelList.summary}</span></div>
+            <div class="ms-table-wrap">
+              <table class="ms-table ms-table--cards">
+                <caption class="ms-sr-only">Channels of {channelList.domain}</caption>
+                <thead>
+                  <tr><th scope="col">Channel</th><th scope="col">Visibility</th><th scope="col">Email address</th><th scope="col"><span class="ms-sr-only">Actions</span></th></tr>
+                </thead>
+                <tbody><loop :for="row of channelList.rows"><tr :class="row.rowClass">
+                  <td class="ms-table__lead"><span class="ms-person__name"><span :class="row.nameIcon" aria-hidden="true"></span> {row.name}</span><span class="ms-table__sub">{row.topic}</span></td>
+                  <td data-label="Visibility"><div><span :class="row.visibilityTag"><span :class="row.visibilityIcon" aria-hidden="true"></span>{row.visibilityText}</span><logic :if="row.archived"> <span class="ms-tag ms-tag--warn"><span class="ms-icon ms-i-eye-off" aria-hidden="true"></span>Archived, read-only</span></logic></div></td>
+                  <td data-label="Email address"><div>
+                    <logic :if="row.hasAddress"><span class="ms-tag ms-tag--email"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span> <span class="ms-addr">{row.emailAddress}</span></logic>
+                    <logic else><span class="ms-subtle">None</span></logic>
+                  </div></td>
+                  <td class="ms-table__actions"><div class="ms-page__actions">
+                    <logic :if="row.archived">
+                      <button class="ms-btn ms-btn--sm" type="button" :aria-label="row.restoreLabel" :disabled="channelArchive.busy" on:click="channelArchive.restore(row.channelId)">Unarchive</button>
+                    </logic>
+                    <logic else>
+                      <button class="ms-btn ms-btn--sm" type="button" aria-haspopup="dialog" :aria-label="row.addressLabel" on:click="channelAddress.edit(row.channelId)"><span class="ms-icon ms-i-mail ms-icon--sm" aria-hidden="true"></span>{row.addressAction}</button>
+                      <button class="ms-btn ms-btn--sm ms-btn--ghost" type="button" aria-haspopup="dialog" :aria-label="row.archiveLabel" on:click="channelArchive.ask(row.channelId)">Archive</button>
+                    </logic>
+                  </div></td>
+                </tr></loop></tbody>
+              </table>
+            </div>
+            <div class="ms-list-foot"><span>{channelList.showing}</span></div>
+          </section>
+          <p class="ms-meta">This list shows public channels and the private channels you are in.</p>
+        </case>
+        <case :when="'empty'">
+          <section class="ms-card" aria-labelledby="channels-empty-title">
+            <div class="ms-empty">
+              <span class="ms-empty__art" aria-hidden="true"><span class="ms-icon ms-i-hash ms-icon--xl"></span></span>
+              <h2 id="channels-empty-title">No channels yet</h2>
+              <p>Channels that people in {channelList.domain} create appear here.</p>
+            </div>
+          </section>
+        </case>
+        <case :when="'noResults'">
+          <section class="ms-card" aria-labelledby="channels-no-results-title">
+            <div class="ms-empty" role="status">
+              <span class="ms-empty__art" aria-hidden="true"><span class="ms-icon ms-i-search ms-icon--xl"></span></span>
+              <h2 id="channels-no-results-title">{channelList.noResultsTitle}</h2>
+              <p>Check the spelling, or clear the search and the filters.</p>
+              <div class="ms-empty__actions"><button class="ms-btn" type="button" on:click="channelList.clearFilters()">Clear search and filters</button></div>
+            </div>
+          </section>
+        </case>
+        <case default>
+          <section class="ms-card" aria-labelledby="channels-error-title">
+            <div class="ms-empty" role="alert">
+              <span class="ms-empty__art ms-empty__art--error" aria-hidden="true"><span class="ms-icon ms-i-alert ms-icon--xl"></span></span>
+              <h2 id="channels-error-title">Channels could not load</h2>
+              <p>{channelList.loadProblem}</p>
+              <div class="ms-empty__actions"><button class="ms-btn ms-btn--primary" type="button" on:click="channelList.refresh()"><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Try again</button></div>
+            </div>
+          </section>
+        </case>
+      </switch>
+    </div>
+  </div>
+
+  <logic :if="channelAddress.open">
+    <div class="ms-scrim">
+      <div class="ms-dialog" role="dialog" aria-modal="true" aria-labelledby="channel-address-title">
+        <div class="ms-dialog__head">
+          <h2 id="channel-address-title">{channelAddress.title}</h2>
+          <button class="ms-icon-btn ms-dialog__close" type="button" aria-label="Close" on:click="channelAddress.cancel()"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
+        </div>
+        <div class="ms-dialog__body">
+          <div class="ms-field">
+            <label class="ms-label" for="channel-address-input">Email address</label>
+            <div class="ms-input-group"><input class="ms-input ms-mono" id="channel-address-input" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" autofocus :value="channelAddress.localPart" :aria-invalid="adminShell.flag(channelAddress.problem != '')" aria-describedby="channel-address-help" on:input="channelAddress.localPart = $event.target.value"><span class="ms-input-group__suffix" aria-hidden="true">@{channelAddress.domain}</span></div>
+            <logic :if="channelAddress.problem != ''">
+              <p class="ms-error-text" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>{channelAddress.problem}</p>
+            </logic>
+            <logic :else-if="channelAddress.editing">
+              <logic :if="channelAddress.localPart == channelAddress.currentLocalPart">
+                <p class="ms-ok-text"><span class="ms-icon ms-i-check" aria-hidden="true"></span>{channelAddress.currentText}</p>
+              </logic>
+            </logic>
+            <p class="ms-help" id="channel-address-help">{channelAddress.help}</p>
+          </div>
+          <div class="ms-callout ms-callout--email">
+            <span class="ms-icon ms-i-mail" aria-hidden="true"></span>
+            <div class="ms-callout__text"><p>{channelAddress.mailText}</p></div>
+          </div>
+        </div>
+        <div class="ms-dialog__foot ms-dialog__foot--split">
+          <logic :if="channelAddress.editing">
+            <button class="ms-btn ms-btn--ghost" type="button" :disabled="channelAddress.busy" on:click="channelAddress.remove()"><span class="ms-icon ms-i-trash ms-icon--sm" aria-hidden="true"></span>Remove address</button>
+          </logic>
+          <logic else><span></span></logic>
+          <div class="ms-page__actions">
+            <button class="ms-btn" type="button" on:click="channelAddress.cancel()">Cancel</button>
+            <button class="ms-btn ms-btn--primary" type="button" :disabled="channelAddress.busy" on:click="channelAddress.save()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </logic>
+
+  <logic :if="channelArchive.open">
+    <div class="ms-scrim">
+      <div class="ms-dialog" role="dialog" aria-modal="true" aria-labelledby="channel-archive-title" aria-describedby="channel-archive-text">
+        <div class="ms-dialog__head">
+          <h2 id="channel-archive-title">{channelArchive.title}</h2>
+          <button class="ms-icon-btn ms-dialog__close" type="button" aria-label="Close" on:click="channelArchive.cancel()"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
+        </div>
+        <div class="ms-dialog__body">
+          <p id="channel-archive-text">Archived channels are read-only and still searchable. Members can read old messages and files, but nobody can post. You can unarchive it later.</p>
+          <p class="ms-meta">{channelArchive.addressNote}</p>
+          <logic :if="channelArchive.problem != ''">
+            <p class="ms-error-text" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>{channelArchive.problem}</p>
+          </logic>
+        </div>
+        <div class="ms-dialog__foot ms-dialog__foot--split">
+          <span></span>
+          <div class="ms-page__actions">
+            <button class="ms-btn" type="button" on:click="channelArchive.cancel()">Cancel</button>
+            <button class="ms-btn ms-btn--primary" type="button" :disabled="channelArchive.busy" on:click="channelArchive.confirm()">Archive channel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </logic>
+</main>

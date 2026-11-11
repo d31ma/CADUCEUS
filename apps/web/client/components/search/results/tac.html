@@ -1,18 +1,18 @@
 <section class="@container/search min-w-0" aria-label="Search">
   <div class="mx-auto grid w-full max-w-2xl gap-3 pt-4 pb-10 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] @xl/search:px-5">
     <form class="contents" method="dialog" role="search" :aria-label="'Search ' + sessionAccount.currentDomain" on:submit="search.searchWith($event.target.elements.query.value, $event.target.elements.author.value, $event.target.elements.from.value, $event.target.elements.to.value)">
-      <div class="flex items-start gap-2">
+      <div class="flex items-center gap-2">
         <w-text-field class="min-w-0 flex-1" type="search" name="query" hide-details autocomplete="off" label="Search messages" :value="search.query"><w-icon slot="prepend-inner" name="search" size="small"></w-icon></w-text-field>
         <logic :if="search.query != ''">
-          <button type="button" class="search-clear mt-1.5 grid size-9 flex-none place-items-center pointer-coarse:size-11 max-sm:size-11" aria-label="Clear search text" on:click="search.clearQuery()"><w-icon name="close" size="small"></w-icon></button>
+          <button type="button" class="search-clear grid size-10 flex-none place-items-center pointer-coarse:size-11 max-sm:size-11" aria-label="Clear search text" on:click="search.clearQuery()"><w-icon name="close" size="small"></w-icon></button>
         </logic>
-        <w-btn class="mt-1.5">Search</w-btn>
+        <w-btn variant="flat" class="flex-none">Search</w-btn>
       </div>
-      <p class="search-meta -mt-2">Searching {sessionAccount.currentDomain}</p>
+      <p class="search-meta -mt-1">Searching {sessionAccount.currentDomain}</p>
       <div class="flex flex-wrap items-end gap-2" role="group" aria-label="Filters">
-        <w-text-field class="min-w-0 flex-[1_1_12rem] max-sm:basis-full" name="author" label="Sender" placeholder="Name or address" density="compact" hide-details autocomplete="off" :value="search.author"></w-text-field>
-        <w-text-field class="min-w-0 flex-[1_1_9rem]" type="date" name="from" label="From date" density="compact" hide-details :value="search.from" :max="search.to"></w-text-field>
-        <w-text-field class="min-w-0 flex-[1_1_9rem]" type="date" name="to" label="To date" density="compact" hide-details :value="search.to" :min="search.from"></w-text-field>
+        <w-text-field class="min-w-0 flex-[1_1_12rem] max-sm:basis-full" name="author" label="Sender" placeholder="Name or address" hide-details autocomplete="off" :value="search.author"></w-text-field>
+        <w-text-field class="min-w-0 flex-[1_1_9rem]" type="date" name="from" label="From date" hide-details :value="search.from" :max="search.to"></w-text-field>
+        <w-text-field class="min-w-0 flex-[1_1_9rem]" type="date" name="to" label="To date" hide-details :value="search.to" :min="search.from"></w-text-field>
       </div>
     </form>
     <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Quick filters">
@@ -43,12 +43,11 @@
         <ol class="search-results -mx-2 m-0 list-none p-0" aria-label="Search results, newest first">
           <loop :for="row of search.pageRows">
             <li>
-              <button type="button" class="search-result grid w-full grid-cols-[2.25rem_minmax(0,1fr)] gap-x-3 px-2 py-3 text-start" on:click="search.open(row)">
+              <button type="button" class="search-result grid w-full grid-cols-[var(--ms-avatar-md)_minmax(0,1fr)] gap-x-3 px-2 py-3 text-start" on:click="search.open(row)">
                 <span class="search-tile grid size-9 place-items-center" aria-hidden="true"><w-icon name="chat" size="small"></w-icon></span>
-                <span class="grid min-w-0 gap-0.5 py-1">
-                  <span class="search-meta flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span class="search-kind">Message</span>
-                    <logic :if="search.conversationId != ''"><span class="search-wrap min-w-0">in {search.conversationTitle}</span></logic>
+                <span class="grid min-w-0 gap-1">
+                  <span class="search-meta flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span class="search-kind search-wrap min-w-0">{search.placeOf(row.conversationId)}</span>
                     <time class="@md/search:ml-auto" :datetime="row.createdAt">{row.timeLabel}</time>
                   </span>
                   <span class="search-wrap line-clamp-3"><loop :for="part of row.parts"><logic :if="part.match"><mark>{part.text}</mark></logic><logic else>{part.text}</logic></loop></span>

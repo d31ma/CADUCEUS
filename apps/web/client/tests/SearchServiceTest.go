@@ -254,3 +254,10 @@ func (test *SearchServiceTest) TestClearQueryEmptiesThePage() {
 	Assert.Equals(0, len(search.PageRows))
 	Assert.Equals("", search.NextCursor)
 }
+
+func (test *SearchServiceTest) TestPlaceOfNamesTheConversation() {
+	sidebar := &SidebarService{Channels: []ConversationRow{{ConversationId: "c-general", Kind: "channel", Title: "general"}}}
+	search := &SearchService{places: &NotificationPlaceService{sidebar: sidebar, kinds: &NotificationKindService{}}}
+	Assert.Equals("#general", search.PlaceOf("c-general"))
+	Assert.Equals("Message", search.PlaceOf("c-unknown"))
+}

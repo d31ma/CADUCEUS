@@ -6,11 +6,11 @@
       <form class="flex min-w-0 flex-1 items-center gap-2" method="dialog" role="search" aria-labelledby="palette-title" on:submit="search.searchPaletteFor($event.target.elements.query.value)">
         <w-text-field class="min-w-0 flex-1" type="search" name="query" single-line hide-details autocomplete="off" autofocus :label="'Search messages in ' + sessionAccount.currentDomain" placeholder="Search messages" :value="search.paletteQuery"><w-icon slot="prepend-inner" name="search" size="small"></w-icon></w-text-field>
         <logic :if="search.paletteQuery != ''">
-          <button type="button" class="search-clear grid size-9 flex-none place-items-center pointer-coarse:size-11 max-sm:size-11" aria-label="Clear search text" on:click="search.clearPaletteQuery()"><w-icon name="close" size="small"></w-icon></button>
+          <button type="button" class="search-clear grid size-10 flex-none place-items-center pointer-coarse:size-11 max-sm:size-11" aria-label="Clear search text" on:click="search.clearPaletteQuery()"><w-icon name="close" size="small"></w-icon></button>
         </logic>
-        <w-btn size="small">Search</w-btn>
+        <w-btn variant="flat" class="flex-none">Search</w-btn>
       </form>
-      <w-btn variant="text" size="small" on:click="search.closePalette()">Close</w-btn>
+      <w-btn variant="text" class="flex-none" on:click="search.closePalette()">Close</w-btn>
     </div>
     <p class="search-scope search-divided flex items-center gap-2 px-4 py-2" id="palette-scope"><w-icon name="shield" size="x-small"></w-icon><span class="min-w-0">Searching {sessionAccount.currentDomain}. Only messages you can see now are searched.</span></p>
     <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-2 sm:max-h-[28rem]">
@@ -29,7 +29,7 @@
                 <button type="button" class="search-option flex w-full items-center gap-3 px-2 py-2 text-start min-h-10 pointer-coarse:min-h-11 max-sm:min-h-11" on:click="search.open(row)">
                   <span class="search-tile grid size-9 flex-none place-items-center" aria-hidden="true"><w-icon name="chat" size="small"></w-icon></span>
                   <span class="grid min-w-0 flex-1 gap-0.5">
-                    <span class="search-option-title truncate">Message</span>
+                    <span class="search-option-title truncate">{search.placeOf(row.conversationId)}</span>
                     <span class="search-snippet line-clamp-2"><loop :for="part of row.parts"><logic :if="part.match"><mark>{part.text}</mark></logic><logic else>{part.text}</logic></loop></span>
                   </span>
                   <time class="search-meta flex-none self-start" :datetime="row.createdAt">{row.timeLabel}</time>

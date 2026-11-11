@@ -2,6 +2,7 @@
   margin: 0;
   color: var(--w-text-subtle);
   font-size: var(--ms-text-meta);
+  line-height: var(--ms-line-tight);
   overflow-wrap: anywhere;
 }
 
@@ -9,6 +10,7 @@
   margin: 0;
   color: var(--w-text-subtle);
   font-size: var(--w-font-base);
+  line-height: var(--ms-line-tight);
 }
 
 .search-count-number {
@@ -32,6 +34,8 @@
   background: transparent;
   color: var(--w-text);
   font: inherit;
+  font-size: var(--ms-text-body);
+  line-height: var(--ms-line-body);
   cursor: pointer;
 }
 
@@ -53,7 +57,7 @@
 
 .search-kind {
   color: var(--w-text);
-  font-size: var(--w-font-base);
+  font-size: var(--ms-text-nav);
   font-weight: var(--w-font-weight-semibold);
 }
 
@@ -66,6 +70,7 @@
   color: var(--w-text);
   font-size: var(--w-font-xl);
   font-weight: var(--w-font-weight-semibold);
+  line-height: var(--ms-line-tight);
   overflow-wrap: anywhere;
 }
 
@@ -88,7 +93,7 @@
 }
 
 mark {
-  padding-inline: 0.125em;
+  padding-inline: 2px;
   border-radius: var(--w-radius);
   background: var(--w-warning-container);
   color: var(--w-on-warning-container);
@@ -117,11 +122,8 @@ mark {
   .mx-auto {
     margin-inline: auto;
   }
-  .-mt-2 {
-    margin-top: calc(var(--spacing, 0.25rem) * -2);
-  }
-  .mt-1\.5 {
-    margin-top: calc(var(--spacing, 0.25rem) * 1.5);
+  .-mt-1 {
+    margin-top: calc(var(--spacing, 0.25rem) * -1);
   }
   .mt-3 {
     margin-top: calc(var(--spacing, 0.25rem) * 3);
@@ -151,6 +153,10 @@ mark {
     width: calc(var(--spacing, 0.25rem) * 9);
     height: calc(var(--spacing, 0.25rem) * 9);
   }
+  .size-10 {
+    width: calc(var(--spacing, 0.25rem) * 10);
+    height: calc(var(--spacing, 0.25rem) * 10);
+  }
   .w-full {
     width: 100%;
   }
@@ -178,8 +184,8 @@ mark {
   .list-none {
     list-style-type: none;
   }
-  .grid-cols-\[2\.25rem_minmax\(0\,1fr\)\] {
-    grid-template-columns: 2.25rem minmax(0,1fr);
+  .grid-cols-\[var\(--ms-avatar-md\)_minmax\(0\,1fr\)\] {
+    grid-template-columns: var(--ms-avatar-md) minmax(0,1fr);
   }
   .flex-wrap {
     flex-wrap: wrap;
@@ -187,23 +193,20 @@ mark {
   .place-items-center {
     place-items: center;
   }
+  .items-baseline {
+    align-items: baseline;
+  }
   .items-center {
     align-items: center;
   }
   .items-end {
     align-items: flex-end;
   }
-  .items-start {
-    align-items: flex-start;
-  }
   .justify-between {
     justify-content: space-between;
   }
   .justify-items-center {
     justify-items: center;
-  }
-  .gap-0\.5 {
-    gap: calc(var(--spacing, 0.25rem) * 0.5);
   }
   .gap-1 {
     gap: var(--spacing, 0.25rem);
@@ -239,9 +242,6 @@ mark {
   }
   .px-2 {
     padding-inline: calc(var(--spacing, 0.25rem) * 2);
-  }
-  .py-1 {
-    padding-block: var(--spacing, 0.25rem);
   }
   .py-3 {
     padding-block: calc(var(--spacing, 0.25rem) * 3);

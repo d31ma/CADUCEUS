@@ -16,6 +16,7 @@
   background: var(--w-surface-container-low);
   color: var(--w-text-subtle);
   font-size: var(--ms-text-meta);
+  line-height: var(--ms-line-body);
   overflow-wrap: anywhere;
 }
 
@@ -41,6 +42,7 @@
   color: inherit;
   font: inherit;
   font-size: var(--w-font-base);
+  line-height: var(--ms-line-tight);
   cursor: pointer;
 }
 
@@ -71,6 +73,8 @@
 }
 
 .search-snippet {
+  color: var(--w-text-subtle);
+  line-height: var(--ms-line-body);
   overflow-wrap: anywhere;
 }
 
@@ -78,12 +82,14 @@
   margin: 0;
   color: var(--w-text-subtle);
   font-size: var(--ms-text-meta);
+  line-height: var(--ms-line-tight);
 }
 
 .search-hint {
   margin: 0;
   color: var(--w-text-subtle);
   font-size: var(--w-font-base);
+  line-height: var(--ms-line-body);
 }
 
 .search-state-title {
@@ -91,6 +97,7 @@
   color: var(--w-text);
   font-size: var(--w-font-lg);
   font-weight: var(--w-font-weight-semibold);
+  line-height: var(--ms-line-tight);
   overflow-wrap: anywhere;
 }
 
@@ -113,7 +120,7 @@
 }
 
 mark {
-  padding-inline: 0.125em;
+  padding-inline: 2px;
   border-radius: var(--w-radius);
   background: var(--w-warning-container);
   color: var(--w-on-warning-container);
@@ -184,6 +191,10 @@ mark {
   .size-9 {
     width: calc(var(--spacing, 0.25rem) * 9);
     height: calc(var(--spacing, 0.25rem) * 9);
+  }
+  .size-10 {
+    width: calc(var(--spacing, 0.25rem) * 10);
+    height: calc(var(--spacing, 0.25rem) * 10);
   }
   .h-full {
     height: 100%;

@@ -1,4 +1,7 @@
-import "strings"
+import (
+	"cmp"
+	"strings"
+)
 
 // @Service
 type SearchService struct {
@@ -35,6 +38,8 @@ type SearchService struct {
 	queries *SearchQueryService
 	// @Needs
 	recent *SearchRecentService
+	// @Needs
+	places *NotificationPlaceService
 	// @Needs
 	shell                     *ShellService
 	applicationEventPublisher ApplicationEventPublisher
@@ -77,6 +82,10 @@ func (search *SearchService) Open(row SearchHitRow) {
 	opened := SearchHitOpenRequested{ConversationId: row.ConversationId, MessageId: row.MessageId}
 	search.applicationEventPublisher.PublishEvent(opened, false)
 	search.PaletteOpen = false
+}
+
+func (search *SearchService) PlaceOf(conversationId string) string {
+	return cmp.Or(search.places.Name(conversationId), search.messageTitle())
 }
 
 func (search *SearchService) SeeAll() {
@@ -231,4 +240,8 @@ func (search *SearchService) pageLimit() string {
 
 func (search *SearchService) stateIdle() string {
 	return "idle"
+}
+
+func (search *SearchService) messageTitle() string {
+	return "Message"
 }

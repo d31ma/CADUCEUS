@@ -109,6 +109,7 @@
     "carousels",
     "badges",
     "empty-states",
+    "send-statuses",
     "skeleton-loaders",
     "banners",
     "feedback-motion",
@@ -117,7 +118,9 @@
     "tooltips",
     "ripple",
     "progress",
+    "storage-meters",
     "snackbars",
+    "sync-statuses",
     "feedback-aliases",
     "buttons",
     "inputs",
@@ -145,7 +148,7 @@
       "--minify"
     ],
     "cssLayer": "duvay",
-    "builtAt": "2026-11-11T23:35:53Z"
+    "builtAt": "2026-11-11T23:44:12Z"
   },
   "inputs": {
     "LICENSE": "5018934d79ea0bf37c34065635d6cbdbe96701c0e7b59e39f40d47641a7da6b7",
@@ -261,6 +264,7 @@
     "src/components/selection-controls.css": "bbed73a49c19b0715222489dd50fa7c9564985439ef71b420e09d2e422e8a51e",
     "src/components/selects.css": "bb03166cf00cd5beba21e77aa4a6db602cd3138a6b824aed19a164f211040948",
     "src/components/send-status.js": "b003ccf84fe7ba26883b2ff5c887bfb7b8237e45cd22459637c45587ce09a0b5",
+    "src/components/send-statuses.css": "979649fb14bfa605603ed5c6e7abe2ca5bf9c8a8751420af2cb6f715f503bdc7",
     "src/components/skeleton-loader.js": "898082c11e240c5be6882a4e2361467c1f9b15b3399870a4a1cccbb238b9d1df",
     "src/components/skeleton-loaders.css": "95a57f720c7d800191559a13cf4f11c24bf029021b5956a7bafaa8693e2ccd84",
     "src/components/skeleton.js": "762b6e8f6531b65bd729a4a1ebd4c1e93f5523d9ce42a3fc5e15a807927db806",
@@ -270,9 +274,11 @@
     "src/components/spacer.js": "cfff74ce912b3f1bdd5feee0541812a2c84a541ff2d6ed2ea83d268d1a1499a3",
     "src/components/spacers.css": "c6cba763d0fc96ed212c8a01c1fc73adf4a2650d561764fb1c45d8561ba8e28b",
     "src/components/storage-meter.js": "9579ab23dc2d5784aeb845716be0c48fe70e9c129e9a642cc4bb74773763e213",
+    "src/components/storage-meters.css": "4b510cef03ec4a886b186f41a148b18896dff42a580750922c2f37f3d7eacf58",
     "src/components/switch.js": "4e84fc87bf7c2e3e1efe559191522c8309e4e11d5972c6e134fac4efc3efb7aa",
     "src/components/switches.css": "9a64a734ebe65195410802b78c4fb9318e91348253d79864c77a594ee12aa927",
     "src/components/sync-status.js": "a875035f12664fabd9fa6612665a99d5c40d40501d989c00146ca3f6278f1d96",
+    "src/components/sync-statuses.css": "2eb7b3668f1c2158015b7e5336dc5115f6c9d10ab20ccbbbae4876c253631aca",
     "src/components/tab.js": "0d62c7556d6bfebbbd32cb0b86a792a6713966687a04bad9ae9472c746e0bdd3",
     "src/components/table.js": "4ba3147de527af599419151c36d6d1aff1e414b3bcf044ead438f40707cfab5c",
     "src/components/tables.css": "e953db242f9c3e1b03d03dc49acee97c21955c3395ac4f700ac60e1d079c7992",
@@ -300,7 +306,7 @@
   },
   "outputs": {
     "duvay-mesail.js": "5de2fef0b983f7728e6a739420bada25d844a0e7da2fdc79854260227da3389a",
-    "duvay-mesail.css": "b6a801b4851fdeb8ad782a96632a52efa6defdf2bf0284aed1f85f7903a9e689",
+    "duvay-mesail.css": "7b77cbf22dce87dcc7e802a78198b64569b2c0e3a240c9a651829e47b3006b86",
     "LICENSE": "5018934d79ea0bf37c34065635d6cbdbe96701c0e7b59e39f40d47641a7da6b7"
   }
 }

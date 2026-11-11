@@ -1,3 +1,126 @@
-<section class="notifications-list" aria-label="Notifications">
-  <h2>Notifications</h2>
+<section class="activity" aria-labelledby="activity-title">
+  <header class="activity-head">
+    <h2 class="activity-title" id="activity-title">
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9" /><path d="M10 20.5a2 2 0 0 0 4 0" /></svg>
+      <span>Activity</span>
+    </h2>
+    <button type="button" class="text-button" on:click="notification.markAllRead()">
+      <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12l5 5 9-10M12 16l1 1 9-10" /></svg>
+      <span>Mark all as read</span>
+    </button>
+  </header>
+
+  <logic :if="notificationPush.panel == 'notAsked'">
+    <div class="push-prompt" role="region" aria-labelledby="push-prompt-text">
+      <svg class="icon push-prompt-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9" /><path d="M10 20.5a2 2 0 0 0 4 0" /></svg>
+      <p class="push-prompt-text" id="push-prompt-text">Get a notification on this device when someone mentions you or sends you a message while Mesail is in the background.</p>
+      <button type="button" class="button button-primary" on:click="notificationPush.turnOn()">Turn on notifications</button>
+    </div>
+  </logic>
+  <logic :if="notificationPush.problem == 'notAllowed'">
+    <p class="inline-problem" role="status">Mesail could not ask for permission. Try again, or allow notifications in your browser settings.</p>
+  </logic>
+
+  <div class="tabs" role="tablist" aria-label="Show activity">
+    <loop :for="tab of notification.tabs">
+      <button type="button" class="tab" role="tab" :id="tab.id" aria-controls="activity-panel" :aria-selected="shell.flag(tab.selected)" on:click="notification.chooseTab(tab.name)">
+        <span>{tab.label}</span>
+        <logic :if="tab.hasUnread">
+          <span class="badge">{tab.unreadCount}<span class="screen-reader-only"> unread</span></span>
+        </logic>
+      </button>
+    </loop>
+  </div>
+
+  <div class="activity-panel" id="activity-panel" role="tabpanel" tabindex="0" :aria-labelledby="notification.tabId">
+    <switch :value="notification.status">
+      <case :when="'ready'">
+        <logic :if="notification.empty">
+          <div class="state">
+            <svg class="icon state-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" /><path d="M8 12l3 3 5-6" /></svg>
+            <p class="state-title">You're all caught up</p>
+            <p class="state-text">Mentions, direct messages, thread replies and new email show up here.</p>
+          </div>
+        </logic>
+        <loop :for="day of notification.days">
+          <h3 class="day">{day.label}</h3>
+          <ul class="rows" :aria-label="day.label">
+            <loop :for="row of day.rows">
+              <li class="row" :data-unread="shell.flag(row.unread)">
+                <button type="button" class="row-open" on:click="notification.open(row)">
+                  <span class="unread-mark" aria-hidden="true"></span>
+                  <span class="kind" :data-kind="row.kind" aria-hidden="true">
+                    <switch :value="row.kind">
+                      <case :when="'mention'">
+                        <svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8" /></svg>
+                      </case>
+                      <case :when="'dm'">
+                        <svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z" /></svg>
+                      </case>
+                      <case :when="'thread_reply'">
+                        <svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><path d="M4 5h12v8H9l-5 4zM18 9h2v10l-3-3h-6" /></svg>
+                      </case>
+                      <case :when="'email'">
+                        <svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><path d="M3 6h18v12H3z" /><path d="M3 7l9 6 9-6" /></svg>
+                      </case>
+                      <case default>
+                        <svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9" /></svg>
+                      </case>
+                    </switch>
+                  </span>
+                  <span class="row-body">
+                    <span class="row-title">
+                      <logic :if="row.unread"><span class="screen-reader-only">Unread. </span></logic>
+                      {row.title}
+                    </span>
+                    <time class="row-time" :datetime="row.stamp">{row.time}</time>
+                  </span>
+                </button>
+                <logic :if="row.unread">
+                  <button type="button" class="icon-button row-mark" :aria-label="row.markLabel" on:click="notification.markRead(row.notificationId)">
+                    <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>
+                  </button>
+                </logic>
+              </li>
+            </loop>
+          </ul>
+        </loop>
+        <logic :if="notification.hasMore">
+          <div class="more">
+            <button type="button" class="button" on:click="notification.loadMore()">Load more</button>
+          </div>
+        </logic>
+        <logic :if="notification.actionProblem == 'error'">
+          <p class="inline-problem" role="status">That did not work. Check your connection and try again.</p>
+        </logic>
+        <logic :if="notification.actionProblem == 'session'">
+          <p class="inline-problem" role="status">Your session ended. Sign in again, then try again.</p>
+        </logic>
+      </case>
+      <case :when="'error'">
+        <div class="state" role="alert">
+          <svg class="icon state-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" /><path d="M12 7v6M12 16.5v.5" /></svg>
+          <p class="state-title">Activity could not load</p>
+          <p class="state-text">Check your connection, then try again.</p>
+          <button type="button" class="button" on:click="notification.retry()">Retry</button>
+        </div>
+      </case>
+      <case :when="'session'">
+        <div class="state" role="alert">
+          <svg class="icon state-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z" /></svg>
+          <p class="state-title">Your session ended</p>
+          <p class="state-text">Sign in again to see your activity.</p>
+        </div>
+      </case>
+      <case default>
+        <div class="skeleton" aria-busy="true">
+          <span class="screen-reader-only">Loading activity</span>
+          <span class="skeleton-day" aria-hidden="true"></span>
+          <span class="skeleton-row" aria-hidden="true"></span>
+          <span class="skeleton-row" aria-hidden="true"></span>
+          <span class="skeleton-row" aria-hidden="true"></span>
+        </div>
+      </case>
+    </switch>
+  </div>
 </section>

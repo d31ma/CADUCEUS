@@ -1,0 +1,131 @@
+<section class="push" aria-labelledby="push-title">
+  <div class="card">
+    <div class="card-head">
+      <h3 class="card-title" id="push-title">Notifications on this device</h3>
+      <p class="card-text">Mesail notifies you when no Mesail tab is in front. Nothing is shown while you are set to Do not disturb.</p>
+    </div>
+    <switch :value="notificationPush.panel">
+      <case :when="'notAsked'">
+        <div class="permission">
+          <svg class="icon permission-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9" /><path d="M10 20.5a2 2 0 0 0 4 0" /></svg>
+          <div class="permission-body">
+            <p class="permission-title">Notifications are off on this device</p>
+            <p class="help">Your browser will ask if Mesail may show notifications. Choose Allow.</p>
+            <div class="actions">
+              <button type="button" class="button button-primary" on:click="notificationPush.turnOn()">Turn on notifications</button>
+            </div>
+          </div>
+        </div>
+      </case>
+      <case :when="'on'">
+        <div class="permission" data-tone="on">
+          <svg class="icon permission-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>
+          <div class="permission-body">
+            <p class="permission-title">Notifications are on for this browser</p>
+            <p class="help">To stop them on this device, turn them off here. Your other devices keep their own setting.</p>
+            <div class="actions">
+              <button type="button" class="button" on:click="notificationPush.sendTest()">Send a test notification</button>
+              <button type="button" class="button button-quiet" on:click="notificationPush.turnOff()">Turn off on this device</button>
+            </div>
+            <logic :if="notificationPush.testSent">
+              <p class="note" role="status">Test notification sent.</p>
+            </logic>
+          </div>
+        </div>
+      </case>
+      <case :when="'off'">
+        <div class="permission">
+          <svg class="icon permission-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9" /><path d="M4 4l16 16" /></svg>
+          <div class="permission-body">
+            <p class="permission-title">Notifications are off on this device</p>
+            <p class="help">You turned them off here. Your browser still allows them.</p>
+            <div class="actions">
+              <button type="button" class="button button-primary" on:click="notificationPush.turnOn()">Turn on notifications</button>
+            </div>
+          </div>
+        </div>
+      </case>
+      <case :when="'blocked'">
+        <div class="permission" data-tone="blocked">
+          <svg class="icon permission-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 8 2.5 8h-17S6 15 6 9" /><path d="M4 4l16 16" /></svg>
+          <div class="permission-body">
+            <p class="permission-title">Your browser blocks notifications from Mesail</p>
+            <p class="help">Mesail cannot ask again. To allow them:</p>
+            <ol class="steps">
+              <li>Select the icon to the left of the web address (a lock or a settings icon).</li>
+              <li>Find <strong>Notifications</strong> and choose <strong>Allow</strong>.</li>
+              <li>Come back here and select <strong>Check again</strong>.</li>
+            </ol>
+            <div class="actions">
+              <button type="button" class="button" on:click="notificationPush.checkAgain()">Check again</button>
+            </div>
+          </div>
+        </div>
+      </case>
+      <case :when="'unsupported'">
+        <div class="permission">
+          <svg class="icon permission-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" /></svg>
+          <div class="permission-body">
+            <p class="permission-title">This browser cannot show notifications</p>
+            <p class="help">On iPhone and iPad, first add Mesail to your Home Screen: select Share, then Add to Home Screen. Then open Mesail from there.</p>
+          </div>
+        </div>
+      </case>
+      <case default>
+        <div class="skeleton" aria-busy="true">
+          <span class="screen-reader-only">Checking notifications on this device</span>
+          <span class="skeleton-line" aria-hidden="true"></span>
+        </div>
+      </case>
+    </switch>
+    <logic :if="notificationPush.problem == 'notAllowed'">
+      <p class="problem" role="status">Mesail could not ask for permission. Try again, or allow notifications in your browser settings.</p>
+    </logic>
+    <logic :if="notificationPush.problem == 'notShown'">
+      <p class="problem" role="status">A notification could not be shown. Check the notification settings of your browser and your device.</p>
+    </logic>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h3 class="card-title" id="summary-title">Email summary</h3>
+      <p class="card-text">If you miss something, get one email instead of many. It lists what you did not read, and it is not sent if you read everything first.</p>
+    </div>
+    <switch :value="notificationPush.settingsStatus">
+      <case :when="'ready'">
+        <fieldset class="choices">
+          <legend class="legend">Email me when a notification is unread for</legend>
+          <div class="choice-list">
+            <loop :for="choice of notificationPush.summaryChoices">
+              <label class="choice" :for="choice.id">
+                <input class="choice-input" type="radio" name="summary-delay" :id="choice.id" :value="choice.minutes" :checked="choice.selected" on:change="notificationPush.chooseSummary(choice.minutes)">
+                <span class="choice-label">{choice.label}</span>
+              </label>
+            </loop>
+          </div>
+        </fieldset>
+        <p class="save-status" role="status" aria-live="polite">
+          <logic :if="notificationPush.saved">Saved.</logic>
+          <logic :if="notificationPush.saveProblem == 'error'">Not saved. Check your connection and choose again.</logic>
+          <logic :if="notificationPush.saveProblem == 'session'">Not saved. Your session ended. Sign in again.</logic>
+        </p>
+      </case>
+      <case :when="'error'">
+        <div class="problem-block" role="alert">
+          <p>Your email summary setting could not load. Check your connection, then try again.</p>
+          <button type="button" class="button" on:click="notificationPush.retrySettings()">Retry</button>
+        </div>
+      </case>
+      <case :when="'session'">
+        <p class="problem" role="alert">Your session ended. Sign in again to change this setting.</p>
+      </case>
+      <case default>
+        <div class="skeleton" aria-busy="true">
+          <span class="screen-reader-only">Loading your email summary setting</span>
+          <span class="skeleton-line" aria-hidden="true"></span>
+          <span class="skeleton-line" aria-hidden="true"></span>
+        </div>
+      </case>
+    </switch>
+  </div>
+</section>

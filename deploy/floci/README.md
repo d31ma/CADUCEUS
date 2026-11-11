@@ -24,8 +24,8 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
   `server/application-native.json` (loopback host and, for a FYLO owner, a
   root at `~/Developer/AtlasFylo/mesail/<owner>/native/<service>`, emptied
   at each start), bundled (`ty bundle`, all apps at once) and started with
-  `YON_PROFILE=native ty start --port <free port>`. An app's own `.env` is
-  copied too.
+  `YON_PROFILE=native ty start --port <free port>`. The app's own `.env` is
+  copied too (without its datasource lines).
 - The Tac apps (`web`, `web-admin`) are bundled with `--target web` and
   served by the router from their `dist/web` folders.
 - The router (`deploy/router`, built with `go build`) runs in native mode:
@@ -63,11 +63,18 @@ scripts/floci/run-all.sh identity directory    # build and deploy only these fun
 1. It bundles the Tac apps (`web`, `web-admin`) with the pinned `ty` as a
    `tachyon-build` heavy job. A bundle that fails is a warning: the app's
    pages are not served, and the API tests still run.
-2. It runs `stack.sh` as one Docker job in the `mesail-docker` root with
-   `--vm=colima`. `stack.sh` starts Colima if it is stopped, builds the
-   images, starts the stack, deploys the functions, seeds the realms, runs
-   `go test -tags blackbox` in `tests/blackbox`, removes the stack, and stops
-   Colima again if it started it.
+2. It runs `stack.sh` as one job in the `mesail-docker` root. By default
+   (`MESAIL_VM=mesail`) it uses the `mesail` dev host: `mesail-devhost up`
+   if it is down, its Docker engine (`mesail-devhost env`) and its Floci on
+   `127.0.0.1:14566`, joining Floci's network `mesail_floci_backend`
+   (`deploy/floci/compose.devhost.yaml`). With `MESAIL_VM=colima` it takes
+   `--vm=colima`, starts Colima and its own Floci instead. `stack.sh` builds
+   the images, starts Keycloak and the router, deploys the functions, seeds
+   the realms, runs `go test -tags blackbox` in `tests/blackbox`, removes
+   what it started (in the dev host's Floci it deletes the `mesail-*`
+   functions), and takes the dev host down or stops Colima only if it
+   started it. An image that fails to build is a warning: that function is
+   not deployed and its tests fail.
 
 Logs: `~/Library/Logs/local/CADUCEUS/<MESAIL_OWNER>/floci-<time>/`, one file
 per step. Set `MESAIL_OWNER` to your slice name (for example `slice-m3`).
@@ -80,7 +87,7 @@ Settings (environment, or a `.env` file copied from `.env.example`):
 | `MESAIL_TEST_RUN` | `go test -run` filter for `tests/blackbox`. |
 | `MESAIL_SKIP_STATIC=1` | Skip the Tac bundles and the static upload. |
 | `MESAIL_SKIP_BUILD=1` | Reuse the images that are already built. |
-| `MESAIL_VM` | `colima` (the only engine so far; the `mesail` VM comes next). |
+| `MESAIL_VM` | `mesail` (default, the dev host) or `colima`. |
 
 ## The pieces
 
@@ -109,8 +116,17 @@ Settings (environment, or a `.env` file copied from `.env.example`):
   `ty start` writes beside the app, so the start script copies the app and
   its handler cache back to the same `/tmp` paths at cold start (16 MB each).
 - `YON_PROFILE=lambda` selects `server/application-lambda.json`, which the
-  build writes into the image only: loopback host and, for FYLO owners,
-  `"datasource": {"driver": "fylo", "url": "fylo:///mnt/data/<service>"}`.
+  build writes into the image only (loopback host). A FYLO owner's datasource
+  is in the app's `.env`, written by the build:
+  `YON_DATASOURCE_DRIVER=fylo` and `YON_DATASOURCE_URL=fylo:///mnt/data/<service>`
+  (apps keep no datasource in `application.json`).
+- `ty` reads only the app folder's `.env`, not the process environment. So at
+  cold start the start script appends the function's own `YON_*`
+  environment variables (its secrets, for example
+  `YON_SERVICE_CLIENT_SECRET`) to that `.env`, leaving out `ty`'s runtime
+  variables (`YON_PROFILE`, `YON_EGRESS_ENFORCEMENT`, `YON_ISOLATION`,
+  `YON_PORT`, `YON_HOST`). Set secrets as Lambda environment variables (or
+  from a secret manager), never in the image.
 - `YON_EGRESS_ENFORCEMENT=proxy`: Lambda cannot confine processes (TACHYON
   ADR 0113).
 - The start script creates `/mnt/data/<service>`, hands it to the user
@@ -140,6 +156,20 @@ One HTTP origin, like FitNest's gateway:
 | `/idp/...` | Keycloak (served under `/idp`), with the original `Host`. |
 | `/admin`, `/admin/...` | The `web-admin` bundle in the bucket `mesail-static` under `admin/`. |
 | everything else | The `web` bundle under `web/`. A missing page (no file extension, or a browser asking for HTML) gets the app's `index.html`. |
+
+Limits at the router:
+
+- **Per-address rate limit** (`MESAIL_ROUTER_RATE_LIMIT`, default 10 per
+  minute per client address) on `POST /api/v1/identity/session` and
+  `POST /api/v1/identity/session/refresh`
+  (`MESAIL_ROUTER_LIMITED_ROUTES`). Over the limit: 429 with `Retry-After`.
+  Identity keeps no attempt counter; Keycloak's brute-force detection
+  covers each account. In AWS the same rule is an AWS WAF rate-based rule on
+  the API Gateway stage (API Gateway throttling is not per address).
+- **One writer per FYLO root:** in Lambda mode the router sends one request
+  at a time to each FYLO-owning function (`MESAIL_ROUTER_SINGLE_WRITERS`,
+  filled from `stack.json`) and queues the others, so reserved concurrency 1
+  never answers 429 to a user. Other functions take up to 1000 at once.
 
 Static replies carry `Content-Security-Policy`, `X-Content-Type-Options`,
 `X-Frame-Options` and `Referrer-Policy`.
@@ -182,11 +212,12 @@ belong to `deploy/keycloak`; this seed is a test fixture.
 | --- | --- |
 | 18080 | Router (`MESAIL_BASE_URL` of the blackbox tests) |
 | 18180 | Keycloak under `/idp` (admin API for seeding) |
-| 4566 | Floci (AWS API) |
+| 14566 / 4566 | Floci (AWS API) in the dev host / in Colima |
 
 ## Not done yet
 
-- The `mesail` Lima VM as the engine (`MESAIL_VM=mesail`).
+- `realtime` as a long-running container (the v1 decision) behind the router.
+- Native app targets of the Tac apps (macOS, Windows, Linux, iOS, Android).
 - EventBridge schedules that call each service's `/outbox/relay` and
   `/jobs/<job>` routes in Lambda form.
 - The SMTP edge container (`edge/smtp`, slice M1) and `MESAIL_SMTP_ADDR`.

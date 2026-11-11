@@ -26,6 +26,10 @@ func (Problems) UpstreamFailed() Problem {
 	return Problem{Status: http.StatusBadGateway, Code: "upstream-error", Message: "the storage failed to answer"}
 }
 
+func (Problems) TooManyRequests() Problem {
+	return Problem{Status: http.StatusTooManyRequests, Code: "too-many-requests", Message: "too many attempts; wait and try again"}
+}
+
 func (Problems) NotFound() Problem {
 	return Problem{Status: http.StatusNotFound, Code: "not-found", Message: "nothing is at this path"}
 }

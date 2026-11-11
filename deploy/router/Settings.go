@@ -15,4 +15,7 @@ type Settings struct {
 	BodyLimit      int64
 	Upstreams      map[string]string
 	StaticFolders  map[string]string
+	SingleWriters  []string
+	Limited        []string
+	RateLimit      int
 }

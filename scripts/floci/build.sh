@@ -27,7 +27,7 @@ main() {
   mesail_load_settings
   mesail_step build-router build_image router "mesail-router:$MESAIL_IMAGE_TAG"
   for service in $(chosen_services "$@"); do
-    mesail_step "build-$service" build_service "$service"
+    mesail_step "build-$service" build_service "$service" || echo "warning: $service did not build; its function is not deployed"
   done
   mesail_step prune-images docker image prune --force --filter label=org.mesail.stack=dev
 }

@@ -23,6 +23,7 @@ func nativeSettings(t *testing.T, upstream string) Settings {
 	return Settings{
 		Timeout:       5 * time.Second,
 		BodyLimit:     16,
+		RateLimit:     100,
 		Upstreams:     map[string]string{"identity": upstream},
 		StaticFolders: map[string]string{"web": web, "admin": admin},
 	}

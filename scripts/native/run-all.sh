@@ -82,23 +82,25 @@ copy_app() {
   rsync -a --delete --exclude .tachyon --exclude dist --exclude .env "$(mesail_root)/apps/$app/" "$(run_folder)/apps/$app/"
 }
 
-datasource_json() {
+add_datasource() {
   local app="$1"
   if ! owns_fylo "$app"; then return 0; fi
   mkdir -p "$(data_folder)/$app"
-  printf ', "datasource": { "driver": "fylo", "url": "fylo://%s" }' "$(cd "$(data_folder)/$app" && pwd -P)"
+  printf 'YON_DATASOURCE_DRIVER=fylo\nYON_DATASOURCE_URL=fylo://%s\n' "$(cd "$(data_folder)/$app" && pwd -P)" >> "$(run_folder)/apps/$app/.env"
 }
 
 write_profile() {
   local app="$1"
-  printf '{ "server": { "host": "127.0.0.1" }%s }\n' "$(datasource_json "$app")" > "$(run_folder)/apps/$app/server/application-native.json"
-  cat "$(run_folder)/apps/$app/server/application-native.json"
+  printf '{ "server": { "host": "127.0.0.1" } }\n' > "$(run_folder)/apps/$app/server/application-native.json"
+  add_datasource "$app"
 }
 
 copy_env_file() {
   local app="$1"
+  : > "$(run_folder)/apps/$app/.env"
+  chmod 600 "$(run_folder)/apps/$app/.env"
   if [ ! -f "$(mesail_root)/apps/$app/.env" ]; then return 0; fi
-  cp "$(mesail_root)/apps/$app/.env" "$(run_folder)/apps/$app/.env"
+  grep -v -E '^YON_DATASOURCE_(DRIVER|URL)=' "$(mesail_root)/apps/$app/.env" >> "$(run_folder)/apps/$app/.env" || true
 }
 
 prepare_app() {

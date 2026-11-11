@@ -85,8 +85,13 @@ limit_writers() {
   mesail_aws lambda put-function-concurrency --function-name "$(function_name "$service")" --reserved-concurrent-executions 1
 }
 
+image_exists() {
+  docker image inspect "$(image_uri "$1")" > /dev/null 2>&1
+}
+
 deploy_service() {
   local service="$1"
+  if ! image_exists "$service"; then echo "warning: no image $(image_uri "$service"); $service is not deployed"; return 0; fi
   ensure_function "$service"
   limit_writers "$service"
   mesail_aws lambda wait function-active-v2 --function-name "$(function_name "$service")"

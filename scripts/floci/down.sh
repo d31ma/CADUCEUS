@@ -4,11 +4,11 @@ set -euo pipefail
 . "$(dirname "$0")/common.sh"
 
 compose() {
-  docker compose --project-directory "$(mesail_root)" --file "$(mesail_root)/docker-compose.yml" "$@"
+  docker compose --project-directory "$(mesail_root)" "$@"
 }
 
 used_profile() {
-  cat "$(mesail_log_dir)/compose-profile" 2> /dev/null || true
+  cat "$(mesail_log_dir)/compose-profile" 2> /dev/null || echo "--file $(mesail_root)/docker-compose.yml"
 }
 
 function_containers() {
@@ -31,6 +31,13 @@ remove_file_system_volumes() {
   docker volume rm $volumes
 }
 
+remove_functions_in_floci() {
+  local name
+  for name in $(mesail_aws lambda list-functions --query "Functions[?starts_with(FunctionName, '$(mesail_stack .functionPrefix)')].FunctionName" --output text); do
+    mesail_aws lambda delete-function --function-name "$name" && echo "deleted $name"
+  done
+}
+
 own_floci() {
   grep -q -- '--profile floci' "$(mesail_log_dir)/compose-profile" 2> /dev/null
 }
@@ -41,7 +48,7 @@ main() {
   profile="$(used_profile)"
   # shellcheck disable=SC2086
   mesail_step compose-down compose $profile down --volumes --remove-orphans
-  if ! own_floci; then echo "Floci belongs to the dev host; its functions and volumes stay"; return; fi
+  if ! own_floci; then mesail_step remove-functions remove_functions_in_floci; return; fi
   mesail_step remove-functions remove_function_containers
   mesail_step remove-volumes remove_file_system_volumes
   mesail_step remove-network docker network rm --force mesail_floci_backend

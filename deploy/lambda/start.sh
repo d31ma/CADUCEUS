@@ -25,9 +25,15 @@ copy_stored() {
   cp -R "$1/." "$2/"
 }
 
+add_function_secrets() {
+  env | grep -E '^YON_[A-Z0-9_]+=' | grep -v -E '^YON_(PROFILE|EGRESS_ENFORCEMENT|ISOLATION|PORT|HOST)=' >> "$MESAIL_APP_ROOT/.env" || true
+  chmod 600 "$MESAIL_APP_ROOT/.env"
+}
+
 start_server() {
   copy_stored "$MESAIL_STORED_CACHE" "$TAC_CACHE_DIR"
   copy_stored "$MESAIL_STORED_APP" "$MESAIL_APP_ROOT"
+  add_function_secrets
   echo "mesail: starting $MESAIL_SERVICE (data root: ${MESAIL_DATA_ROOT:-none})"
   exec ty start "$MESAIL_APP_ROOT" --port "$AWS_LWA_PORT"
 }

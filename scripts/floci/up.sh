@@ -16,18 +16,28 @@ router_ready() {
 }
 
 compose() {
-  docker compose --project-directory "$(mesail_root)" --file "$(mesail_root)/docker-compose.yml" "$@"
+  docker compose --project-directory "$(mesail_root)" "$@"
 }
 
-own_floci_profile() {
-  if floci_ready; then echo "Floci already answers at $MESAIL_FLOCI_URL; using it" >&2; return; fi
-  echo "--profile floci"
+compose_options() {
+  if floci_ready; then
+    echo "Floci already answers at $MESAIL_FLOCI_URL; using it and its network" >&2
+    echo "--file $(mesail_root)/docker-compose.yml --file $(mesail_root)/deploy/floci/compose.devhost.yaml"
+    return
+  fi
+  echo "--file $(mesail_root)/docker-compose.yml --profile floci"
+}
+
+single_writers() {
+  mesail_stack '[.services[] | select(.fylo) | .name] | join(",")'
 }
 
 main() {
   local profile
   mesail_load_settings
-  profile="$(own_floci_profile)"
+  MESAIL_SINGLE_WRITERS="$(single_writers)"
+  export MESAIL_SINGLE_WRITERS
+  profile="$(compose_options)"
   echo "$profile" > "$(mesail_log_dir)/compose-profile"
   # shellcheck disable=SC2086
   mesail_step compose-up compose $profile up --detach

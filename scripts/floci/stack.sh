@@ -11,10 +11,31 @@ use_colima() {
   export DOCKER_HOST="unix:///Volumes/HANGAR/colima/default/docker.sock"
 }
 
+devhost() {
+  "$HOME/.local/bin/mesail-devhost" "$@"
+}
+
+devhost_running() {
+  devhost status 2>&1 | grep -q '"status": "running_verified"'
+}
+
+start_devhost() {
+  if devhost_running; then echo "the mesail dev host is already up"; return; fi
+  mesail_step devhost-up devhost up
+  MESAIL_STARTED_DEVHOST=1
+}
+
+use_devhost() {
+  start_devhost
+  eval "$(devhost env)"
+  export MESAIL_FLOCI_PORT=14566
+}
+
 choose_engine() {
-  case "${MESAIL_VM:-colima}" in
-    colima) use_colima ;;
-    *) echo "MESAIL_VM=${MESAIL_VM} is not supported yet; use colima"; return 1 ;;
+  case "${MESAIL_VM:-mesail}" in
+    colima) use_colima; start_engine ;;
+    mesail) use_devhost ;;
+    *) echo "MESAIL_VM must be mesail or colima, not ${MESAIL_VM}"; return 1 ;;
   esac
 }
 
@@ -40,6 +61,7 @@ finish() {
   local code=$?
   "$(dirname "$0")/down.sh" || code=1
   if [ "${MESAIL_STARTED_ENGINE:-0}" = 1 ]; then mesail_step colima-stop stop_colima || code=1; fi
+  if [ "${MESAIL_STARTED_DEVHOST:-0}" = 1 ]; then mesail_step devhost-down devhost down || code=1; fi
   echo "=== stack rc=$code (logs in $(mesail_log_dir))"
   exit "$code"
 }
@@ -50,10 +72,9 @@ build_images() {
 }
 
 main() {
-  mesail_load_settings
-  choose_engine
-  start_engine
   trap finish EXIT
+  choose_engine
+  mesail_load_settings
   build_images "$@"
   "$(dirname "$0")/up.sh"
   "$(dirname "$0")/deploy.sh" "$@"

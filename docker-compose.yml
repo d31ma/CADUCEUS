@@ -45,6 +45,7 @@ services:
       MESAIL_ROUTER_LAMBDA_ENDPOINT: http://floci:4566
       MESAIL_ROUTER_STATIC_BUCKET: mesail-static
       MESAIL_ROUTER_KEYCLOAK_URL: http://keycloak:8080
+      MESAIL_ROUTER_SINGLE_WRITERS: ${MESAIL_SINGLE_WRITERS:-}
     ports:
       - "127.0.0.1:${MESAIL_ROUTER_PORT:-18080}:8080"
     networks: [backend]

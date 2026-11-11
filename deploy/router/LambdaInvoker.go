@@ -15,6 +15,7 @@ type LambdaInvoker struct {
 	Client   *http.Client
 	Signer   Signer
 	Now      func() time.Time
+	Limits   ConcurrencyLimits
 }
 
 func (invoker LambdaInvoker) Invoke(context context.Context, function string, event HttpEvent) ([]byte, error) {
@@ -28,6 +29,11 @@ func (invoker LambdaInvoker) Invoke(context context.Context, function string, ev
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("X-Amz-Invocation-Type", "RequestResponse")
+	release, err := invoker.Limits.Enter(context, function)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 	invoker.Signer.Sign(request, payload, invoker.Now())
 	response, err := invoker.Client.Do(request)
 	if err != nil {

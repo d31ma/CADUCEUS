@@ -22,10 +22,33 @@ func (reader SettingsReader) Read() (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
+	rateLimit, err := reader.count("MESAIL_ROUTER_RATE_LIMIT", "10")
+	if err != nil {
+		return Settings{}, err
+	}
 	settings, err := reader.forMode(len(upstreams) > 0)
 	settings.Upstreams = upstreams
 	settings.StaticFolders = staticFolders
+	settings.SingleWriters = reader.list("MESAIL_ROUTER_SINGLE_WRITERS", "")
+	settings.Limited = reader.list("MESAIL_ROUTER_LIMITED_ROUTES", "POST /api/v1/identity/session,POST /api/v1/identity/session/refresh")
+	settings.RateLimit = rateLimit
 	return settings, err
+}
+
+func (reader SettingsReader) list(name string, fallback string) []string {
+	return strings.FieldsFunc(reader.optional(name, fallback), reader.isComma)
+}
+
+func (SettingsReader) isComma(letter rune) bool {
+	return letter == ','
+}
+
+func (reader SettingsReader) count(name string, fallback string) (int, error) {
+	count, err := strconv.Atoi(reader.optional(name, fallback))
+	if err != nil || count < 1 {
+		return 0, InvalidSetting{Name: name, Reason: "use a whole number above 0"}
+	}
+	return count, nil
 }
 
 func (reader SettingsReader) forMode(native bool) (Settings, error) {
@@ -153,11 +176,8 @@ func (reader SettingsReader) optional(name string, fallback string) string {
 }
 
 func (reader SettingsReader) seconds(name string, fallback string) (time.Duration, error) {
-	count, err := strconv.Atoi(reader.optional(name, fallback))
-	if err != nil || count < 1 {
-		return 0, InvalidSetting{Name: name, Reason: "use a whole number of seconds"}
-	}
-	return time.Duration(count) * time.Second, nil
+	count, err := reader.count(name, fallback)
+	return time.Duration(count) * time.Second, err
 }
 
 func (SettingsReader) bodyLimit() int64 {

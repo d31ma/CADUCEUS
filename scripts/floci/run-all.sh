@@ -16,7 +16,7 @@ Settings (environment):
   MESAIL_TEST_RUN    go test -run filter for tests/blackbox
   MESAIL_SKIP_STATIC 1 skips the Tac bundles and the static upload
   MESAIL_SKIP_BUILD  1 reuses the images already built
-  MESAIL_VM          colima (default)
+  MESAIL_VM          mesail (default: the mesail dev host and its Floci) or colima
 Logs: ~/Library/Logs/local/CADUCEUS/<owner>/floci-<time>/
 TEXT
 }
@@ -33,8 +33,19 @@ heavy_job() {
 
 docker_job() {
   if inside_lock; then "$@"; return; fi
+  locked_docker_job "$@"
+}
+
+locked_docker_job() {
+  local lock
+  read -ra lock <<< "$(engine_lock)"
   TACHYON_LOCK_ROOT="$HOME/Library/Caches/mac-locks/mesail-docker" MAC_HEAVY_COORDINATOR=mesail-docker \
-    "$HOME/.local/bin/mac-heavy" --owner "$MESAIL_OWNER" "--vm=${MESAIL_VM:-colima}" -- "$@"
+    "$HOME/.local/bin/mac-heavy" --owner "$MESAIL_OWNER" "${lock[@]}" -- "$@"
+}
+
+engine_lock() {
+  if [ "${MESAIL_VM:-mesail}" = colima ]; then echo "--vm=colima"; return; fi
+  echo "--weight 1"
 }
 
 ty_binary() {

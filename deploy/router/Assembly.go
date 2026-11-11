@@ -17,7 +17,7 @@ func (assembly Assembly) Handler(settings Settings) (http.Handler, error) {
 	}
 	return AccessLog{Next: Router{
 		Ready:    ReadyHandler{},
-		Api:      api,
+		Api:      RateLimitHandler{Limited: settings.Limited, Limiter: RateLimiter{}.New(settings.RateLimit, assembly.rateWindow(), time.Now), Next: api},
 		Keycloak: assembly.keycloak(settings.KeycloakUrl),
 		Static:   StaticHandler{Storage: assembly.storage(settings, client), Paths: StaticPaths{}, Security: SecurityHeaders{}},
 	}}, nil
@@ -35,7 +35,7 @@ func (Assembly) lambda(settings Settings, client *http.Client) http.Handler {
 		Routes:     Routes{}.Of(settings.Services, settings.FunctionPrefix),
 		Bodies:     BodyReader{Limit: settings.BodyLimit},
 		Events:     EventBuilder{Now: time.Now},
-		Invoker:    LambdaInvoker{Endpoint: settings.LambdaEndpoint, Client: client, Signer: Signer{Credentials: settings.Credentials, Service: "lambda"}, Now: time.Now},
+		Invoker:    LambdaInvoker{Endpoint: settings.LambdaEndpoint, Client: client, Signer: Signer{Credentials: settings.Credentials, Service: "lambda"}, Now: time.Now, Limits: ConcurrencyLimits{}.Of(settings.Services, settings.SingleWriters, settings.FunctionPrefix, 1000)},
 		Translator: ResultTranslator{},
 	}
 }
@@ -45,6 +45,10 @@ func (Assembly) storage(settings Settings, client *http.Client) ObjectStore {
 		return FolderStore{Folders: settings.StaticFolders}
 	}
 	return S3Client{Endpoint: settings.S3Endpoint, Bucket: settings.StaticBucket, Client: client, Signer: Signer{Credentials: settings.Credentials, Service: "s3"}, Now: time.Now}
+}
+
+func (Assembly) rateWindow() time.Duration {
+	return time.Minute
 }
 
 func (Assembly) keycloak(address string) http.Handler {

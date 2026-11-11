@@ -82,6 +82,7 @@ func settingsFor(fake *fakeAws, keycloak string) Settings {
 		Credentials:    Credentials{AccessKey: "test", SecretKey: "test", Region: "us-east-1"},
 		Timeout:        5 * time.Second,
 		BodyLimit:      16,
+		RateLimit:      100,
 	}
 }
 
@@ -331,7 +332,8 @@ func TestSettings(t *testing.T) {
 		{name: "no endpoint", change: map[string]string{"MESAIL_ROUTER_LAMBDA_ENDPOINT": ""}, want: "MESAIL_ROUTER_LAMBDA_ENDPOINT is required"},
 		{name: "no access key", change: map[string]string{"AWS_ACCESS_KEY_ID": ""}, want: "AWS_ACCESS_KEY_ID is required"},
 		{name: "no secret", change: map[string]string{"AWS_SECRET_ACCESS_KEY": ""}, want: "AWS_SECRET_ACCESS_KEY is required"},
-		{name: "bad timeout", change: map[string]string{"MESAIL_ROUTER_TIMEOUT_SECONDS": "soon"}, want: "whole number of seconds"},
+		{name: "bad timeout", change: map[string]string{"MESAIL_ROUTER_TIMEOUT_SECONDS": "soon"}, want: "whole number above 0"},
+		{name: "bad rate limit", change: map[string]string{"MESAIL_ROUTER_RATE_LIMIT": "0"}, want: "MESAIL_ROUTER_RATE_LIMIT"},
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {

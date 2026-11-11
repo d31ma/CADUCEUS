@@ -214,7 +214,7 @@
 
                   <logic :if="message.replyLabel != ''">
                     <div class="thread-link flex">
-                      <w-btn variant="text" size="small" prepend-icon="thread" :text="message.replyLabel" on:click="thread.openMessage(message.conversationId, message.messageId)"></w-btn>
+                      <w-btn variant="text" size="small" prepend-icon="thread" :text="message.replyLabel" on:click="thread.openMessage(conversation.conversationId, message.messageId)"></w-btn>
                     </div>
                   </logic>
 
@@ -243,7 +243,7 @@
                 <w-icon-btn class="message-more col-start-3 row-start-1 hidden self-start max-[959px]:inline-flex pointer-coarse:inline-flex" icon="more" size="small" variant="text" aria-label="Actions for this message" :aria-controls="'actions-' + message.messageId" :aria-expanded="shell.flag(conversation.actionsForId == message.messageId)" on:click="conversation.toggleActions(message.messageId)"></w-icon-btn>
                 <div class="message-actions flex flex-wrap items-center gap-1" role="group" :id="'actions-' + message.messageId" :aria-label="message.actionsLabel">
                   <w-icon-btn icon="smile" size="small" variant="text" aria-label="Add reaction" on:click="conversation.openPicker(message.messageId)"></w-icon-btn>
-                  <w-icon-btn icon="thread" size="small" variant="text" aria-label="Reply in thread" on:click="thread.openMessage(message.conversationId, message.messageId)"></w-icon-btn>
+                  <w-icon-btn icon="thread" size="small" variant="text" aria-label="Reply in thread" on:click="thread.openMessage(conversation.conversationId, message.messageId)"></w-icon-btn>
                   <logic :if="message.canEdit">
                     <w-icon-btn icon="edit" size="small" variant="text" aria-label="Edit message" on:click="conversation.startEdit(message.messageId)"></w-icon-btn>
                   </logic>

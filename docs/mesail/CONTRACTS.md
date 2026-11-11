@@ -94,7 +94,7 @@ own access token, which names the active domain.
 | `GET /api/v1/identity/jwks` | Public | - | `KeySet{keys[]: PublicKey}`: the JSON Web Key Set (RFC 7517) with the current signing key and, during a rotation, the previous one. `PublicKey{kty, crv, x, y, kid, alg, use}` uses the standard JWK names (`EC`, `P-256`, `ES256`, `sig`); add them to `names.words`. Cache header `max-age=300`. |
 | `POST /api/v1/identity/service-token` | Public | `ServiceTokenRequest{clientId, clientSecret, domainId}` | `200 ServiceToken{accessToken, expiresIn}`; `401` for a wrong client or secret; `400 invalid_request` (`domainId`) when it is neither a domain name nor `*` |
 
-`Session{me: Me, domains[]: DomainChoice{domainId, admin}, accessToken,
+`Session{me: Me, domains[]: DomainChoice{domainId, admin, default}, accessToken,
 expiresIn (seconds), sessionKey, mustChangePassword, kept}`. `kept` is
 true when the sign-in asked `keepSignedIn` (ADR 0006 section 2): the
 `sessionKey` then seals a Keycloak offline session (scope
@@ -102,6 +102,15 @@ true when the sign-in asked `keepSignedIn` (ADR 0006 section 2): the
 in its device copy instead of `@SessionState`. A refresh, a switch and
 `DELETE /session` keep `kept` as it was. `domains` lists every
 domain of the person, for the domain switcher, in `people.domainIds` order.
+`default` is `true` on exactly one entry: the person's
+`PersonRecord.defaultDomainId` (when that domain is gone, the first entry,
+the one a prefix-only sign-in would open); it is `false` on every entry of
+an Operator session with no domain, which has no entries. Every `Session`
+answer (sign-in, refresh, switch, password change) carries it, so the
+client learns a new default at its next refresh after `PUT
+/directory/me/default-domain`. The client shows the default first with a
+"Default" tag; the server's order stays `domainIds` order. (Decided
+2026-11-11 for slice F1/L6.)
 
 How sign-in works (SPEC AC-ID-9):
 - `login` is trimmed and lowercased. Anything outside ASCII, or a prefix

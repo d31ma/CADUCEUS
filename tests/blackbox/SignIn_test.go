@@ -43,7 +43,7 @@ func TestAcId9FullAddressOpensThatDomain(t *testing.T) {
 func TestAcId9SessionListsEveryDomainOfThePerson(t *testing.T) {
 	stack := NewStack(t)
 	ana := fixture(t, stack, "ANA")
-	want := []domainChoice{{DomainId: "example.com", Admin: true}, {DomainId: "example.org", Admin: false}}
+	want := []domainChoice{{DomainId: "example.com", Admin: true, Default: true}, {DomainId: "example.org", Admin: false, Default: false}}
 	if len(ana.Domains) != len(want) || ana.Domains[0] != want[0] || ana.Domains[1] != want[1] {
 		t.Fatalf("want %+v, got %+v", want, ana.Domains)
 	}
@@ -127,8 +127,10 @@ func TestAcId9DefaultDomainIsTheOneThePersonChose(t *testing.T) {
 	danSession := signIn(t, stack, dan.Username, dan.Password)
 	choice := map[string]string{"domainId": "example.org"}
 	stack.Call(t, http.MethodPut, "/api/v1/directory/me/default-domain", danSession.AccessToken, choice).Expect(t, http.StatusNoContent)
-	if again := signIn(t, stack, dan.Username, dan.Password); again.Me.DomainId != "example.org" {
-		t.Fatalf("want the chosen default example.org, got %+v", again.Me)
+	again := signIn(t, stack, dan.Username, dan.Password)
+	want := []domainChoice{{DomainId: "example.com", Default: false}, {DomainId: "example.org", Default: true}}
+	if again.Me.DomainId != "example.org" || len(again.Domains) != 2 || again.Domains[0] != want[0] || again.Domains[1] != want[1] {
+		t.Fatalf("want the chosen default example.org, got %+v with domains %+v", again.Me, again.Domains)
 	}
 }
 

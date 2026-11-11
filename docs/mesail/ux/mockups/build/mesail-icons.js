@@ -60,7 +60,10 @@ class MesailIcons {
     "code": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m16 18 6-6-6-6M8 6l-6 6 6 6\"/></g>",
     "list": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01\"/></g>",
     "link": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.8 1.7\"/><path d=\"M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7\"/></g>",
-    "signature": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 17c3-4 5-11 7-11 3 0-2 12 1 12 2 0 3-4 5-4 1 0 1 3 3 3M3 21h18\"/></g>"
+    "signature": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 17c3-4 5-11 7-11 3 0-2 12 1 12 2 0 3-4 5-4 1 0 1 3 3 3M3 21h18\"/></g>",
+    "device": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"4\" width=\"14\" height=\"10\" rx=\"1.5\"/><path d=\"M1 18h11\"/><rect x=\"15\" y=\"9\" width=\"7\" height=\"12\" rx=\"1.5\"/><path d=\"M18.5 18h.01\"/></g>",
+    "download": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3v12M7 10l5 5 5-5M4 20h16\"/></g>",
+    "cloud-check": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 18a5 5 0 0 1-.9-9.9A6 6 0 0 1 17.6 7 4.5 4.5 0 0 1 17.5 18Z\"/><path d=\"m9 13 2 2 4-4\"/></g>"
   };
 
   static register() {

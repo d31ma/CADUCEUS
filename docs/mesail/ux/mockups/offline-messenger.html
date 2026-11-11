@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: working offline</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/offline.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface text-text">
+<a class="ms-skip-link" href="#timeline">Skip to messages</a>
+<a class="ms-skip-link" href="#composer-input">Skip to composer</a>
+
+<!-- Offline on a kept device (ADR 0006, SPEC S15, AC-OF-3 and AC-OF-4). The sync bar sits above every pane and takes
+     the top safe area; the pane headers under it do not add it again. It opens the sync panel (offline-status.html). -->
+<div class="flex h-dvh flex-col">
+  <button type="button" class="ms-sync-bar safe-l safe-r" aria-haspopup="dialog" aria-describedby="sync-help" style="--ms-edge: 1rem">
+    <w-icon name="wifi-off" aria-hidden="true"></w-icon>
+    <span class="ms-sync-bar__state">Offline</span>
+    <span class="ms-sync-bar__detail"><span aria-hidden="true">· </span>Updated 08:12</span>
+    <span class="ms-sync-bar__count"><w-icon name="clock" aria-hidden="true"></w-icon><span>4 waiting<span class="max-sm:hidden"> to send</span></span></span>
+    <w-icon name="chevron-down" class="ms-icon-sm" aria-hidden="true"></w-icon>
+  </button>
+  <p id="sync-help" class="sr-only">Mesail shows the copy on this device. What you write waits and sends when you are back online. Opens the sync details.</p>
+
+<div class="group/app relative grid min-h-0 flex-1 overflow-hidden
+  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
+  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main">
+
+  <!-- Domain rail (960 px and up). Offline, a domain without a copy on this device is dimmed: it needs the network. -->
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 overflow-y-auto" aria-label="Domains">
+    <ul class="flex flex-col gap-2">
+      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain, 3 waiting to send">Ex</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org, on this device" aria-label="example.org, on this device, updated 07:55, 1 waiting to send">Eo</a></li>
+      <li><a class="ms-domain-tile opacity-50" href="#" title="lab.example.net, not on this device" aria-label="lab.example.net, not on this device, needs the network" aria-disabled="true">La</a></li>
+    </ul>
+    <div class="flex-1"></div>
+    <a class="ms-domain-tile" href="settings-device.html" aria-label="This device: space and offline settings" title="This device"><w-icon name="device"></w-icon></a>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations in example.com">
+    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
+      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
+      <span class="flex-1"></span>
+      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+    </header>
+    <div class="px-3 py-2">
+      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
+        <w-icon name="search" class="ms-icon-sm"></w-icon>Search this device<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-2 pb-4">
+      <w-list nav density="compact" aria-label="Shortcuts">
+        <w-list-item href="attention.html" title="Needs your attention"><w-icon slot="prepend" name="alert" class="text-error"></w-icon><w-badge slot="append" content="1" inline label="1 item needs your attention"></w-badge></w-list-item>
+        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline class="ms-count" label="2 mentions"></w-badge></w-list-item>
+        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
+      </w-list>
+
+      <section class="mt-3" aria-labelledby="sec-channels">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-channels"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Channels</button>
+          <w-icon-btn icon="plus" size="small" aria-label="Add or browse channels (needs the network)" disabled></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-channels">
+          <w-list-item href="#" title="general"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="#" title="design" active><w-icon slot="prepend" name="lock" role="img" aria-label="Private channel"></w-icon><w-icon slot="append" name="clock" class="ms-icon-sm text-on-warning-container" role="img" aria-label="3 waiting to send"></w-icon></w-list-item>
+          <w-list-item href="#" title="releases"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="channel-email.html" title="support" class="ms-unread"><w-icon slot="prepend" name="hash"></w-icon><w-badge slot="append" content="4" inline class="ms-count" label="4 unread"></w-badge></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-dms">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-dms"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Direct messages</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New direct message"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-dms">
+          <w-list-item href="#" title="Bo Lee"><w-avatar slot="prepend" text="BL" size="20" style="--h:20" alt="Bo Lee"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Chen Wu"><w-avatar slot="prepend" text="CW" size="20" style="--h:280" alt="Chen Wu"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-email">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-email"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Email</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New email"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" lines="two" aria-labelledby="sec-email">
+          <w-list-item href="#" title="carol@partner.test" subtitle="Draft offer for 2027"><w-avatar slot="prepend" text="CA" size="20" class="ms-external" alt="carol@partner.test, outside example.com"></w-avatar><w-icon slot="append" name="clock" class="ms-icon-sm text-on-warning-container" role="img" aria-label="1 waiting to send"></w-icon></w-list-item>
+          <w-list-item href="email-conversation.html" title="Carol Diaz, Bo Lee" subtitle="Contract renewal 2027"><w-avatar slot="prepend" text="CD" size="20" class="ms-external" alt="Carol Diaz, outside example.com"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+    </div>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz, offline. Open status and account menu">
+        <w-avatar text="AR" size="28" style="--h:195" alt=""></w-avatar>
+        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">Offline · ana@example.com</span></span>
+      </button>
+      <w-icon-btn icon="settings" href="settings-device.html" aria-label="Settings"></w-icon-btn>
+    </footer>
+  </aside>
+
+  <!-- Conversation -->
+  <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="conv-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="?pane=list" aria-label="Back to conversations"></w-icon-btn>
+      <h1 id="conv-title" class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="lock" class="ms-icon-sm"></w-icon><span class="truncate">design</span></h1>
+      <div class="ml-auto flex items-center gap-1 no-drag">
+        <w-icon-btn icon="bell" aria-label="Notifications for #design: mentions (needs the network to change)" disabled></w-icon-btn>
+        <w-icon-btn icon="info" aria-label="Channel details"></w-icon-btn>
+      </div>
+    </header>
+
+    <div class="flex-1 min-h-0 overflow-y-auto py-4 [&_.ms-msg]:px-4 @xl/main:[&_.ms-msg]:px-5" id="timeline" role="log" aria-label="Messages in #design" tabindex="0">
+      <!-- The device copy ends here (first build: 7 days; AC-OF-2). Online, the same place loads older messages. -->
+      <div class="mx-4 mb-4 @xl/main:mx-5">
+        <p class="ms-not-here"><w-icon name="inbox" aria-hidden="true"></w-icon><span><strong class="font-semibold text-text">Older messages are not on this device.</strong> This device keeps the last 7 days. Older messages load when you are back online.</span></p>
+      </div>
+
+      <div class="ms-day"><span>Yesterday</span></div>
+
+      <article class="ms-msg" aria-label="Chen Wu, yesterday 16:40">
+        <w-avatar text="CW" size="36" style="--h:280" alt=""></w-avatar>
+        <div class="min-w-0 max-w-[80ch]">
+          <div class="ms-msg__meta"><span class="ms-msg__author">Chen Wu</span><time class="ms-msg__time" datetime="2026-11-10T16:40">16:40</time></div>
+          <div class="ms-msg__text"><p>New icon sheet for the mobile app. Feedback before Friday, please.</p></div>
+          <div class="ms-attachments">
+            <a class="ms-file is-not-here" href="#" aria-disabled="true" aria-describedby="nh-file"><span class="ms-file__icon"><w-icon name="image"></w-icon></span><span class="min-w-0"><span class="ms-file__name">icons-v4.png</span><span class="ms-file__size" id="nh-file">Not on this device · opens when you are online</span></span></a>
+          </div>
+        </div>
+      </article>
+
+      <article class="ms-msg ms-msg--queued" aria-label="Ana Ruiz, yesterday 17:02, edit waiting to send">
+        <w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar>
+        <div class="min-w-0 max-w-[80ch]">
+          <div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-10T17:02">17:02</time><span class="ms-msg__edited">(edited)</span></div>
+          <div class="ms-msg__text"><p>The new tab bar works. I would make the active icon filled, not only darker.</p></div>
+          <div class="ms-delivery"><span class="ms-queue-note"><w-icon name="clock" aria-hidden="true"></w-icon>Edit waiting to send</span><w-btn variant="text" size="small">Undo edit</w-btn></div>
+        </div>
+      </article>
+
+      <div class="ms-day"><span>Today</span></div>
+
+      <article class="ms-msg" aria-label="Dara Okafor, 08:05">
+        <w-avatar text="DO" size="36" style="--h:140" alt=""></w-avatar>
+        <div class="min-w-0 max-w-[80ch]">
+          <div class="ms-msg__meta"><span class="ms-msg__author">Dara Okafor</span><time class="ms-msg__time" datetime="2026-11-11T08:05">08:05</time></div>
+          <div class="ms-msg__text"><p>Budget for the icon work is approved: 3 days.</p></div>
+          <div class="mt-1 flex flex-wrap gap-1" role="group" aria-label="Reactions">
+            <w-chip size="small" aria-label="Party, 2 people">🎉 2</w-chip>
+            <w-chip size="small" selected aria-label="Thumbs up, you, waiting to send">👍 1<w-icon slot="append" name="clock" class="ms-icon-xs text-on-warning-container" aria-hidden="true"></w-icon></w-chip>
+            <w-icon-btn icon="smile" size="small" aria-label="Add reaction"></w-icon-btn>
+          </div>
+        </div>
+      </article>
+
+      <article class="ms-msg ms-msg--queued" aria-label="Ana Ruiz, written 09:40, waiting to send">
+        <w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar>
+        <div class="min-w-0 max-w-[80ch]">
+          <div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-11T09:40">Written 09:40</time></div>
+          <div class="ms-msg__text"><p>Great. I will start on the filled icons today and share a first set tomorrow.</p></div>
+          <div class="ms-delivery"><span class="ms-queue-note"><w-icon name="clock" aria-hidden="true"></w-icon>Waiting to send</span></div>
+        </div>
+      </article>
+
+      <article class="ms-msg ms-msg--queued ms-msg--deleting" aria-label="Ana Ruiz, 09:42, delete waiting to send">
+        <w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar>
+        <div class="min-w-0 max-w-[80ch]">
+          <div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-11T09:42">Written 09:42</time></div>
+          <div class="ms-msg__text"><p>Dara, can you check the budget line for fonts too?</p></div>
+          <div class="ms-delivery"><span class="ms-queue-note"><w-icon name="trash" aria-hidden="true"></w-icon>Deletes when you are back online</span><w-btn variant="text" size="small">Undo</w-btn></div>
+        </div>
+      </article>
+
+      <article class="ms-msg ms-msg--failed shadow-[inset_3px_0_0_var(--w-error)]" aria-label="Ana Ruiz, written 07:58, not sent, needs your attention">
+        <w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar>
+        <div class="min-w-0 max-w-[80ch]">
+          <div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-11T07:58">Written 07:58</time></div>
+          <div class="ms-msg__text"><p>@Eli Park can you join the review on Thursday?</p></div>
+          <div class="mt-1 flex flex-wrap items-center gap-2"><span class="ms-delivery__item ms-delivery__item--bad text-xs" id="att-1"><w-icon name="alert" class="ms-icon-xs" aria-hidden="true"></w-icon>Not sent. Eli Park left #design.</span><w-btn variant="outlined" size="small" href="attention.html" aria-describedby="att-1">Review</w-btn></div>
+        </div>
+      </article>
+    </div>
+
+    <div class="px-2 pb-3 sm:px-4 safe-b safe-l safe-r">
+      <form class="ms-composer @container/composer" aria-label="Message #design" aria-describedby="offline-note" onsubmit="return false">
+        <p class="flex items-start gap-2 border-b border-divider px-3 py-2 text-xs text-subtle" id="offline-note"><w-icon name="wifi-off" class="ms-icon-sm mt-px" aria-hidden="true"></w-icon><span><span class="max-sm:hidden">You are offline. What you send waits on this device and sends when you are back online.</span><span class="sm:hidden">Offline: sends when you are back online.</span></span></p>
+        <div class="ms-editor max-h-[40vh] min-h-12 overflow-y-auto p-3" id="composer-input" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Message #design" data-placeholder="Message #design"></div>
+        <div class="flex items-center gap-0.5 px-2 pb-2">
+          <span class="hidden @md/composer:contents">
+            <w-icon-btn icon="bold" size="small" aria-label="Bold" aria-keyshortcuts="Control+B Meta+B"></w-icon-btn>
+            <w-icon-btn icon="italic" size="small" aria-label="Italic" aria-keyshortcuts="Control+I Meta+I"></w-icon-btn>
+            <w-icon-btn icon="code" size="small" aria-label="Code"></w-icon-btn>
+            <span class="mx-1 h-5 w-px bg-divider" role="presentation"></span>
+          </span>
+          <w-icon-btn icon="paperclip" size="small" aria-label="Attach files (needs the network)" disabled></w-icon-btn>
+          <w-icon-btn icon="at" size="small" aria-label="Mention someone"></w-icon-btn>
+          <w-icon-btn icon="smile" size="small" aria-label="Emoji"></w-icon-btn>
+          <w-btn variant="filled" size="small" prepend-icon="send" class="ml-auto" disabled aria-label="Send message (waits until you are online)">Send</w-btn>
+        </div>
+      </form>
+      <p class="hidden pointer-fine:@sm/main:block px-1 pt-1 text-xs text-subtle"><w-kbd>Enter</w-kbd> to send · <w-kbd>Shift</w-kbd> + <w-kbd>Enter</w-kbd> for a new line</p>
+    </div>
+  </main>
+
+  <!-- Bottom navigation: phones, list pane only -->
+  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden" value="home" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" href="?pane=list" active><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="search" label="Search" href="offline-messages.html#search"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="you" label="You" href="settings-device.html"><w-icon name="user"></w-icon></w-bottom-nav-item>
+  </w-bottom-navigation>
+</div>
+</div>
+
+<div class="sr-only" aria-live="polite" id="announcer">Offline. Showing the copy on this device, updated 08:12.</div>
+</body>
+</html>

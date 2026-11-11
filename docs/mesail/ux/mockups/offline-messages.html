@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: messages, composer and search offline</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<link rel="stylesheet" href="assets/screens/offline.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#m1">Skip to the first state</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 px-0 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">How each change written offline looks until the server has it (ADR 0006 sections 4 and 5, SPEC AC-OF-3 to AC-OF-8, AC-OF-12). A queued message has a thin amber edge and a note; its text stays at full contrast, because it is the person&rsquo;s own writing.</p>
+    <!-- Mockup: labelled states side by side. Cards keep their token widths (auth 26rem, dialog 32rem, page 50rem). -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-dialog-max)),1fr))]">
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" id="m1" aria-label="State 1 &middot; Waiting to send (chat): written offline, shown at once (AC-OF-4)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 &middot; Waiting to send (chat): written offline, shown at once (AC-OF-4)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface py-3 [&_.ms-msg]:px-4" role="log">
+          <article class="ms-msg ms-msg--queued" aria-label="Ana Ruiz, written 09:40, waiting to send"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><div class="min-w-0 max-w-[80ch]"><div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-11T09:40">Written 09:40</time></div><div class="ms-msg__text"><p>Great. I will start on the filled icons today.</p></div><div class="ms-delivery"><span class="ms-queue-note"><w-icon name="clock" aria-hidden="true"></w-icon>Waiting to send</span></div></div></article>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 2 &middot; A new email waiting to send (S15: to carol@partner.test)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 &middot; A new email waiting to send (S15: to carol@partner.test)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface py-3 [&_.ms-msg]:px-4" role="log">
+          <article class="ms-msg ms-msg--queued" aria-label="Ana Ruiz, written 09:44, email waiting to send"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><div class="min-w-0 max-w-[80ch]"><div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-11T09:40">Written 09:44</time></div><div class="ms-msg__text"><p><strong>Draft offer for 2027</strong><br>Hi Carol, here is our first idea for next year&rsquo;s terms.</p></div><div class="ms-delivery"><span class="ms-queue-note"><w-icon name="mail" aria-hidden="true"></w-icon>Email to carol@partner.test: waiting to send</span></div></div></article>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 3 &middot; Back online: sending">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 &middot; Back online: sending</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface py-3 [&_.ms-msg]:px-4" role="log">
+          <article class="ms-msg ms-msg--pending" aria-label="Ana Ruiz, written 09:40, sending"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><div class="min-w-0 max-w-[80ch]"><div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-11T09:40">Written 09:40</time></div><div class="ms-msg__text"><p>Great. I will start on the filled icons today.</p></div><div class="ms-delivery"><span class="ms-delivery__item"><w-progress-circular indeterminate size="x-small" aria-hidden="true"></w-progress-circular>Sending&hellip;</span></div></div></article>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 4 &middot; Sent: ordered by the server time, with Written offline at (AC-OF-7)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 &middot; Sent: ordered by the server time, with &ldquo;Written offline at&rdquo; (AC-OF-7)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface py-3 [&_.ms-msg]:px-4" role="log">
+          <article class="ms-msg " aria-label="Ana Ruiz, 10:02, written offline at 09:40"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><div class="min-w-0 max-w-[80ch]"><div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-11T10:02">10:02</time><span class="ms-msg__edited">Written offline at 09:40</span></div><div class="ms-msg__text"><p>Great. I will start on the filled icons today.</p></div></div></article>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 5 &middot; Edit and delete waiting, with Undo">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 5 &middot; Edit and delete waiting, with Undo</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface py-3 [&_.ms-msg]:px-4" role="log">
+          <article class="ms-msg ms-msg--queued" aria-label="Ana Ruiz, yesterday 17:02, edit waiting to send"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><div class="min-w-0 max-w-[80ch]"><div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-10T17:02">17:02</time><span class="ms-msg__edited">(edited)</span></div><div class="ms-msg__text"><p>I would make the active icon filled, not only darker.</p></div><div class="ms-delivery"><span class="ms-queue-note"><w-icon name="clock" aria-hidden="true"></w-icon>Edit waiting to send</span><w-btn variant="text" size="small">Undo edit</w-btn></div></div></article>
+          <article class="ms-msg ms-msg--queued ms-msg--deleting" aria-label="Ana Ruiz, 09:42, delete waiting to send"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><div class="min-w-0 max-w-[80ch]"><div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-11T09:42">09:42</time></div><div class="ms-msg__text"><p>Dara, can you check the budget line for fonts too?</p></div><div class="ms-delivery"><span class="ms-queue-note"><w-icon name="trash" aria-hidden="true"></w-icon>Deletes when you are back online</span><w-btn variant="text" size="small">Undo</w-btn></div></div></article>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 6 &middot; A reaction waiting to send">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 6 &middot; A reaction waiting to send</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface py-3 [&_.ms-msg]:px-4" role="log">
+          <article class="ms-msg " aria-label="Dara Okafor, 08:05"><w-avatar text="DO" size="36" style="--h:140" alt=""></w-avatar><div class="min-w-0 max-w-[80ch]"><div class="ms-msg__meta"><span class="ms-msg__author">Dara Okafor</span><time class="ms-msg__time" datetime="2026-11-11T08:05">08:05</time></div><div class="ms-msg__text"><p>Budget for the icon work is approved: 3 days.</p></div><div class="mt-1 flex flex-wrap gap-1" role="group" aria-label="Reactions"><w-chip size="small" aria-label="Party, 2 people">🎉 2</w-chip><w-chip size="small" selected aria-label="Thumbs up, you, waiting to send">👍 1<w-icon slot="append" name="clock" class="ms-icon-xs text-on-warning-container" aria-hidden="true"></w-icon></w-chip></div></div></article>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 7 &middot; Refused: moved to Needs your attention (AC-OF-6)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 7 &middot; Refused: moved to &ldquo;Needs your attention&rdquo; (AC-OF-6)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface py-3 [&_.ms-msg]:px-4" role="log">
+          <article class="ms-msg ms-msg--failed shadow-[inset_3px_0_0_var(--w-error)]" aria-label="Ana Ruiz, written 07:58, not sent, needs your attention"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><div class="min-w-0 max-w-[80ch]"><div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-11T09:40">Written 07:58</time></div><div class="ms-msg__text"><p>@Eli Park can you join the review on Thursday?</p></div><div class="mt-1 flex flex-wrap items-center gap-2"><span class="ms-delivery__item ms-delivery__item--bad text-xs" id="m7-why"><w-icon name="alert" class="ms-icon-xs" aria-hidden="true"></w-icon>Not sent. Eli Park left #design.</span><w-btn variant="outlined" size="small" href="attention.html" aria-describedby="m7-why">Review</w-btn></div></div></article>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 8 &middot; Edit conflict: the newer text shows, your edit is kept as a draft (AC-OF-8, Q12)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 8 &middot; Edit conflict: the newer text shows, your edit is kept as a draft (AC-OF-8, Q12)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface py-3 [&_.ms-msg]:px-4" role="log">
+          <article class="ms-msg ms-msg--queued" aria-label="Ana Ruiz, yesterday 17:02, edited on another device, your offline edit kept as a draft"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><div class="min-w-0 max-w-[80ch]"><div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><time class="ms-msg__time" datetime="2026-11-10T17:02">17:02</time><span class="ms-msg__edited">(edited 09:55 on another device)</span></div><div class="ms-msg__text"><p>The new tab bar works. Let&rsquo;s test a filled icon with three people first.</p></div><div class="mt-1 flex flex-wrap items-center gap-2"><span class="ms-queue-note" id="m8-why"><w-icon name="edit" aria-hidden="true"></w-icon>Your offline edit was not saved. It is kept as a draft.</span><w-btn variant="outlined" size="small" href="attention-states.html#c2" aria-describedby="m8-why">Compare</w-btn></div></div></article>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 9 &middot; Deleted elsewhere: your edit and reaction were dropped, and you are told once">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 9 &middot; Deleted elsewhere: your edit and reaction were dropped, and you are told once</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface py-3 [&_.ms-msg]:px-4" role="log">
+          <article class="ms-msg ms-msg--system" aria-label="Your changes were dropped"><w-icon name="info" class="ms-icon-sm justify-self-end text-subtle"></w-icon><p class="text-sm text-subtle">Bo Lee deleted a message you edited offline. Your edit and 1 reaction were not saved. <time class="text-xs" datetime="2026-11-11T10:02">10:02</time></p></article>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 10 &middot; Not on this device: older messages, files and thread replies (AC-OF-3)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 10 &middot; &ldquo;Not on this device&rdquo;: older messages, files and thread replies (AC-OF-3)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface py-3 [&_.ms-msg]:px-4" role="log">
+          <div class="mx-4 mb-3"><p class="ms-not-here"><w-icon name="inbox" aria-hidden="true"></w-icon><span><strong class="font-semibold text-text">Older messages are not on this device.</strong> This device keeps the last 7 days. Older messages load when you are back online.</span></p></div>
+          <article class="ms-msg " aria-label="Chen Wu, yesterday 16:40"><w-avatar text="CW" size="36" style="--h:280" alt=""></w-avatar><div class="min-w-0 max-w-[80ch]"><div class="ms-msg__meta"><span class="ms-msg__author">Chen Wu</span><time class="ms-msg__time" datetime="2026-11-10T16:40">16:40</time></div><div class="ms-msg__text"><p>New icon sheet for the mobile app.</p></div><div class="ms-attachments"><a class="ms-file is-not-here" href="#" aria-disabled="true"><span class="ms-file__icon"><w-icon name="image"></w-icon></span><span class="min-w-0"><span class="ms-file__name">icons-v4.png</span><span class="ms-file__size">Not on this device &middot; opens when you are online</span></span></a></div><a class="ms-thread-link" href="#"><w-avatar text="BL" size="20" style="--h:20" alt=""></w-avatar>12 replies <span class="text-xs font-normal text-subtle">8 on this device</span></a></div></article>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 10b &middot; Online again: the same places load from the server">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 10b &middot; Online again: the same places load from the server</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface py-3 [&_.ms-msg]:px-4" role="log">
+          <div class="mx-4"><w-btn variant="outlined" block prepend-icon="download">Load older messages</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 11 &middot; Composer offline: recipients from the device copy, others Checked when online (AC-OF-5)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 11 &middot; Composer offline: recipients from the device copy, others &ldquo;Checked when online&rdquo; (AC-OF-5)</p>
+        <form class="ms-composer @container/composer w-full" aria-label="New message" onsubmit="return false">
+          <div class="ms-composer__row"><span class="ms-composer__row-label" id="m11-to">To</span><div class="ms-recipients"><w-chip closable close-label="Remove Bo Lee"><w-avatar slot="prepend" text="BL" size="20" style="--h:20" alt=""></w-avatar>Bo Lee<span class="ms-how ms-how--chat ml-1"><w-icon name="chat" aria-hidden="true"></w-icon>Chat</span></w-chip><w-chip closable close-label="Remove dan@newco.test">dan@newco.test<span class="ms-how ms-how--checking ml-1"><w-icon name="clock" aria-hidden="true"></w-icon>Checked when online</span><span class="sr-only">. Mesail checks this address when you are back online.</span></w-chip><input type="text" role="combobox" aria-labelledby="m11-to" aria-autocomplete="list" aria-expanded="false" autocomplete="off" spellcheck="false" placeholder="Add more people"></div></div>
+          <div class="ms-editor min-h-12 p-3" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Message" data-placeholder="Message"></div>
+          <p class="ms-composer__summary" id="m11-sum"><w-icon name="wifi-off" class="ms-icon-sm mt-0.5 text-subtle" aria-hidden="true"></w-icon><span>Bo gets chat. dan@newco.test is checked when you are back online; if it then needs email, Mesail asks you first. Sends when you are back online.</span></p>
+          <div class="flex items-center gap-0.5 px-2 pb-2"><w-icon-btn icon="paperclip" size="small" aria-label="Attach files (needs the network)" disabled></w-icon-btn><w-icon-btn icon="smile" size="small" aria-label="Emoji"></w-icon-btn><w-btn variant="filled" size="small" prepend-icon="send" class="ml-auto" aria-describedby="m11-sum">Send</w-btn></div>
+        </form>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 12 &middot; Search offline: results from the device, marked On this device (AC-OF-12)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 12 &middot; Search offline: results from the device, marked &ldquo;On this device&rdquo; (AC-OF-12)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface" id="search">
+          <div class="grid gap-2 border-b border-divider p-3"><w-text-field label="Search" value="budget" prepend-inner-icon="search" hide-details></w-text-field><p class="flex items-start gap-2 text-xs text-subtle"><w-icon name="wifi-off" class="ms-icon-xs mt-0.5" aria-hidden="true"></w-icon><span>Searching this device: the last 7 days of example.com. Older messages need the network.</span></p></div>
+          <ul class="grid divide-y divide-divider" aria-label="2 results on this device">
+            <li><a class="grid gap-1 px-4 py-3 no-underline hover:bg-hover" href="offline-messenger.html"><span class="flex flex-wrap items-center gap-2 text-xs text-subtle"><span class="font-semibold text-text">#design</span><span>Dara Okafor &middot; Today 08:05</span><span class="ms-tag"><w-icon name="device"></w-icon>On this device</span></span><span class="text-sm text-text"><mark>Budget</mark> for the icon work is approved: 3 days.</span></a></li>
+            <li><a class="grid gap-1 px-4 py-3 no-underline hover:bg-hover" href="offline-messenger.html"><span class="flex flex-wrap items-center gap-2 text-xs text-subtle"><span class="font-semibold text-text">#releases</span><span>Chen Wu &middot; Monday 16:40</span><span class="ms-tag"><w-icon name="device"></w-icon>On this device</span></span><span class="text-sm text-text">The release <mark>budget</mark> covers two more test devices.</span></a></li>
+          </ul>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 13 &middot; Search offline, nothing on this device">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 13 &middot; Search offline, nothing on this device</p>
+        <div class="w-full rounded-xl border border-border bg-surface p-6 text-center">
+          <w-icon name="search" class="[--ms-icon-size:var(--ms-icon-lg)] text-subtle" aria-hidden="true"></w-icon>
+          <p class="mt-2 font-semibold">No results for &ldquo;invoice 2291&rdquo; on this device</p>
+          <p class="mt-1 text-sm text-subtle">This device keeps the last 7 days. Search again when you are online to look in older messages.</p>
+        </div>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Mockup pages">
+        <ul class="flex flex-wrap justify-center gap-2">
+          <li><w-btn variant="text" size="small" href="index.html">All mockups</w-btn></li>
+          <li><w-btn variant="text" size="small" href="offline-messenger.html">Offline messenger</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

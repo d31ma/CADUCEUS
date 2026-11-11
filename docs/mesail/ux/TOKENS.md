@@ -109,7 +109,20 @@ which adds the same tokens with the same values to `apps/web` and `apps/web-admi
 
 The Tailwind variant `touch:` (pointer: coarse, or a window under 768 px) matches the rule of `tests/responsive`.
 `mesail-components.css` applies the floor to DuVay's own controls in that case (`.w-btn`, `.w-icon-btn`,
-`.w-checkbox`, `.w-text-field-control`, `.w-select-field`), so a small DuVay button grows to 44 px on a phone.
+`.w-checkbox`, `.w-text-field-control`, `.w-select-field`, and since slice OU `.w-chip`, `.w-list-item`,
+`.w-tab` (width), the recipient input and the thread link), so a small DuVay control grows to 44 px on a phone.
+Tabs never shrink (`flex: none`): a tab strip scrolls sideways instead of cutting labels.
+
+The icon classes `.ms-icon-xs` / `-sm` are not Tailwind utilities: since the `--spacing-icon-*` names exist,
+Tailwind read `ms-icon-sm` as "margin-inline-start: icon-sm" and moved every small icon 16 px to the right.
+`tailwind.input.css` now excludes those class names (`@source not inline(...)`). Apps do not define
+`--spacing-icon-*`, so they are not affected.
+
+Offline states (slice OU, `screens/offline.css`) add no colour token: the sync bar uses
+`--w-surface-container-high` (offline), the primary, warning and success container pairs (updating, needs
+attention, up to date); waiting items use `--w-on-warning-container` text and a `--w-warning-container` edge;
+the space meter uses `--w-primary`, `--ms-email`, `--ms-presence-idle` and `--w-text-very-subtle`, always with a
+labelled list beside it.
 Proportions: a card is never wider than its content needs (auth 26rem, dialog 32rem), its main button fills
 the card width at 48 px, and secondary buttons sit at 40 px, so the main action is always the largest.
 

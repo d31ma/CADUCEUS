@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: keep me signed in on this device</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<link rel="stylesheet" href="assets/screens/offline.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#s1-title">Skip to the first state</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 px-0 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">Sign-in with &ldquo;Keep me signed in on this device&rdquo; (ADR 0006 section 2, SPEC AC-OF-1, Q8). Only a kept device keeps a copy of your messages and works offline. Off by default in a browser, on by default in the Mesail app.</p>
+    <!-- Mockup: labelled states side by side. Cards keep their token widths (auth 26rem, dialog 32rem, page 50rem). -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-auth-card-max)),1fr))]">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 1 &middot; Browser, first visit: the box is off by default (SPEC Q8)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 &middot; Browser, first visit: the box is off by default (SPEC Q8)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h1 id="s1-title" class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h1>
+            <p class="-mt-3 text-subtle short:hidden">Use your username or your work email address.</p>
+            <form class="grid gap-4 short:gap-3" action="offline-messenger.html" method="post" novalidate>
+              <w-text-field id="s1-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint required></w-text-field>
+              <w-text-field id="s1-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s1-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s1-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <fieldset class="m-0 grid min-w-0 gap-3 border-0 border-t border-solid border-divider p-0 pt-4"><legend class="sr-only">On this device</legend>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="s1-keep-hint"></w-checkbox>
+                <p id="s1-keep-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              </fieldset>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 2 &middot; Browser, box ticked: the username is remembered too">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 &middot; Browser, box ticked: the username is remembered too</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+            <p class="-mt-3 text-subtle short:hidden">Use your username or your work email address.</p>
+            <form class="grid gap-4 short:gap-3" action="offline-messenger.html" method="post" novalidate>
+              <w-text-field id="s2-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" required></w-text-field>
+              <w-text-field id="s2-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s2-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s2-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <fieldset class="m-0 grid min-w-0 gap-3 border-0 border-t border-solid border-divider p-0 pt-4"><legend class="sr-only">On this device</legend>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="s2-keep-hint" checked></w-checkbox>
+                <p id="s2-keep-hint" class="ps-8 text-xs text-subtle">Mesail keeps your messages of the last 7 days on this computer. Signing out removes them.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device (included)" name="remember" checked disabled></w-checkbox>
+              </fieldset>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 3 &middot; Mesail app (macOS, Windows, Linux, iOS, Android): on by default">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 &middot; Mesail app (macOS, Windows, Linux, iOS, Android): on by default</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+            <p class="-mt-3 text-subtle short:hidden">Use your username or your work email address.</p>
+            <form class="grid gap-4 short:gap-3" action="offline-messenger.html" method="post" novalidate>
+              <w-text-field id="s3-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint required></w-text-field>
+              <w-text-field id="s3-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s3-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s3-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <fieldset class="m-0 grid min-w-0 gap-3 border-0 border-t border-solid border-divider p-0 pt-4"><legend class="sr-only">On this device</legend>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="s3-keep-hint" checked></w-checkbox>
+                <p id="s3-keep-hint" class="ps-8 text-xs text-subtle">Recommended in the Mesail app. Turn it off on a device you share with others.</p>
+              </div>
+              </fieldset>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 4 &middot; No network, and nothing is kept on this device">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 &middot; No network, and nothing is kept on this device</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">You are offline</h2>
+            <div class="grid gap-4">
+              <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="wifi-off" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Sign-in needs the network. Mesail keeps nothing on this device yet, so it cannot open your messages offline.</p></div></div>
+              <p class="text-sm text-subtle">Connect to Wi-Fi or mobile data. Mesail tries again by itself.</p>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Try again</w-btn>
+              <p class="flex items-start gap-2 text-xs text-subtle"><w-icon name="info" class="ms-icon-sm flex-none"></w-icon>On a device you own, tick &ldquo;Keep me signed in on this device&rdquo; next time. Then Mesail opens without the network.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 5 &middot; Kept device, opened without network: no sign-in, the copy opens">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 5 &middot; Kept device, opened without network: no sign-in, the copy opens</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Opening Mesail</h2>
+            <div class="grid gap-4">
+              <p class="flex items-center gap-3"><w-icon name="refresh" class="ms-icon-sm flex-none animate-spin text-accent motion-reduce:animate-none" aria-hidden="true"></w-icon><span>Opening your messages on this device&hellip;</span></p>
+              <p class="text-sm text-subtle">There is no network, so Mesail shows the copy on this device, updated today at 08:12. It updates by itself when you are back online.</p>
+              <p class="sr-only" role="status">Opening Mesail offline.</p>
+              <w-btn variant="outlined" block href="offline-messenger.html">See the offline messenger</w-btn>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 6 &middot; Another person signed in on this device: the last person&rsquo;s copy was removed first (AC-OF-10)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 6 &middot; Another person signed in on this device: the last person&rsquo;s copy was removed first (AC-OF-10)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Welcome, Bo</h2>
+            <div class="grid gap-4">
+              <div class="flex items-start gap-3 rounded-lg bg-primary-container text-on-primary-container p-3" role="status"><w-icon name="shield-check" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Mesail removed the messages it kept for the last person who used this device. Nobody else&rsquo;s messages are shown to you.</p></div></div>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Continue</w-btn>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Mockup pages">
+        <ul class="flex flex-wrap justify-center gap-2">
+          <li><w-btn variant="text" size="small" href="index.html">All mockups</w-btn></li>
+          <li><w-btn variant="text" size="small" href="offline-messenger.html">Offline messenger</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

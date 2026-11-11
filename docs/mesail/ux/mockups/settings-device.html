@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: settings, this device</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/offline.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface text-text">
+<a class="ms-skip-link" href="#settings-page">Skip to the page</a>
+
+<div class="flex h-dvh flex-col">
+<div class="group/app relative grid min-h-0 flex-1 overflow-hidden
+  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
+  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main">
+
+  <!-- Domain rail (960 px and up). Offline, a domain without a copy on this device is dimmed: it needs the network. -->
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Domains">
+    <ul class="flex flex-col gap-2">
+      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org">Eo</a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net">La</a></li>
+    </ul>
+    <div class="flex-1"></div>
+    <a class="ms-domain-tile" href="settings-device.html" aria-label="This device: space and offline settings" title="This device"><w-icon name="device"></w-icon></a>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations in example.com">
+    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-t safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
+      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
+      <span class="flex-1"></span>
+      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+    </header>
+    <div class="px-3 py-2">
+      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
+        <w-icon name="search" class="ms-icon-sm"></w-icon>Search<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-2 pb-4">
+      <w-list nav density="compact" aria-label="Shortcuts">
+        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline class="ms-count" label="2 mentions"></w-badge></w-list-item>
+        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
+      </w-list>
+
+      <section class="mt-3" aria-labelledby="sec-channels">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-channels"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Channels</button>
+          <w-icon-btn icon="plus" size="small" aria-label="Add or browse channels"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-channels">
+          <w-list-item href="#" title="general"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="offline-messenger.html" title="design"><w-icon slot="prepend" name="lock" role="img" aria-label="Private channel"></w-icon></w-list-item>
+          <w-list-item href="#" title="releases"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="channel-email.html" title="support" class="ms-unread"><w-icon slot="prepend" name="hash"></w-icon><w-badge slot="append" content="4" inline class="ms-count" label="4 unread"></w-badge></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-dms">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-dms"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Direct messages</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New direct message"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-dms">
+          <w-list-item href="#" title="Bo Lee"><w-avatar slot="prepend" text="BL" size="20" style="--h:20" alt="Bo Lee"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Chen Wu"><w-avatar slot="prepend" text="CW" size="20" style="--h:280" alt="Chen Wu"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-email">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-email"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Email</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New email"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" lines="two" aria-labelledby="sec-email">
+          <w-list-item href="#" title="carol@partner.test" subtitle="Draft offer for 2027"><w-avatar slot="prepend" text="CA" size="20" class="ms-external" alt="carol@partner.test, outside example.com"></w-avatar></w-list-item>
+          <w-list-item href="email-conversation.html" title="Carol Diaz, Bo Lee" subtitle="Contract renewal 2027"><w-avatar slot="prepend" text="CD" size="20" class="ms-external" alt="Carol Diaz, outside example.com"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+    </div>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz. Open status and account menu">
+        <w-avatar text="AR" size="28" style="--h:195" alt=""></w-avatar>
+        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">ana@example.com</span></span>
+      </button>
+      <w-icon-btn icon="settings" href="settings-device.html" aria-label="Settings"></w-icon-btn>
+    </footer>
+  </aside>
+
+  <!-- Settings: This device (ADR 0006 section 6, SPEC AC-OF-1, AC-OF-2, AC-OF-13, AC-OF-14, Q9, Q11) -->
+  <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="settings-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="?pane=list" aria-label="Back to conversations"></w-icon-btn>
+      <h1 id="settings-title" class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="settings" class="ms-icon-sm hidden @md/main:inline-flex"></w-icon><span class="truncate">Settings</span></h1>
+    </header>
+    <nav class="flex-none border-b border-divider safe-l safe-r @2xl/main:hidden" style="--ms-edge: 0.25rem" aria-label="Settings sections">
+      <w-tabs value="device">
+        <w-tab value="profile" href="settings.html">Profile</w-tab>
+        <w-tab value="notifications" href="settings-notifications.html">Notifications</w-tab>
+        <w-tab value="email" href="settings-email.html">Email</w-tab>
+        <w-tab value="appearance" href="settings-appearance.html">Appearance</w-tab>
+        <w-tab value="device" href="settings-device.html" active>This device</w-tab>
+      </w-tabs>
+    </nav>
+    <div class="flex min-h-0 flex-1">
+      <nav class="hidden w-56 flex-none overflow-y-auto border-r border-divider px-2 py-4 safe-b @2xl/main:block" aria-label="Settings sections">
+        <p class="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-subtle">Your settings</p>
+        <w-list nav class="ms-plain-list">
+          <w-list-item href="settings.html" title="Profile and account"><w-icon slot="prepend" name="user"></w-icon></w-list-item>
+          <w-list-item href="settings-notifications.html" title="Notifications"><w-icon slot="prepend" name="bell"></w-icon></w-list-item>
+          <w-list-item href="settings-email.html" title="Email"><w-icon slot="prepend" name="mail"></w-icon></w-list-item>
+          <w-list-item href="settings-appearance.html" title="Appearance"><w-icon slot="prepend" name="sun"></w-icon></w-list-item>
+          <w-list-item href="settings-device.html" title="This device" active><w-icon slot="prepend" name="device"></w-icon></w-list-item>
+        </w-list>
+      </nav>
+      <div class="min-w-0 flex-1 overflow-y-auto @container/page safe-b safe-r" id="settings-page">
+        <div class="mx-auto grid w-full max-w-2xl gap-6 px-4 pt-6 pb-10 @xl/page:px-6">
+          <div class="grid gap-1"><h2 class="text-xl font-bold @xl/page:text-2xl">This device</h2><p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="device" class="ms-icon-sm mt-0.5" aria-hidden="true"></w-icon><span>What Mesail keeps on this computer, for all your domains. These settings are for this device only.</span></p></div>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="keep-h">
+            <div class="border-b border-divider px-4 py-4 @xl/page:px-5"><h3 id="keep-h" class="text-lg font-semibold">Keep me signed in on this device</h3><p class="mt-0.5 text-sm text-subtle">Mesail keeps a copy of your recent messages here, so it opens and works without the network.</p></div>
+            <div class="divide-y divide-divider">
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="keep-t" class="font-medium">Kept on this device</p><p class="text-sm text-subtle">On since 11 November 2026. The Mesail app keeps you signed in for up to 90 days of use; after 30 days without the network it locks the copy.</p></div><w-switch class="ms-auto" aria-labelledby="keep-t" checked></w-switch></div></div>
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="shield-check" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>The copy is protected by your device&rsquo;s own encryption and screen lock. Use a device with a password or passcode. Signing out removes the copy.</span></p></div>
+            </div>
+          </section>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="space-h">
+            <div class="border-b border-divider px-4 py-4 @xl/page:px-5"><h3 id="space-h" class="text-lg font-semibold">Space used</h3><p class="mt-0.5 text-sm text-subtle">For all your domains on this device.</p></div>
+            <div class="divide-y divide-divider">
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="grid gap-2"><div class="flex flex-wrap items-baseline justify-between gap-2"><p class="font-medium" id="space-label">412 MB of 1 GB used</p><p class="text-sm text-subtle">Updated 08:12</p></div><div class="ms-space-meter" role="meter" aria-labelledby="space-label" aria-valuemin="0" aria-valuemax="1024" aria-valuenow="412" aria-valuetext="412 MB of 1 GB"><span class="ms-part-1" style="--ms-share: 27%"></span><span class="ms-part-2" style="--ms-share: 9%"></span><span class="ms-part-3" style="--ms-share: 4%"></span></div><ul class="grid divide-y divide-divider" aria-label="Space used per domain"><li class="flex items-center gap-3 py-2"><span class="ms-space-swatch ms-part-1" aria-hidden="true"></span><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Ex</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="truncate text-sm font-semibold">example.com</span><span class="truncate text-xs text-subtle">Updated 08:12</span></span><span class="text-sm tabular-nums">276 MB</span></li><li class="flex items-center gap-3 py-2"><span class="ms-space-swatch ms-part-2" aria-hidden="true"></span><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Eo</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="truncate text-sm font-semibold">example.org</span><span class="truncate text-xs text-subtle">Updated 07:55</span></span><span class="text-sm tabular-nums">94 MB</span></li><li class="flex items-center gap-3 py-2"><span class="ms-space-swatch ms-part-3" aria-hidden="true"></span><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">La</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="truncate text-sm font-semibold">lab.example.net</span><span class="truncate text-xs text-subtle">Updated yesterday</span></span><span class="text-sm tabular-nums">42 MB</span></li></ul><p class="text-sm text-subtle">When the space is full, Mesail removes the oldest messages and files first. It never removes items that wait to send, or drafts.</p></div></div>
+            </div>
+          </section>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="what-h">
+            <div class="border-b border-divider px-4 py-4 @xl/page:px-5"><h3 id="what-h" class="text-lg font-semibold">What to keep</h3><p class="mt-0.5 text-sm text-subtle">More days show more offline, and use more space.</p></div>
+            <div class="divide-y divide-divider">
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="days-label" class="font-medium">Keep messages from the last</p><p class="text-sm text-subtle">At least the last 20 messages of every conversation stay, however old.</p></div><div class="flex w-full gap-1 rounded-lg border border-outline p-1 @md/page:w-auto" role="radiogroup" aria-labelledby="days-label"><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days" value="7">7 days</label><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days" value="14">14 days</label><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days" value="30" checked>30 days</label><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days" value="90">90 days</label></div></div></div>
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="limit-t" class="font-medium">Space limit</p><p class="text-sm text-subtle">When it is full, the oldest messages and files go first.</p></div><w-select label="Space limit" value="1g" hide-details class="w-full @md/page:w-40"><w-option value="300m">300 MB</w-option><w-option value="1g">1 GB</w-option><w-option value="2g">2 GB</w-option><w-option value="5g">5 GB</w-option></w-select></div></div>
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="ahead-t" class="font-medium">Download files ahead of time</p><p class="text-sm text-subtle">Images and files up to 2 MB in your recent messages, so they open offline.</p></div><w-switch class="ms-auto" aria-labelledby="ahead-t" checked></w-switch></div></div>
+            </div>
+          </section>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="remove-h">
+            <div class="border-b border-divider px-4 py-4 @xl/page:px-5"><h3 id="remove-h" class="text-lg font-semibold">Remove</h3><p class="mt-0.5 text-sm text-subtle">These need the network.</p></div>
+            <div class="divide-y divide-divider">
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="rm-t" class="font-medium">Remove the copy on this device</p><p class="text-sm text-subtle">Removes your messages from this computer and stops keeping a copy. Items that wait to send are removed too.</p></div><w-btn variant="outlined" color="danger" class="max-sm:w-full" href="access-ended.html">Remove the copy</w-btn></div></div>
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="all-t" class="font-medium">Sign out on all devices</p><p class="text-sm text-subtle">For a lost or stolen device. Every device signs out and removes its copy within a minute.</p></div><w-btn variant="outlined" class="max-sm:w-full" href="access-ended.html">Sign out everywhere</w-btn></div></div>
+            </div>
+          </section>
+          <h3 class="mt-4 text-sm font-semibold uppercase tracking-wide text-subtle">Other devices and builds (mockup only)</h3>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="v1">
+            <div class="border-b border-divider px-4 py-4 @xl/page:px-5"><h3 id="v1" class="text-lg font-semibold">First build (until TACHYON T1, T2 and T9)</h3><p class="mt-0.5 text-sm text-subtle">AC-OF-2: a fixed window, no attachments on the device.</p></div>
+            <div class="divide-y divide-divider">
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="grid gap-2"><p class="font-medium">31 MB of 40 MB used</p><div class="ms-space-meter" role="meter" aria-label="31 MB of 40 MB used" aria-valuemin="0" aria-valuemax="40" aria-valuenow="31"><span class="ms-part-1" style="--ms-share: 58%"></span><span class="ms-part-2" style="--ms-share: 13%"></span><span class="ms-part-3" style="--ms-share: 7%"></span></div></div></div>
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="days1-label" class="font-medium">Keep messages from the last</p><p class="text-sm text-subtle">More days come in a later version. Up to 5,000 messages.</p></div><div class="flex w-full gap-1 rounded-lg border border-outline p-1 @md/page:w-auto" role="radiogroup" aria-labelledby="days1-label"><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days1" value="7" checked>7 days</label><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days1" value="14" disabled>14 days</label><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days1" value="30" disabled>30 days</label><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days1" value="90" disabled>90 days</label></div></div></div>
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="ahead1-t" class="font-medium">Download files ahead of time</p><p class="text-sm text-subtle">Files are not kept on devices yet. They open when you are online.</p></div><w-switch class="ms-auto" aria-labelledby="ahead1-t" disabled></w-switch></div></div>
+            </div>
+          </section>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="v2">
+            <div class="border-b border-divider px-4 py-4 @xl/page:px-5"><h3 id="v2" class="text-lg font-semibold">Phone (Mesail app on iOS or Android)</h3><p class="mt-0.5 text-sm text-subtle">SPEC Q9 and Q11: a smaller default, and files only on Wi-Fi.</p></div>
+            <div class="divide-y divide-divider">
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="days2-label" class="font-medium">Keep messages from the last</p><p class="text-sm text-subtle">Default on a phone: 14 days, 300 MB.</p></div><div class="flex w-full gap-1 rounded-lg border border-outline p-1 @md/page:w-auto" role="radiogroup" aria-labelledby="days2-label"><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days2" value="7">7 days</label><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days2" value="14" checked>14 days</label><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days2" value="30">30 days</label><label class="relative flex min-h-control-md touch:min-h-touch flex-1 cursor-pointer items-center justify-center rounded-md px-3 text-sm font-medium has-[:checked]:bg-primary-container has-[:checked]:text-on-primary-container has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"><input class="sr-only" type="radio" name="days2" value="90">90 days</label></div></div></div>
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="ahead2-t" class="font-medium">Download files ahead of time on Wi-Fi</p><p class="text-sm text-subtle">Off: files download when you open them.</p></div><w-switch class="ms-auto" aria-labelledby="ahead2-t"></w-switch></div></div>
+            </div>
+          </section>
+          <section class="rounded-lg border border-border bg-surface" aria-labelledby="v3">
+            <div class="border-b border-divider px-4 py-4 @xl/page:px-5"><h3 id="v3" class="text-lg font-semibold">Browser where &ldquo;Keep me signed in&rdquo; was off</h3><p class="mt-0.5 text-sm text-subtle">AC-OF-1: nothing stays after the tab closes.</p></div>
+            <div class="divide-y divide-divider">
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="v3-t" class="font-medium">Not kept on this browser</p><p class="text-sm text-subtle">Mesail keeps nothing here after you close the tab. To work offline, sign out and sign in again with &ldquo;Keep me signed in on this device&rdquo; ticked. Only do that on your own computer.</p></div><w-btn variant="outlined" class="max-sm:w-full" href="signin-kept.html">How it works</w-btn></div></div>
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5"><p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="info" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>In a browser, the browser itself may delete the copy when space runs low. The Mesail app keeps it more safely.</span></p></div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom navigation: phones, list pane only -->
+  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden" value="home" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" href="?pane=list" active><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="search" label="Search" href="offline-messages.html#search"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="you" label="You" href="settings-device.html"><w-icon name="user"></w-icon></w-bottom-nav-item>
+  </w-bottom-navigation>
+</div>
+</div>
+
+<div class="sr-only" aria-live="polite" id="announcer"></div>
+</body>
+</html>

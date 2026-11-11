@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: offline and sync status</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<link rel="stylesheet" href="assets/screens/offline.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#st1">Skip to the first state</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 px-0 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">The sync bar sits at the very top of the app, above every pane, on every width (ADR 0006 section 3, SPEC S15, AC-OF-3, AC-OF-7). It shows only when there is something to say. It is one button: 32 px with a mouse, 44 px on touch and under 768 px.</p>
+    <!-- Mockup: labelled states side by side. Cards keep their token widths (auth 26rem, dialog 32rem, page 50rem). -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-dialog-max)),1fr))]">
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" id="st1" aria-label="State 1 &middot; Offline, nothing waiting">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 &middot; Offline, nothing waiting</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <button type="button" class="ms-sync-bar" aria-haspopup="dialog"><w-icon name="wifi-off" aria-hidden="true"></w-icon><span class="ms-sync-bar__state">Offline</span><span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>Updated 08:12</span><span class="ms-sync-bar__count"></span><w-icon name="chevron-down" class="ms-icon-sm" aria-hidden="true"></w-icon></button>
+          <div class="flex min-h-13 items-center gap-2 border-b border-divider px-4"><w-icon name="lock" class="ms-icon-sm" aria-hidden="true"></w-icon><span class="font-bold">design</span></div>
+          <p class="px-4 py-3 text-sm text-subtle">Mesail shows the copy on this device. Reading, search and writing work. The bar is a button: it opens the sync panel (state 9).</p><p class="sr-only" role="status">Offline. Showing the copy on this device, updated 08:12.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 2 &middot; Offline, items waiting to send (SPEC S15)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 &middot; Offline, items waiting to send (SPEC S15)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <button type="button" class="ms-sync-bar" aria-haspopup="dialog"><w-icon name="wifi-off" aria-hidden="true"></w-icon><span class="ms-sync-bar__state">Offline</span><span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>Updated 08:12</span><span class="ms-sync-bar__count"><w-icon name="clock" aria-hidden="true"></w-icon><span>4 waiting<span class="max-sm:hidden"> to send</span></span></span><w-icon name="chevron-down" class="ms-icon-sm" aria-hidden="true"></w-icon></button>
+          <div class="flex min-h-13 items-center gap-2 border-b border-divider px-4"><w-icon name="lock" class="ms-icon-sm" aria-hidden="true"></w-icon><span class="font-bold">design</span></div>
+          <p class="px-4 py-3 text-sm text-subtle">Each waiting item also shows &ldquo;Waiting to send&rdquo; where it was written.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 3 &middot; Back online: catching up (AC-OF-7, within 15 seconds)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 &middot; Back online: catching up (AC-OF-7, within 15 seconds)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <button type="button" class="ms-sync-bar ms-sync-bar--syncing" aria-haspopup="dialog" style="--ms-progress: 45%"><w-icon name="refresh" class="animate-spin motion-reduce:animate-none" aria-hidden="true"></w-icon><span class="ms-sync-bar__state">Updating</span><span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>Getting changes since 08:12</span><span class="ms-sync-bar__count"></span><w-icon name="chevron-down" class="ms-icon-sm" aria-hidden="true"></w-icon></button>
+          <div class="flex min-h-13 items-center gap-2 border-b border-divider px-4"><w-icon name="lock" class="ms-icon-sm" aria-hidden="true"></w-icon><span class="font-bold">design</span></div>
+          <p class="px-4 py-3 text-sm text-subtle">A 2 px line at the bottom of the bar shows the progress. New messages appear in place; nothing jumps while you read.</p><p class="sr-only" role="status">Back online. Updating.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 4 &middot; Sending the queue, in the order it was written">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 &middot; Sending the queue, in the order it was written</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <button type="button" class="ms-sync-bar ms-sync-bar--syncing" aria-haspopup="dialog" style="--ms-progress: 75%"><w-icon name="refresh" class="animate-spin motion-reduce:animate-none" aria-hidden="true"></w-icon><span class="ms-sync-bar__state">Sending</span><span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>3 of 4</span><span class="ms-sync-bar__count"></span><w-icon name="chevron-down" class="ms-icon-sm" aria-hidden="true"></w-icon></button>
+          <div class="flex min-h-13 items-center gap-2 border-b border-divider px-4"><w-icon name="lock" class="ms-icon-sm" aria-hidden="true"></w-icon><span class="font-bold">design</span></div>
+          <p class="px-4 py-3 text-sm text-subtle">Items of one conversation go in order; different conversations go side by side.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 5 &middot; All sent and up to date (hides after 4 seconds)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 5 &middot; All sent and up to date (hides after 4 seconds)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <button type="button" class="ms-sync-bar ms-sync-bar--done" aria-haspopup="dialog"><w-icon name="cloud-check" aria-hidden="true"></w-icon><span class="ms-sync-bar__state">Up to date</span><span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>4 sent</span><span class="ms-sync-bar__count"></span></button>
+          <div class="flex min-h-13 items-center gap-2 border-b border-divider px-4"><w-icon name="lock" class="ms-icon-sm" aria-hidden="true"></w-icon><span class="font-bold">design</span></div>
+          <p class="px-4 py-3 text-sm text-subtle">With reduced motion the bar disappears without a slide. Screen readers hear &ldquo;Up to date. 4 sent.&rdquo; once.</p><p class="sr-only" role="status">Up to date. 4 sent.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 6 &middot; Some items need your attention (AC-OF-6)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 6 &middot; Some items need your attention (AC-OF-6)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <button type="button" class="ms-sync-bar ms-sync-bar--attention" aria-haspopup="dialog"><w-icon name="alert" aria-hidden="true"></w-icon><span class="ms-sync-bar__state">1 item needs your attention</span><span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>3 others sent</span><span class="ms-sync-bar__count"><span>Review</span><w-icon name="chevron-right" aria-hidden="true"></w-icon></span></button>
+          <div class="flex min-h-13 items-center gap-2 border-b border-divider px-4"><w-icon name="lock" class="ms-icon-sm" aria-hidden="true"></w-icon><span class="font-bold">design</span></div>
+          <p class="px-4 py-3 text-sm text-subtle">The bar stays until the person opens the list. The sidebar shows &ldquo;Needs your attention&rdquo; with a count.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 7 &middot; Network up, realtime connection down (one wording everywhere, README section 8)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 7 &middot; Network up, realtime connection down (one wording everywhere, README section 8)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <button type="button" class="ms-sync-bar" aria-haspopup="dialog"><w-icon name="refresh" aria-hidden="true"></w-icon><span class="ms-sync-bar__state">Reconnecting</span><span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>New messages may be late</span><span class="ms-sync-bar__count"><w-icon name="refresh" aria-hidden="true"></w-icon><span>Try now</span></span></button>
+          <div class="flex min-h-13 items-center gap-2 border-b border-divider px-4"><w-icon name="lock" class="ms-icon-sm" aria-hidden="true"></w-icon><span class="font-bold">design</span></div>
+          <p class="px-4 py-3 text-sm text-subtle">Writing still works: items wait and send at the next answer. Pressing the bar tries now.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 8 &middot; Offline longer than the server keeps changes (AC-OF-15)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 8 &middot; Offline longer than the server keeps changes (AC-OF-15)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <button type="button" class="ms-sync-bar ms-sync-bar--syncing" aria-haspopup="dialog" style="--ms-progress: 20%"><w-icon name="refresh" class="animate-spin motion-reduce:animate-none" aria-hidden="true"></w-icon><span class="ms-sync-bar__state">Reloading recent messages</span><span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>You were away for a long time</span><span class="ms-sync-bar__count"></span><w-icon name="chevron-down" class="ms-icon-sm" aria-hidden="true"></w-icon></button>
+          <div class="flex min-h-13 items-center gap-2 border-b border-divider px-4"><w-icon name="lock" class="ms-icon-sm" aria-hidden="true"></w-icon><span class="font-bold">design</span></div>
+          <p class="px-4 py-3 text-sm text-subtle">Each conversation reloads its last 7 days instead of syncing. Items that wait to send are kept and sent after that.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 9 &middot; The sync panel (opens from the bar; a bottom sheet under 600 px)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 9 &middot; The sync panel (opens from the bar; a bottom sheet under 600 px)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="sp-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-surface-high text-text" aria-hidden="true"><w-icon name="wifi-off"></w-icon></span><h2 id="sp-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">Offline</h2></div>
+          <div class="grid gap-3 px-4 pb-2 sm:px-6">
+            <p class="text-sm text-subtle">Mesail shows the copy on this device. What you write waits here and sends when you are back online. Mesail sends only while it is open.</p>
+            <ul class="grid divide-y divide-divider rounded-lg border border-border" aria-label="Your domains on this device">
+              <li class="flex min-h-control-lg items-center gap-3 px-3 py-2"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Ex</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="truncate text-sm font-semibold">example.com</span><span class="truncate text-xs text-subtle">Updated 08:12</span></span><span class="ms-tag ms-tag--warn"><w-icon name="clock"></w-icon>3 waiting</span></li>
+              <li class="flex min-h-control-lg items-center gap-3 px-3 py-2"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Eo</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="truncate text-sm font-semibold">example.org</span><span class="truncate text-xs text-subtle">Updated 07:55</span></span><span class="ms-tag ms-tag--warn"><w-icon name="clock"></w-icon>1 waiting</span></li>
+              <li class="flex min-h-control-lg items-center gap-3 px-3 py-2 opacity-60"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">La</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="truncate text-sm font-semibold">lab.example.net</span><span class="truncate text-xs text-subtle">Not on this device. Needs the network.</span></span></li>
+            </ul>
+            <a class="flex min-h-control-md touch:min-h-touch items-center gap-3 rounded-lg bg-warning-container px-3 text-sm font-semibold text-on-warning-container no-underline" href="attention.html"><w-icon name="alert" class="ms-icon-sm" aria-hidden="true"></w-icon><span class="flex-1">1 item needs your attention</span><w-icon name="chevron-right" class="ms-icon-sm" aria-hidden="true"></w-icon></a>
+          </div>
+          <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-4 pt-4 pb-5 sm:px-6 max-sm:[&>*]:flex-1">
+            <w-btn variant="text" href="settings-device.html">Space and offline settings</w-btn>
+            <w-btn variant="filled">Try now</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 10 &middot; Domain menu while offline: switch between domains that have a copy (AC-OF-11)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 10 &middot; Domain menu while offline: switch between domains that have a copy (AC-OF-11)</p>
+        <div class="w-full rounded-xl border border-border bg-surface p-1 shadow-xl" data-duvay="w-menu">
+          <div class="mb-1 grid gap-0.5 border-b border-divider px-3 py-2"><span class="text-xs font-semibold uppercase tracking-wide text-subtle">Your domains</span><span class="flex items-center gap-1 text-xs text-subtle"><w-icon name="wifi-off" class="ms-icon-xs" aria-hidden="true"></w-icon>Offline: domains on this device still open.</span></div>
+          <div role="menu" aria-label="Your domains" class="grid"><div role="group" aria-label="Switch domain" class="grid gap-0.5"><button type="button" role="menuitemradio" aria-checked="true" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Ex</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">example.com</span><span class="ms-tag"><w-icon name="star"></w-icon>Default</span><span class="ms-tag ms-tag--warn"><w-icon name="clock"></w-icon>3</span></span><span class="truncate text-xs font-normal text-subtle">On this device &middot; updated 08:12</span></span><w-icon name="check" class="ms-icon-sm text-accent"></w-icon><span class="sr-only">, current domain</span></button><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Eo</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">example.org</span><span class="ms-tag ms-tag--warn"><w-icon name="clock"></w-icon>1</span></span><span class="truncate text-xs font-normal text-subtle">On this device &middot; updated 07:55</span></span></button><button type="button" role="menuitemradio" aria-checked="false" aria-disabled="true" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold opacity-60"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">La</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">lab.example.net</span></span><span class="truncate text-xs font-normal text-subtle">Not on this device &middot; needs the network</span></span></button></div></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 11 &middot; Switched offline: the header changes at once, from the device copy">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 11 &middot; Switched offline: the header changes at once, from the device copy</p>
+        <div class="grid w-full gap-3">
+          <div class="overflow-hidden rounded-xl border border-border bg-sidebar"><button type="button" class="ms-sync-bar" aria-haspopup="dialog"><w-icon name="wifi-off" aria-hidden="true"></w-icon><span class="ms-sync-bar__state">Offline</span><span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>example.org updated 07:55</span><span class="ms-sync-bar__count"><w-icon name="clock" aria-hidden="true"></w-icon><span>1 waiting</span></span><w-icon name="chevron-down" class="ms-icon-sm" aria-hidden="true"></w-icon></button><div class="flex min-h-13 items-center gap-2 px-2"><w-btn variant="text" class="font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.org</w-btn></div></div>
+          <p class="sr-only" role="status">Now in example.org. Offline, updated 07:55.</p>
+          <p class="text-sm text-subtle">A switch offline needs no server answer: the tab opens the example.org copy. Items queued for example.org send only with an example.org token. Back online, the tab asks <code>POST /identity/session/domain</code> as usual.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 12 &middot; A domain with no copy, offline">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 12 &middot; A domain with no copy, offline</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="nd-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-surface-high text-text" aria-hidden="true"><w-icon name="inbox"></w-icon></span><h2 id="nd-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">lab.example.net is not on this device</h2></div>
+          <div class="grid gap-3 px-4 pb-2 sm:px-6">
+            <p>Mesail keeps a copy only of domains you opened on this device. Open lab.example.net when you are online, and it works offline after that.</p>
+          </div>
+          <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-4 pt-4 pb-5 sm:px-6 max-sm:[&>*]:flex-1">
+            <w-btn variant="filled">OK</w-btn>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Mockup pages">
+        <ul class="flex flex-wrap justify-center gap-2">
+          <li><w-btn variant="text" size="small" href="index.html">All mockups</w-btn></li>
+          <li><w-btn variant="text" size="small" href="offline-messenger.html">Offline messenger</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

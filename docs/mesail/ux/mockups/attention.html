@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: needs your attention</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/offline.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface text-text">
+<a class="ms-skip-link" href="#attention">Skip to the page</a>
+
+<div class="flex h-dvh flex-col">
+  <button type="button" class="ms-sync-bar ms-sync-bar--attention safe-l safe-r" aria-haspopup="dialog" style="--ms-edge: 1rem">
+    <w-icon name="alert" aria-hidden="true"></w-icon>
+    <span class="ms-sync-bar__state">3 items need your attention</span>
+    <span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>5 others sent</span>
+    <w-icon name="chevron-down" class="ms-icon-sm ms-sync-bar__count" aria-hidden="true"></w-icon>
+  </button>
+
+<div class="group/app relative grid min-h-0 flex-1 overflow-hidden
+  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
+  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main">
+
+  <!-- Domain rail (960 px and up). Offline, a domain without a copy on this device is dimmed: it needs the network. -->
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 overflow-y-auto" aria-label="Domains">
+    <ul class="flex flex-col gap-2">
+      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org">Eo</a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net">La</a></li>
+    </ul>
+    <div class="flex-1"></div>
+    <a class="ms-domain-tile" href="settings-device.html" aria-label="This device: space and offline settings" title="This device"><w-icon name="device"></w-icon></a>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations in example.com">
+    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
+      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
+      <span class="flex-1"></span>
+      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+    </header>
+    <div class="px-3 py-2">
+      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
+        <w-icon name="search" class="ms-icon-sm"></w-icon>Search<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto px-2 pb-4">
+      <w-list nav density="compact" aria-label="Shortcuts">
+        <w-list-item href="attention.html" title="Needs your attention" active><w-icon slot="prepend" name="alert" class="text-error"></w-icon><w-badge slot="append" content="3" inline label="3 items need your attention"></w-badge></w-list-item>
+        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline class="ms-count" label="2 mentions"></w-badge></w-list-item>
+        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
+      </w-list>
+
+      <section class="mt-3" aria-labelledby="sec-channels">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-channels"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Channels</button>
+          <w-icon-btn icon="plus" size="small" aria-label="Add or browse channels"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-channels">
+          <w-list-item href="#" title="general"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="offline-messenger.html" title="design"><w-icon slot="prepend" name="lock" role="img" aria-label="Private channel"></w-icon></w-list-item>
+          <w-list-item href="#" title="releases"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
+          <w-list-item href="channel-email.html" title="support" class="ms-unread"><w-icon slot="prepend" name="hash"></w-icon><w-badge slot="append" content="4" inline class="ms-count" label="4 unread"></w-badge></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-dms">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-dms"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Direct messages</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New direct message"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" aria-labelledby="sec-dms">
+          <w-list-item href="#" title="Bo Lee"><w-avatar slot="prepend" text="BL" size="20" style="--h:20" alt="Bo Lee"></w-avatar></w-list-item>
+          <w-list-item href="#" title="Chen Wu"><w-avatar slot="prepend" text="CW" size="20" style="--h:280" alt="Chen Wu"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+
+      <section class="mt-3" aria-labelledby="sec-email">
+        <div class="flex items-center gap-1 px-1">
+          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-email"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Email</button>
+          <w-icon-btn icon="plus" size="small" aria-label="New email"></w-icon-btn>
+        </div>
+        <w-list nav density="compact" lines="two" aria-labelledby="sec-email">
+          <w-list-item href="#" title="carol@partner.test" subtitle="Draft offer for 2027"><w-avatar slot="prepend" text="CA" size="20" class="ms-external" alt="carol@partner.test, outside example.com"></w-avatar></w-list-item>
+          <w-list-item href="email-conversation.html" title="Carol Diaz, Bo Lee" subtitle="Contract renewal 2027"><w-avatar slot="prepend" text="CD" size="20" class="ms-external" alt="Carol Diaz, outside example.com"></w-avatar></w-list-item>
+        </w-list>
+      </section>
+    </div>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
+      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz. Open status and account menu">
+        <w-avatar text="AR" size="28" style="--h:195" alt=""></w-avatar>
+        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">ana@example.com</span></span>
+      </button>
+      <w-icon-btn icon="settings" href="settings-device.html" aria-label="Settings"></w-icon-btn>
+    </footer>
+  </aside>
+
+  <!-- Needs your attention (ADR 0006 section 4, SPEC AC-OF-6, AC-OF-8, S16). Every kind: attention-states.html. -->
+  <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="att-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="?pane=list" aria-label="Back to conversations"></w-icon-btn>
+      <h1 id="att-title" class="flex min-w-0 items-center gap-2 text-lg font-bold"><w-icon name="alert" class="ms-icon-sm text-error" aria-hidden="true"></w-icon><span class="truncate">Needs your attention</span></h1>
+      <span class="ms-tag ms-tag--danger">3</span>
+    </header>
+    <div class="flex-1 min-h-0 overflow-y-auto safe-b safe-l safe-r @container/page" id="attention" style="--ms-edge: 1rem">
+      <div class="mx-auto grid w-full max-w-content gap-5 px-4 pt-5 pb-10 @xl/page:px-6">
+        <p class="text-sm text-subtle">Mesail could not send these items from example.com. <strong class="font-semibold text-text">Nothing of them was sent.</strong> Your other items were sent. They stay on this device until you choose.</p>
+        <ul class="grid gap-3" aria-label="Items in example.com">
+          <li><article class="ms-attention-card @container/card" aria-labelledby="i1-r">
+            <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-subtle"><span class="font-semibold text-text">Bo Lee &middot; direct message</span><span>Written offline at 09:40</span></p>
+            <div class="flex items-start gap-2"><w-icon name="alert" class="ms-icon-sm mt-0.5 flex-none text-error" aria-hidden="true"></w-icon><div class="grid gap-1"><h2 id="i1-r" class="text-base font-semibold">Bo Lee is no longer in example.com</h2><p class="text-sm text-subtle">Chat stays inside example.com, so this was not sent.</p></div></div>
+            <blockquote class="ms-attention-card__quote ">Here are the two logo options. Can you pick one by Friday?</blockquote>
+            <p class="text-xs text-subtle">1 reaction you added to it later was dropped too.</p>
+            <div class="flex flex-wrap gap-2 max-sm:[&>*]:flex-1"><w-btn variant="tonal">Send by email</w-btn><w-btn variant="outlined">Edit</w-btn><w-btn variant="text" color="danger">Discard</w-btn></div>
+          </article></li>
+          <li><article class="ms-attention-card ms-attention-card--conflict @container/card" aria-labelledby="i2-r">
+            <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-subtle"><span class="font-semibold text-text">#design</span><span>Your edit at 09:40 &middot; newer edit 09:55 on another device</span></p>
+            <div class="flex items-start gap-2"><w-icon name="edit" class="ms-icon-sm mt-0.5 flex-none text-on-warning-container" aria-hidden="true"></w-icon><div class="grid gap-1"><h2 id="i2-r" class="text-base font-semibold">Your edit was not saved</h2><p class="text-sm text-subtle">You changed this message on another device later. Mesail kept the newer text and saved your edit as a draft.</p></div></div>
+            <div class="grid gap-3 @lg/card:grid-cols-2">
+              <section class="grid content-start gap-1" aria-label="Now on the server"><p class="text-xs font-semibold uppercase tracking-wide text-subtle">Now on the server</p><blockquote class="ms-attention-card__quote ms-attention-card__quote--full">The new tab bar works. Let&rsquo;s test a filled icon with three people first.</blockquote></section>
+              <section class="grid content-start gap-1" aria-label="Your edit, kept as a draft"><p class="text-xs font-semibold uppercase tracking-wide text-on-warning-container">Your edit (draft)</p><blockquote class="ms-attention-card__quote ms-attention-card__quote--full bg-warning-container text-on-warning-container">The new tab bar works. I would make the active icon filled, not only darker.</blockquote></section>
+            </div>
+            <div class="flex flex-wrap gap-2 max-sm:[&>*]:flex-1"><w-btn variant="tonal">Use my edit</w-btn><w-btn variant="outlined">Keep the newer text</w-btn><w-btn variant="text">Edit</w-btn></div>
+          </article></li>
+          <li><article class="ms-attention-card @container/card" aria-labelledby="i3-r">
+            <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-subtle"><span class="font-semibold text-text">#design</span><span>Written offline at 07:58</span></p>
+            <div class="flex items-start gap-2"><w-icon name="alert" class="ms-icon-sm mt-0.5 flex-none text-error" aria-hidden="true"></w-icon><div class="grid gap-1"><h2 id="i3-r" class="text-base font-semibold">Eli Park left #design</h2><p class="text-sm text-subtle">A mention of someone who left the channel cannot be sent here. Remove the mention, or send it to Eli directly.</p></div></div>
+            <blockquote class="ms-attention-card__quote ">@Eli Park can you join the review on Thursday?</blockquote>
+            <div class="flex flex-wrap gap-2 max-sm:[&>*]:flex-1"><w-btn variant="tonal">Edit</w-btn><w-btn variant="text" color="danger">Discard</w-btn></div>
+          </article></li>
+        </ul>
+        <div class="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-low p-4">
+          <span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Eo</span>
+          <p class="min-w-0 flex-1 text-sm"><strong class="font-semibold">1 more item</strong> needs your attention in example.org.</p>
+          <w-btn variant="outlined" class="max-sm:w-full">Open example.org</w-btn>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom navigation: phones, list pane only -->
+  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden" value="home" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" href="?pane=list" active><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="search" label="Search" href="offline-messages.html#search"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <w-bottom-nav-item value="you" label="You" href="settings-device.html"><w-icon name="user"></w-icon></w-bottom-nav-item>
+  </w-bottom-navigation>
+</div>
+</div>
+
+<div class="sr-only" aria-live="polite" id="announcer"></div>
+</body>
+</html>

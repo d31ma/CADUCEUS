@@ -5,6 +5,8 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 @source "../*.html";
+/* .ms-icon-xs / -sm / -md / -lg are Mesail icon classes, not margin-inline-start utilities with the icon spacing tokens. */
+@source not inline("ms-icon-xs ms-icon-sm ms-icon-md ms-icon-lg");
 
 /* Breakpoints are DuVay's (--w-bp-*), not Tailwind's defaults. */
 @theme {

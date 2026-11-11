@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: locked device copy</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<link rel="stylesheet" href="assets/screens/offline.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#l1-title">Skip to the first state</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 px-0 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">A kept device locks its copy after 30 days without a successful update, or when a refresh answers a plain 401 (ADR 0006 sections 2 and 7, SPEC AC-OF-14, Q10). Only the same person can unlock it. Items written offline are kept and sent after the unlock.</p>
+    <!-- Mockup: labelled states side by side. Cards keep their token widths (auth 26rem, dialog 32rem, page 50rem). -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-auth-card-max)),1fr))]">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 1 &middot; Locked after 30 days without an update (SPEC Q10, AC-OF-14), online">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 &middot; Locked after 30 days without an update (SPEC Q10, AC-OF-14), online</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h1 id="l1-title" class="text-2xl font-semibold tracking-tight short:text-xl">Your messages on this device are locked</h1>
+            <p class="-mt-3 text-subtle short:hidden">Mesail could not update this device for 30 days, so it locked the copy. Sign in to unlock it.</p>
+            <form class="grid gap-4 short:gap-3" action="offline-messenger.html" method="post" novalidate>
+              <div class="flex items-center gap-3 rounded-lg border border-border p-3"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><span class="grid min-w-0 flex-1 gap-0.5"><span class="truncate font-semibold">Welcome back, Ana Ruiz</span><span class="truncate text-xs text-subtle">ana · opens example.com</span></span></div>
+              <w-text-field id="l1-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="l1-password"></w-icon-btn></w-text-field>
+              <w-text-field id="l1-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <p class="flex items-start gap-2 text-sm"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none text-on-warning-container" aria-hidden="true"></w-icon><span><strong class="font-semibold">3 items</strong> you wrote offline wait to send. They send after you sign in.</span></p>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in and unlock</w-btn>
+              <w-btn variant="text" block href="device-locked.html#s4">Not ana? Use another username</w-btn>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 2 &middot; Locked, and still no network">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 &middot; Locked, and still no network</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Your messages on this device are locked</h2>
+            <p class="-mt-3 text-subtle short:hidden">Mesail could not update this device for 30 days, so it locked the copy.</p>
+            <div class="grid gap-4">
+              <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="wifi-off" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>You are offline. Sign-in needs the network. Your messages stay on this device, locked.</p></div></div>
+              <p class="flex items-start gap-2 text-sm"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none text-on-warning-container" aria-hidden="true"></w-icon><span><strong class="font-semibold">3 items</strong> you wrote offline are kept. They send after you sign in.</span></p>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Try again</w-btn>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 3 &middot; Session ended (a plain 401 on refresh): locked until the same person signs in">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 &middot; Session ended (a plain <code>401</code> on refresh): locked until the same person signs in</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in again</h2>
+            <p class="-mt-3 text-subtle short:hidden">Your session ended. Your messages stay on this device, locked, until you sign in again.</p>
+            <form class="grid gap-4 short:gap-3" action="offline-messenger.html" method="post" novalidate>
+              <div class="flex items-center gap-3 rounded-lg border border-border p-3"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><span class="grid min-w-0 flex-1 gap-0.5"><span class="truncate font-semibold">Welcome back, Ana Ruiz</span><span class="truncate text-xs text-subtle">ana · opens example.com</span></span></div>
+              <w-text-field id="l3-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="l3-password"></w-icon-btn></w-text-field>
+              <w-text-field id="l3-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <p class="flex items-start gap-2 text-sm"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none text-on-warning-container" aria-hidden="true"></w-icon><span><strong class="font-semibold">1 item</strong> you wrote offline waits to send. It sends after you sign in.</span></p>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <w-btn variant="text" block href="device-locked.html#s4">Not ana? Use another username</w-btn>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" id="s4" aria-label="State 4 &middot; Use another username on a device with a copy">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 &middot; &ldquo;Use another username&rdquo; on a device with a copy</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="l4-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-error-container text-on-error-container" aria-hidden="true"><w-icon name="trash"></w-icon></span><h2 id="l4-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">Remove Ana Ruiz&rsquo;s messages from this device?</h2></div>
+          <div class="grid gap-3 px-4 pb-2 sm:px-6">
+            <p>Before someone else signs in, Mesail removes everything it keeps here for Ana Ruiz: messages, drafts, and <strong>3 items that were not sent</strong>.</p>
+            <p class="text-sm text-subtle">Ana&rsquo;s messages stay safe on the server. Only this device&rsquo;s copy is removed.</p>
+          </div>
+          <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-4 pt-4 pb-5 sm:px-6 max-sm:[&>*]:flex-1">
+            <w-btn variant="text">Cancel</w-btn>
+            <w-btn variant="filled" color="danger">Remove and continue</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 5 &middot; Signed in again: unlocking and catching up">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 5 &middot; Signed in again: unlocking and catching up</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Unlocking</h2>
+            <div class="grid gap-4">
+              <p class="flex items-center gap-3"><w-icon name="refresh" class="ms-icon-sm flex-none animate-spin text-accent motion-reduce:animate-none" aria-hidden="true"></w-icon><span>Getting the changes since 2 October&hellip;</span></p>
+              <p class="text-sm text-subtle">You were away longer than the server keeps changes (30 days), so Mesail reloads your recent messages. Your 3 waiting items are kept and sent after that.</p>
+              <p class="sr-only" role="status">Unlocking. Getting changes.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 6 &middot; Warning 5 days before the lock (in the sync bar and the sync panel)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 6 &middot; Warning 5 days before the lock (in the sync bar and the sync panel)</p>
+        <div class="grid w-full gap-3 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <button type="button" class="ms-sync-bar ms-sync-bar--attention" aria-haspopup="dialog"><w-icon name="lock" aria-hidden="true"></w-icon><span class="ms-sync-bar__state">Connect soon</span><span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>Locks on 18 Nov</span><w-icon name="chevron-down" class="ms-icon-sm ms-sync-bar__count" aria-hidden="true"></w-icon></button>
+          <p class="px-4 pb-4 text-sm">Mesail has not updated this device since 19 October. If it cannot update by 18 November, it locks your messages on this device until you sign in online.</p>
+        </div>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Mockup pages">
+        <ul class="flex flex-wrap justify-center gap-2">
+          <li><w-btn variant="text" size="small" href="index.html">All mockups</w-btn></li>
+          <li><w-btn variant="text" size="small" href="offline-messenger.html">Offline messenger</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

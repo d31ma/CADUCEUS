@@ -143,6 +143,27 @@ The mockup is the reference for look and states.
 | Wordmark | sign-in pages | `components/app/wordmark/tac.html` | none (Mesail mark) |
 | Session ended dialog (draft kept) | `session-expired.html` | `components/app/session-ended/tac.html` | `w-dialog persistent` |
 
+## Offline and sync (Wave 4: O3, O4, O5; ADR 0006)
+
+Screen CSS: `mockups/assets/screens/offline.css`. File names follow SLICES.md "Wave 4" (`Sync*`, `Queue*`,
+`Attention*`, `DeviceStore*`, `OfflineSearch*`). The "D1" column names what DuVay request D1 (offline-state
+patterns, ADR 0006) would replace; until D1 ships, Mesail draws these parts itself with DuVay v26.46.03
+elements and Tailwind.
+
+| Component | Mockups | Tac target | DuVay element(s) | D1 would replace |
+| --- | --- | --- | --- | --- |
+| Sync bar (offline, updating with progress, sending, up to date, needs attention, reconnecting, reloading, lock warning) | `offline-status.html` 1-8, `offline-messenger.html`, `device-locked.html` 6 | `components/sync/bar/tac.html` + `SyncStatusService.go` (O4) | none: one `<button>` (`.ms-sync-bar`), `w-icon` | the "Offline, updated at" status bar |
+| Sync panel (per-domain copy, waiting counts, Try now) | `offline-status.html` 9 | `components/sync/panel/tac.html` (O4) | `w-dialog` (`w-bottom-sheet` under 600 px), `.ms-tag--warn` | part of the status bar pattern |
+| Domain menu offline (copy per domain, waiting count, no-copy row disabled) | `offline-status.html` 10-12 | the existing domain menu + `DevicePartitionService.go` (O3) | `w-menu`, `w-dialog` | none |
+| Message queue notes ("Waiting to send", "Edit waiting to send", "Deletes when you are back online", Undo, "Written offline at") | `offline-messages.html` 1-9, `offline-messenger.html` | the message row + `QueueService.go` (O4) | `w-btn` (text, small), `w-chip` (reaction with a clock) | the "Waiting to send" message state |
+| "Not on this device" (older messages, files, thread replies) and "Load older messages" | `offline-messages.html` 10, 10b | `components/conversation/not-here/tac.html` (O4) | `.ms-not-here`, `w-btn` | none |
+| Offline recipient chip "Checked when online" and offline composer note | `offline-messages.html` 11, `offline-messenger.html` | the composer chips (O4, with F3's composer) | `w-chip`, `.ms-how--checking` | none |
+| Offline search results ("On this device") | `offline-messages.html` 12-13 | `components/search/offline-results/tac.html` + `OfflineSearchService.go` (O5) | `w-text-field`, `.ms-tag` | none |
+| Needs your attention: page, cards per reason, edit-conflict compare, Discard dialog | `attention.html`, `attention-states.html` | `pages/attention/tac.html`, `components/attention/item/tac.html` + `AttentionService.go` (O4) | `w-btn`, `w-dialog`, `.ms-attention-card` | the "Needs your attention" list |
+| "Keep me signed in on this device" box | `signin-kept.html`, `signin.html` | the sign-in form + `SessionService.go` kept parts (O3) | `w-checkbox`, hint `<p>` | none |
+| Locked copy, ended access, sign-out warning, remove-the-copy and sign-out-everywhere dialogs | `device-locked.html`, `access-ended.html` | `components/app/device-locked/tac.html`, `components/app/access-ended/tac.html` + `DeviceWipeService.go` (O3) | `w-text-field`, `w-btn`, `w-dialog` | none |
+| Settings: this device (kept status, space meter per domain, window, space limit, files ahead, remove, sign out everywhere) | `settings-device.html` | `pages/settings/device/tac.html` + `DeviceBudgetService.go` (O3) | `w-switch`, `w-select`, radio group, `.ms-space-meter` | the space-used meter |
+
 ## Settings (new group: no slice owns it yet)
 
 | Component | Mockups | Tac target | DuVay element(s) |
@@ -189,6 +210,8 @@ The mockup is the reference for look and states.
   (`.ms-states`, `.mk-state`, `.ms-mock-state`, `.ms-state`: mockup-only, do not port) and the
   invalid composer row (`.ms-attach-chip--error`, `.ms-composer__row--invalid` in `composer.css`
   and `delivery.css`).
+- **Offline group owner.** The "Settings: this device" page belongs to O3 by SLICES.md file names, but the
+  settings group itself still has no owner (first bullet).
 - **Tables on phones.** `admin.css` turns table rows into cards with a container query. Tac must keep
   table semantics (`role="table"`, `row`, `cell`) when it does this, because `display: block`
   removes them in Safari.

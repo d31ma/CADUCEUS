@@ -1,9 +1,9 @@
 # Mesail UX specification
 
 - Status: Draft for implementation
-- Date: 2026-11-10 (one login, ADR 0005: 2026-11-11)
+- Date: 2026-11-10 (one login, ADR 0005, and offline first, ADR 0006: 2026-11-11)
 - Owner: Senior UX/UI Designer (Mesail rewrite)
-- Product spec: [../SPEC.md](../SPEC.md) (scenarios S1-S14, acceptance criteria AC-*; one login: AC-ID-1 to AC-ID-14)
+- Product spec: [../SPEC.md](../SPEC.md) (scenarios S1-S17, acceptance criteria AC-*; one login: AC-ID-1 to AC-ID-14; offline first: AC-OF-1 to AC-OF-17, section 15)
 - Design tokens: [TOKENS.md](TOKENS.md)
 - Component inventory and Tac mapping: [COMPONENTS.md](COMPONENTS.md)
 - Mockups: [mockups/index.html](mockups/index.html) (open the file in a browser; add
@@ -183,8 +183,9 @@ recovery code (AC-ID-5). Mockups: `signin.html`, `password-change-required.html`
 - **One card** (`signin.html`): **Username or email address** (one field; `type="text"`,
   `inputmode="email"`, `autocomplete="username"`, no auto-capitalization, placeholder "ana or
   ana@example.com"), Password (with a Show button), optional 2-step code ("Only if your account uses
-  one."), "Remember my username on this device" (off by default), **Sign in**, and "Forgot your
-  password? Ask your admin to reset it."
+  one."), "Keep me signed in on this device" (offline-first, section 15: off by default in a browser,
+  on in the Mesail app), "Remember my username on this device" (off by default; ticked and disabled
+  while "Keep me signed in" is ticked), **Sign in**, and "Forgot your password? Ask your admin to reset it."
 - **The hint under the field** is computed in the browser from the text only, so it never reveals
   whether an account exists: empty "Your username, like ana, or your full address."; a username
   "Opens your default domain."; a full address "Opens example.org.". The browser trims the text; the
@@ -425,6 +426,20 @@ Questions from the screen work (product owner to decide; none blocks the first s
   let the members menu disable account actions up front instead of answering `403` (AC-ID-13). (b) After
   a refresh answers `401` because the open domain was removed, may the same `sessionKey` still switch to
   another domain (`POST /session/domain`)? The mockup tries it, then falls back to sign-in.
+- **Offline first (slice OU, for mesail-arch and the owner).**
+  (a) Q13 for these screens is "number only": the access-lost notice says how many items were not sent
+  and never shows their words (the coordinator's brief of 2026-11-11). SPEC AC-OF-9 and Q13 still say
+  "with the first words of each"; SPEC should be aligned. A conversation that is gone while the domain
+  stays is different: its items go to "Needs your attention" with their text and "Copy text" (AC-OF-6).
+  (b) In a browser where "Keep me signed in" was off, what happens when the network drops while the tab
+  is open? ADR 0006 does not say whether such a tab may queue. Proposal (not drawn yet): keep showing
+  what the tab has, read only, and say in the composer "Sending needs the network on this browser."
+  (c) Does "Remove the copy on this device" also turn off "Keep me signed in" (mockup: yes, the session
+  then lasts until Mesail closes)? Otherwise the copy comes back at the next sync.
+  (d) May the person choose the space limit (mockup: 300 MB, 1 GB, 2 GB, 5 GB), or is it fixed per
+  device kind (SPEC AC-OF-13 names only defaults)?
+  (e) A mention of someone who left the channel (attention item "Eli Park left #design"): is that a
+  server refusal (`409 recipients_changed`), or does the server send it with a dead mention?
 - **Settings.** Does the job title come from Keycloak, like the name? Is "Always show images from
   people I have emailed" allowed (AC-IN-5 speaks of one sender at a time)? Is auto-reply out of the
   first release (the mockup shows it as "Later release")?
@@ -433,3 +448,96 @@ Questions from the screen work (product owner to decide; none blocks the first s
   archived channel's address refused (mockup) or accepted? Who can archive and unarchive? What
   happens to a turned-off domain (mockup: mail refused, sign-in blocked, messages kept)? When can
   the old DKIM record go (mockup: after 7 days)?
+
+## 15. Offline first (ADR 0006, slice OU)
+
+The server stays the source of truth. A **kept device** keeps a copy of recent messages and mail, works
+offline (read, search, write), queues every change and sends it later. Mockups: `offline-messenger.html`,
+`offline-status.html`, `offline-messages.html`, `attention.html`, `attention-states.html`,
+`signin-kept.html`, `device-locked.html`, `access-ended.html`, `settings-device.html`. Styles:
+`mockups/assets/screens/offline.css`. DuVay request D1 would replace the sync bar, the queue notes, the
+attention cards and the space meter (COMPONENTS.md "Offline and sync").
+
+- **Kept device** (`signin-kept.html`, AC-OF-1, Q8): the box "Keep me signed in on this device" sits
+  under the code field with a hint. Browser: off, "Only on your own computer. Mesail then keeps your
+  recent messages here and works offline." Ticked: "Mesail keeps your messages of the last 7 days on this
+  computer. Signing out removes them." Mesail app: on, "Recommended in the Mesail app. Turn it off on a
+  device you share with others." Sends `keepSignedIn` in `SignInRequest`. A kept device opens offline
+  without the sign-in form. Without a copy and without network: "You are offline. Sign-in needs the network."
+- **Sync bar** (`offline-status.html`): one full-width button at the very top of the app, above every pane
+  and on every width, so the person always sees it in the same place. It shows only when there is
+  something to say, and it takes the top safe area (the pane headers under it do not add it again).
+  32 px with a mouse, 44 px on touch and under 768 px. States and words:
+  - Offline: "Offline · Updated 08:12", plus "4 waiting to send" ("4 waiting" under 600 px). Neutral
+    colour: offline is normal, not an error.
+  - Back online: "Updating · Getting changes since 08:12" with a 2 px progress line; then "Sending · 3 of 4";
+    then "Up to date · 4 sent" in green, gone after 4 seconds (no slide with reduced motion).
+  - "1 item needs your attention · 3 others sent" in amber, until the person opens the list.
+  - Realtime down but network up: "Reconnecting · New messages may be late" and "Try now" (the existing
+    wording of section 8).
+  - Long offline (AC-OF-15): "Reloading recent messages". Before the 30-day lock: "Connect soon · Locks on 18 Nov".
+  - The bar opens the **sync panel** (a dialog; a bottom sheet under 600 px): each domain with "Updated
+    08:12" and its waiting count, domains without a copy marked "Not on this device. Needs the network.",
+    a link to "Needs your attention", **Try now**, and "Space and offline settings". It says "Mesail sends
+    only while it is open" (no background sending until TACHYON T3).
+  - Screen readers hear one polite status per change ("Offline. Showing the copy on this device, updated
+    08:12."; "Up to date. 4 sent."), never a stream of progress.
+- **Waiting items** (`offline-messages.html`, AC-OF-4): a change shows at once. A queued message has a
+  3 px amber edge on the left and a note under it; its text stays at full contrast, because it is the
+  person's own writing. Notes: "Waiting to send", "Email to carol@partner.test: waiting to send", "Edit
+  waiting to send" with **Undo edit**, "Deletes when you are back online" (text struck through) with
+  **Undo**, and a reaction chip with a small clock. The time reads "Written 09:40" until it is sent; then
+  the server time, with "Written offline at 09:40" (AC-OF-7). Back online, "Sending…" as today. The
+  sidebar row of a conversation with waiting items shows a clock ("3 waiting to send" for screen readers).
+- **Things not on this device** (AC-OF-3): a dashed panel at the top of the timeline, "Older messages are
+  not on this device. This device keeps the last 7 days. Older messages load when you are back online."
+  Files show "Not on this device · opens when you are online"; thread links "12 replies · 8 on this
+  device". Online, the same place offers **Load older messages**. Things that need the network (attach a
+  file, create a channel, change notification settings) are disabled with "(needs the network)" in their
+  label.
+- **Composer offline** (AC-OF-5): a line on top, "You are offline. What you send waits on this device and
+  sends when you are back online." ("Offline: sends when you are back online." under 600 px). Members and
+  channels come from the copy; any other address gets the chip "Checked when online". If the server
+  later finds that an address needs email, the item goes to "Needs your attention" instead of being sent
+  another way (AC-OF-6: never sent with a changed choice).
+- **Search offline** (AC-OF-12): "Search this device" in the sidebar; a line "Searching this device: the
+  last 7 days of example.com. Older messages need the network."; each hit has the tag "On this device".
+  No hit: "No results for … on this device", and a hint to search again online.
+- **Needs your attention** (`attention.html`, `attention-states.html`, AC-OF-6, AC-OF-8, S16): a row under
+  Activity with a red count; a page with one card per item, newest first, for the current domain, and a
+  line for other domains ("1 more item needs your attention in example.org. Open example.org"). A card:
+  where and when it was written, the reason as a heading, one sentence on what happened, the person's
+  text (3 lines at most), and buttons that depend on the reason. **Discard** is always last and asks first.
+  - Recipient changed: "Bo Lee is no longer in example.com" → **Send by email**, Edit, Discard.
+  - Edit conflict: "Your edit was not saved" with "Now on the server" and "Your edit (draft)" side by side
+    (stacked in a narrow card) → **Use my edit**, Keep the newer text, Edit.
+  - Too large, attachment refused: Edit, Discard. Conversation gone or posting not allowed: **Copy text**,
+    Discard. Any other refusal: **Retry**, Edit, Discard.
+  - Dropped changes (a refused send's later edits and reactions, or changes to a message deleted
+    elsewhere): an info card or a system line in the timeline, "Your edit and 1 reaction were not saved".
+- **Domains** (AC-OF-11): the domain menu offline says "Offline: domains on this device still open." Each row
+  shows "On this device · updated 08:12" and its waiting count; a domain without a copy is disabled with
+  "Not on this device · needs the network" (the rail dims its tile). A switch offline opens that domain's
+  copy at once ("Now in example.org. Offline, updated 07:55."); online, the tab still calls
+  `POST /identity/session/domain`.
+- **Locked copy** (`device-locked.html`, AC-OF-14, Q10): after 30 days without an update, or after a plain
+  `401`, the app shows "Your messages on this device are locked" (or "Sign in again") with the person's
+  name, password and code, the waiting count ("3 items you wrote offline wait to send. They send after you
+  sign in."), and "Not ana? Use another username", which asks first: "Remove Ana Ruiz's messages from this
+  device?" (all copies, drafts and unsent items).
+- **Access ended** (`access-ended.html`, AC-OF-9, AC-OF-10, Q13): `403 access_revoked` shows "Your session
+  was ended" and "Mesail removed your messages from this device. 2 items you wrote offline were not sent."
+  Removal from one domain shows a one-time dialog, "You no longer have access to example.org ... 2 items
+  you wrote offline for example.org were not sent." Both show **only the number**, never the words.
+  Sign-out with waiting items warns first (offline: "Sign out and remove"; online: "Wait, then sign out").
+  After another person signs in, a notice says the last person's copy was removed, without a name.
+- **Settings: this device** (`settings-device.html`, AC-OF-13, Q9, Q11): a new settings section "This
+  device" (tab and side list on every settings page). Cards: Keep me signed in (switch, since when, the
+  disk-encryption note of AC-OF-14); Space used (a bar split by domain, with a list of each domain's size
+  and update time, so colour is never the only cue); What to keep (7, 14, 30 or 90 days as a segmented
+  choice, space limit, "Download files ahead of time" on a computer or "on Wi-Fi" on a phone); Remove
+  ("Remove the copy", "Sign out everywhere"). The first build shows 7 days only, 40 MB, and files off with
+  "Files are not kept on devices yet." A browser without a kept session says how to turn it on.
+- **Sizes:** every new target follows TOKENS.md "Control sizes"; the bar, chips, list rows, tabs and
+  recipient input reach 44 px on touch and under 768 px. Checked in headless Chromium at 320, 375, 768,
+  1024, 1440 and 2560 px, light and dark (fine and coarse pointer at 768 and 1024).

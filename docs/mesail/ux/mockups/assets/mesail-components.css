@@ -211,9 +211,16 @@ w-chip .w-chip__content > slot { display: contents; }
  * --ms-control-sm (32 px); on touch screens and in windows under 768 px it is at least --ms-touch-min (44 px),
  * the rule tests/responsive checks in the app. */
 .w-checkbox, .w-radio, .w-switch { min-height: var(--ms-control-sm); align-items: center; }
+/* A tab strip scrolls sideways on narrow screens; its tabs keep their full label instead of shrinking. */
+w-tabs w-tab, .w-tab { flex: none; }
 @media (pointer: coarse), (max-width: 767.98px) {
   .w-btn, .w-icon-btn { min-height: var(--ms-touch-min); }
   .w-icon-btn { min-width: var(--ms-touch-min); }
   .w-checkbox, .w-radio, .w-switch { min-height: var(--ms-touch-min); }
   .w-text-field-control, .w-select-field { min-height: var(--ms-touch-min); }
+  .w-chip { min-height: var(--ms-touch-min); min-width: var(--ms-touch-min); justify-content: center; }
+  .ms-recipients input { height: var(--ms-touch-min); }
+  .ms-thread-link { min-height: var(--ms-touch-min); }
+  .w-list-item { min-height: var(--ms-touch-min); }
+  .w-tab { min-width: var(--ms-touch-min); }
 }

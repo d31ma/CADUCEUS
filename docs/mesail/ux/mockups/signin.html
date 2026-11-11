@@ -30,6 +30,10 @@
               <w-text-field id="s1-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
               <w-text-field id="s1-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s1-password"></w-icon-btn></w-text-field>
               <w-text-field id="s1-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="k1-hint"></w-checkbox>
+                <p id="k1-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
               <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
               <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
 
@@ -51,6 +55,10 @@
               <w-text-field id="s2-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" active required></w-text-field>
               <w-text-field id="s2-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s2-password"></w-icon-btn></w-text-field>
               <w-text-field id="s2-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="k2-hint"></w-checkbox>
+                <p id="k2-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
               <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
               <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
 
@@ -72,6 +80,10 @@
               <w-text-field id="s3-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens example.org." persistent-hint value="ana@example.org" active required></w-text-field>
               <w-text-field id="s3-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s3-password"></w-icon-btn></w-text-field>
               <w-text-field id="s3-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="k3-hint"></w-checkbox>
+                <p id="k3-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
               <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
               <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
 
@@ -93,6 +105,10 @@
               <w-text-field id="s4-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" required></w-text-field>
               <w-text-field id="s4-password" type="password" label="Password" autocomplete="current-password" hide-details active required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s4-password"></w-icon-btn></w-text-field>
               <w-text-field id="s4-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="k4-hint"></w-checkbox>
+                <p id="k4-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
               <w-checkbox label="Remember my username on this device" name="remember" checked></w-checkbox>
               <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
 
@@ -115,6 +131,10 @@
               <w-text-field id="s5-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" active readonly required></w-text-field>
               <w-text-field id="s5-password" type="password" label="Password" autocomplete="current-password" value="secretpassword" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s5-password"></w-icon-btn></w-text-field>
               <w-text-field id="s5-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="k5-hint"></w-checkbox>
+                <p id="k5-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
               <w-checkbox label="Remember my username on this device" name="remember" checked></w-checkbox>
               <w-btn variant="filled" size="large" block class="min-h-control-lg" loading disabled>Signing in…</w-btn>
               <p class="sr-only" role="status">Signing in…</p>
@@ -137,6 +157,10 @@
               <w-text-field id="s6-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" required></w-text-field>
               <w-text-field id="s6-password" type="password" label="Password" autocomplete="current-password" hide-details active required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s6-password"></w-icon-btn></w-text-field>
               <w-text-field id="s6-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="k6-hint"></w-checkbox>
+                <p id="k6-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
               <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
               <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
 
@@ -158,6 +182,10 @@
               <w-text-field id="s7-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens partner.test." persistent-hint value="ana@partner.test" required></w-text-field>
               <w-text-field id="s7-password" type="password" label="Password" autocomplete="current-password" value="secretpassword" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s7-password"></w-icon-btn></w-text-field>
               <w-text-field id="s7-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="If you use 2-step sign-in, type a new code before you try again." persistent-hint active></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="k7-hint"></w-checkbox>
+                <p id="k7-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
               <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
               <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
 
@@ -196,6 +224,10 @@
               <w-text-field id="s9-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="" persistent-hint value="ana@" error="Type your username, like ana, or your full address, like ana@example.com." active required></w-text-field>
               <w-text-field id="s9-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s9-password"></w-icon-btn></w-text-field>
               <w-text-field id="s9-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="k8-hint"></w-checkbox>
+                <p id="k8-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
               <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
               <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
 
@@ -217,6 +249,10 @@
               <w-text-field id="s10-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" active required></w-text-field>
               <w-text-field id="s10-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s10-password"></w-icon-btn></w-text-field>
               <w-text-field id="s10-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="k9-hint"></w-checkbox>
+                <p id="k9-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
               <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
               <w-btn variant="filled" size="large" block class="min-h-control-lg" disabled>Sign in (wait 1 minute)</w-btn>
 
@@ -238,6 +274,10 @@
               <w-text-field id="s11-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" active required></w-text-field>
               <w-text-field id="s11-password" type="password" label="Password" autocomplete="current-password" value="secretpassword" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s11-password"></w-icon-btn></w-text-field>
               <w-text-field id="s11-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="k10-hint"></w-checkbox>
+                <p id="k10-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
               <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
               <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
 

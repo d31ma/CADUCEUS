@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: access ended and copies removed</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<link rel="stylesheet" href="assets/screens/offline.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#a1-title">Skip to the first state</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 px-0 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">When access ends, the device removes the copy (ADR 0006 sections 2 and 4, SPEC AC-OF-9, AC-OF-10, S16, S17). The notice shows only how many items were not sent, never their words (Q13).</p>
+    <!-- Mockup: labelled states side by side. Cards keep their token widths (auth 26rem, dialog 32rem, page 50rem). -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-dialog-max)),1fr))]">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 1 &middot; 403 access_revoked: every copy of the person is removed (AC-OF-9)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 &middot; <code>403 access_revoked</code>: every copy of the person is removed (AC-OF-9)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h1 id="a1-title" class="text-2xl font-semibold tracking-tight short:text-xl">Your session was ended</h1>
+            <div class="grid gap-4">
+              <p>Your account was turned off, your password was changed, or someone chose &ldquo;Sign out on all devices&rdquo;.</p>
+              <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="trash" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Mesail removed your messages from this device. <strong>2 items</strong> you wrote offline were not sent.</p></div></div>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <p class="flex items-start gap-2 text-xs text-subtle"><w-icon name="info" class="ms-icon-sm flex-none"></w-icon>If you did not expect this, ask your admin.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 2 &middot; Removed from one domain: a one-time notice, number only (SPEC S16, Q13)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 &middot; Removed from one domain: a one-time notice, number only (SPEC S16, Q13)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="a2-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-surface-high text-text" aria-hidden="true"><w-icon name="globe"></w-icon></span><h2 id="a2-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">You no longer have access to example.org</h2></div>
+          <div class="grid gap-3 px-4 pb-2 sm:px-6">
+            <p>An admin removed you from example.org. Mesail removed example.org from this device.</p>
+            <p class="flex items-start gap-2 rounded-lg bg-surface-high p-3 text-sm"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span><strong>2 items</strong> you wrote offline for example.org were not sent.</span></p>
+            <p class="text-sm text-subtle">Your other domains are not changed.</p>
+          </div>
+          <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-4 pt-4 pb-5 sm:px-6 max-sm:[&>*]:flex-1">
+            <w-btn variant="filled">OK</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 3 &middot; Sign out with items waiting (SPEC S17, AC-OF-10)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 &middot; Sign out with items waiting (SPEC S17, AC-OF-10)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="a3-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-error-container text-on-error-container" aria-hidden="true"><w-icon name="logout"></w-icon></span><h2 id="a3-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">Sign out and remove your messages from this device?</h2></div>
+          <div class="grid gap-3 px-4 pb-2 sm:px-6">
+            <p>Signing out removes everything Mesail keeps on this computer, for every domain: messages, drafts, and <strong>1 item that was not sent yet</strong>.</p>
+            <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="wifi-off" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>You are offline, so it cannot be sent now. Online, Mesail offers to wait for it.</span></p>
+          </div>
+          <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-4 pt-4 pb-5 sm:px-6 max-sm:[&>*]:flex-1">
+            <w-btn variant="text">Stay signed in</w-btn>
+            <w-btn variant="filled" color="danger">Sign out and remove</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 4 &middot; Sign out with items waiting, online: wait for them first">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 &middot; Sign out with items waiting, online: wait for them first</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="a4-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-primary-container text-on-primary-container" aria-hidden="true"><w-icon name="clock"></w-icon></span><h2 id="a4-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">1 item is still sending</h2></div>
+          <div class="grid gap-3 px-4 pb-2 sm:px-6">
+            <p class="flex items-center gap-3"><w-icon name="refresh" class="ms-icon-sm flex-none animate-spin text-accent motion-reduce:animate-none" aria-hidden="true"></w-icon><span>Sending &ldquo;See you on Thursday&rdquo; to #design&hellip;</span></p>
+            <p class="text-sm text-subtle">Mesail signs you out when it is sent. If you sign out now, it is not sent.</p>
+          </div>
+          <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-4 pt-4 pb-5 sm:px-6 max-sm:[&>*]:flex-1">
+            <w-btn variant="text" color="danger">Sign out now</w-btn>
+            <w-btn variant="filled">Wait, then sign out</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 5 &middot; Signed out on a kept device (nothing was waiting)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 5 &middot; Signed out on a kept device (nothing was waiting)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">You are signed out</h2>
+            <div class="grid gap-4">
+              <div class="flex items-start gap-3 rounded-lg bg-success-container text-on-success-container p-3" role="status"><w-icon name="shield-check" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Mesail removed your messages from this device.</p></div></div>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg" href="signin-kept.html">Sign in again</w-btn>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 6 &middot; Sign out on all devices (settings, DELETE /identity/sessions)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 6 &middot; &ldquo;Sign out on all devices&rdquo; (settings, <code>DELETE /identity/sessions</code>)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="a6-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-error-container text-on-error-container" aria-hidden="true"><w-icon name="device"></w-icon></span><h2 id="a6-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">Sign out on all devices?</h2></div>
+          <div class="grid gap-3 px-4 pb-2 sm:px-6">
+            <p>Every device where you are signed in signs out within a minute, this one too. Each one removes its copy of your messages.</p>
+            <p class="text-sm text-subtle">Items that a device has not sent yet are not sent. Use this when you lose a device.</p>
+          </div>
+          <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-4 pt-4 pb-5 sm:px-6 max-sm:[&>*]:flex-1">
+            <w-btn variant="text">Cancel</w-btn>
+            <w-btn variant="filled" color="danger">Sign out everywhere</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 7 &middot; Remove the copy on this device (settings)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 7 &middot; &ldquo;Remove the copy on this device&rdquo; (settings)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="a7-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-error-container text-on-error-container" aria-hidden="true"><w-icon name="trash"></w-icon></span><h2 id="a7-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">Remove your messages from this device?</h2></div>
+          <div class="grid gap-3 px-4 pb-2 sm:px-6">
+            <p>Mesail removes the copy of all your domains from this computer (31 MB) and stops keeping one. <strong>4 items</strong> that were not sent are removed too.</p>
+            <p class="text-sm text-subtle">You stay signed in until you close Mesail. After that, Mesail needs the network.</p>
+          </div>
+          <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-4 pt-4 pb-5 sm:px-6 max-sm:[&>*]:flex-1">
+            <w-btn variant="text">Cancel</w-btn>
+            <w-btn variant="filled" color="danger">Remove</w-btn>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Mockup pages">
+        <ul class="flex flex-wrap justify-center gap-2">
+          <li><w-btn variant="text" size="small" href="index.html">All mockups</w-btn></li>
+          <li><w-btn variant="text" size="small" href="offline-messenger.html">Offline messenger</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

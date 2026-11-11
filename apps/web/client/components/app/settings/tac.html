@@ -18,8 +18,8 @@
         <div class="flex flex-wrap items-center gap-2">
           <h3 class="settings-subheading">2-step sign-in</h3>
           <switch :value="sessionSettings.twoStep">
-            <case :when="'on'"><w-chip size="small" color="success">On</w-chip></case>
-            <case :when="'off'"><w-chip size="small">Off</w-chip></case>
+            <case :when="'on'"><w-chip static size="small" color="success">On</w-chip></case>
+            <case :when="'off'"><w-chip static size="small">Off</w-chip></case>
           </switch>
         </div>
         <p class="settings-help">Lost your phone? Ask an admin of your domain to reset 2-step sign-in.</p>
@@ -41,7 +41,7 @@
           </div>
         </case>
         <case default>
-          <w-skeleton-loader type="button" class="w-40" loading-text="Checking 2-step sign-in"></w-skeleton-loader>
+          <w-skeleton-loader type="button" class="w-40" announce loading-text="Checking 2-step sign-in"></w-skeleton-loader>
         </case>
       </switch>
     </div>
@@ -54,7 +54,7 @@
 
   <switch :value="sessionSettings.step">
     <case :when="'password'">
-      <w-dialog open title="Change your password" max-width="32rem" on:close="sessionSettings.cancel()">
+      <w-dialog open heading-level="2" heading="Change your password" max-width="32rem" on:close="sessionSettings.cancel()">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
           <form method="dialog" class="contents" aria-label="Change your password" on:submit="sessionSettings.changePasswordWith($event.target.elements.current.value, $event.target.elements.next.value, $event.target.elements.code.value)">
             <div class="col-span-full flex flex-col gap-4">
@@ -89,7 +89,7 @@
       </w-dialog>
     </case>
     <case :when="'twoStepPassword'">
-      <w-dialog open title="Confirm it's you" max-width="32rem" on:close="sessionSettings.cancel()">
+      <w-dialog open heading-level="2" heading="Confirm it's you" max-width="32rem" on:close="sessionSettings.cancel()">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
           <form method="dialog" class="contents" aria-label="Confirm it's you" on:submit="sessionSettings.setUpTwoStepWith($event.target.elements.current.value, $event.target.elements.code.value)">
             <div class="col-span-full flex flex-col gap-4">
@@ -124,7 +124,7 @@
       </w-dialog>
     </case>
     <case :when="'twoStepScan'">
-      <w-dialog open title="Scan this code with your authenticator app" max-width="32rem" on:close="sessionSettings.cancel()">
+      <w-dialog open heading-level="2" heading="Scan this code with your authenticator app" max-width="32rem" on:close="sessionSettings.cancel()">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
           <div class="col-span-full flex flex-col gap-4">
             <p class="settings-help">Step 2 of 3</p>
@@ -147,7 +147,7 @@
       </w-dialog>
     </case>
     <case :when="'twoStepCode'">
-      <w-dialog open title="Type the 6-digit code from your app" max-width="32rem" on:close="sessionSettings.cancel()">
+      <w-dialog open heading-level="2" heading="Type the 6-digit code from your app" max-width="32rem" on:close="sessionSettings.cancel()">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
           <form method="dialog" class="contents" aria-label="Type the code from your app" on:submit="sessionSettings.confirmTwoStepWith($event.target.elements.code.value)">
             <div class="col-span-full flex flex-col gap-4">
@@ -169,7 +169,7 @@
       </w-dialog>
     </case>
     <case :when="'twoStepRemove'">
-      <w-dialog open title="Turn off 2-step sign-in?" max-width="32rem" on:close="sessionSettings.cancel()">
+      <w-dialog open heading-level="2" heading="Turn off 2-step sign-in?" max-width="32rem" on:close="sessionSettings.cancel()">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
           <form method="dialog" class="contents" aria-label="Turn off 2-step sign-in" on:submit="sessionSettings.removeTwoStepWith($event.target.elements.current.value, $event.target.elements.code.value)">
             <div class="col-span-full flex flex-col gap-4">

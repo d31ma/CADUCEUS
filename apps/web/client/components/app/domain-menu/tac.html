@@ -1,9 +1,9 @@
 <div class="flex min-w-0 flex-1">
-  <w-menu class="domain-menu min-w-0 max-[768px]:hidden" location="bottom-start" offset="4" on:toggle="shell.toggleDomainMenu()" on:close="shell.closeMenus()">
-    <span slot="activator" class="domain-name flex min-w-0 items-center gap-1 px-2">
-      <span class="truncate">{sessionAccount.currentDomain}</span>
-      <w-icon name="chevron-down" class="domain-name-icon"></w-icon>
-    </span>
+  <button type="button" id="domain-menu-trigger" class="domain-trigger domain-name flex min-w-0 items-center gap-1 px-2 max-[768px]:hidden">
+    <span class="truncate">{sessionAccount.currentDomain}</span>
+    <w-icon name="chevron-down" class="domain-name-icon"></w-icon>
+  </button>
+  <w-menu class="domain-menu min-w-0 max-[768px]:hidden" activator="domain-menu-trigger" location="bottom-start" offset="4" on:toggle="shell.toggleDomainMenu()" on:close="shell.closeMenus()">
     <div class="menu-head grid gap-0.5 px-3 py-2">
       <span class="menu-title">Your domains</span>
       <span class="menu-meta">You sign in to each domain on its own.</span>

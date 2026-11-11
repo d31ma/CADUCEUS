@@ -238,6 +238,7 @@ id from another domain answers `404`. A `PATCH` that sets `emailAddress` or
 | `PUT /api/v1/messaging/messages/{messageId}/reactions/{emoji}` | SignedIn | - | `204` |
 | `DELETE /api/v1/messaging/messages/{messageId}/reactions/{emoji}` | SignedIn | - | `204` |
 | `PUT /api/v1/messaging/conversations/{conversationId}/read` | SignedIn | `ReadRequest{messageId}` | `204` |
+| `GET /api/v1/messaging/attachments/{attachmentId}/access` | SignedIn | - | `204` when the caller can read a message of its domain that carries the attachment, else `404` (called by `attachments` with the caller's own token) |
 
 `SendRequest{clientMessageId, conversationId?, threadRootId?, body,
 attachmentIds[], recipients[]: RecipientChoice, email?: EmailOptions}`.
@@ -287,6 +288,41 @@ chat|email, status, detail?}`.
 | `GET /api/v1/attachments/{attachmentId}` | SignedIn | - | `Download{url, expiresAt}` (short-lived signed URL) |
 
 An attachment in another domain answers `404`.
+
+- **Upload.** `uploadUrl` is a signed `PUT` link that lives
+  `attachments.link.seconds` (default 300). The client sends the raw bytes
+  with no `Authorization` header: exactly `size` bytes. Then it calls
+  `complete`. The bytes never pass through a Yon route, because TACHYON
+  accepts only UTF-8 request bodies of at most 12 MiB.
+- **Limits and checks** (AC-MS-5). `size` is 1 byte to the domain limit
+  (default 25 MiB, `attachments.limit.bytes`): over it answers `413
+  too_large`. `fileName` is 1 to 255 bytes without `/`, `\` or control
+  characters; `mediaType` is `type/subtype`; `sha256` is 64 lowercase hex
+  characters; otherwise `400 invalid_request` with `field`. The 50 MiB per
+  message limit is checked by `messaging` from the `size` of each
+  attachment.
+- **Complete.** Only the uploader may complete (`404` for anyone else). It
+  reads the stored bytes back: no bytes yet answers `409 conflict` (field
+  `file`); fewer bytes `409` (field `size`); more bytes `413`; another
+  SHA-256 `409` (field `sha256`). A file whose sniffed type contradicts
+  `mediaType` (HTML declared as anything else, or an image declared as
+  another kind of file) gets `state: blocked` and can never be downloaded.
+  Otherwise `state: ready`. Completing again answers the same attachment.
+- **Download.** Only for a `ready` attachment (`409 conflict`, field
+  `state`, before that). The caller gets the link when it is the uploader,
+  a `Service` caller of the same domain, or a member for whom
+  `GET /api/v1/messaging/attachments/{attachmentId}/access` answers `2xx`;
+  everyone else gets `404`. The `url` is a signed `GET` link that lives
+  `attachments.link.seconds` and answers with `Content-Disposition:
+  attachment`.
+- **Blob links.** With the S3 adapter the links are AWS Signature V4
+  presigned URLs (path style, `<public endpoint>/<bucket>/<domainId>/<name>`).
+  With the local-folder adapter (all-in-one image, native dev) they are
+  `<attachments.link.base>/<domainId>/<name>?expires&type&size&file&signature`
+  (HMAC-SHA256), served by `kit/blobs` `LocalHandler` mounted by the router
+  at `/blobs` with the same folder and secret as the `attachments` app
+  (`PUT` answers `200`; a bad or expired signature `403`; a wrong size
+  `400`).
 
 ## realtime
 

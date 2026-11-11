@@ -78,6 +78,18 @@
 - `kit/recipients` gained address and domain-name checks and the recipient
   classifier, which decides the kind from the caller's domain.
 
+### Slice A1: attachments and blob store
+
+- Added the `attachments` service and the `kit/blobs` blob store port.
+  Attachment bytes live outside FYLO, under a key that starts with the
+  owning domain, in a local folder (all-in-one image and native dev) or in
+  an S3-compatible bucket (Floci locally, AWS later). Uploads and downloads
+  use short-lived signed links. Completing an upload checks the size, the
+  SHA-256 and the real content type. Download links go only to members who
+  may read the message that carries the file, and never to another domain.
+- `kit/blobs` also writes and copies blobs for the SMTP edge and the mail
+  hand-off, and its `LocalHandler` serves the local adapter's signed links.
+
 - Completed account-synchronized interface localization across 20 closed,
   persisted locale choices. A reproducible, checksum-pinned SMaLL-100 pipeline
   now catalogs 755 audited static interface literals for 19 non-English

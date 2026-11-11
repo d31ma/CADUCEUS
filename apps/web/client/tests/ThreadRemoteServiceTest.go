@@ -70,7 +70,7 @@ func (test *ThreadRemoteServiceTest) TestMyNameIsTheCurrentAccountName() {
 
 func (test *ThreadRemoteServiceTest) TestPageRenewsOnceAfterA401AndTriesAgain() {
 	remote := test.remote(3600000, "key-1")
-	page, failure := remote.pageAfterRenew(ThreadMessagePage{}, &BehaviorError{Status: 401}, ThreadPageRequest{ConversationId: "conv-1", RootId: "root-1"})
+	page, failure := remote.pageAfterRenew(MessagePage{}, &BehaviorError{Status: 401}, ThreadPageRequest{ConversationId: "conv-1", RootId: "root-1"})
 	token, _ := remote.session.AccessToken()
 	Assert.Equals(nil, failure)
 	Assert.Equals(2, len(page.Items))
@@ -79,14 +79,14 @@ func (test *ThreadRemoteServiceTest) TestPageRenewsOnceAfterA401AndTriesAgain() 
 
 func (test *ThreadRemoteServiceTest) TestPageKeepsOtherFailuresWithoutRenewing() {
 	remote := test.remote(3600000, "key-1")
-	_, failure := remote.pageAfterRenew(ThreadMessagePage{}, &BehaviorError{Status: 503}, ThreadPageRequest{ConversationId: "conv-1", RootId: "root-1"})
+	_, failure := remote.pageAfterRenew(MessagePage{}, &BehaviorError{Status: 503}, ThreadPageRequest{ConversationId: "conv-1", RootId: "root-1"})
 	token, _ := remote.session.AccessToken()
 	Assert.Equals(503, BehaviorErrorStatus(failure))
 	Assert.Equals("access-1", token)
 }
 
 func (test *ThreadRemoteServiceTest) TestMessageRenewsOnceAfterA401AndTriesAgain() {
-	root, failure := test.remote(3600000, "key-1").messageAfterRenew(ThreadMessage{}, &BehaviorError{Status: 401}, "root-1")
+	root, failure := test.remote(3600000, "key-1").messageAfterRenew(Message{}, &BehaviorError{Status: 401}, "root-1")
 	Assert.Equals(nil, failure)
 	Assert.Equals("root-1", root.MessageId)
 }
@@ -99,6 +99,6 @@ func (test *ThreadRemoteServiceTest) TestSendRenewsOnceAfterA401AndTriesAgain() 
 }
 
 func (test *ThreadRemoteServiceTest) TestSecondFailureAfterRenewIsUnauthorized() {
-	_, failure := test.remote(3600000, "ended").pageAfterRenew(ThreadMessagePage{}, &BehaviorError{Status: 401}, ThreadPageRequest{ConversationId: "conv-1", RootId: "root-1"})
+	_, failure := test.remote(3600000, "ended").pageAfterRenew(MessagePage{}, &BehaviorError{Status: 401}, ThreadPageRequest{ConversationId: "conv-1", RootId: "root-1"})
 	Assert.Equals(401, BehaviorErrorStatus(failure))
 }

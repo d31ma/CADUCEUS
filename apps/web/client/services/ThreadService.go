@@ -7,6 +7,7 @@ type ThreadService struct {
 	Root               ThreadRow
 	HasRoot            bool
 	Replies            []ThreadRow
+	Timeline           []ThreadRow
 	RepliesLabel       string
 	Status             string
 	NextCursor         string
@@ -15,8 +16,8 @@ type ThreadService struct {
 	SendStatus         string
 	Pending            ThreadRow
 	AlsoToConversation bool
-	root               ThreadMessage
-	messages           []ThreadMessage
+	root               Message
+	messages           []Message
 	draft              string
 	pendingId          string
 	pendingBody        string
@@ -74,12 +75,12 @@ func (thread *ThreadService) Shown(changed VisibilityChanged) {
 func (thread *ThreadService) openMessage(conversationId string, messageId string) {
 	thread.reset(conversationId, messageId)
 	thread.shell.ThreadOpen = true
-	thread.shell.Pane = thread.paneThread()
+	thread.shell.Pane = "thread"
 	thread.load()
 }
 
 func (thread *ThreadService) load() {
-	thread.Status = thread.statusLoading()
+	thread.Status = "loading"
 	root, rootFailure := thread.remote.Message(thread.RootId)
 	page, failure := thread.remote.Page(ThreadPageRequest{ConversationId: thread.ConversationId, RootId: thread.RootId})
 	thread.root = root
@@ -90,11 +91,12 @@ func (thread *ThreadService) load() {
 func (thread *ThreadService) reset(conversationId string, rootId string) {
 	thread.ConversationId = conversationId
 	thread.RootId = rootId
-	thread.root = ThreadMessage{}
+	thread.root = Message{}
 	thread.Root = ThreadRow{}
 	thread.HasRoot = false
-	thread.messages = []ThreadMessage{}
+	thread.messages = []Message{}
 	thread.Replies = []ThreadRow{}
+	thread.Timeline = []ThreadRow{}
 	thread.RepliesLabel = ""
 	thread.Status = ""
 	thread.NextCursor = ""
@@ -130,8 +132,8 @@ func (thread *ThreadService) firstFailure(rootFailure error, failure error) erro
 	return failure
 }
 
-func (thread *ThreadService) applyPage(page ThreadMessagePage, failure error) {
-	thread.Status = thread.chosen(thread.codeOf(failure), thread.loadStates(), thread.statusError())
+func (thread *ThreadService) applyPage(page MessagePage, failure error) {
+	thread.Status = thread.chosen(thread.codeOf(failure), thread.loadStates(), "error")
 	thread.NextCursor = page.NextCursor
 	thread.LoadingOlder = false
 	thread.showMessages()
@@ -141,6 +143,7 @@ func (thread *ThreadService) showMessages() {
 	thread.Root = thread.rows.Row(thread.root)
 	thread.HasRoot = thread.Root.MessageId != ""
 	thread.Replies = thread.rows.Replies(thread.messages)
+	thread.Timeline = thread.rows.Timeline(thread.root, thread.messages)
 	thread.RepliesLabel = thread.rows.RepliesLabel(thread.root, len(thread.Replies))
 }
 
@@ -219,7 +222,7 @@ func (thread *ThreadService) replyRequest() ThreadReplyRequest {
 func (thread *ThreadService) finish(result ThreadSendResult, failure error) {
 	code := thread.codeOf(failure)
 	thread.SendStatus = thread.chosen(code, thread.sendStates(), thread.sendFailed())
-	thread.announce.Message = thread.chosen(code, thread.announcements(), thread.notSent())
+	thread.announce.Message = thread.chosen(code, thread.announcements(), "Reply not sent")
 	thread.FailedDraft = thread.failedDraftOf(failure)
 	thread.keepWhenSent(result.Message, failure)
 }
@@ -231,11 +234,11 @@ func (thread *ThreadService) failedDraftOf(failure error) string {
 	return thread.pendingBody
 }
 
-func (thread *ThreadService) keepWhenSent(message ThreadMessage, failure error) {
+func (thread *ThreadService) keepWhenSent(message Message, failure error) {
 	if failure != nil {
 		return
 	}
-	thread.messages = append([]ThreadMessage{message}, thread.messages...)
+	thread.messages = append([]Message{message}, thread.messages...)
 	thread.draft = ""
 	thread.pendingId = ""
 	thread.pendingBody = ""
@@ -252,6 +255,14 @@ func (thread *ThreadService) codeOf(failure error) int {
 	return BehaviorErrorStatus(failure)
 }
 
+func (thread *ThreadService) codeOk() int {
+	return 200
+}
+
+func (thread *ThreadService) codeUnauthorized() int {
+	return 401
+}
+
 func (thread *ThreadService) chosen(code int, choices map[int]string, otherwise string) string {
 	choice, found := choices[code]
 	if found {
@@ -261,7 +272,7 @@ func (thread *ThreadService) chosen(code int, choices map[int]string, otherwise 
 }
 
 func (thread *ThreadService) loadStates() map[int]string {
-	return map[int]string{thread.codeOk(): thread.statusReady(), thread.codeUnauthorized(): thread.stateSession(), thread.codeNotFound(): thread.statusGone()}
+	return map[int]string{thread.codeOk(): "ready", thread.codeUnauthorized(): thread.stateSession(), 404: "gone"}
 }
 
 func (thread *ThreadService) sendStates() map[int]string {
@@ -270,38 +281,6 @@ func (thread *ThreadService) sendStates() map[int]string {
 
 func (thread *ThreadService) announcements() map[int]string {
 	return map[int]string{thread.codeOk(): "Reply sent"}
-}
-
-func (thread *ThreadService) notSent() string {
-	return "Reply not sent"
-}
-
-func (thread *ThreadService) codeOk() int {
-	return 200
-}
-
-func (thread *ThreadService) codeUnauthorized() int {
-	return 401
-}
-
-func (thread *ThreadService) codeNotFound() int {
-	return 404
-}
-
-func (thread *ThreadService) statusLoading() string {
-	return "loading"
-}
-
-func (thread *ThreadService) statusReady() string {
-	return "ready"
-}
-
-func (thread *ThreadService) statusGone() string {
-	return "gone"
-}
-
-func (thread *ThreadService) statusError() string {
-	return "error"
 }
 
 func (thread *ThreadService) stateSession() string {
@@ -314,8 +293,4 @@ func (thread *ThreadService) sendSending() string {
 
 func (thread *ThreadService) sendFailed() string {
 	return "failed"
-}
-
-func (thread *ThreadService) paneThread() string {
-	return "thread"
 }

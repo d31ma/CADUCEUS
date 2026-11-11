@@ -1,4 +1,4 @@
 type ThreadSendResult struct {
-	Message    ThreadMessage    `json:"message"`
-	Deliveries []ThreadDelivery `json:"deliveries"`
+	Message    Message          `json:"message"`
+	Deliveries []DeliveryStatus `json:"deliveries"`
 }

@@ -1,16 +1,21 @@
 import (
-	"sort"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // @Service
-type ThreadRowService struct{}
+type ThreadRowService struct {
+	// @Needs
+	clock Clock
+	// @Needs
+	times *ConversationTimeService
+	// @Needs
+	reactions *ConversationReactionService
+}
 
-func (rows *ThreadRowService) Row(message ThreadMessage) ThreadRow {
+func (rows *ThreadRowService) Row(message Message) ThreadRow {
 	name := rows.nameOf(message.Author)
-	clock := rows.timeOf(message.CreatedAt)
+	clock := rows.times.Time(message.CreatedAt, rows.zone())
 	return ThreadRow{
 		MessageId:  message.MessageId,
 		Initials:   rows.initialsOf(name),
@@ -18,27 +23,42 @@ func (rows *ThreadRowService) Row(message ThreadMessage) ThreadRow {
 		Time:       clock,
 		DateTime:   message.CreatedAt,
 		Body:       message.Body,
+		Blocks:     message.Blocks,
+		Truncated:  message.Truncated,
 		Edited:     message.EditedAt != "",
 		Deleted:    message.DeletedAt != "",
-		Reactions:  rows.reactionsOf(message.Reactions),
+		Reactions:  rows.reactions.Reactions(message.Reactions, message.MyReactions),
 		Label:      rows.labelOf(name, clock),
 	}
 }
 
-func (rows *ThreadRowService) Replies(messages []ThreadMessage) []ThreadRow {
+func (rows *ThreadRowService) Timeline(root Message, messages []Message) []ThreadRow {
+	return append(rows.rootRows(root), rows.oldestFirst(messages)...)
+}
+
+func (rows *ThreadRowService) Replies(messages []Message) []ThreadRow {
 	return rows.oldestFirst(messages)
 }
 
-func (rows *ThreadRowService) RepliesLabel(root ThreadMessage, shown int) string {
+func (rows *ThreadRowService) RepliesLabel(root Message, shown int) string {
 	count := max(shown, root.ReplyCount)
 	return strconv.Itoa(count) + rows.space() + rows.repliesWord(count)
 }
 
 func (rows *ThreadRowService) PendingRow(name string, body string) ThreadRow {
-	return rows.Row(ThreadMessage{Author: ThreadAuthor{DisplayName: name}, Body: body})
+	return rows.Row(Message{Author: Author{DisplayName: name}, Body: body})
 }
 
-func (rows *ThreadRowService) oldestFirst(messages []ThreadMessage) []ThreadRow {
+func (rows *ThreadRowService) rootRows(root Message) []ThreadRow {
+	if root.MessageId == "" {
+		return []ThreadRow{}
+	}
+	row := rows.Row(root)
+	row.IsRoot = true
+	return []ThreadRow{row}
+}
+
+func (rows *ThreadRowService) oldestFirst(messages []Message) []ThreadRow {
 	replies := []ThreadRow{}
 	for index := len(messages) - 1; index >= 0; index-- {
 		replies = append(replies, rows.Row(messages[index]))
@@ -53,19 +73,11 @@ func (rows *ThreadRowService) repliesWord(count int) string {
 	return "replies"
 }
 
-func (rows *ThreadRowService) nameOf(author ThreadAuthor) string {
+func (rows *ThreadRowService) nameOf(author Author) string {
 	if author.DisplayName == "" {
 		return author.Address
 	}
 	return author.DisplayName
-}
-
-func (rows *ThreadRowService) timeOf(createdAt string) string {
-	moment, failure := time.Parse(time.RFC3339, createdAt)
-	if failure != nil {
-		return ""
-	}
-	return moment.UTC().Format(rows.hourAndMinute())
 }
 
 func (rows *ThreadRowService) labelOf(name string, clock string) string {
@@ -88,27 +100,6 @@ func (rows *ThreadRowService) firstWords(name string) []string {
 	return words[:min(len(words), rows.initialsLength())]
 }
 
-func (rows *ThreadRowService) reactionsOf(reactions map[string]int) string {
-	parts := []string{}
-	for _, emoji := range rows.sortedEmoji(reactions) {
-		parts = append(parts, emoji+rows.space()+strconv.Itoa(reactions[emoji]))
-	}
-	return strings.Join(parts, rows.separator())
-}
-
-func (rows *ThreadRowService) sortedEmoji(reactions map[string]int) []string {
-	emoji := []string{}
-	for each := range reactions {
-		emoji = append(emoji, each)
-	}
-	sort.Strings(emoji)
-	return emoji
-}
-
-func (rows *ThreadRowService) hourAndMinute() string {
-	return "15:04"
-}
-
 func (rows *ThreadRowService) initialsLength() int {
 	return 2
 }
@@ -119,4 +110,9 @@ func (rows *ThreadRowService) space() string {
 
 func (rows *ThreadRowService) separator() string {
 	return ", "
+}
+
+func (rows *ThreadRowService) zone() string {
+	zone, _ := rows.clock.TimeZone()
+	return zone
 }

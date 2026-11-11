@@ -47,47 +47,7 @@
 
     <case :when="'ready'">
       <div class="flex-1 min-w-0 py-4 [&_.ms-msg]:px-4 max-sm:[&_.ms-msg]:px-3" role="log" aria-label="Thread replies">
-        <logic :if="thread.hasRoot">
-          <article class="ms-msg" :aria-label="thread.root.label">
-            <w-avatar :text="thread.root.initials" size="36" alt=""></w-avatar>
-            <div class="min-w-0">
-              <div class="ms-msg__meta">
-                <span class="ms-msg__author">{thread.root.authorName}</span>
-                <time class="ms-msg__time" :datetime="thread.root.dateTime">{thread.root.time}</time>
-                <logic :if="thread.root.edited"><span class="ms-msg__edited">(edited)</span></logic>
-              </div>
-              <logic :if="thread.root.deleted">
-                <p class="ms-msg__text ms-msg__text--deleted">This message was deleted</p>
-              </logic>
-              <logic else>
-                <p class="ms-msg__text">{thread.root.body}</p>
-              </logic>
-              <logic :if="thread.root.reactions != ''">
-                <p class="mt-1 ms-meta ms-subtle [overflow-wrap:anywhere]">Reactions: {thread.root.reactions}</p>
-              </logic>
-            </div>
-          </article>
-        </logic>
-
-        <p class="mx-4 my-2 flex items-center gap-2 ms-meta ms-subtle max-sm:mx-3"><span>{thread.repliesLabel}</span><span class="h-px flex-1 ms-divider-line" aria-hidden="true"></span></p>
-
-        <logic :if="thread.nextCursor != ''">
-          <div class="flex justify-center px-4">
-            <w-btn variant="text" size="small" class="pointer-coarse:min-h-11 max-sm:min-h-11" :loading="thread.loadingOlder" on:click="thread.showOlder()">Show older replies</w-btn>
-          </div>
-        </logic>
-
-        <logic :if="thread.replies.length == 0">
-          <logic :if="thread.sendStatus == ''">
-            <w-empty-state class="block px-4">
-              <w-icon slot="media" name="thread" class="text-[2rem]"></w-icon>
-              <h3 slot="title" class="ms-state-title">No replies yet</h3>
-              <span slot="text">Start the thread. Replies stay in this thread.</span>
-            </w-empty-state>
-          </logic>
-        </logic>
-
-        <loop :for="row of thread.replies">
+        <loop :for="row of thread.timeline">
           <article class="ms-msg" :aria-label="row.label">
             <w-avatar :text="row.initials" size="36" alt=""></w-avatar>
             <div class="min-w-0">
@@ -100,13 +60,59 @@
                 <p class="ms-msg__text ms-msg__text--deleted">This message was deleted</p>
               </logic>
               <logic else>
-                <p class="ms-msg__text">{row.body}</p>
+                <div class="ms-msg__body flex min-w-0 flex-col gap-2">
+                <loop :for="block of row.blocks">
+                  <switch :value="block.kind">
+                    <case :when="'paragraph'"><p class="block-paragraph"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></p></case>
+                    <case :when="'heading'">
+                      <switch :value="block.level">
+                        <case :when="1"><h3 class="block-heading"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></h3></case>
+                        <case :when="2"><h4 class="block-heading"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></h4></case>
+                        <case :when="3"><h5 class="block-heading"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></h5></case>
+                        <case default><h6 class="block-heading"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></h6></case>
+                      </switch>
+                    </case>
+                    <case :when="'quote'"><blockquote class="block-quote"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></blockquote></case>
+                    <case :when="'listItem'"><p class="block-list-item" :data-level="block.level" :data-ordered="block.ordered"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></p></case>
+                    <case :when="'code'"><pre class="block-code"><code><loop :for="span of block.spans">{span.text}</loop></code></pre></case>
+                    <case :when="'divider'"><hr class="block-divider" /></case>
+                    <case :when="'row'">
+                      <div class="block-row grid auto-cols-fr grid-flow-col gap-2"><loop :for="cell of block.cells"><span class="block-cell min-w-0">{cell}</span></loop></div>
+                    </case>
+                    <case :when="'image'"><logic :if="block.image"><p class="image-card flex items-center gap-2"><w-icon name="image" size="small" aria-hidden="true"></w-icon><span>Image: {block.image.alt}</span></p></logic></case>
+                  </switch>
+                </loop>
+                </div>
+                <logic :if="row.truncated">
+                  <p class="mt-1 ms-meta ms-subtle">Only the first part of this message is shown.</p>
+                </logic>
               </logic>
-              <logic :if="row.reactions != ''">
-                <p class="mt-1 ms-meta ms-subtle [overflow-wrap:anywhere]">Reactions: {row.reactions}</p>
+              <logic :if="row.reactions && row.reactions.length > 0">
+                <ul class="mt-1 flex flex-wrap gap-1 ms-meta" aria-label="Reactions">
+                  <loop :for="reaction of row.reactions">
+                    <li class="ms-reaction" :aria-label="reaction.label"><span aria-hidden="true">{reaction.glyph} {reaction.count}</span></li>
+                  </loop>
+                </ul>
               </logic>
             </div>
           </article>
+          <logic :if="row.isRoot">
+            <p class="mx-4 my-2 flex items-center gap-2 ms-meta ms-subtle max-sm:mx-3"><span>{thread.repliesLabel}</span><span class="h-px flex-1 ms-divider-line" aria-hidden="true"></span></p>
+          <logic :if="thread.nextCursor != ''">
+            <div class="flex justify-center px-4">
+              <w-btn variant="text" size="small" class="pointer-coarse:min-h-11 max-sm:min-h-11" :loading="thread.loadingOlder" on:click="thread.showOlder()">Show older replies</w-btn>
+            </div>
+          </logic>
+          <logic :if="thread.replies.length == 0">
+            <logic :if="thread.sendStatus == ''">
+              <w-empty-state class="block px-4">
+                <w-icon slot="media" name="thread" class="text-[2rem]"></w-icon>
+                <h3 slot="title" class="ms-state-title">No replies yet</h3>
+                <span slot="text">Start the thread. Replies stay in this thread.</span>
+              </w-empty-state>
+            </logic>
+          </logic>
+          </logic>
         </loop>
 
         <logic :if="thread.sendStatus == 'sending'">

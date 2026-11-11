@@ -55,6 +55,19 @@
   line-height: var(--ms-line-body);
 }
 
+.ms-msg__body {
+  overflow-wrap: anywhere;
+  line-height: var(--ms-line-body);
+}
+
+.ms-reaction {
+  padding-block: 0.125rem;
+  padding-inline: var(--w-space-2);
+  border: 1px solid var(--w-border);
+  border-radius: var(--ms-radius-chip);
+  background: var(--w-surface-container-low);
+}
+
 .ms-msg__text--deleted,
 .ms-msg--pending .ms-msg__text {
   color: var(--w-text-subtle);
@@ -179,6 +192,12 @@
   .flex-1 {
     flex: 1;
   }
+  .auto-cols-fr {
+    grid-auto-columns: minmax(0, 1fr);
+  }
+  .grid-flow-col {
+    grid-auto-flow: column;
+  }
   .flex-col {
     flex-direction: column;
   }
@@ -193,6 +212,9 @@
   }
   .justify-center {
     justify-content: center;
+  }
+  .gap-1 {
+    gap: var(--spacing, 0.25rem);
   }
   .gap-2 {
     gap: calc(var(--spacing, 0.25rem) * 2);
@@ -217,9 +239,6 @@
   }
   .text-\[2rem\] {
     font-size: 2rem;
-  }
-  .\[overflow-wrap\:anywhere\] {
-    overflow-wrap: anywhere;
   }
   @media (width < 600px) {
     .max-sm\:mx-3 {

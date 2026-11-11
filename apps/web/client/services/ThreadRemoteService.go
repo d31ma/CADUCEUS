@@ -10,13 +10,13 @@ type ThreadRemoteService struct {
 	random SecureRandom
 }
 
-func (remote *ThreadRemoteService) Page(requested ThreadPageRequest) (ThreadMessagePage, error) {
+func (remote *ThreadRemoteService) Page(requested ThreadPageRequest) (MessagePage, error) {
 	token, failure := remote.session.AccessToken()
 	page, failure := remote.page(token, failure, requested)
 	return remote.pageAfterRenew(page, failure, requested)
 }
 
-func (remote *ThreadRemoteService) Message(messageId string) (ThreadMessage, error) {
+func (remote *ThreadRemoteService) Message(messageId string) (Message, error) {
 	token, failure := remote.session.AccessToken()
 	message, failure := remote.message(token, failure, messageId)
 	return remote.messageAfterRenew(message, failure, messageId)
@@ -37,19 +37,19 @@ func (remote *ThreadRemoteService) MyName() string {
 	return remote.accounts.Current().DisplayName
 }
 
-func (remote *ThreadRemoteService) page(token string, failure error, requested ThreadPageRequest) (ThreadMessagePage, error) {
-	return BehaviorsAnswer[ThreadMessagePage](remote.fetch(token, failure, requested))
+func (remote *ThreadRemoteService) page(token string, failure error, requested ThreadPageRequest) (MessagePage, error) {
+	return BehaviorsAnswer[MessagePage](remote.fetch(token, failure, requested))
 }
 
-func (remote *ThreadRemoteService) message(token string, failure error, messageId string) (ThreadMessage, error) {
-	return BehaviorsAnswer[ThreadMessage](remote.read(token, failure, messageId))
+func (remote *ThreadRemoteService) message(token string, failure error, messageId string) (Message, error) {
+	return BehaviorsAnswer[Message](remote.read(token, failure, messageId))
 }
 
 func (remote *ThreadRemoteService) send(token string, failure error, request ThreadReplyRequest) (ThreadSendResult, error) {
 	return BehaviorsAnswer[ThreadSendResult](remote.post(token, failure, request))
 }
 
-func (remote *ThreadRemoteService) pageAfterRenew(page ThreadMessagePage, failure error, requested ThreadPageRequest) (ThreadMessagePage, error) {
+func (remote *ThreadRemoteService) pageAfterRenew(page MessagePage, failure error, requested ThreadPageRequest) (MessagePage, error) {
 	if BehaviorErrorStatus(failure) != remote.unauthorized() {
 		return page, failure
 	}
@@ -57,7 +57,7 @@ func (remote *ThreadRemoteService) pageAfterRenew(page ThreadMessagePage, failur
 	return remote.page(token, renewFailure, requested)
 }
 
-func (remote *ThreadRemoteService) messageAfterRenew(message ThreadMessage, failure error, messageId string) (ThreadMessage, error) {
+func (remote *ThreadRemoteService) messageAfterRenew(message Message, failure error, messageId string) (Message, error) {
 	if BehaviorErrorStatus(failure) != remote.unauthorized() {
 		return message, failure
 	}

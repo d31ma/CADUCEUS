@@ -17,10 +17,15 @@ func (test *ThreadServiceTest) remote(expiresAtMs float64, sessionKey string) *T
 	return &ThreadRemoteService{client: NewThreadClientWith(test.behaviors), session: session, accounts: accounts}
 }
 
+func (test *ThreadServiceTest) rows() *ThreadRowService {
+	BrowserFakes{}.Answer("clock", "timeZone", "UTC")
+	return &ThreadRowService{times: &ConversationTimeService{}, reactions: &ConversationReactionService{}}
+}
+
 func (test *ThreadServiceTest) threadWith(remote *ThreadRemoteService) *ThreadService {
 	shell := &ShellService{}
 	shell.Start()
-	return &ThreadService{shell: shell, announce: &ShellAnnounceService{}, remote: remote, rows: &ThreadRowService{}}
+	return &ThreadService{shell: shell, announce: &ShellAnnounceService{}, remote: remote, rows: test.rows()}
 }
 
 func (test *ThreadServiceTest) thread() *ThreadService {
@@ -62,6 +67,14 @@ func (test *ThreadServiceTest) TestOpenMessageShowsRepliesOldestFirst() {
 	Assert.Equals("c-2", thread.NextCursor)
 }
 
+func (test *ThreadServiceTest) TestOpenMessageShowsTheRootFirstInTheTimeline() {
+	thread := test.opened("root-1")
+	Assert.Equals(3, len(thread.Timeline))
+	Assert.Equals("root-1", thread.Timeline[0].MessageId)
+	Assert.IsTrue(thread.Timeline[0].IsRoot)
+	Assert.IsTrue(!thread.Timeline[1].IsRoot)
+}
+
 func (test *ThreadServiceTest) TestOpenMessageShowsTheRootFromItsOwnCall() {
 	thread := test.opened("root-1")
 	Assert.IsTrue(thread.HasRoot)
@@ -87,7 +100,7 @@ func (test *ThreadServiceTest) TestOpenMessageFailsWhenTheRootDoesNotLoad() {
 
 func (test *ThreadServiceTest) TestARemovedRootSaysItIsGone() {
 	thread := test.opened("root-1")
-	thread.applyPage(ThreadMessagePage{}, &BehaviorError{Status: 404})
+	thread.applyPage(MessagePage{}, &BehaviorError{Status: 404})
 	Assert.Equals("gone", thread.Status)
 }
 

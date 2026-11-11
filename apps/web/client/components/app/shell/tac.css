@@ -1,0 +1,22 @@
+.shell {
+  display: grid;
+  grid-template-columns: minmax(14rem, 18rem) 1fr minmax(16rem, 22rem);
+  min-height: 100dvh;
+}
+
+.shell-sidebar {
+  background: var(--sidebar);
+  color: var(--sidebar-text);
+  padding: 1rem;
+}
+
+.shell-conversation,
+.shell-thread {
+  padding: 1rem;
+}
+
+@media (max-width: 40rem) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+}

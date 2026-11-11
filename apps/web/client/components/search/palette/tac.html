@@ -1,99 +1,91 @@
-<div class="palette-layer">
-  <div class="palette-backdrop" on:click="search.closePalette()"></div>
-  <div class="palette" id="search-palette" role="dialog" aria-modal="true" aria-labelledby="palette-title" aria-describedby="palette-scope">
-    <h2 class="screen-reader-only" id="palette-title">Search {sessionAccount.currentDomain}</h2>
-    <form class="palette-field" method="dialog" role="search" aria-labelledby="palette-title" on:submit="search.searchPalette()">
-      <svg class="icon palette-field-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" /></svg>
-      <label class="screen-reader-only" for="palette-input">Search messages in {sessionAccount.currentDomain}</label>
-      <input class="palette-input" id="palette-input" name="q" type="search" enterkeyhint="search" autocomplete="off" spellcheck="false" autofocus placeholder="Search messages" :value="search.paletteQuery" on:input="search.paletteQuery = $event.target.value">
+<div class="fixed inset-0 z-50 flex items-stretch justify-center sm:items-start sm:px-4 sm:pt-[12vh]">
+  <div class="absolute inset-0 bg-scrim" on:click="search.closePalette()"></div>
+  <div class="relative flex h-full w-full flex-col overflow-hidden bg-surface text-text safe-t safe-b sm:h-auto sm:max-h-[calc(88dvh-2rem)] sm:w-[min(40rem,100%)] sm:rounded-xl sm:border sm:border-border sm:shadow-xl" id="search-palette" role="dialog" aria-modal="true" aria-labelledby="palette-title" aria-describedby="palette-scope">
+    <h2 class="sr-only" id="palette-title">Search {sessionAccount.currentDomain}</h2>
+    <div class="flex items-center gap-2 border-b border-divider py-2 pl-3 pr-2 min-h-13 safe-l safe-r [--ms-edge:0.75rem]">
+      <form class="flex min-w-0 flex-1 items-center gap-2" method="dialog" role="search" aria-labelledby="palette-title" on:submit="search.searchPalette()">
+        <w-text-field class="min-w-0 flex-1" type="search" name="q" single-line hide-details autocomplete="suppress" autofocus :label="'Search messages in ' + sessionAccount.currentDomain" placeholder="Search messages" :value="search.paletteQuery" on:input="search.paletteQuery = $event.detail.value"><w-icon slot="prepend-inner" name="search" class="ms-icon-sm"></w-icon></w-text-field>
+        <w-btn variant="filled" size="small">Search</w-btn>
+      </form>
       <logic :if="search.paletteQuery != ''">
-        <button type="button" class="icon-button" aria-label="Clear search text" on:click="search.clearPaletteQuery()">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
-        </button>
+        <w-icon-btn icon="close" size="small" aria-label="Clear search text" on:click="search.clearPaletteQuery()"></w-icon-btn>
       </logic>
-      <button type="submit" class="button button-primary">Search</button>
-      <button type="button" class="button button-ghost" on:click="search.closePalette()">Close</button>
-    </form>
-    <p class="palette-scope" id="palette-scope">
-      <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z" /></svg>
-      <span>Searching {sessionAccount.currentDomain}. Only messages you can see now are searched.</span>
-    </p>
-    <div class="palette-body">
+      <w-btn variant="text" size="small" on:click="search.closePalette()">Close</w-btn>
+    </div>
+    <p class="flex items-center gap-2 border-b border-divider bg-surface-low px-4 py-2 text-xs text-subtle [overflow-wrap:anywhere]" id="palette-scope"><w-icon name="shield" class="ms-icon-xs"></w-icon>Searching {sessionAccount.currentDomain}. Only messages you can see now are searched.</p>
+    <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-2 safe-l safe-r [--ms-edge:0.5rem] sm:max-h-[28rem]">
       <switch :value="search.paletteState">
         <case :when="'loading'">
-          <p class="screen-reader-only" role="status">Searching…</p>
-          <ul class="palette-list" aria-hidden="true">
-            <li class="option option-skeleton"><span class="tile skeleton"></span><span class="option-main"><span class="skeleton skeleton-line skeleton-short"></span><span class="skeleton skeleton-line"></span></span></li>
-            <li class="option option-skeleton"><span class="tile skeleton"></span><span class="option-main"><span class="skeleton skeleton-line skeleton-short"></span><span class="skeleton skeleton-line"></span></span></li>
-            <li class="option option-skeleton"><span class="tile skeleton"></span><span class="option-main"><span class="skeleton skeleton-line skeleton-short"></span><span class="skeleton skeleton-line"></span></span></li>
-          </ul>
+          <p class="sr-only" role="status">Searching…</p>
+          <div aria-hidden="true">
+            <w-skeleton-loader type="list-item-avatar-two-line@3" loading-text="Loading search results" class="block py-2"></w-skeleton-loader>
+          </div>
         </case>
         <case :when="'results'">
-          <h3 class="group-label" id="palette-messages">Messages <span class="group-count">newest first</span></h3>
-          <ul class="palette-list" aria-labelledby="palette-messages">
+          <h3 class="px-2 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-subtle" id="palette-messages">Messages <span class="font-normal normal-case tracking-normal">· newest first</span></h3>
+          <ul class="m-0 grid list-none gap-0.5 p-0" aria-labelledby="palette-messages">
             <loop :for="row of search.paletteRows">
               <li>
-                <button type="button" class="option" on:click="search.open(row)">
-                  <span class="tile" aria-hidden="true"><svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><path d="M4 5h16v11H9l-5 4z" /></svg></span>
-                  <span class="option-main">
-                    <span class="option-title">Message</span>
-                    <span class="option-snippet"><loop :for="part of row.parts"><logic :if="part.match"><mark>{part.text}</mark></logic><logic else>{part.text}</logic></loop></span>
+                <button type="button" class="flex w-full items-center gap-3 min-h-10 pointer-coarse:min-h-11 max-sm:min-h-11 cursor-pointer rounded-md border-0 bg-transparent px-2 py-2 text-start text-inherit hover:bg-hover focus-visible:bg-selected focus-visible:text-on-selected focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--w-focus-ring-color)]" on:click="search.open(row)">
+                  <span class="grid size-9 flex-none place-items-center rounded-lg bg-surface-high text-subtle" aria-hidden="true"><w-icon name="chat" class="ms-icon-sm"></w-icon></span>
+                  <span class="grid min-w-0 flex-1 gap-0.5">
+                    <span class="truncate font-semibold">Message</span>
+                    <span class="line-clamp-2 text-sm [overflow-wrap:anywhere]"><loop :for="part of row.parts"><logic :if="part.match"><mark>{part.text}</mark></logic><logic else>{part.text}</logic></loop></span>
                   </span>
-                  <time class="option-time" :datetime="row.createdAt">{row.timeLabel}</time>
+                  <time class="flex-none self-start text-xs text-subtle" :datetime="row.createdAt">{row.timeLabel}</time>
                 </button>
               </li>
             </loop>
           </ul>
-          <a class="option option-all" href="/search" on:click="search.seeAll()">
-            <span class="tile" aria-hidden="true"><svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><circle cx="11" cy="11" r="6" /><path d="M20 20l-4.5-4.5" /></svg></span>
-            <span class="option-main"><span class="option-title">See all results for “{search.paletteQuery}”</span></span>
-            <svg class="icon icon-small option-go" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" /></svg>
-          </a>
-          <p class="screen-reader-only" role="status">{search.paletteRows.length} results shown, newest first.</p>
+          <button type="button" class="mt-1 flex w-full items-center gap-3 min-h-10 pointer-coarse:min-h-11 max-sm:min-h-11 cursor-pointer rounded-md border-0 bg-transparent px-2 py-2 text-start font-semibold text-accent hover:bg-hover focus-visible:bg-selected focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--w-focus-ring-color)]" on:click="search.seeAll()">
+            <span class="grid size-9 flex-none place-items-center rounded-lg bg-surface-high text-subtle" aria-hidden="true"><w-icon name="search" class="ms-icon-sm"></w-icon></span>
+            <span class="min-w-0 flex-1 truncate">See all results for “{search.paletteQuery}”</span>
+            <w-icon name="chevron-right" class="ms-icon-sm"></w-icon>
+          </button>
+          <p class="sr-only" role="status">{search.paletteRows.length} results shown, newest first.</p>
         </case>
         <case :when="'empty'">
-          <div class="state" role="status">
-            <h3 class="state-title">No results for “{search.paletteQuery}”</h3>
-            <p class="state-text">Check the spelling, try fewer words, or open all results to use filters.</p>
-            <a class="button button-ghost" href="/search" on:click="search.seeAll()">Search with filters</a>
-          </div>
+          <w-empty-state class="block py-8" role="status">
+            <w-icon slot="media" name="search" class="text-accent [--ms-icon-size:2.5rem]"></w-icon>
+            <h3 slot="title" class="text-lg font-semibold [overflow-wrap:anywhere]">No results for “{search.paletteQuery}”</h3>
+            <span slot="text">Check the spelling, try fewer words, or search with filters.</span>
+            <div slot="actions"><w-btn variant="filled" on:click="search.seeAll()">Search with filters</w-btn></div>
+          </w-empty-state>
         </case>
         <case :when="'error'">
-          <div class="state" role="alert">
-            <h3 class="state-title">Search is not available right now</h3>
-            <p class="state-text">Try again. Your messages are safe, and you can still open every conversation.</p>
-            <button type="button" class="button button-primary" on:click="search.searchPalette()">Try again</button>
+          <div class="p-2">
+            <w-alert type="error" title="Search is not available right now" text="Try again. Your messages are safe, and you can still open every conversation.">
+              <div class="mt-3 flex flex-wrap items-center gap-3"><w-btn variant="filled" prepend-icon="refresh" on:click="search.searchPalette()">Try again</w-btn></div>
+            </w-alert>
           </div>
         </case>
         <case :when="'session'">
-          <div class="state" role="alert">
-            <h3 class="state-title">Your session ended</h3>
-            <p class="state-text">Sign in to {sessionAccount.currentDomain} again to search.</p>
-            <button type="button" class="button button-primary" on:click="session.signInAgain()">Sign in again</button>
+          <div class="p-2">
+            <w-alert type="warning" title="Your session ended" :text="'Sign in to ' + sessionAccount.currentDomain + ' again to search.'">
+              <div class="mt-3 flex flex-wrap items-center gap-3"><w-btn variant="filled" on:click="session.signInAgain()">Sign in again</w-btn></div>
+            </w-alert>
           </div>
         </case>
         <case default>
           <logic :if="search.recentSearches.length > 0">
-            <div class="group-head">
-              <h3 class="group-label" id="palette-recent">Recent searches</h3>
-              <button type="button" class="button button-ghost button-small" on:click="search.clearRecent()">Clear</button>
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="px-2 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-subtle" id="palette-recent">Recent searches</h3>
+              <w-btn variant="text" size="small" on:click="search.clearRecent()">Clear recent searches</w-btn>
             </div>
-            <ul class="palette-list" aria-labelledby="palette-recent">
+            <ul class="m-0 grid list-none gap-0.5 p-0" aria-labelledby="palette-recent">
               <loop :for="recent of search.recentSearches">
                 <li>
-                  <button type="button" class="option" on:click="search.useRecent(recent)">
-                    <span class="tile" aria-hidden="true"><svg class="icon icon-small" viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" /></svg></span>
-                    <span class="option-main"><span class="option-title">{recent}</span></span>
+                  <button type="button" class="flex w-full items-center gap-3 min-h-10 pointer-coarse:min-h-11 max-sm:min-h-11 cursor-pointer rounded-md border-0 bg-transparent px-2 py-2 text-start text-inherit hover:bg-hover focus-visible:bg-selected focus-visible:text-on-selected focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--w-focus-ring-color)]" on:click="search.useRecent(recent)">
+                    <span class="grid size-9 flex-none place-items-center rounded-lg bg-surface-high text-subtle" aria-hidden="true"><w-icon name="clock" class="ms-icon-sm"></w-icon></span>
+                    <span class="min-w-0 flex-1 truncate font-semibold">{recent}</span>
                   </button>
                 </li>
               </loop>
             </ul>
-            <p class="palette-note">Recent searches stay on this device only.</p>
+            <p class="px-2 pt-2 text-xs text-subtle">Recent searches stay on this device only.</p>
           </logic>
           <logic else>
-            <div class="state">
-              <p class="state-text">Type words from a message, then press Search.</p>
-            </div>
+            <p class="px-4 py-8 text-center text-sm text-subtle">Type words from a message, then press Search.</p>
           </logic>
         </case>
       </switch>

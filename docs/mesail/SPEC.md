@@ -534,10 +534,9 @@ recent data, works offline, and syncs when it is back online.
   thread replies of those messages; the person's read positions and
   reactions; the domain's member list (names and addresses) and channel
   list. Older messages and attachments are fetched when the person opens
-  them, and are kept only while space allows (AC-OF-13). **First build**
-  (until TACHYON requests T1, T2 and T9 of ADR 0006 are delivered): 7 days,
-  at most 5,000 messages and 40 MiB per person, and no attachments in the
-  copy.
+  them, and are kept only while space allows (AC-OF-13). The first
+  offline release waits for TACHYON's sealed tables (Q16), so it already
+  has this full window and attachments.
 - **AC-OF-3 Reading offline.** With no network, the person can open every
   conversation, thread, message and attachment in the device copy, and
   their drafts. The interface says "Offline" and when the copy was last
@@ -602,7 +601,7 @@ recent data, works offline, and syncs when it is back online.
   device". Online, search uses the server.
 - **AC-OF-13 Space.** The device copy stays within a budget (default 1 GiB
   on a computer and 300 MiB on a phone, attachments included; Q9). When it
-  is full (first build: AC-OF-2's limits), Mesail removes, in this order: attachments and messages
+  is full, Mesail removes, in this order: attachments and messages
   fetched on demand, attachments in the window (least recently opened
   first), messages older than the window. It never removes queued items
   or drafts. Settings show the space used per domain and offer "Remove
@@ -612,16 +611,24 @@ recent data, works offline, and syncs when it is back online.
 - **AC-OF-14 At rest.** The copy holds no password and no Keycloak token,
   and the stored session key is sealed by the server. After 30 days
   without a successful sync, the copy is locked until the person signs in
-  online again (Q10). Once TACHYON's sealed tables are available (ADR 0006
-  section 9), every table and file of the copy is encrypted with a device
-  key that service code never sees: a non-extractable browser key on the
-  web, and the system's key store in the apps (Keychain, Android Keystore,
-  Windows DPAPI, the Linux Secret Service). Only ids stay readable on disk
+  online again (Q10). Every table and file of the copy is encrypted with a
+  device key that service code never sees (TACHYON's sealed tables, ADR
+  0006 section 9): a non-extractable browser key on the web, and the
+  system's key store in the apps (Keychain, Android Keystore, Windows
+  DPAPI, the Linux Secret Service). Only ids stay readable on disk
   (person, domain, conversation and message ids). A wipe makes the copy
-  unreadable at once. Where sealing cannot work (Linux without a Secret
-  Service, a plain-`http` address), see Q15. Until sealed tables are
-  available, the copy relies on the device's disk encryption, and the
-  release notes say so.
+  unreadable at once. No device keeps a copy before this encryption exists
+  (Q16).
+- **AC-OF-18 No encryption on this device.** Where the copy cannot be
+  encrypted (Linux without a running Secret Service, or Mesail opened over
+  plain `http`), Mesail still keeps the copy, unencrypted (Q15), and says
+  so: next to "Keep me signed in on this device" at sign-in, the warning
+  "This device cannot encrypt Mesail's copy. Anyone who can read this
+  device's files can read your recent messages." and the same warning in
+  the space settings, with "Remove the copy on this device". The person
+  may untick the box to keep nothing. The copy follows every other rule
+  (wipes, the 30-day lock, the budget). When the device can encrypt later,
+  Mesail deletes the unencrypted copy and builds an encrypted one.
 - **AC-OF-15 Long offline.** When a device was offline longer than the
   server keeps changes (30 days), each conversation's copy is reloaded
   from its recent window instead of synced; queued items are kept and sent
@@ -709,8 +716,7 @@ all"):
   on this device" is off by default in a browser, so a shared computer
   keeps nothing, and on by default in the installed apps (AC-OF-1).
 - **Q9 (decided).** The default budget and window are 1 GiB and 30 days on
-  a computer, 300 MiB and 14 days on a phone (AC-OF-2, AC-OF-13), after
-  the first build's limits.
+  a computer, 300 MiB and 14 days on a phone (AC-OF-2, AC-OF-13).
 - **Q10 (decided: 30 days).** A device copy that has not reached the
   server for 30 days is locked until an online sign-in (AC-OF-14).
 - **Q11 (decided).** On a computer, images and files up to 2 MiB in the
@@ -726,17 +732,16 @@ all"):
 - **Q14 (decided: on the device).** In the first release drafts stay on
   the device; they do not follow the person to other devices.
 
-Open questions after TACHYON's plan (ADR 0006 section 9; the spec uses the
-default until the owner decides):
+Decided by the owner on 2026-11-11, after TACHYON's plan (ADR 0006
+section 9); both differ from the first proposal:
 
-- **Q15** Where sealed tables cannot open (Linux without a running Secret
-  Service, or Mesail served over plain `http`), should Mesail keep no
-  device copy there and work online only (this spec), or keep an
-  unencrypted copy with a warning?
-- **Q16** Should the first offline release wait for sealed tables
-  (TACHYON wave 3), or ship earlier with an unencrypted copy that relies on
-  the device's disk encryption (this spec, with the kept-device box off by
-  default in browsers)?
+- **Q15 (decided: an unencrypted copy with a warning).** Where the copy
+  cannot be encrypted (Linux without a running Secret Service, or plain
+  `http`), Mesail keeps an unencrypted copy and shows a warning
+  (AC-OF-18).
+- **Q16 (decided: wait for encryption).** The first offline release waits
+  until TACHYON's sealed tables (its wave 3) are in a TACHYON release that
+  Mesail uses. No device keeps a copy before that (AC-OF-14).
 
 Q1 (one shared conversation or one per member) is closed: one email to two
 members of the same domain is one shared conversation (AC-IN-6).

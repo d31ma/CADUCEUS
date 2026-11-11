@@ -791,12 +791,14 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
   T1, one row per message partitioned by
   `<personId>/<domainId>/<conversationId>`, eager tables for the
   conversation list, cursors, queue and drafts, load and unload of
-  partitions, `StoreWriteFailed` handling; without T1 in a release, the
-  day-page fallback with the first-build budget (7 days, 5,000 messages,
-  40 MiB, no attachments). Also `StorageSpace.persist()` and `estimate()`
-  (T9), the 30-day lock, storing the kept `sessionKey`, and wiping on
-  sign-out, another person, `access_revoked` and a lost domain
-  (`StorageSeal.forget()` first, once sealed tables exist).
+  partitions, `StoreWriteFailed` handling; attachments through `Blobs`
+  (T2) with AC-OF-2's full window; every table and the blob store sealed
+  (sealed tables, TACHYON wave 3), with the plain fallback set and the
+  warning of SPEC AC-OF-18 where sealing cannot work (or T6b's
+  "whenAvailable" mode if TACHYON ships it); `StorageSpace.persist()` and
+  `estimate()` (T9), the 30-day lock, storing the kept `sessionKey`, and
+  wiping on sign-out, another person, `access_revoked` and a lost domain
+  (`StorageSeal.forget()` first). Behind the release gate below.
 - **Depends on:** OU; Wave 3's L6 merged.
 - **Done when:** gates pass, the copy survives a restart of the app in a
   browser and in the macOS and Android shells, and every wipe case leaves
@@ -832,12 +834,15 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
    during Wave 3).
 2. After Wave 3 is merged, in parallel: **O1**, **O2**, **O3**.
 3. After O3: **O5**. After O1, O2 and O3: **O4**.
-4. Follow-ups as TACHYON lands (ADR 0006 section 9): with T2 (wave 2) a
-   slice keeps attachments in the copy through `Blobs` and raises the
-   window to AC-OF-2's full size; with sealed tables (wave 3) a slice
-   declares every device-copy table and the blob store sealed and calls
-   `StorageSeal.forget()` on every wipe (SPEC Q15 and Q16 decide where and
-   when).
+4. **Release gate** (SPEC Q16, decided "Wait for encryption"; ADR 0006
+   section 9): O1 and O2 are server changes and ship as soon as they
+   merge. O3 needs TACHYON's T1, T9 and T2 (waves 1 and 2) to build, and
+   sealed tables (wave 3) to finish. O3, O4 and O5 may merge earlier, but
+   "Keep me signed in on this device" stays hidden and no device keeps a
+   copy until sealed tables are in a TACHYON release that Mesail uses and
+   O3's tables are declared sealed. Turning it on is one small last slice
+   (show the box, run S15 to S17 on the dev stack in a browser and the
+   macOS, Windows, Linux and Android shells).
 
 ## Later (after the first release)
 

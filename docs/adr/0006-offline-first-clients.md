@@ -4,8 +4,8 @@
 - Date: 2026-11-11
 - Builds on: [ADR 0004](0004-mesail-go-serverless-keycloak.md) and
   [ADR 0005](0005-one-login-per-person.md). Nothing in them is replaced.
-- Spec: [SPEC.md](../mesail/SPEC.md) S15 to S17, AC-OF-1 to AC-OF-17,
-  Q8 to Q14. Contracts: [CONTRACTS.md](../mesail/CONTRACTS.md)
+- Spec: [SPEC.md](../mesail/SPEC.md) S15 to S17, AC-OF-1 to AC-OF-18,
+  Q8 to Q16. Contracts: [CONTRACTS.md](../mesail/CONTRACTS.md)
   "messaging" (sync), "identity" (kept devices). Slices:
   [SLICES.md](../mesail/SLICES.md) "Wave 4: offline first".
 - Amended: 2026-11-11, by TACHYON's approved plan for T1 to T12 (section
@@ -268,9 +268,29 @@ The owner approved TACHYON's plan for T1 to T12 (the TACHYON section's
   (person id, domain id, conversation id) and the message id are readable
   on disk; bodies, names, addresses, subjects and attachments are not.
   On Linux without a running Secret Service, and on a plain-`http` web
-  origin, a sealed table refuses to open (see SPEC Q15). Mesail declares
-  every device-copy table and the blob store sealed, so section 7's
-  `keyId` field is no longer Mesail's: the storage layer keeps it.
+  origin, a sealed table refuses to open. Mesail declares every
+  device-copy table and the blob store sealed, so section 7's `keyId`
+  field is no longer Mesail's: the storage layer keeps it.
+- **Where sealing cannot work** (the owner's answer to SPEC Q15,
+  2026-11-11: "Unencrypted copy + warning"): Mesail keeps an unencrypted
+  copy there and warns (SPEC AC-OF-18). Because a sealed table refuses to
+  open in that case, Mesail asks TACHYON for a "sealed when available"
+  mode (request **T6b**: `"sealed": "whenAvailable"` stores plain rows
+  where no device key can exist, and tells the services with a built-in
+  event such as `StorageSealUnavailable { reason }`). Until T6b exists,
+  the `DeviceStore` adapter keeps a second, plain set of entities and
+  chooses one set when the app starts, from whether a sealed table opens;
+  it never mixes them. When a device that had a plain copy can seal later,
+  the adapter deletes the plain copy and fills a sealed one.
+- **Release gate** (the owner's answer to SPEC Q16, 2026-11-11: "Wait for
+  encryption"): the first offline release waits until sealed tables
+  (TACHYON wave 3) are in a TACHYON release that Mesail uses. Waves 1 and
+  2 (T1, T9, T5, T2, T11) come before that, so the first offline release
+  has the full window and attachments: the first-build limits of section
+  1 (7 days, 5,000 messages, 40 MiB, no attachments), the day-page row
+  layout and section 7's interim (relying on disk encryption) are dropped.
+  Wave 4 slices may be built and merged earlier, but "Keep me signed in on
+  this device" stays hidden, and no copy is kept, until the gate opens.
 - **Outbox (T3): not built.** Mesail keeps its own queue (section 4),
   sends it from the tab that holds the T11 lock, and sends only while the
   app is open.
@@ -330,7 +350,8 @@ Costs, accepted:
 Status after TACHYON's approved plan (section 9): T1, T5, T9 and T4a in
 wave 1; T2 and T11 in wave 2; T6 and T7 as sealed tables in wave 3; T10 as
 worker services without a view, later; T4b later; T3, T4c, T8 and T12 not
-built. The original requests:
+built. Added after the owner's answer to SPEC Q15: **T6b**, a "sealed
+when available" mode (section 9). The original requests:
 
 TACHYON (Go Tac), in order of need:
 - **T1** `Store` tables for Go services read lazily and by page from

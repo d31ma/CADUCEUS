@@ -47,4 +47,9 @@ the stack to clear them. Wrong-password tests use new people, so the
 fixtures are never locked by brute-force detection. The tests that wait
 for a membership change allow 70 seconds.
 
+The offline-first tests (`Sync_test.go`, `Queue_test.go`,
+`KeptDevice_test.go`; slice O0, ADR 0006) send direct messages from ana to
+bo, wait up to 15 seconds for the change log, and create new people for the
+session tests, so the fixtures' own sessions are never revoked.
+
 A missing variable skips the test.

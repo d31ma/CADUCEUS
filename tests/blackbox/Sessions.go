@@ -20,6 +20,7 @@ type session struct {
 	ExpiresIn          int            `json:"expiresIn"`
 	SessionKey         string         `json:"sessionKey"`
 	MustChangePassword bool           `json:"mustChangePassword"`
+	Kept               bool           `json:"kept"`
 }
 
 type domainChoice struct {

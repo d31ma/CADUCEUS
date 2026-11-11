@@ -695,32 +695,29 @@ Decided by the owner on 2026-11-11 (one login, ADR 0005):
   opens the person's default domain: the first domain they were added to,
   until they choose another in their settings (AC-ID-9).
 
-Open questions of the offline-first design (ADR 0006; the spec uses the
-stated default until the owner decides):
+Decided by the owner on 2026-11-11 (offline first, ADR 0006; "Accept
+all"):
 
-- **Q8** Should "Keep me signed in on this device" be on by default in a
-  browser? This spec says off in a browser (a shared computer keeps
-  nothing) and on in the installed apps.
-- **Q9** The default space budget and window: 1 GiB and 30 days on a
-  computer, 300 MiB and 14 days on a phone. Smaller saves space; larger
-  shows more offline.
-- **Q10** How long may a device read its copy without reaching the
-  server? This spec says 30 days, then the copy is locked until an online
-  sign-in. Shorter is safer for a lost device; longer is better for long
-  trips.
-- **Q11** Should attachments in the recent window be downloaded ahead of
-  time? This spec says: on a computer, images and files up to 2 MiB are
-  downloaded ahead; on a phone, only when opened (or on Wi-Fi when the
-  person allows it in settings).
-- **Q12** An offline edit that meets a newer edit: this spec refuses it
-  and keeps the offline text as a draft. The alternative is "last edit
-  wins", which can silently undo the newer edit.
-- **Q13** When access to a domain is lost, should the one-time notice show
-  the first words of the unsent items (this spec) or only how many there
-  were? Showing words keeps the person's own writing visible for one last
-  time after the access ended.
-- **Q14** Should drafts follow the person to their other devices (stored
-  on the server) or stay on the device (this spec, first release)?
+- **Q8 (decided: off in a browser, on in the apps).** "Keep me signed in
+  on this device" is off by default in a browser, so a shared computer
+  keeps nothing, and on by default in the installed apps (AC-OF-1).
+- **Q9 (decided).** The default budget and window are 1 GiB and 30 days on
+  a computer, 300 MiB and 14 days on a phone (AC-OF-2, AC-OF-13), after
+  the first build's limits.
+- **Q10 (decided: 30 days).** A device copy that has not reached the
+  server for 30 days is locked until an online sign-in (AC-OF-14).
+- **Q11 (decided).** On a computer, images and files up to 2 MiB in the
+  recent window are downloaded ahead of time; on a phone, only when opened,
+  or on Wi-Fi when the person allows it in settings. (Only once
+  attachments are kept on devices, ADR 0006 T2.)
+- **Q12 (decided: refuse and keep a draft).** An offline edit that meets a
+  newer edit is refused (`409 edit_conflict`), and the offline text is
+  kept as a draft (AC-OF-8).
+- **Q13 (decided: first words).** When access to a domain is lost, the
+  one-time notice shows how many queued items were not sent and the first
+  words of each (AC-OF-9).
+- **Q14 (decided: on the device).** In the first release drafts stay on
+  the device; they do not follow the person to other devices.
 
 Q1 (one shared conversation or one per member) is closed: one email to two
 members of the same domain is one shared conversation (AC-IN-6).

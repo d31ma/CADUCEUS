@@ -750,6 +750,8 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
   reactions, forward-only read positions, `writtenAt`, `keepSignedIn`,
   `DELETE /identity/sessions` and `403 access_revoked`.
 - **Depends on:** nothing; the tests fail until O1 and O2 land.
+- **Landed:** `Sync_test.go`, `Queue_test.go`, `KeptDevice_test.go`
+  (helpers in `Sync.go`).
 
 ### O1. Messaging: change log and sync (M3's successor)
 - **Owns:** `apps/messaging/**` (except kit copies of other slices),

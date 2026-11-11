@@ -4,7 +4,10 @@ type AdminShellService struct {
 	DomainId                  string
 	Pane                      string
 	Announcement              string
+	nextView                  string
 	applicationEventPublisher ApplicationEventPublisher
+	// @Needs
+	session *AdminSessionService
 }
 
 // @OnStart
@@ -15,7 +18,9 @@ func (shell *AdminShellService) Start() {
 
 // @OnEvent
 func (shell *AdminShellService) SignedIn(signedIn AdminSignedIn) {
-	shell.Open(shell.firstView(signedIn.Operator), signedIn.DomainId)
+	view := shell.firstView(signedIn, shell.nextView)
+	shell.nextView = ""
+	shell.Open(view, signedIn.DomainId)
 }
 
 // @OnEvent
@@ -30,6 +35,15 @@ func (shell *AdminShellService) Open(view string, domainId string) {
 	shell.applicationEventPublisher.PublishEvent(AdminViewOpened{View: view, DomainId: domainId}, true)
 }
 
+func (shell *AdminShellService) OpenDomain(domainId string) {
+	shell.nextView = "members"
+	shell.session.SwitchTo(domainId)
+}
+
+func (shell *AdminShellService) OpenInstall() {
+	shell.Open("domains", shell.session.DomainId)
+}
+
 func (shell *AdminShellService) ShowMenu() {
 	shell.Pane = shell.listPane()
 }
@@ -38,8 +52,16 @@ func (shell *AdminShellService) SidebarLabel(domainId string) string {
 	return "Admin of " + domainId
 }
 
+func (shell *AdminShellService) TileLabel(domainId string, current bool) string {
+	return domainId + map[bool]string{true: ", current domain", false: ""}[current]
+}
+
 func (shell *AdminShellService) Flag(value bool) string {
 	return map[bool]string{true: "true", false: "false"}[value]
+}
+
+func (shell *AdminShellService) InstallView() bool {
+	return map[string]bool{"domains": true, "people": true}[shell.View]
 }
 
 func (shell *AdminShellService) announced(message string) string {
@@ -49,11 +71,11 @@ func (shell *AdminShellService) announced(message string) string {
 	return message
 }
 
-func (shell *AdminShellService) firstView(operator bool) string {
-	if operator {
-		return "domains"
+func (shell *AdminShellService) firstView(signedIn AdminSignedIn, nextView string) string {
+	if nextView != "" {
+		return nextView
 	}
-	return "members"
+	return map[bool]string{true: "domains", false: "members"}[signedIn.Operator && !signedIn.DomainAdmin]
 }
 
 func (shell *AdminShellService) listPane() string {

@@ -1,4 +1,4 @@
-// @Test(AdminShellTestSetup, {"partition":"tests"})
+// @Test(AdminSessionTestSetup, {"partition":"tests"})
 type AdminShellServiceTest struct {
 	behaviors *BehaviorContext
 	// @Fake
@@ -15,7 +15,7 @@ func (test *AdminShellServiceTest) TestStartShowsTheMenu() {
 func (test *AdminShellServiceTest) TestAnOperatorStartsAtDomains() {
 	shell := &AdminShellService{}
 	test.construct(shell)
-	shell.SignedIn(AdminSignedIn{DomainId: "mesail-operators", Operator: true})
+	shell.SignedIn(AdminSignedIn{DomainId: "*", Operator: true})
 	Assert.Equals("domains", shell.View)
 	Assert.Equals("main", shell.Pane)
 }
@@ -60,4 +60,48 @@ func (test *AdminShellServiceTest) TestLoadedAnnouncesWhatTheViewShows() {
 func (test *AdminShellServiceTest) TestSidebarLabelNamesTheDomain() {
 	shell := &AdminShellService{}
 	Assert.Equals("Admin of example.com", shell.SidebarLabel("example.com"))
+}
+
+func (test *AdminShellServiceTest) TestAnOperatorWhoAdministersTheOpenDomainStartsAtMembers() {
+	shell := &AdminShellService{}
+	test.construct(shell)
+	shell.SignedIn(AdminSignedIn{DomainId: "example.com", Operator: true, DomainAdmin: true})
+	Assert.Equals("members", shell.View)
+}
+
+func (test *AdminShellServiceTest) TestOpenDomainSwitchesAndOpensMembers() {
+	session := &AdminSessionService{}
+	test.construct(session)
+	shell := &AdminShellService{session: session}
+	test.construct(shell)
+	shell.session.SignInWith("ana@example.com", "right", "")
+	shell.OpenDomain("example.org")
+	shell.SignedIn(AdminSignedIn{DomainId: "example.org", DomainAdmin: true})
+	Assert.Equals("example.org", shell.session.DomainId)
+	Assert.Equals("members", shell.View)
+	Assert.Equals("example.org", shell.DomainId)
+}
+
+func (test *AdminShellServiceTest) TestOpenInstallShowsDomains() {
+	session := &AdminSessionService{}
+	test.construct(session)
+	shell := &AdminShellService{session: session}
+	test.construct(shell)
+	shell.session.SignInWith("olu", "right", "")
+	shell.OpenInstall()
+	Assert.Equals("domains", shell.View)
+	Assert.Equals(true, shell.InstallView())
+}
+
+func (test *AdminShellServiceTest) TestInstallViewIsFalseForDomainPages() {
+	shell := &AdminShellService{}
+	test.construct(shell)
+	shell.Open("members", "example.com")
+	Assert.Equals(false, shell.InstallView())
+}
+
+func (test *AdminShellServiceTest) TestTileLabelNamesTheCurrentDomain() {
+	shell := &AdminShellService{}
+	Assert.Equals("example.com, current domain", shell.TileLabel("example.com", true))
+	Assert.Equals("example.org", shell.TileLabel("example.org", false))
 }

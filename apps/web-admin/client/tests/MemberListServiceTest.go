@@ -110,6 +110,46 @@ func (test *MemberListServiceTest) TestClearSearchShowsEveryone() {
 	Assert.Equals(2, len(list.Rows))
 }
 
+func (test *MemberListServiceTest) TestRowsShowTheUsernameAndTheRole() {
+	list := test.opened()
+	Assert.Equals("ana", list.Rows[0].Username)
+	Assert.Equals(true, list.Rows[0].Admin)
+	Assert.Equals(true, list.Rows[0].AccountManaged)
+	Assert.Equals("2 admins", list.AdminCount)
+}
+
+func (test *MemberListServiceTest) TestAccountManagedComesFromTheDirectory() {
+	list := test.opened()
+	list.SearchWith("team")
+	Assert.Equals(false, list.Rows[2].AccountManaged)
+	Assert.Equals(false, list.Rows[2].Admin)
+}
+
+func (test *MemberListServiceTest) TestTheSignedInAdminIsMarkedAsYou() {
+	session := &AdminSessionService{SessionKey: "bo-key"}
+	test.construct(session)
+	list := &MemberListService{session: session, problems: &AdminProblemService{}}
+	test.construct(list)
+	list.Opened(AdminViewOpened{View: "members", DomainId: "example.com"})
+	Assert.Equals(false, list.Rows[0].You)
+	Assert.Equals(true, list.Rows[1].You)
+}
+
+func (test *MemberListServiceTest) TestNameOfFindsAListedUsername() {
+	list := test.opened()
+	Assert.Equals("Bo Lee", list.NameOf("bo"))
+	Assert.Equals("", list.NameOf("zoe"))
+}
+
+func (test *MemberListServiceTest) TestChangedLoadsTheListAgain() {
+	list := test.opened()
+	list.Query = "olu"
+	list.Changed(PeopleChanged{PersonId: "olu-id"})
+	Assert.Equals(1, len(list.Rows))
+	Assert.Equals("1 member", list.Heading)
+	Assert.Equals("0 admins", list.AdminCount)
+}
+
 func (test *MemberListServiceTest) session() *AdminSessionService {
 	session := &AdminSessionService{}
 	test.construct(session)

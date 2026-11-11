@@ -103,6 +103,33 @@
   plain Go, so the Yon role files stay thin enough for TACHYON's
   cohesion check (`ty bundle` enforces TY1314).
 
+### Slice M2: outbound mail
+
+- `kit/compose` builds RFC 5322 messages: `Message-ID`, `In-Reply-To` and
+  `References` for threading (at most 20 references, the first one kept),
+  RFC 2047 and RFC 2231 encoding, text, HTML and attachments, CRLF line
+  ends, and no `Bcc` header ever. It refuses line breaks in header values.
+- `kit/dkim` signs each message with its own domain's key (RSA-SHA256 or
+  Ed25519-SHA256, relaxed/relaxed, `from` signed twice). Keys come from the
+  secret store under `dkim/<domain>/<selector>`, never from documents or
+  logs, and a From outside the key's domain is refused. Two selectors can
+  live side by side, so keys rotate without lost mail.
+- `kit/smtpclient` delivers direct to MX (implicit and null MX) or through
+  a relay (STARTTLS, AUTH PLAIN only over TLS, port 465), through an HTTP
+  CONNECT tunnel when the app runs behind TACHYON's outgoing guard, and
+  sorts replies into temporary and permanent. `kit/smtpclient/sink` is a
+  local SMTP server for tests, so no test sends real mail.
+- The `mail-out` app takes `email.send.requested` from messaging and
+  notify, keeps one queue item per recipient (deduplicated by event id and
+  idempotency key), builds and signs the message, and delivers it: to
+  `mail-in` over HTTP when the recipient's domain is hosted on the same
+  install (never SMTP to itself), otherwise to the relay or direct to MX.
+  Temporary failures retry with doubling delays up to one hour, until 5
+  days; hard bounces add the address to the sender domain's own suppression
+  list. Every change publishes `email.delivery.changed` through the outbox.
+  The delivery job and the relay are `Allow(Service)` routes that a
+  scheduled worker or an EventBridge schedule triggers.
+
 - Completed account-synchronized interface localization across 20 closed,
   persisted locale choices. A reproducible, checksum-pinned SMaLL-100 pipeline
   now catalogs 755 audited static interface literals for 19 non-English

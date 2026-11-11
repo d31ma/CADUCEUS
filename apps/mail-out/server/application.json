@@ -1,7 +1,8 @@
 {
   "server": {
     "host": "127.0.0.1",
-    "port": 8110
+    "port": 8110,
+    "environment": ["MESAIL_SECRET_*"]
   },
   "names": {
     "words": [
@@ -9,7 +10,47 @@
       "dmarc",
       "helo",
       "mx",
+      "requeue",
+      "smtp",
       "spf"
     ]
+  },
+  "oidc": {
+    "issuer": "https://mesail.localhost/idp/realms/{realm}",
+    "jwks": "http://keycloak:8080/idp/realms/{realm}/protocol/openid-connect/certs",
+    "audience": "mesail-api",
+    "keycloak": "http://keycloak:8080/idp/realms/{realm}/protocol/openid-connect"
+  },
+  "outgoing": {
+    "hosts": [
+      "keycloak",
+      "mail-in.localhost",
+      "mail-out.localhost",
+      "messaging.localhost",
+      "notify.localhost",
+      "directory.localhost"
+    ]
+  },
+  "outbox": {
+    "producer": "mail-out",
+    "subscribers": [
+      { "name": "messaging", "url": "http://messaging.localhost:8104/api/v1/messaging/events" }
+    ]
+  },
+  "mailout": {
+    "mailinurl": "http://mail-in.localhost:8109",
+    "messagingurl": "http://messaging.localhost:8104",
+    "notifyurl": "http://notify.localhost:8107",
+    "directoryurl": "http://directory.localhost:8102",
+    "relayaddress": "",
+    "relayrequiretls": true,
+    "heloname": "mail-out.localhost",
+    "directenabled": false,
+    "secretprefix": "MESAIL_SECRET_",
+    "maxageminutes": 7200,
+    "firstdelayseconds": 60,
+    "maxdelayseconds": 3600,
+    "leaseseconds": 300,
+    "timeoutseconds": 30
   }
 }

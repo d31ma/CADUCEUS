@@ -184,21 +184,19 @@
             </div>
           </section>
 
-          <!-- Account: managed in Keycloak -->
+          <!-- Account: managed by the domain admin -->
           <section class="ms-card" aria-labelledby="account-h">
             <div class="ms-card__head">
-              <div class="ms-card__head-text"><h3 id="account-h">Account and sign-in</h3><p class="ms-card__desc">Your example.com sign-in is managed by your organization's account service. Mesail never sees or stores your password.</p></div>
+              <div class="ms-card__head-text"><h3 id="account-h">Account and sign-in</h3><p class="ms-card__desc">Your example.com sign-in is managed by your domain's admins. Mesail never stores your password.</p></div>
             </div>
-            <a class="ms-link-row" href="https://id.example.com/realms/example-com/account/#/security/signingin" target="_blank" rel="noopener">
+            <div class="ms-link-row">
               <span class="ms-link-row__icon"><span class="ms-icon ms-i-key" aria-hidden="true"></span></span>
-              <span class="ms-link-row__main"><span class="ms-link-row__title">Manage password, passkeys and two-step sign-in</span><span class="ms-help">Opens your example.com account page at id.example.com</span></span>
-              <span class="ms-link-row__end"><span class="ms-link-row__open">Open</span><span class="ms-icon ms-i-external ms-icon--sm" aria-hidden="true"></span><span class="ms-sr-only"> (opens in a new tab)</span></span>
-            </a>
-            <a class="ms-link-row" href="https://id.example.com/realms/example-com/account/#/personal-info" target="_blank" rel="noopener">
+              <span class="ms-link-row__main"><span class="ms-link-row__title">Password and 2-step code</span><span class="ms-help">To change or reset them, ask an admin of example.com.</span></span>
+            </div>
+            <div class="ms-link-row">
               <span class="ms-link-row__icon"><span class="ms-icon ms-i-user" aria-hidden="true"></span></span>
-              <span class="ms-link-row__main"><span class="ms-link-row__title">Change your name and personal details</span><span class="ms-help">Changes show in Mesail the next time you sign in</span></span>
-              <span class="ms-link-row__end"><span class="ms-link-row__open">Open</span><span class="ms-icon ms-i-external ms-icon--sm" aria-hidden="true"></span><span class="ms-sr-only"> (opens in a new tab)</span></span>
-            </a>
+              <span class="ms-link-row__main"><span class="ms-link-row__title">Name and personal details</span><span class="ms-help">An admin of example.com changes these. Changes show in Mesail the next time you sign in.</span></span>
+            </div>
           </section>
 
           <!-- Sessions -->

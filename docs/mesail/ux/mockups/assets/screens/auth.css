@@ -141,3 +141,11 @@ a.ms-btn { text-decoration: none; }
 a.ms-btn--primary { color: var(--w-on-accent); }
 a.ms-menu__item { color: var(--w-text); text-decoration: none; }
 a.ms-menu__item--danger { color: var(--w-error); }
+
+/* Mesail's own sign-in form (since 2026-11-10: the browser never talks to Keycloak) */
+.ms-password { position: relative; }
+.ms-password .ms-input { padding-right: 2.75rem; }
+.ms-password__toggle { position: absolute; right: 0.25rem; top: 50%; transform: translateY(-50%); }
+.ms-code-input { max-width: 10rem; font-family: var(--w-font-family-mono); letter-spacing: 0.2em; }
+.ms-input.is-active { border-color: var(--w-focus-ring-color); outline: var(--w-focus-ring-width) solid var(--w-focus-ring-color); outline-offset: 0; }
+.ms-auth__form .ms-domain-row { width: 100%; border: 0; background: transparent; text-align: left; font: inherit; color: inherit; cursor: pointer; }

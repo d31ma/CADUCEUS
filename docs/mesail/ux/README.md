@@ -150,23 +150,33 @@ reviews and sends again). Mockup: `compose-errors.html`.
 - Mockups: `search-palette.html`, `search.html`, `search-states.html`, `activity.html`,
   `presence-menu.html`, `profile-card.html`.
 
-## 8. Sign-in (Keycloak, OpenID Connect)
+## 8. Sign-in (Mesail's own form)
 
-Mesail shows no password field of its own (AC-ID-5).
-1. `signin.html`: the user types a work email (or picks a recent domain).
-2. Mesail finds the domain and says where the user goes next ("You will go to
-   sign-in.example.com"). Unknown or disabled domains get a clear message.
-3. The browser goes to Keycloak with `login_hint`; Keycloak handles passwords, passkeys and
-   second factors.
-4. Back in Mesail: "Finishing sign-in…", then the app.
-Errors (cancelled, account turned off, Keycloak unreachable, expired sign-in attempt), sign-out
-per domain, and the "session ended" dialog (the draft is kept) are all designed.
-Mockups: `signin*.html`, `signed-out.html`, `session-expired.html`.
+Changed on 2026-11-10 by the user's decision (relayed by slice F1): the browser never talks to
+Keycloak. Mesail shows its own form and posts it to the identity service, which checks it with
+Keycloak. Mesail still stores no password, TOTP secret or recovery code (AC-ID-5).
+
+- **One card** (`signin.html`): Work email, Password (with a Show button), optional 2-step code
+  ("Only if your account uses one."; TOTP in v1, no passkeys), "Remember my email on this device"
+  (off by default, for shared computers), and **Sign in**. Recent domains below the form fill in
+  the email and move focus to Password. "Forgot your password? Ask an admin of your domain to
+  reset it."
+- **One answer for every failure**, so the form never reveals whether an account exists:
+  "The email, password or 2-step code is not right." The password field is cleared and focused.
+- **Too many tries:** "Too many tries. Wait a minute, then try again." The button stays disabled
+  until then. **Service down:** "We cannot reach sign-in right now. Try again in a minute."
+- **Sign in to another domain** (from the domain menu): the same card with the title
+  "Sign in to another domain", a line saying the user stays signed in to the current domain, and
+  a Cancel button.
+- **Sign-out** happens in place, per domain or for all domains (`signed-out.html`). The "session
+  ended" dialog keeps the draft (`session-expired.html`).
+- Connection banners use one wording everywhere: "Reconnecting… New messages may be late." with
+  the button **Try now**.
 
 ## 9. Settings and admin
 
-- **Settings** (per domain): profile (name comes from Keycloak, so it links to the Keycloak account
-  page), notifications (push permission states, email summary delay, do-not-disturb schedule),
+- **Settings** (per domain): profile (name and password are managed by the domain admin; Mesail
+  shows them read-only), notifications (push permission states, email summary delay, do-not-disturb schedule),
   email (send-from aliases, signature, remote images, Cc default), appearance (DuVay themes light,
   dark, auto, high contrast; density; text size; motion).
 - **Admin** (role `mesail-admin`, checked by the server; the UI only hides entry points):
@@ -225,7 +235,6 @@ CADUCEUS, so the brand carries over.
 - **Unverified senders.** Images from a sender that fails SPF, DKIM or DMARC stay hidden, and
   "Show images" is not offered; "Show original" is.
 - **Appearance settings are per device;** all other settings are per domain.
-- **The sign-in field accepts a work email or a bare domain** (`type="text"`, `inputmode="email"`).
 - **Mockup-only helpers** (labelled state frames, `?theme=`, `?pane=`) are not part of the product.
 
 ## 13. Open questions
@@ -251,9 +260,11 @@ Questions from the screen work (product owner to decide; none blocks the first s
 - **Delivery.** After an edit, offer "Send the change by email"? After a bounce, does "Send again"
   send a new email copy of the same message (mockup) or post a new message? Warn about repeated
   bounces once per address or once per message?
-- **Sign-in.** Are drafts kept on the device or on the server, and does sign-out delete them? Is
-  "Remember this domain on this device" on by default? Who turns a domain off: the operator or the
-  domain admin?
+- **Sign-in.** Are drafts kept on the device or on the server, and does sign-out delete them? Who
+  turns a domain off: the operator or the domain admin? Since the browser never talks to Keycloak,
+  how do people change their own password and 2-step code (the mockup says "ask an admin")? Do
+  admins still open the Keycloak console from `admin-members.html` ("Open Keycloak"), or does the
+  admin app manage members through the identity service?
 - **Settings.** Does the job title come from Keycloak, like the name? Is "Always show images from
   people I have emailed" allowed (AC-IN-5 speaks of one sender at a time)? Is auto-reply out of the
   first release (the mockup shows it as "Later release")?

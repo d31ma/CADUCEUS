@@ -134,7 +134,7 @@ values. The mockup class is the reference for look and states.
 
 | Component | Mockups | Tac target |
 | --- | --- | --- |
-| Sign-in pages (email, domain found, redirecting, errors, signed out) | `signin*.html`, `signed-out.html` | `pages/signin/tac.html`, `pages/signin/callback/tac.html`, `pages/signed-out/tac.html` + `SessionService.go` (OIDC with PKCE, `login_hint`) |
+| Sign-in form (email, password, optional 2-step code, remember email, errors, "Sign in to another domain" variant) | `signin.html`, `signed-out.html` | `pages/signin/tac.html`, `pages/signed-out/tac.html`, `components/app/signin-form/tac.html` + `SessionService.go` (POST to the identity service) |
 | Wordmark | sign-in pages | `components/app/wordmark/tac.html` |
 | Domain row (recent domain with address) | `signin.html`, `signed-out.html` | `components/app/domain-row/tac.html` |
 | Session ended dialog (draft kept) | `session-expired.html` | `components/app/session-ended/tac.html` |

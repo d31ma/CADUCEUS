@@ -6,4 +6,5 @@ type AuthResults struct {
 	Dmarc       string `json:"dmarc"`
 	DmarcPolicy string `json:"dmarcPolicy"`
 	Suspicious  bool   `json:"suspicious"`
+	Handoff     bool   `json:"handoff"`
 }

@@ -18,7 +18,7 @@ domain, and hands each copy to `mail-in`.
    - reads the headers (`kit/mime`).
    - for each recipient domain, writes the raw message with an
      `Authentication-Results` header field in front of it to
-     `<domainId>/inbound/<sha256>.eml` (written to a temporary file, synced,
+     `<domainId>/inbound-<sha256 hex>` (the blob key format of `kit/blobs`) (written to a temporary file, synced,
      renamed). The hash covers the original message, the envelope sender and
      that domain's recipients, so a retried transaction gets the same key.
    - calls `POST /api/v1/mail-in/messages` with that domain's recipients.

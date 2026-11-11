@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -101,7 +102,7 @@ func TestTwoRecipientDomainsGiveTwoRawCopiesAndTwoMailInCalls(t *testing.T) {
 	if strings.Join(first.Recipients, ",") != "ana@example.com,bob@example.com" || strings.Join(second.Recipients, ",") != "cy@example.org" {
 		t.Fatalf("recipients are not split by domain: %v and %v", first.Recipients, second.Recipients)
 	}
-	if !strings.HasPrefix(first.RawBlobKey, "example.com/inbound/") || !strings.HasSuffix(first.RawBlobKey, ".eml") {
+	if !regexp.MustCompile(`^example\.com/inbound-[0-9a-f]{64}$`).MatchString(first.RawBlobKey) {
 		t.Fatalf("unexpected key %q", first.RawBlobKey)
 	}
 	if strings.Join(receipt.InboundIds, ",") != "in_ana@example.com,in_cy@example.org" {

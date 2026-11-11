@@ -1,4 +1,5 @@
 import (
+	"regexp"
 	"sort"
 	"strings"
 )
@@ -19,7 +20,11 @@ func (service *EnvelopeCheckService) DomainOf(envelope InboundEnvelope) (string,
 	if err != nil {
 		return "", err
 	}
-	err = service.checkBlobKey(domainId, envelope.RawBlobKey)
+	err = service.checkHandoffSender(envelope)
+	if err != nil {
+		return "", err
+	}
+	err = service.checkBlobKey(service.blobOwner(envelope, domainId), envelope.RawBlobKey)
 	if err != nil {
 		return "", err
 	}
@@ -80,11 +85,33 @@ func (service *EnvelopeCheckService) checkDomain(domainId string) error {
 	return nil
 }
 
-func (service *EnvelopeCheckService) checkBlobKey(domainId string, key string) error {
-	if !strings.HasPrefix(key, domainId+"/") || strings.Contains(key, "..") {
-		return &InvalidEnvelope{Field: "rawBlobKey", Reason: "the raw blob key must start with the recipient domain"}
+func (service *EnvelopeCheckService) SenderDomain(envelope InboundEnvelope) string {
+	return service.domainPart(envelope.EnvelopeFrom)
+}
+
+func (service *EnvelopeCheckService) blobOwner(envelope InboundEnvelope, domainId string) string {
+	if envelope.AuthResults.Handoff {
+		return service.SenderDomain(envelope)
+	}
+	return domainId
+}
+
+func (service *EnvelopeCheckService) checkHandoffSender(envelope InboundEnvelope) error {
+	if envelope.AuthResults.Handoff && service.domainPart(envelope.Headers.From.Address) != service.SenderDomain(envelope) {
+		return &InvalidEnvelope{Field: "headers.from", Reason: "a hand-off must come from an address of the sender domain"}
 	}
 	return nil
+}
+
+func (service *EnvelopeCheckService) checkBlobKey(owner string, key string) error {
+	if !regexp.MustCompile(service.blobKeyPattern(owner)).MatchString(key) {
+		return &InvalidEnvelope{Field: "rawBlobKey", Reason: "the raw blob key must be a blob of the domain that owns it"}
+	}
+	return nil
+}
+
+func (service *EnvelopeCheckService) blobKeyPattern(owner string) string {
+	return "^" + regexp.QuoteMeta(owner) + "/[A-Za-z0-9_-]{1,128}$"
 }
 
 func (service *EnvelopeCheckService) checkSize(size int64) error {

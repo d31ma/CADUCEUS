@@ -28,11 +28,11 @@ func (test *InboundServiceTest) envelope(key string) InboundEnvelope {
 }
 
 func (test *InboundServiceTest) freshKey() string {
-	return "example.com/inbound/" + rand.Text() + ".eml"
+	return "example.com/inbound-" + rand.Text()
 }
 
 func (test *InboundServiceTest) TestAcceptRefusesAnInvalidEnvelope() {
-	_, err := test.service().Accept(test.envelope("example.org/inbound/x.eml"))
+	_, err := test.service().Accept(test.envelope("example.org/inbound-x"))
 	invalid := &InvalidEnvelope{}
 	Assert.IsTrue(errors.As(err, &invalid))
 }

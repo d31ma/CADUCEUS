@@ -7,7 +7,7 @@ type InboundControllerTest struct {
 
 func (test *InboundControllerTest) TestPostMessageRefusesAnEnvelopeWithoutRecipients() {
 	controller := &InboundController{inboundService: &InboundService{envelopeCheckService: &EnvelopeCheckService{}}}
-	_, err := controller.PostMessage(InboundEnvelope{RawBlobKey: "example.com/inbound/x.eml", Size: 1})
+	_, err := controller.PostMessage(InboundEnvelope{RawBlobKey: "example.com/inbound-x", Size: 1})
 	invalid := &InvalidEnvelope{}
 	Assert.IsTrue(errors.As(err, &invalid))
 }

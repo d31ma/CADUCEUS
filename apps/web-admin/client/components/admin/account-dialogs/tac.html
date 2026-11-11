@@ -1,0 +1,108 @@
+<div class="contents">
+  <switch :value="accountAction.dialog">
+    <case :when="'reset'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="'Reset the password of ' + accountAction.name + '?'" heading-level="2" aria-describedby="account-reset-text" on:close="accountAction.close()">
+        <form method="dialog" class="dialog-text grid gap-4" aria-label="Reset the password" on:submit="accountAction.resetWith($event.target.elements.newPassword.value)">
+          <p id="account-reset-text">This is the one password of {accountAction.firstName} for every domain. {accountAction.firstName} is signed out everywhere and must choose a new password at the next sign-in.</p>
+          <logic :if="accountAction.passwordProblem != ''">
+            <w-text-field label="New first password" name="newPassword" type="password" autocomplete="new-password" required autofocus :error="accountAction.passwordProblem"></w-text-field>
+          </logic>
+          <logic else>
+            <w-text-field label="New first password" name="newPassword" type="password" autocomplete="new-password" required autofocus hint="Give it to them in person or by phone." persistent-hint></w-text-field>
+          </logic>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2">
+            <w-btn variant="text" :disabled="accountAction.busy" on:click="accountAction.close()">Cancel</w-btn>
+            <w-btn variant="flat" type="submit" :loading="accountAction.busy">Reset password</w-btn>
+          </div>
+        </form>
+      </w-dialog>
+    </case>
+    <case :when="'totp'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="'Remove the 2-step code of ' + accountAction.name + '?'" heading-level="2" aria-describedby="account-totp-text" on:close="accountAction.close()">
+        <div class="dialog-text grid gap-4">
+          <p id="account-totp-text">Use this when {accountAction.firstName} lost the phone with the authenticator app. {accountAction.firstName} then signs in with the password only, in every domain, and can set up 2-step sign-in again in Settings.</p>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2">
+            <w-btn variant="text" :disabled="accountAction.busy" on:click="accountAction.close()">Cancel</w-btn>
+            <w-btn variant="flat" color="danger" :loading="accountAction.busy" on:click="accountAction.removeTwoStepCode()">Remove 2-step code</w-btn>
+          </div>
+        </div>
+      </w-dialog>
+    </case>
+    <case :when="'disable'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="'Turn off the account of ' + accountAction.name + '?'" heading-level="2" aria-describedby="account-disable-text" on:close="accountAction.close()">
+        <div class="dialog-text grid gap-4">
+          <p id="account-disable-text">{accountAction.firstName} is signed out within a minute and cannot sign in to any domain. Messages and addresses stay. You can turn the account on again later.</p>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2">
+            <w-btn variant="text" :disabled="accountAction.busy" on:click="accountAction.close()">Cancel</w-btn>
+            <w-btn variant="flat" color="danger" :loading="accountAction.busy" on:click="accountAction.turnOff()">Turn off account</w-btn>
+          </div>
+        </div>
+      </w-dialog>
+    </case>
+    <case :when="'rename'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="'Change the name of ' + accountAction.name" heading-level="2" on:close="accountAction.close()">
+        <form method="dialog" class="dialog-text grid gap-4" aria-label="Change the name" on:submit="accountAction.renameWith($event.target.elements.displayName.value)">
+          <logic :if="accountAction.nameProblem != ''">
+            <w-text-field label="Display name" name="displayName" autocomplete="off" required autofocus :value="accountAction.name" :error="accountAction.nameProblem"></w-text-field>
+          </logic>
+          <logic else>
+            <w-text-field label="Display name" name="displayName" autocomplete="off" required autofocus :value="accountAction.name" hint="Shown in every domain, also on old messages." persistent-hint></w-text-field>
+          </logic>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2">
+            <w-btn variant="text" :disabled="accountAction.busy" on:click="accountAction.close()">Cancel</w-btn>
+            <w-btn variant="flat" type="submit" :loading="accountAction.busy">Save</w-btn>
+          </div>
+        </form>
+      </w-dialog>
+    </case>
+    <case :when="'delete'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="'Delete ' + accountAction.name + '?'" heading-level="2" aria-describedby="account-delete-text" on:close="accountAction.close()">
+        <form method="dialog" class="dialog-text grid gap-4" aria-label="Delete the person" on:submit="accountAction.deleteWith($event.target.elements.confirm.value)">
+          <ul class="dialog-list grid gap-2" id="account-delete-text">
+            <li>The account of {accountAction.firstName} is deleted, and {accountAction.firstName} leaves every domain.</li>
+            <li>Mail to the addresses of {accountAction.firstName} is refused.</li>
+            <li>Messages stay, with the name {accountAction.name}.</li>
+            <li>The username {accountAction.username} is never given to anyone else.</li>
+          </ul>
+          <logic :if="accountAction.confirmProblem != ''">
+            <w-text-field :label="'Type ' + accountAction.username + ' to confirm'" name="confirm" autocomplete="off" autocapitalize="none" spellcheck="false" required autofocus :error="accountAction.confirmProblem"></w-text-field>
+          </logic>
+          <logic else>
+            <w-text-field :label="'Type ' + accountAction.username + ' to confirm'" name="confirm" autocomplete="off" autocapitalize="none" spellcheck="false" required autofocus></w-text-field>
+          </logic>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2">
+            <w-btn variant="text" :disabled="accountAction.busy" on:click="accountAction.close()">Cancel</w-btn>
+            <w-btn variant="flat" color="danger" type="submit" :loading="accountAction.busy">Delete person</w-btn>
+          </div>
+        </form>
+      </w-dialog>
+    </case>
+    <case :when="'done'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="accountAction.doneTitle" heading-level="2" aria-describedby="account-done-text" on:close="accountAction.close()">
+        <div class="dialog-text grid gap-4">
+          <p class="note note--ok flex items-start gap-3 px-4 py-3" role="status"><w-icon name="check" class="mt-0.5" aria-hidden="true"></w-icon><span id="account-done-text">{accountAction.doneText}</span></p>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2"><w-btn variant="flat" on:click="accountAction.close()">Done</w-btn></div>
+        </div>
+      </w-dialog>
+    </case>
+    <case :when="'forbidden'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="'You cannot change the account of ' + accountAction.name" heading-level="2" role="alertdialog" aria-describedby="account-forbidden-text" on:close="accountAction.close()">
+        <div class="dialog-text grid gap-4">
+          <div class="grid gap-2" id="account-forbidden-text">
+            <p>{accountAction.name} is also a member of a domain you do not manage. A change to the account would change the sign-in there too.</p>
+            <p>Ask the Operator of this Mesail install, or an admin of all the domains of {accountAction.firstName}.</p>
+          </div>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2"><w-btn variant="flat" on:click="accountAction.close()">OK</w-btn></div>
+        </div>
+      </w-dialog>
+    </case>
+    <case :when="'failed'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" heading="Nothing changed" heading-level="2" role="alertdialog" aria-describedby="account-failed-text" on:close="accountAction.close()">
+        <div class="dialog-text grid gap-4">
+          <p id="account-failed-text">We cannot reach the directory right now. Try again in a minute.</p>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2"><w-btn variant="flat" on:click="accountAction.close()">OK</w-btn></div>
+        </div>
+      </w-dialog>
+    </case>
+  </switch>
+</div>

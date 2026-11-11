@@ -19,7 +19,9 @@ type MemberListService struct {
 	// @Needs
 	directoryClient *DirectoryClient
 	// @Needs
-	problems                  *AdminProblemService
+	problems *AdminProblemService
+	// @Needs
+	initials                  *InitialsService
 	applicationEventPublisher ApplicationEventPublisher
 }
 
@@ -60,6 +62,10 @@ func (list *MemberListService) indexOf(username string) int {
 	return slices.IndexFunc(list.Rows, func(row MemberRow) bool { return row.Username == username })
 }
 
+func (list *MemberListService) Listed() bool {
+	return map[string]bool{list.ready(): true, list.onlyYou(): true}[list.State]
+}
+
 func (list *MemberListService) load() {
 	list.State = "loading"
 	list.SearchedQuery = strings.TrimSpace(list.Query)
@@ -71,7 +77,7 @@ func (list *MemberListService) load() {
 	list.AdminCount = list.countText(list.admins(), "admin", "admins")
 	list.State = list.emptyState(list.SearchedQuery)
 	list.State = list.filledState(len(list.Rows), list.State)
-	list.State = list.aloneState(list.alone(), list.State)
+	list.State = list.aloneState(list.aloneKey(), list.State)
 	list.State = list.failedState(problem, list.State)
 	list.State = list.forbiddenState(problem, list.State)
 }
@@ -90,21 +96,11 @@ func (list *MemberListService) rowOf(item MemberSummary) MemberRow {
 		Name:           item.DisplayName,
 		Username:       item.Username,
 		Address:        item.PrimaryAddress,
-		Initials:       list.initialsOf(item.DisplayName),
+		Initials:       list.initials.Of(item.DisplayName),
 		Admin:          item.Admin,
 		AccountManaged: item.AccountManaged,
 		You:            item.Username != "" && item.Username == list.session.Username,
 	}
-}
-
-func (list *MemberListService) initialsOf(name string) string {
-	words := append(strings.Fields(name), "", "")
-	return strings.ToUpper(list.firstLetter(words[0]) + list.firstLetter(words[1]))
-}
-
-func (list *MemberListService) firstLetter(word string) string {
-	letters := []rune(word)
-	return string(letters[:min(1, len(letters))])
 }
 
 func (list *MemberListService) admins() int {
@@ -115,8 +111,12 @@ func (list *MemberListService) admins() int {
 	return count
 }
 
-func (list *MemberListService) alone() bool {
-	return list.SearchedQuery == "" && len(list.Rows) == 1 && list.Rows[0].You
+func (list *MemberListService) aloneKey() string {
+	return strings.Join([]string{list.SearchedQuery, strconv.Itoa(len(list.Rows)), strconv.FormatBool(list.firstIsYou())}, "/")
+}
+
+func (list *MemberListService) firstIsYou() bool {
+	return append(slices.Clone(list.Rows), MemberRow{})[0].You
 }
 
 func (list *MemberListService) foundIndex(index int, missing int) int {
@@ -151,14 +151,22 @@ func (list *MemberListService) filledState(count int, state string) string {
 	if count == 0 {
 		return state
 	}
+	return list.ready()
+}
+
+func (list *MemberListService) ready() string {
 	return "ready"
 }
 
-func (list *MemberListService) aloneState(alone bool, state string) string {
-	if !alone {
+func (list *MemberListService) onlyYou() string {
+	return "onlyYou"
+}
+
+func (list *MemberListService) aloneState(key string, state string) string {
+	if key != "/1/true" {
 		return state
 	}
-	return "onlyYou"
+	return list.onlyYou()
 }
 
 func (list *MemberListService) failedState(problem string, state string) string {

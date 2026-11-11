@@ -5,34 +5,68 @@
     <div class="admin-app group/app grid h-dvh overflow-hidden grid-cols-1 min-[768px]:grid-cols-[4.25rem_17rem_minmax(0,1fr)] xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)] 2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" :data-pane="adminShell.pane">
       <nav class="admin-rail hidden min-[768px]:flex flex-col items-center gap-2 py-3" aria-label="Domains">
         <ul class="flex flex-col gap-2">
-          <li><span class="domain-tile grid place-items-center" aria-current="true"><span aria-hidden="true">{adminSession.initials}</span><span class="sr-only">{adminSession.domainId}, current domain</span></span></li>
+          <logic :if="adminSession.operator">
+            <li><button type="button" class="domain-tile domain-tile--install grid place-items-center" :aria-current="adminShell.flag(adminShell.installView())" title="Whole install" on:click="adminShell.openInstall()"><w-icon name="globe" aria-hidden="true"></w-icon><span class="sr-only">Whole install</span></button></li>
+          </logic>
+          <loop :for="tile of adminSession.tiles">
+            <li><button type="button" class="domain-tile grid place-items-center" :aria-current="adminShell.flag(tile.current && !adminShell.installView())" :title="tile.domainId" :aria-label="adminShell.tileLabel(tile.domainId, tile.current)" :disabled="adminSession.switching != ''" on:click="adminShell.openDomain(tile.domainId)"><span aria-hidden="true">{tile.initials}</span></button></li>
+          </loop>
         </ul>
       </nav>
-      <aside class="admin-sidebar hidden group-data-[pane=list]/app:flex min-[768px]:flex flex-col min-h-0" :aria-label="adminShell.sidebarLabel(adminSession.domainId)">
+      <aside class="admin-sidebar hidden group-data-[pane=list]/app:flex min-[768px]:flex flex-col min-h-0" aria-label="Admin menu">
         <header class="sidebar-head flex items-center gap-2 px-4">
-          <p class="domain-name min-w-0 flex-1 truncate">{adminSession.domainId}</p>
+          <p class="domain-name min-w-0 flex-1 truncate">Mesail admin</p>
         </header>
         <div class="flex-1 min-h-0 overflow-y-auto px-2 py-3">
-          <h2 class="section-title px-2" id="admin-nav-title">Admin</h2>
-          <ul class="mt-1 flex flex-col gap-1" aria-labelledby="admin-nav-title">
+          <logic :if="adminSession.switchProblem != ''">
+            <p class="switch-problem mx-2 mb-3 px-3 py-2" role="alert">
+              <switch :value="adminSession.switchProblem">
+                <case :when="'notMember'">You are no longer an admin of that domain. Its tile goes away at the next refresh.</case>
+                <case default>That domain did not open. Try again in a minute.</case>
+              </switch>
+            </p>
+          </logic>
+          <nav aria-label="Admin pages" class="grid gap-4">
             <logic :if="adminSession.operator">
-              <li><button type="button" class="nav-item flex w-full items-center gap-2 px-2" :aria-current="adminShell.flag(adminShell.view == 'domains')" on:click="adminShell.open('domains', adminSession.domainId)"><w-icon name="globe" aria-hidden="true"></w-icon><span class="truncate">Domains</span></button></li>
+              <div>
+                <h2 class="section-title px-2" id="admin-install-title">Install</h2>
+                <ul class="mt-1 flex flex-col gap-1" aria-labelledby="admin-install-title">
+                  <li><button type="button" class="nav-item flex w-full items-center gap-2 px-2" :aria-current="adminShell.flag(adminShell.view == 'domains')" on:click="adminShell.open('domains', adminSession.domainId)"><w-icon name="globe" aria-hidden="true"></w-icon><span class="truncate">Domains</span></button></li>
+                  <li><button type="button" class="nav-item flex w-full items-center gap-2 px-2" :aria-current="adminShell.flag(adminShell.view == 'people')" on:click="adminShell.open('people', adminSession.domainId)"><w-icon name="user" aria-hidden="true"></w-icon><span class="truncate">People</span></button></li>
+                </ul>
+              </div>
             </logic>
             <logic :if="adminSession.domainAdmin">
-              <li><button type="button" class="nav-item flex w-full items-center gap-2 px-2" :aria-current="adminShell.flag(adminShell.view == 'domain')" on:click="adminShell.open('domain', adminSession.domainId)"><w-icon name="globe" aria-hidden="true"></w-icon><span class="truncate">Domain</span></button></li>
-              <li><button type="button" class="nav-item flex w-full items-center gap-2 px-2" :aria-current="adminShell.flag(adminShell.view == 'members')" on:click="adminShell.open('members', adminSession.domainId)"><w-icon name="users" aria-hidden="true"></w-icon><span class="truncate">Members</span></button></li>
-              <li><button type="button" class="nav-item flex w-full items-center gap-2 px-2" :aria-current="adminShell.flag(adminShell.view == 'channels')" on:click="adminShell.open('channels', adminSession.domainId)"><w-icon name="hash" aria-hidden="true"></w-icon><span class="truncate">Channels</span></button></li>
+              <div>
+                <h2 class="section-title truncate px-2" id="admin-domain-title">{adminSession.domainId}</h2>
+                <ul class="mt-1 flex flex-col gap-1" aria-labelledby="admin-domain-title">
+                  <li><button type="button" class="nav-item flex w-full items-center gap-2 px-2" :aria-current="adminShell.flag(adminShell.view == 'domain')" on:click="adminShell.open('domain', adminSession.domainId)"><w-icon name="globe" aria-hidden="true"></w-icon><span class="truncate">Domain</span></button></li>
+                  <li><button type="button" class="nav-item flex w-full items-center gap-2 px-2" :aria-current="adminShell.flag(adminShell.view == 'members')" on:click="adminShell.open('members', adminSession.domainId)"><w-icon name="users" aria-hidden="true"></w-icon><span class="truncate">Members</span></button></li>
+                  <li><button type="button" class="nav-item flex w-full items-center gap-2 px-2" :aria-current="adminShell.flag(adminShell.view == 'channels')" on:click="adminShell.open('channels', adminSession.domainId)"><w-icon name="hash" aria-hidden="true"></w-icon><span class="truncate">Channels</span></button></li>
+                </ul>
+              </div>
             </logic>
-          </ul>
+          </nav>
+          <logic :if="adminSession.manyDomains">
+            <div class="mt-4 min-[768px]:hidden">
+              <h2 class="section-title px-2" id="admin-switch-title">Your domains</h2>
+              <ul class="mt-1 flex flex-col gap-1" aria-labelledby="admin-switch-title">
+                <loop :for="tile of adminSession.tiles">
+                  <li><button type="button" class="nav-item flex w-full items-center gap-2 px-2" :aria-current="adminShell.flag(tile.current)" :disabled="adminSession.switching != ''" on:click="adminShell.openDomain(tile.domainId)"><span class="domain-mark grid place-items-center" aria-hidden="true">{tile.initials}</span><span class="truncate">{tile.domainId}</span></button></li>
+                </loop>
+              </ul>
+            </div>
+          </logic>
         </div>
         <footer class="sidebar-foot flex items-center gap-2 px-3 py-2">
-          <span class="min-w-0 flex-1"><span class="me-name block truncate">{adminSession.displayName}</span><span class="me-sub block truncate">{adminSession.domainId}</span></span>
+          <span class="min-w-0 flex-1"><span class="me-name block truncate">{adminSession.displayName}</span><span class="me-sub block truncate">{adminSession.username}</span></span>
           <w-icon-btn icon="logout" aria-label="Sign out" title="Sign out" on:click="adminSession.signOut()"></w-icon-btn>
         </footer>
       </aside>
       <div class="admin-pane hidden group-data-[pane=main]/app:block min-[768px]:block min-w-0 min-h-0 overflow-y-auto">
         <switch :value="adminShell.view">
           <case :when="'domains'"><admin-domains hydrate="load" /></case>
+          <case :when="'people'"><admin-people hydrate="load" /></case>
           <case :when="'domain'"><admin-domain hydrate="load" /></case>
           <case :when="'members'"><admin-members hydrate="load" /></case>
           <case :when="'channels'"><admin-channels hydrate="load" /></case>

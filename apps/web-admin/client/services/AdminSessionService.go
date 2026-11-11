@@ -9,6 +9,8 @@ type AdminSessionService struct {
 	Problem       string
 	Busy          bool
 	Login         string
+	LoginUsername string
+	LoginDomain   string
 	Hint          string
 	Username      string
 	DomainId      string
@@ -18,6 +20,7 @@ type AdminSessionService struct {
 	DomainAdmin   bool
 	Domains       []DomainChoice
 	Tiles         []DomainTile
+	ManyDomains   bool
 	Switching     string
 	SwitchProblem string
 	// @SessionState
@@ -50,6 +53,8 @@ func (session *AdminSessionService) Resume(started AdminPageStarted) {
 
 func (session *AdminSessionService) TypeLogin(login string) {
 	session.Login = login
+	session.LoginUsername = session.logins.UsernameOf(login)
+	session.LoginDomain = session.logins.DomainOf(login)
 	session.Hint = session.logins.Hint(login)
 }
 
@@ -136,10 +141,11 @@ func (session *AdminSessionService) keep(answer Session) {
 	session.Domains = answer.Domains
 	session.remember(answer.Me)
 	session.Tiles = session.tilesOf(answer.Domains)
+	session.ManyDomains = len(session.Tiles) > 1
 	session.Step = session.accessStep(session.isAdmin())
 	session.Step = session.signedOutWhen(session.accessToken == "")
 	target := session.moveTarget(session.Step)
-	session.announceWhen(session.Step == session.ready() && target == "")
+	session.announceWhen(map[string]bool{session.ready(): target == ""}[session.Step])
 	session.switchWhen(target)
 }
 

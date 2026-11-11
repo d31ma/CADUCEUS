@@ -1,0 +1,134 @@
+<main class="@container/main flex h-full min-h-0 min-w-0 flex-col" aria-labelledby="page-title">
+  <header class="page-head flex items-center gap-2">
+    <w-icon-btn icon="arrow-left" aria-label="Back to the admin menu" class="-ml-2 min-[768px]:hidden" on:click="adminShell.showMenu()"></w-icon-btn>
+    <h1 id="page-title" class="page-title flex min-w-0 items-center gap-1"><w-icon name="user" aria-hidden="true"></w-icon><span class="truncate">People</span></h1>
+    <p class="page-topic hidden min-w-0 flex-1 truncate pl-3 @2xl/main:block">Everyone on this Mesail install</p>
+  </header>
+
+  <div class="page-scroll min-h-0 flex-1 overflow-y-auto" id="admin-content">
+    <div class="@container/page mx-auto grid w-full max-w-(--ms-content-max) grid-cols-[minmax(0,1fr)] gap-6 pb-10">
+      <logic :if="peopleList.state == 'forbidden'">
+        <div class="panel px-4 py-8 sm:px-6">
+          <w-empty-state>
+            <w-icon slot="media" name="lock" class="empty-icon icon-xl" aria-hidden="true"></w-icon>
+            <h2 slot="title" class="empty-title">Only Operators see this page</h2>
+            <p slot="text">To add a person to a domain, use the Members page of that domain.</p>
+          </w-empty-state>
+        </div>
+      </logic>
+      <logic else>
+        <form method="dialog" role="search" aria-label="Find people" class="grid grid-cols-1 items-end gap-3 @xl/page:grid-cols-[minmax(0,1fr)_12rem_auto]" on:submit="peopleList.searchWith($event.target.elements.query.value, peopleList.stateFilter)">
+          <w-text-field type="search" name="query" label="Search" placeholder="Name or username" prepend-inner-icon="search" autocomplete="off" hide-details :value="peopleList.query"></w-text-field>
+          <w-select name="state" label="State" hide-details :value="peopleList.stateFilter == '' ? 'all' : peopleList.stateFilter" on:change="peopleList.searchWith(peopleList.query, $event.target.value)">
+            <w-option value="all">All states</w-option>
+            <w-option value="active">Active</w-option>
+            <w-option value="disabled">Turned off</w-option>
+            <w-option value="deleted">Deleted</w-option>
+          </w-select>
+          <w-btn variant="outlined" type="submit" :disabled="peopleList.state == 'loading'">Search</w-btn>
+        </form>
+
+        <switch :value="peopleList.state">
+          <case :when="'ready'">
+            <section class="panel" aria-labelledby="people-title">
+              <div class="panel-head flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-3 sm:px-6"><h2 id="people-title" class="section-title">{peopleList.heading}</h2></div>
+              <table class="data-table people-table w-full">
+                <caption class="sr-only">Every person on this Mesail install</caption>
+                <thead>
+                  <tr><th scope="col" class="px-4 py-2">Person</th><th scope="col" class="px-4 py-2">Domains</th><th scope="col" class="px-4 py-2">State</th><th scope="col" class="px-4 py-2"><span class="sr-only">Actions</span></th></tr>
+                </thead>
+                <tbody><loop :for="row of peopleList.rows"><tr>
+                  <td class="px-4 py-2">
+                    <div class="flex min-w-0 items-center gap-3">
+                      <w-avatar size="32" alt="" aria-hidden="true" :text="row.initials"></w-avatar>
+                      <span class="grid min-w-0"><span class="strong break-words">{row.name}</span><span class="meta username">{row.username}</span></span>
+                    </div>
+                  </td>
+                  <td data-label="Domains" class="px-4 py-2">
+                    <ul class="flex flex-wrap gap-1" :aria-label="'Domains of ' + row.name">
+                      <loop :for="domainId of row.domainIds"><li><span class="tag" data-variant="outlined">{domainId}</span></li></loop>
+                    </ul>
+                    <logic :if="row.noDomains"><span class="meta">None</span></logic>
+                  </td>
+                  <td data-label="State" class="px-4 py-2">
+                    <span class="tag" :data-color="row.stateColor">{row.stateText}</span>
+                  </td>
+                  <td class="member-actions px-2 py-1">
+                    <logic :if="row.deleted">
+                      <span class="sr-only">No actions</span>
+                    </logic>
+                    <logic else>
+                      <w-icon-btn icon="more" class="row-action" :id="'person-menu-' + row.personId" :aria-label="'Actions for ' + row.name" aria-haspopup="menu"></w-icon-btn>
+                      <w-menu class="member-menu" location="bottom-end" :activator="'person-menu-' + row.personId">
+                        <div class="grid" role="group" :aria-label="'Account of ' + row.name + ', in every domain'">
+                          <p class="w-menu-label">Account (all domains)</p>
+                          <button type="button" class="w-menu-item member-menu-item" aria-haspopup="dialog" on:click="accountAction.ask('reset', row.personId, row.name, row.username)"><w-icon name="key" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Reset password&hellip;</span><span class="member-menu-text">A new one is chosen at the next sign-in</span></span></button>
+                          <button type="button" class="w-menu-item member-menu-item" aria-haspopup="dialog" on:click="accountAction.ask('totp', row.personId, row.name, row.username)"><w-icon name="shield" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Remove 2-step code&hellip;</span><span class="member-menu-text">For a lost phone</span></span></button>
+                          <button type="button" class="w-menu-item member-menu-item" aria-haspopup="dialog" on:click="accountAction.ask('rename', row.personId, row.name, row.username)"><w-icon name="edit" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Change name&hellip;</span><span class="member-menu-text">The same name in every domain</span></span></button>
+                          <logic :if="row.disabled">
+                            <button type="button" class="w-menu-item member-menu-item" on:click="accountAction.turnOn(row.personId, row.name)"><w-icon name="check" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Turn on account</span><span class="member-menu-text">{row.name} can sign in again</span></span></button>
+                          </logic>
+                          <logic else>
+                            <button type="button" class="w-menu-item member-menu-item" aria-haspopup="dialog" on:click="accountAction.ask('disable', row.personId, row.name, row.username)"><w-icon name="lock" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Turn off account&hellip;</span><span class="member-menu-text">Signs out within a minute, in every domain</span></span></button>
+                          </logic>
+                        </div>
+                        <div class="member-menu-group grid">
+                          <button type="button" class="w-menu-item member-menu-item member-menu-danger" aria-haspopup="dialog" on:click="accountAction.ask('delete', row.personId, row.name, row.username)"><w-icon name="trash" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Delete person&hellip;</span><span class="member-menu-text">The username {row.username} stays reserved for ever</span></span></button>
+                        </div>
+                      </w-menu>
+                    </logic>
+                  </td>
+                </tr></loop></tbody>
+              </table>
+              <logic :if="peopleList.hasMore">
+                <p class="meta panel-foot px-4 py-3 sm:px-6">More people exist than this page shows. Search by name or username to find them.</p>
+              </logic>
+            </section>
+          </case>
+          <case :when="'empty'">
+            <div class="panel px-4 py-8 sm:px-6">
+              <w-empty-state>
+                <w-icon slot="media" name="users" class="empty-icon icon-xl" aria-hidden="true"></w-icon>
+                <h2 slot="title" class="empty-title">No people yet</h2>
+                <p slot="text">People are created when an admin adds a new username to a domain.</p>
+              </w-empty-state>
+            </div>
+          </case>
+          <case :when="'noResults'">
+            <div class="panel px-4 py-8 sm:px-6" role="status">
+              <w-empty-state>
+                <w-icon slot="media" name="search" class="empty-icon icon-xl" aria-hidden="true"></w-icon>
+                <h2 slot="title" class="empty-title">No person matches</h2>
+                <p slot="text">People are created when an admin adds a new username to a domain.</p>
+                <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="outlined" on:click="peopleList.clearSearch()">Clear search and filter</w-btn></div>
+              </w-empty-state>
+            </div>
+          </case>
+          <case :when="'failed'">
+            <div class="panel px-4 py-8 sm:px-6" role="alert">
+              <w-empty-state>
+                <w-icon slot="media" name="alert" class="empty-icon icon-xl" aria-hidden="true"></w-icon>
+                <h2 slot="title" class="empty-title">People did not load</h2>
+                <p slot="text">We cannot reach the directory right now. Try again in a minute.</p>
+                <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="flat" prepend-icon="refresh" on:click="peopleList.retry()">Try again</w-btn></div>
+              </w-empty-state>
+            </div>
+          </case>
+          <case default>
+            <section class="panel" aria-busy="true" aria-labelledby="people-loading-title">
+              <div class="panel-head flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6"><h2 id="people-loading-title" class="section-title flex-1">People</h2><p class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Loading people&hellip;</p></div>
+              <w-skeleton-loader type="list-item-avatar-two-line@3" class="block px-2 py-2"></w-skeleton-loader>
+            </section>
+          </case>
+        </switch>
+
+        <logic :if="accountAction.notice != ''">
+          <p class="note note--ok flex items-start gap-3 px-4 py-3" role="status"><w-icon name="check" class="mt-0.5" aria-hidden="true"></w-icon><span>{accountAction.notice}</span></p>
+        </logic>
+        <p class="meta">A person is one account with one username in every domain. To add a person to a domain, use the Members page of that domain.</p>
+      </logic>
+    </div>
+  </div>
+
+  <admin-account-dialogs hydrate="load" />
+</main>

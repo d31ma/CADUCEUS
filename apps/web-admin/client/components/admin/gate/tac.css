@@ -6,8 +6,9 @@
 }
 
 .gate-card {
+  max-width: var(--ms-auth-card-max);
   border: 1px solid var(--w-border);
-  border-radius: var(--ms-radius-tile);
+  border-radius: var(--ms-radius-card);
   background: var(--w-surface);
   box-shadow: var(--w-shadow-sm);
 }
@@ -22,15 +23,9 @@
   color: var(--w-text-subtle);
 }
 
-.gate-notice {
-  padding: var(--w-space-3);
-  border-radius: var(--w-radius-md);
-  background: var(--w-warning-container);
-  color: var(--w-on-warning-container);
-}
-
-.gate-meta {
+.meta {
   font-size: var(--ms-text-meta);
+  line-height: 1.33;
   color: var(--w-text-subtle);
 }
 
@@ -42,21 +37,144 @@
   }
 }
 
-.w-text-field-control {
-  min-height: 1.5rem;
+.note {
+  border-radius: var(--ms-radius-card);
+  background: color-mix(in srgb, var(--note-tone-base) 16%, transparent);
+  color: var(--w-text);
+}
+
+.note > w-icon,
+.note .strong {
+  color: var(--note-tone);
+}
+
+.note--info {
+  --note-tone-base: var(--w-primary);
+  --note-tone: var(--ms-tone-info);
+}
+
+.note--ok {
+  --note-tone-base: var(--w-success);
+  --note-tone: var(--ms-tone-success);
+}
+
+.note--warn {
+  --note-tone-base: var(--w-warning);
+  --note-tone: var(--ms-tone-warning);
+}
+
+.note--email {
+  --note-tone-base: var(--ms-email);
+  --note-tone: var(--ms-tone-email);
+}
+
+.w-text-field {
+  --w-tf-height: var(--ms-control-md);
+  --w-tf-radius: var(--ms-radius-control);
+}
+
+.w-text-field:not(.w-text-field--error) .w-text-field-messages {
+  color: var(--w-text-subtle);
+}
+
+.w-checkbox,
+.w-radio,
+.w-switch {
+  min-height: var(--ms-control-sm);
+  align-items: center;
 }
 
 @media (max-width: 767px), (pointer: coarse) {
-  .w-text-field-control {
+  .w-text-field {
+    --w-tf-height: var(--ms-touch-min);
+  }
+
+  .w-btn,
+  .w-icon-btn,
+  .w-checkbox,
+  .w-radio,
+  .w-switch,
+  .w-text-field-control,
+  .w-select-field {
     min-height: var(--ms-touch-min);
   }
+
+  .w-icon-btn {
+    min-width: var(--ms-touch-min);
+  }
+
+  .w-text-field-control:has(.w-text-field-affix) .w-text-field-field {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+.gate-brand {
+  color: var(--w-text);
+}
+
+.gate-mark {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--w-radius-lg);
+  background: var(--ms-rail-bg);
+}
+
+.gate-name {
+  font-size: var(--w-font-xl);
+  font-weight: var(--w-font-weight-bold);
+  letter-spacing: -0.01em;
+}
+
+.gate-tag {
+  padding: 0.125rem var(--w-space-2);
+  border-radius: var(--w-radius-pill);
+  background: var(--w-surface-container-high);
+  color: var(--w-text-subtle);
+  font-size: var(--w-font-xs);
+  font-weight: var(--w-font-weight-semibold);
+}
+
+.gate-meta {
+  font-size: var(--ms-text-meta);
+  line-height: 1.33;
+  color: var(--w-text-subtle);
+}
+
+.gate-strong {
+  font-weight: var(--w-font-weight-semibold);
+}
+
+.gate-note {
+  padding: var(--w-space-3) var(--w-space-4);
+  border-radius: var(--ms-radius-card);
+  background: color-mix(in srgb, var(--gate-note-tone) 16%, transparent);
+  color: var(--w-text);
+}
+
+.gate-note--warn {
+  --gate-note-tone: var(--w-warning);
+}
+
+.gate-note--info {
+  --gate-note-tone: var(--w-primary);
+}
+
+.gate-main,
+.gate-main .w-btn {
+  min-height: var(--ms-control-lg);
 }
 
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer utilities {
+  .flex {
+    display: flex;
+  }
   .grid {
     display: grid;
+  }
+  .inline-flex {
+    display: inline-flex;
   }
   .min-h-dvh {
     min-height: 100dvh;
@@ -64,29 +182,46 @@
   .w-full {
     width: 100%;
   }
-  .max-w-md {
-    max-width: var(--container-md, 28rem);
+  .max-w-\(--ms-auth-card-max\) {
+    max-width: var(--ms-auth-card-max);
   }
-  .place-items-center {
-    place-items: center;
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .content-center {
+    align-content: center;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .justify-items-center {
+    justify-items: center;
   }
   .gap-2 {
     gap: calc(var(--spacing, 0.25rem) * 2);
   }
+  .gap-3 {
+    gap: calc(var(--spacing, 0.25rem) * 3);
+  }
   .gap-4 {
     gap: calc(var(--spacing, 0.25rem) * 4);
   }
-  .gap-5 {
-    gap: calc(var(--spacing, 0.25rem) * 5);
+  .gap-6 {
+    gap: calc(var(--spacing, 0.25rem) * 6);
+  }
+  .p-4 {
+    padding: calc(var(--spacing, 0.25rem) * 4);
   }
   .px-4 {
     padding-inline: calc(var(--spacing, 0.25rem) * 4);
   }
-  .px-6 {
-    padding-inline: calc(var(--spacing, 0.25rem) * 6);
-  }
   .py-8 {
     padding-block: calc(var(--spacing, 0.25rem) * 8);
+  }
+  @media (width >= 600px) {
+    .sm\:p-6 {
+      padding: calc(var(--spacing, 0.25rem) * 6);
+    }
   }
 }
 /* @tachyon-generated-tailwind:end */

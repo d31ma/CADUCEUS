@@ -36,20 +36,16 @@ func (shell *AdminShellService) Open(view string, domainId string) {
 }
 
 func (shell *AdminShellService) OpenDomain(domainId string) {
-	shell.nextView = "members"
+	shell.nextView = shell.membersView()
 	shell.session.SwitchTo(domainId)
 }
 
 func (shell *AdminShellService) OpenInstall() {
-	shell.Open("domains", shell.session.DomainId)
+	shell.Open(shell.domainsView(), shell.session.DomainId)
 }
 
 func (shell *AdminShellService) ShowMenu() {
 	shell.Pane = shell.listPane()
-}
-
-func (shell *AdminShellService) SidebarLabel(domainId string) string {
-	return "Admin of " + domainId
 }
 
 func (shell *AdminShellService) TileLabel(domainId string, current bool) string {
@@ -61,7 +57,7 @@ func (shell *AdminShellService) Flag(value bool) string {
 }
 
 func (shell *AdminShellService) InstallView() bool {
-	return map[string]bool{"domains": true, "people": true}[shell.View]
+	return map[string]bool{shell.domainsView(): true, "people": true}[shell.View]
 }
 
 func (shell *AdminShellService) announced(message string) string {
@@ -75,7 +71,20 @@ func (shell *AdminShellService) firstView(signedIn AdminSignedIn, nextView strin
 	if nextView != "" {
 		return nextView
 	}
-	return map[bool]string{true: "domains", false: "members"}[signedIn.Operator && !signedIn.DomainAdmin]
+	return shell.startView(signedIn)
+}
+
+func (shell *AdminShellService) startView(signedIn AdminSignedIn) string {
+	operatorOnly := map[bool]map[bool]bool{true: {false: true}}[signedIn.Operator][signedIn.DomainAdmin]
+	return map[bool]string{true: shell.domainsView(), false: shell.membersView()}[operatorOnly]
+}
+
+func (shell *AdminShellService) membersView() string {
+	return "members"
+}
+
+func (shell *AdminShellService) domainsView() string {
+	return "domains"
 }
 
 func (shell *AdminShellService) listPane() string {

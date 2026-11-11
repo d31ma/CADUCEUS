@@ -54,10 +54,7 @@ func (login *AdminLoginService) hintFor(domainId string, cleaned string) string 
 }
 
 func (login *AdminLoginService) domainHint(domainId string) string {
-	if domainId == "" {
-		return "Opens your default domain, or the whole install for an Operator."
-	}
-	return "Opens " + domainId + "."
+	return map[bool]string{true: "Opens your default domain, or the whole install for an Operator.", false: "Opens " + domainId + "."}[domainId == ""]
 }
 
 func (login *AdminLoginService) forbiddenFor(domainId string) string {

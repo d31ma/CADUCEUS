@@ -34,6 +34,9 @@ func (test *PeopleListServiceTest) TestStatesHavePlainNames() {
 	Assert.Equals("Deleted", people.Rows[2].StateText)
 	Assert.Equals(true, people.Rows[2].Deleted)
 	Assert.Equals(false, people.Rows[2].AccountManaged)
+	Assert.Equals("success", people.Rows[0].StateColor)
+	Assert.Equals("warning", people.Rows[1].StateColor)
+	Assert.Equals(true, people.Rows[2].NoDomains)
 }
 
 func (test *PeopleListServiceTest) TestTheStateFilterKeepsMatchingPeople() {
@@ -42,6 +45,13 @@ func (test *PeopleListServiceTest) TestTheStateFilterKeepsMatchingPeople() {
 	Assert.Equals(1, len(people.Rows))
 	Assert.Equals("1 person", people.Heading)
 	Assert.Equals("disabled", people.StateFilter)
+}
+
+func (test *PeopleListServiceTest) TestAllStatesClearsTheFilter() {
+	people := test.opened()
+	people.SearchWith("", "all")
+	Assert.Equals("", people.StateFilter)
+	Assert.Equals(3, len(people.Rows))
 }
 
 func (test *PeopleListServiceTest) TestNoMatchShowsNoResults() {

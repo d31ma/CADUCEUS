@@ -52,6 +52,7 @@ func (test *AdminSessionServiceTest) TestTilesShowOnlyTheAdministeredDomains() {
 	Assert.Equals("example.com", session.Tiles[0].DomainId)
 	Assert.Equals(true, session.Tiles[0].Current)
 	Assert.Equals(2, len(session.Domains))
+	Assert.Equals(false, session.ManyDomains)
 }
 
 func (test *AdminSessionServiceTest) TestAnAdminOfAnotherDomainIsMovedThere() {
@@ -132,6 +133,8 @@ func (test *AdminSessionServiceTest) TestTypeLoginExplainsAFullAddress() {
 	session := test.started()
 	session.TypeLogin("Ana@Example.ORG")
 	Assert.Equals("Opens example.org.", session.Hint)
+	Assert.Equals("ana", session.LoginUsername)
+	Assert.Equals("example.org", session.LoginDomain)
 }
 
 func (test *AdminSessionServiceTest) TestALockedAccountIsRateLimited() {

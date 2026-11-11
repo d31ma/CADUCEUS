@@ -1,10 +1,14 @@
 import (
+	"regexp"
 	"slices"
 	"strings"
 )
 
 // @Service
-type UsernameRuleService struct{}
+type UsernameRuleService struct {
+	// @Needs
+	memberList *MemberListService
+}
 
 func (rules *UsernameRuleService) Cleaned(username string) string {
 	return strings.ToLower(strings.TrimSpace(username))
@@ -17,19 +21,23 @@ func (rules *UsernameRuleService) Problem(username string) string {
 	return rules.emptyProblem(cleaned, problem)
 }
 
+func (rules *UsernameRuleService) ListedProblem(username string, domainId string) string {
+	return rules.listedFor(rules.memberList.NameOf(username), domainId)
+}
+
 func (rules *UsernameRuleService) PasswordProblem(password string) string {
 	return rules.shortProblem(len([]rune(password)) < rules.passwordLength())
 }
 
 func (rules *UsernameRuleService) wellShaped(cleaned string) bool {
-	return len(cleaned) <= rules.maximumLength() &&
-		!strings.ContainsFunc(cleaned, rules.notAllowed) &&
-		strings.Trim(cleaned, rules.punctuation()) == cleaned &&
-		!strings.Contains(cleaned, "..")
+	return regexp.MustCompile(rules.shape()).MatchString(cleaned) && !strings.Contains(cleaned, "..")
 }
 
-func (rules *UsernameRuleService) notAllowed(character rune) bool {
-	return !strings.ContainsRune(rules.allowedCharacters(), character)
+func (rules *UsernameRuleService) listedFor(name string, domainId string) string {
+	if name == "" || domainId == "" {
+		return ""
+	}
+	return name + " is already a member of " + domainId + "."
 }
 
 func (rules *UsernameRuleService) roleProblem(cleaned string) string {
@@ -64,16 +72,8 @@ func (rules *UsernameRuleService) roleNames() []string {
 	return []string{"postmaster", "abuse", "hostmaster", "webmaster", "mailer-daemon", "noreply", "no-reply", "security"}
 }
 
-func (rules *UsernameRuleService) allowedCharacters() string {
-	return "abcdefghijklmnopqrstuvwxyz0123456789._-"
-}
-
-func (rules *UsernameRuleService) punctuation() string {
-	return "._-"
-}
-
-func (rules *UsernameRuleService) maximumLength() int {
-	return 64
+func (rules *UsernameRuleService) shape() string {
+	return `^[a-z0-9]([a-z0-9._-]{0,62}[a-z0-9])?$`
 }
 
 func (rules *UsernameRuleService) passwordLength() int {

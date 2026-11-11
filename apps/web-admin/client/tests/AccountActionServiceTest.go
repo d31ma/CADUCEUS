@@ -12,7 +12,7 @@ func (test *AccountActionServiceTest) asked(dialog string, personId string) *Acc
 	test.construct(session)
 	account := &AccountActionService{session: session, problems: &AdminProblemService{}, rules: &UsernameRuleService{}}
 	test.construct(account)
-	account.Ask(dialog, personId, "Dan Example", "dan", "dan@example.com")
+	account.Ask(dialog, personId, "Dan Example", "dan")
 	return account
 }
 
@@ -53,13 +53,13 @@ func (test *AccountActionServiceTest) TestAPersonInAnotherDomainIsForbidden() {
 
 func (test *AccountActionServiceTest) TestOfflineOpensTheFailedDialog() {
 	account := test.asked("totp", "offline-id")
-	account.RemoveTotp()
+	account.RemoveTwoStepCode()
 	Assert.Equals("failed", account.Dialog)
 }
 
 func (test *AccountActionServiceTest) TestRemoveTotpRemovesTheCode() {
 	account := test.asked("totp", "dan-id")
-	account.RemoveTotp()
+	account.RemoveTwoStepCode()
 	Assert.Equals("done", account.Dialog)
 	Assert.Equals("2-step code removed", account.DoneTitle)
 }

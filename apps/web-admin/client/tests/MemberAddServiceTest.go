@@ -13,7 +13,7 @@ func (test *MemberAddServiceTest) opened() *MemberAddService {
 	list := &MemberListService{session: session, problems: &AdminProblemService{}}
 	test.construct(list)
 	list.Opened(AdminViewOpened{View: "members", DomainId: "example.com"})
-	add := &MemberAddService{session: session, memberList: list, problems: &AdminProblemService{}, rules: &UsernameRuleService{}}
+	add := &MemberAddService{session: session, problems: &AdminProblemService{}, rules: &UsernameRuleService{memberList: list}}
 	test.construct(add)
 	session.DomainId = "example.com"
 	add.Open()
@@ -100,6 +100,13 @@ func (test *MemberAddServiceTest) TestAMemberAlreadyListedIsCheckedBeforeSending
 	add.AddWith("bo", false)
 	Assert.Equals("username", add.Step)
 	Assert.Equals("Bo Lee is already a member of example.com.", add.UsernameProblem)
+}
+
+func (test *MemberAddServiceTest) TestListedProblemNamesTheListedMember() {
+	add := test.opened()
+	Assert.Equals("Ana Ruiz is already a member of example.com.", add.rules.ListedProblem("ana", "example.com"))
+	Assert.Equals("", add.rules.ListedProblem("ana", ""))
+	Assert.Equals("", add.rules.ListedProblem("zoe", "example.com"))
 }
 
 func (test *MemberAddServiceTest) TestADuplicateAddressIsExplained() {

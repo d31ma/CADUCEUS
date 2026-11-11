@@ -111,7 +111,7 @@ type DirectoryClient interface {
 	) (BehaviorValue, error)
 
 	// @DeleteRequest("/people/{personId}/totp")
-	RemoveTotp(
+	RemoveTwoStepCode(
 		// @RequestHeader("Authorization")
 		authorization BehaviorValue,
 		// @PathVariable

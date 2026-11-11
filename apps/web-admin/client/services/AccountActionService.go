@@ -7,7 +7,6 @@ type AccountActionService struct {
 	Name            string
 	FirstName       string
 	Username        string
-	Address         string
 	Busy            bool
 	PasswordProblem string
 	NameProblem     string
@@ -27,12 +26,11 @@ type AccountActionService struct {
 	applicationEventPublisher ApplicationEventPublisher
 }
 
-func (account *AccountActionService) Ask(dialog string, personId string, name string, username string, address string) {
+func (account *AccountActionService) Ask(dialog string, personId string, name string, username string) {
 	account.PersonId = personId
 	account.Name = name
 	account.FirstName = strings.Fields(name + " " + username)[0]
 	account.Username = username
-	account.Address = address
 	account.PasswordProblem = ""
 	account.NameProblem = ""
 	account.ConfirmProblem = ""
@@ -51,9 +49,9 @@ func (account *AccountActionService) ResetWith(password string) {
 	account.done("Password reset", account.FirstName+" is signed out everywhere. "+account.FirstName+" signs in with the new first password and then chooses a new one.")
 }
 
-func (account *AccountActionService) RemoveTotp() {
+func (account *AccountActionService) RemoveTwoStepCode() {
 	account.call(func() error {
-		_, failure := account.directoryClient.RemoveTotp(account.session.Authorization(), account.PersonId)
+		_, failure := account.directoryClient.RemoveTwoStepCode(account.session.Authorization(), account.PersonId)
 		return failure
 	})
 	account.done("2-step code removed", account.FirstName+" now signs in with the password only. "+account.FirstName+" can set up 2-step sign-in again in Settings.")
@@ -65,7 +63,7 @@ func (account *AccountActionService) TurnOff() {
 }
 
 func (account *AccountActionService) TurnOn(personId string, name string) {
-	account.Ask("", personId, name, "", "")
+	account.Ask("", personId, name, "")
 	account.changeState("active")
 	account.Notice = account.noticeAfter(account.Problem, name+" can sign in again.")
 	account.Dialog = account.dialogAfter(account.Problem, "")

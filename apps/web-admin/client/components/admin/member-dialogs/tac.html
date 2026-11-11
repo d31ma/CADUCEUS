@@ -1,0 +1,57 @@
+<div class="contents">
+  <switch :value="memberRole.dialog">
+    <case :when="'remove'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="'Remove ' + memberRole.name + ' from ' + memberRole.domainId + '?'" heading-level="2" aria-describedby="member-remove-text" on:close="memberRole.close()">
+        <div class="dialog-text grid gap-4">
+          <ul class="dialog-list grid gap-2" id="member-remove-text">
+            <li>Their access to {memberRole.domainId} ends within a minute.</li>
+            <li>Mail to <span class="address">{memberRole.address}</span> is refused.</li>
+            <li>Their messages stay. Their account and their other domains do not change.</li>
+            <li>The username stays theirs, so an admin can add them again later.</li>
+          </ul>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2">
+            <w-btn variant="text" :disabled="memberRole.busy" on:click="memberRole.close()">Cancel</w-btn>
+            <w-btn variant="flat" color="danger" :loading="memberRole.busy" on:click="memberRole.remove()">Remove</w-btn>
+          </div>
+        </div>
+      </w-dialog>
+    </case>
+    <case :when="'removed'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="memberRole.name + ' was removed from ' + memberRole.domainId" heading-level="2" aria-describedby="member-removed-text" on:close="memberRole.close()">
+        <div class="dialog-text grid gap-4">
+          <p id="member-removed-text">Mail to <span class="address">{memberRole.address}</span> is now refused. Their account and their other domains did not change.</p>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2"><w-btn variant="flat" on:click="memberRole.close()">Done</w-btn></div>
+        </div>
+      </w-dialog>
+    </case>
+    <case :when="'lastAdmin'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="memberRole.domainId + ' needs an admin'" heading-level="2" role="alertdialog" aria-describedby="member-last-admin-text" on:close="memberRole.close()">
+        <div class="dialog-text grid gap-4">
+          <logic :if="memberRole.lastAdminFor == 'removal'">
+            <p id="member-last-admin-text">{memberRole.name} is the last admin of {memberRole.domainId} and cannot be removed. Make another member an admin first, then try again.</p>
+          </logic>
+          <logic else>
+            <p id="member-last-admin-text">{memberRole.name} is the last admin of {memberRole.domainId}, so the role did not change. Make another member an admin first.</p>
+          </logic>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2"><w-btn variant="flat" on:click="memberRole.close()">OK</w-btn></div>
+        </div>
+      </w-dialog>
+    </case>
+    <case :when="'forbidden'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" heading="You cannot change this member" heading-level="2" role="alertdialog" aria-describedby="member-forbidden-text" on:close="memberRole.close()">
+        <div class="dialog-text grid gap-4">
+          <p id="member-forbidden-text">You are no longer an admin of {memberRole.domainId}, or {memberRole.name} left it. Reload the page to see the current members.</p>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2"><w-btn variant="flat" on:click="memberRole.close()">OK</w-btn></div>
+        </div>
+      </w-dialog>
+    </case>
+    <case :when="'failed'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" heading="Nothing changed" heading-level="2" role="alertdialog" aria-describedby="member-failed-text" on:close="memberRole.close()">
+        <div class="dialog-text grid gap-4">
+          <p id="member-failed-text">We cannot reach the directory right now. Try again in a minute.</p>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2"><w-btn variant="flat" on:click="memberRole.close()">OK</w-btn></div>
+        </div>
+      </w-dialog>
+    </case>
+  </switch>
+</div>

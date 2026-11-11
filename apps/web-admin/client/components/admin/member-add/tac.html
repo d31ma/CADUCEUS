@@ -1,0 +1,121 @@
+<div class="contents">
+  <switch :value="memberAdd.step">
+    <case :when="'username'">
+      <logic :if="!memberAdd.firstAdmin">
+        <w-dialog open class="sheet-dialog" max-width="32rem" :heading="'Add a member to ' + memberAdd.domainId" heading-level="2" aria-describedby="member-add-text" on:close="memberAdd.close()">
+          <form method="dialog" class="dialog-text grid gap-4" aria-label="Add a member" on:submit="memberAdd.addWith($event.target.elements.username.value, memberAdd.admin)">
+            <p id="member-add-text">Type the username. A person who already uses Mesail keeps their password; a new username gets a new account.</p>
+            <logic :if="memberAdd.problem != ''">
+              <w-alert type="error">
+                <switch :value="memberAdd.problem">
+                  <case :when="'forbidden'">You cannot add members to {memberAdd.domainId}. Ask an admin of the domain.</case>
+                  <case default>We cannot reach the directory right now. Try again in a minute.</case>
+                </switch>
+              </w-alert>
+            </logic>
+            <logic :if="memberAdd.usernameProblem != ''">
+              <w-text-field label="Username" name="username" placeholder="dan" :suffix="'@' + memberAdd.domainId" autocomplete="off" autocapitalize="none" spellcheck="false" required autofocus :value="memberAdd.username" :error="memberAdd.usernameProblem" on:change="memberAdd.username = $event.target.value"></w-text-field>
+            </logic>
+            <logic else>
+              <w-text-field label="Username" name="username" placeholder="dan" :suffix="'@' + memberAdd.domainId" autocomplete="off" autocapitalize="none" spellcheck="false" required autofocus hint="The part before @. For a person who already uses Mesail in another domain, type the same username." persistent-hint :value="memberAdd.username" on:change="memberAdd.username = $event.target.value"></w-text-field>
+            </logic>
+            <w-checkbox name="admin" :label="'Make this person an admin of ' + memberAdd.domainId" :checked="memberAdd.admin" on:change="memberAdd.admin = $event.target.checked"></w-checkbox>
+            <div class="dialog-actions flex flex-wrap justify-end gap-2">
+              <w-btn variant="text" on:click="memberAdd.close()">Cancel</w-btn>
+              <w-btn variant="flat" type="submit">Add</w-btn>
+            </div>
+          </form>
+        </w-dialog>
+      </logic>
+    </case>
+    <case :when="'busy'">
+      <logic :if="!memberAdd.firstAdmin">
+        <w-dialog open class="sheet-dialog" max-width="32rem" :heading="'Add a member to ' + memberAdd.domainId" heading-level="2" persistent hide-close>
+          <div class="dialog-text grid gap-4">
+            <w-text-field label="Username" name="username" readonly :suffix="'@' + memberAdd.domainId" :value="memberAdd.username"></w-text-field>
+            <p class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Adding {memberAdd.username}&hellip;</p>
+            <div class="dialog-actions flex flex-wrap justify-end gap-2">
+              <w-btn variant="text" disabled>Cancel</w-btn>
+              <w-btn variant="flat" loading disabled>Adding&hellip;</w-btn>
+            </div>
+          </div>
+        </w-dialog>
+      </logic>
+    </case>
+    <case :when="'details'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="'Create an account for ' + memberAdd.username" heading-level="2" aria-describedby="member-new-text" on:close="memberAdd.close()">
+        <form method="dialog" class="dialog-text grid gap-4" aria-label="Create an account" on:submit="memberAdd.createWith($event.target.elements.displayName.value, $event.target.elements.firstPassword.value)">
+          <logic :if="memberAdd.firstAdmin">
+            <p id="member-new-text">No one has the username {memberAdd.username} yet. Mesail creates a new account and makes {memberAdd.username} the admin of {memberAdd.domainId}.</p>
+          </logic>
+          <logic else>
+            <p id="member-new-text">No one has the username {memberAdd.username} yet. Mesail creates a new account. It works for every domain an admin adds {memberAdd.username} to.</p>
+          </logic>
+          <logic :if="memberAdd.problem != ''">
+            <w-alert type="error">We cannot reach the directory right now. Try again in a minute.</w-alert>
+          </logic>
+          <logic :if="memberAdd.nameProblem != ''">
+            <w-text-field label="Display name" name="displayName" autocomplete="off" required autofocus :value="memberAdd.displayName" :error="memberAdd.nameProblem"></w-text-field>
+          </logic>
+          <logic else>
+            <w-text-field label="Display name" name="displayName" autocomplete="off" required autofocus hint="Shown in every domain." persistent-hint :value="memberAdd.displayName"></w-text-field>
+          </logic>
+          <logic :if="memberAdd.passwordProblem != ''">
+            <w-text-field label="First password" name="firstPassword" type="password" autocomplete="new-password" required :error="memberAdd.passwordProblem"></w-text-field>
+          </logic>
+          <logic else>
+            <w-text-field label="First password" name="firstPassword" type="password" autocomplete="new-password" required hint="Give it to them in person or by phone. They must choose a new one at the first sign-in." persistent-hint></w-text-field>
+          </logic>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2">
+            <w-btn variant="text" on:click="memberAdd.back()">Back</w-btn>
+            <logic :if="memberAdd.firstAdmin">
+              <w-btn variant="flat" type="submit">Create account and name as admin</w-btn>
+            </logic>
+            <logic else>
+              <w-btn variant="flat" type="submit">Create account and add</w-btn>
+            </logic>
+          </div>
+        </form>
+      </w-dialog>
+    </case>
+    <case :when="'creating'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="'Create an account for ' + memberAdd.username" heading-level="2" persistent hide-close>
+        <div class="dialog-text grid gap-4">
+          <p class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Creating the account for {memberAdd.username}&hellip;</p>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2">
+            <w-btn variant="text" disabled>Back</w-btn>
+            <w-btn variant="flat" loading disabled>Creating&hellip;</w-btn>
+          </div>
+        </div>
+      </w-dialog>
+    </case>
+    <case :when="'added'">
+      <w-dialog open class="sheet-dialog" max-width="32rem" :heading="memberAdd.addedName + ' was added'" heading-level="2" aria-describedby="member-added-text" on:close="memberAdd.close()">
+        <div class="dialog-text grid gap-4">
+          <div class="note note--ok flex items-start gap-3 px-4 py-3" role="status">
+            <w-icon name="check" class="mt-0.5" aria-hidden="true"></w-icon>
+            <div class="grid min-w-0 gap-1" id="member-added-text">
+              <logic :if="memberAdd.existingPerson">
+                <p class="strong">{memberAdd.username} already had a Mesail account</p>
+                <p>{memberAdd.addedFirstName} keeps their password and 2-step code, and sees {memberAdd.domainId} within a minute, with the address <span class="address">{memberAdd.addedAddress}</span>. Mesail did not ask them first.</p>
+              </logic>
+              <logic else>
+                <p class="strong">New account created</p>
+                <p>{memberAdd.addedFirstName} signs in with {memberAdd.username} and the first password, then chooses a new one. Address: <span class="address">{memberAdd.addedAddress}</span>.</p>
+              </logic>
+              <logic :if="memberAdd.firstAdmin">
+                <p>{memberAdd.addedName} is now the admin of {memberAdd.domainId}, and sees it in the domain switcher within a minute.</p>
+              </logic>
+            </div>
+          </div>
+          <div class="dialog-actions flex flex-wrap justify-end gap-2">
+            <logic :if="!memberAdd.firstAdmin">
+              <w-btn variant="text" prepend-icon="plus" on:click="memberAdd.addAnother()">Add another</w-btn>
+            </logic>
+            <w-btn variant="flat" on:click="memberAdd.close()">Done</w-btn>
+          </div>
+        </div>
+      </w-dialog>
+    </case>
+  </switch>
+</div>

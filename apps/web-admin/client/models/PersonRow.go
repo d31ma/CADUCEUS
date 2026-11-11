@@ -6,6 +6,8 @@ type PersonRow struct {
 	DomainIds      []string `json:"domainIds"`
 	State          string   `json:"state"`
 	StateText      string   `json:"stateText"`
+	StateColor     string   `json:"stateColor"`
+	NoDomains      bool     `json:"noDomains"`
 	Deleted        bool     `json:"deleted"`
 	Disabled       bool     `json:"disabled"`
 	AccountManaged bool     `json:"accountManaged"`

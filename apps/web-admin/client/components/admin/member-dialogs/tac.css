@@ -1,0 +1,168 @@
+.w-dialog {
+  border-radius: var(--ms-radius-dialog);
+}
+
+.w-dialog-title {
+  font-size: var(--ms-text-heading);
+  font-weight: var(--w-font-weight-semibold);
+  line-height: 1.4;
+}
+
+.w-dialog-body {
+  padding-top: var(--w-space-2);
+  padding-bottom: var(--w-space-5);
+}
+
+.w-dialog-footer:has(> slot:empty) {
+  display: none;
+}
+
+.dialog-text {
+  color: var(--w-text);
+}
+
+.dialog-list {
+  padding-inline-start: 1.25rem;
+  list-style: disc;
+}
+
+.strong {
+  font-weight: var(--w-font-weight-semibold);
+}
+
+.meta {
+  font-size: var(--ms-text-meta);
+  line-height: 1.33;
+  color: var(--w-text-subtle);
+}
+
+.address {
+  font-family: var(--w-font-family-mono);
+  font-size: var(--ms-text-meta);
+  line-height: 1.33;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.note {
+  border-radius: var(--ms-radius-card);
+  background: color-mix(in srgb, var(--note-tone-base) 16%, transparent);
+  color: var(--w-text);
+}
+
+.note > w-icon,
+.note .strong {
+  color: var(--note-tone);
+}
+
+.note--ok {
+  --note-tone-base: var(--w-success);
+  --note-tone: var(--ms-tone-success);
+}
+
+.w-text-field {
+  --w-tf-height: var(--ms-control-md);
+  --w-tf-radius: var(--ms-radius-control);
+}
+
+.w-text-field:not(.w-text-field--error) .w-text-field-messages {
+  color: var(--w-text-subtle);
+}
+
+.w-checkbox {
+  min-height: var(--ms-control-sm);
+  align-items: center;
+}
+
+w-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--ms-icon-size, var(--ms-icon-md));
+  height: var(--ms-icon-size, var(--ms-icon-md));
+  font-size: var(--ms-icon-size, var(--ms-icon-md));
+}
+
+.meta w-icon {
+  --ms-icon-size: var(--ms-icon-sm);
+}
+
+@media (max-width: 599px) {
+  .sheet-dialog .w-dialog-wrapper {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .sheet-dialog .w-dialog {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - var(--w-space-8));
+    border-bottom: 0;
+    border-radius: var(--ms-radius-dialog) var(--ms-radius-dialog) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .sheet-dialog w-btn {
+    display: block;
+    width: 100%;
+  }
+
+  .sheet-dialog .w-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .w-text-field {
+    --w-tf-height: var(--ms-touch-min);
+  }
+
+  .w-btn,
+  .w-icon-btn,
+  .w-checkbox,
+  .w-text-field-control {
+    min-height: var(--ms-touch-min);
+  }
+
+  .w-icon-btn {
+    min-width: var(--ms-touch-min);
+  }
+
+  .w-text-field-control:has(.w-text-field-affix) .w-text-field-field {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .contents {
+    display: contents;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .justify-end {
+    justify-content: flex-end;
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .gap-4 {
+    gap: calc(var(--spacing, 0.25rem) * 4);
+  }
+}
+/* @tachyon-generated-tailwind:end */

@@ -109,6 +109,8 @@
           </section>
 
           <logic :if="adminSession.operator">
+            <admin-first-admin hydrate="load" />
+
             <section class="danger-zone" aria-labelledby="danger-title">
               <div class="panel-head px-4 py-3 @xl/page:px-5"><h2 id="danger-title" class="section-title danger-title">Danger zone</h2></div>
               <div class="flex flex-wrap items-center gap-3 px-4 py-3 @xl/page:px-5">

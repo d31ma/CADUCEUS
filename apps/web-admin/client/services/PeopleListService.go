@@ -18,7 +18,9 @@ type PeopleListService struct {
 	// @Needs
 	directoryClient *DirectoryClient
 	// @Needs
-	problems                  *AdminProblemService
+	problems *AdminProblemService
+	// @Needs
+	initials                  *InitialsService
 	applicationEventPublisher ApplicationEventPublisher
 }
 
@@ -39,7 +41,7 @@ func (people *PeopleListService) Changed(changed PeopleChanged) {
 
 func (people *PeopleListService) SearchWith(query string, stateFilter string) {
 	people.Query = query
-	people.StateFilter = stateFilter
+	people.StateFilter = people.chosenFilter(stateFilter)
 	people.load()
 }
 
@@ -71,6 +73,13 @@ func (people *PeopleListService) filteredOut(person PersonSummary) bool {
 	return people.StateFilter != "" && person.State != people.StateFilter
 }
 
+func (people *PeopleListService) chosenFilter(stateFilter string) string {
+	if stateFilter == "all" {
+		return ""
+	}
+	return stateFilter
+}
+
 func (people *PeopleListService) rowsOf(items []PersonSummary) []PersonRow {
 	rows := []PersonRow{}
 	for _, item := range items {
@@ -84,28 +93,20 @@ func (people *PeopleListService) rowOf(item PersonSummary) PersonRow {
 		PersonId:       item.PersonId,
 		Name:           item.DisplayName,
 		Username:       item.Username,
-		Initials:       people.initialsOf(item.DisplayName + " " + item.Username),
+		Initials:       people.initials.Of(item.DisplayName + " " + item.Username),
 		DomainIds:      item.DomainIds,
 		State:          item.State,
 		StateText:      people.stateText(item.State),
-		Deleted:        item.State == "deleted",
-		Disabled:       item.State == "disabled",
-		AccountManaged: item.State != "deleted",
+		StateColor:     map[string]string{people.active(): "success", people.disabled(): "warning"}[item.State],
+		NoDomains:      len(item.DomainIds) == 0,
+		Deleted:        item.State == people.deleted(),
+		Disabled:       item.State == people.disabled(),
+		AccountManaged: item.State != people.deleted(),
 	}
 }
 
-func (people *PeopleListService) initialsOf(name string) string {
-	words := append(strings.Fields(name), "", "")
-	return strings.ToUpper(people.firstLetter(words[0]) + people.firstLetter(words[1]))
-}
-
-func (people *PeopleListService) firstLetter(word string) string {
-	letters := []rune(word)
-	return string(letters[:min(1, len(letters))])
-}
-
 func (people *PeopleListService) stateText(state string) string {
-	text, known := map[string]string{"active": "Active", "disabled": "Turned off", "deleted": "Deleted"}[state]
+	text, known := map[string]string{people.active(): "Active", people.disabled(): "Turned off", people.deleted(): "Deleted"}[state]
 	if !known {
 		return state
 	}
@@ -148,8 +149,24 @@ func (people *PeopleListService) failedState(problem string, state string) strin
 }
 
 func (people *PeopleListService) forbiddenState(problem string, state string) string {
-	if problem != "forbidden" {
+	if problem != people.forbidden() {
 		return state
 	}
+	return people.forbidden()
+}
+
+func (people *PeopleListService) forbidden() string {
 	return "forbidden"
+}
+
+func (people *PeopleListService) active() string {
+	return "active"
+}
+
+func (people *PeopleListService) disabled() string {
+	return "disabled"
+}
+
+func (people *PeopleListService) deleted() string {
+	return "deleted"
 }

@@ -1,0 +1,29 @@
+<section class="panel" aria-labelledby="first-admin-title">
+  <div class="panel-head px-4 py-3 sm:px-6"><h2 id="first-admin-title" class="section-title">Name an admin of {domainDns.name}</h2></div>
+  <div class="grid gap-4 px-4 py-4 sm:px-6">
+    <p>A new domain has no admin yet. Its admin adds the other members. It can be a person who already uses Mesail, or a new username.</p>
+    <logic :if="memberAdd.firstAdmin && memberAdd.problem != ''">
+      <w-alert type="error">
+        <switch :value="memberAdd.problem">
+          <case :when="'forbidden'">Only an Operator can name the admin of {domainDns.name}.</case>
+          <case default>We cannot reach the directory right now. Try again in a minute.</case>
+        </switch>
+      </w-alert>
+    </logic>
+    <form method="dialog" class="grid grid-cols-1 items-start gap-3 @lg/page:grid-cols-[minmax(0,1fr)_auto]" aria-label="Name an admin" on:submit="memberAdd.nameFirstAdmin(domainDns.domainId, $event.target.elements.username.value)">
+      <logic :if="memberAdd.firstAdmin && memberAdd.usernameProblem != ''">
+        <w-text-field label="Username" name="username" placeholder="dan" :suffix="'@' + domainDns.name" autocomplete="off" autocapitalize="none" spellcheck="false" required :value="memberAdd.username" :error="memberAdd.usernameProblem"></w-text-field>
+      </logic>
+      <logic else>
+        <w-text-field label="Username" name="username" placeholder="dan" :suffix="'@' + domainDns.name" autocomplete="off" autocapitalize="none" spellcheck="false" required hint="The part before @. For a person who already uses Mesail in another domain, type the same username." persistent-hint></w-text-field>
+      </logic>
+      <logic :if="memberAdd.firstAdmin && memberAdd.step == 'busy'">
+        <w-btn variant="flat" class="first-admin-action" loading disabled>Naming&hellip;</w-btn>
+      </logic>
+      <logic else>
+        <w-btn variant="flat" type="submit" class="first-admin-action" prepend-icon="user">Name as admin</w-btn>
+      </logic>
+    </form>
+  </div>
+  <admin-member-add hydrate="load" />
+</section>

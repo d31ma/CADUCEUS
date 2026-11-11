@@ -55,20 +55,65 @@
   position: relative;
   width: var(--ms-domain-tile);
   height: var(--ms-domain-tile);
+  border: 0;
   border-radius: var(--ms-radius-tile);
+  background: var(--ms-rail-tile);
+  color: var(--ms-on-rail);
+  font: inherit;
+  font-weight: var(--w-font-weight-bold);
+  cursor: pointer;
+}
+
+.domain-tile:hover {
+  background: color-mix(in srgb, var(--ms-rail-tile) 100%, var(--ms-on-rail) 12%);
+}
+
+.domain-tile:focus-visible {
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--ms-on-rail);
+  outline-offset: var(--w-focus-ring-offset);
+}
+
+.domain-tile:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.domain-tile[aria-current="true"] {
   background: var(--ms-rail-tile-active);
   color: var(--ms-on-rail-tile-active);
+}
+
+.domain-tile[aria-current="true"]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: calc(var(--w-space-3) * -1 - 2px);
+  width: 4px;
+  height: 1.75rem;
+  border-start-end-radius: 4px;
+  border-end-end-radius: 4px;
+  background: var(--ms-on-rail);
+}
+
+.domain-mark {
+  width: var(--ms-avatar-sm);
+  height: var(--ms-avatar-sm);
+  border-radius: var(--w-radius-md);
+  background: var(--w-surface-container-high);
+  font-size: var(--w-font-xs);
   font-weight: var(--w-font-weight-bold);
 }
 
-.domain-tile::before {
-  content: "";
-  position: absolute;
-  left: calc(var(--w-space-3) * -1 - 2px);
-  width: 4px;
-  height: 1.75rem;
-  border-radius: 0 4px 4px 0;
-  background: var(--ms-on-rail);
+.switch-problem {
+  border-radius: var(--ms-radius-card);
+  background: color-mix(in srgb, var(--w-warning) 16%, transparent);
+  color: var(--w-text);
+  font-size: var(--ms-text-meta);
+  line-height: 1.33;
+}
+
+.nav-item:disabled {
+  cursor: progress;
+  opacity: 0.7;
 }
 
 .admin-sidebar {
@@ -89,6 +134,7 @@
 
 .section-title {
   font-size: var(--ms-text-meta);
+  line-height: 1.33;
   font-weight: var(--w-font-weight-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -103,6 +149,7 @@
   color: var(--w-text);
   font: inherit;
   font-size: var(--ms-text-nav);
+  line-height: 1.43;
   text-align: left;
   cursor: pointer;
 }
@@ -129,11 +176,13 @@
 
 .me-name {
   font-size: var(--w-font-base);
+  line-height: 1.43;
   font-weight: var(--w-font-weight-semibold);
 }
 
 .me-sub {
   font-size: var(--ms-text-meta);
+  line-height: 1.33;
   color: var(--w-text-subtle);
 }
 
@@ -141,6 +190,67 @@
   .nav-item {
     min-height: var(--ms-touch-min);
   }
+}
+
+.w-text-field {
+  --w-tf-height: var(--ms-control-md);
+  --w-tf-radius: var(--ms-radius-control);
+}
+
+.w-text-field:not(.w-text-field--error) .w-text-field-messages {
+  color: var(--w-text-subtle);
+}
+
+.w-checkbox,
+.w-radio,
+.w-switch {
+  min-height: var(--ms-control-sm);
+  align-items: center;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .w-text-field {
+    --w-tf-height: var(--ms-touch-min);
+  }
+
+  .w-btn,
+  .w-icon-btn,
+  .w-checkbox,
+  .w-radio,
+  .w-switch,
+  .w-text-field-control,
+  .w-select-field {
+    min-height: var(--ms-touch-min);
+  }
+
+  .w-icon-btn {
+    min-width: var(--ms-touch-min);
+  }
+
+  .w-text-field-control:has(.w-text-field-affix) .w-text-field-field {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+w-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--ms-icon-size, var(--ms-icon-md));
+  height: var(--ms-icon-size, var(--ms-icon-md));
+  font-size: var(--ms-icon-size, var(--ms-icon-md));
+}
+
+.icon-sm,
+.tag w-icon,
+h1 w-icon,
+.meta w-icon {
+  --ms-icon-size: var(--ms-icon-sm);
+}
+
+.icon-xl {
+  --ms-icon-size: 2.5rem;
 }
 
 /* @tachyon-generated-tailwind:start */
@@ -157,8 +267,17 @@
     white-space: nowrap;
     border-width: 0;
   }
+  .mx-2 {
+    margin-inline: calc(var(--spacing, 0.25rem) * 2);
+  }
   .mt-1 {
     margin-top: var(--spacing, 0.25rem);
+  }
+  .mt-4 {
+    margin-top: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .mb-3 {
+    margin-bottom: calc(var(--spacing, 0.25rem) * 3);
   }
   .block {
     display: block;
@@ -208,6 +327,9 @@
   .gap-2 {
     gap: calc(var(--spacing, 0.25rem) * 2);
   }
+  .gap-4 {
+    gap: calc(var(--spacing, 0.25rem) * 4);
+  }
   .truncate {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -246,6 +368,9 @@
     }
     .min-\[768px\]\:flex {
       display: flex;
+    }
+    .min-\[768px\]\:hidden {
+      display: none;
     }
     .min-\[768px\]\:grid-cols-\[4\.25rem_17rem_minmax\(0\,1fr\)\] {
       grid-template-columns: 4.25rem 17rem minmax(0,1fr);

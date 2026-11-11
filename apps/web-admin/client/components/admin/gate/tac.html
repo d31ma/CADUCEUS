@@ -1,39 +1,71 @@
-<div class="gate grid min-h-dvh place-items-center px-4 py-8">
-  <main class="gate-card grid w-full max-w-md gap-5 px-6 py-8" id="admin-content" aria-labelledby="gate-title">
+<div class="gate grid min-h-dvh content-center justify-items-center gap-6 px-4 py-8">
+  <p class="gate-brand inline-flex items-center gap-2"><span class="gate-mark" aria-hidden="true"></span><span class="gate-name">Mesail</span><span class="gate-tag">Admin</span></p>
+  <main class="gate-card grid w-full max-w-(--ms-auth-card-max) gap-6 p-4 sm:p-6" id="admin-content" aria-labelledby="gate-title">
     <switch :value="adminSession.step">
       <case :when="'noRights'">
-        <div class="grid gap-4">
+        <div class="grid gap-2">
           <h1 class="gate-title" id="gate-title">You need admin rights</h1>
-          <p class="gate-lead">{adminSession.displayName} is signed in to {adminSession.domainId}, but has no admin role. Ask an admin of your domain or the operator of this Mesail install.</p>
-          <w-btn variant="outlined" size="large" block on:click="adminSession.signOut()">Sign out</w-btn>
+          <p class="gate-lead">{adminSession.displayName} is not an admin of any domain and is not an Operator. Ask an admin of your domain, or the Operator of this Mesail install.</p>
+        </div>
+        <div class="grid gap-3">
+          <w-btn variant="flat" block size="large" class="gate-main" href="/">Open Mesail</w-btn>
+          <w-btn variant="outlined" block on:click="adminSession.signOut()">Sign out</w-btn>
         </div>
       </case>
       <case default>
-        <div class="grid gap-2">
-          <h1 class="gate-title" id="gate-title">Sign in to Mesail admin</h1>
-          <p class="gate-lead">Domain admins sign in with their work email. Operators sign in with their operator account, such as you@mesail-operators.</p>
-        </div>
         <switch :value="adminSession.problem">
-          <case :when="'expired'">
-            <p class="gate-notice" role="status">Your session ended. Sign in again to keep working.</p>
+          <case :when="'noDomain'">
+            <div class="grid gap-2">
+              <h1 class="gate-title" id="gate-title">No domain yet</h1>
+              <p class="gate-lead">Your password is right, but your account is not in any domain yet. An admin adds you to a domain. Then sign in again.</p>
+            </div>
+            <w-btn variant="flat" block size="large" class="gate-main" on:click="adminSession.changeAddress()">Back to sign-in</w-btn>
           </case>
-          <case :when="'rateLimited'">
-            <w-alert type="error">Too many tries. Wait a minute, then try again.</w-alert>
-          </case>
-          <case :when="'unavailable'">
-            <w-alert type="error">We cannot reach sign-in right now. Check your connection, then try again in a minute.</w-alert>
-          </case>
-          <case :when="'refused'">
-            <w-alert type="error">The email, password or 2-step code is not right.</w-alert>
+          <case default>
+            <div class="grid gap-2">
+              <h1 class="gate-title" id="gate-title">Sign in to Mesail admin</h1>
+              <p class="gate-lead">Domain admins and Operators use the same username and password as in Mesail.</p>
+            </div>
+            <switch :value="adminSession.problem">
+              <case :when="'expired'">
+                <p class="gate-note gate-note--warn" role="status">Your session ended. Sign in again to keep working.</p>
+              </case>
+              <case :when="'retype'">
+                <p class="gate-note gate-note--info" role="status">Type your password again to sign in as {adminSession.login}. Leave the 2-step code empty or type a new one.</p>
+              </case>
+              <case :when="'rateLimited'">
+                <w-alert type="error">Too many tries. Wait a minute, then try again.</w-alert>
+              </case>
+              <case :when="'unavailable'">
+                <w-alert type="error">We cannot reach sign-in right now. Try again in a minute.</w-alert>
+              </case>
+              <case :when="'refused'">
+                <w-alert type="error">The username, password or 2-step code is not right. Check them and try again.</w-alert>
+              </case>
+              <case :when="'notMember'">
+                <div class="gate-note gate-note--warn grid gap-3" role="alert">
+                  <p><span class="gate-strong">You are not a member of {adminSession.loginDomain}</span><br>Your password is right. Sign in with your username only to open your default domain.</p>
+                  <div class="flex flex-wrap gap-2">
+                    <w-btn variant="flat" on:click="adminSession.useUsernameOnly()">Sign in as {adminSession.loginUsername}</w-btn>
+                    <w-btn variant="text" on:click="adminSession.changeAddress()">Change the address</w-btn>
+                  </div>
+                </div>
+              </case>
+            </switch>
+            <form method="dialog" class="grid gap-4" aria-label="Sign in" on:submit="adminSession.signInWith($event.target.elements.login.value, $event.target.elements.password.value, $event.target.elements.code.value)">
+              <logic :if="adminSession.problem == 'loginMissing'">
+                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" :value="adminSession.login" error="Type your username, like ana, or your full address, like ana@example.com." on:change="adminSession.typeLogin($event.target.value)"></w-text-field>
+              </logic>
+              <logic else>
+                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" :value="adminSession.login" :hint="adminSession.hint" persistent-hint on:change="adminSession.typeLogin($event.target.value)"></w-text-field>
+              </logic>
+              <w-text-field label="Password" name="password" type="password" autocomplete="current-password"></w-text-field>
+              <w-text-field label="2-step code (optional)" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-btn variant="flat" type="submit" block size="large" class="gate-main" :loading="adminSession.busy" :disabled="adminSession.problem == 'rateLimited'">Sign in</w-btn>
+            </form>
+            <p class="gate-meta">Forgot your password? Ask your admin to reset it.</p>
           </case>
         </switch>
-        <form method="dialog" class="grid gap-4" aria-label="Sign in" on:submit="adminSession.signInWith($event.target.elements.email.value, $event.target.elements.password.value, $event.target.elements.code.value)">
-          <w-text-field label="Email or operator account" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana@example.com" :value="adminSession.address"></w-text-field>
-          <w-text-field label="Password" name="password" type="password" autocomplete="current-password"></w-text-field>
-          <w-text-field label="2-step code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one."></w-text-field>
-          <w-btn variant="flat" type="submit" size="large" block :loading="adminSession.busy">Sign in</w-btn>
-        </form>
-        <p class="gate-meta">Forgot your password? Ask an admin of your domain to reset it.</p>
       </case>
     </switch>
   </main>

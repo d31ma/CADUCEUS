@@ -57,11 +57,6 @@ func (test *AdminShellServiceTest) TestLoadedAnnouncesWhatTheViewShows() {
 	Assert.Equals("5 members", shell.Announcement)
 }
 
-func (test *AdminShellServiceTest) TestSidebarLabelNamesTheDomain() {
-	shell := &AdminShellService{}
-	Assert.Equals("Admin of example.com", shell.SidebarLabel("example.com"))
-}
-
 func (test *AdminShellServiceTest) TestAnOperatorWhoAdministersTheOpenDomainStartsAtMembers() {
 	shell := &AdminShellService{}
 	test.construct(shell)

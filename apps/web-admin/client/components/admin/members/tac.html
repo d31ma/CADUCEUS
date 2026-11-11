@@ -1,93 +1,157 @@
 <main class="@container/main flex h-full min-h-0 min-w-0 flex-col" aria-labelledby="page-title">
-  <header class="members-header flex min-h-13 items-center gap-2">
-    <w-icon-btn icon="arrow-left" aria-label="Back to menu" class="members-touch -ml-2 min-[768px]:hidden" on:click="adminShell.showMenu()"></w-icon-btn>
-    <h1 id="page-title" class="members-title flex min-w-0 items-center gap-1"><w-icon name="users" aria-hidden="true"></w-icon><span class="truncate">Members</span></h1>
-    <p class="members-topic hidden min-w-0 flex-1 truncate pl-3 @2xl/main:block">{memberList.domainId} &middot; people who signed in to this domain</p>
+  <header class="page-head flex items-center gap-2">
+    <w-icon-btn icon="arrow-left" aria-label="Back to the admin menu" class="-ml-2 min-[768px]:hidden" on:click="adminShell.showMenu()"></w-icon-btn>
+    <h1 id="page-title" class="page-title flex min-w-0 items-center gap-1"><w-icon name="users" aria-hidden="true"></w-icon><span class="truncate">Members</span></h1>
+    <p class="page-topic hidden min-w-0 flex-1 truncate pl-3 @2xl/main:block">{memberList.domainId} &middot; people who can sign in to this domain</p>
   </header>
 
-  <div class="members-page min-h-0 flex-1 overflow-y-auto py-6" id="admin-content">
-    <div class="@container/page mx-auto grid w-full max-w-3xl grid-cols-[minmax(0,1fr)] gap-6 pb-10">
+  <div class="page-scroll min-h-0 flex-1 overflow-y-auto" id="admin-content">
+    <div class="@container/page mx-auto grid w-full max-w-(--ms-content-max) grid-cols-[minmax(0,1fr)] gap-6 pb-10">
       <logic :if="memberList.state == 'forbidden'">
-        <div class="members-box px-4 py-8">
+        <div class="panel px-4 py-8 sm:px-6">
           <w-empty-state>
-            <w-icon slot="media" name="lock" class="members-art" aria-hidden="true"></w-icon>
-            <h2 slot="title" class="members-empty-title">You need admin rights for this page</h2>
-            <p slot="text">Ask an admin of {memberList.domainId} to give you the Domain admin role.</p>
+            <w-icon slot="media" name="lock" class="empty-icon icon-xl" aria-hidden="true"></w-icon>
+            <h2 slot="title" class="empty-title">You need admin rights for this page</h2>
+            <p slot="text">Ask an admin of {memberList.domainId} to make you a Domain admin.</p>
           </w-empty-state>
         </div>
       </logic>
       <logic else>
-        <div class="members-notice flex items-start gap-3 p-4">
-          <w-icon name="key" class="mt-0.5" aria-hidden="true"></w-icon>
-          <div class="grid min-w-0 gap-1">
-            <p class="members-strong">To add people, create them in Keycloak.</p>
-            <p>They appear here after their first sign-in. Disable a person or reset their sign-in in Keycloak too. Mesail never stores passwords.</p>
-          </div>
+        <div class="flex flex-wrap items-end gap-3">
+          <form method="dialog" role="search" aria-label="Find members" class="flex min-w-0 flex-[1_1_18rem] items-end gap-3" on:submit="memberList.searchWith($event.target.elements.query.value)">
+            <w-text-field type="search" name="query" label="Search" placeholder="Name or username" prepend-inner-icon="search" autocomplete="off" hide-details class="min-w-0 flex-1" :value="memberList.query"></w-text-field>
+            <w-btn variant="outlined" type="submit" :disabled="memberList.state == 'loading'">Search</w-btn>
+          </form>
+          <w-btn variant="flat" prepend-icon="plus" aria-haspopup="dialog" class="max-sm:flex-1" on:click="memberAdd.open()">Add member</w-btn>
         </div>
 
-        <form method="dialog" role="search" aria-label="Filter members" class="flex flex-wrap items-end gap-3" on:submit="memberList.searchWith($event.target.elements.query.value)">
-          <w-text-field type="search" name="query" label="Search" placeholder="Name or address" prepend-inner-icon="search" autocomplete="off" hide-details class="min-w-0 flex-1 basis-56" :value="memberList.query"></w-text-field>
-          <w-btn variant="outlined" type="submit" class="members-touch" :disabled="memberList.state == 'loading'">Search</w-btn>
-        </form>
+        <logic :if="memberList.listed()">
+          <section class="panel" aria-labelledby="members-title">
+            <div class="panel-head flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-3 sm:px-6"><h2 id="members-title" class="section-title">{memberList.heading}</h2><p class="meta">{memberList.adminCount}</p></div>
+            <table class="data-table member-table w-full">
+              <caption class="sr-only">Members of {memberList.domainId}</caption>
+              <thead>
+                <tr><th scope="col" class="px-4 py-2">Member</th><th scope="col" class="px-4 py-2">Address</th><th scope="col" class="px-4 py-2">Role</th><th scope="col" class="px-4 py-2"><span class="sr-only">Actions</span></th></tr>
+              </thead>
+              <tbody><loop :for="row of memberList.rows"><tr>
+                <td class="member-cell px-4 py-2">
+                  <div class="flex min-w-0 items-center gap-3">
+                    <w-avatar size="32" alt="" aria-hidden="true" :text="row.initials"></w-avatar>
+                    <span class="grid min-w-0">
+                      <span class="strong break-words">{row.name}</span>
+                      <logic :if="row.you"><span class="meta">You</span></logic>
+                      <logic else><span class="meta username">{row.username}</span></logic>
+                    </span>
+                  </div>
+                </td>
+                <td data-label="Address" class="px-4 py-2"><span class="address min-w-0">{row.address}</span></td>
+                <td data-label="Role" class="px-4 py-2">
+                  <logic :if="row.admin"><span class="tag" data-color="primary">Admin</span></logic>
+                  <logic else><span class="meta">Member</span></logic>
+                </td>
+                <td class="member-actions px-2 py-1">
+                  <w-icon-btn icon="more" class="row-action" :id="'member-menu-' + row.memberId" :aria-label="'Actions for ' + row.name" aria-haspopup="menu"></w-icon-btn>
+                  <w-menu class="member-menu" location="bottom-end" :activator="'member-menu-' + row.memberId">
+                    <div class="grid" role="group" :aria-label="'Role in ' + memberList.domainId">
+                      <p class="w-menu-label">Role in {memberList.domainId}</p>
+                      <button type="button" class="w-menu-item member-menu-item" role="menuitemradio" :aria-checked="adminShell.flag(!row.admin)" on:click="memberRole.setRole(row.memberId, row.name, false)">
+                        <span class="grid min-w-0 flex-1 gap-0.5"><span>Member</span><span class="member-menu-text">Chats and sends email in {memberList.domainId}</span></span>
+                        <w-icon name="check" class="member-menu-check" aria-hidden="true"></w-icon>
+                      </button>
+                      <button type="button" class="w-menu-item member-menu-item" role="menuitemradio" :aria-checked="adminShell.flag(row.admin)" on:click="memberRole.setRole(row.memberId, row.name, true)">
+                        <span class="grid min-w-0 flex-1 gap-0.5"><span>Domain admin</span><span class="member-menu-text">Also manages members and channels of {memberList.domainId}</span></span>
+                        <w-icon name="check" class="member-menu-check" aria-hidden="true"></w-icon>
+                      </button>
+                    </div>
+                    <div class="member-menu-group grid" role="group" :aria-label="'Account of ' + row.name + ', in every domain'">
+                      <p class="w-menu-label">Account (all domains)</p>
+                      <logic :if="row.accountManaged">
+                        <button type="button" class="w-menu-item member-menu-item" aria-haspopup="dialog" on:click="accountAction.ask('reset', row.memberId, row.name, row.username)"><w-icon name="key" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Reset password&hellip;</span><span class="member-menu-text">A new one is chosen at the next sign-in</span></span></button>
+                        <button type="button" class="w-menu-item member-menu-item" aria-haspopup="dialog" on:click="accountAction.ask('totp', row.memberId, row.name, row.username)"><w-icon name="shield" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Remove 2-step code&hellip;</span><span class="member-menu-text">For a lost phone</span></span></button>
+                        <button type="button" class="w-menu-item member-menu-item" aria-haspopup="dialog" on:click="accountAction.ask('rename', row.memberId, row.name, row.username)"><w-icon name="edit" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Change name&hellip;</span><span class="member-menu-text">The same name in every domain</span></span></button>
+                        <button type="button" class="w-menu-item member-menu-item" aria-haspopup="dialog" on:click="accountAction.ask('disable', row.memberId, row.name, row.username)"><w-icon name="lock" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Turn off account&hellip;</span><span class="member-menu-text">Signs out within a minute, in every domain</span></span></button>
+                      </logic>
+                      <logic else>
+                        <p class="member-menu-note flex items-start gap-2 px-3 py-2"><w-icon name="lock" class="mt-0.5" aria-hidden="true"></w-icon><span>{row.name} is also a member of a domain you do not manage. Only an Operator, or an admin of all of their domains, can change this account.</span></p>
+                      </logic>
+                    </div>
+                    <div class="member-menu-group grid">
+                      <button type="button" class="w-menu-item member-menu-item member-menu-danger" aria-haspopup="dialog" on:click="memberRole.askRemove(row.memberId, row.name, row.address)"><w-icon name="trash" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Remove from {memberList.domainId}&hellip;</span><span class="member-menu-text">The account and other domains stay</span></span></button>
+                    </div>
+                  </w-menu>
+                </td>
+              </tr></loop></tbody>
+            </table>
+            <logic :if="memberList.hasMore">
+              <p class="meta panel-foot px-4 py-3 sm:px-6">More members exist than this page shows. Search by name or username to find them.</p>
+            </logic>
+          </section>
+        </logic>
 
         <switch :value="memberList.state">
-          <case :when="'ready'">
-            <section class="members-box" aria-labelledby="members-title">
-              <div class="members-box-head flex flex-wrap items-center gap-3 px-4 py-3 @xl/page:px-5"><h2 id="members-title" class="members-heading flex-1">{memberList.heading}</h2></div>
-              <table class="members-table w-full @max-2xl/page:block">
-                <caption class="sr-only">Members of {memberList.domainId}</caption>
-                <thead class="@max-2xl/page:sr-only">
-                  <tr><th scope="col" class="px-4 py-2">Name</th><th scope="col" class="px-4 py-2">Address</th></tr>
-                </thead>
-                <tbody class="@max-2xl/page:block"><loop :for="row of memberList.rows"><tr class="@max-2xl/page:block @max-2xl/page:px-4 @max-2xl/page:py-3">
-                  <td class="px-4 py-3 @max-2xl/page:block @max-2xl/page:px-0 @max-2xl/page:py-1"><div class="flex min-w-0 items-center gap-2"><w-avatar size="28" alt="" aria-hidden="true" :text="row.initials"></w-avatar><span class="members-strong min-w-0">{row.name}</span></div></td>
-                  <td data-label="Address" class="members-labelled px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1"><span class="members-address min-w-0">{row.address}</span></td>
-                </tr></loop></tbody>
-              </table>
-              <logic :if="memberList.hasMore">
-                <p class="members-foot px-4 py-3 @xl/page:px-5">More members exist than this page shows. Search by name or address to find them.</p>
-              </logic>
-            </section>
+          <case :when="'ready'"></case>
+          <case :when="'onlyYou'">
+            <div class="note note--info flex flex-wrap items-start gap-3 px-4 py-3">
+              <w-icon name="users" class="mt-0.5" aria-hidden="true"></w-icon>
+              <div class="grid min-w-0 flex-[1_1_16rem] gap-1">
+                <p class="strong">You are the only member</p>
+                <p>Add people by their username. People who already use Mesail in another domain keep their password.</p>
+              </div>
+              <w-btn variant="outlined" prepend-icon="plus" class="max-sm:flex-1" on:click="memberAdd.open()">Add member</w-btn>
+            </div>
           </case>
           <case :when="'empty'">
-            <div class="members-box px-4 py-8">
+            <div class="panel px-4 py-8 sm:px-6">
               <w-empty-state>
-                <w-icon slot="media" name="users" class="members-art" aria-hidden="true"></w-icon>
-                <h2 slot="title" class="members-empty-title">No one has signed in yet</h2>
-                <p slot="text">Create people in Keycloak for {memberList.domainId}. Each person appears here after their first sign-in.</p>
+                <w-icon slot="media" name="users" class="empty-icon icon-xl" aria-hidden="true"></w-icon>
+                <h2 slot="title" class="empty-title">No members yet</h2>
+                <p slot="text">Add people by their username. People who already use Mesail in another domain keep their password.</p>
+                <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="flat" prepend-icon="plus" on:click="memberAdd.open()">Add member</w-btn></div>
               </w-empty-state>
             </div>
           </case>
           <case :when="'noResults'">
-            <div class="members-box px-4 py-8" role="status">
+            <div class="panel px-4 py-8 sm:px-6" role="status">
               <w-empty-state>
-                <w-icon slot="media" name="search" class="members-art" aria-hidden="true"></w-icon>
-                <h2 slot="title" class="members-empty-title">No members match &ldquo;{memberList.searchedQuery}&rdquo;</h2>
-                <p slot="text">Check the spelling, or clear the search and the filters. New people appear after their first sign-in.</p>
-                <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="outlined" class="members-touch" on:click="memberList.clearSearch()">Clear search and filters</w-btn></div>
+                <w-icon slot="media" name="search" class="empty-icon icon-xl" aria-hidden="true"></w-icon>
+                <h2 slot="title" class="empty-title">No member matches &ldquo;{memberList.searchedQuery}&rdquo;</h2>
+                <p slot="text">If {memberList.searchedQuery} should be here, add the username {memberList.searchedQuery}.</p>
+                <div slot="actions" class="flex flex-wrap justify-center gap-2">
+                  <w-btn variant="outlined" on:click="memberList.clearSearch()">Clear search</w-btn>
+                  <w-btn variant="flat" prepend-icon="plus" on:click="memberAdd.openWith(memberList.searchedQuery)">Add {memberList.searchedQuery}</w-btn>
+                </div>
               </w-empty-state>
             </div>
           </case>
           <case :when="'failed'">
-            <div class="members-box px-4 py-8" role="alert">
+            <div class="panel px-4 py-8 sm:px-6" role="alert">
               <w-empty-state>
-                <w-icon slot="media" name="alert" class="members-art" aria-hidden="true"></w-icon>
-                <h2 slot="title" class="members-empty-title">Members could not load</h2>
-                <p slot="text">Mesail could not reach the server. Check your connection, then try again.</p>
-                <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="flat" prepend-icon="refresh" class="members-touch" on:click="memberList.retry()">Try again</w-btn></div>
+                <w-icon slot="media" name="alert" class="empty-icon icon-xl" aria-hidden="true"></w-icon>
+                <h2 slot="title" class="empty-title">Members did not load</h2>
+                <p slot="text">We cannot reach the directory right now. Try again in a minute.</p>
+                <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="flat" prepend-icon="refresh" on:click="memberList.retry()">Try again</w-btn></div>
               </w-empty-state>
             </div>
           </case>
           <case default>
-            <section class="members-box" aria-busy="true" aria-labelledby="members-loading-title">
-              <div class="members-box-head flex flex-wrap items-center gap-3 px-4 py-3"><h2 id="members-loading-title" class="members-heading flex-1">Members</h2><p class="members-meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Loading members&hellip;</p></div>
+            <section class="panel" aria-busy="true" aria-labelledby="members-loading-title">
+              <div class="panel-head flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6"><h2 id="members-loading-title" class="section-title flex-1">Members</h2><p class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Loading members&hellip;</p></div>
               <w-skeleton-loader type="list-item-avatar-two-line@3" class="block px-2 py-2"></w-skeleton-loader>
             </section>
           </case>
         </switch>
 
+        <logic :if="accountAction.notice != ''">
+          <p class="note note--ok flex items-start gap-3 px-4 py-3" role="status"><w-icon name="check" class="mt-0.5" aria-hidden="true"></w-icon><span>{accountAction.notice}</span></p>
+        </logic>
+        <p class="meta">Changes reach a person within a minute. An account action (password, 2-step code, name, turn off) changes the person&rsquo;s sign-in in every domain, so only an admin of all their domains, or an Operator, may do it.</p>
+
         <admin-aliases hydrate="load" />
       </logic>
     </div>
   </div>
+
+  <admin-member-add hydrate="load" />
+  <admin-member-dialogs hydrate="load" />
+  <admin-account-dialogs hydrate="load" />
 </main>

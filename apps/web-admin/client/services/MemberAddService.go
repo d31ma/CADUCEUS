@@ -24,8 +24,6 @@ type MemberAddService struct {
 	problems *AdminProblemService
 	// @Needs
 	rules *UsernameRuleService
-	// @Needs
-	memberList                *MemberListService
 	applicationEventPublisher ApplicationEventPublisher
 }
 
@@ -48,7 +46,7 @@ func (add *MemberAddService) AddWith(username string, admin bool) {
 	add.Username = add.rules.Cleaned(username)
 	add.Admin = admin
 	add.Problem = ""
-	add.UsernameProblem = add.firstOf(add.rules.Problem(username), add.listedProblem(add.memberList.NameOf(add.Username)))
+	add.UsernameProblem = add.firstOf(add.rules.Problem(username), add.rules.ListedProblem(add.Username, add.listedDomain()))
 	add.sendWhenValid(add.UsernameProblem, AddMemberRequest{Username: add.Username, Admin: admin})
 }
 
@@ -107,10 +105,22 @@ func (add *MemberAddService) createWhenValid(problem string, request AddMemberRe
 }
 
 func (add *MemberAddService) send(request AddMemberRequest) (AddedMember, error) {
-	if add.FirstAdmin {
-		return add.directoryClient.AddDomainMember(add.session.Authorization(), add.DomainId, request)
+	return add.senders()[add.FirstAdmin](request)
+}
+
+func (add *MemberAddService) senders() map[bool]func(AddMemberRequest) (AddedMember, error) {
+	return map[bool]func(AddMemberRequest) (AddedMember, error){
+		true: func(request AddMemberRequest) (AddedMember, error) {
+			return add.directoryClient.AddDomainMember(add.session.Authorization(), add.DomainId, request)
+		},
+		false: func(request AddMemberRequest) (AddedMember, error) {
+			return add.directoryClient.AddMember(add.session.Authorization(), request)
+		},
 	}
-	return add.directoryClient.AddMember(add.session.Authorization(), request)
+}
+
+func (add *MemberAddService) listedDomain() string {
+	return map[bool]string{true: "", false: add.DomainId}[add.FirstAdmin]
 }
 
 func (add *MemberAddService) answered(answer AddedMember, problem string, step string) {
@@ -122,7 +132,7 @@ func (add *MemberAddService) answered(answer AddedMember, problem string, step s
 }
 
 func (add *MemberAddService) stepAfter(problem string, step string) string {
-	next, known := map[string]string{"": "added", "invalid": add.detailsStep(), "conflict": add.usernameStep()}[problem]
+	next, known := map[string]string{"": "added", add.invalid(): add.detailsStep(), add.conflict(): add.usernameStep()}[problem]
 	if !known {
 		return step
 	}
@@ -130,21 +140,21 @@ func (add *MemberAddService) stepAfter(problem string, step string) string {
 }
 
 func (add *MemberAddService) conflictProblem(problem string, current string) string {
-	if problem != "conflict" {
+	if problem != add.conflict() {
 		return current
 	}
 	return add.Username + " cannot be used. It is already a member here, or an alias or channel address uses it in a domain on this install."
 }
 
 func (add *MemberAddService) policyProblem(problem string, step string, current string) string {
-	if problem != "invalid" || step != add.detailsStep() {
+	if problem != add.invalid() || step != add.detailsStep() {
 		return current
 	}
 	return "Mesail did not accept this password. Use at least 12 characters, and not the username or the address."
 }
 
 func (add *MemberAddService) otherProblem(problem string) string {
-	if map[string]bool{"": true, "invalid": true, "conflict": true}[problem] {
+	if map[string]bool{"": true, add.invalid(): true, add.conflict(): true}[problem] {
 		return ""
 	}
 	return problem
@@ -161,13 +171,6 @@ func (add *MemberAddService) showAdded(answer AddedMember, problem string) {
 	add.applicationEventPublisher.PublishEvent(PeopleChanged{PersonId: answer.Member.MemberId}, false)
 }
 
-func (add *MemberAddService) listedProblem(name string) string {
-	if name == "" || add.FirstAdmin {
-		return ""
-	}
-	return name + " is already a member of " + add.DomainId + "."
-}
-
 func (add *MemberAddService) nameProblem(displayName string) string {
 	if displayName != "" {
 		return ""
@@ -180,6 +183,14 @@ func (add *MemberAddService) firstOf(first string, second string) string {
 		return first
 	}
 	return second
+}
+
+func (add *MemberAddService) invalid() string {
+	return "invalid"
+}
+
+func (add *MemberAddService) conflict() string {
+	return "conflict"
 }
 
 func (add *MemberAddService) usernameStep() string {

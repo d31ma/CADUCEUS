@@ -89,6 +89,25 @@
   --ms-dialog-max: 32rem;
   --ms-row-height: 2rem;
   --ms-touch-min: 2.75rem;
+  --ms-control-sm: 2rem;
+  --ms-control-md: 2.5rem;
+  --ms-control-lg: 3rem;
+  --ms-icon-sm: 1rem;
+  --ms-icon-md: 1.25rem;
+  --ms-icon-lg: 1.5rem;
+  --ms-auth-card-max: 26rem;
+  --ms-radius-control: var(--w-radius-lg);
+  --ms-radius-dialog: var(--w-radius-xl);
+  --ms-card-pad: 1.5rem;
+  --ms-card-pad-narrow: 1rem;
+  --ms-space-field: 1rem;
+  --ms-space-label: 0.375rem;
+  --ms-space-section: 1.5rem;
+  --ms-tone-info: var(--w-on-primary-container);
+  --ms-tone-success: var(--w-on-success-container);
+  --ms-tone-warning: var(--w-on-warning-container);
+  --ms-tone-error: var(--w-error);
+  --ms-tone-email: var(--ms-on-email-bg);
 
   --ms-avatar-xs: 1.25rem;
   --ms-avatar-sm: 1.5rem;
@@ -98,7 +117,7 @@
   --ms-domain-tile: 2.75rem;
 
   --ms-radius-chip: var(--w-radius-pill);
-  --ms-radius-card: var(--w-radius-lg);
+  --ms-radius-card: var(--w-radius-xl);
   --ms-radius-tile: var(--w-radius-xl);
   --ms-duration: 120ms;
   --ms-duration-panel: 200ms;
@@ -199,6 +218,11 @@ html[w-theme="dark"] {
   --ms-msg-hover: rgba(255, 255, 255, 0.04);
   --ms-msg-highlight: rgba(242, 184, 75, 0.16);
   --ms-code-bg: rgba(255, 255, 255, 0.08);
+  --ms-tone-info: var(--w-primary);
+  --ms-tone-success: var(--w-success);
+  --ms-tone-warning: var(--w-warning);
+  --ms-tone-error: var(--w-error);
+  --ms-tone-email: var(--ms-email);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -259,6 +283,11 @@ html[w-theme="dark"] {
     --ms-msg-hover: rgba(255, 255, 255, 0.04);
     --ms-msg-highlight: rgba(242, 184, 75, 0.16);
     --ms-code-bg: rgba(255, 255, 255, 0.08);
+    --ms-tone-info: var(--w-primary);
+    --ms-tone-success: var(--w-success);
+    --ms-tone-warning: var(--w-warning);
+    --ms-tone-error: var(--w-error);
+    --ms-tone-email: var(--ms-email);
   }
 }
 
@@ -350,6 +379,25 @@ html[w-theme="light"] {
   --ms-dialog-max: 32rem;
   --ms-row-height: 2rem;
   --ms-touch-min: 2.75rem;
+  --ms-control-sm: 2rem;
+  --ms-control-md: 2.5rem;
+  --ms-control-lg: 3rem;
+  --ms-icon-sm: 1rem;
+  --ms-icon-md: 1.25rem;
+  --ms-icon-lg: 1.5rem;
+  --ms-auth-card-max: 26rem;
+  --ms-radius-control: var(--w-radius-lg);
+  --ms-radius-dialog: var(--w-radius-xl);
+  --ms-card-pad: 1.5rem;
+  --ms-card-pad-narrow: 1rem;
+  --ms-space-field: 1rem;
+  --ms-space-label: 0.375rem;
+  --ms-space-section: 1.5rem;
+  --ms-tone-info: var(--w-on-primary-container);
+  --ms-tone-success: var(--w-on-success-container);
+  --ms-tone-warning: var(--w-on-warning-container);
+  --ms-tone-error: var(--w-error);
+  --ms-tone-email: var(--ms-on-email-bg);
 
   --ms-avatar-xs: 1.25rem;
   --ms-avatar-sm: 1.5rem;
@@ -359,7 +407,7 @@ html[w-theme="light"] {
   --ms-domain-tile: 2.75rem;
 
   --ms-radius-chip: var(--w-radius-pill);
-  --ms-radius-card: var(--w-radius-lg);
+  --ms-radius-card: var(--w-radius-xl);
   --ms-radius-tile: var(--w-radius-xl);
   --ms-duration: 120ms;
   --ms-duration-panel: 200ms;
@@ -489,6 +537,12 @@ html[w-theme="high-contrast"] {
 
   a {
     color: var(--w-accent);
+  }
+
+  @media (min-width: 2560px) {
+    html {
+      font-size: 112.5%;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

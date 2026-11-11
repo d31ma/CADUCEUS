@@ -135,6 +135,13 @@ func (test *MemberListServiceTest) TestTheSignedInAdminIsMarkedAsYou() {
 	Assert.Equals(true, list.Rows[1].You)
 }
 
+func (test *MemberListServiceTest) TestListedIsTrueOnlyWithRows() {
+	list := test.opened()
+	Assert.Equals(true, list.Listed())
+	list.SearchWith("zoe")
+	Assert.Equals(false, list.Listed())
+}
+
 func (test *MemberListServiceTest) TestNameOfFindsAListedUsername() {
 	list := test.opened()
 	Assert.Equals("Bo Lee", list.NameOf("bo"))

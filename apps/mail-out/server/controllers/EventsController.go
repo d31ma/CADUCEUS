@@ -1,16 +1,16 @@
 import (
 	"errors"
+	"os"
 
 	"mesail.dev/packages/events"
-	"mesail.dev/packages/oidc"
-	"mesail.dev/packages/outbox"
+	"mesail.dev/packages/mailout"
 )
 
 // @RequestRoute("/api/v1/mail-out/events")
 // @Allow(Service)
 type EventsController struct {
 	// @Needs
-	events *EventsService
+	dataSource DataSource
 }
 
 // @PostRoute
@@ -20,21 +20,22 @@ func (controller *EventsController) PostEvent(
 	// @FromBody
 	envelope SendEnvelope,
 ) (EventReceipt, error) {
-	caller, _ := oidc.Configured().Identify(authorization)
-	receipt, err := controller.events.ReceiveSend(caller, envelope, oidc.ServiceTokensFactory{}.Configured().Authorization)
-	return receipt, controller.answer(err)
+	receipt, failed := mailout.DeskFactory{Environment: os.Getenv}.Desk(controller.dataSource).Receive(authorization, envelope)
+	return EventReceipt{EventId: receipt.EventID, Status: receipt.Status}, controller.failure(failed)
 }
 
-func (controller *EventsController) answer(failure error) error {
-	invalid, unsubscribed, notService, missing := events.InvalidEnvelope{}, events.NotSubscribed{}, events.NotService{}, outbox.NotFound{}
+func (controller *EventsController) failure(failed error) error {
+	invalid, unsubscribed, notService, mismatch := events.InvalidEnvelope{}, events.NotSubscribed{}, events.NotService{}, mailout.DomainMismatch{}
 	switch {
-	case errors.As(failure, &notService):
+	case failed == nil:
+		return nil
+	case errors.As(failed, &notService):
 		return &ForbiddenCaller{}
-	case errors.As(failure, &missing):
+	case errors.As(failed, &mismatch):
 		return &UnknownDomain{}
-	case errors.As(failure, &invalid), errors.As(failure, &unsubscribed):
-		return &RejectedEvent{Reason: failure.Error()}
+	case errors.As(failed, &invalid), errors.As(failed, &unsubscribed):
+		return &RejectedEvent{Reason: failed.Error()}
 	default:
-		return failure
+		return failed
 	}
 }

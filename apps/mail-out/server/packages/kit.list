@@ -6,3 +6,5 @@ compose
 dkim
 smtpclient
 smtpclient/sink
+blobs
+mailout

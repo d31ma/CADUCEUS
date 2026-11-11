@@ -3,6 +3,7 @@ import (
 	"os"
 	"time"
 
+	"mesail.dev/packages/mailout"
 	"mesail.dev/packages/oidc"
 )
 
@@ -15,15 +16,15 @@ func (MailOutTestSetup) Configure(execution *BehaviorExecution) (*BehaviorConfig
 	return NewBehaviorConfiguration(), nil
 }
 
-func (setup MailOutTestSetup) Use(settings MailOutSettings, messagingEvents string, keycloak string) {
+func (setup MailOutTestSetup) Use(settings mailout.Settings, services string) {
 	signing, _ := oidc.SigningRealm{}.Started("settings")
 	identity := signing.Settings
-	identity.Keycloak = keycloak + "/realms/{realm}/protocol/openid-connect"
+	identity.Keycloak = services + "/realms/{realm}/protocol/openid-connect"
 	snapshot := map[string]any{"yon": map[string]any{
 		"mailout": settings,
 		"outbox": map[string]any{
 			"producer":    "mail-out",
-			"subscribers": []map[string]string{{"name": "messaging", "url": messagingEvents}},
+			"subscribers": []map[string]string{{"name": "messaging", "url": services + "/api/v1/messaging/events"}},
 			"retry":       map[string]int{"baseDelaySeconds": 1, "maxDelaySeconds": 1, "maxAttempts": 2},
 		},
 		"oidc":    identity,

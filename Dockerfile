@@ -63,7 +63,7 @@ ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 PATH=/usr/local/go/bin:/usr/loca
 COPY --chmod=755 deploy/lambda/install-tools.sh /usr/local/lib/mesail/install-tools.sh
 RUN set -eu \
  && apt-get update -q \
- && apt-get install -y -q --no-install-recommends ca-certificates curl tzdata jq \
+ && apt-get install -y -q --no-install-recommends ca-certificates curl tzdata jq socat \
  && /usr/local/lib/mesail/install-tools.sh \
  && apt-get purge -y -q curl \
  && apt-get autoremove -y -q \
@@ -73,8 +73,9 @@ FROM lambda-tools AS lambda
 ARG APP
 ARG FYLO=false
 ARG ISSUER_ORIGIN=https://mesail.localhost
-ARG KEYCLOAK_URL=http://keycloak:8080/idp
-ARG SERVICE_BASE=http://router:8080
+ARG KEYCLOAK_URL=http://keycloak.localhost:18180/idp
+ARG SERVICE_BASE=http://router.localhost:18080
+ARG FORWARDS=18180=keycloak:8080,18080=router:8080
 ARG USER_ID=10001
 ENV MESAIL_APP_ROOT=/tmp/mesail-app \
     MESAIL_STORED_APP=/opt/mesail/app \
@@ -89,6 +90,7 @@ COPY --from=lambda-adapter /lambda-adapter /opt/extensions/lambda-adapter
 COPY --chmod=755 deploy/lambda/start.sh /usr/local/bin/mesail-lambda-start
 COPY --chmod=755 deploy/lambda/write-profile.sh /usr/local/lib/mesail/write-profile.sh
 COPY --chmod=755 deploy/lambda/rewrite-config.sh /usr/local/lib/mesail/rewrite-config.sh
+COPY --chmod=755 deploy/lambda/forwards.sh /usr/local/lib/mesail/forwards.sh
 COPY apps/${APP} /tmp/mesail-app
 RUN set -eu \
  && mkdir -p /opt/mesail /tmp/tac-cache \
@@ -99,7 +101,8 @@ RUN set -eu \
  && mv /tmp/tac-cache /opt/mesail/cache \
  && rm -rf /tmp/* /tmp/.cache \
  && chmod -R a+rX /opt/mesail
-ENV YON_PROFILE=lambda \
+ENV MESAIL_FORWARDS=${FORWARDS} \
+    YON_PROFILE=lambda \
     YON_EGRESS_ENFORCEMENT=proxy \
     MESAIL_SERVICE=${APP} \
     AWS_LWA_PORT=8080 \
@@ -137,8 +140,9 @@ RUN GOTOOLCHAIN=local GOFLAGS=-mod=readonly CGO_ENABLED=0 go build -trimpath -bu
 FROM lambda-tools AS realtime
 ARG USER_ID=10001
 ARG ISSUER_ORIGIN=https://mesail.localhost
-ARG KEYCLOAK_URL=http://keycloak:8080/idp
-ARG SERVICE_BASE=http://router:8080
+ARG KEYCLOAK_URL=http://keycloak.localhost:18180/idp
+ARG SERVICE_BASE=http://router.localhost:18080
+ARG FORWARDS=18180=keycloak:8080,18080=router:8080
 ENV MESAIL_APP_ROOT=/opt/mesail/realtime \
     MESAIL_DATA_ROOT=/data/realtime \
     HOME=/tmp TMPDIR=/tmp \
@@ -150,6 +154,7 @@ RUN useradd --system --no-create-home --home-dir /tmp --uid "${USER_ID}" --user-
 COPY --from=realtime-gateway-build /out/mesail-realtime-gateway /usr/local/bin/mesail-realtime-gateway
 COPY --chmod=755 deploy/lambda/realtime-start.sh /usr/local/bin/mesail-realtime-start
 COPY --chmod=755 deploy/lambda/rewrite-config.sh /usr/local/lib/mesail/rewrite-config.sh
+COPY --chmod=755 deploy/lambda/forwards.sh /usr/local/lib/mesail/forwards.sh
 COPY --chown=${USER_ID}:${USER_ID} apps/realtime /opt/mesail/realtime
 USER ${USER_ID}:${USER_ID}
 RUN set -eu \
@@ -157,7 +162,8 @@ RUN set -eu \
  && /usr/local/lib/mesail/rewrite-config.sh /opt/mesail/realtime/server/application.json "${ISSUER_ORIGIN}" "${KEYCLOAK_URL}" "${SERVICE_BASE}" \
  && ty bundle /opt/mesail/realtime \
  && rm -rf /tmp/* /tmp/.cache
-ENV YON_PROFILE=container \
+ENV MESAIL_FORWARDS=${FORWARDS} \
+    YON_PROFILE=container \
     YON_EGRESS_ENFORCEMENT=proxy \
     MESAIL_REALTIME_LISTEN=0.0.0.0:8116
 EXPOSE 8106 8116

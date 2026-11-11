@@ -35,6 +35,7 @@ start_server() {
   copy_stored "$MESAIL_STORED_APP" "$MESAIL_APP_ROOT"
   add_function_secrets
   echo "mesail: starting $MESAIL_SERVICE (data root: ${MESAIL_DATA_ROOT:-none})"
+  /usr/local/lib/mesail/forwards.sh
   exec ty start "$MESAIL_APP_ROOT" --port "$AWS_LWA_PORT"
 }
 

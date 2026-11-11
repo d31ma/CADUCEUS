@@ -43,8 +43,8 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
   and `http://127.0.0.1:81xx` keep their host and use the router's port; the
   Keycloak host is added to `outgoing.hosts`. The copied `.env` gets the same
   address change. The Lambda image runs the same script at build time
-  (build args `ISSUER_ORIGIN`, `KEYCLOAK_URL` = `http://keycloak:8080/idp`,
-  `SERVICE_BASE` = `http://router:8080`), so every function trusts the same
+  (build args `ISSUER_ORIGIN`, `KEYCLOAK_URL`, `SERVICE_BASE`; see the Lambda
+  image section for the local forwarders), so every function trusts the same
   issuer and reaches other services through the router.
 - Mail: `mail-in` and `mail-out` share the run's blob folder
   (`YON_MAILIN_BLOBS_*`, `mailout.blobfolder`), and `mail-out` reads test DKIM
@@ -201,6 +201,17 @@ Settings (environment, or a `.env` file copied from `.env.example`):
   from a secret manager), never in the image.
 - `YON_EGRESS_ENFORCEMENT=proxy`: Lambda cannot confine processes (TACHYON
   ADR 0113).
+- **Local forwarders for private addresses.** TACHYON's outgoing request
+  guard drops private (RFC 1918) addresses when it resolves a name, and in
+  Docker `keycloak` and `router` resolve to such addresses, so a handler could
+  not reach them. A listed localhost name is the allowed way: the guard
+  connects it to 127.0.0.1. So the image starts `socat` forwarders
+  (`deploy/lambda/forwards.sh`, `MESAIL_FORWARDS`, default
+  `18180=keycloak:8080,18080=router:8080`) before `ty start`, and the build
+  rewrites the config to `http://keycloak.localhost:18180/idp` and
+  `http://router.localhost:18080` (build args `KEYCLOAK_URL`, `SERVICE_BASE`,
+  `FORWARDS`). Where Keycloak and the API have public names (AWS), build with
+  those names and an empty `FORWARDS`.
 - The start script creates `/mnt/data/<service>`, hands it to the user
   `mesail` (uid 10001) and drops root before `ty start` when it runs as root
   (Floci). In AWS, Lambda already runs as a non-root user and the EFS access

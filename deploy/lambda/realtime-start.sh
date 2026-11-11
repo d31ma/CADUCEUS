@@ -71,6 +71,7 @@ main() {
   prepare_app
   trap 'stopping=1; signal_children' TERM INT
   echo "mesail: starting realtime (data root: $MESAIL_DATA_ROOT, Yon on port $yon_port, gateway on $MESAIL_REALTIME_LISTEN)"
+  /usr/local/lib/mesail/forwards.sh
   start_yon
   start_gateway
   watch_children

@@ -3,8 +3,11 @@ type ShellService struct {
 	ProductName    string
 	Heading        string
 	Pane           string
+	Page           string
 	ThreadOpen     bool
 	DomainMenuOpen bool
+	// @Needs
+	settings *SessionSettingsService
 }
 
 // @OnStart
@@ -15,8 +18,7 @@ func (shell *ShellService) Start() {
 }
 
 func (shell *ShellService) ShowList() {
-	shell.Pane = shell.paneList()
-	shell.CloseMenus()
+	shell.ShowPage("")
 }
 
 func (shell *ShellService) CloseThread() {
@@ -32,20 +34,23 @@ func (shell *ShellService) CloseMenus() {
 	shell.DomainMenuOpen = false
 }
 
-func (shell *ShellService) PaneFor(path string) string {
-	return shell.pick(shell.onSettings(path), shell.paneMain(), shell.Pane)
+func (shell *ShellService) ShowPage(page string) {
+	shell.Page = page
+	shell.Pane = shell.pick(page == "", shell.paneList(), shell.paneMain())
+	shell.CloseMenus()
+	shell.loadSettingsWhenShown(page)
 }
 
-func (shell *ShellService) HeadingFor(path string) string {
-	return shell.pick(shell.onSettings(path), "Settings", shell.Heading)
+func (shell *ShellService) loadSettingsWhenShown(page string) {
+	if page != "settings" {
+		return
+	}
+	shell.settings.RetryTwoStep()
 }
 
-func (shell *ShellService) OnSettings(path string) bool {
-	return shell.onSettings(path)
-}
-
-func (shell *ShellService) onSettings(path string) bool {
-	return path == "/settings"
+func (shell *ShellService) Title() string {
+	titles := map[string]string{"settings": "Settings", "activity": "Activity", "search": "Search"}
+	return shell.pick(titles[shell.Page] == "", shell.Heading, titles[shell.Page])
 }
 
 func (shell *ShellService) pick(chosen bool, first string, otherwise string) string {
@@ -53,6 +58,10 @@ func (shell *ShellService) pick(chosen bool, first string, otherwise string) str
 		return first
 	}
 	return otherwise
+}
+
+func (shell *ShellService) FieldType(show bool) string {
+	return map[bool]string{true: "text", false: "password"}[show]
 }
 
 func (shell *ShellService) Flag(value bool) string {

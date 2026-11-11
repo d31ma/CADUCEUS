@@ -12,46 +12,38 @@
           <logic else>
             <h1 class="auth-title">Sign in to Mesail</h1>
           </logic>
+          <logic :if="session.adding">
+            <p class="auth-lead">You stay signed in to {sessionAccount.currentDomain}.</p>
+          </logic>
           <p class="auth-lead">Enter your work email and password.</p>
         </div>
-        <div class="auth-form">
+        <div class="flex flex-col gap-4">
           <switch :value="session.problem">
             <case :when="'rateLimited'">
-              <p class="auth-notice auth-notice-error" role="alert"><span class="auth-icon auth-icon-alert auth-icon-small" aria-hidden="true"></span>Too many tries. Wait a minute, then try again.</p>
+              <w-alert type="error">Too many tries. Wait a minute, then try again.</w-alert>
             </case>
             <case :when="'unavailable'">
-              <p class="auth-notice auth-notice-error" role="alert"><span class="auth-icon auth-icon-alert auth-icon-small" aria-hidden="true"></span>We cannot reach sign-in right now. Try again in a minute.</p>
+              <w-alert type="error">We cannot reach sign-in right now. Try again in a minute.</w-alert>
+            </case>
+            <case :when="'wrongCredentials'">
+              <w-alert type="error">The email, password or 2-step code is not right.</w-alert>
             </case>
           </switch>
-          <div class="auth-field">
-            <label class="auth-label" for="signin-email">Work email</label>
-            <input class="auth-input" id="signin-email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" aria-describedby="signin-email-error" :aria-invalid="shell.flag(session.problem == 'invalidEmail')" :value="session.email" on:input="session.email = $event.target.value">
+          <form method="dialog" class="flex flex-col gap-4" aria-label="Sign in" on:submit="session.signInWith($event.target.elements.email.value, $event.target.elements.password.value, $event.target.elements.code.value, $event.target.elements.remember.checked)">
             <logic :if="session.problem == 'invalidEmail'">
-              <p class="auth-error-text" id="signin-email-error" role="alert"><span class="auth-icon auth-icon-alert auth-icon-small" aria-hidden="true"></span>Enter your full work email, like ana@example.com.</p>
+              <w-text-field label="Work email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" error="Enter your full work email, like ana@example.com." :value="session.shownEmail"></w-text-field>
             </logic>
-          </div>
-          <div class="auth-field">
-            <label class="auth-label" for="signin-password">Password</label>
-            <logic :if="session.showPassword">
-              <input class="auth-input" id="signin-password" name="password" type="text" autocomplete="current-password" aria-describedby="signin-credentials-error" :aria-invalid="shell.flag(session.problem == 'wrongCredentials')" :value="session.password" on:input="session.password = $event.target.value">
+            <logic :if="session.problem != 'invalidEmail'">
+              <w-text-field label="Work email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" :value="session.shownEmail"></w-text-field>
             </logic>
-            <logic else>
-              <input class="auth-input" id="signin-password" name="password" type="password" autocomplete="current-password" aria-describedby="signin-credentials-error" :aria-invalid="shell.flag(session.problem == 'wrongCredentials')" :value="session.password" on:input="session.password = $event.target.value">
-            </logic>
-            <button type="button" class="auth-button auth-button-ghost" aria-controls="signin-password" :aria-pressed="shell.flag(session.showPassword)" on:click="session.togglePassword()">Show password</button>
-          </div>
-          <div class="auth-field">
-            <label class="auth-label" for="signin-code">2-step code</label>
-            <input class="auth-input" id="signin-code" name="one-time-code" type="text" inputmode="numeric" autocomplete="one-time-code" aria-describedby="signin-code-help signin-credentials-error" :aria-invalid="shell.flag(session.problem == 'wrongCredentials')" :value="session.oneTimeCode" on:input="session.oneTimeCode = $event.target.value">
-            <p class="auth-help" id="signin-code-help">Only if your account uses one.</p>
-            <logic :if="session.problem == 'wrongCredentials'">
-              <p class="auth-error-text" id="signin-credentials-error" role="alert"><span class="auth-icon auth-icon-alert auth-icon-small" aria-hidden="true"></span>The email, password or 2-step code is not right.</p>
-            </logic>
-          </div>
-          <label class="auth-check"><input type="checkbox" name="remember" :checked="session.remember" on:change="session.remember = $event.target.checked">Remember my email on this device</label>
-          <button type="button" class="auth-button auth-button-primary auth-button-large auth-button-block" on:click="session.signIn()">Sign in</button>
+            <w-text-field label="Password" name="password" autocomplete="current-password" :type="shell.fieldType(session.showPassword)" :value="session.shownPassword"></w-text-field>
+            <w-checkbox label="Show password" name="show" :checked="session.showPassword" on:change="session.showPasswordWith($event.target.checked, $event.target.form.email.value, $event.target.form.password.value)"></w-checkbox>
+            <w-text-field label="2-step code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one."></w-text-field>
+            <w-checkbox label="Remember my email on this device" name="remember" :checked="session.remember"></w-checkbox>
+            <w-btn variant="flat" size="large" block>Sign in</w-btn>
+          </form>
           <logic :if="session.adding">
-            <button type="button" class="auth-button auth-button-ghost auth-button-large auth-button-block" on:click="session.cancelAdd()">Cancel</button>
+            <w-btn variant="text" size="large" block on:click="session.cancelAdd()">Cancel</w-btn>
           </logic>
         </div>
         <logic :if="session.recentDomains.length > 0">
@@ -65,7 +57,7 @@
                     <span class="auth-domain-row-main"><span class="auth-domain-row-name">{recent.domainId}</span><span class="auth-domain-row-sub">{recent.email}</span></span>
                     <span class="auth-icon auth-icon-chevron-right auth-domain-row-go" aria-hidden="true"></span>
                   </button>
-                  <button type="button" class="auth-icon-button" on:click="session.forget(recent.domainId)"><span class="auth-icon auth-icon-close auth-icon-small" aria-hidden="true"></span><span class="auth-visually-hidden">Remove {recent.domainId} from this device</span></button>
+                  <w-icon-btn icon="close" size="small" :aria-label="session.forgetLabel(recent.domainId)" on:click="session.forget(recent.domainId)"></w-icon-btn>
                 </li>
               </loop>
             </ul>
@@ -77,7 +69,7 @@
     </logic>
     <logic else>
       <div class="auth-card auth-card-center" role="status" aria-live="polite">
-        <span class="auth-spinner auth-spinner-large" aria-hidden="true"></span>
+        <w-progress-circular indeterminate aria-hidden="true"></w-progress-circular>
         <h1 class="auth-title">Loading Mesail…</h1>
       </div>
     </logic>

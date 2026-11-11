@@ -1,3 +1,6 @@
+@layer duvay, theme, base, components, utilities;
+@import "../vendor/duvay/duvay-mesail.css" layer(duvay);
+
 :root {
   color-scheme: light;
 
@@ -315,52 +318,46 @@ html[w-theme="high-contrast"] {
   --ms-msg-hover: #eef2f1;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-body {
-  margin: 0;
-  font-family: var(--w-font-family);
-  font-size: var(--ms-text-body);
-  line-height: var(--ms-line-body);
-  background-color: var(--w-surface);
-  color: var(--w-text);
-}
-
-h1,
-h2,
-h3,
-p {
-  margin: 0;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
-}
-
-a {
-  color: var(--w-accent);
-}
-
-@media (prefers-reduced-motion: reduce) {
+@layer base {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms;
-    animation-iteration-count: 1;
-    transition-duration: 0.01ms;
-    scroll-behavior: auto;
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--w-font-family);
+    font-size: var(--ms-text-body);
+    line-height: var(--ms-line-body);
+    background-color: var(--w-surface);
+    color: var(--w-text);
+  }
+
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
+
+  a {
+    color: var(--w-accent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms;
+      animation-iteration-count: 1;
+      transition-duration: 0.01ms;
+      scroll-behavior: auto;
+    }
   }
 }

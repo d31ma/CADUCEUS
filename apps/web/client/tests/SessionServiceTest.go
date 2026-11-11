@@ -27,7 +27,7 @@ func (test *SessionServiceTest) signedIn() *SessionService {
 	session.Email = "ana@example.com"
 	session.Password = "right"
 	session.Remember = true
-	session.SignIn()
+	session.signIn()
 	return session
 }
 
@@ -36,7 +36,7 @@ func (test *SessionServiceTest) signedInTwice() *SessionService {
 	session.AddDomain()
 	session.Email = "ana@example.org"
 	session.Password = "right"
-	session.SignIn()
+	session.signIn()
 	return session
 }
 
@@ -50,14 +50,6 @@ func (test *SessionServiceTest) TestStartWithoutSessionsShowsTheForm() {
 	session := test.started()
 	Assert.Equals("signIn", session.Step)
 	Assert.IsTrue(!session.Remember)
-}
-
-func (test *SessionServiceTest) TestTogglePasswordShowsAndHidesIt() {
-	session := test.started()
-	session.TogglePassword()
-	Assert.IsTrue(session.ShowPassword)
-	session.TogglePassword()
-	Assert.IsTrue(!session.ShowPassword)
 }
 
 func (test *SessionServiceTest) TestStartRestoresStoredSessions() {
@@ -82,7 +74,7 @@ func (test *SessionServiceTest) TestSignInRefusesAnIncompleteEmail() {
 	session := test.started()
 	session.Email = "ana"
 	session.Password = "right"
-	session.SignIn()
+	session.signIn()
 	Assert.Equals("signIn", session.Step)
 	Assert.Equals("invalidEmail", session.Problem)
 }
@@ -99,7 +91,7 @@ func (test *SessionServiceTest) TestSignInClearsThePasswordAndCode() {
 	session.Email = "ana@example.com"
 	session.Password = "right"
 	session.OneTimeCode = "123456"
-	session.SignIn()
+	session.signIn()
 	Assert.Equals("", session.Password)
 	Assert.Equals("", session.OneTimeCode)
 }
@@ -113,7 +105,7 @@ func (test *SessionServiceTest) TestSignInWithoutRememberKeepsNothing() {
 	session := test.started()
 	session.Email = "ana@example.com"
 	session.Password = "right"
-	session.SignIn()
+	session.signIn()
 	Assert.Equals(0, len(session.RecentDomains))
 }
 
@@ -122,7 +114,7 @@ func (test *SessionServiceTest) TestSignInRefusedShowsAProblem() {
 	session.Email = "ana@example.com"
 	session.Password = "wrong"
 	session.Remember = true
-	session.SignIn()
+	session.signIn()
 	Assert.Equals("signIn", session.Step)
 	Assert.Equals("unavailable", session.Problem)
 	Assert.Equals("", session.Password)
@@ -133,6 +125,7 @@ func (test *SessionServiceTest) TestUseRecentFillsTheEmail() {
 	session := test.started()
 	session.UseRecent(SessionRecentDomain{DomainId: "example.org", Email: "ana@example.org"})
 	Assert.Equals("ana@example.org", session.Email)
+	Assert.Equals("ana@example.org", session.ShownEmail)
 }
 
 func (test *SessionServiceTest) TestForgetRemovesOneRecentDomain() {
@@ -255,4 +248,30 @@ func (test *SessionServiceTest) TestRenewEndsASessionThatCannotRefresh() {
 	session.tokens.keys["example.com"] = "ended"
 	session.Renew()
 	Assert.Equals("expired", session.Step)
+}
+
+func (test *SessionServiceTest) TestForgetLabelNamesTheDomain() {
+	Assert.Equals("Remove example.org from this device", test.started().ForgetLabel("example.org"))
+}
+
+func (test *SessionServiceTest) TestSignInWithTakesTheFormValues() {
+	session := test.started()
+	session.SignInWith("ana@example.com", "right", "", true)
+	Assert.Equals("signedIn", session.Step)
+	Assert.Equals(1, len(session.RecentDomains))
+}
+
+func (test *SessionServiceTest) TestShowPasswordWithKeepsWhatWasTyped() {
+	session := test.started()
+	session.ShowPasswordWith(true, "ana@example.com", "secret")
+	Assert.IsTrue(session.ShowPassword)
+	Assert.Equals("ana@example.com", session.ShownEmail)
+	Assert.Equals("secret", session.ShownPassword)
+}
+
+func (test *SessionServiceTest) TestSignInForgetsTheShownPassword() {
+	session := test.started()
+	session.ShowPasswordWith(true, "ana@example.com", "right")
+	session.SignInWith("ana@example.com", "right", "", false)
+	Assert.Equals("", session.ShownPassword)
 }

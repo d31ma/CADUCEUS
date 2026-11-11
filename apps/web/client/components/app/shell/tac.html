@@ -1,7 +1,7 @@
 <a class="skip-link" href="#timeline">Skip to messages</a>
 <a class="skip-link" href="#composer-input">Skip to composer</a>
 
-<div class="app" :data-pane="shell.paneFor(page.path)">
+<div class="app" :data-pane="shell.pane">
   <div class="rail-area">
     <app-rail />
   </div>
@@ -24,14 +24,25 @@
       <button type="button" class="icon-button back-button" aria-label="Back to conversations" on:click="shell.showList()">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" /></svg>
       </button>
-      <h1 class="header-title" id="conversation-title">{shell.headingFor(page.path)}</h1>
+      <h1 class="header-title" id="conversation-title">{shell.title()}</h1>
     </header>
-    <logic :if="shell.onSettings(page.path)">
-      <div class="main-body">
-        <app-settings />
-      </div>
-    </logic>
-    <logic else>
+    <switch :value="shell.page">
+      <case :when="'settings'">
+        <div class="main-body">
+          <app-settings />
+        </div>
+      </case>
+      <case :when="'activity'">
+        <div class="main-body">
+          <notifications-list />
+        </div>
+      </case>
+      <case :when="'search'">
+        <div class="main-body">
+          <search-panel />
+        </div>
+      </case>
+      <case default>
       <switch :value="shell.pane">
         <case :when="'list'">
           <div class="main-body main-empty">
@@ -47,7 +58,8 @@
           </div>
         </case>
       </switch>
-    </logic>
+      </case>
+    </switch>
   </main>
 
   <logic :if="shell.threadOpen">
@@ -63,7 +75,6 @@
       </header>
       <div class="thread-body">
         <thread-pane />
-        <notifications-list />
       </div>
     </aside>
   </logic>

@@ -1,18 +1,6 @@
-<nav class="bottom-nav" aria-label="Main">
-  <a class="bottom-nav-item" href="/" aria-current="page">
-    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5h16v11H9l-5 4z" /></svg>
-    <span>Home</span>
-  </a>
-  <a class="bottom-nav-item" href="/activity">
-    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 21h4" /></svg>
-    <span>Activity</span>
-  </a>
-  <a class="bottom-nav-item" href="/search">
-    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM16 16l4 4" /></svg>
-    <span>Search</span>
-  </a>
-  <a class="bottom-nav-item" href="/settings">
-    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM4 20a8 8 0 0 1 16 0" /></svg>
-    <span>You</span>
-  </a>
-</nav>
+<w-bottom-navigation class="bottom-nav" mandatory :value="shell.page" on:change="shell.showPage($event.detail.value)">
+  <w-bottom-nav-item value="" label="Home" icon="chat"></w-bottom-nav-item>
+  <w-bottom-nav-item value="activity" label="Activity" icon="bell"></w-bottom-nav-item>
+  <w-bottom-nav-item value="search" label="Search" icon="search"></w-bottom-nav-item>
+  <w-bottom-nav-item value="settings" label="You" icon="person"></w-bottom-nav-item>
+</w-bottom-navigation>

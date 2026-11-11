@@ -1,10 +1,14 @@
-// @Test(ShellTestSetup, {"partition":"tests"})
+// @Test(SessionTestSetup, {"partition":"tests"})
 type ShellServiceTest struct {
 	behaviors *BehaviorContext
 }
 
 func (test *ShellServiceTest) shell() *ShellService {
-	shell := &ShellService{}
+	BrowserFakes{}.Answer("clock", "now", 1000)
+	client := NewIdentityClientWith(test.behaviors)
+	session := &SessionService{realm: &SessionRealmService{}, tokens: &SessionTokenService{identity: client}, accounts: &SessionAccountService{}, problems: &SessionProblemService{}}
+	session.SignInWith("ana@example.com", "right", "", false)
+	shell := &ShellService{settings: &SessionSettingsService{session: session, identity: client, problems: &SessionProblemService{}}}
 	shell.Start()
 	return shell
 }
@@ -60,23 +64,34 @@ func (test *ShellServiceTest) TestFlagWritesFalseForScreenReaders() {
 	Assert.Equals("false", test.shell().Flag(false))
 }
 
-func (test *ShellServiceTest) TestPaneForSettingsShowsTheMainPane() {
-	Assert.Equals("main", test.shell().PaneFor("/settings"))
+func (test *ShellServiceTest) TestFieldTypeShowsThePassword() {
+	Assert.Equals("text", test.shell().FieldType(true))
 }
 
-func (test *ShellServiceTest) TestPaneForOtherPagesKeepsThePane() {
-	Assert.Equals("list", test.shell().PaneFor("/"))
+func (test *ShellServiceTest) TestFieldTypeHidesThePassword() {
+	Assert.Equals("password", test.shell().FieldType(false))
 }
 
-func (test *ShellServiceTest) TestHeadingForSettingsNamesSettings() {
-	Assert.Equals("Settings", test.shell().HeadingFor("/settings"))
+func (test *ShellServiceTest) TestShowPageOpensSettingsInTheMainPane() {
+	shell := test.shell()
+	shell.ShowPage("settings")
+	Assert.Equals("on", shell.settings.TwoStep)
+	Assert.Equals("settings", shell.Page)
+	Assert.Equals("main", shell.Pane)
+	Assert.Equals("Settings", shell.Title())
 }
 
-func (test *ShellServiceTest) TestHeadingForOtherPagesKeepsTheHeading() {
-	Assert.Equals("Select a conversation", test.shell().HeadingFor("/"))
+func (test *ShellServiceTest) TestShowPageHomeShowsTheList() {
+	shell := test.shell()
+	shell.ShowPage("activity")
+	shell.ShowPage("")
+	Assert.Equals("list", shell.Pane)
+	Assert.Equals("Select a conversation", shell.Title())
 }
 
-func (test *ShellServiceTest) TestOnSettingsKnowsTheSettingsPage() {
-	Assert.IsTrue(test.shell().OnSettings("/settings"))
-	Assert.IsTrue(!test.shell().OnSettings("/"))
+func (test *ShellServiceTest) TestShowListLeavesTheOtherPages() {
+	shell := test.shell()
+	shell.ShowPage("settings")
+	shell.ShowList()
+	Assert.Equals("", shell.Page)
 }

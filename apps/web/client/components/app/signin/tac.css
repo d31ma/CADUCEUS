@@ -147,3 +147,21 @@
 @media (prefers-reduced-motion: reduce) {
   .auth *, .auth *::before, .auth *::after { animation: none; transition: none; }
 }
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .block {
+    display: block;
+  }
+  .flex {
+    display: flex;
+  }
+  .flex-col {
+    flex-direction: column;
+  }
+  .gap-4 {
+    gap: calc(var(--spacing, 0.25rem) * 4);
+  }
+}
+/* @tachyon-generated-tailwind:end */

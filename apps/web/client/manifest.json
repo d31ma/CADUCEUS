@@ -4,9 +4,31 @@
   "start_url": "/",
   "display": "standalone",
   "tac": {
-    "styles": ["/shared/styles/app.css"],
+    "styles": [
+      "/shared/styles/app.css"
+    ],
     "styleSources": {
-      "/shared/styles/app.css": {"kind": "foundation"}
+      "/shared/styles/app.css": {
+        "kind": "foundation"
+      },
+      "/shared/vendor/duvay/duvay-mesail.css": {
+        "kind": "vendor",
+        "package": "@d31ma/duvay",
+        "version": "26.35.01-1",
+        "license": "MIT",
+        "sha256": "4d44c7a2dc4b4401af2fcf2bff8a73f59bed25ae80aa993e0312c07ce00790c7"
+      }
+    },
+    "scripts": [
+      "/shared/vendor/duvay/duvay-mesail.js"
+    ],
+    "scriptSources": {
+      "/shared/vendor/duvay/duvay-mesail.js": {
+        "package": "@d31ma/duvay",
+        "version": "26.35.01-1",
+        "license": "MIT",
+        "sha256": "62e97288962ba9bf9143b3723f06d8fab7dbdfd4359ea27a66746dba0a679896"
+      }
     }
   }
 }

@@ -1,9 +1,3 @@
-.settings-card {
-  border: 1px solid var(--w-border);
-  border-radius: var(--ms-radius-card, 0.5rem);
-  background: var(--w-surface);
-}
-
 .settings-heading {
   margin: 0;
   font-size: var(--ms-text-title, 1.0625rem);
@@ -24,9 +18,11 @@
   color: var(--w-text-subtle);
 }
 
-.settings-qr {
+.settings-qr-tile {
   border: 1px solid var(--w-border);
-  border-radius: var(--w-radius-md);
+  border-radius: var(--ms-radius-tile, 0.75rem);
+  background: var(--w-surface-bright, var(--w-surface));
+  color-scheme: light;
 }
 
 .settings-secret {
@@ -35,3 +31,124 @@
   letter-spacing: 0.1em;
   color: var(--w-text);
 }
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .col-span-full {
+    grid-column: 1 / -1;
+  }
+  .mx-auto {
+    margin-inline: auto;
+  }
+  .block {
+    display: block;
+  }
+  .contents {
+    display: contents;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .hidden {
+    display: none;
+  }
+  .h-48 {
+    height: calc(var(--spacing, 0.25rem) * 48);
+  }
+  .w-40 {
+    width: calc(var(--spacing, 0.25rem) * 40);
+  }
+  .w-48 {
+    width: calc(var(--spacing, 0.25rem) * 48);
+  }
+  .w-full {
+    width: 100%;
+  }
+  .max-w-\[50rem\] {
+    max-width: 50rem;
+  }
+  .min-w-0 {
+    min-width: 0px;
+  }
+  .grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  .flex-col {
+    flex-direction: column;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .gap-1 {
+    gap: var(--spacing, 0.25rem);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .gap-3 {
+    gap: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .gap-4 {
+    gap: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .gap-6 {
+    gap: calc(var(--spacing, 0.25rem) * 6);
+  }
+  .self-center {
+    align-self: center;
+  }
+  .p-3 {
+    padding: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .p-4 {
+    padding: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .py-6 {
+    padding-block: calc(var(--spacing, 0.25rem) * 6);
+  }
+  .break-all {
+    word-break: break-all;
+  }
+  @media (width >= 600px) {
+    .sm\:col-start-2 {
+      grid-column-start: 2;
+    }
+    .sm\:col-start-3 {
+      grid-column-start: 3;
+    }
+    .sm\:row-start-2 {
+      grid-row-start: 2;
+    }
+    .sm\:grid-cols-\[1fr_auto_auto\] {
+      grid-template-columns: 1fr auto auto;
+    }
+    .sm\:flex-row {
+      flex-direction: row;
+    }
+    .sm\:items-center {
+      align-items: center;
+    }
+    .sm\:justify-between {
+      justify-content: space-between;
+    }
+  }
+  @media (width >= 960px) {
+    .md\:px-6 {
+      padding-inline: calc(var(--spacing, 0.25rem) * 6);
+    }
+    .md\:px-8 {
+      padding-inline: calc(var(--spacing, 0.25rem) * 8);
+    }
+  }
+}
+/* @tachyon-generated-tailwind:end */

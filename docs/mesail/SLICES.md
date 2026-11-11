@@ -92,8 +92,9 @@ wave run at the same time.
    16-character hex key (DOMAIN.md, "The domain key"). Add `collections` to
    your `server/packages/kit.list`.
 11. **The domain is the tenant.** Every store method takes the `domainId`
-   from the verified caller (`oidc.Caller.DomainId`, the Keycloak realm
-   name, which is the mail domain). Chat data never crosses a domain. Email
+   from the verified caller (`oidc.Caller.DomainId`: the `domain` claim of
+   the Mesail access token since ADR 0005; before Wave 3's L5, the Keycloak
+   realm name). Chat data never crosses a domain. Email
    crosses domains freely. See SPEC section 2 and DOMAIN.md invariant 1.
 12. **FYLO roots for dev and test.** On this Mac, a test FYLO root lives in
     the shared APFS disk image on ATLAS, in your own folder:
@@ -210,6 +211,8 @@ C1, not before each slice merge.
 ## Wave 1 (start now, all in parallel)
 
 ### I1. Identity and token check
+> Changed by Wave 3 (ADR 0005): one Keycloak realm, `mesail`; see L1, L2 and L4.
+
 - **Owns:** `apps/identity/**` (except the copies of other slices' kit
   packages), `kit/oidc/**`, and every copy `apps/*/server/packages/oidc/**`.
 - **Builds:** a real `oidc.TokenVerifier` (JWKS fetch and cache, RS256 and
@@ -269,6 +272,8 @@ C1, not before each slice merge.
   outbox to another app's `/events` route exactly once per `eventId`.
 
 ### D1. Directory
+> Changed by Wave 3 (ADR 0005): one Keycloak realm, `mesail`; see L3.
+
 - **Owns:** `apps/directory/**` (except kit copies), `kit/recipients/**`
   and its copies.
 - **Builds:** domains (an `Operator` adds one: Mesail creates its
@@ -342,6 +347,8 @@ C1, not before each slice merge.
 - **Blackbox:** `Search_test.go`.
 
 ### F1. Web shell and sign-in
+> Changed by Wave 3 (ADR 0005): one Keycloak realm, `mesail`; see L6.
+
 - **Owns:** `apps/web/client/manifest.json`, `apps/web/client/pages/**`,
   `apps/web/client/components/app/**`, `apps/web/client/shared/**`,
   `apps/web/client/services/Shell*.go`, `apps/web/client/services/Session*.go`,
@@ -368,6 +375,8 @@ C1, not before each slice merge.
 - **Depends on:** I1.
 
 ### F5. Admin app
+> Changed by Wave 3 (ADR 0005): one Keycloak realm, `mesail`; see L7.
+
 - **Owns:** `apps/web-admin/**` (it runs F1's `scripts/vendor/duvay.sh
   --app web-admin` for its own vendor copy).
 - **Builds:** domains (with DNS record display and verify, for operators),
@@ -375,6 +384,8 @@ C1, not before each slice merge.
 - **Depends on:** D1, C2 contracts.
 
 ### P1. Lambda images and the Floci stack
+> Changed by Wave 3 (ADR 0005): one Keycloak realm, `mesail`; see L5.
+
 - **Owns:** `Dockerfile` except the Keycloak stages (owned by
   `mesail-keycloak`), `docker-compose.yml`, `.dockerignore`, `.env.example`,
   new `deploy/lambda/**`, `deploy/floci/**`, `deploy/router/**`,
@@ -510,6 +521,189 @@ C1, not before each slice merge.
   notification list and push opt-in, presence dots and Do not disturb.
 - **Depends on:** F1, M3, S1, N1, R1.
 
+## Wave 3: one login (ADR 0005)
+
+The owner's requirement of 2026-11-11: one login per person, with the
+email prefix as the username in every domain (SPEC AC-ID-1 to AC-ID-14,
+S12, S14; ADR 0005; CONTRACTS "identity" and "directory"). It replaces the
+realm-per-domain model of I1, D1, F1, F5, P1 and `mesail-keycloak`. Where
+an earlier slice text in this file says "realm of the domain",
+"`mesail-operators`" or "creates its Keycloak realm", this wave wins.
+
+### What changes where
+
+| Area | Change |
+| --- | --- |
+| Keycloak (`deploy/keycloak/**`) | One realm `mesail` instead of one per domain plus `mesail-operators`; username = prefix; clients `mesail-identity`, `mesail-account`, `mesail-directory` (in the realm `mesail`); no `mesail-service` client; realm role `mesail-operator` only; user attribute `mesail.mustChangePassword` mapped into the `mesail-identity` token; dev users by prefix. `domain-realm.json` and `mesail-operators-realm.json` are deleted. |
+| `kit/oidc` | Mesail token mode: exact issuer, `domain` claim -> `Caller.DomainId`, `oidc.InstallWide`; a token signer (ES256) and key set document for `identity`; `TokenRequest.Domain` for tests; `ServiceTokens` calls `identity`'s service token route; the session code signs in to the one realm by username. `Realm` and `IssuerPattern` are removed in L5. |
+| `kit/addresses` (new) | Prefix rules, login parsing (prefix or address), address normalization, the role names (SPEC AC-ID-11). Used by identity, directory, mail-in, messaging. |
+| `apps/identity` | Sign-in by prefix or address, the person lookup, Mesail token issuing, `GET /jwks`, `POST /service-token`, `POST /session/domain`, membership check on refresh, `mustChangePassword`, account routes in the realm `mesail`. |
+| `apps/directory` | `people` and `local-parts`, member admin routes, person routes, the AC-ID-13 check, default domain, Keycloak users through `mesail-directory`; no realm creation (`packages/keycloak` realm template code and `RealmService` go away); prefix check on aliases and channel addresses; `member.upserted` with `removed`. |
+| Every Yon app | `application.json` `oidc` block (issuer, `jwks`, `serviceTokens`; no `keycloak`), the kit copy of `oidc`, test token setups (`Domain` field), install-wide calls with `oidc.InstallWide`. |
+| `kit/realtime`, `kit/channels`, `kit/mailin`, `kit/mailout` | `OidcTokenChecker` reads the `domain` claim; `"mesail-operators"` becomes `oidc.InstallWide`. |
+| P1 (`deploy/floci/**`, `deploy/lambda/**`, `deploy/router/**`, `scripts/floci/**`, `scripts/native/**`, `.env.example`) | `stack.json` `keycloak.domains` and `testUsers` become people with memberships; the signing key and the service secret in `generatedSecrets`; `rewrite-config.sh` rewrites `issuer`, `jwks` and `serviceTokens` to `identity`'s URL; `tokens.sh` gets tokens from `identity`'s sign-in, not from Keycloak; `keycloak.sh` checks the realm `mesail`; dev seed adds memberships. |
+| `apps/web` | Sign-in field "Username or email address"; no domain guessing (`SessionRealmService` goes away); one `Session` per tab; domain switcher from `Session.domains`; `mustChangePassword` screen; default domain in settings. |
+| `apps/web-admin` | Operator signs in with the same form; members page (add by prefix, existing-person notice, admin flag, remove, last admin); people page for Operators (find, rename, disable, reset password, remove 2-step code, delete); name the first admin on the domain page. |
+| `docs/mesail/ux/**` | Screens for the sign-in field, the switcher, the members and people pages. |
+| `tests/blackbox`, `tests/responsive` | New tests for AC-ID-1 to AC-ID-14; fixtures by prefix; no realm names. |
+
+### LU. UX for one login (`mesail-ux`)
+- **Owns:** `docs/mesail/ux/**`.
+- **Builds:** the sign-in screen with one "Username or email address"
+  field and the `403 not_a_member` / `no_domain` messages; the domain
+  switcher fed by `Session.domains` (per tab, admin badge); the forced
+  password change screen; the default domain setting; the admin members
+  page (add by prefix with the "existing person" notice, admin flag,
+  remove, `409 last_admin`) and the Operator people page. Every screen at
+  every width (rule 15).
+- **Depends on:** nothing; starts at once.
+- **Done when:** L6 and L7 can build from it.
+
+### L0. Blackbox tests for one login (architecture, `mesail-arch`)
+- **Owns:** `tests/blackbox/**`.
+- **Builds:** throwaway contract tests for SPEC AC-ID-1 to AC-ID-14 (sign
+  in with `ana`, `ANA` and `ana@example.org`; switch; refresh after
+  removal; prefix reservation against aliases and channel addresses;
+  last admin; AC-ID-13; install-wide `*`; the key set and the service
+  token route), and fixtures by prefix (ana: admin of `example.com` and
+  member of `example.org`; bo: `example.com`; eve: `example.org`; carol:
+  `partner.test`; operator: no domain).
+- **Depends on:** nothing; starts at once. The tests fail until L5 lands.
+- **Done when:** `go vet -tags blackbox ./...` passes and every new
+  criterion has a test. Landed: `SignIn_test.go`, `DomainSwitch_test.go`,
+  `Tokens_test.go`, `Members_test.go`, `People_test.go` (helpers
+  `Sessions.go`, `People.go`; fixtures in `tests/blackbox/README.md`).
+
+### L1. Login kit (new session `mesail-login-kit`, or I1's successor)
+- **Owns:** `kit/oidc/**`, `kit/addresses/**` (new). Not the app copies:
+  L4 and L5 sync them.
+- **Builds:** `kit/addresses` (SPEC AC-ID-11: `Username`, `Login` parse
+  into username and optional domain, `Address` normalize and compare, the
+  role names). In `kit/oidc`: the Mesail token mode of `Gate` and
+  `TokenVerifier` (exact issuer, `domain` claim, `azp` allowlist
+  `mesail-web`/`mesail-service`, `InstallWide`), chosen when `oidc.issuer`
+  has no `{realm}`, so apps keep working in the old mode until L5; a
+  `TokenSigner` (ES256, current and previous key, `kid`) and the key set
+  document for `identity`; `TokenRequest.Domain` in `SigningRealm`;
+  `ServiceTokens` against `oidc.serviceTokens` with the per-domain cache;
+  the session and account code for the one realm (username, not address).
+- **Depends on:** nothing; starts at once.
+- **Done when:** both modes pass their tests at 100% of the new code, and
+  the CRAP and cohesion gates pass.
+
+### L2. One Keycloak realm (`mesail-keycloak`)
+- **Owns:** `deploy/keycloak/**`, the Keycloak stages of `Dockerfile`.
+- **Builds:** `deploy/keycloak/realm/mesail-realm.json` per the "What
+  changes where" table: brute-force detection on, `loginWithEmailAllowed`
+  false, `editUsernameAllowed` false, `duplicateEmailsAllowed` true,
+  registration off, 60 s access tokens, conditional OTP on the direct
+  grant flow, the three clients with their service-account roles, the
+  attribute mapper; dev users `ana`, `bo`, `eve`, `carol`, `operator`
+  (role `mesail-operator`); the OTP provider endpoint works in the realm
+  `mesail`; `test/oidc_check.py` checks the new realm. Delete
+  `domain-realm.json`, `mesail-operators-realm.json` and the per-realm dev
+  user files.
+- **Depends on:** nothing; starts at once.
+- **Done when:** the image starts on SQLite with the one realm, and
+  `oidc_check.py` passes direct grant, OTP, attribute mapping and the
+  three service accounts.
+
+### L3. Directory: people and members (D1's successor)
+- **Owns:** `apps/directory/**` (except kit copies), `kit/recipients/**`.
+- **Builds:** CONTRACTS "directory" members and people routes; the
+  `people` and `local-parts` collections (DOMAIN.md) with the write order;
+  the AC-ID-13 check; the prefix check on aliases and channel addresses;
+  Keycloak user create, disable, delete, password reset, OTP removal and
+  `mesail.mustChangePassword` through `mesail-directory` (a fake Keycloak
+  in tests); `GET /people/{personId}` for `identity`; the default domain
+  route; `member.upserted` with `removed` into each affected domain;
+  domain removal drops memberships. Removes the realm creation
+  (`packages/keycloak` realm code, `RealmService`, the realm secrets).
+  Seeds a dev person store from P1's people list.
+- **Depends on:** L1 (`kit/addresses`, `InstallWide`); fakes until L2.
+- **Blackbox:** the L0 member and prefix tests.
+- **Done when:** the app bundles, starts and answers `GET /health` 200,
+  and its routes pass against the L2 image.
+
+### L4. Identity: one sign-in, Mesail tokens (I1's successor)
+- **Owns:** `apps/identity/**` (except other slices' kit copies).
+- **Builds:** CONTRACTS "identity": sign-in by prefix or address, the
+  person lookup, the `403` answers, the Mesail token with the claims
+  listed there, `GET /jwks`, `POST /service-token`, `POST
+  /session/domain`, the membership check on refresh, `mustChangePassword`,
+  the account routes in the realm `mesail`; `names.words` for the JWK
+  names. Settings `token.issuer` and the env names in CONTRACTS.
+- **Depends on:** L1; L3's `GET /people/{personId}` (fake until it lands);
+  L2 for the live check.
+- **Blackbox:** the L0 sign-in, switch, refresh, key set and service
+  token tests.
+- **Done when:** the app bundles, starts and answers `GET /health` 200,
+  and a sign-in against the L2 image returns a Mesail token that L1's
+  `Gate` accepts.
+
+### L5. Switch every app to Mesail tokens (P1)
+- **Owns, for one commit:** the `oidc` block of every
+  `apps/*/server/application.json`; every `apps/*/server/packages/oidc/**`
+  copy (through `scripts/kit-sync.sh`); the token setup files of each
+  app's tests (`*TestSetup.go`, `TokenIdentityProviderTest.go`,
+  `CallerServiceTest.go` and the others that build tokens); the
+  install-wide call sites (`kit/realtime/OidcTokenChecker.go`,
+  `SweepTrigger.go`, `Sweeper.go`, `kit/channels/ScheduledSweep.go`,
+  `kit/mailin/Directory.go`, `kit/mailout/Transport.go`,
+  `apps/directory/server/workers/outbox-relay.go`,
+  `apps/directory/server/services/CallerService.go`,
+  `apps/notify/server/services/CallerService.go`,
+  `apps/notify/server/workers/notify-jobs.go`,
+  `apps/mail-out/server/workers/deliver.go`,
+  `apps/messaging/server/controllers/OutboxController.go` and their
+  tests); and, as always, P1's own files.
+- **Builds:** the switch of the whole install in one fast-forward: every
+  app in the Mesail token mode, `"mesail-operators"` replaced by
+  `oidc.InstallWide`, the old mode removed from `kit/oidc` (`Realm`,
+  `IssuerPattern`, the `{realm}` settings), the P1 changes in the "What
+  changes where" table.
+- **Depends on:** L1, L2, L3, L4 on `develop`. The coordinator asks the
+  owners of the apps listed above to merge nothing during the switch
+  (about one working session).
+- **Blackbox:** all of L0.
+- **Done when:** `scripts/gates.sh` passes for every app, the native stack
+  and the Floci stack start, and the L0 tests pass against the running
+  stack.
+
+### L6. Web: sign-in and domain switcher (F1's successor)
+- **Owns:** F1's patterns in `apps/web/client/**` (`Session*`, `Shell*`,
+  `SignIn*`, `DomainSwitch*`, `Settings*`), `SessionRealmService` (deleted).
+- **Builds:** the LU screens: one sign-in field, the `403` messages, the
+  per-tab session with `Session.domains`, the switcher (`POST
+  /session/domain`, then a new realtime connection), the forced password
+  change, the default domain setting (`PUT /directory/me/default-domain`).
+- **Depends on:** LU and the contracts; works with fakes until L4 lands.
+- **Also owns:** `tests/responsive/AppProfile.go` (`WebProfile`): the
+  stored session and fake tokens follow the new per-tab session.
+- **Done when:** gates pass, the responsive test passes at 320 to 2560 px,
+  and a person switches domains in the running stack after L5.
+
+### L7. Admin app: members and people (F5's successor)
+- **Owns:** `apps/web-admin/**`.
+- **Builds:** the LU admin screens: Operator sign-in with the same form
+  (no `mesail-operators` realm), the members page, the people page, naming
+  the first admin on the domain page.
+- **Depends on:** LU and the contracts; works with fakes until L3 lands.
+- **Also owns:** `AdminProfile` in `tests/responsive/AppProfile.go` (no
+  `mesail-operators` realm; L6 and L7 merge it one after the other).
+- **Done when:** gates pass, the responsive test passes, and S14 works in
+  the running stack after L5.
+
+### Order
+
+1. At once, in parallel: **LU**, **L0**, **L1**, **L2**.
+2. After L1: **L3** and **L4** in parallel; **L6** and **L7** may start on
+   the contracts with fakes (after LU).
+3. After L1 to L4 are on `develop`: **L5**, alone, with a merge pause for
+   the apps it touches.
+4. After L5: L6 and L7 finish their live checks; L0's tests pass against
+   the stack.
+
 ## Later (after the first release)
 
 - **X1** SMTP submission for third-party mail clients (app passwords or
@@ -526,7 +720,7 @@ C1, not before each slice merge.
 | Path | Owner |
 | --- | --- |
 | `docs/**` (except `docs/mesail/ux/**`), `tests/blackbox/**`, `tools/crap/**`, `scripts/kit-sync.sh`, `CLAUDE.md`, `AGENTS.md`, `README.md`, `CHANGELOG.md`, `.gitignore` | architecture (this plan); slices append to `CHANGELOG.md` only under their own heading, and update CONTRACTS.md per rule 3 |
-| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package: I1 `oidc`, `identity`; M2 (from I2) `events`, `outbox`; D1 `recipients`, `directory`; C2 `channels`; A1 `blobs`, `attachments`; M1 `mime`, `mailauth`, `richtext`, `mailin`; M2 `compose`, `dkim`, `smtpclient`, `mailout`; S1 `textindex`, `search`; M3 `messaging`; R1 `realtime`; N1 `webpush`, `notify`. The workflow package of a service (rule 8b) is copied only into that service's app; `ids`, `collections` and `transport` stay with architecture |
+| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package: I1 `oidc`, `identity` (Wave 3: L1 owns `kit/oidc` and `kit/addresses`, L5 the copies during the switch); M2 (from I2) `events`, `outbox`; D1 `recipients`, `directory`; C2 `channels`; A1 `blobs`, `attachments`; M1 `mime`, `mailauth`, `richtext`, `mailin`; M2 `compose`, `dkim`, `smtpclient`, `mailout`; S1 `textindex`, `search`; M3 `messaging`; R1 `realtime`; N1 `webpush`, `notify`. The workflow package of a service (rule 8b) is copied only into that service's app; `ids`, `collections` and `transport` stay with architecture |
 | `apps/<service>/**` other files | the service's slice |
 | `apps/web/client/**` | split between F1-F4 by the patterns above |
 | `apps/web-admin/**` | F5 |

@@ -35,9 +35,12 @@ and server. It replaces CADUCEUS.
   and to and from outside addresses. Chat never crosses a domain.
 - Email that arrives shows up as a conversation, next to chat conversations,
   with the same reading and reply experience.
-- Sign-in and identity come from Keycloak (OpenID Connect). Each domain has
-  its own Keycloak realm. Mesail stores no passwords, passkeys or second
-  factors of its own.
+- Sign-in and identity come from Keycloak (OpenID Connect), reached only by
+  Mesail's backend. A person has **one login** for every domain: their
+  username is their email prefix (the part before `@`), which is the same
+  in all their domains. After sign-in they switch between their domains
+  without signing in again. Mesail stores no passwords, passkeys or second
+  factors of its own (ADR 0005).
 
 ## 2. Terms
 
@@ -45,9 +48,12 @@ These terms are used the same way in the spec, the code and the API.
 
 | Term | Meaning |
 | --- | --- |
-| Domain | A mail domain that the install hosts, such as `example.com`. It is the tenant and the messaging space. It has one Keycloak realm with the same name, DNS state (MX, SPF, DKIM, DMARC), DKIM keys, its members, aliases and channels. No chat data crosses domains. |
+| Domain | A mail domain that the install hosts, such as `example.com`. It is the tenant and the messaging space. It has DNS state (MX, SPF, DKIM, DMARC), DKIM keys, its members, aliases and channels. No chat data crosses domains. |
 | Install | One running Mesail deployment. It hosts one or more domains. An Operator runs it. |
-| Member | A person with a Mesail account in one domain. Identified by the domain and the Keycloak subject (`sub`) of that domain's realm. A member has one primary address in the domain and may have aliases in the same domain. A person with addresses in two domains has two accounts, one per domain. |
+| Person | One human with one Mesail login: one Keycloak user in the realm `mesail`, with one password and one 2-step code. Identified by the person id (the Keycloak `sub`). A person belongs to the domains an admin added them to, and to no other. |
+| Username (prefix) | A person's username: the local part (before `@`) of all their member addresses, for example `ana`. It is reserved on the whole install: no other person, alias or channel address may use it in any domain. |
+| Member | A person in one domain. Identified by the domain and the person id (`memberId` = person id, the same in every domain). In a domain the member's primary address is `<username>@<domain>`, and the member may have aliases in that domain. |
+| Active domain | The one domain a signed-in session works in. The access token names it; every request is scoped to it. |
 | Address | An email address. It is *internal* (same domain) when it belongs to a member, alias or channel of the sender's domain. Every other address is not internal: either an address of another domain hosted by this install, or an external address. |
 | Recipient kind | The result of resolving one recipient address for one sender. Exact API values: `member` (a member or alias of the sender's domain), `channel` (a channel address of the sender's domain), `otherDomain` (a member, alias or channel address of another domain hosted by this install), `external` (any other address). |
 | Channel | A named conversation in a domain. Channels belong to the domain directly. Public (any member of the domain may join) or private (invite only). A channel may have an email address in its domain, so mail can be sent into it. |
@@ -57,19 +63,22 @@ These terms are used the same way in the spec, the code and the API.
 | Thread | The replies to one message (the thread root). Replies stay in the same conversation. |
 | Delivery | How one recipient receives one message: `chat` or `email`. Each delivery has its own status. |
 | Email conversation | A direct conversation that has at least one participant who takes part by email (an `otherDomain` or `external` address, or a member switched to email). It is still a conversation; email is how those participants take part. |
-| Domain switcher | The control at the top of the interface that moves a person between their accounts in different domains. Each account has its own session. |
+| Domain switcher | The control at the top of the interface that lists the person's domains and changes the active domain of the current tab, without a password. |
 
 ## 3. Actors
 
 - **Member**: reads and writes messages in their own domain, manages their
   own settings. Can create channels (AC-CH-1).
-- **DomainAdmin** (Keycloak role `mesail-admin` in the domain's realm):
-  manages one domain: its members (through Keycloak), aliases, channels,
-  channel email addresses, retention and mail policy for that domain. A
-  DomainAdmin has no rights in any other domain.
-- **Operator** (Keycloak role `mesail-operator`): runs the install. Adds and
-  removes domains. An Operator does not read the messages of a domain
-  through this role.
+- **DomainAdmin** (a member marked as admin of the domain in `directory`;
+  token role `mesail-admin` while that domain is active): manages one
+  domain: adds and removes its members, aliases, channels, channel email
+  addresses, retention and mail policy for that domain. A DomainAdmin has
+  no rights in any other domain, and may reset a person's credentials only
+  when they administer every domain of that person (AC-ID-13).
+- **Operator** (Keycloak realm role `mesail-operator` in the realm
+  `mesail`): runs the install. Adds and removes domains, names the first
+  DomainAdmin of a domain, and manages people (AC-ID-13, AC-ID-14). An
+  Operator does not read the messages of a domain through this role.
 - **Service**: a backend service that calls another service. It uses a
   service token, never a user token, and has no user rights.
 - **Correspondent in another domain**: a member of another domain hosted by
@@ -149,25 +158,28 @@ away, Bo gets a push notification. If he does not read it within the time
 he chose (default 30 minutes), he gets one email summary.
 
 ### S11. An Operator adds a domain
-An Operator adds `example.org` to the install. Mesail creates the Keycloak
-realm `example.org` for it, with the roles `mesail-admin` and
-`mesail-operator`, and an empty messaging space for the domain. Mesail shows
+An Operator adds `example.org` to the install. Mesail adds it as a hosted
+domain with an empty messaging space; Keycloak does not change. Mesail shows
 the DNS records to create (MX, SPF, DKIM, DMARC), checks them, and shows
 each as *ok* or *missing*. Mail for the domain is accepted only after MX and
 DKIM are *ok*. The Operator then names the first DomainAdmin of
-`example.org`.
+`example.org` by username: an existing person or a new one (AC-ID-12).
 
 ### S12. Sign in and switch domains
-A visitor opens Mesail and sees Mesail's own sign-in form. They type their
-address (for example `ana@example.com`), their password and, when their
-account has one, a one-time code. Mesail checks them with Keycloak on the
-server (the realm of `example.com`); the browser never talks to Keycloak.
-Passkeys are not offered in the first release. Signing out in Mesail also
-ends the Keycloak session. A DomainAdmin who disables a user in Keycloak
-cuts that user off within 60 seconds, including open realtime connections.
-Ana also has the address `ana@example.org`. She uses the domain switcher at
-the top of the interface to sign in to her second account. Each account
-shows only its own domain's channels, DMs and email.
+A visitor opens Mesail and sees Mesail's own sign-in form with one field,
+"Username or email address", a password field and, when needed, a
+one-time code. Ana types `ana` (or `ana@example.com`, in any letter case),
+her password and her code. Mesail checks them with Keycloak on the server;
+the browser never talks to Keycloak. Passkeys are not offered in the first
+release. Ana is a member of `example.com` and `example.org`. She lands in
+her default domain, `example.com` (had she typed `ana@example.org`, she
+would land in `example.org`). The domain switcher at the top lists both
+domains. She picks `example.org` and sees its channels, DMs and email,
+without signing in again. A second tab can stay in `example.com`. Signing
+out in Mesail ends the Keycloak session. An admin who removes Ana from
+`example.org` cuts that domain off within 60 seconds; an Operator who
+disables Ana's account cuts every domain off within 60 seconds, including
+open realtime connections.
 
 ### S13. Writing to another domain on the same install
 Ana (`ana@example.com`) writes to `eve@example.org`. The same install hosts
@@ -180,53 +192,122 @@ replies from Mesail. Her reply goes back as email and joins Ana's email
 conversation in `example.com`. Neither side sees the other's presence,
 channels or search results.
 
+### S14. An admin adds and removes members
+Bo is a DomainAdmin of `example.com`. In the admin app he adds the username
+`dan` with the display name "Dan Example" and a first password. No person
+has `dan` yet, so Mesail creates Dan's account. Dan signs in with `dan`,
+must choose a new password first, and has the address `dan@example.com`.
+Bo then adds `eve`. Eve already has an account (she is a member of
+`example.org`); the admin app says so, and does not ask for a password.
+Within a minute Eve sees `example.com` in her domain switcher, with the
+address `eve@example.com`. No one can create the alias `dan@example.org`
+or a channel address `dan@...` in any domain: `dan` is Dan's prefix
+everywhere. Bo removes Eve from `example.com`. Within a minute she no
+longer sees `example.com`, and mail to `eve@example.com` is refused. Her
+account and `eve@example.org` are unchanged.
+
 ## 5. Acceptance criteria
 
 Each criterion is testable from the outside (HTTP, SMTP, browser). IDs are
 stable; tests name them.
 
 ### Identity and access (AC-ID)
-- **AC-ID-1** Every API route requires a valid Keycloak access token,
-  except the routes listed as public in [CONTRACTS.md](CONTRACTS.md)
-  (health, OIDC callback, public config). A missing, expired, wrongly
-  signed or wrong-audience token gets `401` with no data.
-- **AC-ID-2** Each domain has one Keycloak realm, and the realm name is the
-  domain name (for example `example.com`). The token's issuer names the
-  realm, and so selects the caller's domain. The server scopes every
-  message, channel, conversation, search and presence query by that domain.
-  A token from one domain never reads or changes another domain's data,
-  even on the same install; such a request gets `404` (not `403`), so the
-  existence of data is not revealed.
-- **AC-ID-3** Roles come from token claims: `mesail-admin` (DomainAdmin,
-  for the token's domain only), `mesail-operator` (Operator, install-wide
-  domain management only) and plain member (no Mesail role). Service calls
-  use a `Service` token. A caller without the needed role gets `403` on
-  admin and operator routes. A DomainAdmin token of one domain gets `404`
-  on another domain's admin routes. The check is on the server; the client
-  only hides buttons.
-- **AC-ID-4** A user disabled or signed out in Keycloak loses access within
-  60 seconds: API calls get `401` and open realtime connections close.
+- **AC-ID-1** Every API route requires a valid Mesail access token, except
+  the routes listed as public in [CONTRACTS.md](CONTRACTS.md) (health,
+  sign-in, refresh, sign-out, domain switch, the token key set and the
+  service token route). A missing, expired, wrongly signed or
+  wrong-audience token gets `401` with no data.
+- **AC-ID-2** One Keycloak realm, `mesail`, holds every person. The access
+  token that `identity` issues names one active domain (its `domain`
+  claim). The server scopes every message, channel, conversation, search
+  and presence query by that domain. A token for one domain never reads or
+  changes another domain's data, even when the same person is a member of
+  both; such a request gets `404` (not `403`), so the existence of data is
+  not revealed.
+- **AC-ID-3** Roles come from the token, which `identity` fills: plain
+  member for every member of the active domain, `mesail-admin`
+  (DomainAdmin) only when the person administers the active domain (data in
+  `directory`), `mesail-operator` (Operator, install-wide) from the
+  Keycloak realm role. Service calls use a `Service` token. A caller
+  without the needed role gets `403` on admin and operator routes. A
+  DomainAdmin token of one domain gets `404` on another domain's admin
+  routes. The check is on the server; the client only hides buttons.
+- **AC-ID-4** A person disabled or signed out in Keycloak loses access to
+  every domain within 60 seconds. A person removed from a domain loses
+  access to that domain within 60 seconds and keeps their other domains.
+  In both cases API calls get `401` and open realtime connections close.
 - **AC-ID-5** Mesail stores no password, passkey, TOTP secret or recovery
-  code. The browser never talks to Keycloak. The browser keeps the access
-  token (60 seconds) in memory only, and keeps only an encrypted, opaque
-  session key in per-tab session storage, which is gone when the tab
-  closes. No token or key ever appears in a URL or a log. (When TACHYON can
-  send same-origin cookies, the session key moves to an HttpOnly cookie.)
-- **AC-ID-6** A person with accounts in two domains can switch between them
-  with the domain switcher. Each account keeps its own session and token.
-  A request made with one domain's token never returns data of the other
-  domain.
-- **AC-ID-7** A member changes their own password in Mesail's settings. They
-  must type the current password (and their one-time code when 2-step
-  sign-in is on). The new password must meet the domain's password policy;
-  a refusal says which rule failed. After the change, every other session
-  of that account ends; this session continues. The browser never talks to
-  Keycloak.
-- **AC-ID-8** A member turns on 2-step sign-in in Mesail's settings: Mesail
+  code. The browser never talks to Keycloak and never receives a Keycloak
+  token. The browser keeps the Mesail access token (60 seconds) in memory
+  only, and keeps only an encrypted, opaque session key in per-tab session
+  storage, which is gone when the tab closes. No token or key ever appears
+  in a URL or a log. (When TACHYON can send same-origin cookies, the
+  session key moves to an HttpOnly cookie.)
+- **AC-ID-6** One sign-in gives a person every domain they are a member
+  of. The domain switcher lists those domains; choosing one needs no
+  password and changes only the current tab. Another tab keeps its own
+  domain. A request made with one domain's token never returns data of
+  another domain.
+- **AC-ID-7** A person changes their own password in Mesail's settings.
+  They must type the current password (and their one-time code when 2-step
+  sign-in is on). The new password must meet the install's password
+  policy; a refusal says which rule failed. The new password is the
+  person's one password, for every domain. After the change, every other
+  session of the person ends; this session continues. The browser never
+  talks to Keycloak.
+- **AC-ID-8** A person turns on 2-step sign-in in Mesail's settings: Mesail
   shows a QR code and the same secret as text, and turns it on only after
-  the member types a valid code from their app. Turning it off or resetting
-  it needs the current password and a valid code. A lost authenticator is
-  reset by a DomainAdmin (Keycloak admin), not by the member.
+  the person types a valid code from their app. Turning it off or
+  resetting it needs the current password and a valid code. A lost
+  authenticator is reset by an admin (AC-ID-13), not by the person.
+- **AC-ID-9** The sign-in form has one field, "Username or email address".
+  `ana`, `ANA`, ` ana ` and `ana@example.com` (in any letter case) sign in
+  to the same account. With the prefix only, the person lands in their
+  default domain (the first domain they were added to, until they choose
+  another in settings). With a full address, they land in that domain. An
+  unknown prefix, a wrong password and a wrong code get the same `401`
+  answer. A correct password with a full address in a domain the person is
+  not a member of gets `403 not_a_member` and no session. A correct
+  password for a person who is in no domain and is not an Operator gets
+  `403 no_domain` and no session. A person who must choose a new password
+  sees only the password change screen until they do.
+- **AC-ID-10** A prefix belongs to at most one person on the install. Every
+  member address of that person is `<prefix>@<domain>`. No alias or
+  channel address in any domain may use a person's prefix (`409
+  duplicate`), and no new person may take a prefix that an alias or a
+  channel address uses in any domain (`409 duplicate`). A deleted person's
+  prefix stays reserved for ever (Q5).
+- **AC-ID-11** Prefix and address rules. A prefix has 1 to 64 characters
+  from `a-z`, `0-9`, `.`, `_` and `-`; it starts and ends with a letter or
+  digit and has no two dots in a row. Input in any letter case is accepted
+  and stored in lowercase. The role names `postmaster`, `abuse`,
+  `hostmaster`, `webmaster`, `mailer-daemon`, `noreply`, `no-reply` and
+  `security` are never prefixes; a domain may use them as aliases. Domain
+  names are lowercase (IDNA A-label). Hosted addresses are stored and
+  compared in lowercase, so mail to `Ana@Example.com` reaches Ana. An
+  external address is sent exactly as written and is compared without
+  letter case when Mesail matches participants and replies.
+- **AC-ID-12** A DomainAdmin adds a member by prefix. For a new prefix they
+  give a display name and a first password, and the person must choose a
+  new password at their first sign-in. For a prefix that belongs to an
+  existing person, the person is added as they are (no password asked),
+  and the admin is told it is an existing person. The person sees the new
+  domain at their next sign-in, refresh or switch (within 60 seconds).
+  Removing a member ends their access to that domain within 60 seconds and
+  makes their address there unknown to senders (`550`); the prefix stays
+  theirs, and their messages stay with their display name. A DomainAdmin
+  may make a member an admin or remove that role. A domain always keeps at
+  least one DomainAdmin (`409 last_admin`).
+- **AC-ID-13** Resetting a person's password, removing their 2-step code,
+  disabling or deleting the person, or changing their display name affects
+  every domain of that person. An Operator may do it. A DomainAdmin may do
+  it only when they administer every domain the person belongs to;
+  otherwise `403`.
+- **AC-ID-14** An Operator is a person with the Keycloak role
+  `mesail-operator`, and signs in with the same form. An Operator who is in
+  no domain gets an install-wide session (domain `*`) that works only in
+  the admin app. Operator routes accept any session of an Operator; they
+  never use its active domain as the tenant.
 
 ### Channels of a domain (AC-CH)
 - **AC-CH-1** A member can create a public channel in their domain, join
@@ -370,8 +451,9 @@ stable; tests name them.
 
 ### Domains and mail operations (AC-DM)
 - **AC-DM-1** An Operator can add, verify and remove domains. Adding a
-  domain creates its Keycloak realm (named after the domain) and its empty
-  messaging space. The verification shows MX, SPF, DKIM and DMARC records
+  domain creates its empty messaging space; it does not change Keycloak.
+  Removing a domain removes every membership in it; the people and their
+  prefixes stay. The verification shows MX, SPF, DKIM and DMARC records
   and their state. A DomainAdmin can see the verification state of their
   own domain only.
 - **AC-DM-2** Each domain has its own DKIM key pair. The private key is
@@ -419,8 +501,11 @@ stable; tests name them.
 - Chat between domains of any kind: shared channels, cross-domain DMs or
   shared presence (Slack Connect style). Domains talk to each other by
   email only. This is a product rule, not only a first-release limit.
-- One account that spans several domains. A person with addresses in two
-  domains has two accounts.
+- A separate account or password per domain. One person has one login for
+  all their domains (ADR 0005).
+- Renaming a username (prefix). It is fixed when the person is created.
+- Sub-addressing (`ana+news@example.com`) in the first release (Q6,
+  decided).
 - Bots and app integrations beyond incoming webhooks.
 - IMAP and POP access for third-party mail clients. (SMTP submission for
   third-party clients is a later slice; see SLICES.md.)
@@ -430,7 +515,7 @@ stable; tests name them.
 - In-browser translation models. The UI is localizable from the start.
 - End-to-end encryption.
 - Migrating CADUCEUS user credentials. Users enrol again in the Keycloak
-  realm of their domain; mail data is migrated by a separate tool.
+  realm `mesail`; mail data is migrated by a separate tool.
 
 ## 7. Open questions
 
@@ -440,6 +525,22 @@ stable; tests name them.
   (AC-DM-6) still pass through the outbound queue and the suppression list
   of the sender's domain? This spec says yes, so it behaves like any other
   email.
+
+Decided by the owner on 2026-11-11 (one login, ADR 0005):
+
+- **Q4 (decided: the admin adds).** A DomainAdmin adds an existing person
+  (whose prefix is taken) to their domain without that person agreeing.
+  The admin learns that the prefix exists, and the person simply gets the
+  new domain (AC-ID-12). No invitation step.
+- **Q5 (decided: never).** A deleted person's prefix is never given to
+  another person, so mail meant for the old person never reaches a new one
+  (AC-ID-10). There is no tool to release it.
+- **Q6 (decided: not in the first release).** Sub-addressing is not
+  supported: `+` is not allowed in a prefix or an alias, and an address
+  such as `ana+news@example.com` is unknown (`550`).
+- **Q7 (decided: the default domain).** A sign-in with the prefix only
+  opens the person's default domain: the first domain they were added to,
+  until they choose another in their settings (AC-ID-9).
 
 Q1 (one shared conversation or one per member) is closed: one email to two
 members of the same domain is one shared conversation (AC-IN-6).

@@ -15,20 +15,36 @@ each app behind the router):
 
     MESAIL_BASE_URL=http://127.0.0.1:8080 \
     MESAIL_SMTP_ADDR=127.0.0.1:2525 \
+    MESAIL_PASSWORD=... MESAIL_PASSWORD_OPERATOR=... \
+    MESAIL_SERVICE_CLIENT_SECRET=... \
     MESAIL_TOKEN_ANA=... MESAIL_TOKEN_BO=... MESAIL_TOKEN_EVE=... \
     MESAIL_TOKEN_OPERATOR=... \
     go test -tags blackbox -v ./...
 
-Fixtures they expect. Each hosted mail domain is its own tenant, with its
-own Keycloak realm. Email crosses domains; chat never does.
+Fixtures they expect (ADR 0005: one login per person, one Keycloak realm
+`mesail`, the prefix is the username in every domain). Email crosses
+domains; chat never does.
 
-- Hosted domain `example.com`: `ana@example.com` (realm role
-  `mesail-admin`, token `MESAIL_TOKEN_ANA`) and `bo@example.com` (realm
-  role `mesail-member`, token `MESAIL_TOKEN_BO`).
-- Hosted domain `example.org`, on the same Mesail: `eve@example.org`
-  (realm role `mesail-member`, token `MESAIL_TOKEN_EVE`).
-- Operator: realm `mesail-operators`, realm role `mesail-operator`, token
-  `MESAIL_TOKEN_OPERATOR`.
-- External address `carol@partner.test` (not hosted).
+- `ana`: DomainAdmin of `example.com` (her default domain) and a plain
+  member of `example.org`. Token `MESAIL_TOKEN_ANA` is her `example.com`
+  token.
+- `bo`: member of `example.com` (`MESAIL_TOKEN_BO`).
+- `eve`: member of `example.org` (`MESAIL_TOKEN_EVE`).
+- `carol`: member of `partner.test` only.
+- `operator`: Keycloak role `mesail-operator`, in no domain
+  (`MESAIL_TOKEN_OPERATOR` is an install-wide session, domain `*`).
+- `MESAIL_PASSWORD` is the password of the fixture people;
+  `MESAIL_PASSWORD_<NAME>` overrides it for one of them (for example
+  `MESAIL_PASSWORD_OPERATOR`). The sign-in tests sign in by themselves.
+- `MESAIL_SERVICE_CLIENT_SECRET` is the `mesail-service` secret, for the
+  service token tests.
+
+The one-login tests (`SignIn_test.go`, `DomainSwitch_test.go`,
+`Tokens_test.go`, `Members_test.go`, `People_test.go`; slice L0) create
+new people with prefixes `bb<time>` and new domains `bb<time>.test`.
+Prefixes are never reused (SPEC Q5), so these stay in the dev stack; reset
+the stack to clear them. Wrong-password tests use new people, so the
+fixtures are never locked by brute-force detection. The tests that wait
+for a membership change allow 70 seconds.
 
 A missing variable skips the test.

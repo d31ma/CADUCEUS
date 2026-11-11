@@ -21,9 +21,12 @@ documentation.
   containers.
 - FYLO 26.45.07, one root per service, one writer per root, on a local disk.
   Never share a root between services or instances.
-- Keycloak (OIDC) owns identity. One realm per organization. Mesail stores
-  no credentials.
+- Keycloak (OIDC) owns credentials, in one realm `mesail`. One login per
+  person; the username is the email prefix in every domain. Membership is
+  `directory` data, and `identity` issues Mesail's own access token that
+  names the active domain (ADR 0005). Mesail stores no credentials.
 - Follow `docs/adr/0004-mesail-go-serverless-keycloak.md`,
+  `docs/adr/0005-one-login-per-person.md`,
   `docs/mesail/SPEC.md`, `docs/mesail/DOMAIN.md`,
   `docs/mesail/CONTRACTS.md` and `docs/mesail/SLICES.md`. ADRs 0002 and
   0003 are superseded.

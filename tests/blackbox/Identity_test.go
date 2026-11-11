@@ -9,6 +9,8 @@ import (
 
 type member struct {
 	MemberId       string   `json:"memberId"`
+	Username       string   `json:"username"`
+	DisplayName    string   `json:"displayName"`
 	PrimaryAddress string   `json:"primaryAddress"`
 	DomainId       string   `json:"domainId"`
 	Roles          []string `json:"roles"`
@@ -36,7 +38,7 @@ func TestAcId1RoutesRefuseAForgedToken(t *testing.T) {
 func TestMeDescribesTheSignedInMember(t *testing.T) {
 	stack := NewStack(t)
 	ana := me(t, stack, stack.Token(t, "ANA"))
-	if ana.MemberId == "" || ana.PrimaryAddress != "ana@example.com" {
+	if ana.MemberId == "" || ana.Username != "ana" || ana.PrimaryAddress != "ana@example.com" {
 		t.Fatalf("got %+v", ana)
 	}
 }

@@ -126,8 +126,8 @@ example `channels-a379a6f6eeafb9a5`). Keep them in a small install-wide collecti
 document is written into that collection. Collection names come only from
 the service's own code, never from a request.
 
-The service token for pushes comes from I1 (Keycloak client credentials,
-realm role `mesail-service`) through `outbox.TokenSource`.
+The service token for pushes comes from `identity`'s service token route
+(ADR 0005; token role `mesail-service`) through `outbox.TokenSource`.
 
 ## 3. What a consuming service adds
 
@@ -187,25 +187,24 @@ outbound delivery queue, retries, email summaries, cleanup):
    after its own write, so most events leave within the same request; the
    schedule only sweeps what is left.
 
-**Service tokens** (slice I1 builds them in `kit/oidc`, documented in
-`docs/mesail/SERVICE-TOKENS.md`; decided with I1 on 2026-11-10):
-- A service asks the realm of the domain the call is about: client
-  credentials with the confidential client `mesail-service` of that realm
-  (one shared secret, `YON_SERVICE_CLIENT_SECRET`, set in every realm like
-  `mesail-identity`'s). So on the receiving side `Caller.DomainId` IS the
-  target domain, and SLICES rule 11 holds unchanged: a receiver refuses a
+**Service tokens** (`kit/oidc`, documented in
+`docs/mesail/SERVICE-TOKENS.md`; changed by ADR 0005 on 2026-11-11):
+- A service asks `identity` (`POST /api/v1/identity/service-token`, shared
+  secret `YON_SERVICE_CLIENT_SECRET`) for a token for the domain the call
+  is about. So on the receiving side `Caller.DomainId` IS the target
+  domain, and SLICES rule 11 holds unchanged: a receiver refuses a
   `Service` token whose `DomainId` differs from the domain in the path, the
   body or the event envelope (`404`, as for any other domain).
 - Calls that are about the whole install, or about a domain that may not be
-  hosted (the SMTP edge asking whether a domain is hosted, operator jobs),
-  use the realm `mesail-operators`, which also has a `mesail-service`
-  client. Only routes documented as install-wide accept such a token.
-- The helper: `oidc.ServiceTokens{}.Configured().Authorization(realm)`
-  returns `"Bearer ..."`; tokens are cached per realm in the process's
+  hosted (the SMTP edge asking whether a domain is hosted, operator jobs,
+  the relay schedules), ask for the domain `*` (`oidc.InstallWide`). Only
+  routes documented as install-wide accept such a token.
+- The helper: `oidc.ServiceTokens{}.Configured().Authorization(domainId)`
+  returns `"Bearer ..."`; tokens are cached per domain in the process's
   temporary folder (file mode 0600) until 10 seconds before they expire;
-  the token endpoint comes from the app's `oidc.keycloak` setting; the
-  Keycloak host is in `outgoing.hosts`. `kit/outbox`'s `TokenSource` is the
-  port; `StaticToken` stays for tests.
+  the route comes from the app's `oidc.serviceTokens` setting; the
+  `identity` host is in `outgoing.hosts`. `kit/outbox`'s `TokenSource` is
+  the port; `StaticToken` stays for tests.
 
 ## 5. Tests other slices use
 
@@ -236,7 +235,7 @@ needs `scripts/kit-sync.sh` and the copies in the same commit.
 
 The Go types are in `kit/events`, one file per type. All ids are wire id strings, times RFC 3339 UTC strings, no `domainId` (the envelope has it). No `omitempty`: every key is always present (empty string / empty list when unset).
 
-- `member.upserted` -> MemberUpserted: `memberId` (Keycloak sub), `displayName`, `primaryAddress`, `state` (active|disabled).
+- `member.upserted` -> MemberUpserted: `memberId` (the person id, the same in every domain), `displayName`, `primaryAddress` (`<username>@<domain>`), `state` (active|disabled|removed). Published into each affected domain when a member is added, changed or removed, or when the person is renamed, disabled or deleted (ADR 0005). On `removed`: channels removes the member from every channel of the domain (publishing `channel.member.removed`), realtime closes the member's connections in the domain, notify deletes the member's push subscriptions and settings in the domain, messaging and search keep the history.
 - `channel.created` -> ChannelCreated: `channelId`, `conversationId` (the channel's one conversation; messaging creates it with this id), `name`, `topic`, `visibility` (public|private), `emailAddress` ("" when none), `createdBy` (member id).
 - `channel.member.added` -> ChannelMemberAdded: `channelId`, `conversationId`, `memberId`, `joinedAt`.
 - `channel.member.removed` -> ChannelMemberRemoved: `channelId`, `conversationId`, `memberId`.

@@ -4,6 +4,9 @@
 - Date: 2026-11-10
 - Supersedes: [ADR 0002](0002-typescript-frontend-go-backend.md) and
   [ADR 0003](0003-sesame-authentication-boundary.md)
+- Amended by: [ADR 0005](0005-one-login-per-person.md) (one login per
+  person: one Keycloak realm, membership as `directory` data, Mesail's own
+  access token naming the active domain). Read sections 2 and 7 with it.
 - Spec: [docs/mesail/SPEC.md](../mesail/SPEC.md). UX: `docs/mesail/ux/`.
 
 ## Context
@@ -81,6 +84,12 @@ Facts that constrain the design (from reading TACHYON 26.46.02 and FYLO
   (section 6), where `go vet` and `go test` apply directly.
 
 ### 2. The domain is the tenant and the chat boundary
+> Amended by ADR 0005: there is one Keycloak realm, `mesail`, for every
+> person. The caller's domain comes from the `domain` claim of the Mesail
+> access token that `identity` issues, not from a realm name. The rest of
+> this section (chat stays in a domain, email crosses domains, hand-off)
+> is unchanged.
+
 - A hosted mail **domain** (for example `example.com`) is the tenant. It
   has exactly one messaging space: its members, channels, direct
   conversations, threads, presence and search. There is no organization or
@@ -272,6 +281,13 @@ Decisions:
   handler builds.
 
 ### 7. Keycloak replaces SESAME
+> Amended by ADR 0005: one realm `mesail`; the username is the person's
+> prefix; `identity` answers its own ES256 access token (60 seconds) and
+> never gives Keycloak's tokens to the browser; service tokens come from
+> `identity`; a person signs in once and switches domains without a
+> password. The bullets below about realms per domain, `mesail-operators`
+> and per-realm secrets are replaced.
+
 - Keycloak (OIDC) owns users, passwords, passkeys (WebAuthn), second
   factors, sessions and roles. Mesail stores no credentials. SESAME, its
   engine, its FYLO root and every `/auth/*` route are removed.

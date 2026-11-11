@@ -26,8 +26,8 @@ own TACHYON Go app in `apps/<service>/`, with the route prefix
 
 | Service | Owns (FYLO collections) | Does not own |
 | --- | --- | --- |
-| `identity` | none (stateless token check) | users and credentials (Keycloak owns them) |
-| `directory` | `domains`, `members`, `addresses` (aliases are addresses) | DKIM private keys (secret store), Keycloak realms (Keycloak owns them) |
+| `identity` | none (stateless; signs in through Keycloak and issues Mesail access tokens, ADR 0005) | users and credentials (Keycloak owns them), membership (directory owns it) |
+| `directory` | `domains`, `people` and `local-parts` (install-wide), `members` (with the admin flag), `addresses` (aliases are addresses) | DKIM private keys (secret store), passwords and 2-step codes (Keycloak owns them) |
 | `channels` | `channels`, `channel-members` | messages |
 | `messaging` | `conversations`, `participants` (with the read position), `messages` (with the deliveries), `reactions`, `mentions`, `attachment-uses` (one row per attachment of a message, for the attachment access check; at most 10 per message), `members` (a cache filled from `member.upserted`, for @mention lookup), `email-threads` | raw email bytes, attachments |
 | `attachments` | `attachments` (metadata) and the blob bucket | message bodies |
@@ -39,19 +39,22 @@ own TACHYON Go app in `apps/<service>/`, with the route prefix
 
 ### Roles
 
-Roles are Tachyon `@Allow(...)` names, mapped from the token's
-`realm_access.roles` claim by `kit/oidc` `RoleMap`:
-| Role | Realm role | Can do |
-| --- | --- | --- |
-| `Member` | `mesail-member` | use chat and email in their own domain |
-| `DomainAdmin` | `mesail-admin` | manage aliases and channel email settings in their own domain only |
-| `Operator` | `mesail-operator` | add, verify and remove domains on the install |
-| `Service` | `mesail-service` | service-to-service calls (events, address lookup, inbound mail) |
+Roles are Tachyon `@Allow(...)` names, mapped from the Mesail access
+token's `realm_access.roles` claim by `kit/oidc` `RoleMap`. `identity`
+fills that claim when it issues the token (ADR 0005):
+| Role | Token role | Comes from | Can do |
+| --- | --- | --- | --- |
+| `Member` | `mesail-member` | the person is a member of the active domain (`people.domainIds`) | use chat and email in the active domain |
+| `DomainAdmin` | `mesail-admin` | the person administers the active domain (`people.adminDomainIds`) | manage members, aliases and channel email settings of the active domain only |
+| `Operator` | `mesail-operator` | the Keycloak realm role `mesail-operator` of the realm `mesail` | add, verify and remove domains; manage people (SPEC AC-ID-13) |
+| `Service` | `mesail-service` | a service token from `identity`'s service token route | service-to-service calls (events, address lookup, inbound mail) |
 
-Operators sign in to their own realm, `mesail-operators`. It is not a mail
-domain: it has no addresses, members or chat, and it can never be created as
-a domain (a domain name always contains a dot). Operator routes never use the
-caller's `domainId` as a tenant; they name the target domain in the path.
+A token's `domain` claim is the active domain, or `*` (`oidc.InstallWide`)
+for an install-wide service token or an Operator session with no domain.
+`*` is never a hosted domain: every store refuses it, and only routes
+documented as install-wide accept it. Operator routes check the role, and
+never use the caller's `domainId` as a tenant; they name the target domain
+in the path.
 
 ## 2. Entities
 
@@ -63,7 +66,8 @@ notes):
   caller cannot pass one kind of id where another is expected. Lookups by a
   natural key (an address, a `Message-ID` hash) use an `$eq` query on an
   indexed field. Two ids are not TTIDs: a `domainId` is the domain name, and
-  a member id is the Keycloak `sub`.
+  a member id is the person id (the Keycloak `sub` in the realm `mesail`),
+  the same in every domain of that person.
 - **No arrays of objects.** FYLO rejects them. Lists of objects (recipients,
   reactions, attachments) are separate documents or lists of ids.
 - **Order is creation order.** FYLO has no ORDER BY. Lists that need
@@ -103,7 +107,9 @@ notes):
   document also stores `domainId` in clear text, and a store checks it on
   read, so a key collision can never show one domain's data to another.
 - **Install-wide collections.** Only `directory/domains` (the list of hosted
-  domains) is not split by domain.
+  domains), `directory/people` and `directory/local-parts` (ADR 0005) are
+  not split by domain. They are written only by `directory`'s
+  install-wide writer (today the one `directory` function or process).
 - **Path to scale.** Because each domain already has its own collections, a
   domain (or a set of domains) can later move to its own FYLO root and its
   own function without changing any document.
@@ -114,25 +120,64 @@ Every document carries `domainId`. Times are RFC 3339 UTC strings.
 A hosted mail domain. It is the tenant and the chat boundary.
 | Field | Type | Rule |
 | --- | --- | --- |
-| `domainId` | string | The domain name in lowercase, IDNA A-label (for example `example.com`). The document id. Unique on the install. It is also the Keycloak realm name, so the token issuer `https://<host>/realms/<domainId>` names the domain with no lookup (`kit/oidc` `Realm`, `Caller.DomainId`). |
+| `domainId` | string | The domain name in lowercase, IDNA A-label (for example `example.com`). The document id. Unique on the install. The Mesail access token names the active domain in its `domain` claim, so no service needs a lookup (`kit/oidc` `Caller.DomainId`). |
 | `name` | string | The domain name as shown. Same value as `domainId`. |
-| `issuer` | string | Keycloak issuer URL of the domain's realm. Unique. |
 | `state` | `pending` \| `active` \| `disabled` | mail is accepted only when `active` |
 | `dkimSelector` | string | the private key lives in the secret store under `dkim/<domain>/<selector>` |
 | `dns` | object | last check result per record: `mx`, `spf`, `dkim`, `dmarc` -> `ok` \| `missing` \| `wrong` |
 | `limits` | object | attachment size, message size, retention days |
 
-Only an Operator adds or removes a domain. Creating a domain also creates
-its Keycloak realm.
+Only an Operator adds or removes a domain. Adding a domain does not touch
+Keycloak. Removing a domain removes every membership in it (the people
+stay).
 
-### Member (`directory/members`)
+### Person (`directory/people`, install-wide)
+One human with one login (ADR 0005). Keycloak holds the credentials.
 | Field | Type | Rule |
 | --- | --- | --- |
-| `id` | string | The Keycloak `sub` (user id). With `domainId` it identifies the member everywhere, so no service needs a lookup to know who calls (`kit/oidc` `Caller`). |
-| `domainId` | string | the realm the member signs in to. A member belongs to exactly one domain. |
-| `displayName` | string | from the token, updated on each sign-in |
-| `primaryAddress` | string | an address in the member's own domain |
-| `state` | `active` \| `disabled` | mirrored from Keycloak |
+| `id` | string | The person id: the Keycloak `sub` of the realm `mesail`. The document id. |
+| `username` | string | The prefix: lowercase, rules in SPEC AC-ID-11. Indexed, unique on the install, never changed. Equal to the Keycloak username. |
+| `displayName` | string | Shown in every domain of the person. |
+| `domainIds` | string[] | The domains the person is a member of; the only list `identity` reads to allow a sign-in or a switch. |
+| `adminDomainIds` | string[] | The domains the person administers. Always a subset of `domainIds`. |
+| `defaultDomainId` | string | The domain opened after a sign-in with the prefix only. The first domain added, until the person chooses another; `""` when `domainIds` is empty. |
+| `state` | `active` \| `disabled` \| `deleted` | `disabled` mirrors the Keycloak user's `enabled: false`. `deleted` keeps the document (and the reserved prefix) after the Keycloak user is deleted. |
+
+### LocalPart (`directory/local-parts`, install-wide)
+The install-wide reservation of local parts (SPEC AC-ID-10).
+| Field | Type | Rule |
+| --- | --- | --- |
+| `localPart` | string | Lowercase. The document id. |
+| `owner` | `person` \| `addresses` | `person`: a person's prefix, reserved in every domain. `addresses`: used by aliases or channel addresses. |
+| `personId` | string | For `owner: person`. Never changes, also after the person is deleted. |
+| `domainIds` | string[] | For `owner: addresses`: the domains whose aliases or channel addresses use this local part. |
+
+Rules: reserving for a person succeeds only when the document is missing or
+already names that person; reserving for an alias or a channel address
+succeeds when the document is missing or has `owner: addresses` (the domain
+is added to `domainIds`). Each reservation is one idempotent write, done
+before the person, alias or channel address is written. A reservation left
+behind by a failed request is harmless: the same request can retry it.
+
+### Member (`directory/members`)
+A person in one domain.
+| Field | Type | Rule |
+| --- | --- | --- |
+| `id` | string | The person id. With `domainId` it identifies the member everywhere, so no service needs a lookup to know who calls (`kit/oidc` `Caller`). |
+| `domainId` | string | |
+| `displayName` | string | A copy of the person's display name. |
+| `primaryAddress` | string | Always `<username>@<domainId>`. |
+| `admin` | bool | The member administers this domain. A domain always keeps at least one admin. |
+| `state` | `active` \| `disabled` \| `removed` | `removed` after a DomainAdmin removes the member; the document stays so old messages keep their author. |
+
+**Order of writes** (no transaction across collections; each step is
+idempotent, so a retry completes it):
+- Add a member: reserve the local part, create the Keycloak user when the
+  person is new, write `people` (add the domain), then `members` (with
+  `member.upserted`), then the member's `addresses` document.
+- Remove a member: write `people` first (remove the domain; this cuts
+  sign-in and refresh), then `members` (`state: removed`, with
+  `member.upserted`), then delete the member's `addresses` document.
 
 ### Address (`directory/addresses`)
 The routing table for every hosted address.
@@ -279,10 +324,11 @@ at index time. A search reads only the caller's domain.
 
 1. **Domain first.** Every store method takes a `domainId`; there is no query
    without it. For a signed-in request it is the caller's domain, taken from
-   the verified token issuer (`Caller.DomainId`). For SMTP and for an address
+   the verified token's `domain` claim (`Caller.DomainId`). For SMTP and for an address
    lookup it is the domain part of the recipient address. A caller-supplied
-   `domainId` is never trusted. The only exception is the install-wide
-   `directory/domains` list.
+   `domainId` is never trusted. The only exceptions are the install-wide
+   `directory/domains`, `directory/people` and `directory/local-parts`
+   collections.
 2. **Chat never crosses a domain.** Conversations, messages, reactions, read
    positions, presence, search hits, channels and channel members belong to
    one domain and are never read or written from another. Every member
@@ -309,8 +355,15 @@ at index time. A search reads only the caller's domain.
    `idempotencyKey` are unique.
 9. **Bcc is private.** Bcc never appears in participants, deliveries visible
    to others, chat events, or headers of other recipients' copies.
-10. **No secrets in documents.** DKIM keys and Keycloak client secrets live
-    in the platform secret store.
+10. **No secrets in documents.** DKIM keys, Keycloak client secrets and
+    `identity`'s signing key live in the platform secret store.
+11. **One prefix, one person.** A local part that is a person's prefix is
+    that person's in every domain (`local-parts`). A member's primary
+    address is always `<username>@<domainId>`.
+12. **Sign-in follows membership.** A token for a domain is issued only
+    while that domain is in the person's `people.domainIds`; removing it
+    ends the person's access to that domain at the next refresh (60
+    seconds at most).
 
 ## 4. Events
 
@@ -325,7 +378,7 @@ Consumers are idempotent by `eventId`, and write only into the envelope's
 
 | Event | Producer | Consumers |
 | --- | --- | --- |
-| `member.upserted` | directory | messaging, notify, search |
+| `member.upserted` (also for a removed member: `state: removed`) | directory | channels, messaging, notify, realtime, search |
 | `channel.created`, `channel.member.added`, `channel.member.removed`, `channel.archived` | channels | messaging, realtime, search |
 | `message.created`, `message.edited`, `message.deleted` | messaging | realtime, notify, search |
 | `reaction.changed`, `read-position.moved` | messaging | realtime, notify |

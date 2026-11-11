@@ -97,7 +97,9 @@ is enough.
 ### I2. Events and outbox
 - **Owns:** `kit/events/**`, new `kit/outbox/**`, and their copies in
   `apps/*/server/packages/{events,outbox}/**`.
-- **Builds:** the outbox relay library (pending events stored in the
+- **Builds:** one Go payload type per event in `kit/events` (today only
+  the names exist in `Types.go`; payload fields are in DOMAIN.md and
+  CONTRACTS.md), the outbox relay library (pending events stored in the
   producer's own document, HTTP push to subscribers listed in
   `application.json`, retries with backoff, dead-letter list), the consumer
   side (verify the `Service` caller, dedupe by `eventId` through a store
@@ -157,7 +159,7 @@ is enough.
   `kit/dkim/**`, `kit/smtpclient/**` and their copies.
 - **Builds:** MIME composition with correct threading headers (AC-CP-6),
   per-domain DKIM signing with keys from the secret store (AC-DM-2), the
-  delivery queue with retries, bounces and per-organization suppression
+  delivery queue with retries, bounces and per-domain suppression
   (AC-DM-3, 4), direct-to-MX and relay adapters, the internal hand-off
   to `mail-in` for recipients in another hosted domain (ADR 0004 section
   2; never SMTP to itself), the `email.delivery.changed` event. Note: a

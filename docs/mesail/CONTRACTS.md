@@ -1,0 +1,245 @@
+# Mesail API contracts
+
+- Status: Draft for implementation
+- Date: 2026-11-10
+- Spec: [SPEC.md](SPEC.md). Domain: [DOMAIN.md](DOMAIN.md).
+
+The Go wire models are the contract. Each one is a file in
+`apps/<service>/server/models/` with the same name as the type (one type per
+file, data only, `json` tags in lowerCamel). They exist on `develop` now;
+a slice that changes one updates this file in the same commit. A Tac app
+keeps its own copies of the models it uses in `client/models/`. The tables below list every
+route, its caller rule (Tachyon `@Public`, `@SignedIn`, `@Allow(Role)`), its
+request and response model, and its errors. A `?` after a field means the
+field may be empty or left out.
+
+## Conventions
+
+- Base path `/api/v1/<service>/...`. The services are `identity`,
+  `directory`, `channels`, `messaging`, `attachments`, `realtime`, `notify`,
+  `search`, `mail-in` and `mail-out`, each its own TACHYON Go app in
+  `apps/<service>/`. Each service owns its prefix, so a gateway (or CDN path
+  rule) can route by prefix to an independently deployed service.
+- **The domain is the tenant.** Every hosted mail domain is one Keycloak
+  realm and one chat space (DOMAIN.md). The caller's `domainId` is the realm
+  name in the token issuer `https://<host>/realms/<domainId>` (`kit/oidc`
+  `Realm`, `Caller.DomainId`). No route takes the caller's domain from the
+  request. Chat data never crosses a domain; email does.
+- Every non-public route takes `Authorization: Bearer <access token>` from
+  Keycloak. The token is checked by the service's `IdentityProvider`
+  (`apps/<service>/server/controllers/OidcIdentityProvider.go`), which uses
+  the shared verifier package `kit/oidc`. Roles (empty structs in
+  `apps/<service>/server/roles/`) come from the token's `realm_access.roles`
+  claim (`kit/oidc` `RoleMap`):
+  - `Member` from `mesail-member`;
+  - `DomainAdmin` from `mesail-admin`, acting only in its own domain;
+  - `Operator` from `mesail-operator`. Operators sign in to the operator
+    realm `mesail-operators`, which is not a mail domain. Operator routes
+    name the target domain in the path;
+  - `Service` from `mesail-service`, for calls between services.
+- Errors use one model, `ApiError{code, message, field?}`. Codes are
+  lowercase snake case and stable. Status codes: `400 invalid_request`,
+  `401 unauthenticated`, `403 forbidden`, `404 not_found` (also for data in
+  another domain or a private channel the caller is not in),
+  `409 conflict` / `recipients_changed` / `duplicate`, `413 too_large`,
+  `422 chat_not_allowed`, `429 rate_limited`, `503 unavailable`.
+- Lists are paged with `?cursor=<opaque>&limit=<1..100>` and return a page
+  model `{items: [...], nextCursor: string}` (`MemberPage`,
+  `ConversationPage`, `MessagePage`, `NotificationPage`, `SearchPage`).
+  `nextCursor` is empty on the last page.
+- Every service has `GET /api/v1/<service>/health` (`@Public`) returning
+  `Health{service, status: ok|degraded}`.
+- Every service that consumes events has `POST /api/v1/<service>/events`
+  (`Allow(Service)`) taking the `kit/events` `Envelope{eventId, type,
+  domainId, producer, occurredAt, payload}` (slice I2). The consumer writes
+  only into the envelope's `domainId`.
+
+## identity (stateless)
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `GET /api/v1/identity/config` | Public | - | `ClientConfig{issuer, clientId, scopes[], apiBase}` |
+| `GET /api/v1/identity/me` | SignedIn | - | `Me{memberId, domainId, displayName, primaryAddress, roles[]}` |
+
+The browser uses the OIDC authorization code flow with PKCE against
+Keycloak directly, in the realm of the user's domain. Mesail has no
+`/auth/*` login routes.
+
+## directory
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `POST /api/v1/directory/recipients/resolve` | SignedIn | `ResolveRequest{addresses[] (max 100)}` | `ResolveResponse{recipients[]: ResolvedRecipient}` |
+| `GET /api/v1/directory/members?query=` | SignedIn | - | `MemberPage` of `MemberSummary{memberId?, displayName, primaryAddress}`, only members of the caller's domain |
+| `GET /api/v1/directory/domains` | Allow(Operator) | - | `[]Domain` |
+| `POST /api/v1/directory/domains` | Allow(Operator) | `CreateDomainRequest{name}` | `201 Domain` (also creates the domain's Keycloak realm) |
+| `POST /api/v1/directory/domains/{domainId}/verify` | Allow(Operator) | - | `Domain` (with `dns` states) |
+| `DELETE /api/v1/directory/domains/{domainId}` | Allow(Operator) | - | `204` |
+| `POST /api/v1/directory/aliases` | Allow(DomainAdmin) | `CreateAliasRequest{address, memberId?}` | `201 Address` |
+| `GET /api/v1/directory/addresses/{address}` | Allow(Service) | - | `Address{address, domainId, kind, targetId}` or `404` (used by the SMTP edge and `messaging`) |
+
+`Domain{domainId, name, state, dkimSelector, dns: DnsState{mx, spf, dkim,
+dmarc}}`. `domainId` is the domain name in lowercase (for example
+`example.com`) and is also the realm name. `Address.kind` is
+`member|alias|channel`. An alias address and its member are both in the
+caller's domain.
+
+`ResolvedRecipient{address, displayName, kind:
+member|channel|otherDomain|external, memberId?, channelId?, defaultDelivery:
+chat|email, allowedDeliveries[]}`. The kind is decided from the caller's
+domain by `kit/recipients`:
+
+| `kind` | Meaning | `allowedDeliveries` | `defaultDelivery` |
+| --- | --- | --- | --- |
+| `member` | a member or alias in the caller's domain | `["chat","email","both"]` | `chat` |
+| `channel` | a channel in the caller's domain | `["chat"]` | `chat` |
+| `otherDomain` | hosted on this install, in another domain | `["email"]` | `email` |
+| `external` | not hosted on this install | `["email"]` | `email` |
+
+For `otherDomain` the response has no `memberId`, no `channelId` and no
+display name from the other domain.
+
+## channels
+
+Channels belong to one domain. There is no workspace.
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `GET /api/v1/channels` | SignedIn | - | `[]Channel` (public ones in the caller's domain, plus private ones the caller is in) |
+| `POST /api/v1/channels` | SignedIn | `CreateChannelRequest{name, topic?, visibility: public|private}` | `201 Channel` |
+| `POST /api/v1/channels/{channelId}/join` | SignedIn | - | `204` |
+| `POST /api/v1/channels/{channelId}/leave` | SignedIn | - | `204` |
+| `POST /api/v1/channels/{channelId}/invite` | SignedIn | `AddMembersRequest{memberIds[]}` | `204` |
+| `PATCH /api/v1/channels/{channelId}` | SignedIn; `DomainAdmin` for `emailAddress` and `archived` | `UpdateChannelRequest{topic?, emailAddress?, archived?}` | `Channel` |
+
+`Channel{channelId, name, topic?, visibility, emailAddress?, archived,
+conversationId}`. Invited members must be in the caller's domain; a member
+id from another domain answers `404`. A `PATCH` that sets `emailAddress` or
+`archived` without the `DomainAdmin` role answers `403 forbidden`. A channel
+`emailAddress` must be in the channel's domain.
+
+## messaging
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `GET /api/v1/messaging/conversations` | SignedIn | - | `ConversationPage` of `ConversationSummary{conversationId, kind, title, hasExternal, unreadCount, mentionCount, lastMessageAt}` |
+| `GET /api/v1/messaging/conversations/{conversationId}/messages` | SignedIn | `?threadRootId=` | `MessagePage` of `Message`, newest first |
+| `POST /api/v1/messaging/messages` | SignedIn | `SendRequest` | `201 SendResult{message, deliveries[]}` |
+| `PATCH /api/v1/messaging/messages/{messageId}` | SignedIn | `EditRequest{body}` | `Message` |
+| `DELETE /api/v1/messaging/messages/{messageId}` | SignedIn | - | `204` |
+| `PUT /api/v1/messaging/messages/{messageId}/reactions/{emoji}` | SignedIn | - | `204` |
+| `DELETE /api/v1/messaging/messages/{messageId}/reactions/{emoji}` | SignedIn | - | `204` |
+| `PUT /api/v1/messaging/conversations/{conversationId}/read` | SignedIn | `ReadRequest{messageId}` | `204` |
+
+`SendRequest{clientMessageId, conversationId?, threadRootId?, body,
+attachmentIds[], recipients[]: RecipientChoice, email?: EmailOptions}`.
+`RecipientChoice{address, role: to|cc|bcc, delivery: chat|email|both,
+expectedKind: member|channel|otherDomain|external}`.
+`EmailOptions{subject, fromAddress?, sendToExternal (for channel threads)}`.
+`fromAddress` must be an address of the caller in the caller's domain.
+
+Rules (SPEC AC-CP):
+
+- A send to an existing conversation without new recipients needs no
+  `recipients`. A conversation in another domain answers `404`.
+- Chat never leaves the caller's domain. The server re-resolves every
+  recipient from the caller's domain and checks the delivery with
+  `kit/recipients` `Policy.Check`:
+  - if `expectedKind` differs from the fresh kind, it answers
+    `409 recipients_changed` with `RecipientsChanged{code, message,
+    addresses[]}`, naming the changed addresses; the client resolves them
+    again;
+  - if `expectedKind` is right but `delivery` asks for chat (`chat` or
+    `both`) for a kind that allows email only (`otherDomain`, `external`),
+    it answers `422 chat_not_allowed` (`field` names the address);
+  - any other delivery that the kind does not allow (email to a `channel`)
+    answers `400 invalid_request`.
+- An email to an `otherDomain` address is sent as email through `mail-out`,
+  like any other email (DOMAIN.md invariant 3).
+- When any delivery is `email`, `email.subject` is required for a new
+  conversation.
+
+`Message{messageId, conversationId, threadRootId?, author: Author, body,
+attachments[]: AttachmentRef, email?: EmailSummary, reactions:
+map[string]int, myReactions[], replyCount, lastReplyAt?, editedAt?,
+deletedAt?, createdAt, deliveries[]: DeliveryStatus}`.
+`Author{kind: member|otherDomain|external, memberId?, address,
+displayName}`. `AttachmentRef{attachmentId, fileName, mediaType, size}`.
+`EmailSummary{subject, from, to[], cc[], suspicious, authResults:
+AuthResults{spf, dkim, dmarc}}`. `DeliveryStatus{recipient, channel:
+chat|email, status, detail?}`.
+
+## attachments
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `POST /api/v1/attachments` | SignedIn | `CreateUploadRequest{fileName, mediaType, size, sha256}` | `201 Upload{attachmentId, uploadUrl, expiresAt}` |
+| `POST /api/v1/attachments/{attachmentId}/complete` | SignedIn | - | `Attachment{attachmentId, fileName, mediaType, size, sha256, state}` |
+| `GET /api/v1/attachments/{attachmentId}` | SignedIn | - | `Download{url, expiresAt}` (short-lived signed URL) |
+
+An attachment in another domain answers `404`.
+
+## realtime
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `GET /api/v1/realtime/socket` (socket route) | SignedIn | - | server-to-client `RealtimeEvent` |
+| `PUT /api/v1/realtime/presence` | SignedIn | `PresenceRequest{state: active|idle|dnd, dndUntil?}` | `204` |
+| `GET /api/v1/realtime/presence?memberIds=` | SignedIn | - | `[]Presence{memberId, state, dndUntil?, lastSeenAt}` |
+
+Presence is per domain: a caller sees presence only of members in its own
+domain, and member ids from another domain are left out of the answer. The
+socket sends only events of the caller's domain.
+
+`RealtimeEvent{type, conversationId, messageId, memberId?, state}` carries
+ids only, never message bodies; the client fetches what it needs.
+`RealtimeEvent.type` is one of `message.created`, `message.edited`,
+`message.deleted`, `reaction.changed`, `read.moved`, `presence.changed`,
+`typing`, `notification`. The socket re-checks the token every 60 seconds
+and closes with code 4401 when it is no longer valid (SPEC AC-ID-4).
+
+## notify
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `GET /api/v1/notify/notifications` | SignedIn | - | `NotificationPage` of `Notification{notificationId, kind, conversationId, messageId, createdAt, readAt?}` |
+| `PUT /api/v1/notify/notifications/{notificationId}/read` | SignedIn | - | `204` |
+| `POST /api/v1/notify/push-subscriptions` | SignedIn | `PushSubscriptionRequest{endpoint, p256dh, auth}` | `201` |
+| `GET /api/v1/notify/settings` / `PUT` | SignedIn | `NotifySettings{emailSummaryAfterMinutes (0=off, 15..1440), mutedConversationIds[]}` | `NotifySettings` |
+
+## search
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `GET /api/v1/search?q=&conversationId=&author=&from=&to=&hasAttachment=&isEmail=` | SignedIn | - | `SearchPage` of `SearchHit{messageId, conversationId, snippet, createdAt}` |
+
+A search reads only the caller's domain, and only conversations the caller
+can read now.
+
+## mail-in (SMTP, not HTTP)
+
+- SMTP on port 25 (STARTTLS), run as an always-on edge listener (ADR 0004).
+- `RCPT TO` is checked against `directory`
+  (`GET /api/v1/directory/addresses/{address}`); unknown hosted recipients
+  get `550 5.1.1`. Mail for a domain that is not hosted, or not `active`,
+  gets `550 5.7.1` (no open relay).
+- The edge writes the raw message to the blob store, then calls
+  `POST /api/v1/mail-in/messages` (`Allow(Service)`) with
+  `InboundEnvelope{envelopeFrom, recipients[], rawBlobKey, size,
+  remoteAddress, helo, tls}` and answers `250` only after
+  `201 InboundAccepted{inboundId}`.
+- After the message is stored, `mail-in` publishes one `email.received`
+  event per recipient domain: envelope `domainId` is that domain, payload
+  `{inboundId, rcpts[] (only that domain's), rawBlobKey, headers: {messageId,
+  inReplyTo, references, subject, from, to, cc}, authResults}`.
+
+## mail-out (worker, no public routes)
+
+Consumes `email.send.requested` (envelope `domainId` is the sender's domain;
+payload `{messageId, from, rcpt, role, subject, inReplyTo, references[],
+bodyRef, attachmentIds[], idempotencyKey}`), builds MIME, signs DKIM,
+delivers, and publishes `email.delivery.changed{messageId, rcpt, status,
+detail}`. When `rcpt` is in another hosted domain, `mail-out` may hand the
+signed message to `mail-in` inside the install (raw blob plus
+`POST /api/v1/mail-in/messages`) instead of using the internet. It is still
+email: full headers, DKIM, and an email conversation on both sides.

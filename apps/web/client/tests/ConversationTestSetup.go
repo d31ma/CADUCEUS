@@ -20,7 +20,7 @@ func (setup ConversationTestSetup) Exchange(request *BehaviorHttpRequest, execut
 	case "GET /api/v1/channels":
 		return setup.Channels(), nil
 	case "GET /api/v1/messaging/conversations":
-		return ConversationPage{Items: setup.Summaries(), NextCursor: ""}, nil
+		return setup.conversationPage(setup.cursorOf(request)), nil
 	case "GET /api/v1/messaging/conversations/cnv_general/messages":
 		return setup.generalPage(setup.cursorOf(request)), nil
 	case "GET /api/v1/messaging/conversations/cnv_carol/messages":
@@ -56,6 +56,12 @@ func (setup ConversationTestSetup) Summaries() []ConversationSummary {
 		{ConversationId: "cnv_bo", Kind: "direct", Title: "Bo Lee", UnreadCount: 1, LastMessageAt: "2026-11-10T09:00:00Z"},
 		{ConversationId: "cnv_team", Kind: "direct", Title: "Bo Lee, Dee Park", LastMessageAt: "2026-11-10T12:00:00Z"},
 		{ConversationId: "cnv_carol", Kind: "direct", Title: "Carol Diaz", HasExternal: true, LastMessageAt: "2026-11-10T13:00:00Z"},
+	}
+}
+
+func (setup ConversationTestSetup) secondPageSummaries() []ConversationSummary {
+	return []ConversationSummary{
+		{ConversationId: "cnv_dee", Kind: "direct", Title: "Dee Park", LastMessageAt: "2026-11-08T08:00:00Z"},
 	}
 }
 
@@ -120,6 +126,13 @@ func (setup ConversationTestSetup) generalPage(cursor string) MessagePage {
 		return MessagePage{Items: setup.OlderMessages(), NextCursor: ""}
 	}
 	return MessagePage{Items: setup.GeneralMessages(), NextCursor: "older"}
+}
+
+func (setup ConversationTestSetup) conversationPage(cursor string) ConversationPage {
+	if cursor == "50" {
+		return ConversationPage{Items: setup.secondPageSummaries(), NextCursor: ""}
+	}
+	return ConversationPage{Items: setup.Summaries(), NextCursor: "50"}
 }
 
 func (setup ConversationTestSetup) authorizationOf(request *BehaviorHttpRequest) string {

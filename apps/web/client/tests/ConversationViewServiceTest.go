@@ -56,6 +56,13 @@ func (test *ConversationViewServiceTest) fromCarol(messageId string, createdAt s
 	}
 }
 
+func (test *ConversationViewServiceTest) handoff() Message {
+	message := test.withResults(test.fromCarol("m1", "2026-11-10T08:47:00Z"), false, MessageAuthResults{Handoff: true})
+	message.Author = Author{Kind: "otherDomain", Address: "Lee@Example.org", DisplayName: "Lee Chan"}
+	message.Email.From = "Lee Chan <lee@example.org>"
+	return message
+}
+
 func (test *ConversationViewServiceTest) withResults(message Message, suspicious bool, results MessageAuthResults) Message {
 	message.Email.Suspicious = suspicious
 	message.Email.AuthResults = results
@@ -320,12 +327,39 @@ func (test *ConversationViewServiceTest) TestFailingChecksAreAWarningWithTheirRe
 	Assert.Equals("SPF softfail · DKIM none · DMARC fail", email.SenderCheckInfo)
 }
 
-func (test *ConversationViewServiceTest) TestHandoffIsSentOnThisServer() {
-	message := test.withResults(test.fromCarol("m1", "2026-11-10T08:47:00Z"), false, MessageAuthResults{Handoff: true})
+func (test *ConversationViewServiceTest) TestEmailFromAnotherDomainOnThisServerIsAHandoff() {
+	message := test.handoff()
 	email := test.one(message).Email
 	Assert.Equals("handoff", email.SenderCheck)
 	Assert.Equals("Sent on this server", email.SenderCheckLabel)
-	Assert.Equals("Sent from partner.org on this server", email.SenderCheckInfo)
+	Assert.Equals("Sent from example.org on this server", email.SenderCheckInfo)
+}
+
+func (test *ConversationViewServiceTest) TestPassingDmarcStillShowsAHandoff() {
+	message := test.handoff()
+	message.Email.AuthResults = MessageAuthResults{DomainPolicy: "pass", Handoff: true}
+	Assert.Equals("handoff", test.one(message).Email.SenderCheck)
+}
+
+func (test *ConversationViewServiceTest) TestAnotherDomainWithoutTheHandoffFlagIsAWarning() {
+	message := test.handoff()
+	message.Email.AuthResults = MessageAuthResults{}
+	Assert.Equals("warning", test.one(message).Email.SenderCheck)
+}
+
+func (test *ConversationViewServiceTest) TestChatFromAnotherDomainHasNoEmailCard() {
+	message := test.handoff()
+	message.Email = nil
+	email := test.one(message).Email
+	Assert.IsTrue(!email.IsEmail)
+	Assert.Equals("", email.SenderCheck)
+}
+
+func (test *ConversationViewServiceTest) TestExternalEmailWithoutResultsIsAWarning() {
+	message := test.withResults(test.fromCarol("m1", "2026-11-10T08:47:00Z"), false, MessageAuthResults{})
+	email := test.one(message).Email
+	Assert.Equals("warning", email.SenderCheck)
+	Assert.Equals("SPF none · DKIM none · DMARC none", email.SenderCheckInfo)
 }
 
 func (test *ConversationViewServiceTest) TestRemoteImagesFromAnUnknownSenderAreHidden() {
@@ -412,7 +446,7 @@ func (test *ConversationViewServiceTest) TestReactionsAndAttachmentsAreShown() {
 func (test *ConversationViewServiceTest) TestMyMessageShowsItsDelivery() {
 	message := test.mine("m1", "2026-11-10T14:00:00Z")
 	message.Deliveries = []DeliveryStatus{
-		{Recipient: "bo@example.com", Channel: "chat", Status: "seen"},
+		{Recipient: "bo@example.com", Channel: "chat", Status: "read"},
 		{Recipient: "carol@outside.test", Channel: "email", Status: "bounced", Detail: "mailbox not found"},
 	}
 	view := test.one(message)
@@ -427,7 +461,7 @@ func (test *ConversationViewServiceTest) TestMyMessageWithoutDeliveriesShowsNone
 
 func (test *ConversationViewServiceTest) TestSomeoneElsesDeliveryIsNotShown() {
 	message := test.message("m1", "bo@example.com", "2026-11-10T14:00:00Z")
-	message.Deliveries = []DeliveryStatus{{Recipient: "ana@example.com", Channel: "chat", Status: "seen"}}
+	message.Deliveries = []DeliveryStatus{{Recipient: "ana@example.com", Channel: "chat", Status: "read"}}
 	Assert.IsTrue(!test.one(message).ShowDelivery)
 }
 

@@ -229,7 +229,7 @@ func (service *ConversationViewService) emailView(message Message, blocks []Bloc
 	sender := service.senderAddress(summary.From)
 	allowed := slices.Contains(service.lowercased(allowedSenders), sender)
 	blocked := service.blockedCount(len(service.withoutEmpty(service.remoteUrls(blocks))), allowed)
-	check := service.senderCheck(summary)
+	check := service.senderCheck(message, summary)
 	card := MessageEmailView{
 		IsEmail:          true,
 		Subject:          summary.Subject,
@@ -238,7 +238,7 @@ func (service *ConversationViewService) emailView(message Message, blocks []Bloc
 		Cc:               strings.Join(summary.Cc, service.listSeparator()),
 		SenderCheck:      check,
 		SenderCheckLabel: service.senderLabels()[check],
-		SenderCheckInfo:  cmp.Or(service.handoffInfo(sender)[check], service.resultsLine(summary.AuthResults)),
+		SenderCheckInfo:  cmp.Or(service.handoffInfo(message.Author.Address)[check], service.resultsLine(summary.AuthResults)),
 		HasQuoted:        hasQuoted,
 		BlockedImages:    blocked,
 		BlockedLabel:     service.countLabel(blocked, "image hidden", "images hidden"),
@@ -308,8 +308,8 @@ func (service *ConversationViewService) blockedCount(count int, allowed bool) in
 	return count
 }
 
-func (service *ConversationViewService) senderCheck(summary MessageEmailSummary) string {
-	return cmp.Or(service.verifiedWhen(summary), service.handoffWhen(summary), service.warningCheck())
+func (service *ConversationViewService) senderCheck(message Message, summary MessageEmailSummary) string {
+	return cmp.Or(service.handoffWhen(summary), service.verifiedWhen(summary), service.warningCheck())
 }
 
 func (service *ConversationViewService) warningCheck() string {
@@ -346,8 +346,8 @@ func (service *ConversationViewService) senderLabels() map[string]string {
 	}
 }
 
-func (service *ConversationViewService) handoffInfo(sender string) map[string]string {
-	_, domain, _ := strings.Cut(sender, service.atSign())
+func (service *ConversationViewService) handoffInfo(authorAddress string) map[string]string {
+	_, domain, _ := strings.Cut(strings.ToLower(authorAddress), service.atSign())
 	return map[string]string{service.handoffCheck(): "Sent from " + domain + " on this server"}
 }
 

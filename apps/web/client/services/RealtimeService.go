@@ -73,5 +73,5 @@ func (service *RealtimeService) authenticationType() string {
 }
 
 func (service *RealtimeService) announceRefresh() {
-	service.applicationEventPublisher.PublishEvent(ConversationRefreshed{Source: "realtime"}, false)
+	service.applicationEventPublisher.PublishEvent(ConversationRefreshed{Source: "realtime"}, true)
 }

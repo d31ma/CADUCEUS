@@ -45,8 +45,24 @@ func (test *SidebarServiceTest) TestDomainSelectedFillsTheThreeSections() {
 	Assert.Equals("ready", sidebar.State)
 	Assert.Equals("example.com", sidebar.DomainId)
 	Assert.Equals([]string{"cnv_general", "cnv_secret"}, test.ids(sidebar.Channels))
-	Assert.Equals([]string{"cnv_team", "cnv_bo"}, test.ids(sidebar.Directs))
+	Assert.Equals([]string{"cnv_team", "cnv_bo", "cnv_dee"}, test.ids(sidebar.Directs))
 	Assert.Equals([]string{"cnv_carol"}, test.ids(sidebar.Emails))
+}
+
+func (test *SidebarServiceTest) TestSummariesReadEveryPage() {
+	summaries, failure := test.sidebar("access-1").loader.Summaries()
+	Assert.Equals(nil, failure)
+	Assert.Equals(6, len(summaries))
+	Assert.Equals("cnv_secret", summaries[0].ConversationId)
+	Assert.Equals("cnv_dee", summaries[5].ConversationId)
+	Assert.Equals("Dee Park", summaries[5].Title)
+}
+
+func (test *SidebarServiceTest) TestSummariesFailWithNoRowsWhenTheFirstPageFails() {
+	summaries, failure := test.sidebar("access-2").loader.Summaries()
+	Assert.IsTrue(failure != nil)
+	Assert.Equals(0, len(summaries))
+	Assert.IsTrue(summaries != nil)
 }
 
 func (test *SidebarServiceTest) TestDomainSelectedMatchesChannelInfo() {
@@ -170,7 +186,7 @@ func (test *SidebarServiceTest) TestLiveRefreshesAndKeepsTheOpenConversation() {
 	sidebar.ToggleSection("direct")
 	sidebar.Directs = []ConversationRow{}
 	sidebar.Live(RealtimeEvent{Type: "message.created", ConversationId: "cnv_bo", MessageId: "m-7"})
-	Assert.Equals(2, len(sidebar.Directs))
+	Assert.Equals(3, len(sidebar.Directs))
 	Assert.Equals("cnv_general", sidebar.CurrentId)
 	Assert.IsTrue(sidebar.Channels[0].Current)
 	Assert.IsTrue(sidebar.DirectsClosed)
@@ -206,7 +222,7 @@ func (test *SidebarServiceTest) TestLiveKeepsTheRowsWhenTheRefreshFails() {
 	test.useToken(sidebar, "access-2")
 	sidebar.Live(RealtimeEvent{Type: "message.created", ConversationId: "cnv_bo"})
 	Assert.Equals("ready", sidebar.State)
-	Assert.Equals(2, len(sidebar.Directs))
+	Assert.Equals(3, len(sidebar.Directs))
 }
 
 func (test *SidebarServiceTest) TestStartShowsLoadingUntilTheDomainLoads() {
@@ -250,5 +266,21 @@ func (test *SidebarServiceTest) TestNewMessageClearsTheCurrentConversation() {
 func (test *SidebarServiceTest) TestRefreshedCountsRenders() {
 	sidebar := test.loaded()
 	sidebar.Refreshed(ConversationRefreshed{Source: "conversation"})
-	Assert.Equals(1, sidebar.refreshes)
+	Assert.Equals(1, sidebar.Refreshes)
+}
+
+func (test *SidebarServiceTest) TestDomainChangedToAnotherDomainReturnsToTheList() {
+	sidebar := test.loaded()
+	sidebar.Open("cnv_general")
+	sidebar.DomainChanged(SessionDomainChanged{DomainId: "example.org"})
+	Assert.Equals("list", sidebar.shell.Pane)
+	Assert.Equals("Select a conversation", sidebar.shell.Heading)
+}
+
+func (test *SidebarServiceTest) TestDomainChangedToTheSameDomainKeepsTheShell() {
+	sidebar := test.loaded()
+	sidebar.Open("cnv_general")
+	sidebar.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
+	Assert.Equals("main", sidebar.shell.Pane)
+	Assert.Equals("general", sidebar.shell.Heading)
 }

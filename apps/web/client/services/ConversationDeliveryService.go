@@ -69,13 +69,11 @@ func (service *ConversationDeliveryService) countedLabel(worst DeliveryLine, cou
 
 func (service *ConversationDeliveryService) states() map[string]DeliveryLine {
 	return map[string]DeliveryLine{
-		"chat:pending":   {StatusLabel: "Sending", Tone: service.infoTone(), Connector: service.forWord()},
 		"chat:delivered": {StatusLabel: "Delivered", Tone: service.okTone(), Connector: service.toWord()},
-		"chat:seen":      {StatusLabel: "Seen", Tone: service.okTone(), Connector: service.byWord()},
+		"chat:read":      {StatusLabel: "Seen", Tone: service.okTone(), Connector: service.byWord()},
 		"email:queued":   {StatusLabel: "Queued", Tone: service.infoTone(), Connector: service.forWord()},
 		"email:sent":     {StatusLabel: "Sent", Tone: service.okTone(), Connector: service.toWord()},
-		"email:retrying": {StatusLabel: service.retryingWord(), Tone: service.warningTone()},
-		"email:deferred": {StatusLabel: service.retryingWord(), Tone: service.warningTone()},
+		"email:deferred": {StatusLabel: "Retrying", Tone: service.warningTone()},
 		"email:bounced":  {StatusLabel: "Bounced", Tone: service.dangerTone()},
 		"email:failed":   {StatusLabel: "Failed", Tone: service.dangerTone()},
 	}
@@ -96,10 +94,6 @@ func (service *ConversationDeliveryService) ranks() map[string]int {
 
 func (service *ConversationDeliveryService) onePerson() int {
 	return 1
-}
-
-func (service *ConversationDeliveryService) retryingWord() string {
-	return "Retrying"
 }
 
 func (service *ConversationDeliveryService) okTone() string {

@@ -14,23 +14,31 @@ func (test *ConversationDeliveryServiceTest) summary(statuses ...DeliveryStatus)
 func (test *ConversationDeliveryServiceTest) TestChatStatesHaveWordsAndTones() {
 	lines := test.lines(
 		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "delivered"},
-		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "seen"},
-		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "pending"},
+		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "read"},
 	)
 	Assert.Equals("Chat", lines[0].ChannelLabel)
 	Assert.Equals("Delivered", lines[0].StatusLabel)
 	Assert.Equals("ok", lines[0].Tone)
 	Assert.Equals("Seen", lines[1].StatusLabel)
 	Assert.Equals("ok", lines[1].Tone)
-	Assert.Equals("Sending", lines[2].StatusLabel)
-	Assert.Equals("info", lines[2].Tone)
+	Assert.Equals(2, len(lines))
+}
+
+func (test *ConversationDeliveryServiceTest) TestOldChatAndEmailWordsAreUnknown() {
+	lines := test.lines(
+		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "pending"},
+		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "seen"},
+		DeliveryStatus{Recipient: "carol@outside.test", Channel: "email", Status: "retrying"},
+	)
+	Assert.Equals("Unknown", lines[0].StatusLabel)
+	Assert.Equals("Unknown", lines[1].StatusLabel)
+	Assert.Equals("Unknown", lines[2].StatusLabel)
 }
 
 func (test *ConversationDeliveryServiceTest) TestEmailStatesHaveWordsAndTones() {
 	lines := test.lines(
 		DeliveryStatus{Recipient: "carol@outside.test", Channel: "email", Status: "queued"},
 		DeliveryStatus{Recipient: "carol@outside.test", Channel: "email", Status: "sent"},
-		DeliveryStatus{Recipient: "carol@outside.test", Channel: "email", Status: "retrying"},
 		DeliveryStatus{Recipient: "carol@outside.test", Channel: "email", Status: "deferred"},
 		DeliveryStatus{Recipient: "carol@outside.test", Channel: "email", Status: "bounced"},
 		DeliveryStatus{Recipient: "carol@outside.test", Channel: "email", Status: "failed"},
@@ -42,11 +50,10 @@ func (test *ConversationDeliveryServiceTest) TestEmailStatesHaveWordsAndTones() 
 	Assert.Equals("ok", lines[1].Tone)
 	Assert.Equals("Retrying", lines[2].StatusLabel)
 	Assert.Equals("warning", lines[2].Tone)
-	Assert.Equals("Retrying", lines[3].StatusLabel)
-	Assert.Equals("Bounced", lines[4].StatusLabel)
+	Assert.Equals("Bounced", lines[3].StatusLabel)
+	Assert.Equals("danger", lines[3].Tone)
+	Assert.Equals("Failed", lines[4].StatusLabel)
 	Assert.Equals("danger", lines[4].Tone)
-	Assert.Equals("Failed", lines[5].StatusLabel)
-	Assert.Equals("danger", lines[5].Tone)
 }
 
 func (test *ConversationDeliveryServiceTest) TestLineCopiesRecipientStatusAndDetail() {
@@ -70,8 +77,8 @@ func (test *ConversationDeliveryServiceTest) TestNoStatusesGiveNoLines() {
 
 func (test *ConversationDeliveryServiceTest) TestSummaryNamesTheRecipientOfTheWorstProblem() {
 	summary := test.summary(
-		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "seen"},
-		DeliveryStatus{Recipient: "dan@outside.test", Channel: "email", Status: "retrying"},
+		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "read"},
+		DeliveryStatus{Recipient: "dan@outside.test", Channel: "email", Status: "deferred"},
 		DeliveryStatus{Recipient: "carol@outside.test", Channel: "email", Status: "bounced"},
 	)
 	Assert.Equals("Bounced for carol@outside.test", summary.StatusLabel)
@@ -82,7 +89,7 @@ func (test *ConversationDeliveryServiceTest) TestSummaryNamesTheRecipientOfTheWo
 func (test *ConversationDeliveryServiceTest) TestSummaryNamesARetryingRecipient() {
 	summary := test.summary(
 		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "delivered"},
-		DeliveryStatus{Recipient: "dan@outside.test", Channel: "email", Status: "retrying"},
+		DeliveryStatus{Recipient: "dan@outside.test", Channel: "email", Status: "deferred"},
 	)
 	Assert.Equals("Retrying for dan@outside.test", summary.StatusLabel)
 	Assert.Equals("warning", summary.Tone)
@@ -100,7 +107,7 @@ func (test *ConversationDeliveryServiceTest) TestSummaryCountsPeopleWhenNothingI
 
 func (test *ConversationDeliveryServiceTest) TestSummaryShowsTheWaitingWord() {
 	summary := test.summary(
-		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "seen"},
+		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "read"},
 		DeliveryStatus{Recipient: "carol@outside.test", Channel: "email", Status: "queued"},
 	)
 	Assert.Equals("Queued for 2 people", summary.StatusLabel)
@@ -119,8 +126,10 @@ func (test *ConversationDeliveryServiceTest) TestSummaryOfNoLinesIsEmpty() {
 
 func (test *ConversationDeliveryServiceTest) TestSummarySaysSeenByPeople() {
 	summary := test.summary(
-		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "seen"},
-		DeliveryStatus{Recipient: "dee@example.com", Channel: "chat", Status: "seen"},
+		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "read"},
+		DeliveryStatus{Recipient: "dee@example.com", Channel: "chat", Status: "read"},
+		DeliveryStatus{Recipient: "eve@example.com", Channel: "chat", Status: "read"},
 	)
-	Assert.Equals("Seen by 2 people", summary.StatusLabel)
+	Assert.Equals("Seen by 3 people", summary.StatusLabel)
+	Assert.Equals("ok", summary.Tone)
 }

@@ -25,6 +25,7 @@ type ConversationService struct {
 	OriginalUrl     string
 	PickerForId     string
 	ReactionChoices []MessageReaction
+	ActionsForId    string
 	// @LocalState
 	AllowedSenders map[string][]string
 	ShowQuoted     []string
@@ -103,6 +104,7 @@ func (service *ConversationService) StartEdit(messageId string) {
 	service.EditingId = messageId
 	service.EditBody = service.messageList.Find(service.raw, messageId).Body
 	service.Problem = ""
+	service.closeActions()
 	service.rebuild()
 }
 
@@ -120,6 +122,7 @@ func (service *ConversationService) CancelEdit() {
 func (service *ConversationService) AskDelete(messageId string) {
 	service.DeletingId = messageId
 	service.DeleteWarning = service.messageList.DeleteWarning(service.messageList.Find(service.raw, messageId))
+	service.closeActions()
 }
 
 func (service *ConversationService) CancelDelete() {
@@ -151,6 +154,7 @@ func (service *ConversationService) reactionFailed() string {
 func (service *ConversationService) OpenPicker(messageId string) {
 	service.PickerForId = messageId
 	service.ReactionChoices = service.messageList.ReactionChoices(service.raw, messageId)
+	service.closeActions()
 }
 
 func (service *ConversationService) ClosePicker() {
@@ -184,6 +188,22 @@ func (service *ConversationService) OpenThread(messageId string) {
 		ConversationId: service.ConversationId,
 		MessageId:      messageId,
 	}, false)
+	service.closeActions()
+}
+
+func (service *ConversationService) ToggleActions(messageId string) {
+	service.ActionsForId = service.actionsTarget(messageId)
+}
+
+func (service *ConversationService) closeActions() {
+	service.ActionsForId = ""
+}
+
+func (service *ConversationService) actionsTarget(messageId string) string {
+	if service.ActionsForId == messageId {
+		return ""
+	}
+	return messageId
 }
 
 func (service *ConversationService) openWhenCurrent(opened ConversationOpened) {
@@ -405,6 +425,7 @@ func (service *ConversationService) reset() {
 	service.EditBody = ""
 	service.CancelDelete()
 	service.ClosePicker()
+	service.closeActions()
 	service.OriginalForId = ""
 	service.OriginalUrl = ""
 	service.ShowQuoted = []string{}
@@ -454,5 +475,5 @@ func (service *ConversationService) liveTypes() []string {
 }
 
 func (service *ConversationService) announceRefresh() {
-	service.applicationEventPublisher.PublishEvent(ConversationRefreshed{Source: "conversation"}, false)
+	service.applicationEventPublisher.PublishEvent(ConversationRefreshed{Source: "conversation"}, true)
 }

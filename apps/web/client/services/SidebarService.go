@@ -13,7 +13,7 @@ type SidebarService struct {
 	EmailsClosed   bool
 	channelInfo    []Channel
 	opened         ConversationOpened
-	refreshes      int
+	Refreshes      int
 	// @Needs
 	loader *SidebarLoadService
 	// @Needs
@@ -40,6 +40,7 @@ func (sidebar *SidebarService) DomainSelected(selected ConversationDomainSelecte
 // @OnEvent({"replay":true})
 // @InBackground
 func (sidebar *SidebarService) DomainChanged(changed SessionDomainChanged) {
+	sidebar.resetShellWhenOtherDomain(changed.DomainId)
 	sidebar.clear(changed.DomainId)
 	sidebar.load(changed.DomainId)
 	sidebar.announceRefresh()
@@ -47,7 +48,7 @@ func (sidebar *SidebarService) DomainChanged(changed SessionDomainChanged) {
 
 // @OnEvent
 func (sidebar *SidebarService) Refreshed(refreshed ConversationRefreshed) {
-	sidebar.refreshes++
+	sidebar.Refreshes++
 }
 
 // @OnEvent
@@ -92,6 +93,18 @@ func (sidebar *SidebarService) clear(domainId string) {
 	sidebar.CurrentId = ""
 	sidebar.channelInfo = []Channel{}
 	sidebar.opened = ConversationOpened{}
+}
+
+func (sidebar *SidebarService) resetShellWhenOtherDomain(domainId string) {
+	if domainId == sidebar.DomainId {
+		return
+	}
+	sidebar.shell.ShowList()
+	sidebar.shell.Heading = sidebar.listHeading()
+}
+
+func (sidebar *SidebarService) listHeading() string {
+	return "Select a conversation"
 }
 
 func (sidebar *SidebarService) stateLoading() string {
@@ -267,5 +280,5 @@ func (sidebar *SidebarService) sectionEmail() string {
 }
 
 func (sidebar *SidebarService) announceRefresh() {
-	sidebar.applicationEventPublisher.PublishEvent(ConversationRefreshed{Source: "sidebar"}, false)
+	sidebar.applicationEventPublisher.PublishEvent(ConversationRefreshed{Source: "sidebar"}, true)
 }

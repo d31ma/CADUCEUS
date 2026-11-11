@@ -1,6 +1,6 @@
 <logic :if="conversation.state != 'idle'">
   <div class="conversation-view flex h-full min-w-0 flex-col-reverse overflow-y-auto overscroll-contain">
-  <div class="conversation-stack flex min-h-full min-w-0 flex-col pb-[env(safe-area-inset-bottom)]">
+  <div class="conversation-stack flex min-h-full min-w-0 shrink-0 flex-col pb-[env(safe-area-inset-bottom)]">
     <logic :if="conversation.state == 'ready' && conversation.problem != ''">
       <div class="view-problem sticky top-0 z-10 px-3 pt-2 sm:px-5">
         <w-alert type="error" :text="conversation.problem"></w-alert>
@@ -50,7 +50,7 @@
               <div class="new-divider flex items-center gap-3 py-1" role="separator" aria-label="New messages"><span class="new-label" aria-hidden="true">New</span></div>
             </logic>
 
-            <article class="message relative grid min-w-0 grid-cols-[var(--ms-avatar-md)_minmax(0,1fr)] gap-x-3 rounded-md px-2 py-1" :aria-label="message.authorName + ', ' + message.time" :data-grouped="message.grouped" :data-mention="message.mentionsMe" :data-deleted="message.deleted" :data-editing="message.editing">
+            <article class="message relative grid min-w-0 grid-cols-[var(--ms-avatar-md)_minmax(0,1fr)] gap-x-3 max-[959px]:grid-cols-[var(--ms-avatar-md)_minmax(0,1fr)_auto] pointer-coarse:grid-cols-[var(--ms-avatar-md)_minmax(0,1fr)_auto] rounded-md px-2 py-1" :aria-label="message.authorName + ', ' + message.time" :data-grouped="message.grouped" :data-mention="message.mentionsMe" :data-deleted="message.deleted" :data-editing="message.editing" :data-actions-open="conversation.actionsForId == message.messageId">
               <div class="message-gutter flex justify-center">
                 <logic :if="!message.grouped">
                   <w-avatar class="message-avatar" size="small" :initials="message.authorInitials" :data-outside="message.outside" aria-hidden="true"></w-avatar>
@@ -60,7 +60,7 @@
                 </logic>
               </div>
 
-              <div class="message-main flex min-w-0 max-w-(--ms-content-max) flex-col gap-1">
+              <div class="message-main flex min-w-0 max-w-(--ms-content-max) flex-col gap-1 justify-self-start">
                 <logic :if="!message.grouped">
                   <div class="message-meta flex min-w-0 flex-wrap items-baseline gap-x-2">
                     <span class="author">{message.authorName}</span>
@@ -138,7 +138,7 @@
                                 <p class="image-card flex items-center gap-2"><w-icon name="eye-off" size="small" aria-hidden="true"></w-icon><span>Image hidden: {block.image.alt}</span></p>
                               </logic>
                               <logic :if="block.image.remoteUrl && message.email.imagesAllowed">
-                                <p class="image-card flex items-center gap-2"><w-icon name="image" size="small" aria-hidden="true"></w-icon><a class="image-link" :href="block.image.remoteUrl" target="_blank" rel="noopener noreferrer">Open image: {block.image.alt}</a></p>
+                                <p class="image-card flex items-center gap-2"><w-icon name="image" size="small" aria-hidden="true"></w-icon><a class="image-link inline-flex min-h-11 items-center" :href="block.image.remoteUrl" target="_blank" rel="noopener noreferrer">Open image: {block.image.alt}</a></p>
                               </logic>
                               <logic :if="!block.image.remoteUrl">
                                 <p class="image-card flex items-center gap-2"><w-icon name="image" size="small" aria-hidden="true"></w-icon><span>Image: {block.image.alt}</span></p>
@@ -240,7 +240,8 @@
               </div>
 
               <logic :if="!message.deleted && !message.editing">
-                <div class="message-actions flex items-center gap-1" role="group" :aria-label="message.actionsLabel">
+                <w-icon-btn class="message-more col-start-3 row-start-1 hidden self-start max-[959px]:inline-flex pointer-coarse:inline-flex" icon="more" size="small" variant="text" aria-label="Actions for this message" :aria-controls="'actions-' + message.messageId" :aria-expanded="shell.flag(conversation.actionsForId == message.messageId)" on:click="conversation.toggleActions(message.messageId)"></w-icon-btn>
+                <div class="message-actions flex flex-wrap items-center gap-1" role="group" :id="'actions-' + message.messageId" :aria-label="message.actionsLabel">
                   <w-icon-btn icon="smile" size="small" variant="text" aria-label="Add reaction" on:click="conversation.openPicker(message.messageId)"></w-icon-btn>
                   <w-icon-btn icon="thread" size="small" variant="text" aria-label="Reply in thread" on:click="conversation.openThread(message.messageId)"></w-icon-btn>
                   <logic :if="message.canEdit">

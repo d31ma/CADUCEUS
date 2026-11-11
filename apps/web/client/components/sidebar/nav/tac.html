@@ -1,4 +1,4 @@
-<nav class="sidebar-nav flex flex-col gap-2 pb-[env(safe-area-inset-bottom)]" aria-label="Conversations">
+<nav class="sidebar-nav flex flex-col gap-2 pb-[env(safe-area-inset-bottom)]" aria-label="Conversations" :data-refreshes="sidebar.refreshes">
   <div class="live-notice" role="status" aria-live="polite" :data-realtime="realtime.state">
     <logic :if="sidebar.state == 'ready' && realtime.state == 'connecting'">
       <w-banner class="notice-banner" density="compact">

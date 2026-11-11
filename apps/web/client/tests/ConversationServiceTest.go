@@ -308,3 +308,73 @@ func (test *ConversationServiceTest) TestComposeRequestedClearsTheConversation()
 	Assert.Equals("idle", service.State)
 	Assert.Equals(0, len(service.Messages))
 }
+
+func (test *ConversationServiceTest) TestStartHasNoActionsOpen() {
+	service := test.build()
+	Assert.Equals("", service.ActionsForId)
+}
+
+func (test *ConversationServiceTest) TestToggleActionsOpensForTheMessage() {
+	service := test.general()
+	service.ToggleActions("m-2")
+	Assert.Equals("m-2", service.ActionsForId)
+}
+
+func (test *ConversationServiceTest) TestToggleActionsAgainClosesThem() {
+	service := test.general()
+	service.ToggleActions("m-2")
+	service.ToggleActions("m-2")
+	Assert.Equals("", service.ActionsForId)
+}
+
+func (test *ConversationServiceTest) TestToggleActionsMovesToAnotherMessage() {
+	service := test.general()
+	service.ToggleActions("m-2")
+	service.ToggleActions("m-3")
+	Assert.Equals("m-3", service.ActionsForId)
+}
+
+func (test *ConversationServiceTest) TestOpenedClosesTheActions() {
+	service := test.general()
+	service.ToggleActions("m-2")
+	service.Opened(ConversationOpened{DomainId: "example.com", ConversationId: "cnv_general", Title: "general", Section: "channels", UnreadCount: 1})
+	Assert.Equals("", service.ActionsForId)
+}
+
+func (test *ConversationServiceTest) TestComposeRequestedClosesTheActions() {
+	service := test.general()
+	service.ToggleActions("m-2")
+	service.ComposeRequested(ConversationComposeRequested{DomainId: "example.com"})
+	Assert.Equals("", service.ActionsForId)
+}
+
+func (test *ConversationServiceTest) TestStartEditClosesTheActions() {
+	service := test.general()
+	service.ToggleActions("m-2")
+	service.StartEdit("m-2")
+	Assert.Equals("", service.ActionsForId)
+	Assert.Equals("m-2", service.EditingId)
+}
+
+func (test *ConversationServiceTest) TestAskDeleteClosesTheActions() {
+	service := test.general()
+	service.ToggleActions("m-2")
+	service.AskDelete("m-2")
+	Assert.Equals("", service.ActionsForId)
+	Assert.Equals("m-2", service.DeletingId)
+}
+
+func (test *ConversationServiceTest) TestOpenPickerClosesTheActions() {
+	service := test.general()
+	service.ToggleActions("m-3")
+	service.OpenPicker("m-3")
+	Assert.Equals("", service.ActionsForId)
+	Assert.Equals("m-3", service.PickerForId)
+}
+
+func (test *ConversationServiceTest) TestOpenThreadClosesTheActions() {
+	service := test.general()
+	service.ToggleActions("m-3")
+	service.OpenThread("m-3")
+	Assert.Equals("", service.ActionsForId)
+}

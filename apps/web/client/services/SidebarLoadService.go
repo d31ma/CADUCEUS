@@ -1,3 +1,5 @@
+import "errors"
+
 // @Service
 type SidebarLoadService struct {
 	// @Needs
@@ -38,15 +40,36 @@ func (loader *SidebarLoadService) channelsOrNone(channels []Channel, failure err
 }
 
 func (loader *SidebarLoadService) summaries() ([]ConversationSummary, error) {
+	return loader.pagesFrom("", loader.pageLimit())
+}
+
+func (loader *SidebarLoadService) pagesFrom(cursor string, pagesLeft int) ([]ConversationSummary, error) {
+	page, failure := loader.page(cursor)
+	rest, restFailure := loader.restAfter(page.NextCursor, pagesLeft-1, failure)
+	return append(append([]ConversationSummary{}, page.Items...), rest...), errors.Join(failure, restFailure)
+}
+
+func (loader *SidebarLoadService) restAfter(cursor string, pagesLeft int, failure error) ([]ConversationSummary, error) {
+	if failure != nil || cursor == "" || pagesLeft == 0 {
+		return nil, nil
+	}
+	return loader.pagesFrom(cursor, pagesLeft)
+}
+
+func (loader *SidebarLoadService) page(cursor string) (ConversationPage, error) {
 	page := ConversationPage{}
 	failure := loader.token.WithRenewal(func(authorization string) error {
-		answer, failure := loader.messaging.Conversations(authorization, "", loader.pageSize())
+		answer, failure := loader.messaging.Conversations(authorization, cursor, loader.pageSize())
 		page = answer
 		return failure
 	})
-	return append([]ConversationSummary{}, page.Items...), failure
+	return page, failure
 }
 
 func (loader *SidebarLoadService) pageSize() int {
 	return 50
+}
+
+func (loader *SidebarLoadService) pageLimit() int {
+	return 4
 }

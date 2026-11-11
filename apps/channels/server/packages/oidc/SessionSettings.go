@@ -5,4 +5,5 @@ type SessionSettings struct {
 	Session KeySetting      `json:"session"`
 	Account ClientSetting   `json:"account"`
 	Signing SigningSettings `json:"signing"`
+	Issuer  string          `json:"issuer,omitempty"`
 }

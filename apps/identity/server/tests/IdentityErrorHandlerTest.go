@@ -28,3 +28,19 @@ func (test *IdentityErrorHandlerTest) TestInvalidCodeIsInvalidCode() {
 	answer := (&IdentityErrorHandler{}).InvalidCode(&InvalidCode{})
 	Assert.Equals("invalid_code", answer.Code)
 }
+
+func (test *IdentityErrorHandlerTest) TestForbiddenKeepsItsCode() {
+	answer := (&IdentityErrorHandler{}).Forbidden(&Forbidden{Code: "not_a_member"})
+	Assert.Equals("not_a_member", answer.Code)
+}
+
+func (test *IdentityErrorHandlerTest) TestNotFoundIsNotFound() {
+	answer := (&IdentityErrorHandler{}).NotFound(&NotFound{})
+	Assert.Equals("not_found", answer.Code)
+}
+
+func (test *IdentityErrorHandlerTest) TestInvalidRequestNamesTheDomainField() {
+	answer := (&IdentityErrorHandler{}).InvalidRequest(&InvalidRequest{})
+	Assert.Equals("invalid_request", answer.Code)
+	Assert.Equals("domainId", answer.Field)
+}

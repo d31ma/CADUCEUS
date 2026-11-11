@@ -1,6 +1,7 @@
 import (
 	"net/http"
 
+	"mesail.dev/packages/login"
 	"mesail.dev/packages/oidc"
 )
 
@@ -9,7 +10,7 @@ type TokenIdentityProvider struct {
 }
 
 func (provider *TokenIdentityProvider) Identify(request *http.Request) *Identity {
-	caller, failure := oidc.Configured().Identify(request.Header.Get("Authorization"))
+	caller, failure := login.SessionsFactory{}.Configured().Identify(request.Header.Get("Authorization"))
 	return provider.identity(caller, failure)
 }
 

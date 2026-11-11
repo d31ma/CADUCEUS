@@ -1,5 +1,6 @@
 type SignInRequest struct {
-	Address     string `json:"address"`
+	Login       string `json:"login,omitempty"`
+	Address     string `json:"address,omitempty"`
 	Password    string `json:"password"`
 	OneTimeCode string `json:"oneTimeCode,omitempty"`
 }

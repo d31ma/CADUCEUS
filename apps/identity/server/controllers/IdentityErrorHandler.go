@@ -30,3 +30,21 @@ func (handler *IdentityErrorHandler) PasswordPolicy(failure *PasswordPolicy) Api
 func (handler *IdentityErrorHandler) InvalidCode(failure *InvalidCode) ApiError {
 	return ApiError{Code: "invalid_code", Message: failure.Error(), Field: "code"}
 }
+
+// @HandlesError
+// @ResponseStatus(403)
+func (handler *IdentityErrorHandler) Forbidden(failure *Forbidden) ApiError {
+	return ApiError{Code: failure.Code, Message: failure.Error()}
+}
+
+// @HandlesError
+// @ResponseStatus(404)
+func (handler *IdentityErrorHandler) NotFound(failure *NotFound) ApiError {
+	return ApiError{Code: "not_found", Message: failure.Error()}
+}
+
+// @HandlesError
+// @ResponseStatus(400)
+func (handler *IdentityErrorHandler) InvalidRequest(failure *InvalidRequest) ApiError {
+	return ApiError{Code: "invalid_request", Message: failure.Error(), Field: "domainId"}
+}

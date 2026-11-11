@@ -17,8 +17,19 @@
   },
   "names": {
     "words": [
+      "alg",
+      "crv",
+      "jwks",
+      "kid",
+      "kty",
       "otpauth",
       "totp"
     ]
+  },
+  "directory": {
+    "url": "http://127.0.0.1:8102"
+  },
+  "identity": {
+    "issuer": "http://127.0.0.1:8101/api/v1/identity"
   }
 }

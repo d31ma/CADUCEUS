@@ -38,7 +38,7 @@ func generatedKeyText(t *testing.T) string {
 
 func signerDocument(current string, previous string) string {
 	return `{"yon":{"oidc":{"issuer":"https://mail.example.net/api/v1/identity","jwks":"https://mail.example.net/api/v1/identity/jwks","audience":"mesail-api"},` +
-		`"token":{"issuer":"https://mail.example.net/api/v1/identity"},"identity":{"signing":{"key":"` + current + `","previous":"` + previous + `"}}}}`
+		`"identity":{"issuer":"https://mail.example.net/api/v1/identity","signing":{"key":"` + current + `","previous":"` + previous + `"}}}}`
 }
 
 func configuredSigner(t *testing.T, current string, previous string) TokenSigner {
@@ -206,7 +206,7 @@ func TestTokenSignerFactoryNeedsTheIssuer(t *testing.T) {
 }
 
 func TestTokenSignerFactoryNeedsTheAudience(t *testing.T) {
-	document := `{"yon":{"token":{"issuer":"https://x"},"identity":{"signing":{"key":"` + generatedKeyText(t) + `"}}}}`
+	document := `{"yon":{"identity":{"issuer":"https://x","signing":{"key":"` + generatedKeyText(t) + `"}}}}`
 	signer := TokenSignerFactory{}.FromJson(document)
 	if !errors.Is(signer.Problem, NotConfigured{}) {
 		t.Fatalf("got %v", signer.Problem)

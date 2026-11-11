@@ -91,7 +91,7 @@ own access token, which names the active domain.
 | `DELETE /api/v1/identity/session` | Public | `RefreshRequest{sessionKey}` | `204`; ends the Keycloak session (also an offline session) |
 | `DELETE /api/v1/identity/sessions` | SignedIn | - | `204`: "Sign out on all devices". Ends every Keycloak session of the caller, offline sessions included, and records `sessionsEndedAt` in `directory`, so every kept device deletes its copy at its next refresh (SPEC AC-OF-9) |
 | `GET /api/v1/identity/me` | SignedIn | - | `Me{memberId, domainId, username, displayName, primaryAddress, roles[]}` from the token only (`domainId` `*` and `primaryAddress` `""` for an Operator session with no domain) |
-| `GET /api/v1/identity/jwks` | Public | - | `KeySet{keys[]: PublicKey}`: the JSON Web Key Set (RFC 7517) with the current signing key and, during a rotation, the previous one. `PublicKey{kty, crv, x, y, kid, alg, use}` uses the standard JWK names (`EC`, `P-256`, `ES256`, `sig`); add them to `names.words`. Cache header `max-age=300`. |
+| `GET /api/v1/identity/jwks` | Public | - | `KeySet{keys[]: PublicKey}`: the JSON Web Key Set (RFC 7517) with the current signing key and, during a rotation, the previous one. `PublicKey{kty, crv, x, y, kid, alg, use}` uses the standard JWK names (`EC`, `P-256`, `ES256`, `sig`); add them to `names.words`. No cache header: TACHYON 26.46.02 has no way to set a response header from a Go route; `kit/oidc` keeps the set for 10 s to 5 minutes. |
 | `POST /api/v1/identity/service-token` | Public | `ServiceTokenRequest{clientId, clientSecret, domainId}` | `200 ServiceToken{accessToken, expiresIn}`; `401` for a wrong client or secret; `400 invalid_request` (`domainId`) when it is neither a domain name nor `*` |
 
 `Session{me: Me, domains[]: DomainChoice{domainId, admin, default}, accessToken,
@@ -111,6 +111,10 @@ client learns a new default at its next refresh after `PUT
 /directory/me/default-domain`. The client shows the default first with a
 "Default" tag; the server's order stays `domainIds` order. (Decided
 2026-11-11 for slice F1/L6.)
+
+Until slice L5, `SignInRequest` also takes the old field `address` (used when
+`login` is empty), and `identity` keeps the per-realm mode while its
+`oidc.issuer` has `{realm}` (slice L4 builds both; L5 switches the setting).
 
 How sign-in works (SPEC AC-ID-9):
 - `login` is trimmed and lowercased. Anything outside ASCII, or a prefix
@@ -145,7 +149,7 @@ The Mesail access token (ADR 0005 section 3):
   them. Not `..._KEY_PREVIOUS`: TACHYON maps `.env` names to settings by
   splitting at `_`, and `identity.signing.key` cannot be both a value and
   a folder, so `ty` refuses such a `.env`.
-- Claims: `iss` (the app setting `token.issuer`, for example
+- Claims: `iss` (the app setting `identity.issuer`, for example
   `https://mail.example.net/api/v1/identity`), `aud` `mesail-api`, `sub`
   (person id; `service` for a service token), `azp` (`mesail-web` or
   `mesail-service`), `domain` (active domain or `*`), `realm_access.roles`

@@ -9,7 +9,7 @@
   </header>
 
   <div id="admin-content" class="page-scroll min-h-0 flex-1 overflow-y-auto">
-    <div class="@container/page mx-auto grid w-full max-w-3xl grid-cols-[minmax(0,1fr)] gap-6 pb-10">
+    <div class="@container/page mx-auto grid w-full max-w-(--ms-content-max) grid-cols-[minmax(0,1fr)] gap-6 pb-10">
       <logic :if="adminSession.operator">
         <nav aria-label="Breadcrumb"><p class="crumbs flex flex-wrap items-center gap-1"><button type="button" class="crumb-link inline-flex items-center" on:click="adminShell.open('domains', adminSession.domainId)">Domains</button><span aria-hidden="true">/</span><span class="min-w-0 truncate" aria-current="page">{domainDns.name}</span></p></nav>
       </logic>

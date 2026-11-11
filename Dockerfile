@@ -136,6 +136,9 @@ RUN GOTOOLCHAIN=local GOFLAGS=-mod=readonly CGO_ENABLED=0 go build -trimpath -bu
 
 FROM lambda-tools AS realtime
 ARG USER_ID=10001
+ARG ISSUER_ORIGIN=https://mesail.localhost
+ARG KEYCLOAK_URL=http://keycloak:8080/idp
+ARG SERVICE_BASE=http://router:8080
 ENV MESAIL_APP_ROOT=/opt/mesail/realtime \
     MESAIL_DATA_ROOT=/data/realtime \
     HOME=/tmp TMPDIR=/tmp \
@@ -146,10 +149,12 @@ RUN useradd --system --no-create-home --home-dir /tmp --uid "${USER_ID}" --user-
  && chown "${USER_ID}:${USER_ID}" /opt/mesail/realtime /opt/mesail/cache /data
 COPY --from=realtime-gateway-build /out/mesail-realtime-gateway /usr/local/bin/mesail-realtime-gateway
 COPY --chmod=755 deploy/lambda/realtime-start.sh /usr/local/bin/mesail-realtime-start
+COPY --chmod=755 deploy/lambda/rewrite-config.sh /usr/local/lib/mesail/rewrite-config.sh
 COPY --chown=${USER_ID}:${USER_ID} apps/realtime /opt/mesail/realtime
 USER ${USER_ID}:${USER_ID}
 RUN set -eu \
  && printf '{ "server": { "hosts": ["realtime"] } }\n' > /opt/mesail/realtime/server/application-container.json \
+ && /usr/local/lib/mesail/rewrite-config.sh /opt/mesail/realtime/server/application.json "${ISSUER_ORIGIN}" "${KEYCLOAK_URL}" "${SERVICE_BASE}" \
  && ty bundle /opt/mesail/realtime \
  && rm -rf /tmp/* /tmp/.cache
 ENV YON_PROFILE=container \

@@ -28,13 +28,25 @@ ensure_file_system() {
     --tags Key=Name,Value=mesail-data Key=project,Value=mesail
 }
 
-access_point_arn() {
+existing_access_point() {
+  mesail_aws efs describe-access-points --file-system-id "$(file_system_id)" --output text \
+    --query "AccessPoints[?ClientToken=='mesail-$1' || RootDirectory.Path=='/$1'].AccessPointArn | [0]"
+}
+
+create_access_point() {
   local service="$1"
   mesail_aws efs create-access-point --client-token "mesail-$service" --file-system-id "$(file_system_id)" \
     --posix-user Uid=10001,Gid=10001 \
     --root-directory "Path=/$service,CreationInfo={OwnerUid=10001,OwnerGid=10001,Permissions=0750}" \
     --tags "Key=Name,Value=mesail-$service" Key=project,Value=mesail \
     --query AccessPointArn --output text
+}
+
+access_point_arn() {
+  local service="$1" existing
+  existing="$(existing_access_point "$service")"
+  if [ -n "$existing" ] && [ "$existing" != None ]; then echo "$existing"; return; fi
+  create_access_point "$service"
 }
 
 function_name() {

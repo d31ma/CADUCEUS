@@ -70,6 +70,19 @@
   message, and queues one `email.received` event.
 - Added `kit/mime` (header and MIME parser, fuzz tested) and `kit/mailauth`
   (SPF, DKIM and DMARC checks with the DMARC DNS tree walk, fuzz tested).
+- The edge writes raw copies through `kit/blobs` (S3, or a local folder
+  in development) and maps only `directory`'s two 404 codes; any other
+  answer gets `451` so the sender retries.
+- `mail-in` keeps its workflow in `kit/mailin` (rule 8b), stages
+  `email.received` with `kit/outbox`, and serves
+  `GET /api/v1/mail-in/messages/{inboundId}/content` (the email converted
+  once into typed blocks) and `.../original` (a 5-minute signed link to
+  the raw message), both for the caller's own domain only. An internal
+  hand-off needs a hosted, active sender domain and is copied into the
+  recipient's domain.
+- Added `kit/richtext`: HTML email, plain text and chat Markdown become
+  typed blocks with a strict allowlist and limits; fuzz tests show no
+  markup or other link scheme gets through.
 
 ### Slice I1: identity and token check
 

@@ -56,7 +56,7 @@ writes or 20 seconds), answer `more: true` when it stopped early, and
 never scroll a collection without that filter. Tests remove the documents
 and collections they create, so a test root does not grow across runs.
 
-The entity model in `server/models/` declares these four fields with these
+The entity model in `server/models/` declares these six fields with these
 JSON names. The store adapter converts them to and from `outbox.Fields`.
 
 ### 2.2 Staging an event in the write

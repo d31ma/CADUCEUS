@@ -606,15 +606,22 @@ recent data, works offline, and syncs when it is back online.
   fetched on demand, attachments in the window (least recently opened
   first), messages older than the window. It never removes queued items
   or drafts. Settings show the space used per domain and offer "Remove
-  the copy on this device".
+  the copy on this device". When the device refuses a write because its
+  storage is full, Mesail stops adding to the copy, keeps the queue and
+  drafts, and says "This device is full" (ADR 0006 section 9).
 - **AC-OF-14 At rest.** The copy holds no password and no Keycloak token,
   and the stored session key is sealed by the server. After 30 days
   without a successful sync, the copy is locked until the person signs in
-  online again (Q10). When TACHYON offers a key store (requests T6 and T7
-  of ADR 0006), the copy is encrypted with a key that never leaves the
-  device and is held by the system's key store (Keychain, Android
-  Keystore, Windows DPAPI, the Linux secret service). Until then the copy
-  relies on the device's disk encryption, and the release notes say so.
+  online again (Q10). Once TACHYON's sealed tables are available (ADR 0006
+  section 9), every table and file of the copy is encrypted with a device
+  key that service code never sees: a non-extractable browser key on the
+  web, and the system's key store in the apps (Keychain, Android Keystore,
+  Windows DPAPI, the Linux Secret Service). Only ids stay readable on disk
+  (person, domain, conversation and message ids). A wipe makes the copy
+  unreadable at once. Where sealing cannot work (Linux without a Secret
+  Service, a plain-`http` address), see Q15. Until sealed tables are
+  available, the copy relies on the device's disk encryption, and the
+  release notes say so.
 - **AC-OF-15 Long offline.** When a device was offline longer than the
   server keeps changes (30 days), each conversation's copy is reloaded
   from its recent window instead of synced; queued items are kept and sent
@@ -718,6 +725,18 @@ all"):
   words of each (AC-OF-9).
 - **Q14 (decided: on the device).** In the first release drafts stay on
   the device; they do not follow the person to other devices.
+
+Open questions after TACHYON's plan (ADR 0006 section 9; the spec uses the
+default until the owner decides):
+
+- **Q15** Where sealed tables cannot open (Linux without a running Secret
+  Service, or Mesail served over plain `http`), should Mesail keep no
+  device copy there and work online only (this spec), or keep an
+  unencrypted copy with a warning?
+- **Q16** Should the first offline release wait for sealed tables
+  (TACHYON wave 3), or ship earlier with an unencrypted copy that relies on
+  the device's disk encryption (this spec, with the kept-device box off by
+  default in browsers)?
 
 Q1 (one shared conversation or one per member) is closed: one email to two
 members of the same domain is one shared conversation (AC-IN-6).

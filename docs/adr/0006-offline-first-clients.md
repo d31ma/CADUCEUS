@@ -8,6 +8,8 @@
   Q8 to Q14. Contracts: [CONTRACTS.md](../mesail/CONTRACTS.md)
   "messaging" (sync), "identity" (kept devices). Slices:
   [SLICES.md](../mesail/SLICES.md) "Wave 4: offline first".
+- Amended: 2026-11-11, by TACHYON's approved plan for T1 to T12 (section
+  9). Where section 9 and an earlier section differ, section 9 wins.
 
 ## Context
 
@@ -218,6 +220,70 @@ FYLO has no change feed and no ORDER BY, so `messaging` keeps its own log.
   one domain.
 - `web-admin` keeps no device copy: admin work needs the network.
 
+### 9. Amendment: TACHYON's approved plan (2026-11-11)
+The owner approved TACHYON's plan for T1 to T12 (the TACHYON section's
+`tachyon-offline-first-plan.md`). It changes this ADR as follows.
+
+- **Store (T1, TACHYON wave 1, ADR 0123).** A `Store` table may declare a
+  partition field (`@Entity({"adapter":"indexeddb","partition":"..."})`);
+  only eager tables are copied at start, a partition is loaded and
+  unloaded on demand, and the 10,000-row limit applies per partition. So
+  the `DeviceStore` adapter uses **one row per message**, partitioned by
+  `partitionKey` = `<personId>/<domainId>/<conversationId>`; the
+  conversation list, cursors, queue and drafts are small eager tables. The
+  device opens a conversation by loading its partition and unloads
+  partitions to stay in memory budget. The "one row per conversation and
+  day" layout of section 1 is used only if slice O3 must ship before T1 is
+  in a TACHYON release. A failed write in IndexedDB (for example a full
+  disk) now arrives as `StoreWriteFailed`; Mesail then stops adding to the
+  copy, keeps the queue, and says "This device is full" (SPEC AC-OF-13).
+- **Space (T9, wave 1, ADR 0124).** On a kept device the app calls
+  `StorageSpace.persist()` once (Firefox shows its own prompt) and uses
+  `estimate()` for the space settings and the budget.
+- **Sockets (T5, wave 1, ADR 0125).** The app sets a reconnect policy that
+  never gives up (backoff up to 60 seconds), and names the realtime
+  gateway as a second origin if it is not on the API origin.
+- **Push (T4).** Web Push for the browser already exists in TACHYON (ADR
+  0118, after 26.46.02); T4a (wave 1) adds `PushReceived` for open pages,
+  which the app treats as one more sign to sync. Native push (T4b) comes
+  later. Sending Web Push from Yon (T4c) is not built and not needed:
+  Mesail's `notify` sends with its own Go `kit/webpush`. (Using browser
+  push in Mesail changes SPEC AC-PN-3; that is a separate decision.)
+- **Blobs (T2, wave 2, ADR 0126).** Attachments in the copy use the
+  `Blobs` client (IndexedDB, quota from the manifest). TACHYON never
+  deletes a blob itself; Mesail's budget code does (section 6).
+- **Tabs (T11, wave 2, ADR 0127).** Store changes reach the other tabs
+  (`StoreChanged`), and a `Locks` client lets one tab send the queue. The
+  native apps have one window each; several windows of one native app are
+  not supported.
+- **Encryption at rest (T6 + T7, wave 3, ADR 0128): sealed tables.** An
+  entity declares `"sealed": true` (and the blob store
+  `tac.storage.blobs.sealed`): each row is stored as AES-GCM ciphertext
+  under a device key that service code never sees. The key is a
+  non-extractable WebCrypto key on the web; the OS key store in the native
+  apps (Keychain with CryptoKit on macOS and iOS, Android Keystore, Windows
+  DPAPI, the Linux Secret Service). `StorageSeal.forget()` makes every
+  sealed row unreadable at once, which Mesail calls first on every wipe
+  (section 6). Fields used by an index stay plain: the partition key
+  (person id, domain id, conversation id) and the message id are readable
+  on disk; bodies, names, addresses, subjects and attachments are not.
+  On Linux without a running Secret Service, and on a plain-`http` web
+  origin, a sealed table refuses to open (see SPEC Q15). Mesail declares
+  every device-copy table and the blob store sealed, so section 7's
+  `keyId` field is no longer Mesail's: the storage layer keeps it.
+- **Outbox (T3): not built.** Mesail keeps its own queue (section 4),
+  sends it from the tab that holds the T11 lock, and sends only while the
+  app is open.
+- **Workers (T10, later):** worker services have no view. The sync engine
+  and the offline search are written as services with no view binding, so
+  they can move into a worker when T10 lands.
+- **Not coming:** native storage (T8, deferred until a 1 GiB relaunch test
+  fails; web storage already survives a relaunch in all shells) and a
+  larger field limit (T12; T1 and T2 cover it).
+
+So the full window of AC-OF-2 switches on with T1, T9 and T2 (TACHYON
+waves 1 and 2), and AC-OF-14 holds fully with sealed tables (wave 3).
+
 ## Options considered
 
 - **FYLO on the device** (`fylo-browser.wasm` in OPFS). Rejected for now:
@@ -260,6 +326,11 @@ Costs, accepted:
 - The change log adds one write per relayed message event in `messaging`.
 
 ## Requests to dependencies
+
+Status after TACHYON's approved plan (section 9): T1, T5, T9 and T4a in
+wave 1; T2 and T11 in wave 2; T6 and T7 as sealed tables in wave 3; T10 as
+worker services without a view, later; T4b later; T3, T4c, T8 and T12 not
+built. The original requests:
 
 TACHYON (Go Tac), in order of need:
 - **T1** `Store` tables for Go services read lazily and by page from

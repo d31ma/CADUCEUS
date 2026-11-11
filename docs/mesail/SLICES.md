@@ -787,12 +787,16 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
   `DevicePartition*`, `DeviceBudget*`, `DeviceWipe*` and the `Device*`
   entities and models; the kept-device parts of `Session*`.
 - **Builds:** the `DeviceStore` port and its adapter on TACHYON's `Store`
-  with the IndexedDB adapter (ADR 0006 sections 1 and 6): partitions
-  `<personId>/<domainId>`, one row per conversation and day, the queue and
-  cursor tables, `@AllOrNothing` wipes, the first-build budget (7 days,
-  5,000 messages, 40 MiB, no attachments), the `keyId` field for later
-  encryption, the 30-day lock; storing the kept `sessionKey`; wiping on
-  sign-out, another person, `access_revoked` and a lost domain.
+  with the IndexedDB adapter (ADR 0006 sections 1, 6 and 9): with TACHYON
+  T1, one row per message partitioned by
+  `<personId>/<domainId>/<conversationId>`, eager tables for the
+  conversation list, cursors, queue and drafts, load and unload of
+  partitions, `StoreWriteFailed` handling; without T1 in a release, the
+  day-page fallback with the first-build budget (7 days, 5,000 messages,
+  40 MiB, no attachments). Also `StorageSpace.persist()` and `estimate()`
+  (T9), the 30-day lock, storing the kept `sessionKey`, and wiping on
+  sign-out, another person, `access_revoked` and a lost domain
+  (`StorageSeal.forget()` first, once sealed tables exist).
 - **Depends on:** OU; Wave 3's L6 merged.
 - **Done when:** gates pass, the copy survives a restart of the app in a
   browser and in the macOS and Android shells, and every wipe case leaves
@@ -801,10 +805,13 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
 ### O4. Web: sync engine and queue (F2's and F3's successors)
 - **Owns:** `apps/web/client/**` files named `Sync*`, `Queue*`,
   `Attention*`, and the offline parts of `Conversation*` and `Composer*`.
-- **Builds:** catch-up and pokes (ADR 0006 section 3), the queue with
-  ordering per conversation, backoff and "Needs your attention" (section
-  4), conflict handling (AC-OF-8), offline recipient chips (AC-OF-5),
-  access-lost handling (AC-OF-9), the offline states from OU.
+- **Builds:** catch-up and pokes (ADR 0006 section 3; also on T4a's
+  `PushReceived`), the queue with ordering per conversation, backoff and
+  "Needs your attention" (section 4), sent by the tab that holds the T11
+  `Locks` lock, the T5 reconnect policy that never gives up, conflict
+  handling (AC-OF-8), offline recipient chips (AC-OF-5), access-lost
+  handling (AC-OF-9), the offline states from OU. The sync engine is a
+  service with no view binding, so it can move to a T10 worker later.
 - **Depends on:** O1, O2 and O3.
 - **Done when:** S15 and S16 work on the dev stack with the network turned
   off and on, and two tabs never send an item twice.
@@ -825,9 +832,12 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
    during Wave 3).
 2. After Wave 3 is merged, in parallel: **O1**, **O2**, **O3**.
 3. After O3: **O5**. After O1, O2 and O3: **O4**.
-4. When TACHYON delivers T1, T2 and T9 (ADR 0006): a follow-up slice
-   raises the window to AC-OF-2's full size and keeps attachments; when it
-   delivers T6 and T7: a follow-up slice encrypts the copy.
+4. Follow-ups as TACHYON lands (ADR 0006 section 9): with T2 (wave 2) a
+   slice keeps attachments in the copy through `Blobs` and raises the
+   window to AC-OF-2's full size; with sealed tables (wave 3) a slice
+   declares every device-copy table and the blob store sealed and calls
+   `StorageSeal.forget()` on every wipe (SPEC Q15 and Q16 decide where and
+   when).
 
 ## Later (after the first release)
 

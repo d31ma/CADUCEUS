@@ -895,9 +895,6 @@ h3.block-heading {
   .row-start-2 {
     grid-row-start: 2;
   }
-  .block {
-    display: block;
-  }
   .contents {
     display: contents;
   }
@@ -1006,6 +1003,9 @@ h3.block-heading {
   .overscroll-contain {
     overscroll-behavior: contain;
   }
+  .rounded-md {
+    border-radius: var(--w-radius-md);
+  }
   .px-2 {
     padding-inline: calc(var(--spacing, 0.25rem) * 2);
   }
@@ -1026,9 +1026,6 @@ h3.block-heading {
   }
   .pb-\[env\(safe-area-inset-bottom\)\] {
     padding-bottom: env(safe-area-inset-bottom);
-  }
-  .italic {
-    font-style: italic;
   }
   @media (width < 959px) {
     .max-\[959px\]\:inline-flex {

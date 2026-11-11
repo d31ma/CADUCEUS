@@ -12,6 +12,35 @@
   server and client, the Go monolith, SESAME and their tooling (kept in git
   history at 4ef82f72).
 
+### Slice F2: web conversations
+
+- Sidebar (`components/sidebar/nav`, `SidebarService`): a "New message"
+  button, then Channels, Direct messages and Email sections with unread and
+  mention counts, private, archived and email-address markers, and loading,
+  empty and error states. Data is kept for the current domain only and is
+  cleared when the domain changes (chat never crosses a domain).
+- Timeline (`components/conversation/*`, `ConversationService`): day and
+  "New" dividers, grouped messages, mentions, edit (read on submit), delete
+  with a confirm dialog and the "email cannot be recalled" warning,
+  reactions by name (12), attachments, delivery lines with words and icons
+  ("Seen by 3 people", "Bounced for …"), "Load older", newest message first
+  in view, local times from the browser time zone. On touch screens the
+  actions open from a "More actions" button.
+- Email display: only the server's rich-text blocks are rendered (no HTML),
+  the sender check (verified, sent on this server, could not verify),
+  remote images hidden until the sender is allowed (then opened as a link,
+  because the page CSP allows no remote images), quoted text behind a
+  toggle, and "Get the original" for long emails.
+- Live updates (`RealtimeService`): answers `hello`, `reauth` and
+  `auth.expired` with a fresh token, and refreshes the sidebar and the open
+  conversation on `message.*`, `reaction.changed` and `read.moved`; new
+  messages are announced to screen readers.
+- Requests renew the token once after a `401`. The composer (F3) is opened
+  with `SendTarget` and the timeline refreshes after `SendCompleted`.
+- TACHYON 26.46.02 does not render after an `@OnEvent @InBackground`
+  handler; each such handler ends by publishing `ConversationRefreshed`,
+  which a plain handler takes.
+
 ### Slice P1: Lambda images, the Floci stack and the native run
 
 - `scripts/native/run-all.sh`: the path every slice gate uses. It starts

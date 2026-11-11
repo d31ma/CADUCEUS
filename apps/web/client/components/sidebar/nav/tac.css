@@ -1,3 +1,8 @@
+.new-message .w-btn,
+.nav-problem .w-btn {
+  min-block-size: var(--ms-touch-min);
+}
+
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -241,14 +246,8 @@
     white-space: nowrap;
     border-width: 0;
   }
-  .block {
-    display: block;
-  }
   .flex {
     display: flex;
-  }
-  .inline {
-    display: inline;
   }
   .min-h-8 {
     min-height: calc(var(--spacing, 0.25rem) * 8);

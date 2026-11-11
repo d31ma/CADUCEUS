@@ -81,6 +81,9 @@
   .gap-4 {
     gap: calc(var(--spacing, 0.25rem) * 4);
   }
+  .rounded-md {
+    border-radius: var(--w-radius-md);
+  }
   .p-3 {
     padding: calc(var(--spacing, 0.25rem) * 3);
   }

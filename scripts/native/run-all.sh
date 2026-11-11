@@ -461,11 +461,11 @@ native_schedule_paths() {
 start_scheduler() {
   local paths
   paths="$(native_schedule_paths)"
-  if [ -z "$paths" ]; then echo "no scheduled route needs the runner (the apps' own workers trigger the rest)"; return 0; fi
+  if [ -z "$paths" ]; then echo "no scheduled route to call"; return 0; fi
   mesail_load_secrets
   MESAIL_SCHEDULER_TOKEN_URL="$(keycloak_base)/idp/realms/mesail-operators/protocol/openid-connect/token" \
     MESAIL_SCHEDULER_CLIENT_SECRET="$MESAIL_SERVICE_SECRET" MESAIL_SCHEDULER_BASE="$(router_base)" \
-    MESAIL_SCHEDULER_PATHS="$paths" MESAIL_SCHEDULER_SECONDS="$(mesail_stack .scheduleSeconds)" \
+    MESAIL_SCHEDULER_PATHS="$paths" MESAIL_SCHEDULER_SECONDS="${MESAIL_SCHEDULE_SECONDS:-$(mesail_stack .nativeScheduleSeconds)}" \
     "$(mesail_root)/deploy/lambda/scheduler.sh" > "$(mesail_log_dir)/scheduler.log" 2>&1 &
   echo "$!" >> "$(run_folder)/pids"
   echo "scheduler for $paths (pid $!, log scheduler.log)"

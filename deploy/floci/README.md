@@ -57,10 +57,13 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
   and `YON_REALTIME_GATEWAY_SECRET`, and the router sends
   `/api/v1/realtime/socket` and `/stream` to the gateway.
 - Scheduled routes: each app's own `@Schedule` worker triggers its relay and
-  jobs under `ty start`. For a route no worker covers (`stack.json`
-  `schedules` with `"native": true`; today `mail-in`'s outbox relay) the run
-  starts `deploy/lambda/scheduler.sh`, which calls it every
-  `scheduleSeconds` with a `mesail-operators` service token.
+  jobs under `ty start`, every 15 to 60 seconds. So that tests do not wait
+  for those intervals, the run also starts `deploy/lambda/scheduler.sh`,
+  which calls every route in `stack.json` `schedules` (all nine relay and job
+  routes, including `mail-in`'s outbox relay that no worker covers) every
+  `nativeScheduleSeconds` (10; `MESAIL_SCHEDULE_SECONDS` overrides it) with a
+  `mesail-operators` service token. The extra calls repeat the workers' work,
+  and the jobs take leases, so they are harmless.
 - An app that declares its own `datasource` in `application.json` (against
   the rule; `search` does today) gets no `.env` datasource; in the copy its
   `fylo:///mnt/data/<service>` becomes this run's root. The Lambda image

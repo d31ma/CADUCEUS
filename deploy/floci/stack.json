@@ -181,11 +181,11 @@
   "schedules": [
     {
       "path": "/api/v1/channels/outbox/relay",
-      "native": false
+      "native": true
     },
     {
       "path": "/api/v1/directory/outbox/relay",
-      "native": false
+      "native": true
     },
     {
       "path": "/api/v1/mail-in/outbox/relay",
@@ -193,27 +193,28 @@
     },
     {
       "path": "/api/v1/mail-out/jobs/deliver",
-      "native": false
+      "native": true
     },
     {
       "path": "/api/v1/mail-out/outbox/relay",
-      "native": false
+      "native": true
     },
     {
       "path": "/api/v1/messaging/outbox/relay",
-      "native": false
+      "native": true
     },
     {
       "path": "/api/v1/notify/jobs/run",
-      "native": false
+      "native": true
     },
     {
       "path": "/api/v1/notify/outbox/relay",
-      "native": false
+      "native": true
     },
     {
       "path": "/api/v1/realtime/jobs/sweep",
-      "native": false
+      "native": true
     }
-  ]
+  ],
+  "nativeScheduleSeconds": 10
 }

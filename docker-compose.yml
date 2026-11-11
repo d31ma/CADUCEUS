@@ -1,56 +1,53 @@
-# Local standalone mail-server test.
-#
-#   docker compose up --build
-#
-# Then open the webmail at http://localhost:8080 (seeded admin@caduceus.com)
-# and send a test message to port 25:
-#
-#   bun scripts/send-test-mail.mjs admin@caduceus.com localhost 25
-#   # or: swaks --to admin@caduceus.com --server localhost:25
-#
-# The container runs as non-root (UID 65532) and cannot bind ports <1024, so the
-# inbound SMTP daemon listens on 2525 inside and the host maps 25 -> 2525.
-services:
-  caduceus:
-    build: .
-    cap_add:
-      - CHOWN
-    command: ["serve"]
-    ports:
-      - "8080:8080"   # webmail + API
-      - "25:2525"     # inbound MX  (host 25 -> container 2525)
-      - "587:2587"    # submission  (optional; needs MAIL_SUBMISSION_ENABLED + TLS)
-    volumes:
-      # Mount the seeded dev database in as the FYLO data root. Writes (new mail)
-      # persist back to ./db on the host. The prod image never COPYs db/.
-      - ./db:/data/caduceus
-      # The identity deployment holds the signing keys every issued token was
-      # verified against. It is a named volume so a restart keeps them.
-      - sesame-deployment:/data/sesame
-    environment:
-      # Secrets — dev-only values; the seed scripts default to this exact secret.
-      INBOUND_WEBHOOK_SECRET: caduceus-e2e-inbound-secret
-      # Development-only stable credential key. Production must inject a
-      # unique random key and back it up independently from the FYLO volume.
-      EXTERNAL_ACCOUNT_CREDENTIAL_KEYS: '{"1":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}'
-      EXTERNAL_ACCOUNT_ACTIVE_KEY: "1"
-      # Identity. The deployment is created by the entrypoint on first start
-      # and persists in the mounted volume; the keys inside it are what every
-      # issued token was verified against.
-      SESAME_BINARY: /usr/local/bin/sesame
-      SESAME_DEPLOYMENT: /data/sesame
-      SESAME_ISSUER: https://localhost:8080
-      SESAME_REDIRECT_URI: https://localhost:8080/auth/callback
-      # Standalone mail server: receive over SMTP, no external provider.
-      MAIL_SERVER_ENABLED: "true"
-      SMTP_INBOUND_PORT: "2525"
-      MAIL_HOSTNAME: mail.caduceus.local
-      # Skip SPF/DKIM/DMARC on localhost sends (no real DNS for the sender domain).
-      MAIL_AUTH_VERIFY: "off"
-      # Local compose logs outbound messages. Production defaults to direct-MX.
-      SMTP_ADAPTER: console
-      # Let the webmail seed script / test tools reach the API from the host.
-      CADUCEUS_ENABLE_TEST_ROUTES: "true"
+name: mesail
 
-volumes:
-  sesame-deployment:
+x-dev-credentials: &dev-credentials
+  AWS_ACCESS_KEY_ID: test
+  AWS_SECRET_ACCESS_KEY: test
+  AWS_REGION: us-east-1
+
+services:
+  floci:
+    profiles: [floci]
+    image: floci/floci:2.4.0@sha256:5ee85db604c4aa74ac76e07ea5cc83086f37bb472bf3dbb97e34019e48efae9c
+    user: "0:0"
+    environment:
+      FLOCI_SERVICES_DOCKER_NETWORK: mesail_floci_backend
+      FLOCI_HOSTNAME: floci
+      FLOCI_BASE_URL: http://floci:4566
+      FLOCI_SERVICES_LAMBDA_HONOUR_ARCHITECTURES: "true"
+    ports:
+      - "127.0.0.1:${MESAIL_FLOCI_PORT:-4566}:4566"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [backend]
+
+  keycloak:
+    image: ${MESAIL_KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.8.2@sha256:723b1d6e254c0fc96d5cffec860c7e0744d6a3277822b865bb538cf891575e41}
+    command: ["start-dev", "--http-port=8080"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${MESAIL_KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${MESAIL_KEYCLOAK_ADMIN_PASSWORD:-mesail-dev-admin}
+      KC_HOSTNAME: ${MESAIL_PUBLIC_URL:-http://127.0.0.1:18080}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "127.0.0.1:${MESAIL_KEYCLOAK_PORT:-18180}:8080"
+    networks: [backend]
+
+  router:
+    image: mesail-router:dev
+    environment:
+      <<: *dev-credentials
+      MESAIL_ROUTER_SERVICES: identity,directory,channels,messaging,attachments,realtime,notify,search,mail-in,mail-out
+      MESAIL_ROUTER_LAMBDA_ENDPOINT: http://floci:4566
+      MESAIL_ROUTER_STATIC_BUCKET: mesail-static
+      MESAIL_ROUTER_KEYCLOAK_URL: http://keycloak:8080
+    ports:
+      - "127.0.0.1:${MESAIL_ROUTER_PORT:-18080}:8080"
+    networks: [backend]
+
+networks:
+  backend:
+    name: mesail_floci_backend

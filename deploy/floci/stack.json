@@ -1,0 +1,60 @@
+{
+  "region": "us-east-1",
+  "account": "000000000000",
+  "functionPrefix": "mesail-",
+  "imagePrefix": "mesail-lambda-",
+  "architecture": "arm64",
+  "network": {
+    "subnet": "subnet-0000000000000001",
+    "securityGroup": "sg-0000000000000001"
+  },
+  "fileSystem": {
+    "creationToken": "mesail-data",
+    "mountPath": "/mnt/data"
+  },
+  "staticBucket": "mesail-static",
+  "staticApps": [
+    { "app": "web", "prefix": "web" },
+    { "app": "web-admin", "prefix": "admin" }
+  ],
+  "services": [
+    { "name": "identity", "fylo": false, "memory": 1024, "timeout": 30 },
+    { "name": "directory", "fylo": true, "memory": 1024, "timeout": 30 },
+    { "name": "channels", "fylo": true, "memory": 1024, "timeout": 30 },
+    { "name": "messaging", "fylo": true, "memory": 1024, "timeout": 30 },
+    { "name": "attachments", "fylo": true, "memory": 1024, "timeout": 60 },
+    { "name": "realtime", "fylo": true, "memory": 1024, "timeout": 30 },
+    { "name": "notify", "fylo": true, "memory": 1024, "timeout": 30 },
+    { "name": "search", "fylo": true, "memory": 1024, "timeout": 30 },
+    { "name": "mail-in", "fylo": true, "memory": 1024, "timeout": 60 },
+    { "name": "mail-out", "fylo": true, "memory": 1024, "timeout": 60 }
+  ],
+  "realms": [
+    {
+      "name": "example.com",
+      "users": [
+        { "username": "ana", "email": "ana@example.com", "roles": ["mesail-member", "mesail-admin"], "token": "ANA" },
+        { "username": "bo", "email": "bo@example.com", "roles": ["mesail-member"], "token": "BO" }
+      ]
+    },
+    {
+      "name": "example.org",
+      "users": [
+        { "username": "eve", "email": "eve@example.org", "roles": ["mesail-member"], "token": "EVE" }
+      ]
+    },
+    {
+      "name": "partner.test",
+      "users": [
+        { "username": "carol", "email": "carol@partner.test", "roles": ["mesail-member"], "token": "CAROL" }
+      ]
+    },
+    {
+      "name": "mesail-operators",
+      "users": [
+        { "username": "operator", "email": "operator@mesail.test", "roles": ["mesail-operator"], "token": "OPERATOR" }
+      ]
+    }
+  ],
+  "realmRoles": ["mesail-member", "mesail-admin", "mesail-service", "mesail-operator"]
+}

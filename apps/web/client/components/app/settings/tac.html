@@ -47,6 +47,11 @@
     </div>
   </section>
 
+  <section class="settings-card flex flex-col gap-4 p-4 md:px-6" aria-labelledby="notifications-title">
+    <h2 id="notifications-title" class="settings-heading">Notifications</h2>
+    <notifications-push />
+  </section>
+
   <switch :value="sessionSettings.step">
     <case :when="'password'">
       <w-dialog open title="Change your password" max-width="32rem" on:close="sessionSettings.cancel()">

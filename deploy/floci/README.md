@@ -17,7 +17,7 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --up                     # start
 MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop what --up started
 ```
 
-- It runs as one `tachyon-build` heavy job (`mac-heavy`), unless it already
+- It runs as one `caduceus-build` heavy job (`mac-heavy`), unless it already
   runs inside one.
 - Each Yon app is copied to `$TMPDIR/mesail-native/<owner>/apps/<app>`
   (your worktree stays clean), given a profile
@@ -69,7 +69,7 @@ scripts/floci/run-all.sh identity directory    # build and deploy only these fun
 `run-all.sh` takes the locks itself:
 
 1. It bundles the Tac apps (`web`, `web-admin`) with the pinned `ty` as a
-   `tachyon-build` heavy job. A bundle that fails is a warning: the app's
+   `caduceus-build` heavy job. A bundle that fails is a warning: the app's
    pages are not served, and the API tests still run.
 2. It runs `stack.sh` as one job in the `mesail-docker` root. By default
    (`MESAIL_VM=mesail`) it uses the `mesail` dev host: `mesail-devhost up`

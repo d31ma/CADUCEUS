@@ -28,7 +28,7 @@ inside_lock() {
 
 heavy_job() {
   if inside_lock; then "$@"; return; fi
-  MAC_HEAVY_COORDINATOR=tachyon-build "$HOME/.local/bin/mac-heavy" --owner "$MESAIL_OWNER" -- "$@"
+  MAC_HEAVY_COORDINATOR=caduceus-build "$HOME/.local/bin/mac-heavy" --owner "$MESAIL_OWNER" -- "$@"
 }
 
 docker_job() {

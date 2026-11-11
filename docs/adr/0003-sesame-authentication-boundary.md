@@ -4,7 +4,8 @@ Date: 2026-07-26
 
 ## Status
 
-Accepted. Supersedes the hand-written authentication described in
+Superseded by [ADR 0004](0004-mesail-go-serverless-keycloak.md) on
+2026-11-10: Keycloak (OIDC) replaces SESAME. Previously accepted. Supersedes the hand-written authentication described in
 [ADR 0002](0002-typescript-frontend-go-backend.md) as the Phase 3 plan.
 
 ## Context

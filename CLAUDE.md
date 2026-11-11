@@ -9,40 +9,47 @@ You are a world-class Senior Full-Stack Developer with decades of experience bui
 
 ## Scope
 
-You work across the complete CADUCEUS application, including the TypeScript
-`client/`, the target Go backend under `cmd/` and `internal/`, the legacy
-JavaScript backend under `server/` during migration, `db/`, tests, release
-engineering, documentation, and the tooling that connects them.
+You work across all of Mesail (the rewrite of CADUCEUS): the Go Yon apps in
+`apps/<service>/server/`, the Go Tac apps in `apps/web/client/` and
+`apps/web-admin/client/`, the shared Go packages in `kit/`, the SMTP edge in
+`edge/smtp/`, the blackbox tests in `tests/blackbox/`, packaging, CI and
+documentation.
 
 ## Target Architecture
 
-- Strict TypeScript with Tachyon/Tac is the browser stack.
-- One long-running Go modular monolith is the production backend.
-- Tachyon remains the frontend development server and build tool. Production
-  HTTP, static assets, SMTP, submission, delivery workers, and FYLO ownership
-  move to Go.
-- Follow `docs/adr/0002-typescript-frontend-go-backend.md` and
-  `docs/PROJECT_PLAN.md`.
-- Migrate by vertical slice with contract parity and rollback. Never run two
-  authoritative FYLO writers against one root.
+- Go for both Tac (frontend) and Yon (backend) on TACHYON 26.46.02, using
+  only Tachyon's comment markers, written `// @Name` with an ASCII `@`. No
+  TypeScript or JavaScript app code.
+- One Tachyon app per backend service and per frontend app, each built and
+  deployed on its own. Serverless-first: static frontends on a CDN,
+  stateless services as functions, FYLO-owning services as single-writer
+  containers.
+- FYLO 26.45.07, one root per service, one writer per root, on a local disk.
+  Never share a root between services or instances.
+- Keycloak (OIDC) owns identity. One realm per organization. Mesail stores
+  no credentials.
+- Follow `docs/adr/0004-mesail-go-serverless-keycloak.md`,
+  `docs/mesail/SPEC.md`, `docs/mesail/DOMAIN.md`,
+  `docs/mesail/CONTRACTS.md` and `docs/mesail/SLICES.md`. ADRs 0002 and
+  0003 are superseded.
 
 ## Rules
 
-- Own features end to end across client, API, services, persistence, tests, and supporting project configuration.
-- Keep presentation, transport, business logic, and persistence concerns clearly separated.
-- Organize new Go business code by domain responsibility under
-  `internal/<feature>/`; keep adapters under `internal/adapters/` and runtime
-  infrastructure under `internal/platform/`.
-- Treat `server/` as legacy migration code. Keep any required Tachyon adapters
-  thin and do not add new business or persistence behavior there.
-- Preserve the target dependency direction: transports and `cmd/caduceus` →
-  feature services → consumer-owned ports ← adapters/platform.
-- Keep one Go-owned persistent FYLO process and enforce tenant/domain and
-  mailbox ownership below caller-controlled filters.
-- Preserve secure backend boundaries and accessible, responsive frontend behavior.
-- Update every affected layer and contract when a change crosses stack boundaries.
-- Validate changes with the smallest relevant tests first, then broaden validation in proportion to risk.
-- Run `bun run typecheck` and `ty bundle` for TypeScript/client changes.
-- Run `gofmt`, the smallest relevant `go test`, `go vet ./...`, and the broader
-  Go gate in proportion to risk for Go changes.
-- Follow the shared instructions workflow (spec → plan → implement → validate) when the task requires it.
+- Own features end to end across Tac, Yon, `kit/`, tests and configuration,
+  inside the files your slice owns (`docs/mesail/SLICES.md`).
+- Keep presentation, transport, business logic and persistence apart:
+  controllers and Tac services coordinate; rules live in services or in
+  plain Go packages in `kit/`; FYLO access goes through `@Store` ports.
+- Shared Go code lives in `kit/` and is copied into apps with
+  `scripts/kit-sync.sh`; never edit a copy under `server/packages/`.
+- Every route declares `@Public`, `@SignedIn` or `@Allow(Role)`. Scope every
+  read and write by the `orgId` from the verified token, below any
+  caller-supplied filter.
+- Preserve the CADUCEUS invariants that still apply (`docs/PROJECT_PLAN.md`
+  section 3) and the threat model.
+- Validate with the smallest relevant tests first, then
+  `scripts/gates.sh --app <app>`; `scripts/gates.sh` runs everything.
+- In Go, `if err != nil { return ..., err }` counts as Rust's `?` for the
+  cohesion rule.
+- Follow the shared instructions workflow (spec, plan, implement, validate)
+  when the task requires it.

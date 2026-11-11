@@ -1,0 +1,45 @@
+:root {
+  color-scheme: light dark;
+  --surface: #ffffff;
+  --text: #1d1f24;
+  --sidebar: #2a1f3d;
+  --sidebar-text: #f4f1fa;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #17181c;
+    --text: #e8e9ee;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(14rem, 18rem) 1fr minmax(16rem, 22rem);
+  min-height: 100dvh;
+}
+
+.shell-sidebar {
+  background: var(--sidebar);
+  color: var(--sidebar-text);
+  padding: 1rem;
+}
+
+.shell-conversation,
+.shell-thread {
+  padding: 1rem;
+}
+
+@media (max-width: 40rem) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+}

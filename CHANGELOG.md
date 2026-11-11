@@ -89,6 +89,9 @@
   may read the message that carries the file, and never to another domain.
 - `kit/blobs` also writes and copies blobs for the SMTP edge and the mail
   hand-off, and its `LocalHandler` serves the local adapter's signed links.
+- `kit/attachments` holds the upload, complete and download workflow in
+  plain Go, so the Yon role files stay thin enough for TACHYON's
+  cohesion check (`ty bundle` enforces TY1314).
 
 - Completed account-synchronized interface localization across 20 closed,
   persisted locale choices. A reproducible, checksum-pinned SMaLL-100 pipeline

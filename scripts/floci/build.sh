@@ -20,7 +20,8 @@ build_service() {
   local service="$1"
   if mesail_is_container "$service"; then build_container "$service"; return; fi
   build_image lambda "$(mesail_stack .imagePrefix)$service:$MESAIL_IMAGE_TAG" \
-    --build-arg "APP=$service" --build-arg "FYLO=$(mesail_service_field "$service" fylo)"
+    --build-arg "APP=$service" --build-arg "FYLO=$(mesail_service_field "$service" fylo)" \
+    --build-arg "DEV_DNS_RESOLVER=http://router.localhost:18080/_dev/dns-query"
 }
 
 chosen_services() {

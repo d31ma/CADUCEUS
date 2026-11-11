@@ -2,7 +2,7 @@
 set -eu
 
 usage() {
-  echo "usage: rewrite-config.sh <application.json> <issuer origin> <keycloak url> <service base>" >&2
+  echo "usage: rewrite-config.sh <application.json> <issuer origin> <keycloak url> <service base> [dev dns resolver]" >&2
   echo "  service base: a URL, or 'port:<n>' to keep each <name>.localhost host and use port n" >&2
   exit 64
 }
@@ -35,9 +35,17 @@ allow_hosts() {
   mv "$file.new" "$file"
 }
 
+use_resolver() {
+  file="$1" resolver="$2"
+  if [ -z "$resolver" ]; then return 0; fi
+  sed -E -i.before -e "s#\"dnsresolver\": *\"[^\"]*\"#\"dnsresolver\": \"$resolver\"#" "$file"
+  rm -f "$file.before"
+}
+
 main() {
-  if [ "$#" -ne 4 ]; then usage; fi
+  if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then usage; fi
   rewrite_addresses "$1" "$2" "$3" "$4"
+  use_resolver "$1" "${5:-}"
   case "$4" in
     port:*) allow_hosts "$1" "$(host_of "$3")" ;;
     *) allow_hosts "$1" "$(host_of "$3")" "$(host_of "$4")" ;;

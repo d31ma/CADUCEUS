@@ -91,34 +91,9 @@ write_tokens() {
   echo "tokens for $(grep -c '^export MESAIL_TOKEN_' "$file") users in $file (mode 600; they last 60 s, renew with --tokens)"
 }
 
-directory_call() {
-  local token="$1" method="$2" path="$3" body="${4:-}"
-  curl --silent --output /dev/null --write-out '%{http_code}' --request "$method" \
-    --header "Authorization: Bearer $token" --header 'Content-Type: application/json' \
-    ${body:+--data "$body"} "$(router_base)/api/v1/directory$path"
-}
-
-seed_domain() {
-  local domain="$1"
-  echo "add domain $domain: $(directory_call "$MESAIL_TOKEN_OPERATOR" POST /domains "{\"name\":\"$domain\"}")"
-  echo "verify domain $domain: $(directory_call "$MESAIL_TOKEN_OPERATOR" POST "/domains/$domain/verify")"
-}
-
-seed_member() {
-  local name="$1" token="MESAIL_TOKEN_$1"
-  echo "member $name: $(directory_call "${!token}" GET /members)"
-}
-
 seed_directory() {
-  local domain name
   if ! keycloak_wanted || ! grep -q '^directory ' "$(run_folder)/servers"; then return 0; fi
   # shellcheck disable=SC1090
   . "$(tokens_file)"
-  for domain in $(mesail_stack '.hostedDomains[]'); do
-    seed_domain "$domain"
-  done
-  # shellcheck disable=SC2016
-  for name in $(mesail_stack '.hostedDomains as $hosted | .testUsers[] | select(.fixture and (.realm | IN($hosted[]))) | .token'); do
-    seed_member "$name"
-  done
+  mesail_seed_directory "$(router_base)"
 }

@@ -23,6 +23,7 @@ run_blackbox() {
 main() {
   mesail_load_settings
   load_tokens
+  mesail_step seed-directory mesail_seed_directory "$MESAIL_ROUTER_URL"
   mesail_step blackbox run_blackbox
 }
 

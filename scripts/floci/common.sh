@@ -114,3 +114,32 @@ mesail_app_secrets() {
     if mesail_app_uses "$folder" "$name"; then echo "$name=${!source}"; fi
   done < <(mesail_stack '.secrets | to_entries[] | "\(.key) \(.value)"')
 }
+
+mesail_directory_call() {
+  local base="$1" token="$2" method="$3" path="$4" body="${5:-}"
+  curl --silent --output /dev/null --write-out '%{http_code}' --request "$method" \
+    --header "Authorization: Bearer $token" --header 'Content-Type: application/json' \
+    ${body:+--data "$body"} "$base/api/v1/directory$path"
+}
+
+mesail_seed_domain() {
+  local base="$1" domain="$2"
+  echo "add domain $domain: $(mesail_directory_call "$base" "$MESAIL_TOKEN_OPERATOR" POST /domains "{\"name\":\"$domain\"}")"
+  echo "verify domain $domain: $(mesail_directory_call "$base" "$MESAIL_TOKEN_OPERATOR" POST "/domains/$domain/verify")"
+}
+
+mesail_seed_member() {
+  local base="$1" name="$2" token="MESAIL_TOKEN_$2"
+  echo "member $name: $(mesail_directory_call "$base" "${!token}" GET /members)"
+}
+
+mesail_seed_directory() {
+  local base="$1" domain name
+  for domain in $(mesail_stack '.hostedDomains[]'); do
+    mesail_seed_domain "$base" "$domain"
+  done
+  # shellcheck disable=SC2016
+  for name in $(mesail_stack '.hostedDomains as $hosted | .testUsers[] | select(.fixture and (.realm | IN($hosted[]))) | .token'); do
+    mesail_seed_member "$base" "$name"
+  done
+}

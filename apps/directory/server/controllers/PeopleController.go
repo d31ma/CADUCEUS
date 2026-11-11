@@ -90,7 +90,7 @@ func (controller *PeopleController) DeleteTotp(
 }
 
 // @DeleteRoute("/{person_id}")
-// @ResponseStatus(204)
+// @ResponseStatus(202)
 func (controller *PeopleController) DeletePerson(
 	// @FromHeader("authorization")
 	authorization string,

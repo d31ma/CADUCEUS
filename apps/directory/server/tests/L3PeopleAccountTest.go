@@ -84,7 +84,7 @@ func (test *L3PeopleAccountTest) TestRemoveTotpForAnAdminOfAnotherDomainIsForbid
 	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
 }
 
-func (test *L3PeopleAccountTest) TestDeleteRemovesTheAccountAndEveryMembership() {
+func (test *L3PeopleAccountTest) TestDeleteRemovesTheAccountAndMarksThePersonDeletedFirst() {
 	base, calls, closeServer := test.keycloak(test.key(), false, http.StatusNoContent)
 	defer closeServer()
 	test.configure(base)
@@ -93,14 +93,17 @@ func (test *L3PeopleAccountTest) TestDeleteRemovesTheAccountAndEveryMembership()
 	defer test.forget([]string{first, second}, person)
 	err := test.personService().Delete(person.PersonId)
 	stored, _, _ := test.people().ByPersonId(person.PersonId)
+	record, recordErr := test.personService().Record(person.PersonId)
 	Assert.Equals("<nil>", fmt.Sprint(err))
+	Assert.Equals("<nil>", fmt.Sprint(recordErr))
 	Assert.IsTrue(strings.Contains(calls(), "DELETE /idp/admin/realms/mesail/users/"+person.PersonId), "want the account deleted")
-	Assert.Equals("removed", test.memberDocument(first, person.PersonId).State)
-	Assert.Equals("removed", test.memberDocument(second, person.PersonId).State)
 	Assert.Equals("deleted", stored.State)
-	Assert.Equals(0, len(stored.DomainIds))
+	Assert.Equals(first+","+second, strings.Join(stored.DomainIds, ","))
+	Assert.Equals(0, len(stored.AdminDomainIds))
 	Assert.Equals("", stored.DefaultDomainId)
 	Assert.Equals(person.Username, stored.Username)
+	Assert.Equals("deleted", record.State)
+	Assert.Equals(0, len(record.DomainIds))
 }
 
 func (test *L3PeopleAccountTest) TestDeleteOfAnUnknownPersonIsNotFound() {
@@ -150,7 +153,7 @@ func (test *L3PeopleAccountTest) TestSetDefaultForACallerWithoutAPersonIsNotFoun
 }
 
 func (test *L3PeopleAccountTest) personService() *PersonService {
-	return &PersonService{people: test.people(), access: test.access(), accounts: test.accounts(), writer: test.writer()}
+	return &PersonService{people: test.people(), access: test.access(), accounts: test.accounts(), writer: test.writer(), domains: test.domains()}
 }
 
 func (test *L3PeopleAccountTest) access() *PersonAccessService {

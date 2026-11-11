@@ -136,7 +136,7 @@ func (test *L3PeopleChangeTest) TestAChangeOfADeletedPersonIsNotFound() {
 }
 
 func (test *L3PeopleChangeTest) personService() *PersonService {
-	return &PersonService{people: test.people(), access: test.access(), accounts: test.accounts(), writer: test.writer()}
+	return &PersonService{people: test.people(), access: test.access(), accounts: test.accounts(), writer: test.writer(), domains: test.domains()}
 }
 
 func (test *L3PeopleChangeTest) access() *PersonAccessService {

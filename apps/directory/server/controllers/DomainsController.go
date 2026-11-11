@@ -57,13 +57,13 @@ func (controller *DomainsController) PostVerify(
 }
 
 // @DeleteRoute("/{domain_id}")
-// @ResponseStatus(204)
+// @ResponseStatus(202)
 func (controller *DomainsController) DeleteDomain(
 	// @FromHeader("authorization")
 	authorization string,
 	// @FromPath("domain_id")
 	domainId string,
-) error {
+) (Domain, error) {
 	return controller.removeUnless(controller.operator(authorization), domainId)
 }
 
@@ -121,9 +121,9 @@ func (controller *DomainsController) verifyUnless(refused error, domainId string
 	return controller.domains.Verify(domainId)
 }
 
-func (controller *DomainsController) removeUnless(refused error, domainId string) error {
+func (controller *DomainsController) removeUnless(refused error, domainId string) (Domain, error) {
 	if refused != nil {
-		return refused
+		return Domain{}, refused
 	}
 	return controller.domains.Remove(domainId)
 }

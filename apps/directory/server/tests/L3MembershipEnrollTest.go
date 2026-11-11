@@ -202,6 +202,10 @@ func (test *L3MembershipEnrollTest) users(key string, body []byte, writer http.R
 		writer.Write(encoded)
 		return
 	}
+	if request.Method == http.MethodGet {
+		writer.Write([]byte(`{"enabled":true,"attributes":{}}`))
+		return
+	}
 	writer.Header().Set("Location", "http://"+request.Host+"/idp/admin/realms/mesail/users/kc-"+user.Username)
 	writer.WriteHeader(http.StatusCreated)
 }

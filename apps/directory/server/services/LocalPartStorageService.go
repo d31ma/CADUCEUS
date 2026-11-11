@@ -1,3 +1,9 @@
+import (
+	"slices"
+
+	"mesail.dev/packages/addresses"
+)
+
 // @Service
 type LocalPartStorageService struct {
 	// @Needs
@@ -10,6 +16,16 @@ func (storage *LocalPartStorageService) Find(localPart string) (LocalPartDocumen
 	document := LocalPartDocument{}
 	_, failure := storage.documents.FindOne(storage.names.LocalParts(), map[string]any{storage.localPartField(): localPart}, &document)
 	return document, failure
+}
+
+func (storage *LocalPartStorageService) ForAddressesIn(domainId string) ([]LocalPartDocument, error) {
+	documents := []LocalPartDocument{}
+	failure := storage.documents.All(storage.names.LocalParts(), map[string]any{storage.ownerField(): addresses.Owners{}.Addresses()}, &documents)
+	return storage.reservedIn(documents, domainId), failure
+}
+
+func (storage *LocalPartStorageService) Delete(document LocalPartDocument) error {
+	return storage.documents.Delete(storage.names.LocalParts(), document.Id)
 }
 
 func (storage *LocalPartStorageService) Store(document LocalPartDocument) error {
@@ -25,6 +41,14 @@ func (storage *LocalPartStorageService) insertOrReplace(document LocalPartDocume
 	id := document.Id
 	document.Id = ""
 	return storage.documents.Replace(storage.names.LocalParts(), id, document)
+}
+
+func (storage *LocalPartStorageService) reservedIn(documents []LocalPartDocument, domainId string) []LocalPartDocument {
+	return slices.DeleteFunc(documents, func(document LocalPartDocument) bool { return !slices.Contains(document.DomainIds, domainId) })
+}
+
+func (storage *LocalPartStorageService) ownerField() string {
+	return "owner"
 }
 
 func (storage *LocalPartStorageService) localPartField() string {

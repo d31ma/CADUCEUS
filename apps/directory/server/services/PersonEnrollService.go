@@ -49,17 +49,25 @@ func (service *PersonEnrollService) reserved(personId string, request AddMemberR
 
 func (service *PersonEnrollService) created(request AddMemberRequest) (PersonDocument, bool, error) {
 	_, invalid := service.fresh("", request)
-	personId, failure := service.createUnless(cmp.Or(invalid, service.passwordGiven(request.FirstPassword)), request)
+	addRequest, failure := service.pendingUnless(cmp.Or(invalid, service.passwordGiven(request.FirstPassword)), request.Username)
+	personId, failure := service.createUnless(failure, request, addRequest)
 	failure = service.reserveUnless(failure, request.Username, personId)
 	person, _ := service.fresh(personId, request)
 	return person, false, failure
 }
 
-func (service *PersonEnrollService) createUnless(failure error, request AddMemberRequest) (string, error) {
+func (service *PersonEnrollService) pendingUnless(failure error, username string) (string, error) {
 	if failure != nil {
 		return "", failure
 	}
-	return service.accounts.Create(request.Username, request.FirstPassword)
+	return service.reservations.Pending(username)
+}
+
+func (service *PersonEnrollService) createUnless(failure error, request AddMemberRequest, addRequest string) (string, error) {
+	if failure != nil {
+		return "", failure
+	}
+	return service.accounts.Create(request.Username, request.FirstPassword, addRequest)
 }
 
 func (service *PersonEnrollService) reserveUnless(failure error, username string, personId string) error {

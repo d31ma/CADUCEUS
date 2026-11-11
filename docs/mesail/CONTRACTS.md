@@ -311,7 +311,7 @@ change the person's one account, so they apply to every domain:
 | `GET /api/v1/directory/domains/{domainId}` | Allow(Operator, Service) | - | `Domain` or `404` (used by `mail-out` for `dkimSelector` and the hosted check) |
 | `POST /api/v1/directory/domains` | Allow(Operator) | `CreateDomainRequest{name}` | `201 Domain` (no Keycloak change) |
 | `POST /api/v1/directory/domains/{domainId}/verify` | Allow(Operator) | - | `Domain` (with `dns` states) |
-| `DELETE /api/v1/directory/domains/{domainId}` | Allow(Operator) | - | `204`; removes every membership in the domain (the people stay) |
+| `DELETE /api/v1/directory/domains/{domainId}` | Allow(Operator) | - | `202 Domain` with `state: removing` (again `202` while it is removing); at once the domain leaves every `PersonRecord`, sign-in, refresh, switch and admin route refuse it, and mail for it is refused; the removal job then takes it off every person, releases its alias and channel-address reservations and deletes the domain (the people stay); `404 not_found` |
 | `POST /api/v1/directory/domains/{domainId}/members` | Allow(Operator) | `AddMemberRequest` | as `POST /members`, for the domain in the path; used to name the first DomainAdmin (SPEC S11) |
 | `POST /api/v1/directory/members` | Allow(DomainAdmin) | `AddMemberRequest{username, displayName?, firstPassword?, admin}` | `201 AddedMember{member: MemberSummary, existingPerson}`; `400 invalid_request` (`username` breaks SPEC AC-ID-11 or is a role name; `displayName` or `firstPassword` missing for a new person); `400 password_policy`; `409 duplicate` (already a member of this domain, or the prefix is an alias or channel address in any domain) |
 | `PATCH /api/v1/directory/members/{memberId}` | Allow(DomainAdmin) | `MemberChange{admin}` | `200 MemberSummary`; `409 last_admin`; `404 not_found` |
@@ -323,7 +323,8 @@ change the person's one account, so they apply to every domain:
 | `PATCH /api/v1/directory/people/{personId}` | Allow(DomainAdmin, Operator) | `PersonChange{displayName?, state?}` (`state`: `active` or `disabled`) | `200 PersonSummary`; `403 forbidden` (SPEC AC-ID-13) |
 | `POST /api/v1/directory/people/{personId}/password` | Allow(DomainAdmin, Operator) | `PasswordReset{newPassword}` | `204`: sets the password, sets `mesail.mustChangePassword`, ends the person's sessions; `400 password_policy`; `403 forbidden` (AC-ID-13) |
 | `DELETE /api/v1/directory/people/{personId}/totp` | Allow(DomainAdmin, Operator) | - | `204`; `403 forbidden` (AC-ID-13) |
-| `DELETE /api/v1/directory/people/{personId}` | Allow(Operator) | - | `204`: deletes the Keycloak user, removes every membership, keeps the prefix reserved (`state: deleted`) |
+| `DELETE /api/v1/directory/people/{personId}` | Allow(Operator) | - | `202`: deletes the Keycloak user and sets `state: deleted` first (so every sign-in ends; `PersonRecord.domainIds` is empty from then on), then the removal job removes every membership (`member.upserted` with `state: removed`); the prefix stays reserved for ever; calling it again answers `202`; `404 not_found` |
+| `POST /api/v1/directory/jobs/removals` | Allow(Service), install-wide | - | `200 RemovalReport{writes, more}`: one step of the removal job (SLICES rule 9: at most 25 writes and 20 seconds per call; `more: true` when work is left for the next call); safe to call twice at the same time. Its schedule calls it every minute (EVENTS.md section 4) |
 | `PUT /api/v1/directory/me/default-domain` | SignedIn | `DefaultDomain{domainId}` | `204`; `404 not_found` when it is not one of the caller's domains |
 | `POST /api/v1/directory/aliases` | Allow(DomainAdmin) | `CreateAliasRequest{address, memberId?}` | `201 Address`; `409 duplicate` when the address exists or its local part is a person's prefix (SPEC AC-ID-10) |
 | `POST /api/v1/directory/channel-addresses` | Allow(DomainAdmin) | `ChannelAddressRequest{address, channelId}` | `201 Address` with `kind: channel`; the same address for the same channel again answers `201`; `409 duplicate` when a member, alias or other channel has it, or its local part is a person's prefix; `400 invalid_request` (`address`) when it is not in the caller's domain (called by `channels`) |
@@ -331,7 +332,8 @@ change the person's one account, so they apply to every domain:
 | `GET /api/v1/directory/addresses/{address}` | Allow(Service) | - | `Address{address, domainId, kind, targetId}`; `404 domain_not_hosted` when the domain is not hosted or not `active`; `404 not_found` for an unknown address in a hosted, active domain (used by the SMTP edge and `messaging`) |
 
 `Domain{domainId, name, state, dkimSelector, dns: DnsState{mx, spf, dkim,
-dmarc}}`. `domainId` is the domain name in lowercase (for example
+dmarc}}`; `state` is `pending`, `active`, `disabled` or `removing` (removing:
+answered by `GET /domains` until the removal job deletes it). `domainId` is the domain name in lowercase (for example
 `example.com`). `Address.kind` is `member|alias|channel`. An alias address
 and its member are both in the caller's domain. `MemberSummary{memberId?,
 username?, displayName, primaryAddress, admin, accountManaged}` (`username`,
@@ -367,6 +369,22 @@ Members and people (ADR 0005, SPEC AC-ID-10 to AC-ID-13):
 - When Keycloak already has a user with the new prefix but `directory` has
   no person for it, both add routes answer `409 duplicate`: `directory`
   never takes over a Keycloak user it did not create (DOMAIN "Person").
+  The one exception is a user that `directory` made for an add that
+  failed later (slice D2): before the Keycloak call, `directory` writes
+  a new id into the prefix's `local-parts` document (`addRequest`, no
+  owner yet; the same id again on a retry) and sets it on the new user
+  as the attribute `mesail.addRequest`. When a later add of the same
+  prefix gets "user exists" and that user's `mesail.addRequest` matches
+  the document, `directory` finishes the add with that user's `sub` and
+  sets the `firstPassword` of the new request. A user without the
+  matching attribute still answers `409 duplicate`. While such a pending
+  add exists, the prefix cannot become an alias or channel address
+  (`409 duplicate`).
+- Removing a domain releases its alias and channel-address reservations:
+  the domain leaves each `local-parts` document with `owner: addresses`,
+  and a document left without domains is deleted (also when the last
+  channel address of a local part is deleted). A person's prefix is never
+  released (SPEC Q5).
 - `GET /members` gives `username`, `admin` and `accountManaged` when the
   caller has the role `DomainAdmin` or `Operator`, and never lists removed
   members.
@@ -381,7 +399,7 @@ any session of the Operator, also one with an active domain. A signed-in
 request whose domain is not hosted, or is `disabled`, answers `403`, except
 on Operator routes. The `Service` routes (`addresses/{address}`,
 `domains/{domainId}`) accept a token for the target domain or `*`; any
-other domain answers `404`. `people/{personId}` and the outbox routes
+other domain answers `404`. `people/{personId}`, `jobs/removals` and the outbox routes
 (`POST /api/v1/directory/outbox/relay`, `GET .../outbox/dead`,
 `POST .../outbox/dead/requeue`, EVENTS.md) are install-wide and accept only
 `*`.

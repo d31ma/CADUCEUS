@@ -12,6 +12,17 @@ func (storage *DomainStorageService) All() ([]DomainDocument, error) {
 	return domains, failure
 }
 
+func (storage *DomainStorageService) Removing() ([]DomainDocument, error) {
+	domains := []DomainDocument{}
+	failure := storage.documents.All(storage.names.Domains(), map[string]any{storage.stateField(): storage.removing()}, &domains)
+	return domains, failure
+}
+
+func (storage *DomainStorageService) RemovingIds() ([]string, error) {
+	domains, failure := storage.Removing()
+	return storage.ids(domains), failure
+}
+
 func (storage *DomainStorageService) Find(domainId string) (DomainDocument, bool, error) {
 	domain := DomainDocument{}
 	found, failure := storage.documents.FindOne(storage.names.Domains(), map[string]any{storage.domainField(): domainId}, &domain)
@@ -31,6 +42,22 @@ func (storage *DomainStorageService) Save(domain DomainDocument) error {
 
 func (storage *DomainStorageService) Delete(domain DomainDocument) error {
 	return storage.documents.Delete(storage.names.Domains(), domain.Id)
+}
+
+func (storage *DomainStorageService) ids(domains []DomainDocument) []string {
+	ids := []string{}
+	for _, domain := range domains {
+		ids = append(ids, domain.DomainId)
+	}
+	return ids
+}
+
+func (storage *DomainStorageService) stateField() string {
+	return "state"
+}
+
+func (storage *DomainStorageService) removing() string {
+	return "removing"
 }
 
 func (storage *DomainStorageService) domainField() string {

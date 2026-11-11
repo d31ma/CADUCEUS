@@ -21,6 +21,17 @@ func (rules PersonRules) Without(person PersonDocument, domainId string) PersonD
 	return person
 }
 
+func (rules PersonRules) Hidden(person PersonDocument, domainIds []string) PersonDocument {
+	return rules.withoutEach(person, domainIds)
+}
+
+func (rules PersonRules) withoutEach(person PersonDocument, domainIds []string) PersonDocument {
+	for _, domainId := range slices.Clone(domainIds) {
+		person = rules.Without(person, domainId)
+	}
+	return person
+}
+
 func (rules PersonRules) Member(person PersonDocument, domainId string) bool {
 	return slices.Contains(person.DomainIds, domainId)
 }

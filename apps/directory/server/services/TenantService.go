@@ -18,7 +18,7 @@ func (service *TenantService) Hosted() (map[string]bool, error) {
 
 func (service *TenantService) refusal(found bool, state string) error {
 	switch {
-	case !found, state == service.disabled():
+	case !found, state == service.disabled(), state == service.removing():
 		return &Forbidden{Message: "this domain is not hosted here"}
 	}
 	return nil
@@ -30,6 +30,10 @@ func (service *TenantService) names(domains []DomainDocument) map[string]bool {
 		hosted[domain.DomainId] = true
 	}
 	return hosted
+}
+
+func (service *TenantService) removing() string {
+	return "removing"
 }
 
 func (service *TenantService) disabled() string {

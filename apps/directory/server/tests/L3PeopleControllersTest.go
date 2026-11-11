@@ -182,7 +182,7 @@ func (test *L3PeopleControllersTest) unauthenticated(err error) bool {
 }
 
 func (test *L3PeopleControllersTest) personService() *PersonService {
-	return &PersonService{people: test.people(), access: test.access(), accounts: test.accounts(), writer: test.writer()}
+	return &PersonService{people: test.people(), access: test.access(), accounts: test.accounts(), writer: test.writer(), domains: test.domains()}
 }
 
 func (test *L3PeopleControllersTest) access() *PersonAccessService {

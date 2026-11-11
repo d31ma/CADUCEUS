@@ -60,23 +60,6 @@ func (test *L3MembershipRemoveTest) TestRemovingAnUnknownMemberIsNotFound() {
 	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
 }
 
-func (test *L3MembershipRemoveTest) TestRemoveDomainTakesTheDomainOffEveryPerson() {
-	_, closeAll := test.keycloak(map[string]int{})
-	defer closeAll()
-	first, second := test.hosted(), test.hosted()
-	defer test.dropDomain(first)
-	defer test.dropDomain(second)
-	username := test.username()
-	test.add(test.operator(first), first, username, true)
-	test.add(test.operator(second), second, username, false)
-	err := test.membership().RemoveDomain(first)
-	person, _, _ := test.people().ByPersonId("kc-" + username)
-	Assert.Equals("<nil>", fmt.Sprint(err))
-	Assert.Equals(second, strings.Join(person.DomainIds, ","))
-	Assert.Equals("", strings.Join(person.AdminDomainIds, ","))
-	Assert.Equals(second, person.DefaultDomainId)
-}
-
 func (test *L3MembershipRemoveTest) keycloak(overrides map[string]int) (func() string, func()) {
 	lock := &sync.Mutex{}
 	lines := []string{}

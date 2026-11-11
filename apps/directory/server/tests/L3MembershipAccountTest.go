@@ -23,7 +23,7 @@ type L3MembershipAccountTest struct {
 func (test *L3MembershipAccountTest) TestCreateReturnsTheIdFromTheLocationHeader() {
 	calls, closeAll := test.keycloak(map[string]int{})
 	defer closeAll()
-	id, err := test.accounts().Create("ana", "first-password")
+	id, err := test.accounts().Create("ana", "first-password", "")
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("kc-ana", id)
 	Assert.Equals("POST /users", calls())
@@ -32,7 +32,7 @@ func (test *L3MembershipAccountTest) TestCreateReturnsTheIdFromTheLocationHeader
 func (test *L3MembershipAccountTest) TestCreateOfATakenUsernameIsADuplicate() {
 	_, closeAll := test.keycloak(map[string]int{"POST /users": http.StatusConflict})
 	defer closeAll()
-	_, err := test.accounts().Create("ana", "first-password")
+	_, err := test.accounts().Create("ana", "first-password", "")
 	var duplicate *Duplicate
 	Assert.IsTrue(errors.As(err, &duplicate), "want Duplicate")
 }
@@ -40,7 +40,7 @@ func (test *L3MembershipAccountTest) TestCreateOfATakenUsernameIsADuplicate() {
 func (test *L3MembershipAccountTest) TestCreateWithAPasswordThePolicyRefusesIsAPasswordPolicyFailure() {
 	_, closeAll := test.keycloak(map[string]int{"POST /users": http.StatusBadRequest})
 	defer closeAll()
-	_, err := test.accounts().Create("ana", "short")
+	_, err := test.accounts().Create("ana", "short", "")
 	var policy *PasswordPolicy
 	Assert.IsTrue(errors.As(err, &policy), "want PasswordPolicy")
 	Assert.IsTrue(strings.Contains(policy.Message, "refused by the fake"), "want the reason of Keycloak")
@@ -49,14 +49,14 @@ func (test *L3MembershipAccountTest) TestCreateWithAPasswordThePolicyRefusesIsAP
 func (test *L3MembershipAccountTest) TestCreateWhenKeycloakFailsIsUnavailable() {
 	_, closeAll := test.keycloak(map[string]int{"POST /users": http.StatusInternalServerError})
 	defer closeAll()
-	_, err := test.accounts().Create("ana", "first-password")
+	_, err := test.accounts().Create("ana", "first-password", "")
 	var unavailable *Unavailable
 	Assert.IsTrue(errors.As(err, &unavailable), "want Unavailable")
 }
 
 func (test *L3MembershipAccountTest) TestCreateWithoutKeycloakSettingsIsUnavailable() {
 	os.Setenv("YON_APPLICATION_JSON", `{"yon":{}}`)
-	_, err := test.accounts().Create("ana", "first-password")
+	_, err := test.accounts().Create("ana", "first-password", "")
 	var unavailable *Unavailable
 	Assert.IsTrue(errors.As(err, &unavailable), "want Unavailable")
 }

@@ -118,7 +118,7 @@ func (test *L3PeopleSearchTest) TestRemovedMembersAreNotListed() {
 	person := test.member(domainId)
 	removed := test.member(domainId)
 	defer test.forget([]string{domainId}, person, removed)
-	Assert.Equals("<nil>", fmt.Sprint(test.writer().LeaveAll(PersonDocument{PersonId: removed.PersonId, DomainIds: []string{domainId}})))
+	Assert.Equals("<nil>", fmt.Sprint(test.writer().LeaveDomain(removed.PersonId, domainId)))
 	page, err := test.memberService().Search(Admission{Caller: oidc.Caller{DomainId: domainId, MemberId: person.PersonId, Roles: []string{"DomainAdmin"}}}, MemberQuery{}, nil)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(1, len(page.Items))
@@ -126,7 +126,7 @@ func (test *L3PeopleSearchTest) TestRemovedMembersAreNotListed() {
 }
 
 func (test *L3PeopleSearchTest) personService() *PersonService {
-	return &PersonService{people: test.people(), access: test.access(), accounts: test.accounts(), writer: test.writer()}
+	return &PersonService{people: test.people(), access: test.access(), accounts: test.accounts(), writer: test.writer(), domains: test.domains()}
 }
 
 func (test *L3PeopleSearchTest) memberService() *MemberService {

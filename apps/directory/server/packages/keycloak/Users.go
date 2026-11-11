@@ -44,6 +44,19 @@ func (users Users) IdOf(username string) (string, error) {
 	return users.onlyId(entries.idsByUsername()[strings.ToLower(username)])
 }
 
+func (users Users) Tagged(username string) (TaggedUser, error) {
+	id, err := users.IdOf(username)
+	if err != nil {
+		return TaggedUser{}, err
+	}
+	user, err := users.readUser(id)
+	if err != nil {
+		return TaggedUser{}, err
+	}
+	tag, err := user.attribute(addRequest{}.Key())
+	return TaggedUser{Id: id, AddRequest: tag}, err
+}
+
 func (users Users) SetEnabled(userId string, enabled bool) error {
 	user, err := users.readUser(userId)
 	if err != nil {
@@ -115,9 +128,17 @@ func (users Users) newUserBody(user NewUser) newUserBody {
 	return newUserBody{
 		Username:    user.Username,
 		Enabled:     true,
-		Attributes:  map[string][]string{mustChangePassword{}.Key(): mustChangePassword{}.Values()},
+		Attributes:  users.newAttributes(user.AddRequest),
 		Credentials: []passwordCredential{users.password(user.Password)},
 	}
+}
+
+func (Users) newAttributes(request string) map[string][]string {
+	attributes := map[string][]string{mustChangePassword{}.Key(): mustChangePassword{}.Values()}
+	if request != "" {
+		attributes[addRequest{}.Key()] = addRequest{}.Values(request)
+	}
+	return attributes
 }
 
 func (users Users) password(value string) passwordCredential {

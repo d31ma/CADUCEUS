@@ -91,22 +91,33 @@ func (test *DomainServiceTest) TestListShowsAnAddedDomain() {
 	Assert.IsTrue(strings.Contains(string(encoded), `"domainId":"`+added.DomainId+`"`), "domain not listed")
 }
 
-func (test *DomainServiceTest) TestRemovingADomainDeletesItsRecordWithoutCallingKeycloak() {
+func (test *DomainServiceTest) TestRemovingADomainMarksItRemovingWithoutCallingKeycloak() {
 	service, calls, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
 	added, _ := service.Add(CreateDomainRequest{Name: test.reset("remove-unit.test")})
-	err := service.Remove(added.DomainId)
-	_, getErr := service.Get(added.DomainId)
-	var missing *NotFound
+	removed, err := service.Remove(added.DomainId)
+	stored, getErr := service.Get(added.DomainId)
 	Assert.Equals("<nil>", fmt.Sprint(err))
-	Assert.IsTrue(errors.As(getErr, &missing), "want NotFound")
+	Assert.Equals("<nil>", fmt.Sprint(getErr))
+	Assert.Equals("removing", removed.State)
+	Assert.Equals("removing", stored.State)
 	Assert.Equals("", calls())
+}
+
+func (test *DomainServiceTest) TestRemovingADomainTwiceKeepsItRemoving() {
+	service, _, closeAll := test.world(http.StatusCreated)
+	defer closeAll()
+	added, _ := service.Add(CreateDomainRequest{Name: test.reset("remove-twice-unit.test")})
+	service.Remove(added.DomainId)
+	removed, err := service.Remove(added.DomainId)
+	Assert.Equals("<nil>", fmt.Sprint(err))
+	Assert.Equals("removing", removed.State)
 }
 
 func (test *DomainServiceTest) TestRemovingAnUnknownDomainIsNotFound() {
 	service, _, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
-	err := service.Remove("unknown-" + test.unique() + ".test")
+	_, err := service.Remove("unknown-" + test.unique() + ".test")
 	var missing *NotFound
 	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
 }
@@ -145,7 +156,6 @@ func (test *DomainServiceTest) worldWith(createStatus int, deleteStatus int, dis
 	service := &DomainService{
 		domains:     &DomainStorageService{documents: documents, names: &CollectionNamesService{}},
 		collections: &TenantCollectionsService{documents: documents, names: &CollectionNamesService{}},
-		memberships: &MembershipService{people: &PeopleStorageService{documents: documents, names: &CollectionNamesService{}}},
 		dns:         &DnsService{settings: settingsService},
 		factory:     &DomainFactoryService{settings: settingsService},
 	}

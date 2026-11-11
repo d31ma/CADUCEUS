@@ -39,13 +39,9 @@ func (writer *MemberWriterService) Leave(member MemberDocument) error {
 	return writer.deleteOwn(cmp.Or(failure, readFailure), found, address, member.MemberId)
 }
 
-func (writer *MemberWriterService) leaveDomain(personId string, domainId string) error {
+func (writer *MemberWriterService) LeaveDomain(personId string, domainId string) error {
 	member, found, failure := writer.members.Find(domainId, personId)
 	return writer.leaveFound(found, failure, member)
-}
-
-func (writer *MemberWriterService) LeaveAll(person PersonDocument) error {
-	return writer.leaveEach(person)
 }
 
 func (writer *MemberWriterService) mirror(person PersonDocument, domainId string) error {
@@ -107,14 +103,6 @@ func (writer *MemberWriterService) leaveFound(found bool, failure error, member 
 		return nil
 	}
 	return writer.Leave(member)
-}
-
-func (writer *MemberWriterService) leaveEach(person PersonDocument) error {
-	failures := []error{}
-	for _, domainId := range person.DomainIds {
-		failures = append(failures, writer.leaveDomain(person.PersonId, domainId))
-	}
-	return errors.Join(failures...)
 }
 
 func (writer *MemberWriterService) mirrorEach(person PersonDocument) error {

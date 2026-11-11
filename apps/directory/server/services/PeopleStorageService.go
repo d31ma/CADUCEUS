@@ -1,3 +1,5 @@
+import "slices"
+
 // @Service
 type PeopleStorageService struct {
 	// @Needs
@@ -14,6 +16,17 @@ func (storage *PeopleStorageService) All() ([]PersonDocument, error) {
 	people := []PersonDocument{}
 	failure := storage.documents.All(storage.names.People(), map[string]any{}, &people)
 	return people, failure
+}
+
+func (storage *PeopleStorageService) InDomain(domainId string) ([]PersonDocument, error) {
+	people, failure := storage.All()
+	return storage.membersOf(people, domainId), failure
+}
+
+func (storage *PeopleStorageService) Leaving() ([]PersonDocument, error) {
+	people := []PersonDocument{}
+	failure := storage.documents.All(storage.names.People(), map[string]any{storage.stateField(): storage.deleted()}, &people)
+	return storage.withDomains(people), failure
 }
 
 func (storage *PeopleStorageService) Store(person PersonDocument) (PersonDocument, error) {
@@ -41,6 +54,22 @@ func (storage *PeopleStorageService) insertOrReplace(person PersonDocument) (Per
 
 func (storage *PeopleStorageService) list(values []string) []string {
 	return append([]string{}, values...)
+}
+
+func (storage *PeopleStorageService) membersOf(people []PersonDocument, domainId string) []PersonDocument {
+	return slices.DeleteFunc(people, func(person PersonDocument) bool { return !slices.Contains(person.DomainIds, domainId) })
+}
+
+func (storage *PeopleStorageService) withDomains(people []PersonDocument) []PersonDocument {
+	return slices.DeleteFunc(people, func(person PersonDocument) bool { return len(person.DomainIds) == 0 })
+}
+
+func (storage *PeopleStorageService) stateField() string {
+	return "state"
+}
+
+func (storage *PeopleStorageService) deleted() string {
+	return "deleted"
 }
 
 func (storage *PeopleStorageService) personField() string {

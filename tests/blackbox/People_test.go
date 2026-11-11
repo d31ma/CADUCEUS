@@ -67,7 +67,7 @@ func TestAcId13OnlyAnOperatorDeletesAPerson(t *testing.T) {
 	ana := fixture(t, stack, "ANA")
 	dan := createPerson(t, stack, ana.AccessToken)
 	stack.Call(t, http.MethodDelete, "/api/v1/directory/people/"+dan.Id, ana.AccessToken, nil).Expect(t, http.StatusForbidden)
-	stack.Call(t, http.MethodDelete, "/api/v1/directory/people/"+dan.Id, operatorToken(t, stack), nil).Expect(t, http.StatusNoContent)
+	stack.Call(t, http.MethodDelete, "/api/v1/directory/people/"+dan.Id, operatorToken(t, stack), nil).Expect(t, http.StatusAccepted)
 	signInReply(t, stack, dan.Username, dan.Password).Expect(t, http.StatusUnauthorized)
 }
 
@@ -76,7 +76,7 @@ func TestAcId10DeletedPersonsPrefixIsNeverReused(t *testing.T) {
 	ana := fixture(t, stack, "ANA")
 	dan := createPerson(t, stack, ana.AccessToken)
 	operator := operatorToken(t, stack)
-	stack.Call(t, http.MethodDelete, "/api/v1/directory/people/"+dan.Id, operator, nil).Expect(t, http.StatusNoContent)
+	stack.Call(t, http.MethodDelete, "/api/v1/directory/people/"+dan.Id, operator, nil).Expect(t, http.StatusAccepted)
 	addMemberReply(t, stack, ana.AccessToken, dan.Username, false).ExpectError(t, http.StatusConflict, "duplicate")
 }
 

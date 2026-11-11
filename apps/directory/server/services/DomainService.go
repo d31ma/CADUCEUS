@@ -12,8 +12,6 @@ type DomainService struct {
 	// @Needs
 	collections *TenantCollectionsService
 	// @Needs
-	memberships *MembershipService
-	// @Needs
 	dns *DnsService
 	// @Needs
 	factory *DomainFactoryService
@@ -46,11 +44,10 @@ func (service *DomainService) Verify(domainId string) (Domain, error) {
 	return service.wire(document), service.unless(cmp.Or(failure, checkFailure), func() error { return service.domains.Save(document) })
 }
 
-func (service *DomainService) Remove(domainId string) error {
+func (service *DomainService) Remove(domainId string) (Domain, error) {
 	document, failure := service.existing(domainId)
-	failure = service.unless(failure, func() error { return service.memberships.RemoveDomain(document.DomainId) })
-	failure = service.unless(failure, func() error { return service.collections.Drop(document.DomainId) })
-	return service.unless(failure, func() error { return service.domains.Delete(document) })
+	document.State = service.removing()
+	return service.wire(document), service.unless(failure, func() error { return service.domains.Save(document) })
 }
 
 func (service *DomainService) existing(domainId string) (DomainDocument, error) {
@@ -123,6 +120,10 @@ func (service *DomainService) pending() string {
 
 func (service *DomainService) active() string {
 	return "active"
+}
+
+func (service *DomainService) removing() string {
+	return "removing"
 }
 
 func (service *DomainService) ok() string {

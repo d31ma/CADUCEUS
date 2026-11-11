@@ -1,5 +1,7 @@
 import (
 	"cmp"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"reflect"
 
@@ -24,7 +26,7 @@ func (service *ReservationService) Current(localPart string) (addresses.Reservat
 
 func (service *ReservationService) ForPerson(username string, personId string) error {
 	document, failure := service.localParts.Find(username)
-	wanted, taken := addresses.Reservations{}.ForPerson(service.reservation(document), username, personId)
+	wanted, taken := addresses.Reservations{}.ForPerson(service.claimable(document), username, personId)
 	return service.storeUnless(cmp.Or(failure, service.translated(taken, service.usernameField())), document, wanted)
 }
 
@@ -39,7 +41,45 @@ func (service *ReservationService) ForAddress(address string) error {
 func (service *ReservationService) Release(address string) error {
 	parts, _ := addresses.Address{}.Parsed(address)
 	document, failure := service.localParts.Find(parts.LocalPart)
-	return service.storeUnless(failure, document, addresses.Reservations{}.WithoutDomain(service.reservation(document), parts.DomainId))
+	return service.releaseUnless(failure, document, addresses.Reservations{}.WithoutDomain(service.reservation(document), parts.DomainId))
+}
+
+func (service *ReservationService) Pending(username string) (string, error) {
+	document, failure := service.localParts.Find(username)
+	request := cmp.Or(document.AddRequest, service.newRequest())
+	pending := LocalPartDocument{Id: document.Id, LocalPart: username, DomainIds: []string{}, AddRequest: request}
+	return request, service.markUnless(failure, document, pending)
+}
+
+func (service *ReservationService) ReleaseDomain(document LocalPartDocument, domainId string) error {
+	return service.releaseUnless(nil, document, addresses.Reservations{}.WithoutDomain(service.reservation(document), domainId))
+}
+
+func (service *ReservationService) markUnless(failure error, document LocalPartDocument, pending LocalPartDocument) error {
+	switch {
+	case failure != nil:
+		return failure
+	case document.AddRequest == pending.AddRequest:
+		return nil
+	}
+	return service.localParts.Store(pending)
+}
+
+func (service *ReservationService) claimable(document LocalPartDocument) addresses.Reservation {
+	if document.Owner == "" {
+		return addresses.Reservation{}
+	}
+	return service.reservation(document)
+}
+
+func (service *ReservationService) newRequest() string {
+	random := make([]byte, service.requestBytes())
+	rand.Read(random)
+	return hex.EncodeToString(random)
+}
+
+func (service *ReservationService) requestBytes() int {
+	return 16
 }
 
 func (service *ReservationService) storeUnless(failure error, document LocalPartDocument, wanted addresses.Reservation) error {
@@ -49,7 +89,23 @@ func (service *ReservationService) storeUnless(failure error, document LocalPart
 	case reflect.DeepEqual(service.reservation(document), service.normal(wanted)):
 		return nil
 	}
-	return service.localParts.Store(LocalPartDocument{Id: document.Id, LocalPart: wanted.LocalPart, Owner: wanted.Owner, PersonId: wanted.PersonId, DomainIds: wanted.DomainIds})
+	return service.localParts.Store(service.stored(document, wanted))
+}
+
+func (service *ReservationService) releaseUnless(failure error, document LocalPartDocument, wanted addresses.Reservation) error {
+	switch {
+	case failure != nil:
+		return failure
+	case reflect.DeepEqual(service.reservation(document), service.normal(wanted)):
+		return nil
+	case len(wanted.DomainIds) > 0, wanted.Owner != addresses.Owners{}.Addresses():
+		return service.localParts.Store(service.stored(document, wanted))
+	}
+	return service.localParts.Delete(document)
+}
+
+func (service *ReservationService) stored(document LocalPartDocument, wanted addresses.Reservation) LocalPartDocument {
+	return LocalPartDocument{Id: document.Id, LocalPart: wanted.LocalPart, Owner: wanted.Owner, PersonId: wanted.PersonId, DomainIds: wanted.DomainIds}
 }
 
 func (service *ReservationService) reservation(document LocalPartDocument) addresses.Reservation {

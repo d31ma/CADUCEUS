@@ -1,6 +1,5 @@
 import (
 	"cmp"
-	"errors"
 	"slices"
 	"strings"
 
@@ -50,11 +49,6 @@ func (service *MembershipService) Remove(caller oidc.Caller, memberId string) er
 	person, found, readFailure := service.people.ByPersonId(memberId)
 	_, failure = service.storeFoundUnless(cmp.Or(failure, readFailure), found, PersonRules{}.Without(person, caller.DomainId))
 	return service.leaveUnless(failure, member)
-}
-
-func (service *MembershipService) RemoveDomain(domainId string) error {
-	people, failure := service.people.All()
-	return cmp.Or(failure, service.storeWithout(service.inDomain(people, domainId), domainId))
 }
 
 func (service *MembershipService) enrollUnless(refused error, request AddMemberRequest) (PersonDocument, bool, error) {
@@ -112,15 +106,6 @@ func (service *MembershipService) leaveUnless(failure error, member MemberDocume
 	return service.writer.Leave(member)
 }
 
-func (service *MembershipService) storeWithout(people []PersonDocument, domainId string) error {
-	failures := []error{}
-	for _, person := range people {
-		_, failure := service.people.Store(PersonRules{}.Without(person, domainId))
-		failures = append(failures, failure)
-	}
-	return errors.Join(failures...)
-}
-
 func (service *MembershipService) withDomain(person PersonDocument, domainId string, admin bool) PersonDocument {
 	return PersonRules{}.WithAdmin(PersonRules{}.With(person, domainId), domainId, admin)
 }
@@ -130,8 +115,4 @@ func (service *MembershipService) notYetMember(person PersonDocument, domainId s
 		return &Duplicate{Message: person.Username + " is already a member of " + domainId}
 	}
 	return nil
-}
-
-func (service *MembershipService) inDomain(people []PersonDocument, domainId string) []PersonDocument {
-	return slices.DeleteFunc(people, func(person PersonDocument) bool { return !slices.Contains(person.DomainIds, domainId) })
 }

@@ -24,6 +24,22 @@ func (record userRecord) requirePasswordChange() error {
 	return marshalError
 }
 
+func (record userRecord) attribute(key string) (string, error) {
+	attributes := map[string][]string{}
+	err := json.Unmarshal(record.attributesText(), &attributes)
+	if err != nil {
+		return "", fmt.Errorf("the Keycloak user attributes are not a JSON object of lists: %w", err)
+	}
+	return record.first(attributes[key]), nil
+}
+
+func (userRecord) first(values []string) string {
+	if len(values) == 0 {
+		return ""
+	}
+	return values[0]
+}
+
 func (record userRecord) attributesText() json.RawMessage {
 	text := record[record.attributesKey()]
 	if len(text) == 0 || string(text) == "null" {

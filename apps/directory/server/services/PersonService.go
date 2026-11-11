@@ -16,11 +16,15 @@ type PersonService struct {
 	accounts *AccountAdminService
 	// @Needs
 	writer *MemberWriterService
+	// @Needs
+	domains *DomainStorageService
 }
 
 func (service *PersonService) Record(personId string) (PersonRecord, error) {
-	person, failure := service.known(personId)
-	return PersonRecord{PersonId: person.PersonId, Username: person.Username, DisplayName: person.DisplayName, DomainIds: service.list(person.DomainIds), AdminDomainIds: service.list(person.AdminDomainIds), DefaultDomainId: person.DefaultDomainId, State: person.State}, failure
+	found, failure := service.known(personId)
+	removing, removingFailure := service.domains.RemovingIds()
+	person := service.visible(found, removing)
+	return PersonRecord{PersonId: person.PersonId, Username: person.Username, DisplayName: person.DisplayName, DomainIds: service.list(person.DomainIds), AdminDomainIds: service.list(person.AdminDomainIds), DefaultDomainId: person.DefaultDomainId, State: person.State}, cmp.Or(failure, removingFailure)
 }
 
 func (service *PersonService) Search(query MemberQuery) (PersonPage, error) {
@@ -54,8 +58,7 @@ func (service *PersonService) RemoveTotp(caller oidc.Caller, personId string) er
 func (service *PersonService) Delete(personId string) error {
 	person, failure := service.known(personId)
 	failure = Steps{}.Unless(failure, func() error { return service.accounts.Delete(person.PersonId) })
-	failure = Steps{}.Unless(failure, func() error { return service.writer.LeaveAll(person) })
-	_, failure = service.storeUnless(failure, service.deletedPerson(person))
+	_, failure = service.storeUnless(failure, service.leavingPerson(person))
 	return failure
 }
 
@@ -99,12 +102,18 @@ func (service *PersonService) storeUnless(failure error, person PersonDocument) 
 	return service.people.Store(person)
 }
 
-func (service *PersonService) deletedPerson(person PersonDocument) PersonDocument {
-	person.DomainIds = []string{}
+func (service *PersonService) leavingPerson(person PersonDocument) PersonDocument {
 	person.AdminDomainIds = []string{}
 	person.DefaultDomainId = ""
 	person.State = service.deleted()
 	return person
+}
+
+func (service *PersonService) visible(person PersonDocument, removing []string) PersonDocument {
+	if person.State == service.deleted() {
+		return PersonRules{}.Hidden(person, person.DomainIds)
+	}
+	return PersonRules{}.Hidden(person, removing)
 }
 
 func (service *PersonService) validState(state string) error {

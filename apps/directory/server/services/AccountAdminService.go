@@ -13,9 +13,11 @@ type AccountAdminService struct {
 	settings *SettingsService
 }
 
-func (service *AccountAdminService) Create(username string, password string) (string, error) {
-	id, failure := service.users().Create(keycloak.NewUser{Username: username, Password: password})
-	return id, service.translated(failure)
+func (service *AccountAdminService) Create(username string, password string, addRequest string) (string, error) {
+	user := keycloak.NewUser{Username: username, Password: password, AddRequest: addRequest}
+	id, failure := service.users().Create(user)
+	taken := errors.As(failure, &keycloak.UserExists{})
+	return service.recoveredWhenTaken(taken, id, service.translated(failure), user)
 }
 
 func (service *AccountAdminService) SetEnabled(personId string, enabled bool) error {
@@ -39,6 +41,46 @@ func (service *AccountAdminService) IsOperator(personId string) (bool, error) {
 	return operator, service.translated(failure)
 }
 
+func (service *AccountAdminService) recoveredWhenTaken(taken bool, id string, translated error, user keycloak.NewUser) (string, error) {
+	if !taken {
+		return id, translated
+	}
+	return service.recovered(user)
+}
+
+func (service *AccountAdminService) recovered(user keycloak.NewUser) (string, error) {
+	tagged, failure := service.users().Tagged(user.Username)
+	missing := errors.As(failure, &keycloak.UserMissing{})
+	refused := service.unlessMissing(missing, service.translated(failure))
+	refusal := service.madeByThisAdd(refused, service.sameTag(tagged.AddRequest, user.AddRequest))
+	return tagged.Id, Steps{}.Unless(refusal, func() error { return service.ResetPassword(tagged.Id, user.Password) })
+}
+
+func (service *AccountAdminService) unlessMissing(missing bool, failure error) error {
+	if missing {
+		return nil
+	}
+	return failure
+}
+
+func (service *AccountAdminService) madeByThisAdd(refused error, sameTag bool) error {
+	switch {
+	case refused != nil:
+		return refused
+	case sameTag:
+		return nil
+	}
+	return &Duplicate{Message: service.taken()}
+}
+
+func (service *AccountAdminService) sameTag(tag string, addRequest string) bool {
+	return tag != "" && tag == addRequest
+}
+
+func (service *AccountAdminService) taken() string {
+	return "this username is already taken"
+}
+
 func (service *AccountAdminService) users() keycloak.Users {
 	settings := service.settings.Settings()
 	userSettings := keycloak.UserSettings{BaseUrl: settings.KeycloakUrl, ClientId: settings.Admin.Client, ClientSecret: settings.Admin.Secret}
@@ -53,7 +95,7 @@ func (service *AccountAdminService) translated(failure error) error {
 	case errors.As(failure, &refused):
 		return &PasswordPolicy{Message: cmp.Or(refused.Message, "the password does not meet the password policy")}
 	case errors.As(failure, &keycloak.UserExists{}):
-		return &Duplicate{Message: "this username is already taken"}
+		return &Duplicate{Message: service.taken()}
 	case errors.As(failure, &keycloak.UserMissing{}):
 		return &NotFound{Message: "no such account"}
 	}

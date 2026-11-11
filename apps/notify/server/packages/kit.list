@@ -1,3 +1,7 @@
 oidc
 events
 outbox
+collections
+ids
+notifications
+webpush

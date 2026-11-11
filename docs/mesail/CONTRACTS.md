@@ -419,6 +419,36 @@ and closes with code 4401 when it is no longer valid (SPEC AC-ID-4).
 | `PUT /api/v1/notify/notifications/{notificationId}/read` | SignedIn | - | `204` |
 | `POST /api/v1/notify/push-subscriptions` | SignedIn | `PushSubscriptionRequest{endpoint, p256dh, auth}` | `201` |
 | `GET /api/v1/notify/settings` / `PUT` | SignedIn | `NotifySettings{emailSummaryAfterMinutes (0=off, 15..1440), mutedConversationIds[]}` | `NotifySettings` |
+| `DELETE /api/v1/notify/push-subscriptions` | SignedIn | `PushSubscriptionRequest` (only `endpoint` is used) | `204`; only the caller's own subscription |
+| `GET /api/v1/notify/push-key` | SignedIn | - | `PushKey{publicKey}` (the VAPID public key for `pushManager.subscribe`); `503 unavailable` when not configured |
+| `POST /api/v1/notify/events` | Allow(Service) | `Envelope` | `EventReceipt` (EVENTS.md) |
+| `POST /api/v1/notify/outbox/relay` | Allow(Service) | - | `OutboxReport` |
+| `POST /api/v1/notify/jobs/run` | Allow(Service), install-wide (`mesail-operators`) | - | `JobReport{domains, fannedOut, pushed, skipped, summarized, more}` |
+| `GET /api/v1/notify/messages/{messageId}/source` | Allow(Service) | - | `MessageSource{messageId, domainId, body, attachmentIds[]}` of an email summary (`sum_` id) |
+
+How it works:
+- Notifications (AC-PN-2) come from `message.created`: a mention, a direct
+  message (`kind` `email` when the direct message is an email), or a reply
+  in a thread the member wrote in. Only members who can read the message
+  get one, never the author. A muted conversation keeps only mentions.
+- Web Push (AC-PN-3) uses VAPID (RFC 8292) and `aes128gcm` encryption (RFC
+  8291). The VAPID keys come from the secret store (`.env`:
+  `YON_NOTIFY_VAPID_PUBLIC_KEY`, `YON_NOTIFY_VAPID_PRIVATE_KEY`,
+  `YON_NOTIFY_VAPID_SUBJECT`). A push endpoint must be `https` on a known
+  push service host (`notify.push.hosts`), else `400 invalid_request`.
+  Nothing is pushed while the member's presence is `dnd` or `active`; the
+  service worker still decides whether a tab is focused. The push text never
+  holds message text. A subscription the push service reports gone (404,
+  410) is deleted. Native push targets (APNs, FCM) plug in behind the same
+  `webpush.Target` seam later.
+- The email summary (AC-PN-4) is sent once per batch of unread
+  notifications after the member's delay, as `email.send.requested` from
+  `notifications@<domain>` to the member's primary address (producer
+  `notify`). mail-out reads its body from
+  `GET /api/v1/<envelope producer>/messages/{messageId}/source`.
+- Everything is per domain: the caller's domain for routes, the envelope's
+  `domainId` for events. A notification of another member or domain
+  answers `404`.
 
 ## search
 
@@ -565,7 +595,8 @@ visible header lists, `rcpt` is the one envelope recipient of this item,
 Bcc never appears in `to[]` or `cc[]`), reads the body from `messaging`
 (`GET /api/v1/messaging/messages/{messageId}/source`, `Allow(Service)`,
 answers `MessageSource{messageId, domainId, body, attachmentIds[]}`;
-slice M3), reads `dkimSelector` and the hosted state from `directory`
+slice M3; for an event whose producer is `notify`, an email summary, from
+`GET /api/v1/notify/messages/{messageId}/source` instead), reads `dkimSelector` and the hosted state from `directory`
 (`GET /api/v1/directory/domains/{domainId}`, `Allow(Service)`, answers
 `Domain`; slice D1), builds MIME, signs DKIM,
 delivers, and publishes `email.delivery.changed{messageId, rcpt, status,

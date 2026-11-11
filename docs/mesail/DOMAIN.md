@@ -32,7 +32,7 @@ own TACHYON Go app in `apps/<service>/`, with the route prefix
 | `messaging` | `conversations`, `participants` (with the read position), `messages` (with the deliveries), `reactions`, `mentions`, `attachment-uses` (one row per attachment of a message, for the attachment access check; at most 10 per message), `members` (a cache filled from `member.upserted`, for @mention lookup), `email-threads` | raw email bytes, attachments |
 | `attachments` | `attachments` (metadata) and the blob bucket | message bodies |
 | `realtime` | `connections`, `presence` | messages |
-| `notify` | `notifications`, `push-subscriptions`, `notify-settings` | messages |
+| `notify` | `notifications`, `push-subscriptions`, `notify-settings`, `notify-threads`, `notify-summaries`, `notify-fanout`, `events-seen` | messages |
 | `search` | `search-index` | the source documents |
 | `mail-in` | `inbound-raw` (metadata) and the raw-mail bucket | conversations |
 | `mail-out` | `outbound-queue`, `suppressions`, `delivery-attempts` | conversations |
@@ -329,7 +329,7 @@ Consumers are idempotent by `eventId`, and write only into the envelope's
 | `channel.created`, `channel.member.added`, `channel.member.removed`, `channel.archived` | channels | messaging, realtime, search |
 | `message.created`, `message.edited`, `message.deleted` | messaging | realtime, notify, search |
 | `reaction.changed`, `read-position.moved` | messaging | realtime, notify |
-| `email.send.requested` | messaging | mail-out |
+| `email.send.requested` | messaging, notify (email summary) | mail-out |
 | `email.delivery.changed` | mail-out | messaging |
 | `email.received` | mail-in | messaging |
 | `presence.changed` | realtime | realtime (fan-out within the domain) |

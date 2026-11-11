@@ -3,10 +3,13 @@ set -Eeuo pipefail
 
 readonly KEYCLOAK_HOME=${KEYCLOAK_HOME:-/opt/keycloak}
 readonly KCADM=${KEYCLOAK_HOME}/bin/kcadm.sh
+BIN=$(cd "$(dirname "$0")" && pwd)
+readonly BIN
 readonly SERVER=${MESAIL_KEYCLOAK_ADMIN_URL:-http://127.0.0.1:${KC_HTTP_PORT:-8180}/idp}
 readonly DIRECTORY_CLIENT=${MESAIL_KEYCLOAK_DIRECTORY_CLIENT_ID:-mesail-directory}
 readonly DIRECTORY_ROLE=create-realm
 readonly ADMIN_API_SCOPE=kc-admin-api
+readonly LEGACY_REALM=mesail-operators
 readonly CONFIG_ERROR=64
 KCADM_CONFIG=$(mktemp)
 readonly KCADM_CONFIG
@@ -69,8 +72,13 @@ add_admin_api_scope() {
   kcadm update "clients/${client_id}/default-client-scopes/${scope_id}" -r master
 }
 
+legacy_realms_present() {
+  MESAIL_APP_HEALTH_URL="${SERVER}/realms/${LEGACY_REALM}/.well-known/openid-configuration" "$BIN/mesail-healthcheck" app 2>/dev/null
+}
+
 main() {
   trap 'rm -f "$KCADM_CONFIG"' EXIT
+  legacy_realms_present || { log "no old per-domain realms: the realm mesail has its own ${DIRECTORY_CLIENT} client; nothing to provision"; return 0; }
   [[ -n ${MESAIL_KEYCLOAK_DIRECTORY_SECRET:-} ]] || { log "MESAIL_KEYCLOAK_DIRECTORY_SECRET is not set; no admin API client for the directory service"; return 0; }
   directory_client_works && { log "client ${DIRECTORY_CLIENT} is ready"; return 0; }
   sign_in_as_bootstrap_admin

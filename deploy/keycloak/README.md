@@ -18,63 +18,91 @@ in production.
 | `conf/quarkus.properties` | Turns off Hibernate's database version check (it expects PostgreSQL 14+). |
 | `providers/sqlite/` | Java source of `mesail-keycloak-sqlite.jar` (SQLite support), compiled in the `keycloak-providers` stage. Left out of the PostgreSQL image. |
 | `providers/mesail/` | Java source of `mesail-keycloak-mesail.jar`: the admin API endpoint that stores a TOTP. In both images. |
-| `realm/domain-realm.json` | The template of one mail domain's realm (`${MESAIL_REALM}` = the domain). |
-| `realm/mesail-operators-realm.json` | The `mesail-operators` realm, for the people who run the installation. |
-| `realm/dev/<realm>-users-0.json` | Dev-only test users for `example.com`, `example.org`, `partner.test` and `mesail-operators`. Imported only with `MESAIL_KEYCLOAK_DEV_USERS=true`. |
+| `realm/mesail-realm.json` | The one realm `mesail`: every person and every Operator (ADR 0005). |
+| `realm/dev/mesail-users-0.json` | Dev-only people `ana`, `bo`, `eve`, `carol` and `operator`. Imported only with `MESAIL_KEYCLOAK_DEV_USERS=true`. |
+| `realm/domain-realm.json`, `realm/mesail-operators-realm.json`, `realm/dev/<domain>-users-0.json` | **Transition only, until Wave 3's switch (L5):** the old realm per mail domain and `mesail-operators` (ADR 0004). Imported only while `MESAIL_KEYCLOAK_DOMAINS` is set. Deleted after L5. |
 | `bin/mesail-supervisor` | The image entrypoint. Starts Keycloak, waits until it is ready, runs the provisioning step, then starts `MESAIL_APP_COMMAND`. |
-| `bin/mesail-keycloak-start` | Checks the environment, renders one realm per domain, chooses the database, runs `kc.sh start --optimized --import-realm`. |
-| `bin/mesail-keycloak-provision` | Creates the master-realm client `mesail-directory` once, so the directory service can create realms through the admin API. |
+| `bin/mesail-keycloak-start` | Checks the environment, prepares the realm `mesail` (and, in the transition, one realm per domain), chooses the database, runs `kc.sh start --optimized --import-realm`. |
+| `bin/mesail-keycloak-provision` | **Transition only:** while the old realms exist, creates the master-realm client `mesail-directory` once, so the old directory service can create realms. Does nothing with the one realm. |
 | `dev/build-native-keycloak.sh` | Builds the same Keycloak natively on macOS or Linux (no Docker), for development. |
 | `bin/mesail-healthcheck` | Docker `HEALTHCHECK`: Keycloak readiness, plus `MESAIL_APP_HEALTH_URL` when set. |
 | `test/run-image-test.sh` | Builds the image and proves it works (see [Testing](#testing)). |
-| `test/oidc_check.py` | The OIDC checks the test runs (Python standard library and `openssl`). |
+| `test/oidc_check.py` | The checks of the realm `mesail` (Python standard library and `openssl`). |
+| `test/legacy_realms_check.py` | **Transition only:** the old checks of the per-domain realms. |
+| `test/keycloak_client.py` | HTTP, token, TOTP and admin API helpers both checks use. |
 
-## Realms: one per mail domain
+## The realm `mesail`: one login per person
 
-Each hosted mail domain has its own realm, named after the domain (for
-example `example.com`). The realm keeps that domain's users apart: a token
-from one realm is never valid in another, and its issuer names the domain.
-People who run the installation sign in to the separate realm
-`mesail-operators`.
+Since [ADR 0005](../../docs/adr/0005-one-login-per-person.md) Keycloak has one
+realm, `mesail`. It holds every person: members of any mail domain and the
+Operators. Keycloak owns only credentials and sessions: the password, the
+2-step code (TOTP), brute-force detection, the session lifetime and the realm
+role `mesail-operator`. Which domains a person belongs to, and whether they
+administer one, is `directory` data, not Keycloak data. Adding a domain does
+not touch Keycloak.
 
 **Keycloak is reached only from the backend.** No browser talks to it, and
 `/idp` is not routed from the public address. The identity service signs
-users in server to server.
+people in server to server and gives the browser Mesail's own token;
+Keycloak's tokens never leave the identity service.
 
-| Client | In | Type | Use |
-| --- | --- | --- | --- |
-| `mesail-identity` | every realm | confidential, password grant only | The identity service signs a user in. Keycloak's built-in direct grant flow asks for a TOTP code (`totp` form field) when the user has one set up. Brute-force detection locks an account for a while after 10 failures. |
-| `mesail-service` | every realm | confidential, client credentials | Service-to-service calls. Tokens carry only the role `mesail-service`. A call about one domain uses that domain's realm; install-wide calls use `mesail-operators`. |
-| `mesail-account` | domain realms | confidential, client credentials; service account with `realm-management` `view-users` and `manage-users` only | The identity service changes a user's own settings through this realm's admin API: password reset, TOTP set and remove, logout everywhere, lock status and unlock. It gets 403 on anything else and on other realms. |
-| `mesail-api` | every realm | audience only | Every access token's `aud` contains `mesail-api`. |
-| `mesail-directory` | `master` | confidential, client credentials, role `create-realm` | The directory service creates a new domain's realm through the admin API. Created by `mesail-keycloak-provision`. Keycloak makes the creator an admin of each realm it creates. |
+**Usernames.** The username is the person's email prefix, stored in lowercase
+(`ana` for `ana@example.com` and `ana@example.org`). The realm's user profile
+allows 1 to 64 characters of `a-z`, `0-9`, `.`, `_` and `-`, starting and
+ending with a letter or digit, with no two dots in a row (SPEC AC-ID-11); the
+admin API answers 400 for anything else and 409 for a prefix that exists.
+`editUsernameAllowed` is false. Keycloak lowercases and trims the username at
+sign-in, so `ANA` and ` ana ` sign in as `ana`. Sign-in with an email address
+is off in Keycloak (`loginWithEmailAllowed` false): the identity service turns
+`ana@example.com` into `ana` itself. Emails are optional and may repeat
+(`duplicateEmailsAllowed` true); the dev users have their default address.
 
-There is no browser client. Keycloak's own `account-console` and
-`security-admin-console` clients still exist in each realm (Keycloak always
-creates them), but nothing routes browsers to them.
+| Client | Type | Use |
+| --- | --- | --- |
+| `mesail-identity` | confidential, password grant only | The identity service signs a person in. Keycloak's built-in direct grant flow asks for a TOTP code (`totp` form field) when the person has one set up. Its access token has `aud` `mesail-identity` only (never `mesail-api`, so no service accepts it), the realm role `mesail-operator` for Operators, and the claim `mesail_must_change_password` (boolean, from the user attribute `mesail.mustChangePassword`; absent when the attribute is not set). |
+| `mesail-account` | confidential, client credentials; service account with `realm-management` `view-users` and `manage-users` only | The identity service changes a person's own settings: password, TOTP, sessions, the `mesail.mustChangePassword` attribute, lock status and unlock. 403 on anything else, and on other realms. |
+| `mesail-directory` | confidential, client credentials; service account with `realm-management` `view-users`, `query-users` and `manage-users` only | The directory service creates, finds, disables and deletes people, sets `mesail.mustChangePassword`, resets passwords, removes a TOTP and logs a person out. It cannot create realms or read clients. |
 
-Realm roles (in `realm_access.roles`): `mesail-member` (every user of a domain
-gets it), `mesail-admin` (admin of that domain), `mesail-service` (service
-accounts only; they get no default role), and in `mesail-operators` the role
-`mesail-operator` (given to each operator explicitly; that realm's default role
-is empty).
+There is no `mesail-service` client any more: service tokens come from the
+identity service (ADR 0005 section 4). There is no browser client. Keycloak's
+own `account-console` and `security-admin-console` clients still exist
+(Keycloak always creates them), but nothing routes browsers to them.
 
-**Account settings through the admin API** (all tested, with a
-`mesail-account` client-credentials token of the user's realm):
+**Roles.** The only Mesail realm role is `mesail-operator`, given to each
+Operator explicitly. The default role `default-roles-mesail` is empty, so a
+person's token and the two service accounts' tokens carry no other realm
+role. `mesail-member`, `mesail-admin` and `mesail-service` are roles of
+Mesail's own token, set by the identity service.
 
-| Action | Call |
-| --- | --- |
-| Find the user | `GET /admin/realms/<domain>/users?username=<address>&exact=true` |
-| Set up TOTP with a secret the identity service made, after the user typed a code | `PUT /admin/realms/<domain>/mesail/users/<id>/otp` with `{"secret":"<base32, 32 to 128 characters>","digits":6,"period":30,"algorithm":"HmacSHA1","code":"<the code>"}` (see below) |
-| List or remove TOTP | `GET .../users/<id>/credentials`, `DELETE .../users/<id>/credentials/<credential id>` |
-| Change the password | `PUT .../users/<id>/reset-password` with `{"type":"password","value":"...","temporary":false}` |
-| Log out everywhere | `POST .../users/<id>/logout` |
-| Lock status, unlock | `GET` / `DELETE /admin/realms/<domain>/attack-detection/brute-force/users/<id>` |
+**User attributes.** The realm's user profile declares
+`mesail.mustChangePassword` (`true` or `false`; only admins see or change it).
+Profile verification (`VERIFY_PROFILE`) is off and no field but the username
+is required, so a person made through the admin API without an email or a
+name can sign in with the password grant.
+
+**Admin API calls** (all tested, in the realm `mesail`, with a
+client-credentials token of `mesail-account` or `mesail-directory`):
+
+| Action | Call | Client |
+| --- | --- | --- |
+| Find a person | `GET /admin/realms/mesail/users?username=<prefix>&exact=true` | both |
+| Create a person | `POST /admin/realms/mesail/users` with `username`, `firstName`, `lastName`, `enabled`, `attributes.mesail.mustChangePassword` `["true"]` and a password credential (`temporary: false`) | directory |
+| Set or clear must-change | `PUT /admin/realms/mesail/users/<id>` with the user from `GET` and the changed `attributes` | both |
+| Disable or enable | `PUT .../users/<id>` with `enabled` | directory |
+| Delete | `DELETE .../users/<id>` | directory |
+| Set up TOTP with a secret the identity service made, after the person typed a code | `PUT /admin/realms/mesail/mesail/users/<id>/otp` (see below) | account |
+| List or remove TOTP | `GET .../users/<id>/credentials`, `DELETE .../users/<id>/credentials/<credential id>` | both |
+| Change the password | `PUT .../users/<id>/reset-password` with `{"type":"password","value":"...","temporary":false}` | both |
+| List or end sessions | `GET .../users/<id>/sessions`, `DELETE /admin/realms/mesail/sessions/<session id>` | account |
+| Log out everywhere | `POST .../users/<id>/logout` | both |
+| Lock status, unlock | `GET` / `DELETE /admin/realms/mesail/attack-detection/brute-force/users/<id>` | account |
 
 **The TOTP endpoint** (`providers/mesail`, Keycloak's admin REST extension
 SPI, so Keycloak's own admin authentication runs first). It:
 
-- requires `manage-users` for that user (Keycloak's permission check);
+- requires `manage-users` for that user (Keycloak's permission check), so
+  `mesail-account` and `mesail-directory` may call it; a person's own token
+  gets 401 or 403;
 - requires digits, period and algorithm equal to the realm's OTP policy
   (6, 30, `HmacSHA1`), and a base32 secret of 160 to 640 bits;
 - checks the code against the secret with the realm's look-around (one 30 s
@@ -84,51 +112,55 @@ SPI, so Keycloak's own admin authentication runs first). It:
 - refuses a second TOTP (remove the old one first);
 - stores the credential and writes an admin event (`CREATE` on
   `users/<id>/credentials/<credential id>`, without the secret; admin events
-  are on in the realm templates) and a log line.
+  are on in the realm) and a log line.
 
 Answers: 204 stored; 400 `{"error":"invalid_request"}`, `invalid_code` or
 `code_used`; 401 or 403 without the right; 404 `user_not_found`; 409
 `otp_exists`. The stock `PUT /users/<id>` with an `otp` credential also stores
 a TOTP, but checks no code; Mesail uses the endpoint.
 
-**Sign-in answers.** A wrong password, a missing or wrong TOTP code and a
-locked account all get the same answer: HTTP 400 `invalid_grant`,
-"Invalid user credentials". Keycloak does not say which (so nobody can probe
-accounts). The identity service can ask for the lock status with
-`mesail-account`. Lockout: 10 failures lock the account for up to 15 minutes,
-and two failures within 1 second lock it for 60 seconds (Keycloak's quick login
-check).
+**Sign-in answers.** A wrong password, a missing or wrong TOTP code, a
+disabled person and a locked account all get the same answer: HTTP 400
+`invalid_grant`. Keycloak does not say which (so nobody can probe accounts).
+The identity service can ask for the lock status with `mesail-account`.
+Lockout counts per person (one budget for all their domains): 10 failures
+lock the account for up to 15 minutes, and two failures within 1 second lock
+it for 60 seconds (Keycloak's quick login check).
+
+**TOTP:** SHA-1, 6 digits, 30 seconds; a code one step before or after the
+current one is accepted, and each code signs in only once.
 
 Tokens: RS256, access token 60 seconds, refresh token rotation on (a refresh
 token works once), SSO idle 30 minutes, at most 10 hours. Passwords need 12
-characters. Self-registration and password reset by email are off.
+characters and may not equal the username or the email. Self-registration and
+password reset by email are off.
 
-**Issuer:** `${MESAIL_KEYCLOAK_URL}/realms/<domain>`. `MESAIL_KEYCLOAK_URL`
-is the backend address of Keycloak, default `http://127.0.0.1:8180/idp` (the
+**Issuer:** `${MESAIL_KEYCLOAK_URL}/realms/mesail`. `MESAIL_KEYCLOAK_URL` is
+the backend address of Keycloak, default `http://127.0.0.1:8180/idp` (the
 all-in-one image). If Keycloak runs as its own host, use that host, for
-example `http://keycloak:8180/idp`. Keys:
-`${MESAIL_KEYCLOAK_URL}/realms/<domain>/protocol/openid-connect/certs`.
+example `http://keycloak:8180/idp`. Only the identity service reads this
+issuer.
 
-**Adding a domain.** Two ways, both tested on SQLite:
-- at run time: the directory service takes a client-credentials token from
-  the `master` realm with `mesail-directory`, renders `domain-realm.json`
-  itself (the admin API does not fill `${...}` placeholders), and posts it to
-  `${MESAIL_KEYCLOAK_URL}/admin/realms`; then it creates users with
-  `POST /admin/realms/<domain>/users`;
-- a realm that exists already, seeded or created earlier, answers the `POST`
-  with 409 `{"errorMessage":"Realm <domain> already exists"}`; Keycloak also
-  logs that as an ERROR line ("Conflict detected"), which is expected. The
-  directory client may delete only realms it created (403 on seeded ones);
-- at start: add the domain to `MESAIL_KEYCLOAK_DOMAINS`. A realm that exists
-  already is skipped, so restarts change nothing.
+The realm file uses the placeholders `${MESAIL_IDENTITY_CLIENT_SECRET}`,
+`${MESAIL_ACCOUNT_CLIENT_SECRET}` and `${MESAIL_KEYCLOAK_DIRECTORY_SECRET}`,
+filled by Keycloak from the environment. The import runs only when the realm
+does not exist yet, so changing a secret later changes nothing: change it
+through the admin API.
 
-The realm templates use the placeholders `${MESAIL_REALM}` (filled by
-`mesail-keycloak-start` for each domain), `${MESAIL_IDENTITY_CLIENT_SECRET}`,
-`${MESAIL_SERVICE_SECRET}` and `${MESAIL_ACCOUNT_CLIENT_SECRET}` (filled by
-Keycloak from the environment; the directory service fills them itself when it
-creates a realm). The
-import runs only for realms that do not exist yet, so changing a secret later
-changes nothing: change it through the admin API.
+### Transition until Wave 3's switch (L5)
+
+Until L5 moves every app to Mesail's own tokens, the running apps still use
+ADR 0004's realm per domain. While `MESAIL_KEYCLOAK_DOMAINS` is set,
+`mesail-keycloak-start` therefore also imports the old realms beside
+`mesail`: one realm per listed domain from `realm/domain-realm.json`, the
+realm `mesail-operators`, and all files in `realm/dev/` (with
+`MESAIL_KEYCLOAK_DEV_USERS=true`). It then needs `MESAIL_SERVICE_SECRET` too,
+and `mesail-keycloak-provision` creates the master-realm client
+`mesail-directory` (role `create-realm`) for the old directory service. Both
+models run side by side in one Keycloak and one SQLite file; they share no
+users. `test/legacy_realms_check.py` keeps checking the old realms. After L5,
+unset `MESAIL_KEYCLOAK_DOMAINS`; then the old files, the provisioning step and
+the legacy check are deleted.
 
 ## Running the image
 
@@ -138,28 +170,26 @@ docker build --target mesail-keycloak -t mesail-keycloak .
 
 ```bash
 docker run -d --name mesail-keycloak -v mesail-keycloak:/data/keycloak \
-  -e MESAIL_KEYCLOAK_DOMAINS=example.com,example.org \
-  -e MESAIL_IDENTITY_CLIENT_SECRET=... -e MESAIL_SERVICE_SECRET=... \
+  -e MESAIL_IDENTITY_CLIENT_SECRET=... -e MESAIL_ACCOUNT_CLIENT_SECRET=... \
   -e MESAIL_KEYCLOAK_DIRECTORY_SECRET=... \
-  -e KC_BOOTSTRAP_ADMIN_CLIENT_ID=bootstrap-admin -e KC_BOOTSTRAP_ADMIN_CLIENT_SECRET=... \
   -e MESAIL_APP_COMMAND='/path/to/mesail-front' mesail-keycloak
 ```
 
 | Variable | Required | Meaning |
 | --- | --- | --- |
-| `MESAIL_IDENTITY_CLIENT_SECRET` | yes | Secret of `mesail-identity`, the same in every realm (the identity service's `YON_IDENTITY_CLIENT_SECRET`). Used when a realm is imported. |
-| `MESAIL_SERVICE_SECRET` | yes | Secret of `mesail-service` in every imported realm (the services' `YON_SERVICE_CLIENT_SECRET`). |
-| `MESAIL_ACCOUNT_CLIENT_SECRET` | yes | Secret of `mesail-account` in every imported domain realm (the identity service's `YON_IDENTITY_ACCOUNT_SECRET`). |
-| `MESAIL_KEYCLOAK_DOMAINS` | no | Mail domains whose realms are imported at start, separated by commas or spaces. Existing realms are skipped. |
+| `MESAIL_IDENTITY_CLIENT_SECRET` | yes | Secret of `mesail-identity` (the identity service's `YON_IDENTITY_CLIENT_SECRET`). Used when the realm is imported. |
+| `MESAIL_ACCOUNT_CLIENT_SECRET` | yes | Secret of `mesail-account` (the identity service's `YON_IDENTITY_ACCOUNT_SECRET`). |
+| `MESAIL_KEYCLOAK_DIRECTORY_SECRET` | yes | Secret of `mesail-directory` (the directory service's `YON_DIRECTORY_ADMIN_SECRET`). In the transition also the secret of the old master-realm client of the same name. |
 | `MESAIL_KEYCLOAK_URL` | no | Keycloak's backend address and the issuer base. Default `http://127.0.0.1:8180/idp`. |
-| `MESAIL_KEYCLOAK_DIRECTORY_SECRET` | no | Turns on the `mesail-directory` admin client and is its secret (the directory service's `YON_DIRECTORY_ADMIN_SECRET`). |
-| `KC_BOOTSTRAP_ADMIN_CLIENT_ID`, `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` | first start | A temporary admin client of the `master` realm. The provisioning step uses it once to create `mesail-directory`. Remove it from the environment after the first start. |
+| `MESAIL_KEYCLOAK_DOMAINS` | transition | Mail domains whose old realms are imported beside `mesail`, until L5 (see the transition above). Leave it unset for the one realm. |
+| `MESAIL_SERVICE_SECRET` | transition | Secret of `mesail-service` in the old realms. Needed only with `MESAIL_KEYCLOAK_DOMAINS`. |
+| `KC_BOOTSTRAP_ADMIN_CLIENT_ID`, `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` | transition, first start | A temporary admin client of the `master` realm. The provisioning step uses it once to create the old master-realm `mesail-directory`. Not needed for the one realm. Remove it from the environment after the first start. |
 | `KC_BOOTSTRAP_ADMIN_USERNAME`, `KC_BOOTSTRAP_ADMIN_PASSWORD` | no | A temporary admin user of the `master` realm, for the admin console (reach it through a tunnel, never the public address). |
 | `MESAIL_APP_COMMAND` | no | The app the supervisor starts after Keycloak is ready. Without it the container runs Keycloak only. |
 | `MESAIL_APP_HEALTH_URL` | no | `http://127.0.0.1:<port>/<path>` of the app's health route, added to the image health check. |
 | `MESAIL_KEYCLOAK_DATA` | no | Folder of the SQLite file. Default `/data/keycloak` (a volume). |
 | `MESAIL_KEYCLOAK_IMPORT_DIR` | no | Another folder of realm files laid out like `realm/`. |
-| `MESAIL_KEYCLOAK_DEV_USERS` | no | `true` imports the dev users: `member@<domain>` (password `dev-member-password`) and `admin@<domain>` (`dev-admin-password`) in each dev domain, and `operator@mesail.test` (`dev-operator-password`). Dev and tests only. |
+| `MESAIL_KEYCLOAK_DEV_USERS` | no | `true` imports the dev people of the realm `mesail`: `ana`, `bo`, `eve`, `carol` (password `dev-<name>-password`) and `operator` (`dev-operator-password`, role `mesail-operator`). Their domains are `directory` data. In the transition it also imports the old realms' dev users. Dev and tests only. |
 | `MESAIL_KEYCLOAK_START_TIMEOUT` | no | Seconds the supervisor waits for Keycloak (default 300). |
 
 Inside the container Keycloak listens on `127.0.0.1:8180` under `/idp`, and
@@ -276,8 +306,9 @@ enough; the supervisor itself needs bash 5.1):
 export KEYCLOAK_HOME=~/Developer/Tools/mesail-keycloak/keycloak
 export MESAIL_KEYCLOAK_HOME=$PWD/deploy/keycloak
 export MESAIL_KEYCLOAK_DATA=~/Developer/AtlasFylo/mesail/keycloak/dev
-export MESAIL_KEYCLOAK_DOMAINS=example.com,example.org,partner.test MESAIL_KEYCLOAK_DEV_USERS=true
-export MESAIL_IDENTITY_CLIENT_SECRET=dev-identity-secret MESAIL_SERVICE_SECRET=dev-service-secret
+export MESAIL_KEYCLOAK_DEV_USERS=true
+export MESAIL_IDENTITY_CLIENT_SECRET=dev-identity-secret MESAIL_ACCOUNT_CLIENT_SECRET=dev-account-secret
+export MESAIL_KEYCLOAK_DIRECTORY_SECRET=dev-directory-secret
 deploy/keycloak/bin/mesail-keycloak-start
 ```
 
@@ -291,19 +322,45 @@ network share.
 VM lock) and `python3` and `openssl` on the host. It:
 
 1. builds the `mesail-keycloak` stage;
-2. starts it on a fresh volume with three domain realms, the dev users, the
-   bootstrap admin client and a stand-in app (`sleep infinity`);
-3. runs `test/oidc_check.py` against every domain realm and
-   `mesail-operators`: discovery and issuer; the password grant through
-   `mesail-identity`; the RS256 signature against the realm's keys; `iss`,
-   `aud`, `azp`, `typ`, roles and the 60-second lifetime; a wrong password;
-   refresh token rotation; introspection (a tampered token is not active, and
-   a token of one domain is not active in another); a `mesail-service` token
-   without member or operator roles; no browser login offered; every
-   `mesail-account` action above, and its 403s; a locked account and unlocking it; then it creates the realm `added.test` through
-   the admin API with `mesail-directory`, adds a user and signs in to it;
-4. restarts the container and runs the checks again;
-5. replaces the container, keeping the volume, without the bootstrap admin
-   client, and runs the checks again;
-6. ends the stand-in app and checks that the supervisor stops the container;
-7. removes the container and the volume.
+2. starts it on a fresh volume with the one realm, the dev people and a
+   stand-in app (`sleep infinity`), and checks that provisioning does nothing;
+3. runs `test/oidc_check.py` against the realm `mesail`: discovery and issuer
+   (and no `mesail-operators`); the password grant for every dev person; the
+   RS256 signature against the realm's keys; `iss`, `aud` (only
+   `mesail-identity`), `azp`, `typ`, `sid`, roles (`mesail-operator` only for
+   the Operator, no old domain roles) and the 60-second lifetime; `ANA` and
+   ` Ana ` sign in as `ana`, `ana@example.com` does not; a wrong password;
+   introspection (a tampered token is not active); refresh token rotation; no
+   browser login offered; no client-credentials grant for `mesail-identity`;
+   no `mesail-service` or `mesail-api` client; the service tokens of
+   `mesail-account` and `mesail-directory` carry no realm role; the directory
+   client creates a person (username given in capitals, stored in
+   lowercase), refuses a second one with the same prefix and six bad
+   usernames, sets `mesail.mustChangePassword` (the claim appears; `account`
+   clears it after a password change; only `true` or `false`), logs out,
+   disables (no sign-in) and deletes the person, and gets 403 for clients,
+   the `master` realm and creating a realm; `mesail-account` lists and ends
+   sessions, resets the password and logs out everywhere; the TOTP endpoint
+   (wrong code, short secret, other digits, unknown user, stored, a second
+   TOTP refused, the admin event without the secret, a person's own token
+   refused), then sign-in without a code, with the confirmation code, one
+   step back, one step ahead, the same code again and two steps ahead; the
+   directory removes the TOTP; a locked account (other people still sign in)
+   and unlocking it;
+4. restarts the container and runs the checks again (the import is
+   skipped);
+5. replaces the container, keeping the volume, and runs the checks again;
+6. replaces the container with one in transition mode on a new volume
+   (`MESAIL_KEYCLOAK_DOMAINS` with three domains and the bootstrap admin
+   client), checks that provisioning created the old master-realm client,
+   runs `test/oidc_check.py` again and `test/legacy_realms_check.py` (the old
+   checks of every domain realm, `mesail-operators` and a realm created
+   through the admin API);
+7. ends the stand-in app and checks that the supervisor stops the container;
+8. removes the container and both volumes.
+
+To run the same checks against a native Keycloak, export
+`MESAIL_KEYCLOAK_URL` and the three secrets (plus
+`KC_BOOTSTRAP_ADMIN_CLIENT_ID` and `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` for the
+admin event check) and run `python3 deploy/keycloak/test/oidc_check.py`. Add
+`CHECK_LEGACY_REALMS=true` when the old realms are imported too.

@@ -1,0 +1,81 @@
+{
+  "realm": "mesail",
+  "users": [
+    {
+      "username": "ana",
+      "firstName": "Ana",
+      "lastName": "Admin",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-ana-password",
+          "temporary": false
+        }
+      ],
+      "email": "ana@example.com",
+      "emailVerified": true
+    },
+    {
+      "username": "bo",
+      "firstName": "Bo",
+      "lastName": "Member",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-bo-password",
+          "temporary": false
+        }
+      ],
+      "email": "bo@example.com",
+      "emailVerified": true
+    },
+    {
+      "username": "eve",
+      "firstName": "Eve",
+      "lastName": "Member",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-eve-password",
+          "temporary": false
+        }
+      ],
+      "email": "eve@example.org",
+      "emailVerified": true
+    },
+    {
+      "username": "carol",
+      "firstName": "Carol",
+      "lastName": "Partner",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-carol-password",
+          "temporary": false
+        }
+      ],
+      "email": "carol@partner.test",
+      "emailVerified": true
+    },
+    {
+      "username": "operator",
+      "firstName": "Dev",
+      "lastName": "Operator",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-operator-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "mesail-operator"
+      ]
+    }
+  ]
+}

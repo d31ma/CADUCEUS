@@ -31,6 +31,23 @@
   routes), EVENTS, SERVICE-TOKENS and SLICES (Wave 3: LU, L0 to L7) are
   updated. No code changes yet.
 
+### Slice L2: one Keycloak realm
+
+- Keycloak has the realm `mesail` for every person (ADR 0005): the
+  username is the email prefix (1 to 64 lowercase characters, checked by
+  the realm's user profile), sign-in by email is off in Keycloak, the realm
+  role `mesail-operator` is the only Mesail role, and the clients are
+  `mesail-identity` (password grant with conditional TOTP; its tokens carry
+  `mesail_must_change_password` from the user attribute
+  `mesail.mustChangePassword` and are not for `mesail-api`),
+  `mesail-account` and `mesail-directory` (admin API, users only). Dev
+  people `ana`, `bo`, `eve`, `carol` and `operator`. The TOTP endpoint
+  works in the new realm.
+- Until the switch (L5), `MESAIL_KEYCLOAK_DOMAINS` still imports the old
+  realm per domain and `mesail-operators` beside it, so the running apps
+  keep working; `test/legacy_realms_check.py` keeps checking them.
+  `test/oidc_check.py` checks the new realm natively and in the image.
+
 ### Slice R1: realtime and presence
 
 - Added `edge/realtime`, the connection gateway: a small Go program that

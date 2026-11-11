@@ -5,7 +5,10 @@ readonly KEYCLOAK_HOME=${KEYCLOAK_HOME:-/opt/keycloak}
 readonly MESAIL_KEYCLOAK_HOME=${MESAIL_KEYCLOAK_HOME:-/opt/mesail/keycloak}
 readonly REALM_SOURCE=${MESAIL_KEYCLOAK_IMPORT_DIR:-${MESAIL_KEYCLOAK_HOME}/realm}
 readonly IMPORT_DIR=${KEYCLOAK_HOME}/data/import
+readonly MESAIL_REALM_FILE=mesail-realm.json
+readonly MESAIL_DEV_USERS='mesail-users-*.json'
 readonly DOMAIN_TEMPLATE=domain-realm.json
+readonly OPERATORS_REALM_FILE=mesail-operators-realm.json
 # shellcheck disable=SC2016
 readonly REALM_PLACEHOLDER='${MESAIL_REALM}'
 readonly DOMAIN_PATTERN='^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'
@@ -43,27 +46,49 @@ render_domain_realm() {
   log "realm ${domain}: ready to import (skipped if it exists)"
 }
 
-copy_fixed_realms() {
-  local file
-  for file in "$REALM_SOURCE"/*-realm.json; do
-    [[ ${file##*/} == "$DOMAIN_TEMPLATE" ]] || cp "$file" "$IMPORT_DIR/"
-  done
+legacy_realms_wanted() {
+  [[ -n $(domains) ]]
 }
 
-copy_dev_users() {
-  [[ ${MESAIL_KEYCLOAK_DEV_USERS:-false} == true ]] || return 0
-  log "WARNING: MESAIL_KEYCLOAK_DEV_USERS=true imports the dev-only test users. Never set it in production."
-  cp "$REALM_SOURCE"/dev/*-users-*.json "$IMPORT_DIR/"
+copy_mesail_realm() {
+  cp "$REALM_SOURCE/$MESAIL_REALM_FILE" "$IMPORT_DIR/"
+  log "realm mesail: ready to import (skipped if it exists)"
 }
 
-prepare_import() {
+copy_legacy_realms() {
   local domain
-  rm -rf "$IMPORT_DIR"
-  mkdir -p "$IMPORT_DIR"
-  copy_fixed_realms
+  legacy_realms_wanted || return 0
+  require MESAIL_SERVICE_SECRET
+  log "MESAIL_KEYCLOAK_DOMAINS is set: also importing the old per-domain realms and mesail-operators (ADR 0004, until Wave 3's switch L5)"
+  cp "$REALM_SOURCE/$OPERATORS_REALM_FILE" "$IMPORT_DIR/"
   for domain in $(domains); do
     render_domain_realm "$domain"
   done
+}
+
+dev_user_pattern() {
+  if legacy_realms_wanted; then
+    echo '*-users-*.json'
+    return 0
+  fi
+  echo "$MESAIL_DEV_USERS"
+}
+
+copy_dev_users() {
+  local pattern files
+  [[ ${MESAIL_KEYCLOAK_DEV_USERS:-false} == true ]] || return 0
+  log "WARNING: MESAIL_KEYCLOAK_DEV_USERS=true imports the dev-only test users. Never set it in production."
+  pattern=$(dev_user_pattern)
+  # shellcheck disable=SC2206
+  files=("$REALM_SOURCE"/dev/$pattern)
+  cp "${files[@]}" "$IMPORT_DIR/"
+}
+
+prepare_import() {
+  rm -rf "$IMPORT_DIR"
+  mkdir -p "$IMPORT_DIR"
+  copy_mesail_realm
+  copy_legacy_realms
   copy_dev_users
 }
 
@@ -90,12 +115,12 @@ choose_database() {
 
 main() {
   require MESAIL_IDENTITY_CLIENT_SECRET
-  require MESAIL_SERVICE_SECRET
   require MESAIL_ACCOUNT_CLIENT_SECRET
+  require MESAIL_KEYCLOAK_DIRECTORY_SECRET
   export KC_HOSTNAME=${MESAIL_KEYCLOAK_URL:-$DEFAULT_KEYCLOAK_URL}
   choose_database
   prepare_import
-  log "issuers: ${KC_HOSTNAME}/realms/<domain>"
+  log "issuer: ${KC_HOSTNAME}/realms/mesail"
   exec "$KEYCLOAK_HOME/bin/kc.sh" start --optimized --import-realm "$@"
 }
 

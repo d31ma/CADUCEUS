@@ -126,6 +126,9 @@
   .list-decimal {
     list-style-type: decimal;
   }
+  .grid-cols-\[minmax\(0\,1fr\)\] {
+    grid-template-columns: minmax(0,1fr);
+  }
   .flex-wrap {
     flex-wrap: wrap;
   }
@@ -171,6 +174,9 @@
     }
     .max-sm\:w-full {
       width: 100%;
+    }
+    .max-sm\:flex-col {
+      flex-direction: column;
     }
   }
   @media (pointer: coarse) {

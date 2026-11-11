@@ -1,13 +1,13 @@
-<div class="notify-push grid min-w-0 gap-4">
-  <section class="grid min-w-0 gap-3" aria-labelledby="push-title">
+<div class="notify-push grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
+  <section class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3" aria-labelledby="push-title">
     <div class="grid gap-1">
       <h3 id="push-title" class="notify-heading">Notifications on this device</h3>
       <p class="notify-help">Mesail notifies you when no Mesail tab is in front. Nothing is shown while you are set to Do not disturb.</p>
     </div>
-    <div class="grid gap-3">
+    <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">
       <switch :value="notificationPush.panel">
         <case :when="'notAsked'">
-          <div class="notify-permission flex items-start gap-3 p-4">
+          <div class="notify-permission flex items-start gap-3 p-4 max-sm:flex-col">
             <span class="notify-tile notify-tile-primary grid size-10 flex-none place-items-center"><w-icon name="bell"></w-icon></span>
             <div class="grid min-w-0 flex-1 justify-items-start gap-2">
               <p class="notify-strong">Notifications are off on this device</p>
@@ -17,7 +17,7 @@
           </div>
         </case>
         <case :when="'on'">
-          <div class="notify-permission flex items-start gap-3 p-4">
+          <div class="notify-permission flex items-start gap-3 p-4 max-sm:flex-col">
             <span class="notify-tile notify-tile-success grid size-10 flex-none place-items-center"><w-icon name="check"></w-icon></span>
             <div class="grid min-w-0 flex-1 justify-items-start gap-2">
               <p class="notify-strong">Notifications are on for this browser</p>
@@ -33,7 +33,7 @@
           </div>
         </case>
         <case :when="'off'">
-          <div class="notify-permission flex items-start gap-3 p-4">
+          <div class="notify-permission flex items-start gap-3 p-4 max-sm:flex-col">
             <span class="notify-tile grid size-10 flex-none place-items-center"><w-icon name="bell-off"></w-icon></span>
             <div class="grid min-w-0 flex-1 justify-items-start gap-2">
               <p class="notify-strong">Notifications are off on this device</p>
@@ -43,7 +43,7 @@
           </div>
         </case>
         <case :when="'blocked'">
-          <div class="notify-permission flex items-start gap-3 p-4">
+          <div class="notify-permission flex items-start gap-3 p-4 max-sm:flex-col">
             <span class="notify-tile notify-tile-warning grid size-10 flex-none place-items-center"><w-icon name="bell-off"></w-icon></span>
             <div class="grid min-w-0 flex-1 justify-items-start gap-2">
               <p class="notify-strong">Your browser blocks notifications from Mesail</p>
@@ -58,7 +58,7 @@
           </div>
         </case>
         <case :when="'unsupported'">
-          <div class="notify-permission flex items-start gap-3 p-4">
+          <div class="notify-permission flex items-start gap-3 p-4 max-sm:flex-col">
             <span class="notify-tile grid size-10 flex-none place-items-center"><w-icon name="info"></w-icon></span>
             <div class="grid min-w-0 flex-1 justify-items-start gap-2">
               <p class="notify-strong">This browser cannot show notifications</p>
@@ -80,12 +80,12 @@
     </div>
   </section>
 
-  <section class="notify-divider-above grid min-w-0 gap-3 pt-4" aria-labelledby="summary-title">
+  <section class="notify-divider-above grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 pt-4" aria-labelledby="summary-title">
     <div class="grid gap-1">
       <h3 id="summary-title" class="notify-heading">Email summary</h3>
       <p class="notify-help">If you miss something, get one email instead of many. It lists what you did not read, and it is not sent if you read everything first.</p>
     </div>
-    <div class="grid gap-3">
+    <div class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">
       <switch :value="notificationPush.settingsStatus">
         <case :when="'ready'">
           <w-radio-group name="summary-delay" label="Email me when a notification is unread for" class="notify-choices block [&_w-radio]:block [&_w-radio]:min-h-8 [&_w-radio]:py-1 max-sm:[&_w-radio]:min-h-11 pointer-coarse:[&_w-radio]:min-h-11">

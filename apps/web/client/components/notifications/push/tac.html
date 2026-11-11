@@ -88,7 +88,7 @@
     <div class="grid gap-3">
       <switch :value="notificationPush.settingsStatus">
         <case :when="'ready'">
-          <w-radio-group name="summary-delay" label="Email me when a notification is unread for" class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-x-4 gap-y-1 [&_.w-label]:col-span-full [&_.w-label]:pb-1 [&_w-radio]:block [&_w-radio]:min-h-8 [&_w-radio]:py-1 max-sm:[&_w-radio]:min-h-11 pointer-coarse:[&_w-radio]:min-h-11">
+          <w-radio-group name="summary-delay" label="Email me when a notification is unread for" class="notify-choices block [&_w-radio]:block [&_w-radio]:min-h-8 [&_w-radio]:py-1 max-sm:[&_w-radio]:min-h-11 pointer-coarse:[&_w-radio]:min-h-11">
             <loop :for="choice of notificationPush.summaryChoices">
               <w-radio :value="choice.id" :label="choice.label" :checked="choice.selected" on:change="notificationPush.chooseSummary(choice.minutes)"></w-radio>
             </loop>

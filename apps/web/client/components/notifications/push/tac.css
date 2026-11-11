@@ -21,6 +21,22 @@
   overflow-wrap: anywhere;
 }
 
+.notify-choices .w-radio-group {
+  display: grid;
+  inline-size: 100%;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--w-space-1) var(--w-space-4);
+}
+
+.notify-choices .w-radio-group > slot {
+  display: contents;
+}
+
+.notify-choices .w-radio-group > .w-label,
+.notify-choices .w-radio-group > .w-radio-group-details {
+  grid-column: 1 / -1;
+}
+
 .notify-strong {
   margin: 0;
   font-size: var(--ms-text-nav);
@@ -82,6 +98,9 @@
     white-space: nowrap;
     border-width: 0;
   }
+  .block {
+    display: block;
+  }
   .flex {
     display: flex;
   }
@@ -107,9 +126,6 @@
   .list-decimal {
     list-style-type: decimal;
   }
-  .grid-cols-\[repeat\(auto-fill\,minmax\(9rem\,1fr\)\)\] {
-    grid-template-columns: repeat(auto-fill,minmax(9rem,1fr));
-  }
   .flex-wrap {
     flex-wrap: wrap;
   }
@@ -133,12 +149,6 @@
   }
   .gap-4 {
     gap: calc(var(--spacing, 0.25rem) * 4);
-  }
-  .gap-x-4 {
-    column-gap: calc(var(--spacing, 0.25rem) * 4);
-  }
-  .gap-y-1 {
-    row-gap: var(--spacing, 0.25rem);
   }
   .p-4 {
     padding: calc(var(--spacing, 0.25rem) * 4);
@@ -167,12 +177,6 @@
     .pointer-coarse\:min-h-11 {
       min-height: calc(var(--spacing, 0.25rem) * 11);
     }
-  }
-  .\[\&_\.w-label\]\:col-span-full .w-label {
-    grid-column: 1 / -1;
-  }
-  .\[\&_\.w-label\]\:pb-1 .w-label {
-    padding-bottom: var(--spacing, 0.25rem);
   }
   .\[\&_w-radio\]\:block w-radio {
     display: block;

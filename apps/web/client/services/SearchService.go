@@ -11,8 +11,6 @@ type SearchService struct {
 	NextCursor    string
 	MoreState     string
 	SearchedQuery string
-	paletteNumber int
-	pageNumber    int
 	searched      SearchHitFilter
 	domainId      string
 	// @LocalState
@@ -75,13 +73,6 @@ func (search *SearchService) ClearRecent() {
 	search.RecentSearches = []string{}
 }
 
-// @OnEvent
-// @InBackground
-func (search *SearchService) FindPalette(requested SearchHitPaletteRequested) {
-	answer := search.queries.Find(requested.Filter)
-	search.keepPalette(requested.Number, answer)
-}
-
 func (search *SearchService) Open(row SearchHitRow) {
 	opened := SearchHitOpenRequested{ConversationId: row.ConversationId, MessageId: row.MessageId}
 	search.applicationEventPublisher.PublishEvent(opened, false)
@@ -113,25 +104,9 @@ func (search *SearchService) ClearQuery() {
 	search.Search()
 }
 
-// @OnEvent
-// @InBackground
-func (search *SearchService) FindPage(requested SearchHitPageRequested) {
-	answer := search.queries.Find(requested.Filter)
-	search.keepPage(requested.Number, answer)
-}
-
 func (search *SearchService) LoadMore() {
-	search.MoreState = search.stateLoading()
 	search.searched.Cursor = search.NextCursor
-	more := SearchHitMoreRequested{Number: search.pageNumber, Filter: search.searched}
-	search.applicationEventPublisher.PublishEvent(more, false)
-}
-
-// @OnEvent
-// @InBackground
-func (search *SearchService) FindMore(requested SearchHitMoreRequested) {
-	answer := search.queries.Find(requested.Filter)
-	search.keepMore(requested.Number, answer)
+	search.keepMore(search.queries.Find(search.searched))
 }
 
 // @OnEvent
@@ -176,8 +151,6 @@ func (search *SearchService) clearWhenMoved(previous string, current string) {
 	if previous == "" || previous == current {
 		return
 	}
-	search.paletteNumber++
-	search.pageNumber++
 	search.PaletteRows = []SearchHitRow{}
 	search.PageRows = []SearchHitRow{}
 	search.NextCursor = ""
@@ -206,18 +179,15 @@ func (search *SearchService) pageFilter() SearchHitFilter {
 }
 
 func (search *SearchService) askPalette(filter SearchHitFilter) {
-	search.paletteNumber++
 	search.PaletteRows = []SearchHitRow{}
 	search.PaletteState = search.stateIdle()
 	if filter.Query == "" {
 		return
 	}
-	search.PaletteState = search.stateLoading()
-	search.applicationEventPublisher.PublishEvent(SearchHitPaletteRequested{Number: search.paletteNumber, Filter: filter}, false)
+	search.keepPalette(search.queries.Find(filter))
 }
 
 func (search *SearchService) askPage(filter SearchHitFilter) {
-	search.pageNumber++
 	search.searched = filter
 	search.SearchedQuery = filter.Query
 	search.PageRows = []SearchHitRow{}
@@ -227,31 +197,21 @@ func (search *SearchService) askPage(filter SearchHitFilter) {
 	if filter.Query == "" {
 		return
 	}
-	search.PageState = search.stateLoading()
-	search.applicationEventPublisher.PublishEvent(SearchHitPageRequested{Number: search.pageNumber, Filter: filter}, false)
+	search.keepPage(search.queries.Find(filter))
 }
 
-func (search *SearchService) keepPalette(number int, answer SearchHitAnswer) {
-	if number != search.paletteNumber {
-		return
-	}
+func (search *SearchService) keepPalette(answer SearchHitAnswer) {
 	search.PaletteRows = answer.Rows
 	search.PaletteState = answer.State
 }
 
-func (search *SearchService) keepPage(number int, answer SearchHitAnswer) {
-	if number != search.pageNumber {
-		return
-	}
+func (search *SearchService) keepPage(answer SearchHitAnswer) {
 	search.PageRows = answer.Rows
 	search.NextCursor = answer.NextCursor
 	search.PageState = answer.State
 }
 
-func (search *SearchService) keepMore(number int, answer SearchHitAnswer) {
-	if number != search.pageNumber {
-		return
-	}
+func (search *SearchService) keepMore(answer SearchHitAnswer) {
 	search.PageRows = append(search.PageRows, answer.Rows...)
 	search.NextCursor = answer.NextCursor
 	search.MoreState = answer.State
@@ -271,8 +231,4 @@ func (search *SearchService) pageLimit() string {
 
 func (search *SearchService) stateIdle() string {
 	return "idle"
-}
-
-func (search *SearchService) stateLoading() string {
-	return "loading"
 }

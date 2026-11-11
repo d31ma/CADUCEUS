@@ -12,9 +12,7 @@ func (test *SearchServiceTest) search() *SearchService {
 func (test *SearchServiceTest) paletteFound(query string) *SearchService {
 	search := test.search()
 	search.OpenPalette()
-	search.PaletteQuery = query
-	search.SearchPalette()
-	search.FindPalette(SearchHitPaletteRequested{Number: search.paletteNumber, Filter: search.paletteFilter()})
+	search.SearchPaletteFor(query)
 	return search
 }
 
@@ -22,7 +20,6 @@ func (test *SearchServiceTest) pageFound(query string) *SearchService {
 	search := test.search()
 	search.Query = query
 	search.Search()
-	search.FindPage(SearchHitPageRequested{Number: search.pageNumber, Filter: search.pageFilter()})
 	return search
 }
 
@@ -46,11 +43,11 @@ func (test *SearchServiceTest) TestClosePaletteHidesIt() {
 	Assert.IsTrue(!search.PaletteOpen)
 }
 
-func (test *SearchServiceTest) TestSearchPaletteShowsLoadingAndRemembersTheSearch() {
+func (test *SearchServiceTest) TestSearchPaletteFindsAndRemembersTheSearch() {
 	search := test.search()
 	search.PaletteQuery = " invoice "
 	search.SearchPalette()
-	Assert.Equals("loading", search.PaletteState)
+	Assert.Equals("results", search.PaletteState)
 	Assert.Equals([]string{"invoice"}, search.RecentSearches)
 	Assert.Equals("invoice", search.paletteFilter().Query)
 	Assert.Equals("5", search.paletteFilter().Limit)
@@ -64,32 +61,20 @@ func (test *SearchServiceTest) TestSearchPaletteWithoutTextStaysIdle() {
 	Assert.Equals(0, len(search.RecentSearches))
 }
 
-func (test *SearchServiceTest) TestFindPaletteShowsTheQuickResults() {
+func (test *SearchServiceTest) TestSearchPaletteShowsTheQuickResults() {
 	search := test.paletteFound("invoice")
 	Assert.Equals("results", search.PaletteState)
 	Assert.Equals(2, len(search.PaletteRows))
 	Assert.Equals(SearchHitPart{Text: "invoice", Match: true}, search.PaletteRows[0].Parts[5])
 }
 
-func (test *SearchServiceTest) TestFindPaletteShowsTheEmptyState() {
+func (test *SearchServiceTest) TestSearchPaletteShowsTheEmptyState() {
 	Assert.Equals("empty", test.paletteFound("nothing").PaletteState)
 }
 
-func (test *SearchServiceTest) TestFindPaletteShowsTheErrorState() {
+func (test *SearchServiceTest) TestSearchPaletteShowsTheErrorState() {
 	search := test.paletteFound("broken")
 	Assert.Equals("error", search.PaletteState)
-	Assert.Equals(0, len(search.PaletteRows))
-}
-
-func (test *SearchServiceTest) TestFindPaletteIgnoresAnOldAnswer() {
-	search := test.search()
-	search.PaletteQuery = "invoice"
-	search.SearchPalette()
-	old := SearchHitPaletteRequested{Number: search.paletteNumber, Filter: search.paletteFilter()}
-	search.PaletteQuery = "nothing"
-	search.SearchPalette()
-	search.FindPalette(old)
-	Assert.Equals("loading", search.PaletteState)
 	Assert.Equals(0, len(search.PaletteRows))
 }
 
@@ -107,7 +92,7 @@ func (test *SearchServiceTest) TestSearchPaletteForRunsARecentSearchAgain() {
 	search.RecentSearches = []string{"march", "invoice"}
 	search.SearchPaletteFor("invoice")
 	Assert.Equals("invoice", search.PaletteQuery)
-	Assert.Equals("loading", search.PaletteState)
+	Assert.Equals("results", search.PaletteState)
 	Assert.Equals([]string{"invoice", "march"}, search.RecentSearches)
 }
 
@@ -130,7 +115,7 @@ func (test *SearchServiceTest) TestSeeAllMovesThePaletteSearchToThePage() {
 	search.PaletteQuery = "invoice"
 	search.SeeAll()
 	Assert.Equals("invoice", search.Query)
-	Assert.Equals("loading", search.PageState)
+	Assert.Equals("results", search.PageState)
 	Assert.IsTrue(!search.PaletteOpen)
 	Assert.Equals("search", search.shell.Page)
 	Assert.Equals("main", search.shell.Pane)
@@ -143,7 +128,7 @@ func (test *SearchServiceTest) TestSearchWithoutTextStaysIdle() {
 	Assert.Equals("", search.SearchedQuery)
 }
 
-func (test *SearchServiceTest) TestFindPageShowsResultsNewestFirstWithMore() {
+func (test *SearchServiceTest) TestSearchShowsResultsNewestFirstWithMore() {
 	search := test.pageFound("invoice")
 	Assert.Equals("results", search.PageState)
 	Assert.Equals("m-1", search.PageRows[0].MessageId)
@@ -152,51 +137,28 @@ func (test *SearchServiceTest) TestFindPageShowsResultsNewestFirstWithMore() {
 	Assert.Equals("20", search.searched.Limit)
 }
 
-func (test *SearchServiceTest) TestFindPageShowsTheEmptyState() {
+func (test *SearchServiceTest) TestSearchShowsTheEmptyState() {
 	search := test.pageFound("nothing")
 	Assert.Equals("empty", search.PageState)
 	Assert.Equals("nothing", search.SearchedQuery)
 }
 
-func (test *SearchServiceTest) TestFindPageIgnoresAnOldAnswer() {
-	search := test.search()
-	search.Query = "invoice"
-	search.Search()
-	old := SearchHitPageRequested{Number: search.pageNumber, Filter: search.pageFilter()}
-	search.ClearQuery()
-	search.FindPage(old)
-	Assert.Equals("idle", search.PageState)
-	Assert.Equals(0, len(search.PageRows))
-}
-
 func (test *SearchServiceTest) TestLoadMoreAddsTheNextPage() {
 	search := test.pageFound("invoice")
 	search.LoadMore()
-	Assert.Equals("loading", search.MoreState)
-	search.FindMore(SearchHitMoreRequested{Number: search.pageNumber, Filter: search.searched})
 	Assert.Equals(3, len(search.PageRows))
 	Assert.Equals("m-3", search.PageRows[2].MessageId)
 	Assert.Equals("", search.NextCursor)
 	Assert.Equals("results", search.MoreState)
 }
 
-func (test *SearchServiceTest) TestFindMoreFailureKeepsTheRowsAndTheCursor() {
+func (test *SearchServiceTest) TestLoadMoreFailureKeepsTheRowsAndTheCursor() {
 	search := test.pageFound("invoice")
+	search.searched.Query = "broken"
 	search.LoadMore()
-	search.FindMore(SearchHitMoreRequested{Number: search.pageNumber, Filter: SearchHitFilter{Query: "broken", Cursor: "page-2"}})
 	Assert.Equals(2, len(search.PageRows))
 	Assert.Equals("page-2", search.NextCursor)
 	Assert.Equals("error", search.MoreState)
-}
-
-func (test *SearchServiceTest) TestFindMoreIgnoresAnOldAnswer() {
-	search := test.pageFound("invoice")
-	search.LoadMore()
-	old := SearchHitMoreRequested{Number: search.pageNumber, Filter: search.searched}
-	search.Search()
-	search.FindMore(old)
-	Assert.Equals(0, len(search.PageRows))
-	Assert.Equals("", search.MoreState)
 }
 
 func (test *SearchServiceTest) TestScopeToSearchesOneConversation() {
@@ -205,7 +167,7 @@ func (test *SearchServiceTest) TestScopeToSearchesOneConversation() {
 	search.ScopeTo(SearchHitScopeRequested{ConversationId: "c-1", Title: "support"})
 	Assert.Equals("c-1", search.pageFilter().ConversationId)
 	Assert.Equals("support", search.ConversationTitle)
-	Assert.Equals("loading", search.PageState)
+	Assert.Equals("results", search.PageState)
 }
 
 func (test *SearchServiceTest) TestClearScopeSearchesEveryConversation() {
@@ -236,7 +198,7 @@ func (test *SearchServiceTest) TestSearchWithReadsTheSubmittedFields() {
 	search := test.search()
 	search.SearchWith(" invoice ", " bo ", "2026-11-01", "2026-11-10")
 	Assert.Equals(SearchHitFilter{Query: "invoice", Author: "bo", From: "2026-11-01", To: "2026-11-10", Limit: "20"}, search.searched)
-	Assert.Equals("loading", search.PageState)
+	Assert.Equals("results", search.PageState)
 	Assert.Equals([]string{"invoice"}, search.RecentSearches)
 }
 
@@ -244,7 +206,6 @@ func (test *SearchServiceTest) TestDomainChangedClearsTheOldDomainResults() {
 	search := test.pageFound("invoice")
 	search.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
 	search.ScopeTo(SearchHitScopeRequested{ConversationId: "c-1", Title: "support"})
-	search.FindPage(SearchHitPageRequested{Number: search.pageNumber, Filter: search.searched})
 	search.DomainChanged(SessionDomainChanged{DomainId: "example.org"})
 	Assert.Equals("idle", search.PageState)
 	Assert.Equals(0, len(search.PageRows))
@@ -266,7 +227,6 @@ func (test *SearchServiceTest) TestEveryFilterReachesTheSearch() {
 	search.ToggleAttachment()
 	search.ToggleEmail()
 	search.ScopeTo(SearchHitScopeRequested{ConversationId: "c-1", Title: "support"})
-	search.FindPage(SearchHitPageRequested{Number: search.pageNumber, Filter: search.searched})
 	Assert.Equals("results", search.PageState)
 	Assert.Equals("m-9", search.PageRows[0].MessageId)
 }
@@ -283,7 +243,7 @@ func (test *SearchServiceTest) TestClearFiltersKeepsTheQuery() {
 	search.ClearFilters()
 	Assert.Equals(SearchHitFilter{Query: "invoice", Limit: "20"}, search.pageFilter())
 	Assert.Equals("", search.ConversationTitle)
-	Assert.Equals("loading", search.PageState)
+	Assert.Equals("results", search.PageState)
 }
 
 func (test *SearchServiceTest) TestClearQueryEmptiesThePage() {

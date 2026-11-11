@@ -130,6 +130,14 @@ below) once `scripts/native/run-all.sh` exists (slice P1); until then, the
 compile check is enough.
 `ty test --coverage` fails when a public method has no test (TY2022).
 
+**A slice is done only when its app builds and starts.** `ty test` does not
+apply every build rule (TY1314 is enforced by `ty bundle` and `ty start`).
+So every slice, server-only apps included, also runs `ty bundle apps/<app>`
+and starts the app with `ty start` against its test FYLO root, and checks
+that `GET /api/v1/<service>/health` answers `200`. Slice C1 adds this step
+to `scripts/gates.sh` for every app; until it lands, run it by hand and
+name it in the report.
+
 **Everything in a slice gate runs natively on macOS. No VM.** That means
 `ty test`, `ty bundle`, `ty start`, `go test`, and the blackbox tests
 against services started with `ty start` on this Mac behind the native dev

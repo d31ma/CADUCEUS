@@ -69,7 +69,7 @@ the scheduled sweep retries it.
       { "name": "realtime", "url": "http://127.0.0.1:8108/api/v1/realtime/events" },
       { "name": "search", "url": "http://127.0.0.1:8109/api/v1/search/events" }
     ],
-    "retry": { "baseDelaySeconds": 5, "maxDelaySeconds": 900, "maxAttempts": 12 }
+    "retry": { "basedelayseconds": 5, "maxdelayseconds": 900, "maxattempts": 12 }
   },
   "outgoing": { "hosts": ["127.0.0.1"] }
 }
@@ -82,7 +82,13 @@ the scheduled sweep retries it.
   guard refuses other hosts).
 - Read the settings with
   `outbox.SettingsReader{}.FromApplicationJSON(os.Getenv("YON_APPLICATION_JSON"))`.
-- Retry: the delay is `baseDelay * 2^(attempts-1)`, at most `maxDelay`.
+- Keys in `application.json` must be lowercase (TACHYON refuses others with
+  TY2010); Go's JSON decoding still fills the camel-case struct fields. In a
+  handler the settings arrive in `YON_APPLICATION_JSON` under the top-level
+  key `yon` (`{"yon":{"outbox":{...}}}`), so readers look there, as
+  `kit/oidc`'s `SettingsReader` does.
+- Retry: the delay is `basedelayseconds * 2^(attempts-1)`, at most
+  `maxdelayseconds`.
   After `maxAttempts` the remaining subscribers become dead letters. A `4xx`
   answer (except `408` and `429`) is permanent and dead-letters at once.
 

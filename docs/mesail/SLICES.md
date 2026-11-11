@@ -122,14 +122,16 @@ C1, not before each slice merge.
   CONTRACTS.md "identity" (sign in with address, password and optional
   one-time code through direct access grants; refresh and sign-out with the
   encrypted `sessionKey`; brute-force limits; nothing secret in logs) and
-  `GET /identity/me`. The Keycloak realm settings that Mesail needs
-  (confidential client `mesail-identity` with direct access grants and
-  conditional OTP, 60 s access tokens, brute-force detection on, roles
-  `mesail-*`, client `mesail-service` with client credentials; no browser
-  client) written as a realm template under `apps/identity/realm/` for the
-  Keycloak session to import.
-- **Depends on:** nothing. Coordinates the realm template with
-  `mesail-keycloak` (which owns `deploy/keycloak/**`).
+  `GET /identity/me`, and the client-credentials service token in
+  `kit/oidc` (EVENTS.md section 4). The realm templates are NOT I1's: they
+  live in `deploy/keycloak/realm/` and belong to `mesail-keycloak` (one
+  realm per domain plus `mesail-operators`; clients `mesail-identity` with
+  direct access grants and conditional OTP, and `mesail-service` with client
+  credentials; 60 s access tokens; brute-force detection on; no browser
+  client; a master-realm client `mesail-directory` that slice D1 uses to
+  create a realm at run time). I1 states what the templates must contain
+  and checks them against its code.
+- **Depends on:** `mesail-keycloak` for the realm templates.
 - **Blackbox:** `Identity_test.go`.
 - **Done when:** every app's `TokenIdentityProvider` accepts a valid
   Keycloak token and refuses forged, expired and other-audience tokens.
@@ -155,7 +157,10 @@ C1, not before each slice merge.
 - **Owns:** `apps/directory/**` (except kit copies), `kit/recipients/**`
   and its copies.
 - **Builds:** domains (an `Operator` adds one: Mesail creates its
-  Keycloak realm from I1's template through the Keycloak admin API, then
+  Keycloak realm from `mesail-keycloak`'s template through the Keycloak
+  admin API, signed in as the master-realm client `mesail-directory`
+  (secret `YON_DIRECTORY_ADMIN_SECRET`), and sets the shared
+  `mesail-identity` client secret in the new realm; then
   DNS verify; remove), members
   (upserted from the caller's token on each request and from Keycloak
   admin events), addresses and aliases, `POST /directory/recipients/resolve`
@@ -359,5 +364,5 @@ C1, not before each slice merge.
 | `edge/smtp/**` | M1 |
 | `Dockerfile` (non-Keycloak stages), `docker-compose.yml`, `.dockerignore`, `.env.example`, `deploy/lambda/**`, `deploy/floci/**`, `deploy/router/**`, `scripts/floci/**`, `scripts/native/**` | P1 |
 | `docs/mesail/ux/**` | `mesail-ux` |
-| `Dockerfile` Keycloak stages, `deploy/keycloak/**` | `mesail-keycloak` |
+| `Dockerfile` Keycloak stages, `deploy/keycloak/**` (including the realm templates in `deploy/keycloak/realm/`) | `mesail-keycloak` |
 | `.github/workflows/**`, `scripts/gates.sh`, `scripts/ci/**` | C1 |

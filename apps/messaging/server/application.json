@@ -9,7 +9,46 @@
       "dmarc",
       "helo",
       "mx",
+      "requeue",
       "spf"
     ]
+  },
+  "oidc": {
+    "issuer": "http://127.0.0.1:8180/idp/realms/{realm}",
+    "jwks": "http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect/certs",
+    "audience": "mesail-api",
+    "keycloak": "http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect"
+  },
+  "outgoing": {
+    "hosts": [
+      "127.0.0.1",
+      "keycloak"
+    ]
+  },
+  "outbox": {
+    "producer": "messaging",
+    "subscribers": [
+      {
+        "name": "realtime",
+        "url": "http://127.0.0.1:8106/api/v1/realtime/events"
+      },
+      {
+        "name": "notify",
+        "url": "http://127.0.0.1:8107/api/v1/notify/events"
+      },
+      {
+        "name": "search",
+        "url": "http://127.0.0.1:8108/api/v1/search/events"
+      },
+      {
+        "name": "mail-out",
+        "url": "http://127.0.0.1:8110/api/v1/mail-out/events"
+      }
+    ]
+  },
+  "messaging": {
+    "directoryurl": "http://127.0.0.1:8102",
+    "mailinurl": "http://127.0.0.1:8109",
+    "relayurl": "http://127.0.0.1:8104/api/v1/messaging/outbox/relay"
   }
 }

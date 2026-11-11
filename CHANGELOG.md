@@ -122,6 +122,38 @@
   plain Go, so the Yon role files stay thin enough for TACHYON's
   cohesion check (`ty bundle` enforces TY1314).
 
+### Slice M3: messaging
+
+- The `messaging` app stores conversations, participants (with each
+  member's read position), messages (split by month, with their delivery
+  rows and rich-text blocks), reactions, mentions, email thread keys and a
+  member cache, all in FYLO collections named per domain with
+  `kit/collections`. Every lookup is scoped to the caller's domain; data of
+  another domain answers `404`.
+- One composer: `POST /api/v1/messaging/messages` re-resolves every
+  recipient through `directory` at send time and refuses a stale kind
+  (`409 recipients_changed`), chat to an email-only kind
+  (`422 chat_not_allowed`) and email to a channel (`400`). It reuses a
+  chat-only direct conversation by its member set, starts a new email
+  conversation when any delivery is email, keeps Bcc out of participants
+  and headers, threads email replies (`In-Reply-To`, `References`), and
+  publishes `message.created` and one `email.send.requested` per email
+  recipient through the outbox. A retry with the same `clientMessageId`
+  returns the first message. At most 20 recipients and 25 storage writes
+  per send.
+- Lists, threads (one level), edit, delete with a placeholder, reaction
+  names, read positions with unread and mention counts, delivery status
+  (`read` from the reader's position), the `/source` route for `mail-out`
+  and the `/original` download for received email.
+- Consumes `channel.*` (the channel's conversation and members),
+  `member.upserted`, `email.delivery.changed` (status never moves back)
+  and `email.received`: a reply joins its conversation and thread by
+  `Message-ID`, only inside the same domain; a new email to several
+  members of one domain is one shared conversation.
+- `kit/messaging` holds the fixed list of reaction names.
+- Body blocks come from a plain-text renderer until `kit/richtext` lands;
+  attachment names and sizes come later from `attachments`.
+
 ### Slice M2: outbound mail
 
 - `kit/compose` builds RFC 5322 messages: `Message-ID`, `In-Reply-To` and

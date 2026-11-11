@@ -23,6 +23,17 @@ wave run at the same time.
    every app). Everyone else lists the packages they need in their own
    `server/packages/kit.list` and asks the owner to sync. The gate
    `scripts/kit-sync.sh --check` fails on any hand edit.
+   **Outside Go modules.** `kit/go.mod` is the module file of every app's
+   `server/packages/` (both are `mesail.dev/packages`). A kit package that
+   needs an outside module (for example `golang.org/x/net/html` for
+   `kit/richtext`) adds its `require` to `kit/go.mod` and `kit/go.sum` (the
+   package owner does this; architecture reviews it). `kit-sync.sh` then
+   copies both files into each app, runs `go mod tidy` and `go mod vendor`
+   there, so each app keeps only the modules its packages use, vendored for
+   Tachyon's offline build (TY1368); `--check` rebuilds in a temporary
+   copy and compares everything, `vendor/` included. App-owned packages in
+   `server/packages/` (such as directory's `dnscheck`) stay untouched and
+   use outside modules only through `kit/go.mod`.
 3. **Contracts first.** The routes and models in CONTRACTS.md are the
    contract. A slice that must change a contract updates CONTRACTS.md in
    the same commit and tells the coordinator, because other slices code
@@ -187,7 +198,12 @@ C1, not before each slice merge.
 
 ### I2. Events and outbox
 - **Owns:** `kit/events/**`, new `kit/outbox/**`, and their copies in
-  `apps/*/server/packages/{events,outbox}/**`.
+  `apps/*/server/packages/{events,outbox}/**`. **I2 is finished; since
+  2026-11-11 slice M2 owns both packages and their copies.** M2's first
+  change: the `TokenSource` takes the target domain and `HTTPPusher` pushes
+  each domain's events with that domain's service token (EVENTS.md
+  section 4), and `SettingsReader` reads under `yon` if I2 has not fixed
+  it.
 - **Builds:** one Go payload type per event in `kit/events` (today only
   the names exist in `Types.go`; payload fields are in DOMAIN.md and
   CONTRACTS.md), the outbox relay library (pending events stored in the
@@ -365,7 +381,10 @@ C1, not before each slice merge.
 - **Blackbox:** `Messaging_test.go`.
 
 ### R1. Realtime and presence
-- **Owns:** `apps/realtime/**` (except kit copies).
+- **Owns:** `apps/realtime/**` (except kit copies), new `edge/realtime/**`
+  (a plain-Go connection gateway with its own module: a Yon
+  `@SocketRoute` holds at most 32 connections and nothing can push into it,
+  TACHYON ADR 0060; design in `slice-r1-design.md`), and `kit/realtime`.
 - **Builds:** `realtime` as one small long-running container in the first
   release (the owner's decision): the socket route with the token in the
   first message and a 60 s recheck (AC-ID-4), the single-use SSE ticket,
@@ -451,11 +470,12 @@ C1, not before each slice merge.
 | Path | Owner |
 | --- | --- |
 | `docs/**` (except `docs/mesail/ux/**`), `tests/blackbox/**`, `tools/crap/**`, `scripts/kit-sync.sh`, `CLAUDE.md`, `AGENTS.md`, `README.md`, `CHANGELOG.md`, `.gitignore` | architecture (this plan); slices append to `CHANGELOG.md` only under their own heading, and update CONTRACTS.md per rule 3 |
-| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package: I1 `oidc`, `identity`; I2 `events`, `outbox`; D1 `recipients`, `directory`; C2 `channels`; A1 `blobs`, `attachments`; M1 `mime`, `mailauth`, `richtext`, `mailin`; M2 `compose`, `dkim`, `smtpclient`, `mailout`; S1 `textindex`, `search`; M3 `messaging`; R1 `realtime`; N1 `webpush`, `notify`. The workflow package of a service (rule 8b) is copied only into that service's app; `ids` and `collections` stay with architecture |
+| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package: I1 `oidc`, `identity`; M2 (from I2) `events`, `outbox`; D1 `recipients`, `directory`; C2 `channels`; A1 `blobs`, `attachments`; M1 `mime`, `mailauth`, `richtext`, `mailin`; M2 `compose`, `dkim`, `smtpclient`, `mailout`; S1 `textindex`, `search`; M3 `messaging`; R1 `realtime`; N1 `webpush`, `notify`. The workflow package of a service (rule 8b) is copied only into that service's app; `ids` and `collections` stay with architecture |
 | `apps/<service>/**` other files | the service's slice |
 | `apps/web/client/**` | split between F1-F4 by the patterns above |
 | `apps/web-admin/**` | F5 |
 | `edge/smtp/**` | M1 |
+| `edge/realtime/**` | R1 |
 | `Dockerfile` (non-Keycloak stages), `docker-compose.yml`, `.dockerignore`, `.env.example`, `deploy/lambda/**`, `deploy/floci/**`, `deploy/router/**`, `scripts/floci/**`, `scripts/native/**` | P1 |
 | `docs/mesail/ux/**` | `mesail-ux` |
 | `Dockerfile` Keycloak stages, `deploy/keycloak/**` (including the realm templates in `deploy/keycloak/realm/`) | `mesail-keycloak` |

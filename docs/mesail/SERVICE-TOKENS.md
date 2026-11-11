@@ -35,8 +35,10 @@ realm, then in every `.env`, then restart.
 
 ## Code
 
-Call it from a controller or the identity provider (a `@Service` that
-imports a kit package cannot be injected in TACHYON 26.46.02):
+Call it from a controller, the identity provider or a `@Service`. (An
+earlier note said a `@Service` that imports a kit package cannot be
+injected; slices R1 and C2 showed under `ty start` 26.46.02 that it is
+injected.)
 
 ```go
 authorization, err := oidc.ServiceTokensFactory{}.Configured().Authorization(domainId)

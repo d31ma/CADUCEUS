@@ -119,7 +119,7 @@ in Mesail's own settings; the browser still never talks to Keycloak):
 
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
-| `POST /api/v1/identity/password` | SignedIn | `PasswordChange{currentPassword, newPassword, oneTimeCode?, sessionKey}` | `200 Session` (fresh tokens); `401` wrong current password or code; `400 password_policy` with `ApiError.message` naming the failed rule |
+| `POST /api/v1/identity/password` | SignedIn | `PasswordChange{currentPassword, newPassword, oneTimeCode?}` | `200 Session` (fresh tokens); `401` wrong current password or code; `400 password_policy` with `ApiError.message` naming the failed rule |
 | `GET /api/v1/identity/totp` | SignedIn | - | `200 TotpStatus{enabled}`: whether the caller's account has an OTP credential (read through the `mesail-account` client; `Me` stays token-only) |
 | `POST /api/v1/identity/totp/setup` | SignedIn | `TotpSetupRequest{currentPassword}` | `200 TotpSetup{secret, otpauthUri, qrImage, setupKey}` |
 | `POST /api/v1/identity/totp/confirm` | SignedIn | `TotpConfirm{setupKey, code}` | `204`; `400 invalid_code` |
@@ -127,7 +127,9 @@ in Mesail's own settings; the browser still never talks to Keycloak):
 
 - **Checking the current password:** a direct grant to the member's realm
   with the current password (and code). Keycloak's brute-force detection
-  counts it like a sign-in. The new tokens from that grant are discarded.
+  counts it like a sign-in. The session from that grant is KEPT: it becomes
+  the caller's fresh `Session`, because Keycloak does not accept the same
+  one-time code twice (agreed with slice I1).
 - **Changing:** through the Keycloak admin API, signed in as the
   confidential client `mesail-account` of the member's realm, whose service
   account has only the realm-management roles it needs (`manage-users`,
@@ -136,9 +138,10 @@ in Mesail's own settings; the browser still never talks to Keycloak):
   the user whose `sub` is in the caller's token; it never takes a user id
   from the request.
 - **Password:** `PUT /admin/realms/<domain>/users/<sub>/reset-password`
-  (`temporary: false`), then the user's other sessions are ended
-  (`POST .../users/<sub>/logout`), then a direct grant with the new password
-  returns the caller a fresh `Session`.
+  (`temporary: false`), then `GET .../users/<sub>/sessions` and every
+  session except the one from the check (its `sid` claim) is deleted; the
+  caller gets that session as its fresh `Session`. The admin base URL is
+  the app setting `oidc.admin`.
 - **2-step code:** `setup` makes a random 160-bit TOTP secret (SHA-1, 6
   digits, 30 s, as Keycloak's default OTP policy), and returns it as text,
   as an `otpauth://` URI, as a QR code image (`qrImage`, a `data:image/png`

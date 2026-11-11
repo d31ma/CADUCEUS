@@ -18,10 +18,11 @@ domain, and hands each copy to `mail-in`.
      `reject` policy answers `550 5.7.1` and stores nothing.
    - reads the headers (`kit/mime`).
    - for each recipient domain, writes the raw message with an
-     `Authentication-Results` header field in front of it to
-     `<domainId>/inbound-<sha256 hex>` (the blob key format of `kit/blobs`) (written to a temporary file, synced,
-     renamed). The hash covers the original message, the envelope sender and
-     that domain's recipients, so a retried transaction gets the same key.
+     `Authentication-Results` header field in front of it to the blob store
+     (`kit/blobs`) under the key `<domainId>/inbound-<sha256 hex>`. The hash
+     covers the original message, the envelope sender and that domain's
+     recipients, so a retried transaction gets the same key. A key that
+     `kit/blobs` refuses is never written.
    - calls `POST /api/v1/mail-in/messages` with that domain's recipients.
    - answers `250 2.0.0` only after every domain got `201`. Any failure
      answers `451 4.3.0`, so the sending server tries again.
@@ -32,7 +33,7 @@ domain, and hands each copy to `mail-in`.
 
 - `protocol`: the SMTP conversation (sockets, STARTTLS, limits).
 - `reception`: the delivery pipeline and its ports. It has no socket code.
-- `adapters`: HTTP directory, HTTP mail-in, local raw store, service tokens.
+- `adapters`: HTTP directory, HTTP mail-in, the raw store on `kit/blobs`, service tokens.
 - `mailchecks`: adapters for `kit/mailauth` and `kit/mime`.
 - `startup`: reads the environment and wires the parts together.
 
@@ -60,9 +61,27 @@ any other error for a temporary failure.
 | `MAIL_AUTH_VERIFY` | on | `off` skips SPF, DKIM and DMARC |
 | `MESAIL_DIRECTORY_URL` | required | Base URL of `directory` |
 | `MESAIL_MAIL_IN_URL` | required | Base URL of `mail-in` |
-| `MESAIL_RAW_STORE_DIR` | required | Folder for raw message copies |
+| `MESAIL_RAW_STORE_DIR` | required without `MESAIL_RAW_STORE_S3_BUCKET` | Local folder for raw message copies (local development) |
+| `MESAIL_RAW_STORE_S3_BUCKET` | none | Set it to keep raw copies in S3 instead of the local folder |
+| `MESAIL_RAW_STORE_S3_REGION`, `MESAIL_RAW_STORE_S3_ACCESS_KEY_ID`, `MESAIL_RAW_STORE_S3_SECRET_ACCESS_KEY_FILE` | required with `MESAIL_RAW_STORE_S3_BUCKET` | S3 region, access key id, and a file that holds the secret access key |
+| `MESAIL_RAW_STORE_S3_TIMEOUT_SECONDS` | `300` | Longest time for one S3 upload, in seconds (5 minutes is enough for 25 MiB at about 100 KB/s) |
+| `MESAIL_RAW_STORE_S3_ENDPOINT` | AWS (`https://s3.<region>.amazonaws.com`) | Another S3 endpoint, for example Floci in local tests |
 | `MESAIL_SERVICE_TOKEN` | none | A fixed Service bearer token |
 | `MESAIL_SERVICE_TOKEN_URL`, `MESAIL_SERVICE_CLIENT_ID`, `MESAIL_SERVICE_CLIENT_SECRET_FILE` | required without `MESAIL_SERVICE_TOKEN` | OAuth2 client credentials; the token is kept until 30 seconds before it expires |
+
+## Raw message store
+
+The edge picks the store when it starts:
+
+- With `MESAIL_RAW_STORE_S3_BUCKET` set, it writes each copy to
+  `<bucket>/<domainId>/inbound-<hash>` with a signed S3 `PUT`. The secret
+  access key is read from the file in
+  `MESAIL_RAW_STORE_S3_SECRET_ACCESS_KEY_FILE`, never from a plain variable.
+  A missing or empty file stops the edge at startup. S3 uploads use their own
+  HTTP client with a 5-minute timeout (`MESAIL_RAW_STORE_S3_TIMEOUT_SECONDS`),
+  not the 30-second client of the directory and mail-in calls.
+- Without it, it writes each copy to `MESAIL_RAW_STORE_DIR/<domainId>/inbound-<hash>`
+  (written to a temporary file, synced, renamed).
 
 ## Limits
 

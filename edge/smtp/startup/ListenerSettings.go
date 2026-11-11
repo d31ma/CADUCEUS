@@ -13,6 +13,7 @@ type ListenerSettings struct {
 	DirectoryUrl    string
 	MailInUrl       string
 	RawStoreFolder  string
+	RawStoreS3      S3RawStoreSettings
 	ServiceToken    string
 	TokenSettings   adapters.TokenSettings
 }

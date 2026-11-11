@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"mesail.dev/edge/smtp/adapters"
 	"mesail.dev/edge/smtp/protocol"
@@ -31,10 +32,11 @@ func (reader *SettingsReader) Load() (ListenerSettings, error) {
 		VerifyAuth:      !strings.EqualFold(reader.environment.Optional("MAIL_AUTH_VERIFY"), "off"),
 		DirectoryUrl:    reader.required("MESAIL_DIRECTORY_URL"),
 		MailInUrl:       reader.required("MESAIL_MAIL_IN_URL"),
-		RawStoreFolder:  reader.required("MESAIL_RAW_STORE_DIR"),
 		ServiceToken:    reader.environment.Optional("MESAIL_SERVICE_TOKEN"),
 	}
 	settings.TokenSettings = reader.tokenSettings(settings.ServiceToken)
+	settings.RawStoreS3 = reader.s3RawStore()
+	settings.RawStoreFolder = reader.rawStoreFolder(settings.RawStoreS3)
 	reader.checkCertificatePair(settings)
 	return settings, errors.Join(reader.problems...)
 }
@@ -53,6 +55,10 @@ func (reader *SettingsReader) number(name string, fallback int64) int64 {
 		reader.problems = append(reader.problems, InvalidSetting{Name: name, Reason: "it must be a positive whole number"})
 	}
 	return value
+}
+
+func (reader *SettingsReader) seconds(name string, fallback time.Duration) time.Duration {
+	return time.Duration(reader.number(name, int64(fallback/time.Second))) * time.Second
 }
 
 func (reader *SettingsReader) required(name string) string {
@@ -76,6 +82,29 @@ func (reader *SettingsReader) clientCredentials() adapters.TokenSettings {
 		ClientId:   reader.required("MESAIL_SERVICE_CLIENT_ID"),
 		SecretFile: reader.required("MESAIL_SERVICE_CLIENT_SECRET_FILE"),
 	}
+}
+
+func (reader *SettingsReader) s3RawStore() S3RawStoreSettings {
+	names := S3RawStoreNames{}
+	bucket := reader.environment.Optional(names.Bucket())
+	if bucket == "" {
+		return S3RawStoreSettings{}
+	}
+	return S3RawStoreSettings{
+		Endpoint:    reader.environment.Optional(names.Endpoint()),
+		Bucket:      bucket,
+		Region:      reader.required(names.Region()),
+		AccessKeyId: reader.required(names.AccessKeyId()),
+		SecretFile:  reader.required(names.SecretFile()),
+		Timeout:     reader.seconds(names.TimeoutSeconds(), RawStoreFactory{}.defaultUploadTimeout()),
+	}
+}
+
+func (reader *SettingsReader) rawStoreFolder(s3 S3RawStoreSettings) string {
+	if s3.Bucket != "" {
+		return ""
+	}
+	return reader.required("MESAIL_RAW_STORE_DIR")
 }
 
 func (reader *SettingsReader) checkCertificatePair(settings ListenerSettings) {

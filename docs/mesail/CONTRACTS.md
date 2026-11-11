@@ -235,8 +235,8 @@ id from another domain answers `404`. A `PATCH` that sets `emailAddress` or
 | `PATCH /api/v1/messaging/messages/{messageId}` | SignedIn | `EditRequest{body}` | `Message` |
 | `DELETE /api/v1/messaging/messages/{messageId}` | SignedIn | - | `204` |
 | `GET /api/v1/messaging/messages/{messageId}/original` | SignedIn (a participant) | - | `Download{url, expiresAt}` for the raw email as a `.eml` file; `404` for a chat message. messaging asks `GET /api/v1/mail-in/messages/{inboundId}/original` (`Allow(Service)`) for it. The client opens it as a download link and never renders it. |
-| `PUT /api/v1/messaging/messages/{messageId}/reactions/{emoji}` | SignedIn | - | `204` |
-| `DELETE /api/v1/messaging/messages/{messageId}/reactions/{emoji}` | SignedIn | - | `204` |
+| `PUT /api/v1/messaging/messages/{messageId}/reactions/{reaction}` | SignedIn | - | `204` |
+| `DELETE /api/v1/messaging/messages/{messageId}/reactions/{reaction}` | SignedIn | - | `204` |
 | `PUT /api/v1/messaging/conversations/{conversationId}/read` | SignedIn | `ReadRequest{messageId}` | `204` |
 | `GET /api/v1/messaging/attachments/{attachmentId}/access` | SignedIn | - | `204` when the caller can read a message of its domain that carries the attachment, else `404` (called by `attachments` with the caller's own token) |
 
@@ -267,6 +267,16 @@ Rules (SPEC AC-CP):
   like any other email (DOMAIN.md invariant 3).
 - When any delivery is `email`, `email.subject` is required for a new
   conversation.
+
+Reactions are identified by a NAME, not an emoji character, because a Tac
+path value may only use `A-Z a-z 0-9 . _ ~ -` (found by slice F2). A name
+matches `[a-z0-9_-]{1,32}` and must be in the fixed list that `messaging`
+accepts (in `kit/messaging`, owned by M3; first release: `thumbs_up`,
+`thumbs_down`, `heart`, `laugh`, `surprised`, `sad`, `party`, `eyes`,
+`check`, `pray`, `fire`, `rocket`); any other name answers `400
+invalid_request` with `field: reaction`. `Message.reactions` and
+`myReactions` are keyed by name; the client maps names to glyphs and
+accessible labels.
 
 `Message{messageId, conversationId, threadRootId?, author: Author, body,
 bodyFormat: markdown|text|email, blocks[]: Block, truncated,

@@ -261,8 +261,10 @@ stable; tests name them.
 - **AC-MS-5** Attachments up to the domain limit (default 25 MiB per
   file, 50 MiB per message) can be added to any message. They are stored
   once and shared by chat and email deliveries.
-- **AC-MS-6** A member can add and remove emoji reactions. Reactions are
-  not sent by email and never cross a domain.
+- **AC-MS-6** A member can add and remove emoji reactions from a fixed set
+  (12 in the first release). Each reaction shows its glyph and has an
+  accessible name. Reactions are not sent by email and never cross a
+  domain.
 - **AC-MS-7** Each member has a read position per conversation. Unread
   counts and mention counts in the sidebar match it.
 - **AC-MS-8** Sending is idempotent: the client sends a `clientMessageId`,

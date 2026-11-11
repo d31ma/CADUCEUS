@@ -403,22 +403,55 @@ An attachment in another domain answers `404`.
 
 ## realtime
 
+The browser-facing socket and event stream are served by the connection
+gateway (`edge/realtime`, slice R1), the local stand-in for an AWS API
+Gateway WebSocket API. The other routes are the `realtime` Yon app.
+
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
-| `GET /api/v1/realtime/socket` (socket route) | SignedIn | - | server-to-client `RealtimeEvent` |
+| `GET /api/v1/realtime/socket` (WebSocket, gateway) | first message `auth` | client frames `RealtimeClientMessage` | server frames `RealtimeEvent` |
+| `GET /api/v1/realtime/stream?ticket=` (event stream, gateway) | single-use ticket | - | `data:` lines of `RealtimeEvent` |
+| `POST /api/v1/realtime/tickets` | SignedIn | - | `Ticket{ticket, expiresAt}` (single use, 30 seconds) |
 | `PUT /api/v1/realtime/presence` | SignedIn | `PresenceRequest{state: active|idle|dnd, doNotDisturbUntil?}` | `204` |
 | `GET /api/v1/realtime/presence?memberIds=` | SignedIn | - | `[]Presence{memberId, state, doNotDisturbUntil?, lastSeenAt}` |
+| `POST /api/v1/realtime/events` | Service (the envelope's domain) | `events.Envelope` | `EventReceipt{eventId, status}` |
+| `POST /api/v1/realtime/jobs/sweep` | Service (install-wide, realm `mesail-operators`) | - | `SweepReport{closedConnections, offlineMembers, endedDoNotDisturb, writes, more}` |
+
+Socket protocol:
+- Client frames: `RealtimeClientMessage{type, token?, conversationId?,
+  state?, doNotDisturbUntil?}` with `type` one of `auth` (`token`: the
+  access token; the first message, within 10 seconds), `typing`
+  (`conversationId`) and `presence` (`state`, `doNotDisturbUntil?`).
+- After each accepted `auth` the server sends
+  `RealtimeEvent{type: "auth.accepted", state: <RFC 3339 time>}`. The
+  socket closes with code 4401 at that time unless the client sent `auth`
+  again with a newer token. The time is the token's expiry, at most 60
+  seconds ahead, so the token is re-checked at least every 60 seconds
+  (SPEC AC-ID-4). A refused `auth`, or `typing`/`presence` before an
+  accepted `auth`, closes the socket with 4401.
+- The event stream sends the same events. It ends with `event: close` and
+  `data: {"code":4401}` when the token behind the ticket ends; the client
+  then gets a new ticket and reconnects.
 
 Presence is per domain: a caller sees presence only of members in its own
-domain, and member ids from another domain are left out of the answer. The
-socket sends only events of the caller's domain.
+domain, and member ids from another domain are left out of the answer. When
+none of the asked ids is found the answer is `404`, so a query for a member
+of another domain gets `404` (SPEC AC-PN-1). The socket sends only events
+of the caller's domain. Typing goes only to the conversation's members.
 
 `RealtimeEvent{type, conversationId, messageId, memberId?, state}` carries
 ids only, never message bodies; the client fetches what it needs.
 `RealtimeEvent.type` is one of `message.created`, `message.edited`,
-`message.deleted`, `reaction.changed`, `read.moved`, `presence.changed`,
-`typing`, `notification`. The socket re-checks the token every 60 seconds
-and closes with code 4401 when it is no longer valid (SPEC AC-ID-4).
+`message.deleted`, `reaction.changed` (`state` = the emoji),
+`read.moved` (only to the reader's own connections), `presence.changed`,
+`typing`, `notification` and `auth.accepted`.
+
+Internal routes between the gateway and the Yon app (never routed
+publicly; shared secret in the header `X-Realtime-Gateway`):
+`POST /api/v1/realtime/gateway/{connect,message,disconnect}` (role
+`Gateway`, the `$connect`, `$default` and `$disconnect` of API Gateway) and
+the gateway's management API `POST` / `DELETE /@connections/{connectionId}`
+(API Gateway's `@connections`). Details: `edge/realtime/README.md`.
 
 ## notify
 

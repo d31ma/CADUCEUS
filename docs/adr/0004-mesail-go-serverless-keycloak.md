@@ -187,21 +187,46 @@ Decisions:
   still give each domain its own roots: the set of a domain's roots is its
   **cell**, which moves, is backed up and is deleted as one unit (`fylo
   pack` per root), and chat still never leaves it.
-- **Where live roots live.** Live roots must be on a local disk: in the
-  measured ATLAS-backed setup one domain could take only about 9 writes per
-  second with multi-second stalls, which is too slow for chat. The spike's
-  recommendation, waiting for the owner's decision: live roots on kestrel's
-  local disk, and a `fylo pack` snapshot of every root to ATLAS hourly and
-  before every deploy (0.2 s per 13 MB root locally). ATLAS-backed EFS stays
-  acceptable only for development with small fixtures. On this Mac,
-  native development uses the APFS disk image on ATLAS (about 2 ms writes).
-  A function that is stopped mid-write can leave a write lock; the snapshot
-  and restart runbook (slice P1) must clear it safely.
+- **Where live roots live: on ATLAS** (the owner's decision, 2026-11-10:
+  "Keep it on ATLAS"). Live roots stay on ext4 on the ATLAS raw disk, the
+  FitNest pattern: a Floci Lambda with EFS on the `mesail` dev host now,
+  and on kestrel later. The measured cost is accepted and designed for:
+  writes take about 109 ms (p50), 346 ms (p95) and stall up to 10.9 s, so
+  one writer manages about 9 writes per second; reads are as fast as on a
+  local disk. Every FYLO-owning service follows these rules:
+  - **Bounded work per call.** One request or job call does at most 25
+    FYLO writes and stops after 20 seconds of work, far under the Lambda
+    timeout (set to 120 seconds). A job that has more to do answers its
+    `Report` with `more: true`, and the next trigger continues; bulk loads
+    (imports, migrations, reindexing) are always split this way.
+  - **Write-lock recovery.** A writer killed by a timeout can leave FYLO's
+    write lock behind (`ENATIVE_CONCURRENT_WRITE` on the next call). Because
+    each root has exactly one function with reserved concurrency 1, a lock
+    found at start-up can only be stale. The image's entrypoint (slice P1)
+    clears a stale lock only when no `fylo` process of this container is
+    alive and the lock's recorded owner is not running, logs that it did,
+    and then starts `ty start`; anything else fails closed.
+  - **Timeouts and retries.** Callers of a FYLO-owning route use a 30
+    second timeout and retry only idempotent requests (every write has an
+    idempotency key, DOMAIN.md invariant 6), with backoff, at most 3 times.
+    The router queues calls to a busy function instead of failing them.
+  - **Slow work goes through the outbox.** A route writes its own document
+    once and returns; fan-out, indexing, notification and delivery happen
+    later from the outbox relay and job routes (EVENTS.md). Chat stays
+    responsive because `messaging` writes one document per message.
+  - **Snapshots.** `fylo pack` of every root to `.vdbx` files on ATLAS
+    before every deploy, so a deploy can roll back.
+  On this Mac, native development uses the APFS disk image on ATLAS (about
+  2 ms writes), so slice tests are not slowed down.
 - **Realtime is the exception.** `realtime` holds open connections, which a
-  Lambda cannot do. It runs as one long-running container (`ty start`)
-  everywhere, unless the target offers a managed WebSocket gateway (API
-  Gateway WebSocket on AWS), in which case connect, message and disconnect
-  are ordinary Yon routes of `realtime`. Its contract does not change.
+  Lambda cannot do. In the first release it runs as one small long-running
+  container (`ty start`) everywhere (the owner's decision). The serverless
+  form, as AWS does it with API Gateway WebSocket APIs (`$connect`,
+  `$disconnect` and `$default` routes that invoke functions, and pushes
+  through the `@connections` management API), is being researched with a
+  proof on Floci or a small local connection gateway by `mesail-serverless`
+  (`realtime-serverless.md`); R1 keeps a seam so that form can replace the
+  container without changing `realtime`'s contract.
   Chat writes stay in `messaging`; `realtime` only fans out events.
 - **Data of other services** is reached only through that service's HTTP
   contract or its events, never by opening its root. `identity` has no root

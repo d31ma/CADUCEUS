@@ -42,16 +42,22 @@ wave run at the same time.
    `~/Developer/Tools/fylo-26.45.07/fylo`.
 8. **Heavy jobs** run as
    `MAC_HEAVY_COORDINATOR=tachyon-build mac-heavy --owner <slice> -- ...`.
-9. **Collection names.** Build every FYLO collection name with
+9. **FYLO on ATLAS (every FYLO-owning slice).** Live roots are on ATLAS in
+   Lambda form, where a write takes about 109 ms with stalls up to 11 s
+   (ADR 0004 section 4). So: at most 25 FYLO writes and 20 seconds of work
+   per request or job call (answer `more: true` and continue on the next
+   trigger); every write idempotent; slow work through the outbox; callers
+   use a 30 s timeout and at most 3 retries with backoff.
+10. **Collection names.** Build every FYLO collection name with
    `kit/collections` (`CollectionName{}.ForDomain` or `.ForDomainMonth`).
    FYLO accepts only lowercase letters, digits and `-`; the domain becomes a
    16-character hex key (DOMAIN.md, "The domain key"). Add `collections` to
    your `server/packages/kit.list`.
-10. **The domain is the tenant.** Every store method takes the `domainId`
+11. **The domain is the tenant.** Every store method takes the `domainId`
    from the verified caller (`oidc.Caller.DomainId`, the Keycloak realm
    name, which is the mail domain). Chat data never crosses a domain. Email
    crosses domains freely. See SPEC section 2 and DOMAIN.md invariant 1.
-11. **FYLO roots for dev and test.** On this Mac, a test FYLO root lives in
+12. **FYLO roots for dev and test.** On this Mac, a test FYLO root lives in
     the shared APFS disk image on ATLAS, in your own folder:
     `~/Developer/AtlasFylo/mesail/slice-<slice id>/` (for example
     `slice-m3/`). Never put a root on `/Volumes/ATLAS` or `/Volumes/HAVEN`
@@ -71,14 +77,14 @@ wave run at the same time.
     Only the integration run in Lambda form (Floci, AWS later) puts a
     root on EFS: `/mnt/data/<service>/<domain>/`, one function per
     (service, domain) (ADR 0004 section 4).
-12. **Scheduled work.** A `@Schedule` worker gets no injected providers in
+13. **Scheduled work.** A `@Schedule` worker gets no injected providers in
     TACHYON 26.46.02, so it only triggers: it fetches a service token for
     the domain it works on (`kit/oidc`, slice I1; EVENTS.md section 4) and
     POSTs to its own `@Allow(Service)` route
     (`/outbox/relay` or `/jobs/<job>`), where the work runs with injected
     services. In Lambda form an EventBridge schedule calls the same route
     (P1). Details: `docs/mesail/EVENTS.md` section 4.
-13. **UI stack (frontend slices F1 to F5).** Follow ADR 0004 section 8:
+14. **UI stack (frontend slices F1 to F5).** Follow ADR 0004 section 8:
     DuVay `w-*` elements for every control and overlay, DuVay tokens for
     color and type, Tailwind classes for layout and breakpoints, no
     hard-coded colors, no CSS frameworks other than these two, no
@@ -89,7 +95,7 @@ wave run at the same time.
     `tools/styles --check` and the responsive test in `tests/responsive/`
     (320 to 2560 px, 44 px touch targets, safe areas, RTL, reduced motion)
     for the routes it owns.
-14. **UX.** The screens, states and copy come from `docs/mesail/ux/**`
+15. **UX.** The screens, states and copy come from `docs/mesail/ux/**`
     (owned by the `mesail-ux` session). Frontend slices follow it and do not
     edit it.
 
@@ -286,9 +292,11 @@ C1, not before each slice merge.
   (service, domain) with reserved concurrency 1, a router that picks the
   function by path prefix and domain and queues calls to a busy function
   (a concurrent call gets `429`), `realtime` as one long-running container
-  (Lambda cannot hold connections), a snapshot schedule (`fylo pack` of
-  every root to ATLAS) with a runbook that clears a lock left by a killed
-  writer, the Floci description that runs every service in
+  (Lambda cannot hold connections), live roots on the ATLAS-backed EFS
+  volumes (the owner's decision), Lambda timeouts of 120 s, an entrypoint
+  that clears a stale FYLO write lock only when no writer is alive (ADR
+  0004 section 4) and logs it, `fylo pack` snapshots to ATLAS before every
+  deploy, the Floci description that runs every service in
   the `mesail` Lima VM (built by the `mesail-devhost` session), the
   path-routing front (API Gateway in Floci and AWS), static hosting for the
   Tac apps, seeded realms `example.com`, `example.org` (a second hosted
@@ -328,11 +336,16 @@ C1, not before each slice merge.
 
 ### R1. Realtime and presence
 - **Owns:** `apps/realtime/**` (except kit copies).
-- **Builds:** the socket route (or the API Gateway WebSocket callbacks in
-  Lambda form) with 60 s token recheck (AC-ID-4), fan-out
-  of `message.*`, `reaction.changed`, `read-position.moved`, presence
-  (AC-PN-1), typing. A gateway adapter seam for the cloud form (ADR 0004
-  section 4).
+- **Builds:** `realtime` as one small long-running container in the first
+  release (the owner's decision): the socket route with the token in the
+  first message and a 60 s recheck (AC-ID-4), the single-use SSE ticket,
+  fan-out of `message.*`, `reaction.changed`, `read-position.moved`,
+  presence (AC-PN-1) and typing. A connection-gateway seam (connect,
+  message, disconnect and push behind one Go interface) so the serverless
+  form researched by `mesail-serverless` (`realtime-serverless.md`: API
+  Gateway WebSocket `$connect`/`$default`/`$disconnect` and `@connections`,
+  or a small local gateway on Floci) can replace the container without a
+  contract change. Read that report before you start.
 - **Depends on:** I1, I2, M3 event payloads.
 
 ### N1. Notifications

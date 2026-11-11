@@ -169,7 +169,7 @@ outbound delivery queue, retries, email summaries, cleanup):
   credentials with the confidential client `mesail-service` of that realm
   (one shared secret, `YON_SERVICE_CLIENT_SECRET`, set in every realm like
   `mesail-identity`'s). So on the receiving side `Caller.DomainId` IS the
-  target domain, and SLICES rule 10 holds unchanged: a receiver refuses a
+  target domain, and SLICES rule 11 holds unchanged: a receiver refuses a
   `Service` token whose `DomainId` differs from the domain in the path, the
   body or the event envelope (`404`, as for any other domain).
 - Calls that are about the whole install, or about a domain that may not be

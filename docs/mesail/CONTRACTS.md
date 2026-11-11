@@ -172,7 +172,7 @@ in Mesail's own settings; the browser still never talks to Keycloak):
 | `GET /api/v1/directory/domains/{domainId}` | Allow(Operator, Service) | - | `Domain` or `404` (used by `mail-out` for `dkimSelector` and the hosted check) |
 | `POST /api/v1/directory/domains` | Allow(Operator) | `CreateDomainRequest{name}` | `201 Domain` (also creates the domain's Keycloak realm) |
 | `POST /api/v1/directory/domains/{domainId}/verify` | Allow(Operator) | - | `Domain` (with `dns` states) |
-| `DELETE /api/v1/directory/domains/{domainId}` | Allow(Operator) | - | `204` |
+| `DELETE /api/v1/directory/domains/{domainId}` | Allow(Operator) | - | `204`; `403 forbidden` when the realm was not created by the directory |
 | `POST /api/v1/directory/aliases` | Allow(DomainAdmin) | `CreateAliasRequest{address, memberId?}` | `201 Address` |
 | `POST /api/v1/directory/channel-addresses` | Allow(DomainAdmin) | `ChannelAddressRequest{address, channelId}` | `201 Address` with `kind: channel`; the same address for the same channel again answers `201`; `409 duplicate` when a member, alias or other channel has it; `400 invalid_request` (`address`) when it is not in the caller's domain (called by `channels`) |
 | `DELETE /api/v1/directory/channel-addresses/{address}` | Allow(DomainAdmin) | - | `204`; `404` unless it is a channel address in the caller's domain |

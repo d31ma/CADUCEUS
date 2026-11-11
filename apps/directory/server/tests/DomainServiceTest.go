@@ -47,6 +47,28 @@ func (test *DomainServiceTest) TestARealmThatAlreadyExistsIsAdopted() {
 	Assert.IsTrue(err == nil, "add failed")
 }
 
+func (test *DomainServiceTest) TestARealmThatKeycloakWillNotCreateButThatExistsIsAdopted() {
+	service, calls, closeAll := test.worldWith(http.StatusForbidden, http.StatusNoContent, http.StatusOK)
+	defer closeAll()
+	name := test.reset("seeded-unit.test")
+	domain, err := service.Add(CreateDomainRequest{Name: name})
+	Assert.IsTrue(err == nil, "add failed")
+	Assert.Equals(name, domain.DomainId)
+	Assert.IsTrue(strings.Contains(calls(), "GET /idp/realms/"+name+"/.well-known/openid-configuration"), calls())
+}
+
+func (test *DomainServiceTest) TestARealmThatKeycloakWillNotCreateAndThatIsMissingLeavesNoDomain() {
+	service, _, closeAll := test.worldWith(http.StatusForbidden, http.StatusNoContent, http.StatusNotFound)
+	defer closeAll()
+	name := test.reset("refused-unit.test")
+	_, err := service.Add(CreateDomainRequest{Name: name})
+	_, getErr := service.Get(name)
+	var unavailable *Unavailable
+	var missing *NotFound
+	Assert.IsTrue(errors.As(err, &unavailable), "want Unavailable")
+	Assert.IsTrue(errors.As(getErr, &missing), "want NotFound")
+}
+
 func (test *DomainServiceTest) TestAKeycloakFailureLeavesNoDomain() {
 	service, _, closeAll := test.world(http.StatusInternalServerError)
 	defer closeAll()
@@ -121,6 +143,19 @@ func (test *DomainServiceTest) TestRemovingADomainDeletesItsRealmAndRecord() {
 	Assert.IsTrue(strings.Contains(calls(), "DELETE /idp/admin/realms/"+added.DomainId), calls())
 }
 
+func (test *DomainServiceTest) TestRemovingADomainWhoseRealmKeycloakWillNotDeleteKeepsTheDomain() {
+	service, _, closeAll := test.worldWith(http.StatusCreated, http.StatusForbidden, http.StatusOK)
+	defer closeAll()
+	added, _ := service.Add(CreateDomainRequest{Name: test.reset("seeded-remove-unit.test")})
+	err := service.Remove(added.DomainId)
+	stored, getErr := service.Get(added.DomainId)
+	var notManaged *RealmNotManaged
+	Assert.IsTrue(errors.As(err, &notManaged), "want RealmNotManaged")
+	Assert.IsTrue(strings.Contains(err.Error(), added.DomainId), err.Error())
+	Assert.IsTrue(getErr == nil, "the domain record is gone")
+	Assert.Equals(added.DomainId, stored.DomainId)
+}
+
 func (test *DomainServiceTest) TestRemovingAnUnknownDomainIsNotFound() {
 	service, _, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
@@ -130,6 +165,11 @@ func (test *DomainServiceTest) TestRemovingAnUnknownDomainIsNotFound() {
 }
 
 func (test *DomainServiceTest) world(createStatus int) (*DomainService, func() string, func()) {
+	return test.worldWith(createStatus, http.StatusNoContent, http.StatusNotFound)
+}
+
+func (test *DomainServiceTest) worldWith(createStatus int, deleteStatus int, discoveryStatus int) (*DomainService, func() string, func()) {
+	statuses := map[string]int{http.MethodPost: createStatus, http.MethodDelete: deleteStatus, http.MethodGet: discoveryStatus}
 	lock := &sync.Mutex{}
 	lines := []string{}
 	record := func(line string) {
@@ -143,7 +183,7 @@ func (test *DomainServiceTest) world(createStatus int) (*DomainService, func() s
 		return strings.Join(lines, "\n")
 	}
 	keycloak := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		test.keycloak(record, createStatus, writer, request)
+		test.keycloak(record, statuses, writer, request)
 	}))
 	dns := httptest.NewServer(http.HandlerFunc(test.dns))
 	settings := map[string]any{"yon": map[string]any{"directory": map[string]any{
@@ -166,7 +206,7 @@ func (test *DomainServiceTest) world(createStatus int) (*DomainService, func() s
 	return service, calls, func() { keycloak.Close(); dns.Close() }
 }
 
-func (test *DomainServiceTest) keycloak(record func(string), createStatus int, writer http.ResponseWriter, request *http.Request) {
+func (test *DomainServiceTest) keycloak(record func(string), statuses map[string]int, writer http.ResponseWriter, request *http.Request) {
 	body, _ := io.ReadAll(request.Body)
 	realm := struct {
 		Realm string `json:"realm"`
@@ -177,11 +217,7 @@ func (test *DomainServiceTest) keycloak(record func(string), createStatus int, w
 		writer.Write([]byte(`{"access_token":"example-token"}`))
 		return
 	}
-	if request.Method == http.MethodPost {
-		writer.WriteHeader(createStatus)
-		return
-	}
-	writer.WriteHeader(http.StatusNoContent)
+	writer.WriteHeader(statuses[request.Method])
 }
 
 func (test *DomainServiceTest) dns(writer http.ResponseWriter, request *http.Request) {

@@ -37,11 +37,15 @@ func (admin Admin) CreateRealm(realm string) error {
 }
 
 func (admin Admin) RealmExists(realm string) (bool, error) {
-	token, err := admin.token()
+	err := admin.reachable()
 	if err != nil {
 		return false, err
 	}
-	status, _, err := admin.exchange(http.MethodGet, admin.addresses().Realm(realm), token, nil)
+	request, err := http.NewRequest(http.MethodGet, admin.addresses().Discovery(realm), nil)
+	if err != nil {
+		return false, admin.failed(err)
+	}
+	status, _, err := admin.perform(request)
 	if err != nil {
 		return false, err
 	}
@@ -57,7 +61,7 @@ func (admin Admin) DeleteRealm(realm string) error {
 	if err != nil {
 		return err
 	}
-	return admin.deleteOutcome(status)
+	return admin.deleteOutcome(status, realm)
 }
 
 func (admin Admin) token() (string, error) {
@@ -79,6 +83,13 @@ func (admin Admin) token() (string, error) {
 		return "", err
 	}
 	return admin.accessToken(content)
+}
+
+func (admin Admin) reachable() error {
+	if admin.settings.BaseUrl == "" {
+		return NotConfigured{}
+	}
+	return nil
 }
 
 func (admin Admin) configured() error {
@@ -152,9 +163,27 @@ func (admin Admin) createOutcome(status int, realm string) error {
 		return nil
 	case http.StatusConflict:
 		return RealmExists{Realm: realm}
+	case http.StatusForbidden:
+		return admin.forbiddenCreate(realm)
 	default:
 		return AdminRefused{Status: status, Action: admin.createAction()}
 	}
+}
+
+func (admin Admin) forbiddenCreate(realm string) error {
+	refused := AdminRefused{Status: http.StatusForbidden, Action: admin.createAction()}
+	exists, err := admin.RealmExists(realm)
+	if err != nil {
+		return errors.Join(refused, err)
+	}
+	return admin.adoptable(exists, realm, refused)
+}
+
+func (Admin) adoptable(exists bool, realm string, refused AdminRefused) error {
+	if exists {
+		return RealmExists{Realm: realm}
+	}
+	return refused
 }
 
 func (admin Admin) existsOutcome(status int) (bool, error) {
@@ -168,11 +197,15 @@ func (admin Admin) existsOutcome(status int) (bool, error) {
 	}
 }
 
-func (admin Admin) deleteOutcome(status int) error {
-	if status == http.StatusNoContent || status == http.StatusNotFound {
+func (admin Admin) deleteOutcome(status int, realm string) error {
+	switch status {
+	case http.StatusNoContent, http.StatusNotFound:
 		return nil
+	case http.StatusForbidden:
+		return RealmNotManaged{Realm: realm}
+	default:
+		return AdminRefused{Status: status, Action: admin.deleteAction()}
 	}
-	return AdminRefused{Status: status, Action: admin.deleteAction()}
 }
 
 func (admin Admin) addresses() adminAddresses {
@@ -212,7 +245,7 @@ func (Admin) createAction() string {
 }
 
 func (Admin) readAction() string {
-	return "read the realm"
+	return "read the realm discovery document"
 }
 
 func (Admin) deleteAction() string {

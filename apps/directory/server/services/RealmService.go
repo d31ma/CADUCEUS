@@ -1,4 +1,5 @@
 import (
+	"cmp"
 	"errors"
 	"net/http"
 
@@ -16,7 +17,8 @@ func (service *RealmService) Create(domainId string) error {
 }
 
 func (service *RealmService) Delete(domainId string) error {
-	return service.unavailable(service.admin().DeleteRealm(domainId))
+	failure := service.admin().DeleteRealm(domainId)
+	return cmp.Or(service.notManaged(failure), service.unavailable(failure))
 }
 
 func (service *RealmService) admin() keycloak.Admin {
@@ -34,6 +36,13 @@ func (service *RealmService) adopted(failure error) error {
 		return nil
 	}
 	return failure
+}
+
+func (service *RealmService) notManaged(failure error) error {
+	if errors.As(failure, &keycloak.RealmNotManaged{}) {
+		return &RealmNotManaged{Message: failure.Error()}
+	}
+	return nil
 }
 
 func (service *RealmService) unavailable(failure error) error {

@@ -130,6 +130,12 @@
   (and the dead-letter view `outboxHasDead: true`), set with the counts in
   every write. The directory tests reuse fixed domains per test unit and
   reset them, so a test FYLO root no longer grows.
+- Realm checks follow Keycloak 26.8.2's rights for `mesail-directory`:
+  existence is read from the public discovery URL; a seeded realm is
+  adopted when the create answers 409 (or 403 while discovery finds it);
+  removing a domain whose realm the directory did not create answers
+  `403 forbidden` and keeps the domain. The outbox sweep reads only due
+  documents and stops after 20 seconds.
 
 ### Slice A1: attachments and blob store
 

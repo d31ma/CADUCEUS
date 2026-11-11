@@ -28,15 +28,18 @@ type fakeKeycloak struct {
 	tokenBody   string
 	adminStatus int
 	adminBody   string
+	discovery   int
 	token       recordedRequest
 	admin       recordedRequest
+	found       recordedRequest
 	requests    int
 }
 
 func newFakeKeycloak(t *testing.T, tokenStatus int, adminStatus int, adminBody string) *fakeKeycloak {
-	fake := &fakeKeycloak{tokenStatus: tokenStatus, tokenBody: `{"access_token":"example-token"}`, adminStatus: adminStatus, adminBody: adminBody}
+	fake := &fakeKeycloak{tokenStatus: tokenStatus, tokenBody: `{"access_token":"example-token"}`, adminStatus: adminStatus, adminBody: adminBody, discovery: http.StatusNotFound}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/idp/realms/master/protocol/openid-connect/token", fake.answerToken)
+	mux.HandleFunc("/idp/realms/", fake.answerDiscovery)
 	mux.HandleFunc("/idp/admin/", fake.answerAdmin)
 	fake.server = httptest.NewServer(mux)
 	t.Cleanup(fake.server.Close)
@@ -59,6 +62,21 @@ func (fake *fakeKeycloak) answerAdmin(writer http.ResponseWriter, request *http.
 	fake.admin = record(request)
 	writer.WriteHeader(fake.adminStatus)
 	io.WriteString(writer, fake.adminBody)
+}
+
+func (fake *fakeKeycloak) answerDiscovery(writer http.ResponseWriter, request *http.Request) {
+	fake.mutex.Lock()
+	defer fake.mutex.Unlock()
+	fake.requests++
+	fake.found = record(request)
+	writer.WriteHeader(fake.discovery)
+	io.WriteString(writer, "{}")
+}
+
+func (fake *fakeKeycloak) discoveryRequest() recordedRequest {
+	fake.mutex.Lock()
+	defer fake.mutex.Unlock()
+	return fake.found
 }
 
 func (fake *fakeKeycloak) snapshot() (recordedRequest, recordedRequest, int) {
@@ -108,10 +126,44 @@ func TestCreateRealmReportsAnExistingRealm(t *testing.T) {
 }
 
 func TestCreateRealmReportsOtherStatusesAsRefused(t *testing.T) {
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusInternalServerError, "")
+	err := fake.client().CreateRealm("example.com")
+	var refused AdminRefused
+	if !errors.As(err, &refused) || refused.Status != http.StatusInternalServerError {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestForbiddenCreateOfAnExistingRealmReportsAnExistingRealm(t *testing.T) {
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusForbidden, "")
+	fake.discovery = http.StatusOK
+	err := fake.client().CreateRealm("example.com")
+	found := fake.discoveryRequest()
+	var exists RealmExists
+	if !errors.As(err, &exists) || exists.Realm != "example.com" {
+		t.Fatalf("got %v", err)
+	}
+	if found.uri != "/idp/realms/example.com/.well-known/openid-configuration" {
+		t.Fatalf("got %q", found.uri)
+	}
+}
+
+func TestForbiddenCreateOfAMissingRealmIsRefused(t *testing.T) {
 	fake := newFakeKeycloak(t, http.StatusOK, http.StatusForbidden, "")
 	err := fake.client().CreateRealm("example.com")
 	var refused AdminRefused
-	if !errors.As(err, &refused) || refused.Status != http.StatusForbidden {
+	var exists RealmExists
+	if !errors.As(err, &refused) || refused.Status != http.StatusForbidden || errors.As(err, &exists) {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestForbiddenCreateWithAFailedDiscoveryIsRefused(t *testing.T) {
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusForbidden, "")
+	fake.discovery = http.StatusInternalServerError
+	err := fake.client().CreateRealm("example.com")
+	var refused AdminRefused
+	if !errors.As(err, &refused) || refused.Status != http.StatusForbidden || !strings.Contains(err.Error(), "500") {
 		t.Fatalf("got %v", err)
 	}
 }
@@ -172,8 +224,8 @@ func TestMissingBaseUrlFailsEveryCall(t *testing.T) {
 }
 
 func TestTokenRequestIsFormEncodedWithClientCredentials(t *testing.T) {
-	fake := newFakeKeycloak(t, http.StatusOK, http.StatusOK, "")
-	_, err := fake.client().RealmExists("example.com")
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusNoContent, "")
+	err := fake.client().DeleteRealm("example.com")
 	token, _, _ := fake.snapshot()
 	form, parseError := url.ParseQuery(token.body)
 	if err != nil || parseError != nil {
@@ -188,28 +240,52 @@ func TestTokenRequestIsFormEncodedWithClientCredentials(t *testing.T) {
 }
 
 func TestAdminCallCarriesTheBearerToken(t *testing.T) {
-	fake := newFakeKeycloak(t, http.StatusOK, http.StatusOK, "")
-	_, err := fake.client().RealmExists("example.com")
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusNoContent, "")
+	err := fake.client().DeleteRealm("example.com")
 	_, admin, _ := fake.snapshot()
 	if err != nil || admin.authorization != "Bearer example-token" {
 		t.Fatalf("got %q, %v", admin.authorization, err)
 	}
 }
 
-func TestRealmExistsWhenKeycloakFindsIt(t *testing.T) {
-	fake := newFakeKeycloak(t, http.StatusOK, http.StatusOK, "{}")
+func TestRealmExistsWhenDiscoveryFindsIt(t *testing.T) {
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusOK, "")
+	fake.discovery = http.StatusOK
 	exists, err := fake.client().RealmExists("example.com")
-	_, admin, _ := fake.snapshot()
+	found := fake.discoveryRequest()
+	_, _, requests := fake.snapshot()
 	if err != nil || !exists {
 		t.Fatalf("got %v, %v", exists, err)
 	}
-	if admin.method != http.MethodGet || admin.uri != "/idp/admin/realms/example.com" {
-		t.Fatalf("got %s %s", admin.method, admin.uri)
+	if found.method != http.MethodGet || found.uri != "/idp/realms/example.com/.well-known/openid-configuration" {
+		t.Fatalf("got %s %s", found.method, found.uri)
+	}
+	if requests != 1 {
+		t.Fatalf("got %d requests", requests)
 	}
 }
 
-func TestRealmDoesNotExistWhenKeycloakAnswersNotFound(t *testing.T) {
-	fake := newFakeKeycloak(t, http.StatusOK, http.StatusNotFound, "")
+func TestDiscoveryCarriesNoAuthorization(t *testing.T) {
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusOK, "")
+	fake.discovery = http.StatusOK
+	_, err := fake.client().RealmExists("example.com")
+	found := fake.discoveryRequest()
+	if err != nil || found.authorization != "" {
+		t.Fatalf("got %q, %v", found.authorization, err)
+	}
+}
+
+func TestRealmExistsNeedsOnlyTheBaseUrl(t *testing.T) {
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusOK, "")
+	fake.discovery = http.StatusOK
+	exists, err := NewAdmin(AdminSettings{BaseUrl: fake.server.URL + "/idp"}, fake.server.Client()).RealmExists("example.com")
+	if err != nil || !exists {
+		t.Fatalf("got %v, %v", exists, err)
+	}
+}
+
+func TestRealmDoesNotExistWhenDiscoveryAnswersNotFound(t *testing.T) {
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusOK, "")
 	exists, err := fake.client().RealmExists("example.com")
 	if err != nil || exists {
 		t.Fatalf("got %v, %v", exists, err)
@@ -217,7 +293,8 @@ func TestRealmDoesNotExistWhenKeycloakAnswersNotFound(t *testing.T) {
 }
 
 func TestRealmExistsReportsOtherStatusesAsRefused(t *testing.T) {
-	fake := newFakeKeycloak(t, http.StatusOK, http.StatusInternalServerError, "")
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusOK, "")
+	fake.discovery = http.StatusInternalServerError
 	_, err := fake.client().RealmExists("example.com")
 	var refused AdminRefused
 	if !errors.As(err, &refused) || refused.Status != http.StatusInternalServerError {
@@ -225,9 +302,18 @@ func TestRealmExistsReportsOtherStatusesAsRefused(t *testing.T) {
 	}
 }
 
-func TestRealmNameIsEscapedInThePath(t *testing.T) {
-	fake := newFakeKeycloak(t, http.StatusOK, http.StatusNotFound, "")
+func TestRealmNameIsEscapedInTheDiscoveryPath(t *testing.T) {
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusOK, "")
 	_, err := fake.client().RealmExists("a b/c?d")
+	found := fake.discoveryRequest()
+	if err != nil || found.uri != "/idp/realms/a%20b%2Fc%3Fd/.well-known/openid-configuration" {
+		t.Fatalf("got %q, %v", found.uri, err)
+	}
+}
+
+func TestRealmNameIsEscapedInTheAdminPath(t *testing.T) {
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusNoContent, "")
+	err := fake.client().DeleteRealm("a b/c?d")
 	_, admin, _ := fake.snapshot()
 	if err != nil || admin.uri != "/idp/admin/realms/a%20b%2Fc%3Fd" {
 		t.Fatalf("got %q, %v", admin.uri, err)
@@ -255,10 +341,19 @@ func TestDeleteRealmTreatsNotFoundAsGone(t *testing.T) {
 }
 
 func TestDeleteRealmReportsOtherStatusesAsRefused(t *testing.T) {
-	fake := newFakeKeycloak(t, http.StatusOK, http.StatusForbidden, "")
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusInternalServerError, "")
 	err := fake.client().DeleteRealm("example.com")
 	var refused AdminRefused
-	if !errors.As(err, &refused) || refused.Status != http.StatusForbidden {
+	if !errors.As(err, &refused) || refused.Status != http.StatusInternalServerError {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestForbiddenDeleteIsARealmTheDirectoryDoesNotManage(t *testing.T) {
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusForbidden, "")
+	err := fake.client().DeleteRealm("example.com")
+	var notManaged RealmNotManaged
+	if !errors.As(err, &notManaged) || notManaged.Realm != "example.com" {
 		t.Fatalf("got %v", err)
 	}
 }
@@ -284,11 +379,33 @@ func TestInvalidBaseUrlFails(t *testing.T) {
 	}
 }
 
+func TestInvalidBaseUrlFailsTheDiscovery(t *testing.T) {
+	admin := NewAdmin(AdminSettings{BaseUrl: "http://bad host"}, http.DefaultClient)
+	_, err := admin.RealmExists("example.com")
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+}
+
+func TestUnreachableKeycloakFailsTheDiscovery(t *testing.T) {
+	fake := newFakeKeycloak(t, http.StatusOK, http.StatusOK, "")
+	admin := fake.client()
+	fake.server.Close()
+	_, err := admin.RealmExists("example.com")
+	if err == nil || errors.Unwrap(err) == nil {
+		t.Fatalf("got %v", err)
+	}
+}
+
 func TestErrorMessagesNameTheProblem(t *testing.T) {
 	exists := RealmExists{Realm: "example.com"}.Error()
 	refused := AdminRefused{Status: http.StatusForbidden, Action: "delete the realm"}.Error()
 	missing := NotConfigured{}.Error()
+	notManaged := RealmNotManaged{Realm: "example.com"}.Error()
 	if !strings.Contains(exists, "example.com") || !strings.Contains(refused, "403") || missing == "" {
 		t.Fatalf("got %q, %q, %q", exists, refused, missing)
+	}
+	if !strings.Contains(notManaged, "example.com") || !strings.Contains(notManaged, "cannot delete") {
+		t.Fatalf("got %q", notManaged)
 	}
 }

@@ -17,7 +17,13 @@ func (handler *DirectoryErrorHandler) Unauthenticated(failure *Unauthenticated) 
 // @HandlesError
 // @ResponseStatus(403)
 func (handler *DirectoryErrorHandler) Forbidden(failure *Forbidden) ApiError {
-	return ApiError{Code: "forbidden", Message: failure.Message}
+	return ApiError{Code: handler.forbidden(), Message: failure.Message}
+}
+
+// @HandlesError
+// @ResponseStatus(403)
+func (handler *DirectoryErrorHandler) NotManaged(failure *RealmNotManaged) ApiError {
+	return ApiError{Code: handler.forbidden(), Message: failure.Message}
 }
 
 // @HandlesError
@@ -48,6 +54,10 @@ func (handler *DirectoryErrorHandler) Unavailable(failure *Unavailable) ApiError
 // @ResponseStatus(503)
 func (handler *DirectoryErrorHandler) Store(failure YonResourceError) ApiError {
 	return ApiError{Code: handler.unavailable(), Message: "the directory store is not available"}
+}
+
+func (handler *DirectoryErrorHandler) forbidden() string {
+	return "forbidden"
 }
 
 func (handler *DirectoryErrorHandler) unavailable() string {

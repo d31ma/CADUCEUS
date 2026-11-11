@@ -21,6 +21,10 @@ func (addresses adminAddresses) Realm(realm string) string {
 	return addresses.Realms() + "/" + url.PathEscape(realm)
 }
 
+func (addresses adminAddresses) Discovery(realm string) string {
+	return addresses.trimmedBase() + "/realms/" + url.PathEscape(realm) + "/.well-known/openid-configuration"
+}
+
 func (addresses adminAddresses) trimmedBase() string {
 	return strings.TrimSuffix(addresses.base, "/")
 }

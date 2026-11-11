@@ -9,8 +9,6 @@ type AdminSessionService struct {
 	Problem     string
 	Busy        bool
 	Address     string
-	Password    string
-	OneTimeCode string
 	DomainId    string
 	Initials    string
 	DisplayName string
@@ -41,12 +39,10 @@ func (session *AdminSessionService) Resume(started AdminPageStarted) {
 	session.renewWhenSaved(session.SessionKey)
 }
 
-func (session *AdminSessionService) SignIn() {
+func (session *AdminSessionService) SignInWith(address string, password string, oneTimeCode string) {
 	session.Busy = true
-	request := SignInRequest{Address: session.Address, Password: session.Password, OneTimeCode: session.OneTimeCode}
-	answer, failure := session.identityClient.SignIn(request)
-	session.Password = ""
-	session.OneTimeCode = ""
+	session.Address = address
+	answer, failure := session.identityClient.SignIn(SignInRequest{Address: address, Password: password, OneTimeCode: oneTimeCode})
 	session.Busy = false
 	session.keep(answer)
 	session.Problem = session.signInProblem(session.problems.Of(failure))

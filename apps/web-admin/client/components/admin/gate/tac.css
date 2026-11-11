@@ -1,14 +1,85 @@
-.admin-gate {
-  min-height: 100dvh;
+.gate {
+  padding-top: max(var(--w-space-8), env(safe-area-inset-top));
+  padding-bottom: max(var(--w-space-8), env(safe-area-inset-bottom));
+  background: var(--w-surface-container-low);
+  color: var(--w-text);
 }
 
-.admin-gate__inner {
-  max-width: 28rem;
-  margin-inline: auto;
-  padding-block: var(--w-space-8);
+.gate-card {
+  border: 1px solid var(--w-border);
+  border-radius: var(--ms-radius-tile);
+  background: var(--w-surface);
+  box-shadow: var(--w-shadow-sm);
 }
 
-.admin-gate__form {
-  display: grid;
-  gap: var(--w-space-4);
+.gate-title {
+  font-size: var(--w-font-2xl);
+  font-weight: var(--w-font-weight-semibold);
+  line-height: 1.25;
 }
+
+.gate-lead {
+  color: var(--w-text-subtle);
+}
+
+.gate-notice {
+  padding: var(--w-space-3);
+  border-radius: var(--w-radius-md);
+  background: var(--w-warning-container);
+  color: var(--w-on-warning-container);
+}
+
+.gate-meta {
+  font-size: var(--ms-text-meta);
+  color: var(--w-text-subtle);
+}
+
+@media (max-width: 599px) {
+  .gate-card {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+}
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .block {
+    display: block;
+  }
+  .grid {
+    display: grid;
+  }
+  .min-h-dvh {
+    min-height: 100dvh;
+  }
+  .w-full {
+    width: 100%;
+  }
+  .max-w-md {
+    max-width: var(--container-md, 28rem);
+  }
+  .place-items-center {
+    place-items: center;
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .gap-4 {
+    gap: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .gap-5 {
+    gap: calc(var(--spacing, 0.25rem) * 5);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .px-6 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 6);
+  }
+  .py-8 {
+    padding-block: calc(var(--spacing, 0.25rem) * 8);
+  }
+}
+/* @tachyon-generated-tailwind:end */

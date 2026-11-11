@@ -18,9 +18,7 @@ func (test *AliasFormServiceTest) opened() *AliasFormService {
 
 func (test *AliasFormServiceTest) added(address string, memberId string) *AliasFormService {
 	form := test.opened()
-	form.Address = address
-	form.MemberId = memberId
-	form.Add()
+	form.AddWith(address, memberId)
 	return form
 }
 
@@ -143,11 +141,44 @@ func (test *AliasFormServiceTest) TestAddWithoutTheServerIsUnavailable() {
 
 func (test *AliasFormServiceTest) TestASecondAliasIsAddedToTheList() {
 	form := test.added("sales", "bo-id")
-	form.Address = "help"
-	form.MemberId = "ana-id"
-	form.Add()
+	form.AddWith("help", "ana-id")
 	Assert.Equals(2, len(form.Added))
 	Assert.Equals("help@example.com now reaches Ana Ruiz.", form.Status)
+}
+
+func (test *AliasFormServiceTest) TestAddKeepsTheMemberThatWasChosen() {
+	form := test.added("taken", "bo-id")
+	Assert.Equals("bo-id", form.MemberId)
+}
+
+func (test *AliasFormServiceTest) TestSuffixIsTheDomainInLowercase() {
+	form := &AliasFormService{DomainId: "Example.COM"}
+	Assert.Equals("@example.com", form.Suffix())
+}
+
+func (test *AliasFormServiceTest) TestAddressHintNamesTheDomain() {
+	form := test.opened()
+	Assert.Equals("Ends with @example.com. The address must not belong to a person, an alias or another channel.", form.AddressHint())
+}
+
+func (test *AliasFormServiceTest) TestAddressErrorExplainsAnInvalidAddress() {
+	form := test.opened()
+	Assert.Equals("Use 1 to 64 lowercase letters, digits, dots, hyphens, underscores or plus signs. Do not start or end with a dot.", form.AddressError("invalidAddress"))
+}
+
+func (test *AliasFormServiceTest) TestAddressErrorExplainsATakenAddress() {
+	form := test.opened()
+	Assert.Equals("This address already belongs to a member, alias or channel.", form.AddressError("conflict"))
+}
+
+func (test *AliasFormServiceTest) TestAddressErrorExplainsAnAddressTheServerRefuses() {
+	form := test.opened()
+	Assert.Equals("This is not a valid address in example.com.", form.AddressError("invalid"))
+}
+
+func (test *AliasFormServiceTest) TestAddressErrorIsEmptyForAMemberProblem() {
+	form := test.opened()
+	Assert.Equals("", form.AddressError("noMember"))
 }
 
 func (test *AliasFormServiceTest) session() *AdminSessionService {

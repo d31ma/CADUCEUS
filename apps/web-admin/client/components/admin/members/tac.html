@@ -1,95 +1,88 @@
-<main class="ms-main ms-admin" aria-labelledby="members-page-title">
-  <header class="ms-header">
-    <button class="ms-icon-btn ms-header__back" type="button" aria-label="Back to menu" on:click="adminShell.showMenu()"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></button>
-    <h1 class="ms-header__title" id="members-page-title"><span class="ms-icon ms-i-users" aria-hidden="true"></span><span>Members</span></h1>
-    <p class="ms-header__topic">{memberList.domainId} &middot; people who signed in to this domain</p>
+<main class="@container/main flex h-full min-h-0 min-w-0 flex-col" aria-labelledby="page-title">
+  <header class="members-header flex min-h-13 items-center gap-2">
+    <w-icon-btn icon="arrow-left" aria-label="Back to menu" class="members-touch -ml-2 sm:hidden" on:click="adminShell.showMenu()"></w-icon-btn>
+    <h1 id="page-title" class="members-title flex min-w-0 items-center gap-1"><w-icon name="users" aria-hidden="true"></w-icon><span class="truncate">Members</span></h1>
+    <p class="members-topic hidden min-w-0 flex-1 truncate pl-3 @2xl/main:block">{memberList.domainId} &middot; people who signed in to this domain</p>
   </header>
 
-  <div class="ms-page" id="admin-content">
-    <div class="ms-page__inner">
+  <div class="members-page min-h-0 flex-1 overflow-y-auto py-6" id="admin-content">
+    <div class="@container/page mx-auto grid w-full max-w-3xl gap-6 pb-10">
       <logic :if="memberList.state == 'forbidden'">
-        <section class="ms-card" aria-labelledby="members-no-access-title">
-          <div class="ms-empty">
-            <span class="ms-empty__art ms-empty__art--lock" aria-hidden="true"><span class="ms-icon ms-i-lock ms-icon--xl"></span></span>
-            <h2 id="members-no-access-title">You need admin rights for this page</h2>
-            <p>Ask an admin of {memberList.domainId} to give you the Domain admin role.</p>
-          </div>
-        </section>
+        <div class="members-box px-4 py-8">
+          <w-empty-state>
+            <w-icon slot="media" name="lock" class="members-art" aria-hidden="true"></w-icon>
+            <h2 slot="title" class="members-empty-title">You need admin rights for this page</h2>
+            <p slot="text">Ask an admin of {memberList.domainId} to give you the Domain admin role.</p>
+          </w-empty-state>
+        </div>
       </logic>
       <logic else>
-        <div class="ms-callout ms-callout--info">
-          <span class="ms-icon ms-i-key" aria-hidden="true"></span>
-          <div class="ms-callout__text">
-            <strong>To add people, create them in Keycloak.</strong>
+        <div class="members-notice flex items-start gap-3 p-4">
+          <w-icon name="key" class="mt-0.5" aria-hidden="true"></w-icon>
+          <div class="grid min-w-0 gap-1">
+            <p class="members-strong">To add people, create them in Keycloak.</p>
             <p>They appear here after their first sign-in. Disable a person or reset their sign-in in Keycloak too. Mesail never stores passwords.</p>
           </div>
         </div>
 
-        <div class="ms-toolbar" role="search" aria-label="Filter members">
-          <div class="ms-field ms-toolbar__search">
-            <label class="ms-label" for="member-search">Search</label>
-            <div class="ms-input-icon"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span><input class="ms-input" id="member-search" type="search" placeholder="Name or address" autocomplete="off" spellcheck="false" :value="memberList.query" on:input="memberList.query = $event.target.value"></div>
-          </div>
-          <button class="ms-btn" type="button" on:click="memberList.search()" :disabled="memberList.state == 'loading'">Search</button>
-        </div>
+        <form method="dialog" role="search" aria-label="Filter members" class="flex flex-wrap items-end gap-3" on:submit="memberList.searchWith($event.target.elements.query.value)">
+          <w-text-field type="search" name="query" label="Search" placeholder="Name or address" prepend-inner-icon="search" autocomplete="off" hide-details class="min-w-0 flex-1 basis-56" :value="memberList.query"></w-text-field>
+          <w-btn variant="outlined" class="members-touch" :disabled="memberList.state == 'loading'">Search</w-btn>
+        </form>
 
         <switch :value="memberList.state">
           <case :when="'ready'">
-            <section class="ms-card" aria-labelledby="members-title">
-              <div class="ms-card__head"><h2 id="members-title">{memberList.heading}</h2></div>
-              <div class="ms-table-wrap">
-                <table class="ms-table ms-table--cards">
-                  <caption class="ms-sr-only">Members of {memberList.domainId}</caption>
-                  <thead>
-                    <tr><th scope="col">Name</th><th scope="col">Address</th></tr>
-                  </thead>
-                  <tbody><loop :for="row of memberList.rows"><tr>
-                    <td class="ms-table__lead"><div class="ms-person"><span class="ms-avatar ms-avatar--sm" aria-hidden="true">{row.initials}</span><div><span class="ms-person__name">{row.name}</span></div></div></td>
-                    <td data-label="Address"><span class="ms-addr">{row.address}</span></td>
-                  </tr></loop></tbody>
-                </table>
-              </div>
+            <section class="members-box" aria-labelledby="members-title">
+              <div class="members-box-head flex flex-wrap items-center gap-3 px-4 py-3 @xl/page:px-5"><h2 id="members-title" class="members-heading flex-1">{memberList.heading}</h2></div>
+              <table class="members-table w-full @max-2xl/page:block">
+                <caption class="sr-only">Members of {memberList.domainId}</caption>
+                <thead class="@max-2xl/page:sr-only">
+                  <tr><th scope="col" class="px-4 py-2">Name</th><th scope="col" class="px-4 py-2">Address</th></tr>
+                </thead>
+                <tbody class="@max-2xl/page:block"><loop :for="row of memberList.rows"><tr class="@max-2xl/page:block @max-2xl/page:px-4 @max-2xl/page:py-3">
+                  <td class="px-4 py-3 @max-2xl/page:block @max-2xl/page:px-0 @max-2xl/page:py-1"><div class="flex min-w-0 items-center gap-2"><w-avatar size="28" alt="" aria-hidden="true" :text="row.initials"></w-avatar><span class="members-strong min-w-0">{row.name}</span></div></td>
+                  <td data-label="Address" class="members-labelled px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1"><span class="members-address min-w-0">{row.address}</span></td>
+                </tr></loop></tbody>
+              </table>
               <logic :if="memberList.hasMore">
-                <div class="ms-list-foot"><span>More members exist than this page shows. Search by name or address to find them.</span></div>
+                <p class="members-foot px-4 py-3 @xl/page:px-5">More members exist than this page shows. Search by name or address to find them.</p>
               </logic>
             </section>
           </case>
           <case :when="'empty'">
-            <section class="ms-card" aria-labelledby="members-empty-title">
-              <div class="ms-empty">
-                <span class="ms-empty__art" aria-hidden="true"><span class="ms-icon ms-i-users ms-icon--xl"></span></span>
-                <h2 id="members-empty-title">No one has signed in yet</h2>
-                <p>Create people in Keycloak for {memberList.domainId}. Each person appears here after their first sign-in.</p>
-              </div>
-            </section>
+            <div class="members-box px-4 py-8">
+              <w-empty-state>
+                <w-icon slot="media" name="users" class="members-art" aria-hidden="true"></w-icon>
+                <h2 slot="title" class="members-empty-title">No one has signed in yet</h2>
+                <p slot="text">Create people in Keycloak for {memberList.domainId}. Each person appears here after their first sign-in.</p>
+              </w-empty-state>
+            </div>
           </case>
           <case :when="'noResults'">
-            <section class="ms-card" aria-labelledby="members-no-results-title">
-              <div class="ms-empty" role="status">
-                <span class="ms-empty__art" aria-hidden="true"><span class="ms-icon ms-i-search ms-icon--xl"></span></span>
-                <h2 id="members-no-results-title">No members match &ldquo;{memberList.searchedQuery}&rdquo;</h2>
-                <p>Check the spelling, or clear the search and the filters. New people appear after their first sign-in.</p>
-                <div class="ms-empty__actions"><button class="ms-btn" type="button" on:click="memberList.clearSearch()">Clear search and filters</button></div>
-              </div>
-            </section>
+            <div class="members-box px-4 py-8" role="status">
+              <w-empty-state>
+                <w-icon slot="media" name="search" class="members-art" aria-hidden="true"></w-icon>
+                <h2 slot="title" class="members-empty-title">No members match &ldquo;{memberList.searchedQuery}&rdquo;</h2>
+                <p slot="text">Check the spelling, or clear the search and the filters. New people appear after their first sign-in.</p>
+                <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="outlined" class="members-touch" on:click="memberList.clearSearch()">Clear search and filters</w-btn></div>
+              </w-empty-state>
+            </div>
           </case>
           <case :when="'failed'">
-            <section class="ms-card" aria-labelledby="members-error-title">
-              <div class="ms-empty" role="alert">
-                <span class="ms-empty__art ms-empty__art--error" aria-hidden="true"><span class="ms-icon ms-i-alert ms-icon--xl"></span></span>
-                <h2 id="members-error-title">Members could not load</h2>
-                <p>Mesail could not reach the server. Check your connection, then try again.</p>
-                <div class="ms-empty__actions"><button class="ms-btn ms-btn--primary" type="button" on:click="memberList.retry()"><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Try again</button></div>
-              </div>
-            </section>
+            <div class="members-box px-4 py-8" role="alert">
+              <w-empty-state>
+                <w-icon slot="media" name="alert" class="members-art" aria-hidden="true"></w-icon>
+                <h2 slot="title" class="members-empty-title">Members could not load</h2>
+                <p slot="text">Mesail could not reach the server. Check your connection, then try again.</p>
+                <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn prepend-icon="refresh" class="members-touch" on:click="memberList.retry()">Try again</w-btn></div>
+              </w-empty-state>
+            </div>
           </case>
           <case default>
-            <section class="ms-card" aria-busy="true" aria-labelledby="members-loading-title">
-              <div class="ms-card__head"><h2 id="members-loading-title">Members</h2><span class="ms-meta" role="status"><span class="ms-spinner" aria-hidden="true"></span> Loading members&hellip;</span></div>
-              <div aria-hidden="true">
-                <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line" style="width:40%"></span><span class="ms-skeleton ms-skeleton--line" style="width:60%"></span></div></div>
-                <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line" style="width:35%"></span><span class="ms-skeleton ms-skeleton--line" style="width:55%"></span></div></div>
-                <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line" style="width:45%"></span><span class="ms-skeleton ms-skeleton--line" style="width:50%"></span></div></div>
+            <section class="members-box" aria-busy="true" aria-labelledby="members-loading-title">
+              <div class="members-box-head flex flex-wrap items-center gap-3 px-4 py-3"><h2 id="members-loading-title" class="members-heading flex-1">Members</h2><p class="members-meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Loading members&hellip;</p></div>
+              <div aria-hidden="true" class="px-2 py-2">
+                <w-skeleton-loader type="list-item-avatar-two-line@3" class="block"></w-skeleton-loader>
               </div>
             </section>
           </case>

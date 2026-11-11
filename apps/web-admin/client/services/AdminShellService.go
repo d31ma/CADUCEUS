@@ -34,6 +34,10 @@ func (shell *AdminShellService) ShowMenu() {
 	shell.Pane = shell.listPane()
 }
 
+func (shell *AdminShellService) SidebarLabel(domainId string) string {
+	return "Admin of " + domainId
+}
+
 func (shell *AdminShellService) Flag(value bool) string {
 	return map[bool]string{true: "true", false: "false"}[value]
 }

@@ -1,74 +1,62 @@
-<section class="ms-card" aria-labelledby="aliases-title">
-  <div class="ms-card__head"><h2 id="aliases-title">Aliases</h2></div>
-  <div class="ms-card__body" role="group" aria-labelledby="aliases-title">
-    <p class="ms-subtle">An alias is another address for a member, such as sales@{aliasForm.domainId}. Mail to it reaches the member.</p>
-    <div class="ms-field">
-      <label class="ms-label" for="alias-address">Alias address</label>
-      <div class="ms-input-group"><input class="ms-input ms-mono" id="alias-address" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="sales" aria-describedby="alias-address-error alias-address-help" :aria-invalid="aliasForm.problem == 'invalidAddress' || aliasForm.problem == 'conflict' || aliasForm.problem == 'invalid'" :value="aliasForm.address" on:input="aliasForm.address = $event.target.value"><span class="ms-input-group__suffix" aria-hidden="true">@{aliasForm.domainId}</span></div>
-      <div id="alias-address-error"><switch :value="aliasForm.problem">
-        <case :when="'invalidAddress'">
-          <p class="ms-error-text" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>Use 1 to 64 lowercase letters, digits, dots, hyphens, underscores or plus signs. Do not start or end with a dot.</p>
+<section class="@container/aliases aliases-box" aria-labelledby="aliases-title">
+  <div class="aliases-head px-4 py-3 @xl/aliases:px-5"><h2 id="aliases-title" class="aliases-heading">Aliases</h2></div>
+  <div class="grid gap-4 p-4 @xl/aliases:px-5">
+    <p class="aliases-subtle">An alias is another address for a member, such as sales@{aliasForm.domainId}. Mail to it reaches the member.</p>
+    <form method="dialog" class="grid gap-4" aria-labelledby="aliases-title" on:submit="aliasForm.addWith($event.target.elements.address.value, $event.target.elements.member.value)">
+      <w-text-field label="Alias address" name="address" placeholder="sales" autocomplete="off" persistent-hint :suffix="aliasForm.suffix()" :hint="aliasForm.addressHint()" :error="aliasForm.addressError(aliasForm.problem)" :value="aliasForm.address"></w-text-field>
+      <p class="sr-only" role="alert">{aliasForm.addressError(aliasForm.problem)}</p>
+      <div class="grid gap-1">
+        <label class="aliases-label" for="alias-member">Member</label>
+        <select class="aliases-select w-full" id="alias-member" name="member" aria-describedby="alias-member-error" :aria-invalid="adminShell.flag(aliasForm.problem == 'noMember')">
+          <option value="" :selected="aliasForm.memberId == ''">Choose a member</option>
+          <loop :for="choice of aliasForm.choices"><option :value="choice.memberId" :selected="choice.memberId == aliasForm.memberId">{choice.label}</option></loop>
+        </select>
+        <div id="alias-member-error" role="alert">
+          <logic :if="aliasForm.problem == 'noMember'">
+            <p class="aliases-error flex items-start gap-1"><w-icon name="alert" class="mt-0.5" aria-hidden="true"></w-icon><span>Choose the member who gets mail sent to this alias.</span></p>
+          </logic>
+        </div>
+      </div>
+      <switch :value="aliasForm.problem">
+        <case :when="'forbidden'">
+          <w-alert type="error" title="You need admin rights">Only an admin of {aliasForm.domainId} can add aliases.</w-alert>
         </case>
-        <case :when="'conflict'">
-          <p class="ms-error-text" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>This address already belongs to a member, alias or channel.</p>
+        <case :when="'unavailable'">
+          <w-alert type="error" title="The alias was not added.">Mesail could not reach the server. Check your connection, then try again.</w-alert>
         </case>
-        <case :when="'invalid'">
-          <p class="ms-error-text" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>This is not a valid address in {aliasForm.domainId}.</p>
+        <case :when="'signedOut'">
+          <w-alert type="error" title="The alias was not added.">Your session ended. Sign in again, then try again.</w-alert>
         </case>
-      </switch></div>
-      <p class="ms-help" id="alias-address-help">Ends with @{aliasForm.domainId}. The address must not belong to a person, an alias or another channel.</p>
-    </div>
-    <div class="ms-field">
-      <label class="ms-label" for="alias-member">Member</label>
-      <select class="ms-select" id="alias-member" aria-describedby="alias-member-error" :aria-invalid="aliasForm.problem == 'noMember'" on:change="aliasForm.memberId = $event.target.value">
-        <option value="" :selected="aliasForm.memberId == ''">Choose a member</option>
-        <loop :for="choice of aliasForm.choices"><option :value="choice.memberId" :selected="choice.memberId == aliasForm.memberId">{choice.label}</option></loop>
-      </select>
-      <logic :if="aliasForm.problem == 'noMember'">
-        <p class="ms-error-text" id="alias-member-error" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>Choose the member who gets mail sent to this alias.</p>
-      </logic>
-    </div>
-    <switch :value="aliasForm.problem">
-      <case :when="'forbidden'">
-        <div class="ms-callout ms-callout--error" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span><div class="ms-callout__text"><strong>You need admin rights</strong><p>Only an admin of {aliasForm.domainId} can add aliases.</p></div></div>
-      </case>
-      <case :when="'unavailable'">
-        <div class="ms-callout ms-callout--error" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span><div class="ms-callout__text"><strong>The alias was not added.</strong><p>Mesail could not reach the server. Check your connection, then try again.</p></div></div>
-      </case>
-      <case :when="'signedOut'">
-        <div class="ms-callout ms-callout--error" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span><div class="ms-callout__text"><strong>The alias was not added.</strong><p>Your session ended. Sign in again, then try again.</p></div></div>
-      </case>
-      <case :when="'notFound'">
-        <div class="ms-callout ms-callout--error" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span><div class="ms-callout__text"><strong>The alias was not added.</strong><p>This member is no longer in {aliasForm.domainId}. Reload the page, then choose a member again.</p></div></div>
-      </case>
-      <case :when="'rateLimited'">
-        <div class="ms-callout ms-callout--error" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span><div class="ms-callout__text"><strong>The alias was not added.</strong><p>Too many changes in a short time. Wait a minute, then try again.</p></div></div>
-      </case>
-    </switch>
-    <div>
-      <button class="ms-btn ms-btn--primary" type="button" on:click="aliasForm.add()" :disabled="aliasForm.busy" :aria-busy="adminShell.flag(aliasForm.busy)">
-        <logic :if="aliasForm.busy">Adding&hellip;</logic>
-        <logic else>Add alias</logic>
-      </button>
-    </div>
+        <case :when="'notFound'">
+          <w-alert type="error" title="The alias was not added.">This member is no longer in {aliasForm.domainId}. Reload the page, then choose a member again.</w-alert>
+        </case>
+        <case :when="'rateLimited'">
+          <w-alert type="error" title="The alias was not added.">Too many changes in a short time. Wait a minute, then try again.</w-alert>
+        </case>
+      </switch>
+      <div class="flex flex-wrap items-center gap-3">
+        <w-btn class="aliases-touch" :disabled="aliasForm.busy">
+          <logic :if="aliasForm.busy">Adding&hellip;</logic>
+          <logic else>Add alias</logic>
+        </w-btn>
+      </div>
+    </form>
     <div role="status">
       <logic :if="aliasForm.status != ''">
-        <div class="ms-toast"><span class="ms-icon ms-i-check" aria-hidden="true"></span><span>{aliasForm.status}</span></div>
+        <p class="aliases-done flex items-start gap-2 px-3 py-2"><w-icon name="check" class="mt-0.5" aria-hidden="true"></w-icon><span class="min-w-0">{aliasForm.status}</span></p>
       </logic>
     </div>
   </div>
   <logic :if="aliasForm.hasAdded">
-    <div class="ms-table-wrap">
-      <table class="ms-table ms-table--cards">
-        <caption class="ms-sr-only">Aliases added just now in {aliasForm.domainId}</caption>
-        <thead>
-          <tr><th scope="col">Added just now</th><th scope="col">Reaches</th></tr>
-        </thead>
-        <tbody><loop :for="alias of aliasForm.added"><tr>
-          <td class="ms-table__lead"><span class="ms-addr">{alias.address}</span></td>
-          <td data-label="Reaches">{alias.memberName}</td>
-        </tr></loop></tbody>
-      </table>
-    </div>
+    <table class="aliases-table w-full @max-2xl/aliases:block">
+      <caption class="sr-only">Aliases added just now in {aliasForm.domainId}</caption>
+      <thead class="@max-2xl/aliases:sr-only">
+        <tr><th scope="col" class="px-4 py-2">Added just now</th><th scope="col" class="px-4 py-2">Reaches</th></tr>
+      </thead>
+      <tbody class="@max-2xl/aliases:block"><loop :for="alias of aliasForm.added"><tr class="@max-2xl/aliases:block @max-2xl/aliases:px-4 @max-2xl/aliases:py-3">
+        <td class="px-4 py-3 @max-2xl/aliases:block @max-2xl/aliases:px-0 @max-2xl/aliases:py-1"><span class="aliases-address">{alias.address}</span></td>
+        <td data-label="Reaches" class="aliases-labelled px-4 py-3 @max-2xl/aliases:flex @max-2xl/aliases:items-start @max-2xl/aliases:gap-3 @max-2xl/aliases:px-0 @max-2xl/aliases:py-1"><span class="min-w-0">{alias.memberName}</span></td>
+      </tr></loop></tbody>
+    </table>
   </logic>
 </section>

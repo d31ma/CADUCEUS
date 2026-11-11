@@ -1,8 +1,8 @@
 type DnsLook struct {
-	MarkClass    string `json:"markClass"`
-	IconClass    string `json:"iconClass"`
+	Color        string `json:"color"`
+	Variant      string `json:"variant"`
+	Icon         string `json:"icon"`
 	Words        string `json:"words"`
-	TagClass     string `json:"tagClass"`
 	TagText      string `json:"tagText"`
 	CardClass    string `json:"cardClass"`
 	ResultClass  string `json:"resultClass"`

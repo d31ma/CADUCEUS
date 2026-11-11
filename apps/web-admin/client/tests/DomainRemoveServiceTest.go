@@ -23,30 +23,43 @@ func (test *DomainRemoveServiceTest) TestStartAsksToTypeTheName() {
 	remove := test.started("example.com")
 	Assert.Equals(true, remove.Confirming)
 	Assert.Equals("example.com", remove.Name)
-	Assert.Equals(false, remove.CanRemove)
-	Assert.Equals(true, remove.Locked)
+	Assert.Equals("Type example.com to confirm", remove.ConfirmLabel)
+	Assert.Equals("", remove.Typed)
+	Assert.Equals("", remove.NameProblem)
 }
 
-func (test *DomainRemoveServiceTest) TestTypeTheRightNameAllowsRemove() {
+func (test *DomainRemoveServiceTest) TestConfirmWithAnotherNameDoesNotRemove() {
 	remove := test.started("example.com")
-	remove.Type("example.com")
-	Assert.Equals(true, remove.CanRemove)
-	Assert.Equals(false, remove.Locked)
+	remove.ConfirmWith("example.co")
+	Assert.Equals("The name does not match. Type example.com exactly to remove it.", remove.NameProblem)
+	Assert.Equals("example.co", remove.Typed)
+	Assert.Equals(true, remove.Confirming)
+	Assert.Equals("domain", remove.adminShell.View)
 }
 
-func (test *DomainRemoveServiceTest) TestTypeAnotherNameDoesNotAllowRemove() {
+func (test *DomainRemoveServiceTest) TestConfirmWithNothingDoesNotRemove() {
 	remove := test.started("example.com")
-	remove.Type("example.co")
-	Assert.Equals(false, remove.CanRemove)
+	remove.ConfirmWith("")
+	Assert.Equals(true, remove.Confirming)
+	Assert.Equals("", remove.Problem)
+	Assert.Equals("domain", remove.adminShell.View)
+}
+
+func (test *DomainRemoveServiceTest) TestConfirmWithTheNameOpensTheDomainList() {
+	remove := test.started("example.com")
+	remove.ConfirmWith(" example.com ")
+	Assert.Equals("", remove.Problem)
+	Assert.Equals(false, remove.Confirming)
+	Assert.Equals("domains", remove.adminShell.View)
 }
 
 func (test *DomainRemoveServiceTest) TestCancelClosesTheConfirm() {
 	remove := test.started("example.com")
-	remove.Type("example.com")
+	remove.ConfirmWith("example.co")
 	remove.Cancel()
 	Assert.Equals(false, remove.Confirming)
 	Assert.Equals("", remove.Typed)
-	Assert.Equals(false, remove.CanRemove)
+	Assert.Equals("", remove.NameProblem)
 }
 
 func (test *DomainRemoveServiceTest) TestOpenedClosesAnOldConfirm() {
@@ -55,42 +68,25 @@ func (test *DomainRemoveServiceTest) TestOpenedClosesAnOldConfirm() {
 	Assert.Equals(false, remove.Confirming)
 }
 
-func (test *DomainRemoveServiceTest) TestRemoveOpensTheDomainList() {
-	remove := test.started("example.com")
-	remove.Type("example.com")
-	remove.Remove()
-	Assert.Equals("", remove.Problem)
-	Assert.Equals(false, remove.Confirming)
-	Assert.Equals("domains", remove.adminShell.View)
-}
-
-func (test *DomainRemoveServiceTest) TestRemoveWithoutTheNameDoesNothing() {
-	remove := test.started("example.com")
-	remove.Remove()
-	Assert.Equals(true, remove.Confirming)
-	Assert.Equals("domain", remove.adminShell.View)
-}
-
-func (test *DomainRemoveServiceTest) TestRemoveWithoutOperatorRightsSaysSo() {
+func (test *DomainRemoveServiceTest) TestConfirmWithoutOperatorRightsSaysSo() {
 	remove := test.started("old.example.com")
-	remove.Type("old.example.com")
-	remove.Remove()
+	remove.ConfirmWith("old.example.com")
 	Assert.Equals("Only operators can remove domains.", remove.Problem)
+	Assert.Equals("", remove.NameProblem)
 	Assert.Equals(true, remove.Confirming)
 	Assert.Equals("domain", remove.adminShell.View)
 }
 
-func (test *DomainRemoveServiceTest) TestRemoveOfAGoneDomainSaysSo() {
+func (test *DomainRemoveServiceTest) TestConfirmOfAGoneDomainSaysSo() {
 	remove := test.started("gone.example")
-	remove.Type("gone.example")
-	remove.Remove()
+	remove.ConfirmWith("gone.example")
 	Assert.Equals("This domain was already removed.", remove.Problem)
 }
 
-func (test *DomainRemoveServiceTest) TestRemoveWithoutTheServerSaysSo() {
+func (test *DomainRemoveServiceTest) TestConfirmWithoutTheServerSaysSo() {
 	remove := test.started("new.example.net")
-	remove.Type("new.example.net")
-	remove.Remove()
+	remove.ConfirmWith("new.example.net")
 	Assert.Equals("The domain was not removed. Mesail could not reach the server. Try again.", remove.Problem)
 	Assert.Equals(false, remove.Removing)
+	Assert.Equals("new.example.net", remove.Typed)
 }

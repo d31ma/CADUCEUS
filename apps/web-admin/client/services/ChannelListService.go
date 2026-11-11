@@ -40,7 +40,7 @@ func (list *ChannelListService) Refresh() {
 	list.load()
 }
 
-func (list *ChannelListService) SearchFor(text string) {
+func (list *ChannelListService) SearchWith(text string) {
 	list.Search = text
 	list.show()
 }
@@ -144,7 +144,7 @@ func (list *ChannelListService) rowOf(channel Channel) ChannelRow {
 		Topic:          channel.Topic,
 		NameIcon:       list.nameIcons()[channel.Visibility],
 		VisibilityText: list.visibilityTexts()[channel.Visibility],
-		VisibilityTag:  list.visibilityTags()[channel.Visibility],
+		ChipVariant:    list.chipVariants()[channel.Visibility],
 		VisibilityIcon: list.visibilityIcons()[channel.Visibility],
 		HasAddress:     hasAddress,
 		EmailAddress:   channel.EmailAddress,
@@ -158,22 +158,19 @@ func (list *ChannelListService) rowOf(channel Channel) ChannelRow {
 }
 
 func (list *ChannelListService) nameIcons() map[string]string {
-	return map[string]string{
-		list.publicVisibility():  "ms-icon ms-i-hash ms-icon--sm",
-		list.privateVisibility(): "ms-icon ms-i-lock ms-icon--sm",
-	}
+	return map[string]string{list.publicVisibility(): "hash", list.privateVisibility(): list.lockIcon()}
 }
 
 func (list *ChannelListService) visibilityTexts() map[string]string {
 	return map[string]string{list.publicVisibility(): "Public", list.privateVisibility(): "Private"}
 }
 
-func (list *ChannelListService) visibilityTags() map[string]string {
-	return map[string]string{list.publicVisibility(): "ms-tag ms-tag--outline", list.privateVisibility(): "ms-tag"}
+func (list *ChannelListService) chipVariants() map[string]string {
+	return map[string]string{list.publicVisibility(): "outlined", list.privateVisibility(): "tonal"}
 }
 
 func (list *ChannelListService) visibilityIcons() map[string]string {
-	return map[string]string{list.publicVisibility(): "ms-icon ms-i-globe", list.privateVisibility(): "ms-icon ms-i-lock"}
+	return map[string]string{list.publicVisibility(): "globe", list.privateVisibility(): list.lockIcon()}
 }
 
 func (list *ChannelListService) channelsById() map[string]Channel {
@@ -248,6 +245,10 @@ func (list *ChannelListService) publicVisibility() string {
 
 func (list *ChannelListService) privateVisibility() string {
 	return "private"
+}
+
+func (list *ChannelListService) lockIcon() string {
+	return "lock"
 }
 
 func (list *ChannelListService) channelSign() string {

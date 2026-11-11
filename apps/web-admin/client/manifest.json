@@ -5,55 +5,18 @@
   "display": "standalone",
   "tac": {
     "styles": [
-      "/shared/styles/duvay-tokens.css",
-      "/shared/styles/duvay-themes.css",
-      "/shared/styles/mesail-tokens.css",
-      "/shared/styles/icons.css",
-      "/shared/styles/mesail.css",
-      "/shared/styles/admin.css"
+      "/shared/styles/app.css"
     ],
     "styleSources": {
-      "/shared/styles/duvay-tokens.css": {
-        "kind": "vendor",
-        "package": "duvay",
-        "version": "26.35.01",
-        "license": "MIT",
-        "sha256": "80c9094884f088bbe1cb98d508c665354105caa2f838b2163bfb130a7e2c8574"
+      "/shared/styles/app.css": {
+        "kind": "foundation"
       },
-      "/shared/styles/duvay-themes.css": {
+      "/shared/vendor/duvay/duvay-mesail.css": {
         "kind": "vendor",
-        "package": "duvay",
-        "version": "26.35.01",
+        "package": "@d31ma/duvay",
+        "version": "26.35.01-1",
         "license": "MIT",
-        "sha256": "f1e508c041a14ee6c14b1c80850ef180418e73c9079d4e28030c49c85d05c553"
-      },
-      "/shared/styles/mesail-tokens.css": {
-        "kind": "vendor",
-        "package": "mesail-ux",
-        "version": "2026.11.10",
-        "license": "MIT",
-        "sha256": "942d0ddc310ee1e261f3b52bff05d29371379ab0dd8814000752e119c411a660"
-      },
-      "/shared/styles/icons.css": {
-        "kind": "vendor",
-        "package": "mesail-ux",
-        "version": "2026.11.10",
-        "license": "MIT",
-        "sha256": "3c65e8c3dbafa235b87a653a4c0021796ec910ac9317a0f399a741f23dddd6da"
-      },
-      "/shared/styles/mesail.css": {
-        "kind": "vendor",
-        "package": "mesail-ux",
-        "version": "2026.11.10",
-        "license": "MIT",
-        "sha256": "a88f4fc628ff8e15dbc9572286b11f422b2d835c9dfbc5d3ee92059e2b2f52f8"
-      },
-      "/shared/styles/admin.css": {
-        "kind": "vendor",
-        "package": "mesail-ux",
-        "version": "2026.11.10",
-        "license": "MIT",
-        "sha256": "54a4007cbc93376428fadbe3914341383f43e0568f8bb7a8f4b454c9257425b6"
+        "sha256": "4d44c7a2dc4b4401af2fcf2bff8a73f59bed25ae80aa993e0312c07ce00790c7"
       }
     },
     "names": {
@@ -65,6 +28,17 @@
         "keycloak",
         "mesail"
       ]
+    },
+    "scripts": [
+      "/shared/vendor/duvay/duvay-mesail.js"
+    ],
+    "scriptSources": {
+      "/shared/vendor/duvay/duvay-mesail.js": {
+        "package": "@d31ma/duvay",
+        "version": "26.35.01-1",
+        "license": "MIT",
+        "sha256": "62e97288962ba9bf9143b3723f06d8fab7dbdfd4359ea27a66746dba0a679896"
+      }
     }
   }
 }

@@ -30,7 +30,8 @@ func (list *MemberListService) Opened(opened AdminViewOpened) {
 	list.applicationEventPublisher.PublishEvent(AdminViewLoaded{View: opened.View, Message: list.Heading}, false)
 }
 
-func (list *MemberListService) Search() {
+func (list *MemberListService) SearchWith(query string) {
+	list.Query = query
 	list.load()
 }
 

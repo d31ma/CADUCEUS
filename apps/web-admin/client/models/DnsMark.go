@@ -1,6 +1,7 @@
 type DnsMark struct {
-	Name      string `json:"name"`
-	MarkClass string `json:"markClass"`
-	IconClass string `json:"iconClass"`
-	Words     string `json:"words"`
+	Name    string `json:"name"`
+	Color   string `json:"color"`
+	Variant string `json:"variant"`
+	Icon    string `json:"icon"`
+	Words   string `json:"words"`
 }

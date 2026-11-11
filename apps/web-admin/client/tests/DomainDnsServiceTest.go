@@ -22,7 +22,8 @@ func (test *DomainDnsServiceTest) TestOpenedShowsThePendingDomain() {
 	Assert.Equals("ready", dns.Step)
 	Assert.Equals("new.example.net", dns.Name)
 	Assert.Equals("Pending", dns.StateText)
-	Assert.Equals("ms-tag ms-tag--warn", dns.StateClass)
+	Assert.Equals("warning", dns.StateColor)
+	Assert.Equals("clock", dns.StateIcon)
 	Assert.Equals(true, dns.Pending)
 }
 

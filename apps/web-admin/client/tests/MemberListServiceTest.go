@@ -46,8 +46,7 @@ func (test *MemberListServiceTest) TestOpenedForgetsAnOldSearch() {
 
 func (test *MemberListServiceTest) TestSearchWithNoMatchShowsNoResults() {
 	list := test.opened()
-	list.Query = "zoe"
-	list.Search()
+	list.SearchWith("zoe")
 	Assert.Equals("noResults", list.State)
 	Assert.Equals("zoe", list.SearchedQuery)
 	Assert.Equals(0, len(list.Rows))
@@ -55,47 +54,47 @@ func (test *MemberListServiceTest) TestSearchWithNoMatchShowsNoResults() {
 
 func (test *MemberListServiceTest) TestSearchIgnoresSpacesAroundTheQuery() {
 	list := test.opened()
-	list.Query = "  zoe "
-	list.Search()
+	list.SearchWith("  zoe ")
 	Assert.Equals("zoe", list.SearchedQuery)
 	Assert.Equals("noResults", list.State)
 }
 
+func (test *MemberListServiceTest) TestSearchWithKeepsTheTypedQueryForTheField() {
+	list := test.opened()
+	list.SearchWith("  zoe ")
+	Assert.Equals("  zoe ", list.Query)
+}
+
 func (test *MemberListServiceTest) TestSearchCountsOneMemberInTheSingular() {
 	list := test.opened()
-	list.Query = "olu"
-	list.Search()
+	list.SearchWith("olu")
 	Assert.Equals("1 member", list.Heading)
 	Assert.Equals("O", list.Rows[0].Initials)
 }
 
 func (test *MemberListServiceTest) TestMorePagesSayTheMembersAreOnlyShown() {
 	list := test.opened()
-	list.Query = "many"
-	list.Search()
+	list.SearchWith("many")
 	Assert.Equals("2 members shown", list.Heading)
 	Assert.Equals(true, list.HasMore)
 }
 
 func (test *MemberListServiceTest) TestForbiddenShowsNoAccess() {
 	list := test.opened()
-	list.Query = "locked"
-	list.Search()
+	list.SearchWith("locked")
 	Assert.Equals("forbidden", list.State)
 }
 
 func (test *MemberListServiceTest) TestANetworkFailureShowsTheError() {
 	list := test.opened()
-	list.Query = "broken"
-	list.Search()
+	list.SearchWith("broken")
 	Assert.Equals("failed", list.State)
 	Assert.Equals(0, len(list.Rows))
 }
 
 func (test *MemberListServiceTest) TestRetryLoadsAgain() {
 	list := test.opened()
-	list.Query = "broken"
-	list.Search()
+	list.SearchWith("broken")
 	list.Query = "olu"
 	list.Retry()
 	Assert.Equals("ready", list.State)
@@ -104,8 +103,7 @@ func (test *MemberListServiceTest) TestRetryLoadsAgain() {
 
 func (test *MemberListServiceTest) TestClearSearchShowsEveryone() {
 	list := test.opened()
-	list.Query = "zoe"
-	list.Search()
+	list.SearchWith("zoe")
 	list.ClearSearch()
 	Assert.Equals("", list.Query)
 	Assert.Equals("ready", list.State)

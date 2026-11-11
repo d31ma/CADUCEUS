@@ -9,6 +9,7 @@ type ChannelAddressService struct {
 	ChannelId        string
 	Title            string
 	Domain           string
+	Suffix           string
 	LocalPart        string
 	CurrentLocalPart string
 	Editing          bool
@@ -32,6 +33,7 @@ func (dialog *ChannelAddressService) Edit(channelId string) {
 	label := "#" + channel.Name
 	dialog.ChannelId = channel.ChannelId
 	dialog.Domain = dialog.channelList.Domain
+	dialog.Suffix = dialog.atSign() + dialog.Domain
 	dialog.LocalPart = dialog.localPartOf(channel.EmailAddress)
 	dialog.CurrentLocalPart = dialog.LocalPart
 	dialog.Editing = channel.EmailAddress != ""
@@ -48,7 +50,8 @@ func (dialog *ChannelAddressService) Cancel() {
 	dialog.Open = false
 }
 
-func (dialog *ChannelAddressService) Save() {
+func (dialog *ChannelAddressService) SaveWith(localPart string) {
+	dialog.LocalPart = localPart
 	dialog.Problem = dialog.localPartProblem(dialog.LocalPart)
 	dialog.sendWhenValid(dialog.Problem)
 }

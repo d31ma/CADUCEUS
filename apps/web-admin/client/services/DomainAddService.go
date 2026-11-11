@@ -38,8 +38,8 @@ func (add *DomainAddService) Close() {
 	add.Open = false
 }
 
-func (add *DomainAddService) Add() {
-	add.Name = strings.ToLower(strings.TrimSpace(add.Name))
+func (add *DomainAddService) AddWith(name string) {
+	add.Name = strings.ToLower(strings.TrimSpace(name))
 	add.Problem = add.nameProblem(add.Name)
 	add.Step = add.stepFor(add.Problem, add.busy())
 	add.BusyText = "Adding " + add.Name + " and making its DKIM key…"

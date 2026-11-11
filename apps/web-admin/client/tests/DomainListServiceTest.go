@@ -36,7 +36,7 @@ func (test *DomainListServiceTest) TestRowsShowStateAndMarks() {
 	list.Opened(AdminViewOpened{View: "domains"})
 	Assert.Equals("Pending", list.Rows[1].StateText)
 	Assert.Equals("Set up DNS", list.Rows[1].ActionText)
-	Assert.Equals("ms-mark ms-mark--missing", list.Rows[1].Marks[2].MarkClass)
+	Assert.Equals("error", list.Rows[1].Marks[2].Color)
 	Assert.Equals("DNS: MX not checked, SPF not checked, DKIM not checked, DMARC not checked", list.Rows[2].MarksLabel)
 }
 

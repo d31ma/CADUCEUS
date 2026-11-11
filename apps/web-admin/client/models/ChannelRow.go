@@ -4,7 +4,7 @@ type ChannelRow struct {
 	Topic          string `json:"topic"`
 	NameIcon       string `json:"nameIcon"`
 	VisibilityText string `json:"visibilityText"`
-	VisibilityTag  string `json:"visibilityTag"`
+	ChipVariant    string `json:"chipVariant"`
 	VisibilityIcon string `json:"visibilityIcon"`
 	HasAddress     bool   `json:"hasAddress"`
 	EmailAddress   string `json:"emailAddress"`

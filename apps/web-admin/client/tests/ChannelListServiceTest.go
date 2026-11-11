@@ -43,20 +43,20 @@ func (test *ChannelListServiceTest) TestOpenedCountsAddressesAndArchivedChannels
 	Assert.Equals("Showing 6 of 6.", list.Showing)
 }
 
-func (test *ChannelListServiceTest) TestAPublicChannelShowsAnOutlineTag() {
+func (test *ChannelListServiceTest) TestAPublicChannelShowsAnOutlinedChip() {
 	list := test.opened()
 	Assert.Equals("Public", list.Rows[0].VisibilityText)
-	Assert.Equals("ms-tag ms-tag--outline", list.Rows[0].VisibilityTag)
-	Assert.Equals("ms-icon ms-i-globe", list.Rows[0].VisibilityIcon)
-	Assert.Equals("ms-icon ms-i-hash ms-icon--sm", list.Rows[0].NameIcon)
+	Assert.Equals("outlined", list.Rows[0].ChipVariant)
+	Assert.Equals("globe", list.Rows[0].VisibilityIcon)
+	Assert.Equals("hash", list.Rows[0].NameIcon)
 }
 
 func (test *ChannelListServiceTest) TestAPrivateChannelShowsALock() {
 	list := test.opened()
 	Assert.Equals("Private", list.Rows[2].VisibilityText)
-	Assert.Equals("ms-tag", list.Rows[2].VisibilityTag)
-	Assert.Equals("ms-icon ms-i-lock", list.Rows[2].VisibilityIcon)
-	Assert.Equals("ms-icon ms-i-lock ms-icon--sm", list.Rows[2].NameIcon)
+	Assert.Equals("tonal", list.Rows[2].ChipVariant)
+	Assert.Equals("lock", list.Rows[2].VisibilityIcon)
+	Assert.Equals("lock", list.Rows[2].NameIcon)
 }
 
 func (test *ChannelListServiceTest) TestAChannelWithoutAnAddressOffersToAddOne() {
@@ -83,31 +83,31 @@ func (test *ChannelListServiceTest) TestAnArchivedChannelIsMuted() {
 	Assert.Equals("", list.Rows[0].RowClass)
 }
 
-func (test *ChannelListServiceTest) TestSearchForFindsAChannelByName() {
+func (test *ChannelListServiceTest) TestSearchWithFindsAChannelByName() {
 	list := test.opened()
-	list.SearchFor("SUPP")
+	list.SearchWith("SUPP")
 	Assert.Equals(1, len(list.Rows))
 	Assert.Equals("support", list.Rows[0].Name)
 	Assert.Equals("Showing 1 of 6.", list.Showing)
 }
 
-func (test *ChannelListServiceTest) TestSearchForAcceptsAChannelSign() {
+func (test *ChannelListServiceTest) TestSearchWithAcceptsAChannelSign() {
 	list := test.opened()
-	list.SearchFor(" #design ")
+	list.SearchWith(" #design ")
 	Assert.Equals(1, len(list.Rows))
 	Assert.Equals("design", list.Rows[0].Name)
 }
 
-func (test *ChannelListServiceTest) TestSearchForFindsAChannelByAddress() {
+func (test *ChannelListServiceTest) TestSearchWithFindsAChannelByAddress() {
 	list := test.opened()
-	list.SearchFor("board@")
+	list.SearchWith("board@")
 	Assert.Equals(1, len(list.Rows))
 	Assert.Equals("board", list.Rows[0].Name)
 }
 
 func (test *ChannelListServiceTest) TestSearchWithoutAMatchShowsNoResults() {
 	list := test.opened()
-	list.SearchFor("zoe")
+	list.SearchWith("zoe")
 	Assert.Equals("noResults", list.State)
 	Assert.Equals("No channels match “zoe”", list.NoResultsTitle)
 	Assert.Equals("6 channels", list.Heading)
@@ -153,7 +153,7 @@ func (test *ChannelListServiceTest) TestAFilterWithoutAMatchNamesTheFilter() {
 func (test *ChannelListServiceTest) TestClearFiltersShowsEveryChannelAgain() {
 	list := test.opened()
 	list.ShowOnly("private")
-	list.SearchFor("zoe")
+	list.SearchWith("zoe")
 	list.ClearFilters()
 	Assert.Equals("ready", list.State)
 	Assert.Equals(6, len(list.Rows))

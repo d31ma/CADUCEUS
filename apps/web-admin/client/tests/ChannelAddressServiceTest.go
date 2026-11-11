@@ -21,8 +21,7 @@ func (test *ChannelAddressServiceTest) editing(channelId string) *ChannelAddress
 
 func (test *ChannelAddressServiceTest) saved(channelId string, localPart string) *ChannelAddressService {
 	dialog := test.editing(channelId)
-	dialog.LocalPart = localPart
-	dialog.Save()
+	dialog.SaveWith(localPart)
 	return dialog
 }
 
@@ -32,6 +31,7 @@ func (test *ChannelAddressServiceTest) TestEditOpensAnEmptyAddressForAChannelWit
 	Assert.Equals(false, dialog.Editing)
 	Assert.Equals("", dialog.LocalPart)
 	Assert.Equals("example.com", dialog.Domain)
+	Assert.Equals("@example.com", dialog.Suffix)
 	Assert.Equals("Email address for #general", dialog.Title)
 }
 

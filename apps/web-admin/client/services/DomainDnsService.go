@@ -6,7 +6,8 @@ type DomainDnsService struct {
 	DomainId     string
 	Name         string
 	StateText    string
-	StateClass   string
+	StateColor   string
+	StateVariant string
 	StateIcon    string
 	Pending      bool
 	Waiting      string
@@ -63,7 +64,8 @@ func (dns *DomainDnsService) show(domain Domain) {
 	dns.domain = domain
 	dns.Name = dns.firstOf(domain.Name, dns.DomainId)
 	dns.StateText = view.StateText
-	dns.StateClass = view.StateClass
+	dns.StateColor = view.StateColor
+	dns.StateVariant = view.StateVariant
 	dns.StateIcon = view.StateIcon
 	dns.Pending = view.Pending
 	dns.Waiting = view.Waiting

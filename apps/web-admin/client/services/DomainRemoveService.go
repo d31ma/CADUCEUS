@@ -1,13 +1,15 @@
+import "strings"
+
 // @Service
 type DomainRemoveService struct {
-	Confirming bool
-	DomainId   string
-	Name       string
-	Typed      string
-	CanRemove  bool
-	Locked     bool
-	Removing   bool
-	Problem    string
+	Confirming   bool
+	DomainId     string
+	Name         string
+	ConfirmLabel string
+	Typed        string
+	Removing     bool
+	NameProblem  string
+	Problem      string
 	// @Needs
 	session *AdminSessionService
 	// @Needs
@@ -27,29 +29,37 @@ func (remove *DomainRemoveService) Start(domainId string, name string) {
 	remove.Confirming = true
 	remove.DomainId = domainId
 	remove.Name = name
-	remove.Type("")
-}
-
-func (remove *DomainRemoveService) Type(typed string) {
-	remove.Typed = typed
-	remove.CanRemove = typed == remove.Name
-	remove.Locked = typed != remove.Name
-	remove.Problem = ""
+	remove.ConfirmLabel = "Type " + name + " to confirm"
+	remove.forget()
 }
 
 func (remove *DomainRemoveService) Cancel() {
 	remove.Confirming = false
-	remove.Type("")
+	remove.forget()
 }
 
-func (remove *DomainRemoveService) Remove() {
+func (remove *DomainRemoveService) ConfirmWith(typed string) {
+	remove.Typed = strings.TrimSpace(typed)
+	remove.NameProblem = remove.nameProblem(remove.Typed)
+	remove.Problem = ""
 	remove.Removing = true
-	remove.Locked = true
-	removed, failure := remove.removeWhenConfirmed(remove.CanRemove)
+	removed, failure := remove.removeWhenConfirmed(remove.NameProblem == "")
 	remove.Removing = false
-	remove.Locked = remove.Typed != remove.Name
 	remove.Problem = remove.problemText(remove.problems.Of(failure))
 	remove.closeWhenRemoved(removed)
+}
+
+func (remove *DomainRemoveService) forget() {
+	remove.Typed = ""
+	remove.NameProblem = ""
+	remove.Problem = ""
+}
+
+func (remove *DomainRemoveService) nameProblem(typed string) string {
+	if typed == remove.Name {
+		return ""
+	}
+	return "The name does not match. Type " + remove.Name + " exactly to remove it."
 }
 
 func (remove *DomainRemoveService) removeWhenConfirmed(confirmed bool) (bool, error) {

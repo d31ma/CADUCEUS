@@ -1,161 +1,170 @@
-<main class="ms-main ms-admin" aria-labelledby="domain-page-title">
-  <header class="ms-header">
-    <button class="ms-icon-btn ms-header__back" type="button" aria-label="Back to menu" on:click="adminShell.showMenu()"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></button>
-    <h1 class="ms-header__title" id="domain-page-title"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span>{domainDns.name}</span></h1>
+<main class="flex h-full min-h-0 min-w-0 flex-col @container/main" aria-labelledby="page-title">
+  <header class="page-head flex min-h-13 items-center gap-2">
+    <w-icon-btn icon="arrow-left" aria-label="Back to menu" class="-ml-2 sm:hidden" on:click="adminShell.showMenu()"></w-icon-btn>
+    <h1 id="page-title" class="page-title flex min-w-0 items-center gap-1"><w-icon name="globe" aria-hidden="true"></w-icon><span class="truncate">{domainDns.name}</span></h1>
     <logic :if="domainDns.step == 'ready'">
-      <span :class="domainDns.stateClass"><span :class="domainDns.stateIcon" aria-hidden="true"></span>{domainDns.stateText}</span>
+      <span class="inline-flex flex-none"><w-chip size="small" :color="domainDns.stateColor" :variant="domainDns.stateVariant" inert aria-hidden="true"><w-icon slot="prepend" :name="domainDns.stateIcon"></w-icon>{domainDns.stateText}</w-chip><span class="sr-only">{domainDns.stateText}</span></span>
     </logic>
-    <p class="ms-header__topic">DNS setup</p>
+    <p class="page-topic hidden min-w-0 flex-1 truncate pl-3 @2xl/main:block">DNS setup</p>
   </header>
 
-  <div class="ms-page" id="admin-content">
-    <div class="ms-page__inner">
+  <div id="admin-content" class="page-scroll min-h-0 flex-1 overflow-y-auto">
+    <div class="@container/page mx-auto grid w-full max-w-3xl gap-6 pb-10">
       <logic :if="adminSession.operator">
-        <nav aria-label="Breadcrumb"><p><button class="ms-btn ms-btn--ghost ms-btn--sm" type="button" on:click="adminShell.open('domains', adminSession.domainId)">Domains</button> <span aria-hidden="true">/</span> <span aria-current="page">{domainDns.name}</span></p></nav>
+        <nav aria-label="Breadcrumb"><p class="flex flex-wrap items-center gap-1"><w-btn variant="text" size="small" on:click="adminShell.open('domains', adminSession.domainId)">Domains</w-btn><span aria-hidden="true">/</span><span class="min-w-0 truncate" aria-current="page">{domainDns.name}</span></p></nav>
       </logic>
 
       <switch :value="domainDns.step">
         <case :when="'operatorsOnly'">
-          <div class="ms-callout ms-callout--info" role="status">
-            <span class="ms-icon ms-i-info" aria-hidden="true"></span>
-            <div class="ms-callout__text">
-              <strong>DNS checks are for operators.</strong>
+          <div class="note note--info flex items-start gap-3 px-4 py-3" role="status">
+            <w-icon name="info" class="mt-0.5" aria-hidden="true"></w-icon>
+            <div class="grid min-w-0 gap-1">
+              <p class="strong">DNS checks are for operators.</p>
               <p>{domainDns.problemText}</p>
             </div>
           </div>
         </case>
         <case :when="'notFound'">
-          <section class="ms-card" aria-labelledby="domain-missing-title">
-            <div class="ms-empty" role="alert">
-              <span class="ms-empty__art ms-empty__art--error" aria-hidden="true"><span class="ms-icon ms-i-alert ms-icon--xl"></span></span>
-              <h2 id="domain-missing-title">Domain not found</h2>
-              <p>This domain was not found. It may have been removed.</p>
-            </div>
+          <section class="panel px-4 py-8" role="alert" aria-labelledby="domain-missing-title">
+            <w-empty-state>
+              <w-icon slot="media" name="alert" class="icon-xl" aria-hidden="true"></w-icon>
+              <h2 slot="title" id="domain-missing-title" class="empty-title">Domain not found</h2>
+              <p slot="text">This domain was not found. It may have been removed.</p>
+            </w-empty-state>
           </section>
         </case>
         <case :when="'failed'">
-          <section class="ms-card" aria-labelledby="domain-error-title">
-            <div class="ms-empty" role="alert">
-              <span class="ms-empty__art ms-empty__art--error" aria-hidden="true"><span class="ms-icon ms-i-alert ms-icon--xl"></span></span>
-              <h2 id="domain-error-title">The domain could not load</h2>
-              <p>{domainDns.problemText}</p>
-              <div class="ms-empty__actions"><button class="ms-btn ms-btn--primary" type="button" on:click="domainDns.refresh()"><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Try again</button></div>
-            </div>
+          <section class="panel px-4 py-8" role="alert" aria-labelledby="domain-error-title">
+            <w-empty-state>
+              <w-icon slot="media" name="alert" class="icon-xl" aria-hidden="true"></w-icon>
+              <h2 slot="title" id="domain-error-title" class="empty-title">The domain could not load</h2>
+              <p slot="text">{domainDns.problemText}</p>
+              <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="flat" prepend-icon="refresh" on:click="domainDns.refresh()">Try again</w-btn></div>
+            </w-empty-state>
           </section>
         </case>
         <case :when="'ready'">
           <logic :if="domainDns.pending">
-            <div class="ms-callout ms-callout--warn">
-              <span class="ms-icon ms-i-alert" aria-hidden="true"></span>
-              <div class="ms-callout__text">
-                <strong>Mail for {domainDns.name} is not accepted yet.</strong>
+            <div class="note note--warn flex items-start gap-3 px-4 py-3">
+              <w-icon name="alert" class="mt-0.5" aria-hidden="true"></w-icon>
+              <div class="grid min-w-0 gap-1">
+                <p class="strong">Mail for {domainDns.name} is not accepted yet.</p>
                 <p>{domainDns.waiting}</p>
               </div>
             </div>
           </logic>
 
-          <section class="ms-section" aria-labelledby="records-title">
-            <h2 class="ms-section-title" id="records-title">DNS records to create</h2>
-            <p class="ms-subtle">Add these 4 records at the company that hosts DNS for {domainDns.name}. DNS changes can take up to 48 hours to appear.</p>
-            <div class="ms-card">
-              <div class="ms-card__body">
-                <div class="ms-checkbar">
+          <section class="grid gap-3" aria-labelledby="records-title">
+            <h2 class="section-title" id="records-title">DNS records to create</h2>
+            <p class="subtle">Add these 4 records at the company that hosts DNS for {domainDns.name}. DNS changes can take up to 48 hours to appear.</p>
+            <div class="panel grid gap-2 px-4 py-4 @xl/page:px-5">
+              <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <logic :if="domainDns.checking">
+                  <p class="subtle flex flex-[1_1_14rem] items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Checking 4 records…</p>
+                </logic>
+                <logic else>
+                  <p class="subtle flex flex-[1_1_14rem] items-center gap-2" role="status"><w-icon name="clock" aria-hidden="true"></w-icon>{domainDns.status}</p>
+                </logic>
+                <logic :if="adminSession.operator">
                   <logic :if="domainDns.checking">
-                    <p class="ms-checkbar__status" role="status"><span class="ms-spinner" aria-hidden="true"></span>Checking 4 records…</p>
+                    <w-btn variant="outlined" loading disabled>Checking…</w-btn>
                   </logic>
                   <logic else>
-                    <p class="ms-checkbar__status" role="status"><span class="ms-icon ms-i-clock ms-icon--sm" aria-hidden="true"></span>{domainDns.status}</p>
+                    <w-btn variant="outlined" prepend-icon="refresh" on:click="domainDns.check()">Check again</w-btn>
                   </logic>
-                  <logic :if="adminSession.operator">
-                    <button class="ms-btn" type="button" :aria-busy="adminShell.flag(domainDns.checking)" :disabled="domainDns.checking" on:click="domainDns.check()">
-                      <logic :if="domainDns.checking"><span class="ms-spinner" aria-hidden="true"></span>Checking…</logic>
-                      <logic else><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Check again</logic>
-                    </button>
-                  </logic>
-                </div>
-                <logic :if="domainDns.checkProblem != ''">
-                  <p class="ms-error-text" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>{domainDns.checkProblem}</p>
-                </logic>
-                <logic :if="domainCopy.problem != ''">
-                  <p class="ms-error-text" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>{domainCopy.problem}</p>
                 </logic>
               </div>
+              <logic :if="domainDns.checkProblem != ''">
+                <w-alert type="error">{domainDns.checkProblem}</w-alert>
+              </logic>
+              <logic :if="domainCopy.problem != ''">
+                <w-alert type="error">{domainCopy.problem}</w-alert>
+              </logic>
+              <p class="sr-only" role="status">{domainCopy.notice}</p>
             </div>
 
             <loop :for="record of domainDns.records">
               <section :class="record.cardClass" :aria-labelledby="record.titleId">
-                <div class="ms-card__head">
-                  <span class="ms-record__type" aria-hidden="true">{record.type}</span>
-                  <div class="ms-record__name"><h3 :id="record.titleId">{record.title} <span class="ms-sr-only">(type {record.type})</span></h3><span class="ms-record__need">{record.need}</span></div>
-                  <span :class="record.tagClass"><span :class="record.tagIcon" aria-hidden="true"></span>{record.tagText}</span>
+                <div class="record-head flex flex-wrap items-center gap-3 px-4 py-3 @xl/page:px-5">
+                  <span class="record-type grid h-7 min-w-13 place-items-center px-2" aria-hidden="true">{record.type}</span>
+                  <div class="grid min-w-0 flex-[1_1_12rem] gap-0.5"><h3 :id="record.titleId" class="record-title">{record.title} <span class="sr-only">(type {record.type})</span></h3><span class="meta">{record.need}</span></div>
+                  <span class="inline-flex"><w-chip size="small" :color="record.tagColor" :variant="record.tagVariant" inert aria-hidden="true"><w-icon slot="prepend" :name="record.tagIcon"></w-icon>{record.tagText}</w-chip><span class="sr-only">{record.tagText}</span></span>
                 </div>
-                <div class="ms-card__body">
-                  <dl class="ms-kv">
-                    <dt>Type</dt>
-                    <dd>{record.type}</dd>
-                    <logic :if="record.hasSelector">
-                      <dt>Selector</dt>
-                      <dd><code class="ms-mono">{record.selector}</code></dd>
+                <div class="grid gap-3 px-4 py-4 @xl/page:px-5">
+                  <p class="subtle">Type {record.type}<logic :if="record.hasSelector"> · Selector <code class="mono">{record.selector}</code></logic></p>
+                  <div class="flex items-start gap-2">
+                    <w-text-field label="Host" :value="record.host" readonly class="mono min-w-0 flex-1" spellcheck="false"></w-text-field>
+                    <logic :if="domainCopy.copied == record.host">
+                      <w-icon-btn icon="check" class="copied mt-2" :aria-label="record.copiedLabel" on:click="domainCopy.copy(record.host)"></w-icon-btn>
                     </logic>
-                    <dt>Host</dt>
-                    <dd><div class="ms-copy-field"><code class="ms-copy-field__value" :id="record.hostId">{record.host}</code>
-                      <logic :if="domainCopy.copied == record.host">
-                        <button class="ms-btn ms-btn--sm is-done" type="button" :aria-label="record.copiedLabel" :aria-describedby="record.hostId" on:click="domainCopy.copy(record.host)"><span class="ms-icon ms-i-check ms-icon--sm" aria-hidden="true"></span>Copied</button>
-                      </logic>
-                      <logic else>
-                        <button class="ms-btn ms-btn--sm" type="button" :aria-label="record.copyLabel" :aria-describedby="record.hostId" on:click="domainCopy.copy(record.host)"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button>
-                      </logic>
-                    </div></dd>
-                  </dl>
-                  <p :class="record.resultClass"><span :class="record.resultIcon" aria-hidden="true"></span>{record.resultText}</p>
+                    <logic else>
+                      <w-icon-btn icon="copy" class="mt-2" :aria-label="record.copyLabel" on:click="domainCopy.copy(record.host)"></w-icon-btn>
+                    </logic>
+                  </div>
+                  <p :class="record.resultClass"><w-icon :name="record.resultIcon" aria-hidden="true"></w-icon><span>{record.resultText}</span></p>
                 </div>
               </section>
             </loop>
-            <p class="ms-meta">Some DNS providers want <code class="ms-mono">@</code> as the host for the domain itself.</p>
+            <p class="meta">Some DNS providers want <code class="mono">@</code> as the host for the domain itself.</p>
           </section>
 
           <logic :if="adminSession.operator">
-            <section class="ms-card ms-danger-zone" aria-labelledby="danger-title">
-              <div class="ms-card__head"><h2 id="danger-title">Danger zone</h2></div>
-              <div class="ms-row">
-                <div class="ms-row__main">
-                  <span class="ms-row__title">Remove domain</span>
-                  <span class="ms-meta">Deletes the domain, its channels, messages and DKIM keys. This cannot be undone.</span>
-                </div>
-                <button class="ms-btn ms-btn--danger" type="button" :aria-expanded="adminShell.flag(domainRemove.confirming)" aria-controls="remove-confirm-area" on:click="domainRemove.start(domainDns.domainId, domainDns.name)"><span class="ms-icon ms-i-trash ms-icon--sm" aria-hidden="true"></span>Remove</button>
-              </div>
-              <div id="remove-confirm-area">
-                <logic :if="domainRemove.confirming">
-                  <div class="ms-card__body">
-                    <p id="remove-desc">This deletes the domain, its channels, its messages and its DKIM keys. Mail to {domainRemove.name} will be refused. This cannot be undone.</p>
-                    <div class="ms-field">
-                      <label class="ms-label" for="remove-confirm">Type <strong class="ms-mono">{domainRemove.name}</strong> to confirm</label>
-                      <input class="ms-input ms-mono" id="remove-confirm" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="remove-desc remove-hint" :value="domainRemove.typed" on:input="domainRemove.type($event.target.value)">
-                      <p class="ms-help" id="remove-hint">The Remove button works when the name matches.</p>
-                    </div>
-                    <logic :if="domainRemove.problem != ''">
-                      <p class="ms-error-text" role="alert"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>{domainRemove.problem}</p>
-                    </logic>
-                    <div class="ms-page__actions">
-                      <button class="ms-btn" type="button" :disabled="domainRemove.removing" on:click="domainRemove.cancel()">Cancel</button>
-                      <button class="ms-btn ms-btn--danger" type="button" :aria-busy="adminShell.flag(domainRemove.removing)" :disabled="domainRemove.locked" on:click="domainRemove.remove()">Remove domain</button>
-                    </div>
-                  </div>
-                </logic>
+            <section class="danger-zone" aria-labelledby="danger-title">
+              <div class="panel-head px-4 py-3 @xl/page:px-5"><h2 id="danger-title" class="section-title danger-title">Danger zone</h2></div>
+              <div class="flex flex-wrap items-center gap-3 px-4 py-3 @xl/page:px-5">
+                <div class="grid min-w-0 flex-[1_1_16rem] gap-0.5"><span class="strong">Remove domain</span><span class="meta">Deletes the domain, its channels, messages and DKIM keys. This cannot be undone.</span></div>
+                <w-btn variant="flat" color="error" prepend-icon="trash" aria-haspopup="dialog" on:click="domainRemove.start(domainDns.domainId, domainDns.name)">Remove</w-btn>
               </div>
             </section>
           </logic>
         </case>
         <case default>
-          <section class="ms-card" aria-labelledby="domain-loading-title" aria-busy="true">
-            <div class="ms-card__head"><h2 id="domain-loading-title">DNS records</h2><span class="ms-meta" role="status"><span class="ms-spinner" aria-hidden="true"></span> Loading the domain…</span></div>
-            <div aria-hidden="true">
-              <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line"></span><span class="ms-skeleton ms-skeleton--line"></span></div></div>
-              <div class="ms-skeleton-row"><span class="ms-skeleton ms-skeleton--avatar"></span><div><span class="ms-skeleton ms-skeleton--line"></span><span class="ms-skeleton ms-skeleton--line"></span></div></div>
-            </div>
+          <section class="panel" aria-labelledby="domain-loading-title" aria-busy="true">
+            <div class="panel-head flex flex-wrap items-center gap-3 px-4 py-3"><h2 id="domain-loading-title" class="section-title flex-1">DNS records</h2><span class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Loading the domain…</span></div>
+            <div aria-hidden="true"><w-skeleton-loader type="list-item-two-line@2" class="block px-2 py-2"></w-skeleton-loader></div>
           </section>
         </case>
       </switch>
     </div>
   </div>
+
+  <logic :if="domainRemove.confirming">
+    <logic :if="domainRemove.removing">
+      <w-dialog open class="sheet-dialog" max-width="32rem" persistent hide-close>
+        <span slot="title">Remove {domainRemove.name}?</span>
+        <div class="dialog-text grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
+          <div class="col-span-full grid gap-4">
+            <p>This deletes the domain, its channels, its messages and its DKIM keys. Mail to {domainRemove.name} will be refused. This cannot be undone.</p>
+            <w-text-field :label="domainRemove.confirmLabel" name="typed" class="mono" readonly :value="domainRemove.typed" autocomplete="off" autocapitalize="none" spellcheck="false"></w-text-field>
+            <p class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Removing {domainRemove.name}…</p>
+          </div>
+          <w-btn variant="text" class="sm:col-start-2 sm:row-start-2" disabled>Cancel</w-btn>
+          <w-btn variant="flat" color="error" class="sm:col-start-3 sm:row-start-2" loading disabled>Remove domain</w-btn>
+        </div>
+      </w-dialog>
+    </logic>
+    <logic else>
+      <w-dialog open class="sheet-dialog" max-width="32rem" on:close="domainRemove.cancel()">
+        <span slot="title">Remove {domainRemove.name}?</span>
+        <div class="dialog-text grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
+          <form method="dialog" class="contents" aria-label="Remove domain" on:submit="domainRemove.confirmWith($event.target.elements.typed.value)">
+            <div class="col-span-full grid gap-4">
+              <p>This deletes the domain, its channels, its messages and its DKIM keys. Mail to {domainRemove.name} will be refused. This cannot be undone.</p>
+              <logic :if="domainRemove.problem != ''">
+                <w-alert type="error">{domainRemove.problem}</w-alert>
+              </logic>
+              <logic :if="domainRemove.nameProblem != ''">
+                <w-text-field :label="domainRemove.confirmLabel" name="typed" class="mono" :value="domainRemove.typed" :error="domainRemove.nameProblem" autocomplete="off" autocapitalize="none" spellcheck="false" autofocus></w-text-field>
+              </logic>
+              <logic else>
+                <w-text-field :label="domainRemove.confirmLabel" name="typed" class="mono" :value="domainRemove.typed" hint="The Remove button works when the name matches." persistent-hint autocomplete="off" autocapitalize="none" spellcheck="false" autofocus></w-text-field>
+              </logic>
+            </div>
+            <w-btn variant="flat" color="error" class="sm:col-start-3 sm:row-start-2">Remove domain</w-btn>
+          </form>
+          <w-btn variant="text" class="sm:col-start-2 sm:row-start-2" on:click="domainRemove.cancel()">Cancel</w-btn>
+        </div>
+      </w-dialog>
+    </logic>
+  </logic>
 </main>

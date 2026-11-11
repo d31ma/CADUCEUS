@@ -33,14 +33,16 @@ func (form *AliasFormService) Opened(opened AdminViewOpened) {
 	form.applicationEventPublisher.PublishEvent(AdminViewLoaded{View: opened.View, Message: ""}, false)
 }
 
-func (form *AliasFormService) Add() {
+func (form *AliasFormService) AddWith(address string, memberId string) {
+	form.Address = address
+	form.MemberId = memberId
 	form.Status = ""
 	localPart := form.localPartOf(form.Address)
 	form.Problem = form.memberProblem(form.MemberId)
 	form.Problem = form.addressProblem(form.hasNoEdgeDot(localPart), form.Problem)
 	form.Problem = form.addressProblem(form.usesAllowedCharacters(localPart), form.Problem)
 	form.Problem = form.addressProblem(form.fitsLength(localPart), form.Problem)
-	created, failure := form.createWhenValid(localPart + form.suffix())
+	created, failure := form.createWhenValid(localPart + form.Suffix())
 	form.Problem = form.firstProblem(form.Problem, form.problems.Of(failure))
 	form.remember(created, form.memberNames[form.MemberId])
 }
@@ -62,11 +64,27 @@ func (form *AliasFormService) namesOf(items []MemberSummary) map[string]string {
 }
 
 func (form *AliasFormService) localPartOf(address string) string {
-	return strings.TrimSuffix(strings.ToLower(strings.TrimSpace(address)), form.suffix())
+	return strings.TrimSuffix(strings.ToLower(strings.TrimSpace(address)), form.Suffix())
 }
 
-func (form *AliasFormService) suffix() string {
+func (form *AliasFormService) Suffix() string {
 	return "@" + strings.ToLower(form.DomainId)
+}
+
+func (form *AliasFormService) AddressHint() string {
+	return "Ends with " + form.Suffix() + ". The address must not belong to a person, an alias or another channel."
+}
+
+func (form *AliasFormService) AddressError(problem string) string {
+	return form.addressErrors()[problem]
+}
+
+func (form *AliasFormService) addressErrors() map[string]string {
+	return map[string]string{
+		form.invalidAddress(): "Use 1 to 64 lowercase letters, digits, dots, hyphens, underscores or plus signs. Do not start or end with a dot.",
+		"conflict":            "This address already belongs to a member, alias or channel.",
+		"invalid":             "This is not a valid address in " + form.DomainId + form.period(),
+	}
 }
 
 func (form *AliasFormService) fitsLength(localPart string) bool {
@@ -92,7 +110,7 @@ func (form *AliasFormService) addressProblem(valid bool, previous string) string
 	if valid {
 		return previous
 	}
-	return "invalidAddress"
+	return form.invalidAddress()
 }
 
 func (form *AliasFormService) createWhenValid(address string) (Address, error) {
@@ -125,6 +143,10 @@ func (form *AliasFormService) remember(created Address, memberName string) {
 	form.HasAdded = true
 	form.Status = created.Address + " now reaches " + memberName + form.period()
 	form.Address = ""
+}
+
+func (form *AliasFormService) invalidAddress() string {
+	return "invalidAddress"
 }
 
 func (form *AliasFormService) longestLocalPart() int {

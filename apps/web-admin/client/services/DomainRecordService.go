@@ -75,15 +75,15 @@ func (records *DomainRecordService) record(plan DnsRecordPlan) DnsRecord {
 	return DnsRecord{
 		Key:         plan.Key,
 		TitleId:     "record-" + plan.Key,
-		HostId:      "record-host-" + plan.Key,
 		Title:       plan.Name + " record",
 		Type:        plan.Type,
 		Need:        plan.Need,
 		Host:        plan.Host,
 		Selector:    plan.Selector,
 		HasSelector: plan.Selector != "",
-		TagClass:    look.TagClass,
-		TagIcon:     look.IconClass,
+		TagColor:    look.Color,
+		TagVariant:  look.Variant,
+		TagIcon:     look.Icon,
 		TagText:     look.TagText,
 		CardClass:   look.CardClass,
 		ResultClass: look.ResultClass,
@@ -98,7 +98,7 @@ func (records *DomainRecordService) marks(plans []DnsRecordPlan) []DnsMark {
 	list := []DnsMark{}
 	for _, plan := range plans {
 		look := records.look(plan.State)
-		list = append(list, DnsMark{Name: plan.Name, MarkClass: look.MarkClass, IconClass: look.IconClass, Words: look.Words})
+		list = append(list, DnsMark{Name: plan.Name, Color: look.Color, Variant: look.Variant, Icon: look.Icon, Words: look.Words})
 	}
 	return list
 }
@@ -157,13 +157,12 @@ func (records *DomainRecordService) missingState() string {
 
 func (records *DomainRecordService) okLook() DnsLook {
 	return DnsLook{
-		MarkClass:    "ms-mark ms-mark--ok",
-		IconClass:    records.checkIcon(),
+		Color:        "success",
+		Icon:         records.checkIcon(),
 		Words:        records.okWord(),
-		TagClass:     "ms-tag ms-tag--ok",
 		TagText:      records.okWord(),
 		CardClass:    records.recordCard(),
-		ResultClass:  "ms-ok-text",
+		ResultClass:  "result result--ok",
 		ResultIcon:   records.checkIcon(),
 		ResultFormat: "Found the right value.",
 		Sentence:     "%s is OK.",
@@ -176,18 +175,17 @@ func (records *DomainRecordService) okWord() string {
 }
 
 func (records *DomainRecordService) checkIcon() string {
-	return "ms-icon ms-i-check"
+	return "check"
 }
 
 func (records *DomainRecordService) missingLook() DnsLook {
 	return DnsLook{
-		MarkClass:    "ms-mark ms-mark--missing",
-		IconClass:    "ms-icon ms-i-close",
+		Color:        "error",
+		Icon:         "close",
 		Words:        records.missingState(),
-		TagClass:     "ms-tag ms-tag--danger",
 		TagText:      "Missing",
-		CardClass:    "ms-card ms-record ms-record--bad",
-		ResultClass:  records.errorText(),
+		CardClass:    "record-card record-card--bad",
+		ResultClass:  records.badResult(),
 		ResultIcon:   records.alertIcon(),
 		ResultFormat: "No {type} record found at {host}. Create it, then select Check again.",
 		Sentence:     "%s is missing.",
@@ -196,13 +194,12 @@ func (records *DomainRecordService) missingLook() DnsLook {
 
 func (records *DomainRecordService) wrongLook() DnsLook {
 	return DnsLook{
-		MarkClass:    "ms-mark ms-mark--wrong",
-		IconClass:    records.alertIcon(),
+		Color:        "warning",
+		Icon:         records.alertIcon(),
 		Words:        "wrong value",
-		TagClass:     "ms-tag ms-tag--warn",
 		TagText:      "Wrong value",
-		CardClass:    "ms-card ms-record ms-record--wrong",
-		ResultClass:  records.errorText(),
+		CardClass:    "record-card record-card--wrong",
+		ResultClass:  records.badResult(),
 		ResultIcon:   records.alertIcon(),
 		ResultFormat: "The record at {host} has a different value. Fix it at your DNS provider, then select Check again.",
 		Sentence:     "%s has a wrong value.",
@@ -210,28 +207,27 @@ func (records *DomainRecordService) wrongLook() DnsLook {
 }
 
 func (records *DomainRecordService) alertIcon() string {
-	return "ms-icon ms-i-alert"
+	return "alert"
 }
 
-func (records *DomainRecordService) errorText() string {
-	return "ms-error-text"
+func (records *DomainRecordService) badResult() string {
+	return "result result--bad"
 }
 
 func (records *DomainRecordService) uncheckedLook() DnsLook {
 	return DnsLook{
-		MarkClass:    "ms-mark ms-mark--off",
-		IconClass:    "ms-icon ms-i-minus-circle",
+		Variant:      "outlined",
+		Icon:         "minus-circle",
 		Words:        "not checked",
-		TagClass:     "ms-tag ms-tag--outline",
 		TagText:      "Not checked",
 		CardClass:    records.recordCard(),
-		ResultClass:  "ms-meta",
-		ResultIcon:   "ms-icon ms-i-clock",
+		ResultClass:  "result",
+		ResultIcon:   "clock",
 		ResultFormat: "Not checked yet. Select Check again.",
 		Sentence:     "%s is not checked yet.",
 	}
 }
 
 func (records *DomainRecordService) recordCard() string {
-	return "ms-card ms-record"
+	return "record-card"
 }

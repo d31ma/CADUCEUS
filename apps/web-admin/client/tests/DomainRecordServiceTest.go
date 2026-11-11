@@ -22,35 +22,35 @@ func (test *DomainRecordServiceTest) TestMarksShowEachRecordInOrder() {
 
 func (test *DomainRecordServiceTest) TestAnOkMarkIsGreenWithACheck() {
 	mark := (&DomainRecordService{}).Marks(test.pending().Dns)[0]
-	Assert.Equals("ms-mark ms-mark--ok", mark.MarkClass)
-	Assert.Equals("ms-icon ms-i-check", mark.IconClass)
+	Assert.Equals("success", mark.Color)
+	Assert.Equals("check", mark.Icon)
 	Assert.Equals("OK", mark.Words)
 }
 
 func (test *DomainRecordServiceTest) TestAMissingMarkShowsAClose() {
 	mark := (&DomainRecordService{}).Marks(test.pending().Dns)[2]
-	Assert.Equals("ms-mark ms-mark--missing", mark.MarkClass)
-	Assert.Equals("ms-icon ms-i-close", mark.IconClass)
+	Assert.Equals("error", mark.Color)
+	Assert.Equals("close", mark.Icon)
 	Assert.Equals("missing", mark.Words)
 }
 
 func (test *DomainRecordServiceTest) TestAWrongMarkShowsAnAlert() {
 	mark := (&DomainRecordService{}).Marks(test.pending().Dns)[3]
-	Assert.Equals("ms-mark ms-mark--wrong", mark.MarkClass)
-	Assert.Equals("ms-icon ms-i-alert", mark.IconClass)
+	Assert.Equals("warning", mark.Color)
+	Assert.Equals("alert", mark.Icon)
 	Assert.Equals("wrong value", mark.Words)
 }
 
 func (test *DomainRecordServiceTest) TestAnEmptyStateIsNotChecked() {
 	mark := (&DomainRecordService{}).Marks(DnsState{})[0]
-	Assert.Equals("ms-mark ms-mark--off", mark.MarkClass)
-	Assert.Equals("ms-icon ms-i-minus-circle", mark.IconClass)
+	Assert.Equals("outlined", mark.Variant)
+	Assert.Equals("minus-circle", mark.Icon)
 	Assert.Equals("not checked", mark.Words)
 }
 
 func (test *DomainRecordServiceTest) TestAnUnknownStateIsNotChecked() {
 	mark := (&DomainRecordService{}).Marks(DnsState{Mx: "later"})[0]
-	Assert.Equals("ms-mark ms-mark--off", mark.MarkClass)
+	Assert.Equals("outlined", mark.Variant)
 }
 
 func (test *DomainRecordServiceTest) TestMarksLabelNamesEachRecord() {
@@ -90,33 +90,35 @@ func (test *DomainRecordServiceTest) TestOnlyTheDkimRecordHasASelector() {
 
 func (test *DomainRecordServiceTest) TestAnOkRecordSaysItFoundTheRightValue() {
 	record := (&DomainRecordService{}).Records(test.pending())[0]
-	Assert.Equals("ms-tag ms-tag--ok", record.TagClass)
+	Assert.Equals("success", record.TagColor)
 	Assert.Equals("OK", record.TagText)
-	Assert.Equals("ms-card ms-record", record.CardClass)
-	Assert.Equals("ms-ok-text", record.ResultClass)
+	Assert.Equals("record-card", record.CardClass)
+	Assert.Equals("result result--ok", record.ResultClass)
+	Assert.Equals("check", record.ResultIcon)
 	Assert.Equals("Found the right value.", record.ResultText)
 }
 
 func (test *DomainRecordServiceTest) TestAMissingRecordSaysWhereToCreateIt() {
 	record := (&DomainRecordService{}).Records(test.pending())[2]
-	Assert.Equals("ms-tag ms-tag--danger", record.TagClass)
+	Assert.Equals("error", record.TagColor)
 	Assert.Equals("Missing", record.TagText)
-	Assert.Equals("ms-card ms-record ms-record--bad", record.CardClass)
-	Assert.Equals("ms-error-text", record.ResultClass)
+	Assert.Equals("record-card record-card--bad", record.CardClass)
+	Assert.Equals("result result--bad", record.ResultClass)
 	Assert.Equals("No TXT record found at ms2026a._domainkey.new.example.net. Create it, then select Check again.", record.ResultText)
 }
 
 func (test *DomainRecordServiceTest) TestAWrongRecordSaysToFixIt() {
 	record := (&DomainRecordService{}).Records(test.pending())[3]
-	Assert.Equals("ms-tag ms-tag--warn", record.TagClass)
+	Assert.Equals("warning", record.TagColor)
 	Assert.Equals("Wrong value", record.TagText)
-	Assert.Equals("ms-card ms-record ms-record--wrong", record.CardClass)
+	Assert.Equals("record-card record-card--wrong", record.CardClass)
 	Assert.Equals("The record at _dmarc.new.example.net has a different value. Fix it at your DNS provider, then select Check again.", record.ResultText)
 }
 
 func (test *DomainRecordServiceTest) TestAnUncheckedRecordAsksToCheck() {
 	record := (&DomainRecordService{}).Records(Domain{Name: "a.example", DkimSelector: "s1"})[0]
-	Assert.Equals("ms-tag ms-tag--outline", record.TagClass)
+	Assert.Equals("outlined", record.TagVariant)
+	Assert.Equals("result", record.ResultClass)
 	Assert.Equals("Not checked", record.TagText)
 	Assert.Equals("Not checked yet. Select Check again.", record.ResultText)
 }
@@ -125,7 +127,6 @@ func (test *DomainRecordServiceTest) TestRecordsHaveCopyLabels() {
 	record := (&DomainRecordService{}).Records(test.pending())[0]
 	Assert.Equals("Copy MX host", record.CopyLabel)
 	Assert.Equals("Copied MX host", record.CopiedLabel)
-	Assert.Equals("record-host-mx", record.HostId)
 	Assert.Equals("record-mx", record.TitleId)
 }
 

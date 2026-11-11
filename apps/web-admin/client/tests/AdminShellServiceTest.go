@@ -56,3 +56,8 @@ func (test *AdminShellServiceTest) TestLoadedAnnouncesWhatTheViewShows() {
 	shell.Loaded(AdminViewLoaded{View: "members", Message: ""})
 	Assert.Equals("5 members", shell.Announcement)
 }
+
+func (test *AdminShellServiceTest) TestSidebarLabelNamesTheDomain() {
+	shell := &AdminShellService{}
+	Assert.Equals("Admin of example.com", shell.SidebarLabel("example.com"))
+}

@@ -1,0 +1,316 @@
+.members-header {
+  padding-top: env(safe-area-inset-top);
+  padding-left: max(var(--w-space-4), env(safe-area-inset-left));
+  padding-right: max(var(--w-space-4), env(safe-area-inset-right));
+  border-bottom: 1px solid var(--w-divider);
+}
+
+.members-title {
+  font-size: var(--w-font-lg);
+  font-weight: var(--w-font-weight-bold);
+}
+
+.members-topic {
+  border-left: 1px solid var(--w-divider);
+  font-size: var(--w-font-base);
+  color: var(--w-text-subtle);
+}
+
+.members-page {
+  padding-left: max(var(--w-space-4), env(safe-area-inset-left));
+  padding-right: max(var(--w-space-4), env(safe-area-inset-right));
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.members-notice {
+  border: 1px solid var(--w-border);
+  border-radius: var(--w-radius-xl);
+  background: var(--w-primary-container);
+  color: var(--w-on-primary-container);
+}
+
+.members-strong {
+  font-weight: var(--w-font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.members-box {
+  border: 1px solid var(--w-border);
+  border-radius: var(--w-radius-xl);
+  background: var(--w-surface);
+}
+
+.members-box-head {
+  border-bottom: 1px solid var(--w-divider);
+}
+
+.members-heading {
+  font-size: var(--w-font-lg);
+  font-weight: var(--w-font-weight-semibold);
+}
+
+.members-empty-title {
+  font-size: var(--w-font-xl);
+  font-weight: var(--w-font-weight-semibold);
+}
+
+.members-art {
+  font-size: 2.5rem;
+  color: var(--w-text-subtle);
+}
+
+.members-meta,
+.members-foot {
+  font-size: var(--ms-text-meta);
+  color: var(--w-text-subtle);
+}
+
+.members-table {
+  border-collapse: collapse;
+  font-size: var(--w-font-base);
+}
+
+.members-table th {
+  border-bottom: 1px solid var(--w-divider);
+  font-size: var(--ms-text-meta);
+  font-weight: var(--w-font-weight-semibold);
+  text-align: left;
+  white-space: nowrap;
+  color: var(--w-text-subtle);
+}
+
+.members-table td {
+  border-bottom: 1px solid var(--w-divider);
+  vertical-align: middle;
+}
+
+.members-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.members-address {
+  font-family: var(--w-font-family-mono);
+  font-size: var(--ms-text-meta);
+  word-break: break-all;
+}
+
+.members-foot {
+  border-top: 1px solid var(--w-divider);
+}
+
+@container page (width < 42rem) {
+  .members-table tr {
+    border-bottom: 1px solid var(--w-divider);
+  }
+
+  .members-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .members-table td {
+    border-bottom: 0;
+  }
+
+  .members-labelled::before {
+    content: attr(data-label);
+    flex: none;
+    width: 7rem;
+    font-size: var(--ms-text-meta);
+    font-weight: var(--w-font-weight-semibold);
+    color: var(--w-text-subtle);
+  }
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .members-touch > :is(button, a) {
+    min-width: var(--ms-touch-min);
+    min-height: var(--ms-touch-min);
+  }
+}
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .\@container\/main {
+    container-type: inline-size;
+    container-name: main;
+  }
+  .\@container\/page {
+    container-type: inline-size;
+    container-name: page;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  .mx-auto {
+    margin-inline: auto;
+  }
+  .mt-0\.5 {
+    margin-top: calc(var(--spacing, 0.25rem) * 0.5);
+  }
+  .-ml-2 {
+    margin-left: calc(var(--spacing, 0.25rem) * -2);
+  }
+  .block {
+    display: block;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .hidden {
+    display: none;
+  }
+  .h-full {
+    height: 100%;
+  }
+  .min-h-0 {
+    min-height: 0px;
+  }
+  .min-h-13 {
+    min-height: calc(var(--spacing, 0.25rem) * 13);
+  }
+  .w-full {
+    width: 100%;
+  }
+  .max-w-3xl {
+    max-width: var(--container-3xl, 48rem);
+  }
+  .min-w-0 {
+    min-width: 0px;
+  }
+  .flex-1 {
+    flex: 1;
+  }
+  .basis-56 {
+    flex-basis: calc(var(--spacing, 0.25rem) * 56);
+  }
+  .flex-col {
+    flex-direction: column;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .items-end {
+    align-items: flex-end;
+  }
+  .items-start {
+    align-items: flex-start;
+  }
+  .justify-center {
+    justify-content: center;
+  }
+  .gap-1 {
+    gap: var(--spacing, 0.25rem);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .gap-3 {
+    gap: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .gap-6 {
+    gap: calc(var(--spacing, 0.25rem) * 6);
+  }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .overflow-y-auto {
+    overflow-y: auto;
+  }
+  .p-4 {
+    padding: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .px-2 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .py-3 {
+    padding-block: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .py-6 {
+    padding-block: calc(var(--spacing, 0.25rem) * 6);
+  }
+  .py-8 {
+    padding-block: calc(var(--spacing, 0.25rem) * 8);
+  }
+  .pb-10 {
+    padding-bottom: calc(var(--spacing, 0.25rem) * 10);
+  }
+  .pl-3 {
+    padding-left: calc(var(--spacing, 0.25rem) * 3);
+  }
+  @media (width >= 600px) {
+    .sm\:hidden {
+      display: none;
+    }
+  }
+  @container page (width < 42rem) {
+    .\@max-2xl\/page\:sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    .\@max-2xl\/page\:block {
+      display: block;
+    }
+    .\@max-2xl\/page\:flex {
+      display: flex;
+    }
+    .\@max-2xl\/page\:items-start {
+      align-items: flex-start;
+    }
+    .\@max-2xl\/page\:gap-3 {
+      gap: calc(var(--spacing, 0.25rem) * 3);
+    }
+    .\@max-2xl\/page\:px-0 {
+      padding-inline: 0px;
+    }
+    .\@max-2xl\/page\:px-4 {
+      padding-inline: calc(var(--spacing, 0.25rem) * 4);
+    }
+    .\@max-2xl\/page\:py-1 {
+      padding-block: var(--spacing, 0.25rem);
+    }
+    .\@max-2xl\/page\:py-3 {
+      padding-block: calc(var(--spacing, 0.25rem) * 3);
+    }
+  }
+  @container page (width >= 36rem) {
+    .\@xl\/page\:px-5 {
+      padding-inline: calc(var(--spacing, 0.25rem) * 5);
+    }
+  }
+  @container main (width >= 42rem) {
+    .\@2xl\/main\:block {
+      display: block;
+    }
+  }
+}
+/* @tachyon-generated-tailwind:end */

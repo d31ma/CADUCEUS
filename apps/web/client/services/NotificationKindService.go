@@ -9,6 +9,10 @@ func (kinds *NotificationKindService) Icon(kind string) string {
 	return kinds.lookup(kinds.icons(), kind, "bell")
 }
 
+func (kinds *NotificationKindService) PlaceWord(kind string) string {
+	return kinds.lookup(kinds.placeWords(), kind, "in")
+}
+
 func (kinds *NotificationKindService) TabLabel(name string) string {
 	return kinds.lookup(kinds.labels(), name, name)
 }
@@ -37,6 +41,17 @@ func (kinds *NotificationKindService) icons() map[string]string {
 		kinds.threadReply(): "thread",
 		kinds.email():       "mail",
 	}
+}
+
+func (kinds *NotificationKindService) placeWords() map[string]string {
+	return map[string]string{
+		kinds.direct(): kinds.fromWord(),
+		kinds.email():  kinds.fromWord(),
+	}
+}
+
+func (kinds *NotificationKindService) fromWord() string {
+	return "from"
 }
 
 func (kinds *NotificationKindService) labels() map[string]string {

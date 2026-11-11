@@ -1,32 +1,31 @@
 <section class="notify-page flex h-full min-h-0 min-w-0 flex-col @container/activity">
-  <div class="notify-divider-below flex min-h-11 flex-wrap items-center justify-end gap-2 px-3 py-1 sm:px-4">
-    <w-btn variant="text" size="small" prepend-icon="check-double" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notification.markAllRead()">Mark all as read</w-btn>
+  <div class="notify-divider-below flex min-w-0 items-center gap-1 pe-2 sm:pe-3">
+    <w-tabs :value="notification.tab" class="notify-tabs block min-w-0 flex-1" aria-label="Show activity">
+      <loop :for="tab of notification.tabs">
+        <w-tab :value="tab.name" :id="tab.id" aria-controls="activity-panel" on:click="notification.chooseTab(tab.name)">
+          {tab.label}
+          <logic :if="tab.hasUnread">
+            <w-badge :content="tab.unreadCount" inline :label="tab.unreadLabel" :data-tab="tab.name"></w-badge>
+          </logic>
+        </w-tab>
+      </loop>
+    </w-tabs>
+    <w-btn variant="text" size="small" prepend-icon="check-double" class="hidden flex-none @2xl/activity:inline-flex pointer-coarse:min-h-11" on:click="notification.markAllRead()">Mark all as read</w-btn>
+    <w-icon-btn icon="check-double" class="flex-none @2xl/activity:hidden" aria-label="Mark all as read" on:click="notification.markAllRead()"></w-icon-btn>
   </div>
-
-  <logic :if="notificationPush.panel == 'notAsked'">
-    <div class="notify-prompt mx-3 mt-3 flex flex-wrap items-center gap-3 p-3 sm:mx-4 sm:p-4" role="region" aria-labelledby="push-prompt-text">
-      <span class="notify-tile notify-tile-primary grid size-10 flex-none place-items-center"><w-icon name="bell"></w-icon></span>
-      <p id="push-prompt-text" class="notify-text min-w-0 flex-[1_1_14rem]">Get a notification on this device when someone mentions you or sends you a message while Mesail is in the background.</p>
-      <w-btn variant="flat" prepend-icon="bell" class="max-sm:w-full max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notificationPush.turnOn()">Turn on notifications</w-btn>
-    </div>
-  </logic>
-  <logic :if="notificationPush.problem == 'notAllowed'">
-    <p class="notify-problem mx-3 mt-2 px-3 py-2 sm:mx-4" role="status">Mesail could not ask for permission. Try again, or allow notifications in your browser settings.</p>
-  </logic>
-
-  <w-tabs :value="notification.tab" class="notify-tabs block min-w-0 max-w-full" aria-label="Show activity">
-    <loop :for="tab of notification.tabs">
-      <w-tab :value="tab.name" :id="tab.id" aria-controls="activity-panel" on:click="notification.chooseTab(tab.name)">
-        {tab.label}
-        <logic :if="tab.hasUnread">
-          <w-badge :content="tab.unreadCount" inline class="ms-1" :label="tab.unreadLabel"></w-badge>
-        </logic>
-      </w-tab>
-    </loop>
-  </w-tabs>
 
   <div class="notify-safe-bottom min-h-0 flex-1 overflow-y-auto" id="activity-panel" role="tabpanel" tabindex="0" :aria-labelledby="notification.tabId">
     <div class="mx-auto w-full max-w-3xl">
+      <logic :if="notificationPush.panel == 'notAsked'">
+        <div class="notify-prompt mx-3 mt-4 flex flex-wrap items-center gap-3 p-3 sm:mx-5 sm:p-4" role="region" aria-labelledby="push-prompt-text">
+          <span class="notify-tile notify-tile-primary grid size-10 flex-none place-items-center"><w-icon name="bell"></w-icon></span>
+          <p id="push-prompt-text" class="notify-text min-w-0 flex-[1_1_14rem]">Get a notification on this device when someone mentions you or sends you a message while Mesail is in the background.</p>
+          <w-btn variant="flat" prepend-icon="bell" class="max-sm:w-full max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notificationPush.turnOn()">Turn on notifications</w-btn>
+        </div>
+      </logic>
+      <logic :if="notificationPush.problem == 'notAllowed'">
+        <p class="notify-problem mx-3 mt-2 px-3 py-2 sm:mx-5" role="status">Mesail could not ask for permission. Try again, or allow notifications in your browser settings.</p>
+      </logic>
       <switch :value="notification.status">
         <case :when="'ready'">
           <logic :if="notification.empty">
@@ -40,28 +39,38 @@
           </logic>
           <loop :for="day of notification.days">
             <h2 class="notify-day mx-3 mb-1 mt-4 sm:mx-5">{day.label}</h2>
-            <w-list class="px-1 sm:px-3" :aria-label="day.label">
+            <div class="grid px-1 sm:px-3" role="list" :aria-label="day.label">
               <loop :for="row of day.rows">
                 <div role="listitem" class="notify-row flex items-start" :data-unread="shell.flag(row.unread)">
-                  <button type="button" class="notify-row-open flex min-h-11 min-w-0 flex-1 items-start gap-2 px-2 py-2" on:click="notification.open(row)">
+                  <button type="button" class="notify-row-open flex min-h-11 min-w-0 flex-1 items-start gap-3 px-2 py-2" on:click="notification.open(row)">
                     <span class="grid h-9 w-2 flex-none place-items-center" aria-hidden="true"><span class="notify-unread-dot size-2"></span></span>
-                    <span class="notify-tile grid size-9 flex-none place-items-center" :data-kind="row.kind" aria-hidden="true"><w-icon :name="row.icon" class="notify-icon-small"></w-icon></span>
-                    <span class="grid min-w-0 flex-1 gap-0.5 py-1">
-                      <span class="flex flex-wrap items-baseline gap-x-2">
+                    <span class="notify-avatar relative grid size-9 flex-none place-items-center" aria-hidden="true">
+                      <logic :if="notificationPlace.initials(row.conversationId) != ''">{notificationPlace.initials(row.conversationId)}</logic>
+                      <logic else><w-icon :name="row.icon" class="notify-icon-small"></w-icon></logic>
+                      <span class="notify-kind-badge absolute grid size-4 place-items-center" :data-kind="row.kind"><w-icon :name="row.icon" class="notify-icon-badge"></w-icon></span>
+                    </span>
+                    <span class="grid min-w-0 flex-1 gap-1">
+                      <span class="flex min-w-0 items-baseline gap-2">
                         <span class="notify-row-title min-w-0 flex-1">
                           <logic :if="row.unread"><span class="sr-only">Unread. </span></logic>
                           {row.title}
                         </span>
-                        <time class="notify-meta" :datetime="row.stamp">{row.time}</time>
+                        <time class="notify-meta flex-none" :datetime="row.stamp">{row.time}</time>
                       </span>
+                      <logic :if="notificationPlace.name(row.conversationId) != ''">
+                        <span class="notify-place min-w-0">{notificationPlace.word(row.kind)} <span class="notify-place-name">{notificationPlace.name(row.conversationId)}</span></span>
+                      </logic>
                     </span>
                   </button>
                   <logic :if="row.unread">
                     <w-icon-btn icon="check" size="small" class="me-1 mt-2 flex-none max-sm:size-11 pointer-coarse:size-11" :aria-label="row.markLabel" on:click="notification.markRead(row.notificationId)"></w-icon-btn>
                   </logic>
+                  <logic else>
+                    <span class="me-1 size-8 flex-none max-sm:size-11 pointer-coarse:size-11" aria-hidden="true"></span>
+                  </logic>
                 </div>
               </loop>
-            </w-list>
+            </div>
           </loop>
           <logic :if="notification.hasMore">
             <div class="flex justify-center p-4">

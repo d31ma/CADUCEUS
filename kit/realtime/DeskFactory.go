@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/oidc"
+	"mesail.dev/packages/transport"
 )
 
 type DeskFactory struct {
@@ -64,7 +65,7 @@ func (DeskFactory) ticketBook(storage Storage) TicketBook {
 }
 
 func (factory DeskFactory) pushes(settings Settings) ConnectionGateway {
-	return HttpConnectionGateway{BaseUrl: settings.GatewayUrl, Secret: settings.GatewaySecret, Client: SingleUseTransport{}.Client(factory.pushTimeout())}
+	return HttpConnectionGateway{BaseUrl: settings.GatewayUrl, Secret: settings.GatewaySecret, Client: transport.SingleUseTransport{}.Client(factory.pushTimeout())}
 }
 
 func (DeskFactory) pushTimeout() time.Duration {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/oidc"
+	"mesail.dev/packages/transport"
 )
 
 type SweepTrigger struct {
@@ -17,7 +18,7 @@ type SweepTrigger struct {
 
 func (trigger SweepTrigger) Configured(environment func(string) string) SweepTrigger {
 	tokens := oidc.ServiceTokensFactory{}.FromJson(environment(trigger.settingsVariable()))
-	return SweepTrigger{Tokens: tokens, Environment: environment, Client: SingleUseTransport{}.Client(trigger.timeout())}
+	return SweepTrigger{Tokens: tokens, Environment: environment, Client: transport.SingleUseTransport{}.Client(trigger.timeout())}
 }
 
 func (trigger SweepTrigger) Fire() error {

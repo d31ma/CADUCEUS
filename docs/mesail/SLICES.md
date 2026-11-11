@@ -69,8 +69,8 @@ wave run at the same time.
     TY2160 when the folder does not exist, so `scripts/gates.sh` (C1)
     creates the folder and the `.env` when they are missing.
     Only the integration run in Lambda form (Floci, AWS later) puts a
-    service's root on its
-    EFS mount: `/mnt/data/<service>/`.
+    root on EFS: `/mnt/data/<service>/<domain>/`, one function per
+    (service, domain) (ADR 0004 section 4).
 12. **Scheduled work.** A `@Schedule` worker gets no injected providers in
     TACHYON 26.46.02, so it only triggers: it fetches a service token
     (`kit/oidc`, slice I1) and POSTs to its own `@Allow(Service)` route
@@ -277,10 +277,16 @@ C1, not before each slice merge.
   `scripts/floci/**` and `scripts/native/**` (never `deploy/keycloak/**`).
 - **Builds:** one Lambda container image per Yon app (arm64, Ubuntu 24.04
   base because `fylo` needs glibc 2.39, AWS Lambda Web Adapter, `ty start`,
-  the Go toolchain that built the handlers, FYLO root on the EFS mount at
-  `/mnt/data/<service>/` set in the app's own configuration because Floci
-  ignores the access point root folder, reserved concurrency 1 for every
-  FYLO-owning function), the Floci description that runs every service in
+  the Go toolchain that built the handlers, an entrypoint that writes the
+  app's `.env` (`YON_DATASOURCE_URL=fylo:///mnt/data/<service>/<domain>`)
+  from the function's environment because `ty` reads the root only from
+  `.env` and Floci ignores the access point root folder), one function per
+  (service, domain) with reserved concurrency 1, a router that picks the
+  function by path prefix and domain and queues calls to a busy function
+  (a concurrent call gets `429`), `realtime` as one long-running container
+  (Lambda cannot hold connections), a snapshot schedule (`fylo pack` of
+  every root to ATLAS) with a runbook that clears a lock left by a killed
+  writer, the Floci description that runs every service in
   the `mesail` Lima VM (built by the `mesail-devhost` session), the
   path-routing front (API Gateway in Floci and AWS), static hosting for the
   Tac apps, seeded realms `example.com`, `example.org` (a second hosted

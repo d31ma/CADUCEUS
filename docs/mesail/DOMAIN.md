@@ -75,11 +75,13 @@ notes):
 
 ### FYLO layout
 
-- **One root per service.** Each service that stores data owns one FYLO
-  root. In Lambda the root is the EFS mount `/mnt/data/<service>/`. Every
-  function that owns a FYLO root has reserved concurrency 1, so there is
-  exactly one writer per root (ADR 0004). No root is ever shared between
-  services or between parallel function instances.
+- **One writer per (service, domain).** In native development each service
+  owns one FYLO root for all domains. In Lambda form each FYLO-owning
+  service runs once per domain, as function `<service>-<domainKey>` with
+  reserved concurrency 1 and root `/mnt/data/<service>/<domain>/` (ADR 0004
+  section 4). No root is ever shared between services or between parallel
+  function instances. The same code serves both forms, because every
+  collection is already keyed by domain.
 - **Collections are split by domain.** A FYLO collection index stops taking
   writes at about 240 MiB, and domains must never mix. So every collection
   name ends with the domain key:

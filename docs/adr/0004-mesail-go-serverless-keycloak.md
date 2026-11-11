@@ -143,54 +143,74 @@ kit/            shared plain Go packages (source of truth)
   Tac apps (`tac.elements` is the first step); until then a feature ships
   inside `web`.
 
-### 4. Every Yon service is a Lambda container image
-- Each Yon app is packaged as an arm64 Lambda container image: the bundled
-  app, `ty start`, the AWS Lambda Web Adapter, and the Go toolchain that
-  built the handlers. The same image runs in Floci on this Mac, in Floci on
-  kestrel, and in AWS Lambda.
-- **FYLO roots on EFS.** Each FYLO-owning service has its own EFS access
-  point mounted at `/mnt/data`, and its root is `/mnt/data/<service>/`, set
-  in the service's own configuration (Floci ignores an access point's root
-  folder, so the path must not rely on it). No root is shared between
-  services. The `mesail-devhost` session proved on 2026-11-10 that a Floci
-  Lambda writes and reads FYLO data through EFS on the ATLAS ext4 disk and
-  keeps it across a restart.
-- **Base image.** The `fylo` 26.45.07 Linux binary needs glibc 2.39, so
-  every FYLO-owning image uses a glibc 2.39 base such as Ubuntu 24.04, not
-  Amazon Linux 2023.
-- **One writer per root.** Every FYLO-owning function has reserved
-  concurrency 1, so at most one warm instance (one `fylo exec --loop`)
-  writes its root; FYLO's owner lock refuses a second writer. This trades
-  throughput for correctness and is stated, not hidden.
-- **Scale path: domain cells.** Tachyon allows one datasource per server,
-  and collections are prefixed by domain (DOMAIN.md). So the same image can
-  be deployed again for one domain (or a group of domains) with its own EFS
-  access point, `/mnt/data/<service>/<domain>/`, and the gateway routes
-  that domain's requests (the token issuer, or the recipient domain for
-  mail) to it. The set of a domain's service functions is a **domain cell**:
-  one writer per (service, domain) root, chat that never leaves the cell,
-  and data that moves with the domain. The first install runs one function
-  per service for all domains; cells are a deployment change, not a code
-  change.
-- The `mesail-serverless` spike (report
-  `~/Library/Logs/local/CADUCEUS/mesail/serverless-report.md`, still a
-  draft on 2026-11-10) found that FYLO has no server, replication or object
-  store backend, that its lock is advisory on filesystems without locks,
-  and that the earlier CADUCEUS Lambda deployment already ran FYLO on EFS
-  with reserved concurrency 1. Its measurements of FYLO on EFS and of
-  per-domain access points will amend this section.
+### 4. Every Yon service is a Lambda container image, one writer per (service, domain)
+
+Measured by the `mesail-serverless` spike on 2026-11-10 (report
+`~/Library/Logs/local/CADUCEUS/mesail/serverless-report.md`, Floci recipe
+`floci-recipe.md`):
+- FYLO on ext4 on the ATLAS raw disk (the dev host and kestrel/FitNest
+  pattern) writes at 109 ms p50 (346 ms p95, stalls up to 10.9 s) against
+  1.46 ms on a local disk; reads are the same. Bulk loads hit Lambda's
+  300 s timeout, and the killed `fylo` process left a write lock behind
+  (`ENATIVE_CONCURRENT_WRITE`).
+- Opening a root takes 4 to 15 ms; `fylo` uses 5 to 35 MB; a domain's warm
+  service costs about 60 to 100 MB.
+- The single-writer lock works across containers on one kernel
+  (`EROOTLOCKED`).
+- The `fylo` and `ty` Linux binaries need glibc 2.39.
+- A Lambda cannot hold server-sent events or WebSockets.
+
+Decisions:
+- **Packaging.** Each Yon app is an arm64 Lambda container image on an
+  Ubuntu 24.04 base (glibc 2.39): the bundled app, `ty start`, the AWS
+  Lambda Web Adapter, and the Go toolchain that built the handlers. The same
+  image runs in Floci on this Mac, in Floci on kestrel and in AWS Lambda.
+- **One writer per (service, domain).** In Lambda form, each FYLO-owning
+  service is deployed once per hosted domain: function
+  `<service>-<domainKey>` with reserved concurrency 1 and its own FYLO root
+  `/mnt/data/<service>/<domain>/`. The image's entrypoint writes the app's
+  `.env` (`YON_DATASOURCE_URL`) from the function's environment, because
+  `ty` reads the root only from `.env`. The router sends a request to the
+  function of its service (the path prefix) and its domain (the token's
+  issuer, the envelope's `domainId` for events, the recipient domain for
+  mail), and queues calls to one function, because a second concurrent call
+  to a concurrency-1 function gets `429`. Native development runs one
+  `ty start` per service for all domains (collections are already keyed by
+  domain, DOMAIN.md), so this is a deployment choice, not a code change.
+- **Why this and not one "domain cell" process for all features.** The
+  spike proposed one writer process per domain that owns all of the
+  domain's data. That gives the same isolation, but it puts every feature
+  in one deploy unit, against the owner's rule that each service deploys on
+  its own, and one slow feature (a bulk mail import) would block the
+  domain's chat. Writers per (service, domain) keep the micro-service split,
+  let different domains and different services write in parallel, and
+  still give each domain its own roots: the set of a domain's roots is its
+  **cell**, which moves, is backed up and is deleted as one unit (`fylo
+  pack` per root), and chat still never leaves it.
+- **Where live roots live.** Live roots must be on a local disk: in the
+  measured ATLAS-backed setup one domain could take only about 9 writes per
+  second with multi-second stalls, which is too slow for chat. The spike's
+  recommendation, waiting for the owner's decision: live roots on kestrel's
+  local disk, and a `fylo pack` snapshot of every root to ATLAS hourly and
+  before every deploy (0.2 s per 13 MB root locally). ATLAS-backed EFS stays
+  acceptable only for development with small fixtures. On this Mac,
+  native development uses the APFS disk image on ATLAS (about 2 ms writes).
+  A function that is stopped mid-write can leave a write lock; the snapshot
+  and restart runbook (slice P1) must clear it safely.
+- **Realtime is the exception.** `realtime` holds open connections, which a
+  Lambda cannot do. It runs as one long-running container (`ty start`)
+  everywhere, unless the target offers a managed WebSocket gateway (API
+  Gateway WebSocket on AWS), in which case connect, message and disconnect
+  are ordinary Yon routes of `realtime`. Its contract does not change.
+  Chat writes stay in `messaging`; `realtime` only fans out events.
+- **Data of other services** is reached only through that service's HTTP
+  contract or its events, never by opening its root. `identity` has no root
+  and scales freely.
 - Under Tachyon's OS egress confinement a handler cannot open raw SMTP
   sockets (TACHYON ADR 0113); Lambda runs with
   `YON_EGRESS_ENFORCEMENT=proxy`. `mail-out` delivery therefore goes through
   a relay adapter or the SMTP edge, never a socket opened inside a
   confined handler.
-- **Data of other services** is reached only through that service's HTTP
-  contract or its events, never by opening its root.
-- `identity` has no FYLO root and scales freely.
-- **Realtime** in Lambda form uses an API Gateway WebSocket API: connect,
-  message and disconnect are ordinary Yon routes of `realtime`, and pushes
-  go through the gateway's connection management API. A single-server run
-  may use Tachyon sockets instead behind the same `realtime` contract.
 - **SMTP.** A Lambda cannot listen on port 25. `edge/smtp` is a small
   always-on Go program (a container next to Floci on this Mac and on
   kestrel; Amazon SES receiving in AWS) that writes the raw message to the
@@ -265,12 +285,14 @@ kit/            shared plain Go packages (source of truth)
 - Revocation within 60 seconds: access tokens live 60 seconds, so a disabled
   user's next refresh fails; `realtime` rechecks open connections every 60
   seconds. No revocation list is kept.
-- **Deployment:** Keycloak runs as one always-on container (a JVM; it is
-  not practical as a Lambda), in the same image as Mesail where the owner
-  asked for that. Keycloak has no supported SQLite database; the
-  `mesail-keycloak` session owns that question and `deploy/keycloak/**`. In
-  Floci on kestrel and in AWS it runs as its own container service with a
-  managed database.
+- **Deployment:** Keycloak runs as one always-on container (a JVM; not
+  practical as a Lambda). The `mesail-keycloak` session proved Keycloak
+  26.8.2 on SQLite with its own provider (develop 13e1923), which corrects
+  the spike report's "PostgreSQL only": Keycloak's own docs list no SQLite
+  support, so this setup is Mesail's, and it runs as exactly **one
+  instance** (SQLite has one writer; Keycloak's `local` cache is not a
+  cluster). A clustered Keycloak would need PostgreSQL. The realm templates
+  and the image belong to `mesail-keycloak` (`deploy/keycloak/**`).
 - SMTP submission for third-party mail clients needs a password that is not
   the Keycloak password; it is a later slice.
 

@@ -14,7 +14,7 @@
       "/shared/vendor/duvay/duvay-mesail.css": {
         "kind": "vendor",
         "package": "@d31ma/duvay",
-        "version": "26.46.03",
+        "version": "26.46.04-develop.06d3fb2",
         "license": "MIT",
         "sha256": "09d652ee2fb9624b312ee92995b8775185b8ebe0ef1cb36a735b39cbd5dba541"
       }
@@ -35,9 +35,9 @@
     "scriptSources": {
       "/shared/vendor/duvay/duvay-mesail.js": {
         "package": "@d31ma/duvay",
-        "version": "26.46.03",
+        "version": "26.46.04-develop.06d3fb2",
         "license": "MIT",
-        "sha256": "84a8736c8878ebe28776198cc276d44b0a62d1e0d45609ae83a38b8f6066ae54"
+        "sha256": "98d669faae6fa65fd58dbb6ad1c5f9d39b4e6364949bc131cd7602ddc97d21b2"
       }
     }
   }

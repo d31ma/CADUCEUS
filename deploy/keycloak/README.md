@@ -84,8 +84,15 @@ The old realms' dev users use `...0101` and up. Keycloak user ids are unique
 across realms, so a new dev user needs an id no other file uses. Real people
 get Keycloak's random ids from `directory`.
 
-**User attributes.** The realm's user profile declares
-`mesail.mustChangePassword` (`true` or `false`; only admins see or change it).
+**User attributes.** The realm's user profile declares two attributes;
+only admins see or change them, and Keycloak drops any attribute it does not
+declare:
+- `mesail.mustChangePassword` (`true` or `false`), mapped into the
+  `mesail-identity` token as `mesail_must_change_password`;
+- `mesail.addRequest` (at most 64 characters; the directory writes 32
+  lowercase hex characters), the id of the directory's add request. It has no
+  protocol mapper, so it never reaches a token.
+
 Profile verification (`VERIFY_PROFILE`) is off and no field but the username
 is required, so a person made through the admin API without an email or a
 name can sign in with the password grant.
@@ -97,6 +104,7 @@ client-credentials token of `mesail-account` or `mesail-directory`):
 | --- | --- | --- |
 | Find a person | `GET /admin/realms/mesail/users?username=<prefix>&exact=true` | both |
 | Create a person | `POST /admin/realms/mesail/users` with `username`, `firstName`, `lastName`, `enabled`, `attributes.mesail.mustChangePassword` `["true"]` and a password credential (`temporary: false`) | directory |
+| Mark a new person with the directory's add request, and read it back after a 409 on create (SLICES D2: finish a half-finished add only when it matches the prefix's reservation) | `attributes.mesail.addRequest` `["<32 hex>"]` in the create body; `GET /admin/realms/mesail/users?username=<prefix>&exact=true` then `GET .../users/<id>` | directory |
 | Set or clear must-change | `PUT /admin/realms/mesail/users/<id>` with the user from `GET` and the changed `attributes` | both |
 | Disable or enable | `PUT .../users/<id>` with `enabled` | directory |
 | Delete | `DELETE .../users/<id>` | directory |
@@ -345,9 +353,11 @@ VM lock) and `python3` and `openssl` on the host. It:
    no `mesail-service` or `mesail-api` client; the service tokens of
    `mesail-account` and `mesail-directory` carry no realm role; the directory
    client creates a person (username given in capitals, stored in
-   lowercase), refuses a second one with the same prefix and six bad
-   usernames, sets `mesail.mustChangePassword` (the claim appears; `account`
-   clears it after a password change; only `true` or `false`), logs out,
+   lowercase) with `mesail.addRequest` and reads it back, refuses a second
+   one with the same prefix and six bad usernames, sets `mesail.mustChangePassword` (the claim appears; `account`
+   clears it after a password change; only `true` or `false`; the add request
+   is in no claim, keeps its value through these changes and refuses 65
+   characters), logs out,
    disables (no sign-in) and deletes the person, and gets 403 for clients,
    the `master` realm and creating a realm; `mesail-account` lists and ends
    sessions, resets the password and logs out everywhere; the TOTP endpoint

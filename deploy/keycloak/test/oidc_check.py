@@ -18,6 +18,9 @@ class MesailRealmCheck:
     OLD_ROLES = ["mesail-member", "mesail-admin", "mesail-service"]
     MUST_CHANGE_ATTRIBUTE = "mesail.mustChangePassword"
     MUST_CHANGE_CLAIM = "mesail_must_change_password"
+    ADD_REQUEST_ATTRIBUTE = "mesail.addRequest"
+    ADD_REQUEST = "0123456789abcdef0123456789abcdef"
+    ATTRIBUTE_MAX_LENGTH = 64
     PEOPLE = {
         "ana": "dev-ana-password",
         "bo": "dev-bo-password",
@@ -154,6 +157,7 @@ class MesailRealmCheck:
         created = directory.call("POST", f"/{self.REALM}/users", self.new_person(self.NEW_PERSON.upper()))
         self.expect("directory: creates a person, username given in capitals (HTTP)", created.status, 201)
         self.expect("directory: the username is stored in lowercase", self.usernames(directory, self.NEW_PERSON), [self.NEW_PERSON])
+        self.expect("directory: reads mesail.addRequest back", self.attribute(directory, self.NEW_PERSON, self.ADD_REQUEST_ATTRIBUTE), [self.ADD_REQUEST])
         again = directory.call("POST", f"/{self.REALM}/users", self.new_person(self.NEW_PERSON))
         self.expect("directory: the same prefix again is refused (HTTP)", again.status, 409)
         for bad in ["a..b", ".ana", "ana-", "x" * 65, "ana@example.com", "ana b"]:
@@ -166,6 +170,7 @@ class MesailRealmCheck:
         user_id = directory.user_id(self.NEW_PERSON)
         claims = self.verifier.claims(self.password_grant(self.NEW_PERSON, self.NEW_PASSWORD)["access_token"])
         self.expect("new person: must-change claim is true", claims.get(self.MUST_CHANGE_CLAIM), True)
+        self.expect("new person: mesail.addRequest is in no claim", self.ADD_REQUEST in json.dumps(claims), False)
         account = self.admin_client(self.ACCOUNT_CLIENT, self.account_secret)
         self.expect("account: changes the password (HTTP)", account.reset_password(user_id, self.TEMPORARY_PASSWORD), 204)
         self.expect("account: clears the must-change attribute (HTTP)", self.set_must_change(account, user_id, None), 204)
@@ -176,6 +181,10 @@ class MesailRealmCheck:
         claims = self.verifier.claims(self.password_grant(self.NEW_PERSON, self.NEW_PASSWORD)["access_token"])
         self.expect("new person: must-change claim is true again", claims.get(self.MUST_CHANGE_CLAIM), True)
         self.expect("directory: may not set must-change to another value (HTTP)", self.set_must_change(directory, user_id, "maybe"), 400)
+        too_long = "a" * (self.ATTRIBUTE_MAX_LENGTH + 1)
+        self.expect("directory: refuses a mesail.addRequest over 64 characters (HTTP)",
+                    self.set_attribute(directory, user_id, self.ADD_REQUEST_ATTRIBUTE, too_long), 400)
+        self.expect("mesail.addRequest survives the attribute changes", self.attribute(directory, self.NEW_PERSON, self.ADD_REQUEST_ATTRIBUTE), [self.ADD_REQUEST])
 
     def check_disable_and_delete(self, directory: AccountSettings) -> None:
         user_id = directory.user_id(self.NEW_PERSON)
@@ -280,7 +289,7 @@ class MesailRealmCheck:
     def new_person(self, username: str) -> dict:
         return {
             "username": username, "firstName": "Dan", "lastName": "New", "enabled": True,
-            "attributes": {self.MUST_CHANGE_ATTRIBUTE: ["true"]},
+            "attributes": {self.MUST_CHANGE_ATTRIBUTE: ["true"], self.ADD_REQUEST_ATTRIBUTE: [self.ADD_REQUEST]},
             "credentials": [{"type": "password", "value": self.NEW_PASSWORD, "temporary": False}],
         }
 
@@ -294,13 +303,20 @@ class MesailRealmCheck:
         return [user["username"] for user in reply.json_list()]
 
     def set_must_change(self, client: AccountSettings, user_id: str, value: str | None) -> int:
+        return self.set_attribute(client, user_id, self.MUST_CHANGE_ATTRIBUTE, value)
+
+    def set_attribute(self, client: AccountSettings, user_id: str, name: str, value: str | None) -> int:
         user = client.call("GET", f"/{self.REALM}/users/{user_id}").json()
         attributes = dict(user.get("attributes") or {})
-        attributes.pop(self.MUST_CHANGE_ATTRIBUTE, None)
+        attributes.pop(name, None)
         if value is not None:
-            attributes[self.MUST_CHANGE_ATTRIBUTE] = [value]
+            attributes[name] = [value]
         user["attributes"] = attributes
         return client.call("PUT", f"/{self.REALM}/users/{user_id}", user).status
+
+    def attribute(self, client: AccountSettings, username: str, name: str) -> object:
+        user = client.call("GET", f"/{self.REALM}/users/{client.user_id(username)}").json()
+        return (user.get("attributes") or {}).get(name)
 
     def set_enabled(self, client: AccountSettings, user_id: str, enabled: bool) -> int:
         user = client.call("GET", f"/{self.REALM}/users/{user_id}").json()

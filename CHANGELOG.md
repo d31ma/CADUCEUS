@@ -76,6 +76,9 @@
   realm per domain and `mesail-operators` beside it, so the running apps
   keep working; `test/legacy_realms_check.py` keeps checking them.
   `test/oidc_check.py` checks the new realm natively and in the image.
+- The dev users have fixed Keycloak ids (a person's id never changes), and
+  the realm declares the admin-only attribute `mesail.addRequest`, which the
+  directory uses to finish an add that failed halfway (slice D2).
 
 ### Slice LU: one-login screens (UX)
 

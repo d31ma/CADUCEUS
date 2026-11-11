@@ -12,7 +12,7 @@ func (test *RealtimeServiceTest) realtimeAt(accessToken string, expiresAtMs floa
 	accounts := &SessionAccountService{}
 	accounts.Add(Me{MemberId: "ana", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com"})
 	tokens := &SessionTokenService{tokens: map[string]SessionTokens{"example.com": {AccessToken: accessToken, ExpiresAtMs: expiresAtMs}}, identity: NewIdentityClientWith(test.behaviors)}
-	service := &RealtimeService{realtimeClient: &RealtimeClient{}, token: &ConversationTokenService{tokens: tokens, accounts: accounts}}
+	service := &RealtimeService{realtimeClient: &RealtimeClient{}, token: &ConversationTokenService{session: &SessionService{tokens: tokens, accounts: accounts}, accounts: accounts}}
 	service.Start()
 	return service
 }
@@ -39,9 +39,9 @@ func (test *RealtimeServiceTest) TestOtherEventsKeepTheState() {
 	Assert.Equals("connecting", realtime.State)
 }
 
-func (test *RealtimeServiceTest) TestDomainSelectedWithoutAnOpenSocketGoesOffline() {
+func (test *RealtimeServiceTest) TestDomainChangedWithoutAnOpenSocketGoesOffline() {
 	realtime := test.realtime("access-1")
-	realtime.DomainSelected(ConversationDomainSelected{DomainId: "example.com"})
+	realtime.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
 	Assert.Equals("offline", realtime.State)
 }
 

@@ -20,7 +20,7 @@ func (service *RealtimeService) Received(event RealtimeEvent) {
 
 // @OnEvent({"replay":true})
 // @InBackground
-func (service *RealtimeService) DomainSelected(selected ConversationDomainSelected) {
+func (service *RealtimeService) DomainChanged(changed SessionDomainChanged) {
 	service.State = service.stateAfter(service.authenticate())
 }
 

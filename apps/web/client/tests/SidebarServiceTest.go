@@ -14,7 +14,7 @@ func (test *SidebarServiceTest) sidebar(accessToken string) *SidebarService {
 	return &SidebarService{
 		messaging:      NewMessagingClientWith(test.behaviors),
 		channelsClient: NewChannelsClientWith(test.behaviors),
-		token:          &ConversationTokenService{tokens: tokens, accounts: accounts},
+		token:          &ConversationTokenService{session: &SessionService{tokens: tokens, accounts: accounts}, accounts: accounts},
 		shell:          &ShellService{},
 		rows:           &SidebarRowService{},
 	}
@@ -27,7 +27,7 @@ func (test *SidebarServiceTest) loaded() *SidebarService {
 }
 
 func (test *SidebarServiceTest) useToken(sidebar *SidebarService, accessToken string) {
-	sidebar.token.tokens.tokens["example.com"] = SessionTokens{AccessToken: accessToken, ExpiresAtMs: 100000000}
+	sidebar.token.session.tokens.tokens["example.com"] = SessionTokens{AccessToken: accessToken, ExpiresAtMs: 100000000}
 }
 
 func (test *SidebarServiceTest) ids(rows []ConversationRow) []string {
@@ -63,7 +63,7 @@ func (test *SidebarServiceTest) TestDomainSelectedShowsAnErrorWhenConversationsF
 
 func (test *SidebarServiceTest) TestDomainSelectedShowsAnErrorWhenTheSessionEnded() {
 	sidebar := test.sidebar("access-1")
-	sidebar.token.tokens.tokens["example.com"] = SessionTokens{AccessToken: "access-1", ExpiresAtMs: 0}
+	sidebar.token.session.tokens.tokens["example.com"] = SessionTokens{AccessToken: "access-1", ExpiresAtMs: 0}
 	sidebar.DomainSelected(ConversationDomainSelected{DomainId: "example.com"})
 	Assert.Equals("error", sidebar.State)
 }
@@ -211,4 +211,25 @@ func (test *SidebarServiceTest) TestStartShowsLoadingUntilTheDomainLoads() {
 	sidebar := test.sidebar("access-1")
 	sidebar.Start()
 	Assert.Equals("loading", sidebar.State)
+}
+
+func (test *SidebarServiceTest) TestDomainChangedLoadsTheNewDomain() {
+	sidebar := test.sidebar("access-1")
+	sidebar.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
+	Assert.Equals("ready", sidebar.State)
+	Assert.Equals("example.com", sidebar.DomainId)
+}
+
+func (test *SidebarServiceTest) TestViewMountedAnswersTheOpenConversation() {
+	sidebar := test.loaded()
+	sidebar.Open("cnv_general")
+	opened := sidebar.ViewMounted(ConversationViewMounted{Mounted: true})
+	Assert.Equals("cnv_general", opened.ConversationId)
+	Assert.Equals("example.com", opened.DomainId)
+	Assert.Equals(2, opened.UnreadCount)
+}
+
+func (test *SidebarServiceTest) TestViewMountedBeforeAnyOpenAnswersNothing() {
+	opened := test.loaded().ViewMounted(ConversationViewMounted{Mounted: true})
+	Assert.Equals("", opened.ConversationId)
 }

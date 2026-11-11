@@ -10,7 +10,7 @@ func (test *ConversationRequestServiceTest) requests() *ConversationRequestServi
 	tokens := &SessionTokenService{tokens: map[string]SessionTokens{"example.com": {AccessToken: "access-1", ExpiresAtMs: 1900000000000}}}
 	return &ConversationRequestService{
 		messaging: NewMessagingClientWith(test.behaviors),
-		token:     &ConversationTokenService{tokens: tokens, accounts: accounts},
+		token:     &ConversationTokenService{session: &SessionService{tokens: tokens, accounts: accounts}, accounts: accounts},
 	}
 }
 

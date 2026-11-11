@@ -46,9 +46,10 @@ type ConversationService struct {
 // @OnStart
 func (service *ConversationService) Start() {
 	service.reset()
+	service.applicationEventPublisher.PublishEvent(ConversationViewMounted{Mounted: true}, false)
 }
 
-// @OnEvent({"replay":true})
+// @OnEvent
 // @InBackground
 func (service *ConversationService) Opened(opened ConversationOpened) {
 	service.openWhenCurrent(opened)
@@ -56,8 +57,8 @@ func (service *ConversationService) Opened(opened ConversationOpened) {
 
 // @OnEvent({"replay":true})
 // @InBackground
-func (service *ConversationService) DomainSelected(selected ConversationDomainSelected) {
-	service.resetWhenOtherDomain(selected.DomainId)
+func (service *ConversationService) DomainChanged(changed SessionDomainChanged) {
+	service.resetWhenOtherDomain(changed.DomainId)
 }
 
 // @OnEvent

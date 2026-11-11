@@ -9,7 +9,7 @@ func (test *ConversationTokenServiceTest) token(expiresAtMs float64) *Conversati
 	accounts.Add(Me{MemberId: "ana", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com"})
 	tokens := &SessionTokenService{identity: NewIdentityClientWith(test.behaviors)}
 	tokens.tokens = map[string]SessionTokens{"example.com": {AccessToken: "access-1", ExpiresAtMs: expiresAtMs}}
-	return &ConversationTokenService{tokens: tokens, accounts: accounts}
+	return &ConversationTokenService{session: &SessionService{tokens: tokens, accounts: accounts}, accounts: accounts}
 }
 
 func (test *ConversationTokenServiceTest) TestAuthorizationIsABearerHeader() {
@@ -47,4 +47,44 @@ func (test *ConversationTokenServiceTest) TestDomainIdFollowsASwitch() {
 
 func (test *ConversationTokenServiceTest) TestMyAddressIsTheCurrentAccountAddress() {
 	Assert.Equals("ana@example.com", test.token(100000000).MyAddress())
+}
+
+func (test *ConversationTokenServiceTest) TestWithRenewalCallsOnceWhenTheCallWorks() {
+	calls := []string{}
+	failure := test.token(100000000).WithRenewal(func(authorization string) error {
+		calls = append(calls, authorization)
+		return nil
+	})
+	Assert.Equals(nil, failure)
+	Assert.Equals([]string{"Bearer access-1"}, calls)
+}
+
+func (test *ConversationTokenServiceTest) TestWithRenewalRenewsOnceAfterAnUnauthorizedAnswer() {
+	calls := []string{}
+	failure := test.token(100000000).WithRenewal(func(authorization string) error {
+		calls = append(calls, authorization)
+		return &BehaviorError{Code: "HTTP_STATUS", Status: 401}
+	})
+	Assert.IsTrue(failure != nil)
+	Assert.Equals(2, len(calls))
+}
+
+func (test *ConversationTokenServiceTest) TestWithRenewalKeepsOtherFailures() {
+	calls := []string{}
+	failure := test.token(100000000).WithRenewal(func(authorization string) error {
+		calls = append(calls, authorization)
+		return &BehaviorError{Code: "HTTP_STATUS", Status: 503}
+	})
+	Assert.IsTrue(failure != nil)
+	Assert.Equals(1, len(calls))
+}
+
+func (test *ConversationTokenServiceTest) TestWithRenewalStopsWhenTheSessionEnded() {
+	calls := []string{}
+	failure := test.token(0).WithRenewal(func(authorization string) error {
+		calls = append(calls, authorization)
+		return nil
+	})
+	Assert.IsTrue(failure != nil)
+	Assert.Equals(0, len(calls))
 }

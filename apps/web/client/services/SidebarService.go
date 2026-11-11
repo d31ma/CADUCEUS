@@ -12,6 +12,7 @@ type SidebarService struct {
 	DirectsClosed  bool
 	EmailsClosed   bool
 	channelInfo    []Channel
+	opened         ConversationOpened
 	// @Needs
 	messaging *MessagingClient
 	// @Needs
@@ -28,7 +29,7 @@ type SidebarService struct {
 // @OnStart
 func (sidebar *SidebarService) Start() {
 	sidebar.State = sidebar.stateLoading()
-	sidebar.applicationEventPublisher.PublishEvent(ConversationDomainSelected{DomainId: sidebar.token.DomainId()}, true)
+	sidebar.applicationEventPublisher.PublishEvent(ConversationDomainSelected{DomainId: sidebar.token.DomainId()}, false)
 }
 
 // @OnEvent({"replay":true})
@@ -36,6 +37,18 @@ func (sidebar *SidebarService) Start() {
 func (sidebar *SidebarService) DomainSelected(selected ConversationDomainSelected) {
 	sidebar.clear(selected.DomainId)
 	sidebar.load(selected.DomainId)
+}
+
+// @OnEvent({"replay":true})
+// @InBackground
+func (sidebar *SidebarService) DomainChanged(changed SessionDomainChanged) {
+	sidebar.clear(changed.DomainId)
+	sidebar.load(changed.DomainId)
+}
+
+// @OnEvent
+func (sidebar *SidebarService) ViewMounted(mounted ConversationViewMounted) ConversationOpened {
+	return sidebar.opened
 }
 
 // @OnEvent
@@ -65,6 +78,7 @@ func (sidebar *SidebarService) clear(domainId string) {
 	sidebar.Emails = []ConversationRow{}
 	sidebar.CurrentId = ""
 	sidebar.channelInfo = []Channel{}
+	sidebar.opened = ConversationOpened{}
 }
 
 func (sidebar *SidebarService) load(domainId string) {
@@ -176,13 +190,14 @@ func (sidebar *SidebarService) open(row ConversationRow) {
 	sidebar.Emails = sidebar.marked(sidebar.Emails, row.ConversationId)
 	sidebar.shell.Pane = sidebar.paneMain()
 	sidebar.shell.Heading = row.Title
-	sidebar.applicationEventPublisher.PublishEvent(ConversationOpened{
+	sidebar.opened = ConversationOpened{
 		DomainId:       sidebar.DomainId,
 		ConversationId: row.ConversationId,
 		Title:          row.Title,
 		Section:        row.Section,
 		UnreadCount:    row.UnreadCount,
-	}, true)
+	}
+	sidebar.applicationEventPublisher.PublishEvent(sidebar.opened, false)
 }
 
 func (sidebar *SidebarService) marked(rows []ConversationRow, conversationId string) []ConversationRow {

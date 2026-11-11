@@ -26,7 +26,7 @@ func (test *ConversationServiceTest) requests() *ConversationRequestService {
 	tokens := &SessionTokenService{tokens: map[string]SessionTokens{"example.com": {AccessToken: "access-1", ExpiresAtMs: 1900000000000}}}
 	return &ConversationRequestService{
 		messaging: NewMessagingClientWith(test.behaviors),
-		token:     &ConversationTokenService{tokens: tokens, accounts: accounts},
+		token:     &ConversationTokenService{session: &SessionService{tokens: tokens, accounts: accounts}, accounts: accounts},
 	}
 }
 
@@ -83,18 +83,18 @@ func (test *ConversationServiceTest) TestRetryLoadsAgain() {
 	Assert.Equals(3, len(service.Messages))
 }
 
-func (test *ConversationServiceTest) TestDomainSelectedClearsEverything() {
+func (test *ConversationServiceTest) TestDomainChangedClearsEverything() {
 	service := test.general()
-	service.DomainSelected(ConversationDomainSelected{DomainId: "example.org"})
+	service.DomainChanged(SessionDomainChanged{DomainId: "example.org"})
 	Assert.Equals("idle", service.State)
 	Assert.Equals("", service.ConversationId)
 	Assert.Equals(0, len(service.Messages))
 	Assert.Equals(0, len(service.raw))
 }
 
-func (test *ConversationServiceTest) TestDomainSelectedForTheSameDomainKeepsTheConversation() {
+func (test *ConversationServiceTest) TestDomainChangedForTheSameDomainKeepsTheConversation() {
 	service := test.general()
-	service.DomainSelected(ConversationDomainSelected{DomainId: "example.com"})
+	service.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
 	Assert.Equals("ready", service.State)
 	Assert.Equals("cnv_general", service.ConversationId)
 }

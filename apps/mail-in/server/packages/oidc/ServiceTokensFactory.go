@@ -23,7 +23,7 @@ func (factory ServiceTokensFactory) FromJson(document string) ServiceTokens {
 }
 
 func (ServiceTokensFactory) complete(settings Settings, secret string) error {
-	if settings.Keycloak == "" || secret == "" {
+	if (settings.Keycloak == "" && settings.ServiceTokens == "") || secret == "" {
 		return NotConfigured{}
 	}
 	return nil

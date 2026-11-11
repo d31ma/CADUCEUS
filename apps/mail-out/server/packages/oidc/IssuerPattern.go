@@ -17,15 +17,34 @@ func (pattern IssuerPattern) Realm(issuer string) (string, error) {
 }
 
 func (pattern IssuerPattern) Expand(realm string) (string, error) {
-	_, err := pattern.allowed(realm, strings.Contains(pattern.Pattern, pattern.placeholder()), realm)
+	_, err := pattern.allowed(realm, pattern.HasPlaceholder(), realm)
 	return strings.ReplaceAll(pattern.Pattern, pattern.placeholder(), realm), err
 }
 
+func (pattern IssuerPattern) HasPlaceholder() bool {
+	return strings.Contains(pattern.Pattern, pattern.placeholder())
+}
+
+func (pattern IssuerPattern) Resolved(realm string) (string, error) {
+	return pattern.resolved(pattern.HasPlaceholder(), realm)
+}
+
+func (pattern IssuerPattern) resolved(hasPlaceholder bool, realm string) (string, error) {
+	if !hasPlaceholder {
+		return pattern.Pattern, nil
+	}
+	return pattern.Expand(realm)
+}
+
 func (pattern IssuerPattern) allowed(name string, matched bool, issuer string) (string, error) {
-	if !matched || len(name) > pattern.maximumNameLength() || !pattern.realmName().MatchString(name) {
+	if !matched || !pattern.validName(name) {
 		return "", UnknownIssuer{Issuer: issuer}
 	}
 	return name, nil
+}
+
+func (pattern IssuerPattern) validName(name string) bool {
+	return len(name) <= pattern.maximumNameLength() && pattern.realmName().MatchString(name)
 }
 
 func (IssuerPattern) realmName() *regexp.Regexp {

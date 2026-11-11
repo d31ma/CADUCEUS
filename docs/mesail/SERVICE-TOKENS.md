@@ -34,7 +34,9 @@ YON_SERVICE_CLIENT_SECRET=<the mesail-service secret>
 ```
 
 `identity` holds the same value (and, during a rotation,
-`YON_SERVICE_CLIENT_SECRET_PREVIOUS`). Rotating it is an operator step: set
+`YON_SERVICE_CLIENT_PREVIOUS`; not `..._SECRET_PREVIOUS`, which `ty`
+refuses because `service.client.secret` would be both a value and a
+folder). Rotating it is an operator step: set
 the new value as current and the old as previous in `identity`, then in
 every caller's `.env`, then remove the previous value.
 
@@ -50,11 +52,13 @@ request.Header.Set("Authorization", authorization) // "Bearer <token>"
 ```
 
 - `Authorization(domainId)` returns `Bearer <token>` whose `domain` claim
-  is `domainId`. For install-wide calls pass `oidc.InstallWide` (`*`).
+  is `domainId`. For install-wide calls pass `oidc.InstallWide{}.DomainId()` (`*`).
 - Without the settings it returns `oidc.NotConfigured`. When `identity`
   refuses the client, it returns `oidc.SignInRefused`. When `identity`
-  cannot answer, it returns `oidc.KeycloakUnavailable` (slice L1 may rename
-  it).
+  cannot answer, it returns `oidc.KeycloakUnavailable` (the name stays).
+- The mode follows the settings: with `oidc.serviceTokens` it asks
+  `identity`; without it (the old per-realm settings, until slice L5) it
+  asks Keycloak's `oidc.keycloak` with client credentials.
 - Tokens are cached in `TMPDIR` (folder `mesail-oidc/tokens`, mode 0700,
   files mode 0600) until 10 seconds before they expire, so a warm handler
   asks `identity` about once a minute per domain.
@@ -81,10 +85,14 @@ maps the token role `mesail-service` to `Service`. A service token has
 
 ## Tests
 
-Use `oidc.SigningRealm` to make a token without `identity` (slice L1 adds
-the `Domain` field and makes the test issuer the Mesail issuer):
+Use `oidc.SigningRealm{}.StartedMesail()` to make a Mesail token without
+`identity` (its settings: issuer
+`https://mail.mesail.test/api/v1/identity`, `jwks` and `serviceTokens`
+under it; `ApplicationJson()` and `Publish(now)` as for `Started(name)`,
+which stays the per-realm test issuer until slice L5):
 
 ```go
+realm, _ := oidc.SigningRealm{}.StartedMesail()
 token, _ := realm.Token(oidc.TokenRequest{Subject: "service", Domain: "example.com",
     RealmRoles: []string{"mesail-service"}, Audience: "mesail-api",
     AuthorizedParty: "mesail-service", ExpiresAt: time.Now().Unix() + 60})

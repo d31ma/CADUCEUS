@@ -8,4 +8,6 @@ type TokenRequest struct {
 	Audience        string
 	AuthorizedParty string
 	ExpiresAt       int64
+	Domain          string
+	Username        string
 }

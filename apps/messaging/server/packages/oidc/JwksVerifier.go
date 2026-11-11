@@ -28,5 +28,7 @@ func (verifier JwksVerifier) Verify(rawToken string, now time.Time) (Claims, err
 	if err != nil {
 		return Claims{}, err
 	}
-	return token.Claims, ClaimRules{Audience: verifier.Settings.Audience}.Check(token.Claims, now)
+	claims := token.Claims
+	claims.Domain = realm
+	return claims, ClaimRules{Audience: verifier.Settings.Audience}.Check(claims, now)
 }

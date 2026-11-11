@@ -49,6 +49,18 @@ func (admin KeycloakAdmin) SetOtp(userId string, secret string) error {
 	return admin.send(http.MethodPut, admin.user(userId), UserCredentials{Credentials: []CredentialRepresentation{credential}}, nil)
 }
 
+func (admin KeycloakAdmin) RemoveAttribute(userId string, name string) error {
+	user := map[string]json.RawMessage{}
+	err := admin.send(http.MethodGet, admin.user(userId), nil, &user)
+	if err != nil {
+		return err
+	}
+	attributes := admin.attributes(user[admin.attributesField()])
+	delete(attributes, name)
+	user[admin.attributesField()], _ = json.Marshal(attributes)
+	return admin.send(http.MethodPut, admin.user(userId), user, nil)
+}
+
 func (admin KeycloakAdmin) UserId(username string) (string, error) {
 	users := []UserReference{}
 	err := admin.send(http.MethodGet, "/users?exact=true&username="+url.QueryEscape(username), nil, &users)
@@ -62,6 +74,16 @@ func (admin KeycloakAdmin) Locked(userId string) (bool, error) {
 	status := BruteForceStatus{}
 	err := admin.send(http.MethodGet, "/attack-detection/brute-force"+admin.user(userId), nil, &status)
 	return status.Disabled, err
+}
+
+func (KeycloakAdmin) attributes(raw json.RawMessage) map[string][]string {
+	attributes := map[string][]string{}
+	_ = json.Unmarshal(raw, &attributes)
+	return attributes
+}
+
+func (KeycloakAdmin) attributesField() string {
+	return "attributes"
 }
 
 func (KeycloakAdmin) only(users []UserReference) (string, error) {

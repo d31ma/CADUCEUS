@@ -8,10 +8,10 @@ func (roles RoleMap) MesailRoles(claims Claims) []string {
 
 func (RoleMap) table() map[string]string {
 	return map[string]string{
-		"mesail-member":   "Member",
-		"mesail-admin":    "DomainAdmin",
-		"mesail-operator": "Operator",
-		"mesail-service":  "Service",
+		RealmRoles{}.Member():   "Member",
+		RealmRoles{}.Admin():    "DomainAdmin",
+		RealmRoles{}.Operator(): "Operator",
+		RealmRoles{}.Service():  "Service",
 	}
 }
 

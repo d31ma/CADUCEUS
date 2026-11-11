@@ -120,9 +120,15 @@ How sign-in works (SPEC AC-ID-9):
   The web app shows only the password change screen while it is `true`.
 
 The Mesail access token (ADR 0005 section 3):
-- JWT, ES256, `kid` of the current key. Keys from the secret store:
-  `YON_IDENTITY_SIGNING_KEY` (PKCS #8 PEM, P-256) and, during a rotation,
-  `YON_IDENTITY_SIGNING_KEY_PREVIOUS` (published, never used to sign).
+- JWT, ES256, `kid` = the RFC 7638 thumbprint of the current key. Keys
+  from the secret store: `YON_IDENTITY_SIGNING_KEY` (a P-256 key as PKCS #8:
+  base64 of the DER bytes on one line, because a TACHYON `.env` value is
+  one line; a PEM text also works where the store keeps several lines) and,
+  during a rotation, `YON_IDENTITY_SIGNING_PREVIOUS` (same format;
+  published, never used to sign). `kit/oidc` `TokenSignerFactory` reads
+  them. Not `..._KEY_PREVIOUS`: TACHYON maps `.env` names to settings by
+  splitting at `_`, and `identity.signing.key` cannot be both a value and
+  a folder, so `ty` refuses such a `.env`.
 - Claims: `iss` (the app setting `token.issuer`, for example
   `https://mail.example.net/api/v1/identity`), `aud` `mesail-api`, `sub`
   (person id; `service` for a service token), `azp` (`mesail-web` or
@@ -187,7 +193,8 @@ Sessions:
 Service tokens (ADR 0005 section 4):
 - `POST /service-token` compares `clientId` with `mesail-service` and
   `clientSecret` with `YON_SERVICE_CLIENT_SECRET` (or
-  `YON_SERVICE_CLIENT_SECRET_PREVIOUS` during a rotation) in constant time,
+  `YON_SERVICE_CLIENT_PREVIOUS` during a rotation) in constant time
+  (`kit/oidc` `ServiceClientCheck`),
   and answers a 60-second token with `azp` `mesail-service`, the role
   `mesail-service`, `sub` `service` and `domain` = the requested
   `domainId` (a domain name or `*`). It does not check that the domain is
@@ -195,7 +202,7 @@ Service tokens (ADR 0005 section 4):
 - `kit/oidc` `ServiceTokens.Authorization(domainId)` calls it (app setting
   `oidc.serviceTokens`, the route URL; the host is in `outgoing.hosts`) and
   caches each token per domain until 10 seconds before it expires.
-  `oidc.InstallWide` (`*`) is the domain id of install-wide calls.
+  `oidc.InstallWide{}.DomainId()` (`*`) is the domain id of install-wide calls.
 
 Account settings (the owner's choice: password and 2-step code are managed
 in Mesail's own settings; the browser still never talks to Keycloak). They

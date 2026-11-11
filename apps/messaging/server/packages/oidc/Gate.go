@@ -28,7 +28,14 @@ func (gate Gate) Identify(authorization string) (Caller, error) {
 }
 
 func (gate Gate) caller(claims Claims) (Caller, error) {
-	domainId, err := Realm{}.Name(claims.Issuer)
-	caller := Caller{DomainId: domainId, MemberId: claims.Subject, DisplayName: claims.Name, Email: claims.Email, Roles: RoleMap{}.MesailRoles(claims), SessionId: claims.SessionId}
+	domainId, err := gate.domain(claims)
+	caller := Caller{DomainId: domainId, MemberId: claims.Subject, Username: claims.Username, DisplayName: claims.Name, Email: claims.Email, Roles: RoleMap{}.MesailRoles(claims), SessionId: claims.SessionId}
 	return caller, err
+}
+
+func (Gate) domain(claims Claims) (string, error) {
+	if claims.Domain != "" {
+		return claims.Domain, nil
+	}
+	return Realm{}.Name(claims.Issuer)
 }

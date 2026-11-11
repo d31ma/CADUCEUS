@@ -1,11 +1,6 @@
 package oidc
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"time"
 )
@@ -13,15 +8,17 @@ import (
 type SigningRealm struct {
 	Name     string
 	Settings Settings
-	key      *ecdsa.PrivateKey
+	key      SigningKey
 }
 
 func (realm SigningRealm) Started(name string) (SigningRealm, error) {
-	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return SigningRealm{}, err
-	}
-	return SigningRealm{Name: name, Settings: realm.settings(), key: key}, nil
+	key, err := SigningKey{}.Generated()
+	return SigningRealm{Name: name, Settings: realm.settings(), key: key}, err
+}
+
+func (realm SigningRealm) StartedMesail() (SigningRealm, error) {
+	key, err := SigningKey{}.Generated()
+	return SigningRealm{Settings: realm.mesailSettings(), key: key}, err
 }
 
 func (realm SigningRealm) ApplicationJson() (string, error) {
@@ -30,34 +27,24 @@ func (realm SigningRealm) ApplicationJson() (string, error) {
 }
 
 func (realm SigningRealm) Publish(now time.Time) error {
-	jwksUrl, err := IssuerPattern{Pattern: realm.Settings.Jwks}.Expand(realm.Name)
+	jwksUrl, err := IssuerPattern{Pattern: realm.Settings.Jwks}.Resolved(realm.Name)
 	if err != nil {
 		return err
 	}
-	point, err := realm.key.PublicKey.Bytes()
+	key, err := realm.key.PublicKey()
 	if err != nil {
 		return err
 	}
-	key := JsonWebKey{KeyType: "EC", KeyId: realm.keyId(), Algorithm: "ES256", Use: "sig", Curve: "P-256", X: realm.encoded(point[1:33]), Y: realm.encoded(point[33:])}
+	key.KeyId = realm.keyId()
 	return realm.cache().Store(jwksUrl, CachedKeySet{FetchedAt: now.Unix(), Keys: KeySet{Keys: []JsonWebKey{key}}})
 }
 
 func (realm SigningRealm) Token(request TokenRequest) (string, error) {
-	issuer, err := IssuerPattern{Pattern: realm.Settings.Issuer}.Expand(realm.Name)
+	issuer, err := IssuerPattern{Pattern: realm.Settings.Issuer}.Resolved(realm.Name)
 	if err != nil {
 		return "", err
 	}
-	header, err := json.Marshal(TokenHeader{Algorithm: "ES256", KeyId: realm.keyId(), Type: "JWT"})
-	if err != nil {
-		return "", err
-	}
-	claims, err := json.Marshal(realm.document(issuer, request))
-	if err != nil {
-		return "", err
-	}
-	input := realm.encoded(header) + "." + realm.encoded(claims)
-	signature, err := realm.signature(input)
-	return input + "." + realm.encoded(signature), err
+	return JwtWriter{}.Signed(realm.key, realm.keyId(), realm.document(issuer, request))
 }
 
 func (realm SigningRealm) document(issuer string, request TokenRequest) ClaimsDocument {
@@ -69,35 +56,40 @@ func (realm SigningRealm) document(issuer string, request TokenRequest) ClaimsDo
 		ExpiresAt:       request.ExpiresAt,
 		TokenType:       ClaimRules{}.accessTokenType(),
 		Name:            request.Name,
+		Username:        request.Username,
 		Email:           request.Email,
+		Domain:          request.Domain,
 		RealmAccess:     RealmAccess{Roles: request.RealmRoles},
 	}
-}
-
-func (realm SigningRealm) signature(input string) ([]byte, error) {
-	digest := sha256.Sum256([]byte(input))
-	r, s, err := ecdsa.Sign(rand.Reader, realm.key, digest[:])
-	if err != nil {
-		return nil, err
-	}
-	half := SignatureCheck{}.ecdsaHalfLength()
-	return append(r.FillBytes(make([]byte, half)), s.FillBytes(make([]byte, half))...), nil
 }
 
 func (SigningRealm) settings() Settings {
 	return Settings{
 		Issuer:   "https://id.mesail.test/realms/{realm}",
 		Jwks:     "https://id.mesail.test/realms/{realm}/protocol/openid-connect/certs",
-		Audience: "mesail-api",
+		Audience: SigningRealm{}.audience(),
 	}
+}
+
+func (realm SigningRealm) mesailSettings() Settings {
+	return Settings{
+		Issuer:        realm.mesailIssuer(),
+		Jwks:          realm.mesailIssuer() + "/jwks",
+		Audience:      "mesail-api",
+		ServiceTokens: realm.mesailIssuer() + "/service-token",
+	}
+}
+
+func (SigningRealm) mesailIssuer() string {
+	return "https://mail.mesail.test/api/v1/identity"
+}
+
+func (SigningRealm) audience() string {
+	return "mesail-api"
 }
 
 func (SigningRealm) cache() JsonFileCache {
 	return VerifierFactory{}.cache()
-}
-
-func (SigningRealm) encoded(raw []byte) string {
-	return base64.RawURLEncoding.EncodeToString(raw)
 }
 
 func (SigningRealm) keyId() string {

@@ -85,7 +85,7 @@ func (issuer SessionIssuer) admin(domain string) (KeycloakAdmin, error) {
 	if err != nil {
 		return KeycloakAdmin{}, err
 	}
-	endpoint, err := IssuerPattern{Pattern: issuer.Admin}.Expand(domain)
+	endpoint, err := IssuerPattern{Pattern: issuer.Admin}.Resolved(domain)
 	return KeycloakAdmin{Client: issuer.Client, Endpoint: endpoint, Token: grant.AccessToken}, err
 }
 
@@ -143,7 +143,7 @@ func (issuer SessionIssuer) opened(sessionKey string) (SessionContent, error) {
 }
 
 func (issuer SessionIssuer) keycloak(domain string) (KeycloakClient, error) {
-	endpoint, err := IssuerPattern{Pattern: issuer.Keycloak}.Expand(domain)
+	endpoint, err := IssuerPattern{Pattern: issuer.Keycloak}.Resolved(domain)
 	return KeycloakClient{Client: issuer.Client, Endpoint: endpoint, ClientId: issuer.clientId(), ClientSecret: issuer.Settings.Client.Secret}, err
 }
 

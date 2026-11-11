@@ -420,7 +420,7 @@ Gateway WebSocket API. The other routes are the `realtime` Yon app.
 | `PUT /api/v1/realtime/presence` | SignedIn | `PresenceRequest{state: active|idle|dnd, doNotDisturbUntil?}` | `204` |
 | `GET /api/v1/realtime/presence?memberIds=` | SignedIn | - | `[]Presence{memberId, state, doNotDisturbUntil?, lastSeenAt}` |
 | `POST /api/v1/realtime/events` | Service (the envelope's domain) | `events.Envelope` | `EventReceipt{eventId, status}` |
-| `POST /api/v1/realtime/jobs/sweep` | Service (install-wide, realm `mesail-operators`) | - | `SweepReport{closedConnections, offlineMembers, endedDoNotDisturb, writes, more}` |
+| `POST /api/v1/realtime/jobs/sweep` | Service (install-wide, realm `mesail-operators`) | - | `SweepReport{closedConnections, offlineMembers, endedDoNotDisturb, deletedTickets, writes, more}` (also deletes used or expired stream tickets with the writes left of its 25) |
 
 Socket protocol (agreed with slice F2: a Go Tac socket client gets no open
 or close callback and has no timer):

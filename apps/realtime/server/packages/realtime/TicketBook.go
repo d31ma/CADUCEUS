@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"io"
+	"slices"
 	"time"
 )
 
@@ -47,6 +48,50 @@ func (book TicketBook) Redeem(ticket string) (Grant, error) {
 		return Grant{}, Unavailable{Operation: "ticket use"}
 	}
 	return Grant{DomainId: record.DomainId, MemberId: record.MemberId, ExpiresAt: record.TokenExpiresAt}, nil
+}
+
+func (book TicketBook) Stale(limit int) ([]TicketRecord, error) {
+	found, err := book.all()
+	if err != nil {
+		return nil, err
+	}
+	stale := book.staleBy(found, book.Now().UTC())
+	return stale[:min(len(stale), max(limit, 0))], nil
+}
+
+func (book TicketBook) Remove(record TicketRecord) error {
+	_, err := book.Storage.Documents.DeleteById(book.collection(), record.ID)
+	if err != nil {
+		return Unavailable{Operation: "ticket delete"}
+	}
+	return nil
+}
+
+func (book TicketBook) all() ([]TicketRecord, error) {
+	exists, err := book.keeper().Exists(book.collection())
+	if err != nil || !exists {
+		return []TicketRecord{}, err
+	}
+	return book.read()
+}
+
+func (book TicketBook) read() ([]TicketRecord, error) {
+	found, cursor, more := []TicketRecord{}, "", true
+	for pages := 0; more && pages < book.maximumPages(); pages++ {
+		page := []TicketRecord{}
+		next, err := book.Storage.Page(Query{Collection: book.collection(), Cursor: cursor, Size: book.pageSize()}, &page)
+		if err != nil {
+			return nil, Unavailable{Operation: "ticket scroll"}
+		}
+		found, cursor, more = append(found, page...), next, next != ""
+	}
+	return found, nil
+}
+
+func (book TicketBook) staleBy(found []TicketRecord, now time.Time) []TicketRecord {
+	return slices.DeleteFunc(found, func(record TicketRecord) bool {
+		return record.ID == "" || (record.UsedAt == "" && now.Before(book.moment(record.ExpiresAt)))
+	})
 }
 
 func (book TicketBook) newTicket() (string, error) {
@@ -112,6 +157,14 @@ func (TicketBook) collection() string {
 
 func (TicketBook) lifetime() time.Duration {
 	return 30 * time.Second
+}
+
+func (TicketBook) pageSize() int {
+	return 100
+}
+
+func (TicketBook) maximumPages() int {
+	return 3
 }
 
 func (TicketBook) randomBytes() int {

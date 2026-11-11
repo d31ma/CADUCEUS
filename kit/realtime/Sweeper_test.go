@@ -7,9 +7,14 @@ import (
 	"time"
 )
 
-func presenceSweeper(memory *memoryStorage, gateway *recordingGateway) Sweeper {
+func presenceDomainSweep(memory *memoryStorage, gateway *recordingGateway) DomainSweep {
 	keeper := presenceKeeper(memory, gateway)
-	return Sweeper{Gate: presenceGate(), Domains: DomainBook{Storage: memory.storage()}, Connections: keeper.Connections, Pushes: gateway, Presence: keeper}
+	return DomainSweep{Book: DomainBook{Storage: memory.storage()}, Connections: keeper.Connections, Pushes: gateway, Presence: keeper}
+}
+
+func presenceSweeper(memory *memoryStorage, gateway *recordingGateway) Sweeper {
+	tickets := TicketSweep{Book: ticketTestBook(memory, presenceNow())}
+	return Sweeper{Gate: presenceGate(), Domains: presenceDomainSweep(memory, gateway), Tickets: tickets}
 }
 
 func TestSweepRefusesAMissingToken(t *testing.T) {
@@ -43,7 +48,7 @@ func TestSweepRunsForTheOperatorsService(t *testing.T) {
 func TestClosingAnExpiredConnectionWarnsClosesAndMarksTheMember(t *testing.T) {
 	memory := newMemoryStorage()
 	gateway := newRecordingGateway()
-	sweeper := presenceSweeper(memory, gateway)
+	sweeper := presenceDomainSweep(memory, gateway)
 	sweeper.Presence.Connected("example.com", "ana")
 	report, err := sweeper.closeAll([]Connection{{ConnectionId: "c1", DomainId: "example.com", MemberId: "ana"}})
 	record, _, _ := sweeper.Presence.Book.Find("example.com", "ana")
@@ -55,7 +60,7 @@ func TestClosingAnExpiredConnectionWarnsClosesAndMarksTheMember(t *testing.T) {
 func TestClosingAConnectionThatIsGoneIsFine(t *testing.T) {
 	gateway := newRecordingGateway()
 	gateway.gone["c1"] = true
-	err := presenceSweeper(newMemoryStorage(), gateway).closeOne(Connection{ConnectionId: "c1", DomainId: "example.com", MemberId: "ana"})
+	err := presenceDomainSweep(newMemoryStorage(), gateway).closeOne(Connection{ConnectionId: "c1", DomainId: "example.com", MemberId: "ana"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +69,7 @@ func TestClosingAConnectionThatIsGoneIsFine(t *testing.T) {
 func TestClosingFailsWhileTheGatewayIsDown(t *testing.T) {
 	gateway := newRecordingGateway()
 	gateway.down = true
-	_, err := presenceSweeper(newMemoryStorage(), gateway).closeAll([]Connection{{ConnectionId: "c1", DomainId: "example.com", MemberId: "ana"}})
+	_, err := presenceDomainSweep(newMemoryStorage(), gateway).closeAll([]Connection{{ConnectionId: "c1", DomainId: "example.com", MemberId: "ana"}})
 	if !errors.As(err, &Unavailable{}) {
 		t.Fatalf("got %v", err)
 	}
@@ -72,7 +77,7 @@ func TestClosingFailsWhileTheGatewayIsDown(t *testing.T) {
 
 func TestSweepingADomainSettlesItsPresence(t *testing.T) {
 	memory := newMemoryStorage()
-	sweeper := presenceSweeper(memory, newRecordingGateway())
+	sweeper := presenceDomainSweep(memory, newRecordingGateway())
 	sweeper.Presence.Book.Save(PresenceRecord{DomainId: "example.com", MemberId: "ana", State: "idle", DisconnectedAt: presenceText(-2 * time.Minute)})
 	report, err := sweeper.sweepDomains([]string{"example.com"}, SweepReport{}, presenceNow())
 	record, _, _ := sweeper.Presence.Book.Find("example.com", "ana")
@@ -82,18 +87,20 @@ func TestSweepingADomainSettlesItsPresence(t *testing.T) {
 }
 
 func TestSweepStopsWhenTheBudgetIsUsedUp(t *testing.T) {
-	sweeper := presenceSweeper(newMemoryStorage(), newRecordingGateway())
+	memory := newMemoryStorage()
+	sweeper := presenceSweeper(memory, newRecordingGateway())
+	domains := presenceDomainSweep(memory, newRecordingGateway())
 	used := SweepReport{Writes: 25}
-	report, err := sweeper.sweepDomains([]string{"example.com"}, used, presenceNow())
-	expired, _ := sweeper.expired("example.com", presenceText(0), 0)
-	if err != nil || report != used || !sweeper.more(used) || sweeper.more(SweepReport{Writes: 3}) || len(expired) != 0 || sweeper.morePages(0, "", used) {
+	report, err := domains.sweepDomains([]string{"example.com"}, used, presenceNow())
+	expired, _ := domains.expired("example.com", presenceText(0), 0)
+	if err != nil || report != used || !sweeper.more(used) || sweeper.more(SweepReport{Writes: 3}) || len(expired) != 0 || domains.morePages(0, "", used) {
 		t.Fatalf("got %+v %v", report, err)
 	}
 }
 
 func TestSweepPassesAStorageFailureOn(t *testing.T) {
 	memory := newMemoryStorage()
-	sweeper := presenceSweeper(memory, newRecordingGateway())
+	sweeper := presenceDomainSweep(memory, newRecordingGateway())
 	memory.failAll = true
 	_, err := sweeper.sweepDomains([]string{"example.com"}, SweepReport{}, presenceNow())
 	if err == nil {
@@ -102,8 +109,64 @@ func TestSweepPassesAStorageFailureOn(t *testing.T) {
 }
 
 func TestSweepReportsAddUp(t *testing.T) {
-	sum := SweepReports{}.Sum(SweepReport{ClosedConnections: 1, Writes: 2}, SweepReport{OfflineMembers: 1, EndedDoNotDisturb: 1, Writes: 2, More: true})
-	if sum != (SweepReport{ClosedConnections: 1, OfflineMembers: 1, EndedDoNotDisturb: 1, Writes: 4, More: true}) {
+	sum := SweepReports{}.Sum(SweepReport{ClosedConnections: 1, DeletedTickets: 1, Writes: 3}, SweepReport{OfflineMembers: 1, EndedDoNotDisturb: 1, DeletedTickets: 2, Writes: 4, More: true})
+	if sum != (SweepReport{ClosedConnections: 1, OfflineMembers: 1, EndedDoNotDisturb: 1, DeletedTickets: 3, Writes: 7, More: true}) {
 		t.Fatalf("got %+v", sum)
+	}
+}
+
+func sweepTicket(book TicketBook, usedAt string, expiresAt string) {
+	book.keeper().Ensure(book.collection())
+	book.Storage.Documents.Insert(book.collection(), TicketRecord{TicketHash: expiresAt + usedAt, DomainId: "example.com", MemberId: "ana", ExpiresAt: expiresAt, TokenExpiresAt: expiresAt, UsedAt: usedAt})
+}
+
+func remainingTickets(book TicketBook) []TicketRecord {
+	found, _ := book.all()
+	return found
+}
+
+func TestSweepDeletesUsedAndExpiredTicketsOnly(t *testing.T) {
+	memory := newMemoryStorage()
+	sweeper := presenceSweeper(memory, newRecordingGateway())
+	book := sweeper.Tickets.Book
+	sweepTicket(book, presenceText(-time.Second), presenceText(20*time.Second))
+	sweepTicket(book, "", presenceText(-time.Second))
+	sweepTicket(book, "", presenceText(20*time.Second))
+	report, err := sweeper.Run("Bearer operators")
+	left := remainingTickets(book)
+	if err != nil || report.DeletedTickets != 2 || report.Writes != 2 || report.More || len(left) != 1 || left[0].ExpiresAt != presenceText(20*time.Second) {
+		t.Fatalf("got %+v %v %+v", report, err, left)
+	}
+}
+
+func TestTicketCleaningKeepsToTheWritesThatAreLeft(t *testing.T) {
+	memory := newMemoryStorage()
+	sweep := presenceSweeper(memory, newRecordingGateway()).Tickets
+	sweepTicket(sweep.Book, "", presenceText(-time.Second))
+	sweepTicket(sweep.Book, "", presenceText(-2*time.Second))
+	report, err := sweep.Clean(1)
+	nothing, _ := sweep.Clean(0)
+	if err != nil || report != (SweepReport{DeletedTickets: 1, Writes: 1}) || nothing != (SweepReport{}) || len(remainingTickets(sweep.Book)) != 1 {
+		t.Fatalf("got %+v %+v %v", report, nothing, err)
+	}
+}
+
+func TestTicketCleaningPassesAStorageFailureOn(t *testing.T) {
+	memory := newMemoryStorage()
+	sweep := presenceSweeper(memory, newRecordingGateway()).Tickets
+	sweepTicket(sweep.Book, "", presenceText(-time.Second))
+	memory.failAll = true
+	_, err := sweep.Clean(5)
+	removeErr := sweep.Book.Remove(TicketRecord{ID: "missing"})
+	if err == nil || !errors.As(removeErr, &Unavailable{}) {
+		t.Fatalf("got %v %v", err, removeErr)
+	}
+}
+
+func TestTicketCleaningSkipsARecordWithoutAnId(t *testing.T) {
+	book := presenceSweeper(newMemoryStorage(), newRecordingGateway()).Tickets.Book
+	stale := book.staleBy([]TicketRecord{{ExpiresAt: presenceText(-time.Second)}}, presenceNow())
+	if len(stale) != 0 {
+		t.Fatalf("got %+v", stale)
 	}
 }

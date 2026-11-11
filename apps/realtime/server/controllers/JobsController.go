@@ -18,7 +18,7 @@ func (controller *JobsController) PostSweep(
 	authorization string,
 ) (SweepReport, error) {
 	report, failed := controller.sweeper().Run(authorization)
-	return SweepReport{ClosedConnections: report.ClosedConnections, OfflineMembers: report.OfflineMembers, EndedDoNotDisturb: report.EndedDoNotDisturb, Writes: report.Writes, More: report.More}, controller.failure(failed)
+	return SweepReport{ClosedConnections: report.ClosedConnections, OfflineMembers: report.OfflineMembers, EndedDoNotDisturb: report.EndedDoNotDisturb, DeletedTickets: report.DeletedTickets, Writes: report.Writes, More: report.More}, controller.failure(failed)
 }
 
 func (controller *JobsController) sweeper() realtime.Sweeper {

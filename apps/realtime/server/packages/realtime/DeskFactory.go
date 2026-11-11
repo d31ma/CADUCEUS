@@ -36,7 +36,8 @@ func (factory DeskFactory) Events(storage Storage) EventDesk {
 func (factory DeskFactory) Sweeper(storage Storage) Sweeper {
 	settings := factory.settings()
 	parts := factory.parts(storage, settings)
-	return Sweeper{Gate: oidc.Configured(), Domains: DomainBook{Storage: storage}, Connections: parts.Connections, Pushes: factory.pushes(settings), Presence: parts.Presence}
+	domains := DomainSweep{Book: DomainBook{Storage: storage}, Connections: parts.Connections, Pushes: factory.pushes(settings), Presence: parts.Presence}
+	return Sweeper{Gate: oidc.Configured(), Domains: domains, Tickets: TicketSweep{Book: factory.ticketBook(storage)}}
 }
 
 func (factory DeskFactory) GatewayCheck() GatewayCheck {

@@ -25,6 +25,8 @@
   `message.*`, `reaction.changed`, `read.moved`, presence and typing within
   one domain, presence states with `offline` after 60 seconds without a
   connection, and a sweep job for expired connections and presence.
+- The realtime sweep also deletes stream tickets that are used or expired,
+  with the writes left in its budget of 25 (`SweepReport.deletedTickets`).
 
 ### Slice F2: web conversations
 

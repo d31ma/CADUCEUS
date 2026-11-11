@@ -15,12 +15,15 @@ type recordedRequest struct {
 	method        string
 	path          string
 	authorization string
+	copySource    string
+	body          string
 }
 
 func fakeS3(t *testing.T, status int, body string) (S3Store, *[]recordedRequest) {
 	seen := &[]recordedRequest{}
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		*seen = append(*seen, recordedRequest{method: request.Method, path: request.URL.Path, authorization: request.Header.Get("Authorization")})
+		sent, _ := io.ReadAll(request.Body)
+		*seen = append(*seen, recordedRequest{method: request.Method, path: request.URL.Path, authorization: request.Header.Get("Authorization"), copySource: request.Header.Get("X-Amz-Copy-Source"), body: string(sent)})
 		writer.WriteHeader(status)
 		io.WriteString(writer, body)
 	}))
@@ -173,4 +176,64 @@ func TestS3SignsLinksForThePublicEndpointAndReadsInside(t *testing.T) {
 		t.Fatalf("got %s, %v", signed, err)
 	}
 	reader.Close()
+}
+
+func TestS3WriteSendsTheBytes(t *testing.T) {
+	store, seen := fakeS3(t, http.StatusOK, "")
+	err := store.Write(Key{DomainId: "example.com", Name: "inbound-abc"}, strings.NewReader("raw mail"), 8)
+	request := (*seen)[0]
+	if err != nil || request.method != http.MethodPut || request.body != "raw mail" || request.path != "/mesail-attachments/example.com/inbound-abc" {
+		t.Fatalf("got %v, %+v", err, request)
+	}
+}
+
+func TestS3WriteRefusesABodyOfTheWrongSize(t *testing.T) {
+	store, _ := fakeS3(t, http.StatusOK, "")
+	longer := store.Write(Key{DomainId: "example.com", Name: "a1"}, strings.NewReader("raw mail!"), 8)
+	shorter := store.Write(Key{DomainId: "example.com", Name: "a1"}, strings.NewReader("raw"), 8)
+	if longer == nil || shorter == nil {
+		t.Fatalf("got %v, %v", longer, shorter)
+	}
+}
+
+func TestS3WriteReportsFailures(t *testing.T) {
+	store, _ := fakeS3(t, http.StatusForbidden, "")
+	unreachable := NewS3Store(S3Settings{Endpoint: "http://127.0.0.1:1", Bucket: "b"}, &http.Client{Timeout: time.Second}, testNow)
+	if store.Write(Key{DomainId: "example.com", Name: "a1"}, strings.NewReader("x"), 1) == nil || unreachable.Write(Key{DomainId: "example.com", Name: "a1"}, strings.NewReader("x"), 1) == nil {
+		t.Fatal("expected errors")
+	}
+	if store.Write(Key{DomainId: "example.com", Name: "a/1"}, strings.NewReader("x"), 1) == nil {
+		t.Fatal("bad key accepted")
+	}
+}
+
+func TestS3CopyAsksS3ToCopyInsideTheBucket(t *testing.T) {
+	store, seen := fakeS3(t, http.StatusOK, "<CopyObjectResult/>")
+	err := store.Copy(Key{DomainId: "example.com", Name: "inbound-abc"}, Key{DomainId: "example.org", Name: "inbound-abc"})
+	request := (*seen)[0]
+	if err != nil || request.method != http.MethodPut || request.path != "/mesail-attachments/example.org/inbound-abc" || request.copySource != "/mesail-attachments/example.com/inbound-abc" {
+		t.Fatalf("got %v, %+v", err, request)
+	}
+	if !strings.Contains(request.authorization, "x-amz-copy-source") {
+		t.Fatalf("copy source not signed: %s", request.authorization)
+	}
+}
+
+func TestS3CopyOfAMissingObjectIsNotFound(t *testing.T) {
+	store, _ := fakeS3(t, http.StatusNotFound, "")
+	var missing NotFound
+	if err := store.Copy(Key{DomainId: "example.com", Name: "a1"}, Key{DomainId: "example.org", Name: "a1"}); !errors.As(err, &missing) || missing.Path != "example.com/a1" {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestS3CopyRefusesBadKeysAndReportsFailures(t *testing.T) {
+	store, seen := fakeS3(t, http.StatusOK, "")
+	badFrom := store.Copy(Key{DomainId: "example.com", Name: "../a"}, Key{DomainId: "example.org", Name: "a1"})
+	badTo := store.Copy(Key{DomainId: "example.com", Name: "a1"}, Key{DomainId: "Example.org", Name: "a1"})
+	unreachable := NewS3Store(S3Settings{Endpoint: "http://127.0.0.1:1", Bucket: "b"}, &http.Client{Timeout: time.Second}, testNow)
+	failed := unreachable.Copy(Key{DomainId: "example.com", Name: "a1"}, Key{DomainId: "example.org", Name: "a1"})
+	if badFrom == nil || badTo == nil || failed == nil || len(*seen) != 0 {
+		t.Fatalf("got %v, %v, %v after %d requests", badFrom, badTo, failed, len(*seen))
+	}
 }

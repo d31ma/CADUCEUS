@@ -215,3 +215,35 @@ func TestSigningAndGrantingRefuseBadKeys(t *testing.T) {
 		t.Fatalf("got %v, %v", uploadErr, grantErr)
 	}
 }
+
+func TestCopyWritesTheSameBytesUnderTheNewKey(t *testing.T) {
+	folder, _ := testFolder(t)
+	from := Key{DomainId: "example.com", Name: "inbound-abc"}
+	to := Key{DomainId: "example.org", Name: "inbound-abc"}
+	folder.Write(from, strings.NewReader("raw mail"), 8)
+	if err := folder.Copy(from, to); err != nil {
+		t.Fatal(err)
+	}
+	reader, _ := folder.Read(to)
+	defer reader.Close()
+	body, _ := io.ReadAll(reader)
+	if string(body) != "raw mail" {
+		t.Fatalf("got %q", body)
+	}
+}
+
+func TestCopyOfAMissingBlobIsNotFound(t *testing.T) {
+	folder, _ := testFolder(t)
+	var missing NotFound
+	if err := folder.Copy(Key{DomainId: "example.com", Name: "nope"}, Key{DomainId: "example.org", Name: "nope"}); !errors.As(err, &missing) {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestCopyOfAFolderFails(t *testing.T) {
+	folder, root := testFolder(t)
+	os.MkdirAll(filepath.Join(root, "example.com", "a1"), 0o700)
+	if err := folder.Copy(Key{DomainId: "example.com", Name: "a1"}, Key{DomainId: "example.org", Name: "a1"}); err == nil {
+		t.Fatal("expected an error")
+	}
+}

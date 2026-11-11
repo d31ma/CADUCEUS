@@ -50,9 +50,17 @@ func TestFlociStoresReadsAndDeletesThroughSignedUrls(t *testing.T) {
 	if string(body) != "hello" {
 		t.Fatalf("got %q", body)
 	}
+	copied := Key{DomainId: "example.org", Name: "floci-check"}
+	if err := store.Copy(key, copied); err != nil {
+		t.Fatalf("copy: %v", err)
+	}
+	if err := store.Write(copied, strings.NewReader("replaced"), 8); err != nil {
+		t.Fatalf("write: %v", err)
+	}
 	if err := store.Delete(key); err != nil {
 		t.Fatal(err)
 	}
+	store.Delete(copied)
 	var missing NotFound
 	if _, err := store.Read(key); !errors.As(err, &missing) {
 		t.Fatalf("after delete: %v", err)

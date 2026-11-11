@@ -31,15 +31,20 @@ func (folder LocalFolder) SignDownload(key Key, download DownloadTerms, expiresA
 }
 
 func (folder LocalFolder) Read(key Key) (io.ReadCloser, error) {
-	path, err := folder.path(key)
+	return folder.open(key)
+}
+
+func (folder LocalFolder) Copy(from Key, to Key) error {
+	file, err := folder.open(from)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	file, err := os.Open(path)
+	defer file.Close()
+	info, err := file.Stat()
 	if err != nil {
-		return nil, folder.openFailure(err, key)
+		return err
 	}
-	return file, nil
+	return folder.Write(to, file, info.Size())
 }
 
 func (folder LocalFolder) Delete(key Key) error {
@@ -76,6 +81,18 @@ func (folder LocalFolder) signedUrl(grant Grant) (string, error) {
 		return "", err
 	}
 	return folder.baseUrl + "/" + grant.Key.Path() + "?" + folder.signer.Query(grant).Encode(), nil
+}
+
+func (folder LocalFolder) open(key Key) (*os.File, error) {
+	path, err := folder.path(key)
+	if err != nil {
+		return nil, err
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, folder.openFailure(err, key)
+	}
+	return file, nil
 }
 
 func (folder LocalFolder) path(key Key) (string, error) {

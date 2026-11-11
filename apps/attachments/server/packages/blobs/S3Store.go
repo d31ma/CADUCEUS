@@ -42,11 +42,15 @@ func (store S3Store) SignDownload(key Key, download DownloadTerms, expiresAt tim
 }
 
 func (store S3Store) Read(key Key) (io.ReadCloser, error) {
-	response, err := store.send(http.MethodGet, key)
+	request, err := store.objectRequest(http.MethodGet, key, nil)
 	if err != nil {
 		return nil, err
 	}
-	err = store.readFailure(response, key)
+	response, err := store.send(request, store.emptyPayloadHash())
+	if err != nil {
+		return nil, err
+	}
+	err = store.missingOrFailure(response, key)
 	if err != nil {
 		response.Body.Close()
 		return nil, err
@@ -54,8 +58,44 @@ func (store S3Store) Read(key Key) (io.ReadCloser, error) {
 	return response.Body, nil
 }
 
+func (store S3Store) Write(key Key, body io.Reader, size int64) error {
+	request, err := store.objectRequest(http.MethodPut, key, io.LimitReader(body, size+1))
+	if err != nil {
+		return err
+	}
+	request.ContentLength = size
+	response, err := store.send(request, store.unsignedPayload())
+	if err != nil {
+		return err
+	}
+	response.Body.Close()
+	return store.statusFailure(http.MethodPut, response.StatusCode)
+}
+
+func (store S3Store) Copy(from Key, to Key) error {
+	err := KeyRules{}.Check(from)
+	if err != nil {
+		return err
+	}
+	request, err := store.objectRequest(http.MethodPut, to, nil)
+	if err != nil {
+		return err
+	}
+	request.Header.Set("X-Amz-Copy-Source", "/"+store.settings.Bucket+"/"+from.Path())
+	response, err := store.send(request, store.emptyPayloadHash())
+	if err != nil {
+		return err
+	}
+	response.Body.Close()
+	return store.missingOrFailure(response, from)
+}
+
 func (store S3Store) Delete(key Key) error {
-	response, err := store.send(http.MethodDelete, key)
+	request, err := store.objectRequest(http.MethodDelete, key, nil)
+	if err != nil {
+		return err
+	}
+	response, err := store.send(request, store.emptyPayloadHash())
 	if err != nil {
 		return err
 	}
@@ -64,11 +104,11 @@ func (store S3Store) Delete(key Key) error {
 }
 
 func (store S3Store) EnsureBucket() error {
-	target, err := url.Parse(store.settings.BaseUrl() + "/" + store.settings.Bucket)
+	request, err := http.NewRequest(http.MethodPut, store.settings.BaseUrl()+"/"+store.settings.Bucket, nil)
 	if err != nil {
 		return err
 	}
-	response, err := store.sendTo(http.MethodPut, target)
+	response, err := store.send(request, store.emptyPayloadHash())
 	if err != nil {
 		return err
 	}
@@ -76,20 +116,16 @@ func (store S3Store) EnsureBucket() error {
 	return store.bucketFailure(response.StatusCode)
 }
 
-func (store S3Store) send(method string, key Key) (*http.Response, error) {
+func (store S3Store) objectRequest(method string, key Key, body io.Reader) (*http.Request, error) {
 	target, err := store.objectUrl(store.settings.BaseUrl(), key, url.Values{})
 	if err != nil {
 		return nil, err
 	}
-	return store.sendTo(method, target)
+	return http.NewRequest(method, target.String(), body)
 }
 
-func (store S3Store) sendTo(method string, target *url.URL) (*http.Response, error) {
-	request, err := http.NewRequest(method, target.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	store.signature().Authorize(request, store.emptyPayloadHash(), store.now())
+func (store S3Store) send(request *http.Request, payloadHash string) (*http.Response, error) {
+	store.signature().Authorize(request, payloadHash, store.now())
 	return store.client.Do(request)
 }
 
@@ -107,11 +143,11 @@ func (store S3Store) objectUrl(base string, key Key, query url.Values) (*url.URL
 	return target, nil
 }
 
-func (store S3Store) readFailure(response *http.Response, key Key) error {
+func (store S3Store) missingOrFailure(response *http.Response, key Key) error {
 	if response.StatusCode == http.StatusNotFound {
 		return NotFound{Path: key.Path()}
 	}
-	return store.statusFailure(http.MethodGet, response.StatusCode)
+	return store.statusFailure(response.Request.Method, response.StatusCode)
 }
 
 func (store S3Store) deleteFailure(status int) error {
@@ -141,4 +177,8 @@ func (store S3Store) signature() SignatureV4 {
 
 func (S3Store) emptyPayloadHash() string {
 	return "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}
+
+func (S3Store) unsignedPayload() string {
+	return "UNSIGNED-PAYLOAD"
 }

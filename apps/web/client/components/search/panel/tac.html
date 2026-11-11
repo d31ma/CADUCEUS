@@ -1,6 +1,6 @@
 <div class="flex min-w-0">
-  <button type="button" class="flex w-full min-w-0 items-center gap-2 min-h-9 pointer-coarse:min-h-11 max-sm:min-h-11 cursor-pointer rounded-md border border-border bg-surface px-3 text-start text-sm text-subtle hover:border-outline hover:text-text aria-expanded:border-outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--w-focus-ring-color)]" aria-haspopup="dialog" aria-controls="search-palette" :aria-expanded="shell.flag(search.paletteOpen)" on:click="search.openPalette()">
-    <w-icon name="search" class="ms-icon-sm"></w-icon>
+  <button type="button" class="search-trigger flex w-full min-w-0 items-center gap-2 min-h-9 px-3 text-start pointer-coarse:min-h-11 max-sm:min-h-11" aria-haspopup="dialog" aria-controls="search-palette" :aria-expanded="shell.flag(search.paletteOpen)" on:click="search.openPalette()">
+    <w-icon name="search" size="small"></w-icon>
     <span class="min-w-0 flex-1 truncate">Search {sessionAccount.currentDomain}</span>
   </button>
   <logic :if="search.paletteOpen">

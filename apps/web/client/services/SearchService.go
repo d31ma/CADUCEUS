@@ -14,6 +14,7 @@ type SearchService struct {
 	paletteNumber int
 	pageNumber    int
 	searched      SearchHitFilter
+	domainId      string
 	// @LocalState
 	RecentSearches []string
 	// @SessionState
@@ -35,7 +36,9 @@ type SearchService struct {
 	// @Needs
 	queries *SearchQueryService
 	// @Needs
-	recent                    *SearchRecentService
+	recent *SearchRecentService
+	// @Needs
+	shell                     *ShellService
 	applicationEventPublisher ApplicationEventPublisher
 }
 
@@ -58,14 +61,14 @@ func (search *SearchService) SearchPalette() {
 	search.askPalette(search.paletteFilter())
 }
 
+func (search *SearchService) SearchPaletteFor(query string) {
+	search.PaletteQuery = query
+	search.SearchPalette()
+}
+
 func (search *SearchService) ClearPaletteQuery() {
 	search.PaletteQuery = ""
 	search.askPalette(search.paletteFilter())
-}
-
-func (search *SearchService) UseRecent(query string) {
-	search.PaletteQuery = query
-	search.SearchPalette()
 }
 
 func (search *SearchService) ClearRecent() {
@@ -88,12 +91,21 @@ func (search *SearchService) Open(row SearchHitRow) {
 func (search *SearchService) SeeAll() {
 	search.Query = search.PaletteQuery
 	search.PaletteOpen = false
+	search.shell.ShowPage(search.searchPage())
 	search.Search()
 }
 
 func (search *SearchService) Search() {
 	search.RecentSearches = search.recent.With(search.RecentSearches, search.Query)
 	search.askPage(search.pageFilter())
+}
+
+func (search *SearchService) SearchWith(query string, author string, from string, to string) {
+	search.Query = query
+	search.Author = author
+	search.From = from
+	search.To = to
+	search.Search()
 }
 
 func (search *SearchService) ClearQuery() {
@@ -143,16 +155,6 @@ func (search *SearchService) ToggleEmail() {
 	search.Search()
 }
 
-func (search *SearchService) ChooseFrom(day string) {
-	search.From = day
-	search.Search()
-}
-
-func (search *SearchService) ChooseTo(day string) {
-	search.To = day
-	search.Search()
-}
-
 func (search *SearchService) ClearFilters() {
 	search.ConversationId = ""
 	search.ConversationTitle = ""
@@ -162,6 +164,28 @@ func (search *SearchService) ClearFilters() {
 	search.HasAttachment = false
 	search.IsEmail = false
 	search.Search()
+}
+
+// @OnEvent
+func (search *SearchService) DomainChanged(changed SessionDomainChanged) {
+	search.clearWhenMoved(search.domainId, changed.DomainId)
+	search.domainId = changed.DomainId
+}
+
+func (search *SearchService) clearWhenMoved(previous string, current string) {
+	if previous == "" || previous == current {
+		return
+	}
+	search.paletteNumber++
+	search.pageNumber++
+	search.PaletteRows = []SearchHitRow{}
+	search.PageRows = []SearchHitRow{}
+	search.NextCursor = ""
+	search.MoreState = ""
+	search.PaletteState = search.stateIdle()
+	search.PageState = search.stateIdle()
+	search.ConversationId = ""
+	search.ConversationTitle = ""
 }
 
 func (search *SearchService) paletteFilter() SearchHitFilter {
@@ -231,6 +255,10 @@ func (search *SearchService) keepMore(number int, answer SearchHitAnswer) {
 	search.PageRows = append(search.PageRows, answer.Rows...)
 	search.NextCursor = answer.NextCursor
 	search.MoreState = answer.State
+}
+
+func (search *SearchService) searchPage() string {
+	return "search"
 }
 
 func (search *SearchService) paletteLimit() string {

@@ -4,7 +4,7 @@ type SearchServiceTest struct {
 }
 
 func (test *SearchServiceTest) search() *SearchService {
-	search := &SearchService{queries: SearchTestSetup{}.Queries(test.behaviors), recent: &SearchRecentService{}}
+	search := &SearchService{queries: SearchTestSetup{}.Queries(test.behaviors), recent: &SearchRecentService{}, shell: &ShellService{}}
 	search.Start()
 	return search
 }
@@ -102,10 +102,10 @@ func (test *SearchServiceTest) TestClearPaletteQueryReturnsToRecentSearches() {
 	Assert.Equals([]string{"invoice"}, search.RecentSearches)
 }
 
-func (test *SearchServiceTest) TestUseRecentSearchesAgain() {
+func (test *SearchServiceTest) TestSearchPaletteForRunsARecentSearchAgain() {
 	search := test.search()
 	search.RecentSearches = []string{"march", "invoice"}
-	search.UseRecent("invoice")
+	search.SearchPaletteFor("invoice")
 	Assert.Equals("invoice", search.PaletteQuery)
 	Assert.Equals("loading", search.PaletteState)
 	Assert.Equals([]string{"invoice", "march"}, search.RecentSearches)
@@ -132,6 +132,8 @@ func (test *SearchServiceTest) TestSeeAllMovesThePaletteSearchToThePage() {
 	Assert.Equals("invoice", search.Query)
 	Assert.Equals("loading", search.PageState)
 	Assert.IsTrue(!search.PaletteOpen)
+	Assert.Equals("search", search.shell.Page)
+	Assert.Equals("main", search.shell.Pane)
 }
 
 func (test *SearchServiceTest) TestSearchWithoutTextStaysIdle() {
@@ -230,20 +232,37 @@ func (test *SearchServiceTest) TestToggleEmailTurnsTheFilterOnAndOff() {
 	Assert.IsTrue(!search.IsEmail)
 }
 
-func (test *SearchServiceTest) TestChooseFromAndChooseToSetTheDates() {
+func (test *SearchServiceTest) TestSearchWithReadsTheSubmittedFields() {
 	search := test.search()
-	search.ChooseFrom("2026-11-01")
-	search.ChooseTo("2026-11-10")
-	Assert.Equals("2026-11-01", search.pageFilter().From)
-	Assert.Equals("2026-11-10", search.pageFilter().To)
+	search.SearchWith(" invoice ", " bo ", "2026-11-01", "2026-11-10")
+	Assert.Equals(SearchHitFilter{Query: "invoice", Author: "bo", From: "2026-11-01", To: "2026-11-10", Limit: "20"}, search.searched)
+	Assert.Equals("loading", search.PageState)
+	Assert.Equals([]string{"invoice"}, search.RecentSearches)
+}
+
+func (test *SearchServiceTest) TestDomainChangedClearsTheOldDomainResults() {
+	search := test.pageFound("invoice")
+	search.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
+	search.ScopeTo(SearchHitScopeRequested{ConversationId: "c-1", Title: "support"})
+	search.FindPage(SearchHitPageRequested{Number: search.pageNumber, Filter: search.searched})
+	search.DomainChanged(SessionDomainChanged{DomainId: "example.org"})
+	Assert.Equals("idle", search.PageState)
+	Assert.Equals(0, len(search.PageRows))
+	Assert.Equals("", search.ConversationId)
+	Assert.Equals("invoice", search.Query)
+}
+
+func (test *SearchServiceTest) TestDomainChangedKeepsResultsOfTheSameDomain() {
+	search := test.pageFound("invoice")
+	search.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
+	search.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
+	Assert.Equals("results", search.PageState)
+	Assert.Equals(2, len(search.PageRows))
 }
 
 func (test *SearchServiceTest) TestEveryFilterReachesTheSearch() {
 	search := test.search()
-	search.Query = "filtered"
-	search.Author = " bo "
-	search.ChooseFrom("2026-11-01")
-	search.ChooseTo("2026-11-10")
+	search.SearchWith("filtered", " bo ", "2026-11-01", "2026-11-10")
 	search.ToggleAttachment()
 	search.ToggleEmail()
 	search.ScopeTo(SearchHitScopeRequested{ConversationId: "c-1", Title: "support"})
@@ -256,8 +275,8 @@ func (test *SearchServiceTest) TestClearFiltersKeepsTheQuery() {
 	search := test.search()
 	search.Query = "invoice"
 	search.Author = "bo"
-	search.ChooseFrom("2026-11-01")
-	search.ChooseTo("2026-11-10")
+	search.From = "2026-11-01"
+	search.To = "2026-11-10"
 	search.ToggleAttachment()
 	search.ToggleEmail()
 	search.ScopeTo(SearchHitScopeRequested{ConversationId: "c-1", Title: "support"})

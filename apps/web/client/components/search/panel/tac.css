@@ -1,0 +1,68 @@
+.search-trigger {
+  border: 1px solid var(--w-border);
+  border-radius: var(--w-radius-md);
+  background: var(--w-surface);
+  color: var(--w-text-subtle);
+  font: inherit;
+  font-size: var(--w-font-base);
+  cursor: pointer;
+}
+
+.search-trigger:hover,
+.search-trigger[aria-expanded="true"] {
+  border-color: var(--w-outline);
+  color: var(--w-text);
+}
+
+.search-trigger:focus-visible {
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
+  outline-offset: var(--w-focus-ring-offset);
+}
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .flex {
+    display: flex;
+  }
+  .min-h-9 {
+    min-height: calc(var(--spacing, 0.25rem) * 9);
+  }
+  .w-full {
+    width: 100%;
+  }
+  .min-w-0 {
+    min-width: 0px;
+  }
+  .flex-1 {
+    flex: 1;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .text-start {
+    text-align: start;
+  }
+  @media (width < 600px) {
+    .max-sm\:min-h-11 {
+      min-height: calc(var(--spacing, 0.25rem) * 11);
+    }
+  }
+  @media (pointer: coarse) {
+    .pointer-coarse\:min-h-11 {
+      min-height: calc(var(--spacing, 0.25rem) * 11);
+    }
+  }
+}
+/* @tachyon-generated-tailwind:end */

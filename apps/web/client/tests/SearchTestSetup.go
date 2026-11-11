@@ -1,4 +1,8 @@
-import "errors"
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+)
 
 // @TestSetup
 type SearchTestSetup struct{}
@@ -15,7 +19,9 @@ func (setup SearchTestSetup) Configure(execution *BehaviorExecution) (*BehaviorC
 func (setup SearchTestSetup) Exchange(request *BehaviorHttpRequest, execution *BehaviorExecution) (BehaviorValue, error) {
 	switch request.Method + " " + request.Path {
 	case "POST /api/v1/identity/session":
-		return setup.session(), nil
+		return setup.session("access-1", "key-1"), nil
+	case "POST /api/v1/identity/session/refresh":
+		return setup.refresh(setup.refreshRequestOf(request).SessionKey)
 	case "GET /api/v1/search":
 		return setup.searchUnlessRefused(request)
 	}
@@ -25,21 +31,47 @@ func (setup SearchTestSetup) Exchange(request *BehaviorHttpRequest, execution *B
 func (setup SearchTestSetup) Queries(behaviors *BehaviorContext) *SearchQueryService {
 	BrowserFakes{}.Answer("clock", "now", 1000)
 	tokens := &SessionTokenService{identity: NewIdentityClientWith(behaviors)}
-	tokens.SignIn(SessionSignInRequest{Address: "ana@example.com", Password: "right"})
+	me, _ := tokens.SignIn(SessionSignInRequest{Address: "ana@example.com", Password: "right"})
+	accounts := &SessionAccountService{}
+	accounts.Add(me)
+	session := &SessionService{realm: &SessionRealmService{}, tokens: tokens, accounts: accounts, problems: &SessionProblemService{}}
 	return &SearchQueryService{
-		client:   NewSearchClientWith(behaviors),
-		tokens:   tokens,
-		accounts: &SessionAccountService{CurrentDomain: "example.com"},
-		rows:     &SearchRowService{highlights: &SearchHighlightService{}, times: &SearchTimeService{}},
+		client:  NewSearchClientWith(behaviors),
+		session: session,
+		rows:    &SearchRowService{highlights: &SearchHighlightService{}, times: &SearchTimeService{}},
 	}
 }
 
-func (setup SearchTestSetup) session() Session {
+func (setup SearchTestSetup) session(accessToken string, sessionKey string) Session {
 	me := Me{MemberId: "m-1", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}
-	return Session{Me: me, AccessToken: "access-1", ExpiresIn: 60, SessionKey: "key-1"}
+	return Session{Me: me, AccessToken: accessToken, ExpiresIn: 60, SessionKey: sessionKey}
+}
+
+func (setup SearchTestSetup) refresh(sessionKey string) (BehaviorValue, error) {
+	if sessionKey != "key-1" {
+		return nil, errors.New("unauthenticated")
+	}
+	return setup.session("access-2", "key-2"), nil
+}
+
+func (setup SearchTestSetup) refreshRequestOf(request *BehaviorHttpRequest) SessionRefreshRequest {
+	text, _ := json.Marshal(request.Body)
+	body := SessionRefreshRequest{}
+	_ = json.Unmarshal(text, &body)
+	return body
 }
 
 func (setup SearchTestSetup) searchUnlessRefused(request *BehaviorHttpRequest) (BehaviorValue, error) {
+	switch fmt.Sprint(request.Headers["Authorization"]) + " " + fmt.Sprint(request.Query["q"]) {
+	case "Bearer access-2 needs-renew":
+		return SearchHitPage{Items: []SearchHit{setup.hit("m-7", "renewed")}}, nil
+	case "Bearer access-1 needs-renew":
+		return nil, errors.New("unauthenticated")
+	}
+	return setup.searchWithKnownToken(request)
+}
+
+func (setup SearchTestSetup) searchWithKnownToken(request *BehaviorHttpRequest) (BehaviorValue, error) {
 	if request.Headers["Authorization"] != "Bearer access-1" {
 		return nil, errors.New("unauthenticated")
 	}

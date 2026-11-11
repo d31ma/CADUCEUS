@@ -1,77 +1,73 @@
 <section class="@container/search min-w-0" aria-labelledby="search-page-title">
-  <div class="mx-auto grid w-full max-w-2xl gap-3 px-3 pb-10 pt-4 safe-l safe-r [--ms-edge:0.75rem] @xl/search:px-5">
+  <div class="mx-auto grid w-full max-w-2xl gap-3 pt-4 pb-10 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] @xl/search:px-5">
     <div class="flex flex-wrap items-baseline gap-x-2">
-      <h2 class="flex min-w-0 items-center gap-1 text-lg font-bold" id="search-page-title"><w-icon name="search" class="ms-icon-sm"></w-icon><span>Search</span></h2>
-      <span class="min-w-0 text-xs text-subtle [overflow-wrap:anywhere]">in {sessionAccount.currentDomain}</span>
+      <h2 class="search-title flex min-w-0 items-center gap-1" id="search-page-title"><w-icon name="search" size="small"></w-icon><span>Search</span></h2>
+      <span class="search-meta min-w-0">in {sessionAccount.currentDomain}</span>
     </div>
-    <div class="flex items-start gap-2">
-      <form class="flex min-w-0 flex-1 items-start gap-2" method="dialog" role="search" aria-labelledby="search-page-title" on:submit="search.search()">
-        <w-text-field class="min-w-0 flex-1" type="search" name="q" hide-details autocomplete="suppress" :label="'Search messages in ' + sessionAccount.currentDomain" :value="search.query" on:input="search.query = $event.detail.value"><w-icon slot="prepend-inner" name="search" class="ms-icon-sm"></w-icon></w-text-field>
-        <w-btn variant="filled" class="mt-1.5">Search</w-btn>
-      </form>
-      <logic :if="search.query != ''">
-        <w-icon-btn icon="close" class="mt-1.5" aria-label="Clear search text" on:click="search.clearQuery()"></w-icon-btn>
-      </logic>
-    </div>
-    <div class="flex flex-wrap items-end gap-2" role="group" aria-label="Filters">
+    <form class="contents" method="dialog" role="search" aria-labelledby="search-page-title" on:submit="search.searchWith($event.target.elements.query.value, $event.target.elements.author.value, $event.target.elements.from.value, $event.target.elements.to.value)">
+      <div class="flex items-start gap-2">
+        <w-text-field class="min-w-0 flex-1" type="search" name="query" hide-details autocomplete="off" :label="'Search messages in ' + sessionAccount.currentDomain" :value="search.query"><w-icon slot="prepend-inner" name="search" size="small"></w-icon></w-text-field>
+        <logic :if="search.query != ''">
+          <button type="button" class="search-clear mt-1.5 grid size-9 flex-none place-items-center pointer-coarse:size-11 max-sm:size-11" aria-label="Clear search text" on:click="search.clearQuery()"><w-icon name="close" size="small"></w-icon></button>
+        </logic>
+        <w-btn class="mt-1.5">Search</w-btn>
+      </div>
+      <div class="flex flex-wrap items-end gap-2" role="group" aria-label="Filters">
+        <w-text-field class="min-w-0 flex-[1_1_12rem] max-sm:basis-full" name="author" label="Sender" placeholder="Name or address" density="compact" hide-details autocomplete="off" :value="search.author"></w-text-field>
+        <w-text-field class="min-w-0 flex-[1_1_9rem]" type="date" name="from" label="From date" density="compact" hide-details :value="search.from" :max="search.to"></w-text-field>
+        <w-text-field class="min-w-0 flex-[1_1_9rem]" type="date" name="to" label="To date" density="compact" hide-details :value="search.to" :min="search.from"></w-text-field>
+      </div>
+    </form>
+    <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Quick filters">
       <logic :if="search.conversationId != ''">
-        <span class="inline-flex min-w-0 max-w-full flex-none items-center gap-1 rounded-full bg-selected pl-3 text-sm text-on-selected">
-          <w-icon name="hash" class="ms-icon-sm"></w-icon>
+        <span class="search-scope-chip inline-flex min-w-0 max-w-full flex-none items-center gap-1 pl-3">
+          <w-icon name="hash" size="small"></w-icon>
           <span class="min-w-0 truncate">In {search.conversationTitle}</span>
-          <w-icon-btn icon="close" size="small" :aria-label="'Remove filter: in ' + search.conversationTitle" on:click="search.clearScope()"></w-icon-btn>
+          <w-icon-btn icon="close" size="small" :aria-label="'Search every conversation, not only ' + search.conversationTitle" on:click="search.clearScope()"></w-icon-btn>
         </span>
       </logic>
-      <form class="min-w-0 flex-[1_1_12rem] max-sm:basis-full" method="dialog" aria-label="Sender filter" on:submit="search.search()">
-        <w-text-field name="author" label="Sender" placeholder="Name or address" density="compact" hide-details autocomplete="suppress" :value="search.author" on:input="search.author = $event.detail.value"></w-text-field>
-      </form>
-      <w-text-field class="min-w-0 flex-[1_1_9rem]" type="date" name="from" label="From date" density="compact" hide-details :value="search.from" :max="search.to" on:change="search.chooseFrom($event.detail.value)"></w-text-field>
-      <w-text-field class="min-w-0 flex-[1_1_9rem]" type="date" name="to" label="To date" density="compact" hide-details :value="search.to" :min="search.from" on:change="search.chooseTo($event.detail.value)"></w-text-field>
-      <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Quick filters">
-        <w-chip filter :selected="search.hasAttachment" on:click="search.toggleAttachment()"><w-icon slot="prepend" name="paperclip" class="ms-icon-sm"></w-icon>Has file</w-chip>
-        <w-chip filter :selected="search.isEmail" on:click="search.toggleEmail()"><w-icon slot="prepend" name="mail" class="ms-icon-sm"></w-icon>Is email</w-chip>
-      </div>
+      <w-chip :selected="search.hasAttachment" on:click="search.toggleAttachment()"><w-icon slot="prepend" name="paperclip" size="small"></w-icon>Has file</w-chip>
+      <w-chip :selected="search.isEmail" on:click="search.toggleEmail()"><w-icon slot="prepend" name="mail" size="small"></w-icon>Is email</w-chip>
       <w-btn variant="text" size="small" class="flex-none" on:click="search.clearFilters()">Clear filters</w-btn>
     </div>
 
     <switch :value="search.pageState">
       <case :when="'loading'">
-        <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pt-2">
-          <p class="inline-flex items-center gap-2 text-sm text-subtle" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Searching…</p>
-        </div>
+        <p class="search-count inline-flex items-center gap-2 pt-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Searching…</p>
         <div aria-hidden="true">
           <w-skeleton-loader type="list-item-avatar-three-line@3" loading-text="Loading search results" class="block p-2"></w-skeleton-loader>
         </div>
       </case>
       <case :when="'results'">
         <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pt-2">
-          <p class="text-sm text-subtle" role="status"><strong class="text-text">{search.pageRows.length} results shown</strong>, newest first</p>
-          <p class="inline-flex items-center gap-1 text-xs text-subtle"><w-icon name="shield" class="ms-icon-xs"></w-icon>Only messages you can see now are searched.</p>
+          <p class="search-count" role="status"><strong class="search-count-number">{search.pageRows.length} results shown</strong>, newest first</p>
+          <p class="search-meta inline-flex items-center gap-1"><w-icon name="shield" size="x-small"></w-icon>Only messages you can see now are searched.</p>
         </div>
-        <ol class="-mx-2 m-0 list-none p-0 [&>li+li]:border-t [&>li+li]:border-divider" aria-label="Search results, newest first">
+        <ol class="search-results -mx-2 m-0 list-none p-0" aria-label="Search results, newest first">
           <loop :for="row of search.pageRows">
             <li>
-              <button type="button" class="grid w-full grid-cols-[2.25rem_minmax(0,1fr)] gap-x-3 cursor-pointer rounded-md border-0 bg-transparent px-2 py-3 text-start text-inherit hover:bg-msg-hover focus-visible:bg-msg-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--w-focus-ring-color)]" on:click="search.open(row)">
-                <span class="grid size-9 place-items-center rounded-lg bg-surface-high text-subtle" aria-hidden="true"><w-icon name="chat" class="ms-icon-sm"></w-icon></span>
+              <button type="button" class="search-result grid w-full grid-cols-[2.25rem_minmax(0,1fr)] gap-x-3 px-2 py-3 text-start" on:click="search.open(row)">
+                <span class="search-tile grid size-9 place-items-center" aria-hidden="true"><w-icon name="chat" size="small"></w-icon></span>
                 <span class="grid min-w-0 gap-0.5 py-1">
-                  <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-subtle">
-                    <span class="text-sm font-semibold text-text">Message</span>
-                    <logic :if="search.conversationId != ''"><span class="min-w-0 [overflow-wrap:anywhere]">in {search.conversationTitle}</span></logic>
+                  <span class="search-meta flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span class="search-kind">Message</span>
+                    <logic :if="search.conversationId != ''"><span class="search-wrap min-w-0">in {search.conversationTitle}</span></logic>
                     <time class="@md/search:ml-auto" :datetime="row.createdAt">{row.timeLabel}</time>
                   </span>
-                  <span class="line-clamp-3 [overflow-wrap:anywhere]"><loop :for="part of row.parts"><logic :if="part.match"><mark>{part.text}</mark></logic><logic else>{part.text}</logic></loop></span>
+                  <span class="search-wrap line-clamp-3"><loop :for="part of row.parts"><logic :if="part.match"><mark>{part.text}</mark></logic><logic else>{part.text}</logic></loop></span>
                 </span>
               </button>
             </li>
           </loop>
         </ol>
-        <div class="grid justify-items-center gap-2 pb-2 pt-4 text-center">
+        <div class="grid justify-items-center gap-2 pt-4 pb-2 text-center">
           <switch :value="search.moreState">
             <case :when="'error'">
               <w-alert type="error" text="We could not load more results. Try again."></w-alert>
             </case>
             <case :when="'session'">
               <w-alert type="warning" text="Your session ended. Sign in again to load more results.">
-                <div class="mt-3"><w-btn variant="filled" on:click="session.signInAgain()">Sign in again</w-btn></div>
+                <div class="mt-3"><w-btn on:click="session.signInAgain()">Sign in again</w-btn></div>
               </w-alert>
             </case>
           </switch>
@@ -79,32 +75,32 @@
             <w-btn variant="outlined" :loading="search.moreState == 'loading'" on:click="search.loadMore()">Load more results</w-btn>
           </logic>
           <logic else>
-            <p class="text-xs text-subtle">You have reached the oldest result.</p>
+            <p class="search-meta">You have reached the oldest result.</p>
           </logic>
         </div>
       </case>
       <case :when="'empty'">
         <w-empty-state class="block py-8" role="status">
-          <w-icon slot="media" name="search" class="text-accent [--ms-icon-size:2.5rem]"></w-icon>
-          <h3 slot="title" class="text-xl font-semibold [overflow-wrap:anywhere]">No results for “{search.searchedQuery}”</h3>
-          <span slot="text">Check the spelling, try fewer or shorter words, or remove a filter.</span>
-          <div slot="actions"><w-btn variant="filled" on:click="search.clearFilters()">Clear filters</w-btn></div>
+          <w-icon slot="media" name="search"></w-icon>
+          <h3 slot="title" class="search-state-title">No results for “{search.searchedQuery}”</h3>
+          <span slot="text">Check the spelling, try fewer or shorter words, or clear the filters.</span>
+          <div slot="actions"><w-btn on:click="search.clearFilters()">Clear filters</w-btn></div>
         </w-empty-state>
       </case>
       <case :when="'error'">
         <w-alert type="error" title="Search is not available right now" text="Try again. Your messages are safe, and you can still open every conversation.">
-          <div class="mt-3 flex flex-wrap items-center gap-3"><w-btn variant="filled" prepend-icon="refresh" on:click="search.search()">Try again</w-btn></div>
+          <div class="mt-3 flex flex-wrap items-center gap-3"><w-btn prepend-icon="refresh" on:click="search.search()">Try again</w-btn></div>
         </w-alert>
       </case>
       <case :when="'session'">
         <w-alert type="warning" title="Your session ended" :text="'Sign in to ' + sessionAccount.currentDomain + ' again to search.'">
-          <div class="mt-3 flex flex-wrap items-center gap-3"><w-btn variant="filled" on:click="session.signInAgain()">Sign in again</w-btn></div>
+          <div class="mt-3 flex flex-wrap items-center gap-3"><w-btn on:click="session.signInAgain()">Sign in again</w-btn></div>
         </w-alert>
       </case>
       <case default>
         <w-empty-state class="block py-8">
-          <w-icon slot="media" name="search" class="text-accent [--ms-icon-size:2.5rem]"></w-icon>
-          <h3 slot="title" class="text-xl font-semibold [overflow-wrap:anywhere]">Search messages in {sessionAccount.currentDomain}</h3>
+          <w-icon slot="media" name="search"></w-icon>
+          <h3 slot="title" class="search-state-title">Search messages in {sessionAccount.currentDomain}</h3>
           <span slot="text">Type words from a message, then press Search. Use the filters to narrow the results.</span>
         </w-empty-state>
       </case>

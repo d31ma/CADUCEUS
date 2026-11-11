@@ -1,3 +1,99 @@
+.search-title {
+  margin: 0;
+  color: var(--w-text);
+  font-size: var(--w-font-lg);
+  font-weight: var(--w-font-weight-bold);
+}
+
+.search-meta {
+  margin: 0;
+  color: var(--w-text-subtle);
+  font-size: var(--ms-text-meta);
+  overflow-wrap: anywhere;
+}
+
+.search-count {
+  margin: 0;
+  color: var(--w-text-subtle);
+  font-size: var(--w-font-base);
+}
+
+.search-count-number {
+  color: var(--w-text);
+}
+
+.search-scope-chip {
+  border-radius: var(--w-radius-pill);
+  background: var(--w-selected);
+  color: var(--w-selected-text);
+  font-size: var(--w-font-base);
+}
+
+.search-results > li + li {
+  border-block-start: 1px solid var(--w-divider);
+}
+
+.search-result {
+  border: 0;
+  border-radius: var(--w-radius-md);
+  background: transparent;
+  color: var(--w-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.search-result:hover {
+  background: var(--ms-msg-hover);
+}
+
+.search-result:focus-visible {
+  background: var(--ms-msg-hover);
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
+  outline-offset: -2px;
+}
+
+.search-tile {
+  border-radius: var(--w-radius-lg);
+  background: var(--w-surface-container-high);
+  color: var(--w-text-subtle);
+}
+
+.search-kind {
+  color: var(--w-text);
+  font-size: var(--w-font-base);
+  font-weight: var(--w-font-weight-semibold);
+}
+
+.search-wrap {
+  overflow-wrap: anywhere;
+}
+
+.search-state-title {
+  margin: 0;
+  color: var(--w-text);
+  font-size: var(--w-font-xl);
+  font-weight: var(--w-font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.search-clear {
+  border: 0;
+  border-radius: var(--w-radius-md);
+  background: transparent;
+  color: var(--w-text-subtle);
+  cursor: pointer;
+}
+
+.search-clear:hover {
+  background: var(--w-hover);
+  color: var(--w-text);
+}
+
+.search-clear:focus-visible {
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
+  outline-offset: var(--w-focus-ring-offset);
+}
+
 mark {
   padding-inline: 0.125em;
   border-radius: var(--w-radius);
@@ -5,3 +101,206 @@ mark {
   color: var(--w-on-warning-container);
   font-weight: var(--w-font-weight-semibold);
 }
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .\@container\/search {
+    container-type: inline-size;
+    container-name: search;
+  }
+  .m-0 {
+    margin: 0px;
+  }
+  .-mx-2 {
+    margin-inline: calc(var(--spacing, 0.25rem) * -2);
+  }
+  .mx-auto {
+    margin-inline: auto;
+  }
+  .mt-1\.5 {
+    margin-top: calc(var(--spacing, 0.25rem) * 1.5);
+  }
+  .mt-3 {
+    margin-top: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  .block {
+    display: block;
+  }
+  .contents {
+    display: contents;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .inline-flex {
+    display: inline-flex;
+  }
+  .size-9 {
+    width: calc(var(--spacing, 0.25rem) * 9);
+    height: calc(var(--spacing, 0.25rem) * 9);
+  }
+  .w-full {
+    width: 100%;
+  }
+  .max-w-2xl {
+    max-width: var(--container-2xl, 42rem);
+  }
+  .max-w-full {
+    max-width: 100%;
+  }
+  .min-w-0 {
+    min-width: 0px;
+  }
+  .flex-1 {
+    flex: 1;
+  }
+  .flex-\[1_1_9rem\] {
+    flex: 1 1 9rem;
+  }
+  .flex-\[1_1_12rem\] {
+    flex: 1 1 12rem;
+  }
+  .flex-none {
+    flex: none;
+  }
+  .list-none {
+    list-style-type: none;
+  }
+  .grid-cols-\[2\.25rem_minmax\(0\,1fr\)\] {
+    grid-template-columns: 2.25rem minmax(0,1fr);
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .place-items-center {
+    place-items: center;
+  }
+  .items-baseline {
+    align-items: baseline;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .items-end {
+    align-items: flex-end;
+  }
+  .items-start {
+    align-items: flex-start;
+  }
+  .justify-between {
+    justify-content: space-between;
+  }
+  .justify-items-center {
+    justify-items: center;
+  }
+  .gap-0\.5 {
+    gap: calc(var(--spacing, 0.25rem) * 0.5);
+  }
+  .gap-1 {
+    gap: var(--spacing, 0.25rem);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .gap-3 {
+    gap: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .gap-x-2 {
+    column-gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .gap-x-3 {
+    column-gap: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .gap-x-4 {
+    column-gap: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .gap-y-1 {
+    row-gap: var(--spacing, 0.25rem);
+  }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .p-0 {
+    padding: 0px;
+  }
+  .p-2 {
+    padding: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .px-2 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .py-1 {
+    padding-block: var(--spacing, 0.25rem);
+  }
+  .py-3 {
+    padding-block: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .py-8 {
+    padding-block: calc(var(--spacing, 0.25rem) * 8);
+  }
+  .pt-2 {
+    padding-top: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .pt-4 {
+    padding-top: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .pr-\[max\(0\.75rem\,env\(safe-area-inset-right\)\)\] {
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+  }
+  .pb-2 {
+    padding-bottom: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .pb-10 {
+    padding-bottom: calc(var(--spacing, 0.25rem) * 10);
+  }
+  .pl-3 {
+    padding-left: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .pl-\[max\(0\.75rem\,env\(safe-area-inset-left\)\)\] {
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+  }
+  .text-center {
+    text-align: center;
+  }
+  .text-start {
+    text-align: start;
+  }
+  @media (width < 600px) {
+    .max-sm\:size-11 {
+      width: calc(var(--spacing, 0.25rem) * 11);
+      height: calc(var(--spacing, 0.25rem) * 11);
+    }
+    .max-sm\:basis-full {
+      flex-basis: 100%;
+    }
+  }
+  @container search (width >= 28rem) {
+    .\@md\/search\:ml-auto {
+      margin-left: auto;
+    }
+  }
+  @container search (width >= 36rem) {
+    .\@xl\/search\:px-5 {
+      padding-inline: calc(var(--spacing, 0.25rem) * 5);
+    }
+  }
+  @media (pointer: coarse) {
+    .pointer-coarse\:size-11 {
+      width: calc(var(--spacing, 0.25rem) * 11);
+      height: calc(var(--spacing, 0.25rem) * 11);
+    }
+  }
+}
+/* @tachyon-generated-tailwind:end */

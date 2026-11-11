@@ -52,7 +52,11 @@ wave run at the same time.
    `~/Developer/Tools/tachyon-26.46.02/ty` and
    `~/Developer/Tools/fylo-26.45.07/fylo`.
 8. **Heavy jobs** run as
-   `MAC_HEAVY_COORDINATOR=tachyon-build mac-heavy --owner <slice> -- ...`.
+   `MAC_HEAVY_COORDINATOR=caduceus-build mac-heavy --owner <slice> -- ...`
+   (Mesail's own lock root, `~/Library/Caches/mac-locks/caduceus-build`,
+   4 slots, since 2026-11-11; `tachyon-build` belongs to the TACHYON
+   coordinator). Docker and VM jobs use the root `mesail-docker`
+   (`TACHYON_LOCK_ROOT=~/Library/Caches/mac-locks/mesail-docker`).
 8a. **Tac setups.** Every `@HTTPClient` needs a setup in
    `client/setups/`. A web slice owns the setups whose names start with
    the same prefixes as its remotes and services (listed under each F

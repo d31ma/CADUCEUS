@@ -36,7 +36,6 @@ const (
 	memberRole        = "mesail-member"
 	adminRole         = "mesail-admin"
 	operatorRole      = "mesail-operator"
-	operatorRealm     = "mesail-operators"
 	firstHostedDomain = "example.com"
 	otherHostedDomain = "example.org"
 )
@@ -69,15 +68,15 @@ func AdminProfile() AppProfile {
 		DefaultDist:       "../../apps/web-admin/dist/web",
 		SessionStorageKey: "tac:service:adminSession:/:sessionKey",
 		StoredSession:     sessionKeyPrefix + firstHostedDomain,
-		HostedDomains:     []string{firstHostedDomain, otherHostedDomain, operatorRealm},
+		HostedDomains:     []string{firstHostedDomain, otherHostedDomain},
 		DomainRoles: map[string][]string{
-			firstHostedDomain: {adminRole, memberRole},
-			operatorRealm:     {operatorRole},
+			firstHostedDomain: {adminRole, memberRole, operatorRole},
 		},
 		DefaultRoles: []string{memberRole},
 		DataAnswers: map[string]any{
 			"GET /api/v1/directory/domains": []any{},
 			"GET /api/v1/directory/members": fakeMemberPage{Items: []any{}},
+			"GET /api/v1/directory/people":  fakeMemberPage{Items: []any{}},
 			"GET /api/v1/channels":          []any{},
 		},
 	}

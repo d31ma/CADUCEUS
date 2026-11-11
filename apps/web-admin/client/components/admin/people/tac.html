@@ -17,9 +17,9 @@
         </div>
       </logic>
       <logic else>
-        <form method="dialog" role="search" aria-label="Find people" class="grid grid-cols-1 items-end gap-3 @xl/page:grid-cols-[minmax(0,1fr)_12rem_auto]" on:submit="peopleList.searchWith($event.target.elements.query.value, peopleList.stateFilter)">
-          <w-text-field type="search" name="query" label="Search" placeholder="Name or username" prepend-inner-icon="search" autocomplete="off" hide-details :value="peopleList.query"></w-text-field>
-          <w-select name="state" label="State" hide-details :value="peopleList.stateFilter == '' ? 'all' : peopleList.stateFilter" on:change="peopleList.searchWith(peopleList.query, $event.target.value)">
+        <form method="dialog" role="search" aria-label="Find people" class="flex flex-wrap items-center gap-3" on:submit="peopleList.searchWith($event.target.elements.query.value, peopleList.stateFilter)">
+          <w-text-field type="search" name="query" label="Search" placeholder="Name or username" prepend-inner-icon="search" autocomplete="off" hide-details class="min-w-0 flex-[1_1_16rem]" :value="peopleList.query"></w-text-field>
+          <w-select name="state" aria-label="State" hide-details class="people-state min-w-0 flex-[1_1_10rem] @xl/page:flex-[0_0_11rem]" :value="peopleList.stateFilter == '' ? 'all' : peopleList.stateFilter" on:change="peopleList.searchWith(peopleList.query, $event.target.value)">
             <w-option value="all">All states</w-option>
             <w-option value="active">Active</w-option>
             <w-option value="disabled">Turned off</w-option>
@@ -32,25 +32,25 @@
           <case :when="'ready'">
             <section class="panel" aria-labelledby="people-title">
               <div class="panel-head flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-3 sm:px-6"><h2 id="people-title" class="section-title">{peopleList.heading}</h2></div>
-              <table class="data-table people-table w-full">
+              <table class="data-table people-table w-full @max-2xl/page:block">
                 <caption class="sr-only">Every person on this Mesail install</caption>
-                <thead>
+                <thead class="@max-2xl/page:sr-only">
                   <tr><th scope="col" class="px-4 py-2">Person</th><th scope="col" class="px-4 py-2">Domains</th><th scope="col" class="px-4 py-2">State</th><th scope="col" class="px-4 py-2"><span class="sr-only">Actions</span></th></tr>
                 </thead>
-                <tbody><loop :for="row of peopleList.rows"><tr>
-                  <td class="px-4 py-2">
+                <tbody class="@max-2xl/page:block"><loop :for="row of peopleList.rows"><tr class="@max-2xl/page:block">
+                  <td class="px-4 py-2 @max-2xl/page:block @max-2xl/page:px-0 @max-2xl/page:py-1">
                     <div class="flex min-w-0 items-center gap-3">
                       <w-avatar size="32" alt="" aria-hidden="true" :text="row.initials"></w-avatar>
                       <span class="grid min-w-0"><span class="strong break-words">{row.name}</span><span class="meta username">{row.username}</span></span>
                     </div>
                   </td>
-                  <td data-label="Domains" class="px-4 py-2">
+                  <td data-label="Domains" class="px-4 py-2 @max-2xl/page:flex @max-2xl/page:items-center @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1">
                     <ul class="flex flex-wrap gap-1" :aria-label="'Domains of ' + row.name">
                       <loop :for="domainId of row.domainIds"><li><span class="tag" data-variant="outlined">{domainId}</span></li></loop>
                     </ul>
                     <logic :if="row.noDomains"><span class="meta">None</span></logic>
                   </td>
-                  <td data-label="State" class="px-4 py-2">
+                  <td data-label="State" class="px-4 py-2 @max-2xl/page:flex @max-2xl/page:items-center @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1">
                     <span class="tag" :data-color="row.stateColor">{row.stateText}</span>
                   </td>
                   <td class="member-actions px-2 py-1">

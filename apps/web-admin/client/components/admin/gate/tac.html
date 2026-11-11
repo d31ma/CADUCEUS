@@ -54,10 +54,10 @@
             </switch>
             <form method="dialog" class="grid gap-4" aria-label="Sign in" on:submit="adminSession.signInWith($event.target.elements.login.value, $event.target.elements.password.value, $event.target.elements.code.value)">
               <logic :if="adminSession.problem == 'loginMissing'">
-                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" :value="adminSession.login" error="Type your username, like ana, or your full address, like ana@example.com." on:change="adminSession.typeLogin($event.target.value)"></w-text-field>
+                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" :value="adminSession.login" error="Type your username, like ana, or your full address, like ana@example.com."></w-text-field>
               </logic>
               <logic else>
-                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" :value="adminSession.login" :hint="adminSession.hint" persistent-hint on:change="adminSession.typeLogin($event.target.value)"></w-text-field>
+                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" :value="adminSession.login" :hint="adminSession.hint" persistent-hint></w-text-field>
               </logic>
               <w-text-field label="Password" name="password" type="password" autocomplete="current-password"></w-text-field>
               <w-text-field label="2-step code (optional)" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>

@@ -51,7 +51,7 @@ func (session *AdminSessionService) Resume(started AdminPageStarted) {
 	session.renewWhenSaved(session.SessionKey)
 }
 
-func (session *AdminSessionService) TypeLogin(login string) {
+func (session *AdminSessionService) typeLogin(login string) {
 	session.Login = login
 	session.LoginUsername = session.logins.UsernameOf(login)
 	session.LoginDomain = session.logins.DomainOf(login)
@@ -59,13 +59,13 @@ func (session *AdminSessionService) TypeLogin(login string) {
 }
 
 func (session *AdminSessionService) SignInWith(login string, password string, oneTimeCode string) {
-	session.TypeLogin(login)
+	session.typeLogin(login)
 	session.Problem = session.missingProblem(session.logins.Missing(login))
 	session.sendWhenReady(session.Problem, SignInRequest{Login: session.logins.Cleaned(login), Password: password, OneTimeCode: oneTimeCode})
 }
 
 func (session *AdminSessionService) UseUsernameOnly() {
-	session.TypeLogin(session.logins.UsernameOf(session.Login))
+	session.typeLogin(session.logins.UsernameOf(session.Login))
 	session.Problem = "retype"
 }
 

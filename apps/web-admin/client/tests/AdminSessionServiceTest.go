@@ -129,9 +129,9 @@ func (test *AdminSessionServiceTest) TestChangeAddressClosesTheNotice() {
 	Assert.Equals("", session.Problem)
 }
 
-func (test *AdminSessionServiceTest) TestTypeLoginExplainsAFullAddress() {
+func (test *AdminSessionServiceTest) TestTheHintFollowsTheSentLogin() {
 	session := test.started()
-	session.TypeLogin("Ana@Example.ORG")
+	session.SignInWith("Ana@Example.ORG", "wrong", "")
 	Assert.Equals("Opens example.org.", session.Hint)
 	Assert.Equals("ana", session.LoginUsername)
 	Assert.Equals("example.org", session.LoginDomain)

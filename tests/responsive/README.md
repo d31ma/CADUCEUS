@@ -56,17 +56,19 @@ the app's data calls. To test another app, add one profile to
 
 | | `web` (default) | `web-admin` |
 | --- | --- | --- |
-| Session storage key | `tac:service:session:/:sessionKeys` | `tac:service:adminSession:/:sessionKey` |
-| Stored value | `{"example.com":"key-example.com","example.org":"key-example.org"}` (a map) | `"key-example.com"` (one string; Tac stores every field as JSON) |
-| Hosted domains | `example.com`, `example.org` | `example.com`, `example.org`, `mesail-operators` |
-| Roles | `["mesail-member"]` | `example.com`: `["mesail-admin","mesail-member"]`; `mesail-operators`: `["mesail-operator"]`; `example.org`: `["mesail-member"]` (no admin rights) |
-| Fixed data answers | none | `GET /api/v1/directory/domains`: `200 []`; `GET /api/v1/directory/members`: `200 {"items":[]}`; `GET /api/v1/channels`: `200 []` |
+| Session storage key | `tac:service:session:/:sessionKey` | `tac:service:adminSession:/:sessionKey` |
+| Stored value | `"key-example.com"` (one string; Tac stores every field as JSON) | `"key-example.com"` |
+| Hosted domains | `example.com`, `example.org` | `example.com`, `example.org` |
+| Default domain (the first hosted domain; a login without `@` opens it) | `example.com` | `example.com` |
+| Roles | `["mesail-member"]` | `example.com`: `["mesail-admin","mesail-member","mesail-operator"]` (both admin menus show); `example.org`: `["mesail-member"]` (no admin rights) |
+| Fixed data answers | none | `GET /api/v1/directory/domains`: `200 []`; `GET /api/v1/directory/members`: `200 {"items":[]}`; `GET /api/v1/directory/people`: `200 {"items":[]}`; `GET /api/v1/channels`: `200 []` |
 
 Both apps use the same shell-ready selector (`nav[aria-label="Domains"]`),
-the same sign-in form (fields `email`, `password`, `code`; the button
-"Sign in") and the same form sign-in (`ana@example.com` / `right`). In the
-admin app, `olu@mesail-operators` / `right` signs in as an operator: the
-part after `@` is the domain (the operator realm).
+the same sign-in form (the username field `autocomplete="username"`, the
+password field, the button "Sign in") and the same form sign-in
+(`ana@example.com` / `right`). Since ADR 0005 there is no operator realm:
+the admin profile gives the Operator role with the session of a hosted
+domain, and a login without `@` (`ana`) opens the first hosted domain.
 
 ## What it serves
 
@@ -76,10 +78,18 @@ same Content-Security-Policy that TACHYON 26.46.02's server sends (`'self'`,
 origin has a fake identity API (`docs/mesail/CONTRACTS.md`, "identity"):
 
 - `POST /api/v1/identity/session`: password `right` gives `200 Session`
-  for a hosted domain of the app profile (the part of `address` after `@`),
-  with that profile's roles; `busy` gives `429`, anything else `401`.
+  for a hosted domain of the app profile (the part of `login` after `@`,
+  or the first hosted domain for a login without `@`), with that profile's
+  roles and `domains[]` (every hosted domain, `admin` from the roles,
+  `default` on the first). A domain that is not hosted gives `403
+  not_a_member`; the login `dan` gives `403 no_domain`, `new` a session
+  with `mustChangePassword`, and `op` an Operator session with the domain
+  `*`. Password `busy` gives `429`, any other wrong password `401`.
 - `POST /api/v1/identity/session/refresh`: `sessionKey` `key-<domain>` gives
   `200 Session` for that domain, anything else `401`.
+- `POST /api/v1/identity/session/domain`: `sessionKey` `key-<any>` and a
+  hosted `domainId` give `200 Session` for that domain; another key `401`,
+  a domain that is not hosted `404`.
 - `DELETE /api/v1/identity/session`: `204`.
 - The app profile's fixed data answers (admin app only; see "Apps"). Every
   other admin data call (`/api/v1/directory/*`, `/api/v1/channels/*`, any

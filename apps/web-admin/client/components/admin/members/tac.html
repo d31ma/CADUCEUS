@@ -28,13 +28,13 @@
         <logic :if="memberList.listed()">
           <section class="panel" aria-labelledby="members-title">
             <div class="panel-head flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-3 sm:px-6"><h2 id="members-title" class="section-title">{memberList.heading}</h2><p class="meta">{memberList.adminCount}</p></div>
-            <table class="data-table member-table w-full">
+            <table class="data-table member-table w-full @max-2xl/page:block">
               <caption class="sr-only">Members of {memberList.domainId}</caption>
-              <thead>
+              <thead class="@max-2xl/page:sr-only">
                 <tr><th scope="col" class="px-4 py-2">Member</th><th scope="col" class="px-4 py-2">Address</th><th scope="col" class="px-4 py-2">Role</th><th scope="col" class="px-4 py-2"><span class="sr-only">Actions</span></th></tr>
               </thead>
-              <tbody><loop :for="row of memberList.rows"><tr>
-                <td class="member-cell px-4 py-2">
+              <tbody class="@max-2xl/page:block"><loop :for="row of memberList.rows"><tr class="@max-2xl/page:block">
+                <td class="member-cell px-4 py-2 @max-2xl/page:block @max-2xl/page:px-0 @max-2xl/page:py-1">
                   <div class="flex min-w-0 items-center gap-3">
                     <w-avatar size="32" alt="" aria-hidden="true" :text="row.initials"></w-avatar>
                     <span class="grid min-w-0">
@@ -44,8 +44,8 @@
                     </span>
                   </div>
                 </td>
-                <td data-label="Address" class="px-4 py-2"><span class="address min-w-0">{row.address}</span></td>
-                <td data-label="Role" class="px-4 py-2">
+                <td data-label="Address" class="px-4 py-2 @max-2xl/page:flex @max-2xl/page:items-center @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1"><span class="address min-w-0">{row.address}</span></td>
+                <td data-label="Role" class="px-4 py-2 @max-2xl/page:flex @max-2xl/page:items-center @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1">
                   <logic :if="row.admin"><span class="tag" data-color="primary">Admin</span></logic>
                   <logic else><span class="meta">Member</span></logic>
                 </td>

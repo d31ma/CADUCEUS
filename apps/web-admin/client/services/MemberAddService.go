@@ -23,7 +23,7 @@ type MemberAddService struct {
 	// @Needs
 	problems *AdminProblemService
 	// @Needs
-	rules *UsernameRuleService
+	rules                     *UsernameRuleService
 	applicationEventPublisher ApplicationEventPublisher
 }
 

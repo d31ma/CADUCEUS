@@ -76,9 +76,40 @@ func (test *ThreadRowServiceTest) TestRootKeepsTheKnownRootWhenMissing() {
 }
 
 func (test *ThreadRowServiceTest) TestRepliesLabelForOneReply() {
-	Assert.Equals("1 reply", (&ThreadRowService{}).RepliesLabel(1))
+	Assert.Equals("1 reply", (&ThreadRowService{}).RepliesLabel(ThreadMessage{}, 1))
 }
 
-func (test *ThreadRowServiceTest) TestRepliesLabelForManyReplies() {
-	Assert.Equals("0 replies", (&ThreadRowService{}).RepliesLabel(0))
+func (test *ThreadRowServiceTest) TestRepliesLabelForNoReplies() {
+	Assert.Equals("0 replies", (&ThreadRowService{}).RepliesLabel(ThreadMessage{}, 0))
+}
+
+func (test *ThreadRowServiceTest) TestRepliesLabelTrustsTheRootCountWhenOlderRepliesAreHidden() {
+	Assert.Equals("5 replies", (&ThreadRowService{}).RepliesLabel(ThreadMessage{ReplyCount: 5}, 2))
+}
+
+func (test *ThreadRowServiceTest) TestPendingRowShowsMyNameAndText() {
+	row := (&ThreadRowService{}).PendingRow("Ana Ruiz", "Thanks")
+	Assert.Equals("AR", row.Initials)
+	Assert.Equals("Thanks", row.Body)
+	Assert.Equals("Ana Ruiz", row.Label)
+}
+
+func (test *ThreadRowServiceTest) TestConversationOfReadsTheConversation() {
+	Assert.Equals("conv-1", (&ThreadRowService{}).ConversationOf(ThreadMessage{ConversationId: "conv-1"}))
+}
+
+func (test *ThreadRowServiceTest) TestRootIdOfARootIsItsOwnId() {
+	Assert.Equals("m-1", (&ThreadRowService{}).RootIdOf(test.message()))
+}
+
+func (test *ThreadRowServiceTest) TestRootIdOfAReplyIsItsRoot() {
+	Assert.Equals("m-1", (&ThreadRowService{}).RootIdOf(ThreadMessage{MessageId: "m-2", ThreadRootId: "m-1"}))
+}
+
+func (test *ThreadRowServiceTest) TestKnownRootKeepsARoot() {
+	Assert.Equals("m-1", (&ThreadRowService{}).KnownRoot(test.message()).MessageId)
+}
+
+func (test *ThreadRowServiceTest) TestKnownRootDropsAReply() {
+	Assert.Equals("", (&ThreadRowService{}).KnownRoot(ThreadMessage{MessageId: "m-2", ThreadRootId: "m-1"}).MessageId)
 }

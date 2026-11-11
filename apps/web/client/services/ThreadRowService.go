@@ -33,8 +33,39 @@ func (rows *ThreadRowService) Root(messages []ThreadMessage, rootId string, know
 	return rows.rootOf(messages, rootId, known)
 }
 
-func (rows *ThreadRowService) RepliesLabel(count int) string {
+func (rows *ThreadRowService) RepliesLabel(root ThreadMessage, shown int) string {
+	count := max(shown, root.ReplyCount)
 	return strconv.Itoa(count) + rows.space() + rows.repliesWord(count)
+}
+
+func (rows *ThreadRowService) PendingRow(name string, body string) ThreadRow {
+	return rows.Row(ThreadMessage{Author: ThreadAuthor{DisplayName: name}, Body: body})
+}
+
+func (rows *ThreadRowService) ConversationOf(message ThreadMessage) string {
+	return message.ConversationId
+}
+
+func (rows *ThreadRowService) RootIdOf(message ThreadMessage) string {
+	return rows.rootIdOf(message)
+}
+
+func (rows *ThreadRowService) KnownRoot(message ThreadMessage) ThreadMessage {
+	return rows.rootOrNothing(message)
+}
+
+func (rows *ThreadRowService) rootIdOf(message ThreadMessage) string {
+	if message.ThreadRootId == "" {
+		return message.MessageId
+	}
+	return message.ThreadRootId
+}
+
+func (rows *ThreadRowService) rootOrNothing(message ThreadMessage) ThreadMessage {
+	if message.ThreadRootId != "" {
+		return ThreadMessage{}
+	}
+	return message
 }
 
 func (rows *ThreadRowService) repliesOf(messages []ThreadMessage, rootId string) []ThreadRow {

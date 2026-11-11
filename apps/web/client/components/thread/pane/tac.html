@@ -1,143 +1,146 @@
-<section class="thread-pane" aria-label="Thread">
+<section class="flex min-h-full min-w-0 flex-col" aria-label="Thread">
   <switch :value="thread.status">
     <case :when="'loading'">
-      <div class="thread-skeleton" role="status">
-        <span class="thread-hidden">Loading the thread…</span>
-        <div class="thread-skeleton-row" aria-hidden="true">
-          <span class="thread-skeleton-avatar"></span>
-          <span class="thread-skeleton-lines"><span class="thread-skeleton-line"></span><span class="thread-skeleton-line thread-skeleton-line-short"></span></span>
-        </div>
-        <div class="thread-skeleton-row" aria-hidden="true">
-          <span class="thread-skeleton-avatar"></span>
-          <span class="thread-skeleton-lines"><span class="thread-skeleton-line"></span><span class="thread-skeleton-line"></span></span>
-        </div>
-        <div class="thread-skeleton-row" aria-hidden="true">
-          <span class="thread-skeleton-avatar"></span>
-          <span class="thread-skeleton-lines"><span class="thread-skeleton-line thread-skeleton-line-short"></span></span>
-        </div>
+      <p class="sr-only" role="status">Loading the thread…</p>
+      <div class="grid gap-4 px-4 py-4 max-sm:px-3" aria-hidden="true">
+        <w-skeleton-loader type="list-item-avatar-three-line" class="block max-w-[80ch]"></w-skeleton-loader>
+        <w-skeleton-loader type="list-item-avatar-two-line" class="block max-w-[60ch]"></w-skeleton-loader>
+        <w-skeleton-loader type="list-item-avatar-two-line" class="block max-w-[50ch]"></w-skeleton-loader>
       </div>
     </case>
 
     <case :when="'error'">
-      <div class="thread-state" role="alert">
-        <p class="thread-state-title">We could not load this thread.</p>
-        <p class="thread-state-text">Check your connection, then try again.</p>
-        <div class="thread-state-actions">
-          <button type="button" class="thread-button" on:click="thread.reload()">Try again</button>
-          <button type="button" class="thread-button thread-button-quiet" on:click="thread.close()">Close thread</button>
-        </div>
+      <div class="grid flex-1 place-items-center px-4 py-8 max-sm:px-3">
+        <w-alert type="error" title="This thread did not load" class="block w-full max-w-md">
+          <p>Check your connection, then try again.</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <w-btn variant="filled" prepend-icon="refresh" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="thread.reload()">Try again</w-btn>
+            <w-btn variant="text" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="thread.close()">Close thread</w-btn>
+          </div>
+        </w-alert>
       </div>
     </case>
 
     <case :when="'session'">
-      <div class="thread-state" role="alert">
-        <p class="thread-state-title">Your session ended.</p>
-        <p class="thread-state-text">Sign in again to see this thread.</p>
-        <button type="button" class="thread-button thread-button-quiet" on:click="thread.close()">Close thread</button>
+      <div class="grid flex-1 place-items-center px-4 py-8 max-sm:px-3">
+        <w-alert type="error" title="Your session ended" class="block w-full max-w-md">
+          <p>Sign in again to see this thread.</p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <w-btn variant="text" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="thread.close()">Close thread</w-btn>
+          </div>
+        </w-alert>
       </div>
     </case>
 
     <case :when="'ready'">
-      <div class="thread-log" role="log" aria-label="Thread replies">
+      <div class="flex-1 min-w-0 py-4 [&_.ms-msg]:px-4 max-sm:[&_.ms-msg]:px-3" role="log" aria-label="Thread replies">
         <logic :if="thread.hasRoot">
-          <article class="thread-message" :aria-label="thread.root.label">
-            <span class="thread-avatar" aria-hidden="true">{thread.root.initials}</span>
-            <div class="thread-message-main">
-              <p class="thread-message-meta">
-                <span class="thread-author">{thread.root.authorName}</span>
-                <time class="thread-time" :datetime="thread.root.dateTime">{thread.root.time}</time>
-                <logic :if="thread.root.edited"><span class="thread-edited">(edited)</span></logic>
-              </p>
+          <article class="ms-msg" :aria-label="thread.root.label">
+            <w-avatar :text="thread.root.initials" size="36" alt=""></w-avatar>
+            <div class="min-w-0">
+              <div class="ms-msg__meta">
+                <span class="ms-msg__author">{thread.root.authorName}</span>
+                <time class="ms-msg__time" :datetime="thread.root.dateTime">{thread.root.time}</time>
+                <logic :if="thread.root.edited"><span class="ms-msg__edited">(edited)</span></logic>
+              </div>
               <logic :if="thread.root.deleted">
-                <p class="thread-text thread-text-deleted">This message was deleted</p>
+                <p class="ms-msg__text ms-msg__text--deleted">This message was deleted</p>
               </logic>
               <logic else>
-                <p class="thread-text">{thread.root.body}</p>
+                <p class="ms-msg__text">{thread.root.body}</p>
               </logic>
               <logic :if="thread.root.reactions != ''">
-                <p class="thread-reactions">Reactions: {thread.root.reactions}</p>
+                <p class="mt-1 text-xs text-subtle [overflow-wrap:anywhere]">Reactions: {thread.root.reactions}</p>
               </logic>
             </div>
           </article>
         </logic>
         <logic else>
-          <p class="thread-original">Original message</p>
+          <p class="px-4 py-2 text-subtle max-sm:px-3">Original message</p>
         </logic>
 
-        <p class="thread-divider">{thread.repliesLabel}</p>
+        <p class="mx-4 my-2 flex items-center gap-2 text-sm text-subtle after:h-px after:flex-1 after:bg-divider max-sm:mx-3">{thread.repliesLabel}</p>
 
         <logic :if="thread.nextCursor != ''">
-          <div class="thread-older">
-            <button type="button" class="thread-button thread-button-quiet" :aria-busy="shell.flag(thread.loadingOlder)" on:click="thread.showOlder()">Show older replies</button>
+          <div class="flex justify-center px-4">
+            <w-btn variant="text" size="small" class="pointer-coarse:min-h-11 max-sm:min-h-11" :loading="thread.loadingOlder" on:click="thread.showOlder()">Show older replies</w-btn>
           </div>
         </logic>
 
         <logic :if="thread.replies.length == 0">
           <logic :if="thread.sendStatus == ''">
-            <p class="thread-empty">No replies yet. Start the thread.</p>
+            <w-empty-state class="block px-4">
+              <w-icon slot="media" name="thread" class="[--ms-icon-size:2rem]"></w-icon>
+              <h3 slot="title" class="text-base font-semibold">No replies yet</h3>
+              <span slot="text">Start the thread. Replies stay in this thread.</span>
+            </w-empty-state>
           </logic>
         </logic>
 
         <loop :for="row of thread.replies">
-          <article class="thread-message" :aria-label="row.label">
-            <span class="thread-avatar" aria-hidden="true">{row.initials}</span>
-            <div class="thread-message-main">
-              <p class="thread-message-meta">
-                <span class="thread-author">{row.authorName}</span>
-                <time class="thread-time" :datetime="row.dateTime">{row.time}</time>
-                <logic :if="row.edited"><span class="thread-edited">(edited)</span></logic>
-              </p>
+          <article class="ms-msg" :aria-label="row.label">
+            <w-avatar :text="row.initials" size="36" alt=""></w-avatar>
+            <div class="min-w-0">
+              <div class="ms-msg__meta">
+                <span class="ms-msg__author">{row.authorName}</span>
+                <time class="ms-msg__time" :datetime="row.dateTime">{row.time}</time>
+                <logic :if="row.edited"><span class="ms-msg__edited">(edited)</span></logic>
+              </div>
               <logic :if="row.deleted">
-                <p class="thread-text thread-text-deleted">This message was deleted</p>
+                <p class="ms-msg__text ms-msg__text--deleted">This message was deleted</p>
               </logic>
               <logic else>
-                <p class="thread-text">{row.body}</p>
+                <p class="ms-msg__text">{row.body}</p>
               </logic>
               <logic :if="row.reactions != ''">
-                <p class="thread-reactions">Reactions: {row.reactions}</p>
+                <p class="mt-1 text-xs text-subtle [overflow-wrap:anywhere]">Reactions: {row.reactions}</p>
               </logic>
             </div>
           </article>
         </loop>
 
         <logic :if="thread.sendStatus == 'sending'">
-          <article class="thread-message thread-message-pending" :aria-label="thread.pending.label + ', sending'">
-            <span class="thread-avatar" aria-hidden="true">{thread.pending.initials}</span>
-            <div class="thread-message-main">
-              <p class="thread-message-meta"><span class="thread-author">{thread.pending.authorName}</span><span class="thread-status">Sending…</span></p>
-              <p class="thread-text">{thread.pending.body}</p>
+          <article class="ms-msg ms-msg--pending" :aria-label="thread.pending.label + ', sending'">
+            <w-avatar :text="thread.pending.initials" size="36" alt=""></w-avatar>
+            <div class="min-w-0">
+              <div class="ms-msg__meta"><span class="ms-msg__author">{thread.pending.authorName}</span><span class="ms-msg__time">Sending…</span></div>
+              <p class="ms-msg__text">{thread.pending.body}</p>
             </div>
           </article>
         </logic>
 
         <logic :if="thread.sendStatus == 'failed'">
-          <article class="thread-message thread-message-failed" :aria-label="thread.pending.label + ', not sent'">
-            <span class="thread-avatar" aria-hidden="true">{thread.pending.initials}</span>
-            <div class="thread-message-main">
-              <p class="thread-message-meta"><span class="thread-author">{thread.pending.authorName}</span><span class="thread-status thread-status-failed">Not sent</span></p>
-              <p class="thread-text">{thread.pending.body}</p>
-              <button type="button" class="thread-button thread-button-quiet" on:click="thread.retry()">Try again</button>
+          <article class="ms-msg ms-msg--failed" :aria-label="thread.pending.label + ', not sent'">
+            <w-avatar :text="thread.pending.initials" size="36" alt=""></w-avatar>
+            <div class="min-w-0">
+              <div class="ms-msg__meta"><span class="ms-msg__author">{thread.pending.authorName}</span><span class="ms-msg__failed"><w-icon name="alert" class="ms-icon-xs"></w-icon>Not sent</span></div>
+              <p class="ms-msg__text">{thread.pending.body}</p>
+              <w-btn variant="text" size="small" prepend-icon="refresh" class="-ml-2 pointer-coarse:min-h-11 max-sm:min-h-11" on:click="thread.retry()">Try again</w-btn>
             </div>
           </article>
         </logic>
       </div>
 
-      <form class="thread-reply" aria-label="Reply in thread">
-        <logic :if="thread.sendStatus == 'session'">
-          <p class="thread-reply-problem" role="alert">Your session ended, so the reply was not sent. Sign in again, then send it.</p>
-        </logic>
-        <label class="thread-hidden" for="thread-reply-input">Reply in thread</label>
-        <textarea class="thread-reply-input" id="thread-reply-input" name="reply" rows="2" placeholder="Reply…" :readonly="thread.sendStatus == 'sending'" :value="thread.draft" on:input="thread.write($event.target.value)"></textarea>
-        <div class="thread-reply-bar">
-          <button type="button" class="thread-send" :disabled="!thread.canSend" on:click="thread.reply()">Send</button>
-        </div>
-      </form>
+      <div class="sticky bottom-0 bg-surface px-2 pb-3 sm:px-4 safe-b safe-r">
+        <form class="ms-composer grid gap-2 p-3" aria-label="Reply in thread">
+          <logic :if="thread.sendStatus == 'session'">
+            <w-alert type="error" class="block">Your session ended, so the reply was not sent. Sign in again, then send it.</w-alert>
+          </logic>
+          <w-textarea label="Reply in thread" name="reply" rows="2" auto-grow no-resize placeholder="Reply…" class="block min-w-0 [&_textarea]:max-h-[30vh]" :readonly="thread.sendStatus == 'sending'" :value="thread.draft" on:input="thread.write($event.target.value)"></w-textarea>
+          <div class="flex items-center gap-2">
+            <w-btn variant="filled" size="small" prepend-icon="send" class="ml-auto pointer-coarse:min-h-11 max-sm:min-h-11" :disabled="!thread.canSend" on:click="thread.reply()">Send</w-btn>
+          </div>
+        </form>
+      </div>
     </case>
 
     <case default>
-      <div class="thread-state">
-        <p class="thread-state-title">No thread is open.</p>
-        <p class="thread-state-text">Choose "Reply in thread" on a message to open its thread.</p>
+      <div class="grid flex-1 place-items-center px-4 py-8">
+        <w-empty-state class="block max-w-md">
+          <w-icon slot="media" name="thread" class="[--ms-icon-size:2rem]"></w-icon>
+          <h3 slot="title" class="text-base font-semibold">No thread is open</h3>
+          <span slot="text">Choose "Reply in thread" on a message to open its thread.</span>
+        </w-empty-state>
       </div>
     </case>
   </switch>

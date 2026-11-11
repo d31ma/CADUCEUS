@@ -1,373 +1,83 @@
-.thread-pane {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 100%;
-  color: var(--w-text);
-  font-size: var(--ms-text-body);
-  line-height: var(--ms-line-body);
-}
-
-.thread-hidden {
-  position: absolute;
-  inline-size: 1px;
-  block-size: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.thread-log {
-  flex: 1;
-  min-width: 0;
-  padding-block: var(--w-space-4) var(--w-space-2);
-}
-
-.thread-message {
+.ms-msg {
+  position: relative;
   display: grid;
   grid-template-columns: var(--ms-avatar-md) minmax(0, 1fr);
   column-gap: var(--w-space-3);
   padding-block: var(--w-space-1);
-  padding-inline: var(--w-space-5);
   margin-block-start: var(--w-space-2);
   transition: background var(--ms-duration) var(--ms-ease);
 }
 
-.thread-message:hover,
-.thread-message:focus-within {
+.ms-msg:hover,
+.ms-msg:focus-within {
   background: var(--ms-msg-hover);
 }
 
-.thread-avatar {
-  display: inline-grid;
-  place-items: center;
-  inline-size: var(--ms-avatar-md);
-  block-size: var(--ms-avatar-md);
+.ms-msg w-avatar .w-avatar {
   border-radius: var(--w-radius-lg);
   background: var(--w-primary-container);
   color: var(--w-on-primary-container);
-  font-size: var(--w-font-sm);
   font-weight: var(--w-font-weight-semibold);
-  line-height: 1;
-  user-select: none;
 }
 
-.thread-message-main {
-  display: grid;
-  gap: var(--w-space-1);
-  min-width: 0;
-}
-
-.thread-message-meta {
+.ms-msg__meta {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0 var(--w-space-2);
-  margin: 0;
 }
 
-.thread-author {
+.ms-msg__author {
   min-width: 0;
   overflow-wrap: anywhere;
   font-weight: var(--w-font-weight-bold);
 }
 
-.thread-time,
-.thread-edited,
-.thread-status,
-.thread-reactions {
+.ms-msg__time,
+.ms-msg__edited {
   color: var(--w-text-subtle);
   font-size: var(--ms-text-meta);
 }
 
-.thread-status-failed {
+.ms-msg__failed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--w-space-1);
   color: var(--w-error);
+  font-size: var(--ms-text-meta);
   font-weight: var(--w-font-weight-semibold);
 }
 
-.thread-text {
+.ms-msg__text {
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  line-height: var(--ms-line-body);
 }
 
-.thread-text-deleted,
-.thread-message-pending .thread-text {
+.ms-msg__text--deleted,
+.ms-msg--pending .ms-msg__text {
   color: var(--w-text-subtle);
   font-style: italic;
 }
 
-.thread-message-failed .thread-text {
+.ms-msg--failed .ms-msg__text {
   color: var(--w-text-subtle);
 }
 
-.thread-reactions {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.thread-original,
-.thread-empty {
-  margin: 0;
-  padding-block: var(--w-space-2);
-  padding-inline: var(--w-space-5);
-  color: var(--w-text-subtle);
-}
-
-.thread-divider {
-  display: flex;
-  align-items: center;
-  gap: var(--w-space-2);
-  margin-block: var(--w-space-2);
-  margin-inline: var(--w-space-4);
-  color: var(--w-text-subtle);
-  font-size: var(--w-font-sm);
-}
-
-.thread-divider::after {
-  content: "";
-  flex: 1;
-  border-block-start: 1px solid var(--w-divider);
-}
-
-.thread-older {
-  display: flex;
-  justify-content: center;
-  padding-inline: var(--w-space-4);
-}
-
-.thread-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  justify-self: start;
-  min-block-size: 2rem;
-  padding-block: 0;
-  padding-inline: var(--w-space-3);
-  border: 1px solid var(--w-outline);
-  border-radius: var(--w-radius-md);
-  background: var(--w-surface);
-  color: var(--w-text);
-  font: inherit;
-  font-size: var(--w-font-base);
-  font-weight: var(--w-font-weight-semibold);
-  cursor: pointer;
-  transition: background var(--ms-duration) var(--ms-ease);
-}
-
-.thread-button:hover {
-  background: var(--w-hover);
-}
-
-.thread-button-quiet {
-  border-color: transparent;
-  background: transparent;
-  color: var(--w-primary);
-}
-
-.thread-button[aria-busy="true"] {
-  cursor: progress;
-}
-
-.thread-state {
-  display: grid;
-  justify-items: center;
-  gap: var(--w-space-2);
-  max-inline-size: 26rem;
-  margin: auto;
-  padding-block: var(--w-space-8);
-  padding-inline: var(--w-space-4);
-  text-align: center;
-}
-
-.thread-state-title {
-  margin: 0;
-  font-size: var(--ms-text-title);
-  font-weight: var(--w-font-weight-bold);
-}
-
-.thread-state-text {
-  margin: 0;
-  color: var(--w-text-subtle);
-}
-
-.thread-state-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--w-space-2);
-  margin-block-start: var(--w-space-2);
-}
-
-.thread-skeleton {
-  display: grid;
-  gap: var(--w-space-4);
-  padding-block: var(--w-space-4);
-  padding-inline: var(--w-space-5);
-}
-
-.thread-skeleton-row {
-  display: grid;
-  grid-template-columns: var(--ms-avatar-md) minmax(0, 1fr);
-  column-gap: var(--w-space-3);
-}
-
-.thread-skeleton-avatar,
-.thread-skeleton-line {
-  display: block;
-  background: linear-gradient(90deg, var(--w-surface-container) 25%, var(--w-surface-container-high) 50%, var(--w-surface-container) 75%);
-  background-size: 200% 100%;
-  animation: thread-shimmer 1.4s linear infinite;
-}
-
-.thread-skeleton-avatar {
-  inline-size: var(--ms-avatar-md);
-  block-size: var(--ms-avatar-md);
-  border-radius: var(--w-radius-lg);
-}
-
-.thread-skeleton-lines {
-  display: grid;
-  align-content: start;
-  gap: var(--w-space-2);
-  min-width: 0;
-}
-
-.thread-skeleton-line {
-  max-inline-size: 100%;
-  block-size: 0.75rem;
-  border-radius: var(--w-radius);
-}
-
-.thread-skeleton-line-short {
-  inline-size: 60%;
-}
-
-@keyframes thread-shimmer {
-  from {
-    background-position: 100% 0;
-  }
-
-  to {
-    background-position: -100% 0;
-  }
-}
-
-.thread-reply {
-  position: sticky;
-  inset-block-end: 0;
-  display: grid;
-  gap: var(--w-space-2);
-  margin-block-start: auto;
-  padding-block: var(--w-space-2) var(--w-space-4);
-  padding-block-end: max(var(--w-space-4), env(safe-area-inset-bottom));
-  padding-inline: var(--w-space-5);
-  background: var(--w-surface);
-}
-
-.thread-reply-problem {
-  margin: 0;
-  padding-block: var(--w-space-2);
-  padding-inline: var(--w-space-3);
-  border-radius: var(--w-radius-md);
-  background: var(--w-error-container);
-  color: var(--w-on-error-container);
-  font-size: var(--w-font-base);
-}
-
-.thread-reply-input {
-  display: block;
-  inline-size: 100%;
-  min-block-size: 3rem;
-  max-block-size: 40vh;
-  box-sizing: border-box;
-  padding: var(--w-space-3);
+.ms-composer {
   border: 1px solid var(--w-outline);
   border-radius: var(--ms-radius-card);
   background: var(--w-surface);
-  color: var(--w-text);
-  font: inherit;
-  resize: vertical;
-  overflow-wrap: anywhere;
 }
 
-.thread-reply-input::placeholder {
-  color: var(--w-text-very-subtle);
-}
-
-.thread-reply-input:read-only {
-  color: var(--w-text-subtle);
-}
-
-.thread-reply-bar {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.thread-send {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-block-size: 2rem;
-  padding-block: 0;
-  padding-inline: var(--w-space-4);
-  border: 0;
-  border-radius: var(--w-radius-md);
-  background: var(--w-accent-bg);
-  color: var(--w-on-accent);
-  font: inherit;
-  font-size: var(--w-font-base);
-  font-weight: var(--w-font-weight-semibold);
-  cursor: pointer;
-}
-
-.thread-send:disabled {
-  background: var(--w-surface-container-high);
-  color: var(--w-text-subtle);
-  cursor: not-allowed;
-}
-
-.thread-button:focus-visible,
-.thread-send:focus-visible,
-.thread-reply-input:focus-visible {
-  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
-  outline-offset: var(--w-focus-ring-offset);
-}
-
-@media (pointer: coarse) {
-  .thread-button,
-  .thread-send {
-    min-block-size: var(--ms-touch-min);
-    min-inline-size: var(--ms-touch-min);
-  }
-}
-
-@media (max-width: 767px) {
-  .thread-message,
-  .thread-original,
-  .thread-empty,
-  .thread-reply {
-    padding-inline: max(var(--w-space-3), env(safe-area-inset-left)) max(var(--w-space-3), env(safe-area-inset-right));
-  }
-
-  .thread-button,
-  .thread-send {
-    min-block-size: var(--ms-touch-min);
-    min-inline-size: var(--ms-touch-min);
-  }
+.ms-composer:focus-within {
+  border-color: var(--w-focus-ring-color);
+  box-shadow: 0 0 0 1px var(--w-focus-ring-color);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .thread-message,
-  .thread-button {
+  .ms-msg {
     transition: none;
-  }
-
-  .thread-skeleton-avatar,
-  .thread-skeleton-line {
-    animation: none;
   }
 }

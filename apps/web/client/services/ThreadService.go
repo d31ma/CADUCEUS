@@ -32,8 +32,9 @@ type ThreadService struct {
 
 // @OnEvent
 func (thread *ThreadService) Open(requested ThreadRootOpenRequested) {
-	thread.begin(requested.Root.ConversationId, thread.rootIdOf(requested.Root))
-	thread.keepRoot(requested.Root)
+	thread.begin(thread.rows.ConversationOf(requested.Root), thread.rows.RootIdOf(requested.Root))
+	thread.root = thread.rows.KnownRoot(requested.Root)
+	thread.showMessages()
 }
 
 // @OnEvent
@@ -127,21 +128,6 @@ func (thread *ThreadService) publishLoad(cursor string) {
 	thread.applicationEventPublisher.PublishEvent(requested, false)
 }
 
-func (thread *ThreadService) rootIdOf(message ThreadMessage) string {
-	if message.ThreadRootId == "" {
-		return message.MessageId
-	}
-	return message.ThreadRootId
-}
-
-func (thread *ThreadService) keepRoot(message ThreadMessage) {
-	if message.ThreadRootId != "" {
-		return
-	}
-	thread.root = message
-	thread.showMessages()
-}
-
 func (thread *ThreadService) refreshWhenOpen(conversationId string) {
 	if thread.RootId == "" || conversationId != thread.ConversationId {
 		return
@@ -181,9 +167,9 @@ func (thread *ThreadService) messagesWith(cursor string, items []ThreadMessage) 
 func (thread *ThreadService) showMessages() {
 	thread.root = thread.rows.Root(thread.messages, thread.RootId, thread.root)
 	thread.Root = thread.rows.Row(thread.root)
-	thread.HasRoot = thread.root.MessageId != ""
+	thread.HasRoot = thread.Root.MessageId != ""
 	thread.Replies = thread.rows.Replies(thread.messages, thread.RootId)
-	thread.RepliesLabel = thread.rows.RepliesLabel(max(len(thread.Replies), thread.root.ReplyCount))
+	thread.RepliesLabel = thread.rows.RepliesLabel(thread.root, len(thread.Replies))
 }
 
 func (thread *ThreadService) forgetPendingWhenChanged() {
@@ -228,7 +214,7 @@ func (thread *ThreadService) idForPending() string {
 func (thread *ThreadService) sendPending() {
 	thread.SendStatus = thread.sendSending()
 	thread.CanSend = false
-	thread.Pending = thread.rows.Row(ThreadMessage{Author: ThreadAuthor{DisplayName: thread.remote.MyName()}, Body: thread.pendingBody})
+	thread.Pending = thread.rows.PendingRow(thread.remote.MyName(), thread.pendingBody)
 	thread.applicationEventPublisher.PublishEvent(ThreadReplyRequested{Request: thread.replyRequest()}, false)
 }
 

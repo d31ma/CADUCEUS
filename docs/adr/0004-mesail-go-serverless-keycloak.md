@@ -315,16 +315,44 @@ already combines DuVay and Tailwind (`website/client/manifest.json`,
   release has no assets; the source archive of the tag had SHA-256
   `087f8c40b58ddffd2860cdf6632cad5b62a8a3b8c16ecf6520eb94fdea450919` on
   2026-11-10, but GitHub does not promise archive bytes, so the commit is
-  the pin). `scripts/vendor/duvay.sh` fetches that commit, checks it, builds
-  the single bundled files `duvay-wc.min.js` and `duvay.min.css`, and writes
-  them to `apps/<app>/client/shared/vendor/duvay/`. Each app's
+  the pin; the same build is also hosted at
+  `https://d31ma.github.io/DUVAY/versions/26.35.01/`). DuVay has no npm
+  package. `scripts/vendor/duvay.sh` fetches that commit, checks it, builds
+  one **Mesail subset** bundle from DuVay's `src/` (the components listed in
+  `scripts/vendor/duvay-components.txt`, after `base.js`, which the others
+  need) plus the matching per-component CSS, records every hash in a
+  `PROVENANCE.json` next to them (TACHYON's website does the same with
+  `build-duvay.mjs`), and writes them to
+  `apps/<app>/client/shared/vendor/duvay/`. Each app's
   `client/manifest.json` declares them in `tac.scripts` /
   `tac.scriptSources` and `tac.styles` / `tac.styleSources` (`"kind":
   "vendor"`) with `package`, `version`, `license` and `sha256`; TACHYON
   refuses the page when the bytes differ (TY1403). The vendored files are
-  never edited by hand. The full bundle is about 134 KiB Brotli of the 200
-  KB route script budget (measured by slice F1); when that becomes tight,
-  the script builds a pinned subset instead.
+  never edited by hand. Measured at that commit: all 257 components are
+  about 137 KB Brotli (of the 200 KB route script budget) and 53 KB of CSS;
+  a Mesail-sized subset of 22 components is about 35 KB of script and 21 KB
+  of CSS. A slice that needs another component adds it to the list (owned
+  by F1) and rebuilds. DuVay is loaded as a module (`tac.scripts` loads
+  `type="module"`), because its bundle defines a top-level `fs` that
+  clashes with Go's `wasm_exec.js` (TACHYON ADR 0045).
+- **DuVay rules.** DuVay renders in the light DOM (no shadow DOM), so
+  Tailwind and page CSS reach it. DuVay also ships unprefixed utility
+  classes whose names clash with Tailwind's and mean other things (DuVay
+  `h-100` is 100 percent, Tailwind `h-100` is 25 rem): Mesail markup never
+  uses DuVay's utility classes; Tailwind owns utilities, and DuVay's CSS
+  sits in a lower `@layer duvay`. The theme follows the system
+  (`w-theme="auto"`, with `light`, `dark` and `high-contrast` available);
+  `duvay.js` would force `light` on first load, so Mesail does not load it,
+  or sets the stored theme before first paint (TACHYON request B7). Native
+  targets set DuVay's OS skin (`w-os` = `ios`, `android`, `macos`,
+  `windows` or `linux`). For values that change often, a Tac view sets the
+  element's property rather than its attribute, because a changed observed
+  attribute rebuilds the element. Inline `@event` and `on<name>` handlers
+  of DuVay use `new Function`, which the CSP forbids; Mesail binds events
+  only with Tac's `on:` and checks the browser console for CSP errors in
+  the responsive test. DuVay's RTL support is not tested upstream and it has
+  no `forced-colors` support, so Mesail's responsive test covers RTL and
+  Windows high-contrast itself.
 - **Tailwind is the layout layer.** Grid, flex, gap, spacing, sizing and
   breakpoints are Tailwind classes in `tac.html`. Tailwind 4.3.3's
   standalone CLI (pinned version and SHA-256; no Node packages) runs without

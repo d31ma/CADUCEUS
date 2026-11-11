@@ -257,8 +257,9 @@ C1, not before each slice merge.
   `SessionService`.
 - **Also owns (shared UI tooling, used by F2 to F5):** `scripts/vendor/**`
   (`duvay.sh`: fetch DuVay commit `bc8b56a` of release `v26.35.01-1`,
-  check it, build `duvay-wc.min.js` and `duvay.min.css`, write them and
-  print the manifest SHA-256 lines), `tools/styles/**` (the Go generator
+  check it, build the Mesail subset bundle and its CSS from the components
+  in `duvay-components.txt`, write them with `PROVENANCE.json` and print the
+  manifest SHA-256 lines; other slices ask F1 to add a component), `tools/styles/**` (the Go generator
   around the pinned Tailwind 4.3.3 standalone CLI, with `--check`), and
   `tests/responsive/**` (the Go responsive test). F1 does the first
   migration of the web shell to DuVay and Tailwind.

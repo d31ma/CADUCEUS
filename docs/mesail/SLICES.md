@@ -349,7 +349,9 @@ C1, not before each slice merge.
 - **Depends on:** I1, I2, M3 event payloads.
 
 ### N1. Notifications
-- **Owns:** `apps/notify/**` (except kit copies).
+- **Owns:** `apps/notify/**` (except kit copies), new `kit/webpush/**`
+  (VAPID ES256 and RFC 8291 message encryption) and its copy in
+  `apps/notify/server/packages/webpush/**` (synced only into `notify`).
 - **Builds:** AC-PN-2..4: notification records, Web Push (VAPID keys from
   the secret store), mute, the email summary (via `email.send.requested`).
 - **Depends on:** I2, M3 events, M2 contract.
@@ -405,7 +407,7 @@ C1, not before each slice merge.
 | Path | Owner |
 | --- | --- |
 | `docs/**` (except `docs/mesail/ux/**`), `tests/blackbox/**`, `tools/crap/**`, `scripts/kit-sync.sh`, `CLAUDE.md`, `AGENTS.md`, `README.md`, `CHANGELOG.md`, `.gitignore` | architecture (this plan); slices append to `CHANGELOG.md` only under their own heading, and update CONTRACTS.md per rule 3 |
-| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package (I1 `oidc`, I2 `events` `outbox`, D1 `recipients`, A1 `blobs`, M1 `mime` `mailauth`, M2 `compose` `dkim` `smtpclient`, S1 `textindex`); `ids` and `collections` stay with architecture |
+| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package (I1 `oidc`, I2 `events` `outbox`, D1 `recipients`, A1 `blobs`, M1 `mime` `mailauth`, M2 `compose` `dkim` `smtpclient`, S1 `textindex`, N1 `webpush`); `ids` and `collections` stay with architecture |
 | `apps/<service>/**` other files | the service's slice |
 | `apps/web/client/**` | split between F1-F4 by the patterns above |
 | `apps/web-admin/**` | F5 |

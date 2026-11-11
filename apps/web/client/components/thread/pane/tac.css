@@ -5,6 +5,7 @@
   column-gap: var(--w-space-3);
   padding-block: var(--w-space-1);
   margin-block-start: var(--w-space-2);
+  line-height: var(--ms-line-body);
   transition: background var(--ms-duration) var(--ms-ease);
 }
 
@@ -146,6 +147,7 @@
 
 .ms-state-title {
   font-size: var(--ms-text-body);
+  line-height: var(--ms-line-tight);
   font-weight: var(--w-font-weight-semibold);
 }
 

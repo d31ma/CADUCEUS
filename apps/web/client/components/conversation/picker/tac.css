@@ -33,7 +33,7 @@
 
 .picker-glyph {
   font-size: var(--w-font-xl);
-  line-height: 1;
+  line-height: var(--ms-line-tight);
 }
 
 .picker-actions {
@@ -63,7 +63,7 @@
   margin: 0;
   font-size: var(--w-font-lg);
   font-weight: var(--w-font-weight-bold);
-  line-height: 1.3;
+  line-height: var(--ms-line-tight);
 }
 
 /* @tachyon-generated-tailwind:start */

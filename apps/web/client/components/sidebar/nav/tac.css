@@ -9,6 +9,7 @@
   gap: var(--w-space-2);
   min-width: 0;
   padding-block-end: env(safe-area-inset-bottom);
+  line-height: var(--ms-line-body);
 }
 
 .live-notice:empty {
@@ -77,6 +78,7 @@
 
 .empty-title {
   margin: 0;
+  line-height: var(--ms-line-tight);
   font-size: var(--w-font-md);
   font-weight: var(--w-font-weight-bold);
   text-align: center;
@@ -224,7 +226,7 @@
   color: var(--ms-on-email-bg);
   font-size: var(--w-font-xs);
   font-weight: var(--w-font-weight-semibold);
-  line-height: 1.5;
+  line-height: var(--ms-line-body);
 }
 
 .email-row .row-icon {

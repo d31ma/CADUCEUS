@@ -47,22 +47,23 @@ request.Header.Set("Authorization", authorization) // "Bearer <token>"
 - Without the settings it returns `oidc.NotConfigured`. When Keycloak
   refuses the client, it returns `oidc.SignInRefused`. When Keycloak cannot
   answer, it returns `oidc.KeycloakUnavailable`.
-- Tokens are cached in `TMPDIR` (folder `mesail-oidc/tokens`, mode 0700)
-  until 10 seconds before they expire, so a warm handler asks Keycloak
+- Tokens are cached in `TMPDIR` (folder `mesail-oidc/tokens`, mode 0700,
+  files mode 0600) until 10 seconds before they expire, so a warm handler asks Keycloak
   about once a minute per realm.
 - Use `http.DefaultTransport` (a plain `http.Client{}`) for the call, so the
   egress guard of TACHYON sees it.
 
-## Which realm
+## Which realm (decided by mesail-arch, 2026-11-10)
 
-Ask for the token in the realm of the domain the call is about. Then the
-receiving service's `caller.DomainId` is that domain, and the tenant rule
-holds without exceptions: the receiver refuses a `Service` call whose
-`DomainId` is not the domain in the path or event envelope.
-
-For a call that is not about a hosted domain (for example asking whether a
-domain is hosted at all), the architecture decides the realm; see
-`CONTRACTS.md`. Until it does, `mesail-operators` is the proposal.
+- Ask for the token in the realm of the domain the call is about. The
+  receiving service's `caller.DomainId` is then that domain, and the tenant
+  rule holds: a receiver answers `404` to a `Service` call whose `DomainId`
+  is not the domain in the path, body or event envelope.
+- Install-wide calls (not about one hosted domain, for example asking
+  whether a domain is hosted at all) use the realm `mesail-operators`, which
+  also has a `mesail-service` client. Only routes documented as install-wide
+  accept a `Service` token from `mesail-operators`.
+- See also `docs/mesail/EVENTS.md` section 4.
 
 ## The receiving side
 

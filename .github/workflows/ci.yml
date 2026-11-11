@@ -77,7 +77,7 @@ jobs:
         run: scripts/ci/install-tools.sh "$RUNNER_TEMP/mesail-tools" ty fylo go tinygo binaryen bun
       - name: Install Chromium for the responsive test
         if: matrix.app == 'web'
-        run: bunx playwright@1.60.0 install --with-deps chromium-headless-shell
+        run: bun x playwright@1.60.0 install --with-deps chromium-headless-shell
       - name: Run app gates
         env:
           APP: ${{ matrix.app }}

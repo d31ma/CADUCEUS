@@ -262,11 +262,15 @@ kit/            shared plain Go packages (source of truth)
   the Keycloak password; it is a later slice.
 
 ### 8. Environments
-- **This Mac (development and test):** every Yon service runs as a Lambda in
-  Floci inside the `mesail` Lima VM, with EFS volumes on an ext4 data disk
-  whose raw file is on ATLAS. Tests that run natively on macOS put FYLO
-  roots in the APFS disk image on ATLAS, attached at
-  `~/Developer/AtlasFylo/mesail` (one folder per slice).
+- **This Mac, development and slice tests:** native macOS, no VM. Each Yon
+  app runs with `ty start` behind a small native dev router on one origin;
+  FYLO roots are in the APFS disk image on ATLAS, attached at
+  `~/Developer/AtlasFylo/mesail` (one folder per slice); Keycloak runs
+  natively when a test needs a real token.
+- **This Mac, integration:** every Yon service as a Lambda in Floci inside
+  the `mesail` Lima VM, with EFS volumes on an ext4 data disk whose raw file
+  is on ATLAS. Linux VMs are used only for this run, Lambda image builds and
+  workflow dry runs, never as a per-slice gate.
 - **kestrel (deployment, later):** the same images through PaaS, like
   FitNest.
 - **AWS (possible later):** the same images on Lambda with EFS.

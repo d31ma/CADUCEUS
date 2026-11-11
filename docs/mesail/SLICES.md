@@ -58,7 +58,8 @@ wave run at the same time.
     directly (SMB; FYLO refuses it), and never detach the image: other
     sessions share it. If it is not attached, attach it (Bash sandbox off):
     `diskutil image attach --mountOptions nobrowse --mountPoint ~/Developer/AtlasFylo/mesail /Volumes/ATLAS/Mesail/mesail-fylo-test.sparsebundle`.
-    In Lambda form (Floci locally, AWS later) a service's root is on its
+    Only the integration run in Lambda form (Floci, AWS later) puts a
+    service's root on its
     EFS mount: `/mnt/data/<service>/`.
 12. **UX.** The screens, states and copy come from `docs/mesail/ux/**`
     (owned by the `mesail-ux` session). Frontend slices follow it and do not
@@ -73,10 +74,24 @@ scripts/gates.sh --app <each app it owns>   # versions, doctor, gofmt, kit sync,
 ```
 
 plus, when it owns a `kit/` package, `cd kit && go test ./<package>/...`,
-and its named blackbox tests against the Floci stack once
-`scripts/floci/run-all.sh` exists (slice P1); until then, the compile check
-is enough.
+and its named blackbox tests against the services started natively (see
+below) once `scripts/native/run-all.sh` exists (slice P1); until then, the
+compile check is enough.
 `ty test --coverage` fails when a public method has no test (TY2022).
+
+**Everything in a slice gate runs natively on macOS. No VM.** That means
+`ty test`, `ty bundle`, `ty start`, `go test`, and the blackbox tests
+against services started with `ty start` on this Mac behind the native dev
+router. FYLO roots go in `~/Developer/AtlasFylo/mesail/slice-<id>/`.
+When a test needs a real Keycloak token, use Keycloak running natively on
+macOS (the `mesail-keycloak` session documents how). Fakes at the boundary
+(rule 4) are preferred for unit tests.
+
+**Linux VMs are not a slice gate.** Colima and the `mesail` dev host with
+Floci are only for work that truly needs Linux: Lambda image builds, the
+end-to-end Floci run (`scripts/floci/run-all.sh`) and `act` dry runs of the
+workflows. Those run in the integration and release gates, owned by P1 and
+C1, not before each slice merge.
 
 ## Wave 1 (start now, all in parallel)
 
@@ -203,8 +218,8 @@ is enough.
 ### P1. Lambda images and the Floci stack
 - **Owns:** `Dockerfile` except the Keycloak stages (owned by
   `mesail-keycloak`), `docker-compose.yml`, `.dockerignore`, `.env.example`,
-  new `deploy/lambda/**`, `deploy/floci/**`, `deploy/router/**` and
-  `scripts/floci/**` (never `deploy/keycloak/**`).
+  new `deploy/lambda/**`, `deploy/floci/**`, `deploy/router/**`,
+  `scripts/floci/**` and `scripts/native/**` (never `deploy/keycloak/**`).
 - **Builds:** one Lambda container image per Yon app (arm64, Ubuntu 24.04
   base because `fylo` needs glibc 2.39, AWS Lambda Web Adapter, `ty start`,
   the Go toolchain that built the handlers, FYLO root on the EFS mount at
@@ -214,8 +229,15 @@ is enough.
   the `mesail` Lima VM (built by the `mesail-devhost` session), the
   path-routing front (API Gateway in Floci and AWS), static hosting for the
   Tac apps, seeded realms `example.com`, `example.org` (a second hosted
-  domain) and `partner.test`, and `scripts/floci/run-all.sh`, which the
-  slices' gates use to run the blackbox tests against Floci. The
+  domain) and `partner.test`, and `scripts/floci/run-all.sh` for the
+  end-to-end integration run in Floci. **First**, the native path that every
+  slice gate uses: `scripts/native/run-all.sh` starts every Yon app that
+  exists with `ty start` on this Mac (FYLO roots under
+  `~/Developer/AtlasFylo/mesail/slice-<id>/`), the static Tac apps, and a
+  small native dev router on one origin that routes `/api/v1/<service>/`
+  by prefix (a plain Go program in `deploy/router/`), and prints the
+  `MESAIL_BASE_URL` for the blackbox tests. Deliver the native path before
+  the Floci path. The
   deployment to kestrel through PaaS (like FitNest) comes later.
 - **Depends on:** `mesail-devhost` (the VM), `mesail-keycloak` (Keycloak
   stages), `mesail-serverless` (the FYLO-on-EFS findings).
@@ -312,7 +334,7 @@ is enough.
 | `apps/web/client/**` | split between F1-F4 by the patterns above |
 | `apps/web-admin/**` | F5 |
 | `edge/smtp/**` | M1 |
-| `Dockerfile` (non-Keycloak stages), `docker-compose.yml`, `.dockerignore`, `.env.example`, `deploy/lambda/**`, `deploy/floci/**`, `deploy/router/**`, `scripts/floci/**` | P1 |
+| `Dockerfile` (non-Keycloak stages), `docker-compose.yml`, `.dockerignore`, `.env.example`, `deploy/lambda/**`, `deploy/floci/**`, `deploy/router/**`, `scripts/floci/**`, `scripts/native/**` | P1 |
 | `docs/mesail/ux/**` | `mesail-ux` |
 | `Dockerfile` Keycloak stages, `deploy/keycloak/**` | `mesail-keycloak` |
 | `.github/workflows/**`, `scripts/gates.sh`, `scripts/ci/**` | C1 |

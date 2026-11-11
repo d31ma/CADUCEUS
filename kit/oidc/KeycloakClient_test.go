@@ -97,10 +97,10 @@ func TestSignOutPostsToTheLogoutEndpoint(t *testing.T) {
 	}
 }
 
-func TestSignInReportsALockedAccount(t *testing.T) {
-	fake := newKeycloakFake(t, http.StatusBadRequest, `{"error":"invalid_grant","error_description":"Account temporarily disabled"}`)
+func TestSignInCannotTellALockedAccountFromAWrongPassword(t *testing.T) {
+	fake := newKeycloakFake(t, http.StatusBadRequest, `{"error":"invalid_grant","error_description":"Invalid user credentials"}`)
 	_, err := fake.client().SignIn("ana@example.com", "pw", "")
-	if !errors.Is(err, AccountLocked{}) || (AccountLocked{}).Error() == "" {
+	if !errors.Is(err, SignInRefused{}) || (AccountLocked{}).Error() == "" {
 		t.Fatalf("got %v", err)
 	}
 }

@@ -9,7 +9,6 @@ import (
 
 type AccountManager struct {
 	Sessions SessionIssuer
-	Admin    string
 	Now      func() time.Time
 }
 
@@ -139,23 +138,8 @@ func (manager AccountManager) callerAndAdmin(authorization string) (Caller, Keyc
 	if err != nil {
 		return Caller{}, KeycloakAdmin{}, err
 	}
-	admin, err := manager.admin(caller.DomainId)
+	admin, err := manager.Sessions.admin(caller.DomainId)
 	return caller, admin, err
-}
-
-func (manager AccountManager) admin(domain string) (KeycloakAdmin, error) {
-	keycloak, err := manager.Sessions.keycloak(domain)
-	if err != nil {
-		return KeycloakAdmin{}, err
-	}
-	keycloak.ClientId = manager.accountClientId()
-	keycloak.ClientSecret = manager.Sessions.Settings.Account.Secret
-	grant, err := keycloak.ClientCredentials()
-	if err != nil {
-		return KeycloakAdmin{}, err
-	}
-	endpoint, err := IssuerPattern{Pattern: manager.Admin}.Expand(domain)
-	return KeycloakAdmin{Client: manager.Sessions.Client, Endpoint: endpoint, Token: grant.AccessToken}, err
 }
 
 func (manager AccountManager) keycloak(caller Caller) KeycloakClient {
@@ -222,10 +206,6 @@ func (manager AccountManager) isNotOtp(credential UserCredential) bool {
 
 func (AccountManager) otpType() string {
 	return "otp"
-}
-
-func (AccountManager) accountClientId() string {
-	return "mesail-account"
 }
 
 func (AccountManager) setupLabel() string {

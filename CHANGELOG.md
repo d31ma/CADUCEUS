@@ -67,6 +67,10 @@
   `otpauth://` URI, server-drawn QR code and a sealed `setupKey`) and
   `POST .../totp/confirm`, through the Keycloak admin API as the client
   `mesail-account`. Session routes and account routes share one controller.
+- identity follows Keycloak 26.8.2 as tested by mesail-keycloak: a locked
+  account is found through the brute-force status of the user (Keycloak
+  answers it like a wrong password), and the 2-step secret is stored with
+  the stock admin API, so no custom Keycloak endpoint is needed.
 
 ### Mesail D1: directory
 

@@ -70,7 +70,7 @@ func (keycloak KeycloakClient) post(path string, form url.Values) ([]byte, error
 	if err != nil {
 		return nil, KeycloakUnavailable{Status: response.StatusCode}
 	}
-	return body, keycloak.answered(response.StatusCode, keycloak.failure(body))
+	return body, keycloak.answered(response.StatusCode)
 }
 
 func (KeycloakClient) failure(body []byte) KeycloakError {
@@ -79,20 +79,14 @@ func (KeycloakClient) failure(body []byte) KeycloakError {
 	return failure
 }
 
-func (keycloak KeycloakClient) answered(status int, failure KeycloakError) error {
+func (KeycloakClient) answered(status int) error {
 	switch {
 	case status < http.StatusMultipleChoices:
 		return nil
 	case status >= http.StatusInternalServerError:
 		return KeycloakUnavailable{Status: status}
-	case keycloak.locked(failure):
-		return AccountLocked{}
 	}
 	return SignInRefused{}
-}
-
-func (KeycloakClient) locked(failure KeycloakError) bool {
-	return strings.Contains(strings.ToLower(failure.Description), "temporarily")
 }
 
 func (KeycloakClient) refreshField() string {

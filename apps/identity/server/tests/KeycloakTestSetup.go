@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"mesail.dev/packages/oidc"
@@ -35,9 +36,10 @@ func (setup KeycloakTestSetup) Realm(name string) oidc.SigningRealm {
 }
 
 func (setup KeycloakTestSetup) Keycloak(realm oidc.SigningRealm) {
+	locked := &atomic.Bool{}
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		_ = request.ParseForm()
-		setup.answer(writer, request, realm)
+		setup.answer(writer, request, realm, locked)
 	}))
 	key := base64.StdEncoding.EncodeToString([]byte(strings.Repeat("k", 32)))
 	realm.Settings.Keycloak = server.URL + "/realms/{realm}/protocol/openid-connect"
@@ -49,12 +51,12 @@ func (setup KeycloakTestSetup) Keycloak(realm oidc.SigningRealm) {
 	})
 }
 
-func (setup KeycloakTestSetup) answer(writer http.ResponseWriter, request *http.Request, realm oidc.SigningRealm) {
+func (setup KeycloakTestSetup) answer(writer http.ResponseWriter, request *http.Request, realm oidc.SigningRealm, locked *atomic.Bool) {
 	form := request.PostForm
 	path := request.URL.Path
 	switch {
 	case strings.Contains(path, "/admin/"):
-		setup.admin(writer, request)
+		setup.admin(writer, request, locked)
 	case strings.HasSuffix(path, "/logout"):
 		writer.WriteHeader(http.StatusNoContent)
 	case form.Get("client_id") == "mesail-account":
@@ -62,15 +64,16 @@ func (setup KeycloakTestSetup) answer(writer http.ResponseWriter, request *http.
 	case form.Get("password") == "right" || form.Get("refresh_token") == "refresh-1":
 		_ = json.NewEncoder(writer).Encode(map[string]any{"access_token": setup.Token(realm, setup.Member()), "refresh_token": "refresh-1", "expires_in": 60})
 	case form.Get("password") == "locked":
+		locked.Store(true)
 		writer.WriteHeader(http.StatusBadRequest)
-		_, _ = writer.Write([]byte(`{"error":"invalid_grant","error_description":"Account temporarily disabled"}`))
+		_, _ = writer.Write([]byte(`{"error":"invalid_grant","error_description":"Invalid user credentials"}`))
 	default:
 		writer.WriteHeader(http.StatusUnauthorized)
 		_, _ = writer.Write([]byte(`{"error":"invalid_grant","error_description":"Invalid user credentials"}`))
 	}
 }
 
-func (KeycloakTestSetup) admin(writer http.ResponseWriter, request *http.Request) {
+func (KeycloakTestSetup) admin(writer http.ResponseWriter, request *http.Request, locked *atomic.Bool) {
 	reset := oidc.PasswordReset{}
 	_ = json.NewDecoder(request.Body).Decode(&reset)
 	switch {
@@ -81,6 +84,10 @@ func (KeycloakTestSetup) admin(writer http.ResponseWriter, request *http.Request
 		_, _ = writer.Write([]byte(`{"error":"invalidPasswordMinLengthMessage","error_description":"Invalid password: minimum length 12."}`))
 	case strings.HasSuffix(request.URL.Path, "/credentials"):
 		_, _ = writer.Write([]byte(`[{"id":"password-1","type":"password"}]`))
+	case strings.HasSuffix(request.URL.Path, "/users") && request.URL.Query().Get("username") == "ana@example.com":
+		_, _ = writer.Write([]byte(`[{"id":"member-1"}]`))
+	case strings.Contains(request.URL.Path, "/attack-detection/"):
+		_ = json.NewEncoder(writer).Encode(oidc.BruteForceStatus{Disabled: locked.Load()})
 	case strings.HasSuffix(request.URL.Path, "/sessions"):
 		_, _ = writer.Write([]byte(`[{"id":"session-other"}]`))
 	default:

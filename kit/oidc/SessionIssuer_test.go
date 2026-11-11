@@ -21,6 +21,7 @@ func newKeycloakRealm(t *testing.T) keycloakRealm {
 	t.Helper()
 	signer := newTestSigner(t)
 	signOuts := &atomic.Int64{}
+	locked := &atomic.Bool{}
 	claims := claimsWith("exp", time.Now().Unix()+60)
 	answer := func(writer http.ResponseWriter, refresh string) {
 		_ = json.NewEncoder(writer).Encode(map[string]any{"access_token": signer.rsaToken(t, "rsa-1", claims), "refresh_token": refresh, "expires_in": 60})
@@ -33,19 +34,32 @@ func newKeycloakRealm(t *testing.T) keycloakRealm {
 		_ = request.ParseForm()
 		form := request.PostForm
 		switch {
+		case form.Get("client_id") == "mesail-account" && form.Get("client_secret") == "account-secret":
+			_ = json.NewEncoder(writer).Encode(map[string]any{"access_token": "admin-token", "expires_in": 60})
 		case form.Get("client_id") != "mesail-identity" || form.Get("client_secret") != "client-secret":
 			writer.WriteHeader(http.StatusUnauthorized)
 		case form.Get("grant_type") == "password" && form.Get("password") == "right" && form.Get("totp") == "123456":
 			answer(writer, "refresh-1")
 		case form.Get("grant_type") == "password" && form.Get("password") == "locked":
+			locked.Store(true)
 			writer.WriteHeader(http.StatusBadRequest)
-			_, _ = writer.Write([]byte(`{"error":"invalid_grant","error_description":"Account temporarily disabled"}`))
+			_, _ = writer.Write([]byte(`{"error":"invalid_grant","error_description":"Invalid user credentials"}`))
 		case form.Get("grant_type") == "refresh_token" && form.Get("refresh_token") == "refresh-1":
 			answer(writer, "refresh-2")
 		default:
 			writer.WriteHeader(http.StatusBadRequest)
 			_, _ = writer.Write([]byte(`{"error":"invalid_grant","error_description":"Invalid user credentials"}`))
 		}
+	})
+	mux.HandleFunc("GET /admin/realms/example.com/users", func(writer http.ResponseWriter, request *http.Request) {
+		if request.Header.Get("Authorization") != "Bearer admin-token" || request.URL.Query().Get("username") != "ana@example.com" || request.URL.Query().Get("exact") != "true" {
+			_, _ = writer.Write([]byte(`[]`))
+			return
+		}
+		_, _ = writer.Write([]byte(`[{"id":"member-1"}]`))
+	})
+	mux.HandleFunc("GET /admin/realms/example.com/attack-detection/brute-force/users/member-1", func(writer http.ResponseWriter, request *http.Request) {
+		_ = json.NewEncoder(writer).Encode(BruteForceStatus{Disabled: locked.Load()})
 	})
 	mux.HandleFunc("POST /realms/example.com/protocol/openid-connect/logout", func(writer http.ResponseWriter, request *http.Request) {
 		signOuts.Add(1)
@@ -58,8 +72,8 @@ func newKeycloakRealm(t *testing.T) keycloakRealm {
 
 func (realm keycloakRealm) document() string {
 	key := base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{9}, 32))
-	return `{"yon":{"oidc":{"issuer":"https://id.mesail.test/realms/{realm}","jwks":"` + realm.server.URL + `/realms/{realm}/certs","audience":"mesail-api","keycloak":"` + realm.server.URL + `/realms/{realm}/protocol/openid-connect"},` +
-		`"identity":{"client":{"secret":"client-secret"},"session":{"key":"` + key + `"}}}}`
+	return `{"yon":{"oidc":{"issuer":"https://id.mesail.test/realms/{realm}","jwks":"` + realm.server.URL + `/realms/{realm}/certs","audience":"mesail-api","keycloak":"` + realm.server.URL + `/realms/{realm}/protocol/openid-connect","admin":"` + realm.server.URL + `/admin/realms/{realm}"},` +
+		`"identity":{"client":{"secret":"client-secret"},"account":{"secret":"account-secret"},"session":{"key":"` + key + `"}}}}`
 }
 
 func (realm keycloakRealm) issuer(t *testing.T) SessionIssuer {
@@ -110,6 +124,14 @@ func TestSignInReportsTheLockedAccount(t *testing.T) {
 	realm := newKeycloakRealm(t)
 	_, err := realm.issuer(t).SignIn("ana@example.com", "locked", "")
 	if !errors.Is(err, AccountLocked{}) {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestSignInTreatsAnUnknownAddressAsARefusal(t *testing.T) {
+	realm := newKeycloakRealm(t)
+	_, err := realm.issuer(t).SignIn("bo@example.com", "wrong", "")
+	if !errors.Is(err, SignInRefused{}) {
 		t.Fatalf("got %v", err)
 	}
 }

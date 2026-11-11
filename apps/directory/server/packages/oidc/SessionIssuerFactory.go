@@ -20,7 +20,7 @@ func (factory SessionIssuerFactory) FromJson(document string) SessionIssuer {
 	settings, settingsErr := SettingsReader{}.FromJson(document)
 	gate := NewGate(VerifierFactory{}.Jwks(settings), time.Now)
 	problem := factory.complete(snapshot.Yon, len(key), keyErr, settingsErr)
-	return SessionIssuer{Gate: gate, Settings: snapshot.Yon.Identity, Keycloak: snapshot.Yon.Oidc.Keycloak, Sealer: SealedCookie{Key: key}, Client: VerifierFactory{}.client(), Problem: problem}
+	return SessionIssuer{Gate: gate, Settings: snapshot.Yon.Identity, Keycloak: snapshot.Yon.Oidc.Keycloak, Admin: snapshot.Yon.Oidc.Admin, Sealer: SealedCookie{Key: key}, Client: VerifierFactory{}.client(), Problem: problem}
 }
 
 func (factory SessionIssuerFactory) complete(settings ApplicationSettings, keyLength int, keyErr error, settingsErr error) error {

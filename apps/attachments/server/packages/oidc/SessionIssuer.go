@@ -2,6 +2,7 @@ package oidc
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -9,6 +10,7 @@ type SessionIssuer struct {
 	Gate     Gate
 	Settings SessionSettings
 	Keycloak string
+	Admin    string
 	Sealer   SealedCookie
 	Client   *http.Client
 	Problem  error
@@ -42,9 +44,49 @@ func (issuer SessionIssuer) signIn(address string, password string, oneTimeCode 
 	}
 	tokens, err := keycloak.SignIn(address, password, oneTimeCode)
 	if err != nil {
-		return SessionGrant{}, err
+		return SessionGrant{}, issuer.refusal(domain, address, err)
 	}
 	return issuer.granted(domain, tokens)
+}
+
+func (issuer SessionIssuer) refusal(domain string, address string, refused error) error {
+	locked := errors.Is(refused, SignInRefused{}) && issuer.locked(domain, address)
+	return issuer.lockedOr(locked, refused)
+}
+
+func (issuer SessionIssuer) locked(domain string, address string) bool {
+	admin, err := issuer.admin(domain)
+	if err != nil {
+		return false
+	}
+	userId, err := admin.UserId(address)
+	if err != nil {
+		return false
+	}
+	locked, err := admin.Locked(userId)
+	return err == nil && locked
+}
+
+func (SessionIssuer) lockedOr(locked bool, refused error) error {
+	if locked {
+		return AccountLocked{}
+	}
+	return refused
+}
+
+func (issuer SessionIssuer) admin(domain string) (KeycloakAdmin, error) {
+	keycloak, err := issuer.keycloak(domain)
+	if err != nil {
+		return KeycloakAdmin{}, err
+	}
+	keycloak.ClientId = issuer.accountClientId()
+	keycloak.ClientSecret = issuer.Settings.Account.Secret
+	grant, err := keycloak.ClientCredentials()
+	if err != nil {
+		return KeycloakAdmin{}, err
+	}
+	endpoint, err := IssuerPattern{Pattern: issuer.Admin}.Expand(domain)
+	return KeycloakAdmin{Client: issuer.Client, Endpoint: endpoint, Token: grant.AccessToken}, err
 }
 
 func (issuer SessionIssuer) refresh(sessionKey string) (SessionGrant, error) {
@@ -103,6 +145,10 @@ func (issuer SessionIssuer) opened(sessionKey string) (SessionContent, error) {
 func (issuer SessionIssuer) keycloak(domain string) (KeycloakClient, error) {
 	endpoint, err := IssuerPattern{Pattern: issuer.Keycloak}.Expand(domain)
 	return KeycloakClient{Client: issuer.Client, Endpoint: endpoint, ClientId: issuer.clientId(), ClientSecret: issuer.Settings.Client.Secret}, err
+}
+
+func (SessionIssuer) accountClientId() string {
+	return "mesail-account"
 }
 
 func (SessionIssuer) clientId() string {

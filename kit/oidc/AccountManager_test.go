@@ -91,10 +91,18 @@ func newAccountRealm(t *testing.T) *accountRealm {
 		realm.otpSecret = ""
 		writer.WriteHeader(http.StatusNoContent)
 	})
-	admin.HandleFunc("PUT /admin/realms/example.com/mesail/users/member-1/otp", func(writer http.ResponseWriter, request *http.Request) {
-		credential := OtpCredential{}
-		_ = json.NewDecoder(request.Body).Decode(&credential)
-		realm.otpSecret = credential.Secret
+	admin.HandleFunc("PUT /admin/realms/example.com/users/member-1", func(writer http.ResponseWriter, request *http.Request) {
+		update := UserCredentials{}
+		_ = json.NewDecoder(request.Body).Decode(&update)
+		secret := OtpSecretData{}
+		data := OtpCredentialData{}
+		_ = json.Unmarshal([]byte(update.Credentials[0].SecretData), &secret)
+		_ = json.Unmarshal([]byte(update.Credentials[0].CredentialData), &data)
+		if update.Credentials[0].Type != "otp" || data.SubType != "totp" || data.Digits != 6 || data.Period != 30 || data.Algorithm != "HmacSHA1" || data.SecretEncoding != "BASE32" {
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		realm.otpSecret = secret.Value
 		writer.WriteHeader(http.StatusNoContent)
 	})
 	mux.HandleFunc("/admin/", func(writer http.ResponseWriter, request *http.Request) {

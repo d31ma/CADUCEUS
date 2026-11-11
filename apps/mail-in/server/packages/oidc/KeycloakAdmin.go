@@ -37,8 +37,38 @@ func (admin KeycloakAdmin) DeleteCredential(userId string, credentialId string) 
 }
 
 func (admin KeycloakAdmin) SetOtp(userId string, secret string) error {
-	credential := OtpCredential{Secret: secret, Digits: Totp{}.values().Digits, Period: Totp{}.values().PeriodSeconds, Algorithm: "HmacSHA1"}
-	return admin.send(http.MethodPut, "/mesail"+admin.user(userId)+"/otp", credential, nil)
+	secretData, err := json.Marshal(OtpSecretData{Value: secret})
+	if err != nil {
+		return err
+	}
+	credentialData, err := json.Marshal(OtpCredentialData{SubType: "totp", Digits: Totp{}.values().Digits, Period: Totp{}.values().PeriodSeconds, Algorithm: "HmacSHA1", SecretEncoding: "BASE32"})
+	if err != nil {
+		return err
+	}
+	credential := CredentialRepresentation{Type: "otp", UserLabel: "Mesail", SecretData: string(secretData), CredentialData: string(credentialData)}
+	return admin.send(http.MethodPut, admin.user(userId), UserCredentials{Credentials: []CredentialRepresentation{credential}}, nil)
+}
+
+func (admin KeycloakAdmin) UserId(username string) (string, error) {
+	users := []UserReference{}
+	err := admin.send(http.MethodGet, "/users?exact=true&username="+url.QueryEscape(username), nil, &users)
+	if err != nil {
+		return "", err
+	}
+	return admin.only(users)
+}
+
+func (admin KeycloakAdmin) Locked(userId string) (bool, error) {
+	status := BruteForceStatus{}
+	err := admin.send(http.MethodGet, "/attack-detection/brute-force"+admin.user(userId), nil, &status)
+	return status.Disabled, err
+}
+
+func (KeycloakAdmin) only(users []UserReference) (string, error) {
+	if len(users) != 1 {
+		return "", SignInRefused{}
+	}
+	return users[0].Id, nil
 }
 
 func (KeycloakAdmin) user(userId string) string {

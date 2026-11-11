@@ -87,10 +87,14 @@ request:
   caller's own
 - `GET  /admin/realms/<domain>/users/<sub>/credentials`, then
   `DELETE /admin/realms/<domain>/users/<sub>/credentials/<id>` for type `otp`
-- `PUT  /admin/realms/<domain>/mesail/users/<sub>/otp` with
-  `{secret (base32), digits 6, period 30, algorithm HmacSHA1}`: stores the
-  2-step credential. This is an endpoint of mesail-keycloak's provider
-  (being settled), because the stock admin API cannot set an OTP secret.
+- `PUT  /admin/realms/<domain>/users/<sub>` with
+  `{"credentials":[{"type":"otp","userLabel":"Mesail","secretData":"{\"value\":\"<base32>\"}","credentialData":"{\"subType\":\"totp\",\"digits\":6,\"period\":30,\"algorithm\":\"HmacSHA1\",\"counter\":0,\"secretEncoding\":\"BASE32\"}"}]}`:
+  stores the 2-step credential (stock admin API, tested by mesail-keycloak
+  on 26.8.2). identity checks the confirmation code itself first.
+- After a refused sign-in only: `GET /admin/realms/<domain>/users?exact=true&username=<address>`,
+  then `GET /admin/realms/<domain>/attack-detection/brute-force/users/<id>`.
+  Keycloak answers a locked account with the same 400 as a wrong password,
+  so identity answers `429` only when this status says `"disabled": true`.
 
 ## Rotating a shared secret
 

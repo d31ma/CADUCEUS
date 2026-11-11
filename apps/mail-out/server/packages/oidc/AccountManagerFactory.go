@@ -18,7 +18,7 @@ func (factory AccountManagerFactory) FromJson(document string) AccountManager {
 	_ = json.Unmarshal([]byte(document), &snapshot)
 	sessions := SessionIssuerFactory{}.FromJson(document)
 	sessions.Problem = cmp.Or(sessions.Problem, factory.complete(snapshot.Yon))
-	return AccountManager{Sessions: sessions, Admin: snapshot.Yon.Oidc.Admin, Now: time.Now}
+	return AccountManager{Sessions: sessions, Now: time.Now}
 }
 
 func (AccountManagerFactory) complete(settings ApplicationSettings) error {

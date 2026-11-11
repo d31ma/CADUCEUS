@@ -10,7 +10,7 @@ download_folder() {
 
 fetch_verified() {
   local url="$1" sha="$2" folder="$3" partial
-  partial="$folder/$sha.partial"
+  partial="$folder/$sha.$$.partial"
   echo "=== download $url $(date +%H:%M:%S)" >&2
   curl -fsSL --retry 3 "$url" -o "$partial" || return 1
   tool_lock_verify "$partial" "$sha" || return 1

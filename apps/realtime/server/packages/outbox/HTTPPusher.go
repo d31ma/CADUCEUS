@@ -11,11 +11,15 @@ import (
 )
 
 type HTTPPusher struct {
-	tokens TokenSource
+	tokens DomainTokenSource
 	client *http.Client
 }
 
 func NewHTTPPusher(tokens TokenSource, timeout time.Duration) HTTPPusher {
+	return NewDomainHTTPPusher(sameToken{source: tokens}, timeout)
+}
+
+func NewDomainHTTPPusher(tokens DomainTokenSource, timeout time.Duration) HTTPPusher {
 	return HTTPPusher{tokens: tokens, client: &http.Client{Transport: http.DefaultTransport, Timeout: timeout}}
 }
 
@@ -24,7 +28,7 @@ func (HTTPPusher) DefaultTimeout() time.Duration {
 }
 
 func (pusher HTTPPusher) Push(subscriber Subscriber, envelope events.Envelope) error {
-	token, err := pusher.tokens.Token()
+	token, err := pusher.tokens.TokenFor(envelope.DomainId)
 	if err != nil {
 		return err
 	}

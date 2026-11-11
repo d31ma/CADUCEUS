@@ -71,7 +71,7 @@ func (store *MemoryStore) pendingRefs() []Ref {
 }
 
 func (store *MemoryStore) ifPending(ref Ref) []Ref {
-	if store.documents[ref].OutboxPending <= 0 {
+	if !store.documents[ref].OutboxWaiting {
 		return []Ref{}
 	}
 	return []Ref{ref}

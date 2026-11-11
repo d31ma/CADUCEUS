@@ -9,10 +9,10 @@ func TestMemoryStoreListsPendingDocumentsOldestFirstUpToTheLimit(t *testing.T) {
 	store := NewMemoryStore()
 	first := Ref{Collection: "channels", Id: "1"}
 	second := Ref{Collection: "channels", Id: "2"}
-	store.Put(first, Fields{OutboxPending: 1})
+	store.Put(first, Fields{OutboxPending: 1, OutboxWaiting: true})
 	store.Put(Ref{Collection: "channels", Id: "done"}, Fields{})
-	store.Put(second, Fields{OutboxPending: 2})
-	store.Put(first, Fields{OutboxPending: 3})
+	store.Put(second, Fields{OutboxPending: 2, OutboxWaiting: true})
+	store.Put(first, Fields{OutboxPending: 3, OutboxWaiting: true})
 
 	all, err := store.Pending(10)
 	one, _ := store.Pending(1)

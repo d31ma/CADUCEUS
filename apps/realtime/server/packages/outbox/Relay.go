@@ -22,7 +22,19 @@ func (relay Relay) RunOnce(limit int) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
-	return relay.relayAll(documents)
+	report, failed := relay.relayAll(documents)
+	report.More = len(documents) >= limit
+	return report, failed
+}
+
+func (relay Relay) RunWithin(limit int, budget time.Duration) (Report, error) {
+	documents, err := relay.store.Pending(limit)
+	if err != nil {
+		return Report{}, err
+	}
+	report, failed := relay.relayUntil(documents, relay.now().Add(budget))
+	report.More = relay.more(report, len(documents), limit)
+	return report, failed
 }
 
 func (relay Relay) RelayDocument(ref Ref) (Report, error) {
@@ -42,6 +54,28 @@ func (relay Relay) relayAll(documents []Document) (Report, error) {
 		failures = append(failures, err)
 	}
 	return total, errors.Join(failures...)
+}
+
+func (relay Relay) relayUntil(documents []Document, deadline time.Time) (Report, error) {
+	total := Report{}
+	failures := []error{}
+	for _, document := range documents {
+		report, err := relay.relayBefore(document, deadline)
+		total = total.plus(report)
+		failures = append(failures, err)
+	}
+	return total, errors.Join(failures...)
+}
+
+func (relay Relay) relayBefore(document Document, deadline time.Time) (Report, error) {
+	if !relay.now().Before(deadline) {
+		return Report{More: true}, nil
+	}
+	return relay.relayOne(document)
+}
+
+func (Relay) more(report Report, found int, limit int) bool {
+	return report.More || found >= limit
 }
 
 func (relay Relay) relayOne(document Document) (Report, error) {

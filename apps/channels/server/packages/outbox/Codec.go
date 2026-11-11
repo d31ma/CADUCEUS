@@ -22,7 +22,7 @@ func (codec Codec) Write(state OutboxState) (Fields, error) {
 		return Fields{}, err
 	}
 	dead, err := codec.EncodeDead(state.Dead)
-	return Fields{PendingEvents: pending, DeadEvents: dead, OutboxPending: len(pending), OutboxDead: len(dead)}, err
+	return Fields{PendingEvents: pending, DeadEvents: dead, OutboxPending: len(pending), OutboxDead: len(dead), OutboxWaiting: len(pending) > 0, OutboxHasDead: len(dead) > 0}, err
 }
 
 func (codec Codec) EncodePending(pending []PendingEvent) ([]string, error) {

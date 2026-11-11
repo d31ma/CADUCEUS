@@ -209,7 +209,7 @@ func TestRelayReportsAFailingPendingQuery(t *testing.T) {
 
 func TestRelayReportsADocumentItCannotRead(t *testing.T) {
 	fixture := newRelayFixture(t, testSettings())
-	fixture.store.Put(fixture.ref, Fields{PendingEvents: []string{"not json"}, OutboxPending: 1})
+	fixture.store.Put(fixture.ref, Fields{PendingEvents: []string{"not json"}, OutboxPending: 1, OutboxWaiting: true})
 
 	_, err := fixture.relay.RunOnce(10)
 

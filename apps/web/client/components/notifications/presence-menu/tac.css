@@ -1,8 +1,15 @@
+.presence-avatar .w-avatar {
+  --w-avatar-size: var(--ms-avatar-md);
+  border-radius: var(--w-radius-lg);
+  font-size: var(--ms-text-nav);
+  font-weight: var(--w-font-weight-semibold);
+}
+
 .presence-mark {
   --presence-ring: var(--ms-presence-ring, var(--w-surface));
   position: absolute;
-  inset-block-end: -3px;
-  inset-inline-end: -3px;
+  inset-block-end: -4px;
+  inset-inline-end: -4px;
   box-sizing: content-box;
   inline-size: 0.625rem;
   block-size: 0.625rem;
@@ -53,13 +60,15 @@
 
 .presence-name {
   margin: 0;
-  font-size: var(--w-font-sm);
+  font-size: var(--ms-text-nav);
   font-weight: var(--w-font-weight-semibold);
+  line-height: var(--ms-line-tight);
 }
 
 .presence-meta,
 .presence-description {
   font-size: var(--ms-text-meta);
+  line-height: var(--ms-line-tight);
   font-weight: var(--w-font-weight-normal);
   color: var(--w-text-subtle);
 }
@@ -98,7 +107,8 @@
   background: transparent;
   color: var(--w-text);
   font: inherit;
-  font-size: var(--w-font-sm);
+  font-size: var(--ms-text-nav);
+  line-height: var(--ms-line-tight);
   text-align: start;
   cursor: pointer;
 }
@@ -113,21 +123,22 @@
 }
 
 .presence-group-label {
-  font-size: var(--w-font-sm);
+  font-size: var(--ms-text-nav);
+  line-height: var(--ms-line-tight);
   font-weight: var(--w-font-weight-medium);
 }
 
 .presence-check {
-  --ms-icon-size: 1rem;
-  inline-size: 1rem;
-  block-size: 1rem;
+  --ms-icon-size: var(--ms-icon-sm);
+  inline-size: var(--ms-icon-sm);
+  block-size: var(--ms-icon-sm);
   color: var(--w-accent);
 }
 
 .presence-icon-small {
-  --ms-icon-size: 1rem;
-  inline-size: 1rem;
-  block-size: 1rem;
+  --ms-icon-size: var(--ms-icon-sm);
+  inline-size: var(--ms-icon-sm);
+  block-size: var(--ms-icon-sm);
 }
 
 .presence-separator {
@@ -139,6 +150,7 @@
   background: var(--w-error-container);
   color: var(--w-on-error-container);
   font-size: var(--w-font-sm);
+  line-height: var(--ms-line-body);
 }
 
 .presence-me:focus-visible,
@@ -216,9 +228,6 @@
   }
   .mt-1 {
     margin-top: var(--spacing, 0.25rem);
-  }
-  .mt-1\.5 {
-    margin-top: calc(var(--spacing, 0.25rem) * 1.5);
   }
   .mb-1 {
     margin-bottom: var(--spacing, 0.25rem);

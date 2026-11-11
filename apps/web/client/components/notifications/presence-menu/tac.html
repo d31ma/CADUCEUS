@@ -1,7 +1,7 @@
 <div class="relative flex min-w-0">
   <button type="button" class="presence-me flex min-h-11 min-w-0 flex-1 items-center gap-2 px-2 py-1" id="presence-button" aria-haspopup="dialog" aria-controls="presence-panel" :aria-expanded="shell.flag(notificationPresence.menuOpen)" :aria-label="notificationPresence.buttonLabel()" on:click="notificationPresence.toggleMenu()">
     <span class="relative inline-flex flex-none" aria-hidden="true">
-      <w-avatar :text="notificationPresence.initials()" size="28" alt=""></w-avatar>
+      <w-avatar class="presence-avatar" :text="notificationPresence.initials()" alt=""></w-avatar>
       <span class="presence-mark" :data-state="notificationPresence.myState"></span>
     </span>
     <span class="grid min-w-0 flex-1" aria-hidden="true">
@@ -16,7 +16,7 @@
       <div class="presence-grip mx-auto mt-1 h-1 w-10 sm:hidden" aria-hidden="true"></div>
       <div class="presence-divider-below mb-1 flex items-center gap-3 py-2 ps-3 pe-1">
         <span class="relative inline-flex flex-none" aria-hidden="true">
-          <w-avatar :text="notificationPresence.initials()" size="36" alt=""></w-avatar>
+          <w-avatar class="presence-avatar" :text="notificationPresence.initials()" alt=""></w-avatar>
           <span class="presence-mark" :data-state="notificationPresence.myState"></span>
         </span>
         <span class="grid min-w-0 flex-1">
@@ -29,14 +29,14 @@
       <ul class="presence-list m-0 p-0" role="menu" aria-label="Your status">
         <li role="none">
           <button type="button" class="presence-item group flex min-h-9 w-full items-start gap-2 px-3 py-2 max-sm:min-h-11 pointer-coarse:min-h-11" role="menuitemradio" :aria-checked="shell.flag(notificationPresence.myState != 'dnd')" on:click="notificationPresence.setActive()">
-            <span class="presence-mark presence-mark-inline mt-1.5" data-state="active" aria-hidden="true"></span>
+            <span class="presence-mark presence-mark-inline mt-1" data-state="active" aria-hidden="true"></span>
             <span class="min-w-0 flex-1">Active<span class="presence-description block">Automatic. Shows Idle while Mesail is in the background.</span></span>
             <w-icon name="check" class="presence-check ms-auto invisible group-aria-checked:visible"></w-icon>
           </button>
         </li>
         <li role="none">
           <div class="presence-group-label flex items-start gap-2 px-3 pb-1 pt-2" id="presence-dnd-label">
-            <span class="presence-mark presence-mark-inline mt-1.5" data-state="dnd" aria-hidden="true"></span>
+            <span class="presence-mark presence-mark-inline mt-1" data-state="dnd" aria-hidden="true"></span>
             <span>Do not disturb<span class="presence-description block">No notifications. Mentions wait in Activity.</span></span>
           </div>
           <ul class="presence-list m-0 p-0" role="group" aria-labelledby="presence-dnd-label">

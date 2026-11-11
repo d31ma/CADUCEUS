@@ -39,8 +39,13 @@ run_step() {
   "$@" >> "$log" 2>&1
   code=$?
   echo "=== $name rc=$code"
-  [ "$code" = 0 ] || tail -40 "$log"
+  [ "$code" = 0 ] || show_failure "$log"
   return "$code"
+}
+
+show_failure() {
+  grep -E '^ *(--- )?FAIL' "$1" | tail -20
+  tail -40 "$1"
 }
 
 pinned_tool_matches() {

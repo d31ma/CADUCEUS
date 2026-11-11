@@ -6,7 +6,7 @@
   </header>
 
   <div class="page-scroll min-h-0 flex-1 overflow-y-auto py-6" id="admin-content">
-    <div class="@container/page mx-auto grid w-full max-w-3xl gap-6 pb-10">
+    <div class="@container/page mx-auto grid w-full max-w-3xl grid-cols-[minmax(0,1fr)] gap-6 pb-10">
       <div class="email-note flex items-start gap-3 px-4 py-3">
         <w-icon name="mail" class="mt-0.5" aria-hidden="true"></w-icon>
         <div class="grid min-w-0 gap-1">
@@ -58,9 +58,9 @@
                 </td>
                 <td data-label="Visibility" class="px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1">
                   <div class="flex flex-wrap gap-1">
-                    <span class="inline-flex"><w-chip size="small" :variant="row.chipVariant" inert aria-hidden="true"><w-icon slot="prepend" :name="row.visibilityIcon"></w-icon>{row.visibilityText}</w-chip><span class="sr-only">{row.visibilityText}</span></span>
+                    <span class="inline-flex"><span class="tag" :data-variant="row.chipVariant" aria-hidden="true"><w-icon :name="row.visibilityIcon"></w-icon>{row.visibilityText}</span><span class="sr-only">{row.visibilityText}</span></span>
                     <logic :if="row.archived">
-                      <span class="inline-flex"><w-chip size="small" color="warning" inert aria-hidden="true"><w-icon slot="prepend" name="eye-off"></w-icon>Archived, read-only</w-chip><span class="sr-only">Archived, read-only</span></span>
+                      <span class="inline-flex"><span class="tag" data-color="warning" aria-hidden="true"><w-icon name="eye-off"></w-icon>Archived, read-only</span><span class="sr-only">Archived, read-only</span></span>
                     </logic>
                   </div>
                 </td>

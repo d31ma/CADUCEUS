@@ -180,6 +180,47 @@ ul {
   }
 }
 
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 1.5rem;
+  padding: 0 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--w-radius-pill);
+  background: var(--w-surface-container-high);
+  color: var(--w-text-subtle);
+  font-size: var(--w-font-xs);
+  font-weight: var(--w-font-weight-semibold);
+  white-space: nowrap;
+}
+
+.tag w-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  font-size: 0.875rem;
+}
+
+.tag[data-color="success"] {
+  background: var(--w-success-container);
+  color: var(--w-on-success-container);
+}
+
+.tag[data-color="warning"] {
+  background: var(--w-warning-container);
+  color: var(--w-on-warning-container);
+}
+
+.tag[data-color="error"] {
+  background: var(--w-error-container);
+  color: var(--w-on-error-container);
+}
+
+.tag[data-variant="outlined"] {
+  border-color: var(--w-outline);
+  background: transparent;
+}
+
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer properties;
@@ -262,6 +303,9 @@ ul {
   }
   .grid-cols-1 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  .grid-cols-\[minmax\(0\,1fr\)\] {
+    grid-template-columns: minmax(0,1fr);
   }
   .flex-col {
     flex-direction: column;

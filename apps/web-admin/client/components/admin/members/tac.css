@@ -195,6 +195,9 @@
   .basis-56 {
     flex-basis: calc(var(--spacing, 0.25rem) * 56);
   }
+  .grid-cols-\[minmax\(0\,1fr\)\] {
+    grid-template-columns: minmax(0,1fr);
+  }
   .flex-col {
     flex-direction: column;
   }

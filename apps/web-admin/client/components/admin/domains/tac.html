@@ -10,7 +10,7 @@
   </header>
 
   <div id="admin-content" class="page-scroll min-h-0 flex-1 overflow-y-auto">
-    <div class="@container/page mx-auto grid w-full max-w-3xl gap-6 pb-10">
+    <div class="@container/page mx-auto grid w-full max-w-3xl grid-cols-[minmax(0,1fr)] gap-6 pb-10">
       <div class="note note--info flex items-start gap-3 px-4 py-3">
         <w-icon name="info" class="mt-0.5" aria-hidden="true"></w-icon>
         <div class="grid min-w-0 gap-1">
@@ -54,14 +54,14 @@
                     <td class="cell px-4 py-3 @max-2xl/page:block @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:pb-2"><span class="strong">{row.name}</span></td>
                     <td data-label="State" class="cell px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:content-[attr(data-label)]">
                       <div class="min-w-0">
-                        <span class="inline-flex"><w-chip size="small" :color="row.stateColor" :variant="row.stateVariant" inert aria-hidden="true"><w-icon slot="prepend" :name="row.stateIcon"></w-icon>{row.stateText}</w-chip><span class="sr-only">{row.stateText}</span></span>
+                        <span class="inline-flex"><span class="tag" :data-color="row.stateColor" :data-variant="row.stateVariant" aria-hidden="true"><w-icon :name="row.stateIcon"></w-icon>{row.stateText}</span><span class="sr-only">{row.stateText}</span></span>
                         <logic :if="row.hasNote"><span class="meta block">{row.stateNote}</span></logic>
                       </div>
                     </td>
                     <td data-label="DNS records" class="cell px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:content-[attr(data-label)]">
                       <ul class="flex flex-wrap gap-1" :aria-label="row.marksLabel">
                         <loop :for="mark of row.marks">
-                          <li><span class="inline-flex"><w-chip size="small" :color="mark.color" :variant="mark.variant" inert aria-hidden="true"><w-icon slot="prepend" :name="mark.icon"></w-icon>{mark.name}</w-chip><span class="sr-only">{mark.name} {mark.words}</span></span></li>
+                          <li><span class="inline-flex"><span class="tag" :data-color="mark.color" :data-variant="mark.variant" aria-hidden="true"><w-icon :name="mark.icon"></w-icon>{mark.name}</span><span class="sr-only">{mark.name} {mark.words}</span></span></li>
                         </loop>
                       </ul>
                     </td>
@@ -87,13 +87,13 @@
       <section class="grid gap-3" aria-labelledby="legend-title">
         <h2 class="section-title" id="legend-title">What the DNS marks mean</h2>
         <dl class="legend grid grid-cols-1 gap-x-4 gap-y-2 @md/page:grid-cols-[8rem_minmax(0,1fr)]">
-          <dt><span class="inline-flex"><w-chip size="small" color="success" inert aria-hidden="true"><w-icon slot="prepend" name="check"></w-icon>OK</w-chip><span class="sr-only">OK</span></span></dt>
+          <dt><span class="inline-flex"><span class="tag" data-color="success" aria-hidden="true"><w-icon name="check"></w-icon>OK</span><span class="sr-only">OK</span></span></dt>
           <dd>The record is published and has the right value.</dd>
-          <dt><span class="inline-flex"><w-chip size="small" color="error" inert aria-hidden="true"><w-icon slot="prepend" name="close"></w-icon>Missing</w-chip><span class="sr-only">Missing</span></span></dt>
+          <dt><span class="inline-flex"><span class="tag" data-color="error" aria-hidden="true"><w-icon name="close"></w-icon>Missing</span><span class="sr-only">Missing</span></span></dt>
           <dd>Mesail could not find the record. Create it at your DNS provider.</dd>
-          <dt><span class="inline-flex"><w-chip size="small" color="warning" inert aria-hidden="true"><w-icon slot="prepend" name="alert"></w-icon>Wrong</w-chip><span class="sr-only">Wrong</span></span></dt>
+          <dt><span class="inline-flex"><span class="tag" data-color="warning" aria-hidden="true"><w-icon name="alert"></w-icon>Wrong</span><span class="sr-only">Wrong</span></span></dt>
           <dd>A record exists, but its value is different. Open the domain to compare.</dd>
-          <dt><span class="inline-flex"><w-chip size="small" variant="outlined" inert aria-hidden="true"><w-icon slot="prepend" name="minus-circle"></w-icon>Not checked</w-chip><span class="sr-only">Not checked</span></span></dt>
+          <dt><span class="inline-flex"><span class="tag" data-variant="outlined" aria-hidden="true"><w-icon name="minus-circle"></w-icon>Not checked</span><span class="sr-only">Not checked</span></span></dt>
           <dd>Mesail has not checked the record yet. Open the domain and select Check again.</dd>
         </dl>
         <p class="meta">Mail for a domain is accepted only when MX and DKIM are OK. SPF and DMARC help your mail reach inboxes.</p>
@@ -118,10 +118,10 @@
               <h3 class="subsection-title">Next step: create these DNS records</h3>
               <p>Add them at the company that hosts DNS for {domainAdd.addedName}. The next page shows the host of each record with a Copy button.</p>
               <ul class="flex flex-wrap gap-1" aria-label="Records to create">
-                <li><span class="inline-flex"><w-chip size="small" inert aria-hidden="true"><w-icon slot="prepend" name="mail"></w-icon>MX</w-chip><span class="sr-only">MX</span></span></li>
-                <li><span class="inline-flex"><w-chip size="small" inert aria-hidden="true"><w-icon slot="prepend" name="shield"></w-icon>SPF (TXT)</w-chip><span class="sr-only">SPF, a TXT record</span></span></li>
-                <li><span class="inline-flex"><w-chip size="small" inert aria-hidden="true"><w-icon slot="prepend" name="key"></w-icon>DKIM (TXT)</w-chip><span class="sr-only">DKIM, a TXT record</span></span></li>
-                <li><span class="inline-flex"><w-chip size="small" inert aria-hidden="true"><w-icon slot="prepend" name="shield-check"></w-icon>DMARC (TXT)</w-chip><span class="sr-only">DMARC, a TXT record</span></span></li>
+                <li><span class="inline-flex"><span class="tag" aria-hidden="true"><w-icon name="mail"></w-icon>MX</span><span class="sr-only">MX</span></span></li>
+                <li><span class="inline-flex"><span class="tag" aria-hidden="true"><w-icon name="shield"></w-icon>SPF (TXT)</span><span class="sr-only">SPF, a TXT record</span></span></li>
+                <li><span class="inline-flex"><span class="tag" aria-hidden="true"><w-icon name="key"></w-icon>DKIM (TXT)</span><span class="sr-only">DKIM, a TXT record</span></span></li>
+                <li><span class="inline-flex"><span class="tag" aria-hidden="true"><w-icon name="shield-check"></w-icon>DMARC (TXT)</span><span class="sr-only">DMARC, a TXT record</span></span></li>
               </ul>
               <p class="meta">Mesail made a DKIM key just for this domain. The private key stays in the secure key store and is never shown.</p>
             </div>

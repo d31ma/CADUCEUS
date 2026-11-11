@@ -6,7 +6,7 @@
   </header>
 
   <div class="members-page min-h-0 flex-1 overflow-y-auto py-6" id="admin-content">
-    <div class="@container/page mx-auto grid w-full max-w-3xl gap-6 pb-10">
+    <div class="@container/page mx-auto grid w-full max-w-3xl grid-cols-[minmax(0,1fr)] gap-6 pb-10">
       <logic :if="memberList.state == 'forbidden'">
         <div class="members-box px-4 py-8">
           <w-empty-state>
@@ -74,7 +74,7 @@
                 <w-icon slot="media" name="alert" class="members-art" aria-hidden="true"></w-icon>
                 <h2 slot="title" class="members-empty-title">Members could not load</h2>
                 <p slot="text">Mesail could not reach the server. Check your connection, then try again.</p>
-                <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn prepend-icon="refresh" class="members-touch" on:click="memberList.retry()">Try again</w-btn></div>
+                <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="flat" prepend-icon="refresh" class="members-touch" on:click="memberList.retry()">Try again</w-btn></div>
               </w-empty-state>
             </div>
           </case>

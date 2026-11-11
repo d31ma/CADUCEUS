@@ -35,7 +35,7 @@
         </case>
       </switch>
       <div class="flex flex-wrap items-center gap-3">
-        <w-btn class="aliases-touch" :disabled="aliasForm.busy">
+        <w-btn variant="flat" class="aliases-touch" :disabled="aliasForm.busy">
           <logic :if="aliasForm.busy">Adding&hellip;</logic>
           <logic else>Add alias</logic>
         </w-btn>

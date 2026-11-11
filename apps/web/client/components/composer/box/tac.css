@@ -1,0 +1,137 @@
+.composer {
+  border: 1px solid var(--w-outline);
+  border-radius: var(--ms-radius-card);
+  background: var(--w-surface);
+  color: var(--w-text);
+  transition: border-color var(--ms-duration) var(--ms-ease), box-shadow var(--ms-duration) var(--ms-ease);
+}
+
+.composer:focus-within {
+  border-color: var(--w-focus-ring-color);
+  box-shadow: 0 0 0 1px var(--w-focus-ring-color);
+}
+
+.composer[data-email] {
+  border-color: var(--ms-email-rule);
+}
+
+.composer-mode {
+  margin: 0;
+  border-radius: var(--ms-radius-card) var(--ms-radius-card) 0 0;
+  background: var(--ms-email-bg);
+  color: var(--ms-on-email-bg);
+  font-size: var(--w-font-sm);
+  line-height: var(--ms-line-body);
+}
+
+.composer-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.composer-textarea textarea {
+  min-height: 3rem;
+  max-height: 40vh;
+  font-size: var(--ms-text-body);
+  line-height: var(--ms-line-body);
+}
+
+.composer-textarea textarea::placeholder {
+  color: var(--w-text-very-subtle);
+}
+
+.composer-toolbar {
+  position: sticky;
+  bottom: 0;
+  border-top: 1px solid var(--w-divider);
+  border-radius: 0 0 var(--ms-radius-card) var(--ms-radius-card);
+  background: var(--w-surface);
+  padding-bottom: max(var(--w-space-2), env(safe-area-inset-bottom));
+}
+
+.composer-keys {
+  margin: 0;
+  color: var(--w-text-subtle);
+  font-size: var(--ms-text-meta);
+}
+
+.composer-problem {
+  margin: 0;
+  border-radius: var(--w-radius-md);
+  background: var(--w-error-container);
+  color: var(--w-on-error-container);
+  font-size: var(--w-font-sm);
+}
+
+.composer-send .w-btn {
+  min-height: 2rem;
+  padding: 0 var(--w-space-3);
+  gap: var(--w-space-2);
+  border-radius: var(--w-radius-md);
+  background: var(--w-accent-bg);
+  color: var(--w-on-accent);
+  font-weight: var(--w-font-weight-semibold);
+}
+
+.composer[data-email] .composer-send .w-btn {
+  background: var(--ms-email);
+  color: var(--w-surface);
+}
+
+.composer-send .w-btn:focus-visible {
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
+  outline-offset: var(--w-focus-ring-offset);
+}
+
+.composer-announcer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 767px) {
+  .composer {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .composer:focus-within {
+    box-shadow: none;
+  }
+
+  .composer-mode,
+  .composer-toolbar {
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .composer-keys {
+    display: none;
+  }
+
+  .composer-send .w-btn {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer,
+  .composer * {
+    transition: none;
+    animation: none;
+  }
+}

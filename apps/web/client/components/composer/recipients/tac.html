@@ -1,0 +1,145 @@
+<div class="composer-recipients">
+  <loop :for="row of composer.rows">
+    <div class="composer-row-block" :id="'composer-row-' + row.role">
+      <div class="composer-row flex flex-wrap items-center gap-2 px-3 py-1" role="group" :aria-label="row.label">
+        <span class="composer-row-label w-14 shrink-0" aria-hidden="true">{row.label}</span>
+        <loop :for="item of row.recipients">
+          <span class="composer-chip inline-flex max-w-full items-center" :data-state="item.state" :data-delivery="item.delivery" :data-kind="item.kind">
+            <w-menu class="composer-chip-menu min-w-0" location="bottom-start">
+              <span slot="activator" class="composer-chip-main inline-flex min-w-0 items-center">
+                <span class="composer-sr-only">{item.ariaLabel}</span>
+                <span class="inline-flex min-w-0 items-center gap-1.5" aria-hidden="true">
+                  <logic :if="item.displayName == item.address">
+                    <svg class="composer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z" /><path d="M4 7l8 6 8-6" /></svg>
+                  </logic>
+                  <logic else>
+                    <w-avatar class="composer-chip-avatar" size="x-small" :text="item.initials"></w-avatar>
+                  </logic>
+                  <span class="composer-chip-name truncate">{item.displayName}</span>
+                  <span class="composer-chip-how inline-flex items-center gap-1">
+                    <switch :value="item.state">
+                      <case :when="'checking'">
+                        <span class="composer-spinner"></span>
+                      </case>
+                      <case :when="'invalid'">
+                        <svg class="composer-icon composer-icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4M12 17h.01" /></svg>
+                      </case>
+                    </switch>
+                    <span>{item.label}</span>
+                  </span>
+                </span>
+              </span>
+
+              <div class="composer-menu-head flex items-center gap-2 px-3 py-2" aria-hidden="true">
+                <span class="grid min-w-0 gap-0.5">
+                  <span class="composer-menu-name truncate">{item.displayName}</span>
+                  <span class="composer-menu-meta">
+                    <span>{item.address}</span>
+                    <switch :value="item.kind">
+                      <case :when="'member'"><span> · Member of your domain</span></case>
+                      <case :when="'channel'"><span> · Channel</span></case>
+                      <case :when="'otherDomain'"><span> · Other domain</span></case>
+                      <case :when="'external'"><span> · Outside address</span></case>
+                    </switch>
+                  </span>
+                </span>
+              </div>
+
+              <logic :if="item.state == 'ready'">
+                <div class="grid gap-0.5" role="group" :aria-label="'How ' + item.displayName + ' gets this'">
+                  <p class="w-menu-label" aria-hidden="true">How {item.displayName} gets this</p>
+
+                  <button type="button" class="w-menu-item composer-menu-item items-start" role="menuitemradio" :aria-checked="shell.flag(item.delivery == 'chat')" :aria-disabled="shell.flag(!item.chatAllowed)" on:click="composer.choose(item.address, item.role, 'chat')">
+                    <svg class="composer-icon composer-icon-chat mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5h16v11H9l-5 4z" /></svg>
+                    <span class="grid min-w-0 flex-1 gap-0.5">
+                      <span>Chat</span>
+                      <logic :if="item.chatAllowed">
+                        <span class="composer-menu-description">{item.displayName} sees it in Mesail</span>
+                      </logic>
+                      <logic else>
+                        <span class="composer-menu-reason inline-flex items-start gap-1">
+                          <svg class="composer-icon composer-icon-small mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 11V8a5 5 0 0 1 10 0v3" /><path d="M5 11h14v10H5z" /></svg>
+                          <span>{item.chatReason}</span>
+                        </span>
+                      </logic>
+                    </span>
+                    <svg class="composer-icon composer-menu-check mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>
+                  </button>
+
+                  <button type="button" class="w-menu-item composer-menu-item items-start" role="menuitemradio" :aria-checked="shell.flag(item.delivery == 'email')" :aria-disabled="shell.flag(item.kind == 'channel')" on:click="composer.choose(item.address, item.role, 'email')">
+                    <svg class="composer-icon composer-icon-mail mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z" /><path d="M4 7l8 6 8-6" /></svg>
+                    <span class="grid min-w-0 flex-1 gap-0.5">
+                      <span>Email</span>
+                      <switch :value="item.kind">
+                        <case :when="'channel'">
+                          <span class="composer-menu-reason inline-flex items-start gap-1">
+                            <svg class="composer-icon composer-icon-small mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 11V8a5 5 0 0 1 10 0v3" /><path d="M5 11h14v10H5z" /></svg>
+                            <span>A channel gets chat only</span>
+                          </span>
+                        </case>
+                        <case :when="'external'">
+                          <span class="composer-menu-description">{item.displayName} gets a normal email</span>
+                        </case>
+                        <case default>
+                          <span class="composer-menu-description">{item.displayName} gets it in their mailbox</span>
+                        </case>
+                      </switch>
+                    </span>
+                    <svg class="composer-icon composer-menu-check mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>
+                  </button>
+
+                  <button type="button" class="w-menu-item composer-menu-item items-start" role="menuitemradio" :aria-checked="shell.flag(item.delivery == 'both')" :aria-disabled="shell.flag(item.kind != 'member')" on:click="composer.choose(item.address, item.role, 'both')">
+                    <span class="composer-icon-pair inline-flex mt-0.5" aria-hidden="true">
+                      <svg class="composer-icon composer-icon-chat" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5h16v11H9l-5 4z" /></svg>
+                      <svg class="composer-icon composer-icon-mail" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z" /><path d="M4 7l8 6 8-6" /></svg>
+                    </span>
+                    <span class="grid min-w-0 flex-1 gap-0.5">
+                      <span>Chat and email</span>
+                      <logic :if="item.kind == 'member'">
+                        <span class="composer-menu-description">{item.displayName} sees it in Mesail and gets an email</span>
+                      </logic>
+                      <logic else>
+                        <span class="composer-menu-reason inline-flex items-start gap-1">
+                          <svg class="composer-icon composer-icon-small mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 11V8a5 5 0 0 1 10 0v3" /><path d="M5 11h14v10H5z" /></svg>
+                          <switch :value="item.kind">
+                            <case :when="'channel'"><span>A channel gets chat only</span></case>
+                            <case default><span>{item.bothReason}</span></case>
+                          </switch>
+                        </span>
+                      </logic>
+                    </span>
+                    <svg class="composer-icon composer-menu-check mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>
+                  </button>
+                </div>
+                <div class="w-menu-separator" role="separator"></div>
+              </logic>
+
+              <button type="button" class="w-menu-item composer-menu-item composer-menu-danger" role="menuitem" on:click="composer.remove(item.address, item.role)">
+                <svg class="composer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16" /><path d="M10 11v6M14 11v6" /><path d="M6 7l1 13h10l1-13" /><path d="M9 7V4h6v3" /></svg>
+                <span>Remove {item.displayName}</span>
+              </button>
+            </w-menu>
+            <w-icon-btn class="composer-chip-remove" size="x-small" variant="text" :aria-label="'Remove ' + item.displayName" on:click="composer.remove(item.address, item.role)">
+              <svg class="composer-icon composer-icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </w-icon-btn>
+          </span>
+        </loop>
+        <w-text-field class="composer-row-input min-w-32 flex-1" variant="plain" density="compact" single-line hide-details autocomplete="off" :label="row.label" :placeholder="row.placeholder" :value="row.text" on:input="composer.typeText(row.role, $event.detail.value)" on:keydown="composer.recipientKey(row.role, $event.key, $event.target.value)" on:change="composer.addTyped(row.role)"></w-text-field>
+        <logic :if="row.role == 'to'">
+          <span class="ml-auto inline-flex items-center gap-1">
+            <w-btn class="composer-row-toggle" size="small" variant="text" aria-controls="composer-row-cc" :aria-expanded="shell.flag(composer.showCc)" on:click="composer.toggleCc()">Cc</w-btn>
+            <w-btn class="composer-row-toggle" size="small" variant="text" aria-controls="composer-row-bcc" :aria-expanded="shell.flag(composer.showBlindCopy)" on:click="composer.toggleBlindCopy()">Bcc</w-btn>
+          </span>
+        </logic>
+      </div>
+      <loop :for="item of row.recipients">
+        <logic :if="item.state == 'invalid'">
+          <p class="composer-note-error mx-3 my-1 flex items-start gap-2 px-3 py-2">
+            <svg class="composer-icon mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4M12 17h.01" /></svg>
+            <span class="min-w-0"><strong>{item.address}</strong> is not a full email address.</span>
+          </p>
+        </logic>
+      </loop>
+    </div>
+  </loop>
+</div>

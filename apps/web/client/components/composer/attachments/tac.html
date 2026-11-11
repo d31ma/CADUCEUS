@@ -1,0 +1,32 @@
+<logic :if="composer.uploads.length > 0">
+  <div class="composer-attachments grid gap-2 px-3 pb-2">
+    <ul class="m-0 flex flex-wrap gap-2 p-0" role="list" aria-label="Attachments">
+      <loop :for="upload of composer.uploads">
+        <li class="composer-attach flex max-w-full flex-wrap items-center gap-2 px-2 py-1" :data-state="upload.state" :aria-busy="shell.flag(upload.state == 'uploading')">
+          <svg class="composer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 3h8l4 4v14H6z" /><path d="M14 3v4h4" /></svg>
+          <span class="composer-attach-name truncate">{upload.fileName}</span>
+          <span class="composer-attach-size">{upload.sizeText}</span>
+          <logic :if="upload.state == 'uploading'">
+            <w-progress-linear class="composer-attach-progress w-12" indeterminate :aria-label="'Uploading ' + upload.fileName"></w-progress-linear>
+          </logic>
+          <switch :value="upload.problem">
+            <case :when="'fileTooLarge'">
+              <span class="composer-attach-problem basis-full">{upload.fileName} is {upload.sizeText}. Files can be up to 25 MB.</span>
+            </case>
+            <case :when="'messageTooLarge'">
+              <span class="composer-attach-problem basis-full">{upload.fileName} does not fit: a message can carry up to 50 MB.</span>
+            </case>
+          </switch>
+          <logic :if="upload.state == 'failed'">
+            <span class="composer-attach-problem">{upload.fileName} did not finish uploading.</span>
+            <w-btn class="composer-attach-action" size="small" variant="text" :aria-label="'Retry ' + upload.fileName" on:click="composer.retryUpload(upload.fileName)">Retry</w-btn>
+          </logic>
+          <w-icon-btn class="composer-attach-remove" size="x-small" variant="text" :aria-label="'Remove ' + upload.fileName" on:click="composer.removeUpload(upload.fileName)">
+            <svg class="composer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </w-icon-btn>
+        </li>
+      </loop>
+    </ul>
+    <p class="composer-attach-limit m-0">Up to 25 MB per file and 50 MB per message. {composer.uploadsUsed}.</p>
+  </div>
+</logic>

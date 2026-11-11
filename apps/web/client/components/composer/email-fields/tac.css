@@ -1,0 +1,56 @@
+.composer-field {
+  min-height: 2.5rem;
+  margin: 0;
+  border-bottom: 1px solid var(--w-divider);
+  font-size: var(--w-font-base);
+}
+
+.composer-field[data-invalid] {
+  background: var(--w-error-container);
+}
+
+.composer-field-label {
+  color: var(--w-text-subtle);
+}
+
+.composer-from {
+  color: var(--w-text);
+}
+
+.composer-field-meta {
+  color: var(--w-text-subtle);
+  font-size: var(--ms-text-meta);
+}
+
+.composer-subject input {
+  min-height: 2rem;
+  font-size: var(--w-font-base);
+}
+
+.composer-subject input::placeholder {
+  color: var(--w-text-very-subtle);
+}
+
+.composer-subject .w-text-field-details {
+  color: var(--w-on-error-container);
+  font-size: var(--ms-text-meta);
+}
+
+@media (max-width: 767px) {
+  .composer-field {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--w-space-1);
+  }
+
+  .composer-field-label {
+    width: auto;
+    font-size: var(--ms-text-meta);
+  }
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .composer-subject input {
+    min-height: var(--ms-touch-min);
+  }
+}

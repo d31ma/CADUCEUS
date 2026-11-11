@@ -1,4 +1,8 @@
-import "strings"
+import (
+	"slices"
+	"strconv"
+	"strings"
+)
 
 // @Service
 type ComposerService struct {
@@ -6,14 +10,14 @@ type ComposerService struct {
 	NewConversation bool
 	ToText          string
 	CcText          string
-	BccText         string
+	BlindCopyText   string
 	ShowCc          bool
-	ShowBcc         bool
+	ShowBlindCopy   bool
 	Subject         string
 	Body            string
 	To              []Recipient
 	Cc              []Recipient
-	Bcc             []Recipient
+	BlindCopy       []Recipient
 	Rows            []RecipientRow
 	Uploads         []UploadItem
 	UploadsUsed     string
@@ -54,19 +58,26 @@ func (composer *ComposerService) Open(target SendTarget) {
 	composer.refresh()
 }
 
-func (composer *ComposerService) StartNew() {
-	composer.Open(SendTarget{})
+// @OnEvent
+func (composer *ComposerService) Picked(picked UploadPicked) {
+	composer.uploads.Pick(picked)
+	composer.refresh()
+}
+
+// @OnEvent
+func (composer *ComposerService) Uploaded(finished UploadFinished) {
+	composer.uploads.Complete(finished.AttachmentId)
+	composer.refresh()
 }
 
 func (composer *ComposerService) AddTyped(role string) {
-	composer.recipients.Add(composer.textOf(role), role)
-	composer.setText(role, "")
+	composer.addText(role)
 	composer.refresh()
 }
 
 func (composer *ComposerService) RecipientKey(role string, key string, value string) {
 	composer.setText(role, value)
-	composer.keyAction(key, value)(role)
+	composer.keyAction(composer.keyName(key, value))(role)
 	composer.refresh()
 }
 
@@ -81,17 +92,7 @@ func (composer *ComposerService) Remove(address string, role string) {
 
 func (composer *ComposerService) Choose(address string, role string, delivery string) {
 	composer.recipients.Choose(address, role, delivery)
-	composer.Announcement = composer.choiceAnnouncement(address)
-	composer.refresh()
-}
-
-func (composer *ComposerService) ToggleMenu(address string, role string) {
-	composer.recipients.ToggleMenu(address, role)
-	composer.refresh()
-}
-
-func (composer *ComposerService) CloseMenus() {
-	composer.recipients.CloseMenus()
+	composer.Announcement = composer.choiceAnnouncement(composer.recipients.Find(address))
 	composer.refresh()
 }
 
@@ -100,20 +101,20 @@ func (composer *ComposerService) ToggleCc() {
 	composer.refresh()
 }
 
-func (composer *ComposerService) ToggleBcc() {
-	composer.ShowBcc = !composer.ShowBcc
+func (composer *ComposerService) ToggleBlindCopy() {
+	composer.ShowBlindCopy = !composer.ShowBlindCopy
 	composer.refresh()
 }
 
 func (composer *ComposerService) BodyKey(key string, control bool, command bool) {
-	composer.sendWhenShortcut(composer.isSendShortcut(key, control, command))
+	composer.sendWhenShortcut(composer.sendShortcuts()[composer.shortcutName(key, control, command)])
 }
 
 func (composer *ComposerService) Send() {
 	composer.recipients.ResolvePending()
 	composer.Problem = composer.firstProblem(composer.checks())
-	composer.SubjectMissing = composer.Problem == "subjectMissing"
-	composer.requestWhenClear()
+	composer.SubjectMissing = composer.Problem == composer.problemSubjectMissing()
+	composer.requestWhenClear(composer.request(composer.emailMode()))
 	composer.refresh()
 }
 
@@ -132,11 +133,6 @@ func (composer *ComposerService) CloseChanged() {
 	composer.Changes = []RecipientChange{}
 }
 
-func (composer *ComposerService) Pick(picked UploadPicked) {
-	composer.uploads.Pick(picked)
-	composer.refresh()
-}
-
 func (composer *ComposerService) RetryUpload(fileName string) {
 	composer.uploads.Retry(fileName)
 	composer.refresh()
@@ -147,23 +143,18 @@ func (composer *ComposerService) RemoveUpload(fileName string) {
 	composer.refresh()
 }
 
-func (composer *ComposerService) Discard() {
-	composer.clear()
-	composer.refresh()
-}
-
 func (composer *ComposerService) refresh() {
-	composer.To = composer.recipients.InRole("to")
-	composer.Cc = composer.recipients.InRole("cc")
-	composer.Bcc = composer.recipients.InRole("bcc")
+	composer.To = composer.recipients.InRole(composer.roleTo())
+	composer.Cc = composer.recipients.InRole(composer.roleCc())
+	composer.BlindCopy = composer.recipients.InRole(composer.roleBlindCopy())
 	composer.ShowCc = composer.rowShown(composer.ShowCc, composer.Cc)
-	composer.ShowBcc = composer.rowShown(composer.ShowBcc, composer.Bcc)
+	composer.ShowBlindCopy = composer.rowShown(composer.ShowBlindCopy, composer.BlindCopy)
+	composer.Rows = composer.shownRows(composer.rows())
 	composer.Uploads = composer.uploads.Items
 	composer.UploadsUsed = composer.uploads.UsedText()
 	composer.Summary = composer.recipients.Summary()
 	composer.SendLabel = composer.recipients.SendLabel()
 	composer.EmailMode = composer.emailMode()
-	composer.Rows = composer.rows()
 	composer.ModeText = composer.recipients.ModeText()
 	composer.SenderAddress = composer.recipients.SenderAddress()
 	composer.ProblemText = composer.problems.Text(composer.Problem)
@@ -174,17 +165,25 @@ func (composer *ComposerService) emailMode() bool {
 }
 
 func (composer *ComposerService) rows() []RecipientRow {
-	rows := []RecipientRow{}
-	rows = composer.appendRow(rows, composer.NewConversation, RecipientRow{Role: "to", Label: "To", Placeholder: composer.toPlaceholder(), Text: composer.ToText, Recipients: composer.To})
-	rows = composer.appendRow(rows, composer.NewConversation && composer.ShowCc, RecipientRow{Role: "cc", Label: "Cc", Placeholder: "Add people who get a copy", Text: composer.CcText, Recipients: composer.Cc})
-	return composer.appendRow(rows, composer.NewConversation && composer.ShowBcc, RecipientRow{Role: "bcc", Label: "Bcc", Placeholder: "Hidden from everyone else", Text: composer.BccText, Recipients: composer.Bcc})
+	return []RecipientRow{
+		{Role: composer.roleTo(), Label: "To", Placeholder: composer.toPlaceholder(), Text: composer.ToText, Recipients: composer.To, Shown: composer.NewConversation},
+		{Role: composer.roleCc(), Label: "Cc", Placeholder: "Add people who get a copy", Text: composer.CcText, Recipients: composer.Cc, Shown: composer.shownWithNew(composer.ShowCc)},
+		{Role: composer.roleBlindCopy(), Label: "Bcc", Placeholder: "Hidden from everyone else", Text: composer.BlindCopyText, Recipients: composer.BlindCopy, Shown: composer.shownWithNew(composer.ShowBlindCopy)},
+	}
 }
 
-func (composer *ComposerService) appendRow(rows []RecipientRow, shown bool, row RecipientRow) []RecipientRow {
-	if !shown {
-		return rows
-	}
-	return append(rows, row)
+func (composer *ComposerService) shownRows(rows []RecipientRow) []RecipientRow {
+	return slices.DeleteFunc(rows, func(row RecipientRow) bool {
+		return !row.Shown
+	})
+}
+
+func (composer *ComposerService) shownWithNew(shown bool) bool {
+	return composer.NewConversation && shown
+}
+
+func (composer *ComposerService) rowShown(shown bool, recipients []Recipient) bool {
+	return shown || len(recipients) > 0
 }
 
 func (composer *ComposerService) toPlaceholder() string {
@@ -202,35 +201,51 @@ func (composer *ComposerService) replySubject(subject string) string {
 }
 
 func (composer *ComposerService) textOf(role string) string {
-	texts := map[string]string{"to": composer.ToText, "cc": composer.CcText, "bcc": composer.BccText}
+	texts := map[string]string{composer.roleTo(): composer.ToText, composer.roleCc(): composer.CcText, composer.roleBlindCopy(): composer.BlindCopyText}
 	return texts[role]
 }
 
 func (composer *ComposerService) setText(role string, value string) {
-	fields := map[string]*string{"to": &composer.ToText, "cc": &composer.CcText, "bcc": &composer.BccText}
+	fields := map[string]*string{composer.roleTo(): &composer.ToText, composer.roleCc(): &composer.CcText, composer.roleBlindCopy(): &composer.BlindCopyText}
 	*fields[role] = value
 }
 
-func (composer *ComposerService) keyAction(key string, value string) func(string) {
-	switch {
-	case composer.addingKeys()[key]:
-		return composer.addTypedOnly
-	case key == "Backspace" && value == "":
-		return composer.recipients.RemoveLast
-	}
-	return composer.ignoreKey
-}
-
-func (composer *ComposerService) addTypedOnly(role string) {
+func (composer *ComposerService) addText(role string) {
 	composer.recipients.Add(composer.textOf(role), role)
 	composer.setText(role, "")
+}
+
+func (composer *ComposerService) keyName(key string, value string) string {
+	return key + composer.separator() + strconv.FormatBool(value == "")
+}
+
+func (composer *ComposerService) keyAction(name string) func(string) {
+	actions := map[string]func(string){
+		"Enter false":    composer.addText,
+		", false":        composer.addText,
+		"; false":        composer.addText,
+		"Tab false":      composer.addText,
+		"Backspace true": composer.recipients.RemoveLast,
+	}
+	action, found := actions[name]
+	if !found {
+		return composer.ignoreKey
+	}
+	return action
 }
 
 func (composer *ComposerService) ignoreKey(role string) {
 }
 
-func (composer *ComposerService) choiceAnnouncement(address string) string {
-	chosen := composer.recipients.Find(address)
+func (composer *ComposerService) shortcutName(key string, control bool, command bool) string {
+	return strings.Join([]string{key, strconv.FormatBool(control), strconv.FormatBool(command)}, composer.separator())
+}
+
+func (composer *ComposerService) sendShortcuts() map[string]bool {
+	return map[string]bool{"Enter true false": true, "Enter false true": true, "Enter true true": true}
+}
+
+func (composer *ComposerService) choiceAnnouncement(chosen Recipient) string {
 	return chosen.DisplayName + " now gets: " + chosen.Label + "."
 }
 
@@ -247,7 +262,7 @@ func (composer *ComposerService) checks() []string {
 		composer.needsRecipient(),
 		composer.needsValidRecipients(),
 		composer.needsResolvedRecipients(),
-		composer.needsSubject(),
+		composer.needsSubject(composer.recipients.EmailMode()),
 		composer.needsContent(),
 		composer.needsFinishedUploads(),
 		composer.needsWorkingUploads(),
@@ -255,11 +270,18 @@ func (composer *ComposerService) checks() []string {
 }
 
 func (composer *ComposerService) firstProblem(problems []string) string {
-	found := strings.Fields(strings.Join(problems, " "))
+	found := strings.Fields(strings.Join(problems, composer.separator()))
 	if len(found) == 0 {
 		return ""
 	}
 	return found[0]
+}
+
+func (composer *ComposerService) needsIdle() string {
+	if !composer.Sending {
+		return ""
+	}
+	return "stillSending"
 }
 
 func (composer *ComposerService) needsRecipient() string {
@@ -283,11 +305,11 @@ func (composer *ComposerService) needsResolvedRecipients() string {
 	return "waitForCheck"
 }
 
-func (composer *ComposerService) needsSubject() string {
-	if !composer.NewConversation || !composer.recipients.EmailMode() || strings.TrimSpace(composer.Subject) != "" {
+func (composer *ComposerService) needsSubject(emailMode bool) string {
+	if !composer.NewConversation || !emailMode || strings.TrimSpace(composer.Subject) != "" {
 		return ""
 	}
-	return "subjectMissing"
+	return composer.problemSubjectMissing()
 }
 
 func (composer *ComposerService) needsContent() string {
@@ -311,42 +333,27 @@ func (composer *ComposerService) needsWorkingUploads() string {
 	return "fixAttachments"
 }
 
-func (composer *ComposerService) requestWhenClear() {
+func (composer *ComposerService) requestWhenClear(request SendRequest) {
 	if composer.Problem != "" {
 		return
 	}
 	composer.Sending = true
-	composer.applicationEventPublisher.PublishEvent(SendRequested{Request: composer.request()}, false)
+	composer.applicationEventPublisher.PublishEvent(SendRequested{Request: request}, false)
 }
 
-func (composer *ComposerService) needsIdle() string {
-	if !composer.Sending {
-		return ""
-	}
-	return "stillSending"
-}
-
-func (composer *ComposerService) isSendShortcut(key string, control bool, command bool) bool {
-	return key == "Enter" && (control || command)
-}
-
-func (composer *ComposerService) rowShown(shown bool, recipients []Recipient) bool {
-	return shown || len(recipients) > 0
-}
-
-func (composer *ComposerService) request() SendRequest {
+func (composer *ComposerService) request(emailMode bool) SendRequest {
 	return SendRequest{
 		ConversationId: composer.Target.ConversationId,
 		ThreadRootId:   composer.Target.ThreadRootId,
 		Body:           strings.TrimSpace(composer.Body),
 		AttachmentIds:  composer.uploads.AttachmentIds(),
 		Recipients:     composer.recipients.Choices(),
-		Email:          composer.emailOptions(),
+		Email:          composer.emailOptions(emailMode),
 	}
 }
 
-func (composer *ComposerService) emailOptions() *EmailOptions {
-	if !composer.emailMode() {
+func (composer *ComposerService) emailOptions(emailMode bool) *EmailOptions {
+	if !emailMode {
 		return nil
 	}
 	return &EmailOptions{Subject: strings.TrimSpace(composer.Subject)}
@@ -383,13 +390,29 @@ func (composer *ComposerService) clear() {
 	composer.Subject = ""
 	composer.ToText = ""
 	composer.CcText = ""
-	composer.BccText = ""
+	composer.BlindCopyText = ""
 	composer.ShowCc = false
-	composer.ShowBcc = false
+	composer.ShowBlindCopy = false
 	composer.Problem = ""
 	composer.SubjectMissing = false
 }
 
-func (composer *ComposerService) addingKeys() map[string]bool {
-	return map[string]bool{"Enter": true, ",": true, ";": true, "Tab": true}
+func (composer *ComposerService) problemSubjectMissing() string {
+	return "subjectMissing"
+}
+
+func (composer *ComposerService) roleTo() string {
+	return "to"
+}
+
+func (composer *ComposerService) roleCc() string {
+	return "cc"
+}
+
+func (composer *ComposerService) roleBlindCopy() string {
+	return "bcc"
+}
+
+func (composer *ComposerService) separator() string {
+	return " "
 }

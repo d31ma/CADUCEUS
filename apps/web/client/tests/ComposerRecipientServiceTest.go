@@ -116,22 +116,7 @@ func (test *ComposerRecipientServiceTest) TestRemoveLastOfAnEmptyRowChangesNothi
 	Assert.Equals(1, len(recipients.Recipients))
 }
 
-func (test *ComposerRecipientServiceTest) TestToggleMenuOpensOneMenuAtATime() {
-	recipients := test.recipients()
-	recipients.Add("bo@example.com carol@partner.org", "to")
-	recipients.ToggleMenu("bo@example.com", "to")
-	recipients.ToggleMenu("carol@partner.org", "to")
-	Assert.IsTrue(!recipients.Recipients[0].MenuOpen)
-	Assert.IsTrue(recipients.Recipients[1].MenuOpen)
-}
 
-func (test *ComposerRecipientServiceTest) TestCloseMenusClosesEveryMenu() {
-	recipients := test.recipients()
-	recipients.Add("bo@example.com", "to")
-	recipients.ToggleMenu("bo@example.com", "to")
-	recipients.CloseMenus()
-	Assert.IsTrue(!recipients.Recipients[0].MenuOpen)
-}
 
 func (test *ComposerRecipientServiceTest) TestRefreshReportsAKindThatChanged() {
 	recipients := test.recipients()
@@ -203,10 +188,3 @@ func (test *ComposerRecipientServiceTest) TestSenderAddressIsTheSignedInAddress(
 	Assert.Equals("ana@example.com", test.recipients().SenderAddress())
 }
 
-func (test *ComposerRecipientServiceTest) TestCloseMenusExceptKeepsOneMenu() {
-	recipients := test.recipients()
-	recipients.Add("bo@example.com", "to")
-	recipients.ToggleMenu("bo@example.com", "to")
-	recipients.CloseMenusExcept("bo@example.com", "to")
-	Assert.IsTrue(recipients.Recipients[0].MenuOpen)
-}

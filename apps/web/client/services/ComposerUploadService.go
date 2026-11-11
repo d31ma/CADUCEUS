@@ -51,7 +51,7 @@ func (uploads *ComposerUploadService) UsedText() string {
 }
 
 func (uploads *ComposerUploadService) itemOf(picked UploadPicked) UploadItem {
-	return UploadItem{FileName: picked.FileName, MediaType: picked.MediaType, Size: picked.Size, Sha256: picked.Sha256, SizeText: uploads.megabytes(picked.Size), State: "uploading"}
+	return UploadItem{FileName: picked.FileName, MediaType: picked.MediaType, Size: picked.Size, Sha256: picked.Sha256, SizeText: uploads.megabytes(picked.Size), State: uploads.stateUploading()}
 }
 
 func (uploads *ComposerUploadService) limitProblem(size int64, used int64) string {
@@ -66,7 +66,7 @@ func (uploads *ComposerUploadService) limitProblem(size int64, used int64) strin
 
 func (uploads *ComposerUploadService) createdUnlessRefused(item UploadItem) UploadItem {
 	if item.Problem != "" {
-		item.State = "refused"
+		item.State = uploads.stateRefused()
 		return item
 	}
 	return uploads.created(item)
@@ -97,16 +97,16 @@ func (uploads *ComposerUploadService) completeUnlessFailed(authorization string,
 
 func (uploads *ComposerUploadService) stateWhenCreated(failure error) string {
 	if failure != nil {
-		return "failed"
+		return uploads.stateFailed()
 	}
-	return "uploading"
+	return uploads.stateUploading()
 }
 
 func (uploads *ComposerUploadService) stateAfter(failure error) string {
 	if failure != nil {
-		return "failed"
+		return uploads.stateFailed()
 	}
-	return "ready"
+	return uploads.stateReady()
 }
 
 func (uploads *ComposerUploadService) withState(attachmentId string, state string) []UploadItem {
@@ -154,7 +154,7 @@ func (uploads *ComposerUploadService) idsOf(items []UploadItem) []string {
 }
 
 func (uploads *ComposerUploadService) appendReady(ids []string, item UploadItem) []string {
-	if item.State != "ready" {
+	if item.State != uploads.stateReady() {
 		return ids
 	}
 	return append(ids, item.AttachmentId)
@@ -178,7 +178,7 @@ func (uploads *ComposerUploadService) oneWhen(wanted bool) int {
 func (uploads *ComposerUploadService) usedBytes() int64 {
 	used := int64(0)
 	for _, item := range uploads.Items {
-		used += item.Size * int64(uploads.oneWhen(item.State != "refused"))
+		used += item.Size * int64(uploads.oneWhen(item.State != uploads.stateRefused()))
 	}
 	return used
 }
@@ -196,5 +196,21 @@ func (uploads *ComposerUploadService) messageLimit() int64 {
 }
 
 func (uploads *ComposerUploadService) bytesPerMegabyte() int64 {
-	return 1024 * 1024
+	return 1048576
+}
+
+func (uploads *ComposerUploadService) stateUploading() string {
+	return "uploading"
+}
+
+func (uploads *ComposerUploadService) stateFailed() string {
+	return "failed"
+}
+
+func (uploads *ComposerUploadService) stateReady() string {
+	return "ready"
+}
+
+func (uploads *ComposerUploadService) stateRefused() string {
+	return "refused"
 }

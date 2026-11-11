@@ -23,8 +23,8 @@ func (test *ComposerResolveServiceTest) TestRecipientOfUsesTheAddressWhenThereIs
 
 func (test *ComposerResolveServiceTest) TestCheckingAndInvalidChips() {
 	resolve := test.resolve()
-	Assert.Equals("Checking…", resolve.Checking("x@y.z", "to").Label)
-	Assert.Equals("Not valid", resolve.Invalid("x@y", "to").Label)
+	Assert.Equals("Checking…", resolve.Pending("x@y.z", "to", "checking").Label)
+	Assert.Equals("Not valid", resolve.Pending("x@y", "to", "invalid").Label)
 }
 
 func (test *ComposerResolveServiceTest) TestLabelledWritesTheChipText() {

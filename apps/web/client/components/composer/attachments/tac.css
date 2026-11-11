@@ -1,0 +1,78 @@
+.composer-attachments {
+  font-size: var(--w-font-sm);
+}
+
+.composer-attach {
+  list-style: none;
+  min-height: 2rem;
+  border: 1px solid var(--w-border);
+  border-radius: var(--w-radius-md);
+  background: var(--w-surface-container-low);
+  color: var(--w-text);
+}
+
+.composer-attach[data-state="failed"],
+.composer-attach[data-state="refused"] {
+  border-color: var(--w-error);
+  background: var(--w-error-container);
+  color: var(--w-on-error-container);
+}
+
+.composer-icon {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.composer-attach-name {
+  max-width: 12rem;
+}
+
+.composer-attach-size,
+.composer-attach-limit {
+  color: var(--w-text-subtle);
+  font-size: var(--ms-text-meta);
+}
+
+.composer-attach-problem {
+  font-size: var(--ms-text-meta);
+}
+
+.composer-attach-progress {
+  color: var(--w-accent-bg);
+}
+
+.composer-attach-remove .w-btn,
+.composer-attach-action .w-btn {
+  min-height: 1.5rem;
+  color: inherit;
+}
+
+.composer-attach-remove .w-btn:focus-visible,
+.composer-attach-action .w-btn:focus-visible {
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
+  outline-offset: var(--w-focus-ring-offset);
+}
+
+@media (max-width: 767px) {
+  .composer-attach-name {
+    max-width: 9rem;
+  }
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .composer-attach {
+    min-height: var(--ms-touch-min);
+  }
+
+  .composer-attach-remove .w-btn,
+  .composer-attach-action .w-btn {
+    min-width: var(--ms-touch-min);
+    min-height: var(--ms-touch-min);
+  }
+}

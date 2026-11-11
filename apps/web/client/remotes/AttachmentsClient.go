@@ -15,4 +15,12 @@ type AttachmentsClient interface {
 		// @PathVariable("attachmentId")
 		attachmentId BehaviorValue,
 	) (BehaviorValue, error)
+
+	// @GetRequest("/{attachmentId}")
+	Download(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @PathVariable("attachmentId")
+		attachmentId BehaviorValue,
+	) (BehaviorValue, error)
 }

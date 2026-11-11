@@ -69,20 +69,20 @@ func (test *ComposerWordsServiceTest) TestBothReasonForAnOutsideAddress() {
 	Assert.Equals("Not possible without a Mesail account", test.words().BothReason("external"))
 }
 
-func (test *ComposerWordsServiceTest) TestNamesJoinsNobody() {
-	Assert.Equals("", test.words().Names([]string{}))
+func (test *ComposerWordsServiceTest) TestJoinedJoinsNobody() {
+	Assert.Equals("", test.words().joined([]string{}))
 }
 
-func (test *ComposerWordsServiceTest) TestNamesJoinsOne() {
-	Assert.Equals("Bo", test.words().Names([]string{"Bo"}))
+func (test *ComposerWordsServiceTest) TestJoinedJoinsOne() {
+	Assert.Equals("Bo", test.words().joined([]string{"Bo"}))
 }
 
-func (test *ComposerWordsServiceTest) TestNamesJoinsTwoWithAnd() {
-	Assert.Equals("Bo and Carol", test.words().Names([]string{"Bo", "Carol"}))
+func (test *ComposerWordsServiceTest) TestJoinedJoinsTwoWithAnd() {
+	Assert.Equals("Bo and Carol", test.words().joined([]string{"Bo", "Carol"}))
 }
 
-func (test *ComposerWordsServiceTest) TestNamesJoinsThreeWithoutASerialComma() {
-	Assert.Equals("Bo, Carol and Finn", test.words().Names([]string{"Bo", "Carol", "Finn"}))
+func (test *ComposerWordsServiceTest) TestJoinedJoinsThreeWithoutASerialComma() {
+	Assert.Equals("Bo, Carol and Finn", test.words().joined([]string{"Bo", "Carol", "Finn"}))
 }
 
 func (test *ComposerWordsServiceTest) TestSummarySaysWhoGetsWhat() {

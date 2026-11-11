@@ -27,6 +27,7 @@ func (resolve *ComposerResolveService) RecipientOf(resolved ResolvedRecipient, r
 		Role:        role,
 		Delivery:    resolve.deliveryOf(resolved, delivery),
 		State:       "ready",
+		Allowed:     resolved.AllowedDeliveries,
 		ChatAllowed: slices.Contains(resolved.AllowedDeliveries, "chat"),
 		ChatReason:  resolve.words.ChatReason(resolved.Kind, resolved.Address, resolve.auth.DomainId()),
 		BothReason:  resolve.words.BothReason(resolved.Kind),
@@ -34,12 +35,8 @@ func (resolve *ComposerResolveService) RecipientOf(resolved ResolvedRecipient, r
 	return resolve.labelled(recipient)
 }
 
-func (resolve *ComposerResolveService) Checking(address string, role string) Recipient {
-	return resolve.labelled(Recipient{Address: address, DisplayName: address, Initials: resolve.words.Initials(address), Role: role, State: "checking"})
-}
-
-func (resolve *ComposerResolveService) Invalid(address string, role string) Recipient {
-	return resolve.labelled(Recipient{Address: address, DisplayName: address, Initials: resolve.words.Initials(address), Role: role, State: "invalid"})
+func (resolve *ComposerResolveService) Pending(address string, role string, state string) Recipient {
+	return resolve.labelled(Recipient{Address: address, DisplayName: address, Initials: resolve.words.Initials(address), Role: role, State: state, Allowed: []string{}})
 }
 
 func (resolve *ComposerResolveService) Labelled(recipient Recipient) Recipient {

@@ -35,7 +35,7 @@ func (problems *ComposerProblemService) foundOrUnavailable(problem string, found
 	if found {
 		return problem
 	}
-	return "unavailable"
+	return problems.unavailable()
 }
 
 func (problems *ComposerProblemService) texts() map[string]string {
@@ -54,7 +54,7 @@ func (problems *ComposerProblemService) texts() map[string]string {
 		"notFound":          "Not sent. This conversation is not available any more.",
 		"tooLarge":          "Not sent. The message or its files are too large.",
 		"rateLimited":       "Not sent. You sent many messages in a short time. Wait a moment, then try again.",
-		"unavailable":       "Not sent. Mesail could not be reached. Your message is kept here. Try again; it is sent only once.",
+		problems.unavailable(): "Not sent. Mesail could not be reached. Your message is kept here. Try again; it is sent only once.",
 		"stillSending":      "Still sending. Wait a moment.",
 		"resolveFailed":     "Some addresses could not be checked. Try again in a moment.",
 	}
@@ -62,4 +62,8 @@ func (problems *ComposerProblemService) texts() map[string]string {
 
 func (problems *ComposerProblemService) noStatus() int {
 	return -1
+}
+
+func (problems *ComposerProblemService) unavailable() string {
+	return "unavailable"
 }

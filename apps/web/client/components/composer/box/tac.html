@@ -1,3 +1,65 @@
-<section class="composer-box" aria-label="Write a message">
-  <h2>Write a message</h2>
+<section class="composer flex min-w-0 flex-col" aria-label="Write a message" :data-email="composer.emailMode" :data-sending="composer.sending">
+  <logic :if="composer.emailMode">
+    <p class="composer-mode flex items-start gap-2 px-3 py-2">
+      <svg class="composer-icon mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z" /><path d="M4 7l8 6 8-6" /></svg>
+      <logic :if="composer.modeText">
+        <span class="min-w-0">{composer.modeText}</span>
+      </logic>
+      <logic else>
+        <span class="min-w-0">Reply as email.</span>
+      </logic>
+    </p>
+  </logic>
+
+  <logic :if="composer.newConversation">
+    <composer-recipients />
+  </logic>
+
+  <logic :if="composer.emailMode">
+    <composer-email-fields />
+  </logic>
+
+  <div class="composer-editor px-3 py-2">
+    <logic :if="composer.emailMode">
+      <w-textarea id="composer-input" class="composer-textarea block w-full" variant="plain" single-line hide-details auto-grow rows="2" max-rows="12" label="Email body" placeholder="Write your email" :value="composer.body" on:input="composer.body = $event.detail.value" on:keydown="composer.bodyKey($event.key, $event.ctrlKey, $event.metaKey)"></w-textarea>
+    </logic>
+    <logic else>
+      <w-textarea id="composer-input" class="composer-textarea block w-full" variant="plain" single-line hide-details auto-grow rows="2" max-rows="12" label="Message" placeholder="Write a message" :value="composer.body" on:input="composer.body = $event.detail.value" on:keydown="composer.bodyKey($event.key, $event.ctrlKey, $event.metaKey)"></w-textarea>
+    </logic>
+  </div>
+
+  <composer-attachments />
+
+  <composer-summary />
+
+  <div class="composer-toolbar flex flex-wrap items-center gap-x-3 gap-y-2 px-3 pt-2">
+    <logic :if="composer.problemText">
+      <p class="composer-problem flex basis-full items-start gap-2 px-3 py-2" role="alert">
+        <svg class="composer-icon mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4M12 17h.01" /></svg>
+        <span class="min-w-0">{composer.problemText}</span>
+      </p>
+    </logic>
+    <p class="composer-keys mr-auto min-w-0">Ctrl+Enter or Cmd+Enter sends · Enter adds a line</p>
+    <logic :if="composer.sending">
+      <w-btn class="composer-send ml-auto" variant="filled" loading>Sending…</w-btn>
+    </logic>
+    <logic else>
+      <logic :if="composer.emailMode">
+        <w-btn class="composer-send ml-auto" variant="filled" on:click="composer.send()">
+          <svg class="composer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z" /><path d="M4 7l8 6 8-6" /></svg>
+          <span>{composer.sendLabel}</span>
+        </w-btn>
+      </logic>
+      <logic else>
+        <w-btn class="composer-send ml-auto" variant="filled" on:click="composer.send()">
+          <svg class="composer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 3 10 14" /><path d="M21 3l-6.5 18-4.5-7-7-4.5z" /></svg>
+          <span>{composer.sendLabel}</span>
+        </w-btn>
+      </logic>
+    </logic>
+  </div>
+
+  <div class="composer-announcer" aria-live="polite">{composer.announcement}</div>
+
+  <composer-changed />
 </section>

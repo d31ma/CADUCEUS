@@ -77,7 +77,18 @@ wave run at the same time.
     (`/outbox/relay` or `/jobs/<job>`), where the work runs with injected
     services. In Lambda form an EventBridge schedule calls the same route
     (P1). Details: `docs/mesail/EVENTS.md` section 4.
-13. **UX.** The screens, states and copy come from `docs/mesail/ux/**`
+13. **UI stack (frontend slices F1 to F5).** Follow ADR 0004 section 8:
+    DuVay `w-*` elements for every control and overlay, DuVay tokens for
+    color and type, Tailwind classes for layout and breakpoints, no
+    hard-coded colors, no CSS frameworks other than these two, no
+    JavaScript of our own. The DuVay files in
+    `apps/<app>/client/shared/vendor/duvay/` and the generated Tailwind
+    regions in `tac.css` are produced by `scripts/vendor/duvay.sh` and
+    `tools/styles`; never edit them by hand. A Tac slice's gate also runs
+    `tools/styles --check` and the responsive test in `tests/responsive/`
+    (320 to 2560 px, 44 px touch targets, safe areas, RTL, reduced motion)
+    for the routes it owns.
+14. **UX.** The screens, states and copy come from `docs/mesail/ux/**`
     (owned by the `mesail-ux` session). Frontend slices follow it and do not
     edit it.
 
@@ -243,10 +254,18 @@ C1, not before each slice merge.
   AC-ID-7 and AC-ID-8); the three-pane layout (AC-UI-1, 2, 4) and the
   feature slots the shell already places. Other web slices get the token from F1's
   `SessionService`.
+- **Also owns (shared UI tooling, used by F2 to F5):** `scripts/vendor/**`
+  (`duvay.sh`: fetch DuVay commit `bc8b56a` of release `v26.35.01-1`,
+  check it, build `duvay-wc.min.js` and `duvay.min.css`, write them and
+  print the manifest SHA-256 lines), `tools/styles/**` (the Go generator
+  around the pinned Tailwind 4.3.3 standalone CLI, with `--check`), and
+  `tests/responsive/**` (the Go responsive test). F1 does the first
+  migration of the web shell to DuVay and Tailwind.
 - **Depends on:** I1.
 
 ### F5. Admin app
-- **Owns:** `apps/web-admin/**`.
+- **Owns:** `apps/web-admin/**` (it runs F1's `scripts/vendor/duvay.sh
+  --app web-admin` for its own vendor copy).
 - **Builds:** domains (with DNS record display and verify, for operators),
   members and aliases, channel email addresses (SPEC S11, AC-DM-1, AC-CH).
 - **Depends on:** D1, C2 contracts.
@@ -364,7 +383,7 @@ C1, not before each slice merge.
 
 | Path | Owner |
 | --- | --- |
-| `docs/**` (except `docs/mesail/ux/**`), `tests/blackbox/**`, `tools/**`, `scripts/kit-sync.sh`, `CLAUDE.md`, `AGENTS.md`, `README.md`, `CHANGELOG.md`, `.gitignore` | architecture (this plan); slices append to `CHANGELOG.md` only under their own heading, and update CONTRACTS.md per rule 3 |
+| `docs/**` (except `docs/mesail/ux/**`), `tests/blackbox/**`, `tools/crap/**`, `scripts/kit-sync.sh`, `CLAUDE.md`, `AGENTS.md`, `README.md`, `CHANGELOG.md`, `.gitignore` | architecture (this plan); slices append to `CHANGELOG.md` only under their own heading, and update CONTRACTS.md per rule 3 |
 | `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package (I1 `oidc`, I2 `events` `outbox`, D1 `recipients`, A1 `blobs`, M1 `mime` `mailauth`, M2 `compose` `dkim` `smtpclient`, S1 `textindex`); `ids` and `collections` stay with architecture |
 | `apps/<service>/**` other files | the service's slice |
 | `apps/web/client/**` | split between F1-F4 by the patterns above |
@@ -374,3 +393,4 @@ C1, not before each slice merge.
 | `docs/mesail/ux/**` | `mesail-ux` |
 | `Dockerfile` Keycloak stages, `deploy/keycloak/**` (including the realm templates in `deploy/keycloak/realm/`) | `mesail-keycloak` |
 | `.github/workflows/**`, `scripts/gates.sh`, `scripts/ci/**` | C1 |
+| `scripts/vendor/**`, `tools/styles/**`, `tests/responsive/**` | F1 (C1 calls them from `scripts/gates.sh` for Tac apps) |

@@ -274,7 +274,64 @@ kit/            shared plain Go packages (source of truth)
 - SMTP submission for third-party mail clients needs a password that is not
   the Keycloak password; it is a later slice.
 
-### 8. Environments
+### 8. UI: DuVay for rigidity, Tailwind for fluidity, every screen size
+
+The owner's rule: DuVay web components for rigidity, Tailwind for
+fluidity, and the UI must work on every screen size, because the frontend
+ships on web, macOS, Windows, Linux, iOS and Android. TACHYON's own website
+already combines DuVay and Tailwind (`website/client/manifest.json`,
+`website/scripts/build-duvay.mjs`, `build-styles.mjs`); Mesail follows it.
+
+- **DuVay is the component layer.** Controls, menus, dialogs, sheets,
+  fields, avatars, badges, banners and toasts are DuVay elements (`w-*`).
+  They also bring keyboard and focus behavior (Escape, arrow keys, focus
+  trap and return) that Go Tac cannot do today. Colors, type and radii come
+  from DuVay's tokens (`--w-*`); Mesail maps its brand onto those tokens and
+  never hard-codes colors.
+- **DuVay is pinned.** Source: `https://github.com/d31ma/DUVAY`, release
+  `v26.35.01-1`, commit `bc8b56aea7969ec3b7f4ca358320b71aecde4675` (the
+  release has no assets; the source archive of the tag had SHA-256
+  `087f8c40b58ddffd2860cdf6632cad5b62a8a3b8c16ecf6520eb94fdea450919` on
+  2026-11-10, but GitHub does not promise archive bytes, so the commit is
+  the pin). `scripts/vendor/duvay.sh` fetches that commit, checks it, builds
+  the single bundled files `duvay-wc.min.js` and `duvay.min.css`, and writes
+  them to `apps/<app>/client/shared/vendor/duvay/`. Each app's
+  `client/manifest.json` declares them in `tac.scripts` /
+  `tac.scriptSources` and `tac.styles` / `tac.styleSources` (`"kind":
+  "vendor"`) with `package`, `version`, `license` and `sha256`; TACHYON
+  refuses the page when the bytes differ (TY1403). The vendored files are
+  never edited by hand. The full bundle is about 134 KiB Brotli of the 200
+  KB route script budget (measured by slice F1); when that becomes tight,
+  the script builds a pinned subset instead.
+- **Tailwind is the layout layer.** Grid, flex, gap, spacing, sizing and
+  breakpoints are Tailwind classes in `tac.html`. Tailwind 4.3.3's
+  standalone CLI (pinned version and SHA-256; no Node packages) runs without
+  Preflight, and a small Go tool, `tools/styles`, writes the generated rules
+  for each component into a marked region of that component's `tac.css`
+  (TACHYON's website pattern), with the shared `@property` blocks in the
+  foundation stylesheet. `tools/styles --check` fails when a generated
+  region is stale; it is a gate. Tailwind is not used for colors or type;
+  those come from DuVay tokens.
+- **Events.** TACHYON 26.46.02 allows only `a-z`, `0-9` and `:` in event
+  names (TY1306), so Mesail uses DuVay events such as `on:change`,
+  `on:input`, `on:close` and `on:toggle`, and passes values, not events, to
+  Go (`on:change="x.set($event.detail.value)"`). `w-text-field` is used for
+  text input (`w-input` fires `input` twice).
+- **Platforms.** Every target is a web view around the same bundle
+  (WKWebView, WebView2, WebKitGTK, Android WebView). Component CSS compiles
+  to `@scope`, so the minimum versions are Safari and iOS 17.4, WebView2 and
+  Android WebView 118, and WebKitGTK 2.44.
+- **Responsive and accessible, as a gate.** Every Tac route is checked at
+  320, 360, 375, 414, 768, 1024, 1280, 1440, 1920 and 2560 px wide: no
+  horizontal scrolling, no clipped or overlapping text, every touch target
+  at least 44 by 44 px, the layout of SPEC AC-UI-1 at each width, safe-area
+  insets respected (`env(safe-area-inset-*)`), `prefers-reduced-motion` and
+  dark mode honored, and right-to-left layout intact. The check is a Go test
+  in `tests/responsive/` that drives a headless browser against the built
+  `dist/web` (no JavaScript test code). Native builds for the six targets are
+  release gates, not slice gates.
+
+### 9. Environments
 - **This Mac, development and slice tests:** native macOS, no VM. Each Yon
   app runs with `ty start` behind a small native dev router on one origin;
   FYLO roots are in the APFS disk image on ATLAS, attached at
@@ -324,7 +381,19 @@ Friction found while designing, to raise with the dependency owners:
   (`on:keydown.escape`) and focus control (focus, focus trap, focus
   return). Details: `slice-f1-tachyon-gaps.md` in the planning notes.
 - TACHYON: `viewport-fit=cover` in the injected viewport meta (or a manifest
-  option), so `env(safe-area-inset-*)` works on iOS.
+  option), and `--tac-safe-area-*` properties from the iOS and Android
+  hosts, so a bottom bar never sits under the home indicator.
+- TACHYON, for DuVay and Tailwind in Go Tac apps: allow `-` in event names
+  (TY1306); a `prop:<name>=` binding to set properties on custom elements;
+  a `ty styles [--check]` command configured by a `tac.tailwind` manifest
+  member (today a website-only script); a `tac.budgets.style` budget; vendor
+  scripts in `tac.blockingScripts` so a saved theme applies before the
+  first paint; DuVay tag roles for the accessibility check (TY1336); the
+  responsive-widths check as a `ty` command for apps; and a test that
+  stateful custom elements keep their state when a watched attribute
+  redraws the page.
+- DUVAY: emit kebab-case event names only, and publish release assets
+  (the built bundles and their SHA-256) with each release.
 - TACHYON: mount separately built Tac apps under route prefixes, or split
   Go Wasm per route, so a frontend feature can be deployed alone.
 - TACHYON: more than one FYLO datasource per app, so a service can keep one

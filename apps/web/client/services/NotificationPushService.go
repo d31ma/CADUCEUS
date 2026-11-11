@@ -48,6 +48,15 @@ func (service *NotificationPushService) LoadSettings(requested NotificationSetti
 }
 
 // @OnEvent
+// @InBackground
+func (service *NotificationPushService) DomainChanged(changed SessionDomainChanged) {
+	service.SettingsStatus = service.statusLoading()
+	service.Saved = false
+	service.SaveProblem = ""
+	service.LoadSettings(NotificationSettingsLoadRequested{})
+}
+
+// @OnEvent
 func (service *NotificationPushService) Shown(changed VisibilityChanged) {
 	service.readPermission()
 }
@@ -92,6 +101,17 @@ func (service *NotificationPushService) SendTest() {
 }
 
 func (service *NotificationPushService) ChooseSummary(minutes int) {
+	service.saveWhenChanged(minutes)
+}
+
+func (service *NotificationPushService) saveWhenChanged(minutes int) {
+	if minutes == service.SummaryMinutes {
+		return
+	}
+	service.save(minutes)
+}
+
+func (service *NotificationPushService) save(minutes int) {
 	request := NotificationSettings{EmailSummaryAfterMinutes: minutes, MutedConversationIds: append([]string{}, service.muted...)}
 	saved, problem := service.api.SaveSettings(request)
 	service.SummaryMinutes = service.minutesAfter(saved, problem)

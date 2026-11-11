@@ -4,7 +4,7 @@ type NotificationPresenceServiceTest struct {
 }
 
 func (test *NotificationPresenceServiceTest) build(domainId string) *NotificationPresenceService {
-	return NotificationTestSetup{}.presence(test.behaviors, NotificationTestSetup{}.access(domainId))
+	return NotificationTestSetup{}.presence(test.behaviors, NotificationTestSetup{}.access(test.behaviors, domainId))
 }
 
 func (test *NotificationPresenceServiceTest) watching() *NotificationPresenceService {
@@ -144,6 +144,24 @@ func (test *NotificationPresenceServiceTest) TestLoadForgetsTheOtherDomain() {
 	service.Load(PresenceWatchRequested{MemberIds: []string{"m-4"}})
 	Assert.Equals("offline", service.stateOf("m-2"))
 	Assert.Equals("error", service.LoadProblem)
+}
+
+func (test *NotificationPresenceServiceTest) TestOpeningTheMenuSendsActive() {
+	service := test.build("example.com")
+	service.MyState = "idle"
+	service.ToggleMenu()
+	Assert.Equals("active", service.MyState)
+	Assert.Equals("", service.Problem)
+}
+
+func (test *NotificationPresenceServiceTest) TestDomainChangedStartsActiveInTheNewDomain() {
+	service := test.watching()
+	service.DoNotDisturb("1h")
+	service.access.accounts.Add(Me{MemberId: "m-1", DomainId: "broken.example", DisplayName: "Ana Ruiz"})
+	service.DomainChanged(SessionDomainChanged{DomainId: "broken.example"})
+	Assert.Equals("active", service.MyState)
+	Assert.Equals("", service.DoNotDisturbUntil)
+	Assert.Equals("offline", service.stateOf("m-2"))
 }
 
 func (test *NotificationPresenceServiceTest) TestNameInitialsAndButtonLabel() {

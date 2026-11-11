@@ -48,6 +48,16 @@ func (service *NotificationService) Load(requested NotificationLoadRequested) {
 
 // @OnEvent
 // @InBackground
+func (service *NotificationService) DomainChanged(changed SessionDomainChanged) {
+	service.seen = nil
+	service.known = false
+	service.Tab = service.rows.AllTab()
+	service.Status = service.statusLoading()
+	service.Load(NotificationLoadRequested{})
+}
+
+// @OnEvent
+// @InBackground
 func (service *NotificationService) Shown(changed VisibilityChanged) {
 	service.loadWhenVisible(changed.Visible)
 }

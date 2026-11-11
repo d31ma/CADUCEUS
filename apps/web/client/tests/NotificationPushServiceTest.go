@@ -4,7 +4,7 @@ type NotificationPushServiceTest struct {
 }
 
 func (test *NotificationPushServiceTest) build(domainId string) *NotificationPushService {
-	return NotificationTestSetup{}.push(test.behaviors, NotificationTestSetup{}.access(domainId))
+	return NotificationTestSetup{}.push(test.behaviors, NotificationTestSetup{}.access(test.behaviors, domainId))
 }
 
 func (test *NotificationPushServiceTest) loaded(permission any) *NotificationPushService {
@@ -104,6 +104,22 @@ func (test *NotificationPushServiceTest) TestChooseSummarySavesTheDelay() {
 	Assert.Equals(240, service.SummaryMinutes)
 	Assert.IsTrue(service.Saved)
 	Assert.IsTrue(service.SummaryChoices[4].Selected)
+}
+
+func (test *NotificationPushServiceTest) TestChooseTheSameDelayAgainSendsNothing() {
+	service := test.build("broken.example")
+	service.SummaryMinutes = 60
+	service.ChooseSummary(60)
+	Assert.Equals("", service.SaveProblem)
+}
+
+func (test *NotificationPushServiceTest) TestDomainChangedLoadsTheSettingsAgain() {
+	service := test.loaded("granted")
+	service.ChooseSummary(240)
+	service.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
+	Assert.Equals(30, service.SummaryMinutes)
+	Assert.IsTrue(!service.Saved)
+	Assert.Equals("ready", service.SettingsStatus)
 }
 
 func (test *NotificationPushServiceTest) TestChooseSummaryKeepsTheOldDelayWhenSavingFails() {

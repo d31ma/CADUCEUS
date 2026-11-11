@@ -42,6 +42,16 @@ func (service *NotificationPresenceService) Announce(requested PresenceAnnounceR
 
 // @OnEvent
 // @InBackground
+func (service *NotificationPresenceService) DomainChanged(changed SessionDomainChanged) {
+	service.MyState = service.active()
+	service.DoNotDisturbUntil = ""
+	service.chosen = ""
+	service.forgetOtherDomain()
+	service.Announce(PresenceAnnounceRequested{})
+}
+
+// @OnEvent
+// @InBackground
 func (service *NotificationPresenceService) Shown(changed VisibilityChanged) {
 	service.refresh(service.automaticState(changed.Visible, nil))
 	service.reloadWhenVisible(changed.Visible)
@@ -71,8 +81,8 @@ func (service *NotificationPresenceService) Quiet() bool {
 
 func (service *NotificationPresenceService) ToggleMenu() {
 	service.MenuOpen = !service.MenuOpen
-	service.expireWhenPassed()
 	service.Problem = ""
+	service.refreshWhenOpened()
 	service.Choices = service.choicesNow()
 }
 
@@ -114,6 +124,13 @@ func (service *NotificationPresenceService) ButtonLabel() string {
 func (service *NotificationPresenceService) refresh(state string) {
 	service.expireWhenPassed()
 	service.Problem = service.sendUnlessQuiet(state)
+}
+
+func (service *NotificationPresenceService) refreshWhenOpened() {
+	if !service.MenuOpen {
+		return
+	}
+	service.refresh(service.active())
 }
 
 func (service *NotificationPresenceService) finish(problem string) {

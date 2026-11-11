@@ -4,7 +4,7 @@ type NotificationPresenceApiServiceTest struct {
 }
 
 func (test *NotificationPresenceApiServiceTest) build(domainId string) *NotificationPresenceApiService {
-	return NotificationTestSetup{}.presenceApi(test.behaviors, NotificationTestSetup{}.access(domainId))
+	return NotificationTestSetup{}.presenceApi(test.behaviors, NotificationTestSetup{}.access(test.behaviors, domainId))
 }
 
 func (test *NotificationPresenceApiServiceTest) TestAnnounce() {

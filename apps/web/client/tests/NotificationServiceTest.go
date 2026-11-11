@@ -4,7 +4,7 @@ type NotificationServiceTest struct {
 }
 
 func (test *NotificationServiceTest) build(domainId string) *NotificationService {
-	return NotificationTestSetup{}.list(test.behaviors, NotificationTestSetup{}.access(domainId))
+	return NotificationTestSetup{}.list(test.behaviors, NotificationTestSetup{}.access(test.behaviors, domainId))
 }
 
 func (test *NotificationServiceTest) loaded() *NotificationService {
@@ -43,7 +43,7 @@ func (test *NotificationServiceTest) TestLoadCountsUnreadForBadges() {
 }
 
 func (test *NotificationServiceTest) TestLoadWaitsWhileNobodyIsSignedIn() {
-	service := NotificationTestSetup{}.list(test.behaviors, NotificationTestSetup{}.signedOutAccess())
+	service := NotificationTestSetup{}.list(test.behaviors, NotificationTestSetup{}.signedOutAccess(test.behaviors))
 	service.Load(NotificationLoadRequested{})
 	Assert.Equals("waiting", service.Status)
 }
@@ -120,6 +120,16 @@ func (test *NotificationServiceTest) TestMarkAllReadMarksEveryUnreadRow() {
 	service.MarkAllRead()
 	Assert.Equals(0, service.UnreadCount)
 	Assert.Equals("", service.ActionProblem)
+}
+
+func (test *NotificationServiceTest) TestDomainChangedReloadsForTheNewDomain() {
+	service := test.loaded()
+	service.ChooseTab("email")
+	service.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
+	Assert.Equals("ready", service.Status)
+	Assert.Equals("all", service.Tab)
+	Assert.IsTrue(service.known)
+	Assert.Equals(4, len(service.seen))
 }
 
 func (test *NotificationServiceTest) TestShownReloadsWhenThePageIsVisible() {

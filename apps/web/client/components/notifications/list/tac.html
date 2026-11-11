@@ -1,64 +1,64 @@
-<section class="flex h-full min-h-0 min-w-0 flex-col bg-surface text-text safe-l safe-r @container/activity" aria-labelledby="activity-title">
-  <header class="flex min-h-13 flex-wrap items-center gap-2 border-b border-divider px-3 py-2 sm:px-4">
-    <h2 id="activity-title" class="flex min-w-0 flex-1 items-center gap-1 text-lg font-bold"><w-icon name="bell" class="ms-icon-sm"></w-icon><span>Activity</span></h2>
-    <w-btn variant="text" size="small" prepend-icon="check-double" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notification.markAllRead()">Mark all as read</w-btn>
+<section class="notify-page flex h-full min-h-0 min-w-0 flex-col @container/activity" aria-labelledby="activity-title">
+  <header class="notify-divider-below flex min-h-13 flex-wrap items-center gap-2 px-3 py-2 sm:px-4">
+    <h2 id="activity-title" class="notify-title flex min-w-0 flex-1 items-center gap-1"><w-icon name="bell" class="notify-icon-small"></w-icon><span>Activity</span></h2>
+    <w-btn variant="text" size="small" prepend-icon="check-double" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notification.markAllRead()">Mark all as read</w-btn>
   </header>
 
   <logic :if="notificationPush.panel == 'notAsked'">
-    <div class="mx-3 mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-mid p-3 sm:mx-4 sm:p-4" role="region" aria-labelledby="push-prompt-text">
-      <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="bell"></w-icon></span>
-      <p id="push-prompt-text" class="min-w-0 flex-[1_1_14rem] text-sm [overflow-wrap:anywhere]">Get a notification on this device when someone mentions you or sends you a message while Mesail is in the background.</p>
-      <w-btn variant="filled" prepend-icon="bell" class="max-sm:w-full pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notificationPush.turnOn()">Turn on notifications</w-btn>
+    <div class="notify-prompt mx-3 mt-3 flex flex-wrap items-center gap-3 p-3 sm:mx-4 sm:p-4" role="region" aria-labelledby="push-prompt-text">
+      <span class="notify-tile notify-tile-primary grid size-10 flex-none place-items-center"><w-icon name="bell"></w-icon></span>
+      <p id="push-prompt-text" class="notify-text min-w-0 flex-[1_1_14rem]">Get a notification on this device when someone mentions you or sends you a message while Mesail is in the background.</p>
+      <w-btn variant="flat" prepend-icon="bell" class="max-sm:w-full max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notificationPush.turnOn()">Turn on notifications</w-btn>
     </div>
   </logic>
   <logic :if="notificationPush.problem == 'notAllowed'">
-    <p class="mx-3 mt-2 rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container sm:mx-4" role="status">Mesail could not ask for permission. Try again, or allow notifications in your browser settings.</p>
+    <p class="notify-problem mx-3 mt-2 px-3 py-2 sm:mx-4" role="status">Mesail could not ask for permission. Try again, or allow notifications in your browser settings.</p>
   </logic>
 
-  <w-tabs :value="notification.tab" class="px-2 sm:px-4 [&_w-tab]:pointer-coarse:min-h-11 max-sm:[&_w-tab]:min-h-11" aria-label="Show activity">
+  <w-tabs :value="notification.tab" class="px-2 sm:px-4" aria-label="Show activity">
     <loop :for="tab of notification.tabs">
-      <w-tab :value="tab.name" :id="tab.id" on:click="notification.chooseTab(tab.name)">
+      <w-tab :value="tab.name" :id="tab.id" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notification.chooseTab(tab.name)">
         {tab.label}
         <logic :if="tab.hasUnread">
-          <w-badge :content="tab.unreadCount" inline class="ms-count" :label="tab.unreadLabel"></w-badge>
+          <w-badge :content="tab.unreadCount" inline class="ms-1" :label="tab.unreadLabel"></w-badge>
         </logic>
       </w-tab>
     </loop>
   </w-tabs>
 
-  <div class="min-h-0 flex-1 overflow-y-auto pb-8 safe-b" id="activity-panel" role="tabpanel" tabindex="0" :aria-labelledby="notification.tabId">
+  <div class="notify-safe-bottom min-h-0 flex-1 overflow-y-auto" id="activity-panel" role="tabpanel" tabindex="0" :aria-labelledby="notification.tabId">
     <div class="mx-auto w-full max-w-3xl">
       <switch :value="notification.status">
         <case :when="'ready'">
           <logic :if="notification.empty">
             <div class="grid place-items-center px-4 py-10">
               <w-empty-state class="block max-w-lg">
-                <w-icon slot="media" name="check-circle" class="[--ms-icon-size:2.5rem]"></w-icon>
+                <w-icon slot="media" name="check" class="notify-icon-large"></w-icon>
                 <h3 slot="title">You're all caught up</h3>
                 <span slot="text">Mentions, direct messages, thread replies and new email show up here.</span>
               </w-empty-state>
             </div>
           </logic>
           <loop :for="day of notification.days">
-            <h3 class="mx-3 mb-1 mt-4 text-xs font-semibold uppercase tracking-wide text-subtle sm:mx-5">{day.label}</h3>
-            <w-list class="ms-plain-list px-1 sm:px-3" :aria-label="day.label">
+            <h3 class="notify-day mx-3 mb-1 mt-4 sm:mx-5">{day.label}</h3>
+            <w-list class="px-1 sm:px-3" :aria-label="day.label">
               <loop :for="row of day.rows">
-                <div role="listitem" class="group flex items-start rounded-lg hover:bg-msg-hover focus-within:bg-msg-hover" :data-unread="shell.flag(row.unread)">
-                  <button type="button" class="flex min-h-11 min-w-0 flex-1 items-start gap-2 rounded-lg px-2 py-2 text-start focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus" on:click="notification.open(row)">
-                    <span class="grid h-9 w-2 flex-none place-items-center" aria-hidden="true"><span class="size-2 rounded-full group-data-[unread=true]:bg-accent-bg"></span></span>
-                    <span class="grid size-9 flex-none place-items-center rounded-lg bg-surface-high text-text" :data-kind="row.kind" aria-hidden="true"><w-icon :name="row.icon" class="ms-icon-sm"></w-icon></span>
+                <div role="listitem" class="notify-row flex items-start" :data-unread="shell.flag(row.unread)">
+                  <button type="button" class="notify-row-open flex min-h-11 min-w-0 flex-1 items-start gap-2 px-2 py-2" on:click="notification.open(row)">
+                    <span class="grid h-9 w-2 flex-none place-items-center" aria-hidden="true"><span class="notify-unread-dot size-2"></span></span>
+                    <span class="notify-tile grid size-9 flex-none place-items-center" :data-kind="row.kind" aria-hidden="true"><w-icon :name="row.icon" class="notify-icon-small"></w-icon></span>
                     <span class="grid min-w-0 flex-1 gap-0.5 py-1">
                       <span class="flex flex-wrap items-baseline gap-x-2">
-                        <span class="min-w-0 flex-1 text-subtle [overflow-wrap:anywhere] group-data-[unread=true]:font-semibold group-data-[unread=true]:text-text">
+                        <span class="notify-row-title min-w-0 flex-1">
                           <logic :if="row.unread"><span class="sr-only">Unread. </span></logic>
                           {row.title}
                         </span>
-                        <time class="text-xs text-subtle" :datetime="row.stamp">{row.time}</time>
+                        <time class="notify-meta" :datetime="row.stamp">{row.time}</time>
                       </span>
                     </span>
                   </button>
                   <logic :if="row.unread">
-                    <w-icon-btn icon="check" size="small" class="me-1 mt-2 flex-none pointer-coarse:size-11 max-sm:size-11" :aria-label="row.markLabel" on:click="notification.markRead(row.notificationId)"></w-icon-btn>
+                    <w-icon-btn icon="check" size="small" class="me-1 mt-2 flex-none max-sm:size-11 pointer-coarse:size-11" :aria-label="row.markLabel" on:click="notification.markRead(row.notificationId)"></w-icon-btn>
                   </logic>
                 </div>
               </loop>
@@ -66,30 +66,30 @@
           </loop>
           <logic :if="notification.hasMore">
             <div class="flex justify-center p-4">
-              <w-btn variant="outlined" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notification.loadMore()">Load more</w-btn>
+              <w-btn variant="outlined" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notification.loadMore()">Load more</w-btn>
             </div>
           </logic>
           <logic :if="notification.actionProblem == 'error'">
-            <p class="mx-3 mt-2 rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container sm:mx-5" role="status">That did not work. Check your connection and try again.</p>
+            <p class="notify-problem mx-3 mt-2 px-3 py-2 sm:mx-5" role="status">That did not work. Check your connection and try again.</p>
           </logic>
           <logic :if="notification.actionProblem == 'session'">
-            <p class="mx-3 mt-2 rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container sm:mx-5" role="status">Your session ended. Sign in again, then try again.</p>
+            <p class="notify-problem mx-3 mt-2 px-3 py-2 sm:mx-5" role="status">Your session ended. Sign in again, then try again.</p>
           </logic>
         </case>
         <case :when="'error'">
           <div class="grid place-items-center px-4 py-10">
             <w-empty-state class="block max-w-lg">
-              <w-icon slot="media" name="alert" class="[--ms-icon-size:2.5rem]"></w-icon>
+              <w-icon slot="media" name="alert" class="notify-icon-large"></w-icon>
               <h3 slot="title">Activity could not load</h3>
               <span slot="text" role="alert">Check your connection, then try again.</span>
-              <div slot="actions"><w-btn variant="outlined" prepend-icon="refresh" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notification.retry()">Retry</w-btn></div>
+              <div slot="actions"><w-btn variant="outlined" prepend-icon="refresh" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notification.retry()">Retry</w-btn></div>
             </w-empty-state>
           </div>
         </case>
         <case :when="'session'">
           <div class="grid place-items-center px-4 py-10">
             <w-empty-state class="block max-w-lg">
-              <w-icon slot="media" name="lock" class="[--ms-icon-size:2.5rem]"></w-icon>
+              <w-icon slot="media" name="lock" class="notify-icon-large"></w-icon>
               <h3 slot="title">Your session ended</h3>
               <span slot="text" role="alert">Sign in again to see your activity.</span>
             </w-empty-state>

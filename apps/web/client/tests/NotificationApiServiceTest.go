@@ -4,7 +4,7 @@ type NotificationApiServiceTest struct {
 }
 
 func (test *NotificationApiServiceTest) build(domainId string) *NotificationApiService {
-	return NotificationTestSetup{}.api(test.behaviors, NotificationTestSetup{}.access(domainId))
+	return NotificationTestSetup{}.api(test.behaviors, NotificationTestSetup{}.access(test.behaviors, domainId))
 }
 
 func (test *NotificationApiServiceTest) TestPageSendsTheBearerToken() {
@@ -35,7 +35,7 @@ func (test *NotificationApiServiceTest) TestSettingsRoundTrip() {
 }
 
 func (test *NotificationApiServiceTest) TestSettingsWaitWhileNobodyIsSignedIn() {
-	api := NotificationTestSetup{}.api(test.behaviors, NotificationTestSetup{}.signedOutAccess())
+	api := NotificationTestSetup{}.api(test.behaviors, NotificationTestSetup{}.signedOutAccess(test.behaviors))
 	_, problem := api.Settings()
 	_, saveProblem := api.SaveSettings(NotificationSettings{})
 	Assert.Equals("waiting", problem)

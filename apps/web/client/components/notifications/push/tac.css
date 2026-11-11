@@ -1,0 +1,204 @@
+.notify-push {
+  color: var(--w-text);
+}
+
+.notify-card {
+  border: 1px solid var(--w-border);
+  border-radius: var(--w-radius-lg);
+  background: var(--w-surface);
+}
+
+.notify-divider-below {
+  border-block-end: 1px solid var(--w-divider);
+}
+
+.notify-heading {
+  margin: 0;
+  font-size: var(--ms-text-heading);
+  font-weight: var(--w-font-weight-semibold);
+  line-height: 1.3;
+}
+
+.notify-help {
+  margin: 0;
+  font-size: var(--ms-text-meta);
+  color: var(--w-text-subtle);
+  overflow-wrap: anywhere;
+}
+
+.notify-strong {
+  margin: 0;
+  font-weight: var(--w-font-weight-semibold);
+}
+
+.notify-steps {
+  margin: 0;
+  font-size: var(--w-font-sm);
+}
+
+.notify-permission {
+  border-radius: var(--w-radius-lg);
+  background: var(--w-surface-container-low);
+}
+
+.notify-tile {
+  border-radius: var(--w-radius-md);
+  background: var(--w-surface-container-high);
+  color: var(--w-text);
+}
+
+.notify-tile-primary {
+  background: var(--w-primary-container);
+  color: var(--w-on-primary-container);
+}
+
+.notify-tile-success {
+  background: var(--w-success-container);
+  color: var(--w-on-success-container);
+}
+
+.notify-tile-warning {
+  background: var(--w-warning-container);
+  color: var(--w-on-warning-container);
+}
+
+.notify-problem {
+  margin: 0;
+  border-radius: var(--w-radius-md);
+  background: var(--w-error-container);
+  color: var(--w-on-error-container);
+  font-size: var(--w-font-sm);
+}
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .\@container\/push {
+    container-type: inline-size;
+    container-name: push;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  .mt-0\.5 {
+    margin-top: calc(var(--spacing, 0.25rem) * 0.5);
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .size-10 {
+    width: calc(var(--spacing, 0.25rem) * 10);
+    height: calc(var(--spacing, 0.25rem) * 10);
+  }
+  .min-h-6 {
+    min-height: calc(var(--spacing, 0.25rem) * 6);
+  }
+  .min-w-0 {
+    min-width: 0px;
+  }
+  .flex-1 {
+    flex: 1;
+  }
+  .flex-none {
+    flex: none;
+  }
+  .list-decimal {
+    list-style-type: decimal;
+  }
+  .grid-cols-\[repeat\(auto-fill\,minmax\(9rem\,1fr\)\)\] {
+    grid-template-columns: repeat(auto-fill,minmax(9rem,1fr));
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .place-items-center {
+    place-items: center;
+  }
+  .items-start {
+    align-items: flex-start;
+  }
+  .justify-items-start {
+    justify-items: start;
+  }
+  .gap-1 {
+    gap: var(--spacing, 0.25rem);
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .gap-3 {
+    gap: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .gap-4 {
+    gap: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .p-4 {
+    padding: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .px-3 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .py-4 {
+    padding-block: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .ps-5 {
+    padding-inline-start: calc(var(--spacing, 0.25rem) * 5);
+  }
+  @media (width < 600px) {
+    .max-sm\:min-h-11 {
+      min-height: calc(var(--spacing, 0.25rem) * 11);
+    }
+    .max-sm\:w-full {
+      width: 100%;
+    }
+  }
+  @container push (width >= 36rem) {
+    .\@xl\/push\:px-5 {
+      padding-inline: calc(var(--spacing, 0.25rem) * 5);
+    }
+  }
+  @media (pointer: coarse) {
+    .pointer-coarse\:min-h-11 {
+      min-height: calc(var(--spacing, 0.25rem) * 11);
+    }
+  }
+  .\[\&_w-radio\]\:block w-radio {
+    display: block;
+  }
+  .\[\&_w-radio\]\:py-1\.5 w-radio {
+    padding-block: calc(var(--spacing, 0.25rem) * 1.5);
+  }
+  @media (width < 600px) {
+    .max-sm\:\[\&_w-radio\]\:min-h-11 w-radio {
+      min-height: calc(var(--spacing, 0.25rem) * 11);
+    }
+  }
+  @media (pointer: coarse) {
+    .pointer-coarse\:\[\&_w-radio\]\:min-h-11 w-radio {
+      min-height: calc(var(--spacing, 0.25rem) * 11);
+    }
+  }
+  @media (width < 600px) {
+    .max-sm\:\[\&\>\*\]\:w-full > * {
+      width: 100%;
+    }
+  }
+}
+/* @tachyon-generated-tailwind:end */

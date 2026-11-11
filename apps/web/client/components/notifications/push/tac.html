@@ -1,68 +1,68 @@
-<div class="grid min-w-0 gap-4 text-text @container/push">
-  <section class="rounded-lg border border-border bg-surface" aria-labelledby="push-title">
-    <div class="border-b border-divider px-4 py-4 @xl/push:px-5">
-      <h3 id="push-title" class="text-lg font-semibold">Notifications on this device</h3>
-      <p class="mt-0.5 text-sm text-subtle">Mesail notifies you when no Mesail tab is in front. Nothing is shown while you are set to Do not disturb.</p>
+<div class="notify-push grid min-w-0 gap-4 @container/push">
+  <section class="notify-card" aria-labelledby="push-title">
+    <div class="notify-divider-below px-4 py-4 @xl/push:px-5">
+      <h3 id="push-title" class="notify-heading">Notifications on this device</h3>
+      <p class="notify-help mt-0.5">Mesail notifies you when no Mesail tab is in front. Nothing is shown while you are set to Do not disturb.</p>
     </div>
     <div class="grid gap-3 px-4 py-4 @xl/push:px-5">
       <switch :value="notificationPush.panel">
         <case :when="'notAsked'">
-          <div class="flex items-start gap-3 rounded-lg bg-surface-mid p-4">
-            <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="bell"></w-icon></span>
+          <div class="notify-permission flex items-start gap-3 p-4">
+            <span class="notify-tile notify-tile-primary grid size-10 flex-none place-items-center"><w-icon name="bell"></w-icon></span>
             <div class="grid min-w-0 flex-1 justify-items-start gap-2">
-              <p class="font-semibold">Notifications are off on this device</p>
-              <p class="text-xs text-subtle">Your browser will ask if Mesail may show notifications. Choose Allow.</p>
-              <w-btn variant="filled" prepend-icon="bell" class="max-sm:w-full pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notificationPush.turnOn()">Turn on notifications</w-btn>
+              <p class="notify-strong">Notifications are off on this device</p>
+              <p class="notify-help">Your browser will ask if Mesail may show notifications. Choose Allow.</p>
+              <w-btn variant="flat" prepend-icon="bell" class="max-sm:w-full max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notificationPush.turnOn()">Turn on notifications</w-btn>
             </div>
           </div>
         </case>
         <case :when="'on'">
-          <div class="flex items-start gap-3 rounded-lg bg-surface-mid p-4">
-            <span class="grid size-10 flex-none place-items-center rounded-md bg-success-container text-on-success-container"><w-icon name="check"></w-icon></span>
+          <div class="notify-permission flex items-start gap-3 p-4">
+            <span class="notify-tile notify-tile-success grid size-10 flex-none place-items-center"><w-icon name="check"></w-icon></span>
             <div class="grid min-w-0 flex-1 justify-items-start gap-2">
-              <p class="font-semibold">Notifications are on for this browser</p>
-              <p class="text-xs text-subtle">To stop them on this device, turn them off here. Your other devices keep their own setting.</p>
+              <p class="notify-strong">Notifications are on for this browser</p>
+              <p class="notify-help">To stop them on this device, turn them off here. Your other devices keep their own setting.</p>
               <div class="flex flex-wrap gap-2 max-sm:w-full max-sm:[&>*]:w-full">
-                <w-btn variant="outlined" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notificationPush.sendTest()">Send a test notification</w-btn>
-                <w-btn variant="text" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notificationPush.turnOff()">Turn off on this device</w-btn>
+                <w-btn variant="outlined" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notificationPush.sendTest()">Send a test notification</w-btn>
+                <w-btn variant="text" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notificationPush.turnOff()">Turn off on this device</w-btn>
               </div>
               <logic :if="notificationPush.testSent">
-                <p class="text-xs text-subtle" role="status">Test notification sent.</p>
+                <p class="notify-help" role="status">Test notification sent.</p>
               </logic>
             </div>
           </div>
         </case>
         <case :when="'off'">
-          <div class="flex items-start gap-3 rounded-lg bg-surface-mid p-4">
-            <span class="grid size-10 flex-none place-items-center rounded-md bg-surface-high text-text"><w-icon name="bell-off"></w-icon></span>
+          <div class="notify-permission flex items-start gap-3 p-4">
+            <span class="notify-tile grid size-10 flex-none place-items-center"><w-icon name="bell-off"></w-icon></span>
             <div class="grid min-w-0 flex-1 justify-items-start gap-2">
-              <p class="font-semibold">Notifications are off on this device</p>
-              <p class="text-xs text-subtle">You turned them off here. Your browser still allows them.</p>
-              <w-btn variant="filled" prepend-icon="bell" class="max-sm:w-full pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notificationPush.turnOn()">Turn on notifications</w-btn>
+              <p class="notify-strong">Notifications are off on this device</p>
+              <p class="notify-help">You turned them off here. Your browser still allows them.</p>
+              <w-btn variant="flat" prepend-icon="bell" class="max-sm:w-full max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notificationPush.turnOn()">Turn on notifications</w-btn>
             </div>
           </div>
         </case>
         <case :when="'blocked'">
-          <div class="flex items-start gap-3 rounded-lg bg-surface-mid p-4">
-            <span class="grid size-10 flex-none place-items-center rounded-md bg-warning-container text-on-warning-container"><w-icon name="bell-off"></w-icon></span>
+          <div class="notify-permission flex items-start gap-3 p-4">
+            <span class="notify-tile notify-tile-warning grid size-10 flex-none place-items-center"><w-icon name="bell-off"></w-icon></span>
             <div class="grid min-w-0 flex-1 justify-items-start gap-2">
-              <p class="font-semibold">Your browser blocks notifications from Mesail</p>
-              <p class="text-xs text-subtle">Mesail cannot ask again. To allow them:</p>
-              <ol class="grid list-decimal gap-1 ps-5 text-sm">
+              <p class="notify-strong">Your browser blocks notifications from Mesail</p>
+              <p class="notify-help">Mesail cannot ask again. To allow them:</p>
+              <ol class="notify-steps grid list-decimal gap-1 ps-5">
                 <li>Select the icon to the left of the web address (a lock or a settings icon).</li>
                 <li>Find <strong>Notifications</strong> and choose <strong>Allow</strong>.</li>
                 <li>Come back here and select <strong>Check again</strong>.</li>
               </ol>
-              <w-btn variant="outlined" prepend-icon="refresh" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notificationPush.checkAgain()">Check again</w-btn>
+              <w-btn variant="outlined" prepend-icon="refresh" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notificationPush.checkAgain()">Check again</w-btn>
             </div>
           </div>
         </case>
         <case :when="'unsupported'">
-          <div class="flex items-start gap-3 rounded-lg bg-surface-mid p-4">
-            <span class="grid size-10 flex-none place-items-center rounded-md bg-surface-high text-text"><w-icon name="info"></w-icon></span>
+          <div class="notify-permission flex items-start gap-3 p-4">
+            <span class="notify-tile grid size-10 flex-none place-items-center"><w-icon name="info"></w-icon></span>
             <div class="grid min-w-0 flex-1 justify-items-start gap-2">
-              <p class="font-semibold">This browser cannot show notifications</p>
-              <p class="text-xs text-subtle">On iPhone and iPad, first add Mesail to your Home Screen: select Share, then Add to Home Screen. Then open Mesail from there.</p>
+              <p class="notify-strong">This browser cannot show notifications</p>
+              <p class="notify-help">On iPhone and iPad, first add Mesail to your Home Screen: select Share, then Add to Home Screen. Then open Mesail from there.</p>
             </div>
           </div>
         </case>
@@ -72,41 +72,41 @@
         </case>
       </switch>
       <logic :if="notificationPush.problem == 'notAllowed'">
-        <p class="rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container" role="status">Mesail could not ask for permission. Try again, or allow notifications in your browser settings.</p>
+        <p class="notify-problem px-3 py-2" role="status">Mesail could not ask for permission. Try again, or allow notifications in your browser settings.</p>
       </logic>
       <logic :if="notificationPush.problem == 'notShown'">
-        <p class="rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container" role="status">A notification could not be shown. Check the notification settings of your browser and your device.</p>
+        <p class="notify-problem px-3 py-2" role="status">A notification could not be shown. Check the notification settings of your browser and your device.</p>
       </logic>
     </div>
   </section>
 
-  <section class="rounded-lg border border-border bg-surface" aria-labelledby="summary-title">
-    <div class="border-b border-divider px-4 py-4 @xl/push:px-5">
-      <h3 id="summary-title" class="text-lg font-semibold">Email summary</h3>
-      <p class="mt-0.5 text-sm text-subtle">If you miss something, get one email instead of many. It lists what you did not read, and it is not sent if you read everything first.</p>
+  <section class="notify-card" aria-labelledby="summary-title">
+    <div class="notify-divider-below px-4 py-4 @xl/push:px-5">
+      <h3 id="summary-title" class="notify-heading">Email summary</h3>
+      <p class="notify-help mt-0.5">If you miss something, get one email instead of many. It lists what you did not read, and it is not sent if you read everything first.</p>
     </div>
     <div class="grid gap-3 px-4 py-4 @xl/push:px-5">
       <switch :value="notificationPush.settingsStatus">
         <case :when="'ready'">
-          <w-radio-group name="summary-delay" label="Email me when a notification is unread for" class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2 [&_w-radio]:block [&_w-radio]:py-1.5 pointer-coarse:[&_w-radio]:min-h-11 max-sm:[&_w-radio]:min-h-11">
+          <w-radio-group name="summary-delay" label="Email me when a notification is unread for" class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2 [&_w-radio]:block [&_w-radio]:py-1.5 max-sm:[&_w-radio]:min-h-11 pointer-coarse:[&_w-radio]:min-h-11">
             <loop :for="choice of notificationPush.summaryChoices">
               <w-radio :value="choice.id" :label="choice.label" :checked="choice.selected" on:change="notificationPush.chooseSummary(choice.minutes)"></w-radio>
             </loop>
           </w-radio-group>
-          <p class="min-h-6 text-xs text-subtle" role="status">
+          <p class="notify-help min-h-6" role="status">
             <logic :if="notificationPush.saved">Saved.</logic>
             <logic :if="notificationPush.saveProblem == 'error'">Not saved. Check your connection and choose again.</logic>
             <logic :if="notificationPush.saveProblem == 'session'">Not saved. Your session ended. Sign in again.</logic>
           </p>
         </case>
         <case :when="'error'">
-          <div class="grid justify-items-start gap-2 rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container">
+          <div class="notify-problem grid justify-items-start gap-2 px-3 py-2">
             <p role="alert">Your email summary setting could not load. Check your connection, then try again.</p>
-            <w-btn variant="outlined" prepend-icon="refresh" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="notificationPush.retrySettings()">Retry</w-btn>
+            <w-btn variant="outlined" prepend-icon="refresh" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notificationPush.retrySettings()">Retry</w-btn>
           </div>
         </case>
         <case :when="'session'">
-          <p class="rounded-md bg-error-container px-3 py-2 text-sm text-on-error-container" role="alert">Your session ended. Sign in again to change this setting.</p>
+          <p class="notify-problem px-3 py-2" role="alert">Your session ended. Sign in again to change this setting.</p>
         </case>
         <case default>
           <p class="sr-only" role="status">Loading your email summary setting</p>

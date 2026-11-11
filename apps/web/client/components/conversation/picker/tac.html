@@ -1,6 +1,6 @@
 <logic :if="conversation.pickerForId != ''">
-  <w-dialog open max-width="24rem" on:close="conversation.closePicker()">
-    <h2 slot="title" class="dialog-title">Add a reaction</h2>
+  <w-dialog open heading-level="2" max-width="24rem" aria-describedby="" on:close="conversation.closePicker()">
+    <span slot="title" class="dialog-title">Add a reaction</span>
     <div class="picker-body flex flex-col gap-4">
       <ul class="picker-grid grid grid-cols-4 gap-2 sm:grid-cols-6" aria-label="Reactions">
         <loop :for="choice of conversation.reactionChoices">

@@ -77,6 +77,13 @@
   color: var(--w-text-subtle);
 }
 
+.notify-empty-title {
+  margin: 0;
+  color: var(--w-text);
+  font-size: var(--w-font-lg);
+  font-weight: var(--w-font-weight-semibold);
+}
+
 .notify-row {
   border-radius: var(--w-radius-lg);
 }

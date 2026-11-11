@@ -1,6 +1,6 @@
-<w-dialog class="composer-changed" title="Recipients changed" close-label="Close" max-width="32rem" :open="composer.changedOpen" on:close="composer.closeChanged()">
+<w-dialog class="composer-changed" heading="Recipients changed" heading-level="2" aria-describedby="composer-changed-lead" close-label="Close" max-width="32rem" :open="composer.changedOpen" on:close="composer.closeChanged()">
   <div class="grid gap-3">
-    <p class="composer-changed-lead m-0"><strong>Nothing was sent.</strong> Some recipients changed after you wrote this message. Check how each one gets it, then send again.</p>
+    <p class="composer-changed-lead m-0" id="composer-changed-lead"><strong>Nothing was sent.</strong> Some recipients changed after you wrote this message. Check how each one gets it, then send again.</p>
     <ul class="m-0 grid gap-2 p-0" aria-label="Changed recipients">
       <loop :for="change of composer.changes">
         <li class="composer-change grid gap-1 py-2">

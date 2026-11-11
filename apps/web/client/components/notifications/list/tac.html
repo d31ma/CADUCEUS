@@ -16,7 +16,7 @@
 
   <w-tabs :value="notification.tab" class="notify-tabs block min-w-0 max-w-full" aria-label="Show activity">
     <loop :for="tab of notification.tabs">
-      <w-tab :value="tab.name" :id="tab.id" on:click="notification.chooseTab(tab.name)">
+      <w-tab :value="tab.name" :id="tab.id" aria-controls="activity-panel" on:click="notification.chooseTab(tab.name)">
         {tab.label}
         <logic :if="tab.hasUnread">
           <w-badge :content="tab.unreadCount" inline class="ms-1" :label="tab.unreadLabel"></w-badge>
@@ -33,13 +33,13 @@
             <div class="grid place-items-center px-4 py-10">
               <w-empty-state class="block max-w-lg">
                 <w-icon slot="media" name="check" class="notify-icon-large"></w-icon>
-                <h3 slot="title">You're all caught up</h3>
+                <h2 slot="title" class="notify-empty-title">You're all caught up</h2>
                 <span slot="text">Mentions, direct messages, thread replies and new email show up here.</span>
               </w-empty-state>
             </div>
           </logic>
           <loop :for="day of notification.days">
-            <h3 class="notify-day mx-3 mb-1 mt-4 sm:mx-5">{day.label}</h3>
+            <h2 class="notify-day mx-3 mb-1 mt-4 sm:mx-5">{day.label}</h2>
             <w-list class="px-1 sm:px-3" :aria-label="day.label">
               <loop :for="row of day.rows">
                 <div role="listitem" class="notify-row flex items-start" :data-unread="shell.flag(row.unread)">
@@ -79,7 +79,7 @@
           <div class="grid place-items-center px-4 py-10">
             <w-empty-state class="block max-w-lg">
               <w-icon slot="media" name="alert" class="notify-icon-large"></w-icon>
-              <h3 slot="title">Activity could not load</h3>
+              <h2 slot="title" class="notify-empty-title">Activity could not load</h2>
               <span slot="text" role="alert">Check your connection, then try again.</span>
               <div slot="actions"><w-btn variant="outlined" prepend-icon="refresh" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notification.reload()">Retry</w-btn></div>
             </w-empty-state>
@@ -89,7 +89,7 @@
           <div class="grid place-items-center px-4 py-10">
             <w-empty-state class="block max-w-lg">
               <w-icon slot="media" name="lock" class="notify-icon-large"></w-icon>
-              <h3 slot="title">Your session ended</h3>
+              <h2 slot="title" class="notify-empty-title">Your session ended</h2>
               <span slot="text" role="alert">Sign in again to see your activity.</span>
             </w-empty-state>
           </div>

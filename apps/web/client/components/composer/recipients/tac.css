@@ -1,3 +1,4 @@
+.composer-chip-main,
 .composer-chip-remove,
 .composer-row-toggle {
   border: 0;
@@ -87,16 +88,7 @@
 }
 
 .composer-chip-menu {
-  display: inline-flex;
-  min-width: 0;
-  max-width: 100%;
-  flex: 0 1 auto;
-}
-
-.composer-chip-menu > .w-menu {
-  display: inline-flex;
-  min-width: 0;
-  max-width: 100%;
+  position: absolute;
 }
 
 .composer-chip-how {
@@ -107,23 +99,24 @@
   flex-shrink: 0;
 }
 
-.composer-chip .w-menu-activator {
+.composer-chip-main {
   display: inline-flex;
   align-items: center;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
+  color: inherit;
   min-height: 1.75rem;
   padding: 0 var(--w-space-1);
   border-radius: var(--ms-radius-chip);
   cursor: pointer;
 }
 
-.composer-chip .w-menu-activator:hover {
+.composer-chip-main:hover {
   background: var(--w-hover);
 }
 
-.composer-chip .w-menu-activator:focus-visible,
+.composer-chip-main:focus-visible,
 .composer-chip-remove:focus-visible {
   outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
   outline-offset: var(--w-focus-ring-offset);
@@ -335,7 +328,7 @@
     min-height: var(--ms-touch-min);
   }
 
-  .composer-chip .w-menu-activator,
+  .composer-chip-main,
   .composer-chip-remove,
   .composer-row-toggle,
   .composer-row-input,

@@ -1,13 +1,13 @@
 <nav class="sidebar-nav flex flex-col gap-2 pb-[env(safe-area-inset-bottom)]" aria-label="Conversations" :data-refreshes="sidebar.refreshes">
   <div class="live-notice" role="status" aria-live="polite" :data-realtime="realtime.state">
     <logic :if="sidebar.state == 'ready' && realtime.state == 'connecting'">
-      <w-banner class="notice-banner" density="compact">
+      <w-banner class="notice-banner" density="compact" label="Live updates">
         <w-icon slot="prepend" name="refresh" size="small" aria-hidden="true"></w-icon>
         <span class="notice-text">Connecting to live updates…</span>
       </w-banner>
     </logic>
     <logic :if="sidebar.state == 'ready' && realtime.state == 'offline'">
-      <w-banner class="notice-banner" density="compact">
+      <w-banner class="notice-banner" density="compact" label="Live updates">
         <w-icon slot="prepend" name="wifi-off" size="small" aria-hidden="true"></w-icon>
         <span class="notice-text">Live updates are off. New messages appear when you reload.</span>
       </w-banner>

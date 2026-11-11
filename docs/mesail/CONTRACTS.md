@@ -253,6 +253,7 @@ Rules (SPEC AC-CP):
   conversation.
 
 `Message{messageId, conversationId, threadRootId?, author: Author, body,
+bodyFormat: markdown|text|email, blocks[]: Block, truncated,
 attachments[]: AttachmentRef, email?: EmailSummary, reactions:
 map[string]int, myReactions[], replyCount, lastReplyAt?, editedAt?,
 deletedAt?, createdAt, deliveries[]: DeliveryStatus}`.
@@ -308,6 +309,44 @@ and closes with code 4401 when it is no longer valid (SPEC AC-ID-4).
 
 A search reads only the caller's domain, and only conversations the caller
 can read now.
+
+## Rich text: one block format for chat and email
+
+The client never receives HTML to render. Every message body reaches the
+client as typed blocks, made on the server by `kit/richtext` (slice M1
+owns it; M3 uses it):
+
+- `Block{kind: paragraph|heading|quote|listItem|code|divider|image|row,
+  level, ordered, spans[]: Span, image?: ImageRef, cells[]: string}`.
+  `level` is the heading level (1 to 6) or the list or quote depth.
+  `row` is one table row as plain cell texts.
+- `Span{text, bold, italic, code, strike, href?}`. `href` is kept only for
+  `https`, `http` and `mailto`; any other link becomes plain text.
+- `ImageRef{alt, attachmentId?, remoteUrl?}`. An inline image of the
+  message itself is an attachment; a remote image keeps `remoteUrl`, and
+  the client shows a placeholder until the user allows images for that
+  sender (SPEC AC-IN-5).
+- `bodyFormat` says where the blocks came from: `markdown` (a chat
+  message; `body` is its Markdown source), `text` (a plain-text email;
+  `body` is the text), or `email` (an HTML email; `body` is its plain-text
+  part, or text made from the HTML).
+- Limits: at most 2,000 blocks and 200,000 characters of text per message.
+  Longer bodies are cut, `truncated` is true, and the client offers the
+  original as a download.
+- Conversion rules for HTML email: parse with a real HTML parser; keep only
+  the allowlisted elements; drop `script`, `style`, `form`, `iframe`,
+  `object`, `embed`, `svg`, `math`, comments, every `on*` attribute and
+  every `style` attribute; keep text in reading order; never pass markup
+  through. A fuzz test in `kit/richtext` must show that no input produces a
+  block with markup or a link outside the allowed schemes.
+- `mail-in` converts each received email once and keeps the result. It
+  answers `GET /api/v1/mail-in/messages/{inboundId}/content`
+  (`Allow(Service)`, a token for the recipient's domain) with
+  `InboundContent{text, bodyFormat, blocks[], truncated, attachments[]:
+  InboundAttachment{fileName, mediaType, size, blobKey, contentId?}}`.
+  `messaging` reads it when it handles `email.received`, and stores the
+  blocks on the Message. `messaging` makes the blocks for chat messages
+  from their Markdown with the same package.
 
 ## mail-in (SMTP, not HTTP)
 

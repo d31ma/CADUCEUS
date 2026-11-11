@@ -213,7 +213,11 @@ C1, not before each slice merge.
 
 ### M1. Inbound mail
 - **Owns:** `apps/mail-in/**` (except kit copies), new `edge/smtp/**` (its
-  own Go module), new `kit/mime/**` and `kit/mailauth/**` and their copies.
+  own Go module), new `kit/mime/**`, `kit/mailauth/**` and `kit/richtext/**`
+  and their copies. `kit/richtext` turns HTML email and chat Markdown into
+  the typed blocks of CONTRACTS.md "Rich text" (with a fuzz test); M3 uses
+  it and asks M1 for changes; the HTML parser is vendored
+  (`golang.org/x/net/html`).
 - **Builds:** the SMTP edge (RCPT TO check through `directory`, STARTTLS,
   size limits, `250` only after `mail-in` stored the raw message), MIME
   parsing with fuzz tests, SPF/DKIM/DMARC checks (AC-IN-1, 2, 4), the
@@ -407,7 +411,7 @@ C1, not before each slice merge.
 | Path | Owner |
 | --- | --- |
 | `docs/**` (except `docs/mesail/ux/**`), `tests/blackbox/**`, `tools/crap/**`, `scripts/kit-sync.sh`, `CLAUDE.md`, `AGENTS.md`, `README.md`, `CHANGELOG.md`, `.gitignore` | architecture (this plan); slices append to `CHANGELOG.md` only under their own heading, and update CONTRACTS.md per rule 3 |
-| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package (I1 `oidc`, I2 `events` `outbox`, D1 `recipients`, A1 `blobs`, M1 `mime` `mailauth`, M2 `compose` `dkim` `smtpclient`, S1 `textindex`, N1 `webpush`); `ids` and `collections` stay with architecture |
+| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package (I1 `oidc`, I2 `events` `outbox`, D1 `recipients`, A1 `blobs`, M1 `mime` `mailauth`, M1 also `richtext`, M2 `compose` `dkim` `smtpclient`, S1 `textindex`, N1 `webpush`); `ids` and `collections` stay with architecture |
 | `apps/<service>/**` other files | the service's slice |
 | `apps/web/client/**` | split between F1-F4 by the patterns above |
 | `apps/web-admin/**` | F5 |

@@ -253,9 +253,11 @@ stable; tests name them.
 - **AC-MS-3** The author can edit a message (the message shows "edited")
   and delete it (the body is removed, a "deleted" placeholder stays). Email
   deliveries already sent are not recalled; the UI says so before delete.
-- **AC-MS-4** Message bodies are Markdown (CommonMark subset: emphasis,
-  links, code, lists, quotes). The server stores the source and never
-  trusts client-rendered HTML. Links get `rel="noopener noreferrer"`.
+- **AC-MS-4** Chat message bodies are Markdown (CommonMark subset:
+  emphasis, links, code, lists, quotes). The server stores the source and
+  sends the client typed blocks made from it (CONTRACTS.md "Rich text");
+  the client never renders HTML from a message. Links are only `https`,
+  `http` and `mailto`, and open with `rel="noopener noreferrer"`.
 - **AC-MS-5** Attachments up to the domain limit (default 25 MiB per
   file, 50 MiB per message) can be added to any message. They are stored
   once and shared by chat and email deliveries.
@@ -321,8 +323,13 @@ stable; tests name them.
 - **AC-IN-4** SPF, DKIM and DMARC results are recorded and shown on the
   message. A DMARC `reject` policy failure is refused at SMTP time.
   Messages that fail other checks are marked as suspicious, not dropped.
-- **AC-IN-5** HTML email is shown sanitized, with remote images blocked
-  until the user allows them for that sender.
+- **AC-IN-5** HTML email is converted on the server, through a strict
+  allowlist, into the same typed blocks as chat (paragraphs, headings,
+  lists, quotes, code, tables as plain rows, links, images). Scripts,
+  styles, forms, frames and event attributes are dropped. Remote images are
+  shown as a placeholder until the user allows images for that sender. The
+  plain-text part is kept, and "View original" downloads the raw message as
+  a file; it is never rendered.
 - **AC-IN-6** An email sent to two members of the same domain is stored
   once and appears in one shared conversation for both. An email sent to
   members of two different domains is stored once per domain, with one

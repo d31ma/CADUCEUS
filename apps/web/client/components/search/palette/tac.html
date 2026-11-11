@@ -3,6 +3,7 @@
   <div class="search-sheet relative flex h-full w-full flex-col overflow-hidden pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] sm:h-auto sm:max-h-[calc(88dvh-2rem)] sm:w-[min(40rem,100%)] sm:p-0" id="search-palette" role="dialog" aria-modal="true" aria-labelledby="palette-title" aria-describedby="palette-scope">
     <h2 class="sr-only" id="palette-title">Search {sessionAccount.currentDomain}</h2>
     <div class="search-divided flex min-h-13 items-center gap-2 py-2 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))]">
+      <w-icon-btn icon="arrow-left" class="flex-none sm:hidden" aria-label="Close search" on:click="search.closePalette()"></w-icon-btn>
       <form class="flex min-w-0 flex-1 items-center gap-2" method="dialog" role="search" aria-labelledby="palette-title" on:submit="search.searchPaletteFor($event.target.elements.query.value)">
         <w-text-field class="min-w-0 flex-1" type="search" name="query" single-line hide-details autocomplete="off" autofocus :label="'Search messages in ' + sessionAccount.currentDomain" placeholder="Search messages" :value="search.paletteQuery"><w-icon slot="prepend-inner" name="search" size="small"></w-icon></w-text-field>
         <logic :if="search.paletteQuery != ''">
@@ -10,7 +11,7 @@
         </logic>
         <w-btn variant="flat" class="flex-none">Search</w-btn>
       </form>
-      <w-btn variant="text" class="flex-none" on:click="search.closePalette()">Close</w-btn>
+      <w-btn variant="text" class="flex-none max-sm:hidden" on:click="search.closePalette()">Close</w-btn>
     </div>
     <p class="search-scope search-divided flex items-center gap-2 px-4 py-2" id="palette-scope"><w-icon name="shield" size="x-small"></w-icon><span class="min-w-0">Searching {sessionAccount.currentDomain}. Only messages you can see now are searched.</span></p>
     <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-2 sm:max-h-[28rem]">

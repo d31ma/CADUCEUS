@@ -319,6 +319,9 @@ mark {
     text-align: start;
   }
   @media (width < 600px) {
+    .max-sm\:hidden {
+      display: none;
+    }
     .max-sm\:size-11 {
       width: calc(var(--spacing, 0.25rem) * 11);
       height: calc(var(--spacing, 0.25rem) * 11);
@@ -328,6 +331,9 @@ mark {
     }
   }
   @media (width >= 600px) {
+    .sm\:hidden {
+      display: none;
+    }
     .sm\:h-auto {
       height: auto;
     }

@@ -826,9 +826,9 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
   conversation list, cursors, queue and drafts, load and unload of
   partitions, `StoreWriteFailed` handling; attachments through `Blobs`
   (T2) with AC-OF-2's full window; every table and the blob store sealed
-  (sealed tables, TACHYON wave 3), with the plain fallback set and the
-  warning of SPEC AC-OF-18 where sealing cannot work (or T6b's
-  "whenAvailable" mode if TACHYON ships it); `StorageSpace.persist()` and
+  with `"sealed": "whenAvailable"` (TACHYON T6b, in wave 3 with sealed
+  tables), the warning of SPEC AC-OF-18 on the fallback event, and the
+  plain-to-sealed refill when a device can seal later; `StorageSpace.persist()` and
   `estimate()` (T9), the 30-day lock, storing the kept `sessionKey`, and
   wiping on sign-out, another person, `access_revoked` and a lost domain
   (`StorageSeal.forget()` first). Behind the release gate below.

@@ -274,15 +274,20 @@ The owner approved TACHYON's plan for T1 to T12 (the TACHYON section's
   field is no longer Mesail's: the storage layer keeps it.
 - **Where sealing cannot work** (the owner's answer to SPEC Q15,
   2026-11-11: "Unencrypted copy + warning"): Mesail keeps an unencrypted
-  copy there and warns (SPEC AC-OF-18). Because a sealed table refuses to
-  open in that case, Mesail asks TACHYON for a "sealed when available"
-  mode (request **T6b**: `"sealed": "whenAvailable"` stores plain rows
-  where no device key can exist, and tells the services with a built-in
-  event such as `StorageSealUnavailable { reason }`). Until T6b exists,
-  the `DeviceStore` adapter keeps a second, plain set of entities and
-  chooses one set when the app starts, from whether a sealed table opens;
-  it never mixes them. When a device that had a plain copy can seal later,
-  the adapter deletes the plain copy and fills a sealed one.
+  copy there and warns (SPEC AC-OF-18). TACHYON accepted request **T6b**
+  (2026-11-11): in its wave 3, inside the sealed tables slice, a Store
+  entity or the blob store may declare `"sealed": "whenAvailable"`. It
+  seals where a device key can exist, stores plain rows where it cannot
+  (Linux without a running Secret Service, plain `http`), and sends the
+  services a built-in event for each fallback (planned name
+  `StorageSealUnavailable { reason }`; the final name comes with TACHYON's
+  ADR). Mesail declares every device-copy table and the blob store
+  `"whenAvailable"`, shows the AC-OF-18 warning on that event, and keeps a
+  small eager marker of whether its copy is plain. When a device whose copy
+  is plain starts without the event (it can seal now), Mesail deletes the
+  plain copy and fills a sealed one. Because the first offline release
+  waits for wave 3 anyway (next bullet), the earlier plan of a second,
+  plain set of entities is dropped.
 - **Release gate** (the owner's answer to SPEC Q16, 2026-11-11: "Wait for
   encryption"): the first offline release waits until sealed tables
   (TACHYON wave 3) are in a TACHYON release that Mesail uses. Waves 1 and

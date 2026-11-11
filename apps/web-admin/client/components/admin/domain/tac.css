@@ -403,9 +403,6 @@ code.mono {
   .mt-0\.5 {
     margin-top: calc(var(--spacing, 0.25rem) * 0.5);
   }
-  .mt-2 {
-    margin-top: calc(var(--spacing, 0.25rem) * 2);
-  }
   .-ml-2 {
     margin-left: calc(var(--spacing, 0.25rem) * -2);
   }

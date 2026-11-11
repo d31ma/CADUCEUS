@@ -95,10 +95,10 @@
                   <div class="flex items-start gap-2">
                     <w-text-field label="Host" :value="record.host" readonly class="mono min-w-0 flex-1" spellcheck="false"></w-text-field>
                     <logic :if="domainCopy.copied == record.host">
-                      <w-icon-btn icon="check" class="copied mt-2" :aria-label="record.copiedLabel" on:click="domainCopy.copy(record.host)"></w-icon-btn>
+                      <w-icon-btn icon="check" class="copied" :aria-label="record.copiedLabel" on:click="domainCopy.copy(record.host)"></w-icon-btn>
                     </logic>
                     <logic else>
-                      <w-icon-btn icon="copy" class="mt-2" :aria-label="record.copyLabel" on:click="domainCopy.copy(record.host)"></w-icon-btn>
+                      <w-icon-btn icon="copy" :aria-label="record.copyLabel" on:click="domainCopy.copy(record.host)"></w-icon-btn>
                     </logic>
                   </div>
                   <p :class="record.resultClass"><w-icon :name="record.resultIcon" class="icon-sm" aria-hidden="true"></w-icon><span>{record.resultText}</span></p>

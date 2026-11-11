@@ -15,7 +15,7 @@
         </span>
         <div id="alias-member-error" role="alert">
           <logic :if="aliasForm.problem == 'noMember'">
-            <p class="aliases-error flex items-start gap-1"><w-icon name="alert" class="mt-0.5" aria-hidden="true"></w-icon><span>Choose the member who gets mail sent to this alias.</span></p>
+            <p class="aliases-error flex items-start gap-1"><w-icon name="alert" class="icon-sm" aria-hidden="true"></w-icon><span>Choose the member who gets mail sent to this alias.</span></p>
           </logic>
         </div>
       </div>
@@ -37,7 +37,7 @@
         </case>
       </switch>
       <div class="flex flex-wrap items-center gap-3">
-        <w-btn variant="flat" type="submit" class="aliases-touch" :disabled="aliasForm.busy">
+        <w-btn variant="flat" type="submit" :disabled="aliasForm.busy">
           <logic :if="aliasForm.busy">Adding&hellip;</logic>
           <logic else>Add alias</logic>
         </w-btn>

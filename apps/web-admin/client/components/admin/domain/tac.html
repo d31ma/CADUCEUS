@@ -63,7 +63,7 @@
                   <p class="subtle flex flex-[1_1_14rem] items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Checking 4 records…</p>
                 </logic>
                 <logic else>
-                  <p class="subtle flex flex-[1_1_14rem] items-center gap-2" role="status"><w-icon name="clock" aria-hidden="true"></w-icon>{domainDns.status}</p>
+                  <p class="subtle flex flex-[1_1_14rem] items-center gap-2" role="status"><w-icon name="clock" class="icon-sm" aria-hidden="true"></w-icon>{domainDns.status}</p>
                 </logic>
                 <logic :if="adminSession.operator">
                   <logic :if="domainDns.checking">
@@ -101,7 +101,7 @@
                       <w-icon-btn icon="copy" class="mt-2" :aria-label="record.copyLabel" on:click="domainCopy.copy(record.host)"></w-icon-btn>
                     </logic>
                   </div>
-                  <p :class="record.resultClass"><w-icon :name="record.resultIcon" aria-hidden="true"></w-icon><span>{record.resultText}</span></p>
+                  <p :class="record.resultClass"><w-icon :name="record.resultIcon" class="icon-sm" aria-hidden="true"></w-icon><span>{record.resultText}</span></p>
                 </div>
               </section>
             </loop>

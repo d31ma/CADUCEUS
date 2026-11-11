@@ -66,7 +66,7 @@
                 </td>
                 <td data-label="Email address" class="px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1">
                   <logic :if="row.hasAddress">
-                    <div class="flex min-w-0 flex-wrap items-center gap-1"><span class="email-how inline-flex items-center gap-1"><w-icon name="mail" aria-hidden="true"></w-icon>Email</span><span class="address break-all">{row.emailAddress}</span></div>
+                    <div class="flex min-w-0 flex-wrap items-center gap-1"><span class="email-how inline-flex items-center gap-1"><w-icon name="mail" class="icon-sm" aria-hidden="true"></w-icon>Email</span><span class="address break-all">{row.emailAddress}</span></div>
                   </logic>
                   <logic else><span class="subtle">None</span></logic>
                 </td>
@@ -90,7 +90,7 @@
         <case :when="'empty'">
           <section class="channels-card px-4 py-8" aria-labelledby="channels-empty-title">
             <w-empty-state>
-              <w-icon slot="media" name="hash" class="empty-icon" aria-hidden="true"></w-icon>
+              <w-icon slot="media" name="hash" class="icon-xl" aria-hidden="true"></w-icon>
               <h2 slot="title" id="channels-empty-title" class="empty-title">No channels yet</h2>
               <p slot="text">Channels that people in {channelList.domain} create appear here.</p>
             </w-empty-state>
@@ -100,7 +100,7 @@
           <section class="channels-card px-4 py-8" aria-labelledby="channels-no-results-title">
             <div role="status">
               <w-empty-state>
-                <w-icon slot="media" name="search" class="empty-icon" aria-hidden="true"></w-icon>
+                <w-icon slot="media" name="search" class="icon-xl" aria-hidden="true"></w-icon>
                 <h2 slot="title" id="channels-no-results-title" class="empty-title">{channelList.noResultsTitle}</h2>
                 <p slot="text">Check the spelling, or clear the search and the filters.</p>
                 <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="outlined" on:click="channelList.clearFilters()">Clear search and filters</w-btn></div>
@@ -112,7 +112,7 @@
           <section class="channels-card px-4 py-8" aria-labelledby="channels-error-title">
             <div role="alert">
               <w-empty-state>
-                <w-icon slot="media" name="alert" class="empty-icon empty-icon-error" aria-hidden="true"></w-icon>
+                <w-icon slot="media" name="alert" class="icon-xl empty-icon-error" aria-hidden="true"></w-icon>
                 <h2 slot="title" id="channels-error-title" class="empty-title">Channels could not load</h2>
                 <p slot="text">{channelList.loadProblem}</p>
                 <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="flat" prepend-icon="refresh" on:click="channelList.refresh()">Try again</w-btn></div>
@@ -137,7 +137,7 @@
               <w-text-field class="address-field" label="Email address" name="local" autofocus autocomplete="off" autocapitalize="none" spellcheck="false" persistent-hint :suffix="channelAddress.suffix" :hint="channelAddress.help" :value="channelAddress.localPart"></w-text-field>
               <logic :if="channelAddress.editing">
                 <logic :if="channelAddress.localPart == channelAddress.currentLocalPart">
-                  <p class="ok-text flex items-center gap-1"><w-icon name="check" class="icon-xs" aria-hidden="true"></w-icon>{channelAddress.currentText}</p>
+                  <p class="ok-text flex items-center gap-1"><w-icon name="check" class="icon-sm" aria-hidden="true"></w-icon>{channelAddress.currentText}</p>
                 </logic>
               </logic>
             </logic>

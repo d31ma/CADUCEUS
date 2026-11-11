@@ -84,6 +84,17 @@
   align-items: center;
 }
 
+.w-text-field:not(.w-text-field--error) .w-text-field-messages {
+  color: var(--w-text-subtle);
+}
+
+.w-checkbox,
+.w-radio,
+.w-switch {
+  min-height: var(--ms-control-sm);
+  align-items: center;
+}
+
 @media (max-width: 767px), (pointer: coarse) {
   .w-text-field {
     --w-tf-height: var(--ms-touch-min);

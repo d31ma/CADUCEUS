@@ -3,21 +3,6 @@
   color: var(--w-text);
 }
 
-w-icon {
-  width: var(--ms-icon-size, 1.25rem);
-  height: var(--ms-icon-size, 1.25rem);
-  font-size: var(--ms-icon-size, 1.25rem);
-}
-
-.icon-sm {
-  --ms-icon-size: 1rem;
-}
-
-.icon-xs,
-w-chip w-icon {
-  --ms-icon-size: 0.875rem;
-}
-
 .page-header {
   min-height: var(--ms-header-height);
   padding-top: env(safe-area-inset-top);
@@ -129,7 +114,6 @@ w-chip w-icon {
   font-size: var(--w-font-xs);
   font-weight: var(--w-font-weight-bold);
   white-space: nowrap;
-  --ms-icon-size: 0.875rem;
 }
 
 .address {
@@ -144,10 +128,6 @@ w-chip w-icon {
 .ok-text {
   font-size: var(--ms-text-meta);
   color: var(--w-on-success-container);
-}
-
-.empty-icon {
-  --ms-icon-size: 2.5rem;
 }
 
 .empty-icon-error {
@@ -208,13 +188,6 @@ w-chip w-icon {
   }
 }
 
-@media (max-width: 767px) {
-  .w-btn {
-    min-width: var(--ms-touch-min);
-    min-height: var(--ms-touch-min);
-  }
-}
-
 .tag {
   display: inline-flex;
   align-items: center;
@@ -228,12 +201,6 @@ w-chip w-icon {
   font-size: var(--w-font-xs);
   font-weight: var(--w-font-weight-semibold);
   white-space: nowrap;
-}
-
-.tag w-icon {
-  width: 0.875rem;
-  height: 0.875rem;
-  font-size: 0.875rem;
 }
 
 .tag[data-color="success"] {
@@ -261,9 +228,34 @@ w-chip w-icon {
   --w-tf-radius: var(--w-radius-lg);
 }
 
+.w-text-field:not(.w-text-field--error) .w-text-field-messages {
+  color: var(--w-text-subtle);
+}
+
+.w-checkbox,
+.w-radio,
+.w-switch {
+  min-height: var(--ms-control-sm);
+  align-items: center;
+}
+
 @media (max-width: 767px), (pointer: coarse) {
   .w-text-field {
     --w-tf-height: var(--ms-touch-min);
+  }
+
+  .w-btn,
+  .w-icon-btn,
+  .w-checkbox,
+  .w-radio,
+  .w-switch,
+  .w-text-field-control,
+  .w-select-field {
+    min-height: var(--ms-touch-min);
+  }
+
+  .w-icon-btn {
+    min-width: var(--ms-touch-min);
   }
 
   .w-text-field-control:has(.w-text-field-affix) .w-text-field-field {
@@ -285,6 +277,27 @@ w-chip w-icon {
   .show-select .w-select-field {
     min-height: var(--ms-touch-min);
   }
+}
+
+w-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--ms-icon-size, var(--ms-icon-md));
+  height: var(--ms-icon-size, var(--ms-icon-md));
+  font-size: var(--ms-icon-size, var(--ms-icon-md));
+}
+
+.icon-sm,
+.tag w-icon,
+h1 w-icon,
+.meta w-icon {
+  --ms-icon-size: var(--ms-icon-sm);
+}
+
+.icon-xl {
+  --ms-icon-size: 2.5rem;
 }
 
 /* @tachyon-generated-tailwind:start */

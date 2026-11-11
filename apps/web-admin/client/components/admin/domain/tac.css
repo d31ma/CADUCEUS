@@ -51,10 +51,6 @@
   color: var(--w-text);
 }
 
-.icon-xl {
-  font-size: 2.5rem;
-}
-
 .strong {
   font-weight: var(--w-font-weight-semibold);
 }
@@ -118,15 +114,12 @@ ul {
   }
 }
 
-@media (max-width: 767px) {
-  .w-btn {
-    min-width: var(--ms-touch-min);
-    min-height: var(--ms-touch-min);
-  }
-}
-
 code.mono {
   font-size: 0.9em;
+}
+
+.meta code.mono {
+  font-size: 1em;
 }
 
 .record-card {
@@ -206,12 +199,6 @@ code.mono {
   white-space: nowrap;
 }
 
-.tag w-icon {
-  width: 0.875rem;
-  height: 0.875rem;
-  font-size: 0.875rem;
-}
-
 .tag[data-color="success"] {
   background: var(--w-success-container);
   color: var(--w-on-success-container);
@@ -271,14 +258,60 @@ code.mono {
   --w-tf-radius: var(--w-radius-lg);
 }
 
+.w-text-field:not(.w-text-field--error) .w-text-field-messages {
+  color: var(--w-text-subtle);
+}
+
+.w-checkbox,
+.w-radio,
+.w-switch {
+  min-height: var(--ms-control-sm);
+  align-items: center;
+}
+
 @media (max-width: 767px), (pointer: coarse) {
   .w-text-field {
     --w-tf-height: var(--ms-touch-min);
   }
 
+  .w-btn,
+  .w-icon-btn,
+  .w-checkbox,
+  .w-radio,
+  .w-switch,
+  .w-text-field-control,
+  .w-select-field {
+    min-height: var(--ms-touch-min);
+  }
+
+  .w-icon-btn {
+    min-width: var(--ms-touch-min);
+  }
+
   .w-text-field-control:has(.w-text-field-affix) .w-text-field-field {
     min-height: var(--ms-touch-min);
   }
+}
+
+w-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--ms-icon-size, var(--ms-icon-md));
+  height: var(--ms-icon-size, var(--ms-icon-md));
+  font-size: var(--ms-icon-size, var(--ms-icon-md));
+}
+
+.icon-sm,
+.tag w-icon,
+h1 w-icon,
+.meta w-icon {
+  --ms-icon-size: var(--ms-icon-sm);
+}
+
+.icon-xl {
+  --ms-icon-size: 2.5rem;
 }
 
 /* @tachyon-generated-tailwind:start */

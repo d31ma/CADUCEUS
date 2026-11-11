@@ -44,10 +44,6 @@
   color: var(--w-text);
 }
 
-.w-text-field-control {
-  min-height: 1.5rem;
-}
-
 .w-checkbox {
   min-height: 1.5rem;
   align-items: center;

@@ -104,8 +104,41 @@ func (test *SessionTokenServiceTest) TestRenewRefreshesNow() {
 	Assert.Equals("access-2", accessToken)
 }
 
-func (test *SessionTokenServiceTest) TestRenewSkipsWhenAnotherRefreshFinishedFirst() {
+func (test *SessionTokenServiceTest) TestRenewSkipsWhileARefreshIsRunning() {
 	tokens := test.signedIn()
-	Assert.Equals(nil, tokens.renewUnlessRefreshedSince("example.com", tokens.refreshes-1))
+	tokens.refreshing = map[string]bool{"example.com": true}
+	Assert.Equals(nil, tokens.Renew("example.com"))
 	Assert.Equals("key-1", tokens.SavedKeys()["example.com"])
+}
+
+func (test *SessionTokenServiceTest) TestAccessTokenUsesTheCurrentTokenWhileARefreshIsRunning() {
+	tokens := test.signedIn()
+	tokens.refreshing = map[string]bool{"example.com": true}
+	BrowserFakes{}.Answer("clock", "now", 50000)
+	accessToken, failure := tokens.AccessToken("example.com")
+	Assert.Equals(nil, failure)
+	Assert.Equals("access-1", accessToken)
+	Assert.Equals("key-1", tokens.SavedKeys()["example.com"])
+}
+
+func (test *SessionTokenServiceTest) TestAccessTokenRefreshesOtherDomainsWhileOneIsRefreshing() {
+	tokens := test.signedIn()
+	tokens.refreshing = map[string]bool{"example.org": true}
+	BrowserFakes{}.Answer("clock", "now", 50000)
+	accessToken, _ := tokens.AccessToken("example.com")
+	Assert.Equals("access-2", accessToken)
+}
+
+func (test *SessionTokenServiceTest) TestRefreshClearsTheRunningMarkWhenDone() {
+	tokens := test.signedIn()
+	BrowserFakes{}.Answer("clock", "now", 50000)
+	tokens.AccessToken("example.com")
+	Assert.Equals(false, tokens.refreshing["example.com"])
+}
+
+func (test *SessionTokenServiceTest) TestRefreshClearsTheRunningMarkWhenRefused() {
+	tokens := test.signedIn()
+	tokens.keys["example.com"] = "ended"
+	Assert.IsTrue(tokens.Renew("example.com") != nil)
+	Assert.Equals(false, tokens.refreshing["example.com"])
 }

@@ -212,7 +212,8 @@ Settings (environment, or a `.env` file copied from `.env.example`):
   `http://router.localhost:18080` (build args `KEYCLOAK_URL`, `SERVICE_BASE`,
   `FORWARDS`). Where Keycloak and the API have public names (AWS), build with
   those names and an empty `FORWARDS`.
-- The start script creates `/mnt/data/<service>`, hands it to the user
+- The start script creates `/mnt/data/<service>`, hands it and `/mnt/data`
+  (FYLO writes its owner lease next to the root) to the user
   `mesail` (uid 10001) and drops root before `ty start` when it runs as root
   (Floci). In AWS, Lambda already runs as a non-root user and the EFS access
   point (`PosixUser` 10001, root directory `/<service>`) owns the folder.

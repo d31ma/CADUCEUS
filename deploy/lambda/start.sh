@@ -16,7 +16,7 @@ prepare_data_root() {
 
 hand_data_root_to_service_user() {
   if [ -z "$MESAIL_DATA_ROOT" ]; then return 0; fi
-  chown "$MESAIL_USER_ID:$MESAIL_USER_ID" "$MESAIL_DATA_ROOT"
+  chown "$MESAIL_USER_ID:$MESAIL_USER_ID" "$MESAIL_DATA_ROOT" "$(dirname "$MESAIL_DATA_ROOT")"
 }
 
 copy_stored() {

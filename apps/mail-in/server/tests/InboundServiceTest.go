@@ -1,4 +1,7 @@
-import "errors"
+import (
+	"crypto/rand"
+	"errors"
+)
 
 // @Test(InboundTestSetup, {"partition":"tests"})
 type InboundServiceTest struct {
@@ -24,6 +27,10 @@ func (test *InboundServiceTest) envelope(key string) InboundEnvelope {
 	}
 }
 
+func (test *InboundServiceTest) freshKey() string {
+	return "example.com/inbound/" + rand.Text() + ".eml"
+}
+
 func (test *InboundServiceTest) TestAcceptRefusesAnInvalidEnvelope() {
 	_, err := test.service().Accept(test.envelope("example.org/inbound/x.eml"))
 	invalid := &InvalidEnvelope{}
@@ -32,8 +39,9 @@ func (test *InboundServiceTest) TestAcceptRefusesAnInvalidEnvelope() {
 
 func (test *InboundServiceTest) TestAcceptStoresTheMessageOnce() {
 	service := test.service()
-	first, err := service.Accept(test.envelope("example.com/inbound/once.eml"))
-	second, again := service.Accept(test.envelope("example.com/inbound/once.eml"))
+	key := test.freshKey()
+	first, err := service.Accept(test.envelope(key))
+	second, again := service.Accept(test.envelope(key))
 	Assert.IsTrue(err == nil, "first accept failed")
 	Assert.IsTrue(again == nil, "second accept failed")
 	Assert.Equals(first.InboundId, second.InboundId)

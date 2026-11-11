@@ -1,33 +1,24 @@
 package mailin
 
-import (
-	"encoding/json"
-
-	"mesail.dev/packages/outbox"
-)
+import "mesail.dev/packages/outbox"
 
 type SettingsReader struct {
 	Environment func(string) string
 }
 
 func (reader SettingsReader) Outbox() (outbox.Settings, error) {
-	snapshot := ApplicationSnapshot{}
-	err := json.Unmarshal([]byte(reader.Environment(reader.applicationVariable())), &snapshot)
-	if err != nil {
-		return outbox.Settings{}, reader.unavailable()
-	}
-	settings, err := outbox.SettingsReader{}.FromApplicationJSON(string(snapshot.Yon))
-	if err != nil {
-		return outbox.Settings{}, reader.unavailable()
-	}
-	return settings, nil
+	settings, err := outbox.SettingsReader{}.FromApplicationJSON(reader.Environment(reader.applicationVariable()))
+	return settings, reader.unavailable(err)
 }
 
 func (reader SettingsReader) ServiceToken() outbox.TokenSource {
 	return outbox.StaticToken{Value: reader.Environment(reader.tokenVariable())}
 }
 
-func (SettingsReader) unavailable() error {
+func (SettingsReader) unavailable(failure error) error {
+	if failure == nil {
+		return nil
+	}
 	return Unavailable{Operation: "outbox settings"}
 }
 

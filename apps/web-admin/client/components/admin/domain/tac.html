@@ -91,7 +91,7 @@
                   <span class="inline-flex"><span class="tag" :data-color="record.tagColor" :data-variant="record.tagVariant" aria-hidden="true"><w-icon :name="record.tagIcon"></w-icon>{record.tagText}</span><span class="sr-only">{record.tagText}</span></span>
                 </div>
                 <div class="grid gap-3 px-4 py-4 @xl/page:px-5">
-                  <p class="subtle">Type {record.type}<logic :if="record.hasSelector"> · Selector <code class="mono">{record.selector}</code></logic></p>
+                  <p class="meta">Type {record.type}<logic :if="record.hasSelector"> · Selector <code class="mono">{record.selector}</code></logic></p>
                   <div class="flex items-start gap-2">
                     <w-text-field label="Host" :value="record.host" readonly class="mono min-w-0 flex-1" spellcheck="false"></w-text-field>
                     <logic :if="domainCopy.copied == record.host">

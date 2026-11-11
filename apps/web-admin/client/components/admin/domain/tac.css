@@ -108,6 +108,25 @@ ul {
   list-style: none;
 }
 
+.w-dialog {
+  border-radius: var(--ms-radius-card);
+}
+
+.w-dialog-title {
+  font-size: var(--ms-text-heading);
+  font-weight: var(--w-font-weight-semibold);
+  line-height: 1.4;
+}
+
+.w-dialog-body {
+  padding-top: var(--w-space-2);
+  padding-bottom: var(--w-space-5);
+}
+
+.w-dialog-footer:has(> slot:empty) {
+  display: none;
+}
+
 .dialog-text {
   color: var(--w-text);
 }
@@ -123,8 +142,18 @@ ul {
     max-width: 100%;
     max-height: calc(100dvh - var(--w-space-8));
     border-bottom: 0;
-    border-radius: var(--w-radius-xl) var(--w-radius-xl) 0 0;
+    border-radius: var(--ms-radius-card) var(--ms-radius-card) 0 0;
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .sheet-dialog w-btn {
+    display: block;
+    width: 100%;
+  }
+
+  .sheet-dialog .w-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -183,7 +212,7 @@ code.mono {
 
 .result--ok,
 .copied {
-  color: var(--w-on-success-container);
+  color: var(--ms-tone-success);
 }
 
 .result--bad {

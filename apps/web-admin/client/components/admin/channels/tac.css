@@ -156,7 +156,7 @@
 .ok-text {
   font-size: var(--ms-text-meta);
   line-height: 1.33;
-  color: var(--w-on-success-container);
+  color: var(--ms-tone-success);
 }
 
 .empty-icon-error {
@@ -203,18 +203,52 @@
   }
 }
 
+.w-dialog {
+  border-radius: var(--ms-radius-card);
+}
+
+.w-dialog-title {
+  font-size: var(--ms-text-heading);
+  font-weight: var(--w-font-weight-semibold);
+  line-height: 1.4;
+}
+
+.w-dialog-body {
+  padding-top: var(--w-space-2);
+  padding-bottom: var(--w-space-5);
+}
+
+.w-dialog-footer:has(> slot:empty) {
+  display: none;
+}
+
+.dialog-text {
+  color: var(--w-text);
+}
+
 @media (max-width: 599px) {
-  .w-dialog-wrapper {
+  .sheet-dialog .w-dialog-wrapper {
     align-items: flex-end;
     padding: 0;
   }
 
-  .w-dialog {
+  .sheet-dialog .w-dialog {
     width: 100%;
     max-width: 100%;
-    max-height: 90dvh;
+    max-height: calc(100dvh - var(--w-space-8));
+    border-bottom: 0;
+    border-radius: var(--ms-radius-card) var(--ms-radius-card) 0 0;
     padding-bottom: env(safe-area-inset-bottom);
-    border-radius: var(--w-radius-xl) var(--w-radius-xl) 0 0;
+  }
+
+  .sheet-dialog w-btn {
+    display: block;
+    width: 100%;
+  }
+
+  .sheet-dialog .w-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 

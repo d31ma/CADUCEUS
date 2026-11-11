@@ -125,8 +125,8 @@
   </div>
 
   <logic :if="channelAddress.open">
-    <w-dialog open max-width="32rem" :heading="channelAddress.title" heading-level="2" aria-describedby="channel-address-text" on:close="channelAddress.cancel()">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
+    <w-dialog open class="sheet-dialog" max-width="32rem" :heading="channelAddress.title" heading-level="2" aria-describedby="channel-address-text" on:close="channelAddress.cancel()">
+      <div class="dialog-text grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
         <form method="dialog" class="contents" :aria-label="channelAddress.title" on:submit="channelAddress.saveWith($event.target.elements.local.value)">
           <div class="col-span-full grid gap-4">
             <logic :if="channelAddress.problem != ''">
@@ -157,8 +157,8 @@
   </logic>
 
   <logic :if="channelArchive.open">
-    <w-dialog open max-width="32rem" :heading="channelArchive.title" heading-level="2" aria-describedby="channel-archive-text" on:close="channelArchive.cancel()">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
+    <w-dialog open class="sheet-dialog" max-width="32rem" :heading="channelArchive.title" heading-level="2" aria-describedby="channel-archive-text" on:close="channelArchive.cancel()">
+      <div class="dialog-text grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
         <div class="col-span-full grid gap-4">
           <p id="channel-archive-text">Archived channels are read-only and still searchable. Members can read old messages and files, but nobody can post. You can unarchive it later.</p>
           <p class="meta">{channelArchive.addressNote}</p>

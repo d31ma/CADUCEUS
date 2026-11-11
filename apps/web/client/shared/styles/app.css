@@ -110,6 +110,7 @@
   --ms-avatar-md: 2.25rem;
   --ms-avatar-lg: 3rem;
   --ms-avatar-xl: 5rem;
+  --ms-avatar-radius: var(--w-radius-lg);
   --ms-domain-tile: 2.75rem;
 
   --ms-radius-chip: var(--w-radius-pill);
@@ -356,9 +357,6 @@ html[w-theme="light"] {
   --w-scrim: rgba(0, 0, 0, 0.4);
   --w-shadow-color: rgba(24, 33, 37, 0.12);
 
-  --ms-rail-width: 4.25rem;
-  --ms-sidebar-width: 17rem;
-  --ms-thread-width: 25rem;
   --ms-header-height: 3.25rem;
   --ms-bottom-nav-height: 3.5rem;
   --ms-content-max: 50rem;
@@ -474,6 +472,21 @@ html[w-theme="high-contrast"] {
   --ms-msg-hover: #eef2f1;
 }
 
+@media (min-width: 1920px) {
+  :root {
+    --ms-rail-width: 4.5rem;
+    --ms-sidebar-width: 19rem;
+    --ms-thread-width: 28rem;
+  }
+}
+
+@media (min-width: 2560px) {
+  :root {
+    --ms-sidebar-width: 21rem;
+    --ms-thread-width: 34rem;
+  }
+}
+
 @layer base {
   *,
   *::before,
@@ -484,6 +497,12 @@ html[w-theme="high-contrast"] {
   html {
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+  }
+
+  @media (min-width: 2560px) {
+    html {
+      font-size: 112.5%;
+    }
   }
 
   body {

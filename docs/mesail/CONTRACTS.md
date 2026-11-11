@@ -20,23 +20,32 @@ field may be empty or left out.
   `search`, `mail-in` and `mail-out`, each its own TACHYON Go app in
   `apps/<service>/`. Each service owns its prefix, so a gateway (or CDN path
   rule) can route by prefix to an independently deployed service.
-- **The domain is the tenant.** Every hosted mail domain is one Keycloak
-  realm and one chat space (DOMAIN.md). The caller's `domainId` is the realm
-  name in the token issuer `https://<host>/realms/<domainId>` (`kit/oidc`
-  `Realm`, `Caller.DomainId`). No route takes the caller's domain from the
-  request. Chat data never crosses a domain; email does.
-- Every non-public route takes `Authorization: Bearer <access token>` from
-  Keycloak. The token is checked by the service's `IdentityProvider`
+- **The domain is the tenant.** Every hosted mail domain is one chat space
+  (DOMAIN.md). The caller's `domainId` is the `domain` claim of the Mesail
+  access token (`kit/oidc` `Caller.DomainId`), which `identity` sets to the
+  session's active domain (ADR 0005). No route takes the caller's domain
+  from the request. Chat data never crosses a domain; email does.
+- Every non-public route takes `Authorization: Bearer <access token>`, a
+  Mesail access token issued by `identity` (never a Keycloak token). The
+  token is checked by the service's `IdentityProvider`
   (`apps/<service>/server/controllers/TokenIdentityProvider.go`), which uses
-  the shared verifier package `kit/oidc`. Roles (empty structs in
-  `apps/<service>/server/roles/`) come from the token's `realm_access.roles`
-  claim (`kit/oidc` `RoleMap`):
-  - `Member` from `mesail-member`;
-  - `DomainAdmin` from `mesail-admin`, acting only in its own domain;
-  - `Operator` from `mesail-operator`. Operators sign in to the operator
-    realm `mesail-operators`, which is not a mail domain. Operator routes
-    name the target domain in the path;
-  - `Service` from `mesail-service`, for calls between services.
+  the shared verifier package `kit/oidc` against `identity`'s key set
+  (`GET /api/v1/identity/jwks`) and the one configured issuer. Roles (empty
+  structs in `apps/<service>/server/roles/`) come from the token's
+  `realm_access.roles` claim (`kit/oidc` `RoleMap`), which `identity`
+  fills:
+  - `Member` from `mesail-member`: the person is a member of the active
+    domain;
+  - `DomainAdmin` from `mesail-admin`: the person administers the active
+    domain, and acts only in it;
+  - `Operator` from `mesail-operator`: the Keycloak realm role. It is
+    install-wide; Operator routes name the target domain in the path and
+    never use the caller's domain as a tenant;
+  - `Service` from `mesail-service`, for calls between services (a service
+    token from `identity`).
+- The domain `*` (`oidc.InstallWide`) is never a hosted domain. Only an
+  install-wide service token or an Operator session with no domain carries
+  it, and only routes marked "install-wide" accept it.
 - Errors use one model, `ApiError{code, message, field?}`. Codes are
   lowercase snake case and stable. Status codes: `400 invalid_request`,
   `401 unauthenticated`, `403 forbidden`, `404 not_found` (also for data in
@@ -69,58 +78,121 @@ field may be empty or left out.
 ## identity (stateless)
 
 Keycloak is reached only from the backend (the owner's rule). The browser
-never talks to Keycloak.
+never talks to Keycloak and never receives a Keycloak token. Since ADR 0005
+`identity` signs people in to the one realm `mesail` and issues Mesail's
+own access token, which names the active domain.
 
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
-| `POST /api/v1/identity/session` | Public | `SignInRequest{address, password, oneTimeCode?}` | `200 Session{me, accessToken, expiresIn (seconds), sessionKey}`; `401 unauthenticated` (one message for every failure); `429 rate_limited` |
-| `POST /api/v1/identity/session/refresh` | Public | `RefreshRequest{sessionKey}` | `200 Session`; `401` when the Keycloak session has ended |
+| `POST /api/v1/identity/session` | Public | `SignInRequest{login, password, oneTimeCode?}` | `200 Session`; `401 unauthenticated` (one message for an unknown prefix, a wrong password and a wrong code); after a correct password only: `403 not_a_member` (the address names a domain the person is not in) or `403 no_domain` (the person is in no domain and is not an Operator); `429 rate_limited` |
+| `POST /api/v1/identity/session/refresh` | Public | `RefreshRequest{sessionKey}` | `200 Session` for the same active domain; `401` when the Keycloak session has ended, the person is disabled, or the person is no longer a member of the active domain |
+| `POST /api/v1/identity/session/domain` | Public | `DomainSwitch{sessionKey, domainId}` | `200 Session` for `domainId` (no password); `401` as for refresh; `404 not_found` when the person is not a member of `domainId` |
 | `DELETE /api/v1/identity/session` | Public | `RefreshRequest{sessionKey}` | `204`; ends the Keycloak session |
-| `GET /api/v1/identity/me` | SignedIn | - | `Me{memberId, domainId, displayName, primaryAddress, roles[]}` |
+| `GET /api/v1/identity/me` | SignedIn | - | `Me{memberId, domainId, username, displayName, primaryAddress, roles[]}` from the token only (`domainId` `*` and `primaryAddress` `""` for an Operator session with no domain) |
+| `GET /api/v1/identity/jwks` | Public | - | `KeySet{keys[]: PublicKey}`: the JSON Web Key Set (RFC 7517) with the current signing key and, during a rotation, the previous one. `PublicKey{kty, crv, x, y, kid, alg, use}` uses the standard JWK names (`EC`, `P-256`, `ES256`, `sig`); add them to `names.words`. Cache header `max-age=300`. |
+| `POST /api/v1/identity/service-token` | Public | `ServiceTokenRequest{clientId, clientSecret, domainId}` | `200 ServiceToken{accessToken, expiresIn}`; `401` for a wrong client or secret; `400 invalid_request` (`domainId`) when it is neither a domain name nor `*` |
 
-How it works:
-- `POST /session` takes the domain from `address` (the realm has the same
-  name) and calls that realm's token endpoint server to server as the
-  confidential client `mesail-identity` (direct access grants). Every
-  realm uses the same client secret, `YON_IDENTITY_CLIENT_SECRET` in
-  `identity`'s `.env`; `directory` sets that value when it creates a realm.
-  Rotating it is an operator step (all realms, then `.env`, then restart).
-- It answers the Keycloak access token (a JWT, 60 seconds) as
-  `accessToken`, and the refresh token encrypted with AES-GCM under
-  `YON_IDENTITY_SESSION_KEY` as `sessionKey`. identity keeps no state; a
-  `sessionKey` stops working when Keycloak ends the session (sign-out, user
-  disabled, idle 30 minutes, at most 10 hours).
+`Session{me: Me, domains[]: DomainChoice{domainId, admin}, accessToken,
+expiresIn (seconds), sessionKey, mustChangePassword}`. `domains` lists every
+domain of the person, for the domain switcher, in `people.domainIds` order.
+
+How sign-in works (SPEC AC-ID-9):
+- `login` is trimmed and lowercased. Anything outside ASCII, or a prefix
+  that breaks the rules of SPEC AC-ID-11, answers the same `401` without a
+  Keycloak call. The part before the last `@` is the username; the part
+  after it, when present, is the wanted domain.
+- `identity` calls the token endpoint of the realm `mesail` server to
+  server as the confidential client `mesail-identity` (direct access
+  grants, secret `YON_IDENTITY_CLIENT_SECRET`) with the username, password
+  and `oneTimeCode` (Keycloak's conditional OTP).
+- It reads the person with `GET /api/v1/directory/people/{personId}`
+  (`personId` = the Keycloak `sub`; an install-wide service token). The
+  active domain is the wanted domain, else `defaultDomainId`. When the
+  wanted domain is not in `domainIds`, or the person is `disabled` or
+  `deleted`, or has no domain and no Operator role, `identity` ends the
+  Keycloak session it just opened and answers `403` (or `401` for
+  `disabled` and `deleted`). An Operator with no domain gets the active
+  domain `*`.
+- `mustChangePassword` is the Keycloak user attribute
+  `mesail.mustChangePassword`, which `directory` sets when it creates a
+  person or resets a password; Keycloak maps it into its token for
+  `mesail-identity`. `identity` clears it on `POST /identity/password`.
+  The web app shows only the password change screen while it is `true`.
+
+The Mesail access token (ADR 0005 section 3):
+- JWT, ES256, `kid` of the current key. Keys from the secret store:
+  `YON_IDENTITY_SIGNING_KEY` (PKCS #8 PEM, P-256) and, during a rotation,
+  `YON_IDENTITY_SIGNING_KEY_PREVIOUS` (published, never used to sign).
+- Claims: `iss` (the app setting `token.issuer`, for example
+  `https://mail.example.net/api/v1/identity`), `aud` `mesail-api`, `sub`
+  (person id; `service` for a service token), `azp` (`mesail-web` or
+  `mesail-service`), `domain` (active domain or `*`), `realm_access.roles`
+  (`mesail-member`; `mesail-admin` when the person administers the active
+  domain; `mesail-operator` from Keycloak; `mesail-service` for a service
+  token), `name`, `preferred_username`, `email` (`<username>@<domain>`,
+  absent for `*`), `sid` (the Keycloak session id), `iat`, `nbf`, `exp`
+  (`iat` + 60), `jti`.
+- Every Yon app checks it with `kit/oidc` `Gate`: the signature against
+  `identity`'s key set (app setting `oidc.jwks`, cached), the exact issuer
+  (`oidc.issuer`), audience, `azp` (`mesail-web` or `mesail-service`),
+  expiry (30 s leeway) and a non-empty `domain`. `Caller.DomainId` is the
+  `domain` claim.
+
+Sessions:
+- The `sessionKey` is the Keycloak refresh token and the active domain
+  id, sealed with AES-GCM under `YON_IDENTITY_SESSION_KEY`. `identity`
+  keeps no state; a `sessionKey` stops working when Keycloak ends the
+  session (sign-out, person disabled, idle 30 minutes, at most 10 hours).
+- **Refresh** refreshes the Keycloak session, reads the person again, and
+  answers `401` when the active domain is no longer in `domainIds`. So
+  removing a member cuts their access to that domain within 60 seconds.
+- **Domain switch** does the same refresh and then issues the token and a
+  new `sessionKey` for the wanted domain. No password, no second Keycloak
+  session.
 - Tac keeps `accessToken` in memory only and sends it as
   `Authorization: Bearer <accessToken>` on every Yon call (a
   `// @RequestHeader("Authorization")` parameter). It keeps `sessionKey` in
   a `// @SessionState` field (per tab, gone when the tab closes). When a
   call answers `401`, Tac calls `POST /session/refresh` once and retries;
-  when that fails, it shows the sign-in form. No timer is needed.
+  when that fails, it shows the sign-in form. No timer is needed. Each tab
+  has its own active domain.
 - Why not cookies: TACHYON 26.46.02's Tac HTTP client always sends requests
   with `credentials: 'omit'`, so it sends no cookie and the browser ignores
   `Set-Cookie` on its responses. When TACHYON offers same-origin
   credentials, the `sessionKey` moves to an `HttpOnly` cookie (requested in
   ADR 0004).
-- Every Yon app's `TokenIdentityProvider` checks the Bearer token with
-  `kit/oidc` `Gate`, for browser and service-to-service calls alike.
 - Realtime cannot send a header from the browser: `realtime` takes the
   access token in the first socket message (`{type:"auth", token}`), and an
   event stream takes a single-use ticket from
   `POST /api/v1/realtime/tickets` (SignedIn, 30 seconds). Never a token in a
-  URL.
+  URL. After a domain switch the tab opens a new connection with the new
+  token.
 - Second factor: TOTP through Keycloak's direct-grant conditional OTP
   (`oneTimeCode`). Passkeys are not available in this flow; they are a
   later slice.
-- Brute force: Keycloak brute-force detection is on in every realm (per
-  user), and the gateway or dev router limits requests per client address
-  (slice P1). `identity` keeps no counter; it answers `429` only when
-  Keycloak reports the account as temporarily locked.
-  Passwords, codes, tokens and session keys never appear in logs.
-- A person with accounts in two domains signs in once per domain; the domain
-  switcher keeps one `Session` per domain in the same `@SessionState`.
+- Brute force: Keycloak brute-force detection is on in the realm `mesail`
+  (per person, so one budget for all their domains), and the gateway or
+  dev router limits requests per client address (slice P1). `identity`
+  keeps no counter; it answers `429` only when Keycloak reports the
+  account as temporarily locked. Passwords, codes, tokens, client secrets
+  and session keys never appear in logs.
+
+Service tokens (ADR 0005 section 4):
+- `POST /service-token` compares `clientId` with `mesail-service` and
+  `clientSecret` with `YON_SERVICE_CLIENT_SECRET` (or
+  `YON_SERVICE_CLIENT_SECRET_PREVIOUS` during a rotation) in constant time,
+  and answers a 60-second token with `azp` `mesail-service`, the role
+  `mesail-service`, `sub` `service` and `domain` = the requested
+  `domainId` (a domain name or `*`). It does not check that the domain is
+  hosted: the receiving route does (SLICES rule 11).
+- `kit/oidc` `ServiceTokens.Authorization(domainId)` calls it (app setting
+  `oidc.serviceTokens`, the route URL; the host is in `outgoing.hosts`) and
+  caches each token per domain until 10 seconds before it expires.
+  `oidc.InstallWide` (`*`) is the domain id of install-wide calls.
 
 Account settings (the owner's choice: password and 2-step code are managed
-in Mesail's own settings; the browser still never talks to Keycloak):
+in Mesail's own settings; the browser still never talks to Keycloak). They
+change the person's one account, so they apply to every domain:
 
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
@@ -130,20 +202,22 @@ in Mesail's own settings; the browser still never talks to Keycloak):
 | `POST /api/v1/identity/totp/confirm` | SignedIn | `TotpConfirm{setupKey, code}` | `204`; `400 invalid_code` |
 | `DELETE /api/v1/identity/totp` | SignedIn | `TotpRemove{currentPassword, oneTimeCode}` | `204`; `401` |
 
-- **Checking the current password:** a direct grant to the member's realm
-  with the current password (and code). Keycloak's brute-force detection
-  counts it like a sign-in. The session from that grant is KEPT: it becomes
-  the caller's fresh `Session`, because Keycloak does not accept the same
+- **Checking the current password:** a direct grant to the realm
+  `mesail` with the caller's username and current password (and code).
+  Keycloak's brute-force detection counts it like a sign-in. The session
+  from that grant is KEPT: it becomes the caller's fresh `Session`, for the
+  caller's active domain, because Keycloak does not accept the same
   one-time code twice (agreed with slice I1).
 - **Changing:** through the Keycloak admin API, signed in as the
-  confidential client `mesail-account` of the member's realm, whose service
-  account has only the realm-management roles it needs (`manage-users`,
-  `view-users`); secret `YON_IDENTITY_ACCOUNT_SECRET`, the same in every
-  realm, set by `directory` when it creates a realm. identity changes only
+  confidential client `mesail-account` of the realm `mesail`, whose
+  service account has only the realm-management roles it needs
+  (`manage-users`, `view-users`); secret `YON_IDENTITY_ACCOUNT_SECRET`.
+  identity changes only
   the user whose `sub` is in the caller's token; it never takes a user id
   from the request.
-- **Password:** `PUT /admin/realms/<domain>/users/<sub>/reset-password`
-  (`temporary: false`), then `GET .../users/<sub>/sessions` and every
+- **Password:** `PUT /admin/realms/mesail/users/<sub>/reset-password`
+  (`temporary: false`), then it clears the user attribute
+  `mesail.mustChangePassword`, then `GET .../users/<sub>/sessions` and every
   session except the one from the check (its `sid` claim) is deleted; the
   caller gets that session as its fresh `Session`. The admin base URL is
   the app setting `oidc.admin`.
@@ -175,29 +249,62 @@ in Mesail's own settings; the browser still never talks to Keycloak):
 | `GET /api/v1/directory/members/{memberId}` | SignedIn | - | `MemberSummary`; `404 not_found` when the member is unknown or in another domain (used by `channels` for invites) |
 | `GET /api/v1/directory/domains` | Allow(Operator) | - | `[]Domain` |
 | `GET /api/v1/directory/domains/{domainId}` | Allow(Operator, Service) | - | `Domain` or `404` (used by `mail-out` for `dkimSelector` and the hosted check) |
-| `POST /api/v1/directory/domains` | Allow(Operator) | `CreateDomainRequest{name}` | `201 Domain` (also creates the domain's Keycloak realm) |
+| `POST /api/v1/directory/domains` | Allow(Operator) | `CreateDomainRequest{name}` | `201 Domain` (no Keycloak change) |
 | `POST /api/v1/directory/domains/{domainId}/verify` | Allow(Operator) | - | `Domain` (with `dns` states) |
-| `DELETE /api/v1/directory/domains/{domainId}` | Allow(Operator) | - | `204`; `403 forbidden` when the realm was not created by the directory |
-| `POST /api/v1/directory/aliases` | Allow(DomainAdmin) | `CreateAliasRequest{address, memberId?}` | `201 Address` |
-| `POST /api/v1/directory/channel-addresses` | Allow(DomainAdmin) | `ChannelAddressRequest{address, channelId}` | `201 Address` with `kind: channel`; the same address for the same channel again answers `201`; `409 duplicate` when a member, alias or other channel has it; `400 invalid_request` (`address`) when it is not in the caller's domain (called by `channels`) |
+| `DELETE /api/v1/directory/domains/{domainId}` | Allow(Operator) | - | `204`; removes every membership in the domain (the people stay) |
+| `POST /api/v1/directory/domains/{domainId}/members` | Allow(Operator) | `AddMemberRequest` | as `POST /members`, for the domain in the path; used to name the first DomainAdmin (SPEC S11) |
+| `POST /api/v1/directory/members` | Allow(DomainAdmin) | `AddMemberRequest{username, displayName?, firstPassword?, admin}` | `201 AddedMember{member: MemberSummary, existingPerson}`; `400 invalid_request` (`username` breaks SPEC AC-ID-11 or is a role name; `displayName` or `firstPassword` missing for a new person); `400 password_policy`; `409 duplicate` (already a member of this domain, or the prefix is an alias or channel address in any domain) |
+| `PATCH /api/v1/directory/members/{memberId}` | Allow(DomainAdmin) | `MemberChange{admin}` | `200 MemberSummary`; `409 last_admin`; `404 not_found` |
+| `DELETE /api/v1/directory/members/{memberId}` | Allow(DomainAdmin) | - | `204`; `409 last_admin`; `404 not_found` |
+| `GET /api/v1/directory/people/{personId}` | Allow(Service), install-wide | - | `PersonRecord{personId, username, displayName, domainIds[], adminDomainIds[], defaultDomainId, state}`; `404 not_found` (used by `identity` on every sign-in, refresh and switch) |
+| `GET /api/v1/directory/people?query=` | Allow(Operator) | - | `PersonPage` of `PersonSummary{personId, username, displayName, domainIds[], state}` |
+| `PATCH /api/v1/directory/people/{personId}` | Allow(DomainAdmin, Operator) | `PersonChange{displayName?, state?}` (`state`: `active` or `disabled`) | `200 PersonSummary`; `403 forbidden` (SPEC AC-ID-13) |
+| `POST /api/v1/directory/people/{personId}/password` | Allow(DomainAdmin, Operator) | `PasswordReset{newPassword}` | `204`: sets the password, sets `mesail.mustChangePassword`, ends the person's sessions; `400 password_policy`; `403 forbidden` (AC-ID-13) |
+| `DELETE /api/v1/directory/people/{personId}/totp` | Allow(DomainAdmin, Operator) | - | `204`; `403 forbidden` (AC-ID-13) |
+| `DELETE /api/v1/directory/people/{personId}` | Allow(Operator) | - | `204`: deletes the Keycloak user, removes every membership, keeps the prefix reserved (`state: deleted`) |
+| `PUT /api/v1/directory/me/default-domain` | SignedIn | `DefaultDomain{domainId}` | `204`; `404 not_found` when it is not one of the caller's domains |
+| `POST /api/v1/directory/aliases` | Allow(DomainAdmin) | `CreateAliasRequest{address, memberId?}` | `201 Address`; `409 duplicate` when the address exists or its local part is a person's prefix (SPEC AC-ID-10) |
+| `POST /api/v1/directory/channel-addresses` | Allow(DomainAdmin) | `ChannelAddressRequest{address, channelId}` | `201 Address` with `kind: channel`; the same address for the same channel again answers `201`; `409 duplicate` when a member, alias or other channel has it, or its local part is a person's prefix; `400 invalid_request` (`address`) when it is not in the caller's domain (called by `channels`) |
 | `DELETE /api/v1/directory/channel-addresses/{address}` | Allow(DomainAdmin) | - | `204`; `404` unless it is a channel address in the caller's domain |
 | `GET /api/v1/directory/addresses/{address}` | Allow(Service) | - | `Address{address, domainId, kind, targetId}`; `404 domain_not_hosted` when the domain is not hosted or not `active`; `404 not_found` for an unknown address in a hosted, active domain (used by the SMTP edge and `messaging`) |
 
 `Domain{domainId, name, state, dkimSelector, dns: DnsState{mx, spf, dkim,
 dmarc}}`. `domainId` is the domain name in lowercase (for example
-`example.com`) and is also the realm name. `Address.kind` is
-`member|alias|channel`. An alias address and its member are both in the
-caller's domain.
+`example.com`). `Address.kind` is `member|alias|channel`. An alias address
+and its member are both in the caller's domain. `MemberSummary{memberId?,
+username?, displayName, primaryAddress, admin}` (`username` and `admin` only
+on the admin routes). Every address in a request is trimmed; the domain
+part and, for hosted domains, the local part are lowercased before any
+lookup (SPEC AC-ID-11).
 
-Operator routes also require a token from the operator realm
-`mesail-operators`; an `mesail-operator` role inside a mail domain's realm
-answers `403`. A signed-in request from a realm that is not a hosted domain,
-or from a `disabled` domain, answers `403`. The `Service` routes
-(`addresses/{address}`, `domains/{domainId}`) accept a token from the target
-domain's realm or from `mesail-operators`; any other realm answers `404`.
-The outbox routes (`POST /api/v1/directory/outbox/relay`,
-`GET .../outbox/dead`, `POST .../outbox/dead/requeue`, EVENTS.md) are
-install-wide and accept only `mesail-operators`.
+Members and people (ADR 0005, SPEC AC-ID-10 to AC-ID-13):
+- `POST /members` with a prefix that has no person: reserves the local
+  part, creates the Keycloak user in the realm `mesail` (username = the
+  prefix, `firstPassword` not temporary, attribute
+  `mesail.mustChangePassword` `true`) through the client
+  `mesail-directory` (secret `YON_DIRECTORY_ADMIN_SECRET`, app setting
+  `oidc.admin`), then writes `people`, `members` and `addresses` in the
+  order of DOMAIN.md. With a prefix that has a person: adds the domain to
+  that person; `displayName` and `firstPassword` are ignored and
+  `existingPerson` is `true`. The first domain added becomes the person's
+  `defaultDomainId`.
+- `admin: true` adds the domain to `adminDomainIds`. `PATCH` and `DELETE`
+  refuse to leave a domain without an admin (`409 last_admin`).
+- The person routes check SPEC AC-ID-13 on `directory`'s data: an Operator
+  always passes; a DomainAdmin passes only when every domain in the
+  person's `domainIds` is also in the caller's own `adminDomainIds`.
+- Every change of a person or membership publishes `member.upserted` into
+  each affected domain (`state: removed` for a removed member).
+
+Operator routes require the role `Operator` (the Keycloak realm role), from
+any session of the Operator, also one with an active domain. A signed-in
+request whose domain is not hosted, or is `disabled`, answers `403`, except
+on Operator routes. The `Service` routes (`addresses/{address}`,
+`domains/{domainId}`) accept a token for the target domain or `*`; any
+other domain answers `404`. `people/{personId}` and the outbox routes
+(`POST /api/v1/directory/outbox/relay`, `GET .../outbox/dead`,
+`POST .../outbox/dead/requeue`, EVENTS.md) are install-wide and accept only
+`*`.
 
 `ResolvedRecipient{address, displayName, kind:
 member|channel|otherDomain|external, memberId?, channelId?, defaultDelivery:
@@ -391,7 +498,7 @@ An attachment in another domain answers `404`.
   `attachments.link.seconds` and answers with `Content-Disposition:
   attachment`.
 - **Meta.** For `messaging` at send time: a `Service` caller reads the
-  details of an attachment of its own domain (the token's realm), in any
+  details of an attachment of its own domain (the token's `domain`), in any
   state (`pending`, `ready` or `blocked`), to refuse a missing or not-ready
   file, to check the 50 MiB per message sum and to store `fileName`,
   `mediaType` and `size` on the message. An unknown id, or an attachment
@@ -420,7 +527,7 @@ Gateway WebSocket API. The other routes are the `realtime` Yon app.
 | `PUT /api/v1/realtime/presence` | SignedIn | `PresenceRequest{state: active|idle|dnd, doNotDisturbUntil?}` | `204` |
 | `GET /api/v1/realtime/presence?memberIds=` | SignedIn | - | `[]Presence{memberId, state, doNotDisturbUntil?, lastSeenAt}` |
 | `POST /api/v1/realtime/events` | Service (the envelope's domain) | `events.Envelope` | `EventReceipt{eventId, status}` |
-| `POST /api/v1/realtime/jobs/sweep` | Service (install-wide, realm `mesail-operators`) | - | `SweepReport{closedConnections, offlineMembers, endedDoNotDisturb, deletedTickets, writes, more}` (also deletes used or expired stream tickets with the writes left of its 25) |
+| `POST /api/v1/realtime/jobs/sweep` | Service (install-wide, domain `*`) | - | `SweepReport{closedConnections, offlineMembers, endedDoNotDisturb, deletedTickets, writes, more}` (also deletes used or expired stream tickets with the writes left of its 25) |
 
 Socket protocol (agreed with slice F2: a Go Tac socket client gets no open
 or close callback and has no timer):
@@ -484,7 +591,7 @@ the gateway's management API `POST` / `DELETE /@connections/{connectionId}`
 | `GET /api/v1/notify/push-key` | SignedIn | - | `PushKey{publicKey}` (the VAPID public key for `pushManager.subscribe`); `503 unavailable` when not configured |
 | `POST /api/v1/notify/events` | Allow(Service) | `Envelope` | `EventReceipt` (EVENTS.md) |
 | `POST /api/v1/notify/outbox/relay` | Allow(Service) | - | `OutboxReport` |
-| `POST /api/v1/notify/jobs/run` | Allow(Service), install-wide (`mesail-operators`) | - | `JobReport{domains, fannedOut, pushed, skipped, summarized, more}` |
+| `POST /api/v1/notify/jobs/run` | Allow(Service), install-wide (domain `*`) | - | `JobReport{domains, fannedOut, pushed, skipped, summarized, more}` |
 | `GET /api/v1/notify/messages/{messageId}/source` | Allow(Service) | - | `MessageSource{messageId, domainId, body, attachmentIds[]}` of an email summary (`sum_` id) |
 
 How it works:
@@ -623,8 +730,7 @@ owns it; M3 uses it):
     `active` (`GET /api/v1/directory/domains/{domainId}`). mail-in copies
     the blob into the recipient domain before it stores `InboundRaw`, so the
     stored `rawBlobKey` is always under the recipient domain.
-    The check uses a service token of the install-wide realm
-    `mesail-operators`, because the sender domain may not be hosted; an
+    The check uses an install-wide service token (domain `*`), because the sender domain may not be hosted; an
     unknown or inactive sender domain answers `400 invalid_request`
     (field `envelopeFrom`), a directory failure `503`. The copy's key is
     `<recipientDomain>/inbound-<sha256 hex of the sender key>`.

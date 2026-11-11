@@ -20,6 +20,17 @@
   kit/channels, kit/realtime (its own copy is gone), kit/search and the
   directory, messaging and notify apps; mail-in and mail-out follow in M1.
 
+### Architecture: one login per person (design)
+
+- ADR 0005 amends ADR 0004: one Keycloak realm `mesail` for every person,
+  the email prefix as the username in every domain, membership and the
+  DomainAdmin role as `directory` data, and Mesail's own ES256 access token
+  from `identity` that names the active domain. SPEC (AC-ID-1 to AC-ID-14,
+  S12, S14, Q4 to Q7), DOMAIN (`people`, `local-parts`), CONTRACTS
+  (sign-in, domain switch, key set, service tokens, member and person
+  routes), EVENTS, SERVICE-TOKENS and SLICES (Wave 3: LU, L0 to L7) are
+  updated. No code changes yet.
+
 ### Slice R1: realtime and presence
 
 - Added `edge/realtime`, the connection gateway: a small Go program that

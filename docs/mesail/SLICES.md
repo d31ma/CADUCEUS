@@ -42,11 +42,16 @@ wave run at the same time.
    `~/Developer/Tools/fylo-26.45.07/fylo`.
 8. **Heavy jobs** run as
    `MAC_HEAVY_COORDINATOR=tachyon-build mac-heavy --owner <slice> -- ...`.
-9. **The domain is the tenant.** Every store method takes the `domainId`
+9. **Collection names.** Build every FYLO collection name with
+   `kit/collections` (`CollectionName{}.ForDomain` or `.ForDomainMonth`).
+   FYLO accepts only lowercase letters, digits and `-`; the domain becomes a
+   16-character hex key (DOMAIN.md, "The domain key"). Add `collections` to
+   your `server/packages/kit.list`.
+10. **The domain is the tenant.** Every store method takes the `domainId`
    from the verified caller (`oidc.Caller.DomainId`, the Keycloak realm
    name, which is the mail domain). Chat data never crosses a domain. Email
    crosses domains freely. See SPEC section 2 and DOMAIN.md invariant 1.
-10. **FYLO roots for dev and test.** On this Mac, a test FYLO root lives in
+11. **FYLO roots for dev and test.** On this Mac, a test FYLO root lives in
     the shared APFS disk image on ATLAS, in your own folder:
     `~/Developer/AtlasFylo/mesail/slice-<slice id>/` (for example
     `slice-m3/`). Never put a root on `/Volumes/ATLAS` or `/Volumes/HAVEN`
@@ -55,7 +60,7 @@ wave run at the same time.
     `diskutil image attach --mountOptions nobrowse --mountPoint ~/Developer/AtlasFylo/mesail /Volumes/ATLAS/Mesail/mesail-fylo-test.sparsebundle`.
     In Lambda form (Floci locally, AWS later) a service's root is on its
     EFS mount: `/mnt/data/<service>/`.
-11. **UX.** The screens, states and copy come from `docs/mesail/ux/**`
+12. **UX.** The screens, states and copy come from `docs/mesail/ux/**`
     (owned by the `mesail-ux` session). Frontend slices follow it and do not
     edit it.
 
@@ -200,9 +205,11 @@ is enough.
   `mesail-keycloak`), `docker-compose.yml`, `.dockerignore`, `.env.example`,
   new `deploy/lambda/**`, `deploy/floci/**`, `deploy/router/**` and
   `scripts/floci/**` (never `deploy/keycloak/**`).
-- **Builds:** one Lambda container image per Yon app (arm64, AWS Lambda Web
-  Adapter, `ty start`, the Go toolchain that built the handlers, FYLO root
-  on the EFS mount `/mnt/data/<service>/`, reserved concurrency 1 for every
+- **Builds:** one Lambda container image per Yon app (arm64, Ubuntu 24.04
+  base because `fylo` needs glibc 2.39, AWS Lambda Web Adapter, `ty start`,
+  the Go toolchain that built the handlers, FYLO root on the EFS mount at
+  `/mnt/data/<service>/` set in the app's own configuration because Floci
+  ignores the access point root folder, reserved concurrency 1 for every
   FYLO-owning function), the Floci description that runs every service in
   the `mesail` Lima VM (built by the `mesail-devhost` session), the
   path-routing front (API Gateway in Floci and AWS), static hosting for the
@@ -300,7 +307,7 @@ is enough.
 | Path | Owner |
 | --- | --- |
 | `docs/**` (except `docs/mesail/ux/**`), `tests/blackbox/**`, `tools/**`, `scripts/kit-sync.sh`, `CLAUDE.md`, `AGENTS.md`, `README.md`, `CHANGELOG.md`, `.gitignore` | architecture (this plan); slices append to `CHANGELOG.md` only under their own heading, and update CONTRACTS.md per rule 3 |
-| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package (I1 `oidc`, I2 `events` `outbox`, D1 `recipients`, A1 `blobs`, M1 `mime` `mailauth`, M2 `compose` `dkim` `smtpclient`, S1 `textindex`); `ids` stays with architecture |
+| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package (I1 `oidc`, I2 `events` `outbox`, D1 `recipients`, A1 `blobs`, M1 `mime` `mailauth`, M2 `compose` `dkim` `smtpclient`, S1 `textindex`); `ids` and `collections` stay with architecture |
 | `apps/<service>/**` other files | the service's slice |
 | `apps/web/client/**` | split between F1-F4 by the patterns above |
 | `apps/web-admin/**` | F5 |

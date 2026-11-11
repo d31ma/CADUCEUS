@@ -42,6 +42,10 @@ wave run at the same time.
    `~/Developer/Tools/fylo-26.45.07/fylo`.
 8. **Heavy jobs** run as
    `MAC_HEAVY_COORDINATOR=tachyon-build mac-heavy --owner <slice> -- ...`.
+8a. **Tac setups.** Every `@HTTPClient` needs a setup in
+   `client/setups/`. A web slice owns the setups whose names start with
+   the same prefixes as its remotes and services (listed under each F
+   slice).
 9. **FYLO on ATLAS (every FYLO-owning slice).** Live roots are on ATLAS in
    Lambda form, where a write takes about 109 ms with stalls up to 11 s
    (ADR 0004 section 4). So: at most 25 FYLO writes and 20 seconds of work
@@ -255,7 +259,8 @@ C1, not before each slice merge.
   `apps/web/client/components/app/**`, `apps/web/client/shared/**`,
   `apps/web/client/services/Shell*.go`, `apps/web/client/services/Session*.go`,
   `apps/web/client/remotes/Identity*.go`, `apps/web/client/models/{Session,ClientConfig,Me}*.go`,
-  `apps/web/client/tests/{Shell,Session}*.go`.
+  `apps/web/client/tests/{Shell,Session}*.go`,
+  `apps/web/client/setups/{Shell,Session,Identity}*.go`.
 - **Builds:** Mesail's own sign-in form (address, password, one-time
   code) calling `identity`'s session routes; the access token in memory and
   sent with `// @RequestHeader("Authorization")`; the `sessionKey` in a
@@ -356,8 +361,12 @@ C1, not before each slice merge.
 - **Owns:** `apps/notify/**` (except kit copies), new `kit/webpush/**`
   (VAPID ES256 and RFC 8291 message encryption) and its copy in
   `apps/notify/server/packages/webpush/**` (synced only into `notify`).
-- **Builds:** AC-PN-2..4: notification records, Web Push (VAPID keys from
-  the secret store), mute, the email summary (via `email.send.requested`).
+- **Builds:** AC-PN-2..4: notification records, in-app delivery through
+  `realtime`, mute, the email summary (via `email.send.requested`). The Web
+  Push sender (`kit/webpush`, VAPID keys from the secret store) stays
+  ready, but no browser can subscribe yet (Go Tac 26.46.02 has no
+  PushManager), so the subscription route is kept and unused in the first
+  release.
 - **Depends on:** I2, M3 events, M2 contract.
 
 ### F2. Web conversations
@@ -365,7 +374,8 @@ C1, not before each slice merge.
   `apps/web/client/services/{Sidebar,Conversation,Realtime}*.go`,
   `apps/web/client/remotes/{Messaging,Realtime,Channels}*.go`,
   `apps/web/client/models/{Conversation,Message,Channel,Realtime,Delivery,Author,Attachment,Block,Span,ImageRef}*.go`,
-  `apps/web/client/tests/{Sidebar,Conversation,Realtime}*.go`.
+  `apps/web/client/tests/{Sidebar,Conversation,Realtime}*.go`,
+  `apps/web/client/setups/{Sidebar,Conversation,Realtime,Messaging,Channels}*.go`.
 - **Builds:** the sidebar (the domain switcher for people with accounts in
   several domains, channels, DMs, email conversations,
   unread and mention counts), the message list with live updates (bodies
@@ -379,7 +389,8 @@ C1, not before each slice merge.
   `apps/web/client/services/Composer*.go`,
   `apps/web/client/remotes/{Directory,Attachments}*.go`,
   `apps/web/client/models/{Recipient,Send,Resolve,Upload,EmailOptions}*.go`,
-  `apps/web/client/tests/Composer*.go`.
+  `apps/web/client/tests/Composer*.go`,
+  `apps/web/client/setups/{Composer,Directory,Attachments}*.go`.
 - **Builds:** the one composer: recipient chips with Chat / Email / Both,
   and "Email · other domain" for a member of another hosted domain
   (AC-CP-1..5), subject, Cc, Bcc, the who-gets-what summary, attachments,
@@ -387,11 +398,18 @@ C1, not before each slice merge.
 - **Depends on:** F1, D1, M3, A1.
 
 ### F4. Web threads, search and notifications
-- **Owns:** `apps/web/client/components/{thread,search,notifications}/**`,
-  `apps/web/client/services/{Thread,Search,Notification}*.go`,
-  `apps/web/client/remotes/{Search,Notify}*.go`,
-  `apps/web/client/models/{SearchHit,Notification,Presence}*.go`,
-  `apps/web/client/tests/{Thread,Search,Notification}*.go`.
+- **Owns:** `apps/web/client/components/{thread,search,notifications}/**`
+  (the presence control lives in `components/notifications/presence/` and
+  `components/notifications/presence-menu/`, not in F1's `components/app/`),
+  `apps/web/client/services/{Thread,Search,Notification}*.go` (including
+  `NotificationPresence*` and `NotificationPush*`),
+  `apps/web/client/remotes/{Thread,Search,Notify,Presence}*.go`,
+  `apps/web/client/models/{Thread,SearchHit,Notification,Presence}*.go`,
+  `apps/web/client/tests/{Thread,Search,Notification,Presence}*.go`,
+  `apps/web/client/setups/{Thread,Search,Notify,Notification,Presence}*.go`.
+  F4 reads thread replies with its own `Thread*` remote but reuses F2's
+  `Message`, `Block`, `Span` and other message models; it never copies
+  them.
 - **Builds:** the thread pane, search with filters (AC-SR-3), the
   notification list and push opt-in, presence dots and Do not disturb.
 - **Depends on:** F1, M3, S1, N1, R1.

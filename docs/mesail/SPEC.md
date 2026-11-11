@@ -352,8 +352,13 @@ stable; tests name them.
 - **AC-PN-2** A mention, a DM, or a reply in a thread the member takes part
   in creates a notification. Muted conversations create notifications only
   for direct mentions.
-- **AC-PN-3** Notifications reach the member by Web Push when no Mesail tab
-  is focused, and are not sent during `dnd`.
+- **AC-PN-3** In the first release, notifications reach the member inside
+  Mesail: in the notification list, and as a system notification
+  (browser or desktop notification) while a Mesail window is open but not
+  focused. None are shown during `dnd`. When no Mesail window is open, the
+  email summary (AC-PN-4) covers them. Push to a closed browser or to a
+  phone waits for TACHYON support (Web Push from Go Tac) and native push per
+  platform, both after the first release.
 - **AC-PN-4** A member may opt in to one email summary of unread
   notifications after a delay they choose (15 minutes to 24 hours).
 

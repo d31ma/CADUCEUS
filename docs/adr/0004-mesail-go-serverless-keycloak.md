@@ -472,6 +472,11 @@ Friction found while designing, to raise with the dependency owners:
   `@OnStart`; ARIA attributes that take Go booleans; key filters on events
   (`on:keydown.escape`) and focus control (focus, focus trap, focus
   return). Details: `slice-f1-tachyon-gaps.md` in the planning notes.
+- TACHYON: a Push capability for Go Tac services (PushManager subscribe
+  with a VAPID key, returning endpoint, `p256dh` and `auth`, and a service
+  worker push handler that shows the notification), and native push
+  (APNs, FCM, WNS) on the native targets. Without it Mesail ships in-app
+  notifications and the email summary only (found by slice F4).
 - TACHYON: `viewport-fit=cover` in the injected viewport meta (or a manifest
   option), and `--tac-safe-area-*` properties from the iOS and Android
   hosts, so a bottom bar never sits under the home indicator.

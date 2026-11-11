@@ -15,12 +15,29 @@ type OutboxTest struct {
 }
 
 func (test *OutboxTest) TestTheRelayRetriesAPendingMemberEventWhileServiceTokensAreMissing() {
-	relay, _, _ := test.world()
+	relay, ref, _ := test.world()
 	report, err := relay.RunOnce()
+	fields, loadErr := relay.store.Load(ref)
+	state, readErr := outbox.Codec{}.Read(fields)
 	Assert.IsTrue(err == nil, "relay failed")
-	Assert.IsTrue(report.Documents >= 1, "no pending document found")
-	Assert.IsTrue(report.Retried >= 1, "nothing was retried")
+	Assert.IsTrue(loadErr == nil && readErr == nil, "member document not readable")
+	Assert.Equals(1, state.Pending[0].Attempts)
 	Assert.Equals(0, report.Delivered)
+}
+
+func (test *OutboxTest) TestAnEventThatIsNotDueIsLeftForTheNextSweep() {
+	relay, _, _ := test.world()
+	relay.RunOnce()
+	due, err := relay.store.PendingIn("outbox-unit.test", 20)
+	Assert.IsTrue(err == nil, "pending failed")
+	Assert.Equals(0, len(due))
+}
+
+func (test *OutboxTest) TestAFreshEventIsDue() {
+	relay, _, _ := test.world()
+	due, err := relay.store.PendingIn("outbox-unit.test", 20)
+	Assert.IsTrue(err == nil, "pending failed")
+	Assert.Equals(1, len(due))
 }
 
 func (test *OutboxTest) TestTheRelayNeedsOutboxSettings() {

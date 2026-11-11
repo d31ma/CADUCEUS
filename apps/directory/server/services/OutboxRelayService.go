@@ -51,9 +51,10 @@ func (service *OutboxRelayService) relay(settings outbox.Settings, domainId stri
 func (service *OutboxRelayService) sweep(settings outbox.Settings, domains []DomainDocument) (outbox.Report, error) {
 	total := outbox.Report{}
 	failures := []error{}
+	deadline := time.Now().Add(service.timeBudget())
 	for _, domain := range domains {
-		report, failure := service.relay(settings, domain.DomainId).RunOnce(max(service.sweepSize()-total.Documents, 0))
-		total = outbox.Report{Documents: total.Documents + report.Documents, Delivered: total.Delivered + report.Delivered, Retried: total.Retried + report.Retried, DeadLettered: total.DeadLettered + report.DeadLettered}
+		report, failure := service.relay(settings, domain.DomainId).RunWithin(max(service.sweepSize()-total.Documents, 0), time.Until(deadline))
+		total = outbox.Report{Documents: total.Documents + report.Documents, Delivered: total.Delivered + report.Delivered, Retried: total.Retried + report.Retried, DeadLettered: total.DeadLettered + report.DeadLettered, More: cmp.Or(total.More, report.More)}
 		failures = append(failures, failure)
 	}
 	return total, errors.Join(failures...)
@@ -109,6 +110,10 @@ func (service *OutboxRelayService) missingLetter(failure error) error {
 		return &NotFound{Message: "no such dead event"}
 	}
 	return nil
+}
+
+func (service *OutboxRelayService) timeBudget() time.Duration {
+	return 20 * time.Second
 }
 
 func (service *OutboxRelayService) sweepSize() int {

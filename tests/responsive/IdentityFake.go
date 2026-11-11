@@ -63,6 +63,9 @@ const (
 	sessionRefreshPath  = "/api/v1/identity/session/refresh"
 	sessionDomainPath   = "/api/v1/identity/session/domain"
 	fakeUsername        = "ana"
+	noDomainLogin       = "dan"
+	firstPasswordLogin  = "new"
+	operatorLogin       = "op"
 	rightPassword       = "right"
 	rateLimitedPassword = "busy"
 	sessionKeyPrefix    = "key-"
@@ -90,11 +93,22 @@ func (fake *IdentityFake) ServeHTTP(writer http.ResponseWriter, request *http.Re
 func (fake *IdentityFake) signIn(writer http.ResponseWriter, request *http.Request) {
 	var signIn fakeSignInRequest
 	_ = json.NewDecoder(request.Body).Decode(&signIn)
-	domain := fake.domainOfLogin(signIn.Login + signIn.Address)
+	login := signIn.Login + signIn.Address
+	domain := fake.domainOfLogin(login)
 	switch {
 	case signIn.Password == rateLimitedPassword:
 		writeJson(writer, http.StatusTooManyRequests, fakeApiError{Code: "rate_limited", Message: "Too many tries."})
-	case signIn.Password == rightPassword && fake.hosts(domain):
+	case signIn.Password != rightPassword:
+		writeJson(writer, http.StatusUnauthorized, fakeApiError{Code: "unauthenticated", Message: "Sign-in failed."})
+	case login == noDomainLogin:
+		writeJson(writer, http.StatusForbidden, fakeApiError{Code: "no_domain", Message: "No domain."})
+	case login == firstPasswordLogin:
+		writeJson(writer, http.StatusOK, fake.firstPasswordSession())
+	case login == operatorLogin:
+		writeJson(writer, http.StatusOK, fake.operatorSession())
+	case !fake.hosts(domain):
+		writeJson(writer, http.StatusForbidden, fakeApiError{Code: "not_a_member", Message: "Not a member."})
+	case fake.hosts(domain):
 		writeJson(writer, http.StatusOK, fake.sessionFor(domain))
 	default:
 		writeJson(writer, http.StatusUnauthorized, fakeApiError{Code: "unauthenticated", Message: "Sign-in failed."})
@@ -123,6 +137,23 @@ func (fake *IdentityFake) switchDomain(writer http.ResponseWriter, request *http
 		writeJson(writer, http.StatusNotFound, fakeApiError{Code: "not_found", Message: "not found"})
 	default:
 		writeJson(writer, http.StatusOK, fake.sessionFor(domain))
+	}
+}
+
+func (fake *IdentityFake) firstPasswordSession() fakeSession {
+	session := fake.sessionFor(fake.Profile.HostedDomains[0])
+	session.Me.Username = firstPasswordLogin
+	session.MustChangePassword = true
+	return session
+}
+
+func (fake *IdentityFake) operatorSession() fakeSession {
+	return fakeSession{
+		Me:          fakeMe{DomainId: "*", Username: operatorLogin, DisplayName: "Olu Park", Roles: []string{operatorRole}},
+		Domains:     []fakeDomainChoice{},
+		AccessToken: "token-operator",
+		ExpiresIn:   60,
+		SessionKey:  sessionKeyPrefix + "operator",
 	}
 }
 

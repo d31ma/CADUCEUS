@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: browser notifications when Mesail is closed</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<link rel="stylesheet" href="assets/screens/offline.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#r1s">Skip to the first state</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 px-0 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">Browser push (SPEC AC-PN-3, slice N2). Off until the person turns it on, in Settings or from a one-time suggestion; the browser asks only after that click. A notification shows who wrote and where, never the message.</p>
+    <!-- Mockup: labelled states side by side. Cards keep their token widths (auth 26rem, dialog 32rem, page 50rem). -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-dialog-max)),1fr))]">
+      <section class="grid w-full max-w-dialog content-start gap-3" id="r1s" aria-label="Row 1 &middot; Off (the default). Settings &gt; Notifications">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Row 1 &middot; Off (the default). Settings &gt; Notifications</p>
+        <section class="w-full rounded-lg border border-border bg-surface" aria-labelledby="r1-h">
+          <div class="border-b border-divider px-4 py-4"><h3 id="r1-h" class="text-lg font-semibold">Notifications when Mesail is closed</h3><p class="mt-0.5 text-sm text-subtle">For this browser, in every domain you open here.</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-56 gap-0.5"><p id="r1-label" class="font-medium">Notify me in this browser when Mesail is closed</p><p class="text-sm text-subtle" id="r1-hint">Turn this on only on your own device.</p></div><w-switch class="ms-auto" aria-labelledby="r1-label" aria-describedby="r1-hint"></w-switch></div>
+          </div>
+        </section>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Row 2 &middot; After the click: the browser asks (the only moment Mesail asks)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Row 2 &middot; After the click: the browser asks (the only moment Mesail asks)</p>
+        <section class="w-full rounded-lg border border-border bg-surface" aria-labelledby="r2-h">
+          <div class="border-b border-divider px-4 py-4"><h3 id="r2-h" class="text-lg font-semibold">Notifications when Mesail is closed</h3><p class="mt-0.5 text-sm text-subtle">For this browser, in every domain you open here.</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-56 gap-0.5"><p id="r2-label" class="font-medium">Notify me in this browser when Mesail is closed</p><p class="text-sm text-subtle" id="r2-hint">Turn this on only on your own device.</p></div><w-switch class="ms-auto" aria-labelledby="r2-label" aria-describedby="r2-hint" checked disabled></w-switch></div>
+            <p class="text-sm" id="r2-status" role="status"><w-icon name="refresh" class="ms-icon-sm me-2 inline-flex animate-spin text-accent motion-reduce:animate-none" aria-hidden="true"></w-icon>Your browser now asks if Mesail may show notifications. Choose <strong>Allow</strong>.</p>
+            <div class="grid min-h-20 place-items-center rounded-lg border border-dashed border-outline p-3 text-center text-xs text-subtle" aria-hidden="true">The browser&rsquo;s own question opens here (not drawn: it belongs to the browser)</div>
+          </div>
+        </section>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Row 3 &middot; On (Allow): registered in each domain opened here">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Row 3 &middot; On (Allow): registered in each domain opened here</p>
+        <section class="w-full rounded-lg border border-border bg-surface" aria-labelledby="r3-h">
+          <div class="border-b border-divider px-4 py-4"><h3 id="r3-h" class="text-lg font-semibold">Notifications when Mesail is closed</h3><p class="mt-0.5 text-sm text-subtle">For this browser, in every domain you open here.</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-56 gap-0.5"><p id="r3-label" class="font-medium">Notify me in this browser when Mesail is closed</p><p class="text-sm text-subtle" id="r3-hint">Turn this on only on your own device.</p></div><w-switch class="ms-auto" aria-labelledby="r3-label" aria-describedby="r3-hint" checked></w-switch></div>
+            <p class="text-sm" id="r3-status" role="status"><span class="inline-flex items-center gap-1 font-medium text-on-success-container"><w-icon name="check" class="ms-icon-sm" aria-hidden="true"></w-icon>On for this browser</span> in example.com and example.org. Other domains join when you open them here.</p>
+            <p class="text-xs text-subtle">Nothing comes while you are using Mesail or set to Do not disturb. A notification shows who wrote and where, never the message.</p>
+          </div>
+        </section>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Row 4 &middot; The person closed the browser&rsquo;s question without choosing">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Row 4 &middot; The person closed the browser&rsquo;s question without choosing</p>
+        <section class="w-full rounded-lg border border-border bg-surface" aria-labelledby="r4-h">
+          <div class="border-b border-divider px-4 py-4"><h3 id="r4-h" class="text-lg font-semibold">Notifications when Mesail is closed</h3><p class="mt-0.5 text-sm text-subtle">For this browser, in every domain you open here.</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-56 gap-0.5"><p id="r4-label" class="font-medium">Notify me in this browser when Mesail is closed</p><p class="text-sm text-subtle" id="r4-hint">Turn this on only on your own device.</p></div><w-switch class="ms-auto" aria-labelledby="r4-label" aria-describedby="r4-hint"></w-switch></div>
+            <p class="text-sm" id="r4-status" role="status">Nothing changed. Turn the switch on to be asked again.</p>
+          </div>
+        </section>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Row 5 &middot; Blocked (the person chose Block, now or before)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Row 5 &middot; Blocked (the person chose Block, now or before)</p>
+        <section class="w-full rounded-lg border border-border bg-surface" aria-labelledby="r5-h">
+          <div class="border-b border-divider px-4 py-4"><h3 id="r5-h" class="text-lg font-semibold">Notifications when Mesail is closed</h3><p class="mt-0.5 text-sm text-subtle">For this browser, in every domain you open here.</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-56 gap-0.5"><p id="r5-label" class="font-medium">Notify me in this browser when Mesail is closed</p><p class="text-sm text-subtle" id="r5-hint">Blocked in this browser&rsquo;s settings.</p></div><w-switch class="ms-auto" aria-labelledby="r5-label" aria-describedby="r5-hint" disabled></w-switch></div>
+            <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3" role="note"><w-icon name="bell-off" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p class="font-semibold">Blocked in this browser&rsquo;s settings</p><p>Mesail cannot ask again. To allow it: select the icon to the left of the web address, find <strong>Notifications</strong>, choose <strong>Allow</strong>, then come back here.</p></div></div>
+            <w-btn variant="outlined" prepend-icon="refresh" class="justify-self-start">Check again</w-btn>
+          </div>
+        </section>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Row 6 &middot; Turned off by the person">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Row 6 &middot; Turned off by the person</p>
+        <section class="w-full rounded-lg border border-border bg-surface" aria-labelledby="r6-h">
+          <div class="border-b border-divider px-4 py-4"><h3 id="r6-h" class="text-lg font-semibold">Notifications when Mesail is closed</h3><p class="mt-0.5 text-sm text-subtle">For this browser, in every domain you open here.</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-56 gap-0.5"><p id="r6-label" class="font-medium">Notify me in this browser when Mesail is closed</p><p class="text-sm text-subtle" id="r6-hint">Turn this on only on your own device.</p></div><w-switch class="ms-auto" aria-labelledby="r6-label" aria-describedby="r6-hint"></w-switch></div>
+            <p class="text-sm" id="r6-status" role="status">Off. This browser no longer gets notifications when Mesail is closed. Your other devices keep their own setting.</p>
+          </div>
+        </section>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Row 7 &middot; Mesail app (macOS, Windows, Linux, iOS, Android): the row is hidden">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Row 7 &middot; Mesail app (macOS, Windows, Linux, iOS, Android): the row is hidden</p>
+        <section class="w-full rounded-lg border border-dashed border-outline bg-surface-low p-4 text-sm text-subtle"><p>No &ldquo;when Mesail is closed&rdquo; row: the apps get it later (APNs, FCM, WNS; TACHYON T4b). Notifications while the app is open work as before.</p></section>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Row 8 &middot; Safari on iPhone or iPad, not on the Home Screen: the row is hidden, one hint line">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Row 8 &middot; Safari on iPhone or iPad, not on the Home Screen: the row is hidden, one hint line</p>
+        <section class="w-full rounded-lg border border-border bg-surface p-4"><p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="info" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>To get notifications when Mesail is closed on iPhone or iPad, add Mesail to your Home Screen: select Share, then Add to Home Screen. Then open Mesail from there.</span></p></section>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Suggestion 1 &middot; Shown once, after the first notification while Mesail is open (never on page load)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Suggestion 1 &middot; Shown once, after the first notification while Mesail is open (never on page load)</p>
+        <aside class="w-full rounded-xl border border-border bg-surface p-4 shadow-xl" aria-labelledby="g1-t">
+          <div class="flex items-start gap-3"><span class="grid size-10 flex-none place-items-center rounded-full bg-primary-container text-on-primary-container" aria-hidden="true"><w-icon name="bell"></w-icon></span><div class="grid min-w-0 flex-1 gap-1"><h3 id="g1-t" class="font-semibold">Get notified when Mesail is closed?</h3><p class="text-sm text-subtle">You just got a notification while Mesail was open. Mesail can also tell you when it is closed: who wrote and where, never the message. Turn this on only on your own device.</p></div><w-icon-btn icon="close" size="small" aria-label="Close (same as Not now)"></w-icon-btn></div>
+          <div class="mt-3 flex flex-wrap justify-end gap-2 max-sm:[&>*]:flex-1"><w-btn variant="text">Not now</w-btn><w-btn variant="filled" prepend-icon="bell">Turn on</w-btn></div>
+        </aside>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Suggestion 2 &middot; After Turn on: the browser asks">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Suggestion 2 &middot; After &ldquo;Turn on&rdquo;: the browser asks</p>
+        <aside class="w-full rounded-xl border border-border bg-surface p-4 shadow-xl" aria-labelledby="g2-t">
+          <h3 id="g2-t" class="flex items-center gap-2 font-semibold"><w-icon name="refresh" class="ms-icon-sm flex-none animate-spin text-accent motion-reduce:animate-none" aria-hidden="true"></w-icon>Your browser now asks</h3>
+          <p class="mt-1 text-sm text-subtle">Choose <strong>Allow</strong> to get notifications when Mesail is closed.</p>
+          <div class="mt-3">
+            <div class="grid min-h-20 place-items-center rounded-lg border border-dashed border-outline p-3 text-center text-xs text-subtle" aria-hidden="true">The browser&rsquo;s own question opens here (not drawn: it belongs to the browser)</div>
+          </div>
+        </aside>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Suggestion 3 &middot; Results (a status line for 4 seconds, then nothing)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Suggestion 3 &middot; Results (a status line for 4 seconds, then nothing)</p>
+        <div class="grid w-full gap-3">
+        <div class="flex w-full items-center gap-3 rounded-lg bg-inverse text-on-inverse px-4 py-2 shadow-lg" role="status"><w-icon name="check" class="ms-icon-sm flex-none" aria-hidden="true"></w-icon><p class="min-w-0 flex-1 py-1.5 text-sm">Notifications are on for this browser.</p></div>
+        <div class="flex w-full items-center gap-3 rounded-lg bg-inverse text-on-inverse px-4 py-2 shadow-lg" role="status"><w-icon name="info" class="ms-icon-sm flex-none" aria-hidden="true"></w-icon><p class="min-w-0 flex-1 py-1.5 text-sm">Not turned on. You can turn it on later in Settings &gt; Notifications.</p></div>
+        <div class="flex w-full items-center gap-3 rounded-lg bg-inverse text-on-inverse px-4 py-2 shadow-lg" role="status"><w-icon name="bell-off" class="ms-icon-sm flex-none" aria-hidden="true"></w-icon><p class="min-w-0 flex-1 py-1.5 text-sm">Blocked in this browser&rsquo;s settings.</p><a class="ms-auto inline-flex min-h-control-sm touch:min-h-touch items-center px-2 text-sm font-semibold underline" href="settings-notifications.html">How to allow</a></div>
+          <p class="text-xs text-subtle">&ldquo;Not now&rdquo; and the close button hide the suggestion for good. It never shows again on this browser.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Suggestion 4 &middot; Where it shows: under the sidebar list, above the bottom navigation on phones">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Suggestion 4 &middot; Where it shows: under the sidebar list, above the bottom navigation on phones</p>
+        <div class="grid w-full gap-3 rounded-xl border border-border bg-sidebar p-2">
+          <div class="flex min-h-control-md items-center gap-2 rounded-md px-2 text-sm"><w-icon name="bell" class="ms-icon-sm" aria-hidden="true"></w-icon>Activity<w-badge content="1" inline class="ms-auto" label="1 mention"></w-badge></div>
+          <div class="flex min-h-control-md items-center gap-2 rounded-md px-2 text-sm"><w-icon name="hash" class="ms-icon-sm" aria-hidden="true"></w-icon>design</div>
+        <aside class="w-full rounded-xl border border-border bg-surface p-4 shadow-xl" aria-labelledby="g4-t">
+          <div class="flex items-start gap-3"><span class="grid size-10 flex-none place-items-center rounded-full bg-primary-container text-on-primary-container" aria-hidden="true"><w-icon name="bell"></w-icon></span><div class="grid min-w-0 flex-1 gap-1"><h3 id="g4-t" class="font-semibold">Get notified when Mesail is closed?</h3><p class="text-sm text-subtle">You just got a notification while Mesail was open. Mesail can also tell you when it is closed: who wrote and where, never the message. Turn this on only on your own device.</p></div><w-icon-btn icon="close" size="small" aria-label="Close (same as Not now)"></w-icon-btn></div>
+          <div class="mt-3 flex flex-wrap justify-end gap-2 max-sm:[&>*]:flex-1"><w-btn variant="text">Not now</w-btn><w-btn variant="filled" prepend-icon="bell">Turn on</w-btn></div>
+        </aside>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Notification 1 &middot; A mention (who and where, never the text)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Notification 1 &middot; A mention (who and where, never the text)</p>
+        <div class="w-full max-w-[24rem] justify-self-center rounded-xl border border-border bg-surface-high p-3 shadow-xl" role="img" aria-label="System notification: Ana Ruiz, mentioned you in #design (example.com)">
+          <div class="flex items-center gap-2 text-xs text-subtle"><span class="ms-wordmark__mark relative size-5 rounded-md bg-rail" aria-hidden="true"></span><span class="font-semibold">Mesail</span><span>&middot; mesail.example.com</span><span class="ms-auto">now</span></div>
+          <p class="mt-2 font-semibold">Ana Ruiz</p>
+          <p class="text-sm">mentioned you in #design (example.com)</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Notification 2 &middot; A direct message">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Notification 2 &middot; A direct message</p>
+        <div class="w-full max-w-[24rem] justify-self-center rounded-xl border border-border bg-surface-high p-3 shadow-xl" role="img" aria-label="System notification: Bo Lee, sent you a message (example.org)">
+          <div class="flex items-center gap-2 text-xs text-subtle"><span class="ms-wordmark__mark relative size-5 rounded-md bg-rail" aria-hidden="true"></span><span class="font-semibold">Mesail</span><span>&middot; mesail.example.com</span><span class="ms-auto">2 min ago</span></div>
+          <p class="mt-2 font-semibold">Bo Lee</p>
+          <p class="text-sm">sent you a message (example.org)</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Notification 3 &middot; A reply in a thread you are in">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Notification 3 &middot; A reply in a thread you are in</p>
+        <div class="w-full max-w-[24rem] justify-self-center rounded-xl border border-border bg-surface-high p-3 shadow-xl" role="img" aria-label="System notification: Chen Wu, replied in a thread (example.com)">
+          <div class="flex items-center gap-2 text-xs text-subtle"><span class="ms-wordmark__mark relative size-5 rounded-md bg-rail" aria-hidden="true"></span><span class="font-semibold">Mesail</span><span>&middot; mesail.example.com</span><span class="ms-auto">5 min ago</span></div>
+          <p class="mt-2 font-semibold">Chen Wu</p>
+          <p class="text-sm">replied in a thread (example.com)</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Notification 4 &middot; The click opens the conversation, switching the tab&rsquo;s domain when needed">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Notification 4 &middot; The click opens the conversation, switching the tab&rsquo;s domain when needed</p>
+        <div class="grid w-full gap-3">
+          <div class="overflow-hidden rounded-xl border border-border bg-surface">
+            <div class="flex min-h-13 items-center gap-2 border-b border-divider bg-sidebar px-2"><w-btn variant="text" class="font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.org</w-btn></div>
+            <div class="flex min-h-13 items-center gap-2 border-b border-divider px-4"><w-avatar text="BL" size="24" style="--h:20" alt=""></w-avatar><span class="font-bold">Bo Lee</span></div>
+            <p class="px-4 py-3 text-sm text-subtle">The conversation opens at the first unread message.</p>
+          </div>
+        <div class="flex w-full items-center gap-3 rounded-lg bg-inverse text-on-inverse px-4 py-2 shadow-lg" role="status"><w-icon name="globe" class="ms-icon-sm flex-none" aria-hidden="true"></w-icon><p class="min-w-0 flex-1 py-1.5 text-sm">Now in example.org, from a notification.</p></div>
+          <p class="text-xs text-subtle">The click goes to the notification&rsquo;s path, built from the domain id and the conversation id. When the tab was in example.com, it switches with <code>POST /identity/session/domain</code> first. With no Mesail tab open, a new tab opens there.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Notification 5 &middot; The click, when the conversation cannot open">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Notification 5 &middot; The click, when the conversation cannot open</p>
+        <div class="grid w-full gap-3">
+        <div class="flex w-full items-center gap-3 rounded-lg bg-error-container text-on-error-container px-4 py-2 shadow-lg" role="status"><w-icon name="alert" class="ms-icon-sm flex-none" aria-hidden="true"></w-icon><p class="min-w-0 flex-1 py-1.5 text-sm">You no longer have access to example.org.</p></div>
+        <div class="flex w-full items-center gap-3 rounded-lg bg-surface-high text-text px-4 py-2 shadow-lg" role="status"><w-icon name="lock" class="ms-icon-sm flex-none" aria-hidden="true"></w-icon><p class="min-w-0 flex-1 py-1.5 text-sm">Sign in to open this conversation. It opens after you sign in.</p></div>
+        <div class="flex w-full items-center gap-3 rounded-lg bg-surface-high text-text px-4 py-2 shadow-lg" role="status"><w-icon name="info" class="ms-icon-sm flex-none" aria-hidden="true"></w-icon><p class="min-w-0 flex-1 py-1.5 text-sm">This conversation is no longer available to you.</p></div>
+          <p class="text-xs text-subtle">The domain&rsquo;s lost access shows the existing screen (domain-switch-states.html, state 7); signed out shows the sign-in form and opens the conversation after it.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="Stop 1 &middot; Sign-out: the sign-out confirmation says so">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Stop 1 &middot; Sign-out: the sign-out confirmation says so</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="x1-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-surface-high text-text" aria-hidden="true"><w-icon name="logout"></w-icon></span><h2 id="x1-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">Sign out of Mesail?</h2></div>
+          <div class="grid gap-3 px-4 pb-2 sm:px-6">
+            <p>You sign out of every domain on this browser.</p>
+            <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="bell-off" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>This browser also stops getting notifications from Mesail.</span></p>
+          </div>
+          <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-4 pt-4 pb-5 sm:px-6 max-sm:[&>*]:flex-1">
+            <w-btn variant="text">Cancel</w-btn>
+            <w-btn variant="filled">Sign out</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="Stop 2 &middot; Where pushes stop, and what the person sees">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">Stop 2 &middot; Where pushes stop, and what the person sees</p>
+        <ul class="grid w-full divide-y divide-divider rounded-lg border border-border bg-surface text-sm">
+          <li class="grid gap-1 p-4"><p class="font-semibold">Sign-out</p><p class="text-subtle">The browser&rsquo;s subscription ends. The signed-out page adds: &ldquo;Notifications in this browser are off.&rdquo;</p></li>
+          <li class="grid gap-1 p-4"><p class="font-semibold">Removing the copy on this device, or any other wipe</p><p class="text-subtle">The subscription ends with the copy. The confirmation adds: &ldquo;This browser also stops getting notifications.&rdquo;</p></li>
+          <li class="grid gap-1 p-4"><p class="font-semibold">Removed from a domain</p><p class="text-subtle">That domain&rsquo;s registration is deleted by the server. Nothing extra is shown: the existing &ldquo;You no longer have access&rdquo; notice covers it. Other domains keep notifying.</p></li>
+          <li class="grid gap-1 p-4"><p class="font-semibold"><code>403 access_revoked</code></p><p class="text-subtle">Every subscription of the person ends. The &ldquo;Your session was ended&rdquo; screen covers it.</p></li>
+        </ul>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Mockup pages">
+        <ul class="flex flex-wrap justify-center gap-2">
+          <li><w-btn variant="text" size="small" href="index.html">All mockups</w-btn></li>
+          <li><w-btn variant="text" size="small" href="offline-messenger.html">Offline messenger</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

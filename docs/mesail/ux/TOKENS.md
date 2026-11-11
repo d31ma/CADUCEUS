@@ -123,6 +123,10 @@ Offline states (slice OU, `screens/offline.css`) add no colour token: the sync b
 attention, up to date); waiting items use `--w-on-warning-container` text and a `--w-warning-container` edge;
 the space meter uses `--w-primary`, `--ms-email`, `--ms-presence-idle` and `--w-text-very-subtle`, always with a
 labelled list beside it.
+
+Browser push states (slice N2, `push-states.html`) add no token either: status lines use the inverse pair
+(`bg-inverse` / `text-on-inverse`, DuVay's snackbar colours), errors the error-container pair, and the drawn
+system notification `--w-surface-container-high` with the `shadow-xl` utility, like dialogs.
 Proportions: a card is never wider than its content needs (auth 26rem, dialog 32rem), its main button fills
 the card width at 48 px, and secondary buttons sit at 40 px, so the main action is always the largest.
 

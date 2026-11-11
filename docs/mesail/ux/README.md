@@ -1,7 +1,7 @@
 # Mesail UX specification
 
 - Status: Draft for implementation
-- Date: 2026-11-10 (one login, ADR 0005, and offline first, ADR 0006: 2026-11-11)
+- Date: 2026-11-10 (one login, ADR 0005, offline first, ADR 0006, and browser push, AC-PN-3: 2026-11-11)
 - Owner: Senior UX/UI Designer (Mesail rewrite)
 - Product spec: [../SPEC.md](../SPEC.md) (scenarios S1-S17, acceptance criteria AC-*; one login: AC-ID-1 to AC-ID-14; offline first: AC-OF-1 to AC-OF-17, section 15)
 - Design tokens: [TOKENS.md](TOKENS.md)
@@ -556,3 +556,53 @@ attention cards and the space meter (COMPONENTS.md "Offline and sync").
 - **Sizes:** every new target follows TOKENS.md "Control sizes"; the bar, chips, list rows, tabs and
   recipient input reach 44 px on touch and under 768 px. Checked in headless Chromium at 320, 375, 768,
   1024, 1440 and 2560 px, light and dark (fine and coarse pointer at 768 and 1024).
+
+## 16. Notifications when Mesail is closed (browser push, SPEC AC-PN-3, slice N2)
+
+Mockups: `push-states.html` (every state), `settings-notifications.html` (the row in place). Server side:
+CONTRACTS "notify" (`GET /notify/push-key`, `POST` and `DELETE /notify/push-subscriptions`, the payload
+`{title, body, path, tag}` of TACHYON ADR 0118).
+
+- **The row** (Settings > Notifications, card "Notifications when Mesail is closed", "For this browser, in
+  every domain you open here."): the switch "Notify me in this browser when Mesail is closed", off by
+  default, with "Turn this on only on your own device. A notification shows who wrote and where, never the
+  message." It is per browser, not per domain: while it is on, each domain the tab opens registers the
+  same browser subscription once.
+- **Mesail never asks on page load.** The browser's own question appears only right after the person turns
+  the switch on, or presses "Turn on" in the suggestion. While it is open the row says "Your browser now
+  asks if Mesail may show notifications. Choose Allow." (the switch disabled, a spinner). Results:
+  - Allow: "On for this browser in example.com and example.org. Other domains join when you open them here."
+  - The question closed without a choice: the switch goes back off, "Nothing changed. Turn the switch on to
+    be asked again."
+  - Block (now or earlier): the switch is disabled, the hint says "Blocked in this browser's settings.", and
+    a warning box explains how to allow it (the icon left of the address, Notifications, Allow) with
+    **Check again**.
+  - Turned off by the person: "Off. This browser no longer gets notifications when Mesail is closed. Your
+    other devices keep their own setting." (`DELETE /notify/push-subscriptions` in each registered domain.)
+- **Hidden** where the browser has no push: in the Mesail apps (their push comes later, TACHYON T4b), and in
+  Safari on iPhone or iPad unless Mesail runs from the Home Screen. Design decision: on iPhone and iPad the
+  row is replaced by one hint line, "To get notifications when Mesail is closed on iPhone or iPad, add Mesail
+  to your Home Screen ...", because that is the only way to get them there.
+- **The one-time suggestion**: shown once per browser, after the first notification arrives while Mesail is
+  open, never on page load. A small card under the sidebar list (above the bottom navigation on phones):
+  "Get notified when Mesail is closed?" with the own-device advice, **Turn on** and **Not now** (the close
+  button counts as Not now). Either answer hides it for good on this browser. After "Turn on" the card says
+  "Your browser now asks"; then one status line for 4 seconds: "Notifications are on for this browser.",
+  "Not turned on. You can turn it on later in Settings > Notifications." or "Blocked in this browser's
+  settings." with "How to allow".
+- **The notification** (drawn by the system; its look differs per OS): title = the sender's name; body = what
+  and where, never message text: "mentioned you in #design (example.com)", "sent you a message
+  (example.org)", "replied in a thread (example.com)". A newer push for the same conversation replaces the
+  older one (`tag`). Nothing comes during Do not disturb or while the person is active in Mesail.
+- **The click** opens the conversation at the first unread message, in its domain. When the tab shows
+  another domain it switches first (`POST /identity/session/domain`) and says "Now in example.org, from a
+  notification."; with no Mesail tab open a new tab opens there. Lost access shows the existing "You no
+  longer have access to example.org"; signed out shows the sign-in form and opens the conversation after
+  it; a conversation the person can no longer read says "This conversation is no longer available to you."
+- **Where pushes stop**: sign-out (the confirmation says "This browser also stops getting notifications
+  from Mesail."; `signed-out.html` adds "Notifications in this browser are off."), every wipe of the device
+  copy (the "Remove the copy" confirmation says so), removal from a domain (that domain's registration is
+  deleted by the server; the existing notice covers it) and `403 access_revoked` (the "Your session was
+  ended" screen covers it).
+- **Sizes and checks:** the row uses the shared control scale; every new target is at least 44 px on touch
+  and under 768 px. Checked in headless Chromium at 320, 375, 768, 1024, 1440 and 2560 px, light and dark.

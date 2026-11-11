@@ -164,6 +164,15 @@ elements and Tailwind.
 | Locked copy, ended access, sign-out warning, remove-the-copy and sign-out-everywhere dialogs | `device-locked.html`, `access-ended.html` | `components/app/device-locked/tac.html`, `components/app/access-ended/tac.html` + `DeviceWipeService.go` (O3) | `w-text-field`, `w-btn`, `w-dialog` | none |
 | Settings: this device (kept status, space meter per domain, window, space limit, files ahead, remove, sign out everywhere, cannot-encrypt and device-full notes) | `settings-device.html` | `pages/settings/device/tac.html` + `DeviceBudgetService.go` (O3) | `w-switch`, `w-select`, radio group, `.ms-space-meter` | the space-used meter |
 
+## Browser push (N2, SPEC AC-PN-3)
+
+| Component | Mockups | Tac target | DuVay element(s) |
+| --- | --- | --- | --- |
+| Row "Notify me in this browser when Mesail is closed" (off, asking, on, closed without a choice, blocked, turned off; hidden in the apps; iPhone hint) | `push-states.html` rows 1-8, `settings-notifications.html` | `components/settings/push/tac.html` + `NotificationPushService.go` (`Push.Supported`, `Push.Subscribe`, `Push.Unsubscribe`) | `w-switch`, `w-btn`, Mesail notice box |
+| One-time suggestion "Get notified when Mesail is closed?" and its status lines | `push-states.html` suggestions 1-4 | `components/notifications/push-suggestion/tac.html` + `NotificationPushService.go` (shown once, after the first in-app notification) | `w-icon-btn`, `w-btn`, `w-snackbar` for the status line |
+| Opening a conversation from a notification (path route, domain switch notice, failure lines) | `push-states.html` notifications 4-5 | the web app's path route + `SessionService.go` (domain switch) | `w-snackbar` |
+| Notification-stop lines in sign-out and wipe confirmations | `push-states.html` stops 1-2, `signed-out.html`, `access-ended.html` 5, 7 | the existing sign-out and wipe components | none new |
+
 ## Settings (new group: no slice owns it yet)
 
 | Component | Mockups | Tac target | DuVay element(s) |

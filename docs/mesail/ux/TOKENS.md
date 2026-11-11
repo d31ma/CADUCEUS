@@ -102,6 +102,11 @@ Every control has one of three heights, so buttons, fields, menu rows and icon b
 | `--ms-card-pad` / `-narrow` | 1.5rem / 1rem | `sm:p-6` / `p-4` | card padding from 600 px / under it |
 | `--ms-space-field`, `--ms-space-label`, `--ms-space-section` | 1rem, 0.375rem, 1.5rem | `gap-4`, `gap-1.5`, `gap-6` | between fields, label to field, between sections |
 
+**Icon buttons are square at the control height of their row:** 40 px next to 40 px fields and buttons.
+A dense row (sidebar rows, the remove button on a chip, row actions in a list) uses `--ms-control-sm` (32 px)
+with a mouse; under `touch:` it grows to `--ms-touch-min` (44 px) like every other target. Agreed with slice F3,
+which adds the same tokens with the same values to `apps/web` and `apps/web-admin` `shared/styles/app.css`.
+
 The Tailwind variant `touch:` (pointer: coarse, or a window under 768 px) matches the rule of `tests/responsive`.
 `mesail-components.css` applies the floor to DuVay's own controls in that case (`.w-btn`, `.w-icon-btn`,
 `.w-checkbox`, `.w-text-field-control`, `.w-select-field`), so a small DuVay button grows to 44 px on a phone.

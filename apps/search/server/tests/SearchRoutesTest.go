@@ -98,3 +98,9 @@ func (test *SearchRoutesTest) TestEventRouteAppliesAGoodEnvelope() {
 	Assert.Equals("no", (&Unauthenticated{Message: "no"}).Error())
 	Assert.Equals("down", (&Unavailable{Message: "down"}).Error())
 }
+
+func (test *SearchRoutesTest) TestAnUnavailableIndexNamesItsCause() {
+	failure := search.Unavailable{Message: "the search index is not available", Cause: errors.New("Yon managed resource operation failed.")}
+	Assert.Equals("the search index is not available: Yon managed resource operation failed.", failure.Error())
+	Assert.Equals("the search index is not available", search.Unavailable{Message: "the search index is not available"}.Error())
+}

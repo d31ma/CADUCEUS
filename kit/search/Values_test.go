@@ -59,11 +59,11 @@ func TestServiceFactoryBuildsAServiceThatRefusesAMissingToken(t *testing.T) {
 func TestErrorMessages(t *testing.T) {
 	cause := errors.New("disk full")
 	cases := map[string]error{
-		"bad limit":                                InvalidRequest{Message: "bad limit", Field: "limit"},
-		"no access":                                Forbidden{Message: "no access"},
-		"the access token was refused":             Unauthenticated{},
-		"the search index is not available":        Unavailable{Message: "the search index is not available", Cause: cause},
-		"the channels service answered status 503": MembershipFailed{Service: "channels", Status: 503},
+		"bad limit":                    InvalidRequest{Message: "bad limit", Field: "limit"},
+		"no access":                    Forbidden{Message: "no access"},
+		"the access token was refused": Unauthenticated{},
+		"the search index is not available: disk full": Unavailable{Message: "the search index is not available", Cause: cause},
+		"the channels service answered status 503":     MembershipFailed{Service: "channels", Status: 503},
 	}
 	for want, err := range cases {
 		if err.Error() != want {

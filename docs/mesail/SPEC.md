@@ -158,10 +158,11 @@ DKIM are *ok*. The Operator then names the first DomainAdmin of
 `example.org`.
 
 ### S12. Sign in and switch domains
-A visitor opens Mesail at the address of their domain and is sent to the
-Keycloak sign-in page of that domain's realm (for example `example.com`).
-After sign-in (with any factor Keycloak requires, such as a passkey) they
-come back to Mesail, signed in to that domain. Signing out in Mesail also
+A visitor opens Mesail and sees Mesail's own sign-in form. They type their
+address (for example `ana@example.com`), their password and, when their
+account has one, a one-time code. Mesail checks them with Keycloak on the
+server (the realm of `example.com`); the browser never talks to Keycloak.
+Passkeys are not offered in the first release. Signing out in Mesail also
 ends the Keycloak session. A DomainAdmin who disables a user in Keycloak
 cuts that user off within 60 seconds, including open realtime connections.
 Ana also has the address `ana@example.org`. She uses the domain switcher at
@@ -206,8 +207,11 @@ stable; tests name them.
 - **AC-ID-4** A user disabled or signed out in Keycloak loses access within
   60 seconds: API calls get `401` and open realtime connections close.
 - **AC-ID-5** Mesail stores no password, passkey, TOTP secret or recovery
-  code. The browser never stores a refresh token in script-readable
-  storage.
+  code. The browser never talks to Keycloak. The browser keeps the access
+  token (60 seconds) in memory only, and keeps only an encrypted, opaque
+  session key in per-tab session storage, which is gone when the tab
+  closes. No token or key ever appears in a URL or a log. (When TACHYON can
+  send same-origin cookies, the session key moves to an HttpOnly cookie.)
 - **AC-ID-6** A person with accounts in two domains can switch between them
   with the domain switcher. Each account keeps its own session and token.
   A request made with one domain's token never returns data of the other

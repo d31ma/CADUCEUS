@@ -56,14 +56,56 @@ field may be empty or left out.
 
 ## identity (stateless)
 
+Keycloak is reached only from the backend (the owner's rule). The browser
+never talks to Keycloak.
+
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
-| `GET /api/v1/identity/config` | Public | - | `ClientConfig{issuer, clientId, scopes[], apiBase}` |
+| `POST /api/v1/identity/session` | Public | `SignInRequest{address, password, oneTimeCode?}` | `200 Session{me, accessToken, expiresIn (seconds), sessionKey}`; `401 unauthenticated` (one message for every failure); `429 rate_limited` |
+| `POST /api/v1/identity/session/refresh` | Public | `RefreshRequest{sessionKey}` | `200 Session`; `401` when the Keycloak session has ended |
+| `DELETE /api/v1/identity/session` | Public | `RefreshRequest{sessionKey}` | `204`; ends the Keycloak session |
 | `GET /api/v1/identity/me` | SignedIn | - | `Me{memberId, domainId, displayName, primaryAddress, roles[]}` |
 
-The browser uses the OIDC authorization code flow with PKCE against
-Keycloak directly, in the realm of the user's domain. Mesail has no
-`/auth/*` login routes.
+How it works:
+- `POST /session` takes the domain from `address` (the realm has the same
+  name) and calls that realm's token endpoint server to server as the
+  confidential client `mesail-identity` (direct access grants). Every
+  realm uses the same client secret, `YON_IDENTITY_CLIENT_SECRET` in
+  `identity`'s `.env`; `directory` sets that value when it creates a realm.
+  Rotating it is an operator step (all realms, then `.env`, then restart).
+- It answers the Keycloak access token (a JWT, 60 seconds) as
+  `accessToken`, and the refresh token encrypted with AES-GCM under
+  `YON_IDENTITY_SESSION_KEY` as `sessionKey`. identity keeps no state; a
+  `sessionKey` stops working when Keycloak ends the session (sign-out, user
+  disabled, idle 30 minutes, at most 10 hours).
+- Tac keeps `accessToken` in memory only and sends it as
+  `Authorization: Bearer <accessToken>` on every Yon call (a
+  `// @RequestHeader("Authorization")` parameter). It keeps `sessionKey` in
+  a `// @SessionState` field (per tab, gone when the tab closes). When a
+  call answers `401`, Tac calls `POST /session/refresh` once and retries;
+  when that fails, it shows the sign-in form. No timer is needed.
+- Why not cookies: TACHYON 26.46.02's Tac HTTP client always sends requests
+  with `credentials: 'omit'`, so it sends no cookie and the browser ignores
+  `Set-Cookie` on its responses. When TACHYON offers same-origin
+  credentials, the `sessionKey` moves to an `HttpOnly` cookie (requested in
+  ADR 0004).
+- Every Yon app's `TokenIdentityProvider` checks the Bearer token with
+  `kit/oidc` `Gate`, for browser and service-to-service calls alike.
+- Realtime cannot send a header from the browser: `realtime` takes the
+  access token in the first socket message (`{type:"auth", token}`), and an
+  event stream takes a single-use ticket from
+  `POST /api/v1/realtime/tickets` (SignedIn, 30 seconds). Never a token in a
+  URL.
+- Second factor: TOTP through Keycloak's direct-grant conditional OTP
+  (`oneTimeCode`). Passkeys are not available in this flow; they are a
+  later slice.
+- Brute force: Keycloak brute-force detection is on in every realm (per
+  user), and the gateway or dev router limits requests per client address
+  (slice P1). `identity` keeps no counter; it answers `429` only when
+  Keycloak reports the account as temporarily locked.
+  Passwords, codes, tokens and session keys never appear in logs.
+- A person with accounts in two domains signs in once per domain; the domain
+  switcher keeps one `Session` per domain in the same `@SessionState`.
 
 ## directory
 
@@ -236,10 +278,29 @@ can read now.
 ## mail-out (worker, no public routes)
 
 Consumes `email.send.requested` (envelope `domainId` is the sender's domain;
-payload `{messageId, from, rcpt, role, subject, inReplyTo, references[],
-bodyRef, attachmentIds[], idempotencyKey}`), builds MIME, signs DKIM,
+payload `{messageId, from, rcpt, role, to[], cc[], subject, inReplyTo,
+references[], attachmentIds[], idempotencyKey}`; `to[]` and `cc[]` are the
+visible header lists, `rcpt` is the one envelope recipient of this item,
+Bcc never appears in `to[]` or `cc[]`), reads the body from `messaging`
+(`GET /api/v1/messaging/messages/{messageId}/source`, `Allow(Service)`,
+answers `MessageSource{messageId, domainId, body, attachmentIds[]}`;
+slice M3), reads `dkimSelector` and the hosted state from `directory`
+(`GET /api/v1/directory/domains/{domainId}`, `Allow(Service)`, answers
+`Domain`; slice D1), builds MIME, signs DKIM,
 delivers, and publishes `email.delivery.changed{messageId, rcpt, status,
 detail}`. When `rcpt` is in another hosted domain, `mail-out` may hand the
-signed message to `mail-in` inside the install (raw blob plus
-`POST /api/v1/mail-in/messages`) instead of using the internet. It is still
-email: full headers, DKIM, and an email conversation on both sides.
+signed message to `mail-in` inside the install instead of using the
+internet. It is still email: full headers, DKIM, and an email conversation
+on both sides. The hand-off (slice M1 accepts it, slice M2 sends it):
+- mail-out writes the raw message to the blob store under the SENDER's
+  domain and calls `POST /api/v1/mail-in/messages` with the same
+  `InboundEnvelope` the SMTP edge sends;
+- mail-in accepts a `rawBlobKey` in another hosted domain's space only on
+  this `Allow(Service)` route, copies the bytes into the recipient domain's
+  space, and keeps only its own copy, so each domain's retention and
+  deletion stay its own;
+- `authResults` carries the explicit marker `handoff: true` and no
+  invented SPF, DKIM or DMARC values. mail-in then skips the DNS checks,
+  requires that the sender domain is hosted and active (directory) and
+  that the `From` domain equals that sender domain, and the UI shows
+  "Sent from <domain> on this server" instead of check badges.

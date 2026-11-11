@@ -58,6 +58,16 @@ wave run at the same time.
     directly (SMB; FYLO refuses it), and never detach the image: other
     sessions share it. If it is not attached, attach it (Bash sandbox off):
     `diskutil image attach --mountOptions nobrowse --mountPoint ~/Developer/AtlasFylo/mesail /Volumes/ATLAS/Mesail/mesail-fylo-test.sparsebundle`.
+    **How `ty test` finds the root** (agreed with slice C1): no `datasource`
+    in the committed `server/application.json`; a committed
+    `apps/<app>/.env.example` shows the format, and a local, ignored
+    `apps/<app>/.env` holds
+    `YON_DATASOURCE_DRIVER=fylo` and
+    `YON_DATASOURCE_URL=fylo:///Users/<you>/Developer/AtlasFylo/mesail/slice-<id>/<app>`.
+    `ty` reads only the app folder's `.env` (not the process environment,
+    and a value in `application.json` cannot be overridden), and stops with
+    TY2160 when the folder does not exist, so `scripts/gates.sh` (C1)
+    creates the folder and the `.env` when they are missing.
     Only the integration run in Lambda form (Floci, AWS later) puts a
     service's root on its
     EFS mount: `/mnt/data/<service>/`.
@@ -102,12 +112,16 @@ C1, not before each slice merge.
   ES256 with the standard library, issuer allowlist, audience, `azp`,
   expiry with 30 s leeway) and `oidc.Configured()` reading its settings
   (issuer URL pattern, audience, JWKS URL) from the handler environment;
-  `outgoing.hosts` for the Keycloak host. Routes `GET /identity/config`,
+  `outgoing.hosts` for the Keycloak host. The session routes in
+  CONTRACTS.md "identity" (sign in with address, password and optional
+  one-time code through direct access grants; refresh and sign-out with the
+  encrypted `sessionKey`; brute-force limits; nothing secret in logs) and
   `GET /identity/me`. The Keycloak realm settings that Mesail needs
-  (public client `mesail-web` with PKCE, 60 s access tokens, roles
-  `mesail-*`, client `mesail-service` with client credentials) written as a
-  realm template under `apps/identity/realm/` for the Keycloak session to
-  import.
+  (confidential client `mesail-identity` with direct access grants and
+  conditional OTP, 60 s access tokens, brute-force detection on, roles
+  `mesail-*`, client `mesail-service` with client credentials; no browser
+  client) written as a realm template under `apps/identity/realm/` for the
+  Keycloak session to import.
 - **Depends on:** nothing. Coordinates the realm template with
   `mesail-keycloak` (which owns `deploy/keycloak/**`).
 - **Blackbox:** `Identity_test.go`.
@@ -203,10 +217,13 @@ C1, not before each slice merge.
   `apps/web/client/services/Shell*.go`, `apps/web/client/services/Session*.go`,
   `apps/web/client/remotes/Identity*.go`, `apps/web/client/models/{Session,ClientConfig,Me}*.go`,
   `apps/web/client/tests/{Shell,Session}*.go`.
-- **Builds:** OIDC sign-in with PKCE from Go Wasm (no `syscall/js`; use
-  Tachyon's navigation and storage features, and raise a TACHYON request if
-  one is missing), token refresh every 60 s, the three-pane layout
-  (AC-UI-1, 2, 4), the feature slots the shell already places.
+- **Builds:** Mesail's own sign-in form (address, password, one-time
+  code) calling `identity`'s session routes; the access token in memory and
+  sent with `// @RequestHeader("Authorization")`; the `sessionKey` in a
+  `// @SessionState` field; refresh after a `401` and retry once; sign-out;
+  the domain switcher; the three-pane layout (AC-UI-1, 2, 4) and the feature
+  slots the shell already places. Other web slices get the token from F1's
+  `SessionService`.
 - **Depends on:** I1.
 
 ### F5. Admin app

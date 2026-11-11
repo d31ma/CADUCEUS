@@ -235,11 +235,24 @@ kit/            shared plain Go packages (source of truth)
   Operators, who add and remove domains, sign in to the realm
   `mesail-operators` with the role `mesail-operator`. Adding a domain
   creates its realm from a template through the Keycloak admin API.
-- The browser signs in with the authorization code flow and PKCE as the
-  public client `mesail-web` of the domain's realm. Access tokens live 60
-  seconds and are kept in memory; refresh uses refresh token rotation. A
-  person with addresses in two domains has two accounts and a domain
-  switcher in the UI.
+- **Keycloak is reached only from the backend** (the owner's rule). Go Tac
+  in TACHYON 26.46.02 cannot run a browser OIDC flow (no redirects, no query
+  string, JSON only to its own origin). So Mesail shows its own sign-in
+  form, and `identity` signs in to the domain's realm server to server as
+  the confidential client `mesail-identity` (direct access grants, TOTP
+  through conditional OTP). It answers the access token (a JWT, 60 seconds)
+  and a `sessionKey`: the refresh token encrypted with AES-GCM under a key
+  from the secret store. `identity` keeps no state.
+- Tac keeps the access token in memory and sends it as
+  `Authorization: Bearer` (`@RequestHeader`); it keeps the `sessionKey` in
+  `@SessionState` (per tab) and calls `identity`'s refresh route after a
+  `401`. Cookies are not used because the Tac HTTP client sends requests
+  with `credentials: 'omit'`. Trade-offs, accepted for the first release:
+  no Keycloak login page, so no passkeys yet; the `sessionKey` is readable
+  by script in its tab, so CSP stays strict and no third-party script is
+  loaded; Keycloak's brute-force detection (per user) and the gateway's limit per client address
+  guard the password route. A person with addresses in two domains signs
+  in once per domain and switches with the domain switcher.
 - Every Yon app has one `TokenIdentityProvider` that calls
   `oidc.Configured().Identify(...)` from `kit/oidc`. A route that needs
   the caller (domain and member) gets it from a `CallerService` (`@Service`)
@@ -301,6 +314,9 @@ Friction found while designing, to raise with the dependency owners:
 
 - TACHYON: verify OIDC bearer tokens in the identity provider (JWKS with a
   cache) and pass the verified identity to routes.
+- TACHYON: an `@HTTPClient` option for same-origin credentials, so a
+  session key can live in an HttpOnly cookie instead of script-readable
+  storage.
 - TACHYON: mount separately built Tac apps under route prefixes, or split
   Go Wasm per route, so a frontend feature can be deployed alone.
 - TACHYON: more than one FYLO datasource per app, so a service can keep one

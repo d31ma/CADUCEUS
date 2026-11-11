@@ -306,7 +306,8 @@ Every event uses the `kit/events` `Envelope{eventId, type, domainId,
 producer, occurredAt, payload}`; the type names are in `kit/events` `Types`.
 Consumers are idempotent by `eventId`, and write only into the envelope's
 `domainId`. Event payloads carry ids, not message bodies, except
-`message.created`, which `realtime` and `search` need.
+`message.created` and `message.edited`, which carry the body because
+`realtime` and `search` need it.
 
 | Event | Producer | Consumers |
 | --- | --- | --- |

@@ -198,8 +198,18 @@ func (setup NotifyTestSetup) Preferences() *PreferencesService {
 	return &PreferencesService{callers: &CallerService{}, store: setup.SettingsStore()}
 }
 
+func (setup NotifyTestSetup) MessageCreated() *MessageCreatedService {
+	writer := &FanoutWriterService{store: setup.NotificationStore(), states: &NotificationStatesService{}, timestamps: &TimestampService{}}
+	queue := &FanoutQueueService{store: setup.FanoutStore(), timestamps: &TimestampService{}}
+	targets := &PushTargetsService{settings: &NotifySettingsService{}, client: &http.Client{}}
+	sender := &PushSenderService{subscriptions: setup.PushStore()}
+	pushes := &PushService{store: setup.NotificationStore(), presence: &PresenceService{settings: &NotifySettingsService{}}, targets: targets, sender: sender, states: &NotificationStatesService{}}
+	threads := &ThreadParticipationService{threads: setup.ThreadStore()}
+	return &MessageCreatedService{threads: threads, recipients: &RecipientService{settings: setup.SettingsStore()}, writer: writer, queue: queue, pushes: pushes}
+}
+
 func (setup NotifyTestSetup) EventActions() *NotificationEventsService {
-	return &NotificationEventsService{settings: setup.SettingsStore(), notifications: setup.NotificationStore(), timestamps: &TimestampService{}, created: &MessageCreatedService{}}
+	return &NotificationEventsService{settings: setup.SettingsStore(), notifications: setup.NotificationStore(), timestamps: &TimestampService{}, created: setup.MessageCreated()}
 }
 
 func (setup NotifyTestSetup) Handlers() *EventHandlersService {

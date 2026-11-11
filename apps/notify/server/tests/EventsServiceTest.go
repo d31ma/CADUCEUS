@@ -127,10 +127,6 @@ func (test *EventsServiceTest) TestMessageCreatedReachesTheApplyStep() {
 	Assert.IsTrue(setup.EventActions().MessageCreated(envelope) == nil)
 }
 
-func (test *EventsServiceTest) TestApplyAcceptsAMessage() {
-	Assert.IsTrue((&MessageCreatedService{}).Apply("example.com", events.MessageCreated{MessageId: "msg_5"}) == nil)
-}
-
 func (test *EventsServiceTest) contains(domains []string, domainId string) bool {
 	for _, found := range domains {
 		if found == domainId {

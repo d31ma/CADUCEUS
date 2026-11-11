@@ -1,0 +1,19 @@
+import "net/http"
+
+// @RequestRoute("/api/v1/notify/messages")
+// @Allow(Service)
+type MessageSourceController struct {
+	// @Needs
+	sources *MessageSourceService
+}
+
+// @GetRoute("/{messageId}/source")
+func (controller *MessageSourceController) GetSource(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromPath
+	messageId string,
+	request *http.Request,
+) (MessageSource, error) {
+	return controller.sources.Source(authorization, messageId, request.URL.Query().Get("domainId"))
+}

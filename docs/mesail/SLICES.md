@@ -46,6 +46,19 @@ wave run at the same time.
    `client/setups/`. A web slice owns the setups whose names start with
    the same prefixes as its remotes and services (listed under each F
    slice).
+8b. **Thin role files, workflows in plain Go.** `ty bundle` and `ty start`
+   enforce TY1314 strictly: every `if err != nil` in a public method of a
+   role file (controller, service, store, worker) counts as a decision, so
+   a Yon app with multi-step logic does not bundle (found by slices I1 and
+   A1). So every Yon slice puts its workflows in its own plain-Go package
+   `kit/<service>/` (for example `kit/messaging`), copied only into its own
+   app by `scripts/kit-sync.sh`, tested with `go test`, and held to the
+   CRAP limit by the gate. Role files stay thin: a public method makes one
+   call into that package and returns; a private helper holds at most one
+   decision. The package talks to FYLO, HTTP clients and the clock through
+   small Go interfaces that the role files fill in, so it is testable
+   without Tachyon. Design this way from the start (wave 2 slices M3, R1,
+   N1 included).
 9. **FYLO on ATLAS (every FYLO-owning slice).** Live roots are on ATLAS in
    Lambda form, where a write takes about 109 ms with stalls up to 11 s
    (ADR 0004 section 4). So: at most 25 FYLO writes and 20 seconds of work
@@ -430,7 +443,7 @@ C1, not before each slice merge.
 | Path | Owner |
 | --- | --- |
 | `docs/**` (except `docs/mesail/ux/**`), `tests/blackbox/**`, `tools/crap/**`, `scripts/kit-sync.sh`, `CLAUDE.md`, `AGENTS.md`, `README.md`, `CHANGELOG.md`, `.gitignore` | architecture (this plan); slices append to `CHANGELOG.md` only under their own heading, and update CONTRACTS.md per rule 3 |
-| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package (I1 `oidc`, I2 `events` `outbox`, D1 `recipients`, A1 `blobs`, M1 `mime` `mailauth`, M1 also `richtext`, M2 `compose` `dkim` `smtpclient`, S1 `textindex`, N1 `webpush`); `ids` and `collections` stay with architecture |
+| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package: I1 `oidc`, `identity`; I2 `events`, `outbox`; D1 `recipients`, `directory`; C2 `channels`; A1 `blobs`, `attachments`; M1 `mime`, `mailauth`, `richtext`, `mailin`; M2 `compose`, `dkim`, `smtpclient`, `mailout`; S1 `textindex`, `search`; M3 `messaging`; R1 `realtime`; N1 `webpush`, `notify`. The workflow package of a service (rule 8b) is copied only into that service's app; `ids` and `collections` stay with architecture |
 | `apps/<service>/**` other files | the service's slice |
 | `apps/web/client/**` | split between F1-F4 by the patterns above |
 | `apps/web-admin/**` | F5 |

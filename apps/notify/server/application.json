@@ -2,5 +2,62 @@
   "server": {
     "host": "127.0.0.1",
     "port": 8107
+  },
+  "oidc": {
+    "issuer": "http://127.0.0.1:8180/idp/realms/{realm}",
+    "jwks": "http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect/certs",
+    "audience": "mesail-api",
+    "keycloak": "http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect"
+  },
+  "outbox": {
+    "producer": "notify",
+    "subscribers": [
+      {
+        "name": "mail-out",
+        "url": "http://127.0.0.1:8110/api/v1/mail-out/events"
+      }
+    ],
+    "retry": {
+      "basedelayseconds": 5,
+      "maxdelayseconds": 900,
+      "maxattempts": 12
+    }
+  },
+  "notify": {
+    "push": {
+      "hosts": [
+        "fcm.googleapis.com",
+        "updates.push.services.mozilla.com",
+        "push.apple.com",
+        "notify.windows.com"
+      ]
+    },
+    "presence": {
+      "url": ""
+    },
+    "summary": {
+      "sender": "notifications"
+    }
+  },
+  "outgoing": {
+    "hosts": [
+      "127.0.0.1",
+      "keycloak",
+      "fcm.googleapis.com",
+      "updates.push.services.mozilla.com",
+      "push.apple.com",
+      "*.push.apple.com",
+      "notify.windows.com",
+      "*.notify.windows.com"
+    ]
+  },
+  "names": {
+    "words": [
+      "dedupe",
+      "dh",
+      "requeue",
+      "upserted",
+      "vapid"
+    ]
   }
 }

@@ -12,6 +12,8 @@ type PeopleController struct {
 	callers *CallerService
 	// @Needs
 	people *PersonService
+	// @Needs
+	seeds *PersonSeedService
 }
 
 // @GetRoute
@@ -31,6 +33,18 @@ func (controller *PeopleController) GetPerson(
 ) (PersonRecord, error) {
 	caller, refused := controller.callers.Caller(authorization)
 	return controller.recordUnless(cmp.Or(refused, controller.callers.InstallWide(caller)), personId)
+}
+
+// @PostRoute("/seed")
+// @Allow(Service)
+func (controller *PeopleController) PostSeed(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromBody
+	seed PersonSeed,
+) (PersonRecord, error) {
+	caller, refused := controller.callers.Caller(authorization)
+	return controller.seedUnless(cmp.Or(refused, controller.callers.InstallWide(caller)), seed)
 }
 
 // @PatchRoute("/{person_id}")
@@ -101,6 +115,14 @@ func (controller *PeopleController) recordUnless(refused error, personId string)
 		return PersonRecord{DomainIds: []string{}, AdminDomainIds: []string{}}, refused
 	}
 	return controller.people.Record(personId)
+}
+
+func (controller *PeopleController) seedUnless(refused error, seed PersonSeed) (PersonRecord, error) {
+	switch {
+	case refused != nil:
+		return PersonRecord{DomainIds: []string{}, AdminDomainIds: []string{}}, refused
+	}
+	return controller.seeds.Seed(seed)
 }
 
 func (controller *PeopleController) changeUnless(refused error, caller oidc.Caller, personId string, change PersonChange) (PersonSummary, error) {

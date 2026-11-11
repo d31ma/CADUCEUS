@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en" w-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: error states</title>
+<link rel="stylesheet" href="assets/duvay/tokens.css">
+<link rel="stylesheet" href="assets/duvay/themes.css">
+<link rel="stylesheet" href="assets/mesail-tokens.css">
+<link rel="stylesheet" href="assets/icons.css">
+<link rel="stylesheet" href="assets/mesail.css">
+<link rel="stylesheet" href="assets/screens/shell.css">
+<script src="assets/mockup.js" defer></script>
+</head>
+<body>
+<a class="ms-skip-link" href="#error-a">Skip to main content</a>
+
+<div class="ms-state">
+<p class="ms-state__label"><strong>State A:</strong> conversation not found, or no access (same message for both)</p>
+<div class="ms-app" data-pane="main">
+
+  <!-- Domain rail: one tile per messaging domain the user belongs to -->
+  <nav class="ms-rail" aria-label="Domains">
+    <ul class="ms-rail__list">
+      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+    </ul>
+    <div class="ms-rail__sep" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
+    <div class="ms-rail__spacer"></div>
+    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="ms-sidebar" aria-label="Conversations in example.com">
+    <div class="ms-sidebar__head">
+      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
+      <div class="ms-header__actions">
+        <button class="ms-icon-btn ms-head-new" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
+      </div>
+    </div>
+    <div class="ms-sidebar__search">
+      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
+    </div>
+    <div class="ms-sidebar__scroll">
+      <ul class="ms-nav-list">
+        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
+        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
+      </ul>
+
+      <section class="ms-nav-section" aria-labelledby="a-sec-channels">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="a-sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
+          <button class="ms-icon-btn" aria-label="Add or browse channels"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">general</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">releases</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">support</span><span class="ms-icon ms-i-mail ms-icon--sm ms-icon--email" role="img" aria-label="Has an email address"></span><span class="ms-badge" aria-label="4 unread">4</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-lock" role="img" aria-label="Private channel"></span><span class="ms-nav-item__label">design</span><span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span></a></li>
+          <li><a class="ms-nav-item is-muted" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">random</span><span class="ms-icon ms-i-bell-off ms-icon--sm" role="img" aria-label="Muted"></span></a></li>
+          <li><a class="ms-nav-item" href="channel-browse.html"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span><span class="ms-nav-item__label">Browse channels</span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="a-sec-dms">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="a-sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
+          <button class="ms-icon-btn" aria-label="New direct message"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item is-unread" href="mobile-conversation.html"><span class="ms-avatar ms-avatar--xs" style="--h:20">BL<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span><span class="ms-nav-item__label">Bo Lee</span><span class="ms-sr-only">, active</span><span class="ms-badge ms-badge--mention" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:280">CW<span class="ms-presence ms-presence--idle" aria-hidden="true"></span></span><span class="ms-nav-item__label">Chen Wu</span><span class="ms-sr-only">, idle</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:140">DO<span class="ms-presence ms-presence--dnd" aria-hidden="true"></span></span><span class="ms-nav-item__label">Dara Okafor</span><span class="ms-sr-only">, do not disturb</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs ms-avatar--channel" aria-hidden="true">3</span><span class="ms-nav-item__label">Bo, Chen, Dara</span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="a-sec-email">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="a-sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
+          <button class="ms-icon-btn" aria-label="New email"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email is-unread" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">DH</span><span class="ms-nav-item__label">Dan Hale<span class="ms-nav-item__sub">Question about invoice 2291</span></span><span class="ms-badge" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-nav-item__label">Carol Diaz, Bo Lee<span class="ms-nav-item__sub">Contract renewal 2027</span></span></a></li>
+        </ul>
+      </section>
+    </div>
+    <div class="ms-sidebar__foot">
+      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
+        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+      </button>
+      <a class="ms-icon-btn" href="settings.html" aria-label="Settings"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
+    </div>
+  </aside>
+
+  <!-- Main: not found or no access (same words for both) -->
+  <main class="ms-main" aria-labelledby="nf-title">
+    <header class="ms-header">
+      <a class="ms-icon-btn ms-header__back" href="?pane=list" aria-label="Back to conversations"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
+      <p class="ms-header__title"><span>Conversation</span></p>
+    </header>
+    <div class="ms-page" id="error-a">
+      <div class="ms-empty" role="alert">
+        <div class="ms-empty__art ms-empty__art--error"><span class="ms-icon ms-i-eye-off ms-icon--xl" aria-hidden="true"></span></div>
+        <h1 id="nf-title">This conversation doesn’t exist or you don’t have access.</h1>
+        <p>Check the link. If someone shared it with you, ask them to add you.</p>
+        <div class="ms-empty__actions">
+          <a class="ms-btn ms-btn--primary" href="channel-browse.html">Browse channels</a>
+          <a class="ms-btn" href="#">Go to #general</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="ms-bottom-nav" aria-label="Main">
+    <a class="ms-bottom-nav__item" href="mobile-home.html" aria-current="page"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
+    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
+    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
+    <a class="ms-bottom-nav__item" href="settings.html"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
+  </nav>
+
+</div>
+</div>
+<div class="ms-state">
+<p class="ms-state__label"><strong>State B:</strong> conversation failed to load (Retry, and Retrying)</p>
+<div class="ms-app" data-pane="main">
+
+  <!-- Domain rail: one tile per messaging domain the user belongs to -->
+  <nav class="ms-rail" aria-label="Domains">
+    <ul class="ms-rail__list">
+      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+    </ul>
+    <div class="ms-rail__sep" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
+    <div class="ms-rail__spacer"></div>
+    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="ms-sidebar" aria-label="Conversations in example.com">
+    <div class="ms-sidebar__head">
+      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
+      <div class="ms-header__actions">
+        <button class="ms-icon-btn ms-head-new" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
+      </div>
+    </div>
+    <div class="ms-sidebar__search">
+      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
+    </div>
+    <div class="ms-sidebar__scroll">
+      <ul class="ms-nav-list">
+        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
+        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
+      </ul>
+
+      <section class="ms-nav-section" aria-labelledby="b-sec-channels">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="b-sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
+          <button class="ms-icon-btn" aria-label="Add or browse channels"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">general</span></a></li>
+          <li><a class="ms-nav-item" href="#" aria-current="page"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">releases</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">support</span><span class="ms-icon ms-i-mail ms-icon--sm ms-icon--email" role="img" aria-label="Has an email address"></span><span class="ms-badge" aria-label="4 unread">4</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-lock" role="img" aria-label="Private channel"></span><span class="ms-nav-item__label">design</span><span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span></a></li>
+          <li><a class="ms-nav-item is-muted" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">random</span><span class="ms-icon ms-i-bell-off ms-icon--sm" role="img" aria-label="Muted"></span></a></li>
+          <li><a class="ms-nav-item" href="channel-browse.html"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span><span class="ms-nav-item__label">Browse channels</span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="b-sec-dms">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="b-sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
+          <button class="ms-icon-btn" aria-label="New direct message"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item is-unread" href="mobile-conversation.html"><span class="ms-avatar ms-avatar--xs" style="--h:20">BL<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span><span class="ms-nav-item__label">Bo Lee</span><span class="ms-sr-only">, active</span><span class="ms-badge ms-badge--mention" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:280">CW<span class="ms-presence ms-presence--idle" aria-hidden="true"></span></span><span class="ms-nav-item__label">Chen Wu</span><span class="ms-sr-only">, idle</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:140">DO<span class="ms-presence ms-presence--dnd" aria-hidden="true"></span></span><span class="ms-nav-item__label">Dara Okafor</span><span class="ms-sr-only">, do not disturb</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs ms-avatar--channel" aria-hidden="true">3</span><span class="ms-nav-item__label">Bo, Chen, Dara</span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="b-sec-email">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="b-sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
+          <button class="ms-icon-btn" aria-label="New email"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email is-unread" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">DH</span><span class="ms-nav-item__label">Dan Hale<span class="ms-nav-item__sub">Question about invoice 2291</span></span><span class="ms-badge" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-nav-item__label">Carol Diaz, Bo Lee<span class="ms-nav-item__sub">Contract renewal 2027</span></span></a></li>
+        </ul>
+      </section>
+    </div>
+    <div class="ms-sidebar__foot">
+      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
+        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+      </button>
+      <a class="ms-icon-btn" href="settings.html" aria-label="Settings"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
+    </div>
+  </aside>
+
+  <!-- Main: failed to load -->
+  <main class="ms-main" aria-labelledby="fail-title">
+    <header class="ms-header">
+      <a class="ms-icon-btn ms-header__back" href="?pane=list" aria-label="Back to conversations"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
+      <h2 class="ms-header__title" id="fail-title"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span>releases</span></h2>
+      <p class="ms-header__topic">Build and release status for every Mesail service</p>
+      <div class="ms-header__actions">
+        <button class="ms-members-btn" aria-label="12 members"><span class="ms-icon ms-i-users ms-icon--sm" aria-hidden="true"></span>12</button>
+        <button class="ms-icon-btn" aria-label="Notifications for #releases: all messages"><span class="ms-icon ms-i-bell" aria-hidden="true"></span></button>
+        <button class="ms-icon-btn" aria-label="Channel details" aria-expanded="false"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+      </div>
+    </header>
+
+    <div class="ms-page">
+      <div class="ms-empty" role="alert">
+        <div class="ms-empty__art ms-empty__art--error"><span class="ms-icon ms-i-alert ms-icon--xl" aria-hidden="true"></span></div>
+        <h3>Messages didn’t load</h3>
+        <p>Something went wrong on our side. Your messages are safe. Try again in a moment.</p>
+        <div class="ms-empty__actions">
+          <button class="ms-btn ms-btn--primary"><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Retry</button>
+          <button class="ms-btn ms-btn--primary" aria-busy="true" aria-disabled="true"><span class="ms-spinner" aria-hidden="true"></span>Retrying…</button>
+        </div>
+        <p class="ms-ref">Reference: 7F3A-91C2</p>
+      </div>
+    </div>
+    <div class="ms-composer-wrap">
+      <div class="ms-readonly-notice" role="note"><span class="ms-icon ms-i-info" aria-hidden="true"></span><p>You can write again when the messages load.</p></div>
+    </div>
+  </main>
+
+  <nav class="ms-bottom-nav" aria-label="Main">
+    <a class="ms-bottom-nav__item" href="mobile-home.html" aria-current="page"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
+    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
+    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
+    <a class="ms-bottom-nav__item" href="settings.html"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
+  </nav>
+
+</div>
+</div>
+<div class="ms-state">
+<p class="ms-state__label"><strong>State C:</strong> offline: banner and a queued message waiting to send</p>
+<div class="ms-app" data-pane="main">
+
+  <!-- Domain rail: one tile per messaging domain the user belongs to -->
+  <nav class="ms-rail" aria-label="Domains">
+    <ul class="ms-rail__list">
+      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+    </ul>
+    <div class="ms-rail__sep" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
+    <div class="ms-rail__spacer"></div>
+    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="ms-sidebar" aria-label="Conversations in example.com">
+    <div class="ms-sidebar__head">
+      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
+      <div class="ms-header__actions">
+        <button class="ms-icon-btn ms-head-new" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
+      </div>
+    </div>
+    <div class="ms-sidebar__search">
+      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
+    </div>
+    <div class="ms-sidebar__scroll">
+      <ul class="ms-nav-list">
+        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
+        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
+      </ul>
+
+      <section class="ms-nav-section" aria-labelledby="c-sec-channels">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="c-sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
+          <button class="ms-icon-btn" aria-label="Add or browse channels"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">general</span></a></li>
+          <li><a class="ms-nav-item" href="#" aria-current="page"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">releases</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">support</span><span class="ms-icon ms-i-mail ms-icon--sm ms-icon--email" role="img" aria-label="Has an email address"></span><span class="ms-badge" aria-label="4 unread">4</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-lock" role="img" aria-label="Private channel"></span><span class="ms-nav-item__label">design</span><span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span></a></li>
+          <li><a class="ms-nav-item is-muted" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">random</span><span class="ms-icon ms-i-bell-off ms-icon--sm" role="img" aria-label="Muted"></span></a></li>
+          <li><a class="ms-nav-item" href="channel-browse.html"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span><span class="ms-nav-item__label">Browse channels</span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="c-sec-dms">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="c-sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
+          <button class="ms-icon-btn" aria-label="New direct message"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item is-unread" href="mobile-conversation.html"><span class="ms-avatar ms-avatar--xs" style="--h:20">BL<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span><span class="ms-nav-item__label">Bo Lee</span><span class="ms-sr-only">, active</span><span class="ms-badge ms-badge--mention" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:280">CW<span class="ms-presence ms-presence--idle" aria-hidden="true"></span></span><span class="ms-nav-item__label">Chen Wu</span><span class="ms-sr-only">, idle</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:140">DO<span class="ms-presence ms-presence--dnd" aria-hidden="true"></span></span><span class="ms-nav-item__label">Dara Okafor</span><span class="ms-sr-only">, do not disturb</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs ms-avatar--channel" aria-hidden="true">3</span><span class="ms-nav-item__label">Bo, Chen, Dara</span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="c-sec-email">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="c-sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
+          <button class="ms-icon-btn" aria-label="New email"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email is-unread" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">DH</span><span class="ms-nav-item__label">Dan Hale<span class="ms-nav-item__sub">Question about invoice 2291</span></span><span class="ms-badge" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-nav-item__label">Carol Diaz, Bo Lee<span class="ms-nav-item__sub">Contract renewal 2027</span></span></a></li>
+        </ul>
+      </section>
+    </div>
+    <div class="ms-sidebar__foot">
+      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
+        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+      </button>
+      <a class="ms-icon-btn" href="settings.html" aria-label="Settings"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
+    </div>
+  </aside>
+
+  <!-- Main: offline with a queued message -->
+  <main class="ms-main" aria-labelledby="off-title">
+    <header class="ms-header">
+      <a class="ms-icon-btn ms-header__back" href="?pane=list" aria-label="Back to conversations"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
+      <h2 class="ms-header__title" id="off-title"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span>releases</span></h2>
+      <p class="ms-header__topic">Build and release status for every Mesail service</p>
+      <div class="ms-header__actions">
+        <button class="ms-members-btn" aria-label="12 members"><span class="ms-icon ms-i-users ms-icon--sm" aria-hidden="true"></span>12</button>
+        <button class="ms-icon-btn" aria-label="Notifications for #releases: all messages"><span class="ms-icon ms-i-bell" aria-hidden="true"></span></button>
+        <button class="ms-icon-btn" aria-label="Channel details" aria-expanded="false"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+      </div>
+    </header>
+
+    <div class="ms-banner ms-banner--warn" role="status"><span class="ms-icon ms-i-wifi-off" aria-hidden="true"></span><p>You’re offline. Messages will send when you reconnect.</p></div>
+    <div class="ms-timeline" role="log" aria-label="Messages in #releases" tabindex="0">
+      <div class="ms-day"><span>Today</span></div>
+      <article class="ms-msg" aria-label="Bo Lee, 09:20">
+        <span class="ms-avatar" style="--h:20" aria-hidden="true">BL</span>
+        <div>
+          <div class="ms-msg__meta"><span class="ms-msg__author">Bo Lee</span><time class="ms-msg__time" datetime="2026-11-10T09:20">09:20</time></div>
+          <div class="ms-msg__text"><p>Tagged <code>v26.46.02</code>. Publishing now.</p></div>
+        </div>
+      </article>
+
+      <article class="ms-msg ms-msg--pending" aria-label="Ana Ruiz, waiting to send">
+        <span class="ms-avatar" style="--h:195" aria-hidden="true">AR</span>
+        <div>
+          <div class="ms-msg__meta"><span class="ms-msg__author">Ana Ruiz</span><span class="ms-msg__time">Not sent yet</span></div>
+          <div class="ms-msg__text"><p>Great, I’ll update the status page.</p></div>
+          <div class="ms-delivery"><span class="ms-delivery__item ms-delivery__item--wait"><span class="ms-icon ms-i-clock" aria-hidden="true"></span>Waiting to send</span><button class="ms-link-btn">Cancel</button></div>
+        </div>
+      </article>
+    </div>
+    <div class="ms-composer-wrap">
+      <form class="ms-composer" aria-label="Message #releases" onsubmit="return false">
+        <div class="ms-composer__editor" id="c-composer" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Message #releases" data-placeholder="Message #releases"></div>
+        <div class="ms-composer__toolbar">
+          <button type="button" class="ms-icon-btn" aria-label="Bold" aria-keyshortcuts="Control+B"><span class="ms-icon ms-i-bold ms-icon--sm" aria-hidden="true"></span></button>
+          <button type="button" class="ms-icon-btn" aria-label="Italic" aria-keyshortcuts="Control+I"><span class="ms-icon ms-i-italic ms-icon--sm" aria-hidden="true"></span></button>
+          <button type="button" class="ms-icon-btn" aria-label="Code"><span class="ms-icon ms-i-code ms-icon--sm" aria-hidden="true"></span></button>
+          <button type="button" class="ms-icon-btn" aria-label="Link"><span class="ms-icon ms-i-link ms-icon--sm" aria-hidden="true"></span></button>
+          <span class="ms-divider-v" role="presentation"></span>
+          <button type="button" class="ms-icon-btn" aria-label="Attach files"><span class="ms-icon ms-i-paperclip" aria-hidden="true"></span></button>
+          <button type="button" class="ms-icon-btn" aria-label="Mention someone"><span class="ms-icon ms-i-at" aria-hidden="true"></span></button>
+          <button type="button" class="ms-icon-btn" aria-label="Emoji"><span class="ms-icon ms-i-smile" aria-hidden="true"></span></button>
+          <div class="ms-composer__send">
+            <button type="submit" class="ms-send" disabled aria-label="Send message"><span class="ms-icon ms-i-send ms-icon--sm" aria-hidden="true"></span>Send</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <nav class="ms-bottom-nav" aria-label="Main">
+    <a class="ms-bottom-nav__item" href="mobile-home.html" aria-current="page"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
+    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
+    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
+    <a class="ms-bottom-nav__item" href="settings.html"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
+  </nav>
+
+</div>
+</div>
+<div class="ms-state">
+<p class="ms-state__label"><strong>State D:</strong> reconnecting banner, and new messages arrived while scrolled up</p>
+<div class="ms-app" data-pane="main">
+
+  <!-- Domain rail: one tile per messaging domain the user belongs to -->
+  <nav class="ms-rail" aria-label="Domains">
+    <ul class="ms-rail__list">
+      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+    </ul>
+    <div class="ms-rail__sep" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
+    <div class="ms-rail__spacer"></div>
+    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="ms-sidebar" aria-label="Conversations in example.com">
+    <div class="ms-sidebar__head">
+      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
+      <div class="ms-header__actions">
+        <button class="ms-icon-btn ms-head-new" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
+      </div>
+    </div>
+    <div class="ms-sidebar__search">
+      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
+    </div>
+    <div class="ms-sidebar__scroll">
+      <ul class="ms-nav-list">
+        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
+        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
+      </ul>
+
+      <section class="ms-nav-section" aria-labelledby="d-sec-channels">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="d-sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
+          <button class="ms-icon-btn" aria-label="Add or browse channels"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">general</span></a></li>
+          <li><a class="ms-nav-item" href="#" aria-current="page"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">releases</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">support</span><span class="ms-icon ms-i-mail ms-icon--sm ms-icon--email" role="img" aria-label="Has an email address"></span><span class="ms-badge" aria-label="4 unread">4</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-lock" role="img" aria-label="Private channel"></span><span class="ms-nav-item__label">design</span><span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span></a></li>
+          <li><a class="ms-nav-item is-muted" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">random</span><span class="ms-icon ms-i-bell-off ms-icon--sm" role="img" aria-label="Muted"></span></a></li>
+          <li><a class="ms-nav-item" href="channel-browse.html"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span><span class="ms-nav-item__label">Browse channels</span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="d-sec-dms">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="d-sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
+          <button class="ms-icon-btn" aria-label="New direct message"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item is-unread" href="mobile-conversation.html"><span class="ms-avatar ms-avatar--xs" style="--h:20">BL<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span><span class="ms-nav-item__label">Bo Lee</span><span class="ms-sr-only">, active</span><span class="ms-badge ms-badge--mention" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:280">CW<span class="ms-presence ms-presence--idle" aria-hidden="true"></span></span><span class="ms-nav-item__label">Chen Wu</span><span class="ms-sr-only">, idle</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:140">DO<span class="ms-presence ms-presence--dnd" aria-hidden="true"></span></span><span class="ms-nav-item__label">Dara Okafor</span><span class="ms-sr-only">, do not disturb</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs ms-avatar--channel" aria-hidden="true">3</span><span class="ms-nav-item__label">Bo, Chen, Dara</span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="d-sec-email">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="d-sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
+          <button class="ms-icon-btn" aria-label="New email"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email is-unread" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">DH</span><span class="ms-nav-item__label">Dan Hale<span class="ms-nav-item__sub">Question about invoice 2291</span></span><span class="ms-badge" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-nav-item__label">Carol Diaz, Bo Lee<span class="ms-nav-item__sub">Contract renewal 2027</span></span></a></li>
+        </ul>
+      </section>
+    </div>
+    <div class="ms-sidebar__foot">
+      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
+        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+      </button>
+      <a class="ms-icon-btn" href="settings.html" aria-label="Settings"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
+    </div>
+  </aside>
+
+  <!-- Main: reconnecting, and new messages below while scrolled up -->
+  <main class="ms-main" aria-labelledby="rec-title">
+    <header class="ms-header">
+      <a class="ms-icon-btn ms-header__back" href="?pane=list" aria-label="Back to conversations"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
+      <h2 class="ms-header__title" id="rec-title"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span>releases</span></h2>
+      <p class="ms-header__topic">Build and release status for every Mesail service</p>
+      <div class="ms-header__actions">
+        <button class="ms-members-btn" aria-label="12 members"><span class="ms-icon ms-i-users ms-icon--sm" aria-hidden="true"></span>12</button>
+        <button class="ms-icon-btn" aria-label="Notifications for #releases: all messages"><span class="ms-icon ms-i-bell" aria-hidden="true"></span></button>
+        <button class="ms-icon-btn" aria-label="Channel details" aria-expanded="false"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+      </div>
+    </header>
+
+    <div class="ms-banner ms-banner--info" role="status"><span class="ms-spinner" aria-hidden="true"></span><p>Reconnecting… New messages may be late.</p><div class="ms-banner__actions"><button class="ms-btn ms-btn--sm">Try now</button></div></div>
+    <div class="ms-timeline" role="log" aria-label="Messages in #releases" tabindex="0">
+      <div class="ms-day"><span>Monday, 9 November</span></div>
+      <article class="ms-msg" aria-label="Chen Wu, 16:40">
+        <span class="ms-avatar" style="--h:280" aria-hidden="true">CW</span>
+        <div>
+          <div class="ms-msg__meta"><span class="ms-msg__author">Chen Wu</span><time class="ms-msg__time" datetime="2026-11-09T16:40">16:40</time></div>
+          <div class="ms-msg__text"><p>Release notes for 26.46 are ready for review.</p></div>
+        </div>
+      </article>
+
+      <article class="ms-msg" aria-label="Eli Park, 17:05">
+        <span class="ms-avatar" style="--h:60" aria-hidden="true">EP</span>
+        <div>
+          <div class="ms-msg__meta"><span class="ms-msg__author">Eli Park</span><time class="ms-msg__time" datetime="2026-11-09T17:05">17:05</time></div>
+          <div class="ms-msg__text"><p>I read them. Two small fixes, see my comments.</p></div>
+        </div>
+      </article>
+
+      <article class="ms-msg" aria-label="Chen Wu, 17:12">
+        <span class="ms-avatar" style="--h:280" aria-hidden="true">CW</span>
+        <div>
+          <div class="ms-msg__meta"><span class="ms-msg__author">Chen Wu</span><time class="ms-msg__time" datetime="2026-11-09T17:12">17:12</time></div>
+          <div class="ms-msg__text"><p>Thanks, fixed both.</p></div>
+        </div>
+      </article>
+
+    </div>
+    <div class="ms-jump"><button class="ms-jump__pill" aria-label="Jump to 3 new messages">3 new messages<span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></button></div>
+    <p class="ms-sr-only" role="status">3 new messages below</p>
+    <div class="ms-composer-wrap">
+      <form class="ms-composer" aria-label="Message #releases" onsubmit="return false">
+        <div class="ms-composer__editor" id="d-composer" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Message #releases" data-placeholder="Message #releases"></div>
+        <div class="ms-composer__toolbar">
+          <button type="button" class="ms-icon-btn" aria-label="Bold" aria-keyshortcuts="Control+B"><span class="ms-icon ms-i-bold ms-icon--sm" aria-hidden="true"></span></button>
+          <button type="button" class="ms-icon-btn" aria-label="Italic" aria-keyshortcuts="Control+I"><span class="ms-icon ms-i-italic ms-icon--sm" aria-hidden="true"></span></button>
+          <button type="button" class="ms-icon-btn" aria-label="Code"><span class="ms-icon ms-i-code ms-icon--sm" aria-hidden="true"></span></button>
+          <button type="button" class="ms-icon-btn" aria-label="Link"><span class="ms-icon ms-i-link ms-icon--sm" aria-hidden="true"></span></button>
+          <span class="ms-divider-v" role="presentation"></span>
+          <button type="button" class="ms-icon-btn" aria-label="Attach files"><span class="ms-icon ms-i-paperclip" aria-hidden="true"></span></button>
+          <button type="button" class="ms-icon-btn" aria-label="Mention someone"><span class="ms-icon ms-i-at" aria-hidden="true"></span></button>
+          <button type="button" class="ms-icon-btn" aria-label="Emoji"><span class="ms-icon ms-i-smile" aria-hidden="true"></span></button>
+          <div class="ms-composer__send">
+            <button type="submit" class="ms-send" disabled aria-label="Send message"><span class="ms-icon ms-i-send ms-icon--sm" aria-hidden="true"></span>Send</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <nav class="ms-bottom-nav" aria-label="Main">
+    <a class="ms-bottom-nav__item" href="mobile-home.html" aria-current="page"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
+    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
+    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
+    <a class="ms-bottom-nav__item" href="settings.html"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
+  </nav>
+
+</div>
+</div>
+
+<div class="ms-sr-only" aria-live="polite" id="announcer"></div>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en" w-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: show original email</title>
+<link rel="stylesheet" href="assets/duvay/tokens.css">
+<link rel="stylesheet" href="assets/duvay/themes.css">
+<link rel="stylesheet" href="assets/mesail-tokens.css">
+<link rel="stylesheet" href="assets/icons.css">
+<link rel="stylesheet" href="assets/mesail.css">
+<link rel="stylesheet" href="assets/screens/email.css">
+<script src="assets/mockup.js" defer></script>
+</head>
+<body>
+
+<div class="ms-app" data-pane="main" inert>
+
+  <!-- Domain rail: one tile per messaging domain the user belongs to -->
+  <nav class="ms-rail" aria-label="Domains">
+    <ul class="ms-rail__list">
+      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+    </ul>
+    <div class="ms-rail__sep" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
+    <div class="ms-rail__spacer"></div>
+    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="ms-sidebar" aria-label="Conversations in example.com">
+    <div class="ms-sidebar__head">
+      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
+      <div class="ms-header__actions">
+        <button class="ms-icon-btn" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
+      </div>
+    </div>
+    <div class="ms-sidebar__search">
+      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
+    </div>
+    <div class="ms-sidebar__scroll">
+      <ul class="ms-nav-list">
+        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
+        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
+      </ul>
+
+      <section class="ms-nav-section" aria-labelledby="sec-channels">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
+          <button class="ms-icon-btn" aria-label="Add or browse channels"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">general</span></a></li>
+          <li><a class="ms-nav-item" href="messenger.html"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">releases</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="channel-email.html"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">support</span><span class="ms-icon ms-i-mail ms-icon--sm ms-nav-item__email" aria-label="Has an email address: support@example.com" role="img"></span><span class="ms-badge" aria-label="4 unread">4</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-lock" aria-label="Private channel" role="img"></span><span class="ms-nav-item__label">design</span><span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span></a></li>
+          <li><a class="ms-nav-item is-muted" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">random</span><span class="ms-icon ms-i-bell-off ms-icon--sm" aria-label="Muted" role="img"></span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="sec-dms">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
+          <button class="ms-icon-btn" aria-label="New direct message"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:20">BL<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span><span class="ms-nav-item__label">Bo Lee</span><span class="ms-sr-only">, active</span><span class="ms-badge ms-badge--mention" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:280">CW<span class="ms-presence ms-presence--idle" aria-hidden="true"></span></span><span class="ms-nav-item__label">Chen Wu</span><span class="ms-sr-only">, idle</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:140">DO<span class="ms-presence ms-presence--dnd" aria-hidden="true"></span></span><span class="ms-nav-item__label">Dara Okafor</span><span class="ms-sr-only">, do not disturb</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs ms-avatar--channel" aria-hidden="true">3</span><span class="ms-nav-item__label">Bo, Chen, Dara</span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="sec-email">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
+          <button class="ms-icon-btn" aria-label="New email"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email is-unread" href="email-inbound-new.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">DH</span><span class="ms-nav-item__label">Dan Hale<span class="ms-nav-item__sub">Question about invoice 2291</span></span><span class="ms-badge" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email" href="email-conversation.html" aria-current="page"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-nav-item__label">Carol Diaz, Bo Lee<span class="ms-nav-item__sub">Contract renewal 2027</span></span></a></li>
+        </ul>
+      </section>
+    </div>
+    <div class="ms-sidebar__foot">
+      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
+        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+      </button>
+      <a class="ms-icon-btn" href="settings.html" aria-label="Settings"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
+    </div>
+  </aside>
+
+  <!-- Background: the email conversation, inert while the dialog is open -->
+  <main class="ms-main" aria-labelledby="conv-title">
+    <header class="ms-header">
+      <a class="ms-icon-btn ms-header__back" href="?pane=list" aria-label="Back to conversations"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
+      <h1 class="ms-header__title" id="conv-title"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span>Contract renewal 2027</span></h1>
+      <div class="ms-header__actions">
+        <button class="ms-icon-btn" aria-label="More actions" aria-haspopup="menu" aria-expanded="false"><span class="ms-icon ms-i-more" aria-hidden="true"></span></button>
+      </div>
+    </header>
+    <div class="ms-timeline" role="log" aria-label="Messages in Contract renewal 2027">
+      <div class="ms-day"><span>Today</span></div>
+      <article class="ms-msg ms-msg--email" aria-label="Email from Carol Diaz, 08:47">
+        <span class="ms-avatar ms-avatar--external" aria-hidden="true">CD</span>
+        <div>
+          <div class="ms-msg__meta"><span class="ms-msg__author">Carol Diaz</span><span class="ms-msg__addr">carol@partner.org</span><span class="ms-tag ms-tag--email"><span class="ms-icon ms-i-mail" aria-hidden="true"></span>Email</span><time class="ms-msg__time" datetime="2026-11-10T08:47">08:47</time></div>
+          <div class="ms-email-card">
+            <div class="ms-email-card__head"><p class="ms-email-card__subject">Re: Contract renewal 2027</p><span>From Carol Diaz &lt;carol@partner.org&gt;</span></div>
+            <div class="ms-email-card__body"><p>Hi Ana, hi Bo, here is the renewal draft for 2027…</p></div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <nav class="ms-bottom-nav" aria-label="Main">
+    <a class="ms-bottom-nav__item" href="?pane=list" aria-current="page"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
+    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
+    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
+    <a class="ms-bottom-nav__item" href="settings.html"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
+  </nav>
+</div>
+
+<!-- Show original: modal dialog (a bottom sheet under 768 px) -->
+<div class="ms-scrim ms-scrim--sheet">
+  <div class="ms-dialog ms-dialog--wide" role="dialog" aria-modal="true" aria-labelledby="original-title" aria-describedby="original-sub">
+    <div class="ms-dialog__head">
+      <h2 id="original-title">Original email</h2>
+      <button type="button" class="ms-icon-btn" aria-label="Close" aria-keyshortcuts="Escape" autofocus><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
+    </div>
+    <div class="ms-dialog__body">
+      <p class="ms-dialog__sub" id="original-sub">Re: Contract renewal 2027 · from Carol Diaz · 48 KB, received 10 November 2026, 08:47</p>
+
+      <div class="ms-auth-summary" role="group" aria-label="Sender checks">
+        <span class="ms-tag ms-tag--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>SPF: pass</span>
+        <span class="ms-tag ms-tag--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>DKIM: pass (partner.org)</span>
+        <span class="ms-tag ms-tag--ok"><span class="ms-icon ms-i-check" aria-hidden="true"></span>DMARC: pass</span>
+      </div>
+
+      <div class="ms-table-wrap">
+        <table class="ms-table ms-headers">
+          <caption class="ms-sr-only">Main headers of the email</caption>
+          <tbody>
+            <tr><th scope="row">From</th><td>Carol Diaz &lt;carol@partner.org&gt;</td></tr>
+            <tr><th scope="row">To</th><td>Ana Ruiz &lt;ana@example.com&gt;, Bo Lee &lt;bo@example.com&gt;</td></tr>
+            <tr><th scope="row">Cc</th><td>legal@partner.org</td></tr>
+            <tr><th scope="row">Subject</th><td>Re: Contract renewal 2027</td></tr>
+            <tr><th scope="row">Date</th><td>Tue, 10 Nov 2026 08:47:05 +0000 <span class="ms-meta">(08:47 your time)</span></td></tr>
+            <tr><th scope="row">Message-ID</th><td class="ms-mono">&lt;a81c2f0e.5d7b@mail.partner.org&gt;</td></tr>
+            <tr><th scope="row">Authentication-Results</th><td>mx.example.com: SPF pass for partner.org, DKIM pass (signed by partner.org), DMARC pass</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ms-raw-head">
+        <h3 id="raw-title">Plain text</h3>
+        <button type="button" class="ms-btn ms-btn--sm"><span class="ms-icon ms-i-copy ms-icon--sm" aria-hidden="true"></span>Copy</button>
+      </div>
+      <pre class="ms-raw" tabindex="0" aria-labelledby="raw-title">Return-Path: &lt;carol@partner.org&gt;
+Received: from mail.partner.org (mail.partner.org [203.0.113.25])
+        by mx.example.com with ESMTPS; Tue, 10 Nov 2026 08:47:12 +0000
+Authentication-Results: mx.example.com;
+       spf=pass smtp.mailfrom=partner.org;
+       dkim=pass header.d=partner.org header.s=mail2026;
+       dmarc=pass (p=quarantine) header.from=partner.org
+DKIM-Signature: v=1; a=rsa-sha256; d=partner.org; s=mail2026;
+       h=from:to:cc:subject:date:message-id; bh=...; b=...
+From: Carol Diaz &lt;carol@partner.org&gt;
+To: Ana Ruiz &lt;ana@example.com&gt;, Bo Lee &lt;bo@example.com&gt;
+Cc: legal@partner.org
+Subject: Re: Contract renewal 2027
+Date: Tue, 10 Nov 2026 08:47:05 +0000
+Message-ID: &lt;a81c2f0e.5d7b@mail.partner.org&gt;
+In-Reply-To: &lt;m-20261103-1520.ana@example.com&gt;
+References: &lt;m-20261103-1520.ana@example.com&gt;
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="b1"
+
+--b1
+Content-Type: text/plain; charset="utf-8"
+
+Hi Ana, hi Bo,
+
+Here is the renewal draft for 2027. Three things changed
+from this year:
+...
+
+--b1
+Content-Type: application/pdf; name="renewal-2027-draft.pdf"
+Content-Disposition: attachment; filename="renewal-2027-draft.pdf"
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjcKJcfsj6IKNSAwIG9iago8PC9MZW5ndGggNiAwIFI+Pg...
+(attachment shortened here: 212 KB)
+--b1--</pre>
+    </div>
+    <div class="ms-dialog__foot">
+      <a class="ms-btn ms-dialog__foot-start" href="#" download="contract-renewal-2027.eml"><span class="ms-icon ms-i-file ms-icon--sm" aria-hidden="true"></span>Download .eml</a>
+      <button type="button" class="ms-btn ms-btn--primary">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="ms-sr-only" aria-live="polite" id="announcer"></div>
+</body>
+</html>

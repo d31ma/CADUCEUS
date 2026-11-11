@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en" w-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign in to example.com · Mesail</title>
+<link rel="stylesheet" href="assets/duvay/tokens.css">
+<link rel="stylesheet" href="assets/duvay/themes.css">
+<link rel="stylesheet" href="assets/mesail-tokens.css">
+<link rel="stylesheet" href="assets/icons.css">
+<link rel="stylesheet" href="assets/mesail.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<script src="assets/mockup.js" defer></script>
+</head>
+<body>
+<div class="ms-auth ms-auth--states">
+  <header class="ms-auth__brand">
+    <p class="ms-wordmark"><span class="ms-wordmark__mark" aria-hidden="true"></span><span class="ms-wordmark__text">Mesail</span></p>
+  </header>
+
+  <main class="ms-auth__main ms-auth__main--states">
+
+    <!-- State 1: domain found -->
+    <section class="ms-mock-state" aria-label="State 1: domain found">
+      <p class="ms-mock-state__label">State 1 · Domain found (after ana@example.com)</p>
+      <div class="ms-auth__card">
+        <div class="ms-auth__head">
+          <h1 class="ms-auth__title">Sign in to example.com</h1>
+          <p class="ms-auth__lead">We found your organization.</p>
+        </div>
+        <div class="ms-domain-row ms-domain-row--static">
+          <span class="ms-domain-mark ms-domain-mark--lg" aria-hidden="true">Ex</span>
+          <span class="ms-domain-row__main">
+            <span class="ms-domain-row__name">example.com</span>
+            <span class="ms-domain-row__sub"><span class="ms-icon ms-i-building ms-icon--sm" aria-hidden="true"></span> Example Inc.</span>
+            <span class="ms-domain-row__sub">ana@example.com</span>
+          </span>
+        </div>
+        <form class="ms-auth__form" action="signin-redirecting.html" method="get">
+          <input type="hidden" name="login_hint" value="ana@example.com">
+          <label class="ms-check"><input type="checkbox" name="remember" checked> Remember example.com on this device</label>
+          <div class="ms-auth__actions">
+            <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block" aria-describedby="s1-dest">Continue to example.com sign-in</button>
+            <p class="ms-auth__dest" id="s1-dest"><span class="ms-icon ms-i-lock ms-icon--sm" aria-hidden="true"></span>You will go to <span class="ms-mono">sign-in.example.com</span></p>
+          </div>
+        </form>
+        <p class="ms-auth__note"><span class="ms-icon ms-i-shield-check ms-icon--sm" aria-hidden="true"></span>Your password, passkey and 2-step code go to example.com's sign-in page only. Mesail never asks for them.</p>
+        <div class="ms-auth__link-row">
+          <a class="ms-auth__link" href="signin.html"><span class="ms-icon ms-i-arrow-left ms-icon--sm" aria-hidden="true"></span>Use a different email</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- State 2: domain not hosted -->
+    <section class="ms-mock-state" aria-label="State 2: domain not hosted">
+      <p class="ms-mock-state__label">State 2 · Error: we do not host this domain</p>
+      <div class="ms-auth__card">
+        <div class="ms-auth__head">
+          <h2 class="ms-auth__title">Sign in to Mesail</h2>
+          <p class="ms-auth__lead">Enter your work email. We will find your organization.</p>
+        </div>
+        <form class="ms-auth__form" action="signin-domain.html" method="get" novalidate>
+          <div class="ms-field">
+            <label class="ms-label" for="s2-email">Work email</label>
+            <input class="ms-input" id="s2-email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" value="ana@gmail.com" aria-invalid="true" aria-describedby="s2-email-error">
+          </div>
+          <div class="ms-auth__notice ms-auth__notice--error" id="s2-email-error" role="alert">
+            <span class="ms-icon ms-i-alert ms-icon--sm" aria-hidden="true"></span>
+            <p>We don't host mail for gmail.com. Check the address, or ask your admin for the Mesail address of your organization.</p>
+          </div>
+          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block">Continue</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- State 3: domain turned off by an admin -->
+    <section class="ms-mock-state" aria-label="State 3: domain turned off">
+      <p class="ms-mock-state__label">State 3 · Domain turned off by an admin</p>
+      <div class="ms-auth__card">
+        <span class="ms-auth__art ms-auth__art--warn"><span class="ms-icon ms-i-minus-circle" aria-hidden="true"></span></span>
+        <div class="ms-auth__head">
+          <h2 class="ms-auth__title">Sign-in to example.net is turned off</h2>
+          <p class="ms-auth__lead">An admin turned off Mesail for example.net. You cannot sign in until they turn it on again.</p>
+        </div>
+        <div class="ms-auth__notice ms-auth__notice--warn">
+          <span class="ms-icon ms-i-info ms-icon--sm" aria-hidden="true"></span>
+          <p>Contact your admin and ask when example.net will be back.</p>
+        </div>
+        <div class="ms-auth__actions">
+          <a class="ms-btn ms-btn--lg ms-btn--block" href="signin.html">Use a different email</a>
+        </div>
+        <p class="ms-auth__ref">Reference: DOM-OFF-7Q2K</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="ms-auth__foot">
+    <nav aria-label="Help and legal">
+      <ul>
+        <li><a href="#">Help</a></li>
+        <li><a href="#">Privacy</a></li>
+      </ul>
+    </nav>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en" w-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: Admin, mail delivery for example.com</title>
+<link rel="stylesheet" href="assets/duvay/tokens.css">
+<link rel="stylesheet" href="assets/duvay/themes.css">
+<link rel="stylesheet" href="assets/mesail-tokens.css">
+<link rel="stylesheet" href="assets/icons.css">
+<link rel="stylesheet" href="assets/mesail.css">
+<link rel="stylesheet" href="assets/screens/admin.css">
+<script src="assets/mockup.js" defer></script>
+</head>
+<body>
+<a class="ms-skip-link" href="#admin-content">Skip to admin content</a>
+
+<div class="ms-app" data-pane="main">
+
+  <!-- Domain rail -->
+  <nav class="ms-rail" aria-label="Domains">
+    <ul class="ms-rail__list">
+      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+    </ul>
+    <div class="ms-rail__sep" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
+    <div class="ms-rail__spacer"></div>
+    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+  </nav>
+
+  <!-- Sidebar: the Admin section shows only for users with an admin role -->
+  <aside class="ms-sidebar" aria-label="Conversations and admin in example.com">
+    <div class="ms-sidebar__head">
+      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
+      <div class="ms-header__actions">
+        <button class="ms-icon-btn" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
+      </div>
+    </div>
+    <div class="ms-sidebar__search">
+      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
+    </div>
+    <div class="ms-sidebar__scroll">
+      <ul class="ms-nav-list">
+        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
+        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
+      </ul>
+
+      <section class="ms-nav-section" aria-labelledby="sec-channels">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
+          <span class="ms-badge" aria-label="4 unread">4</span>
+        </div>
+      </section>
+      <section class="ms-nav-section" aria-labelledby="sec-dms">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
+          <span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span>
+        </div>
+      </section>
+      <section class="ms-nav-section" aria-labelledby="sec-email">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="false" id="sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
+          <span class="ms-badge" aria-label="1 unread">1</span>
+        </div>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="sec-admin">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-admin"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Admin</button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item" href="admin-domains.html"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span class="ms-nav-item__label">Domains</span></a></li>
+          <li><a class="ms-nav-item" href="admin-members.html"><span class="ms-icon ms-i-users" aria-hidden="true"></span><span class="ms-nav-item__label">Members</span></a></li>
+          <li><a class="ms-nav-item" href="admin-channels.html"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">Channels</span></a></li>
+          <li><a class="ms-nav-item" href="admin-mail.html" aria-current="page"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span class="ms-nav-item__label">Mail delivery</span></a></li>
+        </ul>
+      </section>
+    </div>
+    <div class="ms-sidebar__foot">
+      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
+        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+      </button>
+      <a class="ms-icon-btn" href="settings.html" aria-label="Settings"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
+    </div>
+  </aside>
+
+  <!-- Admin: mail delivery for one domain -->
+  <main class="ms-main ms-admin" aria-labelledby="page-title">
+    <header class="ms-header">
+      <a class="ms-icon-btn ms-header__back" href="?pane=list" aria-label="Back to menu"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
+      <h1 class="ms-header__title" id="page-title"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span>Mail delivery</span></h1>
+      <p class="ms-header__topic">example.com &middot; outgoing queue, blocked addresses and limits</p>
+    </header>
+
+    <div class="ms-page" id="admin-content">
+      <div class="ms-page__inner">
+
+        <section class="ms-section" aria-labelledby="queue-title">
+          <div class="ms-page__head">
+            <div class="ms-page__head-text">
+              <h2 class="ms-section-title" id="queue-title">Outgoing mail, last 24 hours</h2>
+              <p>Updated 10:50. Mail leaves the queue only with a final result: sent, bounced or expired.</p>
+            </div>
+            <div class="ms-page__actions"><button class="ms-btn" type="button"><span class="ms-icon ms-i-refresh ms-icon--sm" aria-hidden="true"></span>Refresh</button></div>
+          </div>
+          <ul class="ms-stat-grid">
+            <li class="ms-stat"><span class="ms-stat__label"><span class="ms-icon ms-i-send ms-icon--sm" aria-hidden="true"></span>Sent</span><span class="ms-stat__value">1,284</span><span class="ms-stat__note">Delivered to the other server.</span></li>
+            <li class="ms-stat"><span class="ms-stat__label"><span class="ms-icon ms-i-inbox ms-icon--sm" aria-hidden="true"></span>Queued</span><span class="ms-stat__value">12</span><span class="ms-stat__note">Sending now.</span></li>
+            <li class="ms-stat ms-stat--warn"><span class="ms-stat__label"><span class="ms-icon ms-i-clock ms-icon--sm" aria-hidden="true"></span>Deferred</span><span class="ms-stat__value">3</span><span class="ms-stat__note">Will try again, for up to 5 days.</span></li>
+            <li class="ms-stat ms-stat--bad"><span class="ms-stat__label"><span class="ms-icon ms-i-alert ms-icon--sm" aria-hidden="true"></span>Bounced</span><span class="ms-stat__value">2</span><span class="ms-stat__note">Not delivered. The sender was told.</span></li>
+          </ul>
+
+          <div class="ms-card">
+            <div class="ms-card__head"><h3 id="deferred-title">Deferred mail</h3><span class="ms-meta">Tries again with longer waits each time</span></div>
+            <div class="ms-table-wrap">
+              <table class="ms-table ms-table--cards" aria-labelledby="deferred-title">
+                <thead><tr><th scope="col">To</th><th scope="col">Why</th><th scope="col">Tries</th><th scope="col">Next try</th></tr></thead>
+                <tbody>
+                <tr>
+                  <td class="ms-table__lead"><span class="ms-addr">dan@clientco.net</span></td>
+                  <td data-label="Why"><div>Their server is busy. Mesail will try again.<span class="ms-table__sub">Reference: 451</span></div></td>
+                  <td data-label="Tries">3</td>
+                  <td data-label="Next try"><time datetime="2026-11-10T11:05">11:05</time></td>
+                </tr>
+                <tr>
+                  <td class="ms-table__lead"><span class="ms-addr">carol@partner.org</span></td>
+                  <td data-label="Why"><div>Their server did not answer.<span class="ms-table__sub">Reference: timeout</span></div></td>
+                  <td data-label="Tries">2</td>
+                  <td data-label="Next try"><time datetime="2026-11-10T11:20">11:20</time></td>
+                </tr>
+                <tr>
+                  <td class="ms-table__lead"><span class="ms-addr">team@slow.example</span></td>
+                  <td data-label="Why"><div>Their mailbox is full.<span class="ms-table__sub">Reference: 452</span></div></td>
+                  <td data-label="Tries">6</td>
+                  <td data-label="Next try"><time datetime="2026-11-10T13:40">13:40</time></td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="ms-state">
+            <p class="ms-state__label">State: numbers could not load</p>
+            <div class="ms-callout ms-callout--error" role="alert">
+              <span class="ms-icon ms-i-alert" aria-hidden="true"></span>
+              <div class="ms-callout__text">
+                <strong>Queue numbers could not load.</strong>
+                <p>Mail is still being sent. Try again in a minute.</p>
+                <div class="ms-callout__actions"><button class="ms-btn ms-btn--sm" type="button">Try again</button></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="ms-card" aria-labelledby="sup-title">
+          <div class="ms-card__head">
+            <h2 id="sup-title">Suppression list</h2>
+            <span class="ms-tag ms-tag--outline"><span class="ms-icon ms-i-building" aria-hidden="true"></span>Whole organization</span>
+          </div>
+          <div class="ms-card__body">
+            <p>Mesail does not send mail to these addresses. Addresses are added after a hard bounce or a spam complaint. This list is only for your organization.</p>
+          </div>
+          <div class="ms-table-wrap">
+            <table class="ms-table ms-table--cards">
+              <caption class="ms-sr-only">Blocked addresses</caption>
+              <thead><tr><th scope="col">Address</th><th scope="col">Reason</th><th scope="col">Added</th><th scope="col"><span class="ms-sr-only">Actions</span></th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="ms-table__lead"><span class="ms-addr">old.contact@partner.org</span></td>
+                  <td data-label="Reason"><div><span class="ms-person__name">Hard bounce</span><span class="ms-table__sub">The mailbox does not exist.</span></div></td>
+                  <td data-label="Added"><time datetime="2026-11-08">8 Nov 2026</time></td>
+                  <td class="ms-table__actions"><div class="ms-page__actions"><button class="ms-btn ms-btn--sm" type="button" aria-label="Remove old.contact@partner.org from the suppression list">Remove</button></div></td>
+                </tr>
+                <tr>
+                  <td class="ms-table__lead"><span class="ms-addr">news@clientco.net</span></td>
+                  <td data-label="Reason"><div><span class="ms-person__name">Spam complaint</span><span class="ms-table__sub">The person marked our mail as spam.</span></div></td>
+                  <td data-label="Added"><time datetime="2026-10-21">21 Oct 2026</time></td>
+                  <td class="ms-table__actions"><div class="ms-page__actions"><button class="ms-btn ms-btn--sm" type="button" aria-label="Remove news@clientco.net from the suppression list">Remove</button></div></td>
+                </tr>
+                <tr>
+                  <td class="ms-table__lead"><span class="ms-addr">test@invalid.example</span></td>
+                  <td data-label="Reason"><div><span class="ms-person__name">Added by an admin</span><span class="ms-table__sub">Added by Dara Okafor.</span></div></td>
+                  <td data-label="Added"><time datetime="2026-09-02">2 Sep 2026</time></td>
+                  <td class="ms-table__actions"><div class="ms-page__actions"><button class="ms-btn ms-btn--sm" type="button" aria-label="Remove test@invalid.example from the suppression list">Remove</button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="ms-list-foot">
+            <span>3 of up to 10,000 addresses.</span>
+            <div class="ms-page__actions"><button class="ms-btn ms-btn--sm" type="button"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span>Add address</button></div>
+          </div>
+        </section>
+
+        <section class="ms-card" aria-labelledby="ret-title">
+          <div class="ms-card__head">
+            <h2 id="ret-title">Retention</h2>
+            <button class="ms-btn ms-btn--sm" type="button" aria-label="Edit retention"><span class="ms-icon ms-i-edit ms-icon--sm" aria-hidden="true"></span>Edit</button>
+          </div>
+          <div class="ms-card__body">
+            <dl class="ms-kv ms-kv--plain">
+              <dt>Messages</dt><dd>Kept for 365 days, then deleted</dd>
+              <dt>Deleted items</dt><dd>Kept for 30 days, then removed completely. This cannot be undone</dd>
+            </dl>
+          </div>
+        </section>
+
+        <section class="ms-card" aria-labelledby="lim-title">
+          <div class="ms-card__head">
+            <h2 id="lim-title">Attachment limits</h2>
+            <button class="ms-btn ms-btn--sm" type="button" aria-label="Edit attachment limits"><span class="ms-icon ms-i-edit ms-icon--sm" aria-hidden="true"></span>Edit</button>
+          </div>
+          <div class="ms-card__body">
+            <dl class="ms-kv ms-kv--plain">
+              <dt>Per file</dt><dd>25 MB</dd>
+              <dt>Per message</dt><dd>50 MB, all files together</dd>
+              <dt>Outgoing retries</dt><dd>Up to 5 days, then the sender is told</dd>
+            </dl>
+            <p class="ms-meta">These limits apply to chat and email. The server&rsquo;s own maximum is in the configuration reference.</p>
+          </div>
+        </section>
+
+        <section class="ms-state" aria-labelledby="st-edit-lim">
+          <h2 class="ms-state__label" id="st-edit-lim">State: editing attachment limits, with an error</h2>
+          <form class="ms-card" aria-labelledby="lim-edit-title" onsubmit="return false">
+            <div class="ms-card__head"><h3 id="lim-edit-title">Attachment limits</h3></div>
+            <div class="ms-card__body">
+              <div class="ms-field">
+                <label class="ms-label" for="lim-file">Per file</label>
+                <div class="ms-input-group"><input class="ms-input" id="lim-file" type="number" inputmode="numeric" min="1" max="50" value="60" aria-invalid="true" aria-describedby="lim-file-err lim-file-help"><span class="ms-input-group__suffix">MB</span></div>
+                <p class="ms-error-text" id="lim-file-err"><span class="ms-icon ms-i-alert" aria-hidden="true"></span>A file cannot be bigger than the whole message (50 MB). Enter 50 or less.</p>
+                <p class="ms-help" id="lim-file-help">From 1 to 50 MB. Many mail servers refuse files over 25 MB.</p>
+              </div>
+              <div class="ms-field">
+                <label class="ms-label" for="lim-msg">Per message</label>
+                <div class="ms-input-group"><input class="ms-input" id="lim-msg" type="number" inputmode="numeric" min="1" max="100" value="50" aria-describedby="lim-msg-help"><span class="ms-input-group__suffix">MB</span></div>
+                <p class="ms-help" id="lim-msg-help">All files together. From 1 to 100 MB, the server maximum.</p>
+              </div>
+            </div>
+            <div class="ms-dialog__foot">
+              <button class="ms-btn" type="button">Cancel</button>
+              <button class="ms-btn ms-btn--primary" type="submit">Save limits</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <nav class="ms-bottom-nav" aria-label="Main">
+    <a class="ms-bottom-nav__item" href="messenger.html?pane=list"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
+    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
+    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
+    <a class="ms-bottom-nav__item" href="settings.html" aria-current="page"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
+  </nav>
+</div>
+
+<div class="ms-sr-only" aria-live="polite" id="announcer"></div>
+</body>
+</html>

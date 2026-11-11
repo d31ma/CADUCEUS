@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en" w-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: settings, profile and account</title>
+<link rel="stylesheet" href="assets/duvay/tokens.css">
+<link rel="stylesheet" href="assets/duvay/themes.css">
+<link rel="stylesheet" href="assets/mesail-tokens.css">
+<link rel="stylesheet" href="assets/icons.css">
+<link rel="stylesheet" href="assets/mesail.css">
+<link rel="stylesheet" href="assets/screens/settings.css">
+<script src="assets/mockup.js" defer></script>
+</head>
+<body>
+<a class="ms-skip-link" href="#settings-page">Skip to settings</a>
+
+<div class="ms-app" data-pane="main">
+
+  <!-- Domain rail: one tile per messaging domain the user belongs to -->
+  <nav class="ms-rail" aria-label="Domains">
+    <ul class="ms-rail__list">
+      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
+      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<span class="ms-badge ms-badge--mention" aria-hidden="true">3</span></a></li>
+      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="ms-dot" aria-hidden="true"></span>La</a></li>
+    </ul>
+    <div class="ms-rail__sep" role="presentation"></div>
+    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><span class="ms-icon ms-i-plus" aria-hidden="true"></span></a>
+    <div class="ms-rail__spacer"></div>
+    <button class="ms-domain-tile" aria-label="Help and keyboard shortcuts" title="Help"><span class="ms-icon ms-i-info" aria-hidden="true"></span></button>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="ms-sidebar" aria-label="Conversations in example.com">
+    <div class="ms-sidebar__head">
+      <button class="ms-domain-name" aria-haspopup="menu" aria-expanded="false"><span>example.com</span><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span></button>
+      <div class="ms-header__actions">
+        <button class="ms-icon-btn" aria-label="New message" title="New message (N)"><span class="ms-icon ms-i-edit" aria-hidden="true"></span></button>
+      </div>
+    </div>
+    <div class="ms-sidebar__search">
+      <button class="ms-search" aria-label="Search example.com" aria-keyshortcuts="Control+K Meta+K"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span>Search<span class="ms-kbd">⌘K</span></button>
+    </div>
+    <div class="ms-sidebar__scroll">
+      <ul class="ms-nav-list">
+        <li><a class="ms-nav-item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Activity</span><span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a></li>
+        <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-thread" aria-hidden="true"></span><span class="ms-nav-item__label">Threads</span></a></li>
+      </ul>
+
+      <section class="ms-nav-section" aria-labelledby="sec-channels">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-channels"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Channels</button>
+          <button class="ms-icon-btn" aria-label="Add or browse channels"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">general</span></a></li>
+          <li><a class="ms-nav-item" href="messenger.html"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">releases</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">support</span><span class="ms-icon ms-i-mail ms-icon--sm" style="color:var(--ms-email)" aria-label="Has an email address" role="img"></span><span class="ms-badge" aria-label="4 unread">4</span></a></li>
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-icon ms-i-lock" aria-label="Private channel" role="img"></span><span class="ms-nav-item__label">design</span><span class="ms-badge ms-badge--mention" aria-label="1 mention">1</span></a></li>
+          <li><a class="ms-nav-item is-muted" href="#"><span class="ms-icon ms-i-hash" aria-hidden="true"></span><span class="ms-nav-item__label">random</span><span class="ms-icon ms-i-bell-off ms-icon--sm" aria-label="Muted" role="img"></span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="sec-dms">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-dms"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Direct messages</button>
+          <button class="ms-icon-btn" aria-label="New direct message"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item is-unread" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:20">BL<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span><span class="ms-nav-item__label">Bo Lee</span><span class="ms-sr-only">, active</span><span class="ms-badge ms-badge--mention" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:280">CW<span class="ms-presence ms-presence--idle" aria-hidden="true"></span></span><span class="ms-nav-item__label">Chen Wu</span><span class="ms-sr-only">, idle</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs" style="--h:140">DO<span class="ms-presence ms-presence--dnd" aria-hidden="true"></span></span><span class="ms-nav-item__label">Dara Okafor</span><span class="ms-sr-only">, do not disturb</span></a></li>
+          <li><a class="ms-nav-item" href="#"><span class="ms-avatar ms-avatar--xs ms-avatar--channel" aria-hidden="true">3</span><span class="ms-nav-item__label">Bo, Chen, Dara</span></a></li>
+        </ul>
+      </section>
+
+      <section class="ms-nav-section" aria-labelledby="sec-email">
+        <div class="ms-nav-section__head">
+          <button class="ms-nav-section__toggle" aria-expanded="true" id="sec-email"><span class="ms-icon ms-i-chevron-down ms-icon--sm" aria-hidden="true"></span>Email</button>
+          <button class="ms-icon-btn" aria-label="New email"><span class="ms-icon ms-i-plus ms-icon--sm" aria-hidden="true"></span></button>
+        </div>
+        <ul class="ms-nav-list">
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email is-unread" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">DH</span><span class="ms-nav-item__label">Dan Hale<span class="ms-nav-item__sub">Question about invoice 2291</span></span><span class="ms-badge" aria-label="1 unread">1</span></a></li>
+          <li><a class="ms-nav-item ms-nav-item--two-line ms-nav-item--email" href="email-conversation.html"><span class="ms-avatar ms-avatar--xs ms-avatar--external" aria-hidden="true">CD</span><span class="ms-nav-item__label">Carol Diaz, Bo Lee<span class="ms-nav-item__sub">Contract renewal 2027</span></span></a></li>
+        </ul>
+      </section>
+    </div>
+    <div class="ms-sidebar__foot">
+      <button class="ms-me" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
+        <span class="ms-avatar ms-avatar--sm" style="--h:195">AR<span class="ms-presence ms-presence--active" aria-hidden="true"></span></span>
+        <span><span class="ms-me__name">Ana Ruiz</span><br><span class="ms-me__status">ana@example.com</span></span>
+      </button>
+      <a class="ms-icon-btn" href="settings.html" aria-label="Settings" aria-current="page"><span class="ms-icon ms-i-settings" aria-hidden="true"></span></a>
+    </div>
+  </aside>
+
+  <!-- Settings for the current domain -->
+  <main class="ms-main" aria-labelledby="settings-title">
+    <header class="ms-header">
+      <a class="ms-icon-btn ms-header__back" href="messenger.html?pane=list" aria-label="Back to conversations"><span class="ms-icon ms-i-arrow-left" aria-hidden="true"></span></a>
+      <h1 class="ms-header__title" id="settings-title"><span class="ms-icon ms-i-settings" aria-hidden="true"></span><span class="ms-settings-title">Settings<span class="ms-settings-title__sep"> · </span><span class="ms-settings-title__domain">example.com</span></span></h1>
+      <div class="ms-header__actions">
+        <p class="ms-save-status ms-save-status--saved" id="save-status" role="status" aria-live="polite"><span class="ms-icon ms-i-check" aria-hidden="true"></span>Saved</p>
+      </div>
+    </header>
+    <nav class="ms-tabs ms-settings-tabs" aria-label="Settings sections">
+      <a class="ms-tab" href="settings.html" aria-current="page">Profile</a>
+      <a class="ms-tab" href="settings-notifications.html">Notifications</a>
+      <a class="ms-tab" href="settings-email.html">Email</a>
+      <a class="ms-tab" href="settings-appearance.html">Appearance</a>
+    </nav>
+    <div class="ms-settings">
+      <nav class="ms-settings__nav" aria-label="Settings sections">
+        <p class="ms-settings-nav__head">Your settings</p>
+        <ul class="ms-nav-list">
+        <li><a class="ms-nav-item" href="settings.html" aria-current="page"><span class="ms-icon ms-i-user" aria-hidden="true"></span><span class="ms-nav-item__label">Profile and account</span></a></li>
+        <li><a class="ms-nav-item" href="settings-notifications.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span><span class="ms-nav-item__label">Notifications</span></a></li>
+        <li><a class="ms-nav-item" href="settings-email.html"><span class="ms-icon ms-i-mail" aria-hidden="true"></span><span class="ms-nav-item__label">Email</span></a></li>
+        <li><a class="ms-nav-item" href="settings-appearance.html"><span class="ms-icon ms-i-sun" aria-hidden="true"></span><span class="ms-nav-item__label">Appearance</span></a></li>
+        </ul>
+        <p class="ms-settings-nav__scope"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span>Profile, notifications and email are for <strong>example.com</strong> only. Appearance is for this device.</span></p>
+      </nav>
+      <div class="ms-page" id="settings-page">
+        <div class="ms-page__inner">
+          <div class="ms-page__head">
+            <h2 class="ms-page__title">Profile and account</h2>
+            <p class="ms-scope-note"><span class="ms-icon ms-i-globe" aria-hidden="true"></span><span>This is your example.com identity. People in example.com see this profile. Your example.org profile is separate.</span></p>
+          </div>
+
+          <!-- Profile -->
+          <section class="ms-card" aria-labelledby="profile-h">
+            <div class="ms-card__head">
+              <div class="ms-card__head-text"><h3 id="profile-h">Profile</h3><p class="ms-card__desc">How people in example.com see you.</p></div>
+            </div>
+            <div class="ms-profile">
+              <span class="ms-avatar ms-avatar--xl" style="--h:195" aria-hidden="true">AR</span>
+              <div class="ms-profile__id">
+                <p class="ms-profile__name">Ana Ruiz</p>
+                <p class="ms-subtle">Release manager · ana@example.com</p>
+                <div class="ms-profile__actions">
+                  <button class="ms-btn ms-btn--sm" type="button" aria-describedby="photo-help"><span class="ms-icon ms-i-image" aria-hidden="true"></span>Change photo</button>
+                  <button class="ms-btn ms-btn--sm ms-btn--ghost" type="button" disabled>Remove photo</button>
+                </div>
+                <p class="ms-help" id="photo-help">JPG or PNG, up to 5 MB. Without a photo, people see your initials.</p>
+              </div>
+            </div>
+            <div class="ms-setting ms-setting--stack">
+              <div class="ms-field">
+                <label class="ms-label" for="display-name">Name</label>
+                <div class="ms-input-row">
+                  <input class="ms-input" id="display-name" type="text" value="Ana Ruiz" readonly aria-describedby="display-name-help">
+                  <span class="ms-icon ms-i-lock ms-subtle" role="img" aria-label="Read only"></span>
+                </div>
+                <p class="ms-help" id="display-name-help">Your name comes from your example.com account. Change it in your <a class="ms-ext-link" href="https://id.example.com/realms/example-com/account/#/personal-info" target="_blank" rel="noopener">account settings<span class="ms-icon ms-i-external" aria-hidden="true"></span><span class="ms-sr-only"> (opens in a new tab)</span></a>.</p>
+              </div>
+              <div class="ms-field">
+                <label class="ms-label" for="job-title">Title</label>
+                <input class="ms-input" id="job-title" type="text" value="Release manager" maxlength="60" autocomplete="organization-title" aria-describedby="job-title-help">
+                <p class="ms-help" id="job-title-help">Shown under your name in example.com. Up to 60 characters. Saved when you leave the field.</p>
+              </div>
+            </div>
+            <div class="ms-setting">
+              <div class="ms-setting__text">
+                <p class="ms-setting__label">Primary address</p>
+                <p class="ms-help">Your chat and email address in example.com. Your admin manages addresses and aliases.</p>
+              </div>
+              <div class="ms-setting__control">
+                <span class="ms-mono">ana@example.com</span>
+                <button class="ms-icon-btn" type="button" aria-label="Copy ana@example.com" title="Copy"><span class="ms-icon ms-i-copy" aria-hidden="true"></span></button>
+              </div>
+            </div>
+            <div class="ms-setting ms-setting--stack">
+              <div class="ms-field">
+                <label class="ms-label" for="time-zone">Local time zone</label>
+                <select class="ms-select" id="time-zone" aria-describedby="time-zone-help">
+                  <option value="auto" selected>Use this device: Europe/Madrid (UTC+01:00)</option>
+                  <option value="Europe/Lisbon">Europe/Lisbon (UTC+00:00)</option>
+                  <option value="Europe/Madrid">Europe/Madrid (UTC+01:00)</option>
+                  <option value="America/New_York">America/New_York (UTC−05:00)</option>
+                  <option value="Asia/Tokyo">Asia/Tokyo (UTC+09:00)</option>
+                </select>
+                <p class="ms-help" id="time-zone-help">People in example.com see your local time on your profile, for example "10:42 for Ana". Quiet hours use this time zone too.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Account: managed in Keycloak -->
+          <section class="ms-card" aria-labelledby="account-h">
+            <div class="ms-card__head">
+              <div class="ms-card__head-text"><h3 id="account-h">Account and sign-in</h3><p class="ms-card__desc">Your example.com sign-in is managed by your organization's account service. Mesail never sees or stores your password.</p></div>
+            </div>
+            <a class="ms-link-row" href="https://id.example.com/realms/example-com/account/#/security/signingin" target="_blank" rel="noopener">
+              <span class="ms-link-row__icon"><span class="ms-icon ms-i-key" aria-hidden="true"></span></span>
+              <span class="ms-link-row__main"><span class="ms-link-row__title">Manage password, passkeys and two-step sign-in</span><span class="ms-help">Opens your example.com account page at id.example.com</span></span>
+              <span class="ms-link-row__end"><span class="ms-link-row__open">Open</span><span class="ms-icon ms-i-external ms-icon--sm" aria-hidden="true"></span><span class="ms-sr-only"> (opens in a new tab)</span></span>
+            </a>
+            <a class="ms-link-row" href="https://id.example.com/realms/example-com/account/#/personal-info" target="_blank" rel="noopener">
+              <span class="ms-link-row__icon"><span class="ms-icon ms-i-user" aria-hidden="true"></span></span>
+              <span class="ms-link-row__main"><span class="ms-link-row__title">Change your name and personal details</span><span class="ms-help">Changes show in Mesail the next time you sign in</span></span>
+              <span class="ms-link-row__end"><span class="ms-link-row__open">Open</span><span class="ms-icon ms-i-external ms-icon--sm" aria-hidden="true"></span><span class="ms-sr-only"> (opens in a new tab)</span></span>
+            </a>
+          </section>
+
+          <!-- Sessions -->
+          <section class="ms-card" aria-labelledby="sessions-h">
+            <div class="ms-card__head">
+              <div class="ms-card__head-text"><h3 id="sessions-h">Sessions</h3><p class="ms-card__desc">Signed in to example.com on this browser since today, 08:55.</p></div>
+            </div>
+            <div class="ms-setting">
+              <div class="ms-setting__text">
+                <p class="ms-setting__label">Sign out of all devices</p>
+                <p class="ms-help" id="signout-help">Signs you out of example.com on every phone, tablet and browser, this one too. Other devices stop within one minute. example.org and lab.example.net stay signed in.</p>
+              </div>
+              <div class="ms-setting__control">
+                <button class="ms-btn ms-btn--danger-outline" type="button" aria-haspopup="dialog" aria-describedby="signout-help"><span class="ms-icon ms-i-logout" aria-hidden="true"></span>Sign out everywhere</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Mockup only: other states of the cards above -->
+          <section class="ms-mock-states" aria-labelledby="mock-h">
+            <h2 id="mock-h">Other states (mockup only)</h2>
+
+            <figure class="ms-mock-state">
+              <figcaption>After "Sign out everywhere": confirm</figcaption>
+              <div class="ms-dialog" role="dialog" aria-modal="true" aria-labelledby="signout-dialog-h" aria-describedby="signout-dialog-desc">
+                <div class="ms-dialog__head">
+                  <h2 id="signout-dialog-h">Sign out of all devices?</h2>
+                  <button class="ms-icon-btn" type="button" aria-label="Close"><span class="ms-icon ms-i-close" aria-hidden="true"></span></button>
+                </div>
+                <div class="ms-dialog__body">
+                  <p id="signout-dialog-desc">You will be signed out of example.com everywhere, this browser too. To use example.com again, sign in again.</p>
+                  <p class="ms-help">example.org and lab.example.net stay signed in.</p>
+                </div>
+                <div class="ms-dialog__foot">
+                  <button class="ms-btn" type="button">Cancel</button>
+                  <button class="ms-btn ms-btn--danger" type="button"><span class="ms-icon ms-i-logout" aria-hidden="true"></span>Sign out everywhere</button>
+                </div>
+              </div>
+            </figure>
+
+            <figure class="ms-mock-state">
+              <figcaption>Photo: uploading</figcaption>
+              <div class="ms-profile">
+                <span class="ms-avatar ms-avatar--xl" style="--h:195" aria-hidden="true">AR</span>
+                <div class="ms-profile__id">
+                  <p class="ms-profile__name">Ana Ruiz</p>
+                  <div class="ms-profile__actions">
+                    <button class="ms-btn ms-btn--sm" type="button" aria-busy="true" disabled><span class="ms-spinner" aria-hidden="true"></span>Uploading photo…</button>
+                    <button class="ms-btn ms-btn--sm ms-btn--ghost" type="button">Cancel</button>
+                  </div>
+                  <div class="ms-progress" role="progressbar" aria-label="Uploading photo" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"><span style="width:60%"></span></div>
+                </div>
+              </div>
+            </figure>
+
+            <figure class="ms-mock-state">
+              <figcaption>Photo: error</figcaption>
+              <div class="ms-profile">
+                <span class="ms-avatar ms-avatar--xl" style="--h:195" aria-hidden="true">AR</span>
+                <div class="ms-profile__id">
+                  <p class="ms-profile__name">Ana Ruiz</p>
+                  <div class="ms-profile__actions">
+                    <button class="ms-btn ms-btn--sm" type="button" aria-describedby="photo-error"><span class="ms-icon ms-i-image" aria-hidden="true"></span>Choose another photo</button>
+                  </div>
+                  <p class="ms-error-text" id="photo-error" role="alert"><span class="ms-icon ms-i-alert ms-icon--sm" aria-hidden="true"></span>This photo is 9 MB. Choose a JPG or PNG under 5 MB.</p>
+                </div>
+              </div>
+            </figure>
+
+            <figure class="ms-mock-state">
+              <figcaption>Loading the profile</figcaption>
+              <div class="ms-profile" aria-busy="true">
+                <span class="ms-sr-only" role="status">Loading your profile</span>
+                <span class="ms-skeleton" style="width:5rem;height:5rem;border-radius:var(--ms-radius-tile)"></span>
+                <div class="ms-profile__id">
+                  <span class="ms-skeleton ms-skeleton--line" style="width:10rem;height:1.25rem"></span>
+                  <span class="ms-skeleton ms-skeleton--line" style="width:14rem"></span>
+                  <span class="ms-skeleton ms-skeleton--line" style="width:8rem"></span>
+                </div>
+              </div>
+            </figure>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <nav class="ms-bottom-nav" aria-label="Main">
+    <a class="ms-bottom-nav__item" href="messenger.html?pane=list"><span class="ms-icon ms-i-chat" aria-hidden="true"></span>Home</a>
+    <a class="ms-bottom-nav__item" href="activity.html"><span class="ms-icon ms-i-bell" aria-hidden="true"></span>Activity<span class="ms-badge ms-badge--mention" aria-label="2 mentions">2</span></a>
+    <a class="ms-bottom-nav__item" href="search.html"><span class="ms-icon ms-i-search" aria-hidden="true"></span>Search</a>
+    <a class="ms-bottom-nav__item" href="settings.html" aria-current="page"><span class="ms-icon ms-i-user" aria-hidden="true"></span>You</a>
+  </nav>
+</div>
+</body>
+</html>

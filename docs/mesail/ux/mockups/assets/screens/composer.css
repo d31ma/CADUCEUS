@@ -1,0 +1,186 @@
+/* Composer screens: the full-pane "New message" view, recipient chip menus,
+ * reply-as-email controls and the labelled mockup state frames.
+ * Load after mesail.css. Tokens only (--w-*, --ms-*). */
+
+/* ---------- New message view: the composer fills the main pane ---------- */
+.ms-compose-main { position: relative; }
+.ms-compose { flex: 1; min-height: 0; overflow-y: auto; padding: var(--w-space-5) var(--w-space-5) var(--w-space-6); }
+.ms-compose__inner { max-width: var(--ms-content-max); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--w-space-3); }
+.ms-compose__intro { padding: 0 var(--w-space-1); color: var(--w-text-subtle); font-size: var(--w-font-base); }
+.ms-compose__status { display: inline-flex; align-items: center; gap: var(--w-space-1); font-size: var(--ms-text-meta); color: var(--w-text-subtle); white-space: nowrap; }
+.ms-compose__status .ms-icon { --ms-icon-size: 0.875rem; }
+
+/* Rows that need more than the shared row gives */
+.ms-compose__to { position: relative; }
+.ms-composer__editor--tall { min-height: 9rem; max-height: none; }
+.ms-composer__editor p + p { margin-top: var(--w-space-2); }
+.ms-compose__select {
+  flex: 1; min-width: 0; min-height: 2rem; padding: 0 var(--w-space-1);
+  border: 0; border-radius: var(--w-radius-md); background: transparent; color: var(--w-text);
+}
+.ms-compose__select:hover { background: var(--w-hover); }
+.ms-compose__row-note { flex: none; align-self: center; font-size: var(--ms-text-meta); color: var(--w-text-subtle); }
+.ms-compose__row-note--required { color: var(--w-text-subtle); }
+.ms-compose__row-help { flex-basis: 100%; padding: 0 0 var(--w-space-1) calc(3.5rem + var(--w-space-2)); font-size: var(--ms-text-meta); color: var(--w-text-subtle); }
+.ms-compose__row-error { flex-basis: 100%; padding: 0 0 var(--w-space-1) calc(3.5rem + var(--w-space-2)); }
+.ms-composer__row--wrap { flex-wrap: wrap; }
+.ms-compose__row-fix { margin: 0 0 var(--w-space-1) calc(3.5rem + var(--w-space-2)); }
+/* A reply composer can grow tall: it scrolls, and its toolbar stays visible */
+.ms-composer-wrap--scroll { flex: none; max-height: 70%; overflow-y: auto; }
+.ms-composer__row--invalid { background: var(--w-error-container); }
+.ms-composer__row--invalid .ms-composer__row-label { color: var(--w-on-error-container); font-weight: var(--w-font-weight-semibold); }
+.ms-cc-toggle[aria-expanded="true"] { background: var(--w-selected); color: var(--w-selected-text); }
+
+/* A Cc chip the composer added for a chat recipient (S4): dashed, and says why */
+.ms-chip--linked { border-style: dashed; background: transparent; }
+.ms-chip__note { font-size: var(--w-font-xs); color: var(--w-text-subtle); white-space: nowrap; }
+
+/* Recipient chip with its menu anchored under it */
+.ms-chip-anchor { position: relative; display: inline-flex; max-width: 100%; }
+.ms-chip-menu { position: absolute; top: calc(100% + var(--w-space-1)); left: 0; z-index: 40; width: 21rem; }
+.ms-chip-menu .ms-popover__head { display: flex; align-items: center; gap: var(--w-space-2); }
+.ms-chip-menu__who { display: grid; min-width: 0; }
+.ms-chip-menu__name { font-weight: var(--w-font-weight-semibold); }
+.ms-chip-menu__addr { font-size: var(--ms-text-meta); color: var(--w-text-subtle); overflow-wrap: anywhere; }
+.ms-chip-menu__label { padding: var(--w-space-1) var(--w-space-3) 0; font-size: var(--w-font-xs); font-weight: var(--w-font-weight-semibold); color: var(--w-text-subtle); text-transform: uppercase; letter-spacing: 0.04em; }
+.ms-chip-menu .ms-menu__check { margin-top: 0.125rem; }
+.ms-menu__item.is-active { background: var(--w-hover); outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color); outline-offset: -2px; }
+.ms-menu__name { display: inline-flex; align-items: center; gap: var(--w-space-1); }
+.ms-menu__name .ms-icon { --ms-icon-size: 1rem; }
+.ms-menu__name .ms-i-chat { color: var(--ms-chat); }
+.ms-menu__name .ms-i-mail { color: var(--ms-email); }
+.ms-menu__item[aria-disabled="true"] .ms-menu__name .ms-icon { color: inherit; }
+.ms-menu__reason { display: flex; align-items: flex-start; gap: var(--w-space-1); font-size: var(--ms-text-meta); color: var(--w-text-subtle); font-weight: var(--w-font-weight-normal); }
+.ms-menu__reason .ms-icon { --ms-icon-size: 0.875rem; flex: none; margin-top: 0.125rem; }
+.ms-chip-menu--static { position: static; width: auto; max-width: 24rem; }
+.ms-compose__scrim { display: none; }
+
+/* Suggestion list under the To field */
+.ms-compose__suggest { top: 100%; left: calc(var(--w-space-3) + 3.5rem + var(--w-space-2)); max-height: 26rem; overflow-y: auto; }
+.ms-suggest__text { display: grid; min-width: 0; }
+.ms-suggest__name { font-weight: var(--w-font-weight-medium); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-suggest__sub { font-size: var(--ms-text-meta); color: var(--w-text-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-suggest__item[aria-selected="true"] .ms-suggest__sub { color: inherit; }
+.ms-suggest__item--raw .ms-suggest__icon { display: grid; place-items: center; width: var(--ms-avatar-sm); height: var(--ms-avatar-sm); border-radius: var(--w-radius-md); background: var(--ms-email-bg); color: var(--ms-on-email-bg); flex: none; }
+.ms-suggest__hint { display: flex; align-items: center; gap: var(--w-space-2); padding: var(--w-space-2); border-top: 1px solid var(--w-divider); margin-top: var(--w-space-1); font-size: var(--ms-text-meta); color: var(--w-text-subtle); }
+.ms-suggest__hint .ms-icon { --ms-icon-size: 0.875rem; }
+
+/* Who-gets-what summary (AC-CP-4) */
+.ms-summary { display: grid; gap: var(--w-space-1); flex: 1; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.ms-summary__item { display: flex; align-items: flex-start; gap: var(--w-space-2); }
+.ms-composer__summary .ms-summary__item .ms-icon { --ms-icon-size: 1rem; flex: none; }
+.ms-composer__summary .ms-summary__item--chat .ms-icon { color: var(--ms-chat); }
+.ms-composer__summary .ms-summary__item--email .ms-icon { color: var(--ms-email); }
+.ms-composer__summary--error .ms-summary__item .ms-icon { color: inherit; }
+.ms-summary__option { display: flex; flex-wrap: wrap; align-items: center; gap: var(--w-space-2); padding-top: var(--w-space-1); }
+.ms-summary__option .ms-switch { font-size: var(--w-font-base); }
+
+/* Toolbar that stays on screen while the body scrolls, above the safe area */
+.ms-composer__toolbar--sticky {
+  position: sticky; bottom: 0; z-index: 2; flex-wrap: wrap; row-gap: var(--w-space-2);
+  border-top: 1px solid var(--w-divider); border-radius: 0 0 var(--ms-radius-card) var(--ms-radius-card);
+  background: var(--w-surface); padding-top: var(--w-space-2);
+  padding-bottom: max(var(--w-space-2), env(safe-area-inset-bottom));
+}
+.ms-compose__format { display: inline-flex; align-items: center; gap: 2px; }
+.ms-compose__format-toggle { display: none; }
+.ms-compose__send-note { font-size: var(--ms-text-meta); color: var(--w-text-subtle); }
+.ms-send--busy { cursor: progress; }
+.ms-send .ms-spinner { width: 0.875rem; height: 0.875rem; }
+
+/* Attachments (AC-MS-5) */
+.ms-attach-chip__name { max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: var(--w-font-weight-medium); }
+.ms-attach-chip__size { color: var(--w-text-subtle); white-space: nowrap; }
+.ms-attach-chip .ms-icon-btn { width: 1.5rem; height: 1.5rem; }
+.ms-attach-chip--error { border-color: var(--w-error); background: var(--w-error-container); color: var(--w-on-error-container); height: auto; min-height: 2rem; padding-top: var(--w-space-1); padding-bottom: var(--w-space-1); }
+.ms-attach-chip--error .ms-attach-chip__size { color: inherit; }
+.ms-attach-chip--error .ms-icon-btn { color: inherit; }
+.ms-attach-limit { flex-basis: 100%; font-size: var(--ms-text-meta); color: var(--w-text-subtle); }
+
+/* Signature */
+.ms-signature__head { display: flex; align-items: center; gap: var(--w-space-2); margin-bottom: var(--w-space-1); font-size: var(--ms-text-meta); }
+.ms-signature__head .ms-btn { margin-left: auto; }
+
+/* Reply as email: who gets the reply, collapsed subject, quoted text */
+.ms-composer__mode--wrap { flex-wrap: wrap; row-gap: var(--w-space-2); }
+.ms-composer__mode-text { flex: 1; min-width: 12rem; }
+.ms-segmented { display: inline-flex; margin: 0; padding: 2px; border: 1px solid var(--w-border); border-radius: var(--w-radius-pill); background: var(--w-surface); }
+.ms-segmented__option { position: relative; display: inline-flex; align-items: center; gap: var(--w-space-1); min-height: 1.75rem; padding: 0 var(--w-space-3); border-radius: var(--w-radius-pill); color: var(--w-text); font-size: var(--w-font-base); cursor: pointer; white-space: nowrap; }
+.ms-segmented__option input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.ms-segmented__option:hover { background: var(--w-hover); }
+.ms-segmented__option:has(input:checked) { background: var(--w-selected); color: var(--w-selected-text); font-weight: var(--w-font-weight-semibold); }
+.ms-segmented__option:has(input:focus-visible) { outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color); outline-offset: 1px; }
+.ms-segmented__option .ms-icon { --ms-icon-size: 0.875rem; visibility: hidden; }
+.ms-segmented__option:has(input:checked) .ms-icon { visibility: visible; }
+.ms-compose__expand { display: flex; align-items: center; gap: var(--w-space-2); flex: 1; min-width: 0; min-height: 2rem; padding: 0 var(--w-space-1); border: 0; border-radius: var(--w-radius-md); background: transparent; text-align: left; }
+.ms-compose__expand:hover { background: var(--w-hover); }
+.ms-compose__expand .ms-composer__row-label { padding-top: 0; }
+.ms-compose__expand-value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ms-compose__expand-action { flex: none; display: inline-flex; align-items: center; gap: var(--w-space-1); color: var(--w-accent); font-size: var(--w-font-sm); font-weight: var(--w-font-weight-semibold); }
+.ms-compose__quoted { padding: 0 var(--w-space-3) var(--w-space-2); }
+.ms-compose__quoted .ms-email-card__quoted { margin-top: 0; }
+.ms-compose__chat-label { display: flex; align-items: center; gap: var(--w-space-2); padding: var(--w-space-2) var(--w-space-3) 0; font-size: var(--ms-text-meta); color: var(--w-text-subtle); }
+.ms-compose__chat-label .ms-icon { --ms-icon-size: 0.875rem; color: var(--ms-chat); }
+
+/* Keyboard help under the composer */
+.ms-compose__keys { display: flex; flex-wrap: wrap; gap: var(--w-space-1) var(--w-space-4); margin: 0; padding: 0 var(--w-space-1); list-style: none; font-size: var(--w-font-xs); color: var(--w-text-subtle); }
+.ms-compose__keys li { display: inline-flex; align-items: center; gap: var(--w-space-1); }
+
+/* ---------- Mockup only: labelled extra states below the screen ---------- */
+.ms-states { padding: var(--w-space-8) var(--w-space-5) var(--w-space-10); border-top: 4px solid var(--w-divider); background: var(--w-surface-container-low); }
+.ms-states__inner { max-width: 72rem; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--w-space-8); }
+.ms-states__title { font-size: var(--ms-text-heading); }
+.ms-states__intro { color: var(--w-text-subtle); margin-top: var(--w-space-1); }
+.ms-states__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr)); gap: var(--w-space-6); align-items: start; }
+.ms-state { display: grid; gap: var(--w-space-3); min-width: 0; }
+.ms-state__label { display: flex; align-items: center; gap: var(--w-space-2); font-size: var(--w-font-md); }
+.ms-state__note { font-size: var(--ms-text-meta); color: var(--w-text-subtle); }
+.ms-state__frame { position: relative; min-width: 0; padding: var(--w-space-4); border: 1px dashed var(--w-outline); border-radius: var(--ms-radius-card); background: var(--w-surface); }
+.ms-state__frame--tall { padding-bottom: 20rem; }
+.ms-state__frame--pane { padding: 0; overflow: hidden; }
+.ms-state__frame .ms-popover--static { max-width: none; }
+.ms-state__frame .ms-composer__toolbar--sticky { position: static; }
+.ms-state__frame .ms-composer-wrap { padding: var(--w-space-3); }
+.ms-state__frame .ms-timeline { flex: none; overflow: visible; padding-top: var(--w-space-2); }
+
+/* ---------- Narrow screens ---------- */
+@media (max-width: 767px) {
+  .ms-compose { padding: 0; }
+  .ms-compose__inner { gap: 0; }
+  .ms-compose__intro { padding: var(--w-space-3) var(--w-space-3) var(--w-space-2); }
+  .ms-compose .ms-composer--page { border-left: 0; border-right: 0; border-top: 0; border-radius: 0; box-shadow: none; }
+  .ms-compose .ms-composer--page .ms-composer__mode { border-radius: 0; }
+  .ms-compose .ms-composer__toolbar--sticky { border-radius: 0; }
+  .ms-composer__row--stack { flex-direction: column; align-items: stretch; gap: 0; }
+  .ms-composer__row--stack .ms-composer__row-label { width: auto; padding-top: var(--w-space-1); font-size: var(--ms-text-meta); }
+  .ms-composer__row--stack .ms-compose__row-note { align-self: flex-start; }
+  .ms-compose__row-help, .ms-compose__row-error { padding-left: 0; }
+  .ms-compose__row-fix { margin-left: 0; }
+  .ms-composer-wrap--scroll { max-height: 80%; }
+  .ms-compose__suggest { left: var(--w-space-2); right: var(--w-space-2); width: auto; max-height: 60dvh; }
+  .ms-suggest__item { min-height: var(--ms-touch-min); }
+  .ms-compose__format, .ms-compose__wide-only { display: none; }
+  .ms-compose__format-toggle { display: inline-grid; }
+  .ms-composer__toolbar--sticky .ms-composer__send { flex-wrap: wrap; justify-content: flex-end; }
+  .ms-send { min-height: var(--ms-touch-min); }
+  .ms-compose__keys { display: none; }
+  .ms-segmented { display: flex; width: 100%; }
+  .ms-segmented__option { flex: 1; justify-content: center; min-height: var(--ms-touch-min); }
+  .ms-composer__mode-text { flex-basis: 100%; }
+  .ms-attach-chip { height: auto; min-height: var(--ms-touch-min); }
+  .ms-attach-chip .ms-icon-btn { width: var(--ms-touch-min); height: var(--ms-touch-min); }
+  .ms-attach-chip__name { max-width: 9rem; }
+  /* The chip menu becomes a bottom sheet inside the main pane */
+  .ms-app .ms-chip-anchor, .ms-app .ms-compose__to:has(.ms-chip-menu) { position: static; }
+  .ms-compose__scrim { display: block; position: absolute; inset: 0; z-index: 45; background: var(--w-scrim); }
+  .ms-chip-menu { position: absolute; top: auto; left: 0; right: 0; bottom: 0; z-index: 50; width: auto; max-width: none; border-radius: var(--ms-radius-tile) var(--ms-radius-tile) 0 0; padding-bottom: max(var(--w-space-2), env(safe-area-inset-bottom)); }
+  .ms-chip-menu .ms-menu__item { min-height: var(--ms-touch-min); }
+  .ms-chip-menu--static { position: static; border-radius: var(--ms-radius-card); padding-bottom: var(--w-space-1); max-width: none; }
+  .ms-states { padding: var(--w-space-6) var(--w-space-4) var(--w-space-10); }
+}
+@media (pointer: coarse) {
+  .ms-compose__keys { display: none; }
+  .ms-menu__item { min-height: var(--ms-touch-min); }
+}
+.ms-compose__suggest { max-width: calc(100% - 3.5rem - var(--w-space-3) * 2 - var(--w-space-2)); }
+@media (max-width: 767px) { .ms-compose__suggest { max-width: none; } }

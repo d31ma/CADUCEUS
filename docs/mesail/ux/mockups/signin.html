@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en" w-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign in to Mesail</title>
+<link rel="stylesheet" href="assets/duvay/tokens.css">
+<link rel="stylesheet" href="assets/duvay/themes.css">
+<link rel="stylesheet" href="assets/mesail-tokens.css">
+<link rel="stylesheet" href="assets/icons.css">
+<link rel="stylesheet" href="assets/mesail.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<script src="assets/mockup.js" defer></script>
+</head>
+<body>
+<a class="ms-skip-link" href="#signin-email">Skip to the email field</a>
+
+<div class="ms-auth ms-auth--states">
+  <header class="ms-auth__brand">
+    <p class="ms-wordmark"><span class="ms-wordmark__mark" aria-hidden="true"></span><span class="ms-wordmark__text">Mesail</span></p>
+  </header>
+
+  <main class="ms-auth__main ms-auth__main--states">
+
+    <!-- State 1: default, with recent domains -->
+    <section class="ms-mock-state" aria-label="State 1: default with recent domains">
+      <p class="ms-mock-state__label">State 1 · Default, with recent domains</p>
+      <div class="ms-auth__card">
+        <div class="ms-auth__head">
+          <h1 class="ms-auth__title">Sign in to Mesail</h1>
+          <p class="ms-auth__lead">Enter your work email. We will find your organization.</p>
+        </div>
+        <form class="ms-auth__form" action="signin-domain.html" method="get" novalidate>
+          <div class="ms-field">
+            <label class="ms-label" for="signin-email">Work email</label>
+            <input class="ms-input" id="signin-email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" aria-describedby="signin-email-help" required>
+          </div>
+          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block">Continue</button>
+          <p class="ms-auth__note" id="signin-email-help"><span class="ms-icon ms-i-shield-check ms-icon--sm" aria-hidden="true"></span>You will sign in with your organization's account.</p>
+        </form>
+
+        <div class="ms-auth__divider" role="presentation">or</div>
+
+        <section aria-labelledby="recent-title" class="ms-auth__form">
+          <h2 class="ms-section-title" id="recent-title">Recent domains</h2>
+          <ul class="ms-domain-list">
+            <li class="ms-domain-item">
+              <a class="ms-domain-row is-active" href="signin-redirecting.html" aria-label="Continue to example.com as ana@example.com">
+                <span class="ms-domain-mark" aria-hidden="true">Ex</span>
+                <span class="ms-domain-row__main"><span class="ms-domain-row__name">example.com</span><span class="ms-domain-row__sub">ana@example.com</span></span>
+                <span class="ms-icon ms-i-chevron-right ms-domain-row__go" aria-hidden="true"></span>
+              </a>
+              <button class="ms-icon-btn" type="button" aria-label="Remove example.com from this device"><span class="ms-icon ms-i-close ms-icon--sm" aria-hidden="true"></span></button>
+            </li>
+            <li class="ms-domain-item">
+              <a class="ms-domain-row" href="signin-redirecting.html" aria-label="Continue to example.org as ana@example.org">
+                <span class="ms-domain-mark" aria-hidden="true">Eo</span>
+                <span class="ms-domain-row__main"><span class="ms-domain-row__name">example.org</span><span class="ms-domain-row__sub">ana@example.org</span></span>
+                <span class="ms-icon ms-i-chevron-right ms-domain-row__go" aria-hidden="true"></span>
+              </a>
+              <button class="ms-icon-btn" type="button" aria-label="Remove example.org from this device"><span class="ms-icon ms-i-close ms-icon--sm" aria-hidden="true"></span></button>
+            </li>
+          </ul>
+          <p class="ms-meta">This device remembers only the domain and the email. It never keeps your password.</p>
+        </section>
+      </div>
+    </section>
+
+    <!-- State 2: first visit, no recent domains -->
+    <section class="ms-mock-state" aria-label="State 2: first visit">
+      <p class="ms-mock-state__label">State 2 · First visit (empty: no recent domains)</p>
+      <div class="ms-auth__card">
+        <div class="ms-auth__head">
+          <h2 class="ms-auth__title">Sign in to Mesail</h2>
+          <p class="ms-auth__lead">Enter your work email. We will find your organization.</p>
+        </div>
+        <form class="ms-auth__form" action="signin-domain.html" method="get" novalidate>
+          <div class="ms-field">
+            <label class="ms-label" for="s2-email">Work email</label>
+            <input class="ms-input" id="s2-email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" aria-describedby="s2-email-help" required>
+          </div>
+          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block">Continue</button>
+          <p class="ms-auth__note" id="s2-email-help"><span class="ms-icon ms-i-shield-check ms-icon--sm" aria-hidden="true"></span>You will sign in with your organization's account.</p>
+        </form>
+      </div>
+    </section>
+
+    <!-- State 3: the email is not complete -->
+    <section class="ms-mock-state" aria-label="State 3: email not valid">
+      <p class="ms-mock-state__label">State 3 · Error: the email is not complete</p>
+      <div class="ms-auth__card">
+        <div class="ms-auth__head">
+          <h2 class="ms-auth__title">Sign in to Mesail</h2>
+          <p class="ms-auth__lead">Enter your work email. We will find your organization.</p>
+        </div>
+        <form class="ms-auth__form" action="signin-domain.html" method="get" novalidate>
+          <div class="ms-field">
+            <label class="ms-label" for="s3-email">Work email</label>
+            <input class="ms-input" id="s3-email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" value="ana@" aria-invalid="true" aria-describedby="s3-email-error s3-email-help" required>
+            <p class="ms-error-text" id="s3-email-error" role="alert"><span class="ms-icon ms-i-alert ms-icon--sm" aria-hidden="true"></span>Enter your full work email, like ana@example.com.</p>
+          </div>
+          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block">Continue</button>
+          <p class="ms-auth__note" id="s3-email-help"><span class="ms-icon ms-i-shield-check ms-icon--sm" aria-hidden="true"></span>You will sign in with your organization's account.</p>
+        </form>
+      </div>
+    </section>
+
+    <!-- State 4: looking up the domain -->
+    <section class="ms-mock-state" aria-label="State 4: finding the domain">
+      <p class="ms-mock-state__label">State 4 · Loading: finding the domain</p>
+      <div class="ms-auth__card">
+        <div class="ms-auth__head">
+          <h2 class="ms-auth__title">Sign in to Mesail</h2>
+          <p class="ms-auth__lead">Enter your work email. We will find your organization.</p>
+        </div>
+        <form class="ms-auth__form" action="signin-domain.html" method="get" novalidate aria-busy="true">
+          <div class="ms-field">
+            <label class="ms-label" for="s4-email">Work email</label>
+            <input class="ms-input" id="s4-email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" value="ana@example.com" readonly aria-describedby="s4-status">
+          </div>
+          <button type="submit" class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block" aria-disabled="true" aria-busy="true"><span class="ms-spinner" aria-hidden="true"></span>Finding your organization…</button>
+          <p class="ms-auth__note" id="s4-status" role="status"><span class="ms-icon ms-i-clock ms-icon--sm" aria-hidden="true"></span>Looking up example.com…</p>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="ms-auth__foot">
+    <nav aria-label="Help and legal">
+      <ul>
+        <li><a href="#">Help</a></li>
+        <li><a href="#">Privacy</a></li>
+      </ul>
+    </nav>
+  </footer>
+</div>
+</body>
+</html>

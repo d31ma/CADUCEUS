@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" w-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Signed out · Mesail</title>
+<link rel="stylesheet" href="assets/duvay/tokens.css">
+<link rel="stylesheet" href="assets/duvay/themes.css">
+<link rel="stylesheet" href="assets/mesail-tokens.css">
+<link rel="stylesheet" href="assets/icons.css">
+<link rel="stylesheet" href="assets/mesail.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<script src="assets/mockup.js" defer></script>
+</head>
+<body>
+<div class="ms-auth ms-auth--states">
+  <header class="ms-auth__brand">
+    <p class="ms-wordmark"><span class="ms-wordmark__mark" aria-hidden="true"></span><span class="ms-wordmark__text">Mesail</span></p>
+  </header>
+
+  <main class="ms-auth__main ms-auth__main--states">
+
+    <!-- State 1: signed out of one domain, still signed in to another -->
+    <section class="ms-mock-state" aria-label="State 1: signed out of one domain">
+      <p class="ms-mock-state__label">State 1 · Signed out of one domain</p>
+      <div class="ms-auth__card ms-auth__card--center">
+        <span class="ms-auth__art ms-auth__art--ok"><span class="ms-icon ms-i-logout" aria-hidden="true"></span></span>
+        <div class="ms-auth__head" role="status">
+          <h1 class="ms-auth__title">You signed out of example.com</h1>
+          <p class="ms-auth__lead">Your session at <span class="ms-mono">sign-in.example.com</span> ended too.</p>
+        </div>
+        <div class="ms-auth__actions">
+          <a class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block" href="signin-redirecting.html">Sign in again</a>
+        </div>
+        <section class="ms-auth__form" aria-labelledby="still-title">
+          <h2 class="ms-section-title" id="still-title">You are still signed in to example.org</h2>
+          <div class="ms-domain-row ms-domain-row--static">
+            <span class="ms-domain-mark" aria-hidden="true">Eo</span>
+            <span class="ms-domain-row__main"><span class="ms-domain-row__name">example.org</span><span class="ms-domain-row__sub">ana@example.org</span></span>
+            <a class="ms-btn" href="messenger.html">Open example.org</a>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- State 2: signed out of every domain -->
+    <section class="ms-mock-state" aria-label="State 2: signed out of all domains">
+      <p class="ms-mock-state__label">State 2 · Signed out of all domains</p>
+      <div class="ms-auth__card ms-auth__card--center">
+        <span class="ms-auth__art ms-auth__art--ok"><span class="ms-icon ms-i-logout" aria-hidden="true"></span></span>
+        <div class="ms-auth__head" role="status">
+          <h2 class="ms-auth__title">You signed out of all domains</h2>
+          <p class="ms-auth__lead">You signed out of example.com, example.org and lab.example.net.</p>
+        </div>
+        <div class="ms-auth__actions">
+          <a class="ms-btn ms-btn--primary ms-btn--lg ms-btn--block" href="signin.html">Sign in again</a>
+        </div>
+        <div class="ms-auth__notice">
+          <span class="ms-icon ms-i-shield ms-icon--sm" aria-hidden="true"></span>
+          <p>On a shared computer, also close this browser window.</p>
+        </div>
+        <button type="button" class="ms-btn ms-btn--ghost">Forget my domains on this device</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="ms-auth__foot">
+    <nav aria-label="Help and legal">
+      <ul>
+        <li><a href="#">Help</a></li>
+        <li><a href="#">Privacy</a></li>
+      </ul>
+    </nav>
+  </footer>
+</div>
+</body>
+</html>

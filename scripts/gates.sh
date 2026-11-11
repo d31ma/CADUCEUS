@@ -70,11 +70,6 @@ use_pinned_tools() {
   export PATH
 }
 
-plain_go_formatted() {
-  local root="$1" unformatted
-  unformatted="$(cd "$root" && gofmt -l kit tools tests)"
-  [ -z "$unformatted" ] || { echo "gofmt needed: $unformatted"; return 1; }
-}
 
 role_file_formatted() {
   local file="$1" difference
@@ -90,9 +85,73 @@ role_files_formatted() {
   return "$status"
 }
 
-kit_checks() {
-  local root="$1" profile="$2"
-  (cd "$root/kit" && go vet ./... && go test -coverprofile="$profile" ./...) && crap_from_tool "$root" "$profile" "$root/kit"
+go_modules() {
+  local root="$1"
+  (cd "$root" && find . -name go.mod -not -path './apps/*' -not -path '*/vendor/*' -not -path '*/testdata/*' -not -path '*/node_modules/*' -not -path '*/.tachyon/*') | sed 's|^\./||; s|/go\.mod$||' | sort
+}
+
+is_production_module() {
+  case "$1" in
+    tests/* | tools/*) return 1 ;;
+  esac
+}
+
+module_build_tags() {
+  grep -rh '^//go:build [a-z0-9_]*$' . --include='*.go' | sed 's|^//go:build ||' | sort -u | paste -sd, -
+}
+
+module_vet_options() {
+  local tags
+  tags="$(module_build_tags)"
+  [ -z "$tags" ] || echo "-tags=$tags"
+}
+
+module_test_options() {
+  local tags
+  tags="$(module_build_tags)"
+  [ -z "$tags" ] || echo "-tags=$tags -run=^\$"
+}
+
+module_formatted() {
+  local unformatted
+  unformatted="$(gofmt -l .)"
+  [ -z "$unformatted" ] || { echo "gofmt needed: $unformatted"; return 1; }
+}
+
+module_vetted() {
+  go vet $(module_vet_options) ./...
+}
+
+module_tested() {
+  local root="$1" module="$2" profile="$3"
+  if is_production_module "$module"; then
+    go test -coverprofile="$profile" ./... && crap_from_tool "$root" "$profile" "$root/$module"
+    return
+  fi
+  go test $(module_test_options) ./...
+}
+
+module_checks() {
+  local root="$1" module="$2" profile="$3"
+  (cd "$root/$module" && module_formatted && module_vetted && module_tested "$root" "$module" "$profile")
+}
+
+module_step_name() {
+  local module="$1"
+  if is_production_module "$module"; then echo "$module gofmt vet test crap"; return; fi
+  echo "$module gofmt vet test"
+}
+
+module_gates() {
+  local root="$1" folder="$2" module file status=0
+  local modules
+  modules="$(go_modules "$root")"
+  echo "=== go modules: $(echo $modules)"
+  for module in $modules; do
+    file="$folder/module-${module//\//-}"
+    run_step "$(module_step_name "$module")" "$file.log" module_checks "$root" "$module" "$file.cover" || status=1
+  done
+  return "$status"
 }
 
 crap_from_tool() {
@@ -125,11 +184,6 @@ local_package_checks() {
   list="$(local_packages "$packages" | tr '\n' ' ')"
   echo "app-local packages: $list"
   (cd "$packages" && go vet $list && go test -coverprofile="$profile" $list) && crap_from_tool "$(repository_root)" "$profile" "$packages"
-}
-
-blackbox_compiles() {
-  local root="$1"
-  (cd "$root/tests/blackbox" && go vet -tags blackbox ./...)
 }
 
 app_kind_has_server() {
@@ -258,13 +312,6 @@ responsive_test() {
   (cd "$(repository_root)/tests/responsive" && MESAIL_DIST="$app/dist/web" go test -tags responsive -count=1 -v ./...)
 }
 
-tool_checks() {
-  local root="$1"
-  (cd "$root/tools/crap" && go vet ./...) || return 1
-  (cd "$root/tools/styles" && go vet ./... && go test ./...) || return 1
-  (cd "$root/tests/responsive" && go vet -tags responsive ./...)
-}
-
 start_wait_seconds() {
   echo "${MESAIL_START_TIMEOUT:-120}"
 }
@@ -342,12 +389,9 @@ selected_apps() {
 shared_gates() {
   local root="$1" ty="$2" folder="$3" status=0
   run_step "doctor" "$folder/doctor.log" "$ty" doctor "$root/apps/web" || status=1
-  run_step "gofmt plain go" "$folder/gofmt.log" plain_go_formatted "$root" || status=1
   run_step "gofmt role files" "$folder/gofmt.log" role_files_formatted "$root" || status=1
   run_step "kit sync" "$folder/kit-sync.log" "$root/scripts/kit-sync.sh" --check || status=1
-  run_step "kit vet test crap" "$folder/kit.log" kit_checks "$root" "$folder/kit.cover" || status=1
-  run_step "tools vet test" "$folder/tools.log" tool_checks "$root" || status=1
-  run_step "blackbox compiles" "$folder/blackbox.log" blackbox_compiles "$root" || status=1
+  module_gates "$root" "$folder" || status=1
   return "$status"
 }
 
@@ -392,6 +436,10 @@ has_unknown_option() {
 
 usage() {
   echo "usage: scripts/gates.sh [--app <name>] [--shared-only | --apps-only] | --list-apps" >&2
+  echo "  --shared-only  versions, doctor, gofmt of role files, kit sync, and in every Go module" >&2
+  echo "                 outside apps/ (found by its go.mod): gofmt, go vet (with the module's" >&2
+  echo "                 build tags), go test; modules outside tests/ and tools/ also pass CRAP <= 15" >&2
+  echo "  --apps-only    versions and the per-app steps; --app <name> limits them to one app" >&2
   return 2
 }
 

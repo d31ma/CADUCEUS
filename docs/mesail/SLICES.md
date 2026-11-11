@@ -172,7 +172,7 @@ wave run at the same time.
 Every slice runs, in its worktree, before it merges:
 
 ```sh
-scripts/gates.sh --app <each app it owns>   # versions, doctor, gofmt, kit sync, kit vet/test/CRAP, blackbox compile, ty migrate check, ty test --coverage, ty bundle (Tac apps)
+scripts/gates.sh --app <each app it owns>   # versions, doctor, gofmt, kit sync, every Go module outside apps/ (gofmt, vet, test, CRAP), ty migrate check, ty test --coverage, ty bundle, ty start
 ```
 
 plus, when it owns a `kit/` package, `cd kit && go test ./<package>/...`,
@@ -198,11 +198,14 @@ name it in the report.
 merged without a gate). `scripts/gates.sh` runs `gofmt -l`, `go vet ./...`
 and `go test ./...` in every Go module of the repository outside the apps:
 `kit`, `deploy/router`, `edge/realtime`, `edge/smtp`, `tools/crap`,
-`tools/styles`, `tests/responsive`, and `go vet -tags blackbox ./...` in
-`tests/blackbox`. The production modules (`kit`, `deploy/router`,
-`edge/realtime`, `edge/smtp`) also pass the CRAP check (at most 15). A new
-`go.mod` outside `apps/` is gated automatically: the script finds the
-modules instead of listing them. A slice that owns one of these modules
+`tools/styles`, `tests/responsive` and `tests/blackbox`. `go vet` uses the
+build tags the module's files declare (`blackbox`, `responsive`), so the
+tagged suites are vetted; `go test` runs without tags, so the blackbox
+suite (Floci) and the responsive suite (after the web bundle) run in their
+own steps. The production modules (every module outside `tests/` and
+`tools/`: today `kit`, `deploy/router`, `edge/realtime`, `edge/smtp`) also
+pass the CRAP check (at most 15). A new `go.mod` outside `apps/` is gated
+automatically: the script finds the modules instead of listing them. A slice that owns one of these modules
 runs `scripts/gates.sh --shared-only` before it merges. Slice C1 owns the
 script change.
 

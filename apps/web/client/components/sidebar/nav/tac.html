@@ -79,6 +79,9 @@
                     <logic :if="row.mentionCount > 0">
                       <w-badge class="row-badge" inline color="danger" :content="row.mentionCount" aria-hidden="true"></w-badge>
                     </logic>
+                    <logic :if="row.mentionCount == 0 && row.unreadCount > 0">
+                      <w-badge class="row-badge row-count" inline :content="row.unreadCount" aria-hidden="true"></w-badge>
+                    </logic>
                     <logic :if="row.countLabel"><span class="sr-only">, {row.countLabel}</span></logic>
                   </span>
                 </w-btn>
@@ -105,6 +108,9 @@
                     <logic :if="row.archived"><span class="row-meta">archived</span></logic>
                     <logic :if="row.mentionCount > 0">
                       <w-badge class="row-badge" inline color="danger" :content="row.mentionCount" aria-hidden="true"></w-badge>
+                    </logic>
+                    <logic :if="row.mentionCount == 0 && row.unreadCount > 0">
+                      <w-badge class="row-badge row-count" inline :content="row.unreadCount" aria-hidden="true"></w-badge>
                     </logic>
                     <logic :if="row.countLabel"><span class="sr-only">, {row.countLabel}</span></logic>
                   </span>
@@ -133,6 +139,9 @@
                     <logic :if="row.archived"><span class="row-meta">archived</span></logic>
                     <logic :if="row.mentionCount > 0">
                       <w-badge class="row-badge" inline color="danger" :content="row.mentionCount" aria-hidden="true"></w-badge>
+                    </logic>
+                    <logic :if="row.mentionCount == 0 && row.unreadCount > 0">
+                      <w-badge class="row-badge row-count" inline :content="row.unreadCount" aria-hidden="true"></w-badge>
                     </logic>
                     <logic :if="row.countLabel"><span class="sr-only">, {row.countLabel}</span></logic>
                   </span>

@@ -81,10 +81,12 @@
   padding-block: var(--w-space-2);
   font-size: var(--ms-text-meta);
   font-weight: var(--w-font-weight-semibold);
+  line-height: var(--ms-line-tight);
 }
 
 .day-divider {
-  color: var(--w-text-subtle);
+  gap: 0;
+  color: var(--w-text);
 }
 
 .new-divider {
@@ -112,6 +114,13 @@
 .day-label,
 .new-label {
   flex: none;
+}
+
+.day-label {
+  padding: 0.125rem var(--w-space-3);
+  border: 1px solid var(--w-divider);
+  border-radius: var(--ms-radius-chip);
+  background: var(--w-surface);
 }
 
 .message {
@@ -648,6 +657,19 @@ h3.block-heading {
   display: flex;
   align-items: center;
   gap: var(--w-space-1);
+  min-width: 0;
+}
+
+.delivery-status w-icon {
+  flex: none;
+}
+
+.status-label,
+.delivery-recipient {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .delivery-status[data-tone="ok"] {
@@ -673,9 +695,18 @@ h3.block-heading {
 .delivery-summary {
   display: inline-flex;
   align-items: center;
+  gap: var(--w-space-1);
   min-height: var(--ms-row-height);
   color: var(--w-primary);
   cursor: pointer;
+  list-style: none;
+}
+
+.delivery-summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary-text {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -822,6 +853,48 @@ h3.block-heading {
 
   .message[data-actions-open] .message-actions {
     display: flex;
+  }
+
+  .delivery {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .delivery > .delivery-status,
+  .delivery > .delivery-details {
+    grid-area: 1 / 1;
+  }
+
+  .delivery > .delivery-status {
+    min-height: var(--ms-touch-min);
+    padding-inline-end: var(--ms-touch-min);
+  }
+
+  .delivery-details {
+    pointer-events: none;
+  }
+
+  .delivery-summary,
+  .delivery-list {
+    pointer-events: auto;
+  }
+
+  .delivery-summary {
+    display: flex;
+    justify-content: center;
+    width: var(--ms-touch-min);
+    min-height: var(--ms-touch-min);
+    margin-inline-start: auto;
+  }
+
+  .summary-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .message-more .w-icon-btn,
@@ -1024,6 +1097,11 @@ h3.block-heading {
   }
   .justify-self-start {
     justify-self: flex-start;
+  }
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .overflow-y-auto {
     overflow-y: auto;

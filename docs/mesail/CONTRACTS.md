@@ -233,7 +233,8 @@ id from another domain answers `404`. A `PATCH` that sets `emailAddress` or
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
 | `GET /api/v1/messaging/conversations` | SignedIn | - | `ConversationPage` of `ConversationSummary{conversationId, kind, title, hasExternal, unreadCount, mentionCount, lastMessageAt}` |
-| `GET /api/v1/messaging/conversations/{conversationId}/messages` | SignedIn | `?threadRootId=` | `MessagePage` of `Message`, newest first |
+| `GET /api/v1/messaging/conversations/{conversationId}/messages` | SignedIn | `?threadRootId=` | `MessagePage` of `Message`, newest first. Without `threadRootId`: the roots of the conversation plus replies sent with `alsoToConversation`. With `threadRootId`: only the replies of that thread, never the root itself |
+| `GET /api/v1/messaging/messages/{messageId}` | SignedIn (a participant) | - | `Message`; used for a thread's root and for links to one message |
 | `POST /api/v1/messaging/messages` | SignedIn | `SendRequest` | `201 SendResult{message, deliveries[]}` |
 | `PATCH /api/v1/messaging/messages/{messageId}` | SignedIn | `EditRequest{body}` | `Message` |
 | `DELETE /api/v1/messaging/messages/{messageId}` | SignedIn | - | `204` |
@@ -243,12 +244,17 @@ id from another domain answers `404`. A `PATCH` that sets `emailAddress` or
 | `PUT /api/v1/messaging/conversations/{conversationId}/read` | SignedIn | `ReadRequest{messageId}` | `204` |
 | `GET /api/v1/messaging/attachments/{attachmentId}/access` | SignedIn | - | `204` when the caller can read a message of its domain that carries the attachment, else `404` (called by `attachments` with the caller's own token) |
 
-`SendRequest{clientMessageId, conversationId?, threadRootId?, body,
+`SendRequest{clientMessageId, conversationId?, threadRootId?,
+alsoToConversation, body,
 attachmentIds[], recipients[]: RecipientChoice, email?: EmailOptions}`.
 `RecipientChoice{address, role: to|cc|bcc, delivery: chat|email|both,
 expectedKind: member|channel|otherDomain|external}`.
 `EmailOptions{subject, fromAddress?, sendToExternal (for channel threads)}`.
 `fromAddress` must be an address of the caller in the caller's domain.
+`alsoToConversation` (default false) is allowed only with `threadRootId`:
+the reply stays in its thread and is also listed in the conversation, the
+"Also send to #channel" option. `Message` carries the same flag, so the
+client can show "replied to a thread" with a link to the root.
 
 Rules (SPEC AC-CP):
 

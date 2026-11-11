@@ -249,7 +249,10 @@ stable; tests name them.
   participants are always members of the conversation's domain.
 - **AC-MS-2** A reply carries `threadRootId`. The root shows the reply count
   and the last reply time. A reply to a reply attaches to the same root
-  (threads are one level deep).
+  (threads are one level deep). The author may tick "Also send to
+  #channel" (or "Also send to the conversation"); the reply then also
+  appears in the conversation, marked as a thread reply with a link to its
+  root.
 - **AC-MS-3** The author can edit a message (the message shows "edited")
   and delete it (the body is removed, a "deleted" placeholder stays). Email
   deliveries already sent are not recalled; the UI says so before delete.

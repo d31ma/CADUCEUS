@@ -290,7 +290,7 @@ mark {
       margin-left: auto;
     }
   }
-  @container search (width >= 36rem) {
+  @container search (width >= 40rem) {
     .\@xl\/search\:px-5 {
       padding-inline: calc(var(--spacing, 0.25rem) * 5);
     }

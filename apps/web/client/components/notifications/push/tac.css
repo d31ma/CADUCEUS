@@ -169,7 +169,7 @@
       width: 100%;
     }
   }
-  @container push (width >= 36rem) {
+  @container push (width >= 40rem) {
     .\@xl\/push\:px-5 {
       padding-inline: calc(var(--spacing, 0.25rem) * 5);
     }

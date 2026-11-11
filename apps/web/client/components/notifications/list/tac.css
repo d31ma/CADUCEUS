@@ -200,9 +200,6 @@
   .grid {
     display: grid;
   }
-  .inline {
-    display: inline;
-  }
   .size-2 {
     width: calc(var(--spacing, 0.25rem) * 2);
     height: calc(var(--spacing, 0.25rem) * 2);

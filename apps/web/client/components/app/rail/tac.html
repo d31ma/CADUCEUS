@@ -1,0 +1,17 @@
+<nav class="rail" aria-label="Domains">
+  <ul class="rail-list">
+    <loop :for="account of sessionAccount.accounts">
+      <li>
+        <button type="button" class="domain-tile" :title="account.domainId" :aria-current="account.current" on:click="session.switch(account.domainId)">
+          <span aria-hidden="true">{account.initials}</span>
+          <span class="screen-reader-only">{account.domainId}<logic :if="account.current">, current domain</logic></span>
+        </button>
+      </li>
+    </loop>
+  </ul>
+  <div class="rail-separator" role="presentation"></div>
+  <button type="button" class="domain-tile" title="Sign in to another domain" aria-label="Sign in to another domain" on:click="session.addDomain()">
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
+  </button>
+  <div class="rail-spacer"></div>
+</nav>

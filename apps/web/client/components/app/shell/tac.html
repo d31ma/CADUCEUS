@@ -1,16 +1,69 @@
-<div class="shell">
-  <nav class="shell-sidebar" aria-label="Channels and conversations">
-    <p class="shell-product">{shell.productName}</p>
-    <search-panel />
-    <sidebar-nav />
-  </nav>
-  <main class="shell-conversation">
-    <h1>{shell.heading}</h1>
-    <conversation-view />
-    <composer-box />
-  </main>
-  <aside class="shell-thread" aria-label="Thread and notifications">
-    <thread-pane />
-    <notifications-list />
+<a class="skip-link" href="#timeline">Skip to messages</a>
+<a class="skip-link" href="#composer-input">Skip to composer</a>
+
+<div class="app" :data-pane="shell.pane">
+  <div class="rail-area">
+    <app-rail />
+  </div>
+
+  <aside class="sidebar" aria-labelledby="sidebar-label">
+    <span id="sidebar-label" hidden>Conversations in {sessionAccount.currentDomain}</span>
+    <div class="sidebar-head">
+      <app-domain-menu />
+    </div>
+    <div class="sidebar-search">
+      <search-panel />
+    </div>
+    <div class="sidebar-body">
+      <sidebar-nav />
+    </div>
   </aside>
+
+  <main class="main" aria-labelledby="conversation-title">
+    <header class="header">
+      <button type="button" class="icon-button back-button" aria-label="Back to conversations" on:click="shell.showList()">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" /></svg>
+      </button>
+      <h1 class="header-title" id="conversation-title">{shell.heading}</h1>
+    </header>
+    <switch :value="shell.pane">
+      <case :when="'list'">
+        <div class="main-body main-empty">
+          <app-empty />
+        </div>
+      </case>
+      <case default>
+        <div class="main-body">
+          <conversation-view />
+        </div>
+        <div class="main-composer">
+          <composer-box />
+        </div>
+      </case>
+    </switch>
+  </main>
+
+  <logic :if="shell.threadOpen">
+    <aside class="thread-column" id="thread" aria-labelledby="thread-title">
+      <header class="header">
+        <button type="button" class="icon-button back-button" aria-label="Back to the conversation" on:click="shell.closeThread()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" /></svg>
+        </button>
+        <h2 class="header-title" id="thread-title">Thread</h2>
+        <button type="button" class="icon-button close-button" aria-label="Close thread" aria-keyshortcuts="Escape" on:click="shell.closeThread()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </header>
+      <div class="thread-body">
+        <thread-pane />
+        <notifications-list />
+      </div>
+    </aside>
+  </logic>
+
+  <div class="bottom-area">
+    <app-bottom-nav />
+  </div>
 </div>
+
+<div class="announcer" id="announcer" aria-live="polite">{shellAnnounce.message}</div>

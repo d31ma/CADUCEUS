@@ -7,16 +7,18 @@ func (test *SessionServiceTest) build(keys map[string]string) *SessionService {
 	BrowserFakes{}.Answer("clock", "now", 1000)
 	client := NewIdentityClientWith(test.behaviors)
 	return &SessionService{
-		realm:    &SessionRealmService{},
-		tokens:   &SessionTokenService{identity: client, Keys: keys},
-		accounts: &SessionAccountService{},
-		problems: &SessionProblemService{},
+		realm:       &SessionRealmService{},
+		tokens:      &SessionTokenService{identity: client},
+		accounts:    &SessionAccountService{},
+		problems:    &SessionProblemService{},
+		SessionKeys: keys,
 	}
 }
 
 func (test *SessionServiceTest) started() *SessionService {
 	session := test.build(nil)
 	session.Start()
+	session.Restore(SessionRestoreRequested{})
 	return session
 }
 
@@ -24,6 +26,7 @@ func (test *SessionServiceTest) signedIn() *SessionService {
 	session := test.started()
 	session.Email = "ana@example.com"
 	session.Password = "right"
+	session.Remember = true
 	session.SignIn()
 	return session
 }
@@ -37,22 +40,41 @@ func (test *SessionServiceTest) signedInTwice() *SessionService {
 	return session
 }
 
+func (test *SessionServiceTest) TestStartWaitsForTheRestore() {
+	session := test.build(nil)
+	session.Start()
+	Assert.Equals("", session.Step)
+}
+
 func (test *SessionServiceTest) TestStartWithoutSessionsShowsTheForm() {
 	session := test.started()
 	Assert.Equals("signIn", session.Step)
-	Assert.IsTrue(session.Remember)
+	Assert.IsTrue(!session.Remember)
+}
+
+func (test *SessionServiceTest) TestTogglePasswordShowsAndHidesIt() {
+	session := test.started()
+	session.TogglePassword()
+	Assert.IsTrue(session.ShowPassword)
+	session.TogglePassword()
+	Assert.IsTrue(!session.ShowPassword)
 }
 
 func (test *SessionServiceTest) TestStartRestoresStoredSessions() {
 	session := test.build(map[string]string{"example.com": "key-1"})
-	session.Start()
+	session.Restore(SessionRestoreRequested{})
 	Assert.Equals("signedIn", session.Step)
 	Assert.Equals("example.com", session.accounts.CurrentDomain)
+	Assert.Equals(map[string]string{"example.com": "key-2"}, session.SessionKeys)
+}
+
+func (test *SessionServiceTest) TestSignInSavesTheSessionKey() {
+	Assert.Equals(map[string]string{"example.com": "key-1"}, test.signedIn().SessionKeys)
 }
 
 func (test *SessionServiceTest) TestStartWithAnEndedSessionShowsTheForm() {
 	session := test.build(map[string]string{"example.com": "ended"})
-	session.Start()
+	session.Restore(SessionRestoreRequested{})
 	Assert.Equals("signIn", session.Step)
 }
 
@@ -89,7 +111,6 @@ func (test *SessionServiceTest) TestSignInRemembersOnlyTheDomainAndEmail() {
 
 func (test *SessionServiceTest) TestSignInWithoutRememberKeepsNothing() {
 	session := test.started()
-	session.Remember = false
 	session.Email = "ana@example.com"
 	session.Password = "right"
 	session.SignIn()
@@ -100,6 +121,7 @@ func (test *SessionServiceTest) TestSignInRefusedShowsAProblem() {
 	session := test.started()
 	session.Email = "ana@example.com"
 	session.Password = "wrong"
+	session.Remember = true
 	session.SignIn()
 	Assert.Equals("signIn", session.Step)
 	Assert.Equals("unavailable", session.Problem)
@@ -160,7 +182,7 @@ func (test *SessionServiceTest) TestSignOutKeepsTheOtherDomain() {
 	Assert.Equals("signedIn", session.Step)
 	Assert.Equals("example.org", session.SignedOutDomain)
 	Assert.Equals("example.com", session.accounts.CurrentDomain)
-	Assert.Equals(1, len(session.tokens.Keys))
+	Assert.Equals(map[string]string{"example.com": "key-1"}, session.SessionKeys)
 }
 
 func (test *SessionServiceTest) TestSignOutOfTheLastDomainShowsSignedOut() {
@@ -175,7 +197,7 @@ func (test *SessionServiceTest) TestSignOutAllEndsEverySession() {
 	session.SignOutAll()
 	Assert.Equals("signedOut", session.Step)
 	Assert.Equals("", session.SignedOutDomain)
-	Assert.Equals(0, len(session.tokens.Keys))
+	Assert.Equals(0, len(session.SessionKeys))
 	Assert.Equals(0, len(session.accounts.Accounts))
 }
 
@@ -195,7 +217,7 @@ func (test *SessionServiceTest) TestShownKeepsAWorkingSession() {
 
 func (test *SessionServiceTest) TestShownEndsASessionThatCannotRefresh() {
 	session := test.signedIn()
-	session.tokens.Keys["example.com"] = "ended"
+	session.tokens.keys["example.com"] = "ended"
 	BrowserFakes{}.Answer("clock", "now", 50000)
 	session.Shown(VisibilityChanged{Visible: true})
 	Assert.Equals("expired", session.Step)
@@ -203,7 +225,7 @@ func (test *SessionServiceTest) TestShownEndsASessionThatCannotRefresh() {
 
 func (test *SessionServiceTest) TestShownIgnoresAHiddenPage() {
 	session := test.signedIn()
-	session.tokens.Keys["example.com"] = "ended"
+	session.tokens.keys["example.com"] = "ended"
 	BrowserFakes{}.Answer("clock", "now", 50000)
 	session.Shown(VisibilityChanged{Visible: false})
 	Assert.Equals("signedIn", session.Step)

@@ -1,0 +1,26 @@
+<div class="auth">
+  <header class="auth-brand">
+    <p class="auth-wordmark"><span class="auth-wordmark-mark" aria-hidden="true"></span><span class="auth-wordmark-text">Mesail</span></p>
+  </header>
+  <main class="auth-main">
+    <div class="auth-card auth-card-center">
+      <span class="auth-art auth-art-ok"><span class="auth-icon auth-icon-logout" aria-hidden="true"></span></span>
+      <div class="auth-head" role="status" aria-live="polite">
+        <logic :if="session.signedOutDomain != ''">
+          <h1 class="auth-title">You signed out of {session.signedOutDomain}</h1>
+        </logic>
+        <logic else>
+          <h1 class="auth-title">You signed out of all domains</h1>
+        </logic>
+      </div>
+      <div class="auth-actions">
+        <button type="button" class="auth-button auth-button-primary auth-button-large auth-button-block" on:click="session.signInAgain()">Sign in again</button>
+      </div>
+      <div class="auth-notice">
+        <span class="auth-icon auth-icon-shield auth-icon-small" aria-hidden="true"></span>
+        <p class="auth-notice-text">On a shared computer, also close this browser window.</p>
+      </div>
+      <button type="button" class="auth-button auth-button-ghost" on:click="session.forgetAll()">Forget my domains on this device</button>
+    </div>
+  </main>
+</div>

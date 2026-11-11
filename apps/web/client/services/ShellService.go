@@ -1,11 +1,10 @@
 // @Service
 type ShellService struct {
-	ProductName     string
-	Heading         string
-	Pane            string
-	ThreadOpen      bool
-	DomainMenuOpen  bool
-	AccountMenuOpen bool
+	ProductName    string
+	Heading        string
+	Pane           string
+	ThreadOpen     bool
+	DomainMenuOpen bool
 }
 
 // @OnStart
@@ -20,16 +19,6 @@ func (shell *ShellService) ShowList() {
 	shell.CloseMenus()
 }
 
-func (shell *ShellService) ShowMain() {
-	shell.Pane = shell.paneMain()
-	shell.CloseMenus()
-}
-
-func (shell *ShellService) OpenThread() {
-	shell.ThreadOpen = true
-	shell.Pane = "thread"
-}
-
 func (shell *ShellService) CloseThread() {
 	shell.ThreadOpen = false
 	shell.Pane = shell.paneMain()
@@ -37,17 +26,10 @@ func (shell *ShellService) CloseThread() {
 
 func (shell *ShellService) ToggleDomainMenu() {
 	shell.DomainMenuOpen = !shell.DomainMenuOpen
-	shell.AccountMenuOpen = false
-}
-
-func (shell *ShellService) ToggleAccountMenu() {
-	shell.AccountMenuOpen = !shell.AccountMenuOpen
-	shell.DomainMenuOpen = false
 }
 
 func (shell *ShellService) CloseMenus() {
 	shell.DomainMenuOpen = false
-	shell.AccountMenuOpen = false
 }
 
 func (shell *ShellService) paneList() string {

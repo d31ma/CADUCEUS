@@ -1,0 +1,15 @@
+<switch :value="session.step">
+  <case :when="'signedIn'">
+    <app-shell />
+  </case>
+  <case :when="'expired'">
+    <app-shell />
+    <app-expired />
+  </case>
+  <case :when="'signedOut'">
+    <app-signedout />
+  </case>
+  <case default>
+    <app-signin />
+  </case>
+</switch>

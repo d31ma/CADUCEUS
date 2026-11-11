@@ -21,33 +21,12 @@ func (test *ShellServiceTest) TestStartShowsTheList() {
 	Assert.Equals("list", test.shell().Pane)
 }
 
-func (test *ShellServiceTest) TestShowMainShowsTheConversation() {
-	shell := test.shell()
-	shell.ShowMain()
-	Assert.Equals("main", shell.Pane)
-}
-
 func (test *ShellServiceTest) TestShowListClosesTheMenus() {
 	shell := test.shell()
 	shell.ToggleDomainMenu()
 	shell.ShowList()
 	Assert.Equals("list", shell.Pane)
 	Assert.IsTrue(!shell.DomainMenuOpen)
-}
-
-func (test *ShellServiceTest) TestOpenThreadShowsTheThread() {
-	shell := test.shell()
-	shell.OpenThread()
-	Assert.Equals("thread", shell.Pane)
-	Assert.IsTrue(shell.ThreadOpen)
-}
-
-func (test *ShellServiceTest) TestCloseThreadReturnsToTheConversation() {
-	shell := test.shell()
-	shell.OpenThread()
-	shell.CloseThread()
-	Assert.Equals("main", shell.Pane)
-	Assert.IsTrue(!shell.ThreadOpen)
 }
 
 func (test *ShellServiceTest) TestToggleDomainMenuOpensAndCloses() {
@@ -58,17 +37,17 @@ func (test *ShellServiceTest) TestToggleDomainMenuOpensAndCloses() {
 	Assert.IsTrue(!shell.DomainMenuOpen)
 }
 
-func (test *ShellServiceTest) TestToggleAccountMenuClosesTheDomainMenu() {
+func (test *ShellServiceTest) TestCloseThreadReturnsToTheConversation() {
 	shell := test.shell()
-	shell.ToggleDomainMenu()
-	shell.ToggleAccountMenu()
-	Assert.IsTrue(shell.AccountMenuOpen)
-	Assert.IsTrue(!shell.DomainMenuOpen)
+	shell.ThreadOpen = true
+	shell.CloseThread()
+	Assert.Equals("main", shell.Pane)
+	Assert.IsTrue(!shell.ThreadOpen)
 }
 
-func (test *ShellServiceTest) TestCloseMenusClosesBoth() {
+func (test *ShellServiceTest) TestCloseMenusClosesTheDomainMenu() {
 	shell := test.shell()
-	shell.ToggleAccountMenu()
+	shell.ToggleDomainMenu()
 	shell.CloseMenus()
-	Assert.IsTrue(!shell.AccountMenuOpen)
+	Assert.IsTrue(!shell.DomainMenuOpen)
 }

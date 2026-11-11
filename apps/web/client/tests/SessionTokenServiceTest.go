@@ -21,7 +21,7 @@ func (test *SessionTokenServiceTest) TestSignInKeepsTheTokenInMemoryAndTheKeyInS
 	Assert.Equals(nil, failure)
 	Assert.Equals("example.com", me.DomainId)
 	Assert.Equals("access-1", accessToken)
-	Assert.Equals("key-1", tokens.Keys["example.com"])
+	Assert.Equals(map[string]string{"example.com": "key-1"}, tokens.SavedKeys())
 }
 
 func (test *SessionTokenServiceTest) TestSignInSendsTheOneTimeCode() {
@@ -33,7 +33,7 @@ func (test *SessionTokenServiceTest) TestSignInKeepsNothingWhenRefused() {
 	tokens := test.tokens()
 	_, failure := tokens.SignIn(SessionSignInRequest{Address: "ana@example.com", Password: "wrong"})
 	Assert.IsTrue(failure != nil)
-	Assert.Equals(0, len(tokens.Keys))
+	Assert.Equals(0, len(tokens.SavedKeys()))
 }
 
 func (test *SessionTokenServiceTest) TestAccessTokenRefreshesShortlyBeforeExpiry() {
@@ -41,7 +41,7 @@ func (test *SessionTokenServiceTest) TestAccessTokenRefreshesShortlyBeforeExpiry
 	BrowserFakes{}.Answer("clock", "now", 50000)
 	accessToken, _ := tokens.AccessToken("example.com")
 	Assert.Equals("access-2", accessToken)
-	Assert.Equals("key-2", tokens.Keys["example.com"])
+	Assert.Equals("key-2", tokens.SavedKeys()["example.com"])
 }
 
 func (test *SessionTokenServiceTest) TestAccessTokenKeepsAFreshToken() {
@@ -53,25 +53,24 @@ func (test *SessionTokenServiceTest) TestAccessTokenKeepsAFreshToken() {
 
 func (test *SessionTokenServiceTest) TestAccessTokenForgetsAnEndedSession() {
 	tokens := test.signedIn()
-	tokens.Keys["example.com"] = "ended"
+	tokens.keys["example.com"] = "ended"
 	BrowserFakes{}.Answer("clock", "now", 50000)
 	_, failure := tokens.AccessToken("example.com")
 	Assert.IsTrue(failure != nil)
-	Assert.Equals(0, len(tokens.Keys))
+	Assert.Equals(0, len(tokens.SavedKeys()))
 }
 
 func (test *SessionTokenServiceTest) TestRestoreRefreshesEveryStoredSession() {
 	tokens := test.tokens()
-	tokens.Keys = map[string]string{"example.org": "key-org", "example.com": "key-1", "example.net": "ended"}
-	signedIn := tokens.Restore()
+	signedIn := tokens.Restore(map[string]string{"example.org": "key-org", "example.com": "key-1", "example.net": "ended"})
 	Assert.Equals(2, len(signedIn))
 	Assert.Equals("example.com", signedIn[0].DomainId)
 	Assert.Equals("example.org", signedIn[1].DomainId)
-	Assert.Equals(map[string]string{"example.com": "key-2", "example.org": "key-org-2"}, tokens.Keys)
+	Assert.Equals(map[string]string{"example.com": "key-2", "example.org": "key-org-2"}, tokens.SavedKeys())
 }
 
 func (test *SessionTokenServiceTest) TestRestoreWithoutKeysFindsNobody() {
-	Assert.Equals(0, len(test.tokens().Restore()))
+	Assert.Equals(0, len(test.tokens().Restore(nil)))
 }
 
 func (test *SessionTokenServiceTest) TestSignOutForgetsTheSession() {
@@ -79,11 +78,5 @@ func (test *SessionTokenServiceTest) TestSignOutForgetsTheSession() {
 	Assert.Equals(nil, tokens.SignOut("example.com"))
 	accessToken, _ := tokens.AccessToken("example.com")
 	Assert.Equals("", accessToken)
-	Assert.Equals(0, len(tokens.Keys))
-}
-
-func (test *SessionTokenServiceTest) TestForgetDropsTheKey() {
-	tokens := test.signedIn()
-	tokens.Forget("example.com")
-	Assert.Equals(0, len(tokens.Keys))
+	Assert.Equals(0, len(tokens.SavedKeys()))
 }

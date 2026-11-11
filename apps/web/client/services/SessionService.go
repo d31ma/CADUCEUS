@@ -1,15 +1,20 @@
+import "slices"
+
 // @Service
 type SessionService struct {
 	Email           string
 	Password        string
 	OneTimeCode     string
 	Remember        bool
+	ShowPassword    bool
 	Step            string
 	Problem         string
 	Adding          bool
 	SignedOutDomain string
 	// @LocalState
 	RecentDomains []SessionRecentDomain
+	// @SessionState
+	SessionKeys map[string]string
 	// @Needs
 	realm *SessionRealmService
 	// @Needs
@@ -17,13 +22,20 @@ type SessionService struct {
 	// @Needs
 	accounts *SessionAccountService
 	// @Needs
-	problems *SessionProblemService
+	problems                  *SessionProblemService
+	applicationEventPublisher ApplicationEventPublisher
 }
 
 // @OnStart
 func (session *SessionService) Start() {
-	session.Remember = true
-	session.accounts.Restore(session.tokens.Restore())
+	session.applicationEventPublisher.PublishEvent(SessionRestoreRequested{}, false)
+}
+
+// @OnEvent
+// @InBackground
+func (session *SessionService) Restore(requested SessionRestoreRequested) {
+	session.accounts.Restore(session.tokens.Restore(session.SessionKeys))
+	session.SessionKeys = session.tokens.SavedKeys()
 	session.Step = session.stepForAccounts()
 }
 
@@ -31,6 +43,11 @@ func (session *SessionService) SignIn() {
 	domainId := session.realm.DomainOf(session.Email)
 	session.Problem = session.invalidWhenEmpty(domainId)
 	session.signInWhenClear(domainId)
+	session.SessionKeys = session.tokens.SavedKeys()
+}
+
+func (session *SessionService) TogglePassword() {
+	session.ShowPassword = !session.ShowPassword
 }
 
 func (session *SessionService) UseRecent(recent SessionRecentDomain) {
@@ -71,18 +88,22 @@ func (session *SessionService) Switch(domainId string) {
 func (session *SessionService) SignOut() {
 	session.SignedOutDomain = session.accounts.CurrentDomain
 	session.signOutOf(session.accounts.CurrentDomain)
+	session.SessionKeys = session.tokens.SavedKeys()
 	session.Step = session.stepAfterSignOut()
 }
 
 func (session *SessionService) SignOutAll() {
 	session.SignedOutDomain = ""
 	session.signOutEach(session.accounts.Accounts)
+	session.SessionKeys = session.tokens.SavedKeys()
 	session.Step = session.stepAfterSignOut()
 }
 
 // @OnEvent
+// @InBackground
 func (session *SessionService) Shown(changed VisibilityChanged) {
 	failure := session.checkWhenShown(changed.Visible)
+	session.SessionKeys = session.tokens.SavedKeys()
 	session.Step = session.expiredWhenFailed(failure)
 }
 
@@ -99,6 +120,7 @@ func (session *SessionService) signInTo(domainId string) {
 	session.Problem = session.problems.OfFailure(failure)
 	session.Password = ""
 	session.OneTimeCode = ""
+	session.ShowPassword = false
 	session.rememberWhenAsked(domainId)
 	session.addWhenClear(me)
 }
@@ -175,18 +197,9 @@ func (session *SessionService) rememberWhenAsked(domainId string) {
 }
 
 func (session *SessionService) recentWithout(domainId string) []SessionRecentDomain {
-	kept := []SessionRecentDomain{}
-	for _, recent := range session.RecentDomains {
-		kept = session.keepRecent(kept, recent, domainId)
-	}
-	return kept
-}
-
-func (session *SessionService) keepRecent(kept []SessionRecentDomain, recent SessionRecentDomain, domainId string) []SessionRecentDomain {
-	if recent.DomainId == domainId {
-		return kept
-	}
-	return append(kept, recent)
+	return slices.DeleteFunc(slices.Clone(session.RecentDomains), func(recent SessionRecentDomain) bool {
+		return recent.DomainId == domainId
+	})
 }
 
 func (session *SessionService) stepSignIn() string {

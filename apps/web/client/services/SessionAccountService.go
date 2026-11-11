@@ -1,4 +1,7 @@
-import "strings"
+import (
+	"slices"
+	"strings"
+)
 
 // @Service
 type SessionAccountService struct {
@@ -48,18 +51,9 @@ func (service *SessionAccountService) accountsOf(signedIn []Me) []SessionAccount
 }
 
 func (service *SessionAccountService) without(domainId string) []SessionAccount {
-	kept := []SessionAccount{}
-	for _, account := range service.Accounts {
-		kept = service.keepOther(kept, account, domainId)
-	}
-	return kept
-}
-
-func (service *SessionAccountService) keepOther(kept []SessionAccount, account SessionAccount, domainId string) []SessionAccount {
-	if account.DomainId == domainId {
-		return kept
-	}
-	return append(kept, account)
+	return slices.DeleteFunc(slices.Clone(service.Accounts), func(account SessionAccount) bool {
+		return account.DomainId == domainId
+	})
 }
 
 func (service *SessionAccountService) markCurrent() {

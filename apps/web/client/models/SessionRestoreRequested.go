@@ -1,0 +1,1 @@
+type SessionRestoreRequested struct{}

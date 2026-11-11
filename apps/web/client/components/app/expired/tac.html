@@ -1,0 +1,15 @@
+<div class="expired-scrim">
+  <div class="expired-dialog" role="dialog" aria-modal="true" aria-labelledby="expired-title" aria-describedby="expired-description">
+    <div class="expired-head">
+      <span class="expired-art"><span class="expired-icon" aria-hidden="true"></span></span>
+      <h2 class="expired-title" id="expired-title">Your session ended</h2>
+    </div>
+    <div class="expired-body">
+      <p class="expired-text" id="expired-description">Sign in again to keep working.</p>
+      <p class="expired-meta">This happens when you sign out on another device, or when your admin changes your account.</p>
+    </div>
+    <div class="expired-foot">
+      <button type="button" class="expired-button" autofocus on:click="session.signInAgain()">Sign in again</button>
+    </div>
+  </div>
+</div>

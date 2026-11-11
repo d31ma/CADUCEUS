@@ -1,0 +1,101 @@
+<div class="domain-switch">
+  <button type="button" class="domain-name" id="domain-button" aria-haspopup="menu" aria-controls="domain-menu" :aria-expanded="shell.domainMenuOpen" on:click="shell.toggleDomainMenu()">
+    <span class="domain-name-text">{sessionAccount.currentDomain}</span>
+    <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6" /></svg>
+  </button>
+
+  <logic :if="shell.domainMenuOpen">
+    <div class="popover">
+      <div class="popover-head">
+        <span class="popover-title">Your domains</span>
+        <span class="meta">You sign in to each domain on its own.</span>
+      </div>
+      <ul class="menu" role="menu" id="domain-menu" aria-labelledby="domain-button">
+        <li role="none">
+          <ul class="menu" role="group" aria-label="Switch domain">
+            <loop :for="account of sessionAccount.accounts">
+              <li role="none">
+                <button type="button" class="menu-item" role="menuitemradio" :aria-checked="account.current" on:click="session.switch(account.domainId)">
+                  <span class="domain-mark" aria-hidden="true">{account.initials}</span>
+                  <span class="menu-text"><span>{account.domainId}</span><span class="menu-description">{account.address}</span></span>
+                  <svg class="icon icon-small menu-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>
+                  <logic :if="account.current"><span class="screen-reader-only">, current domain</span></logic>
+                </button>
+              </li>
+            </loop>
+          </ul>
+        </li>
+        <li class="menu-separator" role="separator"></li>
+        <li role="none">
+          <button type="button" class="menu-item" role="menuitem" on:click="session.addDomain()">
+            <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
+            <span class="menu-text"><span>Sign in to another domain</span></span>
+          </button>
+        </li>
+        <li class="menu-separator" role="separator"></li>
+        <li role="none">
+          <button type="button" class="menu-item" role="menuitem" on:click="session.signOut()">
+            <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" /></svg>
+            <span class="menu-text"><span>Sign out of {sessionAccount.currentDomain}</span><span class="menu-description">You stay signed in to your other domains.</span></span>
+          </button>
+        </li>
+        <li role="none">
+          <button type="button" class="menu-item menu-item-danger" role="menuitem" on:click="session.signOutAll()">
+            <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" /></svg>
+            <span class="menu-text"><span>Sign out of all domains</span></span>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sheet-backdrop" on:click="shell.closeMenus()"></div>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <span class="sheet-grip" aria-hidden="true"></span>
+      <div class="sheet-head">
+        <h2 id="sheet-title">Your domains</h2>
+        <button type="button" class="icon-button" aria-label="Close" on:click="shell.closeMenus()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </div>
+      <div class="sheet-body">
+        <p class="meta">You sign in to each domain on its own.</p>
+        <ul class="menu" role="menu" aria-labelledby="sheet-title">
+          <li role="none">
+            <ul class="menu" role="group" aria-label="Switch domain">
+              <loop :for="account of sessionAccount.accounts">
+                <li role="none">
+                  <button type="button" class="menu-item" role="menuitemradio" :aria-checked="account.current" on:click="session.switch(account.domainId)">
+                    <span class="domain-mark" aria-hidden="true">{account.initials}</span>
+                    <span class="menu-text"><span>{account.domainId}</span><span class="menu-description">{account.address}</span></span>
+                    <svg class="icon icon-small menu-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12l5 5 9-10" /></svg>
+                    <logic :if="account.current"><span class="screen-reader-only">, current domain</span></logic>
+                  </button>
+                </li>
+              </loop>
+            </ul>
+          </li>
+          <li class="menu-separator" role="separator"></li>
+          <li role="none">
+            <button type="button" class="menu-item" role="menuitem" on:click="session.addDomain()">
+              <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
+              <span class="menu-text"><span>Sign in to another domain</span></span>
+            </button>
+          </li>
+          <li class="menu-separator" role="separator"></li>
+          <li role="none">
+            <button type="button" class="menu-item" role="menuitem" on:click="session.signOut()">
+              <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" /></svg>
+              <span class="menu-text"><span>Sign out of {sessionAccount.currentDomain}</span><span class="menu-description">You stay signed in to your other domains.</span></span>
+            </button>
+          </li>
+          <li role="none">
+            <button type="button" class="menu-item menu-item-danger" role="menuitem" on:click="session.signOutAll()">
+              <svg class="icon icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" /></svg>
+              <span class="menu-text"><span>Sign out of all domains</span></span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </logic>
+</div>

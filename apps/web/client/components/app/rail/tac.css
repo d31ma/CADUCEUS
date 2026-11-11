@@ -1,0 +1,102 @@
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--w-space-2);
+  height: 100%;
+  padding: var(--w-space-3) 0;
+  padding-top: max(var(--w-space-3), env(safe-area-inset-top));
+  padding-bottom: max(var(--w-space-3), env(safe-area-inset-bottom));
+  overflow-y: auto;
+  background: var(--ms-rail-bg);
+  color: var(--ms-on-rail);
+}
+
+.rail-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--w-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rail-separator {
+  flex: none;
+  width: 2rem;
+  height: 1px;
+  background: var(--ms-rail-tile);
+}
+
+.rail-spacer {
+  flex: 1;
+}
+
+.domain-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--ms-domain-tile);
+  height: var(--ms-domain-tile);
+  padding: 0;
+  border: 0;
+  border-radius: var(--ms-radius-tile);
+  background: var(--ms-rail-tile);
+  color: var(--ms-on-rail);
+  font-size: var(--w-font-md);
+  font-weight: var(--w-font-weight-bold);
+  cursor: pointer;
+  transition: border-radius var(--ms-duration) var(--ms-ease), background var(--ms-duration) var(--ms-ease);
+}
+
+.domain-tile:hover {
+  background: color-mix(in srgb, var(--ms-rail-tile) 100%, white 12%);
+}
+
+.domain-tile:focus-visible {
+  outline-color: var(--ms-on-rail);
+}
+
+.domain-tile[aria-current="true"] {
+  background: var(--ms-rail-tile-active);
+  color: var(--ms-on-rail-tile-active);
+}
+
+.domain-tile[aria-current="true"]::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--w-space-3) * -1 - 2px);
+  width: 4px;
+  height: 1.75rem;
+  border-radius: 0 4px 4px 0;
+  background: var(--ms-on-rail);
+}
+
+.icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.screen-reader-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
+  outline-offset: var(--w-focus-ring-offset);
+}

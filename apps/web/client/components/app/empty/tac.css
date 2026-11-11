@@ -1,0 +1,52 @@
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--w-space-3);
+  max-width: 26rem;
+  margin: auto;
+  padding: var(--w-space-8) var(--w-space-4);
+  text-align: center;
+}
+
+.empty-art {
+  display: grid;
+  place-items: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--ms-radius-tile);
+  background: var(--w-primary-container);
+  color: var(--w-on-primary-container);
+}
+
+.empty h2 {
+  font-size: var(--ms-text-heading);
+  font-weight: var(--w-font-weight-semibold);
+  line-height: 1.25;
+}
+
+.empty p {
+  color: var(--w-text-subtle);
+}
+
+.empty-note {
+  font-size: var(--w-font-base);
+}
+
+kbd {
+  padding: 0 0.3em;
+  border: 1px solid var(--w-border);
+  border-radius: var(--w-radius);
+  background: var(--w-surface-container);
+  font-family: var(--w-font-family-mono);
+  font-size: var(--w-font-sm);
+}
+
+.icon {
+  width: 2rem;
+  height: 2rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

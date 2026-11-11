@@ -82,6 +82,14 @@
           <p class="px-4 py-3 text-sm text-subtle">Each conversation reloads its recent messages instead of syncing. Items that wait to send are kept and sent after that.</p>
         </div>
       </section>
+      <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 7b &middot; A tab that is not kept, offline (AC-OF-19)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 7b &middot; A tab that is not kept, offline (AC-OF-19)</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <button type="button" class="ms-sync-bar" aria-haspopup="dialog"><w-icon name="wifi-off" aria-hidden="true"></w-icon><span class="ms-sync-bar__state">Offline</span><span class="ms-sync-bar__detail"><span aria-hidden="true">&middot; </span>This browser keeps nothing</span><span class="ms-sync-bar__count"><w-icon name="clock" aria-hidden="true"></w-icon><span>1 waiting<span class="max-sm:hidden"> in this tab</span></span></span><w-icon name="chevron-down" class="ms-icon-sm" aria-hidden="true"></w-icon></button>
+          <div class="flex min-h-13 items-center gap-2 border-b border-divider px-4"><w-icon name="lock" class="ms-icon-sm" aria-hidden="true"></w-icon><span class="font-bold">design</span></div>
+          <p class="px-4 py-3 text-sm text-subtle">What the tab already loaded stays readable, and the person may write. Writes wait in this tab&rsquo;s memory only and send when the network is back while the tab is open. Closing the tab loses them.</p>
+        </div>
+      </section>
       <section class="grid w-full max-w-content col-span-full content-start gap-3" aria-label="State 8b &middot; This device is full (StoreWriteFailed, AC-OF-13)">
         <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 8b &middot; This device is full (<code>StoreWriteFailed</code>, AC-OF-13)</p>
         <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">

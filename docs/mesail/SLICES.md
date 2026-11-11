@@ -345,7 +345,7 @@ C1, not before each slice merge.
 - **Owns:** `apps/web/client/manifest.json`, `apps/web/client/pages/**`,
   `apps/web/client/components/app/**`, `apps/web/client/shared/**`,
   `apps/web/client/services/Shell*.go`, `apps/web/client/services/Session*.go`,
-  `apps/web/client/remotes/Identity*.go`, `apps/web/client/models/{Session,ClientConfig,Me}*.go`,
+  `apps/web/client/remotes/Identity*.go`, `apps/web/client/models/{Session,SignIn,Refresh,Me}*.go`,
   `apps/web/client/tests/{Shell,Session}*.go`,
   `apps/web/client/setups/{Shell,Session,Identity}*.go`.
 - **Builds:** Mesail's own sign-in form (address, password, one-time

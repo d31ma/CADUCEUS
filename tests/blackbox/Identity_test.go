@@ -33,18 +33,6 @@ func TestAcId1RoutesRefuseAForgedToken(t *testing.T) {
 	stack.Call(t, http.MethodGet, "/api/v1/identity/me", forged, nil).Expect(t, http.StatusUnauthorized)
 }
 
-func TestPublicConfigNamesTheIssuer(t *testing.T) {
-	stack := NewStack(t)
-	var config struct {
-		Issuer   string `json:"issuer"`
-		ClientId string `json:"clientId"`
-	}
-	stack.Call(t, http.MethodGet, "/api/v1/identity/config", "", nil).Expect(t, http.StatusOK).Decode(t, &config)
-	if config.Issuer == "" || config.ClientId == "" {
-		t.Fatalf("got %+v", config)
-	}
-}
-
 func TestMeDescribesTheSignedInMember(t *testing.T) {
 	stack := NewStack(t)
 	ana := me(t, stack, stack.Token(t, "ANA"))

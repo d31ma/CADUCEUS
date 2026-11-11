@@ -1,0 +1,21 @@
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .grid {
+    display: grid;
+  }
+  .size-14 {
+    width: calc(var(--spacing, 0.25rem) * 14);
+    height: calc(var(--spacing, 0.25rem) * 14);
+  }
+  .w-full {
+    width: 100%;
+  }
+  .place-items-center {
+    place-items: center;
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+}
+/* @tachyon-generated-tailwind:end */

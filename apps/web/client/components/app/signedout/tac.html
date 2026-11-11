@@ -6,19 +6,17 @@
     <div class="auth-card grid justify-items-center gap-5 px-6 py-8 text-center max-[480px]:px-0 max-[480px]:py-2">
       <span class="auth-art grid size-14 place-items-center"><w-icon name="logout"></w-icon></span>
       <div class="grid gap-2" role="status" aria-live="polite">
-        <logic :if="session.signedOutDomain != ''">
-          <h1 class="auth-title">You signed out of {session.signedOutDomain}</h1>
-        </logic>
-        <logic else>
-          <h1 class="auth-title">You signed out of all domains</h1>
-        </logic>
+        <h1 class="auth-title">You signed out</h1>
+        <p class="auth-lead">Your session ended in every domain.</p>
       </div>
       <w-btn class="w-full" variant="flat" size="large" block on:click="session.signInAgain()">Sign in again</w-btn>
       <div class="auth-notice flex w-full items-start gap-2 p-3 text-start">
         <w-icon name="shield" class="auth-notice-icon mt-0.5"></w-icon>
         <p class="m-0">On a shared computer, also close this browser window.</p>
       </div>
-      <w-btn variant="text" on:click="session.forgetAll()">Forget my domains on this device</w-btn>
+      <logic :if="session.rememberedUsername != ''">
+        <w-btn variant="text" on:click="session.forgetUsername()">Forget my username on this device</w-btn>
+      </logic>
     </div>
   </main>
 </div>

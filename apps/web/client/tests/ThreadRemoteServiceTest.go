@@ -6,14 +6,10 @@ type ThreadRemoteServiceTest struct {
 func (test *ThreadRemoteServiceTest) remote(expiresAtMs float64, sessionKey string) *ThreadRemoteService {
 	BrowserFakes{}.Answer("clock", "now", 1000)
 	BrowserFakes{}.Answer("secureRandom", "uuid", "uuid-7")
-	tokens := &SessionTokenService{
-		identity: NewIdentityClientWith(test.behaviors),
-		keys:     map[string]string{"example.com": sessionKey},
-		tokens:   map[string]SessionTokens{"example.com": {AccessToken: "access-1", ExpiresAtMs: expiresAtMs}},
-	}
+	tokens := &SessionTokenService{identity: NewIdentityClientWith(test.behaviors), key: sessionKey, tokens: SessionTokens{AccessToken: "access-1", ExpiresAtMs: expiresAtMs}}
 	accounts := &SessionAccountService{}
-	accounts.Add(Me{MemberId: "m-1", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}})
-	session := &SessionService{realm: &SessionRealmService{}, tokens: tokens, accounts: accounts, problems: &SessionProblemService{}, Step: "signedIn"}
+	accounts.Apply(Session{Me: Me{Username: "ana", MemberId: "m-1", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}, Domains: []DomainChoice{{DomainId: "example.com", Default: true}}})
+	session := &SessionService{tokens: tokens, accounts: accounts, problems: &SessionProblemService{}, Step: "signedIn"}
 	return &ThreadRemoteService{client: NewThreadClientWith(test.behaviors), session: session, accounts: accounts}
 }
 

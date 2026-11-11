@@ -24,7 +24,25 @@ type SessionSettingsService struct {
 	// @Needs
 	problems *SessionProblemService
 	// @Needs
-	clipboard Clipboard
+	clipboard                 Clipboard
+	applicationEventPublisher ApplicationEventPublisher
+}
+
+// @OnEvent
+// @InBackground
+func (settings *SessionSettingsService) SessionChanged(changed SessionChanged) {
+	settings.loadForFirstPassword()
+}
+
+// @OnEvent
+// @InBackground
+func (settings *SessionSettingsService) Restored(restored SessionRestored) {
+	settings.loadForFirstPassword()
+}
+
+func (settings *SessionSettingsService) ChooseFirstPasswordWith(currentPassword string, newPassword string, oneTimeCode string) {
+	settings.ChangePasswordWith(currentPassword, newPassword, oneTimeCode)
+	settings.continueWhenClear()
 }
 
 func (settings *SessionSettingsService) RetryTwoStep() {
@@ -164,6 +182,22 @@ func (settings *SessionSettingsService) groupsOf(secret string) []string {
 		groups = append(groups, secret[start:min(start+settings.groupSize(), len(secret))])
 	}
 	return groups
+}
+
+func (settings *SessionSettingsService) loadForFirstPassword() {
+	if settings.session.Step != "choosePassword" {
+		return
+	}
+	settings.RetryTwoStep()
+	settings.applicationEventPublisher.PublishEvent(SessionTwoStepLoaded{}, true)
+}
+
+func (settings *SessionSettingsService) continueWhenClear() {
+	if settings.Problem != "" {
+		return
+	}
+	settings.Notice = ""
+	settings.session.PasswordChosen()
 }
 
 func (settings *SessionSettingsService) begin(step string) {

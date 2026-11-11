@@ -7,4 +7,12 @@ type DirectoryClient interface {
 		// @RequestBody
 		request BehaviorValue,
 	) (BehaviorValue, error)
+
+	// @PutRequest("/me/default-domain")
+	SetDefaultDomain(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+		// @RequestBody
+		request BehaviorValue,
+	) (BehaviorValue, error)
 }

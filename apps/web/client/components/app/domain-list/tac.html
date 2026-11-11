@@ -1,0 +1,48 @@
+<div class="grid" role="group" aria-label="Switch domain">
+  <loop :for="account of sessionAccount.accounts">
+    <logic :if="session.switching == ''">
+      <button type="button" class="menu-item flex w-full items-center gap-2 px-3 py-2" role="menuitemradio" :aria-checked="shell.flag(account.current)" on:click="session.switch(account.domainId)">
+        <span class="domain-mark grid size-8 flex-none place-items-center" aria-hidden="true">{account.initials}</span>
+        <span class="grid min-w-0 flex-1 gap-0.5">
+          <span class="flex min-w-0 flex-wrap items-center gap-1">
+            <span class="min-w-0 truncate">{account.domainId}</span>
+            <logic :if="account.default"><span class="domain-tag">Default</span></logic>
+            <logic :if="account.admin"><span class="domain-tag">Admin</span></logic>
+            <logic :if="account.new"><span class="domain-tag domain-tag-new">New</span></logic>
+          </span>
+          <span class="menu-description truncate">{account.address}</span>
+        </span>
+        <w-icon name="check" class="menu-check"></w-icon>
+        <logic :if="account.current"><span class="sr-only">, current domain</span></logic>
+      </button>
+    </logic>
+    <logic else>
+      <button type="button" class="menu-item flex w-full items-center gap-2 px-3 py-2" role="menuitemradio" :aria-checked="shell.flag(account.current)" disabled>
+        <span class="domain-mark grid size-8 flex-none place-items-center" aria-hidden="true">{account.initials}</span>
+        <span class="grid min-w-0 flex-1 gap-0.5">
+          <span class="flex min-w-0 flex-wrap items-center gap-1">
+            <span class="min-w-0 truncate">{account.domainId}</span>
+            <logic :if="account.default"><span class="domain-tag">Default</span></logic>
+            <logic :if="account.admin"><span class="domain-tag">Admin</span></logic>
+          </span>
+          <span class="menu-description truncate">{account.address}</span>
+        </span>
+        <logic :if="session.switching == account.domainId">
+          <w-progress-circular indeterminate size="20" aria-hidden="true"></w-progress-circular>
+          <span class="sr-only">, opening</span>
+        </logic>
+      </button>
+    </logic>
+  </loop>
+</div>
+<div class="menu-separator my-1 h-px" role="separator"></div>
+<span class="contents" on:click="notificationPush.loadSettings()">
+  <button type="button" class="menu-item flex w-full items-center gap-2 px-3 py-2" role="menuitem" on:click="shell.showPage('settings')">
+    <w-icon name="star"></w-icon>
+    <span class="grid min-w-0 flex-1 gap-0.5"><span>Choose your default domain</span><span class="menu-description">It opens when you sign in with your username only</span></span>
+  </button>
+</span>
+<button type="button" class="menu-item menu-item-danger flex w-full items-center gap-2 px-3 py-2" role="menuitem" on:click="session.signOut()">
+  <w-icon name="logout"></w-icon>
+  <span class="grid min-w-0 flex-1 gap-0.5"><span>Sign out</span><span class="menu-description">Ends your session in every domain</span></span>
+</button>

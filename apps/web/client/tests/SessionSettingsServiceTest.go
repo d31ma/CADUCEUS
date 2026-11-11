@@ -7,16 +7,52 @@ func (test *SessionSettingsServiceTest) settings() *SessionSettingsService {
 	BrowserFakes{}.Answer("clock", "now", 1000)
 	client := NewIdentityClientWith(test.behaviors)
 	session := &SessionService{
-		realm:    &SessionRealmService{},
 		tokens:   &SessionTokenService{identity: client},
 		accounts: &SessionAccountService{},
 		problems: &SessionProblemService{},
 	}
 	session.Restore(SessionRestoreRequested{})
-	session.Email = "ana@example.com"
-	session.Password = "right"
-	session.signIn()
+	session.SignInWith("ana", "right", "", false)
+	session.SignIn(SessionSignInRequested{})
 	return &SessionSettingsService{session: session, identity: client, problems: &SessionProblemService{}}
+}
+
+func (test *SessionSettingsServiceTest) firstPasswordSettings() *SessionSettingsService {
+	settings := test.settings()
+	settings.session.SignInWith("new", "right", "", false)
+	settings.session.SignIn(SessionSignInRequested{})
+	return settings
+}
+
+func (test *SessionSettingsServiceTest) TestFirstPasswordShowsOnlyThePasswordScreen() {
+	Assert.Equals("choosePassword", test.firstPasswordSettings().session.Step)
+}
+
+func (test *SessionSettingsServiceTest) TestChooseFirstPasswordOpensTheDomain() {
+	settings := test.firstPasswordSettings()
+	settings.ChooseFirstPasswordWith("right", "a-long-new-password", "")
+	Assert.Equals("", settings.Problem)
+	Assert.Equals("signedIn", settings.session.Step)
+	Assert.Equals("example.com", settings.session.accounts.CurrentDomain)
+}
+
+func (test *SessionSettingsServiceTest) TestChooseFirstPasswordStaysWhenTheAdminPasswordIsWrong() {
+	settings := test.firstPasswordSettings()
+	settings.ChooseFirstPasswordWith("wrong", "a-long-new-password", "")
+	Assert.IsTrue(settings.Problem != "")
+	Assert.Equals("choosePassword", settings.session.Step)
+}
+
+func (test *SessionSettingsServiceTest) TestLoadForFirstPasswordReadsTheTwoStepState() {
+	settings := test.firstPasswordSettings()
+	settings.loadForFirstPassword()
+	Assert.Equals("on", settings.TwoStep)
+}
+
+func (test *SessionSettingsServiceTest) TestLoadForFirstPasswordSkipsAnOpenSession() {
+	settings := test.settings()
+	settings.loadForFirstPassword()
+	Assert.Equals("", settings.TwoStep)
 }
 
 func (test *SessionSettingsServiceTest) TestStartPasswordChangeOpensTheForm() {
@@ -107,7 +143,7 @@ func (test *SessionSettingsServiceTest) TestCancelClosesTheForm() {
 
 func (test *SessionSettingsServiceTest) TestRetryTwoStepWithoutSessionIsUnknown() {
 	settings := test.settings()
-	settings.session.SignOutAll()
+	settings.session.SignOut()
 	settings.RetryTwoStep()
 	Assert.Equals("unknown", settings.TwoStep)
 }
@@ -212,4 +248,16 @@ func (test *SessionSettingsServiceTest) TestNewPhoneWithAWrongCodeKeepsTheOldCod
 	Assert.Equals("twoStepPassword", settings.Step)
 	Assert.Equals("on", settings.TwoStep)
 	Assert.Equals("", settings.TwoStepSecret)
+}
+
+func (test *SessionSettingsServiceTest) TestSessionChangedLoadsTheTwoStepStateForAFirstPassword() {
+	settings := test.firstPasswordSettings()
+	settings.SessionChanged(SessionChanged{})
+	Assert.Equals("on", settings.TwoStep)
+}
+
+func (test *SessionSettingsServiceTest) TestRestoredLoadsNothingForAnOpenSession() {
+	settings := test.settings()
+	settings.Restored(SessionRestored{SignedIn: true})
+	Assert.Equals("", settings.TwoStep)
 }

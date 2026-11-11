@@ -44,10 +44,10 @@ func (setup ThreadTestSetup) refresh(request *BehaviorHttpRequest) (BehaviorValu
 	body := SessionRefreshRequest{}
 	_ = json.Unmarshal(text, &body)
 	if body.SessionKey != "key-1" {
-		return nil, errors.New("unauthenticated")
+		return nil, &BehaviorError{Code: "storage", Message: "unauthenticated", Status: 401}
 	}
-	me := Me{MemberId: "m-1", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}
-	return Session{Me: me, AccessToken: "access-2", ExpiresIn: 3600, SessionKey: "key-2"}, nil
+	me := Me{MemberId: "m-1", DomainId: "example.com", Username: "ana", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}
+	return Session{Me: me, Domains: []DomainChoice{{DomainId: me.DomainId, Default: true}}, AccessToken: "access-2", ExpiresIn: 3600, SessionKey: "key-2"}, nil
 }
 
 func (setup ThreadTestSetup) page(rootId string, cursor string) (BehaviorValue, error) {

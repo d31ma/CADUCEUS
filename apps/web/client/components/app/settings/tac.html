@@ -2,7 +2,7 @@
   <section class="settings-card flex flex-col" aria-label="Account and sign-in">
     <div class="flex flex-col gap-1 p-4 md:px-6">
       <h2 class="settings-heading">Account and sign-in</h2>
-      <p class="settings-help">Mesail never stores your password. Your domain's sign-in system checks it.</p>
+      <p class="settings-help">Mesail never stores your password. Your one username and password work in every domain.</p>
     </div>
     <hr class="settings-rule">
     <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
@@ -44,6 +44,25 @@
           <w-skeleton-loader type="button" class="w-40" announce loading-text="Checking 2-step sign-in"></w-skeleton-loader>
         </case>
       </switch>
+    </div>
+    <hr class="settings-rule">
+    <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between md:px-6" id="default-domain">
+      <div class="flex min-w-0 flex-col gap-1">
+        <h3 class="settings-subheading" id="default-domain-label">Default domain</h3>
+        <p class="settings-help" id="default-domain-help">Opens when you sign in with {sessionAccount.username}.<logic :if="sessionAccount.otherDomain() != ''"> Sign in with {sessionAccount.username}@{sessionAccount.otherDomain()} to open another domain once.</logic></p>
+        <logic :if="sessionDefaultDomain.saved != ''">
+          <p class="settings-saved flex items-center gap-1" role="status"><w-icon name="check" class="settings-saved-icon"></w-icon>Saved. Signing in with {sessionAccount.username} now opens {sessionDefaultDomain.saved}.</p>
+        </logic>
+        <logic :if="sessionDefaultDomain.problem == 'unavailable'">
+          <p class="settings-error" role="alert">We could not save it. Try again in a minute.</p>
+        </logic>
+      </div>
+      <logic :if="sessionDefaultDomain.problem == 'notMember'">
+        <w-select class="w-full flex-none sm:w-64" label="Default domain" aria-describedby="default-domain-help" :items="sessionAccount.domainList()" :value="sessionAccount.default().domainId" :error="'You are no longer a member of ' + sessionDefaultDomain.problemDomain + '. Choose another domain.'" on:change="sessionDefaultDomain.saveWith($event.detail.value)"></w-select>
+      </logic>
+      <logic else>
+        <w-select class="w-full flex-none sm:w-64" label="Default domain" aria-describedby="default-domain-help" :items="sessionAccount.domainList()" :value="sessionAccount.default().domainId" on:change="sessionDefaultDomain.saveWith($event.detail.value)"></w-select>
+      </logic>
     </div>
   </section>
 

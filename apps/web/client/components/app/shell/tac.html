@@ -11,6 +11,14 @@
     <div class="pane-header flex min-h-[var(--ms-header-height)] items-center gap-2 ps-4 pe-2 max-[768px]:min-h-[calc(var(--ms-header-height)+var(--tac-titlebar-height,env(safe-area-inset-top)))] max-[768px]:pt-[var(--tac-titlebar-height,env(safe-area-inset-top))]">
       <app-domain-menu />
     </div>
+    <div class="px-3" role="status" aria-live="polite">
+      <logic :if="session.notice != ''">
+        <p class="session-notice m-0 mt-2 flex items-start gap-2 py-2 ps-3 pe-1">
+          <span class="min-w-0 flex-1">{session.notice}</span>
+          <w-icon-btn icon="close" size="small" aria-label="Dismiss" on:click="session.dismissNotice()"></w-icon-btn>
+        </p>
+      </logic>
+    </div>
     <div class="px-3 py-2">
       <search-panel />
     </div>

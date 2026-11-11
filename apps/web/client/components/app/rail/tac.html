@@ -9,8 +9,6 @@
       </li>
     </loop>
   </ul>
-  <div class="rail-separator h-px w-8 flex-none" role="presentation"></div>
-  <w-icon-btn class="rail-button" icon="plus" title="Sign in to another domain" aria-label="Sign in to another domain" on:click="session.addDomain()"></w-icon-btn>
   <div class="flex-1"></div>
   <div class="contents" on:click="notificationPush.loadSettings()">
     <button type="button" class="domain-tile relative grid flex-none place-items-center p-0" title="Settings" aria-label="Settings" :aria-current="shell.flag(shell.page == 'settings')" on:click="shell.showPage('settings')">

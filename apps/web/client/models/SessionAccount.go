@@ -5,4 +5,7 @@ type SessionAccount struct {
 	DisplayName string `json:"displayName"`
 	Initials    string `json:"initials"`
 	Current     bool   `json:"current"`
+	Admin       bool   `json:"admin"`
+	Default     bool   `json:"default"`
+	New         bool   `json:"new"`
 }

@@ -10,8 +10,8 @@ func (test *RealtimeServiceTest) realtime(accessToken string) *RealtimeService {
 func (test *RealtimeServiceTest) realtimeAt(accessToken string, expiresAtMs float64) *RealtimeService {
 	BrowserFakes{}.Answer("clock", "now", 1000)
 	accounts := &SessionAccountService{}
-	accounts.Add(Me{MemberId: "ana", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com"})
-	tokens := &SessionTokenService{tokens: map[string]SessionTokens{"example.com": {AccessToken: accessToken, ExpiresAtMs: expiresAtMs}}, identity: NewIdentityClientWith(test.behaviors)}
+	accounts.Apply(Session{Me: Me{Username: "ana", MemberId: "ana", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com"}, Domains: []DomainChoice{{DomainId: "example.com", Default: true}}})
+	tokens := &SessionTokenService{identity: NewIdentityClientWith(test.behaviors), key: "key-1", tokens: SessionTokens{AccessToken: accessToken, ExpiresAtMs: expiresAtMs}}
 	service := &RealtimeService{realtimeClient: &RealtimeClient{}, token: &ConversationTokenService{session: &SessionService{tokens: tokens, accounts: accounts}, accounts: accounts}}
 	service.Start()
 	return service

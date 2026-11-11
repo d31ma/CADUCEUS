@@ -6,8 +6,8 @@ type ConversationRequestServiceTest struct {
 func (test *ConversationRequestServiceTest) requests() *ConversationRequestService {
 	BrowserFakes{}.Answer("clock", "now", 1794340800000)
 	accounts := &SessionAccountService{}
-	accounts.Add(Me{MemberId: "ana", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com"})
-	tokens := &SessionTokenService{tokens: map[string]SessionTokens{"example.com": {AccessToken: "access-1", ExpiresAtMs: 1900000000000}}}
+	accounts.Apply(Session{Me: Me{Username: "ana", MemberId: "ana", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com"}, Domains: []DomainChoice{{DomainId: "example.com", Default: true}}})
+	tokens := &SessionTokenService{key: "key-1", tokens: SessionTokens{AccessToken: "access-1", ExpiresAtMs: 1900000000000}}
 	return &ConversationRequestService{
 		messaging: NewMessagingClientWith(test.behaviors),
 		token:     &ConversationTokenService{session: &SessionService{tokens: tokens, accounts: accounts}, accounts: accounts},

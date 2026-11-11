@@ -4,7 +4,7 @@ type SearchServiceTest struct {
 }
 
 func (test *SearchServiceTest) search() *SearchService {
-	search := &SearchService{queries: SearchTestSetup{}.Queries(test.behaviors), recent: &SearchRecentService{}, shell: &ShellService{}}
+	search := &SearchService{queries: SearchTestSetup{}.Queries(test.behaviors), recent: &SearchRecentService{}, shell: &ShellService{accounts: &SessionAccountService{}}}
 	search.Start()
 	return search
 }

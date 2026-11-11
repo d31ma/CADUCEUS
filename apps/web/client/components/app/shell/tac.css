@@ -79,6 +79,13 @@ main:has(.composer[data-new]) .main-composer {
   padding-top: var(--w-space-4);
 }
 
+.session-notice {
+  border-radius: var(--w-radius-md);
+  background: var(--w-surface-container);
+  color: var(--w-text);
+  font-size: var(--w-font-base);
+}
+
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer utilities {
@@ -93,8 +100,14 @@ main:has(.composer[data-new]) .main-composer {
     white-space: nowrap;
     border-width: 0;
   }
+  .m-0 {
+    margin: 0px;
+  }
   .ms-auto {
     margin-inline-start: auto;
+  }
+  .mt-2 {
+    margin-top: calc(var(--spacing, 0.25rem) * 2);
   }
   .flex {
     display: flex;
@@ -135,6 +148,9 @@ main:has(.composer[data-new]) .main-composer {
   .items-center {
     align-items: center;
   }
+  .items-start {
+    align-items: flex-start;
+  }
   .gap-2 {
     gap: calc(var(--spacing, 0.25rem) * 2);
   }
@@ -164,8 +180,14 @@ main:has(.composer[data-new]) .main-composer {
   .py-2 {
     padding-block: calc(var(--spacing, 0.25rem) * 2);
   }
+  .ps-3 {
+    padding-inline-start: calc(var(--spacing, 0.25rem) * 3);
+  }
   .ps-4 {
     padding-inline-start: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .pe-1 {
+    padding-inline-end: var(--spacing, 0.25rem);
   }
   .pe-2 {
     padding-inline-end: calc(var(--spacing, 0.25rem) * 2);

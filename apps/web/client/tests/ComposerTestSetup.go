@@ -33,8 +33,8 @@ func (setup ComposerTestSetup) Exchange(request *BehaviorHttpRequest, execution 
 }
 
 func (setup ComposerTestSetup) session(accessToken string) Session {
-	me := Me{MemberId: "m-1", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}
-	return Session{Me: me, AccessToken: accessToken, ExpiresIn: 60, SessionKey: "key-1"}
+	me := Me{MemberId: "m-1", DomainId: "example.com", Username: "ana", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}
+	return Session{Me: me, Domains: []DomainChoice{{DomainId: me.DomainId, Default: true}}, AccessToken: accessToken, ExpiresIn: 60, SessionKey: "key-1"}
 }
 
 func (setup ComposerTestSetup) resolve(request *BehaviorHttpRequest) (BehaviorValue, error) {
@@ -98,10 +98,10 @@ func (setup ComposerTestSetup) decode(request *BehaviorHttpRequest, target any) 
 func (setup ComposerTestSetup) Auth(behaviors *BehaviorContext) *ComposerAuthService {
 	BrowserFakes{}.Answer("clock", "now", 1000)
 	tokens := &SessionTokenService{identity: NewIdentityClientWith(behaviors)}
-	me, _ := tokens.SignIn(SessionSignInRequest{Address: "ana@example.com", Password: "right"})
+	signedIn, _ := tokens.SignIn(SessionSignInRequest{Login: "ana", Password: "right"})
 	accounts := &SessionAccountService{}
-	accounts.Add(me)
-	session := &SessionService{realm: &SessionRealmService{}, tokens: tokens, accounts: accounts, problems: &SessionProblemService{}}
+	accounts.Apply(signedIn)
+	session := &SessionService{tokens: tokens, accounts: accounts, problems: &SessionProblemService{}}
 	return &ComposerAuthService{session: session, accounts: accounts}
 }
 

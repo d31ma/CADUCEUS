@@ -31,10 +31,10 @@ func (setup SearchTestSetup) Exchange(request *BehaviorHttpRequest, execution *B
 func (setup SearchTestSetup) Queries(behaviors *BehaviorContext) *SearchQueryService {
 	BrowserFakes{}.Answer("clock", "now", 1000)
 	tokens := &SessionTokenService{identity: NewIdentityClientWith(behaviors)}
-	me, _ := tokens.SignIn(SessionSignInRequest{Address: "ana@example.com", Password: "right"})
+	signedIn, _ := tokens.SignIn(SessionSignInRequest{Login: "ana", Password: "right"})
 	accounts := &SessionAccountService{}
-	accounts.Add(me)
-	session := &SessionService{realm: &SessionRealmService{}, tokens: tokens, accounts: accounts, problems: &SessionProblemService{}}
+	accounts.Apply(signedIn)
+	session := &SessionService{tokens: tokens, accounts: accounts, problems: &SessionProblemService{}}
 	return &SearchQueryService{
 		client:  NewSearchClientWith(behaviors),
 		session: session,
@@ -43,13 +43,13 @@ func (setup SearchTestSetup) Queries(behaviors *BehaviorContext) *SearchQuerySer
 }
 
 func (setup SearchTestSetup) session(accessToken string, sessionKey string) Session {
-	me := Me{MemberId: "m-1", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}
-	return Session{Me: me, AccessToken: accessToken, ExpiresIn: 60, SessionKey: sessionKey}
+	me := Me{MemberId: "m-1", DomainId: "example.com", Username: "ana", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}
+	return Session{Me: me, Domains: []DomainChoice{{DomainId: me.DomainId, Default: true}}, AccessToken: accessToken, ExpiresIn: 60, SessionKey: sessionKey}
 }
 
 func (setup SearchTestSetup) refresh(sessionKey string) (BehaviorValue, error) {
 	if sessionKey != "key-1" {
-		return nil, errors.New("unauthenticated")
+		return nil, &BehaviorError{Code: "storage", Message: "unauthenticated", Status: 401}
 	}
 	return setup.session("access-2", "key-2"), nil
 }

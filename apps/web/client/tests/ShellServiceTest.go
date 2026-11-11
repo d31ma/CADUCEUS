@@ -6,9 +6,11 @@ type ShellServiceTest struct {
 func (test *ShellServiceTest) shell() *ShellService {
 	BrowserFakes{}.Answer("clock", "now", 1000)
 	client := NewIdentityClientWith(test.behaviors)
-	session := &SessionService{realm: &SessionRealmService{}, tokens: &SessionTokenService{identity: client}, accounts: &SessionAccountService{}, problems: &SessionProblemService{}}
-	session.SignInWith("ana@example.com", "right", "", false)
-	shell := &ShellService{settings: &SessionSettingsService{session: session, identity: client, problems: &SessionProblemService{}}}
+	accounts := &SessionAccountService{}
+	session := &SessionService{tokens: &SessionTokenService{identity: client}, accounts: accounts, problems: &SessionProblemService{}}
+	session.SignInWith("ana", "right", "", false)
+	session.SignIn(SessionSignInRequested{})
+	shell := &ShellService{accounts: accounts, settings: &SessionSettingsService{session: session, identity: client, problems: &SessionProblemService{}}}
 	shell.Start()
 	return shell
 }
@@ -100,4 +102,31 @@ func (test *ShellServiceTest) TestRestoredMarksTheShellReady() {
 	shell := test.shell()
 	shell.Restored(SessionRestored{SignedIn: true})
 	Assert.IsTrue(shell.Ready)
+}
+
+func (test *ShellServiceTest) TestCloseMenusMarksNewDomainsSeen() {
+	shell := test.shell()
+	shell.accounts.Apply(Session{Me: Me{DomainId: "example.com", Username: "ana"}, Domains: []DomainChoice{{DomainId: "example.com"}, {DomainId: "partner.test"}}})
+	Assert.IsTrue(shell.accounts.Accounts[1].New)
+	shell.CloseMenus()
+	Assert.Equals(false, shell.accounts.Accounts[1].New)
+}
+
+func (test *ShellServiceTest) TestSessionChangedCountsTheChange() {
+	shell := test.shell()
+	shell.SessionChanged(SessionChanged{})
+	Assert.Equals(1, shell.SessionChanges)
+}
+
+func (test *ShellServiceTest) TestTwoStepLoadedCountsTheChange() {
+	shell := test.shell()
+	shell.TwoStepLoaded(SessionTwoStepLoaded{})
+	Assert.Equals(1, shell.SessionChanges)
+}
+
+func (test *ShellServiceTest) TestDomainChangedClosesTheMenus() {
+	shell := test.shell()
+	shell.ToggleDomainMenu()
+	shell.DomainChanged(SessionDomainChanged{DomainId: "example.org"})
+	Assert.Equals(false, shell.DomainMenuOpen)
 }

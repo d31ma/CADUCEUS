@@ -118,7 +118,9 @@ func (test *NotificationPresenceServiceTest) TestWatchRequestsAddUp() {
 
 func (test *NotificationPresenceServiceTest) TestLoadForgetsTheOtherDomain() {
 	service := test.watching()
-	service.access.accounts.Add(Me{MemberId: "m-1", DomainId: "broken.example", DisplayName: "Ana Ruiz"})
+	service.access.accounts.Apply(Session{Me: Me{Username: "ana", MemberId: "m-1", DomainId: "broken.example", DisplayName: "Ana Ruiz"}, Domains: []DomainChoice{{DomainId: "broken.example", Default: true}}})
+	service.access.session.tokens.key = "ended"
+	service.access.session.tokens.tokens.AccessToken = "access-broken"
 	service.Load(PresenceWatchRequested{MemberIds: []string{"m-4"}})
 	Assert.Equals("offline", service.stateOf("m-2"))
 	Assert.Equals("error", service.LoadProblem)
@@ -135,7 +137,7 @@ func (test *NotificationPresenceServiceTest) TestOpeningTheMenuSendsActive() {
 func (test *NotificationPresenceServiceTest) TestDomainChangedStartsActiveInTheNewDomain() {
 	service := test.watching()
 	service.DoNotDisturb("1h")
-	service.access.accounts.Add(Me{MemberId: "m-1", DomainId: "broken.example", DisplayName: "Ana Ruiz"})
+	service.access.accounts.Apply(Session{Me: Me{Username: "ana", MemberId: "m-1", DomainId: "broken.example", DisplayName: "Ana Ruiz"}, Domains: []DomainChoice{{DomainId: "broken.example", Default: true}}})
 	service.DomainChanged(SessionDomainChanged{DomainId: "broken.example"})
 	Assert.Equals("active", service.MyState)
 	Assert.Equals("", service.DoNotDisturbUntil)

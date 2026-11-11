@@ -3,12 +3,7 @@
   color: var(--ms-on-rail);
 }
 
-.rail-separator {
-  background: var(--ms-rail-tile);
-}
-
-.domain-tile,
-.rail-button .w-btn {
+.domain-tile {
   width: var(--ms-domain-tile);
   min-width: var(--ms-domain-tile);
   height: var(--ms-domain-tile);
@@ -24,13 +19,11 @@
   transition: border-radius var(--ms-duration) var(--ms-ease), background var(--ms-duration) var(--ms-ease);
 }
 
-.domain-tile:hover,
-.rail-button .w-btn:hover {
+.domain-tile:hover {
   background: color-mix(in srgb, var(--ms-rail-tile) 100%, var(--ms-on-rail) 12%);
 }
 
-.domain-tile:focus-visible,
-.rail-button .w-btn:focus-visible {
+.domain-tile:focus-visible {
   outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--ms-on-rail);
   outline-offset: var(--w-focus-ring-offset);
 }
@@ -57,8 +50,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .domain-tile,
-  .rail-button .w-btn {
+  .domain-tile {
     transition: none;
   }
 }
@@ -94,12 +86,6 @@
   }
   .h-full {
     height: 100%;
-  }
-  .h-px {
-    height: 1px;
-  }
-  .w-8 {
-    width: calc(var(--spacing, 0.25rem) * 8);
   }
   .flex-1 {
     flex: 1;

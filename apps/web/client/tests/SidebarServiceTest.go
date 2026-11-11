@@ -8,16 +8,17 @@ type SidebarServiceTest struct {
 func (test *SidebarServiceTest) sidebar(accessToken string) *SidebarService {
 	BrowserFakes{}.Answer("clock", "now", 1000)
 	accounts := &SessionAccountService{}
-	accounts.Add(Me{MemberId: "ana", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com"})
+	accounts.Apply(Session{Me: Me{Username: "ana", MemberId: "ana", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com"}, Domains: []DomainChoice{{DomainId: "example.com", Default: true}}})
 	tokens := &SessionTokenService{identity: NewIdentityClientWith(test.behaviors)}
-	tokens.tokens = map[string]SessionTokens{"example.com": {AccessToken: accessToken, ExpiresAtMs: 100000000}}
+	tokens.key = "key-1"
+	tokens.tokens = SessionTokens{AccessToken: accessToken, ExpiresAtMs: 100000000}
 	return &SidebarService{
 		loader: &SidebarLoadService{
 			messaging:      NewMessagingClientWith(test.behaviors),
 			channelsClient: NewChannelsClientWith(test.behaviors),
 			token:          &ConversationTokenService{session: &SessionService{tokens: tokens, accounts: accounts}, accounts: accounts},
 		},
-		shell: &ShellService{},
+		shell: &ShellService{accounts: &SessionAccountService{}},
 		rows:  &SidebarRowService{},
 	}
 }
@@ -29,7 +30,7 @@ func (test *SidebarServiceTest) loaded() *SidebarService {
 }
 
 func (test *SidebarServiceTest) useToken(sidebar *SidebarService, accessToken string) {
-	sidebar.loader.token.session.tokens.tokens["example.com"] = SessionTokens{AccessToken: accessToken, ExpiresAtMs: 100000000}
+	sidebar.loader.token.session.tokens.tokens = SessionTokens{AccessToken: accessToken, ExpiresAtMs: 100000000}
 }
 
 func (test *SidebarServiceTest) ids(rows []ConversationRow) []string {
@@ -81,7 +82,7 @@ func (test *SidebarServiceTest) TestDomainSelectedShowsAnErrorWhenConversationsF
 
 func (test *SidebarServiceTest) TestDomainSelectedShowsAnErrorWhenTheSessionEnded() {
 	sidebar := test.sidebar("access-1")
-	sidebar.loader.token.session.tokens.tokens["example.com"] = SessionTokens{AccessToken: "access-1", ExpiresAtMs: 0}
+	sidebar.loader.token.session.tokens.tokens = SessionTokens{AccessToken: "access-1", ExpiresAtMs: 0}
 	sidebar.DomainSelected(ConversationDomainSelected{DomainId: "example.com"})
 	Assert.Equals("error", sidebar.State)
 }

@@ -47,10 +47,10 @@ func (setup NotificationTestSetup) refreshed(request *BehaviorHttpRequest) (Beha
 	body := SessionRefreshRequest{}
 	_ = json.Unmarshal(text, &body)
 	if body.SessionKey != "key-1" {
-		return nil, errors.New("unauthenticated")
+		return nil, &BehaviorError{Code: "storage", Message: "unauthenticated", Status: 401}
 	}
-	me := Me{MemberId: "m-1", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}
-	return Session{Me: me, AccessToken: "access-2", ExpiresIn: 60, SessionKey: "key-2"}, nil
+	me := Me{MemberId: "m-1", DomainId: "example.com", Username: "ana", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}
+	return Session{Me: me, Domains: []DomainChoice{{DomainId: me.DomainId, Default: true}}, AccessToken: "access-2", ExpiresIn: 60, SessionKey: "key-2"}, nil
 }
 
 func (setup NotificationTestSetup) page(cursor string) (BehaviorValue, error) {
@@ -112,25 +112,20 @@ func (setup NotificationTestSetup) answerBrowser() {
 
 func (setup NotificationTestSetup) access(behaviors *BehaviorContext, domainId string) *NotificationTokenService {
 	accounts := &SessionAccountService{}
-	accounts.Add(Me{MemberId: "m-1", DomainId: domainId, DisplayName: "Ana Ruiz", PrimaryAddress: "ana@" + domainId})
-	return setup.accessFor(behaviors, accounts)
+	accounts.Apply(Session{Me: Me{MemberId: "m-1", DomainId: domainId, Username: "ana", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@" + domainId}, Domains: []DomainChoice{{DomainId: domainId, Default: true}}})
+	return setup.accessFor(behaviors, accounts, domainId)
 }
 
 func (setup NotificationTestSetup) signedOutAccess(behaviors *BehaviorContext) *NotificationTokenService {
-	return setup.accessFor(behaviors, &SessionAccountService{})
+	return setup.accessFor(behaviors, &SessionAccountService{}, "")
 }
 
-func (setup NotificationTestSetup) accessFor(behaviors *BehaviorContext, accounts *SessionAccountService) *NotificationTokenService {
-	tokens := &SessionTokenService{
-		identity: NewIdentityClientWith(behaviors),
-		keys:     map[string]string{"example.com": "key-1", "broken.example": "ended"},
-		tokens: map[string]SessionTokens{
-			"example.com":    {AccessToken: "access-1", ExpiresAtMs: 9000000000000},
-			"broken.example": {AccessToken: "access-broken", ExpiresAtMs: 9000000000000},
-		},
-	}
+func (setup NotificationTestSetup) accessFor(behaviors *BehaviorContext, accounts *SessionAccountService, domainId string) *NotificationTokenService {
+	keys := map[string]string{"example.com": "key-1", "broken.example": "ended"}
+	accessTokens := map[string]string{"example.com": "access-1", "broken.example": "access-broken"}
+	tokens := &SessionTokenService{identity: NewIdentityClientWith(behaviors), key: keys[domainId], tokens: SessionTokens{AccessToken: accessTokens[domainId], ExpiresAtMs: 9000000000000}}
 	setup.answerBrowser()
-	session := &SessionService{tokens: tokens, accounts: accounts, problems: &SessionProblemService{}, realm: &SessionRealmService{}}
+	session := &SessionService{tokens: tokens, accounts: accounts, problems: &SessionProblemService{}}
 	return &NotificationTokenService{session: session, accounts: accounts, problems: &NotificationProblemService{}}
 }
 

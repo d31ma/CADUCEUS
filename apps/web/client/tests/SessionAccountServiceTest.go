@@ -3,77 +3,103 @@ type SessionAccountServiceTest struct {
 	behaviors *BehaviorContext
 }
 
-func (test *SessionAccountServiceTest) me(domainId string, address string) Me {
-	return Me{MemberId: "m-1", DomainId: domainId, DisplayName: "Ana Ruiz", PrimaryAddress: address}
+func (test *SessionAccountServiceTest) session(domainId string, choices ...DomainChoice) Session {
+	me := Me{MemberId: "m-1", DomainId: domainId, Username: "ana", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@" + domainId}
+	return Session{Me: me, Domains: choices, SessionKey: "key-1"}
 }
 
-func (test *SessionAccountServiceTest) TestAddMakesTheAccountCurrent() {
+func (test *SessionAccountServiceTest) applied() *SessionAccountService {
 	accounts := &SessionAccountService{}
-	accounts.Add(test.me("example.com", "ana@example.com"))
-	Assert.Equals("example.com", accounts.CurrentDomain)
-	Assert.Equals("Ex", accounts.Current().Initials)
+	accounts.Apply(test.session("example.org", DomainChoice{DomainId: "example.org"}, DomainChoice{DomainId: "example.com", Admin: true, Default: true}, DomainChoice{DomainId: "lab.example.net"}))
+	return accounts
+}
+
+func (test *SessionAccountServiceTest) TestApplyMakesTheActiveDomainCurrent() {
+	accounts := test.applied()
+	Assert.Equals("example.org", accounts.CurrentDomain)
+	Assert.Equals("example.org", accounts.Current().DomainId)
 	Assert.IsTrue(accounts.Current().Current)
 }
 
-func (test *SessionAccountServiceTest) TestAddKeepsOneAccountPerDomain() {
-	accounts := &SessionAccountService{}
-	accounts.Add(test.me("example.com", "ana@example.com"))
-	accounts.Add(test.me("example.com", "ana.ruiz@example.com"))
-	Assert.Equals(1, len(accounts.Accounts))
-	Assert.Equals("ana.ruiz@example.com", accounts.Current().Address)
+func (test *SessionAccountServiceTest) TestApplyPutsTheDefaultDomainFirst() {
+	accounts := test.applied()
+	Assert.Equals("example.com", accounts.Accounts[0].DomainId)
+	Assert.Equals("example.org", accounts.Accounts[1].DomainId)
+	Assert.Equals("lab.example.net", accounts.Accounts[2].DomainId)
 }
 
-func (test *SessionAccountServiceTest) TestSwitchMovesTheCurrentMark() {
-	accounts := &SessionAccountService{}
-	accounts.Add(test.me("example.com", "ana@example.com"))
-	accounts.Add(test.me("example.org", "ana@example.org"))
-	accounts.Switch("example.com")
-	Assert.IsTrue(accounts.Accounts[0].Current)
-	Assert.IsTrue(!accounts.Accounts[1].Current)
+func (test *SessionAccountServiceTest) TestApplyKeepsTheAdminAndDefaultTags() {
+	accounts := test.applied()
+	Assert.IsTrue(accounts.Accounts[0].Admin)
+	Assert.IsTrue(accounts.Accounts[0].Default)
+	Assert.Equals(false, accounts.Accounts[1].Admin)
 }
 
-func (test *SessionAccountServiceTest) TestRemoveSwitchesToTheFirstOtherAccount() {
-	accounts := &SessionAccountService{}
-	accounts.Add(test.me("example.com", "ana@example.com"))
-	accounts.Add(test.me("example.org", "ana@example.org"))
-	accounts.Remove("example.org")
-	Assert.Equals("example.com", accounts.CurrentDomain)
+func (test *SessionAccountServiceTest) TestApplyBuildsTheAddressFromTheUsername() {
+	accounts := test.applied()
+	Assert.Equals("ana@example.com", accounts.Accounts[0].Address)
+	Assert.Equals("ana", accounts.Username)
+	Assert.Equals("Ana Ruiz", accounts.DisplayName)
 }
 
-func (test *SessionAccountServiceTest) TestRemoveOfTheLastAccountLeavesNoCurrentDomain() {
-	accounts := &SessionAccountService{}
-	accounts.Add(test.me("example.com", "ana@example.com"))
-	accounts.Remove("example.com")
-	Assert.Equals("", accounts.CurrentDomain)
-	Assert.Equals("", accounts.Current().DomainId)
-}
-
-func (test *SessionAccountServiceTest) TestRestoreMakesTheFirstAccountCurrent() {
-	accounts := &SessionAccountService{}
-	accounts.Restore([]Me{test.me("example.com", "ana@example.com"), test.me("example.org", "ana@example.org")})
-	Assert.Equals(2, len(accounts.Accounts))
-	Assert.Equals("example.com", accounts.CurrentDomain)
-	Assert.IsTrue(accounts.Accounts[0].Current)
-}
-
-func (test *SessionAccountServiceTest) TestRestoreOfNothingLeavesNoAccount() {
-	accounts := &SessionAccountService{}
-	accounts.Restore([]Me{})
-	Assert.Equals("", accounts.CurrentDomain)
+func (test *SessionAccountServiceTest) TestApplyKeepsTheMemberId() {
+	Assert.Equals("m-1", test.applied().Current().MemberId)
 }
 
 func (test *SessionAccountServiceTest) TestDomainsWithTheSameStartGetTheirEndingLetter() {
-	accounts := &SessionAccountService{}
-	accounts.Add(test.me("example.com", "ana@example.com"))
-	accounts.Add(test.me("example.org", "ana@example.org"))
-	accounts.Add(test.me("lab.example.net", "ana@lab.example.net"))
+	accounts := test.applied()
 	Assert.Equals("Ec", accounts.Accounts[0].Initials)
 	Assert.Equals("Eo", accounts.Accounts[1].Initials)
 	Assert.Equals("La", accounts.Accounts[2].Initials)
 }
 
-func (test *SessionAccountServiceTest) TestAddKeepsTheMemberId() {
+func (test *SessionAccountServiceTest) TestFirstApplyMarksNothingNew() {
+	accounts := test.applied()
+	Assert.Equals(false, accounts.Accounts[0].New)
+	Assert.Equals(false, accounts.Accounts[2].New)
+}
+
+func (test *SessionAccountServiceTest) TestAnAddedDomainIsNewUntilSeen() {
+	accounts := test.applied()
+	accounts.Apply(test.session("example.org", DomainChoice{DomainId: "example.org"}, DomainChoice{DomainId: "example.com", Default: true}, DomainChoice{DomainId: "partner.test"}))
+	Assert.IsTrue(accounts.Accounts[2].New)
+	accounts.MarkSeen()
+	Assert.Equals(false, accounts.Accounts[2].New)
+}
+
+func (test *SessionAccountServiceTest) TestRemoveDropsTheDomain() {
+	accounts := test.applied()
+	accounts.Remove("lab.example.net")
+	Assert.Equals(2, len(accounts.Accounts))
+}
+
+func (test *SessionAccountServiceTest) TestMarkDefaultMovesTheDefaultFirst() {
+	accounts := test.applied()
+	accounts.MarkDefault("lab.example.net")
+	Assert.Equals("lab.example.net", accounts.Accounts[0].DomainId)
+	Assert.IsTrue(accounts.Accounts[0].Default)
+	Assert.Equals("lab.example.net", accounts.Default().DomainId)
+}
+
+func (test *SessionAccountServiceTest) TestOtherDomainIsTheFirstThatIsNotDefault() {
+	Assert.Equals("example.org", test.applied().OtherDomain())
+}
+
+func (test *SessionAccountServiceTest) TestDomainListJoinsTheDomains() {
+	Assert.Equals("example.com,example.org,lab.example.net", test.applied().DomainList())
+}
+
+func (test *SessionAccountServiceTest) TestSingleIsTrueForOneDomain() {
 	accounts := &SessionAccountService{}
-	accounts.Add(test.me("example.com", "ana@example.com"))
-	Assert.Equals("m-1", accounts.Current().MemberId)
+	accounts.Apply(test.session("example.com", DomainChoice{DomainId: "example.com", Default: true}))
+	Assert.IsTrue(accounts.Single())
+	Assert.Equals("", accounts.OtherDomain())
+}
+
+func (test *SessionAccountServiceTest) TestClearForgetsEverything() {
+	accounts := test.applied()
+	accounts.Clear()
+	Assert.Equals(0, len(accounts.Accounts))
+	Assert.Equals("", accounts.CurrentDomain)
+	Assert.Equals("", accounts.Username)
 }

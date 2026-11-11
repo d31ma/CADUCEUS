@@ -3,75 +3,100 @@
     <p class="auth-wordmark"><span class="auth-wordmark-mark" aria-hidden="true"></span><span class="auth-wordmark-text">Mesail</span></p>
   </header>
   <main class="auth-main">
-    <logic :if="session.step == 'signIn'">
-      <div class="auth-card">
-        <div class="auth-head">
-          <logic :if="session.adding">
-            <h1 class="auth-title">Sign in to another domain</h1>
-          </logic>
-          <logic else>
-            <h1 class="auth-title">Sign in to Mesail</h1>
-          </logic>
-          <logic :if="session.adding">
-            <p class="auth-lead">You stay signed in to {sessionAccount.currentDomain}.</p>
-          </logic>
-          <p class="auth-lead">Enter your work email and password.</p>
-        </div>
-        <div class="flex flex-col gap-4">
-          <switch :value="session.problem">
-            <case :when="'rateLimited'">
-              <w-alert type="error">Too many tries. Wait a minute, then try again.</w-alert>
-            </case>
-            <case :when="'unavailable'">
-              <w-alert type="error">We cannot reach sign-in right now. Try again in a minute.</w-alert>
-            </case>
-            <case :when="'wrongCredentials'">
-              <w-alert type="error">The email, password or 2-step code is not right.</w-alert>
-            </case>
-          </switch>
-          <form method="dialog" class="flex flex-col gap-4" aria-label="Sign in" on:submit="session.signInWith($event.target.elements.email.value, $event.target.elements.password.value, $event.target.elements.code.value, $event.target.elements.remember.checked)">
-            <logic :if="session.problem == 'invalidEmail'">
-              <w-text-field label="Work email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" error="Enter your full work email, like ana@example.com." :value="session.shownEmail"></w-text-field>
+    <switch :value="session.step">
+      <case :when="'signIn'">
+        <div class="auth-card">
+          <div class="auth-head">
+            <logic :if="session.rememberedUsername != ''">
+              <h1 class="auth-title">Welcome back</h1>
+              <p class="auth-lead">Type your password to sign in as {session.rememberedUsername}.</p>
             </logic>
-            <logic :if="session.problem != 'invalidEmail'">
-              <w-text-field label="Work email" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="name@company.com" :value="session.shownEmail"></w-text-field>
+            <logic else>
+              <h1 class="auth-title">Sign in to Mesail</h1>
+              <p class="auth-lead">Use your username or your work email address.</p>
             </logic>
-            <w-text-field label="Password" name="password" autocomplete="current-password" :type="shell.fieldType(session.showPassword)" :value="session.shownPassword"></w-text-field>
-            <w-checkbox label="Show password" name="show" :checked="session.showPassword" on:change="session.showPasswordWith($event.target.checked, $event.target.form.email.value, $event.target.form.password.value)"></w-checkbox>
-            <w-text-field label="2-step code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one."></w-text-field>
-            <w-checkbox label="Remember my email on this device" name="remember" :checked="session.remember"></w-checkbox>
-            <w-btn variant="flat" size="large" block>Sign in</w-btn>
-          </form>
-          <logic :if="session.adding">
-            <w-btn variant="text" size="large" block on:click="session.cancelAdd()">Cancel</w-btn>
-          </logic>
+          </div>
+          <div class="flex flex-col gap-4">
+            <switch :value="session.problem">
+              <case :when="'rateLimited'">
+                <w-alert type="error">Too many tries. Wait a minute, then try again.</w-alert>
+              </case>
+              <case :when="'unavailable'">
+                <w-alert type="error">We cannot reach sign-in right now. Try again in a minute.</w-alert>
+              </case>
+              <case :when="'wrongCredentials'">
+                <w-alert type="error">The username, password or 2-step code is not right. Check them and try again.</w-alert>
+              </case>
+              <case :when="'notAMember'">
+                <div class="auth-warning grid gap-3 p-3" role="alert">
+                  <div class="grid gap-1">
+                    <h2 class="auth-warning-title">You are not a member of {session.problemDomain}</h2>
+                    <p class="auth-warning-text">Your password is right, but no admin has added you to {session.problemDomain}. Sign in to your own domains with your username only, or ask an admin of {session.problemDomain} to add you.</p>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <w-btn variant="flat" on:click="session.signInAsUsername()">Sign in as {session.usernameOf(session.login)}</w-btn>
+                    <w-btn variant="text" on:click="session.changeAddress()">Change the address</w-btn>
+                  </div>
+                </div>
+              </case>
+            </switch>
+            <form method="dialog" class="flex flex-col gap-4" aria-label="Sign in" on:submit="session.signInWith($event.target.elements.login.value, $event.target.elements.password.value, $event.target.elements.code.value, $event.target.elements.remember.checked)">
+              <logic :if="session.problem == 'invalidLogin'">
+                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" error="Type your username, like ana, or your full address, like ana@example.com." :value="session.login" on:change="session.typedLogin($event.target.value)"></w-text-field>
+              </logic>
+              <logic else>
+                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" :hint="session.hint()" :value="session.login" on:change="session.typedLogin($event.target.value)"></w-text-field>
+              </logic>
+              <logic :if="session.rememberedUsername != ''">
+                <w-text-field autofocus label="Password" name="password" autocomplete="current-password" :type="shell.fieldType(session.showPassword)" :value="session.shownPassword"></w-text-field>
+              </logic>
+              <logic else>
+                <w-text-field label="Password" name="password" autocomplete="current-password" :type="shell.fieldType(session.showPassword)" :value="session.shownPassword"></w-text-field>
+              </logic>
+              <w-checkbox label="Show password" name="show" :checked="session.showPassword" on:change="session.showPasswordWith($event.target.checked, $event.target.form.login.value, $event.target.form.password.value)"></w-checkbox>
+              <logic :if="session.problem == 'wrongCredentials'">
+                <w-text-field label="2-step code (optional)" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="If you use 2-step sign-in, type a new code before you try again."></w-text-field>
+              </logic>
+              <logic else>
+                <w-text-field label="2-step code (optional)" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one."></w-text-field>
+              </logic>
+              <w-checkbox label="Remember my username on this device" name="remember" :checked="session.remember"></w-checkbox>
+              <logic :if="session.busy">
+                <w-btn variant="flat" size="large" block type="submit" loading disabled>Signing in…</w-btn>
+              </logic>
+              <logic else>
+                <w-btn variant="flat" size="large" block type="submit">Sign in</w-btn>
+              </logic>
+            </form>
+            <logic :if="session.rememberedUsername != ''">
+              <p class="auth-meta flex flex-wrap items-center gap-1">Not {session.rememberedUsername}? <w-btn variant="text" size="small" on:click="session.useAnotherUsername()">Use another username</w-btn></p>
+            </logic>
+          </div>
+          <p class="auth-meta">Forgot your password? Ask your admin to reset it.</p>
+          <p class="auth-meta">One username and password for all your domains. After you sign in, switch domains at the top.</p>
         </div>
-        <logic :if="session.recentDomains.length > 0">
-          <div class="auth-divider" role="presentation">or</div>
-          <section class="auth-form" aria-labelledby="recent-title">
-            <h2 class="auth-section-title" id="recent-title">Recent domains</h2>
-            <ul class="auth-domain-list">
-              <loop :for="recent of session.recentDomains">
-                <li class="auth-domain-item">
-                  <button type="button" class="auth-domain-row" on:click="session.useRecent(recent)">
-                    <span class="auth-domain-row-main"><span class="auth-domain-row-name">{recent.domainId}</span><span class="auth-domain-row-sub">{recent.email}</span></span>
-                    <span class="auth-icon auth-icon-chevron-right auth-domain-row-go" aria-hidden="true"></span>
-                  </button>
-                  <w-icon-btn icon="close" size="small" :aria-label="session.forgetLabel(recent.domainId)" on:click="session.forget(recent.domainId)"></w-icon-btn>
-                </li>
-              </loop>
-            </ul>
-          </section>
-        </logic>
-        <p class="auth-meta">Forgot your password? Ask an admin of your domain to reset it.</p>
-        <p class="auth-meta">This device remembers only the domain and the email. It never keeps your password.</p>
-      </div>
-    </logic>
-    <logic else>
-      <div class="auth-card auth-card-center" role="status" aria-live="polite">
-        <w-progress-circular indeterminate aria-hidden="true"></w-progress-circular>
-        <h1 class="auth-title">Loading Mesail…</h1>
-      </div>
-    </logic>
+      </case>
+      <case :when="'noDomain'">
+        <div class="auth-card auth-card-center">
+          <span class="auth-art grid size-14 place-items-center"><w-icon name="building"></w-icon></span>
+          <div class="grid gap-2" role="alert">
+            <h1 class="auth-title">No domain yet</h1>
+            <p class="auth-lead">Your password is right, but your account is not in any domain yet. An admin adds you to a domain. Then sign in again.</p>
+          </div>
+          <dl class="auth-notice m-0 flex w-full items-center justify-between gap-2 p-3">
+            <dt class="auth-meta">Username</dt>
+            <dd class="m-0 font-semibold">{session.usernameOf(session.login)}</dd>
+          </dl>
+          <w-btn class="w-full" variant="flat" size="large" block on:click="session.backToSignIn()">Back to sign-in</w-btn>
+          <p class="auth-meta">You are not signed in. Mesail kept nothing on this device.</p>
+        </div>
+      </case>
+      <case default>
+        <div class="auth-card auth-card-center" role="status" aria-live="polite">
+          <w-progress-circular indeterminate aria-hidden="true"></w-progress-circular>
+          <h1 class="auth-title">Loading Mesail…</h1>
+        </div>
+      </case>
+    </switch>
   </main>
 </div>

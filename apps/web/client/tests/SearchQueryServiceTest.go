@@ -44,11 +44,11 @@ func (test *SearchQueryServiceTest) TestFindFailureKeepsTheCursorForAnotherTry()
 	Assert.Equals("page-5", answer.NextCursor)
 }
 
-func (test *SearchQueryServiceTest) TestFindWithoutASessionIsAnError() {
+func (test *SearchQueryServiceTest) TestFindWithoutASessionAsksToSignIn() {
 	queries := SearchTestSetup{}.Queries(test.behaviors)
-	queries.session.accounts.CurrentDomain = "example.org"
+	queries.session.tokens.SignOut()
 	answer := queries.Find(SearchHitFilter{Query: "invoice", Limit: "20"})
-	Assert.Equals("error", answer.State)
+	Assert.Equals("session", answer.State)
 	Assert.Equals(0, len(answer.Rows))
 }
 
@@ -76,7 +76,7 @@ func (test *SearchQueryServiceTest) TestRetryAfterRenewSearchesAgainWithTheNewTo
 func (test *SearchQueryServiceTest) TestRetryAfterRenewEndsTheSessionWhenRenewFails() {
 	queries := SearchTestSetup{}.Queries(test.behaviors)
 	queries.session.Step = "signedIn"
-	queries.session.tokens.keys["example.com"] = "ended"
+	queries.session.tokens.key = "ended"
 	filter := SearchHitFilter{Query: "invoice", Limit: "20"}
 	page, failure := queries.retryAfterRenew(filter, SearchHitPage{}, &BehaviorError{Status: 401})
 	answer := queries.answerOf(filter, page, failure)

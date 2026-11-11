@@ -6,9 +6,10 @@ type ConversationTokenServiceTest struct {
 func (test *ConversationTokenServiceTest) token(expiresAtMs float64) *ConversationTokenService {
 	BrowserFakes{}.Answer("clock", "now", 1000)
 	accounts := &SessionAccountService{}
-	accounts.Add(Me{MemberId: "ana", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com"})
+	accounts.Apply(Session{Me: Me{Username: "ana", MemberId: "ana", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com"}, Domains: []DomainChoice{{DomainId: "example.com", Default: true}}})
 	tokens := &SessionTokenService{identity: NewIdentityClientWith(test.behaviors)}
-	tokens.tokens = map[string]SessionTokens{"example.com": {AccessToken: "access-1", ExpiresAtMs: expiresAtMs}}
+	tokens.key = "key-1"
+	tokens.tokens = SessionTokens{AccessToken: "access-1", ExpiresAtMs: expiresAtMs}
 	return &ConversationTokenService{session: &SessionService{tokens: tokens, accounts: accounts}, accounts: accounts}
 }
 
@@ -40,7 +41,7 @@ func (test *ConversationTokenServiceTest) TestDomainIdIsTheCurrentDomain() {
 
 func (test *ConversationTokenServiceTest) TestDomainIdFollowsASwitch() {
 	token := test.token(100000000)
-	token.accounts.Add(Me{MemberId: "ana", DomainId: "example.org", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.org"})
+	token.accounts.Apply(Session{Me: Me{Username: "ana", MemberId: "ana", DomainId: "example.org", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.org"}, Domains: []DomainChoice{{DomainId: "example.org", Default: true}}})
 	Assert.Equals("example.org", token.DomainId())
 	Assert.Equals("ana@example.org", token.MyAddress())
 }

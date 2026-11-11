@@ -7,8 +7,11 @@ type ShellService struct {
 	ThreadOpen     bool
 	DomainMenuOpen bool
 	Ready          bool
+	SessionChanges int
 	// @Needs
 	settings *SessionSettingsService
+	// @Needs
+	accounts *SessionAccountService
 }
 
 // @OnStart
@@ -21,6 +24,21 @@ func (shell *ShellService) Start() {
 // @OnEvent
 func (shell *ShellService) Restored(restored SessionRestored) {
 	shell.Ready = true
+}
+
+// @OnEvent
+func (shell *ShellService) SessionChanged(changed SessionChanged) {
+	shell.SessionChanges++
+}
+
+// @OnEvent
+func (shell *ShellService) TwoStepLoaded(loaded SessionTwoStepLoaded) {
+	shell.SessionChanges++
+}
+
+// @OnEvent
+func (shell *ShellService) DomainChanged(changed SessionDomainChanged) {
+	shell.CloseMenus()
 }
 
 func (shell *ShellService) ShowList() {
@@ -38,6 +56,7 @@ func (shell *ShellService) ToggleDomainMenu() {
 
 func (shell *ShellService) CloseMenus() {
 	shell.DomainMenuOpen = false
+	shell.accounts.MarkSeen()
 }
 
 func (shell *ShellService) ShowPage(page string) {

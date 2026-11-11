@@ -12,6 +12,12 @@ type IdentityClient interface {
 		request BehaviorValue,
 	) (BehaviorValue, error)
 
+	// @PostRequest("/session/domain")
+	SwitchDomain(
+		// @RequestBody
+		request BehaviorValue,
+	) (BehaviorValue, error)
+
 	// @DeleteRequest("/session")
 	SignOut(
 		// @RequestBody

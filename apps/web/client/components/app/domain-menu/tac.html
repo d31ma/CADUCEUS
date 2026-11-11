@@ -5,33 +5,16 @@
   </button>
   <w-menu class="domain-menu min-w-0 max-[768px]:hidden" activator="domain-menu-trigger" location="bottom-start" offset="4" on:toggle="shell.toggleDomainMenu()" on:close="shell.closeMenus()">
     <div class="menu-head grid gap-0.5 px-3 py-2">
-      <span class="menu-title">Your domains</span>
-      <span class="menu-meta">You sign in to each domain on its own.</span>
+      <logic :if="sessionAccount.single()">
+        <span class="menu-title">Your domain</span>
+        <span class="menu-meta">When an admin adds you to another domain, it shows here.</span>
+      </logic>
+      <logic else>
+        <span class="menu-title">Your domains</span>
+        <span class="menu-meta">One sign-in for all of them. This tab shows one domain at a time.</span>
+      </logic>
     </div>
-    <div class="grid" role="group" aria-label="Switch domain">
-      <loop :for="account of sessionAccount.accounts">
-        <button type="button" class="menu-item flex w-full items-center gap-2 px-3 py-2" role="menuitemradio" :aria-checked="shell.flag(account.current)" on:click="session.switch(account.domainId)">
-          <span class="domain-mark grid size-8 flex-none place-items-center" aria-hidden="true">{account.initials}</span>
-          <span class="grid min-w-0 flex-1 gap-0.5"><span>{account.domainId}</span><span class="menu-description">{account.address}</span></span>
-          <w-icon name="check" class="menu-check"></w-icon>
-          <logic :if="account.current"><span class="sr-only">, current domain</span></logic>
-        </button>
-      </loop>
-    </div>
-    <div class="menu-separator my-1 h-px" role="separator"></div>
-    <button type="button" class="menu-item flex w-full items-center gap-2 px-3 py-2" role="menuitem" on:click="session.addDomain()">
-      <w-icon name="plus"></w-icon>
-      <span class="grid min-w-0 flex-1">Sign in to another domain</span>
-    </button>
-    <div class="menu-separator my-1 h-px" role="separator"></div>
-    <button type="button" class="menu-item flex w-full items-center gap-2 px-3 py-2" role="menuitem" on:click="session.signOut()">
-      <w-icon name="logout"></w-icon>
-      <span class="grid min-w-0 flex-1 gap-0.5"><span>Sign out of {sessionAccount.currentDomain}</span><span class="menu-description">You stay signed in to your other domains.</span></span>
-    </button>
-    <button type="button" class="menu-item menu-item-danger flex w-full items-center gap-2 px-3 py-2" role="menuitem" on:click="session.signOutAll()">
-      <w-icon name="logout"></w-icon>
-      <span class="grid min-w-0 flex-1">Sign out of all domains</span>
-    </button>
+    <app-domain-list />
   </w-menu>
 
   <w-bottom-sheet class="domain-sheet min-w-0 min-[768px]:hidden" close-on-content-click on:toggle="shell.toggleDomainMenu()" on:close="shell.closeMenus()">
@@ -42,35 +25,22 @@
     <div class="grid gap-2 px-3 pt-2 pb-[max(var(--w-space-4),env(safe-area-inset-bottom))]">
       <span class="sheet-grip mx-auto h-1 w-10" aria-hidden="true"></span>
       <div class="flex items-center gap-2 ps-2">
-        <h2 class="sheet-title min-w-0 flex-1">Your domains</h2>
+        <logic :if="sessionAccount.single()">
+          <h2 class="sheet-title min-w-0 flex-1">Your domain</h2>
+        </logic>
+        <logic else>
+          <h2 class="sheet-title min-w-0 flex-1">Your domains</h2>
+        </logic>
         <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
       </div>
-      <p class="menu-meta px-2">You sign in to each domain on its own.</p>
+      <logic :if="sessionAccount.single()">
+        <p class="menu-meta px-2">When an admin adds you to another domain, it shows here.</p>
+      </logic>
+      <logic else>
+        <p class="menu-meta px-2">One sign-in for all of them. This tab shows one domain at a time.</p>
+      </logic>
       <div class="grid" role="menu" aria-label="Your domains">
-        <div class="grid" role="group" aria-label="Switch domain">
-          <loop :for="account of sessionAccount.accounts">
-            <button type="button" class="menu-item flex w-full items-center gap-2 px-3 py-2" role="menuitemradio" :aria-checked="shell.flag(account.current)" on:click="session.switch(account.domainId)">
-              <span class="domain-mark grid size-8 flex-none place-items-center" aria-hidden="true">{account.initials}</span>
-              <span class="grid min-w-0 flex-1 gap-0.5"><span>{account.domainId}</span><span class="menu-description">{account.address}</span></span>
-              <w-icon name="check" class="menu-check"></w-icon>
-              <logic :if="account.current"><span class="sr-only">, current domain</span></logic>
-            </button>
-          </loop>
-        </div>
-        <div class="menu-separator my-1 h-px" role="separator"></div>
-        <button type="button" class="menu-item flex w-full items-center gap-2 px-3 py-2" role="menuitem" on:click="session.addDomain()">
-          <w-icon name="plus"></w-icon>
-          <span class="grid min-w-0 flex-1">Sign in to another domain</span>
-        </button>
-        <div class="menu-separator my-1 h-px" role="separator"></div>
-        <button type="button" class="menu-item flex w-full items-center gap-2 px-3 py-2" role="menuitem" on:click="session.signOut()">
-          <w-icon name="logout"></w-icon>
-          <span class="grid min-w-0 flex-1 gap-0.5"><span>Sign out of {sessionAccount.currentDomain}</span><span class="menu-description">You stay signed in to your other domains.</span></span>
-        </button>
-        <button type="button" class="menu-item menu-item-danger flex w-full items-center gap-2 px-3 py-2" role="menuitem" on:click="session.signOutAll()">
-          <w-icon name="logout"></w-icon>
-          <span class="grid min-w-0 flex-1">Sign out of all domains</span>
-        </button>
+        <app-domain-list />
       </div>
     </div>
   </w-bottom-sheet>

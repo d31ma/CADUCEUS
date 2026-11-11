@@ -81,3 +81,177 @@
     transition: none;
   }
 }
+
+.ms-subtle {
+  color: var(--w-text-subtle);
+}
+
+.ms-meta {
+  font-size: var(--ms-text-meta);
+}
+
+.ms-divider-line {
+  background: var(--w-divider);
+}
+
+.ms-state-title {
+  font-size: var(--ms-text-body);
+  font-weight: var(--w-font-weight-semibold);
+}
+
+.ms-reply-dock {
+  padding-block-end: max(var(--w-space-3), env(safe-area-inset-bottom));
+  padding-inline-end: max(var(--w-space-2), env(safe-area-inset-right));
+  background: var(--w-surface);
+}
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  .sticky {
+    position: sticky;
+  }
+  .bottom-0 {
+    bottom: 0px;
+  }
+  .mx-4 {
+    margin-inline: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .my-2 {
+    margin-block: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .mt-1 {
+    margin-top: var(--spacing, 0.25rem);
+  }
+  .mt-3 {
+    margin-top: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .-ml-2 {
+    margin-left: calc(var(--spacing, 0.25rem) * -2);
+  }
+  .ml-auto {
+    margin-left: auto;
+  }
+  .block {
+    display: block;
+  }
+  .flex {
+    display: flex;
+  }
+  .grid {
+    display: grid;
+  }
+  .h-px {
+    height: 1px;
+  }
+  .min-h-full {
+    min-height: 100%;
+  }
+  .w-full {
+    width: 100%;
+  }
+  .max-w-\[50ch\] {
+    max-width: 50ch;
+  }
+  .max-w-\[60ch\] {
+    max-width: 60ch;
+  }
+  .max-w-\[80ch\] {
+    max-width: 80ch;
+  }
+  .max-w-md {
+    max-width: var(--container-md, 28rem);
+  }
+  .min-w-0 {
+    min-width: 0px;
+  }
+  .flex-1 {
+    flex: 1;
+  }
+  .flex-col {
+    flex-direction: column;
+  }
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+  .place-items-center {
+    place-items: center;
+  }
+  .items-center {
+    align-items: center;
+  }
+  .justify-center {
+    justify-content: center;
+  }
+  .gap-2 {
+    gap: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .gap-4 {
+    gap: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .p-3 {
+    padding: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .px-2 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 2);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .py-4 {
+    padding-block: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .py-8 {
+    padding-block: calc(var(--spacing, 0.25rem) * 8);
+  }
+  .text-\[2rem\] {
+    font-size: 2rem;
+  }
+  .\[overflow-wrap\:anywhere\] {
+    overflow-wrap: anywhere;
+  }
+  @media (width < 600px) {
+    .max-sm\:mx-3 {
+      margin-inline: calc(var(--spacing, 0.25rem) * 3);
+    }
+    .max-sm\:min-h-11 {
+      min-height: calc(var(--spacing, 0.25rem) * 11);
+    }
+    .max-sm\:px-3 {
+      padding-inline: calc(var(--spacing, 0.25rem) * 3);
+    }
+  }
+  @media (width >= 600px) {
+    .sm\:px-4 {
+      padding-inline: calc(var(--spacing, 0.25rem) * 4);
+    }
+  }
+  @media (pointer: coarse) {
+    .pointer-coarse\:min-h-11 {
+      min-height: calc(var(--spacing, 0.25rem) * 11);
+    }
+  }
+  .\[\&_\.ms-msg\]\:px-4 .ms-msg {
+    padding-inline: calc(var(--spacing, 0.25rem) * 4);
+  }
+  @media (width < 600px) {
+    .max-sm\:\[\&_\.ms-msg\]\:px-3 .ms-msg {
+      padding-inline: calc(var(--spacing, 0.25rem) * 3);
+    }
+  }
+  .\[\&_textarea\]\:max-h-\[30vh\] textarea {
+    max-height: 30vh;
+  }
+}
+/* @tachyon-generated-tailwind:end */

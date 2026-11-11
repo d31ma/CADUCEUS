@@ -11,13 +11,13 @@ type ThreadService struct {
 	Status             string
 	NextCursor         string
 	LoadingOlder       bool
-	Draft              string
-	CanSend            bool
+	FailedDraft        string
 	SendStatus         string
 	Pending            ThreadRow
 	AlsoToConversation bool
 	root               ThreadMessage
 	messages           []ThreadMessage
+	draft              string
 	pendingId          string
 	pendingBody        string
 	pendingAlso        bool
@@ -64,14 +64,8 @@ func (thread *ThreadService) ShowOlder() {
 	thread.applicationEventPublisher.PublishEvent(ThreadOlderRequested{ConversationId: thread.ConversationId, RootId: thread.RootId, Cursor: thread.NextCursor}, false)
 }
 
-func (thread *ThreadService) Write(text string) {
-	thread.Draft = text
-	thread.forgetPendingWhenChanged()
-	thread.CanSend = thread.sendAllowed()
-}
-
-func (thread *ThreadService) Reply() {
-	thread.sendWhen(thread.sendAllowed())
+func (thread *ThreadService) ReplyWith(text string, alsoToConversation bool) {
+	thread.replyUnlessSending(thread.SendStatus == thread.sendSending(), text, alsoToConversation)
 }
 
 func (thread *ThreadService) Retry() {
@@ -101,6 +95,12 @@ func (thread *ThreadService) Send(requested ThreadReplyRequested) {
 }
 
 // @OnEvent
+func (thread *ThreadService) DomainChanged(changed SessionDomainChanged) {
+	thread.shell.ThreadOpen = false
+	thread.reset("", "")
+}
+
+// @OnEvent
 func (thread *ThreadService) Shown(changed VisibilityChanged) {
 	thread.refreshWhenShown(changed.Visible)
 }
@@ -125,8 +125,8 @@ func (thread *ThreadService) reset(conversationId string, rootId string) {
 	thread.Status = ""
 	thread.NextCursor = ""
 	thread.LoadingOlder = false
-	thread.Draft = ""
-	thread.CanSend = false
+	thread.draft = ""
+	thread.FailedDraft = ""
 	thread.SendStatus = ""
 	thread.Pending = ThreadRow{}
 	thread.pendingId = ""
@@ -193,15 +193,29 @@ func (thread *ThreadService) showMessages() {
 }
 
 func (thread *ThreadService) forgetPendingWhenChanged() {
-	if strings.TrimSpace(thread.Draft) == thread.pendingBody {
+	if strings.TrimSpace(thread.draft) == thread.pendingBody {
 		return
 	}
 	thread.pendingId = ""
 	thread.SendStatus = ""
 }
 
+func (thread *ThreadService) replyUnlessSending(sending bool, text string, alsoToConversation bool) {
+	if sending {
+		return
+	}
+	thread.prepareReply(text, alsoToConversation)
+}
+
+func (thread *ThreadService) prepareReply(text string, alsoToConversation bool) {
+	thread.draft = text
+	thread.AlsoToConversation = alsoToConversation
+	thread.forgetPendingWhenChanged()
+	thread.sendWhen(thread.sendAllowed())
+}
+
 func (thread *ThreadService) sendAllowed() bool {
-	return strings.TrimSpace(thread.Draft) != "" && thread.SendStatus != thread.sendSending()
+	return strings.TrimSpace(thread.draft) != ""
 }
 
 func (thread *ThreadService) sendWhen(allowed bool) {
@@ -212,7 +226,7 @@ func (thread *ThreadService) sendWhen(allowed bool) {
 }
 
 func (thread *ThreadService) startSend() {
-	thread.pendingBody = strings.TrimSpace(thread.Draft)
+	thread.pendingBody = strings.TrimSpace(thread.draft)
 	thread.pendingAlso = thread.AlsoToConversation
 	thread.pendingId = thread.idForPending()
 	thread.sendPending()
@@ -234,7 +248,6 @@ func (thread *ThreadService) idForPending() string {
 
 func (thread *ThreadService) sendPending() {
 	thread.SendStatus = thread.sendSending()
-	thread.CanSend = false
 	thread.Pending = thread.rows.PendingRow(thread.remote.MyName(), thread.pendingBody)
 	thread.applicationEventPublisher.PublishEvent(ThreadReplyRequested{Request: thread.replyRequest()}, false)
 }
@@ -261,8 +274,15 @@ func (thread *ThreadService) finish(result ThreadSendResult, failure error) {
 	code := thread.codeOf(failure)
 	thread.SendStatus = thread.chosen(code, thread.sendStates(), thread.sendFailed())
 	thread.announce.Message = thread.chosen(code, thread.announcements(), thread.notSent())
+	thread.FailedDraft = thread.failedDraftOf(failure)
 	thread.keepWhenSent(result.Message, failure)
-	thread.CanSend = thread.sendAllowed()
+}
+
+func (thread *ThreadService) failedDraftOf(failure error) string {
+	if failure == nil {
+		return ""
+	}
+	return thread.pendingBody
 }
 
 func (thread *ThreadService) keepWhenSent(message ThreadMessage, failure error) {
@@ -270,7 +290,7 @@ func (thread *ThreadService) keepWhenSent(message ThreadMessage, failure error) 
 		return
 	}
 	thread.messages = append([]ThreadMessage{message}, thread.messages...)
-	thread.Draft = ""
+	thread.draft = ""
 	thread.pendingId = ""
 	thread.pendingBody = ""
 	thread.pendingAlso = false

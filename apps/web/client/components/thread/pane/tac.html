@@ -35,8 +35,8 @@
     <case :when="'gone'">
       <div class="grid flex-1 place-items-center px-4 py-8 max-sm:px-3">
         <w-empty-state class="block max-w-md">
-          <w-icon slot="media" name="thread" class="[--ms-icon-size:2rem]"></w-icon>
-          <h3 slot="title" class="text-base font-semibold">This message is no longer available</h3>
+          <w-icon slot="media" name="thread" class="text-[2rem]"></w-icon>
+          <h3 slot="title" class="ms-state-title">This message is no longer available</h3>
           <span slot="text">It was removed, or you are no longer in this conversation.</span>
           <div slot="actions" class="flex justify-center">
             <w-btn variant="text" class="pointer-coarse:min-h-11 max-sm:min-h-11" on:click="thread.close()">Close thread</w-btn>
@@ -63,13 +63,13 @@
                 <p class="ms-msg__text">{thread.root.body}</p>
               </logic>
               <logic :if="thread.root.reactions != ''">
-                <p class="mt-1 text-xs text-subtle [overflow-wrap:anywhere]">Reactions: {thread.root.reactions}</p>
+                <p class="mt-1 ms-meta ms-subtle [overflow-wrap:anywhere]">Reactions: {thread.root.reactions}</p>
               </logic>
             </div>
           </article>
         </logic>
 
-        <p class="mx-4 my-2 flex items-center gap-2 text-sm text-subtle after:h-px after:flex-1 after:bg-divider max-sm:mx-3">{thread.repliesLabel}</p>
+        <p class="mx-4 my-2 flex items-center gap-2 ms-meta ms-subtle max-sm:mx-3"><span>{thread.repliesLabel}</span><span class="h-px flex-1 ms-divider-line" aria-hidden="true"></span></p>
 
         <logic :if="thread.nextCursor != ''">
           <div class="flex justify-center px-4">
@@ -80,8 +80,8 @@
         <logic :if="thread.replies.length == 0">
           <logic :if="thread.sendStatus == ''">
             <w-empty-state class="block px-4">
-              <w-icon slot="media" name="thread" class="[--ms-icon-size:2rem]"></w-icon>
-              <h3 slot="title" class="text-base font-semibold">No replies yet</h3>
+              <w-icon slot="media" name="thread" class="text-[2rem]"></w-icon>
+              <h3 slot="title" class="ms-state-title">No replies yet</h3>
               <span slot="text">Start the thread. Replies stay in this thread.</span>
             </w-empty-state>
           </logic>
@@ -103,7 +103,7 @@
                 <p class="ms-msg__text">{row.body}</p>
               </logic>
               <logic :if="row.reactions != ''">
-                <p class="mt-1 text-xs text-subtle [overflow-wrap:anywhere]">Reactions: {row.reactions}</p>
+                <p class="mt-1 ms-meta ms-subtle [overflow-wrap:anywhere]">Reactions: {row.reactions}</p>
               </logic>
             </div>
           </article>
@@ -123,7 +123,7 @@
           <article class="ms-msg ms-msg--failed" :aria-label="thread.pending.label + ', not sent'">
             <w-avatar :text="thread.pending.initials" size="36" alt=""></w-avatar>
             <div class="min-w-0">
-              <div class="ms-msg__meta"><span class="ms-msg__author">{thread.pending.authorName}</span><span class="ms-msg__failed"><w-icon name="alert" class="ms-icon-xs"></w-icon>Not sent</span></div>
+              <div class="ms-msg__meta"><span class="ms-msg__author">{thread.pending.authorName}</span><span class="ms-msg__failed"><w-icon name="alert"></w-icon>Not sent</span></div>
               <p class="ms-msg__text">{thread.pending.body}</p>
               <w-btn variant="text" size="small" prepend-icon="refresh" class="-ml-2 pointer-coarse:min-h-11 max-sm:min-h-11" on:click="thread.retry()">Try again</w-btn>
             </div>
@@ -131,15 +131,15 @@
         </logic>
       </div>
 
-      <div class="sticky bottom-0 bg-surface px-2 pb-3 sm:px-4 safe-b safe-r">
-        <form class="ms-composer grid gap-2 p-3" aria-label="Reply in thread">
+      <div class="sticky bottom-0 px-2 sm:px-4 ms-reply-dock">
+        <form method="dialog" class="ms-composer grid gap-2 p-3" aria-label="Reply in thread" on:submit="thread.replyWith($event.target.elements.reply.value, $event.target.elements.also.checked)">
           <logic :if="thread.sendStatus == 'session'">
             <w-alert type="error" class="block">Your session ended, so the reply was not sent. Sign in again, then send it.</w-alert>
           </logic>
-          <w-textarea label="Reply in thread" name="reply" rows="2" auto-grow no-resize placeholder="Reply…" class="block min-w-0 [&_textarea]:max-h-[30vh]" :readonly="thread.sendStatus == 'sending'" :value="thread.draft" on:input="thread.write($event.target.value)"></w-textarea>
+          <w-textarea label="Reply in thread" name="reply" rows="2" auto-grow no-resize placeholder="Reply…" class="block min-w-0 [&_textarea]:max-h-[30vh]" :value="thread.failedDraft"></w-textarea>
           <div class="flex flex-wrap items-center gap-2">
-            <w-checkbox label="Also send to the conversation" name="also-to-conversation" density="compact" class="min-w-0 pointer-coarse:min-h-11 max-sm:min-h-11" :checked="thread.alsoToConversation" on:change="thread.alsoToConversation = $event.target.checked"></w-checkbox>
-            <w-btn variant="filled" size="small" prepend-icon="send" class="ml-auto pointer-coarse:min-h-11 max-sm:min-h-11" :disabled="!thread.canSend" on:click="thread.reply()">Send</w-btn>
+            <w-checkbox label="Also send to the conversation" name="also" density="compact" class="min-w-0 pointer-coarse:min-h-11 max-sm:min-h-11" :checked="thread.alsoToConversation"></w-checkbox>
+            <w-btn variant="filled" size="small" prepend-icon="send" class="ml-auto pointer-coarse:min-h-11 max-sm:min-h-11" :loading="thread.sendStatus == 'sending'">Send</w-btn>
           </div>
         </form>
       </div>
@@ -148,8 +148,8 @@
     <case default>
       <div class="grid flex-1 place-items-center px-4 py-8">
         <w-empty-state class="block max-w-md">
-          <w-icon slot="media" name="thread" class="[--ms-icon-size:2rem]"></w-icon>
-          <h3 slot="title" class="text-base font-semibold">No thread is open</h3>
+          <w-icon slot="media" name="thread" class="text-[2rem]"></w-icon>
+          <h3 slot="title" class="ms-state-title">No thread is open</h3>
           <span slot="text">Choose "Reply in thread" on a message to open its thread.</span>
         </w-empty-state>
       </div>

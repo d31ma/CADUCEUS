@@ -18,7 +18,10 @@ func (setup ThreadTestSetup) Configure(execution *BehaviorExecution) (*BehaviorC
 }
 
 func (setup ThreadTestSetup) Exchange(request *BehaviorHttpRequest, execution *BehaviorExecution) (BehaviorValue, error) {
-	if fmt.Sprint(request.Headers["Authorization"]) != "Bearer access-1" {
+	if request.Method+" "+request.Path == "POST /api/v1/identity/session/refresh" {
+		return setup.refresh(request)
+	}
+	if !setup.known(fmt.Sprint(request.Headers["Authorization"])) {
 		return nil, errors.New("unauthenticated")
 	}
 	switch request.Method + " " + request.Path {
@@ -30,6 +33,21 @@ func (setup ThreadTestSetup) Exchange(request *BehaviorHttpRequest, execution *B
 		return setup.send(request)
 	}
 	return nil, errors.New("no fake answer for " + request.Method + " " + request.Path)
+}
+
+func (setup ThreadTestSetup) known(authorization string) bool {
+	return authorization == "Bearer access-1" || authorization == "Bearer access-2"
+}
+
+func (setup ThreadTestSetup) refresh(request *BehaviorHttpRequest) (BehaviorValue, error) {
+	text, _ := json.Marshal(request.Body)
+	body := SessionRefreshRequest{}
+	_ = json.Unmarshal(text, &body)
+	if body.SessionKey != "key-1" {
+		return nil, errors.New("unauthenticated")
+	}
+	me := Me{MemberId: "m-1", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com", Roles: []string{}}
+	return Session{Me: me, AccessToken: "access-2", ExpiresIn: 3600, SessionKey: "key-2"}, nil
 }
 
 func (setup ThreadTestSetup) page(rootId string, cursor string) (BehaviorValue, error) {

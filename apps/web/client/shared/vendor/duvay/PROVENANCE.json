@@ -1,11 +1,11 @@
 {
   "package": "@d31ma/duvay",
-  "version": "26.46.04-develop.06d3fb2",
+  "version": "26.46.04-develop.569d74a",
   "license": "MIT",
   "source": {
     "repository": "https://github.com/d31ma/DUVAY",
     "release": "develop",
-    "commit": "06d3fb2d984410206d03c229fa1e0476a6bf4ea7"
+    "commit": "569d74ad7ea176e0e7119de25931cb39b8df917a"
   },
   "components": [
     "base",
@@ -142,7 +142,7 @@
       "--minify"
     ],
     "cssLayer": "duvay",
-    "builtAt": "2026-11-11T17:51:10Z"
+    "builtAt": "2026-11-11T18:42:51Z"
   },
   "inputs": {
     "LICENSE": "5018934d79ea0bf37c34065635d6cbdbe96701c0e7b59e39f40d47641a7da6b7",
@@ -194,7 +194,7 @@
     "src/components/container.js": "2d180dc78561a2ca27ca3b97ca078bf141cba98e29fd529cd6bf9cc634cb7956",
     "src/components/data-table-row.js": "6890ebe8deb5d43d1c2ca04ecde8c78dbb632aa939d1bbbd129bfdfeeefffcd6",
     "src/components/dialog.js": "36cbb839d84fc2e0608fe6a996c4b674af9b45f56762abf759c2ed5d0f2b87f2",
-    "src/components/dialogs.css": "f33ad7a39aeb20c644f3cc8f83221b5f09f51780e0270a867de33cd4d853279c",
+    "src/components/dialogs.css": "4ea1972d6784b092e6f3703c4d827549b6e92517761a9918f527cd0ec1ec9234",
     "src/components/divider.js": "5ba0f1696b9c187c93f9a27c65763800a3ac791452322ef9a0dc67677e3db1c4",
     "src/components/empty-state.js": "6b0fb7245c61969dd03c7f0b48ebf84149f67b81c6562dbf4f62ec70153d6d01",
     "src/components/empty-states.css": "b0675712863266615134effd506ac3ba10187854133f1c4c30d10a70f5be5299",
@@ -292,7 +292,7 @@
   },
   "outputs": {
     "duvay-mesail.js": "98d669faae6fa65fd58dbb6ad1c5f9d39b4e6364949bc131cd7602ddc97d21b2",
-    "duvay-mesail.css": "09d652ee2fb9624b312ee92995b8775185b8ebe0ef1cb36a735b39cbd5dba541",
+    "duvay-mesail.css": "b6a801b4851fdeb8ad782a96632a52efa6defdf2bf0284aed1f85f7903a9e689",
     "LICENSE": "5018934d79ea0bf37c34065635d6cbdbe96701c0e7b59e39f40d47641a7da6b7"
   }
 }

@@ -31,7 +31,7 @@ cached_download() {
 }
 
 unpack() {
-  local tool="$1" archive="$2" destination="$3" binary_folder="$4"
+  local tool="$1" archive="$2" destination="$3" binary_folder="$4" url="$5"
   if [ "$binary_folder" = - ]; then
     install -m 755 "$archive" "$destination/bin/$tool"
     echo "$destination/bin"
@@ -39,8 +39,16 @@ unpack() {
   fi
   rm -rf "${destination:?}/$tool"
   mkdir -p "$destination/$tool"
-  tar -xzf "$archive" -C "$destination/$tool" || return 1
+  extract "$archive" "$destination/$tool" "$url" || return 1
   echo "$destination/$tool/$binary_folder"
+}
+
+extract() {
+  local archive="$1" folder="$2" url="$3"
+  case "$url" in
+    *.zip) unzip -q "$archive" -d "$folder" ;;
+    *) tar -xzf "$archive" -C "$folder" ;;
+  esac
 }
 
 install_tool() {
@@ -49,7 +57,7 @@ install_tool() {
   read -r _ version _ url sha binary_folder <<< "$entry"
   echo "=== install $tool $version for $platform" >&2
   archive="$(cached_download "$url" "$sha" "$(download_folder "$destination")")" || return 1
-  unpack "$tool" "$archive" "$destination" "$binary_folder"
+  unpack "$tool" "$archive" "$destination" "$binary_folder" "$url"
 }
 
 requested_tools() {

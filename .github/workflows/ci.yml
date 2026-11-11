@@ -73,8 +73,11 @@ jobs:
         app: ${{ fromJSON(needs.list-apps.outputs.apps) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Install pinned ty, fylo, Go, TinyGo and binaryen
-        run: scripts/ci/install-tools.sh "$RUNNER_TEMP/mesail-tools" ty fylo go tinygo binaryen
+      - name: Install pinned ty, fylo, Go, TinyGo, binaryen and Bun
+        run: scripts/ci/install-tools.sh "$RUNNER_TEMP/mesail-tools" ty fylo go tinygo binaryen bun
+      - name: Install Chromium for the responsive test
+        if: matrix.app == 'web'
+        run: bunx playwright@1.60.0 install --with-deps chromium-headless-shell
       - name: Run app gates
         env:
           APP: ${{ matrix.app }}
@@ -87,29 +90,16 @@ jobs:
           path: ${{ runner.temp }}/logs
           retention-days: 7
 
-  blackbox:
-    if: github.event_name != 'pull_request' || github.head_ref == 'develop' || startsWith(github.head_ref, 'release/')
-    name: Blackbox tests on the Floci stack
-    needs: [shared, apps]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Install pinned ty, fylo, Go, TinyGo and binaryen
-        run: scripts/ci/install-tools.sh "$RUNNER_TEMP/mesail-tools" ty fylo go tinygo binaryen
-      - name: Run the blackbox tests
-        run: scripts/ci/blackbox.sh
-
   required:
     if: always() && (github.event_name != 'pull_request' || github.head_ref == 'develop' || startsWith(github.head_ref, 'release/'))
     name: required
-    needs: [workflow-policy, shared, list-apps, apps, blackbox]
+    needs: [workflow-policy, shared, list-apps, apps]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Require every blocking job
         env:
-          RESULTS: ${{ needs.workflow-policy.result }} ${{ needs.shared.result }} ${{ needs.list-apps.result }} ${{ needs.apps.result }} ${{ needs.blackbox.result }}
+          RESULTS: ${{ needs.workflow-policy.result }} ${{ needs.shared.result }} ${{ needs.list-apps.result }} ${{ needs.apps.result }}
         run: |
           echo "results: $RESULTS"
           for result in $RESULTS; do

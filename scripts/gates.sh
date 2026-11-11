@@ -194,11 +194,46 @@ app_gates() {
   fi
   run_step "$name migrate check" "$log" "$ty" migrate check "$app" || status=1
   run_step "$name test" "$log" "$ty" test "$app" --coverage || status=1
+  if app_kind_has_client "$app"; then
+    client_checks "$app" "$log" || status=1
+  fi
   run_step "$name bundle" "$log" "$ty" bundle "$app" --target web || return 1
   if app_kind_has_server "$app"; then
     run_step "$name starts" "$log" app_starts "$ty" "$app" || status=1
   fi
+  if has_responsive_test "$app"; then
+    run_step "$name responsive" "$log" responsive_test "$app" || status=1
+  fi
   return "$status"
+}
+
+app_kind_has_client() {
+  [ -d "$1/client" ]
+}
+
+has_responsive_test() {
+  [ "$(basename "$1")" = web ]
+}
+
+client_checks() {
+  local app="$1" log="$2" root name status=0
+  root="$(repository_root)"
+  name="$(basename "$app")"
+  run_step "$name duvay" "$log" "$root/scripts/vendor/duvay.sh" --check --app "$name" || status=1
+  run_step "$name styles" "$log" sh -c "cd '$root/tools/styles' && go run . --check --app '$name'" || status=1
+  return "$status"
+}
+
+responsive_test() {
+  local app="$1"
+  (cd "$(repository_root)/tests/responsive" && MESAIL_DIST="$app/dist/web" go test -tags responsive -count=1 -v ./...)
+}
+
+tool_checks() {
+  local root="$1"
+  (cd "$root/tools/crap" && go vet ./...) || return 1
+  (cd "$root/tools/styles" && go vet ./... && go test ./...) || return 1
+  (cd "$root/tests/responsive" && go vet -tags responsive ./...)
 }
 
 start_wait_seconds() {
@@ -282,7 +317,7 @@ shared_gates() {
   run_step "gofmt role files" "$folder/gofmt.log" role_files_formatted "$root" || status=1
   run_step "kit sync" "$folder/kit-sync.log" "$root/scripts/kit-sync.sh" --check || status=1
   run_step "kit vet test crap" "$folder/kit.log" kit_checks "$root" "$folder/kit.cover" || status=1
-  run_step "tools vet" "$folder/tools.log" sh -c "cd '$root/tools/crap' && go vet ./..." || status=1
+  run_step "tools vet test" "$folder/tools.log" tool_checks "$root" || status=1
   run_step "blackbox compiles" "$folder/blackbox.log" blackbox_compiles "$root" || status=1
   return "$status"
 }

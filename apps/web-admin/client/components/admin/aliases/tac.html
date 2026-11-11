@@ -1,7 +1,7 @@
-<section class="@container/aliases aliases-box" aria-labelledby="aliases-title">
-  <div class="aliases-head px-4 py-3 @xl/aliases:px-5"><h2 id="aliases-title" class="aliases-heading">Aliases</h2></div>
-  <div class="grid gap-4 p-4 @xl/aliases:px-5">
-    <p class="aliases-subtle">An alias is another address for a member, such as sales@{aliasForm.domainId}. Mail to it reaches the member.</p>
+<section class="@container/page panel" aria-labelledby="aliases-title">
+  <div class="panel-head px-4 py-3 sm:px-6"><h2 id="aliases-title" class="section-title">Aliases</h2></div>
+  <div class="grid gap-4 p-4 sm:p-6">
+    <p class="subtle">An alias is another address for a member, such as sales@{aliasForm.domainId}. Mail to it reaches the member.</p>
     <form method="dialog" class="grid gap-4" aria-labelledby="aliases-title" on:submit="aliasForm.addWith($event.target.elements.address.value, $event.target.elements.member.value)">
       <w-text-field label="Alias address" name="address" placeholder="sales" autocomplete="off" persistent-hint :suffix="aliasForm.suffix()" :hint="aliasForm.addressHint()" :error="aliasForm.addressError(aliasForm.problem)" :value="aliasForm.address"></w-text-field>
       <p class="sr-only" role="alert">{aliasForm.addressError(aliasForm.problem)}</p>
@@ -50,14 +50,14 @@
     </div>
   </div>
   <logic :if="aliasForm.hasAdded">
-    <table class="aliases-table w-full @max-2xl/aliases:block">
+    <table class="data-table w-full @max-2xl/page:block">
       <caption class="sr-only">Aliases added just now in {aliasForm.domainId}</caption>
-      <thead class="@max-2xl/aliases:sr-only">
+      <thead class="@max-2xl/page:sr-only">
         <tr><th scope="col" class="px-4 py-2">Added just now</th><th scope="col" class="px-4 py-2">Reaches</th></tr>
       </thead>
-      <tbody class="@max-2xl/aliases:block"><loop :for="alias of aliasForm.added"><tr class="@max-2xl/aliases:block @max-2xl/aliases:px-4 @max-2xl/aliases:py-3">
-        <td class="px-4 py-3 @max-2xl/aliases:block @max-2xl/aliases:px-0 @max-2xl/aliases:py-1"><span class="aliases-address">{alias.address}</span></td>
-        <td data-label="Reaches" class="aliases-labelled px-4 py-3 @max-2xl/aliases:flex @max-2xl/aliases:items-start @max-2xl/aliases:gap-3 @max-2xl/aliases:px-0 @max-2xl/aliases:py-1"><span class="min-w-0">{alias.memberName}</span></td>
+      <tbody class="@max-2xl/page:block"><loop :for="alias of aliasForm.added"><tr class="@max-2xl/page:block @max-2xl/page:px-4 @max-2xl/page:py-3">
+        <td class="px-4 py-3 @max-2xl/page:block @max-2xl/page:px-0 @max-2xl/page:py-1"><span class="address">{alias.address}</span></td>
+        <td data-label="Reaches" class="px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1"><span class="min-w-0">{alias.memberName}</span></td>
       </tr></loop></tbody>
     </table>
   </logic>

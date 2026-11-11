@@ -556,12 +556,3 @@ html[w-theme="high-contrast"] {
     }
   }
 }
-
-/* @tachyon-generated-tailwind:start */
-/*! Tailwind CSS 4.3.5 variable registrations | MIT License | https://tailwindcss.com */
-@property --tw-content {
-  syntax: "*";
-  initial-value: "";
-  inherits: false;
-}
-/* @tachyon-generated-tailwind:end */

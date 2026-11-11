@@ -21,7 +21,7 @@
 
       <switch :value="domainList.step">
         <case :when="'failed'">
-          <section class="panel px-4 py-8" role="alert" aria-labelledby="domains-error-title">
+          <section class="panel px-4 py-8 sm:px-6" role="alert" aria-labelledby="domains-error-title">
             <w-empty-state>
               <w-icon slot="media" name="alert" class="icon-xl" aria-hidden="true"></w-icon>
               <h2 slot="title" id="domains-error-title" class="empty-title">Domains could not load</h2>
@@ -31,7 +31,7 @@
           </section>
         </case>
         <case :when="'empty'">
-          <section class="panel px-4 py-8" aria-labelledby="domains-empty-title">
+          <section class="panel px-4 py-8 sm:px-6" aria-labelledby="domains-empty-title">
             <w-empty-state>
               <w-icon slot="media" name="globe" class="icon-xl" aria-hidden="true"></w-icon>
               <h2 slot="title" id="domains-empty-title" class="empty-title">No domains yet</h2>
@@ -42,30 +42,30 @@
         </case>
         <case :when="'ready'">
           <section class="panel" aria-labelledby="domains-title">
-            <div class="panel-head flex flex-wrap items-center gap-3 px-4 py-3 @xl/page:px-5"><h2 id="domains-title" class="section-title flex-1">{domainList.heading}</h2></div>
-            <table class="domain-table w-full @max-2xl/page:block">
+            <div class="panel-head flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6"><h2 id="domains-title" class="section-title flex-1">{domainList.heading}</h2></div>
+            <table class="data-table w-full @max-2xl/page:block">
               <caption class="sr-only">Domains, their state and DNS checks</caption>
               <thead class="@max-2xl/page:sr-only">
-                <tr><th scope="col" class="column-head px-4 py-2 whitespace-nowrap">Domain</th><th scope="col" class="column-head px-4 py-2 whitespace-nowrap">State</th><th scope="col" class="column-head px-4 py-2 whitespace-nowrap">DNS records</th><th scope="col" class="column-head px-4 py-2"><span class="sr-only">Actions</span></th></tr>
+                <tr><th scope="col" class="px-4 py-2">Domain</th><th scope="col" class="px-4 py-2">State</th><th scope="col" class="px-4 py-2">DNS records</th><th scope="col" class="px-4 py-2"><span class="sr-only">Actions</span></th></tr>
               </thead>
               <tbody class="@max-2xl/page:block">
                 <loop :for="row of domainList.rows">
                   <tr class="domain-row align-middle @max-2xl/page:block @max-2xl/page:px-4 @max-2xl/page:py-3" :data-tone="row.tone">
-                    <td class="cell px-4 py-3 @max-2xl/page:block @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:pb-2"><span class="strong">{row.name}</span></td>
-                    <td data-label="State" class="cell px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:content-[attr(data-label)]">
+                    <td class="px-4 py-3 @max-2xl/page:block @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:pb-2"><span class="strong">{row.name}</span></td>
+                    <td data-label="State" class="px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1">
                       <div class="min-w-0">
                         <span class="inline-flex"><span class="tag" :data-color="row.stateColor" :data-variant="row.stateVariant" aria-hidden="true"><w-icon :name="row.stateIcon"></w-icon>{row.stateText}</span><span class="sr-only">{row.stateText}</span></span>
                         <logic :if="row.hasNote"><span class="meta block">{row.stateNote}</span></logic>
                       </div>
                     </td>
-                    <td data-label="DNS records" class="cell px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:content-[attr(data-label)]">
+                    <td data-label="DNS records" class="px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1">
                       <ul class="flex flex-wrap gap-1" :aria-label="row.marksLabel">
                         <loop :for="mark of row.marks">
                           <li><span class="inline-flex"><span class="tag" :data-color="mark.color" :data-variant="mark.variant" aria-hidden="true"><w-icon :name="mark.icon"></w-icon>{mark.name}</span><span class="sr-only">{mark.name} {mark.words}</span></span></li>
                         </loop>
                       </ul>
                     </td>
-                    <td class="cell w-px px-4 py-3 text-right whitespace-nowrap @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:px-0 @max-2xl/page:pt-2 @max-2xl/page:pb-1 @max-2xl/page:text-left">
+                    <td class="w-px px-4 py-3 text-right whitespace-nowrap @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:px-0 @max-2xl/page:pt-2 @max-2xl/page:pb-1 @max-2xl/page:text-left">
                       <div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start">
                         <w-btn :variant="row.actionVariant" size="small" :aria-label="row.actionLabel" on:click="adminShell.open('domain', row.domainId)">{row.actionText}</w-btn>
                       </div>
@@ -78,7 +78,7 @@
         </case>
         <case default>
           <section class="panel" aria-labelledby="domains-loading-title" aria-busy="true">
-            <div class="panel-head flex flex-wrap items-center gap-3 px-4 py-3"><h2 id="domains-loading-title" class="section-title flex-1">Domains</h2><span class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Loading domains…</span></div>
+            <div class="panel-head flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6"><h2 id="domains-loading-title" class="section-title flex-1">Domains</h2><span class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Loading domains…</span></div>
             <w-skeleton-loader type="list-item-two-line@3" class="block px-2 py-2"></w-skeleton-loader>
           </section>
         </case>

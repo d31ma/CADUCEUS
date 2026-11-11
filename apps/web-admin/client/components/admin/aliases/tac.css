@@ -1,74 +1,103 @@
-.aliases-box {
+.panel {
   border: 1px solid var(--w-border);
-  border-radius: var(--w-radius-xl);
+  border-radius: var(--ms-radius-card);
   background: var(--w-surface);
 }
 
-.aliases-head {
+.panel-head {
   border-bottom: 1px solid var(--w-divider);
 }
 
-.aliases-heading {
-  font-size: var(--w-font-lg);
+.section-title {
+  font-size: var(--ms-text-title);
+  font-weight: var(--w-font-weight-semibold);
+  line-height: 1.4;
+}
+
+.subtle {
+  color: var(--w-text-subtle);
+}
+
+.strong {
   font-weight: var(--w-font-weight-semibold);
 }
 
-.aliases-subtle {
-  color: var(--w-text-subtle);
-}
-
-.aliases-label {
+.address {
+  font-family: var(--w-font-family-mono);
   font-size: var(--ms-text-meta);
-  font-weight: var(--w-font-weight-medium);
   line-height: 1.33;
-  color: var(--w-text-subtle);
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
-.aliases-select {
-  min-height: var(--ms-control-md);
-  padding: 0 calc(var(--w-space-3) * 2 + var(--ms-icon-sm)) 0 var(--w-space-3);
-  border: 1px solid var(--w-outline);
-  border-radius: var(--w-radius-lg);
-  background: var(--w-surface);
-  color: var(--w-text);
-  font: inherit;
+.data-table {
+  border-collapse: collapse;
   font-size: var(--w-font-base);
   line-height: 1.43;
-  appearance: none;
-  cursor: pointer;
 }
 
-.select-box::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: var(--w-space-4);
-  width: 0.5rem;
-  height: 0.5rem;
-  border-right: 1.5px solid var(--w-text-subtle);
-  border-bottom: 1.5px solid var(--w-text-subtle);
-  transform: translateY(-75%) rotate(45deg);
-  pointer-events: none;
-}
-
-.aliases-select:hover {
-  border-color: var(--w-text-subtle);
-}
-
-.aliases-select:focus-visible {
-  border-color: var(--w-primary);
-  box-shadow: 0 0 0 1px var(--w-primary);
-  outline: 2px solid transparent;
-}
-
-.aliases-select[aria-invalid="true"] {
-  border-color: var(--w-error);
-}
-
-.aliases-error {
+.data-table th {
+  border-bottom: 1px solid var(--w-divider);
+  text-align: left;
+  white-space: nowrap;
   font-size: var(--ms-text-meta);
   line-height: 1.33;
-  color: var(--w-error);
+  font-weight: var(--w-font-weight-semibold);
+  color: var(--w-text-subtle);
+}
+
+.data-table td {
+  border-bottom: 1px solid var(--w-divider);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:last-child > td {
+  border-bottom: 0;
+}
+
+@container page (width >= 42rem) {
+  .data-table :is(th, td):first-child {
+    padding-left: var(--ms-card-pad);
+  }
+
+  .data-table :is(th, td):last-child {
+    padding-right: var(--ms-card-pad);
+  }
+}
+
+@container page (width < 42rem) {
+  .data-table tbody tr {
+    display: block;
+    padding: var(--w-space-3) var(--ms-card-pad-narrow);
+    border-bottom: 1px solid var(--w-divider);
+  }
+
+  .data-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .data-table td {
+    border-bottom: 0;
+  }
+
+  .data-table td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    width: 7rem;
+    padding-top: 0.125rem;
+    font-size: var(--ms-text-meta);
+    line-height: 1.33;
+    font-weight: var(--w-font-weight-semibold);
+    color: var(--w-text-subtle);
+  }
+}
+
+@media (min-width: 600px) {
+  @container page (width < 42rem) {
+    .data-table tbody tr {
+      padding-inline: var(--ms-card-pad);
+    }
+  }
 }
 
 .note {
@@ -102,74 +131,9 @@
   --note-tone: var(--ms-tone-email);
 }
 
-.aliases-table {
-  border-collapse: collapse;
-  border-top: 1px solid var(--w-divider);
-  font-size: var(--w-font-base);
-  line-height: 1.43;
-}
-
-.aliases-table th {
-  border-bottom: 1px solid var(--w-divider);
-  font-size: var(--ms-text-meta);
-  line-height: 1.33;
-  font-weight: var(--w-font-weight-semibold);
-  text-align: left;
-  white-space: nowrap;
-  color: var(--w-text-subtle);
-}
-
-.aliases-table td {
-  border-bottom: 1px solid var(--w-divider);
-  vertical-align: middle;
-}
-
-.aliases-table tr:last-child td {
-  border-bottom: 0;
-}
-
-.aliases-address {
-  font-family: var(--w-font-family-mono);
-  font-size: var(--ms-text-meta);
-  line-height: 1.33;
-  font-weight: var(--w-font-weight-semibold);
-  overflow-wrap: anywhere;
-  word-break: normal;
-}
-
-@container aliases (width < 42rem) {
-  .aliases-table tr {
-    border-bottom: 1px solid var(--w-divider);
-  }
-
-  .aliases-table tr:last-child {
-    border-bottom: 0;
-  }
-
-  .aliases-table td {
-    border-bottom: 0;
-  }
-
-  .aliases-labelled::before {
-    content: attr(data-label);
-    flex: none;
-    width: 7rem;
-    font-size: var(--ms-text-meta);
-    line-height: 1.33;
-    font-weight: var(--w-font-weight-semibold);
-    color: var(--w-text-subtle);
-  }
-}
-
-@media (max-width: 767px), (pointer: coarse) {
-  .aliases-select {
-    min-height: var(--ms-touch-min);
-  }
-}
-
 .w-text-field {
   --w-tf-height: var(--ms-control-md);
-  --w-tf-radius: var(--w-radius-lg);
+  --w-tf-radius: var(--ms-radius-control);
 }
 
 .w-text-field:not(.w-text-field--error) .w-text-field-messages {
@@ -228,12 +192,76 @@ h1 w-icon,
   --ms-icon-size: 2.5rem;
 }
 
+.aliases-label {
+  font-size: var(--ms-text-meta);
+  font-weight: var(--w-font-weight-medium);
+  line-height: 1.33;
+  color: var(--w-text-subtle);
+}
+
+.aliases-select {
+  min-height: var(--ms-control-md);
+  padding: 0 calc(var(--w-space-3) * 2 + var(--ms-icon-sm)) 0 var(--w-space-3);
+  border: 1px solid var(--w-outline);
+  border-radius: var(--ms-radius-control);
+  background: var(--w-surface);
+  color: var(--w-text);
+  font: inherit;
+  font-size: var(--w-font-base);
+  line-height: 1.43;
+  appearance: none;
+  cursor: pointer;
+}
+
+.select-box::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: var(--w-space-4);
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 1.5px solid var(--w-text-subtle);
+  border-bottom: 1.5px solid var(--w-text-subtle);
+  transform: translateY(-75%) rotate(45deg);
+  pointer-events: none;
+}
+
+.aliases-select:hover {
+  border-color: var(--w-text-subtle);
+}
+
+.aliases-select:focus-visible {
+  border-color: var(--w-primary);
+  box-shadow: 0 0 0 1px var(--w-primary);
+  outline: 2px solid transparent;
+}
+
+.aliases-select[aria-invalid="true"] {
+  border-color: var(--w-error);
+}
+
+.aliases-error {
+  font-size: var(--ms-text-meta);
+  line-height: 1.33;
+  color: var(--w-error);
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .aliases-select {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+.data-table {
+  border-top: 1px solid var(--w-divider);
+}
+
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer utilities {
-  .\@container\/aliases {
+  .\@container\/page {
     container-type: inline-size;
-    container-name: aliases;
+    container-name: page;
   }
   .sr-only {
     position: absolute;
@@ -309,8 +337,16 @@ h1 w-icon,
   .break-words {
     overflow-wrap: break-word;
   }
-  @container aliases (width < 42rem) {
-    .\@max-2xl\/aliases\:sr-only {
+  @media (width >= 600px) {
+    .sm\:p-6 {
+      padding: calc(var(--spacing, 0.25rem) * 6);
+    }
+    .sm\:px-6 {
+      padding-inline: calc(var(--spacing, 0.25rem) * 6);
+    }
+  }
+  @container page (width < 42rem) {
+    .\@max-2xl\/page\:sr-only {
       position: absolute;
       width: 1px;
       height: 1px;
@@ -321,34 +357,29 @@ h1 w-icon,
       white-space: nowrap;
       border-width: 0;
     }
-    .\@max-2xl\/aliases\:block {
+    .\@max-2xl\/page\:block {
       display: block;
     }
-    .\@max-2xl\/aliases\:flex {
+    .\@max-2xl\/page\:flex {
       display: flex;
     }
-    .\@max-2xl\/aliases\:items-start {
+    .\@max-2xl\/page\:items-start {
       align-items: flex-start;
     }
-    .\@max-2xl\/aliases\:gap-3 {
+    .\@max-2xl\/page\:gap-3 {
       gap: calc(var(--spacing, 0.25rem) * 3);
     }
-    .\@max-2xl\/aliases\:px-0 {
+    .\@max-2xl\/page\:px-0 {
       padding-inline: 0px;
     }
-    .\@max-2xl\/aliases\:px-4 {
+    .\@max-2xl\/page\:px-4 {
       padding-inline: calc(var(--spacing, 0.25rem) * 4);
     }
-    .\@max-2xl\/aliases\:py-1 {
+    .\@max-2xl\/page\:py-1 {
       padding-block: var(--spacing, 0.25rem);
     }
-    .\@max-2xl\/aliases\:py-3 {
+    .\@max-2xl\/page\:py-3 {
       padding-block: calc(var(--spacing, 0.25rem) * 3);
-    }
-  }
-  @container aliases (width >= 40rem) {
-    .\@xl\/aliases\:px-5 {
-      padding-inline: calc(var(--spacing, 0.25rem) * 5);
     }
   }
 }

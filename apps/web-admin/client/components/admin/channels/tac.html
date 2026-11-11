@@ -1,11 +1,11 @@
 <main class="channels @container/main flex h-full min-h-0 min-w-0 flex-col" aria-labelledby="page-title">
-  <header class="page-header flex items-center gap-2">
+  <header class="page-head flex items-center gap-2">
     <w-icon-btn class="-ml-2 min-[768px]:hidden" icon="arrow-left" aria-label="Back to menu" on:click="adminShell.showMenu()"></w-icon-btn>
     <h1 id="page-title" class="page-title flex min-w-0 items-center gap-1"><w-icon name="hash" class="icon-sm" aria-hidden="true"></w-icon><span class="truncate">Channels</span></h1>
     <p class="page-topic hidden @2xl/main:block min-w-0 flex-1 truncate pl-3">{channelList.domain} &middot; visibility and email addresses</p>
   </header>
 
-  <div class="page-scroll min-h-0 flex-1 overflow-y-auto py-6" id="admin-content">
+  <div class="page-scroll min-h-0 flex-1 overflow-y-auto" id="admin-content">
     <div class="@container/page mx-auto grid w-full max-w-3xl grid-cols-[minmax(0,1fr)] gap-6 pb-10">
       <div class="note note--email flex items-start gap-3 px-4 py-3">
         <w-icon name="mail" class="mt-0.5" aria-hidden="true"></w-icon>
@@ -32,29 +32,29 @@
 
       <switch :value="channelList.state">
         <case :when="'loading'">
-          <section class="channels-card" aria-busy="true" aria-labelledby="channels-loading-title">
-            <div class="card-head flex flex-wrap items-center gap-3 px-4 py-3 @xl/page:px-5">
-              <h2 id="channels-loading-title" class="card-title flex-1">Channels</h2>
+          <section class="panel" aria-busy="true" aria-labelledby="channels-loading-title">
+            <div class="panel-head flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
+              <h2 id="channels-loading-title" class="section-title flex-1">Channels</h2>
               <span class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Loading channels&hellip;</span>
             </div>
             <w-skeleton-loader type="list-item-avatar-two-line@3" class="block px-2 py-2"></w-skeleton-loader>
           </section>
         </case>
         <case :when="'ready'">
-          <section class="channels-card" aria-labelledby="channels-title">
-            <div class="card-head flex flex-wrap items-center gap-3 px-4 py-3 @xl/page:px-5">
-              <h2 id="channels-title" class="card-title flex-1">{channelList.heading}</h2>
+          <section class="panel" aria-labelledby="channels-title">
+            <div class="panel-head flex flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
+              <h2 id="channels-title" class="section-title flex-1">{channelList.heading}</h2>
               <span class="meta">{channelList.summary}</span>
             </div>
-            <table class="channel-table w-full @max-2xl/page:block">
+            <table class="data-table w-full @max-2xl/page:block">
               <caption class="sr-only">Channels of {channelList.domain}</caption>
               <thead class="@max-2xl/page:sr-only">
                 <tr><th scope="col" class="px-4 py-2">Channel</th><th scope="col" class="px-4 py-2">Visibility</th><th scope="col" class="px-4 py-2">Email address</th><th scope="col" class="px-4 py-2"><span class="sr-only">Actions</span></th></tr>
               </thead>
               <tbody class="@max-2xl/page:block"><loop :for="row of channelList.rows"><tr :class="row.rowClass">
                 <td class="channel-lead px-4 py-3 @max-2xl/page:block @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:pb-2">
-                  <span class="channel-name flex items-center gap-1"><w-icon :name="row.nameIcon" class="icon-sm" aria-hidden="true"></w-icon>{row.name}</span>
-                  <span class="channel-topic block">{row.topic}</span>
+                  <span class="strong flex items-center gap-1"><w-icon :name="row.nameIcon" class="icon-sm" aria-hidden="true"></w-icon>{row.name}</span>
+                  <span class="meta block">{row.topic}</span>
                 </td>
                 <td data-label="Visibility" class="px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1">
                   <div class="flex flex-wrap gap-1">
@@ -83,24 +83,24 @@
                 </td>
               </tr></loop></tbody>
             </table>
-            <div class="card-foot flex flex-wrap items-center gap-2 px-4 py-3 @xl/page:px-5"><span>{channelList.showing}</span></div>
+            <div class="meta panel-foot flex flex-wrap items-center gap-2 px-4 py-3 sm:px-6"><span>{channelList.showing}</span></div>
           </section>
           <p class="meta">This list shows public channels and the private channels you are in.</p>
         </case>
         <case :when="'empty'">
-          <section class="channels-card px-4 py-8" aria-labelledby="channels-empty-title">
+          <section class="panel px-4 py-8 sm:px-6" aria-labelledby="channels-empty-title">
             <w-empty-state>
-              <w-icon slot="media" name="hash" class="icon-xl" aria-hidden="true"></w-icon>
+              <w-icon slot="media" name="hash" class="empty-icon icon-xl" aria-hidden="true"></w-icon>
               <h2 slot="title" id="channels-empty-title" class="empty-title">No channels yet</h2>
               <p slot="text">Channels that people in {channelList.domain} create appear here.</p>
             </w-empty-state>
           </section>
         </case>
         <case :when="'noResults'">
-          <section class="channels-card px-4 py-8" aria-labelledby="channels-no-results-title">
+          <section class="panel px-4 py-8 sm:px-6" aria-labelledby="channels-no-results-title">
             <div role="status">
               <w-empty-state>
-                <w-icon slot="media" name="search" class="icon-xl" aria-hidden="true"></w-icon>
+                <w-icon slot="media" name="search" class="empty-icon icon-xl" aria-hidden="true"></w-icon>
                 <h2 slot="title" id="channels-no-results-title" class="empty-title">{channelList.noResultsTitle}</h2>
                 <p slot="text">Check the spelling, or clear the search and the filters.</p>
                 <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="outlined" on:click="channelList.clearFilters()">Clear search and filters</w-btn></div>
@@ -109,10 +109,10 @@
           </section>
         </case>
         <case default>
-          <section class="channels-card px-4 py-8" aria-labelledby="channels-error-title">
+          <section class="panel px-4 py-8 sm:px-6" aria-labelledby="channels-error-title">
             <div role="alert">
               <w-empty-state>
-                <w-icon slot="media" name="alert" class="icon-xl empty-icon-error" aria-hidden="true"></w-icon>
+                <w-icon slot="media" name="alert" class="empty-icon icon-xl empty-icon-error" aria-hidden="true"></w-icon>
                 <h2 slot="title" id="channels-error-title" class="empty-title">Channels could not load</h2>
                 <p slot="text">{channelList.loadProblem}</p>
                 <div slot="actions" class="flex flex-wrap justify-center gap-2"><w-btn variant="flat" prepend-icon="refresh" on:click="channelList.refresh()">Try again</w-btn></div>

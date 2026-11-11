@@ -34,7 +34,7 @@ func (test *ThreadServiceTest) thread() *ThreadService {
 
 func (test *ThreadServiceTest) opened(rootId string) *ThreadService {
 	thread := test.thread()
-	thread.openMessage("conv-1", rootId)
+	thread.OpenMessage("conv-1", rootId)
 	return thread
 }
 
@@ -112,7 +112,7 @@ func (test *ThreadServiceTest) TestOpenMessageFailureShowsTheErrorState() {
 
 func (test *ThreadServiceTest) TestOpenMessageAfterTheSessionEndedShowsTheSessionState() {
 	thread := test.threadWith(test.remote(0, "ended"))
-	thread.openMessage("conv-1", "root-1")
+	thread.OpenMessage("conv-1", "root-1")
 	Assert.Equals("session", thread.Status)
 }
 

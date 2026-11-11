@@ -72,7 +72,7 @@ func (thread *ThreadService) Shown(changed VisibilityChanged) {
 	thread.refreshWhenShown(changed.Visible)
 }
 
-func (thread *ThreadService) openMessage(conversationId string, messageId string) {
+func (thread *ThreadService) OpenMessage(conversationId string, messageId string) {
 	thread.reset(conversationId, messageId)
 	thread.shell.ThreadOpen = true
 	thread.shell.Pane = "thread"

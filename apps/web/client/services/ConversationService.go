@@ -189,15 +189,6 @@ func (service *ConversationService) originalFailed() string {
 	return "We could not get the original email. Try again."
 }
 
-func (service *ConversationService) OpenThread(messageId string) {
-	service.applicationEventPublisher.PublishEvent(ConversationThreadRequested{
-		DomainId:       service.DomainId,
-		ConversationId: service.ConversationId,
-		MessageId:      messageId,
-	}, false)
-	service.closeActions()
-}
-
 func (service *ConversationService) ToggleActions(messageId string) {
 	service.ActionsForId = service.actionsTarget(messageId)
 }

@@ -269,12 +269,6 @@ func (test *ConversationServiceTest) TestFetchOriginalFailureShowsAProblem() {
 	Assert.Equals("We could not get the original email. Try again.", service.Problem)
 }
 
-func (test *ConversationServiceTest) TestOpenThreadKeepsTheConversation() {
-	service := test.general()
-	service.OpenThread("m-3")
-	Assert.Equals("cnv_general", service.ConversationId)
-}
-
 func (test *ConversationServiceTest) TestLiveNewMessageIsAnnounced() {
 	service := test.general()
 	service.Live(RealtimeEvent{Type: "message.created", ConversationId: "cnv_general", MessageId: "m-3"})
@@ -370,13 +364,6 @@ func (test *ConversationServiceTest) TestOpenPickerClosesTheActions() {
 	service.OpenPicker("m-3")
 	Assert.Equals("", service.ActionsForId)
 	Assert.Equals("m-3", service.PickerForId)
-}
-
-func (test *ConversationServiceTest) TestOpenThreadClosesTheActions() {
-	service := test.general()
-	service.ToggleActions("m-3")
-	service.OpenThread("m-3")
-	Assert.Equals("", service.ActionsForId)
 }
 
 func (test *ConversationServiceTest) TestTargetOfAnOpenConversationKeepsIt() {

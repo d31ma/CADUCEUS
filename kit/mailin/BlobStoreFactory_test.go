@@ -1,6 +1,8 @@
 package mailin
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -29,6 +31,20 @@ func TestAnS3StoreUsesTheBucket(t *testing.T) {
 	store := BlobStoreFactory{Environment: testEnvironment(map[string]string{"AWS_ACCESS_KEY_ID": "id", "AWS_SECRET_ACCESS_KEY": "key"})}.Store(settings)
 	url, err := store.SignDownload(blobs.Key{DomainId: "example.com", Name: "inbound-1"}, MessageDesk{}.OriginalTerms(), time.Now().Add(time.Minute))
 	check(t, err == nil && strings.HasPrefix(url, "http://floci.test:4566/mesail-raw/example.com/inbound-1?"), "wrong link")
+}
+
+func TestAnS3StoreClosesEachConnection(t *testing.T) {
+	closed := make(chan bool, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		closed <- request.Close
+		writer.Write([]byte("raw"))
+	}))
+	defer server.Close()
+	settings := BlobSettings{Adapter: "s3", Bucket: "mesail-raw", Region: "us-east-1", Endpoint: server.URL}
+	store := BlobStoreFactory{Environment: testEnvironment(map[string]string{"AWS_ACCESS_KEY_ID": "id", "AWS_SECRET_ACCESS_KEY": "key"})}.Store(settings)
+	reader, err := store.Read(blobs.Key{DomainId: "example.com", Name: "inbound-1"})
+	check(t, err == nil && <-closed, "the S3 client kept the connection alive")
+	reader.Close()
 }
 
 func TestMissingBlobsRefuseEveryCall(t *testing.T) {

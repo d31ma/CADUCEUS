@@ -36,3 +36,46 @@ func TestTheBuilderKeepsAnHtmlImageWithoutAContentIdRemote(t *testing.T) {
 	content, err := ContentBuilder{Blobs: store}.Build(stored)
 	check(t, err == nil && imageBlock(content).Image.AttachmentId == "", "an empty content id named a blob")
 }
+
+func TestTheBuilderDropsTheFinalCrlfOfAPlainTextBody(t *testing.T) {
+	content := builtText(t, "Lunch at noon?\r\nSee you.\r\n")
+	check(t, content.Text == "Lunch at noon?\r\nSee you.", "the final line break was kept in the text")
+	check(t, lastSpanText(content) == "Lunch at noon?\nSee you.", "the final line break was kept in the last span")
+}
+
+func TestTheBuilderDropsTheFinalLfOfAPlainTextBody(t *testing.T) {
+	content := builtText(t, "Lunch at noon?\n")
+	check(t, content.Text == "Lunch at noon?", "the final line feed was kept")
+}
+
+func TestTheBuilderDropsOnlyOneFinalLineBreak(t *testing.T) {
+	content := builtText(t, "Lunch at noon?\r\n\r\n")
+	check(t, content.Text == "Lunch at noon?\r\n", "more than one line break was removed")
+}
+
+func TestTheBuilderKeepsABodyWithoutAFinalLineBreak(t *testing.T) {
+	content := builtText(t, "Lunch at noon?")
+	check(t, content.Text == "Lunch at noon?" && lastSpanText(content) == "Lunch at noon?", "the body changed")
+}
+
+func TestTheBuilderDropsTheFinalCrlfOfTheTextPartBesideHtml(t *testing.T) {
+	memory, store := newMemory(), newBlobs()
+	stored := storedMessage(t, memory, store, alternativeMessage())
+	content, err := ContentBuilder{Blobs: store}.Build(stored)
+	check(t, err == nil && content.BodyFormat == "email", "want an email body")
+	check(t, content.Text == "Hello there", "the final line break was kept in the text")
+}
+
+func builtText(t *testing.T, body string) InboundContent {
+	memory, store := newMemory(), newBlobs()
+	raw := strings.Replace(textMessage(), "Lunch at noon?\r\n", body, 1)
+	stored := storedMessage(t, memory, store, raw)
+	content, err := ContentBuilder{Blobs: store}.Build(stored)
+	check(t, err == nil && content.BodyFormat == "text", "want a text body")
+	return content
+}
+
+func lastSpanText(content InboundContent) string {
+	block := content.Blocks[len(content.Blocks)-1]
+	return block.Spans[len(block.Spans)-1].Text
+}

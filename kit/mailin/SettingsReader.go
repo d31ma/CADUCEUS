@@ -3,9 +3,11 @@ package mailin
 import (
 	"cmp"
 	"encoding/json"
+	"time"
 
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
+	"mesail.dev/packages/transport"
 )
 
 type SettingsReader struct {
@@ -26,7 +28,9 @@ func (reader SettingsReader) MailIn() Settings {
 }
 
 func (reader SettingsReader) Authorize() func(realm string) (string, error) {
-	return oidc.ServiceTokensFactory{}.FromJson(reader.Environment(reader.applicationVariable())).Authorization
+	tokens := oidc.ServiceTokensFactory{}.FromJson(reader.Environment(reader.applicationVariable()))
+	tokens.Client = transport.SingleUseTransport{}.Client(reader.tokenTimeout())
+	return tokens.Authorization
 }
 
 func (reader SettingsReader) withDefaults(settings Settings) Settings {
@@ -36,6 +40,10 @@ func (reader SettingsReader) withDefaults(settings Settings) Settings {
 	settings.Blobs.Endpoint = cmp.Or(reader.Environment("AWS_ENDPOINT_URL_S3"), reader.Environment("AWS_ENDPOINT_URL"), settings.Blobs.Endpoint)
 	settings.Blobs.Link.Seconds = cmp.Or(settings.Blobs.Link.Seconds, reader.defaultLinkSeconds())
 	return settings
+}
+
+func (SettingsReader) tokenTimeout() time.Duration {
+	return 5 * time.Second
 }
 
 func (SettingsReader) LocalAdapter() string {

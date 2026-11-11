@@ -1,10 +1,10 @@
 package mailin
 
 import (
-	"net/http"
 	"time"
 
 	"mesail.dev/packages/blobs"
+	"mesail.dev/packages/transport"
 )
 
 type BlobStoreFactory struct {
@@ -39,5 +39,9 @@ func (factory BlobStoreFactory) s3(settings BlobSettings) blobs.Store {
 		Endpoint: settings.Endpoint, PublicEndpoint: settings.Public, Region: settings.Region, Bucket: settings.Bucket,
 		AccessKeyId: factory.Environment("AWS_ACCESS_KEY_ID"), SecretAccessKey: factory.Environment("AWS_SECRET_ACCESS_KEY"), SessionToken: factory.Environment("AWS_SESSION_TOKEN"),
 	}
-	return blobs.NewS3Store(s3Settings, http.DefaultClient, time.Now)
+	return blobs.NewS3Store(s3Settings, transport.SingleUseTransport{}.Client(factory.timeout()), time.Now)
+}
+
+func (BlobStoreFactory) timeout() time.Duration {
+	return 60 * time.Second
 }

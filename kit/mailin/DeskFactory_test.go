@@ -1,6 +1,7 @@
 package mailin
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -16,11 +17,12 @@ func TestTheFactoryWiresTheGivenPusher(t *testing.T) {
 	check(t, len(pusher.PushedTo("messaging")) == 1, "want one push")
 }
 
-func TestTheFactoryFallsBackToTheHttpPusher(t *testing.T) {
+func TestTheFactoryFallsBackToTheSingleUsePusher(t *testing.T) {
 	memory := newMemory()
 	desk := DeskFactory{Environment: goodSettings()}.Outbox(memory, memory.Page)
-	_, isHttp := desk.Pusher.(outbox.HTTPPusher)
-	check(t, isHttp, "want the HTTP pusher")
+	pusher, isEventPusher := desk.Pusher.(EventPusher)
+	check(t, isEventPusher && pusher.Client.Timeout == outbox.HTTPPusher{}.DefaultTimeout(), "want the event pusher")
+	check(t, keepAlivesOff(pusher.Client), "the pusher keeps connections alive")
 }
 
 func TestTheFactoryBuildsAMessageDesk(t *testing.T) {
@@ -35,4 +37,10 @@ func TestTheFactoryWiresTheDirectoryIntoTheInbox(t *testing.T) {
 	inbox := DeskFactory{Environment: goodSettings()}.Inbox(memory, memory.Page)
 	directory, isDirectory := inbox.HandOff.Domains.(Directory)
 	check(t, isDirectory && directory.Client.Timeout == DeskFactory{}.Timeout(), "want the directory client")
+	check(t, keepAlivesOff(directory.Client), "the directory client keeps connections alive")
+}
+
+func keepAlivesOff(client *http.Client) bool {
+	own, isTransport := client.Transport.(*http.Transport)
+	return isTransport && own.DisableKeepAlives && own != http.DefaultTransport
 }

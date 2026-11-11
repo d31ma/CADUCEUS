@@ -30,7 +30,6 @@
     "hosts": [
       "127.0.0.1",
       "keycloak",
-      "directory.localhost",
       "floci"
     ]
   },
@@ -44,7 +43,7 @@
     ]
   },
   "mailin": {
-    "directory": "http://directory.localhost:8102",
+    "directory": "http://127.0.0.1:8102",
     "blobs": {
       "bucket": "mesail-raw",
       "link": {

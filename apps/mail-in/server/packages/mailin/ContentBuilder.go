@@ -5,6 +5,7 @@ import (
 	"cmp"
 	"errors"
 	"io"
+	"strings"
 
 	"mesail.dev/packages/blobs"
 	"mesail.dev/packages/mime"
@@ -58,6 +59,7 @@ func (builder ContentBuilder) saved(stored InboundRaw, parts []mime.Attachment) 
 }
 
 func (builder ContentBuilder) converted(message mime.Message, attachments []InboundAttachment) InboundContent {
+	message.Text = builder.withoutFinalBreak(message.Text)
 	result, format := builder.blocks(message, builder.inlineImages(attachments))
 	return InboundContent{Text: cmp.Or(message.Text, result.Text), BodyFormat: format, Blocks: result.Blocks, Truncated: result.Truncated, Attachments: attachments}
 }
@@ -67,6 +69,21 @@ func (ContentBuilder) blocks(message mime.Message, inlineImages map[string]strin
 		return richtext.Converter{}.FromHtml(message.Html, inlineImages), BodyFormats{}.Email()
 	}
 	return richtext.Converter{}.FromText(message.Text), BodyFormats{}.Text()
+}
+
+func (builder ContentBuilder) withoutFinalBreak(text string) string {
+	if strings.HasSuffix(text, builder.windowsBreak()) {
+		return strings.TrimSuffix(text, builder.windowsBreak())
+	}
+	return strings.TrimSuffix(text, builder.unixBreak())
+}
+
+func (ContentBuilder) windowsBreak() string {
+	return "\r\n"
+}
+
+func (ContentBuilder) unixBreak() string {
+	return "\n"
 }
 
 func (ContentBuilder) inlineImages(attachments []InboundAttachment) map[string]string {

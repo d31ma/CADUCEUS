@@ -40,3 +40,22 @@ func textMessage() string {
 		"\r\n" +
 		"Lunch at noon?\r\n"
 }
+
+func alternativeMessage() string {
+	return "From: Dan <dan@outside.test>\r\n" +
+		"To: Ana <ana@example.com>\r\n" +
+		"Subject: Hello\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: multipart/alternative; boundary=\"part\"\r\n" +
+		"\r\n" +
+		"--part\r\n" +
+		"Content-Type: text/plain; charset=utf-8\r\n" +
+		"\r\n" +
+		"Hello there\r\n" +
+		"\r\n" +
+		"--part\r\n" +
+		"Content-Type: text/html; charset=utf-8\r\n" +
+		"\r\n" +
+		"<p>Hello there</p>\r\n" +
+		"--part--\r\n"
+}

@@ -2,12 +2,12 @@ package mailin
 
 import (
 	"crypto/rand"
-	"net/http"
 	"time"
 
 	"mesail.dev/packages/blobs"
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
+	"mesail.dev/packages/transport"
 )
 
 type DeskFactory struct {
@@ -41,7 +41,7 @@ func (DeskFactory) Timeout() time.Duration {
 }
 
 func (factory DeskFactory) handOff() HandOff {
-	directory := Directory{Client: &http.Client{Timeout: factory.Timeout()}, BaseUrl: factory.settings().MailIn().Directory, Authorize: factory.settings().Authorize()}
+	directory := Directory{Client: transport.SingleUseTransport{}.Client(factory.Timeout()), BaseUrl: factory.settings().MailIn().Directory, Authorize: factory.settings().Authorize()}
 	return HandOff{Domains: directory, Blobs: factory.blobs()}
 }
 
@@ -57,5 +57,6 @@ func (factory DeskFactory) pusher() outbox.Pusher {
 	if factory.Pusher != nil {
 		return factory.Pusher
 	}
-	return outbox.NewDomainHTTPPusher(DomainTokens{Authorize: factory.settings().Authorize()}, outbox.HTTPPusher{}.DefaultTimeout())
+	tokens := DomainTokens{Authorize: factory.settings().Authorize()}
+	return EventPusher{Tokens: tokens, Client: transport.SingleUseTransport{}.Client(outbox.HTTPPusher{}.DefaultTimeout())}
 }

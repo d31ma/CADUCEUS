@@ -15,6 +15,10 @@ router_ready() {
   curl --fail --silent "$MESAIL_ROUTER_URL/_router/ready" > /dev/null
 }
 
+realtime_ready() {
+  curl --fail --silent "$MESAIL_ROUTER_URL/api/v1/realtime/health" > /dev/null
+}
+
 compose() {
   docker compose --project-directory "$(mesail_root)" "$@"
 }
@@ -33,7 +37,7 @@ wait_for_devhost_floci() {
 }
 
 single_writers() {
-  mesail_stack '[.services[] | select(.fylo) | .name] | join(",")'
+  mesail_stack '[.services[] | select(.fylo and (.kind // "lambda") == "lambda") | .name] | join(",")'
 }
 
 main() {
@@ -52,6 +56,7 @@ main() {
   mesail_step wait-floci mesail_wait_for Floci 120 floci_ready
   mesail_step wait-keycloak mesail_wait_for Keycloak 300 keycloak_ready
   mesail_step wait-router mesail_wait_for router 60 router_ready
+  mesail_step wait-realtime mesail_wait_for "realtime through the router" 180 realtime_ready
 }
 
 main "$@"

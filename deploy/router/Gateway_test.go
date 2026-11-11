@@ -163,3 +163,54 @@ func TestWebSocketUpgradeReachesTheGateway(t *testing.T) {
 		t.Fatalf("got %q %q", status, rest)
 	}
 }
+
+func TestPassthroughRoutesPutTheLongestPrefixFirst(t *testing.T) {
+	targets := map[string]string{
+		"/api/v1/":                     "http://127.0.0.1:1",
+		"/api/v1/realtime/":            "http://127.0.0.1:2",
+		"/api/v1/realtime/socket":      "http://127.0.0.1:3",
+		"/api/v1/realtime/stream":      "http://127.0.0.1:3",
+		"/api/v1/realtime/socket/long": "http://127.0.0.1:4",
+	}
+	passthroughs, err := Passthroughs{}.Of(targets)
+	if err != nil || len(passthroughs.Routes) != 5 || passthroughs.Routes[0].Prefix != "/api/v1/realtime/socket/long" || passthroughs.Routes[3].Prefix != "/api/v1/realtime/" || passthroughs.Routes[4].Prefix != "/api/v1/" {
+		t.Fatalf("got %+v, %v", passthroughs.Routes, err)
+	}
+}
+
+func TestRealtimePassthroughsInLambdaModeBeatTheFunctions(t *testing.T) {
+	gateway := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		_, _ = writer.Write([]byte("gateway " + request.URL.Path))
+	}))
+	defer gateway.Close()
+	yon := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		_, _ = writer.Write([]byte("yon " + request.URL.Path))
+	}))
+	defer yon.Close()
+	fake := newFakeAws(t)
+	settings := settingsFor(fake, "")
+	settings.Passthrough = map[string]string{"/api/v1/realtime/": yon.URL, "/api/v1/realtime/socket": gateway.URL, "/api/v1/realtime/stream": gateway.URL}
+	settings.Blocked = []string{"/api/v1/realtime/gateway/"}
+	handler := handlerFor(t, settings)
+	socket := call(t, handler, http.MethodGet, "/api/v1/realtime/socket", "")
+	stream := call(t, handler, http.MethodGet, "/api/v1/realtime/stream?ticket=1", "")
+	health := call(t, handler, http.MethodGet, "/api/v1/realtime/health", "")
+	blocked := call(t, handler, http.MethodPost, "/api/v1/realtime/gateway/connect", "")
+	if socket.Body.String() != "gateway /api/v1/realtime/socket" || stream.Body.String() != "gateway /api/v1/realtime/stream" || health.Body.String() != "yon /api/v1/realtime/health" || blocked.Code != http.StatusNotFound || len(fake.functions) != 0 {
+		t.Fatalf("socket %q, stream %q, health %q, blocked %d, functions %v", socket.Body.String(), stream.Body.String(), health.Body.String(), blocked.Code, fake.functions)
+	}
+}
+
+func TestLambdaSettingsNeedNoRealtimeServiceForTheRealtimePassthrough(t *testing.T) {
+	values := map[string]string{
+		"MESAIL_ROUTER_SERVICES":        "identity,directory",
+		"MESAIL_ROUTER_LAMBDA_ENDPOINT": "http://floci:4566",
+		"AWS_ACCESS_KEY_ID":             "test",
+		"AWS_SECRET_ACCESS_KEY":         "test",
+		"MESAIL_ROUTER_PASSTHROUGH":     "/api/v1/realtime/socket=http://realtime:8116,/api/v1/realtime/stream=http://realtime:8116,/api/v1/realtime/=http://realtime:8106",
+	}
+	settings, err := SettingsReader{Lookup: lookupIn(values)}.Read()
+	if err != nil || settings.Passthrough["/api/v1/realtime/"] != "http://realtime:8106" || settings.Passthrough["/api/v1/realtime/socket"] != "http://realtime:8116" || len(settings.Services) != 2 || settings.Blocked[0] != "/api/v1/realtime/gateway/" {
+		t.Fatalf("got %+v, %v", settings, err)
+	}
+}

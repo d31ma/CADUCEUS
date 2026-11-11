@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -26,7 +27,14 @@ func (passthroughs Passthroughs) index(path string) int {
 
 func (passthroughs Passthroughs) Of(targets map[string]string) (Passthroughs, error) {
 	routes, err := passthroughs.routes(targets)
-	return Passthroughs{Routes: routes}, err
+	return Passthroughs{Routes: passthroughs.longestFirst(routes)}, err
+}
+
+func (Passthroughs) longestFirst(routes []PrefixRoute) []PrefixRoute {
+	slices.SortStableFunc(routes, func(first PrefixRoute, second PrefixRoute) int {
+		return cmp.Compare(len(second.Prefix), len(first.Prefix))
+	})
+	return routes
 }
 
 func (passthroughs Passthroughs) routes(targets map[string]string) ([]PrefixRoute, error) {

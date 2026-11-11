@@ -119,6 +119,7 @@ image_exists() {
 
 deploy_service() {
   local service="$1"
+  if mesail_is_container "$service"; then echo "$service runs as a container (docker-compose.yml), not as a function"; return 0; fi
   if ! image_exists "$service"; then echo "warning: no image $(image_uri "$service"); $service is not deployed"; return 0; fi
   ensure_function "$service"
   limit_writers "$service"
@@ -149,7 +150,7 @@ upload_static_apps() {
 
 chosen_services() {
   if [ "$#" -gt 0 ]; then printf '%s\n' "$@"; return; fi
-  mesail_services
+  mesail_lambda_services
 }
 
 main() {

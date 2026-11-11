@@ -117,5 +117,36 @@ USER 10001:10001
 EXPOSE 8080
 ENTRYPOINT ["/mesail-router"]
 
+FROM ${GOLANG_IMAGE} AS realtime-gateway-build
+WORKDIR /src/edge/realtime
+COPY edge/realtime/go.mod edge/realtime/go.sum ./
+RUN GOTOOLCHAIN=local go mod download -x
+COPY edge/realtime/ ./
+RUN GOTOOLCHAIN=local GOFLAGS=-mod=readonly CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" -o /out/mesail-realtime-gateway .
+
+FROM lambda-tools AS realtime
+ARG USER_ID=10001
+ENV MESAIL_APP_ROOT=/opt/mesail/realtime \
+    MESAIL_DATA_ROOT=/data/realtime \
+    HOME=/tmp TMPDIR=/tmp \
+    TAC_CACHE_DIR=/opt/mesail/cache \
+    GOTOOLCHAIN=local GOPROXY=off GOFLAGS=-buildvcs=false GOCACHE=/tmp/go-build GOPATH=/tmp/go
+RUN useradd --system --no-create-home --home-dir /tmp --uid "${USER_ID}" --user-group mesail \
+ && mkdir -p /opt/mesail/realtime /opt/mesail/cache /data \
+ && chown "${USER_ID}:${USER_ID}" /opt/mesail/realtime /opt/mesail/cache /data
+COPY --from=realtime-gateway-build /out/mesail-realtime-gateway /usr/local/bin/mesail-realtime-gateway
+COPY --chmod=755 deploy/lambda/realtime-start.sh /usr/local/bin/mesail-realtime-start
+COPY --chown=${USER_ID}:${USER_ID} apps/realtime /opt/mesail/realtime
+USER ${USER_ID}:${USER_ID}
+RUN set -eu \
+ && printf '{ "server": { "hosts": ["realtime"] } }\n' > /opt/mesail/realtime/server/application-container.json \
+ && ty bundle /opt/mesail/realtime \
+ && rm -rf /tmp/* /tmp/.cache
+ENV YON_PROFILE=container \
+    YON_EGRESS_ENFORCEMENT=proxy \
+    MESAIL_REALTIME_LISTEN=0.0.0.0:8116
+EXPOSE 8106 8116
+ENTRYPOINT ["/usr/local/bin/mesail-realtime-start"]
+
 FROM mesail-keycloak AS keycloak-blackbox
 COPY --chown=0:0 deploy/floci/keycloak-users/ /opt/mesail/keycloak/realm/dev/

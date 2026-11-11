@@ -41,11 +41,24 @@ services:
       - "127.0.0.1:${MESAIL_KEYCLOAK_PORT:-18180}:8080"
     networks: [backend]
 
+  realtime:
+    image: mesail-realtime:${MESAIL_IMAGE_TAG:-dev}
+    init: true
+    stop_grace_period: 40s
+    environment:
+      MESAIL_REALTIME_GATEWAY_SECRET: ${MESAIL_REALTIME_GATEWAY_SECRET:?run scripts/floci/run-all.sh}
+      MESAIL_REALTIME_ORIGINS: ${MESAIL_PUBLIC_URL:-http://127.0.0.1:18080}
+      YON_SERVICE_CLIENT_SECRET: ${MESAIL_SERVICE_SECRET:?run scripts/floci/run-all.sh}
+    volumes:
+      - realtime-data:/data
+    networks: [backend]
+
   router:
     image: mesail-router:dev
     environment:
       <<: *dev-credentials
-      MESAIL_ROUTER_SERVICES: identity,directory,channels,messaging,attachments,realtime,notify,search,mail-in,mail-out
+      MESAIL_ROUTER_SERVICES: identity,directory,channels,messaging,attachments,notify,search,mail-in,mail-out
+      MESAIL_ROUTER_PASSTHROUGH: /api/v1/realtime/socket=http://realtime:8116,/api/v1/realtime/stream=http://realtime:8116,/api/v1/realtime/=http://realtime:8106
       MESAIL_ROUTER_LAMBDA_ENDPOINT: http://floci:4566
       MESAIL_ROUTER_STATIC_BUCKET: mesail-static
       MESAIL_ROUTER_KEYCLOAK_URL: http://keycloak:8080
@@ -57,3 +70,7 @@ services:
 networks:
   backend:
     name: mesail_floci_backend
+
+volumes:
+  realtime-data:
+    name: mesail-realtime-data

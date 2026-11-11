@@ -40,7 +40,7 @@ remove_function() {
 
 remove_functions_in_floci() {
   local service
-  for service in $(mesail_services); do
+  for service in $(mesail_lambda_services); do
     remove_function "$(mesail_stack .functionPrefix)$service"
   done
 }

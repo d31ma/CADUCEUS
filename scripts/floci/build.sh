@@ -11,8 +11,14 @@ build_image() {
     --provenance=false --label org.mesail.stack=dev --target "$target" --tag "$tag" "$@" "$(mesail_root)"
 }
 
+build_container() {
+  local service="$1"
+  build_image "$service" "$(mesail_service_field "$service" image):$MESAIL_IMAGE_TAG"
+}
+
 build_service() {
   local service="$1"
+  if mesail_is_container "$service"; then build_container "$service"; return; fi
   build_image lambda "$(mesail_stack .imagePrefix)$service:$MESAIL_IMAGE_TAG" \
     --build-arg "APP=$service" --build-arg "FYLO=$(mesail_service_field "$service" fylo)"
 }
@@ -28,7 +34,7 @@ main() {
   mesail_step build-router build_image router "mesail-router:$MESAIL_IMAGE_TAG"
   mesail_step build-keycloak build_image keycloak-blackbox "$(mesail_stack .keycloak.image):$MESAIL_IMAGE_TAG"
   for service in $(chosen_services "$@"); do
-    mesail_step "build-$service" build_service "$service" || echo "warning: $service did not build; its function is not deployed"
+    mesail_step "build-$service" build_service "$service" || echo "warning: $service did not build; it is not deployed"
   done
   mesail_step prune-images docker image prune --force --filter label=org.mesail.stack=dev
 }

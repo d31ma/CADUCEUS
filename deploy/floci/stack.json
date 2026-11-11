@@ -56,9 +56,9 @@
     },
     {
       "name": "realtime",
-      "fylo": true,
-      "memory": 1024,
-      "timeout": 30
+      "kind": "container",
+      "image": "mesail-realtime",
+      "fylo": true
     },
     {
       "name": "notify",
@@ -109,7 +109,8 @@
     "MESAIL_ACCOUNT_CLIENT_SECRET",
     "MESAIL_KEYCLOAK_DIRECTORY_SECRET",
     "KC_BOOTSTRAP_ADMIN_CLIENT_SECRET",
-    "MESAIL_LINK_SECRET"
+    "MESAIL_LINK_SECRET",
+    "MESAIL_REALTIME_GATEWAY_SECRET"
   ],
   "testUsers": [
     {

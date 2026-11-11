@@ -2,6 +2,7 @@
 !apps/
 !deploy/
 !kit/
+!edge/realtime/
 **/.tachyon
 **/dist
 **/data

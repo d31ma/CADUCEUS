@@ -5,7 +5,7 @@ There are two ways to run the whole of Mesail on this Mac:
 | Script | What runs | Who uses it |
 | --- | --- | --- |
 | `scripts/native/run-all.sh` | Every Yon app with `ty start` on macOS, the Tac apps as static files, and the router, all native. No VM. | Every slice gate (SLICES.md "Gates"). |
-| `scripts/floci/run-all.sh` | The Lambda images in Floci (local AWS) in Colima, with Keycloak. | The integration and release gates (P1, C1). |
+| `scripts/floci/run-all.sh` | The Lambda images in Floci (local AWS), the realtime container, Keycloak and the router, in the dev host or Colima. | The integration and release gates (P1, C1). |
 
 ## Native (slice gates)
 
@@ -79,10 +79,14 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
 
 ## Floci (integration)
 
-Every Yon app runs as an AWS Lambda container image. On this Mac the images run
-in [Floci](https://hub.docker.com/r/floci/floci) 2.4.0, a local AWS emulator,
-next to Keycloak and the Mesail router. The same images later run in Floci on
-kestrel (through PaaS, like FitNest) and in AWS Lambda.
+Every Yon app except `realtime` runs as an AWS Lambda container image. On this
+Mac the images run in [Floci](https://hub.docker.com/r/floci/floci) 2.4.0, a
+local AWS emulator, next to Keycloak and the Mesail router. The same images
+later run in Floci on kestrel (through PaaS, like FitNest) and in AWS Lambda.
+
+`realtime` is a long-running container in v1 (ADR 0004, slice R1), not a
+Lambda: it holds open WebSockets and event streams. See "Realtime container"
+below.
 
 ## Quick start
 
@@ -103,13 +107,16 @@ scripts/floci/run-all.sh identity directory    # build and deploy only these fun
    `127.0.0.1:14566`, joining Floci's network `mesail_floci_backend`
    (`deploy/floci/compose.devhost.yaml`). With `MESAIL_VM=colima` it takes
    `--vm=colima`, starts Colima and its own Floci instead. `stack.sh` builds
-   the images, starts Keycloak and the router, deploys the functions, runs `go test -tags blackbox` in `tests/blackbox`, removes
+   the images, starts Keycloak, the realtime container and the router, waits
+   for `/api/v1/realtime/health` through the router, deploys the functions,
+   runs `go test -tags blackbox` in `tests/blackbox`, removes
    what it started, and takes the dev host down or stops Colima only if it
    started it. In the dev host it only stops its own compose containers
    (`compose stop`; the next run starts them again) and deletes, through the
    Lambda API, exactly the functions named in `stack.json`; it never removes
    any container, volume or network there. Only with `MESAIL_VM=colima`, where it started Floci itself,
-   does it also remove Floci's function containers, EFS volumes and network. An image that fails to build is a warning: that function is
+   does it also remove Floci's function containers, EFS volumes and network.
+   No script ever removes the realtime data volume `mesail-realtime-data`. An image that fails to build is a warning: that function is
    not deployed and its tests fail.
 
 Logs: `~/Library/Logs/local/CADUCEUS/<MESAIL_OWNER>/floci-<time>/`, one file
@@ -130,11 +137,12 @@ Settings (environment, or a `.env` file copied from `.env.example`):
 | Path | What it is |
 | --- | --- |
 | `Dockerfile` target `lambda` | One image per Yon app: `--build-arg APP=<service> --build-arg FYLO=<true/false>`. |
+| `Dockerfile` target `realtime` | The realtime container: the `realtime` Yon app and the `edge/realtime` gateway (helper stage `realtime-gateway-build`). |
 | `Dockerfile` target `router` | The public origin (`deploy/router`). |
-| `deploy/lambda/` | Image helpers: tool install with checksums, the Lambda profile, the start script. |
-| `deploy/floci/stack.json` | The Floci description: functions, memory, timeouts, FYLO owners, file system, bucket, realms and test users. |
+| `deploy/lambda/` | Image helpers: tool install with checksums, the Lambda profile, the Lambda start script and the realtime start script (`realtime-start.sh`). |
+| `deploy/floci/stack.json` | The Floci description: functions, memory, timeouts, FYLO owners, containers (`"kind": "container"`), file system, bucket, realms and test users. |
 | `deploy/floci/keycloak-users/` | The blackbox test users, added to the Keycloak image by the target `keycloak-blackbox`. |
-| `docker-compose.yml` | Floci, Keycloak and the router on the network `mesail_floci_backend`. |
+| `docker-compose.yml` | Floci, Keycloak, the realtime container and the router on the network `mesail_floci_backend`. |
 | `scripts/floci/*.sh` | `build`, `up`, `deploy`, `tokens`, `test`, `down`, `stack`, `run-all`. |
 
 ### Lambda image (`Dockerfile` target `lambda`)
@@ -170,9 +178,53 @@ Settings (environment, or a `.env` file copied from `.env.example`):
   (Floci). In AWS, Lambda already runs as a non-root user and the EFS access
   point (`PosixUser` 10001, root directory `/<service>`) owns the folder.
 
+### Realtime container (`Dockerfile` target `realtime`)
+
+- One image, `mesail-realtime:<tag>`, built from the same Ubuntu base and
+  tools as the Lambda images. `stack.json` marks `realtime` with
+  `"kind": "container"` and `"image": "mesail-realtime"`, so `build.sh`
+  builds the Dockerfile target named after the service, and `deploy.sh` and
+  `down.sh` make or delete no function for it.
+- One container runs two processes, started by
+  `deploy/lambda/realtime-start.sh` as the user `mesail` (uid 10001):
+  1. `ty start` of `apps/realtime` on `0.0.0.0:8106`
+     (`--allow-non-loopback`), bundled during the build at
+     `/opt/mesail/realtime`.
+  2. The gateway `edge/realtime` (built with `go build` in the helper stage
+     `realtime-gateway-build`): public port `0.0.0.0:8116`, management port
+     `127.0.0.1:8117`, backend `http://127.0.0.1:8106`. The start script
+     always sets the management port and the backend itself, so the
+     management port never leaves the container.
+- At start the script writes the app's `.env` (mode 600, never printed):
+  `YON_DATASOURCE_DRIVER=fylo`, `YON_DATASOURCE_URL=fylo:///data/realtime`,
+  `YON_REALTIME_GATEWAY_URL=http://127.0.0.1:8117`,
+  `YON_REALTIME_GATEWAY_SECRET` (copied from
+  `MESAIL_REALTIME_GATEWAY_SECRET`, so both sides always hold the same value)
+  and every other `YON_*` variable of the container (for example
+  `YON_SERVICE_CLIENT_SECRET`). It refuses to start without
+  `MESAIL_REALTIME_GATEWAY_SECRET`.
+- It passes `SIGTERM` to both processes, and stops the container when either
+  process ends. Compose runs it with `init: true` and a 40 s stop grace
+  period (the gateway closes every connection with 1001 first).
+- **Host name:** the router's proxy sends the target's host
+  (`realtime:8106`) as `Host`. Tachyon answers only localhost names, IP
+  addresses and the names in `server.hosts` (else 403 TY1366). The image
+  therefore has a profile `server/application-container.json`
+  (`YON_PROFILE=container`, image only) with `"hosts": ["realtime"]`. If the
+  container gets another network name, change that list.
+- `YON_EGRESS_ENFORCEMENT=proxy`, as in the Lambda images.
+- The FYLO root is on the named volume `mesail-realtime-data`, mounted at
+  `/data`. Our scripts never remove it, so data stays between runs (in the
+  dev host, Docker volumes live on the ATLAS disk).
+- No published ports: the router reaches it on the network `backend`.
+- Compose settings: `MESAIL_REALTIME_GATEWAY_SECRET` (generated for each
+  run), `MESAIL_REALTIME_ORIGINS` = `MESAIL_PUBLIC_URL`, and
+  `YON_SERVICE_CLIENT_SECRET` = `MESAIL_SERVICE_SECRET`.
+
 ### Functions (`deploy.sh`)
 
-- One function `mesail-<service>` per Yon app, `PackageType=Image`, arm64,
+- One function `mesail-<service>` per Yon app (not for a `"kind":
+  "container"` entry such as `realtime`), `PackageType=Image`, arm64,
   memory and timeout from `stack.json`.
 - FYLO owners get one EFS access point each on the file system
   `mesail-data`, mounted at `/mnt/data`, a VPC configuration (Floci needs
@@ -189,7 +241,7 @@ One HTTP origin, like FitNest's gateway:
 | --- | --- |
 | `/_router/ready` | The router itself. |
 | `/api/v1/realtime/gateway/...` (and any `MESAIL_ROUTER_BLOCKED` prefix) | Always 404: the realtime gateway's private routes are never public. |
-| `MESAIL_ROUTER_PASSTHROUGH` prefixes | Proxied as they are, with streaming and WebSocket upgrades. For the realtime gateway (`edge/realtime`, slice R1): `/api/v1/realtime/socket=http://127.0.0.1:8116,/api/v1/realtime/stream=http://127.0.0.1:8116`. Every other `/api/v1/realtime/*` goes to the realtime Yon app. The gateway's management port 8117 is never routed. |
+| `MESAIL_ROUTER_PASSTHROUGH` prefixes | Proxied as they are, with streaming and WebSocket upgrades. When several prefixes match, the longest one wins. They are checked before `/api/v1/<service>/`, so a service reached this way needs no entry in `MESAIL_ROUTER_SERVICES`. In `docker-compose.yml`: `/api/v1/realtime/socket` and `/api/v1/realtime/stream` go to the gateway (`http://realtime:8116`), and every other `/api/v1/realtime/` path goes to the realtime Yon app (`http://realtime:8106`). The gateway's management port 8117 is never routed. |
 | `/blobs/<domain>/<name>?<signature>` | `kit/blobs` `LocalHandler` (GET and PUT only) when `MESAIL_ROUTER_BLOBS_FOLDER`, `_BASE` and `_SECRET` (32+ characters) are set: the signed upload and download links of the local blob store. The values match the attachments app's `YON_ATTACHMENTS_FOLDER`, `_LINK_BASE` and `_LINK_SECRET`. Without them, 404. |
 | `/api/v1/<service>/...` | Lambda `mesail-<service>`, invoked with an HTTP API v2.0 event. The event's `host` header is `localhost` (Tachyon answers only local names) and the original host is in `x-forwarded-host`. Unknown service: 404. Body over 6 MiB: 413. A function error: 502. |
 | `/idp/...` | Keycloak (served under `/idp`), with the original `Host`. |
@@ -242,6 +294,7 @@ file named by `MESAIL_SECRETS_FILE`:
 | `MESAIL_KEYCLOAK_DIRECTORY_SECRET` | same name | `YON_DIRECTORY_ADMIN_SECRET` |
 | `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` | same name (first start: creates `mesail-directory`) | none |
 | `MESAIL_LINK_SECRET` | none | `YON_ATTACHMENTS_LINK_SECRET` (and the router's `/blobs`) |
+| `MESAIL_REALTIME_GATEWAY_SECRET` | none | The realtime container: the gateway, and the Yon app as `YON_REALTIME_GATEWAY_SECRET` |
 
 The map is `secrets` in `stack.json`. A service gets a name when its app
 folder mentions it (in `.env.example`, code or `application.json`). In Floci
@@ -273,7 +326,6 @@ exist too. Passwords are in `stack.json` (dev only).
 
 ## Not done yet
 
-- `realtime` as a long-running container (the v1 decision) behind the router.
 - Native app targets of the Tac apps (macOS, Windows, Linux, iOS, Android).
 - EventBridge schedules that call each service's `/outbox/relay` and
   `/jobs/<job>` routes in Lambda form.

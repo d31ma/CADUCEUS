@@ -69,6 +69,14 @@ mesail_services() {
   mesail_stack '.services[].name'
 }
 
+mesail_lambda_services() {
+  mesail_stack '.services[] | select((.kind // "lambda") == "lambda") | .name'
+}
+
+mesail_is_container() {
+  [ "$(mesail_service_field "$1" 'kind // "lambda"')" = container ]
+}
+
 mesail_service_field() {
   jq -r --arg name "$1" ".services[] | select(.name == \$name) | .$2" "$(mesail_stack_file)"
 }

@@ -1,8 +1,8 @@
 # Mesail responsive and accessibility test
 
 A Go test that drives headless Chromium (through
-[chromedp](https://github.com/chromedp/chromedp)) against the built Mesail
-web app and checks the gate of ADR 0004 section 8 ("Responsive and
+[chromedp](https://github.com/chromedp/chromedp)) against a built Mesail
+app (the web app `apps/web`, or the admin app `apps/web-admin`) and checks the gate of ADR 0004 section 8 ("Responsive and
 accessible, as a gate"), SLICES rule 13 and SPEC AC-UI-1.
 
 It is behind the `responsive` build tag, so `go test ./...` and
@@ -13,6 +13,9 @@ It is behind the `responsive` build tag, so `go test ./...` and
 1. Build the app:
 
        ty bundle apps/web --target web
+
+   For the admin app, build `apps/web-admin` instead and set
+   `MESAIL_APP=web-admin` in step 2.
 
 2. Run the test:
 
@@ -31,7 +34,8 @@ Settings (environment variables):
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `MESAIL_DIST` | `../../apps/web/dist/web` | The built `dist/web` folder to serve. |
+| `MESAIL_APP` | `web` | The app under test: `web` or `web-admin` (see "Apps" below). |
+| `MESAIL_DIST` | `../../apps/web/dist/web` (`../../apps/web-admin/dist/web` with `MESAIL_APP=web-admin`) | The built `dist/web` folder to serve. |
 | `MESAIL_CHROME` | newest Playwright Chromium | The Chrome or Chromium binary. |
 | `PLAYWRIGHT_BROWSERS_PATH` | `~/Library/Caches/ms-playwright` | Where to look for `chromium-*`, then `chromium_headless_shell-*`. |
 
@@ -41,6 +45,29 @@ serves the copy, so a rebuild during the run does not change what it tests.
 The test skips (with the reason) when no Chromium is found, and fails when
 `dist/web/index.html` is missing.
 
+## Apps
+
+`MESAIL_APP` picks one app profile (`AppProfile.go`) when the test starts.
+A profile holds everything that differs between the apps: the default
+`MESAIL_DIST`, the session storage key and the value stored in it, the
+hosted domains and roles of the fake identity API, and the fixed answers for
+the app's data calls. To test another app, add one profile to
+`AppProfiles()`.
+
+| | `web` (default) | `web-admin` |
+| --- | --- | --- |
+| Session storage key | `tac:service:session:/:sessionKeys` | `tac:service:adminSession:/:sessionKey` |
+| Stored value | `{"example.com":"key-example.com","example.org":"key-example.org"}` (a map) | `"key-example.com"` (one string; Tac stores every field as JSON) |
+| Hosted domains | `example.com`, `example.org` | `example.com`, `example.org`, `mesail-operators` |
+| Roles | `["mesail-member"]` | `example.com`: `["mesail-admin","mesail-member"]`; `mesail-operators`: `["mesail-operator"]`; `example.org`: `["mesail-member"]` (no admin rights) |
+| Fixed data answers | none | `GET /api/v1/directory/domains`: `200 []`; `GET /api/v1/directory/members`: `200 {"items":[]}`; `GET /api/v1/channels`: `200 []` |
+
+Both apps use the same shell-ready selector (`nav[aria-label="Domains"]`),
+the same sign-in form (fields `email`, `password`, `code`; the button
+"Sign in") and the same form sign-in (`ana@example.com` / `right`). In the
+admin app, `olu@mesail-operators` / `right` signs in as an operator: the
+part after `@` is the domain (the operator realm).
+
 ## What it serves
 
 The test serves `dist/web` itself on a random `127.0.0.1` port, with the
@@ -49,18 +76,21 @@ same Content-Security-Policy that TACHYON 26.46.02's server sends (`'self'`,
 origin has a fake identity API (`docs/mesail/CONTRACTS.md`, "identity"):
 
 - `POST /api/v1/identity/session`: password `right` gives `200 Session`
-  for a hosted domain (`example.com`, `example.org`), `busy` gives `429`,
-  anything else `401`.
+  for a hosted domain of the app profile (the part of `address` after `@`),
+  with that profile's roles; `busy` gives `429`, anything else `401`.
 - `POST /api/v1/identity/session/refresh`: `sessionKey` `key-<domain>` gives
   `200 Session` for that domain, anything else `401`.
 - `DELETE /api/v1/identity/session`: `204`.
+- The app profile's fixed data answers (admin app only; see "Apps"). Every
+  other admin data call (`/api/v1/directory/*`, `/api/v1/channels/*`, any
+  `POST`, `PATCH` or `DELETE`) answers `404` for now.
 - Any other `/api/` call answers `404`, and the test logs it.
 
-The signed-in shell is reached without typing: the test stores
-`{"example.com":"key-example.com","example.org":"key-example.org"}` in the
-session storage key `tac:service:session:/:sessionKeys` (where Tac keeps the
-`// @SessionState` field `SessionKeys`) before the app loads, and the app
-restores both sessions through `/refresh`. If that restore does not reach
+The signed-in shell is reached without typing: the test stores the profile's
+value in its session storage key (where Tac keeps the `// @SessionState`
+field: `SessionKeys` of the web app's `session` service, `SessionKey` of the
+admin app's `adminSession` service) before the app loads, and the app
+restores the sessions through `/refresh`. If that restore does not reach
 the shell within 20 s, `TestSessionRestore` fails. Its message lists every
 console and log entry and every API call. The test then sends one
 `visibilitychange` event. If the shell appears after that event, the restored

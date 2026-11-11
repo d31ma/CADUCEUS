@@ -36,7 +36,6 @@ var everyWidth = []viewport{
 var bothStates = []AppState{SignInState, SignedInState}
 
 const (
-	defaultDist      = "../../apps/web/dist/web"
 	safeAreaTop      = 47
 	safeAreaBottom   = 34
 	safeAreaTopRule  = "env(safe-area-inset-top"
@@ -59,7 +58,11 @@ func prepareSuite() suite {
 	if chromePath == "" {
 		return suite{skipReason: missing}
 	}
-	site, err := StartSite(distFolder())
+	profile, err := SelectAppProfile(os.Getenv("MESAIL_APP"))
+	if err != nil {
+		return suite{setupError: err}
+	}
+	site, err := StartSite(distFolder(profile), profile)
 	if err != nil {
 		return suite{setupError: err}
 	}
@@ -71,11 +74,11 @@ func prepareSuite() suite {
 	return suite{site: site, browser: browser}
 }
 
-func distFolder() string {
+func distFolder(profile AppProfile) string {
 	if configured := os.Getenv("MESAIL_DIST"); configured != "" {
 		return configured
 	}
-	return defaultDist
+	return profile.DefaultDist
 }
 
 func (s suite) close() {
@@ -184,7 +187,7 @@ func TestSessionRestore(t *testing.T) {
 	t.Cleanup(visit.Close)
 	shared.restoreFailed = visit.RestoreProblem != ""
 	if visit.RestoreProblem != "" {
-		t.Errorf("restoring the saved sessions from sessionStorage %s did not reach the shell; the other signed-in checks sign in through the form instead: %s", sessionKeysStorageKey, visit.RestoreProblem)
+		t.Errorf("restoring the saved sessions from sessionStorage %s did not reach the shell; the other signed-in checks sign in through the form instead: %s", shared.site.Profile.SessionStorageKey, visit.RestoreProblem)
 	}
 }
 

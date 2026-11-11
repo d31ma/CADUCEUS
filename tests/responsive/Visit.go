@@ -49,7 +49,6 @@ type Visit struct {
 }
 
 const (
-	sessionKeysStorageKey = "tac:service:session:/:sessionKeys"
 	signedInReadySelector = `nav[aria-label="Domains"]`
 	signInReadySelector   = `input[type="password"]`
 	visitTimeout          = 120 * time.Second
@@ -132,7 +131,7 @@ func (visit *Visit) storeSessionKeysWhenSignedIn(site *Site) error {
 	if err := visit.step("opening the blank page", chromedp.Navigate(site.Url(blankPagePath))); err != nil {
 		return err
 	}
-	return visit.step("storing the session keys", visit.storeSessionKeys(site.Origin()))
+	return visit.step("storing the session keys", visit.storeSessionKeys(site))
 }
 
 func (visit *Visit) step(name string, action chromedp.Action[chromedp.Void]) error {
@@ -152,7 +151,7 @@ type formStep struct {
 func (visit *Visit) signInThroughForm(site *Site) error {
 	steps := []formStep{
 		{"opening the blank page", chromedp.Navigate(site.Url(blankPagePath))},
-		{"forgetting the session keys", visit.forgetSessionKeys(site.Origin())},
+		{"forgetting the session keys", visit.forgetSessionKeys(site)},
 		{"opening the sign-in form", chromedp.Navigate(site.Url("/"))},
 		{"typing the email into " + emailFieldSelector, chromedp.SendKeys(chromedp.CSS(emailFieldSelector), "ana@example.com")},
 		{"typing the password into " + passwordFieldSelector, chromedp.SendKeys(chromedp.CSS(passwordFieldSelector), rightPassword)},
@@ -227,23 +226,22 @@ func (visit *Visit) emulateViewport(ctx context.Context, target *chromedp.Target
 	return err
 }
 
-func (visit *Visit) storeSessionKeys(origin string) chromedp.Action[chromedp.Void] {
+func (visit *Visit) storeSessionKeys(site *Site) chromedp.Action[chromedp.Void] {
 	return chromedp.Func(func(ctx context.Context, target *chromedp.Target) error {
-		keys, _ := json.Marshal(map[string]string{"example.com": "key-example.com", "example.org": "key-example.org"})
 		_, err := cdp.Call(ctx, target, domstorage.SetDOMStorageItem, domstorage.SetDOMStorageItemParams{
-			StorageID: &domstorage.StorageID{SecurityOrigin: origin, IsLocalStorage: false},
-			Key:       sessionKeysStorageKey,
-			Value:     string(keys),
+			StorageID: &domstorage.StorageID{SecurityOrigin: site.Origin(), IsLocalStorage: false},
+			Key:       site.Profile.SessionStorageKey,
+			Value:     site.Profile.StoredSessionText(),
 		})
 		return err
 	})
 }
 
-func (visit *Visit) forgetSessionKeys(origin string) chromedp.Action[chromedp.Void] {
+func (visit *Visit) forgetSessionKeys(site *Site) chromedp.Action[chromedp.Void] {
 	return chromedp.Func(func(ctx context.Context, target *chromedp.Target) error {
 		_, err := cdp.Call(ctx, target, domstorage.RemoveDOMStorageItem, domstorage.RemoveDOMStorageItemParams{
-			StorageID: &domstorage.StorageID{SecurityOrigin: origin, IsLocalStorage: false},
-			Key:       sessionKeysStorageKey,
+			StorageID: &domstorage.StorageID{SecurityOrigin: site.Origin(), IsLocalStorage: false},
+			Key:       site.Profile.SessionStorageKey,
 		})
 		return err
 	})

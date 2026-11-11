@@ -5,12 +5,11 @@ package responsive
 import (
 	"encoding/json"
 	"net/http"
-	"slices"
 	"strings"
 )
 
 type IdentityFake struct {
-	HostedDomains []string
+	Profile AppProfile
 }
 
 type fakeMe struct {
@@ -51,8 +50,8 @@ const (
 	sessionKeyPrefix    = "key-"
 )
 
-func NewIdentityFake() *IdentityFake {
-	return &IdentityFake{HostedDomains: []string{"example.com", "example.org"}}
+func NewIdentityFake(profile AppProfile) *IdentityFake {
+	return &IdentityFake{Profile: profile}
 }
 
 func (fake *IdentityFake) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -94,7 +93,7 @@ func (fake *IdentityFake) refresh(writer http.ResponseWriter, request *http.Requ
 }
 
 func (fake *IdentityFake) hosts(domain string) bool {
-	return slices.Contains(fake.HostedDomains, domain)
+	return fake.Profile.Hosts(domain)
 }
 
 func (fake *IdentityFake) sessionFor(domain string) fakeSession {
@@ -104,7 +103,7 @@ func (fake *IdentityFake) sessionFor(domain string) fakeSession {
 			DomainId:       domain,
 			DisplayName:    "Ana Lima",
 			PrimaryAddress: "ana@" + domain,
-			Roles:          []string{"mesail-member"},
+			Roles:          fake.Profile.RolesFor(domain),
 		},
 		AccessToken: "token-" + domain,
 		ExpiresIn:   60,

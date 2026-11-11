@@ -22,6 +22,7 @@ type Site struct {
 	DistFolder        string
 	SourceFolder      string
 	ContentPolicy     string
+	Profile           AppProfile
 	server            *httptest.Server
 	unknownApiCalls   []string
 	apiCalls          []string
@@ -46,9 +47,9 @@ const (
 	blankPageContent = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>blank</title></head><body></body></html>"
 )
 
-func StartSite(distFolder string) (*Site, error) {
+func StartSite(distFolder string, profile AppProfile) (*Site, error) {
 	if _, err := os.Stat(filepath.Join(distFolder, indexFileName)); err != nil {
-		return nil, fmt.Errorf("the built app is missing (%w); build it with `ty bundle apps/web --target web` or set MESAIL_DIST", err)
+		return nil, fmt.Errorf("the built %s app is missing (%w); build it with `%s` or set MESAIL_DIST", profile.Name, err, profile.BuildCommand())
 	}
 	copied, err := copyBuild(distFolder)
 	if err != nil {
@@ -58,7 +59,7 @@ func StartSite(distFolder string) (*Site, error) {
 	if err != nil {
 		return nil, err
 	}
-	site := &Site{DistFolder: copied, SourceFolder: distFolder, ContentPolicy: ServerContentPolicy(string(indexHtml))}
+	site := &Site{DistFolder: copied, SourceFolder: distFolder, ContentPolicy: ServerContentPolicy(string(indexHtml)), Profile: profile}
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		return nil, err
@@ -144,8 +145,8 @@ func copyEntry(sourcePath string, targetPath string, entry fs.DirEntry) error {
 
 func (site *Site) handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.Handle(identityApiPath, NewIdentityFake())
-	mux.HandleFunc(apiPath, site.unknownApi)
+	mux.Handle(identityApiPath, NewIdentityFake(site.Profile))
+	mux.HandleFunc(apiPath, site.otherApi)
 	mux.HandleFunc(blankPagePath, site.blankPage)
 	mux.HandleFunc("/", site.staticFile)
 	return site.withSecurityHeaders(mux)
@@ -177,6 +178,15 @@ func (site *Site) ApiCalls() []string {
 	site.unknownApiCallsMu.Lock()
 	defer site.unknownApiCallsMu.Unlock()
 	return append([]string{}, site.apiCalls...)
+}
+
+func (site *Site) otherApi(writer http.ResponseWriter, request *http.Request) {
+	answer, found := site.Profile.DataAnswer(request)
+	if !found {
+		site.unknownApi(writer, request)
+		return
+	}
+	writeJson(writer, http.StatusOK, answer)
 }
 
 func (site *Site) unknownApi(writer http.ResponseWriter, request *http.Request) {

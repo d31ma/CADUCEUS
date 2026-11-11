@@ -33,8 +33,13 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
 - It prints `export MESAIL_BASE_URL=http://127.0.0.1:<port>` (also in
   `$TMPDIR/mesail-native/<owner>/env`).
 - An app that fails to start is a warning: its tests fail, the others run.
-- Services reach each other through the router: in the copied `.env`, every
-  `http://127.0.0.1:81xx` address becomes the router's address.
+- Services reach each other through the router: in the copied `.env` and
+  `server/application.json`, every `http://127.0.0.1:81xx` address becomes
+  the router's address.
+- An app that declares its own `datasource` in `application.json` (against
+  the rule; `search` does today) gets no `.env` datasource; in the copy its
+  `fylo:///mnt/data/<service>` becomes this run's root. The Lambda image
+  likewise adds no `.env` datasource to such an app.
 - When `attachments` runs, the run makes a blob folder in the FYLO test image
   and a random link secret, writes `YON_ATTACHMENTS_ADAPTER=local`,
   `_FOLDER`, `_LINK_BASE` (`<router>/blobs`) and `_LINK_SECRET` into its

@@ -6,8 +6,13 @@ data_root() {
   printf '/mnt/data/%s' "$2"
 }
 
+declares_datasource() {
+  grep -q '"datasource"' "$1/server/application.json"
+}
+
 datasource_env() {
   if [ "$1" != true ]; then return 0; fi
+  if declares_datasource "$app_root"; then return 0; fi
   printf 'YON_DATASOURCE_DRIVER=fylo\nYON_DATASOURCE_URL=fylo:///mnt/data/%s\n' "$2"
 }
 

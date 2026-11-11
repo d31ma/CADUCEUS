@@ -84,11 +84,27 @@ copy_app() {
   rsync -a --delete --exclude .tachyon --exclude dist --exclude .env "$(mesail_root)/apps/$app/" "$(run_folder)/apps/$app/"
 }
 
+app_root_of() {
+  mkdir -p "$(data_folder)/$1"
+  cd "$(data_folder)/$1" && pwd -P
+}
+
+declares_datasource() {
+  grep -q '"datasource"' "$(run_folder)/apps/$1/server/application.json"
+}
+
+point_copy_at_this_run() {
+  local app="$1" file
+  file="$(run_folder)/apps/$app/server/application.json"
+  sed -E -i '' -e "s#fylo:///mnt/data/$app#fylo://$(app_root_of "$app")#g" \
+    -e "s#http://127\.0\.0\.1:81[0-9][0-9]#$(router_base)#g" "$file"
+}
+
 add_datasource() {
   local app="$1"
-  if ! owns_fylo "$app"; then return 0; fi
-  mkdir -p "$(data_folder)/$app"
-  printf 'YON_DATASOURCE_DRIVER=fylo\nYON_DATASOURCE_URL=fylo://%s\n' "$(cd "$(data_folder)/$app" && pwd -P)" >> "$(run_folder)/apps/$app/.env"
+  point_copy_at_this_run "$app"
+  if ! owns_fylo "$app" || declares_datasource "$app"; then return 0; fi
+  printf 'YON_DATASOURCE_DRIVER=fylo\nYON_DATASOURCE_URL=fylo://%s\n' "$(app_root_of "$app")" >> "$(run_folder)/apps/$app/.env"
 }
 
 write_profile() {

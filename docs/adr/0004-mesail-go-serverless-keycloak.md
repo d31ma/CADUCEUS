@@ -149,8 +149,15 @@ kit/            shared plain Go packages (source of truth)
   built the handlers. The same image runs in Floci on this Mac, in Floci on
   kestrel, and in AWS Lambda.
 - **FYLO roots on EFS.** Each FYLO-owning service has its own EFS access
-  point mounted at `/mnt/data`, and its root is `/mnt/data/<service>/`. No
-  root is shared between services.
+  point mounted at `/mnt/data`, and its root is `/mnt/data/<service>/`, set
+  in the service's own configuration (Floci ignores an access point's root
+  folder, so the path must not rely on it). No root is shared between
+  services. The `mesail-devhost` session proved on 2026-11-10 that a Floci
+  Lambda writes and reads FYLO data through EFS on the ATLAS ext4 disk and
+  keeps it across a restart.
+- **Base image.** The `fylo` 26.45.07 Linux binary needs glibc 2.39, so
+  every FYLO-owning image uses a glibc 2.39 base such as Ubuntu 24.04, not
+  Amazon Linux 2023.
 - **One writer per root.** Every FYLO-owning function has reserved
   concurrency 1, so at most one warm instance (one `fylo exec --loop`)
   writes its root; FYLO's owner lock refuses a second writer. This trades

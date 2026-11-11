@@ -82,18 +82,24 @@ notes):
   services or between parallel function instances.
 - **Collections are split by domain.** A FYLO collection index stops taking
   writes at about 240 MiB, and domains must never mix. So every collection
-  name ends with the domain:
-  - small collections: `<collection>.<domainKey>`, for example
-    `channels.example_com`;
-  - large collections, also split by month: `<collection>.<domainKey>.<YYYYMM>`.
-    These are `messages`, `deliveries`, `search-index` and `notifications`,
-    for example `messages.example_com.202611`.
-- **The domain key.** Domain names contain dots, and the dot separates the
-  parts of a collection name. So `domainKey` is the `domainId` with every `.`
-  replaced by `_` (`example.com` -> `example_com`). A domain name cannot
-  contain `_`, so the key maps back to one domain. The slice that builds
-  this must check the key against FYLO's rules for collection names
-  (allowed characters and length) and add a test with a long domain name.
+  name ends with the domain key:
+  - small collections: `<collection>-<domainKey>`, for example
+    `channels-a379a6f6eeafb9a5` for `example.com`;
+  - large collections, also split by month:
+    `<collection>-<domainKey>-<YYYYMM>`. These are `messages`, `deliveries`,
+    `search-index` and `notifications`, for example
+    `messages-a379a6f6eeafb9a5-202611`.
+- **The domain key.** FYLO 26.45.07 accepts only lowercase letters, digits
+  and `-` in a collection name, and the name must not start with `-`
+  (measured on 2026-11-10: names with `.`, `_` or capital letters fail with
+  `ENATIVE_COLLECTION`). Replacing dots with `-` would be ambiguous
+  (`a-b.com` and `a.b-com`), so the domain key is the first 16 hex
+  characters of the SHA-256 of the lowercase domain name. `kit/collections`
+  (`CollectionName{}.ForDomain`, `.ForDomainMonth`, `.DomainKey`) is the
+  only code that builds these names; never build one by hand. The key must
+  never change (a test pins `example.com` -> `a379a6f6eeafb9a5`). Every
+  document also stores `domainId` in clear text, and a store checks it on
+  read, so a key collision can never show one domain's data to another.
 - **Install-wide collections.** Only `directory/domains` (the list of hosted
   domains) is not split by domain.
 - **Path to scale.** Because each domain already has its own collections, a
@@ -136,7 +142,7 @@ The routing table for every hosted address.
 | `targetId` | string | member id or channel id, always in the same domain |
 
 To look up an address, the service takes the domain part of the address
-as the `domainId` and reads `addresses.<domainKey>`. A domain part that is
+as the `domainId` and reads `addresses-<domainKey>`. A domain part that is
 not in `domains` means the address is not hosted.
 
 ### Recipient kinds (`kit/recipients`)
@@ -232,7 +238,7 @@ queued|sending|sent|deferred|bounced|expired, idempotencyKey}`.
 
 ### Suppression (`mail-out/suppressions`)
 `{domainId, address, reason, createdAt}`. Document id is
-`sha256(address)` inside `suppressions.<domainKey>`, so lists never mix
+`sha256(address)` inside `suppressions-<domainKey>`, so lists never mix
 domains.
 
 ### InboundRaw (`mail-in/inbound-raw`)

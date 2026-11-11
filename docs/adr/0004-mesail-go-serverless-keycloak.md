@@ -354,14 +354,31 @@ already combines DuVay and Tailwind (`website/client/manifest.json`,
   no `forced-colors` support, so Mesail's responsive test covers RTL and
   Windows high-contrast itself.
 - **Tailwind is the layout layer.** Grid, flex, gap, spacing, sizing and
-  breakpoints are Tailwind classes in `tac.html`. Tailwind 4.3.3's
+  breakpoints are Tailwind classes in `tac.html`. Tailwind 4.3.5's
   standalone CLI (pinned version and SHA-256; no Node packages) runs without
   Preflight, and a small Go tool, `tools/styles`, writes the generated rules
   for each component into a marked region of that component's `tac.css`
   (TACHYON's website pattern), with the shared `@property` blocks in the
   foundation stylesheet. `tools/styles --check` fails when a generated
   region is stale; it is a gate. Tailwind is not used for colors or type;
-  those come from DuVay tokens.
+  those come from DuVay tokens. The breakpoints are DuVay's, set in
+  Tailwind's `@theme`: `sm` 600, `md` 960, `lg` 1280, `xl` 1920 and `2xl`
+  2560 px; panes also use container queries. The foundation stylesheet
+  declares `@layer duvay, theme, base, components, utilities` and imports
+  DuVay's CSS into `layer(duvay)`.
+- **Safe areas.** Tac pages get no `viewport-fit=cover` today, so the shell
+  uses TACHYON's `--tac-titlebar-height`, `--tac-titlebar-leading-inset`
+  and `--tac-titlebar-trailing-inset` (with `env(safe-area-inset-*)` as the
+  web fallback) and marks the title area with `data-tac-drag-region`.
+- **One DuVay bundle only.** Some DuVay modules register their element
+  without checking whether it exists, so the full bundle is never loaded
+  beside the subset. DuVay's icon set is registered (as the `ms` set)
+  before any component renders. The page has no platform marker, so the
+  shell sets `w-os`, `w-theme` and `w-density` itself.
+- **Mockups and app share one component list.** `mesail-ux` builds its
+  HTML mockups in `docs/mesail/ux/mockups/build/`; the app's bundle is
+  built only by F1's `scripts/vendor/duvay.sh` from
+  `scripts/vendor/duvay-components.txt`, which takes the mockups' list.
 - **Events.** TACHYON 26.46.02 allows only `a-z`, `0-9` and `:` in event
   names (TY1306), so Mesail uses DuVay events such as `on:change`,
   `on:input`, `on:close` and `on:toggle`, and passes values, not events, to

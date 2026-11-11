@@ -1,4 +1,4 @@
-<section class="composer flex min-w-0 flex-col" aria-label="Write a message" :data-email="composer.emailMode">
+<section class="composer flex min-w-0 flex-col" aria-label="Write a message" :data-email="composer.emailMode" :data-new="composer.newConversation">
     <p class="composer-mode m-0 flex items-start gap-2 px-3 py-2" :hidden="!composer.emailMode">
       <svg class="composer-icon mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z" /><path d="M4 7l8 6 8-6" /></svg>
       <span class="min-w-0">{composer.modeText || 'Reply as email.'}</span>
@@ -13,7 +13,7 @@
     <form method="dialog" class="contents" aria-label="Message" on:submit="composer.sendWith($event.target.elements.body.value)">
     <div class="composer-editor px-3 py-2">
       <label class="sr-only" for="composer-input">{composer.emailMode ? 'Email body' : 'Message'}</label>
-      <textarea id="composer-input" class="composer-textarea block w-full" name="body" rows="3" :placeholder="composer.emailMode ? 'Write your email' : 'Write a message'" :value="composer.body" on:input="composer.body = $event.target.value"></textarea>
+      <textarea id="composer-input" class="composer-textarea block w-full" name="body" rows="1" :placeholder="composer.emailMode ? 'Write your email' : 'Write a message'" :value="composer.body" on:input="composer.body = $event.target.value"></textarea>
     </div>
 
     <composer-attachments />
@@ -27,7 +27,8 @@
           <span class="min-w-0">{composer.problemText}</span>
         </p>
       </logic>
-      <p class="composer-keys m-0 mr-auto min-w-0">Enter in an address field adds it · Enter in the message adds a line</p>
+      <p class="composer-keys m-0 mr-auto min-w-0" :hidden="!composer.newConversation">Enter in an address field adds it · Enter in the message adds a line</p>
+      <p class="composer-keys m-0 mr-auto min-w-0" :hidden="composer.newConversation">Enter adds a line · press Send to send</p>
       <w-btn class="composer-send ml-auto" variant="flat">
         <svg class="composer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 3 10 14" /><path d="M21 3l-6.5 18-4.5-7-7-4.5z" /></svg>
         <span>{composer.sendLabel}</span>

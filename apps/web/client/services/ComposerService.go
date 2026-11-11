@@ -44,6 +44,7 @@ func (composer *ComposerService) Start() {
 
 // @OnEvent
 func (composer *ComposerService) Open(target SendTarget) {
+	composer.clearWhenOtherTarget(target)
 	composer.Target = target
 	composer.NewConversation = target.ConversationId == ""
 	composer.Subject = composer.replySubject(target.Subject)
@@ -312,6 +313,13 @@ func (composer *ComposerService) showChanges() {
 	composer.Changes = composer.recipients.Refresh()
 	composer.ChangedOpen = true
 	composer.Announcement = "Not sent. Some recipients changed."
+}
+
+func (composer *ComposerService) clearWhenOtherTarget(target SendTarget) {
+	if target.ConversationId == composer.Target.ConversationId && target.ThreadRootId == composer.Target.ThreadRootId {
+		return
+	}
+	composer.clear()
 }
 
 func (composer *ComposerService) clear() {

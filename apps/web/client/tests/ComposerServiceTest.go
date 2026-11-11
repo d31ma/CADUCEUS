@@ -244,3 +244,20 @@ func (test *ComposerServiceTest) TestUploadsShowInTheComposer() {
 func (test *ComposerServiceTest) TestTheSenderAddressIsShown() {
 	Assert.Equals("ana@example.com", test.composer().SenderAddress)
 }
+
+func (test *ComposerServiceTest) TestOpenAnotherConversationStartsAFreshDraft() {
+	composer := test.with("bo@example.com carol@partner.org")
+	composer.Body = "draft"
+	composer.Open(SendTarget{ConversationId: "conv-general", Title: "#general"})
+	Assert.Equals(0, len(composer.recipients.Recipients))
+	Assert.Equals("", composer.Body)
+	Assert.IsTrue(!composer.EmailMode)
+}
+
+func (test *ComposerServiceTest) TestOpenTheSameConversationKeepsTheDraft() {
+	composer := test.composer()
+	composer.Open(SendTarget{ConversationId: "conv-general"})
+	composer.Body = "half written"
+	composer.Open(SendTarget{ConversationId: "conv-general"})
+	Assert.Equals("half written", composer.Body)
+}

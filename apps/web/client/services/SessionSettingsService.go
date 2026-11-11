@@ -1,5 +1,6 @@
 // @Service
 type SessionSettingsService struct {
+	TwoStep         string
 	Step            string
 	Problem         string
 	Message         string
@@ -16,6 +17,14 @@ type SessionSettingsService struct {
 	identity *IdentityClient
 	// @Needs
 	problems *SessionProblemService
+}
+
+// @OnEvent
+// @InBackground
+func (settings *SessionSettingsService) LoadTwoStep(restored SessionRestored) {
+	status, failure := settings.readTwoStep()
+	status, failure = settings.retryAfterRenew(status, failure)
+	settings.TwoStep = settings.twoStepState(status.Enabled, failure)
 }
 
 func (settings *SessionSettingsService) StartPasswordChange() {
@@ -53,7 +62,9 @@ func (settings *SessionSettingsService) StartTwoStepRemoval() {
 func (settings *SessionSettingsService) RemoveTwoStep() {
 	request := SessionTwoStepRemove{CurrentPassword: settings.CurrentPassword, OneTimeCode: settings.OneTimeCode}
 	_, failure := settings.identity.RemoveTwoStep(settings.bearer(), request)
-	settings.finish(settings.problems.OfAccountChange(failure, settings.wrongPassword()), "twoStepOff")
+	problem := settings.problems.OfAccountChange(failure, settings.wrongPassword())
+	settings.TwoStep = settings.stateAfter(problem, settings.off())
+	settings.finish(problem, "twoStepOff")
 }
 
 func (settings *SessionSettingsService) Cancel() {
@@ -76,6 +87,7 @@ func (settings *SessionSettingsService) finish(problem string, message string) {
 
 func (settings *SessionSettingsService) finishSetup(problem string) {
 	settings.Problem = problem
+	settings.TwoStep = settings.stateAfter(problem, settings.on())
 	settings.endWhenClear("twoStepOn")
 }
 
@@ -116,4 +128,46 @@ func (settings *SessionSettingsService) bearer() string {
 
 func (settings *SessionSettingsService) wrongPassword() string {
 	return "wrongPassword"
+}
+
+func (settings *SessionSettingsService) readTwoStep() (SessionTwoStepStatus, error) {
+	return BehaviorsAnswer[SessionTwoStepStatus](settings.identity.TwoStepStatus(settings.bearer()))
+}
+
+func (settings *SessionSettingsService) retryAfterRenew(status SessionTwoStepStatus, failure error) (SessionTwoStepStatus, error) {
+	if BehaviorErrorStatus(failure) != settings.unauthorized() {
+		return status, failure
+	}
+	settings.session.Renew()
+	return settings.readTwoStep()
+}
+
+func (settings *SessionSettingsService) twoStepState(enabled bool, failure error) string {
+	if failure != nil {
+		return "unknown"
+	}
+	return map[bool]string{true: settings.on(), false: settings.off()}[enabled]
+}
+
+func (settings *SessionSettingsService) unauthorized() int {
+	return 401
+}
+
+func (settings *SessionSettingsService) stateAfter(problem string, state string) string {
+	return settings.pick(problem == "", state, settings.TwoStep)
+}
+
+func (settings *SessionSettingsService) pick(chosen bool, first string, otherwise string) string {
+	if chosen {
+		return first
+	}
+	return otherwise
+}
+
+func (settings *SessionSettingsService) on() string {
+	return "on"
+}
+
+func (settings *SessionSettingsService) off() string {
+	return "off"
 }

@@ -1,0 +1,98 @@
+<section class="mx-auto flex w-full max-w-[50rem] flex-col gap-6 px-4 py-6 tablet:px-8" aria-label="Account settings">
+  <switch :value="sessionSettings.message">
+    <case :when="'passwordChanged'">
+      <w-alert type="success" title="Password changed">Your other sessions ended. You stay signed in here.</w-alert>
+    </case>
+    <case :when="'twoStepOn'">
+      <w-alert type="success" title="2-step sign-in is on">From now on, sign-in asks for a code from your app.</w-alert>
+    </case>
+    <case :when="'twoStepOff'">
+      <w-alert type="success" title="2-step sign-in is off">Sign-in asks only for your password.</w-alert>
+    </case>
+  </switch>
+
+  <section class="settings-card flex flex-col gap-4 p-4 tablet:p-6" aria-labelledby="account-title">
+    <div class="flex flex-col gap-1">
+      <h2 id="account-title" class="settings-heading">Account and sign-in</h2>
+      <p class="settings-help">Mesail never stores your password. Your domain's sign-in system checks it.</p>
+    </div>
+
+    <switch :value="sessionSettings.step">
+      <case :when="'password'">
+        <div class="flex flex-col gap-4" role="group" aria-labelledby="password-title">
+          <h3 id="password-title" class="settings-subheading">Change password</h3>
+          <w-text-field type="password" label="Current password" autocomplete="current-password" :value="sessionSettings.currentPassword" on:input="sessionSettings.currentPassword = $event.target.value"></w-text-field>
+          <w-text-field type="password" label="New password" autocomplete="new-password" hint="Your domain's password rules apply." :value="sessionSettings.newPassword" on:input="sessionSettings.newPassword = $event.target.value"></w-text-field>
+          <w-text-field type="text" inputmode="numeric" label="2-step code" autocomplete="one-time-code" hint="Only if your account uses one." :value="sessionSettings.oneTimeCode" on:input="sessionSettings.oneTimeCode = $event.target.value"></w-text-field>
+          <app-settingsproblem />
+          <div class="flex flex-col-reverse gap-3 tablet:flex-row tablet:justify-end">
+            <w-btn variant="text" on:click="sessionSettings.cancel()">Cancel</w-btn>
+            <w-btn variant="flat" color="primary" on:click="sessionSettings.changePassword()">Change password</w-btn>
+          </div>
+        </div>
+      </case>
+      <case :when="'twoStepPassword'">
+        <div class="flex flex-col gap-4" role="group" aria-labelledby="two-step-title">
+          <h3 id="two-step-title" class="settings-subheading">Turn on 2-step sign-in</h3>
+          <p class="settings-help">First, type your current password.</p>
+          <w-text-field type="password" label="Current password" autocomplete="current-password" :value="sessionSettings.currentPassword" on:input="sessionSettings.currentPassword = $event.target.value"></w-text-field>
+          <app-settingsproblem />
+          <div class="flex flex-col-reverse gap-3 tablet:flex-row tablet:justify-end">
+            <w-btn variant="text" on:click="sessionSettings.cancel()">Cancel</w-btn>
+            <w-btn variant="flat" color="primary" on:click="sessionSettings.setUpTwoStep()">Continue</w-btn>
+          </div>
+        </div>
+      </case>
+      <case :when="'twoStepConfirm'">
+        <div class="flex flex-col gap-4" role="group" aria-labelledby="two-step-confirm-title">
+          <h3 id="two-step-confirm-title" class="settings-subheading">Add Mesail to your authenticator app</h3>
+          <div class="flex flex-col items-start gap-4 tablet:flex-row">
+            <img class="settings-qr h-48 w-48 shrink-0" :src="sessionSettings.twoStepQrImage" alt="QR code for your authenticator app">
+            <div class="flex min-w-0 flex-col gap-2">
+              <p class="settings-help">Scan the code with your app. Or type this key:</p>
+              <code class="settings-secret break-all">{sessionSettings.twoStepSecret}</code>
+            </div>
+          </div>
+          <w-text-field type="text" inputmode="numeric" label="Code from your app" autocomplete="one-time-code" :value="sessionSettings.code" on:input="sessionSettings.code = $event.target.value"></w-text-field>
+          <app-settingsproblem />
+          <div class="flex flex-col-reverse gap-3 tablet:flex-row tablet:justify-end">
+            <w-btn variant="text" on:click="sessionSettings.cancel()">Cancel</w-btn>
+            <w-btn variant="flat" color="primary" on:click="sessionSettings.confirmTwoStep()">Turn on</w-btn>
+          </div>
+        </div>
+      </case>
+      <case :when="'twoStepRemove'">
+        <div class="flex flex-col gap-4" role="group" aria-labelledby="two-step-off-title">
+          <h3 id="two-step-off-title" class="settings-subheading">Turn off 2-step sign-in</h3>
+          <w-text-field type="password" label="Current password" autocomplete="current-password" :value="sessionSettings.currentPassword" on:input="sessionSettings.currentPassword = $event.target.value"></w-text-field>
+          <w-text-field type="text" inputmode="numeric" label="2-step code" autocomplete="one-time-code" :value="sessionSettings.oneTimeCode" on:input="sessionSettings.oneTimeCode = $event.target.value"></w-text-field>
+          <app-settingsproblem />
+          <div class="flex flex-col-reverse gap-3 tablet:flex-row tablet:justify-end">
+            <w-btn variant="text" on:click="sessionSettings.cancel()">Cancel</w-btn>
+            <w-btn variant="flat" color="error" on:click="sessionSettings.removeTwoStep()">Turn off</w-btn>
+          </div>
+        </div>
+      </case>
+      <case default>
+        <switch :value="sessionSettings.twoStep">
+          <case :when="'on'">
+            <p class="settings-help">2-step sign-in is on.</p>
+          </case>
+          <case :when="'off'">
+            <p class="settings-help">2-step sign-in is off.</p>
+          </case>
+        </switch>
+        <div class="flex flex-col gap-3 tablet:flex-row tablet:flex-wrap">
+          <w-btn variant="outlined" on:click="sessionSettings.startPasswordChange()">Change password</w-btn>
+          <logic :if="sessionSettings.twoStep != 'on'">
+            <w-btn variant="outlined" on:click="sessionSettings.startTwoStep()">Turn on 2-step sign-in</w-btn>
+          </logic>
+          <logic :if="sessionSettings.twoStep != 'off'">
+            <w-btn variant="text" on:click="sessionSettings.startTwoStepRemoval()">Turn off 2-step sign-in</w-btn>
+          </logic>
+        </div>
+        <p class="settings-help">Lost your authenticator app? Ask an admin of your domain to reset your 2-step sign-in.</p>
+      </case>
+    </switch>
+  </section>
+</section>

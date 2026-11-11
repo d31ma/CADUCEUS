@@ -37,6 +37,7 @@ func (session *SessionService) Restore(requested SessionRestoreRequested) {
 	session.accounts.Restore(session.tokens.Restore(session.SessionKeys))
 	session.SessionKeys = session.tokens.SavedKeys()
 	session.Step = session.stepForAccounts()
+	session.applicationEventPublisher.PublishEvent(SessionRestored{SignedIn: session.Step == session.stepSignedIn()}, true)
 }
 
 func (session *SessionService) SignIn() {

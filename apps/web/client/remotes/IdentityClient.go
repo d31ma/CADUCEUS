@@ -49,4 +49,10 @@ type IdentityClient interface {
 		// @RequestBody
 		request BehaviorValue,
 	) (BehaviorValue, error)
+
+	// @GetRequest("/totp")
+	TwoStepStatus(
+		// @RequestHeader("Authorization")
+		authorization BehaviorValue,
+	) (BehaviorValue, error)
 }

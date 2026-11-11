@@ -237,6 +237,12 @@ func (test *SessionServiceTest) TestAccessTokenGivesTheCurrentDomainToken() {
 	Assert.Equals("access-1", accessToken)
 }
 
+func (test *SessionServiceTest) TestChangePasswordSavesTheNewKey() {
+	session := test.signedIn()
+	Assert.Equals(nil, session.ChangePassword(SessionPasswordChange{CurrentPassword: "right", NewPassword: "longer-and-better"}))
+	Assert.Equals("key-new", session.SessionKeys["example.com"])
+}
+
 func (test *SessionServiceTest) TestRenewGivesAFreshTokenAndSavesTheKey() {
 	session := test.signedIn()
 	accessToken, _ := session.Renew()
@@ -249,10 +255,4 @@ func (test *SessionServiceTest) TestRenewEndsASessionThatCannotRefresh() {
 	session.tokens.keys["example.com"] = "ended"
 	session.Renew()
 	Assert.Equals("expired", session.Step)
-}
-
-func (test *SessionServiceTest) TestChangePasswordSavesTheNewKey() {
-	session := test.signedIn()
-	Assert.Equals(nil, session.ChangePassword(SessionPasswordChange{CurrentPassword: "right", NewPassword: "longer-and-better"}))
-	Assert.Equals("key-new", session.SessionKeys["example.com"])
 }

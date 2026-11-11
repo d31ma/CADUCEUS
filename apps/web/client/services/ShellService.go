@@ -32,6 +32,29 @@ func (shell *ShellService) CloseMenus() {
 	shell.DomainMenuOpen = false
 }
 
+func (shell *ShellService) PaneFor(path string) string {
+	return shell.pick(shell.onSettings(path), shell.paneMain(), shell.Pane)
+}
+
+func (shell *ShellService) HeadingFor(path string) string {
+	return shell.pick(shell.onSettings(path), "Settings", shell.Heading)
+}
+
+func (shell *ShellService) OnSettings(path string) bool {
+	return shell.onSettings(path)
+}
+
+func (shell *ShellService) onSettings(path string) bool {
+	return path == "/settings"
+}
+
+func (shell *ShellService) pick(chosen bool, first string, otherwise string) string {
+	if chosen {
+		return first
+	}
+	return otherwise
+}
+
 func (shell *ShellService) Flag(value bool) string {
 	return shell.flagText(value)
 }

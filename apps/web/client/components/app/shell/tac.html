@@ -1,7 +1,7 @@
 <a class="skip-link" href="#timeline">Skip to messages</a>
 <a class="skip-link" href="#composer-input">Skip to composer</a>
 
-<div class="app" :data-pane="shell.pane">
+<div class="app" :data-pane="shell.paneFor(page.path)">
   <div class="rail-area">
     <app-rail />
   </div>
@@ -24,23 +24,30 @@
       <button type="button" class="icon-button back-button" aria-label="Back to conversations" on:click="shell.showList()">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" /></svg>
       </button>
-      <h1 class="header-title" id="conversation-title">{shell.heading}</h1>
+      <h1 class="header-title" id="conversation-title">{shell.headingFor(page.path)}</h1>
     </header>
-    <switch :value="shell.pane">
-      <case :when="'list'">
-        <div class="main-body main-empty">
-          <app-empty />
-        </div>
-      </case>
-      <case default>
-        <div class="main-body">
-          <conversation-view />
-        </div>
-        <div class="main-composer">
-          <composer-box />
-        </div>
-      </case>
-    </switch>
+    <logic :if="shell.onSettings(page.path)">
+      <div class="main-body">
+        <app-settings />
+      </div>
+    </logic>
+    <logic else>
+      <switch :value="shell.pane">
+        <case :when="'list'">
+          <div class="main-body main-empty">
+            <app-empty />
+          </div>
+        </case>
+        <case default>
+          <div class="main-body">
+            <conversation-view />
+          </div>
+          <div class="main-composer">
+            <composer-box />
+          </div>
+        </case>
+      </switch>
+    </logic>
   </main>
 
   <logic :if="shell.threadOpen">

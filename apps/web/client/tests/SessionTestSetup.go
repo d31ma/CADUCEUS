@@ -28,6 +28,8 @@ func (setup SessionTestSetup) Exchange(request *BehaviorHttpRequest, execution *
 		return setup.setUpTwoStep(setup.bodyOf(request))
 	case "POST /api/v1/identity/totp/confirm":
 		return setup.confirmTwoStep(setup.bodyOf(request))
+	case "GET /api/v1/identity/totp":
+		return setup.twoStepStatus(fmt.Sprint(request.Headers["Authorization"]))
 	case "DELETE /api/v1/identity/totp":
 		return setup.removeTwoStep(setup.bodyOf(request))
 	}
@@ -106,4 +108,11 @@ func (setup SessionTestSetup) removeTwoStep(body map[string]string) (BehaviorVal
 		return nil, errors.New("refused")
 	}
 	return nil, nil
+}
+
+func (setup SessionTestSetup) twoStepStatus(authorization string) (BehaviorValue, error) {
+	if authorization != "Bearer access-1" {
+		return nil, errors.New("unauthenticated")
+	}
+	return SessionTwoStepStatus{Enabled: true}, nil
 }

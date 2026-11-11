@@ -1,0 +1,37 @@
+.settings-card {
+  border: 1px solid var(--w-border);
+  border-radius: var(--ms-radius-card, 0.5rem);
+  background: var(--w-surface);
+}
+
+.settings-heading {
+  margin: 0;
+  font-size: var(--ms-text-title, 1.0625rem);
+  font-weight: 600;
+  color: var(--w-text);
+}
+
+.settings-subheading {
+  margin: 0;
+  font-size: var(--ms-text-body, 0.9375rem);
+  font-weight: 600;
+  color: var(--w-text);
+}
+
+.settings-help {
+  margin: 0;
+  font-size: var(--ms-text-meta, 0.75rem);
+  color: var(--w-text-subtle);
+}
+
+.settings-qr {
+  border: 1px solid var(--w-border);
+  border-radius: var(--w-radius-md);
+}
+
+.settings-secret {
+  font-family: var(--w-font-family-mono, ui-monospace, monospace);
+  font-size: var(--ms-text-body, 0.9375rem);
+  letter-spacing: 0.1em;
+  color: var(--w-text);
+}

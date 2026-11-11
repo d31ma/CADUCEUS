@@ -59,3 +59,24 @@ func (test *ShellServiceTest) TestFlagWritesTrueForScreenReaders() {
 func (test *ShellServiceTest) TestFlagWritesFalseForScreenReaders() {
 	Assert.Equals("false", test.shell().Flag(false))
 }
+
+func (test *ShellServiceTest) TestPaneForSettingsShowsTheMainPane() {
+	Assert.Equals("main", test.shell().PaneFor("/settings"))
+}
+
+func (test *ShellServiceTest) TestPaneForOtherPagesKeepsThePane() {
+	Assert.Equals("list", test.shell().PaneFor("/"))
+}
+
+func (test *ShellServiceTest) TestHeadingForSettingsNamesSettings() {
+	Assert.Equals("Settings", test.shell().HeadingFor("/settings"))
+}
+
+func (test *ShellServiceTest) TestHeadingForOtherPagesKeepsTheHeading() {
+	Assert.Equals("Select a conversation", test.shell().HeadingFor("/"))
+}
+
+func (test *ShellServiceTest) TestOnSettingsKnowsTheSettingsPage() {
+	Assert.IsTrue(test.shell().OnSettings("/settings"))
+	Assert.IsTrue(!test.shell().OnSettings("/"))
+}

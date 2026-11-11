@@ -117,3 +117,35 @@ func (test *SessionSettingsServiceTest) TestCancelClosesTheForm() {
 	Assert.Equals("", settings.Step)
 	Assert.Equals("", settings.CurrentPassword)
 }
+
+func (test *SessionSettingsServiceTest) TestLoadTwoStepReadsTheStatus() {
+	settings := test.settings()
+	settings.LoadTwoStep(SessionRestored{SignedIn: true})
+	Assert.Equals("on", settings.TwoStep)
+}
+
+func (test *SessionSettingsServiceTest) TestLoadTwoStepWithoutSessionIsUnknown() {
+	settings := test.settings()
+	settings.session.SignOutAll()
+	settings.LoadTwoStep(SessionRestored{SignedIn: false})
+	Assert.Equals("unknown", settings.TwoStep)
+}
+
+func (test *SessionSettingsServiceTest) TestTurningOnMarksTwoStepOn() {
+	settings := test.settings()
+	settings.StartTwoStep()
+	settings.CurrentPassword = "right"
+	settings.SetUpTwoStep()
+	settings.Code = "123456"
+	settings.ConfirmTwoStep()
+	Assert.Equals("on", settings.TwoStep)
+}
+
+func (test *SessionSettingsServiceTest) TestTurningOffMarksTwoStepOff() {
+	settings := test.settings()
+	settings.StartTwoStepRemoval()
+	settings.CurrentPassword = "right"
+	settings.OneTimeCode = "123456"
+	settings.RemoveTwoStep()
+	Assert.Equals("off", settings.TwoStep)
+}

@@ -75,3 +75,17 @@ func TestServicesNameEveryMesailService(t *testing.T) {
 		t.Fatalf("got %v", got)
 	}
 }
+
+func TestCatalogLetsNotifyRequestAnEmailSummary(t *testing.T) {
+	producers, err := Catalog{}.ProducersOf(Types{}.EmailSendRequested())
+	if err != nil || len(producers) != 2 || producers[0] != "messaging" || producers[1] != "notify" {
+		t.Fatalf("got %v, %v", producers, err)
+	}
+}
+
+func TestCatalogNamesOneProducerForMostTypes(t *testing.T) {
+	producers, _ := Catalog{}.ProducersOf(Types{}.MessageCreated())
+	if len(producers) != 1 || producers[0] != "messaging" {
+		t.Fatalf("got %v", producers)
+	}
+}

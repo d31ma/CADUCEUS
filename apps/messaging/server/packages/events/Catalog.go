@@ -7,6 +7,11 @@ func (catalog Catalog) ProducerOf(eventType string) (string, error) {
 	return route.Producer, err
 }
 
+func (catalog Catalog) ProducersOf(eventType string) ([]string, error) {
+	route, err := catalog.route(eventType)
+	return append([]string{route.Producer}, route.OtherProducers...), err
+}
+
 func (catalog Catalog) ConsumersOf(eventType string) []string {
 	route, _ := catalog.route(eventType)
 	return append([]string{}, route.Consumers...)
@@ -42,7 +47,7 @@ func (Catalog) table() map[string]Route {
 		types.MessageDeleted():       {Producer: services.Messaging(), Consumers: messageConsumers},
 		types.ReactionChanged():      {Producer: services.Messaging(), Consumers: activityConsumers},
 		types.ReadPositionMoved():    {Producer: services.Messaging(), Consumers: activityConsumers},
-		types.EmailSendRequested():   {Producer: services.Messaging(), Consumers: []string{services.MailOut()}},
+		types.EmailSendRequested():   {Producer: services.Messaging(), OtherProducers: []string{services.Notify()}, Consumers: []string{services.MailOut()}},
 		types.EmailDeliveryChanged(): {Producer: services.MailOut(), Consumers: []string{services.Messaging()}},
 		types.EmailReceived():        {Producer: services.MailIn(), Consumers: []string{services.Messaging()}},
 		types.PresenceChanged():      {Producer: services.Realtime(), Consumers: []string{services.Realtime()}},

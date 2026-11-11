@@ -1,6 +1,7 @@
 package events
 
 type Route struct {
-	Producer  string
-	Consumers []string
+	Producer       string
+	OtherProducers []string
+	Consumers      []string
 }

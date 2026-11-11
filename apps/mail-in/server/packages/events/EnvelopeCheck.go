@@ -1,6 +1,10 @@
 package events
 
-import "time"
+import (
+	"slices"
+	"strings"
+	"time"
+)
 
 type EnvelopeCheck struct{}
 
@@ -25,11 +29,11 @@ func (check EnvelopeCheck) Check(envelope Envelope) error {
 }
 
 func (check EnvelopeCheck) Producer(eventType string, producer string) error {
-	expected, err := check.knownProducer(eventType)
+	expected, err := check.knownProducers(eventType)
 	if err != nil {
 		return err
 	}
-	return check.sameProducer(expected, producer)
+	return check.listedProducer(expected, producer)
 }
 
 func (EnvelopeCheck) requireEventId(eventId string) error {
@@ -54,17 +58,17 @@ func (EnvelopeCheck) requirePayload(envelope Envelope) error {
 	return nil
 }
 
-func (EnvelopeCheck) knownProducer(eventType string) (string, error) {
-	producer, err := Catalog{}.ProducerOf(eventType)
+func (EnvelopeCheck) knownProducers(eventType string) ([]string, error) {
+	producers, err := Catalog{}.ProducersOf(eventType)
 	if err != nil {
-		return "", InvalidEnvelope{Reason: err.Error()}
+		return nil, InvalidEnvelope{Reason: err.Error()}
 	}
-	return producer, nil
+	return producers, nil
 }
 
-func (EnvelopeCheck) sameProducer(expected string, producer string) error {
-	if expected != producer {
-		return InvalidEnvelope{Reason: "the producer " + producer + " does not produce this event type; " + expected + " does"}
+func (EnvelopeCheck) listedProducer(expected []string, producer string) error {
+	if !slices.Contains(expected, producer) {
+		return InvalidEnvelope{Reason: "the producer " + producer + " does not produce this event type; " + strings.Join(expected, " or ") + " does"}
 	}
 	return nil
 }

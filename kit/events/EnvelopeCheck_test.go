@@ -1,9 +1,11 @@
 package events
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"testing"
+	"time"
 )
 
 func validEnvelope() Envelope {
@@ -67,4 +69,12 @@ func TestEnvelopeCheckRefusesEmptyPayload(t *testing.T) {
 	envelope := validEnvelope()
 	envelope.Payload = nil
 	checkEnvelopeRefused(t, envelope)
+}
+
+func TestEnvelopeCheckAcceptsTheOtherListedProducer(t *testing.T) {
+	factory := NewEnvelopeFactory(Services{}.Notify(), time.Now, rand.Reader)
+	_, err := factory.New(Types{}.EmailSendRequested(), "example.com", EmailSendRequested{})
+	if err != nil {
+		t.Fatalf("got %v", err)
+	}
 }

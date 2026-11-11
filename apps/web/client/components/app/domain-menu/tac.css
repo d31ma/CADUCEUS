@@ -199,7 +199,8 @@
 }
 
 @media (pointer: coarse) {
-  .menu-item {
+  .menu-item,
+  .domain-name {
     min-height: var(--ms-touch-min);
   }
 }

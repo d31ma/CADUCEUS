@@ -62,7 +62,7 @@
               <logic :if="sessionSettings.problem == 'unavailable'">
                 <w-alert type="error">We cannot reach sign-in right now. Try again in a minute.</w-alert>
               </logic>
-              <w-text-field label="Current password" name="current" autocomplete="current-password" :type="shell.fieldType(sessionSettings.showPasswords)" :value="sessionSettings.shownCurrent"></w-text-field>
+              <w-text-field autofocus label="Current password" name="current" autocomplete="current-password" :type="shell.fieldType(sessionSettings.showPasswords)" :value="sessionSettings.shownCurrent"></w-text-field>
               <logic :if="sessionSettings.problem == 'passwordPolicy'">
                 <w-text-field label="New password" name="next" autocomplete="new-password" error="Choose another password. Use at least 12 characters." :type="shell.fieldType(sessionSettings.showPasswords)" :value="sessionSettings.shownNew"></w-text-field>
               </logic>
@@ -98,7 +98,7 @@
               <logic :if="sessionSettings.problem == 'unavailable'">
                 <w-alert type="error">We cannot reach sign-in right now. Try again in a minute.</w-alert>
               </logic>
-              <w-text-field label="Current password" name="current" type="password" autocomplete="current-password"></w-text-field>
+              <w-text-field autofocus label="Current password" name="current" type="password" autocomplete="current-password"></w-text-field>
               <logic :if="sessionSettings.resetting">
                 <w-text-field label="2-step code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></w-text-field>
               </logic>
@@ -142,10 +142,10 @@
             <div class="col-span-full flex flex-col gap-4">
               <p class="settings-help">Step 3 of 3</p>
               <logic :if="sessionSettings.problem == 'invalidCode'">
-                <w-text-field label="Code from your app" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" error="That code is not right. Codes change every 30 seconds; type the newest one."></w-text-field>
+                <w-text-field autofocus label="Code from your app" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" error="That code is not right. Codes change every 30 seconds; type the newest one."></w-text-field>
               </logic>
               <logic :if="sessionSettings.problem != 'invalidCode'">
-                <w-text-field label="Code from your app" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></w-text-field>
+                <w-text-field autofocus label="Code from your app" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></w-text-field>
               </logic>
               <logic :if="sessionSettings.problem == 'unavailable'">
                 <w-alert type="error">We cannot reach sign-in right now. Try again in a minute.</w-alert>
@@ -172,7 +172,7 @@
               <logic :if="sessionSettings.problem == 'unavailable'">
                 <w-alert type="error">We cannot reach sign-in right now. Try again in a minute.</w-alert>
               </logic>
-              <w-text-field label="Current password" name="current" type="password" autocomplete="current-password"></w-text-field>
+              <w-text-field autofocus label="Current password" name="current" type="password" autocomplete="current-password"></w-text-field>
               <w-text-field label="2-step code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></w-text-field>
             </div>
             <w-btn variant="flat" color="danger" class="sm:col-start-3 sm:row-start-2">Turn off</w-btn>

@@ -5,7 +5,7 @@
   gap: var(--w-space-2);
   height: 100%;
   padding: var(--w-space-3) 0;
-  padding-top: max(var(--w-space-3), env(safe-area-inset-top));
+  padding-top: max(var(--w-space-3), var(--tac-titlebar-height, env(safe-area-inset-top)));
   padding-bottom: max(var(--w-space-3), env(safe-area-inset-bottom));
   overflow-y: auto;
   background: var(--ms-rail-bg);

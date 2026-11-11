@@ -249,8 +249,8 @@
 
   .sidebar-head,
   .header {
-    padding-top: env(safe-area-inset-top);
-    min-height: calc(var(--ms-header-height) + env(safe-area-inset-top));
+    padding-top: var(--tac-titlebar-height, env(safe-area-inset-top));
+    min-height: calc(var(--ms-header-height) + var(--tac-titlebar-height, env(safe-area-inset-top)));
   }
 
   .header {

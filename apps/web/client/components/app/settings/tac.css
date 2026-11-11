@@ -32,6 +32,22 @@
   color: var(--w-text);
 }
 
+.w-text-field-control {
+  min-height: 1.5rem;
+}
+
+.w-checkbox {
+  min-height: 1.5rem;
+  align-items: center;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .w-text-field-control,
+  .w-checkbox {
+    min-height: var(--ms-touch-min);
+  }
+}
+
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer utilities {

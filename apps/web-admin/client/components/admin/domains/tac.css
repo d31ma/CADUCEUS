@@ -270,12 +270,12 @@ ul {
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  .sheet-dialog w-btn {
+  .sheet-dialog .w-dialog-body w-btn {
     display: block;
     width: 100%;
   }
 
-  .sheet-dialog .w-btn {
+  .sheet-dialog .w-dialog-body .w-btn {
     width: 100%;
     justify-content: center;
   }
@@ -434,8 +434,8 @@ h1 w-icon,
   .w-px {
     width: 1px;
   }
-  .max-w-3xl {
-    max-width: var(--container-3xl, 48rem);
+  .max-w-\(--ms-content-max\) {
+    max-width: var(--ms-content-max);
   }
   .min-w-0 {
     min-width: 0px;

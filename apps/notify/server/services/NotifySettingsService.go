@@ -13,7 +13,7 @@ func (settings *NotifySettingsService) Snapshot() string {
 }
 
 func (settings *NotifySettingsService) Outbox() (outbox.Settings, error) {
-	found, failure := outbox.SettingsReader{}.FromApplicationJSON(settings.application())
+	found, failure := outbox.SettingsReader{}.FromApplicationJSON(settings.Snapshot())
 	return found, settings.unavailable(failure)
 }
 

@@ -3,7 +3,7 @@ import (
 	"encoding/json"
 
 	"mesail.dev/packages/events"
-	"mesail.dev/packages/notifications"
+	"mesail.dev/packages/notify"
 )
 
 // @Service
@@ -14,7 +14,7 @@ type FanoutQueueService struct {
 	timestamps *TimestampService
 }
 
-func (queue *FanoutQueueService) Spill(batch FanoutBatch, remaining []notifications.Recipient) error {
+func (queue *FanoutQueueService) Spill(batch FanoutBatch, remaining []notify.Recipient) error {
 	message, failure := json.Marshal(batch.Message)
 	recipients, encodeFailure := queue.encoded(remaining)
 	return queue.insertUnless(cmp.Or(failure, encodeFailure), queue.record(batch, message, recipients))
@@ -24,14 +24,14 @@ func (queue *FanoutQueueService) Waiting(domainId string, limit int) ([]FanoutRe
 	return queue.store.Waiting(domainId, limit)
 }
 
-func (queue *FanoutQueueService) Read(record FanoutRecord) (events.MessageCreated, []notifications.Recipient, error) {
+func (queue *FanoutQueueService) Read(record FanoutRecord) (events.MessageCreated, []notify.Recipient, error) {
 	payload := events.MessageCreated{}
 	failure := json.Unmarshal([]byte(record.Message), &payload)
 	recipients, decodeFailure := queue.decoded(record.Recipients)
 	return payload, recipients, cmp.Or(failure, decodeFailure)
 }
 
-func (queue *FanoutQueueService) Save(record FanoutRecord, remaining []notifications.Recipient) error {
+func (queue *FanoutQueueService) Save(record FanoutRecord, remaining []notify.Recipient) error {
 	recipients, failure := queue.encoded(remaining)
 	return queue.saveUnless(failure, record, recipients)
 }
@@ -61,7 +61,7 @@ func (queue *FanoutQueueService) saveUnless(failure error, record FanoutRecord, 
 	return queue.store.SaveRecipients(record, recipients)
 }
 
-func (queue *FanoutQueueService) encoded(recipients []notifications.Recipient) ([]string, error) {
+func (queue *FanoutQueueService) encoded(recipients []notify.Recipient) ([]string, error) {
 	texts := []string{}
 	failures := []error{}
 	for _, recipient := range recipients {
@@ -71,11 +71,11 @@ func (queue *FanoutQueueService) encoded(recipients []notifications.Recipient) (
 	return texts, cmp.Or(failures...)
 }
 
-func (queue *FanoutQueueService) decoded(texts []string) ([]notifications.Recipient, error) {
-	recipients := []notifications.Recipient{}
+func (queue *FanoutQueueService) decoded(texts []string) ([]notify.Recipient, error) {
+	recipients := []notify.Recipient{}
 	failures := []error{}
 	for _, text := range texts {
-		recipient := notifications.Recipient{}
+		recipient := notify.Recipient{}
 		failures = append(failures, json.Unmarshal([]byte(text), &recipient))
 		recipients = append(recipients, recipient)
 	}

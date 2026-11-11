@@ -2,7 +2,7 @@ import (
 	"cmp"
 
 	"mesail.dev/packages/ids"
-	"mesail.dev/packages/notifications"
+	"mesail.dev/packages/notify"
 	"mesail.dev/packages/webpush"
 )
 
@@ -54,7 +54,7 @@ func (service *PushSenderService) removeGone(subscription PushSubscriptionRecord
 }
 
 func (service *PushSenderService) message(record NotificationRecord) webpush.Message {
-	title, body := notifications.PushText{}.For(record.Kind, record.AuthorDisplayName)
+	title, body := notify.PushText{}.For(record.Kind, record.AuthorDisplayName)
 	notificationId := ids.WireId{}.Add(service.prefix(), record.Id)
 	return webpush.Message{
 		Title:          title,

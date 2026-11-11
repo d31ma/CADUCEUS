@@ -2,7 +2,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/events"
-	"mesail.dev/packages/notifications"
+	"mesail.dev/packages/notify"
 )
 
 // @Test(NotifyTestSetup, {"partition":"tests"})
@@ -16,7 +16,7 @@ func (test *FanoutWriterServiceTest) writer() *FanoutWriterService {
 
 func (test *FanoutWriterServiceTest) batch(domainId string, createdAt string) FanoutBatch {
 	message := events.MessageCreated{MessageId: "msg_1", ConversationId: "cnv_1", AuthorKind: "member", AuthorMemberId: "member-1", AuthorDisplayName: "Ana", CreatedAt: createdAt}
-	recipients := []notifications.Recipient{{MemberId: "member-2", Kind: "mention"}, {MemberId: "member-3", Kind: "mention"}, {MemberId: "member-4", Kind: "mention"}}
+	recipients := []notify.Recipient{{MemberId: "member-2", Kind: "mention"}, {MemberId: "member-3", Kind: "mention"}, {MemberId: "member-4", Kind: "mention"}}
 	settings := map[string]MemberSettingsRecord{"member-2": {MemberId: "member-2", EmailSummaryAfterMinutes: 15}}
 	return FanoutBatch{DomainId: domainId, Message: message, Recipients: recipients, Settings: settings}
 }
@@ -35,7 +35,7 @@ func (test *FanoutWriterServiceTest) TestWriteInsertsUpToTheBudget() {
 	Assert.IsTrue(err == nil, "write failed")
 	Assert.Equals(2, result.Written)
 	Assert.Equals(2, len(result.Inserted))
-	Assert.Equals([]notifications.Recipient{{MemberId: "member-4", Kind: "mention"}}, result.Remaining)
+	Assert.Equals([]notify.Recipient{{MemberId: "member-4", Kind: "mention"}}, result.Remaining)
 	Assert.Equals(2, len(test.stored(domainId)))
 }
 

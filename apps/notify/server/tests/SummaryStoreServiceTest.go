@@ -10,7 +10,7 @@ func (test *SummaryStoreServiceTest) TestInsertIfAbsentKeepsOneSummaryPerBatch()
 	second, again := setup.SummaryStore().InsertIfAbsent(record)
 	Assert.IsTrue(err == nil && again == nil, "insert failed")
 	Assert.Equals(first.Id, second.Id)
-	Assert.Equals("pending", first.OutboxState)
+	Assert.IsTrue(first.OutboxWaiting, "the summary is not waiting in the outbox")
 }
 
 func (test *SummaryStoreServiceTest) TestInsertRegistersTheOutboxCollection() {

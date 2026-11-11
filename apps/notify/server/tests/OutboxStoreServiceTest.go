@@ -44,6 +44,7 @@ func (test *OutboxStoreServiceTest) TestSaveSettlesTheDocument() {
 }
 
 func (test *OutboxStoreServiceTest) TestPendingFindsAStagedDocument() {
+	NotifyTestSetup{}.FreshRegistries()
 	ref, _ := test.stored()
 	documents, err := NotifyTestSetup{}.OutboxStore().Pending(100000)
 	Assert.IsTrue(err == nil, "pending failed")
@@ -51,6 +52,7 @@ func (test *OutboxStoreServiceTest) TestPendingFindsAStagedDocument() {
 }
 
 func (test *OutboxStoreServiceTest) TestDeadFindsADeadDocument() {
+	NotifyTestSetup{}.FreshRegistries()
 	ref, _ := test.stored()
 	store := NotifyTestSetup{}.OutboxStore()
 	store.Save(ref, outbox.Fields{PendingEvents: []string{}, DeadEvents: []string{"{}"}, OutboxPending: 0, OutboxDead: 1})

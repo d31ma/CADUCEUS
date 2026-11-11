@@ -3,7 +3,7 @@ import (
 	"errors"
 
 	"mesail.dev/packages/ids"
-	"mesail.dev/packages/notifications"
+	"mesail.dev/packages/notify"
 	"mesail.dev/packages/oidc"
 )
 
@@ -19,7 +19,7 @@ type NotificationsService struct {
 
 func (service *NotificationsService) List(authorization string, cursor string, limitText string) (NotificationPage, error) {
 	caller, failure := service.callers.Caller(authorization)
-	limit, invalidLimit := notifications.PageRequest{}.Limit(limitText)
+	limit, invalidLimit := notify.PageRequest{}.Limit(limitText)
 	failure = cmp.Or(failure, service.invalidPage(invalidLimit, "limit"))
 	records, failure := service.recordsUnless(failure, caller)
 	page, failure := service.pageUnless(failure, records, cursor, limit)
@@ -46,14 +46,14 @@ func (service *NotificationsService) pageUnless(failure error, records []Notific
 	if failure != nil {
 		return NotificationPage{Items: []Notification{}}, failure
 	}
-	indexes, next, problem := notifications.Newest{}.Page(service.sortKeys(records), cursor, limit)
+	indexes, next, problem := notify.Newest{}.Page(service.sortKeys(records), cursor, limit)
 	return NotificationPage{Items: service.wireItems(records, indexes), NextCursor: next}, problem
 }
 
-func (service *NotificationsService) sortKeys(records []NotificationRecord) []notifications.Sortable {
-	keys := []notifications.Sortable{}
+func (service *NotificationsService) sortKeys(records []NotificationRecord) []notify.Sortable {
+	keys := []notify.Sortable{}
 	for _, record := range records {
-		keys = append(keys, notifications.Sortable{CreatedAt: record.CreatedAt, Id: record.Id})
+		keys = append(keys, notify.Sortable{CreatedAt: record.CreatedAt, Id: record.Id})
 	}
 	return keys
 }
@@ -106,7 +106,7 @@ func (service *NotificationsService) missing(failure error) error {
 }
 
 func (service *NotificationsService) invalidPage(failure error, field string) error {
-	if errors.As(failure, &notifications.InvalidPage{}) {
+	if errors.As(failure, &notify.InvalidPage{}) {
 		return &InvalidRequest{Field: field, Reason: failure.Error()}
 	}
 	return failure

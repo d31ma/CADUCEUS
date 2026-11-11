@@ -24,6 +24,12 @@ func (NotifyTestSetup) Domain() string {
 	return "d" + strings.ToLower(rand.Text())[:12] + ".example.com"
 }
 
+func (NotifyTestSetup) FreshRegistries() {
+	names := &CollectionNamesService{}
+	DataSource{}.DropCollection(names.OutboxCollections())
+	DataSource{}.DropCollection(names.Domains())
+}
+
 func (NotifyTestSetup) Name(base string) string {
 	return base + "-" + strings.ToLower(rand.Text())[:12]
 }
@@ -159,7 +165,7 @@ func (setup NotifyTestSetup) Registry() *OutboxCollectionsService {
 }
 
 func (setup NotifyTestSetup) SummaryStore() *SummaryStoreService {
-	return &SummaryStoreService{documents: setup.Documents(), names: &CollectionNamesService{}, registry: setup.Registry(), outboxStates: &OutboxStatesService{}}
+	return &SummaryStoreService{documents: setup.Documents(), names: &CollectionNamesService{}, registry: setup.Registry()}
 }
 
 func (setup NotifyTestSetup) FanoutStore() *FanoutStoreService {
@@ -175,11 +181,11 @@ func (setup NotifyTestSetup) Seen() *SeenEventsService {
 }
 
 func (setup NotifyTestSetup) OutboxStore() *OutboxStoreService {
-	return &OutboxStoreService{documents: setup.Documents(), registry: setup.Registry(), outboxStates: &OutboxStatesService{}}
+	return &OutboxStoreService{documents: setup.Documents(), registry: setup.Registry()}
 }
 
 func (setup NotifyTestSetup) Relay(pusher outbox.Pusher) *OutboxRelayService {
-	return &OutboxRelayService{store: setup.OutboxStore(), settings: &NotifySettingsService{}, tokens: &OperatorTokenService{}, callers: &CallerService{}, pusher: pusher}
+	return &OutboxRelayService{store: setup.OutboxStore(), settings: &NotifySettingsService{}, tokens: &ServiceTokenService{}, callers: &CallerService{}, pusher: pusher}
 }
 
 func (setup NotifyTestSetup) Notifications() *NotificationsService {

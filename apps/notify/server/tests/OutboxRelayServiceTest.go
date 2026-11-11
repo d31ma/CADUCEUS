@@ -30,6 +30,7 @@ func (test *OutboxRelayServiceTest) TestRunOnceNeedsAnOperator() {
 }
 
 func (test *OutboxRelayServiceTest) TestRunOnceRelaysPendingDocuments() {
+	NotifyTestSetup{}.FreshRegistries()
 	setup := NotifyTestSetup{}
 	domainId := setup.Domain()
 	_, operators := setup.Realms(domainId)
@@ -41,6 +42,7 @@ func (test *OutboxRelayServiceTest) TestRunOnceRelaysPendingDocuments() {
 }
 
 func (test *OutboxRelayServiceTest) TestDeadEventsListsALetterAndRetryDeadMovesItBack() {
+	NotifyTestSetup{}.FreshRegistries()
 	setup := NotifyTestSetup{}
 	domainId := setup.Domain()
 	_, operators := setup.Realms(domainId)

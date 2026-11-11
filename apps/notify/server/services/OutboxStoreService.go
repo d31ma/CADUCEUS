@@ -1,5 +1,6 @@
 import (
 	"cmp"
+	"encoding/json"
 
 	"mesail.dev/packages/outbox"
 )
@@ -10,16 +11,14 @@ type OutboxStoreService struct {
 	documents *DocumentsService
 	// @Needs
 	registry *OutboxCollectionsService
-	// @Needs
-	outboxStates *OutboxStatesService
 }
 
 func (store *OutboxStoreService) Pending(limit int) ([]outbox.Document, error) {
-	return store.documentsWhere(map[string]any{"outboxState": store.outboxStates.Waiting()}, limit)
+	return store.documentsWhere(store.where(outbox.Filters{}.Waiting()), limit)
 }
 
 func (store *OutboxStoreService) Dead(limit int) ([]outbox.Document, error) {
-	return store.documentsWhere(map[string]any{"deadState": store.outboxStates.Failed()}, limit)
+	return store.documentsWhere(store.where(outbox.Filters{}.HasDead()), limit)
 }
 
 func (store *OutboxStoreService) Load(ref outbox.Ref) (outbox.Fields, error) {
@@ -37,6 +36,13 @@ func (store *OutboxStoreService) documentsWhere(where map[string]any, limit int)
 	names, failure := store.registry.All(store.collectionLimit())
 	found, problem := store.rowsOf(names, where, limit)
 	return found[:min(len(found), limit)], cmp.Or(failure, problem)
+}
+
+func (store *OutboxStoreService) where(filter any) map[string]any {
+	encoded, _ := json.Marshal(filter)
+	where := map[string]any{}
+	_ = json.Unmarshal(encoded, &where)
+	return where
 }
 
 func (store *OutboxStoreService) rowsOf(names []string, where map[string]any, limit int) ([]outbox.Document, error) {
@@ -87,13 +93,13 @@ func (store *OutboxStoreService) patch(fields outbox.Fields) OutboxFieldsPatch {
 		DeadEvents:    fields.DeadEvents,
 		OutboxPending: fields.OutboxPending,
 		OutboxDead:    fields.OutboxDead,
-		OutboxState:   store.outboxStates.Pending(fields.OutboxPending),
-		DeadState:     store.outboxStates.Dead(fields.OutboxDead),
+		OutboxWaiting: fields.OutboxPending > 0,
+		OutboxHasDead: fields.OutboxDead > 0,
 	}
 }
 
 func (store *OutboxStoreService) fields(row OutboxRow) outbox.Fields {
-	return outbox.Fields{PendingEvents: row.PendingEvents, DeadEvents: row.DeadEvents, OutboxPending: row.OutboxPending, OutboxDead: row.OutboxDead}
+	return outbox.Fields{PendingEvents: row.PendingEvents, DeadEvents: row.DeadEvents, OutboxPending: row.OutboxPending, OutboxDead: row.OutboxDead, OutboxWaiting: row.OutboxWaiting, OutboxHasDead: row.OutboxHasDead}
 }
 
 func (store *OutboxStoreService) collectionLimit() int {

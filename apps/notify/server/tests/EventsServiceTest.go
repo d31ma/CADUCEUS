@@ -63,13 +63,14 @@ func (test *EventsServiceTest) TestReceiveRefusesAnEventNotifyDoesNotConsume() {
 	Assert.IsTrue(errors.As(err, &invalid))
 }
 
-func (test *EventsServiceTest) TestHandleRegistersTheDomain() {
+func (test *EventsServiceTest) TestReceiveRegistersTheDomain() {
 	setup := NotifyTestSetup{}
 	domainId := setup.Domain()
-	envelope := setup.Kit(setup.Envelope("messaging", events.Types{}.MessageEdited(), domainId, map[string]any{"messageId": "msg_1"}))
-	err := setup.Events().Handle(envelope)
+	member, _ := setup.Realms(domainId)
+	envelope := setup.Envelope("messaging", events.Types{}.MessageEdited(), domainId, map[string]any{"messageId": "msg_1"})
+	_, err := setup.Events().Receive(setup.Service(member), envelope)
 	domains, _ := setup.Domains().All(100000)
-	Assert.IsTrue(err == nil, "handle failed")
+	Assert.IsTrue(err == nil, "receive failed")
 	Assert.IsTrue(test.contains(domains, domainId), "domain not registered")
 }
 

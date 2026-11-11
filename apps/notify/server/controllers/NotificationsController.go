@@ -13,12 +13,12 @@ func (controller *NotificationsController) GetNotifications(request *http.Reques
 	return controller.notifications.List(request.Header.Get("Authorization"), query.Get("cursor"), query.Get("limit"))
 }
 
-// @PutRoute("/{notificationId}/read")
+// @PutRoute("/{notification_id}/read")
 // @ResponseStatus(204)
 func (controller *NotificationsController) PutRead(
 	// @FromHeader("authorization")
 	authorization string,
-	// @FromPath
+	// @FromPath("notification_id")
 	notificationId string,
 ) error {
 	return controller.notifications.MarkRead(authorization, notificationId)

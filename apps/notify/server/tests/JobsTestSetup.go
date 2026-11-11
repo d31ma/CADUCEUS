@@ -21,6 +21,12 @@ import (
 // @TestSetup
 type JobsTestSetup struct{}
 
+func (JobsTestSetup) FreshRegistries() {
+	names := &CollectionNamesService{}
+	DataSource{}.DropCollection(names.OutboxCollections())
+	DataSource{}.DropCollection(names.Domains())
+}
+
 func (JobsTestSetup) Configure(execution *BehaviorExecution) (*BehaviorConfiguration, error) {
 	return NewBehaviorConfiguration(), nil
 }
@@ -326,7 +332,7 @@ func (setup JobsTestSetup) Registry() *OutboxCollectionsService {
 }
 
 func (setup JobsTestSetup) SummaryStore() *SummaryStoreService {
-	return &SummaryStoreService{documents: setup.Documents(), names: &CollectionNamesService{}, registry: setup.Registry(), outboxStates: &OutboxStatesService{}}
+	return &SummaryStoreService{documents: setup.Documents(), names: &CollectionNamesService{}, registry: setup.Registry()}
 }
 
 func (setup JobsTestSetup) FanoutStore() *FanoutStoreService {
@@ -338,11 +344,11 @@ func (setup JobsTestSetup) Domains() *DomainRegistryService {
 }
 
 func (setup JobsTestSetup) OutboxStore() *OutboxStoreService {
-	return &OutboxStoreService{documents: setup.Documents(), registry: setup.Registry(), outboxStates: &OutboxStatesService{}}
+	return &OutboxStoreService{documents: setup.Documents(), registry: setup.Registry()}
 }
 
 func (setup JobsTestSetup) Relay(pusher outbox.Pusher) *OutboxRelayService {
-	return &OutboxRelayService{store: setup.OutboxStore(), settings: &NotifySettingsService{}, tokens: &OperatorTokenService{}, callers: &CallerService{}, pusher: pusher}
+	return &OutboxRelayService{store: setup.OutboxStore(), settings: &NotifySettingsService{}, tokens: &ServiceTokenService{}, callers: &CallerService{}, pusher: pusher}
 }
 
 func (setup JobsTestSetup) StagedSummary(domainId string) SummaryRecord {

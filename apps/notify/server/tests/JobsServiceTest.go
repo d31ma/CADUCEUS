@@ -26,6 +26,7 @@ func (test *JobsServiceTest) TestRunRefusesABadToken() {
 }
 
 func (test *JobsServiceTest) TestRunVisitsTheRegisteredDomains() {
+	JobsTestSetup{}.FreshRegistries()
 	setup := JobsTestSetup{}
 	domainId := setup.Domain()
 	_, operators := setup.Realms(domainId)

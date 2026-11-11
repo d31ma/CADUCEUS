@@ -3,5 +3,5 @@ events
 outbox
 collections
 ids
-notifications
+notify
 webpush

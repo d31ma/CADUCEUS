@@ -2,7 +2,7 @@ import (
 	"cmp"
 	"time"
 
-	"mesail.dev/packages/notifications"
+	"mesail.dev/packages/notify"
 )
 
 // @Service
@@ -75,7 +75,7 @@ func (store *NotificationStoreService) MarkSummarized(record NotificationRecord,
 }
 
 func (store *NotificationStoreService) months() []string {
-	return notifications.Months{}.Recent(time.Now())
+	return notify.Months{}.Recent(time.Now())
 }
 
 func (store *NotificationStoreService) markAll(records []NotificationRecord, readAt string) error {

@@ -7,11 +7,11 @@ type MessageSourceController struct {
 	sources *MessageSourceService
 }
 
-// @GetRoute("/{messageId}/source")
+// @GetRoute("/{message_id}/source")
 func (controller *MessageSourceController) GetSource(
 	// @FromHeader("authorization")
 	authorization string,
-	// @FromPath
+	// @FromPath("message_id")
 	messageId string,
 	request *http.Request,
 ) (MessageSource, error) {

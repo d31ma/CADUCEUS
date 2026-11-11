@@ -2,7 +2,7 @@ import (
 	"cmp"
 
 	"mesail.dev/packages/events"
-	"mesail.dev/packages/notifications"
+	"mesail.dev/packages/notify"
 )
 
 // @Service
@@ -53,7 +53,7 @@ func (service *FanoutService) processOne(domainId string, record FanoutRecord, r
 	return service.progressOf(result), failure
 }
 
-func (service *FanoutService) resumeUnless(failure error, domainId string, payload events.MessageCreated, recipients []notifications.Recipient) (FanoutBatch, error) {
+func (service *FanoutService) resumeUnless(failure error, domainId string, payload events.MessageCreated, recipients []notify.Recipient) (FanoutBatch, error) {
 	if failure != nil {
 		return FanoutBatch{}, failure
 	}

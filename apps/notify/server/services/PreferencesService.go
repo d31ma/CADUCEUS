@@ -2,7 +2,7 @@ import (
 	"cmp"
 	"errors"
 
-	"mesail.dev/packages/notifications"
+	"mesail.dev/packages/notify"
 	"mesail.dev/packages/oidc"
 )
 
@@ -23,7 +23,7 @@ func (service *PreferencesService) Get(authorization string) (NotifySettings, er
 func (service *PreferencesService) Put(authorization string, settings NotifySettings) (NotifySettings, error) {
 	caller, failure := service.callers.Caller(authorization)
 	settings.MutedConversationIds = service.orEmpty(settings.MutedConversationIds)
-	refusal := notifications.SettingsCheck{}.Check(settings.EmailSummaryAfterMinutes, settings.MutedConversationIds)
+	refusal := notify.SettingsCheck{}.Check(settings.EmailSummaryAfterMinutes, settings.MutedConversationIds)
 	failure = cmp.Or(failure, service.invalid(refusal))
 	return settings, service.putUnless(failure, caller, settings)
 }
@@ -43,7 +43,7 @@ func (service *PreferencesService) putUnless(failure error, caller oidc.Caller, 
 }
 
 func (service *PreferencesService) invalid(refusal error) error {
-	invalid := notifications.InvalidSettings{}
+	invalid := notify.InvalidSettings{}
 	if errors.As(refusal, &invalid) {
 		return &InvalidRequest{Field: service.wireFields()[invalid.Field], Reason: invalid.Reason}
 	}

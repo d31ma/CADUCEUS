@@ -17,10 +17,6 @@ func (states *NotificationStatesService) PushFailed() string {
 	return "failed"
 }
 
-func (states *NotificationStatesService) PushNone() string {
-	return states.none()
-}
-
 func (states *NotificationStatesService) SummaryWaiting() string {
 	return "waiting"
 }

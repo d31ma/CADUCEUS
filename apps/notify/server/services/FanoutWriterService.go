@@ -3,7 +3,7 @@ import (
 	"slices"
 	"time"
 
-	"mesail.dev/packages/notifications"
+	"mesail.dev/packages/notify"
 )
 
 // @Service
@@ -30,13 +30,13 @@ func (writer *FanoutWriterService) memberIds(records []NotificationRecord) map[s
 	return memberIds
 }
 
-func (writer *FanoutWriterService) withoutExisting(recipients []notifications.Recipient, existing map[string]bool) []notifications.Recipient {
-	return slices.DeleteFunc(slices.Clone(recipients), func(recipient notifications.Recipient) bool {
+func (writer *FanoutWriterService) withoutExisting(recipients []notify.Recipient, existing map[string]bool) []notify.Recipient {
+	return slices.DeleteFunc(slices.Clone(recipients), func(recipient notify.Recipient) bool {
 		return existing[recipient.MemberId]
 	})
 }
 
-func (writer *FanoutWriterService) insertUnless(failure error, batch FanoutBatch, fresh []notifications.Recipient, writeBudget int) (FanoutResult, error) {
+func (writer *FanoutWriterService) insertUnless(failure error, batch FanoutBatch, fresh []notify.Recipient, writeBudget int) (FanoutResult, error) {
 	if failure != nil {
 		return FanoutResult{}, failure
 	}
@@ -45,7 +45,7 @@ func (writer *FanoutWriterService) insertUnless(failure error, batch FanoutBatch
 	return FanoutResult{Inserted: inserted, Remaining: fresh[count:], Written: len(inserted)}, failure
 }
 
-func (writer *FanoutWriterService) insertAll(batch FanoutBatch, recipients []notifications.Recipient) ([]NotificationRecord, error) {
+func (writer *FanoutWriterService) insertAll(batch FanoutBatch, recipients []notify.Recipient) ([]NotificationRecord, error) {
 	createdAt := writer.createdAt(batch.Message.CreatedAt)
 	inserted := []NotificationRecord{}
 	failures := []error{}
@@ -56,9 +56,9 @@ func (writer *FanoutWriterService) insertAll(batch FanoutBatch, recipients []not
 	return inserted, cmp.Or(failures...)
 }
 
-func (writer *FanoutWriterService) record(batch FanoutBatch, recipient notifications.Recipient, createdAt time.Time) NotificationRecord {
+func (writer *FanoutWriterService) record(batch FanoutBatch, recipient notify.Recipient, createdAt time.Time) NotificationRecord {
 	message := batch.Message
-	summaryDueAt := notifications.SummaryClock{}.DueAt(createdAt, batch.Settings[recipient.MemberId].EmailSummaryAfterMinutes)
+	summaryDueAt := notify.SummaryClock{}.DueAt(createdAt, batch.Settings[recipient.MemberId].EmailSummaryAfterMinutes)
 	return NotificationRecord{
 		DomainId:          batch.DomainId,
 		MemberId:          recipient.MemberId,

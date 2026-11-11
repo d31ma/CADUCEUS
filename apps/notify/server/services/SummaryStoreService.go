@@ -6,14 +6,12 @@ type SummaryStoreService struct {
 	names *CollectionNamesService
 	// @Needs
 	registry *OutboxCollectionsService
-	// @Needs
-	outboxStates *OutboxStatesService
 }
 
 func (store *SummaryStoreService) InsertIfAbsent(record SummaryRecord) (SummaryRecord, error) {
 	collection := store.Collection(record.DomainId)
 	failure := store.registry.Register(collection)
-	record.OutboxState, record.DeadState = store.outboxStates.Pending(record.OutboxPending), store.outboxStates.Dead(record.OutboxDead)
+	record.OutboxWaiting, record.OutboxHasDead = record.OutboxPending > 0, record.OutboxDead > 0
 	record.Id, failure = store.insertUnless(failure, collection, record)
 	return record, failure
 }

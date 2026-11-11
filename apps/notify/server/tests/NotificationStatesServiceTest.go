@@ -9,7 +9,6 @@ func (test *NotificationStatesServiceTest) TestPushStates() {
 	Assert.Equals("sent", states.PushSent())
 	Assert.Equals("skipped", states.PushSkipped())
 	Assert.Equals("failed", states.PushFailed())
-	Assert.Equals("none", states.PushNone())
 }
 
 func (test *NotificationStatesServiceTest) TestSummaryStates() {

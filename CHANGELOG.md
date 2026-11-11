@@ -272,6 +272,32 @@
   files are thin. `kit/textindex` holds word splitting, prefix matching,
   snippets and cursors.
 
+### Slice N1: notifications
+
+- `apps/notify` turns `message.created` into notifications (AC-PN-2): a
+  mention, a direct message (`email` when it is an email) or a reply in a
+  thread the member wrote in. Only members who can read the message get
+  one, never the author, and a muted conversation keeps only mentions. One
+  call writes at most 20; the rest wait in a fan-out record for the job.
+- Members list and read their notifications (newest first, paged), save
+  push subscriptions, read the VAPID public key and set the summary delay
+  and muted conversations. Everything is per domain: another member's or
+  domain's notification answers `404`.
+- Web Push (AC-PN-3) in the new package `kit/webpush`: VAPID (RFC 8292),
+  `aes128gcm` encryption (RFC 8291, checked against its Appendix A), an
+  allowlist of push service hosts against SSRF, and a `Target` seam for
+  native push later. Nothing is pushed during `dnd` or while the member is
+  `active`; the text never holds message content; gone subscriptions are
+  deleted. The VAPID keys come from `.env` (secret store).
+- The email summary (AC-PN-4) goes out once per batch of unread
+  notifications after the member's delay as `email.send.requested` from
+  `notify` (now a second listed producer in `kit/events`); mail-out reads
+  its body from `GET /api/v1/notify/messages/{id}/source`.
+- Rules (recipients, push decisions, summary text, paging) are in the
+  plain-Go package `kit/notify`. `POST /api/v1/notify/jobs/run` (Service,
+  install-wide) does fan-out, push and summary work in bounded calls, and a
+  `@Schedule` worker triggers it and the outbox relay.
+
 ### Slice C2: channels
 
 - `apps/channels` lists, creates, joins, leaves, invites to and updates

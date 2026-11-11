@@ -3,7 +3,7 @@ import (
 	"slices"
 	"time"
 
-	"mesail.dev/packages/notifications"
+	"mesail.dev/packages/notify"
 	"mesail.dev/packages/webpush"
 )
 
@@ -79,7 +79,7 @@ func (service *PushService) handle(record NotificationRecord, targets map[string
 }
 
 func (service *PushService) push(record NotificationRecord, targets map[string]webpush.Target, presence Presence, writeLimit int) (JobProgress, error) {
-	decision := notifications.PushRules{}.Decide(presence.State, presence.DoNotDisturbUntil, time.Now())
+	decision := notify.PushRules{}.Decide(presence.State, presence.DoNotDisturbUntil, time.Now())
 	return service.byDecision(record, service.withTargets(decision, targets), targets, writeLimit)
 }
 
@@ -91,7 +91,7 @@ func (service *PushService) withTargets(decision string, targets map[string]webp
 }
 
 func (service *PushService) byDecision(record NotificationRecord, decision string, targets map[string]webpush.Target, writeLimit int) (JobProgress, error) {
-	if decision != (notifications.PushDecisions{}).Send() {
+	if decision != (notify.PushDecisions{}).Send() {
 		return service.skip(record)
 	}
 	return service.send(record, targets, writeLimit)

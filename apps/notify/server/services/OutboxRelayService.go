@@ -3,6 +3,7 @@ import (
 	"errors"
 	"time"
 
+	"mesail.dev/packages/notify"
 	"mesail.dev/packages/outbox"
 )
 
@@ -13,7 +14,7 @@ type OutboxRelayService struct {
 	// @Needs
 	settings *NotifySettingsService
 	// @Needs
-	tokens *OperatorTokenService
+	tokens *ServiceTokenService
 	// @Needs
 	callers *CallerService
 	pusher  outbox.Pusher
@@ -48,7 +49,8 @@ func (service *OutboxRelayService) RetryDead(authorization string, request Retry
 
 func (service *OutboxRelayService) relay() (outbox.Relay, error) {
 	settings, failure := service.settings.Outbox()
-	return outbox.NewRelay(service.store, service.pusherOrDefault(), settings, time.Now), failure
+	store := notify.OutboxStoreFunctions{PendingFunction: service.store.Pending, LoadFunction: service.store.Load, SaveFunction: service.store.Save}
+	return outbox.NewRelay(store, service.pusherOrDefault(), settings, time.Now), failure
 }
 
 func (service *OutboxRelayService) runUnless(failure error) (outbox.Report, error) {
@@ -56,7 +58,7 @@ func (service *OutboxRelayService) runUnless(failure error) (outbox.Report, erro
 		return outbox.Report{}, failure
 	}
 	relay, problem := service.relay()
-	report, runFailure := relay.RunOnce(service.sweepSize())
+	report, runFailure := relay.RunWithin(service.writeLimit(), service.timeLimit())
 	return report, cmp.Or(problem, runFailure)
 }
 
@@ -92,7 +94,7 @@ func (service *OutboxRelayService) pusherOrDefault() outbox.Pusher {
 	if service.pusher != nil {
 		return service.pusher
 	}
-	return outbox.NewHTTPPusher(service.tokens, outbox.HTTPPusher{}.DefaultTimeout())
+	return outbox.NewDomainHTTPPusher(outbox.DomainTokenFunc(service.tokens.TokenFor), outbox.HTTPPusher{}.DefaultTimeout())
 }
 
 func (service *OutboxRelayService) deadEventsOf(documents []outbox.Document) ([]DeadEvent, error) {
@@ -123,7 +125,7 @@ func (service *OutboxRelayService) views(ref outbox.Ref, letters []outbox.DeadLe
 }
 
 func (service *OutboxRelayService) wire(report outbox.Report) OutboxReport {
-	return OutboxReport{Documents: report.Documents, Delivered: report.Delivered, Retried: report.Retried, DeadLettered: report.DeadLettered}
+	return OutboxReport{Documents: report.Documents, Delivered: report.Delivered, Retried: report.Retried, DeadLettered: report.DeadLettered, More: report.More}
 }
 
 func (service *OutboxRelayService) missingLetter(failure error) error {
@@ -145,4 +147,12 @@ func (service *OutboxRelayService) unavailable(failure error) error {
 
 func (service *OutboxRelayService) sweepSize() int {
 	return 100
+}
+
+func (service *OutboxRelayService) writeLimit() int {
+	return 25
+}
+
+func (service *OutboxRelayService) timeLimit() time.Duration {
+	return 20 * time.Second
 }

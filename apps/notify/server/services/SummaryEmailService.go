@@ -9,7 +9,7 @@ import (
 
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/ids"
-	"mesail.dev/packages/notifications"
+	"mesail.dev/packages/notify"
 	"mesail.dev/packages/outbox"
 )
 
@@ -42,7 +42,7 @@ func (service *SummaryEmailService) Writes() int {
 
 func (service *SummaryEmailService) record(member MemberSettingsRecord, items []NotificationRecord) SummaryRecord {
 	notificationIds := service.wireIds(items)
-	subject, body := notifications.SummaryText{}.Build(member.DisplayName, service.summaryItems(items))
+	subject, body := notify.SummaryText{}.Build(member.DisplayName, service.summaryItems(items))
 	return SummaryRecord{
 		DomainId:        member.DomainId,
 		MemberId:        member.MemberId,
@@ -65,10 +65,10 @@ func (service *SummaryEmailService) wireIds(items []NotificationRecord) []string
 	return notificationIds
 }
 
-func (service *SummaryEmailService) summaryItems(items []NotificationRecord) []notifications.SummaryItem {
-	summaryItems := []notifications.SummaryItem{}
+func (service *SummaryEmailService) summaryItems(items []NotificationRecord) []notify.SummaryItem {
+	summaryItems := []notify.SummaryItem{}
 	for _, item := range items {
-		summaryItems = append(summaryItems, notifications.SummaryItem{Kind: item.Kind, AuthorDisplayName: item.AuthorDisplayName, CreatedAt: item.CreatedAt})
+		summaryItems = append(summaryItems, notify.SummaryItem{Kind: item.Kind, AuthorDisplayName: item.AuthorDisplayName, CreatedAt: item.CreatedAt})
 	}
 	return summaryItems
 }

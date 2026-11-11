@@ -2,7 +2,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/events"
-	"mesail.dev/packages/notifications"
+	"mesail.dev/packages/notify"
 )
 
 // @Test(NotifyTestSetup, {"partition":"tests"})
@@ -21,7 +21,7 @@ func (test *FanoutServiceTest) service() *FanoutService {
 
 func (test *FanoutServiceTest) spilled(domainId string) {
 	message := events.MessageCreated{MessageId: "msg_1", ConversationId: "cnv_1", ConversationKind: "direct", AuthorKind: "member", AuthorMemberId: "member-1", MemberIds: []string{"member-1", "member-2", "member-3", "member-4", "member-5"}, CreatedAt: time.Now().UTC().Format(time.RFC3339)}
-	recipients := []notifications.Recipient{{MemberId: "member-2", Kind: "dm"}, {MemberId: "member-3", Kind: "dm"}, {MemberId: "member-4", Kind: "dm"}, {MemberId: "member-5", Kind: "dm"}}
+	recipients := []notify.Recipient{{MemberId: "member-2", Kind: "dm"}, {MemberId: "member-3", Kind: "dm"}, {MemberId: "member-4", Kind: "dm"}, {MemberId: "member-5", Kind: "dm"}}
 	if err := test.queue().Spill(FanoutBatch{DomainId: domainId, Message: message}, recipients); err != nil {
 		panic(err)
 	}

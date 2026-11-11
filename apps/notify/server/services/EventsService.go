@@ -3,6 +3,7 @@ import (
 	"errors"
 
 	"mesail.dev/packages/events"
+	"mesail.dev/packages/notify"
 	"mesail.dev/packages/oidc"
 )
 
@@ -26,7 +27,7 @@ func (service *EventsService) Receive(authorization string, request EventEnvelop
 	return EventReceipt{EventId: receipt.EventID, Status: receipt.Status}, service.translated(failure)
 }
 
-func (service *EventsService) Handle(envelope events.Envelope) error {
+func (service *EventsService) handle(envelope events.Envelope) error {
 	failure := service.domains.Register(envelope.DomainId)
 	return service.dispatchUnless(failure, envelope)
 }
@@ -53,7 +54,8 @@ func (service *EventsService) receiveUnless(failure error, caller oidc.Caller, e
 	if failure != nil {
 		return events.Receipt{}, failure
 	}
-	return events.NewReceiver(events.Services{}.Notify(), service.seen, service).Receive(caller, envelope)
+	seen := notify.SeenStoreFunctions{SeenFunction: service.seen.Seen, RememberFunction: service.seen.Remember}
+	return events.NewReceiver(events.Services{}.Notify(), seen, notify.EventHandlerFunction(service.handle)).Receive(caller, envelope)
 }
 
 func (service *EventsService) dispatchUnless(failure error, envelope events.Envelope) error {

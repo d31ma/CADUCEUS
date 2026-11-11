@@ -135,7 +135,7 @@ stay).
 One human with one login (ADR 0005). Keycloak holds the credentials.
 | Field | Type | Rule |
 | --- | --- | --- |
-| `id` | string | The person id: the Keycloak `sub` of the realm `mesail`. The document id. |
+| `id` | string | The person id: the Keycloak `sub` of the realm `mesail`. The document id. It never changes. `directory` never creates a person from a Keycloak user it did not create, and never points an existing person, member or address at another `sub` (a re-created Keycloak user with the same username is a different, unknown user; see CONTRACTS "identity"). |
 | `username` | string | The prefix: lowercase, rules in SPEC AC-ID-11. Indexed, unique on the install, never changed. Equal to the Keycloak username. |
 | `displayName` | string | Shown in every domain of the person. |
 | `domainIds` | string[] | The domains the person is a member of; the only list `identity` reads to allow a sign-in or a switch. |

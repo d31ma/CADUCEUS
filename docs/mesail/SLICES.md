@@ -194,6 +194,18 @@ that `GET /api/v1/<service>/health` answers `200`. Slice C1 adds this step
 to `scripts/gates.sh` for every app; until it lands, run it by hand and
 name it in the report.
 
+**Every Go module is gated** (decided 2026-11-11, after a router fix
+merged without a gate). `scripts/gates.sh` runs `gofmt -l`, `go vet ./...`
+and `go test ./...` in every Go module of the repository outside the apps:
+`kit`, `deploy/router`, `edge/realtime`, `edge/smtp`, `tools/crap`,
+`tools/styles`, `tests/responsive`, and `go vet -tags blackbox ./...` in
+`tests/blackbox`. The production modules (`kit`, `deploy/router`,
+`edge/realtime`, `edge/smtp`) also pass the CRAP check (at most 15). A new
+`go.mod` outside `apps/` is gated automatically: the script finds the
+modules instead of listing them. A slice that owns one of these modules
+runs `scripts/gates.sh --shared-only` before it merges. Slice C1 owns the
+script change.
+
 **Everything in a slice gate runs natively on macOS. No VM.** That means
 `ty test`, `ty bundle`, `ty start`, `go test`, and the blackbox tests
 against services started with `ty start` on this Mac behind the native dev
@@ -606,6 +618,13 @@ an earlier slice text in this file says "realm of the domain",
 - **Done when:** the image starts on SQLite with the one realm, and
   `oidc_check.py` passes direct grant, OTP, attribute mapping and the
   three service accounts.
+- **Follow-up (2026-11-11, from the Floci run):** the dev and test users in
+  `deploy/keycloak/realm/` carry fixed Keycloak user ids (`id` in the
+  realm import), and the directory's dev seed (L3, P1's people list) uses
+  the same ids, so a Keycloak that is re-created for a run keeps every
+  `sub` and the tests' member ids still match (CONTRACTS "identity", a
+  Keycloak user without a person). A fresh FYLO root per Floci run stays
+  allowed, but is not needed for this.
 
 ### L3. Directory: people and members (D1's successor)
 - **Owns:** `apps/directory/**` (except kit copies), `kit/recipients/**`.

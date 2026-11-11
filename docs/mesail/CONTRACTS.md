@@ -133,6 +133,17 @@ How sign-in works (SPEC AC-ID-9):
   Keycloak session it just opened and answers `403` (or `401` for
   `disabled` and `deleted`). An Operator with no domain gets the active
   domain `*`.
+- **A Keycloak user without a person** (`GET /people/{personId}` answers
+  `404`): `identity` ends the Keycloak session it just opened and answers
+  the same `401 unauthenticated` as a wrong password, and logs one warning
+  line `person_missing` with the Keycloak `sub` (never the username or
+  password). This happens when a Keycloak user was made outside Mesail, or
+  was deleted and made again outside Mesail: Keycloak gives the new user a
+  new `sub`, and Mesail never moves an existing person's data to it
+  (decided 2026-11-11). Keycloak users are made only by `directory`
+  (`POST /members`); a lost Keycloak database is recovered from its backup,
+  which keeps every `sub`. A later Operator tool may re-link a person to a
+  new `sub` on purpose; there is none in the first release.
 - `mustChangePassword` is the Keycloak user attribute
   `mesail.mustChangePassword`, which `directory` sets when it creates a
   person or resets a password; Keycloak maps it into its token for

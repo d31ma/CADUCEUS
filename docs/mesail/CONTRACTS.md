@@ -267,20 +267,44 @@ can read now.
 
 ## mail-in (SMTP, not HTTP)
 
-- SMTP on port 25 (STARTTLS), run as an always-on edge listener (ADR 0004).
+- SMTP on port 25 (STARTTLS), run as an always-on edge listener (ADR 0004,
+  `edge/smtp/README.md`).
 - `RCPT TO` is checked against `directory`
   (`GET /api/v1/directory/addresses/{address}`); unknown hosted recipients
   get `550 5.1.1`. Mail for a domain that is not hosted, or not `active`,
-  gets `550 5.7.1` (no open relay).
-- The edge writes the raw message to the blob store, then calls
+  gets `550 5.7.1` (no open relay). The edge tells the two apart by the
+  404 body: `ApiError{code:"domain_not_hosted"}` means the domain is not
+  hosted or not active; any other 404 means an unknown address in a hosted
+  domain.
+- The edge checks SPF, DKIM and DMARC (`kit/mailauth`) and parses the
+  headers (`kit/mime`). A DMARC failure under a `reject` policy gets
+  `550 5.7.1` and nothing is stored (AC-IN-4).
+- For each recipient domain, the edge writes its own raw copy (with an
+  `Authentication-Results` header added) to the blob store under
+  `<domainId>/inbound/<sha256>.eml`, then calls
   `POST /api/v1/mail-in/messages` (`Allow(Service)`) with
-  `InboundEnvelope{envelopeFrom, recipients[], rawBlobKey, size,
-  remoteAddress, helo, tls}` and answers `250` only after
-  `201 InboundAccepted{inboundId}`.
+  `InboundEnvelope{envelopeFrom, recipients[] (that domain only, 1..100),
+  rawBlobKey, size (1 byte..64 MiB), remoteAddress, helo, tls, headers:
+  InboundHeaders, authResults: AuthResults}`, and answers `250` only after
+  every domain answered `201 InboundAccepted{inboundId}`.
+  - `InboundHeaders{messageId, inReplyTo, references[], subject, from:
+    MailboxAddress, to[]: MailboxAddress, cc[]: MailboxAddress}`;
+    `MailboxAddress{name, address}`. Message ids have no angle brackets.
+  - `AuthResults{spf, dkim, dmarc, dmarcPolicy, suspicious}`: the result
+    words of RFC 8601 (`pass`, `fail`, `softfail`, `neutral`, `none`,
+    `temperror`, `permerror`), the applied DMARC policy, and `suspicious`
+    when DMARC, SPF or every DKIM signature failed.
+  - Errors: `400 invalid_request` (recipients in more than one domain, a
+    `rawBlobKey` outside `<domainId>/`, a size out of range), `503
+    unavailable` (storage failed; the edge answers `451` and the sender
+    retries).
+  - The same `rawBlobKey` sent again answers the same `inboundId`, so a
+    retried SMTP transaction is stored once.
 - After the message is stored, `mail-in` publishes one `email.received`
   event per recipient domain: envelope `domainId` is that domain, payload
-  `{inboundId, rcpts[] (only that domain's), rawBlobKey, headers: {messageId,
-  inReplyTo, references, subject, from, to, cc}, authResults}`.
+  `{inboundId, rcpts[] (only that domain's), rawBlobKey, headers:
+  InboundHeaders, authResults: AuthResults}`. Its `eventId` is fixed per
+  stored message (`evt_<inboundId>_received`).
 
 ## mail-out (worker, no public routes)
 

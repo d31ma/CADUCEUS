@@ -167,13 +167,16 @@ in Mesail's own settings; the browser still never talks to Keycloak):
 | --- | --- | --- | --- |
 | `POST /api/v1/directory/recipients/resolve` | SignedIn | `ResolveRequest{addresses[] (max 100)}` | `ResolveResponse{recipients[]: ResolvedRecipient}` |
 | `GET /api/v1/directory/members?query=` | SignedIn | - | `MemberPage` of `MemberSummary{memberId?, displayName, primaryAddress}`, only members of the caller's domain |
+| `GET /api/v1/directory/members/{memberId}` | SignedIn | - | `MemberSummary`; `404 not_found` when the member is unknown or in another domain (used by `channels` for invites) |
 | `GET /api/v1/directory/domains` | Allow(Operator) | - | `[]Domain` |
 | `GET /api/v1/directory/domains/{domainId}` | Allow(Operator, Service) | - | `Domain` or `404` (used by `mail-out` for `dkimSelector` and the hosted check) |
 | `POST /api/v1/directory/domains` | Allow(Operator) | `CreateDomainRequest{name}` | `201 Domain` (also creates the domain's Keycloak realm) |
 | `POST /api/v1/directory/domains/{domainId}/verify` | Allow(Operator) | - | `Domain` (with `dns` states) |
 | `DELETE /api/v1/directory/domains/{domainId}` | Allow(Operator) | - | `204` |
 | `POST /api/v1/directory/aliases` | Allow(DomainAdmin) | `CreateAliasRequest{address, memberId?}` | `201 Address` |
-| `GET /api/v1/directory/addresses/{address}` | Allow(Service) | - | `Address{address, domainId, kind, targetId}` or `404` (used by the SMTP edge and `messaging`) |
+| `POST /api/v1/directory/channel-addresses` | Allow(DomainAdmin) | `ChannelAddressRequest{address, channelId}` | `201 Address` with `kind: channel`; the same address for the same channel again answers `201`; `409 duplicate` when a member, alias or other channel has it; `400 invalid_request` (`address`) when it is not in the caller's domain (called by `channels`) |
+| `DELETE /api/v1/directory/channel-addresses/{address}` | Allow(DomainAdmin) | - | `204`; `404` unless it is a channel address in the caller's domain |
+| `GET /api/v1/directory/addresses/{address}` | Allow(Service) | - | `Address{address, domainId, kind, targetId}`; `404 domain_not_hosted` when the domain is not hosted or not `active`; `404 not_found` for an unknown address in a hosted, active domain (used by the SMTP edge and `messaging`) |
 
 `Domain{domainId, name, state, dkimSelector, dns: DnsState{mx, spf, dkim,
 dmarc}}`. `domainId` is the domain name in lowercase (for example

@@ -54,6 +54,20 @@ func (test *ControllersTest) TestGetAddressRefusesARequestWithoutAValidToken() {
 	Assert.IsTrue(test.unauthenticated(err), "want Unauthenticated")
 }
 
+func (test *ControllersTest) TestMemberLookupRefusesARequestWithoutAValidToken() {
+	controller := &MembersController{admission: &AdmissionService{callers: &CallerService{}}}
+	_, err := controller.GetMember("Bearer forged", "bo-id")
+	Assert.IsTrue(test.unauthenticated(err), "want Unauthenticated")
+}
+
+func (test *ControllersTest) TestChannelAddressRoutesRefuseARequestWithoutAValidToken() {
+	controller := &ChannelAddressesController{admission: &AdmissionService{callers: &CallerService{}}, channels: &ChannelAddressService{rules: &AddressRulesService{}}}
+	_, addErr := controller.PostChannelAddress("Bearer forged", ChannelAddressRequest{Address: "team@example.com", ChannelId: "ch_1"})
+	deleteErr := controller.DeleteChannelAddress("Bearer forged", "team@example.com")
+	Assert.IsTrue(test.unauthenticated(addErr), "add: want Unauthenticated")
+	Assert.IsTrue(test.unauthenticated(deleteErr), "delete: want Unauthenticated")
+}
+
 func (test *ControllersTest) unauthenticated(err error) bool {
 	var refused *Unauthenticated
 	return errors.As(err, &refused)

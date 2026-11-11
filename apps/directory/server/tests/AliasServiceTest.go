@@ -70,7 +70,7 @@ func (test *AliasServiceTest) world() (*AliasService, oidc.Caller, string) {
 	caller := oidc.Caller{DomainId: domainId, MemberId: "ana-id", DisplayName: "Ana", Email: "ana@" + domainId}
 	memberService.Remember(caller)
 	memberService.Remember(oidc.Caller{DomainId: domainId, MemberId: "bo-id", DisplayName: "Bo", Email: "bo@" + domainId})
-	return &AliasService{addresses: addresses, members: members}, caller, domainId
+	return &AliasService{addresses: addresses, members: members, rules: &AddressRulesService{}}, caller, domainId
 }
 
 func (test *AliasServiceTest) unique() string {

@@ -27,6 +27,12 @@ func (handler *DirectoryErrorHandler) Missing(failure *NotFound) ApiError {
 }
 
 // @HandlesError
+// @ResponseStatus(404)
+func (handler *DirectoryErrorHandler) NotHosted(failure *DomainNotHosted) ApiError {
+	return ApiError{Code: "domain_not_hosted", Message: failure.Message}
+}
+
+// @HandlesError
 // @ResponseStatus(409)
 func (handler *DirectoryErrorHandler) Duplicate(failure *Duplicate) ApiError {
 	return ApiError{Code: "duplicate", Message: failure.Message}

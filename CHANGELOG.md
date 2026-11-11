@@ -87,6 +87,10 @@
   wait for slice I1's service tokens.
 - `kit/recipients` gained address and domain-name checks and the recipient
   classifier, which decides the kind from the caller's domain.
+- For other slices: the address lookup answers `404 domain_not_hosted`
+  for a domain that is not hosted or not active and `404 not_found` for an
+  unknown address (M1); `GET /api/v1/directory/members/{memberId}` and
+  `POST`/`DELETE /api/v1/directory/channel-addresses` for channels (C2).
 
 ### Slice A1: attachments and blob store
 

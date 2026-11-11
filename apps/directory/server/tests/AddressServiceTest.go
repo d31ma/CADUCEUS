@@ -26,11 +26,27 @@ func (test *AddressServiceTest) TestAnUnknownAddressOfAHostedDomainIsNotFound() 
 	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
 }
 
-func (test *AddressServiceTest) TestAnAddressOfADomainThatIsNotHostedIsNotFound() {
+func (test *AddressServiceTest) TestAnAddressOfADomainThatIsNotHostedIsDomainNotHosted() {
 	service, _ := test.world()
 	_, err := service.Find("carol@partner-" + test.unique() + ".test")
-	var missing *NotFound
-	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
+	var notHosted *DomainNotHosted
+	Assert.IsTrue(errors.As(err, &notHosted), "want DomainNotHosted")
+}
+
+func (test *AddressServiceTest) TestAnAddressOfAPendingDomainIsDomainNotHosted() {
+	service, _ := test.world()
+	pending := "p-" + test.unique() + ".test"
+	Assert.IsTrue(service.domains.Insert(DomainDocument{DomainId: pending, Name: pending, State: "pending"}) == nil, "insert failed")
+	_, err := service.Find("team@" + pending)
+	var notHosted *DomainNotHosted
+	Assert.IsTrue(errors.As(err, &notHosted), "want DomainNotHosted")
+}
+
+func (test *AddressServiceTest) TestAnUnknownAddressOfAnActiveDomainIsNotDomainNotHosted() {
+	service, domain := test.world()
+	_, err := service.Find("nobody@" + domain)
+	var notHosted *DomainNotHosted
+	Assert.IsTrue(!errors.As(err, &notHosted), "an active domain is hosted")
 }
 
 func (test *AddressServiceTest) TestAnInvalidAddressIsNotFound() {

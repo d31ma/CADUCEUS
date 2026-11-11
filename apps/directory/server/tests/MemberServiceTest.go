@@ -132,6 +132,31 @@ func (test *MemberServiceTest) TestSearchRefusesACursorItDidNotGiveOut() {
 	Assert.Equals("cursor", invalid.Field)
 }
 
+func (test *MemberServiceTest) TestSummaryOfAMemberOfTheCallersDomain() {
+	service, _, domain := test.world()
+	service.Remember(oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain})
+	summary, err := service.Summary(Admission{Caller: test.caller(domain, "Bo")}, "ana-id")
+	Assert.IsTrue(err == nil, "summary failed")
+	Assert.Equals("Ana Admin", summary.DisplayName)
+	Assert.Equals("ana@"+domain, summary.PrimaryAddress)
+}
+
+func (test *MemberServiceTest) TestSummaryOfAMemberOfAnotherDomainIsNotFound() {
+	service, _, domain := test.world()
+	otherDomain := test.hosted("active")
+	service.Remember(oidc.Caller{DomainId: otherDomain, MemberId: "eve-id", DisplayName: "Eve", Email: "eve@" + otherDomain})
+	_, err := service.Summary(Admission{Caller: test.caller(domain, "Bo")}, "eve-id")
+	var missing *NotFound
+	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
+}
+
+func (test *MemberServiceTest) TestSummaryForARefusedCallerIsTheRefusal() {
+	service, _, domain := test.world()
+	_, err := service.Summary(Admission{Caller: test.caller(domain, "Bo"), Refusal: &Unauthenticated{}}, "bo-id")
+	var refused *Unauthenticated
+	Assert.IsTrue(errors.As(err, &refused), "want Unauthenticated")
+}
+
 func (test *MemberServiceTest) caller(domain string, name string) oidc.Caller {
 	return oidc.Caller{DomainId: domain, MemberId: "bo-id", DisplayName: name, Email: "Bo@" + strings.ToUpper(domain)}
 }

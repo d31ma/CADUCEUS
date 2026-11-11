@@ -2,7 +2,6 @@ import (
 	"cmp"
 
 	"mesail.dev/packages/oidc"
-	"mesail.dev/packages/recipients"
 )
 
 // @Service
@@ -11,6 +10,8 @@ type AliasService struct {
 	addresses *AddressStorageService
 	// @Needs
 	members *MemberStorageService
+	// @Needs
+	rules *AddressRulesService
 }
 
 func (service *AliasService) Add(admission Admission, request CreateAliasRequest) (Address, error) {
@@ -25,22 +26,13 @@ func (service *AliasService) addUnless(admission Admission, request CreateAliasR
 }
 
 func (service *AliasService) add(caller oidc.Caller, request CreateAliasRequest) (Address, error) {
-	address, invalid := service.ownAddress(caller.DomainId, request.Address)
+	address, invalid := service.rules.OwnAddress(caller.DomainId, request.Address)
 	memberId := cmp.Or(request.MemberId, caller.MemberId)
 	_, found, memberFailure := service.members.Find(caller.DomainId, memberId)
 	_, taken, addressFailure := service.addresses.Find(address)
 	alias := AddressDocument{Address: address, DomainId: caller.DomainId, Kind: service.aliasKind(), TargetId: memberId}
 	failure := cmp.Or(invalid, memberFailure, addressFailure, service.knownMember(found), service.free(taken, address))
 	return service.wire(alias), service.insertUnless(failure, alias)
-}
-
-func (service *AliasService) ownAddress(domainId string, raw string) (string, error) {
-	address, invalid := recipients.Addresses{}.Normalize(raw)
-	switch {
-	case invalid != nil, (recipients.Addresses{}).Domain(address) != domainId:
-		return "", &InvalidRequest{Field: "address", Message: "the alias must be an address in your own domain"}
-	}
-	return address, nil
 }
 
 func (service *AliasService) knownMember(found bool) error {

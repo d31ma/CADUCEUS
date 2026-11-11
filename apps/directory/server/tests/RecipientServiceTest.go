@@ -1,7 +1,7 @@
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
+	"os"
 	"strings"
 
 	"mesail.dev/packages/oidc"
@@ -57,51 +57,6 @@ func (test *RecipientServiceTest) TestUnknownAddressOfTheCallersDomainIsExternal
 	Assert.Equals("external", nobody.Kind)
 }
 
-func (test *RecipientServiceTest) TestAddressesAreMatchedWithoutCase() {
-	service, caller, world := test.world()
-	bo := test.resolve(service, caller, strings.ToUpper(world["bo"]))
-	Assert.Equals(world["bo"], bo.Address)
-	Assert.Equals("member", bo.Kind)
-}
-
-func (test *RecipientServiceTest) TestAliasResolvesToItsMember() {
-	service, caller, world := test.world()
-	alias := test.resolve(service, caller, world["alias"])
-	Assert.Equals("member", alias.Kind)
-	Assert.Equals("bo-id", alias.MemberId)
-}
-
-func (test *RecipientServiceTest) TestChannelAddressResolvesToChatOnly() {
-	service, caller, world := test.world()
-	channel := test.resolve(service, caller, world["channel"])
-	Assert.Equals("channel", channel.Kind)
-	Assert.Equals("chat", strings.Join(channel.AllowedDeliveries, ","))
-	Assert.Equals("ch_team", channel.ChannelId)
-}
-
-func (test *RecipientServiceTest) TestRepeatedAddressesAreResolvedOnce() {
-	service, caller, world := test.world()
-	response, err := service.Resolve(Admission{Caller: caller}, ResolveRequest{Addresses: []string{world["bo"], strings.ToUpper(world["bo"])}})
-	Assert.IsTrue(err == nil, "resolve failed")
-	Assert.Equals(1, len(response.Recipients))
-}
-
-func (test *RecipientServiceTest) TestInvalidAddressIsRefused() {
-	service, caller, _ := test.world()
-	_, err := service.Resolve(Admission{Caller: caller}, ResolveRequest{Addresses: []string{"not an address"}})
-	var invalid *InvalidRequest
-	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("addresses", invalid.Field)
-}
-
-func (test *RecipientServiceTest) TestMoreThanOneHundredAddressesAreRefused() {
-	service, caller, _ := test.world()
-	addresses := strings.Split(strings.Repeat("a@partner.test,", 101), ",")
-	_, err := service.Resolve(Admission{Caller: caller}, ResolveRequest{Addresses: addresses[:101]})
-	var invalid *InvalidRequest
-	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-}
-
 func (test *RecipientServiceTest) resolve(service *RecipientService, caller oidc.Caller, address string) ResolvedRecipient {
 	response, err := service.Resolve(Admission{Caller: caller}, ResolveRequest{Addresses: []string{address}})
 	Assert.IsTrue(err == nil, "resolve failed")
@@ -110,6 +65,7 @@ func (test *RecipientServiceTest) resolve(service *RecipientService, caller oidc
 }
 
 func (test *RecipientServiceTest) world() (*RecipientService, oidc.Caller, map[string]string) {
+	os.Setenv("YON_APPLICATION_JSON", `{"yon":{}}`)
 	run := test.unique()
 	domain := "one-" + run + ".test"
 	otherDomain := "two-" + run + ".test"

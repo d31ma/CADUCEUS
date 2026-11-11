@@ -21,6 +21,10 @@ func (test *DirectoryErrorHandlerTest) TestNotFoundHasItsCode() {
 	Assert.Equals("not_found", (&DirectoryErrorHandler{}).Missing(&NotFound{}).Code)
 }
 
+func (test *DirectoryErrorHandlerTest) TestDomainNotHostedHasItsOwnCode() {
+	Assert.Equals("domain_not_hosted", (&DirectoryErrorHandler{}).NotHosted(&DomainNotHosted{}).Code)
+}
+
 func (test *DirectoryErrorHandlerTest) TestDuplicateHasItsCode() {
 	Assert.Equals("duplicate", (&DirectoryErrorHandler{}).Duplicate(&Duplicate{}).Code)
 }

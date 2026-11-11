@@ -21,6 +21,16 @@ func (controller *MembersController) GetMembers(request *http.Request) (MemberPa
 	return controller.members.Search(admission, query, invalid)
 }
 
+// @GetRoute("/{member_id}")
+func (controller *MembersController) GetMember(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromPath("member_id")
+	memberId string,
+) (MemberSummary, error) {
+	return controller.members.Summary(controller.admission.Admit(authorization), memberId)
+}
+
 func (controller *MembersController) limit(raw string) (int, error) {
 	limit, failure := strconv.Atoi(raw)
 	switch {

@@ -42,6 +42,27 @@ func (service *MemberService) Search(admission Admission, query MemberQuery, inv
 	return service.page(service.matching(members, query.Text), offset, size), cmp.Or(refusal, failure)
 }
 
+func (service *MemberService) Summary(admission Admission, memberId string) (MemberSummary, error) {
+	member, found, failure := service.memberUnless(admission, memberId)
+	summary := MemberSummary{MemberId: member.MemberId, DisplayName: member.DisplayName, PrimaryAddress: member.PrimaryAddress}
+	return summary, cmp.Or(admission.Refusal, failure, service.knownActive(found, member.State))
+}
+
+func (service *MemberService) memberUnless(admission Admission, memberId string) (MemberDocument, bool, error) {
+	if admission.Refusal != nil {
+		return MemberDocument{}, false, nil
+	}
+	return service.members.Find(admission.Caller.DomainId, memberId)
+}
+
+func (service *MemberService) knownActive(found bool, state string) error {
+	switch {
+	case !found, state != service.active():
+		return &NotFound{Message: "no such member in your domain"}
+	}
+	return nil
+}
+
 func (service *MemberService) findUnless(refused error, caller oidc.Caller) (MemberDocument, bool, error) {
 	if refused != nil {
 		return MemberDocument{}, false, nil

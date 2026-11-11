@@ -9,6 +9,17 @@ type AddressStorageService struct {
 }
 
 func (storage *AddressStorageService) Find(address string) (AddressDocument, bool, error) {
+	return storage.lookup(address == "", address)
+}
+
+func (storage *AddressStorageService) Delete(address AddressDocument) error {
+	return storage.documents.Delete(storage.names.Addresses(address.DomainId), address.Id)
+}
+
+func (storage *AddressStorageService) lookup(empty bool, address string) (AddressDocument, bool, error) {
+	if empty {
+		return AddressDocument{}, false, nil
+	}
 	route := AddressDocument{}
 	collection := storage.names.Addresses(recipients.Addresses{}.Domain(address))
 	found, failure := storage.documents.FindOne(collection, map[string]any{storage.addressField(): address}, &route)

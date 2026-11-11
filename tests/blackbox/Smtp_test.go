@@ -18,7 +18,8 @@ func smtpAddress(t *testing.T) string {
 	return address
 }
 
-func TestAcIn1UnknownHostedRecipientIsRefusedAtRcpt(t *testing.T) {
+func expectRcptRefused(t *testing.T, recipient string) {
+	t.Helper()
 	client, err := smtp.Dial(smtpAddress(t))
 	if err != nil {
 		t.Fatal(err)
@@ -27,10 +28,18 @@ func TestAcIn1UnknownHostedRecipientIsRefusedAtRcpt(t *testing.T) {
 	if err := client.Mail("dan@outside.test"); err != nil {
 		t.Fatal(err)
 	}
-	err = client.Rcpt("nobody@example.com")
+	err = client.Rcpt(recipient)
 	if err == nil || !strings.HasPrefix(err.Error(), "550") {
-		t.Fatalf("want 550 at RCPT TO, got %v", err)
+		t.Fatalf("want 550 at RCPT TO for %s, got %v", recipient, err)
 	}
+}
+
+func TestAcIn1UnknownHostedRecipientIsRefusedAtRcpt(t *testing.T) {
+	expectRcptRefused(t, "nobody@example.com")
+}
+
+func TestAcId11SubAddressIsUnknown(t *testing.T) {
+	expectRcptRefused(t, "ana+news@example.com")
 }
 
 func TestAcIn1MailForAnUnhostedDomainIsNotRelayed(t *testing.T) {

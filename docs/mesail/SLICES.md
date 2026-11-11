@@ -560,8 +560,7 @@ an earlier slice text in this file says "realm of the domain",
 - **Done when:** L6 and L7 can build from it.
 
 ### L0. Blackbox tests for one login (architecture, `mesail-arch`)
-- **Owns:** `tests/blackbox/**`, `tests/responsive/AppProfile.go` (realm
-  names only).
+- **Owns:** `tests/blackbox/**`.
 - **Builds:** throwaway contract tests for SPEC AC-ID-1 to AC-ID-14 (sign
   in with `ana`, `ANA` and `ana@example.org`; switch; refresh after
   removal; prefix reservation against aliases and channel addresses;
@@ -571,7 +570,9 @@ an earlier slice text in this file says "realm of the domain",
   `partner.test`; operator: no domain).
 - **Depends on:** nothing; starts at once. The tests fail until L5 lands.
 - **Done when:** `go vet -tags blackbox ./...` passes and every new
-  criterion has a test.
+  criterion has a test. Landed: `SignIn_test.go`, `DomainSwitch_test.go`,
+  `Tokens_test.go`, `Members_test.go`, `People_test.go` (helpers
+  `Sessions.go`, `People.go`; fixtures in `tests/blackbox/README.md`).
 
 ### L1. Login kit (new session `mesail-login-kit`, or I1's successor)
 - **Owns:** `kit/oidc/**`, `kit/addresses/**` (new). Not the app copies:
@@ -660,7 +661,7 @@ an earlier slice text in this file says "realm of the domain",
   app in the Mesail token mode, `"mesail-operators"` replaced by
   `oidc.InstallWide`, the old mode removed from `kit/oidc` (`Realm`,
   `IssuerPattern`, the `{realm}` settings), the P1 changes in the "What
-  changes where" table, `tests/responsive/AppProfile.go` cleaned with L0.
+  changes where" table.
 - **Depends on:** L1, L2, L3, L4 on `develop`. The coordinator asks the
   owners of the apps listed above to merge nothing during the switch
   (about one working session).
@@ -677,6 +678,8 @@ an earlier slice text in this file says "realm of the domain",
   /session/domain`, then a new realtime connection), the forced password
   change, the default domain setting (`PUT /directory/me/default-domain`).
 - **Depends on:** LU and the contracts; works with fakes until L4 lands.
+- **Also owns:** `tests/responsive/AppProfile.go` (`WebProfile`): the
+  stored session and fake tokens follow the new per-tab session.
 - **Done when:** gates pass, the responsive test passes at 320 to 2560 px,
   and a person switches domains in the running stack after L5.
 
@@ -686,6 +689,8 @@ an earlier slice text in this file says "realm of the domain",
   (no `mesail-operators` realm), the members page, the people page, naming
   the first admin on the domain page.
 - **Depends on:** LU and the contracts; works with fakes until L3 lands.
+- **Also owns:** `AdminProfile` in `tests/responsive/AppProfile.go` (no
+  `mesail-operators` realm; L6 and L7 merge it one after the other).
 - **Done when:** gates pass, the responsive test passes, and S14 works in
   the running stack after L5.
 

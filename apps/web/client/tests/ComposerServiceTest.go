@@ -46,7 +46,6 @@ func (test *ComposerServiceTest) TestOpenKeepsAnExistingReplyPrefix() {
 	Assert.Equals("RE: Contract", composer.Subject)
 }
 
-
 func (test *ComposerServiceTest) TestAddTypedShowsChipsAndSummary() {
 	composer := test.with("bo@example.com carol@partner.org")
 	Assert.Equals(2, len(composer.To))
@@ -105,7 +104,6 @@ func (test *ComposerServiceTest) TestChooseAnnouncesTheNewChoice() {
 	Assert.Equals("Send email", composer.SendLabel)
 }
 
-
 func (test *ComposerServiceTest) TestRemoveTakesTheChipAway() {
 	composer := test.with("bo@example.com")
 	composer.Remove("bo@example.com", "to")
@@ -119,6 +117,13 @@ func (test *ComposerServiceTest) TestSendWithoutRecipientsAsksForOne() {
 	Assert.Equals("addRecipient", composer.Problem)
 	Assert.Equals("Add a recipient to send.", composer.ProblemText)
 	Assert.IsTrue(!composer.Sending)
+}
+
+func (test *ComposerServiceTest) TestSendRefusesMoreThanTwentyRecipients() {
+	composer := test.with("p0@partner.org p1@partner.org p2@partner.org p3@partner.org p4@partner.org p5@partner.org p6@partner.org p7@partner.org p8@partner.org p9@partner.org p10@partner.org p11@partner.org p12@partner.org p13@partner.org p14@partner.org p15@partner.org p16@partner.org p17@partner.org p18@partner.org p19@partner.org p20@partner.org")
+	composer.Body = "hello"
+	composer.Send()
+	Assert.Equals("tooManyRecipients", composer.Problem)
 }
 
 func (test *ComposerServiceTest) TestSendRefusesAnInvalidAddress() {
@@ -266,7 +271,6 @@ func (test *ComposerServiceTest) TestUploadsShowInTheComposer() {
 	composer.RemoveUpload("plan.pdf")
 	Assert.Equals(0, len(composer.Uploads))
 }
-
 
 func (test *ComposerServiceTest) TestRecipientKeyTabAddsAndOtherKeysDoNot() {
 	composer := test.composer()

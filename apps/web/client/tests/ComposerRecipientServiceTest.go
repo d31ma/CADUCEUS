@@ -116,8 +116,6 @@ func (test *ComposerRecipientServiceTest) TestRemoveLastOfAnEmptyRowChangesNothi
 	Assert.Equals(1, len(recipients.Recipients))
 }
 
-
-
 func (test *ComposerRecipientServiceTest) TestRefreshReportsAKindThatChanged() {
 	recipients := test.recipients()
 	recipients.Add("eve@example.org bo@example.com", "to")
@@ -187,4 +185,3 @@ func (test *ComposerRecipientServiceTest) TestFindReturnsTheChip() {
 func (test *ComposerRecipientServiceTest) TestSenderAddressIsTheSignedInAddress() {
 	Assert.Equals("ana@example.com", test.recipients().SenderAddress())
 }
-

@@ -260,6 +260,7 @@ func (composer *ComposerService) checks() []string {
 	return []string{
 		composer.needsIdle(),
 		composer.needsRecipient(),
+		composer.needsFewerRecipients(),
 		composer.needsValidRecipients(),
 		composer.needsResolvedRecipients(),
 		composer.needsSubject(composer.recipients.EmailMode()),
@@ -289,6 +290,13 @@ func (composer *ComposerService) needsRecipient() string {
 		return ""
 	}
 	return "addRecipient"
+}
+
+func (composer *ComposerService) needsFewerRecipients() string {
+	if len(composer.recipients.Recipients) <= composer.mostRecipients() {
+		return ""
+	}
+	return "tooManyRecipients"
 }
 
 func (composer *ComposerService) needsValidRecipients() string {
@@ -395,6 +403,10 @@ func (composer *ComposerService) clear() {
 	composer.ShowBlindCopy = false
 	composer.Problem = ""
 	composer.SubjectMissing = false
+}
+
+func (composer *ComposerService) mostRecipients() int {
+	return 20
 }
 
 func (composer *ComposerService) problemSubjectMissing() string {

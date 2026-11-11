@@ -700,8 +700,9 @@ an earlier slice text in this file says "realm of the domain",
   stack. This is also L3's live check: L3 tested its Keycloak calls only
   against a fake, so L5 runs `directory`'s member and person routes against
   the L2 image (create, disable, delete, password reset, 2-step code
-  removal, `mesail.mustChangePassword`) and reports any gap to the
-  directory owner.
+  removal, `mesail.mustChangePassword`) and D2's recovery of a Keycloak
+  user left by a failed add (`mesail.addRequest`, once `mesail-keycloak`
+  declares the attribute), and reports any gap to the directory owner.
 
 ### L6. Web: sign-in and domain switcher (F1's successor)
 - **Owns:** F1's patterns in `apps/web/client/**` (`Session*`, `Shell*`,
@@ -736,7 +737,25 @@ an earlier slice text in this file says "realm of the domain",
    the apps it touches.
 4. After L5: L6 and L7 finish their live checks; L0's tests pass against
    the stack.
-5. After L3, any time (does not block L5): **D2**.
+5. After L3, any time (does not block L5): **D2** (merged, develop
+   f106bdb).
+6. After D2, any time (does not block L5): **L7b**.
+
+### L7b. Admin app: removals in progress (a new small web-admin session)
+L5 stays a mechanical switch with a merge pause, so this UI change is not
+folded into it.
+- **Owns:** `apps/web-admin/**` (L7's session is finished).
+- **Builds:** `DELETE /directory/domains/{domainId}` and `DELETE
+  /directory/people/{personId}` answer `202` since D2 (CONTRACTS
+  "directory"); the admin app treats `202` as accepted, not as an error,
+  and shows the domain as "Removing" (and the person as "Deleting") with
+  their actions turned off, until the domain or person list no longer
+  shows it (or shows `state: deleted`). Uses the existing admin list and
+  badge styles; no new screen.
+- **Depends on:** D2 merged.
+- **Done when:** gates pass for `web-admin`, the responsive test passes,
+  and removing a domain and deleting a person on the native stack show the
+  in-progress state and then the end state.
 
 ### D2. Directory: long operations in batches, and repairs (L3's successor)
 Open items from L3 (develop 3d984bc, hand-over

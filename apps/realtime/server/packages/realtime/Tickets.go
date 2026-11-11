@@ -1,6 +1,10 @@
 package realtime
 
-import "time"
+import (
+	"time"
+
+	"mesail.dev/packages/oidc"
+)
 
 type Tickets struct {
 	Tokens TokenChecker
@@ -9,5 +13,13 @@ type Tickets struct {
 }
 
 func (tickets Tickets) Issue(authorization string) (Ticket, error) {
-	return Ticket{}, Unauthenticated{}
+	token, err := oidc.BearerToken{}.FromHeader(authorization)
+	if err != nil {
+		return Ticket{}, Unauthenticated{}
+	}
+	grant, err := tickets.Tokens.Grant(token, tickets.Now())
+	if err != nil {
+		return Ticket{}, err
+	}
+	return tickets.Book.Issue(grant)
 }

@@ -161,7 +161,8 @@ one conversation, one person, a date range, or "has attachment".
 Bo's avatar shows a green dot while he has Mesail open, yellow when idle
 for 10 minutes, and a red sign when he set *Do not disturb*. Only members
 of `example.com` see Bo's presence. When Ana mentions `@bo` while Bo is
-away, Bo gets a push notification. If he does not read it within the time
+away, Bo gets a browser push notification (if he turned it on in this
+browser; AC-PN-3). If he does not read it within the time
 he chose (default 30 minutes), he gets one email summary.
 
 ### S11. An Operator adds a domain
@@ -479,13 +480,33 @@ stable; tests name them.
 - **AC-PN-2** A mention, a DM, or a reply in a thread the member takes part
   in creates a notification. Muted conversations create notifications only
   for direct mentions.
-- **AC-PN-3** In the first release, notifications reach the member inside
-  Mesail: in the notification list, and as a system notification
-  (browser or desktop notification) while a Mesail window is open but not
-  focused. None are shown during `dnd`. When no Mesail window is open, the
-  email summary (AC-PN-4) covers them. Push to a closed browser or to a
-  phone waits for TACHYON support (Web Push from Go Tac) and native push per
-  platform, both after the first release.
+- **AC-PN-3** Notifications reach the member inside Mesail (the
+  notification list, and a system notification while a Mesail tab is open
+  but not focused) and, in a browser, also when no Mesail tab is open,
+  through browser push (decided by the owner on 2026-11-11: "Add browser
+  push"):
+  - Browser push is off until the member turns it on: in the settings
+    ("Notify me in this browser when Mesail is closed"), or from a one-time
+    in-app suggestion. The browser's own permission prompt appears only
+    after that click. The setting says to turn it on only on the member's
+    own device. Mesail never asks on page load.
+  - It works in every domain of the person that this browser has opened
+    while push was on; each domain registers the browser once.
+  - A push shows who and where, never message text: for example "Ana
+    Example mentioned you in #design (example.com)". A click opens that
+    conversation in that domain, switching the tab's domain if needed.
+  - Nothing is pushed during `dnd` or while the member is `active` in
+    Mesail.
+  - Signing out, a wipe of the device copy, removal from a domain and
+    `403 access_revoked` stop the pushes: sign-out and wipes end the
+    browser's subscription; removal deletes that domain's registration.
+  - Where the browser has no push (the installed apps, and Safari on an
+    iPhone or iPad unless Mesail was added to the Home Screen), the setting
+    is hidden. Push in the installed apps (APNs, FCM, WNS) comes after the
+    first release (TACHYON T4b).
+  - The email summary (AC-PN-4) still covers anything not read.
+  - Needs a TACHYON release with its push client (TACHYON ADR 0118, after
+    26.46.02).
 - **AC-PN-4** A member may opt in to one email summary of unread
   notifications after a delay they choose (15 minutes to 24 hours).
 

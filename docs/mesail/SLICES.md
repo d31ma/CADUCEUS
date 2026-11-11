@@ -464,10 +464,9 @@ C1, not before each slice merge.
   `apps/notify/server/packages/webpush/**` (synced only into `notify`).
 - **Builds:** AC-PN-2..4: notification records, in-app delivery through
   `realtime`, mute, the email summary (via `email.send.requested`). The Web
-  Push sender (`kit/webpush`, VAPID keys from the secret store) stays
-  ready, but no browser can subscribe yet (Go Tac 26.46.02 has no
-  PushManager), so the subscription route is kept and unused in the first
-  release.
+  Push sender (`kit/webpush`, VAPID keys from the secret store); the
+  browser side comes with slice N2 (Wave 3b) once Mesail uses a TACHYON
+  release with the push client (TACHYON ADR 0118).
 - **Depends on:** I2, M3 events, M2 contract.
 
 ### F2. Web conversations
@@ -711,6 +710,40 @@ an earlier slice text in this file says "realm of the domain",
    the apps it touches.
 4. After L5: L6 and L7 finish their live checks; L0's tests pass against
    the stack.
+
+## Wave 3b: browser push (SPEC AC-PN-3, decided 2026-11-11)
+
+The owner chose to add browser push to the first release. The server side
+exists (slice N1: subscriptions, `GET /notify/push-key`, VAPID and RFC 8291
+sending); this wave adds the payload format and the browser side.
+
+### N2. Browser push (N1's successor for `notify`, F4's successor for the web app)
+- **Owns:** in `apps/notify/**`, the push payload code; in
+  `apps/web/client/**`, F4's `NotificationPush*` files, the push settings
+  row and the one-time suggestion, and the `push` grant in the web app's
+  `tac.browserApis` (coordinate the manifest line with F1's owner).
+- **Builds:**
+  - `notify`: the payload JSON of CONTRACTS "notify" (title, body without
+    message text, path, tag), with tests that no message text can reach
+    it; deleting the member's push subscriptions in a domain on
+    `member.upserted` with `state: removed` (EVENTS.md section 7).
+  - web: `Push.Supported`; the settings toggle and the one-time
+    suggestion; on the click, `GET /notify/push-key`, `Push.Subscribe`,
+    then `POST /notify/push-subscriptions` with `PushSubscribed`'s fields;
+    on opening another domain while push is on, the same registration in
+    that domain; `Push.Unsubscribe` on sign-out and on every device-copy
+    wipe; the path route that opens a conversation in its domain (switching
+    the tab's domain with `POST /identity/session/domain` when needed);
+    the denied state ("Blocked in this browser's settings").
+  - The screens come from `mesail-ux` (or `mesail-offline-ux`): the
+    toggle, the suggestion, the prompt moment and the denied state.
+- **Depends on:** Mesail on a TACHYON release that has the push client
+  (ADR 0118; not 26.46.02); Wave 3 (one login) merged for the domain
+  switch.
+- **Done when:** in Chromium and Firefox on the dev stack, with no Mesail
+  tab open, a mention shows a system notification without message text,
+  and a click opens the conversation in the right domain; signing out
+  stops further pushes.
 
 ## Wave 4: offline first (ADR 0006)
 

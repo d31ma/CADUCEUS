@@ -691,7 +691,17 @@ How it works:
   in a thread the member wrote in. Only members who can read the message
   get one, never the author. A muted conversation keeps only mentions.
 - Web Push (AC-PN-3) uses VAPID (RFC 8292) and `aes128gcm` encryption (RFC
-  8291). The VAPID keys come from the secret store (`.env`:
+  8291). The encrypted payload is the JSON that TACHYON's push worker shows
+  (TACHYON ADR 0118): `{"title", "body", "path", "tag"}`. `title` is the
+  sender's display name; `body` says what happened and where, with no
+  message text ("mentioned you in #design (example.com)", "sent you a
+  message (example.com)", "replied in a thread (example.com)"); `path` is
+  the web app's path that opens the conversation in its domain, built only
+  from the domain id and the conversation id (the web slice names the
+  route); `tag` is `<domainId>/<conversationId>`, so a newer push for the
+  same conversation replaces the older one. A subscription is stored per
+  (domain, member); the web app registers the same browser subscription
+  once in each domain it opens while push is on. The VAPID keys come from the secret store (`.env`:
   `YON_NOTIFY_VAPID_PUBLIC_KEY`, `YON_NOTIFY_VAPID_PRIVATE_KEY`,
   `YON_NOTIFY_VAPID_SUBJECT`). A push endpoint must be `https` on a known
   push service host (`notify.push.hosts`), else `400 invalid_request`.

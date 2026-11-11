@@ -247,8 +247,9 @@ The owner approved TACHYON's plan for T1 to T12 (the TACHYON section's
   0118, after 26.46.02); T4a (wave 1) adds `PushReceived` for open pages,
   which the app treats as one more sign to sync. Native push (T4b) comes
   later. Sending Web Push from Yon (T4c) is not built and not needed:
-  Mesail's `notify` sends with its own Go `kit/webpush`. (Using browser
-  push in Mesail changes SPEC AC-PN-3; that is a separate decision.)
+  Mesail's `notify` sends with its own Go `kit/webpush`. (The owner then
+  decided to add browser push to the first release: SPEC AC-PN-3, slice
+  N2.)
 - **Blobs (T2, wave 2, ADR 0126).** Attachments in the copy use the
   `Blobs` client (IndexedDB, quota from the manifest). TACHYON never
   deletes a blob itself; Mesail's budget code does (section 6).

@@ -1,6 +1,7 @@
 import (
 	"cmp"
 	"errors"
+	"time"
 
 	"mesail.dev/packages/keycloak"
 	"mesail.dev/packages/transport"
@@ -24,7 +25,7 @@ func (service *RealmService) Delete(domainId string) error {
 func (service *RealmService) admin() keycloak.Admin {
 	settings := service.settings.Settings()
 	adminSettings := keycloak.AdminSettings{BaseUrl: settings.KeycloakUrl, ClientId: settings.Admin.Client, ClientSecret: settings.Admin.Secret, Secrets: service.secrets(settings.RealmSecrets)}
-	return keycloak.NewAdmin(adminSettings, transport.SingleUseTransport{}.Client(0))
+	return keycloak.NewAdmin(adminSettings, transport.SingleUseTransport{}.Client(service.timeout()))
 }
 
 func (service *RealmService) secrets(secrets DirectoryRealmSecrets) keycloak.RealmSecrets {
@@ -50,4 +51,8 @@ func (service *RealmService) unavailable(failure error) error {
 		return nil
 	}
 	return &Unavailable{Message: "the identity server is not available", Cause: failure}
+}
+
+func (service *RealmService) timeout() time.Duration {
+	return 30 * time.Second
 }

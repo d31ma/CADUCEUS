@@ -88,9 +88,9 @@
                 </logic>
               </logic>
               <logic :if="row.reactions && row.reactions.length > 0">
-                <ul class="mt-1 flex flex-wrap gap-1 ms-meta" aria-label="Reactions">
+                <ul class="reactions mt-1 flex flex-wrap items-center gap-1" aria-label="Reactions">
                   <loop :for="reaction of row.reactions">
-                    <li class="ms-reaction" :aria-label="reaction.label"><span aria-hidden="true">{reaction.glyph} {reaction.count}</span></li>
+                    <li class="reaction-chip inline-flex items-center px-2" :aria-label="reaction.label"><span aria-hidden="true">{reaction.glyph} {reaction.count}</span></li>
                   </loop>
                 </ul>
               </logic>
@@ -137,15 +137,15 @@
         </logic>
       </div>
 
-      <div class="sticky bottom-0 px-2 sm:px-4 ms-reply-dock">
-        <form method="dialog" class="ms-composer grid gap-2 p-3" aria-label="Reply in thread" on:submit="thread.replyWith($event.target.elements.reply.value, $event.target.elements.also.checked)">
+      <div class="sticky bottom-0 ms-reply-dock">
+        <form method="dialog" class="ms-composer grid gap-2" aria-label="Reply in thread" on:submit="thread.replyWith($event.target.elements.reply.value, $event.target.elements.also.checked)">
           <logic :if="thread.sendStatus == 'session'">
             <w-alert type="error" class="block">Your session ended, so the reply was not sent. Sign in again, then send it.</w-alert>
           </logic>
-          <w-textarea label="Reply in thread" name="reply" rows="2" auto-grow no-resize placeholder="Reply…" class="block min-w-0 [&_textarea]:max-h-[30vh]" :value="thread.failedDraft"></w-textarea>
+          <w-textarea label="Reply in thread" name="reply" rows="1" auto-grow no-resize placeholder="Reply…" class="block min-w-0 [&_textarea]:max-h-[30vh]" :value="thread.failedDraft"></w-textarea>
           <div class="flex flex-wrap items-center gap-2">
             <w-checkbox label="Also send to the conversation" name="also" density="compact" class="min-w-0 pointer-coarse:min-h-11 max-sm:min-h-11" :checked="thread.alsoToConversation"></w-checkbox>
-            <w-btn variant="filled" size="small" prepend-icon="send" class="ml-auto pointer-coarse:min-h-11 max-sm:min-h-11" :loading="thread.sendStatus == 'sending'">Send</w-btn>
+            <w-btn variant="filled" prepend-icon="send" class="reply-send ml-auto" :loading="thread.sendStatus == 'sending'">Send</w-btn>
           </div>
         </form>
       </div>

@@ -256,12 +256,33 @@ w-chip w-icon {
   background: transparent;
 }
 
-.w-text-field-control {
-  min-height: 1.5rem;
+.w-text-field {
+  --w-tf-height: var(--ms-control-md);
+  --w-tf-radius: var(--w-radius-lg);
 }
 
 @media (max-width: 767px), (pointer: coarse) {
-  .w-text-field-control {
+  .w-text-field {
+    --w-tf-height: var(--ms-touch-min);
+  }
+
+  .w-text-field-control:has(.w-text-field-affix) .w-text-field-field {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+.show-select {
+  display: block;
+  min-width: 0;
+}
+
+.show-select .w-select-field {
+  min-height: var(--ms-control-md);
+  border-radius: var(--w-radius-lg);
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .show-select .w-select-field {
     min-height: var(--ms-touch-min);
   }
 }
@@ -353,6 +374,9 @@ w-chip w-icon {
   }
   .items-center {
     align-items: center;
+  }
+  .items-end {
+    align-items: flex-end;
   }
   .items-start {
     align-items: flex-start;
@@ -497,8 +521,8 @@ w-chip w-icon {
     }
   }
   @container page (width >= 40rem) {
-    .\@xl\/page\:grid-cols-\[minmax\(0\,1fr\)_13rem\] {
-      grid-template-columns: minmax(0,1fr) 13rem;
+    .\@xl\/page\:grid-cols-\[minmax\(0\,1fr\)_14rem\] {
+      grid-template-columns: minmax(0,1fr) 14rem;
     }
     .\@xl\/page\:px-5 {
       padding-inline: calc(var(--spacing, 0.25rem) * 5);

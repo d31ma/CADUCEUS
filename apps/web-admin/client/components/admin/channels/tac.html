@@ -15,9 +15,9 @@
         </div>
       </div>
 
-      <form method="dialog" role="search" aria-label="Filter channels" class="grid grid-cols-1 gap-3 @xl/page:grid-cols-[minmax(0,1fr)_13rem]" on:submit="channelList.searchWith($event.target.elements.search.value)">
-        <w-text-field type="search" name="search" label="Search" placeholder="Channel name or address" prepend-inner-icon="search" hint="Press Enter to search." autocomplete="off" spellcheck="false" :value="channelList.search"></w-text-field>
-        <w-select name="show" label="Show" :value="channelList.show" on:change="channelList.showOnly($event.target.value)">
+      <form method="dialog" role="search" aria-label="Filter channels" class="grid grid-cols-1 items-end gap-3 @xl/page:grid-cols-[minmax(0,1fr)_14rem]" on:submit="channelList.searchWith($event.target.elements.search.value)">
+        <w-text-field type="search" name="search" label="Search" placeholder="Channel name or address" prepend-inner-icon="search" hide-details autocomplete="off" spellcheck="false" :value="channelList.search"></w-text-field>
+        <w-select name="show" label="Show" class="show-select" :value="channelList.show" on:change="channelList.showOnly($event.target.value)">
           <w-option value="all">All channels</w-option>
           <w-option value="public">Public</w-option>
           <w-option value="private">Private</w-option>

@@ -221,12 +221,17 @@ ul {
   background: transparent;
 }
 
-.w-text-field-control {
-  min-height: 1.5rem;
+.w-text-field {
+  --w-tf-height: var(--ms-control-md);
+  --w-tf-radius: var(--w-radius-lg);
 }
 
 @media (max-width: 767px), (pointer: coarse) {
-  .w-text-field-control {
+  .w-text-field {
+    --w-tf-height: var(--ms-touch-min);
+  }
+
+  .w-text-field-control:has(.w-text-field-affix) .w-text-field-field {
     min-height: var(--ms-touch-min);
   }
 }

@@ -11,7 +11,7 @@
   <div id="admin-content" class="page-scroll min-h-0 flex-1 overflow-y-auto">
     <div class="@container/page mx-auto grid w-full max-w-3xl grid-cols-[minmax(0,1fr)] gap-6 pb-10">
       <logic :if="adminSession.operator">
-        <nav aria-label="Breadcrumb"><p class="flex flex-wrap items-center gap-1"><w-btn variant="text" size="small" on:click="adminShell.open('domains', adminSession.domainId)">Domains</w-btn><span aria-hidden="true">/</span><span class="min-w-0 truncate" aria-current="page">{domainDns.name}</span></p></nav>
+        <nav aria-label="Breadcrumb"><p class="crumbs flex flex-wrap items-center gap-1"><button type="button" class="crumb-link inline-flex items-center" on:click="adminShell.open('domains', adminSession.domainId)">Domains</button><span aria-hidden="true">/</span><span class="min-w-0 truncate" aria-current="page">{domainDns.name}</span></p></nav>
       </logic>
 
       <switch :value="domainDns.step">
@@ -115,7 +115,7 @@
               <div class="panel-head px-4 py-3 @xl/page:px-5"><h2 id="danger-title" class="section-title danger-title">Danger zone</h2></div>
               <div class="flex flex-wrap items-center gap-3 px-4 py-3 @xl/page:px-5">
                 <div class="grid min-w-0 flex-[1_1_16rem] gap-0.5"><span class="strong">Remove domain</span><span class="meta">Deletes the domain, its channels, messages and DKIM keys. This cannot be undone.</span></div>
-                <w-btn variant="flat" color="error" prepend-icon="trash" aria-haspopup="dialog" on:click="domainRemove.start(domainDns.domainId, domainDns.name)">Remove</w-btn>
+                <w-btn variant="flat" color="danger" prepend-icon="trash" aria-haspopup="dialog" on:click="domainRemove.start(domainDns.domainId, domainDns.name)">Remove</w-btn>
               </div>
             </section>
           </logic>
@@ -140,7 +140,7 @@
             <p class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Removing {domainRemove.name}…</p>
           </div>
           <w-btn variant="text" class="sm:col-start-2 sm:row-start-2" disabled>Cancel</w-btn>
-          <w-btn variant="flat" color="error" class="sm:col-start-3 sm:row-start-2" loading disabled>Remove domain</w-btn>
+          <w-btn variant="flat" color="danger" class="sm:col-start-3 sm:row-start-2" loading disabled>Remove domain</w-btn>
         </div>
       </w-dialog>
     </logic>
@@ -160,7 +160,7 @@
                 <w-text-field :label="domainRemove.confirmLabel" name="typed" class="mono" :value="domainRemove.typed" hint="The Remove button works when the name matches." persistent-hint autocomplete="off" autocapitalize="none" spellcheck="false" autofocus></w-text-field>
               </logic>
             </div>
-            <w-btn variant="flat" color="error" type="submit" class="sm:col-start-3 sm:row-start-2">Remove domain</w-btn>
+            <w-btn variant="flat" color="danger" type="submit" class="sm:col-start-3 sm:row-start-2">Remove domain</w-btn>
           </form>
           <w-btn variant="text" class="sm:col-start-2 sm:row-start-2" on:click="domainRemove.cancel()">Cancel</w-btn>
         </div>

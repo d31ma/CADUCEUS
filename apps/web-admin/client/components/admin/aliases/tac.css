@@ -18,19 +18,36 @@
 }
 
 .aliases-label {
-  font-size: var(--w-font-base);
+  font-size: var(--ms-text-meta);
   font-weight: var(--w-font-weight-medium);
-  color: var(--w-text);
+  line-height: 1.33;
+  color: var(--w-text-subtle);
 }
 
 .aliases-select {
-  min-height: 2.5rem;
-  padding: 0 var(--w-space-3);
+  min-height: var(--ms-control-md);
+  padding: 0 calc(var(--w-space-3) * 2 + var(--ms-icon-sm)) 0 var(--w-space-3);
   border: 1px solid var(--w-outline);
-  border-radius: var(--w-radius-md);
+  border-radius: var(--w-radius-lg);
   background: var(--w-surface);
   color: var(--w-text);
   font: inherit;
+  font-size: var(--w-font-base);
+  appearance: none;
+  cursor: pointer;
+}
+
+.select-box::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: var(--w-space-4);
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 1.5px solid var(--w-text-subtle);
+  border-bottom: 1.5px solid var(--w-text-subtle);
+  transform: translateY(-75%) rotate(45deg);
+  pointer-events: none;
 }
 
 .aliases-select:hover {
@@ -38,8 +55,9 @@
 }
 
 .aliases-select:focus-visible {
-  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
-  outline-offset: var(--w-focus-ring-offset);
+  border-color: var(--w-primary);
+  box-shadow: 0 0 0 1px var(--w-primary);
+  outline: 2px solid transparent;
 }
 
 .aliases-select[aria-invalid="true"] {
@@ -122,12 +140,17 @@
   }
 }
 
-.aliases-box .w-text-field-field {
-  min-height: 1.5rem;
+.w-text-field {
+  --w-tf-height: var(--ms-control-md);
+  --w-tf-radius: var(--w-radius-lg);
 }
 
 @media (max-width: 767px), (pointer: coarse) {
-  .aliases-box .w-text-field-field {
+  .w-text-field {
+    --w-tf-height: var(--ms-touch-min);
+  }
+
+  .w-text-field-control:has(.w-text-field-affix) .w-text-field-field {
     min-height: var(--ms-touch-min);
   }
 }
@@ -150,8 +173,14 @@
     white-space: nowrap;
     border-width: 0;
   }
+  .relative {
+    position: relative;
+  }
   .mt-0\.5 {
     margin-top: calc(var(--spacing, 0.25rem) * 0.5);
+  }
+  .block {
+    display: block;
   }
   .flex {
     display: flex;
@@ -176,6 +205,9 @@
   }
   .gap-1 {
     gap: var(--spacing, 0.25rem);
+  }
+  .gap-1\.5 {
+    gap: calc(var(--spacing, 0.25rem) * 1.5);
   }
   .gap-2 {
     gap: calc(var(--spacing, 0.25rem) * 2);

@@ -232,12 +232,51 @@ code.mono {
   background: transparent;
 }
 
-.w-text-field-control {
-  min-height: 1.5rem;
+.crumbs {
+  font-size: var(--ms-text-nav);
+  line-height: 1.43;
+  color: var(--w-text-subtle);
+}
+
+.crumb-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--w-accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.crumb-link:hover {
+  text-decoration-thickness: 2px;
+}
+
+.crumb-link:focus-visible {
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
+  outline-offset: var(--w-focus-ring-offset);
+  border-radius: var(--w-radius);
 }
 
 @media (max-width: 767px), (pointer: coarse) {
-  .w-text-field-control {
+  .crumb-link {
+    min-width: var(--ms-touch-min);
+    min-height: var(--ms-touch-min);
+  }
+}
+
+.w-text-field {
+  --w-tf-height: var(--ms-control-md);
+  --w-tf-radius: var(--w-radius-lg);
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .w-text-field {
+    --w-tf-height: var(--ms-touch-min);
+  }
+
+  .w-text-field-control:has(.w-text-field-affix) .w-text-field-field {
     min-height: var(--ms-touch-min);
   }
 }

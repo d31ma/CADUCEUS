@@ -5,12 +5,14 @@
     <form method="dialog" class="grid gap-4" aria-labelledby="aliases-title" on:submit="aliasForm.addWith($event.target.elements.address.value, $event.target.elements.member.value)">
       <w-text-field label="Alias address" name="address" placeholder="sales" autocomplete="off" persistent-hint :suffix="aliasForm.suffix()" :hint="aliasForm.addressHint()" :error="aliasForm.addressError(aliasForm.problem)" :value="aliasForm.address"></w-text-field>
       <p class="sr-only" role="alert">{aliasForm.addressError(aliasForm.problem)}</p>
-      <div class="grid gap-1">
+      <div class="grid gap-1.5">
         <label class="aliases-label" for="alias-member">Member</label>
-        <select class="aliases-select w-full" id="alias-member" name="member" aria-describedby="alias-member-error" :aria-invalid="adminShell.flag(aliasForm.problem == 'noMember')">
-          <option value="" :selected="aliasForm.memberId == ''">Choose a member</option>
-          <loop :for="choice of aliasForm.choices"><option :value="choice.memberId" :selected="choice.memberId == aliasForm.memberId">{choice.label}</option></loop>
-        </select>
+        <span class="select-box relative block">
+          <select class="aliases-select w-full" id="alias-member" name="member" aria-describedby="alias-member-error" :aria-invalid="adminShell.flag(aliasForm.problem == 'noMember')">
+            <option value="" :selected="aliasForm.memberId == ''">Choose a member</option>
+            <loop :for="choice of aliasForm.choices"><option :value="choice.memberId" :selected="choice.memberId == aliasForm.memberId">{choice.label}</option></loop>
+          </select>
+        </span>
         <div id="alias-member-error" role="alert">
           <logic :if="aliasForm.problem == 'noMember'">
             <p class="aliases-error flex items-start gap-1"><w-icon name="alert" class="mt-0.5" aria-hidden="true"></w-icon><span>Choose the member who gets mail sent to this alias.</span></p>

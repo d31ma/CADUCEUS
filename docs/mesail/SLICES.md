@@ -426,9 +426,12 @@ C1, not before each slice merge.
   `apps/web/client/remotes/{Messaging,Realtime,Channels}*.go`,
   `apps/web/client/models/{Conversation,Message,Channel,Realtime,Delivery,Author,Attachment,Block,Span,ImageRef}*.go`,
   `apps/web/client/tests/{Sidebar,Conversation,Realtime}*.go`,
-  `apps/web/client/setups/{Sidebar,Conversation,Realtime,Messaging,Channels}*.go`.
+  `apps/web/client/setups/{Sidebar,Conversation,Realtime,Messaging,Channels}*.go`
+  (except `MessagingSend*`, which is F3's).
 - **Builds:** the sidebar (the domain switcher for people with accounts in
-  several domains, channels, DMs, email conversations,
+  several domains, a "New message" button at the top of the sidebar that
+  publishes F3's `SendTarget{}` to open an empty composer, channels, DMs,
+  email conversations,
   unread and mention counts), the message list with live updates (bodies
   rendered only from the server's typed blocks, CONTRACTS "Rich text"), reactions,
   edit and delete, delivery status badges, sanitized email display
@@ -441,7 +444,10 @@ C1, not before each slice merge.
   `apps/web/client/remotes/{Directory,Attachments}*.go`,
   `apps/web/client/models/{Recipient,Send,Resolve,Upload,EmailOptions}*.go`,
   `apps/web/client/tests/Composer*.go`,
-  `apps/web/client/setups/{Composer,Directory,Attachments}*.go`.
+  `apps/web/client/setups/{Composer,Directory,Attachments}*.go`, and the send
+  call `apps/web/client/remotes/MessagingSend*.go` and
+  `apps/web/client/setups/MessagingSend*.go` (an exception to F2's
+  `Messaging*` pattern, agreed by F2 and F3).
 - **Builds:** the one composer: recipient chips with Chat / Email / Both,
   and "Email · other domain" for a member of another hosted domain
   (AC-CP-1..5), subject, Cc, Bcc, the who-gets-what summary, attachments,

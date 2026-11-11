@@ -1,3 +1,9 @@
+.composer {
+  width: 100%;
+  max-width: var(--ms-content-max);
+  margin-inline: auto;
+}
+
 .composer-textarea {
   border: 0;
   background: transparent;

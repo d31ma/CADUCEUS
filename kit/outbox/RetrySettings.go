@@ -1,9 +1,9 @@
 package outbox
 
 type RetrySettings struct {
-	BaseDelaySeconds int `json:"baseDelaySeconds"`
-	MaxDelaySeconds  int `json:"maxDelaySeconds"`
-	MaxAttempts      int `json:"maxAttempts"`
+	BaseDelaySeconds int `json:"basedelayseconds"`
+	MaxDelaySeconds  int `json:"maxdelayseconds"`
+	MaxAttempts      int `json:"maxattempts"`
 }
 
 func (settings RetrySettings) withDefaults() RetrySettings {

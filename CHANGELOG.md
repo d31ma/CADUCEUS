@@ -25,6 +25,11 @@
 - `events` and `outbox` are in `kit.list` of directory, channels,
   messaging, mail-in, mail-out, search, realtime and notify, with synced
   copies. Guide: `docs/mesail/EVENTS.md`.
+- Fix: `outbox.SettingsReader` reads `outbox` from under the `yon` key, as
+  a running handler sees `YON_APPLICATION_JSON` (before, it found no
+  settings outside tests, so nothing was relayed). New `FromEnvironment()`.
+  Retry keys are lowercase (`basedelayseconds`, `maxdelayseconds`,
+  `maxattempts`).
 
 ### Slice M1: inbound mail
 

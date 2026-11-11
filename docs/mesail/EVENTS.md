@@ -80,8 +80,9 @@ the scheduled sweep retries it.
   deployment and is skipped (the event is not kept for it).
 - Every subscriber host must also be in `outgoing.hosts` (Tachyon's egress
   guard refuses other hosts).
-- Read the settings with
-  `outbox.SettingsReader{}.FromApplicationJSON(os.Getenv("YON_APPLICATION_JSON"))`.
+- Read the settings with `outbox.SettingsReader{}.FromEnvironment()`. It
+  reads `YON_APPLICATION_JSON` and takes `outbox` from under `yon` (a
+  top-level `outbox` key still works, for tests).
 - Keys in `application.json` must be lowercase (TACHYON refuses others with
   TY2010); Go's JSON decoding still fills the camel-case struct fields. In a
   handler the settings arrive in `YON_APPLICATION_JSON` under the top-level

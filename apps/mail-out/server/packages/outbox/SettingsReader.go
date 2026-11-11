@@ -1,8 +1,15 @@
 package outbox
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"os"
+)
 
 type SettingsReader struct{}
+
+func (reader SettingsReader) FromEnvironment() (Settings, error) {
+	return reader.FromApplicationJSON(os.Getenv(reader.variable()))
+}
 
 func (reader SettingsReader) FromApplicationJSON(raw string) (Settings, error) {
 	file := ApplicationFile{}
@@ -10,7 +17,7 @@ func (reader SettingsReader) FromApplicationJSON(raw string) (Settings, error) {
 	if err != nil {
 		return Settings{}, err
 	}
-	settings, err := reader.present(file)
+	settings, err := reader.present(file.outbox())
 	if err != nil {
 		return Settings{}, err
 	}
@@ -18,9 +25,13 @@ func (reader SettingsReader) FromApplicationJSON(raw string) (Settings, error) {
 	return settings, nil
 }
 
-func (SettingsReader) present(file ApplicationFile) (Settings, error) {
-	if file.Outbox == nil {
+func (SettingsReader) present(outbox *Settings) (Settings, error) {
+	if outbox == nil {
 		return Settings{}, MissingSettings{}
 	}
-	return *file.Outbox, nil
+	return *outbox, nil
+}
+
+func (SettingsReader) variable() string {
+	return "YON_APPLICATION_JSON"
 }

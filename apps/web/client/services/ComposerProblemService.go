@@ -56,7 +56,6 @@ func (problems *ComposerProblemService) texts() map[string]string {
 		"tooLarge":             "Not sent. The message or its files are too large.",
 		"rateLimited":          "Not sent. You sent many messages in a short time. Wait a moment, then try again.",
 		problems.unavailable(): "Not sent. Mesail could not be reached. Your message is kept here. Try again; it is sent only once.",
-		"stillSending":         "Still sending. Wait a moment.",
 		"resolveFailed":        "Some addresses could not be checked. Try again in a moment.",
 	}
 }

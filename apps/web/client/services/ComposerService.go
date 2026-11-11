@@ -4,9 +4,6 @@ import "strings"
 type ComposerService struct {
 	Target          SendTarget
 	NewConversation bool
-	ToText          string
-	CcText          string
-	BlindCopyText   string
 	ShowCc          bool
 	ShowBlindCopy   bool
 	Subject         string
@@ -25,7 +22,6 @@ type ComposerService struct {
 	Problem         string
 	ProblemText     string
 	SubjectMissing  bool
-	Sending         bool
 	ChangedOpen     bool
 	Changes         []RecipientChange
 	Announcement    string
@@ -74,20 +70,18 @@ func (composer *ComposerService) DomainChanged(changed SessionDomainChanged) {
 	composer.refresh()
 }
 
-func (composer *ComposerService) SubmitWith(to string, cc string, blindCopy string) {
-	composer.recipients.Add(to, composer.roleTo())
-	composer.recipients.Add(cc, composer.roleCc())
-	composer.recipients.Add(blindCopy, composer.roleBlindCopy())
-	composer.sendUnlessTyped(strings.TrimSpace(to+cc+blindCopy) != "")
+func (composer *ComposerService) AddTyped(role string, text string) {
+	composer.recipients.Add(text, role)
 	composer.refresh()
+}
+
+func (composer *ComposerService) SendWith(body string) {
+	composer.Body = body
+	composer.startSending()
 }
 
 func (composer *ComposerService) KeepSubject(subject string) {
 	composer.Subject = subject
-}
-
-func (composer *ComposerService) KeepBody(body string) {
-	composer.Body = body
 }
 
 func (composer *ComposerService) Remove(address string, role string) {
@@ -101,48 +95,21 @@ func (composer *ComposerService) Choose(address string, role string, delivery st
 	composer.refresh()
 }
 
-func (composer *ComposerService) ToggleCc(to string) {
-	composer.ToText = to
+func (composer *ComposerService) ToggleCc() {
 	composer.ShowCc = !composer.ShowCc
 	composer.refresh()
 }
 
-func (composer *ComposerService) ToggleBlindCopy(to string, cc string) {
-	composer.ToText = to
-	composer.CcText = cc
+func (composer *ComposerService) ToggleBlindCopy() {
 	composer.ShowBlindCopy = !composer.ShowBlindCopy
 	composer.refresh()
-}
-
-func (composer *ComposerService) sendUnlessTyped(typed bool) {
-	composer.ToText = ""
-	composer.CcText = ""
-	composer.BlindCopyText = ""
-	composer.startWhenNothingTyped(typed)
-}
-
-func (composer *ComposerService) startWhenNothingTyped(typed bool) {
-	if typed {
-		return
-	}
-	composer.startSending()
 }
 
 func (composer *ComposerService) startSending() {
 	composer.recipients.ResolvePending()
 	composer.Problem = composer.firstProblem(composer.checks())
 	composer.SubjectMissing = composer.Problem == composer.problemSubjectMissing()
-	composer.requestWhenClear(composer.request(composer.emailMode()))
-	composer.refresh()
-}
-
-// @OnEvent
-// @InBackground
-func (composer *ComposerService) Deliver(requested SendRequested) {
-	result, failure := composer.send.Send(requested.Request)
-	composer.Sending = false
-	composer.Problem = composer.problems.OfFailure(failure)
-	composer.afterSend(result)
+	composer.deliverWhenClear(composer.request(composer.emailMode()))
 	composer.refresh()
 }
 
@@ -184,9 +151,9 @@ func (composer *ComposerService) emailMode() bool {
 
 func (composer *ComposerService) rows() []RecipientRow {
 	return []RecipientRow{
-		{Role: composer.roleTo(), Label: "To", Placeholder: composer.toPlaceholder(), Text: composer.ToText, Recipients: composer.To, Shown: composer.NewConversation},
-		{Role: composer.roleCc(), Label: "Cc", Placeholder: "Add people who get a copy", Text: composer.CcText, Recipients: composer.Cc, Shown: composer.shownWithNew(composer.ShowCc)},
-		{Role: composer.roleBlindCopy(), Label: "Bcc", Placeholder: "Hidden from everyone else", Text: composer.BlindCopyText, Recipients: composer.BlindCopy, Shown: composer.shownWithNew(composer.ShowBlindCopy)},
+		{Role: composer.roleTo(), Label: "To", Placeholder: composer.toPlaceholder(), Recipients: composer.To, Shown: composer.NewConversation},
+		{Role: composer.roleCc(), Label: "Cc", Placeholder: "Add people who get a copy", Recipients: composer.Cc, Shown: composer.shownWithNew(composer.ShowCc)},
+		{Role: composer.roleBlindCopy(), Label: "Bcc", Placeholder: "Hidden from everyone else", Recipients: composer.BlindCopy, Shown: composer.shownWithNew(composer.ShowBlindCopy)},
 	}
 }
 
@@ -218,7 +185,6 @@ func (composer *ComposerService) choiceAnnouncement(chosen Recipient) string {
 
 func (composer *ComposerService) checks() []string {
 	return []string{
-		composer.needsIdle(),
 		composer.needsRecipient(),
 		composer.needsFewerRecipients(),
 		composer.needsValidRecipients(),
@@ -236,13 +202,6 @@ func (composer *ComposerService) firstProblem(problems []string) string {
 		return ""
 	}
 	return found[0]
-}
-
-func (composer *ComposerService) needsIdle() string {
-	if !composer.Sending {
-		return ""
-	}
-	return "stillSending"
 }
 
 func (composer *ComposerService) needsRecipient() string {
@@ -301,12 +260,17 @@ func (composer *ComposerService) needsWorkingUploads() string {
 	return "fixAttachments"
 }
 
-func (composer *ComposerService) requestWhenClear(request SendRequest) {
+func (composer *ComposerService) deliverWhenClear(request SendRequest) {
 	if composer.Problem != "" {
 		return
 	}
-	composer.Sending = true
-	composer.applicationEventPublisher.PublishEvent(SendRequested{Request: request}, false)
+	composer.deliver(request)
+}
+
+func (composer *ComposerService) deliver(request SendRequest) {
+	result, failure := composer.send.Send(request)
+	composer.Problem = composer.problems.OfFailure(failure)
+	composer.afterSend(result)
 }
 
 func (composer *ComposerService) request(emailMode bool) SendRequest {
@@ -356,9 +320,6 @@ func (composer *ComposerService) clear() {
 	composer.send.Reset()
 	composer.Body = ""
 	composer.Subject = ""
-	composer.ToText = ""
-	composer.CcText = ""
-	composer.BlindCopyText = ""
 	composer.ShowCc = false
 	composer.ShowBlindCopy = false
 	composer.Problem = ""

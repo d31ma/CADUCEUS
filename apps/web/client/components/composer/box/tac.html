@@ -1,26 +1,19 @@
-<section class="composer flex min-w-0 flex-col" aria-label="Write a message" :data-email="composer.emailMode" :data-sending="composer.sending">
-  <form method="dialog" class="contents" aria-label="Message" on:submit="composer.submitWith($event.target.elements.to.value, $event.target.elements.cc.value, $event.target.elements.bcc.value)">
-    <logic :if="composer.emailMode">
-      <p class="composer-mode m-0 flex items-start gap-2 px-3 py-2">
-        <svg class="composer-icon mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z" /><path d="M4 7l8 6 8-6" /></svg>
-        <logic :if="composer.modeText">
-          <span class="min-w-0">{composer.modeText}</span>
-        </logic>
-        <logic else>
-          <span class="min-w-0">Reply as email.</span>
-        </logic>
-      </p>
-    </logic>
+<section class="composer flex min-w-0 flex-col" aria-label="Write a message" :data-email="composer.emailMode">
+    <p class="composer-mode m-0 flex items-start gap-2 px-3 py-2" :hidden="!composer.emailMode">
+      <svg class="composer-icon mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z" /><path d="M4 7l8 6 8-6" /></svg>
+      <span class="min-w-0">{composer.modeText || 'Reply as email.'}</span>
+    </p>
 
     <composer-recipients />
 
-    <logic :if="composer.emailMode">
+    <div :hidden="!composer.emailMode">
       <composer-email-fields />
-    </logic>
+    </div>
 
+    <form method="dialog" class="contents" aria-label="Message" on:submit="composer.sendWith($event.target.elements.body.value)">
     <div class="composer-editor px-3 py-2">
-      <label class="composer-sr-only" for="composer-input">{composer.emailMode ? 'Email body' : 'Message'}</label>
-      <textarea id="composer-input" class="composer-textarea block w-full" name="body" rows="3" :placeholder="composer.emailMode ? 'Write your email' : 'Write a message'" :value="composer.body" on:change="composer.keepBody($event.target.value)"></textarea>
+      <label class="sr-only" for="composer-input">{composer.emailMode ? 'Email body' : 'Message'}</label>
+      <textarea id="composer-input" class="composer-textarea block w-full" name="body" rows="3" :placeholder="composer.emailMode ? 'Write your email' : 'Write a message'" :value="composer.body" on:input="composer.body = $event.target.value"></textarea>
     </div>
 
     <composer-attachments />
@@ -35,19 +28,14 @@
         </p>
       </logic>
       <p class="composer-keys m-0 mr-auto min-w-0">Enter in an address field adds it · Enter in the message adds a line</p>
-      <logic :if="composer.sending">
-        <w-btn class="composer-send ml-auto" variant="flat" loading>Sending…</w-btn>
-      </logic>
-      <logic else>
-        <w-btn class="composer-send ml-auto" variant="flat">
-          <svg class="composer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 3 10 14" /><path d="M21 3l-6.5 18-4.5-7-7-4.5z" /></svg>
-          <span>{composer.sendLabel}</span>
-        </w-btn>
-      </logic>
+      <w-btn class="composer-send ml-auto" variant="flat">
+        <svg class="composer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 3 10 14" /><path d="M21 3l-6.5 18-4.5-7-7-4.5z" /></svg>
+        <span>{composer.sendLabel}</span>
+      </w-btn>
     </div>
-  </form>
+    </form>
 
-  <div class="composer-sr-only" aria-live="polite">{composer.announcement}</div>
+  <div class="sr-only" aria-live="polite">{composer.announcement}</div>
 
   <composer-changed />
 </section>

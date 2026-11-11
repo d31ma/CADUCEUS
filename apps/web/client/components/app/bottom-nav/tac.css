@@ -1,54 +1,69 @@
-.bottom-nav {
-  display: flex;
-  justify-content: space-around;
+.bottom-nav .w-bottom-navigation {
+  width: 100%;
   min-height: var(--ms-bottom-nav-height);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  border: 0;
   border-top: 1px solid var(--w-divider);
+  border-radius: 0;
   background: var(--w-surface);
+  box-shadow: none;
 }
 
-.bottom-nav-item {
-  position: relative;
-  flex: 1;
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 2px;
-  min-height: var(--ms-bottom-nav-height);
+.bottom-nav .w-bottom-navigation > slot {
+  display: contents;
+}
+
+.bottom-nav w-bottom-nav-item {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.bottom-nav .w-bottom-nav-item {
+  width: 100%;
   min-width: var(--ms-touch-min);
+  min-height: var(--ms-bottom-nav-height);
+  background: transparent;
   color: var(--w-text-subtle);
-  font-size: var(--w-font-xs);
   font-weight: var(--w-font-weight-medium);
-  text-decoration: none;
 }
 
-.bottom-nav-item:hover {
+.bottom-nav .w-bottom-nav-item:hover {
+  background: transparent;
   color: var(--w-text);
 }
 
-.bottom-nav-item:focus-visible {
-  outline-offset: -2px;
-}
-
-.bottom-nav-item[aria-current="page"] {
+.bottom-nav .w-bottom-nav-item--active,
+.bottom-nav .w-bottom-nav-item--active:hover {
+  background: transparent;
   color: var(--w-accent);
   font-weight: var(--w-font-weight-bold);
 }
 
-.icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.bottom-nav .w-bottom-nav-item:focus-visible {
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
+  outline-offset: -2px;
 }
 
-button:focus-visible,
-a:focus-visible {
-  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
-  outline-offset: var(--w-focus-ring-offset);
+.bottom-nav .w-bottom-nav-item__label {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 2px;
 }
+
+.bottom-nav w-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .block {
+    display: block;
+  }
+  .contents {
+    display: contents;
+  }
+}
+/* @tachyon-generated-tailwind:end */

@@ -1,8 +1,6 @@
-<div class="empty">
-  <div class="empty-art">
-    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 5h16v11H9l-5 4z" /></svg>
-  </div>
-  <h2>Pick a conversation</h2>
-  <p>Choose a channel, a person or an email on the left. Or start something new.</p>
-  <p class="empty-note">Tip: press <kbd>⌘K</kbd> to search.</p>
-</div>
+<w-empty-state class="empty m-auto block max-w-[26rem] px-4 py-8">
+  <span slot="media" class="empty-art grid size-16 place-items-center"><w-icon name="chat"></w-icon></span>
+  <h2 slot="title" class="empty-title">Pick a conversation</h2>
+  <span slot="text">Choose a channel, a person or an email on the left. Or start something new.</span>
+  <p slot="actions" class="empty-note">Tip: press <kbd>⌘K</kbd> to search.</p>
+</w-empty-state>

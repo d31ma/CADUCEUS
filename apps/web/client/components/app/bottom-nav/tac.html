@@ -1,6 +1,16 @@
-<w-bottom-navigation class="bottom-nav" mandatory :value="shell.page" on:change="shell.showPage($event.detail.value)">
-  <w-bottom-nav-item value="" label="Home" icon="chat"></w-bottom-nav-item>
-  <w-bottom-nav-item value="activity" label="Activity" icon="bell"></w-bottom-nav-item>
-  <w-bottom-nav-item value="search" label="Search" icon="search"></w-bottom-nav-item>
-  <w-bottom-nav-item value="settings" label="You" icon="person"></w-bottom-nav-item>
-</w-bottom-navigation>
+<logic :if="shell.page == ''">
+  <w-bottom-navigation class="bottom-nav block" grow mandatory value="home" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" on:click="shell.showList()"><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <span class="contents" on:click="notification.reload()"><w-bottom-nav-item value="activity" label="Activity" on:click="shell.showPage('activity')"><w-icon name="bell"></w-icon></w-bottom-nav-item></span>
+    <w-bottom-nav-item value="search" label="Search" on:click="shell.showPage('search')"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <span class="contents" on:click="notificationPush.loadSettings()"><w-bottom-nav-item value="settings" label="You" on:click="shell.showPage('settings')"><w-icon name="user"></w-icon></w-bottom-nav-item></span>
+  </w-bottom-navigation>
+</logic>
+<logic else>
+  <w-bottom-navigation class="bottom-nav block" grow mandatory :value="shell.page" aria-label="Main">
+    <w-bottom-nav-item value="home" label="Home" on:click="shell.showList()"><w-icon name="chat"></w-icon></w-bottom-nav-item>
+    <span class="contents" on:click="notification.reload()"><w-bottom-nav-item value="activity" label="Activity" on:click="shell.showPage('activity')"><w-icon name="bell"></w-icon></w-bottom-nav-item></span>
+    <w-bottom-nav-item value="search" label="Search" on:click="shell.showPage('search')"><w-icon name="search"></w-icon></w-bottom-nav-item>
+    <span class="contents" on:click="notificationPush.loadSettings()"><w-bottom-nav-item value="settings" label="You" on:click="shell.showPage('settings')"><w-icon name="user"></w-icon></w-bottom-nav-item></span>
+  </w-bottom-navigation>
+</logic>

@@ -1,38 +1,31 @@
-.empty {
-  display: grid;
-  justify-items: center;
-  gap: var(--w-space-3);
-  max-width: 26rem;
-  margin: auto;
-  padding: var(--w-space-8) var(--w-space-4);
-  text-align: center;
+.empty .w-empty {
+  color: var(--w-text-subtle);
 }
 
 .empty-art {
-  display: grid;
-  place-items: center;
-  width: 4rem;
-  height: 4rem;
   border-radius: var(--ms-radius-tile);
   background: var(--w-primary-container);
   color: var(--w-on-primary-container);
 }
 
-.empty h2 {
+.empty-art w-icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.empty-title {
+  color: var(--w-text);
   font-size: var(--ms-text-heading);
   font-weight: var(--w-font-weight-semibold);
   line-height: 1.25;
 }
 
-.empty p {
+.empty-note {
+  font-size: var(--w-font-base);
   color: var(--w-text-subtle);
 }
 
-.empty-note {
-  font-size: var(--w-font-base);
-}
-
-kbd {
+.empty kbd {
   padding: 0 0.3em;
   border: 1px solid var(--w-border);
   border-radius: var(--w-radius);
@@ -41,12 +34,33 @@ kbd {
   font-size: var(--w-font-sm);
 }
 
-.icon {
-  width: 2rem;
-  height: 2rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+/* @tachyon-generated-tailwind:start */
+/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer utilities {
+  .m-auto {
+    margin: auto;
+  }
+  .block {
+    display: block;
+  }
+  .grid {
+    display: grid;
+  }
+  .size-16 {
+    width: calc(var(--spacing, 0.25rem) * 16);
+    height: calc(var(--spacing, 0.25rem) * 16);
+  }
+  .max-w-\[26rem\] {
+    max-width: 26rem;
+  }
+  .place-items-center {
+    place-items: center;
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing, 0.25rem) * 4);
+  }
+  .py-8 {
+    padding-block: calc(var(--spacing, 0.25rem) * 8);
+  }
 }
+/* @tachyon-generated-tailwind:end */

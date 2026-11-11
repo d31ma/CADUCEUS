@@ -1,59 +1,60 @@
 <a class="skip-link" href="#timeline">Skip to messages</a>
 <a class="skip-link" href="#composer-input">Skip to composer</a>
 
-<div class="app" :data-pane="shell.pane">
-  <div class="rail-area">
+<div class="group/app grid h-dvh grid-cols-1 grid-rows-[minmax(0,1fr)_auto] overflow-hidden min-[768px]:grid-cols-[var(--ms-rail-width)_var(--ms-sidebar-width)_minmax(0,1fr)] min-[768px]:grid-rows-[minmax(0,1fr)] lg:data-[thread=true]:grid-cols-[var(--ms-rail-width)_var(--ms-sidebar-width)_minmax(0,1fr)_var(--ms-thread-width)]" :data-pane="shell.pane" :data-page="shell.page" :data-thread="shell.flag(shell.threadOpen)">
+  <div class="hidden min-h-0 grid-rows-[minmax(0,1fr)] min-[768px]:col-start-1 min-[768px]:row-start-1 min-[768px]:grid">
     <app-rail />
   </div>
 
-  <aside class="sidebar" aria-labelledby="sidebar-label">
+  <aside class="sidebar hidden min-h-0 min-w-0 flex-col group-data-[pane=list]/app:flex min-[768px]:col-start-2 min-[768px]:row-start-1 min-[768px]:flex" aria-labelledby="sidebar-label">
     <span id="sidebar-label" hidden>Conversations in {sessionAccount.currentDomain}</span>
-    <div class="sidebar-head">
+    <div class="pane-header flex min-h-[var(--ms-header-height)] items-center gap-2 ps-4 pe-2 max-[768px]:min-h-[calc(var(--ms-header-height)+var(--tac-titlebar-height,env(safe-area-inset-top)))] max-[768px]:pt-[var(--tac-titlebar-height,env(safe-area-inset-top))]">
       <app-domain-menu />
     </div>
-    <div class="sidebar-search">
+    <div class="px-3 py-2">
       <search-panel />
     </div>
-    <div class="sidebar-body">
+    <div class="min-h-0 flex-1 overflow-y-auto px-2 pt-1 pb-4">
       <sidebar-nav />
+    </div>
+    <div class="sidebar-footer min-w-0 px-2 py-1 min-[768px]:pb-[max(var(--w-space-1),env(safe-area-inset-bottom))]">
+      <notifications-presence-menu />
     </div>
   </aside>
 
-  <main class="main" aria-labelledby="conversation-title">
-    <header class="header">
-      <button type="button" class="icon-button back-button" aria-label="Back to conversations" on:click="shell.showList()">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" /></svg>
-      </button>
-      <h1 class="header-title" id="conversation-title">{shell.title()}</h1>
+  <main class="hidden min-h-0 min-w-0 flex-col group-data-[pane=main]/app:flex min-[768px]:col-start-3 min-[768px]:row-start-1 min-[768px]:flex" aria-labelledby="conversation-title">
+    <header class="pane-header flex min-h-[var(--ms-header-height)] items-center gap-2 ps-4 pe-3 max-[768px]:min-h-[calc(var(--ms-header-height)+var(--tac-titlebar-height,env(safe-area-inset-top)))] max-[768px]:ps-[max(var(--w-space-2),env(safe-area-inset-left))] max-[768px]:pe-[max(var(--w-space-2),env(safe-area-inset-right))] max-[768px]:pt-[var(--tac-titlebar-height,env(safe-area-inset-top))]">
+      <w-icon-btn class="back-button min-[768px]:hidden" icon="arrow-left" aria-label="Back to conversations" on:click="shell.showList()"></w-icon-btn>
+      <h1 class="pane-title min-w-0 truncate" id="conversation-title">{shell.title()}</h1>
     </header>
     <switch :value="shell.page">
       <case :when="'settings'">
-        <div class="main-body">
+        <div class="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <app-settings />
         </div>
       </case>
       <case :when="'activity'">
-        <div class="main-body">
+        <div class="min-h-0 min-w-0 flex-1 overflow-y-auto">
           <notifications-list />
         </div>
       </case>
       <case :when="'search'">
-        <div class="main-body">
-          <search-panel />
+        <div class="min-h-0 min-w-0 flex-1 overflow-y-auto">
+          <search-results />
         </div>
       </case>
       <case default>
       <switch :value="shell.pane">
         <case :when="'list'">
-          <div class="main-body main-empty">
+          <div class="grid min-h-0 min-w-0 flex-1 overflow-y-auto">
             <app-empty />
           </div>
         </case>
         <case default>
-          <div class="main-body">
+          <div class="min-h-0 min-w-0 flex-1 overflow-y-auto">
             <conversation-view />
           </div>
-          <div class="main-composer">
+          <div class="min-w-0 px-5 pb-[max(var(--w-space-4),env(safe-area-inset-bottom))] max-[768px]:px-2">
             <composer-box />
           </div>
         </case>
@@ -63,25 +64,21 @@
   </main>
 
   <logic :if="shell.threadOpen">
-    <aside class="thread-column" id="thread" aria-labelledby="thread-title">
-      <header class="header">
-        <button type="button" class="icon-button back-button" aria-label="Back to the conversation" on:click="shell.closeThread()">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7" /></svg>
-        </button>
-        <h2 class="header-title" id="thread-title">Thread</h2>
-        <button type="button" class="icon-button close-button" aria-label="Close thread" aria-keyshortcuts="Escape" on:click="shell.closeThread()">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
-        </button>
+    <aside class="thread-column hidden min-h-0 min-w-0 flex-col group-data-[pane=thread]/app:flex min-[768px]:z-5 min-[768px]:col-start-3 min-[768px]:row-start-1 min-[768px]:flex lg:col-start-4" id="thread" aria-labelledby="thread-title">
+      <header class="pane-header flex min-h-[var(--ms-header-height)] items-center gap-2 ps-4 pe-3 max-[768px]:min-h-[calc(var(--ms-header-height)+var(--tac-titlebar-height,env(safe-area-inset-top)))] max-[768px]:ps-[max(var(--w-space-2),env(safe-area-inset-left))] max-[768px]:pe-[max(var(--w-space-2),env(safe-area-inset-right))] max-[768px]:pt-[var(--tac-titlebar-height,env(safe-area-inset-top))]">
+        <w-icon-btn class="back-button min-[768px]:hidden" icon="arrow-left" aria-label="Back to the conversation" on:click="shell.closeThread()"></w-icon-btn>
+        <h2 class="pane-title thread-title min-w-0 truncate" id="thread-title">Thread</h2>
+        <w-icon-btn class="ms-auto" icon="close" aria-label="Close thread" aria-keyshortcuts="Escape" on:click="shell.closeThread()"></w-icon-btn>
       </header>
-      <div class="thread-body">
+      <div class="min-h-0 min-w-0 flex-1 overflow-y-auto">
         <thread-pane />
       </div>
     </aside>
   </logic>
 
-  <div class="bottom-area">
+  <div class="hidden max-[768px]:group-data-[pane=list]/app:block max-[768px]:group-data-[page=activity]/app:block max-[768px]:group-data-[page=search]/app:block max-[768px]:group-data-[page=settings]/app:block">
     <app-bottom-nav />
   </div>
 </div>
 
-<div class="announcer" id="announcer" aria-live="polite">{shellAnnounce.message}</div>
+<div class="sr-only" id="announcer" aria-live="polite">{shellAnnounce.message}</div>

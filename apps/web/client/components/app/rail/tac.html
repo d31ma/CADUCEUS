@@ -1,20 +1,20 @@
-<nav class="rail" aria-label="Domains">
-  <ul class="rail-list">
+<nav class="rail flex h-full flex-col items-center gap-2 overflow-y-auto pt-[max(var(--w-space-3),var(--tac-titlebar-height,env(safe-area-inset-top)))] pb-[max(var(--w-space-3),env(safe-area-inset-bottom))]" aria-label="Domains">
+  <ul class="m-0 flex list-none flex-col gap-2 p-0">
     <loop :for="account of sessionAccount.accounts">
       <li>
-        <button type="button" class="domain-tile" :title="account.domainId" :aria-current="shell.flag(account.current)" on:click="session.switch(account.domainId)">
+        <button type="button" class="domain-tile relative grid flex-none place-items-center p-0" :title="account.domainId" :aria-current="shell.flag(account.current)" on:click="session.switch(account.domainId)">
           <span aria-hidden="true">{account.initials}</span>
-          <span class="screen-reader-only">{account.domainId}<logic :if="account.current">, current domain</logic></span>
+          <span class="sr-only">{account.domainId}<logic :if="account.current">, current domain</logic></span>
         </button>
       </li>
     </loop>
   </ul>
-  <div class="rail-separator" role="presentation"></div>
-  <button type="button" class="domain-tile" title="Sign in to another domain" aria-label="Sign in to another domain" on:click="session.addDomain()">
-    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
-  </button>
-  <div class="rail-spacer"></div>
-  <button type="button" class="domain-tile" title="Settings" aria-label="Settings" :aria-current="shell.flag(shell.page == 'settings')" on:click="shell.showPage('settings')">
-    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /></svg>
-  </button>
+  <div class="rail-separator h-px w-8 flex-none" role="presentation"></div>
+  <w-icon-btn class="rail-button" icon="plus" title="Sign in to another domain" aria-label="Sign in to another domain" on:click="session.addDomain()"></w-icon-btn>
+  <div class="flex-1"></div>
+  <div class="contents" on:click="notificationPush.loadSettings()">
+    <button type="button" class="domain-tile relative grid flex-none place-items-center p-0" title="Settings" aria-label="Settings" :aria-current="shell.flag(shell.page == 'settings')" on:click="shell.showPage('settings')">
+      <w-icon name="settings" class="tile-icon"></w-icon>
+    </button>
+  </div>
 </nav>

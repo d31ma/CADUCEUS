@@ -26,6 +26,22 @@
   messaging, mail-in, mail-out, search, realtime and notify, with synced
   copies. Guide: `docs/mesail/EVENTS.md`.
 
+### Slice M1: inbound mail
+
+- Added `edge/smtp`, the long-running inbound SMTP listener (the MX). It
+  checks each RCPT TO with `directory` (550 5.1.1 for an unknown address,
+  550 5.7.1 for a domain that is not hosted), offers STARTTLS when a
+  certificate is configured, enforces size, recipient, line and connection
+  limits, checks SPF, DKIM and DMARC (550 5.7.1 for a DMARC `reject`
+  failure), and answers 250 only after every recipient domain's raw copy
+  is written durably and `mail-in` stored it. The delivery pipeline has no
+  socket code, so a managed inbound service can use it in production.
+- Added the `mail-in` route `POST /api/v1/mail-in/messages`: it stores one
+  `InboundRaw` per recipient domain, answers the same id for a retried
+  message, and queues one `email.received` event.
+- Added `kit/mime` (header and MIME parser, fuzz tested) and `kit/mailauth`
+  (SPF, DKIM and DMARC checks with the DMARC DNS tree walk, fuzz tested).
+
 - Completed account-synchronized interface localization across 20 closed,
   persisted locale choices. A reproducible, checksum-pinned SMaLL-100 pipeline
   now catalogs 755 audited static interface literals for 19 non-English

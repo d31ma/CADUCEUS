@@ -632,7 +632,9 @@ an earlier slice text in this file says "realm of the domain",
   listed there, `GET /jwks`, `POST /service-token`, `POST
   /session/domain`, the membership check on refresh, `mustChangePassword`,
   the account routes in the realm `mesail`; `names.words` for the JWK
-  names. Settings `token.issuer` and the env names in CONTRACTS.
+  names. Settings `identity.issuer` (not `token.issuer`: `ty` refuses an
+  `application.json` key named `token`, TY2010) and the env names in
+  CONTRACTS.
 - **Depends on:** L1; L3's `GET /people/{personId}` (fake until it lands);
   L2 for the live check.
 - **Blackbox:** the L0 sign-in, switch, refresh, key set and service

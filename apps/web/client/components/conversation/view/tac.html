@@ -188,7 +188,7 @@
                         <loop :for="file of message.attachments">
                           <li class="file-card flex min-w-0 items-center gap-2">
                             <w-icon class="file-icon" name="file" aria-hidden="true"></w-icon>
-                            <span class="file-text flex min-w-0 flex-col"><span class="file-name">{file.fileName}</span><span class="file-size">{file.typeLabel} · {file.sizeLabel}</span></span>
+                            <span class="file-text flex min-w-0 flex-col"><span class="file-name">{file.fileName}</span><logic :if="file.details != ''"><span class="file-size">{file.details}</span></logic></span>
                           </li>
                         </loop>
                       </ul>

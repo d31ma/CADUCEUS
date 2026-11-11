@@ -69,3 +69,15 @@ func (test *ConversationAttachmentServiceTest) TestOtherTypeIsFile() {
 	Assert.Equals("File", test.card("application/octet-stream", 1).TypeLabel)
 	Assert.Equals("File", test.card("", 1).TypeLabel)
 }
+
+func (test *ConversationAttachmentServiceTest) TestNamedAttachmentShowsTypeAndSize() {
+	cards := (&ConversationAttachmentService{}).Cards([]AttachmentRef{{AttachmentId: "a1", FileName: "plan.pdf", MediaType: "application/pdf", Size: 2516582}})
+	Assert.Equals("plan.pdf", cards[0].FileName)
+	Assert.Equals("PDF · 2.4 MB", cards[0].Details)
+}
+
+func (test *ConversationAttachmentServiceTest) TestAttachmentWithoutANameShowsAPlainLabel() {
+	cards := (&ConversationAttachmentService{}).Cards([]AttachmentRef{{AttachmentId: "a2"}})
+	Assert.Equals("Attachment", cards[0].FileName)
+	Assert.Equals("", cards[0].Details)
+}

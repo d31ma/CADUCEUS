@@ -23,10 +23,22 @@ func (service *ConversationAttachmentService) cardsOf(attachments []AttachmentRe
 func (service *ConversationAttachmentService) card(attachment AttachmentRef) AttachmentCard {
 	return AttachmentCard{
 		AttachmentId: attachment.AttachmentId,
-		FileName:     attachment.FileName,
+		FileName:     cmp.Or(attachment.FileName, service.unnamedLabel()),
 		TypeLabel:    service.typeLabel(attachment.MediaType),
 		SizeLabel:    service.sizeLabel(attachment.Size),
+		Details:      service.detailsOf(attachment),
 	}
+}
+
+func (service *ConversationAttachmentService) detailsOf(attachment AttachmentRef) string {
+	if attachment.FileName == "" {
+		return ""
+	}
+	return service.typeLabel(attachment.MediaType) + " · " + service.sizeLabel(attachment.Size)
+}
+
+func (service *ConversationAttachmentService) unnamedLabel() string {
+	return "Attachment"
 }
 
 func (service *ConversationAttachmentService) sizeLabel(size int64) string {

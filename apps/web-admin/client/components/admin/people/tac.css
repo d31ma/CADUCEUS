@@ -143,7 +143,7 @@ ul {
   .data-table td[data-label]::before {
     content: attr(data-label);
     flex: none;
-    width: 7rem;
+    width: 6rem;
     padding-top: 0.125rem;
     font-size: var(--ms-text-meta);
     line-height: 1.33;

@@ -108,12 +108,12 @@ w-icon {
     align-items: stretch;
   }
 
-  .sheet-dialog w-btn {
+  .sheet-dialog .w-dialog-body w-btn {
     display: block;
     width: 100%;
   }
 
-  .sheet-dialog .w-btn {
+  .sheet-dialog .w-dialog-body .w-btn {
     width: 100%;
     justify-content: center;
   }

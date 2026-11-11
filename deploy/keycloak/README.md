@@ -16,7 +16,8 @@ in production.
 | `conf/keycloak-sqlite.conf` | Build and runtime options for the SQLite image (the default). |
 | `conf/keycloak-postgres.conf` | Options for the PostgreSQL image (`--build-arg KEYCLOAK_DB=postgres`). |
 | `conf/quarkus.properties` | Turns off Hibernate's database version check (it expects PostgreSQL 14+). |
-| `providers/sqlite/` | Java source of `mesail-keycloak-sqlite.jar`, compiled in the `keycloak-providers` stage. |
+| `providers/sqlite/` | Java source of `mesail-keycloak-sqlite.jar` (SQLite support), compiled in the `keycloak-providers` stage. Left out of the PostgreSQL image. |
+| `providers/mesail/` | Java source of `mesail-keycloak-mesail.jar`: the admin API endpoint that stores a TOTP. In both images. |
 | `realm/domain-realm.json` | The template of one mail domain's realm (`${MESAIL_REALM}` = the domain). |
 | `realm/mesail-operators-realm.json` | The `mesail-operators` realm, for the people who run the installation. |
 | `realm/dev/<realm>-users-0.json` | Dev-only test users for `example.com`, `example.org`, `partner.test` and `mesail-operators`. Imported only with `MESAIL_KEYCLOAK_DEV_USERS=true`. |
@@ -64,11 +65,31 @@ is empty).
 | Action | Call |
 | --- | --- |
 | Find the user | `GET /admin/realms/<domain>/users?username=<address>&exact=true` |
-| Set up TOTP with a secret the identity service made | `PUT /admin/realms/<domain>/users/<id>` with `{"credentials":[{"type":"otp","userLabel":"Mesail","secretData":"{\"value\":\"<base32>\"}","credentialData":"{\"subType\":\"totp\",\"digits\":6,\"period\":30,\"algorithm\":\"HmacSHA1\",\"counter\":0,\"secretEncoding\":\"BASE32\"}"}]}` |
+| Set up TOTP with a secret the identity service made, after the user typed a code | `PUT /admin/realms/<domain>/mesail/users/<id>/otp` with `{"secret":"<base32, 32 to 128 characters>","digits":6,"period":30,"algorithm":"HmacSHA1","code":"<the code>"}` (see below) |
 | List or remove TOTP | `GET .../users/<id>/credentials`, `DELETE .../users/<id>/credentials/<credential id>` |
 | Change the password | `PUT .../users/<id>/reset-password` with `{"type":"password","value":"...","temporary":false}` |
 | Log out everywhere | `POST .../users/<id>/logout` |
 | Lock status, unlock | `GET` / `DELETE /admin/realms/<domain>/attack-detection/brute-force/users/<id>` |
+
+**The TOTP endpoint** (`providers/mesail`, Keycloak's admin REST extension
+SPI, so Keycloak's own admin authentication runs first). It:
+
+- requires `manage-users` for that user (Keycloak's permission check);
+- requires digits, period and algorithm equal to the realm's OTP policy
+  (6, 30, `HmacSHA1`), and a base32 secret of 160 to 640 bits;
+- checks the code against the secret with the realm's look-around (one 30 s
+  step either side);
+- accepts a code only once for this user, and marks it used for sign-in too, so
+  the confirmation code cannot sign in afterwards;
+- refuses a second TOTP (remove the old one first);
+- stores the credential and writes an admin event (`CREATE` on
+  `users/<id>/credentials/<credential id>`, without the secret; admin events
+  are on in the realm templates) and a log line.
+
+Answers: 204 stored; 400 `{"error":"invalid_request"}`, `invalid_code` or
+`code_used`; 401 or 403 without the right; 404 `user_not_found`; 409
+`otp_exists`. The stock `PUT /users/<id>` with an `otp` credential also stores
+a TOTP, but checks no code; Mesail uses the endpoint.
 
 **Sign-in answers.** A wrong password, a missing or wrong TOTP code and a
 locked account all get the same answer: HTTP 400 `invalid_grant`,

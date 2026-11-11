@@ -61,7 +61,7 @@ wait_healthy() {
 
 check_oidc() {
   step "oidc check: $1"
-  CHECK_DOMAINS="$DOMAINS" CHECK_ADD_DOMAIN="$ADDED_DOMAIN" MESAIL_KEYCLOAK_DIRECTORY_CLIENT_ID=mesail-directory \
+  KC_BOOTSTRAP_ADMIN_CLIENT_ID=bootstrap-admin KC_BOOTSTRAP_ADMIN_CLIENT_SECRET="$BOOTSTRAP_CLIENT_SECRET" CHECK_DOMAINS="$DOMAINS" CHECK_ADD_DOMAIN="$ADDED_DOMAIN" MESAIL_KEYCLOAK_DIRECTORY_CLIENT_ID=mesail-directory \
     CHECK_REALM_TEMPLATE="$REPO_ROOT/deploy/keycloak/realm/domain-realm.json" \
     python3 "$REPO_ROOT/deploy/keycloak/test/oidc_check.py"
 }

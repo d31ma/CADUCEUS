@@ -35,18 +35,22 @@ unpack_keycloak() {
   tar -xzf "$folder/keycloak-${KEYCLOAK_VERSION}.tar.gz" -C "$folder/keycloak" --strip-components 1
 }
 
-build_providers() {
-  local folder=$1
-  local classes=$folder/provider-classes source sources=()
+build_provider() {
+  local folder=$1 provider=$2
+  local classes=$folder/provider-classes/$provider source sources=()
   while IFS= read -r source; do
     sources+=("$source")
-  done < <(find "$REPO_KEYCLOAK/providers/sqlite/src/main/java" -name '*.java')
-  step "compile the SQLite provider"
+  done < <(find "$REPO_KEYCLOAK/providers/$provider/src/main/java" -name '*.java')
+  step "compile the ${provider} provider"
   rm -rf "$classes"
-  javac --release 21 -Xlint:all -Werror -cp "$folder/keycloak/lib/lib/main/*" -d "$classes" "${sources[@]}"
-  cp -R "$REPO_KEYCLOAK/providers/sqlite/src/main/resources/." "$classes/"
-  jar --create --file "$folder/keycloak/providers/mesail-keycloak-sqlite.jar" -C "$classes" .
-  download_checked "$SQLITE_JDBC_URL" "$folder/keycloak/providers/sqlite-jdbc.jar" 256 "$SQLITE_JDBC_SHA256"
+  javac --release 21 -Xlint:all -Werror -cp "$folder/keycloak/lib/lib/main/*:$folder/keycloak/lib/lib/boot/*" -d "$classes" "${sources[@]}"
+  cp -R "$REPO_KEYCLOAK/providers/$provider/src/main/resources/." "$classes/"
+  jar --create --file "$folder/keycloak/providers/mesail-keycloak-${provider}.jar" -C "$classes" .
+}
+
+build_sqlite_providers() {
+  build_provider "$1" sqlite
+  download_checked "$SQLITE_JDBC_URL" "$1/keycloak/providers/sqlite-jdbc.jar" 256 "$SQLITE_JDBC_SHA256"
 }
 
 configure() {
@@ -63,7 +67,10 @@ main() {
   mkdir -p "$folder"
   folder=$(cd "$folder" && pwd)
   unpack_keycloak "$folder"
-  [[ $database == sqlite ]] && build_providers "$folder"
+  build_provider "$folder" mesail
+  if [[ $database == sqlite ]]; then
+    build_sqlite_providers "$folder"
+  fi
   configure "$folder" "$database"
   step "done: KEYCLOAK_HOME=$folder/keycloak"
 }

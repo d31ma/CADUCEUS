@@ -8,20 +8,23 @@
 ARG KEYCLOAK_DB=sqlite
 
 FROM eclipse-temurin:21-jdk-noble@sha256:114cabb73033ca4ce7ceec3deb62396bc1b716282bae051ed3c1d82e38fcab2d AS keycloak-providers
-COPY --from=quay.io/keycloak/keycloak:26.8.2@sha256:723b1d6e254c0fc96d5cffec860c7e0744d6a3277822b865bb538cf891575e41 /opt/keycloak/lib/lib/main /keycloak-lib
-COPY deploy/keycloak/providers/sqlite /src
+COPY --from=quay.io/keycloak/keycloak:26.8.2@sha256:723b1d6e254c0fc96d5cffec860c7e0744d6a3277822b865bb538cf891575e41 /opt/keycloak/lib/lib /keycloak-lib
+COPY deploy/keycloak/providers /src
 ADD --checksum=sha256:f8dce420a6016278497f4f0560f65602b9db858de141b541cf91a4644ebe4639 \
   https://repo1.maven.org/maven2/org/xerial/sqlite-jdbc/3.54.1.0/sqlite-jdbc-3.54.1.0.jar /providers/sqlite-jdbc.jar
-RUN javac --release 21 -Xlint:all -Werror -cp '/keycloak-lib/*' -d /classes $(find /src/src/main/java -name '*.java') \
-  && cp -R /src/src/main/resources/. /classes/ \
-  && jar --create --file /providers/mesail-keycloak-sqlite.jar -C /classes .
+RUN set -e; for provider in sqlite mesail; do \
+      javac --release 21 -Xlint:all -Werror -cp '/keycloak-lib/main/*:/keycloak-lib/boot/*' -d "/classes/$provider" \
+        $(find "/src/$provider/src/main/java" -name '*.java') \
+      && cp -R "/src/$provider/src/main/resources/." "/classes/$provider/" \
+      && jar --create --file "/providers/mesail-keycloak-$provider.jar" -C "/classes/$provider" . ; \
+    done
 
 FROM quay.io/keycloak/keycloak:26.8.2@sha256:723b1d6e254c0fc96d5cffec860c7e0744d6a3277822b865bb538cf891575e41 AS keycloak-build
 ARG KEYCLOAK_DB
 COPY --from=keycloak-providers --chown=1000:0 /providers/ /opt/keycloak/providers/
 COPY --chown=1000:0 deploy/keycloak/conf/keycloak-${KEYCLOAK_DB}.conf /opt/keycloak/conf/keycloak.conf
 COPY --chown=1000:0 deploy/keycloak/conf/quarkus.properties /opt/keycloak/conf/quarkus.properties
-RUN if [ "$KEYCLOAK_DB" != sqlite ]; then rm -f /opt/keycloak/providers/*.jar; fi \
+RUN if [ "$KEYCLOAK_DB" != sqlite ]; then rm -f /opt/keycloak/providers/sqlite-jdbc.jar /opt/keycloak/providers/mesail-keycloak-sqlite.jar; fi \
   && /opt/keycloak/bin/kc.sh build \
   && /opt/keycloak/bin/kc.sh show-config | grep -F "kc.db "
 

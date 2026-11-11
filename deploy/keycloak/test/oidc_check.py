@@ -159,11 +159,30 @@ class OidcCheck:
         user_id = account.user_id(username)
         self.expect(f"{realm}: mesail-account finds the user", bool(user_id), True)
         secret = base64.b32encode(os.urandom(20)).decode().rstrip("=")
-        self.expect(f"{realm}: store a TOTP with a given base32 secret (HTTP)", account.store_totp(user_id, secret), 204)
+        code = self.totp(secret)
+        self.expect(f"{realm}: OTP endpoint refuses a wrong code", account.store_otp(user_id, secret, self.wrong_code(code)), (400, "invalid_code"))
+        self.expect(f"{realm}: OTP endpoint refuses a short secret", account.store_otp(user_id, secret[:20], code), (400, "invalid_request"))
+        self.expect(f"{realm}: OTP endpoint refuses other digits", account.store_otp(user_id, secret, code, digits=8), (400, "invalid_request"))
+        self.expect(f"{realm}: OTP endpoint answers 404 for an unknown user", account.store_otp("no-such-user", secret, code), (404, "user_not_found"))
+        self.expect(f"{realm}: OTP endpoint stores the TOTP", account.store_otp(user_id, secret, code), (204, ""))
+        self.expect(f"{realm}: OTP endpoint refuses a second TOTP", account.store_otp(user_id, secret, code), (409, "otp_exists"))
+        self.expect(f"{realm}: the TOTP is listed", "otp" in account.credential_types(user_id), True)
+        self.check_otp_audit(realm, user_id, secret)
         time.sleep(self.QUICK_FAILURE_GAP_SECONDS)
         self.expect(f"{realm}: sign-in without the TOTP code (HTTP)", self.password_reply(urls, username, self.MEMBER_PASSWORD).status, 400)
-        self.expect(f"{realm}: sign-in with the TOTP code (HTTP)", self.password_reply(urls, username, self.MEMBER_PASSWORD, self.totp(secret)).status, 200)
+        time.sleep(self.QUICK_FAILURE_GAP_SECONDS)
+        self.expect(f"{realm}: the confirmation code cannot sign in (HTTP)", self.password_reply(urls, username, self.MEMBER_PASSWORD, code).status, 400)
+        time.sleep(self.QUICK_FAILURE_GAP_SECONDS)
+        self.expect(f"{realm}: sign-in with the next TOTP code (HTTP)", self.password_reply(urls, username, self.MEMBER_PASSWORD, self.totp(secret, 1)).status, 200)
         self.expect(f"{realm}: delete the TOTP credential (HTTP)", account.delete_credentials(user_id, "otp"), 204)
+        self.expect(f"{realm}: OTP endpoint refuses a used code again", account.store_otp(user_id, secret, code), (400, "code_used"))
+        service = AccountSettings(self.http, self.base_url, realm, self.service_secret, client=self.SERVICE_CLIENT)
+        service.sign_in()
+        self.expect(f"{realm}: OTP endpoint refuses a client that may not manage users (401 or 403)",
+                    account_status(service.store_otp(user_id, secret, self.totp(secret))) in (401, 403), True)
+        session_ids = account.session_ids(user_id)
+        self.expect(f"{realm}: mesail-account lists the user's sessions", len(session_ids) > 0, True)
+        self.expect(f"{realm}: mesail-account ends one session (HTTP)", account.end_session(session_ids[0]), 204)
         self.expect(f"{realm}: sign-in without TOTP after removal (HTTP)", self.password_reply(urls, username, self.MEMBER_PASSWORD).status, 200)
         self.expect(f"{realm}: reset the password (HTTP)", account.reset_password(user_id, self.TEMPORARY_PASSWORD), 204)
         self.expect(f"{realm}: sign-in with the new password (HTTP)", self.password_reply(urls, username, self.TEMPORARY_PASSWORD).status, 200)
@@ -173,6 +192,19 @@ class OidcCheck:
         self.expect(f"{realm}: refresh after the logout (HTTP)", self.refresh_reply(urls, refresh_token).status, 400)
         self.expect(f"{realm}: mesail-account may not list clients (HTTP)", account.get(f"/{realm}/clients"), 403)
         self.expect(f"{realm}: mesail-account may not read another realm (HTTP)", account.get(f"/{other_realm}/users"), 403)
+
+    def check_otp_audit(self, realm: str, user_id: str, secret: str) -> None:
+        client_id = os.environ.get("KC_BOOTSTRAP_ADMIN_CLIENT_ID", "")
+        client_secret = os.environ.get("KC_BOOTSTRAP_ADMIN_CLIENT_SECRET", "")
+        if not client_id or not client_secret:
+            print(f"{realm}: no admin client in the environment; audit event not checked")
+            return
+        admin = AccountSettings(self.http, self.base_url, "master", client_secret, client=client_id)
+        admin.sign_in()
+        events = admin.call("GET", f"/{realm}/admin-events?operationTypes=CREATE&resourceTypes=USER&max=50").json_list()
+        matching = [event for event in events if f"users/{user_id}/credentials/" in event.get("resourcePath", "")]
+        self.expect(f"{realm}: admin event for the stored TOTP", len(matching) > 0, True)
+        self.expect(f"{realm}: the admin event holds no secret", any(secret in json.dumps(event) for event in matching), False)
 
     def check_lockout(self, urls: "RealmUrls") -> None:
         realm = urls.realm
@@ -229,9 +261,13 @@ class OidcCheck:
         return self.http.post_form(urls.token, fields)
 
     @staticmethod
-    def totp(secret: str) -> str:
+    def wrong_code(code: str) -> str:
+        return str((int(code) + 500000) % 1000000).zfill(6)
+
+    @staticmethod
+    def totp(secret: str, steps_ahead: int = 0) -> str:
         key = base64.b32decode(secret + "=" * (-len(secret) % 8))
-        digest = hmac.new(key, struct.pack(">Q", int(time.time()) // 30), hashlib.sha1).digest()
+        digest = hmac.new(key, struct.pack(">Q", int(time.time()) // 30 + steps_ahead), hashlib.sha1).digest()
         offset = digest[-1] & 15
         return str((struct.unpack(">I", digest[offset:offset + 4])[0] & 0x7FFFFFFF) % 1000000).zfill(6)
 
@@ -301,10 +337,15 @@ class RealmUrls:
         self.auth = f"{connect}/auth"
 
 
+def account_status(result: tuple[int, str]) -> int:
+    return result[0]
+
+
 class AccountSettings:
     CLIENT = "mesail-account"
 
-    def __init__(self, http: "Http", base_url: str, realm: str, secret: str) -> None:
+    def __init__(self, http: "Http", base_url: str, realm: str, secret: str, client: str = CLIENT) -> None:
+        self.client = client
         self.http = http
         self.base_url = base_url
         self.realm = realm
@@ -313,7 +354,7 @@ class AccountSettings:
 
     def sign_in(self) -> int:
         reply = self.http.post_form(f"{self.base_url}/realms/{self.realm}/protocol/openid-connect/token",
-                                    {"grant_type": "client_credentials"}, (self.CLIENT, self.secret))
+                                    {"grant_type": "client_credentials"}, (self.client, self.secret))
         self.token = reply.json().get("access_token", "")
         return reply.status
 
@@ -329,6 +370,20 @@ class AccountSettings:
             "credentialData": json.dumps({"subType": "totp", "digits": 6, "period": 30, "algorithm": "HmacSHA1", "counter": 0, "secretEncoding": "BASE32"}),
         }
         return self.call("PUT", f"/{self.realm}/users/{user_id}", {"credentials": [credential]}).status
+
+    def store_otp(self, user_id: str, secret: str, code: str, digits: int = 6) -> tuple[int, str]:
+        body = {"secret": secret, "digits": digits, "period": 30, "algorithm": "HmacSHA1", "code": code}
+        reply = self.call("PUT", f"/{self.realm}/mesail/users/{user_id}/otp", body)
+        return reply.status, reply.json().get("error", "")
+
+    def credential_types(self, user_id: str) -> list:
+        return [credential["type"] for credential in self.call("GET", f"/{self.realm}/users/{user_id}/credentials").json_list()]
+
+    def session_ids(self, user_id: str) -> list:
+        return [session["id"] for session in self.call("GET", f"/{self.realm}/users/{user_id}/sessions").json_list()]
+
+    def end_session(self, session_id: str) -> int:
+        return self.call("DELETE", f"/{self.realm}/sessions/{session_id}").status
 
     def delete_credentials(self, user_id: str, credential_type: str) -> int:
         credentials = self.call("GET", f"/{self.realm}/users/{user_id}/credentials").json_list()

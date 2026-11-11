@@ -19,11 +19,15 @@
   "otpPolicyAlgorithm": "HmacSHA1",
   "otpPolicyDigits": 6,
   "otpPolicyPeriod": 30,
+  "otpPolicyLookAheadWindow": 1,
+  "otpPolicyCodeReusable": false,
   "accessTokenLifespan": 60,
   "ssoSessionIdleTimeout": 1800,
   "ssoSessionMaxLifespan": 36000,
   "revokeRefreshToken": true,
   "refreshTokenMaxReuse": 0,
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": false,
   "roles": {
     "realm": [
       {

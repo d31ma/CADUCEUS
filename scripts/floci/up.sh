@@ -47,7 +47,9 @@ main() {
   MESAIL_KEYCLOAK_DOMAINS="$(mesail_stack '.keycloak.domains | join(",")')"
   export MESAIL_KEYCLOAK_DOMAINS
   MESAIL_SINGLE_WRITERS="$(single_writers)"
-  export MESAIL_SINGLE_WRITERS
+  MESAIL_SCHEDULER_PATHS="$(mesail_stack '[.schedules[].path] | join(",")')"
+  MESAIL_SCHEDULER_SECONDS="$(mesail_stack .scheduleSeconds)"
+  export MESAIL_SINGLE_WRITERS MESAIL_SCHEDULER_PATHS MESAIL_SCHEDULER_SECONDS
   mesail_step wait-devhost-floci wait_for_devhost_floci
   profile="$(compose_options)"
   echo "$profile" > "$(mesail_log_dir)/compose-profile"

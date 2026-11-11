@@ -101,7 +101,9 @@
     "YON_DIRECTORY_REALMSECRETS_IDENTITY": "MESAIL_IDENTITY_CLIENT_SECRET",
     "YON_DIRECTORY_REALMSECRETS_SERVICE": "MESAIL_SERVICE_SECRET",
     "YON_DIRECTORY_REALMSECRETS_ACCOUNT": "MESAIL_ACCOUNT_CLIENT_SECRET",
-    "YON_ATTACHMENTS_LINK_SECRET": "MESAIL_LINK_SECRET"
+    "YON_ATTACHMENTS_LINK_SECRET": "MESAIL_LINK_SECRET",
+    "YON_MAILIN_BLOBS_LINK_SECRET": "MESAIL_LINK_SECRET",
+    "YON_REALTIME_GATEWAY_SECRET": "MESAIL_REALTIME_GATEWAY_SECRET"
   },
   "generatedSecrets": [
     "MESAIL_IDENTITY_CLIENT_SECRET",
@@ -174,5 +176,44 @@
   "hostedDomains": [
     "example.com",
     "example.org"
+  ],
+  "scheduleSeconds": 60,
+  "schedules": [
+    {
+      "path": "/api/v1/channels/outbox/relay",
+      "native": false
+    },
+    {
+      "path": "/api/v1/directory/outbox/relay",
+      "native": false
+    },
+    {
+      "path": "/api/v1/mail-in/outbox/relay",
+      "native": true
+    },
+    {
+      "path": "/api/v1/mail-out/jobs/deliver",
+      "native": false
+    },
+    {
+      "path": "/api/v1/mail-out/outbox/relay",
+      "native": false
+    },
+    {
+      "path": "/api/v1/messaging/outbox/relay",
+      "native": false
+    },
+    {
+      "path": "/api/v1/notify/jobs/run",
+      "native": false
+    },
+    {
+      "path": "/api/v1/notify/outbox/relay",
+      "native": false
+    },
+    {
+      "path": "/api/v1/realtime/jobs/sweep",
+      "native": false
+    }
   ]
 }

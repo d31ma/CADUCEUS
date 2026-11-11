@@ -67,6 +67,16 @@ services:
       - "127.0.0.1:${MESAIL_ROUTER_PORT:-18080}:8080"
     networks: [backend]
 
+  scheduler:
+    image: mesail-scheduler:${MESAIL_IMAGE_TAG:-dev}
+    environment:
+      MESAIL_SCHEDULER_TOKEN_URL: http://keycloak:8080/idp/realms/mesail-operators/protocol/openid-connect/token
+      MESAIL_SCHEDULER_CLIENT_SECRET: ${MESAIL_SERVICE_SECRET:?run scripts/floci/run-all.sh}
+      MESAIL_SCHEDULER_BASE: http://router:8080
+      MESAIL_SCHEDULER_PATHS: ${MESAIL_SCHEDULER_PATHS:-}
+      MESAIL_SCHEDULER_SECONDS: ${MESAIL_SCHEDULER_SECONDS:-60}
+    networks: [backend]
+
 networks:
   backend:
     name: mesail_floci_backend

@@ -73,11 +73,9 @@ provision_keycloak() {
     KC_BOOTSTRAP_ADMIN_CLIENT_ID=mesail-bootstrap "$(mesail_root)/deploy/keycloak/bin/mesail-keycloak-provision"
 }
 
-point_copy_at_keycloak() {
-  local file="$1"
-  if ! keycloak_wanted; then return 0; fi
-  sed -E -i '' -e "s#\"issuer\": *\"[^\"]*/idp/realms/#\"issuer\": \"$MESAIL_ISSUER_ORIGIN/idp/realms/#" \
-    -e "s#http://keycloak:8080/idp#$(keycloak_base)/idp#g" -e "s#http://127\.0\.0\.1:8180/idp#$(keycloak_base)/idp#g" "$file"
+native_keycloak_url() {
+  if ! keycloak_wanted; then echo "http://127.0.0.1:8180/idp"; return; fi
+  echo "$(keycloak_base)/idp"
 }
 
 tokens_file() {

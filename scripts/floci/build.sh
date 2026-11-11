@@ -32,6 +32,7 @@ main() {
   local service
   mesail_load_settings
   mesail_step build-router build_image router "mesail-router:$MESAIL_IMAGE_TAG"
+  mesail_step build-scheduler build_image scheduler "mesail-scheduler:$MESAIL_IMAGE_TAG"
   mesail_step build-keycloak build_image keycloak-blackbox "$(mesail_stack .keycloak.image):$MESAIL_IMAGE_TAG"
   for service in $(chosen_services "$@"); do
     mesail_step "build-$service" build_service "$service" || echo "warning: $service did not build; it is not deployed"

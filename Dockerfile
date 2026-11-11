@@ -63,7 +63,7 @@ ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 PATH=/usr/local/go/bin:/usr/loca
 COPY --chmod=755 deploy/lambda/install-tools.sh /usr/local/lib/mesail/install-tools.sh
 RUN set -eu \
  && apt-get update -q \
- && apt-get install -y -q --no-install-recommends ca-certificates curl tzdata \
+ && apt-get install -y -q --no-install-recommends ca-certificates curl tzdata jq \
  && /usr/local/lib/mesail/install-tools.sh \
  && apt-get purge -y -q curl \
  && apt-get autoremove -y -q \
@@ -72,6 +72,9 @@ RUN set -eu \
 FROM lambda-tools AS lambda
 ARG APP
 ARG FYLO=false
+ARG ISSUER_ORIGIN=https://mesail.localhost
+ARG KEYCLOAK_URL=http://keycloak:8080/idp
+ARG SERVICE_BASE=http://router:8080
 ARG USER_ID=10001
 ENV MESAIL_APP_ROOT=/tmp/mesail-app \
     MESAIL_STORED_APP=/opt/mesail/app \
@@ -85,9 +88,11 @@ RUN test -n "${APP}" \
 COPY --from=lambda-adapter /lambda-adapter /opt/extensions/lambda-adapter
 COPY --chmod=755 deploy/lambda/start.sh /usr/local/bin/mesail-lambda-start
 COPY --chmod=755 deploy/lambda/write-profile.sh /usr/local/lib/mesail/write-profile.sh
+COPY --chmod=755 deploy/lambda/rewrite-config.sh /usr/local/lib/mesail/rewrite-config.sh
 COPY apps/${APP} /tmp/mesail-app
 RUN set -eu \
  && mkdir -p /opt/mesail /tmp/tac-cache \
+ && /usr/local/lib/mesail/rewrite-config.sh /tmp/mesail-app/server/application.json "${ISSUER_ORIGIN}" "${KEYCLOAK_URL}" "${SERVICE_BASE}" \
  && ty bundle /tmp/mesail-app \
  && /usr/local/lib/mesail/write-profile.sh /tmp/mesail-app "${APP}" "${FYLO}" > /opt/mesail/data-root \
  && mv /tmp/mesail-app /opt/mesail/app \
@@ -109,6 +114,11 @@ COPY deploy/router/go.mod ./
 COPY deploy/router/*.go ./
 RUN rm -f ./*_test.go \
  && GOTOOLCHAIN=local GOPROXY=off CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" -o /out/mesail-router .
+
+FROM curlimages/curl:8.11.1@sha256:c1fe1679c34d9784c1b0d1e5f62ac0a79fca01fb6377cdd33e90473c6f9f9a69 AS scheduler
+COPY --chmod=755 deploy/lambda/scheduler.sh /usr/local/bin/mesail-scheduler
+USER 10001:10001
+ENTRYPOINT ["/usr/local/bin/mesail-scheduler"]
 
 FROM scratch AS router
 COPY --from=lambda-tools /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt

@@ -33,9 +33,34 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
 - It prints `export MESAIL_BASE_URL=http://127.0.0.1:<port>` (also in
   `$TMPDIR/mesail-native/<owner>/env`).
 - An app that fails to start is a warning: its tests fail, the others run.
-- Services reach each other through the router: in the copied `.env` and
-  `server/application.json`, every `http://127.0.0.1:81xx` address becomes
-  the router's address.
+- Each app gets a free port, written into its native profile
+  (`server.port`), so its own `@Schedule` worker, which calls
+  `<app>.localhost:<server.port>`, reaches it.
+- Services reach each other through the router. `deploy/lambda/rewrite-config.sh`
+  rewrites each copied `server/application.json`: `oidc.issuer` becomes
+  `${MESAIL_ISSUER_ORIGIN}/idp/realms/{realm}`; `http://keycloak:8080/idp` and
+  `http://127.0.0.1:8180/idp` become the run's Keycloak; `http://<name>.localhost:81xx`
+  and `http://127.0.0.1:81xx` keep their host and use the router's port; the
+  Keycloak host is added to `outgoing.hosts`. The copied `.env` gets the same
+  address change. The Lambda image runs the same script at build time
+  (build args `ISSUER_ORIGIN`, `KEYCLOAK_URL` = `http://keycloak:8080/idp`,
+  `SERVICE_BASE` = `http://router:8080`), so every function trusts the same
+  issuer and reaches other services through the router.
+- Mail: `mail-in` and `mail-out` share the run's blob folder
+  (`YON_MAILIN_BLOBS_*`, `mailout.blobfolder`), and `mail-out` reads test DKIM
+  keys from a private secrets folder (`mailout.secretfolder`), one RSA 2048 key
+  per hosted domain at `dkim/<domain>/<selector>.pem` (selector from the
+  directory's `dkimselector`).
+- Realtime: when `realtime` runs, the run builds and starts `edge/realtime`
+  (public and management ports chosen by the run, the shared
+  `MESAIL_REALTIME_GATEWAY_SECRET`), gives `realtime` `YON_REALTIME_GATEWAY_URL`
+  and `YON_REALTIME_GATEWAY_SECRET`, and the router sends
+  `/api/v1/realtime/socket` and `/stream` to the gateway.
+- Scheduled routes: each app's own `@Schedule` worker triggers its relay and
+  jobs under `ty start`. For a route no worker covers (`stack.json`
+  `schedules` with `"native": true`; today `mail-in`'s outbox relay) the run
+  starts `deploy/lambda/scheduler.sh`, which calls it every
+  `scheduleSeconds` with a `mesail-operators` service token.
 - An app that declares its own `datasource` in `application.json` (against
   the rule; `search` does today) gets no `.env` datasource; in the copy its
   `fylo:///mnt/data/<service>` becomes this run's root. The Lambda image
@@ -315,6 +340,16 @@ password grant, by `tokens.sh`):
 
 The Keycloak image's own dev users (`member@<domain>`, `admin@<domain>`)
 exist too. Passwords are in `stack.json` (dev only).
+
+### Scheduler (Floci)
+
+In Lambda form no `@Schedule` worker runs, so the `scheduler` container
+(`Dockerfile` target `scheduler`, `deploy/lambda/scheduler.sh` on a pinned
+curl image) calls every route in `stack.json` `schedules` through the router
+every `scheduleSeconds` (60) with a `mesail-operators` service token from
+`mesail-service` (`MESAIL_SERVICE_SECRET`). It logs only the path and the
+status code. In AWS this becomes EventBridge Scheduler rules with a small
+token-fetching trigger.
 
 ## Ports on the Mac (127.0.0.1 only)
 

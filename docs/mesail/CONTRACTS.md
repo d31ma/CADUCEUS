@@ -242,7 +242,7 @@ id from another domain answers `404`. A `PATCH` that sets `emailAddress` or
 | `PUT /api/v1/messaging/messages/{messageId}/reactions/{reaction}` | SignedIn | - | `204` |
 | `DELETE /api/v1/messaging/messages/{messageId}/reactions/{reaction}` | SignedIn | - | `204` |
 | `PUT /api/v1/messaging/conversations/{conversationId}/read` | SignedIn | `ReadRequest{messageId}` | `204` |
-| `GET /api/v1/messaging/attachments/{attachmentId}/access` | SignedIn | - | `204` when the caller can read a message of its domain that carries the attachment, else `404` (called by `attachments` with the caller's own token) |
+| `GET /api/v1/messaging/attachments/{attachmentId}/access` | SignedIn | - | `204` when the caller can read a message of its domain that carries the attachment, else `404` (called by `attachments` with the caller's own token). messaging answers it from one `attachment-uses` row per attachment of a message, so a message carries at most 10 attachments; more answers `400 invalid_request` with `field: attachmentIds` |
 
 `SendRequest{clientMessageId, conversationId?, threadRootId?,
 alsoToConversation, body,

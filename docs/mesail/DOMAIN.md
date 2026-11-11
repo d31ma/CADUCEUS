@@ -29,7 +29,7 @@ own TACHYON Go app in `apps/<service>/`, with the route prefix
 | `identity` | none (stateless token check) | users and credentials (Keycloak owns them) |
 | `directory` | `domains`, `members`, `addresses` (aliases are addresses) | DKIM private keys (secret store), Keycloak realms (Keycloak owns them) |
 | `channels` | `channels`, `channel-members` | messages |
-| `messaging` | `conversations`, `participants` (with the read position), `messages` (with the deliveries), `reactions`, `mentions`, `members` (a cache filled from `member.upserted`, for @mention lookup), `email-threads` | raw email bytes, attachments |
+| `messaging` | `conversations`, `participants` (with the read position), `messages` (with the deliveries), `reactions`, `mentions`, `attachment-uses` (one row per attachment of a message, for the attachment access check; at most 10 per message), `members` (a cache filled from `member.upserted`, for @mention lookup), `email-threads` | raw email bytes, attachments |
 | `attachments` | `attachments` (metadata) and the blob bucket | message bodies |
 | `realtime` | `connections`, `presence` | messages |
 | `notify` | `notifications`, `push-subscriptions`, `notify-settings` | messages |

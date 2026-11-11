@@ -262,7 +262,8 @@ stable; tests name them.
   the client never renders HTML from a message. Links are only `https`,
   `http` and `mailto`, and open with `rel="noopener noreferrer"`.
 - **AC-MS-5** Attachments up to the domain limit (default 25 MiB per
-  file, 50 MiB per message) can be added to any message. They are stored
+  file, 50 MiB per message, at most 10 files per message) can be added to
+  any message. They are stored
   once and shared by chat and email deliveries.
 - **AC-MS-6** A member can add and remove emoji reactions from a fixed set
   (12 in the first release). Each reaction shows its glyph and has an

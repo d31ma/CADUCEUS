@@ -19,6 +19,11 @@ Every call to the backend uses a 30 s timeout. A `408`, `429`, `5xx` or
 network error is retried up to 3 times, after 0.25 s, 1 s and 2 s (SLICES
 rule 9). All three routes are safe to repeat.
 
+At start the gateway sends one `connect` for the id `gateway-warmup` (retried
+every 2 s for up to 2 minutes), so `ty start` compiles the backend's handler
+before the first real client arrives. The log line `backend.warmed` says
+whether it worked.
+
 ## Public routes (`MESAIL_REALTIME_LISTEN`)
 
 - `GET /api/v1/realtime/socket`: WebSocket. The `Origin` header must be in

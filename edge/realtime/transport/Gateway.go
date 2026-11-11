@@ -10,6 +10,7 @@ import (
 
 type Gateway struct {
 	hub        *connections.Hub
+	relay      connections.Relay
 	public     http.Handler
 	management http.Handler
 }
@@ -24,7 +25,7 @@ func NewGateway(settings GatewaySettings, log connections.EventLog) Gateway {
 	public.Handle("GET /api/v1/realtime/stream", NewStreamHandler(relay, settings.Session))
 	public.Handle("GET /api/v1/realtime/gateway-health", HealthHandler{})
 	management := NewSecretGuard(settings.Secret, NewManagementHandler(hub).Routes())
-	return Gateway{hub: hub, public: public, management: management}
+	return Gateway{hub: hub, relay: relay, public: public, management: management}
 }
 
 func (gateway Gateway) Public() http.Handler {
@@ -33,6 +34,10 @@ func (gateway Gateway) Public() http.Handler {
 
 func (gateway Gateway) Management() http.Handler {
 	return gateway.management
+}
+
+func (gateway Gateway) Warm() {
+	gateway.relay.Warm()
 }
 
 func (gateway Gateway) Close(ctx context.Context) error {

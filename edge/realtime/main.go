@@ -32,6 +32,7 @@ func (program Program) Run() error {
 	go program.serve(public, failures)
 	go program.serve(management, failures)
 	events.Started(settings.PublicAddress, settings.ManagementAddress)
+	go gateway.Warm()
 	err = program.waitForEnd(ctx, failures)
 	events.Stopping()
 	program.shutdown(gateway, public, management)

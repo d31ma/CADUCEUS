@@ -167,6 +167,8 @@ func testSessionSettings() connections.SessionSettings {
 		WriteTimeout:      2 * time.Second,
 		QueueLimit:        64,
 		ReauthLead:        100 * time.Millisecond,
+		WarmAttempts:      3,
+		WarmPause:         time.Millisecond,
 	}
 }
 

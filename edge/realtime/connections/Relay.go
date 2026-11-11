@@ -2,6 +2,7 @@ package connections
 
 import (
 	"context"
+	"time"
 
 	"mesail.dev/edge/realtime/backend"
 )
@@ -26,6 +27,24 @@ func (relay Relay) Open(kind string) (*Session, error) {
 	err := relay.backend.Connect(context.Background(), request)
 	relay.log.BackendFailed(session.Id(), "connect", err)
 	return session, err
+}
+
+func (relay Relay) Warm() {
+	ready := false
+	for attempt := 0; attempt < relay.settings.WarmAttempts && !ready; attempt++ {
+		ready = relay.tryWarm(attempt)
+	}
+	relay.log.Warmed(ready)
+}
+
+func (relay Relay) tryWarm(attempt int) bool {
+	time.Sleep(time.Duration(min(attempt, 1)) * relay.settings.WarmPause)
+	request := backend.ConnectRequest{ConnectionId: relay.warmupId(), Kind: Kinds{}.Socket()}
+	return relay.backend.Connect(context.Background(), request) == nil
+}
+
+func (Relay) warmupId() string {
+	return "gateway-warmup"
 }
 
 func (relay Relay) Forward(session *Session, body string) {

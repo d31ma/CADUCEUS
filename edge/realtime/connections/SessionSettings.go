@@ -9,6 +9,8 @@ type SessionSettings struct {
 	WriteTimeout      time.Duration
 	QueueLimit        int
 	ReauthLead        time.Duration
+	WarmAttempts      int
+	WarmPause         time.Duration
 }
 
 func DefaultSessionSettings() SessionSettings {
@@ -19,5 +21,7 @@ func DefaultSessionSettings() SessionSettings {
 		WriteTimeout:      10 * time.Second,
 		QueueLimit:        64,
 		ReauthLead:        20 * time.Second,
+		WarmAttempts:      60,
+		WarmPause:         2 * time.Second,
 	}
 }

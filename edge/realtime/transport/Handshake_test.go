@@ -1,6 +1,7 @@
 package transport_test
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -58,4 +59,25 @@ func TestStreamSaysHelloFirst(t *testing.T) {
 	harness := newHarness(t, defaults)
 	stream := harness.openStream("?ticket=abc")
 	stream.waitFor("data: " + helloFrame)
+}
+
+func TestWarmCompilesTheBackendWithAHarmlessConnect(t *testing.T) {
+	harness := newHarness(t, defaults)
+	harness.gateway.Warm()
+	connects := harness.backend.connectsSnapshot()
+	if len(connects) != 1 || connects[0].ConnectionId != "gateway-warmup" || connects[0].Kind != "socket" {
+		t.Fatalf("connects %+v", connects)
+	}
+	if !strings.Contains(harness.logs.String(), `"msg":"backend.warmed","ready":true`) {
+		t.Fatalf("logs %s", harness.logs.String())
+	}
+}
+
+func TestWarmLogsAFailedBackend(t *testing.T) {
+	harness := newHarness(t, defaults)
+	harness.backend.setConnectStatus(500)
+	harness.gateway.Warm()
+	if !strings.Contains(harness.logs.String(), `"ready":false`) || len(harness.backend.connectsSnapshot()) != 12 {
+		t.Fatalf("logs %s", harness.logs.String())
+	}
 }

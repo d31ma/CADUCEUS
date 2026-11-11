@@ -21,6 +21,10 @@ func (log EventLog) Stopping() {
 	log.logger.Info("gateway.stopping")
 }
 
+func (log EventLog) Warmed(ready bool) {
+	log.logger.Info("backend.warmed", "ready", ready)
+}
+
 func (log EventLog) Opened(connectionId string, kind string) {
 	log.logger.Info("connection.opened", log.connectionField(), connectionId, "kind", kind)
 }

@@ -8,6 +8,7 @@ type ClaimsDocument struct {
 	ExpiresAt       int64        `json:"exp"`
 	NotBefore       int64        `json:"nbf"`
 	TokenType       string       `json:"typ"`
+	SessionId       string       `json:"sid"`
 	Name            string       `json:"name"`
 	Email           string       `json:"email"`
 	RealmAccess     RealmAccess  `json:"realm_access"`
@@ -22,6 +23,7 @@ func (document ClaimsDocument) Claims() Claims {
 		ExpiresAt:       document.ExpiresAt,
 		NotBefore:       document.NotBefore,
 		TokenType:       document.TokenType,
+		SessionId:       document.SessionId,
 		Name:            document.Name,
 		Email:           document.Email,
 		RealmRoles:      document.RealmAccess.Roles,

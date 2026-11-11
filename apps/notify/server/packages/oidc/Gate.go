@@ -29,6 +29,6 @@ func (gate Gate) Identify(authorization string) (Caller, error) {
 
 func (gate Gate) caller(claims Claims) (Caller, error) {
 	domainId, err := Realm{}.Name(claims.Issuer)
-	caller := Caller{DomainId: domainId, MemberId: claims.Subject, DisplayName: claims.Name, Email: claims.Email, Roles: RoleMap{}.MesailRoles(claims)}
+	caller := Caller{DomainId: domainId, MemberId: claims.Subject, DisplayName: claims.Name, Email: claims.Email, Roles: RoleMap{}.MesailRoles(claims), SessionId: claims.SessionId}
 	return caller, err
 }

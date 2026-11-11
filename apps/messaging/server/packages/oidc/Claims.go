@@ -8,6 +8,7 @@ type Claims struct {
 	ExpiresAt       int64
 	NotBefore       int64
 	TokenType       string
+	SessionId       string
 	Name            string
 	Email           string
 	RealmRoles      []string

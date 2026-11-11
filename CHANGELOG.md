@@ -62,6 +62,11 @@
   service a cached `mesail-service` token (client credentials) for calling
   another service. Guide: `docs/mesail/SERVICE-TOKENS.md`. The Keycloak
   token endpoint is the shared setting `oidc.keycloak`.
+- Account settings in identity: `POST /api/v1/identity/password`,
+  `GET`/`DELETE /api/v1/identity/totp`, `POST .../totp/setup` (secret,
+  `otpauth://` URI, server-drawn QR code and a sealed `setupKey`) and
+  `POST .../totp/confirm`, through the Keycloak admin API as the client
+  `mesail-account`. Session routes and account routes share one controller.
 
 ### Mesail D1: directory
 

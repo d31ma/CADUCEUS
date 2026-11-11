@@ -5,4 +5,5 @@ type Settings struct {
 	Jwks     string `json:"jwks"`
 	Audience string `json:"audience"`
 	Keycloak string `json:"keycloak,omitempty"`
+	Admin    string `json:"admin,omitempty"`
 }

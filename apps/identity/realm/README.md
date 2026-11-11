@@ -15,7 +15,12 @@ the token check in `kit/oidc` need from them.
 - `mesail-identity`: confidential, direct access grants only. The identity
   service signs people in with it. Every realm uses the same secret
   (`YON_IDENTITY_CLIENT_SECRET` in identity's `.env`).
-- `mesail-service`: client credentials, for calls between services.
+- `mesail-service`: client credentials, for calls between services. Also in
+  `mesail-operators`, for install-wide calls.
+- `mesail-account`: client credentials only. Its service account has only
+  the realm-management roles `manage-users` and `view-users`. identity uses
+  it for the account settings (password, 2-step code). Shared secret
+  `YON_IDENTITY_ACCOUNT_SECRET`.
 - `mesail-api`: no sign-in. It exists only as the token audience.
 
 ## What the token check requires
@@ -63,9 +68,34 @@ The identity service also needs:
 
 - `oidc.keycloak` in `server/application.json`: the base of the token
   and logout endpoints, `http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect`.
+- `oidc.admin` in `server/application.json`: the admin API base,
+  `http://127.0.0.1:8180/idp/admin/realms/{realm}`.
 - In its `.env` (never committed): `YON_IDENTITY_CLIENT_SECRET` (the
-  `mesail-identity` secret) and `YON_IDENTITY_SESSION_KEY` (32 random bytes
-  in standard base64, for example `openssl rand -base64 32`). It encrypts
-  the `sessionKey` with AES-GCM.
+  `mesail-identity` secret), `YON_IDENTITY_ACCOUNT_SECRET` (the
+  `mesail-account` secret) and `YON_IDENTITY_SESSION_KEY` (32 random bytes
+  in standard base64, for example `openssl rand -base64 32`). The session
+  key encrypts the `sessionKey` and the 2-step `setupKey` with AES-GCM.
+
+## Admin API calls identity makes
+
+All for the user whose `sub` is in the caller's token, never an id from the
+request:
+
+- `PUT  /admin/realms/<domain>/users/<sub>/reset-password`
+- `GET  /admin/realms/<domain>/users/<sub>/sessions`, then
+  `DELETE /admin/realms/<domain>/sessions/<id>` for every session except the
+  caller's own
+- `GET  /admin/realms/<domain>/users/<sub>/credentials`, then
+  `DELETE /admin/realms/<domain>/users/<sub>/credentials/<id>` for type `otp`
+- `PUT  /admin/realms/<domain>/mesail/users/<sub>/otp` with
+  `{secret (base32), digits 6, period 30, algorithm HmacSHA1}`: stores the
+  2-step credential. This is an endpoint of mesail-keycloak's provider
+  (being settled), because the stock admin API cannot set an OTP secret.
+
+## Rotating a shared secret
+
+Set the new value in every realm (client `mesail-identity`, `mesail-account`
+or `mesail-service`), then in every `.env` that holds it, then restart those
+services.
 
 Without these, the session routes answer `503 unavailable`.

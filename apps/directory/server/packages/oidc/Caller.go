@@ -6,4 +6,5 @@ type Caller struct {
 	DisplayName string
 	Email       string
 	Roles       []string
+	SessionId   string
 }

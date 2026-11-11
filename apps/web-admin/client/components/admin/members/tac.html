@@ -25,13 +25,13 @@
           </div>
         </div>
 
-        <form class="ms-toolbar" role="search" aria-label="Filter members" on:submit="memberList.search()">
+        <div class="ms-toolbar" role="search" aria-label="Filter members">
           <div class="ms-field ms-toolbar__search">
             <label class="ms-label" for="member-search">Search</label>
             <div class="ms-input-icon"><span class="ms-icon ms-i-search ms-icon--sm" aria-hidden="true"></span><input class="ms-input" id="member-search" type="search" placeholder="Name or address" autocomplete="off" spellcheck="false" :value="memberList.query" on:input="memberList.query = $event.target.value"></div>
           </div>
-          <button class="ms-btn" type="submit" :disabled="memberList.state == 'loading'">Search</button>
-        </form>
+          <button class="ms-btn" type="button" on:click="memberList.search()" :disabled="memberList.state == 'loading'">Search</button>
+        </div>
 
         <switch :value="memberList.state">
           <case :when="'ready'">

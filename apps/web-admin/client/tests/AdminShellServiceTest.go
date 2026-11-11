@@ -49,3 +49,10 @@ func (test *AdminShellServiceTest) TestFlagWritesAriaValuesAsText() {
 	Assert.Equals("true", shell.Flag(true))
 	Assert.Equals("false", shell.Flag(false))
 }
+
+func (test *AdminShellServiceTest) TestLoadedAnnouncesWhatTheViewShows() {
+	shell := &AdminShellService{}
+	shell.Loaded(AdminViewLoaded{View: "members", Message: "5 members"})
+	shell.Loaded(AdminViewLoaded{View: "members", Message: ""})
+	Assert.Equals("5 members", shell.Announcement)
+}

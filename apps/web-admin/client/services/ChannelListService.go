@@ -22,16 +22,18 @@ type ChannelListService struct {
 	// @Needs
 	channelsClient *ChannelsClient
 	// @Needs
-	problems *AdminProblemService
+	problems                  *AdminProblemService
+	applicationEventPublisher ApplicationEventPublisher
 }
 
-// @OnEvent({"condition":"value.view == 'channels'"})
+// @OnEvent({"condition":"value.view == 'channels'","replay":true})
 // @InBackground
 func (list *ChannelListService) Opened(opened AdminViewOpened) {
 	list.Domain = opened.DomainId
 	list.Search = ""
 	list.Show = list.allChannels()
 	list.load()
+	list.applicationEventPublisher.PublishEvent(AdminViewLoaded{View: opened.View, Message: list.Heading}, false)
 }
 
 func (list *ChannelListService) Refresh() {

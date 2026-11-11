@@ -23,15 +23,15 @@ type DomainDnsService struct {
 	// @Needs
 	problems *AdminProblemService
 	// @Needs
-	records *DomainRecordService
-	// @Needs
-	domainRows *DomainRowService
+	domainRows                *DomainRowService
+	applicationEventPublisher ApplicationEventPublisher
 }
 
-// @OnEvent({"condition":"value.view == 'domain'"})
+// @OnEvent({"condition":"value.view == 'domain'","replay":true})
 // @InBackground
 func (dns *DomainDnsService) Opened(opened AdminViewOpened) {
 	dns.load(opened.DomainId)
+	dns.applicationEventPublisher.PublishEvent(AdminViewLoaded{View: opened.View, Message: dns.Status}, false)
 }
 
 func (dns *DomainDnsService) Refresh() {
@@ -59,16 +59,16 @@ func (dns *DomainDnsService) load(domainId string) {
 }
 
 func (dns *DomainDnsService) show(domain Domain) {
-	state := dns.domainRows.State(domain.State)
+	view := dns.domainRows.View(domain)
 	dns.domain = domain
 	dns.Name = dns.firstOf(domain.Name, dns.DomainId)
-	dns.StateText = state.Text
-	dns.StateClass = state.TagClass
-	dns.StateIcon = state.IconClass
-	dns.Pending = state.Pending
-	dns.Waiting = dns.records.Waiting(domain.Dns)
-	dns.Status = dns.records.Status(domain.Dns)
-	dns.Records = dns.records.Records(domain)
+	dns.StateText = view.StateText
+	dns.StateClass = view.StateClass
+	dns.StateIcon = view.StateIcon
+	dns.Pending = view.Pending
+	dns.Waiting = view.Waiting
+	dns.Status = view.Status
+	dns.Records = view.Records
 }
 
 func (dns *DomainDnsService) find(domains []Domain, domainId string) Domain {

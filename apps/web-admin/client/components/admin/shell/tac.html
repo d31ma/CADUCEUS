@@ -1,10 +1,11 @@
 <div class="admin-root">
   <a class="ms-skip-link" href="#admin-content">Skip to admin content</a>
+  <p class="ms-sr-only" role="status" aria-live="polite">{adminShell.announcement}</p>
   <logic :if="adminSession.step == 'ready'">
     <div class="ms-app" :data-pane="adminShell.pane">
       <nav class="ms-rail" aria-label="Domains">
         <ul class="ms-rail__list">
-          <li><span class="ms-domain-tile" aria-current="true">{adminSession.domainId}</span></li>
+          <li><span class="ms-domain-tile" aria-current="true"><span aria-hidden="true">{adminSession.initials}</span><span class="ms-sr-only">{adminSession.domainId}, current domain</span></span></li>
         </ul>
       </nav>
       <aside class="ms-sidebar" :aria-label="adminSession.domainId">
@@ -33,12 +34,14 @@
           <button class="ms-icon-btn" type="button" aria-label="Sign out" title="Sign out" on:click="adminSession.signOut()"><span class="ms-icon ms-i-logout" aria-hidden="true"></span></button>
         </div>
       </aside>
+      <div class="admin-pane">
       <switch :value="adminShell.view">
         <case :when="'domains'"><admin-domains hydrate="load" /></case>
         <case :when="'domain'"><admin-domain hydrate="load" /></case>
         <case :when="'members'"><admin-members hydrate="load" /></case>
         <case :when="'channels'"><admin-channels hydrate="load" /></case>
       </switch>
+      </div>
     </div>
   </logic>
   <logic else>

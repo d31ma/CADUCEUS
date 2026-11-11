@@ -17,10 +17,11 @@ type AliasFormService struct {
 	// @Needs
 	directoryClient *DirectoryClient
 	// @Needs
-	problems *AdminProblemService
+	problems                  *AdminProblemService
+	applicationEventPublisher ApplicationEventPublisher
 }
 
-// @OnEvent({"condition":"value.view == 'members'"})
+// @OnEvent({"condition":"value.view == 'members'","replay":true})
 // @InBackground
 func (form *AliasFormService) Opened(opened AdminViewOpened) {
 	form.DomainId = opened.DomainId
@@ -29,6 +30,7 @@ func (form *AliasFormService) Opened(opened AdminViewOpened) {
 	form.Choices = form.choicesOf(page.Items)
 	form.memberNames = form.namesOf(page.Items)
 	form.Problem = form.problems.Of(failure)
+	form.applicationEventPublisher.PublishEvent(AdminViewLoaded{View: opened.View, Message: ""}, false)
 }
 
 func (form *AliasFormService) Add() {

@@ -19,7 +19,7 @@
             <div class="ms-card__head">
               <h1 id="gate-title">Sign in to Mesail admin</h1>
             </div>
-            <form class="ms-card__body admin-gate__form" on:submit="adminSession.signIn()">
+            <div class="ms-card__body admin-gate__form">
               <p class="ms-subtle">Domain admins sign in with their work email. Operators sign in with their operator account, such as you@mesail-operators.</p>
               <switch :value="adminSession.problem">
                 <case :when="'expired'">
@@ -48,9 +48,9 @@
                   <p class="ms-error-text" id="gate-credentials-error" role="alert">The email, password or 2-step code is not right.</p>
                 </logic>
               </div>
-              <button class="ms-btn ms-btn--primary" type="submit" :disabled="adminSession.busy" :aria-busy="adminShell.flag(adminSession.busy)">Sign in</button>
+              <button class="ms-btn ms-btn--primary" type="button" on:click="adminSession.signIn()" :disabled="adminSession.busy" :aria-busy="adminShell.flag(adminSession.busy)">Sign in</button>
               <p class="ms-meta">Forgot your password? Ask an admin of your domain to reset it.</p>
-            </form>
+            </div>
           </section>
         </case>
       </switch>

@@ -45,13 +45,15 @@ func (test *DomainRowServiceTest) TestADisabledRowIsMuted() {
 	Assert.Equals("Manage", row.ActionText)
 }
 
-func (test *DomainRowServiceTest) TestStateOfAnUnknownStateIsAnOutline() {
-	look := test.rows().State("moving")
-	Assert.Equals("Unknown", look.Text)
-	Assert.Equals("ms-tag ms-tag--outline", look.TagClass)
-	Assert.Equals(false, look.Pending)
+func (test *DomainRowServiceTest) TestViewOfAnUnknownStateIsAnOutline() {
+	view := test.rows().View(Domain{DomainId: "x.example", State: "moving"})
+	Assert.Equals("Unknown", view.StateText)
+	Assert.Equals("ms-tag ms-tag--outline", view.StateClass)
+	Assert.Equals(false, view.Pending)
 }
 
-func (test *DomainRowServiceTest) TestStateOfPendingIsPending() {
-	Assert.Equals(true, test.rows().State("pending").Pending)
+func (test *DomainRowServiceTest) TestViewOfAPendingDomainListsFourRecords() {
+	view := test.rows().View(Domain{DomainId: "new.example.net", Name: "new.example.net", State: "pending", DkimSelector: "ms2026a"})
+	Assert.Equals(true, view.Pending)
+	Assert.Equals(4, len(view.Records))
 }

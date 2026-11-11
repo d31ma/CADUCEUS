@@ -11,7 +11,7 @@ func (test *DomainDnsServiceTest) opened(domainId string) *DomainDnsService {
 	session := &AdminSessionService{}
 	test.construct(session)
 	records := &DomainRecordService{}
-	dns := &DomainDnsService{session: session, problems: &AdminProblemService{}, records: records, domainRows: &DomainRowService{records: records}}
+	dns := &DomainDnsService{session: session, problems: &AdminProblemService{}, domainRows: &DomainRowService{records: records}}
 	test.construct(dns)
 	dns.Opened(AdminViewOpened{View: "domain", DomainId: domainId})
 	return dns

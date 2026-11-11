@@ -5,7 +5,7 @@ type DomainRowService struct {
 }
 
 func (rows *DomainRowService) Row(domain Domain) DomainRow {
-	state := rows.State(domain.State)
+	state := rows.stateLook(domain.State)
 	return DomainRow{
 		DomainId:    domain.DomainId,
 		Name:        domain.Name,
@@ -23,8 +23,17 @@ func (rows *DomainRowService) Row(domain Domain) DomainRow {
 	}
 }
 
-func (rows *DomainRowService) State(state string) DomainStateLook {
-	return rows.stateLook(state)
+func (rows *DomainRowService) View(domain Domain) DomainView {
+	state := rows.stateLook(domain.State)
+	return DomainView{
+		StateText:  state.Text,
+		StateClass: state.TagClass,
+		StateIcon:  state.IconClass,
+		Pending:    state.Pending,
+		Waiting:    rows.records.Waiting(domain.Dns),
+		Status:     rows.records.Status(domain.Dns),
+		Records:    rows.records.Records(domain),
+	}
 }
 
 func (rows *DomainRowService) stateLook(state string) DomainStateLook {

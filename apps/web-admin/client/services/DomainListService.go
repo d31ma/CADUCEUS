@@ -13,13 +13,15 @@ type DomainListService struct {
 	// @Needs
 	problems *AdminProblemService
 	// @Needs
-	domainRows *DomainRowService
+	domainRows                *DomainRowService
+	applicationEventPublisher ApplicationEventPublisher
 }
 
-// @OnEvent({"condition":"value.view == 'domains'"})
+// @OnEvent({"condition":"value.view == 'domains'","replay":true})
 // @InBackground
 func (list *DomainListService) Opened(opened AdminViewOpened) {
 	list.load()
+	list.applicationEventPublisher.PublishEvent(AdminViewLoaded{View: opened.View, Message: list.Heading}, false)
 }
 
 func (list *DomainListService) Refresh() {

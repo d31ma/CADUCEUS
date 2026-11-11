@@ -6,7 +6,7 @@ type DomainCopyService struct {
 	clipboard Clipboard
 }
 
-// @OnEvent({"condition":"value.view == 'domain'"})
+// @OnEvent({"condition":"value.view == 'domain'","replay":true})
 func (copying *DomainCopyService) Opened(opened AdminViewOpened) {
 	copying.Copied = ""
 	copying.Problem = ""

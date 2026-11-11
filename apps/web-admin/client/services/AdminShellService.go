@@ -3,6 +3,7 @@ type AdminShellService struct {
 	View                      string
 	DomainId                  string
 	Pane                      string
+	Announcement              string
 	applicationEventPublisher ApplicationEventPublisher
 }
 
@@ -17,11 +18,16 @@ func (shell *AdminShellService) SignedIn(signedIn AdminSignedIn) {
 	shell.Open(shell.firstView(signedIn.Operator), signedIn.DomainId)
 }
 
+// @OnEvent
+func (shell *AdminShellService) Loaded(loaded AdminViewLoaded) {
+	shell.Announcement = shell.announced(loaded.Message)
+}
+
 func (shell *AdminShellService) Open(view string, domainId string) {
 	shell.View = view
 	shell.DomainId = domainId
 	shell.Pane = shell.mainPane()
-	shell.applicationEventPublisher.PublishEvent(AdminViewOpened{View: view, DomainId: domainId}, false)
+	shell.applicationEventPublisher.PublishEvent(AdminViewOpened{View: view, DomainId: domainId}, true)
 }
 
 func (shell *AdminShellService) ShowMenu() {
@@ -30,6 +36,13 @@ func (shell *AdminShellService) ShowMenu() {
 
 func (shell *AdminShellService) Flag(value bool) string {
 	return map[bool]string{true: "true", false: "false"}[value]
+}
+
+func (shell *AdminShellService) announced(message string) string {
+	if message == "" {
+		return shell.Announcement
+	}
+	return message
 }
 
 func (shell *AdminShellService) firstView(operator bool) string {

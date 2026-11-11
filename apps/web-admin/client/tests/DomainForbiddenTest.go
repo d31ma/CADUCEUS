@@ -23,7 +23,7 @@ func (test *DomainForbiddenTest) TestTheListAsksForOperatorRights() {
 
 func (test *DomainForbiddenTest) TestADomainAdminSeesThatOnlyOperatorsSeeDnsChecks() {
 	records := &DomainRecordService{}
-	dns := &DomainDnsService{session: test.session(), problems: &AdminProblemService{}, records: records, domainRows: &DomainRowService{records: records}}
+	dns := &DomainDnsService{session: test.session(), problems: &AdminProblemService{}, domainRows: &DomainRowService{records: records}}
 	test.construct(dns)
 	dns.Opened(AdminViewOpened{View: "domain", DomainId: "example.com"})
 	Assert.Equals("operatorsOnly", dns.Step)

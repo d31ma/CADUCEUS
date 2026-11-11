@@ -1,4 +1,7 @@
-import "slices"
+import (
+	"slices"
+	"strings"
+)
 
 // @Service
 type AdminSessionService struct {
@@ -9,6 +12,7 @@ type AdminSessionService struct {
 	Password    string
 	OneTimeCode string
 	DomainId    string
+	Initials    string
 	DisplayName string
 	Operator    bool
 	DomainAdmin bool
@@ -91,9 +95,17 @@ func (session *AdminSessionService) keep(answer Session) {
 
 func (session *AdminSessionService) remember(me Me) {
 	session.DomainId = me.DomainId
+	session.Initials = session.initials(me.DomainId)
 	session.DisplayName = me.DisplayName
 	session.Operator = session.hasRole(me.Roles, []string{"Operator", "mesail-operator"})
 	session.DomainAdmin = session.hasRole(me.Roles, []string{"DomainAdmin", "mesail-admin"})
+}
+
+func (session *AdminSessionService) initials(domainId string) string {
+	if len(domainId) < session.initialsLength() {
+		return strings.ToUpper(domainId)
+	}
+	return strings.ToUpper(domainId[:1]) + domainId[1:session.initialsLength()]
 }
 
 func (session *AdminSessionService) hasRole(roles []string, wanted []string) bool {
@@ -168,4 +180,8 @@ func (session *AdminSessionService) millisecondsPerSecond() float64 {
 
 func (session *AdminSessionService) refused() string {
 	return "refused"
+}
+
+func (session *AdminSessionService) initialsLength() int {
+	return 2
 }

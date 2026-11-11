@@ -17,15 +17,17 @@ type MemberListService struct {
 	// @Needs
 	directoryClient *DirectoryClient
 	// @Needs
-	problems *AdminProblemService
+	problems                  *AdminProblemService
+	applicationEventPublisher ApplicationEventPublisher
 }
 
-// @OnEvent({"condition":"value.view == 'members'"})
+// @OnEvent({"condition":"value.view == 'members'","replay":true})
 // @InBackground
 func (list *MemberListService) Opened(opened AdminViewOpened) {
 	list.DomainId = opened.DomainId
 	list.Query = ""
 	list.load()
+	list.applicationEventPublisher.PublishEvent(AdminViewLoaded{View: opened.View, Message: list.Heading}, false)
 }
 
 func (list *MemberListService) Search() {

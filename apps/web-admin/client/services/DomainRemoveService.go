@@ -18,7 +18,7 @@ type DomainRemoveService struct {
 	adminShell *AdminShellService
 }
 
-// @OnEvent({"condition":"value.view == 'domain'"})
+// @OnEvent({"condition":"value.view == 'domain'","replay":true})
 func (remove *DomainRemoveService) Opened(opened AdminViewOpened) {
 	remove.Cancel()
 }

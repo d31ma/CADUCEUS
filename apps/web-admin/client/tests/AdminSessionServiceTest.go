@@ -28,6 +28,7 @@ func (test *AdminSessionServiceTest) TestSignInSignsInADomainAdminOfTheirDomain(
 	session.SignIn()
 	Assert.Equals("ready", session.Step)
 	Assert.Equals("example.com", session.DomainId)
+	Assert.Equals("Ex", session.Initials)
 	Assert.Equals(true, session.DomainAdmin)
 }
 

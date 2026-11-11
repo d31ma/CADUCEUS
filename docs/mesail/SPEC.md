@@ -489,12 +489,14 @@ stable; tests name them.
     ("Notify me in this browser when Mesail is closed"), or from a one-time
     in-app suggestion. The browser's own permission prompt appears only
     after that click. The setting says to turn it on only on the member's
-    own device. Mesail never asks on page load.
+    own device. Mesail never asks on page load. "Not now", or closing the
+    suggestion, hides it for good in that browser; the settings row stays.
   - It works in every domain of the person that this browser has opened
     while push was on; each domain registers the browser once.
   - A push shows who and where, never message text: for example "Ana
     Example mentioned you in #design (example.com)". A click opens that
-    conversation in that domain, switching the tab's domain if needed.
+    conversation in that domain at the first unread message, switching the
+    tab's domain if needed.
   - Nothing is pushed during `dnd` or while the member is `active` in
     Mesail.
   - Signing out, a wipe of the device copy, removal from a domain and
@@ -502,7 +504,8 @@ stable; tests name them.
     browser's subscription; removal deletes that domain's registration.
   - Where the browser has no push (the installed apps, and Safari on an
     iPhone or iPad unless Mesail was added to the Home Screen), the setting
-    is hidden. Push in the installed apps (APNs, FCM, WNS) comes after the
+    is hidden; on an iPhone or iPad, one hint line in its place explains
+    that adding Mesail to the Home Screen allows notifications. Push in the installed apps (APNs, FCM, WNS) comes after the
     first release (TACHYON T4b).
   - The email summary (AC-PN-4) still covers anything not read.
   - Needs a TACHYON release with its push client (TACHYON ADR 0118, after

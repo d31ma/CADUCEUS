@@ -735,8 +735,11 @@ sending); this wave adds the payload format and the browser side.
     wipe; the path route that opens a conversation in its domain (switching
     the tab's domain with `POST /identity/session/domain` when needed);
     the denied state ("Blocked in this browser's settings").
-  - The screens come from `mesail-ux` (or `mesail-offline-ux`): the
-    toggle, the suggestion, the prompt moment and the denied state.
+  - The screens are merged (develop a360499; handover
+    `~/Library/Logs/local/CADUCEUS/mesail/n2-push-ux-handover.md`): the
+    toggle, the suggestion (hidden for good after "Not now" or closing),
+    the prompt moment, the denied state, the iPhone and iPad Home Screen
+    hint, and a click that opens the first unread message.
 - **Depends on:** Mesail on a TACHYON release that has the push client
   (ADR 0118; not 26.46.02); Wave 3 (one login) merged for the domain
   switch.

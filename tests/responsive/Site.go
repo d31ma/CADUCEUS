@@ -39,6 +39,10 @@ func (recorder *statusRecorder) WriteHeader(status int) {
 	recorder.ResponseWriter.WriteHeader(status)
 }
 
+func (recorder *statusRecorder) Unwrap() http.ResponseWriter {
+	return recorder.ResponseWriter
+}
+
 const (
 	blankPagePath    = "/__responsive/blank"
 	identityApiPath  = "/api/v1/identity/"
@@ -146,6 +150,7 @@ func copyEntry(sourcePath string, targetPath string, entry fs.DirEntry) error {
 func (site *Site) handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle(identityApiPath, NewIdentityFake(site.Profile))
+	mux.Handle(realtimeSocketPath, RealtimeFake{})
 	mux.HandleFunc(apiPath, site.otherApi)
 	mux.HandleFunc(blankPagePath, site.blankPage)
 	mux.HandleFunc("/", site.staticFile)
@@ -184,6 +189,10 @@ func (site *Site) otherApi(writer http.ResponseWriter, request *http.Request) {
 	answer, found := site.Profile.DataAnswer(request)
 	if !found {
 		site.unknownApi(writer, request)
+		return
+	}
+	if answer == nil {
+		writer.WriteHeader(http.StatusNoContent)
 		return
 	}
 	writeJson(writer, http.StatusOK, answer)

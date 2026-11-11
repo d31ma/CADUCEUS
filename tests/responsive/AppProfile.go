@@ -21,6 +21,11 @@ type AppProfile struct {
 	DataAnswers       map[string]any
 }
 
+type fakeConversationPage struct {
+	Items      []any  `json:"items"`
+	NextCursor string `json:"nextCursor"`
+}
+
 type fakeMemberPage struct {
 	Items []any `json:"items"`
 }
@@ -52,7 +57,11 @@ func WebProfile() AppProfile {
 		HostedDomains: []string{firstHostedDomain, otherHostedDomain},
 		DomainRoles:   map[string][]string{},
 		DefaultRoles:  []string{memberRole},
-		DataAnswers:   map[string]any{},
+		DataAnswers: map[string]any{
+			"GET /api/v1/channels":                []any{},
+			"GET /api/v1/messaging/conversations": fakeConversationPage{Items: []any{}},
+			"PUT /api/v1/realtime/presence":       nil,
+		},
 	}
 }
 

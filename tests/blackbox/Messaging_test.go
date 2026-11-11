@@ -110,7 +110,7 @@ func TestAcCp4MixedRecipientsGetChatAndEmail(t *testing.T) {
 func TestAcCp2ChatToAnExternalAddressIsRefused(t *testing.T) {
 	stack := NewStack(t)
 	body := toOne("refused", "hello", "carol@partner.test", "chat", "external")
-	send(t, stack, stack.Token(t, "ANA"), body, http.StatusConflict)
+	send(t, stack, stack.Token(t, "ANA"), body, http.StatusUnprocessableEntity)
 }
 
 func TestAcCp5StaleResolutionIsRefused(t *testing.T) {

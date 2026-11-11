@@ -220,6 +220,7 @@ id from another domain answers `404`. A `PATCH` that sets `emailAddress` or
 | `POST /api/v1/messaging/messages` | SignedIn | `SendRequest` | `201 SendResult{message, deliveries[]}` |
 | `PATCH /api/v1/messaging/messages/{messageId}` | SignedIn | `EditRequest{body}` | `Message` |
 | `DELETE /api/v1/messaging/messages/{messageId}` | SignedIn | - | `204` |
+| `GET /api/v1/messaging/messages/{messageId}/original` | SignedIn (a participant) | - | `Download{url, expiresAt}` for the raw email as a `.eml` file; `404` for a chat message. messaging asks `GET /api/v1/mail-in/messages/{inboundId}/original` (`Allow(Service)`) for it. The client opens it as a download link and never renders it. |
 | `PUT /api/v1/messaging/messages/{messageId}/reactions/{emoji}` | SignedIn | - | `204` |
 | `DELETE /api/v1/messaging/messages/{messageId}/reactions/{emoji}` | SignedIn | - | `204` |
 | `PUT /api/v1/messaging/conversations/{conversationId}/read` | SignedIn | `ReadRequest{messageId}` | `204` |
@@ -325,7 +326,13 @@ owns it; M3 uses it):
 - `ImageRef{alt, attachmentId?, remoteUrl?}`. An inline image of the
   message itself is an attachment; a remote image keeps `remoteUrl`, and
   the client shows a placeholder until the user allows images for that
-  sender (SPEC AC-IN-5).
+  sender (SPEC AC-IN-5). Tac pages allow images only from their own origin
+  or `data:` URLs (CSP `img-src 'self' data:`), so in the first release an
+  allowed remote image opens as a link, and an inline attachment image is
+  a named placeholder that downloads through `GET /api/v1/attachments/
+  {attachmentId}` (F2 reuses F3's `AttachmentsClient` with `@Needs`).
+  Showing them inline needs a same-origin image route, which is a later
+  slice.
 - `bodyFormat` says where the blocks came from: `markdown` (a chat
   message; `body` is its Markdown source), `text` (a plain-text email;
   `body` is the text), or `email` (an HTML email; `body` is its plain-text

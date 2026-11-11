@@ -29,7 +29,7 @@ own TACHYON Go app in `apps/<service>/`, with the route prefix
 | `identity` | none (stateless token check) | users and credentials (Keycloak owns them) |
 | `directory` | `domains`, `members`, `addresses` (aliases are addresses) | DKIM private keys (secret store), Keycloak realms (Keycloak owns them) |
 | `channels` | `channels`, `channel-members` | messages |
-| `messaging` | `conversations`, `participants`, `messages`, `reactions`, `read-positions`, `deliveries`, `email-threads` | raw email bytes, attachments |
+| `messaging` | `conversations`, `participants` (with the read position), `messages` (with the deliveries), `reactions`, `mentions`, `members` (a cache filled from `member.upserted`, for @mention lookup), `email-threads` | raw email bytes, attachments |
 | `attachments` | `attachments` (metadata) and the blob bucket | message bodies |
 | `realtime` | `connections`, `presence` | messages |
 | `notify` | `notifications`, `push-subscriptions`, `notify-settings` | messages |
@@ -189,6 +189,7 @@ is created.
 | `address` | string | always set; for a member, their address used in this conversation |
 | `displayName` | string | |
 | `role` | `to` \| `cc` | how they joined; Bcc recipients are never participants |
+| `readMessageId`, `readAt` | string, time | the member's read position in this conversation (AC-MS-7); kept here so moving it is one write |
 
 For a channel conversation the participants are the channel members, read
 from `channels` through events, plus email senders into the channel.
@@ -215,8 +216,12 @@ from `channels` through events, plus email senders into the channel.
 cc[], authResults{spf, dkim, dmarc}, suspicious, rawId}`. Bcc is stored only
 on the outbound queue item, never on the message.
 
-### Delivery (`messaging/deliveries`)
-One row per recipient per message.
+### Delivery (stored on the message)
+One entry per recipient per message, kept on the Message document as one
+JSON string per delivery (like `pendingEvents`), so a send stays within
+SLICES rule 9 (at most 25 writes). A send has at most 20 recipients (To,
+Cc and Bcc together); more answers `400 invalid_request` with
+`field: recipients`.
 | Field | Type | Rule |
 | --- | --- | --- |
 | `messageId` | string | |
@@ -228,7 +233,11 @@ One row per recipient per message.
 ### EmailThreadKey (`messaging/email-threads`)
 Maps a `Message-ID` header to `{conversationId, messageId}` in one domain.
 Used by inbound threading (AC-IN-3). Document id is the SHA-256 of the
-lowercased `Message-ID`.
+lowercased `Message-ID`. Outbound email gets the `Message-ID`
+`<messageId>@<domainId>` (for example `<msg_202611...@example.com>`, made
+by `mail-out`); `messaging` stores that key when it sends, so replies
+thread. A chat message's wire id is `msg_<YYYYMM><TTID>`, so the id names
+its monthly collection.
 
 ### Attachment (`attachments/attachments`)
 `{id att_, domainId, uploaderId, fileName, mediaType, size, sha256, state:

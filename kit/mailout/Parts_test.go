@@ -257,3 +257,54 @@ type failingCollections struct {
 }
 
 func (failingCollections) CreateCollection(string) error { return errors.New("storage down") }
+
+func TestASuppressionIsStoredOnce(t *testing.T) {
+	documents := newMemoryDocuments()
+	list := Suppressions{Store: DocumentStore{Documents: documents}}
+	suppression := Suppression{DomainId: "example.com", Address: "gone@partner.test"}
+
+	equal(t, nil, list.Add(suppression))
+	equal(t, nil, list.Add(suppression))
+	collection, _ := list.Store.Ready(list.base(), "example.com")
+	equal(t, 1, documents.count(collection))
+}
+
+func TestRegisterReportsStorageFailures(t *testing.T) {
+	registry := Registry{Store: DocumentStore{Documents: failingCollections{newMemoryDocuments()}}}
+	equal(t, "storage down", registry.Register(Queue{}.Base(), "example.com").Error())
+}
+
+func TestOutboxStoreReportsLoadFailures(t *testing.T) {
+	documents := newMemoryDocuments()
+	documents.fail("FindById", errors.New("storage down"))
+	_, err := OutboxStore{Store: DocumentStore{Documents: documents}}.Load(outbox.Ref{Collection: "c", Id: "i"})
+	equal(t, "storage down", err.Error())
+}
+
+func TestOutboxStoreReportsUnreadableItems(t *testing.T) {
+	documents := newMemoryDocuments()
+	store := DocumentStore{Documents: documents}
+	registry := Registry{Store: store}
+	equal(t, nil, registry.Register(Queue{}.Base(), "example.com"))
+	collection := Queue{}.Ref(Item{DomainId: "example.com"}).Collection
+	_, err := documents.Insert(collection, map[string]any{"outboxWaiting": true, "attempts": "many"})
+	equal(t, nil, err)
+
+	_, pendingErr := OutboxStore{Store: store, Registry: registry}.Pending(10)
+	equal(t, true, pendingErr != nil)
+}
+
+func TestSourcesReportUnreachableProducers(t *testing.T) {
+	broken := ServiceClient{Client: http.DefaultClient, Authorize: func(string) (string, error) { return "", errors.New("no token") }}
+	sources := Sources{Client: broken, Bases: map[string]string{"messaging": "http://127.0.0.1:1"}}
+	_, err := sources.Source(Item{Producer: "messaging", MessageId: "m", DomainId: "example.com"})
+	equal(t, "no token", err.Error())
+}
+
+func TestBuilderReportsAnUnreachableDirectory(t *testing.T) {
+	broken := ServiceClient{Client: http.DefaultClient, Authorize: func(string) (string, error) { return "", errors.New("no token") }}
+	builder := Builder{Directory: Directory{Client: broken, BaseUrl: "http://127.0.0.1:1"}}
+	prepared, err := builder.Prepare(Item{Id: "i", DomainId: "example.com"}, time.Now())
+	equal(t, "no token", err.Error())
+	equal(t, "i", prepared.Item.Id)
+}

@@ -9,12 +9,14 @@ type SeenEvents struct {
 
 func (SeenEvents) base() string { return "events-seen" }
 
+func (SeenEvents) eventField() string { return "eventId" }
+
 func (seen SeenEvents) Seen(domainId string, eventId string) (bool, error) {
 	collection, err := seen.Store.Ready(seen.base(), domainId)
 	if err != nil {
 		return false, err
 	}
-	return seen.Store.Exists(collection, map[string]any{"eventId": eventId})
+	return seen.Store.Exists(collection, map[string]any{seen.eventField(): eventId})
 }
 
 func (seen SeenEvents) Remember(domainId string, eventId string) error {

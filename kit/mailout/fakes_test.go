@@ -94,7 +94,7 @@ func (documents *memoryDocuments) Command(command map[string]any) (any, error) {
 		return nil, err
 	}
 	collection, _ := command["collection"].(string)
-	where, _ := command["where"].(map[string]any)
+	where := toMap(command["where"])
 	size, _ := command["size"].(int)
 	cursor, _ := command["cursor"].(string)
 	start, _ := strconv.Atoi(cursor)

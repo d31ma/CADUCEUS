@@ -6,6 +6,8 @@ type AttemptLog struct {
 
 func (AttemptLog) base() string { return "delivery-attempts" }
 
+func (AttemptLog) itemField() string { return "itemId" }
+
 func (log AttemptLog) Record(attempt DeliveryAttempt) error {
 	collection, err := log.Store.Ready(log.base(), attempt.DomainId)
 	if err != nil {
@@ -20,7 +22,7 @@ func (log AttemptLog) ForItem(domainId string, itemId string) ([]DeliveryAttempt
 	if err != nil {
 		return nil, err
 	}
-	documents, err := log.Store.All(collection, map[string]any{"itemId": itemId})
+	documents, err := log.Store.All(collection, map[string]any{log.itemField(): itemId})
 	if err != nil {
 		return nil, err
 	}

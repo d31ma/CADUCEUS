@@ -6,3 +6,9 @@ type Domain struct {
 	State        string `json:"state"`
 	DkimSelector string `json:"dkimSelector"`
 }
+
+func (Domain) activeState() string { return "active" }
+
+func (domain Domain) IsActive() bool {
+	return domain.State == domain.activeState()
+}

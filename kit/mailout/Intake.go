@@ -17,17 +17,54 @@ type Intake struct {
 	Now      func() time.Time
 }
 
+func (Intake) keyField() string { return "idempotencyKey" }
+
 func (intake Intake) Handle(envelope events.Envelope) error {
 	request := events.EmailSendRequested{}
 	readErr := events.PayloadReader{}.Read(envelope, &request)
-	field := intake.invalidField(envelope, request, readErr == nil)
-	if field != "" {
-		return events.InvalidEnvelope{Reason: "the email.send.requested field " + field + " is missing or not valid"}
-	}
-	_, known, err := intake.Queue.FindBy(envelope.DomainId, "idempotencyKey", request.IdempotencyKey)
-	if err != nil || known {
+	err := intake.validate(envelope, request, readErr == nil)
+	if err != nil {
 		return err
 	}
+	_, known, err := intake.Queue.FindBy(envelope.DomainId, intake.keyField(), request.IdempotencyKey)
+	if err != nil {
+		return err
+	}
+	return intake.enqueueUnlessKnown(known, envelope, request)
+}
+
+func (intake Intake) validate(envelope events.Envelope, request events.EmailSendRequested, decoded bool) error {
+	index := slices.Index(intake.checks(envelope, request, decoded), false)
+	if index < 0 {
+		return nil
+	}
+	return events.InvalidEnvelope{Reason: "the email.send.requested field " + intake.fieldNames()[index] + " is missing or not valid"}
+}
+
+func (intake Intake) fieldNames() []string {
+	return []string{"producer", "payload", "messageId", intake.keyField(), "rcpt", "from"}
+}
+
+func (intake Intake) checks(envelope events.Envelope, request events.EmailSendRequested, decoded bool) []bool {
+	addresses := Addresses{}
+	return []bool{
+		intake.Sources.Knows(envelope.Producer),
+		decoded,
+		request.MessageId != "",
+		request.IdempotencyKey != "",
+		addresses.Mailbox(request.Rcpt).Address != "",
+		addresses.Domain(addresses.Mailbox(request.From).Address) == strings.ToLower(envelope.DomainId),
+	}
+}
+
+func (intake Intake) enqueueUnlessKnown(known bool, envelope events.Envelope, request events.EmailSendRequested) error {
+	if known {
+		return nil
+	}
+	return intake.enqueue(envelope, request)
+}
+
+func (intake Intake) enqueue(envelope events.Envelope, request events.EmailSendRequested) error {
 	item := intake.item(envelope, request)
 	change, err := intake.Changes.Envelope(item)
 	if err != nil {
@@ -39,24 +76,6 @@ func (intake Intake) Handle(envelope events.Envelope) error {
 	}
 	_, err = intake.Relayer.RelayDocument(intake.Queue.Ref(saved), saved.DomainId)
 	return err
-}
-
-func (intake Intake) invalidField(envelope events.Envelope, request events.EmailSendRequested, decoded bool) string {
-	addresses := Addresses{}
-	names := []string{"producer", "payload", "messageId", "idempotencyKey", "rcpt", "from"}
-	valid := []bool{
-		intake.Sources.Knows(envelope.Producer),
-		decoded,
-		request.MessageId != "",
-		request.IdempotencyKey != "",
-		addresses.Mailbox(request.Rcpt).Address != "",
-		addresses.Domain(addresses.Mailbox(request.From).Address) == strings.ToLower(envelope.DomainId),
-	}
-	index := slices.Index(valid, false)
-	if index < 0 {
-		return ""
-	}
-	return names[index]
 }
 
 func (intake Intake) item(envelope events.Envelope, request events.EmailSendRequested) Item {

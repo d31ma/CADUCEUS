@@ -26,18 +26,15 @@ func (builder Builder) Prepare(item Item, now time.Time) (Prepared, error) {
 	if err != nil {
 		return Prepared{Item: item}, err
 	}
-	refusal := builder.refusal(item, sender, found, source)
-	if refusal != "" {
-		return Prepared{Item: item, Refusal: refusal}, nil
-	}
-	return builder.build(item, sender.DkimSelector, source, now)
+	draft := Draft{Item: item, Selector: sender.DkimSelector, Source: source, Refusal: builder.refusal(item, sender, found, source)}
+	return builder.finish(draft, now)
 }
 
 func (Builder) refusal(item Item, sender Domain, found bool, source MessageSource) string {
 	switch {
 	case !found:
 		return "the sender domain is not hosted"
-	case sender.State != "active":
+	case !sender.IsActive():
 		return "the sender domain is not active"
 	case source.DomainId != item.DomainId:
 		return "the message source belongs to another domain"
@@ -46,16 +43,24 @@ func (Builder) refusal(item Item, sender Domain, found bool, source MessageSourc
 	}
 }
 
-func (builder Builder) build(item Item, selector string, source MessageSource, now time.Time) (Prepared, error) {
-	attachments, err := builder.attachments(item.DomainId, source.AttachmentIds)
+func (builder Builder) finish(draft Draft, now time.Time) (Prepared, error) {
+	if draft.Refusal != "" {
+		return Prepared{Item: draft.Item, Refusal: draft.Refusal}, nil
+	}
+	return builder.build(draft, now)
+}
+
+func (builder Builder) build(draft Draft, now time.Time) (Prepared, error) {
+	item := draft.Item
+	attachments, err := builder.attachments(item.DomainId, draft.Source.AttachmentIds)
 	if err != nil {
 		return Prepared{Item: item}, err
 	}
-	key, err := builder.Keys.Key(item.DomainId, selector)
+	key, err := builder.Keys.Key(item.DomainId, draft.Selector)
 	if err != nil {
 		return Prepared{Item: item}, err
 	}
-	raw, err := compose.Composer{}.Compose(builder.message(item, source.Body, attachments, now))
+	raw, err := compose.Composer{}.Compose(builder.message(item, draft.Source.Body, attachments, now))
 	if err != nil {
 		return Prepared{Item: item}, err
 	}
@@ -71,18 +76,23 @@ func (builder Builder) build(item Item, selector string, source MessageSource, n
 func (builder Builder) attachments(domainId string, attachmentIds []string) ([]compose.Attachment, error) {
 	attachments := []compose.Attachment{}
 	for _, attachmentId := range attachmentIds {
-		reader, err := builder.Blobs.Read(blobs.Key{DomainId: domainId, Name: "attachment-" + attachmentId})
+		attachment, err := builder.attachment(domainId, attachmentId)
 		if err != nil {
 			return nil, err
 		}
-		content, err := io.ReadAll(reader)
-		reader.Close()
-		if err != nil {
-			return nil, err
-		}
-		attachments = append(attachments, compose.Attachment{FileName: attachmentId, ContentType: "application/octet-stream", Content: content})
+		attachments = append(attachments, attachment)
 	}
 	return attachments, nil
+}
+
+func (builder Builder) attachment(domainId string, attachmentId string) (compose.Attachment, error) {
+	reader, err := builder.Blobs.Read(blobs.Key{DomainId: domainId, Name: "attachment-" + attachmentId})
+	if err != nil {
+		return compose.Attachment{}, err
+	}
+	defer reader.Close()
+	content, err := io.ReadAll(reader)
+	return compose.Attachment{FileName: attachmentId, ContentType: "application/octet-stream", Content: content}, err
 }
 
 func (builder Builder) message(item Item, body string, attachments []compose.Attachment, now time.Time) compose.Message {

@@ -17,31 +17,44 @@ func (store DocumentStore) Ready(base string, domainId string) (string, error) {
 	return name, store.Documents.CreateCollection(name)
 }
 
-func (store DocumentStore) Page(collection string, where map[string]any, cursor string, size int) ([]json.RawMessage, string, error) {
-	command := map[string]any{"operation": "document", "command": "scroll", "collection": collection, "where": where, "size": size}
-	if cursor != "" {
-		command["cursor"] = cursor
-	}
-	answer, err := store.Documents.Command(command)
+func (store DocumentStore) Page(collection string, where any, cursor string, size int) ([]json.RawMessage, string, error) {
+	answer, err := store.Documents.Command(store.scroll(collection, where, cursor, size))
 	if err != nil {
 		return nil, "", err
 	}
 	return store.window(answer)
 }
 
-func (store DocumentStore) All(collection string, where map[string]any) ([]json.RawMessage, error) {
+func (store DocumentStore) All(collection string, where any) ([]json.RawMessage, error) {
 	documents, cursor, err := store.Page(collection, where, "", store.pageSize())
-	for err == nil && cursor != "" {
-		var more []json.RawMessage
-		more, cursor, err = store.Page(collection, where, cursor, store.pageSize())
-		documents = append(documents, more...)
+	if err != nil {
+		return documents, err
 	}
-	return documents, err
+	return store.remaining(collection, where, documents, cursor)
 }
 
-func (store DocumentStore) Exists(collection string, where map[string]any) (bool, error) {
+func (store DocumentStore) Exists(collection string, where any) (bool, error) {
 	documents, _, err := store.Page(collection, where, "", 1)
 	return len(documents) > 0, err
+}
+
+func (DocumentStore) scroll(collection string, where any, cursor string, size int) map[string]any {
+	command := map[string]any{"operation": "document", "command": "scroll", "collection": collection, "where": where, "size": size}
+	if cursor != "" {
+		command["cursor"] = cursor
+	}
+	return command
+}
+
+func (store DocumentStore) remaining(collection string, where any, documents []json.RawMessage, cursor string) ([]json.RawMessage, error) {
+	for cursor != "" {
+		more, next, err := store.Page(collection, where, cursor, store.pageSize())
+		documents, cursor = append(documents, more...), next
+		if err != nil {
+			return documents, err
+		}
+	}
+	return documents, nil
 }
 
 func (DocumentStore) window(answer any) ([]json.RawMessage, string, error) {

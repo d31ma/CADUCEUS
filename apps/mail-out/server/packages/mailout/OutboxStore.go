@@ -12,21 +12,16 @@ type OutboxStore struct {
 func (OutboxStore) largestPage() int { return 100 }
 
 func (store OutboxStore) Pending(limit int) ([]outbox.Document, error) {
-	return store.flagged(map[string]any{"outboxWaiting": true}, limit)
+	return store.flagged(outbox.Filters{}.Waiting(), limit)
 }
 
 func (store OutboxStore) WithDeadLetters(limit int) ([]outbox.Document, error) {
-	return store.flagged(map[string]any{"outboxHasDead": true}, limit)
+	return store.flagged(outbox.Filters{}.HasDead(), limit)
 }
 
 func (store OutboxStore) Load(ref outbox.Ref) (outbox.Fields, error) {
 	item, err := store.item(ref)
 	return item.OutboxFields(), err
-}
-
-func (store OutboxStore) Owner(ref outbox.Ref) (string, error) {
-	item, err := store.item(ref)
-	return item.DomainId, err
 }
 
 func (store OutboxStore) Save(ref outbox.Ref, fields outbox.Fields) error {
@@ -37,30 +32,59 @@ func (store OutboxStore) Save(ref outbox.Ref, fields outbox.Fields) error {
 func (store OutboxStore) item(ref outbox.Ref) (Item, error) {
 	item := Item{}
 	found, err := store.Store.Documents.FindById(ref.Collection, ref.Id, &item)
-	if err == nil && !found {
-		return Item{}, outbox.NotFound{Kind: "outbound item", Key: ref.Collection + "/" + ref.Id}
+	if err != nil {
+		return item, err
 	}
-	return item, err
+	return store.foundItem(item, found, ref)
 }
 
-func (store OutboxStore) flagged(where map[string]any, limit int) ([]outbox.Document, error) {
+func (OutboxStore) foundItem(item Item, found bool, ref outbox.Ref) (Item, error) {
+	if !found {
+		return Item{}, outbox.NotFound{Kind: "outbound item", Key: ref.Collection + "/" + ref.Id}
+	}
+	return item, nil
+}
+
+func (store OutboxStore) flagged(filter any, limit int) ([]outbox.Document, error) {
 	entries, err := store.Registry.Collections(Queue{}.Base())
 	if err != nil {
 		return nil, err
 	}
-	documents := []outbox.Document{}
-	for _, entry := range entries {
-		page, _, err := store.Store.Page(entry.Collection, where, "", min(limit, store.largestPage()))
-		if err != nil {
-			return nil, err
-		}
-		items, err := Decoder{}.Items(page)
-		if err != nil {
-			return nil, err
-		}
-		for _, item := range items {
-			documents = append(documents, outbox.Document{Ref: outbox.Ref{Collection: entry.Collection, Id: item.Id}, Fields: item.OutboxFields()})
-		}
+	documents, err := store.collect(entries, filter, limit)
+	if err != nil {
+		return nil, err
 	}
 	return documents[:min(len(documents), limit)], nil
+}
+
+func (store OutboxStore) collect(entries []CollectionEntry, filter any, limit int) ([]outbox.Document, error) {
+	documents := []outbox.Document{}
+	for _, entry := range entries {
+		found, err := store.inCollection(entry.Collection, filter, limit)
+		if err != nil {
+			return nil, err
+		}
+		documents = append(documents, found...)
+	}
+	return documents, nil
+}
+
+func (store OutboxStore) inCollection(collection string, filter any, limit int) ([]outbox.Document, error) {
+	page, _, err := store.Store.Page(collection, filter, "", min(limit, store.largestPage()))
+	if err != nil {
+		return nil, err
+	}
+	items, err := Decoder{}.Items(page)
+	if err != nil {
+		return nil, err
+	}
+	return store.documents(collection, items), nil
+}
+
+func (OutboxStore) documents(collection string, items []Item) []outbox.Document {
+	documents := []outbox.Document{}
+	for _, item := range items {
+		documents = append(documents, outbox.Document{Ref: outbox.Ref{Collection: collection, Id: item.Id}, Fields: item.OutboxFields()})
+	}
+	return documents
 }

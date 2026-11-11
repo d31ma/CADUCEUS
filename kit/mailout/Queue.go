@@ -1,6 +1,7 @@
 package mailout
 
 import (
+	"encoding/json"
 	"slices"
 	"time"
 
@@ -66,6 +67,41 @@ func (queue Queue) Claim(item Item, now time.Time) (Item, bool, error) {
 	if err != nil {
 		return item, false, err
 	}
+	return queue.claimUnlessLeased(item, current, now)
+}
+
+func (queue Queue) FindBy(domainId string, field string, value string) (Item, bool, error) {
+	collection, err := queue.Store.Ready(queue.Base(), domainId)
+	if err != nil {
+		return Item{}, false, err
+	}
+	documents, _, err := queue.Store.Page(collection, map[string]any{field: value}, "", 1)
+	if err != nil {
+		return Item{}, false, err
+	}
+	return queue.first(documents)
+}
+
+func (queue Queue) Due(domainId string, now time.Time) ([]Item, error) {
+	collection, err := queue.Store.Ready(queue.Base(), domainId)
+	if err != nil {
+		return nil, err
+	}
+	waiting, err := queue.waiting(collection)
+	if err != nil {
+		return nil, err
+	}
+	return queue.dueBy(waiting, now), nil
+}
+
+func (Queue) stateField() string { return "state" }
+
+func (Queue) waitingStates() []string {
+	states := States{}
+	return []string{states.Queued(), states.Deferred(), states.Sending()}
+}
+
+func (queue Queue) claimUnlessLeased(item Item, current Item, now time.Time) (Item, bool, error) {
 	if queue.leased(current, now) {
 		return item, false, nil
 	}
@@ -75,38 +111,40 @@ func (queue Queue) Claim(item Item, now time.Time) (Item, bool, error) {
 	return item, true, queue.patch(item)
 }
 
-func (queue Queue) FindBy(domainId string, field string, value string) (Item, bool, error) {
-	collection, err := queue.Store.Ready(queue.Base(), domainId)
-	if err != nil {
-		return Item{}, false, err
-	}
-	documents, _, err := queue.Store.Page(collection, map[string]any{field: value}, "", 1)
-	if err != nil || len(documents) == 0 {
-		return Item{}, false, err
+func (Queue) first(documents []json.RawMessage) (Item, bool, error) {
+	if len(documents) == 0 {
+		return Item{}, false, nil
 	}
 	items, err := Decoder{}.Items(documents)
 	return items[0], err == nil, err
 }
 
-func (queue Queue) Due(domainId string, now time.Time) ([]Item, error) {
-	collection, err := queue.Store.Ready(queue.Base(), domainId)
+func (queue Queue) waiting(collection string) ([]Item, error) {
+	waiting := []Item{}
+	for _, state := range queue.waitingStates() {
+		items, err := queue.inState(collection, state)
+		if err != nil {
+			return nil, err
+		}
+		waiting = append(waiting, items...)
+	}
+	return waiting, nil
+}
+
+func (queue Queue) inState(collection string, state string) ([]Item, error) {
+	documents, err := queue.Store.All(collection, map[string]any{queue.stateField(): state})
 	if err != nil {
 		return nil, err
 	}
-	due := []Item{}
-	states := States{}
-	for _, state := range []string{states.Queued(), states.Deferred(), states.Sending()} {
-		documents, err := queue.Store.All(collection, map[string]any{"state": state})
-		if err != nil {
-			return nil, err
-		}
-		items, err := Decoder{}.Items(documents)
-		if err != nil {
-			return nil, err
-		}
-		due = append(due, items...)
-	}
-	return slices.DeleteFunc(due, func(item Item) bool { return Clock{}.Parse(item.NextAttemptAt).After(now) }), nil
+	return Decoder{}.Items(documents)
+}
+
+func (queue Queue) dueBy(items []Item, now time.Time) []Item {
+	return slices.DeleteFunc(items, func(item Item) bool { return queue.notYetDue(item, now) })
+}
+
+func (Queue) notYetDue(item Item, now time.Time) bool {
+	return Clock{}.Parse(item.NextAttemptAt).After(now)
 }
 
 func (Queue) leased(current Item, now time.Time) bool {

@@ -20,10 +20,10 @@ func (client ServiceClient) Get(address string, realm string, target any) (int, 
 		return 0, err
 	}
 	status, body, err := client.send(request, realm)
-	if err != nil || status != http.StatusOK {
+	if err != nil {
 		return status, err
 	}
-	return status, json.Unmarshal(body, target)
+	return client.decode(status, body, target)
 }
 
 func (client ServiceClient) Post(address string, realm string, payload any) (int, error) {
@@ -53,4 +53,11 @@ func (client ServiceClient) send(request *http.Request, realm string) (int, []by
 	defer response.Body.Close()
 	body, err := io.ReadAll(io.LimitReader(response.Body, client.readLimit()))
 	return response.StatusCode, body, err
+}
+
+func (ServiceClient) decode(status int, body []byte, target any) (int, error) {
+	if status != http.StatusOK {
+		return status, nil
+	}
+	return status, json.Unmarshal(body, target)
 }

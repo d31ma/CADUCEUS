@@ -12,9 +12,20 @@ type Delivery struct {
 
 func (delivery Delivery) Deliver(item Item, now time.Time) (Item, error) {
 	claimed, free, err := delivery.Queue.Claim(item, now)
-	if err != nil || !free {
+	if err != nil {
 		return item, err
 	}
+	return delivery.deliverFree(claimed, free, now)
+}
+
+func (delivery Delivery) deliverFree(claimed Item, free bool, now time.Time) (Item, error) {
+	if !free {
+		return claimed, nil
+	}
+	return delivery.process(claimed, now)
+}
+
+func (delivery Delivery) process(claimed Item, now time.Time) (Item, error) {
 	attempted, outcome := delivery.attempt(claimed, now)
 	return delivery.Outcomes.Apply(attempted, outcome, now)
 }
@@ -29,8 +40,18 @@ func (delivery Delivery) attempt(item Item, now time.Time) (Item, Outcome) {
 		return item, rules.Expired()
 	case suppressed:
 		return item, rules.Suppressed()
+	default:
+		return delivery.prepareAndSend(item, now)
 	}
+}
+
+func (delivery Delivery) prepareAndSend(item Item, now time.Time) (Item, Outcome) {
 	prepared, err := delivery.Builder.Prepare(item, now)
+	return delivery.send(prepared, err)
+}
+
+func (delivery Delivery) send(prepared Prepared, err error) (Item, Outcome) {
+	rules := OutcomeRules{}
 	switch {
 	case err != nil:
 		return prepared.Item, rules.FromBuild(err)

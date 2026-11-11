@@ -11,6 +11,10 @@ func (States) Expired() string  { return "expired" }
 func (States) Failed() string   { return "failed" }
 
 func (states States) EventStatus(state string) string {
+	return states.eventStatus(state)
+}
+
+func (states States) eventStatus(state string) string {
 	if state == states.Expired() {
 		return states.Failed()
 	}

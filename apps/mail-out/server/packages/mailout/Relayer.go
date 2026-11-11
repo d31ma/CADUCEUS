@@ -16,29 +16,20 @@ type Relayer struct {
 	Now       func() time.Time
 }
 
+func (Relayer) bearerPrefix() string { return "Bearer " }
+
 func (relayer Relayer) RunOnce(limit int) (outbox.Report, error) {
-	documents, err := relayer.Store.Pending(limit)
-	if err != nil {
-		return outbox.Report{}, err
-	}
-	total := outbox.Report{}
-	for _, document := range documents {
-		owner, ownerErr := relayer.Store.Owner(document.Ref)
-		report, relayErr := relayer.RelayDocument(document.Ref, owner)
-		total = outbox.Report{Documents: total.Documents + report.Documents, Delivered: total.Delivered + report.Delivered, Retried: total.Retried + report.Retried, DeadLettered: total.DeadLettered + report.DeadLettered}
-		err = errors.Join(err, ownerErr, relayErr)
-	}
-	return total, err
+	pusher := outbox.NewDomainHTTPPusher(outbox.DomainTokenFunc(relayer.token), relayer.Timeout)
+	return relayer.relay(pusher).RunOnce(limit)
 }
 
 func (relayer Relayer) RelayDocument(ref outbox.Ref, domainId string) (outbox.Report, error) {
-	authorization, err := relayer.Authorize(domainId)
+	token, err := relayer.token(domainId)
 	if err != nil {
 		return outbox.Report{}, err
 	}
-	tokens := outbox.StaticToken{Value: strings.TrimPrefix(authorization, "Bearer ")}
-	pusher := outbox.NewHTTPPusher(tokens, relayer.Timeout)
-	return outbox.NewRelay(relayer.Store, pusher, relayer.Settings, relayer.Now).RelayDocument(ref)
+	pusher := outbox.NewHTTPPusher(outbox.StaticToken{Value: token}, relayer.Timeout)
+	return relayer.relay(pusher).RelayDocument(ref)
 }
 
 func (relayer Relayer) Pending(limit int) ([]outbox.Document, error) {
@@ -47,12 +38,8 @@ func (relayer Relayer) Pending(limit int) ([]outbox.Document, error) {
 
 func (relayer Relayer) DeadLetters(limit int) ([]outbox.DeadLetter, error) {
 	documents, err := relayer.Store.WithDeadLetters(limit)
-	letters := []outbox.DeadLetter{}
-	for _, document := range documents {
-		listed, listErr := outbox.DeadLetters{}.List(document.Fields)
-		letters, err = append(letters, listed...), errors.Join(err, listErr)
-	}
-	return letters, err
+	letters, listErr := relayer.letters(documents)
+	return letters, errors.Join(err, listErr)
 }
 
 func (relayer Relayer) Requeue(request RequeueRequest) (outbox.Report, error) {
@@ -70,4 +57,23 @@ func (relayer Relayer) Requeue(request RequeueRequest) (outbox.Report, error) {
 		return outbox.Report{}, err
 	}
 	return relayer.RelayDocument(ref, request.DomainId)
+}
+
+func (relayer Relayer) token(domainId string) (string, error) {
+	authorization, err := relayer.Authorize(domainId)
+	return strings.TrimPrefix(authorization, relayer.bearerPrefix()), err
+}
+
+func (relayer Relayer) relay(pusher outbox.Pusher) outbox.Relay {
+	return outbox.NewRelay(relayer.Store, pusher, relayer.Settings, relayer.Now)
+}
+
+func (Relayer) letters(documents []outbox.Document) ([]outbox.DeadLetter, error) {
+	letters := []outbox.DeadLetter{}
+	failures := []error{}
+	for _, document := range documents {
+		listed, err := outbox.DeadLetters{}.List(document.Fields)
+		letters, failures = append(letters, listed...), append(failures, err)
+	}
+	return letters, errors.Join(failures...)
 }

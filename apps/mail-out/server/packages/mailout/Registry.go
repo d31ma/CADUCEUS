@@ -1,7 +1,6 @@
 package mailout
 
 import (
-	"encoding/json"
 	"errors"
 
 	"mesail.dev/packages/collections"
@@ -13,18 +12,21 @@ type Registry struct {
 
 func (Registry) collection() string { return "outbox-collections" }
 
+func (Registry) collectionField() string { return "collection" }
+
+func (Registry) baseField() string { return "base" }
+
 func (registry Registry) Register(base string, domainId string) error {
 	entry := CollectionEntry{Collection: collections.CollectionName{}.ForDomain(base, domainId), Base: base, DomainId: domainId}
 	err := registry.Store.Documents.CreateCollection(registry.collection())
 	if err != nil {
 		return err
 	}
-	known, err := registry.Store.Exists(registry.collection(), map[string]any{"collection": entry.Collection})
-	if err != nil || known {
+	known, err := registry.Store.Exists(registry.collection(), map[string]any{registry.collectionField(): entry.Collection})
+	if err != nil {
 		return err
 	}
-	_, err = registry.Store.Documents.Insert(registry.collection(), entry)
-	return err
+	return registry.insertUnlessKnown(known, entry)
 }
 
 func (registry Registry) Collections(base string) ([]CollectionEntry, error) {
@@ -32,12 +34,15 @@ func (registry Registry) Collections(base string) ([]CollectionEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	documents, err := registry.Store.All(registry.collection(), map[string]any{"base": base})
-	entries := []CollectionEntry{}
-	for _, document := range documents {
-		entry := CollectionEntry{}
-		err = errors.Join(err, json.Unmarshal(document, &entry))
-		entries = append(entries, entry)
+	documents, err := registry.Store.All(registry.collection(), map[string]any{registry.baseField(): base})
+	entries, decodeErr := documentDecoder[CollectionEntry]{}.decode(documents)
+	return entries, errors.Join(err, decodeErr)
+}
+
+func (registry Registry) insertUnlessKnown(known bool, entry CollectionEntry) error {
+	if known {
+		return nil
 	}
-	return entries, err
+	_, err := registry.Store.Documents.Insert(registry.collection(), entry)
+	return err
 }

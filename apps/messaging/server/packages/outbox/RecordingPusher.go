@@ -32,6 +32,10 @@ func (pusher *RecordingPusher) Attempted() []Push {
 }
 
 func (pusher *RecordingPusher) PushedTo(subscriber string) []events.Envelope {
+	return pusher.envelopesTo(subscriber)
+}
+
+func (pusher *RecordingPusher) envelopesTo(subscriber string) []events.Envelope {
 	envelopes := []events.Envelope{}
 	for _, push := range pusher.pushed {
 		envelopes = append(envelopes, pusher.ifTo(push, subscriber)...)

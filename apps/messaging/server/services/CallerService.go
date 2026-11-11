@@ -2,7 +2,6 @@ import (
 	"cmp"
 	"slices"
 
-	"mesail.dev/packages/core"
 	"mesail.dev/packages/oidc"
 )
 
@@ -31,14 +30,14 @@ func (service *CallerService) chatRefusal(roles []string) error {
 	if slices.ContainsFunc(roles, service.chatRole) {
 		return nil
 	}
-	return &core.Forbidden{Message: "only members of a domain use its conversations"}
+	return &Forbidden{Message: "only members of a domain use its conversations"}
 }
 
 func (service *CallerService) serviceRefusal(roles []string) error {
 	if slices.Contains(roles, service.serviceRole()) {
 		return nil
 	}
-	return &core.Forbidden{Message: "only a caller with the Service role may use this route"}
+	return &Forbidden{Message: "only a caller with the Service role may use this route"}
 }
 
 func (service *CallerService) chatRole(role string) bool {

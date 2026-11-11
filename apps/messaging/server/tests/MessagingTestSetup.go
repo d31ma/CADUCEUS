@@ -44,7 +44,7 @@ func (MessagingTestSetup) World() *MessagingTestSetup {
 	world.Messages = &MessagesController{callers: callers, messaging: world.Service, wire: wire}
 	world.Attachments = &AttachmentsController{callers: callers, messaging: world.Service}
 	world.Sources = &MessageSourceController{callers: callers, messaging: world.Service, wire: wire}
-	world.Events = &EventsController{callers: callers, events: &EventsService{core: world.Core, failures: &FailureService{}}}
+	world.Events = &EventsController{callers: callers, events: world.EventsService(), wire: wire}
 	world.AddMember("ana")
 	world.AddMember("bo")
 	return world
@@ -165,35 +165,39 @@ func (world *MessagingTestSetup) IsUnauthenticated(err error) bool {
 	return errors.As(err, &failure)
 }
 
+func (world *MessagingTestSetup) EventsService() *EventsService {
+	return &EventsService{core: world.Core, storage: &StorageService{settings: &SettingsService{}}, failures: &FailureService{}}
+}
+
 func (world *MessagingTestSetup) IsForbidden(err error) bool {
-	var failure *core.Forbidden
+	var failure *Forbidden
 	return errors.As(err, &failure)
 }
 
 func (world *MessagingTestSetup) IsNotFound(err error) bool {
-	var failure *core.NotFound
+	var failure *NotFound
 	return errors.As(err, &failure)
 }
 
 func (world *MessagingTestSetup) IsUnavailable(err error) bool {
-	var failure *core.Unavailable
+	var failure *Unavailable
 	return errors.As(err, &failure)
 }
 
 func (world *MessagingTestSetup) InvalidField(err error) string {
-	failure := &core.InvalidRequest{}
+	failure := &InvalidRequest{}
 	errors.As(err, &failure)
 	return failure.Field
 }
 
-func (world *MessagingTestSetup) Changed(err error) *core.RecipientsChanged {
-	failure := &core.RecipientsChanged{}
+func (world *MessagingTestSetup) Changed(err error) *ChangedRecipients {
+	failure := &ChangedRecipients{}
 	errors.As(err, &failure)
 	return failure
 }
 
-func (world *MessagingTestSetup) NotAllowed(err error) *core.ChatNotAllowed {
-	failure := &core.ChatNotAllowed{}
+func (world *MessagingTestSetup) NotAllowed(err error) *ChatNotAllowed {
+	failure := &ChatNotAllowed{}
 	errors.As(err, &failure)
 	return failure
 }

@@ -58,12 +58,12 @@ func (test *OutboxTest) TestUnknownCollectionsLettersAndDocumentsAreNotFound() {
 	collection := world.Names.Messages(world.Domain, "202611")
 	unknownCollection := world.Relay.RetryDead(RetryRequest{Collection: "messages-" + world.RandomText(), DocumentId: id, EventId: "evt_1", Subscriber: "search"})
 	unknownLetter := world.Relay.RetryDead(RetryRequest{Collection: collection, DocumentId: id, EventId: "evt_missing", Subscriber: "search"})
-	store := &OutboxStoreService{documents: world.Documents, registry: world.Registry}
+	store := world.OutboxStore()
 	_, missing := store.Load(outbox.Ref{Collection: collection, Id: "00000000000000"})
 	Assert.IsTrue(world.IsNotFound(unknownCollection), "want NotFound for the collection")
 	Assert.IsTrue(world.IsNotFound(unknownLetter), "want NotFound for the letter")
 	Assert.IsTrue(world.IsNotFound(missing), "want NotFound for the document")
-	Assert.IsTrue(world.IsNotFound(world.Registry.Check("not-a-collection")), "want NotFound from the registry")
+	Assert.IsTrue(world.IsNotFound(world.Registry().Check("not-a-collection")), "want NotFound from the registry")
 	Assert.IsTrue(world.IsNotFound(store.Save(outbox.Ref{Collection: "not-a-collection", Id: id}, outbox.Fields{})), "want NotFound on save")
 }
 
@@ -72,7 +72,7 @@ func (test *OutboxTest) TestMissingOutboxSettingsAreUnavailable() {
 	os.Setenv("YON_APPLICATION_JSON", `{"yon":{}}`)
 	_, settingsError := world.Settings.Outbox()
 	_, runError := world.Relay.RunOnce()
-	world.Relay.Drain(world.Names.Messages(world.Domain, "202611"), "00000000000000")
+	world.Storage.Storage().Outbox().Drain(outbox.Ref{Collection: world.Names.Messages(world.Domain, "202611"), Id: "00000000000000"})
 	Assert.IsTrue(world.IsUnavailable(settingsError), "want Unavailable settings")
 	Assert.IsTrue(world.IsUnavailable(runError), "want Unavailable relay")
 	Assert.Equals("", world.Settings.Settings().RelayUrl)

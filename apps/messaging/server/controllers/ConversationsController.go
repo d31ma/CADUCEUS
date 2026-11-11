@@ -27,9 +27,9 @@ func (controller *ConversationsController) GetConversations(request *http.Reques
 	return controller.wire.ConversationPage(list), err
 }
 
-// @GetRoute("/{conversationId}/messages")
+// @GetRoute("/{conversation_id}/messages")
 func (controller *ConversationsController) GetMessages(
-	// @FromPath
+	// @FromPath("conversation_id")
 	conversationId string,
 	request *http.Request,
 ) (MessagePage, error) {
@@ -39,12 +39,12 @@ func (controller *ConversationsController) GetMessages(
 	return controller.wire.MessagePage(list), err
 }
 
-// @PutRoute("/{conversationId}/read")
+// @PutRoute("/{conversation_id}/read")
 // @ResponseStatus(204)
 func (controller *ConversationsController) PutRead(
 	// @FromHeader("authorization")
 	authorization string,
-	// @FromPath
+	// @FromPath("conversation_id")
 	conversationId string,
 	// @FromBody
 	request ReadRequest,

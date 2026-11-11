@@ -23,10 +23,10 @@ func (test *CoreTest) TestBuiltStoresWriteToFylo() {
 func (test *CoreTest) TestBuiltPortsUseTheSettings() {
 	world := StorageTestSetup{}.World()
 	ports := world.Core().Ports()
-	_, isPlain := ports.Renderer.(adapters.PlainRenderer)
+	_, isRichText := ports.Renderer.(adapters.RichTextRenderer)
 	_, isDirectory := ports.Directory.(adapters.DirectoryClient)
 	_, isMailIn := ports.Inbound.(adapters.MailInClient)
-	Assert.IsTrue(isPlain && isDirectory && isMailIn, "the built ports are the HTTP adapters")
+	Assert.IsTrue(isRichText && isDirectory && isMailIn, "the built ports are the HTTP adapters")
 	Assert.IsTrue(!ports.Now().IsZero(), "the clock runs")
 	fields, err := ports.Stager.Stage(core.OutboxFields{}, "message.deleted", world.Domain, map[string]string{})
 	Assert.IsTrue(err == nil, "staging works")

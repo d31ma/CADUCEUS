@@ -10,6 +10,8 @@ type EventsController struct {
 	callers *CallerService
 	// @Needs
 	events *EventsService
+	// @Needs
+	wire *WireService
 }
 
 // @PostRoute
@@ -17,10 +19,10 @@ func (controller *EventsController) PostEvent(
 	// @FromHeader("authorization")
 	authorization string,
 	// @FromBody
-	envelope events.Envelope,
+	envelope EventEnvelope,
 ) (events.Receipt, error) {
 	caller, refused := controller.callers.ServiceCaller(authorization)
-	return controller.received(caller, envelope, refused)
+	return controller.received(caller, controller.wire.Envelope(envelope), refused)
 }
 
 func (controller *EventsController) received(caller oidc.Caller, envelope events.Envelope, failure error) (events.Receipt, error) {

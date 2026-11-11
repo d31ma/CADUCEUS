@@ -2,6 +2,7 @@ import (
 	"maps"
 
 	"mesail.dev/packages/core"
+	"mesail.dev/packages/events"
 )
 
 // @Service
@@ -60,6 +61,10 @@ func (service *WireService) SendRequest(request SendRequest) core.SendRequest {
 
 func (service *WireService) MessageSource(source core.MessageSource) MessageSource {
 	return MessageSource{MessageId: source.MessageId, DomainId: source.DomainId, Body: source.Body, AttachmentIds: service.texts(source.AttachmentIds)}
+}
+
+func (service *WireService) Envelope(envelope EventEnvelope) events.Envelope {
+	return events.Envelope{EventID: envelope.EventId, Type: envelope.Type, DomainId: envelope.DomainId, Producer: envelope.Producer, OccurredAt: envelope.OccurredAt, Payload: envelope.Payload}
 }
 
 func (service *WireService) Download(download core.Download) Download {
@@ -154,7 +159,7 @@ func (service *WireService) emailSummary(email core.EmailMeta) *EmailSummary {
 		To:          service.texts(email.To),
 		Cc:          service.texts(email.Cc),
 		Suspicious:  email.Suspicious,
-		AuthResults: AuthResults{Spf: email.Spf, Dkim: email.Dkim, Dmarc: email.Dmarc},
+		AuthResults: AuthResults{Spf: email.Spf, Dkim: email.Dkim, Dmarc: email.Dmarc, Handoff: email.Handoff},
 	}
 }
 

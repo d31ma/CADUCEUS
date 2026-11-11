@@ -9,12 +9,12 @@ type AttachmentsController struct {
 	messaging *MessagingService
 }
 
-// @GetRoute("/{attachmentId}/access")
+// @GetRoute("/{attachment_id}/access")
 // @ResponseStatus(204)
 func (controller *AttachmentsController) GetAccess(
 	// @FromHeader("authorization")
 	authorization string,
-	// @FromPath
+	// @FromPath("attachment_id")
 	attachmentId string,
 ) error {
 	caller, refused := controller.callers.ChatCaller(authorization)

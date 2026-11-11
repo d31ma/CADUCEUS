@@ -10,9 +10,7 @@ import (
 // @Service
 type CoreService struct {
 	// @Needs
-	chatStores *ChatStoresService
-	// @Needs
-	lookupStores *LookupStoresService
+	storage *StorageService
 	// @Needs
 	settings    *SettingsService
 	fixedStores *core.Stores
@@ -31,7 +29,7 @@ func (service *CoreService) storesOr(fixed *core.Stores) core.Stores {
 	if fixed != nil {
 		return *fixed
 	}
-	return service.builtStores()
+	return service.storage.Storage().Stores()
 }
 
 func (service *CoreService) portsOr(fixed *core.Ports) core.Ports {
@@ -41,10 +39,6 @@ func (service *CoreService) portsOr(fixed *core.Ports) core.Ports {
 	return service.builtPorts()
 }
 
-func (service *CoreService) builtStores() core.Stores {
-	return service.lookupStores.Into(service.chatStores.Into(core.Stores{}))
-}
-
 func (service *CoreService) builtPorts() core.Ports {
 	urls := service.settings.Settings()
 	tokens := oidc.ServiceTokensFactory{}.Configured()
@@ -52,7 +46,7 @@ func (service *CoreService) builtPorts() core.Ports {
 	outboxSettings, _ := service.settings.Outbox()
 	return core.Ports{
 		Directory: adapters.NewDirectoryClient(urls.DirectoryUrl, tokens, call),
-		Renderer:  adapters.PlainRenderer{},
+		Renderer:  adapters.RichTextRenderer{},
 		Inbound:   adapters.NewMailInClient(urls.MailInUrl, tokens, call),
 		Stager:    core.NewStager(outboxSettings, time.Now, rand.Reader),
 		Now:       time.Now,

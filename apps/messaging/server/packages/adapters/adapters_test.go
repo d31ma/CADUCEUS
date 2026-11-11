@@ -252,54 +252,6 @@ func TestDomainPusherReportsARefusal(t *testing.T) {
 	}
 }
 
-func TestPlainRendererSplitsParagraphsOnBlankLines(t *testing.T) {
-	text, err := PlainRenderer{}.Markdown("first line\r\nstill first\r\n\r\n  \n\nsecond **not bold**\n \t\nthird")
-	if err != nil || text.Truncated {
-		t.Fatalf("got %+v %v", text, err)
-	}
-	if len(text.Blocks) != 3 || text.Blocks[0].Spans[0].Text != "first line\nstill first" || text.Blocks[1].Spans[0].Text != "second **not bold**" {
-		t.Fatalf("got %+v", text.Blocks)
-	}
-	if text.Blocks[2].Kind != "paragraph" || text.Blocks[2].Cells == nil || text.Blocks[2].Spans[0].Bold {
-		t.Fatalf("got %+v", text.Blocks[2])
-	}
-}
-
-func TestPlainRendererOfAnEmptyBodyHasNoBlocks(t *testing.T) {
-	text, _ := PlainRenderer{}.Markdown(" \n\n ")
-	if len(text.Blocks) != 0 || text.Blocks == nil || text.Truncated {
-		t.Fatalf("got %+v", text)
-	}
-}
-
-func TestPlainRendererKeepsAtMostTwoThousandBlocks(t *testing.T) {
-	text, _ := PlainRenderer{}.Markdown(strings.Repeat("a\n\n", 2001))
-	if len(text.Blocks) != 2000 || !text.Truncated {
-		t.Fatalf("got %d blocks, truncated %v", len(text.Blocks), text.Truncated)
-	}
-}
-
-func TestPlainRendererKeepsExactlyTwoThousandBlocksWhole(t *testing.T) {
-	text, _ := PlainRenderer{}.Markdown(strings.Repeat("a\n\n", 2000))
-	if len(text.Blocks) != 2000 || text.Truncated {
-		t.Fatalf("got %d blocks, truncated %v", len(text.Blocks), text.Truncated)
-	}
-}
-
-func TestPlainRendererCutsTextAfterTwoHundredThousandCharacters(t *testing.T) {
-	text, _ := PlainRenderer{}.Markdown(strings.Repeat("é", 150000) + "\n\n" + strings.Repeat("b", 60000) + "\n\nlast")
-	if !text.Truncated || len(text.Blocks) != 2 || len([]rune(text.Blocks[1].Spans[0].Text)) != 50000 {
-		t.Fatalf("got %d blocks, truncated %v", len(text.Blocks), text.Truncated)
-	}
-}
-
-func TestPlainRendererKeepsExactlyTheLimit(t *testing.T) {
-	text, _ := PlainRenderer{}.Markdown(strings.Repeat("c", 200000))
-	if text.Truncated || len(text.Blocks) != 1 {
-		t.Fatalf("got %d blocks, truncated %v", len(text.Blocks), text.Truncated)
-	}
-}
-
 func TestRelayTriggerPostsWithAnOperatorToken(t *testing.T) {
 	base, seen := serve(t, http.StatusOK, `{}`)
 	tokens := &fixedTokens{}
@@ -357,4 +309,49 @@ func TestScheduledSweepFetchesAnOperatorTokenAndCallsTheRoute(t *testing.T) {
 	if tokenPath != "/idp/realms/mesail-operators/protocol/openid-connect/token" || seen.authorization != "Bearer operator-token" {
 		t.Fatalf("got %q %+v", tokenPath, seen)
 	}
+}
+
+func TestRichTextRendererMakesBlocksFromMarkdown(t *testing.T) {
+	text, err := RichTextRenderer{}.Markdown("# Title\n\nSome **bold** and [a link](https://example.com)")
+	if err != nil || len(text.Blocks) != 2 || text.Truncated {
+		t.Fatalf("got %+v %v", text, err)
+	}
+	if text.Blocks[0].Kind != "heading" || text.Blocks[0].Level != 1 {
+		t.Fatalf("first block %+v", text.Blocks[0])
+	}
+	if !hasBoldSpan(text.Blocks[1].Spans) || !hasLink(text.Blocks[1].Spans, "https://example.com") {
+		t.Fatalf("second block %+v", text.Blocks[1])
+	}
+}
+
+func TestRichTextRendererDropsUnsafeLinks(t *testing.T) {
+	text, _ := RichTextRenderer{}.Markdown("[click](javascript:alert(1))")
+	if hasLink(text.Blocks[0].Spans, "javascript:alert(1)") {
+		t.Fatalf("an unsafe link was kept: %+v", text.Blocks)
+	}
+}
+
+func TestRichTextRendererOfAnEmptyBodyHasNoBlocks(t *testing.T) {
+	text, err := RichTextRenderer{}.Markdown("  \n\n ")
+	if err != nil || len(text.Blocks) != 0 {
+		t.Fatalf("got %+v %v", text, err)
+	}
+}
+
+func hasBoldSpan(spans []core.Span) bool {
+	for _, span := range spans {
+		if span.Bold && span.Text == "bold" {
+			return true
+		}
+	}
+	return false
+}
+
+func hasLink(spans []core.Span, href string) bool {
+	for _, span := range spans {
+		if span.Href == href {
+			return true
+		}
+	}
+	return false
 }

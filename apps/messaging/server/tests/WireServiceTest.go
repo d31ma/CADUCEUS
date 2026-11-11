@@ -1,4 +1,9 @@
-import "mesail.dev/packages/core"
+import (
+	"encoding/json"
+
+	"mesail.dev/packages/core"
+	"mesail.dev/packages/events"
+)
 
 // @Test(MessagingTestSetup, {"partition":"tests"})
 type WireServiceTest struct {
@@ -42,6 +47,14 @@ func (test *WireServiceTest) TestAnEmailMessageCarriesItsSummary() {
 	summary := EmailSummary{Subject: "Invoice", From: "carol@partner.org", To: []string{"ana@example.com"}, Cc: []string{}, Suspicious: true, AuthResults: AuthResults{Spf: "pass", Dkim: "fail", Dmarc: "none"}}
 	Assert.Equals(summary, *message.Email)
 	Assert.Equals([]AttachmentRef{{AttachmentId: "att_1"}}, message.Attachments)
+}
+
+func (test *WireServiceTest) TestAHandedOffEmailSaysSo() {
+	email := core.EmailMeta{Subject: "Hello", From: "eve@example.org", Handoff: true}
+	view := core.MessageView{Message: core.Message{Id: "000000000003", Month: "202611", IsEmail: true, Email: email}}
+	message := (&WireService{}).Message(view)
+	Assert.IsTrue(message.Email.AuthResults.Handoff, "the hand-off flag was dropped")
+	Assert.Equals("", message.Email.AuthResults.Spf)
 }
 
 func (test *WireServiceTest) TestBlocksKeepSpansAndImages() {
@@ -90,4 +103,10 @@ func (test *WireServiceTest) TestMessageSourceNeverHasNullAttachments() {
 func (test *WireServiceTest) TestDownloadCopiesTheLink() {
 	download := (&WireService{}).Download(core.Download{Url: "https://files.example.com/a.eml", ExpiresAt: "2026-11-10T12:05:00Z"})
 	Assert.Equals(Download{Url: "https://files.example.com/a.eml", ExpiresAt: "2026-11-10T12:05:00Z"}, download)
+}
+
+func (test *WireServiceTest) TestAnEnvelopeCrossesTheWire() {
+	envelope := EventEnvelope{EventId: "evt_1", Type: "member.upserted", DomainId: "a.test", Producer: "directory", OccurredAt: "2026-11-10T12:00:00Z", Payload: json.RawMessage(`{"memberId":"ana"}`)}
+	expected := events.Envelope{EventID: "evt_1", Type: "member.upserted", DomainId: "a.test", Producer: "directory", OccurredAt: "2026-11-10T12:00:00Z", Payload: json.RawMessage(`{"memberId":"ana"}`)}
+	Assert.Equals(expected, (&WireService{}).Envelope(envelope))
 }

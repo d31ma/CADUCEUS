@@ -2,7 +2,6 @@ import (
 	"slices"
 	"strings"
 
-	"mesail.dev/packages/core"
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/inbound"
 	"mesail.dev/packages/oidc"
@@ -13,7 +12,7 @@ type EventsService struct {
 	// @Needs
 	core *CoreService
 	// @Needs
-	seen *SeenEventsService
+	storage *StorageService
 	// @Needs
 	failures *FailureService
 }
@@ -32,12 +31,12 @@ func (service *EventsService) received(caller oidc.Caller, envelope events.Envel
 
 func (service *EventsService) receiver() events.Receiver {
 	handler := inbound.NewEventHandler(service.core.Stores(), service.core.Ports())
-	return events.NewReceiver(events.Services{}.Messaging(), service.seen, handler)
+	return events.NewReceiver(events.Services{}.Messaging(), service.storage.Storage().Seen(), handler)
 }
 
 func (service *EventsService) domainRefusal(caller oidc.Caller, domainId string) error {
 	if slices.Contains(caller.Roles, service.serviceRole()) && !strings.EqualFold(caller.DomainId, domainId) {
-		return &core.NotFound{Message: "no such domain"}
+		return &NotFound{Message: "no such domain"}
 	}
 	return nil
 }

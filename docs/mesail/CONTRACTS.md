@@ -325,15 +325,18 @@ invalid_request` with `field: reaction`. `Message.reactions` and
 `myReactions` are keyed by name; the client maps names to glyphs and
 accessible labels.
 
-`Message{messageId, conversationId, threadRootId?, author: Author, body,
-bodyFormat: markdown|text|email, blocks[]: Block, truncated,
-attachments[]: AttachmentRef, email?: EmailSummary, reactions:
+`Message{messageId, conversationId, threadRootId?, alsoToConversation,
+author: Author, body, bodyFormat: markdown|text|email, blocks[]: Block,
+truncated, attachments[]: AttachmentRef, email?: EmailSummary, reactions:
 map[string]int, myReactions[], replyCount, lastReplyAt?, editedAt?,
 deletedAt?, createdAt, deliveries[]: DeliveryStatus}`.
 `Author{kind: member|otherDomain|external, memberId?, address,
 displayName}`. `AttachmentRef{attachmentId, fileName, mediaType, size}`.
 `EmailSummary{subject, from, to[], cc[], suspicious, authResults:
-AuthResults{spf, dkim, dmarc}}`. `DeliveryStatus{recipient, channel:
+AuthResults{spf, dkim, dmarc, handoff}}`. `handoff` is true when another
+domain of this install handed the email over (AC-DM-6); then `spf`, `dkim`
+and `dmarc` are empty, and the client shows "Sent from <domain> on this
+server" instead of check badges. `DeliveryStatus{recipient, channel:
 chat|email, status, detail?}`.
 
 ## attachments

@@ -27,11 +27,11 @@ func (controller *MessagesController) PostMessage(
 	return controller.wire.SendResult(outcome), err
 }
 
-// @GetRoute("/{messageId}")
+// @GetRoute("/{message_id}")
 func (controller *MessagesController) GetMessage(
 	// @FromHeader("authorization")
 	authorization string,
-	// @FromPath
+	// @FromPath("message_id")
 	messageId string,
 ) (Message, error) {
 	caller, refused := controller.callers.ChatCaller(authorization)
@@ -39,11 +39,11 @@ func (controller *MessagesController) GetMessage(
 	return controller.wire.Message(view), err
 }
 
-// @PatchRoute("/{messageId}")
+// @PatchRoute("/{message_id}")
 func (controller *MessagesController) PatchMessage(
 	// @FromHeader("authorization")
 	authorization string,
-	// @FromPath
+	// @FromPath("message_id")
 	messageId string,
 	// @FromBody
 	request EditRequest,
@@ -53,24 +53,24 @@ func (controller *MessagesController) PatchMessage(
 	return controller.wire.Message(view), err
 }
 
-// @DeleteRoute("/{messageId}")
+// @DeleteRoute("/{message_id}")
 // @ResponseStatus(204)
 func (controller *MessagesController) DeleteMessage(
 	// @FromHeader("authorization")
 	authorization string,
-	// @FromPath
+	// @FromPath("message_id")
 	messageId string,
 ) error {
 	caller, refused := controller.callers.ChatCaller(authorization)
 	return controller.deleteMessage(caller, messageId, refused)
 }
 
-// @PutRoute("/{messageId}/reactions/{reaction}")
+// @PutRoute("/{message_id}/reactions/{reaction}")
 // @ResponseStatus(204)
 func (controller *MessagesController) PutReaction(
 	// @FromHeader("authorization")
 	authorization string,
-	// @FromPath
+	// @FromPath("message_id")
 	messageId string,
 	// @FromPath
 	reaction string,
@@ -79,12 +79,12 @@ func (controller *MessagesController) PutReaction(
 	return controller.addReaction(caller, messageId, reaction, refused)
 }
 
-// @DeleteRoute("/{messageId}/reactions/{reaction}")
+// @DeleteRoute("/{message_id}/reactions/{reaction}")
 // @ResponseStatus(204)
 func (controller *MessagesController) DeleteReaction(
 	// @FromHeader("authorization")
 	authorization string,
-	// @FromPath
+	// @FromPath("message_id")
 	messageId string,
 	// @FromPath
 	reaction string,
@@ -93,11 +93,11 @@ func (controller *MessagesController) DeleteReaction(
 	return controller.removeReaction(caller, messageId, reaction, refused)
 }
 
-// @GetRoute("/{messageId}/original")
+// @GetRoute("/{message_id}/original")
 func (controller *MessagesController) GetOriginal(
 	// @FromHeader("authorization")
 	authorization string,
-	// @FromPath
+	// @FromPath("message_id")
 	messageId string,
 ) (Download, error) {
 	caller, refused := controller.callers.ChatCaller(authorization)

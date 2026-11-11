@@ -9,17 +9,16 @@ import (
 	"mesail.dev/packages/core"
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
+	"mesail.dev/packages/storage"
 )
 
 // @TestSetup
 type StorageTestSetup struct {
 	Domain    string
 	Pusher    *outbox.RecordingPusher
-	Documents *DocumentsService
-	Names     *CollectionNamesService
-	Registry  *OutboxCollectionsService
+	Names     storage.CollectionNames
+	Storage   *StorageService
 	Relay     *OutboxRelayService
-	Tenant    *TenantCollectionsService
 	Settings  *SettingsService
 	Operators oidc.SigningRealm
 	Home      oidc.SigningRealm
@@ -30,12 +29,10 @@ func (StorageTestSetup) Configure(execution *BehaviorExecution) (*BehaviorConfig
 }
 
 func (StorageTestSetup) World() *StorageTestSetup {
-	world := &StorageTestSetup{Pusher: outbox.NewRecordingPusher(), Settings: &SettingsService{}, Names: &CollectionNamesService{}}
+	world := &StorageTestSetup{Pusher: outbox.NewRecordingPusher(), Settings: &SettingsService{}}
 	world.Domain = "m3-" + world.RandomText() + ".test"
-	world.Documents = &DocumentsService{dataSource: DataSource{}}
-	world.Registry = &OutboxCollectionsService{documents: world.Documents, names: world.Names}
-	world.Relay = &OutboxRelayService{store: &OutboxStoreService{documents: world.Documents, registry: world.Registry}, settings: world.Settings, pusher: world.Pusher}
-	world.Tenant = &TenantCollectionsService{documents: world.Documents, registry: world.Registry, relay: world.Relay}
+	world.Storage = &StorageService{dataSource: DataSource{}, settings: world.Settings, pusher: world.Pusher}
+	world.Relay = &OutboxRelayService{storage: world.Storage, failures: &FailureService{}}
 	world.Operators, world.Home = world.SignedRealms()
 	return world
 }
@@ -71,46 +68,56 @@ func (world *StorageTestSetup) Bearer(realm oidc.SigningRealm) string {
 	return "Bearer " + token
 }
 
-func (world *StorageTestSetup) Conversations() *ConversationStoreService {
-	return &ConversationStoreService{tenant: world.Tenant, names: world.Names}
+func (world *StorageTestSetup) Stores() core.Stores {
+	return world.Storage.Storage().Stores()
 }
 
-func (world *StorageTestSetup) Participants() *ParticipantStoreService {
-	return &ParticipantStoreService{tenant: world.Tenant, names: world.Names}
+func (world *StorageTestSetup) Conversations() core.ConversationStore {
+	return world.Stores().Conversations
 }
 
-func (world *StorageTestSetup) Messages() *MessageStoreService {
-	return &MessageStoreService{tenant: world.Tenant, names: world.Names}
+func (world *StorageTestSetup) Participants() core.ParticipantStore {
+	return world.Stores().Participants
 }
 
-func (world *StorageTestSetup) Reactions() *ReactionStoreService {
-	return &ReactionStoreService{tenant: world.Tenant, names: world.Names}
+func (world *StorageTestSetup) Messages() core.MessageStore {
+	return world.Stores().Messages
 }
 
-func (world *StorageTestSetup) ThreadKeys() *ThreadKeyStoreService {
-	return &ThreadKeyStoreService{tenant: world.Tenant, names: world.Names}
+func (world *StorageTestSetup) Reactions() core.ReactionStore {
+	return world.Stores().Reactions
 }
 
-func (world *StorageTestSetup) Mentions() *MentionStoreService {
-	return &MentionStoreService{tenant: world.Tenant, names: world.Names}
+func (world *StorageTestSetup) ThreadKeys() core.ThreadKeyStore {
+	return world.Stores().ThreadKeys
 }
 
-func (world *StorageTestSetup) Members() *MemberStoreService {
-	return &MemberStoreService{tenant: world.Tenant, names: world.Names}
+func (world *StorageTestSetup) Mentions() core.MentionStore {
+	return world.Stores().Mentions
 }
 
-func (world *StorageTestSetup) AttachmentUses() *AttachmentUseStoreService {
-	return &AttachmentUseStoreService{tenant: world.Tenant, names: world.Names}
+func (world *StorageTestSetup) Members() core.MemberStore {
+	return world.Stores().Members
 }
 
-func (world *StorageTestSetup) Seen() *SeenEventsService {
-	return &SeenEventsService{tenant: world.Tenant, names: world.Names}
+func (world *StorageTestSetup) AttachmentUses() core.AttachmentUseStore {
+	return world.Stores().AttachmentUses
+}
+
+func (world *StorageTestSetup) Seen() storage.SeenEvents {
+	return world.Storage.Storage().Seen()
+}
+
+func (world *StorageTestSetup) Registry() storage.Registry {
+	return world.Storage.Storage().Registry()
+}
+
+func (world *StorageTestSetup) OutboxStore() storage.OutboxStore {
+	return world.Storage.Storage().Outbox().Store
 }
 
 func (world *StorageTestSetup) Core() *CoreService {
-	chat := &ChatStoresService{conversations: world.Conversations(), participants: world.Participants(), messages: world.Messages(), reactions: world.Reactions()}
-	lookup := &LookupStoresService{threadKeys: world.ThreadKeys(), mentions: world.Mentions(), members: world.Members(), attachmentUses: world.AttachmentUses()}
-	return &CoreService{chatStores: chat, lookupStores: lookup, settings: world.Settings}
+	return &CoreService{storage: world.Storage, settings: world.Settings}
 }
 
 func (world *StorageTestSetup) Staged(fields core.OutboxFields, eventType string, payload any) core.OutboxFields {
@@ -149,16 +156,18 @@ func (world *StorageTestSetup) Must(err error) {
 }
 
 func (world *StorageTestSetup) IsNotFound(err error) bool {
-	var failure *core.NotFound
-	return errors.As(err, &failure)
+	var failure *NotFound
+	var storeFailure *core.NotFound
+	return errors.As(err, &failure) || errors.As(err, &storeFailure)
 }
 
 func (world *StorageTestSetup) IsForbidden(err error) bool {
-	var failure *core.Forbidden
+	var failure *Forbidden
 	return errors.As(err, &failure)
 }
 
 func (world *StorageTestSetup) IsUnavailable(err error) bool {
-	var failure *core.Unavailable
-	return errors.As(err, &failure)
+	var failure *Unavailable
+	var storeFailure *core.Unavailable
+	return errors.As(err, &failure) || errors.As(err, &storeFailure)
 }

@@ -31,7 +31,7 @@ func (service *RequestService) limit(raw string) (int, error) {
 	case raw == "":
 		return 0, nil
 	case failure != nil, limit < 1, limit > service.largestLimit():
-		return 0, &core.InvalidRequest{Field: service.limitName(), Message: "limit must be a whole number from 1 to 100"}
+		return 0, &InvalidRequest{Field: service.limitName(), Message: "limit must be a whole number from 1 to 100"}
 	}
 	return limit, nil
 }

@@ -14,11 +14,11 @@ type MessageSourceController struct {
 	wire *WireService
 }
 
-// @GetRoute("/{messageId}/source")
+// @GetRoute("/{message_id}/source")
 func (controller *MessageSourceController) GetSource(
 	// @FromHeader("authorization")
 	authorization string,
-	// @FromPath
+	// @FromPath("message_id")
 	messageId string,
 ) (MessageSource, error) {
 	caller, refused := controller.callers.ServiceCaller(authorization)

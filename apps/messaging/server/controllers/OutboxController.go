@@ -1,5 +1,4 @@
 import (
-	"mesail.dev/packages/core"
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
 )
@@ -51,7 +50,7 @@ func (controller *OutboxController) operatorOnly(fromOperatorRealm bool) error {
 	if fromOperatorRealm {
 		return nil
 	}
-	return &core.Forbidden{Message: "the outbox is managed from the operator realm only"}
+	return &Forbidden{Message: "the outbox is managed from the operator realm only"}
 }
 
 func (controller *OutboxController) relayUnless(refused error) (outbox.Report, error) {

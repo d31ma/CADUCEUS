@@ -163,17 +163,25 @@ outbound delivery queue, retries, email summaries, cleanup):
    after its own write, so most events leave within the same request; the
    schedule only sweeps what is left.
 
-**Service tokens** (slice I1 builds this in `kit/oidc`): services sign in
-to the realm `mesail-operators` with the confidential client
-`mesail-service` (client credentials grant; secret
-`YON_SERVICE_CLIENT_SECRET` in the app's `.env`; the Keycloak host in
-`outgoing.hosts`). The token carries the realm role `mesail-service`, which
-`RoleMap` maps to `Service`. A warm handler process caches the token until
-30 seconds before it expires. `kit/outbox`'s `TokenSource` is the port; I1's
-client-credentials source is the real one, `StaticToken` stays for tests.
-A `Service` caller's `Caller.DomainId` is `mesail-operators`, never a mail
-domain: a route called by a service takes the target domain from the
-envelope or the request body, and only `Service` callers may do that.
+**Service tokens** (slice I1 builds them in `kit/oidc`, documented in
+`docs/mesail/SERVICE-TOKENS.md`; decided with I1 on 2026-11-10):
+- A service asks the realm of the domain the call is about: client
+  credentials with the confidential client `mesail-service` of that realm
+  (one shared secret, `YON_SERVICE_CLIENT_SECRET`, set in every realm like
+  `mesail-identity`'s). So on the receiving side `Caller.DomainId` IS the
+  target domain, and SLICES rule 10 holds unchanged: a receiver refuses a
+  `Service` token whose `DomainId` differs from the domain in the path, the
+  body or the event envelope (`404`, as for any other domain).
+- Calls that are about the whole install, or about a domain that may not be
+  hosted (the SMTP edge asking whether a domain is hosted, operator jobs),
+  use the realm `mesail-operators`, which also has a `mesail-service`
+  client. Only routes documented as install-wide accept such a token.
+- The helper: `oidc.ServiceTokens{}.Configured().Authorization(realm)`
+  returns `"Bearer ..."`; tokens are cached per realm in the process's
+  temporary folder (file mode 0600) until 10 seconds before they expire;
+  the token endpoint comes from the app's `oidc.keycloak` setting; the
+  Keycloak host is in `outgoing.hosts`. `kit/outbox`'s `TokenSource` is the
+  port; `StaticToken` stays for tests.
 
 ## 5. Tests other slices use
 

@@ -72,8 +72,9 @@ wave run at the same time.
     root on EFS: `/mnt/data/<service>/<domain>/`, one function per
     (service, domain) (ADR 0004 section 4).
 12. **Scheduled work.** A `@Schedule` worker gets no injected providers in
-    TACHYON 26.46.02, so it only triggers: it fetches a service token
-    (`kit/oidc`, slice I1) and POSTs to its own `@Allow(Service)` route
+    TACHYON 26.46.02, so it only triggers: it fetches a service token for
+    the domain it works on (`kit/oidc`, slice I1; EVENTS.md section 4) and
+    POSTs to its own `@Allow(Service)` route
     (`/outbox/relay` or `/jobs/<job>`), where the work runs with injected
     services. In Lambda form an EventBridge schedule calls the same route
     (P1). Details: `docs/mesail/EVENTS.md` section 4.

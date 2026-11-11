@@ -7,10 +7,10 @@
 
   <div class="page-scroll min-h-0 flex-1 overflow-y-auto py-6" id="admin-content">
     <div class="@container/page mx-auto grid w-full max-w-3xl grid-cols-[minmax(0,1fr)] gap-6 pb-10">
-      <div class="email-note flex items-start gap-3 px-4 py-3">
+      <div class="note note--email flex items-start gap-3 px-4 py-3">
         <w-icon name="mail" class="mt-0.5" aria-hidden="true"></w-icon>
         <div class="grid min-w-0 gap-1">
-          <strong class="note-title">A channel can have an email address.</strong>
+          <p class="strong">A channel can have an email address.</p>
           <p>People outside {channelList.domain} can then email the channel. The address ends with @{channelList.domain} and must not belong to a person or another channel.</p>
         </div>
       </div>
@@ -64,9 +64,9 @@
                     </logic>
                   </div>
                 </td>
-                <td data-label="Email address" class="px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1">
+                <td data-label="Email address" class="address-cell px-4 py-3 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1">
                   <logic :if="row.hasAddress">
-                    <div class="flex min-w-0 flex-wrap items-center gap-1"><span class="email-how inline-flex items-center gap-1"><w-icon name="mail" class="icon-sm" aria-hidden="true"></w-icon>Email</span><span class="address break-all">{row.emailAddress}</span></div>
+                    <div class="flex min-w-0 flex-wrap items-center gap-1"><span class="tag" data-color="email"><w-icon name="mail" aria-hidden="true"></w-icon>Email</span><span class="address min-w-0">{row.emailAddress}</span></div>
                   </logic>
                   <logic else><span class="subtle">None</span></logic>
                 </td>
@@ -141,7 +141,7 @@
                 </logic>
               </logic>
             </logic>
-            <div class="email-note flex items-start gap-2 px-3 py-2">
+            <div class="note note--email flex items-start gap-2 px-3 py-2">
               <w-icon name="mail" class="icon-sm mt-0.5" aria-hidden="true"></w-icon>
               <p id="channel-address-text">{channelAddress.mailText}</p>
             </div>

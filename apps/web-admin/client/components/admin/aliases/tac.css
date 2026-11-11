@@ -33,6 +33,7 @@
   color: var(--w-text);
   font: inherit;
   font-size: var(--w-font-base);
+  line-height: 1.43;
   appearance: none;
   cursor: pointer;
 }
@@ -66,25 +67,52 @@
 
 .aliases-error {
   font-size: var(--ms-text-meta);
+  line-height: 1.33;
   color: var(--w-error);
 }
 
-.aliases-done {
-  border-radius: var(--w-radius-md);
-  background: var(--w-success-container);
-  color: var(--w-on-success-container);
-  overflow-wrap: anywhere;
+.note {
+  border-radius: var(--ms-radius-card);
+  background: color-mix(in srgb, var(--note-tone-base) 16%, transparent);
+  color: var(--w-text);
+}
+
+.note > w-icon,
+.note .strong {
+  color: var(--note-tone);
+}
+
+.note--info {
+  --note-tone-base: var(--w-primary);
+  --note-tone: var(--ms-tone-info);
+}
+
+.note--ok {
+  --note-tone-base: var(--w-success);
+  --note-tone: var(--ms-tone-success);
+}
+
+.note--warn {
+  --note-tone-base: var(--w-warning);
+  --note-tone: var(--ms-tone-warning);
+}
+
+.note--email {
+  --note-tone-base: var(--ms-email);
+  --note-tone: var(--ms-tone-email);
 }
 
 .aliases-table {
   border-collapse: collapse;
   border-top: 1px solid var(--w-divider);
   font-size: var(--w-font-base);
+  line-height: 1.43;
 }
 
 .aliases-table th {
   border-bottom: 1px solid var(--w-divider);
   font-size: var(--ms-text-meta);
+  line-height: 1.33;
   font-weight: var(--w-font-weight-semibold);
   text-align: left;
   white-space: nowrap;
@@ -103,8 +131,10 @@
 .aliases-address {
   font-family: var(--w-font-family-mono);
   font-size: var(--ms-text-meta);
+  line-height: 1.33;
   font-weight: var(--w-font-weight-semibold);
-  word-break: break-all;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 @container aliases (width < 42rem) {
@@ -125,6 +155,7 @@
     flex: none;
     width: 7rem;
     font-size: var(--ms-text-meta);
+    line-height: 1.33;
     font-weight: var(--w-font-weight-semibold);
     color: var(--w-text-subtle);
   }
@@ -274,6 +305,9 @@ h1 w-icon,
   }
   .py-3 {
     padding-block: calc(var(--spacing, 0.25rem) * 3);
+  }
+  .break-words {
+    overflow-wrap: break-word;
   }
   @container aliases (width < 42rem) {
     .\@max-2xl\/aliases\:sr-only {

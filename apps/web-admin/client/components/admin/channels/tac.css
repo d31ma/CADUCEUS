@@ -19,6 +19,7 @@
 .page-topic {
   border-left: 1px solid var(--w-divider);
   font-size: var(--ms-text-meta);
+  line-height: 1.33;
   color: var(--w-text-subtle);
 }
 
@@ -28,19 +29,45 @@
   padding-bottom: max(var(--w-space-6), env(safe-area-inset-bottom));
 }
 
-.email-note {
-  border-radius: var(--w-radius-xl);
-  background: var(--ms-email-bg);
-  color: var(--ms-on-email-bg);
+.note {
+  border-radius: var(--ms-radius-card);
+  background: color-mix(in srgb, var(--note-tone-base) 16%, transparent);
+  color: var(--w-text);
 }
 
-.note-title {
+.note > w-icon,
+.note .strong {
+  color: var(--note-tone);
+}
+
+.note--info {
+  --note-tone-base: var(--w-primary);
+  --note-tone: var(--ms-tone-info);
+}
+
+.note--ok {
+  --note-tone-base: var(--w-success);
+  --note-tone: var(--ms-tone-success);
+}
+
+.note--warn {
+  --note-tone-base: var(--w-warning);
+  --note-tone: var(--ms-tone-warning);
+}
+
+.note--email {
+  --note-tone-base: var(--ms-email);
+  --note-tone: var(--ms-tone-email);
+}
+
+.strong {
   font-weight: var(--w-font-weight-semibold);
 }
 
 .meta,
 .card-foot {
   font-size: var(--ms-text-meta);
+  line-height: 1.33;
   color: var(--w-text-subtle);
 }
 
@@ -66,6 +93,7 @@
 .channel-table {
   border-collapse: collapse;
   font-size: var(--w-font-base);
+  line-height: 1.43;
 }
 
 .channel-table th {
@@ -73,6 +101,7 @@
   text-align: left;
   white-space: nowrap;
   font-size: var(--ms-text-meta);
+  line-height: 1.33;
   font-weight: var(--w-font-weight-semibold);
   color: var(--w-text-subtle);
 }
@@ -102,23 +131,22 @@
 
 .channel-topic {
   font-size: var(--ms-text-meta);
+  line-height: 1.33;
   color: var(--w-text-subtle);
-}
-
-.email-how {
-  height: 1.375rem;
-  padding: 0 0.5rem 0 0.375rem;
-  border-radius: var(--w-radius-pill);
-  background: var(--ms-email-bg);
-  color: var(--ms-on-email-bg);
-  font-size: var(--w-font-xs);
-  font-weight: var(--w-font-weight-bold);
-  white-space: nowrap;
 }
 
 .address {
   font-family: var(--w-font-family-mono);
   font-size: var(--w-font-xs);
+  line-height: 1.33;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+@container page (width >= 42rem) {
+  .address-cell {
+    min-width: 12rem;
+  }
 }
 
 .address-field input {
@@ -127,6 +155,7 @@
 
 .ok-text {
   font-size: var(--ms-text-meta);
+  line-height: 1.33;
   color: var(--w-on-success-container);
 }
 
@@ -160,6 +189,7 @@
     width: 7rem;
     padding-top: 0.125rem;
     font-size: var(--ms-text-meta);
+    line-height: 1.33;
     font-weight: var(--w-font-weight-semibold);
     color: var(--w-text-subtle);
   }
@@ -191,31 +221,37 @@
 .tag {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--w-space-1);
   min-height: 1.5rem;
-  padding: 0 0.5rem;
+  padding: 0 var(--w-space-2);
   border: 1px solid transparent;
   border-radius: var(--w-radius-pill);
   background: var(--w-surface-container-high);
   color: var(--w-text-subtle);
   font-size: var(--w-font-xs);
-  font-weight: var(--w-font-weight-semibold);
+  font-weight: var(--w-font-weight-medium);
+  line-height: 1.33;
   white-space: nowrap;
 }
 
 .tag[data-color="success"] {
-  background: var(--w-success-container);
-  color: var(--w-on-success-container);
+  background: color-mix(in srgb, var(--w-success) 16%, transparent);
+  color: var(--ms-tone-success);
 }
 
 .tag[data-color="warning"] {
-  background: var(--w-warning-container);
-  color: var(--w-on-warning-container);
+  background: color-mix(in srgb, var(--w-warning) 16%, transparent);
+  color: var(--ms-tone-warning);
 }
 
 .tag[data-color="error"] {
-  background: var(--w-error-container);
-  color: var(--w-on-error-container);
+  background: color-mix(in srgb, var(--w-error) 16%, transparent);
+  color: var(--ms-tone-error);
+}
+
+.tag[data-color="email"] {
+  background: color-mix(in srgb, var(--ms-email) 16%, transparent);
+  color: var(--ms-tone-email);
 }
 
 .tag[data-variant="outlined"] {
@@ -452,9 +488,6 @@ h1 w-icon,
   }
   .text-right {
     text-align: right;
-  }
-  .break-all {
-    word-break: break-all;
   }
   .whitespace-nowrap {
     white-space: nowrap;

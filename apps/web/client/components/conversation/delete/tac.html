@@ -1,0 +1,15 @@
+<logic :if="conversation.deletingId != ''">
+  <w-dialog open max-width="28rem" on:close="conversation.cancelDelete()">
+    <h2 slot="title" class="dialog-title">Delete this message?</h2>
+    <div class="delete-body flex flex-col gap-4">
+      <logic :if="conversation.deleteWarning != ''">
+        <p class="delete-warning flex items-start gap-2 rounded-md p-3"><w-icon class="shrink-0" name="alert" size="small" aria-hidden="true"></w-icon><span class="min-w-0">{conversation.deleteWarning}</span></p>
+      </logic>
+      <p class="delete-text">Everyone in this conversation will see that a message was deleted. You cannot undo this.</p>
+      <div class="delete-actions flex flex-wrap justify-end gap-2">
+        <w-btn variant="text" on:click="conversation.cancelDelete()">Cancel</w-btn>
+        <w-btn variant="flat" color="danger" prepend-icon="trash" on:click="conversation.confirmDelete()">Delete</w-btn>
+      </div>
+    </div>
+  </w-dialog>
+</logic>

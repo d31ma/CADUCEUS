@@ -1,0 +1,228 @@
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--w-space-2);
+  min-width: 0;
+  padding-block-end: env(safe-area-inset-bottom);
+}
+
+.live-notice:empty {
+  display: none;
+}
+
+.notice-banner {
+  display: block;
+  border-radius: var(--w-radius-md);
+  --w-banner-bg: var(--w-surface-container);
+  --w-banner-fg: var(--w-text);
+  font-size: var(--ms-text-meta);
+}
+
+.notice-text {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.nav-loading,
+.nav-problem,
+.nav-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--w-space-3);
+  padding-inline: var(--w-space-2);
+}
+
+.empty-title {
+  margin: 0;
+  font-size: var(--w-font-md);
+  font-weight: var(--w-font-weight-bold);
+  text-align: center;
+}
+
+.empty-text {
+  margin: 0;
+  color: var(--w-text-subtle);
+  font-size: var(--ms-text-meta);
+  text-align: center;
+}
+
+.nav-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.section-head {
+  margin: 0;
+  font-size: var(--ms-text-meta);
+  font-weight: var(--w-font-weight-semibold);
+  color: var(--w-text-subtle);
+}
+
+.section-toggle > .w-btn,
+.nav-row > .w-btn {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--ms-row-height);
+  padding-inline: var(--w-space-2);
+  border-radius: var(--w-radius-md);
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: start;
+  white-space: normal;
+}
+
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: var(--w-space-1);
+}
+
+.section-chevron {
+  transition: transform var(--ms-duration) var(--ms-ease);
+}
+
+.section-toggle[data-closed] .section-chevron {
+  transform: rotate(-90deg);
+}
+
+.section-toggle[data-closed]:dir(rtl) .section-chevron {
+  transform: rotate(90deg);
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-row {
+  display: block;
+  font-size: var(--ms-text-nav);
+  font-weight: var(--w-font-weight-normal);
+  color: var(--w-text-subtle);
+}
+
+.nav-row > .w-btn:hover {
+  background: var(--w-hover);
+  color: var(--w-text);
+}
+
+.nav-row[data-unread] {
+  color: var(--w-text);
+  font-weight: var(--w-font-weight-bold);
+}
+
+.nav-row[data-current] > .w-btn {
+  background: var(--w-selected);
+  color: var(--w-selected-text);
+}
+
+.row-inner {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--w-space-2);
+  min-width: 0;
+}
+
+.row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-icon,
+.row-mail {
+  flex: none;
+  color: var(--w-text-subtle);
+}
+
+.row-avatar {
+  flex: none;
+}
+
+.outside-avatar .w-avatar {
+  background: var(--ms-email-bg);
+  color: var(--ms-on-email-bg);
+}
+
+.row-meta {
+  flex: none;
+  font-size: var(--ms-text-meta);
+  font-weight: var(--w-font-weight-normal);
+  color: var(--w-text-subtle);
+}
+
+.email-chip {
+  flex: none;
+  padding: 0 var(--w-space-2);
+  border-radius: var(--ms-radius-chip);
+  background: var(--ms-email-bg);
+  color: var(--ms-on-email-bg);
+  font-size: var(--w-font-xs);
+  font-weight: var(--w-font-weight-semibold);
+  line-height: 1.5;
+}
+
+.email-row .row-icon {
+  color: var(--ms-email);
+}
+
+.row-badge {
+  flex: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.section-toggle > .w-btn:focus-visible,
+.nav-row > .w-btn:focus-visible {
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
+  outline-offset: calc(var(--w-focus-ring-offset) * -1);
+}
+
+@media (pointer: coarse) {
+  .section-toggle > .w-btn,
+  .nav-row > .w-btn {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+@media (max-width: 959px) {
+  .section-toggle > .w-btn,
+  .nav-row > .w-btn {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-chevron {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .nav-row[data-current] > .w-btn {
+    outline: 2px solid CanvasText;
+  }
+}

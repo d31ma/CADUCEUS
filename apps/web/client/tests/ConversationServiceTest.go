@@ -127,8 +127,7 @@ func (test *ConversationServiceTest) TestStartEditCopiesTheBody() {
 func (test *ConversationServiceTest) TestSaveEditReplacesTheMessage() {
 	service := test.general()
 	service.StartEdit("m-2")
-	service.SetEditBody("Lunch at one?")
-	service.SaveEdit()
+	service.SaveEdit("Lunch at one?")
 	Assert.Equals("", service.EditingId)
 	Assert.Equals("", service.Problem)
 	Assert.IsTrue(service.Messages[1].Edited)
@@ -138,8 +137,7 @@ func (test *ConversationServiceTest) TestSaveEditReplacesTheMessage() {
 func (test *ConversationServiceTest) TestSaveEditWithAnEmptyBodyKeepsEditing() {
 	service := test.general()
 	service.StartEdit("m-2")
-	service.SetEditBody("   ")
-	service.SaveEdit()
+	service.SaveEdit("   ")
 	Assert.Equals("m-2", service.EditingId)
 	Assert.Equals("", service.Problem)
 }
@@ -147,7 +145,7 @@ func (test *ConversationServiceTest) TestSaveEditWithAnEmptyBodyKeepsEditing() {
 func (test *ConversationServiceTest) TestSaveEditFailureKeepsEditing() {
 	service := test.general()
 	service.StartEdit("m-3")
-	service.SaveEdit()
+	service.SaveEdit("Thanks again")
 	Assert.Equals("m-3", service.EditingId)
 	Assert.Equals("We could not save your change. Try again.", service.Problem)
 }

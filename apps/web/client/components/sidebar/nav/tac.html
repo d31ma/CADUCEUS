@@ -1,3 +1,138 @@
-<section class="sidebar-nav" aria-label="Conversations">
-  <h2>Conversations</h2>
-</section>
+<nav class="sidebar-nav flex flex-col gap-2 pb-[env(safe-area-inset-bottom)]" aria-label="Conversations">
+  <div class="live-notice" role="status" aria-live="polite" :data-realtime="realtime.state">
+    <logic :if="sidebar.state == 'ready' && realtime.state == 'connecting'">
+      <w-banner class="notice-banner" density="compact">
+        <w-icon slot="prepend" name="refresh" size="small" aria-hidden="true"></w-icon>
+        <span class="notice-text">Connecting to live updates…</span>
+      </w-banner>
+    </logic>
+    <logic :if="sidebar.state == 'ready' && realtime.state == 'offline'">
+      <w-banner class="notice-banner" density="compact">
+        <w-icon slot="prepend" name="wifi-off" size="small" aria-hidden="true"></w-icon>
+        <span class="notice-text">Live updates are off. New messages appear when you reload.</span>
+      </w-banner>
+    </logic>
+  </div>
+
+  <switch :value="sidebar.state">
+    <case :when="'loading'">
+      <div class="nav-loading flex flex-col gap-2 px-2">
+        <p class="sr-only" role="status">Loading conversations…</p>
+        <div aria-hidden="true">
+          <w-skeleton-loader type="list-item-avatar@6" loading-text="Loading conversations"></w-skeleton-loader>
+        </div>
+      </div>
+    </case>
+
+    <case :when="'error'">
+      <div class="nav-problem flex flex-col items-start gap-3 px-2">
+        <w-alert type="error">We could not load your conversations. Check your connection and try again.</w-alert>
+        <w-btn variant="outlined" class="min-h-11" on:click="sidebar.retry()">Retry</w-btn>
+      </div>
+    </case>
+
+    <case :when="'empty'">
+      <div class="nav-empty px-2">
+        <w-empty-state>
+          <w-icon slot="media" name="chat" size="large" aria-hidden="true"></w-icon>
+          <h2 slot="title" class="empty-title">No conversations yet</h2>
+          <p slot="text" class="empty-text">When someone writes to you, the conversation shows up here.</p>
+        </w-empty-state>
+      </div>
+    </case>
+
+    <case :when="'ready'">
+      <section class="nav-section flex flex-col" aria-labelledby="nav-channels-title">
+        <h2 class="section-head" id="nav-channels-title">
+          <w-btn variant="text" block class="section-toggle min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-closed="sidebar.channelsClosed" :aria-expanded="shell.flag(!sidebar.channelsClosed)" on:click="sidebar.toggleSection('channels')">
+            <span class="section-label flex items-center gap-1"><w-icon class="section-chevron" name="chevron-down" size="small" aria-hidden="true"></w-icon>Channels</span>
+          </w-btn>
+        </h2>
+        <logic :if="!sidebar.channelsClosed">
+          <ul class="nav-list flex flex-col gap-px">
+            <loop :for="row of sidebar.channels">
+              <li class="min-w-0">
+                <w-btn variant="text" block class="nav-row min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-unread="row.unread" :data-current="row.current" :aria-current="row.current ? 'page' : false" on:click="sidebar.open(row.conversationId)">
+                  <span class="row-inner flex min-w-0 flex-1 items-center gap-2">
+                    <logic :if="row.private">
+                      <w-icon class="row-icon" name="lock" size="small" aria-hidden="true"></w-icon>
+                    </logic>
+                    <logic :if="!row.private">
+                      <w-icon class="row-icon" name="hash" size="small" aria-hidden="true"></w-icon>
+                    </logic>
+                    <span class="row-title min-w-0 flex-1 truncate">{row.title}</span>
+                    <logic :if="row.private"><span class="sr-only">, private channel</span></logic>
+                    <logic :if="row.archived"><span class="row-meta">archived</span></logic>
+                    <logic :if="row.hasEmailAddress">
+                      <w-icon class="row-mail" name="mail" size="small" aria-hidden="true"></w-icon>
+                      <span class="sr-only">, has an email address</span>
+                    </logic>
+                    <logic :if="row.mentionCount > 0">
+                      <w-badge class="row-badge" inline color="danger" :content="row.mentionCount" aria-hidden="true"></w-badge>
+                    </logic>
+                    <logic :if="row.countLabel"><span class="sr-only">, {row.countLabel}</span></logic>
+                  </span>
+                </w-btn>
+              </li>
+            </loop>
+          </ul>
+        </logic>
+      </section>
+
+      <section class="nav-section flex flex-col" aria-labelledby="nav-direct-title">
+        <h2 class="section-head" id="nav-direct-title">
+          <w-btn variant="text" block class="section-toggle min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-closed="sidebar.directsClosed" :aria-expanded="shell.flag(!sidebar.directsClosed)" on:click="sidebar.toggleSection('direct')">
+            <span class="section-label flex items-center gap-1"><w-icon class="section-chevron" name="chevron-down" size="small" aria-hidden="true"></w-icon>Direct messages</span>
+          </w-btn>
+        </h2>
+        <logic :if="!sidebar.directsClosed">
+          <ul class="nav-list flex flex-col gap-px">
+            <loop :for="row of sidebar.directs">
+              <li class="min-w-0">
+                <w-btn variant="text" block class="nav-row min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-unread="row.unread" :data-current="row.current" :aria-current="row.current ? 'page' : false" on:click="sidebar.open(row.conversationId)">
+                  <span class="row-inner flex min-w-0 flex-1 items-center gap-2">
+                    <w-avatar class="row-avatar" size="x-small" :initials="row.initials" aria-hidden="true"></w-avatar>
+                    <span class="row-title min-w-0 flex-1 truncate">{row.title}</span>
+                    <logic :if="row.archived"><span class="row-meta">archived</span></logic>
+                    <logic :if="row.mentionCount > 0">
+                      <w-badge class="row-badge" inline color="danger" :content="row.mentionCount" aria-hidden="true"></w-badge>
+                    </logic>
+                    <logic :if="row.countLabel"><span class="sr-only">, {row.countLabel}</span></logic>
+                  </span>
+                </w-btn>
+              </li>
+            </loop>
+          </ul>
+        </logic>
+      </section>
+
+      <section class="nav-section flex flex-col" aria-labelledby="nav-email-title">
+        <h2 class="section-head" id="nav-email-title">
+          <w-btn variant="text" block class="section-toggle min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-closed="sidebar.emailsClosed" :aria-expanded="shell.flag(!sidebar.emailsClosed)" on:click="sidebar.toggleSection('email')">
+            <span class="section-label flex items-center gap-1"><w-icon class="section-chevron" name="chevron-down" size="small" aria-hidden="true"></w-icon>Email</span>
+          </w-btn>
+        </h2>
+        <logic :if="!sidebar.emailsClosed">
+          <ul class="nav-list flex flex-col gap-px">
+            <loop :for="row of sidebar.emails">
+              <li class="min-w-0">
+                <w-btn variant="text" block class="nav-row email-row min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-unread="row.unread" :data-current="row.current" :aria-current="row.current ? 'page' : false" on:click="sidebar.open(row.conversationId)">
+                  <span class="row-inner flex min-w-0 flex-1 items-center gap-2">
+                    <w-avatar class="row-avatar outside-avatar" size="x-small" :initials="row.initials" aria-hidden="true"></w-avatar>
+                    <span class="row-title min-w-0 flex-1 truncate">{row.title}</span>
+                    <span class="email-chip shrink-0">Email</span>
+                    <logic :if="row.archived"><span class="row-meta">archived</span></logic>
+                    <logic :if="row.mentionCount > 0">
+                      <w-badge class="row-badge" inline color="danger" :content="row.mentionCount" aria-hidden="true"></w-badge>
+                    </logic>
+                    <logic :if="row.countLabel"><span class="sr-only">, {row.countLabel}</span></logic>
+                  </span>
+                </w-btn>
+              </li>
+            </loop>
+          </ul>
+        </logic>
+      </section>
+    </case>
+  </switch>
+</nav>

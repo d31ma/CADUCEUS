@@ -1,0 +1,17 @@
+<logic :if="conversation.pickerForId != ''">
+  <w-dialog open max-width="24rem" on:close="conversation.closePicker()">
+    <h2 slot="title" class="dialog-title">Add a reaction</h2>
+    <div class="picker-body flex flex-col gap-4">
+      <ul class="picker-grid grid grid-cols-4 gap-2 sm:grid-cols-6" aria-label="Reactions">
+        <loop :for="choice of conversation.reactionChoices">
+          <li class="picker-cell flex min-w-0">
+            <w-btn variant="tonal" class="picker-choice w-full" :aria-label="choice.label" on:click="conversation.toggleReaction(conversation.pickerForId, choice.emoji)"><span class="picker-glyph" aria-hidden="true">{choice.glyph}</span></w-btn>
+          </li>
+        </loop>
+      </ul>
+      <div class="picker-actions flex justify-end">
+        <w-btn variant="text" on:click="conversation.closePicker()">Close</w-btn>
+      </div>
+    </div>
+  </w-dialog>
+</logic>

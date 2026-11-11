@@ -96,11 +96,8 @@ func (service *ConversationService) StartEdit(messageId string) {
 	service.rebuild()
 }
 
-func (service *ConversationService) SetEditBody(text string) {
+func (service *ConversationService) SaveEdit(text string) {
 	service.EditBody = text
-}
-
-func (service *ConversationService) SaveEdit() {
 	service.saveWhenFilled()
 }
 

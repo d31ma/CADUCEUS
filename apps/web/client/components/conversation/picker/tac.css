@@ -1,0 +1,67 @@
+.picker-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--w-space-4);
+  min-width: 0;
+}
+
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--w-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.picker-cell {
+  display: flex;
+  min-width: 0;
+}
+
+.picker-choice {
+  display: flex;
+  width: 100%;
+}
+
+.picker-choice > .w-btn {
+  width: 100%;
+  min-width: var(--ms-touch-min);
+  min-height: var(--ms-touch-min);
+  padding: 0;
+}
+
+.picker-glyph {
+  font-size: var(--w-font-xl);
+  line-height: 1;
+}
+
+.picker-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (min-width: 600px) {
+  .picker-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (pointer: coarse) {
+  .picker-actions .w-btn {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+@media (max-width: 959px) {
+  .picker-actions .w-btn {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: var(--w-font-lg);
+  font-weight: var(--w-font-weight-bold);
+  line-height: 1.3;
+}

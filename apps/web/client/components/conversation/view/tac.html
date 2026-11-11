@@ -1,3 +1,262 @@
-<section class="conversation-view" aria-label="Messages">
-  <h2>Messages</h2>
-</section>
+<logic :if="conversation.state != 'idle'">
+  <div class="conversation-view flex min-h-full min-w-0 flex-col pb-[env(safe-area-inset-bottom)]">
+    <logic :if="conversation.state == 'ready' && conversation.problem != ''">
+      <div class="view-problem sticky top-0 z-10 px-3 pt-2 sm:px-5">
+        <w-alert type="error" :text="conversation.problem"></w-alert>
+      </div>
+    </logic>
+
+    <div id="timeline" class="timeline flex min-w-0 flex-1 flex-col justify-end gap-1 px-2 py-3 sm:px-4" role="log" aria-live="polite" aria-relevant="additions" tabindex="0" :aria-label="'Messages in ' + conversation.title">
+      <switch :value="conversation.state">
+        <case :when="'loading'">
+          <div class="timeline-loading flex flex-col gap-3 px-2">
+            <p class="sr-only" role="status">Loading messages…</p>
+            <div aria-hidden="true">
+              <w-skeleton-loader type="list-item-avatar-two-line@5" loading-text="Loading messages"></w-skeleton-loader>
+            </div>
+          </div>
+        </case>
+
+        <case :when="'error'">
+          <div class="timeline-problem flex flex-col items-start gap-3 px-2">
+            <w-alert type="error" :text="conversation.problem"></w-alert>
+            <w-btn variant="outlined" on:click="conversation.retry()">Retry</w-btn>
+          </div>
+        </case>
+
+        <case :when="'empty'">
+          <div class="timeline-empty flex flex-1 items-center justify-center px-2">
+            <w-empty-state>
+              <w-icon slot="media" name="chat" size="large" aria-hidden="true"></w-icon>
+              <h2 slot="title" class="empty-title">No messages yet</h2>
+              <p slot="text" class="empty-text">Say hello.</p>
+            </w-empty-state>
+          </div>
+        </case>
+
+        <case :when="'ready'">
+          <logic :if="conversation.hasOlder">
+            <div class="load-older flex justify-center py-2">
+              <w-btn variant="text" :loading="conversation.loadingOlder" on:click="conversation.loadOlder()">Load older messages</w-btn>
+            </div>
+          </logic>
+
+          <loop :for="message of conversation.messages">
+            <logic :if="message.startsDay">
+              <div class="day-divider flex items-center gap-3 py-2"><span class="day-label">{message.dayLabel}</span></div>
+            </logic>
+            <logic :if="message.newDivider">
+              <div class="new-divider flex items-center gap-3 py-1" role="separator" aria-label="New messages"><span class="new-label" aria-hidden="true">New</span></div>
+            </logic>
+
+            <article class="message relative grid min-w-0 grid-cols-[var(--ms-avatar-md)_minmax(0,1fr)] gap-x-3 rounded-md px-2 py-1" :aria-label="message.authorName + ', ' + message.time" :data-grouped="message.grouped" :data-mention="message.mentionsMe" :data-deleted="message.deleted" :data-editing="message.editing">
+              <div class="message-gutter flex justify-center">
+                <logic :if="!message.grouped">
+                  <w-avatar class="message-avatar" size="small" :initials="message.authorInitials" :data-outside="message.outside" aria-hidden="true"></w-avatar>
+                </logic>
+                <logic :if="message.grouped">
+                  <span class="gutter-time" aria-hidden="true">{message.time}</span>
+                </logic>
+              </div>
+
+              <div class="message-main flex min-w-0 max-w-(--ms-content-max) flex-col gap-1">
+                <logic :if="!message.grouped">
+                  <div class="message-meta flex min-w-0 flex-wrap items-baseline gap-x-2">
+                    <span class="author">{message.authorName}</span>
+                    <logic :if="message.outside"><span class="author-address">{message.authorAddress}</span></logic>
+                    <logic :if="message.email.isEmail"><span class="email-chip">Email</span></logic>
+                    <time class="message-time" :datetime="message.dateTime">{message.time}</time>
+                  </div>
+                </logic>
+                <logic :if="message.mentionsMe"><span class="sr-only">Mentions you.</span></logic>
+
+                <logic :if="message.deleted">
+                  <p class="deleted-note">This message was deleted.</p>
+                </logic>
+
+                <logic :if="message.editing">
+                  <div class="edit-box grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] gap-2">
+                    <form method="dialog" class="contents" aria-label="Edit message" on:submit="conversation.saveEdit($event.target.elements.body.value)">
+                      <w-textarea class="edit-field col-span-full" label="Edit message" name="body" rows="3" auto-grow :value="conversation.editBody"></w-textarea>
+                      <w-btn variant="flat" class="edit-save col-start-2 row-start-2">Save</w-btn>
+                    </form>
+                    <w-btn variant="text" class="edit-cancel col-start-3 row-start-2" on:click="conversation.cancelEdit()">Cancel</w-btn>
+                  </div>
+                </logic>
+
+                <logic :if="!message.deleted && !message.editing">
+                  <div class="message-content flex min-w-0 flex-col gap-2" :data-email="message.email.isEmail">
+                    <logic :if="message.email.isEmail">
+                      <div class="email-head flex flex-col gap-2">
+                        <div class="email-top flex flex-wrap items-start justify-between gap-2">
+                          <p class="email-subject min-w-0">{message.email.subject}</p>
+                          <logic :if="message.email.senderCheck != ''">
+                            <details class="sender-check" :data-check="message.email.senderCheck">
+                              <summary class="sender-summary flex items-center gap-1">
+                                <logic :if="message.email.senderCheck == 'verified'"><w-icon name="shield-check" size="small" aria-hidden="true"></w-icon></logic>
+                                <logic :if="message.email.senderCheck == 'handoff'"><w-icon name="shield" size="small" aria-hidden="true"></w-icon></logic>
+                                <logic :if="message.email.senderCheck == 'warning'"><w-icon name="alert" size="small" aria-hidden="true"></w-icon></logic>
+                                <span>{message.email.senderCheckLabel}</span>
+                              </summary>
+                              <p class="sender-info">{message.email.senderCheckInfo}</p>
+                            </details>
+                          </logic>
+                        </div>
+                        <dl class="email-fields grid gap-x-3 gap-y-1">
+                          <div class="email-field contents"><dt>From</dt><dd>{message.email.from}</dd></div>
+                          <div class="email-field contents"><dt>To</dt><dd>{message.email.to}</dd></div>
+                          <logic :if="message.email.cc != ''">
+                            <div class="email-field contents"><dt>Cc</dt><dd>{message.email.cc}</dd></div>
+                          </logic>
+                        </dl>
+                      </div>
+                    </logic>
+
+                    <div class="message-body flex min-w-0 flex-col gap-2">
+                      <loop :for="block of message.blocks">
+                        <switch :value="block.kind">
+                          <case :when="'paragraph'"><p class="block-paragraph"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></p></case>
+                          <case :when="'heading'">
+                            <switch :value="block.level">
+                              <case :when="1"><h3 class="block-heading"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></h3></case>
+                              <case :when="2"><h4 class="block-heading"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></h4></case>
+                              <case :when="3"><h5 class="block-heading"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></h5></case>
+                              <case default><h6 class="block-heading"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></h6></case>
+                            </switch>
+                          </case>
+                          <case :when="'quote'"><blockquote class="block-quote"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></blockquote></case>
+                          <case :when="'listItem'"><p class="block-list-item" :data-level="block.level" :data-ordered="block.ordered"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></p></case>
+                          <case :when="'code'"><pre class="block-code"><code><loop :for="span of block.spans">{span.text}</loop></code></pre></case>
+                          <case :when="'divider'"><hr class="block-divider" /></case>
+                          <case :when="'row'">
+                            <div class="block-row grid auto-cols-fr grid-flow-col gap-2"><loop :for="cell of block.cells"><span class="block-cell min-w-0">{cell}</span></loop></div>
+                          </case>
+                          <case :when="'image'">
+                            <logic :if="block.image">
+                              <logic :if="block.image.remoteUrl && !message.email.imagesAllowed">
+                                <p class="image-card flex items-center gap-2"><w-icon name="eye-off" size="small" aria-hidden="true"></w-icon><span>Image hidden: {block.image.alt}</span></p>
+                              </logic>
+                              <logic :if="block.image.remoteUrl && message.email.imagesAllowed">
+                                <p class="image-card flex items-center gap-2"><w-icon name="image" size="small" aria-hidden="true"></w-icon><a class="image-link" :href="block.image.remoteUrl" target="_blank" rel="noopener noreferrer">Open image: {block.image.alt}</a></p>
+                              </logic>
+                              <logic :if="!block.image.remoteUrl">
+                                <p class="image-card flex items-center gap-2"><w-icon name="image" size="small" aria-hidden="true"></w-icon><span>Image: {block.image.alt}</span></p>
+                              </logic>
+                            </logic>
+                          </case>
+                        </switch>
+                      </loop>
+                      <logic :if="message.edited"><span class="edited">(edited)</span></logic>
+                    </div>
+
+                    <logic :if="message.email.isEmail && message.email.blockedImages > 0 && !message.email.imagesAllowed">
+                      <div class="images-notice flex flex-wrap items-center gap-2">
+                        <w-icon name="eye-off" size="small" aria-hidden="true"></w-icon>
+                        <span class="min-w-0">{message.email.blockedLabel}</span>
+                        <logic :if="message.email.senderCheck != 'warning'">
+                          <w-btn variant="text" size="small" on:click="conversation.allowImages(message.email.from)">Show images from this sender</w-btn>
+                        </logic>
+                      </div>
+                    </logic>
+
+                    <logic :if="message.email.hasQuoted">
+                      <div class="quoted flex flex-col items-start gap-2">
+                        <w-btn variant="text" size="small" prepend-icon="chevron-down" :data-open="message.showQuoted" :aria-expanded="shell.flag(message.showQuoted)" :text="message.showQuoted ? 'Hide quoted text' : 'Show quoted text'" on:click="conversation.toggleQuoted(message.messageId)"></w-btn>
+                        <logic :if="message.showQuoted">
+                          <blockquote class="quoted-text flex min-w-0 flex-col gap-2">
+                            <loop :for="block of message.quotedBlocks">
+                              <p class="quoted-block" :data-kind="block.kind"><loop :for="span of block.spans"><logic :if="span.href"><a class="span-link" :href="span.href" target="_blank" rel="noopener noreferrer" :data-bold="span.bold" :data-italic="span.italic" :data-strike="span.strike">{span.text}</a></logic><logic :if="!span.href && span.code"><code class="span-code">{span.text}</code></logic><logic :if="!span.href && !span.code && span.bold"><strong :data-italic="span.italic" :data-strike="span.strike">{span.text}</strong></logic><logic :if="!span.href && !span.code && !span.bold && span.italic"><em :data-strike="span.strike">{span.text}</em></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && span.strike"><s>{span.text}</s></logic><logic :if="!span.href && !span.code && !span.bold && !span.italic && !span.strike">{span.text}</logic></loop></p>
+                            </loop>
+                          </blockquote>
+                        </logic>
+                      </div>
+                    </logic>
+
+                    <logic :if="message.truncated">
+                      <div class="truncated-note flex flex-wrap items-center gap-2">
+                        <span class="min-w-0">Only the first part of this email is shown.</span>
+                        <w-btn variant="text" size="small" on:click="conversation.fetchOriginal(message.messageId)">Get the original</w-btn>
+                        <logic :if="conversation.originalForId == message.messageId && conversation.originalUrl != ''">
+                          <a class="original-link" :href="conversation.originalUrl" download>Download the original email</a>
+                        </logic>
+                      </div>
+                    </logic>
+
+                    <logic :if="message.attachments && message.attachments.length > 0">
+                      <ul class="attachments flex flex-wrap gap-2" aria-label="Attachments">
+                        <loop :for="file of message.attachments">
+                          <li class="file-card flex min-w-0 items-center gap-2">
+                            <w-icon class="file-icon" name="file" aria-hidden="true"></w-icon>
+                            <span class="file-text flex min-w-0 flex-col"><span class="file-name">{file.fileName}</span><span class="file-size">{file.typeLabel} · {file.sizeLabel}</span></span>
+                          </li>
+                        </loop>
+                      </ul>
+                    </logic>
+                  </div>
+
+                  <logic :if="message.internalOnly">
+                    <p class="scope-note flex items-center gap-1"><w-icon name="lock" size="small" aria-hidden="true"></w-icon><span class="min-w-0">Only people in {sessionAccount.currentDomain} see this.</span></p>
+                  </logic>
+
+                  <logic :if="message.reactions && message.reactions.length > 0">
+                    <ul class="reactions flex flex-wrap items-center gap-1" aria-label="Reactions">
+                      <loop :for="reaction of message.reactions">
+                        <li>
+                          <w-btn variant="tonal" size="small" class="reaction" :data-mine="reaction.mine" :aria-pressed="shell.flag(reaction.mine)" :aria-label="reaction.label" on:click="conversation.toggleReaction(message.messageId, reaction.emoji)"><span aria-hidden="true">{reaction.glyph} {reaction.count}</span></w-btn>
+                        </li>
+                      </loop>
+                      <li>
+                        <w-icon-btn icon="smile" size="small" variant="text" aria-label="Add reaction" on:click="conversation.openPicker(message.messageId)"></w-icon-btn>
+                      </li>
+                    </ul>
+                  </logic>
+
+                  <logic :if="message.replyLabel != ''">
+                    <div class="thread-link flex">
+                      <w-btn variant="text" size="small" prepend-icon="thread" :text="message.replyLabel" on:click="conversation.openThread(message.messageId)"></w-btn>
+                    </div>
+                  </logic>
+
+                  <logic :if="message.showDelivery">
+                    <div class="delivery flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                      <span class="delivery-status flex items-center gap-1" :data-tone="message.deliverySummary.tone"><logic :if="message.deliverySummary.tone == 'ok'"><w-icon name="check" size="small" aria-hidden="true"></w-icon></logic><logic :if="message.deliverySummary.tone == 'info'"><w-icon name="clock" size="small" aria-hidden="true"></w-icon></logic><logic :if="message.deliverySummary.tone == 'warning'"><w-icon name="refresh" size="small" aria-hidden="true"></w-icon></logic><logic :if="message.deliverySummary.tone == 'danger'"><w-icon name="alert" size="small" aria-hidden="true"></w-icon></logic><span>{message.deliverySummary.statusLabel}</span></span>
+                      <details class="delivery-details min-w-0">
+                        <summary class="delivery-summary">Delivery details</summary>
+                        <ul class="delivery-list flex flex-col gap-2" aria-label="Delivery to each person">
+                          <loop :for="line of message.deliveries">
+                            <li class="delivery-line grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+                              <span class="delivery-recipient min-w-0">{line.recipient}</span>
+                              <span class="channel-chip" :data-channel="line.channel">{line.channelLabel}</span>
+                              <span class="delivery-status flex items-center gap-1" :data-tone="line.tone"><logic :if="line.tone == 'ok'"><w-icon name="check" size="small" aria-hidden="true"></w-icon></logic><logic :if="line.tone == 'info'"><w-icon name="clock" size="small" aria-hidden="true"></w-icon></logic><logic :if="line.tone == 'warning'"><w-icon name="refresh" size="small" aria-hidden="true"></w-icon></logic><logic :if="line.tone == 'danger'"><w-icon name="alert" size="small" aria-hidden="true"></w-icon></logic><span>{line.statusLabel}</span></span>
+                              <logic :if="line.detail != ''"><span class="delivery-detail col-span-full min-w-0">{line.detail}</span></logic>
+                            </li>
+                          </loop>
+                        </ul>
+                      </details>
+                    </div>
+                  </logic>
+                </logic>
+              </div>
+
+              <logic :if="!message.deleted && !message.editing">
+                <div class="message-actions flex items-center gap-1" role="group" :aria-label="message.actionsLabel">
+                  <w-icon-btn icon="smile" size="small" variant="text" aria-label="Add reaction" on:click="conversation.openPicker(message.messageId)"></w-icon-btn>
+                  <w-icon-btn icon="thread" size="small" variant="text" aria-label="Reply in thread" on:click="conversation.openThread(message.messageId)"></w-icon-btn>
+                  <logic :if="message.canEdit">
+                    <w-icon-btn icon="edit" size="small" variant="text" aria-label="Edit message" on:click="conversation.startEdit(message.messageId)"></w-icon-btn>
+                  </logic>
+                  <logic :if="message.canDelete">
+                    <w-icon-btn icon="trash" size="small" variant="text" aria-label="Delete message" on:click="conversation.askDelete(message.messageId)"></w-icon-btn>
+                  </logic>
+                </div>
+              </logic>
+            </article>
+          </loop>
+        </case>
+      </switch>
+    </div>
+
+    <conversation-delete />
+    <conversation-picker />
+  </div>
+</logic>

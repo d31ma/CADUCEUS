@@ -1,6 +1,6 @@
 <main class="channels @container/main flex h-full min-h-0 min-w-0 flex-col" aria-labelledby="page-title">
   <header class="page-header flex items-center gap-2">
-    <w-icon-btn class="-ml-2 sm:hidden" icon="arrow-left" aria-label="Back to menu" on:click="adminShell.showMenu()"></w-icon-btn>
+    <w-icon-btn class="-ml-2 min-[768px]:hidden" icon="arrow-left" aria-label="Back to menu" on:click="adminShell.showMenu()"></w-icon-btn>
     <h1 id="page-title" class="page-title flex min-w-0 items-center gap-1"><w-icon name="hash" class="icon-sm" aria-hidden="true"></w-icon><span class="truncate">Channels</span></h1>
     <p class="page-topic hidden @2xl/main:block min-w-0 flex-1 truncate pl-3">{channelList.domain} &middot; visibility and email addresses</p>
   </header>

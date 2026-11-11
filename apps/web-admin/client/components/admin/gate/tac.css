@@ -42,6 +42,16 @@
   }
 }
 
+.w-text-field-control {
+  min-height: 1.5rem;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .w-text-field-control {
+    min-height: var(--ms-touch-min);
+  }
+}
+
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer utilities {

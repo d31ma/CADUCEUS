@@ -2,13 +2,13 @@
   <a class="skip-link" href="#admin-content">Skip to admin content</a>
   <p class="sr-only" role="status" aria-live="polite">{adminShell.announcement}</p>
   <logic :if="adminSession.step == 'ready'">
-    <div class="admin-app group/app grid h-dvh overflow-hidden grid-cols-1 sm:grid-cols-[17rem_minmax(0,1fr)] md:grid-cols-[4.25rem_17rem_minmax(0,1fr)] xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)] 2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" :data-pane="adminShell.pane">
-      <nav class="admin-rail hidden md:flex flex-col items-center gap-2 py-3" aria-label="Domains">
+    <div class="admin-app group/app grid h-dvh overflow-hidden grid-cols-1 min-[768px]:grid-cols-[4.25rem_17rem_minmax(0,1fr)] xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)] 2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" :data-pane="adminShell.pane">
+      <nav class="admin-rail hidden min-[768px]:flex flex-col items-center gap-2 py-3" aria-label="Domains">
         <ul class="flex flex-col gap-2">
           <li><span class="domain-tile grid place-items-center" aria-current="true"><span aria-hidden="true">{adminSession.initials}</span><span class="sr-only">{adminSession.domainId}, current domain</span></span></li>
         </ul>
       </nav>
-      <aside class="admin-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0" :aria-label="adminShell.sidebarLabel(adminSession.domainId)">
+      <aside class="admin-sidebar hidden group-data-[pane=list]/app:flex min-[768px]:flex flex-col min-h-0" :aria-label="adminShell.sidebarLabel(adminSession.domainId)">
         <header class="sidebar-head flex items-center gap-2 px-4">
           <p class="domain-name min-w-0 flex-1 truncate">{adminSession.domainId}</p>
         </header>
@@ -30,7 +30,7 @@
           <w-icon-btn icon="logout" aria-label="Sign out" title="Sign out" on:click="adminSession.signOut()"></w-icon-btn>
         </footer>
       </aside>
-      <div class="admin-pane hidden group-data-[pane=main]/app:block sm:block min-w-0 min-h-0 overflow-y-auto">
+      <div class="admin-pane hidden group-data-[pane=main]/app:block min-[768px]:block min-w-0 min-h-0 overflow-y-auto">
         <switch :value="adminShell.view">
           <case :when="'domains'"><admin-domains hydrate="load" /></case>
           <case :when="'domain'"><admin-domain hydrate="load" /></case>

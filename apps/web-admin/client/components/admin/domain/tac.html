@@ -1,6 +1,6 @@
 <main class="flex h-full min-h-0 min-w-0 flex-col @container/main" aria-labelledby="page-title">
   <header class="page-head flex min-h-13 items-center gap-2">
-    <w-icon-btn icon="arrow-left" aria-label="Back to menu" class="-ml-2 sm:hidden" on:click="adminShell.showMenu()"></w-icon-btn>
+    <w-icon-btn icon="arrow-left" aria-label="Back to menu" class="-ml-2 min-[768px]:hidden" on:click="adminShell.showMenu()"></w-icon-btn>
     <h1 id="page-title" class="page-title flex min-w-0 items-center gap-1"><w-icon name="globe" aria-hidden="true"></w-icon><span class="truncate">{domainDns.name}</span></h1>
     <logic :if="domainDns.step == 'ready'">
       <span class="inline-flex flex-none"><span class="tag" :data-color="domainDns.stateColor" :data-variant="domainDns.stateVariant" aria-hidden="true"><w-icon :name="domainDns.stateIcon"></w-icon>{domainDns.stateText}</span><span class="sr-only">{domainDns.stateText}</span></span>

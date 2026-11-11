@@ -128,6 +128,16 @@
   }
 }
 
+.w-text-field-control {
+  min-height: 1.5rem;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .w-text-field-control {
+    min-height: var(--ms-touch-min);
+  }
+}
+
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer utilities {
@@ -263,8 +273,8 @@
   .pl-3 {
     padding-left: calc(var(--spacing, 0.25rem) * 3);
   }
-  @media (width >= 600px) {
-    .sm\:hidden {
+  @media (width >= 768px) {
+    .min-\[768px\]\:hidden {
       display: none;
     }
   }

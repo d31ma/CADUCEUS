@@ -1,6 +1,6 @@
 <main class="@container/main flex h-full min-h-0 min-w-0 flex-col" aria-labelledby="page-title">
   <header class="members-header flex min-h-13 items-center gap-2">
-    <w-icon-btn icon="arrow-left" aria-label="Back to menu" class="members-touch -ml-2 sm:hidden" on:click="adminShell.showMenu()"></w-icon-btn>
+    <w-icon-btn icon="arrow-left" aria-label="Back to menu" class="members-touch -ml-2 min-[768px]:hidden" on:click="adminShell.showMenu()"></w-icon-btn>
     <h1 id="page-title" class="members-title flex min-w-0 items-center gap-1"><w-icon name="users" aria-hidden="true"></w-icon><span class="truncate">Members</span></h1>
     <p class="members-topic hidden min-w-0 flex-1 truncate pl-3 @2xl/main:block">{memberList.domainId} &middot; people who signed in to this domain</p>
   </header>

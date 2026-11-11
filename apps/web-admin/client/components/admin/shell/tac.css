@@ -240,22 +240,14 @@
   :is(:where(.group\/app)[data-pane="main"] .group-data-\[pane\=main\]\/app\:block) {
     display: block;
   }
-  @media (width >= 600px) {
-    .sm\:block {
+  @media (width >= 768px) {
+    .min-\[768px\]\:block {
       display: block;
     }
-    .sm\:flex {
+    .min-\[768px\]\:flex {
       display: flex;
     }
-    .sm\:grid-cols-\[17rem_minmax\(0\,1fr\)\] {
-      grid-template-columns: 17rem minmax(0,1fr);
-    }
-  }
-  @media (width >= 960px) {
-    .md\:flex {
-      display: flex;
-    }
-    .md\:grid-cols-\[4\.25rem_17rem_minmax\(0\,1fr\)\] {
+    .min-\[768px\]\:grid-cols-\[4\.25rem_17rem_minmax\(0\,1fr\)\] {
       grid-template-columns: 4.25rem 17rem minmax(0,1fr);
     }
   }

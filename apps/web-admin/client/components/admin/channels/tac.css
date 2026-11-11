@@ -256,6 +256,16 @@ w-chip w-icon {
   background: transparent;
 }
 
+.w-text-field-control {
+  min-height: 1.5rem;
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .w-text-field-control {
+    min-height: var(--ms-touch-min);
+  }
+}
+
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer utilities {
@@ -425,14 +435,16 @@ w-chip w-icon {
     .sm\:row-start-2 {
       grid-row-start: 2;
     }
-    .sm\:hidden {
-      display: none;
-    }
     .sm\:grid-cols-\[1fr_auto_auto\] {
       grid-template-columns: 1fr auto auto;
     }
     .sm\:justify-self-start {
       justify-self: flex-start;
+    }
+  }
+  @media (width >= 768px) {
+    .min-\[768px\]\:hidden {
+      display: none;
     }
   }
   @container page (width < 42rem) {

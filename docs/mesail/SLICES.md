@@ -845,7 +845,9 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
   "Needs your attention" (section 4), sent by the tab that holds the T11
   `Locks` lock, the T5 reconnect policy that never gives up, conflict
   handling (AC-OF-8), offline recipient chips (AC-OF-5), access-lost
-  handling (AC-OF-9), the offline states from OU. The sync engine is a
+  handling (AC-OF-9), files attached offline (kept with `Blobs`, uploaded
+  before their send, AC-OF-4), the in-memory queue of a tab that is not
+  kept (AC-OF-19), the offline states from OU. The sync engine is a
   service with no view binding, so it can move to a T10 worker later.
 - **Depends on:** O1, O2 and O3.
 - **Done when:** S15 and S16 work on the dev stack with the network turned

@@ -142,7 +142,7 @@
 }
 
 .nav-item {
-  min-height: 2.25rem;
+  min-height: var(--ms-row-height);
   border: 0;
   border-radius: var(--w-radius-md);
   background: transparent;

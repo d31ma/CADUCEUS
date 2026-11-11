@@ -66,6 +66,11 @@ Breakpoints are DuVay's (`--w-bp-*`), set as the Tailwind breakpoints: `sm` 600 
 `lg` 1280 px, `xl` 1920 px, `2xl` 2560 px. Panes respond to their own width with container queries, so
 the same component works in the conversation, the thread pane and a phone screen.
 
+**The apps use one step at 768 px** (decided on 2026-11-11, "Keep 768 px"). Under 768 px `apps/web` and
+`apps/web-admin` show one pane at a time; from 768 px they show the rail, the sidebar and the conversation.
+The 1280, 1920 and 2560 px rows below apply as written. The 600 and 960 px rows describe the mockups only.
+TOKENS.md, section Breakpoints, has the table for the apps.
+
 | Width | Layout |
 | --- | --- |
 | under 600 px (phones) | One pane at a time: list, conversation or thread (`data-pane`). A back button in each header. Bottom navigation on the list and on tab screens: Home, Activity, Search, You. Dialogs become bottom sheets. |

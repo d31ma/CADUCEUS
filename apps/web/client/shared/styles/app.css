@@ -529,6 +529,11 @@ html[w-theme="high-contrast"] {
     margin: 0;
   }
 
+  button,
+  a {
+    --w-radius: var(--ms-radius-control);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

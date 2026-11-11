@@ -20,16 +20,23 @@ colour has a value for each. Density (`w-density`) and platform skin (`w-os`) ar
 
 ## Breakpoints
 
-| Tailwind | DuVay token | Width | Mesail layout |
-| --- | --- | --- | --- |
-| (base) | | under 600 px | phones: one pane, bottom navigation |
-| `sm` | `--w-bp-sm` | 600 px | list + conversation |
-| `md` | `--w-bp-md` | 960 px | + domain rail |
-| `lg` | `--w-bp-lg` | 1280 px | + docked thread or details pane |
-| `xl` | `--w-bp-xl` | 1920 px | wider panes |
-| `2xl` | `--w-bp-xxl` | 2560 px | wider panes, UI scaled to 112.5 % |
-| `short:` | | height under 520 px | landscape phones: 44 px headers, no hint lines |
-| `pointer-coarse:` | `--w-touch-min` | touch screens | 44 px targets |
+Decided on 2026-11-11 (the user's choice "Keep 768 px"): the apps have ONE layout step, at 768 px. There is
+no separate 600 px or 960 px layout. The table matches the code in `apps/web` and `apps/web-admin`.
+
+| Tailwind | Width | Mesail layout |
+| --- | --- | --- |
+| (base), `max-[768px]:` | under 768 px | phones and narrow windows: one pane at a time, bottom navigation, 44 px targets |
+| `min-[768px]:` | 768 px | domain rail + sidebar + conversation; a thread or details pane covers the conversation |
+| `lg` | 1280 px | the thread or details pane docks as a fourth column |
+| `xl` | 1920 px | wider panes: rail 4.5rem, sidebar 19rem, thread 28rem |
+| `2xl` | 2560 px | wider panes (sidebar 21rem, thread 34rem), UI scaled to 112.5 % |
+| `short:` | height under 520 px | landscape phones: 44 px headers, no hint lines |
+| `pointer-coarse:`, `touch:` | touch screens | 44 px targets |
+
+Inside a component, Tailwind's `sm` (600 px) still sets card padding (`--ms-card-pad`), and a few dense rows
+switch at 960 px (the one-line delivery status in a conversation). These change one component, not the page
+layout.
+The mockups in this folder still show DuVay's 600 and 960 px layout steps; the apps follow this table.
 
 Containers (for `@container` queries on panes and cards) use Tailwind's `@xs` 20rem to `@3xl` 64rem plus
 its larger defaults.
@@ -82,10 +89,10 @@ Mesail utilities: `safe-t`, `safe-b`, `safe-l`, `safe-r` (Tac title-bar insets, 
 | `--ms-bottom-nav-height` | 3.5rem (56 px) | phone bottom navigation (plus bottom safe area) |
 | `--ms-content-max` | 50rem | settings and admin pages |
 | `--ms-dialog-max` | 32rem | dialogs |
-| `--ms-row-height` | 2rem | sidebar rows with a pointer |
+| `--ms-row-height` | 2rem (32 px) | sidebar rows and admin nav rows with a pointer; 44 px on touch screens and under 768 px (decided 2026-11-11) |
 | `--ms-touch-min` | 2.75rem (44 px) | alias of DuVay `--w-touch-min`; every target on touch screens |
 
-Breakpoints: see the table above (DuVay's 600, 960, 1280, 1920 and 2560 px).
+Breakpoints: see the table above (768, 1280, 1920 and 2560 px).
 
 ### Control sizes (one scale, since 2026-11-11)
 Every control has one of three heights, so buttons, fields, menu rows and icon buttons line up.
@@ -95,12 +102,20 @@ Every control has one of three heights, so buttons, fields, menu rows and icon b
 | `--ms-control-md` | 2.5rem (40 px) | `h-control-md`, `min-h-control-md` | default: buttons, text fields (DuVay's field is 40 px), selects, menu items |
 | `--ms-control-lg` | 3rem (48 px) | `min-h-control-lg` | the main action of a card or dialog (Sign in, Save and continue) |
 | `--ms-touch-min` | 2.75rem (44 px) | `min-h-touch`, `size-touch` | floor for every target on touch screens and in windows under 768 px |
-| `--ms-icon-sm` / `-md` / `-lg` | 1 / 1.25 / 1.5rem | `size-icon-sm` ... | icons inside text and controls / standalone / empty states |
-| `--ms-radius-control` / `-dialog` | `--w-radius-lg` (8) / `--w-radius-xl` (12) | `rounded-lg` / `rounded-xl` | controls / cards and dialogs |
+| `--ms-icon-sm` / `-md` / `-lg` / `-xl` | 1 / 1.25 / 1.5 / 2rem | `size-icon-sm` ... | icons inside text and controls / standalone and navigation / large / empty-state tiles |
+| `--ms-radius-control` / `-dialog` | `--w-radius-lg` (8) / `--w-radius-xl` (12) | `rounded-lg` / `rounded-xl` | controls: buttons of every size, fields, selects / cards and dialogs |
+| `--ms-nav-pill-width` | 3.5rem (56 px) | | the selected pill behind a bottom-navigation icon |
 | `--ms-auth-card-max` | 26rem (416 px) | `max-w-auth` | sign-in and password cards |
 | `--ms-dialog-max`, `--ms-content-max` | 32rem, 50rem | `max-w-dialog`, `max-w-content` | dialogs, settings and admin pages |
 | `--ms-card-pad` / `-narrow` | 1.5rem / 1rem | `sm:p-6` / `p-4` | card padding from 600 px / under it |
 | `--ms-space-field`, `--ms-space-label`, `--ms-space-section` | 1rem, 0.375rem, 1.5rem | `gap-4`, `gap-1.5`, `gap-6` | between fields, label to field, between sections |
+
+**Buttons and fields share one corner** (decided 2026-11-11, the user's choice "Both 8 px"): every DuVay button,
+small ones included, has 8 px corners like the fields. DuVay draws `.w-btn` corners from `--w-radius` (4 px) and
+renders every button as a native `<button>` or `<a>`, so `shared/styles/app.css` sets
+`button, a { --w-radius: var(--ms-radius-control); }`. Other clickable DuVay controls drawn from those elements
+(menu items, alert close buttons) get 8 px too. Surfaces that use `--w-radius` (tooltips, snackbars, skeletons)
+keep 4 px. TY1403 allows only plain HTML elements in app.css, so the custom element `w-btn` cannot carry the rule.
 
 **Icon buttons are square at the control height of their row:** 40 px next to 40 px fields and buttons.
 A dense row (sidebar rows, the remove button on a chip, row actions in a list) uses `--ms-control-sm` (32 px)
@@ -132,7 +147,7 @@ the card width at 48 px, and secondary buttons sit at 40 px, so the main action 
 
 ### Avatars and tiles
 `--ms-avatar-xs` 20 px, `-sm` 24, `-md` 36 (messages), `-lg` 48, `-xl` 80 (profile);
-`--ms-domain-tile` 44 px. Avatars are rounded squares; the colour comes from a per-person hue
+`--ms-domain-tile` 44 px. Avatars are rounded squares (`--ms-avatar-radius`, = `--w-radius-lg`, 8 px); the colour comes from a per-person hue
 (`--h`), light and dark variants are computed in CSS.
 
 ### Delivery colours
@@ -176,7 +191,7 @@ cue. Screen readers get the state as text ("Bo Lee, active").
 | `--ms-text-meta` | `--w-font-sm` (12 px) |
 | `--ms-text-nav` | `--w-font-base` (14 px) |
 | `--ms-text-title` / `--ms-text-heading` | `--w-font-lg` (17) / `--w-font-xl` (20) |
-| `--ms-radius-chip` / `-card` / `-tile` | pill / 8 px / 12 px |
+| `--ms-radius-chip` / `-card` / `-tile` | pill / 12 px (`--w-radius-xl`) / 12 px |
 | `--ms-duration` / `--ms-duration-panel` | 120 ms / 200 ms, `--ms-ease` standard curve; all off with reduced motion |
 
 ## Checked contrast (WCAG 2.2 AA)

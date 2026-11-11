@@ -78,6 +78,7 @@ jobs:
       - name: Run app gates
         env:
           APP: ${{ matrix.app }}
+          MESAIL_FYLO_ROOT: ${{ runner.temp }}/fylo
         run: LOG_ROOT="$RUNNER_TEMP/logs" scripts/gates.sh --app "$APP" --apps-only
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure() && !env.ACT

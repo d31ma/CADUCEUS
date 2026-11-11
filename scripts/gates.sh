@@ -105,10 +105,88 @@ app_kind_has_client() {
   [ -d "$1/client" ]
 }
 
+atlas_mount_point() {
+  echo "$HOME/Developer/AtlasFylo/mesail"
+}
+
+worktree_slice() {
+  local name
+  name="$(basename "$1")"
+  case "$name" in
+    slice-*) echo "${name#slice-}" ;;
+    *) echo "gates: set MESAIL_SLICE or MESAIL_FYLO_ROOT; $name is not a slice-<id> worktree" >&2; return 1 ;;
+  esac
+}
+
+slice_id() {
+  local root="$1"
+  if [ -n "${MESAIL_SLICE:-}" ]; then echo "$MESAIL_SLICE"; return; fi
+  worktree_slice "$root"
+}
+
+fylo_root_base() {
+  local root="$1" slice
+  if [ -n "${MESAIL_FYLO_ROOT:-}" ]; then echo "$MESAIL_FYLO_ROOT"; return; fi
+  slice="$(slice_id "$root")" || return 1
+  echo "$(atlas_mount_point)/slice-$slice"
+}
+
+uses_fylo() {
+  grep -qx 'YON_DATASOURCE_DRIVER=fylo' "$1/.env.example" 2> /dev/null
+}
+
+datasource_folder() {
+  sed -n 's|^YON_DATASOURCE_URL=fylo://||p' "$1/.env" | tail -1
+}
+
+new_app_env() {
+  local root="$1" app="$2" base
+  base="$(fylo_root_base "$root")" || return 1
+  printf 'YON_DATASOURCE_DRIVER=fylo\nYON_DATASOURCE_URL=fylo://%s\n' "$base/$(basename "$app")" > "$app/.env"
+  echo "created $app/.env"
+}
+
+ensure_app_env() {
+  local root="$1" app="$2"
+  [ -f "$app/.env" ] && return 0
+  new_app_env "$root" "$app"
+}
+
+atlas_image_attached() {
+  local mount_point
+  mount_point="$(atlas_mount_point)"
+  mount | grep -q " on $mount_point " && return 0
+  echo "the FYLO test image is not attached at $mount_point; attach it:"
+  echo "diskutil image attach --mountOptions nobrowse --mountPoint $mount_point /Volumes/ATLAS/Mesail/mesail-fylo-test.sparsebundle"
+  return 1
+}
+
+folder_storage_ready() {
+  case "$1" in
+    "$(atlas_mount_point)"/*) atlas_image_attached ;;
+  esac
+}
+
+ensure_fylo_folder() {
+  local folder="$1"
+  [ -n "$folder" ] || { echo "no fylo:// YON_DATASOURCE_URL in .env"; return 0; }
+  folder_storage_ready "$folder" || return 1
+  mkdir -p "$folder" && echo "fylo root $folder"
+}
+
+prepare_fylo_root() {
+  local root="$1" app="$2"
+  ensure_app_env "$root" "$app" || return 1
+  ensure_fylo_folder "$(datasource_folder "$app")"
+}
+
 app_gates() {
   local ty="$1" app="$2" log="$3"
   local name status=0
   name="$(basename "$app")"
+  if uses_fylo "$app"; then
+    run_step "$name fylo root" "$log" prepare_fylo_root "$(repository_root)" "$app" || return 1
+  fi
   run_step "$name migrate check" "$log" "$ty" migrate check "$app" || status=1
   run_step "$name test" "$log" "$ty" test "$app" --coverage || status=1
   if app_kind_has_client "$app"; then

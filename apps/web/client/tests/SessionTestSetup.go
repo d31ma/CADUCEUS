@@ -83,7 +83,7 @@ func (setup SessionTestSetup) bodyOf(request *BehaviorHttpRequest) map[string]st
 }
 
 func (setup SessionTestSetup) changePassword(authorization string, body map[string]string) (BehaviorValue, error) {
-	if authorization != "Bearer access-1" || body["currentPassword"] != "right" || body["sessionKey"] != "key-1" || body["newPassword"] == "weak" {
+	if authorization != "Bearer access-1" || body["currentPassword"] != "right" || body["newPassword"] == "weak" {
 		return nil, errors.New("refused")
 	}
 	return setup.session("example.com", "access-new", "key-new"), nil

@@ -40,7 +40,6 @@ func (service *SessionTokenService) Renew(domainId string) error {
 
 func (service *SessionTokenService) ChangePassword(domainId string, change SessionPasswordChange) error {
 	accessToken, failure := service.AccessToken(domainId)
-	change.SessionKey = service.keys[domainId]
 	session, answerFailure := BehaviorsAnswer[Session](service.identity.ChangePassword("Bearer "+accessToken, change))
 	return service.keepUnlessFailed(session, errors.Join(failure, answerFailure))
 }

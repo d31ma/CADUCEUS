@@ -15,6 +15,10 @@ management API. It is the local stand-in for AWS API Gateway WebSocket APIs.
 | `POST /api/v1/realtime/gateway/disconnect` (to the backend) | `$disconnect` route |
 | `POST` and `DELETE /@connections/{connectionId}` (management port) | `@connections` management API (`PostToConnection`, `DeleteConnection`) |
 
+Every call to the backend uses a 30 s timeout. A `408`, `429`, `5xx` or
+network error is retried up to 3 times, after 0.25 s, 1 s and 2 s (SLICES
+rule 9). All three routes are safe to repeat.
+
 ## Public routes (`MESAIL_REALTIME_LISTEN`)
 
 - `GET /api/v1/realtime/socket`: WebSocket. The `Origin` header must be in

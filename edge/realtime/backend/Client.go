@@ -13,10 +13,15 @@ type Client struct {
 	baseUrl string
 	secret  string
 	http    *http.Client
+	retry   RetryPolicy
 }
 
 func NewClient(baseUrl string, secret string, timeout time.Duration) Client {
-	return Client{baseUrl: baseUrl, secret: secret, http: &http.Client{Timeout: timeout}}
+	return NewRetryingClient(baseUrl, secret, timeout, DefaultRetryPolicy())
+}
+
+func NewRetryingClient(baseUrl string, secret string, timeout time.Duration, retry RetryPolicy) Client {
+	return Client{baseUrl: baseUrl, secret: secret, http: &http.Client{Timeout: timeout}, retry: retry}
 }
 
 func (client Client) Connect(ctx context.Context, request ConnectRequest) error {
@@ -40,6 +45,21 @@ func (client Client) Disconnect(ctx context.Context, request DisconnectRequest) 
 }
 
 func (client Client) post(ctx context.Context, path string, payload any) ([]byte, error) {
+	body, err := client.once(ctx, path, payload)
+	for _, delay := range client.retry.Delays {
+		body, err = client.again(ctx, Attempt{Path: path, Payload: payload, Delay: delay}, body, err)
+	}
+	return body, err
+}
+
+func (client Client) again(ctx context.Context, attempt Attempt, body []byte, failure error) ([]byte, error) {
+	if !client.retry.Retryable(failure) || !client.retry.Wait(ctx, attempt.Delay) {
+		return body, failure
+	}
+	return client.once(ctx, attempt.Path, attempt.Payload)
+}
+
+func (client Client) once(ctx context.Context, path string, payload any) ([]byte, error) {
 	encoded, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err

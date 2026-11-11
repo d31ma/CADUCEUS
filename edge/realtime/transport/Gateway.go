@@ -16,7 +16,7 @@ type Gateway struct {
 
 func NewGateway(settings GatewaySettings, log connections.EventLog) Gateway {
 	hub := connections.NewHub()
-	client := backend.NewClient(settings.BackendUrl, settings.Secret, settings.BackendTimeout)
+	client := backend.NewRetryingClient(settings.BackendUrl, settings.Secret, settings.BackendTimeout, settings.BackendRetry)
 	relay := connections.NewRelay(hub, client, settings.Session, log)
 	public := http.NewServeMux()
 	socket := NewSocketHandler(relay, settings.Session)

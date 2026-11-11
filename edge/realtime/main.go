@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"mesail.dev/edge/realtime/backend"
 	"mesail.dev/edge/realtime/connections"
 	"mesail.dev/edge/realtime/startup"
 	"mesail.dev/edge/realtime/transport"
@@ -41,6 +42,7 @@ func (program Program) gatewaySettings(settings startup.Settings) transport.Gate
 	return transport.GatewaySettings{
 		BackendUrl:     settings.BackendUrl,
 		BackendTimeout: program.backendTimeout(),
+		BackendRetry:   backend.DefaultRetryPolicy(),
 		Secret:         settings.Secret,
 		Origins:        settings.Origins,
 		Session:        connections.DefaultSessionSettings(),

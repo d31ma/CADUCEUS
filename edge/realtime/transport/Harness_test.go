@@ -178,6 +178,7 @@ func newHarness(t *testing.T, change func(*connections.SessionSettings)) *Harnes
 	settings := transport.GatewaySettings{
 		BackendUrl:     fake.server.URL,
 		BackendTimeout: 5 * time.Second,
+		BackendRetry:   backend.RetryPolicy{Delays: []time.Duration{time.Millisecond, time.Millisecond, time.Millisecond}},
 		Secret:         testSecret,
 		Origins:        []string{allowedOrigin, "https://other.example"},
 		Session:        session,

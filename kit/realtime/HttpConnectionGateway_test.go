@@ -78,3 +78,10 @@ func TestPushReportsABadGatewayAddress(t *testing.T) {
 		t.Fatalf("got %v", err)
 	}
 }
+
+func TestAnEmptyConnectionIdIsGoneWithoutARequest(t *testing.T) {
+	gateway := HttpConnectionGateway{BaseUrl: "http://127.0.0.1:1", Secret: "s", Client: http.DefaultClient}
+	if err := gateway.Push("", Event{Type: "hello"}); !errors.As(err, &Gone{}) {
+		t.Fatalf("got %v", err)
+	}
+}

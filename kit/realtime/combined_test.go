@@ -100,3 +100,28 @@ func TestSweepClosesAnExpiredConnectionWithAWarning(t *testing.T) {
 		t.Fatalf("closed a connection that has not expired")
 	}
 }
+
+func TestFanOutSkipsARecordThatIsStillBeingWritten(t *testing.T) {
+	fixture := newGatewayFixture()
+	fixture.authenticate("c1", "ana-token")
+	collection := fixture.gateway.Connections.collection("example.com")
+	fixture.memory.Insert(collection, Connection{DomainId: "example.com"})
+	err := fixture.gateway.Typing.FanOut.ToDomain("example.com", Event{Type: "presence.changed", MemberId: "ben", State: "idle"})
+	if err != nil || len(fixture.pushes.eventsOfType("c1", "presence.changed")) == 0 {
+		t.Fatalf("got %v %+v", err, fixture.pushes.pushes)
+	}
+	if _, pushed := fixture.pushes.pushes[""]; pushed {
+		t.Fatalf("pushed to an empty connection id")
+	}
+}
+
+func TestExpiredLeavesOutARecordWithoutAnId(t *testing.T) {
+	memory := newMemoryStorage()
+	book := connectionTestBook(memory)
+	book.Add(testConnection("example.com", "ana", "c1"))
+	memory.Insert(book.collection("example.com"), Connection{DomainId: "example.com"})
+	expired, err := book.Expired("example.com", "2030-01-01T00:00:00Z", 25)
+	if err != nil || len(expired) != 1 || expired[0].ConnectionId != "c1" {
+		t.Fatalf("got %+v %v", expired, err)
+	}
+}

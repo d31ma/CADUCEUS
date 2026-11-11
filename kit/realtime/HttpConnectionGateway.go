@@ -29,15 +29,18 @@ func (gateway HttpConnectionGateway) Close(connectionId string, code int) error 
 }
 
 func (gateway HttpConnectionGateway) call(method string, address string, body io.Reader, connectionId string) error {
+	if connectionId == "" {
+		return Gone{}
+	}
 	request, err := http.NewRequest(method, address, body)
 	if err != nil {
-		return Unavailable{Operation: gateway.operation(method)}
+		return Unavailable{Operation: gateway.operation(method) + ": " + err.Error()}
 	}
 	request.Header.Set(gateway.secretHeader(), gateway.Secret)
 	request.Header.Set("Content-Type", "application/json")
 	response, err := gateway.Client.Do(request)
 	if err != nil {
-		return Unavailable{Operation: gateway.operation(method)}
+		return Unavailable{Operation: gateway.operation(method) + ": " + err.Error()}
 	}
 	defer response.Body.Close()
 	io.Copy(io.Discard, response.Body)
@@ -49,7 +52,7 @@ func (gateway HttpConnectionGateway) outcome(status int, method string, connecti
 	case status == http.StatusGone:
 		return Gone{ConnectionId: connectionId}
 	case status < http.StatusOK || status >= http.StatusMultipleChoices:
-		return Unavailable{Operation: gateway.operation(method)}
+		return Unavailable{Operation: gateway.operation(method) + ": status " + strconv.Itoa(status)}
 	}
 	return nil
 }

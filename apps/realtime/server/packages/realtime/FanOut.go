@@ -40,7 +40,7 @@ func (fanOut FanOut) ToConnection(connectionId string, event Event) error {
 
 func (fanOut FanOut) deliver(domainId string, found []Connection, event Event) error {
 	removals := 0
-	for _, connection := range found {
+	for _, connection := range fanOut.complete(found) {
 		removed, err := fanOut.settle(domainId, connection, fanOut.Gateway.Push(connection.ConnectionId, event), removals)
 		if err != nil {
 			return err
@@ -59,6 +59,12 @@ func (fanOut FanOut) settle(domainId string, connection Connection, pushed error
 		return 0, nil
 	}
 	return 0, pushed
+}
+
+func (FanOut) complete(found []Connection) []Connection {
+	return slices.DeleteFunc(found, func(connection Connection) bool {
+		return connection.ConnectionId == ""
+	})
 }
 
 func (FanOut) without(found []Connection, exceptMemberId string) []Connection {

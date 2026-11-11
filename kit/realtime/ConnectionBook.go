@@ -141,7 +141,7 @@ func (ConnectionBook) ofMembers(found []Connection, memberIds []string) []Connec
 
 func (book ConnectionBook) expiredBy(found []Connection, now time.Time) []Connection {
 	return slices.DeleteFunc(found, func(connection Connection) bool {
-		return book.moment(connection.ExpiresAt).After(now)
+		return connection.ConnectionId == "" || book.moment(connection.ExpiresAt).After(now)
 	})
 }
 

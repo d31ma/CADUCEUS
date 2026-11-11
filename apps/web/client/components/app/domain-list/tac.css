@@ -1,3 +1,94 @@
+.menu-item:focus-visible {
+  outline: var(--w-focus-ring-width) var(--w-focus-ring-style) var(--w-focus-ring-color);
+  outline-offset: var(--w-focus-ring-offset);
+}
+
+.menu-item {
+  min-height: 2.25rem;
+  border: 0;
+  border-radius: var(--w-radius-md);
+  background: transparent;
+  color: var(--w-text);
+  font: inherit;
+  font-size: var(--w-font-base);
+  text-align: start;
+  cursor: pointer;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--w-hover);
+  outline-offset: -2px;
+}
+
+.menu-item[aria-checked="true"] {
+  font-weight: var(--w-font-weight-semibold);
+}
+
+.menu-item-danger {
+  color: var(--w-error);
+}
+
+.menu-item w-icon {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+}
+
+.menu-check {
+  visibility: hidden;
+  color: var(--w-accent);
+}
+
+.menu-item[aria-checked="true"] .menu-check {
+  visibility: visible;
+}
+
+.menu-description {
+  font-size: var(--ms-text-meta);
+  font-weight: var(--w-font-weight-normal);
+  color: var(--w-text-subtle);
+  overflow-wrap: anywhere;
+}
+
+.menu-separator {
+  background: var(--w-divider);
+}
+
+.domain-mark {
+  border-radius: var(--w-radius-lg);
+  background: var(--ms-rail-bg);
+  color: var(--ms-on-rail);
+  font-size: var(--w-font-sm);
+  font-weight: var(--w-font-weight-bold);
+}
+
+.domain-sheet .menu-item {
+  min-height: var(--ms-touch-min);
+  font-size: var(--w-font-md);
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  .menu-item {
+    min-height: var(--ms-touch-min);
+  }
+}
+
+.domain-tag {
+  flex: none;
+  padding: 0 var(--w-space-1);
+  border: 1px solid var(--w-border);
+  border-radius: var(--w-radius-sm);
+  color: var(--w-text-subtle);
+  font-size: var(--ms-text-meta);
+  line-height: 1.4;
+}
+
+.domain-tag-new {
+  border-color: var(--w-accent-bg);
+  color: var(--w-text);
+}
+
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer utilities {

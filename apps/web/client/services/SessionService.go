@@ -81,15 +81,6 @@ func (session *SessionService) ShowPasswordWith(show bool, login string, passwor
 	session.ShownPassword = password
 }
 
-func (session *SessionService) TypedLogin(login string) {
-	session.Login = login
-}
-
-func (session *SessionService) Hint() string {
-	login := strings.ToLower(strings.TrimSpace(session.Login))
-	return session.hintFor(login, session.domainOf(login))
-}
-
 func (session *SessionService) UsernameOf(login string) string {
 	username, _, _ := strings.Cut(strings.ToLower(strings.TrimSpace(login)), session.at())
 	return username
@@ -288,18 +279,6 @@ func (session *SessionService) checkWhenShown(visible bool) error {
 	return failure
 }
 
-func (session *SessionService) hintFor(login string, domainId string) string {
-	hints := map[bool]string{true: "Opens " + domainId + session.period(), false: "Opens your default domain."}
-	return session.emptyOr(login, hints[domainId != ""])
-}
-
-func (session *SessionService) emptyOr(login string, hint string) string {
-	if login == "" {
-		return "Your username, like ana, or your full address."
-	}
-	return hint
-}
-
 func (session *SessionService) domainOf(login string) string {
 	_, domainId, _ := strings.Cut(strings.TrimSpace(login), session.at())
 	return domainId
@@ -352,7 +331,15 @@ func (session *SessionService) domainStep(domainId string) string {
 }
 
 func (session *SessionService) expiredWhenFailed(failure error) string {
-	if failure != nil {
+	return session.expiredWhen(session.openSessionFailed(failure))
+}
+
+func (session *SessionService) openSessionFailed(failure error) bool {
+	return failure != nil && session.Step == session.stepSignedIn()
+}
+
+func (session *SessionService) expiredWhen(ended bool) string {
+	if ended {
 		return "expired"
 	}
 	return session.Step

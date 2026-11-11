@@ -169,15 +169,6 @@ func (test *SessionServiceTest) TestSignInOfAnOperatorWithoutDomainShowsTheAdmin
 	Assert.Equals("noDomainOperator", test.signInAs(test.started(), "op", "right", false).Step)
 }
 
-func (test *SessionServiceTest) TestHintFollowsTheTypedText() {
-	session := test.started()
-	Assert.Equals("Your username, like ana, or your full address.", session.Hint())
-	session.TypedLogin("ana")
-	Assert.Equals("Opens your default domain.", session.Hint())
-	session.TypedLogin(" Ana@Example.org ")
-	Assert.Equals("Opens example.org.", session.Hint())
-}
-
 func (test *SessionServiceTest) TestUsernameOfTakesThePartBeforeTheAt() {
 	Assert.Equals("ana", test.started().UsernameOf(" ANA@example.org"))
 }
@@ -331,4 +322,11 @@ func (test *SessionServiceTest) TestPasswordChosenOpensTheDomain() {
 	session.tokens.ChangePassword(SessionPasswordChange{CurrentPassword: "right", NewPassword: "a-long-new-password"})
 	session.PasswordChosen()
 	Assert.Equals("signedIn", session.Step)
+}
+
+func (test *SessionServiceTest) TestRenewAfterSignOutKeepsTheSignedOutPage() {
+	session := test.signedIn()
+	session.SignOut()
+	session.Renew()
+	Assert.Equals("signedOut", session.Step)
 }

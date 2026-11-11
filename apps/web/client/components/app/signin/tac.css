@@ -177,6 +177,27 @@
   font-size: var(--w-font-base);
 }
 
+.auth-art {
+  border-radius: var(--ms-radius-tile);
+  background: var(--w-success-container);
+  color: var(--w-on-success-container);
+}
+
+.auth-art w-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.password-avatar {
+  border-radius: var(--w-radius-full, 9999px);
+  background: var(--w-primary-container, var(--w-surface-container-high));
+  color: var(--w-on-primary-container, var(--w-text));
+}
+
+a.w-btn-filled {
+  color: var(--w-on-primary);
+}
+
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer properties;
@@ -190,12 +211,22 @@
   .grid {
     display: grid;
   }
+  .size-10 {
+    width: calc(var(--spacing, 0.25rem) * 10);
+    height: calc(var(--spacing, 0.25rem) * 10);
+  }
   .size-14 {
     width: calc(var(--spacing, 0.25rem) * 14);
     height: calc(var(--spacing, 0.25rem) * 14);
   }
   .w-full {
     width: 100%;
+  }
+  .min-w-0 {
+    min-width: 0px;
+  }
+  .flex-none {
+    flex: none;
   }
   .flex-col {
     flex-direction: column;
@@ -211,6 +242,9 @@
   }
   .justify-between {
     justify-content: space-between;
+  }
+  .gap-0\.5 {
+    gap: calc(var(--spacing, 0.25rem) * 0.5);
   }
   .gap-1 {
     gap: var(--spacing, 0.25rem);

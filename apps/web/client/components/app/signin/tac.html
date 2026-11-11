@@ -42,10 +42,10 @@
             </switch>
             <form method="dialog" class="flex flex-col gap-4" aria-label="Sign in" on:submit="session.signInWith($event.target.elements.login.value, $event.target.elements.password.value, $event.target.elements.code.value, $event.target.elements.remember.checked)">
               <logic :if="session.problem == 'invalidLogin'">
-                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" error="Type your username, like ana, or your full address, like ana@example.com." :value="session.login" on:change="session.typedLogin($event.target.value)"></w-text-field>
+                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" error="Type your username, like ana, or your full address, like ana@example.com." persistent-hint :value="session.login"></w-text-field>
               </logic>
               <logic else>
-                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" :hint="session.hint()" :value="session.login" on:change="session.typedLogin($event.target.value)"></w-text-field>
+                <w-text-field label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint :value="session.login"></w-text-field>
               </logic>
               <logic :if="session.rememberedUsername != ''">
                 <w-text-field autofocus label="Password" name="password" autocomplete="current-password" :type="shell.fieldType(session.showPassword)" :value="session.shownPassword"></w-text-field>
@@ -55,10 +55,10 @@
               </logic>
               <w-checkbox label="Show password" name="show" :checked="session.showPassword" on:change="session.showPasswordWith($event.target.checked, $event.target.form.login.value, $event.target.form.password.value)"></w-checkbox>
               <logic :if="session.problem == 'wrongCredentials'">
-                <w-text-field label="2-step code (optional)" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="If you use 2-step sign-in, type a new code before you try again."></w-text-field>
+                <w-text-field label="2-step code (optional)" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="If you use 2-step sign-in, type a new code before you try again." persistent-hint></w-text-field>
               </logic>
               <logic else>
-                <w-text-field label="2-step code (optional)" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one."></w-text-field>
+                <w-text-field label="2-step code (optional)" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
               </logic>
               <w-checkbox label="Remember my username on this device" name="remember" :checked="session.remember"></w-checkbox>
               <logic :if="session.busy">
@@ -90,6 +90,66 @@
           <w-btn class="w-full" variant="flat" size="large" block on:click="session.backToSignIn()">Back to sign-in</w-btn>
           <p class="auth-meta">You are not signed in. Mesail kept nothing on this device.</p>
         </div>
+      </case>
+      <case :when="'choosePassword'">
+        <div class="auth-card">
+          <div class="auth-head">
+            <h1 class="auth-title">Choose your own password</h1>
+            <p class="auth-lead">An admin gave you a first password. Choose your own before you open Mesail.</p>
+          </div>
+          <div class="auth-notice flex items-center gap-3 p-3">
+            <span class="password-avatar grid size-10 flex-none place-items-center" aria-hidden="true"><w-icon name="user"></w-icon></span>
+            <span class="grid min-w-0 gap-0.5">
+              <span class="font-semibold">{sessionAccount.displayName}</span>
+              <span class="auth-meta">{sessionAccount.username} · opens {sessionAccount.currentDomain}</span>
+            </span>
+          </div>
+          <div class="flex flex-col gap-4">
+            <switch :value="sessionSettings.problem">
+              <case :when="'wrongPassword'">
+                <w-alert type="error">The password from your admin is not right. Check it and try again.</w-alert>
+              </case>
+              <case :when="'rateLimited'">
+                <w-alert type="error">Too many tries. Wait a minute, then try again.</w-alert>
+              </case>
+              <case :when="'unavailable'">
+                <w-alert type="error">We cannot reach sign-in right now. Try again in a minute.</w-alert>
+              </case>
+            </switch>
+            <form method="dialog" class="flex flex-col gap-4" aria-label="Choose your own password" on:submit="sessionSettings.chooseFirstPasswordWith($event.target.elements.current.value, $event.target.elements.next.value, $event.target.elements.code.value)">
+              <w-text-field autofocus label="Password from your admin" name="current" autocomplete="current-password" :type="shell.fieldType(sessionSettings.showPasswords)" :value="sessionSettings.shownCurrent"></w-text-field>
+              <logic :if="sessionSettings.problem == 'passwordPolicy'">
+                <w-text-field label="New password" name="next" autocomplete="new-password" error="Choose another password. Use at least 12 characters." :type="shell.fieldType(sessionSettings.showPasswords)" :value="sessionSettings.shownNew"></w-text-field>
+              </logic>
+              <logic else>
+                <w-text-field label="New password" name="next" autocomplete="new-password" hint="It is your one password for every domain." :type="shell.fieldType(sessionSettings.showPasswords)" :value="sessionSettings.shownNew"></w-text-field>
+              </logic>
+              <w-checkbox label="Show passwords" name="show" :checked="sessionSettings.showPasswords" on:change="sessionSettings.showPasswordsWith($event.target.checked, $event.target.form.current.value, $event.target.form.next.value)"></w-checkbox>
+              <logic :if="sessionSettings.twoStep == 'on'">
+                <w-text-field label="2-step code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></w-text-field>
+              </logic>
+              <logic else>
+                <input type="hidden" name="code" value="">
+              </logic>
+              <p class="auth-meta">Use a long password that you use nowhere else. If it is too short or too simple, Mesail says which rule it breaks.</p>
+              <w-btn variant="flat" size="large" block type="submit">Save and continue</w-btn>
+            </form>
+            <w-btn variant="text" size="large" block on:click="session.signOut()">Sign out</w-btn>
+          </div>
+        </div>
+  
+      </case>
+      <case :when="'noDomainOperator'">
+        <div class="auth-card auth-card-center">
+          <span class="auth-art grid size-14 place-items-center"><w-icon name="shield-check"></w-icon></span>
+          <div class="grid gap-2">
+            <h1 class="auth-title">Your account has no domain</h1>
+            <p class="auth-lead">You are an Operator of this Mesail install, but not a member of any domain. Chat and email open only inside a domain.</p>
+          </div>
+          <w-btn class="w-full" variant="flat" size="large" block href="/admin/">Open Mesail admin</w-btn>
+          <w-btn class="w-full" variant="text" size="large" block on:click="session.signOut()">Sign out</w-btn>
+        </div>
+  
       </case>
       <case default>
         <div class="auth-card auth-card-center" role="status" aria-live="polite">

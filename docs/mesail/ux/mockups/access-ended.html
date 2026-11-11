@@ -15,7 +15,7 @@
 <div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
   <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 px-0 py-8 short:gap-3 short:py-3">
     <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
-    <p class="max-w-2xl px-1 text-center text-sm text-subtle">When access ends, the device removes the copy (ADR 0006 sections 2 and 4, SPEC AC-OF-9, AC-OF-10, S16, S17). The notice shows only how many items were not sent, never their words (Q13).</p>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">When access ends, the device removes the copy (ADR 0006 sections 2 and 4, SPEC AC-OF-9, AC-OF-10, S16, S17). The one-time notice shows how many items were not sent and the first words of each, once (Q13, decided). State 2b shows the number-only variant.</p>
     <!-- Mockup: labelled states side by side. Cards keep their token widths (auth 26rem, dialog 32rem, page 50rem). -->
     <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-dialog-max)),1fr))]">
       <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 1 &middot; 403 access_revoked: every copy of the person is removed (AC-OF-9)">
@@ -25,17 +25,31 @@
             <h1 id="a1-title" class="text-2xl font-semibold tracking-tight short:text-xl">Your session was ended</h1>
             <div class="grid gap-4">
               <p>Your account was turned off, your password was changed, or someone chose &ldquo;Sign out on all devices&rdquo;.</p>
-              <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="trash" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Mesail removed your messages from this device. <strong>2 items</strong> you wrote offline were not sent.</p></div></div>
+              <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="trash" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Mesail removed your messages from this device. <strong>2 items</strong> you wrote offline were not sent:</p><ul class="grid gap-1 ps-6 text-sm" aria-label="First words of each item"><li class="truncate">&ldquo;Here are the two logo options. Can you&hellip;&rdquo;</li><li class="truncate">&ldquo;Lunch at 12:30?&rdquo;</li></ul></div></div>
               <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
               <p class="flex items-start gap-2 text-xs text-subtle"><w-icon name="info" class="ms-icon-sm flex-none"></w-icon>If you did not expect this, ask your admin.</p>
             </div>
           </div>
         </div>
       </section>
-      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 2 &middot; Removed from one domain: a one-time notice, number only (SPEC S16, Q13)">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 &middot; Removed from one domain: a one-time notice, number only (SPEC S16, Q13)</p>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 2 &middot; Removed from one domain: a one-time notice with the first words of each item (SPEC S16, AC-OF-9, Q13 decided)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 &middot; Removed from one domain: a one-time notice with the first words of each item (SPEC S16, AC-OF-9, Q13 decided)</p>
         <div role="dialog" aria-modal="false" aria-labelledby="a2-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
           <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-surface-high text-text" aria-hidden="true"><w-icon name="globe"></w-icon></span><h2 id="a2-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">You no longer have access to example.org</h2></div>
+          <div class="grid gap-3 px-4 pb-2 sm:px-6">
+            <p>An admin removed you from example.org. Mesail removed example.org from this device.</p>
+            <div class="grid gap-2 rounded-lg bg-surface-high p-3 text-sm"><p class="flex items-start gap-2"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span><strong>2 items</strong> you wrote offline for example.org were not sent:</span></p><ul class="grid gap-1 ps-6 text-sm" aria-label="First words of each item"><li class="truncate">&ldquo;Here are the two logo options. Can you&hellip;&rdquo;</li><li class="truncate">&ldquo;Lunch at 12:30?&rdquo;</li></ul></div>
+            <p class="text-sm text-subtle">This is the last time Mesail shows them. Your other domains are not changed.</p>
+          </div>
+          <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-4 pt-4 pb-5 sm:px-6 max-sm:[&>*]:flex-1">
+            <w-btn variant="filled">OK</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 2b &middot; The same notice with the number only (the variant of the OU brief, if the owner changes Q13)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2b &middot; The same notice with the number only (the variant of the OU brief, if the owner changes Q13)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="a2b-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-surface-high text-text" aria-hidden="true"><w-icon name="globe"></w-icon></span><h2 id="a2b-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">You no longer have access to example.org</h2></div>
           <div class="grid gap-3 px-4 pb-2 sm:px-6">
             <p>An admin removed you from example.org. Mesail removed example.org from this device.</p>
             <p class="flex items-start gap-2 rounded-lg bg-surface-high p-3 text-sm"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span><strong>2 items</strong> you wrote offline for example.org were not sent.</span></p>

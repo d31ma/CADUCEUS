@@ -53,7 +53,7 @@
               <fieldset class="m-0 grid min-w-0 gap-3 border-0 border-t border-solid border-divider p-0 pt-4"><legend class="sr-only">On this device</legend>
               <div class="grid gap-1">
                 <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="s2-keep-hint" checked></w-checkbox>
-                <p id="s2-keep-hint" class="ps-8 text-xs text-subtle">Mesail keeps your messages of the last 7 days on this computer. Signing out removes them.</p>
+                <p id="s2-keep-hint" class="ps-8 text-xs text-subtle">Mesail keeps your messages of the last 30 days on this computer, encrypted. Signing out removes them.</p>
               </div>
               <w-checkbox label="Remember my username on this device (included)" name="remember" checked disabled></w-checkbox>
               </fieldset>
@@ -77,6 +77,28 @@
                 <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="s3-keep-hint" checked></w-checkbox>
                 <p id="s3-keep-hint" class="ps-8 text-xs text-subtle">Recommended in the Mesail app. Turn it off on a device you share with others.</p>
               </div>
+              </fieldset>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 3b &middot; This device cannot encrypt the copy (Linux without Secret Service, or plain http; AC-OF-18, Q15)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3b &middot; This device cannot encrypt the copy (Linux without Secret Service, or plain <code>http</code>; AC-OF-18, Q15)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+            <p class="-mt-3 text-subtle short:hidden">Use your username or your work email address.</p>
+            <form class="grid gap-4 short:gap-3" action="offline-messenger.html" method="post" novalidate>
+              <w-text-field id="s3b-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" required></w-text-field>
+              <w-text-field id="s3b-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s3b-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s3b-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <fieldset class="m-0 grid min-w-0 gap-3 border-0 border-t border-solid border-divider p-0 pt-4"><legend class="sr-only">On this device</legend>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="s3b-keep-hint" checked></w-checkbox>
+                <p id="s3b-keep-hint" class="ps-8 text-xs text-subtle">Recommended in the Mesail app. Turn it off on a device you share with others.</p>
+              </div>
+              <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3" role="note"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>This device cannot encrypt Mesail&rsquo;s copy. Anyone who can read this device&rsquo;s files can read your recent messages.</p><p>Untick the box to keep nothing here.</p></div></div>
               </fieldset>
               <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
             </form>

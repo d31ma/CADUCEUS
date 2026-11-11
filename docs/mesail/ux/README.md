@@ -427,18 +427,20 @@ Questions from the screen work (product owner to decide; none blocks the first s
   a refresh answers `401` because the open domain was removed, may the same `sessionKey` still switch to
   another domain (`POST /session/domain`)? The mockup tries it, then falls back to sign-in.
 - **Offline first (slice OU, for mesail-arch and the owner).**
-  (a) Q13 for these screens is "number only": the access-lost notice says how many items were not sent
-  and never shows their words (the coordinator's brief of 2026-11-11). SPEC AC-OF-9 and Q13 still say
-  "with the first words of each"; SPEC should be aligned. A conversation that is gone while the domain
+  (a) Q13: SPEC records the owner's decision "first words" (AC-OF-9), and the main mockups follow it.
+  The OU brief asked for "number only"; that variant is `access-ended.html` state 2b, in case the owner
+  changes Q13. A conversation that is gone while the domain
   stays is different: its items go to "Needs your attention" with their text and "Copy text" (AC-OF-6).
   (b) In a browser where "Keep me signed in" was off, what happens when the network drops while the tab
   is open? ADR 0006 does not say whether such a tab may queue. Proposal (not drawn yet): keep showing
   what the tab has, read only, and say in the composer "Sending needs the network on this browser."
   (c) Does "Remove the copy on this device" also turn off "Keep me signed in" (mockup: yes, the session
   then lasts until Mesail closes)? Otherwise the copy comes back at the next sync.
-  (d) May the person choose the space limit (mockup: 300 MB, 1 GB, 2 GB, 5 GB), or is it fixed per
+  (d) Can a file be attached offline now that the copy has a blob store (ADR 0006 section 9, T2)? The
+  mockups keep "Attach files" disabled offline, because an upload needs the network anyway.
+  (e) May the person choose the space limit (mockup: 300 MB, 1 GB, 2 GB, 5 GB), or is it fixed per
   device kind (SPEC AC-OF-13 names only defaults)?
-  (e) A mention of someone who left the channel (attention item "Eli Park left #design"): is that a
+  (f) A mention of someone who left the channel (attention item "Eli Park left #design"): is that a
   server refusal (`409 recipients_changed`), or does the server send it with a dead mention?
 - **Settings.** Does the job title come from Keycloak, like the name? Is "Always show images from
   people I have emailed" allowed (AC-IN-5 speaks of one sender at a time)? Is auto-reply out of the
@@ -460,9 +462,13 @@ attention cards and the space meter (COMPONENTS.md "Offline and sync").
 
 - **Kept device** (`signin-kept.html`, AC-OF-1, Q8): the box "Keep me signed in on this device" sits
   under the code field with a hint. Browser: off, "Only on your own computer. Mesail then keeps your
-  recent messages here and works offline." Ticked: "Mesail keeps your messages of the last 7 days on this
-  computer. Signing out removes them." Mesail app: on, "Recommended in the Mesail app. Turn it off on a
-  device you share with others." Sends `keepSignedIn` in `SignInRequest`. A kept device opens offline
+  recent messages here and works offline." Ticked: "Mesail keeps your messages of the last 30 days on this computer, encrypted. Signing out removes
+  them." Mesail app: on, "Recommended in the Mesail app. Turn it off on a
+  device you share with others." Sends `keepSignedIn` in `SignInRequest`. Where the copy cannot be
+  encrypted (AC-OF-18, Q15), a warning box under the box: "This device cannot encrypt Mesail's copy. Anyone
+  who can read this device's files can read your recent messages." and "Untick the box to keep nothing
+  here." The box stays hidden until the release gate of ADR 0006 section 9 opens (Q16). On a kept browser
+  the app asks for persistent storage once; Firefox shows its own prompt. A kept device opens offline
   without the sign-in form. Without a copy and without network: "You are offline. Sign-in needs the network."
 - **Sync bar** (`offline-status.html`): one full-width button at the very top of the app, above every pane
   and on every width, so the person always sees it in the same place. It shows only when there is
@@ -476,6 +482,8 @@ attention cards and the space meter (COMPONENTS.md "Offline and sync").
   - Realtime down but network up: "Reconnecting · New messages may be late" and "Try now" (the existing
     wording of section 8).
   - Long offline (AC-OF-15): "Reloading recent messages". Before the 30-day lock: "Connect soon · Locks on 18 Nov".
+  - Device full (`StoreWriteFailed`, AC-OF-13): "This device is full · New messages are not kept" and
+    "Manage space" (opens Settings > This device). Waiting items and drafts are safe.
   - The bar opens the **sync panel** (a dialog; a bottom sheet under 600 px): each domain with "Updated
     08:12" and its waiting count, domains without a copy marked "Not on this device. Needs the network.",
     a link to "Needs your attention", **Try now**, and "Space and offline settings". It says "Mesail sends
@@ -490,8 +498,9 @@ attention cards and the space meter (COMPONENTS.md "Offline and sync").
   the server time, with "Written offline at 09:40" (AC-OF-7). Back online, "Sending…" as today. The
   sidebar row of a conversation with waiting items shows a clock ("3 waiting to send" for screen readers).
 - **Things not on this device** (AC-OF-3): a dashed panel at the top of the timeline, "Older messages are
-  not on this device. This device keeps the last 7 days. Older messages load when you are back online."
-  Files show "Not on this device · opens when you are online"; thread links "12 replies · 8 on this
+  not on this device. This device keeps the last 30 days. Older messages load when you are back online."
+  (14 days on a phone, or the person's choice.) Files that were not downloaded (over 2 MB on a computer;
+  any file on a phone until opened, Q11) show "Not on this device · 14 MB · opens when you are online"; thread links "12 replies · 8 on this
   device". Online, the same place offers **Load older messages**. Things that need the network (attach a
   file, create a channel, change notification settings) are disabled with "(needs the network)" in their
   label.
@@ -500,8 +509,7 @@ attention cards and the space meter (COMPONENTS.md "Offline and sync").
   channels come from the copy; any other address gets the chip "Checked when online". If the server
   later finds that an address needs email, the item goes to "Needs your attention" instead of being sent
   another way (AC-OF-6: never sent with a changed choice).
-- **Search offline** (AC-OF-12): "Search this device" in the sidebar; a line "Searching this device: the
-  last 7 days of example.com. Older messages need the network."; each hit has the tag "On this device".
+- **Search offline** (AC-OF-12): "Search this device" in the sidebar; a line "Searching this device: the last 30 days of example.com. Older messages need the network."; each hit has the tag "On this device".
   No hit: "No results for … on this device", and a hint to search again online.
 - **Needs your attention** (`attention.html`, `attention-states.html`, AC-OF-6, AC-OF-8, S16): a row under
   Activity with a red count; a page with one card per item, newest first, for the current domain, and a
@@ -528,16 +536,19 @@ attention cards and the space meter (COMPONENTS.md "Offline and sync").
 - **Access ended** (`access-ended.html`, AC-OF-9, AC-OF-10, Q13): `403 access_revoked` shows "Your session
   was ended" and "Mesail removed your messages from this device. 2 items you wrote offline were not sent."
   Removal from one domain shows a one-time dialog, "You no longer have access to example.org ... 2 items
-  you wrote offline for example.org were not sent." Both show **only the number**, never the words.
+  you wrote offline for example.org were not sent:" followed by the first words of each item, one per line
+  (Q13 decided; "This is the last time Mesail shows them."). State 2b shows the number-only variant.
   Sign-out with waiting items warns first (offline: "Sign out and remove"; online: "Wait, then sign out").
   After another person signs in, a notice says the last person's copy was removed, without a name.
 - **Settings: this device** (`settings-device.html`, AC-OF-13, Q9, Q11): a new settings section "This
-  device" (tab and side list on every settings page). Cards: Keep me signed in (switch, since when, the
-  disk-encryption note of AC-OF-14); Space used (a bar split by domain, with a list of each domain's size
+  device" (tab and side list on every settings page). Cards: Keep me signed in (switch, since when, and
+  "Mesail encrypts the copy with a key that only this device holds", AC-OF-14); Space used (a bar split by domain, with a list of each domain's size
   and update time, so colour is never the only cue); What to keep (7, 14, 30 or 90 days as a segmented
   choice, space limit, "Download files ahead of time" on a computer or "on Wi-Fi" on a phone); Remove
-  ("Remove the copy", "Sign out everywhere"). The first build shows 7 days only, 40 MB, and files off with
-  "Files are not kept on devices yet." A browser without a kept session says how to turn it on.
+  ("Remove the copy", "Sign out everywhere"). Variants: a device that cannot encrypt (the AC-OF-18 warning
+  with "Remove the copy"), a full device, a phone (14 days, files on Wi-Fi), and a browser without a kept
+  session (how to turn it on). There is no "first build" with smaller limits any more (Q16: the first
+  offline release waits for sealed tables and has the full window and files).
 - **Sizes:** every new target follows TOKENS.md "Control sizes"; the bar, chips, list rows, tabs and
   recipient input reach 44 px on touch and under 768 px. Checked in headless Chromium at 320, 375, 768,
   1024, 1440 and 2560 px, light and dark (fine and coarse pointer at 768 and 1024).

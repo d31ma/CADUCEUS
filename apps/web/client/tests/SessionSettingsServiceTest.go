@@ -194,3 +194,22 @@ func (test *SessionSettingsServiceTest) TestShowPasswordsWithKeepsWhatWasTyped()
 	Assert.Equals("right", settings.ShownCurrent)
 	Assert.Equals("longer-and-better", settings.ShownNew)
 }
+
+func (test *SessionSettingsServiceTest) TestNewPhoneTurnsTheOldCodeOffThenShowsTheNewKey() {
+	settings := test.settings()
+	settings.StartTwoStepReset()
+	settings.SetUpTwoStepWith("right", "123456")
+	Assert.Equals("twoStepScan", settings.Step)
+	Assert.Equals("off", settings.TwoStep)
+	Assert.Equals("JBSWY3DPEHPK3PXP", settings.TwoStepSecret)
+}
+
+func (test *SessionSettingsServiceTest) TestNewPhoneWithAWrongCodeKeepsTheOldCode() {
+	settings := test.settings()
+	settings.TwoStep = "on"
+	settings.StartTwoStepReset()
+	settings.SetUpTwoStepWith("right", "999999")
+	Assert.Equals("twoStepPassword", settings.Step)
+	Assert.Equals("on", settings.TwoStep)
+	Assert.Equals("", settings.TwoStepSecret)
+}

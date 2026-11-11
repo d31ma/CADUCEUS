@@ -89,7 +89,13 @@
           <form method="dialog" class="contents" aria-label="Confirm it's you" on:submit="sessionSettings.setUpTwoStepWith($event.target.elements.current.value, $event.target.elements.code.value)">
             <div class="col-span-full flex flex-col gap-4">
               <p class="settings-help">Step 1 of 3</p>
-              <logic :if="sessionSettings.problem == 'wrongPassword'">
+              <logic :if="sessionSettings.resetting">
+                <p class="settings-help">Your old 2-step code stops working when you continue. Then you add Mesail to the app on your new phone.</p>
+              </logic>
+              <logic :if="sessionSettings.problem == 'wrongPassword' && sessionSettings.resetting">
+                <w-alert type="error">The password or 2-step code is not right.</w-alert>
+              </logic>
+              <logic :if="sessionSettings.problem == 'wrongPassword' && !sessionSettings.resetting">
                 <w-alert type="error">That password is not right.</w-alert>
               </logic>
               <logic :if="sessionSettings.problem == 'rateLimited'">

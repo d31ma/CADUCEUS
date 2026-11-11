@@ -69,11 +69,32 @@ func (settings *SessionSettingsService) StartTwoStepReset() {
 func (settings *SessionSettingsService) SetUpTwoStepWith(currentPassword string, oneTimeCode string) {
 	settings.CurrentPassword = currentPassword
 	settings.OneTimeCode = oneTimeCode
+	settings.Problem = settings.removeWhenResetting()
+	settings.setUpWhenClear()
+}
+
+func (settings *SessionSettingsService) removeWhenResetting() string {
+	if !settings.Resetting {
+		return ""
+	}
+	request := SessionTwoStepRemove{CurrentPassword: settings.CurrentPassword, OneTimeCode: settings.OneTimeCode}
+	_, failure := settings.identity.RemoveTwoStep(settings.bearer(), request)
+	problem := settings.problems.OfAccountChange(failure, settings.wrongPassword())
+	settings.TwoStep = settings.stateAfter(problem, settings.off())
+	return problem
+}
+
+func (settings *SessionSettingsService) setUpWhenClear() {
+	if settings.Problem != "" {
+		settings.CurrentPassword = ""
+		settings.OneTimeCode = ""
+		return
+	}
 	settings.setUpTwoStep()
 }
 
 func (settings *SessionSettingsService) setUpTwoStep() {
-	request := SessionTwoStepSetupRequest{CurrentPassword: settings.CurrentPassword, OneTimeCode: settings.OneTimeCode}
+	request := SessionTwoStepSetupRequest{CurrentPassword: settings.CurrentPassword}
 	setup, failure := BehaviorsAnswer[SessionTwoStepSetup](settings.identity.SetUpTwoStep(settings.bearer(), request))
 	settings.Problem = settings.problems.OfAccountChange(failure, settings.wrongPassword())
 	settings.CurrentPassword = ""

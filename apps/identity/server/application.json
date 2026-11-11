@@ -2,5 +2,18 @@
   "server": {
     "host": "127.0.0.1",
     "port": 8101
+  },
+  "oidc": {
+    "issuer": "http://127.0.0.1:8180/idp/realms/{realm}",
+    "jwks": "http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect/certs",
+    "audience": "mesail-api"
+  },
+  "outgoing": {
+    "hosts": [
+      "127.0.0.1"
+    ]
+  },
+  "identity": {
+    "keycloak": "http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect"
   }
 }

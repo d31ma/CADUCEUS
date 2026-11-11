@@ -12,7 +12,7 @@ func NewGate(verifier TokenVerifier, now func() time.Time) Gate {
 }
 
 func Configured() Gate {
-	return NewGate(RefusingVerifier{}, time.Now)
+	return NewGate(VerifierFactory{}.FromEnvironment(), time.Now)
 }
 
 func (gate Gate) Identify(authorization string) (Caller, error) {

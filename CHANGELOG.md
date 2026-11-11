@@ -42,6 +42,18 @@
 - Added `kit/mime` (header and MIME parser, fuzz tested) and `kit/mailauth`
   (SPF, DKIM and DMARC checks with the DMARC DNS tree walk, fuzz tested).
 
+### Slice I1: identity and token check
+
+- `kit/oidc` checks Keycloak access tokens for real in every service: it
+  fetches and caches each realm's key set (JWKS), checks RS256 and ES256
+  signatures, the issuer pattern (one realm per mail domain), the
+  `mesail-api` audience, `azp`, `typ` and expiry with 30 seconds of leeway,
+  and still refuses every token when its `oidc` settings are missing.
+  `oidc.SigningRealm` lets every app test with real tokens and no network.
+- The identity service signs people in server to server through Keycloak
+  (`POST`/`DELETE /api/v1/identity/session`, `POST .../session/refresh`)
+  with an AES-GCM encrypted `sessionKey`, and answers `GET /identity/me`.
+
 - Completed account-synchronized interface localization across 20 closed,
   persisted locale choices. A reproducible, checksum-pinned SMaLL-100 pipeline
   now catalogs 755 audited static interface literals for 19 non-English

@@ -6,6 +6,8 @@ type Claims struct {
 	Audience        []string
 	AuthorizedParty string
 	ExpiresAt       int64
+	NotBefore       int64
+	TokenType       string
 	Name            string
 	Email           string
 	RealmRoles      []string

@@ -2,6 +2,7 @@ package connections
 
 import (
 	"encoding/json"
+	"math"
 	"strconv"
 	"sync"
 	"time"
@@ -28,9 +29,9 @@ func NewSession(id string, settings SessionSettings) *Session {
 		closing: make(chan struct{}),
 		lead:    settings.ReauthLead,
 	}
-	session.deadline = time.AfterFunc(settings.AuthWindow, session.expire)
-	session.reauth = time.AfterFunc(settings.AuthWindow, session.askReauth)
-	session.reauth.Stop()
+	session.reauth = session.idleTimer(session.askReauth)
+	session.deadline = session.idleTimer(session.expire)
+	session.deadline.Reset(settings.AuthWindow)
 	session.offerOrClose(session.encoded(session.hello()))
 	return session
 }
@@ -93,6 +94,12 @@ func (session *Session) expire() {
 
 func (session *Session) askReauth() {
 	session.offerOrClose(session.encoded(RealtimeEvent{Type: "reauth"}))
+}
+
+func (*Session) idleTimer(action func()) *time.Timer {
+	timer := time.AfterFunc(time.Duration(math.MaxInt64), action)
+	timer.Stop()
+	return timer
 }
 
 func (*Session) hello() RealtimeEvent {

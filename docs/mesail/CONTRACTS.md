@@ -43,6 +43,11 @@ field may be empty or left out.
   another domain or a private channel the caller is not in),
   `409 conflict` / `recipients_changed` / `duplicate`, `413 too_large`,
   `422 chat_not_allowed`, `429 rate_limited`, `503 unavailable`.
+- **One exception, from TACHYON 26.46.02:** a request with a missing or
+  forged token is answered `401` by TACHYON itself, with the plain text
+  "Sign in to call this route.", before any Mesail code runs. So clients
+  treat any `401` as "sign in again" (refresh once, then show the sign-in
+  form), whatever its body, and never parse a `401` body.
 - Lists are paged with `?cursor=<opaque>&limit=<1..100>` and return a page
   model `{items: [...], nextCursor: string}` (`MemberPage`,
   `ConversationPage`, `MessagePage`, `NotificationPage`, `SearchPage`).

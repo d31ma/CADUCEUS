@@ -489,6 +489,14 @@ Friction found while designing, to raise with the dependency owners:
   responsive-widths check as a `ty` command for apps; and a test that
   stateful custom elements keep their state when a watched attribute
   redraws the page.
+- TACHYON (bugs and gaps found by slices M3 and R1, 2026-11-11): the Go
+  egress guard pipes a kept-alive plain-HTTP connection to the first
+  target it saw, so a reused connection reaches the wrong service (Mesail
+  turns keep-alives off with `kit/transport` until it is fixed); `ty test`
+  does not apply the required-field rule, the package-main rule for
+  `@HandlesError` and `@FromBody` types, or TY1314, which `ty start` and
+  `ty bundle` do; the built-in `401` answers plain text, so apps cannot
+  give one error format for every status.
 - DUVAY: emit kebab-case event names only, and publish release assets
   (the built bundles and their SHA-256) with each release.
 - TACHYON: mount separately built Tac apps under route prefixes, or split

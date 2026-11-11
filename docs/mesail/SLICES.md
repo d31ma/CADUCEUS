@@ -136,6 +136,35 @@ wave run at the same time.
 15. **UX.** The screens, states and copy come from `docs/mesail/ux/**`
     (owned by the `mesail-ux` session). Frontend slices follow it and do not
     edit it.
+16. **TACHYON 26.46.02 facts every Yon slice follows** (found by slices M3
+    and R1, 2026-11-11):
+    - **Outgoing HTTP without keep-alive.** TACHYON's Go prelude sends
+      every outgoing request, loopback included, through its egress guard,
+      and for plain HTTP the guard keeps piping a kept-alive connection to
+      the first target it saw. Go reuses idle connections for any host, so
+      a later request can reach the wrong service. Until TACHYON fixes it,
+      every Mesail HTTP client uses `kit/transport`'s
+      `SingleUseTransport{}.Client(timeout)` (a clone of the default
+      transport with keep-alives off; the proxy setting stays). Add
+      `transport` to your `kit.list`.
+    - **Request-body fields without `,omitempty` are required** under
+      `ty start` (`400 "body.<field> is required"`); `ty test` does not
+      catch it. Optional fields get `,omitempty`.
+    - **`@HandlesError` parameter types and `@FromBody` types are
+      package-main types** (in `server/models/` or `server/shared/`). A
+      kit or app-package type passes `ty test` but fails `ty start` and
+      `ty bundle`.
+    - **Error types go in `server/shared/`**, not `server/errors/`:
+      identity providers and workers compile without `server/errors/`.
+    - **Path variables match `[a-z0-9_]`** (TY2015).
+    - **A public role-file method that is called only through a Go
+      interface fails TY1333** in `ty bundle`: keep stores in plain Go and
+      pass the `DataSource` in (rule 8b).
+    - **A missing or forged token gets TACHYON's own plain-text `401`**
+      ("Sign in to call this route."), not an `ApiError` body (CONTRACTS.md
+      "Conventions").
+    `scripts/gates.sh` bundles every app and starts every server app, so
+    most of these fail the gate rather than production.
 
 ## Gates
 
@@ -497,7 +526,7 @@ C1, not before each slice merge.
 | Path | Owner |
 | --- | --- |
 | `docs/**` (except `docs/mesail/ux/**`), `tests/blackbox/**`, `tools/crap/**`, `scripts/kit-sync.sh`, `CLAUDE.md`, `AGENTS.md`, `README.md`, `CHANGELOG.md`, `.gitignore` | architecture (this plan); slices append to `CHANGELOG.md` only under their own heading, and update CONTRACTS.md per rule 3 |
-| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package: I1 `oidc`, `identity`; M2 (from I2) `events`, `outbox`; D1 `recipients`, `directory`; C2 `channels`; A1 `blobs`, `attachments`; M1 `mime`, `mailauth`, `richtext`, `mailin`; M2 `compose`, `dkim`, `smtpclient`, `mailout`; S1 `textindex`, `search`; M3 `messaging`; R1 `realtime`; N1 `webpush`, `notify`. The workflow package of a service (rule 8b) is copied only into that service's app; `ids` and `collections` stay with architecture |
+| `kit/<package>/**` and `apps/*/server/packages/<package>/**` | the slice that owns the package: I1 `oidc`, `identity`; M2 (from I2) `events`, `outbox`; D1 `recipients`, `directory`; C2 `channels`; A1 `blobs`, `attachments`; M1 `mime`, `mailauth`, `richtext`, `mailin`; M2 `compose`, `dkim`, `smtpclient`, `mailout`; S1 `textindex`, `search`; M3 `messaging`; R1 `realtime`; N1 `webpush`, `notify`. The workflow package of a service (rule 8b) is copied only into that service's app; `ids`, `collections` and `transport` stay with architecture |
 | `apps/<service>/**` other files | the service's slice |
 | `apps/web/client/**` | split between F1-F4 by the patterns above |
 | `apps/web-admin/**` | F5 |

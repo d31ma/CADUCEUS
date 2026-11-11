@@ -29,20 +29,16 @@ func (service *NotificationService) Start() {
 	service.Status = service.statusLoading()
 	service.Tab = service.rows.AllTab()
 	service.show()
-	service.applicationEventPublisher.PublishEvent(NotificationLoadRequested{}, false)
 }
 
 // @OnEvent
 // @InBackground
 func (service *NotificationService) Load(requested NotificationLoadRequested) {
-	page, problem := service.api.Page("")
+	seen := service.seen
+	known := service.known
+	page := service.loadFirstPage()
 	visible, failure := service.pageVisibility.Visible()
-	service.push.Announce(service.rows.Fresh(page.Items, service.seen, service.known), service.hidden(visible, failure))
-	service.seen = service.rows.Seen(page.Items, service.seen)
-	service.known = service.knownAfter(problem)
-	service.items = page.Items
-	service.NextCursor = page.NextCursor
-	service.Status = service.statusOf(problem)
+	service.push.Announce(service.rows.Fresh(page.Items, seen, known), service.hidden(visible, failure))
 	service.show()
 }
 
@@ -51,20 +47,18 @@ func (service *NotificationService) Load(requested NotificationLoadRequested) {
 func (service *NotificationService) DomainChanged(changed SessionDomainChanged) {
 	service.seen = nil
 	service.known = false
+	service.items = []Notification{}
+	service.NextCursor = ""
+	service.ActionProblem = ""
 	service.Tab = service.rows.AllTab()
 	service.Status = service.statusLoading()
-	service.Load(NotificationLoadRequested{})
+	service.show()
 }
 
-// @OnEvent
-// @InBackground
-func (service *NotificationService) Shown(changed VisibilityChanged) {
-	service.loadWhenVisible(changed.Visible)
-}
-
-func (service *NotificationService) Retry() {
-	service.Status = service.statusLoading()
-	service.applicationEventPublisher.PublishEvent(NotificationLoadRequested{}, false)
+func (service *NotificationService) Reload() {
+	service.push.CheckAgain()
+	service.loadFirstPage()
+	service.show()
 }
 
 func (service *NotificationService) LoadMore() {
@@ -78,6 +72,7 @@ func (service *NotificationService) LoadMore() {
 
 func (service *NotificationService) ChooseTab(name string) {
 	service.Tab = name
+	service.loadWhenNotLoaded()
 	service.show()
 }
 
@@ -97,6 +92,24 @@ func (service *NotificationService) MarkAllRead() {
 	service.show()
 }
 
+func (service *NotificationService) loadFirstPage() NotificationPage {
+	page, problem := service.api.Page("")
+	service.seen = service.rows.Seen(page.Items, service.seen)
+	service.known = service.knownAfter(problem)
+	service.items = page.Items
+	service.NextCursor = page.NextCursor
+	service.Status = service.statusOf(problem)
+	service.ActionProblem = ""
+	return page
+}
+
+func (service *NotificationService) loadWhenNotLoaded() {
+	if service.Status == service.statusReady() {
+		return
+	}
+	service.loadFirstPage()
+}
+
 func (service *NotificationService) show() {
 	service.TabId = service.rows.TabId(service.Tab)
 	service.Tabs = service.rows.Tabs(service.items, service.Tab)
@@ -104,13 +117,6 @@ func (service *NotificationService) show() {
 	service.Empty = len(service.Days) == 0
 	service.UnreadCount = service.rows.Count(service.items, service.rows.AllTab())
 	service.HasMore = service.NextCursor != ""
-}
-
-func (service *NotificationService) loadWhenVisible(visible bool) {
-	if !visible {
-		return
-	}
-	service.Load(NotificationLoadRequested{})
 }
 
 func (service *NotificationService) markWhenUnread(row NotificationRow) string {
@@ -152,6 +158,10 @@ func (service *NotificationService) statusOf(problem string) string {
 	if problem != "" {
 		return problem
 	}
+	return service.statusReady()
+}
+
+func (service *NotificationService) statusReady() string {
 	return "ready"
 }
 

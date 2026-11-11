@@ -1,1 +1,0 @@
-type PresenceAnnounceRequested struct{}

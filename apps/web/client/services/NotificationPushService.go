@@ -25,20 +25,16 @@ type NotificationPushService struct {
 	// @Needs
 	presence *NotificationPresenceService
 	// @Needs
-	kinds                     *NotificationKindService
-	applicationEventPublisher ApplicationEventPublisher
+	kinds *NotificationKindService
 }
 
 // @OnStart
 func (service *NotificationPushService) Start() {
 	service.SettingsStatus = service.statusLoading()
 	service.SummaryChoices = service.choices()
-	service.applicationEventPublisher.PublishEvent(NotificationSettingsLoadRequested{}, false)
 }
 
-// @OnEvent
-// @InBackground
-func (service *NotificationPushService) LoadSettings(requested NotificationSettingsLoadRequested) {
+func (service *NotificationPushService) LoadSettings() {
 	service.readPermission()
 	settings, problem := service.api.Settings()
 	service.SettingsStatus = service.statusOf(problem)
@@ -48,17 +44,13 @@ func (service *NotificationPushService) LoadSettings(requested NotificationSetti
 }
 
 // @OnEvent
-// @InBackground
 func (service *NotificationPushService) DomainChanged(changed SessionDomainChanged) {
 	service.SettingsStatus = service.statusLoading()
 	service.Saved = false
 	service.SaveProblem = ""
-	service.LoadSettings(NotificationSettingsLoadRequested{})
-}
-
-// @OnEvent
-func (service *NotificationPushService) Shown(changed VisibilityChanged) {
-	service.readPermission()
+	service.SummaryMinutes = 0
+	service.muted = []string{}
+	service.SummaryChoices = service.choices()
 }
 
 // @OnEvent
@@ -71,11 +63,6 @@ func (service *NotificationPushService) PermissionChanged(changed NotificationPe
 func (service *NotificationPushService) CallFailed(failed BrowserCallFailed) {
 	service.readPermission()
 	service.Problem = service.notAllowed()
-}
-
-func (service *NotificationPushService) RetrySettings() {
-	service.SettingsStatus = service.statusLoading()
-	service.applicationEventPublisher.PublishEvent(NotificationSettingsLoadRequested{}, false)
 }
 
 func (service *NotificationPushService) TurnOn() {

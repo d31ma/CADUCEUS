@@ -1,6 +1,5 @@
 import (
 	"maps"
-	"slices"
 	"strings"
 )
 
@@ -15,53 +14,38 @@ type NotificationPresenceService struct {
 	chosen            string
 	known             map[string]string
 	knownDomain       string
-	watched           []string
 	// @Needs
 	api *NotificationPresenceApiService
 	// @Needs
 	access *NotificationTokenService
 	// @Needs
 	times *NotificationTimeService
-	// @Needs
-	pageVisibility            PageVisibility
-	applicationEventPublisher ApplicationEventPublisher
 }
 
 // @OnStart
 func (service *NotificationPresenceService) Start() {
 	service.MyState = service.active()
-	service.applicationEventPublisher.PublishEvent(PresenceAnnounceRequested{}, false)
 }
 
 // @OnEvent
-// @InBackground
-func (service *NotificationPresenceService) Announce(requested PresenceAnnounceRequested) {
-	visible, failure := service.pageVisibility.Visible()
-	service.refresh(service.automaticState(visible, failure))
-}
-
-// @OnEvent
-// @InBackground
 func (service *NotificationPresenceService) DomainChanged(changed SessionDomainChanged) {
 	service.MyState = service.active()
 	service.DoNotDisturbUntil = ""
 	service.chosen = ""
+	service.Problem = ""
 	service.forgetOtherDomain()
-	service.Announce(PresenceAnnounceRequested{})
 }
 
 // @OnEvent
 // @InBackground
 func (service *NotificationPresenceService) Shown(changed VisibilityChanged) {
-	service.refresh(service.automaticState(changed.Visible, nil))
-	service.reloadWhenVisible(changed.Visible)
+	service.refresh(service.automaticState(changed.Visible))
 }
 
 // @OnEvent
 // @InBackground
 func (service *NotificationPresenceService) Load(requested PresenceWatchRequested) {
 	service.forgetOtherDomain()
-	service.watched = service.unionOf(requested.MemberIds)
 	presences, problem := service.api.Find(requested.MemberIds)
 	service.known = service.merged(presences)
 	service.LoadProblem = problem
@@ -156,18 +140,11 @@ func (service *NotificationPresenceService) sendUnlessQuiet(state string) string
 	return service.api.Announce(PresenceRequest{State: state})
 }
 
-func (service *NotificationPresenceService) automaticState(visible bool, failure error) string {
-	if failure == nil && !visible {
+func (service *NotificationPresenceService) automaticState(visible bool) string {
+	if !visible {
 		return service.idle()
 	}
 	return service.active()
-}
-
-func (service *NotificationPresenceService) reloadWhenVisible(visible bool) {
-	if !visible {
-		return
-	}
-	service.Load(PresenceWatchRequested{MemberIds: service.watched})
 }
 
 func (service *NotificationPresenceService) keepWhenSaved(problem string, name string, until string) {
@@ -207,12 +184,6 @@ func (service *NotificationPresenceService) merged(presences []Presence) map[str
 		known[presence.MemberId] = presence.State
 	}
 	return known
-}
-
-func (service *NotificationPresenceService) unionOf(memberIds []string) []string {
-	union := append(slices.Clone(service.watched), memberIds...)
-	slices.Sort(union)
-	return slices.Compact(union)
 }
 
 func (service *NotificationPresenceService) stateOrOffline(state string) string {

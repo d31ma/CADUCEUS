@@ -20,20 +20,6 @@ func (test *NotificationPresenceServiceTest) TestStartIsActive() {
 	Assert.Equals("active", service.MyState)
 }
 
-func (test *NotificationPresenceServiceTest) TestAnnounceSendsActiveWhileVisible() {
-	service := test.build("example.com")
-	service.Announce(PresenceAnnounceRequested{})
-	Assert.Equals("active", service.MyState)
-	Assert.Equals("", service.Problem)
-}
-
-func (test *NotificationPresenceServiceTest) TestAnnounceSendsIdleWhileHidden() {
-	service := test.build("example.com")
-	BrowserFakes{}.Answer("pageVisibility", "visible", false)
-	service.Announce(PresenceAnnounceRequested{})
-	Assert.Equals("idle", service.MyState)
-}
-
 func (test *NotificationPresenceServiceTest) TestShownFollowsThePage() {
 	service := test.build("example.com")
 	service.Shown(VisibilityChanged{Visible: false})
@@ -42,9 +28,9 @@ func (test *NotificationPresenceServiceTest) TestShownFollowsThePage() {
 	Assert.Equals("active", service.MyState)
 }
 
-func (test *NotificationPresenceServiceTest) TestAnnounceFailureIsKept() {
+func (test *NotificationPresenceServiceTest) TestShownFailureIsKept() {
 	service := test.build("broken.example")
-	service.Announce(PresenceAnnounceRequested{})
+	service.Shown(VisibilityChanged{Visible: false})
 	Assert.Equals("error", service.Problem)
 }
 
@@ -116,7 +102,6 @@ func (test *NotificationPresenceServiceTest) TestToggleMenuShowsTheEndTimes() {
 
 func (test *NotificationPresenceServiceTest) TestWatchRequestLoadsTheStatesOfMembers() {
 	service := test.watching()
-	Assert.Equals([]string{"m-2", "m-3", "m-x"}, service.watched)
 	Assert.Equals("active", service.stateOf("m-2"))
 	Assert.Equals("dnd", service.stateOf("m-3"))
 	Assert.Equals("offline", service.stateOf("m-x"))
@@ -127,15 +112,8 @@ func (test *NotificationPresenceServiceTest) TestWatchRequestLoadsTheStatesOfMem
 func (test *NotificationPresenceServiceTest) TestWatchRequestsAddUp() {
 	service := test.watching()
 	service.Load(PresenceWatchRequested{MemberIds: []string{"m-4"}})
-	Assert.Equals([]string{"m-2", "m-3", "m-4", "m-x"}, service.watched)
-	Assert.Equals("idle", service.stateOf("m-4"))
-}
-
-func (test *NotificationPresenceServiceTest) TestShownReloadsWatchedMembers() {
-	service := test.build("example.com")
-	service.watched = []string{"m-2", "m-3", "m-x"}
-	service.Shown(VisibilityChanged{Visible: true})
 	Assert.Equals("active", service.stateOf("m-2"))
+	Assert.Equals("idle", service.stateOf("m-4"))
 }
 
 func (test *NotificationPresenceServiceTest) TestLoadForgetsTheOtherDomain() {

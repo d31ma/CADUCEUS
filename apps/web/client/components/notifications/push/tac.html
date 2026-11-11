@@ -102,7 +102,7 @@
         <case :when="'error'">
           <div class="notify-problem grid justify-items-start gap-2 px-3 py-2">
             <p role="alert">Your email summary setting could not load. Check your connection, then try again.</p>
-            <w-btn variant="outlined" prepend-icon="refresh" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notificationPush.retrySettings()">Retry</w-btn>
+            <w-btn variant="outlined" prepend-icon="refresh" class="max-sm:min-h-11 pointer-coarse:min-h-11" on:click="notificationPush.loadSettings()">Retry</w-btn>
           </div>
         </case>
         <case :when="'session'">

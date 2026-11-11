@@ -10,7 +10,7 @@ func (test *NotificationPushServiceTest) build(domainId string) *NotificationPus
 func (test *NotificationPushServiceTest) loaded(permission any) *NotificationPushService {
 	service := test.build("example.com")
 	BrowserFakes{}.Answer("notifications", "permission", permission)
-	service.LoadSettings(NotificationSettingsLoadRequested{})
+	service.LoadSettings()
 	return service
 }
 
@@ -37,7 +37,7 @@ func (test *NotificationPushServiceTest) TestLoadSettingsReadsPermissionAndDelay
 
 func (test *NotificationPushServiceTest) TestLoadSettingsFailureShowsTheErrorState() {
 	service := test.build("broken.example")
-	service.LoadSettings(NotificationSettingsLoadRequested{})
+	service.LoadSettings()
 	Assert.Equals("error", service.SettingsStatus)
 }
 
@@ -84,13 +84,6 @@ func (test *NotificationPushServiceTest) TestCheckAgainReadsThePermission() {
 	Assert.Equals("on", service.Panel)
 }
 
-func (test *NotificationPushServiceTest) TestShownReadsThePermission() {
-	service := test.loaded("granted")
-	BrowserFakes{}.Answer("notifications", "permission", "denied")
-	service.Shown(VisibilityChanged{Visible: true})
-	Assert.Equals("blocked", service.Panel)
-}
-
 func (test *NotificationPushServiceTest) TestSendTestShowsANotification() {
 	service := test.loaded("granted")
 	service.SendTest()
@@ -113,13 +106,13 @@ func (test *NotificationPushServiceTest) TestChooseTheSameDelayAgainSendsNothing
 	Assert.Equals("", service.SaveProblem)
 }
 
-func (test *NotificationPushServiceTest) TestDomainChangedLoadsTheSettingsAgain() {
+func (test *NotificationPushServiceTest) TestDomainChangedClearsTheOldSettings() {
 	service := test.loaded("granted")
 	service.ChooseSummary(240)
 	service.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
-	Assert.Equals(30, service.SummaryMinutes)
+	Assert.Equals(0, service.SummaryMinutes)
 	Assert.IsTrue(!service.Saved)
-	Assert.Equals("ready", service.SettingsStatus)
+	Assert.Equals("loading", service.SettingsStatus)
 }
 
 func (test *NotificationPushServiceTest) TestChooseSummaryKeepsTheOldDelayWhenSavingFails() {
@@ -129,13 +122,6 @@ func (test *NotificationPushServiceTest) TestChooseSummaryKeepsTheOldDelayWhenSa
 	Assert.Equals(30, service.SummaryMinutes)
 	Assert.Equals("error", service.SaveProblem)
 	Assert.IsTrue(!service.Saved)
-}
-
-func (test *NotificationPushServiceTest) TestRetrySettingsShowsLoading() {
-	service := test.build("broken.example")
-	service.LoadSettings(NotificationSettingsLoadRequested{})
-	service.RetrySettings()
-	Assert.Equals("loading", service.SettingsStatus)
 }
 
 func (test *NotificationPushServiceTest) TestAnnounceShowsEachItemOnce() {

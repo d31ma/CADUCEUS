@@ -10,7 +10,7 @@ func (test *NotificationServiceTest) build(domainId string) *NotificationService
 func (test *NotificationServiceTest) loaded() *NotificationService {
 	service := test.build("example.com")
 	service.Start()
-	service.Load(NotificationLoadRequested{})
+	service.Reload()
 	return service
 }
 
@@ -54,11 +54,24 @@ func (test *NotificationServiceTest) TestLoadFailureShowsTheErrorState() {
 	Assert.Equals("error", service.Status)
 }
 
-func (test *NotificationServiceTest) TestRetryShowsLoadingAgain() {
+func (test *NotificationServiceTest) TestReloadShowsTheErrorState() {
 	service := test.build("broken.example")
-	service.Load(NotificationLoadRequested{})
-	service.Retry()
-	Assert.Equals("loading", service.Status)
+	service.Start()
+	service.Reload()
+	Assert.Equals("error", service.Status)
+}
+
+func (test *NotificationServiceTest) TestReloadReadsTheDevicePermission() {
+	service := test.loaded()
+	Assert.Equals("on", service.push.Panel)
+}
+
+func (test *NotificationServiceTest) TestChooseTabLoadsWhenNothingIsLoaded() {
+	service := test.build("example.com")
+	service.Start()
+	service.ChooseTab("dm")
+	Assert.Equals("ready", service.Status)
+	Assert.Equals(1, len(service.Days))
 }
 
 func (test *NotificationServiceTest) TestChooseTabShowsOnlyThatKind() {
@@ -122,28 +135,16 @@ func (test *NotificationServiceTest) TestMarkAllReadMarksEveryUnreadRow() {
 	Assert.Equals("", service.ActionProblem)
 }
 
-func (test *NotificationServiceTest) TestDomainChangedReloadsForTheNewDomain() {
+func (test *NotificationServiceTest) TestDomainChangedClearsTheOldDomain() {
 	service := test.loaded()
 	service.ChooseTab("email")
 	service.DomainChanged(SessionDomainChanged{DomainId: "example.com"})
-	Assert.Equals("ready", service.Status)
-	Assert.Equals("all", service.Tab)
-	Assert.IsTrue(service.known)
-	Assert.Equals(4, len(service.seen))
-}
-
-func (test *NotificationServiceTest) TestShownReloadsWhenThePageIsVisible() {
-	service := test.build("example.com")
-	service.Start()
-	service.Shown(VisibilityChanged{Visible: true})
-	Assert.Equals("ready", service.Status)
-}
-
-func (test *NotificationServiceTest) TestShownWhileHiddenDoesNotReload() {
-	service := test.build("example.com")
-	service.Start()
-	service.Shown(VisibilityChanged{Visible: false})
 	Assert.Equals("loading", service.Status)
+	Assert.Equals("all", service.Tab)
+	Assert.IsTrue(!service.known)
+	Assert.Equals(0, service.UnreadCount)
+	service.Reload()
+	Assert.Equals(3, service.UnreadCount)
 }
 
 func (test *NotificationServiceTest) TestNewItemWhileHiddenShowsOneSystemNotification() {

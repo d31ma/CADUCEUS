@@ -17,7 +17,7 @@ type SweepTrigger struct {
 
 func (trigger SweepTrigger) Configured(environment func(string) string) SweepTrigger {
 	tokens := oidc.ServiceTokensFactory{}.FromJson(environment(trigger.settingsVariable()))
-	return SweepTrigger{Tokens: tokens, Environment: environment, Client: &http.Client{Timeout: trigger.timeout()}}
+	return SweepTrigger{Tokens: tokens, Environment: environment, Client: SingleUseTransport{}.Client(trigger.timeout())}
 }
 
 func (trigger SweepTrigger) Fire() error {

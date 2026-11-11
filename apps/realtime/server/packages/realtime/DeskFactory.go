@@ -2,7 +2,6 @@ package realtime
 
 import (
 	"crypto/rand"
-	"net/http"
 	"time"
 
 	"mesail.dev/packages/oidc"
@@ -64,7 +63,7 @@ func (DeskFactory) ticketBook(storage Storage) TicketBook {
 }
 
 func (factory DeskFactory) pushes(settings Settings) ConnectionGateway {
-	return HttpConnectionGateway{BaseUrl: settings.GatewayUrl, Secret: settings.GatewaySecret, Client: &http.Client{Timeout: factory.pushTimeout()}}
+	return HttpConnectionGateway{BaseUrl: settings.GatewayUrl, Secret: settings.GatewaySecret, Client: SingleUseTransport{}.Client(factory.pushTimeout())}
 }
 
 func (DeskFactory) pushTimeout() time.Duration {

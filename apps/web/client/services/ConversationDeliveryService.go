@@ -12,7 +12,7 @@ func (service *ConversationDeliveryService) Lines(statuses []DeliveryStatus) []D
 
 func (service *ConversationDeliveryService) Summary(lines []DeliveryLine) DeliveryLine {
 	worst := service.worst(lines)
-	worst.StatusLabel = cmp.Or(service.problemLabel(worst), service.countedLabel(worst.StatusLabel, len(lines)))
+	worst.StatusLabel = cmp.Or(service.problemLabel(worst), service.countedLabel(worst, len(lines)))
 	return worst
 }
 
@@ -33,6 +33,7 @@ func (service *ConversationDeliveryService) line(status DeliveryStatus) Delivery
 		Status:       status.Status,
 		StatusLabel:  cmp.Or(state.StatusLabel, "Unknown"),
 		Tone:         cmp.Or(state.Tone, service.infoTone()),
+		Connector:    cmp.Or(state.Connector, service.forWord()),
 		Detail:       status.Detail,
 	}
 }
@@ -56,23 +57,23 @@ func (service *ConversationDeliveryService) problemLabel(worst DeliveryLine) str
 	if service.ranks()[worst.Tone] < service.ranks()[service.warningTone()] {
 		return ""
 	}
-	return worst.StatusLabel + " for " + worst.Recipient
+	return worst.StatusLabel + service.forWord() + worst.Recipient
 }
 
-func (service *ConversationDeliveryService) countedLabel(word string, count int) string {
+func (service *ConversationDeliveryService) countedLabel(worst DeliveryLine, count int) string {
 	if count <= service.onePerson() {
-		return word
+		return worst.StatusLabel
 	}
-	return word + " to " + strconv.Itoa(count) + " people"
+	return worst.StatusLabel + worst.Connector + strconv.Itoa(count) + " people"
 }
 
 func (service *ConversationDeliveryService) states() map[string]DeliveryLine {
 	return map[string]DeliveryLine{
-		"chat:pending":   {StatusLabel: "Sending", Tone: service.infoTone()},
-		"chat:delivered": {StatusLabel: "Delivered", Tone: service.okTone()},
-		"chat:seen":      {StatusLabel: "Seen", Tone: service.okTone()},
-		"email:queued":   {StatusLabel: "Queued", Tone: service.infoTone()},
-		"email:sent":     {StatusLabel: "Sent", Tone: service.okTone()},
+		"chat:pending":   {StatusLabel: "Sending", Tone: service.infoTone(), Connector: service.forWord()},
+		"chat:delivered": {StatusLabel: "Delivered", Tone: service.okTone(), Connector: service.toWord()},
+		"chat:seen":      {StatusLabel: "Seen", Tone: service.okTone(), Connector: service.byWord()},
+		"email:queued":   {StatusLabel: "Queued", Tone: service.infoTone(), Connector: service.forWord()},
+		"email:sent":     {StatusLabel: "Sent", Tone: service.okTone(), Connector: service.toWord()},
 		"email:retrying": {StatusLabel: service.retryingWord(), Tone: service.warningTone()},
 		"email:deferred": {StatusLabel: service.retryingWord(), Tone: service.warningTone()},
 		"email:bounced":  {StatusLabel: "Bounced", Tone: service.dangerTone()},
@@ -115,4 +116,16 @@ func (service *ConversationDeliveryService) warningTone() string {
 
 func (service *ConversationDeliveryService) dangerTone() string {
 	return "danger"
+}
+
+func (service *ConversationDeliveryService) forWord() string {
+	return " for "
+}
+
+func (service *ConversationDeliveryService) toWord() string {
+	return " to "
+}
+
+func (service *ConversationDeliveryService) byWord() string {
+	return " by "
 }

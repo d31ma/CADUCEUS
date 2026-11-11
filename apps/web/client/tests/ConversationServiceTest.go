@@ -21,6 +21,7 @@ func (test *ConversationServiceTest) build() *ConversationService {
 
 func (test *ConversationServiceTest) requests() *ConversationRequestService {
 	BrowserFakes{}.Answer("clock", "now", 1794340800000)
+	BrowserFakes{}.Answer("clock", "timeZone", "UTC")
 	accounts := &SessionAccountService{}
 	accounts.Add(Me{MemberId: "ana", DomainId: "example.com", DisplayName: "Ana Ruiz", PrimaryAddress: "ana@example.com"})
 	tokens := &SessionTokenService{tokens: map[string]SessionTokens{"example.com": {AccessToken: "access-1", ExpiresAtMs: 1900000000000}}}
@@ -44,6 +45,22 @@ func (test *ConversationServiceTest) TestStartIsIdle() {
 	service := test.build()
 	Assert.Equals("idle", service.State)
 	Assert.Equals(0, len(service.Messages))
+}
+
+func (test *ConversationServiceTest) TestOpenedShowsTimesInTheBrowserTimeZone() {
+	service := test.build()
+	BrowserFakes{}.Answer("clock", "timeZone", "America/New_York")
+	service.Opened(ConversationOpened{DomainId: "example.com", ConversationId: "cnv_general", Title: "general", Section: "channels", UnreadCount: 1})
+	Assert.Equals("04:00", service.Messages[0].Time)
+	Assert.Equals("09:05", service.Messages[1].Time)
+	Assert.Equals("Today", service.Messages[1].DayLabel)
+}
+
+func (test *ConversationServiceTest) TestOpenedShowsUniversalTimeWhenTheTimeZoneIsUnknown() {
+	service := test.build()
+	BrowserFakes{}.Answer("clock", "timeZone", "Mars/Olympus_Mons")
+	service.Opened(ConversationOpened{DomainId: "example.com", ConversationId: "cnv_general", Title: "general", Section: "channels", UnreadCount: 1})
+	Assert.Equals("14:05", service.Messages[1].Time)
 }
 
 func (test *ConversationServiceTest) TestOpenedLoadsTheFirstPageOldestFirst() {

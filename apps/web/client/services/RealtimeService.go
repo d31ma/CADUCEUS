@@ -4,7 +4,8 @@ type RealtimeService struct {
 	// @Needs
 	realtimeClient *RealtimeClient
 	// @Needs
-	token *ConversationTokenService
+	token                     *ConversationTokenService
+	applicationEventPublisher ApplicationEventPublisher
 }
 
 // @OnStart
@@ -16,12 +17,14 @@ func (service *RealtimeService) Start() {
 // @InBackground
 func (service *RealtimeService) Received(event RealtimeEvent) {
 	service.State = service.answerFor(event.Type)()
+	service.announceRefresh()
 }
 
 // @OnEvent({"replay":true})
 // @InBackground
 func (service *RealtimeService) DomainChanged(changed SessionDomainChanged) {
 	service.State = service.reconnect()
+	service.announceRefresh()
 }
 
 func (service *RealtimeService) answerFor(eventType string) func() string {
@@ -67,4 +70,8 @@ func (service *RealtimeService) stateConnecting() string {
 
 func (service *RealtimeService) authenticationType() string {
 	return "auth"
+}
+
+func (service *RealtimeService) announceRefresh() {
+	service.applicationEventPublisher.PublishEvent(ConversationRefreshed{Source: "realtime"}, false)
 }

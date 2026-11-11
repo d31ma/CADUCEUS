@@ -5,5 +5,6 @@ type DeliveryLine struct {
 	Status       string `json:"status"`
 	StatusLabel  string `json:"statusLabel"`
 	Tone         string `json:"tone"`
+	Connector    string `json:"connector"`
 	Detail       string `json:"detail"`
 }

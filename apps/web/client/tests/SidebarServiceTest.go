@@ -246,3 +246,9 @@ func (test *SidebarServiceTest) TestNewMessageClearsTheCurrentConversation() {
 	Assert.Equals("New message", sidebar.shell.Heading)
 	Assert.Equals("", sidebar.ViewMounted(ConversationViewMounted{Mounted: true}).ConversationId)
 }
+
+func (test *SidebarServiceTest) TestRefreshedCountsRenders() {
+	sidebar := test.loaded()
+	sidebar.Refreshed(ConversationRefreshed{Source: "conversation"})
+	Assert.Equals(1, sidebar.refreshes)
+}

@@ -4,6 +4,7 @@ type ConversationViewContext struct {
 	Section        string   `json:"section"`
 	UnreadCount    int      `json:"unreadCount"`
 	NowMs          float64  `json:"nowMs"`
+	TimeZone       string   `json:"timeZone"`
 	AllowedSenders []string `json:"allowedSenders"`
 	ShowQuoted     []string `json:"showQuoted"`
 	EditingId      string   `json:"editingId"`

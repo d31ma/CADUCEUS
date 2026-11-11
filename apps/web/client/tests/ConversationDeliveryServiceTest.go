@@ -103,7 +103,7 @@ func (test *ConversationDeliveryServiceTest) TestSummaryShowsTheWaitingWord() {
 		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "seen"},
 		DeliveryStatus{Recipient: "carol@outside.test", Channel: "email", Status: "queued"},
 	)
-	Assert.Equals("Queued to 2 people", summary.StatusLabel)
+	Assert.Equals("Queued for 2 people", summary.StatusLabel)
 	Assert.Equals("info", summary.Tone)
 }
 
@@ -115,4 +115,12 @@ func (test *ConversationDeliveryServiceTest) TestSummaryOfNoLinesIsEmpty() {
 	summary := test.summary()
 	Assert.Equals("", summary.StatusLabel)
 	Assert.Equals("", summary.Tone)
+}
+
+func (test *ConversationDeliveryServiceTest) TestSummarySaysSeenByPeople() {
+	summary := test.summary(
+		DeliveryStatus{Recipient: "bo@example.com", Channel: "chat", Status: "seen"},
+		DeliveryStatus{Recipient: "dee@example.com", Channel: "chat", Status: "seen"},
+	)
+	Assert.Equals("Seen by 2 people", summary.StatusLabel)
 }

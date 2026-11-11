@@ -53,12 +53,14 @@ func (service *ConversationService) Start() {
 // @InBackground
 func (service *ConversationService) Opened(opened ConversationOpened) {
 	service.openWhenCurrent(opened)
+	service.announceRefresh()
 }
 
 // @OnEvent({"replay":true})
 // @InBackground
 func (service *ConversationService) DomainChanged(changed SessionDomainChanged) {
 	service.resetWhenOtherDomain(changed.DomainId)
+	service.announceRefresh()
 }
 
 // @OnEvent
@@ -70,6 +72,7 @@ func (service *ConversationService) ComposeRequested(requested ConversationCompo
 // @InBackground
 func (service *ConversationService) Live(event RealtimeEvent) {
 	service.refreshWhenRelevant(event)
+	service.announceRefresh()
 }
 
 func (service *ConversationService) Retry() {
@@ -366,12 +369,14 @@ func (service *ConversationService) still(conversationId string, domainId string
 
 func (service *ConversationService) rebuild() {
 	now, _ := service.clock.NowMs()
+	zone, _ := service.clock.TimeZone()
 	service.Messages = service.views.Views(service.raw, ConversationViewContext{
 		MyAddress:      service.requests.MyAddress(),
 		DomainId:       service.DomainId,
 		Section:        service.Section,
 		UnreadCount:    service.unreadCount,
 		NowMs:          now,
+		TimeZone:       zone,
 		AllowedSenders: service.AllowedSenders[service.DomainId],
 		ShowQuoted:     service.ShowQuoted,
 		EditingId:      service.EditingId,
@@ -446,4 +451,8 @@ func (service *ConversationService) allTrue(conditions ...bool) bool {
 
 func (service *ConversationService) liveTypes() []string {
 	return []string{service.createdType(), "message.edited", "message.deleted", "reaction.changed"}
+}
+
+func (service *ConversationService) announceRefresh() {
+	service.applicationEventPublisher.PublishEvent(ConversationRefreshed{Source: "conversation"}, false)
 }

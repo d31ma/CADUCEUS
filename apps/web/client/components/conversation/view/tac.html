@@ -1,5 +1,6 @@
 <logic :if="conversation.state != 'idle'">
-  <div class="conversation-view flex min-h-full min-w-0 flex-col pb-[env(safe-area-inset-bottom)]">
+  <div class="conversation-view flex h-full min-w-0 flex-col-reverse overflow-y-auto overscroll-contain">
+  <div class="conversation-stack flex min-h-full min-w-0 flex-col pb-[env(safe-area-inset-bottom)]">
     <logic :if="conversation.state == 'ready' && conversation.problem != ''">
       <div class="view-problem sticky top-0 z-10 px-3 pt-2 sm:px-5">
         <w-alert type="error" :text="conversation.problem"></w-alert>
@@ -258,5 +259,6 @@
 
     <conversation-delete />
     <conversation-picker />
+  </div>
   </div>
 </logic>

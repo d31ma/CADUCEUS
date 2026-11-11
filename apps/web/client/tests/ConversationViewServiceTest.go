@@ -127,6 +127,36 @@ func (test *ConversationViewServiceTest) TestTimeAndDayComeFromTheCreationTime()
 	Assert.Equals("Today", view.DayLabel)
 }
 
+func (test *ConversationViewServiceTest) newYork() ConversationViewContext {
+	context := test.context()
+	context.TimeZone = "America/New_York"
+	return context
+}
+
+func (test *ConversationViewServiceTest) TestTimeAndDayUseTheLocalTimeZone() {
+	views := test.views(test.newYork(), test.mine("m2", "2026-11-10T14:05:00Z"), test.mine("m1", "2026-11-10T03:00:00Z"))
+	Assert.Equals("22:00", views[0].Time)
+	Assert.Equals("Yesterday", views[0].DayLabel)
+	Assert.Equals("09:05", views[1].Time)
+	Assert.Equals("Today", views[1].DayLabel)
+	Assert.Equals("Actions for the message from Ana Ruiz at 09:05", views[1].ActionsLabel)
+}
+
+func (test *ConversationViewServiceTest) TestLocalMidnightStartsANewDayAndBreaksTheGroup() {
+	views := test.views(test.newYork(), test.mine("m2", "2026-11-10T05:01:00Z"), test.mine("m1", "2026-11-10T04:58:00Z"))
+	Assert.Equals("Yesterday", views[0].DayLabel)
+	Assert.Equals("Today", views[1].DayLabel)
+	Assert.IsTrue(views[1].StartsDay)
+	Assert.IsTrue(!views[1].Grouped)
+}
+
+func (test *ConversationViewServiceTest) TestUniversalMidnightDoesNotBreakTheGroupInTheLocalTimeZone() {
+	views := test.views(test.newYork(), test.mine("m2", "2026-11-11T00:02:00Z"), test.mine("m1", "2026-11-10T23:58:00Z"))
+	Assert.Equals("Today", views[1].DayLabel)
+	Assert.IsTrue(!views[1].StartsDay)
+	Assert.IsTrue(views[1].Grouped)
+}
+
 func (test *ConversationViewServiceTest) TestFirstMessageOfEachDayStartsTheDay() {
 	views := test.views(test.context(),
 		test.mine("m3", "2026-11-10T09:01:00Z"),

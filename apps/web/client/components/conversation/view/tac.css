@@ -1,5 +1,14 @@
 .conversation-view {
   display: flex;
+  flex-direction: column-reverse;
+  height: 100%;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.conversation-stack {
+  display: flex;
   flex-direction: column;
   min-width: 0;
   min-height: 100%;
@@ -864,6 +873,9 @@ h3.block-heading {
   .hidden {
     display: none;
   }
+  .h-full {
+    height: 100%;
+  }
   .min-h-full {
     min-height: 100%;
   }
@@ -893,6 +905,9 @@ h3.block-heading {
   }
   .flex-col {
     flex-direction: column;
+  }
+  .flex-col-reverse {
+    flex-direction: column-reverse;
   }
   .flex-wrap {
     flex-wrap: wrap;
@@ -932,6 +947,12 @@ h3.block-heading {
   }
   .gap-y-1 {
     row-gap: var(--spacing, 0.25rem);
+  }
+  .overflow-y-auto {
+    overflow-y: auto;
+  }
+  .overscroll-contain {
+    overscroll-behavior: contain;
   }
   .px-2 {
     padding-inline: calc(var(--spacing, 0.25rem) * 2);

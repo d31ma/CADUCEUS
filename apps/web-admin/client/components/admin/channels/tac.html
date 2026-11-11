@@ -37,7 +37,7 @@
               <h2 id="channels-loading-title" class="card-title flex-1">Channels</h2>
               <span class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Loading channels&hellip;</span>
             </div>
-            <div aria-hidden="true"><w-skeleton-loader type="list-item-avatar-two-line@3" class="block px-2 py-2"></w-skeleton-loader></div>
+            <w-skeleton-loader type="list-item-avatar-two-line@3" class="block px-2 py-2"></w-skeleton-loader>
           </section>
         </case>
         <case :when="'ready'">
@@ -125,8 +125,7 @@
   </div>
 
   <logic :if="channelAddress.open">
-    <w-dialog open max-width="32rem" on:close="channelAddress.cancel()">
-      <span slot="title">{channelAddress.title}</span>
+    <w-dialog open max-width="32rem" :heading="channelAddress.title" heading-level="2" aria-describedby="channel-address-text" on:close="channelAddress.cancel()">
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
         <form method="dialog" class="contents" :aria-label="channelAddress.title" on:submit="channelAddress.saveWith($event.target.elements.local.value)">
           <div class="col-span-full grid gap-4">
@@ -144,10 +143,10 @@
             </logic>
             <div class="email-note flex items-start gap-2 px-3 py-2">
               <w-icon name="mail" class="icon-sm mt-0.5" aria-hidden="true"></w-icon>
-              <p>{channelAddress.mailText}</p>
+              <p id="channel-address-text">{channelAddress.mailText}</p>
             </div>
           </div>
-          <w-btn variant="flat" class="sm:col-start-3 sm:row-start-2" :loading="channelAddress.busy">Save</w-btn>
+          <w-btn variant="flat" type="submit" class="sm:col-start-3 sm:row-start-2" :loading="channelAddress.busy">Save</w-btn>
         </form>
         <w-btn variant="text" class="sm:col-start-2 sm:row-start-2" on:click="channelAddress.cancel()">Cancel</w-btn>
         <logic :if="channelAddress.editing">
@@ -158,11 +157,10 @@
   </logic>
 
   <logic :if="channelArchive.open">
-    <w-dialog open max-width="32rem" on:close="channelArchive.cancel()">
-      <span slot="title">{channelArchive.title}</span>
+    <w-dialog open max-width="32rem" :heading="channelArchive.title" heading-level="2" aria-describedby="channel-archive-text" on:close="channelArchive.cancel()">
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
         <div class="col-span-full grid gap-4">
-          <p>Archived channels are read-only and still searchable. Members can read old messages and files, but nobody can post. You can unarchive it later.</p>
+          <p id="channel-archive-text">Archived channels are read-only and still searchable. Members can read old messages and files, but nobody can post. You can unarchive it later.</p>
           <p class="meta">{channelArchive.addressNote}</p>
           <logic :if="channelArchive.problem != ''">
             <w-alert type="error">{channelArchive.problem}</w-alert>

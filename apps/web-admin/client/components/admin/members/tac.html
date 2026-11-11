@@ -27,7 +27,7 @@
 
         <form method="dialog" role="search" aria-label="Filter members" class="flex flex-wrap items-end gap-3" on:submit="memberList.searchWith($event.target.elements.query.value)">
           <w-text-field type="search" name="query" label="Search" placeholder="Name or address" prepend-inner-icon="search" autocomplete="off" hide-details class="min-w-0 flex-1 basis-56" :value="memberList.query"></w-text-field>
-          <w-btn variant="outlined" class="members-touch" :disabled="memberList.state == 'loading'">Search</w-btn>
+          <w-btn variant="outlined" type="submit" class="members-touch" :disabled="memberList.state == 'loading'">Search</w-btn>
         </form>
 
         <switch :value="memberList.state">
@@ -81,9 +81,7 @@
           <case default>
             <section class="members-box" aria-busy="true" aria-labelledby="members-loading-title">
               <div class="members-box-head flex flex-wrap items-center gap-3 px-4 py-3"><h2 id="members-loading-title" class="members-heading flex-1">Members</h2><p class="members-meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Loading members&hellip;</p></div>
-              <div aria-hidden="true" class="px-2 py-2">
-                <w-skeleton-loader type="list-item-avatar-two-line@3" class="block"></w-skeleton-loader>
-              </div>
+              <w-skeleton-loader type="list-item-avatar-two-line@3" class="block px-2 py-2"></w-skeleton-loader>
             </section>
           </case>
         </switch>

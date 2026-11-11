@@ -31,7 +31,7 @@
           <w-text-field label="Email or operator account" name="email" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana@example.com" :value="adminSession.address"></w-text-field>
           <w-text-field label="Password" name="password" type="password" autocomplete="current-password"></w-text-field>
           <w-text-field label="2-step code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one."></w-text-field>
-          <w-btn variant="flat" size="large" block :loading="adminSession.busy">Sign in</w-btn>
+          <w-btn variant="flat" type="submit" size="large" block :loading="adminSession.busy">Sign in</w-btn>
         </form>
         <p class="gate-meta">Forgot your password? Ask an admin of your domain to reset it.</p>
       </case>

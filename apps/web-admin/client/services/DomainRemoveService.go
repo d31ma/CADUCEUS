@@ -5,6 +5,7 @@ type DomainRemoveService struct {
 	Confirming   bool
 	DomainId     string
 	Name         string
+	Heading      string
 	ConfirmLabel string
 	Typed        string
 	Removing     bool
@@ -29,6 +30,7 @@ func (remove *DomainRemoveService) Start(domainId string, name string) {
 	remove.Confirming = true
 	remove.DomainId = domainId
 	remove.Name = name
+	remove.Heading = "Remove " + name + "?"
 	remove.ConfirmLabel = "Type " + name + " to confirm"
 	remove.forget()
 }

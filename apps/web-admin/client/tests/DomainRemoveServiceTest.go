@@ -23,6 +23,7 @@ func (test *DomainRemoveServiceTest) TestStartAsksToTypeTheName() {
 	remove := test.started("example.com")
 	Assert.Equals(true, remove.Confirming)
 	Assert.Equals("example.com", remove.Name)
+	Assert.Equals("Remove example.com?", remove.Heading)
 	Assert.Equals("Type example.com to confirm", remove.ConfirmLabel)
 	Assert.Equals("", remove.Typed)
 	Assert.Equals("", remove.NameProblem)

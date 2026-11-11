@@ -79,7 +79,7 @@
         <case default>
           <section class="panel" aria-labelledby="domains-loading-title" aria-busy="true">
             <div class="panel-head flex flex-wrap items-center gap-3 px-4 py-3"><h2 id="domains-loading-title" class="section-title flex-1">Domains</h2><span class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>Loading domains…</span></div>
-            <div aria-hidden="true"><w-skeleton-loader type="list-item-two-line@3" class="block px-2 py-2"></w-skeleton-loader></div>
+            <w-skeleton-loader type="list-item-two-line@3" class="block px-2 py-2"></w-skeleton-loader>
           </section>
         </case>
       </switch>
@@ -104,12 +104,11 @@
   <logic :if="domainAdd.open">
     <switch :value="domainAdd.step">
       <case :when="'added'">
-        <w-dialog open class="sheet-dialog" max-width="32rem" on:close="domainAdd.close()">
-          <span slot="title">Domain added</span>
+        <w-dialog open class="sheet-dialog" max-width="32rem" heading="Domain added" heading-level="2" aria-describedby="domain-added-text" on:close="domainAdd.close()">
           <div class="dialog-text grid gap-4">
             <div class="note note--ok flex items-start gap-3 px-4 py-3" role="status">
               <w-icon name="check" class="mt-0.5" aria-hidden="true"></w-icon>
-              <div class="grid min-w-0 gap-1">
+              <div class="grid min-w-0 gap-1" id="domain-added-text">
                 <p class="strong">{domainAdd.addedName} is added.</p>
                 <p>Its state is Pending. Mail is not accepted until MX and DKIM are OK.</p>
               </div>
@@ -133,11 +132,10 @@
         </w-dialog>
       </case>
       <case :when="'busy'">
-        <w-dialog open class="sheet-dialog" max-width="32rem" persistent hide-close>
-          <span slot="title">Add a domain</span>
+        <w-dialog open class="sheet-dialog" max-width="32rem" heading="Add a domain" heading-level="2" aria-describedby="domain-add-text" persistent hide-close>
           <div class="dialog-text grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
             <div class="col-span-full grid gap-4">
-              <p>Add a mail domain. It becomes its own messaging space, with its own members and channels.</p>
+              <p id="domain-add-text">Add a mail domain. It becomes its own messaging space, with its own members and channels.</p>
               <w-text-field label="Domain name" name="domain" class="mono" readonly :value="domainAdd.name" hint="Use the domain only, without www or @. Letters from any language are fine: bücher.example is saved as xn--bcher-kva.example." persistent-hint autocomplete="off" autocapitalize="none" spellcheck="false"></w-text-field>
               <p class="meta flex items-center gap-2" role="status"><w-progress-circular indeterminate size="16" aria-hidden="true"></w-progress-circular>{domainAdd.busyText}</p>
             </div>
@@ -147,12 +145,11 @@
         </w-dialog>
       </case>
       <case default>
-        <w-dialog open class="sheet-dialog" max-width="32rem" on:close="domainAdd.close()">
-          <span slot="title">Add a domain</span>
+        <w-dialog open class="sheet-dialog" max-width="32rem" heading="Add a domain" heading-level="2" aria-describedby="domain-add-text" on:close="domainAdd.close()">
           <div class="dialog-text grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto_auto]">
             <form method="dialog" class="contents" aria-label="Add a domain" on:submit="domainAdd.addWith($event.target.elements.domain.value)">
               <div class="col-span-full grid gap-4">
-                <p>Add a mail domain. It becomes its own messaging space, with its own members and channels.</p>
+                <p id="domain-add-text">Add a mail domain. It becomes its own messaging space, with its own members and channels.</p>
                 <logic :if="domainAdd.hasProblem">
                   <w-text-field label="Domain name" name="domain" class="mono" placeholder="example.net" :value="domainAdd.name" :error="domainAdd.problem" autocomplete="off" autocapitalize="none" spellcheck="false" autofocus></w-text-field>
                 </logic>
@@ -160,7 +157,7 @@
                   <w-text-field label="Domain name" name="domain" class="mono" placeholder="example.net" :value="domainAdd.name" hint="Use the domain only, without www or @. Letters from any language are fine: bücher.example is saved as xn--bcher-kva.example." persistent-hint autocomplete="off" autocapitalize="none" spellcheck="false" autofocus></w-text-field>
                 </logic>
               </div>
-              <w-btn variant="flat" class="sm:col-start-3 sm:row-start-2">Add domain</w-btn>
+              <w-btn variant="flat" type="submit" class="sm:col-start-3 sm:row-start-2">Add domain</w-btn>
             </form>
             <w-btn variant="text" class="sm:col-start-2 sm:row-start-2" on:click="domainAdd.close()">Cancel</w-btn>
           </div>

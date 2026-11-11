@@ -1,5 +1,6 @@
-// Mesail's icon set for DuVay (stroke icons on a 24 px grid). Registered before any component renders.
-import WIcons from 'DUVAY/icons.js';
+// Mesail's icon set for DuVay (stroke icons on a 24 px grid), registered as the "ms" set before any component renders.
+// This file sits next to DuVay's src/ folder when bundled; DuVay's icons.js publishes the registry as globalThis.WIcons.
+import './src/icons.js';
 
 class MesailIcons {
   static paths = {
@@ -63,8 +64,8 @@ class MesailIcons {
   };
 
   static register() {
-    WIcons.set('ms', { type: 'svg', viewBox: '0 0 24 24', paths: MesailIcons.paths });
-    WIcons.defaultSet = 'ms';
+    globalThis.WIcons.set('ms', { type: 'svg', viewBox: '0 0 24 24', paths: MesailIcons.paths });
+    globalThis.WIcons.defaultSet = 'ms';
   }
 }
 

@@ -1,13 +1,17 @@
 package mailin
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"testing"
 	"time"
 
+	"mesail.dev/packages/blobs"
+	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
 )
 
@@ -151,7 +155,7 @@ func testEnvironment(values map[string]string) func(string) string {
 
 func goodSettings() func(string) string {
 	application := `{"yon":{"outbox":{"producer":"mail-in","subscribers":[{"name":"messaging","url":"http://127.0.0.1:9/events"}],"retry":{"maxAttempts":2}}}}`
-	return testEnvironment(map[string]string{"YON_APPLICATION_JSON": application, "YON_SERVICE_TOKEN": "service-token"})
+	return testEnvironment(map[string]string{"YON_APPLICATION_JSON": application})
 }
 
 func fixedNow() time.Time {
@@ -214,4 +218,122 @@ func invalidField(err error) string {
 	invalid := Invalid{}
 	errors.As(err, &invalid)
 	return invalid.Field
+}
+
+type memoryBlobs struct {
+	objects map[string][]byte
+	failOn  string
+	signed  []blobs.DownloadTerms
+}
+
+func newBlobs() *memoryBlobs {
+	return &memoryBlobs{objects: map[string][]byte{}}
+}
+
+func (memory *memoryBlobs) failure(operation string) error {
+	if memory.failOn == operation {
+		return errors.New(operation + " failed")
+	}
+	return nil
+}
+
+func (memory *memoryBlobs) SignUpload(key blobs.Key, upload blobs.UploadTerms, expiresAt time.Time) (string, error) {
+	return "", errors.New("not used")
+}
+
+func (memory *memoryBlobs) SignDownload(key blobs.Key, download blobs.DownloadTerms, expiresAt time.Time) (string, error) {
+	memory.signed = append(memory.signed, download)
+	return "https://blobs.test/" + key.Path() + "?file=" + download.FileName, memory.failure("sign")
+}
+
+func (memory *memoryBlobs) Read(key blobs.Key) (io.ReadCloser, error) {
+	content, found := memory.objects[key.Path()]
+	if !found {
+		return nil, blobs.NotFound{Path: key.Path()}
+	}
+	return io.NopCloser(bytes.NewReader(content)), memory.failure("read")
+}
+
+func (memory *memoryBlobs) Write(key blobs.Key, body io.Reader, size int64) error {
+	if err := memory.failure("write"); err != nil {
+		return err
+	}
+	content, _ := io.ReadAll(body)
+	memory.objects[key.Path()] = content
+	return nil
+}
+
+func (memory *memoryBlobs) Copy(from blobs.Key, to blobs.Key) error {
+	if err := memory.failure("copy"); err != nil {
+		return err
+	}
+	content, found := memory.objects[from.Path()]
+	if !found {
+		return blobs.NotFound{Path: from.Path()}
+	}
+	memory.objects[to.Path()] = content
+	return nil
+}
+
+func (memory *memoryBlobs) Delete(key blobs.Key) error {
+	delete(memory.objects, key.Path())
+	return nil
+}
+
+type fakeDomains struct {
+	domains map[string]Domain
+	failure error
+	asked   []string
+}
+
+func (fake *fakeDomains) Domain(domainId string) (Domain, bool, error) {
+	fake.asked = append(fake.asked, domainId)
+	domain, found := fake.domains[domainId]
+	return domain, found, fake.failure
+}
+
+type fakeCallers struct {
+	domainId string
+}
+
+func (fake fakeCallers) Identify(authorization string) (oidc.Caller, error) {
+	if authorization == "" {
+		return oidc.Caller{}, errors.New("no token")
+	}
+	return oidc.Caller{DomainId: fake.domainId, Roles: []string{"Service"}}, nil
+}
+
+func activeDomains(names ...string) *fakeDomains {
+	domains := map[string]Domain{}
+	for _, name := range names {
+		domains[name] = Domain{DomainId: name, Name: name, State: "active"}
+	}
+	return &fakeDomains{domains: domains}
+}
+
+func handOffInbox(memory *memoryDocuments, store *memoryBlobs, domains Domains) Inbox {
+	inbox := testInbox(memory, outbox.NewRecordingPusher(), goodSettings())
+	inbox.HandOff = HandOff{Domains: domains, Blobs: store}
+	return inbox
+}
+
+func handOffEnvelope(senderKey string) Envelope {
+	envelope := testEnvelope("example.com", senderKey)
+	envelope.EnvelopeFrom = "bob@sender.test"
+	envelope.Headers.From = Mailbox{Name: "Bob", Address: "bob@sender.test"}
+	envelope.AuthResults = AuthResults{Handoff: true}
+	return envelope
+}
+
+func testMessageDesk(memory *memoryDocuments, store *memoryBlobs, domainId string) MessageDesk {
+	storage := memory.storage()
+	contents := ContentShelf{Storage: storage, Builder: ContentBuilder{Blobs: store}}
+	return MessageDesk{Callers: fakeCallers{domainId: domainId}, Book: InboundBook{Storage: storage}, Contents: contents, Blobs: store, LinkLife: 5 * time.Minute, Now: fixedNow}
+}
+
+func acceptedMessage(t *testing.T, memory *memoryDocuments, store *memoryBlobs, key string, raw string) string {
+	store.objects[key] = []byte(raw)
+	inboundId, err := testInbox(memory, outbox.NewRecordingPusher(), goodSettings()).Accept(testEnvelope("example.com", key))
+	check(t, err == nil, "accept failed")
+	return inboundId
 }

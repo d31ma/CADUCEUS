@@ -1,5 +1,6 @@
 import (
 	"os"
+	"time"
 
 	"mesail.dev/packages/mailin"
 )
@@ -31,4 +32,13 @@ func (test *WorkflowServiceTest) TestSettingsComeFromTheApplicationJson() {
 	Assert.Equals("messaging", settings.Subscribers[0].Name)
 	Assert.Equals(12, settings.Retry.MaxAttempts)
 	Assert.Equals("http://127.0.0.1:8104/api/v1/messaging/events", settings.Subscribers[0].URL)
+}
+
+func (test *WorkflowServiceTest) TestMessagesUseTheFiveMinuteLink() {
+	world := InboundTestSetup{}.World()
+	world.UseServices()
+	defer world.Cleanup()
+	desk := world.Workflows.Messages()
+	Assert.Equals(5*time.Minute, desk.LinkLife)
+	Assert.Equals("message.eml", desk.OriginalTerms().FileName)
 }

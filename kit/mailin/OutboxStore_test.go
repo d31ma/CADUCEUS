@@ -11,9 +11,9 @@ func seededStore(t *testing.T) (*memoryDocuments, OutboxStore) {
 	store := memory.store()
 	memory.storage().Ensure("inbound-raw-a")
 	store.Registry.Register("inbound-raw-a")
-	memory.storage().Insert("inbound-raw-a", OutboxPatch{}.From(outbox.Fields{PendingEvents: []string{}, DeadEvents: []string{}}))
-	memory.storage().Insert("inbound-raw-a", OutboxPatch{}.From(outbox.Fields{OutboxPending: 1}))
-	memory.storage().Insert("inbound-raw-a", OutboxPatch{}.From(outbox.Fields{OutboxPending: 1, OutboxDead: 1}))
+	memory.storage().Insert("inbound-raw-a", outbox.Fields{PendingEvents: []string{}, DeadEvents: []string{}})
+	memory.storage().Insert("inbound-raw-a", outbox.Fields{OutboxPending: 1, OutboxWaiting: true})
+	memory.storage().Insert("inbound-raw-a", outbox.Fields{OutboxPending: 1, OutboxDead: 1, OutboxWaiting: true, OutboxHasDead: true})
 	return memory, store
 }
 
@@ -30,7 +30,7 @@ func TestPendingStopsReadingAtTheLimit(t *testing.T) {
 	memory, store := seededStore(t)
 	memory.storage().Ensure("inbound-raw-b")
 	store.Registry.Register("inbound-raw-b")
-	memory.storage().Insert("inbound-raw-b", OutboxPatch{}.From(outbox.Fields{OutboxPending: 1}))
+	memory.storage().Insert("inbound-raw-b", outbox.Fields{OutboxPending: 1, OutboxWaiting: true})
 	memory.pageReads = map[string]int{}
 	limited, err := store.Pending(1)
 	check(t, err == nil && len(limited) == 1, "want one row")
@@ -42,7 +42,7 @@ func TestPendingReadsTheNextCollectionUntilTheLimit(t *testing.T) {
 	memory, store := seededStore(t)
 	memory.storage().Ensure("inbound-raw-b")
 	store.Registry.Register("inbound-raw-b")
-	memory.storage().Insert("inbound-raw-b", OutboxPatch{}.From(outbox.Fields{OutboxPending: 1}))
+	memory.storage().Insert("inbound-raw-b", outbox.Fields{OutboxPending: 1, OutboxWaiting: true})
 	pending, err := store.Pending(3)
 	check(t, err == nil && len(pending) == 3, "want three rows")
 	check(t, pending[2].Ref == outbox.Ref{Collection: "inbound-raw-b", Id: "D1"}, "want the row of the second collection")
@@ -50,7 +50,7 @@ func TestPendingReadsTheNextCollectionUntilTheLimit(t *testing.T) {
 
 func TestPendingIgnoresRowsWithoutTheFlag(t *testing.T) {
 	memory, store := seededStore(t)
-	memory.storage().Insert("inbound-raw-a", OutboxRow{OutboxPending: 1})
+	memory.storage().Insert("inbound-raw-a", OutboxRow{Fields: outbox.Fields{OutboxPending: 1}})
 	pending, err := store.Pending(10)
 	check(t, err == nil && len(pending) == 2, "want only the flagged rows")
 }
@@ -119,10 +119,11 @@ func TestSaveWritesTheFields(t *testing.T) {
 	check(t, err == nil && fields.OutboxPending == 0, "save failed")
 }
 
-func TestSaveSetsTheFlagsInOnePatch(t *testing.T) {
+func TestSaveWritesTheCodecFlagsInOnePatch(t *testing.T) {
 	memory, store := seededStore(t)
 	ref := outbox.Ref{Collection: "inbound-raw-a", Id: "D1"}
-	err := store.Save(ref, outbox.Fields{PendingEvents: []string{"e"}, DeadEvents: []string{"d"}, OutboxPending: 1, OutboxDead: 1})
+	fields, _ := outbox.Codec{}.Write(outbox.OutboxState{Pending: []outbox.PendingEvent{{}}, Dead: []outbox.DeadLetter{{}}})
+	err := store.Save(ref, fields)
 	row := memory.rows["inbound-raw-a"]["D1"]
 	check(t, err == nil && memory.patches == 1, "want one patch")
 	check(t, row["outboxWaiting"] == true && row["outboxHasDead"] == true, "want both flags set")

@@ -474,7 +474,12 @@ owns it; M3 uses it):
   `InboundContent{text, bodyFormat, blocks[], truncated, attachments[]:
   InboundAttachment{fileName, mediaType, size, blobKey, contentId?}}`.
   `messaging` reads it when it handles `email.received`, and stores the
-  blocks on the Message. `messaging` makes the blocks for chat messages
+  blocks on the Message. For an inline image of an email, `ImageRef.attachmentId`
+  is the `kit/blobs` key of the stored part (`<domainId>/attachment-<sha256 hex>`),
+  the same value as that part's `InboundAttachment.blobKey`. A message that
+  `kit/mime` cannot parse (malformed, or over its 25 MiB limit) answers empty
+  `blocks` and `attachments` with `truncated: true`, so the client offers the
+  original. `messaging` makes the blocks for chat messages
   from their Markdown with the same package.
 
 ## mail-in (SMTP, not HTTP)
@@ -516,6 +521,11 @@ owns it; M3 uses it):
     `active` (`GET /api/v1/directory/domains/{domainId}`). mail-in copies
     the blob into the recipient domain before it stores `InboundRaw`, so the
     stored `rawBlobKey` is always under the recipient domain.
+    The check uses a service token of the install-wide realm
+    `mesail-operators`, because the sender domain may not be hosted; an
+    unknown or inactive sender domain answers `400 invalid_request`
+    (field `envelopeFrom`), a directory failure `503`. The copy's key is
+    `<recipientDomain>/inbound-<sha256 hex of the sender key>`.
   - Errors: `400 invalid_request` (recipients in more than one domain, a
     `rawBlobKey` outside its owner domain, a hand-off From outside the
     sender domain, a size out of range), `503

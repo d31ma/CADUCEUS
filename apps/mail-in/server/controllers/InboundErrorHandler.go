@@ -9,6 +9,12 @@ func (handler *InboundErrorHandler) Invalid(failure *InvalidEnvelope) ApiError {
 }
 
 // @HandlesError
+// @ResponseStatus(401)
+func (handler *InboundErrorHandler) Refused(failure *Unauthenticated) ApiError {
+	return ApiError{Code: "unauthenticated", Message: failure.Error()}
+}
+
+// @HandlesError
 // @ResponseStatus(404)
 func (handler *InboundErrorHandler) Missing(failure *NotFound) ApiError {
 	return ApiError{Code: "not_found", Message: failure.Message}

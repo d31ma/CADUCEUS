@@ -3,7 +3,6 @@ package mailin
 import (
 	"time"
 
-	"mesail.dev/packages/collections"
 	"mesail.dev/packages/outbox"
 )
 
@@ -12,11 +11,16 @@ type Inbox struct {
 	Registry CollectionRegistry
 	Stager   EventStager
 	Outbox   OutboxDesk
+	HandOff  HandOff
 	Now      func() time.Time
 }
 
 func (inbox Inbox) Accept(envelope Envelope) (string, error) {
 	domainId, err := EnvelopeRules{}.Check(envelope)
+	if err != nil {
+		return "", err
+	}
+	envelope, err = inbox.HandOff.Received(envelope, domainId)
 	if err != nil {
 		return "", err
 	}
@@ -32,7 +36,7 @@ func (inbox Inbox) Accept(envelope Envelope) (string, error) {
 }
 
 func (inbox Inbox) Collection(domainId string) (string, error) {
-	collection := collections.CollectionName{}.ForDomain("inbound-raw", domainId)
+	collection := InboundBook{}.Collection(domainId)
 	err := inbox.Storage.Ensure(collection)
 	if err != nil {
 		return "", err
@@ -95,7 +99,6 @@ func (inbox Inbox) record(domainId string, envelope Envelope) InboundRaw {
 		FromAddress:   envelope.Headers.From.Address,
 		AuthResults:   envelope.AuthResults,
 		State:         inbox.AcceptedState(),
-		PendingEvents: []string{},
-		DeadEvents:    []string{},
+		Fields:        outbox.Fields{PendingEvents: []string{}, DeadEvents: []string{}},
 	}
 }

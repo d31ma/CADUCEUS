@@ -19,7 +19,7 @@ func (desk OutboxDesk) RunOnce() (outbox.Report, error) {
 	if err != nil {
 		return outbox.Report{}, err
 	}
-	return relay.RunOnce(desk.SweepSize())
+	return relay.RunWithin(desk.SweepSize(), desk.Budget())
 }
 
 func (desk OutboxDesk) Drain(ref outbox.Ref) {
@@ -58,6 +58,10 @@ func (desk OutboxDesk) Retry(request RetryRequest) error {
 
 func (OutboxDesk) SweepSize() int {
 	return 100
+}
+
+func (OutboxDesk) Budget() time.Duration {
+	return 20 * time.Second
 }
 
 func (desk OutboxDesk) relay() (outbox.Relay, error) {

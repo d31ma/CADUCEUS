@@ -27,3 +27,9 @@ func (test *InboundErrorHandlerTest) TestInvalidEnvelopeNamesTheField() {
 func (test *InboundErrorHandlerTest) TestStorageUnavailableNamesTheOperation() {
 	Assert.Equals("inbound storage failed: insert", (&StorageUnavailable{Operation: "insert"}).Error())
 }
+
+func (test *InboundErrorHandlerTest) TestRefusedAnswersUnauthenticated() {
+	answer := (&InboundErrorHandler{}).Refused(&Unauthenticated{})
+	Assert.Equals("unauthenticated", answer.Code)
+	Assert.Equals("the access token was refused", answer.Message)
+}

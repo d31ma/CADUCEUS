@@ -1,23 +1,44 @@
 import (
+	"cmp"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
 
+	"mesail.dev/packages/blobs"
 	"mesail.dev/packages/collections"
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/mailin"
+	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
 )
 
 // @TestSetup
 type InboundTestSetup struct {
-	Domain    string
-	Pusher    *outbox.RecordingPusher
-	Workflows *WorkflowService
-	Inbound   *InboundController
-	Outbox    *OutboxController
+	Domain      string
+	Sender      string
+	Retired     string
+	Other       string
+	Pusher      *outbox.RecordingPusher
+	Workflows   *WorkflowService
+	Inbound     *InboundController
+	Outbox      *OutboxController
+	server      *httptest.Server
+	realms      map[string]oidc.SigningRealm
+	lock        sync.Mutex
+	asked       []string
+	savedJson   string
+	savedTemp   string
+	tokenFolder string
+	blobFolder  string
 }
 
 func (InboundTestSetup) Configure(execution *BehaviorExecution) (*BehaviorConfiguration, error) {
@@ -109,6 +130,173 @@ func (world *InboundTestSetup) ifDocument(event DeadEvent, documentId string) []
 
 func (world *InboundTestSetup) Cleanup() {
 	world.Forget(world.Collection())
+	DataSource{}.DropCollection(mailin.ContentShelf{}.Collection(world.Domain))
+	world.stopServices()
+}
+
+func (world *InboundTestSetup) UseServices() {
+	world.Sender = "m1s-" + world.RandomText() + ".test"
+	world.Retired = "m1r-" + world.RandomText() + ".test"
+	world.Other = "m1o-" + world.RandomText() + ".test"
+	world.savedJson, world.savedTemp = os.Getenv("YON_APPLICATION_JSON"), os.Getenv("TMPDIR")
+	world.tokenFolder, _ = os.MkdirTemp("", "mail-in-realms-")
+	os.Setenv("TMPDIR", world.tokenFolder)
+	world.realms = map[string]oidc.SigningRealm{}
+	for _, name := range []string{world.Domain, world.Other, "mesail-operators"} {
+		realm, _ := oidc.SigningRealm{}.Started(name)
+		realm.Publish(time.Now())
+		world.realms[name] = realm
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/v1/directory/domains/{domainId}", world.directory)
+	mux.HandleFunc("POST /realms/{realm}/protocol/openid-connect/token", world.keycloak)
+	world.server = httptest.NewServer(mux)
+	world.writeSettings()
+}
+
+func (world *InboundTestSetup) writeSettings() {
+	application := map[string]map[string]any{}
+	world.Must(json.Unmarshal([]byte(world.savedJson), &application))
+	identity := world.realms[world.Domain].Settings
+	identity.Keycloak = world.server.URL + "/realms/{realm}/protocol/openid-connect"
+	settings := mailin.SettingsReader{Environment: os.Getenv}.MailIn()
+	settings.Directory = world.server.URL
+	world.blobFolder = cmp.Or(settings.Blobs.Folder, world.tokenFolder)
+	settings.Blobs = mailin.BlobSettings{Adapter: "local", Folder: world.blobFolder, Link: mailin.LinkSettings{Base: "https://mesail.test/blobs", Seconds: 300, Secret: cmp.Or(settings.Blobs.Link.Secret, "fixture-link-value")}}
+	application["yon"]["oidc"] = identity
+	application["yon"]["service"] = map[string]any{"client": map[string]string{"secret": "fixture-client-value"}}
+	application["yon"]["mailin"] = settings
+	text, _ := json.Marshal(application)
+	os.Setenv("YON_APPLICATION_JSON", string(text))
+}
+
+func (world *InboundTestSetup) stopServices() {
+	if world.server == nil {
+		return
+	}
+	world.server.Close()
+	os.Setenv("YON_APPLICATION_JSON", world.savedJson)
+	os.Setenv("TMPDIR", world.savedTemp)
+	for _, domainId := range []string{world.Domain, world.Sender, world.Retired} {
+		os.RemoveAll(filepath.Join(world.blobFolder, domainId))
+	}
+	os.RemoveAll(world.tokenFolder)
+}
+
+func (world *InboundTestSetup) keycloak(writer http.ResponseWriter, request *http.Request) {
+	realm := world.realms[request.PathValue("realm")]
+	json.NewEncoder(writer).Encode(map[string]any{"access_token": world.serviceToken(realm), "expires_in": 60})
+}
+
+func (world *InboundTestSetup) directory(writer http.ResponseWriter, request *http.Request) {
+	caller, _ := oidc.Configured().Identify(request.Header.Get("Authorization"))
+	domainId := request.PathValue("domainId")
+	world.lock.Lock()
+	world.asked = append(world.asked, domainId+" "+caller.DomainId)
+	world.lock.Unlock()
+	states := map[string]string{world.Sender: "active", world.Retired: "disabled"}
+	if states[domainId] == "" {
+		writer.WriteHeader(http.StatusNotFound)
+		return
+	}
+	json.NewEncoder(writer).Encode(mailin.Domain{DomainId: domainId, Name: domainId, State: states[domainId]})
+}
+
+func (world *InboundTestSetup) serviceToken(realm oidc.SigningRealm) string {
+	token, _ := realm.Token(oidc.TokenRequest{Subject: "service-account", RealmRoles: []string{"mesail-service"}, Audience: "mesail-api", AuthorizedParty: "mesail-service", ExpiresAt: time.Now().Unix() + 60})
+	return token
+}
+
+func (world *InboundTestSetup) Bearer(domainId string) string {
+	return "Bearer " + world.serviceToken(world.realms[domainId])
+}
+
+func (world *InboundTestSetup) Asked() []string {
+	world.lock.Lock()
+	defer world.lock.Unlock()
+	return append([]string{}, world.asked...)
+}
+
+func (world *InboundTestSetup) Blobs() blobs.Store {
+	settings := mailin.SettingsReader{Environment: os.Getenv}.MailIn()
+	return mailin.BlobStoreFactory{Environment: os.Getenv}.Store(settings.Blobs)
+}
+
+func (world *InboundTestSetup) WriteBlob(path string, content string) {
+	world.Must(world.Blobs().Write(mailin.BlobKeys{}.FromPath(path), strings.NewReader(content), int64(len(content))))
+}
+
+func (world *InboundTestSetup) ReadBlob(path string) string {
+	reader, err := world.Blobs().Read(mailin.BlobKeys{}.FromPath(path))
+	world.Must(err)
+	defer reader.Close()
+	content, _ := io.ReadAll(reader)
+	return string(content)
+}
+
+func (world *InboundTestSetup) DeleteBlob(path string) {
+	world.Must(world.Blobs().Delete(mailin.BlobKeys{}.FromPath(path)))
+}
+
+func (world *InboundTestSetup) HandOff(sender string) InboundEnvelope {
+	envelope := world.Envelope(sender + "/inbound-" + world.RandomText())
+	envelope.EnvelopeFrom = "bob@" + sender
+	envelope.Headers.From = MailboxAddress{Name: "Bob", Address: "bob@" + sender}
+	envelope.AuthResults = AuthResults{Handoff: true}
+	return envelope
+}
+
+func (world *InboundTestSetup) Accepted(raw string) string {
+	key := world.FreshKey()
+	world.WriteBlob(key, raw)
+	accepted, err := world.Inbound.PostMessage(world.Envelope(key))
+	world.Must(err)
+	return accepted.InboundId
+}
+
+func (world *InboundTestSetup) IsUnauthenticated(err error) bool {
+	var failure *Unauthenticated
+	return errors.As(err, &failure)
+}
+
+func (world *InboundTestSetup) InvalidField(err error) string {
+	failure := &InvalidEnvelope{}
+	errors.As(err, &failure)
+	return failure.Field
+}
+
+func (world *InboundTestSetup) HtmlMessage() string {
+	return strings.Join([]string{
+		"From: Dan <dan@outside.test>", "Subject: Plans", "MIME-Version: 1.0", `Content-Type: multipart/mixed; boundary="outer"`, "",
+		"--outer", `Content-Type: multipart/related; boundary="inner"`, "",
+		"--inner", "Content-Type: text/html; charset=utf-8", "",
+		`<p>Hello <b>Ana</b></p><img src="cid:logo@outside.test" alt="Logo">`,
+		"--inner", "Content-Type: image/png", "Content-ID: <logo@outside.test>", `Content-Disposition: inline; filename="logo.png"`, "Content-Transfer-Encoding: base64", "",
+		"iVBORw0KGgo=",
+		"--inner--",
+		"--outer", "Content-Type: application/pdf", `Content-Disposition: attachment; filename="plan.pdf"`, "Content-Transfer-Encoding: base64", "",
+		"JVBERi0xLjQK",
+		"--outer--", "",
+	}, "\r\n")
+}
+
+func (world *InboundTestSetup) TextMessage() string {
+	return "From: Dan <dan@outside.test>\r\nSubject: Lunch\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nLunch at noon?\r\n"
+}
+
+func (world *InboundTestSetup) ImageOf(content InboundContent) ImageRef {
+	images := []ImageRef{}
+	for _, block := range content.Blocks {
+		images = append(images, world.imageIn(block)...)
+	}
+	return append(images, ImageRef{})[0]
+}
+
+func (world *InboundTestSetup) imageIn(block Block) []ImageRef {
+	if block.Image == nil {
+		return []ImageRef{}
+	}
+	return []ImageRef{*block.Image}
 }
 
 func (world *InboundTestSetup) Forget(collection string) {

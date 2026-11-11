@@ -12,11 +12,11 @@ type OutboxStore struct {
 }
 
 func (store OutboxStore) Pending(limit int) ([]outbox.Document, error) {
-	return store.matching(OutboxRow{}.Waiting(), limit)
+	return store.matching(store.Storage.Where(outbox.Filters{}.Waiting()), limit)
 }
 
 func (store OutboxStore) Dead() ([]outbox.Document, error) {
-	return store.matching(OutboxRow{}.HasDead(), store.Storage.Everything())
+	return store.matching(store.Storage.Where(outbox.Filters{}.HasDead()), store.Storage.Everything())
 }
 
 func (store OutboxStore) Load(ref outbox.Ref) (outbox.Fields, error) {
@@ -32,7 +32,7 @@ func (store OutboxStore) Load(ref outbox.Ref) (outbox.Fields, error) {
 	if !found {
 		return outbox.Fields{}, Missing{Message: "no such outbox document"}
 	}
-	return row.Fields(), nil
+	return row.Fields, nil
 }
 
 func (store OutboxStore) Save(ref outbox.Ref, fields outbox.Fields) error {
@@ -40,7 +40,7 @@ func (store OutboxStore) Save(ref outbox.Ref, fields outbox.Fields) error {
 	if err != nil {
 		return err
 	}
-	return store.Storage.Replace(ref.Collection, ref.Id, OutboxPatch{}.From(fields))
+	return store.Storage.Replace(ref.Collection, ref.Id, fields)
 }
 
 func (store OutboxStore) matching(where map[string]any, limit int) ([]outbox.Document, error) {
@@ -73,7 +73,7 @@ func (store OutboxStore) documentsIn(collection string, where map[string]any, li
 func (OutboxStore) documents(collection string, rows []OutboxRow) []outbox.Document {
 	documents := []outbox.Document{}
 	for _, row := range rows {
-		documents = append(documents, outbox.Document{Ref: outbox.Ref{Collection: collection, Id: row.Id}, Fields: row.Fields()})
+		documents = append(documents, outbox.Document{Ref: outbox.Ref{Collection: collection, Id: row.Id}, Fields: row.Fields})
 	}
 	return documents
 }

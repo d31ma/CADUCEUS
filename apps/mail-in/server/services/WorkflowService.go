@@ -20,6 +20,10 @@ func (service *WorkflowService) Outbox() mailin.OutboxDesk {
 	return service.factory().Outbox(service.dataSource, service.page)
 }
 
+func (service *WorkflowService) Messages() mailin.MessageDesk {
+	return service.factory().Messages(service.dataSource, service.page)
+}
+
 func (service *WorkflowService) factory() mailin.DeskFactory {
 	return mailin.DeskFactory{Environment: os.Getenv, Pusher: service.pusher}
 }

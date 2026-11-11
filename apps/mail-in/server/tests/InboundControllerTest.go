@@ -1,7 +1,10 @@
 import (
 	"errors"
+	"strings"
+	"time"
 
 	"mesail.dev/packages/events"
+	"mesail.dev/packages/mailin"
 	"mesail.dev/packages/outbox"
 )
 
@@ -88,4 +91,116 @@ func (test *InboundControllerTest) TestPostMessagePushesTheEventToMessagingAtOnc
 	world.Must(events.PayloadReader{}.Read(pushed[0], &payload))
 	Assert.Equals(accepted.InboundId, payload.InboundId)
 	Assert.Equals(0, world.Stored(key).OutboxPending)
+}
+
+func (test *InboundControllerTest) TestAHandOffIsStoredUnderTheRecipientDomainAfterTheCopy() {
+	world := InboundTestSetup{}.World()
+	world.UseServices()
+	defer world.Cleanup()
+	envelope := world.HandOff(world.Sender)
+	world.WriteBlob(envelope.RawBlobKey, "raw hand-off")
+	first, err := world.Inbound.PostMessage(envelope)
+	second, again := world.Inbound.PostMessage(envelope)
+	copied := mailin.BlobKeys{}.HandOffCopy(world.Domain, envelope.RawBlobKey).Path()
+	Assert.IsTrue(err == nil && again == nil, "hand-off refused")
+	Assert.Equals(first.InboundId, second.InboundId)
+	Assert.Equals(copied, world.Stored(copied).RawBlobKey)
+	Assert.Equals("raw hand-off", world.ReadBlob(copied))
+	Assert.Equals(world.Sender+" mesail-operators", world.Asked()[0])
+}
+
+func (test *InboundControllerTest) TestAHandOffFromAnInactiveDomainIsRefused() {
+	world := InboundTestSetup{}.World()
+	world.UseServices()
+	defer world.Cleanup()
+	envelope := world.HandOff(world.Retired)
+	world.WriteBlob(envelope.RawBlobKey, "raw hand-off")
+	_, err := world.Inbound.PostMessage(envelope)
+	Assert.IsTrue(world.IsInvalid(err), "want InvalidEnvelope")
+	Assert.Equals("envelopeFrom", world.InvalidField(err))
+}
+
+func (test *InboundControllerTest) TestGetOriginalSignsADownloadForTheMessageDomain() {
+	world := InboundTestSetup{}.World()
+	world.UseServices()
+	defer world.Cleanup()
+	inboundId := world.Accepted(world.TextMessage())
+	download, err := world.Inbound.GetOriginal(world.Bearer(world.Domain), inboundId)
+	Assert.IsTrue(err == nil, "no download link")
+	Assert.IsTrue(strings.HasPrefix(download.Url, "https://mesail.test/blobs/"+world.Domain+"/inbound-"), "wrong link")
+	Assert.IsTrue(strings.Contains(download.Url, "message.eml"), "want the file name")
+	expiresAt, _ := time.Parse(time.RFC3339, download.ExpiresAt)
+	Assert.IsTrue(expiresAt.After(time.Now().Add(4*time.Minute)) && expiresAt.Before(time.Now().Add(6*time.Minute)), "want about five minutes")
+}
+
+func (test *InboundControllerTest) TestGetOriginalHidesTheMessageFromAnotherDomain() {
+	world := InboundTestSetup{}.World()
+	world.UseServices()
+	defer world.Cleanup()
+	inboundId := world.Accepted(world.TextMessage())
+	_, err := world.Inbound.GetOriginal(world.Bearer(world.Other), inboundId)
+	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
+}
+
+func (test *InboundControllerTest) TestGetOriginalRefusesABadToken() {
+	world := InboundTestSetup{}.World()
+	world.UseServices()
+	defer world.Cleanup()
+	_, err := world.Inbound.GetOriginal("Bearer not-a-token", "in_1")
+	Assert.IsTrue(world.IsUnauthenticated(err), "want Unauthenticated")
+}
+
+func (test *InboundControllerTest) TestGetContentConvertsAnHtmlEmailWithAnInlineImageAndAPdf() {
+	world := InboundTestSetup{}.World()
+	world.UseServices()
+	defer world.Cleanup()
+	inboundId := world.Accepted(world.HtmlMessage())
+	content, err := world.Inbound.GetContent(world.Bearer(world.Domain), inboundId)
+	Assert.IsTrue(err == nil, "no content")
+	Assert.Equals("email", content.BodyFormat)
+	Assert.Equals(2, len(content.Attachments))
+	Assert.Equals("logo@outside.test", content.Attachments[0].ContentId)
+	Assert.Equals(content.Attachments[0].BlobKey, world.ImageOf(content).AttachmentId)
+	Assert.Equals("plan.pdf", content.Attachments[1].FileName)
+	Assert.Equals("application/pdf", content.Attachments[1].MediaType)
+	Assert.Equals("%PDF-1.4\n", world.ReadBlob(content.Attachments[1].BlobKey))
+	Assert.Equals("Hello ", content.Blocks[0].Spans[0].Text)
+	Assert.IsTrue(content.Blocks[0].Spans[1].Bold, "want the bold span")
+}
+
+func (test *InboundControllerTest) TestGetContentConvertsAPlainTextEmail() {
+	world := InboundTestSetup{}.World()
+	world.UseServices()
+	defer world.Cleanup()
+	inboundId := world.Accepted(world.TextMessage())
+	content, err := world.Inbound.GetContent(world.Bearer(world.Domain), inboundId)
+	Assert.IsTrue(err == nil, "no content")
+	Assert.Equals("text", content.BodyFormat)
+	Assert.Equals("Lunch at noon?", content.Blocks[0].Spans[0].Text)
+	Assert.Equals(0, len(content.Attachments))
+}
+
+func (test *InboundControllerTest) TestASecondGetContentReadsTheStoredResult() {
+	world := InboundTestSetup{}.World()
+	world.UseServices()
+	defer world.Cleanup()
+	inboundId := world.Accepted(world.HtmlMessage())
+	first, err := world.Inbound.GetContent(world.Bearer(world.Domain), inboundId)
+	world.Must(err)
+	stored, err := world.Workflows.Messages().Book.Find(world.Domain, inboundId)
+	world.Must(err)
+	world.DeleteBlob(stored.RawBlobKey)
+	second, again := world.Inbound.GetContent(world.Bearer(world.Domain), inboundId)
+	Assert.IsTrue(again == nil, "the second call read the raw message")
+	Assert.Equals(len(first.Blocks), len(second.Blocks))
+	Assert.Equals(first.Attachments[1].BlobKey, second.Attachments[1].BlobKey)
+}
+
+func (test *InboundControllerTest) TestGetContentHidesTheMessageFromAnotherDomain() {
+	world := InboundTestSetup{}.World()
+	world.UseServices()
+	defer world.Cleanup()
+	inboundId := world.Accepted(world.TextMessage())
+	_, err := world.Inbound.GetContent(world.Bearer(world.Other), inboundId)
+	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
 }

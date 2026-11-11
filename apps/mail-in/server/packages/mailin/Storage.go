@@ -49,6 +49,13 @@ func (storage Storage) First(collection string, where map[string]any, limit int,
 	return storage.failure("decode", json.Unmarshal(encoded, target))
 }
 
+func (Storage) Where(filter any) map[string]any {
+	encoded, _ := json.Marshal(filter)
+	where := map[string]any{}
+	json.Unmarshal(encoded, &where)
+	return where
+}
+
 func (Storage) Everything() int {
 	return math.MaxInt
 }

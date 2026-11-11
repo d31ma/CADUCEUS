@@ -1,6 +1,9 @@
 package mailin
 
-import "mesail.dev/packages/outbox"
+import (
+	"mesail.dev/packages/ids"
+	"mesail.dev/packages/outbox"
+)
 
 type InboundRaw struct {
 	ID            string      `json:"id,omitempty"`
@@ -19,18 +22,13 @@ type InboundRaw struct {
 	AuthResults   AuthResults `json:"authResults"`
 	State         string      `json:"state"`
 	EventQueued   bool        `json:"eventQueued"`
-	PendingEvents []string    `json:"pendingEvents"`
-	DeadEvents    []string    `json:"deadEvents"`
-	OutboxPending int         `json:"outboxPending"`
-	OutboxDead    int         `json:"outboxDead"`
-	OutboxWaiting bool        `json:"outboxWaiting"`
-	OutboxHasDead bool        `json:"outboxHasDead"`
+	outbox.Fields
 }
 
 func (raw InboundRaw) WireId() string {
-	return "in_" + raw.ID
+	return ids.WireId{}.Add(InboundBook{}.wirePrefix(), raw.ID)
 }
 
 func (raw InboundRaw) OutboxFields() outbox.Fields {
-	return outbox.Fields{PendingEvents: raw.PendingEvents, DeadEvents: raw.DeadEvents, OutboxPending: raw.OutboxPending, OutboxDead: raw.OutboxDead}
+	return raw.Fields
 }

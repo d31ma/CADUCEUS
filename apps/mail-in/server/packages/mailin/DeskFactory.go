@@ -2,8 +2,11 @@ package mailin
 
 import (
 	"crypto/rand"
+	"net/http"
 	"time"
 
+	"mesail.dev/packages/blobs"
+	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
 )
 
@@ -15,13 +18,35 @@ type DeskFactory struct {
 func (factory DeskFactory) Inbox(documents Documents, pages PageReader) Inbox {
 	storage := Storage{Documents: documents, Pages: pages}
 	stager := EventStager{Settings: factory.settings(), Now: time.Now, Random: rand.Reader}
-	return Inbox{Storage: storage, Registry: CollectionRegistry{Storage: storage}, Stager: stager, Outbox: factory.Outbox(documents, pages), Now: time.Now}
+	return Inbox{Storage: storage, Registry: CollectionRegistry{Storage: storage}, Stager: stager, Outbox: factory.Outbox(documents, pages), HandOff: factory.handOff(), Now: time.Now}
 }
 
 func (factory DeskFactory) Outbox(documents Documents, pages PageReader) OutboxDesk {
 	storage := Storage{Documents: documents, Pages: pages}
 	store := OutboxStore{Storage: storage, Registry: CollectionRegistry{Storage: storage}}
 	return OutboxDesk{Store: store, Pusher: factory.pusher(), Settings: factory.settings(), Now: time.Now}
+}
+
+func (factory DeskFactory) Messages(documents Documents, pages PageReader) MessageDesk {
+	storage := Storage{Documents: documents, Pages: pages}
+	settings := factory.settings().MailIn()
+	store := factory.blobs()
+	contents := ContentShelf{Storage: storage, Builder: ContentBuilder{Blobs: store}}
+	linkLife := time.Duration(settings.Blobs.Link.Seconds) * time.Second
+	return MessageDesk{Callers: oidc.Configured(), Book: InboundBook{Storage: storage}, Contents: contents, Blobs: store, LinkLife: linkLife, Now: time.Now}
+}
+
+func (DeskFactory) Timeout() time.Duration {
+	return 30 * time.Second
+}
+
+func (factory DeskFactory) handOff() HandOff {
+	directory := Directory{Client: &http.Client{Timeout: factory.Timeout()}, BaseUrl: factory.settings().MailIn().Directory, Authorize: factory.settings().Authorize()}
+	return HandOff{Domains: directory, Blobs: factory.blobs()}
+}
+
+func (factory DeskFactory) blobs() blobs.Store {
+	return BlobStoreFactory{Environment: factory.Environment}.Store(factory.settings().MailIn().Blobs)
 }
 
 func (factory DeskFactory) settings() SettingsReader {
@@ -32,5 +57,5 @@ func (factory DeskFactory) pusher() outbox.Pusher {
 	if factory.Pusher != nil {
 		return factory.Pusher
 	}
-	return outbox.NewHTTPPusher(factory.settings().ServiceToken(), outbox.HTTPPusher{}.DefaultTimeout())
+	return outbox.NewDomainHTTPPusher(DomainTokens{Authorize: factory.settings().Authorize()}, outbox.HTTPPusher{}.DefaultTimeout())
 }

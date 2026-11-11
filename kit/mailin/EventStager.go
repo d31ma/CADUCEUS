@@ -33,14 +33,5 @@ func (EventStager) Producer() string {
 }
 
 func (EventStager) patch(fields outbox.Fields) EventPatch {
-	outboxPatch := OutboxPatch{}.From(fields)
-	return EventPatch{
-		PendingEvents: outboxPatch.PendingEvents,
-		DeadEvents:    outboxPatch.DeadEvents,
-		OutboxPending: outboxPatch.OutboxPending,
-		OutboxDead:    outboxPatch.OutboxDead,
-		OutboxWaiting: outboxPatch.OutboxWaiting,
-		OutboxHasDead: outboxPatch.OutboxHasDead,
-		EventQueued:   true,
-	}
+	return EventPatch{Fields: fields, EventQueued: true}
 }

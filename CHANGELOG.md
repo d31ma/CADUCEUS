@@ -220,6 +220,28 @@
   files are thin. `kit/textindex` holds word splitting, prefix matching,
   snippets and cursors.
 
+### Slice C2: channels
+
+- `apps/channels` lists, creates, joins, leaves, invites to and updates
+  (topic, archive, email address) the channels of the caller's domain,
+  stored per domain in FYLO (`channels-<domain key>`,
+  `channel-members-<domain key>`). Private channels and channels of other
+  domains answer `404`; an invite of a member of another domain is refused.
+- The workflow is the plain-Go package `kit/channels` (rule 8b): the two
+  controllers make one call into it, through `DataSource.Command` for FYLO.
+  `go test` covers it fully; the Yon tests drive every route with real
+  signed tokens and a real FYLO test root.
+- Each change stages its `channel.*` event in the changed document and
+  pushes it right after the write, with a service token from the realm of
+  the event's domain; `/api/v1/channels/outbox/*` (Service) sweeps, counts
+  waiting documents, lists dead letters and retries them, and a `@Schedule`
+  worker calls the sweep route every minute under `ty start` with a
+  `mesail-operators` token.
+- Invite checks and channel email addresses call directory
+  (`GET /api/v1/directory/members/{memberId}`,
+  `POST`/`DELETE /api/v1/directory/channel-addresses`) with the caller's
+  token, so directory decides the domain and keeps addresses unique.
+
 - Completed account-synchronized interface localization across 20 closed,
   persisted locale choices. A reproducible, checksum-pinned SMaLL-100 pipeline
   now catalogs 755 audited static interface literals for 19 non-English

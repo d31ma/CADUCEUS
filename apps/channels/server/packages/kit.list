@@ -1,3 +1,5 @@
 oidc
 events
 outbox
+collections
+channels

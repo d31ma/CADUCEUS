@@ -2,5 +2,37 @@
   "server": {
     "host": "127.0.0.1",
     "port": 8103
+  },
+  "oidc": {
+    "issuer": "http://127.0.0.1:8180/idp/realms/{realm}",
+    "jwks": "http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect/certs",
+    "audience": "mesail-api",
+    "keycloak": "http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect"
+  },
+  "outbox": {
+    "producer": "channels",
+    "subscribers": [
+      {
+        "name": "messaging",
+        "url": "http://127.0.0.1:8104/api/v1/messaging/events"
+      },
+      {
+        "name": "realtime",
+        "url": "http://127.0.0.1:8106/api/v1/realtime/events"
+      },
+      {
+        "name": "search",
+        "url": "http://127.0.0.1:8108/api/v1/search/events"
+      }
+    ]
+  },
+  "outgoing": {
+    "hosts": [
+      "127.0.0.1"
+    ]
+  },
+  "channels": {
+    "directoryurl": "http://127.0.0.1:8102",
+    "relayurl": "http://127.0.0.1:8103/api/v1/channels/outbox/relay"
   }
 }

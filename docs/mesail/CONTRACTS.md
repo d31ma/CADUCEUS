@@ -220,13 +220,51 @@ Channels belong to one domain. There is no workspace.
 | `POST /api/v1/channels/{channelId}/join` | SignedIn | - | `204` |
 | `POST /api/v1/channels/{channelId}/leave` | SignedIn | - | `204` |
 | `POST /api/v1/channels/{channelId}/invite` | SignedIn | `AddMembersRequest{memberIds[]}` | `204` |
-| `PATCH /api/v1/channels/{channelId}` | SignedIn; `DomainAdmin` for `emailAddress` and `archived` | `UpdateChannelRequest{topic?, emailAddress?, archived?}` | `Channel` |
+| `PATCH /api/v1/channels/{channelId}` | SignedIn; `topic` for a channel member or `DomainAdmin`; `archived` for the channel creator or `DomainAdmin`; `emailAddress` for `DomainAdmin` | `UpdateChannelRequest{topic?, emailAddress?, archived?}` | `Channel` |
 
 `Channel{channelId, name, topic?, visibility, emailAddress?, archived,
-conversationId}`. Invited members must be in the caller's domain; a member
-id from another domain answers `404`. A `PATCH` that sets `emailAddress` or
-`archived` without the `DomainAdmin` role answers `403 forbidden`. A channel
-`emailAddress` must be in the channel's domain.
+conversationId}`. `channelId` is `ch_<TTID>`; `conversationId` is
+`cnv_<the same TTID>`, and `messaging` creates that conversation when it
+receives `channel.created`.
+
+- Every route needs the `Member` or `DomainAdmin` role; a caller without
+  either (for example an Operator) answers `403 forbidden`.
+- A private channel the caller is not in, a channel of another domain, an
+  unknown id and an id of another kind all answer `404 not_found`.
+- `POST /api/v1/channels`: the name is 1 to 80 characters of `a-z`, `0-9`,
+  `-` and `_` (`400`, field `name`), `visibility` is `public` or `private`
+  (`400`, field `visibility`), `topic` has at most 250 characters (`400`,
+  field `topic`). A name already used in the domain answers `409 conflict`.
+  The creator becomes the first member.
+- `join` and `leave` are idempotent. `invite` takes 1 to 100 member ids
+  (`400`, field `memberIds`); a member id that is not in the caller's domain
+  answers `404` and adds nobody. Channels checks each id with directory's
+  `GET /api/v1/directory/members/{memberId}`, sending the caller's token.
+- An archived channel is read-only: `join`, `invite` and a `topic` change
+  answer `409 conflict`, unless the same `PATCH` sets `archived: false`.
+  A `PATCH` that archives an open channel may change its topic too.
+  `leave` still works.
+- A `PATCH` without the right for a field answers `403 forbidden`. A
+  channel `emailAddress` must be `local@<the channel's domain>` (`400`,
+  field `emailAddress`); an empty string removes it. Channels claims the
+  address with directory's `POST /api/v1/directory/channel-addresses` and
+  frees the old one with `DELETE /api/v1/directory/channel-addresses/{address}`,
+  both with the caller's token; an address that already belongs to a
+  member, alias or channel answers `409 duplicate`.
+- Events: `channel.created`, `channel.member.added`,
+  `channel.member.removed` and `channel.archived`, with the `kit/events`
+  payloads (EVENTS.md section 7). Each one is staged in the changed
+  document (outbox, slice I2) and pushed right after the write.
+- Outbox routes, `Allow(Service)`: `POST /api/v1/channels/outbox/relay`
+  runs one sweep of at most 25 documents or 20 seconds and answers
+  `SweepReport{documents, delivered, retried, deadLettered, more}` (`more`
+  is true when it stopped early); `GET
+  /api/v1/channels/outbox/pending` answers `OutboxCount{documents}` (documents with events still waiting, counted up to 100); `GET
+  /api/v1/channels/outbox/dead` answers `[]DeadEvent{collection, documentId,
+  eventId, type, subscriber, attempts, lastError, deadAt}`; `POST
+  /api/v1/channels/outbox/dead/requeue` takes `RetryRequest{collection,
+  documentId, eventId, subscriber}` and answers `204` (`404` for an
+  unknown collection, document or dead letter).
 
 ## messaging
 

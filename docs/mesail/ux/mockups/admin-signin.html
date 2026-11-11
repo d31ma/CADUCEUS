@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign in to Mesail admin</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#a1-login">Skip to the form</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span><span class="ms-tag">Admin</span></p></header>
+    <span></span>
+    <!-- Mockup: labelled states side by side. Each card is at most --ms-auth-card-max (26rem) wide. -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-auth-card-max)),1fr))]">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 1 · Admin app sign-in: the same one field">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 · Admin app sign-in: the same one field</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h1 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail admin</h1>
+              <p class="text-subtle short:hidden">Domain admins and Operators use the same username and password as in Mesail.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+
+              <w-text-field id="a1-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="a1-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="a1-password"></w-icon-btn></w-text-field>
+              <w-text-field id="a1-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 2 · Operator signs in with the username only (no domain: lands on Domains)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 · Operator signs in with the username only (no domain: lands on Domains)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail admin</h2>
+              <p class="text-subtle short:hidden">Domain admins and Operators use the same username and password as in Mesail.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate aria-busy="true">
+
+              <w-text-field id="a2-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain, or the whole install for an Operator." persistent-hint value="olu" active readonly required></w-text-field>
+              <w-text-field id="a2-password" type="password" label="Password" autocomplete="current-password" value="secretpassword" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="a2-password"></w-icon-btn></w-text-field>
+              <w-text-field id="a2-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+
+              <w-btn variant="filled" size="large" block class="min-h-control-lg" loading disabled>Signing in…</w-btn>
+              <p class="sr-only" role="status">Signing in…</p>
+
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 3 · Signed in, but not an admin of any domain">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 · Signed in, but not an admin of any domain</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">You need admin rights</h2>
+
+            </div>
+            <div class="grid gap-4">
+              <div class="flex items-start gap-3 rounded-lg bg-primary-container p-3 text-on-primary-container" role="status"><w-icon name="lock" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Eve Park is not an admin of any domain and is not an Operator. Ask an admin of your domain, or the Operator of this Mesail install.</p></div></div>
+              <w-btn variant="filled" size="large" block href="messenger.html" class="min-h-control-lg">Open Mesail</w-btn>
+              <w-btn variant="text" size="large" block class="min-h-control-lg">Sign out</w-btn>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Help and legal">
+        <ul class="flex gap-2">
+          <li><w-btn variant="text" size="small" href="#" class="">Help</w-btn></li>
+          <li><w-btn variant="text" size="small" href="#" class="">Privacy</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

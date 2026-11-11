@@ -206,3 +206,14 @@ w-chip .w-chip__content > slot { display: contents; }
   w-chip .ms-how { font-size: 0; gap: 0; padding: 0 0.3125rem; }
   w-chip .ms-how w-icon { --ms-icon-size: 0.875rem; }
 }
+
+/* Control sizes (TOKENS.md "Control sizes"): one scale for every DuVay control. With a mouse a target is at least
+ * --ms-control-sm (32 px); on touch screens and in windows under 768 px it is at least --ms-touch-min (44 px),
+ * the rule tests/responsive checks in the app. */
+.w-checkbox, .w-radio, .w-switch { min-height: var(--ms-control-sm); align-items: center; }
+@media (pointer: coarse), (max-width: 767.98px) {
+  .w-btn, .w-icon-btn { min-height: var(--ms-touch-min); }
+  .w-icon-btn { min-width: var(--ms-touch-min); }
+  .w-checkbox, .w-radio, .w-switch { min-height: var(--ms-touch-min); }
+  .w-text-field-control, .w-select-field { min-height: var(--ms-touch-min); }
+}

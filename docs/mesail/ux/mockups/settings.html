@@ -27,8 +27,6 @@
       <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<w-badge content="3" inline class="absolute -top-1 -right-1.5"></w-badge></a></li>
       <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="absolute -left-2.5 size-2 rounded-full bg-on-rail" aria-hidden="true"></span>La</a></li>
     </ul>
-    <div class="h-px w-8 bg-on-rail/20" role="presentation"></div>
-    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><w-icon name="plus"></w-icon></a>
     <div class="flex-1"></div>
     <a class="ms-domain-tile" href="settings-appearance.html" aria-label="Help and keyboard shortcuts" title="Help"><w-icon name="info"></w-icon></a>
   </nav>
@@ -185,7 +183,7 @@
           <!-- Account: password and 2-step sign-in change here; name is changed by an admin -->
           <section class="rounded-lg border border-border bg-surface" aria-labelledby="account-h">
             <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
-              <div class="min-w-0 flex-1"><h3 id="account-h" class="text-lg font-semibold">Account and sign-in</h3><p class="mt-0.5 text-sm text-subtle">How you sign in to example.com. Nobody can see your password, admins included.</p></div>
+              <div class="min-w-0 flex-1"><h3 id="account-h" class="text-lg font-semibold">Account and sign-in</h3><p class="mt-0.5 text-sm text-subtle">You sign in as <strong class="font-semibold">ana</strong> with one password for all your domains. Nobody can see your password, admins included.</p></div>
             </div>
             <div class="divide-y divide-divider">
               <div class="flex flex-col gap-3 px-4 py-4 @xl/page:flex-row @xl/page:items-center @xl/page:justify-between @xl/page:gap-6 @xl/page:px-5">
@@ -202,7 +200,7 @@
                 <div class="flex min-w-0 items-start gap-3">
                   <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="shield-check"></w-icon></span>
                   <div class="grid min-w-0 gap-0.5">
-                    <p class="flex flex-wrap items-center gap-2 font-semibold" id="totp-label">2-step sign-in <w-chip size="small" prepend-icon="check" inert>On</w-chip><span class="sr-only">: on</span></p>
+                    <p class="flex flex-wrap items-center gap-2 font-semibold" id="totp-label">2-step sign-in <span class="ms-tag ms-tag--ok"><w-icon name="check"></w-icon>On</span><span class="sr-only">: on</span></p>
                     <p class="text-xs text-subtle" id="totp-help">When you sign in, Mesail asks for a code from the authenticator app on your phone.</p>
                   </div>
                 </div>
@@ -211,26 +209,36 @@
                   <w-btn variant="text" color="danger" aria-haspopup="dialog" aria-describedby="totp-label" class="pointer-coarse:min-h-11">Turn off</w-btn>
                 </div>
               </div>
+              <div class="flex flex-col gap-3 px-4 py-4 @xl/page:flex-row @xl/page:items-center @xl/page:justify-between @xl/page:gap-6 @xl/page:px-5" id="default-domain">
+                <div class="flex min-w-0 items-start gap-3">
+                  <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="star"></w-icon></span>
+                  <div class="grid min-w-0 gap-0.5">
+                    <p class="font-semibold" id="default-domain-label">Default domain</p>
+                    <p class="text-xs text-subtle" id="default-domain-help">Opens when you sign in with ana. Sign in with ana@example.org to open another domain once.</p>
+                  </div>
+                </div>
+                <w-select label="Default domain" value="example.com" aria-describedby="default-domain-help" class="w-full flex-none @xl/page:w-64"><w-option value="example.com">example.com</w-option><w-option value="example.org">example.org</w-option><w-option value="lab.example.net">lab.example.net</w-option></w-select>
+              </div>
               <div class="flex min-w-0 items-start gap-3 px-4 py-4 @xl/page:px-5">
                 <span class="grid size-10 flex-none place-items-center rounded-md bg-surface-mid text-subtle"><w-icon name="user"></w-icon></span>
                 <div class="grid min-w-0 gap-0.5">
                   <p class="font-semibold">Name and personal details</p>
-                  <p class="text-xs text-subtle">An admin of example.com changes these. Changes show in Mesail the next time you sign in.</p>
+                  <p class="text-xs text-subtle">An admin changes your name. It is the same in all your domains. Your username ana never changes.</p>
                 </div>
               </div>
             </div>
-            <p class="border-t border-divider px-4 py-3 text-xs text-subtle @xl/page:px-5"><a class="text-accent underline" href="settings-security.html">See every state of password and 2-step sign-in (mockup)</a></p>
+            <div class="border-t border-divider px-2 py-2 @xl/page:px-3"><w-btn variant="text" size="small" href="settings-security.html" append-icon="chevron-right">Every state of password and 2-step sign-in (mockup)</w-btn></div>
           </section>
 
           <!-- Sessions -->
           <section class="rounded-lg border border-border bg-surface" aria-labelledby="sessions-h">
             <div class="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-divider px-4 py-4 @xl/page:px-5">
-              <div class="min-w-0 flex-1"><h3 id="sessions-h" class="text-lg font-semibold">Sessions</h3><p class="mt-0.5 text-sm text-subtle">Signed in to example.com on this browser since today, 08:55.</p></div>
+              <div class="min-w-0 flex-1"><h3 id="sessions-h" class="text-lg font-semibold">Sessions</h3><p class="mt-0.5 text-sm text-subtle">Signed in as ana on this browser since today, 08:55. This tab shows example.com.</p></div>
             </div>
             <div class="flex flex-col gap-3 px-4 py-4 @xl/page:flex-row @xl/page:items-center @xl/page:justify-between @xl/page:gap-6 @xl/page:px-5">
               <div class="grid min-w-0 gap-0.5">
                 <p class="font-semibold">Sign out of all devices</p>
-                <p class="text-xs text-subtle" id="signout-help">Signs you out of example.com on every phone, tablet and browser, this one too. Other devices stop within one minute. example.org and lab.example.net stay signed in.</p>
+                <p class="text-xs text-subtle" id="signout-help">Signs you out of Mesail on every phone, tablet and browser, this one too, in all your domains. Other devices stop within one minute.</p>
               </div>
               <w-btn variant="outlined" color="danger" prepend-icon="logout" aria-haspopup="dialog" aria-describedby="signout-help" class="flex-none self-start @xl/page:self-center pointer-coarse:min-h-11">Sign out everywhere</w-btn>
             </div>
@@ -247,13 +255,24 @@
                   <h2 id="signout-dialog-h" class="flex-1 text-xl font-semibold">Sign out of all devices?</h2>
                   <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
                 </div>
-                <p id="signout-dialog-desc">You will be signed out of example.com everywhere, this browser too. To use example.com again, sign in again.</p>
-                <p class="text-xs text-subtle">example.org and lab.example.net stay signed in.</p>
+                <p id="signout-dialog-desc">You will be signed out of Mesail everywhere, this browser too, in all your domains. To use Mesail again, sign in again.</p>
                 <div class="flex flex-wrap justify-end gap-2">
                   <w-btn variant="text" class="pointer-coarse:min-h-11">Cancel</w-btn>
                   <w-btn variant="filled" color="danger" prepend-icon="logout" class="pointer-coarse:min-h-11">Sign out everywhere</w-btn>
                 </div>
               </div>
+            </figure>
+
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Default domain: saved</figcaption>
+              <w-select label="Default domain" value="example.org" class="w-full @xl/page:w-64"><w-option value="example.com">example.com</w-option><w-option value="example.org">example.org</w-option></w-select>
+              <p class="flex items-center gap-1 text-xs text-success" role="status"><w-icon name="check" class="ms-icon-sm"></w-icon>Saved. Signing in with ana now opens example.org.</p>
+            </figure>
+
+            <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6">
+              <figcaption class="absolute -top-3 left-3 bg-surface px-2 text-xs font-bold uppercase tracking-wide text-subtle">Default domain: 404, no longer a member</figcaption>
+              <w-select label="Default domain" value="example.com" error="You are no longer a member of lab.example.net. Choose another domain." class="w-full @xl/page:w-64"><w-option value="example.com">example.com</w-option><w-option value="example.org">example.org</w-option></w-select>
+              <p class="text-xs text-subtle">The list reloads from your session, so lab.example.net is gone. Nothing was saved.</p>
             </figure>
 
             <figure class="relative m-0 grid gap-3 rounded-lg border-2 border-dashed border-outline p-4 pt-6">

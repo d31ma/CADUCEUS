@@ -1,0 +1,29 @@
+/* Admin app screens (apps/web-admin): only what Tailwind and DuVay cannot draw. Tokens only. */
+@layer components {
+  /* People and member lists: a real table from 48rem of page width; under it each row becomes a card with
+   * labelled lines, and the actions button stays in the top corner. */
+  .ms-rtable { width: 100%; border-collapse: collapse; font-size: var(--w-font-base); }
+  .ms-rtable th {
+    padding: var(--w-space-2) var(--w-space-4); border-bottom: 1px solid var(--w-divider); text-align: start;
+    font-size: var(--w-font-xs); font-weight: var(--w-font-weight-semibold); color: var(--w-text-subtle); white-space: nowrap;
+  }
+  .ms-rtable td { padding: var(--w-space-3) var(--w-space-4); border-bottom: 1px solid var(--w-divider); vertical-align: middle; }
+  .ms-rtable tbody tr:last-child td { border-bottom: 0; }
+  .ms-rtable tbody tr:hover { background: var(--w-surface-container-low); }
+  .ms-rtable__actions { width: 1px; white-space: nowrap; text-align: end; }
+
+  @container page (max-width: 47.99rem) {
+    .ms-rtable, .ms-rtable tbody, .ms-rtable tr, .ms-rtable td { display: block; }
+    .ms-rtable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .ms-rtable tbody tr { position: relative; padding: var(--w-space-3) var(--w-space-4); border-bottom: 1px solid var(--w-divider); }
+    .ms-rtable tbody tr:last-child { border-bottom: 0; }
+    .ms-rtable td { padding: var(--w-space-1) 0; border: 0; }
+    .ms-rtable td:first-child { padding-inline-end: calc(var(--ms-touch-min) + var(--w-space-2)); }
+    .ms-rtable td[data-label] { display: flex; align-items: baseline; gap: var(--w-space-3); }
+    .ms-rtable td[data-label]::before {
+      content: attr(data-label); flex: none; width: 6rem;
+      font-size: var(--w-font-xs); font-weight: var(--w-font-weight-semibold); color: var(--w-text-subtle);
+    }
+    .ms-rtable .ms-rtable__actions { position: absolute; top: var(--w-space-2); inset-inline-end: var(--w-space-2); width: auto; padding: 0; }
+  }
+}

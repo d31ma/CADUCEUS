@@ -1,9 +1,9 @@
 # Mesail UX specification
 
 - Status: Draft for implementation
-- Date: 2026-11-10
+- Date: 2026-11-10 (one login, ADR 0005: 2026-11-11)
 - Owner: Senior UX/UI Designer (Mesail rewrite)
-- Product spec: [../SPEC.md](../SPEC.md) (scenarios S1-S12, acceptance criteria AC-*)
+- Product spec: [../SPEC.md](../SPEC.md) (scenarios S1-S14, acceptance criteria AC-*; one login: AC-ID-1 to AC-ID-14)
 - Design tokens: [TOKENS.md](TOKENS.md)
 - Component inventory and Tac mapping: [COMPONENTS.md](COMPONENTS.md)
 - Mockups: [mockups/index.html](mockups/index.html) (open the file in a browser; add
@@ -31,20 +31,34 @@ presentation; open questions are listed in section 14.
 ## 2. Domains (the messaging space)
 
 Each hosted mail domain is its own messaging space (the user's rule). `example.com` and
-`example.org` are two separate spaces, even inside one organization.
+`example.org` are two separate spaces, even inside one organization. Since ADR 0005 a person has
+**one login** for all of them: the username is the email prefix (`ana`), the same in every domain.
 
-- **Rail (left edge, desktop and tablet):** one tile per domain the user is signed in to.
-  The tile shows two letters, a mention count or an unread dot. The current domain has a bar on
-  its left and an inverted tile. "+" signs in to another domain.
-- **Sidebar header:** the domain name with a menu: switch domain, sign in to another domain,
-  sign out of this domain, sign out of all domains. On narrow screens the rail is hidden and this
-  menu opens as a bottom sheet.
-- **Identity per domain:** Ana is `ana@example.com` in one space and `ana@example.org` in the
-  other. Settings, presence and notifications are per domain.
+- **One sign-in, many domains.** After sign-in, `Session.domains` lists every domain of the person.
+  The tab opens the default domain (or the domain of the full address typed at sign-in). A switch
+  needs no password and changes only the current tab; a second tab may show another domain.
+- **Rail (left edge, 960 px and wider):** one tile per domain in `Session.domains`. The tile shows two
+  letters, a mention count or an unread dot. The current domain has a bar on its left and an inverted
+  tile. There is no "+" tile: an admin adds a person to a domain, and the new domain appears by itself
+  within a minute (at the next refresh).
+- **Domain menu** (the domain name in the sidebar header; a bottom sheet under 600 px): "Your domains",
+  the **default domain first**, then the others in `Session.domains` order. Each row: tile, domain,
+  the address `ana@<domain>`, a **Default** tag, an **Admin** tag when `DomainChoice.admin` is true, and
+  the count. Then "Choose your default domain" (settings) and one **Sign out** ("Ends your session in
+  every domain"). No per-domain sign-in or sign-out any more.
+- **Switching** (`POST /identity/session/domain`): the chosen row shows a spinner and the other rows
+  are disabled; after the answer the header, rail, sidebar and address change, the tab opens a new
+  realtime connection, and a polite status says "Now in example.org." `404` (removed meanwhile): the
+  domain leaves the list with "You are no longer a member of example.org." A refresh that answers `401`
+  because the open domain was removed shows "You no longer have access to example.org" with buttons
+  for the other domains; when no switch succeeds, the sign-in form.
+- **Identity per domain:** Ana is `ana@example.com` in one space and `ana@example.org` in the other.
+  Her name, password and 2-step code are the same everywhere; presence and notifications are per domain.
 - **Who can be chatted with:** only members of the current domain. Anyone else (another hosted
   domain, or outside) gets email. The recipient chip, the profile card and the composer summary
   all say why: "Chat stays inside example.com. finn@example.org gets an email."
-- Mockups: `messenger.html`, `domain-switcher.html`, `cross-domain.html`.
+- Mockups: `messenger.html`, `domain-switcher.html`, `domain-switcher-mobile.html`,
+  `domain-switch-states.html`, `cross-domain.html`.
 
 ## 3. Layout
 
@@ -161,49 +175,100 @@ reviews and sends again). Mockup: `compose-errors.html`.
 
 ## 8. Sign-in (Mesail's own form)
 
-Changed on 2026-11-10 by the user's decision (relayed by slice F1): the browser never talks to
-Keycloak. Mesail shows its own form and posts it to the identity service, which checks it with
-Keycloak. Mesail still stores no password, TOTP secret or recovery code (AC-ID-5).
+The browser never talks to Keycloak. Mesail shows its own form and posts it to the identity service,
+which checks it with Keycloak (one realm, `mesail`). Mesail stores no password, TOTP secret or
+recovery code (AC-ID-5). Mockups: `signin.html`, `password-change-required.html`, `signed-out.html`,
+`session-expired.html`; the admin app: `admin-signin.html`.
 
-- **One card** (`signin.html`): Work email, Password (with a Show button), optional 2-step code
-  ("Only if your account uses one."; TOTP in v1, no passkeys), "Remember my email on this device"
-  (off by default, for shared computers), and **Sign in**. Recent domains below the form fill in
-  the email and move focus to Password. "Forgot your password? Ask an admin of your domain to
-  reset it."
-- **One answer for every failure**, so the form never reveals whether an account exists:
-  "The email, password or 2-step code is not right." The password field is cleared and focused.
-- **Too many tries:** "Too many tries. Wait a minute, then try again." The button stays disabled
-  until then. **Service down:** "We cannot reach sign-in right now. Try again in a minute."
-- **Sign in to another domain** (from the domain menu): the same card with the title
-  "Sign in to another domain", a line saying the user stays signed in to the current domain, and
-  a Cancel button.
-- **Sign-out** happens in place, per domain or for all domains (`signed-out.html`). The "session
-  ended" dialog keeps the draft (`session-expired.html`).
+- **One card** (`signin.html`): **Username or email address** (one field; `type="text"`,
+  `inputmode="email"`, `autocomplete="username"`, no auto-capitalization, placeholder "ana or
+  ana@example.com"), Password (with a Show button), optional 2-step code ("Only if your account uses
+  one."), "Remember my username on this device" (off by default), **Sign in**, and "Forgot your
+  password? Ask your admin to reset it."
+- **The hint under the field** is computed in the browser from the text only, so it never reveals
+  whether an account exists: empty "Your username, like ana, or your full address."; a username
+  "Opens your default domain."; a full address "Opens example.org.". The browser trims the text; the
+  server lowercases it (`ANA` works).
+- **Check before sending:** an empty field, or text that ends in `@`, shows "Type your username, like
+  ana, or your full address, like ana@example.com." Nothing else is checked in the browser.
+- **401, one answer for every failure** (unknown username, wrong password, wrong code): "The username,
+  password or 2-step code is not right. Check them and try again." The password field is cleared and
+  focused.
+- **403 `not_a_member`** (right password, an address in a domain the person is not in): a warning box
+  "You are not a member of partner.test" with **Sign in as ana** (sends the same form again with the
+  username only) and **Change the address**. The code field is cleared, because Keycloak does not take
+  the same code twice.
+- **403 `no_domain`** (right password, no domain, not an Operator): a card "No domain yet": "Your
+  password is right, but your account is not in any domain yet. An admin adds you to a domain. Then sign
+  in again." and **Back to sign-in**. No session exists.
+- **Too many tries (429):** "Too many tries. Wait a minute, then try again." The button stays disabled
+  until then. **Service down (503 or no answer):** "We cannot reach sign-in right now. Try again in a minute."
+- **Back on this device:** with "Remember my username", the next visit says "Welcome back", fills the
+  field and focuses Password, with "Not ana? Use another username".
+- **Forced password change** (`Session.mustChangePassword`, AC-ID-9): only
+  `password-change-required.html` shows until the person saves: "Choose your own password", the
+  password from the admin, a new password, **Save and continue** (`POST /identity/password`, then the
+  default domain) and **Sign out**. `400 password_policy` shows the server's rule under the new password.
+- **Operator with no domain** (session domain `*`, AC-ID-14) who opens the messenger sees "Your account
+  has no domain" with **Open Mesail admin** (`domain-switch-states.html`).
+- **Sign-out** ends the one Keycloak session, so every domain and every tab of that session signs out
+  (`signed-out.html`). The "session ended" dialog keeps the draft (`session-expired.html`).
 - Connection banners use one wording everywhere: "Reconnecting… New messages may be late." with
   the button **Try now**.
 
 ## 9. Settings and admin
 
-- **Settings** (per domain): profile (name and password are managed by the domain admin; Mesail
-  shows them read-only), notifications (push permission states, email summary delay, do-not-disturb schedule),
+- **Settings:** profile (the name is changed by an admin and is the same in every domain; the username
+  never changes), notifications (push permission states, email summary delay, do-not-disturb schedule),
   email (send-from aliases, signature, remote images, Cc default), appearance (DuVay themes light,
-  dark, auto, high contrast; density; text size; motion).
-- **Admin** (role `mesail-admin`, checked by the server; the UI only hides entry points):
-  domains with DNS setup and checks, DKIM rotation, members (managed in Keycloak), channel email
-  addresses, mail queue and suppression list. A user without the role sees a plain "You need admin
-  rights" page.
-- Mockups: `settings*.html`, `admin-*.html`.
+  dark, auto, high contrast; density; text size; motion). Notifications and email settings are per
+  domain; appearance is per device; the account is one for every domain.
+- **Default domain** (`settings.html#default-domain`, `PUT /directory/me/default-domain`): a select of
+  the person's domains, "Opens when you sign in with ana." Saved: "Saved. Signing in with ana now opens
+  example.org." `404`: "You are no longer a member of lab.example.net. Choose another domain."
 - **Account security** (SPEC AC-ID-7, AC-ID-8; `settings.html`, `settings-security.html`): the
   "Account and sign-in" card has a **Password** row ("Change password") and a **2-step sign-in** row
   (status from `GET /api/v1/identity/totp`: On or Off; "Turn on", or "Set up on a new phone" and
   "Turn off"). Each opens a dialog (full screen under 600 px).
   - Change password: current password, new password (Show toggles, no repeat field), 2-step code
     when on. One message for a wrong password or code; the server's rule text for `password_policy`.
-    Success keeps this session and says other devices were signed out.
+    Success keeps this session and says other devices were signed out. It is the password for every domain.
   - Turn on: three steps (confirm password; scan the QR code or type the key, grouped by 4 with Copy;
     type the 6-digit code). "Set up on a new phone" also asks for the current code in step 1.
-    No recovery codes: "If you lose your phone, ask an admin of example.com to reset 2-step sign-in."
+    No recovery codes: "If you lose your phone, ask your admin to reset 2-step sign-in."
   - Turn off: password and code, with the warning "Without it, anyone with your password can sign in."
+- **Admin app** (`apps/web-admin`, its own shell: a rail of the domains the person administers plus a
+  "Whole install" tile for Operators; a menu with **Install** (Domains, People; Operators only) and
+  **the domain** (Domain, Members, Channels; its admins)). The server checks every role; the UI only
+  hides entry points. Sign-in uses the same one-field form (`admin-signin.html`); a person who is
+  neither an admin nor an Operator sees "You need admin rights". The older admin mockups
+  (`admin-domains.html`, `admin-domain-*.html`, `admin-channels.html`, `admin-mail.html`) show the same
+  pages inside the messenger shell; build them in the admin shell.
+  - **Members** (`admin-members.html`, `admin-members-states.html`): find, **Add member**, a table of
+    member (name and username), address, role (Admin tag) and a row menu: role in the domain (Member or
+    Domain admin), account actions (Reset password, Remove 2-step code, Change name, Turn off account:
+    they change the person in every domain), and Remove from the domain. Under 48rem of page width each
+    row is a card. "Only you" and "no match" states offer Add member.
+  - **Add member** (`admin-member-add.html`, AC-ID-12): step 1 asks only the username (the field shows
+    `@example.com` after it) and "Make this person an admin". An existing person is added as they are:
+    "eve already had a Mesail account ... Mesail did not ask her first." A new username answers
+    `400 invalid_request` with field `displayName`; then step 2 asks a display name and a first password
+    ("Give it to Dan in person or by phone"). Errors: prefix rules, a role name, `409 duplicate` (alias or
+    channel address uses it), already in the list (checked in the browser), `password_policy`.
+  - **Member actions** (`admin-member-actions.html`): remove (lists what happens: access ends within a
+    minute, mail refused, messages and account stay, the username stays theirs), `409 last_admin`
+    ("example.com needs an admin ... Make another member an admin first."), reset password (sets
+    `mustChangePassword`, signs out everywhere), remove 2-step code, turn off, change name.
+  - **Who may change an account** (AC-ID-13): an Operator, or an admin of **every** domain of the person.
+    Today `MemberSummary` does not say whether that holds, so the menu always offers account actions and
+    a `403` opens "You cannot change Eve Park's account: Eve Park is also a member of a domain you do not manage."
+  - **People** (`admin-people.html`, Operators only): find by name or username, filter by state, each
+    person's domains with an admin mark, state (Active, Turned off, Operator, Deleted), and actions;
+    **Delete person** asks to type the username and says "The username dan is never given to anyone else."
+  - **First admin of a domain** (`admin-domain-first-admin.html`, S11): after DNS, the domain page asks
+    "Name the first admin of example.org" with the same username flow (`POST
+    /directory/domains/{domainId}/members` with `admin: true`).
+- **Mockups:** `settings*.html`, `admin-*.html`.
 
 ## 10. Accessibility checklist (AC-UI-2)
 
@@ -353,15 +418,18 @@ Questions from the screen work (product owner to decide; none blocks the first s
   send a new email copy of the same message (mockup) or post a new message? Warn about repeated
   bounces once per address or once per message?
 - **Sign-in.** Are drafts kept on the device or on the server, and does sign-out delete them? Who
-  turns a domain off: the operator or the domain admin? Do admins still open the Keycloak console from
-  `admin-members.html` ("Open Keycloak"), or does the admin app manage members through the identity
-  service? (Resolved: people change their own password and 2-step code in Mesail's settings, AC-ID-7/8.)
+  turns a domain off: the operator or the domain admin? (Resolved: people change their own password
+  and 2-step code in Mesail's settings, AC-ID-7/8; admins manage members in the admin app through
+  `directory`, never in the Keycloak console, ADR 0005.)
+- **One login (for mesail-arch).** (a) A `MemberSummary.accountManaged` flag on the admin routes would
+  let the members menu disable account actions up front instead of answering `403` (AC-ID-13). (b) After
+  a refresh answers `401` because the open domain was removed, may the same `sessionKey` still switch to
+  another domain (`POST /session/domain`)? The mockup tries it, then falls back to sign-in.
 - **Settings.** Does the job title come from Keycloak, like the name? Is "Always show images from
   people I have emailed" allowed (AC-IN-5 speaks of one sender at a time)? Is auto-reply out of the
   first release (the mockup shows it as "Later release")?
 - **Search.** Do People hits match names and addresses only? Are recent searches kept on the device?
-- **Admin.** Does "change role" write to Keycloak through its admin API (mockup) or only link out?
-  Is the suppression list per domain (expected, now that the domain is the tenant)? Is mail to an
+- **Admin.** Is the suppression list per domain (expected, now that the domain is the tenant)? Is mail to an
   archived channel's address refused (mockup) or accepted? Who can archive and unarchive? What
   happens to a turned-off domain (mockup: mail refused, sign-in blocked, messages kept)? When can
   the old DKIM record go (mockup: after 7 days)?

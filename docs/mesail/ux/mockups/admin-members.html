@@ -3,190 +3,106 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mesail mockup: Admin, members of example.com</title>
+<title>Mesail admin mockup: Members</title>
 <link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/admin.css">
 <script src="assets/vendor/duvay-mesail.js" defer></script>
 <script src="assets/mockup.js" defer></script>
 </head>
 <body class="bg-surface text-text">
 <a class="ms-skip-link" href="#admin-content">Skip to admin content</a>
 
-<!-- App shell without a right pane. Under 600 px one pane shows (data-pane); 600 px: list + page; 960 px: + domain rail;
-     1920 and 2560 px: wider sidebar. -->
-<div class="group/app relative grid h-dvh overflow-hidden
-  grid-cols-1 grid-rows-[minmax(0,1fr)_auto]
-  sm:grid-rows-1 sm:grid-cols-[17rem_minmax(0,1fr)]
+<!-- Admin app shell (apps/web-admin). Under 600 px one pane shows (data-pane: list = the admin menu, main = the page);
+     600 px: menu + page; 960 px: + the rail of domains the person administers; 1920 and 2560 px: wider menu. -->
+<div class="group/app relative grid h-dvh overflow-hidden grid-cols-1
+  sm:grid-cols-[17rem_minmax(0,1fr)]
   md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
   xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
   2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main">
 
-  <!-- Domain rail (960 px and up) -->
-  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Domains">
-    <ul class="flex flex-col gap-2">
-      <li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current domain">Ex</a></li>
-      <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<w-badge content="3" inline class="absolute -top-1 -right-1.5"></w-badge></a></li>
-      <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="absolute -left-2.5 size-2 rounded-full bg-on-rail" aria-hidden="true"></span>La</a></li>
-    </ul>
-    <div class="h-px w-8 bg-on-rail/20" role="presentation"></div>
-    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><w-icon name="plus"></w-icon></a>
-    <div class="flex-1"></div>
-    <a class="ms-domain-tile" href="settings-appearance.html" aria-label="Help and keyboard shortcuts" title="Help"><w-icon name="info"></w-icon></a>
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Admin domains">
+    <ul class="flex flex-col gap-2"><li><a class="ms-domain-tile" href="#" aria-current="true" title="example.com" aria-label="example.com, current">Ex</a></li></ul>
   </nav>
 
-  <!-- Sidebar: the Admin section shows only for users with an admin role -->
-  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Conversations and admin in example.com">
-    <header class="flex items-center gap-1 min-h-13 short:min-h-11 safe-t safe-l pl-2 pr-2 border-b border-divider drag-region" style="--ms-edge: 0.5rem">
-      <w-btn variant="text" class="no-drag font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.com</w-btn>
-      <span class="flex-1"></span>
-      <w-icon-btn class="no-drag" icon="edit" aria-label="New message" title="New message (N)"></w-icon-btn>
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Admin menu">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l pl-4 pr-2 border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <p class="flex min-w-0 flex-1 items-center gap-2 font-bold"><w-icon name="shield" class="ms-icon-sm"></w-icon><span class="truncate">Mesail admin</span></p>
     </header>
-    <div class="px-3 py-2">
-      <button type="button" class="flex w-full items-center gap-2 min-h-9 pointer-coarse:min-h-11 rounded-md border border-border bg-surface px-3 text-sm text-subtle hover:border-outline" aria-keyshortcuts="Control+K Meta+K">
-        <w-icon name="search" class="ms-icon-sm"></w-icon>Search<w-hotkey keys="cmd+k" class="ml-auto pointer-coarse:hidden"></w-hotkey>
-      </button>
-    </div>
-    <div class="flex-1 overflow-y-auto px-2 pb-4">
-      <w-list nav density="compact" aria-label="Shortcuts">
-        <w-list-item href="activity.html" title="Activity"><w-icon slot="prepend" name="bell"></w-icon><w-badge slot="append" content="2" inline label="2 mentions"></w-badge></w-list-item>
-        <w-list-item href="#" title="Threads"><w-icon slot="prepend" name="thread"></w-icon></w-list-item>
-      </w-list>
-
-      <section class="mt-3" aria-labelledby="sec-channels">
-        <div class="flex items-center gap-1 px-1">
-          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-channels"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Channels</button>
-          <w-badge content="4" inline class="ms-count" label="4 unread"></w-badge>
-        </div>
-      </section>
-      <section class="mt-3" aria-labelledby="sec-dms">
-        <div class="flex items-center gap-1 px-1">
-          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-dms"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Direct messages</button>
-          <w-badge content="1" inline label="1 mention"></w-badge>
-        </div>
-      </section>
-      <section class="mt-3" aria-labelledby="sec-email">
-        <div class="flex items-center gap-1 px-1">
-          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="false" id="sec-email"><w-icon name="chevron-right" class="ms-icon-sm"></w-icon>Email</button>
-          <w-badge content="1" inline class="ms-count" label="1 unread"></w-badge>
-        </div>
-      </section>
-
-      <section class="mt-3" aria-labelledby="sec-admin">
-        <div class="flex items-center gap-1 px-1">
-          <button type="button" class="ms-section-toggle flex flex-1 items-center gap-1 min-h-7 pointer-coarse:min-h-11 rounded-sm px-1 text-xs font-semibold uppercase tracking-wide text-subtle hover:text-text" aria-expanded="true" id="sec-admin"><w-icon name="chevron-down" class="ms-icon-sm"></w-icon>Admin</button>
-        </div>
-        <w-list nav density="compact" aria-labelledby="sec-admin">
-          <w-list-item href="admin-domains.html" title="Domains"><w-icon slot="prepend" name="globe"></w-icon></w-list-item>
-          <w-list-item href="admin-members.html" title="Members" active><w-icon slot="prepend" name="users"></w-icon></w-list-item>
-          <w-list-item href="admin-channels.html" title="Channels"><w-icon slot="prepend" name="hash"></w-icon></w-list-item>
-          <w-list-item href="admin-mail.html" title="Mail delivery"><w-icon slot="prepend" name="mail"></w-icon></w-list-item>
-        </w-list>
-      </section>
-    </div>
-    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b group-data-[pane=list]/app:max-sm:hidden">
-      <button type="button" class="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1 text-left hover:bg-hover" aria-haspopup="menu" aria-label="Ana Ruiz, active. Open status and account menu">
-        <w-avatar text="AR" size="28" status="online" style="--h:195" alt=""></w-avatar>
-        <span class="min-w-0"><span class="block truncate text-sm font-semibold">Ana Ruiz</span><span class="block truncate text-xs text-subtle">ana@example.com</span></span>
-      </button>
-      <w-icon-btn icon="settings" href="settings.html" aria-label="Settings"></w-icon-btn>
+    <nav class="flex-1 overflow-y-auto px-2 py-3" aria-label="Admin pages"><section class="mt-3 first:mt-0" aria-labelledby="nav-0"><h2 id="nav-0" class="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-subtle">example.com</h2><ul class="grid gap-0.5"><li><a href="admin-domain-first-admin.html" class="flex items-center gap-3 min-h-control-sm touch:min-h-touch rounded-lg px-3 text-sm no-underline text-text hover:bg-hover"><w-icon name="building" class="ms-icon-sm"></w-icon><span class="truncate">Domain</span></a></li><li><a href="admin-members.html" aria-current="page" class="flex items-center gap-3 min-h-control-sm touch:min-h-touch rounded-lg px-3 text-sm no-underline bg-selected text-on-selected font-semibold"><w-icon name="user" class="ms-icon-sm"></w-icon><span class="truncate">Members</span></a></li><li><a href="admin-channels.html" class="flex items-center gap-3 min-h-control-sm touch:min-h-touch rounded-lg px-3 text-sm no-underline text-text hover:bg-hover"><w-icon name="hash" class="ms-icon-sm"></w-icon><span class="truncate">Channels</span></a></li></ul></section></nav>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b">
+      <w-avatar text="BL" size="32" style="--h:20" alt=""></w-avatar>
+      <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold">Bo Lee</span><span class="block truncate text-xs text-subtle">bo</span></span>
+      <w-icon-btn icon="logout" aria-label="Sign out" title="Sign out" class=""></w-icon-btn>
     </footer>
   </aside>
 
-  <!-- Admin page -->
   <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="page-title">
     <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
-      <w-icon-btn class="no-drag sm:hidden -ml-2" icon="arrow-left" href="?pane=list" aria-label="Back to menu"></w-icon-btn>
-      <h1 id="page-title" class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="users" class="ms-icon-sm"></w-icon><span class="truncate">Members</span></h1>
-      <p class="hidden @2xl/main:block min-w-0 flex-1 truncate border-l border-divider pl-3 text-sm text-subtle">example.com &middot; people who signed in to this domain</p>
-      <div class="ml-auto flex items-center gap-1 no-drag"><w-btn variant="outlined" prepend-icon="external" href="#" class="hidden @md/main:inline-flex">Open Keycloak<span class="sr-only"> (opens Keycloak)</span></w-btn><w-icon-btn icon="external" href="#" class="@md/main:hidden" aria-label="Open Keycloak"></w-icon-btn></div>
+      <w-icon-btn class="no-drag sm:hidden -ml-2 " icon="arrow-left" href="?pane=list" aria-label="Back to the admin menu"></w-icon-btn>
+      <h1 id="page-title" class="flex min-w-0 items-center gap-2 text-lg font-bold"><w-icon name="user" class="ms-icon-sm"></w-icon><span class="truncate">Members</span></h1>
+      <p class="hidden @2xl/main:block min-w-0 flex-1 truncate border-l border-divider pl-3 text-sm text-subtle">example.com &middot; people who can sign in to this domain</p>
+      <div class="ml-auto flex items-center gap-2 no-drag"></div>
     </header>
-
     <div class="flex-1 min-h-0 overflow-y-auto py-6 safe-l safe-r safe-b" style="--ms-edge: 1rem" id="admin-content">
-      <div class="@container/page mx-auto grid w-full max-w-3xl gap-6 pb-10">
-        <w-banner>
-          <w-icon slot="prepend" name="key"></w-icon>
-          <div slot="text" class="grid gap-1"><strong class="font-semibold">To add people, create them in Keycloak.</strong><p>They appear here after their first sign-in. Disable a person or reset their sign-in in Keycloak too. Mesail never stores passwords.</p></div>
-        </w-banner>
-
-        <form role="search" aria-label="Filter members" class="grid grid-cols-2 gap-3 @xl/page:grid-cols-[minmax(0,1fr)_11rem_11rem]" onsubmit="return false">
-          <w-text-field type="search" label="Search" placeholder="Name or address" prepend-inner-icon="search" class="col-span-2 @xl/page:col-span-1"></w-text-field>
-          <w-select label="Role" value="all"><w-option value="all">All roles</w-option><w-option value="member">Member</w-option><w-option value="admin">Domain admin</w-option></w-select>
-          <w-select label="State" value="all"><w-option value="all">All states</w-option><w-option value="active">Active</w-option><w-option value="disabled">Disabled in Keycloak</w-option></w-select>
+      <div class="@container/page mx-auto grid w-full max-w-content grid-cols-[minmax(0,1fr)] gap-6 pb-10">
+        <form role="search" aria-label="Find members" class="flex flex-wrap items-start gap-3" onsubmit="return false">
+          <w-text-field type="search" label="Search" placeholder="Name or username" prepend-inner-icon="search" hide-details class="min-w-0 flex-1 basis-60"></w-text-field>
+          <w-btn variant="filled" class=" flex-none" prepend-icon="plus" aria-haspopup="dialog">Add member</w-btn>
         </form>
-
-        <section class="rounded-xl border border-border bg-surface " aria-labelledby="members-title">
-          <div class="flex flex-wrap items-center gap-3 border-b border-divider px-4 py-3 @xl/page:px-5"><h2 id="members-title" class="flex-1 text-lg font-semibold">5 members</h2><span class="text-xs text-subtle">2 domain admins</span></div>
-          <table role="table" class="w-full border-collapse text-sm @max-2xl/page:block">
-              <caption class="sr-only">Members of example.com</caption>
-              <thead role="rowgroup" class="@max-2xl/page:sr-only"><tr role="row"><th scope="col" role="columnheader" class="border-b border-divider px-4 py-2 text-left text-xs font-semibold whitespace-nowrap text-subtle">Name</th><th scope="col" role="columnheader" class="border-b border-divider px-4 py-2 text-left text-xs font-semibold whitespace-nowrap text-subtle">Address</th><th scope="col" role="columnheader" class="border-b border-divider px-4 py-2 text-left text-xs font-semibold whitespace-nowrap text-subtle">Role</th><th scope="col" role="columnheader" class="border-b border-divider px-4 py-2 text-left text-xs font-semibold whitespace-nowrap text-subtle">State</th><th scope="col" role="columnheader" class="border-b border-divider px-4 py-2 text-left text-xs font-semibold whitespace-nowrap text-subtle">Last seen</th><th scope="col" role="columnheader" class="border-b border-divider px-4 py-2 text-left text-xs font-semibold whitespace-nowrap text-subtle"><span class="sr-only">Actions</span></th></tr></thead>
-              <tbody role="rowgroup" class="@max-2xl/page:block">
-                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent">
-                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><div class="flex min-w-0 items-center gap-2"><w-avatar text="AR" size="28" style="--h:195" alt=""></w-avatar><div class="min-w-0"><span class="font-semibold">Ana Ruiz</span><span class="block text-xs text-subtle">You &middot; also organization admin</span></div></div></td>
-                  <td role="cell" data-label="Address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="font-mono text-xs break-all">ana@example.com</span></td>
-                  <td role="cell" data-label="Role" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="inline-flex"><w-chip size="small" prepend-icon="shield" inert aria-hidden="true">Domain admin</w-chip><span class="sr-only">Domain admin</span></span></td>
-                  <td role="cell" data-label="State" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="inline-flex"><w-chip size="small" color="success" prepend-icon="check" inert aria-hidden="true">Active</w-chip><span class="sr-only">Active</span></span></td>
-                  <td role="cell" data-label="Last seen" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><time datetime="2026-11-10T10:50">Now</time></td>
-                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-icon-btn icon="more" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for Ana Ruiz"></w-icon-btn></div></td>
-                </tr>
-                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent">
-                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><div class="flex min-w-0 items-center gap-2"><w-avatar text="BL" size="28" style="--h:20" alt=""></w-avatar><div class="min-w-0"><span class="font-semibold">Bo Lee</span></div></div></td>
-                  <td role="cell" data-label="Address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="font-mono text-xs break-all">bo@example.com</span></td>
-                  <td role="cell" data-label="Role" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]">Member</td>
-                  <td role="cell" data-label="State" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="inline-flex"><w-chip size="small" color="success" prepend-icon="check" inert aria-hidden="true">Active</w-chip><span class="sr-only">Active</span></span></td>
-                  <td role="cell" data-label="Last seen" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><time datetime="2026-11-10T10:45">5 min ago</time></td>
-                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-icon-btn icon="more" aria-haspopup="menu" aria-expanded="true" aria-controls="menu-bo" aria-label="Actions for Bo Lee"></w-icon-btn>
-                    <div id="menu-bo" role="menu" aria-label="Actions for Bo Lee" data-duvay="w-menu" class="absolute right-4 top-[calc(100%-0.5rem)] z-30 w-72 whitespace-normal rounded-xl border border-border bg-surface p-1 text-left shadow-xl @max-2xl/page:inset-x-0 @max-2xl/page:top-full @max-2xl/page:w-auto">
-                      <div role="group" aria-label="Role">
-                        <p class="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-subtle" aria-hidden="true">Role</p>
-                        <button type="button" role="menuitemradio" aria-checked="true" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-hover focus-visible:bg-hover pointer-coarse:min-h-11 font-semibold"><w-icon name="check" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid gap-0.5">Member<span class="text-xs font-normal text-subtle">Chats, sends email, joins public channels.</span></span></button>
-                        <button type="button" role="menuitemradio" aria-checked="false" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-hover focus-visible:bg-hover pointer-coarse:min-h-11"><span class="w-4 flex-none" aria-hidden="true"></span><span class="grid gap-0.5">Domain admin<span class="text-xs font-normal text-subtle">Also manages members, channels and mail for example.com.</span></span></button>
-                      </div>
-                      <w-divider class="my-1" role="separator"></w-divider>
-                      <a role="menuitem" href="#" target="_blank" rel="noopener" class="flex w-full items-start gap-2 rounded-md px-3 py-2 text-left text-sm hover:bg-hover focus-visible:bg-hover pointer-coarse:min-h-11"><w-icon name="external" class="ms-icon-sm mt-0.5"></w-icon><span class="grid gap-0.5">Manage in Keycloak<span class="text-xs text-subtle">Disable, reset sign-in or change name. Opens in a new tab.</span></span></a>
-                    </div></div></td>
-                </tr>
-                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent">
-                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><div class="flex min-w-0 items-center gap-2"><w-avatar text="CW" size="28" style="--h:280" alt=""></w-avatar><div class="min-w-0"><span class="font-semibold">Chen Wu</span></div></div></td>
-                  <td role="cell" data-label="Address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="font-mono text-xs break-all">chen@example.com</span></td>
-                  <td role="cell" data-label="Role" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]">Member</td>
-                  <td role="cell" data-label="State" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="inline-flex"><w-chip size="small" color="success" prepend-icon="check" inert aria-hidden="true">Active</w-chip><span class="sr-only">Active</span></span></td>
-                  <td role="cell" data-label="Last seen" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><time datetime="2026-11-09T18:02">Yesterday, 18:02</time></td>
-                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-icon-btn icon="more" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for Chen Wu"></w-icon-btn></div></td>
-                </tr>
-                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent">
-                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><div class="flex min-w-0 items-center gap-2"><w-avatar text="DO" size="28" style="--h:140" alt=""></w-avatar><div class="min-w-0"><span class="font-semibold">Dara Okafor</span></div></div></td>
-                  <td role="cell" data-label="Address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="font-mono text-xs break-all">dara@example.com</span></td>
-                  <td role="cell" data-label="Role" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="inline-flex"><w-chip size="small" prepend-icon="shield" inert aria-hidden="true">Domain admin</w-chip><span class="sr-only">Domain admin</span></span></td>
-                  <td role="cell" data-label="State" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="inline-flex"><w-chip size="small" color="success" prepend-icon="check" inert aria-hidden="true">Active</w-chip><span class="sr-only">Active</span></span></td>
-                  <td role="cell" data-label="Last seen" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><time datetime="2026-11-10T08:51">2 hours ago</time></td>
-                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-icon-btn icon="more" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for Dara Okafor"></w-icon-btn></div></td>
-                </tr>
-                <tr role="row" class="align-middle hover:bg-surface-low @max-2xl/page:relative @max-2xl/page:block @max-2xl/page:border-b @max-2xl/page:border-divider @max-2xl/page:px-4 @max-2xl/page:py-3 @max-2xl/page:last:border-b-0 @max-2xl/page:hover:bg-transparent text-subtle">
-                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:block @max-2xl/page:pb-2 @max-2xl/page:pr-12 @max-2xl/page:text-base"><div class="flex min-w-0 items-center gap-2"><w-avatar text="EP" size="28" style="--h:60" alt=""></w-avatar><div class="min-w-0"><span class="font-semibold">Eli Park</span></div></div></td>
-                  <td role="cell" data-label="Address" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="font-mono text-xs break-all">eli@example.com</span></td>
-                  <td role="cell" data-label="Role" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]">Member</td>
-                  <td role="cell" data-label="State" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><span class="inline-flex"><w-chip size="small" variant="outlined" prepend-icon="minus-circle" inert aria-hidden="true">Disabled in Keycloak</w-chip><span class="sr-only">Disabled in Keycloak</span></span></td>
-                  <td role="cell" data-label="Last seen" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 @max-2xl/page:flex @max-2xl/page:items-start @max-2xl/page:gap-3 @max-2xl/page:before:w-28 @max-2xl/page:before:flex-none @max-2xl/page:before:pt-0.5 @max-2xl/page:before:text-xs @max-2xl/page:before:font-semibold @max-2xl/page:before:text-subtle @max-2xl/page:before:content-[attr(data-label)]"><time datetime="2026-10-12T16:20">12 Oct 2026</time></td>
-                  <td role="cell" class="border-b border-divider px-4 py-3 [tr:last-child>&]:border-b-0 @max-2xl/page:border-0 @max-2xl/page:px-0 @max-2xl/page:py-1 relative w-px whitespace-nowrap text-right @max-2xl/page:block @max-2xl/page:w-full @max-2xl/page:pt-2 @max-2xl/page:text-left"><span class="sr-only">Actions: </span><div class="flex flex-wrap items-center justify-end gap-2 @max-2xl/page:justify-start"><w-icon-btn icon="more" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for Eli Park"></w-icon-btn></div></td>
-                </tr>
-              </tbody>
-            </table>
-          <div class="flex flex-wrap items-center gap-2 px-4 py-3 text-xs text-subtle @xl/page:px-5"><span>Showing 1&ndash;5 of 5. Up to 50 per page.</span><div class="ml-auto flex gap-2"><w-btn variant="outlined" size="small" disabled>Previous</w-btn><w-btn variant="outlined" size="small" disabled>Next</w-btn></div></div>
+        <section class="rounded-xl border border-border bg-surface" aria-labelledby="members-title">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-divider px-4 py-3"><h2 id="members-title" class="flex-1 text-lg font-semibold">5 members</h2><span class="text-xs text-subtle">2 admins</span></div>
+          <table class="ms-rtable">
+            <caption class="sr-only">Members of example.com</caption>
+            <thead><tr><th scope="col">Member</th><th scope="col">Address</th><th scope="col">Role</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+            <tbody>
+            <tr>
+              <td><div class="flex min-w-0 items-center gap-3"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><span class="grid min-w-0"><span class="flex min-w-0 items-center gap-2 font-semibold"><span class="truncate">Ana Ruiz</span></span><span class="truncate text-xs text-subtle">ana</span></span></div></td>
+              <td data-label="Address"><span class="min-w-0 break-all">ana@example.com</span></td>
+              <td data-label="Role"><span class="ms-tag"><w-icon name="shield"></w-icon>Admin</span></td>
+              <td class="ms-rtable__actions"><w-icon-btn icon="more" aria-haspopup="menu" aria-label="Actions for Ana Ruiz"></w-icon-btn></td>
+            </tr>
+            <tr>
+              <td><div class="flex min-w-0 items-center gap-3"><w-avatar text="BL" size="36" style="--h:20" alt=""></w-avatar><span class="grid min-w-0"><span class="flex min-w-0 items-center gap-2 font-semibold"><span class="truncate">Bo Lee</span> <span class="ms-tag">You</span></span><span class="truncate text-xs text-subtle">bo</span></span></div></td>
+              <td data-label="Address"><span class="min-w-0 break-all">bo@example.com</span></td>
+              <td data-label="Role"><span class="ms-tag"><w-icon name="shield"></w-icon>Admin</span></td>
+              <td class="ms-rtable__actions"><w-icon-btn icon="more" aria-haspopup="menu" aria-label="Actions for Bo Lee"></w-icon-btn></td>
+            </tr>
+            <tr>
+              <td><div class="flex min-w-0 items-center gap-3"><w-avatar text="CW" size="36" style="--h:280" alt=""></w-avatar><span class="grid min-w-0"><span class="flex min-w-0 items-center gap-2 font-semibold"><span class="truncate">Chen Wu</span></span><span class="truncate text-xs text-subtle">chen</span></span></div></td>
+              <td data-label="Address"><span class="min-w-0 break-all">chen@example.com</span></td>
+              <td data-label="Role"><span class="text-subtle">Member</span></td>
+              <td class="ms-rtable__actions"><w-icon-btn icon="more" aria-haspopup="menu" aria-label="Actions for Chen Wu"></w-icon-btn></td>
+            </tr>
+            <tr>
+              <td><div class="flex min-w-0 items-center gap-3"><w-avatar text="DE" size="36" style="--h:300" alt=""></w-avatar><span class="grid min-w-0"><span class="flex min-w-0 items-center gap-2 font-semibold"><span class="truncate">Dan Example</span></span><span class="truncate text-xs text-subtle">dan</span></span></div></td>
+              <td data-label="Address"><span class="min-w-0 break-all">dan@example.com</span></td>
+              <td data-label="Role"><span class="text-subtle">Member</span></td>
+              <td class="ms-rtable__actions"><w-icon-btn icon="more" aria-haspopup="menu" aria-label="Actions for Dan Example"></w-icon-btn></td>
+            </tr>
+            <tr>
+              <td><div class="flex min-w-0 items-center gap-3"><w-avatar text="EP" size="36" style="--h:60" alt=""></w-avatar><span class="grid min-w-0"><span class="flex min-w-0 items-center gap-2 font-semibold"><span class="truncate">Eve Park</span></span><span class="truncate text-xs text-subtle">eve</span></span></div></td>
+              <td data-label="Address"><span class="min-w-0 break-all">eve@example.com</span></td>
+              <td data-label="Role"><span class="text-subtle">Member</span></td>
+              <td class="ms-rtable__actions"><w-icon-btn icon="more" aria-haspopup="menu" aria-label="Actions for Eve Park"></w-icon-btn></td>
+            </tr>
+            </tbody>
+          </table>
         </section>
-        <p class="text-xs text-subtle">A role change takes effect within 5 minutes, when the person&rsquo;s sign-in is renewed. Disabled people lose access within 60 seconds.</p>
-        <p class="text-xs"><a class="text-accent underline" href="admin-members-states.html">Loading, empty, error and no-access states</a></p>
+        <p class="text-xs text-subtle">Changes reach a person within a minute. An account action (password, 2-step code, name, turn off) changes the person&rsquo;s sign-in in every domain, so only an admin of all their domains, or an Operator, may do it.</p>
+        <nav aria-label="More mockups" class="flex flex-wrap gap-2"><w-btn variant="outlined" size="small" href="admin-member-add.html">Add member dialog</w-btn><w-btn variant="outlined" size="small" href="admin-member-actions.html">Member actions</w-btn><w-btn variant="outlined" size="small" href="admin-members-states.html">Loading, empty, error</w-btn></nav>
+        <section class="mt-4 grid gap-4 border-0 border-t-2 border-dashed border-outline pt-6" aria-labelledby="mock-h">
+  <h2 id="mock-h" class="text-lg font-semibold text-subtle">Other states (mockup only)</h2>
+  <div class="grid items-start gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
+<section class="grid min-w-0 content-start gap-3" aria-label="State 1 · Actions for Dan (only in example.com)"><p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 · Actions for Dan (only in example.com)</p><div role="menu" aria-label="Actions for Dan Example" class="grid w-full max-w-sm rounded-xl border border-border bg-surface p-1 shadow-xl"><div role="group" aria-label="Role in example.com" class="grid"><p class="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-subtle" aria-hidden="true">Role in example.com</p><button type="button" role="menuitemradio" aria-checked="true" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><w-icon name="check" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Member<span class="text-xs font-normal text-subtle">Chats and sends email in example.com</span></span></button><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><span class="w-4 flex-none" aria-hidden="true"></span><span class="grid min-w-0 flex-1 gap-0.5">Domain admin<span class="text-xs font-normal text-subtle">Also manages members and channels of example.com</span></span></button></div><div role="separator" class="my-1 h-px bg-divider"></div><div role="group" aria-label="Account of Dan (all domains)" class="grid"><p class="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-subtle" aria-hidden="true">Account of Dan (all domains)</p><button type="button" role="menuitem" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><w-icon name="key" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Reset password…<span class="text-xs font-normal text-subtle">Dan chooses a new one at the next sign-in</span></span></button><button type="button" role="menuitem" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><w-icon name="shield-check" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Remove 2-step code…<span class="text-xs font-normal text-subtle">For a lost phone</span></span></button><button type="button" role="menuitem" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><w-icon name="edit" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Change name…<span class="text-xs font-normal text-subtle">The same name in every domain</span></span></button><button type="button" role="menuitem" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><w-icon name="minus-circle" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Turn off account…<span class="text-xs font-normal text-subtle">Signs out within a minute, in every domain</span></span></button></div><div role="separator" class="my-1 h-px bg-divider"></div><div role="group" class="grid"><button type="button" role="menuitem" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold text-error"><w-icon name="logout" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Remove from example.com…<span class="text-xs font-normal text-subtle">The account and other domains stay</span></span></button></div></div></section>
+<section class="grid min-w-0 content-start gap-3" aria-label="State 2 · Actions for Ana (admin)"><p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 · Actions for Ana (admin)</p><div role="menu" aria-label="Actions for Ana Ruiz" class="grid w-full max-w-sm rounded-xl border border-border bg-surface p-1 shadow-xl"><div role="group" aria-label="Role in example.com" class="grid"><p class="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-subtle" aria-hidden="true">Role in example.com</p><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><span class="w-4 flex-none" aria-hidden="true"></span><span class="grid min-w-0 flex-1 gap-0.5">Member<span class="text-xs font-normal text-subtle">Chats and sends email in example.com</span></span></button><button type="button" role="menuitemradio" aria-checked="true" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><w-icon name="check" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Domain admin<span class="text-xs font-normal text-subtle">Also manages members and channels of example.com</span></span></button></div><div role="separator" class="my-1 h-px bg-divider"></div><div role="group" aria-label="Account of Ana (all domains)" class="grid"><p class="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-subtle" aria-hidden="true">Account of Ana (all domains)</p><button type="button" role="menuitem" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><w-icon name="key" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Reset password…<span class="text-xs font-normal text-subtle">Ana chooses a new one at the next sign-in</span></span></button><button type="button" role="menuitem" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><w-icon name="shield-check" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Remove 2-step code…<span class="text-xs font-normal text-subtle">For a lost phone</span></span></button><button type="button" role="menuitem" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><w-icon name="edit" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Change name…<span class="text-xs font-normal text-subtle">The same name in every domain</span></span></button><button type="button" role="menuitem" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold"><w-icon name="minus-circle" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Turn off account…<span class="text-xs font-normal text-subtle">Signs out within a minute, in every domain</span></span></button></div><div role="separator" class="my-1 h-px bg-divider"></div><div role="group" class="grid"><button type="button" role="menuitem" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start aria-checked:font-semibold text-error"><w-icon name="logout" class="ms-icon-sm mt-0.5 text-accent"></w-icon><span class="grid min-w-0 flex-1 gap-0.5">Remove from example.com…<span class="text-xs font-normal text-subtle">The account and other domains stay</span></span></button></div></div></section>
+<section class="grid min-w-0 content-start gap-3" aria-label="State 3 · Added: existing person"><p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 · Added: existing person</p><div class="flex items-start gap-3 rounded-lg bg-success-container p-3 text-on-success-container" role="status"><w-icon name="check" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p class="font-semibold">Eve Park was added to example.com</p><p>Eve already had a Mesail account, so she keeps her password. She sees example.com within a minute, with the address eve@example.com.</p></div></div></section>
+<section class="grid min-w-0 content-start gap-3" aria-label="State 4 · Removed"><p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 · Removed</p><div class="flex items-start gap-3 rounded-lg bg-success-container p-3 text-on-success-container" role="status"><w-icon name="check" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p class="font-semibold">Eve Park was removed from example.com</p><p>Mail to eve@example.com is now refused. Her account and her other domains did not change.</p></div></div></section>
+  </div>
+</section>
       </div>
     </div>
   </main>
-
-  <!-- Bottom navigation: phones, list pane only -->
-  <w-bottom-navigation grow class="sm:hidden group-data-[pane=main]/app:hidden" value="you" aria-label="Main">
-    <w-bottom-nav-item value="home" label="Home" href="messenger.html?pane=list"><w-icon name="chat"></w-icon></w-bottom-nav-item>
-    <w-bottom-nav-item value="activity" label="Activity" href="activity.html"><w-icon name="bell"></w-icon></w-bottom-nav-item>
-    <w-bottom-nav-item value="search" label="Search" href="search.html"><w-icon name="search"></w-icon></w-bottom-nav-item>
-    <w-bottom-nav-item value="you" label="You" href="settings.html" active><w-icon name="user"></w-icon></w-bottom-nav-item>
-  </w-bottom-navigation>
 </div>
-
 <div class="sr-only" aria-live="polite" id="announcer"></div>
 </body>
 </html>

@@ -49,7 +49,7 @@ The mockup is the reference for look and states.
 | App shell (rail, sidebar, main, thread, bottom nav; one pane under 600 px) | none (DuVay and Tailwind) | `messenger.html` | `components/app/shell/tac.html` `<app-shell>` + `ShellService.go` (current pane, current domain) | F1 | Tailwind grid; `w-bottom-navigation` |
 | Skip links and live announcer | `.ms-skip-link` | `messenger.html` | inside `<app-shell>`; `AnnounceService.go` | F1 | none (plain links, Tailwind `sr-only`) |
 | Domain rail and domain tile | `.ms-rail`, `.ms-domain-tile` | `messenger.html`, `domain-switcher.html` | `components/app/rail/tac.html` `<app-rail>` + `DomainService.go` | F1 | none fits: Mesail tile + `w-badge`, `w-icon` |
-| Domain menu (switch, sign in, sign out) and its phone sheet | none (DuVay and Tailwind) | `domain-switcher.html` | `components/app/domain-menu/tac.html` `<app-domain-menu>` | F1 | `w-menu` + `w-list`; `w-bottom-sheet` on phones |
+| Domain menu (switch from `Session.domains`, default first, Default and Admin tags, default-domain link, one Sign out) and its phone sheet | none (DuVay and Tailwind) | `domain-switcher.html`, `domain-switcher-mobile.html`, `domain-switch-states.html` | `components/app/domain-menu/tac.html` `<app-domain-menu>` | F1 | `w-menu` + `w-list`; `w-bottom-sheet` on phones |
 | Sidebar (head, search button, sections, footer) | `.ms-sidebar*` | `messenger.html` | `components/sidebar/nav/tac.html` `<sidebar-nav>` + `SidebarService.go` | F2 | `w-list nav`, `w-btn`, `w-icon-btn`, `w-hotkey` |
 | Sidebar section (collapsible, add button) | none (DuVay and Tailwind) | `messenger.html` | `components/sidebar/section/tac.html` `<sidebar-section>` | F2 | Mesail toggle + `w-icon-btn` + `w-list` |
 | Sidebar row (channel, DM, group DM, email conversation; current, unread, mention, muted) | none (DuVay and Tailwind) | `messenger.html` | `components/sidebar/item/tac.html` `<sidebar-item>` | F2 | `w-list-item href` + `w-avatar`/`w-icon` + `w-badge` |
@@ -136,9 +136,11 @@ The mockup is the reference for look and states.
 
 | Component | Mockups | Tac target | DuVay element(s) |
 | --- | --- | --- | --- |
-| Sign-in form (email, password, optional 2-step code, remember email, errors, "Sign in to another domain" variant) | `signin.html`, `signed-out.html` | `pages/signin/tac.html`, `pages/signed-out/tac.html`, `components/app/signin-form/tac.html` + `SessionService.go` (POST to the identity service) | `w-text-field`, `w-otp-input`, `w-checkbox`, `w-btn`, `w-alert` |
+| Sign-in form (L6: one field "Username or email address", password, optional 2-step code, remember username, 401 / 403 not_a_member / 403 no_domain / 429 / 503) | `signin.html`, `signed-out.html` | `pages/signin/tac.html`, `pages/signed-out/tac.html`, `components/app/signin-form/tac.html` + `SessionService.go` (POST to the identity service) | `w-text-field` (code too: `w-otp-input` breaks password-manager fill), `w-checkbox`, `w-btn`, `w-alert` |
+| Forced password change (L6, `mustChangePassword`) | `password-change-required.html` | `pages/password-required/tac.html` + `SessionService.go` | `w-text-field`, `w-btn`, `w-alert` |
+| No-domain and access-ended screens (L6) | `domain-switch-states.html` | `components/app/domain-gone/tac.html` | `w-btn`, Mesail notice box |
+| Default domain setting (L6, `PUT /directory/me/default-domain`) | `settings.html` (`#default-domain`) | `components/settings/default-domain/tac.html` | `w-select` |
 | Wordmark | sign-in pages | `components/app/wordmark/tac.html` | none (Mesail mark) |
-| Domain row (recent domain with address) | `signin.html`, `signed-out.html` | `components/app/domain-row/tac.html` | `w-list-item` + `w-avatar` |
 | Session ended dialog (draft kept) | `session-expired.html` | `components/app/session-ended/tac.html` | `w-dialog persistent` |
 
 ## Settings (new group: no slice owns it yet)
@@ -165,7 +167,12 @@ The mockup is the reference for look and states.
 | DNS records, status marks, Check again, DKIM rotation, danger zone | `admin-domain-dns.html` | `pages/domains/dns/tac.html`, `components/admin/dns-record/tac.html`, `components/admin/dns-check/tac.html`, `components/admin/dkim-rotation/tac.html`, `components/admin/danger-zone/tac.html` | `w-text-field readonly` + `w-icon-btn`, `w-chip`, `w-btn`, `w-card` |
 | Typed confirmation (type the domain name) | `admin-domain-dns.html` | `components/admin/confirm-typed/tac.html` | `w-alert-dialog` + `w-text-field` |
 | Copy field | `admin-domain-dns.html`, `channel-details.html` | `components/admin/copy-field/tac.html` (web app copy in `components/app/copy-field/`) | `w-text-field readonly` + `w-icon-btn` |
-| Members table, role menu, "Manage in Keycloak" | `admin-members.html`, `admin-members-states.html` | `pages/members/tac.html`, `components/admin/member-row/tac.html` + `AdminMemberService.go` | `w-table`, `w-menu`, `w-chip` |
+| Admin sign-in (L7: the same one-field form, "Admin" tag) and "You need admin rights" | `admin-signin.html` | `components/admin/gate/tac.html` (exists) | `w-text-field`, `w-btn` |
+| Members table (L7: username, address, Admin tag, row menu: role, account actions, remove) | `admin-members.html`, `admin-members-states.html` | `pages/members/tac.html`, `components/admin/member-row/tac.html` + `AdminMemberService.go` | semantic `<table>` (`.ms-rtable`, cards under 48rem of page), `w-menu` |
+| Add member dialog (L7: username first; 400 `displayName` opens step 2 for a new person; existing-person notice) | `admin-member-add.html` | `components/admin/member-add/tac.html` | `w-dialog`, `w-text-field` (`suffix`), `w-checkbox` |
+| Member actions (L7: remove, `409 last_admin`, reset password, remove 2-step code, turn off, rename, `403` AC-ID-13) | `admin-member-actions.html` | `components/admin/member-actions/tac.html` | `w-dialog`, `w-alert-dialog` |
+| People page for Operators (L7: find, domains with admin marks, state, actions, delete with typed username) | `admin-people.html` | `pages/people/tac.html`, `components/admin/person-row/tac.html` + `AdminPeopleService.go` | `.ms-rtable`, `w-select`, `w-menu`, `w-dialog` |
+| First admin of a domain (L7, Operator, `POST /directory/domains/{domainId}/members`) | `admin-domain-first-admin.html` | `components/admin/first-admin/tac.html` | `w-text-field`, `w-btn`, `w-dialog` |
 | No access page (403) | `admin-members-states.html` | `pages/no-access/tac.html` | `w-empty-state` |
 | Channel addresses and archive | `admin-channels.html` | `pages/channels/tac.html`, `components/admin/channel-address/tac.html` + `AdminChannelService.go` | `w-table`, `w-dialog`, `w-text-field` |
 | Mail delivery: queue numbers, suppression list, limits | `admin-mail.html` | `pages/mail/tac.html`, `components/admin/queue-stats/tac.html`, `components/admin/suppression-list/tac.html`, `components/admin/limits-form/tac.html` + `MailOpsService.go` | `w-card` stats, `w-table`, `w-text-field` |

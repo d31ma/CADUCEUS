@@ -91,6 +91,17 @@
   --text-lg: var(--w-font-lg);
   --text-xl: var(--w-font-xl);
   --text-2xl: var(--w-font-2xl);
+  /* Control sizes: h-control-md, min-h-control-lg, size-control-sm, ... */
+  --spacing-control-sm: var(--ms-control-sm);
+  --spacing-control-md: var(--ms-control-md);
+  --spacing-control-lg: var(--ms-control-lg);
+  --spacing-touch: var(--ms-touch-min);
+  --spacing-icon-sm: var(--ms-icon-sm);
+  --spacing-icon-md: var(--ms-icon-md);
+  --spacing-icon-lg: var(--ms-icon-lg);
+  --container-auth: var(--ms-auth-card-max);
+  --container-dialog: var(--ms-dialog-max);
+  --container-content: var(--ms-content-max);
 }
 
 /* Platform-safe edges. Tac's page has no viewport-fit=cover; native windows report their title bar
@@ -105,3 +116,10 @@
 
 /* Landscape phones and short windows. */
 @custom-variant short (@media (max-height: 520px));
+
+/* Touch screens and narrow windows: every target is at least 44 px (--ms-touch-min), the same rule as
+ * tests/responsive (coarse pointer, or a window under 768 px). Use with min-h-touch, size-touch, ... */
+@custom-variant touch {
+  @media (pointer: coarse) { @slot; }
+  @media (max-width: 767.98px) { @slot; }
+}

@@ -10,249 +10,248 @@
 <script src="assets/mockup.js" defer></script>
 </head>
 <body class="bg-surface-low text-text">
-<a class="ms-skip-link" href="#s1-email">Skip to the email field</a>
-
+<a class="ms-skip-link" href="#s1-login">Skip to the form</a>
 <div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
-  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
-    <header>
-      <p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p>
-    </header>
-
-    <!-- Mockup: labelled states side by side; each card is w-full max-w-md -->
-    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr))]">
-
-      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 1 · Default, with recent domains">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 · Default, with recent domains</p>
-        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
-          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">One sign-in for every domain (ADR 0005, SPEC AC-ID-9). The field takes the username or the full address, in any letter case. The hint under the field is computed in the browser and never reveals whether an account exists.</p>
+    <!-- Mockup: labelled states side by side. Each card is at most --ms-auth-card-max (26rem) wide. -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-auth-card-max)),1fr))]">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 1 · First visit">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 · First visit</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
             <div class="grid gap-2">
               <h1 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h1>
-              <p class="text-subtle short:hidden">Use your work email and password.</p>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
             </div>
             <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
-              <w-text-field id="s1-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" active required></w-text-field>
-              <w-text-field id="s1-password" type="password" label="Password" name="password" autocomplete="current-password" required>
-                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s1-password"></w-icon-btn>
-              </w-text-field>
-              <w-text-field id="s1-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
-              <w-checkbox label="Remember my email on this device" name="remember"></w-checkbox>
-              <w-btn variant="filled" size="large" block>Sign in</w-btn>
-              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
-            </form>
-            <div role="presentation" class="flex items-center gap-3 text-xs text-subtle before:h-px before:flex-1 before:bg-divider after:h-px after:flex-1 after:bg-divider">or</div>
-            <section class="grid gap-3" aria-labelledby="s1-recent">
-              <h2 class="text-sm font-semibold text-subtle" id="s1-recent">Recent domains</h2>
-              <ul class="grid gap-1">
-                <li class="flex items-center gap-1">
-                  <button type="button" class="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 text-left hover:border-outline hover:bg-surface-low" aria-label="Use ana@example.com">
-                    <span class="grid size-9 flex-none place-items-center rounded-lg bg-rail text-sm font-bold text-on-rail" aria-hidden="true">Ex</span>
-                    <span class="grid min-w-0 flex-1"><span class="truncate font-semibold">example.com</span><span class="truncate text-xs text-subtle">ana@example.com</span></span>
-                    <w-icon name="chevron-right" class="text-subtle"></w-icon>
-                  </button>
-                  <w-icon-btn icon="close" class="touch-target" aria-label="Forget example.com on this device"></w-icon-btn>
-                </li>
-                <li class="flex items-center gap-1">
-                  <button type="button" class="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 text-left hover:border-outline hover:bg-surface-low" aria-label="Use ana@example.org">
-                    <span class="grid size-9 flex-none place-items-center rounded-lg bg-rail text-sm font-bold text-on-rail" aria-hidden="true">Eo</span>
-                    <span class="grid min-w-0 flex-1"><span class="truncate font-semibold">example.org</span><span class="truncate text-xs text-subtle">ana@example.org</span></span>
-                    <w-icon name="chevron-right" class="text-subtle"></w-icon>
-                  </button>
-                  <w-icon-btn icon="close" class="touch-target" aria-label="Forget example.org on this device"></w-icon-btn>
-                </li>
-              </ul>
-              <p class="text-xs text-subtle short:hidden">Picking a domain fills in the email. This device keeps only the email, never the password.</p>
-            </section>
+
+              <w-text-field id="s1-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="s1-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s1-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s1-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form><p class="flex items-start gap-2 text-xs text-subtle short:hidden"><w-icon name="info" class="ms-icon-sm"></w-icon>One username and password for all your domains. After you sign in, switch domains at the top.</p>
           </div>
         </div>
       </section>
-
-      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 2 · First visit (no recent domains)">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 · First visit (no recent domains)</p>
-        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
-          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 2 · Typing a username: opens the default domain">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 · Typing a username: opens the default domain</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
             <div class="grid gap-2">
               <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
-              <p class="text-subtle short:hidden">Use your work email and password.</p>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
             </div>
             <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
-              <w-text-field id="s2-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" required></w-text-field>
-              <w-text-field id="s2-password" type="password" label="Password" name="password" autocomplete="current-password" required>
-                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s2-password"></w-icon-btn>
-              </w-text-field>
-              <w-text-field id="s2-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
-              <w-checkbox label="Remember my email on this device" name="remember"></w-checkbox>
-              <w-btn variant="filled" size="large" block>Sign in</w-btn>
-              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+
+              <w-text-field id="s2-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" active required></w-text-field>
+              <w-text-field id="s2-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s2-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s2-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
             </form>
           </div>
         </div>
       </section>
-
-      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 3 · Recent domain picked: email filled, focus on Password">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 · Recent domain picked: email filled, focus on Password</p>
-        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
-          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 3 · Typing a full address: opens that domain">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 · Typing a full address: opens that domain</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
             <div class="grid gap-2">
               <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
-              <p class="text-subtle short:hidden">Use your work email and password.</p>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
             </div>
             <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
-              <w-text-field id="s3-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@example.com" required></w-text-field>
-              <w-text-field id="s3-password" type="password" label="Password" name="password" autocomplete="current-password" active required>
-                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s3-password"></w-icon-btn>
-              </w-text-field>
-              <w-text-field id="s3-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
-              <w-checkbox label="Remember my email on this device" name="remember" checked></w-checkbox>
-              <w-btn variant="filled" size="large" block>Sign in</w-btn>
-              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+
+              <w-text-field id="s3-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens example.org." persistent-hint value="ana@example.org" active required></w-text-field>
+              <w-text-field id="s3-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s3-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s3-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
             </form>
           </div>
         </div>
       </section>
-
-      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 4 · Error before sending: the email is not complete">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 · Error before sending: the email is not complete</p>
-        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
-          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 4 · Back on this device: username remembered, focus on Password">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 · Back on this device: username remembered, focus on Password</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
             <div class="grid gap-2">
-              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
-              <p class="text-subtle short:hidden">Use your work email and password.</p>
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Welcome back</h2>
+              <p class="text-subtle short:hidden">Type your password to sign in as ana.</p>
             </div>
             <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
-              <w-text-field id="s4-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@" error="Enter your full work email, like ana@example.com." required></w-text-field>
-              <w-text-field id="s4-password" type="password" label="Password" name="password" autocomplete="current-password" required>
-                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s4-password"></w-icon-btn>
-              </w-text-field>
-              <w-text-field id="s4-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
-              <w-checkbox label="Remember my email on this device" name="remember"></w-checkbox>
-              <w-btn variant="filled" size="large" block>Sign in</w-btn>
-              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+
+              <w-text-field id="s4-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" required></w-text-field>
+              <w-text-field id="s4-password" type="password" label="Password" autocomplete="current-password" hide-details active required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s4-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s4-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my username on this device" name="remember" checked></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+
+              <p class="flex flex-wrap items-center gap-x-2 text-sm">Not ana? <w-btn variant="text" size="small" class="">Use another username</w-btn></p>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
             </form>
           </div>
         </div>
       </section>
-
-      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 5 · Loading: signing in">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 5 · Loading: signing in</p>
-        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
-          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 5 · Signing in">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 5 · Signing in</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
             <div class="grid gap-2">
               <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
-              <p class="text-subtle short:hidden">Use your work email and password.</p>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
             </div>
             <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate aria-busy="true">
-              <w-text-field id="s5-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@example.com" readonly required></w-text-field>
-              <w-text-field id="s5-password" type="password" label="Password" name="password" autocomplete="current-password" value="secretpassword" readonly required>
-                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s5-password"></w-icon-btn>
-              </w-text-field>
-              <w-text-field id="s5-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
-              <w-checkbox label="Remember my email on this device" name="remember" checked></w-checkbox>
-              <w-btn variant="filled" size="large" block loading disabled>Signing in…</w-btn>
-              <p class="sr-only" role="status">Signing in to example.com…</p>
-              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+
+              <w-text-field id="s5-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" active readonly required></w-text-field>
+              <w-text-field id="s5-password" type="password" label="Password" autocomplete="current-password" value="secretpassword" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s5-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s5-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my username on this device" name="remember" checked></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg" loading disabled>Signing in…</w-btn>
+              <p class="sr-only" role="status">Signing in…</p>
+
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
             </form>
           </div>
         </div>
       </section>
-
-      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 6 · Error: wrong email, password or code (one answer for every failure)">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 6 · Error: wrong email, password or code (one answer for every failure)</p>
-        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
-          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 6 · 401: unknown username, wrong password or wrong code (one answer)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 6 · 401: unknown username, wrong password or wrong code (one answer)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
             <div class="grid gap-2">
               <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
-              <p class="text-subtle short:hidden">Use your work email and password.</p>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
             </div>
             <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
-              <w-alert type="error" variant="tonal" text="The email, password or 2-step code is not right."></w-alert>
-              <w-text-field id="s6-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@example.com" required></w-text-field>
-              <w-text-field id="s6-password" type="password" label="Password" name="password" autocomplete="current-password" active required>
-                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s6-password"></w-icon-btn>
-              </w-text-field>
-              <w-text-field id="s6-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
-              <w-checkbox label="Remember my email on this device" name="remember" checked></w-checkbox>
-              <w-btn variant="filled" size="large" block>Sign in</w-btn>
-              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+              <w-alert type="error" variant="tonal" text="The username, password or 2-step code is not right. Check them and try again."></w-alert>
+              <w-text-field id="s6-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" required></w-text-field>
+              <w-text-field id="s6-password" type="password" label="Password" autocomplete="current-password" hide-details active required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s6-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s6-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
             </form>
           </div>
         </div>
       </section>
-
-      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 7 · Error: too many tries">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 7 · Error: too many tries</p>
-        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
-          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 7 · 403 not_a_member: right password, address in a domain the person is not in">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 7 · 403 not_a_member: right password, address in a domain the person is not in</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
             <div class="grid gap-2">
               <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
-              <p class="text-subtle short:hidden">Use your work email and password.</p>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
             </div>
             <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
-              <w-alert type="warning" variant="tonal" icon="clock" text="Too many tries. Wait a minute, then try again."></w-alert>
-              <w-text-field id="s7-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@example.com" required></w-text-field>
-              <w-text-field id="s7-password" type="password" label="Password" name="password" autocomplete="current-password" required>
-                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s7-password"></w-icon-btn>
-              </w-text-field>
-              <w-text-field id="s7-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
-              <w-checkbox label="Remember my email on this device" name="remember" checked></w-checkbox>
-              <w-btn variant="filled" size="large" block disabled>Sign in (wait 1 minute)</w-btn>
-              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+              <div class="flex items-start gap-3 rounded-lg bg-warning-container p-3 text-on-warning-container" role="alert"><w-icon name="alert" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p class="font-semibold">You are not a member of partner.test</p><p>Your password is right, but no admin has added you to partner.test. Sign in to your own domains with your username only, or ask an admin of partner.test to add you.</p><div class="flex flex-wrap gap-2 pt-1"><w-btn variant="filled" size="small" class="">Sign in as ana</w-btn><w-btn variant="text" size="small" class="">Change the address</w-btn></div></div></div>
+              <w-text-field id="s7-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens partner.test." persistent-hint value="ana@partner.test" required></w-text-field>
+              <w-text-field id="s7-password" type="password" label="Password" autocomplete="current-password" value="secretpassword" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s7-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s7-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="If you use 2-step sign-in, type a new code before you try again." persistent-hint active></w-text-field>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
             </form>
           </div>
         </div>
       </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 8 · 403 no_domain: right password, the person is in no domain">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 8 · 403 no_domain: right password, the person is in no domain</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">No domain yet</h2>
 
-      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 8 · Error: sign-in service cannot be reached">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 8 · Error: sign-in service cannot be reached</p>
-        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
-          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+            </div>
+            <div class="grid gap-4">
+              <div class="flex items-start gap-3 rounded-lg bg-primary-container p-3 text-on-primary-container" role="alert"><w-icon name="info" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Your password is right, but your account is not in any domain yet. An admin adds you to a domain. Then sign in again.</p></div></div>
+              <p class="grid gap-1 rounded-lg border border-border p-3 text-sm"><span class="text-xs font-semibold text-subtle">Username</span><span class="font-semibold">dan</span></p>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Back to sign-in</w-btn>
+              <p class="text-sm text-subtle">You are not signed in. Mesail kept nothing on this device.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 9 · Check before sending: the field is not complete">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 9 · Check before sending: the field is not complete</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
             <div class="grid gap-2">
               <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
-              <p class="text-subtle short:hidden">Use your work email and password.</p>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
             </div>
             <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
-              <w-alert type="error" variant="tonal" icon="wifi-off" text="We cannot reach sign-in right now. Try again in a minute."></w-alert>
-              <w-text-field id="s8-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" value="ana@example.com" required></w-text-field>
-              <w-text-field id="s8-password" type="password" label="Password" name="password" autocomplete="current-password" value="secretpassword" required>
-                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s8-password"></w-icon-btn>
-              </w-text-field>
-              <w-text-field id="s8-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
-              <w-checkbox label="Remember my email on this device" name="remember" checked></w-checkbox>
-              <w-btn variant="filled" size="large" block>Sign in</w-btn>
-              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+
+              <w-text-field id="s9-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="" persistent-hint value="ana@" error="Type your username, like ana, or your full address, like ana@example.com." active required></w-text-field>
+              <w-text-field id="s9-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s9-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s9-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
             </form>
           </div>
         </div>
       </section>
-
-      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 9 · Already signed in: &quot;Sign in to another domain&quot; (from the domain menu)">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 9 · Already signed in: &quot;Sign in to another domain&quot; (from the domain menu)</p>
-        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
-          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 @container/card">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 10 · 429: too many tries">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 10 · 429: too many tries</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
             <div class="grid gap-2">
-              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to another domain</h2>
-              <p class="text-subtle">You stay signed in to example.com. Use the email and password for the other domain.</p>
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
             </div>
             <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
-              <w-text-field id="s9-email" type="email" label="Work email" name="email" autocomplete="username" placeholder="name@company.com" active required></w-text-field>
-              <w-text-field id="s9-password" type="password" label="Password" name="password" autocomplete="current-password" required>
-                <w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s9-password"></w-icon-btn>
-              </w-text-field>
-              <w-text-field id="s9-code" label="2-step code (optional)" name="code" autocomplete="one-time-code" pattern="[0-9]*" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
-              <w-checkbox label="Remember my email on this device" name="remember"></w-checkbox>
-              <w-btn variant="filled" size="large" block>Sign in</w-btn>
-              <w-btn variant="text" size="large" block href="messenger.html">Cancel</w-btn>
-              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask an admin of your domain to reset it.</p>
+              <w-alert type="warning" variant="tonal" text="Too many tries. Wait a minute, then try again."></w-alert>
+              <w-text-field id="s10-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" active required></w-text-field>
+              <w-text-field id="s10-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s10-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s10-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg" disabled>Sign in (wait 1 minute)</w-btn>
+
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 11 · Sign-in cannot be reached">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 11 · Sign-in cannot be reached</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-alert type="error" variant="tonal" text="We cannot reach sign-in right now. Try again in a minute."></w-alert>
+              <w-text-field id="s11-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" active required></w-text-field>
+              <w-text-field id="s11-password" type="password" label="Password" autocomplete="current-password" value="secretpassword" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="s11-password"></w-icon-btn></w-text-field>
+              <w-text-field id="s11-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
             </form>
           </div>
         </div>
       </section>
     </main>
-
     <footer class="text-sm text-subtle">
       <nav aria-label="Help and legal">
         <ul class="flex gap-2">
-          <li><w-btn variant="text" size="small" href="#">Help</w-btn></li>
-          <li><w-btn variant="text" size="small" href="#">Privacy</w-btn></li>
+          <li><w-btn variant="text" size="small" href="#" class="">Help</w-btn></li>
+          <li><w-btn variant="text" size="small" href="#" class="">Privacy</w-btn></li>
         </ul>
       </nav>
     </footer>

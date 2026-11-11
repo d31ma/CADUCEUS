@@ -29,8 +29,6 @@
       <li><a class="ms-domain-tile" href="#" title="example.org" aria-label="example.org, 3 mentions">Eo<w-badge content="3" inline class="absolute -top-1 -right-1.5"></w-badge></a></li>
       <li><a class="ms-domain-tile" href="#" title="lab.example.net" aria-label="lab.example.net, unread messages"><span class="absolute -left-2.5 size-2 rounded-full bg-on-rail" aria-hidden="true"></span>La</a></li>
     </ul>
-    <div class="h-px w-8 bg-on-rail/20" role="presentation"></div>
-    <a class="ms-domain-tile" href="signin.html" aria-label="Sign in to another domain" title="Sign in to another domain"><w-icon name="plus"></w-icon></a>
     <div class="flex-1"></div>
     <a class="ms-domain-tile" href="settings-appearance.html" aria-label="Help and keyboard shortcuts" title="Help"><w-icon name="info"></w-icon></a>
   </nav>
@@ -253,10 +251,10 @@
       <div class="grid gap-4 px-5 pb-4 short:gap-2 short:pb-2">
         <p id="session-desc">Sign in again to keep working. Your draft is saved.</p>
         <p class="flex items-center gap-2 rounded-md bg-success-container px-3 py-2 text-sm text-on-success-container"><w-icon name="check" class="ms-icon-sm"></w-icon>Draft in #releases is saved on this device.</p>
-        <p class="text-xs text-subtle short:hidden">This happens when you sign out on another device, or when your admin changes your account in example.com.</p>
+        <p class="text-xs text-subtle short:hidden">This happens when you sign out on another device, when you were away for 30 minutes, or when an admin changes your account.</p>
       </div>
       <div class="flex flex-wrap justify-end gap-2 px-5 pb-5 max-sm:flex-col-reverse short:pb-3">
-        <w-btn variant="text" href="signed-out.html" class="max-sm:w-full">Sign out of example.com</w-btn>
+        <w-btn variant="text" href="signed-out.html" class="max-sm:w-full">Sign out</w-btn>
         <w-btn variant="filled" href="signin.html" autofocus class="max-sm:w-full">Sign in again</w-btn>
       </div>
     </div>

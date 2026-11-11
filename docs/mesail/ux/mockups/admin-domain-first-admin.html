@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail admin mockup: example.org</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/admin.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface text-text">
+<a class="ms-skip-link" href="#admin-content">Skip to admin content</a>
+
+<!-- Admin app shell (apps/web-admin). Under 600 px one pane shows (data-pane: list = the admin menu, main = the page);
+     600 px: menu + page; 960 px: + the rail of domains the person administers; 1920 and 2560 px: wider menu. -->
+<div class="group/app relative grid h-dvh overflow-hidden grid-cols-1
+  sm:grid-cols-[17rem_minmax(0,1fr)]
+  md:grid-cols-[4.25rem_17rem_minmax(0,1fr)]
+  xl:grid-cols-[4.5rem_19rem_minmax(0,1fr)]
+  2xl:grid-cols-[4.5rem_21rem_minmax(0,1fr)]" data-pane="main">
+
+  <nav class="ms-rail hidden md:flex flex-col items-center gap-2 pb-3 pt-3 safe-t overflow-y-auto" aria-label="Admin domains">
+    <ul class="flex flex-col gap-2"><li><a class="ms-domain-tile" href="#" aria-current="true" title="Whole install" aria-label="Whole install, current"><w-icon name="globe"></w-icon></a></li></ul>
+  </nav>
+
+  <aside class="ms-sidebar hidden group-data-[pane=list]/app:flex sm:flex flex-col min-h-0 bg-sidebar border-r border-divider" aria-label="Admin menu">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l pl-4 pr-2 border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <p class="flex min-w-0 flex-1 items-center gap-2 font-bold"><w-icon name="shield" class="ms-icon-sm"></w-icon><span class="truncate">Mesail admin</span></p>
+    </header>
+    <nav class="flex-1 overflow-y-auto px-2 py-3" aria-label="Admin pages"><section class="mt-3 first:mt-0" aria-labelledby="nav-0"><h2 id="nav-0" class="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-subtle">Install</h2><ul class="grid gap-0.5"><li><a href="admin-domains.html" aria-current="page" class="flex items-center gap-3 min-h-control-sm touch:min-h-touch rounded-lg px-3 text-sm no-underline bg-selected text-on-selected font-semibold"><w-icon name="globe" class="ms-icon-sm"></w-icon><span class="truncate">Domains</span></a></li><li><a href="admin-people.html" class="flex items-center gap-3 min-h-control-sm touch:min-h-touch rounded-lg px-3 text-sm no-underline text-text hover:bg-hover"><w-icon name="users" class="ms-icon-sm"></w-icon><span class="truncate">People</span></a></li></ul></section></nav>
+    <footer class="flex items-center gap-2 border-t border-divider px-3 py-2 safe-b">
+      <w-avatar text="OO" size="32" style="--h:140" alt=""></w-avatar>
+      <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold">Olu Okafor</span><span class="block truncate text-xs text-subtle">olu · Operator</span></span>
+      <w-icon-btn icon="logout" aria-label="Sign out" title="Sign out" class=""></w-icon-btn>
+    </footer>
+  </aside>
+
+  <main class="hidden group-data-[pane=main]/app:flex sm:flex flex-col min-w-0 min-h-0 bg-surface @container/main" aria-labelledby="page-title">
+    <header class="flex items-center gap-2 min-h-13 short:min-h-11 safe-t safe-l safe-r border-b border-divider drag-region" style="--ms-edge: 1rem">
+      <w-icon-btn class="no-drag sm:hidden -ml-2 " icon="arrow-left" href="?pane=list" aria-label="Back to the admin menu"></w-icon-btn>
+      <h1 id="page-title" class="flex min-w-0 items-center gap-2 text-lg font-bold"><w-icon name="building" class="ms-icon-sm"></w-icon><span class="truncate">example.org</span></h1>
+      <p class="hidden @2xl/main:block min-w-0 flex-1 truncate border-l border-divider pl-3 text-sm text-subtle">Domain set up by an Operator (SPEC S11)</p>
+      <div class="ml-auto flex items-center gap-2 no-drag"></div>
+    </header>
+    <div class="flex-1 min-h-0 overflow-y-auto py-6 safe-l safe-r safe-b" style="--ms-edge: 1rem" id="admin-content">
+      <div class="@container/page mx-auto grid w-full max-w-content grid-cols-[minmax(0,1fr)] gap-6 pb-10">
+        <section class="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:p-6" aria-labelledby="dns-h"><div class="flex flex-wrap items-center gap-2"><h2 id="dns-h" class="flex-1 text-lg font-semibold">DNS records</h2><span class="ms-tag ms-tag--ok"><w-icon name="check"></w-icon>MX ok</span><span class="ms-tag ms-tag--ok"><w-icon name="check"></w-icon>SPF ok</span><span class="ms-tag ms-tag--ok"><w-icon name="check"></w-icon>DKIM ok</span><span class="ms-tag ms-tag--ok"><w-icon name="check"></w-icon>DMARC ok</span></div><p class="text-sm text-subtle">Mail for example.org is accepted.</p><div><w-btn variant="text" size="small" href="admin-domain-dns.html" append-icon="chevron-right">DNS details</w-btn></div></section>
+        <section class="grid gap-4 rounded-xl border-2 border-accent bg-surface p-4 sm:p-6" aria-labelledby="first-admin-h">
+          <div class="grid gap-1">
+            <h2 id="first-admin-h" class="flex items-center gap-2 text-lg font-semibold"><w-icon name="shield"></w-icon>Name the first admin of example.org</h2>
+            <p class="text-sm text-subtle">example.org has no admin yet. The admin adds the other members. It can be a person who already uses Mesail, or a new username.</p>
+          </div>
+          <form class="grid gap-4" onsubmit="return false">
+            <w-text-field id="first" label="Username" name="username" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="dan" suffix="@example.org" hint="The part before @. For a person who already uses Mesail in another domain, type the same username." persistent-hint active required></w-text-field>
+            <div class="flex flex-wrap justify-end gap-2"><w-btn variant="filled" class=" ">Name as admin</w-btn></div>
+          </form>
+        </section>
+        <section class="mt-4 grid gap-4 border-0 border-t-2 border-dashed border-outline pt-6" aria-labelledby="mock-h">
+  <h2 id="mock-h" class="text-lg font-semibold text-subtle">Other states (mockup only)</h2>
+  <div class="grid items-start gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr))]">
+<section class="grid min-w-0 content-start gap-3" aria-label="State 1 · A new username: step 2 (same as Add member)"><p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 · A new username: step 2 (same as Add member)</p><div role="dialog" aria-modal="false" aria-labelledby="fa2-t" class="grid w-full max-w-full overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="fa2-t" class="min-w-0 flex-1 text-lg font-semibold">Create an account for nia</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><div class="flex items-start gap-3 rounded-lg bg-primary-container p-3 text-on-primary-container" role="status"><w-icon name="info" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>No one has the username nia yet. Mesail creates a new account and makes nia the admin of example.org.</p></div></div><w-text-field id="fa2-name" label="Display name" value="Nia Obi" hint="Shown in every domain." persistent-hint required></w-text-field><w-text-field id="fa2-pw" type="password" label="First password" autocomplete="new-password" hint="Nia must choose a new one at the first sign-in." persistent-hint required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="fa2-pw"></w-icon-btn></w-text-field></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Back</w-btn><w-btn variant="filled" class=" ">Create account and name as admin</w-btn></div>
+</div></section>
+<section class="grid min-w-0 content-start gap-3" aria-label="State 2 · Done: an existing person named"><p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 · Done: an existing person named</p><section class="grid gap-3 rounded-xl border border-border bg-surface p-4" aria-labelledby="admins-h"><h3 id="admins-h" class="text-lg font-semibold">Admins of example.org</h3><div class="flex items-center gap-3"><w-avatar text="BL" size="36" style="--h:20" alt=""></w-avatar><span class="grid min-w-0 flex-1"><span class="truncate font-semibold">Bo Lee</span><span class="truncate text-xs text-subtle">bo@example.org · existing person</span></span><span class="ms-tag"><w-icon name="shield"></w-icon>Admin</span></div><div class="flex items-start gap-3 rounded-lg bg-success-container p-3 text-on-success-container" role="status"><w-icon name="check" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Bo Lee is now the admin of example.org. Bo sees it in the domain switcher within a minute.</p></div></div></section></section>
+  </div>
+</section>
+      </div>
+    </div>
+  </main>
+</div>
+<div class="sr-only" aria-live="polite" id="announcer"></div>
+</body>
+</html>

@@ -48,6 +48,17 @@
   keep working; `test/legacy_realms_check.py` keeps checking them.
   `test/oidc_check.py` checks the new realm natively and in the image.
 
+### Slice LU: one-login screens (UX)
+
+- `docs/mesail/ux`: one-field sign-in ("Username or email address") with the
+  401, 403 `not_a_member` and 403 `no_domain` states; the forced password
+  change; the domain switcher fed by `Session.domains` (default first, Admin
+  tag, one Sign out, switch states); the default domain setting; the admin
+  app's members, add member, member actions (`409 last_admin`, AC-ID-13
+  `403`), people and first-admin screens. The rail's "+" tile and every
+  per-domain sign-in or sign-out are gone. TOKENS.md gains one control-size
+  scale (32, 40, 48 px, 44 px on touch and under 768 px).
+
 ### Slice R1: realtime and presence
 
 - Added `edge/realtime`, the connection gateway: a small Go program that

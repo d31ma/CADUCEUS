@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail admin mockup: add a member</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#first">Skip to the form</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span><span class="ms-tag">Admin</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">SPEC AC-ID-12 and S14. The admin types a username. An existing person is added as they are; for a new username the server answers 400 with field displayName, and the dialog asks for a name and a first password. Under 600 px every dialog is a full-width bottom sheet.</p>
+    <!-- Mockup: labelled states side by side. Each card is at most --ms-auth-card-max (26rem) wide. -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-auth-card-max)),1fr))]">
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 1 · Step 1: the username only">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 · Step 1: the username only</p>
+<div role="dialog" aria-modal="false" aria-labelledby="add1-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="add1-t" class="min-w-0 flex-1 text-lg font-semibold">Add a member to example.com</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><w-text-field id="first" label="Username" name="username" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="dan" suffix="@example.com" hint="The part before @. For a person who already uses Mesail in another domain, type the same username." persistent-hint active required></w-text-field><w-checkbox label="Make this person an admin of example.com" name="admin"></w-checkbox></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Cancel</w-btn><w-btn variant="filled" class=" ">Add</w-btn></div>
+</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 2 · Adding: POST /directory/members">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 · Adding: POST /directory/members</p>
+<div role="dialog" aria-modal="false" aria-labelledby="add2-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="add2-t" class="min-w-0 flex-1 text-lg font-semibold">Add a member to example.com</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><w-text-field id="add2-u" label="Username" name="username" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="dan" suffix="@example.com" value="dan" hint="The part before @. For a person who already uses Mesail in another domain, type the same username." persistent-hint readonly required></w-text-field><w-checkbox label="Make this person an admin of example.com" name="admin"></w-checkbox><p class="sr-only" role="status">Adding dan…</p></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Cancel</w-btn><w-btn variant="filled" class=" " loading disabled>Adding…</w-btn></div>
+</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 3 · 400 field displayName: a new person, so step 2 asks for a name and a first password">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 · 400 field displayName: a new person, so step 2 asks for a name and a first password</p>
+<div role="dialog" aria-modal="false" aria-labelledby="add3-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="add3-t" class="min-w-0 flex-1 text-lg font-semibold">Create an account for dan</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><div class="flex items-start gap-3 rounded-lg bg-primary-container p-3 text-on-primary-container" role="status"><w-icon name="info" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>No one has the username dan yet. Mesail creates a new account. Dan uses it for every domain an admin adds them to.</p></div></div><w-text-field id="add3-u" label="Username" name="username" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="dan" suffix="@example.com" value="dan" readonly required></w-text-field><w-text-field id="add3-name" label="Display name" autocomplete="off" value="Dan Example" hint="Shown in every domain." persistent-hint required></w-text-field><w-text-field id="add3-pw" type="password" label="First password" autocomplete="new-password" hint="Give it to Dan in person or by phone. Dan must choose a new one at the first sign-in." persistent-hint required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="add3-pw"></w-icon-btn></w-text-field><w-checkbox label="Make this person an admin of example.com" name="admin"></w-checkbox></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Back</w-btn><w-btn variant="filled" class=" ">Create account and add</w-btn></div>
+</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 4 · 201 existingPerson true: the admin is told, no password asked">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 · 201 existingPerson true: the admin is told, no password asked</p>
+<div role="dialog" aria-modal="false" aria-labelledby="add4-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="add4-t" class="min-w-0 flex-1 text-lg font-semibold">Eve Park was added</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><div class="flex items-start gap-3 rounded-lg bg-success-container p-3 text-on-success-container" role="status"><w-icon name="check" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p class="font-semibold">eve already had a Mesail account</p><p>Eve keeps her password and 2-step code. She sees example.com within a minute, with the address eve@example.com. Mesail did not ask her first.</p></div></div><div class="flex items-center gap-3 rounded-lg border border-border p-3"><w-avatar text="EP" size="36" style="--h:60" alt=""></w-avatar><span class="grid min-w-0 flex-1"><span class="truncate font-semibold">Eve Park</span><span class="truncate text-xs text-subtle">eve@example.com · Member</span></span></div></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Add another</w-btn><w-btn variant="filled" class=" ">Done</w-btn></div>
+</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 5 · 201 existingPerson false: new account created">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 5 · 201 existingPerson false: new account created</p>
+<div role="dialog" aria-modal="false" aria-labelledby="add5-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="add5-t" class="min-w-0 flex-1 text-lg font-semibold">Dan Example was added</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><div class="flex items-start gap-3 rounded-lg bg-success-container p-3 text-on-success-container" role="status"><w-icon name="check" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p class="font-semibold">New account created</p><p>Dan signs in with dan and the first password, then chooses a new one. Address: dan@example.com.</p></div></div></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Add another</w-btn><w-btn variant="filled" class=" ">Done</w-btn></div>
+</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 6 · 400 field username: breaks the prefix rules">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 6 · 400 field username: breaks the prefix rules</p>
+<div role="dialog" aria-modal="false" aria-labelledby="add6-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="add6-t" class="min-w-0 flex-1 text-lg font-semibold">Add a member to example.com</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><w-text-field id="add6-u" label="Username" name="username" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="dan" suffix="@example.com" value="dan smith" error="Use 1 to 64 letters, digits, dots, dashes or underscores. Start and end with a letter or digit." required></w-text-field><w-checkbox label="Make this person an admin of example.com" name="admin"></w-checkbox></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Cancel</w-btn><w-btn variant="filled" class=" ">Add</w-btn></div>
+</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 7 · 400 field username: a role name">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 7 · 400 field username: a role name</p>
+<div role="dialog" aria-modal="false" aria-labelledby="add7-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="add7-t" class="min-w-0 flex-1 text-lg font-semibold">Add a member to example.com</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><w-text-field id="add7-u" label="Username" name="username" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="dan" suffix="@example.com" value="postmaster" error="postmaster is kept for system mail. Choose another username, or add postmaster as an alias." required></w-text-field><w-checkbox label="Make this person an admin of example.com" name="admin"></w-checkbox></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Cancel</w-btn><w-btn variant="filled" class=" ">Add</w-btn></div>
+</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 8 · 409 duplicate: an alias or a channel address uses it">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 8 · 409 duplicate: an alias or a channel address uses it</p>
+<div role="dialog" aria-modal="false" aria-labelledby="add8-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="add8-t" class="min-w-0 flex-1 text-lg font-semibold">Add a member to example.com</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><w-text-field id="add8-u" label="Username" name="username" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="dan" suffix="@example.com" value="sales" error="sales cannot be used. It is already a member here, or an alias or channel address uses it in a domain on this install." required></w-text-field><w-checkbox label="Make this person an admin of example.com" name="admin"></w-checkbox></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Cancel</w-btn><w-btn variant="filled" class=" ">Add</w-btn></div>
+</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 9 · Already in the list on screen: checked before sending">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 9 · Already in the list on screen: checked before sending</p>
+<div role="dialog" aria-modal="false" aria-labelledby="add9-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="add9-t" class="min-w-0 flex-1 text-lg font-semibold">Add a member to example.com</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><w-text-field id="add9-u" label="Username" name="username" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="dan" suffix="@example.com" value="eve" error="Eve Park is already a member of example.com." required></w-text-field><w-checkbox label="Make this person an admin of example.com" name="admin"></w-checkbox></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Cancel</w-btn><w-btn variant="filled" class=" ">Add</w-btn></div>
+</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 10 · 400 password_policy on the first password">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 10 · 400 password_policy on the first password</p>
+<div role="dialog" aria-modal="false" aria-labelledby="add10-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="add10-t" class="min-w-0 flex-1 text-lg font-semibold">Create an account for dan</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><w-text-field id="add10-u" label="Username" name="username" autocapitalize="none" spellcheck="false" autocomplete="off" placeholder="dan" suffix="@example.com" value="dan" readonly required></w-text-field><w-text-field id="add10-name" label="Display name" value="Dan Example" hide-details required></w-text-field><w-text-field id="add10-pw" type="password" label="First password" autocomplete="new-password" value="short" error="Use at least 12 characters." required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="add10-pw"></w-icon-btn></w-text-field><w-checkbox label="Make this person an admin of example.com" name="admin"></w-checkbox></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Back</w-btn><w-btn variant="filled" class=" ">Create account and add</w-btn></div>
+</div>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Help and legal">
+        <ul class="flex gap-2">
+          <li><w-btn variant="text" size="small" href="#" class="">Help</w-btn></li>
+          <li><w-btn variant="text" size="small" href="#" class="">Privacy</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

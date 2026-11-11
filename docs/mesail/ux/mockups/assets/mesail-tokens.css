@@ -16,6 +16,23 @@
   --ms-dialog-max: 32rem;
   --ms-row-height: 2rem;
   --ms-touch-min: var(--w-touch-min, 2.75rem);
+  --ms-auth-card-max: 26rem;
+
+  /* Control sizes (one scale for buttons, fields, menu rows and icon buttons).
+   * Under pointer: coarse every control is at least --ms-touch-min. */
+  --ms-control-sm: 2rem;
+  --ms-control-md: 2.5rem;
+  --ms-control-lg: 3rem;
+  --ms-icon-sm: 1rem;
+  --ms-icon-md: 1.25rem;
+  --ms-icon-lg: 1.5rem;
+  --ms-radius-control: var(--w-radius-lg);
+  --ms-radius-dialog: var(--w-radius-xl);
+  --ms-space-field: 1rem;
+  --ms-space-label: 0.375rem;
+  --ms-space-section: 1.5rem;
+  --ms-card-pad: 1.5rem;
+  --ms-card-pad-narrow: 1rem;
 
   /* Avatars */
   --ms-avatar-xs: 1.25rem;

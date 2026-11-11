@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: domain switcher states</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#m1">Skip to the form</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">The domain switcher after one sign-in (ADR 0005). The list comes from Session.domains; the default domain comes first, then the others in the order of Session.domains. A switch needs no password and changes only this tab.</p>
+    <!-- Mockup: labelled states side by side. Each card is at most --ms-auth-card-max (26rem) wide. -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-auth-card-max)),1fr))]">
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 1 · Menu: default domain first, admin tag, current domain checked">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 · Menu: default domain first, admin tag, current domain checked</p>
+        <div class="w-full rounded-xl border border-border bg-surface p-1 shadow-xl" data-duvay="w-menu">
+          <div class="mb-1 grid gap-0.5 border-b border-divider px-3 py-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-subtle">Your domains</span>
+            <span class="text-xs text-subtle">One sign-in for all of them. This tab shows one domain at a time.</span>
+          </div>
+          <div role="menu" id="m1" aria-label="Your domains" class="grid">
+            <div role="group" aria-label="Switch domain" class="grid gap-0.5"><button type="button" role="menuitemradio" aria-checked="true" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Ex</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">example.com</span><span class="ms-tag"><w-icon name="star"></w-icon>Default</span><span class="ms-tag"><w-icon name="shield"></w-icon>Admin</span></span><span class="truncate text-xs font-normal text-subtle">ana@example.com</span></span><span class="sr-only">, default, you are an admin</span><w-icon name="check" class="ms-icon-sm text-accent"></w-icon><span class="sr-only">, current domain</span></button><button type="button" role="menuitemradio" aria-checked="false" tabindex="0" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold bg-hover ring-2 ring-inset ring-accent"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Eo</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">example.org</span></span><span class="truncate text-xs font-normal text-subtle">ana@example.org</span></span><span class="sr-only"></span><w-badge content="3" inline aria-hidden="true"></w-badge><span class="sr-only">, 3 mentions</span></button><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">La</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">lab.example.net</span></span><span class="truncate text-xs font-normal text-subtle">ana@lab.example.net</span></span><span class="sr-only"></span><w-badge content="12" inline class="ms-count" aria-hidden="true"></w-badge><span class="sr-only">, 12 unread</span></button></div>
+            <div role="separator" class="my-1 h-px bg-divider"></div>
+            <a role="menuitem" tabindex="-1" href="settings.html#default-domain" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start"><w-icon name="star" class="ms-icon-sm mt-0.5"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Choose your default domain</span><span class="text-xs text-subtle">It opens when you sign in with your username only</span></span></a>
+            <div role="separator" class="my-1 h-px bg-divider"></div>
+            <a role="menuitem" tabindex="-1" href="signed-out.html" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start"><w-icon name="logout" class="ms-icon-sm mt-0.5"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Sign out</span><span class="text-xs text-subtle">Ends your session in every domain</span></span></a>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 2 · Switching: POST /identity/session/domain">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 · Switching: POST /identity/session/domain</p>
+        <div class="w-full rounded-xl border border-border bg-surface p-1 shadow-xl" data-duvay="w-menu">
+          <div class="mb-1 grid gap-0.5 border-b border-divider px-3 py-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-subtle">Your domains</span>
+            <span class="text-xs text-subtle">One sign-in for all of them. This tab shows one domain at a time.</span>
+          </div>
+          <div role="menu" id="m2" aria-label="Your domains" class="grid">
+            <div role="group" aria-label="Switch domain" class="grid gap-0.5"><button type="button" role="menuitemradio" aria-checked="true" aria-disabled="true" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold opacity-60"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Ex</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">example.com</span><span class="ms-tag"><w-icon name="star"></w-icon>Default</span><span class="ms-tag"><w-icon name="shield"></w-icon>Admin</span></span><span class="truncate text-xs font-normal text-subtle">ana@example.com</span></span><span class="sr-only">, default, you are an admin</span><w-icon name="check" class="ms-icon-sm text-accent"></w-icon><span class="sr-only">, current domain</span></button><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Eo</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">example.org</span></span><span class="truncate text-xs font-normal text-subtle">ana@example.org</span></span><span class="sr-only"></span><w-icon name="refresh" class="ms-icon-sm animate-spin text-accent motion-reduce:animate-none" aria-hidden="true"></w-icon><span class="sr-only">, opening</span></button><button type="button" role="menuitemradio" aria-checked="false" aria-disabled="true" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold opacity-60"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">La</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">lab.example.net</span></span><span class="truncate text-xs font-normal text-subtle">ana@lab.example.net</span></span><span class="sr-only"></span><w-badge content="12" inline class="ms-count" aria-hidden="true"></w-badge><span class="sr-only">, 12 unread</span></button></div>
+            <div role="separator" class="my-1 h-px bg-divider"></div>
+            <a role="menuitem" tabindex="-1" href="settings.html#default-domain" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start"><w-icon name="star" class="ms-icon-sm mt-0.5"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Choose your default domain</span><span class="text-xs text-subtle">It opens when you sign in with your username only</span></span></a>
+            <div role="separator" class="my-1 h-px bg-divider"></div>
+            <a role="menuitem" tabindex="-1" href="signed-out.html" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start"><w-icon name="logout" class="ms-icon-sm mt-0.5"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Sign out</span><span class="text-xs text-subtle">Ends your session in every domain</span></span></a>
+          </div><p class="sr-only" role="status">Opening example.org…</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 3 · Switched: the header, the rail and the address change">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 · Switched: the header, the rail and the address change</p>
+        <div class="grid gap-3">
+          <div class="flex items-center gap-2 rounded-xl border border-border bg-sidebar px-2 min-h-13">
+            <w-btn variant="text" class="font-bold" append-icon="chevron-down" aria-haspopup="menu" aria-expanded="false">example.org</w-btn>
+            <span class="flex-1"></span>
+            <w-icon-btn icon="edit" aria-label="New message"></w-icon-btn>
+          </div>
+          <div class="flex flex-wrap items-center gap-4 rounded-xl bg-rail p-3 pl-5" role="presentation">
+            <span class="ms-domain-tile">Ex</span><span class="ms-domain-tile" aria-current="true">Eo</span><span class="ms-domain-tile">La</span>
+            <span class="ml-2 text-xs text-on-rail">The rail (960 px and wider) marks the same domain.</span>
+          </div>
+          <p class="sr-only" role="status">Now in example.org.</p>
+          <p class="text-sm text-subtle">The tab opens a new realtime connection with the new token and reloads the sidebar. Other tabs keep their own domain.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 4 · Only one domain">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 · Only one domain</p>
+        <div class="w-full rounded-xl border border-border bg-surface p-1 shadow-xl" data-duvay="w-menu">
+          <div class="mb-1 grid gap-0.5 border-b border-divider px-3 py-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-subtle">Your domain</span>
+            <span class="text-xs text-subtle">When an admin adds you to another domain, it shows here.</span>
+          </div>
+          <div role="menu" id="m4" aria-label="Your domains" class="grid">
+            <div role="group" aria-label="Switch domain" class="grid gap-0.5"><button type="button" role="menuitemradio" aria-checked="true" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Ex</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">example.com</span><span class="ms-tag"><w-icon name="star"></w-icon>Default</span><span class="ms-tag"><w-icon name="shield"></w-icon>Admin</span></span><span class="truncate text-xs font-normal text-subtle">ana@example.com</span></span><span class="sr-only">, default, you are an admin</span><w-icon name="check" class="ms-icon-sm text-accent"></w-icon><span class="sr-only">, current domain</span></button></div>
+            <div role="separator" class="my-1 h-px bg-divider"></div>
+            <a role="menuitem" tabindex="-1" href="settings.html#default-domain" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start"><w-icon name="star" class="ms-icon-sm mt-0.5"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Choose your default domain</span><span class="text-xs text-subtle">It opens when you sign in with your username only</span></span></a>
+            <div role="separator" class="my-1 h-px bg-divider"></div>
+            <a role="menuitem" tabindex="-1" href="signed-out.html" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start"><w-icon name="logout" class="ms-icon-sm mt-0.5"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Sign out</span><span class="text-xs text-subtle">Ends your session in every domain</span></span></a>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 5 · Added to a new domain: it shows at the next refresh, within a minute">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 5 · Added to a new domain: it shows at the next refresh, within a minute</p>
+        <div class="w-full rounded-xl border border-border bg-surface p-1 shadow-xl" data-duvay="w-menu">
+          <div class="mb-1 grid gap-0.5 border-b border-divider px-3 py-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-subtle">Your domains</span>
+            <span class="text-xs text-subtle">One sign-in for all of them. This tab shows one domain at a time.</span>
+          </div>
+          <div role="menu" id="m5" aria-label="Your domains" class="grid">
+            <div role="group" aria-label="Switch domain" class="grid gap-0.5"><button type="button" role="menuitemradio" aria-checked="true" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Ex</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">example.com</span><span class="ms-tag"><w-icon name="star"></w-icon>Default</span><span class="ms-tag"><w-icon name="shield"></w-icon>Admin</span></span><span class="truncate text-xs font-normal text-subtle">ana@example.com</span></span><span class="sr-only">, default, you are an admin</span><w-icon name="check" class="ms-icon-sm text-accent"></w-icon><span class="sr-only">, current domain</span></button><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Eo</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">example.org</span></span><span class="truncate text-xs font-normal text-subtle">ana@example.org</span></span><span class="sr-only"></span><w-badge content="3" inline aria-hidden="true"></w-badge><span class="sr-only">, 3 mentions</span></button><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">La</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">lab.example.net</span></span><span class="truncate text-xs font-normal text-subtle">ana@lab.example.net</span></span><span class="sr-only"></span><w-badge content="12" inline class="ms-count" aria-hidden="true"></w-badge><span class="sr-only">, 12 unread</span></button><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Pa</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">partner.test</span><span class="ms-tag ms-tag--ok">New</span></span><span class="truncate text-xs font-normal text-subtle">ana@partner.test</span></span><span class="sr-only">, new</span><span class="sr-only"></span></button></div>
+            <div role="separator" class="my-1 h-px bg-divider"></div>
+            <a role="menuitem" tabindex="-1" href="settings.html#default-domain" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start"><w-icon name="star" class="ms-icon-sm mt-0.5"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Choose your default domain</span><span class="text-xs text-subtle">It opens when you sign in with your username only</span></span></a>
+            <div role="separator" class="my-1 h-px bg-divider"></div>
+            <a role="menuitem" tabindex="-1" href="signed-out.html" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start"><w-icon name="logout" class="ms-icon-sm mt-0.5"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Sign out</span><span class="text-xs text-subtle">Ends your session in every domain</span></span></a>
+          </div><p class="sr-only" role="status">You were added to partner.test.</p>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 6 · 404 on a switch: removed from example.org in the meantime">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 6 · 404 on a switch: removed from example.org in the meantime</p>
+        <div class="w-full rounded-xl border border-border bg-surface p-1 shadow-xl" data-duvay="w-menu">
+          <div class="mb-1 grid gap-0.5 border-b border-divider px-3 py-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-subtle">Your domains</span>
+            <span class="text-xs text-subtle">One sign-in for all of them. This tab shows one domain at a time.</span>
+          </div>
+          <div class="m-2 flex items-start gap-3 rounded-lg bg-error-container p-3 text-on-error-container" role="alert"><w-icon name="alert" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>You are no longer a member of example.org, so it is gone from your list.</p></div></div><div role="menu" id="m6" aria-label="Your domains" class="grid">
+            <div role="group" aria-label="Switch domain" class="grid gap-0.5"><button type="button" role="menuitemradio" aria-checked="true" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">Ex</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">example.com</span><span class="ms-tag"><w-icon name="star"></w-icon>Default</span><span class="ms-tag"><w-icon name="shield"></w-icon>Admin</span></span><span class="truncate text-xs font-normal text-subtle">ana@example.com</span></span><span class="sr-only">, default, you are an admin</span><w-icon name="check" class="ms-icon-sm text-accent"></w-icon><span class="sr-only">, current domain</span></button><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover aria-checked:font-semibold"><span class="grid size-8 flex-none place-items-center rounded-lg bg-rail text-xs font-bold text-on-rail" aria-hidden="true">La</span><span class="grid min-w-0 flex-1 gap-0.5"><span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1"><span class="truncate">lab.example.net</span></span><span class="truncate text-xs font-normal text-subtle">ana@lab.example.net</span></span><span class="sr-only"></span><w-badge content="12" inline class="ms-count" aria-hidden="true"></w-badge><span class="sr-only">, 12 unread</span></button></div>
+            <div role="separator" class="my-1 h-px bg-divider"></div>
+            <a role="menuitem" tabindex="-1" href="settings.html#default-domain" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start"><w-icon name="star" class="ms-icon-sm mt-0.5"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Choose your default domain</span><span class="text-xs text-subtle">It opens when you sign in with your username only</span></span></a>
+            <div role="separator" class="my-1 h-px bg-divider"></div>
+            <a role="menuitem" tabindex="-1" href="signed-out.html" class="flex w-full items-center gap-3 min-h-control-md touch:min-h-touch rounded-lg px-3 py-2 text-left text-sm text-text no-underline hover:bg-hover focus-visible:bg-hover items-start"><w-icon name="logout" class="ms-icon-sm mt-0.5"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Sign out</span><span class="text-xs text-subtle">Ends your session in every domain</span></span></a>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 7 · Refresh answered 401 for the open domain (removed), other domains left">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 7 · Refresh answered 401 for the open domain (removed), other domains left</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">You no longer have access to example.org</h2>
+
+            </div>
+            <div class="grid gap-4">
+              <p>An admin removed you from example.org. Your other domains still work.</p>
+              <div class="grid gap-2">
+                <w-btn variant="filled" size="large" block class="min-h-control-lg">Open example.com</w-btn>
+                <w-btn variant="outlined" size="large" block class="min-h-control-lg">Open lab.example.net</w-btn>
+              </div>
+              <p class="text-xs text-subtle">If none of them opens, your session has ended: Mesail shows the sign-in form.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 8 · Operator with no domain opens the messenger (session domain *)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 8 · Operator with no domain opens the messenger (session domain *)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Your account has no domain</h2>
+
+            </div>
+            <div class="grid gap-4">
+              <div class="flex items-start gap-3 rounded-lg bg-primary-container p-3 text-on-primary-container" role="status"><w-icon name="shield" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>You are an Operator of this Mesail install, but not a member of any domain. Chat and email open only inside a domain.</p></div></div>
+              <w-btn variant="filled" size="large" block href="admin-domains.html" class="min-h-control-lg">Open Mesail admin</w-btn>
+              <w-btn variant="text" size="large" block class="min-h-control-lg">Sign out</w-btn>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Help and legal">
+        <ul class="flex gap-2">
+          <li><w-btn variant="text" size="small" href="#" class="">Help</w-btn></li>
+          <li><w-btn variant="text" size="small" href="#" class="">Privacy</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

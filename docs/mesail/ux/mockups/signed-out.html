@@ -3,68 +3,57 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Signed out · Mesail</title>
+<title>Signed out of Mesail</title>
 <link rel="stylesheet" href="assets/app.css">
 <link rel="stylesheet" href="assets/screens/auth.css">
 <script src="assets/vendor/duvay-mesail.js" defer></script>
 <script src="assets/mockup.js" defer></script>
 </head>
 <body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#s1">Skip to the form</a>
 <div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
-  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
-    <header>
-      <p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p>
-    </header>
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <span></span>
+    <!-- Mockup: labelled states side by side. Each card is at most --ms-auth-card-max (26rem) wide. -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-auth-card-max)),1fr))]">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 1 · After Sign out">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 · After Sign out</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h1 class="text-2xl font-semibold tracking-tight short:text-xl">You signed out</h1>
 
-    <!-- Mockup: labelled states side by side; each card is w-full max-w-md -->
-    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr))]">
-
-      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 1 · Signed out of one domain">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 · Signed out of one domain</p>
-        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
-          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 justify-items-center text-center @container/card">
-            <span class="grid size-14 place-items-center rounded-xl bg-success-container text-on-success-container"><w-icon name="logout" class="size-7"></w-icon></span>
-            <div class="grid gap-2" role="status">
-              <h1 class="text-2xl font-semibold tracking-tight short:text-xl">You signed out of example.com</h1>
             </div>
-            <w-btn variant="filled" size="large" block href="signin.html" class="w-full">Sign in again</w-btn>
-            <section class="grid w-full gap-3" aria-labelledby="still-title">
-              <h2 class="text-sm font-semibold text-subtle" id="still-title">You are still signed in to example.org</h2>
-              <div class="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-low px-3 py-2 text-left">
-                <span class="grid size-9 flex-none place-items-center rounded-lg bg-rail text-sm font-bold text-on-rail" aria-hidden="true">Eo</span>
-                <span class="grid min-w-0 flex-1"><span class="truncate font-semibold">example.org</span><span class="truncate text-xs text-subtle">ana@example.org</span></span>
-                <w-btn variant="outlined" href="messenger.html" class="@max-xs/card:w-full">Open example.org</w-btn>
-              </div>
-            </section>
+            <div class="grid gap-4">
+              <div class="flex items-start gap-3 rounded-lg bg-success-container p-3 text-on-success-container" role="status"><w-icon name="check" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>You signed out of Mesail in every domain. Other tabs where you were signed in ask you to sign in again.</p></div></div>
+              <w-btn variant="filled" size="large" block href="signin.html" class="min-h-control-lg">Sign in again</w-btn>
+              <w-btn variant="text" block class="">Forget my username on this device</w-btn>
+            </div>
           </div>
         </div>
       </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 2 · The session ended on the server (refresh answered 401)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 · The session ended on the server (refresh answered 401)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Please sign in again</h2>
 
-      <section class="grid w-full max-w-md content-start gap-3" aria-label="State 2 · Signed out of all domains">
-        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 · Signed out of all domains</p>
-        <div data-duvay="w-card" class="block w-full rounded-xl border border-border bg-surface">
-          <div class="grid gap-5 p-5 sm:p-8 short:gap-3 short:p-4 justify-items-center text-center @container/card">
-            <span class="grid size-14 place-items-center rounded-xl bg-success-container text-on-success-container"><w-icon name="logout" class="size-7"></w-icon></span>
-            <div class="grid gap-2" role="status">
-              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">You signed out of all domains</h2>
-              <p class="text-subtle">You signed out of example.com, example.org and lab.example.net.</p>
             </div>
-            <w-btn variant="filled" size="large" block href="signin.html" class="w-full">Sign in again</w-btn>
-            <div class="flex w-full items-start gap-2 rounded-md bg-surface-mid p-3 text-left text-sm">
-              <w-icon name="shield" class="ms-icon-sm mt-0.5"></w-icon>
-              <p>On a shared computer, also close this browser window.</p>
+            <div class="grid gap-4">
+              <div class="flex items-start gap-3 rounded-lg bg-primary-container p-3 text-on-primary-container" role="status"><w-icon name="clock" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Your session ended, for example because you were away for 30 minutes, or an admin turned off your account. Sign in again to keep working.</p></div></div>
+              <w-btn variant="filled" size="large" block href="signin.html" class="min-h-control-lg">Sign in again</w-btn>
             </div>
-            <w-btn variant="text">Forget my domains on this device</w-btn>
           </div>
         </div>
       </section>
     </main>
-
     <footer class="text-sm text-subtle">
       <nav aria-label="Help and legal">
         <ul class="flex gap-2">
-          <li><w-btn variant="text" size="small" href="#">Help</w-btn></li>
-          <li><w-btn variant="text" size="small" href="#">Privacy</w-btn></li>
+          <li><w-btn variant="text" size="small" href="#" class="">Help</w-btn></li>
+          <li><w-btn variant="text" size="small" href="#" class="">Privacy</w-btn></li>
         </ul>
       </nav>
     </footer>

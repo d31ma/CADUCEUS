@@ -87,6 +87,27 @@ Mesail utilities: `safe-t`, `safe-b`, `safe-l`, `safe-r` (Tac title-bar insets, 
 
 Breakpoints: see the table above (DuVay's 600, 960, 1280, 1920 and 2560 px).
 
+### Control sizes (one scale, since 2026-11-11)
+Every control has one of three heights, so buttons, fields, menu rows and icon buttons line up.
+| Token | Value | Tailwind | Use |
+| --- | --- | --- | --- |
+| `--ms-control-sm` | 2rem (32 px) | `h-control-sm`, `min-h-control-sm` | menu-nav rows, small buttons, checkbox rows (pointer only) |
+| `--ms-control-md` | 2.5rem (40 px) | `h-control-md`, `min-h-control-md` | default: buttons, text fields (DuVay's field is 40 px), selects, menu items |
+| `--ms-control-lg` | 3rem (48 px) | `min-h-control-lg` | the main action of a card or dialog (Sign in, Save and continue) |
+| `--ms-touch-min` | 2.75rem (44 px) | `min-h-touch`, `size-touch` | floor for every target on touch screens and in windows under 768 px |
+| `--ms-icon-sm` / `-md` / `-lg` | 1 / 1.25 / 1.5rem | `size-icon-sm` ... | icons inside text and controls / standalone / empty states |
+| `--ms-radius-control` / `-dialog` | `--w-radius-lg` (8) / `--w-radius-xl` (12) | `rounded-lg` / `rounded-xl` | controls / cards and dialogs |
+| `--ms-auth-card-max` | 26rem (416 px) | `max-w-auth` | sign-in and password cards |
+| `--ms-dialog-max`, `--ms-content-max` | 32rem, 50rem | `max-w-dialog`, `max-w-content` | dialogs, settings and admin pages |
+| `--ms-card-pad` / `-narrow` | 1.5rem / 1rem | `sm:p-6` / `p-4` | card padding from 600 px / under it |
+| `--ms-space-field`, `--ms-space-label`, `--ms-space-section` | 1rem, 0.375rem, 1.5rem | `gap-4`, `gap-1.5`, `gap-6` | between fields, label to field, between sections |
+
+The Tailwind variant `touch:` (pointer: coarse, or a window under 768 px) matches the rule of `tests/responsive`.
+`mesail-components.css` applies the floor to DuVay's own controls in that case (`.w-btn`, `.w-icon-btn`,
+`.w-checkbox`, `.w-text-field-control`, `.w-select-field`), so a small DuVay button grows to 44 px on a phone.
+Proportions: a card is never wider than its content needs (auth 26rem, dialog 32rem), its main button fills
+the card width at 48 px, and secondary buttons sit at 40 px, so the main action is always the largest.
+
 ### Avatars and tiles
 `--ms-avatar-xs` 20 px, `-sm` 24, `-md` 36 (messages), `-lg` 48, `-xl` 80 (profile);
 `--ms-domain-tile` 44 px. Avatars are rounded squares; the colour comes from a per-person hue

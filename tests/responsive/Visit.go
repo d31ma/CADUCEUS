@@ -56,6 +56,7 @@ const (
 	settleTime            = 700 * time.Millisecond
 	readyTimeout          = 20 * time.Second
 	faviconPath           = "/favicon.ico"
+	visibilityEventScript = "document.dispatchEvent(new Event('visibilitychange')); 0"
 	emailFieldSelector    = `input[autocomplete="username"]`
 	passwordFieldSelector = `input[autocomplete="current-password"]`
 	signInButtonPath      = `//button[normalize-space(.)="Sign in"]`
@@ -109,7 +110,19 @@ func (visit *Visit) load(site *Site) error {
 		return err
 	}
 	visit.RestoreProblem = err.Error()
+	if visit.renderedAfterVisibilityEvent(site) {
+		visit.RestoreProblem += "; the restored state was there: one synthetic visibilitychange event (which makes Tac publish VisibilityChanged and render) showed the shell at once, so nothing re-rendered the view after the @OnEvent @InBackground Restore task changed session.Step"
+		return nil
+	}
+	visit.RestoreProblem += "; a synthetic visibilitychange event did not show the shell either"
 	return visit.signInThroughForm(site)
+}
+
+func (visit *Visit) renderedAfterVisibilityEvent(site *Site) bool {
+	if err := visit.step("sending visibilitychange", chromedp.Evaluate[chromedp.Void](visibilityEventScript)); err != nil {
+		return false
+	}
+	return visit.waitUntilReady(site) == nil
 }
 
 func (visit *Visit) storeSessionKeysWhenSignedIn(site *Site) error {
@@ -160,8 +173,8 @@ func (visit *Visit) waitUntilReady(site *Site) error {
 	if err == nil {
 		return nil
 	}
-	return fmt.Errorf("the %s screen did not appear within %s (no %s); the page shows: %s; console: %s; API calls so far: %s",
-		visit.Options.State, readyTimeout, visit.readySelector(), visit.visibleText(), strings.Join(visit.Problems(), " | "), strings.Join(site.ApiCalls(), ", "))
+	return fmt.Errorf("the %s screen did not appear within %s (no %s); the page shows: %s; every console and log entry: [%s]; API calls so far: %s",
+		visit.Options.State, readyTimeout, visit.readySelector(), visit.visibleText(), strings.Join(visit.AllMessages(), " | "), strings.Join(site.ApiCalls(), ", "))
 }
 
 func (visit *Visit) visibleText() string {
@@ -303,6 +316,16 @@ func (visit *Visit) PressTab() error {
 func (visit *Visit) Focus(element *Element) error {
 	_, err := chromedp.Call(visit.context, dom.Focus, dom.FocusParams{BackendNodeID: element.BackendNodeID})
 	return err
+}
+
+func (visit *Visit) AllMessages() []string {
+	visit.messagesMu.Lock()
+	defer visit.messagesMu.Unlock()
+	all := []string{}
+	for _, message := range visit.messages {
+		all = append(all, describeMessage(message))
+	}
+	return all
 }
 
 func (visit *Visit) Problems() []string {

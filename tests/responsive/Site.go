@@ -153,7 +153,9 @@ func (site *Site) handler() http.Handler {
 
 func (site *Site) withSecurityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		writer.Header().Set("Content-Security-Policy", site.ContentPolicy)
+		if site.ContentPolicy != "" {
+			writer.Header().Set("Content-Security-Policy", site.ContentPolicy)
+		}
 		writer.Header().Set("X-Content-Type-Options", "nosniff")
 		writer.Header().Set("Cache-Control", "no-store")
 		recorder := &statusRecorder{ResponseWriter: writer, status: http.StatusOK}

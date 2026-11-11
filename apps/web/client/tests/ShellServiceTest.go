@@ -95,3 +95,9 @@ func (test *ShellServiceTest) TestShowListLeavesTheOtherPages() {
 	shell.ShowList()
 	Assert.Equals("", shell.Page)
 }
+
+func (test *ShellServiceTest) TestRestoredMarksTheShellReady() {
+	shell := test.shell()
+	shell.Restored(SessionRestored{SignedIn: true})
+	Assert.IsTrue(shell.Ready)
+}

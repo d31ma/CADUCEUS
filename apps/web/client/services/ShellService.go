@@ -6,6 +6,7 @@ type ShellService struct {
 	Page           string
 	ThreadOpen     bool
 	DomainMenuOpen bool
+	Ready          bool
 	// @Needs
 	settings *SessionSettingsService
 }
@@ -15,6 +16,11 @@ func (shell *ShellService) Start() {
 	shell.ProductName = "Mesail"
 	shell.Heading = "Select a conversation"
 	shell.Pane = shell.paneList()
+}
+
+// @OnEvent
+func (shell *ShellService) Restored(restored SessionRestored) {
+	shell.Ready = true
 }
 
 func (shell *ShellService) ShowList() {

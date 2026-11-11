@@ -61,8 +61,12 @@ The signed-in shell is reached without typing: the test stores
 session storage key `tac:service:session:/:sessionKeys` (where Tac keeps the
 `// @SessionState` field `SessionKeys`) before the app loads, and the app
 restores both sessions through `/refresh`. If that restore does not reach
-the shell, `TestSessionRestore` fails and the other signed-in checks sign in
-through the form instead (`ana@example.com` / `right`).
+the shell within 20 s, `TestSessionRestore` fails. Its message lists every
+console and log entry and every API call. The test then sends one
+`visibilitychange` event. If the shell appears after that event, the restored
+state was there and only the re-render was missing, and the message says so.
+From then on, the other signed-in checks sign in through the form instead
+(`ana@example.com` / `right`).
 
 ## What it checks
 
@@ -107,11 +111,13 @@ Extra runs:
   its field box). DuVay has no forced-colors support yet (ADR 0004), so this
   only logs warnings; run with `-v` to see them.
 - `TestSafeAreas`: the built CSS uses `env(safe-area-inset-top)` and
-  `env(safe-area-inset-bottom)`; the viewport meta has `viewport-fit=cover`;
-  and with Chrome's safe-area override (top 47 px, bottom 34 px, at 375 px
+  `env(safe-area-inset-bottom)`; and with Chrome's safe-area override (top 47 px, bottom 34 px, at 375 px
   with a coarse pointer) no visible text or control starts in the top band,
   and no pinned (fixed, sticky or non-scrolling) text or control ends in the
-  bottom band.
+  bottom band. A viewport meta without `viewport-fit=cover` is only a logged
+  warning: ADR 0004 section 8 ("Safe areas") says Tac pages get no
+  `viewport-fit=cover` today, and the shell uses TACHYON's
+  `--tac-titlebar-height` with `env(safe-area-inset-*)` as the web fallback.
 
 Every failure names the screen, the width and height, the pointer, and the
 element (its ARIA role and accessible name, or its tag and id).
@@ -119,8 +125,9 @@ element (its ARIA role and accessible name, or its tag and id).
 ## Limits
 
 - The checks read Chrome's DOM snapshot, accessibility tree and layout
-  metrics through the DevTools protocol; the only JavaScript is
-  `matchMedia(...)` to confirm that an emulation took effect.
+  metrics through the DevTools protocol. The only JavaScript is
+  `matchMedia(...)`, to confirm that an emulation took effect, and the one
+  `visibilitychange` event in the session-restore diagnosis.
 - "Visible" means: laid out, `visibility: visible`, no `opacity: 0` on the
   element or an ancestor, more than 1 px in each direction, inside the
   viewport horizontally and not above it, and not clipped away by an

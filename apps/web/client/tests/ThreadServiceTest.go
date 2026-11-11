@@ -29,20 +29,13 @@ func (test *ThreadServiceTest) thread() *ThreadService {
 
 func (test *ThreadServiceTest) opened(rootId string) *ThreadService {
 	thread := test.thread()
-	thread.OpenMessage(ThreadOpenRequested{ConversationId: "conv-1", MessageId: rootId})
-	thread.Load(ThreadLoadRequested{ConversationId: "conv-1", RootId: rootId})
-	return thread
-}
-
-func (test *ThreadServiceTest) replying(text string) *ThreadService {
-	thread := test.opened("root-1")
-	thread.ReplyWith(text, false)
+	thread.openMessage("conv-1", rootId)
 	return thread
 }
 
 func (test *ThreadServiceTest) sent(text string) *ThreadService {
-	thread := test.replying(text)
-	thread.Send(ThreadReplyRequested{Request: thread.replyRequest()})
+	thread := test.opened("root-1")
+	thread.ReplyWith(text, false)
 	return thread
 }
 
@@ -55,112 +48,67 @@ func (test *ThreadServiceTest) replyIds(thread *ThreadService) []string {
 }
 
 func (test *ThreadServiceTest) TestOpenMessageOpensTheThreadColumn() {
-	thread := test.thread()
-	thread.OpenMessage(ThreadOpenRequested{ConversationId: "conv-1", MessageId: "root-1"})
+	thread := test.opened("root-1")
 	Assert.IsTrue(thread.shell.ThreadOpen)
 	Assert.Equals("thread", thread.shell.Pane)
-	Assert.Equals("loading", thread.Status)
 	Assert.Equals("root-1", thread.RootId)
+	Assert.Equals("conv-1", thread.ConversationId)
 }
 
-func (test *ThreadServiceTest) TestLoadShowsRepliesOldestFirst() {
+func (test *ThreadServiceTest) TestOpenMessageShowsRepliesOldestFirst() {
 	thread := test.opened("root-1")
 	Assert.Equals("ready", thread.Status)
 	Assert.Equals([]string{"reply-2", "reply-3"}, test.replyIds(thread))
 	Assert.Equals("c-2", thread.NextCursor)
 }
 
-func (test *ThreadServiceTest) TestLoadShowsTheRootFromItsOwnCall() {
+func (test *ThreadServiceTest) TestOpenMessageShowsTheRootFromItsOwnCall() {
 	thread := test.opened("root-1")
 	Assert.IsTrue(thread.HasRoot)
 	Assert.Equals("Ana Ruiz", thread.Root.AuthorName)
 	Assert.Equals("09:12", thread.Root.Time)
-	Assert.Equals(2, len(thread.Replies))
 }
 
-func (test *ThreadServiceTest) TestLoadCountsRepliesFromTheRoot() {
+func (test *ThreadServiceTest) TestOpenMessageCountsRepliesFromTheRoot() {
 	Assert.Equals("3 replies", test.opened("root-1").RepliesLabel)
 }
 
 func (test *ThreadServiceTest) TestShowOlderAddsOlderRepliesFirst() {
 	thread := test.opened("root-1")
 	thread.ShowOlder()
-	Assert.IsTrue(thread.LoadingOlder)
-	thread.LoadOlder(ThreadOlderRequested{ConversationId: "conv-1", RootId: "root-1", Cursor: "c-2"})
 	Assert.Equals([]string{"reply-1", "reply-2", "reply-3"}, test.replyIds(thread))
 	Assert.Equals("", thread.NextCursor)
 	Assert.IsTrue(!thread.LoadingOlder)
 }
 
-func (test *ThreadServiceTest) TestLoadFailsWhenTheRootDoesNotLoad() {
-	thread := test.opened("root-2")
-	Assert.Equals("error", thread.Status)
+func (test *ThreadServiceTest) TestOpenMessageFailsWhenTheRootDoesNotLoad() {
+	Assert.Equals("error", test.opened("root-2").Status)
 }
 
-func (test *ThreadServiceTest) TestLoadOfARemovedRootSaysItIsGone() {
-	thread := test.thread()
-	thread.OpenMessage(ThreadOpenRequested{ConversationId: "conv-1", MessageId: "root-1"})
-	thread.applyWhenCurrent(ThreadLoadRequested{ConversationId: "conv-1", RootId: "root-1"}, ThreadMessage{}, ThreadMessagePage{}, &BehaviorError{Status: 404})
+func (test *ThreadServiceTest) TestARemovedRootSaysItIsGone() {
+	thread := test.opened("root-1")
+	thread.applyPage(ThreadMessagePage{}, &BehaviorError{Status: 404})
 	Assert.Equals("gone", thread.Status)
 }
 
-func (test *ThreadServiceTest) TestLoadOlderIgnoresAnAnswerForAnotherThread() {
-	thread := test.opened("root-1")
-	thread.LoadOlder(ThreadOlderRequested{ConversationId: "conv-1", RootId: "root-9", Cursor: "c-2"})
-	Assert.Equals(2, len(thread.Replies))
-}
-
-func (test *ThreadServiceTest) TestOpenShowsTheGivenRootAtOnce() {
-	thread := test.thread()
-	root := ThreadMessage{MessageId: "root-2", ConversationId: "conv-1", Author: ThreadAuthor{DisplayName: "Ana Ruiz"}, Body: "Hello"}
-	thread.Open(ThreadRootOpenRequested{Root: root})
-	Assert.IsTrue(thread.HasRoot)
-	Assert.Equals("root-2", thread.RootId)
-	Assert.Equals("Hello", thread.Root.Body)
-	Assert.IsTrue(thread.shell.ThreadOpen)
-}
-
-func (test *ThreadServiceTest) TestLoadReplacesTheGivenRootWithTheServerCopy() {
-	thread := test.thread()
-	thread.Open(ThreadRootOpenRequested{Root: ThreadMessage{MessageId: "root-1", ConversationId: "conv-1", Body: "Old text"}})
-	thread.Load(ThreadLoadRequested{ConversationId: "conv-1", RootId: "root-1"})
-	Assert.IsTrue(thread.HasRoot)
-	Assert.Equals("Build 42 is green.", thread.Root.Body)
-}
-
-func (test *ThreadServiceTest) TestOpenOnAReplyOpensItsRoot() {
-	thread := test.thread()
-	thread.Open(ThreadRootOpenRequested{Root: ThreadMessage{MessageId: "reply-2", ConversationId: "conv-1", ThreadRootId: "root-1"}})
-	Assert.Equals("root-1", thread.RootId)
-	Assert.IsTrue(!thread.HasRoot)
-}
-
-func (test *ThreadServiceTest) TestLoadFailureShowsTheErrorState() {
+func (test *ThreadServiceTest) TestOpenMessageFailureShowsTheErrorState() {
 	thread := test.opened("broken")
 	Assert.Equals("error", thread.Status)
 	Assert.Equals(0, len(thread.Replies))
 }
 
-func (test *ThreadServiceTest) TestLoadAfterTheSessionEndedShowsTheSessionState() {
+func (test *ThreadServiceTest) TestOpenMessageAfterTheSessionEndedShowsTheSessionState() {
 	thread := test.threadWith(test.remote(0, "ended"))
-	thread.OpenMessage(ThreadOpenRequested{ConversationId: "conv-1", MessageId: "root-1"})
-	thread.Load(ThreadLoadRequested{ConversationId: "conv-1", RootId: "root-1"})
+	thread.openMessage("conv-1", "root-1")
 	Assert.Equals("session", thread.Status)
 }
 
-func (test *ThreadServiceTest) TestLoadIgnoresAnAnswerForAnotherThread() {
-	thread := test.thread()
-	thread.OpenMessage(ThreadOpenRequested{ConversationId: "conv-1", MessageId: "root-1"})
-	thread.OpenMessage(ThreadOpenRequested{ConversationId: "conv-1", MessageId: "root-2"})
-	thread.Load(ThreadLoadRequested{ConversationId: "conv-1", RootId: "root-1"})
-	Assert.Equals("loading", thread.Status)
-	Assert.Equals(0, len(thread.Replies))
-}
-
-func (test *ThreadServiceTest) TestReloadShowsLoadingAgain() {
-	thread := test.opened("broken")
+func (test *ThreadServiceTest) TestReloadLoadsAgain() {
+	thread := test.opened("root-1")
+	thread.Replies = []ThreadRow{}
 	thread.Reload()
-	Assert.Equals("loading", thread.Status)
+	Assert.Equals("ready", thread.Status)
+	Assert.Equals(2, len(thread.Replies))
 }
 
 func (test *ThreadServiceTest) TestCloseClosesTheColumnAndForgetsTheThread() {
@@ -173,17 +121,18 @@ func (test *ThreadServiceTest) TestCloseClosesTheColumnAndForgetsTheThread() {
 	Assert.Equals(0, len(thread.Replies))
 }
 
-func (test *ThreadServiceTest) TestRefreshKeepsTheRepliesWhileLoading() {
+func (test *ThreadServiceTest) TestRefreshLoadsTheOpenThreadAgain() {
 	thread := test.opened("root-1")
+	thread.Replies = []ThreadRow{}
 	thread.Refresh(ThreadRefreshRequested{ConversationId: "conv-1"})
-	Assert.Equals("ready", thread.Status)
 	Assert.Equals(2, len(thread.Replies))
 }
 
 func (test *ThreadServiceTest) TestRefreshIgnoresAnotherConversation() {
 	thread := test.opened("root-1")
+	thread.Replies = []ThreadRow{}
 	thread.Refresh(ThreadRefreshRequested{ConversationId: "conv-2"})
-	Assert.Equals("conv-1", thread.ConversationId)
+	Assert.Equals(0, len(thread.Replies))
 }
 
 func (test *ThreadServiceTest) TestRefreshDoesNothingWhenClosed() {
@@ -192,28 +141,17 @@ func (test *ThreadServiceTest) TestRefreshDoesNothingWhenClosed() {
 	Assert.Equals("", thread.Status)
 }
 
-func (test *ThreadServiceTest) TestShownKeepsTheOpenThread() {
+func (test *ThreadServiceTest) TestShownLoadsTheOpenThreadAgain() {
 	thread := test.opened("root-1")
+	thread.Replies = []ThreadRow{}
 	thread.Shown(VisibilityChanged{Visible: true})
-	Assert.Equals("ready", thread.Status)
+	Assert.Equals(2, len(thread.Replies))
 }
 
 func (test *ThreadServiceTest) TestShownIgnoresAHiddenPage() {
 	thread := test.thread()
 	thread.Shown(VisibilityChanged{Visible: false})
-	Assert.Equals("", thread.RootId)
-}
-
-func (test *ThreadServiceTest) TestReplyWithAnEmptyDraftSendsNothing() {
-	thread := test.opened("root-1")
-	thread.ReplyWith("   ", true)
-	Assert.Equals("", thread.SendStatus)
-}
-
-func (test *ThreadServiceTest) TestReplyWhileSendingSendsNothingMore() {
-	thread := test.replying("Thanks")
-	thread.ReplyWith("More", false)
-	Assert.Equals("Thanks", thread.Pending.Body)
+	Assert.Equals("", thread.Status)
 }
 
 func (test *ThreadServiceTest) TestDomainChangeClosesTheThread() {
@@ -224,52 +162,62 @@ func (test *ThreadServiceTest) TestDomainChangeClosesTheThread() {
 	Assert.Equals(0, len(thread.Replies))
 }
 
-func (test *ThreadServiceTest) TestReplyShowsTheReplyAsSending() {
-	thread := test.replying("  Thanks  ")
-	Assert.Equals("sending", thread.SendStatus)
-	Assert.Equals("Thanks", thread.Pending.Body)
-	Assert.Equals("Ana Ruiz", thread.Pending.AuthorName)
+func (test *ThreadServiceTest) TestReplyWithAnEmptyDraftSendsNothing() {
+	thread := test.opened("root-1")
+	thread.ReplyWith("   ", true)
+	Assert.Equals("", thread.SendStatus)
+	Assert.Equals(2, len(thread.Replies))
+}
+
+func (test *ThreadServiceTest) TestReplyWhileSendingSendsNothingMore() {
+	thread := test.opened("root-1")
+	thread.SendStatus = "sending"
+	thread.ReplyWith("More", false)
+	Assert.Equals(2, len(thread.Replies))
+}
+
+func (test *ThreadServiceTest) TestReplyWithSendsAThreadReply() {
+	thread := test.sent("  Thanks  ")
+	Assert.Equals([]string{"reply-2", "reply-3", "msg-uuid-1"}, test.replyIds(thread))
+	Assert.Equals("Thanks", thread.Replies[2].Body)
+	Assert.Equals("", thread.SendStatus)
 	Assert.Equals("", thread.FailedDraft)
+	Assert.Equals("Reply sent", thread.announce.Message)
 }
 
 func (test *ThreadServiceTest) TestReplyAsksForAThreadReply() {
-	request := test.replying("Thanks").replyRequest()
+	request := test.sent("offline").replyRequest()
 	Assert.Equals("uuid-1", request.ClientMessageId)
 	Assert.Equals("conv-1", request.ConversationId)
 	Assert.Equals("root-1", request.ThreadRootId)
-	Assert.Equals("Thanks", request.Body)
+	Assert.Equals("offline", request.Body)
 	Assert.Equals(0, len(request.AttachmentIds))
 }
 
 func (test *ThreadServiceTest) TestReplyAlsoSendsToTheConversationWhenTicked() {
 	thread := test.opened("root-1")
-	thread.ReplyWith("Thanks", true)
+	thread.ReplyWith("offline", true)
 	Assert.IsTrue(thread.replyRequest().AlsoToConversation)
+	Assert.IsTrue(thread.AlsoToConversation)
 }
 
 func (test *ThreadServiceTest) TestReplyStaysInTheThreadByDefault() {
-	Assert.IsTrue(!test.replying("Thanks").replyRequest().AlsoToConversation)
+	Assert.IsTrue(!test.sent("offline").replyRequest().AlsoToConversation)
 }
 
 func (test *ThreadServiceTest) TestSendResetsAlsoToConversation() {
 	thread := test.opened("root-1")
 	thread.ReplyWith("Thanks", true)
-	thread.Send(ThreadReplyRequested{Request: thread.replyRequest()})
 	Assert.IsTrue(!thread.AlsoToConversation)
-}
-
-func (test *ThreadServiceTest) TestSendAddsTheReplyAndClearsTheDraft() {
-	thread := test.sent("Thanks")
-	Assert.Equals([]string{"reply-2", "reply-3", "msg-uuid-1"}, test.replyIds(thread))
-	Assert.Equals("", thread.FailedDraft)
-	Assert.Equals("", thread.SendStatus)
-	Assert.Equals("Reply sent", thread.announce.Message)
+	Assert.Equals("msg-uuid-1", thread.Replies[2].MessageId)
 }
 
 func (test *ThreadServiceTest) TestSendFailureKeepsTheDraft() {
 	thread := test.sent("offline")
 	Assert.Equals("failed", thread.SendStatus)
 	Assert.Equals("offline", thread.FailedDraft)
+	Assert.Equals("offline", thread.Pending.Body)
+	Assert.Equals("Ana Ruiz", thread.Pending.AuthorName)
 	Assert.Equals("Reply not sent", thread.announce.Message)
 }
 
@@ -277,7 +225,7 @@ func (test *ThreadServiceTest) TestRetryKeepsTheSameClientMessageId() {
 	thread := test.sent("offline")
 	BrowserFakes{}.Answer("secureRandom", "uuid", "uuid-2")
 	thread.Retry()
-	Assert.Equals("sending", thread.SendStatus)
+	Assert.Equals("failed", thread.SendStatus)
 	Assert.Equals("uuid-1", thread.replyRequest().ClientMessageId)
 }
 
@@ -298,21 +246,13 @@ func (test *ThreadServiceTest) TestReplyWithNewTextAfterFailureStartsANewReply()
 	thread := test.sent("offline")
 	BrowserFakes{}.Answer("secureRandom", "uuid", "uuid-2")
 	thread.ReplyWith("Something else", false)
-	Assert.Equals("uuid-2", thread.replyRequest().ClientMessageId)
+	Assert.Equals("msg-uuid-2", thread.Replies[2].MessageId)
 }
 
 func (test *ThreadServiceTest) TestSendAfterTheSessionEndedShowsTheSessionMessage() {
-	thread := test.replying("Thanks")
+	thread := test.sent("offline")
 	thread.finish(ThreadSendResult{}, &BehaviorError{Status: 401})
 	Assert.Equals("session", thread.SendStatus)
-	Assert.Equals("Thanks", thread.FailedDraft)
+	Assert.Equals("offline", thread.FailedDraft)
 	Assert.Equals("Reply not sent", thread.announce.Message)
-}
-
-func (test *ThreadServiceTest) TestSendIgnoresAnAnswerForAnotherReply() {
-	thread := test.replying("Thanks")
-	request := thread.replyRequest()
-	request.ClientMessageId = "old"
-	thread.Send(ThreadReplyRequested{Request: request})
-	Assert.Equals("sending", thread.SendStatus)
 }

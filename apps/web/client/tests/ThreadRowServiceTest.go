@@ -82,23 +82,3 @@ func (test *ThreadRowServiceTest) TestPendingRowShowsMyNameAndText() {
 	Assert.Equals("Thanks", row.Body)
 	Assert.Equals("Ana Ruiz", row.Label)
 }
-
-func (test *ThreadRowServiceTest) TestConversationOfReadsTheConversation() {
-	Assert.Equals("conv-1", (&ThreadRowService{}).ConversationOf(ThreadMessage{ConversationId: "conv-1"}))
-}
-
-func (test *ThreadRowServiceTest) TestRootIdOfARootIsItsOwnId() {
-	Assert.Equals("m-1", (&ThreadRowService{}).RootIdOf(test.message()))
-}
-
-func (test *ThreadRowServiceTest) TestRootIdOfAReplyIsItsRoot() {
-	Assert.Equals("m-1", (&ThreadRowService{}).RootIdOf(ThreadMessage{MessageId: "m-2", ThreadRootId: "m-1"}))
-}
-
-func (test *ThreadRowServiceTest) TestKnownRootKeepsARoot() {
-	Assert.Equals("m-1", (&ThreadRowService{}).KnownRoot(test.message()).MessageId)
-}
-
-func (test *ThreadRowServiceTest) TestKnownRootDropsAReply() {
-	Assert.Equals("", (&ThreadRowService{}).KnownRoot(ThreadMessage{MessageId: "m-2", ThreadRootId: "m-1"}).MessageId)
-}

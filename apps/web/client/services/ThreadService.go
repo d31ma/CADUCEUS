@@ -28,20 +28,7 @@ type ThreadService struct {
 	// @Needs
 	remote *ThreadRemoteService
 	// @Needs
-	rows                      *ThreadRowService
-	applicationEventPublisher ApplicationEventPublisher
-}
-
-// @OnEvent
-func (thread *ThreadService) Open(requested ThreadRootOpenRequested) {
-	thread.begin(thread.rows.ConversationOf(requested.Root), thread.rows.RootIdOf(requested.Root))
-	thread.root = thread.rows.KnownRoot(requested.Root)
-	thread.showMessages()
-}
-
-// @OnEvent
-func (thread *ThreadService) OpenMessage(requested ThreadOpenRequested) {
-	thread.begin(requested.ConversationId, requested.MessageId)
+	rows *ThreadRowService
 }
 
 // @OnEvent
@@ -55,13 +42,14 @@ func (thread *ThreadService) Close() {
 }
 
 func (thread *ThreadService) Reload() {
-	thread.Status = thread.statusLoading()
-	thread.publishLoad()
+	thread.load()
 }
 
 func (thread *ThreadService) ShowOlder() {
 	thread.LoadingOlder = true
-	thread.applicationEventPublisher.PublishEvent(ThreadOlderRequested{ConversationId: thread.ConversationId, RootId: thread.RootId, Cursor: thread.NextCursor}, false)
+	page, failure := thread.remote.Page(ThreadPageRequest{ConversationId: thread.ConversationId, RootId: thread.RootId, Cursor: thread.NextCursor})
+	thread.messages = append(thread.messages, page.Items...)
+	thread.applyPage(page, failure)
 }
 
 func (thread *ThreadService) ReplyWith(text string, alsoToConversation bool) {
@@ -70,28 +58,6 @@ func (thread *ThreadService) ReplyWith(text string, alsoToConversation bool) {
 
 func (thread *ThreadService) Retry() {
 	thread.retryWhenFailed()
-}
-
-// @OnEvent
-// @InBackground
-func (thread *ThreadService) Load(requested ThreadLoadRequested) {
-	root, rootFailure := thread.remote.Message(requested.RootId)
-	page, failure := thread.remote.Page(ThreadPageRequest{ConversationId: requested.ConversationId, RootId: requested.RootId})
-	thread.applyWhenCurrent(requested, root, page, thread.firstFailure(rootFailure, failure))
-}
-
-// @OnEvent
-// @InBackground
-func (thread *ThreadService) LoadOlder(requested ThreadOlderRequested) {
-	page, failure := thread.remote.Page(ThreadPageRequest(requested))
-	thread.applyOlderWhenCurrent(requested, page, failure)
-}
-
-// @OnEvent
-// @InBackground
-func (thread *ThreadService) Send(requested ThreadReplyRequested) {
-	result, failure := thread.remote.Send(requested.Request)
-	thread.finishWhenCurrent(requested.Request, result, failure)
 }
 
 // @OnEvent
@@ -105,12 +71,20 @@ func (thread *ThreadService) Shown(changed VisibilityChanged) {
 	thread.refreshWhenShown(changed.Visible)
 }
 
-func (thread *ThreadService) begin(conversationId string, rootId string) {
-	thread.reset(conversationId, rootId)
-	thread.Status = thread.statusLoading()
+func (thread *ThreadService) openMessage(conversationId string, messageId string) {
+	thread.reset(conversationId, messageId)
 	thread.shell.ThreadOpen = true
 	thread.shell.Pane = thread.paneThread()
-	thread.publishLoad()
+	thread.load()
+}
+
+func (thread *ThreadService) load() {
+	thread.Status = thread.statusLoading()
+	root, rootFailure := thread.remote.Message(thread.RootId)
+	page, failure := thread.remote.Page(ThreadPageRequest{ConversationId: thread.ConversationId, RootId: thread.RootId})
+	thread.root = root
+	thread.messages = page.Items
+	thread.applyPage(page, thread.firstFailure(rootFailure, failure))
 }
 
 func (thread *ThreadService) reset(conversationId string, rootId string) {
@@ -135,23 +109,18 @@ func (thread *ThreadService) reset(conversationId string, rootId string) {
 	thread.AlsoToConversation = false
 }
 
-func (thread *ThreadService) publishLoad() {
-	requested := ThreadLoadRequested{ConversationId: thread.ConversationId, RootId: thread.RootId}
-	thread.applicationEventPublisher.PublishEvent(requested, false)
-}
-
 func (thread *ThreadService) refreshWhenOpen(conversationId string) {
 	if thread.RootId == "" || conversationId != thread.ConversationId {
 		return
 	}
-	thread.publishLoad()
+	thread.load()
 }
 
 func (thread *ThreadService) refreshWhenShown(visible bool) {
 	if !visible || thread.RootId == "" {
 		return
 	}
-	thread.publishLoad()
+	thread.load()
 }
 
 func (thread *ThreadService) firstFailure(rootFailure error, failure error) error {
@@ -159,23 +128,6 @@ func (thread *ThreadService) firstFailure(rootFailure error, failure error) erro
 		return rootFailure
 	}
 	return failure
-}
-
-func (thread *ThreadService) applyWhenCurrent(requested ThreadLoadRequested, root ThreadMessage, page ThreadMessagePage, failure error) {
-	if requested.RootId != thread.RootId || requested.ConversationId != thread.ConversationId {
-		return
-	}
-	thread.root = root
-	thread.messages = page.Items
-	thread.applyPage(page, failure)
-}
-
-func (thread *ThreadService) applyOlderWhenCurrent(requested ThreadOlderRequested, page ThreadMessagePage, failure error) {
-	if requested.RootId != thread.RootId || requested.ConversationId != thread.ConversationId {
-		return
-	}
-	thread.messages = append(thread.messages, page.Items...)
-	thread.applyPage(page, failure)
 }
 
 func (thread *ThreadService) applyPage(page ThreadMessagePage, failure error) {
@@ -249,7 +201,8 @@ func (thread *ThreadService) idForPending() string {
 func (thread *ThreadService) sendPending() {
 	thread.SendStatus = thread.sendSending()
 	thread.Pending = thread.rows.PendingRow(thread.remote.MyName(), thread.pendingBody)
-	thread.applicationEventPublisher.PublishEvent(ThreadReplyRequested{Request: thread.replyRequest()}, false)
+	result, failure := thread.remote.Send(thread.replyRequest())
+	thread.finish(result, failure)
 }
 
 func (thread *ThreadService) replyRequest() ThreadReplyRequest {
@@ -261,13 +214,6 @@ func (thread *ThreadService) replyRequest() ThreadReplyRequest {
 		Body:               thread.pendingBody,
 		AttachmentIds:      []string{},
 	}
-}
-
-func (thread *ThreadService) finishWhenCurrent(request ThreadReplyRequest, result ThreadSendResult, failure error) {
-	if request.ThreadRootId != thread.RootId || request.ClientMessageId != thread.pendingId {
-		return
-	}
-	thread.finish(result, failure)
 }
 
 func (thread *ThreadService) finish(result ThreadSendResult, failure error) {

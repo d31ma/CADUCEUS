@@ -51,8 +51,15 @@ field may be empty or left out.
   `Health{service, status: ok|degraded}`.
 - Every service that consumes events has `POST /api/v1/<service>/events`
   (`Allow(Service)`) taking the `kit/events` `Envelope{eventId, type,
-  domainId, producer, occurredAt, payload}` (slice I2). The consumer writes
-  only into the envelope's `domainId`.
+  domainId, producer, occurredAt, payload}` (slice I2) and answering `200
+  EventReceipt{eventId, status: applied|duplicate}`. The consumer writes
+  only into the envelope's `domainId`. A refused event answers `400`
+  (bad envelope, wrong producer, type not consumed) or `403` (not a
+  service); a storage failure answers `503` so the relay retries. Details:
+  [EVENTS.md](EVENTS.md).
+- Every service that publishes events has `POST /api/v1/<service>/outbox/relay`
+  (`Allow(Service)`, answers `OutboxReport{documents, delivered, retried,
+  deadLettered}`), called by the relay schedule (EVENTS.md section 4).
 
 ## identity (stateless)
 

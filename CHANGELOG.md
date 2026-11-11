@@ -12,6 +12,20 @@
   server and client, the Go monolith, SESAME and their tooling (kept in git
   history at 4ef82f72).
 
+### Slice I2: events and outbox
+
+- `kit/events`: one payload type per event, the producer and consumer
+  catalog, the envelope factory, strict payload reading and the consumer
+  `Receiver` (checks the `Service` caller, the envelope, the listed producer
+  and the domain; drops repeats by `domainId` and `eventId`).
+- `kit/outbox`: pending events stored inside the changed FYLO document, a
+  relay that pushes them over HTTP to the subscribers in `application.json`
+  with backoff, dead letters and replay, and test helpers for other slices.
+  It works with reserved concurrency 1 per Lambda.
+- `events` and `outbox` are in `kit.list` of directory, channels,
+  messaging, mail-in, mail-out, search, realtime and notify, with synced
+  copies. Guide: `docs/mesail/EVENTS.md`.
+
 - Completed account-synchronized interface localization across 20 closed,
   persisted locale choices. A reproducible, checksum-pinned SMaLL-100 pipeline
   now catalogs 755 audited static interface literals for 19 non-English

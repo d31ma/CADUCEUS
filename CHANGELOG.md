@@ -12,6 +12,20 @@
   server and client, the Go monolith, SESAME and their tooling (kept in git
   history at 4ef82f72).
 
+### Slice R1: realtime and presence
+
+- Added `edge/realtime`, the connection gateway: a small Go program that
+  holds WebSockets (`/api/v1/realtime/socket`) and event streams
+  (`/api/v1/realtime/stream`), the local stand-in for an AWS API Gateway
+  WebSocket API. It calls the `realtime` app's `connect`, `message` and
+  `disconnect` routes and offers the `@connections` management API.
+- Added `kit/realtime` and the `realtime` routes: token in the first socket
+  message, re-checked at least every 60 seconds (`auth.accepted`, then
+  `auth.expired` and close 4401), single-use stream tickets, fan-out of
+  `message.*`, `reaction.changed`, `read.moved`, presence and typing within
+  one domain, presence states with `offline` after 60 seconds without a
+  connection, and a sweep job for expired connections and presence.
+
 ### Slice F2: web conversations
 
 - Sidebar (`components/sidebar/nav`, `SidebarService`): a "New message"

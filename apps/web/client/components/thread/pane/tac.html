@@ -1,3 +1,144 @@
 <section class="thread-pane" aria-label="Thread">
-  <h2>Thread</h2>
+  <switch :value="thread.status">
+    <case :when="'loading'">
+      <div class="thread-skeleton" role="status">
+        <span class="thread-hidden">Loading the thread…</span>
+        <div class="thread-skeleton-row" aria-hidden="true">
+          <span class="thread-skeleton-avatar"></span>
+          <span class="thread-skeleton-lines"><span class="thread-skeleton-line"></span><span class="thread-skeleton-line thread-skeleton-line-short"></span></span>
+        </div>
+        <div class="thread-skeleton-row" aria-hidden="true">
+          <span class="thread-skeleton-avatar"></span>
+          <span class="thread-skeleton-lines"><span class="thread-skeleton-line"></span><span class="thread-skeleton-line"></span></span>
+        </div>
+        <div class="thread-skeleton-row" aria-hidden="true">
+          <span class="thread-skeleton-avatar"></span>
+          <span class="thread-skeleton-lines"><span class="thread-skeleton-line thread-skeleton-line-short"></span></span>
+        </div>
+      </div>
+    </case>
+
+    <case :when="'error'">
+      <div class="thread-state" role="alert">
+        <p class="thread-state-title">We could not load this thread.</p>
+        <p class="thread-state-text">Check your connection, then try again.</p>
+        <div class="thread-state-actions">
+          <button type="button" class="thread-button" on:click="thread.reload()">Try again</button>
+          <button type="button" class="thread-button thread-button-quiet" on:click="thread.close()">Close thread</button>
+        </div>
+      </div>
+    </case>
+
+    <case :when="'session'">
+      <div class="thread-state" role="alert">
+        <p class="thread-state-title">Your session ended.</p>
+        <p class="thread-state-text">Sign in again to see this thread.</p>
+        <button type="button" class="thread-button thread-button-quiet" on:click="thread.close()">Close thread</button>
+      </div>
+    </case>
+
+    <case :when="'ready'">
+      <div class="thread-log" role="log" aria-label="Thread replies">
+        <logic :if="thread.hasRoot">
+          <article class="thread-message" :aria-label="thread.root.label">
+            <span class="thread-avatar" aria-hidden="true">{thread.root.initials}</span>
+            <div class="thread-message-main">
+              <p class="thread-message-meta">
+                <span class="thread-author">{thread.root.authorName}</span>
+                <time class="thread-time" :datetime="thread.root.dateTime">{thread.root.time}</time>
+                <logic :if="thread.root.edited"><span class="thread-edited">(edited)</span></logic>
+              </p>
+              <logic :if="thread.root.deleted">
+                <p class="thread-text thread-text-deleted">This message was deleted</p>
+              </logic>
+              <logic else>
+                <p class="thread-text">{thread.root.body}</p>
+              </logic>
+              <logic :if="thread.root.reactions != ''">
+                <p class="thread-reactions">Reactions: {thread.root.reactions}</p>
+              </logic>
+            </div>
+          </article>
+        </logic>
+        <logic else>
+          <p class="thread-original">Original message</p>
+        </logic>
+
+        <p class="thread-divider">{thread.repliesLabel}</p>
+
+        <logic :if="thread.nextCursor != ''">
+          <div class="thread-older">
+            <button type="button" class="thread-button thread-button-quiet" :aria-busy="shell.flag(thread.loadingOlder)" on:click="thread.showOlder()">Show older replies</button>
+          </div>
+        </logic>
+
+        <logic :if="thread.replies.length == 0">
+          <logic :if="thread.sendStatus == ''">
+            <p class="thread-empty">No replies yet. Start the thread.</p>
+          </logic>
+        </logic>
+
+        <loop :for="row of thread.replies">
+          <article class="thread-message" :aria-label="row.label">
+            <span class="thread-avatar" aria-hidden="true">{row.initials}</span>
+            <div class="thread-message-main">
+              <p class="thread-message-meta">
+                <span class="thread-author">{row.authorName}</span>
+                <time class="thread-time" :datetime="row.dateTime">{row.time}</time>
+                <logic :if="row.edited"><span class="thread-edited">(edited)</span></logic>
+              </p>
+              <logic :if="row.deleted">
+                <p class="thread-text thread-text-deleted">This message was deleted</p>
+              </logic>
+              <logic else>
+                <p class="thread-text">{row.body}</p>
+              </logic>
+              <logic :if="row.reactions != ''">
+                <p class="thread-reactions">Reactions: {row.reactions}</p>
+              </logic>
+            </div>
+          </article>
+        </loop>
+
+        <logic :if="thread.sendStatus == 'sending'">
+          <article class="thread-message thread-message-pending" :aria-label="thread.pending.label + ', sending'">
+            <span class="thread-avatar" aria-hidden="true">{thread.pending.initials}</span>
+            <div class="thread-message-main">
+              <p class="thread-message-meta"><span class="thread-author">{thread.pending.authorName}</span><span class="thread-status">Sending…</span></p>
+              <p class="thread-text">{thread.pending.body}</p>
+            </div>
+          </article>
+        </logic>
+
+        <logic :if="thread.sendStatus == 'failed'">
+          <article class="thread-message thread-message-failed" :aria-label="thread.pending.label + ', not sent'">
+            <span class="thread-avatar" aria-hidden="true">{thread.pending.initials}</span>
+            <div class="thread-message-main">
+              <p class="thread-message-meta"><span class="thread-author">{thread.pending.authorName}</span><span class="thread-status thread-status-failed">Not sent</span></p>
+              <p class="thread-text">{thread.pending.body}</p>
+              <button type="button" class="thread-button thread-button-quiet" on:click="thread.retry()">Try again</button>
+            </div>
+          </article>
+        </logic>
+      </div>
+
+      <form class="thread-reply" aria-label="Reply in thread">
+        <logic :if="thread.sendStatus == 'session'">
+          <p class="thread-reply-problem" role="alert">Your session ended, so the reply was not sent. Sign in again, then send it.</p>
+        </logic>
+        <label class="thread-hidden" for="thread-reply-input">Reply in thread</label>
+        <textarea class="thread-reply-input" id="thread-reply-input" name="reply" rows="2" placeholder="Reply…" :readonly="thread.sendStatus == 'sending'" :value="thread.draft" on:input="thread.write($event.target.value)"></textarea>
+        <div class="thread-reply-bar">
+          <button type="button" class="thread-send" :disabled="!thread.canSend" on:click="thread.reply()">Send</button>
+        </div>
+      </form>
+    </case>
+
+    <case default>
+      <div class="thread-state">
+        <p class="thread-state-title">No thread is open.</p>
+        <p class="thread-state-text">Choose "Reply in thread" on a message to open its thread.</p>
+      </div>
+    </case>
+  </switch>
 </section>

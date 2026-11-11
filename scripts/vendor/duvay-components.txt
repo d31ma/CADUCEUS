@@ -73,3 +73,6 @@ navigation-drawer
 messages
 infinite-scroll
 spacer
+sync-status
+send-status
+storage-meter

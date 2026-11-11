@@ -1,11 +1,11 @@
 {
   "package": "@d31ma/duvay",
-  "version": "26.46.03",
+  "version": "26.46.04-develop.d68028d",
   "license": "MIT",
   "source": {
     "repository": "https://github.com/d31ma/DUVAY",
-    "release": "v26.46.03",
-    "commit": "ba8f682a266fdfe28627d5331f457db52a0ae73e"
+    "release": "develop",
+    "commit": "d68028d35c013948b8bc880d813542f8e3d79917"
   },
   "components": [
     "base",
@@ -82,7 +82,10 @@
     "navigation-drawer",
     "messages",
     "infinite-scroll",
-    "spacer"
+    "spacer",
+    "sync-status",
+    "send-status",
+    "storage-meter"
   ],
   "styles": [
     "spacers",
@@ -142,7 +145,7 @@
       "--minify"
     ],
     "cssLayer": "duvay",
-    "builtAt": "2026-11-11T20:10:00Z"
+    "builtAt": "2026-11-11T23:36:05Z"
   },
   "inputs": {
     "LICENSE": "5018934d79ea0bf37c34065635d6cbdbe96701c0e7b59e39f40d47641a7da6b7",
@@ -165,12 +168,12 @@
     "src/components/base.js": "028bc2647236d983adbe038c071ef3f2bb2b417ec6aa0f991d0fdd3a765f6dca",
     "src/components/bottom-nav-item.js": "864e300c42809e4fdc1277fa1d2167b624679ef4eebb273d702a60a4d87ff969",
     "src/components/bottom-navigation.css": "cc4d1354c6f457455bc5c8339b7f52e0cfc57bbe2d51b33808a3a0d0a0f946bb",
-    "src/components/bottom-navigation.js": "d50a961e03485b52c01738bcab70eaaa7b05bc9ba98460d06bf45ef64d1bcc7a",
+    "src/components/bottom-navigation.js": "9d4a44743a4b48a3ee321732227a7741048730e125bb6c3a75db8437246ad445",
     "src/components/bottom-sheet.js": "177a497f50b329110a9b3c9b4d3601d3957d373eb09cb21df13b5c738c4cd4bd",
     "src/components/bottom-sheets.css": "73fbfb6ccee7231efc40fdeb0ec2a0fceacb400a27bf1f5e653e798d40f0d219",
     "src/components/btn-group.js": "00f2143ee6d84809c408886556d65c35199e30eed840eebed12a7a2a39730b14",
     "src/components/btn-toggle.js": "68a1aba8ef5840de02e471b9aa6395f47000838c94d62384760ac6117bb3b4df",
-    "src/components/btn.js": "8b57962cac71bf557afedb8de1a1c6a6b75aa33a2eeb97cf97fa062630554379",
+    "src/components/btn.js": "c3335ba723564ebb07cb5ad3649116a6a03078cc8a60c58fe7372f4c8932eef7",
     "src/components/button-groups.css": "33564b1e8a8045ef7e9e0659dfee7da9e2ccdfc5086868964a1401e14721243c",
     "src/components/buttons.css": "1a837514997e8da2760333f3a25a70f0e00d5c060f6d67be518a4cc96caca302",
     "src/components/card-actions.js": "c1fa522ee6f66894a48caf37e7d804eddd15722bdd793b1d30c9ae65149c12cb",
@@ -193,8 +196,8 @@
     "src/components/command.js": "e1ed962d464a3cd6d3778a8cd1a4b46549e04a9deb2119821476a3cb3bcc16da",
     "src/components/container.js": "2d180dc78561a2ca27ca3b97ca078bf141cba98e29fd529cd6bf9cc634cb7956",
     "src/components/data-table-row.js": "6890ebe8deb5d43d1c2ca04ecde8c78dbb632aa939d1bbbd129bfdfeeefffcd6",
-    "src/components/dialog.js": "cbc0ee8233e67f9eba85c2816f1dee94a63f73f0bddbdf879b9e494ffc5da3c3",
-    "src/components/dialogs.css": "f33ad7a39aeb20c644f3cc8f83221b5f09f51780e0270a867de33cd4d853279c",
+    "src/components/dialog.js": "36cbb839d84fc2e0608fe6a996c4b674af9b45f56762abf759c2ed5d0f2b87f2",
+    "src/components/dialogs.css": "4ea1972d6784b092e6f3703c4d827549b6e92517761a9918f527cd0ec1ec9234",
     "src/components/divider.js": "5ba0f1696b9c187c93f9a27c65763800a3ac791452322ef9a0dc67677e3db1c4",
     "src/components/empty-state.js": "6b0fb7245c61969dd03c7f0b48ebf84149f67b81c6562dbf4f62ec70153d6d01",
     "src/components/empty-states.css": "b0675712863266615134effd506ac3ba10187854133f1c4c30d10a70f5be5299",
@@ -223,23 +226,25 @@
     "src/components/list-group.js": "51196d862cb167fadb90ebd2c4b20715b5c53de128a91e509b6e2fcd8746a047",
     "src/components/list-item-subtitle.js": "7c1c0d412e02971156b14a6551020375208b831a30636d9fe3c7897ac147395a",
     "src/components/list-item-title.js": "a2c5d3f5379f2ef2a6db66cd52248fab866a2decdc7cf03898514584799a0246",
-    "src/components/list-item.js": "f5fc62f75e6b05033eeffe2aaaa97df525373a5959b6b00403cbdb8d154ce9e5",
+    "src/components/list-item.js": "e5497213943b78adced505faf8ccd577358e006b5b6c1b5bec3156d978972006",
     "src/components/list-subheader.js": "96ebc1efc68ae2ea5c00419953294c1f951608b59a63b8326a5ae1e5b92c4146",
-    "src/components/list.js": "a0a074ac51cbb64b308de6dfd6010c2ec8bedf58b4cc7a6efcb7f337d8ac566e",
+    "src/components/list.js": "ead8344036c74f54abe3726b70909b4f69c1ca7c3f7c3f7ecc013bdb1728764f",
     "src/components/lists.css": "163c9ae2240dd965fec3ac8a9dc4a1a739e89f1bfd565490c5dad246c1c8b864",
+    "src/components/live-announcer.js": "8b8fac95d1573467213cbe5460600ccfc6b43555004dc1be04775e04bec8b2e8",
     "src/components/menu.js": "b9f188983718e7d9050807e6cf9f648d1c3e87dc2eea48ec9a9a18bb652f6c61",
     "src/components/menus.css": "038b3074a98816233c7ea296ff9797d77ea5abeca9a34b97f31e1ea8ebe2052a",
     "src/components/messages.css": "e4024229ed357abefc36a20317ec76638812085b7a0cafa12c83e0a8490bf9c8",
     "src/components/messages.js": "bdc0c822b1b4ccbf5a8abbafa68011f8f1ac467dc0e28d64ae9bf6b0d072ae1b",
     "src/components/navigation-drawer.js": "a7601a0dd0926a241508452d1d687238f2774aa4c2b56a4dab19a2e63f3fc368",
     "src/components/navigation-drawers.css": "a2288f16d46ec6e200b5dc3eeac8d593a58b5f6c244135b79434e3bac8da910d",
+    "src/components/offline-text.js": "20cfdce6a04001a95613bb06c3f8e6066470ed1a876a8c5d25649299c88a1b7f",
     "src/components/otp-field.js": "350cbd774936391d24129048c0970e7d9653a1757cf6607a57e8b830bcd20268",
     "src/components/otp-group.js": "41ad6b02a8547154dccbc434b75e471dca275aecf38fe5415aa3bb95b402e593",
     "src/components/otp-input.js": "3dac2b11ac95918f9ccf1ae31289c3b2c75975b76f448952ae8ea3bdca709af8",
     "src/components/otp-inputs.css": "b9487bd0adb1d7e10091a2da9e8c216810eca8c8e410740c10db0917f64845c0",
     "src/components/otp-separator.js": "710e7c2e6a8470568b180a09a4b800af7502cff219870a30f79f5a7f262a3fa1",
     "src/components/otp.js": "9a653c403c023f9888c4ce0abcb6f6edbb021c4ba5e041107650a71b76c4e10c",
-    "src/components/overlay.js": "adda11c96a0369e2af9c0394e81662c36f2113fb5b96ca479ad2d231c040c705",
+    "src/components/overlay.js": "892aaceeeba7f722ae96168d5ece92439e6fe0744b5b7a351dbd6074363d7565",
     "src/components/overlays.css": "db3d2a4bb3576523169e4f97a8135b34988654bc802f0902c4e930f81adb0833",
     "src/components/popover.js": "4ab89c1990de981ed8defea84975169be8dd85aae80aa1862359e19b28ed81fc",
     "src/components/popovers.css": "6c164089716fa04c130bdea478f1fcd7cdd61041c59ca6fa8238b61a94f532b7",
@@ -255,6 +260,7 @@
     "src/components/selection-control.js": "a5af2a471213ce2feb06cbac5abe7bd42e7850a736df1e2385da4b282dbfc8c5",
     "src/components/selection-controls.css": "bbed73a49c19b0715222489dd50fa7c9564985439ef71b420e09d2e422e8a51e",
     "src/components/selects.css": "bb03166cf00cd5beba21e77aa4a6db602cd3138a6b824aed19a164f211040948",
+    "src/components/send-status.js": "b003ccf84fe7ba26883b2ff5c887bfb7b8237e45cd22459637c45587ce09a0b5",
     "src/components/skeleton-loader.js": "898082c11e240c5be6882a4e2361467c1f9b15b3399870a4a1cccbb238b9d1df",
     "src/components/skeleton-loaders.css": "95a57f720c7d800191559a13cf4f11c24bf029021b5956a7bafaa8693e2ccd84",
     "src/components/skeleton.js": "762b6e8f6531b65bd729a4a1ebd4c1e93f5523d9ce42a3fc5e15a807927db806",
@@ -263,8 +269,10 @@
     "src/components/snackbars.css": "0ab5868818e6a2df7af1a518fce629e7e32619b0db0d8507ce799b9ce90e72ff",
     "src/components/spacer.js": "cfff74ce912b3f1bdd5feee0541812a2c84a541ff2d6ed2ea83d268d1a1499a3",
     "src/components/spacers.css": "c6cba763d0fc96ed212c8a01c1fc73adf4a2650d561764fb1c45d8561ba8e28b",
+    "src/components/storage-meter.js": "9579ab23dc2d5784aeb845716be0c48fe70e9c129e9a642cc4bb74773763e213",
     "src/components/switch.js": "4e84fc87bf7c2e3e1efe559191522c8309e4e11d5972c6e134fac4efc3efb7aa",
     "src/components/switches.css": "9a64a734ebe65195410802b78c4fb9318e91348253d79864c77a594ee12aa927",
+    "src/components/sync-status.js": "a875035f12664fabd9fa6612665a99d5c40d40501d989c00146ca3f6278f1d96",
     "src/components/tab.js": "0d62c7556d6bfebbbd32cb0b86a792a6713966687a04bad9ae9472c746e0bdd3",
     "src/components/table.js": "4ba3147de527af599419151c36d6d1aff1e414b3bcf044ead438f40707cfab5c",
     "src/components/tables.css": "e953db242f9c3e1b03d03dc49acee97c21955c3395ac4f700ac60e1d079c7992",
@@ -291,8 +299,8 @@
     "src/utilities.css": "65d100b138e1c623f571da2df021038d8b61d479739a1792b36b999cf2bf6af1"
   },
   "outputs": {
-    "duvay-mesail.js": "2ca9a28e2495bdbdd26d3025fa686c68eecb68bf8a4e216fbd73a5301afe219f",
-    "duvay-mesail.css": "09d652ee2fb9624b312ee92995b8775185b8ebe0ef1cb36a735b39cbd5dba541",
+    "duvay-mesail.js": "5de2fef0b983f7728e6a739420bada25d844a0e7da2fdc79854260227da3389a",
+    "duvay-mesail.css": "b6a801b4851fdeb8ad782a96632a52efa6defdf2bf0284aed1f85f7903a9e689",
     "LICENSE": "5018934d79ea0bf37c34065635d6cbdbe96701c0e7b59e39f40d47641a7da6b7"
   }
 }

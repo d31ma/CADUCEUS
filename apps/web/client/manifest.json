@@ -14,9 +14,9 @@
       "/shared/vendor/duvay/duvay-mesail.css": {
         "kind": "vendor",
         "package": "@d31ma/duvay",
-        "version": "26.46.03",
+        "version": "26.46.04-develop.d68028d",
         "license": "MIT",
-        "sha256": "09d652ee2fb9624b312ee92995b8775185b8ebe0ef1cb36a735b39cbd5dba541"
+        "sha256": "b6a801b4851fdeb8ad782a96632a52efa6defdf2bf0284aed1f85f7903a9e689"
       }
     },
     "scripts": [
@@ -25,9 +25,9 @@
     "scriptSources": {
       "/shared/vendor/duvay/duvay-mesail.js": {
         "package": "@d31ma/duvay",
-        "version": "26.46.03",
+        "version": "26.46.04-develop.d68028d",
         "license": "MIT",
-        "sha256": "2ca9a28e2495bdbdd26d3025fa686c68eecb68bf8a4e216fbd73a5301afe219f"
+        "sha256": "5de2fef0b983f7728e6a739420bada25d844a0e7da2fdc79854260227da3389a"
       }
     },
     "browserApis": [

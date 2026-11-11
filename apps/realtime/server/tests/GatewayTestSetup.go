@@ -48,7 +48,10 @@ func (setup GatewayTestSetup) UseSettings(realm oidc.SigningRealm, gatewayUrl st
 
 func (setup GatewayTestSetup) Gateway(closes chan string) string {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		closes <- request.Method + " " + request.RequestURI + " " + request.Header.Get("X-Realtime-Gateway")
+		select {
+		case closes <- request.Method + " " + request.RequestURI + " " + request.Header.Get("X-Realtime-Gateway"):
+		default:
+		}
 		writer.WriteHeader(http.StatusOK)
 	}))
 	return server.URL

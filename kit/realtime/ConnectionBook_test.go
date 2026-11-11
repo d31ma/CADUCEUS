@@ -168,3 +168,19 @@ func TestConnectionBookReportsFailedWrites(t *testing.T) {
 		t.Fatalf("insert: got %v", err)
 	}
 }
+
+func TestAddAgainReplacesTheOwnerAndTheEndTime(t *testing.T) {
+	memory := newMemoryStorage()
+	book := connectionTestBook(memory)
+	stale := testConnection("example.com", "ana", "c1")
+	stale.ExpiresAt = "2026-11-10T11:00:00Z"
+	book.Add(stale)
+	fresh := testConnection("example.com", "ben", "c1")
+	fresh.ExpiresAt = "2026-11-10T12:01:00Z"
+	err := book.Add(fresh)
+	found, _ := book.Find("example.com", "c1")
+	count, _ := book.CountForMember("example.com", "ana")
+	if err != nil || found.MemberId != "ben" || found.ExpiresAt != "2026-11-10T12:01:00Z" || count != 0 {
+		t.Fatalf("got %+v %v, ana still has %d", found, err, count)
+	}
+}

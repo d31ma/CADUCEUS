@@ -99,13 +99,19 @@ func (book ConnectionBook) read(collection string, where map[string]any) ([]Conn
 }
 
 func (book ConnectionBook) insertUnless(collection string, found []Connection, connection Connection) error {
+	connection.ConnectedAt = book.Now().UTC().Format(time.RFC3339)
 	if len(found) > 0 {
-		return nil
+		return book.replace(collection, found[0].ID, connection)
 	}
 	connection.ID = ""
-	connection.ConnectedAt = book.Now().UTC().Format(time.RFC3339)
 	_, err := book.Storage.Documents.Insert(collection, connection)
 	return book.failure("connection insert", err)
+}
+
+func (book ConnectionBook) replace(collection string, id string, connection Connection) error {
+	connection.ID = ""
+	_, err := book.Storage.Documents.Patch(collection, id, connection, nil)
+	return book.failure("connection replace", err)
 }
 
 func (book ConnectionBook) deleteAll(collection string, found []Connection) (Connection, error) {

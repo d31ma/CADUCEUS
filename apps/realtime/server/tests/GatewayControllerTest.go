@@ -1,4 +1,8 @@
-import "errors"
+import (
+	"crypto/rand"
+	"errors"
+	"strings"
+)
 
 // @Test(GatewayTestSetup, {"partition":"tests"})
 type GatewayControllerTest struct {
@@ -72,7 +76,7 @@ func (test *GatewayControllerTest) TestPostMessageTypingFromANonMemberIsNotFound
 	body := `{"type":"auth","token":"` + setup.Token(realm, []string{"mesail-member"}) + `"}`
 	controller := &GatewayController{}
 	controller.PostMessage(GatewayMessage{ConnectionId: "typist-1", Body: body})
-	_, failure := controller.PostMessage(GatewayMessage{ConnectionId: "typist-1", DomainId: "example.com", Body: `{"type":"typing","conversationId":"c1"}`})
+	_, failure := controller.PostMessage(GatewayMessage{ConnectionId: "typist-1", DomainId: "example.com", Body: `{"type":"typing","conversationId":"lonely-` + strings.ToLower(rand.Text()) + `"}`})
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(failure, &missing), "a non-member was allowed to type")
 }

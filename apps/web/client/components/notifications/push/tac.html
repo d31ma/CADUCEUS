@@ -1,10 +1,10 @@
-<div class="notify-push grid min-w-0 gap-4 @container/push">
-  <section class="notify-card" aria-labelledby="push-title">
-    <div class="notify-divider-below px-4 py-4 @xl/push:px-5">
+<div class="notify-push grid min-w-0 gap-4">
+  <section class="grid min-w-0 gap-3" aria-labelledby="push-title">
+    <div class="grid gap-1">
       <h3 id="push-title" class="notify-heading">Notifications on this device</h3>
-      <p class="notify-help mt-0.5">Mesail notifies you when no Mesail tab is in front. Nothing is shown while you are set to Do not disturb.</p>
+      <p class="notify-help">Mesail notifies you when no Mesail tab is in front. Nothing is shown while you are set to Do not disturb.</p>
     </div>
-    <div class="grid gap-3 px-4 py-4 @xl/push:px-5">
+    <div class="grid gap-3">
       <switch :value="notificationPush.panel">
         <case :when="'notAsked'">
           <div class="notify-permission flex items-start gap-3 p-4">
@@ -80,15 +80,15 @@
     </div>
   </section>
 
-  <section class="notify-card" aria-labelledby="summary-title">
-    <div class="notify-divider-below px-4 py-4 @xl/push:px-5">
+  <section class="notify-divider-above grid min-w-0 gap-3 pt-4" aria-labelledby="summary-title">
+    <div class="grid gap-1">
       <h3 id="summary-title" class="notify-heading">Email summary</h3>
-      <p class="notify-help mt-0.5">If you miss something, get one email instead of many. It lists what you did not read, and it is not sent if you read everything first.</p>
+      <p class="notify-help">If you miss something, get one email instead of many. It lists what you did not read, and it is not sent if you read everything first.</p>
     </div>
-    <div class="grid gap-3 px-4 py-4 @xl/push:px-5">
+    <div class="grid gap-3">
       <switch :value="notificationPush.settingsStatus">
         <case :when="'ready'">
-          <w-radio-group name="summary-delay" label="Email me when a notification is unread for" class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2 [&_w-radio]:block [&_w-radio]:py-1.5 max-sm:[&_w-radio]:min-h-11 pointer-coarse:[&_w-radio]:min-h-11">
+          <w-radio-group name="summary-delay" label="Email me when a notification is unread for" class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-x-4 gap-y-1 [&_.w-label]:col-span-full [&_.w-label]:pb-1 [&_w-radio]:block [&_w-radio]:min-h-8 [&_w-radio]:py-1 max-sm:[&_w-radio]:min-h-11 pointer-coarse:[&_w-radio]:min-h-11">
             <loop :for="choice of notificationPush.summaryChoices">
               <w-radio :value="choice.id" :label="choice.label" :checked="choice.selected" on:change="notificationPush.chooseSummary(choice.minutes)"></w-radio>
             </loop>

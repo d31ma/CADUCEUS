@@ -62,6 +62,31 @@
           </div>
         </div>
       </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 2b &middot; Kept browser, right after Sign in: Firefox asks to keep the storage (StorageSpace.persist())">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2b &middot; Kept browser, right after Sign in: Firefox asks to keep the storage (<code>StorageSpace.persist()</code>)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Opening Mesail</h2>
+            <div class="grid gap-4">
+              <div class="flex items-start gap-3 rounded-lg bg-primary-container text-on-primary-container p-3" role="status"><w-icon name="device" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p class="font-semibold">Firefox asks if Mesail may store data on this device.</p><p>Choose <strong>Allow</strong>. Then Firefox does not clear your messages when the computer runs low on space.</p></div></div>
+              <div class="grid min-h-24 place-items-center rounded-lg border border-dashed border-outline p-4 text-center text-xs text-subtle" aria-hidden="true">Firefox&rsquo;s own prompt opens here (not drawn: it belongs to the browser)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 2c &middot; The person chose Block in Firefox&rsquo;s prompt">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2c &middot; The person chose &ldquo;Block&rdquo; in Firefox&rsquo;s prompt</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Mesail is open</h2>
+            <div class="grid gap-4">
+              <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="info" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Mesail still keeps your recent messages here. Firefox may clear them when space runs low; Mesail then loads them again when you are online. Items that wait to send could be lost then.</p></div></div>
+              <p class="text-sm text-subtle">You can allow it later in Firefox: the lock icon next to the address, then Permissions, then &ldquo;Store data in persistent storage&rdquo;.</p>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Continue</w-btn>
+            </div>
+          </div>
+        </div>
+      </section>
       <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 3 &middot; Mesail app (macOS, Windows, Linux, iOS, Android): on by default">
         <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 &middot; Mesail app (macOS, Windows, Linux, iOS, Android): on by default</p>
         <div class="w-full rounded-xl border border-border bg-surface shadow-sm">

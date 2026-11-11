@@ -467,8 +467,13 @@ attention cards and the space meter (COMPONENTS.md "Offline and sync").
   device you share with others." Sends `keepSignedIn` in `SignInRequest`. Where the copy cannot be
   encrypted (AC-OF-18, Q15), a warning box under the box: "This device cannot encrypt Mesail's copy. Anyone
   who can read this device's files can read your recent messages." and "Untick the box to keep nothing
-  here." The box stays hidden until the release gate of ADR 0006 section 9 opens (Q16). On a kept browser
-  the app asks for persistent storage once; Firefox shows its own prompt. A kept device opens offline
+  here." The box stays hidden until the release gate of ADR 0006 section 9 opens (Q16). On a kept browser the app asks for persistent storage once, right after
+  sign-in; Firefox shows its own prompt, and Mesail explains it first ("Firefox asks if Mesail may store
+  data on this device. Choose Allow ..."; `signin-kept.html` 2b). If the person blocks it: "Firefox may clear
+  them when space runs low; Mesail then loads them again when you are online. Items that wait to send could
+  be lost then." with how to allow it later (2c, and a row in Settings > This device). When a device that had
+  a plain copy can encrypt later, Mesail replaces the copy without asking (no screen; at most the sync bar's
+  "Updating"). A kept device opens offline
   without the sign-in form. Without a copy and without network: "You are offline. Sign-in needs the network."
 - **Sync bar** (`offline-status.html`): one full-width button at the very top of the app, above every pane
   and on every width, so the person always sees it in the same place. It shows only when there is
@@ -542,10 +547,11 @@ attention cards and the space meter (COMPONENTS.md "Offline and sync").
   After another person signs in, a notice says the last person's copy was removed, without a name.
 - **Settings: this device** (`settings-device.html`, AC-OF-13, Q9, Q11): a new settings section "This
   device" (tab and side list on every settings page). Cards: Keep me signed in (switch, since when, and
-  "Mesail encrypts the copy with a key that only this device holds", AC-OF-14); Space used (a bar split by domain, with a list of each domain's size
-  and update time, so colour is never the only cue); What to keep (7, 14, 30 or 90 days as a segmented
+  "Mesail encrypts the copy with a key that only this device holds", AC-OF-14); Space used (real numbers from `StorageSpace.estimate()`: "412 MB of 1 GB used", "38 GB free on this
+  computer"; a bar split by domain, with a list of each domain's size and update time, so colour is never
+  the only cue); What to keep (7, 14, 30 or 90 days as a segmented
   choice, space limit, "Download files ahead of time" on a computer or "on Wi-Fi" on a phone); Remove
-  ("Remove the copy", "Sign out everywhere"). Variants: a device that cannot encrypt (the AC-OF-18 warning
+  ("Remove the copy", "Sign out everywhere"). Variants: Firefox with storage not kept, a device that cannot encrypt (the AC-OF-18 warning
   with "Remove the copy"), a full device, a phone (14 days, files on Wi-Fi), and a browser without a kept
   session (how to turn it on). There is no "first build" with smaller limits any more (Q16: the first
   offline release waits for sealed tables and has the full window and files).

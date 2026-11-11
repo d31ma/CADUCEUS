@@ -1,10 +1,3 @@
-.search-title {
-  margin: 0;
-  color: var(--w-text);
-  font-size: var(--w-font-lg);
-  font-weight: var(--w-font-weight-bold);
-}
-
 .search-meta {
   margin: 0;
   color: var(--w-text-subtle);
@@ -102,6 +95,12 @@ mark {
   font-weight: var(--w-font-weight-semibold);
 }
 
+@media (max-width: 767px), (pointer: coarse) {
+  .search-chip .w-chip {
+    min-height: var(--ms-touch-min);
+  }
+}
+
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer utilities {
@@ -117,6 +116,9 @@ mark {
   }
   .mx-auto {
     margin-inline: auto;
+  }
+  .-mt-2 {
+    margin-top: calc(var(--spacing, 0.25rem) * -2);
   }
   .mt-1\.5 {
     margin-top: calc(var(--spacing, 0.25rem) * 1.5);
@@ -184,9 +186,6 @@ mark {
   }
   .place-items-center {
     place-items: center;
-  }
-  .items-baseline {
-    align-items: baseline;
   }
   .items-center {
     align-items: center;

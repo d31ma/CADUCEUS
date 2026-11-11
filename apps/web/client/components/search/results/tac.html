@@ -1,17 +1,14 @@
-<section class="@container/search min-w-0" aria-labelledby="search-page-title">
+<section class="@container/search min-w-0" aria-label="Search">
   <div class="mx-auto grid w-full max-w-2xl gap-3 pt-4 pb-10 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] @xl/search:px-5">
-    <div class="flex flex-wrap items-baseline gap-x-2">
-      <h2 class="search-title flex min-w-0 items-center gap-1" id="search-page-title"><w-icon name="search" size="small"></w-icon><span>Search</span></h2>
-      <span class="search-meta min-w-0">in {sessionAccount.currentDomain}</span>
-    </div>
-    <form class="contents" method="dialog" role="search" aria-labelledby="search-page-title" on:submit="search.searchWith($event.target.elements.query.value, $event.target.elements.author.value, $event.target.elements.from.value, $event.target.elements.to.value)">
+    <form class="contents" method="dialog" role="search" :aria-label="'Search ' + sessionAccount.currentDomain" on:submit="search.searchWith($event.target.elements.query.value, $event.target.elements.author.value, $event.target.elements.from.value, $event.target.elements.to.value)">
       <div class="flex items-start gap-2">
-        <w-text-field class="min-w-0 flex-1" type="search" name="query" hide-details autocomplete="off" :label="'Search messages in ' + sessionAccount.currentDomain" :value="search.query"><w-icon slot="prepend-inner" name="search" size="small"></w-icon></w-text-field>
+        <w-text-field class="min-w-0 flex-1" type="search" name="query" hide-details autocomplete="off" label="Search messages" :value="search.query"><w-icon slot="prepend-inner" name="search" size="small"></w-icon></w-text-field>
         <logic :if="search.query != ''">
           <button type="button" class="search-clear mt-1.5 grid size-9 flex-none place-items-center pointer-coarse:size-11 max-sm:size-11" aria-label="Clear search text" on:click="search.clearQuery()"><w-icon name="close" size="small"></w-icon></button>
         </logic>
         <w-btn class="mt-1.5">Search</w-btn>
       </div>
+      <p class="search-meta -mt-2">Searching {sessionAccount.currentDomain}</p>
       <div class="flex flex-wrap items-end gap-2" role="group" aria-label="Filters">
         <w-text-field class="min-w-0 flex-[1_1_12rem] max-sm:basis-full" name="author" label="Sender" placeholder="Name or address" density="compact" hide-details autocomplete="off" :value="search.author"></w-text-field>
         <w-text-field class="min-w-0 flex-[1_1_9rem]" type="date" name="from" label="From date" density="compact" hide-details :value="search.from" :max="search.to"></w-text-field>
@@ -26,8 +23,8 @@
           <w-icon-btn icon="close" size="small" :aria-label="'Search every conversation, not only ' + search.conversationTitle" on:click="search.clearScope()"></w-icon-btn>
         </span>
       </logic>
-      <w-chip :selected="search.hasAttachment" on:click="search.toggleAttachment()"><w-icon slot="prepend" name="paperclip" size="small"></w-icon>Has file</w-chip>
-      <w-chip :selected="search.isEmail" on:click="search.toggleEmail()"><w-icon slot="prepend" name="mail" size="small"></w-icon>Is email</w-chip>
+      <w-chip class="search-chip" :selected="search.hasAttachment" on:click="search.toggleAttachment()"><w-icon slot="prepend" name="paperclip" size="small"></w-icon>Has file</w-chip>
+      <w-chip class="search-chip" :selected="search.isEmail" on:click="search.toggleEmail()"><w-icon slot="prepend" name="mail" size="small"></w-icon>Is email</w-chip>
       <w-btn variant="text" size="small" class="flex-none" on:click="search.clearFilters()">Clear filters</w-btn>
     </div>
 
@@ -82,7 +79,7 @@
       <case :when="'empty'">
         <w-empty-state class="block py-8" role="status">
           <w-icon slot="media" name="search"></w-icon>
-          <h3 slot="title" class="search-state-title">No results for “{search.searchedQuery}”</h3>
+          <h2 slot="title" class="search-state-title">No results for “{search.searchedQuery}”</h2>
           <span slot="text">Check the spelling, try fewer or shorter words, or clear the filters.</span>
           <div slot="actions"><w-btn on:click="search.clearFilters()">Clear filters</w-btn></div>
         </w-empty-state>
@@ -100,7 +97,7 @@
       <case default>
         <w-empty-state class="block py-8">
           <w-icon slot="media" name="search"></w-icon>
-          <h3 slot="title" class="search-state-title">Search messages in {sessionAccount.currentDomain}</h3>
+          <h2 slot="title" class="search-state-title">Search messages in {sessionAccount.currentDomain}</h2>
           <span slot="text">Type words from a message, then press Search. Use the filters to narrow the results.</span>
         </w-empty-state>
       </case>

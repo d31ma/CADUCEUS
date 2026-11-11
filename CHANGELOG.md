@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Started Mesail, the rewrite of CADUCEUS as one messenger and email app
+  (ADR 0004). Go for the Tac frontend and the Yon backend on TACHYON
+  26.46.02, one Tachyon app per service, FYLO 26.45.07 with one root per
+  service, Keycloak (OIDC) instead of SESAME. Added the spec, domain model,
+  API contracts, implementation slices, the shared `kit/` packages, the app
+  skeletons with health routes and a fail-closed identity provider, blackbox
+  acceptance tests and `scripts/gates.sh`. Removed the CADUCEUS JavaScript
+  server and client, the Go monolith, SESAME and their tooling (kept in git
+  history at 4ef82f72).
+
 - Completed account-synchronized interface localization across 20 closed,
   persisted locale choices. A reproducible, checksum-pinned SMaLL-100 pipeline
   now catalogs 755 audited static interface literals for 19 non-English

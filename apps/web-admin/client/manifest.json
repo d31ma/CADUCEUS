@@ -1,0 +1,12 @@
+{
+  "name": "Mesail Admin",
+  "short_name": "Admin",
+  "start_url": "/admin/",
+  "display": "standalone",
+  "tac": {
+    "styles": ["/shared/styles/app.css"],
+    "styleSources": {
+      "/shared/styles/app.css": {"kind": "foundation"}
+    }
+  }
+}

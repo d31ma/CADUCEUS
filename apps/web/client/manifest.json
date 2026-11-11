@@ -1,0 +1,12 @@
+{
+  "name": "Mesail",
+  "short_name": "Mesail",
+  "start_url": "/",
+  "display": "standalone",
+  "tac": {
+    "styles": ["/shared/styles/app.css"],
+    "styleSources": {
+      "/shared/styles/app.css": {"kind": "foundation"}
+    }
+  }
+}

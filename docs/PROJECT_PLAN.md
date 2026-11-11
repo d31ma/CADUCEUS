@@ -1,5 +1,9 @@
 # CADUCEUS Enterprise Project Plan
 
+> Superseded on 2026-11-10 by the Mesail plan: [ADR 0004](adr/0004-mesail-go-serverless-keycloak.md),
+> [SPEC](mesail/SPEC.md) and [SLICES](mesail/SLICES.md). The invariants in
+> section 3 and the security program in section 11 still apply to Mesail.
+
 ## 1. Executive Decision
 
 CADUCEUS will be developed as:

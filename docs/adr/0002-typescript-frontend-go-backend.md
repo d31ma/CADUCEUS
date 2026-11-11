@@ -1,6 +1,6 @@
 # ADR 0002: TypeScript Frontend and Go Backend
 
-- Status: Accepted
+- Status: Superseded by [ADR 0004](0004-mesail-go-serverless-keycloak.md) on 2026-11-10
 - Date: 2026-07-26
 - Supersedes: ADR 0001
 

@@ -191,7 +191,9 @@ Costs, accepted:
 - A person's display name is the same in every domain.
 - A DomainAdmin can add an existing person to their domain without that
   person's consent, and learns that the prefix exists (the owner's answer
-  1; see SPEC open question Q4).
+  1, confirmed as SPEC Q4 on 2026-11-11).
+- A deleted person's prefix is never reused (SPEC Q5), so the namespace
+  only grows.
 
 ## Migration
 

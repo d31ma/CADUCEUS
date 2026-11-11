@@ -276,7 +276,7 @@ stable; tests name them.
   channel address in any domain may use a person's prefix (`409
   duplicate`), and no new person may take a prefix that an alias or a
   channel address uses in any domain (`409 duplicate`). A deleted person's
-  prefix stays reserved (Q5).
+  prefix stays reserved for ever (Q5).
 - **AC-ID-11** Prefix and address rules. A prefix has 1 to 64 characters
   from `a-z`, `0-9`, `.`, `_` and `-`; it starts and ends with a letter or
   digit and has no two dots in a row. Input in any letter case is accepted
@@ -504,7 +504,8 @@ stable; tests name them.
 - A separate account or password per domain. One person has one login for
   all their domains (ADR 0005).
 - Renaming a username (prefix). It is fixed when the person is created.
-- Sub-addressing (`ana+news@example.com`) in the first release (Q6).
+- Sub-addressing (`ana+news@example.com`) in the first release (Q6,
+  decided).
 - Bots and app integrations beyond incoming webhooks.
 - IMAP and POP access for third-party mail clients. (SMTP submission for
   third-party clients is a later slice; see SLICES.md.)
@@ -525,23 +526,21 @@ stable; tests name them.
   of the sender's domain? This spec says yes, so it behaves like any other
   email.
 
-- **Q4** May a DomainAdmin add an existing person (whose prefix is taken)
-  to their domain without that person agreeing? This spec says yes (the
-  owner's answer): the admin learns that the prefix exists, and the person
-  simply gets the new domain. If two unrelated organizations may share one
-  install, the alternative is an invitation the person accepts, and the
-  shared prefix namespace itself becomes a problem (two organizations
-  cannot both have an `info` person).
-- **Q5** May a deleted person's prefix ever be given to a new person? This
-  spec says no: it stays reserved, so mail meant for the old person never
-  reaches a new one. A later Operator tool may release a prefix by hand.
-- **Q6** Should `ana+anything@domain` reach Ana (sub-addressing)? This spec
-  says not in the first release: `+` is not allowed in a prefix or alias,
-  and such an address is unknown.
-- **Q7** Which domain opens after a sign-in with the prefix only? This spec
-  says the person's default domain: the first domain they were added to,
-  until they choose another in their settings. The alternative is the last
-  domain used, which needs stored state per person.
+Decided by the owner on 2026-11-11 (one login, ADR 0005):
+
+- **Q4 (decided: the admin adds).** A DomainAdmin adds an existing person
+  (whose prefix is taken) to their domain without that person agreeing.
+  The admin learns that the prefix exists, and the person simply gets the
+  new domain (AC-ID-12). No invitation step.
+- **Q5 (decided: never).** A deleted person's prefix is never given to
+  another person, so mail meant for the old person never reaches a new one
+  (AC-ID-10). There is no tool to release it.
+- **Q6 (decided: not in the first release).** Sub-addressing is not
+  supported: `+` is not allowed in a prefix or an alias, and an address
+  such as `ana+news@example.com` is unknown (`550`).
+- **Q7 (decided: the default domain).** A sign-in with the prefix only
+  opens the person's default domain: the first domain they were added to,
+  until they choose another in their settings (AC-ID-9).
 
 Q1 (one shared conversation or one per member) is closed: one email to two
 members of the same domain is one shared conversation (AC-IN-6).

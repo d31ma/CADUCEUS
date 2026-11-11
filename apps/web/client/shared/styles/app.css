@@ -95,6 +95,8 @@
   --ms-icon-sm: 1rem;
   --ms-icon-md: 1.25rem;
   --ms-icon-lg: 1.5rem;
+  --ms-icon-xl: 2rem;
+  --ms-nav-pill-width: 3.5rem;
   --ms-radius-control: var(--w-radius-lg);
   --ms-radius-dialog: var(--w-radius-xl);
   --ms-auth-card-max: 26rem;

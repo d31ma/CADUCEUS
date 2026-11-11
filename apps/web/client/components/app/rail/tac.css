@@ -36,17 +36,22 @@
 .domain-tile[aria-current="true"]::before {
   content: "";
   position: absolute;
-  inset-inline-start: calc(var(--w-space-3) * -1 - 2px);
-  width: 4px;
-  height: 1.75rem;
-  border-start-end-radius: 4px;
-  border-end-end-radius: 4px;
+  inset-inline-start: calc((var(--ms-domain-tile) - var(--ms-rail-width)) / 2 - var(--w-space-1) / 2);
+  width: var(--w-space-1);
+  height: var(--w-space-6);
+  border-start-end-radius: var(--w-radius);
+  border-end-end-radius: var(--w-radius);
   background: var(--ms-on-rail);
 }
 
 .tile-icon {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: var(--ms-icon-md);
+  height: var(--ms-icon-md);
+  font-size: var(--ms-icon-md);
+}
+
+.rail-button .w-btn {
+  --w-icon-btn-icon: var(--ms-icon-md);
 }
 
 @media (prefers-reduced-motion: reduce) {

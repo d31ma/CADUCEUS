@@ -569,8 +569,13 @@ recent data, works offline, and syncs when it is back online.
   queued on the device, shown at once with "Waiting to send", and sent
   automatically when the device is online, in the order it was made for
   each conversation. Retrying never sends anything twice (AC-MS-8).
-  Creating, joining or leaving a channel, admin actions and settings need
-  the network.
+  Files can be attached offline too (up to the domain's limit per file):
+  the file is kept with the queued item, uploaded first when the device is
+  online, and a refused upload sends the item to "Needs your attention".
+  Queued files are never removed to save space; they count against the
+  budget, and at most 200 MiB of queued files are kept per device (more
+  says "Attach this when you are online"). Creating, joining or leaving a
+  channel, admin actions and settings need the network.
 - **AC-OF-5 Recipients offline.** The composer resolves names and
   addresses from the device copy of the domain's member and channel
   lists. Any other address shows the chip "Checked when online". When the
@@ -625,8 +630,12 @@ recent data, works offline, and syncs when it is back online.
   is full, Mesail removes, in this order: attachments and messages
   fetched on demand, attachments in the window (least recently opened
   first), messages older than the window. It never removes queued items
-  or drafts. Settings show the space used per domain and offer "Remove
-  the copy on this device". When the device refuses a write because its
+  or drafts. Settings show the space used per domain and the free space
+  the device reports, let the person choose the budget (300 MB, 1 GB, 2 GB
+  or 5 GB; never more than the device reports free), and offer "Remove the
+  copy on this device". Removing the copy also turns off "Keep me signed
+  in on this device": the session then lasts only until Mesail closes, and
+  no copy comes back until the person ticks the box at a later sign-in. When the device refuses a write because its
   storage is full, Mesail stops adding to the copy, keeps the queue and
   drafts, and says "This device is full" (ADR 0006 section 9).
 - **AC-OF-14 At rest.** The copy holds no password and no Keycloak token,
@@ -662,7 +671,18 @@ recent data, works offline, and syncs when it is back online.
 - **AC-OF-17 Email offline.** Email conversations follow the same rules.
   A queued email is checked on the device for what the device can check
   (a subject for a new email conversation, attachment sizes); a later
-  bounce is a delivery status (AC-DM-3), not a queue failure.
+  bounce is a delivery status (AC-DM-3), not a queue failure. A mention
+  of someone who cannot read the conversation (for example, they left the
+  channel) is not a refusal: the message is sent, the mention shows as
+  plain text, and that person gets no notification (AC-PN-2).
+- **AC-OF-19 A tab that is not kept.** When the network drops in a tab
+  without "Keep me signed in on this device", the tab keeps showing what
+  it already loaded and lets the person write. What they write waits in
+  the tab's memory only, shown as "Waiting to send. Closing this tab
+  loses it.", and is sent when the network is back while the tab is open.
+  Nothing is stored on the device (AC-OF-1). Search, files not yet loaded
+  and other conversations say "Needs the network on this browser"; files
+  cannot be attached offline in such a tab.
 
 ### Interface quality (AC-UI)
 - **AC-UI-1** Layout: a domain switcher at the top, a sidebar (channels,

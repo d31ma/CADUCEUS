@@ -2,6 +2,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -17,7 +18,7 @@ func (test *MemberServiceTest) TestRememberStoresTheMemberFromTheToken() {
 	service, storage, domain := test.world()
 	member, err := service.Remember(test.caller(domain, "Bo Member"))
 	stored, found, _ := storage.Find(domain, "bo-id")
-	Assert.IsTrue(err == nil, "remember failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.IsTrue(found, "member not stored")
 	Assert.Equals("Bo Member", stored.DisplayName)
 	Assert.Equals("bo@"+domain, member.PrimaryAddress)
@@ -38,7 +39,7 @@ func (test *MemberServiceTest) TestAnEmailOfAnotherDomainIsNotTheMembersAddress(
 	service, _, domain := test.world()
 	caller := oidc.Caller{DomainId: domain, MemberId: "bo-id", DisplayName: "", Email: "bo@elsewhere.test"}
 	member, err := service.Remember(caller)
-	Assert.IsTrue(err == nil, "remember failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("", member.PrimaryAddress)
 	Assert.Equals("bo@elsewhere.test", member.DisplayName)
 }
@@ -63,7 +64,7 @@ func (test *MemberServiceTest) TestSearchFindsMembersByName() {
 	service.Remember(test.caller(domain, "Bo Member"))
 	service.Remember(oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain})
 	page, err := service.Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Text: "ana"}, nil)
-	Assert.IsTrue(err == nil, "search failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(1, len(page.Items))
 	Assert.Equals("ana-id", page.Items[0].MemberId)
 	Assert.Equals("", page.NextCursor)
@@ -74,7 +75,7 @@ func (test *MemberServiceTest) TestSearchNeverReturnsAnotherDomain() {
 	otherDomain := test.hosted("member-other.test", "active")
 	service.Remember(oidc.Caller{DomainId: otherDomain, MemberId: "eve-id", DisplayName: "Eve", Email: "eve@" + otherDomain})
 	page, err := service.Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Text: "eve"}, nil)
-	Assert.IsTrue(err == nil, "search failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(0, len(page.Items))
 }
 
@@ -92,7 +93,7 @@ func (test *MemberServiceTest) TestSearchPagesWithACursor() {
 	service.Remember(oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain})
 	first, _ := service.Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Limit: 1}, nil)
 	second, err := service.Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Limit: 1, Cursor: first.NextCursor}, nil)
-	Assert.IsTrue(err == nil, "search failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("1", first.NextCursor)
 	Assert.Equals(1, len(second.Items))
 	Assert.Equals("", second.NextCursor)
@@ -110,7 +111,7 @@ func (test *MemberServiceTest) TestSummaryOfAMemberOfTheCallersDomain() {
 	service, _, domain := test.world()
 	service.Remember(oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain})
 	summary, err := service.Summary(Admission{Caller: test.caller(domain, "Bo")}, "ana-id")
-	Assert.IsTrue(err == nil, "summary failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("Ana Admin", summary.DisplayName)
 	Assert.Equals("ana@"+domain, summary.PrimaryAddress)
 }
@@ -148,8 +149,8 @@ func (test *MemberServiceTest) hosted(name string, state string) string {
 	domainId := test.reset(name)
 	documents := &DocumentsService{dataSource: DataSource{}}
 	collections := &TenantCollectionsService{documents: documents, names: &CollectionNamesService{}}
-	Assert.IsTrue(collections.Prepare(domainId) == nil, "prepare failed")
-	Assert.IsTrue((&DomainStorageService{documents: documents, names: &CollectionNamesService{}}).Insert(DomainDocument{DomainId: domainId, Name: domainId, State: state}) == nil, "insert failed")
+	Assert.Equals("<nil>", fmt.Sprint(collections.Prepare(domainId)))
+	Assert.Equals("<nil>", fmt.Sprint((&DomainStorageService{documents: documents, names: &CollectionNamesService{}}).Insert(DomainDocument{DomainId: domainId, Name: domainId, State: state})))
 	return domainId
 }
 

@@ -2,6 +2,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"os"
 	"slices"
 
@@ -19,7 +20,7 @@ func (test *OutboxTest) TestTheRelayRetriesAPendingMemberEventWhileServiceTokens
 	report, err := relay.RunOnce()
 	fields, loadErr := relay.store.Load(ref)
 	state, readErr := outbox.Codec{}.Read(fields)
-	Assert.IsTrue(err == nil, "relay failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.IsTrue(loadErr == nil && readErr == nil, "member document not readable")
 	Assert.Equals(1, state.Pending[0].Attempts)
 	Assert.Equals(0, report.Delivered)
@@ -29,14 +30,14 @@ func (test *OutboxTest) TestAnEventThatIsNotDueIsLeftForTheNextSweep() {
 	relay, _, _ := test.world()
 	relay.RunOnce()
 	due, err := relay.store.PendingIn("outbox-unit.test", 20)
-	Assert.IsTrue(err == nil, "pending failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(0, len(due))
 }
 
 func (test *OutboxTest) TestAFreshEventIsDue() {
 	relay, _, _ := test.world()
 	due, err := relay.store.PendingIn("outbox-unit.test", 20)
-	Assert.IsTrue(err == nil, "pending failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(1, len(due))
 }
 
@@ -51,7 +52,7 @@ func (test *OutboxTest) TestTheRelayNeedsOutboxSettings() {
 func (test *OutboxTest) TestADeadEventIsListed() {
 	relay, _, eventId := test.world()
 	dead, err := relay.DeadEvents()
-	Assert.IsTrue(err == nil, "listing failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.IsTrue(slices.ContainsFunc(dead, func(event DeadEvent) bool { return event.EventId == eventId }), "dead event not listed")
 }
 
@@ -59,8 +60,8 @@ func (test *OutboxTest) TestARetriedEventIsPendingAgain() {
 	relay, ref, eventId := test.world()
 	err := relay.Retry(RetryRequest{Collection: ref.Collection, DocumentId: ref.Id, EventId: eventId, Subscriber: "search"})
 	fields, loadErr := relay.store.Load(ref)
-	Assert.IsTrue(err == nil, "retry failed")
-	Assert.IsTrue(loadErr == nil, "load failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
+	Assert.Equals("<nil>", fmt.Sprint(loadErr))
 	Assert.Equals(0, fields.OutboxDead)
 	Assert.IsTrue(fields.OutboxPending >= 1, "event is not pending")
 }
@@ -98,14 +99,14 @@ func (test *OutboxTest) world() (*OutboxRelayService, outbox.Ref, string) {
 	documents := &DocumentsService{dataSource: DataSource{}}
 	names := &CollectionNamesService{}
 	members := &MemberStorageService{documents: documents, names: names}
-	Assert.IsTrue((&DomainStorageService{documents: documents, names: names}).Insert(DomainDocument{DomainId: domainId, Name: domainId, State: "active"}) == nil, "insert failed")
+	Assert.Equals("<nil>", fmt.Sprint((&DomainStorageService{documents: documents, names: names}).Insert(DomainDocument{DomainId: domainId, Name: domainId, State: "active"})))
 	staged, err := (&EventService{settings: &SettingsService{}}).StageMemberSaved(MemberDocument{MemberId: "bo-id", DomainId: domainId, DisplayName: "Bo", State: "active"})
-	Assert.IsTrue(err == nil, "stage failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	eventId := test.unique()
 	dead, _ := outbox.Codec{}.EncodeDead([]outbox.DeadLetter{{Envelope: events.Envelope{EventID: eventId, Type: events.Types{}.MemberUpserted(), DomainId: domainId, Producer: "directory"}, Subscriber: "search", Attempts: 12, LastError: "gone", DeadAt: "2026-11-10T00:00:00Z"}})
 	staged.DeadEvents, staged.OutboxDead, staged.OutboxHasDead = dead, 1, true
 	ref, insertErr := members.Insert(staged)
-	Assert.IsTrue(insertErr == nil, "member insert failed")
+	Assert.Equals("<nil>", fmt.Sprint(insertErr))
 	store := &OutboxStoreService{domains: &DomainStorageService{documents: documents, names: names}, members: members, names: names}
 	return &OutboxRelayService{store: store, settings: &SettingsService{}, domains: &DomainStorageService{documents: documents, names: names}}, ref, eventId
 }

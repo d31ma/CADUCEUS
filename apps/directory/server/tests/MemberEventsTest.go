@@ -1,6 +1,7 @@
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"strings"
 
@@ -55,8 +56,8 @@ func (test *MemberEventsTest) hosted(name string, state string) string {
 	domainId := test.reset(name)
 	documents := &DocumentsService{dataSource: DataSource{}}
 	collections := &TenantCollectionsService{documents: documents, names: &CollectionNamesService{}}
-	Assert.IsTrue(collections.Prepare(domainId) == nil, "prepare failed")
-	Assert.IsTrue((&DomainStorageService{documents: documents, names: &CollectionNamesService{}}).Insert(DomainDocument{DomainId: domainId, Name: domainId, State: state}) == nil, "insert failed")
+	Assert.Equals("<nil>", fmt.Sprint(collections.Prepare(domainId)))
+	Assert.Equals("<nil>", fmt.Sprint((&DomainStorageService{documents: documents, names: &CollectionNamesService{}}).Insert(DomainDocument{DomainId: domainId, Name: domainId, State: state})))
 	return domainId
 }
 

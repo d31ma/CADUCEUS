@@ -2,6 +2,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -38,7 +39,7 @@ func (test *RecipientInputTest) TestChannelAddressResolvesToChatOnly() {
 func (test *RecipientInputTest) TestRepeatedAddressesAreResolvedOnce() {
 	service, caller, world := test.world()
 	response, err := service.Resolve(Admission{Caller: caller}, ResolveRequest{Addresses: []string{world["bo"], strings.ToUpper(world["bo"])}})
-	Assert.IsTrue(err == nil, "resolve failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(1, len(response.Recipients))
 }
 
@@ -60,7 +61,7 @@ func (test *RecipientInputTest) TestMoreThanOneHundredAddressesAreRefused() {
 
 func (test *RecipientInputTest) resolve(service *RecipientService, caller oidc.Caller, address string) ResolvedRecipient {
 	response, err := service.Resolve(Admission{Caller: caller}, ResolveRequest{Addresses: []string{address}})
-	Assert.IsTrue(err == nil, "resolve failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(1, len(response.Recipients))
 	return response.Recipients[0]
 }
@@ -89,13 +90,13 @@ func (test *RecipientInputTest) world() (*RecipientService, oidc.Caller, map[str
 }
 
 func (test *RecipientInputTest) host(domains *DomainStorageService, collections *TenantCollectionsService, domainId string) {
-	Assert.IsTrue(collections.Prepare(domainId) == nil, "prepare failed")
-	Assert.IsTrue(domains.Insert(DomainDocument{DomainId: domainId, Name: domainId, State: "active"}) == nil, "insert failed")
+	Assert.Equals("<nil>", fmt.Sprint(collections.Prepare(domainId)))
+	Assert.Equals("<nil>", fmt.Sprint(domains.Insert(DomainDocument{DomainId: domainId, Name: domainId, State: "active"})))
 }
 
 func (test *RecipientInputTest) remember(service *MemberService, caller oidc.Caller) {
 	_, err := service.Remember(caller)
-	Assert.IsTrue(err == nil, "remember failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 }
 
 func (test *RecipientInputTest) unique() string {

@@ -2,6 +2,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 
 	"mesail.dev/packages/oidc"
 )
@@ -15,7 +16,7 @@ func (test *ChannelAddressServiceTest) TestAChannelAddressIsStored() {
 	service, admission, domain := test.world()
 	address, err := service.Add(admission, ChannelAddressRequest{Address: "Team@" + domain, ChannelId: "ch_team"})
 	route, found, _ := service.addresses.Find("team@" + domain)
-	Assert.IsTrue(err == nil, "add failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("channel", address.Kind)
 	Assert.Equals("ch_team", address.TargetId)
 	Assert.IsTrue(found, "address not stored")
@@ -26,7 +27,7 @@ func (test *ChannelAddressServiceTest) TestRepeatingTheSameChannelAddressIsIdemp
 	service, admission, domain := test.world()
 	service.Add(admission, ChannelAddressRequest{Address: "team@" + domain, ChannelId: "ch_team"})
 	_, err := service.Add(admission, ChannelAddressRequest{Address: "team@" + domain, ChannelId: "ch_team"})
-	Assert.IsTrue(err == nil, "repeat refused")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 }
 
 func (test *ChannelAddressServiceTest) TestAnAddressOfAnotherChannelIsADuplicate() {
@@ -65,7 +66,7 @@ func (test *ChannelAddressServiceTest) TestARemovedChannelAddressIsGone() {
 	service.Add(admission, ChannelAddressRequest{Address: "team@" + domain, ChannelId: "ch_team"})
 	err := service.Remove(admission, "team@"+domain)
 	_, found, _ := service.addresses.Find("team@" + domain)
-	Assert.IsTrue(err == nil, "remove failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.IsTrue(!found, "address still stored")
 }
 
@@ -95,8 +96,8 @@ func (test *ChannelAddressServiceTest) world() (*ChannelAddressService, Admissio
 	documents := &DocumentsService{dataSource: DataSource{}}
 	names := &CollectionNamesService{}
 	addresses := &AddressStorageService{documents: documents, names: names}
-	Assert.IsTrue((&TenantCollectionsService{documents: documents, names: names}).Prepare(domainId) == nil, "prepare failed")
-	Assert.IsTrue(addresses.Insert(AddressDocument{Address: "ana@" + domainId, DomainId: domainId, Kind: "member", TargetId: "ana-id"}) == nil, "insert failed")
+	Assert.Equals("<nil>", fmt.Sprint((&TenantCollectionsService{documents: documents, names: names}).Prepare(domainId)))
+	Assert.Equals("<nil>", fmt.Sprint(addresses.Insert(AddressDocument{Address: "ana@" + domainId, DomainId: domainId, Kind: "member", TargetId: "ana-id"})))
 	admission := Admission{Caller: oidc.Caller{DomainId: domainId, MemberId: "ana-id", Roles: []string{"DomainAdmin"}}}
 	return &ChannelAddressService{addresses: addresses, rules: &AddressRulesService{}}, admission, domainId
 }

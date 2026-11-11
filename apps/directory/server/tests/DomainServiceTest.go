@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,7 +23,7 @@ func (test *DomainServiceTest) TestAddingADomainCreatesItsRealmAndStoresItPendin
 	defer closeAll()
 	name := "Add-" + test.reset("add-unit.test")[4:]
 	domain, err := service.Add(CreateDomainRequest{Name: name})
-	Assert.IsTrue(err == nil, "add failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(strings.ToLower(name), domain.DomainId)
 	Assert.Equals("pending", domain.State)
 	Assert.Equals("mesail", domain.DkimSelector)
@@ -44,7 +45,7 @@ func (test *DomainServiceTest) TestARealmThatAlreadyExistsIsAdopted() {
 	service, _, closeAll := test.world(http.StatusConflict)
 	defer closeAll()
 	_, err := service.Add(CreateDomainRequest{Name: test.reset("adopt-unit.test")})
-	Assert.IsTrue(err == nil, "add failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 }
 
 func (test *DomainServiceTest) TestARealmThatKeycloakWillNotCreateButThatExistsIsAdopted() {
@@ -52,7 +53,7 @@ func (test *DomainServiceTest) TestARealmThatKeycloakWillNotCreateButThatExistsI
 	defer closeAll()
 	name := test.reset("seeded-unit.test")
 	domain, err := service.Add(CreateDomainRequest{Name: name})
-	Assert.IsTrue(err == nil, "add failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(name, domain.DomainId)
 	Assert.IsTrue(strings.Contains(calls(), "GET /idp/realms/"+name+"/.well-known/openid-configuration"), calls())
 }
@@ -96,7 +97,7 @@ func (test *DomainServiceTest) TestVerifyWithEveryRecordRightMakesTheDomainActiv
 	added, _ := service.Add(CreateDomainRequest{Name: test.reset("good-unit.test")})
 	domain, err := service.Verify(added.DomainId)
 	stored, _ := service.Get(added.DomainId)
-	Assert.IsTrue(err == nil, "verify failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("active", domain.State)
 	Assert.Equals("ok", domain.Dns.Dkim)
 	Assert.Equals("active", stored.State)
@@ -107,7 +108,7 @@ func (test *DomainServiceTest) TestVerifyWithAMissingRecordKeepsTheDomainPending
 	defer closeAll()
 	added, _ := service.Add(CreateDomainRequest{Name: test.reset("partial-unit.test")})
 	domain, err := service.Verify(added.DomainId)
-	Assert.IsTrue(err == nil, "verify failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("pending", domain.State)
 	Assert.Equals("missing", domain.Dns.Dmarc)
 	Assert.Equals("ok", domain.Dns.Mx)
@@ -127,7 +128,7 @@ func (test *DomainServiceTest) TestListShowsAnAddedDomain() {
 	added, _ := service.Add(CreateDomainRequest{Name: test.reset("list-unit.test")})
 	domains, err := service.List()
 	encoded, _ := json.Marshal(domains)
-	Assert.IsTrue(err == nil, "list failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.IsTrue(strings.Contains(string(encoded), `"domainId":"`+added.DomainId+`"`), "domain not listed")
 }
 
@@ -138,7 +139,7 @@ func (test *DomainServiceTest) TestRemovingADomainDeletesItsRealmAndRecord() {
 	err := service.Remove(added.DomainId)
 	_, getErr := service.Get(added.DomainId)
 	var missing *NotFound
-	Assert.IsTrue(err == nil, "remove failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.IsTrue(errors.As(getErr, &missing), "want NotFound")
 	Assert.IsTrue(strings.Contains(calls(), "DELETE /idp/admin/realms/"+added.DomainId), calls())
 }
@@ -152,7 +153,7 @@ func (test *DomainServiceTest) TestRemovingADomainWhoseRealmKeycloakWillNotDelet
 	var notManaged *RealmNotManaged
 	Assert.IsTrue(errors.As(err, &notManaged), "want RealmNotManaged")
 	Assert.IsTrue(strings.Contains(err.Error(), added.DomainId), err.Error())
-	Assert.IsTrue(getErr == nil, "the domain record is gone")
+	Assert.Equals("<nil>", fmt.Sprint(getErr))
 	Assert.Equals(added.DomainId, stored.DomainId)
 }
 

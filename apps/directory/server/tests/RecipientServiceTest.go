@@ -1,6 +1,7 @@
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"strings"
 
@@ -59,7 +60,7 @@ func (test *RecipientServiceTest) TestUnknownAddressOfTheCallersDomainIsExternal
 
 func (test *RecipientServiceTest) resolve(service *RecipientService, caller oidc.Caller, address string) ResolvedRecipient {
 	response, err := service.Resolve(Admission{Caller: caller}, ResolveRequest{Addresses: []string{address}})
-	Assert.IsTrue(err == nil, "resolve failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(1, len(response.Recipients))
 	return response.Recipients[0]
 }
@@ -88,13 +89,13 @@ func (test *RecipientServiceTest) world() (*RecipientService, oidc.Caller, map[s
 }
 
 func (test *RecipientServiceTest) host(domains *DomainStorageService, collections *TenantCollectionsService, domainId string) {
-	Assert.IsTrue(collections.Prepare(domainId) == nil, "prepare failed")
-	Assert.IsTrue(domains.Insert(DomainDocument{DomainId: domainId, Name: domainId, State: "active"}) == nil, "insert failed")
+	Assert.Equals("<nil>", fmt.Sprint(collections.Prepare(domainId)))
+	Assert.Equals("<nil>", fmt.Sprint(domains.Insert(DomainDocument{DomainId: domainId, Name: domainId, State: "active"})))
 }
 
 func (test *RecipientServiceTest) remember(service *MemberService, caller oidc.Caller) {
 	_, err := service.Remember(caller)
-	Assert.IsTrue(err == nil, "remember failed")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 }
 
 func (test *RecipientServiceTest) unique() string {

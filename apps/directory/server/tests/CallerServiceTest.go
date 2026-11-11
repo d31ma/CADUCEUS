@@ -1,5 +1,6 @@
 import (
 	"errors"
+	"fmt"
 
 	"mesail.dev/packages/oidc"
 )
@@ -17,7 +18,7 @@ func (test *CallerServiceTest) TestATokenThatCannotBeVerifiedIsRefused() {
 
 func (test *CallerServiceTest) TestAnOperatorFromTheOperatorRealmIsAccepted() {
 	err := (&CallerService{}).Operator(oidc.Caller{DomainId: "mesail-operators", Roles: []string{"Operator"}})
-	Assert.IsTrue(err == nil, "operator refused")
+	Assert.Equals("<nil>", fmt.Sprint(err))
 }
 
 func (test *CallerServiceTest) TestAnOperatorRoleInsideAMailDomainIsRefused() {
@@ -27,11 +28,11 @@ func (test *CallerServiceTest) TestAnOperatorRoleInsideAMailDomainIsRefused() {
 }
 
 func (test *CallerServiceTest) TestAServiceOfTheTargetDomainIsAllowed() {
-	Assert.IsTrue((&CallerService{}).ServiceFor(oidc.Caller{DomainId: "example.com"}, "Example.COM") == nil, "service refused")
+	Assert.Equals("<nil>", fmt.Sprint((&CallerService{}).ServiceFor(oidc.Caller{DomainId: "example.com"}, "Example.COM")))
 }
 
 func (test *CallerServiceTest) TestAServiceOfTheOperatorRealmIsAllowedEverywhere() {
-	Assert.IsTrue((&CallerService{}).ServiceFor(oidc.Caller{DomainId: "mesail-operators"}, "example.com") == nil, "service refused")
+	Assert.Equals("<nil>", fmt.Sprint((&CallerService{}).ServiceFor(oidc.Caller{DomainId: "mesail-operators"}, "example.com")))
 }
 
 func (test *CallerServiceTest) TestAServiceOfAnotherDomainGetsNotFound() {

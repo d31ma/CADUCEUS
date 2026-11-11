@@ -2,5 +2,14 @@
   "server": {
     "host": "127.0.0.1",
     "port": 8110
+  },
+  "names": {
+    "words": [
+      "dkim",
+      "dmarc",
+      "helo",
+      "mx",
+      "spf"
+    ]
   }
 }

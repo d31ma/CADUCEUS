@@ -91,7 +91,7 @@ is enough.
 - **Depends on:** nothing. Coordinates the realm template with
   `mesail-keycloak` (which owns `deploy/keycloak/**`).
 - **Blackbox:** `Identity_test.go`.
-- **Done when:** every app's `OidcIdentityProvider` accepts a valid
+- **Done when:** every app's `TokenIdentityProvider` accepts a valid
   Keycloak token and refuses forged, expired and other-audience tokens.
 
 ### I2. Events and outbox

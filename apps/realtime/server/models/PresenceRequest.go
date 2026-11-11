@@ -1,4 +1,4 @@
 type PresenceRequest struct {
-	State    string `json:"state"`
-	DndUntil string `json:"dndUntil,omitempty"`
+	State             string `json:"state"`
+	DoNotDisturbUntil string `json:"doNotDisturbUntil,omitempty"`
 }

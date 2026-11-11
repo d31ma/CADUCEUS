@@ -242,7 +242,7 @@ two hosted domains gives one `InboundRaw` per domain, each with only that
 domain's recipients and its own raw copy under `<domainId>/`.
 
 ### Presence (`realtime/presence`)
-`{domainId, memberId, state: active|idle|dnd|offline, dndUntil?, lastSeenAt}`.
+`{domainId, memberId, state: active|idle|dnd|offline, doNotDisturbUntil?, lastSeenAt}`.
 Presence is shown only to members of the same domain.
 
 ### Notification (`notify/notifications`)

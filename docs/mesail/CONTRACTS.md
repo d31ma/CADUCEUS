@@ -27,7 +27,7 @@ field may be empty or left out.
   request. Chat data never crosses a domain; email does.
 - Every non-public route takes `Authorization: Bearer <access token>` from
   Keycloak. The token is checked by the service's `IdentityProvider`
-  (`apps/<service>/server/controllers/OidcIdentityProvider.go`), which uses
+  (`apps/<service>/server/controllers/TokenIdentityProvider.go`), which uses
   the shared verifier package `kit/oidc`. Roles (empty structs in
   `apps/<service>/server/roles/`) come from the token's `realm_access.roles`
   claim (`kit/oidc` `RoleMap`):
@@ -184,8 +184,8 @@ An attachment in another domain answers `404`.
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
 | `GET /api/v1/realtime/socket` (socket route) | SignedIn | - | server-to-client `RealtimeEvent` |
-| `PUT /api/v1/realtime/presence` | SignedIn | `PresenceRequest{state: active|idle|dnd, dndUntil?}` | `204` |
-| `GET /api/v1/realtime/presence?memberIds=` | SignedIn | - | `[]Presence{memberId, state, dndUntil?, lastSeenAt}` |
+| `PUT /api/v1/realtime/presence` | SignedIn | `PresenceRequest{state: active|idle|dnd, doNotDisturbUntil?}` | `204` |
+| `GET /api/v1/realtime/presence?memberIds=` | SignedIn | - | `[]Presence{memberId, state, doNotDisturbUntil?, lastSeenAt}` |
 
 Presence is per domain: a caller sees presence only of members in its own
 domain, and member ids from another domain are left out of the answer. The

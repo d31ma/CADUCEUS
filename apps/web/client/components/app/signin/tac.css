@@ -167,9 +167,6 @@
 /* @tachyon-generated-tailwind:start */
 /*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
 @layer utilities {
-  .block {
-    display: block;
-  }
   .flex {
     display: flex;
   }

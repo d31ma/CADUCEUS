@@ -423,7 +423,7 @@ code.mono {
       grid-template-columns: 1fr auto auto;
     }
   }
-  @container page (width >= 36rem) {
+  @container page (width >= 40rem) {
     .\@xl\/page\:px-5 {
       padding-inline: calc(var(--spacing, 0.25rem) * 5);
     }

@@ -496,7 +496,7 @@ ul {
       grid-template-columns: 8rem minmax(0,1fr);
     }
   }
-  @container page (width >= 36rem) {
+  @container page (width >= 40rem) {
     .\@xl\/page\:px-5 {
       padding-inline: calc(var(--spacing, 0.25rem) * 5);
     }

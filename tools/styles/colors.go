@@ -11,8 +11,21 @@ func colorValuePattern() *regexp.Regexp {
 	return regexp.MustCompile(`(?i)#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\(`)
 }
 
+func tokenMixPattern() *regexp.Regexp {
+	part := `(?:var\(--[\w-]+\)|transparent|currentcolor)(?:\s+\d+(?:\.\d+)?%)?`
+	return regexp.MustCompile(`(?i)^color-mix\(in [a-z-]+,\s*` + part + `,\s*` + part + `\)$`)
+}
+
+func systemColors() []string {
+	return []string{
+		"accentcolor", "accentcolortext", "activetext", "buttonborder", "buttonface", "buttontext",
+		"canvas", "canvastext", "field", "fieldtext", "graytext", "highlight", "highlighttext",
+		"linktext", "mark", "marktext", "selecteditem", "selecteditemtext", "visitedtext",
+	}
+}
+
 func colorKeywords() map[string]bool {
-	return map[string]bool{
+	keywords := map[string]bool{
 		"inherit":      true,
 		"initial":      true,
 		"unset":        true,
@@ -22,30 +35,39 @@ func colorKeywords() map[string]bool {
 		"transparent":  true,
 		"none":         true,
 	}
+	for _, name := range systemColors() {
+		keywords[name] = true
+	}
+	return keywords
 }
 
 func hardCodedColors(rules string) []string {
 	utilities, _, _ := strings.Cut(rules, propertiesLayer)
-	pattern := colorValuePattern()
-	keywords := colorKeywords()
+	guard := colorGuard{values: colorValuePattern(), tokenMix: tokenMixPattern(), keywords: colorKeywords()}
 	found := []string{}
 	for _, line := range strings.Split(utilities, "\n") {
-		if declaresColor(strings.TrimSpace(line), pattern, keywords) {
+		if guard.declaresColor(strings.TrimSpace(line)) {
 			found = append(found, strings.TrimSpace(line))
 		}
 	}
 	return found
 }
 
-func declaresColor(line string, pattern *regexp.Regexp, keywords map[string]bool) bool {
+type colorGuard struct {
+	values   *regexp.Regexp
+	tokenMix *regexp.Regexp
+	keywords map[string]bool
+}
+
+func (guard colorGuard) declaresColor(line string) bool {
 	property, value, isDeclaration := declaration(line)
-	if !isDeclaration {
+	if !isDeclaration || guard.tokenMix.MatchString(value) {
 		return false
 	}
-	if pattern.MatchString(value) {
+	if guard.values.MatchString(value) {
 		return true
 	}
-	return colorProperty(property) && !allowedColorValue(value, keywords)
+	return colorProperty(property) && !allowedColorValue(value, guard.keywords)
 }
 
 func declaration(line string) (string, string, bool) {

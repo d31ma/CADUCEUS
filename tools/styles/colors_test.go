@@ -55,3 +55,27 @@ func TestHardCodedColorsIgnoresPropertiesFallbackLayer(t *testing.T) {
 		t.Fatalf("got %v", found)
 	}
 }
+
+func TestHardCodedColorsAcceptsOpacityMixOfDuVayToken(t *testing.T) {
+	if found := colorsIn("background-color: color-mix(in oklab, var(--ms-on-rail) 20%, transparent);"); len(found) != 0 {
+		t.Fatalf("got %v", found)
+	}
+}
+
+func TestHardCodedColorsRejectsOpacityMixOfHex(t *testing.T) {
+	if found := colorsIn("background-color: color-mix(in oklab, #ff0000 20%, transparent);"); len(found) != 1 {
+		t.Fatalf("got %v", found)
+	}
+}
+
+func TestHardCodedColorsRejectsMixOfNamedColor(t *testing.T) {
+	if found := colorsIn("color: color-mix(in srgb, red 50%, var(--w-text));"); len(found) != 1 {
+		t.Fatalf("got %v", found)
+	}
+}
+
+func TestHardCodedColorsAcceptsSystemColor(t *testing.T) {
+	if found := colorsIn("outline-color: Highlight;"); len(found) != 0 {
+		t.Fatalf("got %v", found)
+	}
+}

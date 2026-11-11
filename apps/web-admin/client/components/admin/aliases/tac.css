@@ -228,7 +228,7 @@
       padding-block: calc(var(--spacing, 0.25rem) * 3);
     }
   }
-  @container aliases (width >= 36rem) {
+  @container aliases (width >= 40rem) {
     .\@xl\/aliases\:px-5 {
       padding-inline: calc(var(--spacing, 0.25rem) * 5);
     }

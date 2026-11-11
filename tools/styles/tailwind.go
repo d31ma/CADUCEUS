@@ -16,6 +16,7 @@ import (
 const (
 	tailwindVersion = "4.3.5"
 	releaseURL      = "https://github.com/tailwindlabs/tailwindcss/releases/download/v" + tailwindVersion + "/"
+	sourceName      = "classes.txt"
 	inputCSS        = `@import "tailwindcss/theme.css" reference;
 @import "tailwindcss/utilities.css" layer(utilities) source(none);
 
@@ -26,20 +27,126 @@ const (
   --text-*: initial;
   --leading-*: initial;
   --tracking-*: initial;
-  --radius-*: initial;
   --shadow-*: initial;
   --inset-shadow-*: initial;
   --drop-shadow-*: initial;
   --text-shadow-*: initial;
+
   --breakpoint-*: initial;
   --breakpoint-sm: 600px;
   --breakpoint-md: 960px;
   --breakpoint-lg: 1280px;
   --breakpoint-xl: 1920px;
   --breakpoint-2xl: 2560px;
+
+  --container-*: initial;
+  --container-xs: 20rem;
+  --container-sm: 24rem;
+  --container-md: 28rem;
+  --container-lg: 32rem;
+  --container-xl: 40rem;
+  --container-2xl: 42rem;
+  --container-3xl: 48rem;
+  --container-4xl: 56rem;
+  --container-5xl: 64rem;
+  --container-6xl: 72rem;
+  --container-7xl: 80rem;
 }
 
-@source "./tac.html";
+@theme inline reference {
+  --font-sans: var(--w-font-family);
+  --font-mono: var(--w-font-family-mono);
+  --color-surface: var(--w-surface);
+  --color-surface-low: var(--w-surface-container-low);
+  --color-surface-mid: var(--w-surface-container);
+  --color-surface-high: var(--w-surface-container-high);
+  --color-sidebar: var(--w-sidebar);
+  --color-text: var(--w-text);
+  --color-subtle: var(--w-text-subtle);
+  --color-very-subtle: var(--w-text-very-subtle);
+  --color-divider: var(--w-divider);
+  --color-border: var(--w-border);
+  --color-outline: var(--w-outline);
+  --color-hover: var(--w-hover);
+  --color-selected: var(--w-selected);
+  --color-on-selected: var(--w-selected-text);
+  --color-accent: var(--w-accent);
+  --color-accent-bg: var(--w-accent-bg);
+  --color-on-accent: var(--w-on-accent);
+  --color-primary-container: var(--w-primary-container);
+  --color-on-primary-container: var(--w-on-primary-container);
+  --color-error: var(--w-error);
+  --color-error-container: var(--w-error-container);
+  --color-on-error-container: var(--w-on-error-container);
+  --color-warning: var(--w-warning);
+  --color-success: var(--w-success);
+  --color-warning-container: var(--w-warning-container);
+  --color-on-warning-container: var(--w-on-warning-container);
+  --color-success-container: var(--w-success-container);
+  --color-on-success-container: var(--w-on-success-container);
+  --color-scrim: var(--w-scrim);
+  --color-inverse: var(--w-inverse-surface);
+  --color-on-inverse: var(--w-inverse-on-surface);
+  --color-chat: var(--ms-chat);
+  --color-chat-bg: var(--ms-chat-bg);
+  --color-on-chat-bg: var(--ms-on-chat-bg);
+  --color-email: var(--ms-email);
+  --color-email-bg: var(--ms-email-bg);
+  --color-on-email-bg: var(--ms-on-email-bg);
+  --color-email-rule: var(--ms-email-rule);
+  --color-presence-active: var(--ms-presence-active);
+  --color-presence-idle: var(--ms-presence-idle);
+  --color-presence-dnd: var(--ms-presence-dnd);
+  --color-presence-offline: var(--ms-presence-offline);
+  --color-rail: var(--ms-rail-bg);
+  --color-on-rail: var(--ms-on-rail);
+  --color-msg-hover: var(--ms-msg-hover);
+  --color-msg-highlight: var(--ms-msg-highlight);
+  --radius-sm: var(--w-radius);
+  --radius-md: var(--w-radius-md);
+  --radius-lg: var(--w-radius-lg);
+  --radius-xl: var(--w-radius-xl);
+  --text-xs: var(--w-font-xs);
+  --text-xs--line-height: calc(1 / 0.75);
+  --text-sm: var(--w-font-base);
+  --text-sm--line-height: calc(1.25 / 0.875);
+  --text-base: var(--w-font-md);
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: var(--w-font-lg);
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: var(--w-font-xl);
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: var(--w-font-2xl);
+  --text-2xl--line-height: calc(2 / 1.5);
+  --font-weight-thin: var(--w-font-weight-thin);
+  --font-weight-light: var(--w-font-weight-light);
+  --font-weight-normal: var(--w-font-weight-normal);
+  --font-weight-medium: var(--w-font-weight-medium);
+  --font-weight-semibold: var(--w-font-weight-semibold);
+  --font-weight-bold: var(--w-font-weight-bold);
+  --font-weight-black: var(--w-font-weight-black);
+  --tracking-tight: var(--w-letter-spacing-tight);
+  --tracking-normal: var(--w-letter-spacing-normal);
+  --tracking-wide: var(--w-letter-spacing-wide);
+  --leading-snug: var(--w-line-height-snug);
+  --leading-normal: var(--w-line-height-normal);
+  --leading-relaxed: var(--w-line-height-relaxed);
+  --shadow-sm: var(--w-shadow-sm);
+  --shadow-md: var(--w-shadow-md);
+  --shadow-lg: var(--w-shadow-lg);
+}
+
+@utility safe-t { padding-top: max(env(safe-area-inset-top, 0px), var(--tac-titlebar-height, 0px)); }
+@utility safe-b { padding-bottom: env(safe-area-inset-bottom, 0px); }
+@utility safe-l { padding-left: max(var(--ms-edge, 0px), env(safe-area-inset-left, 0px), var(--tac-titlebar-leading-inset, 0px)); }
+@utility safe-r { padding-right: max(var(--ms-edge, 0px), env(safe-area-inset-right, 0px), var(--tac-titlebar-trailing-inset, 0px)); }
+@utility touch-target { min-width: var(--w-touch-min, 2.75rem); min-height: var(--w-touch-min, 2.75rem); }
+@utility drag-region { -webkit-app-region: drag; app-region: drag; }
+@utility no-drag { -webkit-app-region: no-drag; app-region: no-drag; }
+
+@custom-variant short (@media (max-height: 520px));
+
+@source "./` + sourceName + `";
 `
 )
 
@@ -167,7 +274,7 @@ func (binary tailwind) compile(template []byte) (string, error) {
 		return "", err
 	}
 	defer os.RemoveAll(folder)
-	if err := os.WriteFile(filepath.Join(folder, "tac.html"), template, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(folder, sourceName), []byte(classSource(template)), 0o644); err != nil {
 		return "", err
 	}
 	if err := os.WriteFile(filepath.Join(folder, "input.css"), []byte(inputCSS), 0o644); err != nil {

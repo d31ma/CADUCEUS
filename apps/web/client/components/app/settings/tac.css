@@ -81,9 +81,6 @@
   .grid {
     display: grid;
   }
-  .hidden {
-    display: none;
-  }
   .h-48 {
     height: calc(var(--spacing, 0.25rem) * 48);
   }

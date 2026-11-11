@@ -484,7 +484,7 @@ w-chip w-icon {
       text-align: left;
     }
   }
-  @container page (width >= 36rem) {
+  @container page (width >= 40rem) {
     .\@xl\/page\:grid-cols-\[minmax\(0\,1fr\)_13rem\] {
       grid-template-columns: minmax(0,1fr) 13rem;
     }

@@ -763,6 +763,7 @@ an earlier slice text in this file says "realm of the domain",
    **K5**.
 12. After K3: **K6** (with OP2 if OP2 is changing `deploy/lambda`).
 13. After K4: **K7**.
+14. Any time: **K8**.
 
 ### K5. Channel events without reader lists (messaging's, realtime's and notify's owners, one session)
 Found by K1 (2026-11-12): `memberIds` in a channel message's events lists
@@ -860,6 +861,50 @@ longer than SPEC AC-ID-4's 60 seconds.
      /channels` is K7, removal throughput is K6, a cold start is OP2.
   4. A failure that K3's own changes can cause (the router queue order,
      `directory`'s job budgets, `identity`'s retry) always blocks.
+  5. A directory store outage (decided 2026-11-12, after run 2 had 11
+     `identity` `503`s at 07:29:39-43 UTC): a run is set aside, neither a
+     pass nor a failure, when `directory` itself answered `503` "the
+     directory store is not available" for the whole window of the
+     `503`s, and K3's parts worked as designed (no queue wait, one retry).
+     The count is not restarted: K3 needs 10 passing runs, and set-aside
+     runs do not break the chain. Each one is written in the findings
+     note under K8. If 2 or more further runs of the series are set aside,
+     the series stops and the coordinator reports to the owner.
+
+### K8. Directory store outage on Floci (directory's owner, with TACHYON)
+Found by K3 (2026-11-12, run 2): from 07:29:31 to 07:29:43 UTC every
+`directory` call answered `503` "the directory store is not available"
+(`DirectoryErrorHandler.Store`, a `YonResourceError` from TACHYON's FYLO
+datasource). A `POST /members` hung 8.5 seconds first, then every call
+failed in about 7 ms, and `directory` recovered at 07:29:44. The load was
+15, and the dev host supervisor logged nothing. The same message was seen
+before K3, in slice P1's Floci runs. Sign-in depends on `directory`, so
+12 seconds of outage meant 12 seconds of failed sign-ins.
+- **Owns:** `apps/directory` store wiring and error handling (with the
+  directory owner); the TACHYON request below goes through the
+  coordinator.
+- **Builds:**
+  - make the cause visible first: `directory` (like `channels`, K7)
+    cannot write the FYLO error to its Floci function log (the TACHYON
+    handler-log gap). Ask TACHYON, through the coordinator, for a
+    handler's errors and the datasource's own error to reach the function
+    log; until then, use what the router, Floci and the dev host logs
+    show;
+  - find the cause and write it down with logs: an ATLAS write stall (ADR
+    0004 section 4: stalls up to 11 seconds), the FYLO process restarting,
+    or the datasource marking the store down for a fixed time after one
+    slow call;
+  - fix it in Mesail if the cause is Mesail's; otherwise write the
+    request to TACHYON or FYLO, with the logs.
+- **Not now:** a longer `identity` retry (it would hold sign-in past the
+  client's 10 second timeout). A later option, only if outages remain
+  after this slice: `identity` keeps each person record for at most 60
+  seconds and uses it only when `directory` answers `503`; that keeps SPEC
+  AC-ID-4's 60 second limit. It needs an architecture decision first.
+- **Depends on:** nothing; any time.
+- **Done when:** the cause is written in the hand-over with logs, and a
+  1-hour Floci run under K3's sign-in load shows no "store is not
+  available" answer, or the owner accepts a written limit.
 
 ### K6. Schedulers call again while `more: true` (a small session, after K3)
 Found by K3 (2026-11-12): at 10 writes per call (rule 9, sign-in path) and

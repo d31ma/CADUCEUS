@@ -85,7 +85,12 @@ notes):
   record stores the blocks escaped and the staged event escapes them
   again); a message 384 KiB for body, `blocksJson` and the body in its
   staged event (`messaging` `MessageBudget`); a search document 480 KiB
-  (`kit/search` `DocumentBudget`). A document's waiting events are bounded
+  (`kit/search` `DocumentBudget`); a notify summary at most 20 items with
+  names cut to 200 characters and no summary for an address over 318
+  bytes (`notify` `SummaryEmailService`), and a spilled fan-out record
+  without the message body. Open: the `memberIds` list of
+  `message.created` (and notify's spilled fan-out) has no cap, so a channel
+  of several thousand members can pass 512 KiB. A document's waiting events are bounded
   too: a newer event about the same subject replaces a waiting one
   (EVENTS.md section 2.2).
 - **One collection per write.** FYLO has no transaction across collections.

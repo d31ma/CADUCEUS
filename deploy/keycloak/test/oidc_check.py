@@ -48,9 +48,8 @@ class MesailRealmCheck:
     LOGIN_FORM = 'id="kc-form-login"'
     SHOWN_CLAIMS = ["iss", "sub", "aud", "azp", "typ", "realm_access", "preferred_username", "exp", "iat"]
 
-    def __init__(self, base_url: str, identity_secret: str, account_secret: str, directory_secret: str, legacy_realms: bool) -> None:
+    def __init__(self, base_url: str, identity_secret: str, account_secret: str, directory_secret: str) -> None:
         self.base_url = base_url.rstrip("/")
-        self.legacy_realms = legacy_realms
         self.identity_secret = identity_secret
         self.account_secret = account_secret
         self.directory_secret = directory_secret
@@ -74,9 +73,6 @@ class MesailRealmCheck:
     def check_discovery(self) -> None:
         discovery = self.http.send(self.urls.discovery).json()
         self.expect("discovery issuer", discovery.get("issuer"), self.urls.issuer)
-        if self.legacy_realms:
-            self.expect("old realm mesail-operators still answers (transition, until L5)", self.discovery_status("mesail-operators"), 200)
-            return
         self.expect("no other realm: mesail-operators answers 404", self.discovery_status("mesail-operators"), 404)
 
     def check_people(self) -> None:
@@ -413,5 +409,4 @@ if __name__ == "__main__":
     sys.exit(MesailRealmCheck(
         os.environ["MESAIL_KEYCLOAK_URL"], os.environ["MESAIL_IDENTITY_CLIENT_SECRET"],
         os.environ["MESAIL_ACCOUNT_CLIENT_SECRET"], os.environ["MESAIL_KEYCLOAK_DIRECTORY_SECRET"],
-        os.environ.get("CHECK_LEGACY_REALMS") == "true",
     ).run())

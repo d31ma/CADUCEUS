@@ -73,14 +73,6 @@ wait_for_keycloak() {
   log "keycloak is ready"
 }
 
-provision_keycloak() {
-  "$BIN/mesail-keycloak-provision" && return 0
-  local status=$?
-  log "provisioning failed with status $status"
-  stop_all
-  exit "$status"
-}
-
 start_app() {
   [[ -n ${MESAIL_APP_COMMAND:-} ]] || { log "MESAIL_APP_COMMAND is not set; running Keycloak only"; return 0; }
   bash -c "exec ${MESAIL_APP_COMMAND}" &
@@ -107,7 +99,6 @@ main() {
   trap 'on_signal INT' INT
   start_keycloak
   wait_for_keycloak
-  provision_keycloak
   start_app
   watch_processes
 }

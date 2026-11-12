@@ -7,11 +7,6 @@ readonly REALM_SOURCE=${MESAIL_KEYCLOAK_IMPORT_DIR:-${MESAIL_KEYCLOAK_HOME}/real
 readonly IMPORT_DIR=${KEYCLOAK_HOME}/data/import
 readonly MESAIL_REALM_FILE=mesail-realm.json
 readonly MESAIL_DEV_USERS='mesail-users-*.json'
-readonly DOMAIN_TEMPLATE=domain-realm.json
-readonly OPERATORS_REALM_FILE=mesail-operators-realm.json
-# shellcheck disable=SC2016
-readonly REALM_PLACEHOLDER='${MESAIL_REALM}'
-readonly DOMAIN_PATTERN='^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'
 readonly DEFAULT_KEYCLOAK_URL=http://127.0.0.1:8180/idp
 readonly SQLITE_OPTIONS='journal_mode=WAL&synchronous=NORMAL&busy_timeout=15000&transaction_mode=IMMEDIATE'
 readonly CONFIG_ERROR=64
@@ -30,57 +25,17 @@ require() {
   [[ -n ${!name:-} ]] || fail "$name is not set"
 }
 
-domains() {
-  tr ',' ' ' <<<"${MESAIL_KEYCLOAK_DOMAINS:-}" | tr -s ' ' '\n' | tr '[:upper:]' '[:lower:]'
-}
-
-check_domain() {
-  [[ $1 =~ $DOMAIN_PATTERN ]] || fail "not a mail domain name: $1"
-}
-
-render_domain_realm() {
-  local domain=$1 template
-  check_domain "$domain"
-  template=$(<"$REALM_SOURCE/$DOMAIN_TEMPLATE")
-  printf '%s\n' "${template//"$REALM_PLACEHOLDER"/$domain}" >"$IMPORT_DIR/${domain}-realm.json"
-  log "realm ${domain}: ready to import (skipped if it exists)"
-}
-
-legacy_realms_wanted() {
-  [[ -n $(domains) ]]
-}
-
 copy_mesail_realm() {
   cp "$REALM_SOURCE/$MESAIL_REALM_FILE" "$IMPORT_DIR/"
   log "realm mesail: ready to import (skipped if it exists)"
 }
 
-copy_legacy_realms() {
-  local domain
-  legacy_realms_wanted || return 0
-  require MESAIL_SERVICE_SECRET
-  log "MESAIL_KEYCLOAK_DOMAINS is set: also importing the old per-domain realms and mesail-operators (ADR 0004, until Wave 3's switch L5)"
-  cp "$REALM_SOURCE/$OPERATORS_REALM_FILE" "$IMPORT_DIR/"
-  for domain in $(domains); do
-    render_domain_realm "$domain"
-  done
-}
-
-dev_user_pattern() {
-  if legacy_realms_wanted; then
-    echo '*-users-*.json'
-    return 0
-  fi
-  echo "$MESAIL_DEV_USERS"
-}
-
 copy_dev_users() {
-  local pattern files
+  local files
   [[ ${MESAIL_KEYCLOAK_DEV_USERS:-false} == true ]] || return 0
   log "WARNING: MESAIL_KEYCLOAK_DEV_USERS=true imports the dev-only test users. Never set it in production."
-  pattern=$(dev_user_pattern)
   # shellcheck disable=SC2206
-  files=("$REALM_SOURCE"/dev/$pattern)
+  files=("$REALM_SOURCE"/dev/$MESAIL_DEV_USERS)
   cp "${files[@]}" "$IMPORT_DIR/"
 }
 
@@ -88,7 +43,6 @@ prepare_import() {
   rm -rf "$IMPORT_DIR"
   mkdir -p "$IMPORT_DIR"
   copy_mesail_realm
-  copy_legacy_realms
   copy_dev_users
 }
 

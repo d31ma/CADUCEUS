@@ -20,16 +20,13 @@ in production.
 | `providers/mesail/` | Java source of `mesail-keycloak-mesail.jar`: the admin API endpoint that stores a TOTP. In both images. |
 | `realm/mesail-realm.json` | The one realm `mesail`: every person and every Operator (ADR 0005). |
 | `realm/dev/mesail-users-0.json` | Dev-only people `ana`, `bo`, `eve`, `carol` and `operator`, with fixed Keycloak ids `3e5a11d0-0000-4000-8000-00000000000N` (N = 1 to 5 in that order). Imported only with `MESAIL_KEYCLOAK_DEV_USERS=true`. |
-| `realm/domain-realm.json`, `realm/mesail-operators-realm.json`, `realm/dev/<domain>-users-0.json` | **Transition only, until Wave 3's switch (L5):** the old realm per mail domain and `mesail-operators` (ADR 0004). Imported only while `MESAIL_KEYCLOAK_DOMAINS` is set. Deleted after L5. |
-| `bin/mesail-supervisor` | The image entrypoint. Starts Keycloak, waits until it is ready, runs the provisioning step, then starts `MESAIL_APP_COMMAND`. |
-| `bin/mesail-keycloak-start` | Checks the environment, prepares the realm `mesail` (and, in the transition, one realm per domain), chooses the database, runs `kc.sh start --optimized --import-realm`. |
-| `bin/mesail-keycloak-provision` | **Transition only:** while the old realms exist, creates the master-realm client `mesail-directory` once, so the old directory service can create realms. Does nothing with the one realm. |
+| `bin/mesail-supervisor` | The image entrypoint. Starts Keycloak, waits until it is ready, then starts `MESAIL_APP_COMMAND`. |
+| `bin/mesail-keycloak-start` | Checks the environment, prepares the realm `mesail` (and the dev users when asked), chooses the database, runs `kc.sh start --optimized --import-realm`. |
 | `dev/build-native-keycloak.sh` | Builds the same Keycloak natively on macOS or Linux (no Docker), for development. |
 | `bin/mesail-healthcheck` | Docker `HEALTHCHECK`: Keycloak readiness, plus `MESAIL_APP_HEALTH_URL` when set. |
 | `test/run-image-test.sh` | Builds the image and proves it works (see [Testing](#testing)). |
 | `test/oidc_check.py` | The checks of the realm `mesail` (Python standard library and `openssl`). |
-| `test/legacy_realms_check.py` | **Transition only:** the old checks of the per-domain realms. |
-| `test/keycloak_client.py` | HTTP, token, TOTP and admin API helpers both checks use. |
+| `test/keycloak_client.py` | HTTP, token, TOTP and admin API helpers of the check. |
 
 ## The realm `mesail`: one login per person
 
@@ -80,8 +77,8 @@ changes: `directory` never links a person to a new `sub` (ADR 0005, DOMAIN
 Keycloak database gives the same subjects as the last one and matches the
 directory's dev seed: `ana` `...0001`, `bo` `...0002`, `eve` `...0003`,
 `carol` `...0004`, `operator` `...0005` (all `3e5a11d0-0000-4000-8000-00000000000N`).
-The old realms' dev users use `...0101` and up. Keycloak user ids are unique
-across realms, so a new dev user needs an id no other file uses. Real people
+Keycloak user ids are unique, so a new dev user needs an id no other dev
+user has. Real people
 get Keycloak's random ids from `directory`.
 
 **User attributes.** The realm's user profile declares two attributes;
@@ -165,21 +162,6 @@ filled by Keycloak from the environment. The import runs only when the realm
 does not exist yet, so changing a secret later changes nothing: change it
 through the admin API.
 
-### Transition until Wave 3's switch (L5)
-
-Until L5 moves every app to Mesail's own tokens, the running apps still use
-ADR 0004's realm per domain. While `MESAIL_KEYCLOAK_DOMAINS` is set,
-`mesail-keycloak-start` therefore also imports the old realms beside
-`mesail`: one realm per listed domain from `realm/domain-realm.json`, the
-realm `mesail-operators`, and all files in `realm/dev/` (with
-`MESAIL_KEYCLOAK_DEV_USERS=true`). It then needs `MESAIL_SERVICE_SECRET` too,
-and `mesail-keycloak-provision` creates the master-realm client
-`mesail-directory` (role `create-realm`) for the old directory service. Both
-models run side by side in one Keycloak and one SQLite file; they share no
-users. `test/legacy_realms_check.py` keeps checking the old realms. After L5,
-unset `MESAIL_KEYCLOAK_DOMAINS`; then the old files, the provisioning step and
-the legacy check are deleted.
-
 ## Running the image
 
 ```bash
@@ -197,17 +179,15 @@ docker run -d --name mesail-keycloak -v mesail-keycloak:/data/keycloak \
 | --- | --- | --- |
 | `MESAIL_IDENTITY_CLIENT_SECRET` | yes | Secret of `mesail-identity` (the identity service's `YON_IDENTITY_CLIENT_SECRET`). Used when the realm is imported. |
 | `MESAIL_ACCOUNT_CLIENT_SECRET` | yes | Secret of `mesail-account` (the identity service's `YON_IDENTITY_ACCOUNT_SECRET`). |
-| `MESAIL_KEYCLOAK_DIRECTORY_SECRET` | yes | Secret of `mesail-directory` (the directory service's `YON_DIRECTORY_ADMIN_SECRET`). In the transition also the secret of the old master-realm client of the same name. |
+| `MESAIL_KEYCLOAK_DIRECTORY_SECRET` | yes | Secret of `mesail-directory` (the directory service's `YON_DIRECTORY_ADMIN_SECRET`). |
 | `MESAIL_KEYCLOAK_URL` | no | Keycloak's backend address and the issuer base. Default `http://127.0.0.1:8180/idp`. |
-| `MESAIL_KEYCLOAK_DOMAINS` | transition | Mail domains whose old realms are imported beside `mesail`, until L5 (see the transition above). Leave it unset for the one realm. |
-| `MESAIL_SERVICE_SECRET` | transition | Secret of `mesail-service` in the old realms. Needed only with `MESAIL_KEYCLOAK_DOMAINS`. |
-| `KC_BOOTSTRAP_ADMIN_CLIENT_ID`, `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` | transition, first start | A temporary admin client of the `master` realm. The provisioning step uses it once to create the old master-realm `mesail-directory`. Not needed for the one realm. Remove it from the environment after the first start. |
+| `KC_BOOTSTRAP_ADMIN_CLIENT_ID`, `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` | no | A temporary admin client of the `master` realm, for admin work by hand and for the admin event check in `test/oidc_check.py`. Remove it from the environment after use. |
 | `KC_BOOTSTRAP_ADMIN_USERNAME`, `KC_BOOTSTRAP_ADMIN_PASSWORD` | no | A temporary admin user of the `master` realm, for the admin console (reach it through a tunnel, never the public address). |
 | `MESAIL_APP_COMMAND` | no | The app the supervisor starts after Keycloak is ready. Without it the container runs Keycloak only. |
 | `MESAIL_APP_HEALTH_URL` | no | `http://127.0.0.1:<port>/<path>` of the app's health route, added to the image health check. |
 | `MESAIL_KEYCLOAK_DATA` | no | Folder of the SQLite file. Default `/data/keycloak` (a volume). |
 | `MESAIL_KEYCLOAK_IMPORT_DIR` | no | Another folder of realm files laid out like `realm/`. |
-| `MESAIL_KEYCLOAK_DEV_USERS` | no | `true` imports the dev people of the realm `mesail`: `ana`, `bo`, `eve`, `carol` (password `dev-<name>-password`) and `operator` (`dev-operator-password`, role `mesail-operator`). Their domains are `directory` data. In the transition it also imports the old realms' dev users. Dev and tests only. |
+| `MESAIL_KEYCLOAK_DEV_USERS` | no | `true` imports the dev people of the realm `mesail`: `ana`, `bo`, `eve`, `carol` (password `dev-<name>-password`) and `operator` (`dev-operator-password`, role `mesail-operator`). Their domains are `directory` data. Dev and tests only. |
 | `MESAIL_KEYCLOAK_START_TIMEOUT` | no | Seconds the supervisor waits for Keycloak (default 300). |
 
 Inside the container Keycloak listens on `127.0.0.1:8180` under `/idp`, and
@@ -341,7 +321,7 @@ VM lock) and `python3` and `openssl` on the host. It:
 
 1. builds the `mesail-keycloak` stage;
 2. starts it on a fresh volume with the one realm, the dev people and a
-   stand-in app (`sleep infinity`), and checks that provisioning does nothing;
+   stand-in app (`sleep infinity`);
 3. runs `test/oidc_check.py` against the realm `mesail`: discovery and issuer
    (and no `mesail-operators`); the password grant for every dev person; the
    RS256 signature against the realm's keys; `iss`, `aud` (only
@@ -370,17 +350,10 @@ VM lock) and `python3` and `openssl` on the host. It:
 4. restarts the container and runs the checks again (the import is
    skipped);
 5. replaces the container, keeping the volume, and runs the checks again;
-6. replaces the container with one in transition mode on a new volume
-   (`MESAIL_KEYCLOAK_DOMAINS` with three domains and the bootstrap admin
-   client), checks that provisioning created the old master-realm client,
-   runs `test/oidc_check.py` again and `test/legacy_realms_check.py` (the old
-   checks of every domain realm, `mesail-operators` and a realm created
-   through the admin API);
-7. ends the stand-in app and checks that the supervisor stops the container;
-8. removes the container and both volumes.
+6. ends the stand-in app and checks that the supervisor stops the container;
+7. removes the container and the volume.
 
 To run the same checks against a native Keycloak, export
 `MESAIL_KEYCLOAK_URL` and the three secrets (plus
 `KC_BOOTSTRAP_ADMIN_CLIENT_ID` and `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` for the
-admin event check) and run `python3 deploy/keycloak/test/oidc_check.py`. Add
-`CHECK_LEGACY_REALMS=true` when the old realms are imported too.
+admin event check) and run `python3 deploy/keycloak/test/oidc_check.py`.

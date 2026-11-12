@@ -90,6 +90,11 @@
 - The dev users have fixed Keycloak ids (a person's id never changes), and
   the realm declares the admin-only attribute `mesail.addRequest`, which the
   directory uses to finish an add that failed halfway (slice D2).
+- After the switch (L5), Keycloak has only the realm `mesail`: the old realm
+  per mail domain, `mesail-operators`, their dev users, the master-realm
+  client `mesail-directory` and its provisioning step, and their checks are
+  removed. `MESAIL_KEYCLOAK_DOMAINS` and `MESAIL_SERVICE_SECRET` are no
+  longer read.
 
 ### Slice LU: one-login screens (UX)
 

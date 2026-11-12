@@ -1324,7 +1324,8 @@ ones for T14; the Keycloak and identity parts may be built before.
   lines; Settings > Sign-in: the passkey list (name, added, last used),
   "Add a passkey" with the password and code step, rename, remove (with
   the "other devices are signed out" warning); the admin's "Remove all
-  passkeys" in the person menu (AC-ID-13); hidden where the device has no
+  passkeys" in the person menu (AC-ID-13); the app's "Unlock with Touch
+  ID" setting and locked screen (AC-OF-20); hidden where the device has no
   passkey support.
 
 ### PK0. Blackbox tests for passkeys (architecture, `mesail-arch`)
@@ -1375,15 +1376,16 @@ ones for T14; the Keycloak and identity parts may be built before.
   builds its apps with its own host.
 - **Depends on:** PK4, TACHYON T14.
 
-### PK6. Biometric unlock of the device copy (only if SPEC Q22 is yes)
+### PK6. Biometric unlock of the device copy (SPEC Q22 decided yes; AC-OF-20)
 - **Builds:** sealed tables with `"unlock": "userPresence"` (TACHYON T15)
   for the device copy in the installed apps, the "Unlock with Touch ID"
-  setting and the locked screen.
+  setting, the locked screen (on open and after 5 minutes in the
+  background) and its PU screens.
 - **Depends on:** Wave 4's O3, TACHYON T15.
 
 ### Order
 PU, PK0 and PK1 at once; PK2 and PK3 after PK1; PK4 after PK2 and T13; PK5
-after PK4 and T14; PK6 only on the owner's word.
+after PK4 and T14; PK6 after Wave 4's O3 and TACHYON T15.
 
 ## Later (after the first release)
 

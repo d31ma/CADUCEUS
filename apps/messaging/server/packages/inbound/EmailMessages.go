@@ -15,7 +15,7 @@ func (messages EmailMessages) New(email ReceivedEmail, placement Placement, cont
 		return core.Message{}, err
 	}
 	sender := EmailParticipants{}.Sender(email, "")
-	return core.Message{
+	return EmailBudget{}.Applied(core.Message{
 		DomainId:           email.DomainId,
 		ConversationId:     core.ConversationIds{}.Wire(placement.Conversation),
 		ThreadRootId:       messages.rootId(placement),
@@ -34,7 +34,7 @@ func (messages EmailMessages) New(email ReceivedEmail, placement Placement, cont
 		Email:              messages.meta(email),
 		Deliveries:         []string{},
 		CreatedAt:          Timestamps{}.Of(now),
-	}, nil
+	}), nil
 }
 
 func (EmailMessages) rootId(placement Placement) string {

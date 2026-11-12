@@ -619,6 +619,14 @@ Rules (SPEC AC-CP):
   each `AttachmentRef` and answers it in `attachments[]`; `message.created`
   carries the file names in `fileNames[]`. A retry with the same
   `clientMessageId` does not ask `attachments` again.
+- Storage budget (DOMAIN.md "Every document stays under 512 KiB"): before
+  it writes anything, a send or an edit checks the body with its blocks
+  against `core.MessageBudget` (384 KiB, counting the stored body, the
+  stored `blocksJson` and the body inside the staged event, each with its
+  JSON escaping). A body over it answers `413 too_large` even when it has
+  at most 40,000 characters (for example 40,000 `<` or emoji). An inbound
+  email over it is stored cut: its first 64 KiB of text, then 16 KiB if
+  still over, as `bodyFormat: text` with `truncated: true`.
 
 Reactions are identified by a NAME, not an emoji character, because a Tac
 path value may only use `A-Z a-z 0-9 . _ ~ -` (found by slice F2). A name

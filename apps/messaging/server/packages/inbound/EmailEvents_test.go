@@ -3,7 +3,9 @@ package inbound
 import (
 	"errors"
 	"slices"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"mesail.dev/packages/core"
 	"mesail.dev/packages/events"
@@ -405,5 +407,51 @@ func TestAReplyCopiedToAChannelAddsOnlyMembers(t *testing.T) {
 	scene.Must(received(), "example.com", mail)
 	if len(scene.Participants()) != 2 || len(scene.Messages()) != 2 {
 		t.Fatalf("got %+v", scene.Participants())
+	}
+}
+
+func storedEmailWith(t *testing.T, inboundId string, text string, blocks string) core.Message {
+	t.Helper()
+	scene := NewScene(t)
+	mail := Email(inboundId, "dan@outside.test", []string{"ana@example.com"})
+	mail.Content = &events.EmailContent{Text: text, BodyFormat: "email", Blocks: []byte(blocks)}
+	scene.Must(received(), "example.com", mail)
+	return scene.Messages()[0]
+}
+
+func TestAnEmailWithinTheMessageBudgetIsKeptWhole(t *testing.T) {
+	text := strings.Repeat("a", 100000)
+	message := storedEmailWith(t, "in40", text, "[]")
+	if message.Body != text || message.BodyFormat != "email" || message.Truncated {
+		t.Fatalf("the email was cut: %d bytes, %s, %v", len(message.Body), message.BodyFormat, message.Truncated)
+	}
+}
+
+func TestAnEmailOverTheMessageBudgetKeepsItsFirstSixtyFourKibibytes(t *testing.T) {
+	text := strings.Repeat("a", 200000)
+	message := storedEmailWith(t, "in41", text, "[]")
+	fits := core.MessageBudget{}.Fits(message.Body, message.BlocksJson)
+	budget := EmailBudget{}
+	if len(message.Body) != budget.PlainTextBytes() || message.BodyFormat != "text" || !message.Truncated || !fits || message.BlocksJson == "[]" {
+		t.Fatalf("got %d bytes, %s, %v, fits %v", len(message.Body), message.BodyFormat, message.Truncated, fits)
+	}
+}
+
+func TestAnEmailOfQuotesOverTheMessageBudgetKeepsItsFirstSixteenKibibytes(t *testing.T) {
+	text := strings.Repeat(`"`, 127000)
+	message := storedEmailWith(t, "in42", text, "[]")
+	fits := core.MessageBudget{}.Fits(message.Body, message.BlocksJson)
+	budget := EmailBudget{}
+	if len(message.Body) != budget.LastResortTextBytes() || !message.Truncated || !fits {
+		t.Fatalf("got %d bytes, %v, fits %v", len(message.Body), message.Truncated, fits)
+	}
+}
+
+func TestAnEmailCutKeepsWholeCharacters(t *testing.T) {
+	text := "a" + strings.Repeat("\U0001F600", 60000)
+	message := storedEmailWith(t, "in43", text, "[]")
+	budget := EmailBudget{}
+	if !utf8.ValidString(message.Body) || !message.Truncated || len(message.Body) > budget.PlainTextBytes() {
+		t.Fatalf("got %d bytes, valid %v", len(message.Body), utf8.ValidString(message.Body))
 	}
 }

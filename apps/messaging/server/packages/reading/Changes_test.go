@@ -201,3 +201,13 @@ func TestADeleteReportsABrokenParticipantList(t *testing.T) {
 	err := reading.NewChanges(s.stores, s.world.Ports).Delete(s.caller("ana"), msgId(message))
 	wantError[*core.Unavailable](t, err)
 }
+
+func TestAnEditOverTheStorageBudgetIsRefused(t *testing.T) {
+	s := newScene(t)
+	_, message := s.chat()
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), strings.Repeat("<", 40000))
+	wantError[*core.TooLarge](t, err)
+	if s.stored(message).Body != message.Body {
+		t.Fatal("the refused edit was stored")
+	}
+}

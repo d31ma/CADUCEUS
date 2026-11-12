@@ -40,6 +40,10 @@ func (changes Changes) Edit(caller oidc.Caller, messageId string, body string) (
 	if err != nil {
 		return core.MessageView{}, err
 	}
+	err = core.MessageBudget{}.Check(rewritten.Body, rewritten.BlocksJson)
+	if err != nil {
+		return core.MessageView{}, err
+	}
 	saved, err := changes.published(rewritten, events.Types{}.MessageEdited())
 	if err != nil {
 		return core.MessageView{}, err

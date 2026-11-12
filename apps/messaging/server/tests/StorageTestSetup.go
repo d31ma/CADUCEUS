@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"mesail.dev/packages/core"
+	"mesail.dev/packages/events"
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
 	"mesail.dev/packages/storage"
@@ -168,3 +170,61 @@ func (world *StorageTestSetup) IsUnavailable(err error) bool {
 	var storeFailure *core.Unavailable
 	return errors.As(err, &failure) || errors.As(err, &storeFailure)
 }
+
+func (world *StorageTestSetup) ContentAtTheBudget(piece string) (string, string) {
+	budget := core.MessageBudget{}
+	one := budget.ContentBytes(world.bodyAndBlocks(piece, 1))
+	growth := budget.ContentBytes(world.bodyAndBlocks(piece, 2)) - one
+	return world.bodyAndBlocks(piece, 1+(budget.MaxContentBytes()-one)/growth)
+}
+
+func (world *StorageTestSetup) bodyAndBlocks(piece string, count int) (string, string) {
+	body := strings.Repeat(piece, count)
+	block := core.Block{Kind: "paragraph", Spans: []core.Span{{Text: body}}, Cells: []string{}}
+	return body, core.MessageBudget{}.BlocksJson([]core.Block{block})
+}
+
+func (world *StorageTestSetup) StoredWithCreatedEvent(body string, blocks string) core.Message {
+	store := world.Messages()
+	message := core.Message{DomainId: world.Domain, ConversationId: "cnv_size", Month: "202611", SendKey: "send-" + world.RandomText(), Body: body, BlocksJson: blocks, Sequence: 1}
+	id, err := store.Insert(message)
+	world.Must(err)
+	message.Id = id
+	message.OutboxFields = world.Staged(message.OutboxFields, events.Types{}.MessageCreated(), world.CreatedPayload(message))
+	world.Pusher.FailFor("search", outbox.DeliveryFailure{Subscriber: "search", Detail: "down"})
+	world.Must(store.Save(message))
+	stored, _, err := store.Find(world.Domain, "202611", id)
+	world.Must(err)
+	return stored
+}
+
+func (world *StorageTestSetup) CreatedPayload(message core.Message) events.MessageCreated {
+	return events.MessageCreated{MessageId: message.Id, ConversationId: message.ConversationId, Body: message.Body, AttachmentIds: []string{}, FileNames: []string{}, MentionedMemberIds: []string{}, MemberIds: world.MemberIds(world.ConversationMembers()), CreatedAt: "2026-11-12T00:00:00Z"}
+}
+
+func (world *StorageTestSetup) MemberIds(count int) []string {
+	ids := []string{}
+	for index := 0; index < count; index++ {
+		ids = append(ids, "mem_"+world.RandomText())
+	}
+	return ids
+}
+
+func (world *StorageTestSetup) EncodedSize(message core.Message) int {
+	encoded, err := json.Marshal(message)
+	world.Must(err)
+	return len(encoded)
+}
+
+func (world *StorageTestSetup) ConversationMembers() int {
+	return 200
+}
+
+func (world *StorageTestSetup) BudgetSlack() int {
+	return 64
+}
+
+func (world *StorageTestSetup) MaxDocumentBytes() int {
+	return 512 << 10
+}
+

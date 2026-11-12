@@ -652,3 +652,20 @@ func TestAReplyCanAlsoGoToTheConversation(t *testing.T) {
 		t.Fatalf("the flag was not stored: %+v", outcome.Message.Message)
 	}
 }
+
+func TestAChatOverTheStorageBudgetIsRefusedBeforeAnyWrite(t *testing.T) {
+	s := newScene(t)
+	_, err := s.send(request("c-big", strings.Repeat("<", 40000), to("bo@example.com", "chat", "member")))
+	var tooLarge *core.TooLarge
+	if !errors.As(err, &tooLarge) || len(s.messages()) != 0 || len(s.conversations()) != 0 {
+		t.Fatalf("want too large and no writes, got %v, %d messages", err, len(s.messages()))
+	}
+}
+
+func TestALongChatWithinTheStorageBudgetIsSent(t *testing.T) {
+	s := newScene(t)
+	outcome := s.mustSend(t, request("c-long", strings.Repeat("語", 40000), to("bo@example.com", "chat", "member")))
+	if len([]rune(s.stored(t, outcome).Body)) != 40000 {
+		t.Fatal("the long chat was not stored whole")
+	}
+}

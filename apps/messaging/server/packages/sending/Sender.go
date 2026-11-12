@@ -101,6 +101,10 @@ func (sender Sender) compose(caller oidc.Caller, draft Draft, now time.Time) (Dr
 	if err != nil {
 		return draft, Failures{}.renderer(err)
 	}
+	err = core.MessageBudget{}.Check(composed.Request.Body, core.MessageBudget{}.BlocksJson(rich.Blocks))
+	if err != nil {
+		return draft, err
+	}
 	mentioned, err := NewMentions(sender.stores.Members).of(caller.DomainId, composed.Request.Body, Readers{}.of(composed.Placement.all()), caller.MemberId)
 	if err != nil {
 		return draft, err

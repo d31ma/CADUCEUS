@@ -768,6 +768,7 @@ an earlier slice text in this file says "realm of the domain",
     dev host; K3's series stopped): **K8**. Floci series are not reliable
     until K8 finds the store outage's cause.
 15. After K5: **K9**.
+16. After K8 and the next TACHYON release (the owner approves it): **K10**.
 
 ### K5. Channel events without reader lists (messaging's, realtime's and notify's owners, one session)
 Found by K1 (2026-11-12): `memberIds` in a channel message's events lists
@@ -1064,6 +1065,40 @@ FYLO owner's design choice; Mesail does not need it.
   failure that points at K3's parts comes back as a fix slice); and a
   1-hour Floci run under K3's sign-in load shows no "store is not
   available" answer, or the owner accepts a written limit.
+- **Merge, changed 2026-11-12:** TACHYON's fix (its `develop` ff94a61dd,
+  an amendment to its ADR 0128; not released) makes the next store call
+  wait, within its own deadline, for a killed `fylo` to exit, logs
+  `storage.fylo_process_stopped`, and adds the data source setting
+  `datasource.operationTimeoutMs` (1,000 to 60,000, default 5,000). The
+  Floci image installs `ty` only from a release, so the rerun needs one.
+  K8 merges its own parts now (the 60 second function timeout and the
+  writer guard, with the proof in the findings note); the K2 10-run check
+  and the 1-hour run move to K10.
+
+### K10. Move to the next TACHYON release (a small session, after K8 and that release)
+- **Owns:** the TACHYON version and SHA-256 pins (the Floci image, the
+  native setup and CI), the FYLO-owning apps' `application.json` data
+  source settings, and their store error handlers' logging.
+- **Builds:**
+  - the pin moves to the first TACHYON release with ADR 0128 and its
+    amendment (ff94a61dd), after the owner approves that release;
+  - `datasource.operationTimeoutMs` 15,000 for every FYLO-owning service
+    in Lambda form (the dev host, kestrel and AWS later); native runs keep
+    5,000 (decided 2026-11-12: ATLAS write stalls reach 10.9 seconds and
+    cold-start writes took 9.5 and 18 seconds, so 5 seconds turns them
+    into failures; a shorter deadline does not free the store sooner,
+    because the next call waits for the stuck `fylo` to exit anyway;
+    15 seconds fits the 20 second work budget of rule 9 and the 60 second
+    function timeout; `directory` gets the same value);
+  - the store error handlers log the TACHYON storage code with `YonLog`
+    (K8's logging step);
+  - nothing else: the slices that wait for T1, T13 and other TACHYON
+    features use them in their own changes.
+- **Depends on:** K8 merged; the TACHYON release approved by the owner.
+- **Done when:** gates pass on the new pin; the K2 sign-in check passes 10
+  runs in a row on Floci; a 1-hour Floci run under K3's sign-in load shows
+  no "store is not available" answer, or the owner accepts a written
+  limit (moved here from K8).
 
 ### K6. Schedulers call again while `more: true` (a small session, after K3)
 Found by K3 (2026-11-12): at 10 writes per call (rule 9, sign-in path) and

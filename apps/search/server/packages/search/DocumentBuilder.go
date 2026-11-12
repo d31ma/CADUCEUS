@@ -15,28 +15,30 @@ func (builder DocumentBuilder) FromCreated(domainId string, message events.Messa
 	if err != nil {
 		return Document{}, "", err
 	}
+	labels := DocumentBudget{}.LabelCharacters()
 	document := Document{
 		DomainId:       domainId,
 		MessageId:      message.MessageId,
 		ConversationId: message.ConversationId,
 		AuthorMemberId: message.AuthorMemberId,
-		AuthorAddress:  strings.ToLower(message.AuthorAddress),
-		AuthorName:     message.AuthorDisplayName,
+		AuthorAddress:  builder.cut(strings.ToLower(message.AuthorAddress), labels),
+		AuthorName:     builder.cut(message.AuthorDisplayName, labels),
 		Text:           message.Body,
-		Subject:        message.Subject,
+		Subject:        builder.cut(message.Subject, labels),
 		FileNames:      builder.names(message.FileNames),
 		HasAttachment:  len(message.AttachmentIds) > 0,
 		IsEmail:        message.IsEmail,
 		CreatedAt:      builder.Stamp(createdAt),
 	}
-	return builder.withTerms(document), builder.Month(createdAt), builder.required(message)
+	return builder.sized(document), builder.Month(createdAt), builder.required(message)
 }
 
 func (builder DocumentBuilder) Edited(document Document, message events.MessageEdited) (Document, error) {
 	editedAt, err := builder.instant(message.EditedAt, "editedAt")
 	document.Text = message.Body
+	document.Truncated = false
 	document.EditedAt = builder.Stamp(editedAt)
-	return builder.withTerms(document), err
+	return builder.sized(document), err
 }
 
 func (DocumentBuilder) Tombstone(document Document) Document {
@@ -49,6 +51,37 @@ func (builder DocumentBuilder) Stamp(instant time.Time) string {
 
 func (builder DocumentBuilder) Month(instant time.Time) string {
 	return instant.UTC().Format(builder.monthLayout())
+}
+
+func (builder DocumentBuilder) sized(document Document) Document {
+	return builder.fitted(builder.withTerms(builder.capped(document)))
+}
+
+func (DocumentBuilder) capped(document Document) Document {
+	characters := []rune(document.Text)
+	limit := DocumentBudget{}.TextCharacters()
+	if len(characters) <= limit {
+		return document
+	}
+	document.Text = string(characters[:limit])
+	document.Truncated = true
+	return document
+}
+
+func (builder DocumentBuilder) fitted(document Document) Document {
+	budget := DocumentBudget{}
+	for budget.Over(document) && document.Text != "" {
+		document = builder.shorter(document)
+	}
+	return document
+}
+
+func (builder DocumentBuilder) shorter(document Document) Document {
+	budget := DocumentBudget{}
+	characters := []rune(document.Text)
+	document.Text = string(characters[:len(characters)*budget.MaxBytes()/budget.Size(document)])
+	document.Truncated = true
+	return builder.withTerms(document)
 }
 
 func (builder DocumentBuilder) withTerms(document Document) Document {
@@ -72,11 +105,18 @@ func (DocumentBuilder) required(message events.MessageCreated) error {
 	return nil
 }
 
-func (DocumentBuilder) names(fileNames []string) []string {
-	if fileNames == nil {
-		return []string{}
+func (builder DocumentBuilder) names(fileNames []string) []string {
+	budget := DocumentBudget{}
+	names := []string{}
+	for _, name := range fileNames[:min(len(fileNames), budget.MaxFileNames())] {
+		names = append(names, builder.cut(name, budget.FileNameCharacters()))
 	}
-	return fileNames
+	return names
+}
+
+func (DocumentBuilder) cut(text string, limit int) string {
+	characters := []rune(text)
+	return string(characters[:min(len(characters), limit)])
 }
 
 func (DocumentBuilder) stampLayout() string {

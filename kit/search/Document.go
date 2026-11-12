@@ -8,6 +8,7 @@ type Document struct {
 	AuthorAddress  string   `json:"authorAddress"`
 	AuthorName     string   `json:"authorName"`
 	Text           string   `json:"text"`
+	Truncated      bool     `json:"truncated"`
 	Subject        string   `json:"subject"`
 	FileNames      []string `json:"fileNames"`
 	HasAttachment  bool     `json:"hasAttachment"`

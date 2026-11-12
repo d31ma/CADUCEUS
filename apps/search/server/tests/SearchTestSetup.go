@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"mesail.dev/packages/events"
@@ -148,4 +149,54 @@ func (world *SearchTestSetup) SignedIn(domainId string, subject string, realmRol
 	request := oidc.TokenRequest{Subject: subject, Email: subject + "@" + domainId, Name: subject, Username: subject, RealmRoles: []string{realmRole}, Audience: "mesail-api", AuthorizedParty: party, ExpiresAt: time.Now().Unix() + 60}
 	token, _ := realm.Token(request)
 	return "Bearer " + token
+}
+
+func (world *SearchTestSetup) Storage() search.IndexStorage {
+	return search.IndexStorage{Store: search.DocumentStore{Documents: DataSource{}}}
+}
+
+func (world *SearchTestSetup) Stored(domainId string, messageId string) search.Document {
+	location, _, err := world.Storage().Location(domainId, messageId)
+	world.Must(err)
+	document, err := world.Storage().Find(location)
+	world.Must(err)
+	return document
+}
+
+func (world *SearchTestSetup) StoredJson(domainId string, messageId string) []byte {
+	location, _, err := world.Storage().Location(domainId, messageId)
+	world.Must(err)
+	stored := map[string]any{}
+	_, err = DataSource{}.FindById(search.Collections{}.Documents(domainId, location.Month), location.DocumentId, &stored)
+	world.Must(err)
+	encoded, err := json.Marshal(stored)
+	world.Must(err)
+	return encoded
+}
+
+func (world *SearchTestSetup) WorstCaseText(characters int) string {
+	var text strings.Builder
+	for index := 0; index < characters/2; index++ {
+		text.WriteRune(rune(0x20000 + index%0xA6D0))
+		text.WriteString("<")
+	}
+	return text.String()
+}
+
+func (world *SearchTestSetup) WorstCaseMessage(conversationId string) events.MessageCreated {
+	budget := search.DocumentBudget{}
+	message := world.Message(conversationId, world.WorstCaseText(budget.TextCharacters()), "2026-11-10T10:00:00Z")
+	message.Subject = world.WorstCaseText(budget.LabelCharacters() + 10)
+	message.AuthorDisplayName = world.WorstCaseText(budget.LabelCharacters() + 10)
+	message.AuthorAddress = strings.Repeat("<", budget.LabelCharacters()+10)
+	for index := 0; index < budget.MaxFileNames()+5; index++ {
+		message.FileNames = append(message.FileNames, world.WorstCaseText(budget.FileNameCharacters()+10))
+	}
+	message.AttachmentIds = []string{"att_1"}
+	message.IsEmail = true
+	return message
+}
+
+func (world *SearchTestSetup) DocumentLimit() int {
+	return 512 << 10
 }

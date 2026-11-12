@@ -750,6 +750,8 @@ an earlier slice text in this file says "realm of the domain",
    f106bdb).
 6. After D2, any time (does not block L5): **L7b**.
 7. After L5 (merged, develop b3dbc95), any time: **K1**.
+8. Any time: **K2** (it may change `deploy/keycloak`, so it goes through
+   `mesail-keycloak` for that part).
 
 ### L7b. Admin app: removals in progress (a new small web-admin session)
 L5 stays a mechanical switch with a merge pause, so this UI change is not
@@ -766,6 +768,39 @@ folded into it.
 - **Done when:** gates pass for `web-admin`, the responsive test passes,
   and removing a domain and deleting a person on the native stack show the
   in-progress state and then the end state.
+
+### K2. Sign-in sometimes answers 503 on Floci (identity's successor, with `mesail-keycloak`)
+Seen 2026-11-12 in L5, OP1 and router-cycle runs: `POST
+/api/v1/identity/session` waits 5 seconds inside `identity` and answers
+`503` "sign-in is not available now"; `TestD2DeletingAPersonAnswers202...`
+failed 2 of 3 times. No `directory` or mail call was slow in the router's
+log for that window.
+- **What is known:** every outbound call of `identity` (Keycloak token,
+  Keycloak admin, `directory`'s `GET /people/{personId}`) uses one 5-second
+  timeout (`kit/oidc` `VerifierFactory.fetchTimeout`) with
+  `kit/transport` `SingleUseTransport`, so the keep-alive bug is ruled
+  out. Keycloak calls do not pass through the router, so its log cannot
+  show them.
+- **First suspect:** Keycloak on SQLite has one writer. The failing test
+  deletes a Keycloak user (through `directory`) while another test signs
+  in; a token grant that waits on SQLite's write lock for more than 5
+  seconds gives exactly this answer. Also check a cold `identity`
+  function, and a `GET /people` queued behind `directory`'s single writer
+  during D2's removal job (each job call may run up to 20 seconds, SLICES
+  rule 9).
+- **Builds:**
+  - `identity` logs which upstream call timed out (Keycloak token,
+    Keycloak admin or `directory`) and how long it took, with no secret or
+    person data;
+  - a repeatable check on Floci: delete a person while signing in a loop;
+  - the fix that the check points to, for example SQLite settings in the
+    Keycloak image (WAL journal, a busy timeout), separate timeouts for
+    Keycloak and for `directory`, or both. If the cause is `GET /people`
+    waiting behind `directory`'s writer, report it to the architect before
+    fixing: that is a design question (sign-in depends on a single-writer
+    function).
+- **Done when:** the D2 deletion test and the sign-in tests pass 10 runs in
+  a row on Floci, and the cause is written in the slice's hand-over.
 
 ### K1. Clean-up after the token switch (one small session)
 Open items from L5 (`~/Library/Logs/local/CADUCEUS/mesail/l5-switch-note.md`).

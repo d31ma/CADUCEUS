@@ -1333,7 +1333,12 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
   does that part).
 - **Builds:** CONTRACTS "identity" `keepSignedIn`, `kept`, `signedInAt`,
   `DELETE /sessions`, ended elsewhere; CONTRACTS "directory"
-  `sessionsEndedAt` and its route.
+  `sessionsEndedAt` and its route. Also the `sessions-ended` call on the
+  removal of one passkey (PK2 ends the other Keycloak sessions until
+  then, so the other sessions get `401`, not `403 access_revoked`), and in
+  `directory`'s removal of all passkeys (PK3); PK0's
+  `TestAcId17RemovingAPasskeyEndsTheOtherSessions` and
+  `TestAcId16PasskeySignInMayKeepTheDevice` pass only after O2.
 - **Depends on:** Wave 3 merged.
 - **Blackbox:** O0's session tests.
 - **Done when:** a kept session refreshes after a restart of `identity`, and

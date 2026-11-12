@@ -266,7 +266,14 @@ and T14 (apps).
   `identity.passkeyorigins`: the web origin `https://<host>`; for the
   apps, `https://<host>` on Apple and Windows, and
   `android:apk-key-hash:<hash>` for each Android app build, printed by
-  its build (TACHYON T14)).
+  its build (TACHYON T14)). The setting is one text value with the
+  origins separated by spaces (SLICES rule 17), sent to Keycloak as the
+  one `passkey_origins` field. The relying party id is the host of its
+  first `https://` origin; there is no second setting. `identity` refuses
+  to start when an `https://` origin has another host, when an `http://`
+  origin is not `localhost` (WebAuthn allows plain HTTP only there), or
+  when no `https://` or `http://localhost` origin is listed. The relying
+  party id must equal Keycloak's `MESAIL_PASSKEY_RP_ID` (PK1).
   `mesail-keycloak`'s authenticator finds the user from the user handle,
   checks signature, sign count, user verification and the origin, and
   answers tokens; a failure counts in Keycloak's brute-force detection.

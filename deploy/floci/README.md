@@ -273,6 +273,12 @@ Settings (environment, or a `.env` file copied from `.env.example`):
   `/mnt/data`, a VPC configuration (Floci needs one; the IDs are
   placeholders), and **reserved concurrency 1**, so only one warm instance
   writes the root (ADR 0004 section 4).
+- Each access point's client token is `<creationToken>-<service>`: Floci
+  keeps client tokens unique across file systems.
+- `mail-out` gets a new test DKIM key (Ed25519) per hosted domain at each
+  deploy, as `MESAIL_SECRET_DKIM_<DOMAIN>_<SELECTOR>` (the PEM text). Without
+  a key, mail-out defers every hosted send before it delivers (the native
+  run writes the same keys to a folder).
 - In Floci the access point's root directory and user are not applied: each
   access point is its own Docker volume `floci-aws-efs-<id>-<hash>`.
 - **A fresh data set without removing anything.** The FYLO data in the dev

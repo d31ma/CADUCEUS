@@ -74,11 +74,35 @@ environment_lines() {
   mesail_app_settings "$service"
 }
 
+dkim_variable() {
+  local domain="$1" prefix selector
+  prefix="$(jq -r '.mailout.secretprefix' "$(mesail_root)/apps/mail-out/server/application.json")"
+  selector="$(jq -r '.directory.dkimselector // "mesail"' "$(mesail_root)/apps/directory/server/application.json")"
+  echo "${prefix}DKIM_${domain}_${selector}" | tr '[:lower:]' '[:upper:]' | tr -c '[:upper:][:digit:]_\n' '_'
+}
+
+dkim_key() {
+  local domain="$1" file
+  file="$(mktemp "${TMPDIR:-/tmp}/mesail-dkim.XXXXXX")"
+  chmod 600 "$file"
+  openssl genpkey -algorithm ed25519 -out "$file" 2> /dev/null
+  jq -n --arg name "$(dkim_variable "$domain")" --rawfile key "$file" '{($name): $key}'
+  rm -f "$file"
+}
+
+dkim_keys() {
+  local service="$1" domain
+  if [ "$service" != mail-out ]; then return 0; fi
+  for domain in $(mesail_stack '.hostedDomains[]'); do
+    dkim_key "$domain"
+  done
+}
+
 environment_file() {
   local service="$1" file
   file="$(mktemp "${TMPDIR:-/tmp}/mesail-environment.XXXXXX")"
   chmod 600 "$file"
-  environment_lines "$service" | jq -R 'split("=") | {(.[0]): (.[1:] | join("="))}' \
+  { environment_lines "$service" | jq -R 'split("=") | {(.[0]): (.[1:] | join("="))}'; dkim_keys "$service"; } \
     | jq -s '{Variables: (add // {})}' > "$file"
   echo "$file"
 }

@@ -241,7 +241,7 @@ Service tokens (ADR 0005 section 4):
   `domainId` (a domain name or `*`). It does not check that the domain is
   hosted: the receiving route does (SLICES rule 11).
 - `kit/oidc` `ServiceTokens.Authorization(domainId)` calls it (app setting
-  `oidc.serviceTokens`, the route URL; the host is in `outgoing.hosts`) and
+  `oidc.servicetokens`, the route URL; the host is in `outgoing.hosts`) and
   caches each token per domain until 10 seconds before it expires.
   `oidc.InstallWide{}.DomainId()` (`*`) is the domain id of install-wide calls.
 
@@ -413,11 +413,15 @@ domain by `kit/recipients`:
 | --- | --- | --- | --- |
 | `member` | a member or alias in the caller's domain | `["chat","email","both"]` | `chat` |
 | `channel` | a channel in the caller's domain | `["chat"]` | `chat` |
-| `otherDomain` | hosted on this install, in another domain | `["email"]` | `email` |
+| `otherDomain` | hosted on this install and `active`, in another domain | `["email"]` | `email` |
 | `external` | not hosted on this install | `["email"]` | `email` |
 
 For `otherDomain` the response has no `memberId`, no `channelId` and no
-display name from the other domain.
+display name from the other domain. **"Hosted" means `active`** (decided
+2026-11-11, from L5): a domain that is `pending`, `disabled` or `removing`
+is not hosted for recipients, for `mail-out`'s hand-off inside the install
+or for `GET /addresses/{address}`, so mail to it goes out as `external`
+mail. Members of a `pending` domain may still sign in and set it up.
 
 ## channels
 

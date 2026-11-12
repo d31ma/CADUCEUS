@@ -15,7 +15,7 @@ In the calling app's `server/application.json`:
   "issuer": "http://127.0.0.1:8101/api/v1/identity",
   "jwks": "http://127.0.0.1:8101/api/v1/identity/jwks",
   "audience": "mesail-api",
-  "serviceTokens": "http://127.0.0.1:8101/api/v1/identity/service-token"
+  "servicetokens": "http://127.0.0.1:8101/api/v1/identity/service-token"
 },
 "outgoing": { "hosts": ["127.0.0.1"] }
 ```
@@ -23,7 +23,9 @@ In the calling app's `server/application.json`:
 - `oidc.issuer` and `oidc.jwks` are the same in every app: the one Mesail
   issuer and `identity`'s key set. There is no `{realm}` placeholder any
   more.
-- `oidc.serviceTokens` is `identity`'s service token route.
+- `oidc.servicetokens` is `identity`'s service token route. The key is all
+  lowercase: TACHYON refuses an upper-case letter in an `application.json`
+  key (TY2010).
 - `outgoing.hosts` must list the `identity` host and the host of the
   service you call.
 
@@ -56,7 +58,7 @@ request.Header.Set("Authorization", authorization) // "Bearer <token>"
 - Without the settings it returns `oidc.NotConfigured`. When `identity`
   refuses the client, it returns `oidc.SignInRefused`. When `identity`
   cannot answer, it returns `oidc.KeycloakUnavailable` (the name stays).
-- The mode follows the settings: with `oidc.serviceTokens` it asks
+- The mode follows the settings: with `oidc.servicetokens` it asks
   `identity`; without it (the old per-realm settings, until slice L5) it
   asks Keycloak's `oidc.keycloak` with client credentials.
 - Tokens are cached in `TMPDIR` (folder `mesail-oidc/tokens`, mode 0700,
@@ -87,7 +89,7 @@ maps the token role `mesail-service` to `Service`. A service token has
 
 Use `oidc.SigningRealm{}.StartedMesail()` to make a Mesail token without
 `identity` (its settings: issuer
-`https://mail.mesail.test/api/v1/identity`, `jwks` and `serviceTokens`
+`https://mail.mesail.test/api/v1/identity`, `jwks` and `servicetokens`
 under it; `ApplicationJson()` and `Publish(now)` as for `Started(name)`,
 which stays the per-realm test issuer until slice L5):
 
@@ -98,5 +100,5 @@ token, _ := realm.Token(oidc.TokenRequest{Subject: "service", Domain: "example.c
     AuthorizedParty: "mesail-service", ExpiresAt: time.Now().Unix() + 60})
 ```
 
-To test the calling side, point `oidc.serviceTokens` at an `httptest`
+To test the calling side, point `oidc.servicetokens` at an `httptest`
 server that answers `POST` with `{"accessToken": "...", "expiresIn": 60}`.

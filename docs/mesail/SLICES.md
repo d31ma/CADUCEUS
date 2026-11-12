@@ -562,9 +562,9 @@ an earlier slice text in this file says "realm of the domain",
 | `kit/addresses` (new) | Prefix rules, login parsing (prefix or address), address normalization, the role names (SPEC AC-ID-11). Used by identity, directory, mail-in, messaging. |
 | `apps/identity` | Sign-in by prefix or address, the person lookup, Mesail token issuing, `GET /jwks`, `POST /service-token`, `POST /session/domain`, membership check on refresh, `mustChangePassword`, account routes in the realm `mesail`. |
 | `apps/directory` | `people` and `local-parts`, member admin routes, person routes, the AC-ID-13 check, default domain, Keycloak users through `mesail-directory`; no realm creation (`packages/keycloak` realm template code and `RealmService` go away); prefix check on aliases and channel addresses; `member.upserted` with `removed`. |
-| Every Yon app | `application.json` `oidc` block (issuer, `jwks`, `serviceTokens`; no `keycloak`), the kit copy of `oidc`, test token setups (`Domain` field), install-wide calls with `oidc.InstallWide`. |
+| Every Yon app | `application.json` `oidc` block (issuer, `jwks`, `servicetokens`; no `keycloak`), the kit copy of `oidc`, test token setups (`Domain` field), install-wide calls with `oidc.InstallWide`. |
 | `kit/realtime`, `kit/channels`, `kit/mailin`, `kit/mailout` | `OidcTokenChecker` reads the `domain` claim; `"mesail-operators"` becomes `oidc.InstallWide`. |
-| P1 (`deploy/floci/**`, `deploy/lambda/**`, `deploy/router/**`, `scripts/floci/**`, `scripts/native/**`, `.env.example`) | `stack.json` `keycloak.domains` and `testUsers` become people with memberships; the signing key and the service secret in `generatedSecrets`; `rewrite-config.sh` rewrites `issuer`, `jwks` and `serviceTokens` to `identity`'s URL; `tokens.sh` gets tokens from `identity`'s sign-in, not from Keycloak; `keycloak.sh` checks the realm `mesail`; dev seed adds memberships. |
+| P1 (`deploy/floci/**`, `deploy/lambda/**`, `deploy/router/**`, `scripts/floci/**`, `scripts/native/**`, `.env.example`) | `stack.json` `keycloak.domains` and `testUsers` become people with memberships; the signing key and the service secret in `generatedSecrets`; `rewrite-config.sh` rewrites `issuer`, `jwks` and `servicetokens` to `identity`'s URL; `tokens.sh` gets tokens from `identity`'s sign-in, not from Keycloak; `keycloak.sh` checks the realm `mesail`; dev seed adds memberships. |
 | `apps/web` | Sign-in field "Username or email address"; no domain guessing (`SessionRealmService` goes away); one `Session` per tab; domain switcher from `Session.domains`; `mustChangePassword` screen; default domain in settings. |
 | `apps/web-admin` | Operator signs in with the same form; members page (add by prefix, existing-person notice, admin flag, remove, last admin); people page for Operators (find, rename, disable, reset password, remove 2-step code, delete); name the first admin on the domain page. |
 | `docs/mesail/ux/**` | Screens for the sign-in field, the switcher, the members and people pages. |
@@ -608,7 +608,7 @@ an earlier slice text in this file says "realm of the domain",
   has no `{realm}`, so apps keep working in the old mode until L5; a
   `TokenSigner` (ES256, current and previous key, `kid`) and the key set
   document for `identity`; `TokenRequest.Domain` in `SigningRealm`;
-  `ServiceTokens` against `oidc.serviceTokens` with the per-domain cache;
+  `ServiceTokens` against `oidc.servicetokens` with the per-domain cache;
   the session and account code for the one realm (username, not address).
 - **Depends on:** nothing; starts at once.
 - **Done when:** both modes pass their tests at 100% of the new code, and
@@ -749,6 +749,7 @@ an earlier slice text in this file says "realm of the domain",
 5. After L3, any time (does not block L5): **D2** (merged, develop
    f106bdb).
 6. After D2, any time (does not block L5): **L7b**.
+7. After L5 (merged, develop b3dbc95), any time: **K1**.
 
 ### L7b. Admin app: removals in progress (a new small web-admin session)
 L5 stays a mechanical switch with a merge pause, so this UI change is not
@@ -765,6 +766,39 @@ folded into it.
 - **Done when:** gates pass for `web-admin`, the responsive test passes,
   and removing a domain and deleting a person on the native stack show the
   in-progress state and then the end state.
+
+### K1. Clean-up after the token switch (one small session)
+Open items from L5 (`~/Library/Logs/local/CADUCEUS/mesail/l5-switch-note.md`).
+None needs the owner. The messaging and mail-in call cycle has its own fix
+session; S3 blobs for `mail-out` is a later cloud-form item (ADR 0007
+section 7).
+- **Owns, for these changes only:** `apps/directory` `TenantService` (with
+  the directory owner), the dev seed in `deploy/floci/**` and
+  `scripts/native/**` (with P1), `edge/smtp` service-token code (with M1's
+  successor), `apps/directory` D2 test setup, the web-admin test
+  `DomainListServiceTest.go`, `tests/responsive/IdentityFake.go`, and
+  `tests/blackbox/README.md`.
+- **Builds:**
+  - **"Hosted" means `active`** (CONTRACTS "directory", decided
+    2026-11-11): `TenantService.Hosted` counts only `active` domains, as
+    `GET /addresses` already does, so recipient kinds and `mail-out`'s
+    hand-off agree with `mail-in`. The fixture follows L0: the seed adds
+    `partner.test` and leaves it `pending` (never verified), and `carol` is
+    a member of it. So `carol@partner.test` resolves `external`, and carol
+    can sign in (a `403 not_a_member` for `carol@example.com`).
+  - **`edge/smtp` gets service tokens from `identity`**: it uses `kit/oidc`
+    `ServiceTokens` (JSON to `POST /api/v1/identity/service-token`, domain
+    `*` for its install-wide calls) instead of OAuth client credentials with
+    a form body; its `MESAIL_SERVICE_TOKEN_URL` setting is replaced by the
+    `servicetokens` URL. Needed before OP2 deploys the SMTP edge.
+  - **D2's 200-member test gets its own empty FYLO root** for each run (or a
+    fresh domain key), so its time no longer depends on what other tests
+    left behind; its deadline stays.
+  - **web-admin's `DomainListServiceTest`** uses the install-wide domain `*`
+    (`oidc.InstallWide`), not `mesail-operators`.
+  - **`tests/responsive/IdentityFake.go`** accepts `login`, not `address`.
+- **Done when:** gates pass for every touched app and module, and the
+  blackbox recipient and sign-in tests pass natively and on Floci.
 
 ### D2. Directory: long operations in batches, and repairs (L3's successor)
 Open items from L3 (develop 3d984bc, hand-over

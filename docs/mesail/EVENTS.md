@@ -213,7 +213,7 @@ outbound delivery queue, retries, email summaries, cleanup):
 - The helper: `oidc.ServiceTokens{}.Configured().Authorization(domainId)`
   returns `"Bearer ..."`; tokens are cached per domain in the process's
   temporary folder (file mode 0600) until 10 seconds before they expire;
-  the route comes from the app's `oidc.serviceTokens` setting; the
+  the route comes from the app's `oidc.servicetokens` setting; the
   `identity` host is in `outgoing.hosts`. `kit/outbox`'s `TokenSource` is
   the port; `StaticToken` stays for tests.
 

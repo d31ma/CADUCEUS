@@ -767,6 +767,7 @@ an earlier slice text in this file says "realm of the domain",
 14. Now, before K1's Floci runs if they have not started (it needs the
     dev host; K3's series stopped): **K8**. Floci series are not reliable
     until K8 finds the store outage's cause.
+15. After K5: **K9**.
 
 ### K5. Channel events without reader lists (messaging's, realtime's and notify's owners, one session)
 Found by K1 (2026-11-12): `memberIds` in a channel message's events lists
@@ -787,10 +788,41 @@ limit and no owner question.
   uses `mentionedMemberIds`, thread participants and direct participants
   only; a direct conversation refuses a 101st member participant (`400
   invalid_request`, field `recipients`).
-- **Done when:** a real-FYLO test posts in a channel of 10,000 members and
-  every document stays under 512 KiB; the realtime and notify tests show
-  channel readers still get the message and mentioned members still get
-  a notification; gates pass.
+- **Done when** (changed 2026-11-12: seeding 10,000 participants in real
+  FYLO takes about 100 seconds, over `ty test`'s fixed 30 seconds per file):
+  - a real-FYLO `ty test` in `apps/messaging` with a channel of 1,000
+    members: a post with a mention, an edit and a reaction; the message,
+    conversation and reaction documents stay under 512 KiB and the staged
+    events have empty `memberIds`;
+  - a Go test in `apps/messaging`'s packages (in-memory stores) with
+    10,000 members and the same checks;
+  - a `kit/events` test: the largest direct event (100 members, 100
+    mentions) stays under 16 KiB;
+  - the realtime and notify tests show channel readers still get the
+    message and mentioned members still get a notification; gates pass.
+
+### K9. A channel post reads no member list (messaging's owner, after K5)
+Found by K5 (2026-11-12): a post in a channel makes `messaging` read every
+participant row of the channel (`ConversationPicker.channel` calls
+`Participants.OfConversation`, for mentions and the delivery plan). At
+about 110 ms per page of 100 rows, a channel of 10,000 members needs about
+11 seconds per post, over the client's 10 second timeout. Since K5 the
+channel's readers come from `realtime`'s and `notify`'s own membership
+copies, so `messaging` does not need the list. No owner question.
+- **Owns:** `apps/messaging` posting, mention and delivery-plan code (with
+  the messaging owner).
+- **Builds:** for a channel, `messaging` checks the poster's membership
+  and each mentioned member (at most 100) with one exact-match read each
+  (`conversationId` and `memberId`), and reads only the rows the delivery
+  plan needs that are not plain members (for example outside email
+  participants, with an exact-match filter); it never scrolls all
+  participants of a channel on the post path. Direct conversations keep
+  reading their participants (at most 100).
+- **Depends on:** K5 merged (both change `messaging`'s posting).
+- **Done when:** a real-FYLO measurement shows a post's reads do not grow
+  with the channel's size (the same number of reads at 100 and at 1,000
+  members); a post in a 1,000-member channel answers in under 1 second in
+  that test; mentions and notifications still work; gates pass.
 
 ### K4. A newer event replaces a waiting one (the outbox owner, M2's successor)
 Found by K1 (2026-11-12). Decided in EVENTS.md section 2.2; no owner

@@ -788,6 +788,9 @@ longer than SPEC AC-ID-4's 60 seconds.
     seconds, and a sign-in that still fails answers `503` as now. The
     Keycloak calls keep their own timeout (K2).
 - **Depends on:** K2 merged; not at the same time as OP2.
+- **Also watch:** OP1's Floci run saw one `channels` `503` at 04:02:32 UTC
+  with no slow router call and no known cause. If K3's runs see it again,
+  keep the `channels` function's own log for that minute and report it.
 - **Done when:** a Floci test that keeps `directory` busy with a removal of
   200 members while signing in, in a loop, shows every sign-in answered in
   under 5 seconds, and the K2 check passes 10 runs in a row.
@@ -1218,6 +1221,13 @@ except for the items below.
     makes a key pair for a hosted domain, writes the private key as a
     secret file that `mail-out` reads (`MESAIL_SECRET_*`), and prints the
     DNS record to publish (L5 only adds test keys);
+  - warm functions in production: the scheduler calls every function's
+    health route every 5 minutes, and once after each deploy, so a user
+    request rarely meets a cold start (Floci's cold start is about 10 s;
+    K2 saw `identity` open new cold environments under concurrent sign-ins,
+    and a service-token call take 5 s). Measure `identity` under 20
+    concurrent sign-ins and report whether a per-function minimum of warm
+    instances is needed;
   - Floci kept pinned by digest, with an upgrade note;
   - a check of Floci's licence and maintainer, reported to the owner if it
     does not allow production use.

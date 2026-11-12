@@ -224,7 +224,11 @@ Decisions:
   - **Timeouts and retries.** Callers of a FYLO-owning route use a 30
     second timeout and retry only idempotent requests (every write has an
     idempotency key, DOMAIN.md invariant 6), with backoff, at most 3 times.
-    The router queues calls to a busy function instead of failing them.
+    The router queues calls to a busy function instead of failing them,
+    user requests before background calls (events, relay, jobs), and a
+    service on the sign-in path keeps each background call to 10 writes
+    and 3 seconds (2026-11-12, SLICES K3 and rule 9). A read cannot skip
+    the queue: in Lambda form the function runs one call at a time.
   - **Slow work goes through the outbox.** A route writes its own document
     once and returns; fan-out, indexing, notification and delivery happen
     later from the outbox relay and job routes (EVENTS.md). Chat stays

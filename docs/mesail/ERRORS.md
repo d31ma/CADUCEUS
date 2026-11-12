@@ -30,6 +30,16 @@ keeps its row, marked "retired".
   commit as the code, sorted by number.
 - Numbers inside a block go in order of first use; leave no gaps on
   purpose.
+- **One number per case, not per error type** (decided 2026-11-12, from
+  E1). When one error type has several cases (for example an upload with
+  a bad file name, media type, size or checksum), each case has its own
+  number. The error type's file offers one constructor per case (for
+  example `InvalidUploadFileName()`), and the code that raises the error
+  calls the constructor of its case, so no Service keeps a table from
+  fields to numbers. `field` still names the field.
+- The catch-all is a `@HandlesError` method that takes plain `error`
+  (TACHYON: a concrete error type wins over it): status 500, `code`
+  `unavailable`, the block's first number.
 - The message text is short, plain English, and never holds a token,
   password, key, file path, address list or message content.
 - A test in each app (built on `kit/apierrors`, slice E0) checks that every

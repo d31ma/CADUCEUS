@@ -105,4 +105,12 @@ func (test *SidebarRowServiceTest) TestOnlyTheCurrentConversationIsCurrent() {
 	rows := test.rows()
 	Assert.IsTrue(rows[2].Current)
 	Assert.IsTrue(!rows[1].Current)
+	Assert.Equals("page", *rows[2].AriaCurrent)
+	Assert.IsTrue(rows[1].AriaCurrent == nil)
+}
+
+func (test *SidebarRowServiceTest) TestAriaCurrentIsPageOnlyForTheCurrentRow() {
+	service := &SidebarRowService{}
+	Assert.Equals("page", *service.AriaCurrent(true))
+	Assert.IsTrue(service.AriaCurrent(false) == nil)
 }

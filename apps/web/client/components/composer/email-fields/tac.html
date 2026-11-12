@@ -8,7 +8,7 @@
       <w-text-field class="composer-subject min-w-0 flex-1" name="subject" density="compact" label="Subject" error="Add a subject. An email needs one." :value="composer.subject" on:change="composer.keepSubject($event.target.value)"></w-text-field>
     </logic>
     <logic else>
-      <w-text-field class="composer-subject min-w-0 flex-1" name="subject" density="compact" label="Subject" :hint="composer.newConversation ? 'Required' : ''" :value="composer.subject" on:change="composer.keepSubject($event.target.value)"></w-text-field>
+      <w-text-field class="composer-subject min-w-0 flex-1" name="subject" density="compact" label="Subject" :hint="composer.subjectHint" :value="composer.subject" on:change="composer.keepSubject($event.target.value)"></w-text-field>
     </logic>
   </div>
 </div>

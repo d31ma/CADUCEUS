@@ -338,7 +338,13 @@ client_checks() {
   name="$(basename "$app")"
   run_step "$name duvay" "$log" "$root/scripts/vendor/duvay.sh" --check --app "$name" || status=1
   run_step "$name styles" "$log" sh -c "cd '$root/tools/styles' && go run . --check --app '$name'" || status=1
+  run_step "$name views" "$log" client_view_check "$app" || status=1
   return "$status"
+}
+
+client_view_check() {
+  local app="$1"
+  (cd "$(repository_root)/tools/clientviews" && go run . "$app")
 }
 
 responsive_test() {
@@ -476,6 +482,8 @@ usage() {
   echo "  --apps-only    versions and the per-app steps; --app <name> limits them to one app" >&2
   echo "                 (a backend app's steps start with tools/controllers, ADR 0009, unless the app" >&2
   echo "                 is still in tools/controllers/unconverted.list)" >&2
+  echo "                 (a Tac app's steps include tools/clientviews, SLICES rule 19: the manifest keeps" >&2
+  echo "                 tac.dependencies.check on, and no tac.html view holds a ? : expression)" >&2
   return 2
 }
 

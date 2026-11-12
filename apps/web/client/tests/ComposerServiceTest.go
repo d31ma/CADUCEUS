@@ -23,6 +23,7 @@ func (test *ComposerServiceTest) TestStartOpensANewConversationWithAToRow() {
 	Assert.IsTrue(composer.Rows[0].Shown)
 	Assert.IsTrue(!composer.Rows[1].Shown)
 	Assert.Equals("Name, channel or email address", composer.Rows[0].Placeholder)
+	Assert.Equals("Required", composer.SubjectHint)
 }
 
 func (test *ComposerServiceTest) TestOpenAnExistingConversationHidesTheRows() {
@@ -31,6 +32,9 @@ func (test *ComposerServiceTest) TestOpenAnExistingConversationHidesTheRows() {
 	Assert.IsTrue(!composer.NewConversation)
 	Assert.IsTrue(!composer.Rows[0].Shown)
 	Assert.IsTrue(!composer.EmailMode)
+	Assert.Equals("", composer.SubjectHint)
+	Assert.Equals("Message", composer.BodyLabel)
+	Assert.Equals("Write a message", composer.BodyPlaceholder)
 }
 
 func (test *ComposerServiceTest) TestOpenAnEmailConversationPrefillsTheReplySubject() {
@@ -38,6 +42,8 @@ func (test *ComposerServiceTest) TestOpenAnEmailConversationPrefillsTheReplySubj
 	composer.Open(SendTarget{ConversationId: "conv-1", Subject: "Contract renewal"})
 	Assert.Equals("Re: Contract renewal", composer.Subject)
 	Assert.IsTrue(composer.EmailMode)
+	Assert.Equals("Email body", composer.BodyLabel)
+	Assert.Equals("Write your email", composer.BodyPlaceholder)
 }
 
 func (test *ComposerServiceTest) TestOpenKeepsAnExistingReplyPrefix() {

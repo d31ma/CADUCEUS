@@ -400,6 +400,7 @@ func (test *ConversationViewServiceTest) TestTrailingQuotesOfAnEmailAreSplitOff(
 	Assert.Equals("earlier", view.QuotedBlocks[0].Spans[0].Text)
 	Assert.IsTrue(view.Email.HasQuoted)
 	Assert.IsTrue(!view.ShowQuoted)
+	Assert.Equals("Show quoted text", view.QuotedLabel)
 }
 
 func (test *ConversationViewServiceTest) TestShownQuotesStayInTheQuotedBlocks() {
@@ -407,6 +408,7 @@ func (test *ConversationViewServiceTest) TestShownQuotesStayInTheQuotedBlocks() 
 	context.ShowQuoted = []string{"m1"}
 	view := test.views(context, test.fromCarol("m1", "2026-11-10T08:47:00Z", test.paragraph("Hi"), test.quote("earlier")))[0]
 	Assert.IsTrue(view.ShowQuoted)
+	Assert.Equals("Hide quoted text", view.QuotedLabel)
 	Assert.Equals(1, len(view.Blocks))
 	Assert.Equals(1, len(view.QuotedBlocks))
 }

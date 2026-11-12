@@ -18,6 +18,9 @@ type ComposerService struct {
 	SendLabel       string
 	EmailMode       bool
 	ModeText        string
+	BodyLabel       string
+	BodyPlaceholder string
+	SubjectHint     string
 	SenderAddress   string
 	Problem         string
 	ProblemText     string
@@ -141,6 +144,9 @@ func (composer *ComposerService) refresh() {
 	composer.Summary = composer.recipients.Summary()
 	composer.SendLabel = composer.recipients.SendLabel()
 	composer.EmailMode = composer.emailMode()
+	composer.BodyLabel = composer.bodyLabelFor(composer.EmailMode)
+	composer.BodyPlaceholder = composer.placeholderFor(composer.EmailMode)
+	composer.SubjectHint = composer.subjectHintFor(composer.NewConversation)
 	composer.ModeText = composer.recipients.ModeText()
 	composer.SenderAddress = composer.recipients.SenderAddress()
 	composer.ProblemText = composer.problems.Text(composer.Problem)
@@ -148,6 +154,27 @@ func (composer *ComposerService) refresh() {
 
 func (composer *ComposerService) emailMode() bool {
 	return composer.recipients.EmailMode() || composer.Target.Subject != ""
+}
+
+func (composer *ComposerService) bodyLabelFor(emailMode bool) string {
+	if emailMode {
+		return "Email body"
+	}
+	return "Message"
+}
+
+func (composer *ComposerService) placeholderFor(emailMode bool) string {
+	if emailMode {
+		return "Write your email"
+	}
+	return "Write a message"
+}
+
+func (composer *ComposerService) subjectHintFor(newConversation bool) string {
+	if newConversation {
+		return "Required"
+	}
+	return ""
 }
 
 func (composer *ComposerService) rows() []RecipientRow {

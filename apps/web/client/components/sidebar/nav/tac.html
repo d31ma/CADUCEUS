@@ -61,7 +61,7 @@
           <ul class="nav-list flex flex-col gap-px">
             <loop :for="row of sidebar.channels">
               <li class="min-w-0">
-                <w-btn variant="text" block class="nav-row min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-unread="row.unread" :data-current="row.current" :aria-current="row.current ? 'page' : false" on:click="sidebar.open(row.conversationId)">
+                <w-btn variant="text" block class="nav-row min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-unread="row.unread" :data-current="row.current" :aria-current="row.ariaCurrent" on:click="sidebar.open(row.conversationId)">
                   <span class="row-inner flex min-w-0 flex-1 items-center gap-2">
                     <logic :if="row.private">
                       <w-icon class="row-icon" name="lock" size="small" aria-hidden="true"></w-icon>
@@ -101,7 +101,7 @@
           <ul class="nav-list flex flex-col gap-px">
             <loop :for="row of sidebar.directs">
               <li class="min-w-0">
-                <w-btn variant="text" block class="nav-row min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-unread="row.unread" :data-current="row.current" :aria-current="row.current ? 'page' : false" on:click="sidebar.open(row.conversationId)">
+                <w-btn variant="text" block class="nav-row min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-unread="row.unread" :data-current="row.current" :aria-current="row.ariaCurrent" on:click="sidebar.open(row.conversationId)">
                   <span class="row-inner flex min-w-0 flex-1 items-center gap-2">
                     <w-avatar class="row-avatar" size="x-small" :initials="row.initials" aria-hidden="true"></w-avatar>
                     <span class="row-title min-w-0 flex-1 truncate">{row.title}</span>
@@ -131,7 +131,7 @@
           <ul class="nav-list flex flex-col gap-px">
             <loop :for="row of sidebar.emails">
               <li class="min-w-0">
-                <w-btn variant="text" block class="nav-row email-row min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-unread="row.unread" :data-current="row.current" :aria-current="row.current ? 'page' : false" on:click="sidebar.open(row.conversationId)">
+                <w-btn variant="text" block class="nav-row email-row min-h-8 pointer-coarse:min-h-11 max-md:min-h-11" :data-unread="row.unread" :data-current="row.current" :aria-current="row.ariaCurrent" on:click="sidebar.open(row.conversationId)">
                   <span class="row-inner flex min-w-0 flex-1 items-center gap-2">
                     <w-avatar class="row-avatar outside-avatar" size="x-small" :initials="row.initials" aria-hidden="true"></w-avatar>
                     <span class="row-title min-w-0 flex-1 truncate">{row.title}</span>

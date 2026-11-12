@@ -12,8 +12,8 @@
 
     <form method="dialog" class="contents" aria-label="Message" on:submit="composer.sendWith($event.target.elements.body.value)">
     <div class="composer-editor px-3 py-2">
-      <label class="sr-only" for="composer-input">{composer.emailMode ? 'Email body' : 'Message'}</label>
-      <textarea id="composer-input" class="composer-textarea block w-full" name="body" rows="1" :placeholder="composer.emailMode ? 'Write your email' : 'Write a message'" :value="composer.body" on:input="composer.body = $event.target.value"></textarea>
+      <label class="sr-only" for="composer-input">{composer.bodyLabel}</label>
+      <textarea id="composer-input" class="composer-textarea block w-full" name="body" rows="1" :placeholder="composer.bodyPlaceholder" :value="composer.body" on:input="composer.body = $event.target.value"></textarea>
     </div>
 
     <composer-attachments />

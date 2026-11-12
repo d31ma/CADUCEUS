@@ -8,6 +8,7 @@ import (
 type PeopleListService struct {
 	Query         string
 	StateFilter   string
+	StateChoice   string
 	SearchedQuery string
 	State         string
 	Rows          []PersonRow
@@ -59,6 +60,7 @@ func (people *PeopleListService) Retry() {
 func (people *PeopleListService) load() {
 	people.State = "loading"
 	people.SearchedQuery = strings.TrimSpace(people.Query)
+	people.StateChoice = people.shownFilter(people.StateFilter)
 	page, failure := people.directoryClient.People(people.session.Authorization(), people.SearchedQuery)
 	problem := people.problems.Of(failure)
 	people.Rows = people.rowsOf(slices.DeleteFunc(slices.Clone(page.Items), people.filteredOut))
@@ -76,8 +78,15 @@ func (people *PeopleListService) filteredOut(person PersonSummary) bool {
 }
 
 func (people *PeopleListService) chosenFilter(stateFilter string) string {
-	if stateFilter == "all" {
+	if stateFilter == people.allStates() {
 		return ""
+	}
+	return stateFilter
+}
+
+func (people *PeopleListService) shownFilter(stateFilter string) string {
+	if stateFilter == "" {
+		return people.allStates()
 	}
 	return stateFilter
 }
@@ -172,6 +181,10 @@ func (people *PeopleListService) forbiddenState(problem string, state string) st
 
 func (people *PeopleListService) forbidden() string {
 	return "forbidden"
+}
+
+func (people *PeopleListService) allStates() string {
+	return "all"
 }
 
 func (people *PeopleListService) active() string {

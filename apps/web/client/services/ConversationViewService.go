@@ -118,8 +118,16 @@ func (service *ConversationViewService) addBody(view *MessageView, message Messa
 	view.Blocks = service.filledBlocks(visible.Blocks[:start])
 	view.QuotedBlocks = service.filledBlocks(visible.Blocks[start:])
 	view.ShowQuoted = slices.Contains(context.ShowQuoted, message.MessageId)
+	view.QuotedLabel = service.quotedLabel(view.ShowQuoted)
 	view.MentionsMe = service.mentions(visible.Blocks, context.MyAddress)
 	view.Email = service.emailView(message, visible.Blocks, len(view.QuotedBlocks) > 0, context.AllowedSenders)
+}
+
+func (service *ConversationViewService) quotedLabel(showQuoted bool) string {
+	if showQuoted {
+		return "Hide quoted text"
+	}
+	return "Show quoted text"
 }
 
 func (service *ConversationViewService) filledBlocks(blocks []Block) []Block {

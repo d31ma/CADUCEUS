@@ -129,6 +129,7 @@ func (test *SidebarServiceTest) TestOpenMarksTheRowCurrentAndRead() {
 	row := sidebar.Channels[0]
 	Assert.Equals("cnv_general", sidebar.CurrentId)
 	Assert.IsTrue(row.Current)
+	Assert.Equals("page", *row.AriaCurrent)
 	Assert.IsTrue(!row.Unread)
 	Assert.Equals(0, row.UnreadCount)
 	Assert.Equals(0, row.MentionCount)
@@ -148,6 +149,7 @@ func (test *SidebarServiceTest) TestOpenMovesCurrentFromThePreviousRow() {
 	sidebar.Open("cnv_bo")
 	Assert.IsTrue(!sidebar.Channels[0].Current)
 	Assert.IsTrue(sidebar.Directs[1].Current)
+	Assert.IsTrue(sidebar.Channels[0].AriaCurrent == nil)
 	Assert.Equals(0, sidebar.Directs[1].UnreadCount)
 	Assert.Equals("cnv_bo", sidebar.CurrentId)
 }

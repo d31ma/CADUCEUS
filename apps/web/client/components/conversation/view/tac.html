@@ -162,7 +162,7 @@
 
                     <logic :if="message.email.hasQuoted">
                       <div class="quoted flex flex-col items-start gap-2">
-                        <w-btn variant="text" size="small" prepend-icon="chevron-down" :data-open="message.showQuoted" :aria-expanded="shell.flag(message.showQuoted)" :text="message.showQuoted ? 'Hide quoted text' : 'Show quoted text'" on:click="conversation.toggleQuoted(message.messageId)"></w-btn>
+                        <w-btn variant="text" size="small" prepend-icon="chevron-down" :data-open="message.showQuoted" :aria-expanded="shell.flag(message.showQuoted)" :text="message.quotedLabel" on:click="conversation.toggleQuoted(message.messageId)"></w-btn>
                         <logic :if="message.showQuoted">
                           <blockquote class="quoted-text flex min-w-0 flex-col gap-2">
                             <loop :for="block of message.quotedBlocks">

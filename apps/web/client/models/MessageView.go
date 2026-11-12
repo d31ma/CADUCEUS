@@ -19,6 +19,7 @@ type MessageView struct {
 	Blocks          []Block           `json:"blocks"`
 	QuotedBlocks    []Block           `json:"quotedBlocks"`
 	ShowQuoted      bool              `json:"showQuoted"`
+	QuotedLabel     string            `json:"quotedLabel"`
 	Truncated       bool              `json:"truncated"`
 	Reactions       []MessageReaction `json:"reactions"`
 	Attachments     []AttachmentCard  `json:"attachments"`

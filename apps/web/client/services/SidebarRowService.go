@@ -27,6 +27,7 @@ func (service *SidebarRowService) rowsOf(summaries []ConversationSummary, channe
 }
 
 func (service *SidebarRowService) row(summary ConversationSummary, channel Channel, currentId string) ConversationRow {
+	current := summary.ConversationId == currentId
 	return ConversationRow{
 		ConversationId:  summary.ConversationId,
 		Title:           summary.Title,
@@ -40,9 +41,22 @@ func (service *SidebarRowService) row(summary ConversationSummary, channel Chann
 		Private:         channel.Visibility == service.visibilityPrivate(),
 		HasEmailAddress: channel.EmailAddress != "",
 		Archived:        channel.Archived,
-		Current:         summary.ConversationId == currentId,
+		Current:         current,
+		AriaCurrent:     service.AriaCurrent(current),
 		LastMessageAt:   summary.LastMessageAt,
 	}
+}
+
+func (service *SidebarRowService) AriaCurrent(current bool) *string {
+	return service.pageWhen(current)
+}
+
+func (service *SidebarRowService) pageWhen(current bool) *string {
+	if !current {
+		return nil
+	}
+	page := "page"
+	return &page
 }
 
 func (service *SidebarRowService) channelFor(conversationId string, channels []Channel) Channel {

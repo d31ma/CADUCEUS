@@ -19,7 +19,7 @@
       <logic else>
         <form method="dialog" role="search" aria-label="Find people" class="flex flex-wrap items-center gap-3" on:submit="peopleList.searchWith($event.target.elements.query.value, peopleList.stateFilter)">
           <w-text-field type="search" name="query" label="Search" placeholder="Name or username" prepend-inner-icon="search" autocomplete="off" hide-details class="min-w-0 flex-[1_1_16rem]" :value="peopleList.query"></w-text-field>
-          <w-select name="state" aria-label="State" hide-details class="people-state min-w-0 flex-[1_1_10rem] @xl/page:flex-[0_0_11rem]" :value="peopleList.stateFilter == '' ? 'all' : peopleList.stateFilter" on:change="peopleList.searchWith(peopleList.query, $event.target.value)">
+          <w-select name="state" aria-label="State" hide-details class="people-state min-w-0 flex-[1_1_10rem] @xl/page:flex-[0_0_11rem]" :value="peopleList.stateChoice" on:change="peopleList.searchWith(peopleList.query, $event.target.value)">
             <w-option value="all">All states</w-option>
             <w-option value="active">Active</w-option>
             <w-option value="disabled">Turned off</w-option>

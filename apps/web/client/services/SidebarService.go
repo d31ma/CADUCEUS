@@ -261,6 +261,7 @@ func (sidebar *SidebarService) marked(rows []ConversationRow, conversationId str
 
 func (sidebar *SidebarService) markedRow(row ConversationRow, conversationId string) ConversationRow {
 	row.Current = row.ConversationId == conversationId
+	row.AriaCurrent = sidebar.rows.AriaCurrent(row.Current)
 	if !row.Current {
 		return row
 	}

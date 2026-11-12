@@ -68,12 +68,14 @@ func (test *PeopleListServiceTest) TestTheStateFilterKeepsMatchingPeople() {
 	Assert.Equals(1, len(people.Rows))
 	Assert.Equals("1 person", people.Heading)
 	Assert.Equals("disabled", people.StateFilter)
+	Assert.Equals("disabled", people.StateChoice)
 }
 
 func (test *PeopleListServiceTest) TestAllStatesClearsTheFilter() {
 	people := test.opened()
 	people.SearchWith("", "all")
 	Assert.Equals("", people.StateFilter)
+	Assert.Equals("all", people.StateChoice)
 	Assert.Equals(3, len(people.Rows))
 }
 

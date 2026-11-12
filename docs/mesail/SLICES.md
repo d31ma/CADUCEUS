@@ -763,9 +763,9 @@ an earlier slice text in this file says "realm of the domain",
    **K5**.
 12. After K3: **K6** (with OP2 if OP2 is changing `deploy/lambda`).
 13. After K4: **K7**.
-14. Right after K3's Floci series (it needs the dev host; before K1's
-    Floci runs if they have not started): **K8**. Floci series are not
-    reliable until K8 finds the store outage's cause.
+14. Now, before K1's Floci runs if they have not started (it needs the
+    dev host; K3's series stopped): **K8**. Floci series are not reliable
+    until K8 finds the store outage's cause.
 
 ### K5. Channel events without reader lists (messaging's, realtime's and notify's owners, one session)
 Found by K1 (2026-11-12): `memberIds` in a channel message's events lists
@@ -872,6 +872,13 @@ longer than SPEC AC-ID-4's 60 seconds.
      runs do not break the chain. Each one is written in the findings
      note under K8. If 2 or more further runs of the series are set aside,
      the series stops and the coordinator reports to the owner.
+  6. Changed after run 3 (2026-11-12): the store outage grew (47 seconds,
+     `directory` and `messaging`), so more runs on this data measure the
+     store, not K3. The series stops. K3 merges on its evidence, after its
+     normal gates: run 0 (the K3 test passed), the warm-up and run 1
+     (passed fully, slowest sign-in 2.4 seconds), and runs 2 and 3, where
+     K3's parts worked as designed (no queue wait, one retry). The K2
+     check of 10 runs in a row moves to K8's done-when.
 
 ### K8. Directory store outage on Floci (directory's owner, with TACHYON)
 Found by K3 (2026-11-12, run 2): from 07:29:31 to 07:29:43 UTC every
@@ -938,7 +945,9 @@ FYLO-owning service, not only `directory`.
   AC-ID-4's 60 second limit. It needs an architecture decision first.
 - **Depends on:** the dev host, so after K3's and K1's Floci runs; the
   `YonLog` part after the TACHYON release and pin move.
-- **Done when:** the cause is written in the hand-over with logs, and a
+- **Done when:** the cause is written in the hand-over with logs; the K2
+  sign-in check passes 10 runs in a row on Floci (moved here from K3; a
+  failure that points at K3's parts comes back as a fix slice); and a
   1-hour Floci run under K3's sign-in load shows no "store is not
   available" answer, or the owner accepts a written limit.
 

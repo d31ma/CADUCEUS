@@ -72,6 +72,16 @@ notes):
   reactions, attachments) are separate documents or lists of ids.
 - **Order is creation order.** FYLO has no ORDER BY. Lists that need
   newest-first are read with a cursor from the end of a time partition.
+- **Every document stays under 512 KiB.** FYLO's machine protocol refuses
+  a request frame over 1 MiB (`fylo-machine` `DEFAULT_MAX_REQUEST_BYTES`),
+  for writes and for reads (`EQUERYITEMTOOLARGE`), and JSON escaping can
+  double text inside a staged event. So every collection whose documents
+  can grow (message bodies and `blocksJson`, email content, staged events
+  in `pendingEvents` that carry a body, search documents, summaries) has
+  an explicit cap that keeps the whole document under 512 KiB, and a test
+  at that cap. Large bytes go to the blob store, never into a document.
+  Email content is capped at 256 KiB of JSON (`kit/mailin` `ContentBudget`,
+  found by the router-cycle fix on 2026-11-12).
 - **One collection per write.** FYLO has no transaction across collections.
   Every write touches one collection and is idempotent, so a retry after a
   crash is safe. The outbox event is a field of the same document

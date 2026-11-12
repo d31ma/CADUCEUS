@@ -832,6 +832,13 @@ section 7).
   - **web-admin's `DomainListServiceTest`** uses the install-wide domain `*`
     (`oidc.InstallWide`), not `mesail-operators`.
   - **`tests/responsive/IdentityFake.go`** accepts `login`, not `address`.
+  - **Document size check** (DOMAIN.md "Every document stays under 512
+    KiB"): for each FYLO-owning service, find its largest possible
+    document at today's caps and add a real-FYLO test at that size; at
+    least `messaging`'s email `Message` (body, `blocksJson` and a staged
+    `message.created` that carries the body), `search`'s index document and
+    `notify`'s summary. Lower a cap where a document can pass 512 KiB, and
+    tell the architect which caps changed.
   - **`mail-in`'s `inbound-content` is split by month** (DOMAIN.md "FYLO
     layout", decided 2026-11-12): `kit/mailin` `ContentShelf` uses
     `CollectionName{}.ForDomainMonth` with the email's received month, and

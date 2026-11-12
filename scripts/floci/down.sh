@@ -49,11 +49,21 @@ own_floci() {
   [ "${MESAIL_VM:-mesail}" = colima ] && grep -q -- '--profile floci' "$(mesail_log_dir)/compose-profile" 2> /dev/null
 }
 
+save_logs() {
+  local profile="$1" service
+  for service in scheduler router realtime; do
+    # shellcheck disable=SC2086
+    compose $profile logs --no-color --timestamps "$service" > "$(mesail_log_dir)/container-$service.log" 2>&1 || true
+  done
+  echo "container logs saved for scheduler, router and realtime"
+}
+
 main() {
   local profile
   mesail_load_settings
   mesail_load_secrets
   profile="$(used_profile)"
+  mesail_step save-logs save_logs "$profile"
   if ! own_floci; then
     # shellcheck disable=SC2086
     mesail_step compose-stop compose $profile stop

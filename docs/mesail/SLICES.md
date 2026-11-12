@@ -1088,8 +1088,21 @@ FYLO owner's design choice; Mesail does not need it.
     cold-start writes took 9.5 and 18 seconds, so 5 seconds turns them
     into failures; a shorter deadline does not free the store sooner,
     because the next call waits for the stuck `fylo` to exit anyway;
-    15 seconds fits the 20 second work budget of rule 9 and the 60 second
-    function timeout; `directory` gets the same value);
+    `directory` gets the same value). Since the owner's approval of
+    2026-11-12, TACHYON's budget is for ALL store calls of one HTTP
+    request together (the wait for an old `fylo` and the `EROOTLOCKED`
+    wait included), not per call. Checked: 15 seconds per request is far
+    under the 60 second function timeout and the router's 70 seconds. It
+    is over the client's 10 second timeout, accepted: during a long stall
+    a user request may time out at the client and finish on the server
+    (every write is idempotent); a 5 second budget would fail it instead;
+  - rule 9's work budget in Lambda form drops from 20 to 10 seconds per
+    request or job call (stop starting new writes after 10 seconds and
+    answer `more: true`), so one 11 second stall on the last write still
+    fits the 15 second store budget. Change it where it is set: the
+    `OutboxDesk` and relay limits (`kit/channels`, `kit/mailin`,
+    `apps/notify` `OutboxRelayService`, and any other job's own limit) and
+    rule 9 itself; the sign-in path's 3 seconds stays;
   - the store error handlers log the TACHYON storage code with `YonLog`
     (K8's logging step);
   - nothing else: the slices that wait for T1, T13 and other TACHYON

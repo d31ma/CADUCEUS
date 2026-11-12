@@ -66,6 +66,34 @@ keeps its row, marked "retired".
 | MS1000 | directory | 500 | `unavailable` | Something went wrong. | an unexpected error in `directory` |
 | MS1500 | messaging | 500 | `unavailable` | Something went wrong. | an unexpected error in `messaging` |
 | MS2000 | channels | 500 | `unavailable` | Something went wrong. | an unexpected error in `channels` |
+| MS2001 | channels | 401 | `unauthenticated` | the access token was refused | a channel route could not verify the caller's token |
+| MS2002 | channels | 403 | `forbidden` | only members of a domain use its channels | the caller's token has no member or admin role |
+| MS2003 | channels | 400 | `invalid_request` | a channel name has 1 to 80 lowercase letters, digits, - or _ | a new channel's name breaks the rule (`field` `name`) |
+| MS2004 | channels | 400 | `invalid_request` | visibility is public or private | a new channel's visibility is not `public` or `private` (`field` `visibility`) |
+| MS2005 | channels | 400 | `invalid_request` | a topic has at most 250 characters | a channel topic is too long (`field` `topic`) |
+| MS2006 | channels | 409 | `conflict` | the channel name ... is already used in this domain | a new channel's name is already used in the domain |
+| MS2007 | channels | 404 | `not_found` | no such channel | the channel id in the path does not have the `ch_` form |
+| MS2008 | channels | 404 | `not_found` | no such channel | the channel does not exist, or it is private and the caller is not in it |
+| MS2009 | channels | 400 | `invalid_request` | invite 1 to 100 members at a time | an invite has no member or more than 100 (`field` `memberIds`) |
+| MS2010 | channels | 400 | `invalid_request` | a member id is empty | an invite lists an empty member id (`field` `memberIds`) |
+| MS2011 | channels | 404 | `not_found` | no such member in this domain | an invited member is not in the channel's domain |
+| MS2012 | channels | 403 | `forbidden` | only a domain admin can set a channel email address | a caller who is not a domain admin set the email address |
+| MS2013 | channels | 403 | `forbidden` | only a domain admin or the channel creator can archive a channel | another member tried to archive or unarchive the channel |
+| MS2014 | channels | 403 | `forbidden` | join the channel to change its topic | a caller who is not in the channel changed its topic |
+| MS2015 | channels | 409 | `conflict` | the channel is archived and read-only | a change, join or invite on an archived channel |
+| MS2016 | channels | 400 | `invalid_request` | a channel email address is local-part@ the channel's own domain | the email address has the wrong form (`field` `emailAddress`) |
+| MS2017 | channels | 400 | `invalid_request` | the address ... is not in the channel's domain | `directory` refused the email address as outside the domain (`field` `emailAddress`) |
+| MS2018 | channels | 409 | `duplicate` | the address ... already belongs to a member, an alias or another channel | the channel email address is already taken |
+| MS2019 | channels | 503 | `unavailable` | the channel service is not available | `directory` did not answer a member lookup or an address claim or release |
+| MS2020 | channels | 503 | `unavailable` | the channel service is not available | the channel store (FYLO) did not answer |
+| MS2021 | channels | 503 | `unavailable` | the channel service is not available | the channel store answered something unreadable |
+| MS2022 | channels | 503 | `unavailable` | the channel service is not available / the outbox is not available | the outbox settings are missing |
+| MS2023 | channels | 503 | `unavailable` | the outbox is not available | an outbox document cannot be read |
+| MS2024 | channels | 404 | `not_found` | (the outbox's own text) | the dead letter to retry is not in the outbox document |
+| MS2025 | channels | 404 | `not_found` | no such outbox document | the outbox document to retry does not exist |
+| MS2026 | channels | 404 | `not_found` | no such outbox collection | the collection named in a retry is not an outbox collection |
+| MS2027 | channels | 503 | `unavailable` | the channel service is not available | any other failure in a channel route |
+| MS2028 | channels | 503 | `unavailable` | the outbox is not available | any other failure in an outbox route |
 | MS2500 | mail-in | 500 | `unavailable` | Something went wrong. | an unexpected error in `mail-in` |
 | MS3000 | mail-out | 500 | `unavailable` | Something went wrong. | an unexpected error in `mail-out` |
 | MS3500 | attachments | 500 | `unavailable` | Something went wrong. | an unexpected error in `attachments` |

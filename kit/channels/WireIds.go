@@ -21,7 +21,7 @@ func (WireIds) refusal(found bool, storedId string) error {
 	if found && storedId != "" {
 		return nil
 	}
-	return &NotFound{Message: "no such channel"}
+	return NotFound{}.BadChannelId()
 }
 
 func (WireIds) channelPrefix() string {

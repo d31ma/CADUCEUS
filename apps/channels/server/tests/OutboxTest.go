@@ -41,6 +41,7 @@ func (test *OutboxTest) TestRetryOfAnUnknownCollectionIsNotFound() {
 	defer world.Close()
 	err := world.Outbox.PostRetry(RetryRequest{Collection: "members-" + world.RandomText(), DocumentId: "1", EventId: "evt_1", Subscriber: "search"})
 	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
+	Assert.Equals(2026, world.NumberOf(err))
 }
 
 func (test *OutboxTest) deadFor(world *ChannelsTestSetup, documentId string) []channels.DeadEvent {

@@ -30,8 +30,10 @@ func (test *ChannelsRoutesTest) TestAPrivateChannelIsHiddenFromOtherMembers() {
 	world := ChannelsTestSetup{}.World()
 	defer world.Close()
 	created := world.Create(world.Member("ana"), "secret", "private")
+	joinError := world.Controller.PostJoin(world.Member("bo"), created.ChannelId)
 	Assert.IsTrue(!slices.Contains(world.ListedNames(world.Member("bo")), "secret"), "bo sees the private channel")
-	Assert.IsTrue(world.IsNotFound(world.Controller.PostJoin(world.Member("bo"), created.ChannelId)), "want NotFound")
+	Assert.IsTrue(world.IsNotFound(joinError), "want NotFound")
+	Assert.Equals(2008, world.NumberOf(joinError))
 }
 
 func (test *ChannelsRoutesTest) TestAMemberOfAnotherDomainNeitherSeesNorJoinsTheChannel() {
@@ -59,6 +61,7 @@ func (test *ChannelsRoutesTest) TestInvitingAMemberOfAnotherDomainIsRefused() {
 	created := world.Create(world.Member("ana"), "secret", "private")
 	err := world.Controller.PostInvite(world.Member("ana"), created.ChannelId, AddMembersRequest{MemberIds: []string{"bo", "eve"}})
 	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
+	Assert.Equals(2011, world.NumberOf(err))
 	Assert.IsTrue(!slices.Contains(world.ListedNames(world.Member("bo")), "secret"), "bo was added although the invite was refused")
 }
 
@@ -74,7 +77,9 @@ func (test *ChannelsRoutesTest) TestAMemberLeavesAndTheCreatorArchivesThroughThe
 	Assert.IsTrue(err == nil, "archive failed")
 	Assert.IsTrue(updated.Archived, "not archived")
 	Assert.Equals(1, len(world.Published("search", "channel.archived", created.ChannelId)))
-	Assert.IsTrue(world.IsConflict(world.Controller.PostJoin(world.Member("bo"), created.ChannelId)), "want Conflict")
+	joinError := world.Controller.PostJoin(world.Member("bo"), created.ChannelId)
+	Assert.IsTrue(world.IsConflict(joinError), "want Conflict")
+	Assert.Equals(2015, world.NumberOf(joinError))
 }
 
 func (test *ChannelsRoutesTest) TestAnotherMemberCannotArchive() {
@@ -84,6 +89,7 @@ func (test *ChannelsRoutesTest) TestAnotherMemberCannotArchive() {
 	archived := true
 	_, err := world.Controller.PatchChannel(world.Member("bo"), created.ChannelId, UpdateChannelRequest{Archived: &archived})
 	Assert.IsTrue(world.IsForbidden(err), "want Forbidden")
+	Assert.Equals(2013, world.NumberOf(err))
 }
 
 func (test *ChannelsRoutesTest) TestADomainAdminGivesTheChannelAnEmailAddress() {
@@ -105,6 +111,7 @@ func (test *ChannelsRoutesTest) TestATakenEmailAddressIsADuplicate() {
 	world.Directory.Take(address)
 	_, err := world.Controller.PatchChannel(world.Admin("root"), created.ChannelId, UpdateChannelRequest{EmailAddress: &address})
 	Assert.IsTrue(world.IsDuplicate(err), "want Duplicate")
+	Assert.Equals(2018, world.NumberOf(err))
 }
 
 func (test *ChannelsRoutesTest) TestAnInvalidNameIsRefusedWithItsField() {
@@ -112,6 +119,7 @@ func (test *ChannelsRoutesTest) TestAnInvalidNameIsRefusedWithItsField() {
 	defer world.Close()
 	_, err := world.Controller.PostChannel(world.Member("ana"), CreateChannelRequest{Name: "Bad Name", Visibility: "public"})
 	Assert.Equals("name", world.InvalidField(err))
+	Assert.Equals(2003, world.NumberOf(err))
 }
 
 func (test *ChannelsRoutesTest) TestATokenWithoutAMemberRoleIsForbidden() {
@@ -119,4 +127,5 @@ func (test *ChannelsRoutesTest) TestATokenWithoutAMemberRoleIsForbidden() {
 	defer world.Close()
 	_, err := world.Controller.GetChannels(world.Bearer(world.Home, "robot", "mesail-service"))
 	Assert.IsTrue(world.IsForbidden(err), "want Forbidden")
+	Assert.Equals(2002, world.NumberOf(err))
 }

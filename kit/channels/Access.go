@@ -44,7 +44,7 @@ func (Access) hidden(found bool, view ChannelView) error {
 	if found && (view.Document.Visibility == (Rules{}).public() || view.Member) {
 		return nil
 	}
-	return &NotFound{Message: "no such channel"}
+	return NotFound{}.ChannelHidden()
 }
 
 func (Access) joinedIds(memberships []MembershipDocument) map[string]bool {

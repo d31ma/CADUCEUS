@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"mesail.dev/packages/apierrors"
 	"mesail.dev/packages/channels"
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/oidc"
@@ -33,8 +34,9 @@ func (ChannelsTestSetup) World() *ChannelsTestSetup {
 	world := &ChannelsTestSetup{Directory: channels.NewMemoryDirectory(), Pusher: outbox.NewRecordingPusher()}
 	world.Domain = "c2-" + world.RandomText() + ".test"
 	world.Home, world.Away = world.SignedRealms()
-	world.Controller = &ChannelsController{dataSource: DataSource{}, pusher: world.Pusher, lookup: world.Directory}
-	world.Outbox = &OutboxController{dataSource: DataSource{}, pusher: world.Pusher}
+	failures := &ErrorMappingService{}
+	world.Controller = &ChannelsController{channels: &ChannelService{dataSource: DataSource{}, wire: &ChannelWireService{}, failures: failures, pusher: world.Pusher, lookup: world.Directory}}
+	world.Outbox = &OutboxController{outbox: &OutboxService{dataSource: DataSource{}, failures: failures, pusher: world.Pusher}}
 	return world
 }
 
@@ -176,4 +178,17 @@ func (world *ChannelsTestSetup) FieldOf(failure *InvalidRequest) string {
 		return ""
 	}
 	return failure.Field
+}
+
+func (world *ChannelsTestSetup) NumberOf(err error) int {
+	var numbered apierrors.Numbered
+	errors.As(err, &numbered)
+	return world.numberOrZero(numbered)
+}
+
+func (world *ChannelsTestSetup) numberOrZero(numbered apierrors.Numbered) int {
+	if numbered == nil {
+		return 0
+	}
+	return numbered.Number()
 }

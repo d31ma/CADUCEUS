@@ -116,5 +116,5 @@ func (OutboxStore) missing(found bool) error {
 	if found {
 		return nil
 	}
-	return &NotFound{Message: "no such outbox document"}
+	return NotFound{}.OutboxDocument()
 }

@@ -104,7 +104,7 @@ func (documents CommandDocuments) into(command map[string]any, target any) error
 func (documents CommandDocuments) call(command map[string]any) (any, error) {
 	answer, err := documents.source.Command(command)
 	if err != nil {
-		return nil, &Unavailable{Message: "the channel store is not available", Cause: err}
+		return nil, Unavailable{}.StoreDown(err)
 	}
 	return answer, nil
 }
@@ -112,11 +112,11 @@ func (documents CommandDocuments) call(command map[string]any) (any, error) {
 func (CommandDocuments) decode(value any, target any) error {
 	encoded, err := json.Marshal(value)
 	if err != nil {
-		return &Unavailable{Message: "the channel store answered something unreadable", Cause: err}
+		return Unavailable{}.StoreUnreadable(err)
 	}
 	err = json.Unmarshal(encoded, target)
 	if err != nil {
-		return &Unavailable{Message: "the channel store answered something unreadable", Cause: err}
+		return Unavailable{}.StoreUnreadable(err)
 	}
 	return nil
 }

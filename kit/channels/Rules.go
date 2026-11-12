@@ -67,33 +67,33 @@ func (rules Rules) checkName(name string) error {
 	if rules.namePattern().MatchString(name) {
 		return nil
 	}
-	return &InvalidRequest{Message: "a channel name has 1 to 80 lowercase letters, digits, - or _", Field: "name"}
+	return InvalidRequest{}.BadName()
 }
 
 func (rules Rules) checkVisibility(visibility string) error {
 	if visibility == rules.public() || visibility == rules.private() {
 		return nil
 	}
-	return &InvalidRequest{Message: "visibility is public or private", Field: "visibility"}
+	return InvalidRequest{}.BadVisibility()
 }
 
 func (rules Rules) checkTopic(topic *string) error {
 	if topic == nil || len([]rune(*topic)) <= rules.maxTopicLength() {
 		return nil
 	}
-	return &InvalidRequest{Message: "a topic has at most 250 characters", Field: "topic"}
+	return InvalidRequest{}.TopicTooLong()
 }
 
 func (rules Rules) checkInviteSize(count int) error {
 	if count >= 1 && count <= rules.maxInvites() {
 		return nil
 	}
-	return &InvalidRequest{Message: "invite 1 to 100 members at a time", Field: rules.memberIdsField()}
+	return InvalidRequest{}.BadInviteSize(rules.memberIdsField())
 }
 
 func (rules Rules) checkMemberIds(memberIds []string) error {
 	if slices.Contains(memberIds, "") {
-		return &InvalidRequest{Message: "a member id is empty", Field: rules.memberIdsField()}
+		return InvalidRequest{}.EmptyMemberId(rules.memberIdsField())
 	}
 	return nil
 }
@@ -102,26 +102,26 @@ func (Rules) checkAddressRight(administrator bool, address *string) error {
 	if address == nil || administrator {
 		return nil
 	}
-	return &Forbidden{Message: "only a domain admin can set a channel email address"}
+	return Forbidden{}.AddressNeedsAdmin()
 }
 
 func (Rules) checkArchiveRight(allowed bool, archived *bool) error {
 	if archived == nil || allowed {
 		return nil
 	}
-	return &Forbidden{Message: "only a domain admin or the channel creator can archive a channel"}
+	return Forbidden{}.ArchiveNeedsAdminOrCreator()
 }
 
 func (Rules) checkTopicRight(allowed bool, topic *string) error {
 	if topic == nil || allowed {
 		return nil
 	}
-	return &Forbidden{Message: "join the channel to change its topic"}
+	return Forbidden{}.TopicNeedsMember()
 }
 
 func (Rules) checkOpen(archived bool) error {
 	if archived {
-		return &Conflict{Message: "the channel is archived and read-only"}
+		return Conflict{}.Archived()
 	}
 	return nil
 }
@@ -155,7 +155,7 @@ func (rules Rules) checkAddress(domainId string, address string) error {
 	if address == "" || rules.addressPattern(domainId).MatchString(address) {
 		return nil
 	}
-	return &InvalidRequest{Message: "a channel email address is local-part@ the channel's own domain", Field: "emailAddress"}
+	return InvalidRequest{}.BadAddress()
 }
 
 func (Rules) namePattern() *regexp.Regexp {

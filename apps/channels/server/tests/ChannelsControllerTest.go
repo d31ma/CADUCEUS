@@ -19,4 +19,5 @@ func (test *ChannelsControllerTest) TestEveryRouteRefusesAForgedToken() {
 	Assert.IsTrue(world.IsUnauthenticated(leaveError), "leave: want Unauthenticated")
 	Assert.IsTrue(world.IsUnauthenticated(inviteError), "invite: want Unauthenticated")
 	Assert.IsTrue(world.IsUnauthenticated(patchError), "patch: want Unauthenticated")
+	Assert.Equals([]int{2001, 2001, 2001, 2001, 2001, 2001}, []int{world.NumberOf(listError), world.NumberOf(createError), world.NumberOf(joinError), world.NumberOf(leaveError), world.NumberOf(inviteError), world.NumberOf(patchError)})
 }

@@ -57,7 +57,7 @@ func (service Events) MemberRemoved(channel ChannelDocument, membership Membersh
 
 func (service Events) Ready() error {
 	if service.settings.OutboxError != nil {
-		return &Unavailable{Message: "the outbox settings are missing", Cause: service.settings.OutboxError}
+		return Unavailable{}.OutboxSettingsMissing(service.settings.OutboxError)
 	}
 	return nil
 }

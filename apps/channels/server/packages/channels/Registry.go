@@ -56,7 +56,7 @@ func (Registry) refusal(known bool) error {
 	if known {
 		return nil
 	}
-	return &NotFound{Message: "no such outbox collection"}
+	return NotFound{}.OutboxCollection()
 }
 
 func (registry Registry) matching(where map[string]any) ([]CollectionRecord, error) {

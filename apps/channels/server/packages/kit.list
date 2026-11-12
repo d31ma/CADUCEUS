@@ -4,3 +4,4 @@ events
 outbox
 collections
 channels
+apierrors

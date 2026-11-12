@@ -216,11 +216,11 @@ func (workflow Workflow) checkMembers(authorization string, memberIds []string) 
 func (workflow Workflow) memberRefusal(found bool, failure error) error {
 	switch {
 	case failure != nil:
-		return &Unavailable{Message: workflow.directoryDown(), Cause: failure}
+		return Unavailable{}.DirectoryDown(workflow.directoryDown(), failure)
 	case found:
 		return nil
 	}
-	return &NotFound{Message: "no such member in this domain"}
+	return NotFound{}.MemberOutsideDomain()
 }
 
 func (workflow Workflow) addAll(document ChannelDocument, memberIds []string) error {
@@ -258,18 +258,18 @@ func (workflow Workflow) claimRefusal(failure error) error {
 	case failure == nil:
 		return nil
 	case errors.As(failure, &AddressTaken{}):
-		return &Duplicate{Message: failure.Error()}
+		return Duplicate{}.AddressTaken(failure.Error())
 	case errors.As(failure, &AddressRefused{}):
-		return &InvalidRequest{Message: failure.Error(), Field: "emailAddress"}
+		return InvalidRequest{}.AddressOutsideDomain(failure.Error())
 	}
-	return &Unavailable{Message: workflow.directoryDown(), Cause: failure}
+	return Unavailable{}.DirectoryDown(workflow.directoryDown(), failure)
 }
 
 func (workflow Workflow) unavailable(failure error) error {
 	if failure == nil {
 		return nil
 	}
-	return &Unavailable{Message: workflow.directoryDown(), Cause: failure}
+	return Unavailable{}.DirectoryDown(workflow.directoryDown(), failure)
 }
 
 func (Workflow) applied(document ChannelDocument, change AddressChange, topic *string) ChannelDocument {
@@ -294,7 +294,7 @@ func (workflow Workflow) archived(document ChannelDocument, archived *bool) (Cha
 
 func (workflow Workflow) nameRefusal(taken bool, name string) error {
 	if taken {
-		return &Conflict{Message: "the channel name " + name + " is already used in this domain"}
+		return Conflict{}.NameUsed(name)
 	}
 	return nil
 }

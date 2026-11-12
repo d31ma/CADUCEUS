@@ -95,16 +95,16 @@ func (desk OutboxDesk) relay() outbox.Relay {
 
 func (desk OutboxDesk) settingsError() error {
 	if desk.settings.OutboxError != nil {
-		return &Unavailable{Message: "the outbox settings are missing", Cause: desk.settings.OutboxError}
+		return Unavailable{}.OutboxSettingsMissing(desk.settings.OutboxError)
 	}
 	return nil
 }
 
 func (OutboxDesk) letterError(failure error) error {
 	if errors.As(failure, &outbox.NotFound{}) {
-		return &NotFound{Message: failure.Error()}
+		return NotFound{}.OutboxLetter(failure.Error())
 	}
-	return &Unavailable{Message: "the outbox document cannot be read", Cause: failure}
+	return Unavailable{}.OutboxUnreadable(failure)
 }
 
 func (OutboxDesk) views(ref outbox.Ref, letters []outbox.DeadLetter) []DeadEvent {

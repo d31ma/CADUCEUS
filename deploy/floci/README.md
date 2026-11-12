@@ -424,7 +424,9 @@ router, and every step can run again):
 (`POST /api/v1/identity/session`, login = the username), and the script
 prints `MESAIL_TOKEN_<NAME>`, `MESAIL_PASSWORD_<NAME>` and
 `MESAIL_SERVICE_CLIENT_SECRET` for the blackbox tests. It never calls
-Keycloak. Tokens last 60 seconds, so `test.sh` makes fresh ones before each
+Keycloak. Before the seed, `test.sh` calls every function's health route
+once, so no test waits for a cold start (about 10 s in Floci, longer than the
+tests' 10 s client timeout). Tokens last 60 seconds, so `test.sh` makes fresh ones before each
 test file and runs the files one by one (with `MESAIL_TEST_RUN`, one run
 with one set of tokens).
 

@@ -13,6 +13,13 @@ load_tokens() {
   echo "tokens loaded for: $(env | grep -o '^MESAIL_TOKEN_[A-Z]*=.' | cut -d= -f1 | sort | tr '\n' ' ')"
 }
 
+warm_functions() {
+  local service
+  for service in $(mesail_lambda_services); do
+    wait_for_service "$service" || return 1
+  done
+}
+
 wait_for_service() {
   mesail_wait_for "$1 through the router" 180 mesail_service_answers "$MESAIL_ROUTER_URL" "$1"
 }
@@ -47,8 +54,7 @@ run_blackbox() {
 main() {
   mesail_load_settings
   mesail_load_secrets
-  mesail_step wait-identity wait_for_service identity
-  mesail_step wait-directory wait_for_service directory
+  mesail_step warm-functions warm_functions
   mesail_step seed-directory mesail_seed_directory "$MESAIL_ROUTER_URL"
   load_tokens
   mesail_step blackbox run_blackbox

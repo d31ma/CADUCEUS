@@ -85,7 +85,11 @@ wave run at the same time.
    (ADR 0004 section 4). So: at most 25 FYLO writes and 20 seconds of work
    per request or job call (answer `more: true` and continue on the next
    trigger); every write idempotent; slow work through the outbox; callers
-   use a 30 s timeout and at most 3 retries with backoff.
+   use a 30 s timeout and at most 3 retries with backoff. **Services on the
+   sign-in path** (`directory`, which `identity` reads on every sign-in,
+   refresh and switch) use a smaller budget for job and relay calls: at
+   most 10 writes and 3 seconds of work per call, so a user request never
+   waits long behind background work (decided 2026-11-12, slice K3).
 10. **Collection names.** Build every FYLO collection name with
    `kit/collections` (`CollectionName{}.ForDomain` or `.ForDomainMonth`).
    FYLO accepts only lowercase letters, digits and `-`; the domain becomes a
@@ -751,7 +755,42 @@ an earlier slice text in this file says "realm of the domain",
 6. After D2, any time (does not block L5): **L7b**.
 7. After L5 (merged, develop b3dbc95), any time: **K1**.
 8. Any time: **K2** (it may change `deploy/keycloak`, so it goes through
-   `mesail-keycloak` for that part).
+   `mesail-keycloak` for that part). K2 merges its Keycloak fix on its own.
+9. After K2, and not at the same time as OP2 (both change `deploy/router`):
+   **K3**.
+
+### K3. User requests before background work (a small session)
+Found by K2 on Floci (2026-11-12, run `k2-signin/floci-20261111-232350`):
+`identity`'s `GET /directory/people/{personId}` waited 10 seconds behind
+`directory`'s single writer, which was busy with background calls, so the
+router answered `502` and sign-in answered `503` after 13 seconds.
+Decided (no owner question): user requests go first, background calls get
+smaller, and `identity` retries once. A stale cache of person records in
+`identity` was rejected: it would let a removed member keep a domain for
+longer than SPEC AC-ID-4's 60 seconds.
+- **Owns, for this change only:** `deploy/router` (the single-writer
+  queue; coordinate with OP2), `apps/directory` job and relay budgets
+  (with the directory owner), `kit/oidc` `IdentityPeople` or the code that
+  calls `GET /people` (with L1's owner).
+- **Builds:**
+  - **Router queue order.** For each single-writer function, the router
+    keeps two queues: user requests first, then background calls
+    (`/events`, `/outbox/relay`, `/outbox/dead/requeue`, `/jobs/...`).
+    When the function is free, a waiting user request always goes next. A
+    background call that waits more than 60 seconds goes next once, so
+    background work never starves. Event pushes to a busy writer still get
+    `429` at once (the floci-502 rule).
+  - **Smaller background calls in `directory`** (rule 9, sign-in path): its
+    removal job, outbox relay and any other job call do at most 10 writes
+    and 3 seconds of work per call, and answer `more: true`.
+  - **`identity` retries `GET /people` once:** on a timeout, `502` or `503`,
+    it waits 200 ms and tries again; the two tries together stay under 12
+    seconds, and a sign-in that still fails answers `503` as now. The
+    Keycloak calls keep their own timeout (K2).
+- **Depends on:** K2 merged; not at the same time as OP2.
+- **Done when:** a Floci test that keeps `directory` busy with a removal of
+  200 members while signing in, in a loop, shows every sign-in answered in
+  under 5 seconds, and the K2 check passes 10 runs in a row.
 
 ### L7b. Admin app: removals in progress (a new small web-admin session)
 L5 stays a mechanical switch with a merge pause, so this UI change is not

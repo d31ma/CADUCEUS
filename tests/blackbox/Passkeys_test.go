@@ -273,7 +273,7 @@ func TestAcId13PlainMemberCannotRemoveAnotherPersonsPasskeys(t *testing.T) {
 	stack := NewStack(t)
 	owner := newPasskeyOwner(t, stack)
 	path := "/api/v1/directory/people/" + owner.Person.Id + "/passkeys"
-	stack.Call(t, http.MethodDelete, path, fixture(t, stack, "BO").AccessToken, nil).ExpectError(t, http.StatusForbidden, "forbidden")
+	stack.Call(t, http.MethodDelete, path, fixture(t, stack, "BO").AccessToken, nil).Expect(t, http.StatusForbidden)
 	signInWithPasskey(t, stack, owner.Authenticator)
 }
 

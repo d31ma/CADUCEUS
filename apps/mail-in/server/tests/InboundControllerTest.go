@@ -69,24 +69,21 @@ func (test *InboundControllerTest) TestPostMessageStagesOneEmailReceivedEvent() 
 	Assert.IsTrue(stored.EventQueued, "event not marked")
 }
 
-func (test *InboundControllerTest) TestALargeEmailIsStagedWithItsContentAndClearedAfterTheRelay() {
+func (test *InboundControllerTest) TestAnEmailNearTheBudgetIsStagedWholeAndClearedAfterTheRelay() {
 	world := InboundTestSetup{}.World()
 	defer world.Cleanup()
-	world.UseServices()
-	world.Pusher.FailFor("messaging", errors.New("connection refused"))
-	key := world.FreshKey()
-	world.WriteBlob(key, world.LargeTextMessage())
-	_, err := world.Inbound.PostMessage(world.Envelope(key))
-	world.Must(err)
-	payload := events.EmailReceived{}
-	_, staged := outbox.Published{}.One(world.Stored(key).OutboxFields(), events.Types{}.EmailReceived(), &payload)
-	Assert.IsTrue(staged == nil, "no single staged event")
-	Assert.IsTrue(len(payload.Content.Text) > 700000, "the large text was not staged")
-	world.Pusher.Recover("messaging")
-	_, relayed := world.Outbox.PostRelay()
-	Assert.IsTrue(relayed == nil, "relay failed")
-	Assert.Equals(0, len(world.Stored(key).PendingEvents))
-	Assert.Equals(1, len(world.PushedToMessaging()))
+	payload := world.StagedThenRelayed(world.LongTextMessage("a", 120000))
+	Assert.IsTrue(!payload.Content.Truncated, "a text under the budget was cut")
+	Assert.Equals(120000, len(payload.Content.Text))
+}
+
+func (test *InboundControllerTest) TestAnEmailOverTheBudgetIsStagedCutAndClearedAfterTheRelay() {
+	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
+	payload := world.StagedThenRelayed(world.LongTextMessage("\U0001F600", 199000))
+	Assert.IsTrue(payload.Content.Truncated, "the long text was not cut")
+	Assert.Equals("text", payload.Content.BodyFormat)
+	Assert.IsTrue(len(payload.Content.Text) <= mailin.ContentBudget{}.PlainTextBytes(), "the text is over the plain text size")
 }
 
 func (test *InboundControllerTest) TestARetriedMessageStagesNoSecondEvent() {

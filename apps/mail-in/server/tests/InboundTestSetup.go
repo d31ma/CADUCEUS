@@ -286,9 +286,27 @@ func (world *InboundTestSetup) HtmlMessage() string {
 	}, "\r\n")
 }
 
-func (world *InboundTestSetup) LargeTextMessage() string {
+func (world *InboundTestSetup) LongTextMessage(piece string, count int) string {
 	header := "From: Dan <dan@outside.test>\r\nSubject: Long\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
-	return header + strings.Repeat("\U0001F600", 199000) + "\r\n"
+	return header + strings.Repeat(piece, count) + "\r\n"
+}
+
+func (world *InboundTestSetup) StagedThenRelayed(raw string) events.EmailReceived {
+	world.UseServices()
+	world.Pusher.FailFor("messaging", errors.New("connection refused"))
+	key := world.FreshKey()
+	world.WriteBlob(key, raw)
+	_, err := world.Inbound.PostMessage(world.Envelope(key))
+	world.Must(err)
+	payload := events.EmailReceived{}
+	_, staged := outbox.Published{}.One(world.Stored(key).OutboxFields(), events.Types{}.EmailReceived(), &payload)
+	world.Must(staged)
+	world.Pusher.Recover("messaging")
+	_, relayed := world.Outbox.PostRelay()
+	world.Must(relayed)
+	Assert.Equals(0, len(world.Stored(key).PendingEvents))
+	Assert.Equals(1, len(world.PushedToMessaging()))
+	return payload
 }
 
 func (world *InboundTestSetup) TextMessage() string {

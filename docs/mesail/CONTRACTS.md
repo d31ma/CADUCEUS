@@ -841,9 +841,12 @@ owns it; M3 uses it):
   `kit/mime` cannot parse (malformed, or over its 25 MiB limit) answers empty
   `blocks` and `attachments` with `truncated: true`, so the client offers the
   original. Size budget (`kit/mailin` ContentBudget), the same for this route
-  and for the event: `text` is cut at 200,000 characters; if the JSON is
-  still over 2 MiB, the blocks are made from `text` instead (`bodyFormat:
-  text`). Each cut sets `truncated: true`. `messaging` makes the blocks for chat messages
+  and for the event: at most 256 KiB of JSON, so every FYLO document that
+  holds it fits FYLO's 1 MiB request frame. `text` is cut at 200,000
+  characters; content still over 256 KiB keeps the first 64 KiB of text
+  with blocks made from it (`bodyFormat: text`); content still over that
+  becomes the unreadable form above with the first 16 KiB of text. Each cut
+  sets `truncated: true`. `messaging` makes the blocks for chat messages
   from their Markdown with the same package.
 
 ## mail-in (SMTP, not HTTP)

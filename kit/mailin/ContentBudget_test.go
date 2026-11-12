@@ -24,15 +24,28 @@ func TestContentUnderTheBudgetIsKept(t *testing.T) {
 
 func TestALongTextIsCutAtTheCharacterLimit(t *testing.T) {
 	limit := richtext.Limits{}.MaxCharacters()
-	content := InboundContent{Text: strings.Repeat("é", limit+5), BodyFormat: "text", Blocks: manyBlocks(1, "é"), Attachments: []InboundAttachment{}}
-	cut := ContentBudget{}.Applied(content)
-	check(t, utf8.RuneCountInString(cut.Text) == limit && cut.Truncated, "want the text cut at the limit")
+	content := InboundContent{Text: strings.Repeat("a", limit+5), BodyFormat: "text", Blocks: []richtext.Block{}, Attachments: []InboundAttachment{}}
+	cut := ContentBudget{}.capped(content)
+	check(t, len(cut.Text) == limit && cut.Truncated, "want the text cut at the limit")
 }
 
-func TestContentOverTheBudgetKeepsBlocksMadeFromItsText(t *testing.T) {
-	content := InboundContent{Text: "Hello\nthere", BodyFormat: "email", Blocks: manyBlocks(2000, strings.Repeat("x", 1200)), Attachments: []InboundAttachment{}}
+func TestContentOverTheBudgetKeepsBlocksMadeFromAShorterText(t *testing.T) {
+	content := InboundContent{Text: "Hello\n" + strings.Repeat("é", 100000), BodyFormat: "email", Blocks: manyBlocks(200, strings.Repeat("x", 1200)), Attachments: []InboundAttachment{}}
 	fitted := ContentBudget{}.Applied(content)
 	check(t, fitted.BodyFormat == "text" && fitted.Truncated, "want plain text blocks")
+	check(t, len(fitted.Text) <= ContentBudget{}.PlainTextBytes() && utf8.ValidString(fitted.Text), "want a shorter valid text")
 	check(t, ContentBudget{}.size(fitted) <= ContentBudget{}.MaxBytes(), "still over the budget")
-	check(t, len(fitted.Blocks) > 0 && strings.HasPrefix(fitted.Blocks[0].Spans[0].Text, "Hello"), "wrong blocks from the text")
+	check(t, strings.HasPrefix(fitted.Blocks[0].Spans[0].Text, "Hello"), "wrong blocks from the text")
+}
+
+func TestContentStillOverTheBudgetBecomesTheUnreadableForm(t *testing.T) {
+	attachments := []InboundAttachment{}
+	for range 256 {
+		attachments = append(attachments, InboundAttachment{FileName: strings.Repeat("n", 2000), BlobKey: "example.com/a"})
+	}
+	content := InboundContent{Text: strings.Repeat("a", 70000), BodyFormat: "email", Blocks: manyBlocks(1, "a"), Attachments: attachments}
+	last := ContentBudget{}.Applied(content)
+	check(t, last.Truncated && len(last.Blocks) == 0 && len(last.Attachments) == 0, "want empty blocks and attachments")
+	check(t, len(last.Text) == ContentBudget{}.LastResortTextBytes(), "want the text cut to the last resort size")
+	check(t, ContentBudget{}.size(last) <= ContentBudget{}.MaxBytes(), "still over the budget")
 }

@@ -153,6 +153,12 @@ the old as previous, restart, then remove the previous value.
   digest.
 - Before every deploy, `fylo pack` every FYLO root (ADR 0004 section 4),
   so a deploy can roll back.
+- One live process per FYLO root (ADR 0004 section 4, "One live process
+  per root"): a deploy stops a function's old container before its new
+  one takes calls, and never runs two containers of one FYLO-owning
+  function at the same time. A second container would get `EROOTLOCKED`
+  on every store call ("store is not available"). This stays the rule on
+  AWS with EFS until FYLO qualifies shared roots there.
 
 ## 7. Backups and restore
 

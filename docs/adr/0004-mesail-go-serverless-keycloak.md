@@ -241,6 +241,14 @@ Decisions:
     released yet) logs each failed store call with its FYLO code and waits
     up to 2 seconds on `EROOTLOCKED`; a per-call lease is not available
     yet, so this rule stays the real protection, on AWS Lambda too.
+    FYLO agreed on 2026-11-12 to add `fylo exec --invocation` (the root is
+    locked for one request only), and TACHYON will then add a data source
+    setting `"lease":"call"`. Even then, FYLO does not qualify two
+    containers sharing one root on EFS until it closes its EFS gate (FYLO
+    ADR 0010 profile). So on real AWS with EFS, one container per
+    FYLO-owning function stays the rule until FYLO says otherwise. On
+    Floci on a VM, the data disk is ext4 inside the guest; the rule still
+    holds there until K8 shows the per-call lease working.
   - **Slow work goes through the outbox.** A route writes its own document
     once and returns; fan-out, indexing, notification and delivery happen
     later from the outbox relay and job routes (EVENTS.md). Chat stays

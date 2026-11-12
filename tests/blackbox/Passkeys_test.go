@@ -137,7 +137,8 @@ func TestAcId16WrongSignatureGetsTheSameAnswerAsAWrongPassword(t *testing.T) {
 	challenge := passkeyChallengeFor(t, stack)
 	request := passkeySignInRequest(challenge, owner.Authenticator.AssertWrongSignature(t, challenge.OptionsJson))
 	passkeyFailure := passkeySignInReply(t, stack, request).Expect(t, http.StatusUnauthorized).Error(t)
-	passwordFailure := signInReply(t, stack, owner.Person.Username, owner.Person.Password+"-Wrong").Expect(t, http.StatusUnauthorized).Error(t)
+	stranger := changedPassword(t, stack, createPerson(t, stack, fixture(t, stack, "ANA").AccessToken))
+	passwordFailure := signInReply(t, stack, stranger.Username, stranger.Password+"-Wrong").Expect(t, http.StatusUnauthorized).Error(t)
 	if passkeyFailure != passwordFailure {
 		t.Fatalf("want the same answer as a wrong password %+v, got %+v", passwordFailure, passkeyFailure)
 	}

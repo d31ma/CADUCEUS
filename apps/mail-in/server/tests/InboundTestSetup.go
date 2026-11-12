@@ -305,6 +305,38 @@ func (world *InboundTestSetup) StagedThenPushed(raw string) events.EmailReceived
 	return payload
 }
 
+func (world *InboundTestSetup) StagedAndWaiting(raw string) mailin.InboundRaw {
+	world.UseServices()
+	world.Pusher.FailFor("messaging", errors.New("connection refused"))
+	key := world.FreshKey()
+	world.WriteBlob(key, raw)
+	_, err := world.Inbound.PostMessage(world.Envelope(key))
+	world.Must(err)
+	return world.Stored(key)
+}
+
+func (world *InboundTestSetup) QuotesAtTheBudget() int {
+	return 40890
+}
+
+func (world *InboundTestSetup) RawDocumentBytes(stored mailin.InboundRaw) int {
+	document := json.RawMessage{}
+	found, err := DataSource{}.FindById(world.Collection(), stored.ID, &document)
+	world.Must(err)
+	Assert.IsTrue(found, "the inbound-raw document is missing")
+	return len(document)
+}
+
+func (world *InboundTestSetup) ContentRecordBytes(stored mailin.InboundRaw) int {
+	window, err := DataSource{}.Scroll(mailin.ContentShelf{}.Collection(stored), map[string]any{"inboundId": stored.WireId()}, "", 1)
+	world.Must(err)
+	return len(window.Content)
+}
+
+func (world *InboundTestSetup) DocumentLimitBytes() int {
+	return 512 << 10
+}
+
 func (world *InboundTestSetup) TextMessage() string {
 	return "From: Dan <dan@outside.test>\r\nSubject: Lunch\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nLunch at noon?\r\n"
 }

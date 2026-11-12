@@ -72,12 +72,35 @@ func (test *InboundControllerTest) TestPostMessageStagesOneEmailReceivedEvent() 
 func (test *InboundControllerTest) TestAnEmailNearTheBudgetIsStoredAndPushedWhole() {
 	world := InboundTestSetup{}.World()
 	defer world.Cleanup()
-	payload := world.StagedThenPushed(world.LongTextMessage("a", 120000))
+	payload := world.StagedThenPushed(world.LongTextMessage("a", 80000))
 	Assert.IsTrue(!payload.Content.Truncated, "a text under the budget was cut")
-	Assert.Equals(120000, len(payload.Content.Text))
+	Assert.Equals(80000, len(payload.Content.Text))
 	stored, err := world.Inbound.GetContent(world.Bearer(world.Domain), payload.InboundId)
 	world.Must(err)
-	Assert.Equals(120000, len(stored.Text))
+	Assert.Equals(80000, len(stored.Text))
+}
+
+func (test *InboundControllerTest) TestAnEmailOfQuotesAtTheBudgetKeepsBothDocumentsUnderTheLimit() {
+	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
+	stored := world.StagedAndWaiting(world.LongTextMessage(`"`, world.QuotesAtTheBudget()))
+	content, err := world.Inbound.GetContent(world.Bearer(world.Domain), stored.WireId())
+	world.Must(err)
+	Assert.IsTrue(!content.Truncated, "content at the budget was cut")
+	Assert.Equals(1, len(stored.PendingEvents))
+	Assert.IsTrue(world.RawDocumentBytes(stored) < world.DocumentLimitBytes(), "the inbound-raw document with its event is over 512 KiB")
+	Assert.IsTrue(world.ContentRecordBytes(stored) < world.DocumentLimitBytes(), "the content record is over 512 KiB")
+}
+
+func (test *InboundControllerTest) TestAnEmailOfQuotesJustOverTheBudgetIsCut() {
+	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
+	stored := world.StagedAndWaiting(world.LongTextMessage(`"`, world.QuotesAtTheBudget()+100))
+	content, err := world.Inbound.GetContent(world.Bearer(world.Domain), stored.WireId())
+	world.Must(err)
+	Assert.IsTrue(content.Truncated, "content over the budget was kept whole")
+	Assert.IsTrue(world.RawDocumentBytes(stored) < world.DocumentLimitBytes(), "the inbound-raw document with its event is over 512 KiB")
+	Assert.IsTrue(world.ContentRecordBytes(stored) < world.DocumentLimitBytes(), "the content record is over 512 KiB")
 }
 
 func (test *InboundControllerTest) TestAnEmailOverTheBudgetIsStoredAndPushedCut() {

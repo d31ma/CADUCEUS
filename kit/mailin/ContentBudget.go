@@ -10,7 +10,7 @@ import (
 type ContentBudget struct{}
 
 func (ContentBudget) MaxBytes() int {
-	return 256 << 10
+	return 160 << 10
 }
 
 func (ContentBudget) PlainTextBytes() int {

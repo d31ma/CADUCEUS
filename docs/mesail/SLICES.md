@@ -763,7 +763,7 @@ an earlier slice text in this file says "realm of the domain",
    **K5**.
 12. After K3: **K6** (with OP2 if OP2 is changing `deploy/lambda`).
 13. After K4: **K7**.
-14. Any time: **K8**.
+14. After K3's and K1's Floci runs (it needs the dev host): **K8**.
 
 ### K5. Channel events without reader lists (messaging's, realtime's and notify's owners, one session)
 Found by K1 (2026-11-12): `memberIds` in a channel message's events lists
@@ -881,15 +881,22 @@ failed in about 7 ms, and `directory` recovered at 07:29:44. The load was
 before K3, in slice P1's Floci runs. Sign-in depends on `directory`, so
 12 seconds of outage meant 12 seconds of failed sign-ins.
 - **Owns:** `apps/directory` store wiring and error handling (with the
-  directory owner); the TACHYON request below goes through the
-  coordinator.
+  directory owner); any TACHYON gap goes through the coordinator.
 - **Builds:**
-  - make the cause visible first: `directory` (like `channels`, K7)
-    cannot write the FYLO error to its Floci function log (the TACHYON
-    handler-log gap). Ask TACHYON, through the coordinator, for a
-    handler's errors and the datasource's own error to reach the function
-    log; until then, use what the router, Floci and the dev host logs
-    show;
+  - make the cause visible first, by using TACHYON's running handler-log
+    work, not a new request: session "TACHYON: Yon handlers can write logs
+    on every answer" (branch `feat/yon-handler-logs`, 2eade57a5, its ADR
+    "Yon handlers write logs on every answer"; not merged or released
+    yet). With it, `directory`'s store error handler calls
+    `YonLog.Error("...", fields)` with what the `YonResourceError`
+    carries, and the line reaches TACHYON's run log. It does not cover two
+    parts, which the coordinator passes to TACHYON's coordinator: (1)
+    TACHYON's FYLO datasource writing its own cause (the FYLO error behind
+    the `YonResourceError`) to the run log, because the handler sees only
+    what the error carries; (2) a statement or test that the run log
+    reaches the Floci function log in Lambda form (the ADR does not
+    mention Lambda). Mesail uses it after the TACHYON release that has it
+    and the pin move; until then, use the router, Floci and dev host logs;
   - find the cause and write it down with logs: an ATLAS write stall (ADR
     0004 section 4: stalls up to 11 seconds), the FYLO process restarting,
     or the datasource marking the store down for a fixed time after one
@@ -901,7 +908,8 @@ before K3, in slice P1's Floci runs. Sign-in depends on `directory`, so
   after this slice: `identity` keeps each person record for at most 60
   seconds and uses it only when `directory` answers `503`; that keeps SPEC
   AC-ID-4's 60 second limit. It needs an architecture decision first.
-- **Depends on:** nothing; any time.
+- **Depends on:** the dev host, so after K3's and K1's Floci runs; the
+  `YonLog` part after the TACHYON release and pin move.
 - **Done when:** the cause is written in the hand-over with logs, and a
   1-hour Floci run under K3's sign-in load shows no "store is not
   available" answer, or the owner accepts a written limit.

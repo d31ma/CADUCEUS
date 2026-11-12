@@ -87,7 +87,7 @@ func (service *SummaryService) summarize(batch SummaryBatch, member MemberSettin
 }
 
 func (service *SummaryService) byPreference(batch SummaryBatch, member MemberSettingsRecord, summarizedAt string) (JobProgress, error) {
-	if member.EmailSummaryAfterMinutes > 0 && member.PrimaryAddress != "" {
+	if member.EmailSummaryAfterMinutes > 0 && member.PrimaryAddress != "" && len(member.PrimaryAddress) <= service.emails.MostAddressBytes() {
 		return service.send(batch, member, summarizedAt)
 	}
 	return service.cancel(batch)
@@ -132,5 +132,5 @@ func (service *SummaryService) readLimit() int {
 }
 
 func (service *SummaryService) batchLimit() int {
-	return 20
+	return service.emails.MostItems()
 }

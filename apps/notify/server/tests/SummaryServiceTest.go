@@ -1,5 +1,6 @@
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"mesail.dev/packages/events"
@@ -57,6 +58,35 @@ func (test *SummaryServiceTest) TestRunWaitsWhenTheBudgetIsTooSmall() {
 	Assert.IsTrue(err == nil, "run failed")
 	Assert.IsTrue(progress.More, "the summary was not left for later")
 	Assert.Equals("waiting", JobsTestSetup{}.Found(record).SummaryState)
+}
+
+func (test *SummaryServiceTest) TestRunSendsASummaryToAnAddressAtTheCap() {
+	setup := JobsTestSetup{}
+	domainId := setup.Domain()
+	setup.Realms(domainId)
+	pusher := outbox.NewRecordingPusher()
+	address := strings.Repeat("a", setup.Emails(pusher).MostAddressBytes()-len("@"+domainId)) + "@" + domainId
+	JobsTestSetup{}.MemberSettings(domainId, "member-1", 15, address)
+	JobsTestSetup{}.Stored(setup.Notification(domainId, "member-1", "msg_1"))
+	progress, err := JobsTestSetup{}.Summaries(pusher).Run(domainId, JobsTestSetup{}.Budget(25))
+	Assert.IsTrue(err == nil, "run failed")
+	Assert.Equals(1, progress.Done)
+	Assert.Equals(1, len(pusher.PushedTo("mail-out")))
+}
+
+func (test *SummaryServiceTest) TestRunSendsNoSummaryToAnAddressOverTheCap() {
+	setup := JobsTestSetup{}
+	domainId := setup.Domain()
+	setup.Realms(domainId)
+	pusher := outbox.NewRecordingPusher()
+	address := strings.Repeat("a", setup.Emails(pusher).MostAddressBytes()+1-len("@"+domainId)) + "@" + domainId
+	JobsTestSetup{}.MemberSettings(domainId, "member-1", 15, address)
+	record := JobsTestSetup{}.Stored(setup.Notification(domainId, "member-1", "msg_1"))
+	progress, err := JobsTestSetup{}.Summaries(pusher).Run(domainId, JobsTestSetup{}.Budget(25))
+	Assert.IsTrue(err == nil, "run failed")
+	Assert.Equals(0, progress.Done)
+	Assert.Equals(0, len(pusher.PushedTo("mail-out")))
+	Assert.Equals("none", JobsTestSetup{}.Found(record).SummaryState)
 }
 
 func (test *SummaryServiceTest) firstPayload(sent []events.Envelope) []byte {

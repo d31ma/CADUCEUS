@@ -40,9 +40,22 @@ func (service *SummaryEmailService) Writes() int {
 	return 4
 }
 
+func (service *SummaryEmailService) MostItems() int {
+	return 20
+}
+
+func (service *SummaryEmailService) mostNameCharacters() int {
+	return 200
+}
+
+func (service *SummaryEmailService) MostAddressBytes() int {
+	return 318
+}
+
 func (service *SummaryEmailService) record(member MemberSettingsRecord, items []NotificationRecord) SummaryRecord {
-	notificationIds := service.wireIds(items)
-	subject, body := notify.SummaryText{}.Build(member.DisplayName, service.summaryItems(items))
+	kept := items[:min(len(items), service.MostItems())]
+	notificationIds := service.wireIds(kept)
+	subject, body := notify.SummaryText{}.Build(service.cutName(member.DisplayName), service.summaryItems(kept))
 	return SummaryRecord{
 		DomainId:        member.DomainId,
 		MemberId:        member.MemberId,
@@ -68,9 +81,14 @@ func (service *SummaryEmailService) wireIds(items []NotificationRecord) []string
 func (service *SummaryEmailService) summaryItems(items []NotificationRecord) []notify.SummaryItem {
 	summaryItems := []notify.SummaryItem{}
 	for _, item := range items {
-		summaryItems = append(summaryItems, notify.SummaryItem{Kind: item.Kind, AuthorDisplayName: item.AuthorDisplayName, CreatedAt: item.CreatedAt})
+		summaryItems = append(summaryItems, notify.SummaryItem{Kind: item.Kind, AuthorDisplayName: service.cutName(item.AuthorDisplayName), CreatedAt: item.CreatedAt})
 	}
 	return summaryItems
+}
+
+func (service *SummaryEmailService) cutName(name string) string {
+	characters := []rune(name)
+	return string(characters[:min(len(characters), service.mostNameCharacters())])
 }
 
 func (service *SummaryEmailService) batchKey(notificationIds []string) string {

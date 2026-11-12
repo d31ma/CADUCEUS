@@ -132,6 +132,28 @@ func (JobsTestSetup) Stored(record NotificationRecord) NotificationRecord {
 	return stored
 }
 
+func (setup JobsTestSetup) StoredMany(domainId string, memberId string, count int, authorDisplayName string) []NotificationRecord {
+	records := []NotificationRecord{}
+	for range count {
+		record := setup.Notification(domainId, memberId, setup.Name("msg"))
+		record.AuthorDisplayName = authorDisplayName
+		records = append(records, setup.Stored(record))
+	}
+	return records
+}
+
+func (JobsTestSetup) DocumentBytes(document any) int {
+	raw, err := json.Marshal(document)
+	if err != nil {
+		panic(err)
+	}
+	return len(raw)
+}
+
+func (JobsTestSetup) DocumentLimitBytes() int {
+	return 512 * 1024
+}
+
 func (JobsTestSetup) Found(record NotificationRecord) NotificationRecord {
 	found, _, err := JobsTestSetup{}.NotificationStore().Find(record.DomainId, record.Id)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"mesail.dev/packages/apierrors"
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/search"
@@ -199,4 +200,30 @@ func (world *SearchTestSetup) WorstCaseMessage(conversationId string) events.Mes
 
 func (world *SearchTestSetup) DocumentLimit() int {
 	return 512 << 10
+}
+
+func (setup SearchTestSetup) SearchController() *SearchController {
+	return &SearchController{searches: &SearchService{indexes: &IndexService{}, failures: &FailureService{}}}
+}
+
+func (setup SearchTestSetup) EventsController() *EventsController {
+	return &EventsController{events: &EventService{indexes: &IndexService{}, failures: &FailureService{}}}
+}
+
+func (setup SearchTestSetup) OutsideBlock(block apierrors.NumberBlock, numbers []int) []int {
+	outside := []int{}
+	for _, number := range numbers {
+		if !block.Holds(number) {
+			outside = append(outside, number)
+		}
+	}
+	return outside
+}
+
+func (setup SearchTestSetup) DistinctCount(numbers []int) int {
+	distinct := map[int]bool{}
+	for _, number := range numbers {
+		distinct[number] = true
+	}
+	return len(distinct)
 }

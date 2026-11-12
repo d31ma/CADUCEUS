@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"mesail.dev/packages/apierrors"
 	"mesail.dev/packages/attachments"
 	"mesail.dev/packages/blobs"
 	"mesail.dev/packages/oidc"
@@ -68,4 +69,30 @@ func (setup AttachmentsTestSetup) Store(domainId string, attachmentId string, co
 	record, _ := book.Lookup(domainId, attachmentId)
 	folder := blobs.NewLocalFolder(settings.Folder, settings.Link.Base, blobs.NewLocalSigner([]byte(settings.Link.Secret)))
 	folder.Write(book.Key(record), strings.NewReader(content), int64(len(content)))
+}
+
+func (setup AttachmentsTestSetup) Controller() *AttachmentsController {
+	return &AttachmentsController{attachments: &AttachmentService{desks: &DeskService{}, failures: &FailureService{}, views: &AttachmentViewService{}}}
+}
+
+func (setup AttachmentsTestSetup) MetaController() *AttachmentMetaController {
+	return &AttachmentMetaController{metas: &AttachmentMetaService{desks: &DeskService{}, failures: &FailureService{}, views: &AttachmentViewService{}}}
+}
+
+func (setup AttachmentsTestSetup) OutsideBlock(block apierrors.NumberBlock, numbers []int) []int {
+	outside := []int{}
+	for _, number := range numbers {
+		if !block.Holds(number) {
+			outside = append(outside, number)
+		}
+	}
+	return outside
+}
+
+func (setup AttachmentsTestSetup) DistinctCount(numbers []int) int {
+	distinct := map[int]bool{}
+	for _, number := range numbers {
+		distinct[number] = true
+	}
+	return len(distinct)
 }

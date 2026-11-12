@@ -93,14 +93,14 @@ func (builder DocumentBuilder) withTerms(document Document) Document {
 func (DocumentBuilder) instant(text string, field string) (time.Time, error) {
 	instant, err := time.Parse(time.RFC3339Nano, text)
 	if err != nil {
-		return time.Time{}, InvalidRequest{Message: field + " is not an RFC 3339 time", Field: field}
+		return time.Time{}, InvalidRequest{}.NotATime(field)
 	}
 	return instant, nil
 }
 
 func (DocumentBuilder) required(message events.MessageCreated) error {
 	if message.MessageId == "" || message.ConversationId == "" {
-		return InvalidRequest{Message: "messageId and conversationId are required", Field: "payload"}
+		return InvalidRequest{}.MissingIds()
 	}
 	return nil
 }

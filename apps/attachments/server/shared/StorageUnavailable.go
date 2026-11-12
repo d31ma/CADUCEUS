@@ -5,3 +5,7 @@ type StorageUnavailable struct {
 func (failure *StorageUnavailable) Error() string {
 	return "attachment storage failed during " + failure.Operation
 }
+
+func (failure *StorageUnavailable) Number() int {
+	return 3513
+}

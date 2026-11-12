@@ -53,7 +53,7 @@ func (filters Filters) Parse(values url.Values) (Filter, error) {
 func (filters Filters) terms(text string) ([]string, error) {
 	terms := textindex.Tokenizer{}.Terms(text)
 	if utf8.RuneCountInString(text) > filters.maxQueryLength() || len(terms) > filters.maxTerms() {
-		return nil, InvalidRequest{Message: "the search text is too long", Field: filters.queryField()}
+		return nil, InvalidRequest{}.QueryTooLong()
 	}
 	return terms, nil
 }
@@ -64,7 +64,7 @@ func (filters Filters) instant(text string, field string, dayEnd time.Duration) 
 	}
 	instant, err := filters.parsedTime(text, dayEnd)
 	if err != nil {
-		return "", InvalidRequest{Message: field + " must be a date or an RFC 3339 time", Field: field}
+		return "", InvalidRequest{}.NotADate(field)
 	}
 	return filters.Builder.Stamp(instant), nil
 }
@@ -84,7 +84,7 @@ func (Filters) flag(text string, field string) (*bool, error) {
 	}
 	value, err := strconv.ParseBool(text)
 	if err != nil {
-		return nil, InvalidRequest{Message: field + " must be true or false", Field: field}
+		return nil, InvalidRequest{}.NotTrueOrFalse(field)
 	}
 	return &value, nil
 }
@@ -95,7 +95,7 @@ func (filters Filters) cursor(text string) (textindex.Cursor, error) {
 	}
 	cursor, err := textindex.Cursor{}.Decode(text)
 	if err != nil {
-		return textindex.Cursor{}, InvalidRequest{Message: err.Error(), Field: filters.cursorField()}
+		return textindex.Cursor{}, InvalidRequest{}.BadCursor(err.Error())
 	}
 	return cursor, nil
 }
@@ -103,7 +103,7 @@ func (filters Filters) cursor(text string) (textindex.Cursor, error) {
 func (filters Filters) limit(text string) (int, error) {
 	limit, err := strconv.Atoi(cmp.Or(text, strconv.Itoa(filters.defaultLimit())))
 	if err != nil || limit < 1 || limit > filters.maxLimit() {
-		return 0, InvalidRequest{Message: "limit must be a number from 1 to 100", Field: filters.limitField()}
+		return 0, InvalidRequest{}.BadLimit()
 	}
 	return limit, nil
 }

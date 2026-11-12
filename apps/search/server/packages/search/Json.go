@@ -7,14 +7,14 @@ type Json struct{}
 func (Json) Copy(source any, target any) error {
 	encoded, err := json.Marshal(source)
 	if err != nil {
-		return InvalidRequest{Message: "the value cannot be written as JSON", Field: "body"}
+		return InvalidRequest{}.NotWritable()
 	}
 	return Json{}.decoded(json.Unmarshal(encoded, target))
 }
 
 func (Json) decoded(failure error) error {
 	if failure != nil {
-		return InvalidRequest{Message: "the value does not have the expected fields", Field: "body"}
+		return InvalidRequest{}.MissingFields()
 	}
 	return nil
 }

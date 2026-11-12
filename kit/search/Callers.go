@@ -22,7 +22,7 @@ func (callers Callers) memberRefusal(roles []string) error {
 	if slices.Contains(roles, callers.member()) {
 		return nil
 	}
-	return Forbidden{Message: "only members of a domain search its messages"}
+	return Forbidden{}.MembersOnly()
 }
 
 func (Callers) member() string {

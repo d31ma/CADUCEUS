@@ -103,7 +103,7 @@ func (indexer Indexer) eraseWhen(indexed bool, location Location) error {
 
 func (Indexer) payload(envelope events.Envelope, target any) error {
 	if (events.PayloadReader{}).Read(envelope, target) != nil {
-		return InvalidRequest{Message: "the event payload does not match its type", Field: "payload"}
+		return InvalidRequest{}.PayloadMismatch()
 	}
 	return nil
 }

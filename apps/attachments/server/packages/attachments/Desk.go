@@ -152,7 +152,7 @@ func (desk Desk) verified(record Record) (View, error) {
 
 func (Desk) checkReady(record Record) error {
 	if record.State != (States{}).Ready() {
-		return Conflict{Field: "state", Reason: "The attachment is not ready to download."}
+		return Conflict{}.NotReady()
 	}
 	return nil
 }

@@ -117,7 +117,35 @@ keeps its row, marked "retired".
 | MS2500 | mail-in | 500 | `unavailable` | Something went wrong. | an unexpected error in `mail-in` |
 | MS3000 | mail-out | 500 | `unavailable` | Something went wrong. | an unexpected error in `mail-out` |
 | MS3500 | attachments | 500 | `unavailable` | Something went wrong. | an unexpected error in `attachments` |
+| MS3501 | attachments | 400 | `invalid_request` | Give a file name of 1 to 255 bytes without slashes or control characters. | an upload with a bad file name; `field` is `fileName` |
+| MS3502 | attachments | 400 | `invalid_request` | Give a media type such as image/png. | an upload with a bad media type; `field` is `mediaType` |
+| MS3503 | attachments | 400 | `invalid_request` | An attachment must have at least one byte. | an upload with a size below one byte; `field` is `size` |
+| MS3504 | attachments | 400 | `invalid_request` | Give the SHA-256 of the file as 64 lowercase hex characters. | an upload with a bad checksum; `field` is `sha256` |
+| MS3505 | attachments | 401 | `unauthenticated` | Sign in again. | the access token was refused |
+| MS3506 | attachments | 403 | `forbidden` | Only a service may read attachment details. | a caller that is not a service asks for attachment details |
+| MS3507 | attachments | 404 | `not_found` | The attachment was not found. | no such attachment in the caller's domain, or the caller may not see it |
+| MS3508 | attachments | 409 | `conflict` | The file has not been uploaded yet. | complete before the file was uploaded; `field` is `file` |
+| MS3509 | attachments | 409 | `conflict` | The uploaded file is smaller than the size you gave. | the uploaded file has another size; `field` is `size` |
+| MS3510 | attachments | 409 | `conflict` | The uploaded file does not match the SHA-256 you gave. | the uploaded file has another checksum; `field` is `sha256` |
+| MS3511 | attachments | 409 | `conflict` | The attachment is not ready to download. | a download before the upload is complete; `field` is `state` |
+| MS3512 | attachments | 413 | `too_large` | the file is larger than N bytes | an upload larger than the limit; `field` is `size` |
+| MS3513 | attachments | 503 | `unavailable` | Attachment storage is not available. Try again later. | the attachment store or link signing failed |
 | MS4000 | search | 500 | `unavailable` | Something went wrong. | an unexpected error in `search` |
+| MS4001 | search | 400 | `invalid_request` | the search text is too long | a search with too long a text; `field` is `q` |
+| MS4002 | search | 400 | `invalid_request` | from must be a date or an RFC 3339 time | a search with a bad date filter; `field` is `from` or `to` |
+| MS4003 | search | 400 | `invalid_request` | isEmail must be true or false | a search with a bad true-or-false filter; `field` is `hasAttachment` or `isEmail` |
+| MS4004 | search | 400 | `invalid_request` | (the cursor problem) | a search with a bad cursor; `field` is `cursor` |
+| MS4005 | search | 400 | `invalid_request` | limit must be a number from 1 to 100 | a search with a bad limit; `field` is `limit` |
+| MS4006 | search | 400 | `invalid_request` | createdAt is not an RFC 3339 time | an event with a bad time; `field` is `createdAt` or `editedAt` |
+| MS4007 | search | 400 | `invalid_request` | messageId and conversationId are required | an event without message ids; `field` is `payload` |
+| MS4008 | search | 400 | `invalid_request` | the event payload does not match its type | an event whose payload does not match its type; `field` is `payload` |
+| MS4009 | search | 400 | `invalid_request` | the value cannot be written as JSON | a value that cannot be written as JSON; `field` is `body` |
+| MS4010 | search | 400 | `invalid_request` | the value does not have the expected fields | a body without the expected fields; `field` is `body` |
+| MS4011 | search | 400 | `invalid_request` | (the envelope problem) | an event with a bad envelope, or of a type `search` does not take; `field` is `envelope` (slice E12 may move it to a shared number) |
+| MS4012 | search | 401 | `unauthenticated` | Sign in again. | the access token was refused |
+| MS4013 | search | 403 | `forbidden` | only members of a domain search its messages | a caller that is not a member searches |
+| MS4014 | search | 403 | `forbidden` | (the reason) | an event from a caller that is not a service |
+| MS4015 | search | 503 | `unavailable` | Search is not available. Try again later. | the search index or the membership check failed |
 | MS4500 | notify | 500 | `unavailable` | Something went wrong. | an unexpected error in `notify` |
 | MS4501 | notify | 401 | `unauthenticated` | Sign in again. | a notify route could not verify the caller's token |
 | MS4502 | notify | 404 | `not_found` | The install-wide route was not found. | an operator-only route (jobs, outbox) called with a token that is not install-wide |

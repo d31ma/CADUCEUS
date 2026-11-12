@@ -3,6 +3,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"mesail.dev/packages/apierrors"
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/search"
 )
@@ -19,36 +20,40 @@ func (test *SearchRoutesTest) request(token string) *http.Request {
 }
 
 func (test *SearchRoutesTest) TestSearchRouteRefusesARequestWithoutAToken() {
-	_, err := (&SearchController{dataSource: DataSource{}}).GetSearch(test.request(""))
+	_, err := SearchTestSetup{}.SearchController().GetSearch(test.request(""))
 	Assert.IsTrue(errors.As(err, new(*Unauthenticated)), "expected unauthenticated")
 }
 
 func (test *SearchRoutesTest) TestSearchRouteRefusesAServiceToken() {
 	world := SearchTestSetup{}.World()
 	token := world.SignedIn(world.Domain, "messaging", "mesail-service", "mesail-service")
-	_, err := (&SearchController{dataSource: DataSource{}}).GetSearch(test.request(token))
-	Assert.IsTrue(errors.As(err, new(*Forbidden)), "expected forbidden")
+	_, err := SearchTestSetup{}.SearchController().GetSearch(test.request(token))
+	forbidden := &Forbidden{}
+	Assert.IsTrue(errors.As(err, &forbidden), "expected forbidden")
+	Assert.Equals(4013, forbidden.Number())
 }
 
 func (test *SearchRoutesTest) TestSearchRouteFailsClosedWhenMembershipCannotBeChecked() {
 	world := SearchTestSetup{}.World()
 	token := world.SignedIn(world.Domain, "ana", "mesail-member", "mesail-web")
-	_, err := (&SearchController{dataSource: DataSource{}}).GetSearch(test.request(token))
+	_, err := SearchTestSetup{}.SearchController().GetSearch(test.request(token))
 	Assert.IsTrue(errors.As(err, new(*Unavailable)), "expected unavailable")
 }
 
 func (test *SearchRoutesTest) TestEventRouteRefusesACallerWithoutAServiceToken() {
 	world := SearchTestSetup{}.World()
 	envelope := world.Envelope(world.Domain, "message.created", world.Message("cnv_one", "hi", "2026-11-10T10:00:00Z"))
-	_, err := (&EventsController{dataSource: DataSource{}}).PostEvent("", test.envelope(envelope))
-	Assert.IsTrue(errors.As(err, new(*Forbidden)), "the route accepted a caller without a token")
+	_, err := SearchTestSetup{}.EventsController().PostEvent("", test.envelope(envelope))
+	forbidden := &Forbidden{}
+	Assert.IsTrue(errors.As(err, &forbidden), "the route accepted a caller without a token")
+	Assert.Equals(4014, forbidden.Number())
 }
 
 func (test *SearchRoutesTest) TestEventRouteIndexesAMessageFromAServiceToken() {
 	world := SearchTestSetup{}.World()
 	token := world.SignedIn(world.Domain, "messaging", "mesail-service", "mesail-service")
 	message := world.Message("cnv_one", "posted through the route", "2026-11-10T10:00:00Z")
-	receipt, err := (&EventsController{dataSource: DataSource{}}).PostEvent(token, test.envelope(world.Envelope(world.Domain, "message.created", message)))
+	receipt, err := SearchTestSetup{}.EventsController().PostEvent(token, test.envelope(world.Envelope(world.Domain, "message.created", message)))
 	ana := world.Member(world.Domain, "ana", "cnv_one")
 	Assert.Equals(nil, err)
 	Assert.Equals("applied", receipt.Status)
@@ -61,12 +66,29 @@ func (test *SearchRoutesTest) envelope(envelope events.Envelope) EventEnvelope {
 	return model
 }
 
-func (test *SearchRoutesTest) TestErrorHandlerUsesTheContractCodes() {
+func (test *SearchRoutesTest) TestErrorHandlerUsesTheContractCodesAndNumbers() {
 	handler := &SearchErrorHandler{}
-	Assert.Equals(ApiError{Code: "invalid_request", Message: "bad", Field: "q"}, handler.Invalid(&InvalidRequest{Message: "bad", Field: "q"}))
-	Assert.Equals("unauthenticated", handler.Unauthenticated(&Unauthenticated{}).Code)
-	Assert.Equals("forbidden", handler.Forbidden(&Forbidden{Message: "no"}).Code)
-	Assert.Equals("unavailable", handler.Unavailable(&Unavailable{Message: "down"}).Code)
+	Assert.Equals(ApiError{Code: "invalid_request", Message: "[MS4005]: bad", Field: "limit"}, handler.Invalid(&InvalidRequest{Message: "bad", Field: "limit", ErrorNumber: 4005}))
+	Assert.Equals(ApiError{Code: "unauthenticated", Message: "[MS4012]: Sign in again."}, handler.Unauthenticated(&Unauthenticated{}))
+	Assert.Equals(ApiError{Code: "forbidden", Message: "[MS4013]: no"}, handler.Forbidden(&Forbidden{Message: "no", ErrorNumber: 4013}))
+	Assert.Equals(ApiError{Code: "unavailable", Message: "[MS4015]: Search is not available. Try again later."}, handler.Unavailable(&Unavailable{Message: "down"}))
+	Assert.Equals(ApiError{Code: "unavailable", Message: "[MS4000]: Something went wrong."}, handler.Unexpected(errors.New("disk on fire")))
+}
+
+func (test *SearchRoutesTest) TestEveryNumberIsUsedOnceInsideTheSearchBlock() {
+	numbers := []int{
+		(&UnexpectedFailure{}).Number(),
+		search.InvalidRequest{}.QueryTooLong().ErrorNumber, search.InvalidRequest{}.NotADate("from").ErrorNumber,
+		search.InvalidRequest{}.NotTrueOrFalse("isEmail").ErrorNumber, search.InvalidRequest{}.BadCursor("").ErrorNumber,
+		search.InvalidRequest{}.BadLimit().ErrorNumber, search.InvalidRequest{}.NotATime("createdAt").ErrorNumber,
+		search.InvalidRequest{}.MissingIds().ErrorNumber, search.InvalidRequest{}.PayloadMismatch().ErrorNumber,
+		search.InvalidRequest{}.NotWritable().ErrorNumber, search.InvalidRequest{}.MissingFields().ErrorNumber,
+		search.InvalidRequest{}.BadEnvelope("").ErrorNumber, (&Unauthenticated{}).Number(),
+		search.Forbidden{}.MembersOnly().ErrorNumber, search.Forbidden{}.ServicesOnly("").ErrorNumber, (&Unavailable{}).Number(),
+	}
+	block := apierrors.NumberBlock{First: 4000, Last: 4499}
+	Assert.Equals([]int{}, SearchTestSetup{}.OutsideBlock(block, numbers))
+	Assert.Equals(len(numbers), SearchTestSetup{}.DistinctCount(numbers))
 }
 
 func (test *SearchRoutesTest) TestEventRouteRefusesABadEnvelope() {
@@ -74,8 +96,10 @@ func (test *SearchRoutesTest) TestEventRouteRefusesABadEnvelope() {
 	token := world.SignedIn(world.Domain, "messaging", "mesail-service", "mesail-service")
 	envelope := test.envelope(world.Envelope(world.Domain, "message.created", world.Message("cnv_one", "hi", "2026-11-10T10:00:00Z")))
 	envelope.EventId = ""
-	_, err := (&EventsController{dataSource: DataSource{}}).PostEvent(token, envelope)
-	Assert.IsTrue(errors.As(err, new(*InvalidRequest)), "expected invalid request")
+	_, err := SearchTestSetup{}.EventsController().PostEvent(token, envelope)
+	invalid := &InvalidRequest{}
+	Assert.IsTrue(errors.As(err, &invalid), "expected invalid request")
+	Assert.Equals(4011, invalid.Number())
 }
 
 func (test *SearchRoutesTest) TestSearchRouteRefusesABadLimit() {
@@ -83,20 +107,23 @@ func (test *SearchRoutesTest) TestSearchRouteRefusesABadLimit() {
 	token := world.SignedIn(world.Domain, "ana", "mesail-member", "mesail-web")
 	request, _ := http.NewRequest(http.MethodGet, "/api/v1/search?q=hello&limit=0", nil)
 	request.Header.Set("Authorization", token)
-	_, err := (&SearchController{dataSource: DataSource{}}).GetSearch(request)
-	Assert.IsTrue(errors.As(err, new(*InvalidRequest)), "expected invalid request")
+	_, err := SearchTestSetup{}.SearchController().GetSearch(request)
+	invalid := &InvalidRequest{}
+	Assert.IsTrue(errors.As(err, &invalid), "expected invalid request")
+	Assert.Equals(4005, invalid.Number())
 }
 
 func (test *SearchRoutesTest) TestEventRouteAppliesAGoodEnvelope() {
 	world := SearchTestSetup{}.World()
 	token := world.SignedIn(world.Domain, "messaging", "mesail-service", "mesail-service")
 	envelope := test.envelope(world.Envelope(world.Domain, "message.created", world.Message("cnv_one", "hi", "2026-11-10T10:00:00Z")))
-	_, err := (&EventsController{dataSource: DataSource{}}).PostEvent(token, envelope)
+	_, err := SearchTestSetup{}.EventsController().PostEvent(token, envelope)
 	Assert.Equals(nil, err)
 	Assert.Equals("bad", (&InvalidRequest{Message: "bad"}).Error())
 	Assert.Equals("no", (&Forbidden{Message: "no"}).Error())
 	Assert.Equals("no", (&Unauthenticated{Message: "no"}).Error())
 	Assert.Equals("down", (&Unavailable{Message: "down"}).Error())
+	Assert.Equals("an unexpected error", (&UnexpectedFailure{}).Error())
 }
 
 func (test *SearchRoutesTest) TestAnUnavailableIndexNamesItsCause() {

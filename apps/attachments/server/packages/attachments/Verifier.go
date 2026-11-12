@@ -28,7 +28,7 @@ func (verifier Verifier) Verify(store blobs.Store, key blobs.Key, record Record)
 
 func (Verifier) readFailure(cause error) error {
 	if errors.As(cause, &blobs.NotFound{}) {
-		return Conflict{Field: "file", Reason: "The file has not been uploaded yet."}
+		return Conflict{}.NotUploaded()
 	}
 	return Unavailable{Operation: "read"}
 }
@@ -42,14 +42,14 @@ func (Verifier) inspectFailure(cause error) error {
 
 func (Verifier) checkSize(record Record, inspection blobs.Inspection) error {
 	if inspection.Size != record.Size {
-		return Conflict{Field: "size", Reason: "The uploaded file is smaller than the size you gave."}
+		return Conflict{}.SizeMismatch()
 	}
 	return nil
 }
 
 func (Verifier) checkSha256(record Record, inspection blobs.Inspection) error {
 	if inspection.Sha256 != record.Sha256 {
-		return Conflict{Field: "sha256", Reason: "The uploaded file does not match the SHA-256 you gave."}
+		return Conflict{}.Sha256Mismatch()
 	}
 	return nil
 }

@@ -286,6 +286,11 @@ func (world *InboundTestSetup) HtmlMessage() string {
 	}, "\r\n")
 }
 
+func (world *InboundTestSetup) LargeTextMessage() string {
+	header := "From: Dan <dan@outside.test>\r\nSubject: Long\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n"
+	return header + strings.Repeat("\U0001F600", 199000) + "\r\n"
+}
+
 func (world *InboundTestSetup) TextMessage() string {
 	return "From: Dan <dan@outside.test>\r\nSubject: Lunch\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nLunch at noon?\r\n"
 }

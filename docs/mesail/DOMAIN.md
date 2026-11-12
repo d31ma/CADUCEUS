@@ -412,7 +412,9 @@ producer, occurredAt, payload}`; the type names are in `kit/events` `Types`.
 Consumers are idempotent by `eventId`, and write only into the envelope's
 `domainId`. Event payloads carry ids, not message bodies, except
 `message.created` and `message.edited`, which carry the body because
-`realtime` and `search` need it.
+`realtime` and `search` need it, and `email.received`, which carries the
+email's content because `messaging` must not call `mail-in` back while
+`mail-in` pushes the event (EVENTS.md section 4, item 4).
 
 | Event | Producer | Consumers |
 | --- | --- | --- |

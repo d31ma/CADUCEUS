@@ -69,6 +69,26 @@ func (test *InboundControllerTest) TestPostMessageStagesOneEmailReceivedEvent() 
 	Assert.IsTrue(stored.EventQueued, "event not marked")
 }
 
+func (test *InboundControllerTest) TestALargeEmailIsStagedWithItsContentAndClearedAfterTheRelay() {
+	world := InboundTestSetup{}.World()
+	defer world.Cleanup()
+	world.UseServices()
+	world.Pusher.FailFor("messaging", errors.New("connection refused"))
+	key := world.FreshKey()
+	world.WriteBlob(key, world.LargeTextMessage())
+	_, err := world.Inbound.PostMessage(world.Envelope(key))
+	world.Must(err)
+	payload := events.EmailReceived{}
+	_, staged := outbox.Published{}.One(world.Stored(key).OutboxFields(), events.Types{}.EmailReceived(), &payload)
+	Assert.IsTrue(staged == nil, "no single staged event")
+	Assert.IsTrue(len(payload.Content.Text) > 700000, "the large text was not staged")
+	world.Pusher.Recover("messaging")
+	_, relayed := world.Outbox.PostRelay()
+	Assert.IsTrue(relayed == nil, "relay failed")
+	Assert.Equals(0, len(world.Stored(key).PendingEvents))
+	Assert.Equals(1, len(world.PushedToMessaging()))
+}
+
 func (test *InboundControllerTest) TestARetriedMessageStagesNoSecondEvent() {
 	world := InboundTestSetup{}.World()
 	defer world.Cleanup()

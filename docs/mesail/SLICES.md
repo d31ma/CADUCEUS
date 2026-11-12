@@ -759,6 +759,32 @@ an earlier slice text in this file says "realm of the domain",
 9. After K2, and not at the same time as OP2 (both change `deploy/router`):
    **K3**.
 10. Any time: **K4**.
+11. Any time, not at the same time as K4 (both change `kit/events`):
+   **K5**.
+
+### K5. Channel events without reader lists (messaging's, realtime's and notify's owners, one session)
+Found by K1 (2026-11-12): `memberIds` in a channel message's events lists
+every reader, so a channel of about 5,000 members passes the 512 KiB
+document cap (in `messaging`'s staged event and `notify`'s spilled fan-out
+record). Decided in EVENTS.md section 7, "Reader lists"; no channel size
+limit and no owner question.
+- **Owns, for this change only:** `kit/events` payload comments and tests,
+  `messaging`'s event staging, `realtime`'s fan-out (with R1's successor),
+  `notify`'s fan-out (with N1's successor), and the "Open" item about
+  channel size that K1 wrote in DOMAIN.md (replace it with a pointer to
+  EVENTS.md "Reader lists").
+- **Builds:** `messaging` stages channel events with empty `memberIds` and
+  direct ones with the participants (at most 100), and caps
+  `mentionedMemberIds` at 100; `realtime` fans out channel events from its
+  own channel membership copy (kept from `channel.member.*`; add it if it
+  does not exist yet) and reads `memberIds` only for direct ones; `notify`
+  uses `mentionedMemberIds`, thread participants and direct participants
+  only; a direct conversation refuses a 101st member participant (`400
+  invalid_request`, field `recipients`).
+- **Done when:** a real-FYLO test posts in a channel of 10,000 members and
+  every document stays under 512 KiB; the realtime and notify tests show
+  channel readers still get the message and mentioned members still get
+  a notification; gates pass.
 
 ### K4. A newer event replaces a waiting one (the outbox owner, M2's successor)
 Found by K1 (2026-11-12). Decided in EVENTS.md section 2.2; no owner

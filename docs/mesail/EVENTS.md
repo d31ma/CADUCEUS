@@ -285,10 +285,23 @@ The Go types are in `kit/events`, one file per type. All ids are wire id strings
 - `channel.member.added` -> ChannelMemberAdded: `channelId`, `conversationId`, `memberId`, `joinedAt`.
 - `channel.member.removed` -> ChannelMemberRemoved: `channelId`, `conversationId`, `memberId`.
 - `channel.archived` -> ChannelArchived: `channelId`, `conversationId`.
-- `message.created` -> MessageCreated: `messageId`, `conversationId`, `conversationKind` (channel|direct), `threadRootId` ("" for a root), `authorKind` (member|otherDomain|external), `authorMemberId`, `authorAddress`, `authorDisplayName`, `body` (Markdown), `subject` (email subject, else ""), `attachmentIds[]`, `fileNames[]` (for search), `isEmail`, `mentionedMemberIds[]` (notify: mention), `memberIds[]` (member participants who can read now; realtime fan-out and notify), `createdAt`.
+- `message.created` -> MessageCreated: `messageId`, `conversationId`, `conversationKind` (channel|direct), `threadRootId` ("" for a root), `authorKind` (member|otherDomain|external), `authorMemberId`, `authorAddress`, `authorDisplayName`, `body` (Markdown), `subject` (email subject, else ""), `attachmentIds[]`, `fileNames[]` (for search), `isEmail`, `mentionedMemberIds[]` (notify: mention; at most 100, the first 100 mentions in the body), `memberIds[]` (see "Reader lists" below), `createdAt`.
 - `message.edited` -> MessageEdited: `messageId`, `conversationId`, `body` (the new Markdown text, so search can index the edit), `memberIds[]` (readers to fan out to), `editedAt`.
 - `message.deleted` -> MessageDeleted: `messageId`, `conversationId`, `memberIds[]`, `deletedAt`.
 - `reaction.changed` -> ReactionChanged: `messageId`, `conversationId`, `memberId` (who reacted), `emoji`, `added` (true add, false remove), `memberIds[]`.
+- **Reader lists (`memberIds[]`, decided 2026-11-12, from K1).** In
+  `message.created`, `message.edited`, `message.deleted` and
+  `reaction.changed`, `memberIds` lists the member participants only for a
+  **direct** conversation (at most 100: a direct conversation has at most
+  100 member participants, the same limit as `POST
+  /directory/recipients/resolve`). For a **channel** conversation it is
+  always empty: a channel can have thousands of members, and every reader
+  in every event would pass the 512 KiB document cap (DOMAIN.md). A
+  consumer that needs a channel's readers keeps its own copy from
+  `channel.member.added` and `channel.member.removed` (`realtime`), or
+  checks membership when someone reads (`search`). `notify` needs no
+  channel reader list: channel notifications go only to mentioned members
+  and thread participants (SPEC AC-PN-2).
 - `read-position.moved` -> ReadPositionMoved: `conversationId`, `memberId`, `messageId` (last read), `readAt`.
 - `email.send.requested` -> EmailSendRequested (CONTRACTS.md): `messageId`, `from`, `rcpt`, `role` (to|cc|bcc: this rcpt's role), `to[]`, `cc[]` (the visible header lists; never Bcc), `subject`, `inReplyTo`, `references[]`, `attachmentIds[]`, `idempotencyKey`. No body: mail-out reads it from `GET /api/v1/<producer>/messages/{id}/source` (Service). Producers: `messaging`, and `notify` for the email summary (`Catalog.ProducersOf`).
 - `email.delivery.changed` -> EmailDeliveryChanged (CONTRACTS.md): `messageId`, `rcpt`, `status` (queued|sent|deferred|bounced|failed), `detail` (no content).

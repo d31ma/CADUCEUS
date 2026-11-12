@@ -256,7 +256,7 @@ and T14 (apps).
 | `GET /api/v1/identity/passkeys` | SignedIn | - | `[]Passkey{passkeyId, label, createdAt, lastUsedAt}` of the caller |
 | `POST /api/v1/identity/passkeys/setup` | SignedIn | `PasskeySetupRequest{currentPassword, oneTimeCode?}` | `200 PasskeySetup{optionsJson, setupKey}` (creation options: user id = the person id, user name = the username, resident key required, user verification required, exclude the person's existing passkeys); `401` wrong password or code; `409 too_many` with 10 passkeys |
 | `POST /api/v1/identity/passkeys` | SignedIn | `PasskeyConfirm{setupKey, credentialJson, label}` | `201 Passkey`; `400 setup_expired` when the `setupKey` is older than 10 minutes (start again with `setup`); `400 invalid_passkey` for every other failure |
-| `PATCH /api/v1/identity/passkeys/{passkeyId}` | SignedIn | `PasskeyRename{label}` | `200 Passkey`; `400 invalid_request` (field `label`, 1 to 64 characters); `404 not_found` for another person's passkey. No password: a label is not a secret and changes no access |
+| `PATCH /api/v1/identity/passkeys/{passkeyId}` | SignedIn | `PasskeyRename{label}` | `200 Passkey`; `400 invalid_request` (field `label`, 1 to 64 characters); `409 label_exists` when another of the person's passkeys has that label; `404 not_found` for another person's passkey. No password: a label is not a secret and changes no access |
 | `DELETE /api/v1/identity/passkeys/{passkeyId}` | SignedIn | `PasskeyRemove{currentPassword, oneTimeCode?}` | `200 Session` (fresh tokens, like a password change: its own fresh session starts after `sessionsEndedAt`); ends every other session of the person (`sessionsEndedAt`); `401`; `404 not_found` for another person's passkey |
 
 - `identity` checks the sealed challenge and its expiry, then calls
@@ -285,6 +285,19 @@ and T14 (apps).
 - Labels are 1 to 64 characters, default the device kind ("Mac",
   "iPhone"). Credential ids, public keys, challenges and assertions never
   appear in logs.
+- Labels are unique per person (Keycloak refuses a duplicate, PK1). When
+  adding, `identity` makes the label unique itself: if "Mac" is taken it
+  stores "Mac 2", then "Mac 3", cutting the base so the result stays
+  within 64 characters, and answers the stored label in `Passkey`. A
+  rename to a taken label answers `409 label_exists`, because the person
+  chose that name.
+- `identity` to Keycloak (PK1, `deploy/keycloak/README.md` "Passkeys (ADR
+  0008)"): the allowed origins go as ONE form field `passkey_origins`,
+  separated by spaces, because Keycloak keeps only the first value of a
+  repeated form field. Keycloak's passkey list gives `credentialId`
+  (base64url) and times in milliseconds since 1970: `identity` uses the
+  ids only for `excludeCredentials` in `setup` and never returns them in
+  `GET /passkeys`, and answers the times as RFC 3339.
 
 Account settings (the owner's choice: password and 2-step code are managed
 in Mesail's own settings; the browser still never talks to Keycloak). They

@@ -303,3 +303,20 @@ func TestAcId15AnotherPersonsPasskeyCannotBeRenamed(t *testing.T) {
 	reply := renamePasskeyReply(t, stack, other.Session.AccessToken, owner.Passkey.PasskeyId, "Mine now")
 	reply.ExpectError(t, http.StatusNotFound, "not_found")
 }
+
+func TestAcId15ASecondPasskeyWithTheSameLabelGetsANumber(t *testing.T) {
+	stack := NewStack(t)
+	owner := newPasskeyOwner(t, stack)
+	_, second := addPasskey(t, stack, owner.Session.AccessToken, owner.Person.Password, "Mac")
+	if second.Label != "Mac 2" {
+		t.Fatalf("want the label Mac 2, got %+v", second)
+	}
+}
+
+func TestAcId15RenamingToATakenLabelIsRefused(t *testing.T) {
+	stack := NewStack(t)
+	owner := newPasskeyOwner(t, stack)
+	_, second := addPasskey(t, stack, owner.Session.AccessToken, owner.Person.Password, "Phone")
+	reply := renamePasskeyReply(t, stack, owner.Session.AccessToken, second.PasskeyId, "Mac")
+	reply.ExpectError(t, http.StatusConflict, "label_exists")
+}

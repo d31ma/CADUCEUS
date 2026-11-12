@@ -34,13 +34,13 @@ func TestRetryOfAnUnknownLetterIsMissing(t *testing.T) {
 	_, _, inbox := deadLetterInbox(t)
 	collection, _ := inbox.Collection("example.com")
 	err := inbox.Outbox.Retry(RetryRequest{Collection: collection, DocumentId: "D1", EventId: "evt_missing", Subscriber: "messaging"})
-	check(t, isMissing(err), "want missing")
+	check(t, missingCase(err) == Missing{}.NoDeadLetter(), "want Missing{}.NoDeadLetter")
 }
 
 func TestRetryOfAnUnknownCollectionIsMissing(t *testing.T) {
 	_, _, inbox := deadLetterInbox(t)
 	err := inbox.Outbox.Retry(RetryRequest{Collection: "inbound-raw-other", DocumentId: "D1", EventId: "evt_1", Subscriber: "messaging"})
-	check(t, isMissing(err), "want missing")
+	check(t, missingCase(err) == Missing{}.NoOutboxCollection(), "want Missing{}.NoOutboxCollection")
 }
 
 func TestRetryOfUnreadableFieldsIsUnavailable(t *testing.T) {

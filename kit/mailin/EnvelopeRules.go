@@ -40,13 +40,9 @@ func (rules EnvelopeRules) DomainOf(address string) string {
 	return strings.ToLower(address[strings.LastIndex(address, "@")+1:])
 }
 
-func (EnvelopeRules) recipientsField() string {
-	return "recipients"
-}
-
 func (rules EnvelopeRules) checkCount(recipients []string) error {
 	if len(recipients) == 0 || len(recipients) > rules.MaxRecipients() {
-		return Invalid{Field: rules.recipientsField(), Reason: "between 1 and 100 recipients are required"}
+		return Invalid{}.RecipientCount()
 	}
 	return nil
 }
@@ -54,7 +50,7 @@ func (rules EnvelopeRules) checkCount(recipients []string) error {
 func (rules EnvelopeRules) oneDomain(recipients []string) (string, error) {
 	domains := rules.domains(recipients)
 	if len(domains) != 1 {
-		return "", Invalid{Field: rules.recipientsField(), Reason: "all recipients must be in one domain"}
+		return "", Invalid{}.RecipientsInManyDomains()
 	}
 	return domains[0], rules.checkDomain(domains[0])
 }
@@ -70,7 +66,7 @@ func (rules EnvelopeRules) domains(recipients []string) []string {
 
 func (rules EnvelopeRules) checkDomain(domainId string) error {
 	if !strings.Contains(domainId, ".") || strings.ContainsAny(domainId, "/\\ @") {
-		return Invalid{Field: rules.recipientsField(), Reason: "the recipient domain is not valid"}
+		return Invalid{}.RecipientDomain()
 	}
 	return nil
 }
@@ -84,14 +80,14 @@ func (rules EnvelopeRules) blobOwner(envelope Envelope, domainId string) string 
 
 func (rules EnvelopeRules) checkHandoffSender(envelope Envelope) error {
 	if envelope.AuthResults.Handoff && rules.DomainOf(envelope.Headers.From.Address) != rules.DomainOf(envelope.EnvelopeFrom) {
-		return Invalid{Field: "headers.from", Reason: "a hand-off must come from an address of the sender domain"}
+		return Invalid{}.HandOffSender()
 	}
 	return nil
 }
 
 func (rules EnvelopeRules) checkBlobKey(owner string, key string) error {
 	if !regexp.MustCompile(rules.blobKeyPattern(owner)).MatchString(key) {
-		return Invalid{Field: "rawBlobKey", Reason: "the raw blob key must be a blob of the domain that owns it"}
+		return Invalid{}.BlobKeyOwner()
 	}
 	return nil
 }
@@ -102,7 +98,7 @@ func (EnvelopeRules) blobKeyPattern(owner string) string {
 
 func (rules EnvelopeRules) checkSize(size int64) error {
 	if size <= 0 || size > rules.MaxSize() {
-		return Invalid{Field: "size", Reason: "the size must be between 1 byte and 64 MiB"}
+		return Invalid{}.Size()
 	}
 	return nil
 }

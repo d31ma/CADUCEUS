@@ -319,21 +319,34 @@ func TestReceiveRefusesBadCallersAndEvents(t *testing.T) {
 	_, producer := w.send(wrongProducer)
 	_, body := w.desk.Receive("Bearer token-example.com", make(chan int))
 
-	notService, mismatch, invalid := events.NotService{}, DomainMismatch{}, events.InvalidEnvelope{}
+	notService, mismatch, invalid, refused := events.NotService{}, DomainMismatch{}, events.InvalidEnvelope{}, InvalidSendRequest{}
 	equal(t, true, errors.As(withoutToken, &notService))
 	equal(t, true, errors.As(member, &notService))
 	equal(t, true, errors.As(otherRealm, &mismatch))
 	equal(t, "the caller may not act for the domain example.com", otherRealm.Error())
-	equal(t, true, strings.Contains(sender.Error(), "from is missing or not valid"))
+	equal(t, 3003, mismatch.Number())
+	equal(t, InvalidSendRequest{}.From(), sender)
 	equal(t, true, errors.As(producer, &invalid))
-	equal(t, true, errors.As(body, &invalid))
+	equal(t, true, errors.As(body, &refused))
+	equal(t, 3004, refused.Number())
 	equal(t, 0, len(w.changes()))
 }
 
 func TestTheIntakeRefusesAnUnknownProducer(t *testing.T) {
 	w := newWorld(t, nil)
 	err := w.desk.Intake.Handle(events.Envelope{EventID: "e", Type: "email.send.requested", DomainId: "example.com", Producer: "search", Payload: []byte(`{}`)})
-	equal(t, true, strings.Contains(err.Error(), "producer"))
+	equal(t, InvalidSendRequest{}.Producer(), err)
+}
+
+func TestEverySendRequestCaseHasItsOwnMailOutNumber(t *testing.T) {
+	equal(t, 3004, InvalidSendRequest{}.Body("bad").Number())
+	equal(t, 3005, InvalidSendRequest{}.Producer().Number())
+	equal(t, 3006, InvalidSendRequest{}.Payload().Number())
+	equal(t, 3007, InvalidSendRequest{}.MessageId().Number())
+	equal(t, 3008, InvalidSendRequest{}.IdempotencyKey().Number())
+	equal(t, 3009, InvalidSendRequest{}.Rcpt().Number())
+	equal(t, 3010, InvalidSendRequest{}.From().Number())
+	equal(t, "the email.send.requested field from is missing or not valid", InvalidSendRequest{}.From().Error())
 }
 
 func TestTheOutboxKeepsEventsUntilMessagingAccepts(t *testing.T) {

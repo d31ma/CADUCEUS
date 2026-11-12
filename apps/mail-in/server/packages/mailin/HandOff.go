@@ -44,13 +44,13 @@ func (HandOff) hosted(domain Domain, found bool) error {
 	if found && domain.IsActive() {
 		return nil
 	}
-	return Invalid{Field: "envelopeFrom", Reason: "the sender domain is not hosted or not active"}
+	return Invalid{}.SenderDomainNotHosted()
 }
 
 func (HandOff) copyFailure(failure error) error {
 	missing := blobs.NotFound{}
 	if errors.As(failure, &missing) {
-		return Invalid{Field: "rawBlobKey", Reason: "no raw message is stored under this key"}
+		return Invalid{}.NoRawMessage()
 	}
 	return Unavailable{Operation: "blob copy"}
 }

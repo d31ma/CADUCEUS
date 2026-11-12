@@ -58,7 +58,7 @@ func (book InboundBook) storedId(inboundId string) (string, error) {
 }
 
 func (InboundBook) missing() Missing {
-	return Missing{Message: "no such inbound message"}
+	return Missing{}.NoInboundMessage()
 }
 
 func (InboundBook) wirePrefix() string {

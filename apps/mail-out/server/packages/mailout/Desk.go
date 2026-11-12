@@ -68,7 +68,7 @@ func (desk Desk) receive(authorization string, body any) (events.Receipt, error)
 func (desk Desk) envelope(body any) (events.Envelope, error) {
 	envelope, err := desk.decode(body)
 	if err != nil {
-		return events.Envelope{}, events.InvalidEnvelope{Reason: err.Error()}
+		return events.Envelope{}, InvalidSendRequest{}.Body(err.Error())
 	}
 	return envelope, nil
 }

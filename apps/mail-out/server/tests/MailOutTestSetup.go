@@ -46,3 +46,19 @@ func (MailOutTestSetup) ServiceToken(realm oidc.SigningRealm) string {
 	token, _ := realm.Token(oidc.TokenRequest{Subject: "service-account", RealmRoles: []string{"mesail-service"}, Audience: "mesail-api", AuthorizedParty: "mesail-service", ExpiresAt: time.Now().Unix() + 60})
 	return token
 }
+
+func (MailOutTestSetup) Desks() *DeskService {
+	return &DeskService{dataSource: DataSource{}}
+}
+
+func (setup MailOutTestSetup) Events() *EventsController {
+	return &EventsController{events: &EventService{desks: setup.Desks()}}
+}
+
+func (setup MailOutTestSetup) Jobs() *JobsController {
+	return &JobsController{deliveries: &DeliveryService{desks: setup.Desks()}}
+}
+
+func (setup MailOutTestSetup) Outbox() *OutboxController {
+	return &OutboxController{relay: &OutboxService{desks: setup.Desks()}}
+}

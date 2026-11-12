@@ -115,7 +115,31 @@ keeps its row, marked "retired".
 | MS2027 | channels | 503 | `unavailable` | the channel service is not available | any other failure in a channel route |
 | MS2028 | channels | 503 | `unavailable` | the outbox is not available | any other failure in an outbox route |
 | MS2500 | mail-in | 500 | `unavailable` | Something went wrong. | an unexpected error in `mail-in` |
+| MS2501 | mail-in | 400 | `invalid_request` | between 1 and 100 recipients are required | an inbound envelope has no recipient or more than 100 (`field` `recipients`) |
+| MS2502 | mail-in | 400 | `invalid_request` | all recipients must be in one domain | the recipients of an inbound envelope are in more than one domain (`field` `recipients`) |
+| MS2503 | mail-in | 400 | `invalid_request` | the recipient domain is not valid | the recipient domain has no dot or holds `/`, `\`, a space or `@` (`field` `recipients`) |
+| MS2504 | mail-in | 400 | `invalid_request` | a hand-off must come from an address of the sender domain | a hand-off whose From address is not in the sender domain (`field` `headers.from`) |
+| MS2505 | mail-in | 400 | `invalid_request` | the raw blob key must be a blob of the domain that owns it | the raw blob key is not a blob of the owning domain (`field` `rawBlobKey`) |
+| MS2506 | mail-in | 400 | `invalid_request` | the size must be between 1 byte and 64 MiB | the message size is 0 or over 64 MiB (`field` `size`) |
+| MS2507 | mail-in | 400 | `invalid_request` | the sender domain is not hosted or not active | a hand-off from a domain that is not hosted or not active (`field` `envelopeFrom`) |
+| MS2508 | mail-in | 400 | `invalid_request` | no raw message is stored under this key | a hand-off whose raw message is not in the blob store (`field` `rawBlobKey`) |
+| MS2509 | mail-in | 401 | `unauthenticated` | The access token was refused. | the caller's token for the original or the content of a message is not valid |
+| MS2510 | mail-in | 404 | `not_found` | no such outbox collection | an outbox route names a collection mail-in does not have |
+| MS2511 | mail-in | 404 | `not_found` | no such inbound message | the inbound message does not exist or is in another domain |
+| MS2512 | mail-in | 404 | `not_found` | no such dead letter | a requeue names a dead letter that does not exist |
+| MS2513 | mail-in | 404 | `not_found` | no such outbox document | a requeue names an outbox document that does not exist |
+| MS2514 | mail-in | 503 | `unavailable` | Inbound storage is not available. Try again later. | the inbound store, the blob store or the directory failed |
 | MS3000 | mail-out | 500 | `unavailable` | Something went wrong. | an unexpected error in `mail-out` |
+| MS3001 | mail-out | 400 | `invalid_request` | Why the event is refused, for example "the event envelope is not valid: eventId must not be empty". | a refused event by a rule of the shared `kit/events` (bad envelope, wrong producer, a type mail-out does not consume); retired when slice E12 numbers `kit/events` |
+| MS3002 | mail-out | 403 | `forbidden` | Only a caller with the Service role may deliver events. | the caller of the events route is not a service |
+| MS3003 | mail-out | 404 | `not_found` | Not found. | the event's domain is not the caller's domain |
+| MS3004 | mail-out | 400 | `invalid_request` | the event envelope is not valid: <the JSON error> | the events body is not a JSON event envelope |
+| MS3005 | mail-out | 400 | `invalid_request` | the email.send.requested field producer is missing or not valid | `email.send.requested` from a producer mail-out does not read messages from |
+| MS3006 | mail-out | 400 | `invalid_request` | the email.send.requested field payload is missing or not valid | the `email.send.requested` payload cannot be read |
+| MS3007 | mail-out | 400 | `invalid_request` | the email.send.requested field messageId is missing or not valid | the `email.send.requested` payload has no `messageId` |
+| MS3008 | mail-out | 400 | `invalid_request` | the email.send.requested field idempotencyKey is missing or not valid | the `email.send.requested` payload has no `idempotencyKey` |
+| MS3009 | mail-out | 400 | `invalid_request` | the email.send.requested field rcpt is missing or not valid | the `email.send.requested` payload has no valid `rcpt` address |
+| MS3010 | mail-out | 400 | `invalid_request` | the email.send.requested field from is missing or not valid | the `from` address of `email.send.requested` is not in the event's domain |
 | MS3500 | attachments | 500 | `unavailable` | Something went wrong. | an unexpected error in `attachments` |
 | MS3501 | attachments | 400 | `invalid_request` | Give a file name of 1 to 255 bytes without slashes or control characters. | an upload with a bad file name; `field` is `fileName` |
 | MS3502 | attachments | 400 | `invalid_request` | Give a media type such as image/png. | an upload with a bad media type; `field` is `mediaType` |

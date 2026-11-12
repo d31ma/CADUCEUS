@@ -13,24 +13,24 @@ func TestTheBookHidesAMessageOfAnotherDomain(t *testing.T) {
 	memory, store := newMemory(), newBlobs()
 	inboundId := acceptedMessage(t, memory, store, "example.com/inbound-1", textMessage())
 	_, err := InboundBook{Storage: memory.storage()}.Find("example.org", inboundId)
-	check(t, isMissing(err), "want missing")
+	check(t, missingCase(err) == Missing{}.NoInboundMessage(), "want Missing{}.NoInboundMessage")
 }
 
 func TestTheBookRefusesAnUnknownId(t *testing.T) {
 	memory, store := newMemory(), newBlobs()
 	acceptedMessage(t, memory, store, "example.com/inbound-1", textMessage())
 	_, err := InboundBook{Storage: memory.storage()}.Find("example.com", "in_D9")
-	check(t, isMissing(err), "want missing")
+	check(t, missingCase(err) == Missing{}.NoInboundMessage(), "want Missing{}.NoInboundMessage")
 }
 
 func TestTheBookRefusesAnotherKindOfId(t *testing.T) {
 	_, err := InboundBook{Storage: newMemory().storage()}.Find("example.com", "att_D1")
-	check(t, isMissing(err), "want missing")
+	check(t, missingCase(err) == Missing{}.NoInboundMessage(), "want Missing{}.NoInboundMessage")
 }
 
 func TestTheBookRefusesAnIdWithAPath(t *testing.T) {
 	_, err := InboundBook{Storage: newMemory().storage()}.Find("example.com", "in_../D1")
-	check(t, isMissing(err), "want missing")
+	check(t, missingCase(err) == Missing{}.NoInboundMessage(), "want Missing{}.NoInboundMessage")
 }
 
 func TestTheBookReportsAFailedCollectionCheck(t *testing.T) {

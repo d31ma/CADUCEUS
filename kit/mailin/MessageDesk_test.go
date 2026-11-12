@@ -20,7 +20,7 @@ func TestOriginalHidesAMessageOfAnotherDomain(t *testing.T) {
 	memory, store := newMemory(), newBlobs()
 	inboundId := acceptedMessage(t, memory, store, "example.com/inbound-1", textMessage())
 	_, err := testMessageDesk(memory, store, "example.org").Original("Bearer service", inboundId)
-	check(t, isMissing(err) && len(store.signed) == 0, "want missing")
+	check(t, missingCase(err) == Missing{}.NoInboundMessage() && len(store.signed) == 0, "want Missing{}.NoInboundMessage")
 }
 
 func TestOriginalRefusesARefusedToken(t *testing.T) {
@@ -78,7 +78,7 @@ func TestContentHidesAMessageOfAnotherDomain(t *testing.T) {
 	memory, store := newMemory(), newBlobs()
 	inboundId := acceptedMessage(t, memory, store, "example.com/inbound-1", textMessage())
 	_, err := testMessageDesk(memory, store, "example.org").Content("Bearer service", inboundId)
-	check(t, isMissing(err), "want missing")
+	check(t, missingCase(err) == Missing{}.NoInboundMessage(), "want Missing{}.NoInboundMessage")
 }
 
 func imageBlock(content InboundContent) richtext.Block {

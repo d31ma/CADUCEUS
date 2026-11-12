@@ -88,7 +88,7 @@ func (OutboxDesk) views(ref outbox.Ref, letters []outbox.DeadLetter) []DeadEvent
 
 func (OutboxDesk) missingLetter(failure error) error {
 	if errors.As(failure, &outbox.NotFound{}) {
-		return Missing{Message: failure.Error()}
+		return Missing{}.NoDeadLetter()
 	}
 	return Unavailable{Operation: "outbox document"}
 }

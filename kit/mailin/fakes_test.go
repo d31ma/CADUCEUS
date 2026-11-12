@@ -217,6 +217,18 @@ func isMissing(err error) bool {
 	return errors.As(err, &Missing{})
 }
 
+func invalidCase(err error) Invalid {
+	invalid := Invalid{}
+	errors.As(err, &invalid)
+	return invalid
+}
+
+func missingCase(err error) Missing {
+	missing := Missing{}
+	errors.As(err, &missing)
+	return missing
+}
+
 func invalidField(err error) string {
 	invalid := Invalid{}
 	errors.As(err, &invalid)

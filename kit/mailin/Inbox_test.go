@@ -93,7 +93,7 @@ func TestARetriedAcceptStagesNoSecondEvent(t *testing.T) {
 func TestAcceptRefusesAnInvalidEnvelope(t *testing.T) {
 	inbox := testInbox(newMemory(), outbox.NewRecordingPusher(), goodSettings())
 	_, err := inbox.Accept(testEnvelope("example.com", "example.org/inbound-1"))
-	check(t, invalidField(err) == "rawBlobKey", "want rawBlobKey")
+	check(t, invalidCase(err) == Invalid{}.BlobKeyOwner(), "want Invalid{}.BlobKeyOwner")
 }
 
 func TestAcceptReportsAFailedCollection(t *testing.T) {

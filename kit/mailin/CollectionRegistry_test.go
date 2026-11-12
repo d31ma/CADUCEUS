@@ -22,7 +22,7 @@ func TestRegisterReportsAFailedRead(t *testing.T) {
 
 func TestCheckRefusesAnUnknownCollection(t *testing.T) {
 	memory := newMemory()
-	check(t, isMissing(memory.registry().Check("inbound-raw-a")), "want missing")
+	check(t, missingCase(memory.registry().Check("inbound-raw-a")) == Missing{}.NoOutboxCollection(), "want Missing{}.NoOutboxCollection")
 	check(t, Missing{Message: "gone"}.Error() == "gone", "wrong text")
 }
 

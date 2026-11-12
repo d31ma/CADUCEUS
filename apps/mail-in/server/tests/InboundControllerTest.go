@@ -18,12 +18,14 @@ func (test *InboundControllerTest) TestPostMessageRefusesAnEnvelopeWithoutRecipi
 	world := InboundTestSetup{}.World()
 	_, err := world.Inbound.PostMessage(InboundEnvelope{RawBlobKey: world.FreshKey(), Size: 1})
 	Assert.IsTrue(world.IsInvalid(err), "want InvalidEnvelope")
+	Assert.Equals(2501, world.ErrorNumber(err))
 }
 
 func (test *InboundControllerTest) TestPostMessageRefusesAKeyOfAnotherDomain() {
 	world := InboundTestSetup{}.World()
 	_, err := world.Inbound.PostMessage(world.Envelope("example.org/inbound-x"))
 	Assert.IsTrue(world.IsInvalid(err), "want InvalidEnvelope")
+	Assert.Equals(2505, world.ErrorNumber(err))
 }
 
 func (test *InboundControllerTest) TestPostMessageStoresTheMessageOnce() {
@@ -165,6 +167,7 @@ func (test *InboundControllerTest) TestAHandOffFromAnInactiveDomainIsRefused() {
 	_, err := world.Inbound.PostMessage(envelope)
 	Assert.IsTrue(world.IsInvalid(err), "want InvalidEnvelope")
 	Assert.Equals("envelopeFrom", world.InvalidField(err))
+	Assert.Equals(2507, world.ErrorNumber(err))
 }
 
 func (test *InboundControllerTest) TestGetOriginalSignsADownloadForTheMessageDomain() {
@@ -187,6 +190,7 @@ func (test *InboundControllerTest) TestGetOriginalHidesTheMessageFromAnotherDoma
 	inboundId := world.Accepted(world.TextMessage())
 	_, err := world.Inbound.GetOriginal(world.Bearer(world.Other), inboundId)
 	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
+	Assert.Equals(2511, world.ErrorNumber(err))
 }
 
 func (test *InboundControllerTest) TestGetOriginalRefusesABadToken() {
@@ -195,6 +199,7 @@ func (test *InboundControllerTest) TestGetOriginalRefusesABadToken() {
 	defer world.Cleanup()
 	_, err := world.Inbound.GetOriginal("Bearer not-a-token", "in_1")
 	Assert.IsTrue(world.IsUnauthenticated(err), "want Unauthenticated")
+	Assert.Equals(2509, world.ErrorNumber(err))
 }
 
 func (test *InboundControllerTest) TestGetContentConvertsAnHtmlEmailWithAnInlineImageAndAPdf() {

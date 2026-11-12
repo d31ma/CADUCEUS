@@ -146,7 +146,7 @@ func (test *MailOutRoutesTest) TestAHostedRecipientIsHandedToMailInThroughTheRou
 	services, relay := test.start()
 	defer services.Close()
 	defer relay.Close()
-	events, jobs, outboxRoute := &EventsController{}, &JobsController{}, &OutboxController{}
+	events, jobs, outboxRoute := MailOutTestSetup{}.Events(), MailOutTestSetup{}.Jobs(), MailOutTestSetup{}.Outbox()
 	envelope := test.event("example.com", "Alice <alice@example.com>", "eve@example.org")
 
 	receipt, err := events.PostEvent(test.bearer("example.com"), envelope)
@@ -177,7 +177,7 @@ func (test *MailOutRoutesTest) TestTheEventsRouteRefusesBadCallersAndEvents() {
 	services, relay := test.start()
 	defer services.Close()
 	defer relay.Close()
-	events := &EventsController{}
+	events := MailOutTestSetup{}.Events()
 	envelope := test.event("example.com", "alice@example.com", "bob@partner.test")
 	foreignSender := test.event("example.com", "mallory@example.org", "bob@partner.test")
 
@@ -186,8 +186,10 @@ func (test *MailOutRoutesTest) TestTheEventsRouteRefusesBadCallersAndEvents() {
 	_, senderErr := events.PostEvent(test.bearer("example.com"), foreignSender)
 
 	Assert.Equals(&ForbiddenCaller{}, withoutToken)
-	Assert.Equals(&UnknownDomain{}, otherDomain)
+	Assert.Equals(3002, withoutToken.(*ForbiddenCaller).Number())
+	Assert.Equals(&UnknownDomain{ErrorNumber: 3003}, otherDomain)
 	Assert.IsTrue(strings.Contains(senderErr.Error(), "from is missing or not valid"), senderErr.Error())
+	Assert.Equals(3010, senderErr.(*RejectedEvent).Number())
 	Assert.Equals(0, len(test.pushed))
 }
 
@@ -196,7 +198,7 @@ func (test *MailOutRoutesTest) TestTheOutboxRoutesRelayAndRequeueEvents() {
 	defer services.Close()
 	defer relay.Close()
 	test.eventAnswer = http.StatusBadRequest
-	events, outboxRoute := &EventsController{}, &OutboxController{}
+	events, outboxRoute := MailOutTestSetup{}.Events(), MailOutTestSetup{}.Outbox()
 	envelope := test.event("example.com", "alice@example.com", "bob@partner.test")
 	events.PostEvent(test.bearer("example.com"), envelope)
 

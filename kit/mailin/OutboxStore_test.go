@@ -96,13 +96,13 @@ func TestLoadReadsTheFields(t *testing.T) {
 func TestLoadRefusesAnUnknownCollection(t *testing.T) {
 	_, store := seededStore(t)
 	_, err := store.Load(outbox.Ref{Collection: "inbound-raw-b", Id: "D1"})
-	check(t, isMissing(err), "want missing")
+	check(t, missingCase(err) == Missing{}.NoOutboxCollection(), "want Missing{}.NoOutboxCollection")
 }
 
 func TestLoadRefusesAMissingDocument(t *testing.T) {
 	_, store := seededStore(t)
 	_, err := store.Load(outbox.Ref{Collection: "inbound-raw-a", Id: "D9"})
-	check(t, isMissing(err), "want missing")
+	check(t, missingCase(err) == Missing{}.NoOutboxDocument(), "want Missing{}.NoOutboxDocument")
 }
 
 func TestLoadReportsAFailedFind(t *testing.T) {
@@ -139,5 +139,5 @@ func TestSaveClearsTheFlags(t *testing.T) {
 
 func TestSaveRefusesAnUnknownCollection(t *testing.T) {
 	_, store := seededStore(t)
-	check(t, isMissing(store.Save(outbox.Ref{Collection: "inbound-raw-b", Id: "D1"}, outbox.Fields{})), "want missing")
+	check(t, missingCase(store.Save(outbox.Ref{Collection: "inbound-raw-b", Id: "D1"}, outbox.Fields{})) == Missing{}.NoOutboxCollection(), "want Missing{}.NoOutboxCollection")
 }

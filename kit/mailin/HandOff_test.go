@@ -31,13 +31,13 @@ func TestAHandOffFromAnInactiveDomainIsRefused(t *testing.T) {
 	domains.domains["sender.test"] = Domain{DomainId: "sender.test", State: "disabled"}
 	store.objects["sender.test/inbound-1"] = []byte("raw")
 	_, err := handOffInbox(newMemory(), store, domains).Accept(handOffEnvelope("sender.test/inbound-1"))
-	check(t, invalidField(err) == "envelopeFrom", "want envelopeFrom")
+	check(t, invalidCase(err) == Invalid{}.SenderDomainNotHosted(), "want Invalid{}.SenderDomainNotHosted")
 	check(t, len(store.objects) == 1, "nothing may be copied")
 }
 
 func TestAHandOffFromAnUnknownDomainIsRefused(t *testing.T) {
 	_, err := handOffInbox(newMemory(), newBlobs(), activeDomains()).Accept(handOffEnvelope("sender.test/inbound-1"))
-	check(t, invalidField(err) == "envelopeFrom", "want envelopeFrom")
+	check(t, invalidCase(err) == Invalid{}.SenderDomainNotHosted(), "want Invalid{}.SenderDomainNotHosted")
 }
 
 func TestADirectoryFailureMakesTheHandOffUnavailable(t *testing.T) {
@@ -49,7 +49,7 @@ func TestADirectoryFailureMakesTheHandOffUnavailable(t *testing.T) {
 
 func TestAHandOffWithoutTheSenderBlobIsRefused(t *testing.T) {
 	_, err := handOffInbox(newMemory(), newBlobs(), activeDomains("sender.test")).Accept(handOffEnvelope("sender.test/inbound-1"))
-	check(t, invalidField(err) == "rawBlobKey", "want rawBlobKey")
+	check(t, invalidCase(err) == Invalid{}.NoRawMessage(), "want Invalid{}.NoRawMessage")
 }
 
 func TestABlobFailureMakesTheHandOffUnavailable(t *testing.T) {

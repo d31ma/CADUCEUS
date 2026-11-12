@@ -38,7 +38,7 @@ func (registry CollectionRegistry) Check(collection string) error {
 		return err
 	}
 	if !slices.Contains(known, collection) {
-		return Missing{Message: "no such outbox collection"}
+		return Missing{}.NoOutboxCollection()
 	}
 	return nil
 }

@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"mesail.dev/packages/apierrors"
 	"mesail.dev/packages/blobs"
 	"mesail.dev/packages/collections"
 	"mesail.dev/packages/events"
@@ -50,8 +51,9 @@ func (InboundTestSetup) World() *InboundTestSetup {
 	world := &InboundTestSetup{Pusher: outbox.NewRecordingPusher()}
 	world.Domain = "m1-" + world.RandomText() + ".test"
 	world.Workflows = &WorkflowService{dataSource: DataSource{}, pusher: world.Pusher}
-	world.Inbound = &InboundController{workflows: world.Workflows}
-	world.Outbox = &OutboxController{workflows: world.Workflows}
+	failures := &FailureService{}
+	world.Inbound = &InboundController{messages: &InboundService{workflows: world.Workflows, envelopes: &EnvelopeConversionService{}, contents: &ContentConversionService{}, failures: failures}}
+	world.Outbox = &OutboxController{relay: &OutboxService{workflows: world.Workflows, failures: failures}}
 	return world
 }
 
@@ -386,6 +388,12 @@ func (world *InboundTestSetup) Must(err error) {
 func (world *InboundTestSetup) IsNotFound(err error) bool {
 	var failure *NotFound
 	return errors.As(err, &failure)
+}
+
+func (world *InboundTestSetup) ErrorNumber(err error) int {
+	var failure apierrors.Numbered
+	errors.As(err, &failure)
+	return failure.Number()
 }
 
 func (world *InboundTestSetup) IsInvalid(err error) bool {

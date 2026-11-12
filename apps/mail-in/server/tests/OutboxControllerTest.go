@@ -35,6 +35,7 @@ func (test *OutboxControllerTest) TestRetryOfAnUnknownCollectionIsNotFound() {
 	world := InboundTestSetup{}.World()
 	err := world.Outbox.PostRetry(RetryRequest{Collection: "inbound-raw-" + world.RandomText(), DocumentId: "1", EventId: "evt_1", Subscriber: "messaging"})
 	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
+	Assert.Equals(2510, world.ErrorNumber(err))
 }
 
 func (test *OutboxControllerTest) TestRetryOfAnUnknownLetterIsNotFound() {
@@ -45,6 +46,7 @@ func (test *OutboxControllerTest) TestRetryOfAnUnknownLetterIsNotFound() {
 	world.Must(err)
 	missing := world.Outbox.PostRetry(RetryRequest{Collection: world.Collection(), DocumentId: world.Stored(key).ID, EventId: "evt_missing", Subscriber: "messaging"})
 	Assert.IsTrue(world.IsNotFound(missing), "want NotFound")
+	Assert.Equals(2512, world.ErrorNumber(missing))
 }
 
 func (test *OutboxControllerTest) TestRetryOfAMissingDocumentIsNotFound() {
@@ -54,6 +56,7 @@ func (test *OutboxControllerTest) TestRetryOfAMissingDocumentIsNotFound() {
 	world.Must(err)
 	missing := world.Outbox.PostRetry(RetryRequest{Collection: world.Collection(), DocumentId: "00000000000000", EventId: "evt_1", Subscriber: "messaging"})
 	Assert.IsTrue(world.IsNotFound(missing), "want NotFound")
+	Assert.Equals(2513, world.ErrorNumber(missing))
 }
 
 func (test *OutboxControllerTest) TestTheSweepSurvivesARegisteredCollectionThatIsMissing() {

@@ -30,7 +30,7 @@ func (store OutboxStore) Load(ref outbox.Ref) (outbox.Fields, error) {
 		return outbox.Fields{}, err
 	}
 	if !found {
-		return outbox.Fields{}, Missing{Message: "no such outbox document"}
+		return outbox.Fields{}, Missing{}.NoOutboxDocument()
 	}
 	return row.Fields, nil
 }

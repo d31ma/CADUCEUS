@@ -38,11 +38,12 @@ func (intake Intake) validate(envelope events.Envelope, request events.EmailSend
 	if index < 0 {
 		return nil
 	}
-	return events.InvalidEnvelope{Reason: "the email.send.requested field " + intake.fieldNames()[index] + " is missing or not valid"}
+	return intake.refusals()[index]
 }
 
-func (intake Intake) fieldNames() []string {
-	return []string{"producer", "payload", "messageId", intake.keyField(), "rcpt", "from"}
+func (Intake) refusals() []InvalidSendRequest {
+	refusal := InvalidSendRequest{}
+	return []InvalidSendRequest{refusal.Producer(), refusal.Payload(), refusal.MessageId(), refusal.IdempotencyKey(), refusal.Rcpt(), refusal.From()}
 }
 
 func (intake Intake) checks(envelope events.Envelope, request events.EmailSendRequested, decoded bool) []bool {

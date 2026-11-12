@@ -124,7 +124,7 @@ An audit of `develop` (2cda510) found:
    | API routing / API Gateway | Mesail's router (Lambda mode, to Floci) |
    | API Gateway WebSocket | `edge/realtime` and the `realtime` container (already) |
    | EventBridge schedules | the local scheduler (already) |
-   | S3 for blobs | the local adapter on the host's disk, or a self-hosted S3-compatible store with an explicit endpoint |
+   | S3 for blobs | one shared blob folder on the VM's data disk with the local adapter (decided 2026-11-11, section 7); an S3-compatible store only for a later cloud form |
    | S3 plus CloudFront for web apps | the router serves the web bundles from Floci's S3 bucket (as now) |
    | EFS | Floci's EFS volumes on the VM's data disk (the ATLAS rules of ADR 0004 stay) |
    | Secrets Manager | secret files on the host, read once at start (as now) |
@@ -133,7 +133,26 @@ An audit of `develop` (2cda510) found:
    | Public CA (ACME) | certificate files from the operator's CA or any CA; no ACME client in Mesail |
    | Public NTP | the operator's NTP server (host setting) |
 
-6. **A gate proves it.** An on-premise run starts the whole stack with all
+7. **Blobs on-premise: one shared folder, not Floci's S3** (decided
+   2026-11-11, after L5 found that the Floci deploy gave `mail-in` and
+   `mail-out` no common blob store). Attachments, raw inbound mail and
+   outbound mail all use the local blob adapter on **one folder** on the
+   VM's data disk: a Floci EFS access point `blobs` for the `attachments`,
+   `mail-in` and `mail-out` functions, and the same folder as a plain
+   volume for the router (which serves the signed `/blobs` links) and the
+   SMTP edge (`MESAIL_RAW_STORE_DIR`). Keys are write-once and start with
+   the domain, as now.
+   - Why not Floci's S3: a signed S3 link would send browsers to Floci's
+     API, which must never be reachable from outside (section 4); the
+     router would have to proxy every download anyway. It would also put
+     every file inside the emulator's own storage, one more part to back
+     up and trust. A folder is backed up with the rest of the data disk.
+   - Floci's S3 keeps only the web app bundles, which only the router reads
+     inside the VM.
+   - The S3 adapter stays for a later cloud form. `mail-out` getting the S3
+     adapter that `mail-in` has is a follow-up for that cloud form, not
+     needed on-premise.
+8. **A gate proves it.** An on-premise run starts the whole stack with all
    outbound traffic blocked except the configured relay, resolver and (if
    on) push services, and the blackbox tests pass, except the ones that
    need external mail or push (SPEC AC-OP-8).

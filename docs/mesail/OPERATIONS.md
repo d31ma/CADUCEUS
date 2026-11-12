@@ -86,11 +86,16 @@ queued and never sent. Mail between your own hosted domains needs neither.
 | --- | --- |
 | `dnsresolver` in `apps/directory` | The resolver for domain checks. Default after OP1: the host's own resolver **(planned)**; today it is a public DNS-over-HTTPS address and must be changed. |
 
-**Files (attachments)**
+**Files (attachments and mail)**
+
+All files (attachments, raw received mail, outbound mail) live in **one
+blob folder** on the VM's data disk, shared by `attachments`, `mail-in`,
+`mail-out`, the router and the SMTP edge (ADR 0007 section 7). Back up
+that folder with the data.
 
 | Setting | Meaning |
 | --- | --- |
-| `YON_ATTACHMENTS_ADAPTER` | `local` (default): files on the data disk. `s3` only with an S3-compatible store of yours. |
+| `YON_ATTACHMENTS_ADAPTER` | `local` (on-premise): files in the blob folder. `s3` only for a later cloud form. |
 | `YON_ATTACHMENTS_FOLDER` | The folder for files (local adapter). |
 | `YON_ATTACHMENTS_LINK_BASE`, `YON_ATTACHMENTS_LINK_SECRET` | The `/blobs` address and the link signing secret (32 characters or more); the router's `MESAIL_ROUTER_BLOBS_*` use the same values. |
 | An S3 endpoint | Required with the `s3` adapter; after OP1 it never falls back to AWS **(planned)**. |
@@ -128,7 +133,9 @@ Secrets are files on the host, mounted into the VM and passed to the
 functions; nothing reads a cloud secret store. Keep them readable only by
 the install, back them up separately from data, and never put them in a
 log. The full list (client secrets, the link secret, the realtime gateway
-secret, `identity`'s signing key, DKIM keys under `MESAIL_SECRET_*`, VAPID
+secret, `identity`'s signing key, DKIM keys under `MESAIL_SECRET_*` (one
+per hosted domain; `scripts/onprem/dkim-key.sh <domain>` **(planned, OP2)**
+makes the key and prints the DNS record), VAPID
 keys, the relay login) is in `deploy/floci/README.md` "Keycloak, secrets
 and test users" and `stack.json` `secrets`.
 

@@ -1032,6 +1032,15 @@ except for the items below.
   - a registry inside the install for Floci and every Mesail image; the
     functions' image addresses point to it; nothing pulls from a public
     registry at start or cold start;
+  - blobs (ADR 0007 section 7): one folder on the VM's data disk, as one
+    Floci EFS access point `blobs` mounted by `attachments`, `mail-in` and
+    `mail-out`, and as a plain volume for the router (`/blobs`) and the
+    SMTP edge (`MESAIL_RAW_STORE_DIR`); all use the local adapter. L5's
+    shared EFS access point for the Floci test run is the start of it;
+  - DKIM keys for real domains: `scripts/onprem/dkim-key.sh <domain>`
+    makes a key pair for a hosted domain, writes the private key as a
+    secret file that `mail-out` reads (`MESAIL_SECRET_*`), and prints the
+    DNS record to publish (L5 only adds test keys);
   - Floci kept pinned by digest, with an upgrade note;
   - a check of Floci's licence and maintainer, reported to the owner if it
     does not allow production use.
@@ -1060,6 +1069,9 @@ except for the items below.
 - **Landed (first version, 2026-11-11):** `docs/mesail/OPERATIONS.md`, with
   the planned settings marked; OP1 and OP2 update it when they add or
   rename a setting.
+
+Later, only for a cloud form (not on-premise): `mail-out` gets the S3
+blob adapter that `mail-in` has (ADR 0007 section 7).
 
 OP5 (an offline build bundle) is dropped: the owner decided that builds
 may download pinned parts (SPEC Q20).

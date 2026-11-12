@@ -763,7 +763,9 @@ an earlier slice text in this file says "realm of the domain",
    **K5**.
 12. After K3: **K6** (with OP2 if OP2 is changing `deploy/lambda`).
 13. After K4: **K7**.
-14. After K3's and K1's Floci runs (it needs the dev host): **K8**.
+14. Right after K3's Floci series (it needs the dev host; before K1's
+    Floci runs if they have not started): **K8**. Floci series are not
+    reliable until K8 finds the store outage's cause.
 
 ### K5. Channel events without reader lists (messaging's, realtime's and notify's owners, one session)
 Found by K1 (2026-11-12): `memberIds` in a channel message's events lists
@@ -880,6 +882,17 @@ failed in about 7 ms, and `directory` recovered at 07:29:44. The load was
 15, and the dev host supervisor logged nothing. The same message was seen
 before K3, in slice P1's Floci runs. Sign-in depends on `directory`, so
 12 seconds of outage meant 12 seconds of failed sign-ins.
+Run 3 (07:40:36-07:41:23 UTC, about 47 seconds, load 6 to 13) was wider:
+`directory` ("the directory store is not available", 23 calls) and
+`messaging` ("the message store is not available", 19 calls) failed at the
+same time, mostly on writes, while reads kept answering `200`. Ruled out
+by K3: function restarts, guest kernel I/O errors, host NFS messages, a
+full disk (the data disk was 1% used). K3's lead, not proven: FYLO index
+files on the dev host's persistent data have grown past FYLO's 1 MiB
+frame (`directory` `people/index/keys.snapshot` 1.97 MB and `keys.wal`
+1.2 MB, `local-parts` 1.89 MB, `messaging` `messages` 2.7 MB; K3's two
+200-member test domains added about 400 people). So K8 covers every
+FYLO-owning service, not only `directory`.
 - **Owns:** `apps/directory` store wiring and error handling (with the
   directory owner); any TACHYON gap goes through the coordinator.
 - **Builds:**
@@ -909,8 +922,13 @@ before K3, in slice P1's Floci runs. Sign-in depends on `directory`, so
     failures, and the router's log gives the time of each call;
   - find the cause and write it down with logs: an ATLAS write stall (ADR
     0004 section 4: stalls up to 11 seconds), the FYLO process restarting,
-    or the datasource marking the store down for a fixed time after one
-    slow call;
+    the datasource marking the store down for a fixed time after one slow
+    call, or index files larger than FYLO's 1 MiB frame (test the lead:
+    grow a fresh root's index past 1 MiB and see whether writes fail; if
+    so, it goes to the FYLO coordinator with the sizes, because SLICES
+    and DOMAIN cap documents, not FYLO's own index files);
+  - do not delete or reset the dev host's data to make runs pass before
+    the cause is known;
   - fix it in Mesail if the cause is Mesail's; otherwise write the
     request to TACHYON or FYLO, with the logs.
 - **Not now:** a longer `identity` retry (it would hold sign-in past the

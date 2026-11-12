@@ -139,7 +139,7 @@ func (world *InboundTestSetup) ifDocument(event DeadEvent, documentId string) []
 
 func (world *InboundTestSetup) Cleanup() {
 	world.Forget(world.Collection())
-	DataSource{}.DropCollection(mailin.ContentShelf{}.Collection(world.Domain))
+	DataSource{}.DropCollection(mailin.ContentShelf{}.Collection(mailin.InboundRaw{DomainId: world.Domain, ReceivedAt: time.Now().UTC().Format(time.RFC3339Nano)}))
 	world.stopServices()
 }
 

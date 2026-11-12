@@ -25,7 +25,7 @@ func TestTheShelfKeepsTheContentInADomainCollection(t *testing.T) {
 	memory, store := newMemory(), newBlobs()
 	stored := storedMessage(t, memory, store, textMessage())
 	testShelf(memory, store).ForMessage(stored)
-	collection := ContentShelf{}.Collection("example.com")
+	collection := ContentShelf{}.Collection(stored)
 	row := memory.rows[collection]["D1"]
 	check(t, strings.HasPrefix(collection, "inbound-content-"), "wrong collection")
 	check(t, row["inboundId"] == stored.WireId() && row["bodyFormat"] == "text", "wrong record")
@@ -44,7 +44,7 @@ func TestTheShelfReportsAFailedCollection(t *testing.T) {
 func TestTheShelfReportsAFailedLookup(t *testing.T) {
 	memory, store := newMemory(), newBlobs()
 	stored := storedMessage(t, memory, store, textMessage())
-	memory.failPagesIn = ContentShelf{}.Collection("example.com")
+	memory.failPagesIn = ContentShelf{}.Collection(stored)
 	_, err := testShelf(memory, store).ForMessage(stored)
 	check(t, isUnavailable(err, "scroll"), "want scroll")
 }
@@ -60,7 +60,7 @@ func TestTheShelfReportsAMissingRawMessage(t *testing.T) {
 func TestTheShelfReportsAFailedInsert(t *testing.T) {
 	memory, store := newMemory(), newBlobs()
 	stored := storedMessage(t, memory, store, textMessage())
-	testShelf(memory, store).Storage.Ensure(ContentShelf{}.Collection("example.com"))
+	testShelf(memory, store).Storage.Ensure(ContentShelf{}.Collection(stored))
 	memory.failOn = "insert"
 	_, err := testShelf(memory, store).ForMessage(stored)
 	check(t, isUnavailable(err, "insert"), "want insert")
@@ -69,9 +69,30 @@ func TestTheShelfReportsAFailedInsert(t *testing.T) {
 func TestTheShelfReportsAnUnreadableStoredRecord(t *testing.T) {
 	memory, store := newMemory(), newBlobs()
 	stored := storedMessage(t, memory, store, textMessage())
-	collection := ContentShelf{}.Collection("example.com")
+	collection := ContentShelf{}.Collection(stored)
 	memory.storage().Ensure(collection)
 	memory.storage().Insert(collection, ContentRecord{InboundId: stored.WireId(), Blocks: "{", Attachments: "[]"})
 	_, err := testShelf(memory, store).ForMessage(stored)
 	check(t, isUnavailable(err, "stored content"), "want stored content")
+}
+
+func TestTheShelfKeepsTheContentInTheMonthTheEmailWasReceived(t *testing.T) {
+	memory, store := newMemory(), newBlobs()
+	stored := storedMessage(t, memory, store, textMessage())
+	stored.ReceivedAt = "2026-10-31T23:59:59.5-02:00"
+	testShelf(memory, store).ForMessage(stored)
+	collection := ContentShelf{}.Collection(stored)
+	check(t, strings.HasSuffix(collection, "-202611"), "want the UTC month 202611, got "+collection)
+	check(t, memory.rows[collection]["D1"]["inboundId"] == stored.WireId(), "the content is not in its month")
+}
+
+func TestTheShelfReadsTheContentBackFromItsMonth(t *testing.T) {
+	memory, store := newMemory(), newBlobs()
+	stored := storedMessage(t, memory, store, textMessage())
+	stored.ReceivedAt = "2026-09-15T08:00:00Z"
+	first, err := testShelf(memory, store).ForMessage(stored)
+	check(t, err == nil, "first read failed")
+	delete(store.objects, stored.RawBlobKey)
+	again, err := testShelf(memory, store).ForMessage(stored)
+	check(t, err == nil && again.Text == first.Text, "the kept content was not read back from its month")
 }

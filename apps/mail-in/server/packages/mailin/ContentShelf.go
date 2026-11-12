@@ -1,18 +1,22 @@
 package mailin
 
-import "mesail.dev/packages/collections"
+import (
+	"time"
+
+	"mesail.dev/packages/collections"
+)
 
 type ContentShelf struct {
 	Storage Storage
 	Builder ContentBuilder
 }
 
-func (ContentShelf) Collection(domainId string) string {
-	return collections.CollectionName{}.ForDomain("inbound-content", domainId)
+func (shelf ContentShelf) Collection(stored InboundRaw) string {
+	return collections.CollectionName{}.ForDomainMonth(shelf.base(), stored.DomainId, shelf.month(stored.ReceivedAt))
 }
 
 func (shelf ContentShelf) ForMessage(stored InboundRaw) (InboundContent, error) {
-	collection := shelf.Collection(stored.DomainId)
+	collection := shelf.Collection(stored)
 	err := shelf.Storage.Ensure(collection)
 	if err != nil {
 		return InboundContent{}, err
@@ -39,4 +43,13 @@ func (shelf ContentShelf) built(collection string, stored InboundRaw) (InboundCo
 	}
 	_, err = shelf.Storage.Insert(collection, ContentRecord{}.From(stored.WireId(), content))
 	return content, err
+}
+
+func (ContentShelf) month(receivedAt string) string {
+	received, _ := time.Parse(time.RFC3339Nano, receivedAt)
+	return received.UTC().Format("200601")
+}
+
+func (ContentShelf) base() string {
+	return "inbound-content"
 }

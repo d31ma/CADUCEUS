@@ -43,6 +43,13 @@ domains; chat never does.
   after deleting a new person; every sign-in must answer 200 within 2
   seconds. Use `240s` or more to cover Keycloak's first session purge
   (about 180 seconds after Keycloak starts; slice K2).
+- `MESAIL_K3_MEMBERS` (a number, unset by default) turns on
+  `TestK3SignInStaysQuickWhileADomainWithManyMembersIsRemoved`: the
+  Operator makes a new domain with that many members (200 for slice K3),
+  removes it, and `ana` signs in a loop for `MESAIL_SIGNIN_LOOP` while the
+  directory's removal job works; every sign-in must answer 200 within 5
+  seconds. Filling 200 members takes a few minutes on Floci, so the test
+  skips itself unless the variable is set.
 
 The one-login tests (`SignIn_test.go`, `DomainSwitch_test.go`,
 `Tokens_test.go`, `Members_test.go`, `People_test.go`; slice L0) create

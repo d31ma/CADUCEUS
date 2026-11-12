@@ -50,12 +50,11 @@ own_floci() {
 }
 
 save_logs() {
-  local profile="$1" service
-  for service in scheduler router realtime; do
-    # shellcheck disable=SC2086
-    compose $profile logs --no-color --timestamps "$service" > "$(mesail_log_dir)/container-$service.log" 2>&1 || true
+  local container
+  for container in $(docker ps --all --filter network=mesail_floci_backend --format '{{.Names}}'); do
+    docker logs --timestamps "$container" > "$(mesail_log_dir)/container-$container.log" 2>&1 || true
+    echo "saved the log of $container"
   done
-  echo "container logs saved for scheduler, router and realtime"
 }
 
 main() {
@@ -63,7 +62,7 @@ main() {
   mesail_load_settings
   mesail_load_secrets
   profile="$(used_profile)"
-  mesail_step save-logs save_logs "$profile"
+  mesail_step save-logs save_logs
   if ! own_floci; then
     # shellcheck disable=SC2086
     mesail_step compose-stop compose $profile stop

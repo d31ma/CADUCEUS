@@ -279,6 +279,14 @@ Settings (environment, or a `.env` file copied from `.env.example`):
   deploy, as `MESAIL_SECRET_DKIM_<DOMAIN>_<SELECTOR>` (the PEM text). Without
   a key, mail-out defers every hosted send before it delivers (the native
   run writes the same keys to a folder).
+- `mail-in` and `mail-out` share one access point (`"fileSystemShare":
+  "mail"` in `stack.json`). Each keeps its own FYLO root
+  (`/mnt/data/mail-in`, `/mnt/data/mail-out`), and both use the blob folder
+  `/mnt/data/blobs`: mail-out writes the signed message there and mail-in
+  copies it on the hand-off (`stack.json` `lambdaSettings`, Floci only).
+  Without it every email between hosted domains stops at mail-out or mail-in.
+  In AWS, mail-out should use S3 like mail-in instead (mail-out has no S3
+  store yet).
 - In Floci the access point's root directory and user are not applied: each
   access point is its own Docker volume `floci-aws-efs-<id>-<hash>`.
 - **A fresh data set without removing anything.** The FYLO data in the dev
@@ -416,7 +424,9 @@ router, and every step can run again):
 (`POST /api/v1/identity/session`, login = the username), and the script
 prints `MESAIL_TOKEN_<NAME>`, `MESAIL_PASSWORD_<NAME>` and
 `MESAIL_SERVICE_CLIENT_SECRET` for the blackbox tests. It never calls
-Keycloak. Tokens last 60 seconds, so they are made just before the tests.
+Keycloak. Tokens last 60 seconds, so `test.sh` makes fresh ones before each
+test file and runs the files one by one (with `MESAIL_TEST_RUN`, one run
+with one set of tokens).
 
 ### Scheduler (Floci)
 

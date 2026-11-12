@@ -76,13 +76,15 @@
       "name": "mail-in",
       "fylo": true,
       "memory": 1024,
-      "timeout": 60
+      "timeout": 60,
+      "fileSystemShare": "mail"
     },
     {
       "name": "mail-out",
       "fylo": true,
       "memory": 1024,
-      "timeout": 60
+      "timeout": 60,
+      "fileSystemShare": "mail"
     }
   ],
   "keycloak": {
@@ -228,5 +230,15 @@
       "operator": true,
       "memberships": []
     }
-  ]
+  ],
+  "lambdaSettings": {
+    "mail-out": {
+      "YON_MAILOUT_BLOBFOLDER": "/mnt/data/blobs"
+    },
+    "mail-in": {
+      "YON_MAILIN_BLOBS_ADAPTER": "local",
+      "YON_MAILIN_BLOBS_FOLDER": "/mnt/data/blobs",
+      "YON_MAILIN_BLOBS_LINK_BASE": "http://router.localhost:18080/blobs"
+    }
+  }
 }

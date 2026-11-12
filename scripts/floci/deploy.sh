@@ -46,6 +46,10 @@ create_access_point() {
     --query AccessPointArn --output text
 }
 
+access_point_name() {
+  mesail_service_field "$1" 'fileSystemShare // .name'
+}
+
 access_point_arn() {
   local service="$1" existing
   existing="$(existing_access_point "$service")"
@@ -65,13 +69,18 @@ storage_arguments() {
   local service="$1"
   if [ "$(mesail_service_field "$service" fylo)" != true ]; then return; fi
   echo "--vpc-config SubnetIds=$(mesail_stack .network.subnet),SecurityGroupIds=$(mesail_stack .network.securityGroup)"
-  echo "--file-system-configs Arn=$(access_point_arn "$service"),LocalMountPath=$(mesail_stack .fileSystem.mountPath)"
+  echo "--file-system-configs Arn=$(access_point_arn "$(access_point_name "$service")"),LocalMountPath=$(mesail_stack .fileSystem.mountPath)"
+}
+
+lambda_settings() {
+  jq -r --arg app "$1" '.lambdaSettings[$app] // {} | to_entries[] | "\(.key)=\(.value)"' "$(mesail_stack_file)"
 }
 
 environment_lines() {
   local service="$1"
   mesail_app_secrets "$(mesail_root)/apps/$service"
   mesail_app_settings "$service"
+  lambda_settings "$service"
 }
 
 dkim_variable() {

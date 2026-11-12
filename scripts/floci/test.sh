@@ -17,11 +17,31 @@ wait_for_service() {
   mesail_wait_for "$1 through the router" 180 mesail_service_answers "$MESAIL_ROUTER_URL" "$1"
 }
 
-run_blackbox() {
-  local filter=()
-  if [ -n "${MESAIL_TEST_RUN:-}" ]; then filter=(-run "$MESAIL_TEST_RUN"); fi
+go_blackbox() {
   (cd "$(mesail_root)/tests/blackbox" && MESAIL_BASE_URL="$MESAIL_ROUTER_URL" \
-    go test -tags blackbox -count=1 -v ${filter[@]+"${filter[@]}"} ./...)
+    go test -tags blackbox -count=1 -v -run "$1" ./...)
+}
+
+test_names() {
+  grep -ho '^func Test[A-Za-z0-9_]*' "$1" | sed 's/^func //' | paste -sd'|' -
+}
+
+run_file() {
+  local file="$1" names
+  names="$(test_names "$file")"
+  if [ -z "$names" ]; then return 0; fi
+  echo "=== tests of $(basename "$file") with fresh tokens"
+  load_tokens
+  go_blackbox "^(${names})\$"
+}
+
+run_blackbox() {
+  local file code=0
+  if [ -n "${MESAIL_TEST_RUN:-}" ]; then go_blackbox "$MESAIL_TEST_RUN"; return; fi
+  for file in "$(mesail_root)"/tests/blackbox/*_test.go; do
+    run_file "$file" || code=1
+  done
+  return "$code"
 }
 
 main() {

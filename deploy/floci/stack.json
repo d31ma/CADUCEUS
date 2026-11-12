@@ -116,6 +116,9 @@
     "example.com",
     "example.org"
   ],
+  "pendingDomains": [
+    "partner.test"
+  ],
   "scheduleSeconds": 60,
   "schedules": [
     {
@@ -219,7 +222,12 @@
       "password": "dev-carol-password",
       "token": "CAROL",
       "operator": false,
-      "memberships": []
+      "memberships": [
+        {
+          "domainId": "partner.test",
+          "admin": false
+        }
+      ]
     },
     {
       "username": "operator",

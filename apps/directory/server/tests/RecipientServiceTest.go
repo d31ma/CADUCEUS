@@ -58,6 +58,36 @@ func (test *RecipientServiceTest) TestUnknownAddressOfTheCallersDomainIsExternal
 	Assert.Equals("external", nobody.Kind)
 }
 
+func (test *RecipientServiceTest) TestMemberOfAPendingDomainIsExternal() {
+	service, caller, _ := test.world()
+	carol := test.resolve(service, caller, test.memberOfDomainIn("pending"))
+	Assert.Equals("external", carol.Kind)
+	Assert.Equals("email", carol.DefaultDelivery)
+	Assert.Equals("", carol.MemberId)
+}
+
+func (test *RecipientServiceTest) TestMemberOfADisabledDomainIsExternal() {
+	service, caller, _ := test.world()
+	carol := test.resolve(service, caller, test.memberOfDomainIn("disabled"))
+	Assert.Equals("external", carol.Kind)
+}
+
+func (test *RecipientServiceTest) TestMemberOfARemovingDomainIsExternal() {
+	service, caller, _ := test.world()
+	carol := test.resolve(service, caller, test.memberOfDomainIn("removing"))
+	Assert.Equals("external", carol.Kind)
+}
+
+func (test *RecipientServiceTest) memberOfDomainIn(state string) string {
+	domainId := test.reset(state + "-service.test")
+	documents := &DocumentsService{dataSource: DataSource{}}
+	names := &CollectionNamesService{}
+	Assert.Equals("<nil>", fmt.Sprint((&TenantCollectionsService{documents: documents, names: names}).Prepare(domainId)))
+	Assert.Equals("<nil>", fmt.Sprint((&DomainStorageService{documents: documents, names: names}).Insert(DomainDocument{DomainId: domainId, Name: domainId, State: state})))
+	Assert.Equals("<nil>", fmt.Sprint((&AddressStorageService{documents: documents, names: names}).Insert(AddressDocument{Address: "carol@" + domainId, DomainId: domainId, Kind: "member", TargetId: "carol-id"})))
+	return "carol@" + domainId
+}
+
 func (test *RecipientServiceTest) resolve(service *RecipientService, caller oidc.Caller, address string) ResolvedRecipient {
 	response, err := service.Resolve(Admission{Caller: caller}, ResolveRequest{Addresses: []string{address}})
 	Assert.Equals("<nil>", fmt.Sprint(err))

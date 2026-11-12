@@ -30,7 +30,10 @@ domains; chat never does.
   token.
 - `bo`: member of `example.com` (`MESAIL_TOKEN_BO`).
 - `eve`: member of `example.org` (`MESAIL_TOKEN_EVE`).
-- `carol`: member of `partner.test` only.
+- `carol`: member of `partner.test` only. The seed adds `partner.test` and
+  never verifies it, so it stays `pending`: `carol@partner.test` resolves
+  `external` (only `active` domains are hosted), and `carol@example.com`
+  gets `403 not_a_member` at sign-in.
 - `operator`: Keycloak role `mesail-operator`, in no domain
   (`MESAIL_TOKEN_OPERATOR` is an install-wide session, domain `*`).
 - `MESAIL_PASSWORD` is the password of the fixture people;

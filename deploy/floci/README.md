@@ -431,7 +431,7 @@ people with fixed Keycloak ids):
 | `MESAIL_TOKEN_ANA` | `ana` | `3e5a11d0-0000-4000-8000-000000000001` | `example.com` (admin, default), `example.org` |
 | `MESAIL_TOKEN_BO` | `bo` | `...000000000002` | `example.com` |
 | `MESAIL_TOKEN_EVE` | `eve` | `...000000000003` | `example.org` |
-| `MESAIL_TOKEN_CAROL` | `carol` | `...000000000004` | none (so `carol@partner.test` stays external; her token stays empty) |
+| `MESAIL_TOKEN_CAROL` | `carol` | `...000000000004` | `partner.test`, a `pending` domain, so `carol@partner.test` stays external |
 | `MESAIL_TOKEN_OPERATOR` | `operator` | `...000000000005` | none; Keycloak role `mesail-operator` |
 
 Passwords are `dev-<name>-password` (dev only, in `stack.json`).
@@ -447,11 +447,12 @@ router, and every step can run again):
    memberships). `identity` signs in only people that the directory knows.
 3. `operator` signs in (`POST /api/v1/identity/session`) and adds the
    domains: `hostedDomains` (`example.com`, `example.org`) are added and
-   verified.
+   verified; `pendingDomains` (`partner.test`) are added and never
+   verified, so they stay `pending`.
 4. With the service token, the seed call for `ana`, `bo`, `eve` and `carol`.
-   `carol` gets no domain: the tests need `carol@partner.test` to stay an
-   external address, and any domain added to the directory counts as
-   hosted for recipient lookups.
+   `carol` is a member of `partner.test`. Only `active` domains count as
+   hosted for recipients and `mail-out`'s hand-off, so `carol@partner.test`
+   resolves `external`, and carol can still sign in to set her domain up.
 
 **Tokens** (`tokens.sh`): each person signs in through `identity`
 (`POST /api/v1/identity/session`, login = the username), and the script

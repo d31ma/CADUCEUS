@@ -212,6 +212,13 @@ mesail_seed_domains() {
   done
 }
 
+mesail_seed_pending_domains() {
+  local base="$1" token="$2" domain
+  for domain in $(mesail_stack '(.pendingDomains // [])[]'); do
+    mesail_add_domain "$base" "$token" "$domain"
+  done
+}
+
 mesail_seed_directory() {
   local base="$1" service operator
   service="$(mesail_service_token "$base" || true)"
@@ -220,5 +227,6 @@ mesail_seed_directory() {
   operator="$(mesail_sign_in_person "$base" "$(mesail_operator)" || true)"
   mesail_require_token "operator token" "$operator" || return 1
   mesail_seed_domains "$base" "$operator"
+  mesail_seed_pending_domains "$base" "$operator"
   mesail_seed_people "$base" "$service"
 }

@@ -1,4 +1,7 @@
-import "cmp"
+import (
+	"cmp"
+	"slices"
+)
 
 // @Service
 type TenantService struct {
@@ -13,7 +16,11 @@ func (service *TenantService) Require(domainId string) (DomainDocument, error) {
 
 func (service *TenantService) Hosted() (map[string]bool, error) {
 	domains, failure := service.domains.All()
-	return service.names(domains), failure
+	return service.names(slices.DeleteFunc(domains, service.inactive)), failure
+}
+
+func (service *TenantService) inactive(domain DomainDocument) bool {
+	return domain.State != service.active()
 }
 
 func (service *TenantService) refusal(found bool, state string) error {
@@ -30,6 +37,10 @@ func (service *TenantService) names(domains []DomainDocument) map[string]bool {
 		hosted[domain.DomainId] = true
 	}
 	return hosted
+}
+
+func (service *TenantService) active() string {
+	return "active"
 }
 
 func (service *TenantService) removing() string {

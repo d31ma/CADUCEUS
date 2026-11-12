@@ -69,18 +69,21 @@ func (test *InboundControllerTest) TestPostMessageStagesOneEmailReceivedEvent() 
 	Assert.IsTrue(stored.EventQueued, "event not marked")
 }
 
-func (test *InboundControllerTest) TestAnEmailNearTheBudgetIsStagedWholeAndClearedAfterTheRelay() {
+func (test *InboundControllerTest) TestAnEmailNearTheBudgetIsStoredAndPushedWhole() {
 	world := InboundTestSetup{}.World()
 	defer world.Cleanup()
-	payload := world.StagedThenRelayed(world.LongTextMessage("a", 120000))
+	payload := world.StagedThenPushed(world.LongTextMessage("a", 120000))
 	Assert.IsTrue(!payload.Content.Truncated, "a text under the budget was cut")
 	Assert.Equals(120000, len(payload.Content.Text))
+	stored, err := world.Inbound.GetContent(world.Bearer(world.Domain), payload.InboundId)
+	world.Must(err)
+	Assert.Equals(120000, len(stored.Text))
 }
 
-func (test *InboundControllerTest) TestAnEmailOverTheBudgetIsStagedCutAndClearedAfterTheRelay() {
+func (test *InboundControllerTest) TestAnEmailOverTheBudgetIsStoredAndPushedCut() {
 	world := InboundTestSetup{}.World()
 	defer world.Cleanup()
-	payload := world.StagedThenRelayed(world.LongTextMessage("\U0001F600", 199000))
+	payload := world.StagedThenPushed(world.LongTextMessage("\U0001F600", 199000))
 	Assert.IsTrue(payload.Content.Truncated, "the long text was not cut")
 	Assert.Equals("text", payload.Content.BodyFormat)
 	Assert.IsTrue(len(payload.Content.Text) <= mailin.ContentBudget{}.PlainTextBytes(), "the text is over the plain text size")

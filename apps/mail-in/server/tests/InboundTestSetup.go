@@ -291,21 +291,17 @@ func (world *InboundTestSetup) LongTextMessage(piece string, count int) string {
 	return header + strings.Repeat(piece, count) + "\r\n"
 }
 
-func (world *InboundTestSetup) StagedThenRelayed(raw string) events.EmailReceived {
+func (world *InboundTestSetup) StagedThenPushed(raw string) events.EmailReceived {
 	world.UseServices()
-	world.Pusher.FailFor("messaging", errors.New("connection refused"))
 	key := world.FreshKey()
 	world.WriteBlob(key, raw)
 	_, err := world.Inbound.PostMessage(world.Envelope(key))
 	world.Must(err)
-	payload := events.EmailReceived{}
-	_, staged := outbox.Published{}.One(world.Stored(key).OutboxFields(), events.Types{}.EmailReceived(), &payload)
-	world.Must(staged)
-	world.Pusher.Recover("messaging")
-	_, relayed := world.Outbox.PostRelay()
-	world.Must(relayed)
+	pushed := world.PushedToMessaging()
+	Assert.Equals(1, len(pushed))
 	Assert.Equals(0, len(world.Stored(key).PendingEvents))
-	Assert.Equals(1, len(world.PushedToMessaging()))
+	payload := events.EmailReceived{}
+	world.Must(events.PayloadReader{}.Read(pushed[0], &payload))
 	return payload
 }
 

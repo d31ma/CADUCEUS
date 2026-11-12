@@ -222,8 +222,7 @@ Sessions:
   URL. After a domain switch the tab opens a new connection with the new
   token.
 - Second factor: TOTP through Keycloak's direct-grant conditional OTP
-  (`oneTimeCode`). Passkeys are not available in this flow; they are a
-  later slice.
+  (`oneTimeCode`). Passkeys are a separate sign-in (below, ADR 0008).
 - Brute force: Keycloak brute-force detection is on in the realm `mesail`
   (per person, so one budget for all their domains), and the gateway or
   dev router limits requests per client address (slice P1). `identity`
@@ -244,6 +243,37 @@ Service tokens (ADR 0005 section 4):
   `oidc.servicetokens`, the route URL; the host is in `outgoing.hosts`) and
   caches each token per domain until 10 seconds before it expires.
   `oidc.InstallWide{}.DomainId()` (`*`) is the domain id of install-wide calls.
+
+Passkeys (ADR 0008; Touch ID, Face ID, Windows Hello, Android). Keycloak
+keeps every passkey; `identity` only relays. Built after TACHYON T13 (web)
+and T14 (apps).
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `POST /api/v1/identity/passkeys/challenge` | Public | - | `PasskeyChallenge{optionsJson, challengeKey}`: WebAuthn request options for a discoverable credential (relying party id = the install's host, user verification required, timeout 120 s) and the challenge sealed for 2 minutes |
+| `POST /api/v1/identity/session/passkey` | Public | `PasskeySignIn{challengeKey, credentialJson, domainId?, keepSignedIn?}` | `200 Session` (the default domain, or `domainId` when given and the person is a member); `401 unauthenticated` (one message for every failure); `403 not_a_member`, `403 no_domain` as for a password sign-in; `429 rate_limited` |
+| `GET /api/v1/identity/passkeys` | SignedIn | - | `[]Passkey{passkeyId, label, createdAt, lastUsedAt}` of the caller |
+| `POST /api/v1/identity/passkeys/setup` | SignedIn | `PasskeySetupRequest{currentPassword, oneTimeCode?}` | `200 PasskeySetup{optionsJson, setupKey}` (creation options: user id = the person id, user name = the username, resident key required, user verification required, exclude the person's existing passkeys); `401` wrong password or code; `409 too_many` with 10 passkeys |
+| `POST /api/v1/identity/passkeys` | SignedIn | `PasskeyConfirm{setupKey, credentialJson, label}` | `201 Passkey`; `400 invalid_passkey` |
+| `DELETE /api/v1/identity/passkeys/{passkeyId}` | SignedIn | `PasskeyRemove{currentPassword, oneTimeCode?}` | `204`; ends every other session of the person (`sessionsEndedAt`); `401`; `404 not_found` for another person's passkey |
+
+- `identity` checks the sealed challenge and its expiry, then calls
+  Keycloak's token endpoint through the passkey direct-grant flow of the
+  realm `mesail` (client `mesail-identity`) with the assertion, the
+  expected challenge and the allowed origins (app setting
+  `identity.passkeyorigins`: the web origin and the native apps' origins).
+  `mesail-keycloak`'s authenticator finds the user from the user handle,
+  checks signature, sign count, user verification and the origin, and
+  answers tokens; a failure counts in Keycloak's brute-force detection.
+- `setup` and `confirm` go through `mesail-keycloak`'s admin endpoint as
+  the client `mesail-account`, only for the `sub` in the caller's token,
+  like the 2-step code. The `setupKey` seals the challenge, the `sub` and
+  a 10-minute expiry.
+- A passkey sign-in needs no `oneTimeCode`: user verification makes it
+  two factors (ADR 0008 section 1).
+- Labels are 1 to 64 characters, default the device kind ("Mac",
+  "iPhone"). Credential ids, public keys, challenges and assertions never
+  appear in logs.
 
 Account settings (the owner's choice: password and 2-step code are managed
 in Mesail's own settings; the browser still never talks to Keycloak). They
@@ -323,6 +353,7 @@ change the person's one account, so they apply to every domain:
 | `PATCH /api/v1/directory/people/{personId}` | Allow(DomainAdmin, Operator) | `PersonChange{displayName?, state?}` (`state`: `active` or `disabled`) | `200 PersonSummary`; `403 forbidden` (SPEC AC-ID-13) |
 | `POST /api/v1/directory/people/{personId}/password` | Allow(DomainAdmin, Operator) | `PasswordReset{newPassword}` | `204`: sets the password, sets `mesail.mustChangePassword`, ends the person's sessions; `400 password_policy`; `403 forbidden` (AC-ID-13) |
 | `DELETE /api/v1/directory/people/{personId}/totp` | Allow(DomainAdmin, Operator) | - | `204`; `403 forbidden` (AC-ID-13) |
+| `DELETE /api/v1/directory/people/{personId}/passkeys` | Allow(DomainAdmin, Operator) | - | `204`: removes all the person's passkeys and sets `sessionsEndedAt`; `403 forbidden` (AC-ID-13; ADR 0008) |
 | `DELETE /api/v1/directory/people/{personId}` | Allow(Operator) | - | `202`: deletes the Keycloak user and sets `state: deleted` first (so every sign-in ends; `PersonRecord.domainIds` is empty from then on), then the removal job removes every membership (`member.upserted` with `state: removed`); the prefix stays reserved for ever; calling it again answers `202`; `404 not_found` |
 | `POST /api/v1/directory/jobs/removals` | Allow(Service), install-wide | - | `200 RemovalReport{writes, more}`: one step of the removal job (SLICES rule 9: at most 25 writes and 20 seconds per call; `more: true` when work is left for the next call); safe to call twice at the same time. Its schedule calls it every minute (EVENTS.md section 4) |
 | `PUT /api/v1/directory/me/default-domain` | SignedIn | `DefaultDomain{domainId}` | `204`; `404 not_found` when it is not one of the caller's domains |

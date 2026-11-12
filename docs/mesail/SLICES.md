@@ -1310,6 +1310,81 @@ may download pinned parts (SPEC Q20).
 ### Order
 OP1 and OP4 at once; OP2 after L5 and OP1; OP3 after OP2.
 
+## Wave 6: passkeys (ADR 0008)
+
+The owner's request of 2026-11-12: biometrics (Touch ID, Face ID and the
+like) as a sign-in option. SPEC S18, AC-ID-15 to AC-ID-19, Q21 and Q22;
+CONTRACTS "identity" (passkeys). Web passkeys wait for TACHYON T13, native
+ones for T14; the Keycloak and identity parts may be built before.
+
+### PU. UX for passkeys (`mesail-ux` or a UX session)
+- **Owns:** `docs/mesail/ux/**`.
+- **Builds:** "Sign in with a passkey" on the sign-in form (and in the
+  username field's autofill where the browser offers it), its failure
+  lines; Settings > Sign-in: the passkey list (name, added, last used),
+  "Add a passkey" with the password and code step, rename, remove (with
+  the "other devices are signed out" warning); the admin's "Remove all
+  passkeys" in the person menu (AC-ID-13); hidden where the device has no
+  passkey support.
+
+### PK0. Blackbox tests for passkeys (architecture, `mesail-arch`)
+- **Owns:** `tests/blackbox/**`.
+- **Builds:** contract tests for every passkey route, using a software
+  WebAuthn authenticator in the test (ES256 key pair, made-up credential
+  id, user verification flag set): add, list, sign in, wrong signature,
+  replayed challenge, expired challenge, another person's passkey, remove
+  and `access_revoked` on the other sessions, the admin removal, 10
+  passkeys at most.
+
+### PK1. Keycloak passkey flow (`mesail-keycloak`)
+- **Owns:** `deploy/keycloak/**`.
+- **Builds:** in the realm `mesail`: the WebAuthn passwordless policy
+  (relying party id from a setting, user verification required, resident
+  key required, attestation none, ES256 and RS256, at most 10 per user); a
+  direct-grant flow for passkeys with a custom authenticator that takes
+  the assertion, the expected challenge and the allowed origins from
+  `identity`, finds the user by the user handle, and checks them with
+  Keycloak's WebAuthn code (brute-force detection counts failures); admin
+  endpoints for `mesail-account` (register a passkey for one user, list,
+  rename, remove) and for `mesail-directory` (remove all of one user).
+- **Done when:** `oidc_check.py` signs in with a software authenticator
+  through `mesail-identity`, and refuses a replayed or wrong assertion.
+
+### PK2. Identity passkey routes (identity's successor)
+- **Owns:** `apps/identity/**`, `kit/oidc` session and account code for
+  passkeys.
+- **Builds:** CONTRACTS "identity" passkey routes, the sealed challenge and
+  `setupKey`, `identity.passkeyorigins`, `sessionsEndedAt` on removal.
+- **Depends on:** PK1.
+
+### PK3. Directory: remove all passkeys (directory's successor)
+- **Builds:** `DELETE /directory/people/{personId}/passkeys` with the
+  AC-ID-13 check, through PK1's admin endpoint.
+- **Depends on:** PK1.
+
+### PK4. Web: passkey sign-in and settings (the web app's owner)
+- **Builds:** PU's screens with TACHYON's `Passkeys` client (T13).
+- **Depends on:** PU, PK2, TACHYON T13 in a release Mesail uses.
+
+### PK5. Apps: passkeys in the native shells (P1's successor, with the web app's owner)
+- **Builds:** the manifest settings for T14 (relying party id, Apple
+  associated domain, Android signing certificate), the router's
+  `/.well-known/apple-app-site-association` and
+  `/.well-known/assetlinks.json` from the install's settings, and the
+  native origins in `identity.passkeyorigins`; OPERATIONS.md: each install
+  builds its apps with its own host.
+- **Depends on:** PK4, TACHYON T14.
+
+### PK6. Biometric unlock of the device copy (only if SPEC Q22 is yes)
+- **Builds:** sealed tables with `"unlock": "userPresence"` (TACHYON T15)
+  for the device copy in the installed apps, the "Unlock with Touch ID"
+  setting and the locked screen.
+- **Depends on:** Wave 4's O3, TACHYON T15.
+
+### Order
+PU, PK0 and PK1 at once; PK2 and PK3 after PK1; PK4 after PK2 and T13; PK5
+after PK4 and T14; PK6 only on the owner's word.
+
 ## Later (after the first release)
 
 - **X1** SMTP submission for third-party mail clients (app passwords or

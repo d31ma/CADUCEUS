@@ -181,8 +181,8 @@ A visitor opens Mesail and sees Mesail's own sign-in form with one field,
 "Username or email address", a password field and, when needed, a
 one-time code. Ana types `ana` (or `ana@example.com`, in any letter case),
 her password and her code. Mesail checks them with Keycloak on the server;
-the browser never talks to Keycloak. Passkeys are not offered in the first
-release. Ana is a member of `example.com` and `example.org`. She lands in
+the browser never talks to Keycloak. (A passkey sign-in, without a
+password, is in S18.) Ana is a member of `example.com` and `example.org`. She lands in
 her default domain, `example.com` (had she typed `ana@example.org`, she
 would land in `example.org`). The domain switcher at the top lists both
 domains. She picks `example.org` and sees its channels, DMs and email,
@@ -245,6 +245,16 @@ device". Mesail keeps nothing on that computer after the tab closes. At
 home he signs in with the box ticked; Mesail keeps a copy there. When he
 signs out at home with 1 message still queued, Mesail warns him, and
 after he confirms it deletes every Mesail copy of his on that computer.
+
+### S18. Signing in with Touch ID
+Ana opens Settings > Sign-in on her MacBook, types her password and her
+code, and adds a passkey named "MacBook". The Mac asks for her fingerprint.
+Next morning the sign-in form shows "Sign in with a passkey". She clicks
+it, touches the sensor, and lands in `example.com`, with no username,
+password or code. Her iPhone gets its own passkey with Face ID. When she
+loses the iPhone, she signs in on the Mac with her password and code and
+removes the "iPhone" passkey; the phone is signed out and its copy of her
+mail is deleted at its next contact with the server.
 
 ## 5. Acceptance criteria
 
@@ -342,7 +352,8 @@ stable; tests name them.
   theirs, and their messages stay with their display name. A DomainAdmin
   may make a member an admin or remove that role. A domain always keeps at
   least one DomainAdmin (`409 last_admin`).
-- **AC-ID-13** Resetting a person's password, removing their 2-step code,
+- **AC-ID-13** Resetting a person's password, removing their 2-step code or
+  all their passkeys,
   disabling or deleting the person, or changing their display name affects
   every domain of that person. An Operator may do it. A DomainAdmin may do
   it only when they administer every domain the person belongs to (at
@@ -352,6 +363,28 @@ stable; tests name them.
   no domain gets an install-wide session (domain `*`) that works only in
   the admin app. Operator routes accept any session of an Operator; they
   never use its active domain as the tenant.
+- **AC-ID-15 Passkeys.** A person may add a passkey (Touch ID, Face ID,
+  Windows Hello, an Android biometric or the device PIN) in Mesail's
+  settings, after typing their current password and 2-step code. They may
+  have up to 10, each with a name they can see and remove. Mesail stores
+  no passkey; Keycloak keeps only its public key (ADR 0008).
+- **AC-ID-16 Sign in with a passkey.** The sign-in form offers "Sign in
+  with a passkey" where the device supports it. The person picks a passkey
+  and confirms with the biometric or PIN, without typing a username or
+  password, and lands in their default domain. No 2-step code is asked: a
+  passkey with the biometric counts as two factors. Wrong or unknown
+  passkeys get the same `401` as a wrong password, and count against the
+  same lockout.
+- **AC-ID-17 Removing a passkey** needs the current password and code; it
+  ends every other session of the person, so a lost device that was
+  signed in is signed out (AC-OF-9 then deletes its device copy).
+- **AC-ID-18 Recovery.** Password sign-in always keeps working (Q21). A
+  person who loses a device signs in with password and code and removes
+  that passkey. An admin account action (AC-ID-13) may remove all of a
+  person's passkeys.
+- **AC-ID-19 Where passkeys work.** In browsers that support passkeys, and
+  in the installed apps for macOS, iOS, Windows and Android once TACHYON
+  supports them (requests T13, T14). Linux apps keep password sign-in.
 
 ### Channels of a domain (AC-CH)
 - **AC-CH-1** A member can create a public channel in their domain, join
@@ -826,6 +859,20 @@ Decided by the owner on 2026-11-11 (on-premise, ADR 0007):
 - **Q20 (decided: builds may download).** Builds may download pinned,
   checksum-checked parts from the internet; a deployed install never
   downloads anything (AC-OP-6). No offline build bundle.
+
+Open questions of the passkey design (ADR 0008; the spec uses the first
+option until the owner decides):
+
+- **Q21** How should passkeys work? (a) An extra way to sign in: every
+  account keeps its password and 2-step code for recovery, and a passkey
+  sign-in skips both (this spec). (b) Also allow accounts with no
+  password at all (passkey only): simpler for people, but a person who
+  loses every device needs an admin to recover. (c) Passkeys only as the
+  second step after the password, instead of the 2-step code.
+- **Q22** Should a biometric also unlock the device copy of mail (offline
+  first)? (a) Not now; maybe later, in the installed apps only (this
+  spec). (b) Yes, as an option in the installed apps, once TACHYON
+  supports it (request T15). Browsers cannot do it either way.
 
 Q1 (one shared conversation or one per member) is closed: one email to two
 members of the same domain is one shared conversation (AC-IN-6).

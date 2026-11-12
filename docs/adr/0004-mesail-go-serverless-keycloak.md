@@ -291,6 +291,11 @@ Decisions:
   handler builds.
 
 ### 7. Keycloak replaces SESAME
+> Amended by ADR 0008: passkeys (Touch ID, Face ID, Windows Hello,
+> Android) come through the backend: a Keycloak direct-grant flow takes a
+> WebAuthn assertion that `identity` passes through; Keycloak keeps the
+> passkeys.
+
 > Amended by ADR 0005: one realm `mesail`; the username is the person's
 > prefix; `identity` answers its own ES256 access token (60 seconds) and
 > never gives Keycloak's tokens to the browser; service tokens come from

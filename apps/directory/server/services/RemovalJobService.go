@@ -19,9 +19,9 @@ func (service *RemovalJobService) RunOnce() (RemovalReport, error) {
 }
 
 func (service *RemovalJobService) writeLimit() int {
-	return 25
+	return 10
 }
 
 func (service *RemovalJobService) timeLimit() time.Duration {
-	return 20 * time.Second
+	return 3 * time.Second
 }

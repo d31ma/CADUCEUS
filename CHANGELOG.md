@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Fixed sign-in waiting behind the directory's background work (slice K3).
+  The router now keeps two queues per single-writer function: user
+  requests go before scheduled relay, requeue and job calls, and a
+  background call that waited over 60 seconds goes next once. The
+  directory's removal job and outbox relay now do at most 10 writes and 3
+  seconds per call, and a development seed call adds at most 2 domains.
+  `identity` tries `GET /directory/people/{id}` once more after a timeout,
+  502 or 503 (200 ms pause, both tries within 11.5 seconds).
 - Fixed sign-in answering 503 "sign-in is not available now" for a few
   seconds every 3 minutes (slice K2). Keycloak's expired-session purge
   locked its own SQLite database for 15 seconds and failed; token grants

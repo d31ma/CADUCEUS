@@ -52,10 +52,32 @@ func (test *D2RemovalJobTest) TestDeletingAPersonInFiveDomainsRemovesEveryMember
 	Assert.IsTrue(strings.Contains(calls(), "DELETE /idp/admin/realms/mesail/users/"+person.PersonId), "want the account deleted")
 	Assert.Equals("deleted", marked.State)
 	Assert.Equals(5, len(marked.DomainIds))
-	Assert.IsTrue(test.largest(reports) <= 25, "a batch wrote more than 25 times")
+	Assert.IsTrue(test.largest(reports) <= 10, "a batch wrote more than 10 times")
 	Assert.Equals("removed,removed,removed,removed,removed", test.memberStates(domains, person.PersonId))
 	Assert.Equals(0, len(stored.DomainIds))
 	Assert.Equals("deleted", stored.State)
+}
+
+func (test *D2RemovalJobTest) TestOneRemovalJobCallStopsAfterTenWritesAndReportsMore() {
+	domains := []string{test.hosted(), test.hosted(), test.hosted(), test.hosted(), test.hosted()}
+	defer test.forget(domains...)
+	person := test.joined(test.person(), domains)
+	defer test.forgetPeople([]PersonDocument{person})
+	person.State = "deleted"
+	test.stored(person)
+	first, err := test.job().RunOnce()
+	reports := test.runUntilDone()
+	stored, _, _ := test.peopleStorage().ByPersonId(person.PersonId)
+	Assert.Equals("<nil>", fmt.Sprint(err))
+	Assert.IsTrue(first.Writes <= 10, "the first call wrote more than 10 times")
+	Assert.IsTrue(first.More, "want more work reported after the first call")
+	Assert.IsTrue(test.largest(reports) <= 10, "a later call wrote more than 10 times")
+	Assert.Equals(0, len(stored.DomainIds))
+}
+
+func (test *D2RemovalJobTest) TestARemovalJobCallStopsAfterThreeSeconds() {
+	Assert.Equals(3*time.Second, test.job().timeLimit())
+	Assert.Equals(10, test.job().writeLimit())
 }
 
 func (test *D2RemovalJobTest) TestPersonLeavingStopsWhenTheBudgetRunsOutAndContinuesLater() {

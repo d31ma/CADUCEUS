@@ -1,15 +1,25 @@
 package main
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type QueuedEntry struct {
+	Background bool
 }
 
-func (QueuedEntry) Take(caller context.Context, slot chan struct{}) (func(), error) {
+func (entry QueuedEntry) Take(caller context.Context, gate *FunctionGate, now func() time.Time) (func(), error) {
+	waiter := gate.Enter(entry.Background, now())
+	return entry.wait(caller, gate, waiter, now)
+}
+
+func (QueuedEntry) wait(caller context.Context, gate *FunctionGate, waiter *GateWaiter, now func() time.Time) (func(), error) {
 	select {
-	case slot <- struct{}{}:
-		return func() { <-slot }, nil
+	case <-waiter.Ready:
+		return gate.ReleaseWith(now), nil
 	case <-caller.Done():
+		gate.Leave(waiter, now())
 		return nil, caller.Err()
 	}
 }

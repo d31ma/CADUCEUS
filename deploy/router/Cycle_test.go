@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -126,19 +127,22 @@ func TestOtherCallsWaitForTheirSlot(t *testing.T) {
 		rule.For(eventFor(http.MethodGet, "/api/v1/messaging/events")),
 		rule.For(eventFor(http.MethodPost, "/api/v1/messaging/events/extra")),
 		rule.For(eventFor(http.MethodPost, "/api/v1/messaging/outbox/relay")),
+		rule.For(eventFor(http.MethodPost, "/api/v1/directory/outbox/dead/requeue")),
+		rule.For(eventFor(http.MethodPost, "/api/v1/directory/jobs/removals")),
+		rule.For(eventFor(http.MethodGet, "/api/v1/directory/outbox/dead")),
 	}
-	want := []SlotEntry{QueuedEntry{}, QueuedEntry{}, QueuedEntry{}, QueuedEntry{}}
-	if queued[0] != want[0] || queued[1] != want[1] || queued[2] != want[2] || queued[3] != want[3] {
+	want := []SlotEntry{QueuedEntry{}, QueuedEntry{}, QueuedEntry{}, QueuedEntry{Background: true}, QueuedEntry{Background: true}, QueuedEntry{Background: true}, QueuedEntry{}}
+	if !slices.Equal(queued, want) {
 		t.Fatalf("got %#v", queued)
 	}
 }
 
 func TestImmediateEntryRefusesAFullSlot(t *testing.T) {
-	slot := make(chan struct{}, 1)
-	release, err := ImmediateEntry{}.Take(context.Background(), slot)
-	_, refused := ImmediateEntry{}.Take(context.Background(), slot)
+	gate := FunctionGate{}.New(1)
+	release, err := ImmediateEntry{}.Take(context.Background(), gate, time.Now)
+	_, refused := ImmediateEntry{}.Take(context.Background(), gate, time.Now)
 	release()
-	again, againErr := ImmediateEntry{}.Take(context.Background(), slot)
+	again, againErr := ImmediateEntry{}.Take(context.Background(), gate, time.Now)
 	if err != nil || refused == nil || againErr != nil {
 		t.Fatalf("first %v, refused %v, again %v", err, refused, againErr)
 	}

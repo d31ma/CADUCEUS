@@ -42,8 +42,14 @@ func (service *PersonSeedService) complete(seed PersonSeed) error {
 		return &InvalidRequest{Field: "personId", Message: "a person id is required"}
 	case strings.TrimSpace(seed.DisplayName) == "":
 		return &InvalidRequest{Field: "displayName", Message: "a display name is required"}
+	case len(seed.Memberships) > service.mostMemberships():
+		return &InvalidRequest{Field: "memberships", Message: "a seed call adds at most 2 domains; seed the person again for more"}
 	}
 	return nil
+}
+
+func (service *PersonSeedService) mostMemberships() int {
+	return 2
 }
 
 func (service *PersonSeedService) hosted(memberships []SeedMembership) error {

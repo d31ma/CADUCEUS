@@ -808,7 +808,7 @@ question.
   waiting `message.edited`; when `search` comes back it gets the newest
   body once; gates pass for every app that syncs the kit.
 
-### K3. User requests before background work (a small session)
+### K3. User requests before background work (a small session, built)
 Found by K2 on Floci (2026-11-12, run `k2-signin/floci-20261111-232350`):
 `identity`'s `GET /directory/people/{personId}` waited 10 seconds behind
 `directory`'s single writer, which was busy with background calls, so the

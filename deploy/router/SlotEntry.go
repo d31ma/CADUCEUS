@@ -1,7 +1,10 @@
 package main
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type SlotEntry interface {
-	Take(caller context.Context, slot chan struct{}) (func(), error)
+	Take(caller context.Context, gate *FunctionGate, now func() time.Time) (func(), error)
 }

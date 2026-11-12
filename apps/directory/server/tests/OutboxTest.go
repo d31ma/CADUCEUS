@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"time"
 
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/outbox"
@@ -112,6 +113,31 @@ func (test *OutboxTest) TestTheOutboxRoutesHideThemselvesFromAMailDomainServiceT
 	_, err := controller.PostRelay(setup.ServiceBearer(realm, "outbox-unit.test"))
 	var missing *NotFound
 	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
+}
+
+func (test *OutboxTest) TestOneRelayCallRelaysAtMostTenDocumentsAndReportsMore() {
+	relay, _, _ := test.world()
+	test.pendingMembers("outbox-unit.test", 11)
+	report, err := relay.RunOnce()
+	Assert.Equals("<nil>", fmt.Sprint(err))
+	Assert.IsTrue(report.Documents <= 10, fmt.Sprintf("one call relayed %d documents", report.Documents))
+	Assert.IsTrue(report.More, "want more work reported")
+}
+
+func (test *OutboxTest) TestARelayCallStopsAfterThreeSeconds() {
+	relay, _, _ := test.world()
+	Assert.Equals(3*time.Second, relay.timeBudget())
+	Assert.Equals(10, relay.sweepSize())
+}
+
+func (test *OutboxTest) pendingMembers(domainId string, count int) {
+	members := &MemberStorageService{documents: &DocumentsService{dataSource: DataSource{}}, names: &CollectionNamesService{}}
+	for index := range count {
+		staged, err := (&EventService{settings: &SettingsService{}}).StageMemberSaved(MemberDocument{MemberId: fmt.Sprintf("pending-%d", index), DomainId: domainId, DisplayName: "Pending", State: "active"})
+		Assert.Equals("<nil>", fmt.Sprint(err))
+		_, insertErr := members.Insert(staged)
+		Assert.Equals("<nil>", fmt.Sprint(insertErr))
+	}
 }
 
 func (test *OutboxTest) world() (*OutboxRelayService, outbox.Ref, string) {

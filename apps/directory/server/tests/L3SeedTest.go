@@ -40,6 +40,19 @@ func (test *L3SeedTest) TestSeedingTheSamePersonTwiceKeepsOnePerson() {
 	Assert.Equals(1, test.count(people, seed.PersonId))
 }
 
+func (test *L3SeedTest) TestSeedRefusesMoreThanTwoDomainsInOneCall() {
+	domain := test.world(true)
+	defer test.dropDomain(domain)
+	seed := test.seed(domain)
+	seed.Memberships = append(seed.Memberships, SeedMembership{DomainId: domain}, SeedMembership{DomainId: domain})
+	_, err := test.service().Seed(seed)
+	_, found, _ := test.members().Find(domain, seed.PersonId)
+	var invalid *InvalidRequest
+	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
+	Assert.Equals("memberships", invalid.Field)
+	Assert.IsTrue(!found, "no member may be written")
+}
+
 func (test *L3SeedTest) TestSeedIsNotFoundUnlessTheSettingIsOn() {
 	domain := test.world(false)
 	defer test.dropDomain(domain)

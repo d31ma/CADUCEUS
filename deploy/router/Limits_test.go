@@ -51,17 +51,17 @@ func TestClientWithoutPortIsKeptWhole(t *testing.T) {
 
 func TestSingleWriterFunctionGetsOneRequestAtATime(t *testing.T) {
 	limits := ConcurrencyLimits{}.Of([]string{"identity", "directory"}, []string{"directory"}, "mesail-", 1000)
-	release, err := QueuedEntry{}.Take(context.Background(), limits.Slot("mesail-directory"))
+	release, err := QueuedEntry{}.Take(context.Background(), limits.Gate("mesail-directory"), time.Now)
 	if err != nil {
 		t.Fatal(err)
 	}
 	waiting, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
-	_, blocked := QueuedEntry{}.Take(waiting, limits.Slot("mesail-directory"))
-	other, otherErr := QueuedEntry{}.Take(context.Background(), limits.Slot("mesail-identity"))
+	_, blocked := QueuedEntry{}.Take(waiting, limits.Gate("mesail-directory"), time.Now)
+	other, otherErr := QueuedEntry{}.Take(context.Background(), limits.Gate("mesail-identity"), time.Now)
 	release()
-	again, againErr := QueuedEntry{}.Take(context.Background(), limits.Slot("mesail-directory"))
-	if blocked == nil || otherErr != nil || againErr != nil || cap(limits.Slots["mesail-identity"]) != 1000 {
+	again, againErr := QueuedEntry{}.Take(context.Background(), limits.Gate("mesail-directory"), time.Now)
+	if blocked == nil || otherErr != nil || againErr != nil || limits.Gates["mesail-identity"].capacity != 1000 {
 		t.Fatalf("blocked %v, other %v, again %v", blocked, otherErr, againErr)
 	}
 	other()

@@ -332,6 +332,16 @@ Limits at the router:
   never answers 429 to a user. A request keeps its function's place until
   the function answers, even when the caller stops waiting, because the
   function keeps running. Other functions take up to 1000 at once.
+- **User requests before background calls** (slice K3): each function has
+  two queues. Background calls are the scheduled routes
+  `/api/v1/<service>/outbox/relay`, `/outbox/dead/requeue` and
+  `/jobs/<job>`; everything else is a user request. When the function is
+  free, a waiting user request always goes next, so a sign-in's `GET
+  /directory/people/{id}` never waits behind a queue of removal or relay
+  calls. A background call that has waited more than 60 seconds goes next
+  once (then a user request gets its turn again), so background work never
+  starves. A read cannot skip the queue: the function runs one call at a
+  time. A caller that stops waiting leaves its queue.
 - **Event pushes never wait:** `POST /api/v1/<service>/events` to a
   FYLO-owning function that is busy gets 429 `function-busy` at once, as a
   throttled Lambda does in AWS. The producer's outbox keeps the event and

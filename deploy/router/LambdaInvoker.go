@@ -30,7 +30,7 @@ func (invoker LambdaInvoker) Invoke(caller context.Context, function string, eve
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("X-Amz-Invocation-Type", "RequestResponse")
-	release, err := invoker.Entries.For(event).Take(caller, invoker.Limits.Slot(function))
+	release, err := invoker.Entries.For(event).Take(caller, invoker.Limits.Gate(function), invoker.Now)
 	if err != nil {
 		return nil, err
 	}

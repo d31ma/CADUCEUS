@@ -252,10 +252,24 @@ folder_storage_ready() {
   esac
 }
 
+gate_made_root() {
+  case "$1" in
+    "$(atlas_mount_point)"/slice-*/*) return 0 ;;
+  esac
+  return 1
+}
+
+emptied_fylo_folder() {
+  local folder="$1"
+  gate_made_root "$folder" || { echo "fylo root $folder is not under $(atlas_mount_point)/slice-*, so its data is kept"; return 0; }
+  rm -rf "$folder" && echo "fylo root $folder emptied for this run"
+}
+
 ensure_fylo_folder() {
   local folder="$1"
   [ -n "$folder" ] || { echo "no fylo:// YON_DATASOURCE_URL in .env"; return 0; }
   folder_storage_ready "$folder" || return 1
+  emptied_fylo_folder "$folder" || return 1
   mkdir -p "$folder" && echo "fylo root $folder"
 }
 

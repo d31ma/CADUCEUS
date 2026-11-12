@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Changed `identity`'s error answers (slice E6, ADR 0009): every error
+  answer that `identity` shapes now has a numbered message,
+  `[MS<4 digits>]: <plain English message>`, from identity's block
+  MS0500-MS0520 in `docs/mesail/ERRORS.md` (for example
+  `[MS0510]: This passkey name is already used.`). `code`, `field`,
+  routes and statuses do not change. An error that no other handler
+  method takes answers `500 unavailable` with `[MS0500]`. The
+  controllers now make one Service call each (new `server/services/`).
 - Added `DELETE /api/v1/directory/people/{personId}/passkeys` to
   `directory` (slice PK3, ADR 0008): an Operator, or an admin of every
   domain of the person, removes all of the person's passkeys. Other

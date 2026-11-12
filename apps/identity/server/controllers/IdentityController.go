@@ -1,28 +1,13 @@
-import (
-	"net/http"
-
-	"mesail.dev/packages/login"
-	"mesail.dev/packages/oidc"
-)
+import "net/http"
 
 // @RequestRoute("/api/v1/identity")
 type IdentityController struct {
+	// @Needs
+	me *MeService
 }
 
 // @GetRoute("/me")
 // @SignedIn
 func (controller *IdentityController) GetMe(request *http.Request) (Me, error) {
-	caller, refused := login.SessionsFactory{}.Configured().Identify(request.Header.Get("Authorization"))
-	return controller.me(caller), controller.authenticated(refused)
-}
-
-func (controller *IdentityController) me(caller oidc.Caller) Me {
-	return Me{MemberId: caller.MemberId, DomainId: caller.DomainId, Username: caller.Username, DisplayName: caller.DisplayName, PrimaryAddress: caller.Email, Roles: caller.Roles}
-}
-
-func (controller *IdentityController) authenticated(refused error) error {
-	if refused != nil {
-		return &Unauthenticated{}
-	}
-	return nil
+	return controller.me.Me(request)
 }

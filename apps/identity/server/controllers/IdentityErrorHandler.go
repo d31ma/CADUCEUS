@@ -1,68 +1,56 @@
+import "mesail.dev/packages/apierrors"
+
 // @ErrorHandler
 type IdentityErrorHandler struct{}
 
 // @HandlesError
+// @ResponseStatus(400)
+func (handler *IdentityErrorHandler) BadRequest(failure *BadRequest) ApiError {
+	return handler.answer(failure.ErrorCase)
+}
+
+// @HandlesError
 // @ResponseStatus(401)
 func (handler *IdentityErrorHandler) Unauthenticated(failure *Unauthenticated) ApiError {
-	return ApiError{Code: "unauthenticated", Message: failure.Error()}
-}
-
-// @HandlesError
-// @ResponseStatus(429)
-func (handler *IdentityErrorHandler) RateLimited(failure *RateLimited) ApiError {
-	return ApiError{Code: "rate_limited", Message: failure.Error()}
-}
-
-// @HandlesError
-// @ResponseStatus(503)
-func (handler *IdentityErrorHandler) Unavailable(failure *Unavailable) ApiError {
-	return ApiError{Code: "unavailable", Message: failure.Error()}
-}
-
-// @HandlesError
-// @ResponseStatus(400)
-func (handler *IdentityErrorHandler) PasswordPolicy(failure *PasswordPolicy) ApiError {
-	return ApiError{Code: "password_policy", Message: failure.Error(), Field: "newPassword"}
-}
-
-// @HandlesError
-// @ResponseStatus(400)
-func (handler *IdentityErrorHandler) InvalidCode(failure *InvalidCode) ApiError {
-	return ApiError{Code: "invalid_code", Message: failure.Error(), Field: "code"}
+	return handler.answer(failure.ErrorCase)
 }
 
 // @HandlesError
 // @ResponseStatus(403)
 func (handler *IdentityErrorHandler) Forbidden(failure *Forbidden) ApiError {
-	return ApiError{Code: failure.Code, Message: failure.Error()}
+	return handler.answer(failure.ErrorCase)
 }
 
 // @HandlesError
 // @ResponseStatus(404)
 func (handler *IdentityErrorHandler) NotFound(failure *NotFound) ApiError {
-	return ApiError{Code: "not_found", Message: failure.Error()}
-}
-
-// @HandlesError
-// @ResponseStatus(400)
-func (handler *IdentityErrorHandler) InvalidRequest(failure *InvalidRequest) ApiError {
-	return ApiError{Code: "invalid_request", Message: failure.Error(), Field: "domainId"}
-}
-
-// @HandlesError
-// @ResponseStatus(400)
-func (handler *IdentityErrorHandler) BadPasskey(failure *BadPasskey) ApiError {
-	return ApiError{Code: failure.Code, Message: failure.Error()}
+	return handler.answer(failure.ErrorCase)
 }
 
 // @HandlesError
 // @ResponseStatus(409)
 func (handler *IdentityErrorHandler) Conflict(failure *Conflict) ApiError {
-	return ApiError{Code: failure.Code, Message: failure.Error()}
+	return handler.answer(failure.ErrorCase)
 }
 
 // @HandlesError
-// @ResponseStatus(400)
-func (handler *IdentityErrorHandler) InvalidLabel(failure *InvalidLabel) ApiError {
-	return ApiError{Code: failure.Code(), Message: failure.Error(), Field: "label"}
+// @ResponseStatus(429)
+func (handler *IdentityErrorHandler) RateLimited(failure *RateLimited) ApiError {
+	return handler.answer(failure.ErrorCase)
+}
+
+// @HandlesError
+// @ResponseStatus(503)
+func (handler *IdentityErrorHandler) Unavailable(failure *Unavailable) ApiError {
+	return handler.answer(failure.ErrorCase)
+}
+
+// @HandlesError
+// @ResponseStatus(500)
+func (handler *IdentityErrorHandler) Unexpected(failure error) ApiError {
+	return handler.answer(UnexpectedFailure{}.Unexpected().ErrorCase)
+}
+
+func (handler *IdentityErrorHandler) answer(failure ErrorCase) ApiError {
+	return ApiError{Code: failure.Code(), Message: apierrors.Message{}.Format(failure.Number(), failure.Error()), Field: failure.Field()}
 }

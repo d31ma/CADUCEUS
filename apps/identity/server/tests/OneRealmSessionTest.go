@@ -10,7 +10,7 @@ type OneRealmSessionTest struct {
 
 func (test *OneRealmSessionTest) signedIn(login string) Session {
 	OneRealmTestSetup{}.Start()
-	session, err := (&AccountController{}).PostSession(SignInRequest{Login: login, Password: "right"})
+	session, err := OneRealmTestSetup{}.Account().PostSession(SignInRequest{Login: login, Password: "right"})
 	if err != nil {
 		panic(err)
 	}
@@ -37,24 +37,26 @@ func (test *OneRealmSessionTest) TestPostSessionWithAnAddressOpensThatDomain() {
 
 func (test *OneRealmSessionTest) TestPostSessionRefusesAWrongPassword() {
 	OneRealmTestSetup{}.Start()
-	_, err := (&AccountController{}).PostSession(SignInRequest{Login: "ana", Password: "wrong"})
+	_, err := OneRealmTestSetup{}.Account().PostSession(SignInRequest{Login: "ana", Password: "wrong"})
 	var unauthenticated *Unauthenticated
 	Assert.IsTrue(errors.As(err, &unauthenticated))
+	Assert.Equals(501, unauthenticated.Number())
 }
 
 func (test *OneRealmSessionTest) TestPostSessionRefusesADomainOfAnotherPerson() {
 	OneRealmTestSetup{}.Start()
-	_, err := (&AccountController{}).PostSession(SignInRequest{Login: "ana@partner.test", Password: "right"})
+	_, err := OneRealmTestSetup{}.Account().PostSession(SignInRequest{Login: "ana@partner.test", Password: "right"})
 	var forbidden *Forbidden
 	Assert.IsTrue(errors.As(err, &forbidden))
-	Assert.Equals("not_a_member", forbidden.Code)
+	Assert.Equals(505, forbidden.Number())
+	Assert.Equals("not_a_member", forbidden.Code())
 }
 
 func (test *OneRealmSessionTest) TestTheMesailTokenIdentifiesTheCaller() {
 	session := test.signedIn("ana")
 	request, _ := http.NewRequest(http.MethodGet, "/api/v1/identity/me", nil)
 	request.Header.Set("Authorization", "Bearer "+session.AccessToken)
-	me, err := (&IdentityController{}).GetMe(request)
+	me, err := OneRealmTestSetup{}.Identity().GetMe(request)
 	Assert.IsTrue(err == nil)
 	Assert.Equals("person-ana", me.MemberId)
 	Assert.Equals("example.com", me.DomainId)
@@ -64,14 +66,14 @@ func (test *OneRealmSessionTest) TestTheMesailTokenIdentifiesTheCaller() {
 
 func (test *OneRealmSessionTest) TestPostRefreshKeepsTheDomain() {
 	session := test.signedIn("ana@example.org")
-	refreshed, err := (&AccountController{}).PostRefresh(RefreshRequest{SessionKey: session.SessionKey})
+	refreshed, err := OneRealmTestSetup{}.Account().PostRefresh(RefreshRequest{SessionKey: session.SessionKey})
 	Assert.IsTrue(err == nil)
 	Assert.Equals("example.org", refreshed.Me.DomainId)
 }
 
 func (test *OneRealmSessionTest) TestPostDomainSwitchesWithoutAPassword() {
 	session := test.signedIn("ana")
-	switched, err := (&AccountController{}).PostDomain(DomainSwitch{SessionKey: session.SessionKey, DomainId: "example.org"})
+	switched, err := OneRealmTestSetup{}.Account().PostDomain(DomainSwitch{SessionKey: session.SessionKey, DomainId: "example.org"})
 	Assert.IsTrue(err == nil)
 	Assert.Equals("example.org", switched.Me.DomainId)
 	Assert.IsTrue(switched.SessionKey != session.SessionKey)
@@ -79,19 +81,20 @@ func (test *OneRealmSessionTest) TestPostDomainSwitchesWithoutAPassword() {
 
 func (test *OneRealmSessionTest) TestPostDomainRefusesADomainOfAnotherPerson() {
 	session := test.signedIn("ana")
-	_, err := (&AccountController{}).PostDomain(DomainSwitch{SessionKey: session.SessionKey, DomainId: "partner.test"})
+	_, err := OneRealmTestSetup{}.Account().PostDomain(DomainSwitch{SessionKey: session.SessionKey, DomainId: "partner.test"})
 	var notFound *NotFound
 	Assert.IsTrue(errors.As(err, &notFound))
+	Assert.Equals(516, notFound.Number())
 }
 
 func (test *OneRealmSessionTest) TestDeleteSessionEndsTheSession() {
 	session := test.signedIn("ana")
-	Assert.IsTrue((&AccountController{}).DeleteSession(RefreshRequest{SessionKey: session.SessionKey}) == nil)
+	Assert.IsTrue(OneRealmTestSetup{}.Account().DeleteSession(RefreshRequest{SessionKey: session.SessionKey}) == nil)
 }
 
 func (test *OneRealmSessionTest) TestGetJwksPublishesTheSigningKey() {
 	OneRealmTestSetup{}.Start()
-	set, err := (&TokenController{}).GetJwks()
+	set, err := OneRealmTestSetup{}.Tokens().GetJwks()
 	Assert.IsTrue(err == nil)
 	Assert.Equals(1, len(set.Keys))
 	Assert.Equals("EC", set.Keys[0].KeyType)
@@ -100,7 +103,7 @@ func (test *OneRealmSessionTest) TestGetJwksPublishesTheSigningKey() {
 
 func (test *OneRealmSessionTest) TestPostServiceTokenAnswersADomainToken() {
 	OneRealmTestSetup{}.Start()
-	token, err := (&TokenController{}).PostServiceToken(ServiceTokenRequest{ClientId: "mesail-service", ClientSecret: "service-secret", DomainId: "*"})
+	token, err := OneRealmTestSetup{}.Tokens().PostServiceToken(ServiceTokenRequest{ClientId: "mesail-service", ClientSecret: "service-secret", DomainId: "*"})
 	Assert.IsTrue(err == nil)
 	Assert.IsTrue(token.AccessToken != "")
 	Assert.Equals(int64(60), token.ExpiresIn)
@@ -108,21 +111,24 @@ func (test *OneRealmSessionTest) TestPostServiceTokenAnswersADomainToken() {
 
 func (test *OneRealmSessionTest) TestPostServiceTokenRefusesAWrongSecret() {
 	OneRealmTestSetup{}.Start()
-	_, err := (&TokenController{}).PostServiceToken(ServiceTokenRequest{ClientId: "mesail-service", ClientSecret: "wrong", DomainId: "example.com"})
+	_, err := OneRealmTestSetup{}.Tokens().PostServiceToken(ServiceTokenRequest{ClientId: "mesail-service", ClientSecret: "wrong", DomainId: "example.com"})
 	var unauthenticated *Unauthenticated
 	Assert.IsTrue(errors.As(err, &unauthenticated))
+	Assert.Equals(518, unauthenticated.Number())
 }
 
 func (test *OneRealmSessionTest) TestPostServiceTokenRefusesABadDomain() {
 	OneRealmTestSetup{}.Start()
-	_, err := (&TokenController{}).PostServiceToken(ServiceTokenRequest{ClientId: "mesail-service", ClientSecret: "service-secret", DomainId: "not a domain"})
-	var invalid *InvalidRequest
+	_, err := OneRealmTestSetup{}.Tokens().PostServiceToken(ServiceTokenRequest{ClientId: "mesail-service", ClientSecret: "service-secret", DomainId: "not a domain"})
+	var invalid *BadRequest
 	Assert.IsTrue(errors.As(err, &invalid))
+	Assert.Equals(517, invalid.Number())
 }
 
 func (test *OneRealmSessionTest) TestGetJwksIsUnavailableWithoutAKey() {
 	OneRealmTestSetup{}.Unconfigured()
-	_, err := (&TokenController{}).GetJwks()
+	_, err := OneRealmTestSetup{}.Tokens().GetJwks()
 	var unavailable *Unavailable
 	Assert.IsTrue(errors.As(err, &unavailable))
+	Assert.Equals(520, unavailable.Number())
 }

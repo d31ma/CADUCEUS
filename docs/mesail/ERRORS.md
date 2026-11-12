@@ -63,6 +63,26 @@ keeps its row, marked "retired".
 | --- | --- | --- | --- | --- | --- |
 | MS0000 | kit | 500 | `unavailable` | Something went wrong. | an unexpected error in shared code |
 | MS0500 | identity | 500 | `unavailable` | Something went wrong. | an unexpected error in `identity` |
+| MS0501 | identity | 401 | `unauthenticated` | Sign-in failed. Check your details and try again. | a sign-in, session key, password, 2-step or passkey step was refused (one number, so a wrong passkey looks like a wrong password) |
+| MS0502 | identity | 401 | `unauthenticated` | Your sign-in has ended. Sign in again. | `GET /me` with a refused access token |
+| MS0503 | identity | 429 | `rate_limited` | Too many sign-in attempts. Wait a few minutes. | Keycloak has locked the person for a while |
+| MS0504 | identity | 503 | `unavailable` | Sign-in is not available now. Try again later. | Keycloak or the session settings are not usable (also a bad `identity.passkeyorigins`) |
+| MS0505 | identity | 403 | `not_a_member` | You are not a member of that domain. | sign-in asked for a domain the person is not in |
+| MS0506 | identity | 403 | `no_domain` | This account may not open that domain. | the person has no domain to open, or a non-Operator asked for `*` |
+| MS0507 | identity | 403 | `access_revoked` | Your access was removed. Sign in again. | refresh or switch for a disabled or deleted person |
+| MS0508 | identity | 400 | `password_policy` | (Keycloak's rule text) | the new password breaks the password policy; `field` `newPassword` |
+| MS0509 | identity | 400 | `invalid_code` | The 2-step code is not right. | a wrong 2-step code; `field` `code` |
+| MS0510 | identity | 409 | `label_exists` | This passkey name is already used. | rename to a passkey name the person already uses |
+| MS0511 | identity | 409 | `too_many` | You have the most passkeys allowed. Remove one first. | passkey setup when the person has the most passkeys |
+| MS0512 | identity | 400 | `setup_expired` | The passkey setup has expired. Start again. | add a passkey with an old or broken setup key |
+| MS0513 | identity | 400 | `invalid_passkey` | The passkey could not be added. Start again. | Keycloak refused the new passkey |
+| MS0514 | identity | 400 | `invalid_request` | A passkey name is 1 to 64 characters. | a passkey name that is empty or too long; `field` `label` |
+| MS0515 | identity | 404 | `not_found` | That passkey was not found. | rename or remove a passkey the person does not have |
+| MS0516 | identity | 404 | `not_found` | That domain was not found. | switch to a domain the person is not in |
+| MS0517 | identity | 400 | `invalid_request` | The domain id must be a domain name or *. | `POST /service-token` with a bad `domainId`; `field` `domainId` |
+| MS0518 | identity | 401 | `unauthenticated` | The client id or client secret is not right. | `POST /service-token` with a refused client |
+| MS0519 | identity | 503 | `unavailable` | Service tokens are not available now. Try again later. | `POST /service-token` failed for another reason |
+| MS0520 | identity | 503 | `unavailable` | The signing keys are not available now. Try again later. | `GET /jwks` without a usable signing key |
 | MS1000 | directory | 500 | `unavailable` | Something went wrong. | an unexpected error in `directory` |
 | MS1500 | messaging | 500 | `unavailable` | Something went wrong. | an unexpected error in `messaging` |
 | MS2000 | channels | 500 | `unavailable` | Something went wrong. | an unexpected error in `channels` |

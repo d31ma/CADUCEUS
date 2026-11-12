@@ -170,3 +170,17 @@ func (OneRealmTestSetup) directory(writer http.ResponseWriter, request *http.Req
 func (OneRealmTestSetup) Unconfigured() {
 	os.Setenv("YON_APPLICATION_JSON", "{}")
 }
+
+func (OneRealmTestSetup) Account() *AccountController {
+	grants := &GrantService{}
+	failures := &AccountFailureService{}
+	return &AccountController{sessions: &SessionService{grants: grants, failures: failures}, totp: &TotpService{failures: failures}, passkeys: &PasskeyService{grants: grants, failures: failures}}
+}
+
+func (OneRealmTestSetup) Identity() *IdentityController {
+	return &IdentityController{me: &MeService{}}
+}
+
+func (OneRealmTestSetup) Tokens() *TokenController {
+	return &TokenController{tokens: &TokenService{}}
+}

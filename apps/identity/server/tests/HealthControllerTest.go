@@ -11,25 +11,25 @@ func (test *HealthControllerTest) withOrigins(origins string) {
 
 func (test *HealthControllerTest) TestGetHealthNamesTheService() {
 	test.withOrigins("https://localhost")
-	Assert.Equals("identity", (&HealthController{}).GetHealth().Service)
+	Assert.Equals("identity", HealthTestSetup{}.Health().GetHealth().Service)
 }
 
 func (test *HealthControllerTest) TestGetHealthSaysOk() {
 	test.withOrigins("https://mail.example.com android:apk-key-hash:abc")
-	Assert.Equals("ok", (&HealthController{}).GetHealth().Status)
+	Assert.Equals("ok", HealthTestSetup{}.Health().GetHealth().Status)
 }
 
 func (test *HealthControllerTest) TestGetHealthIsDegradedForAnOriginWithAnotherHost() {
 	test.withOrigins("https://mail.example.com https://other.test")
-	Assert.Equals("degraded", (&HealthController{}).GetHealth().Status)
+	Assert.Equals("degraded", HealthTestSetup{}.Health().GetHealth().Status)
 }
 
 func (test *HealthControllerTest) TestGetHealthIsDegradedForPlainHttpOutsideLocalhost() {
 	test.withOrigins("http://mail.example.com")
-	Assert.Equals("degraded", (&HealthController{}).GetHealth().Status)
+	Assert.Equals("degraded", HealthTestSetup{}.Health().GetHealth().Status)
 }
 
 func (test *HealthControllerTest) TestGetHealthIsDegradedWithoutOrigins() {
 	test.withOrigins("")
-	Assert.Equals("degraded", (&HealthController{}).GetHealth().Status)
+	Assert.Equals("degraded", HealthTestSetup{}.Health().GetHealth().Status)
 }

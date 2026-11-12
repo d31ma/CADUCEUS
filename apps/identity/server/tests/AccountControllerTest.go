@@ -13,7 +13,7 @@ type AccountControllerTest struct {
 
 func (test *AccountControllerTest) signedIn() string {
 	OneRealmTestSetup{}.Start()
-	session, err := (&AccountController{}).PostSession(SignInRequest{Login: "ana", Password: "right"})
+	session, err := OneRealmTestSetup{}.Account().PostSession(SignInRequest{Login: "ana", Password: "right"})
 	if err != nil {
 		panic(err)
 	}
@@ -22,7 +22,7 @@ func (test *AccountControllerTest) signedIn() string {
 
 func (test *AccountControllerTest) TestPostPasswordAnswersAFreshSession() {
 	authorization := test.signedIn()
-	session, err := (&AccountController{}).PostPassword(authorization, PasswordChange{CurrentPassword: "right", NewPassword: "a-new-long-password"})
+	session, err := OneRealmTestSetup{}.Account().PostPassword(authorization, PasswordChange{CurrentPassword: "right", NewPassword: "a-new-long-password"})
 	Assert.IsTrue(err == nil)
 	Assert.Equals("person-ana", session.Me.MemberId)
 	Assert.IsTrue(!session.MustChangePassword)
@@ -31,27 +31,29 @@ func (test *AccountControllerTest) TestPostPasswordAnswersAFreshSession() {
 
 func (test *AccountControllerTest) TestPostPasswordNamesTheFailedPolicy() {
 	authorization := test.signedIn()
-	_, err := (&AccountController{}).PostPassword(authorization, PasswordChange{CurrentPassword: "right", NewPassword: "short"})
-	var policy *PasswordPolicy
+	_, err := OneRealmTestSetup{}.Account().PostPassword(authorization, PasswordChange{CurrentPassword: "right", NewPassword: "short"})
+	var policy *BadRequest
 	Assert.IsTrue(errors.As(err, &policy))
-	Assert.Equals("Invalid password: minimum length 12.", policy.Rule)
+	Assert.Equals(508, policy.Number())
+	Assert.Equals("Invalid password: minimum length 12.", policy.Error())
 }
 
 func (test *AccountControllerTest) TestPostPasswordRefusesAWrongCurrentPassword() {
 	authorization := test.signedIn()
-	_, err := (&AccountController{}).PostPassword(authorization, PasswordChange{CurrentPassword: "wrong", NewPassword: "a-new-long-password"})
+	_, err := OneRealmTestSetup{}.Account().PostPassword(authorization, PasswordChange{CurrentPassword: "wrong", NewPassword: "a-new-long-password"})
 	var unauthenticated *Unauthenticated
 	Assert.IsTrue(errors.As(err, &unauthenticated))
+	Assert.Equals(501, unauthenticated.Number())
 }
 
 func (test *AccountControllerTest) TestGetTotpIsOffWithoutACredential() {
-	status, err := (&AccountController{}).GetTotp(test.signedIn())
+	status, err := OneRealmTestSetup{}.Account().GetTotp(test.signedIn())
 	Assert.IsTrue(err == nil)
 	Assert.IsTrue(!status.Enabled)
 }
 
 func (test *AccountControllerTest) TestPostTotpSetupAnswersTheQrImage() {
-	setup, err := (&AccountController{}).PostTotpSetup(test.signedIn(), TotpSetupRequest{CurrentPassword: "right"})
+	setup, err := OneRealmTestSetup{}.Account().PostTotpSetup(test.signedIn(), TotpSetupRequest{CurrentPassword: "right"})
 	Assert.IsTrue(err == nil)
 	Assert.IsTrue(strings.HasPrefix(setup.QrImage, "data:image/png;base64,"))
 	Assert.IsTrue(strings.HasPrefix(setup.OtpauthUri, "otpauth://totp/"))
@@ -60,25 +62,27 @@ func (test *AccountControllerTest) TestPostTotpSetupAnswersTheQrImage() {
 
 func (test *AccountControllerTest) TestPostTotpConfirmStoresARightCode() {
 	authorization := test.signedIn()
-	setup, _ := (&AccountController{}).PostTotpSetup(authorization, TotpSetupRequest{CurrentPassword: "right"})
+	setup, _ := OneRealmTestSetup{}.Account().PostTotpSetup(authorization, TotpSetupRequest{CurrentPassword: "right"})
 	code, _ := oidc.Totp{}.Code(setup.Secret, time.Now())
-	Assert.IsTrue((&AccountController{}).PostTotpConfirm(authorization, TotpConfirm{SetupKey: setup.SetupKey, Code: code}) == nil)
+	Assert.IsTrue(OneRealmTestSetup{}.Account().PostTotpConfirm(authorization, TotpConfirm{SetupKey: setup.SetupKey, Code: code}) == nil)
 }
 
 func (test *AccountControllerTest) TestPostTotpConfirmRefusesAWrongCode() {
 	authorization := test.signedIn()
-	setup, _ := (&AccountController{}).PostTotpSetup(authorization, TotpSetupRequest{CurrentPassword: "right"})
-	err := (&AccountController{}).PostTotpConfirm(authorization, TotpConfirm{SetupKey: setup.SetupKey, Code: "000000"})
-	var invalid *InvalidCode
+	setup, _ := OneRealmTestSetup{}.Account().PostTotpSetup(authorization, TotpSetupRequest{CurrentPassword: "right"})
+	err := OneRealmTestSetup{}.Account().PostTotpConfirm(authorization, TotpConfirm{SetupKey: setup.SetupKey, Code: "000000"})
+	var invalid *BadRequest
 	Assert.IsTrue(errors.As(err, &invalid))
+	Assert.Equals(509, invalid.Number())
 }
 
 func (test *AccountControllerTest) TestDeleteTotpChecksThePassword() {
 	authorization := test.signedIn()
-	Assert.IsTrue((&AccountController{}).DeleteTotp(authorization, TotpRemove{CurrentPassword: "right", OneTimeCode: "123456"}) == nil)
-	err := (&AccountController{}).DeleteTotp(authorization, TotpRemove{CurrentPassword: "wrong", OneTimeCode: "123456"})
+	Assert.IsTrue(OneRealmTestSetup{}.Account().DeleteTotp(authorization, TotpRemove{CurrentPassword: "right", OneTimeCode: "123456"}) == nil)
+	err := OneRealmTestSetup{}.Account().DeleteTotp(authorization, TotpRemove{CurrentPassword: "wrong", OneTimeCode: "123456"})
 	var unauthenticated *Unauthenticated
 	Assert.IsTrue(errors.As(err, &unauthenticated))
+	Assert.Equals(501, unauthenticated.Number())
 }
 
 func (test *AccountControllerTest) TestAccountRoutesRefuseEveryTokenWithoutSettings() {
@@ -86,7 +90,8 @@ func (test *AccountControllerTest) TestAccountRoutesRefuseEveryTokenWithoutSetti
 	key := setup.Start()
 	token := setup.Token(key, setup.Member())
 	setup.Unconfigured()
-	_, err := (&AccountController{}).GetTotp("Bearer " + token)
+	_, err := OneRealmTestSetup{}.Account().GetTotp("Bearer " + token)
 	var unauthenticated *Unauthenticated
 	Assert.IsTrue(errors.As(err, &unauthenticated))
+	Assert.Equals(501, unauthenticated.Number())
 }

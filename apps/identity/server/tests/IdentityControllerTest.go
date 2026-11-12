@@ -13,7 +13,7 @@ func (test *IdentityControllerTest) TestGetMeDescribesTheSignedInMember() {
 	key := setup.Start()
 	request, _ := http.NewRequest(http.MethodGet, "/api/v1/identity/me", nil)
 	request.Header.Set("Authorization", "Bearer "+setup.Token(key, setup.Member()))
-	me, err := (&IdentityController{}).GetMe(request)
+	me, err := OneRealmTestSetup{}.Identity().GetMe(request)
 	Assert.IsTrue(err == nil)
 	Assert.Equals("person-ana", me.MemberId)
 	Assert.Equals("example.com", me.DomainId)
@@ -26,7 +26,8 @@ func (test *IdentityControllerTest) TestGetMeDescribesTheSignedInMember() {
 func (test *IdentityControllerTest) TestGetMeRefusesAMissingToken() {
 	OneRealmTestSetup{}.Start()
 	request, _ := http.NewRequest(http.MethodGet, "/api/v1/identity/me", nil)
-	_, err := (&IdentityController{}).GetMe(request)
+	_, err := OneRealmTestSetup{}.Identity().GetMe(request)
 	var unauthenticated *Unauthenticated
 	Assert.IsTrue(errors.As(err, &unauthenticated))
+	Assert.Equals(502, unauthenticated.Number())
 }

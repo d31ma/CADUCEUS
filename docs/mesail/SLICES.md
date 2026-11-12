@@ -804,10 +804,18 @@ question.
   type and key on the same document, with the union of subscribers;
   `message.deleted` dropping waiting `message.edited` of that message; a
   refusal (`503`) when staging would pass the document's 512 KiB cap.
-- **Done when:** a real-FYLO test edits one message 1,000 times while
-  `search` is down, and the message document stays under 512 KiB with one
-  waiting `message.edited`; when `search` comes back it gets the newest
-  body once; gates pass for every app that syncs the kit.
+- **Done when** (changed 2026-11-12: TACHYON 26.46.02 runs each `ty test`
+  file as one call with a fixed 30 second deadline, and one real-FYLO edit
+  takes about 30 ms, so 1,000 edits cannot fit):
+  - a real-FYLO `ty test` in `apps/messaging` edits one message 300 times
+    with a 4 KB body while `search` is down (1.2 MB of bodies, so without
+    K4 the document would pass the cap after about 120 edits); the
+    message document stays under 512 KiB with one waiting
+    `message.edited`, and when `search` comes back it gets the newest body
+    once;
+  - a `kit/outbox` `go test` stages 1,000 edits of a 10 KB body and keeps
+    one waiting edit, with the staged events under 16 KiB;
+  - gates pass for every app that syncs the kit.
 
 ### K3. User requests before background work (a small session, built)
 Found by K2 on Floci (2026-11-12, run `k2-signin/floci-20261111-232350`):

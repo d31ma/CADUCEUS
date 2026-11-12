@@ -6,6 +6,7 @@ import urllib.parse
 from typing import Callable
 
 from keycloak_client import AccountSettings, Http, Reply, Totp, TokenVerifier, account_status
+from passkey_check import PasskeyCheck
 
 
 class MesailRealmCheck:
@@ -68,6 +69,7 @@ class MesailRealmCheck:
         self.guarded("account", self.check_account_settings)
         self.guarded("otp", self.check_otp)
         self.guarded("lockout", self.check_lockout)
+        self.guarded("passkeys", PasskeyCheck(self).run)
         return self.report()
 
     def check_discovery(self) -> None:

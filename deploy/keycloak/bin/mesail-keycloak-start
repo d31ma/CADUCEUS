@@ -8,6 +8,7 @@ readonly IMPORT_DIR=${KEYCLOAK_HOME}/data/import
 readonly MESAIL_REALM_FILE=mesail-realm.json
 readonly MESAIL_DEV_USERS='mesail-users-*.json'
 readonly DEFAULT_KEYCLOAK_URL=http://127.0.0.1:8180/idp
+readonly DEFAULT_PASSKEY_RP_ID=localhost
 readonly SQLITE_OPTIONS='journal_mode=WAL&synchronous=NORMAL&busy_timeout=15000&transaction_mode=IMMEDIATE'
 readonly CONFIG_ERROR=64
 
@@ -46,6 +47,14 @@ prepare_import() {
   copy_dev_users
 }
 
+choose_passkey_relying_party() {
+  if [[ -z ${MESAIL_PASSKEY_RP_ID:-} ]]; then
+    log "WARNING: MESAIL_PASSKEY_RP_ID is not set; passkeys use ${DEFAULT_PASSKEY_RP_ID} (set it to the install's public host name)"
+  fi
+  export MESAIL_PASSKEY_RP_ID=${MESAIL_PASSKEY_RP_ID:-$DEFAULT_PASSKEY_RP_ID}
+  log "passkey relying party id: ${MESAIL_PASSKEY_RP_ID} (used when the realm is imported)"
+}
+
 use_sqlite() {
   local data_dir=${MESAIL_KEYCLOAK_DATA:-/data/keycloak}
   mkdir -p "$data_dir"
@@ -73,6 +82,7 @@ main() {
   require MESAIL_KEYCLOAK_DIRECTORY_SECRET
   export KC_HOSTNAME=${MESAIL_KEYCLOAK_URL:-$DEFAULT_KEYCLOAK_URL}
   choose_database
+  choose_passkey_relying_party
   prepare_import
   log "issuer: ${KC_HOSTNAME}/realms/mesail"
   exec "$KEYCLOAK_HOME/bin/kc.sh" start --optimized --import-realm "$@"

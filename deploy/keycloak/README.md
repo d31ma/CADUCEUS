@@ -17,7 +17,7 @@ in production.
 | `conf/keycloak-postgres.conf` | Options for the PostgreSQL image (`--build-arg KEYCLOAK_DB=postgres`). |
 | `conf/quarkus.properties` | Turns off Hibernate's database version check (it expects PostgreSQL 14+), and records each request's start time so the access log can show its duration. |
 | `providers/sqlite/` | Java source of `mesail-keycloak-sqlite.jar` (SQLite support), compiled in the `keycloak-providers` stage. Left out of the PostgreSQL image. |
-| `providers/mesail/` | Java source of `mesail-keycloak-mesail.jar`: the admin API endpoint that stores a TOTP. In both images. |
+| `providers/mesail/` | Java source of `mesail-keycloak-mesail.jar`: the admin API endpoints that store a TOTP and manage passkeys, and the passkey sign-in step of the direct grant (see [Passkeys](#passkeys-adr-0008)). In both images. |
 | `realm/mesail-realm.json` | The one realm `mesail`: every person and every Operator (ADR 0005). |
 | `realm/dev/mesail-users-0.json` | Dev-only people `ana`, `bo`, `eve`, `carol` and `operator`, with fixed Keycloak ids `3e5a11d0-0000-4000-8000-00000000000N` (N = 1 to 5 in that order). Imported only with `MESAIL_KEYCLOAK_DEV_USERS=true`. |
 | `bin/mesail-supervisor` | The image entrypoint. Starts Keycloak, waits until it is ready, then starts `MESAIL_APP_COMMAND`. |
@@ -27,6 +27,7 @@ in production.
 | `test/run-image-test.sh` | Builds the image and proves it works (see [Testing](#testing)). |
 | `test/oidc_check.py` | The checks of the realm `mesail` (Python standard library and `openssl`). |
 | `test/keycloak_client.py` | HTTP, token, TOTP and admin API helpers of the check. |
+| `test/passkey_check.py` | The passkey checks, with `test/software_authenticator.py` (an ES256 key made with `openssl`, a made-up credential id, user verification set) and `test/cbor_writer.py`. |
 
 ## The realm `mesail`: one login per person
 
@@ -56,7 +57,7 @@ is off in Keycloak (`loginWithEmailAllowed` false): the identity service turns
 
 | Client | Type | Use |
 | --- | --- | --- |
-| `mesail-identity` | confidential, password grant only | The identity service signs a person in. Keycloak's built-in direct grant flow asks for a TOTP code (`totp` form field) when the person has one set up. Its access token has `aud` `mesail-identity` only (never `mesail-api`, so no service accepts it), the realm role `mesail-operator` for Operators, and the claim `mesail_must_change_password` (boolean, from the user attribute `mesail.mustChangePassword`; absent when the attribute is not set). |
+| `mesail-identity` | confidential, password grant only | The identity service signs a person in, with a password or with a passkey. The realm's direct grant flow `mesail direct grant` asks for a TOTP code (`totp` form field) when the person has one set up and signs in with a password. Its access token has `aud` `mesail-identity` only (never `mesail-api`, so no service accepts it), the realm role `mesail-operator` for Operators, and the claim `mesail_must_change_password` (boolean, from the user attribute `mesail.mustChangePassword`; absent when the attribute is not set). |
 | `mesail-account` | confidential, client credentials; service account with `realm-management` `view-users` and `manage-users` only | The identity service changes a person's own settings: password, TOTP, sessions, the `mesail.mustChangePassword` attribute, lock status and unlock. 403 on anything else, and on other realms. |
 | `mesail-directory` | confidential, client credentials; service account with `realm-management` `view-users`, `query-users` and `manage-users` only | The directory service creates, finds, disables and deletes people, sets `mesail.mustChangePassword`, resets passwords, removes a TOTP and logs a person out. It cannot create realms or read clients. |
 
@@ -88,7 +89,12 @@ declare:
   `mesail-identity` token as `mesail_must_change_password`;
 - `mesail.addRequest` (at most 64 characters; the directory writes 32
   lowercase hex characters), the id of the directory's add request. It has no
-  protocol mapper, so it never reaches a token.
+  protocol mapper, so it never reaches a token;
+- `mesail.passkeyLastUsed` (many values, each `<passkey id> <milliseconds>`),
+  when each passkey last signed the person in. The passkey sign-in step writes
+  it; the passkey endpoints remove a value with its passkey. It has no
+  protocol mapper. A client that writes the person back with `PUT
+  .../users/<id>` keeps the values it read.
 
 Profile verification (`VERIFY_PROFILE`) is off and no field but the username
 is required, so a person made through the admin API without an email or a
@@ -111,6 +117,8 @@ client-credentials token of `mesail-account` or `mesail-directory`):
 | List or end sessions | `GET .../users/<id>/sessions`, `DELETE /admin/realms/mesail/sessions/<session id>` | account |
 | Log out everywhere | `POST .../users/<id>/logout` | both |
 | Lock status, unlock | `GET` / `DELETE /admin/realms/mesail/attack-detection/brute-force/users/<id>` | account |
+| Add, list, rename or remove one passkey | `/admin/realms/mesail/mesail/users/<id>/passkeys[/<passkey id>]` (see [Passkeys](#passkeys-adr-0008)) | account |
+| Remove all of a person's passkeys | `DELETE /admin/realms/mesail/mesail/users/<id>/passkeys` | directory |
 
 **The TOTP endpoint** (`providers/mesail`, Keycloak's admin REST extension
 SPI, so Keycloak's own admin authentication runs first). It:
@@ -157,10 +165,94 @@ example `http://keycloak:8180/idp`. Only the identity service reads this
 issuer.
 
 The realm file uses the placeholders `${MESAIL_IDENTITY_CLIENT_SECRET}`,
-`${MESAIL_ACCOUNT_CLIENT_SECRET}` and `${MESAIL_KEYCLOAK_DIRECTORY_SECRET}`,
+`${MESAIL_ACCOUNT_CLIENT_SECRET}`, `${MESAIL_KEYCLOAK_DIRECTORY_SECRET}` and
+`${MESAIL_PASSKEY_RP_ID}`,
 filled by Keycloak from the environment. The import runs only when the realm
 does not exist yet, so changing a secret later changes nothing: change it
 through the admin API.
+
+## Passkeys (ADR 0008)
+
+A passkey (Touch ID, Face ID, Windows Hello, an Android biometric) is a
+WebAuthn credential of type `webauthn-passwordless` of the person in Keycloak.
+Keycloak keeps its public key and sign count; Mesail stores no credential.
+Passkeys are an extra way to sign in: every person keeps the password.
+The browser never talks to Keycloak: the identity service relays every
+challenge, creation and assertion.
+
+**Policy** (the realm's WebAuthn passwordless policy): relying party id
+`MESAIL_PASSKEY_RP_ID` (the install's public host name, for example
+`mail.example.com`); user verification required; resident key required;
+attestation `none` (any attestation format is accepted and none is trusted);
+ES256 and RS256; at most 10 passkeys per person (checked by the provider).
+The relying party id is read when the realm is imported, on the first start.
+To change it later, change `webAuthnPolicyPasswordlessRpId` of the realm
+through the admin API; passkeys made for the old host stop working.
+
+**Sign-in** (direct grant, client `mesail-identity`). The realm's direct grant
+flow is `mesail direct grant`: first the step `mesail-passkey-grant`, then the
+password steps (username, password, and the TOTP code when the person has one;
+the same steps as Keycloak's own direct grant flow). When the request has a
+`passkey_assertion` field, only the passkey step runs; without it, only the
+password steps run.
+
+```
+POST /idp/realms/mesail/protocol/openid-connect/token
+grant_type=password  client_id=mesail-identity  client_secret=...  scope=openid
+passkey_assertion=<credentialJson: the PublicKeyCredential toJSON() of navigator.credentials.get>
+passkey_challenge=<the challenge the identity service made, base64url, 16 to 64 bytes>
+passkey_origins=<the allowed origins, separated by spaces>
+```
+
+`passkey_origins` lists `https://<host>` (web, Apple and Windows apps) and
+`android:apk-key-hash:<hash>` for each Android app build (the identity
+setting `identity.passkeyorigins`); `http://localhost` and `http://127.0.0.1`
+(with any port) are also accepted for development. At most 16. It is one
+field because Keycloak keeps only the first value of a repeated form field.
+
+The step finds the person from the assertion's user handle (the UTF-8 bytes
+of the person's Keycloak id), refuses a disabled or locked person, accepts
+each challenge once (for 5 minutes), and checks the assertion with
+Keycloak's own WebAuthn code: the signature with the stored public key, the
+challenge, the origin, the relying party id hash, user presence, user
+verification (always required) and the sign count. On success Keycloak
+answers tokens like a password sign-in, with no TOTP code (user verification
+counts as the second factor), and `mesail.passkeyLastUsed` is updated.
+
+Every failure (a malformed request, an unknown user handle, an unknown or
+removed passkey, a wrong signature, origin or challenge, no user
+verification, a replayed assertion, a disabled or locked person) gets the same
+answer as a wrong password: HTTP 400
+`{"error":"invalid_grant","error_description":"Invalid user credentials"}`.
+A failure of a known person counts in brute-force detection like a wrong
+password (Keycloak itself does not count WebAuthn failures), so 10 failed
+passwords and passkeys together lock the person; a passkey sign-in resets the
+count like a password sign-in.
+
+**Admin endpoints** (`providers/mesail`, under
+`/admin/realms/mesail/mesail/users/<person id>/passkeys`; Keycloak's admin
+authentication runs first). Listing needs `view-users`; every change needs
+`manage-users`. A person's own token gets 401 or 403. Every change writes an
+admin event (`CREATE`, `UPDATE` or `DELETE` on
+`users/<id>/credentials/<passkey id>`) with the type, the passkey id and the
+label, never the key or the credential id. A passkey is answered as
+`{"passkeyId", "credentialId", "label", "createdAt", "lastUsedAt"}`:
+`passkeyId` is Keycloak's credential id, `credentialId` the WebAuthn
+credential id (base64url, for `excludeCredentials`), the times are
+milliseconds since 1970 and `lastUsedAt` is `null` before the first sign-in.
+
+| Call | Body | Answers |
+| --- | --- | --- |
+| `POST .../passkeys` (add) | `{"credentialJson": "<toJSON() of navigator.credentials.create>", "challenge": "<base64url>", "origins": ["https://<host>", ...], "label": "Mac"}` | `201` the passkey; `400 invalid_request` (body, label, origins or challenge), `400 invalid_passkey` (the attestation does not check: origin, challenge, relying party, user verification, algorithm), `400 challenge_used`; `404 user_not_found`; `409 too_many` (10 already), `409 passkey_exists` (the person has this credential), `409 label_exists` (the person has a passkey with this label) |
+| `GET .../passkeys` (list) | - | `200` the person's passkeys; `404 user_not_found` |
+| `PUT .../passkeys/<passkey id>` (rename) | `{"label": "MacBook"}` | `200` the passkey; `400 invalid_request`; `404 not_found` (not a passkey of this person); `409 label_exists` |
+| `DELETE .../passkeys/<passkey id>` (remove) | - | `204`; `404 not_found` |
+| `DELETE .../passkeys` (remove all; the directory, AC-ID-13) | - | `204` |
+
+Labels are 1 to 64 characters with no control characters, trimmed; they are
+unique per person (Keycloak's rule for credential labels). Removing passkeys
+does not end Keycloak sessions: the identity and directory services end the
+person's other sessions themselves (`sessionsEndedAt`).
 
 ## Running the image
 
@@ -181,6 +273,7 @@ docker run -d --name mesail-keycloak -v mesail-keycloak:/data/keycloak \
 | `MESAIL_ACCOUNT_CLIENT_SECRET` | yes | Secret of `mesail-account` (the identity service's `YON_IDENTITY_ACCOUNT_SECRET`). |
 | `MESAIL_KEYCLOAK_DIRECTORY_SECRET` | yes | Secret of `mesail-directory` (the directory service's `YON_DIRECTORY_ADMIN_SECRET`). |
 | `MESAIL_KEYCLOAK_URL` | no | Keycloak's backend address and the issuer base. Default `http://127.0.0.1:8180/idp`. |
+| `MESAIL_PASSKEY_RP_ID` | no, but set it in production | The passkey relying party id: the install's public host name, the same host the identity service names in its WebAuthn options. Read when the realm is imported. Default `localhost`, with a warning. |
 | `KC_BOOTSTRAP_ADMIN_CLIENT_ID`, `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` | no | A temporary admin client of the `master` realm, for admin work by hand and for the admin event check in `test/oidc_check.py`. Remove it from the environment after use. |
 | `KC_BOOTSTRAP_ADMIN_USERNAME`, `KC_BOOTSTRAP_ADMIN_PASSWORD` | no | A temporary admin user of the `master` realm, for the admin console (reach it through a tunnel, never the public address). |
 | `MESAIL_APP_COMMAND` | no | The app the supervisor starts after Keycloak is ready. Without it the container runs Keycloak only. |
@@ -272,7 +365,11 @@ the router's log.
 
 ## Limits
 
-- **Not supported by the Keycloak project.** The provider uses internal SPIs.
+- **Not supported by the Keycloak project.** The provider uses internal SPIs,
+  and the passkey step uses Keycloak's WebAuthn classes (`WebAuthnCredentialProvider`,
+  webauthn4j's deprecated `ServerProperty(Set, ...)` constructor, because
+  Keycloak's origin check reads that origin set) and counts passkey failures
+  in the `password` brute-force category.
   A Keycloak upgrade can break it. Before an upgrade, run the new image on a
   copy of the database file and run `test/run-image-test.sh`.
 - **One instance per file.** One process writes the file. Never run two
@@ -365,7 +462,17 @@ VM lock) and `python3` and `openssl` on the host. It:
    refused), then sign-in without a code, with the confirmation code, one
    step back, one step ahead, the same code again and two steps ahead; the
    directory removes the TOTP; a locked account (other people still sign in)
-   and unlocking it;
+   and unlocking it; passkeys with the software authenticator: adding one
+   (and refusing an unknown person, a wrong or malformed origin, a wrong
+   challenge, no user verification, a bad label, the same challenge or
+   credential twice, a person's own token), signing in (token claims,
+   `lastUsedAt`), refusing a replayed assertion, a wrong signature, origin or
+   challenge, no user verification, an unknown or another person's user
+   handle, an unknown passkey and no allowed origin, all with the wrong
+   password's answer and counted by brute-force detection, a lockout by
+   passkey failures (a valid passkey is then refused too), the password still
+   working, renaming, an Android origin, 10 passkeys at most, a duplicate
+   label, removing one and the directory removing all;
 4. restarts the container and runs the checks again (the import is
    skipped);
 5. replaces the container, keeping the volume, with the session purge every

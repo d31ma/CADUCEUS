@@ -18,6 +18,7 @@ readonly PURGE_LOG_LEVEL='INFO,org.keycloak.models.jpa.session.UserSessionExpira
 
 
 export MESAIL_KEYCLOAK_URL=http://127.0.0.1:${PORT}/idp
+export MESAIL_PASSKEY_RP_ID=mail.example.test
 MESAIL_IDENTITY_CLIENT_SECRET=$(openssl rand -hex 24)
 MESAIL_ACCOUNT_CLIENT_SECRET=$(openssl rand -hex 24)
 MESAIL_KEYCLOAK_DIRECTORY_SECRET=$(openssl rand -hex 24)
@@ -43,7 +44,7 @@ start_container() {
   docker run -d --name "$CONTAINER" --stop-timeout "$STOP_TIMEOUT" \
     -p "127.0.0.1:${PORT}:8180" -v "$1:/data/keycloak" \
     -e KC_HTTP_HOST=0.0.0.0 -e MESAIL_KEYCLOAK_URL -e MESAIL_KEYCLOAK_DEV_USERS=true \
-    -e MESAIL_IDENTITY_CLIENT_SECRET -e MESAIL_ACCOUNT_CLIENT_SECRET -e MESAIL_KEYCLOAK_DIRECTORY_SECRET \
+    -e MESAIL_IDENTITY_CLIENT_SECRET -e MESAIL_ACCOUNT_CLIENT_SECRET -e MESAIL_KEYCLOAK_DIRECTORY_SECRET -e MESAIL_PASSKEY_RP_ID \
     "${@:3}" -e MESAIL_APP_COMMAND='sleep infinity' "$IMAGE" >/dev/null
 }
 

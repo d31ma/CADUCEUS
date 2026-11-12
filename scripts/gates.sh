@@ -265,12 +265,32 @@ prepare_fylo_root() {
   ensure_fylo_folder "$(datasource_folder "$app")"
 }
 
+unconverted_list() {
+  echo "$(repository_root)/tools/controllers/unconverted.list"
+}
+
+app_not_converted() {
+  grep -qx "$(basename "$1")" "$(unconverted_list)"
+}
+
+controller_check() {
+  local app="$1"
+  if app_not_converted "$app"; then
+    echo "$(basename "$app") is not converted yet (tools/controllers/unconverted.list); check skipped"
+    return 0
+  fi
+  (cd "$(repository_root)/tools/controllers" && go run . "$app")
+}
+
 app_gates() {
   local ty="$1" app="$2" log="$3"
   local name status=0
   name="$(basename "$app")"
   if uses_fylo "$app"; then
     run_step "$name fylo root" "$log" prepare_fylo_root "$(repository_root)" "$app" || return 1
+  fi
+  if app_kind_has_server "$app"; then
+    run_step "$name controllers" "$log" controller_check "$app" || status=1
   fi
   run_step "$name migrate check" "$log" "$ty" migrate check "$app" || status=1
   run_step "$name test" "$log" "$ty" test "$app" --coverage || status=1
@@ -440,6 +460,8 @@ usage() {
   echo "                 outside apps/ (found by its go.mod): gofmt, go vet (with the module's" >&2
   echo "                 build tags), go test; modules outside tests/ and tools/ also pass CRAP <= 15" >&2
   echo "  --apps-only    versions and the per-app steps; --app <name> limits them to one app" >&2
+  echo "                 (a backend app's steps start with tools/controllers, ADR 0009, unless the app" >&2
+  echo "                 is still in tools/controllers/unconverted.list)" >&2
   return 2
 }
 

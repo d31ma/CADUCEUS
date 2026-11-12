@@ -428,7 +428,8 @@ C1, not before each slice merge.
   function by path prefix and domain and queues calls to a busy function
   (a concurrent call gets `429`), `realtime` as one long-running container
   (Lambda cannot hold connections), live roots on the ATLAS-backed EFS
-  volumes (the owner's decision), Lambda timeouts of 120 s, an entrypoint
+  volumes (the owner's decision), Lambda timeouts of 120 s (60 s since
+  K8), an entrypoint
   that clears a stale FYLO write lock only when no writer is alive (ADR
   0004 section 4) and logs it, `fylo pack` snapshots to ATLAS before every
   deploy, the Floci description that runs every service in
@@ -932,13 +933,35 @@ FYLO owner's design choice; Mesail does not need it.
     `503` is `EROOTLOCKED` (through `YonLog` below, or a direct probe of
     the datasource error). Write the proof in the findings note.
   - **Fix (a), one container per FYLO root at any time, in Floci:**
-    - find why Floci starts a second container while one lives (its own
-      invocation timeout was 30 seconds while the function's timeout is
-      120 seconds, ADR 0004 section 4; idle replacement; redeploy), and
-      remove each cause: Floci's timeout equals the function's, and a
-      redeploy stops the old container before the new one takes calls;
-    - if Floci cannot promise one container per function, the deploy
-      tooling checks for two and stops the older one, and logs it;
+    - every FYLO-owning function's timeout in `stack.json` is 60 seconds
+      (it was 30, and 60 for `attachments`, `mail-in` and `mail-out`),
+      under the router's 70 second upstream timeout
+      (`MESAIL_ROUTER_TIMEOUT_SECONDS`); ADR 0004 section 4 says 60
+      (decided 2026-11-12: 20 seconds of work, an ATLAS stall of up to 11
+      seconds and a cold start fit, and a stuck container is replaced
+      sooner than at 120);
+    - a redeploy stops the old container before the new one takes calls;
+    - a deploy guard during Floci runs checks every 5 seconds for two
+      containers of one FYLO-owning function, stops the older one, and
+      logs it;
+  - **Second lead, from K8 (2026-11-12): two `fylo` processes in one
+    container.** K3's Floci logs show no second container in either
+    window, and Floci 2.4.0 honours reserved concurrency 1. TACHYON
+    v26.46.02's data source gives each store call a 5 second deadline; when
+    it fires, the `fylo exec --loop` process is killed without a wait and
+    the next call starts a new one. A process stuck in a slow disk write
+    (ATLAS stalls up to 10.9 seconds) cannot die until the write ends, so
+    it keeps the root lease, and the new process gets `EROOTLOCKED`. That
+    fits the router log (the first `503` after 5.5 to 8.5 seconds, then
+    fast `503`s, two services at once on one shared disk), and TACHYON's 2
+    second wait (its ADR 0128) does not cover a longer stall. K8 proves it
+    with a read-only guest watcher (fylo processes per container, their
+    state and kernel wait, the disk's in-flight counters) under K3's load.
+    A controlled 10 second `fsfreeze` of the guest data disk needs the
+    coordinator's OK, and only after K8 has checked that the dev host
+    supervisor's write probe will not block the host for it. If proven,
+    TACHYON is asked (through the coordinator) to wait for the old `fylo`
+    process to exit, for a bounded time, before it starts a new one;
     - `directory` and `messaging` (and every FYLO-owning service through
       its store error handler) report `EROOTLOCKED` as "store busy" in
       their log, not only "store is not available", so the next outage

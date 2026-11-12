@@ -211,7 +211,9 @@ Decisions:
   local disk. Every FYLO-owning service follows these rules:
   - **Bounded work per call.** One request or job call does at most 25
     FYLO writes and stops after 20 seconds of work, far under the Lambda
-    timeout (set to 120 seconds). A job that has more to do answers its
+    timeout (set to 60 seconds for every FYLO-owning function, under the
+    router's 70 second upstream timeout; it was 120 until 2026-11-12, SLICES
+    K8). A job that has more to do answers its
     `Report` with `more: true`, and the next trigger continues; bulk loads
     (imports, migrations, reindexing) are always split this way.
   - **Write-lock recovery.** A writer killed by a timeout can leave FYLO's

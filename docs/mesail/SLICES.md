@@ -1885,6 +1885,23 @@ test of their own; their tests check each answer's exact message.
   number, which the catch-all uses).
 - **Done when:** the check has tests and passes on `develop`; gates pass.
 
+### E12. Numbers for shared kit errors (the events and outbox owner, after K5 and K7)
+Found by E2 (2026-11-12): some error cases are raised in kit packages that
+several apps share (for example `kit/events`, copied into 8 apps:
+`InvalidEnvelope`, `NotSubscribed`). Their numbers come from the shared
+block MS0001-MS0499, not from one app's block.
+- **Owns:** the error types of the shared kit packages (`kit/events`,
+  `kit/outbox`, `kit/oidc` and any other package copied into more than
+  one app), their app copies through `scripts/kit-sync.sh`, and their rows
+  in ERRORS.md.
+- **Builds:** one constructor per case with its MS0001-MS0499 number; each
+  app's error handler answers the kit number as it is. App numbers that
+  stood for "a shared check refused it" until then (for example mail-out's
+  MS3001) are marked "retired" in ERRORS.md.
+- **Depends on:** K5 and K7 merged (both change `kit/events` or
+  `kit/outbox`); E11 makes the check.
+- **Done when:** gates pass for every app that syncs the kit.
+
 ### Requests to TACHYON (ADR 0009)
 - **Y1:** let `@ErrorHandler` shape the answers TACHYON makes itself (no
   identity, missing role, identity provider failure, `@Check` rejection,

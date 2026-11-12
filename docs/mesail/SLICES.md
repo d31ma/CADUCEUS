@@ -1785,7 +1785,10 @@ Every E slice below:
   handler formats `[MSnnnn]: <message>` with `kit/apierrors`, keeps every
   `code` and `field` as CONTRACTS says, and answers the app's
   "unexpected error" number for an error no other method takes; its rows
-  in ERRORS.md. No change in routes, statuses, `code` values or behavior.
+  in ERRORS.md; `apierrors` added to the app's kit list (then
+  `scripts/kit-sync.sh`). Health routes get no exception: a small
+  `HealthService` answers `Health`. No change in routes, statuses, `code`
+  values or behavior.
 - **Done when:** the E0 gate check passes for the app; the app's tests
   check the number on each error answer; the blackbox tests that touch
   the app still pass where they passed before; gates pass.
@@ -1799,7 +1802,10 @@ Every E slice below:
   and checks that a list of numbers is inside a block and listed once;
   `tools/controllers`: a Go check that every exported method of a
   `server/controllers/*Controller.go` type has one statement, a `return`
-  of a call on one of the controller's own fields; it runs in
+  of a call on one of the controller's own fields, whose arguments are
+  only the method's own parameters (no literals, expressions or nested
+  calls); a route with no result may be one bare call statement instead
+  of a `return` (decided 2026-11-12 with E0); it runs in
   `scripts/gates.sh` for each app, with a list of apps not converted yet
   that Wave 7 empties.
 - **Done when:** both have tests; gates pass with every app on the list.

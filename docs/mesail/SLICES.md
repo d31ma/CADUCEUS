@@ -190,6 +190,20 @@ wave run at the same time.
     app's block in `docs/mesail/ERRORS.md`, built by the app's
     `@ErrorHandler` with `kit/apierrors`. New code follows this rule from
     the day E0 merges; existing apps change in Wave 7.
+19. **Client layers** (checked 2026-11-12 for the owner; no behavior
+    change). In the Tac apps a page holds only components, a component
+    holds only `tac.html` and `tac.css`, its view reaches only client
+    services by name, and only services hold remotes (`client/remotes/`,
+    `@HTTPClient`). TACHYON enforces most of it: a page with anything but
+    component tags fails with TY1309 (ADR 0029), a script beside a
+    component fails with TY1310 (ADR 0030), a view resolves names only
+    against `client/services`, and dependencies point down (TY1327, ADR
+    0069: a remote may not need a service). Mesail adds: never set
+    `tac.dependencies.check` to `false` (it turns TY1327 off), and a
+    component view uses TACHYON's control tags (`if`, `for`, `switch`)
+    only on a value the service gives by name: no `? :` and no
+    computation in the view; a service field such as `row.ariaCurrent`
+    holds the result. Slice E10 adds the check.
 
 ## Gates
 
@@ -1839,12 +1853,33 @@ Every E slice below:
 - **Builds:** the router's own answers (`429`, `502`, `503`, `504`) as
   `ApiError` with numbers from MS5500-MS5999.
 
+### E10. Client layer check (the web apps' owners, one small session)
+- **Owns:** `tools/clientviews/**` (new), its line in `scripts/gates.sh`,
+  and the 5 view files and their services named below.
+- **Builds:** a check run by `scripts/gates.sh` for every Tac app: the
+  manifest never sets `tac.dependencies.check` to `false`, and no
+  component `tac.html` holds a `? :` expression. It moves today's 7
+  ternaries into service fields with the same result:
+  `apps/web-admin/client/components/admin/people/tac.html` (line 22),
+  `apps/web/client/components/composer/box/tac.html` (16),
+  `apps/web/client/components/composer/email-fields/tac.html` (11),
+  `apps/web/client/components/conversation/view/tac.html` (165) and
+  `apps/web/client/components/sidebar/nav/tac.html` (64, 104, 134).
+- **Depends on:** E0 (the same gate script). Any time after it; not at
+  the same time as a slice that edits those 5 views.
+- **Done when:** the check has tests; the responsive tests show the same
+  pages; gates pass.
+
 ### Requests to TACHYON (ADR 0009)
 - **Y1:** let `@ErrorHandler` shape the answers TACHYON makes itself (no
   identity, missing role, identity provider failure, `@Check` rejection,
   malformed or too large body, an error no other method takes), keeping
   TACHYON's status codes. When it is released and the pin moves, each
   app's handler adds these numbers.
+- **Y3 (not blocking):** enforce TACHYON ADR 0087 ("a service never
+  calls `fetch`; the network belongs to an `HTTPClient`") with a build
+  error for a client service that uses the network directly; and a
+  dedicated error when a view names a remote. Mesail follows both today.
 - **Y2 (not blocking):** pass the identity that `@IdentityProvider`
   returned into a route method parameter. When it lands, a small
   follow-up replaces the `request` argument of every route with it.

@@ -64,4 +64,14 @@ The offline-first tests (`Sync_test.go`, `Queue_test.go`,
 bo, wait up to 15 seconds for the change log, and create new people for the
 session tests, so the fixtures' own sessions are never revoked.
 
+The passkey tests (`Passkeys_test.go`; slice PK0, ADR 0008) use a
+software WebAuthn authenticator (`Authenticator.go`: an ES256 key pair, a
+made-up credential id, user verification always set, attestation `none`)
+that reads `optionsJson` and writes `credentialJson` as WebAuthn Level 3
+JSON. The origin in its client data is `https://<rp id>`;
+`MESAIL_PASSKEY_ORIGIN` overrides it, and it must be listed in
+`identity.passkeyorigins`. Each test makes a new person in `example.com`
+(by `ana`) with one passkey labelled `Mac`. `MESAIL_PASSKEY_EXPIRY_TEST`
+(any value) turns on the expired-challenge test, which waits 125 seconds.
+
 A missing variable skips the test.

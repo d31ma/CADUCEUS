@@ -186,7 +186,8 @@ Sessions:
   `signedInAt` is before the person's `sessionsEndedAt` answers `403
   access_revoked`, like a disabled or deleted person. `sessionsEndedAt` is
   set by `DELETE /identity/sessions`, by the person's own password change
-  (`POST /identity/password`; its own fresh session starts after it), and
+  (`POST /identity/password`; its own fresh session starts after it), by
+  the removal of one of the person's passkeys (the same way), and
   by the admin actions of SPEC AC-ID-13 (password reset, 2-step code
   removal, disable, delete). A client deletes every device copy of the
   person on `403 access_revoked`, and keeps it (locked) on `401`.
@@ -255,7 +256,7 @@ and T14 (apps).
 | `GET /api/v1/identity/passkeys` | SignedIn | - | `[]Passkey{passkeyId, label, createdAt, lastUsedAt}` of the caller |
 | `POST /api/v1/identity/passkeys/setup` | SignedIn | `PasskeySetupRequest{currentPassword, oneTimeCode?}` | `200 PasskeySetup{optionsJson, setupKey}` (creation options: user id = the person id, user name = the username, resident key required, user verification required, exclude the person's existing passkeys); `401` wrong password or code; `409 too_many` with 10 passkeys |
 | `POST /api/v1/identity/passkeys` | SignedIn | `PasskeyConfirm{setupKey, credentialJson, label}` | `201 Passkey`; `400 invalid_passkey` |
-| `DELETE /api/v1/identity/passkeys/{passkeyId}` | SignedIn | `PasskeyRemove{currentPassword, oneTimeCode?}` | `204`; ends every other session of the person (`sessionsEndedAt`); `401`; `404 not_found` for another person's passkey |
+| `DELETE /api/v1/identity/passkeys/{passkeyId}` | SignedIn | `PasskeyRemove{currentPassword, oneTimeCode?}` | `200 Session` (fresh tokens, like a password change: its own fresh session starts after `sessionsEndedAt`); ends every other session of the person (`sessionsEndedAt`); `401`; `404 not_found` for another person's passkey |
 
 - `identity` checks the sealed challenge and its expiry, then calls
   Keycloak's token endpoint through the passkey direct-grant flow of the
@@ -274,6 +275,12 @@ and T14 (apps).
   a 10-minute expiry.
 - A passkey sign-in needs no `oneTimeCode`: user verification makes it
   two factors (ADR 0008 section 1).
+- `optionsJson` and `credentialJson` are strings that hold WebAuthn
+  Level 3 JSON (the `toJSON()` form of `PublicKeyCredential` and of its
+  options; binary values in base64url without padding), as TACHYON T13's
+  `Passkeys` client takes and returns them. The user handle is the UTF-8
+  bytes of the person id. Every failed passkey sign-in answers the same
+  `ApiError` as a wrong password.
 - Labels are 1 to 64 characters, default the device kind ("Mac",
   "iPhone"). Credential ids, public keys, challenges and assertions never
   appear in logs.

@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: unlock with Touch ID</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<link rel="stylesheet" href="assets/screens/offline.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#s1-title">Skip to the first state</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">The installed apps' lock for the copy on the device (SPEC AC-OF-20, Q22; ADR 0008; TACHYON T15 and T15b: <code>StorageLock</code>, <code>&quot;unlock&quot;: &quot;userPresenceWhenAvailable&quot;</code>). Only on macOS, iOS, Windows and Android, and only on a device that keeps a copy. While locked, the app reads and writes nothing: no list, no counts, no queue, no sync. Browsers and the Linux app never show any of this.</p>
+    <!-- Mockup: labelled states side by side. Cards keep their token widths (auth 26rem, dialog 32rem). -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-auth-card-max)),1fr))]">
+      <section class="grid w-full max-w-auth content-start gap-3" id="s1" aria-label="S1 · Locked when the app opens (macOS). The system prompt opens by itself once">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">S1 &middot; Locked when the app opens (macOS). The system prompt opens by itself once</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid justify-items-center gap-5 p-4 text-center sm:p-6 short:gap-3">
+            <span class="grid size-14 place-items-center rounded-full bg-primary-container text-on-primary-container" aria-hidden="true"><w-icon name="lock" class="size-icon-lg"></w-icon></span>
+            <div class="grid gap-1"><h1 id="s1-title" class="text-2xl font-semibold tracking-tight short:text-xl">Mesail is locked</h1><p class="text-subtle">Unlock to see your messages.</p></div>
+            <div class="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><span class="grid min-w-0 gap-0.5"><span class="truncate font-semibold">Ana Ruiz</span><span class="truncate text-xs text-subtle">ana</span></span></div>
+            <div class="grid w-full gap-3 text-left">
+              <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Unlock with Touch ID</w-btn>
+              
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>Sending, updates and new messages wait until you unlock.</span></p>
+            </div>
+            <w-btn variant="text" size="small" aria-haspopup="dialog" class="pointer-coarse:min-h-11">Cannot unlock? Sign out</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="S2 · Asking (StorageUnlockAsked): the system draws its own prompt">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">S2 &middot; Asking (<code>StorageUnlockAsked</code>): the system draws its own prompt</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid justify-items-center gap-5 p-4 text-center sm:p-6 short:gap-3">
+            <span class="grid size-14 place-items-center rounded-full bg-primary-container text-on-primary-container" aria-hidden="true"><w-icon name="lock" class="size-icon-lg"></w-icon></span>
+            <div class="grid gap-1"><h2 id="s2-title" class="text-2xl font-semibold tracking-tight short:text-xl">Mesail is locked</h2><p class="text-subtle">Unlock to see your messages.</p></div>
+            <div class="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><span class="grid min-w-0 gap-0.5"><span class="truncate font-semibold">Ana Ruiz</span><span class="truncate text-xs text-subtle">ana</span></span></div>
+            <div class="grid w-full gap-3 text-left">
+              <w-btn variant="filled" size="large" block loading disabled class="min-h-control-lg">Waiting for Touch ID&hellip;</w-btn><p class="sr-only" role="status">Waiting for Touch ID.</p>
+              
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>Sending, updates and new messages wait until you unlock.</span></p>
+            </div>
+            <w-btn variant="text" size="small" aria-haspopup="dialog" class="pointer-coarse:min-h-11">Cannot unlock? Sign out</w-btn>
+          </div>
+        </div>
+        <div class="mx-auto grid w-full max-w-xs justify-items-center gap-2 rounded-xl border border-border bg-surface-high p-4 text-center text-sm shadow-xl" aria-hidden="true">
+          <p class="text-xs text-subtle">Drawn by macOS (example)</p>
+          <w-icon name="fingerprint" class="size-icon-xl text-accent"></w-icon>
+          <p class="font-semibold">Mesail</p>
+          <p>Mesail is trying to unlock your messages.</p>
+          <p class="text-xs text-subtle">Touch ID or enter your password to allow this.</p>
+          <div class="flex gap-2 pt-1"><span class="rounded-md border border-border px-3 py-1">Use Password&hellip;</span><span class="rounded-md border border-border px-3 py-1">Cancel</span></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="S3 · cancelled: the person closed the prompt">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">S3 &middot; <code>cancelled</code>: the person closed the prompt</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid justify-items-center gap-5 p-4 text-center sm:p-6 short:gap-3">
+            <span class="grid size-14 place-items-center rounded-full bg-primary-container text-on-primary-container" aria-hidden="true"><w-icon name="lock" class="size-icon-lg"></w-icon></span>
+            <div class="grid gap-1"><h2 id="s3-title" class="text-2xl font-semibold tracking-tight short:text-xl">Mesail is locked</h2><p class="text-subtle">Unlock to see your messages.</p></div>
+            <div class="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><span class="grid min-w-0 gap-0.5"><span class="truncate font-semibold">Ana Ruiz</span><span class="truncate text-xs text-subtle">ana</span></span></div>
+            <div class="grid w-full gap-3 text-left">
+              <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Unlock with Touch ID</w-btn>
+              <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="info" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Not unlocked. Choose Unlock with Touch ID to try again.</p></div></div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>Sending, updates and new messages wait until you unlock.</span></p>
+            </div>
+            <w-btn variant="text" size="small" aria-haspopup="dialog" class="pointer-coarse:min-h-11">Cannot unlock? Sign out</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="S4 · failed">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">S4 &middot; <code>failed</code></p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid justify-items-center gap-5 p-4 text-center sm:p-6 short:gap-3">
+            <span class="grid size-14 place-items-center rounded-full bg-primary-container text-on-primary-container" aria-hidden="true"><w-icon name="lock" class="size-icon-lg"></w-icon></span>
+            <div class="grid gap-1"><h2 id="s4-title" class="text-2xl font-semibold tracking-tight short:text-xl">Mesail is locked</h2><p class="text-subtle">Unlock to see your messages.</p></div>
+            <div class="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><span class="grid min-w-0 gap-0.5"><span class="truncate font-semibold">Ana Ruiz</span><span class="truncate text-xs text-subtle">ana</span></span></div>
+            <div class="grid w-full gap-3 text-left">
+              <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Unlock with Touch ID</w-btn>
+              <div class="flex items-start gap-3 rounded-lg bg-error-container text-on-error-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Touch ID did not work. Try again, or choose Use Password in the window that opens.</p></div></div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>Sending, updates and new messages wait until you unlock.</span></p>
+            </div>
+            <w-btn variant="text" size="small" aria-haspopup="dialog" class="pointer-coarse:min-h-11">Cannot unlock? Sign out</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="S5 · lockedOut: too many tries">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">S5 &middot; <code>lockedOut</code>: too many tries</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid justify-items-center gap-5 p-4 text-center sm:p-6 short:gap-3">
+            <span class="grid size-14 place-items-center rounded-full bg-primary-container text-on-primary-container" aria-hidden="true"><w-icon name="lock" class="size-icon-lg"></w-icon></span>
+            <div class="grid gap-1"><h2 id="s5-title" class="text-2xl font-semibold tracking-tight short:text-xl">Mesail is locked</h2><p class="text-subtle">Unlock to see your messages.</p></div>
+            <div class="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><span class="grid min-w-0 gap-0.5"><span class="truncate font-semibold">Ana Ruiz</span><span class="truncate text-xs text-subtle">ana</span></span></div>
+            <div class="grid w-full gap-3 text-left">
+              <w-btn variant="filled" size="large" block prepend-icon="fingerprint" disabled class="min-h-control-lg">Unlock with Touch ID</w-btn>
+              <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Touch ID is locked after too many tries. Unlock your Mac with its password, then try again.</p><div class="flex flex-wrap gap-2 pt-1"><w-btn variant="text" size="small" class="pointer-coarse:min-h-11">Try again</w-btn></div></div></div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>Sending, updates and new messages wait until you unlock.</span></p>
+            </div>
+            <w-btn variant="text" size="small" aria-haspopup="dialog" class="pointer-coarse:min-h-11">Cannot unlock? Sign out</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="S6 · Locked again: 5 minutes in the background, or the device locked (StorageLocked)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">S6 &middot; Locked again: 5 minutes in the background, or the device locked (<code>StorageLocked</code>)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid justify-items-center gap-5 p-4 text-center sm:p-6 short:gap-3">
+            <span class="grid size-14 place-items-center rounded-full bg-primary-container text-on-primary-container" aria-hidden="true"><w-icon name="lock" class="size-icon-lg"></w-icon></span>
+            <div class="grid gap-1"><h2 id="s6-title" class="text-2xl font-semibold tracking-tight short:text-xl">Mesail is locked</h2><p class="text-subtle">Unlock to see your messages.</p><p class="text-xs text-subtle">Locked after 5 minutes in the background.</p></div>
+            <div class="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><span class="grid min-w-0 gap-0.5"><span class="truncate font-semibold">Ana Ruiz</span><span class="truncate text-xs text-subtle">ana</span></span></div>
+            <div class="grid w-full gap-3 text-left">
+              <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Unlock with Touch ID</w-btn>
+              
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>Sending, updates and new messages wait until you unlock.</span></p>
+            </div>
+            <w-btn variant="text" size="small" aria-haspopup="dialog" class="pointer-coarse:min-h-11">Cannot unlock? Sign out</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="S7 · iPhone (Face ID, falls back to the passcode)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">S7 &middot; iPhone (Face ID, falls back to the passcode)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid justify-items-center gap-5 p-4 text-center sm:p-6 short:gap-3">
+            <span class="grid size-14 place-items-center rounded-full bg-primary-container text-on-primary-container" aria-hidden="true"><w-icon name="lock" class="size-icon-lg"></w-icon></span>
+            <div class="grid gap-1"><h2 id="s7-title" class="text-2xl font-semibold tracking-tight short:text-xl">Mesail is locked</h2><p class="text-subtle">Unlock to see your messages.</p></div>
+            <div class="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><span class="grid min-w-0 gap-0.5"><span class="truncate font-semibold">Ana Ruiz</span><span class="truncate text-xs text-subtle">ana</span></span></div>
+            <div class="grid w-full gap-3 text-left">
+              <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Unlock with Face ID</w-btn>
+              
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>Sending, updates and new messages wait until you unlock.</span></p>
+            </div>
+            <w-btn variant="text" size="small" aria-haspopup="dialog" class="pointer-coarse:min-h-11">Cannot unlock? Sign out</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="S8 · Windows (Windows Hello: face, fingerprint or PIN)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">S8 &middot; Windows (Windows Hello: face, fingerprint or PIN)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid justify-items-center gap-5 p-4 text-center sm:p-6 short:gap-3">
+            <span class="grid size-14 place-items-center rounded-full bg-primary-container text-on-primary-container" aria-hidden="true"><w-icon name="lock" class="size-icon-lg"></w-icon></span>
+            <div class="grid gap-1"><h2 id="s8-title" class="text-2xl font-semibold tracking-tight short:text-xl">Mesail is locked</h2><p class="text-subtle">Unlock to see your messages.</p></div>
+            <div class="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left"><w-avatar text="AR" size="36" style="--h:195" alt=""></w-avatar><span class="grid min-w-0 gap-0.5"><span class="truncate font-semibold">Ana Ruiz</span><span class="truncate text-xs text-subtle">ana</span></span></div>
+            <div class="grid w-full gap-3 text-left">
+              <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Unlock with Windows Hello</w-btn>
+              
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="clock" class="ms-icon-sm mt-0.5 flex-none" aria-hidden="true"></w-icon><span>Sending, updates and new messages wait until you unlock.</span></p>
+            </div>
+            <w-btn variant="text" size="small" aria-haspopup="dialog" class="pointer-coarse:min-h-11">Cannot unlock? Sign out</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="S9 · keyLost: the copy is loaded again, and lost unsent items are counted">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">S9 &middot; <code>keyLost</code>: the copy is loaded again, and lost unsent items are counted</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="s9-t" aria-describedby="s9-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="s9-t" class="min-w-0 flex-1 text-lg font-semibold">Touch ID changed on this Mac</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="s9-d">
+            <p class="text-sm">The fingerprints or the password of this Mac changed, so Mesail can no longer open its copy of your messages. Mesail deleted that copy and loads your messages again from the server.</p>
+            <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p><strong>3 items</strong> you wrote offline and had not sent were lost with it.</p></div></div>
+            
+            <p class="text-sm text-subtle">Unlock with Touch ID stays on. From now on it uses the fingerprints this Mac has now.</p>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="filled">Continue</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="S10 · keyLost with nothing unsent, while offline">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">S10 &middot; <code>keyLost</code> with nothing unsent, while offline</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="s10-t" aria-describedby="s10-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="s10-t" class="min-w-0 flex-1 text-lg font-semibold">Touch ID changed on this Mac</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="s10-d">
+            <p class="text-sm">The fingerprints or the password of this Mac changed, so Mesail can no longer open its copy of your messages. Mesail deleted that copy and loads your messages again from the server.</p>
+            
+            <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="info" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>You are offline. Your messages load when you are back online.</p></div></div>
+            <p class="text-sm text-subtle">Unlock with Touch ID stays on. From now on it uses the fingerprints this Mac has now.</p>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="filled">Continue</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="S11 · “Cannot unlock? Sign out”">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">S11 &middot; &ldquo;Cannot unlock? Sign out&rdquo;</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="s11-t" aria-describedby="s11-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="s11-t" class="min-w-0 flex-1 text-lg font-semibold">Sign out and remove your messages from this Mac?</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="s11-d">
+            <p class="text-sm">Mesail signs you out on this Mac and deletes its copy of your messages. Your messages stay safe on the server.</p>
+            <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Mesail cannot open the copy while it is locked, so it cannot tell you what was not sent. Anything you wrote offline and did not send is lost.</p></div></div>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn><w-btn variant="filled" color="danger">Sign out and remove</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" id="l1" aria-label="L1 · The setting, off (macOS app, kept signed in)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">L1 &middot; The setting, off (macOS app, kept signed in)</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="border-b border-divider px-4 py-3"><p class="text-sm font-semibold text-subtle">This device &gt; Keep me signed in on this device</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="l1-label" class="font-medium">Unlock with Touch ID</p><p id="l1-hint" class="text-sm text-subtle">Mesail asks for Touch ID when you open it, after 5 minutes in the background, and when this Mac locks. Your Mac password works too.</p></div><w-switch class="ms-auto" aria-labelledby="l1-label" aria-describedby="l1-hint"></w-switch></div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="L2 · Turning it on: the system asks first (StorageLock.require(true) after unlock())">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">L2 &middot; Turning it on: the system asks first (<code>StorageLock.require(true)</code> after <code>unlock()</code>)</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="border-b border-divider px-4 py-3"><p class="text-sm font-semibold text-subtle">This device &gt; Keep me signed in on this device</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="l2-label" class="font-medium">Unlock with Touch ID</p><p id="l2-hint" class="text-sm text-subtle">Mesail asks for Touch ID when you open it, after 5 minutes in the background, and when this Mac locks. Your Mac password works too.</p></div><w-switch class="ms-auto" aria-labelledby="l2-label" aria-describedby="l2-hint" disabled></w-switch></div>
+              <p class="flex items-center gap-2 text-sm" role="status"><w-icon name="refresh" class="ms-icon-sm flex-none text-accent animate-spin motion-reduce:animate-none" aria-hidden="true"></w-icon><span>Confirm with Touch ID&hellip;</span></p>
+          </div>
+        </div>
+        <div class="mx-auto grid w-full max-w-xs justify-items-center gap-2 rounded-xl border border-border bg-surface-high p-4 text-center text-sm shadow-xl" aria-hidden="true">
+          <p class="text-xs text-subtle">Drawn by macOS (example)</p>
+          <w-icon name="fingerprint" class="size-icon-xl text-accent"></w-icon>
+          <p class="font-semibold">Mesail</p>
+          <p>Mesail is trying to unlock your messages.</p>
+          <p class="text-xs text-subtle">Touch ID or enter your password to allow this.</p>
+          <div class="flex gap-2 pt-1"><span class="rounded-md border border-border px-3 py-1">Use Password&hellip;</span><span class="rounded-md border border-border px-3 py-1">Cancel</span></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="L3 · On">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">L3 &middot; On</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="border-b border-divider px-4 py-3"><p class="text-sm font-semibold text-subtle">This device &gt; Keep me signed in on this device</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="l3-label" class="font-medium">Unlock with Touch ID</p><p id="l3-hint" class="text-sm text-subtle">Mesail asks for Touch ID when you open it, after 5 minutes in the background, and when this Mac locks. Your Mac password works too.</p></div><w-switch class="ms-auto" aria-labelledby="l3-label" aria-describedby="l3-hint" checked></w-switch></div>
+              <p class="flex items-center gap-2 text-sm" role="status"><w-icon name="check" class="ms-icon-sm flex-none text-accent" aria-hidden="true"></w-icon><span>On. Mesail is locked when you open it, after 5 minutes in the background, and when this Mac locks.</span></p>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="L4 · Turning it off was not confirmed: it stays on">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">L4 &middot; Turning it off was not confirmed: it stays on</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="border-b border-divider px-4 py-3"><p class="text-sm font-semibold text-subtle">This device &gt; Keep me signed in on this device</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="l4-label" class="font-medium">Unlock with Touch ID</p><p id="l4-hint" class="text-sm text-subtle">Mesail asks for Touch ID when you open it, after 5 minutes in the background, and when this Mac locks. Your Mac password works too.</p></div><w-switch class="ms-auto" aria-labelledby="l4-label" aria-describedby="l4-hint" checked></w-switch></div>
+              <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="info" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Still on. Turning it off needs Touch ID or your Mac password.</p></div></div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="L5 · lockedOut while changing it">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">L5 &middot; <code>lockedOut</code> while changing it</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="border-b border-divider px-4 py-3"><p class="text-sm font-semibold text-subtle">This device &gt; Keep me signed in on this device</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="l5-label" class="font-medium">Unlock with Touch ID</p><p id="l5-hint" class="text-sm text-subtle">Mesail asks for Touch ID when you open it, after 5 minutes in the background, and when this Mac locks. Your Mac password works too.</p></div><w-switch class="ms-auto" aria-labelledby="l5-label" aria-describedby="l5-hint"></w-switch></div>
+              <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Touch ID is locked after too many tries. Unlock your Mac with its password, then try again.</p></div></div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="L6 · notEnrolled: no Touch ID and no password on this device">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">L6 &middot; <code>notEnrolled</code>: no Touch ID and no password on this device</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="border-b border-divider px-4 py-3"><p class="text-sm font-semibold text-subtle">This device &gt; Keep me signed in on this device</p></div>
+          <div class="grid gap-3 px-4 py-4">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2"><div class="grid min-w-0 flex-1 basis-60 gap-0.5"><p id="l6-label" class="font-medium">Unlock with Touch ID</p><p id="l6-hint" class="text-sm text-subtle">Set up Touch ID or a password for this Mac first, in System Settings &gt; Touch ID &amp; Password. Then come back here.</p></div><w-switch class="ms-auto" aria-labelledby="l6-label" aria-describedby="l6-hint" disabled></w-switch></div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="L7 · The name on each platform">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">L7 &middot; The name on each platform</p>
+        <div class="w-full overflow-x-auto rounded-lg border border-border bg-surface">
+          <table class="w-full text-left text-sm">
+            <caption class="sr-only">Name of the setting and the lock button on each platform</caption>
+            <thead class="border-b border-divider text-xs uppercase tracking-wide text-subtle"><tr><th scope="col" class="px-4 py-2">App</th><th scope="col" class="px-4 py-2">Setting and button</th></tr></thead>
+            <tbody class="divide-y divide-divider">
+              <tr><th scope="row" class="px-4 py-2 font-medium">macOS</th><td class="px-4 py-2">Unlock with Touch ID (a Mac without it: Unlock with your Mac password)</td></tr>
+              <tr><th scope="row" class="px-4 py-2 font-medium">iOS, iPadOS</th><td class="px-4 py-2">Unlock with Face ID, or Unlock with Touch ID</td></tr>
+              <tr><th scope="row" class="px-4 py-2 font-medium">Windows</th><td class="px-4 py-2">Unlock with Windows Hello</td></tr>
+              <tr><th scope="row" class="px-4 py-2 font-medium">Android</th><td class="px-4 py-2">Unlock with fingerprint or face (no biometric: Unlock with your screen lock)</td></tr>
+              <tr><th scope="row" class="px-4 py-2 font-medium">Browsers, Linux app</th><td class="px-4 py-2">Not shown (<code>StorageUnlockUnavailable</code>)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Mockup pages">
+        <ul class="flex flex-wrap justify-center gap-2">
+          <li><w-btn variant="text" size="small" href="index.html">All mockups</w-btn></li>
+          <li><w-btn variant="text" size="small" href="settings-device.html">This device</w-btn></li>
+          <li><w-btn variant="text" size="small" href="device-locked.html">Locked after 30 days</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

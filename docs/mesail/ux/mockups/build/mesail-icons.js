@@ -63,6 +63,7 @@ class MesailIcons {
     "signature": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 17c3-4 5-11 7-11 3 0-2 12 1 12 2 0 3-4 5-4 1 0 1 3 3 3M3 21h18\"/></g>",
     "device": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"4\" width=\"14\" height=\"10\" rx=\"1.5\"/><path d=\"M1 18h11\"/><rect x=\"15\" y=\"9\" width=\"7\" height=\"12\" rx=\"1.5\"/><path d=\"M18.5 18h.01\"/></g>",
     "download": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3v12M7 10l5 5 5-5M4 20h16\"/></g>",
+    "fingerprint": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3.5 10.5a9 9 0 0 1 17 0\"/><path d=\"M5.5 19.5c.7-1.7 1-3.5 1-5.5a5.5 5.5 0 0 1 11 0c0 2-.2 3.9-.7 5.7\"/><path d=\"M9.5 21c.6-2.2 1-4.5 1-7a1.5 1.5 0 0 1 3 0c0 2.6-.3 5-1 7.3\"/></g>",
     "cloud-check": "<g fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 18a5 5 0 0 1-.9-9.9A6 6 0 0 1 17.6 7 4.5 4.5 0 0 1 17.5 18Z\"/><path d=\"m9 13 2 2 4-4\"/></g>"
   };
 

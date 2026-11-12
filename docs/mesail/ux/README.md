@@ -1,9 +1,10 @@
 # Mesail UX specification
 
 - Status: Draft for implementation
-- Date: 2026-11-10 (one login, ADR 0005, offline first, ADR 0006, and browser push, AC-PN-3: 2026-11-11)
+- Date: 2026-11-10 (one login, ADR 0005, offline first, ADR 0006, and browser push, AC-PN-3: 2026-11-11;
+  passkeys and the app lock, ADR 0008: 2026-11-12)
 - Owner: Senior UX/UI Designer (Mesail rewrite)
-- Product spec: [../SPEC.md](../SPEC.md) (scenarios S1-S17, acceptance criteria AC-*; one login: AC-ID-1 to AC-ID-14; offline first: AC-OF-1 to AC-OF-17, section 15)
+- Product spec: [../SPEC.md](../SPEC.md) (scenarios S1-S18, acceptance criteria AC-*; one login: AC-ID-1 to AC-ID-14; offline first: AC-OF-1 to AC-OF-20, section 15; passkeys and the app lock: AC-ID-15 to AC-ID-19, AC-OF-20, section 17)
 - Design tokens: [TOKENS.md](TOKENS.md)
 - Component inventory and Tac mapping: [COMPONENTS.md](COMPONENTS.md)
 - Mockups: [mockups/index.html](mockups/index.html) (open the file in a browser; add
@@ -221,6 +222,9 @@ recovery code (AC-ID-5). Mockups: `signin.html`, `password-change-required.html`
   (`signed-out.html`). The "session ended" dialog keeps the draft (`session-expired.html`).
 - Connection banners use one wording everywhere: "Reconnecting… New messages may be late." with
   the button **Try now**.
+- **Sign in with a passkey** (section 17, `signin-passkey.html`): where the device supports passkeys, the
+  form also has an "or" line and **Sign in with a passkey** under **Sign in**, and the username field offers
+  saved passkeys in the browser's autofill. The admin app's form gets the same.
 
 ## 9. Settings and admin
 
@@ -243,6 +247,8 @@ recovery code (AC-ID-5). Mockups: `signin.html`, `password-change-required.html`
     type the 6-digit code). "Set up on a new phone" also asks for the current code in step 1.
     No recovery codes: "If you lose your phone, ask your admin to reset 2-step sign-in."
   - Turn off: password and code, with the warning "Without it, anyone with your password can sign in."
+  - **Passkeys** row (section 17, `settings-passkeys.html`): after the 2-step sign-in row. SLICES.md calls this
+    card "Settings > Sign-in"; there is no separate Sign-in page.
 - **Admin app** (`apps/web-admin`, its own shell: a rail of the domains the person administers plus a
   "Whole install" tile for Operators; a menu with **Install** (Domains, People; Operators only) and
   **the domain** (Domain, Members, Channels; its admins)). The server checks every role; the UI only
@@ -264,7 +270,8 @@ recovery code (AC-ID-5). Mockups: `signin.html`, `password-change-required.html`
   - **Member actions** (`admin-member-actions.html`): remove (lists what happens: access ends within a
     minute, mail refused, messages and account stay, the username stays theirs), `409 last_admin`
     ("example.com needs an admin ... Make another member an admin first."), reset password (sets
-    `mustChangePassword`, signs out everywhere), remove 2-step code, turn off, change name.
+    `mustChangePassword`, signs out everywhere), remove 2-step code, remove all passkeys (section 17),
+    turn off, change name.
   - **Who may change an account** (AC-ID-13): an Operator, or an admin of **every** domain of the person.
     Today `MemberSummary` does not say whether that holds, so the menu always offers account actions and
     a `403` opens "You cannot change Eve Park's account: Eve Park is also a member of a domain you do not manage."
@@ -440,6 +447,18 @@ Questions from the screen work (product owner to decide; none blocks the first s
   online" beyond that); a refused upload goes to "Needs your attention". (e) The person chooses the space
   limit (300 MB, 1 GB, 2 GB, 5 GB), capped by the free space the device reports. (f) A mention of someone
   who left the channel is not a refusal: the message is sent, the mention shows as plain text.
+- **Passkeys and the app lock (slice PU, for mesail-arch).** (a) **Rename** has no route yet: CONTRACTS
+  "identity" lists only list, setup, confirm and remove. The mockups need `PATCH /api/v1/identity/passkeys/{passkeyId}`
+  with `{label}` (SignedIn, 1 to 64 characters, `200 Passkey`, `404 not_found`), no password (it changes a
+  label only). (b) **The count of lost items** (AC-OF-20): after `keyLost` Mesail cannot read the locked
+  queue, so it must keep the number of waiting items outside the OS-locked tables (a number only, under the
+  normal sealed key) to say "3 items ... were lost". (c) An expired `setupKey` (10 minutes): the mockup
+  assumes `400 invalid_passkey` with a field or code that tells it apart (it then goes back to step 1); a
+  separate code such as `400 setup_expired` would be clearer. (d) Design choices to confirm: where the device
+  has no passkey support, the Passkeys row still shows when the account has passkeys (to remove a lost one;
+  Add stays hidden); the passkey button lands in the default domain even when the field holds a full
+  address; the locked screen shows no counts; "Cannot unlock? Sign out" removes the copy without counting
+  what was lost.
 - **Settings.** Does the job title come from Keycloak, like the name? Is "Always show images from
   people I have emailed" allowed (AC-IN-5 speaks of one sender at a time)? Is auto-reply out of the
   first release (the mockup shows it as "Later release")?
@@ -616,3 +635,158 @@ CONTRACTS "notify" (`GET /notify/push-key`, `POST` and `DELETE /notify/push-subs
   ended" screen covers it).
 - **Sizes and checks:** the row uses the shared control scale; every new target is at least 44 px on touch
   and under 768 px. Checked in headless Chromium at 320, 375, 768, 1024, 1440 and 2560 px, light and dark.
+
+## 17. Passkeys and the app lock (ADR 0008, slice PU)
+
+Mockups: `signin-passkey.html` (every sign-in state), `settings-passkeys.html` (the list, add, rename,
+remove), `settings.html#passkeys` (the row in place), `admin-member-actions.html` 10-11 and the person menus
+in `admin-members.html` and `admin-people.html` (remove all), `app-lock.html` (the locked screen and the
+setting), `settings-device.html#unlock` (the setting in place). Server side: CONTRACTS "identity"
+(passkeys) and `DELETE /directory/people/{personId}/passkeys`. Client side: TACHYON `Passkeys` (T13, TACHYON
+ADR 0126; T14 in the apps) and `StorageLock` (T15, T15b). A passkey is an **extra** way to sign in (Q21):
+the password and 2-step code always keep working, and every screen says so.
+
+**Where it shows.** `Passkeys.check()` answers `PasskeySupport { platform, conditional }`. Until it answers,
+and when `platform` is false (an old browser, the Linux app, the other apps until T14), nothing about
+passkeys shows: the sign-in form is exactly `signin.html`. The only exception is the Passkeys row in
+settings (below). The app lock shows only in the macOS, iOS, Windows and Android apps, on a device that
+keeps a copy; browsers and the Linux app never show it (`StorageUnlockUnavailable`).
+
+### 17.1 Sign in with a passkey (AC-ID-16, S18)
+
+- **Place:** under **Sign in**, an "or" line, then **Sign in with a passkey** (outlined, 40 px, 44 px on touch,
+  full width, fingerprint icon) with the hint "Touch ID, Face ID, Windows Hello or your device PIN. No password
+  needed." The password path stays first and largest, because every account has a password. "Keep me signed
+  in" and "Remember my username" sit above both buttons and apply to both (`keepSignedIn` in `PasskeySignIn`).
+- **The challenge is fetched before the click.** Safari refuses `get` after an await, and TACHYON ADR 0126
+  allows `get` only inside a click or key handler. So the page calls `POST /identity/passkeys/challenge` when
+  the form opens (and again after 2 minutes, or after each use), and the click handler calls
+  `Passkeys.get(optionsJson)` at once.
+- **Autofill:** with `conditional: true` the username field gets `autocomplete="username webauthn"` and the
+  page calls `Passkeys.offer(optionsJson)` when the form opens. The browser lists saved passkeys in the
+  field's own dropdown; choosing one signs in like the button. Its hint then says "Choose your passkey in the
+  list, or type your username." Any typed sign-in or a click on the button stops the offer first.
+- **Waiting:** the button shows a spinner and is disabled; the hint says "Your device asks for Touch ID, Face
+  ID, Windows Hello or its PIN. Follow what it shows."; a text button **Use your password instead** calls
+  `Passkeys.cancel()`. Typing a password and pressing **Sign in** also cancels the passkey call first.
+- **After the device answers:** "Signing in…" while `POST /identity/session/passkey` runs. Success opens the
+  default domain (no 2-step code is asked). A full address in the field does not change that; to open
+  another domain, switch after sign-in. With "Remember my username", the username from the `Session` is kept.
+- **Lines under the button** (one at a time; the newest replaces the older; focus stays on the button):
+
+  | Cause | Kind | Words | Button after |
+  | --- | --- | --- | --- |
+  | `PasskeyFailed cancelled` (closed, timed out, nothing chosen) | info, polite | "No passkey was used. Try again, or sign in with your password." | shown |
+  | `401` from the server (unknown, removed or wrong passkey; counts against the lockout) | error | "This passkey did not work. It may have been removed from your account. Try another passkey, or sign in with your password and code." | shown |
+  | `busy` | warning | "Your device is already asking for a passkey. Finish or close that window, then try again." | shown |
+  | `refused` (relying party does not match the page: an install set-up fault) | error | "Passkeys do not work on this address of Mesail. Sign in with your password. Tell your admin, so they can fix it." | hidden |
+  | `unsupported` (on the click, though `check` said yes) | info | "This device cannot use passkeys here. Sign in with your password." | hidden |
+  | `invalid` or `failed` | error | "Sign-in with a passkey did not work. Try again, or sign in with your password." | shown |
+  | `429` | warning | "Too many tries. Wait a minute, then try again." | disabled with **Sign in** for that minute |
+  | `503` or no answer | error | "We cannot reach sign-in right now. Try again in a minute." | shown |
+  | `403 no_domain`, `403 not_a_member` | the same boxes as `signin.html` | | |
+
+  `exists` cannot happen on sign-in; it belongs to "Add a passkey". The `message` of `PasskeyFailed` is never
+  shown. Screen readers hear the line once (`role="status"` for info, `role="alert"` for the others).
+- **A locked device copy** (`device-locked.html`) offers the same button. If the passkey belongs to another
+  person, the "Remove Ana Ruiz's messages from this device?" dialog (state 4) shows before anything opens.
+
+### 17.2 Settings: Passkeys (AC-ID-15, AC-ID-17, AC-ID-18)
+
+- **The row** sits in Profile and account > Account and sign-in, after 2-step sign-in: fingerprint tile,
+  "Passkeys", a "2 of 10" tag, the help "Sign in with Touch ID, Face ID, Windows Hello or your device PIN
+  instead of your password. Your password and 2-step code keep working.", and **Add a passkey**. Under it, one
+  line per passkey from `GET /identity/passkeys`, most recently used first: the name, then "Added 12 Nov 2026
+  · Last used today, 08:55" (or "Not used yet"), and two text buttons **Rename** and **Remove** (their
+  accessible names add the passkey's name). Dates use the person's locale; "today" and "yesterday" in words.
+  Mesail cannot tell which passkey lives on this device, so no row says "this device".
+- **States:** loading (skeleton, one status line), "Could not load your passkeys." with **Try again**, none
+  yet ("You have no passkeys yet."), 10 of 10 (**Add** disabled with "You have 10 passkeys, the most you can
+  have. Remove one to add another.").
+- **No passkey support here:** **Add** is hidden. When the account has passkeys, the row and its list stay,
+  with "This device cannot make or use passkeys. You can still rename or remove them here, for example when you
+  lose a phone." (S18: removing a lost phone's passkey must work from any device). With no passkeys, the
+  row is hidden.
+- **Add a passkey** (a dialog; full screen under 600 px):
+  1. "Step 1 of 2 · Confirm it is you": password, and the 2-step code when 2-step sign-in is on
+     (`POST /identity/passkeys/setup`). `401`: "The password or 2-step code is not right. Check them and try
+     again." (both fields cleared, focus on Password). `409 too_many`: "You already have 10 passkeys ..." with
+     **OK**. `429` as elsewhere.
+  2. "Step 2 of 2 · Make the passkey": **Name** (prefilled with the device kind, "MacBook", "iPhone", "Windows
+     PC", "Android phone"; 1 to 64 characters), the line "Your device then asks for Touch ID, Face ID, Windows
+     Hello or its PIN. Mesail never sees your fingerprint or face. It gets only a key that proves it is you.",
+     and **Create passkey** (48 px), whose click calls `Passkeys.create(optionsJson)` directly. Then "Waiting
+     for your device…", then "Saving…" (`POST /identity/passkeys`).
+  - Lines in step 2: `cancelled` "No passkey was made. Choose Create passkey when you are ready."; `exists`
+    "This device already has a passkey for your account. Use it to sign in. To make a new one here, remove
+    the old one from the list first."; `busy` as on sign-in; `refused` "Passkeys do not work on this address of
+    Mesail. Tell your admin, so they can fix it."; `unsupported` "This device cannot make passkeys here. Add
+    one on another device, such as your phone."; `invalid` or `failed` "Something went wrong, so no passkey was
+    made. Try again."; `400 invalid_passkey` "Mesail could not save this passkey. Try again. If your device
+    now shows a Mesail passkey that is not in this list, delete it in the device's settings."; more than 10
+    minutes since step 1: back to step 1 with "This took too long, so Mesail asks again."
+  - Done: the dialog closes, the new row shows, and a snackbar: "Passkey "MacBook" added. Next time, choose
+    Sign in with a passkey."
+- **Rename** (a small dialog): **Name** with a counter, **Save**. Empty: "Type a name, like iPhone or Work
+  phone." `404`: "This passkey was removed, maybe on another device. The list is now up to date." No password:
+  a label is not a secret. (Needs a route: section 14.)
+- **Remove** (a dialog, "Remove the passkey "iPhone"?"): "You can no longer sign in with this passkey.", a
+  warning box **"Your other devices will be signed out"**: "All your other devices will be signed out, in every
+  domain. This device stays signed in. A signed-out device deletes its copy of your messages the next time it
+  connects.", then password and code, and the tip "If you still have the device, also delete the passkey
+  there, for example in System Settings > Passwords on a Mac." The danger button says what happens: **Remove
+  and sign out other devices**. `200 Session` replaces this tab's tokens without a visible step. Done: the row
+  goes, snackbar "Passkey "iPhone" removed. Your other devices were signed out. You are still signed in
+  here." `401`, `429` and `404` as above.
+
+### 17.3 Admin: Remove all passkeys (AC-ID-13, AC-ID-18)
+
+- In the person menu (Members and People), in "Account of Dan (all domains)", after **Remove 2-step code…**:
+  **Remove all passkeys…** with "For a lost device; signs out everywhere". It shows for every person, because
+  `MemberSummary` does not say whether the person has passkeys; the call answers `204` either way.
+- The dialog "Remove all of Dan Example's passkeys?": when to use it, that Dan can no longer sign in with any
+  passkey but still with the password and 2-step code and can add new ones, and a warning box "Dan will be
+  signed out on every device, in every domain, within a minute. Devices that are signed out delete their copy
+  of Dan's messages." **Remove all passkeys** (danger). Done: "Passkeys removed" with "Dan has no passkeys now
+  and is signed out everywhere." `403` shows the existing "You cannot change Eve Park's account" (state 6).
+
+### 17.4 The app lock: Unlock with Touch ID (AC-OF-20, Q22)
+
+- **The setting** (Settings > This device, inside "Keep me signed in on this device", after the switch): a
+  switch **Unlock with Touch ID**, off by default, with "Mesail asks for Touch ID when you open it, after 5
+  minutes in the background, and when this Mac locks. Your Mac password works too." It shows only while the
+  device is kept signed in. Names per platform: macOS "Unlock with Touch ID" (no Touch ID: "Unlock with your
+  Mac password"); iOS and iPadOS "Unlock with Face ID" or "Touch ID"; Windows "Unlock with Windows Hello";
+  Android "Unlock with fingerprint or face" (no biometric: "Unlock with your screen lock").
+- **Turning it on or off** needs the same check: the switch is disabled with "Confirm with Touch ID…" while the
+  system prompt is open (`StorageLock.unlock()`, then `StorageLock.require(true|false)`). On: "On. Mesail is
+  locked when you open it, after 5 minutes in the background, and when this Mac locks." Not confirmed when
+  turning off: "Still on. Turning it off needs Touch ID or your Mac password." `lockedOut`: "Touch ID is locked
+  after too many tries. Unlock your Mac with its password, then try again." `notEnrolled`: the switch is
+  disabled with "Set up Touch ID or a password for this Mac first, in System Settings > Touch ID & Password."
+- **The locked screen** covers the whole window (and so the app switcher's snapshot): a lock tile, **"Mesail
+  is locked"**, "Unlock to see your messages.", the person's name and username, **Unlock with Touch ID** (48 px),
+  "Sending, updates and new messages wait until you unlock.", and a text button **Cannot unlock? Sign out**.
+  It shows no message, no conversation name, no domain and no count: while locked the app reads nothing from
+  the copy (the queue and drafts are locked too). On open, the system prompt opens by itself once; after
+  that only the button asks. After a relock: "Locked after 5 minutes in the background." No sync bar shows.
+- **Lines:** asking (spinner, "Waiting for Touch ID…"); `cancelled` "Not unlocked. Choose Unlock with Touch ID to
+  try again."; `failed` "Touch ID did not work. Try again, or choose Use Password in the window that opens.";
+  `lockedOut` (button disabled) "Touch ID is locked after too many tries. Unlock your Mac with its password, then
+  try again." with **Try again**. The OS draws its own prompt; its reason text comes from
+  `tac.storage.unlock.reason`: "unlock your messages".
+- **`keyLost`** (the passcode was removed or the enrolled fingers or faces changed): a dialog "Touch ID changed
+  on this Mac": "The fingerprints or the password of this Mac changed, so Mesail can no longer open its copy of
+  your messages. Mesail deleted that copy and loads your messages again from the server.", then "**3 items** you
+  wrote offline and had not sent were lost with it." (left out when 0), "You are offline. Your messages load when
+  you are back online." when offline, and "Unlock with Touch ID stays on. From now on it uses the fingerprints this
+  Mac has now." **Continue**.
+- **Cannot unlock? Sign out:** "Sign out and remove your messages from this Mac?" with "Mesail cannot open the
+  copy while it is locked, so it cannot tell you what was not sent. Anything you wrote offline and did not send is
+  lost." **Sign out and remove** (danger).
+- **Both locks:** when the copy is also locked after 30 days (`device-locked.html`), the OS unlock comes first
+  (Mesail needs the key to read the copy), then the sign-in.
+- **Sizes and checks:** no new token; one new icon, `fingerprint`, in `mockups/build/mesail-icons.js` (F1 adds
+  it to the app's icon set). Every new target is at least 44 px on touch and under 768 px. Checked in headless
+  Chromium at 320, 375, 768, 1024, 1440 and 2560 px, light and dark, coarse pointer at 375, 768 and 1024: no
+  sideways scroll, no small targets.

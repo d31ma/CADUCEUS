@@ -173,6 +173,20 @@ elements and Tailwind.
 | Opening a conversation from a notification (path route, domain switch notice, failure lines) | `push-states.html` notifications 4-5 | the web app's path route + `SessionService.go` (domain switch) | `w-snackbar` |
 | Notification-stop lines in sign-out and wipe confirmations | `push-states.html` stops 1-2, `signed-out.html`, `access-ended.html` 5, 7 | the existing sign-out and wipe components | none new |
 
+## Passkeys and the app lock (PK4, PK5, PK6; ADR 0008)
+
+README section 17. `Passkeys` is TACHYON's page client (T13, grant `passkeys`; T14 in the apps); `StorageLock`
+is T15 with T15b. Neither DuVay nor Mesail has a passkey element: these are DuVay controls and Tailwind.
+
+| Component | Mockups | Tac target | DuVay element(s) |
+| --- | --- | --- | --- |
+| "Sign in with a passkey" block (or-line, button, hint, waiting, failure lines per `PasskeyFailed` reason and server answer) and the username field's autofill (`autocomplete="username webauthn"`, `offer`) | `signin-passkey.html` 1-14 | `components/app/passkey-signin/tac.html` inside the sign-in form + `PasskeySignInService.go` (`check`, challenge prefetch, `get`, `offer`, `cancel`, `POST /identity/session/passkey`) (PK4) | `w-btn` (outlined, `loading`), `w-text-field`, Mesail notice box |
+| Passkeys row in Account and sign-in (list, count tag, loading, error, none, 10 of 10, no-support note) | `settings-passkeys.html` A1-A7, `settings.html#passkeys` | `components/settings/passkeys/tac.html` + `AccountPasskeyService.go` (PK4) | `w-btn`, `.ms-tag`, `w-skeleton-loader` |
+| Add a passkey (two steps), rename and remove dialogs with every line | `settings-passkeys.html` B1-B15, C1-C3, D1-D5 | `components/settings/passkey-add/tac.html`, `components/settings/passkey-rename/tac.html`, `components/settings/passkey-remove/tac.html` (PK4) | `w-dialog` (full screen under 600 px), `w-text-field`, `w-btn`, `w-snackbar` |
+| Admin: "Remove all passkeys…" menu item and its dialog | `admin-members.html`, `admin-people.html`, `admin-member-actions.html` 10-11 | `components/admin/member-actions/tac.html` + `AdminMemberService.go` (`DELETE /directory/people/{personId}/passkeys`) (F5 owner, after PK3) | `w-menu`, `w-dialog` |
+| Unlock setting ("Unlock with Touch ID" per platform; on, off, asking, not confirmed, locked out, not enrolled) | `app-lock.html` L1-L7, `settings-device.html#unlock` | `components/settings/device-unlock/tac.html` + `DeviceUnlockService.go` (`StorageLock.require`, `unlock`) (PK6) | `w-switch`, Mesail notice box |
+| Locked screen (asking, cancelled, failed, locked out, relocked), `keyLost` dialog, "Cannot unlock? Sign out" dialog | `app-lock.html` S1-S11 | `components/app/app-locked/tac.html` + `DeviceUnlockService.go` (PK6; the shell shows it before any page while `StorageLock.state()` is locked) | `w-btn`, `w-avatar`, `w-dialog` |
+
 ## Settings (new group: no slice owns it yet)
 
 | Component | Mockups | Tac target | DuVay element(s) |

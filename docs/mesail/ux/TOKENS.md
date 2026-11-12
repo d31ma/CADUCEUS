@@ -142,6 +142,11 @@ labelled list beside it.
 Browser push states (slice N2, `push-states.html`) add no token either: status lines use the inverse pair
 (`bg-inverse` / `text-on-inverse`, DuVay's snackbar colours), errors the error-container pair, and the drawn
 system notification `--w-surface-container-high` with the `shadow-xl` utility, like dialogs.
+Passkeys and the app lock (slice PU, README section 17) add no token. Failure lines reuse the notice pairs
+(`bg-surface-high` for "nothing happened", the warning and error container pairs); the locked screen uses the
+auth card (`max-w-auth`) with a `--w-primary-container` lock tile. One icon is new: `fingerprint` (three arcs,
+the same 2 px stroke on the 24 px grid) for every passkey button, the Passkeys row and the unlock button.
+
 Proportions: a card is never wider than its content needs (auth 26rem, dialog 32rem), its main button fills
 the card width at 48 px, and secondary buttons sit at 40 px, so the main action is always the largest.
 

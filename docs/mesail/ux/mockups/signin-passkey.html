@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: sign in with a passkey</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#p1-title">Skip to the first state</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">Sign in with a passkey (SPEC S18, AC-ID-16, AC-ID-19; ADR 0008; TACHYON <code>Passkeys</code>, T13). The button shows only after <code>PasskeySupport</code> says <code>platform: true</code>; the autofill only with <code>conditional: true</code>. A passkey opens the default domain, needs no 2-step code, and uses the two boxes above it. Lines for <code>PasskeyFailed</code> sit under the button; <code>exists</code> happens only when adding a passkey (settings-passkeys.html). 403 <code>not_a_member</code> and <code>no_domain</code> show the same boxes as signin.html.</p>
+    <!-- Mockup: labelled states side by side. Cards keep their token widths (auth 26rem, dialog 32rem). -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-auth-card-max)),1fr))]">
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 1 · This device supports passkeys: the button shows">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 1 &middot; This device supports passkeys: the button shows</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h1 id="p1-title" class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h1>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p1-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p1-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p1-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p1-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p1-k-hint"></w-checkbox>
+                <p id="p1-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <div class="flex items-center gap-3 text-xs text-subtle"><span class="h-px flex-1 bg-divider" aria-hidden="true"></span>or<span class="h-px flex-1 bg-divider" aria-hidden="true"></span></div>
+              <div class="grid gap-2">
+                <w-btn variant="outlined" block prepend-icon="fingerprint" aria-describedby="p1-pk-hint" class="pointer-coarse:min-h-11">Sign in with a passkey</w-btn>
+                <p id="p1-pk-hint" class="text-xs text-subtle">Touch ID, Face ID, Windows Hello or your device PIN. No password needed.</p>
+                
+                
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 2 · Autofill: the browser offers the passkey in the username field">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 2 &middot; Autofill: the browser offers the passkey in the username field</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p2-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Choose your passkey in the list, or type your username." persistent-hint active required></w-text-field>
+              <div class="-mt-2 grid gap-0.5 rounded-lg border border-border bg-surface-high p-1 text-sm shadow-xl" aria-hidden="true">
+                <p class="px-2 pt-1 text-xs text-subtle">Drawn by the browser (example: Safari on a Mac)</p>
+                <div class="flex items-center gap-3 rounded-md bg-hover px-2 py-2"><w-icon name="fingerprint" class="ms-icon-sm flex-none"></w-icon><span class="grid min-w-0"><span class="truncate font-semibold">ana</span><span class="truncate text-xs text-subtle">Passkey for mail.example.com &middot; saved on this Mac</span></span></div>
+                <div class="flex items-center gap-3 rounded-md px-2 py-2"><w-icon name="key" class="ms-icon-sm flex-none"></w-icon><span class="truncate">Passwords&hellip;</span></div>
+              </div>
+              <w-text-field id="p2-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p2-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p2-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p2-k-hint"></w-checkbox>
+                <p id="p2-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <div class="flex items-center gap-3 text-xs text-subtle"><span class="h-px flex-1 bg-divider" aria-hidden="true"></span>or<span class="h-px flex-1 bg-divider" aria-hidden="true"></span></div>
+              <div class="grid gap-2">
+                <w-btn variant="outlined" block prepend-icon="fingerprint" aria-describedby="p2-pk-hint" class="pointer-coarse:min-h-11">Sign in with a passkey</w-btn>
+                <p id="p2-pk-hint" class="text-xs text-subtle">Touch ID, Face ID, Windows Hello or your device PIN. No password needed.</p>
+                
+                
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 3 · Waiting for the device (after a click on the button)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 3 &middot; Waiting for the device (after a click on the button)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p3-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p3-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p3-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p3-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p3-k-hint"></w-checkbox>
+                <p id="p3-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <div class="flex items-center gap-3 text-xs text-subtle"><span class="h-px flex-1 bg-divider" aria-hidden="true"></span>or<span class="h-px flex-1 bg-divider" aria-hidden="true"></span></div>
+              <div class="grid gap-2">
+                <w-btn variant="outlined" block loading disabled class="pointer-coarse:min-h-11">Waiting for your passkey&hellip;</w-btn><p class="sr-only" role="status">Waiting for your passkey. Follow what your device shows.</p>
+                <p id="p3-pk-hint" class="text-xs text-subtle">Your device asks for Touch ID, Face ID, Windows Hello or its PIN. Follow what it shows.</p>
+                <w-btn variant="text" size="small" class="justify-self-start pointer-coarse:min-h-11">Use your password instead</w-btn>
+                
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 4 · The device answered: signing in">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 4 &middot; The device answered: signing in</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p4-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p4-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p4-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p4-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p4-k-hint"></w-checkbox>
+                <p id="p4-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <div class="flex items-center gap-3 text-xs text-subtle"><span class="h-px flex-1 bg-divider" aria-hidden="true"></span>or<span class="h-px flex-1 bg-divider" aria-hidden="true"></span></div>
+              <div class="grid gap-2">
+                <w-btn variant="outlined" block loading disabled class="pointer-coarse:min-h-11">Signing in&hellip;</w-btn><p class="sr-only" role="status">Signing in&hellip;</p>
+                <p id="p4-pk-hint" class="text-xs text-subtle">Touch ID, Face ID, Windows Hello or your device PIN. No password needed.</p>
+                
+                
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 5 · cancelled: the person closed the prompt, or it timed out">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 5 &middot; <code>cancelled</code>: the person closed the prompt, or it timed out</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p5-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p5-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p5-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p5-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p5-k-hint"></w-checkbox>
+                <p id="p5-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <div class="flex items-center gap-3 text-xs text-subtle"><span class="h-px flex-1 bg-divider" aria-hidden="true"></span>or<span class="h-px flex-1 bg-divider" aria-hidden="true"></span></div>
+              <div class="grid gap-2">
+                <w-btn variant="outlined" block prepend-icon="fingerprint" aria-describedby="p5-pk-hint" class="pointer-coarse:min-h-11">Sign in with a passkey</w-btn>
+                <p id="p5-pk-hint" class="text-xs text-subtle">Touch ID, Face ID, Windows Hello or your device PIN. No password needed.</p>
+                
+                <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="info" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>No passkey was used. Try again, or sign in with your password.</p></div></div>
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 6 · Server 401: the passkey was not accepted">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 6 &middot; Server <code>401</code>: the passkey was not accepted</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p6-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p6-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p6-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p6-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p6-k-hint"></w-checkbox>
+                <p id="p6-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <div class="flex items-center gap-3 text-xs text-subtle"><span class="h-px flex-1 bg-divider" aria-hidden="true"></span>or<span class="h-px flex-1 bg-divider" aria-hidden="true"></span></div>
+              <div class="grid gap-2">
+                <w-btn variant="outlined" block prepend-icon="fingerprint" aria-describedby="p6-pk-hint" class="pointer-coarse:min-h-11">Sign in with a passkey</w-btn>
+                <p id="p6-pk-hint" class="text-xs text-subtle">Touch ID, Face ID, Windows Hello or your device PIN. No password needed.</p>
+                
+                <div class="flex items-start gap-3 rounded-lg bg-error-container text-on-error-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>This passkey did not work. It may have been removed from your account. Try another passkey, or sign in with your password and code.</p></div></div>
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 7 · busy: a passkey window is already open">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 7 &middot; <code>busy</code>: a passkey window is already open</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p7-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p7-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p7-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p7-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p7-k-hint"></w-checkbox>
+                <p id="p7-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <div class="flex items-center gap-3 text-xs text-subtle"><span class="h-px flex-1 bg-divider" aria-hidden="true"></span>or<span class="h-px flex-1 bg-divider" aria-hidden="true"></span></div>
+              <div class="grid gap-2">
+                <w-btn variant="outlined" block prepend-icon="fingerprint" aria-describedby="p7-pk-hint" class="pointer-coarse:min-h-11">Sign in with a passkey</w-btn>
+                <p id="p7-pk-hint" class="text-xs text-subtle">Touch ID, Face ID, Windows Hello or your device PIN. No password needed.</p>
+                
+                <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Your device is already asking for a passkey. Finish or close that window, then try again.</p></div></div>
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 8 · refused: passkeys do not match this address of Mesail">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 8 &middot; <code>refused</code>: passkeys do not match this address of Mesail</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p8-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p8-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p8-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p8-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p8-k-hint"></w-checkbox>
+                <p id="p8-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              
+              <div class="grid gap-2">
+                
+                
+                
+                <div class="flex items-start gap-3 rounded-lg bg-error-container text-on-error-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Passkeys do not work on this address of Mesail. Sign in with your password. Tell your admin, so they can fix it.</p></div></div>
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 9 · unsupported on the click: the button goes away">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 9 &middot; <code>unsupported</code> on the click: the button goes away</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p9-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p9-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p9-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p9-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p9-k-hint"></w-checkbox>
+                <p id="p9-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              
+              <div class="grid gap-2">
+                
+                
+                
+                <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="info" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>This device cannot use passkeys here. Sign in with your password.</p></div></div>
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 10 · invalid or failed">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 10 &middot; <code>invalid</code> or <code>failed</code></p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p10-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p10-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p10-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p10-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p10-k-hint"></w-checkbox>
+                <p id="p10-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <div class="flex items-center gap-3 text-xs text-subtle"><span class="h-px flex-1 bg-divider" aria-hidden="true"></span>or<span class="h-px flex-1 bg-divider" aria-hidden="true"></span></div>
+              <div class="grid gap-2">
+                <w-btn variant="outlined" block prepend-icon="fingerprint" aria-describedby="p10-pk-hint" class="pointer-coarse:min-h-11">Sign in with a passkey</w-btn>
+                <p id="p10-pk-hint" class="text-xs text-subtle">Touch ID, Face ID, Windows Hello or your device PIN. No password needed.</p>
+                
+                <div class="flex items-start gap-3 rounded-lg bg-error-container text-on-error-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Sign-in with a passkey did not work. Try again, or sign in with your password.</p></div></div>
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 11 · Too many tries (429): both buttons wait">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 11 &middot; Too many tries (<code>429</code>): both buttons wait</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p11-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p11-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p11-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p11-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p11-k-hint"></w-checkbox>
+                <p id="p11-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <div class="flex items-center gap-3 text-xs text-subtle"><span class="h-px flex-1 bg-divider" aria-hidden="true"></span>or<span class="h-px flex-1 bg-divider" aria-hidden="true"></span></div>
+              <div class="grid gap-2">
+                <w-btn variant="outlined" block prepend-icon="fingerprint" disabled aria-describedby="p11-pk-hint" class="pointer-coarse:min-h-11">Sign in with a passkey</w-btn>
+                <p id="p11-pk-hint" class="text-xs text-subtle">Touch ID, Face ID, Windows Hello or your device PIN. No password needed.</p>
+                
+                <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Too many tries. Wait a minute, then try again.</p></div></div>
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 12 · Service down (503 or no answer)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 12 &middot; Service down (<code>503</code> or no answer)</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p12-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p12-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p12-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p12-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p12-k-hint"></w-checkbox>
+                <p id="p12-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <div class="flex items-center gap-3 text-xs text-subtle"><span class="h-px flex-1 bg-divider" aria-hidden="true"></span>or<span class="h-px flex-1 bg-divider" aria-hidden="true"></span></div>
+              <div class="grid gap-2">
+                <w-btn variant="outlined" block prepend-icon="fingerprint" aria-describedby="p12-pk-hint" class="pointer-coarse:min-h-11">Sign in with a passkey</w-btn>
+                <p id="p12-pk-hint" class="text-xs text-subtle">Touch ID, Face ID, Windows Hello or your device PIN. No password needed.</p>
+                
+                <div class="flex items-start gap-3 rounded-lg bg-error-container text-on-error-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>We cannot reach sign-in right now. Try again in a minute.</p></div></div>
+              </div>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 13 · Back on this device: remembered username, passkey offered too">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 13 &middot; Back on this device: remembered username, passkey offered too</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Welcome back</h2>
+              <p class="text-subtle short:hidden">Type your password, or use your passkey, to sign in as ana.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p13-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username webauthn" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Opens your default domain." persistent-hint value="ana" required></w-text-field>
+              <w-text-field id="p13-password" type="password" label="Password" autocomplete="current-password" hide-details active required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p13-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p13-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p13-k-hint"></w-checkbox>
+                <p id="p13-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember" checked></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <div class="flex items-center gap-3 text-xs text-subtle"><span class="h-px flex-1 bg-divider" aria-hidden="true"></span>or<span class="h-px flex-1 bg-divider" aria-hidden="true"></span></div>
+              <div class="grid gap-2">
+                <w-btn variant="outlined" block prepend-icon="fingerprint" aria-describedby="p13-pk-hint" class="pointer-coarse:min-h-11">Sign in with a passkey</w-btn>
+                <p id="p13-pk-hint" class="text-xs text-subtle">Touch ID, Face ID, Windows Hello or your device PIN. No password needed.</p>
+                
+                
+              </div>
+              <p class="flex flex-wrap items-center gap-x-2 text-sm">Not ana? <w-btn variant="text" size="small">Use another username</w-btn></p>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" aria-label="State 14 · No passkey support (old browser, Linux app, other apps until TACHYON T14): the form as before">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 14 &middot; No passkey support (old browser, Linux app, other apps until TACHYON T14): the form as before</p>
+        <div class="w-full rounded-xl border border-border bg-surface shadow-sm">
+          <div class="grid gap-6 p-4 sm:p-6 short:gap-3 short:p-4">
+            <div class="grid gap-2">
+              <h2 class="text-2xl font-semibold tracking-tight short:text-xl">Sign in to Mesail</h2>
+              <p class="text-subtle short:hidden">Use your username or your work email address.</p>
+            </div>
+            <form class="grid gap-4 short:gap-3" action="messenger.html" method="post" novalidate>
+              <w-text-field id="p14-login" label="Username or email address" name="login" type="text" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ana or ana@example.com" hint="Your username, like ana, or your full address." persistent-hint active required></w-text-field>
+              <w-text-field id="p14-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="p14-password"></w-icon-btn></w-text-field>
+              <w-text-field id="p14-code" label="2-step code (optional)" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="Only if your account uses one." persistent-hint></w-text-field>
+              <div class="grid gap-1">
+                <w-checkbox label="Keep me signed in on this device" name="keepSignedIn" aria-describedby="p14-k-hint"></w-checkbox>
+                <p id="p14-k-hint" class="ps-8 text-xs text-subtle">Only on your own computer. Mesail then keeps your recent messages here and works offline.</p>
+              </div>
+              <w-checkbox label="Remember my username on this device" name="remember"></w-checkbox>
+              <w-btn variant="filled" size="large" block class="min-h-control-lg">Sign in</w-btn>
+              <p class="flex items-start gap-2 text-sm text-subtle"><w-icon name="key" class="ms-icon-sm mt-0.5"></w-icon>Forgot your password? Ask your admin to reset it.</p>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Mockup pages">
+        <ul class="flex flex-wrap justify-center gap-2">
+          <li><w-btn variant="text" size="small" href="index.html">All mockups</w-btn></li>
+          <li><w-btn variant="text" size="small" href="signin.html">Password sign-in</w-btn></li>
+          <li><w-btn variant="text" size="small" href="settings-passkeys.html">Passkey settings</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

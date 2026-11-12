@@ -211,6 +211,29 @@
                   <w-btn variant="text" color="danger" aria-haspopup="dialog" aria-describedby="totp-label" class="pointer-coarse:min-h-11">Turn off</w-btn>
                 </div>
               </div>
+              <!-- Passkeys (slice PU, SPEC AC-ID-15 to AC-ID-19): hidden where the device has no passkey support and the account has none. Every state: settings-passkeys.html -->
+              <div class="grid gap-3 px-4 py-4 @xl/page:px-5" id="passkeys">
+                <div class="flex flex-col gap-3 @xl/page:flex-row @xl/page:items-center @xl/page:justify-between @xl/page:gap-6">
+                  <div class="flex min-w-0 items-start gap-3">
+                    <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="fingerprint"></w-icon></span>
+                    <div class="grid min-w-0 gap-0.5">
+                      <p class="flex flex-wrap items-center gap-2 font-semibold" id="passkeys-label">Passkeys <span class="ms-tag">2 of 10</span></p>
+                      <p class="text-xs text-subtle" id="passkeys-help">Sign in with Touch ID, Face ID, Windows Hello or your device PIN instead of your password. Your password and 2-step code keep working.</p>
+                    </div>
+                  </div>
+                  <w-btn variant="outlined" prepend-icon="plus" aria-haspopup="dialog" aria-describedby="passkeys-help" class="flex-none self-start @xl/page:self-center pointer-coarse:min-h-11">Add a passkey</w-btn>
+                </div>
+                <ul class="grid divide-y divide-divider rounded-lg border border-border @xl/page:ml-13" aria-labelledby="passkeys-label">
+                  <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
+                    <div class="grid min-w-0 flex-1 basis-48 gap-0.5"><p class="truncate font-medium">MacBook</p><p class="text-xs text-subtle">Added 12 Nov 2026 &middot; Last used today, 08:55</p></div>
+                    <div class="flex flex-none gap-1"><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Rename MacBook" class="pointer-coarse:min-h-11">Rename</w-btn><w-btn variant="text" size="small" color="danger" aria-haspopup="dialog" aria-label="Remove MacBook" class="pointer-coarse:min-h-11">Remove</w-btn></div>
+                  </li>
+                  <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
+                    <div class="grid min-w-0 flex-1 basis-48 gap-0.5"><p class="truncate font-medium">iPhone</p><p class="text-xs text-subtle">Added 12 Nov 2026 &middot; Last used yesterday, 19:20</p></div>
+                    <div class="flex flex-none gap-1"><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Rename iPhone" class="pointer-coarse:min-h-11">Rename</w-btn><w-btn variant="text" size="small" color="danger" aria-haspopup="dialog" aria-label="Remove iPhone" class="pointer-coarse:min-h-11">Remove</w-btn></div>
+                  </li>
+                </ul>
+              </div>
               <div class="flex flex-col gap-3 px-4 py-4 @xl/page:flex-row @xl/page:items-center @xl/page:justify-between @xl/page:gap-6 @xl/page:px-5" id="default-domain">
                 <div class="flex min-w-0 items-start gap-3">
                   <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="star"></w-icon></span>
@@ -229,7 +252,7 @@
                 </div>
               </div>
             </div>
-            <div class="border-t border-divider px-2 py-2 @xl/page:px-3"><w-btn variant="text" size="small" href="settings-security.html" append-icon="chevron-right">Every state of password and 2-step sign-in (mockup)</w-btn></div>
+            <div class="flex flex-wrap border-t border-divider px-2 py-2 @xl/page:px-3"><w-btn variant="text" size="small" href="settings-security.html" append-icon="chevron-right">Every state of password and 2-step sign-in (mockup)</w-btn><w-btn variant="text" size="small" href="settings-passkeys.html" append-icon="chevron-right">Every state of passkeys (mockup)</w-btn></div>
           </section>
 
           <!-- Sessions -->

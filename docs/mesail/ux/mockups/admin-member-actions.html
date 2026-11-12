@@ -14,7 +14,7 @@
 <div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
   <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
     <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span><span class="ms-tag">Admin</span></p></header>
-    <p class="max-w-2xl px-1 text-center text-sm text-subtle">Member actions in the admin app (SPEC AC-ID-12, AC-ID-13). Role and removal act on example.com only. Account actions act on the person's one account, so the server allows them only for an Operator or an admin of every domain of that person; otherwise it answers 403.</p>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">Member actions in the admin app (SPEC AC-ID-12, AC-ID-13). Role and removal act on example.com only. Account actions (reset password, remove 2-step code, remove all passkeys, turn off, change name) act on the person's one account, so the server allows them only for an Operator or an admin of every domain of that person; otherwise it answers 403.</p>
     <!-- Mockup: labelled states side by side. Each card is at most --ms-auth-card-max (26rem) wide. -->
     <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-auth-card-max)),1fr))]">
       <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 1 · Remove a member">
@@ -114,6 +114,28 @@
   </div>
   <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><w-text-field id="act9-name" label="Display name" value="Dan Example" hint="Shown in every domain of Dan, also on old messages." persistent-hint required></w-text-field></div>
   <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Cancel</w-btn><w-btn variant="filled" class=" ">Save</w-btn></div>
+</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 10 · Remove all passkeys (AC-ID-13, AC-ID-18)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 10 · Remove all passkeys (AC-ID-13, AC-ID-18)</p>
+<div role="dialog" aria-modal="false" aria-labelledby="act10-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="act10-t" class="min-w-0 flex-1 text-lg font-semibold">Remove all of Dan Example&rsquo;s passkeys?</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><p class="text-sm">Use this when Dan lost a device with a passkey and cannot remove it. Dan can no longer sign in with Touch ID, Face ID, Windows Hello or any other passkey, on any device. Dan still signs in with the password and 2-step code, and can add new passkeys in Settings.</p><div class="flex items-start gap-3 rounded-lg bg-warning-container p-3 text-on-warning-container"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Dan will be signed out on every device, in every domain, within a minute. Devices that are signed out delete their copy of Dan&rsquo;s messages.</p></div></div></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="text" class=" ">Cancel</w-btn><w-btn variant="filled" class=" " color="danger">Remove all passkeys</w-btn></div>
+</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="State 11 · Passkeys removed">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">State 11 · Passkeys removed (also when Dan had none; a 403 shows state 6)</p>
+<div role="dialog" aria-modal="false" aria-labelledby="act11-t" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+  <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+    <h3 id="act11-t" class="min-w-0 flex-1 text-lg font-semibold">Passkeys removed</h3>
+    <w-icon-btn icon="close" aria-label="Close" class=""></w-icon-btn>
+  </div>
+  <div class="grid gap-4 p-4 sm:px-6 sm:py-5"><div class="flex items-start gap-3 rounded-lg bg-success-container p-3 text-on-success-container" role="status"><w-icon name="check" class="mt-0.5"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Dan has no passkeys now and is signed out everywhere. Dan signs in with the password and 2-step code.</p></div></div></div>
+  <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6"><w-btn variant="filled" class=" ">Done</w-btn></div>
 </div>
       </section>
     </main>

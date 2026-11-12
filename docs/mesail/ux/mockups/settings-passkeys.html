@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: passkey settings</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/auth.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#a1">Skip to the first state</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr_auto] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-2xl px-1 text-center text-sm text-subtle">Settings &gt; Profile and account &gt; Account and sign-in: the Passkeys row (SPEC AC-ID-15, AC-ID-17, AC-ID-18; CONTRACTS &ldquo;identity&rdquo; passkeys). Add needs the password and code; Remove needs them too and signs out every other device. Rename needs no password (it changes only a label). At most 10. Where the device has no passkey support, Add is hidden, and the row shows only when the account already has passkeys, so a lost phone can still be removed (A6, A7).</p>
+    <!-- Mockup: labelled states side by side. Cards keep their token widths (auth 26rem, dialog 32rem). -->
+    <main class="grid w-full max-w-[96rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--ms-auth-card-max)),1fr))]">
+      <section class="grid w-full max-w-dialog content-start gap-3" id="a1" aria-label="A1 · Loading the list">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">A1 &middot; Loading the list</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="flex items-start gap-3 px-4 py-4">
+            <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="fingerprint"></w-icon></span>
+            <div class="grid min-w-0 flex-1 gap-0.5">
+              <p class="flex flex-wrap items-center gap-2 font-semibold" id="a1-label">Passkeys</p>
+              <p class="text-xs text-subtle" id="a1-help">Sign in with Touch ID, Face ID, Windows Hello or your device PIN instead of your password. Your password and 2-step code keep working.</p>
+            </div>
+          </div>
+          <div class="grid gap-2 border-t border-divider px-4 py-3" aria-busy="true"><p class="sr-only" role="status">Loading your passkeys</p><div aria-hidden="true" class="grid gap-2"><w-skeleton-loader type="text" class="w-40"></w-skeleton-loader><w-skeleton-loader type="text" class="w-56"></w-skeleton-loader></div></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="A2 · Could not load the list">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">A2 &middot; Could not load the list</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="flex items-start gap-3 px-4 py-4">
+            <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="fingerprint"></w-icon></span>
+            <div class="grid min-w-0 flex-1 gap-0.5">
+              <p class="flex flex-wrap items-center gap-2 font-semibold" id="a2-label">Passkeys</p>
+              <p class="text-xs text-subtle" id="a2-help">Sign in with Touch ID, Face ID, Windows Hello or your device PIN instead of your password. Your password and 2-step code keep working.</p>
+            </div>
+          </div>
+          <div class="border-t border-divider px-4 py-3"><p class="flex flex-wrap items-center gap-2 text-sm text-on-error-container"><w-icon name="alert" class="ms-icon-sm"></w-icon>Could not load your passkeys.<w-btn variant="text" size="small" prepend-icon="refresh" class="pointer-coarse:min-h-11">Try again</w-btn></p></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="A3 · No passkeys yet">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">A3 &middot; No passkeys yet</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="flex items-start gap-3 px-4 py-4">
+            <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="fingerprint"></w-icon></span>
+            <div class="grid min-w-0 flex-1 gap-0.5">
+              <p class="flex flex-wrap items-center gap-2 font-semibold" id="a3-label">Passkeys</p>
+              <p class="text-xs text-subtle" id="a3-help">Sign in with Touch ID, Face ID, Windows Hello or your device PIN instead of your password. Your password and 2-step code keep working.</p>
+            </div>
+          </div>
+
+          <div class="grid gap-2 border-t border-divider px-4 py-3"><p class="text-sm">You have no passkeys yet.</p><w-btn variant="outlined" prepend-icon="plus" aria-haspopup="dialog" class="justify-self-start pointer-coarse:min-h-11">Add a passkey</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="A4 · Three passkeys (newest use first)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">A4 &middot; Three passkeys (newest use first)</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="flex items-start gap-3 px-4 py-4">
+            <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="fingerprint"></w-icon></span>
+            <div class="grid min-w-0 flex-1 gap-0.5">
+              <p class="flex flex-wrap items-center gap-2 font-semibold" id="a4-label">Passkeys <span class="ms-tag">3 of 10</span></p>
+              <p class="text-xs text-subtle" id="a4-help">Sign in with Touch ID, Face ID, Windows Hello or your device PIN instead of your password. Your password and 2-step code keep working.</p>
+            </div>
+          </div>
+          <ul class="divide-y divide-divider border-t border-divider" aria-labelledby="a4-label">
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+              <div class="grid min-w-0 flex-1 basis-48 gap-0.5"><p class="truncate font-medium">MacBook</p><p class="text-xs text-subtle">Added 12 Nov 2026 &middot; Last used today, 08:55</p></div>
+              <div class="flex flex-none gap-1"><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Rename MacBook" class="pointer-coarse:min-h-11">Rename</w-btn><w-btn variant="text" size="small" color="danger" aria-haspopup="dialog" aria-label="Remove MacBook" class="pointer-coarse:min-h-11">Remove</w-btn></div>
+            </li>
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+              <div class="grid min-w-0 flex-1 basis-48 gap-0.5"><p class="truncate font-medium">iPhone</p><p class="text-xs text-subtle">Added 12 Nov 2026 &middot; Last used yesterday, 19:20</p></div>
+              <div class="flex flex-none gap-1"><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Rename iPhone" class="pointer-coarse:min-h-11">Rename</w-btn><w-btn variant="text" size="small" color="danger" aria-haspopup="dialog" aria-label="Remove iPhone" class="pointer-coarse:min-h-11">Remove</w-btn></div>
+            </li>
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+              <div class="grid min-w-0 flex-1 basis-48 gap-0.5"><p class="truncate font-medium">Work PC</p><p class="text-xs text-subtle">Added 3 Nov 2026 &middot; Not used yet</p></div>
+              <div class="flex flex-none gap-1"><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Rename Work PC" class="pointer-coarse:min-h-11">Rename</w-btn><w-btn variant="text" size="small" color="danger" aria-haspopup="dialog" aria-label="Remove Work PC" class="pointer-coarse:min-h-11">Remove</w-btn></div>
+            </li>
+          </ul>
+          <div class="grid gap-2 border-t border-divider px-4 py-3"><w-btn variant="outlined" prepend-icon="plus" aria-haspopup="dialog" class="justify-self-start pointer-coarse:min-h-11">Add a passkey</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="A5 · 10 of 10: no more can be added">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">A5 &middot; 10 of 10: no more can be added</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="flex items-start gap-3 px-4 py-4">
+            <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="fingerprint"></w-icon></span>
+            <div class="grid min-w-0 flex-1 gap-0.5">
+              <p class="flex flex-wrap items-center gap-2 font-semibold" id="a5-label">Passkeys <span class="ms-tag">10 of 10</span></p>
+              <p class="text-xs text-subtle" id="a5-help">Sign in with Touch ID, Face ID, Windows Hello or your device PIN instead of your password. Your password and 2-step code keep working.</p>
+            </div>
+          </div>
+          <ul class="divide-y divide-divider border-t border-divider" aria-labelledby="a5-label">
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+              <div class="grid min-w-0 flex-1 basis-48 gap-0.5"><p class="truncate font-medium">MacBook</p><p class="text-xs text-subtle">Added 12 Nov 2026 &middot; Last used today, 08:55</p></div>
+              <div class="flex flex-none gap-1"><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Rename MacBook" class="pointer-coarse:min-h-11">Rename</w-btn><w-btn variant="text" size="small" color="danger" aria-haspopup="dialog" aria-label="Remove MacBook" class="pointer-coarse:min-h-11">Remove</w-btn></div>
+            </li>
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+              <div class="grid min-w-0 flex-1 basis-48 gap-0.5"><p class="truncate font-medium">iPhone</p><p class="text-xs text-subtle">Added 12 Nov 2026 &middot; Last used yesterday, 19:20</p></div>
+              <div class="flex flex-none gap-1"><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Rename iPhone" class="pointer-coarse:min-h-11">Rename</w-btn><w-btn variant="text" size="small" color="danger" aria-haspopup="dialog" aria-label="Remove iPhone" class="pointer-coarse:min-h-11">Remove</w-btn></div>
+            </li>
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+              <div class="grid min-w-0 flex-1 basis-48 gap-0.5"><p class="truncate font-medium">Passkey 10</p><p class="text-xs text-subtle">Added 1 Nov 2026 &middot; Last used 10 Nov 2026</p></div>
+              <div class="flex flex-none gap-1"><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Rename Passkey 10" class="pointer-coarse:min-h-11">Rename</w-btn><w-btn variant="text" size="small" color="danger" aria-haspopup="dialog" aria-label="Remove Passkey 10" class="pointer-coarse:min-h-11">Remove</w-btn></div>
+            </li>
+          </ul>
+          <p class="border-t border-divider px-4 py-2 text-center text-xs text-subtle">7 more passkeys in the list</p>
+          <div class="grid gap-2 border-t border-divider px-4 py-3"><w-btn variant="outlined" prepend-icon="plus" disabled aria-describedby="a5-max" class="justify-self-start pointer-coarse:min-h-11">Add a passkey</w-btn><p id="a5-max" class="text-xs text-subtle">You have 10 passkeys, the most you can have. Remove one to add another.</p></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="A6 · A browser or app that cannot make passkeys, with passkeys on the account">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">A6 &middot; A browser or app that cannot make passkeys, with passkeys on the account</p>
+        <div class="w-full rounded-lg border border-border bg-surface">
+          <div class="flex items-start gap-3 px-4 py-4">
+            <span class="grid size-10 flex-none place-items-center rounded-md bg-primary-container text-on-primary-container"><w-icon name="fingerprint"></w-icon></span>
+            <div class="grid min-w-0 flex-1 gap-0.5">
+              <p class="flex flex-wrap items-center gap-2 font-semibold" id="a6-label">Passkeys <span class="ms-tag">2 of 10</span></p>
+              <p class="text-xs text-subtle" id="a6-help">Sign in with Touch ID, Face ID, Windows Hello or your device PIN instead of your password. Your password and 2-step code keep working.</p>
+            </div>
+          </div>
+          <ul class="divide-y divide-divider border-t border-divider" aria-labelledby="a6-label">
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+              <div class="grid min-w-0 flex-1 basis-48 gap-0.5"><p class="truncate font-medium">MacBook</p><p class="text-xs text-subtle">Added 12 Nov 2026 &middot; Last used today, 08:55</p></div>
+              <div class="flex flex-none gap-1"><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Rename MacBook" class="pointer-coarse:min-h-11">Rename</w-btn><w-btn variant="text" size="small" color="danger" aria-haspopup="dialog" aria-label="Remove MacBook" class="pointer-coarse:min-h-11">Remove</w-btn></div>
+            </li>
+            <li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
+              <div class="grid min-w-0 flex-1 basis-48 gap-0.5"><p class="truncate font-medium">iPhone</p><p class="text-xs text-subtle">Added 12 Nov 2026 &middot; Last used yesterday, 19:20</p></div>
+              <div class="flex flex-none gap-1"><w-btn variant="text" size="small" aria-haspopup="dialog" aria-label="Rename iPhone" class="pointer-coarse:min-h-11">Rename</w-btn><w-btn variant="text" size="small" color="danger" aria-haspopup="dialog" aria-label="Remove iPhone" class="pointer-coarse:min-h-11">Remove</w-btn></div>
+            </li>
+          </ul>
+          <div class="grid gap-2 border-t border-divider px-4 py-3"><p class="flex items-start gap-2 text-xs text-subtle"><w-icon name="info" class="ms-icon-sm flex-none"></w-icon><span>This device cannot make or use passkeys. You can still rename or remove them here, for example when you lose a phone.</span></p></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="A7 · Same device, no passkeys on the account: the row is hidden">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">A7 &middot; Same device, no passkeys on the account: the row is hidden</p>
+        <div class="grid w-full place-items-center rounded-lg border border-dashed border-outline p-6 text-center text-sm text-subtle">Nothing shows. Account and sign-in keeps its Password and 2-step sign-in rows.</div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B1 · Add a passkey, step 1: password and code (the code field shows only when 2-step sign-in is on)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B1 &middot; Add a passkey, step 1: password and code (the code field shows only when 2-step sign-in is on)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b1-t" aria-describedby="b1-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b1-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b1-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 1 of 2 &middot; Confirm it is you</p>
+            <p class="text-sm">To add a passkey, type your password and your 2-step code.</p>
+            
+            <w-text-field id="b1-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="b1-password"></w-icon-btn></w-text-field>
+            <w-text-field id="b1-code" label="2-step code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="From the authenticator app on your phone." persistent-hint required></w-text-field>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn><w-btn variant="filled">Continue</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B2 · Step 1: wrong password or code (401): both fields are cleared, focus on Password">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B2 &middot; Step 1: wrong password or code (<code>401</code>): both fields are cleared, focus on Password</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b2-t" aria-describedby="b2-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b2-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b2-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 1 of 2 &middot; Confirm it is you</p>
+            <p class="text-sm">To add a passkey, type your password and your 2-step code.</p>
+            <div class="flex items-start gap-3 rounded-lg bg-error-container text-on-error-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>The password or 2-step code is not right. Check them and try again.</p></div></div>
+            <w-text-field id="b2-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="b2-password"></w-icon-btn></w-text-field>
+            <w-text-field id="b2-code" label="2-step code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="From the authenticator app on your phone." persistent-hint required></w-text-field>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn><w-btn variant="filled">Continue</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B3 · Step 1: 409 too_many (another device added one meanwhile)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B3 &middot; Step 1: <code>409 too_many</code> (another device added one meanwhile)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b3-t" aria-describedby="b3-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b3-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b3-d">
+            <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>You already have 10 passkeys, the most you can have. Remove one you no longer use, then add this one.</p></div></div>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="filled">OK</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B4 · Step 2: name it, then create it (the click calls create directly)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B4 &middot; Step 2: name it, then create it (the click calls <code>create</code> directly)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b4-t" aria-describedby="b4-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b4-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b4-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 2 &middot; Make the passkey</p>
+            <w-text-field id="b4-name" label="Name" value="MacBook" maxlength="64" hint="Helps you find it later, like MacBook or Work phone." persistent-hint required></w-text-field>
+            <p class="text-sm">Your device then asks for Touch ID, Face ID, Windows Hello or its PIN. Mesail never sees your fingerprint or face. It gets only a key that proves it is you.</p>
+            <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Create passkey</w-btn>
+            
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B5 · Waiting for the device">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B5 &middot; Waiting for the device</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b5-t" aria-describedby="b5-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b5-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b5-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 2 &middot; Make the passkey</p>
+            <w-text-field id="b5-name" label="Name" value="MacBook" maxlength="64" hint="Helps you find it later, like MacBook or Work phone." persistent-hint required></w-text-field>
+            <p class="text-sm">Your device then asks for Touch ID, Face ID, Windows Hello or its PIN. Mesail never sees your fingerprint or face. It gets only a key that proves it is you.</p>
+            <w-btn variant="filled" size="large" block loading disabled class="min-h-control-lg">Waiting for your device&hellip;</w-btn><p class="sr-only" role="status">Waiting for your device. Follow what it shows.</p>
+            
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B6 · Saving (POST /identity/passkeys)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B6 &middot; Saving (<code>POST /identity/passkeys</code>)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b6-t" aria-describedby="b6-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b6-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b6-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 2 &middot; Make the passkey</p>
+            <w-text-field id="b6-name" label="Name" value="MacBook" maxlength="64" hint="Helps you find it later, like MacBook or Work phone." persistent-hint required></w-text-field>
+            <p class="text-sm">Your device then asks for Touch ID, Face ID, Windows Hello or its PIN. Mesail never sees your fingerprint or face. It gets only a key that proves it is you.</p>
+            <w-btn variant="filled" size="large" block loading disabled class="min-h-control-lg">Saving&hellip;</w-btn><p class="sr-only" role="status">Saving the passkey</p>
+            
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text" disabled>Cancel</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B7 · Step 2: cancelled">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B7 &middot; Step 2: <code>cancelled</code></p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b7-t" aria-describedby="b7-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b7-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b7-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 2 &middot; Make the passkey</p>
+            <w-text-field id="b7-name" label="Name" value="MacBook" maxlength="64" hint="Helps you find it later, like MacBook or Work phone." persistent-hint required></w-text-field>
+            <p class="text-sm">Your device then asks for Touch ID, Face ID, Windows Hello or its PIN. Mesail never sees your fingerprint or face. It gets only a key that proves it is you.</p>
+            <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Create passkey</w-btn>
+            <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="info" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>No passkey was made. Choose Create passkey when you are ready.</p></div></div>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B8 · Step 2: exists">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B8 &middot; Step 2: <code>exists</code></p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b8-t" aria-describedby="b8-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b8-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b8-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 2 &middot; Make the passkey</p>
+            <w-text-field id="b8-name" label="Name" value="MacBook" maxlength="64" hint="Helps you find it later, like MacBook or Work phone." persistent-hint required></w-text-field>
+            <p class="text-sm">Your device then asks for Touch ID, Face ID, Windows Hello or its PIN. Mesail never sees your fingerprint or face. It gets only a key that proves it is you.</p>
+            <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Create passkey</w-btn>
+            <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>This device already has a passkey for your account. Use it to sign in. To make a new one here, remove the old one from the list first.</p></div></div>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B9 · Step 2: busy">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B9 &middot; Step 2: <code>busy</code></p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b9-t" aria-describedby="b9-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b9-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b9-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 2 &middot; Make the passkey</p>
+            <w-text-field id="b9-name" label="Name" value="MacBook" maxlength="64" hint="Helps you find it later, like MacBook or Work phone." persistent-hint required></w-text-field>
+            <p class="text-sm">Your device then asks for Touch ID, Face ID, Windows Hello or its PIN. Mesail never sees your fingerprint or face. It gets only a key that proves it is you.</p>
+            <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Create passkey</w-btn>
+            <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Your device is already asking for a passkey. Finish or close that window, then try again.</p></div></div>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B10 · Step 2: refused">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B10 &middot; Step 2: <code>refused</code></p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b10-t" aria-describedby="b10-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b10-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b10-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 2 &middot; Make the passkey</p>
+            <w-text-field id="b10-name" label="Name" value="MacBook" maxlength="64" hint="Helps you find it later, like MacBook or Work phone." persistent-hint required></w-text-field>
+            <p class="text-sm">Your device then asks for Touch ID, Face ID, Windows Hello or its PIN. Mesail never sees your fingerprint or face. It gets only a key that proves it is you.</p>
+            <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Create passkey</w-btn>
+            <div class="flex items-start gap-3 rounded-lg bg-error-container text-on-error-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Passkeys do not work on this address of Mesail. Tell your admin, so they can fix it.</p></div></div>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B11 · Step 2: unsupported">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B11 &middot; Step 2: <code>unsupported</code></p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b11-t" aria-describedby="b11-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b11-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b11-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 2 &middot; Make the passkey</p>
+            <w-text-field id="b11-name" label="Name" value="MacBook" maxlength="64" hint="Helps you find it later, like MacBook or Work phone." persistent-hint required></w-text-field>
+            <p class="text-sm">Your device then asks for Touch ID, Face ID, Windows Hello or its PIN. Mesail never sees your fingerprint or face. It gets only a key that proves it is you.</p>
+            <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Create passkey</w-btn>
+            <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="info" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>This device cannot make passkeys here. Add one on another device, such as your phone.</p></div></div>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B12 · Step 2: invalid or failed">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B12 &middot; Step 2: <code>invalid</code> or <code>failed</code></p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b12-t" aria-describedby="b12-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b12-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b12-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 2 &middot; Make the passkey</p>
+            <w-text-field id="b12-name" label="Name" value="MacBook" maxlength="64" hint="Helps you find it later, like MacBook or Work phone." persistent-hint required></w-text-field>
+            <p class="text-sm">Your device then asks for Touch ID, Face ID, Windows Hello or its PIN. Mesail never sees your fingerprint or face. It gets only a key that proves it is you.</p>
+            <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Create passkey</w-btn>
+            <div class="flex items-start gap-3 rounded-lg bg-error-container text-on-error-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Something went wrong, so no passkey was made. Try again.</p></div></div>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B13 · Server 400 invalid_passkey">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B13 &middot; Server <code>400 invalid_passkey</code></p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b13-t" aria-describedby="b13-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b13-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b13-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 2 of 2 &middot; Make the passkey</p>
+            <w-text-field id="b13-name" label="Name" value="MacBook" maxlength="64" hint="Helps you find it later, like MacBook or Work phone." persistent-hint required></w-text-field>
+            <p class="text-sm">Your device then asks for Touch ID, Face ID, Windows Hello or its PIN. Mesail never sees your fingerprint or face. It gets only a key that proves it is you.</p>
+            <w-btn variant="filled" size="large" block prepend-icon="fingerprint" class="min-h-control-lg">Create passkey</w-btn>
+            <div class="flex items-start gap-3 rounded-lg bg-error-container text-on-error-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Mesail could not save this passkey. Try again. If your device now shows a Mesail passkey that is not in this list, delete it in the device&rsquo;s settings.</p></div></div>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B14 · More than 10 minutes since step 1: start again">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B14 &middot; More than 10 minutes since step 1: start again</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b14-t" aria-describedby="b14-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="b14-t" class="min-w-0 flex-1 text-lg font-semibold">Add a passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="b14-d">
+            <p class="text-xs font-semibold uppercase tracking-wide text-subtle">Step 1 of 2 &middot; Confirm it is you</p>
+            <p class="text-sm">To add a passkey, type your password and your 2-step code.</p>
+            <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="info" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>This took too long, so Mesail asks again. Type your password and code.</p></div></div>
+            <w-text-field id="b14-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="b14-password"></w-icon-btn></w-text-field>
+            <w-text-field id="b14-code" label="2-step code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="From the authenticator app on your phone." persistent-hint required></w-text-field>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn><w-btn variant="filled">Continue</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="B15 · Added: the dialog closes, the list shows the new passkey, and a snackbar shows">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B15 &middot; Added: the dialog closes, the list shows the new passkey, and a snackbar shows</p>
+        <div data-duvay="w-snackbar" role="status" class="mx-auto flex w-full max-w-lg flex-wrap items-center gap-3 rounded-lg bg-text px-4 py-3 text-sm text-surface shadow-xl">
+          <w-icon name="check" class="ms-icon-sm"></w-icon><span class="min-w-0 flex-1">Passkey &ldquo;MacBook&rdquo; added. Next time, choose Sign in with a passkey.</span>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="C1 · Rename">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">C1 &middot; Rename</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="c1-t" aria-describedby="c1-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="c1-t" class="min-w-0 flex-1 text-lg font-semibold">Rename the passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="c1-d">
+            <w-text-field id="c1-name" label="Name" value="iPhone" maxlength="64" counter hint="1 to 64 characters." persistent-hint required></w-text-field>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn><w-btn variant="filled">Save</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="C2 · Rename: empty name">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">C2 &middot; Rename: empty name</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="c2-t" aria-describedby="c2-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="c2-t" class="min-w-0 flex-1 text-lg font-semibold">Rename the passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="c2-d">
+            <w-text-field id="c2-name" label="Name" value="" maxlength="64" counter error="Type a name, like iPhone or Work phone." required></w-text-field>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn><w-btn variant="filled">Save</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="C3 · Rename: the passkey was removed meanwhile (404)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">C3 &middot; Rename: the passkey was removed meanwhile (<code>404</code>)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="c3-t" aria-describedby="c3-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="c3-t" class="min-w-0 flex-1 text-lg font-semibold">Rename the passkey</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="c3-d">
+            <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="info" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>This passkey was removed, maybe on another device. The list is now up to date.</p></div></div>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="filled">OK</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" id="d1" aria-label="D1 · Remove a passkey: password and code, and the sign-out warning">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">D1 &middot; Remove a passkey: password and code, and the sign-out warning</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="d1-t" aria-describedby="d1-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="d1-t" class="min-w-0 flex-1 text-lg font-semibold">Remove the passkey &ldquo;iPhone&rdquo;?</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="d1-d">
+            <p class="text-sm">You can no longer sign in with this passkey.</p>
+            <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p class="font-semibold">Your other devices will be signed out</p><p>All your other devices will be signed out, in every domain. This device stays signed in. A signed-out device deletes its copy of your messages the next time it connects.</p></div></div>
+            
+            <w-text-field id="d1-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="d1-password"></w-icon-btn></w-text-field>
+            <w-text-field id="d1-code" label="2-step code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="From the authenticator app on your phone." persistent-hint required></w-text-field>
+            <p class="text-xs text-subtle">If you still have the device, also delete the passkey there, for example in System Settings &gt; Passwords on a Mac.</p>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn><w-btn variant="filled" color="danger">Remove and sign out other devices</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="D2 · Remove: wrong password or code (401): both fields cleared">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">D2 &middot; Remove: wrong password or code (<code>401</code>): both fields cleared</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="d2-t" aria-describedby="d2-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="d2-t" class="min-w-0 flex-1 text-lg font-semibold">Remove the passkey &ldquo;iPhone&rdquo;?</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="d2-d">
+            <p class="text-sm">You can no longer sign in with this passkey.</p>
+            <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p class="font-semibold">Your other devices will be signed out</p><p>All your other devices will be signed out, in every domain. This device stays signed in. A signed-out device deletes its copy of your messages the next time it connects.</p></div></div>
+            <div class="flex items-start gap-3 rounded-lg bg-error-container text-on-error-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>The password or 2-step code is not right. Check them and try again.</p></div></div>
+            <w-text-field id="d2-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="d2-password"></w-icon-btn></w-text-field>
+            <w-text-field id="d2-code" label="2-step code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="From the authenticator app on your phone." persistent-hint required></w-text-field>
+            <p class="text-xs text-subtle">If you still have the device, also delete the passkey there, for example in System Settings &gt; Passwords on a Mac.</p>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn><w-btn variant="filled" color="danger">Remove and sign out other devices</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="D3 · Remove: too many tries (429)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">D3 &middot; Remove: too many tries (<code>429</code>)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="d3-t" aria-describedby="d3-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="d3-t" class="min-w-0 flex-1 text-lg font-semibold">Remove the passkey &ldquo;iPhone&rdquo;?</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="d3-d">
+            <p class="text-sm">You can no longer sign in with this passkey.</p>
+            <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p class="font-semibold">Your other devices will be signed out</p><p>All your other devices will be signed out, in every domain. This device stays signed in. A signed-out device deletes its copy of your messages the next time it connects.</p></div></div>
+            <div class="flex items-start gap-3 rounded-lg bg-warning-container text-on-warning-container p-3" role="alert"><w-icon name="alert" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>Too many tries. Wait a minute, then try again.</p></div></div>
+            <w-text-field id="d3-password" type="password" label="Password" autocomplete="current-password" hide-details required><w-icon-btn slot="append-inner" icon="eye-off" size="small" aria-label="Show password" aria-pressed="false" aria-controls="d3-password"></w-icon-btn></w-text-field>
+            <w-text-field id="d3-code" label="2-step code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" hint="From the authenticator app on your phone." persistent-hint required></w-text-field>
+            <p class="text-xs text-subtle">If you still have the device, also delete the passkey there, for example in System Settings &gt; Passwords on a Mac.</p>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn><w-btn variant="filled" color="danger" disabled>Remove and sign out other devices</w-btn></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="D4 · Removed: the dialog closes, the row goes, a snackbar shows">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">D4 &middot; Removed: the dialog closes, the row goes, a snackbar shows</p>
+        <div data-duvay="w-snackbar" role="status" class="mx-auto flex w-full max-w-lg flex-wrap items-center gap-3 rounded-lg bg-text px-4 py-3 text-sm text-surface shadow-xl">
+          <w-icon name="check" class="ms-icon-sm"></w-icon><span class="min-w-0 flex-1">Passkey &ldquo;iPhone&rdquo; removed. Your other devices were signed out. You are still signed in here.</span>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" aria-label="D5 · Already removed (404)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">D5 &middot; Already removed (<code>404</code>)</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="d5-t" aria-describedby="d5-d" class="grid w-full max-w-dialog overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-center gap-3 border-b border-divider py-2 pl-4 pr-2 sm:pl-6">
+            <h2 id="d5-t" class="min-w-0 flex-1 text-lg font-semibold">Remove the passkey &ldquo;iPhone&rdquo;?</h2>
+            <w-icon-btn icon="close" aria-label="Close"></w-icon-btn>
+          </div>
+          <div class="grid gap-4 p-4 sm:px-6 sm:py-5" id="d5-d">
+            <div class="flex items-start gap-3 rounded-lg bg-surface-high text-text p-3" role="status"><w-icon name="info" class="mt-0.5 flex-none"></w-icon><div class="grid min-w-0 gap-1 text-sm"><p>This passkey was already removed, maybe on another device. The list is now up to date.</p></div></div>
+          </div>
+          <div class="flex flex-wrap-reverse justify-end gap-2 border-t border-divider px-4 py-3 sm:px-6 max-sm:[&>*]:flex-1"><w-btn variant="filled">OK</w-btn></div>
+        </div>
+      </section>
+    </main>
+    <footer class="text-sm text-subtle">
+      <nav aria-label="Mockup pages">
+        <ul class="flex flex-wrap justify-center gap-2">
+          <li><w-btn variant="text" size="small" href="index.html">All mockups</w-btn></li>
+          <li><w-btn variant="text" size="small" href="settings.html">Profile and account</w-btn></li>
+          <li><w-btn variant="text" size="small" href="signin-passkey.html">Sign in with a passkey</w-btn></li>
+        </ul>
+      </nav>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

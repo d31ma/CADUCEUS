@@ -132,7 +132,7 @@
   ],
   "iconSet": {
     "file": "docs/mesail/ux/mockups/build/mesail-icons.js",
-    "sha256": "11034b0ceea8c25961a722ad8d16082f0c0bda459ac9b5d4c9f6a8b6dbbdbdc4"
+    "sha256": "4886ddb5ab2a51b542892d6d97528f2c75d88ec0ca287d0dd45233eb07acfa65"
   },
   "build": {
     "bundler": "bun 1.4.3",
@@ -142,7 +142,7 @@
       "--minify"
     ],
     "cssLayer": "duvay",
-    "builtAt": "2026-11-11T20:10:00Z"
+    "builtAt": "2026-11-12T19:08:15Z"
   },
   "inputs": {
     "LICENSE": "5018934d79ea0bf37c34065635d6cbdbe96701c0e7b59e39f40d47641a7da6b7",
@@ -291,7 +291,7 @@
     "src/utilities.css": "65d100b138e1c623f571da2df021038d8b61d479739a1792b36b999cf2bf6af1"
   },
   "outputs": {
-    "duvay-mesail.js": "2ca9a28e2495bdbdd26d3025fa686c68eecb68bf8a4e216fbd73a5301afe219f",
+    "duvay-mesail.js": "c219f1f5204670b1cd1630276bbd49c015c30ff2f6d0fe3f3fb95c572ff383b2",
     "duvay-mesail.css": "09d652ee2fb9624b312ee92995b8775185b8ebe0ef1cb36a735b39cbd5dba541",
     "LICENSE": "5018934d79ea0bf37c34065635d6cbdbe96701c0e7b59e39f40d47641a7da6b7"
   }

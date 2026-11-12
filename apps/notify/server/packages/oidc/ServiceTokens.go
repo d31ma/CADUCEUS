@@ -23,22 +23,14 @@ func (tokens ServiceTokens) token(domainId string) (string, error) {
 	if tokens.Problem != nil {
 		return "", tokens.Problem
 	}
-	source, err := tokens.source(domainId)
-	if err != nil {
-		return "", err
-	}
+	source := tokens.source(domainId)
 	cached := CachedToken{}
 	tokens.Cache.Load(source.CacheKey(), &cached)
 	return tokens.cachedOrFetched(source, cached)
 }
 
-func (tokens ServiceTokens) source(domainId string) (ServiceTokenSource, error) {
-	if tokens.Settings.ServiceTokens != "" {
-		return IdentityServiceToken{Client: tokens.Client, Endpoint: tokens.Settings.ServiceTokens, Secret: tokens.Secret, DomainId: domainId}, nil
-	}
-	endpoint, err := IssuerPattern{Pattern: tokens.Settings.Keycloak}.Expand(domainId)
-	keycloak := KeycloakClient{Client: tokens.Client, Endpoint: endpoint, ClientId: AuthorizedParties{}.Service(), ClientSecret: tokens.Secret}
-	return KeycloakServiceToken{Keycloak: keycloak}, err
+func (tokens ServiceTokens) source(domainId string) ServiceTokenSource {
+	return IdentityServiceToken{Client: tokens.Client, Endpoint: tokens.Settings.ServiceTokens, Secret: tokens.Secret, DomainId: domainId}
 }
 
 func (tokens ServiceTokens) cachedOrFetched(source ServiceTokenSource, cached CachedToken) (string, error) {

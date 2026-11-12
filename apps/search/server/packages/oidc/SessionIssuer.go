@@ -7,7 +7,6 @@ import (
 )
 
 type SessionIssuer struct {
-	Gate     Gate
 	Settings SessionSettings
 	Keycloak string
 	Admin    string
@@ -16,50 +15,17 @@ type SessionIssuer struct {
 	Problem  error
 }
 
-func (issuer SessionIssuer) SignIn(address string, password string, oneTimeCode string) (SessionGrant, error) {
-	grant, err := issuer.signIn(address, password, oneTimeCode)
-	return grant, SessionErrors{}.Normalized(err)
-}
-
-func (issuer SessionIssuer) Refresh(sessionKey string) (SessionGrant, error) {
-	grant, err := issuer.refresh(sessionKey)
-	return grant, SessionErrors{}.Normalized(err)
-}
-
-func (issuer SessionIssuer) SignOut(sessionKey string) error {
-	return SessionErrors{}.Normalized(issuer.signOut(sessionKey))
-}
-
-func (issuer SessionIssuer) signIn(address string, password string, oneTimeCode string) (SessionGrant, error) {
-	if issuer.Problem != nil {
-		return SessionGrant{}, issuer.Problem
-	}
-	domain, err := AddressDomain{}.Of(address)
-	if err != nil {
-		return SessionGrant{}, err
-	}
-	keycloak, err := issuer.keycloak(domain)
-	if err != nil {
-		return SessionGrant{}, err
-	}
-	tokens, err := keycloak.SignIn(address, password, oneTimeCode)
-	if err != nil {
-		return SessionGrant{}, issuer.refusal(domain, address, err)
-	}
-	return issuer.granted(domain, tokens)
-}
-
-func (issuer SessionIssuer) refusal(domain string, address string, refused error) error {
-	locked := errors.Is(refused, SignInRefused{}) && issuer.locked(domain, address)
+func (issuer SessionIssuer) refusal(username string, refused error) error {
+	locked := errors.Is(refused, SignInRefused{}) && issuer.locked(username)
 	return issuer.lockedOr(locked, refused)
 }
 
-func (issuer SessionIssuer) locked(domain string, address string) bool {
-	admin, err := issuer.admin(domain)
+func (issuer SessionIssuer) locked(username string) bool {
+	admin, err := issuer.admin()
 	if err != nil {
 		return false
 	}
-	userId, err := admin.UserId(address)
+	userId, err := admin.UserId(username)
 	if err != nil {
 		return false
 	}
@@ -74,60 +40,15 @@ func (SessionIssuer) lockedOr(locked bool, refused error) error {
 	return refused
 }
 
-func (issuer SessionIssuer) admin(domain string) (KeycloakAdmin, error) {
-	keycloak, err := issuer.keycloak(domain)
-	if err != nil {
-		return KeycloakAdmin{}, err
-	}
+func (issuer SessionIssuer) admin() (KeycloakAdmin, error) {
+	keycloak := issuer.keycloak()
 	keycloak.ClientId = issuer.accountClientId()
 	keycloak.ClientSecret = issuer.Settings.Account.Secret
 	grant, err := keycloak.ClientCredentials()
 	if err != nil {
 		return KeycloakAdmin{}, err
 	}
-	endpoint, err := IssuerPattern{Pattern: issuer.Admin}.Resolved(domain)
-	return KeycloakAdmin{Client: issuer.Client, Endpoint: endpoint, Token: grant.AccessToken}, err
-}
-
-func (issuer SessionIssuer) refresh(sessionKey string) (SessionGrant, error) {
-	content, err := issuer.opened(sessionKey)
-	if err != nil {
-		return SessionGrant{}, err
-	}
-	keycloak, err := issuer.keycloak(content.Domain)
-	if err != nil {
-		return SessionGrant{}, err
-	}
-	tokens, err := keycloak.Refresh(content.RefreshToken)
-	if err != nil {
-		return SessionGrant{}, err
-	}
-	return issuer.granted(content.Domain, tokens)
-}
-
-func (issuer SessionIssuer) signOut(sessionKey string) error {
-	content, err := issuer.opened(sessionKey)
-	if err != nil {
-		return err
-	}
-	keycloak, err := issuer.keycloak(content.Domain)
-	if err != nil {
-		return err
-	}
-	return keycloak.SignOut(content.RefreshToken)
-}
-
-func (issuer SessionIssuer) granted(domain string, tokens TokenGrant) (SessionGrant, error) {
-	caller, err := issuer.Gate.Identify(BearerToken{}.prefix() + tokens.AccessToken)
-	if err != nil {
-		return SessionGrant{}, err
-	}
-	content, err := json.Marshal(SessionContent{Domain: domain, RefreshToken: tokens.RefreshToken})
-	if err != nil {
-		return SessionGrant{}, err
-	}
-	sessionKey, err := issuer.Sealer.Seal(string(content), issuer.sealLabel())
-	return SessionGrant{Caller: caller, AccessToken: tokens.AccessToken, ExpiresIn: tokens.ExpiresIn, SessionKey: sessionKey}, err
+	return KeycloakAdmin{Client: issuer.Client, Endpoint: issuer.Admin, Token: grant.AccessToken}, nil
 }
 
 func (issuer SessionIssuer) opened(sessionKey string) (SessionContent, error) {
@@ -142,9 +63,8 @@ func (issuer SessionIssuer) opened(sessionKey string) (SessionContent, error) {
 	return content, json.Unmarshal([]byte(plain), &content)
 }
 
-func (issuer SessionIssuer) keycloak(domain string) (KeycloakClient, error) {
-	endpoint, err := IssuerPattern{Pattern: issuer.Keycloak}.Resolved(domain)
-	return KeycloakClient{Client: issuer.Client, Endpoint: endpoint, ClientId: issuer.clientId(), ClientSecret: issuer.Settings.Client.Secret}, err
+func (issuer SessionIssuer) keycloak() KeycloakClient {
+	return KeycloakClient{Client: issuer.Client, Endpoint: issuer.Keycloak, ClientId: issuer.clientId(), ClientSecret: issuer.Settings.Client.Secret}
 }
 
 func (SessionIssuer) accountClientId() string {

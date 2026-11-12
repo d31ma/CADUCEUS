@@ -161,14 +161,6 @@ func newKeyServer(t *testing.T, set KeySet) keyServer {
 	return keyServer{server: server, fetches: fetches}
 }
 
-func (keys keyServer) settings() Settings {
-	return Settings{
-		Issuer:   "https://id.mesail.test/realms/{realm}",
-		Jwks:     keys.server.URL + "/realms/{realm}/certs",
-		Audience: "mesail-api",
-	}
-}
-
 type clock struct {
 	now time.Time
 }
@@ -177,8 +169,13 @@ func (current *clock) Now() time.Time {
 	return current.now
 }
 
-func (keys keyServer) verifier(t *testing.T, current *clock) JwksVerifier {
+func (keys keyServer) verifier(t *testing.T, current *clock) ExactIssuerVerifier {
+	t.Helper()
+	return keys.verifierFor(t, current, "example.com")
+}
+
+func (keys keyServer) verifierFor(t *testing.T, current *clock, realm string) ExactIssuerVerifier {
 	t.Helper()
 	source := CachedKeySource{Fetcher: HttpKeyFetcher{Client: keys.server.Client()}, Cache: JsonFileCache{Folder: t.TempDir()}, Now: current.Now}
-	return JwksVerifier{Settings: keys.settings(), Keys: source}
+	return ExactIssuerVerifier{Issuer: "https://id.mesail.test/realms/" + realm, Jwks: keys.server.URL + "/realms/" + realm + "/certs", Keys: source, Rules: ClaimRules{Audience: "mesail-api"}}
 }

@@ -72,7 +72,6 @@ RUN set -eu \
 FROM lambda-tools AS lambda
 ARG APP
 ARG FYLO=false
-ARG ISSUER_ORIGIN=https://mesail.localhost
 ARG KEYCLOAK_URL=http://keycloak.localhost:18180/idp
 ARG SERVICE_BASE=http://router.localhost:18080
 ARG FORWARDS=18180=keycloak:8080,18080=router:8080
@@ -95,7 +94,7 @@ COPY --chmod=755 deploy/lambda/forwards.sh /usr/local/lib/mesail/forwards.sh
 COPY apps/${APP} /tmp/mesail-app
 RUN set -eu \
  && mkdir -p /opt/mesail /tmp/tac-cache \
- && /usr/local/lib/mesail/rewrite-config.sh /tmp/mesail-app/server/application.json "${ISSUER_ORIGIN}" "${KEYCLOAK_URL}" "${SERVICE_BASE}" "${DEV_DNS_RESOLVER}" \
+ && /usr/local/lib/mesail/rewrite-config.sh /tmp/mesail-app/server/application.json "${KEYCLOAK_URL}" "${SERVICE_BASE}" "${DEV_DNS_RESOLVER}" \
  && ty bundle /tmp/mesail-app \
  && /usr/local/lib/mesail/write-profile.sh /tmp/mesail-app "${APP}" "${FYLO}" > /opt/mesail/data-root \
  && mv /tmp/mesail-app /opt/mesail/app \
@@ -140,7 +139,6 @@ RUN GOTOOLCHAIN=local GOFLAGS=-mod=readonly CGO_ENABLED=0 go build -trimpath -bu
 
 FROM lambda-tools AS realtime
 ARG USER_ID=10001
-ARG ISSUER_ORIGIN=https://mesail.localhost
 ARG KEYCLOAK_URL=http://keycloak.localhost:18180/idp
 ARG SERVICE_BASE=http://router.localhost:18080
 ARG FORWARDS=18180=keycloak:8080,18080=router:8080
@@ -160,7 +158,7 @@ COPY --chown=${USER_ID}:${USER_ID} apps/realtime /opt/mesail/realtime
 USER ${USER_ID}:${USER_ID}
 RUN set -eu \
  && printf '{ "server": { "hosts": ["realtime"] } }\n' > /opt/mesail/realtime/server/application-container.json \
- && /usr/local/lib/mesail/rewrite-config.sh /opt/mesail/realtime/server/application.json "${ISSUER_ORIGIN}" "${KEYCLOAK_URL}" "${SERVICE_BASE}" \
+ && /usr/local/lib/mesail/rewrite-config.sh /opt/mesail/realtime/server/application.json "${KEYCLOAK_URL}" "${SERVICE_BASE}" \
  && ty bundle /opt/mesail/realtime \
  && rm -rf /tmp/* /tmp/.cache
 ENV MESAIL_FORWARDS=${FORWARDS} \
@@ -169,6 +167,3 @@ ENV MESAIL_FORWARDS=${FORWARDS} \
     MESAIL_REALTIME_LISTEN=0.0.0.0:8116
 EXPOSE 8106 8116
 ENTRYPOINT ["/usr/local/bin/mesail-realtime-start"]
-
-FROM mesail-keycloak AS keycloak-blackbox
-COPY --chown=0:0 deploy/floci/keycloak-users/ /opt/mesail/keycloak/realm/dev/

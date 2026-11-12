@@ -22,7 +22,7 @@ func (service *MessageSourceService) Source(authorization string, messageId stri
 }
 
 func (service *MessageSourceService) domainFor(caller oidc.Caller, requestedDomainId string) string {
-	if caller.DomainId == service.callers.OperatorRealm() {
+	if service.callers.IsInstallWide(caller.DomainId) {
 		return requestedDomainId
 	}
 	return caller.DomainId

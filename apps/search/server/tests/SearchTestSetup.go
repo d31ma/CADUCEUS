@@ -132,7 +132,8 @@ func (world *SearchTestSetup) Must(err error) {
 func (world *SearchTestSetup) SignedIn(domainId string, subject string, realmRole string, party string) string {
 	keys, _ := os.MkdirTemp("", "s1-keys-")
 	os.Setenv("TMPDIR", keys)
-	realm, _ := oidc.SigningRealm{}.Started(domainId)
+	started, _ := oidc.SigningRealm{}.StartedMesail()
+	realm := started.ForDomain(domainId)
 	snapshot := struct {
 		Yon struct {
 			Oidc   oidc.Settings   `json:"oidc"`
@@ -144,7 +145,7 @@ func (world *SearchTestSetup) SignedIn(domainId string, subject string, realmRol
 	text, _ := json.Marshal(snapshot)
 	os.Setenv("YON_APPLICATION_JSON", string(text))
 	realm.Publish(time.Now())
-	request := oidc.TokenRequest{Subject: subject, Email: subject + "@" + domainId, Name: subject, RealmRoles: []string{realmRole}, Audience: "mesail-api", AuthorizedParty: party, ExpiresAt: time.Now().Unix() + 60}
+	request := oidc.TokenRequest{Subject: subject, Email: subject + "@" + domainId, Name: subject, Username: subject, RealmRoles: []string{realmRole}, Audience: "mesail-api", AuthorizedParty: party, ExpiresAt: time.Now().Unix() + 60}
 	token, _ := realm.Token(request)
 	return "Bearer " + token
 }

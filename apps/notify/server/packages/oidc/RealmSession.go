@@ -43,7 +43,7 @@ func (session RealmSession) signIn(username string, password string, oneTimeCode
 	}
 	tokens, err := keycloak.SignIn(username, password, oneTimeCode)
 	if err != nil {
-		return KeycloakSession{}, session.Sessions.refusal(session.realm(), username, err)
+		return KeycloakSession{}, session.Sessions.refusal(username, err)
 	}
 	return session.opened(tokens)
 }
@@ -91,7 +91,7 @@ func (session RealmSession) keycloak() (KeycloakClient, error) {
 	if err != nil {
 		return KeycloakClient{}, err
 	}
-	return session.Sessions.keycloak(session.realm())
+	return session.Sessions.keycloak(), nil
 }
 
 func (session RealmSession) admin() (KeycloakAdmin, error) {
@@ -99,9 +99,5 @@ func (session RealmSession) admin() (KeycloakAdmin, error) {
 	if err != nil {
 		return KeycloakAdmin{}, err
 	}
-	return session.Sessions.admin(session.realm())
-}
-
-func (RealmSession) realm() string {
-	return ""
+	return session.Sessions.admin()
 }

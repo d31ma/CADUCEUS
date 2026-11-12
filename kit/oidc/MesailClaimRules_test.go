@@ -130,31 +130,12 @@ func TestExactIssuerVerifierWithoutAnIssuerRefusesEverything(t *testing.T) {
 	}
 }
 
-func TestOldModeUsesTheRealmAndIgnoresADomainClaim(t *testing.T) {
-	signer := newTestSigner(t)
-	keys := newKeyServer(t, signer.keySet())
-	token := signer.rsaToken(t, "rsa-1", claimsWith("domain", "other.example"))
-	caller, err := NewGate(keys.verifier(t, &clock{now: testNow()}), testNow).Identify("Bearer " + token)
-	if err != nil || caller.DomainId != "example.com" {
-		t.Fatalf("got %+v, %v", caller, err)
-	}
-}
-
-func TestConfiguredGateChoosesTheMesailModeWithoutARealmPlaceholder(t *testing.T) {
+func TestConfiguredGateUsesTheMesailVerifier(t *testing.T) {
 	t.Setenv("TMPDIR", t.TempDir())
 	t.Setenv("YON_APPLICATION_JSON", `{"yon":{"oidc":{"issuer":"https://mail.example.net/api/v1/identity","jwks":"https://mail.example.net/api/v1/identity/jwks","audience":"mesail-api"}}}`)
 	verifier, isMesail := VerifierFactory{}.FromEnvironment().(ExactIssuerVerifier)
 	if !isMesail || verifier.Issuer != "https://mail.example.net/api/v1/identity" || verifier.Jwks != "https://mail.example.net/api/v1/identity/jwks" {
 		t.Fatalf("got %#v", verifier)
-	}
-}
-
-func TestConfiguredGateKeepsTheRealmModeWithARealmPlaceholder(t *testing.T) {
-	t.Setenv("TMPDIR", t.TempDir())
-	t.Setenv("YON_APPLICATION_JSON", `{"yon":{"oidc":{"issuer":"https://id.mesail.test/realms/{realm}","jwks":"https://id.mesail.test/realms/{realm}/certs","audience":"mesail-api"}}}`)
-	_, isRealm := VerifierFactory{}.FromEnvironment().(JwksVerifier)
-	if !isRealm {
-		t.Fatal("the realm mode was not chosen")
 	}
 }
 

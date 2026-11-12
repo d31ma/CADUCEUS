@@ -26,10 +26,10 @@ func (test *MessageSourceControllerTest) TestGetSourceAnswersTheSummary() {
 func (test *MessageSourceControllerTest) TestGetSourceReadsTheOperatorDomain() {
 	setup := JobsTestSetup{}
 	domainId := setup.Domain()
-	_, operators := setup.Realms(domainId)
+	_, installWide := setup.Realms(domainId)
 	stored, _ := setup.SummaryStore().InsertIfAbsent(setup.StagedSummary(domainId))
 	request := httptest.NewRequest("GET", "/api/v1/notify/messages/sum_"+stored.Id+"/source?domainId="+domainId, nil)
-	source, err := test.controller().GetSource(setup.Service(operators), "sum_"+stored.Id, request)
+	source, err := test.controller().GetSource(setup.Service(installWide), "sum_"+stored.Id, request)
 	Assert.IsTrue(err == nil, "source failed")
 	Assert.Equals(domainId, source.DomainId)
 }

@@ -16,7 +16,7 @@ func (test *OutboxTest) TestARefusedEventBecomesADeadLetterThatTheOperatorCanReq
 	world.Pusher.FailFor("search", outbox.DeliveryFailure{Subscriber: "search", Status: 400, Permanent: true, Detail: "bad"})
 	id := test.stagedMessage(world)
 	controller := &OutboxController{relay: world.Relay}
-	operator := world.Bearer(world.Operators)
+	operator := world.Bearer(world.InstallWide)
 	dead := test.deadFor(world, controller, operator, id)
 	Assert.Equals(1, len(dead))
 	Assert.Equals("message.edited", dead[0].Type)

@@ -34,7 +34,7 @@ func TestFirePostsToTheSweepRouteWithAnOperatorsToken(t *testing.T) {
 	tokens := &presenceTokens{}
 	seen := http.Request{}
 	err := sweepTrigger(t, http.StatusOK, tokens, &seen).Fire()
-	if err != nil || seen.Method != http.MethodPost || seen.URL.Path != "/api/v1/realtime/jobs/sweep" || seen.Header.Get("Authorization") != "Bearer operators" || tokens.realm != "mesail-operators" {
+	if err != nil || seen.Method != http.MethodPost || seen.URL.Path != "/api/v1/realtime/jobs/sweep" || seen.Header.Get("Authorization") != "Bearer operators" || tokens.realm != "*" {
 		t.Fatalf("got %v %s %s %q", err, seen.Method, seen.URL, tokens.realm)
 	}
 }

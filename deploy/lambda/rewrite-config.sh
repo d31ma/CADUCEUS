@@ -2,7 +2,7 @@
 set -eu
 
 usage() {
-  echo "usage: rewrite-config.sh <application.json> <issuer origin> <keycloak url> <service base> [dev dns resolver]" >&2
+  echo "usage: rewrite-config.sh <application.json> <keycloak url> <service base> [dev dns resolver]" >&2
   echo "  service base: a URL, or 'port:<n>' to keep each <name>.localhost host and use port n" >&2
   exit 64
 }
@@ -19,9 +19,8 @@ host_of() {
 }
 
 rewrite_addresses() {
-  file="$1" origin="$2" keycloak="$3" services="$4"
+  file="$1" keycloak="$2" services="$3"
   sed -E -i.before \
-    -e "s#\"issuer\": *\"[^\"]*/idp/realms/#\"issuer\": \"$origin/idp/realms/#" \
     -e "s#http://keycloak:8080/idp#$keycloak#g" \
     -e "s#http://127\\.0\\.0\\.1:8180/idp#$keycloak#g" \
     -e "$(service_rule "$services")" "$file"
@@ -43,12 +42,12 @@ use_resolver() {
 }
 
 main() {
-  if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then usage; fi
-  rewrite_addresses "$1" "$2" "$3" "$4"
-  use_resolver "$1" "${5:-}"
-  case "$4" in
-    port:*) allow_hosts "$1" "$(host_of "$3")" ;;
-    *) allow_hosts "$1" "$(host_of "$3")" "$(host_of "$4")" ;;
+  if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]; then usage; fi
+  rewrite_addresses "$1" "$2" "$3"
+  use_resolver "$1" "${4:-}"
+  case "$3" in
+    port:*) allow_hosts "$1" "$(host_of "$2")" ;;
+    *) allow_hosts "$1" "$(host_of "$2")" "$(host_of "$3")" ;;
   esac
 }
 

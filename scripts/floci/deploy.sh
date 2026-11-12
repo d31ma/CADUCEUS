@@ -25,7 +25,7 @@ file_system_id() {
 ensure_file_system() {
   if [ "$(file_system_id)" != None ]; then echo "file system $(file_system_id) exists"; return; fi
   mesail_aws efs create-file-system --creation-token "$(mesail_stack .fileSystem.creationToken)" \
-    --tags Key=Name,Value=mesail-data Key=project,Value=mesail
+    --tags "Key=Name,Value=$(mesail_stack .fileSystem.creationToken)" Key=project,Value=mesail
 }
 
 existing_access_point() {
@@ -64,11 +64,17 @@ storage_arguments() {
   echo "--file-system-configs Arn=$(access_point_arn "$service"),LocalMountPath=$(mesail_stack .fileSystem.mountPath)"
 }
 
+environment_lines() {
+  local service="$1"
+  mesail_app_secrets "$(mesail_root)/apps/$service"
+  mesail_app_settings "$service"
+}
+
 environment_file() {
   local service="$1" file
   file="$(mktemp "${TMPDIR:-/tmp}/mesail-environment.XXXXXX")"
   chmod 600 "$file"
-  mesail_app_secrets "$(mesail_root)/apps/$service" | jq -R 'split("=") | {(.[0]): (.[1:] | join("="))}' \
+  environment_lines "$service" | jq -R 'split("=") | {(.[0]): (.[1:] | join("="))}' \
     | jq -s '{Variables: (add // {})}' > "$file"
   echo "$file"
 }

@@ -1,4 +1,4 @@
-// @Test(KeycloakTestSetup, {"partition":"tests"})
+// @Test(OneRealmTestSetup, {"partition":"tests"})
 type IdentityErrorHandlerTest struct {
 	behaviors *BehaviorContext
 }

@@ -33,10 +33,10 @@ func (test *OutboxRelayServiceTest) TestRunOnceRelaysPendingDocuments() {
 	NotifyTestSetup{}.FreshRegistries()
 	setup := NotifyTestSetup{}
 	domainId := setup.Domain()
-	_, operators := setup.Realms(domainId)
+	_, installWide := setup.Realms(domainId)
 	setup.SummaryStore().InsertIfAbsent(setup.StagedSummary(domainId))
 	pusher := outbox.NewRecordingPusher()
-	report, err := setup.Relay(pusher).RunOnce(setup.Service(operators))
+	report, err := setup.Relay(pusher).RunOnce(setup.Service(installWide))
 	Assert.IsTrue(err == nil, "run failed")
 	Assert.IsTrue(report.Delivered >= 1, "nothing delivered")
 }
@@ -45,16 +45,16 @@ func (test *OutboxRelayServiceTest) TestDeadEventsListsALetterAndRetryDeadMovesI
 	NotifyTestSetup{}.FreshRegistries()
 	setup := NotifyTestSetup{}
 	domainId := setup.Domain()
-	_, operators := setup.Realms(domainId)
+	_, installWide := setup.Realms(domainId)
 	stored, _ := setup.SummaryStore().InsertIfAbsent(setup.StagedSummary(domainId))
 	pusher := outbox.NewRecordingPusher()
 	pusher.FailFor("mail-out", outbox.DeliveryFailure{Subscriber: "mail-out", Status: 400, Permanent: true, Detail: "refused"})
 	relay := setup.Relay(pusher)
 	collection := setup.SummaryStore().Collection(domainId)
 	relay.RelayDocument(collection, stored.Id)
-	dead, err := relay.DeadEvents(setup.Service(operators))
+	dead, err := relay.DeadEvents(setup.Service(installWide))
 	letter := test.letterOf(dead, stored.Id)
-	retried := relay.RetryDead(setup.Service(operators), RetryRequest{Collection: collection, DocumentId: stored.Id, EventId: letter.EventId, Subscriber: "mail-out"})
+	retried := relay.RetryDead(setup.Service(installWide), RetryRequest{Collection: collection, DocumentId: stored.Id, EventId: letter.EventId, Subscriber: "mail-out"})
 	fields, _ := setup.OutboxStore().Load(outbox.Ref{Collection: collection, Id: stored.Id})
 	Assert.IsTrue(err == nil, "dead list failed")
 	Assert.Equals("mail-out", letter.Subscriber)
@@ -66,9 +66,9 @@ func (test *OutboxRelayServiceTest) TestDeadEventsListsALetterAndRetryDeadMovesI
 func (test *OutboxRelayServiceTest) TestRetryDeadRefusesAnUnknownLetter() {
 	setup := NotifyTestSetup{}
 	domainId := setup.Domain()
-	_, operators := setup.Realms(domainId)
+	_, installWide := setup.Realms(domainId)
 	stored, _ := setup.SummaryStore().InsertIfAbsent(setup.StagedSummary(domainId))
-	err := setup.Relay(outbox.NewRecordingPusher()).RetryDead(setup.Service(operators), RetryRequest{Collection: setup.SummaryStore().Collection(domainId), DocumentId: stored.Id, EventId: "evt_none", Subscriber: "mail-out"})
+	err := setup.Relay(outbox.NewRecordingPusher()).RetryDead(setup.Service(installWide), RetryRequest{Collection: setup.SummaryStore().Collection(domainId), DocumentId: stored.Id, EventId: "evt_none", Subscriber: "mail-out"})
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
 }

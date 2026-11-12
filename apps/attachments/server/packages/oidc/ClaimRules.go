@@ -64,7 +64,7 @@ func (ClaimRules) subject(claims Claims) error {
 }
 
 func (ClaimRules) parties() []string {
-	return []string{AuthorizedParties{}.Identity(), AuthorizedParties{}.Service()}
+	return []string{AuthorizedParties{}.Identity()}
 }
 
 func (ClaimRules) leewaySeconds() int64 {

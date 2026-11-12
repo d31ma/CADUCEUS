@@ -28,7 +28,7 @@ func TestTheDirectoryReturnsAnActiveDomain(t *testing.T) {
 	server, seen := directoryServer(t, http.StatusOK, string(body))
 	domain, found, err := Directory{Client: server.Client(), BaseUrl: server.URL + "/", Authorize: realmToken}.Domain("Sender.Test")
 	check(t, err == nil && found && domain.IsActive(), "want an active domain")
-	check(t, (*seen)[0] == "/api/v1/directory/domains/sender.test Bearer token-for-mesail-operators", "wrong request")
+	check(t, (*seen)[0] == "/api/v1/directory/domains/sender.test Bearer token-for-*", "wrong request")
 }
 
 func TestTheDirectoryReportsAnUnknownDomain(t *testing.T) {

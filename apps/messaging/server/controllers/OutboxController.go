@@ -38,19 +38,19 @@ func (controller *OutboxController) PostRetry(
 }
 
 func (controller *OutboxController) installWide(authorization string) error {
-	return controller.operatorOnly(controller.fromOperatorRealm(authorization))
+	return controller.installWideOnly(controller.fromInstallWide(authorization))
 }
 
-func (controller *OutboxController) fromOperatorRealm(authorization string) bool {
+func (controller *OutboxController) fromInstallWide(authorization string) bool {
 	caller, failure := oidc.Configured().Identify(authorization)
-	return failure == nil && caller.DomainId == controller.operatorRealm()
+	return failure == nil && oidc.InstallWide{}.Matches(caller.DomainId)
 }
 
-func (controller *OutboxController) operatorOnly(fromOperatorRealm bool) error {
-	if fromOperatorRealm {
+func (controller *OutboxController) installWideOnly(fromInstallWide bool) error {
+	if fromInstallWide {
 		return nil
 	}
-	return &Forbidden{Message: "the outbox is managed from the operator realm only"}
+	return &Forbidden{Message: "the outbox is managed with an install-wide token only"}
 }
 
 func (controller *OutboxController) relayUnless(refused error) (outbox.Report, error) {
@@ -72,8 +72,4 @@ func (controller *OutboxController) retryUnless(refused error, request RetryRequ
 		return refused
 	}
 	return controller.relay.RetryDead(request)
-}
-
-func (controller *OutboxController) operatorRealm() string {
-	return "mesail-operators"
 }

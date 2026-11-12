@@ -93,6 +93,27 @@ func (test *OutboxTest) TestTheOutboxRoutesRefuseAnUnverifiedCaller() {
 	Assert.IsTrue(errors.As(retryErr, &refused), "retry: want Unauthenticated")
 }
 
+func (test *OutboxTest) TestTheDeadEventsRouteListsForAnInstallWideServiceToken() {
+	relay, _, eventId := test.world()
+	setup := DirectoryTestSetup{}
+	realm := setup.SignedRealm()
+	os.Setenv("YON_APPLICATION_JSON", setup.ApplicationJson(realm, "http://127.0.0.1:1"))
+	controller := &OutboxController{callers: &CallerService{}, relay: relay}
+	dead, err := controller.GetDead(setup.ServiceBearer(realm, "*"))
+	Assert.Equals("<nil>", fmt.Sprint(err))
+	Assert.IsTrue(slices.ContainsFunc(dead, func(event DeadEvent) bool { return event.EventId == eventId }), "dead event not listed")
+}
+
+func (test *OutboxTest) TestTheOutboxRoutesHideThemselvesFromAMailDomainServiceToken() {
+	setup := DirectoryTestSetup{}
+	realm := setup.SignedRealm()
+	os.Setenv("YON_APPLICATION_JSON", setup.ApplicationJson(realm, "http://127.0.0.1:1"))
+	controller := &OutboxController{callers: &CallerService{}}
+	_, err := controller.PostRelay(setup.ServiceBearer(realm, "outbox-unit.test"))
+	var missing *NotFound
+	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
+}
+
 func (test *OutboxTest) world() (*OutboxRelayService, outbox.Ref, string) {
 	os.Setenv("YON_APPLICATION_JSON", `{"yon":{"outbox":{"producer":"directory","subscribers":[{"name":"search","url":"http://127.0.0.1:9/api/v1/search/events"}]}}}`)
 	domainId := test.reset("outbox-unit.test")

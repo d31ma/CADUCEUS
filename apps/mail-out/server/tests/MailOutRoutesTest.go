@@ -30,12 +30,12 @@ type MailOutRoutesTest struct {
 	eventAnswer int
 	pushed      []events.Envelope
 	calls       []string
-	realms      map[string]oidc.SigningRealm
+	realm       oidc.SigningRealm
 	sources     map[string]mailout.MessageSource
 }
 
 func (test *MailOutRoutesTest) start() (*httptest.Server, *sink.Sink) {
-	test.realms = MailOutTestSetup{}.Realms("example.com", "example.org", "mesail-operators")
+	test.realm = MailOutTestSetup{}.Realm()
 	test.folder, _ = os.MkdirTemp("", "mail-out-routes-")
 	test.handOffs, test.answers, test.pushed, test.calls, test.eventAnswer = nil, nil, nil, nil, http.StatusOK
 	test.sources = map[string]mailout.MessageSource{}
@@ -51,7 +51,7 @@ func (test *MailOutRoutesTest) start() (*httptest.Server, *sink.Sink) {
 	mux.HandleFunc("GET /api/v1/directory/domains/{domainId}", test.directory)
 	mux.HandleFunc("GET /api/v1/{producer}/messages/{messageId}/source", test.source)
 	mux.HandleFunc("POST /api/v1/messaging/events", test.messagingEvents)
-	mux.HandleFunc("POST /realms/{realm}/protocol/openid-connect/token", test.keycloak)
+	mux.HandleFunc("POST /api/v1/identity/service-token", test.identityServiceToken)
 	services := httptest.NewServer(mux)
 	relay, _ := sink.Start(sink.Options{})
 	MailOutTestSetup{}.Use(mailout.Settings{
@@ -76,9 +76,10 @@ func (test *MailOutRoutesTest) record(name string, request *http.Request) {
 	test.calls = append(test.calls, name+" "+caller.DomainId+" "+strings.Join(caller.Roles, ","))
 }
 
-func (test *MailOutRoutesTest) keycloak(writer http.ResponseWriter, request *http.Request) {
-	realm := test.realms[request.PathValue("realm")]
-	json.NewEncoder(writer).Encode(map[string]any{"access_token": MailOutTestSetup{}.ServiceToken(realm), "expires_in": 60})
+func (test *MailOutRoutesTest) identityServiceToken(writer http.ResponseWriter, request *http.Request) {
+	asked := oidc.ServiceTokenRequest{}
+	json.NewDecoder(request.Body).Decode(&asked)
+	json.NewEncoder(writer).Encode(oidc.ServiceTokenAnswer{AccessToken: MailOutTestSetup{}.ServiceToken(test.realm.ForDomain(asked.DomainId)), ExpiresIn: 60})
 }
 
 func (test *MailOutRoutesTest) mailIn(writer http.ResponseWriter, request *http.Request) {
@@ -130,8 +131,8 @@ func (test *MailOutRoutesTest) event(domainId string, from string, rcpt string) 
 	return SendEnvelope{EventId: "evt_" + key, Type: "email.send.requested", DomainId: domainId, Producer: "messaging", OccurredAt: time.Now().UTC().Format(time.RFC3339), Payload: request}
 }
 
-func (test *MailOutRoutesTest) bearer(realm string) string {
-	return "Bearer " + MailOutTestSetup{}.ServiceToken(test.realms[realm])
+func (test *MailOutRoutesTest) bearer(domainId string) string {
+	return "Bearer " + MailOutTestSetup{}.ServiceToken(test.realm.ForDomain(domainId))
 }
 
 func (test *MailOutRoutesTest) recorded() []string {
@@ -164,7 +165,7 @@ func (test *MailOutRoutesTest) TestAHostedRecipientIsHandedToMailInThroughTheRou
 		"push example.com Service",
 		"directory example.com example.com Service",
 		"source example.com Service",
-		"directory example.org mesail-operators Service",
+		"directory example.org * Service",
 		"mail-in example.org Service",
 		"push example.com Service",
 	}, test.recorded())
@@ -180,11 +181,11 @@ func (test *MailOutRoutesTest) TestTheEventsRouteRefusesBadCallersAndEvents() {
 	foreignSender := test.event("example.com", "mallory@example.org", "bob@partner.test")
 
 	_, withoutToken := events.PostEvent("", envelope)
-	_, otherRealm := events.PostEvent(test.bearer("example.org"), envelope)
+	_, otherDomain := events.PostEvent(test.bearer("example.org"), envelope)
 	_, senderErr := events.PostEvent(test.bearer("example.com"), foreignSender)
 
 	Assert.Equals(&ForbiddenCaller{}, withoutToken)
-	Assert.Equals(&UnknownDomain{}, otherRealm)
+	Assert.Equals(&UnknownDomain{}, otherDomain)
 	Assert.IsTrue(strings.Contains(senderErr.Error(), "from is missing or not valid"), senderErr.Error())
 	Assert.Equals(0, len(test.pushed))
 }

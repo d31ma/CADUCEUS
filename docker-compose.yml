@@ -22,19 +22,15 @@ services:
     networks: [backend]
 
   keycloak:
-    image: mesail-keycloak-blackbox:${MESAIL_IMAGE_TAG:-dev}
+    image: mesail-keycloak:${MESAIL_IMAGE_TAG:-dev}
     environment:
-      MESAIL_KEYCLOAK_URL: ${MESAIL_ISSUER_ORIGIN:-https://mesail.localhost}/idp
-      MESAIL_KEYCLOAK_DOMAINS: ${MESAIL_KEYCLOAK_DOMAINS:-example.com,example.org,partner.test}
+      MESAIL_KEYCLOAK_URL: http://keycloak.localhost:18180/idp
       MESAIL_KEYCLOAK_DEV_USERS: "true"
       KC_HTTP_HOST: 0.0.0.0
       KC_HTTP_PORT: "8080"
       MESAIL_IDENTITY_CLIENT_SECRET: ${MESAIL_IDENTITY_CLIENT_SECRET:?run scripts/floci/run-all.sh}
-      MESAIL_SERVICE_SECRET: ${MESAIL_SERVICE_SECRET:?run scripts/floci/run-all.sh}
       MESAIL_ACCOUNT_CLIENT_SECRET: ${MESAIL_ACCOUNT_CLIENT_SECRET:?run scripts/floci/run-all.sh}
       MESAIL_KEYCLOAK_DIRECTORY_SECRET: ${MESAIL_KEYCLOAK_DIRECTORY_SECRET:?run scripts/floci/run-all.sh}
-      KC_BOOTSTRAP_ADMIN_CLIENT_ID: mesail-bootstrap
-      KC_BOOTSTRAP_ADMIN_CLIENT_SECRET: ${KC_BOOTSTRAP_ADMIN_CLIENT_SECRET:?run scripts/floci/run-all.sh}
     tmpfs:
       - /data/keycloak:uid=1000,gid=0,mode=0770
     ports:
@@ -48,7 +44,7 @@ services:
     environment:
       MESAIL_REALTIME_GATEWAY_SECRET: ${MESAIL_REALTIME_GATEWAY_SECRET:?run scripts/floci/run-all.sh}
       MESAIL_REALTIME_ORIGINS: ${MESAIL_PUBLIC_URL:-http://127.0.0.1:18080}
-      YON_SERVICE_CLIENT_SECRET: ${MESAIL_SERVICE_SECRET:?run scripts/floci/run-all.sh}
+      YON_SERVICE_CLIENT_SECRET: ${MESAIL_SERVICE_CLIENT_SECRET:?run scripts/floci/run-all.sh}
     volumes:
       - realtime-data:/data
     networks: [backend]
@@ -61,7 +57,7 @@ services:
       MESAIL_ROUTER_PASSTHROUGH: /api/v1/realtime/socket=http://realtime:8116,/api/v1/realtime/stream=http://realtime:8116,/api/v1/realtime/=http://realtime:8106
       MESAIL_ROUTER_LAMBDA_ENDPOINT: http://floci:4566
       MESAIL_ROUTER_STATIC_BUCKET: mesail-static
-      MESAIL_ROUTER_KEYCLOAK_URL: http://keycloak:8080
+      MESAIL_ROUTER_RATE_LIMIT: ${MESAIL_ROUTER_RATE_LIMIT:-1000}
       MESAIL_ROUTER_SINGLE_WRITERS: ${MESAIL_SINGLE_WRITERS:-}
       MESAIL_ROUTER_DEV_DNS_DOMAINS: ${MESAIL_DEV_DNS_DOMAINS:-}
       MESAIL_ROUTER_DEV_DNS_MAIL_HOST: ${MESAIL_DEV_DNS_MAIL_HOST:-}
@@ -73,8 +69,8 @@ services:
   scheduler:
     image: mesail-scheduler:${MESAIL_IMAGE_TAG:-dev}
     environment:
-      MESAIL_SCHEDULER_TOKEN_URL: http://keycloak:8080/idp/realms/mesail-operators/protocol/openid-connect/token
-      MESAIL_SCHEDULER_CLIENT_SECRET: ${MESAIL_SERVICE_SECRET:?run scripts/floci/run-all.sh}
+      MESAIL_SCHEDULER_TOKEN_URL: http://router:8080/api/v1/identity/service-token
+      MESAIL_SCHEDULER_CLIENT_SECRET: ${MESAIL_SERVICE_CLIENT_SECRET:?run scripts/floci/run-all.sh}
       MESAIL_SCHEDULER_BASE: http://router:8080
       MESAIL_SCHEDULER_PATHS: ${MESAIL_SCHEDULER_PATHS:-}
       MESAIL_SCHEDULER_SECONDS: ${MESAIL_SCHEDULER_SECONDS:-60}

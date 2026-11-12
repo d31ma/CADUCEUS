@@ -122,45 +122,46 @@ func TestSignatureCheckRefusesAnUnknownAlgorithm(t *testing.T) {
 	refusedBy(t, SignatureCheck{}.Verify(SignedToken{Header: TokenHeader{Algorithm: "PS256"}}, JsonWebKey{}))
 }
 
-func TestIssuerPatternRefusesAPatternWithoutTheRealm(t *testing.T) {
-	_, err := IssuerPattern{Pattern: "https://id.test/realms/fixed"}.Realm("https://id.test/realms/fixed")
-	refusedBy(t, err)
-}
-
-func TestIssuerPatternRefusesAnOverlongRealm(t *testing.T) {
-	_, err := IssuerPattern{Pattern: "https://id.test/realms/{realm}"}.Realm("https://id.test/realms/" + strings.Repeat("a.", 127) + "a")
-	refusedBy(t, err)
-}
-
-func TestIssuerPatternAcceptsTheOperatorRealm(t *testing.T) {
-	realm, err := IssuerPattern{Pattern: "https://id.test/realms/{realm}"}.Realm("https://id.test/realms/mesail-operators")
-	if err != nil || realm != "mesail-operators" {
-		t.Fatalf("got %q, %v", realm, err)
+func TestDomainNameRefusesAnOverlongName(t *testing.T) {
+	if (DomainName{}).Valid(strings.Repeat("a.", 127) + "a") {
+		t.Fatal("an overlong name was accepted")
 	}
 }
 
-func TestIssuerPatternExpandsTheRealm(t *testing.T) {
-	url, err := IssuerPattern{Pattern: "http://keycloak:8080/realms/{realm}/certs"}.Expand("example.org")
-	if err != nil || url != "http://keycloak:8080/realms/example.org/certs" {
-		t.Fatalf("got %q, %v", url, err)
+func TestDomainNameAcceptsALowercaseDomain(t *testing.T) {
+	if !(DomainName{}).Valid("mail.example-1.org") {
+		t.Fatal("a valid name was refused")
 	}
 }
 
-func TestIssuerPatternRefusesToExpandAnInvalidRealm(t *testing.T) {
-	_, err := IssuerPattern{Pattern: "https://id.test/realms/{realm}"}.Expand("../admin")
+func TestDomainNameRefusesAPath(t *testing.T) {
+	if (DomainName{}).Valid("../admin") {
+		t.Fatal("a path was accepted")
+	}
+}
+
+func TestAddressDomainRefusesAnAddressWithoutADomain(t *testing.T) {
+	_, err := AddressDomain{}.Of("ana")
 	refusedBy(t, err)
+}
+
+func TestAddressDomainReadsTheLowercaseDomain(t *testing.T) {
+	domain, err := AddressDomain{}.Of(" Ana@Example.COM ")
+	if err != nil || domain != "example.com" {
+		t.Fatalf("got %q, %v", domain, err)
+	}
 }
 
 func TestSettingsReaderReadsTheOidcSection(t *testing.T) {
-	settings, err := SettingsReader{}.FromJson(`{"yon":{"server":{"port":8101},"oidc":{"issuer":"https://id.test/realms/{realm}","jwks":"http://kc/realms/{realm}/certs","audience":"mesail-api"}}}`)
-	want := Settings{Issuer: "https://id.test/realms/{realm}", Jwks: "http://kc/realms/{realm}/certs", Audience: "mesail-api"}
+	settings, err := SettingsReader{}.FromJson(`{"yon":{"server":{"port":8101},"oidc":{"issuer":"https://id.test/api/v1/identity","jwks":"http://id/api/v1/identity/jwks","audience":"mesail-api"}}}`)
+	want := Settings{Issuer: "https://id.test/api/v1/identity", Jwks: "http://id/api/v1/identity/jwks", Audience: "mesail-api"}
 	if err != nil || settings != want {
 		t.Fatalf("got %+v, %v", settings, err)
 	}
 }
 
 func TestSettingsReaderRefusesAMissingAudience(t *testing.T) {
-	_, err := SettingsReader{}.FromJson(`{"yon":{"oidc":{"issuer":"https://id.test/realms/{realm}","jwks":"http://kc/realms/{realm}/certs"}}}`)
+	_, err := SettingsReader{}.FromJson(`{"yon":{"oidc":{"issuer":"https://id.test/api/v1/identity","jwks":"http://id/api/v1/identity/jwks"}}}`)
 	if !errors.Is(err, NotConfigured{}) {
 		t.Fatalf("got %v", err)
 	}
@@ -174,7 +175,7 @@ func TestSettingsReaderRefusesAnEmptyDocument(t *testing.T) {
 }
 
 func TestSettingsReaderReadsTheHandlerEnvironment(t *testing.T) {
-	t.Setenv("YON_APPLICATION_JSON", `{"yon":{"oidc":{"issuer":"https://id.test/realms/{realm}","jwks":"http://kc/realms/{realm}/certs","audience":"mesail-api"}}}`)
+	t.Setenv("YON_APPLICATION_JSON", `{"yon":{"oidc":{"issuer":"https://id.test/api/v1/identity","jwks":"http://id/api/v1/identity/jwks","audience":"mesail-api"}}}`)
 	settings, err := SettingsReader{}.FromEnvironment()
 	if err != nil || settings.Audience != "mesail-api" {
 		t.Fatalf("got %+v, %v", settings, err)
@@ -189,16 +190,16 @@ func TestVerifierFactoryRefusesWithoutSettings(t *testing.T) {
 	}
 }
 
-func TestVerifierFactoryBuildsTheJwksVerifier(t *testing.T) {
-	t.Setenv("YON_APPLICATION_JSON", `{"yon":{"oidc":{"issuer":"https://id.test/realms/{realm}","jwks":"http://kc/realms/{realm}/certs","audience":"mesail-api"}}}`)
-	verifier, isJwks := VerifierFactory{}.FromEnvironment().(JwksVerifier)
-	if !isJwks || verifier.Settings.Audience != "mesail-api" {
+func TestVerifierFactoryBuildsTheMesailVerifier(t *testing.T) {
+	t.Setenv("YON_APPLICATION_JSON", `{"yon":{"oidc":{"issuer":"https://id.test/api/v1/identity","jwks":"http://id/api/v1/identity/jwks","audience":"mesail-api"}}}`)
+	verifier, isMesail := VerifierFactory{}.FromEnvironment().(ExactIssuerVerifier)
+	if !isMesail || verifier.Issuer != "https://id.test/api/v1/identity" {
 		t.Fatalf("got %+v", verifier)
 	}
 }
 
 func TestConfiguredGateChecksTokensWhenConfigured(t *testing.T) {
-	t.Setenv("YON_APPLICATION_JSON", `{"yon":{"oidc":{"issuer":"https://id.test/realms/{realm}","jwks":"http://kc/realms/{realm}/certs","audience":"mesail-api"}}}`)
+	t.Setenv("YON_APPLICATION_JSON", `{"yon":{"oidc":{"issuer":"https://id.test/api/v1/identity","jwks":"http://id/api/v1/identity/jwks","audience":"mesail-api"}}}`)
 	_, err := Configured().Identify("Bearer eyJhbGciOiJub25lIn0.eyJzdWIiOiJhbmEifQ.")
 	refusedBy(t, err)
 }
@@ -253,6 +254,20 @@ func TestJsonFileCacheStoresJson(t *testing.T) {
 	}
 	raw, err := os.ReadFile(cache.path("u"))
 	if err != nil || !json.Valid(raw) {
+		t.Fatalf("got %s, %v", raw, err)
+	}
+}
+
+func TestAudienceListWritesOneAudienceAsAString(t *testing.T) {
+	raw, err := json.Marshal(AudienceList{"mesail-api"})
+	if err != nil || string(raw) != `"mesail-api"` {
+		t.Fatalf("got %s, %v", raw, err)
+	}
+}
+
+func TestAudienceListWritesSeveralAudiencesAsAList(t *testing.T) {
+	raw, err := json.Marshal(AudienceList{"mesail-api", "account"})
+	if err != nil || string(raw) != `["mesail-api","account"]` {
 		t.Fatalf("got %s, %v", raw, err)
 	}
 }

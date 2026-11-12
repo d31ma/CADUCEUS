@@ -40,14 +40,13 @@ func (setup NotifyTestSetup) Realms(domainId string) (oidc.SigningRealm, oidc.Si
 		panic(err)
 	}
 	os.Setenv("TMPDIR", folder)
-	member := setup.started(domainId)
-	operators := setup.started("mesail-operators")
-	setup.Use(member.Settings)
-	return member, operators
+	realm := setup.started()
+	setup.Use(realm.Settings)
+	return realm.ForDomain(domainId), realm.ForDomain(oidc.InstallWide{}.DomainId())
 }
 
-func (NotifyTestSetup) started(name string) oidc.SigningRealm {
-	realm, err := oidc.SigningRealm{}.Started(name)
+func (NotifyTestSetup) started() oidc.SigningRealm {
+	realm, err := oidc.SigningRealm{}.StartedMesail()
 	if err != nil {
 		panic(err)
 	}
@@ -86,18 +85,20 @@ func (NotifyTestSetup) Use(settings oidc.Settings) {
 	os.Setenv("YON_APPLICATION_JSON", string(raw))
 }
 
-func (setup NotifyTestSetup) Keycloak(member oidc.SigningRealm, operators oidc.SigningRealm) {
-	token := strings.TrimPrefix(setup.Service(operators), "Bearer ")
+func (setup NotifyTestSetup) IdentityServer(member oidc.SigningRealm, installWide oidc.SigningRealm) {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		_ = json.NewEncoder(writer).Encode(map[string]any{"access_token": token, "expires_in": 60})
+		asked := oidc.ServiceTokenRequest{}
+		_ = json.NewDecoder(request.Body).Decode(&asked)
+		token := strings.TrimPrefix(setup.Service(installWide.ForDomain(asked.DomainId)), "Bearer ")
+		_ = json.NewEncoder(writer).Encode(oidc.ServiceTokenAnswer{AccessToken: token, ExpiresIn: 60})
 	}))
 	settings := member.Settings
-	settings.Keycloak = server.URL + "/realms/{realm}/protocol/openid-connect"
+	settings.ServiceTokens = server.URL + "/api/v1/identity/service-token"
 	setup.Use(settings)
 }
 
 func (setup NotifyTestSetup) Member(realm oidc.SigningRealm, memberId string) string {
-	return setup.bearer(realm, oidc.TokenRequest{Subject: memberId, Name: "Ana Example", Email: "ana@example.com", RealmRoles: []string{"mesail-member"}, Audience: "mesail-api", AuthorizedParty: "mesail-identity", ExpiresAt: time.Now().Unix() + 60})
+	return setup.bearer(realm, oidc.TokenRequest{Subject: memberId, Name: "Ana Example", Username: "ana", Email: "ana@example.com", RealmRoles: []string{"mesail-member"}, Audience: "mesail-api", AuthorizedParty: "mesail-web", ExpiresAt: time.Now().Unix() + 60})
 }
 
 func (setup NotifyTestSetup) Service(realm oidc.SigningRealm) string {

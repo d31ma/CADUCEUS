@@ -8,8 +8,8 @@ usage() {
 Usage: scripts/floci/run-all.sh [service ...]
 
 Builds the Tac apps and every Lambda image, starts Floci, Keycloak and the router,
-deploys the functions, seeds the realms and runs the blackbox tests, then removes
-the stack. With service names, only those functions are built and deployed.
+deploys the functions, seeds the directory (people from stack.json) and runs the
+blackbox tests, then removes the stack. With service names, only those functions are built and deployed.
 
 Settings (environment):
   MESAIL_OWNER       lock owner and log folder name (default: floci-run-all)

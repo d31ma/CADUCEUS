@@ -19,6 +19,17 @@
   wrong service. Covers kit/oidc, the outbox pusher, kit/attachments,
   kit/channels, kit/realtime (its own copy is gone), kit/search and the
   directory, messaging and notify apps; mail-in and mail-out follow in M1.
+- One login per person is now the only mode (Wave 3, slice L5). Every app
+  checks Mesail's own access token from `identity` (exact issuer
+  `<identity>/api/v1/identity`, its `/jwks`, the `domain` claim; `*` is
+  install-wide) and gets service tokens from `POST
+  /api/v1/identity/service-token`. Removed the per-domain realm mode:
+  `{realm}` settings, `Realm`, `IssuerPattern`, the per-realm verifier,
+  identity's per-address sessions and the old `address` sign-in field,
+  directory's token-only members, and every `mesail-operators` name. The
+  dev and test stacks run Keycloak with only the realm `mesail`, seed
+  people through `POST /api/v1/directory/people/seed`, and take tokens
+  from identity's sign-in.
 
 ### Architecture: offline-first clients (design)
 

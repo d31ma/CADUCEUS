@@ -2,6 +2,7 @@ package mailout
 
 import (
 	"context"
+	"mesail.dev/packages/oidc"
 	"time"
 
 	"mesail.dev/packages/smtpclient"
@@ -16,11 +17,11 @@ type Transport struct {
 	Timeout       time.Duration
 }
 
-func (Transport) installWideRealm() string { return "mesail-operators" }
+func (Transport) installWide() string { return oidc.InstallWide{}.DomainId() }
 
 func (transport Transport) Deliver(item Item, raw []byte) Outcome {
 	recipientDomain := Addresses{}.Domain(item.Rcpt)
-	domain, found, err := transport.Directory.Domain(recipientDomain, transport.installWideRealm())
+	domain, found, err := transport.Directory.Domain(recipientDomain, transport.installWide())
 	return transport.send(item, raw, transport.hosted(domain, found), err)
 }
 

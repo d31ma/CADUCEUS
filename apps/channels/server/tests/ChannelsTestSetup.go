@@ -51,18 +51,15 @@ func (world *ChannelsTestSetup) SignedRealms() (oidc.SigningRealm, oidc.SigningR
 	folder, err := os.MkdirTemp("", "channels-test-")
 	world.Must(err)
 	os.Setenv("TMPDIR", folder)
-	home, err := oidc.SigningRealm{}.Started(world.Domain)
+	realm, err := oidc.SigningRealm{}.StartedMesail()
 	world.Must(err)
-	away, err := oidc.SigningRealm{}.Started("other-" + world.Domain)
-	world.Must(err)
-	world.Must(home.Publish(time.Now()))
-	world.Must(away.Publish(time.Now()))
-	os.Setenv("YON_APPLICATION_JSON", world.ApplicationJson(home.Settings))
-	return home, away
+	world.Must(realm.Publish(time.Now()))
+	os.Setenv("YON_APPLICATION_JSON", world.ApplicationJson(realm.Settings))
+	return realm.ForDomain(world.Domain), realm.ForDomain("other-" + world.Domain)
 }
 
 func (world *ChannelsTestSetup) Bearer(realm oidc.SigningRealm, memberId string, realmRole string) string {
-	request := oidc.TokenRequest{Subject: memberId, Name: memberId, Email: memberId + "@" + realm.Name, RealmRoles: []string{realmRole}, Audience: "mesail-api", AuthorizedParty: "mesail-identity", ExpiresAt: time.Now().Unix() + 60}
+	request := oidc.TokenRequest{Subject: memberId, Name: memberId, Username: memberId, Email: memberId + "@" + realm.Domain, RealmRoles: []string{realmRole}, Audience: "mesail-api", AuthorizedParty: "mesail-web", ExpiresAt: time.Now().Unix() + 60}
 	token, err := realm.Token(request)
 	world.Must(err)
 	return "Bearer " + token
@@ -113,7 +110,7 @@ func (world *ChannelsTestSetup) ifMatching(envelope events.Envelope, encoded str
 }
 
 func (world *ChannelsTestSetup) Close() {
-	domains := []string{world.Domain, world.Away.Name}
+	domains := []string{world.Domain, world.Away.Domain}
 	for _, domain := range domains {
 		world.drop(channels.Names{}.Channels(domain))
 		world.drop(channels.Names{}.Memberships(domain))

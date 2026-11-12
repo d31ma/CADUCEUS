@@ -14,14 +14,7 @@ type VerifierFactory struct{}
 
 func (factory VerifierFactory) FromEnvironment() TokenVerifier {
 	settings, err := SettingsReader{}.FromEnvironment()
-	return factory.chosen(factory.byMode(settings), err)
-}
-
-func (factory VerifierFactory) byMode(settings Settings) TokenVerifier {
-	if (IssuerPattern{Pattern: settings.Issuer}).HasPlaceholder() {
-		return factory.Jwks(settings)
-	}
-	return factory.Mesail(settings)
+	return factory.chosen(factory.Mesail(settings), err)
 }
 
 func (VerifierFactory) chosen(verifier TokenVerifier, err error) TokenVerifier {
@@ -29,10 +22,6 @@ func (VerifierFactory) chosen(verifier TokenVerifier, err error) TokenVerifier {
 		return RefusingVerifier{}
 	}
 	return verifier
-}
-
-func (factory VerifierFactory) Jwks(settings Settings) JwksVerifier {
-	return JwksVerifier{Settings: settings, Keys: factory.keys()}
 }
 
 func (factory VerifierFactory) Mesail(settings Settings) ExactIssuerVerifier {

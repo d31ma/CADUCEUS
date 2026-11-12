@@ -84,7 +84,7 @@ func (w *world) environment(name string) string {
 			"subscribers": []map[string]string{{"name": "messaging", "url": w.server.URL + "/api/v1/messaging/events"}},
 			"retry":       map[string]int{"baseDelaySeconds": 1, "maxDelaySeconds": 1, "maxAttempts": 2},
 		},
-		"oidc":    map[string]string{"issuer": "https://id.mesail.test/realms/{realm}", "jwks": "https://id.mesail.test/realms/{realm}/protocol/openid-connect/certs", "audience": "mesail-api", "keycloak": w.server.URL + "/realms/{realm}/protocol/openid-connect"},
+		"oidc":    map[string]string{"issuer": "https://mail.mesail.test/api/v1/identity", "jwks": "https://mail.mesail.test/api/v1/identity/jwks", "audience": "mesail-api", "serviceTokens": w.server.URL + "/api/v1/identity/service-token"},
 		"service": map[string]any{"client": map[string]string{"secret": "test-value"}},
 	}}
 	raw, _ := json.Marshal(snapshot)
@@ -105,7 +105,7 @@ func (w *world) services() *httptest.Server {
 	mux.HandleFunc("GET /api/v1/directory/domains/{domainId}", w.directory)
 	mux.HandleFunc("GET /api/v1/{producer}/messages/{messageId}/source", w.source)
 	mux.HandleFunc("POST /api/v1/messaging/events", w.messagingEvents)
-	mux.HandleFunc("POST /realms/{realm}/protocol/openid-connect/token", w.keycloak)
+	mux.HandleFunc("POST /api/v1/identity/service-token", w.serviceToken)
 	return httptest.NewServer(mux)
 }
 
@@ -115,8 +115,10 @@ func (w *world) record(name string, request *http.Request) {
 	w.calls = append(w.calls, name+" "+tokenRealm(request.Header.Get("Authorization")))
 }
 
-func (w *world) keycloak(writer http.ResponseWriter, request *http.Request) {
-	_ = json.NewEncoder(writer).Encode(map[string]any{"access_token": "token-" + request.PathValue("realm"), "expires_in": 60})
+func (w *world) serviceToken(writer http.ResponseWriter, request *http.Request) {
+	asked := map[string]string{}
+	_ = json.NewDecoder(request.Body).Decode(&asked)
+	_ = json.NewEncoder(writer).Encode(map[string]any{"accessToken": "token-" + asked["domainId"], "expiresIn": 60})
 }
 
 func (w *world) mailIn(writer http.ResponseWriter, request *http.Request) {

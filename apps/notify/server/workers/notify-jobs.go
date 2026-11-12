@@ -11,7 +11,7 @@ import (
 type Handler struct{}
 
 func (handler Handler) POST() {
-	authorization, failure := oidc.ServiceTokensFactory{}.Configured().Authorization(handler.realm())
+	authorization, failure := oidc.ServiceTokensFactory{}.Configured().Authorization(oidc.InstallWide{}.DomainId())
 	handler.post(handler.base()+"/jobs/run", authorization, failure)
 	handler.post(handler.base()+"/outbox/relay", authorization, failure)
 }
@@ -38,10 +38,6 @@ func (Handler) closeBody(response *http.Response, failure error) {
 
 func (Handler) base() string {
 	return "http://127.0.0.1:8107/api/v1/notify"
-}
-
-func (Handler) realm() string {
-	return "mesail-operators"
 }
 
 func (Handler) timeout() time.Duration {

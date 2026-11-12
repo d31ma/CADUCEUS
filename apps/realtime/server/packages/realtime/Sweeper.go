@@ -36,7 +36,7 @@ func (sweeper Sweeper) Run(authorization string) (SweepReport, error) {
 }
 
 func (sweeper Sweeper) requireOperators(caller oidc.Caller) error {
-	if caller.DomainId != sweeper.operatorsRealm() {
+	if caller.DomainId != sweeper.installWide() {
 		return Missing{What: "domain"}
 	}
 	return nil
@@ -53,8 +53,8 @@ func (sweeper Sweeper) more(report SweepReport) bool {
 	return report.More || sweeper.Domains.Remaining(report) <= 0
 }
 
-func (Sweeper) operatorsRealm() string {
-	return "mesail-operators"
+func (Sweeper) installWide() string {
+	return oidc.InstallWide{}.DomainId()
 }
 
 func (Sweeper) serviceRole() string {

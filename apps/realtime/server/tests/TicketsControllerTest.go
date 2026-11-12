@@ -23,7 +23,7 @@ func (test *TicketsControllerTest) TestPostTicketGivesAMemberATicket() {
 func (test *TicketsControllerTest) TestPostTicketRefusesAServiceToken() {
 	setup := GatewayTestSetup{}
 	realm := setup.Realm("http://127.0.0.1:1")
-	_, failure := (&TicketsController{}).PostTicket("Bearer " + setup.Token(realm, []string{"mesail-service"}))
+	_, failure := (&TicketsController{}).PostTicket("Bearer " + setup.ServiceToken(realm))
 	refused := &Unauthenticated{}
 	Assert.IsTrue(errors.As(failure, &refused), "a service token got a ticket")
 }

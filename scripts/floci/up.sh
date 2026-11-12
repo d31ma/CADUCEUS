@@ -8,7 +8,7 @@ floci_ready() {
 }
 
 keycloak_ready() {
-  curl --fail --silent "$MESAIL_KEYCLOAK_URL/realms/$(mesail_stack '.keycloak.domains[0]')/.well-known/openid-configuration" > /dev/null
+  curl --fail --silent "$MESAIL_KEYCLOAK_URL/realms/$(mesail_stack .keycloak.realm)/.well-known/openid-configuration" > /dev/null
 }
 
 router_ready() {
@@ -44,8 +44,6 @@ main() {
   local profile
   mesail_load_settings
   mesail_load_secrets
-  MESAIL_KEYCLOAK_DOMAINS="$(mesail_stack '.keycloak.domains | join(",")')"
-  export MESAIL_KEYCLOAK_DOMAINS
   MESAIL_SINGLE_WRITERS="$(single_writers)"
   MESAIL_SCHEDULER_PATHS="$(mesail_stack '[.schedules[].path] | join(",")')"
   MESAIL_SCHEDULER_SECONDS="$(mesail_stack .scheduleSeconds)"

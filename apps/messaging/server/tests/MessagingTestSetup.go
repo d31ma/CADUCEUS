@@ -54,16 +54,13 @@ func (world *MessagingTestSetup) SignedRealms() (oidc.SigningRealm, oidc.Signing
 	folder, err := os.MkdirTemp("", "messaging-test-")
 	world.Must(err)
 	os.Setenv("TMPDIR", folder)
-	home, err := oidc.SigningRealm{}.Started(world.Domain)
+	realm, err := oidc.SigningRealm{}.StartedMesail()
 	world.Must(err)
-	away, err := oidc.SigningRealm{}.Started(world.OtherDomain())
-	world.Must(err)
-	world.Must(home.Publish(time.Now()))
-	world.Must(away.Publish(time.Now()))
-	document, err := home.ApplicationJson()
+	world.Must(realm.Publish(time.Now()))
+	document, err := realm.ApplicationJson()
 	world.Must(err)
 	os.Setenv("YON_APPLICATION_JSON", document)
-	return home, away
+	return realm.ForDomain(world.Domain), realm.ForDomain(world.OtherDomain())
 }
 
 func (world *MessagingTestSetup) OtherDomain() string {
@@ -82,7 +79,7 @@ func (world *MessagingTestSetup) Address(memberId string) string {
 }
 
 func (world *MessagingTestSetup) Bearer(realm oidc.SigningRealm, memberId string, realmRole string) string {
-	request := oidc.TokenRequest{Subject: memberId, Name: memberId, Email: memberId + "@" + realm.Name, RealmRoles: []string{realmRole}, Audience: "mesail-api", AuthorizedParty: "mesail-identity", ExpiresAt: time.Now().Unix() + 60}
+	request := oidc.TokenRequest{Subject: memberId, Name: memberId, Username: memberId, Email: memberId + "@" + realm.Domain, RealmRoles: []string{realmRole}, Audience: "mesail-api", AuthorizedParty: "mesail-web", ExpiresAt: time.Now().Unix() + 60}
 	token, err := realm.Token(request)
 	world.Must(err)
 	return "Bearer " + token

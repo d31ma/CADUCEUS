@@ -12,6 +12,7 @@ import (
 
 	"mesail.dev/packages/core"
 	"mesail.dev/packages/events"
+	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
 )
 
@@ -163,7 +164,7 @@ func TestAddressOfAnotherDomainIsNotFound(t *testing.T) {
 }
 
 func TestAddressWithoutAServiceTokenIsUnavailable(t *testing.T) {
-	_, _, err := NewDirectoryClient("http://127.0.0.1:1", &fixedTokens{failure: errors.New("no keycloak")}, call()).Address("example.com", "a@example.com")
+	_, _, err := NewDirectoryClient("http://127.0.0.1:1", &fixedTokens{failure: errors.New("no service token")}, call()).Address("example.com", "a@example.com")
 	if !isUnavailable(err) {
 		t.Fatalf("want Unavailable, got %v", err)
 	}
@@ -216,7 +217,7 @@ func TestMailInFailureIsUnavailable(t *testing.T) {
 }
 
 func TestMailInWithoutAServiceTokenIsUnavailable(t *testing.T) {
-	_, err := NewMailInClient("http://127.0.0.1:1", &fixedTokens{failure: errors.New("no keycloak")}, call()).Content("example.com", "in_1")
+	_, err := NewMailInClient("http://127.0.0.1:1", &fixedTokens{failure: errors.New("no service token")}, call()).Content("example.com", "in_1")
 	if !isUnavailable(err) {
 		t.Fatalf("want Unavailable, got %v", err)
 	}
@@ -236,7 +237,7 @@ func TestDomainPusherUsesATokenOfTheEnvelopeDomain(t *testing.T) {
 }
 
 func TestDomainPusherWithoutATokenFails(t *testing.T) {
-	failure := errors.New("no keycloak")
+	failure := errors.New("no service token")
 	err := NewDomainPusher(&fixedTokens{failure: failure}, time.Second).Push(outbox.Subscriber{Name: "search", URL: "http://127.0.0.1:1"}, events.Envelope{DomainId: "example.com"})
 	if !errors.Is(err, failure) {
 		t.Fatalf("want the token failure, got %v", err)
@@ -252,13 +253,13 @@ func TestDomainPusherReportsARefusal(t *testing.T) {
 	}
 }
 
-func TestRelayTriggerPostsWithAnOperatorToken(t *testing.T) {
+func TestRelayTriggerPostsWithAnInstallWideToken(t *testing.T) {
 	base, seen := serve(t, http.StatusOK, `{}`)
 	tokens := &fixedTokens{}
 	if err := NewRelayTrigger(tokens, time.Second).Run(base + "/api/v1/messaging/outbox/relay"); err != nil {
 		t.Fatal(err)
 	}
-	if seen.method != http.MethodPost || seen.path != "/api/v1/messaging/outbox/relay" || seen.authorization != "Bearer token-for-mesail-operators" {
+	if seen.method != http.MethodPost || seen.path != "/api/v1/messaging/outbox/relay" || seen.authorization != "Bearer token-for-*" {
 		t.Fatalf("got %+v", seen)
 	}
 }
@@ -272,7 +273,7 @@ func TestRelayTriggerReportsARefusal(t *testing.T) {
 }
 
 func TestRelayTriggerFailures(t *testing.T) {
-	failure := errors.New("no keycloak")
+	failure := errors.New("no service token")
 	if !errors.Is(NewRelayTrigger(&fixedTokens{failure: failure}, time.Second).Run("http://127.0.0.1:1"), failure) {
 		t.Fatal("want the token failure")
 	}
@@ -293,21 +294,23 @@ func TestScheduledSweepReadsTheRelayUrl(t *testing.T) {
 	}
 }
 
-func TestScheduledSweepFetchesAnOperatorTokenAndCallsTheRoute(t *testing.T) {
+func TestScheduledSweepFetchesAnInstallWideTokenAndCallsTheRoute(t *testing.T) {
 	t.Setenv("TMPDIR", t.TempDir())
+	asked := oidc.ServiceTokenRequest{}
 	tokenPath := ""
-	keycloak := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+	identity := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		tokenPath = request.URL.Path
-		_, _ = writer.Write([]byte(`{"access_token":"operator-token","expires_in":60}`))
+		_ = json.NewDecoder(request.Body).Decode(&asked)
+		_, _ = writer.Write([]byte(`{"accessToken":"install-wide-token","expiresIn":60}`))
 	}))
-	t.Cleanup(keycloak.Close)
+	t.Cleanup(identity.Close)
 	relay, seen := serve(t, http.StatusOK, `{}`)
-	t.Setenv("YON_APPLICATION_JSON", `{"yon":{"oidc":{"keycloak":"`+keycloak.URL+`/idp/realms/{realm}/protocol/openid-connect"},"service":{"client":{"secret":"s"}},"messaging":{"relayurl":"`+relay+`/relay"}}}`)
+	t.Setenv("YON_APPLICATION_JSON", `{"yon":{"oidc":{"serviceTokens":"`+identity.URL+`/api/v1/identity/service-token"},"service":{"client":{"secret":"s"}},"messaging":{"relayurl":"`+relay+`/relay"}}}`)
 	if err := (ScheduledSweep{}).Run(); err != nil {
 		t.Fatal(err)
 	}
-	if tokenPath != "/idp/realms/mesail-operators/protocol/openid-connect/token" || seen.authorization != "Bearer operator-token" {
-		t.Fatalf("got %q %+v", tokenPath, seen)
+	if tokenPath != "/api/v1/identity/service-token" || asked.DomainId != (oidc.InstallWide{}).DomainId() || seen.authorization != "Bearer install-wide-token" {
+		t.Fatalf("got %q %+v %+v", tokenPath, asked, seen)
 	}
 }
 
@@ -396,7 +399,7 @@ func TestDescribeWhenTheServiceIsDownIsUnavailable(t *testing.T) {
 }
 
 func TestDescribeWithoutAServiceTokenIsUnavailable(t *testing.T) {
-	_, _, err := NewAttachmentsClient("http://127.0.0.1:1", &fixedTokens{failure: errors.New("no keycloak")}, call()).Describe("example.com", "att_1")
+	_, _, err := NewAttachmentsClient("http://127.0.0.1:1", &fixedTokens{failure: errors.New("no service token")}, call()).Describe("example.com", "att_1")
 	if !isUnavailable(err) {
 		t.Fatalf("want Unavailable, got %v", err)
 	}

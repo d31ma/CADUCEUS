@@ -26,7 +26,7 @@ func (trigger SweepTrigger) Fire() error {
 	if err != nil {
 		return err
 	}
-	authorization, err := trigger.Tokens.Authorization(trigger.operatorsRealm())
+	authorization, err := trigger.Tokens.Authorization(trigger.installWide())
 	if err != nil {
 		return err
 	}
@@ -63,8 +63,8 @@ func (SweepTrigger) settingsVariable() string {
 	return "YON_APPLICATION_JSON"
 }
 
-func (SweepTrigger) operatorsRealm() string {
-	return "mesail-operators"
+func (SweepTrigger) installWide() string {
+	return oidc.InstallWide{}.DomainId()
 }
 
 func (SweepTrigger) route() string {

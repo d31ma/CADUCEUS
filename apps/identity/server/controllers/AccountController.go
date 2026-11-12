@@ -1,5 +1,4 @@
 import (
-	"cmp"
 	"errors"
 
 	"mesail.dev/packages/login"
@@ -17,7 +16,7 @@ func (controller *AccountController) PostSession(
 	// @FromBody
 	request SignInRequest,
 ) (Session, error) {
-	grant, failed := login.SessionsFactory{}.Configured().SignIn(cmp.Or(request.Login, request.Address), request.Password, request.OneTimeCode)
+	grant, failed := login.SessionsFactory{}.Configured().SignIn(request.Login, request.Password, request.OneTimeCode)
 	return controller.session(grant), controller.failure(failed)
 }
 

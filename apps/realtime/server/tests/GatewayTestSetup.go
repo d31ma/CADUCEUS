@@ -26,10 +26,11 @@ func (setup GatewayTestSetup) Realm(gatewayUrl string) oidc.SigningRealm {
 		panic(err)
 	}
 	os.Setenv("TMPDIR", folder)
-	realm, err := oidc.SigningRealm{}.Started("example.com")
+	started, err := oidc.SigningRealm{}.StartedMesail()
 	if err != nil {
 		panic(err)
 	}
+	realm := started.ForDomain("example.com")
 	setup.UseSettings(realm, gatewayUrl, setup.Secret())
 	if err := realm.Publish(time.Now()); err != nil {
 		panic(err)
@@ -58,7 +59,17 @@ func (setup GatewayTestSetup) Gateway(closes chan string) string {
 }
 
 func (setup GatewayTestSetup) Token(realm oidc.SigningRealm, roles []string) string {
-	token, err := realm.Token(oidc.TokenRequest{Subject: "member-1", RealmRoles: roles, Audience: "mesail-api", AuthorizedParty: "mesail-identity", ExpiresAt: time.Now().Unix() + 300})
+	return setup.signed(realm, oidc.TokenRequest{Subject: "member-1", Username: "member-1", RealmRoles: roles, AuthorizedParty: "mesail-web"})
+}
+
+func (setup GatewayTestSetup) ServiceToken(realm oidc.SigningRealm) string {
+	return setup.signed(realm, oidc.TokenRequest{Subject: "service", RealmRoles: []string{"mesail-service"}, AuthorizedParty: "mesail-service"})
+}
+
+func (setup GatewayTestSetup) signed(realm oidc.SigningRealm, request oidc.TokenRequest) string {
+	request.Audience = "mesail-api"
+	request.ExpiresAt = time.Now().Unix() + 300
+	token, err := realm.Token(request)
 	if err != nil {
 		panic(err)
 	}

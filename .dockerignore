@@ -11,4 +11,3 @@
 **/.DS_Store
 **/*.cover
 deploy/floci/
-!deploy/floci/keycloak-users/

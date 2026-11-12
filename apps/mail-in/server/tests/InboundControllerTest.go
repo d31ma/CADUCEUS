@@ -5,6 +5,7 @@ import (
 
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/mailin"
+	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
 )
 
@@ -106,7 +107,7 @@ func (test *InboundControllerTest) TestAHandOffIsStoredUnderTheRecipientDomainAf
 	Assert.Equals(first.InboundId, second.InboundId)
 	Assert.Equals(copied, world.Stored(copied).RawBlobKey)
 	Assert.Equals("raw hand-off", world.ReadBlob(copied))
-	Assert.Equals(world.Sender+" mesail-operators", world.Asked()[0])
+	Assert.Equals(world.Sender+" "+oidc.InstallWide{}.DomainId(), world.Asked()[0])
 }
 
 func (test *InboundControllerTest) TestAHandOffFromAnInactiveDomainIsRefused() {

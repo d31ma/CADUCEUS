@@ -10,7 +10,7 @@ import (
 func signingRealm(t *testing.T) oidc.SigningRealm {
 	t.Helper()
 	t.Setenv("TMPDIR", t.TempDir())
-	realm, err := oidc.SigningRealm{}.Started("example.com")
+	realm, err := oidc.SigningRealm{}.StartedMesail()
 	wantNoError(t, err)
 	document, err := realm.ApplicationJson()
 	wantNoError(t, err)
@@ -26,8 +26,9 @@ func bearer(t *testing.T, realm oidc.SigningRealm, subject string, roles ...stri
 		Name:            subject,
 		Email:           subject + "@example.com",
 		RealmRoles:      roles,
+		Domain:          "example.com",
 		Audience:        "mesail-api",
-		AuthorizedParty: "mesail-identity",
+		AuthorizedParty: "mesail-web",
 		ExpiresAt:       time.Now().Unix() + 60,
 	})
 	wantNoError(t, err)

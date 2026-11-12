@@ -390,22 +390,6 @@ func TestRealmSessionRefusesATamperedKey(t *testing.T) {
 	realmIs(t, err, SignInRefused{})
 }
 
-func TestRealmSessionNeedsAKeycloakEndpointWithoutARealmPlaceholder(t *testing.T) {
-	realm := newMesailRealm(t)
-	t.Setenv("TMPDIR", t.TempDir())
-	session := RealmSessionFactory{}.FromJson(mesailDocument(realm.server.URL+"/realms/{realm}/protocol/openid-connect", realm.admin(), mesailSessionKey(), "account-secret"))
-	realmUnavailable(t, session)
-	realmEqual(t, "sign-outs", realm.signOuts, 0)
-}
-
-func TestRealmSessionNeedsAnAdminEndpointWithoutARealmPlaceholder(t *testing.T) {
-	realm := newMesailRealm(t)
-	t.Setenv("TMPDIR", t.TempDir())
-	session := RealmSessionFactory{}.FromJson(mesailDocument(realm.keycloak(), realm.server.URL+"/admin/realms/{realm}", mesailSessionKey(), "account-secret"))
-	realmUnavailable(t, session)
-	realmList(t, "usernames", realm.usernames, nil)
-}
-
 func TestRealmSessionNeedsTheSessionKey(t *testing.T) {
 	realm := newMesailRealm(t)
 	t.Setenv("TMPDIR", t.TempDir())

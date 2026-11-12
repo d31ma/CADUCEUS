@@ -75,13 +75,13 @@ func (test *RecipientInputTest) world() (*RecipientService, oidc.Caller, map[str
 	members := &MemberStorageService{documents: documents, names: &CollectionNamesService{}}
 	addresses := &AddressStorageService{documents: documents, names: &CollectionNamesService{}}
 	tenants := &TenantService{domains: domains}
-	memberService := &TokenMemberService{tenants: tenants, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}
+	memberService := &MemberWriterService{members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}
 	test.host(domains, &TenantCollectionsService{documents: documents, names: &CollectionNamesService{}}, domain)
 	test.host(domains, &TenantCollectionsService{documents: documents, names: &CollectionNamesService{}}, otherDomain)
 	caller := oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain}
-	test.remember(memberService, caller)
-	test.remember(memberService, oidc.Caller{DomainId: domain, MemberId: "bo-id", DisplayName: "Bo Member", Email: "bo@" + domain})
-	test.remember(memberService, oidc.Caller{DomainId: otherDomain, MemberId: "eve-id", DisplayName: "Eve Other", Email: "eve@" + otherDomain})
+	test.join(memberService, domain, "ana-id", "ana", "Ana Admin")
+	test.join(memberService, domain, "bo-id", "bo", "Bo Member")
+	test.join(memberService, otherDomain, "eve-id", "eve", "Eve Other")
 	addresses.Insert(AddressDocument{Address: "bob@" + domain, DomainId: domain, Kind: "alias", TargetId: "bo-id"})
 	addresses.Insert(AddressDocument{Address: "team@" + domain, DomainId: domain, Kind: "channel", TargetId: "ch_team"})
 	service := &RecipientService{tenants: tenants, lookup: &RecipientLookupService{targets: &LocalTargetService{addresses: addresses, members: members}}}
@@ -94,8 +94,8 @@ func (test *RecipientInputTest) host(domains *DomainStorageService, collections 
 	Assert.Equals("<nil>", fmt.Sprint(domains.Insert(DomainDocument{DomainId: domainId, Name: domainId, State: "active"})))
 }
 
-func (test *RecipientInputTest) remember(service *TokenMemberService, caller oidc.Caller) {
-	_, err := service.Remember(caller)
+func (test *RecipientInputTest) join(writer *MemberWriterService, domainId string, personId string, username string, name string) {
+	_, err := writer.Join(PersonDocument{PersonId: personId, Username: username, DisplayName: name, State: "active"}, domainId, false)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 }
 

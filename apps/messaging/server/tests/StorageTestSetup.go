@@ -14,14 +14,14 @@ import (
 
 // @TestSetup
 type StorageTestSetup struct {
-	Domain    string
-	Pusher    *outbox.RecordingPusher
-	Names     storage.CollectionNames
-	Storage   *StorageService
-	Relay     *OutboxRelayService
-	Settings  *SettingsService
-	Operators oidc.SigningRealm
-	Home      oidc.SigningRealm
+	Domain      string
+	Pusher      *outbox.RecordingPusher
+	Names       storage.CollectionNames
+	Storage     *StorageService
+	Relay       *OutboxRelayService
+	Settings    *SettingsService
+	InstallWide oidc.SigningRealm
+	Home        oidc.SigningRealm
 }
 
 func (StorageTestSetup) Configure(execution *BehaviorExecution) (*BehaviorConfiguration, error) {
@@ -33,7 +33,7 @@ func (StorageTestSetup) World() *StorageTestSetup {
 	world.Domain = "m3-" + world.RandomText() + ".test"
 	world.Storage = &StorageService{dataSource: DataSource{}, settings: world.Settings, pusher: world.Pusher}
 	world.Relay = &OutboxRelayService{storage: world.Storage, failures: &FailureService{}}
-	world.Operators, world.Home = world.SignedRealms()
+	world.InstallWide, world.Home = world.SignedRealms()
 	return world
 }
 
@@ -41,14 +41,11 @@ func (world *StorageTestSetup) SignedRealms() (oidc.SigningRealm, oidc.SigningRe
 	folder, err := os.MkdirTemp("", "messaging-test-")
 	world.Must(err)
 	os.Setenv("TMPDIR", folder)
-	operators, err := oidc.SigningRealm{}.Started("mesail-operators")
+	realm, err := oidc.SigningRealm{}.StartedMesail()
 	world.Must(err)
-	home, err := oidc.SigningRealm{}.Started(world.Domain)
-	world.Must(err)
-	world.Must(operators.Publish(time.Now()))
-	world.Must(home.Publish(time.Now()))
-	os.Setenv("YON_APPLICATION_JSON", world.ApplicationJson(operators.Settings, "http://127.0.0.1:1"))
-	return operators, home
+	world.Must(realm.Publish(time.Now()))
+	os.Setenv("YON_APPLICATION_JSON", world.ApplicationJson(realm.Settings, "http://127.0.0.1:1"))
+	return realm.ForDomain(oidc.InstallWide{}.DomainId()), realm.ForDomain(world.Domain)
 }
 
 func (world *StorageTestSetup) ApplicationJson(settings oidc.Settings, base string) string {

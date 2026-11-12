@@ -10,7 +10,11 @@ load_tokens() {
   # shellcheck disable=SC1090
   . "$file"
   rm -f "$file"
-  echo "tokens loaded for: $(env | grep -o '^MESAIL_TOKEN_[A-Z]*' | sort | tr '\n' ' ')"
+  echo "tokens loaded for: $(env | grep -o '^MESAIL_TOKEN_[A-Z]*=.' | cut -d= -f1 | sort | tr '\n' ' ')"
+}
+
+wait_for_service() {
+  mesail_wait_for "$1 through the router" 180 mesail_service_answers "$MESAIL_ROUTER_URL" "$1"
 }
 
 run_blackbox() {
@@ -22,8 +26,11 @@ run_blackbox() {
 
 main() {
   mesail_load_settings
-  load_tokens
+  mesail_load_secrets
+  mesail_step wait-identity wait_for_service identity
+  mesail_step wait-directory wait_for_service directory
   mesail_step seed-directory mesail_seed_directory "$MESAIL_ROUTER_URL"
+  load_tokens
   mesail_step blackbox run_blackbox
 }
 

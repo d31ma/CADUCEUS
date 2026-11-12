@@ -30,7 +30,7 @@ func presenceText(offset time.Duration) string {
 }
 
 func presenceClaims(domainId string, memberId string, realmRoles ...string) oidc.Claims {
-	return oidc.Claims{Issuer: "https://id.mesail.test/realms/" + domainId, Subject: memberId, RealmRoles: realmRoles}
+	return oidc.Claims{Issuer: "https://mail.mesail.test/api/v1/identity", Domain: domainId, Subject: memberId, RealmRoles: realmRoles}
 }
 
 func presenceGate() oidc.Gate {
@@ -38,8 +38,8 @@ func presenceGate() oidc.Gate {
 		"ana":       presenceClaims("example.com", "ana", "mesail-member"),
 		"service":   presenceClaims("example.com", "service-account", "mesail-service"),
 		"elsewhere": presenceClaims("example.org", "service-account", "mesail-service"),
-		"operators": presenceClaims("mesail-operators", "service-account", "mesail-service"),
-		"operator":  presenceClaims("mesail-operators", "olga", "mesail-operator"),
+		"operators": presenceClaims("*", "service-account", "mesail-service"),
+		"operator":  presenceClaims("*", "olga", "mesail-operator"),
 	}}
 	return oidc.NewGate(verifier, presenceNow)
 }

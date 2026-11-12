@@ -22,10 +22,10 @@ func (test *CallerServiceTest) TestCallerRefusesABadToken() {
 	Assert.IsTrue(errors.As(err, &refused))
 }
 
-func (test *CallerServiceTest) TestOperatorAcceptsTheOperatorRealm() {
+func (test *CallerServiceTest) TestOperatorAcceptsAnInstallWideToken() {
 	setup := NotifyTestSetup{}
-	_, operators := setup.Realms(setup.Domain())
-	Assert.IsTrue((&CallerService{}).Operator(setup.Service(operators)) == nil)
+	_, installWide := setup.Realms(setup.Domain())
+	Assert.IsTrue((&CallerService{}).Operator(setup.Service(installWide)) == nil)
 }
 
 func (test *CallerServiceTest) TestOperatorRefusesADomainService() {
@@ -36,6 +36,10 @@ func (test *CallerServiceTest) TestOperatorRefusesADomainService() {
 	Assert.IsTrue(errors.As(err, &missing))
 }
 
-func (test *CallerServiceTest) TestOperatorRealmIsMesailOperators() {
-	Assert.Equals("mesail-operators", (&CallerService{}).OperatorRealm())
+func (test *CallerServiceTest) TestIsInstallWideMatchesTheStarDomain() {
+	Assert.IsTrue((&CallerService{}).IsInstallWide("*"), "the star domain was not install-wide")
+}
+
+func (test *CallerServiceTest) TestIsInstallWideRefusesANamedDomain() {
+	Assert.IsTrue(!(&CallerService{}).IsInstallWide("example.com"), "a named domain was install-wide")
 }

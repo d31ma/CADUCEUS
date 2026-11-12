@@ -6,23 +6,26 @@ import (
 	"mesail.dev/packages/oidc"
 )
 
-// @Test(KeycloakTestSetup, {"partition":"tests"})
+// @Test(OneRealmTestSetup, {"partition":"tests"})
 type AccountControllerTest struct {
 	behaviors *BehaviorContext
 }
 
 func (test *AccountControllerTest) signedIn() string {
-	setup := KeycloakTestSetup{}
-	realm := setup.Realm("example.com")
-	setup.Keycloak(realm)
-	return "Bearer " + setup.Token(realm, setup.Member())
+	OneRealmTestSetup{}.Start()
+	session, err := (&AccountController{}).PostSession(SignInRequest{Login: "ana", Password: "right"})
+	if err != nil {
+		panic(err)
+	}
+	return "Bearer " + session.AccessToken
 }
 
 func (test *AccountControllerTest) TestPostPasswordAnswersAFreshSession() {
 	authorization := test.signedIn()
 	session, err := (&AccountController{}).PostPassword(authorization, PasswordChange{CurrentPassword: "right", NewPassword: "a-new-long-password"})
 	Assert.IsTrue(err == nil)
-	Assert.Equals("member-1", session.Me.MemberId)
+	Assert.Equals("person-ana", session.Me.MemberId)
+	Assert.IsTrue(!session.MustChangePassword)
 	Assert.IsTrue(session.SessionKey != "")
 }
 
@@ -78,9 +81,12 @@ func (test *AccountControllerTest) TestDeleteTotpChecksThePassword() {
 	Assert.IsTrue(errors.As(err, &unauthenticated))
 }
 
-func (test *AccountControllerTest) TestAccountRoutesAreUnavailableWithoutSettings() {
-	KeycloakTestSetup{}.Unconfigured()
-	_, err := (&AccountController{}).GetTotp("Bearer x")
-	var unavailable *Unavailable
-	Assert.IsTrue(errors.As(err, &unavailable))
+func (test *AccountControllerTest) TestAccountRoutesRefuseEveryTokenWithoutSettings() {
+	setup := OneRealmTestSetup{}
+	key := setup.Start()
+	token := setup.Token(key, setup.Member())
+	setup.Unconfigured()
+	_, err := (&AccountController{}).GetTotp("Bearer " + token)
+	var unauthenticated *Unauthenticated
+	Assert.IsTrue(errors.As(err, &unauthenticated))
 }

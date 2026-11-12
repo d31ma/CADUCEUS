@@ -70,7 +70,7 @@ func (test *PushServiceTest) TestDeliverSkipsAMemberWithoutSubscriptions() {
 func (test *PushServiceTest) TestDeliverSkipsAnActiveMember() {
 	setup := JobsTestSetup{}
 	domainId := setup.Domain()
-	setup.Keycloak(setup.Realms(domainId))
+	setup.IdentityServer(setup.Realms(domainId))
 	server, calls := JobsTestSetup{}.PushServer(201)
 	presence := JobsTestSetup{}.PresenceServer(map[string]string{"member-1": "active"}, 200)
 	JobsTestSetup{}.UseNotify([]string{"example.com"}, presence.URL)
@@ -86,7 +86,7 @@ func (test *PushServiceTest) TestDeliverSkipsAnActiveMember() {
 func (test *PushServiceTest) TestDeliverWaitsWhenPresenceIsUnavailable() {
 	setup := JobsTestSetup{}
 	domainId := setup.Domain()
-	setup.Keycloak(setup.Realms(domainId))
+	setup.IdentityServer(setup.Realms(domainId))
 	server, calls := JobsTestSetup{}.PushServer(201)
 	presence := JobsTestSetup{}.PresenceServer(map[string]string{}, 500)
 	JobsTestSetup{}.UseNotify([]string{"example.com"}, presence.URL)

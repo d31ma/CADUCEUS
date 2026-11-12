@@ -1,15 +1,9 @@
-import (
-	"cmp"
-
-	"mesail.dev/packages/oidc"
-)
+import "cmp"
 
 // @Service
 type AdmissionService struct {
 	// @Needs
 	callers *CallerService
-	// @Needs
-	tokenMembers *TokenMemberService
 	// @Needs
 	people *PeopleStorageService
 	// @Needs
@@ -18,8 +12,8 @@ type AdmissionService struct {
 
 func (service *AdmissionService) Admit(authorization string) Admission {
 	caller, refused := service.callers.Caller(authorization)
-	person, found, failure := service.personUnless(refused, caller.MemberId)
-	return Admission{Caller: caller, Refusal: service.admitted(cmp.Or(refused, failure), found, person, caller)}
+	person, _, failure := service.personUnless(refused, caller.MemberId)
+	return Admission{Caller: caller, Refusal: service.admitted(cmp.Or(refused, failure), person, caller.DomainId)}
 }
 
 func (service *AdmissionService) personUnless(refused error, personId string) (PersonDocument, bool, error) {
@@ -29,19 +23,11 @@ func (service *AdmissionService) personUnless(refused error, personId string) (P
 	return service.people.ByPersonId(personId)
 }
 
-func (service *AdmissionService) admitted(failure error, found bool, person PersonDocument, caller oidc.Caller) error {
-	switch {
-	case failure != nil:
+func (service *AdmissionService) admitted(failure error, person PersonDocument, domainId string) error {
+	if failure != nil {
 		return failure
-	case !found:
-		return service.remembered(caller)
 	}
-	return service.memberRefusal(person, caller.DomainId)
-}
-
-func (service *AdmissionService) remembered(caller oidc.Caller) error {
-	_, failure := service.tokenMembers.Remember(caller)
-	return failure
+	return service.memberRefusal(person, domainId)
 }
 
 func (service *AdmissionService) memberRefusal(person PersonDocument, domainId string) error {

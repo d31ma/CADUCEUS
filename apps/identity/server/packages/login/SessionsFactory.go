@@ -16,9 +16,7 @@ func (factory SessionsFactory) Configured() Sessions {
 }
 
 func (factory SessionsFactory) FromJson(document string) Sessions {
-	settings, err := oidc.SettingsReader{}.FromJson(document)
-	perRealm := oidc.IssuerPattern{Pattern: settings.Issuer}.HasPlaceholder()
-	return factory.byMode(document, perRealm || err != nil)
+	return factory.realm(document)
 }
 
 func (factory SessionsFactory) ServiceTokens(document string) ServiceTokenIssuer {
@@ -27,13 +25,6 @@ func (factory SessionsFactory) ServiceTokens(document string) ServiceTokenIssuer
 
 func (factory SessionsFactory) ConfiguredServiceTokens() ServiceTokenIssuer {
 	return factory.ServiceTokens(os.Getenv(factory.variable()))
-}
-
-func (factory SessionsFactory) byMode(document string, perRealm bool) Sessions {
-	if perRealm {
-		return LegacySessions{Issuer: oidc.SessionIssuerFactory{}.FromJson(document), Accounts: oidc.AccountManagerFactory{}.FromJson(document)}
-	}
-	return factory.realm(document)
 }
 
 func (factory SessionsFactory) realm(document string) RealmSessions {

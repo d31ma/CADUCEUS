@@ -36,16 +36,17 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
 - Each app gets a free port, written into its native profile
   (`server.port`), so its own `@Schedule` worker, which calls
   `<app>.localhost:<server.port>`, reaches it.
-- Services reach each other through the router. `deploy/lambda/rewrite-config.sh`
-  rewrites each copied `server/application.json`: `oidc.issuer` becomes
-  `${MESAIL_ISSUER_ORIGIN}/idp/realms/{realm}`; `http://keycloak:8080/idp` and
+- Services reach each other through the router. `deploy/lambda/rewrite-config.sh
+  <application.json> <keycloak url> <service base> [dev dns resolver]`
+  rewrites each copied `server/application.json`: `http://keycloak:8080/idp` and
   `http://127.0.0.1:8180/idp` become the run's Keycloak; `http://<name>.localhost:81xx`
   and `http://127.0.0.1:81xx` keep their host and use the router's port; the
-  Keycloak host is added to `outgoing.hosts`. The copied `.env` gets the same
-  address change. The Lambda image runs the same script at build time
-  (build args `ISSUER_ORIGIN`, `KEYCLOAK_URL`, `SERVICE_BASE`; see the Lambda
-  image section for the local forwarders), so every function trusts the same
-  issuer and reaches other services through the router.
+  Keycloak host is added to `outgoing.hosts`. So `oidc.issuer`, `oidc.jwks`,
+  `oidc.serviceTokens` and `identity.issuer` all become
+  `<router>/api/v1/identity...` in every app: every app trusts the tokens
+  that `identity` signs. The copied `.env` gets the same address change. The
+  Lambda image runs the same script at build time (build args `KEYCLOAK_URL`,
+  `SERVICE_BASE`; see the Lambda image section for the local forwarders).
 - Mail: `mail-in` and `mail-out` share the run's blob folder
   (`YON_MAILIN_BLOBS_*`, `mailout.blobfolder`), and `mail-out` reads test DKIM
   keys from a private secrets folder (`mailout.secretfolder`), one RSA 2048 key
@@ -59,11 +60,13 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
 - Scheduled routes: each app's own `@Schedule` worker triggers its relay and
   jobs under `ty start`, every 15 to 60 seconds. So that tests do not wait
   for those intervals, the run also starts `deploy/lambda/scheduler.sh`,
-  which calls every route in `stack.json` `schedules` (all nine relay and job
-  routes, including `mail-in`'s outbox relay that no worker covers) every
-  `nativeScheduleSeconds` (10; `MESAIL_SCHEDULE_SECONDS` overrides it) with a
-  `mesail-operators` service token. The extra calls repeat the workers' work,
-  and the jobs take leases, so they are harmless.
+  which calls every route in `stack.json` `schedules` (all ten relay and job
+  routes, including `mail-in`'s outbox relay that no worker covers and
+  directory's `/jobs/removals`) every `nativeScheduleSeconds` (10;
+  `MESAIL_SCHEDULE_SECONDS` overrides it) with an install-wide service token
+  from `identity` (`POST /api/v1/identity/service-token`, domain `*`). The
+  extra calls repeat the workers' work, and the jobs take leases, so they are
+  harmless.
 - An app that declares its own `datasource` in `application.json` (against
   the rule; `search` does today) gets no `.env` datasource; in the copy its
   `fylo:///mnt/data/<service>` becomes this run's root. The Lambda image
@@ -78,21 +81,21 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
   - Keycloak 26.8.2 is built once into `~/Developer/Tools/mesail-keycloak`
     (by `deploy/keycloak/dev/build-native-keycloak.sh`, shared by every
     slice) and started for the run on free ports, with its SQLite file in the
-    run's FYLO folder. It imports the realms `example.com`, `example.org`,
-    `partner.test` and `mesail-operators`, the Keycloak dev users and the
-    blackbox users (`ana`, `bo`, `eve`, `carol`, `operator`; see the table
-    under "Keycloak, secrets and test users"), with this run's secrets, then
-    `mesail-keycloak-provision` creates the `mesail-directory` admin client.
-  - The router proxies `/idp/` to it. In each copied app, `oidc.issuer`
-    becomes `https://mesail.localhost/idp/realms/{realm}` (the issuer in every
-    token) and `http://keycloak:8080/idp` or `http://127.0.0.1:8180/idp`
-    becomes this Keycloak.
-  - After the apps answer, the run writes the tokens to
+    run's FYLO folder. It imports the one realm `mesail` and its dev people
+    (`MESAIL_KEYCLOAK_DEV_USERS=true`; see "People" below), with this run's
+    secrets. Its issuer is `http://127.0.0.1:<its port>/idp/realms/mesail`,
+    the same URL `identity` uses to reach it.
+  - Only the services talk to Keycloak. The router has no `/idp/` route in
+    this stack. In each copied app, `http://keycloak:8080/idp` or
+    `http://127.0.0.1:8180/idp` becomes this Keycloak.
+  - After the apps answer, the run seeds the directory (see "Seeding the
+    directory" below), then writes the tokens to
     `~/Developer/AtlasFylo/mesail/<owner>/tokens.env` (mode 600; set
-    `MESAIL_TOKENS_FILE` for another place; never in a log), adds
-    `example.com` and `example.org` to the directory as the operator, and
-    calls the directory once as `ana`, `bo` and `eve` so it knows them.
-    `carol@partner.test` stays external.
+    `MESAIL_TOKENS_FILE` for another place; never in a log).
+  - The directory gets `YON_DIRECTORY_DEVELOPMENTSEED=true` in its copied
+    `.env` (`stack.json` `appSettings`; it wins over the app's own `.env`).
+    It turns on `POST /api/v1/directory/people/seed`. Never set it in
+    production.
   - Tokens last 60 seconds. The run writes fresh ones just before the tests;
     with `--up`, run `--tokens` before you load the file.
   - Domain verification uses the router's dev DNS responder
@@ -168,8 +171,7 @@ Settings (environment, or a `.env` file copied from `.env.example`):
 | `Dockerfile` target `realtime` | The realtime container: the `realtime` Yon app and the `edge/realtime` gateway (helper stage `realtime-gateway-build`). |
 | `Dockerfile` target `router` | The public origin (`deploy/router`). |
 | `deploy/lambda/` | Image helpers: tool install with checksums, the Lambda profile, the Lambda start script and the realtime start script (`realtime-start.sh`). |
-| `deploy/floci/stack.json` | The Floci description: functions, memory, timeouts, FYLO owners, containers (`"kind": "container"`), file system, bucket, realms and test users. |
-| `deploy/floci/keycloak-users/` | The blackbox test users, added to the Keycloak image by the target `keycloak-blackbox`. |
+| `deploy/floci/stack.json` | The Floci description: functions, memory, timeouts, FYLO owners, containers (`"kind": "container"`), file system, bucket, Keycloak realm and image, secrets, dev settings (`appSettings`), people, domains and schedules. |
 | `docker-compose.yml` | Floci, Keycloak, the realtime container and the router on the network `mesail_floci_backend`. |
 | `scripts/floci/*.sh` | `build`, `up`, `deploy`, `tokens`, `test`, `down`, `stack`, `run-all`. |
 
@@ -259,19 +261,30 @@ Settings (environment, or a `.env` file copied from `.env.example`):
 - No published ports: the router reaches it on the network `backend`.
 - Compose settings: `MESAIL_REALTIME_GATEWAY_SECRET` (generated for each
   run), `MESAIL_REALTIME_ORIGINS` = `MESAIL_PUBLIC_URL`, and
-  `YON_SERVICE_CLIENT_SECRET` = `MESAIL_SERVICE_SECRET`.
+  `YON_SERVICE_CLIENT_SECRET` = `MESAIL_SERVICE_CLIENT_SECRET`.
 
 ### Functions (`deploy.sh`)
 
 - One function `mesail-<service>` per Yon app (not for a `"kind":
   "container"` entry such as `realtime`), `PackageType=Image`, arm64,
   memory and timeout from `stack.json`.
-- FYLO owners get one EFS access point each on the file system
-  `mesail-data`, mounted at `/mnt/data`, a VPC configuration (Floci needs
-  one; the IDs are placeholders), and **reserved concurrency 1**, so only one
-  warm instance writes the root (ADR 0004 section 4).
+- FYLO owners get one EFS access point each on the file system named by
+  `stack.json` `fileSystem.creationToken` (`mesail-data-2`), mounted at
+  `/mnt/data`, a VPC configuration (Floci needs one; the IDs are
+  placeholders), and **reserved concurrency 1**, so only one warm instance
+  writes the root (ADR 0004 section 4).
 - In Floci the access point's root directory and user are not applied: each
   access point is its own Docker volume `floci-aws-efs-<id>-<hash>`.
+- **A fresh data set without removing anything.** The FYLO data in the dev
+  host stays between runs. The file system `mesail-data` holds members with
+  the random Keycloak subjects of the old per-domain realms, which break
+  tests. Since the switch to one realm (L5) the stack uses a new file system,
+  `mesail-data-2`, so every service starts with empty data once; the old
+  file system and its volumes stay untouched. The dev people have fixed ids
+  now, so the data stays valid from run to run. If you ever need another
+  fresh set, change `creationToken` again (`mesail-data-3`, ...). Never
+  remove the old volumes in the dev host. The realtime volume
+  `mesail-realtime-data` is kept as it is.
 
 ### Router (`deploy/router`)
 
@@ -284,7 +297,7 @@ One HTTP origin, like FitNest's gateway:
 | `MESAIL_ROUTER_PASSTHROUGH` prefixes | Proxied as they are, with streaming and WebSocket upgrades. When several prefixes match, the longest one wins. They are checked before `/api/v1/<service>/`, so a service reached this way needs no entry in `MESAIL_ROUTER_SERVICES`. In `docker-compose.yml`: `/api/v1/realtime/socket` and `/api/v1/realtime/stream` go to the gateway (`http://realtime:8116`), and every other `/api/v1/realtime/` path goes to the realtime Yon app (`http://realtime:8106`). The gateway's management port 8117 is never routed. |
 | `/blobs/<domain>/<name>?<signature>` | `kit/blobs` `LocalHandler` (GET and PUT only) when `MESAIL_ROUTER_BLOBS_FOLDER`, `_BASE` and `_SECRET` (32+ characters) are set: the signed upload and download links of the local blob store. The values match the attachments app's `YON_ATTACHMENTS_FOLDER`, `_LINK_BASE` and `_LINK_SECRET`. Without them, 404. |
 | `/api/v1/<service>/...` | Lambda `mesail-<service>`, invoked with an HTTP API v2.0 event. The event's `host` header is `localhost` (Tachyon answers only local names) and the original host is in `x-forwarded-host`. Unknown service: 404. Body over 6 MiB: 413. A function error: 502. |
-| `/idp/...` | Keycloak (served under `/idp`), with the original `Host`. |
+| `/idp/...` | Keycloak (served under `/idp`), with the original `Host`, only when `MESAIL_ROUTER_KEYCLOAK_URL` is set. Both stacks leave it unset: only the services talk to Keycloak, so `/idp/` answers 404. |
 | `GET /_dev/dns-query` | Only when `MESAIL_ROUTER_DEV_DNS_DOMAINS` is set (native runs): a DNS-over-HTTPS (JSON) responder for those test domains, so the directory's domain check can pass locally: MX `10 <MESAIL_ROUTER_DEV_DNS_MAIL_HOST>.`, TXT `v=spf1 <MESAIL_ROUTER_DEV_DNS_SPF> -all`, any `<selector>._domainkey` a placeholder DKIM key, `_dmarc` `v=DMARC1; p=reject`; anything else NXDOMAIN. Otherwise 404. |
 | `/admin`, `/admin/...` | The `web-admin` bundle in the bucket `mesail-static` under `admin/`. |
 | everything else | The `web` bundle under `web/`. A missing page (no file extension, or a browser asking for HTML) gets the app's `index.html`. |
@@ -292,7 +305,8 @@ One HTTP origin, like FitNest's gateway:
 Limits at the router:
 
 - **Per-address rate limit** (`MESAIL_ROUTER_RATE_LIMIT`, default 10 per
-  minute per client address) on `POST /api/v1/identity/session` and
+  minute per client address; both test stacks set 1000, because the
+  blackbox tests sign in more than 100 times) on `POST /api/v1/identity/session` and
   `POST /api/v1/identity/session/refresh`
   (`MESAIL_ROUTER_LIMITED_ROUTES`). Over the limit: 429 with `Retry-After`.
   Identity keeps no attempt counter; Keycloak's brute-force detection
@@ -319,61 +333,94 @@ Static replies carry `Content-Security-Policy`, `X-Content-Type-Options`,
 In AWS the same routes become an API Gateway HTTP API (Lambda proxy
 integrations, payload 2.0) plus S3 and CloudFront for the static files.
 
-### Keycloak, secrets and test users
+### Keycloak, secrets and people
 
 Keycloak is the `mesail-keycloak` image (Keycloak 26.8.2 on SQLite, owned by
-`deploy/keycloak`), extended by the test-only target `keycloak-blackbox`,
-which adds the blackbox users from `deploy/floci/keycloak-users/`. It runs
-with `MESAIL_KEYCLOAK_DOMAINS=example.com,example.org,partner.test`, the dev
-users on, its SQLite file on a tmpfs (no volume), and listens on port 8080
-under `/idp` inside the network. Its hostname is
-`${MESAIL_ISSUER_ORIGIN}/idp` (default `https://mesail.localhost/idp`), so
-every token's issuer is `https://mesail.localhost/idp/realms/<domain>`, the
-value the apps put in their `oidc.issuer`; Lambdas fetch keys from
-`http://keycloak:8080/idp/realms/<domain>/protocol/openid-connect/certs`.
+`deploy/keycloak`), as it is: one realm `mesail`, no domain realms. It runs
+with the dev people on (`MESAIL_KEYCLOAK_DEV_USERS=true`), its SQLite file
+on a tmpfs (no volume, so every start begins with a fresh realm), and
+listens on port 8080 under `/idp` inside the network. Its hostname is
+`http://keycloak.localhost:18180/idp`: the address the Lambdas and the
+realtime container use (through their local forwarder to `keycloak:8080`).
+So the realm's issuer, `http://keycloak.localhost:18180/idp/realms/mesail`,
+is exactly what `identity` checks. Only `identity` and `directory` talk to
+Keycloak. The browser and the tests never do.
 
-**Secrets.** Each run makes one set of random client secrets in a private
-temporary file (mode 600, removed at the end, never in a log), or uses the
-file named by `MESAIL_SECRETS_FILE`:
+**Secrets.** Each run makes one set of random secrets in a private temporary
+file (mode 600, removed at the end, never in a log), or uses the file named
+by `MESAIL_SECRETS_FILE`. `stack.json` `generatedSecrets` names each secret
+and its kind: `hex` (32 random bytes as hex), `random-32-base64` (32 random
+bytes as base64) or `p256-pkcs8-base64` (a new P-256 key, PKCS #8 DER as one
+base64 line).
 
 | Generated | Keycloak reads | Services read (only the apps that use the name) |
 | --- | --- | --- |
-| `MESAIL_IDENTITY_CLIENT_SECRET` | same name | `YON_IDENTITY_CLIENT_SECRET`, `YON_DIRECTORY_REALMSECRETS_IDENTITY` |
-| `MESAIL_SERVICE_SECRET` | same name | `YON_SERVICE_CLIENT_SECRET`, `YON_DIRECTORY_REALMSECRETS_SERVICE` |
-| `MESAIL_ACCOUNT_CLIENT_SECRET` | same name | `YON_IDENTITY_ACCOUNT_SECRET`, `YON_DIRECTORY_REALMSECRETS_ACCOUNT` |
+| `MESAIL_IDENTITY_CLIENT_SECRET` | same name | `YON_IDENTITY_CLIENT_SECRET` |
+| `MESAIL_ACCOUNT_CLIENT_SECRET` | same name | `YON_IDENTITY_ACCOUNT_SECRET` |
 | `MESAIL_KEYCLOAK_DIRECTORY_SECRET` | same name | `YON_DIRECTORY_ADMIN_SECRET` |
-| `KC_BOOTSTRAP_ADMIN_CLIENT_SECRET` | same name (first start: creates `mesail-directory`) | none |
-| `MESAIL_LINK_SECRET` | none | `YON_ATTACHMENTS_LINK_SECRET` (and the router's `/blobs`) |
+| `MESAIL_SERVICE_CLIENT_SECRET` | none | `YON_SERVICE_CLIENT_SECRET`: identity checks it at `POST /service-token`; every app that calls another app sends it there. The scheduler uses it too. |
+| `MESAIL_IDENTITY_SESSION_KEY` | none | `YON_IDENTITY_SESSION_KEY` (identity) |
+| `MESAIL_IDENTITY_SIGNING_KEY` | none | `YON_IDENTITY_SIGNING_KEY` (identity signs every Mesail token with it) |
+| `MESAIL_LINK_SECRET` | none | `YON_ATTACHMENTS_LINK_SECRET`, `YON_MAILIN_BLOBS_LINK_SECRET` (and the router's `/blobs`) |
 | `MESAIL_REALTIME_GATEWAY_SECRET` | none | The realtime container: the gateway, and the Yon app as `YON_REALTIME_GATEWAY_SECRET` |
 
 The map is `secrets` in `stack.json`. A service gets a name when its app
-folder mentions it (in `.env.example`, code or `application.json`). In Floci
-the values are the functions' environment variables, which the start script
-writes into the app's `.env` at cold start; natively they go straight into
-the copied `.env` (an app's own `.env` value wins).
+folder mentions it (`YON_NAME` or its dotted form, in `.env.example`, code or
+`application.json`). In Floci the values are the functions' environment
+variables, which the start script writes into the app's `.env` at cold
+start; natively they go straight into the copied `.env` (an app's own `.env`
+value wins). `YON_IDENTITY_SIGNING_PREVIOUS` and `YON_SERVICE_CLIENT_PREVIOUS`
+are only for a key rotation and are never generated (see `.env.example`).
 
-**Test users** (tokens from the confidential client `mesail-identity`,
-password grant, by `tokens.sh`):
+**Dev settings.** `stack.json` `appSettings` holds plain settings that only
+the test stacks set: `directory` gets `YON_DIRECTORY_DEVELOPMENTSEED=true`
+(Floci: the function's environment; native: the copied `.env`).
 
-| Token | User | Realm | Roles |
+**People** (`stack.json` `people`; one sign-in per person, the realm's dev
+people with fixed Keycloak ids):
+
+| Token | Sign-in | Person id | Memberships |
 | --- | --- | --- | --- |
-| `MESAIL_TOKEN_ANA` | `ana@example.com` | `example.com` | `mesail-member`, `mesail-admin` |
-| `MESAIL_TOKEN_BO` | `bo@example.com` | `example.com` | `mesail-member` |
-| `MESAIL_TOKEN_EVE` | `eve@example.org` | `example.org` | `mesail-member` |
-| `MESAIL_TOKEN_CAROL` | `carol@partner.test` | `partner.test` | `mesail-member` |
-| `MESAIL_TOKEN_OPERATOR` | `operator@mesail.test` | `mesail-operators` | `mesail-operator` |
+| `MESAIL_TOKEN_ANA` | `ana` | `3e5a11d0-0000-4000-8000-000000000001` | `example.com` (admin, default), `example.org` |
+| `MESAIL_TOKEN_BO` | `bo` | `...000000000002` | `example.com` |
+| `MESAIL_TOKEN_EVE` | `eve` | `...000000000003` | `example.org` |
+| `MESAIL_TOKEN_CAROL` | `carol` | `...000000000004` | none (so `carol@partner.test` stays external; her token stays empty) |
+| `MESAIL_TOKEN_OPERATOR` | `operator` | `...000000000005` | none; Keycloak role `mesail-operator` |
 
-The Keycloak image's own dev users (`member@<domain>`, `admin@<domain>`)
-exist too. Passwords are in `stack.json` (dev only).
+Passwords are `dev-<name>-password` (dev only, in `stack.json`).
+
+**Seeding the directory** (`mesail_seed_directory` in
+`scripts/floci/common.sh`, before the tokens; every call goes through the
+router, and every step can run again):
+
+1. A service token from `identity`: `POST /api/v1/identity/service-token`
+   with `{"clientId": "mesail-service", "clientSecret":
+   MESAIL_SERVICE_CLIENT_SECRET, "domainId": "*"}`.
+2. With it, `POST /api/v1/directory/people/seed` for `operator` (no
+   memberships). `identity` signs in only people that the directory knows.
+3. `operator` signs in (`POST /api/v1/identity/session`) and adds the
+   domains: `hostedDomains` (`example.com`, `example.org`) are added and
+   verified.
+4. With the service token, the seed call for `ana`, `bo`, `eve` and `carol`.
+   `carol` gets no domain: the tests need `carol@partner.test` to stay an
+   external address, and any domain added to the directory counts as
+   hosted for recipient lookups.
+
+**Tokens** (`tokens.sh`): each person signs in through `identity`
+(`POST /api/v1/identity/session`, login = the username), and the script
+prints `MESAIL_TOKEN_<NAME>`, `MESAIL_PASSWORD_<NAME>` and
+`MESAIL_SERVICE_CLIENT_SECRET` for the blackbox tests. It never calls
+Keycloak. Tokens last 60 seconds, so they are made just before the tests.
 
 ### Scheduler (Floci)
 
 In Lambda form no `@Schedule` worker runs, so the `scheduler` container
 (`Dockerfile` target `scheduler`, `deploy/lambda/scheduler.sh` on a pinned
 curl image) calls every route in `stack.json` `schedules` through the router
-every `scheduleSeconds` (60) with a `mesail-operators` service token from
-`mesail-service` (`MESAIL_SERVICE_SECRET`). It logs only the path and the
-status code. In AWS this becomes EventBridge Scheduler rules with a small
+every `scheduleSeconds` (60). Its token is an install-wide service token from
+`identity` (`http://router:8080/api/v1/identity/service-token`, domain `*`,
+secret `MESAIL_SERVICE_CLIENT_SECRET`). It logs only the path and the status
+code. In AWS this becomes EventBridge Scheduler rules with a small
 token-fetching trigger.
 
 ## Ports on the Mac (127.0.0.1 only)
@@ -381,7 +428,7 @@ token-fetching trigger.
 | Port | Service |
 | --- | --- |
 | 18080 | Router (`MESAIL_BASE_URL` of the blackbox tests) |
-| 18180 | Keycloak under `/idp` |
+| 18180 | Keycloak under `/idp` (for checks only; the tests never call it) |
 | 14566 / 4566 | Floci (AWS API) in the dev host / in Colima |
 
 ## Not done yet

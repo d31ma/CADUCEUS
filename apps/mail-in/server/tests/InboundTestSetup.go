@@ -32,7 +32,7 @@ type InboundTestSetup struct {
 	Inbound     *InboundController
 	Outbox      *OutboxController
 	server      *httptest.Server
-	realms      map[string]oidc.SigningRealm
+	realm       oidc.SigningRealm
 	lock        sync.Mutex
 	asked       []string
 	savedJson   string
@@ -141,15 +141,11 @@ func (world *InboundTestSetup) UseServices() {
 	world.savedJson, world.savedTemp = os.Getenv("YON_APPLICATION_JSON"), os.Getenv("TMPDIR")
 	world.tokenFolder, _ = os.MkdirTemp("", "mail-in-realms-")
 	os.Setenv("TMPDIR", world.tokenFolder)
-	world.realms = map[string]oidc.SigningRealm{}
-	for _, name := range []string{world.Domain, world.Other, "mesail-operators"} {
-		realm, _ := oidc.SigningRealm{}.Started(name)
-		realm.Publish(time.Now())
-		world.realms[name] = realm
-	}
+	world.realm, _ = oidc.SigningRealm{}.StartedMesail()
+	world.realm.Publish(time.Now())
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/directory/domains/{domainId}", world.directory)
-	mux.HandleFunc("POST /realms/{realm}/protocol/openid-connect/token", world.keycloak)
+	mux.HandleFunc("POST /api/v1/identity/service-token", world.identityServiceToken)
 	world.server = httptest.NewServer(mux)
 	world.writeSettings()
 }
@@ -157,8 +153,8 @@ func (world *InboundTestSetup) UseServices() {
 func (world *InboundTestSetup) writeSettings() {
 	application := map[string]map[string]any{}
 	world.Must(json.Unmarshal([]byte(world.savedJson), &application))
-	identity := world.realms[world.Domain].Settings
-	identity.Keycloak = world.server.URL + "/realms/{realm}/protocol/openid-connect"
+	identity := world.realm.Settings
+	identity.ServiceTokens = world.server.URL + "/api/v1/identity/service-token"
 	settings := mailin.SettingsReader{Environment: os.Getenv}.MailIn()
 	settings.Directory = world.server.URL
 	world.blobFolder = cmp.Or(settings.Blobs.Folder, world.tokenFolder)
@@ -183,9 +179,10 @@ func (world *InboundTestSetup) stopServices() {
 	os.RemoveAll(world.tokenFolder)
 }
 
-func (world *InboundTestSetup) keycloak(writer http.ResponseWriter, request *http.Request) {
-	realm := world.realms[request.PathValue("realm")]
-	json.NewEncoder(writer).Encode(map[string]any{"access_token": world.serviceToken(realm), "expires_in": 60})
+func (world *InboundTestSetup) identityServiceToken(writer http.ResponseWriter, request *http.Request) {
+	asked := oidc.ServiceTokenRequest{}
+	json.NewDecoder(request.Body).Decode(&asked)
+	json.NewEncoder(writer).Encode(oidc.ServiceTokenAnswer{AccessToken: world.serviceToken(asked.DomainId), ExpiresIn: 60})
 }
 
 func (world *InboundTestSetup) directory(writer http.ResponseWriter, request *http.Request) {
@@ -202,13 +199,13 @@ func (world *InboundTestSetup) directory(writer http.ResponseWriter, request *ht
 	json.NewEncoder(writer).Encode(mailin.Domain{DomainId: domainId, Name: domainId, State: states[domainId]})
 }
 
-func (world *InboundTestSetup) serviceToken(realm oidc.SigningRealm) string {
-	token, _ := realm.Token(oidc.TokenRequest{Subject: "service-account", RealmRoles: []string{"mesail-service"}, Audience: "mesail-api", AuthorizedParty: "mesail-service", ExpiresAt: time.Now().Unix() + 60})
+func (world *InboundTestSetup) serviceToken(domainId string) string {
+	token, _ := world.realm.ForDomain(domainId).Token(oidc.TokenRequest{Subject: "service-account", RealmRoles: []string{"mesail-service"}, Audience: "mesail-api", AuthorizedParty: "mesail-service", ExpiresAt: time.Now().Unix() + 60})
 	return token
 }
 
 func (world *InboundTestSetup) Bearer(domainId string) string {
-	return "Bearer " + world.serviceToken(world.realms[domainId])
+	return "Bearer " + world.serviceToken(domainId)
 }
 
 func (world *InboundTestSetup) Asked() []string {

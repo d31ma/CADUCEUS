@@ -40,9 +40,9 @@ func (test *MessageSourceServiceTest) TestSourceIgnoresTheDomainOfADomainService
 func (test *MessageSourceServiceTest) TestSourceLetsAnOperatorNameTheDomain() {
 	setup := JobsTestSetup{}
 	domainId := setup.Domain()
-	_, operators := setup.Realms(domainId)
+	_, installWide := setup.Realms(domainId)
 	stored, _ := setup.SummaryStore().InsertIfAbsent(setup.StagedSummary(domainId))
-	source, err := JobsTestSetup{}.Sources().Source(setup.Service(operators), "sum_"+stored.Id, domainId)
+	source, err := JobsTestSetup{}.Sources().Source(setup.Service(installWide), "sum_"+stored.Id, domainId)
 	Assert.IsTrue(err == nil, "source failed")
 	Assert.Equals(domainId, source.DomainId)
 }
@@ -50,9 +50,9 @@ func (test *MessageSourceServiceTest) TestSourceLetsAnOperatorNameTheDomain() {
 func (test *MessageSourceServiceTest) TestSourceRefusesAnOperatorWithoutADomain() {
 	setup := JobsTestSetup{}
 	domainId := setup.Domain()
-	_, operators := setup.Realms(domainId)
+	_, installWide := setup.Realms(domainId)
 	stored, _ := setup.SummaryStore().InsertIfAbsent(setup.StagedSummary(domainId))
-	_, err := JobsTestSetup{}.Sources().Source(setup.Service(operators), "sum_"+stored.Id, "")
+	_, err := JobsTestSetup{}.Sources().Source(setup.Service(installWide), "sum_"+stored.Id, "")
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
 }

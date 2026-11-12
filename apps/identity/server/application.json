@@ -4,11 +4,11 @@
     "port": 8101
   },
   "oidc": {
-    "issuer": "http://127.0.0.1:8180/idp/realms/{realm}",
-    "jwks": "http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect/certs",
+    "issuer": "http://127.0.0.1:8101/api/v1/identity",
+    "jwks": "http://127.0.0.1:8101/api/v1/identity/jwks",
     "audience": "mesail-api",
-    "keycloak": "http://127.0.0.1:8180/idp/realms/{realm}/protocol/openid-connect",
-    "admin": "http://127.0.0.1:8180/idp/admin/realms/{realm}"
+    "keycloak": "http://127.0.0.1:8180/idp/realms/mesail/protocol/openid-connect",
+    "admin": "http://127.0.0.1:8180/idp/admin/realms/mesail"
   },
   "outgoing": {
     "hosts": [

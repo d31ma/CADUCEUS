@@ -42,7 +42,7 @@ func (controller *OutboxController) PostRetry(
 
 func (controller *OutboxController) installWide(authorization string) error {
 	caller, refused := controller.callers.Caller(authorization)
-	return cmp.Or(refused, controller.callers.Operator(caller))
+	return cmp.Or(refused, controller.callers.InstallWide(caller))
 }
 
 func (controller *OutboxController) relayUnless(refused error) (outbox.Report, error) {

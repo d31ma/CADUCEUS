@@ -9,7 +9,7 @@
     "securityGroup": "sg-0000000000000001"
   },
   "fileSystem": {
-    "creationToken": "mesail-data",
+    "creationToken": "mesail-data-2",
     "mountPath": "/mnt/data"
   },
   "staticBucket": "mesail-static",
@@ -86,93 +86,30 @@
     }
   ],
   "keycloak": {
-    "domains": [
-      "example.com",
-      "example.org",
-      "partner.test"
-    ],
-    "image": "mesail-keycloak-blackbox"
+    "realm": "mesail",
+    "image": "mesail-keycloak"
   },
   "secrets": {
-    "YON_SERVICE_CLIENT_SECRET": "MESAIL_SERVICE_SECRET",
+    "YON_SERVICE_CLIENT_SECRET": "MESAIL_SERVICE_CLIENT_SECRET",
     "YON_IDENTITY_CLIENT_SECRET": "MESAIL_IDENTITY_CLIENT_SECRET",
     "YON_IDENTITY_ACCOUNT_SECRET": "MESAIL_ACCOUNT_CLIENT_SECRET",
+    "YON_IDENTITY_SESSION_KEY": "MESAIL_IDENTITY_SESSION_KEY",
+    "YON_IDENTITY_SIGNING_KEY": "MESAIL_IDENTITY_SIGNING_KEY",
     "YON_DIRECTORY_ADMIN_SECRET": "MESAIL_KEYCLOAK_DIRECTORY_SECRET",
-    "YON_DIRECTORY_REALMSECRETS_IDENTITY": "MESAIL_IDENTITY_CLIENT_SECRET",
-    "YON_DIRECTORY_REALMSECRETS_SERVICE": "MESAIL_SERVICE_SECRET",
-    "YON_DIRECTORY_REALMSECRETS_ACCOUNT": "MESAIL_ACCOUNT_CLIENT_SECRET",
     "YON_ATTACHMENTS_LINK_SECRET": "MESAIL_LINK_SECRET",
     "YON_MAILIN_BLOBS_LINK_SECRET": "MESAIL_LINK_SECRET",
     "YON_REALTIME_GATEWAY_SECRET": "MESAIL_REALTIME_GATEWAY_SECRET"
   },
-  "generatedSecrets": [
-    "MESAIL_IDENTITY_CLIENT_SECRET",
-    "MESAIL_SERVICE_SECRET",
-    "MESAIL_ACCOUNT_CLIENT_SECRET",
-    "MESAIL_KEYCLOAK_DIRECTORY_SECRET",
-    "KC_BOOTSTRAP_ADMIN_CLIENT_SECRET",
-    "MESAIL_LINK_SECRET",
-    "MESAIL_REALTIME_GATEWAY_SECRET"
-  ],
-  "testUsers": [
-    {
-      "realm": "example.com",
-      "username": "ana@example.com",
-      "name": [
-        "Ana",
-        "Example"
-      ],
-      "roles": [
-        "mesail-admin"
-      ],
-      "password": "dev-blackbox-password",
-      "token": "ANA",
-      "fixture": true
-    },
-    {
-      "realm": "example.com",
-      "username": "bo@example.com",
-      "name": [
-        "Bo",
-        "Example"
-      ],
-      "roles": [],
-      "password": "dev-blackbox-password",
-      "token": "BO",
-      "fixture": true
-    },
-    {
-      "realm": "example.org",
-      "username": "eve@example.org",
-      "name": [
-        "Eve",
-        "Example"
-      ],
-      "roles": [],
-      "password": "dev-blackbox-password",
-      "token": "EVE",
-      "fixture": true
-    },
-    {
-      "realm": "partner.test",
-      "username": "carol@partner.test",
-      "name": [
-        "Carol",
-        "Partner"
-      ],
-      "roles": [],
-      "password": "dev-blackbox-password",
-      "token": "CAROL",
-      "fixture": true
-    },
-    {
-      "realm": "mesail-operators",
-      "username": "operator@mesail.test",
-      "password": "dev-operator-password",
-      "token": "OPERATOR",
-      "fixture": false
-    }
-  ],
+  "generatedSecrets": {
+    "MESAIL_IDENTITY_CLIENT_SECRET": "hex",
+    "MESAIL_ACCOUNT_CLIENT_SECRET": "hex",
+    "MESAIL_KEYCLOAK_DIRECTORY_SECRET": "hex",
+    "MESAIL_SERVICE_CLIENT_SECRET": "hex",
+    "MESAIL_IDENTITY_SESSION_KEY": "random-32-base64",
+    "MESAIL_IDENTITY_SIGNING_KEY": "p256-pkcs8-base64",
+    "MESAIL_LINK_SECRET": "hex",
+    "MESAIL_REALTIME_GATEWAY_SECRET": "hex"
+  },
   "hostedDomains": [
     "example.com",
     "example.org"
@@ -181,6 +118,10 @@
   "schedules": [
     {
       "path": "/api/v1/channels/outbox/relay",
+      "native": true
+    },
+    {
+      "path": "/api/v1/directory/jobs/removals",
       "native": true
     },
     {
@@ -216,5 +157,76 @@
       "native": true
     }
   ],
-  "nativeScheduleSeconds": 10
+  "nativeScheduleSeconds": 10,
+  "appSettings": {
+    "directory": {
+      "YON_DIRECTORY_DEVELOPMENTSEED": "true"
+    }
+  },
+  "people": [
+    {
+      "username": "ana",
+      "personId": "3e5a11d0-0000-4000-8000-000000000001",
+      "displayName": "Ana Admin",
+      "password": "dev-ana-password",
+      "token": "ANA",
+      "operator": false,
+      "memberships": [
+        {
+          "domainId": "example.com",
+          "admin": true
+        },
+        {
+          "domainId": "example.org",
+          "admin": false
+        }
+      ]
+    },
+    {
+      "username": "bo",
+      "personId": "3e5a11d0-0000-4000-8000-000000000002",
+      "displayName": "Bo Member",
+      "password": "dev-bo-password",
+      "token": "BO",
+      "operator": false,
+      "memberships": [
+        {
+          "domainId": "example.com",
+          "admin": false
+        }
+      ]
+    },
+    {
+      "username": "eve",
+      "personId": "3e5a11d0-0000-4000-8000-000000000003",
+      "displayName": "Eve Member",
+      "password": "dev-eve-password",
+      "token": "EVE",
+      "operator": false,
+      "memberships": [
+        {
+          "domainId": "example.org",
+          "admin": false
+        }
+      ]
+    },
+    {
+      "username": "carol",
+      "personId": "3e5a11d0-0000-4000-8000-000000000004",
+      "displayName": "Carol Partner",
+      "password": "dev-carol-password",
+      "token": "CAROL",
+      "operator": false,
+      "memberships": []
+    },
+    {
+      "username": "operator",
+      "personId": "3e5a11d0-0000-4000-8000-000000000005",
+      "displayName": "Dev Operator",
+      "password": "dev-operator-password",
+      "token": "OPERATOR",
+      "operator": true,
+      "memberships": []
+    }
+  ]
 }

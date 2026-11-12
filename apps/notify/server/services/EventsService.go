@@ -44,7 +44,7 @@ func (service *EventsService) envelope(request EventEnvelope) events.Envelope {
 }
 
 func (service *EventsService) domainCheck(callerDomainId string, envelopeDomainId string) error {
-	if callerDomainId != envelopeDomainId && callerDomainId != service.callers.OperatorRealm() {
+	if callerDomainId != envelopeDomainId && !service.callers.IsInstallWide(callerDomainId) {
 		return &NotFound{What: "domain"}
 	}
 	return nil

@@ -14,55 +14,10 @@ type MemberServiceTest struct {
 	behaviors *BehaviorContext
 }
 
-func (test *MemberServiceTest) TestRememberStoresTheMemberFromTheToken() {
-	service, storage, domain := test.world()
-	member, err := service.Remember(test.caller(domain, "Bo Member"))
-	stored, found, _ := storage.Find(domain, "bo-id")
-	Assert.Equals("<nil>", fmt.Sprint(err))
-	Assert.IsTrue(found, "member not stored")
-	Assert.Equals("Bo Member", stored.DisplayName)
-	Assert.Equals("bo@"+domain, member.PrimaryAddress)
-	Assert.Equals("active", stored.State)
-}
-
-func (test *MemberServiceTest) TestRememberRegistersThePrimaryAddress() {
-	service, _, domain := test.world()
-	service.Remember(test.caller(domain, "Bo Member"))
-	addresses := &AddressStorageService{documents: &DocumentsService{dataSource: DataSource{}}, names: &CollectionNamesService{}}
-	route, found, _ := addresses.Find("bo@" + domain)
-	Assert.IsTrue(found, "address not registered")
-	Assert.Equals("member", route.Kind)
-	Assert.Equals("bo-id", route.TargetId)
-}
-
-func (test *MemberServiceTest) TestAnEmailOfAnotherDomainIsNotTheMembersAddress() {
-	service, _, domain := test.world()
-	caller := oidc.Caller{DomainId: domain, MemberId: "bo-id", DisplayName: "", Email: "bo@elsewhere.test"}
-	member, err := service.Remember(caller)
-	Assert.Equals("<nil>", fmt.Sprint(err))
-	Assert.Equals("", member.PrimaryAddress)
-	Assert.Equals("bo@elsewhere.test", member.DisplayName)
-}
-
-func (test *MemberServiceTest) TestAMemberOfADomainThatIsNotHostedIsRefused() {
-	service, _, _ := test.world()
-	_, err := service.Remember(test.caller("unknown-"+test.unique()+".test", "Bo"))
-	var forbidden *Forbidden
-	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
-}
-
-func (test *MemberServiceTest) TestAMemberOfADisabledDomainIsRefused() {
-	service, _, _ := test.world()
-	domain := test.hosted("member-disabled.test", "disabled")
-	_, err := service.Remember(test.caller(domain, "Bo"))
-	var forbidden *Forbidden
-	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
-}
-
 func (test *MemberServiceTest) TestSearchFindsMembersByName() {
 	service, _, domain := test.world()
-	service.Remember(test.caller(domain, "Bo Member"))
-	service.Remember(oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain})
+	test.join(service, domain, "bo-id", "bo", "Bo Member")
+	test.join(service, domain, "ana-id", "ana", "Ana Admin")
 	page, err := test.lister().Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Text: "ana"}, nil)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(1, len(page.Items))
@@ -73,7 +28,7 @@ func (test *MemberServiceTest) TestSearchFindsMembersByName() {
 func (test *MemberServiceTest) TestSearchNeverReturnsAnotherDomain() {
 	service, _, domain := test.world()
 	otherDomain := test.hosted("member-other.test", "active")
-	service.Remember(oidc.Caller{DomainId: otherDomain, MemberId: "eve-id", DisplayName: "Eve", Email: "eve@" + otherDomain})
+	test.join(service, otherDomain, "eve-id", "eve", "Eve")
 	page, err := test.lister().Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Text: "eve"}, nil)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(0, len(page.Items))
@@ -89,8 +44,8 @@ func (test *MemberServiceTest) TestSearchRefusesALimitAboveOneHundred() {
 
 func (test *MemberServiceTest) TestSearchPagesWithACursor() {
 	service, _, domain := test.world()
-	service.Remember(test.caller(domain, "Bo Member"))
-	service.Remember(oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain})
+	test.join(service, domain, "bo-id", "bo", "Bo Member")
+	test.join(service, domain, "ana-id", "ana", "Ana Admin")
 	first, _ := test.lister().Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Limit: 1}, nil)
 	second, err := test.lister().Search(Admission{Caller: test.caller(domain, "Bo Member")}, MemberQuery{Limit: 1, Cursor: first.NextCursor}, nil)
 	Assert.Equals("<nil>", fmt.Sprint(err))
@@ -109,7 +64,7 @@ func (test *MemberServiceTest) TestSearchRefusesACursorItDidNotGiveOut() {
 
 func (test *MemberServiceTest) TestSummaryOfAMemberOfTheCallersDomain() {
 	service, _, domain := test.world()
-	service.Remember(oidc.Caller{DomainId: domain, MemberId: "ana-id", DisplayName: "Ana Admin", Email: "ana@" + domain})
+	test.join(service, domain, "ana-id", "ana", "Ana Admin")
 	summary, err := test.lister().Summary(Admission{Caller: test.caller(domain, "Bo")}, "ana-id")
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("Ana Admin", summary.DisplayName)
@@ -119,7 +74,7 @@ func (test *MemberServiceTest) TestSummaryOfAMemberOfTheCallersDomain() {
 func (test *MemberServiceTest) TestSummaryOfAMemberOfAnotherDomainIsNotFound() {
 	service, _, domain := test.world()
 	otherDomain := test.hosted("member-other.test", "active")
-	service.Remember(oidc.Caller{DomainId: otherDomain, MemberId: "eve-id", DisplayName: "Eve", Email: "eve@" + otherDomain})
+	test.join(service, otherDomain, "eve-id", "eve", "Eve")
 	_, err := test.lister().Summary(Admission{Caller: test.caller(domain, "Bo")}, "eve-id")
 	var missing *NotFound
 	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
@@ -136,13 +91,17 @@ func (test *MemberServiceTest) caller(domain string, name string) oidc.Caller {
 	return oidc.Caller{DomainId: domain, MemberId: "bo-id", DisplayName: name, Email: "Bo@" + strings.ToUpper(domain)}
 }
 
-func (test *MemberServiceTest) world() (*TokenMemberService, *MemberStorageService, string) {
+func (test *MemberServiceTest) world() (*MemberWriterService, *MemberStorageService, string) {
 	os.Setenv("YON_APPLICATION_JSON", `{"yon":{}}`)
 	documents := &DocumentsService{dataSource: DataSource{}}
 	members := &MemberStorageService{documents: documents, names: &CollectionNamesService{}}
 	addresses := &AddressStorageService{documents: documents, names: &CollectionNamesService{}}
-	tenants := &TenantService{domains: &DomainStorageService{documents: documents, names: &CollectionNamesService{}}}
-	return &TokenMemberService{tenants: tenants, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}, members, test.hosted("member-unit.test", "active")
+	return &MemberWriterService{members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}, members, test.hosted("member-unit.test", "active")
+}
+
+func (test *MemberServiceTest) join(writer *MemberWriterService, domainId string, personId string, username string, name string) {
+	_, err := writer.Join(PersonDocument{PersonId: personId, Username: username, DisplayName: name, State: "active"}, domainId, false)
+	Assert.Equals("<nil>", fmt.Sprint(err))
 }
 
 func (test *MemberServiceTest) hosted(name string, state string) string {

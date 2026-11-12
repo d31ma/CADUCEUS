@@ -7,10 +7,10 @@
     ]
   },
   "oidc": {
-    "issuer": "https://mesail.localhost/idp/realms/{realm}",
-    "jwks": "http://keycloak:8080/idp/realms/{realm}/protocol/openid-connect/certs",
+    "issuer": "http://127.0.0.1:8101/api/v1/identity",
+    "jwks": "http://127.0.0.1:8101/api/v1/identity/jwks",
     "audience": "mesail-api",
-    "keycloak": "http://keycloak:8080/idp/realms/{realm}/protocol/openid-connect"
+    "servicetokens": "http://127.0.0.1:8101/api/v1/identity/service-token"
   },
   "outbox": {
     "producer": "mail-in",
@@ -29,7 +29,6 @@
   "outgoing": {
     "hosts": [
       "127.0.0.1",
-      "keycloak",
       "floci"
     ]
   },

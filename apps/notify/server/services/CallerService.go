@@ -13,8 +13,8 @@ func (callers *CallerService) Operator(authorization string) error {
 	return callers.operatorOnly(failure, caller)
 }
 
-func (callers *CallerService) OperatorRealm() string {
-	return "mesail-operators"
+func (callers *CallerService) IsInstallWide(domainId string) bool {
+	return oidc.InstallWide{}.Matches(domainId)
 }
 
 func (callers *CallerService) refusal(failure error) error {
@@ -25,7 +25,7 @@ func (callers *CallerService) refusal(failure error) error {
 }
 
 func (callers *CallerService) operatorOnly(failure error, caller oidc.Caller) error {
-	if failure == nil && caller.DomainId != callers.OperatorRealm() {
+	if failure == nil && !callers.IsInstallWide(caller.DomainId) {
 		return &NotFound{What: "install-wide route"}
 	}
 	return failure

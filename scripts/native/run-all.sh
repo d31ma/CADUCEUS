@@ -21,16 +21,17 @@ Settings (environment):
   MESAIL_OWNER        your slice, for example slice-m3 (lock owner, FYLO roots, logs)
   MESAIL_TEST_RUN     go test -run filter for tests/blackbox
   MESAIL_SKIP_STATIC  1 skips the Tac bundles
-  MESAIL_KEYCLOAK      native (default): start Keycloak 26.8.2 natively with the realms
-                      example.com, example.org, partner.test, mesail-operators and the
-                      blackbox users (ana, bo, eve, carol, operator), then write the tokens
-                      file and add example.com and example.org to the directory; none: skip
+  MESAIL_KEYCLOAK     native (default): start Keycloak 26.8.2 natively with the realm mesail
+                      and its dev people (ana, bo, eve, carol, operator), seed the directory
+                      (domains and people from deploy/floci/stack.json), then write the tokens
+                      file (tokens from identity's sign-in); none: skip
   MESAIL_ROUTER_PASSTHROUGH  extra routes for the router, for example the realtime gateway:
                       /api/v1/realtime/socket=http://127.0.0.1:8116,/api/v1/realtime/stream=http://127.0.0.1:8116
   MESAIL_TOKENS_FILE  where the tokens go (default ~/Developer/AtlasFylo/mesail/<owner>/tokens.env,
                       mode 600); with MESAIL_KEYCLOAK=none, a file you made to load instead
-  MESAIL_SECRETS_FILE NAME=value client secrets (as in .env.example); generated per run when unset.
+  MESAIL_SECRETS_FILE NAME=value secrets (as in .env.example); generated per run when unset.
                       Each app gets the ones it uses unless its own .env already sets them.
+  MESAIL_ROUTER_RATE_LIMIT  sign-ins per minute per address at the router (default 1000 here)
 FYLO roots: ~/Developer/AtlasFylo/mesail/<owner>/native/<service> (emptied at each start).
 Logs: ~/Library/Logs/local/CADUCEUS/<owner>/native-<time>/
 TEXT
@@ -106,7 +107,7 @@ point_copy_at_this_run() {
   file="$(run_folder)/apps/$app/server/application.json"
   sed -E -i '' -e "s#fylo:///mnt/data/$app#fylo://$(app_root_of "$app")#g" \
     -e "s#\"dnsresolver\": *\"[^\"]*\"#\"dnsresolver\": \"http://directory.localhost:$(router_port)/_dev/dns-query\"#" "$file"
-  "$(mesail_root)/deploy/lambda/rewrite-config.sh" "$file" "$MESAIL_ISSUER_ORIGIN" "$(native_keycloak_url)" "port:$(router_port)"
+  "$(mesail_root)/deploy/lambda/rewrite-config.sh" "$file" "$(native_keycloak_url)" "port:$(router_port)"
 }
 
 router_port() {
@@ -126,6 +127,7 @@ write_profile() {
   add_datasource "$app"
   add_blob_store "$app"
   add_secrets "$app"
+  add_settings "$app"
 }
 
 router_base() {
@@ -149,6 +151,21 @@ add_secrets() {
     if grep -q "^${line%%=*}=" "$(run_folder)/apps/$app/.env"; then continue; fi
     echo "$line" >> "$(run_folder)/apps/$app/.env"
   done < <(mesail_app_secrets "$(run_folder)/apps/$app")
+}
+
+replace_setting() {
+  local file="$1" line="$2"
+  grep -v "^${line%%=*}=" "$file" > "$file.new" || true
+  echo "$line" >> "$file.new"
+  chmod 600 "$file.new"
+  mv "$file.new" "$file"
+}
+
+add_settings() {
+  local app="$1" line
+  while read -r line; do
+    replace_setting "$(run_folder)/apps/$app/.env" "$line"
+  done < <(mesail_app_settings "$app")
 }
 
 use_secrets() {
@@ -340,18 +357,13 @@ blob_settings() {
   echo "MESAIL_ROUTER_BLOBS_SECRET=$(blob_secret)"
 }
 
-router_keycloak() {
-  if ! keycloak_wanted; then return 0; fi
-  keycloak_base
-}
-
 start_router() {
   local settings
   (cd "$(mesail_root)/deploy/router" && GOFLAGS=-buildvcs=false go build -o "$(run_folder)/mesail-router" .)
   read -ra settings <<< "$({ blob_settings; dev_dns_settings; } | tr '\n' ' ')"
   env ${settings[@]+"${settings[@]}"} MESAIL_ROUTER_LISTEN="127.0.0.1:$(cat "$(run_folder)/router-port")" \
     MESAIL_ROUTER_UPSTREAMS="$(joined "$(run_folder)/upstreams")" MESAIL_ROUTER_STATIC_FOLDERS="$(joined "$(run_folder)/static")" \
-    MESAIL_ROUTER_KEYCLOAK_URL="$(router_keycloak)" MESAIL_ROUTER_PASSTHROUGH="$(passthrough_routes)" \
+    MESAIL_ROUTER_RATE_LIMIT="${MESAIL_ROUTER_RATE_LIMIT:-1000}" MESAIL_ROUTER_PASSTHROUGH="$(passthrough_routes)" \
     "$(run_folder)/mesail-router" > "$(mesail_log_dir)/router.log" 2>&1 &
   echo "$!" >> "$(run_folder)/pids"
   echo "export MESAIL_BASE_URL=$(router_base)" > "$(run_folder)/env"
@@ -445,9 +457,8 @@ launch_keycloak() {
 finish_keycloak() {
   if ! keycloak_wanted; then return 0; fi
   mesail_step keycloak-wait mesail_wait_for Keycloak 300 keycloak_answers
-  mesail_step keycloak-provision provision_keycloak
-  mesail_step tokens write_tokens
   mesail_step seed-directory seed_directory
+  mesail_step tokens write_tokens
   mesail_step scheduler start_scheduler
 }
 
@@ -463,8 +474,8 @@ start_scheduler() {
   paths="$(native_schedule_paths)"
   if [ -z "$paths" ]; then echo "no scheduled route to call"; return 0; fi
   mesail_load_secrets
-  MESAIL_SCHEDULER_TOKEN_URL="$(keycloak_base)/idp/realms/mesail-operators/protocol/openid-connect/token" \
-    MESAIL_SCHEDULER_CLIENT_SECRET="$MESAIL_SERVICE_SECRET" MESAIL_SCHEDULER_BASE="$(router_base)" \
+  MESAIL_SCHEDULER_TOKEN_URL="$(router_base)/api/v1/identity/service-token" \
+    MESAIL_SCHEDULER_CLIENT_SECRET="$MESAIL_SERVICE_CLIENT_SECRET" MESAIL_SCHEDULER_BASE="$(router_base)" \
     MESAIL_SCHEDULER_PATHS="$paths" MESAIL_SCHEDULER_SECONDS="${MESAIL_SCHEDULE_SECONDS:-$(mesail_stack .nativeScheduleSeconds)}" \
     "$(mesail_root)/deploy/lambda/scheduler.sh" > "$(mesail_log_dir)/scheduler.log" 2>&1 &
   echo "$!" >> "$(run_folder)/pids"

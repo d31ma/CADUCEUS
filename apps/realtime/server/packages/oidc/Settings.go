@@ -6,5 +6,5 @@ type Settings struct {
 	Audience      string `json:"audience"`
 	Keycloak      string `json:"keycloak,omitempty"`
 	Admin         string `json:"admin,omitempty"`
-	ServiceTokens string `json:"serviceTokens,omitempty"`
+	ServiceTokens string `json:"servicetokens,omitempty"`
 }

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"mesail.dev/packages/oidc"
 )
 
 // @Test(DirectoryTestSetup, {"partition":"tests"})
@@ -13,43 +11,35 @@ type MemberEventsTest struct {
 	behaviors *BehaviorContext
 }
 
-func (test *MemberEventsTest) TestRememberPublishesTheMemberEvent() {
-	service, storage, domain := test.world()
-	service.Remember(test.caller(domain, "Bo Member"))
+func (test *MemberEventsTest) TestJoinPublishesTheMemberEvent() {
+	writer, storage, domain := test.world()
+	test.join(writer, domain, "Bo Member")
 	stored, _, _ := storage.Find(domain, "bo-id")
 	Assert.Equals(1, len(stored.PendingEvents))
 	Assert.IsTrue(strings.Contains(stored.PendingEvents[0], `"type":"member.upserted"`), "wrong event type")
 	Assert.IsTrue(strings.Contains(stored.PendingEvents[0], `"domainId":"`+domain+`"`), "wrong event domain")
 }
 
-func (test *MemberEventsTest) TestRememberingTheSameTokenTwicePublishesOnce() {
-	service, storage, domain := test.world()
-	service.Remember(test.caller(domain, "Bo Member"))
-	service.Remember(test.caller(domain, "Bo Member"))
-	stored, _, _ := storage.Find(domain, "bo-id")
-	Assert.Equals(1, len(stored.PendingEvents))
-}
-
 func (test *MemberEventsTest) TestANewNameIsSavedAndPublished() {
-	service, storage, domain := test.world()
-	service.Remember(test.caller(domain, "Bo Member"))
-	service.Remember(test.caller(domain, "Bo Renamed"))
+	writer, storage, domain := test.world()
+	test.join(writer, domain, "Bo Member")
+	test.join(writer, domain, "Bo Renamed")
 	stored, _, _ := storage.Find(domain, "bo-id")
 	Assert.Equals("Bo Renamed", stored.DisplayName)
 	Assert.Equals(2, len(stored.PendingEvents))
 }
 
-func (test *MemberEventsTest) caller(domain string, name string) oidc.Caller {
-	return oidc.Caller{DomainId: domain, MemberId: "bo-id", DisplayName: name, Email: "Bo@" + strings.ToUpper(domain)}
+func (test *MemberEventsTest) join(writer *MemberWriterService, domainId string, name string) {
+	_, err := writer.Join(PersonDocument{PersonId: "bo-id", Username: "bo", DisplayName: name, State: "active"}, domainId, false)
+	Assert.Equals("<nil>", fmt.Sprint(err))
 }
 
-func (test *MemberEventsTest) world() (*TokenMemberService, *MemberStorageService, string) {
+func (test *MemberEventsTest) world() (*MemberWriterService, *MemberStorageService, string) {
 	os.Setenv("YON_APPLICATION_JSON", `{"yon":{"outbox":{"producer":"directory","subscribers":[{"name":"search","url":"http://127.0.0.1:9/api/v1/search/events"}]}}}`)
 	documents := &DocumentsService{dataSource: DataSource{}}
 	members := &MemberStorageService{documents: documents, names: &CollectionNamesService{}}
 	addresses := &AddressStorageService{documents: documents, names: &CollectionNamesService{}}
-	tenants := &TenantService{domains: &DomainStorageService{documents: documents, names: &CollectionNamesService{}}}
-	return &TokenMemberService{tenants: tenants, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}, members, test.hosted("events-unit.test", "active")
+	return &MemberWriterService{members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}, members, test.hosted("events-unit.test", "active")
 }
 
 func (test *MemberEventsTest) hosted(name string, state string) string {

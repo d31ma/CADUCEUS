@@ -3,24 +3,17 @@ package oidc
 import (
 	"encoding/base64"
 	"encoding/json"
-	"os"
-	"time"
 )
 
 type SessionIssuerFactory struct{}
-
-func (factory SessionIssuerFactory) Configured() SessionIssuer {
-	return factory.FromJson(os.Getenv(SettingsReader{}.variable()))
-}
 
 func (factory SessionIssuerFactory) FromJson(document string) SessionIssuer {
 	snapshot := ApplicationSnapshot{}
 	_ = json.Unmarshal([]byte(document), &snapshot)
 	key, keyErr := base64.StdEncoding.DecodeString(snapshot.Yon.Identity.Session.Key)
-	settings, settingsErr := SettingsReader{}.FromJson(document)
-	gate := NewGate(VerifierFactory{}.Jwks(settings), time.Now)
+	_, settingsErr := SettingsReader{}.FromJson(document)
 	problem := factory.complete(snapshot.Yon, len(key), keyErr, settingsErr)
-	return SessionIssuer{Gate: gate, Settings: snapshot.Yon.Identity, Keycloak: snapshot.Yon.Oidc.Keycloak, Admin: snapshot.Yon.Oidc.Admin, Sealer: SealedCookie{Key: key}, Client: VerifierFactory{}.client(), Problem: problem}
+	return SessionIssuer{Settings: snapshot.Yon.Identity, Keycloak: snapshot.Yon.Oidc.Keycloak, Admin: snapshot.Yon.Oidc.Admin, Sealer: SealedCookie{Key: key}, Client: VerifierFactory{}.client(), Problem: problem}
 }
 
 func (factory SessionIssuerFactory) complete(settings ApplicationSettings, keyLength int, keyErr error, settingsErr error) error {

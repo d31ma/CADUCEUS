@@ -30,7 +30,7 @@ func (rules MesailClaimRules) party(claims Claims) error {
 }
 
 func (MesailClaimRules) domain(claims Claims) error {
-	if !(InstallWide{}).Matches(claims.Domain) && !(IssuerPattern{}).validName(claims.Domain) {
+	if !(InstallWide{}).Matches(claims.Domain) && !(DomainName{}).Valid(claims.Domain) {
 		return RefusedToken{Reason: "the token names no valid domain"}
 	}
 	return nil

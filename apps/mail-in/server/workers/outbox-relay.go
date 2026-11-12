@@ -22,7 +22,7 @@ func (handler Handler) POST() {
 		} `json:"yon"`
 	}
 	json.Unmarshal([]byte(os.Getenv("YON_APPLICATION_JSON")), &snapshot)
-	authorization, failure := mailin.SettingsReader{Environment: os.Getenv}.Authorize()(mailin.Directory{}.InstallWideRealm())
+	authorization, failure := mailin.SettingsReader{Environment: os.Getenv}.Authorize()(mailin.Directory{}.InstallWide())
 	address := "http://127.0.0.1:" + strconv.Itoa(snapshot.Yon.Server.Port) + "/api/v1/mail-in/outbox/relay"
 	request, requestFailure := http.NewRequest(http.MethodPost, address, nil)
 	handler.send(request, authorization, errors.Join(failure, requestFailure))

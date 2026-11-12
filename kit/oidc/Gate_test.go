@@ -24,7 +24,7 @@ func fixedNow() time.Time {
 
 func TestIdentifyBuildsTheCallerFromVerifiedClaims(t *testing.T) {
 	verifier := &fakeVerifier{claims: Claims{
-		Issuer: "https://id.example.com/realms/example.com", Subject: "u-1", Name: "Ana", Email: "ana@example.com",
+		Issuer: "https://mail.example.com/api/v1/identity", Domain: "example.com", Subject: "u-1", Name: "Ana", Email: "ana@example.com",
 		RealmRoles: []string{"mesail-member"},
 	}}
 	caller, err := NewGate(verifier, fixedNow).Identify("Bearer t-1")
@@ -49,32 +49,10 @@ func TestIdentifyPassesOnTheVerifierRefusal(t *testing.T) {
 	}
 }
 
-func TestIdentifyRefusesAnIssuerThatIsNotARealm(t *testing.T) {
-	verifier := &fakeVerifier{claims: Claims{Issuer: "https://id.example.com/", Subject: "u-1"}}
-	_, err := NewGate(verifier, fixedNow).Identify("Bearer t-1")
-	var unknown UnknownIssuer
-	if !errors.As(err, &unknown) {
-		t.Fatalf("got %v", err)
-	}
-}
-
 func TestConfiguredGateFailsClosed(t *testing.T) {
 	_, err := Configured().Identify("Bearer anything")
 	if !errors.Is(err, NotConfigured{}) {
 		t.Fatalf("got %v", err)
-	}
-}
-
-func TestRealmNameAcceptsATrailingSlash(t *testing.T) {
-	name, err := Realm{}.Name("https://id.example.com/realms/acme.org/")
-	if err != nil || name != "acme.org" {
-		t.Fatalf("got %q, %v", name, err)
-	}
-}
-
-func TestRealmNameRefusesANestedPath(t *testing.T) {
-	if _, err := (Realm{}).Name("https://id.example.com/realms/acme.org/extra"); err == nil {
-		t.Fatal("expected a refusal")
 	}
 }
 

@@ -29,11 +29,11 @@ func (test *JobsServiceTest) TestRunVisitsTheRegisteredDomains() {
 	JobsTestSetup{}.FreshRegistries()
 	setup := JobsTestSetup{}
 	domainId := setup.Domain()
-	_, operators := setup.Realms(domainId)
+	_, installWide := setup.Realms(domainId)
 	server, _ := JobsTestSetup{}.PushServer(201)
 	JobsTestSetup{}.UseNotify([]string{"example.com"}, "")
 	setup.Domains().Register(domainId)
-	report, err := JobsTestSetup{}.Jobs(JobsTestSetup{}.ClientFor(server), outbox.NewRecordingPusher()).Run(setup.Service(operators))
+	report, err := JobsTestSetup{}.Jobs(JobsTestSetup{}.ClientFor(server), outbox.NewRecordingPusher()).Run(setup.Service(installWide))
 	Assert.IsTrue(err == nil, "run failed")
 	Assert.IsTrue(report.Domains >= 1 || report.More, "no domain was visited")
 }

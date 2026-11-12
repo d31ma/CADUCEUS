@@ -69,11 +69,16 @@ func (test *AliasServiceTest) world() (*AliasService, oidc.Caller, string) {
 	domains := &DomainStorageService{documents: documents, names: &CollectionNamesService{}}
 	Assert.Equals("<nil>", fmt.Sprint((&TenantCollectionsService{documents: documents, names: &CollectionNamesService{}}).Prepare(domainId)))
 	Assert.Equals("<nil>", fmt.Sprint(domains.Insert(DomainDocument{DomainId: domainId, Name: domainId, State: "active"})))
-	memberService := &TokenMemberService{tenants: &TenantService{domains: domains}, members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}
+	memberService := &MemberWriterService{members: members, addresses: addresses, events: &EventService{settings: &SettingsService{}}, relay: test.relay(documents)}
 	caller := oidc.Caller{DomainId: domainId, MemberId: "ana-id", DisplayName: "Ana", Email: "ana@" + domainId}
-	memberService.Remember(caller)
-	memberService.Remember(oidc.Caller{DomainId: domainId, MemberId: "bo-id", DisplayName: "Bo", Email: "bo@" + domainId})
+	test.join(memberService, domainId, "ana-id", "ana", "Ana")
+	test.join(memberService, domainId, "bo-id", "bo", "Bo")
 	return &AliasService{addresses: addresses, members: members, rules: &AddressRulesService{}, reservations: &ReservationService{localParts: &LocalPartStorageService{documents: &DocumentsService{dataSource: DataSource{}}, names: &CollectionNamesService{}}}}, caller, domainId
+}
+
+func (test *AliasServiceTest) join(writer *MemberWriterService, domainId string, personId string, username string, name string) {
+	_, err := writer.Join(PersonDocument{PersonId: personId, Username: username, DisplayName: name, State: "active"}, domainId, false)
+	Assert.Equals("<nil>", fmt.Sprint(err))
 }
 
 func (test *AliasServiceTest) unique() string {

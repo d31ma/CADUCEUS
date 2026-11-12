@@ -23,10 +23,11 @@ type keycloak struct {
 func (fake *keycloak) serve(t *testing.T) *httptest.Server {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		parts := strings.Split(request.URL.Path, "/")
-		fake.realms = append(fake.realms, parts[2])
+		asked := map[string]string{}
+		_ = json.NewDecoder(request.Body).Decode(&asked)
+		fake.realms = append(fake.realms, asked["domainId"])
 		writer.WriteHeader(fake.status)
-		_ = json.NewEncoder(writer).Encode(map[string]any{"access_token": "token-" + parts[2], "expires_in": 60})
+		_ = json.NewEncoder(writer).Encode(map[string]any{"accessToken": "token-" + asked["domainId"], "expiresIn": 60})
 	}))
 	t.Cleanup(server.Close)
 	return server
@@ -35,7 +36,7 @@ func (fake *keycloak) serve(t *testing.T) *httptest.Server {
 func tokens(t *testing.T, keycloakUrl string) oidc.ServiceTokens {
 	t.Helper()
 	return oidc.ServiceTokens{
-		Settings: oidc.Settings{Keycloak: keycloakUrl + "/realms/{realm}/protocol/openid-connect"},
+		Settings: oidc.Settings{ServiceTokens: keycloakUrl + "/api/v1/identity/service-token"},
 		Secret:   "secret",
 		Client:   &http.Client{},
 		Cache:    oidc.JsonFileCache{Folder: t.TempDir()},
@@ -88,7 +89,7 @@ func TestScheduledSweepPostsToTheRelayRouteWithAnInstallToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if fake.realms[0] != "mesail-operators" || seen != "POST /api/v1/channels/outbox/relay Bearer token-mesail-operators {}" {
+	if fake.realms[0] != "*" || seen != "POST /api/v1/channels/outbox/relay Bearer token-* {}" {
 		t.Fatalf("unexpected sweep %v %q", fake.realms, seen)
 	}
 }

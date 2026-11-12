@@ -14,9 +14,8 @@ type OidcTokenChecker struct {
 
 func (checker OidcTokenChecker) Grant(token string, now time.Time) (Grant, error) {
 	claims, refused := checker.Verifier.Verify(token, now)
-	domainId, unknown := oidc.Realm{}.Name(claims.Issuer)
-	grant := Grant{DomainId: domainId, MemberId: claims.Subject, ExpiresAt: checker.expiresAt(claims.ExpiresAt, now)}
-	return checker.checked(grant, errors.Join(refused, unknown, checker.member(claims)))
+	grant := Grant{DomainId: claims.Domain, MemberId: claims.Subject, ExpiresAt: checker.expiresAt(claims.ExpiresAt, now)}
+	return checker.checked(grant, errors.Join(refused, checker.member(claims)))
 }
 
 func (checker OidcTokenChecker) member(claims oidc.Claims) error {

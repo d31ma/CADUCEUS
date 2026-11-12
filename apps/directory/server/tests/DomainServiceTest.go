@@ -44,7 +44,7 @@ func (test *DomainServiceTest) TestAddingADomainTwiceIsADuplicate() {
 func (test *DomainServiceTest) TestANameWithoutADotIsRefused() {
 	service, _, closeAll := test.world(http.StatusCreated)
 	defer closeAll()
-	_, err := service.Add(CreateDomainRequest{Name: "mesail-operators"})
+	_, err := service.Add(CreateDomainRequest{Name: "intranet"})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
 	Assert.Equals("name", invalid.Field)

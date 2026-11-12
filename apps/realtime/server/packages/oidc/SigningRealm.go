@@ -1,24 +1,25 @@
 package oidc
 
 import (
+	"cmp"
 	"encoding/json"
 	"time"
 )
 
 type SigningRealm struct {
-	Name     string
+	Domain   string
 	Settings Settings
 	key      SigningKey
-}
-
-func (realm SigningRealm) Started(name string) (SigningRealm, error) {
-	key, err := SigningKey{}.Generated()
-	return SigningRealm{Name: name, Settings: realm.settings(), key: key}, err
 }
 
 func (realm SigningRealm) StartedMesail() (SigningRealm, error) {
 	key, err := SigningKey{}.Generated()
 	return SigningRealm{Settings: realm.mesailSettings(), key: key}, err
+}
+
+func (realm SigningRealm) ForDomain(domainId string) SigningRealm {
+	realm.Domain = domainId
+	return realm
 }
 
 func (realm SigningRealm) ApplicationJson() (string, error) {
@@ -27,24 +28,21 @@ func (realm SigningRealm) ApplicationJson() (string, error) {
 }
 
 func (realm SigningRealm) Publish(now time.Time) error {
-	jwksUrl, err := IssuerPattern{Pattern: realm.Settings.Jwks}.Resolved(realm.Name)
-	if err != nil {
-		return err
-	}
 	key, err := realm.key.PublicKey()
 	if err != nil {
 		return err
 	}
 	key.KeyId = realm.keyId()
-	return realm.cache().Store(jwksUrl, CachedKeySet{FetchedAt: now.Unix(), Keys: KeySet{Keys: []JsonWebKey{key}}})
+	return realm.cache().Store(realm.Settings.Jwks, CachedKeySet{FetchedAt: now.Unix(), Keys: KeySet{Keys: []JsonWebKey{key}}})
 }
 
 func (realm SigningRealm) Token(request TokenRequest) (string, error) {
-	issuer, err := IssuerPattern{Pattern: realm.Settings.Issuer}.Resolved(realm.Name)
-	if err != nil {
-		return "", err
-	}
-	return JwtWriter{}.Signed(realm.key, realm.keyId(), realm.document(issuer, request))
+	return JwtWriter{}.Signed(realm.key, realm.keyId(), realm.document(realm.Settings.Issuer, realm.withDomain(request)))
+}
+
+func (realm SigningRealm) withDomain(request TokenRequest) TokenRequest {
+	request.Domain = cmp.Or(request.Domain, realm.Domain)
+	return request
 }
 
 func (realm SigningRealm) document(issuer string, request TokenRequest) ClaimsDocument {
@@ -63,19 +61,11 @@ func (realm SigningRealm) document(issuer string, request TokenRequest) ClaimsDo
 	}
 }
 
-func (SigningRealm) settings() Settings {
-	return Settings{
-		Issuer:   "https://id.mesail.test/realms/{realm}",
-		Jwks:     "https://id.mesail.test/realms/{realm}/protocol/openid-connect/certs",
-		Audience: SigningRealm{}.audience(),
-	}
-}
-
 func (realm SigningRealm) mesailSettings() Settings {
 	return Settings{
 		Issuer:        realm.mesailIssuer(),
 		Jwks:          realm.mesailIssuer() + "/jwks",
-		Audience:      "mesail-api",
+		Audience:      realm.audience(),
 		ServiceTokens: realm.mesailIssuer() + "/service-token",
 	}
 }

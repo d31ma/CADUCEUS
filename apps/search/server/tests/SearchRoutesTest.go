@@ -32,7 +32,7 @@ func (test *SearchRoutesTest) TestSearchRouteRefusesAServiceToken() {
 
 func (test *SearchRoutesTest) TestSearchRouteFailsClosedWhenMembershipCannotBeChecked() {
 	world := SearchTestSetup{}.World()
-	token := world.SignedIn(world.Domain, "ana", "mesail-member", "mesail-identity")
+	token := world.SignedIn(world.Domain, "ana", "mesail-member", "mesail-web")
 	_, err := (&SearchController{dataSource: DataSource{}}).GetSearch(test.request(token))
 	Assert.IsTrue(errors.As(err, new(*Unavailable)), "expected unavailable")
 }
@@ -80,7 +80,7 @@ func (test *SearchRoutesTest) TestEventRouteRefusesABadEnvelope() {
 
 func (test *SearchRoutesTest) TestSearchRouteRefusesABadLimit() {
 	world := SearchTestSetup{}.World()
-	token := world.SignedIn(world.Domain, "ana", "mesail-member", "mesail-identity")
+	token := world.SignedIn(world.Domain, "ana", "mesail-member", "mesail-web")
 	request, _ := http.NewRequest(http.MethodGet, "/api/v1/search?q=hello&limit=0", nil)
 	request.Header.Set("Authorization", token)
 	_, err := (&SearchController{dataSource: DataSource{}}).GetSearch(request)

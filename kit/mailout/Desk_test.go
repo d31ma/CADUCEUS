@@ -66,8 +66,8 @@ func TestHostedRecipientIsHandedToMailInSignedAndThreaded(t *testing.T) {
 	}, w.changes())
 	equal(t, []string{
 		"push example.com",
-		"directory example.com example.com", "source messaging example.com", "directory example.org mesail-operators", "mail-in example.org", "push example.com",
-		"directory example.com example.com", "source messaging example.com", "directory example.org mesail-operators", "mail-in example.org", "push example.com",
+		"directory example.com example.com", "source messaging example.com", "directory example.org *", "mail-in example.org", "push example.com",
+		"directory example.com example.com", "source messaging example.com", "directory example.org *", "mail-in example.org", "push example.com",
 	}, w.recorded())
 	equal(t, 0, item.OutboxPending)
 }

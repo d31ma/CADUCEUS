@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/core"
+	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/transport"
 )
 
@@ -19,7 +20,7 @@ func NewRelayTrigger(tokens ServiceAuthorizer, timeout time.Duration) RelayTrigg
 }
 
 func (trigger RelayTrigger) Run(relayUrl string) error {
-	authorization, err := trigger.tokens.Authorization(trigger.operatorRealm())
+	authorization, err := trigger.tokens.Authorization(oidc.InstallWide{}.DomainId())
 	if err != nil {
 		return err
 	}
@@ -41,10 +42,6 @@ func (trigger RelayTrigger) answer(status int) error {
 		return nil
 	}
 	return &core.Unavailable{Message: "the outbox relay route answered " + strconv.Itoa(status)}
-}
-
-func (RelayTrigger) operatorRealm() string {
-	return "mesail-operators"
 }
 
 func (RelayTrigger) classSize() int {

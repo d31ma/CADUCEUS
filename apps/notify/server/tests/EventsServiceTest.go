@@ -24,12 +24,12 @@ func (test *EventsServiceTest) TestReceiveAppliesAMemberUpsertOnce() {
 	Assert.Equals("ana@"+domainId, record.PrimaryAddress)
 }
 
-func (test *EventsServiceTest) TestReceiveAcceptsTheOperatorRealm() {
+func (test *EventsServiceTest) TestReceiveAcceptsAnInstallWideToken() {
 	setup := NotifyTestSetup{}
 	domainId := setup.Domain()
-	_, operators := setup.Realms(domainId)
+	_, installWide := setup.Realms(domainId)
 	envelope := setup.Envelope("messaging", events.Types{}.ReactionChanged(), domainId, map[string]any{"messageId": "msg_1"})
-	receipt, err := setup.Events().Receive(setup.Service(operators), envelope)
+	receipt, err := setup.Events().Receive(setup.Service(installWide), envelope)
 	Assert.IsTrue(err == nil, "receive failed")
 	Assert.Equals("applied", receipt.Status)
 }

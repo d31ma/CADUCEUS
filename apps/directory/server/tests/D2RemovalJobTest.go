@@ -122,10 +122,25 @@ func (test *D2RemovalJobTest) TestTheRemovalsRouteRefusesARequestWithoutAValidTo
 	Assert.IsTrue(errors.As(err, &refused), "want Unauthenticated")
 }
 
-func (test *D2RemovalJobTest) TestTheRemovalsRouteRunsTheJobForAnOperatorToken() {
+func (test *D2RemovalJobTest) TestTheRemovalsRouteRunsTheJobForAnInstallWideServiceToken() {
+	setup := DirectoryTestSetup{}
+	realm := setup.SignedRealm()
+	base, _, closeServer := test.keycloak()
+	defer closeServer()
+	os.Setenv("YON_APPLICATION_JSON", setup.ApplicationJson(realm, base))
 	controller := &JobsController{callers: &CallerService{}, removals: test.job()}
-	_, err := controller.removalsUnless(nil)
+	_, err := controller.PostRemovals(setup.ServiceBearer(realm, "*"))
 	Assert.Equals("<nil>", fmt.Sprint(err))
+}
+
+func (test *D2RemovalJobTest) TestTheRemovalsRouteHidesItselfFromAMailDomainServiceToken() {
+	setup := DirectoryTestSetup{}
+	realm := setup.SignedRealm()
+	os.Setenv("YON_APPLICATION_JSON", setup.ApplicationJson(realm, "http://127.0.0.1:1"))
+	controller := &JobsController{callers: &CallerService{}, removals: test.job()}
+	_, err := controller.PostRemovals(setup.ServiceBearer(realm, "example.com"))
+	var missing *NotFound
+	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
 }
 
 func (test *D2RemovalJobTest) TestBatchUtilsRunsEveryStepAndKeepsEveryFailure() {

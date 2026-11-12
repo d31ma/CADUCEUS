@@ -2,6 +2,7 @@ import (
 	"net/http"
 
 	"mesail.dev/packages/mailout"
+	"mesail.dev/packages/oidc"
 )
 
 // @Test(MailOutTestSetup)
@@ -16,13 +17,13 @@ func (test *MailOutPartsTest) TestErrorHandlerAnswersWithApiErrors() {
 	Assert.Equals(ApiError{Code: "not_found", Message: "not found"}, handler.Unknown(&UnknownDomain{}))
 }
 
-func (test *MailOutPartsTest) TestAnOperatorsRealmTokenIsAServiceCaller() {
-	realms := MailOutTestSetup{}.Realms("mesail-operators")
+func (test *MailOutPartsTest) TestAnInstallWideTokenIsAServiceCaller() {
+	realm := MailOutTestSetup{}.Realm()
 	MailOutTestSetup{}.Use(mailout.Settings{}, "http://127.0.0.1:1")
 	request, _ := http.NewRequest(http.MethodPost, "/api/v1/mail-out/jobs/deliver", nil)
-	request.Header.Set("Authorization", "Bearer "+MailOutTestSetup{}.ServiceToken(realms["mesail-operators"]))
+	request.Header.Set("Authorization", "Bearer "+MailOutTestSetup{}.ServiceToken(realm.ForDomain(oidc.InstallWide{}.DomainId())))
 	identity := (&TokenIdentityProvider{}).Identify(request)
 	Assert.IsTrue(identity != nil, "the token is accepted")
 	Assert.Equals([]string{"Service"}, identity.Roles)
-	Assert.Equals("mesail-operators/service-account", identity.User)
+	Assert.Equals(oidc.InstallWide{}.DomainId()+"/service-account", identity.User)
 }

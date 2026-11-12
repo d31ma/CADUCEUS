@@ -19,11 +19,11 @@ func (AttachmentsTestSetup) Configure(execution *BehaviorExecution) (*BehaviorCo
 }
 
 func (setup AttachmentsTestSetup) SignedIn(domainId string, memberId string, secret string) string {
-	return setup.token(setup.started(domainId, secret), memberId, "mesail-member")
+	return setup.token(setup.started(domainId, secret), memberId, "mesail-member", "mesail-web")
 }
 
 func (setup AttachmentsTestSetup) SignedInService(domainId string) string {
-	return setup.token(setup.started(domainId, "secret"), "messaging", "mesail-service")
+	return setup.token(setup.started(domainId, "secret"), "messaging", "mesail-service", "mesail-service")
 }
 
 func (setup AttachmentsTestSetup) started(domainId string, secret string) oidc.SigningRealm {
@@ -31,7 +31,8 @@ func (setup AttachmentsTestSetup) started(domainId string, secret string) oidc.S
 	folder, _ := os.MkdirTemp(base, "test-")
 	keys, _ := os.MkdirTemp("", "a1-keys-")
 	os.Setenv("TMPDIR", keys)
-	realm, _ := oidc.SigningRealm{}.Started(domainId)
+	started, _ := oidc.SigningRealm{}.StartedMesail()
+	realm := started.ForDomain(domainId)
 	snapshot := struct {
 		Yon struct {
 			Attachments attachments.Settings `json:"attachments"`
@@ -46,8 +47,8 @@ func (setup AttachmentsTestSetup) started(domainId string, secret string) oidc.S
 	return realm
 }
 
-func (setup AttachmentsTestSetup) token(realm oidc.SigningRealm, memberId string, realmRole string) string {
-	request := oidc.TokenRequest{Subject: memberId, Email: memberId + "@" + realm.Name, Name: memberId, RealmRoles: []string{realmRole}, Audience: "mesail-api", AuthorizedParty: "mesail-identity", ExpiresAt: time.Now().Unix() + 60}
+func (setup AttachmentsTestSetup) token(realm oidc.SigningRealm, memberId string, realmRole string, party string) string {
+	request := oidc.TokenRequest{Subject: memberId, Email: memberId + "@" + realm.Domain, Name: memberId, Username: memberId, RealmRoles: []string{realmRole}, Audience: "mesail-api", AuthorizedParty: party, ExpiresAt: time.Now().Unix() + 60}
 	token, _ := realm.Token(request)
 	return "Bearer " + token
 }

@@ -17,9 +17,9 @@ func (MailOutTestSetup) Configure(execution *BehaviorExecution) (*BehaviorConfig
 }
 
 func (setup MailOutTestSetup) Use(settings mailout.Settings, services string) {
-	signing, _ := oidc.SigningRealm{}.Started("settings")
+	signing, _ := oidc.SigningRealm{}.StartedMesail()
 	identity := signing.Settings
-	identity.Keycloak = services + "/realms/{realm}/protocol/openid-connect"
+	identity.ServiceTokens = services + "/api/v1/identity/service-token"
 	snapshot := map[string]any{"yon": map[string]any{
 		"mailout": settings,
 		"outbox": map[string]any{
@@ -34,16 +34,12 @@ func (setup MailOutTestSetup) Use(settings mailout.Settings, services string) {
 	os.Setenv(setup.variable(), string(text))
 }
 
-func (setup MailOutTestSetup) Realms(names ...string) map[string]oidc.SigningRealm {
-	folder, _ := os.MkdirTemp("", "mail-out-realms-")
+func (setup MailOutTestSetup) Realm() oidc.SigningRealm {
+	folder, _ := os.MkdirTemp("", "mail-out-tokens-")
 	os.Setenv("TMPDIR", folder)
-	realms := map[string]oidc.SigningRealm{}
-	for _, name := range names {
-		realm, _ := oidc.SigningRealm{}.Started(name)
-		realm.Publish(time.Now())
-		realms[name] = realm
-	}
-	return realms
+	realm, _ := oidc.SigningRealm{}.StartedMesail()
+	realm.Publish(time.Now())
+	return realm
 }
 
 func (MailOutTestSetup) ServiceToken(realm oidc.SigningRealm) string {

@@ -24,7 +24,7 @@ func (handler Handler) POST() {
 		} `json:"yon"`
 	}
 	json.Unmarshal([]byte(os.Getenv("YON_APPLICATION_JSON")), &snapshot)
-	authorization, failure := oidc.ServiceTokensFactory{}.Configured().Authorization("mesail-operators")
+	authorization, failure := oidc.ServiceTokensFactory{}.Configured().Authorization(oidc.InstallWide{}.DomainId())
 	base := "http://127.0.0.1:" + strconv.Itoa(snapshot.Yon.Server.Port) + "/api/v1/mail-out"
 	handler.post(base+"/jobs/deliver", authorization, failure)
 	handler.post(base+"/outbox/relay", authorization, failure)

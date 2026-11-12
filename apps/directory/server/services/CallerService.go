@@ -19,7 +19,7 @@ func (service *CallerService) Operator(caller oidc.Caller) error {
 }
 
 func (service *CallerService) ServiceFor(caller oidc.Caller, domainId string) error {
-	allowed := append(service.installWide(), strings.ToLower(domainId))
+	allowed := []string{oidc.InstallWide{}.DomainId(), strings.ToLower(domainId)}
 	return service.notFoundUnless(service.permitted(caller, allowed))
 }
 
@@ -28,7 +28,7 @@ func (service *CallerService) permitted(caller oidc.Caller, allowed []string) bo
 }
 
 func (service *CallerService) InstallWide(caller oidc.Caller) error {
-	return service.notFoundUnless(slices.Contains(service.installWide(), caller.DomainId))
+	return service.notFoundUnless(oidc.InstallWide{}.Matches(caller.DomainId))
 }
 
 func (service *CallerService) notFoundUnless(allowed bool) error {
@@ -50,14 +50,6 @@ func (service *CallerService) operatorRefusal(operator bool) error {
 		return nil
 	}
 	return &Forbidden{Message: "only an Operator may do this"}
-}
-
-func (service *CallerService) installWide() []string {
-	return []string{oidc.InstallWide{}.DomainId(), service.legacyOperatorRealm()}
-}
-
-func (service *CallerService) legacyOperatorRealm() string {
-	return "mesail-operators"
 }
 
 func (service *CallerService) operatorRole() string {

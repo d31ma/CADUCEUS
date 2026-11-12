@@ -11,19 +11,19 @@ import (
 func tokenRealm(t *testing.T) (oidc.SigningRealm, OidcTokenChecker) {
 	t.Helper()
 	t.Setenv("TMPDIR", t.TempDir())
-	realm, err := oidc.SigningRealm{}.Started("example.com")
+	realm, err := oidc.SigningRealm{}.StartedMesail()
 	if err != nil {
 		t.Fatal(err)
 	}
 	if err := realm.Publish(time.Now()); err != nil {
 		t.Fatal(err)
 	}
-	return realm, OidcTokenChecker{Verifier: oidc.VerifierFactory{}.Jwks(realm.Settings)}
+	return realm, OidcTokenChecker{Verifier: oidc.VerifierFactory{}.Mesail(realm.Settings)}
 }
 
 func signedToken(t *testing.T, realm oidc.SigningRealm, roles []string, expiresAt int64) string {
 	t.Helper()
-	token, err := realm.Token(oidc.TokenRequest{Subject: "member-1", RealmRoles: roles, Audience: "mesail-api", AuthorizedParty: "mesail-identity", ExpiresAt: expiresAt})
+	token, err := realm.Token(oidc.TokenRequest{Subject: "member-1", Domain: "example.com", RealmRoles: roles, Audience: "mesail-api", AuthorizedParty: "mesail-web", ExpiresAt: expiresAt})
 	if err != nil {
 		t.Fatal(err)
 	}

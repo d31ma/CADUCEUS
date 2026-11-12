@@ -15,7 +15,7 @@ func (controller *JobsController) PostRemovals(
 	authorization string,
 ) (RemovalReport, error) {
 	caller, refused := controller.callers.Caller(authorization)
-	return controller.removalsUnless(cmp.Or(refused, controller.callers.Operator(caller)))
+	return controller.removalsUnless(cmp.Or(refused, controller.callers.InstallWide(caller)))
 }
 
 func (controller *JobsController) removalsUnless(refused error) (RemovalReport, error) {

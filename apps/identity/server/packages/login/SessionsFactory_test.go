@@ -1,7 +1,10 @@
 package login
 
 import (
+	"errors"
 	"testing"
+
+	"mesail.dev/packages/oidc"
 )
 
 func realmSessionsFrom(t *testing.T, sessions Sessions) RealmSessions {
@@ -22,30 +25,23 @@ func directoryUrl(t *testing.T, sessions RealmSessions) string {
 	return people.BaseUrl
 }
 
-func isLegacy(sessions Sessions) bool {
-	_, legacy := sessions.(LegacySessions)
-	return legacy
+func unavailable(t *testing.T, sessions Sessions) {
+	t.Helper()
+	_, err := sessions.SignIn("ana", "password", "")
+	same(t, "unavailable", errors.Is(err, oidc.SessionUnavailable{}), true)
 }
 
-func TestSessionsFactoryChoosesLegacySessionsForAPerRealmIssuer(t *testing.T) {
+func TestSessionsFactoryWithIncompleteSettingsIsUnavailable(t *testing.T) {
 	t.Setenv("TMPDIR", t.TempDir())
-	sessions := SessionsFactory{}.FromJson(testDocument(t, "https://keycloak.test/realms/{realm}"))
-	same(t, "legacy", isLegacy(sessions), true)
+	unavailable(t, SessionsFactory{}.FromJson(testDocument(t, "")))
 }
 
-func TestSessionsFactoryChoosesLegacySessionsForIncompleteSettings(t *testing.T) {
+func TestSessionsFactoryWithBrokenJsonIsUnavailable(t *testing.T) {
 	t.Setenv("TMPDIR", t.TempDir())
-	sessions := SessionsFactory{}.FromJson(testDocument(t, ""))
-	same(t, "legacy", isLegacy(sessions), true)
+	unavailable(t, SessionsFactory{}.FromJson("{"))
 }
 
-func TestSessionsFactoryChoosesLegacySessionsForBrokenJson(t *testing.T) {
-	t.Setenv("TMPDIR", t.TempDir())
-	sessions := SessionsFactory{}.FromJson("{")
-	same(t, "legacy", isLegacy(sessions), true)
-}
-
-func TestSessionsFactoryChoosesRealmSessionsForOneIssuer(t *testing.T) {
+func TestSessionsFactoryReadsTheDirectoryUrl(t *testing.T) {
 	t.Setenv("TMPDIR", t.TempDir())
 	sessions := realmSessionsFrom(t, SessionsFactory{}.FromJson(testDocument(t, "https://identity.test")))
 	same(t, "directory", directoryUrl(t, sessions), "https://directory.test")

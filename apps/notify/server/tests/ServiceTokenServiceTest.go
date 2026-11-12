@@ -1,6 +1,7 @@
 import (
 	"os"
-	"strings"
+
+	"mesail.dev/packages/oidc"
 )
 
 // @Test(NotifyTestSetup, {"partition":"tests"})
@@ -10,20 +11,22 @@ type ServiceTokenServiceTest struct {
 
 func (test *ServiceTokenServiceTest) TestTokenForComesWithoutTheBearerPrefix() {
 	setup := NotifyTestSetup{}
-	member, operators := setup.Realms(setup.Domain())
-	setup.Keycloak(member, operators)
-	token, err := (&ServiceTokenService{}).TokenFor(operators.Name)
-	Assert.IsTrue(err == nil, "token failed")
-	Assert.Equals(setup.Service(operators)[len("Bearer "):][:20], token[:20])
+	member, installWide := setup.Realms(setup.Domain())
+	setup.IdentityServer(member, installWide)
+	token, err := (&ServiceTokenService{}).TokenFor(installWide.Domain)
+	caller, refused := (&CallerService{}).Caller("Bearer " + token)
+	Assert.IsTrue(err == nil && refused == nil, "token failed")
+	Assert.Equals(oidc.InstallWide{}.DomainId(), caller.DomainId)
 }
 
-func (test *ServiceTokenServiceTest) TestTokenForServesTheRealmOfADomain() {
+func (test *ServiceTokenServiceTest) TestTokenForServesTheDomainItNames() {
 	setup := NotifyTestSetup{}
-	member, operators := setup.Realms(setup.Domain())
-	setup.Keycloak(member, operators)
-	token, err := (&ServiceTokenService{}).TokenFor(member.Name)
-	Assert.IsTrue(err == nil, "token failed")
-	Assert.IsTrue(!strings.HasPrefix(token, "Bearer "), "the token kept its prefix")
+	member, installWide := setup.Realms(setup.Domain())
+	setup.IdentityServer(member, installWide)
+	token, err := (&ServiceTokenService{}).TokenFor(member.Domain)
+	caller, refused := (&CallerService{}).Caller("Bearer " + token)
+	Assert.IsTrue(err == nil && refused == nil, "token failed")
+	Assert.Equals(member.Domain, caller.DomainId)
 }
 
 func (test *ServiceTokenServiceTest) TestTokenForFailsWithoutSettings() {

@@ -3,23 +3,20 @@ set -euo pipefail
 # shellcheck source-path=SCRIPTDIR
 . "$(dirname "$0")/common.sh"
 
-user_token() {
-  local realm="$1" username="$2" password="$3"
-  curl --fail --silent --show-error "$MESAIL_KEYCLOAK_URL/realms/$realm/protocol/openid-connect/token" \
-    --data-urlencode grant_type=password --data-urlencode client_id=mesail-identity \
-    --data-urlencode "client_secret=$MESAIL_IDENTITY_CLIENT_SECRET" \
-    --data-urlencode "username=$username" --data-urlencode "password=$password" \
-    --data-urlencode scope=openid \
-    | jq -r .access_token
+print_person() {
+  local username="$1" password="$2" name="$3"
+  printf 'export MESAIL_TOKEN_%s=%q\n' "$name" "$(mesail_sign_in "$MESAIL_ROUTER_URL" "$username" "$password" || true)"
+  printf 'export MESAIL_PASSWORD_%s=%q\n' "$name" "$password"
 }
 
 main() {
-  local realm username password name
+  local username password name
   mesail_load_settings
   mesail_load_secrets
-  while read -r realm username password name; do
-    echo "export MESAIL_TOKEN_$name=$(user_token "$realm" "$username" "$password")"
-  done < <(mesail_stack '.testUsers[] | "\(.realm) \(.username) \(.password) \(.token)"')
+  while read -r username password name; do
+    print_person "$username" "$password" "$name"
+  done < <(mesail_stack '.people[] | "\(.username) \(.password) \(.token)"')
+  printf 'export MESAIL_SERVICE_CLIENT_SECRET=%q\n' "$MESAIL_SERVICE_CLIENT_SECRET"
 }
 
 main "$@"

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mesail.dev/packages/oidc"
 	"net/http"
 	"net/url"
 	"strings"
@@ -15,8 +16,8 @@ type Directory struct {
 	Authorize func(realm string) (string, error)
 }
 
-func (Directory) InstallWideRealm() string {
-	return "mesail-operators"
+func (Directory) InstallWide() string {
+	return oidc.InstallWide{}.DomainId()
 }
 
 func (directory Directory) Domain(domainId string) (Domain, bool, error) {
@@ -33,7 +34,7 @@ func (directory Directory) Domain(domainId string) (Domain, bool, error) {
 }
 
 func (directory Directory) request(domainId string) (*http.Request, error) {
-	authorization, err := directory.Authorize(directory.InstallWideRealm())
+	authorization, err := directory.Authorize(directory.InstallWide())
 	if err != nil {
 		return nil, err
 	}

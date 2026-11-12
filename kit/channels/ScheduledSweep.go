@@ -23,7 +23,7 @@ func (sweep ScheduledSweep) Run() error {
 }
 
 func (sweep ScheduledSweep) RunWith(snapshot string) error {
-	authorization, err := sweep.Tokens.Authorization(sweep.installRealm())
+	authorization, err := sweep.Tokens.Authorization(sweep.installWide())
 	if err != nil {
 		return err
 	}
@@ -56,6 +56,6 @@ func (ScheduledSweep) relayUrl(snapshot string) string {
 	return SettingsSource{}.FromSnapshot(snapshot).RelayUrl
 }
 
-func (ScheduledSweep) installRealm() string {
-	return "mesail-operators"
+func (ScheduledSweep) installWide() string {
+	return oidc.InstallWide{}.DomainId()
 }

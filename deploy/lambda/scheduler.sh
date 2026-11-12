@@ -1,11 +1,14 @@
 #!/bin/sh
 set -eu
 
+token_request() {
+  printf '{"clientId":"mesail-service","clientSecret":"%s","domainId":"*"}' "$MESAIL_SCHEDULER_CLIENT_SECRET"
+}
+
 service_token() {
-  curl --fail --silent --show-error "$MESAIL_SCHEDULER_TOKEN_URL" \
-    --data-urlencode grant_type=client_credentials --data-urlencode client_id=mesail-service \
-    --data-urlencode "client_secret=$MESAIL_SCHEDULER_CLIENT_SECRET" \
-    | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p'
+  token_request | curl --fail --silent --show-error --request POST --header 'Content-Type: application/json' \
+    --data-binary @- "$MESAIL_SCHEDULER_TOKEN_URL" \
+    | sed -n 's/.*"accessToken" *: *"\([^"]*\)".*/\1/p'
 }
 
 call_route() {

@@ -98,7 +98,7 @@ func TestSignedTokenPassesTheMesailVerifier(t *testing.T) {
 
 func TestSignedTokenHasTheContractClaims(t *testing.T) {
 	claims := signedClaims(t, configuredSigner(t, generatedKeyText(t), ""), memberToken())
-	if claims["iss"] != "https://mail.example.net/api/v1/identity" || claims["aud"].([]any)[0] != "mesail-api" || claims["azp"] != "mesail-web" || claims["domain"] != "example.com" || claims["preferred_username"] != "ana" || claims["email"] != "ana@example.com" || claims["name"] != "Ana Example" || claims["sid"] != "session-1" {
+	if claims["iss"] != "https://mail.example.net/api/v1/identity" || claims["aud"] != "mesail-api" || claims["azp"] != "mesail-web" || claims["domain"] != "example.com" || claims["preferred_username"] != "ana" || claims["email"] != "ana@example.com" || claims["name"] != "Ana Example" || claims["sid"] != "session-1" {
 		t.Fatalf("got %v", claims)
 	}
 }

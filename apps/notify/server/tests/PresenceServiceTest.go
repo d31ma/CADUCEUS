@@ -8,7 +8,7 @@ type PresenceServiceTest struct {
 func (test *PresenceServiceTest) TestStatesReadsTheRealtimeAnswer() {
 	setup := JobsTestSetup{}
 	domainId := setup.Domain()
-	setup.Keycloak(setup.Realms(domainId))
+	setup.IdentityServer(setup.Realms(domainId))
 	server := JobsTestSetup{}.PresenceServer(map[string]string{"member-1": "active"}, 200)
 	JobsTestSetup{}.UseNotify([]string{"example.com"}, server.URL)
 	states, err := JobsTestSetup{}.Presence().States(domainId, []string{"member-1", "member-2"})
@@ -29,7 +29,7 @@ func (test *PresenceServiceTest) TestStatesIsEmptyWithoutAUrl() {
 func (test *PresenceServiceTest) TestStatesReportsAnUnavailableService() {
 	setup := JobsTestSetup{}
 	domainId := setup.Domain()
-	setup.Keycloak(setup.Realms(domainId))
+	setup.IdentityServer(setup.Realms(domainId))
 	server := JobsTestSetup{}.PresenceServer(map[string]string{}, 500)
 	JobsTestSetup{}.UseNotify([]string{"example.com"}, server.URL)
 	_, err := JobsTestSetup{}.Presence().States(domainId, []string{"member-1"})

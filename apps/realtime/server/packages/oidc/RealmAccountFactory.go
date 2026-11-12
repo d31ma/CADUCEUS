@@ -17,6 +17,13 @@ func (factory RealmAccountFactory) FromJson(document string) RealmAccount {
 	snapshot := ApplicationSnapshot{}
 	_ = json.Unmarshal([]byte(document), &snapshot)
 	session := RealmSessionFactory{}.FromJson(document)
-	session.Sessions.Problem = cmp.Or(session.Sessions.Problem, AccountManagerFactory{}.complete(snapshot.Yon))
+	session.Sessions.Problem = cmp.Or(session.Sessions.Problem, factory.complete(snapshot.Yon))
 	return RealmAccount{Session: session, Now: time.Now}
+}
+
+func (RealmAccountFactory) complete(settings ApplicationSettings) error {
+	if settings.Oidc.Admin == "" || settings.Identity.Account.Secret == "" {
+		return NotConfigured{}
+	}
+	return nil
 }

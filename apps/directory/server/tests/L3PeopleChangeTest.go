@@ -2,7 +2,6 @@
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -20,7 +19,7 @@ type L3PeopleChangeTest struct {
 }
 
 func (test *L3PeopleChangeTest) TestAnOperatorRenamesAPersonInEveryDomain() {
-	base, calls, closeServer := test.keycloak(test.key(), false, http.StatusNoContent)
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
 	test.configure(base)
 	first, second := test.hosted("active"), test.hosted("active")
@@ -36,7 +35,7 @@ func (test *L3PeopleChangeTest) TestAnOperatorRenamesAPersonInEveryDomain() {
 }
 
 func (test *L3PeopleChangeTest) TestDisablingAPersonDisablesTheAccountAndEveryMember() {
-	base, calls, closeServer := test.keycloak(test.key(), false, http.StatusNoContent)
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
 	test.configure(base)
 	domainId := test.hosted("active")
@@ -74,7 +73,7 @@ func (test *L3PeopleChangeTest) TestChangingAStateWithoutAnIdentityServerIsUnava
 }
 
 func (test *L3PeopleChangeTest) TestAnAdminOfEveryDomainChangesAPersonWhoIsNotAnOperator() {
-	base, calls, closeServer := test.keycloak(test.key(), false, http.StatusNoContent)
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
 	test.configure(base)
 	first, second := test.hosted("active"), test.hosted("active")
@@ -88,7 +87,7 @@ func (test *L3PeopleChangeTest) TestAnAdminOfEveryDomainChangesAPersonWhoIsNotAn
 }
 
 func (test *L3PeopleChangeTest) TestAnAdminMayNotChangeAnOperator() {
-	base, _, closeServer := test.keycloak(test.key(), true, http.StatusNoContent)
+	base, _, closeServer := test.keycloak(true, http.StatusNoContent)
 	defer closeServer()
 	test.configure(base)
 	domainId := test.hosted("active")
@@ -103,7 +102,7 @@ func (test *L3PeopleChangeTest) TestAnAdminMayNotChangeAnOperator() {
 }
 
 func (test *L3PeopleChangeTest) TestAnAdminOfOnlySomeDomainsOfThePersonIsForbidden() {
-	base, calls, closeServer := test.keycloak(test.key(), false, http.StatusNoContent)
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
 	test.configure(base)
 	first, second := test.hosted("active"), test.hosted("active")
@@ -231,30 +230,16 @@ func (test *L3PeopleChangeTest) domainAdmin(admin PersonDocument, domainId strin
 	return oidc.Caller{DomainId: domainId, MemberId: admin.PersonId, Username: admin.Username, Roles: []string{"DomainAdmin"}}
 }
 
-func (test *L3PeopleChangeTest) key() oidc.SigningKey {
-	key, err := oidc.SigningKey{}.Generated()
-	Assert.Equals("<nil>", fmt.Sprint(err))
-	return key
-}
-
 func (test *L3PeopleChangeTest) configure(base string) {
-	settings := `{"yon":{"oidc":{"issuer":%q,"jwks":%q,"audience":%q},"directory":{"keycloakurl":%q,"admin":{"client":"mesail-directory","secret":"example-secret"}}}}`
-	os.Setenv("YON_APPLICATION_JSON", fmt.Sprintf(settings, test.issuer(base), base+"/jwks/"+test.unique(), test.audience(), base+"/idp"))
+	settings := `{"yon":{"directory":{"keycloakurl":%q,"admin":{"client":"mesail-directory","secret":"example-secret"}}}}`
+	os.Setenv("YON_APPLICATION_JSON", fmt.Sprintf(settings, base+"/idp"))
 }
 
 func (test *L3PeopleChangeTest) configureWithoutKeycloak() {
 	os.Setenv("YON_APPLICATION_JSON", `{"yon":{}}`)
 }
 
-func (test *L3PeopleChangeTest) issuer(base string) string {
-	return base + "/realms/mesail-test"
-}
-
-func (test *L3PeopleChangeTest) audience() string {
-	return "mesail-directory-test"
-}
-
-func (test *L3PeopleChangeTest) keycloak(key oidc.SigningKey, operator bool, passwordStatus int) (string, func() string, func()) {
+func (test *L3PeopleChangeTest) keycloak(operator bool, passwordStatus int) (string, func() string, func()) {
 	lock := &sync.Mutex{}
 	lines := []string{}
 	record := func(line string) {
@@ -268,18 +253,13 @@ func (test *L3PeopleChangeTest) keycloak(key oidc.SigningKey, operator bool, pas
 		return strings.Join(lines, "\n")
 	}
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		test.answer(key, operator, passwordStatus, record, writer, request)
+		test.answer(operator, passwordStatus, record, writer, request)
 	}))
 	return server.URL, calls, server.Close
 }
 
-func (test *L3PeopleChangeTest) answer(key oidc.SigningKey, operator bool, passwordStatus int, record func(string), writer http.ResponseWriter, request *http.Request) {
+func (test *L3PeopleChangeTest) answer(operator bool, passwordStatus int, record func(string), writer http.ResponseWriter, request *http.Request) {
 	path := request.URL.Path
-	if strings.HasPrefix(path, "/jwks/") {
-		keys, _ := oidc.TokenSigner{Current: key}.KeySet()
-		writer.Write(test.keySet(keys))
-		return
-	}
 	if strings.HasSuffix(path, "/protocol/openid-connect/token") {
 		writer.Write([]byte(`{"access_token":"example-token"}`))
 		return
@@ -303,12 +283,6 @@ func (test *L3PeopleChangeTest) adminAnswer(operator bool, passwordStatus int, m
 		return http.StatusOK, `{"id":"user","enabled":true,"attributes":{}}`
 	}
 	return http.StatusNoContent, ""
-}
-
-func (test *L3PeopleChangeTest) keySet(keys oidc.KeySet) []byte {
-	encoded, err := json.Marshal(keys)
-	Assert.Equals("<nil>", fmt.Sprint(err))
-	return encoded
 }
 
 func (test *L3PeopleChangeTest) unique() string {

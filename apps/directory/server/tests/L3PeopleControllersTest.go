@@ -2,7 +2,6 @@
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,7 +9,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 
 	"mesail.dev/packages/oidc"
 )
@@ -21,14 +19,14 @@ type L3PeopleControllersTest struct {
 }
 
 func (test *L3PeopleControllersTest) TestGetPeopleGivesAnOperatorAPage() {
-	key := test.key()
-	base, _, closeServer := test.keycloak(key, false, http.StatusNoContent)
+	realm := test.realm()
+	base, _, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
-	test.configure(base)
+	test.configure(realm, base)
 	tag := test.unique()
 	person := test.stored(PersonDocument{PersonId: "p-" + test.unique(), Username: "u" + tag, State: "active"})
 	defer test.forget([]string{}, person)
-	request := test.request("/api/v1/directory/people?query="+tag+"&limit=10", test.bearer(key, base, "operator-"+test.unique(), "*", "mesail-operator"))
+	request := test.request("/api/v1/directory/people?query="+tag+"&limit=10", test.bearer(realm, "operator-"+test.unique(), "*", "mesail-operator"))
 	page, err := test.peopleController().GetPeople(request)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(1, len(page.Items))
@@ -36,22 +34,22 @@ func (test *L3PeopleControllersTest) TestGetPeopleGivesAnOperatorAPage() {
 }
 
 func (test *L3PeopleControllersTest) TestGetPeopleRefusesADomainAdmin() {
-	key := test.key()
-	base, _, closeServer := test.keycloak(key, false, http.StatusNoContent)
+	realm := test.realm()
+	base, _, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
-	test.configure(base)
-	request := test.request("/api/v1/directory/people", test.bearer(key, base, "admin-"+test.unique(), "example.com", "mesail-admin"))
+	test.configure(realm, base)
+	request := test.request("/api/v1/directory/people", test.bearer(realm, "admin-"+test.unique(), "example.com", "mesail-admin"))
 	_, err := test.peopleController().GetPeople(request)
 	var forbidden *Forbidden
 	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
 }
 
 func (test *L3PeopleControllersTest) TestGetPeopleRefusesALimitThatIsNotANumber() {
-	key := test.key()
-	base, _, closeServer := test.keycloak(key, false, http.StatusNoContent)
+	realm := test.realm()
+	base, _, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
-	test.configure(base)
-	request := test.request("/api/v1/directory/people?limit=many", test.bearer(key, base, "operator-"+test.unique(), "*", "mesail-operator"))
+	test.configure(realm, base)
+	request := test.request("/api/v1/directory/people?limit=many", test.bearer(realm, "operator-"+test.unique(), "*", "mesail-operator"))
 	_, err := test.peopleController().GetPeople(request)
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
@@ -59,91 +57,91 @@ func (test *L3PeopleControllersTest) TestGetPeopleRefusesALimitThatIsNotANumber(
 }
 
 func (test *L3PeopleControllersTest) TestGetPersonGivesAnInstallWideServiceTheRecord() {
-	key := test.key()
-	base, _, closeServer := test.keycloak(key, false, http.StatusNoContent)
+	realm := test.realm()
+	base, _, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
-	test.configure(base)
+	test.configure(realm, base)
 	domainId := test.hosted("active")
 	person := test.member(domainId)
 	defer test.forget([]string{domainId}, person)
-	record, err := test.peopleController().GetPerson(test.bearer(key, base, "service-"+test.unique(), "*", "mesail-service"), person.PersonId)
+	record, err := test.peopleController().GetPerson(DirectoryTestSetup{}.ServiceBearer(realm, "*"), person.PersonId)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(person.Username, record.Username)
 	Assert.Equals(domainId, record.DefaultDomainId)
 }
 
 func (test *L3PeopleControllersTest) TestGetPersonHidesThePersonFromAMailDomainCaller() {
-	key := test.key()
-	base, _, closeServer := test.keycloak(key, false, http.StatusNoContent)
+	realm := test.realm()
+	base, _, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
-	test.configure(base)
-	_, err := test.peopleController().GetPerson(test.bearer(key, base, "service-"+test.unique(), "example.com", "mesail-service"), "anyone")
+	test.configure(realm, base)
+	_, err := test.peopleController().GetPerson(DirectoryTestSetup{}.ServiceBearer(realm, "example.com"), "anyone")
 	var missing *NotFound
 	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
 }
 
 func (test *L3PeopleControllersTest) TestPatchPersonRenamesForAnOperator() {
-	key := test.key()
-	base, _, closeServer := test.keycloak(key, false, http.StatusNoContent)
+	realm := test.realm()
+	base, _, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
-	test.configure(base)
+	test.configure(realm, base)
 	domainId := test.hosted("active")
 	person := test.member(domainId)
 	defer test.forget([]string{domainId}, person)
-	summary, err := test.peopleController().PatchPerson(test.bearer(key, base, "operator-"+test.unique(), "*", "mesail-operator"), person.PersonId, PersonChange{DisplayName: "Renamed"})
+	summary, err := test.peopleController().PatchPerson(test.bearer(realm, "operator-"+test.unique(), "*", "mesail-operator"), person.PersonId, PersonChange{DisplayName: "Renamed"})
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("Renamed", summary.DisplayName)
 }
 
 func (test *L3PeopleControllersTest) TestPostPasswordResetsThePasswordForAnOperator() {
-	key := test.key()
-	base, calls, closeServer := test.keycloak(key, false, http.StatusNoContent)
+	realm := test.realm()
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
-	test.configure(base)
+	test.configure(realm, base)
 	domainId := test.hosted("active")
 	person := test.member(domainId)
 	defer test.forget([]string{domainId}, person)
-	err := test.peopleController().PostPassword(test.bearer(key, base, "operator-"+test.unique(), "*", "mesail-operator"), person.PersonId, PasswordReset{NewPassword: "a-long-new-password"})
+	err := test.peopleController().PostPassword(test.bearer(realm, "operator-"+test.unique(), "*", "mesail-operator"), person.PersonId, PasswordReset{NewPassword: "a-long-new-password"})
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.IsTrue(strings.Contains(calls(), "/reset-password"), "want a password reset")
 }
 
 func (test *L3PeopleControllersTest) TestDeleteTotpRemovesTheCredentialForAnOperator() {
-	key := test.key()
-	base, calls, closeServer := test.keycloak(key, false, http.StatusNoContent)
+	realm := test.realm()
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
-	test.configure(base)
+	test.configure(realm, base)
 	domainId := test.hosted("active")
 	person := test.member(domainId)
 	defer test.forget([]string{domainId}, person)
-	err := test.peopleController().DeleteTotp(test.bearer(key, base, "operator-"+test.unique(), "*", "mesail-operator"), person.PersonId)
+	err := test.peopleController().DeleteTotp(test.bearer(realm, "operator-"+test.unique(), "*", "mesail-operator"), person.PersonId)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.IsTrue(strings.Contains(calls(), "/credentials/otp-1"), "want the one-time password removed")
 }
 
 func (test *L3PeopleControllersTest) TestDeletePersonDeletesForAnOperator() {
-	key := test.key()
-	base, _, closeServer := test.keycloak(key, false, http.StatusNoContent)
+	realm := test.realm()
+	base, _, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
-	test.configure(base)
+	test.configure(realm, base)
 	domainId := test.hosted("active")
 	person := test.member(domainId)
 	defer test.forget([]string{domainId}, person)
-	err := test.peopleController().DeletePerson(test.bearer(key, base, "operator-"+test.unique(), "*", "mesail-operator"), person.PersonId)
+	err := test.peopleController().DeletePerson(test.bearer(realm, "operator-"+test.unique(), "*", "mesail-operator"), person.PersonId)
 	stored, _, _ := test.people().ByPersonId(person.PersonId)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals("deleted", stored.State)
 }
 
 func (test *L3PeopleControllersTest) TestDeletePersonRefusesADomainAdmin() {
-	key := test.key()
-	base, _, closeServer := test.keycloak(key, false, http.StatusNoContent)
+	realm := test.realm()
+	base, _, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()
-	test.configure(base)
+	test.configure(realm, base)
 	domainId := test.hosted("active")
 	person := test.member(domainId)
 	defer test.forget([]string{domainId}, person)
-	err := test.peopleController().DeletePerson(test.bearer(key, base, "admin-"+test.unique(), domainId, "mesail-admin"), person.PersonId)
+	err := test.peopleController().DeletePerson(test.bearer(realm, "admin-"+test.unique(), domainId, "mesail-admin"), person.PersonId)
 	stored, _, _ := test.people().ByPersonId(person.PersonId)
 	var forbidden *Forbidden
 	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
@@ -260,34 +258,19 @@ func (test *L3PeopleControllersTest) forget(domainIds []string, people ...Person
 	}
 }
 
-func (test *L3PeopleControllersTest) key() oidc.SigningKey {
-	key, err := oidc.SigningKey{}.Generated()
-	Assert.Equals("<nil>", fmt.Sprint(err))
-	return key
+func (test *L3PeopleControllersTest) realm() oidc.SigningRealm {
+	return DirectoryTestSetup{}.SignedRealm()
 }
 
-func (test *L3PeopleControllersTest) bearer(key oidc.SigningKey, base string, subject string, domainId string, realmRoles ...string) string {
-	signer := oidc.TokenSigner{Issuer: test.issuer(base), Audience: test.audience(), Current: key, Now: time.Now}
-	token := oidc.MesailToken{Subject: subject, AuthorizedParty: oidc.AuthorizedParties{}.Web(), Domain: domainId, RealmRoles: realmRoles, Name: "Test Caller", Username: "caller", Email: "caller@" + domainId}
-	issued, err := signer.Sign(token)
-	Assert.Equals("<nil>", fmt.Sprint(err))
-	return "Bearer " + issued.AccessToken
+func (test *L3PeopleControllersTest) bearer(realm oidc.SigningRealm, subject string, domainId string, realmRoles ...string) string {
+	return DirectoryTestSetup{}.PersonBearer(realm, subject, domainId, realmRoles...)
 }
 
-func (test *L3PeopleControllersTest) configure(base string) {
-	settings := `{"yon":{"oidc":{"issuer":%q,"jwks":%q,"audience":%q},"directory":{"keycloakurl":%q,"admin":{"client":"mesail-directory","secret":"example-secret"}}}}`
-	os.Setenv("YON_APPLICATION_JSON", fmt.Sprintf(settings, test.issuer(base), base+"/jwks/"+test.unique(), test.audience(), base+"/idp"))
+func (test *L3PeopleControllersTest) configure(realm oidc.SigningRealm, base string) {
+	os.Setenv("YON_APPLICATION_JSON", DirectoryTestSetup{}.ApplicationJson(realm, base))
 }
 
-func (test *L3PeopleControllersTest) issuer(base string) string {
-	return base + "/realms/mesail-test"
-}
-
-func (test *L3PeopleControllersTest) audience() string {
-	return "mesail-directory-test"
-}
-
-func (test *L3PeopleControllersTest) keycloak(key oidc.SigningKey, operator bool, passwordStatus int) (string, func() string, func()) {
+func (test *L3PeopleControllersTest) keycloak(operator bool, passwordStatus int) (string, func() string, func()) {
 	lock := &sync.Mutex{}
 	lines := []string{}
 	record := func(line string) {
@@ -301,18 +284,13 @@ func (test *L3PeopleControllersTest) keycloak(key oidc.SigningKey, operator bool
 		return strings.Join(lines, "\n")
 	}
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		test.answer(key, operator, passwordStatus, record, writer, request)
+		test.answer(operator, passwordStatus, record, writer, request)
 	}))
 	return server.URL, calls, server.Close
 }
 
-func (test *L3PeopleControllersTest) answer(key oidc.SigningKey, operator bool, passwordStatus int, record func(string), writer http.ResponseWriter, request *http.Request) {
+func (test *L3PeopleControllersTest) answer(operator bool, passwordStatus int, record func(string), writer http.ResponseWriter, request *http.Request) {
 	path := request.URL.Path
-	if strings.HasPrefix(path, "/jwks/") {
-		keys, _ := oidc.TokenSigner{Current: key}.KeySet()
-		writer.Write(test.keySet(keys))
-		return
-	}
 	if strings.HasSuffix(path, "/protocol/openid-connect/token") {
 		writer.Write([]byte(`{"access_token":"example-token"}`))
 		return
@@ -336,12 +314,6 @@ func (test *L3PeopleControllersTest) adminAnswer(operator bool, passwordStatus i
 		return http.StatusOK, `{"id":"user","enabled":true,"attributes":{}}`
 	}
 	return http.StatusNoContent, ""
-}
-
-func (test *L3PeopleControllersTest) keySet(keys oidc.KeySet) []byte {
-	encoded, err := json.Marshal(keys)
-	Assert.Equals("<nil>", fmt.Sprint(err))
-	return encoded
 }
 
 func (test *L3PeopleControllersTest) unique() string {

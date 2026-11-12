@@ -41,36 +41,27 @@ prepare_keycloak_import() {
   folder="$(run_folder)/keycloak-realm"
   rm -rf "$folder"
   cp -R "$(mesail_root)/deploy/keycloak/realm" "$folder"
-  cp "$(mesail_root)"/deploy/floci/keycloak-users/*.json "$folder/dev/"
   echo "$folder"
 }
 
 start_keycloak() {
   local import management
-  import="$(prepare_keycloak_import)"
   free_port > "$(run_folder)/keycloak-port"
   management="$(free_port)"
+  import="$(prepare_keycloak_import)"
   mesail_load_secrets
   mkdir -p "$(data_folder)/keycloak"
   (KEYCLOAK_HOME="$(keycloak_home)" MESAIL_KEYCLOAK_HOME="$(mesail_root)/deploy/keycloak" \
     MESAIL_KEYCLOAK_IMPORT_DIR="$import" MESAIL_KEYCLOAK_DATA="$(cd "$(data_folder)/keycloak" && pwd -P)" \
-    MESAIL_KEYCLOAK_URL="$MESAIL_ISSUER_ORIGIN/idp" MESAIL_KEYCLOAK_DEV_USERS=true \
-    MESAIL_KEYCLOAK_DOMAINS="$(mesail_stack '.keycloak.domains | join(",")')" \
+    MESAIL_KEYCLOAK_URL="$(keycloak_base)/idp" MESAIL_KEYCLOAK_DEV_USERS=true \
     KC_HTTP_HOST=127.0.0.1 KC_HTTP_PORT="$(keycloak_port)" KC_HTTP_MANAGEMENT_PORT="$management" \
-    KC_BOOTSTRAP_ADMIN_CLIENT_ID=mesail-bootstrap \
     exec "$(mesail_root)/deploy/keycloak/bin/mesail-keycloak-start") > "$(mesail_log_dir)/keycloak.log" 2>&1 &
   echo "$!" >> "$(run_folder)/pids"
   echo "Keycloak starting on $(keycloak_base)/idp (pid $!, log keycloak.log)"
 }
 
 keycloak_answers() {
-  curl --fail --silent "$(keycloak_base)/idp/realms/$(mesail_stack '.keycloak.domains[0]')/.well-known/openid-configuration" > /dev/null
-}
-
-provision_keycloak() {
-  mesail_load_secrets
-  KEYCLOAK_HOME="$(keycloak_home)" MESAIL_KEYCLOAK_ADMIN_URL="$(keycloak_base)/idp" \
-    KC_BOOTSTRAP_ADMIN_CLIENT_ID=mesail-bootstrap "$(mesail_root)/deploy/keycloak/bin/mesail-keycloak-provision"
+  curl --fail --silent "$(keycloak_base)/idp/realms/$(mesail_stack .keycloak.realm)/.well-known/openid-configuration" > /dev/null
 }
 
 native_keycloak_url() {
@@ -86,14 +77,17 @@ write_tokens() {
   local file
   if ! keycloak_wanted; then return 0; fi
   file="$(tokens_file)"
-  (umask 077 && MESAIL_KEYCLOAK_URL="$(keycloak_base)/idp" "$(mesail_root)/scripts/floci/tokens.sh" > "$file.new")
+  (umask 077 && MESAIL_ROUTER_URL="$(router_base)" "$(mesail_root)/scripts/floci/tokens.sh" > "$file.new")
   mv "$file.new" "$file"
-  echo "tokens for $(grep -c '^export MESAIL_TOKEN_' "$file") users in $file (mode 600; they last 60 s, renew with --tokens)"
+  echo "tokens for $(grep -c '^export MESAIL_TOKEN_[A-Z]*=[A-Za-z0-9]' "$file") of $(grep -c '^export MESAIL_TOKEN_' "$file") people in $file (mode 600; they last 60 s, renew with --tokens)"
+}
+
+seed_services_run() {
+  grep -q '^identity ' "$(run_folder)/servers" && grep -q '^directory ' "$(run_folder)/servers"
 }
 
 seed_directory() {
-  if ! keycloak_wanted || ! grep -q '^directory ' "$(run_folder)/servers"; then return 0; fi
-  # shellcheck disable=SC1090
-  . "$(tokens_file)"
+  if ! keycloak_wanted || ! seed_services_run; then echo "no seed: needs Keycloak, identity and directory"; return 0; fi
+  mesail_load_secrets
   mesail_seed_directory "$(router_base)"
 }

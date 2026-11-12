@@ -13,7 +13,8 @@
 - Hosting: on-premise first (ADR 0007): every feature runs on the owner's
   own machines, with no cloud account or cloud service. The services are
   built so they can also run as Lambda container images (Floci locally,
-  a cloud later), but that form is optional (ADR 0004, ADR 0007).
+  a cloud later); on-premise they run as Lambda images in the Floci
+  emulator on kestrel (Q18; ADR 0004, ADR 0007).
 
 ## 1. What Mesail is
 
@@ -808,31 +809,23 @@ section 9); both differ from the first proposal:
   until TACHYON's sealed tables (its wave 3) are in a TACHYON release that
   Mesail uses. No device keeps a copy before that (AC-OF-14).
 
-Open questions of the on-premise requirement (ADR 0007; the spec uses the
-default until the owner decides):
+Decided by the owner on 2026-11-11 (on-premise, ADR 0007):
 
-- **Q17** What does "on-premise" mean for Mesail? (a) No cloud: everything
-  runs on the owner's machines, and the install may still reach the
-  internet for email with other organizations, DNS and (optionally)
-  browser push (this spec). (b) Air-gapped: no internet at all at run
-  time; then only internal domains work (no email with outside
-  addresses), browser push is off, and builds need an offline bundle
-  (Q20).
-- **Q18** Which runtime form runs on-premise in production? (a) Plain
-  service processes: one long-running process per service, behind
-  Mesail's own router and scheduler, as every slice is already tested
-  (this spec). (b) Lambda images in the Floci emulator on kestrel, as
-  ADR 0004 planned (like FitNest). Both need no cloud account.
-- **Q19** Browser push needs the browser makers' push services (Google,
-  Mozilla, Apple, Microsoft) on the internet. (a) Keep it as an optional
-  feature, off by default on-premise; an Operator turns it on when the
-  install may reach those services (this spec). (b) Leave it out of
-  on-premise installs.
-- **Q20** May builds download pinned, checksum-checked parts from the
-  internet (GitHub, Docker Hub, Maven, Ubuntu)? (a) Yes; only run time
-  must work without downloads (this spec). (b) No; builds must also work
-  with no internet, from an offline bundle or a local mirror (needed for
-  Q17 b).
+- **Q17 (decided: no cloud).** Everything runs on the owner's machines with
+  no cloud account or cloud service. The install may still use the
+  internet for email with outside people, DNS lookups and (when turned on)
+  browser push. Not air-gapped.
+- **Q18 (decided: Lambda images in Floci).** In production on-premise the
+  services run as Lambda images in the Floci emulator on kestrel (through
+  PaaS, like FitNest), keeping the serverless-first shape. ADR 0007
+  section 4 lists the rules that contain Floci (its own VM, an API never
+  reachable from outside, no route out, pinned local images).
+- **Q19 (decided: optional, off by default).** Browser push is a feature
+  an Operator turns on (`notify.push.enabled`) when the install may reach
+  the browser makers' push services.
+- **Q20 (decided: builds may download).** Builds may download pinned,
+  checksum-checked parts from the internet; a deployed install never
+  downloads anything (AC-OP-6). No offline build bundle.
 
 Q1 (one shared conversation or one per member) is closed: one email to two
 members of the same domain is one shared conversation (AC-IN-6).

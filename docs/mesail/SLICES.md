@@ -1011,28 +1011,43 @@ except for the items below.
   `8.8.8.8`, `1.1.1.1`, `dns.google`), and gates pass for the touched
   apps and modules.
 
-### OP2. The on-premise runtime (P1's successor)
+### OP2. The on-premise runtime: Lambda in Floci on kestrel (P1's successor)
 - **Owns:** `deploy/**` (except `deploy/keycloak`), `docker-compose*.yml`,
-  `scripts/native/**`, `scripts/onprem/**` (new), the non-Keycloak
-  `Dockerfile` stages.
-- **Builds** (SPEC Q18, default "plain service processes"): an on-premise
-  compose (or PaaS) definition for one host: one container per Yon service
-  running `ty start` for all domains, the router in native mode serving
-  the web apps from files, the local scheduler, `realtime`,
-  `edge/realtime`, `edge/smtp` (it has no deployment yet), Keycloak; FYLO
-  roots and blobs on the host's disk; secrets from files; settings for
-  the relay, resolver, push, TLS files and the public host name. The
-  Floci form stays as it is, as a tested option.
+  `scripts/floci/**`, `scripts/native/**`, `scripts/onprem/**` (new), the
+  non-Keycloak `Dockerfile` stages.
+- **Builds** (SPEC Q18, decided "Lambda in Floci"; ADR 0007 section 4):
+  - a production definition for a dedicated VM on kestrel with its own
+    Docker engine, deployed through PaaS like FitNest: Floci and the Lambda
+    functions (one per service and domain, ADR 0004 section 4), the router
+    in Lambda mode, the scheduler, `realtime`, `edge/realtime`,
+    `edge/smtp` (it has no deployment yet), Keycloak with its data on a
+    volume (not tmpfs) and the operator's settings (OPERATIONS.md);
+  - networks: an `internal` network for Floci, the functions, Keycloak and
+    `realtime`; one egress container as the only way out, with an
+    allowlist built from the settings (resolver, relay or port 25 for
+    `mail-out`, push hosts for `notify` when on), which logs every refused
+    attempt; `edge/smtp` gets inbound port 25 and the resolver only;
+  - Floci's port published on no interface; the deploy tooling runs
+    inside the VM;
+  - a registry inside the install for Floci and every Mesail image; the
+    functions' image addresses point to it; nothing pulls from a public
+    registry at start or cold start;
+  - Floci kept pinned by digest, with an upgrade note;
+  - a check of Floci's licence and maintainer, reported to the owner if it
+    does not allow production use.
 - **Depends on:** Wave 3's L5 merged; OP1.
-- **Done when:** the stack starts on kestrel (or the `mesail` dev host)
-  from the on-premise definition and the blackbox tests pass against it.
+- **Done when:** the stack starts in the VM on kestrel (or in the `mesail`
+  dev host as a stand-in) from this definition and passes OP3.
 
-### OP3. Egress-denied gate (C1's successor, with P1)
+### OP3. Outbound-blocked gate for the Floci stack (C1's successor, with P1)
 - **Owns:** `scripts/onprem/egress-check.sh` (new), its CI step.
-- **Builds:** starts OP2's stack with all outbound traffic blocked except
-  the configured relay, resolver and push hosts (when on), runs the
-  blackbox tests (external mail and push tests skip), and records every
-  blocked outbound attempt; any attempt fails the gate (SPEC AC-OP-8).
+- **Builds:** starts OP2's Floci stack with every route out blocked except
+  the egress container's allowlist, runs the blackbox tests (external mail
+  and push tests skip), and records every refused outbound attempt from
+  any container, Floci and the function containers included (from the
+  egress container's log and a DNS log); any refused attempt that is not a
+  test of the allowlist fails the gate (SPEC AC-OP-8). Also checks that no
+  image is pulled from a public registry during the run.
 - **Depends on:** OP2.
 
 ### OP4. Operator guide (architecture)
@@ -1043,15 +1058,11 @@ except for the items below.
   NTP, secret files, Keycloak backups, FYLO `pack` backups, push on or off.
 - **Depends on:** OP2's settings names.
 
-### OP5. Offline build bundle (only if SPEC Q20 is "builds without internet")
-- **Owns:** `scripts/onprem/bundle.sh` (new), with P1.
-- **Builds:** one archive with every pinned image, binary, jar and the
-  apt packages (pinned), and a build path that uses only that archive
-  and a local registry.
+OP5 (an offline build bundle) is dropped: the owner decided that builds
+may download pinned parts (SPEC Q20).
 
 ### Order
-OP1 and OP4 at once; OP2 after L5 and OP1; OP3 after OP2; OP5 only on the
-owner's word.
+OP1 and OP4 at once; OP2 after L5 and OP1; OP3 after OP2.
 
 ## Later (after the first release)
 

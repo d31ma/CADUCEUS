@@ -1,7 +1,9 @@
 # ADR 0007: On-premise first: no cloud account, no hidden outbound traffic
 
-- Status: Accepted, with four owner decisions open (SPEC Q17 to Q20); the
-  defaults below apply until the owner decides.
+- Status: Accepted. The owner decided SPEC Q17 to Q20 on 2026-11-11: no
+  cloud (not air-gapped); **Lambda images in Floci** on-premise (not the
+  proposed plain processes; section 4 records it); browser push optional
+  and off by default; builds may download pinned parts.
 - Date: 2026-11-11
 - Amends: [ADR 0004](0004-mesail-go-serverless-keycloak.md) section 4
   (packaging, SMTP, static frontends) and section 9 (environments). The
@@ -77,34 +79,54 @@ An audit of `develop` (2cda510) found:
    checksum-checked parts (SPEC Q20 decides whether builds must also work
    with no internet). Every Go build runs with `GOPROXY=off` and vendored
    modules.
-4. **The on-premise runtime form** (SPEC Q18; default until the owner
-   decides: **plain service processes**). Each Yon service runs as one
-   long-running `ty start` process per service for all domains (one writer
-   per service root, as native development already runs), behind Mesail's
-   router in its native mode, with the local scheduler for job routes, the
-   realtime container, the SMTP edge and Keycloak, all as containers on the
-   owner's host (kestrel through PaaS). The router serves the web apps from
-   files. The Lambda images and the Floci form stay as an optional,
-   tested target for a later cloud move, not as the production form.
-   - Why: Floci is an emulator for testing, third-party, runs with the
-     host's Docker socket and its own outbound traffic is not audited; the
-     Lambda form adds a queue per single-writer function (the cause of the
-     Floci 502 deadlock); and plain processes are already how every slice
-     is tested.
-   - The other choice (keep the Lambda images in Floci on kestrel as the
-     production form, like FitNest) also needs no cloud account; it is
-     the current plan in ADR 0004.
+4. **The on-premise runtime form: Lambda images in Floci on kestrel**
+   (the owner's answer to SPEC Q18, 2026-11-11: "Lambda in Floci"; it keeps
+   the serverless-first shape of the original requirement). Production runs
+   the same Lambda images as the integration run, in the Floci emulator on
+   kestrel through PaaS, like FitNest, with the router, scheduler, realtime
+   container, SMTP edge and Keycloak beside it. The proposed alternative,
+   plain `ty start` processes behind the router's native mode, was not
+   chosen; it stays working as the way every slice is tested, and so stays
+   a known fallback with no code change. Because Floci is now a production
+   dependency, these rules apply (built by slices OP2 and OP3):
+   - **Its own VM.** Floci controls its Docker engine through the engine's
+     socket, which is the same as root on that engine. So the whole Mesail
+     stack runs in a dedicated VM on kestrel with its own Docker engine
+     (the FitNest and `mesail` dev host pattern); nothing else runs on that
+     engine, and the socket gives no power over kestrel itself.
+   - **Its API is never reachable from outside.** Floci's AWS-style API
+     takes any credentials (`test`/`test`), so anyone who reaches it
+     controls every function and data volume. Its port is published on no
+     interface; only the router and the deploy tooling inside the VM reach
+     it.
+   - **No route out.** Floci, the Lambda containers, Keycloak and the
+     realtime container sit on a Docker network with no route to the
+     internet (`internal`). The only way out is one egress container that
+     allows exactly the configured DNS resolver, the mail relay (or port 25
+     when direct delivery is on, for `mail-out`) and, when push is on, the
+     push services (for `notify`); everything else is refused and logged.
+     The SMTP edge has inbound port 25 and reaches only the resolver.
+     Floci's own outbound attempts are recorded by OP3, and any attempt
+     fails the gate.
+   - **Pinned, local images.** Floci is pinned by digest (as now) and
+     upgraded only by a slice that passes OP3. Floci, the Lambda images and
+     the other images are kept in a registry inside the install, so a
+     restart or a cold start never pulls from Docker Hub or any other
+     public registry (AC-OP-6).
+   - **Licence and support.** OP2 checks that Floci's licence allows this
+     production use and records who maintains it; if it does not, that
+     goes back to the owner.
 5. **What replaces each cloud-shaped part on-premise** (no AWS):
 
    | Cloud-shaped part | On-premise |
    | --- | --- |
-   | Lambda per service (and per domain) | one `ty start` process per service (Q18 default) |
-   | API routing / API Gateway | Mesail's router (native mode) |
+   | Lambda per service (and per domain) | the same Lambda images in Floci on kestrel (Q18) |
+   | API routing / API Gateway | Mesail's router (Lambda mode, to Floci) |
    | API Gateway WebSocket | `edge/realtime` and the `realtime` container (already) |
    | EventBridge schedules | the local scheduler (already) |
    | S3 for blobs | the local adapter on the host's disk, or a self-hosted S3-compatible store with an explicit endpoint |
-   | S3 plus CloudFront for web apps | the router serves the built files |
-   | EFS | the host's local disk for FYLO roots (ATLAS rules stay) |
+   | S3 plus CloudFront for web apps | the router serves the web bundles from Floci's S3 bucket (as now) |
+   | EFS | Floci's EFS volumes on the VM's data disk (the ATLAS rules of ADR 0004 stay) |
    | Secrets Manager | secret files on the host, read once at start (as now) |
    | SES (in and out) | `edge/smtp` for inbound; the operator's relay or direct delivery outbound |
    | Public DNS default | the operator's resolver |
@@ -123,9 +145,9 @@ An audit of `develop` (2cda510) found:
 - Four small code fixes (DNS default, S3 fallback, vendoring one module,
   a push on/off setting) and one deployment slice; most of the work is
   already done in native mode.
-- If Q18 keeps plain processes, the "serverless-first" shape of ADR 0004
-  becomes an optional later target; the code stays the same, because the
-  Lambda form was always "a deployment choice, not a code change"
-  (ADR 0004 section 4).
+- Floci becomes a production dependency (Q18); its VM, network and image
+  rules above contain it, and plain processes remain a fallback that
+  needs no code change (ADR 0004 section 4: "a deployment choice, not a
+  code change").
 - Email to and from other organizations still needs the internet (SMTP
   and DNS). An air-gapped install (SPEC Q17) has only internal domains.

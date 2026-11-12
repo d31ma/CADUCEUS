@@ -153,9 +153,9 @@ kit/            shared plain Go packages (source of truth)
   inside `web`.
 
 ### 4. Every Yon service is a Lambda container image, one writer per (service, domain)
-> Amended by ADR 0007 (on-premise first): the Lambda images and Floci are
-> an optional, tested form; the on-premise production form is decided by
-> SPEC Q18 (default: plain service processes). SES, S3 plus CloudFront,
+> Amended by ADR 0007 (on-premise first): on-premise production runs these
+> Lambda images in Floci on kestrel (SPEC Q18, decided), in a dedicated VM
+> with no route out except one egress container. SES, S3 plus CloudFront,
 > API Gateway and EventBridge below are optional cloud mappings, never
 > required; ADR 0007 section 5 lists the on-premise replacements.
 

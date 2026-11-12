@@ -1611,8 +1611,9 @@ TACHYON's T15 slice (ADR 0008). The Keycloak and identity parts may be built bef
 ### PK2. Identity passkey routes (identity's successor)
 - **Owns:** `apps/identity/**`, `kit/oidc` session and account code for
   passkeys.
-- **Builds:** CONTRACTS "identity" passkey routes, the sealed challenge and
-  `setupKey`, `identity.passkeyorigins`, `sessionsEndedAt` on removal.
+- **Builds:** CONTRACTS "identity" passkey routes (rename and
+  `setup_expired` included, added 2026-11-12 for PU), the sealed challenge
+  and `setupKey`, `identity.passkeyorigins`, `sessionsEndedAt` on removal.
 - **Depends on:** PK1.
 
 ### PK3. Directory: remove all passkeys (directory's successor)
@@ -1643,7 +1644,11 @@ TACHYON's T15 slice (ADR 0008). The Keycloak and identity parts may be built bef
 - **Builds:** sealed tables with `"unlock": "userPresence"` (TACHYON T15)
   for the device copy in the installed apps, the "Unlock with Touch ID"
   setting, the locked screen (on open and after 5 minutes in the
-  background) and its PU screens.
+  background) and its PU screens. For AC-OF-20's "how many unsent items
+  were lost": the app keeps the number of waiting queue items (a count
+  only, no content) outside the OS-locked tables, under the normal sealed
+  key, and updates it with every queue change, because after `keyLost` the
+  locked queue cannot be read. The locked screen shows no counts.
 - **Depends on:** Wave 4's O3, TACHYON T15.
 
 ### Order

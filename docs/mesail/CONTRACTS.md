@@ -255,7 +255,8 @@ and T14 (apps).
 | `POST /api/v1/identity/session/passkey` | Public | `PasskeySignIn{challengeKey, credentialJson, domainId?, keepSignedIn?}` | `200 Session` (the default domain, or `domainId` when given and the person is a member); `401 unauthenticated` (one message for every failure); `403 not_a_member`, `403 no_domain` as for a password sign-in; `429 rate_limited` |
 | `GET /api/v1/identity/passkeys` | SignedIn | - | `[]Passkey{passkeyId, label, createdAt, lastUsedAt}` of the caller |
 | `POST /api/v1/identity/passkeys/setup` | SignedIn | `PasskeySetupRequest{currentPassword, oneTimeCode?}` | `200 PasskeySetup{optionsJson, setupKey}` (creation options: user id = the person id, user name = the username, resident key required, user verification required, exclude the person's existing passkeys); `401` wrong password or code; `409 too_many` with 10 passkeys |
-| `POST /api/v1/identity/passkeys` | SignedIn | `PasskeyConfirm{setupKey, credentialJson, label}` | `201 Passkey`; `400 invalid_passkey` |
+| `POST /api/v1/identity/passkeys` | SignedIn | `PasskeyConfirm{setupKey, credentialJson, label}` | `201 Passkey`; `400 setup_expired` when the `setupKey` is older than 10 minutes (start again with `setup`); `400 invalid_passkey` for every other failure |
+| `PATCH /api/v1/identity/passkeys/{passkeyId}` | SignedIn | `PasskeyRename{label}` | `200 Passkey`; `400 invalid_request` (field `label`, 1 to 64 characters); `404 not_found` for another person's passkey. No password: a label is not a secret and changes no access |
 | `DELETE /api/v1/identity/passkeys/{passkeyId}` | SignedIn | `PasskeyRemove{currentPassword, oneTimeCode?}` | `200 Session` (fresh tokens, like a password change: its own fresh session starts after `sessionsEndedAt`); ends every other session of the person (`sessionsEndedAt`); `401`; `404 not_found` for another person's passkey |
 
 - `identity` checks the sealed challenge and its expiry, then calls

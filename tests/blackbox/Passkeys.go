@@ -137,3 +137,9 @@ func excludedIds(options creationOptions) []string {
 	}
 	return ids
 }
+
+func renamePasskeyReply(t *testing.T, stack Stack, token string, passkeyId string, label string) Reply {
+	t.Helper()
+	request := map[string]string{"label": label}
+	return stack.Call(t, http.MethodPatch, "/api/v1/identity/passkeys/"+passkeyId, token, request)
+}

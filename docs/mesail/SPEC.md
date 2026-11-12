@@ -725,7 +725,9 @@ recent data, works offline, and syncs when it is back online.
   until the person unlocks. The queue and drafts are locked too. If the
   device's lock changes so that the key is lost (the passcode removed, or
   the enrolled fingers or faces changed), the copy is loaded again from the
-  server, and the person is told how many unsent items were lost with it.
+  server, and the person is told how many unsent items were lost with it
+  (the app keeps that number, and nothing else about the queue, outside
+  the locked copy; SLICES PK6).
   Turning the lock off needs the same check. Browsers and the Linux app do
   not offer it. Built after TACHYON requests T15 and T15b (ADR 0008,
   Q22).

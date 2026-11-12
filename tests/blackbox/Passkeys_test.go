@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -273,4 +274,32 @@ func TestAcId13PlainMemberCannotRemoveAnotherPersonsPasskeys(t *testing.T) {
 	path := "/api/v1/directory/people/" + owner.Person.Id + "/passkeys"
 	stack.Call(t, http.MethodDelete, path, fixture(t, stack, "BO").AccessToken, nil).ExpectError(t, http.StatusForbidden, "forbidden")
 	signInWithPasskey(t, stack, owner.Authenticator)
+}
+
+func TestAcId15RenamingAPasskeyNeedsNoPassword(t *testing.T) {
+	stack := NewStack(t)
+	owner := newPasskeyOwner(t, stack)
+	var renamed passkey
+	renamePasskeyReply(t, stack, owner.Session.AccessToken, owner.Passkey.PasskeyId, "Work laptop").Expect(t, http.StatusOK).Decode(t, &renamed)
+	list := listPasskeys(t, stack, owner.Session.AccessToken)
+	if renamed.Label != "Work laptop" || len(list) != 1 || list[0].Label != "Work laptop" {
+		t.Fatalf("want the label Work laptop, got %+v and %+v", renamed, list)
+	}
+}
+
+func TestAcId15PasskeyLabelIsOneTo64Characters(t *testing.T) {
+	stack := NewStack(t)
+	owner := newPasskeyOwner(t, stack)
+	tooLong := strings.Repeat("a", 65)
+	reply := renamePasskeyReply(t, stack, owner.Session.AccessToken, owner.Passkey.PasskeyId, tooLong)
+	reply.ExpectError(t, http.StatusBadRequest, "invalid_request")
+	renamePasskeyReply(t, stack, owner.Session.AccessToken, owner.Passkey.PasskeyId, "").ExpectError(t, http.StatusBadRequest, "invalid_request")
+}
+
+func TestAcId15AnotherPersonsPasskeyCannotBeRenamed(t *testing.T) {
+	stack := NewStack(t)
+	owner := newPasskeyOwner(t, stack)
+	other := newPasskeyOwner(t, stack)
+	reply := renamePasskeyReply(t, stack, other.Session.AccessToken, owner.Passkey.PasskeyId, "Mine now")
+	reply.ExpectError(t, http.StatusNotFound, "not_found")
 }

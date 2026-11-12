@@ -473,8 +473,13 @@ attention cards and the space meter (COMPONENTS.md "Offline and sync").
   a plain copy can encrypt later, Mesail replaces the copy without asking (no screen; at most the sync bar's
   "Updating"). A kept device opens offline
   without the sign-in form. Without a copy and without network: "You are offline. Sign-in needs the network."
-- **Sync bar** (`offline-status.html`): one full-width button at the very top of the app, above every pane
-  and on every width, so the person always sees it in the same place. It shows only when there is
+- **Sync bar** (`offline-status.html`): one full-width status bar at the very top of the app, above every
+  pane and on every width, so the person always sees it in the same place. The bar itself never takes
+  focus and is not clickable (DuVay `w-sync-status`, which never takes focus; decided 2026-11-11 after the
+  DuVay trial 2). A **Details** button in the bar's actions slot (32 px with a mouse, 44 px on touch)
+  opens the sync panel; "Try now", "Manage space" and "Review" sit in the same slot. The mockups
+  `offline-status.html` and `offline-messenger.html` still draw the whole bar as one button: slice O4
+  builds the Details button instead. It shows only when there is
   something to say, and it takes the top safe area (the pane headers under it do not add it again).
   32 px with a mouse, 44 px on touch and under 768 px. States and words:
   - Offline: "Offline · Updated 08:12", plus "4 waiting to send" ("4 waiting" under 600 px). Neutral
@@ -487,10 +492,10 @@ attention cards and the space meter (COMPONENTS.md "Offline and sync").
   - Long offline (AC-OF-15): "Reloading recent messages". Before the 30-day lock: "Connect soon · Locks on 18 Nov".
   - Device full (`StoreWriteFailed`, AC-OF-13): "This device is full · New messages are not kept" and
     "Manage space" (opens Settings > This device). Waiting items and drafts are safe.
-  - The bar opens the **sync panel** (a dialog; a bottom sheet under 600 px): each domain with "Updated
+  - **Details** opens the **sync panel** (a dialog; a bottom sheet under 600 px): each domain with "Updated
     08:12" and its waiting count, domains without a copy marked "Not on this device. Needs the network.",
     a link to "Needs your attention", **Try now**, and "Space and offline settings". It says "Mesail sends
-    only while it is open" (no background sending until TACHYON T3).
+    only while it is open" (TACHYON T3 is not built, ADR 0006 section 9).
   - Screen readers hear one polite status per change ("Offline. Showing the copy on this device, updated
     08:12."; "Up to date. 4 sent."), never a stream of progress.
 - **Waiting items** (`offline-messages.html`, AC-OF-4): a change shows at once. A queued message has a

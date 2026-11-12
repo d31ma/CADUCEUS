@@ -932,7 +932,10 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
   "Needs your attention" (section 4), sent by the tab that holds the T11
   `Locks` lock, the T5 reconnect policy that never gives up, conflict
   handling (AC-OF-8), offline recipient chips (AC-OF-5), access-lost
-  handling (AC-OF-9), files attached offline (kept with `Blobs`, uploaded
+  handling (AC-OF-9), the sync bar as a status that never takes focus,
+  with a "Details" button in its actions slot that opens the sync panel
+  (not the whole bar as one button, as the mockups draw it; matches DuVay
+  `w-sync-status`), files attached offline (kept with `Blobs`, uploaded
   before their send, AC-OF-4), the in-memory queue of a tab that is not
   kept (AC-OF-19), the offline states from OU. The sync engine is a
   service with no view binding, so it can move to a T10 worker later.

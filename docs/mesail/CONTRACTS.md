@@ -261,7 +261,10 @@ and T14 (apps).
   Keycloak's token endpoint through the passkey direct-grant flow of the
   realm `mesail` (client `mesail-identity`) with the assertion, the
   expected challenge and the allowed origins (app setting
-  `identity.passkeyorigins`: the web origin and the native apps' origins).
+  `identity.passkeyorigins`: the web origin `https://<host>`; for the
+  apps, `https://<host>` on Apple and Windows, and
+  `android:apk-key-hash:<hash>` for each Android app build, printed by
+  its build (TACHYON T14)).
   `mesail-keycloak`'s authenticator finds the user from the user handle,
   checks signature, sign count, user verification and the origin, and
   answers tokens; a failure counts in Keycloak's brute-force detection.

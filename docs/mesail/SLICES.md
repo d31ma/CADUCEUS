@@ -1314,8 +1314,11 @@ OP1 and OP4 at once; OP2 after L5 and OP1; OP3 after OP2.
 
 The owner's request of 2026-11-12: biometrics (Touch ID, Face ID and the
 like) as a sign-in option. SPEC S18, AC-ID-15 to AC-ID-19, Q21 and Q22;
-CONTRACTS "identity" (passkeys). Web passkeys wait for TACHYON T13, native
-ones for T14; the Keycloak and identity parts may be built before.
+CONTRACTS "identity" (passkeys). TACHYON's plan (approved 2026-11-12):
+T13 (web passkeys) in its wave 2, already started; T15 (biometric unlock)
+in its wave 3b, after the sealed tables; T14 (app passkeys) first in its
+wave 4. T15b (a run-time on/off switch for the unlock) is a new request
+(ADR 0008). The Keycloak and identity parts may be built before.
 
 ### PU. UX for passkeys (`mesail-ux` or a UX session)
 - **Owns:** `docs/mesail/ux/**`.
@@ -1384,8 +1387,13 @@ ones for T14; the Keycloak and identity parts may be built before.
 - **Depends on:** Wave 4's O3, TACHYON T15.
 
 ### Order
-PU, PK0 and PK1 at once; PK2 and PK3 after PK1; PK4 after PK2 and T13; PK5
-after PK4 and T14; PK6 after Wave 4's O3 and TACHYON T15.
+PU, PK0 and PK1 at once; PK2 and PK3 after PK1; PK4 after PK2 and T13
+(TACHYON wave 2); PK5 after PK4 and T14 (TACHYON wave 4); PK6 after Wave
+4's O3 and TACHYON T15 (wave 3b) with T15b. PK1 and PK2 accept the app
+origins of ADR 0008 T14 (`https://<host>` for Apple and Windows,
+`android:apk-key-hash:<hash>` for Android). PK4 uses the grant `passkeys`
+and handles every `PasskeyFailed` reason. PK6 declares `"unlock":
+"userPresenceWhenAvailable"` and uses `StorageLock.require` (T15b).
 
 ## Later (after the first release)
 

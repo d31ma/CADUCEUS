@@ -124,26 +124,49 @@ exchange power: one stolen `identity` secret could then sign in as anyone.
 
 ## Requests to dependencies (TACHYON)
 
-- **T13** A `Passkeys` page client for every Tac service language (grant
-  `webauthn`): `supported()`, `create(optionsJson)` and `get(optionsJson)`
-  that take WebAuthn options as JSON (WebAuthn Level 3
-  `parseCreationOptionsFromJSON` / `parseRequestOptionsFromJSON`) and
-  answer with built-in events `PasskeyCreated { credentialJson }` and
-  `PasskeyAsserted { credentialJson }` (the credential's `toJSON()`), or
-  `BrowserCallFailed`; a user action is required, as for `Push.subscribe`;
-  conditional mediation (`mediation: "conditional"`, passkeys offered in
-  the username field's autofill) as an option.
-- **T14** The same client in the native shells through the platform's
-  passkey API: Apple `ASAuthorizationPlatformPublicKeyCredentialProvider`
-  (manifest member for the `webcredentials:<host>` associated domain and
-  the entitlement in release signing), Android Credential Manager
-  (`CreatePublicKeyCredentialRequest`, `GetPublicKeyCredentialOption`, with
-  the app's signing certificate for `assetlinks.json`), Windows
-  `WebAuthNAuthenticatorMakeCredential` and `GetAssertion`; `supported()`
-  answers false on Linux. The relying party id is a manifest setting
-  (the install's host), not the WebView's origin.
-- **T15** (firm since the owner's answer to SPEC Q22) Sealed tables with a key the OS
-  releases only after a biometric or device PIN (`"unlock": "userPresence"`):
-  Keychain access control `biometryCurrentSet` or `userPresence`, Android
-  Keystore `setUserAuthenticationRequired`, Windows Hello key protection;
-  a built-in event when the OS asks the person and when they refuse.
+TACHYON's plan was approved by the owner on 2026-11-12 (TACHYON's
+coordinator notes, `tachyon-passkeys-plan.md`). Order: **T13** in TACHYON's
+wave 2 (started), **T15** right after the sealed tables (wave 3b), **T14**
+first in wave 4. Device evidence for T14 and T15 needs resources the owner
+provides; TACHYON's coordinator handles that.
+
+- **T13** (web) A `Passkeys` page client in every Tac service language,
+  behind the browser grant **`passkeys`**: `supported()`, `check()`,
+  `create(optionsJson)`, `get(optionsJson)`, `offer(optionsJson)`
+  (conditional mediation: passkeys in the username field's autofill; web
+  only in v1) and `cancel()`. Options are WebAuthn Level 3 JSON (at most
+  64 KiB). Success arrives as `PasskeyCreated { credentialJson }` or
+  `PasskeyAsserted { credentialJson }`; every failure as
+  `PasskeyFailed { call, reason, message }` with `reason` one of
+  `cancelled`, `exists`, `unsupported`, `refused`, `busy`, `invalid`,
+  `failed`. A user action is required.
+- **T14** (apps) The same client in the native shells through each
+  platform's passkey API (Apple `ASAuthorization`, Android Credential
+  Manager, Windows `webauthn.dll`; Linux answers `unsupported`). The
+  relying party comes from the manifest member
+  `tac.application.passkeys.relyingParty` (the install's host). The origin
+  in the credential is `https://<relyingParty>` on Apple and Windows, and
+  `android:apk-key-hash:<hash>` on Android (the build prints the hash), so
+  `identity.passkeyorigins` lists those for each install (CONTRACTS
+  "identity").
+- **T15** (apps, firm since SPEC Q22) Sealed tables and blobs with
+  `"unlock": "userPresence"`: rows sealed under a second key that the OS
+  releases only after a biometric or the device PIN; a `StorageLock`
+  client (`state()`, `unlock()`, `lock()`) with built-in events
+  (`StorageUnlockAsked`, `StorageUnlocked`, `StorageUnlockRefused { reason
+  }` with `cancelled`, `failed`, `lockedOut`, `notEnrolled`, `keyLost`,
+  `StorageLocked { reason }`); no reads or writes while locked (error
+  `storage_locked`); relock after `tac.storage.unlock.relockAfterSeconds`
+  (default 300) in the background and when the device locks; the prompt
+  text from `tac.storage.unlock.reason`. Mesail declares
+  **`"unlock": "userPresenceWhenAvailable"`**, so the web and Linux builds
+  use the normal sealed key and get `StorageUnlockUnavailable` (SPEC
+  AC-OF-20 leaves them out).
+- **T15b** (new, 2026-11-12) A run-time switch for the unlock key, because
+  SPEC AC-OF-20 makes the biometric lock a choice of the person, while T15
+  fixes it per table in the declaration: `StorageLock.require(true|false)`.
+  Off: the unlock key is kept under the normal sealed device key (no
+  prompt). On: it is moved under the OS-gated key. Changing it needs a
+  successful `unlock()` and answers `StorageLockRequired { required }`.
+  Without T15b the lock would be always on in the apps (a change to
+  AC-OF-20 that the owner would have to accept).

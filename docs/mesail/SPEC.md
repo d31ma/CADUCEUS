@@ -718,11 +718,17 @@ recent data, works offline, and syncs when it is back online.
   for macOS, iOS, Windows and Android, the person may turn on "Unlock with
   Touch ID" (or Face ID, Windows Hello, an Android biometric, falling back
   to the device PIN) for the device copy. The copy's key is then released
-  by the operating system only after that check, each time the app opens
-  or comes back after 5 minutes in the background; until then the app
-  shows a locked screen and keeps the queue waiting. Turning it off needs
-  the same check. Browsers and the Linux app do not offer it. Built after
-  TACHYON request T15 (ADR 0008, Q22).
+  by the operating system only after that check, each time the app opens,
+  after 5 minutes in the background, and when the device itself locks.
+  While locked, the app shows a locked screen and does not read or write
+  the copy at all: syncing, sending the queue and realtime updates wait
+  until the person unlocks. The queue and drafts are locked too. If the
+  device's lock changes so that the key is lost (the passcode removed, or
+  the enrolled fingers or faces changed), the copy is loaded again from the
+  server, and the person is told how many unsent items were lost with it.
+  Turning the lock off needs the same check. Browsers and the Linux app do
+  not offer it. Built after TACHYON requests T15 and T15b (ADR 0008,
+  Q22).
 - **AC-OF-19 A tab that is not kept.** When the network drops in a tab
   without "Keep me signed in on this device", the tab keeps showing what
   it already loaded and lets the person write. What they write waits in

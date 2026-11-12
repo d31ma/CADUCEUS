@@ -1108,6 +1108,16 @@ OP1 and OP4 at once; OP2 after L5 and OP1; OP3 after OP2.
 - **X4** Interface translations and in-browser message translation.
 - **X5** Split `web` into separately deployed feature bundles once TACHYON
   can mount separately built Tac apps.
+- **X6** Use FYLO's word index and sorted pages (FYLO ADR 0023, on FYLO
+  `develop` since 2026-11-11, not yet in a FYLO release Mesail pins) in
+  `search` and in `messaging`'s newest-first lists, replacing Mesail's own
+  word index (`kit/textindex`) where it is simpler. FYLO sorts by number
+  only, so add numeric companion fields (for example `createdAtMs`, epoch
+  milliseconds) next to the RFC 3339 times; the wire format stays RFC 3339.
+  Check the index size first: FYLO estimates 6 to 12 KB of word-index keys
+  per 2 KB message body against its 256 MiB limit per collection, so a
+  busy domain's monthly `search-index` collection may need a finer split
+  (DOMAIN.md "FYLO layout").
 
 ## Ownership check
 

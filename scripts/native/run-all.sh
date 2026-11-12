@@ -11,7 +11,10 @@ Usage: scripts/native/run-all.sh [--up | --down] [app ...]
 
 Starts every Yon app (or the named ones) with `ty start` on this Mac, the Tac
 apps as static files, and the Mesail router on one origin, then runs the
-blackbox tests in tests/blackbox against it and stops everything.
+blackbox tests in tests/blackbox against it and stops everything. The tests
+run one at a time (in file order), and the fixture people sign in again
+before a test whenever their tokens are 30 s old or more (tokens last 60 s;
+scripts/floci/test.sh renews them before each test file).
 
   --up      start and keep running; prints MESAIL_BASE_URL (stop with --down)
   --tokens  write fresh tokens for the running --up stack (they last 60 s)
@@ -19,7 +22,8 @@ blackbox tests in tests/blackbox against it and stops everything.
 
 Settings (environment):
   MESAIL_OWNER        your slice, for example slice-m3 (lock owner, FYLO roots, logs)
-  MESAIL_TEST_RUN     go test -run filter for tests/blackbox
+  MESAIL_TEST_RUN     go test -run filter for tests/blackbox: one go test run with one set of
+                      tokens, instead of one run per test
   MESAIL_SKIP_STATIC  1 skips the Tac bundles
   MESAIL_KEYCLOAK     native (default): start Keycloak 26.8.2 natively with the realm mesail
                       and its dev people (ana, bo, eve, carol, operator), seed the directory
@@ -32,6 +36,18 @@ Settings (environment):
   MESAIL_SECRETS_FILE NAME=value secrets (as in .env.example); generated per run when unset.
                       Each app gets the ones it uses unless its own .env already sets them.
   MESAIL_ROUTER_RATE_LIMIT  sign-ins per minute per address at the router (default 1000 here)
+  MESAIL_KEYCLOAK_REBUILD  1 rebuilds the shared native Keycloak before the run (see below)
+  MESAIL_KEYCLOAK_TOOLS    the native Keycloak folder (default ~/Developer/Tools/mesail-keycloak)
+
+Shared native Keycloak: built once into MESAIL_KEYCLOAK_TOOLS and used by every
+slice's native run. Rebuild it after a change in deploy/keycloak/dev,
+deploy/keycloak/providers or deploy/keycloak/conf (for example PK1's passkey
+provider): MESAIL_KEYCLOAK_REBUILD=1 scripts/native/run-all.sh. Rebuild only
+when no other native run is using it; the run refuses while a Keycloak from
+that folder is running. A run warns when the folder was built from other
+deploy/keycloak files. Realm changes (deploy/keycloak/realm) need no rebuild:
+each run imports the realm from the checkout.
+
 FYLO roots: ~/Developer/AtlasFylo/mesail/<owner>/native/<service> (emptied at each start).
 Logs: ~/Library/Logs/local/CADUCEUS/<owner>/native-<time>/
 TEXT
@@ -482,11 +498,32 @@ start_scheduler() {
   echo "scheduler for $paths (pid $!, log scheduler.log)"
 }
 
-load_tokens() {
-  if keycloak_wanted; then mesail_step tokens write_tokens; fi
+use_tokens() {
   if [ ! -f "$(tokens_file)" ]; then echo "no tokens file: tests that need a token skip"; return 0; fi
   # shellcheck disable=SC1090
   . "$(tokens_file)"
+}
+
+load_tokens() {
+  mesail_step tokens write_tokens
+  use_tokens
+}
+
+token_refresh_seconds() {
+  echo 30
+}
+
+token_age_seconds() {
+  echo $(($(date +%s) - $(stat -f %m "$(tokens_file)")))
+}
+
+tokens_are_fresh() {
+  [ -f "$(tokens_file)" ] && [ "$(token_age_seconds)" -lt "$(token_refresh_seconds)" ]
+}
+
+renew_old_tokens() {
+  if tokens_are_fresh; then return 0; fi
+  mesail_step tokens write_tokens
 }
 
 fresh_tokens() {
@@ -494,19 +531,52 @@ fresh_tokens() {
   write_tokens
 }
 
-run_blackbox() {
-  local filter=()
-  if [ -n "${MESAIL_TEST_RUN:-}" ]; then filter=(-run "$MESAIL_TEST_RUN"); fi
+go_blackbox() {
   # shellcheck disable=SC1091
   . "$(run_folder)/env"
   (cd "$(mesail_root)/tests/blackbox" && GOFLAGS=-buildvcs=false \
-    go test -tags blackbox -count=1 -v ${filter[@]+"${filter[@]}"} ./...)
+    go test -tags blackbox -count=1 -v -run "$1" ./...)
+}
+
+blackbox_tests() {
+  grep -ho '^func Test[A-Za-z0-9_]*' "$(mesail_root)"/tests/blackbox/*_test.go | sed 's/^func //'
+}
+
+run_test() {
+  local name="$1"
+  echo "=== test $name $(date +%H:%M:%S)"
+  renew_old_tokens
+  use_tokens
+  go_blackbox "^${name}\$"
+}
+
+report_failed_tests() {
+  if [ "$#" -eq 0 ]; then echo "=== every blackbox test passed"; return 0; fi
+  echo "=== blackbox tests that failed ($#): $*"
+  return 1
+}
+
+run_every_test() {
+  local name failed=()
+  for name in $(blackbox_tests); do
+    run_test "$name" || failed+=("$name")
+  done
+  report_failed_tests ${failed[@]+"${failed[@]}"}
+}
+
+run_filter() {
+  load_tokens
+  go_blackbox "$MESAIL_TEST_RUN"
+}
+
+run_blackbox() {
+  if [ -n "${MESAIL_TEST_RUN:-}" ]; then run_filter; return; fi
+  run_every_test
 }
 
 start_test_stop() {
   trap stop_all EXIT
   start_all "$@"
-  load_tokens
   mesail_step blackbox run_blackbox
 }
 

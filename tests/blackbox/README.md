@@ -21,6 +21,17 @@ each app behind the router):
     MESAIL_TOKEN_OPERATOR=... \
     go test -tags blackbox -v ./...
 
+On this Mac, `scripts/native/run-all.sh` starts every app natively and runs
+the suite one test at a time. The tokens last 60 seconds, so the fixture
+people sign in again before a test whenever their tokens are 30 seconds old
+or more (`scripts/floci/test.sh` renews them before each test file).
+`MESAIL_TEST_RUN` runs one `-run` filter instead, with one set of tokens. The native runner uses a shared native Keycloak in
+`~/Developer/Tools/mesail-keycloak`. Rebuild it after a change in
+`deploy/keycloak/dev`, `providers` or `conf` (for example a new provider),
+when no other native run uses it:
+`MESAIL_KEYCLOAK_REBUILD=1 scripts/native/run-all.sh`
+(details: `scripts/native/run-all.sh --help`).
+
 Fixtures they expect (ADR 0005: one login per person, one Keycloak realm
 `mesail`, the prefix is the username in every domain). Email crosses
 domains; chat never does.

@@ -1870,6 +1870,19 @@ Every E slice below:
 - **Done when:** the check has tests; the responsive tests show the same
   pages; gates pass.
 
+### E11. Error number gate check (a small session, after E0)
+Found by E3 (2026-11-12): app tests run in a temporary folder and cannot
+read `docs/mesail/ERRORS.md`.
+- **Owns:** `tools/errornumbers/**` (new), its line in `scripts/gates.sh`.
+- **Builds:** a Go check run once per gate: it reads ERRORS.md (every
+  number unique, inside its app's block, rows sorted), collects the
+  numbers each app's code uses (integer literals inside the app's block in
+  `apps/<app>/server/errors/**`, the error handler and the kit packages
+  copied only into that app), and fails when a used number is not listed
+  or a listed number is used by no code (except the block's first
+  number, which the catch-all uses).
+- **Done when:** the check has tests and passes on `develop`; gates pass.
+
 ### Requests to TACHYON (ADR 0009)
 - **Y1:** let `@ErrorHandler` shape the answers TACHYON makes itself (no
   identity, missing role, identity provider failure, `@Check` rejection,

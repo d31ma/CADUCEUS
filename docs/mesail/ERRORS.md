@@ -42,9 +42,15 @@ keeps its row, marked "retired".
   `unavailable`, the block's first number.
 - The message text is short, plain English, and never holds a token,
   password, key, file path, address list or message content.
-- A test in each app (built on `kit/apierrors`, slice E0) checks that every
-  number the app's error handler can answer is inside its block and listed
-  here once.
+- Each app's tests (built on `kit/apierrors`, slice E0) check that every
+  error answer has its exact number and that the number is inside the
+  app's block. `ty test` runs app tests in a temporary folder without the
+  repository, so it cannot read this file; the gate check of slice E11
+  checks this file against the code instead: every number listed once,
+  inside its app's block, and every number the code uses listed here.
+- Shared kit packages that are copied into one app only (for example
+  `kit/channels`) use that app's block, and their error types carry the
+  numbers, one constructor per case.
 - Answers that TACHYON makes itself (`401` without identity, `403` without
   a role, `422` `@Check` rejections, a malformed body, an error no handler
   takes) have no number until TACHYON request Y1 (ADR 0009).

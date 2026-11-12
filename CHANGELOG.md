@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Added `DELETE /api/v1/directory/people/{personId}/passkeys` to
+  `directory` (slice PK3, ADR 0008): an Operator, or an admin of every
+  domain of the person, removes all of the person's passkeys. Other
+  callers get `403 forbidden` (SPEC AC-ID-13). `directory` calls PK1's
+  Keycloak endpoint, then ends every Keycloak session of the person, as
+  the admin password reset does. Until slice O2 adds `sessionsEndedAt`,
+  the person's other devices get `401` at their next refresh, not `403
+  access_revoked`.
 - Added the passkey routes to `identity` (slice PK2, ADR 0008): the sign-in
   challenge (`POST /passkeys/challenge`) and passkey sign-in
   (`POST /session/passkey`), and the account routes to list, set up, add,

@@ -55,6 +55,11 @@ func (service *PersonService) RemoveTotp(caller oidc.Caller, personId string) er
 	return Steps{}.Unless(failure, func() error { return service.accounts.RemoveTotp(person.PersonId) })
 }
 
+func (service *PersonService) RemovePasskeys(caller oidc.Caller, personId string) error {
+	person, failure := service.managed(caller, personId)
+	return Steps{}.Unless(failure, func() error { return service.accounts.RemovePasskeys(person.PersonId) })
+}
+
 func (service *PersonService) Delete(personId string) error {
 	person, failure := service.known(personId)
 	failure = Steps{}.Unless(failure, func() error { return service.accounts.Delete(person.PersonId) })

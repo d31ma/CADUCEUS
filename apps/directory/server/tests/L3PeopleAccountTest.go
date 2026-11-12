@@ -83,6 +83,90 @@ func (test *L3PeopleAccountTest) TestRemoveTotpForAnAdminOfAnotherDomainIsForbid
 	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
 }
 
+func (test *L3PeopleAccountTest) TestRemovePasskeysRemovesThemAllAndSignsThePersonOut() {
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
+	defer closeServer()
+	test.configure(base)
+	domainId := test.hosted("active")
+	person := test.member(domainId)
+	defer test.forget([]string{domainId}, person)
+	err := test.personService().RemovePasskeys(test.operator(), person.PersonId)
+	Assert.Equals("<nil>", fmt.Sprint(err))
+	Assert.Equals("DELETE /idp/admin/realms/mesail/mesail/users/"+person.PersonId+"/passkeys\nPOST /idp/admin/realms/mesail/users/"+person.PersonId+"/logout", calls())
+}
+
+func (test *L3PeopleAccountTest) TestRemovePasskeysByAnAdminOfEveryDomainOfThePerson() {
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
+	defer closeServer()
+	test.configure(base)
+	domainId := test.hosted("active")
+	admin := test.admin(domainId)
+	person := test.member(domainId)
+	defer test.forget([]string{domainId}, admin, person)
+	err := test.personService().RemovePasskeys(test.domainAdmin(admin, domainId), person.PersonId)
+	Assert.Equals("<nil>", fmt.Sprint(err))
+	Assert.IsTrue(strings.Contains(calls(), "DELETE /idp/admin/realms/mesail/mesail/users/"+person.PersonId+"/passkeys"), "want the passkeys removed")
+}
+
+func (test *L3PeopleAccountTest) TestRemovePasskeysForAnAdminOfAnotherDomainIsForbidden() {
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
+	defer closeServer()
+	test.configure(base)
+	first, second := test.hosted("active"), test.hosted("active")
+	admin := test.admin(second)
+	person := test.member(first)
+	defer test.forget([]string{first, second}, admin, person)
+	err := test.personService().RemovePasskeys(test.domainAdmin(admin, second), person.PersonId)
+	var forbidden *Forbidden
+	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
+	Assert.IsTrue(!strings.Contains(calls(), "/passkeys"), "the passkeys must stay")
+}
+
+func (test *L3PeopleAccountTest) TestRemovePasskeysForAPlainMemberIsForbidden() {
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
+	defer closeServer()
+	test.configure(base)
+	domainId := test.hosted("active")
+	member := test.member(domainId)
+	person := test.member(domainId)
+	defer test.forget([]string{domainId}, member, person)
+	caller := oidc.Caller{DomainId: domainId, MemberId: member.PersonId, Username: member.Username, Roles: []string{"Member"}}
+	err := test.personService().RemovePasskeys(caller, person.PersonId)
+	var forbidden *Forbidden
+	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
+	Assert.IsTrue(!strings.Contains(calls(), "/passkeys"), "the passkeys must stay")
+}
+
+func (test *L3PeopleAccountTest) TestRemovePasskeysOfAnOperatorByADomainAdminIsForbidden() {
+	base, calls, closeServer := test.keycloak(true, http.StatusNoContent)
+	defer closeServer()
+	test.configure(base)
+	domainId := test.hosted("active")
+	admin := test.admin(domainId)
+	person := test.member(domainId)
+	defer test.forget([]string{domainId}, admin, person)
+	err := test.personService().RemovePasskeys(test.domainAdmin(admin, domainId), person.PersonId)
+	var forbidden *Forbidden
+	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
+	Assert.IsTrue(!strings.Contains(calls(), "/passkeys"), "the passkeys must stay")
+}
+
+func (test *L3PeopleAccountTest) TestRemovePasskeysOfAnUnknownPersonIsNotFound() {
+	err := test.personService().RemovePasskeys(test.operator(), "nobody-"+test.unique())
+	var missing *NotFound
+	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
+}
+
+func (test *L3PeopleAccountTest) TestRemovePasskeysWithoutTheIdentityServerIsUnavailable() {
+	test.configureWithoutKeycloak()
+	domainId := test.hosted("active")
+	person := test.member(domainId)
+	defer test.forget([]string{domainId}, person)
+	err := test.personService().RemovePasskeys(test.operator(), person.PersonId)
+	var unavailable *Unavailable
+	Assert.IsTrue(errors.As(err, &unavailable), "want Unavailable")
+}
+
 func (test *L3PeopleAccountTest) TestDeleteRemovesTheAccountAndMarksThePersonDeletedFirst() {
 	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
 	defer closeServer()

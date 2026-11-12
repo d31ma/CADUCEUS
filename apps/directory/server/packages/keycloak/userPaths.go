@@ -35,6 +35,14 @@ func (paths userPaths) Credential(userId string, credentialId string) string {
 	return paths.Credentials(userId) + "/" + url.PathEscape(credentialId)
 }
 
+func (paths userPaths) Passkeys(userId string) string {
+	return paths.mesailEndpoints() + paths.User(userId) + "/passkeys"
+}
+
+func (userPaths) mesailEndpoints() string {
+	return "/mesail"
+}
+
 func (paths userPaths) RealmRoles(userId string) string {
 	return paths.User(userId) + "/role-mappings/realm/composite"
 }

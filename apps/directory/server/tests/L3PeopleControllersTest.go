@@ -148,6 +148,39 @@ func (test *L3PeopleControllersTest) TestDeletePersonRefusesADomainAdmin() {
 	Assert.Equals("active", stored.State)
 }
 
+func (test *L3PeopleControllersTest) TestDeletePasskeysRemovesThemForAnOperator() {
+	realm := test.realm()
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
+	defer closeServer()
+	test.configure(realm, base)
+	domainId := test.hosted("active")
+	person := test.member(domainId)
+	defer test.forget([]string{domainId}, person)
+	err := test.peopleController().DeletePasskeys(test.bearer(realm, "operator-"+test.unique(), "*", "mesail-operator"), person.PersonId)
+	Assert.Equals("<nil>", fmt.Sprint(err))
+	Assert.IsTrue(strings.Contains(calls(), "DELETE /idp/admin/realms/mesail/mesail/users/"+person.PersonId+"/passkeys"), "want the passkeys removed")
+	Assert.IsTrue(strings.Contains(calls(), "POST /idp/admin/realms/mesail/users/"+person.PersonId+"/logout"), "want a sign out")
+}
+
+func (test *L3PeopleControllersTest) TestDeletePasskeysRefusesAPlainMember() {
+	realm := test.realm()
+	base, calls, closeServer := test.keycloak(false, http.StatusNoContent)
+	defer closeServer()
+	test.configure(realm, base)
+	domainId := test.hosted("active")
+	person := test.member(domainId)
+	defer test.forget([]string{domainId}, person)
+	err := test.peopleController().DeletePasskeys(test.bearer(realm, "member-"+test.unique(), domainId, "mesail-member"), person.PersonId)
+	var forbidden *Forbidden
+	Assert.IsTrue(errors.As(err, &forbidden), "want Forbidden")
+	Assert.IsTrue(!strings.Contains(calls(), "/passkeys"), "the passkeys must stay")
+}
+
+func (test *L3PeopleControllersTest) TestDeletePasskeysRefusesARequestWithoutAValidToken() {
+	err := test.peopleController().DeletePasskeys("Bearer forged", "anyone")
+	Assert.IsTrue(test.unauthenticated(err), "want Unauthenticated")
+}
+
 func (test *L3PeopleControllersTest) TestPeopleRoutesRefuseARequestWithoutAValidToken() {
 	controller := test.peopleController()
 	_, listErr := controller.GetPeople(test.request("/api/v1/directory/people", "Bearer forged"))

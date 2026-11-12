@@ -398,6 +398,70 @@ func TestRemoveTotpFailsWithoutSettings(t *testing.T) {
 	}
 }
 
+func passkeysPath(userId string) string {
+	return "/idp/admin/realms/mesail/mesail/users/" + userId + "/passkeys"
+}
+
+func removePasskeysFake(t *testing.T, status int) *fakeKeycloak {
+	fake := newFakeKeycloak(t)
+	fake.on(http.MethodDelete, passkeysPath("u1"), fakeAnswer{status: status})
+	fake.on(http.MethodPost, usersPath("/u1/logout"), fakeAnswer{status: http.StatusNoContent})
+	return fake
+}
+
+func TestRemovePasskeysDeletesThemAllAndSignsTheUserOut(t *testing.T) {
+	fake := removePasskeysFake(t, http.StatusNoContent)
+	err := fake.users().RemovePasskeys("u1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	expectRequests(t, fake, []string{"DELETE " + passkeysPath("u1"), "POST " + usersPath("/u1/logout")})
+}
+
+func TestRemovePasskeysEscapesTheUserId(t *testing.T) {
+	fake := newFakeKeycloak(t)
+	fake.on(http.MethodDelete, passkeysPath("a%2Fb"), fakeAnswer{status: http.StatusNoContent})
+	fake.on(http.MethodPost, usersPath("/a%2Fb/logout"), fakeAnswer{status: http.StatusNoContent})
+	err := fake.users().RemovePasskeys("a/b")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestRemovePasskeysReportsAMissingUserWithoutASignOut(t *testing.T) {
+	fake := removePasskeysFake(t, http.StatusNotFound)
+	err := fake.users().RemovePasskeys("u1")
+	expectMissing(t, err)
+	expectRequests(t, fake, []string{"DELETE " + passkeysPath("u1")})
+}
+
+func TestRemovePasskeysReportsARefusedDelete(t *testing.T) {
+	fake := removePasskeysFake(t, http.StatusForbidden)
+	err := fake.users().RemovePasskeys("u1")
+	expectRefused(t, err, http.StatusForbidden, "remove the user passkeys")
+}
+
+func TestRemovePasskeysReportsARefusedLogout(t *testing.T) {
+	fake := removePasskeysFake(t, http.StatusNoContent)
+	fake.on(http.MethodPost, usersPath("/u1/logout"), fakeAnswer{status: http.StatusForbidden})
+	err := fake.users().RemovePasskeys("u1")
+	expectRefused(t, err, http.StatusForbidden, "sign the user out")
+}
+
+func TestRemovePasskeysFailsWhenTheLogoutCannotBeSent(t *testing.T) {
+	fake := removePasskeysFake(t, http.StatusNoContent)
+	fake.limit = 1
+	err := fake.users().RemovePasskeys("u1")
+	expectRefused(t, err, http.StatusUnauthorized, "issue an admin access token")
+}
+
+func TestRemovePasskeysFailsWithoutSettings(t *testing.T) {
+	err := NewUsers(UserSettings{}, http.DefaultClient).RemovePasskeys("u1")
+	if !errors.As(err, &NotConfigured{}) {
+		t.Fatalf("got %v", err)
+	}
+}
+
 func TestDeleteRemovesTheUser(t *testing.T) {
 	fake := newFakeKeycloak(t)
 	fake.on(http.MethodDelete, usersPath("/u1"), fakeAnswer{status: http.StatusNoContent})

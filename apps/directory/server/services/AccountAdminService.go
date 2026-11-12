@@ -32,6 +32,10 @@ func (service *AccountAdminService) RemoveTotp(personId string) error {
 	return service.translated(service.users().RemoveTotp(personId))
 }
 
+func (service *AccountAdminService) RemovePasskeys(personId string) error {
+	return service.translated(service.users().RemovePasskeys(personId))
+}
+
 func (service *AccountAdminService) Delete(personId string) error {
 	return service.translated(service.users().Delete(personId))
 }

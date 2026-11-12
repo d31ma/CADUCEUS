@@ -99,6 +99,18 @@ func (users Users) RemoveTotp(userId string) error {
 	return users.deleteCredentials(userId, credentials.idsByType()[users.totpType()])
 }
 
+func (users Users) RemovePasskeys(userId string) error {
+	answer, err := users.admin.read(http.MethodDelete, userPaths{}.Passkeys(userId))
+	if err != nil {
+		return err
+	}
+	err = users.outcome(answer, http.StatusNoContent, users.removePasskeysAction())
+	if err != nil {
+		return err
+	}
+	return users.logout(userId)
+}
+
 func (users Users) Delete(userId string) error {
 	answer, err := users.admin.read(http.MethodDelete, userPaths{}.User(userId))
 	if err != nil {
@@ -311,6 +323,10 @@ func (Users) credentialsAction() string {
 
 func (Users) deleteCredentialAction() string {
 	return "remove the user credential"
+}
+
+func (Users) removePasskeysAction() string {
+	return "remove the user passkeys"
 }
 
 func (Users) rolesAction() string {

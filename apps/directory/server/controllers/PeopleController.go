@@ -89,6 +89,19 @@ func (controller *PeopleController) DeleteTotp(
 	return controller.removeTotpUnless(refused, caller, personId)
 }
 
+// @DeleteRoute("/{person_id}/passkeys")
+// @Allow(DomainAdmin, Operator)
+// @ResponseStatus(204)
+func (controller *PeopleController) DeletePasskeys(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromPath("person_id")
+	personId string,
+) error {
+	caller, refused := controller.callers.Caller(authorization)
+	return controller.removePasskeysUnless(refused, caller, personId)
+}
+
 // @DeleteRoute("/{person_id}")
 // @ResponseStatus(202)
 func (controller *PeopleController) DeletePerson(
@@ -144,6 +157,13 @@ func (controller *PeopleController) removeTotpUnless(refused error, caller oidc.
 		return refused
 	}
 	return controller.people.RemoveTotp(caller, personId)
+}
+
+func (controller *PeopleController) removePasskeysUnless(refused error, caller oidc.Caller, personId string) error {
+	if refused != nil {
+		return refused
+	}
+	return controller.people.RemovePasskeys(caller, personId)
 }
 
 func (controller *PeopleController) deleteUnless(refused error, personId string) error {

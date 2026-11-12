@@ -47,17 +47,26 @@ func operatorAddReply(t *testing.T, stack Stack, operatorToken string, domainId 
 	return stack.Call(t, http.MethodPost, path, operatorToken, addMemberRequest(username, admin))
 }
 
-func added(t *testing.T, reply Reply) addedMember {
+func added(t *testing.T, stack Stack, reply Reply) addedMember {
 	t.Helper()
 	var result addedMember
 	reply.Expect(t, http.StatusCreated).Decode(t, &result)
+	removeNewPersonAfterTest(t, stack, result)
 	return result
+}
+
+func removeNewPersonAfterTest(t *testing.T, stack Stack, result addedMember) {
+	t.Helper()
+	if result.ExistingPerson {
+		return
+	}
+	removeAfterTest(t, stack, "/api/v1/directory/people/"+result.Member.MemberId)
 }
 
 func createPerson(t *testing.T, stack Stack, adminToken string) newPerson {
 	t.Helper()
 	username := freshPrefix()
-	result := added(t, addMemberReply(t, stack, adminToken, username, false))
+	result := added(t, stack, addMemberReply(t, stack, adminToken, username, false))
 	return newPerson{Id: result.Member.MemberId, Username: username, Password: firstPassword(username)}
 }
 
@@ -71,6 +80,7 @@ func createDomain(t *testing.T, stack Stack, operator string) string {
 	domainId := freshPrefix() + ".test"
 	request := map[string]string{"name": domainId}
 	stack.Call(t, http.MethodPost, "/api/v1/directory/domains", operator, request).Expect(t, http.StatusCreated)
+	removeAfterTest(t, stack, "/api/v1/directory/domains/"+domainId)
 	return domainId
 }
 
@@ -83,4 +93,11 @@ func createAliasReply(t *testing.T, stack Stack, adminToken string, address stri
 	t.Helper()
 	request := map[string]string{"address": address, "memberId": memberId}
 	return stack.Call(t, http.MethodPost, "/api/v1/directory/aliases", adminToken, request)
+}
+
+func addedInBulk(t *testing.T, reply Reply) addedMember {
+	t.Helper()
+	var result addedMember
+	reply.Expect(t, http.StatusCreated).Decode(t, &result)
+	return result
 }

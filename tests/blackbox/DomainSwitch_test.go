@@ -67,7 +67,7 @@ func TestAcId4And12RemovedMemberLosesOnlyThatDomain(t *testing.T) {
 	stack := NewStack(t)
 	ana := fixture(t, stack, "ANA")
 	dan := createPerson(t, stack, ana.AccessToken)
-	added(t, operatorAddReply(t, stack, operatorToken(t, stack), "example.org", dan.Username, false))
+	added(t, stack, operatorAddReply(t, stack, operatorToken(t, stack), "example.org", dan.Username, false))
 	inCom := signIn(t, stack, dan.Username+"@example.com", dan.Password)
 	inOrg := signIn(t, stack, dan.Username+"@example.org", dan.Password)
 	removeMemberReply(t, stack, ana.AccessToken, dan.Id).Expect(t, http.StatusNoContent)
@@ -89,7 +89,7 @@ func TestAcId12AddedDomainAppearsWithinAMinute(t *testing.T) {
 	ana := fixture(t, stack, "ANA")
 	dan := createPerson(t, stack, ana.AccessToken)
 	danSession := signIn(t, stack, dan.Username, dan.Password)
-	added(t, operatorAddReply(t, stack, operatorToken(t, stack), "example.org", dan.Username, false))
+	added(t, stack, operatorAddReply(t, stack, operatorToken(t, stack), "example.org", dan.Username, false))
 	stack.Eventually(t, 70*time.Second, "example.org in the domain list", func() bool {
 		var refreshed session
 		refreshReply(t, stack, danSession.SessionKey).Expect(t, http.StatusOK).Decode(t, &refreshed)

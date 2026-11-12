@@ -81,7 +81,7 @@ func fillDomain(t *testing.T, stack Stack, domainId string, count int) {
 		if time.Since(tokenTaken) > 30*time.Second {
 			operator, tokenTaken = operatorToken(t, stack), time.Now()
 		}
-		added(t, operatorAddReply(t, stack, operator, domainId, freshPrefix(), index == 0))
+		addedInBulk(t, operatorAddReply(t, stack, operator, domainId, freshPrefix(), index == 0))
 	}
 }
 

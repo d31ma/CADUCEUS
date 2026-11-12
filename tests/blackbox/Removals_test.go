@@ -21,7 +21,7 @@ func TestD2RemovingADomainAnswers202AndFinishesLater(t *testing.T) {
 	stack := NewStack(t)
 	operator := operatorToken(t, stack)
 	domainId := createDomain(t, stack, operator)
-	added(t, operatorAddReply(t, stack, operator, domainId, freshPrefix(), true))
+	added(t, stack, operatorAddReply(t, stack, operator, domainId, freshPrefix(), true))
 	var removing struct {
 		DomainId string `json:"domainId"`
 		State    string `json:"state"`

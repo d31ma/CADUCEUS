@@ -57,8 +57,12 @@ domains; chat never does.
 The one-login tests (`SignIn_test.go`, `DomainSwitch_test.go`,
 `Tokens_test.go`, `Members_test.go`, `People_test.go`; slice L0) create
 new people with prefixes `bb<time>` and new domains `bb<time>.test`.
-Prefixes are never reused (SPEC Q5), so these stay in the dev stack; reset
-the stack to clear them. Wrong-password tests use new people, so the
+Prefixes are never reused (SPEC Q5). Since 2026-11-12 every test removes
+the domains and the new people it made when it ends (`Cleanup.go`: the
+Operator deletes them; the directory finishes in the background), so the
+dev stack does not grow with each run. `MESAIL_KEEP_TEST_DATA` (any value)
+keeps them, for debugging. The K3 load test's 200 members are not deleted
+one by one; removing their domain is enough. Wrong-password tests use new people, so the
 fixtures are never locked by brute-force detection. The tests that wait
 for a membership change allow 70 seconds.
 

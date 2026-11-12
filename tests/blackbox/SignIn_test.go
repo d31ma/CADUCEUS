@@ -123,7 +123,7 @@ func TestAcId9DefaultDomainIsTheOneThePersonChose(t *testing.T) {
 	stack := NewStack(t)
 	ana := fixture(t, stack, "ANA")
 	dan := createPerson(t, stack, ana.AccessToken)
-	added(t, operatorAddReply(t, stack, operatorToken(t, stack), "example.org", dan.Username, false))
+	added(t, stack, operatorAddReply(t, stack, operatorToken(t, stack), "example.org", dan.Username, false))
 	danSession := signIn(t, stack, dan.Username, dan.Password)
 	choice := map[string]string{"domainId": "example.org"}
 	stack.Call(t, http.MethodPut, "/api/v1/directory/me/default-domain", danSession.AccessToken, choice).Expect(t, http.StatusNoContent)

@@ -28,7 +28,7 @@ func TestAcId13AdminOfOnlySomeDomainsOfThePersonCannotReset(t *testing.T) {
 	ana := fixture(t, stack, "ANA")
 	dan := createPerson(t, stack, ana.AccessToken)
 	operator := operatorToken(t, stack)
-	added(t, operatorAddReply(t, stack, operator, createDomain(t, stack, operator), dan.Username, false))
+	added(t, stack, operatorAddReply(t, stack, operator, createDomain(t, stack, operator), dan.Username, false))
 	resetPasswordReply(t, stack, ana.AccessToken, dan.Id, dan.Password+"-Reset").Expect(t, http.StatusForbidden)
 	stack.Call(t, http.MethodDelete, "/api/v1/directory/people/"+dan.Id+"/totp", ana.AccessToken, nil).Expect(t, http.StatusForbidden)
 	change := map[string]string{"state": "disabled"}
@@ -47,7 +47,7 @@ func TestAcId13OperatorResetsAnyPerson(t *testing.T) {
 	ana := fixture(t, stack, "ANA")
 	dan := createPerson(t, stack, ana.AccessToken)
 	operator := operatorToken(t, stack)
-	added(t, operatorAddReply(t, stack, operator, createDomain(t, stack, operator), dan.Username, false))
+	added(t, stack, operatorAddReply(t, stack, operator, createDomain(t, stack, operator), dan.Username, false))
 	resetPasswordReply(t, stack, operator, dan.Id, dan.Password+"-Reset").Expect(t, http.StatusNoContent)
 }
 

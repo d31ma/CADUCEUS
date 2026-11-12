@@ -19,7 +19,7 @@ func expectInvalidUsername(t *testing.T, stack Stack, adminToken string, usernam
 func TestAcId12AdminAddsANewPerson(t *testing.T) {
 	stack := NewStack(t)
 	username := freshPrefix()
-	result := added(t, addMemberReply(t, stack, fixture(t, stack, "ANA").AccessToken, username, false))
+	result := added(t, stack, addMemberReply(t, stack, fixture(t, stack, "ANA").AccessToken, username, false))
 	if result.ExistingPerson || result.Member.MemberId == "" || result.Member.PrimaryAddress != username+"@example.com" {
 		t.Fatalf("want a new person %s@example.com, got %+v", username, result)
 	}
@@ -58,7 +58,7 @@ func TestAcId12DomainKeepsOneAdmin(t *testing.T) {
 	operator := operatorToken(t, stack)
 	domainId := createDomain(t, stack, operator)
 	username := freshPrefix()
-	firstAdmin := added(t, operatorAddReply(t, stack, operator, domainId, username, true))
+	firstAdmin := added(t, stack, operatorAddReply(t, stack, operator, domainId, username, true))
 	admin := signIn(t, stack, username, firstPassword(username))
 	demote := map[string]bool{"admin": false}
 	stack.Call(t, http.MethodPatch, "/api/v1/directory/members/"+firstAdmin.Member.MemberId, admin.AccessToken, demote).ExpectError(t, http.StatusConflict, "last_admin")
@@ -104,7 +104,7 @@ func TestAcId10PrefixOfAPersonCannotBeAChannelAddress(t *testing.T) {
 func TestAcId11PrefixIsStoredInLowercase(t *testing.T) {
 	stack := NewStack(t)
 	username := freshPrefix()
-	result := added(t, addMemberReply(t, stack, fixture(t, stack, "ANA").AccessToken, strings.ToUpper(username), false))
+	result := added(t, stack, addMemberReply(t, stack, fixture(t, stack, "ANA").AccessToken, strings.ToUpper(username), false))
 	if result.Member.Username != username || result.Member.PrimaryAddress != username+"@example.com" {
 		t.Fatalf("want %s in lowercase, got %+v", username, result.Member)
 	}
@@ -161,7 +161,7 @@ func TestAcId13MemberListSaysWhetherTheAdminManagesTheAccount(t *testing.T) {
 		t.Fatal("want accountManaged for a person only in ana's domain")
 	}
 	operator := operatorToken(t, stack)
-	added(t, operatorAddReply(t, stack, operator, createDomain(t, stack, operator), dan.Username, false))
+	added(t, stack, operatorAddReply(t, stack, operator, createDomain(t, stack, operator), dan.Username, false))
 	if memberListed(t, stack, ana.AccessToken, dan.Username).AccountManaged {
 		t.Fatal("want no accountManaged once the person is also in a domain ana does not administer")
 	}

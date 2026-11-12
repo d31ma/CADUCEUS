@@ -1164,6 +1164,12 @@ seconds). Decided in EVENTS.md section 4, item 5; no owner question.
   while the K2 sign-in check runs with every sign-in under 5 seconds; a
   small domain removed while a big one is still removing is gone within 2
   minutes; gates pass.
+- **Cold starts, until K10** (decided 2026-11-12, from K6's runs 1 and 2):
+  a run starts only after a warm-up passes (every function answers its
+  health route and one sign-in passes; retry the warm-up for up to 5
+  minutes). A failure during the warm-up is the known K8/K10 class, not a
+  K6 result: write it in the findings note and wait for a quieter window.
+  A failure after the warm-up counts.
 
 ### K7. Drain on write within a time budget (the outbox owner, after K4)
 Found by K3 (2026-11-12), and seen before K3 (router-cycle 5.6 seconds,

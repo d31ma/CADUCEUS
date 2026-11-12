@@ -1838,6 +1838,49 @@ slices it names are merged. K10 (store error logging) changes the same
 error handlers: whichever of K10 and an app's E slice merges second
 rebases onto the first.
 
+## Wave 8: the screens as a tree of page apps (ADR 0010)
+
+The owner's choice of 2026-11-12: the screens only (option B); the back
+ends stay services; no one-server back end. Starts after Wave 7 and after
+TACHYON request R1 is released and Mesail's pin moves. The web addresses
+stay the same in both forms (one bundle, or separate deploys).
+
+```
+home (shell)
+  chat   mail   channels   search   settings   admin
+```
+
+Every W slice below:
+- **Owns:** its page app's folder, and the move of its pages out of
+  `apps/web` (or `apps/web-admin`).
+- **Builds:** the page app with its own `client/` (and a small `server/`
+  and collection only for data no other page uses); the same pages,
+  components, routes and behavior as before; the shared session, device
+  store and DuVay layer used from where W0 puts them.
+- **Done when:** both build forms (one bundle and separate deploys) serve
+  every old address of the page; the responsive and blackbox tests pass;
+  each page app stays inside its route size budget; gates pass.
+
+### W0. Layout and the shared client parts (architecture, with F1's successor)
+- **Builds:** the folder layout of the tree (decided from what R1 offers),
+  the place of the shared client code (session, device store and lock,
+  sync bar, DuVay layer, service worker, manifest), the deploy setting
+  that picks one bundle or separate deploys, and the router's paths; an
+  ADR 0010 amendment with the result.
+- **Depends on:** TACHYON R1 released and the pin moved; Wave 7 done.
+
+### W1. Home (the shell)
+### W2. Chat
+### W3. Mail
+### W4. Channels
+### W5. Search
+### W6. Settings
+### W7. Admin (moves `apps/web-admin` into the tree)
+
+### Order
+W0, then W1, then W2 to W7 at once (different folders). Wave 4's and Wave
+6's client slices that are still open finish before their pages move.
+
 ## Later (after the first release)
 
 - **X1** SMTP submission for third-party mail clients (app passwords or
@@ -1846,8 +1889,7 @@ rebases onto the first.
   `internal/` at commit 4ef82f72 into a Yon app.
 - **X3** CADUCEUS data migration tool.
 - **X4** Interface translations and in-browser message translation.
-- **X5** Split `web` into separately deployed feature bundles once TACHYON
-  can mount separately built Tac apps.
+- **X5** Replaced by Wave 8 (ADR 0010, decided 2026-11-12).
 - **X6** Use FYLO's word index and sorted pages (FYLO ADR 0023, on FYLO
   `develop` since 2026-11-11, not yet in a FYLO release Mesail pins) in
   `search` and in `messaging`'s newest-first lists, replacing Mesail's own

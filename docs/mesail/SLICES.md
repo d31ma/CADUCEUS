@@ -1171,6 +1171,16 @@ OP1 and OP4 at once; OP2 after L5 and OP1; OP3 after OP2.
   per 2 KB message body against its 256 MiB limit per collection, so a
   busy domain's monthly `search-index` collection may need a finer split
   (DOMAIN.md "FYLO layout").
+- **X7** Consider FYLO's change feed (FYLO ADR 0024, on FYLO `develop`
+  since 2026-11-12) instead of `messaging`'s own `changes` log (ADR 0006
+  section 3). Before switching, check two limits: it needs FYLO's segments
+  layout, and a cursor expires after a pack, a rekey, a layout move or a
+  restore. Mesail packs every root before every deploy (ADR 0004 section
+  4), so every device would do a full resync after each deploy. Keep
+  Mesail's own log unless both are solved. FYLO's browser `.vdbx`
+  encryption with a host key (FYLO ADR 0025) and its Android AAR and C ABI
+  (from F2) matter only if FYLO later replaces TACHYON's store behind the
+  `DeviceStore` port (ADR 0006 section 1).
 
 ## Ownership check
 

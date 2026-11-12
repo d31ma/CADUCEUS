@@ -47,7 +47,7 @@ func TestRemovingAReactionStagesARemoval(t *testing.T) {
 	wantNoError(t, reactions.Remove(s.caller("bo"), msgId(message), "thumbs_up"))
 	rows := s.reactions()
 	payloads := reactionPayloads(t, rows[0])
-	if len(rows) != 1 || rows[0].Active || len(payloads) != 2 || !strings.Contains(payloads[1], " false ") {
+	if len(rows) != 1 || rows[0].Active || len(payloads) != 1 || !strings.Contains(payloads[0], " false ") {
 		t.Fatalf("got %+v %v", rows, payloads)
 	}
 }
@@ -69,7 +69,7 @@ func TestAReactionCanBeAddedAgain(t *testing.T) {
 	wantNoError(t, reactions.Remove(s.caller("bo"), msgId(message), "thumbs_up"))
 	wantNoError(t, reactions.Add(s.caller("bo"), msgId(message), "thumbs_up"))
 	rows := s.reactions()
-	if len(rows) != 1 || !rows[0].Active || len(reactionPayloads(t, rows[0])) != 3 {
+	if len(rows) != 1 || !rows[0].Active || len(reactionPayloads(t, rows[0])) != 1 {
 		t.Fatalf("got %+v", rows)
 	}
 }

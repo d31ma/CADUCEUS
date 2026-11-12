@@ -16,13 +16,13 @@ func (outbox Outbox) Stage(fields Fields, envelope events.Envelope) (Fields, err
 		return fields, err
 	}
 	event := PendingEvent{Envelope: envelope, Waiting: outbox.settings.consumersOf(envelope.Type)}
-	state.Pending = outbox.withEvent(state.Pending, event)
-	return Codec{}.Write(state)
-}
-
-func (Outbox) withEvent(pending []PendingEvent, event PendingEvent) []PendingEvent {
-	if len(event.Waiting) == 0 {
-		return pending
+	state.Pending, err = staging{}.added(state.Pending, event)
+	if err != nil {
+		return fields, err
 	}
-	return append(pending, event)
+	staged, err := Codec{}.Write(state)
+	if err != nil {
+		return fields, err
+	}
+	return documentCap{}.checked(fields, staged)
 }

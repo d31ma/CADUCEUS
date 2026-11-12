@@ -10,7 +10,10 @@ func (merge merge) apply(fresh Fields) (Fields, error) {
 		return Fields{}, err
 	}
 	state.Pending = merge.keepWaiting(merge.replaceAll(state.Pending))
-	state.Dead = append(state.Dead, merge.outcome.deadLetters...)
+	state.Dead, err = deadReplacing{}.added(state.Dead, merge.outcome.deadLetters)
+	if err != nil {
+		return Fields{}, err
+	}
 	return Codec{}.Write(state)
 }
 

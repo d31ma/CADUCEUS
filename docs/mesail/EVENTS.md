@@ -82,6 +82,25 @@ many edits during an outage grew one message without limit). So:
   (DOMAIN.md); `kit/outbox` refuses to stage an event that would pass it,
   and the write answers `503` so the caller retries later.
 
+Built by slice K4 (2026-11-12):
+- `events.ReplaceKeys{}.Of(envelope)` gives an event's replace key
+  (`EventKey{Type, Key}`; the zero value means none), and
+  `ReplaceKeys{}.Removes(envelope)` gives the key of the waiting events it
+  removes (`message.deleted` -> `message.edited` of the same message id).
+  `reaction.changed` is staged on the reaction row (one per message,
+  member and emoji), so its message id key replaces only the waiting change
+  of that same reaction.
+- `Outbox.Stage` first removes, then replaces, then adds. The replacing
+  event starts with no attempts, so subscribers that were already up get it
+  at once.
+- The relay's merge adds a dead letter in place of an older one with the
+  same type, replace key and subscriber.
+- `Outbox.Stage` answers `outbox.OutboxFull` (and leaves the fields as they
+  were) when the encoded outbox fields alone would pass 512 KiB. The rest of
+  the document is each service's own cap (for example `messaging`
+  `MessageBudget`). An app maps `OutboxFull` to `503` (`messaging` and
+  `channels` do this through their fallback for unknown errors).
+
 The entity model in `server/models/` declares these six fields with these
 JSON names. The store adapter converts them to and from `outbox.Fields`.
 

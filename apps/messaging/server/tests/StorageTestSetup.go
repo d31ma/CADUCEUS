@@ -227,4 +227,3 @@ func (world *StorageTestSetup) BudgetSlack() int {
 func (world *StorageTestSetup) MaxDocumentBytes() int {
 	return 512 << 10
 }
-

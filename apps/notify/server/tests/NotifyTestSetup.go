@@ -253,3 +253,15 @@ func (NotifyTestSetup) ChangePush(change func(push map[string]any)) {
 	}
 	os.Setenv("YON_APPLICATION_JSON", string(raw))
 }
+
+func (NotifyTestSetup) DocumentBytes(document any) int {
+	raw, err := json.Marshal(document)
+	if err != nil {
+		panic(err)
+	}
+	return len(raw)
+}
+
+func (NotifyTestSetup) DocumentLimitBytes() int {
+	return 512 * 1024
+}

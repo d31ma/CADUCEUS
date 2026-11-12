@@ -141,9 +141,16 @@ update_function() {
   rm -f "$environment"
 }
 
+stop_old_writers() {
+  local service="$1"
+  if [ "$(mesail_service_field "$service" fylo)" != true ]; then return; fi
+  "$(dirname "$0")/writers.sh" before-redeploy "$service"
+}
+
 ensure_function() {
   local service="$1"
   if mesail_aws lambda get-function --function-name "$(function_name "$service")" > /dev/null 2>&1; then
+    stop_old_writers "$service"
     update_function "$service"
     return
   fi

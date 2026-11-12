@@ -34,19 +34,19 @@
       "name": "directory",
       "fylo": true,
       "memory": 1024,
-      "timeout": 30
+      "timeout": 60
     },
     {
       "name": "channels",
       "fylo": true,
       "memory": 1024,
-      "timeout": 30
+      "timeout": 60
     },
     {
       "name": "messaging",
       "fylo": true,
       "memory": 1024,
-      "timeout": 30
+      "timeout": 60
     },
     {
       "name": "attachments",
@@ -64,13 +64,13 @@
       "name": "notify",
       "fylo": true,
       "memory": 1024,
-      "timeout": 30
+      "timeout": 60
     },
     {
       "name": "search",
       "fylo": true,
       "memory": 1024,
-      "timeout": 30
+      "timeout": 60
     },
     {
       "name": "mail-in",

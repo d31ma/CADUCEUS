@@ -273,6 +273,22 @@ Settings (environment, or a `.env` file copied from `.env.example`):
   `/mnt/data`, a VPC configuration (Floci needs one; the IDs are
   placeholders), and **reserved concurrency 1**, so only one warm instance
   writes the root (ADR 0004 section 4).
+- FYLO owners have a 60 second timeout (`stack.json`), under the router's
+  70 second upstream timeout: Floci stops and replaces a container at the
+  function's timeout.
+- **One live container per FYLO root** (ADR 0004 section 4, SLICES K8):
+  `fylo exec --loop` holds its root's lease until the process exits, so a
+  second container of the same function would answer `EROOTLOCKED` ("store
+  is not available") on every call. `scripts/floci/writers.sh` keeps one:
+  - before `deploy.sh` updates an existing FYLO function, it stops that
+    function's running containers (`writers.sh before-redeploy <service>`);
+  - while `stack.sh` runs the tests, `writers.sh watch 5` checks every 5
+    seconds for a second container of a FYLO function, stops the older one
+    and logs it to `writers.log` in the run's log folder;
+  - `writers.sh check` does one check by hand (`eval "$(mesail-devhost env)"`
+    first, for the dev host's Docker).
+  The guard only stops containers. It never removes a container, a volume or
+  any FYLO data; Floci drops a stopped container from its pool by itself.
 - Each access point's client token is `<creationToken>-<service>`: Floci
   keeps client tokens unique across file systems.
 - `mail-out` gets a new test DKIM key (Ed25519) per hosted domain at each

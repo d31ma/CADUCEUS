@@ -61,8 +61,20 @@ start_engine() {
   MESAIL_STARTED_ENGINE=1
 }
 
+start_writer_guard() {
+  "$(dirname "$0")/writers.sh" watch 5 >> "$(mesail_log_dir)/writers.log" 2>&1 &
+  MESAIL_WRITER_GUARD=$!
+  echo "writer guard started (log: $(mesail_log_dir)/writers.log)"
+}
+
+stop_writer_guard() {
+  if [ -z "${MESAIL_WRITER_GUARD:-}" ]; then return 0; fi
+  kill "$MESAIL_WRITER_GUARD" 2> /dev/null || true
+}
+
 finish() {
   local code=$?
+  stop_writer_guard
   "$(dirname "$0")/down.sh" || code=1
   if [ "${MESAIL_GENERATED_SECRETS:-0}" = 1 ]; then rm -f "$MESAIL_SECRETS_FILE"; fi
   if [ "${MESAIL_STARTED_ENGINE:-0}" = 1 ]; then mesail_step colima-stop stop_colima || code=1; fi
@@ -92,6 +104,7 @@ main() {
   build_images "$@"
   "$(dirname "$0")/up.sh"
   "$(dirname "$0")/deploy.sh" "$@"
+  start_writer_guard
   "$(dirname "$0")/test.sh"
 }
 

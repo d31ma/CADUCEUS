@@ -17,7 +17,9 @@ devhost() {
 }
 
 devhost_running() {
-  devhost status 2>&1 | grep -q '"status": "running_verified"'
+  local status
+  status="$(devhost status 2>&1)"
+  grep -q '"status": "running_verified"' <<< "$status"
 }
 
 start_devhost() {

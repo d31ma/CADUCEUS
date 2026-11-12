@@ -41,6 +41,14 @@ documentation.
 - Keep presentation, transport, business logic and persistence apart:
   controllers and Tac services coordinate; rules live in services or in
   plain Go packages in `kit/`; FYLO access goes through `@Store` ports.
+- Controllers are thin (ADR 0009, SLICES rule 18): every Yon route method
+  has one statement that returns the result of one Service method. The
+  caller lookup, checks, branches and wire mapping live in the app's
+  `server/services/` or below.
+- Every error answer that Mesail code shapes has `ApiError.message` =
+  `[MS<4 digits>]: <plain English message>`, with the number from the
+  app's block in `docs/mesail/ERRORS.md`, built by the app's
+  `@ErrorHandler`. `ApiError.code` and `field` stay as CONTRACTS says.
 - Shared Go code lives in `kit/` and is copied into apps with
   `scripts/kit-sync.sh`; never edit a copy under `server/packages/`.
 - Every route declares `@Public`, `@SignedIn` or `@Allow(Role)`. Scope every

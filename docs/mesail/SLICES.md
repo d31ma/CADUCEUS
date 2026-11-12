@@ -1871,14 +1871,16 @@ Every E slice below:
   pages; gates pass.
 
 ### E11. Error number gate check (a small session, after E0)
-Found by E3 (2026-11-12): app tests run in a temporary folder and cannot
-read `docs/mesail/ERRORS.md`.
+Found by E3 and E2 (2026-11-12): app tests run in a temporary folder and
+cannot read `docs/mesail/ERRORS.md`. E slices merge without an ERRORS.md
+test of their own; their tests check each answer's exact message.
 - **Owns:** `tools/errornumbers/**` (new), its line in `scripts/gates.sh`.
 - **Builds:** a Go check run once per gate: it reads ERRORS.md (every
   number unique, inside its app's block, rows sorted), collects the
-  numbers each app's code uses (integer literals inside the app's block in
-  `apps/<app>/server/errors/**`, the error handler and the kit packages
-  copied only into that app), and fails when a used number is not listed
+  numbers each app's code uses (the values of its error types' number
+  methods and case constructors, wherever they live in `apps/<app>/server/`
+  and in the kit packages copied only into that app, plus the error
+  handler's catch-all), and fails when a used number is not listed
   or a listed number is used by no code (except the block's first
   number, which the catch-all uses).
 - **Done when:** the check has tests and passes on `develop`; gates pass.
@@ -1931,7 +1933,10 @@ Every W slice below:
   the place of the shared client code (session, device store and lock,
   sync bar, DuVay layer, service worker, manifest), the deploy setting
   that picks one bundle or separate deploys, and the router's paths; an
-  ADR 0010 amendment with the result.
+  ADR 0010 amendment with the result. Uses TACHYON R1's names (ADR 0010):
+  the home app is the shell and owns the service worker, the manifest and
+  the `Session` client; page apps are mounted with `tac.mount`; the native
+  apps always build the one bundle; one TACHYON pin for every page app.
 - **Depends on:** TACHYON R1 released and the pin moved; Wave 7 done.
 
 ### W1. Home (the shell)

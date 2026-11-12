@@ -78,6 +78,18 @@ Findings (2026-11-12):
   - the per-route size budget still checked per page app;
   - the native shells (T14) load the same apps.
 
+**TACHYON's plan for R1** (approved by the owner, "Accept all", 2026-11-12;
+8 slices, started): a page app is mounted with `tac.mount` (slice 1); one
+device `Store` is shared (slice 2); one shell stays loaded while pages
+change (soft navigation, only on sites with a shell); a new `Session`
+client holds the token and its refresh; the shell owns the one service
+worker and the web app manifest; the native shells always use the one
+bundle; every app of a site must be on the same TACHYON version. Mesail
+follows these names: the home app is the shell and owns the service
+worker, the manifest and the `Session`; each page app is mounted with
+`tac.mount`; the native apps build the one bundle; all page apps move
+their TACHYON pin together.
+
 ## Consequences
 
 - Wave 8 (SLICES) splits the screens after Wave 7 and after TACHYON R1 is

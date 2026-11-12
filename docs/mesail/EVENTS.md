@@ -231,6 +231,33 @@ outbound delivery queue, retries, email summaries, cleanup):
    carries what its consumer needs from the producer: `email.received`
    carries the email's content (section 7), and `messaging` asks `mail-in`
    for it only for an older event that has none.
+5. **A trigger calls again while `more: true`** (decided 2026-11-12, slice
+   K6). In one schedule tick, a trigger may call a job or relay route again
+   at once while it answers `200` with `more: true`, so a long job finishes
+   in minutes (removing a domain of 200 members is about 40 calls), not at
+   one call per minute. Limits:
+   - one call at a time per route: it waits for the answer before the next
+     call;
+   - when several routes have work, it takes them in turn (one call each
+     per round), so one long job does not hold back the others;
+   - it stops at the tick's deadline, the tick length minus 10 seconds (50
+     seconds for the 60 second Floci schedule), so ticks never overlap;
+   - it stops calling a route on `more: false`, on any answer other than
+     `200` (a `429` or `503` waits for the next tick), or on a timeout.
+   This is safe because the router lets every waiting user request go
+   before a background call (SLICES K3), and each call stays inside SLICES
+   rule 9's budget, so a user request waits for at most one background
+   call. Native `ty start` workers may keep one call per tick.
+6. **Drain on write has a time budget** (decided 2026-11-12, slice K7). A
+   producing route pushes to different subscribers at the same time, and
+   to one subscriber in order. Each push has a 2 second timeout, and the
+   whole drain stops after 3 seconds. A push that is not answered in time,
+   or is answered `429` or `503`, stays pending for the relay (a push
+   may arrive twice: section 1, "At least once, applied once"). The route records the
+   results of all pushes in one outbox write. So a user request never
+   waits for a slow subscriber. Found by K3: `POST /channels` took 16.6
+   seconds, pushing to `messaging`, `realtime` (`503` after 5 seconds),
+   `search` and `realtime` again one after another.
 
 **Service tokens** (`kit/oidc`, documented in
 `docs/mesail/SERVICE-TOKENS.md`; changed by ADR 0005 on 2026-11-11):

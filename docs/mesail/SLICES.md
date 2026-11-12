@@ -83,8 +83,8 @@ wave run at the same time.
 9. **FYLO on ATLAS (every FYLO-owning slice).** Live roots are on ATLAS in
    Lambda form, where a write takes about 109 ms with stalls up to 11 s
    (ADR 0004 section 4). So: at most 25 FYLO writes and 20 seconds of work
-   per request or job call (answer `more: true` and continue on the next
-   trigger); every write idempotent; slow work through the outbox; callers
+   per request or job call (answer `more: true`; the trigger calls again
+   within its tick, EVENTS.md section 4 item 5); every write idempotent; slow work through the outbox; callers
    use a 30 s timeout and at most 3 retries with backoff. **Services on the
    sign-in path** (`directory`, which `identity` reads on every sign-in,
    refresh and switch) use a smaller budget for job and relay calls: at
@@ -761,6 +761,8 @@ an earlier slice text in this file says "realm of the domain",
 10. Any time: **K4**.
 11. Any time, not at the same time as K4 (both change `kit/events`):
    **K5**.
+12. After K3: **K6** (with OP2 if OP2 is changing `deploy/lambda`).
+13. After K4: **K7**.
 
 ### K5. Channel events without reader lists (messaging's, realtime's and notify's owners, one session)
 Found by K1 (2026-11-12): `memberIds` in a channel message's events lists
@@ -838,6 +840,87 @@ longer than SPEC AC-ID-4's 60 seconds.
 - **Done when:** a Floci test that keeps `directory` busy with a removal of
   200 members while signing in, in a loop, shows every sign-in answered in
   under 5 seconds, and the K2 check passes 10 runs in a row.
+- **Merge bar** (decided 2026-11-12, after run 1 of 10 failed for causes
+  outside K3; findings in `slice-k3-floci-findings.md`):
+  1. Before the series, wait until no domain is `removing` in the dev
+     host's FYLO data (the two 200-member test domains from attempt 1 and
+     run 0); do not remove dev host volumes. Start the series warm: every
+     function answers its health route and one sign-in has passed.
+  2. The K3 test has passed once (run 0, 497fde5, the same product code as
+     2d12d99); keep that log. The 10-run series runs the K2 check and the
+     other blackbox tests without the K3 test, so it leaves no new
+     200-member removal behind. If K3's product code changes after run 0,
+     run the K3 test once more after the series.
+  3. K3 merges when the K2 check passes 10 runs in a row, with no
+     `identity` `503` and every sign-in under 5 seconds. Another failing
+     test does not block the merge only when (a) it fails the same way on
+     `develop` in the same setup (an earlier log is enough), or (b) the
+     logs show that test leftovers caused it. Write each such failure in
+     `slice-k3-floci-findings.md` with the slice that owns it: slow `POST
+     /channels` is K7, removal throughput is K6, a cold start is OP2.
+  4. A failure that K3's own changes can cause (the router queue order,
+     `directory`'s job budgets, `identity`'s retry) always blocks.
+
+### K6. Schedulers call again while `more: true` (a small session, after K3)
+Found by K3 (2026-11-12): at 10 writes per call (rule 9, sign-in path) and
+one call per minute, removing a 200-member domain takes about 40 minutes,
+and `directory`'s removal job works through removing domains in order, so
+a small domain waits behind a big one (D2's test timed out at 150
+seconds). Decided in EVENTS.md section 4, item 5; no owner question.
+- **Owns, for this change only:** `deploy/lambda/scheduler.sh` (OP2 owns
+  `deploy/**`: coordinate if OP2 is running), the order of `directory`'s
+  removal job (with the directory owner), and the CONTRACTS row of `POST
+  /directory/jobs/removals`.
+- **Builds:**
+  - the Floci scheduler follows EVENTS.md section 4 item 5: it calls a
+    route again at once while the answer is `200` with `more: true` (read
+    from the body), one call at a time per route, routes in turn, and
+    stops at the deadline (`MESAIL_SCHEDULER_SECONDS` minus 10), on `more:
+    false`, on another answer or on a timeout; it logs each call as now,
+    and the number of calls per route in each tick;
+  - `directory`'s removal job takes removing domains in turn: each call
+    works on the removing domain after the one the last call worked on (a
+    cursor in the job's state), so a big domain does not hold back a small
+    one; the person-deletion job too, if it has the same order;
+  - CONTRACTS: the removal row says 10 writes and 3 seconds (rule 9, K3),
+    and that the trigger calls again while `more: true`.
+- **Depends on:** K3 merged (its queue order is what makes the extra calls
+  safe).
+- **Done when:** on Floci, a 200-member domain is removed within 5 minutes
+  while the K2 sign-in check runs with every sign-in under 5 seconds; a
+  small domain removed while a big one is still removing is gone within 2
+  minutes; gates pass.
+
+### K7. Drain on write within a time budget (the outbox owner, after K4)
+Found by K3 (2026-11-12), and seen before K3 (router-cycle 5.6 seconds,
+OP1's `503` after 5.0 seconds, K2's run 9.9 seconds): `POST
+/api/v1/channels` took 16.6 seconds inside `channels`, because its drain
+on write pushed to `messaging` (3.4 seconds), `realtime` (`503` after 5
+seconds), `search` (2.2 seconds) and `realtime` again (3.1 seconds) one
+after another, and clients timed out at 10 seconds. Every producer has
+this path. This is the cause of K3's "also watch" item. Decided in
+EVENTS.md section 4, item 6; no owner question.
+- **Owns:** `kit/outbox/**` (`RelayDocument`) and its app copies through
+  `scripts/kit-sync.sh`; in `apps/channels` only the test that proves it;
+  with `realtime`'s owner, the cause of `realtime`'s `503` after 5 seconds.
+- **Builds:**
+  - drain on write as EVENTS.md section 4 item 6 says: different
+    subscribers at the same time, one subscriber in order, 2 seconds per
+    push, 3 seconds for the whole drain, unfinished pushes left pending for
+    the relay, one outbox write for the results; the relay route keeps its
+    rule 9 budget;
+  - find why `realtime` answers `503` after 5 seconds on Floci (an upstream
+    container behind the router), and fix it or write the cause in the
+    hand-over;
+  - `channels` cannot write its own log on Floci (a TACHYON handler-log
+    gap); if that blocks the work, report it to the coordinator as a
+    TACHYON request, not a workaround.
+- **Depends on:** K4 merged (both change `kit/outbox`).
+- **Done when:** a kit test with a subscriber that waits 10 seconds shows
+  `RelayDocument` returning within 3.5 seconds with that push still
+  pending, and the relay delivering it later; on Floci, 50 channel
+  creations in a row each answer in under 5 seconds; gates pass for every
+  app that syncs the kit.
 
 ### L7b. Admin app: removals in progress (a new small web-admin session)
 L5 stays a mechanical switch with a merge pause, so this UI change is not
@@ -1272,6 +1355,13 @@ except for the items below.
     and a service-token call take 5 s). Measure `identity` under 20
     concurrent sign-ins and report whether a per-function minimum of warm
     instances is needed;
+  - ready before use (found by K3, 2026-11-12: the first run 60 seconds
+    after the VM booted got `503` and `502` from the seeds, `directory`
+    hit Floci's 30 second Lambda timeout, and the seeds' 60 second service
+    token expired while they were slow): the start script and the test
+    runner wait until every function answers its health route and one
+    sign-in passes before they seed or test, and a seed gets a new service
+    token when its token expires;
   - Floci kept pinned by digest, with an upgrade note;
   - a check of Floci's licence and maintainer, reported to the owner if it
     does not allow production use.

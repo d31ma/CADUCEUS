@@ -205,6 +205,15 @@ below) once `scripts/native/run-all.sh` exists (slice P1); until then, the
 compile check is enough.
 `ty test --coverage` fails when a public method has no test (TY2022).
 
+**Large real-FYLO size tests under memory pressure** (decided
+2026-11-12, from K1; until K10): the tests that write documents near the
+512 KiB cap (in `search` and other apps) can fail with "Yon managed
+resource operation failed" when the Mac is short of memory. When such a
+test fails while the run's `mac-memory.log` shows swap above 6 GiB, rerun
+that test file alone once and write both results in the report. A failure
+when it runs alone is a real failure. No automatic retry. K10 removes this
+note after its 15 second store budget lands.
+
 **Push only after a green gate on that exact commit.** Run the gates on the
 commit you will push (after the rebase), wait for the result, and push only
 when that run's log shows `rc=0` for that commit's SHA. Never push while a
@@ -1882,6 +1891,22 @@ Every W slice below:
 ### Order
 W0, then W1, then W2 to W7 at once (different folders). Wave 4's and Wave
 6's client slices that are still open finish before their pages move.
+
+### K11. Native runner: fresh tokens per test file (a small session, with OP2's owner)
+Found by K1 (2026-11-12): in native runs the 60 second fixture tokens
+expire before the late test files, since the passkey tests run first; a
+rerun with fresh tokens passed. The shared native Keycloak in
+`~/Developer/Tools/mesail-keycloak` also had to be rebuilt after PK1.
+- **Owns:** `scripts/native/**` (OP2 owns `deploy/**` and these scripts:
+  coordinate if OP2 is running), `tests/blackbox/README.md` only for the
+  runner lines (architecture's file; keep the rest).
+- **Builds:** the native runner gets fresh fixture tokens before each
+  blackbox test file, as Floci's `test.sh` does; a short note in the
+  native runner's usage text and the README on when and how to rebuild the
+  shared native Keycloak (after a change in `deploy/keycloak`, such as
+  PK1's provider).
+- **Done when:** a native run of the whole blackbox suite passes with no
+  expired-token failures; gates pass.
 
 ## Later (after the first release)
 

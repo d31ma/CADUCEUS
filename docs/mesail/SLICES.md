@@ -896,7 +896,17 @@ before K3, in slice P1's Floci runs. Sign-in depends on `directory`, so
     what the error carries; (2) a statement or test that the run log
     reaches the Floci function log in Lambda form (the ADR does not
     mention Lambda). Mesail uses it after the TACHYON release that has it
-    and the pin move; until then, use the router, Floci and dev host logs;
+    and the pin move; until then, use the router, Floci and dev host logs.
+    TACHYON answered part (2) on 2026-11-12: handler log lines go only to
+    `ty`'s standard error, `deploy/lambda/start.sh` runs `exec ty start`
+    with no redirect, so on real Lambda they reach CloudWatch; Floci is a
+    known limit of their ADR. So K8 checks once, with Floci's logs API,
+    that a line `ty` writes to its standard error appears in the function
+    log, and writes the result in the hand-over. A successful answer has
+    no `x-tachyon-request-id`, so its access line has no `request_id`;
+    failures carry the id, and all lines of one call share it. K8 does not
+    ask TACHYON for the header on successful answers: the outage is
+    failures, and the router's log gives the time of each call;
   - find the cause and write it down with logs: an ATLAS write stall (ADR
     0004 section 4: stalls up to 11 seconds), the FYLO process restarting,
     or the datasource marking the store down for a fixed time after one

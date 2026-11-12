@@ -722,7 +722,7 @@ the gateway's management API `POST` / `DELETE /@connections/{connectionId}`
 | `POST /api/v1/notify/push-subscriptions` | SignedIn | `PushSubscriptionRequest{endpoint, p256dh, auth}` | `201` |
 | `GET /api/v1/notify/settings` / `PUT` | SignedIn | `NotifySettings{emailSummaryAfterMinutes (0=off, 15..1440), mutedConversationIds[]}` | `NotifySettings` |
 | `DELETE /api/v1/notify/push-subscriptions` | SignedIn | `PushSubscriptionRequest` (only `endpoint` is used) | `204`; only the caller's own subscription |
-| `GET /api/v1/notify/push-key` | SignedIn | - | `PushKey{publicKey}` (the VAPID public key for `pushManager.subscribe`); `503 unavailable` when not configured |
+| `GET /api/v1/notify/push-key` | SignedIn | - | `PushKey{publicKey}` (the VAPID public key for `pushManager.subscribe`); `503 unavailable` when not configured or when `notify.push.enabled` is `false` (the web app then hides push; ADR 0007, SPEC Q19) |
 | `POST /api/v1/notify/events` | Allow(Service) | `Envelope` | `EventReceipt` (EVENTS.md) |
 | `POST /api/v1/notify/outbox/relay` | Allow(Service) | - | `OutboxReport` |
 | `POST /api/v1/notify/jobs/run` | Allow(Service), install-wide (domain `*`) | - | `JobReport{domains, fannedOut, pushed, skipped, summarized, more}` |

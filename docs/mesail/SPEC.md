@@ -10,8 +10,10 @@
   [`docs/mesail/ux/`](ux/) (owned by the mesail-ux session). This SPEC is
   the source for behavior. When the two disagree, this SPEC wins and the UX
   files are fixed.
-- Hosting: the services run as AWS Lambda container images (Floci locally,
-  AWS or kestrel later). Details are in ADR 0004.
+- Hosting: on-premise first (ADR 0007): every feature runs on the owner's
+  own machines, with no cloud account or cloud service. The services are
+  built so they can also run as Lambda container images (Floci locally,
+  a cloud later), but that form is optional (ADR 0004, ADR 0007).
 
 ## 1. What Mesail is
 
@@ -705,6 +707,25 @@ recent data, works offline, and syncs when it is back online.
   in logs, traces or metrics.
 - **AC-OP-3** Every list, body, attachment, queue and retry has an explicit
   limit, documented in the configuration reference.
+- **AC-OP-4 On-premise.** Every feature runs on the owner's own machines
+  with no cloud provider account, no managed cloud service and no SaaS,
+  at run time and at deploy time (ADR 0007).
+- **AC-OP-5 No hidden outbound traffic.** At run time Mesail connects only
+  to hosts named in its settings: the DNS resolver, the mail relay or
+  (when turned on) recipients' mail servers, an S3-compatible store (when
+  chosen), and the push services (Q19). No such setting has a public or
+  cloud host as its default.
+- **AC-OP-6 Nothing downloaded at run time.** A deployed install starts
+  and runs with no download of images, binaries, modules, fonts or
+  scripts.
+- **AC-OP-7 Operator-provided basics.** TLS certificates are files from
+  any CA the operator chooses (an internal CA works); time comes from the
+  operator's NTP server; secrets are files on the host. Mesail needs no
+  public CA, ACME service or public time server of its own.
+- **AC-OP-8 Proof.** With all outbound traffic blocked except the
+  configured resolver, relay and (when on) push services, the whole stack
+  starts and every blackbox test passes, except those that need external
+  mail or push; no other outbound attempt happens.
 
 ## 6. Out of scope for the first release
 
@@ -786,6 +807,32 @@ section 9); both differ from the first proposal:
 - **Q16 (decided: wait for encryption).** The first offline release waits
   until TACHYON's sealed tables (its wave 3) are in a TACHYON release that
   Mesail uses. No device keeps a copy before that (AC-OF-14).
+
+Open questions of the on-premise requirement (ADR 0007; the spec uses the
+default until the owner decides):
+
+- **Q17** What does "on-premise" mean for Mesail? (a) No cloud: everything
+  runs on the owner's machines, and the install may still reach the
+  internet for email with other organizations, DNS and (optionally)
+  browser push (this spec). (b) Air-gapped: no internet at all at run
+  time; then only internal domains work (no email with outside
+  addresses), browser push is off, and builds need an offline bundle
+  (Q20).
+- **Q18** Which runtime form runs on-premise in production? (a) Plain
+  service processes: one long-running process per service, behind
+  Mesail's own router and scheduler, as every slice is already tested
+  (this spec). (b) Lambda images in the Floci emulator on kestrel, as
+  ADR 0004 planned (like FitNest). Both need no cloud account.
+- **Q19** Browser push needs the browser makers' push services (Google,
+  Mozilla, Apple, Microsoft) on the internet. (a) Keep it as an optional
+  feature, off by default on-premise; an Operator turns it on when the
+  install may reach those services (this spec). (b) Leave it out of
+  on-premise installs.
+- **Q20** May builds download pinned, checksum-checked parts from the
+  internet (GitHub, Docker Hub, Maven, Ubuntu)? (a) Yes; only run time
+  must work without downloads (this spec). (b) No; builds must also work
+  with no internet, from an offline bundle or a local mirror (needed for
+  Q17 b).
 
 Q1 (one shared conversation or one per member) is closed: one email to two
 members of the same domain is one shared conversation (AC-IN-6).

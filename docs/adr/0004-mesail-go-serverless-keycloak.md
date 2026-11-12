@@ -153,6 +153,12 @@ kit/            shared plain Go packages (source of truth)
   inside `web`.
 
 ### 4. Every Yon service is a Lambda container image, one writer per (service, domain)
+> Amended by ADR 0007 (on-premise first): the Lambda images and Floci are
+> an optional, tested form; the on-premise production form is decided by
+> SPEC Q18 (default: plain service processes). SES, S3 plus CloudFront,
+> API Gateway and EventBridge below are optional cloud mappings, never
+> required; ADR 0007 section 5 lists the on-premise replacements.
+
 
 Measured by the `mesail-serverless` spike on 2026-11-10 (report
 `~/Library/Logs/local/CADUCEUS/mesail/serverless-report.md`, Floci recipe
@@ -440,6 +446,9 @@ already combines DuVay and Tailwind (`website/client/manifest.json`,
   release gates, not slice gates.
 
 ### 9. Environments
+> Amended by ADR 0007: on-premise (kestrel) is the primary target; AWS is
+> an optional later target that no code may assume.
+
 - **This Mac, development and slice tests:** native macOS, no VM. Each Yon
   app runs with `ty start` behind a small native dev router on one origin;
   FYLO roots are in the APFS disk image on ATLAS, attached at

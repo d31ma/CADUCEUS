@@ -983,6 +983,76 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
    (show the box, run S15 to S17 on the dev stack in a browser and the
    macOS, Windows, Linux and Android shells).
 
+## Wave 5: on-premise (ADR 0007)
+
+The owner's requirement of 2026-11-11: no dependency on any cloud
+resource; Mesail runs on-premise on its own. SPEC AC-OP-4 to AC-OP-8 and
+Q17 to Q20. Most of the work is already done: the code is cloud-neutral
+except for the items below.
+
+### OP1. Remove public and cloud defaults (a small cross-app session)
+- **Owns, for this change only:** `apps/directory/server/application.json`
+  and `apps/directory/server/services/DnsService.go` (with the directory
+  owner), `kit/blobs/S3Settings.go` and its app copies, `edge/smtp` raw
+  store settings, `apps/notify/server/application.json` and
+  `kit/webpush` (with the notify owner), the realtime gateway stage of the
+  `Dockerfile` and `edge/realtime` vendoring (with P1 and R1).
+- **Builds:** `dnsresolver` defaults to the host's own resolver, with no
+  public host in `outgoing.hosts` (the dev and Floci runs keep their own
+  resolver setting); the S3 adapter (blobs and the SMTP edge raw store)
+  refuses to start without an explicit endpoint, with no
+  `amazonaws.com` fallback; a `notify.push.enabled` setting (default
+  `false` for on-premise installs; SPEC Q19) that hides the web app's push
+  row through `GET /notify/push-key` answering `503`; `github.com/coder/
+  websocket` vendored, so every Go build runs with `GOPROXY=off`.
+- **Depends on:** nothing. May run during Wave 3 and 4.
+- **Done when:** a grep of the tree finds no public host or AWS host as a
+  default in code or settings (`cloudflare-dns`, `amazonaws.com`,
+  `8.8.8.8`, `1.1.1.1`, `dns.google`), and gates pass for the touched
+  apps and modules.
+
+### OP2. The on-premise runtime (P1's successor)
+- **Owns:** `deploy/**` (except `deploy/keycloak`), `docker-compose*.yml`,
+  `scripts/native/**`, `scripts/onprem/**` (new), the non-Keycloak
+  `Dockerfile` stages.
+- **Builds** (SPEC Q18, default "plain service processes"): an on-premise
+  compose (or PaaS) definition for one host: one container per Yon service
+  running `ty start` for all domains, the router in native mode serving
+  the web apps from files, the local scheduler, `realtime`,
+  `edge/realtime`, `edge/smtp` (it has no deployment yet), Keycloak; FYLO
+  roots and blobs on the host's disk; secrets from files; settings for
+  the relay, resolver, push, TLS files and the public host name. The
+  Floci form stays as it is, as a tested option.
+- **Depends on:** Wave 3's L5 merged; OP1.
+- **Done when:** the stack starts on kestrel (or the `mesail` dev host)
+  from the on-premise definition and the blackbox tests pass against it.
+
+### OP3. Egress-denied gate (C1's successor, with P1)
+- **Owns:** `scripts/onprem/egress-check.sh` (new), its CI step.
+- **Builds:** starts OP2's stack with all outbound traffic blocked except
+  the configured relay, resolver and push hosts (when on), runs the
+  blackbox tests (external mail and push tests skip), and records every
+  blocked outbound attempt; any attempt fails the gate (SPEC AC-OP-8).
+- **Depends on:** OP2.
+
+### OP4. Operator guide (architecture)
+- **Owns:** `docs/mesail/OPERATIONS.md` (new).
+- **Builds:** what an on-premise operator must provide and set: host
+  disks, the resolver, the relay or direct delivery (port 25 out, reverse
+  DNS), inbound port 25 and MX records, TLS certificate files and the CA,
+  NTP, secret files, Keycloak backups, FYLO `pack` backups, push on or off.
+- **Depends on:** OP2's settings names.
+
+### OP5. Offline build bundle (only if SPEC Q20 is "builds without internet")
+- **Owns:** `scripts/onprem/bundle.sh` (new), with P1.
+- **Builds:** one archive with every pinned image, binary, jar and the
+  apt packages (pinned), and a build path that uses only that archive
+  and a local registry.
+
+### Order
+OP1 and OP4 at once; OP2 after L5 and OP1; OP3 after OP2; OP5 only on the
+owner's word.
+
 ## Later (after the first release)
 
 - **X1** SMTP submission for third-party mail clients (app passwords or

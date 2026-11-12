@@ -1057,6 +1057,9 @@ except for the items below.
   DNS), inbound port 25 and MX records, TLS certificate files and the CA,
   NTP, secret files, Keycloak backups, FYLO `pack` backups, push on or off.
 - **Depends on:** OP2's settings names.
+- **Landed (first version, 2026-11-11):** `docs/mesail/OPERATIONS.md`, with
+  the planned settings marked; OP1 and OP2 update it when they add or
+  rename a setting.
 
 OP5 (an offline build bundle) is dropped: the owner decided that builds
 may download pinned parts (SPEC Q20).

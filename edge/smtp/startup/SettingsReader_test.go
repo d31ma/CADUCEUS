@@ -2,6 +2,7 @@ package startup
 
 import (
 	"errors"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -62,19 +63,33 @@ func TestValuesFromTheEnvironmentAreUsed(t *testing.T) {
 func TestMissingRequiredValuesAreNamed(t *testing.T) {
 	_, err := NewSettingsReader(environmentOf(map[string]string{})).Load()
 	text := err.Error()
-	if !strings.Contains(text, "MESAIL_DIRECTORY_URL") || !strings.Contains(text, "MESAIL_MAIL_IN_URL") || !strings.Contains(text, "MESAIL_RAW_STORE_DIR") || !strings.Contains(text, "MESAIL_SERVICE_TOKEN_URL") {
+	if !strings.Contains(text, "MESAIL_DIRECTORY_URL") || !strings.Contains(text, "MESAIL_MAIL_IN_URL") || !strings.Contains(text, "MESAIL_RAW_STORE_DIR") || !strings.Contains(text, "MESAIL_SERVICETOKENS_URL") {
 		t.Fatalf("unexpected error %q", text)
 	}
 }
 
-func TestClientCredentialsNeedAllThreeValues(t *testing.T) {
+func TestIdentityTokensNeedTheSecretFile(t *testing.T) {
 	values := minimalValues()
 	delete(values, "MESAIL_SERVICE_TOKEN")
-	values["MESAIL_SERVICE_TOKEN_URL"] = "http://keycloak.local/token"
-	values["MESAIL_SERVICE_CLIENT_ID"] = "smtp-edge"
+	values["MESAIL_SERVICETOKENS_URL"] = "http://identity.local/api/v1/identity/service-token"
 	_, err := NewSettingsReader(environmentOf(values)).Load()
 	if !errors.Is(err, MissingSetting{Name: "MESAIL_SERVICE_CLIENT_SECRET_FILE"}) {
 		t.Fatalf("want the secret file to be required, got %v", err)
+	}
+}
+
+func TestIdentityTokensUseTheRouteAndATemporaryCache(t *testing.T) {
+	values := minimalValues()
+	delete(values, "MESAIL_SERVICE_TOKEN")
+	values["MESAIL_SERVICETOKENS_URL"] = "http://identity.local/api/v1/identity/service-token"
+	values["MESAIL_SERVICE_CLIENT_SECRET_FILE"] = "/run/secrets/service"
+	settings, err := NewSettingsReader(environmentOf(values)).Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tokens := settings.TokenSettings
+	if tokens.Url != values["MESAIL_SERVICETOKENS_URL"] || tokens.SecretFile != "/run/secrets/service" || !strings.HasPrefix(tokens.CacheFolder, os.TempDir()) {
+		t.Fatalf("unexpected token settings %+v", tokens)
 	}
 }
 

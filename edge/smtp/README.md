@@ -67,7 +67,7 @@ any other error for a temporary failure.
 | `MESAIL_RAW_STORE_S3_TIMEOUT_SECONDS` | `300` | Longest time for one S3 upload, in seconds (5 minutes is enough for 25 MiB at about 100 KB/s) |
 | `MESAIL_RAW_STORE_S3_ENDPOINT` | required with `MESAIL_RAW_STORE_S3_BUCKET` (no default) | The S3-compatible store's address, for example a self-hosted store, or Floci in local tests. There is no cloud default (ADR 0007): without it the edge refuses to start |
 | `MESAIL_SERVICE_TOKEN` | none | A fixed Service bearer token |
-| `MESAIL_SERVICE_TOKEN_URL`, `MESAIL_SERVICE_CLIENT_ID`, `MESAIL_SERVICE_CLIENT_SECRET_FILE` | required without `MESAIL_SERVICE_TOKEN` | OAuth2 client credentials; the token is kept until 30 seconds before it expires |
+| `MESAIL_SERVICETOKENS_URL`, `MESAIL_SERVICE_CLIENT_SECRET_FILE` | required without `MESAIL_SERVICE_TOKEN` | `identity`'s service token route (`.../api/v1/identity/service-token`) and a file that holds the `mesail-service` client secret. The edge asks for an install-wide token (domain `*`) with `kit/oidc` `ServiceTokens` and keeps it in the temporary folder until 10 seconds before it expires |
 
 ## Raw message store
 

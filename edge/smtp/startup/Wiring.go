@@ -65,7 +65,7 @@ func (Wiring) tokensFor(settings ListenerSettings, client *http.Client) receptio
 	if settings.ServiceToken != "" {
 		return adapters.NewStaticTokens(settings.ServiceToken)
 	}
-	return adapters.NewClientCredentialTokens(settings.TokenSettings, client, time.Now)
+	return adapters.NewIdentityTokens(settings.TokenSettings, client, time.Now)
 }
 
 func (Wiring) checkerFor(settings ListenerSettings) reception.AuthChecker {

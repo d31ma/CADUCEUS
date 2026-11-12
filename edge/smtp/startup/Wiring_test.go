@@ -66,13 +66,13 @@ func TestWiringPicksTheTokenSource(t *testing.T) {
 	settings := baseSettings(t)
 	static := Wiring{}.tokensFor(settings, nil)
 	settings.ServiceToken = ""
-	settings.TokenSettings = adapters.TokenSettings{Url: "http://keycloak.local/token", ClientId: "smtp-edge", SecretFile: "/run/secret"}
+	settings.TokenSettings = adapters.TokenSettings{Url: "http://identity.local/api/v1/identity/service-token", SecretFile: "/run/secret", CacheFolder: t.TempDir()}
 	credentials := Wiring{}.tokensFor(settings, nil)
 	token, _ := static.Token(context.Background())
 	if token != "service-token" {
 		t.Fatalf("unexpected static token %q", token)
 	}
-	if _, ok := credentials.(*adapters.ClientCredentialTokens); !ok {
+	if _, ok := credentials.(*adapters.IdentityTokens); !ok {
 		t.Fatalf("unexpected token source %T", credentials)
 	}
 }

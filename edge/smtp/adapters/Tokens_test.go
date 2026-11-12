@@ -2,6 +2,8 @@ package adapters
 
 import (
 	"context"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,17 +17,17 @@ import (
 
 type tokenServer struct {
 	calls   atomic.Int32
-	forms   chan string
+	bodies  chan string
 	address string
 }
 
 func newTokenServer(t *testing.T, status int, answer string) *tokenServer {
 	t.Helper()
-	tokens := &tokenServer{forms: make(chan string, 100)}
+	tokens := &tokenServer{bodies: make(chan string, 100)}
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		tokens.calls.Add(1)
-		request.ParseForm()
-		tokens.forms <- request.PostForm.Encode()
+		body, _ := io.ReadAll(request.Body)
+		tokens.bodies <- request.Header.Get("Content-Type") + " " + string(body)
 		writer.WriteHeader(status)
 		writer.Write([]byte(answer))
 	}))
@@ -65,39 +67,45 @@ func TestStaticTokensGiveTheSameToken(t *testing.T) {
 	}
 }
 
-func TestClientCredentialsSendTheFormAndCacheTheToken(t *testing.T) {
-	server := newTokenServer(t, http.StatusOK, `{"access_token":"first","expires_in":300}`)
+func identityTokens(t *testing.T, address string, now func() time.Time) *IdentityTokens {
+	t.Helper()
+	settings := TokenSettings{Url: address, SecretFile: secretFile(t), CacheFolder: t.TempDir()}
+	return NewIdentityTokens(settings, http.DefaultClient, now)
+}
+
+func TestIdentityTokensSendJsonForTheWholeInstallAndCacheTheToken(t *testing.T) {
+	server := newTokenServer(t, http.StatusOK, `{"accessToken":"first","expiresIn":300}`)
 	fakeClock := &clock{now: time.Unix(1000, 0)}
-	tokens := NewClientCredentialTokens(TokenSettings{Url: server.address, ClientId: "smtp-edge", SecretFile: secretFile(t)}, http.DefaultClient, fakeClock.read)
+	tokens := identityTokens(t, server.address, fakeClock.read)
 	first, err := tokens.Token(context.Background())
 	second, _ := tokens.Token(context.Background())
-	form := <-server.forms
+	body := <-server.bodies
 	if err != nil || first != "first" || second != "first" || server.calls.Load() != 1 {
 		t.Fatalf("want one call and a cached token, got %q %q %d %v", first, second, server.calls.Load(), err)
 	}
-	if !strings.Contains(form, "grant_type=client_credentials") || !strings.Contains(form, "client_id=smtp-edge") || !strings.Contains(form, "client_secret=the-secret") {
-		t.Fatalf("unexpected form %q", form)
+	if body != `application/json {"clientId":"mesail-service","clientSecret":"the-secret","domainId":"*"}` {
+		t.Fatalf("unexpected request %q", body)
 	}
 }
 
-func TestClientCredentialsRefreshThirtySecondsBeforeExpiry(t *testing.T) {
-	server := newTokenServer(t, http.StatusOK, `{"access_token":"token","expires_in":300}`)
+func TestIdentityTokensRefreshTenSecondsBeforeExpiry(t *testing.T) {
+	server := newTokenServer(t, http.StatusOK, `{"accessToken":"token","expiresIn":300}`)
 	fakeClock := &clock{now: time.Unix(1000, 0)}
-	tokens := NewClientCredentialTokens(TokenSettings{Url: server.address, ClientId: "smtp-edge", SecretFile: secretFile(t)}, http.DefaultClient, fakeClock.read)
+	tokens := identityTokens(t, server.address, fakeClock.read)
 	tokens.Token(context.Background())
-	fakeClock.advance(269 * 1e9)
+	fakeClock.advance(289 * time.Second)
 	tokens.Token(context.Background())
 	calls := server.calls.Load()
-	fakeClock.advance(1 * 1e9)
+	fakeClock.advance(1 * time.Second)
 	tokens.Token(context.Background())
 	if calls != 1 || server.calls.Load() != 2 {
-		t.Fatalf("want a refresh at 270 seconds, got %d then %d calls", calls, server.calls.Load())
+		t.Fatalf("want a refresh at 290 seconds, got %d then %d calls", calls, server.calls.Load())
 	}
 }
 
-func TestClientCredentialsAreSafeForManyCallers(t *testing.T) {
-	server := newTokenServer(t, http.StatusOK, `{"access_token":"token","expires_in":300}`)
-	tokens := NewClientCredentialTokens(TokenSettings{Url: server.address, ClientId: "smtp-edge", SecretFile: secretFile(t)}, http.DefaultClient, time.Now)
+func TestIdentityTokensAreSafeForManyCallers(t *testing.T) {
+	server := newTokenServer(t, http.StatusOK, `{"accessToken":"token","expiresIn":300}`)
+	tokens := identityTokens(t, server.address, time.Now)
 	group := sync.WaitGroup{}
 	for range 20 {
 		group.Go(func() { tokens.Token(context.Background()) })
@@ -108,46 +116,48 @@ func TestClientCredentialsAreSafeForManyCallers(t *testing.T) {
 	}
 }
 
-func TestClientCredentialsRefusedIsAnError(t *testing.T) {
+func TestIdentityTokensRefusedIsAnError(t *testing.T) {
 	server := newTokenServer(t, http.StatusUnauthorized, `{"error":"invalid_client"}`)
-	_, err := NewClientCredentialTokens(TokenSettings{Url: server.address, ClientId: "smtp-edge", SecretFile: secretFile(t)}, http.DefaultClient, time.Now).Token(context.Background())
+	_, err := identityTokens(t, server.address, time.Now).Token(context.Background())
 	if err == nil || strings.Contains(err.Error(), "the-secret") {
 		t.Fatalf("want an error without the secret, got %v", err)
 	}
 }
 
-func TestClientCredentialsWithoutTokenIsAnError(t *testing.T) {
-	server := newTokenServer(t, http.StatusOK, `{"expires_in":300}`)
-	_, err := NewClientCredentialTokens(TokenSettings{Url: server.address, ClientId: "smtp-edge", SecretFile: secretFile(t)}, http.DefaultClient, time.Now).Token(context.Background())
+func TestIdentityTokensServerErrorIsAnError(t *testing.T) {
+	server := newTokenServer(t, http.StatusServiceUnavailable, `{}`)
+	_, err := identityTokens(t, server.address, time.Now).Token(context.Background())
 	if err == nil {
 		t.Fatal("want an error")
 	}
 }
 
-func TestClientCredentialsWithBrokenJsonIsAnError(t *testing.T) {
+func TestIdentityTokensWithoutTokenIsAnError(t *testing.T) {
+	server := newTokenServer(t, http.StatusOK, `{"expiresIn":300}`)
+	_, err := identityTokens(t, server.address, time.Now).Token(context.Background())
+	if err == nil {
+		t.Fatal("want an error")
+	}
+}
+
+func TestIdentityTokensWithBrokenJsonIsAnError(t *testing.T) {
 	server := newTokenServer(t, http.StatusOK, `not json`)
-	_, err := NewClientCredentialTokens(TokenSettings{Url: server.address, ClientId: "smtp-edge", SecretFile: secretFile(t)}, http.DefaultClient, time.Now).Token(context.Background())
+	_, err := identityTokens(t, server.address, time.Now).Token(context.Background())
 	if err == nil {
 		t.Fatal("want an error")
 	}
 }
 
-func TestClientCredentialsWithoutSecretFileIsAnError(t *testing.T) {
-	_, err := NewClientCredentialTokens(TokenSettings{Url: "http://127.0.0.1:1", ClientId: "smtp-edge", SecretFile: filepath.Join(t.TempDir(), "missing")}, http.DefaultClient, time.Now).Token(context.Background())
-	if err == nil {
-		t.Fatal("want an error")
+func TestIdentityTokensWithoutSecretFileIsAnError(t *testing.T) {
+	settings := TokenSettings{Url: "http://127.0.0.1:1", SecretFile: filepath.Join(t.TempDir(), "missing"), CacheFolder: t.TempDir()}
+	_, err := NewIdentityTokens(settings, http.DefaultClient, time.Now).Token(context.Background())
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("want a missing file error, got %v", err)
 	}
 }
 
-func TestClientCredentialsUnreachableIsAnError(t *testing.T) {
-	_, err := NewClientCredentialTokens(TokenSettings{Url: "http://127.0.0.1:1", ClientId: "smtp-edge", SecretFile: secretFile(t)}, http.DefaultClient, time.Now).Token(context.Background())
-	if err == nil {
-		t.Fatal("want an error")
-	}
-}
-
-func TestClientCredentialsBadUrlIsAnError(t *testing.T) {
-	_, err := NewClientCredentialTokens(TokenSettings{Url: "http://bad host", ClientId: "smtp-edge", SecretFile: secretFile(t)}, http.DefaultClient, time.Now).Token(context.Background())
+func TestIdentityTokensUnreachableIsAnError(t *testing.T) {
+	_, err := identityTokens(t, "http://127.0.0.1:1", time.Now).Token(context.Background())
 	if err == nil {
 		t.Fatal("want an error")
 	}

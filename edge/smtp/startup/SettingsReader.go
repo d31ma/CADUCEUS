@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -73,14 +74,14 @@ func (reader *SettingsReader) tokenSettings(serviceToken string) adapters.TokenS
 	if serviceToken != "" {
 		return adapters.TokenSettings{}
 	}
-	return reader.clientCredentials()
+	return reader.identityTokens()
 }
 
-func (reader *SettingsReader) clientCredentials() adapters.TokenSettings {
+func (reader *SettingsReader) identityTokens() adapters.TokenSettings {
 	return adapters.TokenSettings{
-		Url:        reader.required("MESAIL_SERVICE_TOKEN_URL"),
-		ClientId:   reader.required("MESAIL_SERVICE_CLIENT_ID"),
-		SecretFile: reader.required("MESAIL_SERVICE_CLIENT_SECRET_FILE"),
+		Url:         reader.required("MESAIL_SERVICETOKENS_URL"),
+		SecretFile:  reader.required("MESAIL_SERVICE_CLIENT_SECRET_FILE"),
+		CacheFolder: filepath.Join(os.TempDir(), "mesail-smtp", "tokens"),
 	}
 }
 

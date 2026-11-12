@@ -714,6 +714,15 @@ recent data, works offline, and syncs when it is back online.
   of someone who cannot read the conversation (for example, they left the
   channel) is not a refusal: the message is sent, the mention shows as
   plain text, and that person gets no notification (AC-PN-2).
+- **AC-OF-20 Biometric unlock (installed apps).** In the installed apps
+  for macOS, iOS, Windows and Android, the person may turn on "Unlock with
+  Touch ID" (or Face ID, Windows Hello, an Android biometric, falling back
+  to the device PIN) for the device copy. The copy's key is then released
+  by the operating system only after that check, each time the app opens
+  or comes back after 5 minutes in the background; until then the app
+  shows a locked screen and keeps the queue waiting. Turning it off needs
+  the same check. Browsers and the Linux app do not offer it. Built after
+  TACHYON request T15 (ADR 0008, Q22).
 - **AC-OF-19 A tab that is not kept.** When the network drops in a tab
   without "Keep me signed in on this device", the tab keeps showing what
   it already loaded and lets the person write. What they write waits in
@@ -860,19 +869,15 @@ Decided by the owner on 2026-11-11 (on-premise, ADR 0007):
   checksum-checked parts from the internet; a deployed install never
   downloads anything (AC-OP-6). No offline build bundle.
 
-Open questions of the passkey design (ADR 0008; the spec uses the first
-option until the owner decides):
+Decided by the owner on 2026-11-12 (passkeys, ADR 0008):
 
-- **Q21** How should passkeys work? (a) An extra way to sign in: every
-  account keeps its password and 2-step code for recovery, and a passkey
-  sign-in skips both (this spec). (b) Also allow accounts with no
-  password at all (passkey only): simpler for people, but a person who
-  loses every device needs an admin to recover. (c) Passkeys only as the
-  second step after the password, instead of the 2-step code.
-- **Q22** Should a biometric also unlock the device copy of mail (offline
-  first)? (a) Not now; maybe later, in the installed apps only (this
-  spec). (b) Yes, as an option in the installed apps, once TACHYON
-  supports it (request T15). Browsers cannot do it either way.
+- **Q21 (decided: an extra way to sign in).** Every account keeps its
+  password and 2-step code for recovery; signing in with a passkey skips
+  both (AC-ID-16, AC-ID-18). No passkey-only accounts.
+- **Q22 (decided: yes, in the installed apps).** A person may turn on
+  "Unlock with Touch ID" (Face ID, Windows Hello, an Android biometric or
+  the device PIN) for the device copy in the installed apps, once TACHYON
+  offers it (request T15). Browsers do not get it (AC-OF-20).
 
 Q1 (one shared conversation or one per member) is closed: one email to two
 members of the same domain is one shared conversation (AC-IN-6).

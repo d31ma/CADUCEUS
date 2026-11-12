@@ -1,7 +1,10 @@
 # ADR 0008: Passkeys (Touch ID, Face ID, Windows Hello, Android) through the backend
 
-- Status: Accepted (design); two owner decisions open (SPEC Q21, Q22).
-  Build after TACHYON offers passkey access to Tac (requests T13, T14).
+- Status: Accepted (design). The owner decided SPEC Q21 (passkeys are an
+  extra way to sign in; passwords stay) and Q22 (biometric unlock of the
+  device copy in the installed apps) on 2026-11-12. Build after TACHYON
+  offers passkey access to Tac (requests T13, T14) and, for the unlock,
+  T15.
 - Date: 2026-11-12
 - Amends: [ADR 0004](0004-mesail-go-serverless-keycloak.md) section 7
   ("no Keycloak login page, so no passkeys yet") and
@@ -100,10 +103,10 @@ exchange power: one stolen `identity` secret could then sign in as anyone.
 6. **Recovery** keeps the password: a person who loses a device signs in
    with password and code and removes that passkey; a person who loses
    everything gets an admin reset (AC-ID-13), which can also remove all
-   passkeys. Whether an account may have no password at all is the owner's
-   choice (SPEC Q21).
-7. **Unlocking the offline copy with a biometric** is a separate, optional
-   item (SPEC Q22). It needs sealed tables (ADR 0006 section 9) whose
+   passkeys. Every account keeps its password (the owner's answer to SPEC
+   Q21); there are no passkey-only accounts.
+7. **Unlocking the offline copy with a biometric** (the owner's answer to
+   SPEC Q22: yes, in the installed apps; SPEC AC-OF-20). It needs sealed tables (ADR 0006 section 9) whose
    device key the OS releases only after Touch ID, Face ID, Windows Hello
    or an Android biometric (TACHYON request T15). It is for the installed
    apps only: a browser has no such key store.
@@ -139,7 +142,7 @@ exchange power: one stolen `identity` secret could then sign in as anyone.
   `WebAuthNAuthenticatorMakeCredential` and `GetAssertion`; `supported()`
   answers false on Linux. The relying party id is a manifest setting
   (the install's host), not the WebView's origin.
-- **T15** (only if SPEC Q22 is yes) Sealed tables with a key the OS
+- **T15** (firm since the owner's answer to SPEC Q22) Sealed tables with a key the OS
   releases only after a biometric or device PIN (`"unlock": "userPresence"`):
   Keychain access control `biometryCurrentSet` or `userPresence`, Android
   Keystore `setUserAuthenticationRequired`, Windows Hello key protection;

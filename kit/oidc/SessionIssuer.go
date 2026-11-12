@@ -1,9 +1,11 @@
 package oidc
 
 import (
+	"cmp"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 )
 
 type SessionIssuer struct {
@@ -31,6 +33,30 @@ func (issuer SessionIssuer) locked(username string) bool {
 	}
 	locked, err := admin.Locked(userId)
 	return err == nil && locked
+}
+
+func (issuer SessionIssuer) passkeyRefusal(credentialJson string, refused error) error {
+	locked := errors.Is(refused, SignInRefused{}) && issuer.personLocked(PasskeyAssertion{}.PersonId(credentialJson))
+	return issuer.lockedOr(locked, refused)
+}
+
+func (issuer SessionIssuer) personLocked(personId string) bool {
+	admin, err := issuer.admin()
+	if err != nil {
+		return false
+	}
+	locked, err := admin.Locked(personId)
+	return err == nil && locked
+}
+
+func (issuer SessionIssuer) PasskeyProblem() error {
+	return PasskeyOrigins{Text: issuer.Settings.Origins}.Problem()
+}
+
+func (issuer SessionIssuer) ceremony(now func() time.Time) (PasskeyCeremony, error) {
+	origins := PasskeyOrigins{Text: issuer.Settings.Origins}
+	ceremony := PasskeyCeremony{Sealer: issuer.Sealer, Origins: origins, Now: now}
+	return ceremony, cmp.Or(issuer.Problem, origins.Problem())
 }
 
 func (SessionIssuer) lockedOr(locked bool, refused error) error {

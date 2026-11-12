@@ -6,4 +6,5 @@ type SessionSettings struct {
 	Account ClientSetting   `json:"account"`
 	Signing SigningSettings `json:"signing"`
 	Issuer  string          `json:"issuer,omitempty"`
+	Origins string          `json:"passkeyorigins,omitempty"`
 }

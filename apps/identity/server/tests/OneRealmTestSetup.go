@@ -35,7 +35,7 @@ func (setup OneRealmTestSetup) Start() oidc.SigningKey {
 	sessionKey := base64.StdEncoding.EncodeToString([]byte(strings.Repeat("s", 32)))
 	document := `{"yon":{"oidc":{"issuer":"` + setup.Issuer() + `","jwks":"` + setup.Issuer() + `/jwks","audience":"mesail-api",` +
 		`"keycloak":"` + keycloak.URL + `/realms/mesail/protocol/openid-connect","admin":"` + keycloak.URL + `/admin/realms/mesail"},` +
-		`"identity":{"issuer":"` + setup.Issuer() + `","client":{"secret":"client-secret"},"account":{"secret":"account-secret"},"session":{"key":"` + sessionKey + `"},"signing":{"key":"` + signingText + `"}},` +
+		`"identity":{"issuer":"` + setup.Issuer() + `","client":{"secret":"client-secret"},"account":{"secret":"account-secret"},"session":{"key":"` + sessionKey + `"},"signing":{"key":"` + signingText + `"},"passkeyorigins":"https://mail.mesail.test"},` +
 		`"directory":{"url":"` + directory.URL + `"},"service":{"client":{"secret":"service-secret"}}}}`
 	os.Setenv("YON_APPLICATION_JSON", document)
 	return signingKey
@@ -80,8 +80,12 @@ func (setup OneRealmTestSetup) keycloak(writer http.ResponseWriter, request *htt
 		writer.WriteHeader(http.StatusNoContent)
 	case form.Get("client_id") == "mesail-account":
 		_ = json.NewEncoder(writer).Encode(map[string]any{"access_token": "admin-token", "expires_in": 60})
+	case strings.Contains(request.URL.Path, "/passkeys"):
+		setup.passkeys(writer, request)
 	case strings.Contains(request.URL.Path, "/admin/"):
 		setup.admin(writer, request, locked)
+	case form.Get("passkey_assertion") == "good-assertion" && form.Get("passkey_origins") == "https://mail.mesail.test":
+		setup.grant(writer, request, key)
 	case form.Get("username") == "ana" && form.Get("password") == "right" || form.Get("refresh_token") == "refresh-ana":
 		setup.grant(writer, request, key)
 	case form.Get("password") == "locked":
@@ -117,6 +121,31 @@ func (OneRealmTestSetup) admin(writer http.ResponseWriter, request *http.Request
 		_, _ = writer.Write([]byte(`[{"id":"session-other"}]`))
 	case request.Method == http.MethodGet && strings.HasSuffix(path, "/users/person-ana"):
 		_, _ = writer.Write([]byte(`{"id":"person-ana","username":"ana","attributes":{"mesail.mustChangePassword":["true"]}}`))
+	default:
+		writer.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func (OneRealmTestSetup) passkeys(writer http.ResponseWriter, request *http.Request) {
+	added := oidc.PasskeyAddRequest{}
+	_ = json.NewDecoder(request.Body).Decode(&added)
+	path := request.URL.Path
+	switch {
+	case request.Header.Get("Authorization") != "Bearer admin-token" || !strings.Contains(path, "/mesail/users/person-ana/passkeys"):
+		writer.WriteHeader(http.StatusForbidden)
+	case request.Method == http.MethodGet:
+		_, _ = writer.Write([]byte(`[{"passkeyId":"passkey-1","credentialId":"credential-1","label":"Mac","createdAt":1762905600000,"lastUsedAt":null}]`))
+	case request.Method == http.MethodPost && added.CredentialJson == "good-credential":
+		writer.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(writer).Encode(oidc.PasskeyRecord{PasskeyId: "passkey-2", CredentialId: "credential-2", Label: added.Label, CreatedAt: 1762905600000})
+	case request.Method == http.MethodPost:
+		writer.WriteHeader(http.StatusBadRequest)
+		_, _ = writer.Write([]byte(`{"error":"invalid_passkey"}`))
+	case !strings.HasSuffix(path, "/passkey-1"):
+		writer.WriteHeader(http.StatusNotFound)
+		_, _ = writer.Write([]byte(`{"error":"not_found"}`))
+	case request.Method == http.MethodPut:
+		_, _ = writer.Write([]byte(`{"passkeyId":"passkey-1","credentialId":"credential-1","label":"Work laptop","createdAt":1762905600000,"lastUsedAt":null}`))
 	default:
 		writer.WriteHeader(http.StatusNoContent)
 	}

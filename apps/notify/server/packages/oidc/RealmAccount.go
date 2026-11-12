@@ -34,6 +34,10 @@ func (account RealmAccount) RemoveTotp(caller Caller, current string, oneTimeCod
 	return AccountErrors{}.Normalized(account.removeTotp(caller, current, oneTimeCode))
 }
 
+func (account RealmAccount) Passkeys() PasskeyAccount {
+	return PasskeyAccount{Account: account}
+}
+
 func (account RealmAccount) totpEnabled(caller Caller) (bool, error) {
 	admin, err := account.Session.admin()
 	if err != nil {

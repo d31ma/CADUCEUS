@@ -22,15 +22,15 @@ func (logins Logins) SignIn(login string, password string, oneTimeCode string) (
 	if err != nil {
 		return Grant{}, err
 	}
-	person, err := logins.People.Person(opened.PersonId)
+	return logins.signedIn(opened, parts.DomainId)
+}
+
+func (logins Logins) PasskeySignIn(challengeKey string, credentialJson string, wanted string) (Grant, error) {
+	opened, err := logins.Realm.PasskeySignIn(challengeKey, credentialJson)
 	if err != nil {
-		return Grant{}, logins.closed(opened, err)
+		return Grant{}, err
 	}
-	domainId, err := DomainRules{}.ForSignIn(person, opened.Operator, parts.DomainId)
-	if err != nil {
-		return Grant{}, logins.closed(opened, err)
-	}
-	return logins.granted(opened, person, domainId)
+	return logins.signedIn(opened, wanted)
 }
 
 func (logins Logins) Refresh(sessionKey string) (Grant, error) {
@@ -77,6 +77,18 @@ func (logins Logins) Reopened(opened oidc.KeycloakSession, domainId string) (Gra
 	person, err := logins.People.Person(opened.PersonId)
 	if err != nil {
 		return Grant{}, err
+	}
+	return logins.granted(opened, person, domainId)
+}
+
+func (logins Logins) signedIn(opened oidc.KeycloakSession, wanted string) (Grant, error) {
+	person, err := logins.People.Person(opened.PersonId)
+	if err != nil {
+		return Grant{}, logins.closed(opened, err)
+	}
+	domainId, err := DomainRules{}.ForSignIn(person, opened.Operator, wanted)
+	if err != nil {
+		return Grant{}, logins.closed(opened, err)
 	}
 	return logins.granted(opened, person, domainId)
 }

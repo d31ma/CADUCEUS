@@ -52,6 +52,16 @@ func (realm *fakeRealm) Open(sessionKey string) (oidc.SessionContent, error) {
 	return realm.content, realm.openErr
 }
 
+func (realm *fakeRealm) PasskeyChallenge() (oidc.PasskeyChallenge, error) {
+	*realm.events = append(*realm.events, "passkey challenge")
+	return oidc.PasskeyChallenge{OptionsJson: "{}", ChallengeKey: "challenge-key"}, nil
+}
+
+func (realm *fakeRealm) PasskeySignIn(challengeKey string, credentialJson string) (oidc.KeycloakSession, error) {
+	*realm.events = append(*realm.events, "passkey "+challengeKey)
+	return realm.session, realm.signInErr
+}
+
 type fakePeople struct {
 	events *[]string
 	people map[string]Person

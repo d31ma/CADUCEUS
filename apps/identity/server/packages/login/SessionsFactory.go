@@ -27,6 +27,10 @@ func (factory SessionsFactory) ConfiguredServiceTokens() ServiceTokenIssuer {
 	return factory.ServiceTokens(os.Getenv(factory.variable()))
 }
 
+func (factory SessionsFactory) PasskeyProblem() error {
+	return oidc.SessionIssuerFactory{}.FromJson(os.Getenv(factory.variable())).PasskeyProblem()
+}
+
 func (factory SessionsFactory) realm(document string) RealmSessions {
 	settings, _ := oidc.SettingsReader{}.FromJson(document)
 	signer := oidc.TokenSignerFactory{}.FromJson(document)

@@ -23,6 +23,9 @@
       "kid",
       "kty",
       "otpauth",
+      "passkey",
+      "passkeyorigins",
+      "passkeys",
       "totp"
     ]
   },
@@ -30,6 +33,7 @@
     "url": "http://127.0.0.1:8102"
   },
   "identity": {
-    "issuer": "http://127.0.0.1:8101/api/v1/identity"
+    "issuer": "http://127.0.0.1:8101/api/v1/identity",
+    "passkeyorigins": "https://localhost"
   }
 }

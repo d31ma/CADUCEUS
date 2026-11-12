@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Added the passkey routes to `identity` (slice PK2, ADR 0008): the sign-in
+  challenge (`POST /passkeys/challenge`) and passkey sign-in
+  (`POST /session/passkey`), and the account routes to list, set up, add,
+  rename and remove passkeys (`/passkeys`). The challenge is sealed with
+  the session key for 2 minutes, and the `setupKey` for 10 minutes and the
+  caller's person id. `identity` relays every step to PK1's Keycloak
+  endpoints and stores no credential. When a label is taken, "Mac" becomes
+  "Mac 2". A rename to a taken label answers `409 label_exists`. Removing a
+  passkey needs the password and ends the person's other Keycloak sessions.
+  New setting `identity.passkeyorigins`: the allowed origins in one line,
+  separated by spaces. The relying party id is the host of its first
+  `https://` origin (`localhost` when only `http://localhost` is listed),
+  so it must match Keycloak's `MESAIL_PASSKEY_RP_ID`. With an `https://`
+  origin of another host, an `http://` origin that is not `localhost`, or
+  no such origin, every passkey route answers 503 and `GET /health`
+  answers `degraded`.
 - Fixed sign-in waiting behind the directory's background work (slice K3).
   The router now keeps two queues per single-writer function: user
   requests go before scheduled relay, requeue and job calls, and a

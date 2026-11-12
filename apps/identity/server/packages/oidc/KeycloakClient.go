@@ -24,6 +24,15 @@ func (keycloak KeycloakClient) SignIn(username string, password string, oneTimeC
 	return keycloak.grant(form)
 }
 
+func (keycloak KeycloakClient) PasskeySignIn(credentialJson string, challenge string, origins string) (TokenGrant, error) {
+	form := keycloak.form("password")
+	form.Set("passkey_assertion", credentialJson)
+	form.Set("passkey_challenge", challenge)
+	form.Set("passkey_origins", origins)
+	form.Set("scope", "openid")
+	return keycloak.grant(form)
+}
+
 func (keycloak KeycloakClient) Refresh(refreshToken string) (TokenGrant, error) {
 	form := keycloak.form(keycloak.refreshField())
 	form.Set(keycloak.refreshField(), refreshToken)

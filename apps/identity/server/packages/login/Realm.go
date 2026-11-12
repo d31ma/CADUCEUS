@@ -8,4 +8,6 @@ type Realm interface {
 	SignOut(refreshToken string) error
 	Seal(content oidc.SessionContent) (string, error)
 	Open(sessionKey string) (oidc.SessionContent, error)
+	PasskeyChallenge() (oidc.PasskeyChallenge, error)
+	PasskeySignIn(challengeKey string, credentialJson string) (oidc.KeycloakSession, error)
 }

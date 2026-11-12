@@ -48,3 +48,21 @@ func (handler *IdentityErrorHandler) NotFound(failure *NotFound) ApiError {
 func (handler *IdentityErrorHandler) InvalidRequest(failure *InvalidRequest) ApiError {
 	return ApiError{Code: "invalid_request", Message: failure.Error(), Field: "domainId"}
 }
+
+// @HandlesError
+// @ResponseStatus(400)
+func (handler *IdentityErrorHandler) BadPasskey(failure *BadPasskey) ApiError {
+	return ApiError{Code: failure.Code, Message: failure.Error()}
+}
+
+// @HandlesError
+// @ResponseStatus(409)
+func (handler *IdentityErrorHandler) Conflict(failure *Conflict) ApiError {
+	return ApiError{Code: failure.Code, Message: failure.Error()}
+}
+
+// @HandlesError
+// @ResponseStatus(400)
+func (handler *IdentityErrorHandler) InvalidLabel(failure *InvalidLabel) ApiError {
+	return ApiError{Code: failure.Code(), Message: failure.Error(), Field: "label"}
+}

@@ -44,3 +44,19 @@ func (test *IdentityErrorHandlerTest) TestInvalidRequestNamesTheDomainField() {
 	Assert.Equals("invalid_request", answer.Code)
 	Assert.Equals("domainId", answer.Field)
 }
+
+func (test *IdentityErrorHandlerTest) TestBadPasskeyKeepsItsCode() {
+	answer := (&IdentityErrorHandler{}).BadPasskey(&BadPasskey{Code: "setup_expired"})
+	Assert.Equals("setup_expired", answer.Code)
+}
+
+func (test *IdentityErrorHandlerTest) TestConflictKeepsItsCode() {
+	answer := (&IdentityErrorHandler{}).Conflict(&Conflict{Code: "label_exists"})
+	Assert.Equals("label_exists", answer.Code)
+}
+
+func (test *IdentityErrorHandlerTest) TestInvalidLabelNamesTheLabelField() {
+	answer := (&IdentityErrorHandler{}).InvalidLabel(&InvalidLabel{})
+	Assert.Equals("invalid_request", answer.Code)
+	Assert.Equals("label", answer.Field)
+}

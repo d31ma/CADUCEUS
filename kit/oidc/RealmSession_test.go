@@ -32,6 +32,9 @@ type mesailRealm struct {
 	deleted   []string
 	signOuts  int
 	user      map[string]any
+	passkeys  []PasskeyRecord
+	added     []PasskeyAddRequest
+	grants    []url.Values
 }
 
 func newMesailRealm(t *testing.T) *mesailRealm {
@@ -47,6 +50,7 @@ func newMesailRealm(t *testing.T) *mesailRealm {
 	admin.HandleFunc("DELETE /admin/realms/mesail/users/person-1/credentials/{id}", realm.deleteCredential)
 	admin.HandleFunc("GET /admin/realms/mesail/users/person-1", realm.readUser)
 	admin.HandleFunc("PUT /admin/realms/mesail/users/person-1", realm.writeUser)
+	realm.handlePasskeys(admin)
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /realms/mesail/protocol/openid-connect/certs", realm.certs)
 	mux.HandleFunc("POST /realms/mesail/protocol/openid-connect/token", realm.token)
@@ -68,7 +72,7 @@ func mesailUser() map[string]any {
 }
 
 func mesailDocument(keycloak string, admin string, key string, accountSecret string) string {
-	return fmt.Sprintf(`{"yon":{"oidc":{"issuer":"https://id.mesail.test/realms/mesail","jwks":"https://id.mesail.test/realms/mesail/protocol/openid-connect/certs","audience":"mesail-api","keycloak":%q,"admin":%q},"identity":{"client":{"secret":"identity-secret"},"account":{"secret":%q},"session":{"key":%q}}}}`, keycloak, admin, accountSecret, key)
+	return fmt.Sprintf(`{"yon":{"oidc":{"issuer":"https://id.mesail.test/realms/mesail","jwks":"https://id.mesail.test/realms/mesail/protocol/openid-connect/certs","audience":"mesail-api","keycloak":%q,"admin":%q},"identity":{"client":{"secret":"identity-secret"},"account":{"secret":%q},"session":{"key":%q},"passkeyorigins":"android:apk-key-hash:abc https://mail.mesail.test"}}}`, keycloak, admin, accountSecret, key)
 }
 
 func mesailSessionKey() string {
@@ -162,6 +166,8 @@ func (realm *mesailRealm) passwordGrant(writer http.ResponseWriter, form url.Val
 	realm.usernames = append(realm.usernames, form.Get("username"))
 	codeOk := realm.otpSecret == "" || (Totp{}).Matches(realm.otpSecret, form.Get("totp"), time.Now())
 	switch {
+	case form.Has("passkey_assertion"):
+		realm.passkeyGrant(writer, form)
 	case form.Get("password") == "locked":
 		realm.locked = true
 		realm.refused(writer)

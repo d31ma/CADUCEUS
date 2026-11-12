@@ -98,24 +98,32 @@ func (KeycloakAdmin) user(userId string) string {
 }
 
 func (admin KeycloakAdmin) send(method string, path string, body any, into any) error {
-	request, err := admin.request(method, path, body)
+	status, raw, err := admin.exchange(method, path, body)
 	if err != nil {
 		return err
 	}
-	response, err := admin.Client.Do(request)
-	if err != nil {
-		return KeycloakUnavailable{}
-	}
-	defer response.Body.Close()
-	raw, err := io.ReadAll(io.LimitReader(response.Body, HttpKeyFetcher{}.maximumBytes()))
-	if err != nil {
-		return KeycloakUnavailable{Status: response.StatusCode}
-	}
-	err = admin.answered(response.StatusCode, KeycloakClient{}.failure(raw))
+	err = admin.answered(status, KeycloakClient{}.failure(raw))
 	if err != nil {
 		return err
 	}
 	return admin.decoded(raw, into)
+}
+
+func (admin KeycloakAdmin) exchange(method string, path string, body any) (int, []byte, error) {
+	request, err := admin.request(method, path, body)
+	if err != nil {
+		return 0, nil, err
+	}
+	response, err := admin.Client.Do(request)
+	if err != nil {
+		return 0, nil, KeycloakUnavailable{}
+	}
+	defer response.Body.Close()
+	raw, err := io.ReadAll(io.LimitReader(response.Body, HttpKeyFetcher{}.maximumBytes()))
+	if err != nil {
+		return 0, nil, KeycloakUnavailable{Status: response.StatusCode}
+	}
+	return response.StatusCode, raw, nil
 }
 
 func (admin KeycloakAdmin) request(method string, path string, body any) (*http.Request, error) {

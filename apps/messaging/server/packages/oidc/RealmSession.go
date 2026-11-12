@@ -36,6 +36,44 @@ func (session RealmSession) Open(sessionKey string) (SessionContent, error) {
 	return content, SessionErrors{}.Normalized(err)
 }
 
+func (session RealmSession) PasskeyChallenge() (PasskeyChallenge, error) {
+	challenge, err := session.passkeyChallenge()
+	return challenge, SessionErrors{}.Normalized(err)
+}
+
+func (session RealmSession) PasskeySignIn(challengeKey string, credentialJson string) (KeycloakSession, error) {
+	opened, err := session.passkeySignIn(challengeKey, credentialJson)
+	return opened, SessionErrors{}.Normalized(err)
+}
+
+func (session RealmSession) passkeyChallenge() (PasskeyChallenge, error) {
+	ceremony, err := session.Sessions.ceremony(session.Now)
+	if err != nil {
+		return PasskeyChallenge{}, err
+	}
+	return ceremony.Challenge()
+}
+
+func (session RealmSession) passkeySignIn(challengeKey string, credentialJson string) (KeycloakSession, error) {
+	ceremony, err := session.Sessions.ceremony(session.Now)
+	if err != nil {
+		return KeycloakSession{}, err
+	}
+	challenge, err := ceremony.SignInChallenge(challengeKey)
+	if err != nil {
+		return KeycloakSession{}, err
+	}
+	err = ceremony.CheckedCredential(credentialJson)
+	if err != nil {
+		return KeycloakSession{}, err
+	}
+	tokens, err := session.Sessions.keycloak().PasskeySignIn(credentialJson, challenge, ceremony.Origins.Field())
+	if err != nil {
+		return KeycloakSession{}, session.Sessions.passkeyRefusal(credentialJson, err)
+	}
+	return session.opened(tokens)
+}
+
 func (session RealmSession) signIn(username string, password string, oneTimeCode string) (KeycloakSession, error) {
 	keycloak, err := session.keycloak()
 	if err != nil {

@@ -17,7 +17,7 @@ func (test *DomainListServiceTest) list() *DomainListService {
 
 func (test *DomainListServiceTest) TestOpenedListsEveryDomain() {
 	list := test.list()
-	list.Opened(AdminViewOpened{View: "domains", DomainId: "mesail-operators"})
+	list.Opened(AdminViewOpened{View: "domains", DomainId: "*"})
 	Assert.Equals("ready", list.Step)
 	Assert.Equals(3, len(list.Rows))
 	Assert.Equals("example.com", list.Rows[0].Name)

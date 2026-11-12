@@ -49,7 +49,6 @@ type fakeApiError struct {
 
 type fakeSignInRequest struct {
 	Login       string `json:"login"`
-	Address     string `json:"address"`
 	Password    string `json:"password"`
 	OneTimeCode string `json:"oneTimeCode"`
 }
@@ -93,7 +92,7 @@ func (fake *IdentityFake) ServeHTTP(writer http.ResponseWriter, request *http.Re
 func (fake *IdentityFake) signIn(writer http.ResponseWriter, request *http.Request) {
 	var signIn fakeSignInRequest
 	_ = json.NewDecoder(request.Body).Decode(&signIn)
-	login := signIn.Login + signIn.Address
+	login := signIn.Login
 	domain := fake.domainOfLogin(login)
 	switch {
 	case signIn.Password == rateLimitedPassword:

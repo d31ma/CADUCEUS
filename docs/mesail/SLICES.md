@@ -179,6 +179,17 @@ wave run at the same time.
     refuses any other text at start with a clear message (decided
     2026-11-11, from slice OP1; a TACHYON request asks for typed
     overrides).
+18. **Thin controllers and numbered errors** (the owner's rule of
+    2026-11-12, ADR 0009). A controller route method has exactly one
+    statement: it returns the result of one method of one Service
+    (`return c.messages.Post(request, body)`). Every backend app has
+    `server/services/`; finding the caller, checks, branches, loops and
+    wire mapping live in the Service or below it. Every error answer that
+    Mesail code shapes has `ApiError.message` =
+    `[MS<4 digits>]: <plain English message>`, with the number from the
+    app's block in `docs/mesail/ERRORS.md`, built by the app's
+    `@ErrorHandler` with `kit/apierrors`. New code follows this rule from
+    the day E0 merges; existing apps change in Wave 7.
 
 ## Gates
 
@@ -1754,6 +1765,72 @@ origins of ADR 0008 T14 (`https://<host>` for Apple and Windows,
 `android:apk-key-hash:<hash>` for Android). PK4 uses the grant `passkeys`
 and handles every `PasskeyFailed` reason. PK6 declares `"unlock":
 "userPresenceWhenAvailable"` and uses `StorageLock.require` (T15b).
+
+## Wave 7: thin controllers and numbered errors (ADR 0009)
+
+The owner's rule of 2026-11-12 (SLICES rule 18). Where the Services are
+today: `directory` (37 files), `notify` (40), `messaging` (10) and
+`mail-in` (1) have `server/services/`; `attachments`, `channels`,
+`identity`, `mail-out`, `realtime` and `search` have none, and their
+controllers call `server/packages/<domain>/` directly.
+
+Every E slice below:
+- **Owns:** its apps' `server/controllers/**`, `server/services/**`,
+  `server/errors/**` and `server/models/ApiError.go`, the app's tests,
+  and its rows in `docs/mesail/ERRORS.md`.
+- **Builds:** each route method as one `return` of one Service call; a
+  Service for every controller that has none (as TACHYON providers, the
+  pattern `directory` uses); the caller lookup, checks and wire mapping
+  moved into the Services; each error type carries its number; the error
+  handler formats `[MSnnnn]: <message>` with `kit/apierrors`, keeps every
+  `code` and `field` as CONTRACTS says, and answers the app's
+  "unexpected error" number for an error no other method takes; its rows
+  in ERRORS.md. No change in routes, statuses, `code` values or behavior.
+- **Done when:** the E0 gate check passes for the app; the app's tests
+  check the number on each error answer; the blackbox tests that touch
+  the app still pass where they passed before; gates pass.
+
+### E0. The shared parts (a small session)
+- **Owns:** `kit/apierrors/**` (new), `tools/controllers/**` (new), the
+  line in `scripts/gates.sh` that runs it (with C1's owner).
+- **Builds:** `kit/apierrors`: `Message(number int, text string) string`
+  (`[MS0510]: text`, four digits), a `Numbered` interface for error types
+  (`Number() int`), and a test helper that reads `docs/mesail/ERRORS.md`
+  and checks that a list of numbers is inside a block and listed once;
+  `tools/controllers`: a Go check that every exported method of a
+  `server/controllers/*Controller.go` type has one statement, a `return`
+  of a call on one of the controller's own fields; it runs in
+  `scripts/gates.sh` for each app, with a list of apps not converted yet
+  that Wave 7 empties.
+- **Done when:** both have tests; gates pass with every app on the list.
+
+### E1. `attachments` and `search`
+### E2. `mail-in` and `mail-out`
+### E3. `channels` (not at the same time as K7, which adds a test there)
+### E4. `realtime` (after K5)
+### E5. `notify` (after K5)
+### E6. `identity` (after PK2 and K1; before O2 if O2 has not started)
+### E7. `directory` (after PK3 and K8; not at the same time as K6)
+### E8. `messaging` (after K5, K8 and K9; K4's test stays)
+### E9. The router's answers (`deploy/router`; after K8, not at the same time as OP2)
+- **Builds:** the router's own answers (`429`, `502`, `503`, `504`) as
+  `ApiError` with numbers from MS5500-MS5999.
+
+### Requests to TACHYON (ADR 0009)
+- **Y1:** let `@ErrorHandler` shape the answers TACHYON makes itself (no
+  identity, missing role, identity provider failure, `@Check` rejection,
+  malformed or too large body, an error no other method takes), keeping
+  TACHYON's status codes. When it is released and the pin moves, each
+  app's handler adds these numbers.
+- **Y2 (not blocking):** pass the identity that `@IdentityProvider`
+  returned into a route method parameter. When it lands, a small
+  follow-up replaces the `request` argument of every route with it.
+
+### Order
+E0 first. Then at once: E1, E2, E3. Then each other E slice when the
+slices it names are merged. K10 (store error logging) changes the same
+error handlers: whichever of K10 and an app's E slice merges second
+rebases onto the first.
 
 ## Later (after the first release)
 

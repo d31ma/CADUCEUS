@@ -53,6 +53,14 @@ field may be empty or left out.
   `409 conflict` / `recipients_changed` / `duplicate` / `edit_conflict` /
   `message_deleted` / `last_admin`, `413 too_large`,
   `422 chat_not_allowed`, `429 rate_limited`, `503 unavailable`.
+- **Numbered messages** (ADR 0009, from Wave 7): `ApiError.message` is
+  `[MS<4 digits>]: <plain English message>`, for example
+  `[MS0510]: This passkey name is already used.` The number names one
+  failure case in one app (`docs/mesail/ERRORS.md`); `code` and `field`
+  do not change, and programs read `code`, never the message. Until
+  TACHYON request Y1, the answers TACHYON makes itself (`401` without
+  identity, `403` without a role, `422` `@Check` rejections, a malformed
+  body, an error no handler takes) carry no number.
 - **One exception, from TACHYON 26.46.02:** a request with a missing or
   forged token is answered `401` by TACHYON itself, with the plain text
   "Sign in to call this route.", before any Mesail code runs. So clients

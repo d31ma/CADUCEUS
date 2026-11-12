@@ -506,6 +506,11 @@ mail. Members of a `pending` domain may still sign in and set it up.
 
 ## channels
 
+Retired at Wave 9's cut-over (G8, ADR 0011): chat moves to devices. Until
+then this section applies in full. The chat parts of "messaging",
+"realtime", "notify" and "search" are retired at the same time; email's
+stay.
+
 Channels belong to one domain. There is no workspace.
 
 | Route | Rule | Request | Response |

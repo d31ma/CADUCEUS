@@ -8,6 +8,10 @@
   person: one Keycloak realm, membership as `directory` data, Mesail's own
   access token naming the active domain). Read sections 2 and 7 with it.
 - Spec: [docs/mesail/SPEC.md](../mesail/SPEC.md). UX: `docs/mesail/ux/`.
+- Superseded for chat, at Wave 9's cut-over (G8), by [ADR
+  0011](0011-chat-goes-device-to-device.md): chat content is no longer
+  stored in the `messaging` and `channels` FYLO roots. Email and every
+  other part stay.
 
 ## Context
 

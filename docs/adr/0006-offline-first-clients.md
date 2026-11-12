@@ -10,6 +10,10 @@
   [SLICES.md](../mesail/SLICES.md) "Wave 4: offline first".
 - Amended: 2026-11-11, by TACHYON's approved plan for T1 to T12 (section
   9). Where section 9 and an earlier section differ, section 9 wins.
+- Superseded for chat, at Wave 9's cut-over (G8), by [ADR
+  0011](0011-chat-goes-device-to-device.md): chat lives only on devices,
+  so the server's change log is no longer chat's source of truth. Email
+  keeps this ADR. Until G8 this ADR applies in full.
 
 ## Context
 

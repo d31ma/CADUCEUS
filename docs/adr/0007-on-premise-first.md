@@ -10,6 +10,10 @@
   rest of ADR 0004, and ADRs 0005 and 0006, stay.
 - Spec: [SPEC.md](../mesail/SPEC.md) AC-OP-4 to AC-OP-8. Slices:
   [SLICES.md](../mesail/SLICES.md) "Wave 5: on-premise".
+- Amended 2026-11-12 by [ADR 0011](0011-chat-goes-device-to-device.md):
+  an install also runs a TURN relay for device-to-device chat, with
+  public ports (UDP and TCP 3478, TLS 5349, a UDP relay range) besides
+  HTTPS and SMTP (slice G3).
 
 ## Context
 

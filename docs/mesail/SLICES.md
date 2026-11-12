@@ -1984,6 +1984,78 @@ rerun with fresh tokens passed. The shared native Keycloak in
 - **Done when:** a native run of the whole blackbox suite passes with no
   expired-token failures; gates pass.
 
+## Wave 9: chat goes device to device (ADR 0011)
+
+The owner's choice of 2026-11-12: full peer-to-peer chat inside a domain,
+for privacy; an encrypted backup; the admin limits accepted. Email does
+not change. The TACHYON requests are named P1 (peer connections), P2
+(encryption) and P3 (passkey unlock) in ADR 0011; they are not slice P1.
+The server chat path keeps working until G8's cut-over, so K5, K9, E3 and
+E8 finish as planned. Three owner questions are open (ADR 0011 section 8:
+Q5 mailbox, Q6 group size and big channels, Q7 first release); slices
+that depend on them say so.
+
+### G0. Design details and blackbox tests (architecture, `mesail-arch`)
+- **Owns:** `docs/**`, `tests/blackbox/**`.
+- **Builds:** the MLS library choice (a short spike: a Go MLS library that
+  compiles to WebAssembly, or a TACHYON request); the encrypted message
+  and group formats; the device and key list contract (`directory`); the
+  signalling messages (`realtime`); the backup contract; the TURN settings
+  for OPERATIONS.md; whether new members may receive older messages; the
+  CONTRACTS, EVENTS, DOMAIN and SPEC changes, marked "from G8"; blackbox
+  tests for the server parts.
+- **Depends on:** nothing; starts now.
+
+### G1. Devices and public keys in `directory` (directory's owner, after E7)
+- **Builds:** each person's devices per domain with their public keys
+  (add after a full sign-in, list, remove; removing a member removes their
+  devices from the domain), as G0's contract says.
+
+### G2. Signalling on `realtime` (realtime's owner, after E4)
+- **Builds:** signalling messages (offer, answer, ICE candidates) carried
+  between the devices of members of one domain over `realtime`'s socket;
+  `realtime` checks the sender and receiver are members, and never sees
+  content.
+
+### G3. The TURN relay on-premise (OP2's successor)
+- **Builds:** a TURN relay in the install (for example coturn, pinned by
+  digest), with short-lived credentials that `identity` or `realtime`
+  hands to signed-in devices; its public ports (UDP and TCP 3478, TLS
+  5349, a UDP relay range) in the deploy files and in OPERATIONS.md; the
+  ADR 0007 amendment in OP3's outbound-blocked gate.
+
+### G4. Encrypted backups (attachments' owner, after E1)
+- **Builds:** a store for each person's encrypted backup blobs (upload,
+  download, replace, delete; size limits), unreadable by the server.
+
+### G5. Content-free chat pushes (notify's owner, after E5)
+- **Builds:** a route a device calls to push "New message" (no text, no
+  sender name unless G0 decides it is safe) to the devices of the
+  members it names, checked against the domain's membership.
+
+### G6. Encrypted mailbox (only if the owner answers yes to Q5)
+- **Builds:** a store-and-forward box that keeps encrypted messages for a
+  device until it fetches them, with a time limit.
+
+### G7. The chat client (the web apps' owner; after TACHYON P1 and P2)
+- **Builds:** device keys (P2), MLS groups, WebRTC transport (P1) through
+  G2 and G3, the device store's chat tables, sync between the person's
+  own devices, the backup and restore with the recovery code (G4), device
+  chat search (with O5), in the chat page app (Wave 8's W2 if it exists,
+  else `apps/web`). G0 splits it into smaller slices.
+
+### G8. Cut-over (one session, last)
+- **Builds:** the web apps use only device chat; `messaging` keeps email
+  only; the `channels` app, chat in `search`, and the chat fan-out in
+  `realtime` and `notify` are retired; CONTRACTS, EVENTS, DOMAIN and SPEC
+  take G0's "from G8" text; dev host chat test data is dropped (no
+  release yet, so no user data moves).
+
+### Order
+G0 now. G1 to G5 (and G6 if wanted) when their app's E slice is merged.
+G7 after TACHYON P1 and P2 are released and the pin moves. G8 last.
+Q7 decides where the first release falls.
+
 ## Later (after the first release)
 
 - **X1** SMTP submission for third-party mail clients (app passwords or

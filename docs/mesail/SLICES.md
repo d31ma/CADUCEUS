@@ -166,6 +166,15 @@ wave run at the same time.
       "Conventions").
     `scripts/gates.sh` bundles every app and starts every server app, so
     most of these fail the gate rather than production.
+17. **Operator settings accept text.** TACHYON 26.46.02 passes an
+    environment override to a Yon setting as a JSON string (`"true"`,
+    `"60"`), whatever the setting's type. So every setting that
+    `docs/mesail/OPERATIONS.md` lists, or that an operator may set from an
+    env file, is read by a settings reader that accepts both the JSON
+    value and its text form (`true` and `"true"`, `60` and `"60"`), and
+    refuses any other text at start with a clear message (decided
+    2026-11-11, from slice OP1; a TACHYON request asks for typed
+    overrides).
 
 ## Gates
 
@@ -1006,6 +1015,16 @@ except for the items below.
   row through `GET /notify/push-key` answering `503`; `github.com/coder/
   websocket` vendored, so every Go build runs with `GOPROXY=off`.
 - **Depends on:** nothing. May run during Wave 3 and 4.
+- **Also (decided 2026-11-11, after L5 merges):** rule 17 for `mail-out`:
+  `mailout.directenabled` and `mailout.relayrequiretls` accept `"true"`
+  and `"false"` from the environment (this change only, with the mail-out
+  owner's agreement); and keep the Floci run green after the S3 adapter
+  stops falling back to AWS: put `attachments` on the local adapter in the
+  Floci stack, on L5's shared EFS access point `blobs` (ADR 0007 section
+  7), and give the router the same folder for `/blobs`
+  (`MESAIL_ROUTER_BLOBS_FOLDER`, `_BASE`, `_SECRET`, matching the
+  attachments settings). OP2 then only hardens that layout for
+  production.
 - **Done when:** a grep of the tree finds no public host or AWS host as a
   default in code or settings (`cloudflare-dns`, `amazonaws.com`,
   `8.8.8.8`, `1.1.1.1`, `dns.google`), and gates pass for the touched

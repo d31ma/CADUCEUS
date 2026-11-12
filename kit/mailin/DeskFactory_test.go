@@ -2,16 +2,26 @@ package mailin
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
 	"mesail.dev/packages/outbox"
 )
 
+func folderSettings(folder string) func(string) string {
+	blobs := `"mailin":{"blobs":{"adapter":"local","folder":"` + folder + `","link":{"secret":"fixture-link-value"}}}`
+	application := `{"yon":{` + blobs + `,"outbox":{"producer":"mail-in","subscribers":[{"name":"messaging","url":"http://127.0.0.1:9/events"}],"retry":{"maxAttempts":2}}}}`
+	return testEnvironment(map[string]string{"YON_APPLICATION_JSON": application})
+}
+
 func TestTheFactoryWiresTheGivenPusher(t *testing.T) {
 	pusher := outbox.NewRecordingPusher()
 	memory := newMemory()
-	inbox := DeskFactory{Environment: goodSettings(), Pusher: pusher}.Inbox(memory, memory.Page)
+	factory := DeskFactory{Environment: folderSettings(t.TempDir()), Pusher: pusher}
+	raw := textMessage()
+	check(t, factory.blobs().Write(BlobKeys{}.FromPath("example.com/inbound-1"), strings.NewReader(raw), int64(len(raw))) == nil, "raw not written")
+	inbox := factory.Inbox(memory, memory.Page)
 	inboundId, err := inbox.Accept(testEnvelope("example.com", "example.com/inbound-1"))
 	check(t, err == nil && inboundId == "in_D1", "accept failed")
 	check(t, len(pusher.PushedTo("messaging")) == 1, "want one push")

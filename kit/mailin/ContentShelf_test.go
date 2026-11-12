@@ -3,11 +3,16 @@ package mailin
 import (
 	"strings"
 	"testing"
+
+	"mesail.dev/packages/outbox"
 )
 
 func storedMessage(t *testing.T, memory *memoryDocuments, store *memoryBlobs, raw string) InboundRaw {
-	inboundId := acceptedMessage(t, memory, store, "example.com/inbound-1", raw)
-	stored, err := InboundBook{Storage: memory.storage()}.Find("example.com", inboundId)
+	store.objects["example.com/inbound-1"] = []byte(raw)
+	inbox := testInbox(memory, outbox.NewRecordingPusher(), goodSettings())
+	collection, err := inbox.Collection("example.com")
+	check(t, err == nil, "collection missing")
+	stored, err := inbox.findOrInsert(collection, "example.com", testEnvelope("example.com", "example.com/inbound-1"))
 	check(t, err == nil, "message missing")
 	return stored
 }

@@ -1,6 +1,10 @@
 package mailin
 
-import "testing"
+import (
+	"testing"
+
+	"mesail.dev/packages/events"
+)
 
 func TestThePayloadUsesAddressStringsAndEmptyLists(t *testing.T) {
 	envelope := Envelope{
@@ -8,7 +12,7 @@ func TestThePayloadUsesAddressStringsAndEmptyLists(t *testing.T) {
 		AuthResults: AuthResults{Spf: "none", Dkim: "none", Dmarc: "none", Handoff: true},
 	}
 	stored := InboundRaw{ID: "t1", Recipients: []string{"ana@example.com"}, RawBlobKey: "outside.test/x"}
-	payload := Payloads{}.EmailReceived(stored, envelope)
+	payload := Payloads{}.EmailReceived(stored, envelope, events.EmailContent{Text: "Hi"})
 	check(t, payload.InboundId == "in_t1", "wrong inbound id")
 	check(t, payload.Rcpts[0] == "ana@example.com", "wrong recipients")
 	check(t, payload.Headers.From == "dan@outside.test", "wrong from")
@@ -17,4 +21,5 @@ func TestThePayloadUsesAddressStringsAndEmptyLists(t *testing.T) {
 	check(t, payload.Headers.References != nil, "references must be a list")
 	check(t, payload.RawBlobKey == "outside.test/x", "wrong key")
 	check(t, payload.AuthResults.Handoff, "handoff lost")
+	check(t, payload.Content.Text == "Hi", "content lost")
 }

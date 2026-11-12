@@ -14,12 +14,16 @@ type EventStager struct {
 	Random   io.Reader
 }
 
-func (stager EventStager) Stage(stored InboundRaw, envelope Envelope) (EventPatch, error) {
+func (stager EventStager) Stage(stored InboundRaw, envelope Envelope, content InboundContent) (EventPatch, error) {
 	settings, err := stager.Settings.Outbox()
 	if err != nil {
 		return EventPatch{}, err
 	}
-	payload := Payloads{}.EmailReceived(stored, envelope)
+	converted, err := EventContent{}.From(content)
+	if err != nil {
+		return EventPatch{}, err
+	}
+	payload := Payloads{}.EmailReceived(stored, envelope, converted)
 	staged, err := events.NewEnvelopeFactory(stager.Producer(), stager.Now, stager.Random).New(events.Types{}.EmailReceived(), stored.DomainId, payload)
 	if err != nil {
 		return EventPatch{}, err

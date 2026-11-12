@@ -75,6 +75,15 @@ func (world *InboundTestSetup) FreshKey() string {
 	return world.Domain + "/inbound-" + world.RandomText()
 }
 
+func (world *InboundTestSetup) StoredKey() string {
+	if world.server == nil {
+		world.UseServices()
+	}
+	key := world.FreshKey()
+	world.WriteBlob(key, world.TextMessage())
+	return key
+}
+
 func (world *InboundTestSetup) Envelope(key string) InboundEnvelope {
 	return InboundEnvelope{
 		EnvelopeFrom: "dan@outside.test",

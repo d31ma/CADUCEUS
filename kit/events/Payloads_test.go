@@ -85,6 +85,18 @@ func TestEmailReceivedKeys(t *testing.T) {
 	expectKeys(t, EmailReceived{}, "authResults,headers,inboundId,rawBlobKey,rcpts")
 }
 
+func TestEmailReceivedWithContentKeys(t *testing.T) {
+	expectKeys(t, EmailReceived{Content: &EmailContent{}}, "authResults,content,headers,inboundId,rawBlobKey,rcpts")
+}
+
+func TestEmailContentKeys(t *testing.T) {
+	expectKeys(t, EmailContent{Blocks: []byte("[]")}, "attachments,blocks,bodyFormat,text,truncated")
+}
+
+func TestEmailAttachmentKeys(t *testing.T) {
+	expectKeys(t, EmailAttachment{ContentId: "logo"}, "blobKey,contentId,fileName,mediaType,size")
+}
+
 func TestEmailHeadersKeys(t *testing.T) {
 	expectKeys(t, EmailHeaders{}, "cc,from,inReplyTo,messageId,references,subject,to")
 }

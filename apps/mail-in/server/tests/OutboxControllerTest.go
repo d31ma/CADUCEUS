@@ -12,7 +12,7 @@ func (test *OutboxControllerTest) TestARefusedEventBecomesADeadLetterThatTheRela
 	world := InboundTestSetup{}.World()
 	defer world.Cleanup()
 	world.Pusher.FailFor("messaging", outbox.DeliveryFailure{Subscriber: "messaging", Status: 400, Permanent: true, Detail: "bad"})
-	key := world.FreshKey()
+	key := world.StoredKey()
 	_, err := world.Inbound.PostMessage(world.Envelope(key))
 	world.Must(err)
 	stored := world.Stored(key)
@@ -40,7 +40,7 @@ func (test *OutboxControllerTest) TestRetryOfAnUnknownCollectionIsNotFound() {
 func (test *OutboxControllerTest) TestRetryOfAnUnknownLetterIsNotFound() {
 	world := InboundTestSetup{}.World()
 	defer world.Cleanup()
-	key := world.FreshKey()
+	key := world.StoredKey()
 	_, err := world.Inbound.PostMessage(world.Envelope(key))
 	world.Must(err)
 	missing := world.Outbox.PostRetry(RetryRequest{Collection: world.Collection(), DocumentId: world.Stored(key).ID, EventId: "evt_missing", Subscriber: "messaging"})

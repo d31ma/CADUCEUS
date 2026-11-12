@@ -12,6 +12,7 @@ type Inbox struct {
 	Stager   EventStager
 	Outbox   OutboxDesk
 	HandOff  HandOff
+	Contents ContentShelf
 	Now      func() time.Time
 }
 
@@ -71,7 +72,11 @@ func (inbox Inbox) queueEvent(collection string, stored InboundRaw, envelope Env
 	if stored.EventQueued {
 		return nil
 	}
-	patch, err := inbox.Stager.Stage(stored, envelope)
+	content, err := inbox.Contents.ForMessage(stored)
+	if err != nil {
+		return err
+	}
+	patch, err := inbox.Stager.Stage(stored, envelope, content)
 	if err != nil {
 		return err
 	}

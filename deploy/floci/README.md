@@ -340,6 +340,13 @@ Limits at the router:
   pushes `email.queued` back to `messaging/events`, and that push would wait
   for the slot the send still holds. Floci's own throttle (429
   `TooManyRequestsException`) is also answered as 429 `function-busy`.
+- **An event handler never calls back into its producer:** the router
+  cannot break that cycle. A producer holds its own slot while it pushes,
+  so a handler that calls the producer waits until the push times out
+  (10 s), and every call queued behind the handler waits too (in AWS the
+  call is throttled and the event never lands). So `email.received`
+  carries the email's content, and `messaging` does not call
+  `mail-in` for it (EVENTS.md section 4, item 4).
 
 Static replies carry `Content-Security-Policy`, `X-Content-Type-Options`,
 `X-Frame-Options` and `Referrer-Policy`.

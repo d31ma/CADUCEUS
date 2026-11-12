@@ -197,6 +197,14 @@ outbound delivery queue, retries, email summaries, cleanup):
    pending; it never waits, because drain on write can call back into the
    service that is pushing (messaging -> mail-out -> messaging). The Floci
    router does the same (`deploy/floci/README.md`, router limits).
+4. **A handler never calls back into the producer of its event.** The
+   producer holds its one writer slot while it pushes (drain on write and
+   the relay alike), so a synchronous call from the handler back to the
+   producer waits for that slot: with the Floci router until the push times
+   out, in AWS a throttle that fails every retry. An event therefore
+   carries what its consumer needs from the producer: `email.received`
+   carries the email's content (section 7), and `messaging` asks `mail-in`
+   for it only for an older event that has none.
 
 **Service tokens** (`kit/oidc`, documented in
 `docs/mesail/SERVICE-TOKENS.md`; changed by ADR 0005 on 2026-11-11):
@@ -258,7 +266,8 @@ The Go types are in `kit/events`, one file per type. All ids are wire id strings
 - `read-position.moved` -> ReadPositionMoved: `conversationId`, `memberId`, `messageId` (last read), `readAt`.
 - `email.send.requested` -> EmailSendRequested (CONTRACTS.md): `messageId`, `from`, `rcpt`, `role` (to|cc|bcc: this rcpt's role), `to[]`, `cc[]` (the visible header lists; never Bcc), `subject`, `inReplyTo`, `references[]`, `attachmentIds[]`, `idempotencyKey`. No body: mail-out reads it from `GET /api/v1/<producer>/messages/{id}/source` (Service). Producers: `messaging`, and `notify` for the email summary (`Catalog.ProducersOf`).
 - `email.delivery.changed` -> EmailDeliveryChanged (CONTRACTS.md): `messageId`, `rcpt`, `status` (queued|sent|deferred|bounced|failed), `detail` (no content).
-- `email.received` -> EmailReceived (CONTRACTS.md): `inboundId`, `rcpts[]` (only this domain's), `rawBlobKey`, `headers` (EmailHeaders), `authResults` (AuthResults: `spf`, `dkim`, `dmarc`, and `handoff`, true when another hosted domain on this install handed the message over; then the DNS results are empty, not fake passes).
+- `email.received` -> EmailReceived (CONTRACTS.md): `inboundId`, `rcpts[]` (only this domain's), `rawBlobKey`, `headers` (EmailHeaders), `authResults` (AuthResults: `spf`, `dkim`, `dmarc`, and `handoff`, true when another hosted domain on this install handed the message over; then the DNS results are empty, not fake passes), `content` (EmailContent; missing only in events staged before 2026-11-12).
+  - EmailContent: `text`, `bodyFormat`, `blocks[]` (richtext blocks, as in InboundContent), `truncated`, `attachments[]` (EmailAttachment: `fileName`, `mediaType`, `size`, `blobKey`, `contentId?`). The same values as `GET /api/v1/mail-in/messages/{inboundId}/content`; bounded by `kit/richtext` (200,000 characters, 2,000 blocks).
   - EmailHeaders: `messageId`, `inReplyTo`, `references[]`, `subject`, `from`, `to[]`, `cc[]`.
   - AuthResults: `spf`, `dkim`, `dmarc`, `handoff`.
 - `presence.changed` -> PresenceChanged: `memberId`, `state` (active|idle|dnd|offline), `doNotDisturbUntil` ("" when none), `lastSeenAt`.

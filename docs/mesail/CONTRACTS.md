@@ -830,8 +830,12 @@ owns it; M3 uses it):
   (`Allow(Service)`, a token for the recipient's domain) with
   `InboundContent{text, bodyFormat, blocks[], truncated, attachments[]:
   InboundAttachment{fileName, mediaType, size, blobKey, contentId?}}`.
-  `messaging` reads it when it handles `email.received`, and stores the
-  blocks on the Message. For an inline image of an email, `ImageRef.attachmentId`
+  `mail-in` builds and keeps it when it accepts the message, and sends the
+  same content in `email.received` (`content`), so `messaging` stores the
+  blocks on the Message without calling `mail-in` back (EVENTS.md section
+  4, item 4). `messaging` reads this route only for an older event that has
+  no `content`. An accept whose raw message cannot be read answers
+  `503 unavailable` and stages no event. For an inline image of an email, `ImageRef.attachmentId`
   is the `kit/blobs` key of the stored part (`<domainId>/attachment-<sha256 hex>`),
   the same value as that part's `InboundAttachment.blobKey`. A message that
   `kit/mime` cannot parse (malformed, or over its 25 MiB limit) answers empty
@@ -892,7 +896,8 @@ owns it; M3 uses it):
 - After the message is stored, `mail-in` publishes one `email.received`
   event per recipient domain: envelope `domainId` is that domain, payload
   `events.EmailReceived{inboundId, rcpts[] (only that domain's), rawBlobKey,
-  headers: EmailHeaders, authResults: {spf, dkim, dmarc, handoff}}`
+  headers: EmailHeaders, authResults: {spf, dkim, dmarc, handoff},
+  content: EmailContent}`
   (EVENTS.md section 7); `from`, `to[]` and `cc[]` are address strings, and
   empty lists are `[]`. A retried accept of the same message stages no
   second event (`eventQueued`).

@@ -169,7 +169,9 @@ func testDesk(memory *memoryDocuments, pusher outbox.Pusher, environment func(st
 func testInbox(memory *memoryDocuments, pusher outbox.Pusher, environment func(string) string) Inbox {
 	settings := SettingsReader{Environment: environment}
 	stager := EventStager{Settings: settings, Now: fixedNow, Random: zeroReader{}}
-	return Inbox{Storage: memory.storage(), Registry: memory.registry(), Stager: stager, Outbox: testDesk(memory, pusher, environment), Now: fixedNow}
+	store := newBlobs()
+	store.fallback = []byte(textMessage())
+	return Inbox{Storage: memory.storage(), Registry: memory.registry(), Stager: stager, Outbox: testDesk(memory, pusher, environment), Contents: testShelf(memory, store), Now: fixedNow}
 }
 
 type zeroReader struct{}
@@ -221,9 +223,10 @@ func invalidField(err error) string {
 }
 
 type memoryBlobs struct {
-	objects map[string][]byte
-	failOn  string
-	signed  []blobs.DownloadTerms
+	objects  map[string][]byte
+	fallback []byte
+	failOn   string
+	signed   []blobs.DownloadTerms
 }
 
 func newBlobs() *memoryBlobs {
@@ -248,8 +251,11 @@ func (memory *memoryBlobs) SignDownload(key blobs.Key, download blobs.DownloadTe
 
 func (memory *memoryBlobs) Read(key blobs.Key) (io.ReadCloser, error) {
 	content, found := memory.objects[key.Path()]
-	if !found {
+	if !found && memory.fallback == nil {
 		return nil, blobs.NotFound{Path: key.Path()}
+	}
+	if !found {
+		content = memory.fallback
 	}
 	return io.NopCloser(bytes.NewReader(content)), memory.failure("read")
 }
@@ -314,6 +320,7 @@ func activeDomains(names ...string) *fakeDomains {
 func handOffInbox(memory *memoryDocuments, store *memoryBlobs, domains Domains) Inbox {
 	inbox := testInbox(memory, outbox.NewRecordingPusher(), goodSettings())
 	inbox.HandOff = HandOff{Domains: domains, Blobs: store}
+	inbox.Contents = testShelf(memory, store)
 	return inbox
 }
 
@@ -327,13 +334,14 @@ func handOffEnvelope(senderKey string) Envelope {
 
 func testMessageDesk(memory *memoryDocuments, store *memoryBlobs, domainId string) MessageDesk {
 	storage := memory.storage()
-	contents := ContentShelf{Storage: storage, Builder: ContentBuilder{Blobs: store}}
-	return MessageDesk{Callers: fakeCallers{domainId: domainId}, Book: InboundBook{Storage: storage}, Contents: contents, Blobs: store, LinkLife: 5 * time.Minute, Now: fixedNow}
+	return MessageDesk{Callers: fakeCallers{domainId: domainId}, Book: InboundBook{Storage: storage}, Contents: testShelf(memory, store), Blobs: store, LinkLife: 5 * time.Minute, Now: fixedNow}
 }
 
 func acceptedMessage(t *testing.T, memory *memoryDocuments, store *memoryBlobs, key string, raw string) string {
 	store.objects[key] = []byte(raw)
-	inboundId, err := testInbox(memory, outbox.NewRecordingPusher(), goodSettings()).Accept(testEnvelope("example.com", key))
+	inbox := testInbox(memory, outbox.NewRecordingPusher(), goodSettings())
+	inbox.Contents = testShelf(memory, store)
+	inboundId, err := inbox.Accept(testEnvelope("example.com", key))
 	check(t, err == nil, "accept failed")
 	return inboundId
 }

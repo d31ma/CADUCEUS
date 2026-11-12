@@ -58,6 +58,35 @@ func TestANewEmailToAMemberStartsAnEmailConversation(t *testing.T) {
 	}
 }
 
+func TestAnEmailWithItsContentNeedsNoCallToMailIn(t *testing.T) {
+	scene := NewScene(t)
+	scene.world.Inbound.Failure = errors.New("mail-in is busy pushing this event")
+	mail := Email("in30", "dan@outside.test", []string{"ana@example.com"})
+	blocks := `[{"kind":"paragraph","level":0,"ordered":false,"spans":[{"text":"Hi from the event"}],"cells":[]}]`
+	attachments := []events.EmailAttachment{{FileName: "a.pdf", MediaType: "application/pdf", Size: 3, BlobKey: "example.com/a"}}
+	mail.Content = &events.EmailContent{Text: "Hi from the event", BodyFormat: "email", Blocks: []byte(blocks), Truncated: true, Attachments: attachments}
+	scene.Must(received(), "example.com", mail)
+	message := scene.Messages()[0]
+	if message.Body != "Hi from the event" || message.BodyFormat != "email" || !message.Truncated || message.BlocksJson == "[]" {
+		t.Fatalf("content: %+v", message)
+	}
+}
+
+func TestReceivedContentKeepsTheAttachments(t *testing.T) {
+	attachments := []events.EmailAttachment{{FileName: "a.pdf", MediaType: "application/pdf", Size: 3, BlobKey: "example.com/a", ContentId: "a"}}
+	content, err := ReceivedContent{}.From(events.EmailContent{Text: "Hi", Blocks: []byte("[]"), Attachments: attachments})
+	if err != nil || content.Text != "Hi" || len(content.Blocks) != 0 || content.Attachments[0].BlobKey != "example.com/a" || content.Attachments[0].ContentId != "a" {
+		t.Fatalf("got %+v, %v", content, err)
+	}
+}
+
+func TestReceivedContentRefusesBlocksThatAreNotAList(t *testing.T) {
+	_, err := ReceivedContent{}.From(events.EmailContent{Blocks: []byte(`{"kind":"paragraph"}`)})
+	if err == nil {
+		t.Fatalf("want an error")
+	}
+}
+
 func TestAnEmailToTwoMembersIsOneSharedConversation(t *testing.T) {
 	scene := NewScene(t)
 	scene.Must(received(), "example.com", Email("in2", "dan@outside.test", []string{"ana@example.com", "bo@example.com"}))

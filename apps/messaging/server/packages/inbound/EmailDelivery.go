@@ -16,7 +16,7 @@ func (delivery EmailDelivery) Deliver(email ReceivedEmail) error {
 	if err != nil {
 		return err
 	}
-	content, err := delivery.ports.Inbound.Content(email.DomainId, email.Mail.InboundId)
+	content, err := delivery.content(email)
 	if err != nil {
 		return Unavailability{}.Of(err)
 	}
@@ -33,6 +33,13 @@ func (delivery EmailDelivery) Deliver(email ReceivedEmail) error {
 		return Unavailability{}.Of(err)
 	}
 	return NewMessageFinisher(delivery.stores, delivery.ports).Finish(placement, message)
+}
+
+func (delivery EmailDelivery) content(email ReceivedEmail) (core.InboundContent, error) {
+	if email.Mail.Content == nil {
+		return delivery.ports.Inbound.Content(email.DomainId, email.Mail.InboundId)
+	}
+	return ReceivedContent{}.From(*email.Mail.Content)
 }
 
 func (delivery EmailDelivery) place(email ReceivedEmail, key core.ThreadKey, matched bool) (Placement, error) {

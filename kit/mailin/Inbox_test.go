@@ -45,6 +45,39 @@ func TestAcceptPushesOneEmailReceivedEventAtOnce(t *testing.T) {
 	check(t, storedRecord(t, inbox, "example.com/inbound-1").OutboxPending == 0, "the event is still pending")
 }
 
+func TestAcceptPushesTheContentSoMessagingNeedsNoCallBack(t *testing.T) {
+	memory := newMemory()
+	store := newBlobs()
+	store.objects["example.com/inbound-1"] = []byte(textMessage())
+	pusher := outbox.NewRecordingPusher()
+	inbox := testInbox(memory, pusher, goodSettings())
+	inbox.Contents = testShelf(memory, store)
+	inbox.Accept(testEnvelope("example.com", "example.com/inbound-1"))
+	payload := events.EmailReceived{}
+	check(t, events.PayloadReader{}.Read(pusher.PushedTo("messaging")[0], &payload) == nil, "payload unreadable")
+	check(t, payload.Content != nil && payload.Content.Text == "Lunch at noon?", "want the content in the event")
+	check(t, payload.Content.BodyFormat == "text" && len(payload.Content.Attachments) == 0, "wrong content")
+}
+
+func TestAcceptKeepsTheContentForALaterGet(t *testing.T) {
+	memory := newMemory()
+	store := newBlobs()
+	inboundId := acceptedMessage(t, memory, store, "example.com/inbound-1", textMessage())
+	delete(store.objects, "example.com/inbound-1")
+	content, err := testMessageDesk(memory, store, "example.com").Content("Bearer ok", inboundId)
+	check(t, err == nil && content.Text == "Lunch at noon?", "want the kept content")
+}
+
+func TestAcceptFailsWhenTheRawMessageCannotBeRead(t *testing.T) {
+	memory := newMemory()
+	pusher := outbox.NewRecordingPusher()
+	inbox := testInbox(memory, pusher, goodSettings())
+	inbox.Contents = testShelf(memory, newBlobs())
+	_, err := inbox.Accept(testEnvelope("example.com", "example.com/inbound-1"))
+	check(t, isUnavailable(err, "raw message"), "want raw message")
+	check(t, len(pusher.Attempted()) == 0, "no event may leave without its content")
+}
+
 func TestARetriedAcceptStagesNoSecondEvent(t *testing.T) {
 	pusher := outbox.NewRecordingPusher()
 	pusher.FailFor("messaging", outbox.DeliveryFailure{Subscriber: "messaging", Status: 503, Detail: "down"})

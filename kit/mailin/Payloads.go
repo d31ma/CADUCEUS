@@ -4,13 +4,14 @@ import "mesail.dev/packages/events"
 
 type Payloads struct{}
 
-func (payloads Payloads) EmailReceived(stored InboundRaw, envelope Envelope) events.EmailReceived {
+func (payloads Payloads) EmailReceived(stored InboundRaw, envelope Envelope, content events.EmailContent) events.EmailReceived {
 	return events.EmailReceived{
 		InboundId:   stored.WireId(),
 		Rcpts:       payloads.listOrEmpty(stored.Recipients),
 		RawBlobKey:  stored.RawBlobKey,
 		Headers:     payloads.headers(envelope.Headers),
 		AuthResults: payloads.authResults(envelope.AuthResults),
+		Content:     &content,
 	}
 }
 

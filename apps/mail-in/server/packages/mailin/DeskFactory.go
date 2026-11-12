@@ -18,7 +18,7 @@ type DeskFactory struct {
 func (factory DeskFactory) Inbox(documents Documents, pages PageReader) Inbox {
 	storage := Storage{Documents: documents, Pages: pages}
 	stager := EventStager{Settings: factory.settings(), Now: time.Now, Random: rand.Reader}
-	return Inbox{Storage: storage, Registry: CollectionRegistry{Storage: storage}, Stager: stager, Outbox: factory.Outbox(documents, pages), HandOff: factory.handOff(), Now: time.Now}
+	return Inbox{Storage: storage, Registry: CollectionRegistry{Storage: storage}, Stager: stager, Outbox: factory.Outbox(documents, pages), HandOff: factory.handOff(), Contents: factory.contents(storage), Now: time.Now}
 }
 
 func (factory DeskFactory) Outbox(documents Documents, pages PageReader) OutboxDesk {
@@ -30,10 +30,12 @@ func (factory DeskFactory) Outbox(documents Documents, pages PageReader) OutboxD
 func (factory DeskFactory) Messages(documents Documents, pages PageReader) MessageDesk {
 	storage := Storage{Documents: documents, Pages: pages}
 	settings := factory.settings().MailIn()
-	store := factory.blobs()
-	contents := ContentShelf{Storage: storage, Builder: ContentBuilder{Blobs: store}}
 	linkLife := time.Duration(settings.Blobs.Link.Seconds) * time.Second
-	return MessageDesk{Callers: oidc.Configured(), Book: InboundBook{Storage: storage}, Contents: contents, Blobs: store, LinkLife: linkLife, Now: time.Now}
+	return MessageDesk{Callers: oidc.Configured(), Book: InboundBook{Storage: storage}, Contents: factory.contents(storage), Blobs: factory.blobs(), LinkLife: linkLife, Now: time.Now}
+}
+
+func (factory DeskFactory) contents(storage Storage) ContentShelf {
+	return ContentShelf{Storage: storage, Builder: ContentBuilder{Blobs: factory.blobs()}}
 }
 
 func (DeskFactory) Timeout() time.Duration {

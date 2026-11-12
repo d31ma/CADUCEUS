@@ -38,7 +38,7 @@ func (finisher MessageFinisher) publish(conversation core.Conversation, message 
 	if err != nil {
 		return Unavailability{}.Of(err)
 	}
-	payload := finisher.payload(conversation, message, Participants{}.MemberIds(participants))
+	payload := finisher.payload(conversation, message, events.ReaderLists{}.ForConversation(conversation.Kind, Participants{}.MemberIds(participants)))
 	message.OutboxFields, err = finisher.ports.Stager.Stage(message.OutboxFields, events.Types{}.MessageCreated(), message.DomainId, payload)
 	if err != nil {
 		return err

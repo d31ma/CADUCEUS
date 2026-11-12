@@ -251,7 +251,7 @@ func TestAMessageToAChannelRecipientPostsInTheChannel(t *testing.T) {
 		t.Fatalf("message %s rows %s", message.ConversationId, rowsText(outcome.Deliveries))
 	}
 	payload := created(t, message)
-	if payload.ConversationKind != "channel" || !slices.Equal(payload.MemberIds, []string{"ana", "bo"}) {
+	if payload.ConversationKind != "channel" || payload.MemberIds == nil || len(payload.MemberIds) != 0 {
 		t.Fatalf("message.created %+v", payload)
 	}
 	if len(s.participants()) != 2 || len(s.conversations()) != 1 || s.conversations()[0].MessageCount != 1 {

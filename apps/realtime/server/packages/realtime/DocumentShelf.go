@@ -23,6 +23,14 @@ func (shelf DocumentShelf) First(collection string, where map[string]any, target
 	return len(found) > 0, shelf.decodeFirst(found, target)
 }
 
+func (shelf DocumentShelf) Every(collection string, where map[string]any, target any) error {
+	found, err := shelf.pages(collection, where)
+	if err != nil {
+		return err
+	}
+	return shelf.decodeAll(found, target)
+}
+
 func (shelf DocumentShelf) Put(collection string, id string, document any) error {
 	return shelf.write(collection, id, document)
 }
@@ -48,4 +56,33 @@ func (DocumentShelf) decodeFirst(found []json.RawMessage, target any) error {
 		return nil
 	}
 	return json.Unmarshal(found[0], target)
+}
+
+func (shelf DocumentShelf) pages(collection string, where map[string]any) ([]json.RawMessage, error) {
+	found, cursor, more := []json.RawMessage{}, "", true
+	for pages := 0; more && pages < shelf.maximumPages(); pages++ {
+		page := []json.RawMessage{}
+		next, err := shelf.Storage.Page(Query{Collection: collection, Where: where, Cursor: cursor, Size: shelf.pageSize()}, &page)
+		if err != nil {
+			return nil, err
+		}
+		found, cursor, more = append(found, page...), next, next != ""
+	}
+	return found, nil
+}
+
+func (DocumentShelf) decodeAll(found []json.RawMessage, target any) error {
+	encoded, err := json.Marshal(found)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(encoded, target)
+}
+
+func (DocumentShelf) pageSize() int {
+	return 100
+}
+
+func (DocumentShelf) maximumPages() int {
+	return 1000
 }

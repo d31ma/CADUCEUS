@@ -17,7 +17,11 @@ func NewConversationPicker(stores core.Stores, now time.Time) ConversationPicker
 }
 
 func (picker ConversationPicker) Pick(caller oidc.Caller, request core.SendRequest, chosen []Recipient) (Placement, error) {
-	return picker.route(request.ConversationId)(caller, request, chosen)
+	placement, err := picker.route(request.ConversationId)(caller, request, chosen)
+	if err != nil {
+		return Placement{}, err
+	}
+	return placement, DirectSize{}.check(placement)
 }
 
 func (picker ConversationPicker) route(conversationId string) func(oidc.Caller, core.SendRequest, []Recipient) (Placement, error) {

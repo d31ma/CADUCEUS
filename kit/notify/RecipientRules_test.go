@@ -10,7 +10,7 @@ func channelMessage() events.MessageCreated {
 	return events.MessageCreated{
 		ConversationKind: "channel",
 		AuthorMemberId:   "author",
-		MemberIds:        []string{"author", "ana", "bo", "cy"},
+		MemberIds:        []string{},
 	}
 }
 
@@ -33,10 +33,26 @@ func TestMentionNotifiesMentionedMembersSorted(t *testing.T) {
 	expectSame(t, RecipientRules{}.For(message, nil, MutedSet{}), want)
 }
 
-func TestMentionOfNonMemberNotifiesNobody(t *testing.T) {
+func TestAChannelMentionNeedsNoReaderList(t *testing.T) {
 	message := channelMessage()
+	message.MentionedMemberIds = []string{"cy"}
+	want := []Recipient{{MemberId: "cy", Kind: "mention"}}
+	expectSame(t, RecipientRules{}.For(message, nil, MutedSet{}), want)
+}
+
+func TestADirectMentionOfANonParticipantNotifiesNobody(t *testing.T) {
+	message := directMessage()
 	message.MentionedMemberIds = []string{"stranger"}
-	expectSame(t, RecipientRules{}.For(message, nil, MutedSet{}), []Recipient{})
+	want := []Recipient{{MemberId: "ana", Kind: "dm"}}
+	expectSame(t, RecipientRules{}.For(message, nil, MutedSet{}), want)
+}
+
+func TestAnOldChannelEventWithReadersNotifiesOnlyMentionsAndThreads(t *testing.T) {
+	message := channelMessage()
+	message.MemberIds = []string{"author", "ana", "bo"}
+	message.MentionedMemberIds = []string{"bo"}
+	want := []Recipient{{MemberId: "bo", Kind: "mention"}}
+	expectSame(t, RecipientRules{}.For(message, nil, MutedSet{}), want)
 }
 
 func TestAuthorIsNeverNotified(t *testing.T) {
@@ -78,12 +94,19 @@ func TestDirectWinsOverThreadReply(t *testing.T) {
 	expectSame(t, RecipientRules{}.For(message, []string{"ana"}, MutedSet{}), want)
 }
 
-func TestThreadReplyNotifiesThreadMembersWhoCanRead(t *testing.T) {
+func TestAChannelThreadReplyNotifiesTheThreadParticipants(t *testing.T) {
 	message := channelMessage()
 	message.ThreadRootId = "root"
 	message.MentionedMemberIds = []string{"cy"}
 	want := []Recipient{{MemberId: "bo", Kind: "thread_reply"}, {MemberId: "cy", Kind: "mention"}}
-	expectSame(t, RecipientRules{}.For(message, []string{"left", "cy", "bo"}, MutedSet{}), want)
+	expectSame(t, RecipientRules{}.For(message, []string{"author", "cy", "bo"}, MutedSet{}), want)
+}
+
+func TestADirectThreadReplySkipsAParticipantWhoLeft(t *testing.T) {
+	message := directMessage()
+	message.ThreadRootId = "root"
+	want := []Recipient{{MemberId: "ana", Kind: "dm"}}
+	expectSame(t, RecipientRules{}.For(message, []string{"left", "ana"}, MutedSet{}), want)
 }
 
 func TestThreadMembersIgnoredWithoutThreadRoot(t *testing.T) {

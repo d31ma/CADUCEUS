@@ -128,7 +128,7 @@ func TestAnEmailIntoAChannelAddressIsANewRootMessageThere(t *testing.T) {
 		t.Fatalf("got %+v", participants)
 	}
 	created := scene.Created(message)
-	if created.ConversationKind != "channel" || !slices.Equal(created.MemberIds, []string{"bo"}) {
+	if created.ConversationKind != "channel" || created.MemberIds == nil || len(created.MemberIds) != 0 {
 		t.Fatalf("got %+v", created)
 	}
 }

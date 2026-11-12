@@ -90,6 +90,9 @@ func (desk EventDesk) memberRemoved(domainId string, payload EventPayload) error
 }
 
 func (desk EventDesk) messageMembers(domainId string, payload EventPayload) error {
+	if payload.FromChannel() {
+		return nil
+	}
 	return desk.Members.Replace(domainId, payload.ConversationId, payload.MemberIds)
 }
 
@@ -101,8 +104,18 @@ func (desk EventDesk) deliver(domainId string, delivery Delivery) error {
 	switch {
 	case delivery.ToDomain:
 		return desk.FanOut.ToDomain(domainId, delivery.Event)
+	case delivery.ChannelConversationId != "":
+		return desk.toChannel(domainId, delivery)
 	case len(delivery.MemberIds) > 0:
 		return desk.FanOut.ToMembers(domainId, delivery.MemberIds, delivery.Event)
 	}
 	return nil
+}
+
+func (desk EventDesk) toChannel(domainId string, delivery Delivery) error {
+	memberIds, err := desk.Members.Channel(domainId, delivery.ChannelConversationId)
+	if err != nil {
+		return err
+	}
+	return desk.FanOut.ToMembers(domainId, memberIds, delivery.Event)
 }

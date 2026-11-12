@@ -16,7 +16,7 @@ func (rules RecipientRules) For(message events.MessageCreated, threadMemberIds [
 	candidates = append(candidates, rules.withKind(message.MemberIds, rules.conversationKind(message))...)
 	candidates = append(candidates, rules.withKind(threadMemberIds, rules.threadKind(message.ThreadRootId))...)
 	candidates = rules.withoutEmptyKind(candidates)
-	candidates = rules.onlyReaders(candidates, rules.readers(message))
+	candidates = rules.onlyReaders(candidates, rules.readerCheck(message))
 	candidates = rules.firstPerMember(candidates)
 	candidates = rules.withoutMuted(candidates, muted)
 	return rules.byMemberId(candidates)
@@ -55,6 +55,26 @@ func (rules RecipientRules) threadKind(threadRootId string) string {
 	return rules.kinds.ThreadReply()
 }
 
+func (rules RecipientRules) readerCheck(message events.MessageCreated) func(string) bool {
+	if message.ConversationKind != rules.directConversation() {
+		return rules.notAuthor(message.AuthorMemberId)
+	}
+	return rules.listedReader(message)
+}
+
+func (RecipientRules) notAuthor(authorMemberId string) func(string) bool {
+	return func(memberId string) bool {
+		return memberId != authorMemberId
+	}
+}
+
+func (rules RecipientRules) listedReader(message events.MessageCreated) func(string) bool {
+	readers := rules.readers(message)
+	return func(memberId string) bool {
+		return readers[memberId]
+	}
+}
+
 func (RecipientRules) readers(message events.MessageCreated) map[string]bool {
 	readers := map[string]bool{}
 	for _, memberId := range message.MemberIds {
@@ -70,9 +90,9 @@ func (RecipientRules) withoutEmptyKind(candidates []Recipient) []Recipient {
 	})
 }
 
-func (RecipientRules) onlyReaders(candidates []Recipient, readers map[string]bool) []Recipient {
+func (RecipientRules) onlyReaders(candidates []Recipient, isReader func(string) bool) []Recipient {
 	return slices.DeleteFunc(candidates, func(candidate Recipient) bool {
-		return !readers[candidate.MemberId]
+		return !isReader(candidate.MemberId)
 	})
 }
 

@@ -41,12 +41,13 @@ func TestAddIsIdempotent(t *testing.T) {
 func TestRemoveIsIdempotent(t *testing.T) {
 	memory := newMemoryStorage()
 	book := MemberBook{Storage: memory.storage()}
-	book.Replace("example.com", "cnv_1", []string{"ana", "bo"})
+	book.Add("example.com", "cnv_1", "ana")
+	book.Add("example.com", "cnv_1", "bo")
 	book.Remove("example.com", "cnv_1", "bo")
 	book.Remove("example.com", "cnv_1", "bo")
 	book.Remove("example.com", "cnv_2", "bo")
 	members, _ := book.Members("example.com", "cnv_1")
-	if memory.writes != 2 || !reflect.DeepEqual(members, []string{"ana"}) {
+	if memory.writes != 3 || !reflect.DeepEqual(members, []string{"ana"}) {
 		t.Fatalf("writes %d, members %v", memory.writes, members)
 	}
 }

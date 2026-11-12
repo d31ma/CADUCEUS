@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"mesail.dev/packages/core"
+	"mesail.dev/packages/events"
 )
 
 type Mentions struct {
@@ -25,7 +26,7 @@ func (mentions Mentions) of(domainId string, body string, readers []string, auth
 		}
 		found = append(found, mentions.ifAllowed(member, known, allowed)...)
 	}
-	return found, nil
+	return events.ReaderLists{}.Mentions(found), nil
 }
 
 func (Mentions) allowed(readers []string, authorId string) map[string]bool {

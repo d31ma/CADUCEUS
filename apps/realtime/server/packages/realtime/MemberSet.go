@@ -21,3 +21,11 @@ func (set MemberSet) Without(memberIds []string, memberId string) []string {
 func (set MemberSet) Same(first []string, second []string) bool {
 	return slices.Equal(set.Sorted(first), set.Sorted(second))
 }
+
+func (MemberSet) lookup(memberIds []string) map[string]bool {
+	lookup := map[string]bool{}
+	for _, memberId := range memberIds {
+		lookup[memberId] = true
+	}
+	return lookup
+}

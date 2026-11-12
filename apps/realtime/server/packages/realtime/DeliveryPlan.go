@@ -28,13 +28,20 @@ func (plan DeliveryPlan) builders() map[string]func(string, EventPayload) Delive
 	}
 }
 
-func (DeliveryPlan) message(eventType string, payload EventPayload) Delivery {
+func (plan DeliveryPlan) message(eventType string, payload EventPayload) Delivery {
 	event := Event{Type: eventType, ConversationId: payload.ConversationId, MessageId: payload.MessageId, MemberId: payload.AuthorMemberId}
-	return Delivery{Event: event, MemberIds: payload.MemberIds}
+	return plan.toReaders(event, payload)
 }
 
-func (DeliveryPlan) reaction(eventType string, payload EventPayload) Delivery {
+func (plan DeliveryPlan) reaction(eventType string, payload EventPayload) Delivery {
 	event := Event{Type: eventType, ConversationId: payload.ConversationId, MessageId: payload.MessageId, MemberId: payload.MemberId, State: payload.Emoji}
+	return plan.toReaders(event, payload)
+}
+
+func (DeliveryPlan) toReaders(event Event, payload EventPayload) Delivery {
+	if payload.FromChannel() {
+		return Delivery{Event: event, MemberIds: []string{}, ChannelConversationId: payload.ConversationId}
+	}
 	return Delivery{Event: event, MemberIds: payload.MemberIds}
 }
 

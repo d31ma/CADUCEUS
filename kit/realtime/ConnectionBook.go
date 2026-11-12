@@ -134,8 +134,9 @@ func (ConnectionBook) first(found []Connection) (Connection, error) {
 }
 
 func (ConnectionBook) ofMembers(found []Connection, memberIds []string) []Connection {
+	wanted := MemberSet{}.lookup(memberIds)
 	return slices.DeleteFunc(found, func(connection Connection) bool {
-		return !slices.Contains(memberIds, connection.MemberId)
+		return !wanted[connection.MemberId]
 	})
 }
 

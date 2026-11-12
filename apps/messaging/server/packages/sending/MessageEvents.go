@@ -68,7 +68,7 @@ func (messageEvents MessageEvents) created(message core.Message, conversation co
 		FileNames:          messageEvents.fileNames(message),
 		IsEmail:            message.IsEmail,
 		MentionedMemberIds: lists.copied(message.MentionedMemberIds),
-		MemberIds:          lists.copied(readers),
+		MemberIds:          events.ReaderLists{}.ForConversation(conversation.Kind, readers),
 		CreatedAt:          message.CreatedAt,
 	}
 }

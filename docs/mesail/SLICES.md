@@ -880,7 +880,7 @@ longer than SPEC AC-ID-4's 60 seconds.
      K3's parts worked as designed (no queue wait, one retry). The K2
      check of 10 runs in a row moves to K8's done-when.
 
-### K8. Directory store outage on Floci (directory's owner, with TACHYON)
+### K8. Store outage on Floci: one FYLO process per root (directory's and messaging's owners, with the deploy files and TACHYON)
 Found by K3 (2026-11-12, run 2): from 07:29:31 to 07:29:43 UTC every
 `directory` call answered `503` "the directory store is not available"
 (`DirectoryErrorHandler.Store`, a `YonResourceError` from TACHYON's FYLO
@@ -894,15 +894,61 @@ Run 3 (07:40:36-07:41:23 UTC, about 47 seconds, load 6 to 13) was wider:
 `messaging` ("the message store is not available", 19 calls) failed at the
 same time, mostly on writes, while reads kept answering `200`. Ruled out
 by K3: function restarts, guest kernel I/O errors, host NFS messages, a
-full disk (the data disk was 1% used). K3's lead, not proven: FYLO index
-files on the dev host's persistent data have grown past FYLO's 1 MiB
-frame (`directory` `people/index/keys.snapshot` 1.97 MB and `keys.wal`
-1.2 MB, `local-parts` 1.89 MB, `messaging` `messages` 2.7 MB; K3's two
-200-member test domains added about 400 people). So K8 covers every
-FYLO-owning service, not only `directory`.
-- **Owns:** `apps/directory` store wiring and error handling (with the
-  directory owner); any TACHYON gap goes through the coordinator.
+full disk (the data disk was 1% used). So K8 covers every FYLO-owning
+service, not only `directory`.
+**FYLO's report** (2026-11-12, FYLO coordinator's notes
+`mesail-store-outage-report.md`; probes in
+`~/Library/Logs/local/FYLO/mesail-store-outage/`):
+- K3's index-size lead is ruled out: index files may grow to 256 MiB;
+  FYLO's 1 MiB limit is only for one request line on standard input.
+  FYLO measured 3.4 MB index files with no errors.
+- Likely cause, not yet proven on the dev host: every `fylo exec --loop`
+  takes the root's exclusive lease on its first request and keeps it until
+  the process exits (FYLO ADR 0003). In Floci each container of a function
+  runs its own `ty start` and its own loop on `/mnt/data/<service>`. When a
+  second container of the same function runs (a replacement after a
+  timeout, an old container still alive after a redeploy, or a scale-out),
+  its FYLO answers `EROOTLOCKED` in about 0.1 ms to every call until the
+  first container's process exits. TACHYON reports that as "FYLO operation
+  failed (EROOTLOCKED)" (diagnostic 2160), and Mesail answers `503`. That
+  matches the router log: one slow call (8.5, 5.5 and 6.8 seconds, a cold
+  start), then fast `503`s.
+**Decision (architecture, 2026-11-12; no owner question):** Mesail keeps
+its design, one live process per FYLO root (ADR 0004 section 4: one
+function per root with reserved concurrency 1), and makes Floci keep it:
+fix option (a). TACHYON is asked for option (b) as a second line of
+defence. Option (c), FYLO releasing the lease after each request, is the
+FYLO owner's design choice; Mesail does not need it.
+- **Owns:** `apps/directory` and `apps/messaging` store error handling
+  (with their owners); for this change only, the parts of
+  `deploy/floci/**` and `deploy/lambda/**` that create, replace and stop
+  function containers and set their timeouts (OP2 owns `deploy/**`:
+  coordinate if OP2 is running); any TACHYON gap goes through the
+  coordinator.
 - **Builds:**
+  - **Prove it first** on the dev host: during an outage, `docker ps`
+    shows two `floci-aws-mesail-<service>-*` containers of one function,
+    Floci's log is kept through the window, and the FYLO error behind each
+    `503` is `EROOTLOCKED` (through `YonLog` below, or a direct probe of
+    the datasource error). Write the proof in the findings note.
+  - **Fix (a), one container per FYLO root at any time, in Floci:**
+    - find why Floci starts a second container while one lives (its own
+      invocation timeout was 30 seconds while the function's timeout is
+      120 seconds, ADR 0004 section 4; idle replacement; redeploy), and
+      remove each cause: Floci's timeout equals the function's, and a
+      redeploy stops the old container before the new one takes calls;
+    - if Floci cannot promise one container per function, the deploy
+      tooling checks for two and stops the older one, and logs it;
+    - `directory` and `messaging` (and every FYLO-owning service through
+      its store error handler) report `EROOTLOCKED` as "store busy" in
+      their log, not only "store is not available", so the next outage
+      names itself.
+  - **Ask TACHYON for (b)** through the coordinator: in Lambda form, use
+    FYLO's per-invocation lease (FYLO ADR 0011, a bounded wait for the
+    root) instead of one long-lived loop per container, or at least treat
+    `EROOTLOCKED` as busy and wait a bounded time (about 2 seconds) before
+    failing. This also covers AWS Lambda later, where an old environment
+    can stay alive after a redeploy.
   - make the cause visible first, by using TACHYON's running handler-log
     work, not a new request: session "TACHYON: Yon handlers can write logs
     on every answer" (branch `feat/yon-handler-logs`, 2eade57a5, its ADR
@@ -927,17 +973,12 @@ FYLO-owning service, not only `directory`.
     failures carry the id, and all lines of one call share it. K8 does not
     ask TACHYON for the header on successful answers: the outage is
     failures, and the router's log gives the time of each call;
-  - find the cause and write it down with logs: an ATLAS write stall (ADR
-    0004 section 4: stalls up to 11 seconds), the FYLO process restarting,
-    the datasource marking the store down for a fixed time after one slow
-    call, or index files larger than FYLO's 1 MiB frame (test the lead:
-    grow a fresh root's index past 1 MiB and see whether writes fail; if
-    so, it goes to the FYLO coordinator with the sizes, because SLICES
-    and DOMAIN cap documents, not FYLO's own index files);
+  - if the proof fails (one container only during an outage), look at the
+    other causes with logs: an ATLAS write stall (ADR 0004 section 4:
+    stalls up to 11 seconds), the FYLO process restarting, or the
+    datasource marking the store down after one slow call;
   - do not delete or reset the dev host's data to make runs pass before
-    the cause is known;
-  - fix it in Mesail if the cause is Mesail's; otherwise write the
-    request to TACHYON or FYLO, with the logs.
+    the cause is known.
 - **Not now:** a longer `identity` retry (it would hold sign-in past the
   client's 10 second timeout). A later option, only if outages remain
   after this slice: `identity` keeps each person record for at most 60

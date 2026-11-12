@@ -229,6 +229,17 @@ Decisions:
     service on the sign-in path keeps each background call to 10 writes
     and 3 seconds (2026-11-12, SLICES K3 and rule 9). A read cannot skip
     the queue: in Lambda form the function runs one call at a time.
+  - **One live process per root** (2026-11-12, SLICES K8; FYLO's report):
+    `fylo exec --loop` holds the root's exclusive lease from its first
+    request until the process exits, so reserved concurrency 1 is not
+    enough on its own: a second container of the function (a replacement
+    after a timeout, an old one after a redeploy) gets `EROOTLOCKED` on
+    every call until the first one stops. So the platform's invocation
+    timeout equals the function's timeout, a redeploy stops the old
+    container before the new one takes calls, and the deploy tooling
+    stops an extra container if one appears. TACHYON is asked to use
+    FYLO's per-invocation lease (FYLO ADR 0011) in Lambda form, or to wait
+    a bounded time on `EROOTLOCKED`, which also covers AWS Lambda.
   - **Slow work goes through the outbox.** A route writes its own document
     once and returns; fan-out, indexing, notification and delivery happen
     later from the outbox relay and job routes (EVENTS.md). Chat stays

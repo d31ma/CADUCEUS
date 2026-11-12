@@ -15,7 +15,7 @@ in production.
 | --- | --- |
 | `conf/keycloak-sqlite.conf` | Build and runtime options for the SQLite image (the default). |
 | `conf/keycloak-postgres.conf` | Options for the PostgreSQL image (`--build-arg KEYCLOAK_DB=postgres`). |
-| `conf/quarkus.properties` | Turns off Hibernate's database version check (it expects PostgreSQL 14+). |
+| `conf/quarkus.properties` | Turns off Hibernate's database version check (it expects PostgreSQL 14+), and records each request's start time so the access log can show its duration. |
 | `providers/sqlite/` | Java source of `mesail-keycloak-sqlite.jar` (SQLite support), compiled in the `keycloak-providers` stage. Left out of the PostgreSQL image. |
 | `providers/mesail/` | Java source of `mesail-keycloak-mesail.jar`: the admin API endpoint that stores a TOTP. In both images. |
 | `realm/mesail-realm.json` | The one realm `mesail`: every person and every Operator (ADR 0005). |
@@ -246,10 +246,29 @@ was seen when running it:
 7. **No clustering.** `cache=local`. Keycloak's cluster discovery opens a
    second transaction while the first holds the write lock, which deadlocks on
    SQLite.
+8. **Session purge after its outer transaction.** Every 180 seconds (the
+   first time 180 seconds after the start) Keycloak removes expired user
+   sessions. It lists the realms in one transaction and deletes in batches,
+   each batch in a new transaction. On SQLite the outer transaction already
+   holds the write lock, so the first batch waited the whole `busy_timeout`
+   (15 seconds) and failed, and every token grant waited with it: sign-in
+   answered 503 for those seconds and expired sessions were never removed
+   (slice K2). The `sqlite` user-session-persister provider
+   (`spi-user-session-persister--provider=sqlite`) runs Keycloak's own purge
+   right after the outer transaction commits instead. A purge now takes a
+   few milliseconds per realm.
 
-Keycloak logs `KC-SERVICES0047 ... implementing the internal SPI dblock` at
-build time. That is expected: the lock and Liquibase SPIs are internal to
-Keycloak.
+Keycloak logs `KC-SERVICES0047 ... implementing the internal SPI ...` at
+build time for `dblock`, `connectionsLiquibase` and `userSessionPersister`.
+That is expected: these SPIs are internal to Keycloak.
+
+**Access log.** Both images log every HTTP call as
+`[org.keycloak.http.access-log] <method> <path> <status> <milliseconds> ms`.
+The path has no query string, and no header, body, cookie or client address
+is logged. `identity` cannot log from inside a TACHYON 26.46.02 handler
+(TACHYON keeps a handler's stderr only when the handler crashes), so this
+log is where a slow or failed Keycloak call shows; `directory` calls show in
+the router's log.
 
 ## Limits
 
@@ -349,7 +368,11 @@ VM lock) and `python3` and `openssl` on the host. It:
    and unlocking it;
 4. restarts the container and runs the checks again (the import is
    skipped);
-5. replaces the container, keeping the volume, and runs the checks again;
+5. replaces the container, keeping the volume, with the session purge every
+   60 seconds; runs the checks again, then signs in as `ana` in a loop until
+   a purge finishes and fails when a token grant takes more than 2 seconds,
+   when no purge finishes within 150 seconds, or when the purge logs an
+   error;
 6. ends the stand-in app and checks that the supervisor stops the container;
 7. removes the container and the volume.
 

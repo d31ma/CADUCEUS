@@ -38,6 +38,11 @@ domains; chat never does.
   `MESAIL_PASSWORD_OPERATOR`). The sign-in tests sign in by themselves.
 - `MESAIL_SERVICE_CLIENT_SECRET` is the `mesail-service` secret, for the
   service token tests.
+- `MESAIL_SIGNIN_LOOP` (a Go duration, default `20s`) is how long
+  `TestK2SignInStaysQuickWhileAPersonIsDeleted` signs in as `ana` in a loop
+  after deleting a new person; every sign-in must answer 200 within 2
+  seconds. Use `240s` or more to cover Keycloak's first session purge
+  (about 180 seconds after Keycloak starts; slice K2).
 
 The one-login tests (`SignIn_test.go`, `DomainSwitch_test.go`,
 `Tokens_test.go`, `Members_test.go`, `People_test.go`; slice L0) create

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Fixed sign-in answering 503 "sign-in is not available now" for a few
+  seconds every 3 minutes (slice K2). Keycloak's expired-session purge
+  locked its own SQLite database for 15 seconds and failed; token grants
+  waited behind it. The SQLite image now runs the purge after its outer
+  transaction (`sqlite` user-session-persister provider), so purges finish
+  in milliseconds and expired sessions are removed again. Keycloak now
+  writes an HTTP access log (method, path, status, milliseconds).
 - Started Mesail, the rewrite of CADUCEUS as one messenger and email app
   (ADR 0004). Go for the Tac frontend and the Yon backend on TACHYON
   26.46.02, one Tachyon app per service, FYLO 26.45.07 with one root per

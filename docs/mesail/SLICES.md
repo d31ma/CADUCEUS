@@ -1317,8 +1317,8 @@ like) as a sign-in option. SPEC S18, AC-ID-15 to AC-ID-19, Q21 and Q22;
 CONTRACTS "identity" (passkeys). TACHYON's plan (approved 2026-11-12):
 T13 (web passkeys) in its wave 2, already started; T15 (biometric unlock)
 in its wave 3b, after the sealed tables; T14 (app passkeys) first in its
-wave 4. T15b (a run-time on/off switch for the unlock) is a new request
-(ADR 0008). The Keycloak and identity parts may be built before.
+wave 4. T15b (a run-time on/off switch for the unlock) was accepted into
+TACHYON's T15 slice (ADR 0008). The Keycloak and identity parts may be built before.
 
 ### PU. UX for passkeys (`mesail-ux` or a UX session)
 - **Owns:** `docs/mesail/ux/**`.

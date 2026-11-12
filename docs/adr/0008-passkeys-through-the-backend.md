@@ -162,11 +162,14 @@ provides; TACHYON's coordinator handles that.
   **`"unlock": "userPresenceWhenAvailable"`**, so the web and Linux builds
   use the normal sealed key and get `StorageUnlockUnavailable` (SPEC
   AC-OF-20 leaves them out).
-- **T15b** (new, 2026-11-12) A run-time switch for the unlock key, because
+- **T15b** (accepted by TACHYON on 2026-11-12, with the owner's OK; part of
+  the T15 slice in wave 3b; final names come from T15's ADR) A run-time
+  switch for the unlock key, because
   SPEC AC-OF-20 makes the biometric lock a choice of the person, while T15
   fixes it per table in the declaration: `StorageLock.require(true|false)`.
   Off: the unlock key is kept under the normal sealed device key (no
   prompt). On: it is moved under the OS-gated key. Changing it needs a
   successful `unlock()` and answers `StorageLockRequired { required }`.
-  Without T15b the lock would be always on in the apps (a change to
-  AC-OF-20 that the owner would have to accept).
+  Where no OS lock exists, `require(true)` follows T15's rule (refused, or
+  Mesail's `userPresenceWhenAvailable` fallback with
+  `StorageUnlockUnavailable`).

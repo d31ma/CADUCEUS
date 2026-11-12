@@ -56,6 +56,32 @@ writes or 20 seconds), answer `more: true` when it stopped early, and
 never scroll a collection without that filter. Tests remove the documents
 and collections they create, so a test root does not grow across runs.
 
+### 2.2 A newer event replaces a waiting one (decided 2026-11-12)
+
+A document must not grow with every change while a subscriber is down
+(found by K1: each edit staged a `message.edited` with the full body, so
+many edits during an outage grew one message without limit). So:
+
+- An event type may declare a **replace key** in `kit/events` (for
+  example `message.edited` and `reaction.changed`: the message id;
+  `presence.changed`: the member id). When `kit/outbox` stages an event
+  whose type and replace key match an event still waiting on the same
+  document, the new event replaces the waiting one (its subscribers are the
+  union of both lists), instead of being added.
+- `message.deleted` also removes any waiting `message.edited` of that
+  message.
+- The same applies to `deadEvents`: a new dead letter of the same type and
+  replace key replaces the older one for that subscriber.
+- This is safe because these events carry the current state (EVENTS.md
+  section 7) and every consumer applies them idempotently; a consumer that
+  missed an older edit only ever needs the newest one.
+- Events without a replace key (`message.created`, `email.*`,
+  `channel.*`, `member.upserted`, ...) are added as now; each is staged
+  once per change of its own document, so they do not pile up.
+- Every waiting event still counts against the document's 512 KiB cap
+  (DOMAIN.md); `kit/outbox` refuses to stage an event that would pass it,
+  and the write answers `503` so the caller retries later.
+
 The entity model in `server/models/` declares these six fields with these
 JSON names. The store adapter converts them to and from `outbox.Fields`.
 

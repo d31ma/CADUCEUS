@@ -758,6 +758,24 @@ an earlier slice text in this file says "realm of the domain",
    `mesail-keycloak` for that part). K2 merges its Keycloak fix on its own.
 9. After K2, and not at the same time as OP2 (both change `deploy/router`):
    **K3**.
+10. Any time: **K4**.
+
+### K4. A newer event replaces a waiting one (the outbox owner, M2's successor)
+Found by K1 (2026-11-12). Decided in EVENTS.md section 2.2; no owner
+question.
+- **Owns:** `kit/outbox/**`, `kit/events/**` (the replace key per type),
+  their app copies through `scripts/kit-sync.sh`; and in `apps/messaging`
+  only the test that proves it.
+- **Builds:** the replace key in `kit/events` (`message.edited`,
+  `reaction.changed`: message id; `presence.changed`: member id);
+  `kit/outbox` replacing a waiting event (and a dead letter) with the same
+  type and key on the same document, with the union of subscribers;
+  `message.deleted` dropping waiting `message.edited` of that message; a
+  refusal (`503`) when staging would pass the document's 512 KiB cap.
+- **Done when:** a real-FYLO test edits one message 1,000 times while
+  `search` is down, and the message document stays under 512 KiB with one
+  waiting `message.edited`; when `search` comes back it gets the newest
+  body once; gates pass for every app that syncs the kit.
 
 ### K3. User requests before background work (a small session)
 Found by K2 on Floci (2026-11-12, run `k2-signin/floci-20261111-232350`):

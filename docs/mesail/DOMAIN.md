@@ -80,8 +80,14 @@ notes):
   in `pendingEvents` that carry a body, search documents, summaries) has
   an explicit cap that keeps the whole document under 512 KiB, and a test
   at that cap. Large bytes go to the blob store, never into a document.
-  Email content is capped at 256 KiB of JSON (`kit/mailin` `ContentBudget`,
-  found by the router-cycle fix on 2026-11-12).
+  Caps so far: email content 160 KiB of JSON (`kit/mailin`
+  `ContentBudget`, lowered from 256 KiB by K1 on 2026-11-12, because the
+  record stores the blocks escaped and the staged event escapes them
+  again); a message 384 KiB for body, `blocksJson` and the body in its
+  staged event (`messaging` `MessageBudget`); a search document 480 KiB
+  (`kit/search` `DocumentBudget`). A document's waiting events are bounded
+  too: a newer event about the same subject replaces a waiting one
+  (EVENTS.md section 2.2).
 - **One collection per write.** FYLO has no transaction across collections.
   Every write touches one collection and is idempotent, so a retry after a
   crash is safe. The outbox event is a field of the same document

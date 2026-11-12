@@ -1,3 +1,6 @@
+import "encoding/json"
+
 type PushOptions struct {
-	Hosts []string `json:"hosts"`
+	Enabled json.RawMessage `json:"enabled"`
+	Hosts   []string        `json:"hosts"`
 }

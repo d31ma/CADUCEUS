@@ -33,5 +33,5 @@ func (test *NotifySettingsServiceTest) TestOptionsReadsThePushHosts() {
 
 func (test *NotifySettingsServiceTest) TestSnapshotIsTheWholeDocument() {
 	NotifyTestSetup{}.Realms(NotifyTestSetup{}.Domain())
-	Assert.IsTrue(strings.HasPrefix((&NotifySettingsService{}).Snapshot(), `{"yon":`))
+	Assert.IsTrue(strings.HasPrefix((&NotifySettingsService{}).snapshot(), `{"yon":`))
 }

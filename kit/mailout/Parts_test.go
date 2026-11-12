@@ -17,7 +17,7 @@ import (
 )
 
 func TestSettingsReaderFillsDefaults(t *testing.T) {
-	settings := SettingsReader{Environment: func(string) string { return "" }}.Read()
+	settings, _ := SettingsReader{Environment: func(string) string { return "" }}.Read()
 	equal(t, 7200, settings.MaxAgeMinutes)
 	equal(t, 5*24*time.Hour, settings.MaxAge())
 	equal(t, time.Minute, settings.FirstDelay())
@@ -31,9 +31,53 @@ func TestSettingsReaderReadsTheYonSnapshot(t *testing.T) {
 	environment := func(string) string {
 		return `{"yon":{"mailout":{"maxageminutes":15,"relayaddress":"relay.example.net:587"}}}`
 	}
-	settings := SettingsReader{Environment: environment}.Read()
+	settings, err := SettingsReader{Environment: environment}.Read()
+	equal(t, nil, err)
 	equal(t, 15, settings.MaxAgeMinutes)
 	equal(t, "relay.example.net:587", settings.RelayAddress)
+}
+
+func readSwitches(t *testing.T, mailout string) (Settings, error) {
+	t.Helper()
+	environment := func(string) string { return `{"yon":{"mailout":` + mailout + `}}` }
+	return SettingsReader{Environment: environment}.Read()
+}
+
+func TestSettingsReaderTakesSwitchesAsJson(t *testing.T) {
+	settings, err := readSwitches(t, `{"directenabled":true,"relayrequiretls":false,"relayimplicittls":true}`)
+	equal(t, nil, err)
+	equal(t, true, settings.DirectEnabled.On())
+	equal(t, false, settings.RelayRequireTls.On())
+	equal(t, true, settings.RelayImplicitTls.On())
+}
+
+func TestSettingsReaderTakesSwitchesAsTextFromTheEnvironment(t *testing.T) {
+	settings, err := readSwitches(t, `{"directenabled":"true","relayrequiretls":"False","relayimplicittls":"TRUE"}`)
+	equal(t, nil, err)
+	equal(t, true, settings.DirectEnabled.On())
+	equal(t, false, settings.RelayRequireTls.On())
+	equal(t, true, settings.RelayImplicitTls.On())
+}
+
+func TestSettingsReaderRefusesOtherSwitchText(t *testing.T) {
+	_, err := readSwitches(t, `{"directenabled":"yes"}`)
+	var invalid InvalidSwitch
+	equal(t, true, errors.As(err, &invalid))
+	equal(t, true, strings.Contains(err.Error(), `"yes"`))
+	equal(t, true, strings.Contains(err.Error(), "mailout.directenabled"))
+}
+
+func TestSettingsReaderRefusesANumberForASwitch(t *testing.T) {
+	_, err := readSwitches(t, `{"relayrequiretls":1}`)
+	var invalid InvalidSwitch
+	equal(t, true, errors.As(err, &invalid))
+}
+
+func TestADeskWithABadSwitchRefusesWork(t *testing.T) {
+	environment := func(string) string { return `{"yon":{"mailout":{"directenabled":"maybe"}}}` }
+	desk := DeskFactory{Environment: environment}.Desk(nil)
+	var invalid InvalidSwitch
+	equal(t, true, errors.As(desk.Failure, &invalid))
 }
 
 func TestMissingBlobsRefuseEverything(t *testing.T) {

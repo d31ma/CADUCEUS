@@ -19,3 +19,13 @@ func (test *PushKeyControllerTest) TestGetPushKeyRefusesAMissingToken() {
 	refused := &Unauthenticated{}
 	Assert.IsTrue(errors.As(err, &refused))
 }
+
+func (test *PushKeyControllerTest) TestGetPushKeyIsUnavailableWhenPushIsTurnedOff() {
+	setup := NotifyTestSetup{}
+	member, _ := setup.Realms(setup.Domain())
+	token := setup.Member(member, "member-1")
+	setup.ChangePush(func(push map[string]any) { push["enabled"] = false })
+	_, err := (&PushKeyController{pushKeys: setup.PushKeys()}).GetPushKey(token)
+	unavailable := &PushNotConfigured{}
+	Assert.IsTrue(errors.As(err, &unavailable))
+}

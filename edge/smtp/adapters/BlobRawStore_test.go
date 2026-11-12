@@ -34,7 +34,8 @@ func fakeS3(t *testing.T, status int) (blobs.S3Store, *[]recordedPut) {
 	t.Cleanup(server.Close)
 	settings := blobs.S3Settings{Endpoint: server.URL, Region: "us-east-1", Bucket: "mesail-raw", AccessKeyId: "test", SecretAccessKey: "test"}
 	now := func() time.Time { return time.Date(2026, 11, 11, 12, 0, 0, 0, time.UTC) }
-	return blobs.NewS3Store(settings, server.Client(), now), seen
+	store, _ := blobs.NewS3Store(settings, server.Client(), now)
+	return store, seen
 }
 
 func TestBlobRawStoreWritesTheContentUnderTheKey(t *testing.T) {

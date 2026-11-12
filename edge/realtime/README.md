@@ -97,3 +97,10 @@ check there.
 - `connections`: one connection's lifecycle (`Session`, `Writer`), the
   registry (`Hub`) and the backend calls (`Relay`). No socket code.
 - `transport`: the WebSocket, event stream, health and management handlers.
+
+## Dependencies
+
+The gateway's one outside module, `github.com/coder/websocket`, is vendored
+in `vendor/`, so every build works with `GOPROXY=off` and downloads nothing
+(ADR 0007). To change its version, edit `go.mod`, run `go mod tidy` and
+`go mod vendor`, and commit `vendor/` with the change.

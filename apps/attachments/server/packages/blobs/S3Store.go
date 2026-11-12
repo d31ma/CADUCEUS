@@ -14,8 +14,8 @@ type S3Store struct {
 	now      func() time.Time
 }
 
-func NewS3Store(settings S3Settings, client *http.Client, now func() time.Time) S3Store {
-	return S3Store{settings: settings, client: client, now: now}
+func NewS3Store(settings S3Settings, client *http.Client, now func() time.Time) (S3Store, error) {
+	return S3Store{settings: settings, client: client, now: now}, settings.Check()
 }
 
 func (store S3Store) SignUpload(key Key, upload UploadTerms, expiresAt time.Time) (string, error) {

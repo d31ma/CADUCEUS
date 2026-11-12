@@ -1,4 +1,8 @@
-import "mesail.dev/packages/webpush"
+import (
+	"errors"
+
+	"mesail.dev/packages/webpush"
+)
 
 // @Test(JobsTestSetup, {"partition":"tests"})
 type PushTargetsServiceTest struct {
@@ -20,5 +24,15 @@ func (test *PushTargetsServiceTest) TestForPlatformsIsEmptyWithoutVapidKeys() {
 	JobsTestSetup{}.WithoutVapid()
 	targets, err := JobsTestSetup{}.Targets(nil).ForPlatforms()
 	Assert.IsTrue(err != nil, "missing keys were accepted")
+	Assert.Equals(0, len(targets))
+}
+
+func (test *PushTargetsServiceTest) TestForPlatformsIsEmptyWhenPushIsTurnedOff() {
+	setup := JobsTestSetup{}
+	setup.Realms(setup.Domain())
+	JobsTestSetup{}.WithPushTurnedOff()
+	targets, err := JobsTestSetup{}.Targets(nil).ForPlatforms()
+	turnedOff := &PushTurnedOff{}
+	Assert.IsTrue(errors.As(err, &turnedOff), "push was not turned off")
 	Assert.Equals(0, len(targets))
 }

@@ -3,6 +3,7 @@ package mailout
 import (
 	"cmp"
 	"encoding/json"
+	"errors"
 )
 
 type SettingsReader struct {
@@ -11,14 +12,22 @@ type SettingsReader struct {
 
 func (SettingsReader) variable() string { return "YON_APPLICATION_JSON" }
 
-func (reader SettingsReader) Read() Settings {
+func (reader SettingsReader) Read() (Settings, error) {
 	var snapshot struct {
 		Yon struct {
 			MailOut Settings `json:"mailout"`
 		} `json:"yon"`
 	}
-	_ = json.Unmarshal([]byte(reader.Environment(reader.variable())), &snapshot)
-	return reader.withDefaults(snapshot.Yon.MailOut)
+	err := json.Unmarshal([]byte(reader.Environment(reader.variable())), &snapshot)
+	return reader.withDefaults(snapshot.Yon.MailOut), reader.switchProblem(err)
+}
+
+func (SettingsReader) switchProblem(err error) error {
+	var invalid InvalidSwitch
+	if errors.As(err, &invalid) {
+		return invalid
+	}
+	return nil
 }
 
 func (SettingsReader) withDefaults(settings Settings) Settings {

@@ -27,3 +27,45 @@ func (test *PushKeyServiceTest) TestKeyIsUnavailableWithoutVapidKeys() {
 	Assert.IsTrue(errors.As(err, &unavailable))
 	Assert.Equals("", key.PublicKey)
 }
+
+func (test *PushKeyServiceTest) TestKeyIsUnavailableWhenPushIsTurnedOff() {
+	setup := NotifyTestSetup{}
+	member, _ := setup.Realms(setup.Domain())
+	token := setup.Member(member, "member-1")
+	setup.ChangePush(func(push map[string]any) { push["enabled"] = false })
+	key, err := setup.PushKeys().Key(token)
+	unavailable := &PushNotConfigured{}
+	Assert.IsTrue(errors.As(err, &unavailable))
+	Assert.Equals("", key.PublicKey)
+}
+
+func (test *PushKeyServiceTest) TestKeyIsUnavailableWhenTheSettingIsMissing() {
+	setup := NotifyTestSetup{}
+	member, _ := setup.Realms(setup.Domain())
+	token := setup.Member(member, "member-1")
+	setup.ChangePush(func(push map[string]any) { delete(push, "enabled") })
+	key, err := setup.PushKeys().Key(token)
+	unavailable := &PushNotConfigured{}
+	Assert.IsTrue(errors.As(err, &unavailable))
+	Assert.Equals("", key.PublicKey)
+}
+
+func (test *PushKeyServiceTest) TestKeyIsGivenWhenTheSettingComesFromTheEnvironmentAsText() {
+	setup := NotifyTestSetup{}
+	member, _ := setup.Realms(setup.Domain())
+	token := setup.Member(member, "member-1")
+	setup.ChangePush(func(push map[string]any) { push["enabled"] = "true" })
+	key, err := setup.PushKeys().Key(token)
+	Assert.IsTrue(err == nil, "key failed")
+	Assert.Equals(87, len(key.PublicKey))
+}
+
+func (test *PushKeyServiceTest) TestKeyIsUnavailableWhenTheSettingIsOtherText() {
+	setup := NotifyTestSetup{}
+	member, _ := setup.Realms(setup.Domain())
+	token := setup.Member(member, "member-1")
+	setup.ChangePush(func(push map[string]any) { push["enabled"] = "yes" })
+	_, err := setup.PushKeys().Key(token)
+	unavailable := &PushNotConfigured{}
+	Assert.IsTrue(errors.As(err, &unavailable))
+}

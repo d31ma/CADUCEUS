@@ -25,6 +25,7 @@
   },
   "notify": {
     "push": {
+      "enabled": false,
       "hosts": [
         "fcm.googleapis.com",
         "updates.push.services.mozilla.com",

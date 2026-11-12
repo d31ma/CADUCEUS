@@ -16,7 +16,7 @@ func flociStore(t *testing.T) S3Store {
 		t.Skip("MESAIL_S3_TEST_ENDPOINT is not set")
 	}
 	settings := S3Settings{Endpoint: endpoint, Region: "us-east-1", Bucket: "mesail-slice-a1-test", AccessKeyId: "test", SecretAccessKey: "test"}
-	return NewS3Store(settings, &http.Client{Timeout: 10 * time.Second}, time.Now)
+	return testS3Store(settings, &http.Client{Timeout: 10 * time.Second}, time.Now)
 }
 
 func TestFlociStoresReadsAndDeletesThroughSignedUrls(t *testing.T) {

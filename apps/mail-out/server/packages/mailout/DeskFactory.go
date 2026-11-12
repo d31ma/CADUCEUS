@@ -22,7 +22,7 @@ type DeskFactory struct {
 func (DeskFactory) variable() string { return "YON_APPLICATION_JSON" }
 
 func (factory DeskFactory) Desk(documents Documents) Desk {
-	settings := SettingsReader{Environment: factory.Environment}.Read()
+	settings, settingsErr := SettingsReader{Environment: factory.Environment}.Read()
 	outboxSettings, err := outbox.SettingsReader{}.FromApplicationJSON(factory.Environment(factory.variable()))
 	dialer, dialErr := smtpclient.ProxyDialers{}.FromEnvironment()
 	authorize := factory.tokens(settings).Authorization
@@ -36,7 +36,7 @@ func (factory DeskFactory) Desk(documents Documents) Desk {
 	relayer := Relayer{Store: OutboxStore{Store: store, Registry: registry}, Settings: outboxSettings, Client: client, Now: time.Now}
 	changes := ChangeEvents{Now: time.Now}
 	builder := Builder{Directory: directory, Sources: sources, Blobs: factory.blobs(settings), Keys: dkim.KeyStore{Source: factory.secrets(settings)}}
-	transport := Transport{Directory: directory, MailIn: MailIn{Client: client, BaseUrl: settings.MailInUrl}, Relay: factory.relay(settings, dialer), Direct: factory.direct(settings), DirectEnabled: settings.DirectEnabled, Timeout: settings.Timeout()}
+	transport := Transport{Directory: directory, MailIn: MailIn{Client: client, BaseUrl: settings.MailInUrl}, Relay: factory.relay(settings, dialer), Direct: factory.direct(settings), DirectEnabled: settings.DirectEnabled.On(), Timeout: settings.Timeout()}
 	suppressions := Suppressions{Store: store}
 	outcomes := Outcomes{Queue: queue, Suppressions: suppressions, Attempts: AttemptLog{Store: store}, Relayer: relayer, Backoff: Backoff{First: settings.FirstDelay(), Largest: settings.MaxDelay()}, Changes: changes}
 	delivery := Delivery{Queue: queue, Suppressions: suppressions, Builder: builder, Transport: transport, Outcomes: outcomes}
@@ -44,7 +44,7 @@ func (factory DeskFactory) Desk(documents Documents) Desk {
 	return Desk{
 		Gate: oidc.Configured(), Seen: SeenEvents{Store: store, Now: time.Now}, Intake: intake,
 		Run: QueueRun{Registry: registry, Queue: queue, Delivery: delivery, Batch: 50}, Relayer: relayer, Now: time.Now, Limit: 100,
-		Failure: errors.Join(err, dialErr),
+		Failure: errors.Join(settingsErr, err, dialErr),
 	}
 }
 
@@ -69,7 +69,7 @@ func (DeskFactory) secrets(settings Settings) dkim.SecretSource {
 }
 
 func (DeskFactory) relay(settings Settings, dialer smtpclient.Dialer) smtpclient.Delivery {
-	return smtpclient.RelayDelivery{Address: settings.RelayAddress, Dialer: dialer, HeloName: settings.HeloName, Username: settings.RelayUsername, Password: settings.RelayPassword, RequireTls: settings.RelayRequireTls, ImplicitTls: settings.RelayImplicitTls}
+	return smtpclient.RelayDelivery{Address: settings.RelayAddress, Dialer: dialer, HeloName: settings.HeloName, Username: settings.RelayUsername, Password: settings.RelayPassword, RequireTls: settings.RelayRequireTls.On(), ImplicitTls: settings.RelayImplicitTls.On()}
 }
 
 func (DeskFactory) direct(settings Settings) smtpclient.Delivery {

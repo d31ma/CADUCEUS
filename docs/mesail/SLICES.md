@@ -913,6 +913,9 @@ sending); this wave adds the payload format and the browser side.
     wipe; the path route that opens a conversation in its domain (switching
     the tab's domain with `POST /identity/session/domain` when needed);
     the denied state ("Blocked in this browser's settings").
+  - The push row and the suggestion stay hidden when `GET
+    /notify/push-key` answers `503` (push turned off with
+    `notify.push.enabled`, or not configured; OP1).
   - The screens are merged (develop a360499; handover
     `~/Library/Logs/local/CADUCEUS/mesail/n2-push-ux-handover.md`): the
     toggle, the suggestion (hidden for good after "Not now" or closing),
@@ -1112,6 +1115,27 @@ except for the items below.
   default in code or settings (`cloudflare-dns`, `amazonaws.com`,
   `8.8.8.8`, `1.1.1.1`, `dns.google`), and gates pass for the touched
   apps and modules.
+- **Built** (branch `feat/op1-defaults`): `directory` uses
+  `dnscheck.SystemLookup` (Go's resolver, so `/etc/resolv.conf`) when
+  `dnsresolver` is empty, and the DoH lookup only for a set URL;
+  `blobs.NewS3Store` returns `MissingEndpoint` without an endpoint
+  (attachments `503`, mail-in `MissingBlobs`, the SMTP edge requires
+  `MESAIL_RAW_STORE_S3_ENDPOINT`); `notify.push.enabled` (default
+  `false`) makes `GET /push-key` answer `503` and marks waiting pushes
+  `skipped`; `edge/realtime/vendor/` with `GOPROXY=off -mod=vendor` in
+  the Dockerfile. The module `tests/nocloud` (run by `gates.sh
+  --shared-only`) fails on any public or cloud host in code or settings
+  and checks both defaults. The web app's push row is N2's: it does not
+  exist yet, and N2 hides it on that `503`. Left for OP2: on Floci, real
+  `attachments` calls answer `503` (no S3 endpoint, no blob adapter set)
+  until OP2's blob layout; `mail-in` and `mail-out` already use L5's
+  shared folder. The push vendor hosts stay in notify's `outgoing.hosts`
+  and `push.hosts` (used only when push is on).
+  Rule 17: `notify.push.enabled` and mail-out's `directenabled`,
+  `relayrequiretls` and `relayimplicittls` (`kit/mailout` `Switch`) take
+  `true`/`false` as JSON or text; other text makes every mail-out call
+  fail with `InvalidSwitch`. mail-out's number settings (`directport`,
+  the delays) still read JSON numbers only.
 
 ### OP2. The on-premise runtime: Lambda in Floci on kestrel (P1's successor)
 - **Owns:** `deploy/**` (except `deploy/keycloak`), `docker-compose*.yml`,

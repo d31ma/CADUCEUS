@@ -10,10 +10,10 @@ type Settings struct {
 	RelayAddress      string `json:"relayaddress"`
 	RelayUsername     string `json:"relayusername"`
 	RelayPassword     string `json:"relaypassword"`
-	RelayRequireTls   bool   `json:"relayrequiretls"`
-	RelayImplicitTls  bool   `json:"relayimplicittls"`
+	RelayRequireTls   Switch `json:"relayrequiretls"`
+	RelayImplicitTls  Switch `json:"relayimplicittls"`
 	HeloName          string `json:"heloname"`
-	DirectEnabled     bool   `json:"directenabled"`
+	DirectEnabled     Switch `json:"directenabled"`
 	DirectMxHost      string `json:"directmxhost"`
 	DirectPort        int    `json:"directport"`
 	SecretFolder      string `json:"secretfolder"`

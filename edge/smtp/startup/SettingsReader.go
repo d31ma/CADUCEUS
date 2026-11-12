@@ -91,7 +91,7 @@ func (reader *SettingsReader) s3RawStore() S3RawStoreSettings {
 		return S3RawStoreSettings{}
 	}
 	return S3RawStoreSettings{
-		Endpoint:    reader.environment.Optional(names.Endpoint()),
+		Endpoint:    reader.required(names.Endpoint()),
 		Bucket:      bucket,
 		Region:      reader.required(names.Region()),
 		AccessKeyId: reader.required(names.AccessKeyId()),

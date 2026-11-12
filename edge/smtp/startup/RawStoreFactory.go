@@ -37,7 +37,7 @@ func (factory RawStoreFactory) s3(settings ListenerSettings) (blobs.Store, error
 	if err != nil {
 		return nil, err
 	}
-	return blobs.NewS3Store(factory.s3Settings(settings.RawStoreS3, secret), factory.uploadClient(settings.RawStoreS3), time.Now), nil
+	return blobs.NewS3Store(factory.s3Settings(settings.RawStoreS3, secret), factory.uploadClient(settings.RawStoreS3), time.Now)
 }
 
 func (factory RawStoreFactory) uploadClient(settings S3RawStoreSettings) *http.Client {

@@ -39,7 +39,14 @@ func (factory BlobStoreFactory) s3(settings BlobSettings) blobs.Store {
 		Endpoint: settings.Endpoint, PublicEndpoint: settings.Public, Region: settings.Region, Bucket: settings.Bucket,
 		AccessKeyId: factory.Environment("AWS_ACCESS_KEY_ID"), SecretAccessKey: factory.Environment("AWS_SECRET_ACCESS_KEY"), SessionToken: factory.Environment("AWS_SESSION_TOKEN"),
 	}
-	return blobs.NewS3Store(s3Settings, transport.SingleUseTransport{}.Client(factory.timeout()), time.Now)
+	return factory.storeOrMissing(blobs.NewS3Store(s3Settings, transport.SingleUseTransport{}.Client(factory.timeout()), time.Now))
+}
+
+func (BlobStoreFactory) storeOrMissing(store blobs.S3Store, err error) blobs.Store {
+	if err != nil {
+		return MissingBlobs{}
+	}
+	return store
 }
 
 func (BlobStoreFactory) timeout() time.Duration {

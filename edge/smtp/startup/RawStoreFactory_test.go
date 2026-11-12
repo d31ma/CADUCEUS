@@ -138,3 +138,11 @@ func TestRawStoreFactoryS3UploadsStopAtTheTimeout(t *testing.T) {
 		t.Fatalf("want a timeout, got %v", err)
 	}
 }
+
+func TestRawStoreFactoryRefusesS3WithoutAnEndpoint(t *testing.T) {
+	settings := s3Settings(t, "", secretFile(t, "edge-secret\n"))
+	_, err := RawStoreFactory{}.Store(settings)
+	if err == nil || !strings.Contains(err.Error(), "endpoint") {
+		t.Fatalf("want an endpoint error, got %v", err)
+	}
+}

@@ -29,7 +29,6 @@
   "outgoing": {
     "hosts": [
       "keycloak",
-      "cloudflare-dns.com",
       "127.0.0.1",
       "directory.localhost"
     ]
@@ -43,7 +42,7 @@
     "mailhost": "mx.mesail.localhost",
     "spfmechanism": "mx",
     "dkimselector": "mesail",
-    "dnsresolver": "https://cloudflare-dns.com/dns-query"
+    "dnsresolver": ""
   },
   "names": {
     "words": [

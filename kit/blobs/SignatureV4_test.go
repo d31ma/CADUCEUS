@@ -59,11 +59,23 @@ func TestAwsEncodingUsesPercentTwentyAndSortsPairs(t *testing.T) {
 	}
 }
 
-func TestBaseUrlDefaultsToAwsInTheRegion(t *testing.T) {
-	if got := (S3Settings{Region: "eu-west-1"}).BaseUrl(); got != "https://s3.eu-west-1.amazonaws.com" {
+func TestBaseUrlHasNoCloudDefault(t *testing.T) {
+	if got := (S3Settings{Region: "eu-west-1"}).BaseUrl(); got != "" {
 		t.Fatalf("got %s", got)
 	}
 	if got := (S3Settings{Endpoint: "http://floci:4566"}).BaseUrl(); got != "http://floci:4566" {
+		t.Fatalf("got %s", got)
+	}
+}
+
+func TestPublicUrlFallsBackToTheEndpointOnly(t *testing.T) {
+	if got := (S3Settings{Region: "eu-west-1"}).PublicUrl(); got != "" {
+		t.Fatalf("got %s", got)
+	}
+	if got := (S3Settings{Endpoint: "http://floci:4566"}).PublicUrl(); got != "http://floci:4566" {
+		t.Fatalf("got %s", got)
+	}
+	if got := (S3Settings{Endpoint: "http://floci:4566", PublicEndpoint: "https://files.example.test"}).PublicUrl(); got != "https://files.example.test" {
 		t.Fatalf("got %s", got)
 	}
 }

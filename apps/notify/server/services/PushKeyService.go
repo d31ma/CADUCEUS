@@ -14,7 +14,7 @@ type PushKeyService struct {
 
 func (service *PushKeyService) Key(authorization string) (PushKey, error) {
 	_, failure := service.callers.Caller(authorization)
-	keys, problem := webpush.VapidSettingsReader{}.FromApplicationJSON(service.settings.Snapshot())
+	keys, problem := service.settings.PushKeys()
 	return PushKey{PublicKey: service.publicKey(cmp.Or(failure, problem), keys)}, cmp.Or(failure, service.notConfigured(problem))
 }
 

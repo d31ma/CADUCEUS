@@ -1,19 +1,22 @@
 import (
+	"cmp"
 	"encoding/json"
 	"os"
+	"strings"
 
 	"mesail.dev/packages/outbox"
+	"mesail.dev/packages/webpush"
 )
 
 // @Service
 type NotifySettingsService struct{}
 
-func (settings *NotifySettingsService) Snapshot() string {
+func (settings *NotifySettingsService) snapshot() string {
 	return os.Getenv(settings.variable())
 }
 
 func (settings *NotifySettingsService) Outbox() (outbox.Settings, error) {
-	found, failure := outbox.SettingsReader{}.FromApplicationJSON(settings.Snapshot())
+	found, failure := outbox.SettingsReader{}.FromApplicationJSON(settings.snapshot())
 	return found, settings.unavailable(failure)
 }
 
@@ -23,10 +26,26 @@ func (settings *NotifySettingsService) Options() NotifyOptions {
 	return application.Notify
 }
 
+func (settings *NotifySettingsService) PushKeys() (webpush.VapidKeys, error) {
+	keys, failure := webpush.VapidSettingsReader{}.FromApplicationJSON(settings.snapshot())
+	return keys, cmp.Or(settings.pushTurnedOff(), failure)
+}
+
+func (settings *NotifySettingsService) pushTurnedOff() error {
+	if settings.switchedOn(settings.Options().Push.Enabled) {
+		return nil
+	}
+	return &PushTurnedOff{}
+}
+
+func (settings *NotifySettingsService) switchedOn(raw json.RawMessage) bool {
+	return strings.EqualFold(strings.Trim(string(raw), `"`), "true")
+}
+
 func (settings *NotifySettingsService) application() string {
-	snapshot := ApplicationSnapshot{}
-	_ = json.Unmarshal([]byte(settings.Snapshot()), &snapshot)
-	return settings.orEmpty(snapshot.Yon)
+	document := ApplicationSnapshot{}
+	_ = json.Unmarshal([]byte(settings.snapshot()), &document)
+	return settings.orEmpty(document.Yon)
 }
 
 func (settings *NotifySettingsService) orEmpty(application json.RawMessage) string {

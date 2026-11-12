@@ -84,7 +84,7 @@ queued and never sent. Mail between your own hosted domains needs neither.
 
 | Setting | Meaning |
 | --- | --- |
-| `dnsresolver` in `apps/directory` | The resolver for domain checks. Default after OP1: the host's own resolver **(planned)**; today it is a public DNS-over-HTTPS address and must be changed. |
+| `dnsresolver` in `apps/directory` | The resolver for domain checks. Empty (the default) means the host's own resolver (`/etc/resolv.conf` of the host or container). Set a DNS-over-HTTPS (JSON) address only if you run one; its host must then be in `outgoing.hosts`. There is no public default (OP1). |
 
 **Files (attachments and mail)**
 
@@ -98,13 +98,13 @@ that folder with the data.
 | `YON_ATTACHMENTS_ADAPTER` | `local` (on-premise): files in the blob folder. `s3` only for a later cloud form. |
 | `YON_ATTACHMENTS_FOLDER` | The folder for files (local adapter). |
 | `YON_ATTACHMENTS_LINK_BASE`, `YON_ATTACHMENTS_LINK_SECRET` | The `/blobs` address and the link signing secret (32 characters or more); the router's `MESAIL_ROUTER_BLOBS_*` use the same values. |
-| An S3 endpoint | Required with the `s3` adapter; after OP1 it never falls back to AWS **(planned)**. |
+| An S3 endpoint (`YON_ATTACHMENTS_ENDPOINT`, `YON_MAILIN_BLOBS_ENDPOINT`, `MESAIL_RAW_STORE_S3_ENDPOINT`) | Required with the `s3` adapter; there is no AWS fallback (OP1). Without it `attachments` answers `503`, `mail-in` refuses file calls and the SMTP edge does not start. |
 
 **Browser push** (off by default, SPEC Q19)
 
 | Setting | Meaning |
 | --- | --- |
-| `notify.push.enabled` **(planned)** | `false` by default. Turn it on only when the install may reach the browser makers' push services (section 4). |
+| `notify.push.enabled` (`YON_NOTIFY_PUSH_ENABLED`) | `false` by default. Turn it on only when the install may reach the browser makers' push services (section 4). While it is off, `GET /notify/push-key` answers `503`, the web app hides push (slice N2), and `notify` sends no Web Push. |
 | `YON_NOTIFY_VAPID_PUBLIC_KEY`, `YON_NOTIFY_VAPID_PRIVATE_KEY`, `YON_NOTIFY_VAPID_SUBJECT` | The VAPID keys and contact, from secret files. |
 | `notify.push.hosts` | The push service hosts allowed (Google FCM, Mozilla, Apple, Microsoft). |
 

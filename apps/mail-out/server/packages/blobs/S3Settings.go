@@ -13,16 +13,16 @@ type S3Settings struct {
 }
 
 func (settings S3Settings) BaseUrl() string {
-	return settings.endpointOrAws(settings.Endpoint)
+	return settings.Endpoint
 }
 
 func (settings S3Settings) PublicUrl() string {
-	return settings.endpointOrAws(cmp.Or(settings.PublicEndpoint, settings.Endpoint))
+	return cmp.Or(settings.PublicEndpoint, settings.Endpoint)
 }
 
-func (settings S3Settings) endpointOrAws(endpoint string) string {
-	if endpoint == "" {
-		return "https://s3." + settings.Region + ".amazonaws.com"
+func (settings S3Settings) Check() error {
+	if settings.Endpoint == "" {
+		return MissingEndpoint{}
 	}
-	return endpoint
+	return nil
 }

@@ -65,7 +65,7 @@ any other error for a temporary failure.
 | `MESAIL_RAW_STORE_S3_BUCKET` | none | Set it to keep raw copies in S3 instead of the local folder |
 | `MESAIL_RAW_STORE_S3_REGION`, `MESAIL_RAW_STORE_S3_ACCESS_KEY_ID`, `MESAIL_RAW_STORE_S3_SECRET_ACCESS_KEY_FILE` | required with `MESAIL_RAW_STORE_S3_BUCKET` | S3 region, access key id, and a file that holds the secret access key |
 | `MESAIL_RAW_STORE_S3_TIMEOUT_SECONDS` | `300` | Longest time for one S3 upload, in seconds (5 minutes is enough for 25 MiB at about 100 KB/s) |
-| `MESAIL_RAW_STORE_S3_ENDPOINT` | AWS (`https://s3.<region>.amazonaws.com`) | Another S3 endpoint, for example Floci in local tests |
+| `MESAIL_RAW_STORE_S3_ENDPOINT` | required with `MESAIL_RAW_STORE_S3_BUCKET` (no default) | The S3-compatible store's address, for example a self-hosted store, or Floci in local tests. There is no cloud default (ADR 0007): without it the edge refuses to start |
 | `MESAIL_SERVICE_TOKEN` | none | A fixed Service bearer token |
 | `MESAIL_SERVICE_TOKEN_URL`, `MESAIL_SERVICE_CLIENT_ID`, `MESAIL_SERVICE_CLIENT_SECRET_FILE` | required without `MESAIL_SERVICE_TOKEN` | OAuth2 client credentials; the token is kept until 30 seconds before it expires |
 

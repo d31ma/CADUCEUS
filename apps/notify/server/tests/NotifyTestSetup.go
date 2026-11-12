@@ -69,7 +69,7 @@ func (NotifyTestSetup) Use(settings oidc.Settings) {
 			"subscribers": []any{map[string]any{"name": "mail-out", "url": "http://127.0.0.1:8110/api/v1/mail-out/events"}},
 		},
 		"notify": map[string]any{
-			"push": map[string]any{"hosts": webpush.EndpointPolicy{}.DefaultHosts()},
+			"push": map[string]any{"enabled": true, "hosts": webpush.EndpointPolicy{}.DefaultHosts()},
 			"vapid": map[string]any{
 				"public":  map[string]any{"key": keys.PublicKey},
 				"private": map[string]any{"key": keys.PrivateKey},
@@ -239,4 +239,17 @@ func (setup NotifyTestSetup) StagedSummary(domainId string) SummaryRecord {
 		panic(err)
 	}
 	return SummaryRecord{DomainId: domainId, MemberId: "member-1", BatchKey: setup.Name("batch"), Rcpt: "ana@" + domainId, Subject: "Unread", Body: "1 unread", NotificationIds: []string{"ntf_1"}, CreatedAt: (&TimestampService{}).Now(), PendingEvents: fields.PendingEvents, DeadEvents: fields.DeadEvents, OutboxPending: fields.OutboxPending, OutboxDead: fields.OutboxDead}
+}
+
+func (NotifyTestSetup) ChangePush(change func(push map[string]any)) {
+	document := map[string]any{}
+	if err := json.Unmarshal([]byte(os.Getenv("YON_APPLICATION_JSON")), &document); err != nil {
+		panic(err)
+	}
+	change(document["yon"].(map[string]any)["notify"].(map[string]any)["push"].(map[string]any))
+	raw, err := json.Marshal(document)
+	if err != nil {
+		panic(err)
+	}
+	os.Setenv("YON_APPLICATION_JSON", string(raw))
 }

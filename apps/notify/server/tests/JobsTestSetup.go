@@ -69,7 +69,7 @@ func (JobsTestSetup) UseNotify(hosts []string, presenceUrl string) {
 		panic(err)
 	}
 	notify := document["yon"].(map[string]any)["notify"].(map[string]any)
-	notify["push"] = map[string]any{"hosts": hosts}
+	notify["push"] = map[string]any{"enabled": true, "hosts": hosts}
 	notify["presence"] = map[string]any{"url": presenceUrl}
 	raw, err := json.Marshal(document)
 	if err != nil {
@@ -78,12 +78,20 @@ func (JobsTestSetup) UseNotify(hosts []string, presenceUrl string) {
 	os.Setenv("YON_APPLICATION_JSON", string(raw))
 }
 
-func (JobsTestSetup) WithoutVapid() {
+func (setup JobsTestSetup) WithoutVapid() {
+	setup.changeNotify(func(notify map[string]any) { delete(notify, "vapid") })
+}
+
+func (setup JobsTestSetup) WithPushTurnedOff() {
+	setup.changeNotify(func(notify map[string]any) { notify["push"].(map[string]any)["enabled"] = false })
+}
+
+func (JobsTestSetup) changeNotify(change func(notify map[string]any)) {
 	document := map[string]any{}
 	if err := json.Unmarshal([]byte(os.Getenv("YON_APPLICATION_JSON")), &document); err != nil {
 		panic(err)
 	}
-	delete(document["yon"].(map[string]any)["notify"].(map[string]any), "vapid")
+	change(document["yon"].(map[string]any)["notify"].(map[string]any))
 	raw, err := json.Marshal(document)
 	if err != nil {
 		panic(err)
@@ -240,7 +248,7 @@ func (JobsTestSetup) Use(settings oidc.Settings) {
 			"subscribers": []any{map[string]any{"name": "mail-out", "url": "http://127.0.0.1:8110/api/v1/mail-out/events"}},
 		},
 		"notify": map[string]any{
-			"push": map[string]any{"hosts": webpush.EndpointPolicy{}.DefaultHosts()},
+			"push": map[string]any{"enabled": true, "hosts": webpush.EndpointPolicy{}.DefaultHosts()},
 			"vapid": map[string]any{
 				"public":  map[string]any{"key": keys.PublicKey},
 				"private": map[string]any{"key": keys.PrivateKey},

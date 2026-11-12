@@ -103,6 +103,7 @@ func s3Values() map[string]string {
 	values["MESAIL_RAW_STORE_S3_REGION"] = "eu-west-1"
 	values["MESAIL_RAW_STORE_S3_ACCESS_KEY_ID"] = "edge-key"
 	values["MESAIL_RAW_STORE_S3_SECRET_ACCESS_KEY_FILE"] = "/run/secrets/raw-store"
+	values["MESAIL_RAW_STORE_S3_ENDPOINT"] = "http://floci.local:4566"
 	return values
 }
 
@@ -115,7 +116,6 @@ func TestTheLocalFolderIsUsedWithoutABucket(t *testing.T) {
 
 func TestABucketChoosesS3AndNeedsNoFolder(t *testing.T) {
 	values := s3Values()
-	values["MESAIL_RAW_STORE_S3_ENDPOINT"] = "http://floci.local:4566"
 	settings, err := NewSettingsReader(environmentOf(values)).Load()
 	want := S3RawStoreSettings{Endpoint: "http://floci.local:4566", Bucket: "mesail-raw", Region: "eu-west-1", AccessKeyId: "edge-key", SecretFile: "/run/secrets/raw-store", Timeout: 5 * time.Minute}
 	if err != nil || settings.RawStoreS3 != want || settings.RawStoreFolder != "" {
@@ -128,7 +128,7 @@ func TestABucketNeedsTheOtherS3Values(t *testing.T) {
 	values["MESAIL_RAW_STORE_S3_BUCKET"] = "mesail-raw"
 	_, err := NewSettingsReader(environmentOf(values)).Load()
 	text := err.Error()
-	if !strings.Contains(text, "MESAIL_RAW_STORE_S3_REGION") || !strings.Contains(text, "MESAIL_RAW_STORE_S3_ACCESS_KEY_ID") || !strings.Contains(text, "MESAIL_RAW_STORE_S3_SECRET_ACCESS_KEY_FILE") {
+	if !strings.Contains(text, "MESAIL_RAW_STORE_S3_REGION") || !strings.Contains(text, "MESAIL_RAW_STORE_S3_ACCESS_KEY_ID") || !strings.Contains(text, "MESAIL_RAW_STORE_S3_SECRET_ACCESS_KEY_FILE") || !strings.Contains(text, "MESAIL_RAW_STORE_S3_ENDPOINT") {
 		t.Fatalf("unexpected error %q", text)
 	}
 }
@@ -149,5 +149,15 @@ func TestABadS3TimeoutIsRefused(t *testing.T) {
 	var invalid InvalidSetting
 	if !errors.As(err, &invalid) || invalid.Name != "MESAIL_RAW_STORE_S3_TIMEOUT_SECONDS" {
 		t.Fatalf("want the timeout to be named, got %v", err)
+	}
+}
+
+func TestABucketWithoutAnEndpointIsRefused(t *testing.T) {
+	values := s3Values()
+	delete(values, "MESAIL_RAW_STORE_S3_ENDPOINT")
+	_, err := NewSettingsReader(environmentOf(values)).Load()
+	var missing MissingSetting
+	if !errors.As(err, &missing) || missing.Name != "MESAIL_RAW_STORE_S3_ENDPOINT" {
+		t.Fatalf("want the endpoint to be required, got %v", err)
 	}
 }

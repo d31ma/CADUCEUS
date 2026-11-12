@@ -15,7 +15,7 @@ type PushTargetsService struct {
 }
 
 func (service *PushTargetsService) ForPlatforms() (map[string]webpush.Target, error) {
-	keys, failure := webpush.VapidSettingsReader{}.FromApplicationJSON(service.settings.Snapshot())
+	keys, failure := service.settings.PushKeys()
 	policy := webpush.EndpointPolicy{Hosts: service.settings.Options().Push.Hosts}
 	web := webpush.NewWebPushTarget(webpush.NewVapidSigner(keys, time.Now), webpush.NewEncryptor(rand.Reader), policy, service.clientOrDefault())
 	targets := map[string]webpush.Target{webpush.Platforms{}.Web(): web}

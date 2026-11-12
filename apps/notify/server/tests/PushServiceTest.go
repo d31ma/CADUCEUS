@@ -109,6 +109,16 @@ func (test *PushServiceTest) TestDeliverSkipsWhenVapidIsNotConfigured() {
 	Assert.Equals("skipped", JobsTestSetup{}.Found(record).PushState)
 }
 
+func (test *PushServiceTest) TestDeliverSendsNoWebPushWhenPushIsTurnedOff() {
+	domainId, record, pushes, calls := test.prepared(201)
+	JobsTestSetup{}.WithPushTurnedOff()
+	progress, err := pushes.Deliver(domainId, []NotificationRecord{record}, 25)
+	Assert.IsTrue(err == nil, "deliver failed")
+	Assert.Equals(1, progress.Skipped)
+	Assert.Equals(int32(0), calls())
+	Assert.Equals("skipped", JobsTestSetup{}.Found(record).PushState)
+}
+
 func (test *PushServiceTest) TestDeliverStopsWhenTheBudgetIsSpent() {
 	domainId, record, pushes, calls := test.prepared(201)
 	progress, err := pushes.Deliver(domainId, []NotificationRecord{record}, 0)

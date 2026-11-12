@@ -97,7 +97,7 @@ is_production_module() {
 }
 
 module_build_tags() {
-  grep -rh '^//go:build [a-z0-9_]*$' . --include='*.go' | sed 's|^//go:build ||' | sort -u | paste -sd, -
+  grep -rh '^//go:build [a-z0-9_]*$' . --include='*.go' --exclude-dir=vendor | sed 's|^//go:build ||' | sort -u | paste -sd, -
 }
 
 module_vet_options() {
@@ -114,7 +114,7 @@ module_test_options() {
 
 module_formatted() {
   local unformatted
-  unformatted="$(gofmt -l .)"
+  unformatted="$(find . -name '*.go' -not -path './vendor/*' -exec gofmt -l {} +)"
   [ -z "$unformatted" ] || { echo "gofmt needed: $unformatted"; return 1; }
 }
 

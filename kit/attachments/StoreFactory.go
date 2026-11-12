@@ -16,7 +16,7 @@ func (factory StoreFactory) Store(settings Settings) (blobs.Store, error) {
 	if err != nil {
 		return nil, err
 	}
-	return factory.chosen(settings), nil
+	return factory.chosen(settings)
 }
 
 func (factory StoreFactory) checkSecret(settings Settings) error {
@@ -26,9 +26,9 @@ func (factory StoreFactory) checkSecret(settings Settings) error {
 	return nil
 }
 
-func (factory StoreFactory) chosen(settings Settings) blobs.Store {
+func (factory StoreFactory) chosen(settings Settings) (blobs.Store, error) {
 	if settings.Adapter == factory.localAdapter() {
-		return factory.local(settings)
+		return factory.local(settings), nil
 	}
 	return factory.s3(settings)
 }
@@ -37,12 +37,16 @@ func (StoreFactory) local(settings Settings) blobs.Store {
 	return blobs.NewLocalFolder(settings.Folder, settings.Link.Base, blobs.NewLocalSigner([]byte(settings.Link.Secret)))
 }
 
-func (factory StoreFactory) s3(settings Settings) blobs.Store {
+func (factory StoreFactory) s3(settings Settings) (blobs.Store, error) {
 	s3Settings := blobs.S3Settings{
 		Endpoint: settings.Endpoint, PublicEndpoint: settings.Public, Region: settings.Region, Bucket: settings.Bucket,
 		AccessKeyId: factory.Environment("AWS_ACCESS_KEY_ID"), SecretAccessKey: factory.Environment("AWS_SECRET_ACCESS_KEY"), SessionToken: factory.Environment("AWS_SESSION_TOKEN"),
 	}
-	return blobs.NewS3Store(s3Settings, transport.SingleUseTransport{}.Client(0), time.Now)
+	store, err := blobs.NewS3Store(s3Settings, transport.SingleUseTransport{}.Client(0), time.Now)
+	if err != nil {
+		return nil, err
+	}
+	return store, nil
 }
 
 func (StoreFactory) localAdapter() string {

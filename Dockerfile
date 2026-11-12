@@ -132,10 +132,8 @@ ENTRYPOINT ["/mesail-router"]
 
 FROM ${GOLANG_IMAGE} AS realtime-gateway-build
 WORKDIR /src/edge/realtime
-COPY edge/realtime/go.mod edge/realtime/go.sum ./
-RUN GOTOOLCHAIN=local go mod download -x
 COPY edge/realtime/ ./
-RUN GOTOOLCHAIN=local GOFLAGS=-mod=readonly CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" -o /out/mesail-realtime-gateway .
+RUN GOTOOLCHAIN=local GOPROXY=off GOFLAGS=-mod=vendor CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" -o /out/mesail-realtime-gateway .
 
 FROM lambda-tools AS realtime
 ARG USER_ID=10001

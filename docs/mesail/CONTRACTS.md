@@ -347,6 +347,13 @@ question.) Every address in a request is trimmed; the domain
 part and, for hosted domains, the local part are lowercased before any
 lookup (SPEC AC-ID-11).
 
+The `dns` states come from the resolver that `directory.dnsresolver`
+names. Empty (the default) means the host's own resolver. An operator may
+set a DNS-over-HTTPS (JSON) URL instead; its host must then be in
+`outgoing.hosts`. No public resolver is a default (ADR 0007, slice OP1).
+A resolver that fails or times out (30 seconds) answers `503 unavailable`;
+a missing name or record counts as `missing`.
+
 Members and people (ADR 0005, SPEC AC-ID-10 to AC-ID-13):
 - `POST /members` with a prefix that has no person: reserves the local
   part, creates the Keycloak user in the realm `mesail` (username = the
@@ -640,6 +647,12 @@ An attachment in another domain answers `404`.
   forbidden`; no valid token `401`.
 - **Blob links.** With the S3 adapter the links are AWS Signature V4
   presigned URLs (path style, `<public endpoint>/<bucket>/<domainId>/<name>`).
+  The S3 adapter needs an explicit `endpoint` (`attachments.endpoint`,
+  `mailin.blobs.endpoint`, the SMTP edge's
+  `MESAIL_RAW_STORE_S3_ENDPOINT`); `public` falls back to it. There is no
+  AWS or other cloud default (ADR 0007, slice OP1): without an endpoint
+  `attachments` answers `503 unavailable`, `mail-in` refuses every blob
+  call, and the SMTP edge does not start.
   With the local-folder adapter (all-in-one image, native dev) they are
   `<attachments.link.base>/<domainId>/<name>?expires&type&size&file&signature`
   (HMAC-SHA256), served by `kit/blobs` `LocalHandler` mounted by the router
@@ -748,7 +761,11 @@ How it works:
   route); `tag` is `<domainId>/<conversationId>`, so a newer push for the
   same conversation replaces the older one. A subscription is stored per
   (domain, member); the web app registers the same browser subscription
-  once in each domain it opens while push is on. The VAPID keys come from the secret store (`.env`:
+  once in each domain it opens while push is on. Push is off unless
+  `notify.push.enabled` is `true` (default `false`: on-premise installs
+  reach no push service unless an Operator turns it on; ADR 0007, SPEC
+  Q19). While it is off, `GET /push-key` answers `503 unavailable` and no
+  Web Push is sent: a waiting push is marked `skipped`. The VAPID keys come from the secret store (`.env`:
   `YON_NOTIFY_VAPID_PUBLIC_KEY`, `YON_NOTIFY_VAPID_PRIVATE_KEY`,
   `YON_NOTIFY_VAPID_SUBJECT`). A push endpoint must be `https` on a known
   push service host (`notify.push.hosts`), else `400 invalid_request`.

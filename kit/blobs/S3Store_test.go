@@ -29,7 +29,7 @@ func fakeS3(t *testing.T, status int, body string) (S3Store, *[]recordedRequest)
 	}))
 	t.Cleanup(server.Close)
 	settings := S3Settings{Endpoint: server.URL, Region: "us-east-1", Bucket: "mesail-attachments", AccessKeyId: "test", SecretAccessKey: "test"}
-	return NewS3Store(settings, server.Client(), testNow), seen
+	return testS3Store(settings, server.Client(), testNow), seen
 }
 
 func TestS3SignUploadPresignsAPutOfTheExactSize(t *testing.T) {
@@ -132,7 +132,7 @@ func TestS3DeleteRefusesBadKeys(t *testing.T) {
 
 func TestS3RequestsFailWhenTheEndpointIsUnreachable(t *testing.T) {
 	settings := S3Settings{Endpoint: "http://127.0.0.1:1", Region: "us-east-1", Bucket: "b", AccessKeyId: "test", SecretAccessKey: "test"}
-	store := NewS3Store(settings, &http.Client{Timeout: time.Second}, testNow)
+	store := testS3Store(settings, &http.Client{Timeout: time.Second}, testNow)
 	_, readErr := store.Read(Key{DomainId: "example.com", Name: "a1"})
 	deleteErr := store.Delete(Key{DomainId: "example.com", Name: "a1"})
 	if readErr == nil || deleteErr == nil {
@@ -141,7 +141,7 @@ func TestS3RequestsFailWhenTheEndpointIsUnreachable(t *testing.T) {
 }
 
 func TestS3RequestsFailWithABadEndpoint(t *testing.T) {
-	store := NewS3Store(S3Settings{Endpoint: "http://bad host", Bucket: "b"}, http.DefaultClient, testNow)
+	store := testS3Store(S3Settings{Endpoint: "http://bad host", Bucket: "b"}, http.DefaultClient, testNow)
 	_, signErr := store.SignUpload(Key{DomainId: "example.com", Name: "a1"}, UploadTerms{}, testNow())
 	_, readErr := store.Read(Key{DomainId: "example.com", Name: "a1"})
 	if signErr == nil || readErr == nil {
@@ -160,8 +160,8 @@ func TestS3EnsureBucketCreatesTheBucketOnce(t *testing.T) {
 
 func TestS3EnsureBucketReportsFailures(t *testing.T) {
 	store, _ := fakeS3(t, http.StatusForbidden, "")
-	unreachable := NewS3Store(S3Settings{Endpoint: "http://127.0.0.1:1", Bucket: "b"}, &http.Client{Timeout: time.Second}, testNow)
-	badUrl := NewS3Store(S3Settings{Endpoint: "http://bad host", Bucket: "b"}, http.DefaultClient, testNow)
+	unreachable := testS3Store(S3Settings{Endpoint: "http://127.0.0.1:1", Bucket: "b"}, &http.Client{Timeout: time.Second}, testNow)
+	badUrl := testS3Store(S3Settings{Endpoint: "http://bad host", Bucket: "b"}, http.DefaultClient, testNow)
 	if store.EnsureBucket() == nil || unreachable.EnsureBucket() == nil || badUrl.EnsureBucket() == nil {
 		t.Fatal("expected errors")
 	}
@@ -198,7 +198,7 @@ func TestS3WriteRefusesABodyOfTheWrongSize(t *testing.T) {
 
 func TestS3WriteReportsFailures(t *testing.T) {
 	store, _ := fakeS3(t, http.StatusForbidden, "")
-	unreachable := NewS3Store(S3Settings{Endpoint: "http://127.0.0.1:1", Bucket: "b"}, &http.Client{Timeout: time.Second}, testNow)
+	unreachable := testS3Store(S3Settings{Endpoint: "http://127.0.0.1:1", Bucket: "b"}, &http.Client{Timeout: time.Second}, testNow)
 	if store.Write(Key{DomainId: "example.com", Name: "a1"}, strings.NewReader("x"), 1) == nil || unreachable.Write(Key{DomainId: "example.com", Name: "a1"}, strings.NewReader("x"), 1) == nil {
 		t.Fatal("expected errors")
 	}
@@ -231,9 +231,28 @@ func TestS3CopyRefusesBadKeysAndReportsFailures(t *testing.T) {
 	store, seen := fakeS3(t, http.StatusOK, "")
 	badFrom := store.Copy(Key{DomainId: "example.com", Name: "../a"}, Key{DomainId: "example.org", Name: "a1"})
 	badTo := store.Copy(Key{DomainId: "example.com", Name: "a1"}, Key{DomainId: "Example.org", Name: "a1"})
-	unreachable := NewS3Store(S3Settings{Endpoint: "http://127.0.0.1:1", Bucket: "b"}, &http.Client{Timeout: time.Second}, testNow)
+	unreachable := testS3Store(S3Settings{Endpoint: "http://127.0.0.1:1", Bucket: "b"}, &http.Client{Timeout: time.Second}, testNow)
 	failed := unreachable.Copy(Key{DomainId: "example.com", Name: "a1"}, Key{DomainId: "example.org", Name: "a1"})
 	if badFrom == nil || badTo == nil || failed == nil || len(*seen) != 0 {
 		t.Fatalf("got %v, %v, %v after %d requests", badFrom, badTo, failed, len(*seen))
+	}
+}
+
+func testS3Store(settings S3Settings, client *http.Client, now func() time.Time) S3Store {
+	store, _ := NewS3Store(settings, client, now)
+	return store
+}
+
+func TestNewS3StoreRefusesAMissingEndpoint(t *testing.T) {
+	_, err := NewS3Store(S3Settings{Region: "eu-west-1", Bucket: "b"}, http.DefaultClient, testNow)
+	if !errors.Is(err, MissingEndpoint{}) || !strings.Contains(err.Error(), "endpoint") {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestNewS3StoreAcceptsAConfiguredEndpoint(t *testing.T) {
+	_, err := NewS3Store(S3Settings{Endpoint: "http://s3.internal.test:9000", Bucket: "b"}, http.DefaultClient, testNow)
+	if err != nil {
+		t.Fatalf("got %v", err)
 	}
 }

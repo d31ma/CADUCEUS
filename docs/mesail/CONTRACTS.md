@@ -269,10 +269,14 @@ and T14 (apps).
   its build (TACHYON T14)). The setting is one text value with the
   origins separated by spaces (SLICES rule 17), sent to Keycloak as the
   one `passkey_origins` field. The relying party id is the host of its
-  first `https://` origin; there is no second setting. `identity` refuses
-  to start when an `https://` origin has another host, when an `http://`
+  first `https://` origin; there is no second setting. The setting is
+  invalid when an `https://` origin has another host, when an `http://`
   origin is not `localhost` (WebAuthn allows plain HTTP only there), or
-  when no `https://` or `http://localhost` origin is listed. The relying
+  when no `https://` or `http://localhost` origin is listed. TACHYON
+  26.46.02 has no start-up hook, so with an invalid setting every passkey
+  route answers `503 unavailable` (fail closed), `GET /identity/health`
+  answers `{"status":"degraded"}`, and password sign-in keeps working.
+  The deploy checks `identity`'s health after each start. The relying
   party id must equal Keycloak's `MESAIL_PASSKEY_RP_ID` (PK1).
   `mesail-keycloak`'s authenticator finds the user from the user handle,
   checks signature, sign count, user verification and the origin, and

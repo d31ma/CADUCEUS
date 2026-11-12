@@ -15,7 +15,7 @@ type FanoutQueueService struct {
 }
 
 func (queue *FanoutQueueService) Spill(batch FanoutBatch, remaining []notify.Recipient) error {
-	message, failure := json.Marshal(batch.Message)
+	message, failure := json.Marshal(queue.withoutContent(batch.Message))
 	recipients, encodeFailure := queue.encoded(remaining)
 	return queue.insertUnless(cmp.Or(failure, encodeFailure), queue.record(batch, message, recipients))
 }
@@ -34,6 +34,11 @@ func (queue *FanoutQueueService) Read(record FanoutRecord) (events.MessageCreate
 func (queue *FanoutQueueService) Save(record FanoutRecord, remaining []notify.Recipient) error {
 	recipients, failure := queue.encoded(remaining)
 	return queue.saveUnless(failure, record, recipients)
+}
+
+func (queue *FanoutQueueService) withoutContent(message events.MessageCreated) events.MessageCreated {
+	message.Body, message.Subject, message.FileNames = "", "", []string{}
+	return message
 }
 
 func (queue *FanoutQueueService) record(batch FanoutBatch, message []byte, recipients []string) FanoutRecord {

@@ -1,4 +1,6 @@
 import (
+	"strings"
+
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/notify"
 )
@@ -29,6 +31,30 @@ func (test *FanoutQueueServiceTest) TestSpillStoresTheMessageAndTheRecipients() 
 	Assert.IsTrue(err == nil && readFailure == nil, "spill failed")
 	Assert.Equals(1, len(waiting))
 	Assert.Equals("msg_1", payload.MessageId)
+	Assert.Equals(test.remaining(), recipients)
+}
+
+func (test *FanoutQueueServiceTest) TestSpillLeavesOutTheContentOfAHugeMessage() {
+	domainId := NotifyTestSetup{}.Domain()
+	queue := test.queue()
+	batch := test.batch(domainId)
+	batch.Message.Body = strings.Repeat("<", 200000)
+	batch.Message.Subject = strings.Repeat("<", 1000)
+	batch.Message.FileNames = []string{"report<1>.pdf"}
+	batch.Message.AuthorDisplayName = "Dan"
+	batch.Message.MemberIds = []string{"member-2", "member-3"}
+	err := queue.Spill(batch, test.remaining())
+	waiting, readFailure := queue.Waiting(domainId, 10)
+	payload, recipients, decodeFailure := queue.Read(waiting[0])
+	Assert.IsTrue(err == nil && readFailure == nil && decodeFailure == nil, "the huge message was not spilled and read back")
+	Assert.IsTrue(JobsTestSetup{}.DocumentBytes(waiting[0]) < JobsTestSetup{}.DocumentLimitBytes(), "the spilled record is over 512 KiB")
+	Assert.Equals("", payload.Body)
+	Assert.Equals("", payload.Subject)
+	Assert.Equals(0, len(payload.FileNames))
+	Assert.Equals("msg_1", payload.MessageId)
+	Assert.Equals("cnv_1", payload.ConversationId)
+	Assert.Equals("Dan", payload.AuthorDisplayName)
+	Assert.Equals([]string{"member-2", "member-3"}, payload.MemberIds)
 	Assert.Equals(test.remaining(), recipients)
 }
 

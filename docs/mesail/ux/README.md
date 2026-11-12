@@ -447,18 +447,15 @@ Questions from the screen work (product owner to decide; none blocks the first s
   online" beyond that); a refused upload goes to "Needs your attention". (e) The person chooses the space
   limit (300 MB, 1 GB, 2 GB, 5 GB), capped by the free space the device reports. (f) A mention of someone
   who left the channel is not a refusal: the message is sent, the mention shows as plain text.
-- **Passkeys and the app lock (slice PU, for mesail-arch).** (a) **Rename** has no route yet: CONTRACTS
-  "identity" lists only list, setup, confirm and remove. The mockups need `PATCH /api/v1/identity/passkeys/{passkeyId}`
-  with `{label}` (SignedIn, 1 to 64 characters, `200 Passkey`, `404 not_found`), no password (it changes a
-  label only). (b) **The count of lost items** (AC-OF-20): after `keyLost` Mesail cannot read the locked
-  queue, so it must keep the number of waiting items outside the OS-locked tables (a number only, under the
-  normal sealed key) to say "3 items ... were lost". (c) An expired `setupKey` (10 minutes): the mockup
-  assumes `400 invalid_passkey` with a field or code that tells it apart (it then goes back to step 1); a
-  separate code such as `400 setup_expired` would be clearer. (d) Design choices to confirm: where the device
-  has no passkey support, the Passkeys row still shows when the account has passkeys (to remove a lost one;
-  Add stays hidden); the passkey button lands in the default domain even when the field holds a full
-  address; the locked screen shows no counts; "Cannot unlock? Sign out" removes the copy without counting
-  what was lost.
+- **Passkeys and the app lock (slice PU): answered by mesail-arch on 2026-11-12 (develop feb4b8d).**
+  (a) **Rename:** CONTRACTS has `PATCH /api/v1/identity/passkeys/{passkeyId}` with `{label}` (SignedIn, no
+  password; `200 Passkey`, `400 invalid_request` for a label outside 1 to 64 characters, `404 not_found`).
+  (b) **The count of lost items** (AC-OF-20): PK6 keeps the number of waiting items (a count only, no content)
+  outside the OS-locked tables, under the normal sealed key, and updates it with every queue change.
+  (c) **An expired `setupKey`** (10 minutes): confirm answers `400 setup_expired`; every other failure stays
+  `400 invalid_passkey`. (d) **Design choices confirmed:** without passkey support the Passkeys row still shows
+  when the account has passkeys (Remove works, Add is hidden); the passkey button opens the default domain
+  (AC-ID-16); the locked screen shows no counts; Rename needs no password.
 - **Settings.** Does the job title come from Keycloak, like the name? Is "Always show images from
   people I have emailed" allowed (AC-IN-5 speaks of one sender at a time)? Is auto-reply out of the
   first release (the mockup shows it as "Later release")?
@@ -723,13 +720,14 @@ keeps a copy; browsers and the Linux app never show it (`StorageUnlockUnavailabl
     Mesail. Tell your admin, so they can fix it."; `unsupported` "This device cannot make passkeys here. Add
     one on another device, such as your phone."; `invalid` or `failed` "Something went wrong, so no passkey was
     made. Try again."; `400 invalid_passkey` "Mesail could not save this passkey. Try again. If your device
-    now shows a Mesail passkey that is not in this list, delete it in the device's settings."; more than 10
-    minutes since step 1: back to step 1 with "This took too long, so Mesail asks again."
+    now shows a Mesail passkey that is not in this list, delete it in the device's settings."; `400 setup_expired`
+    (more than 10 minutes since step 1): back to step 1 with "This took too long, so Mesail asks again."
   - Done: the dialog closes, the new row shows, and a snackbar: "Passkey "MacBook" added. Next time, choose
     Sign in with a passkey."
 - **Rename** (a small dialog): **Name** with a counter, **Save**. Empty: "Type a name, like iPhone or Work
   phone." `404`: "This passkey was removed, maybe on another device. The list is now up to date." No password:
-  a label is not a secret. (Needs a route: section 14.)
+  a label is not a secret (`PATCH /identity/passkeys/{passkeyId}`; a `400 invalid_request` shows under the
+  field like the empty-name line).
 - **Remove** (a dialog, "Remove the passkey "iPhone"?"): "You can no longer sign in with this passkey.", a
   warning box **"Your other devices will be signed out"**: "All your other devices will be signed out, in every
   domain. This device stays signed in. A signed-out device deletes its copy of your messages the next time it

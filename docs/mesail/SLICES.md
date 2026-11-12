@@ -1547,7 +1547,13 @@ TACHYON's T15 slice (ADR 0008). The Keycloak and identity parts may be built bef
 - **Depends on:** PK1.
 
 ### PK4. Web: passkey sign-in and settings (the web app's owner)
-- **Builds:** PU's screens with TACHYON's `Passkeys` client (T13).
+- **Builds:** PU's screens with TACHYON's `Passkeys` client (T13, TACHYON
+  ADR 0126): `passkeys` in the web app's `tac.browserApis` (coordinate the
+  manifest line with F1's owner); `check()` and its `PasskeySupport` event
+  decide whether "Sign in with a passkey" and Settings > Sign-in show
+  passkeys; `create` and `get` are called directly from the button's click
+  handler, never after an await or a timer; `offer` for the username
+  field's autofill; every `PasskeyFailed` reason has a line (PU).
 - **Depends on:** PU, PK2, TACHYON T13 in a release Mesail uses.
 
 ### PK5. Apps: passkeys in the native shells (P1's successor, with the web app's owner)

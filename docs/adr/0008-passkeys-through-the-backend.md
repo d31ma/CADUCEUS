@@ -139,7 +139,11 @@ provides; TACHYON's coordinator handles that.
   `PasskeyAsserted { credentialJson }`; every failure as
   `PasskeyFailed { call, reason, message }` with `reason` one of
   `cancelled`, `exists`, `unsupported`, `refused`, `busy`, `invalid`,
-  `failed`. A user action is required.
+  `failed`. A user action is required. **On TACHYON `develop`** since
+  2026-11-12 (b2ea5b2aa, TACHYON ADR 0126; not released yet): the grant is
+  `passkeys` in `tac.browserApis`; `check()` answers with a
+  `PasskeySupport` event; `create` and `get` run only from a click or key
+  handler; native apps answer `unsupported` until T14.
 - **T14** (apps) The same client in the native shells through each
   platform's passkey API (Apple `ASAuthorization`, Android Credential
   Manager, Windows `webauthn.dll`; Linux answers `unsupported`). The

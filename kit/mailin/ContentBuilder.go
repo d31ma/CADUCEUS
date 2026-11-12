@@ -61,7 +61,8 @@ func (builder ContentBuilder) saved(stored InboundRaw, parts []mime.Attachment) 
 func (builder ContentBuilder) converted(message mime.Message, attachments []InboundAttachment) InboundContent {
 	message.Text = builder.withoutFinalBreak(message.Text)
 	result, format := builder.blocks(message, builder.inlineImages(attachments))
-	return InboundContent{Text: cmp.Or(message.Text, result.Text), BodyFormat: format, Blocks: result.Blocks, Truncated: result.Truncated, Attachments: attachments}
+	content := InboundContent{Text: cmp.Or(message.Text, result.Text), BodyFormat: format, Blocks: result.Blocks, Truncated: result.Truncated, Attachments: attachments}
+	return ContentBudget{}.Applied(content)
 }
 
 func (ContentBuilder) blocks(message mime.Message, inlineImages map[string]string) (richtext.Result, string) {

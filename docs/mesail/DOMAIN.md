@@ -260,7 +260,7 @@ from `channels` through events, plus email senders into the channel.
 | `threadRootId` | string | empty for a root. Threads are one level deep. |
 | `author` | `{kind, memberId?, address, displayName}` | `kind` is `member`, `otherDomain` or `external` |
 | `clientMessageId` | string | unique per author; makes send idempotent |
-| `body` | string | the source: Markdown for chat (max 40,000 chars), the plain text for email |
+| `body` | string | the source: Markdown for chat (max 40,000 chars), the plain text for email (max 200,000 chars) |
 | `bodyFormat` | `markdown` \| `text` \| `email` | where the blocks came from (CONTRACTS.md "Rich text") |
 | `blocksJson` | string | the typed blocks as one JSON string (FYLO stores no arrays of objects), made on the server by `kit/richtext`; the client renders only these |
 | `truncated` | bool | the body was longer than the limits |

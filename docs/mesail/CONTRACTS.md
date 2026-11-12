@@ -840,7 +840,10 @@ owns it; M3 uses it):
   the same value as that part's `InboundAttachment.blobKey`. A message that
   `kit/mime` cannot parse (malformed, or over its 25 MiB limit) answers empty
   `blocks` and `attachments` with `truncated: true`, so the client offers the
-  original. `messaging` makes the blocks for chat messages
+  original. Size budget (`kit/mailin` ContentBudget), the same for this route
+  and for the event: `text` is cut at 200,000 characters; if the JSON is
+  still over 2 MiB, the blocks are made from `text` instead (`bodyFormat:
+  text`). Each cut sets `truncated: true`. `messaging` makes the blocks for chat messages
   from their Markdown with the same package.
 
 ## mail-in (SMTP, not HTTP)

@@ -2,9 +2,9 @@
 set -euo pipefail
 
 duvay_repository() { echo "https://github.com/d31ma/DUVAY"; }
-duvay_release() { echo "v26.46.03"; }
-duvay_version() { echo "26.46.03"; }
-duvay_commit() { echo "ba8f682a266fdfe28627d5331f457db52a0ae73e"; }
+duvay_release() { echo "develop"; }
+duvay_version() { echo "26.46.04-develop.bf03e95"; }
+duvay_commit() { echo "bf03e95061d5bcb6e7197b0a2b6de3eba83b42ad"; }
 package_name() { echo "@d31ma/duvay"; }
 package_license() { echo "MIT"; }
 script_name() { echo "duvay-mesail.js"; }

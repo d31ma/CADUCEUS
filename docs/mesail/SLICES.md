@@ -1080,7 +1080,9 @@ FYLO owner's design choice; Mesail does not need it.
   an amendment to its ADR 0128; not released) makes the next store call
   wait, within its own deadline, for a killed `fylo` to exit, logs
   `storage.fylo_process_stopped`, and adds the data source setting
-  `datasource.operationTimeoutMs` (1,000 to 60,000, default 5,000). The
+  `timeout` in the FYLO data source settings (milliseconds, 1,000 to
+  60,000, default 5,000; first named `operationTimeoutMs`, renamed because
+  TACHYON setting keys hold only lowercase letters and digits, TY2010). The
   Floci image installs `ty` only from a release, so the rerun needs one.
   K8 merges its own parts now (the 60 second function timeout and the
   writer guard, with the proof in the findings note); the K2 10-run check
@@ -1093,7 +1095,7 @@ FYLO owner's design choice; Mesail does not need it.
 - **Builds:**
   - the pin moves to the first TACHYON release with ADR 0128 and its
     amendment (ff94a61dd), after the owner approves that release;
-  - `datasource.operationTimeoutMs` 15,000 for every FYLO-owning service
+  - the FYLO data source setting `timeout` 15,000 for every FYLO-owning service
     in Lambda form (the dev host, kestrel and AWS later); native runs keep
     5,000 (decided 2026-11-12: ATLAS write stalls reach 10.9 seconds and
     cold-start writes took 9.5 and 18 seconds, so 5 seconds turns them

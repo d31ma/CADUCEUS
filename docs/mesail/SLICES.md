@@ -1052,13 +1052,11 @@ except for the items below.
 - **Also (decided 2026-11-11, after L5 merges):** rule 17 for `mail-out`:
   `mailout.directenabled` and `mailout.relayrequiretls` accept `"true"`
   and `"false"` from the environment (this change only, with the mail-out
-  owner's agreement); and keep the Floci run green after the S3 adapter
-  stops falling back to AWS: put `attachments` on the local adapter in the
-  Floci stack, on L5's shared EFS access point `blobs` (ADR 0007 section
-  7), and give the router the same folder for `/blobs`
-  (`MESAIL_ROUTER_BLOBS_FOLDER`, `_BASE`, `_SECRET`, matching the
-  attachments settings). OP2 then only hardens that layout for
-  production.
+  owner's agreement). The Floci blob layout for `attachments` moved to OP2
+  (decided 2026-11-12 with OP1): Floci names each EFS volume only after
+  deploy, while the router starts before deploy, so mounting it needs a
+  restart workaround. The Floci blackbox suite reaches `attachments` only
+  through its health route, so it stays green.
 - **Done when:** a grep of the tree finds no public host or AWS host as a
   default in code or settings (`cloudflare-dns`, `amazonaws.com`,
   `8.8.8.8`, `1.1.1.1`, `dns.google`), and gates pass for the touched
@@ -1075,6 +1073,18 @@ except for the items below.
     in Lambda mode, the scheduler, `realtime`, `edge/realtime`,
     `edge/smtp` (it has no deployment yet), Keycloak with its data on a
     volume (not tmpfs) and the operator's settings (OPERATIONS.md);
+  - the shared blob folder (ADR 0007 section 7), in the Floci test run and
+    in production: `attachments` joins L5's EFS share (`fileSystemShare:
+    "mail"`, folder `/mnt/data/blobs`) on the local adapter, and the router
+    and the SMTP edge reach the same folder for `/blobs` and
+    `MESAIL_RAW_STORE_DIR`. Floci names each EFS volume only after deploy
+    (`floci-aws-efs-<access point>-<hash>`), and the router starts before
+    deploy, so do not rely on that generated name: find a layout where the
+    folder exists first (for example Floci's EFS on a fixed host path, or
+    a named volume made before deploy) or, if Floci allows nothing else,
+    start the router after deploy; no restart of a running router. Add a
+    Floci blackbox run that uploads and downloads an attachment, since the
+    suite reaches `attachments` today only through its health route;
   - networks: an `internal` network for Floci, the functions, Keycloak and
     `realtime`; one egress container as the only way out, with an
     allowlist built from the settings (resolver, relay or port 25 for

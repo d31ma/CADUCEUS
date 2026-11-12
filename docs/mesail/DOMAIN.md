@@ -34,7 +34,7 @@ own TACHYON Go app in `apps/<service>/`, with the route prefix
 | `realtime` | `connections`, `presence` | messages |
 | `notify` | `notifications`, `push-subscriptions`, `notify-settings`, `notify-threads`, `notify-summaries`, `notify-fanout`, `events-seen` | messages |
 | `search` | `search-index` | the source documents |
-| `mail-in` | `inbound-raw` (metadata) and the raw-mail bucket | conversations |
+| `mail-in` | `inbound-raw` (metadata), `inbound-content` (each email's readable content, split by month) and the raw-mail bucket | conversations |
 | `mail-out` | `outbound-queue`, `suppressions`, `delivery-attempts` | conversations |
 
 ### Roles
@@ -93,7 +93,9 @@ notes):
     `channels-a379a6f6eeafb9a5` for `example.com`;
   - large collections, also split by month:
     `<collection>-<domainKey>-<YYYYMM>`. These are `messages`, `deliveries`,
-    `search-index` and `notifications`, for example
+    `search-index`, `notifications` and `mail-in`'s `inbound-content`
+    (decided 2026-11-12: each email's content may be up to about 2 MiB),
+    for example
     `messages-a379a6f6eeafb9a5-202611`.
 - **The domain key.** FYLO 26.45.07 accepts only lowercase letters, digits
   and `-` in a collection name, and the name must not start with `-`

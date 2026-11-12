@@ -797,6 +797,15 @@ section 7).
   - **web-admin's `DomainListServiceTest`** uses the install-wide domain `*`
     (`oidc.InstallWide`), not `mesail-operators`.
   - **`tests/responsive/IdentityFake.go`** accepts `login`, not `address`.
+  - **`mail-in`'s `inbound-content` is split by month** (DOMAIN.md "FYLO
+    layout", decided 2026-11-12): `kit/mailin` `ContentShelf` uses
+    `CollectionName{}.ForDomainMonth` with the email's received month, and
+    reads look in that month's collection (the content's key carries the
+    month, or the reader finds it from `InboundRaw`'s received time). Each
+    email's content may be up to about 2 MiB, so one collection per domain
+    would reach FYLO's 256 MiB limit after about 128 large emails. With the
+    mail-in owner's agreement; no data migration is needed before the first
+    release.
 - **Done when:** gates pass for every touched app and module, and the
   blackbox recipient and sign-in tests pass natively and on Floci.
 

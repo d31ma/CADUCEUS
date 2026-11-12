@@ -949,6 +949,16 @@ FYLO owner's design choice; Mesail does not need it.
     `EROOTLOCKED` as busy and wait a bounded time (about 2 seconds) before
     failing. This also covers AWS Lambda later, where an old environment
     can stay alive after a redeploy.
+    **TACHYON's answer** (TACHYON `develop` 3a1008a0e, TACHYON ADR 0128,
+    not released yet): a failed store call writes `handler.storage_failed`
+    with the `request_id` and `TY2160` "FYLO operation failed (<code>)" to
+    `ty`'s standard error (no data, token or path); on `EROOTLOCKED` the
+    data source retries for up to 2 seconds (10 ms, doubling to 200 ms)
+    before it fails. The per-call lease is only a plan: FYLO ADR 0011's
+    lease is a Rust library API, not in the `fylo` binary, and not approved
+    for deployment. So fix (a) above is the real fix; after Mesail's
+    TACHYON pin moves, the outage names itself and short overlaps of two
+    containers end within 2 seconds.
   - make the cause visible first, by using TACHYON's running handler-log
     work, not a new request: session "TACHYON: Yon handlers can write logs
     on every answer" (branch `feat/yon-handler-logs`, 2eade57a5, its ADR

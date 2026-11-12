@@ -237,9 +237,10 @@ Decisions:
     every call until the first one stops. So the platform's invocation
     timeout equals the function's timeout, a redeploy stops the old
     container before the new one takes calls, and the deploy tooling
-    stops an extra container if one appears. TACHYON is asked to use
-    FYLO's per-invocation lease (FYLO ADR 0011) in Lambda form, or to wait
-    a bounded time on `EROOTLOCKED`, which also covers AWS Lambda.
+    stops an extra container if one appears. TACHYON (its ADR 0128, not
+    released yet) logs each failed store call with its FYLO code and waits
+    up to 2 seconds on `EROOTLOCKED`; a per-call lease is not available
+    yet, so this rule stays the real protection, on AWS Lambda too.
   - **Slow work goes through the outbox.** A route writes its own document
     once and returns; fan-out, indexing, notification and delivery happen
     later from the outbox relay and job routes (EVENTS.md). Chat stays

@@ -1790,13 +1790,64 @@ except for the items below.
   `mail-in`, `mail-out` and `edge/smtp`, so it runs when no other slice is
   changing those (the coordinator orders it). Small: about one session.
 
+### OP7. Attachments end to end on Floci (one small session, after OP6)
+Found by OP6 (2026-11-14, hand-over
+`~/Library/Logs/local/CADUCEUS/mesail/slice-op6-handover.md`): on Floci,
+`attachments` is checked only by its health route. `stack.json` gives it
+no blob folder (OP1 left this for OP2), and no blackbox test uploads or
+downloads an attachment.
+- **Owns, for this change only:** `deploy/floci/stack.json` (the
+  `attachments` entry and its `lambdaSettings`), `tests/blackbox`
+  (a new `Attachments_test.go`), and `scripts/floci/run-all.sh` or
+  `scripts/floci/test.sh` only if the new file is not picked up already
+  (`test.sh` runs every test file with fresh tokens).
+- **Builds:**
+  - `attachments` on Floci gets the shared blob folder the same way
+    `mail-in` and `mail-out` already do (L5): `YON_ATTACHMENTS_ADAPTER`
+    `local`, `YON_ATTACHMENTS_FOLDER` `/mnt/data/blobs`, the `/blobs` link
+    base and the shared link secret; no bucket and no S3 setting
+    (ADR 0007 section 7, OP6).
+  - a blackbox test as a member of a test domain: upload a file of a few
+    hundred KiB with random bytes through the attachments routes
+    (CONTRACTS "attachments"), get its download link, download it through
+    the router's `/blobs`, and check the bytes and the size match; also
+    that another domain's member gets `404` for the same id, and that an
+    expired or changed link is refused. The test removes what it made
+    (tests/blackbox README rule) and passes natively too.
+- **Depends on:** OP6 merged. Not at the same time as OP2 (OP2 owns
+  `deploy/**`) or a slice changing `apps/attachments` (E1); it changes no
+  `mail-out` or `devicebox` file, so K13 and G13 may run beside it. If the
+  test finds a bug in `attachments`, the fix waits for E1 or goes to E1's
+  owner.
+- **Done when:** the Floci run (`scripts/floci/run-all.sh attachments` or
+  the full run) and the native run pass the new test; gates pass for
+  `tests/blackbox`.
+
+### OP8. The SMTP edge in the Floci test stack (one small session, after OP7)
+Also found by OP6: the SMTP edge has no deployment in the Floci stack, so
+`tests/blackbox/Smtp_test.go` skips there (no `MESAIL_SMTP_ADDR`).
+- **Owns, for this change only:** `deploy/floci/stack.json` and the Floci
+  scripts that start containers (`scripts/floci/stack.sh`, `up.sh`,
+  `down.sh`, `run-all.sh`), for one new container `edge/smtp` built from
+  its existing Dockerfile stage, on the Floci network, with the shared
+  blob folder as `MESAIL_RAW_STORE_DIR`, port 25 published on 127.0.0.1
+  only (a test port such as 12525 on the Mac), and `MESAIL_SMTP_ADDR` set
+  for the blackbox run.
+- **Builds:** the test stack only. Production (kestrel, the egress rules
+  of ADR 0007 section 4) stays OP2's.
+- **Depends on:** OP7 (both change `stack.json`). Not at the same time as
+  OP2.
+- **Done when:** `Smtp_test.go` runs (not skips) and passes in the Floci
+  run; `scripts/floci/down.sh` removes the new container.
+
 OP5 (an offline build bundle) is dropped: the owner decided that builds
 may download pinned parts (SPEC Q20).
 
 ### Order
 OP1 and OP4 at once; OP2 after L5 and OP1; OP3 after OP2. OP6 when no
 running slice changes `kit/blobs`, `attachments`, `mail-in`, `mail-out` or
-`edge/smtp`.
+`edge/smtp`. OP7 after OP6, not beside OP2 or
+E1; OP8 after OP7, not beside OP2.
 
 ## Wave 6: passkeys (ADR 0008)
 

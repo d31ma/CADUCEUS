@@ -18,6 +18,7 @@ func (test *PushKeyControllerTest) TestGetPushKeyRefusesAMissingToken() {
 	_, err := (&PushKeyController{pushKeys: NotifyTestSetup{}.PushKeys()}).GetPushKey("")
 	refused := &Unauthenticated{}
 	Assert.IsTrue(errors.As(err, &refused))
+	Assert.Equals(4501, refused.Number())
 }
 
 func (test *PushKeyControllerTest) TestGetPushKeyIsUnavailableWhenPushIsTurnedOff() {
@@ -28,4 +29,5 @@ func (test *PushKeyControllerTest) TestGetPushKeyIsUnavailableWhenPushIsTurnedOf
 	_, err := (&PushKeyController{pushKeys: setup.PushKeys()}).GetPushKey(token)
 	unavailable := &PushNotConfigured{}
 	Assert.IsTrue(errors.As(err, &unavailable))
+	Assert.Equals(4516, unavailable.Number())
 }

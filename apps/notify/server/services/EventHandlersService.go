@@ -24,5 +24,5 @@ func (service *EventHandlersService) route(envelope events.Envelope) error {
 	case types.MessageEdited(), types.ReactionChanged():
 		return nil
 	}
-	return &InvalidRequest{Field: "type", Reason: "notify does not handle events of type " + envelope.Type}
+	return InvalidRequest{}.UnknownEventType(envelope.Type)
 }

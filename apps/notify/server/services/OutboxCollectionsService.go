@@ -39,5 +39,5 @@ func (registry *OutboxCollectionsService) refusal(failure error, known bool) err
 	if failure != nil || known {
 		return failure
 	}
-	return &NotFound{What: "outbox collection"}
+	return NotFound{}.OutboxCollection()
 }

@@ -31,20 +31,20 @@ func (service *PushSubscriptionsService) Unsubscribe(authorization string, reque
 
 func (service *PushSubscriptionsService) checkEndpoint(endpoint string) error {
 	refusal := webpush.EndpointPolicy{Hosts: service.settings.Options().Push.Hosts}.Check(endpoint)
-	return service.invalid(refusal, "endpoint")
+	return service.invalid(refusal)
 }
 
 func (service *PushSubscriptionsService) checkKeys(request PushSubscriptionRequest) error {
 	if request.PublicKey == "" || request.Auth == "" || len(request.PublicKey) > service.keyLimit() || len(request.Auth) > service.keyLimit() {
-		return &InvalidRequest{Field: "p256dh", Reason: "the subscription keys p256dh and auth are required"}
+		return InvalidRequest{}.MissingKeys()
 	}
 	return nil
 }
 
-func (service *PushSubscriptionsService) invalid(refusal error, field string) error {
+func (service *PushSubscriptionsService) invalid(refusal error) error {
 	refused := webpush.RefusedEndpoint{}
 	if errors.As(refusal, &refused) {
-		return &InvalidRequest{Field: field, Reason: refused.Reason}
+		return InvalidRequest{}.BadEndpoint(refused.Reason)
 	}
 	return refusal
 }

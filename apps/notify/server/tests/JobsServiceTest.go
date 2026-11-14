@@ -15,6 +15,7 @@ func (test *JobsServiceTest) TestRunRefusesADomainService() {
 	_, err := JobsTestSetup{}.Jobs(nil, outbox.NewRecordingPusher()).Run(setup.Service(member))
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
+	Assert.Equals(4502, missing.Number())
 }
 
 func (test *JobsServiceTest) TestRunRefusesABadToken() {
@@ -23,6 +24,7 @@ func (test *JobsServiceTest) TestRunRefusesABadToken() {
 	_, err := JobsTestSetup{}.Jobs(nil, outbox.NewRecordingPusher()).Run("Bearer nonsense")
 	refused := &Unauthenticated{}
 	Assert.IsTrue(errors.As(err, &refused))
+	Assert.Equals(4501, refused.Number())
 }
 
 func (test *JobsServiceTest) TestRunVisitsTheRegisteredDomains() {

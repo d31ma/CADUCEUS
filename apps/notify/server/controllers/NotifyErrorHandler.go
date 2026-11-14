@@ -1,3 +1,5 @@
+import "mesail.dev/packages/apierrors"
+
 // @ErrorHandler
 type NotifyErrorHandler struct {
 }
@@ -5,39 +7,45 @@ type NotifyErrorHandler struct {
 // @HandlesError
 // @ResponseStatus(400)
 func (handler *NotifyErrorHandler) Invalid(failure *InvalidRequest) ApiError {
-	return ApiError{Code: "invalid_request", Message: failure.Reason, Field: failure.Field}
+	return handler.answer(failure.ErrorCase)
 }
 
 // @HandlesError
 // @ResponseStatus(401)
 func (handler *NotifyErrorHandler) Refused(failure *Unauthenticated) ApiError {
-	return ApiError{Code: "unauthenticated", Message: "Sign in again."}
+	return handler.answer(failure.ErrorCase)
 }
 
 // @HandlesError
 // @ResponseStatus(403)
 func (handler *NotifyErrorHandler) Forbidden(failure *NotService) ApiError {
-	return ApiError{Code: "forbidden", Message: "Only another Mesail service may call this route."}
+	return handler.answer(failure.ErrorCase)
 }
 
 // @HandlesError
 // @ResponseStatus(404)
 func (handler *NotifyErrorHandler) Missing(failure *NotFound) ApiError {
-	return ApiError{Code: "not_found", Message: "The " + failure.What + " was not found."}
+	return handler.answer(failure.ErrorCase)
 }
 
 // @HandlesError
 // @ResponseStatus(503)
 func (handler *NotifyErrorHandler) Unavailable(failure *StorageUnavailable) ApiError {
-	return ApiError{Code: handler.unavailableCode(), Message: "Notification storage is not available. Try again later."}
+	return handler.answer(failure.ErrorCase)
 }
 
 // @HandlesError
 // @ResponseStatus(503)
 func (handler *NotifyErrorHandler) PushUnavailable(failure *PushNotConfigured) ApiError {
-	return ApiError{Code: handler.unavailableCode(), Message: "Web push is not configured on this server."}
+	return handler.answer(failure.ErrorCase)
 }
 
-func (handler *NotifyErrorHandler) unavailableCode() string {
-	return "unavailable"
+// @HandlesError
+// @ResponseStatus(500)
+func (handler *NotifyErrorHandler) Unexpected(failure error) ApiError {
+	return handler.answer(UnexpectedFailure{}.Unexpected().ErrorCase)
+}
+
+func (handler *NotifyErrorHandler) answer(failure ErrorCase) ApiError {
+	return ApiError{Code: failure.Code(), Message: apierrors.Message{}.Format(failure.Number(), failure.Error()), Field: failure.Field()}
 }

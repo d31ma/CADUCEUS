@@ -22,6 +22,7 @@ func (test *NotifySettingsServiceTest) TestOutboxRefusesMissingSettings() {
 	_, err := (&NotifySettingsService{}).Outbox()
 	unavailable := &StorageUnavailable{}
 	Assert.IsTrue(errors.As(err, &unavailable))
+	Assert.Equals(4518, unavailable.Number())
 }
 
 func (test *NotifySettingsServiceTest) TestOptionsReadsThePushHosts() {

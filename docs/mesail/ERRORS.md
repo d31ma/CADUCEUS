@@ -119,6 +119,28 @@ keeps its row, marked "retired".
 | MS3500 | attachments | 500 | `unavailable` | Something went wrong. | an unexpected error in `attachments` |
 | MS4000 | search | 500 | `unavailable` | Something went wrong. | an unexpected error in `search` |
 | MS4500 | notify | 500 | `unavailable` | Something went wrong. | an unexpected error in `notify` |
+| MS4501 | notify | 401 | `unauthenticated` | Sign in again. | a notify route could not verify the caller's token |
+| MS4502 | notify | 404 | `not_found` | The install-wide route was not found. | an operator-only route (jobs, outbox) called with a token that is not install-wide |
+| MS4503 | notify | 403 | `forbidden` | Only another Mesail service may call this route. | `POST /events` with a token that has no `Service` role |
+| MS4504 | notify | 404 | `not_found` | The domain was not found. | an event for another domain than the calling service's own |
+| MS4505 | notify | 400 | `invalid_request` | (the event check's text) | `kit/events` refused the event envelope (`field` `envelope`) |
+| MS4506 | notify | 400 | `invalid_request` | notify does not handle events of type ... | an event type notify does not handle (`field` `type`) |
+| MS4507 | notify | 400 | `invalid_request` | the time is not an RFC 3339 time | a time in an event payload is not RFC 3339 (`field` `time`) |
+| MS4508 | notify | 400 | `invalid_request` | limit must be a whole number from 1 to 100 | `GET /notifications` with a bad `limit` (`field` `limit`) |
+| MS4509 | notify | 400 | `invalid_request` | cursor is not readable | `GET /notifications` with a bad `cursor` (`field` `cursor`) |
+| MS4510 | notify | 404 | `not_found` | The notification was not found. | mark read for a notification id that is unknown, has another prefix, or belongs to someone else |
+| MS4511 | notify | 404 | `not_found` | The message was not found. | `GET /messages/{id}/source` for a summary that is unknown or in another domain |
+| MS4512 | notify | 400 | `invalid_request` | must be 0 or between 15 and 1440 | `PUT /settings` with a bad summary delay (`field` `emailSummaryAfterMinutes`) |
+| MS4513 | notify | 400 | `invalid_request` | (the settings check's text) | `PUT /settings` with too many or bad muted conversation ids (`field` `mutedConversationIds`) |
+| MS4514 | notify | 400 | `invalid_request` | (the endpoint check's text) | a push subscription endpoint that is not an allowed https URL (`field` `endpoint`) |
+| MS4515 | notify | 400 | `invalid_request` | the subscription keys p256dh and auth are required | a push subscription without its keys, or with keys too long (`field` `p256dh`) |
+| MS4516 | notify | 503 | `unavailable` | Web push is not configured on this server. | web push is turned off or its keys are missing |
+| MS4517 | notify | 503 | `unavailable` | Notification storage is not available. Try again later. | the notify store (FYLO) did not answer |
+| MS4518 | notify | 503 | `unavailable` | Notification storage is not available. Try again later. | the outbox settings cannot be read |
+| MS4519 | notify | 503 | `unavailable` | Notification storage is not available. Try again later. | the outbox relay failed for another reason |
+| MS4520 | notify | 404 | `not_found` | The outbox document was not found. | the outbox document to retry does not exist |
+| MS4521 | notify | 404 | `not_found` | The outbox collection was not found. | the collection named in a retry is not an outbox collection |
+| MS4522 | notify | 404 | `not_found` | The dead letter was not found. | the dead letter to retry is not in the outbox document |
 | MS5000 | realtime | 500 | `unavailable` | Something went wrong. | an unexpected error in `realtime` |
 | MS5001 | realtime | 400 | `invalid_request` | a connection id is required | the gateway connects a connection with no `connectionId` (field `connectionId`) |
 | MS5002 | realtime | 400 | `invalid_request` | the kind is socket or stream | the gateway connects a connection whose `kind` is not `socket` or `stream` (field `kind`) |

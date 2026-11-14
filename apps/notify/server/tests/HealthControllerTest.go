@@ -4,9 +4,9 @@ type HealthControllerTest struct {
 }
 
 func (test *HealthControllerTest) TestGetHealthNamesTheService() {
-	Assert.Equals("notify", (&HealthController{}).GetHealth().Service)
+	Assert.Equals("notify", HealthTestSetup{}.Health().GetHealth().Service)
 }
 
 func (test *HealthControllerTest) TestGetHealthSaysOk() {
-	Assert.Equals("ok", (&HealthController{}).GetHealth().Status)
+	Assert.Equals("ok", HealthTestSetup{}.Health().GetHealth().Status)
 }

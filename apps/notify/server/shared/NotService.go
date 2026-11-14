@@ -1,5 +1,7 @@
-type NotService struct{}
+type NotService struct {
+	ErrorCase
+}
 
-func (failure *NotService) Error() string {
-	return "only a caller with the Service role may call this route"
+func (NotService) ServiceOnly() *NotService {
+	return &NotService{ErrorCase{4503, "forbidden", "", "Only another Mesail service may call this route."}}
 }

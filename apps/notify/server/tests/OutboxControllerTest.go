@@ -19,6 +19,7 @@ func (test *OutboxControllerTest) TestPostRelayRefusesADomainService() {
 	_, err := test.controller().PostRelay(setup.Service(member))
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
+	Assert.Equals(4502, missing.Number())
 }
 
 func (test *OutboxControllerTest) TestGetDeadRefusesADomainService() {
@@ -27,6 +28,7 @@ func (test *OutboxControllerTest) TestGetDeadRefusesADomainService() {
 	_, err := test.controller().GetDead(setup.Service(member))
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
+	Assert.Equals(4502, missing.Number())
 }
 
 func (test *OutboxControllerTest) TestPostRetryRefusesADomainService() {
@@ -35,4 +37,5 @@ func (test *OutboxControllerTest) TestPostRetryRefusesADomainService() {
 	err := test.controller().PostRetry(setup.Service(member), RetryRequest{})
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
+	Assert.Equals(4502, missing.Number())
 }

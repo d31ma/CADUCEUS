@@ -20,6 +20,7 @@ func (test *CallerServiceTest) TestCallerRefusesABadToken() {
 	_, err := (&CallerService{}).Caller("Bearer nonsense")
 	refused := &Unauthenticated{}
 	Assert.IsTrue(errors.As(err, &refused))
+	Assert.Equals(4501, refused.Number())
 }
 
 func (test *CallerServiceTest) TestOperatorAcceptsAnInstallWideToken() {
@@ -34,6 +35,7 @@ func (test *CallerServiceTest) TestOperatorRefusesADomainService() {
 	err := (&CallerService{}).Operator(setup.Service(member))
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
+	Assert.Equals(4502, missing.Number())
 }
 
 func (test *CallerServiceTest) TestIsInstallWideMatchesTheStarDomain() {

@@ -45,7 +45,7 @@ func (service *EventsService) envelope(request EventEnvelope) events.Envelope {
 
 func (service *EventsService) domainCheck(callerDomainId string, envelopeDomainId string) error {
 	if callerDomainId != envelopeDomainId && !service.callers.IsInstallWide(callerDomainId) {
-		return &NotFound{What: "domain"}
+		return NotFound{}.Domain()
 	}
 	return nil
 }
@@ -70,9 +70,9 @@ func (service *EventsService) translated(failure error) error {
 	case failure == nil:
 		return nil
 	case errors.As(failure, &events.NotService{}):
-		return &NotService{}
+		return NotService{}.ServiceOnly()
 	case errors.As(failure, new(*Unauthenticated)), errors.As(failure, new(*NotFound)), errors.As(failure, new(*StorageUnavailable)):
 		return failure
 	}
-	return &InvalidRequest{Field: "envelope", Reason: failure.Error()}
+	return InvalidRequest{}.BadEnvelope(failure.Error())
 }

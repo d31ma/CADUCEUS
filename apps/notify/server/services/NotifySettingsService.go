@@ -57,7 +57,7 @@ func (settings *NotifySettingsService) orEmpty(application json.RawMessage) stri
 
 func (settings *NotifySettingsService) unavailable(failure error) error {
 	if failure != nil {
-		return &StorageUnavailable{Operation: "read the outbox settings"}
+		return StorageUnavailable{}.OutboxSettings()
 	}
 	return nil
 }

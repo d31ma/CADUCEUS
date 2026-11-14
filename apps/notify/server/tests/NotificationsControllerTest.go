@@ -26,4 +26,5 @@ func (test *NotificationsControllerTest) TestPutReadAnswersNotFoundForAnUnknownI
 	err := (&NotificationsController{notifications: setup.Notifications()}).PutRead(setup.Member(member, "member-1"), "ntf_unknown")
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
+	Assert.Equals(4510, missing.Number())
 }

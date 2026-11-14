@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Changed `notify`'s error answers (slice E5, ADR 0009): every error
+  answer that `notify` shapes now has a numbered message,
+  `[MS<4 digits>]: <plain English message>`, from notify's block
+  MS4500-MS4522 in `docs/mesail/ERRORS.md` (for example
+  `[MS4510]: The notification was not found.`). `code`, `field`,
+  routes, statuses and the message texts after the number do not
+  change. An error that no other handler method takes answers
+  `500 unavailable` with `[MS4500]`. Every controller route now makes
+  one Service call (new `HealthService`).
 - Changed `identity`'s error answers (slice E6, ADR 0009): every error
   answer that `identity` shapes now has a numbered message,
   `[MS<4 digits>]: <plain English message>`, from identity's block

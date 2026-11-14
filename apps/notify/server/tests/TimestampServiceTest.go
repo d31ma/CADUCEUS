@@ -21,6 +21,7 @@ func (test *TimestampServiceTest) TestParseRefusesText() {
 	_, err := (&TimestampService{}).Parse("yesterday")
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As(err, &invalid))
+	Assert.Equals(4507, invalid.Number())
 }
 
 func (test *TimestampServiceTest) TestMonthIsYearAndMonth() {

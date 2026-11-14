@@ -27,7 +27,7 @@ func (service *PushKeyService) publicKey(failure error, keys webpush.VapidKeys) 
 
 func (service *PushKeyService) notConfigured(problem error) error {
 	if problem != nil {
-		return &PushNotConfigured{}
+		return PushNotConfigured{}.NoKeys()
 	}
 	return nil
 }

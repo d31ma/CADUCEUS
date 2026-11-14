@@ -130,7 +130,7 @@ func (service *OutboxRelayService) wire(report outbox.Report) OutboxReport {
 
 func (service *OutboxRelayService) missingLetter(failure error) error {
 	if errors.As(failure, &outbox.NotFound{}) {
-		return &NotFound{What: "dead letter"}
+		return NotFound{}.DeadLetter()
 	}
 	return failure
 }
@@ -142,7 +142,7 @@ func (service *OutboxRelayService) unavailable(failure error) error {
 	case errors.As(failure, new(*Unauthenticated)), errors.As(failure, new(*NotFound)):
 		return failure
 	}
-	return &StorageUnavailable{Operation: "relay the outbox"}
+	return StorageUnavailable{}.OutboxRelay()
 }
 
 func (service *OutboxRelayService) sweepSize() int {

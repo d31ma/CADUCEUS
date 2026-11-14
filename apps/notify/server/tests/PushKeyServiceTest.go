@@ -25,6 +25,7 @@ func (test *PushKeyServiceTest) TestKeyIsUnavailableWithoutVapidKeys() {
 	key, err := setup.PushKeys().Key(token)
 	unavailable := &PushNotConfigured{}
 	Assert.IsTrue(errors.As(err, &unavailable))
+	Assert.Equals(4516, unavailable.Number())
 	Assert.Equals("", key.PublicKey)
 }
 
@@ -36,6 +37,7 @@ func (test *PushKeyServiceTest) TestKeyIsUnavailableWhenPushIsTurnedOff() {
 	key, err := setup.PushKeys().Key(token)
 	unavailable := &PushNotConfigured{}
 	Assert.IsTrue(errors.As(err, &unavailable))
+	Assert.Equals(4516, unavailable.Number())
 	Assert.Equals("", key.PublicKey)
 }
 
@@ -47,6 +49,7 @@ func (test *PushKeyServiceTest) TestKeyIsUnavailableWhenTheSettingIsMissing() {
 	key, err := setup.PushKeys().Key(token)
 	unavailable := &PushNotConfigured{}
 	Assert.IsTrue(errors.As(err, &unavailable))
+	Assert.Equals(4516, unavailable.Number())
 	Assert.Equals("", key.PublicKey)
 }
 
@@ -68,4 +71,5 @@ func (test *PushKeyServiceTest) TestKeyIsUnavailableWhenTheSettingIsOtherText() 
 	_, err := setup.PushKeys().Key(token)
 	unavailable := &PushNotConfigured{}
 	Assert.IsTrue(errors.As(err, &unavailable))
+	Assert.Equals(4516, unavailable.Number())
 }

@@ -19,4 +19,5 @@ func (test *SettingsControllerTest) TestPutSettingsRefusesTooManyMinutes() {
 	_, err := (&SettingsController{preferences: setup.Preferences()}).PutSettings(setup.Member(member, "member-1"), NotifySettings{EmailSummaryAfterMinutes: 2000})
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As(err, &invalid))
+	Assert.Equals(4512, invalid.Number())
 }

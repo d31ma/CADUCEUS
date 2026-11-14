@@ -31,6 +31,7 @@ func (test *OutboxStoreServiceTest) TestLoadRefusesAnUnregisteredCollection() {
 	_, err := NotifyTestSetup{}.OutboxStore().Load(outbox.Ref{Collection: NotifyTestSetup{}.Name("other"), Id: "x"})
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
+	Assert.Equals(4521, missing.Number())
 }
 
 func (test *OutboxStoreServiceTest) TestSaveSettlesTheDocument() {

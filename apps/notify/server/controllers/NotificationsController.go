@@ -9,8 +9,7 @@ type NotificationsController struct {
 
 // @GetRoute
 func (controller *NotificationsController) GetNotifications(request *http.Request) (NotificationPage, error) {
-	query := request.URL.Query()
-	return controller.notifications.List(request.Header.Get("Authorization"), query.Get("cursor"), query.Get("limit"))
+	return controller.notifications.Page(request)
 }
 
 // @PutRoute("/{notification_id}/read")

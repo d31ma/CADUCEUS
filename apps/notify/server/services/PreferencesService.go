@@ -45,13 +45,13 @@ func (service *PreferencesService) putUnless(failure error, caller oidc.Caller, 
 func (service *PreferencesService) invalid(refusal error) error {
 	invalid := notify.InvalidSettings{}
 	if errors.As(refusal, &invalid) {
-		return &InvalidRequest{Field: service.wireFields()[invalid.Field], Reason: invalid.Reason}
+		return cmp.Or(service.settingCases(invalid.Reason)[invalid.Field], refusal)
 	}
 	return refusal
 }
 
-func (service *PreferencesService) wireFields() map[string]string {
-	return map[string]string{"afterMinutes": "emailSummaryAfterMinutes", service.mutedField(): service.mutedField()}
+func (service *PreferencesService) settingCases(reason string) map[string]error {
+	return map[string]error{"afterMinutes": InvalidRequest{}.BadSummaryDelay(reason), service.mutedField(): InvalidRequest{}.BadMutedList(reason)}
 }
 
 func (service *PreferencesService) mutedField() string {

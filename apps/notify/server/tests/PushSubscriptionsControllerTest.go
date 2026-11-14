@@ -11,6 +11,7 @@ func (test *PushSubscriptionsControllerTest) TestPostSubscriptionRefusesPlainHtt
 	err := (&PushSubscriptionsController{subscriptions: setup.Subscriptions()}).PostSubscription(setup.Member(member, "member-1"), PushSubscriptionRequest{Endpoint: "http://fcm.googleapis.com/x", PublicKey: "k", Auth: "a"})
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As(err, &invalid))
+	Assert.Equals(4514, invalid.Number())
 }
 
 func (test *PushSubscriptionsControllerTest) TestDeleteSubscriptionOfNothingSucceeds() {

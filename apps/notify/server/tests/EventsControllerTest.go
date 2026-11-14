@@ -26,4 +26,5 @@ func (test *EventsControllerTest) TestPostEventRefusesABadEnvelope() {
 	_, err := (&EventsController{events: setup.Events()}).PostEvent(setup.Service(member), EventEnvelope{DomainId: domainId, Type: "message.edited"})
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As(err, &invalid))
+	Assert.Equals(4505, invalid.Number())
 }

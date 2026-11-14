@@ -1,5 +1,7 @@
-type Unauthenticated struct{}
+type Unauthenticated struct {
+	ErrorCase
+}
 
-func (failure *Unauthenticated) Error() string {
-	return "the access token was refused"
+func (Unauthenticated) TokenRefused() *Unauthenticated {
+	return &Unauthenticated{ErrorCase{4501, "unauthenticated", "", "Sign in again."}}
 }

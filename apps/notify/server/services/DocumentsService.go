@@ -129,7 +129,7 @@ func (documents *DocumentsService) unavailable(operation string, failure error) 
 	if failure == nil {
 		return nil
 	}
-	return &StorageUnavailable{Operation: operation}
+	return StorageUnavailable{}.Store(operation)
 }
 
 func (documents *DocumentsService) pageSize() int {

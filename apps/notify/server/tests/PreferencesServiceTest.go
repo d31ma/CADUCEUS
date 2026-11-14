@@ -31,5 +31,6 @@ func (test *PreferencesServiceTest) TestPutRefusesABadDelay() {
 	_, err := setup.Preferences().Put(setup.Member(member, "member-1"), NotifySettings{EmailSummaryAfterMinutes: 5})
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As(err, &invalid))
-	Assert.Equals("emailSummaryAfterMinutes", invalid.Field)
+	Assert.Equals(4512, invalid.Number())
+	Assert.Equals("emailSummaryAfterMinutes", invalid.Field())
 }

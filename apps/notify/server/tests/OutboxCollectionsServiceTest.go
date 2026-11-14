@@ -20,6 +20,7 @@ func (test *OutboxCollectionsServiceTest) TestCheckRefusesAnUnknownCollection() 
 	err := NotifyTestSetup{}.Registry().Check(NotifyTestSetup{}.Name("unknown"))
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
+	Assert.Equals(4521, missing.Number())
 }
 
 func (test *OutboxCollectionsServiceTest) TestAllListsTheRegisteredCollection() {

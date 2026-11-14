@@ -15,5 +15,5 @@ func (controller *MessageSourceController) GetSource(
 	messageId string,
 	request *http.Request,
 ) (MessageSource, error) {
-	return controller.sources.Source(authorization, messageId, request.URL.Query().Get("domainId"))
+	return controller.sources.Requested(authorization, messageId, request)
 }

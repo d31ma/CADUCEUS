@@ -1,5 +1,7 @@
-type PushNotConfigured struct{}
+type PushNotConfigured struct {
+	ErrorCase
+}
 
-func (failure *PushNotConfigured) Error() string {
-	return "web push keys are not configured"
+func (PushNotConfigured) NoKeys() *PushNotConfigured {
+	return &PushNotConfigured{ErrorCase{4516, "unavailable", "", "Web push is not configured on this server."}}
 }

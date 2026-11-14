@@ -77,7 +77,7 @@ func (store *OutboxStoreService) missingUnless(failure error, found bool) error 
 	if failure != nil || found {
 		return failure
 	}
-	return &NotFound{What: "outbox document"}
+	return NotFound{}.OutboxDocument()
 }
 
 func (store *OutboxStoreService) saveUnless(failure error, ref outbox.Ref, patch OutboxFieldsPatch) error {

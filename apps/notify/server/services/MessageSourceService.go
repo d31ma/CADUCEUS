@@ -1,5 +1,6 @@
 import (
 	"cmp"
+	"net/http"
 
 	"mesail.dev/packages/ids"
 	"mesail.dev/packages/oidc"
@@ -13,7 +14,11 @@ type MessageSourceService struct {
 	summaries *SummaryStoreService
 }
 
-func (service *MessageSourceService) Source(authorization string, messageId string, requestedDomainId string) (MessageSource, error) {
+func (service *MessageSourceService) Requested(authorization string, messageId string, request *http.Request) (MessageSource, error) {
+	return service.sourceFor(authorization, messageId, request.URL.Query().Get("domainId"))
+}
+
+func (service *MessageSourceService) sourceFor(authorization string, messageId string, requestedDomainId string) (MessageSource, error) {
 	caller, failure := service.callers.Caller(authorization)
 	storedId, invalidId := ids.WireId{}.Strip(service.prefix(), messageId)
 	domainId := service.domainFor(caller, requestedDomainId)
@@ -59,7 +64,7 @@ func (service *MessageSourceService) source(record SummaryRecord) MessageSource 
 }
 
 func (service *MessageSourceService) missingMessage() error {
-	return &NotFound{What: "message"}
+	return NotFound{}.Message()
 }
 
 func (service *MessageSourceService) prefix() string {

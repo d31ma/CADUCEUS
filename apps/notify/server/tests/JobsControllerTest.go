@@ -16,4 +16,5 @@ func (test *JobsControllerTest) TestPostRunHidesTheRouteFromADomainService() {
 	_, err := controller.PostRun(setup.Service(member))
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
+	Assert.Equals(4502, missing.Number())
 }

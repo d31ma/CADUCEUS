@@ -42,4 +42,5 @@ func (test *MessageSourceControllerTest) TestGetSourceHidesAnotherDomain() {
 	_, err := test.controller().GetSource(setup.Service(other), "sum_"+stored.Id, request)
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
+	Assert.Equals(4511, missing.Number())
 }

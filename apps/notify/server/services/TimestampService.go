@@ -31,7 +31,7 @@ func (timestamps *TimestampService) monthLayout() string {
 
 func (timestamps *TimestampService) invalid(failure error) error {
 	if failure != nil {
-		return &InvalidRequest{Field: "time", Reason: "the time is not an RFC 3339 time"}
+		return InvalidRequest{}.BadTime()
 	}
 	return nil
 }

@@ -26,7 +26,8 @@ func (test *PushSubscriptionsServiceTest) TestSubscribeRefusesAnUnknownHost() {
 	err := setup.Subscriptions().Subscribe(setup.Member(member, "member-1"), test.request("https://127.0.0.1/push"))
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As(err, &invalid))
-	Assert.Equals("endpoint", invalid.Field)
+	Assert.Equals(4514, invalid.Number())
+	Assert.Equals("endpoint", invalid.Field())
 }
 
 func (test *PushSubscriptionsServiceTest) TestSubscribeRefusesMissingKeys() {
@@ -35,6 +36,7 @@ func (test *PushSubscriptionsServiceTest) TestSubscribeRefusesMissingKeys() {
 	err := setup.Subscriptions().Subscribe(setup.Member(member, "member-1"), PushSubscriptionRequest{Endpoint: "https://fcm.googleapis.com/fcm/send/abc"})
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As(err, &invalid))
+	Assert.Equals(4515, invalid.Number())
 }
 
 func (test *PushSubscriptionsServiceTest) TestUnsubscribeRemovesOnlyTheCallersSubscription() {

@@ -19,14 +19,14 @@ func (callers *CallerService) IsInstallWide(domainId string) bool {
 
 func (callers *CallerService) refusal(failure error) error {
 	if failure != nil {
-		return &Unauthenticated{}
+		return Unauthenticated{}.TokenRefused()
 	}
 	return nil
 }
 
 func (callers *CallerService) operatorOnly(failure error, caller oidc.Caller) error {
 	if failure == nil && !callers.IsInstallWide(caller.DomainId) {
-		return &NotFound{What: "install-wide route"}
+		return NotFound{}.InstallWideRoute()
 	}
 	return failure
 }

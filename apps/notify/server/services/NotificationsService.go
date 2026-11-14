@@ -1,6 +1,7 @@
 import (
 	"cmp"
 	"errors"
+	"net/http"
 
 	"mesail.dev/packages/ids"
 	"mesail.dev/packages/notify"
@@ -17,13 +18,18 @@ type NotificationsService struct {
 	timestamps *TimestampService
 }
 
-func (service *NotificationsService) List(authorization string, cursor string, limitText string) (NotificationPage, error) {
+func (service *NotificationsService) Page(request *http.Request) (NotificationPage, error) {
+	query := request.URL.Query()
+	return service.list(request.Header.Get("Authorization"), query.Get("cursor"), query.Get("limit"))
+}
+
+func (service *NotificationsService) list(authorization string, cursor string, limitText string) (NotificationPage, error) {
 	caller, failure := service.callers.Caller(authorization)
 	limit, invalidLimit := notify.PageRequest{}.Limit(limitText)
-	failure = cmp.Or(failure, service.invalidPage(invalidLimit, "limit"))
+	failure = cmp.Or(failure, service.invalidLimit(invalidLimit))
 	records, failure := service.recordsUnless(failure, caller)
 	page, failure := service.pageUnless(failure, records, cursor, limit)
-	return page, service.invalidPage(failure, "cursor")
+	return page, service.invalidCursor(failure)
 }
 
 func (service *NotificationsService) MarkRead(authorization string, notificationId string) error {
@@ -105,15 +111,22 @@ func (service *NotificationsService) missing(failure error) error {
 	return nil
 }
 
-func (service *NotificationsService) invalidPage(failure error, field string) error {
+func (service *NotificationsService) invalidLimit(failure error) error {
 	if errors.As(failure, &notify.InvalidPage{}) {
-		return &InvalidRequest{Field: field, Reason: failure.Error()}
+		return InvalidRequest{}.BadLimit(failure.Error())
+	}
+	return failure
+}
+
+func (service *NotificationsService) invalidCursor(failure error) error {
+	if errors.As(failure, &notify.InvalidPage{}) {
+		return InvalidRequest{}.BadCursor(failure.Error())
 	}
 	return failure
 }
 
 func (service *NotificationsService) missingNotification() error {
-	return &NotFound{What: "notification"}
+	return NotFound{}.Notification()
 }
 
 func (service *NotificationsService) prefix() string {

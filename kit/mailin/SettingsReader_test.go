@@ -21,16 +21,15 @@ func TestOutboxSettingsRefuseAFileWithoutAnOutbox(t *testing.T) {
 }
 
 func TestMailInSettingsComeFromTheYonSection(t *testing.T) {
-	application := `{"yon":{"mailin":{"directory":"http://directory.test","blobs":{"adapter":"s3","folder":"/blobs","link":{"seconds":60,"secret":"s"}}}}}`
-	settings := SettingsReader{Environment: testEnvironment(map[string]string{"YON_APPLICATION_JSON": application, "AWS_REGION": "eu-west-1", "AWS_ENDPOINT_URL": "http://floci:4566"})}.MailIn()
-	check(t, settings.Directory == "http://directory.test" && settings.Blobs.Adapter == "s3", "wrong settings")
-	check(t, settings.Blobs.Region == "eu-west-1" && settings.Blobs.Endpoint == "http://floci:4566", "want the AWS environment")
-	check(t, settings.Blobs.Link.Seconds == 60 && settings.Blobs.Bucket == "mesail-raw", "wrong link or bucket")
+	application := `{"yon":{"mailin":{"directory":"http://directory.test","blobs":{"adapter":"local","folder":"/blobs","link":{"seconds":60,"secret":"s"}}}}}`
+	settings := SettingsReader{Environment: testEnvironment(map[string]string{"YON_APPLICATION_JSON": application})}.MailIn()
+	check(t, settings.Directory == "http://directory.test" && settings.Blobs.Adapter == "local", "wrong settings")
+	check(t, settings.Blobs.Folder == "/blobs" && settings.Blobs.Link.Seconds == 60 && settings.Blobs.Bucket == "", "wrong folder, link or bucket")
 }
 
 func TestMailInSettingsHaveDefaults(t *testing.T) {
 	settings := SettingsReader{Environment: testEnvironment(nil)}.MailIn()
-	check(t, settings.Blobs.Adapter == "local" && settings.Blobs.Region == "us-east-1", "wrong defaults")
+	check(t, settings.Blobs.Adapter == "local" && settings.Blobs.Bucket == "", "wrong defaults")
 	check(t, settings.Blobs.Link.Seconds == 300, "want five minutes")
 }
 

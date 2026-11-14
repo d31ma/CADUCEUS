@@ -5,13 +5,18 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 )
 
 func environmentOf(values map[string]string) Environment {
 	return NewEnvironment(func(name string) (string, bool) {
 		value, found := values[name]
 		return value, found
+	}, func() []string {
+		names := []string{}
+		for name := range values {
+			names = append(names, name)
+		}
+		return names
 	})
 }
 
@@ -111,68 +116,35 @@ func TestCertificateWithoutKeyIsRefused(t *testing.T) {
 	}
 }
 
-func s3Values() map[string]string {
+func TestTheLocalFolderIsRequired(t *testing.T) {
 	values := minimalValues()
 	delete(values, "MESAIL_RAW_STORE_DIR")
-	values["MESAIL_RAW_STORE_S3_BUCKET"] = "mesail-raw"
-	values["MESAIL_RAW_STORE_S3_REGION"] = "eu-west-1"
-	values["MESAIL_RAW_STORE_S3_ACCESS_KEY_ID"] = "edge-key"
-	values["MESAIL_RAW_STORE_S3_SECRET_ACCESS_KEY_FILE"] = "/run/secrets/raw-store"
-	values["MESAIL_RAW_STORE_S3_ENDPOINT"] = "http://floci.local:4566"
-	return values
-}
-
-func TestTheLocalFolderIsUsedWithoutABucket(t *testing.T) {
-	settings, err := NewSettingsReader(environmentOf(minimalValues())).Load()
-	if err != nil || settings.RawStoreFolder != "/var/lib/mesail/raw" || settings.RawStoreS3 != (S3RawStoreSettings{}) {
-		t.Fatalf("unexpected settings %+v %v", settings, err)
-	}
-}
-
-func TestABucketChoosesS3AndNeedsNoFolder(t *testing.T) {
-	values := s3Values()
-	settings, err := NewSettingsReader(environmentOf(values)).Load()
-	want := S3RawStoreSettings{Endpoint: "http://floci.local:4566", Bucket: "mesail-raw", Region: "eu-west-1", AccessKeyId: "edge-key", SecretFile: "/run/secrets/raw-store", Timeout: 5 * time.Minute}
-	if err != nil || settings.RawStoreS3 != want || settings.RawStoreFolder != "" {
-		t.Fatalf("unexpected settings %+v %v", settings, err)
-	}
-}
-
-func TestABucketNeedsTheOtherS3Values(t *testing.T) {
-	values := minimalValues()
-	values["MESAIL_RAW_STORE_S3_BUCKET"] = "mesail-raw"
-	_, err := NewSettingsReader(environmentOf(values)).Load()
-	text := err.Error()
-	if !strings.Contains(text, "MESAIL_RAW_STORE_S3_REGION") || !strings.Contains(text, "MESAIL_RAW_STORE_S3_ACCESS_KEY_ID") || !strings.Contains(text, "MESAIL_RAW_STORE_S3_SECRET_ACCESS_KEY_FILE") || !strings.Contains(text, "MESAIL_RAW_STORE_S3_ENDPOINT") {
-		t.Fatalf("unexpected error %q", text)
-	}
-}
-
-func TestTheS3TimeoutCanBeChanged(t *testing.T) {
-	values := s3Values()
-	values["MESAIL_RAW_STORE_S3_TIMEOUT_SECONDS"] = "600"
-	settings, err := NewSettingsReader(environmentOf(values)).Load()
-	if err != nil || settings.RawStoreS3.Timeout != 10*time.Minute {
-		t.Fatalf("unexpected timeout %v %v", settings.RawStoreS3.Timeout, err)
-	}
-}
-
-func TestABadS3TimeoutIsRefused(t *testing.T) {
-	values := s3Values()
-	values["MESAIL_RAW_STORE_S3_TIMEOUT_SECONDS"] = "0"
-	_, err := NewSettingsReader(environmentOf(values)).Load()
-	var invalid InvalidSetting
-	if !errors.As(err, &invalid) || invalid.Name != "MESAIL_RAW_STORE_S3_TIMEOUT_SECONDS" {
-		t.Fatalf("want the timeout to be named, got %v", err)
-	}
-}
-
-func TestABucketWithoutAnEndpointIsRefused(t *testing.T) {
-	values := s3Values()
-	delete(values, "MESAIL_RAW_STORE_S3_ENDPOINT")
 	_, err := NewSettingsReader(environmentOf(values)).Load()
 	var missing MissingSetting
-	if !errors.As(err, &missing) || missing.Name != "MESAIL_RAW_STORE_S3_ENDPOINT" {
-		t.Fatalf("want the endpoint to be required, got %v", err)
+	if !errors.As(err, &missing) || missing.Name != "MESAIL_RAW_STORE_DIR" {
+		t.Fatalf("want the folder to be required, got %v", err)
+	}
+}
+
+func TestEveryRemovedS3VariableStopsTheStart(t *testing.T) {
+	prefix := SettingsReader{}.removedRawStorePrefix()
+	values := minimalValues()
+	values[prefix+"_BUCKET"] = "mesail-raw"
+	values[prefix+"_ENDPOINT"] = "http://floci.local:4566"
+	_, err := NewSettingsReader(environmentOf(values)).Load()
+	var removed RemovedSetting
+	if !errors.As(err, &removed) || removed.Name != prefix+"_BUCKET" {
+		t.Fatalf("want the bucket variable to be named first, got %v", err)
+	}
+	if !strings.Contains(err.Error(), prefix+"_ENDPOINT was removed with the S3 raw store (ADR 0007)") || !strings.Contains(err.Error(), "MESAIL_RAW_STORE_DIR") {
+		t.Fatalf("want every removed variable and the folder named, got %v", err)
+	}
+}
+
+func TestTheProcessEnvironmentListsItsNames(t *testing.T) {
+	t.Setenv("MESAIL_OP6_PROBE_NAME", "1")
+	names := NewProcessEnvironment().NamesStartingWith("MESAIL_OP6_PROBE")
+	if len(names) != 1 || names[0] != "MESAIL_OP6_PROBE_NAME" {
+		t.Fatalf("unexpected names %v", names)
 	}
 }

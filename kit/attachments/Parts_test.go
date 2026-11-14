@@ -171,35 +171,48 @@ func environment(values map[string]string) func(string) string {
 
 func TestSettingsReaderFallsBackToDefaults(t *testing.T) {
 	settings := SettingsReader{Environment: environment(nil)}.Read()
-	want := Settings{Adapter: "local", Bucket: "mesail-attachments", Region: "us-east-1", Link: LinkSettings{Seconds: 300}, Limit: LimitSettings{Bytes: 26214400}}
+	want := Settings{Adapter: "local", Link: LinkSettings{Seconds: 300}, Limit: LimitSettings{Bytes: 26214400}}
 	if settings != want {
 		t.Fatalf("got %+v", settings)
 	}
 }
 
-func TestSettingsReaderReadsTheSnapshotAndTheAwsEnvironment(t *testing.T) {
-	snapshot := `{"yon":{"attachments":{"adapter":"s3","bucket":"files","messaging":"http://messaging:8104","link":{"seconds":60,"secret":"s"},"limit":{"bytes":5}}}}`
-	settings := SettingsReader{Environment: environment(map[string]string{"YON_APPLICATION_JSON": snapshot, "AWS_REGION": "eu-west-1", "AWS_ENDPOINT_URL": "http://floci:4566"})}.Read()
-	if settings.Adapter != "s3" || settings.Bucket != "files" || settings.Region != "eu-west-1" || settings.Endpoint != "http://floci:4566" || settings.Link.Seconds != 60 || settings.Limit.Bytes != 5 || settings.Messaging != "http://messaging:8104" {
+func TestSettingsReaderReadsTheSnapshot(t *testing.T) {
+	snapshot := `{"yon":{"attachments":{"adapter":"local","folder":"/data/blobs","messaging":"http://messaging:8104","link":{"seconds":60,"secret":"s"},"limit":{"bytes":5}}}}`
+	settings := SettingsReader{Environment: environment(map[string]string{"YON_APPLICATION_JSON": snapshot})}.Read()
+	if settings.Adapter != "local" || settings.Folder != "/data/blobs" || settings.Link.Seconds != 60 || settings.Limit.Bytes != 5 || settings.Messaging != "http://messaging:8104" {
 		t.Fatalf("got %+v", settings)
 	}
 }
 
-func TestStoreFactoryBuildsEachAdapter(t *testing.T) {
-	factory := StoreFactory{Environment: environment(map[string]string{"AWS_ACCESS_KEY_ID": "test"})}
-	local, localErr := factory.Store(Settings{Adapter: "local", Folder: t.TempDir(), Link: LinkSettings{Base: "http://127.0.0.1:8100/blobs", Secret: "s"}})
-	s3, s3Err := factory.Store(Settings{Adapter: "s3", Bucket: "files", Region: "us-east-1", Endpoint: "http://floci:4566", Public: "http://127.0.0.1:14566"})
+func TestStoreFactoryBuildsTheLocalAdapter(t *testing.T) {
+	local, err := StoreFactory{}.Store(Settings{Adapter: "local", Folder: t.TempDir(), Link: LinkSettings{Base: "http://127.0.0.1:8100/blobs", Secret: "s"}})
 	key := blobs.Key{DomainId: "example.com", Name: "B1"}
 	localUrl, _ := local.SignUpload(key, blobs.UploadTerms{Size: 1}, fixedNow())
-	s3Url, _ := s3.SignUpload(key, blobs.UploadTerms{Size: 1}, fixedNow().Add(time.Minute))
-	if localErr != nil || s3Err != nil || !strings.HasPrefix(localUrl, "http://127.0.0.1:8100/blobs/example.com/B1?") || !strings.HasPrefix(s3Url, "http://127.0.0.1:14566/files/example.com/B1?") {
-		t.Fatalf("got %s and %s (%v, %v)", localUrl, s3Url, localErr, s3Err)
+	if err != nil || !strings.HasPrefix(localUrl, "http://127.0.0.1:8100/blobs/example.com/B1?") {
+		t.Fatalf("got %s (%v)", localUrl, err)
+	}
+}
+
+func TestStoreFactoryRefusesTheRemovedS3Adapter(t *testing.T) {
+	var removed RemovedSetting
+	store, err := StoreFactory{}.Store(Settings{Adapter: "s3", Link: LinkSettings{Secret: "s"}})
+	if store != nil || !errors.As(err, &removed) || removed.Name != "adapter" || !strings.Contains(err.Error(), `adapter "s3" was removed`) {
+		t.Fatalf("got %v and %v", store, err)
+	}
+}
+
+func TestStoreFactoryRefusesAnS3Bucket(t *testing.T) {
+	var removed RemovedSetting
+	store, err := StoreFactory{}.Store(Settings{Adapter: "local", Bucket: "mesail-attachments", Link: LinkSettings{Secret: "s"}})
+	if store != nil || !errors.As(err, &removed) || removed.Name != "bucket" || !strings.Contains(err.Error(), "ADR 0007") {
+		t.Fatalf("got %v and %v", store, err)
 	}
 }
 
 func TestStoreFactoryRefusesLocalLinksWithoutASecret(t *testing.T) {
 	var unavailable Unavailable
-	if _, err := (StoreFactory{Environment: environment(nil)}).Store(Settings{Adapter: "local"}); !errors.As(err, &unavailable) {
+	if _, err := (StoreFactory{}).Store(Settings{Adapter: "local"}); !errors.As(err, &unavailable) {
 		t.Fatalf("got %v", err)
 	}
 }

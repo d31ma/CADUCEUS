@@ -170,6 +170,14 @@ func TestTheDirectoryUsesTheHostResolverByDefault(t *testing.T) {
 	}
 }
 
+func TestNoBlobSettingNamesAnS3Bucket(t *testing.T) {
+	attachments := section(t, applicationSettings(t, "attachments"), "attachments")
+	blobs := section(t, section(t, applicationSettings(t, "mail-in"), "mailin"), "blobs")
+	if attachments["bucket"] != nil || blobs["bucket"] != nil || attachments["adapter"] == "s3" || blobs["adapter"] == "s3" {
+		t.Fatalf("the S3 blob adapter was removed (ADR 0007, slice OP6): attachments %v, mail-in blobs %v", attachments, blobs)
+	}
+}
+
 func TestTheDirectoryAllowsNoPublicResolverHost(t *testing.T) {
 	hosts := outgoingHosts(t, applicationSettings(t, "directory"))
 	if slices.Contains(hosts, "cloudflare-dns.com") {

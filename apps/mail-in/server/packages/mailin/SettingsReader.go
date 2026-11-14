@@ -35,9 +35,6 @@ func (reader SettingsReader) Authorize() func(realm string) (string, error) {
 
 func (reader SettingsReader) withDefaults(settings Settings) Settings {
 	settings.Blobs.Adapter = cmp.Or(settings.Blobs.Adapter, reader.LocalAdapter())
-	settings.Blobs.Bucket = cmp.Or(settings.Blobs.Bucket, reader.defaultBucket())
-	settings.Blobs.Region = cmp.Or(reader.Environment("AWS_REGION"), settings.Blobs.Region, reader.defaultRegion())
-	settings.Blobs.Endpoint = cmp.Or(reader.Environment("AWS_ENDPOINT_URL_S3"), reader.Environment("AWS_ENDPOINT_URL"), settings.Blobs.Endpoint)
 	settings.Blobs.Link.Seconds = cmp.Or(settings.Blobs.Link.Seconds, reader.defaultLinkSeconds())
 	return settings
 }
@@ -48,14 +45,6 @@ func (SettingsReader) tokenTimeout() time.Duration {
 
 func (SettingsReader) LocalAdapter() string {
 	return "local"
-}
-
-func (SettingsReader) defaultBucket() string {
-	return "mesail-raw"
-}
-
-func (SettingsReader) defaultRegion() string {
-	return "us-east-1"
 }
 
 func (SettingsReader) defaultLinkSeconds() int64 {

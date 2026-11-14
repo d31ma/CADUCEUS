@@ -5,7 +5,7 @@ There are two ways to run the whole of Mesail on this Mac:
 | Script | What runs | Who uses it |
 | --- | --- | --- |
 | `scripts/native/run-all.sh` | Every Yon app with `ty start` on macOS, the Tac apps as static files, and the router, all native. No VM. | Every slice gate (SLICES.md "Gates"). |
-| `scripts/floci/run-all.sh` | The Lambda images in Floci (local AWS), the realtime container, Keycloak and the router, in the dev host or Colima. | The integration and release gates (P1, C1). |
+| `scripts/floci/run-all.sh` | The Lambda images in Floci, the realtime container, Keycloak and the router, in the dev host or Colima. | The integration and release gates (P1, C1). |
 
 ## Native (slice gates)
 
@@ -110,10 +110,11 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
 
 ## Floci (integration)
 
-Every Yon app except `realtime` runs as an AWS Lambda container image. On this
-Mac the images run in [Floci](https://hub.docker.com/r/floci/floci) 2.4.0, a
-local AWS emulator, next to Keycloak and the Mesail router. The same images
-later run in Floci on kestrel (through PaaS, like FitNest) and in AWS Lambda.
+Every Yon app except `realtime` runs as a Lambda container image. On this
+Mac the images run in [Floci](https://hub.docker.com/r/floci/floci) 2.4.0, an
+emulator of the Lambda, S3 and EFS APIs, next to Keycloak and the Mesail
+router. The same images later run in Floci on kestrel (through PaaS, like
+FitNest). Mesail runs on-premise only (ADR 0007).
 
 `realtime` is a long-running container in v1 (ADR 0004, slice R1), not a
 Lambda: it holds open WebSockets and event streams. See "Realtime container"
@@ -213,13 +214,12 @@ Settings (environment, or a `.env` file copied from `.env.example`):
   `18180=keycloak:8080,18080=router:8080`) before `ty start`, and the build
   rewrites the config to `http://keycloak.localhost:18180/idp` and
   `http://router.localhost:18080` (build args `KEYCLOAK_URL`, `SERVICE_BASE`,
-  `FORWARDS`). Where Keycloak and the API have public names (AWS), build with
-  those names and an empty `FORWARDS`.
+  `FORWARDS`). Where Keycloak and the API have names the functions can
+  reach directly, build with those names and an empty `FORWARDS`.
 - The start script creates `/mnt/data/<service>`, hands it and `/mnt/data`
   (FYLO writes its owner lease next to the root) to the user
   `mesail` (uid 10001) and drops root before `ty start` when it runs as root
-  (Floci). In AWS, Lambda already runs as a non-root user and the EFS access
-  point (`PosixUser` 10001, root directory `/<service>`) owns the folder.
+  (Floci).
 
 ### Realtime container (`Dockerfile` target `realtime`)
 
@@ -302,8 +302,6 @@ Settings (environment, or a `.env` file copied from `.env.example`):
   `/mnt/data/blobs`: mail-out writes the signed message there and mail-in
   copies it on the hand-off (`stack.json` `lambdaSettings`, Floci only).
   Without it every email between hosted domains stops at mail-out or mail-in.
-  In AWS, mail-out should use S3 like mail-in instead (mail-out has no S3
-  store yet).
 - In Floci the access point's root directory and user are not applied: each
   access point is its own Docker volume `floci-aws-efs-<id>-<hash>`.
 - **A fresh data set without removing anything.** The FYLO data in the dev
@@ -341,8 +339,7 @@ Limits at the router:
   `POST /api/v1/identity/session/refresh`
   (`MESAIL_ROUTER_LIMITED_ROUTES`). Over the limit: 429 with `Retry-After`.
   Identity keeps no attempt counter; Keycloak's brute-force detection
-  covers each account. In AWS the same rule is an AWS WAF rate-based rule on
-  the API Gateway stage (API Gateway throttling is not per address).
+  covers each account.
 - **One writer per FYLO root:** in Lambda mode the router sends one request
   at a time to each FYLO-owning function (`MESAIL_ROUTER_SINGLE_WRITERS`,
   filled from `stack.json`) and queues the others, so reserved concurrency 1
@@ -361,7 +358,7 @@ Limits at the router:
   time. A caller that stops waiting leaves its queue.
 - **Event pushes never wait:** `POST /api/v1/<service>/events` to a
   FYLO-owning function that is busy gets 429 `function-busy` at once, as a
-  throttled Lambda does in AWS. The producer's outbox keeps the event and
+  throttled Lambda does. The producer's outbox keeps the event and
   the relay schedule sends it again. Without this, drain on write deadlocks:
   a send in `messaging` pushes to `mail-out/events`, mail-out's intake
   pushes `email.queued` back to `messaging/events`, and that push would wait
@@ -370,16 +367,12 @@ Limits at the router:
 - **An event handler never calls back into its producer:** the router
   cannot break that cycle. A producer holds its own slot while it pushes,
   so a handler that calls the producer waits until the push times out
-  (10 s), and every call queued behind the handler waits too (in AWS the
-  call is throttled and the event never lands). So `email.received`
+  (10 s), and every call queued behind the handler waits too. So `email.received`
   carries the email's content, and `messaging` does not call
   `mail-in` for it (EVENTS.md section 4, item 4).
 
 Static replies carry `Content-Security-Policy`, `X-Content-Type-Options`,
 `X-Frame-Options` and `Referrer-Policy`.
-
-In AWS the same routes become an API Gateway HTTP API (Lambda proxy
-integrations, payload 2.0) plus S3 and CloudFront for the static files.
 
 ### Keycloak, secrets and people
 
@@ -482,8 +475,7 @@ the tick length minus 10 seconds and half the tick (50 s for 60 s ticks,
 path and the status code) and, at the end of each tick, the number of calls
 per route (`calls this tick: <path>=<n> ...`). The next tick starts
 `scheduleSeconds` after the last one started. Under `ty start` the
-scheduler's 10 s ticks repeat for 5 s. In AWS this becomes EventBridge Scheduler rules with a
-small token-fetching trigger.
+scheduler's 10 s ticks repeat for 5 s.
 
 ## Ports on the Mac (127.0.0.1 only)
 

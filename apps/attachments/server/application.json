@@ -1,10 +1,7 @@
 {
   "server": {
     "host": "127.0.0.1",
-    "port": 8105,
-    "environment": [
-      "AWS_*"
-    ]
+    "port": 8105
   },
   "oidc": {
     "issuer": "http://127.0.0.1:8101/api/v1/identity",
@@ -20,7 +17,6 @@
     ]
   },
   "attachments": {
-    "bucket": "mesail-attachments",
     "link": {
       "seconds": 300
     },

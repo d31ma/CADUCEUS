@@ -99,10 +99,10 @@ that folder with the data.
 
 | Setting | Meaning |
 | --- | --- |
-| `YON_ATTACHMENTS_ADAPTER` | `local` (on-premise): files in the blob folder. `s3` only for a later cloud form. |
+| `YON_ATTACHMENTS_ADAPTER` | `local`, the only adapter: files in the blob folder. |
 | `YON_ATTACHMENTS_FOLDER` | The folder for files (local adapter). |
 | `YON_ATTACHMENTS_LINK_BASE`, `YON_ATTACHMENTS_LINK_SECRET` | The `/blobs` address and the link signing secret (32 characters or more); the router's `MESAIL_ROUTER_BLOBS_*` use the same values. |
-| An S3 endpoint (`YON_ATTACHMENTS_ENDPOINT`, `YON_MAILIN_BLOBS_ENDPOINT`, `MESAIL_RAW_STORE_S3_ENDPOINT`) | Required with the `s3` adapter; there is no AWS fallback (OP1). Without it `attachments` answers `503`, `mail-in` refuses file calls and the SMTP edge does not start. |
+| Removed S3 settings | The S3 blob adapter was removed (ADR 0007, slice OP6). A setting that still names the adapter `s3` or a `bucket` for `attachments` or `mail-in` makes every file call fail (`attachments` answers `503` `[MS3513]`, `mail-in` `503` `[MS2514]`); the service log names the setting. An environment variable whose name starts with `MESAIL_RAW_STORE_S3` stops the SMTP edge at startup. |
 
 **Browser push** (off by default, SPEC Q19)
 
@@ -195,8 +195,7 @@ the old as previous, restart, then remove the previous value.
   per root"): a deploy stops a function's old container before its new
   one takes calls, and never runs two containers of one FYLO-owning
   function at the same time. A second container would get `EROOTLOCKED`
-  on every store call ("store is not available"). This stays the rule on
-  AWS with EFS until FYLO qualifies shared roots there.
+  on every store call ("store is not available").
 
 ## 7. Backups and restore
 

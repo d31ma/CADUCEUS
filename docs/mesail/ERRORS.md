@@ -252,7 +252,7 @@ keeps its row, marked "retired".
 | MS2511 | mail-in | 404 | `not_found` | no such inbound message | the inbound message does not exist or is in another domain |
 | MS2512 | mail-in | 404 | `not_found` | no such dead letter | a requeue names a dead letter that does not exist |
 | MS2513 | mail-in | 404 | `not_found` | no such outbox document | a requeue names an outbox document that does not exist |
-| MS2514 | mail-in | 503 | `unavailable` | Inbound storage is not available. Try again later. | the inbound store, the blob store or the directory failed |
+| MS2514 | mail-in | 503 | `unavailable` | Inbound storage is not available. Try again later. | the inbound store, the blob store or the directory failed, or a blob setting still names the removed S3 adapter or a bucket (slice OP6; the log names the setting) |
 | MS3000 | mail-out | 500 | `unavailable` | Something went wrong. | an unexpected error in `mail-out` |
 | MS3001 | mail-out | 400 | `invalid_request` | Why the event is refused, for example "the event envelope is not valid: eventId must not be empty". | a refused event by a rule of the shared `kit/events` (bad envelope, wrong producer, a type mail-out does not consume); retired when slice E12 numbers `kit/events` |
 | MS3002 | mail-out | 403 | `forbidden` | Only a caller with the Service role may deliver events. | the caller of the events route is not a service |
@@ -277,7 +277,7 @@ keeps its row, marked "retired".
 | MS3510 | attachments | 409 | `conflict` | The uploaded file does not match the SHA-256 you gave. | the uploaded file has another checksum; `field` is `sha256` |
 | MS3511 | attachments | 409 | `conflict` | The attachment is not ready to download. | a download before the upload is complete; `field` is `state` |
 | MS3512 | attachments | 413 | `too_large` | the file is larger than N bytes | an upload larger than the limit; `field` is `size` |
-| MS3513 | attachments | 503 | `unavailable` | Attachment storage is not available. Try again later. | the attachment store or link signing failed |
+| MS3513 | attachments | 503 | `unavailable` | Attachment storage is not available. Try again later. | the attachment store or link signing failed, or a setting still names the removed S3 adapter or a bucket (slice OP6; the log names the setting) |
 | MS4000 | search | 500 | `unavailable` | Something went wrong. | an unexpected error in `search` |
 | MS4001 | search | 400 | `invalid_request` | the search text is too long | a search with too long a text; `field` is `q` |
 | MS4002 | search | 400 | `invalid_request` | from must be a date or an RFC 3339 time | a search with a bad date filter; `field` is `from` or `to` |

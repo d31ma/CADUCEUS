@@ -85,9 +85,9 @@ func TestStatusOfAnUnknownErrorIsServerError(t *testing.T) {
 func TestErrorsNameTheirHttpStatus(t *testing.T) {
 	statuses := []int{
 		BadSignature{}.HttpStatus(), Expired{}.HttpStatus(), BadKey{}.HttpStatus(), NotFound{}.HttpStatus(),
-		SizeMismatch{}.HttpStatus(), TooLarge{}.HttpStatus(), S3Failure{}.HttpStatus(),
+		SizeMismatch{}.HttpStatus(), TooLarge{}.HttpStatus(),
 	}
-	wanted := []int{403, 403, 404, 404, 400, 413, 502}
+	wanted := []int{403, 403, 404, 404, 400, 413}
 	for index, status := range statuses {
 		if status != wanted[index] {
 			t.Fatalf("case %d: got %d", index, status)

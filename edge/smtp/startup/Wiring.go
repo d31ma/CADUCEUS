@@ -23,10 +23,7 @@ func (wiring Wiring) Build(settings ListenerSettings, logger *log.Logger) (proto
 	}
 	client := &http.Client{Timeout: wiring.requestTimeout()}
 	tokens := wiring.tokensFor(settings, client)
-	store, err := RawStoreFactory{}.Store(settings)
-	if err != nil {
-		return protocol.Settings{}, err
-	}
+	store := RawStoreFactory{}.Store(settings)
 	delivery := reception.NewReception(reception.Parts{
 		Checker: wiring.checkerFor(settings),
 		Headers: mailchecks.NewMimeHeaderReader(mime.Parser{}),

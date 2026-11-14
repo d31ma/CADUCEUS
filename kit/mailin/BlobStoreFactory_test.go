@@ -1,24 +1,21 @@
 package mailin
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"mesail.dev/packages/blobs"
 )
 
 func TestALocalStoreNeedsAFolderAndASecret(t *testing.T) {
-	store := BlobStoreFactory{Environment: testEnvironment(nil)}.Store(BlobSettings{Adapter: "local", Folder: t.TempDir()})
+	store := BlobStoreFactory{}.Store(BlobSettings{Adapter: "local", Folder: t.TempDir()})
 	_, isMissing := store.(MissingBlobs)
 	check(t, isMissing, "want missing blobs")
 }
 
 func TestALocalStoreWritesIntoItsFolder(t *testing.T) {
 	settings := BlobSettings{Adapter: "local", Folder: t.TempDir(), Link: LinkSettings{Base: "https://mesail.test/blobs", Secret: "fixture-link-value"}}
-	store := BlobStoreFactory{Environment: testEnvironment(nil)}.Store(settings)
+	store := BlobStoreFactory{}.Store(settings)
 	key := blobs.Key{DomainId: "example.com", Name: "inbound-1"}
 	err := store.Write(key, strings.NewReader("raw"), 3)
 	url, signErr := store.SignDownload(key, MessageDesk{}.OriginalTerms(), fixedNow())
@@ -26,25 +23,17 @@ func TestALocalStoreWritesIntoItsFolder(t *testing.T) {
 	check(t, strings.HasPrefix(url, "https://mesail.test/blobs/example.com/inbound-1?"), "wrong link")
 }
 
-func TestAnS3StoreUsesTheBucket(t *testing.T) {
-	settings := BlobSettings{Adapter: "s3", Bucket: "mesail-raw", Region: "us-east-1", Endpoint: "http://floci.test:4566"}
-	store := BlobStoreFactory{Environment: testEnvironment(map[string]string{"AWS_ACCESS_KEY_ID": "id", "AWS_SECRET_ACCESS_KEY": "key"})}.Store(settings)
-	url, err := store.SignDownload(blobs.Key{DomainId: "example.com", Name: "inbound-1"}, MessageDesk{}.OriginalTerms(), time.Now().Add(time.Minute))
-	check(t, err == nil && strings.HasPrefix(url, "http://floci.test:4566/mesail-raw/example.com/inbound-1?"), "wrong link")
+func TestTheRemovedS3AdapterRefusesEveryCall(t *testing.T) {
+	settings := BlobSettings{Adapter: "s3", Folder: t.TempDir(), Link: LinkSettings{Secret: "fixture-link-value"}}
+	store := BlobStoreFactory{}.Store(settings)
+	err := store.Write(blobs.Key{DomainId: "example.com", Name: "inbound-1"}, strings.NewReader("raw"), 3)
+	check(t, isUnavailable(err, `the mail-in setting blobs.adapter "s3" was removed with the cloud option (ADR 0007): keep blobs in a local folder with the adapter "local"`), "want the removed adapter named")
 }
 
-func TestAnS3StoreClosesEachConnection(t *testing.T) {
-	closed := make(chan bool, 1)
-	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		closed <- request.Close
-		writer.Write([]byte("raw"))
-	}))
-	defer server.Close()
-	settings := BlobSettings{Adapter: "s3", Bucket: "mesail-raw", Region: "us-east-1", Endpoint: server.URL}
-	store := BlobStoreFactory{Environment: testEnvironment(map[string]string{"AWS_ACCESS_KEY_ID": "id", "AWS_SECRET_ACCESS_KEY": "key"})}.Store(settings)
-	reader, err := store.Read(blobs.Key{DomainId: "example.com", Name: "inbound-1"})
-	check(t, err == nil && <-closed, "the S3 client kept the connection alive")
-	reader.Close()
+func TestAnS3BucketRefusesEveryCall(t *testing.T) {
+	settings := BlobSettings{Adapter: "local", Bucket: "mesail-raw", Folder: t.TempDir(), Link: LinkSettings{Secret: "fixture-link-value"}}
+	_, err := BlobStoreFactory{}.Store(settings).Read(blobs.Key{DomainId: "example.com", Name: "inbound-1"})
+	check(t, err != nil && strings.Contains(err.Error(), `blobs.bucket "mesail-raw" was removed`), "want the removed bucket named")
 }
 
 func TestMissingBlobsRefuseEveryCall(t *testing.T) {

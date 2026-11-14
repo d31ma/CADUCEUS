@@ -17,7 +17,7 @@ type Program struct{}
 
 func (program Program) Run() error {
 	logger := log.New(os.Stderr, "", log.LstdFlags|log.LUTC)
-	settings, err := startup.NewSettingsReader(startup.NewEnvironment(os.LookupEnv)).Load()
+	settings, err := startup.NewSettingsReader(startup.NewProcessEnvironment()).Load()
 	if err != nil {
 		return err
 	}

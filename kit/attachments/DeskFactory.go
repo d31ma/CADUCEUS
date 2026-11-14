@@ -13,7 +13,7 @@ type DeskFactory struct {
 
 func (factory DeskFactory) Desk(documents Documents) Desk {
 	settings := SettingsReader{Environment: factory.Environment}.Read()
-	store, err := StoreFactory{Environment: factory.Environment}.Store(settings)
+	store, err := StoreFactory{}.Store(settings)
 	readers := MessagingAccess{BaseUrl: settings.Messaging, Client: transport.SingleUseTransport{}.Client(0)}
 	return Desk{
 		Gate: oidc.Configured(), Book: RecordBook{Documents: documents, Now: time.Now}, Store: store,

@@ -4,16 +4,16 @@ The realtime connection gateway for Mesail. It is a small long-running Go
 program, not a Lambda. It holds the browsers' WebSockets and event streams and
 knows no business rules. For every connection it calls the stateless
 `realtime` Yon app, and the Yon app pushes events back through the gateway's
-management API. It is the local stand-in for AWS API Gateway WebSocket APIs.
+management API.
 
-## AWS mapping
+## Routes
 
-| Gateway | AWS API Gateway WebSocket |
+| Route | When it is called |
 | --- | --- |
-| `POST /api/v1/realtime/gateway/connect` (to the backend) | `$connect` route |
-| `POST /api/v1/realtime/gateway/message` (to the backend) | `$default` route |
-| `POST /api/v1/realtime/gateway/disconnect` (to the backend) | `$disconnect` route |
-| `POST` and `DELETE /@connections/{connectionId}` (management port) | `@connections` management API (`PostToConnection`, `DeleteConnection`) |
+| `POST /api/v1/realtime/gateway/connect` (to the backend) | a browser opens a connection |
+| `POST /api/v1/realtime/gateway/message` (to the backend) | a browser sends a message |
+| `POST /api/v1/realtime/gateway/disconnect` (to the backend) | a connection closes |
+| `POST` and `DELETE /@connections/{connectionId}` (management port) | the backend sends to a connection or closes it |
 
 Every call to the backend uses a 30 s timeout. A `408`, `429`, `5xx` or
 network error is retried up to 3 times, after 0.25 s, 1 s and 2 s (SLICES

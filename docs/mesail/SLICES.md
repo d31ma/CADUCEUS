@@ -1823,6 +1823,20 @@ except for the items below.
 - **Depends on:** nothing new. It touches `kit/blobs`, `attachments`,
   `mail-in`, `mail-out` and `edge/smtp`, so it runs when no other slice is
   changing those (the coordinator orders it). Small: about one session.
+- **Built** (branch `fix/op6-no-cloud`): `kit/blobs` keeps only the local
+  folder, its signer, handler and inspector. `kit/attachments`
+  `StoreFactory` and `kit/mailin` `BlobStoreFactory` build only the local
+  adapter and take no environment; an adapter other than `local` or any
+  `bucket` setting fails every file call with a message that names the
+  setting (`attachments` `[MS3513]`, `mail-in` `[MS2514]`). Yon builds the
+  store for each request and has no start step that can stop the app, so
+  the refusal shows on the first call and on every call after it, not at
+  start. The SMTP edge always uses `MESAIL_RAW_STORE_DIR` and stops at
+  startup on any variable whose name starts with `MESAIL_RAW_STORE_S3`.
+  `AWS_*` and the buckets left the two apps' `application.json`. No removed
+  error had a number, so ERRORS.md retires none. `tests/nocloud` had no S3
+  endpoint check left (OP1 moved them to the blob code); it now checks that
+  no blob setting names an S3 bucket.
 
 ### OP7. Attachments end to end on Floci (one small session, after OP6)
 Found by OP6 (2026-11-14, hand-over

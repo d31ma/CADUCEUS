@@ -48,7 +48,7 @@ func (factory DeskFactory) handOff() HandOff {
 }
 
 func (factory DeskFactory) blobs() blobs.Store {
-	return BlobStoreFactory{Environment: factory.Environment}.Store(factory.settings().MailIn().Blobs)
+	return BlobStoreFactory{}.Store(factory.settings().MailIn().Blobs)
 }
 
 func (factory DeskFactory) settings() SettingsReader {

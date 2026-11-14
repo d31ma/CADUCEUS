@@ -228,7 +228,7 @@ func (world *InboundTestSetup) Asked() []string {
 
 func (world *InboundTestSetup) Blobs() blobs.Store {
 	settings := mailin.SettingsReader{Environment: os.Getenv}.MailIn()
-	return mailin.BlobStoreFactory{Environment: os.Getenv}.Store(settings.Blobs)
+	return mailin.BlobStoreFactory{}.Store(settings.Blobs)
 }
 
 func (world *InboundTestSetup) WriteBlob(path string, content string) {

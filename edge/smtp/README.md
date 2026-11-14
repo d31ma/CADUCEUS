@@ -40,8 +40,8 @@ domain, and hands each copy to `mail-in`.
 ## Managed inbound seam
 
 `reception.Reception.Deliver(ctx, reception.Transaction)` is the whole
-delivery pipeline. A managed inbound service (for example an SES receipt rule
-that writes to S3 and starts a function) can build a `Transaction` from the
+delivery pipeline. Another inbound source (for example a mail gateway that
+hands over received messages) can build a `Transaction` from the
 event (envelope sender, recipients with their `domainId`, raw bytes, remote
 address) and call the same `Deliver`. Only the SMTP socket code in
 `protocol` is then replaced; the auth check, raw copies and mail-in calls
@@ -61,27 +61,17 @@ any other error for a temporary failure.
 | `MAIL_AUTH_VERIFY` | on | `off` skips SPF, DKIM and DMARC |
 | `MESAIL_DIRECTORY_URL` | required | Base URL of `directory` |
 | `MESAIL_MAIL_IN_URL` | required | Base URL of `mail-in` |
-| `MESAIL_RAW_STORE_DIR` | required without `MESAIL_RAW_STORE_S3_BUCKET` | Local folder for raw message copies (local development) |
-| `MESAIL_RAW_STORE_S3_BUCKET` | none | Set it to keep raw copies in S3 instead of the local folder |
-| `MESAIL_RAW_STORE_S3_REGION`, `MESAIL_RAW_STORE_S3_ACCESS_KEY_ID`, `MESAIL_RAW_STORE_S3_SECRET_ACCESS_KEY_FILE` | required with `MESAIL_RAW_STORE_S3_BUCKET` | S3 region, access key id, and a file that holds the secret access key |
-| `MESAIL_RAW_STORE_S3_TIMEOUT_SECONDS` | `300` | Longest time for one S3 upload, in seconds (5 minutes is enough for 25 MiB at about 100 KB/s) |
-| `MESAIL_RAW_STORE_S3_ENDPOINT` | required with `MESAIL_RAW_STORE_S3_BUCKET` (no default) | The S3-compatible store's address, for example a self-hosted store, or Floci in local tests. There is no cloud default (ADR 0007): without it the edge refuses to start |
+| `MESAIL_RAW_STORE_DIR` | required | The blob folder for raw message copies (ADR 0007 section 7) |
 | `MESAIL_SERVICE_TOKEN` | none | A fixed Service bearer token |
 | `MESAIL_SERVICETOKENS_URL`, `MESAIL_SERVICE_CLIENT_SECRET_FILE` | required without `MESAIL_SERVICE_TOKEN` | `identity`'s service token route (`.../api/v1/identity/service-token`) and a file that holds the `mesail-service` client secret. The edge asks for an install-wide token (domain `*`) with `kit/oidc` `ServiceTokens` and keeps it in the temporary folder until 10 seconds before it expires |
 
 ## Raw message store
 
-The edge picks the store when it starts:
-
-- With `MESAIL_RAW_STORE_S3_BUCKET` set, it writes each copy to
-  `<bucket>/<domainId>/inbound-<hash>` with a signed S3 `PUT`. The secret
-  access key is read from the file in
-  `MESAIL_RAW_STORE_S3_SECRET_ACCESS_KEY_FILE`, never from a plain variable.
-  A missing or empty file stops the edge at startup. S3 uploads use their own
-  HTTP client with a 5-minute timeout (`MESAIL_RAW_STORE_S3_TIMEOUT_SECONDS`),
-  not the 30-second client of the directory and mail-in calls.
-- Without it, it writes each copy to `MESAIL_RAW_STORE_DIR/<domainId>/inbound-<hash>`
-  (written to a temporary file, synced, renamed).
+The edge writes each copy to `MESAIL_RAW_STORE_DIR/<domainId>/inbound-<hash>`
+(written to a temporary file, synced, renamed). The S3 raw store was removed
+with the cloud option (ADR 0007, slice OP6): any environment variable whose
+name starts with `MESAIL_RAW_STORE_S3` stops the edge at startup, and the
+message names the variable.
 
 ## Limits
 

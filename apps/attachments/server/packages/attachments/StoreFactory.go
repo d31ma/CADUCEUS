@@ -1,52 +1,48 @@
 package attachments
 
 import (
-	"time"
+	"errors"
 
 	"mesail.dev/packages/blobs"
-	"mesail.dev/packages/transport"
 )
 
-type StoreFactory struct {
-	Environment func(string) string
-}
+type StoreFactory struct{}
 
 func (factory StoreFactory) Store(settings Settings) (blobs.Store, error) {
-	err := factory.checkSecret(settings)
-	if err != nil {
-		return nil, err
-	}
-	return factory.chosen(settings)
+	problems := errors.Join(factory.removedAdapter(settings), factory.removedBucket(settings), factory.missingSecret(settings))
+	return factory.checked(settings, problems)
 }
 
-func (factory StoreFactory) checkSecret(settings Settings) error {
-	if settings.Adapter == factory.localAdapter() && settings.Link.Secret == "" {
-		return Unavailable{Operation: "local link signing without a secret"}
+func (factory StoreFactory) checked(settings Settings, problems error) (blobs.Store, error) {
+	if problems != nil {
+		return nil, problems
 	}
-	return nil
+	return factory.local(settings), nil
 }
 
-func (factory StoreFactory) chosen(settings Settings) (blobs.Store, error) {
+func (factory StoreFactory) removedAdapter(settings Settings) error {
 	if settings.Adapter == factory.localAdapter() {
-		return factory.local(settings), nil
+		return nil
 	}
-	return factory.s3(settings)
+	return RemovedSetting{Name: "adapter", Value: settings.Adapter}
+}
+
+func (StoreFactory) removedBucket(settings Settings) error {
+	if settings.Bucket == "" {
+		return nil
+	}
+	return RemovedSetting{Name: "bucket", Value: settings.Bucket}
+}
+
+func (StoreFactory) missingSecret(settings Settings) error {
+	if settings.Link.Secret != "" {
+		return nil
+	}
+	return Unavailable{Operation: "local link signing without a secret"}
 }
 
 func (StoreFactory) local(settings Settings) blobs.Store {
 	return blobs.NewLocalFolder(settings.Folder, settings.Link.Base, blobs.NewLocalSigner([]byte(settings.Link.Secret)))
-}
-
-func (factory StoreFactory) s3(settings Settings) (blobs.Store, error) {
-	s3Settings := blobs.S3Settings{
-		Endpoint: settings.Endpoint, PublicEndpoint: settings.Public, Region: settings.Region, Bucket: settings.Bucket,
-		AccessKeyId: factory.Environment("AWS_ACCESS_KEY_ID"), SecretAccessKey: factory.Environment("AWS_SECRET_ACCESS_KEY"), SessionToken: factory.Environment("AWS_SESSION_TOKEN"),
-	}
-	store, err := blobs.NewS3Store(s3Settings, transport.SingleUseTransport{}.Client(0), time.Now)
-	if err != nil {
-		return nil, err
-	}
-	return store, nil
 }
 
 func (StoreFactory) localAdapter() string {

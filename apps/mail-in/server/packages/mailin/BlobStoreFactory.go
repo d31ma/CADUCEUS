@@ -1,54 +1,50 @@
 package mailin
 
 import (
-	"time"
+	"cmp"
 
 	"mesail.dev/packages/blobs"
-	"mesail.dev/packages/transport"
 )
 
-type BlobStoreFactory struct {
-	Environment func(string) string
-}
+type BlobStoreFactory struct{}
 
 func (factory BlobStoreFactory) Store(settings BlobSettings) blobs.Store {
-	if factory.incompleteLocal(settings) {
-		return MissingBlobs{}
+	problem := cmp.Or(factory.removedAdapter(settings), factory.removedBucket(settings), factory.incompleteLocal(settings))
+	return factory.checked(settings, problem)
+}
+
+func (factory BlobStoreFactory) checked(settings BlobSettings, problem string) blobs.Store {
+	if problem != "" {
+		return MissingBlobs{Problem: problem}
 	}
-	return factory.chosen(settings)
+	return factory.local(settings)
 }
 
-func (factory BlobStoreFactory) incompleteLocal(settings BlobSettings) bool {
-	local := settings.Adapter == SettingsReader{}.LocalAdapter()
-	return local && (settings.Folder == "" || settings.Link.Secret == "")
-}
-
-func (factory BlobStoreFactory) chosen(settings BlobSettings) blobs.Store {
+func (factory BlobStoreFactory) removedAdapter(settings BlobSettings) string {
 	if settings.Adapter == (SettingsReader{}).LocalAdapter() {
-		return factory.local(settings)
+		return ""
 	}
-	return factory.s3(settings)
+	return factory.removed("adapter", settings.Adapter)
+}
+
+func (factory BlobStoreFactory) removedBucket(settings BlobSettings) string {
+	if settings.Bucket == "" {
+		return ""
+	}
+	return factory.removed("bucket", settings.Bucket)
+}
+
+func (BlobStoreFactory) incompleteLocal(settings BlobSettings) string {
+	if settings.Folder != "" && settings.Link.Secret != "" {
+		return ""
+	}
+	return MissingBlobs{}.Reason()
+}
+
+func (BlobStoreFactory) removed(name string, value string) string {
+	return "the mail-in setting blobs." + name + " \"" + value + "\" was removed with the cloud option (ADR 0007): keep blobs in a local folder with the adapter \"local\""
 }
 
 func (BlobStoreFactory) local(settings BlobSettings) blobs.Store {
 	return blobs.NewLocalFolder(settings.Folder, settings.Link.Base, blobs.NewLocalSigner([]byte(settings.Link.Secret)))
-}
-
-func (factory BlobStoreFactory) s3(settings BlobSettings) blobs.Store {
-	s3Settings := blobs.S3Settings{
-		Endpoint: settings.Endpoint, PublicEndpoint: settings.Public, Region: settings.Region, Bucket: settings.Bucket,
-		AccessKeyId: factory.Environment("AWS_ACCESS_KEY_ID"), SecretAccessKey: factory.Environment("AWS_SECRET_ACCESS_KEY"), SessionToken: factory.Environment("AWS_SESSION_TOKEN"),
-	}
-	return factory.storeOrMissing(blobs.NewS3Store(s3Settings, transport.SingleUseTransport{}.Client(factory.timeout()), time.Now))
-}
-
-func (BlobStoreFactory) storeOrMissing(store blobs.S3Store, err error) blobs.Store {
-	if err != nil {
-		return MissingBlobs{}
-	}
-	return store
-}
-
-func (BlobStoreFactory) timeout() time.Duration {
-	return 60 * time.Second
 }

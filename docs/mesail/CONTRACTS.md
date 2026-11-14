@@ -766,15 +766,8 @@ An attachment in another domain answers `404`.
   `mediaType` and `size` on the message. An unknown id, or an attachment
   of another domain, answers `404 not_found`; any other caller `403
   forbidden`; no valid token `401`.
-- **Blob links.** With the S3 adapter the links are AWS Signature V4
-  presigned URLs (path style, `<public endpoint>/<bucket>/<domainId>/<name>`).
-  The S3 adapter needs an explicit `endpoint` (`attachments.endpoint`,
-  `mailin.blobs.endpoint`, the SMTP edge's
-  `MESAIL_RAW_STORE_S3_ENDPOINT`); `public` falls back to it. There is no
-  AWS or other cloud default (ADR 0007, slice OP1): without an endpoint
-  `attachments` answers `503 unavailable`, `mail-in` refuses every blob
-  call, and the SMTP edge does not start.
-  With the local-folder adapter (all-in-one image, native dev) they are
+- **Blob links.** Links are local signed links (ADR 0007, slice OP6: the S3
+  adapter was removed). They are
   `<attachments.link.base>/<domainId>/<name>?expires&type&size&file&signature`
   (HMAC-SHA256), served by `kit/blobs` `LocalHandler` mounted by the router
   at `/blobs` with the same folder and secret as the `attachments` app

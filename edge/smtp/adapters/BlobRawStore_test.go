@@ -4,38 +4,15 @@ import (
 	"context"
 	"errors"
 	"io"
-	"net/http"
-	"net/http/httptest"
-	"strings"
+	"os"
+	"path/filepath"
 	"testing"
-	"time"
 
 	"mesail.dev/packages/blobs"
 )
 
-type recordedPut struct {
-	method        string
-	path          string
-	authorization string
-	body          string
-}
-
 func localBlobStore(t *testing.T) blobs.LocalFolder {
 	return blobs.NewLocalFolder(t.TempDir(), "", blobs.NewLocalSigner(nil))
-}
-
-func fakeS3(t *testing.T, status int) (blobs.S3Store, *[]recordedPut) {
-	seen := &[]recordedPut{}
-	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		sent, _ := io.ReadAll(request.Body)
-		*seen = append(*seen, recordedPut{method: request.Method, path: request.URL.Path, authorization: request.Header.Get("Authorization"), body: string(sent)})
-		writer.WriteHeader(status)
-	}))
-	t.Cleanup(server.Close)
-	settings := blobs.S3Settings{Endpoint: server.URL, Region: "us-east-1", Bucket: "mesail-raw", AccessKeyId: "test", SecretAccessKey: "test"}
-	now := func() time.Time { return time.Date(2026, 11, 11, 12, 0, 0, 0, time.UTC) }
-	store, _ := blobs.NewS3Store(settings, server.Client(), now)
-	return store, seen
 }
 
 func TestBlobRawStoreWritesTheContentUnderTheKey(t *testing.T) {
@@ -89,32 +66,19 @@ func TestBlobRawStoreRefusesBadDomains(t *testing.T) {
 	}
 }
 
-func TestBlobRawStoreRefusesBadKeysBeforeAnyRequest(t *testing.T) {
-	store, seen := fakeS3(t, http.StatusOK)
-	err := NewBlobRawStore(store).Put(context.Background(), "example.com/a/b", []byte("x"))
-	if !errors.Is(err, InvalidKey{}) || len(*seen) != 0 {
-		t.Fatalf("want InvalidKey and no request, got %v and %d requests", err, len(*seen))
+func TestBlobRawStoreRefusesBadKeysBeforeAnyWrite(t *testing.T) {
+	folder := t.TempDir()
+	err := NewBlobRawStore(blobs.NewLocalFolder(folder, "", blobs.NewLocalSigner(nil))).Put(context.Background(), "example.com/a/b", []byte("x"))
+	entries, _ := os.ReadDir(folder)
+	if !errors.Is(err, InvalidKey{}) || len(entries) != 0 {
+		t.Fatalf("want InvalidKey and no file, got %v and %d entries", err, len(entries))
 	}
 }
 
-func TestBlobRawStoreSendsASignedPutToS3(t *testing.T) {
-	store, seen := fakeS3(t, http.StatusOK)
-	err := NewBlobRawStore(store).Put(context.Background(), "example.com/inbound-abc", []byte("raw"))
-	if err != nil || len(*seen) != 1 {
-		t.Fatalf("want one request, got %v and %d", err, len(*seen))
-	}
-	put := (*seen)[0]
-	if put.method != http.MethodPut || put.path != "/mesail-raw/example.com/inbound-abc" || put.body != "raw" {
-		t.Fatalf("unexpected request %+v", put)
-	}
-	if !strings.HasPrefix(put.authorization, "AWS4-HMAC-SHA256 Credential=test/20261111/us-east-1/s3/aws4_request") || !strings.Contains(put.authorization, "Signature=") {
-		t.Fatalf("unexpected authorization %q", put.authorization)
-	}
-}
-
-func TestBlobRawStoreReportsAnS3Failure(t *testing.T) {
-	store, _ := fakeS3(t, http.StatusInternalServerError)
-	err := NewBlobRawStore(store).Put(context.Background(), "example.com/inbound-abc", []byte("raw"))
+func TestBlobRawStoreReportsAWriteFailure(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "not-a-folder")
+	os.WriteFile(file, []byte("x"), 0o600)
+	err := NewBlobRawStore(blobs.NewLocalFolder(file, "", blobs.NewLocalSigner(nil))).Put(context.Background(), "example.com/inbound-abc", []byte("raw"))
 	if err == nil {
 		t.Fatal("want an error")
 	}

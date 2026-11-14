@@ -56,9 +56,9 @@ func TestCheckRefusesBadNames(t *testing.T) {
 func TestErrorsExplainThemselves(t *testing.T) {
 	messages := []string{
 		BadKey{Part: "name", Value: "../x"}.Error(), NotFound{Path: "example.com/x"}.Error(), TooLarge{Limit: 5}.Error(),
-		SizeMismatch{Expected: 5, Received: 6}.Error(), BadSignature{}.Error(), Expired{}.Error(), S3Failure{Method: "GET", Status: 500}.Error(),
+		SizeMismatch{Expected: 5, Received: 6}.Error(), BadSignature{}.Error(), Expired{}.Error(),
 	}
-	wanted := []string{`name "../x"`, "example.com/x", "5 bytes", "expected 5 bytes but received 6", "signature", "expired", "GET request answered HTTP 500"}
+	wanted := []string{`name "../x"`, "example.com/x", "5 bytes", "expected 5 bytes but received 6", "signature", "expired"}
 	for index, message := range messages {
 		if !strings.Contains(message, wanted[index]) {
 			t.Fatalf("%q does not contain %q", message, wanted[index])

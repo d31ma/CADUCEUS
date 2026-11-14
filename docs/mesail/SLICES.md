@@ -120,7 +120,7 @@ wave run at the same time.
     and a value in `application.json` cannot be overridden), and stops with
     TY2160 when the folder does not exist, so `scripts/gates.sh` (C1)
     creates the folder and the `.env` when they are missing.
-    Only the integration run in Lambda form (Floci, AWS later) puts a
+    Only the integration run in Lambda form (Floci) puts a
     root on EFS: `/mnt/data/<service>/<domain>/`, one function per
     (service, domain) (ADR 0004 section 4).
 13. **Scheduled work.** A `@Schedule` worker gets no injected providers in
@@ -1050,8 +1050,7 @@ FYLO owner's design choice; Mesail does not need it.
     FYLO's per-invocation lease (FYLO ADR 0011, a bounded wait for the
     root) instead of one long-lived loop per container, or at least treat
     `EROOTLOCKED` as busy and wait a bounded time (about 2 seconds) before
-    failing. This also covers AWS Lambda later, where an old environment
-    can stay alive after a redeploy.
+    failing.
     **TACHYON's answer** (TACHYON `develop` 3a1008a0e, TACHYON ADR 0128,
     not released yet): a failed store call writes `handler.storage_failed`
     with the `request_id` and `TY2160` "FYLO operation failed (<code>)" to
@@ -1124,7 +1123,7 @@ FYLO owner's design choice; Mesail does not need it.
   - the pin moves to the first TACHYON release with ADR 0128 and its
     amendment (ff94a61dd), after the owner approves that release;
   - the FYLO data source setting `timeout` 15,000 for every FYLO-owning service
-    in Lambda form (the dev host, kestrel and AWS later); native runs keep
+    in Lambda form (the dev host and kestrel); native runs keep
     5,000 (decided 2026-11-12: ATLAS write stalls reach 10.9 seconds and
     cold-start writes took 9.5 and 18 seconds, so 5 seconds turns them
     into failures; a shorter deadline does not free the store sooner,
@@ -1736,14 +1735,51 @@ except for the items below.
   the planned settings marked; OP1 and OP2 update it when they add or
   rename a setting.
 
-Later, only for a cloud form (not on-premise): `mail-out` gets the S3
-blob adapter that `mail-in` has (ADR 0007 section 7).
+### OP6. Remove the cloud-only code (decided 2026-11-14, ADR 0007)
+- **Why:** the owner dropped the cloud option ("Drop it": remove the AWS
+  notes from the docs and the cloud-only code, such as the S3 file-storage
+  adapter). On-premise uses the local blob adapter on one shared folder
+  (ADR 0007 section 7), so the S3 blob adapter is never used.
+- **Owns, for this change only:** `kit/blobs` (the S3 store, its settings,
+  its Signature V4 signer and AWS encoding, their errors and tests,
+  including `S3Floci_test.go`), `kit/attachments/StoreFactory.go`,
+  `kit/mailin/BlobStoreFactory.go`, the copies that `scripts/kit-sync.sh`
+  makes in `apps/attachments`, `apps/mail-in` and `apps/mail-out`
+  (`server/packages/blobs`, and the factories), `edge/smtp` (the S3 raw
+  store: `startup/RawStoreFactory.go`, its settings and tests, the
+  README rows), `tests/nocloud` (drop the S3 endpoint checks, keep the
+  rest), and the guides: `docs/mesail/OPERATIONS.md` (the `s3` adapter and
+  endpoint rows), `docs/mesail/CONTRACTS.md` "Blob links" (local signed
+  links only), `deploy/floci/README.md` and `edge/realtime/README.md` (the
+  "in AWS" and "AWS mapping" notes), `.env.example` and the apps'
+  `application.json` (the S3 settings), and `docs/mesail/ERRORS.md` (mark
+  the numbers of removed errors as retired; never reuse a number).
+- **Builds:** the attachments and mail-in factories and the SMTP edge
+  accept only the local adapter (`local`, and the raw store folder); a
+  setting that still names `s3` or an S3 bucket stops the service at
+  start with a clear message. Files with no remaining caller are deleted.
+- **Keeps** (the on-premise install uses them): the router's own signer
+  and `S3Endpoint` (it reads the web bundles from Floci's S3 bucket),
+  `scripts/floci/deploy.sh`'s bucket for the web bundles, the Lambda
+  Invoke calls to Floci, the AWS Lambda Web Adapter in the images, EFS
+  volumes, and the `test` credentials inside the VM.
+- **Done when:** `scripts/gates.sh` passes for kit, edge/smtp, tests and
+  the three apps; `scripts/kit-sync.sh --check` is clean; a grep finds no
+  `S3Store`, `RawStoreS3`, `YON_ATTACHMENTS_ENDPOINT`,
+  `YON_MAILIN_BLOBS_ENDPOINT` or `MESAIL_RAW_STORE_S3_` outside the
+  history of ADRs; the Floci blackbox run passes for attachments and mail
+  (it already uses the shared folder).
+- **Depends on:** nothing new. It touches `kit/blobs`, `attachments`,
+  `mail-in`, `mail-out` and `edge/smtp`, so it runs when no other slice is
+  changing those (the coordinator orders it). Small: about one session.
 
 OP5 (an offline build bundle) is dropped: the owner decided that builds
 may download pinned parts (SPEC Q20).
 
 ### Order
-OP1 and OP4 at once; OP2 after L5 and OP1; OP3 after OP2.
+OP1 and OP4 at once; OP2 after L5 and OP1; OP3 after OP2. OP6 when no
+running slice changes `kit/blobs`, `attachments`, `mail-in`, `mail-out` or
+`edge/smtp`.
 
 ## Wave 6: passkeys (ADR 0008)
 

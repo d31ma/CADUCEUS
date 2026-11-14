@@ -232,7 +232,7 @@ outbound delivery queue, retries, email summaries, cleanup):
      `@Schedule` worker in `server/workers/` gets a service token from
      `kit/oidc` (below) and POSTs to its own service's route on the local
      origin. The worker holds no logic beyond that call.
-   - **Lambda (Floci, AWS later):** an EventBridge schedule calls the same
+   - **Lambda (Floci):** the local scheduler calls the same
      route through the gateway with a service token (slice P1 owns the
      schedules and the small trigger that fetches the token).
 3. **Drain on write** stays: a producing route calls `RelayDocument` right
@@ -246,7 +246,7 @@ outbound delivery queue, retries, email summaries, cleanup):
    producer holds its one writer slot while it pushes (drain on write and
    the relay alike), so a synchronous call from the handler back to the
    producer waits for that slot: with the Floci router until the push times
-   out, in AWS a throttle that fails every retry. An event therefore
+   out. An event therefore
    carries what its consumer needs from the producer: `email.received`
    carries the email's content (section 7), and `messaging` asks `mail-in`
    for it only for an older event that has none.

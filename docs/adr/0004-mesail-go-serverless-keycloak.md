@@ -12,6 +12,11 @@
   0011](0011-chat-goes-device-to-device.md): chat content is no longer
   stored in the `messaging` and `channels` FYLO roots. Email and every
   other part stay.
+- Amended 2026-11-14 by [ADR 0007](0007-on-premise-first.md) ("Answered
+  after the 2026-11-14 affirmation"): there is no AWS form. Production is
+  the Lambda images in Floci on the owner's own machines. Read every AWS
+  mapping in this ADR (SES, S3 plus CloudFront, API Gateway, EventBridge,
+  AWS Lambda with EFS) as history, not as a plan.
 
 ## Context
 

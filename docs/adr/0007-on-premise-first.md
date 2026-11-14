@@ -22,8 +22,9 @@
   may need a cloud-shaped service beyond the ones section 5 already maps
   to the install. Mesail uses no SQS, SNS, EventBridge or ECS, in Floci
   or elsewhere. What this means for the runtime form (section 4) and for
-  the cloud option (section 1) is listed in "Open after the 2026-11-14
-  affirmation" at the end.
+  the cloud option (section 1) was answered the same day: keep Lambda in
+  Floci, and drop the cloud option ("Answered after the 2026-11-14
+  affirmation" at the end).
 
 ## Context
 
@@ -72,9 +73,10 @@ An audit of `develop` (2cda510) found:
 
 1. **On-premise is the primary target.** Every Mesail feature runs on the
    owner's own machines with no cloud provider account, no managed cloud
-   service and no SaaS, at run time and at deploy time. A cloud target
-   (AWS) stays an option that may be added later; it is never required,
-   and no code may assume it.
+   service and no SaaS, at run time and at deploy time. There is no cloud
+   target: the owner dropped the AWS option on 2026-11-14 (see "Answered
+   after the 2026-11-14 affirmation"). No code, setting or guide keeps a
+   path for a cloud provider.
 2. **No hidden outbound traffic.** At run time Mesail opens connections
    only to hosts named in its settings. No setting has a public default:
    - DNS for domain checks, SPF, DKIM, DMARC and MX uses the resolver the
@@ -82,9 +84,10 @@ An audit of `develop` (2cda510) found:
      never a public resolver by default.
    - Outbound mail goes to the relay the operator names, or directly to
      recipients' mail servers when the operator turns direct delivery on.
-   - Blob storage is the local adapter, or an S3-compatible store whose
-     endpoint the operator names (for example a self-hosted one). The S3
-     adapter refuses to start without an endpoint; no AWS fallback.
+   - Blob storage is the local adapter on one shared folder (section 7).
+     Until 2026-11-14 an S3-compatible store was also allowed, with an
+     endpoint the operator named and no AWS fallback; slice OP6 removes
+     that adapter.
    - Browser push follows SPEC Q19.
    - Time: the operator points the hosts at their own NTP server. Mesail
      itself makes no time requests.
@@ -138,7 +141,7 @@ An audit of `develop` (2cda510) found:
    | API routing / API Gateway | Mesail's router (Lambda mode, to Floci) |
    | API Gateway WebSocket | `edge/realtime` and the `realtime` container (already) |
    | EventBridge schedules | the local scheduler (already) |
-   | S3 for blobs | one shared blob folder on the VM's data disk with the local adapter (decided 2026-11-11, section 7); an S3-compatible store only for a later cloud form |
+   | S3 for blobs | one shared blob folder on the VM's data disk with the local adapter (decided 2026-11-11, section 7) |
    | S3 plus CloudFront for web apps | the router serves the web bundles from Floci's S3 bucket (as now) |
    | EFS | Floci's EFS volumes on the VM's data disk (the ATLAS rules of ADR 0004 stay) |
    | Secrets Manager | secret files on the host, read once at start (as now) |
@@ -163,9 +166,8 @@ An audit of `develop` (2cda510) found:
      up and trust. A folder is backed up with the rest of the data disk.
    - Floci's S3 keeps only the web app bundles, which only the router reads
      inside the VM.
-   - The S3 adapter stays for a later cloud form. `mail-out` getting the S3
-     adapter that `mail-in` has is a follow-up for that cloud form, not
-     needed on-premise.
+   - The S3 blob adapter is removed (the cloud option was dropped on
+     2026-11-14; slice OP6). `mail-out` never gets one.
 8. **A gate proves it.** An on-premise run starts the whole stack with all
    outbound traffic blocked except the configured relay, resolver and (if
    on) push services, and the blackbox tests pass, except the ones that
@@ -185,24 +187,20 @@ An audit of `develop` (2cda510) found:
 - Email to and from other organizations still needs the internet (SMTP
   and DNS). An air-gapped install (SPEC Q17) has only internal domains.
 
-## Open after the 2026-11-14 affirmation
+## Answered after the 2026-11-14 affirmation
 
-These wait for the owner's answers (through the build coordinator). Until
-then nothing changes and no running slice stops.
+The owner's answers (2026-11-14, through the build coordinator):
 
-- **Runtime form (section 4, SPEC Q18).** On 2026-11-11 the owner chose
-  the same Lambda images in Floci on kestrel, to keep the serverless-first
-  shape. With on-premise as the only target, the other form is plain
-  long-running `ty start` processes (one per service, behind the router's
-  native mode), which every slice already uses in tests. Floci's Lambda
-  form brings the one-writer limits (reserved concurrency 1, the 60 s
-  timeout, the writer guard of K8), cold starts, the Floci socket and
-  licence rules of section 4, and the store deadlines of K10; plain
-  processes avoid them, but lose per-domain function isolation and the
-  emulator's EFS volumes. OP2's production definition is not on `develop`
-  yet, so a switch now costs the least. Recommended: keep the Lambda form
-  (the owner's choice; native stays a fallback with no code change).
-- **The cloud option (section 1).** "AWS may be added later" stays as a
-  possibility with no planned work, or is dropped (remove the AWS notes in
-  ADR 0004 and the cloud-only code, such as the S3 blob adapter).
-  Recommended: keep it as an unplanned possibility; it costs nothing.
+- **Runtime form: keep Lambda in Floci** ("Keep Lambda in Floci
+  (Recommended)"). Section 4 stands; plain `ty start` processes stay the
+  test form and a fallback with no code change.
+- **The cloud option: dropped** ("Drop it": remove the AWS notes from the
+  docs and the cloud-only code, such as the S3 file-storage adapter).
+  Section 1 now says there is no cloud target. Slice OP6 removes the
+  S3 blob adapter (`kit/blobs` S3 store and its Signature V4 signer, the
+  `s3` choice in `kit/attachments` and `kit/mailin`, the SMTP edge's S3
+  raw store) and the AWS notes in the guides. What stays, because the
+  on-premise install uses it: Floci's AWS-shaped APIs (Lambda Invoke, the
+  S3 bucket for the web bundles that the router reads with its own
+  signer, EFS volumes), the AWS Lambda Web Adapter in the images, and the
+  `test` credentials inside the VM.

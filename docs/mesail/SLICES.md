@@ -2309,6 +2309,39 @@ section 4) and only Mesail's own code drops collections.
 - **Done when:** a Floci run's FYLO log shows at most one
   `inspectCollection` per existing collection per container (missing
   collections: see above); gates pass for every app that syncs the kit.
+- **Landed** (develop 8717ad4, 2026-11-14; hand-over
+  `~/Library/Logs/local/CADUCEUS/mesail/slice-k12-handover.md`). Its
+  follow-ups are K13 (devicebox and `kit/mailout`) and the "busiest
+  collections" note in K13.
+
+### K13. The last direct collection calls (one small session, after E2)
+Found by K12 (2026-11-14). Two places still bypass `KnownCollections`:
+- `apps/devicebox` `packages/devicebox/Documents.go` calls
+  `collectionExists` and `createCollection` itself, and drops collections
+  without forgetting their markers. Not harmful today (a write that finds
+  its collection missing forgets the marker, creates and retries once),
+  but it costs a check per call and breaks K12's rule.
+- `kit/mailout` calls `CreateCollection` on every call (100 creates in
+  K12's Floci run).
+- **Owns, for this change only:** `apps/devicebox/server/packages/devicebox/`
+  (G6's app; `devicebox`'s own code, not a kit copy) and `kit/mailout`
+  with its copies (`scripts/kit-sync.sh`).
+- **Builds:** both use `KnownCollections` (`Write` for a write that may
+  create; a read of a missing collection answers empty without creating);
+  `devicebox` calls `Forget` before every drop. Unit tests show one check
+  per collection per process.
+- **Depends on:** K12 (merged). Not at the same time as a slice changing
+  `mail-out` (E2) or `devicebox`.
+- **Done when:** gates pass for `devicebox`, `mail-out` and `kit`; a Floci
+  run's FYLO log shows no repeated `createCollection` from `mail-out`.
+- **Busiest collections (optional, each app's owner, no card):** after
+  K12's choice A, a read of a collection that was never created checks
+  FYLO each time. An app owner may create its busiest such collection on
+  its own first write in that domain. Known cases: `messaging`'s
+  `mentions-<domain>` (82 checks in one run; `messaging`'s owner, with or
+  after E8) and `notify`'s month collections that never got a
+  notification (up to 16 checks each; `notify`'s owner, after E5).
+  Reads still never create.
 
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 

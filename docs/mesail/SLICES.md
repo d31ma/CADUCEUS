@@ -2490,7 +2490,12 @@ step stays in every such slice's card (E12's card carries it).
 - **Owns, for this change only:** `scripts/kit-sync.sh`.
 - **Builds:** kit-sync finds every Go module that vendors the kit (a
   `vendor/mesail.dev/packages` folder; today only `edge/calls`) and runs
-  `go mod vendor` there with `GOFLAGS=-mod=mod GOPROXY=off`. `--check`
+  `go mod vendor` there with `GOFLAGS=-mod=mod` and Go's default module
+  proxy (not `GOPROXY=off`: with an empty module cache, as on GitHub's
+  runner and in act, it fails with "module lookup disabled" for pion; Go
+  uses its cache first and checks every download against `go.sum`, which
+  ADR 0007 section 3 allows for builds; the result matched the committed
+  copy byte for byte; decided with the coordinator 2026-11-14). `--check`
   vendors into a temporary copy and fails, naming the module, when the
   committed copy differs. The script prints each module it updates.
 - **Depends on:** the script freeze ends (E1, E2, E8, K7, PK7 and K6

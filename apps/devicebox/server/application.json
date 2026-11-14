@@ -1,0 +1,21 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8111
+  },
+  "oidc": {
+    "issuer": "http://127.0.0.1:8101/api/v1/identity",
+    "jwks": "http://127.0.0.1:8101/api/v1/identity/jwks",
+    "audience": "mesail-api",
+    "servicetokens": "http://127.0.0.1:8101/api/v1/identity/service-token"
+  },
+  "outbox": {
+    "producer": "devicebox",
+    "subscribers": []
+  },
+  "outgoing": {
+    "hosts": [
+      "127.0.0.1"
+    ]
+  }
+}

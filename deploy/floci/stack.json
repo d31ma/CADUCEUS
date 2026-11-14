@@ -85,6 +85,12 @@
       "memory": 1024,
       "timeout": 60,
       "fileSystemShare": "mail"
+    },
+    {
+      "name": "devicebox",
+      "fylo": true,
+      "memory": 1024,
+      "timeout": 60
     }
   ],
   "keycloak": {
@@ -123,6 +129,14 @@
   "schedules": [
     {
       "path": "/api/v1/channels/outbox/relay",
+      "native": true
+    },
+    {
+      "path": "/api/v1/devicebox/jobs/expire",
+      "native": true
+    },
+    {
+      "path": "/api/v1/devicebox/outbox/relay",
       "native": true
     },
     {

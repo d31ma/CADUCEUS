@@ -12,3 +12,4 @@ func (Services) MailOut() string     { return "mail-out" }
 func (Services) Search() string      { return "search" }
 func (Services) Realtime() string    { return "realtime" }
 func (Services) Notify() string      { return "notify" }
+func (Services) Devicebox() string   { return "devicebox" }

@@ -51,7 +51,7 @@ func TestCatalogKnowsEveryEventType(t *testing.T) {
 		types.ChannelMemberRemoved(), types.ChannelArchived(), types.MessageCreated(),
 		types.MessageEdited(), types.MessageDeleted(), types.ReactionChanged(),
 		types.ReadPositionMoved(), types.EmailSendRequested(), types.EmailDeliveryChanged(),
-		types.EmailReceived(), types.PresenceChanged(),
+		types.EmailReceived(), types.PresenceChanged(), types.EnvelopeStored(),
 	}
 	for _, name := range names {
 		if !(Catalog{}).Known(name) {
@@ -69,8 +69,8 @@ func TestCatalogDoesNotKnowAMadeUpType(t *testing.T) {
 func TestServicesNameEveryMesailService(t *testing.T) {
 	services := Services{}
 	got := []string{services.Identity(), services.Directory(), services.Channels(), services.Messaging(),
-		services.Attachments(), services.MailIn(), services.MailOut(), services.Search(), services.Realtime(), services.Notify()}
-	want := []string{"identity", "directory", "channels", "messaging", "attachments", "mail-in", "mail-out", "search", "realtime", "notify"}
+		services.Attachments(), services.MailIn(), services.MailOut(), services.Search(), services.Realtime(), services.Notify(), services.Devicebox()}
+	want := []string{"identity", "directory", "channels", "messaging", "attachments", "mail-in", "mail-out", "search", "realtime", "notify", "devicebox"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v", got)
 	}
@@ -87,5 +87,13 @@ func TestCatalogNamesOneProducerForMostTypes(t *testing.T) {
 	producers, _ := Catalog{}.ProducersOf(Types{}.MessageCreated())
 	if len(producers) != 1 || producers[0] != "messaging" {
 		t.Fatalf("got %v", producers)
+	}
+}
+
+func TestCatalogSendsEnvelopeStoredFromDeviceboxToRealtimeAndNotify(t *testing.T) {
+	producer, err := Catalog{}.ProducerOf(Types{}.EnvelopeStored())
+	consumers := Catalog{}.ConsumersOf(Types{}.EnvelopeStored())
+	if err != nil || producer != "devicebox" || !reflect.DeepEqual(consumers, []string{"realtime", "notify"}) {
+		t.Fatalf("got %q %v %v", producer, consumers, err)
 	}
 }

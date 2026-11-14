@@ -36,6 +36,7 @@ own TACHYON Go app in `apps/<service>/`, with the route prefix
 | `search` | `search-index` | the source documents |
 | `mail-in` | `inbound-raw` (metadata), `inbound-content` (each email's readable content, split by month) and the raw-mail bucket | conversations |
 | `mail-out` | `outbound-queue`, `suppressions`, `delivery-attempts` | conversations |
+| `devicebox` (from G6, ADR 0011) | `devicebox-slips`, `devicebox-bodies`, `devicebox-counts` (each split by domain), `outbox-collections` | the content of chat (it stores ciphertext it cannot read), devices and their owners (`directory` owns them) |
 
 ### Roles
 
@@ -348,6 +349,66 @@ authResults, state: accepted|routed|failed}`. One email with recipients in
 two hosted domains gives one `InboundRaw` per domain, each with only that
 domain's recipients and its own raw copy under `<domainId>/`.
 
+### Envelope (`devicebox/...`, from G6, ADR 0011)
+
+One encrypted envelope per put, whatever the number of receiving devices
+(up to 200). It is stored as three kinds of document in collections split
+by domain (`kit/collections` `ForDomain`):
+
+- **Slip** (`devicebox-slips-<domainKey>`): `{envelopeId, domainId,
+  senderDeviceId, senderPersonId, kind, storedAt, storedUs, expiresUs,
+  bodyId, contentHash, waiting}`. `waiting` is an object with one key per
+  receiving device that has not acknowledged yet: `d` + the first 24 hex
+  characters of SHA-256 of the device id, value `true`. The slip is small
+  (at most about 6 KiB for 200 devices), so queries over slips stay cheap.
+- **Body** (`devicebox-bodies-<domainKey>`): `{envelopeId, domainId,
+  ciphertext, expiresUs}` plus the six outbox fields (EVENTS.md 2.1). The
+  `envelope.stored` events (one per receiving person) are staged here, in
+  the same write as the ciphertext. At most 256 KiB of ciphertext (about
+  342 KiB as base64url) plus the events stays under 512 KiB.
+- **Box count** (`devicebox-counts-<domainKey>`): 8 documents per domain,
+  `{bucket: b0..b7, counts: {deviceKey: waiting envelopes}}`; a device's
+  key picks its bucket. They make the 10,000 limit a read, not a query.
+
+**How FYLO finds "envelopes waiting for device X" without a scan** (G6
+checked FYLO 26.45.07 and TACHYON 26.46.02 on 2026-11-14):
+
+- FYLO's `$eq` does not match one value inside an array (`$contains` does,
+  but TACHYON's `scroll` sends only `$eq`, and its field names allow only
+  `A-Z a-z 0-9 _`). So the waiting devices are keys of a nested object,
+  not an array.
+- FYLO indexes every nested key (`waiting/<deviceKey>`, an exact-match
+  prefix index). `devicebox` asks through TACHYON's SQL:
+  `SELECT envelopeId, ... FROM devicebox-slips-<domainKey> WHERE
+  waiting.<deviceKey> = true AND storedUs > $1 LIMIT $2`. FYLO's `EXPLAIN`
+  shows `prefix-index waiting/<deviceKey>`; on 10,000 slips it answers in
+  3 to 11 ms. A test (`Cost_test.go`) checks the plan and that a list
+  makes one query and reads only that device's bodies.
+- `LIMIT` is honored and returns the oldest first (FYLO ids follow the
+  write order of the one writer); `OFFSET`, `ORDER BY` and `COUNT(*)`
+  are not supported, and reading 10,000 rows at once takes about 40 s. So
+  pages use the cursor `storedUs` (a numeric range, which FYLO combines
+  with the index) and the box limit uses the box counts.
+- The device key is the only text placed into the SQL statement; it is
+  made by `devicebox` from a hash (`d` + 24 hex), checked against
+  `^d[0-9a-f]{24}$`, never taken from a request. Values go as `$`
+  parameters.
+- A patch of `waiting` replaces the whole object, and FYLO removes the old
+  index key, so an acknowledged device no longer finds the envelope.
+
+**Writes.** A put writes the body, the slip, the box count of each bucket
+its devices fall in (at most 8) and the relay's outbox save: at most 11
+writes for 200 devices of 50 people (measured, `WriteCostTest`). An
+acknowledgement patches the slip (or deletes slip and body for the last
+device) and writes one box count. The expiry job (30 days) deletes the
+slip and the body, leaves an `undelivered` slip and body (no ciphertext)
+for the sender's device, and stays within 25 writes per call.
+
+**Box counts can drift.** FYLO has no transaction across documents. A
+crash after the slip is written but before the box counts are written
+leaves a count too low (the limit is then a little looser); counts never
+go below 0. Nothing repairs a drifted count yet.
+
 ### Presence (`realtime/presence`)
 `{domainId, memberId, state: active|idle|dnd|offline, doNotDisturbUntil?, lastSeenAt}`.
 Presence is shown only to members of the same domain.
@@ -437,3 +498,4 @@ email's content because `messaging` must not call `mail-in` back while
 | `email.delivery.changed` | mail-out | messaging |
 | `email.received` | mail-in | messaging |
 | `presence.changed` | realtime | realtime (fan-out within the domain) |
+| `envelope.stored` (from G6, ADR 0011; no ciphertext, no sender) | devicebox | realtime, notify |

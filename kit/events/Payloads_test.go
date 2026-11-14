@@ -129,3 +129,7 @@ func TestEmailReceivedRoundTrip(t *testing.T) {
 		t.Fatalf("round trip lost data: %+v", decoded)
 	}
 }
+
+func TestEnvelopeStoredKeys(t *testing.T) {
+	expectKeys(t, EnvelopeStored{}, "envelopeId,kind,toDeviceIds,toPersonId")
+}

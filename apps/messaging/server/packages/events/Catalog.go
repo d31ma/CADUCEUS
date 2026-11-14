@@ -51,5 +51,6 @@ func (Catalog) table() map[string]Route {
 		types.EmailDeliveryChanged(): {Producer: services.MailOut(), Consumers: []string{services.Messaging()}},
 		types.EmailReceived():        {Producer: services.MailIn(), Consumers: []string{services.Messaging()}},
 		types.PresenceChanged():      {Producer: services.Realtime(), Consumers: []string{services.Realtime()}},
+		types.EnvelopeStored():       {Producer: services.Devicebox(), Consumers: activityConsumers},
 	}
 }

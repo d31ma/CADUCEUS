@@ -16,3 +16,4 @@ func (Types) EmailSendRequested() string   { return "email.send.requested" }
 func (Types) EmailDeliveryChanged() string { return "email.delivery.changed" }
 func (Types) EmailReceived() string        { return "email.received" }
 func (Types) PresenceChanged() string      { return "presence.changed" }
+func (Types) EnvelopeStored() string       { return "envelope.stored" }

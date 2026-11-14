@@ -101,3 +101,34 @@ keeps its row, marked "retired".
 | MS4500 | notify | 500 | `unavailable` | Something went wrong. | an unexpected error in `notify` |
 | MS5000 | realtime | 500 | `unavailable` | Something went wrong. | an unexpected error in `realtime` |
 | MS5500 | router | 502 | `unavailable` | Something went wrong. | an unexpected error in the router |
+| MS6000 | devicebox | 500 | `unavailable` | Something went wrong. | an unexpected error in `devicebox` |
+| MS6001 | devicebox | 401 | `unauthenticated` | Sign in again. | the token is missing, forged or expired (a token TACHYON lets through but `kit/oidc` refuses) |
+| MS6002 | devicebox | 403 | `forbidden` | Only members of this domain can use the mailbox. | a mailbox route called with a token that is neither `Member` nor `DomainAdmin` |
+| MS6003 | devicebox | 400 | `invalid_request` | The envelope id must be a UUID. | `envelopeId` is not a UUID (field `envelopeId`) |
+| MS6004 | devicebox | 400 | `invalid_request` | The sending device id is not valid. | `senderDeviceId` is empty or not 1 to 128 of `A-Z a-z 0-9 _ -` (field `senderDeviceId`) |
+| MS6005 | devicebox | 400 | `invalid_request` | Name 1 to 200 receiving devices. | `toDeviceIds` has 0 or more than 200 ids (field `toDeviceIds`) |
+| MS6006 | devicebox | 400 | `invalid_request` | A receiving device id is empty, too long or repeated. | a `toDeviceIds` entry is not a valid device id, or is listed twice (field `toDeviceIds`) |
+| MS6007 | devicebox | 400 | `invalid_request` | The kind must be message, group or linking. | `kind` is another value; `undelivered` comes only from the expiry job (field `kind`) |
+| MS6008 | devicebox | 400 | `invalid_request` | The ciphertext must be base64url text that is not empty. | `ciphertext` is empty or not base64url (field `ciphertext`) |
+| MS6009 | devicebox | 413 | `too_large` | The ciphertext is larger than 256 KiB. | the decoded `ciphertext` is over 262,144 bytes |
+| MS6010 | devicebox | 404 | `not_found` | The sending device is not one of your devices in this domain. | `senderDeviceId` is not a device of the caller's person in the token's domain |
+| MS6011 | devicebox | 404 | `not_found` | A receiving device is not a device of a member of this domain. | a `toDeviceIds` entry is unknown in the token's domain |
+| MS6012 | devicebox | 409 | `duplicate` | An envelope with this id already exists with other content. | a put repeats an `envelopeId` with another sender, devices, kind or ciphertext |
+| MS6013 | devicebox | 429 | `box_full` | A receiving device already has 10,000 waiting envelopes. | a receiving device's box count is at 10,000 |
+| MS6014 | devicebox | 404 | `not_found` | This device is not one of your devices in this domain. | list or acknowledge for a device of another person or domain, or an id that is not a device id |
+| MS6015 | devicebox | 400 | `invalid_request` | The page cursor is not valid. | `after` is not a cursor that `next` gave (field `after`) |
+| MS6016 | devicebox | 400 | `invalid_request` | The page size must be 1 to 100. | `limit` is not a number from 1 to 100 (field `limit`) |
+| MS6017 | devicebox | 400 | `invalid_request` | Acknowledge 1 to 10 envelopes at a time. | `envelopeIds` has 0 or more than 10 ids (field `envelopeIds`) |
+| MS6018 | devicebox | 400 | `invalid_request` | Every acknowledged envelope id must be a UUID. | an `envelopeIds` entry is not a UUID (field `envelopeIds`) |
+| MS6019 | devicebox | 503 | `unavailable` | The device list is not available. | the `directory` device list failed |
+| MS6020 | devicebox | 503 | `unavailable` | The device list is not connected yet. | the device list port has no adapter yet (until slice G1) |
+| MS6021 | devicebox | 503 | `unavailable` | The mailbox store is not available. | a FYLO command or query failed |
+| MS6022 | devicebox | 503 | `unavailable` | The mailbox store gave an answer that cannot be read. | a FYLO answer could not be decoded |
+| MS6023 | devicebox | 503 | `unavailable` | The outbox settings are missing. | `outbox` is missing from the app settings |
+| MS6024 | devicebox | 503 | `unavailable` | Too many events are waiting. Try again later. | `kit/outbox` refused to stage an event (`OutboxFull`) |
+| MS6025 | devicebox | 404 | `not_found` | There is no such dead letter. | requeue names an event and subscriber that is not a dead letter |
+| MS6026 | devicebox | 404 | `not_found` | There is no such outbox document. | requeue names a document that does not exist |
+| MS6027 | devicebox | 404 | `not_found` | There is no such outbox collection. | requeue names a collection that is not in `outbox-collections` |
+| MS6028 | devicebox | 503 | `unavailable` | The mailbox is not available. | a mailbox or job route failed in a way no other number covers |
+| MS6029 | devicebox | 503 | `unavailable` | The outbox is not available. | an outbox route failed in a way no other number covers |
+| MS6030 | devicebox | 503 | `unavailable` | The outbox fields cannot be read. | a document's outbox fields could not be read or written |

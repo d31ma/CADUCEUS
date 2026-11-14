@@ -2075,8 +2075,44 @@ section 8.)
   take G0's "from G8" text; dev host chat test data is dropped (no
   release yet, so no user data moves).
 
+### G9. Call design (architecture, `mesail-arch`; part of G0)
+- **Builds:** ADR 0012's open parts after the owner's answers (Q8 to Q11):
+  SPEC call rules (AC-CL), the call signalling messages on `realtime`, the
+  `calls` app's contract (admission, one UDP port), the SFrame key
+  schedule from the MLS group, the call history messages; Pion compared
+  with a ready-made SFU, recorded in ADR 0012; blackbox tests for the
+  server parts.
+
+### CU. Call screens (`mesail-ux` or a UX session)
+- **Owns:** `docs/mesail/ux/**`.
+- **Builds:** the call buttons in a conversation's header, the incoming
+  call view (accept, decline), the call view (one person, and the group
+  grid with the speaker first), the controls (mute, camera, devices,
+  leave; screen sharing if the owner keeps it), the call history rows in
+  the conversation, "Missed call", and the permission and "not supported
+  on this device" states.
+
+### G10. The `calls` app, a forwarding server that cannot read media (after G9)
+- **Owns:** `apps/calls/**` (new Go app on Pion), its stack entry and its
+  public UDP port (with OP2's successor), OPERATIONS.md's call lines.
+- **Builds:** admission of devices that `realtime` admitted to a call of
+  their domain, forwarding of encrypted frames with simulcast, one shared
+  UDP port with the TURN relay as fallback, numbers MS6500-MS6999.
+
+### G11. Call signalling and ringing (with G2's and G5's owners)
+- **Builds:** G2's signalling extended with call messages (invite,
+  answer, decline, leave, end) for members of the conversation; G5's
+  pushes extended with "Incoming call" and "Missed call" (no names).
+
+### G12. The call client (after TACHYON P1, P2, P5; with G7)
+- **Builds:** calls of two device to device, group calls through `calls`
+  with SFrame keys from the MLS group, the call history messages, the
+  call screens of CU, in the chat page app.
+
 ### Order
 G0 now. G1 to G5 (and G6 if wanted) when their app's E slice is merged.
+G9 and CU after the owner's answers to ADR 0012's Q8 to Q11; G10 and G11
+after G9; G12 after TACHYON P5 and G7.
 G6 any time (a new app). G7 after TACHYON P1, P2 and P4 are released and
 the pin moves. G8 last, before the first release (Q7).
 

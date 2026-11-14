@@ -780,7 +780,9 @@ recent data, works offline, and syncs when it is back online.
 
 ## 6. Out of scope for the first release
 
-- Voice and video calls, screen sharing.
+- Voice and video calls and screen sharing moved INTO scope on
+  2026-11-14 (ADR 0012); which of them are in the first release waits for
+  the owner's answers (ADR 0012 section 6).
 - Chat between domains of any kind: shared channels, cross-domain DMs or
   shared presence (Slack Connect style). Domains talk to each other by
   email only. This is a product rule, not only a first-release limit.

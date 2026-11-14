@@ -14,6 +14,16 @@
   an install also runs a TURN relay for device-to-device chat, with
   public ports (UDP and TCP 3478, TLS 5349, a UDP relay range) besides
   HTTPS and SMTP (slice G3).
+- **Affirmed 2026-11-14** by the owner, while rejecting
+  [ADR 0013](0013-queues-deliver-events-and-jobs.md) (queues for events
+  and jobs): "for this project we have to assume the app will run
+  on-premise". So every design choice is judged for the on-premise
+  install only. No slice builds anything for a cloud form, and no design
+  may need a cloud-shaped service beyond the ones section 5 already maps
+  to the install. Mesail uses no SQS, SNS, EventBridge or ECS, in Floci
+  or elsewhere. What this means for the runtime form (section 4) and for
+  the cloud option (section 1) is listed in "Open after the 2026-11-14
+  affirmation" at the end.
 
 ## Context
 
@@ -174,3 +184,25 @@ An audit of `develop` (2cda510) found:
   code change").
 - Email to and from other organizations still needs the internet (SMTP
   and DNS). An air-gapped install (SPEC Q17) has only internal domains.
+
+## Open after the 2026-11-14 affirmation
+
+These wait for the owner's answers (through the build coordinator). Until
+then nothing changes and no running slice stops.
+
+- **Runtime form (section 4, SPEC Q18).** On 2026-11-11 the owner chose
+  the same Lambda images in Floci on kestrel, to keep the serverless-first
+  shape. With on-premise as the only target, the other form is plain
+  long-running `ty start` processes (one per service, behind the router's
+  native mode), which every slice already uses in tests. Floci's Lambda
+  form brings the one-writer limits (reserved concurrency 1, the 60 s
+  timeout, the writer guard of K8), cold starts, the Floci socket and
+  licence rules of section 4, and the store deadlines of K10; plain
+  processes avoid them, but lose per-domain function isolation and the
+  emulator's EFS volumes. OP2's production definition is not on `develop`
+  yet, so a switch now costs the least. Recommended: keep the Lambda form
+  (the owner's choice; native stays a fallback with no code change).
+- **The cloud option (section 1).** "AWS may be added later" stays as a
+  possibility with no planned work, or is dropped (remove the AWS notes in
+  ADR 0004 and the cloud-only code, such as the S3 blob adapter).
+  Recommended: keep it as an unplanned possibility; it costs nothing.

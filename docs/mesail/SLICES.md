@@ -2250,56 +2250,16 @@ section 4) and only Mesail's own code drops collections.
   `inspectCollection` per collection per container; gates pass for every
   app that syncs the kit.
 
-## Wave 10: queues deliver events and jobs (ADR 0013, proposed)
+## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 
-Waits for the owner's answers to ADR 0013's Q14 to Q16. J0 may start now:
-it only measures.
-
-### J0. Probe Floci's queues (one session, with the dev host)
-- **Owns:** a probe under `~/Library/Logs/local/CADUCEUS/` and a report in
-  the coordinator's shared notes; no repository change.
-- **Builds:** on the dev host, with its own names (prefix `probe-`) and
-  removing only what it made: an SNS topic fanning out to two SQS FIFO
-  queues; ordering by message group; a redrive to a dead-letter queue; a
-  queue trigger on a container-image Lambda behind the Lambda Web Adapter,
-  reaching an HTTP route with the batch and answering a partial failure;
-  the same trigger on a function with reserved concurrency 1 while HTTP
-  calls arrive (what waits, what is throttled, what is retried);
-  EventBridge Scheduler putting a message on a queue; delayed messages;
-  and whether queue contents survive a Floci restart (only when the
-  coordinator gives a window: it restarts Floci).
-- **Done when:** the report answers each item with logs.
-
-### J1. `kit/queue` and publish on write (the outbox owner, after J0 and K7)
-- **Builds:** `kit/queue` (SQS and SNS calls signed with AWS SigV4 through a
-  TACHYON HTTP remote to the declared Floci host); `kit/outbox`'s second
-  pusher that publishes each staged event to its type's topic and marks
-  it published; the relay publishes only what is left; native keeps HTTP
-  push.
-
-### J2. Queues, triggers and consumer routes (OP2's successor with each service's owner)
-- **Builds:** per domain function, the FIFO queues, dead-letter queues,
-  topic subscriptions and triggers in the deploy files; each service's
-  `events` route accepts an SQS batch and answers partial failures, inside
-  rule 9's budget per batch; the requeue route becomes a redrive.
-
-### J3. Jobs as queue messages (K6's successor)
-- **Builds:** EventBridge Scheduler ticks on job queues instead of
-  `deploy/lambda/scheduler.sh`; removal, devicebox expiry and other long
-  jobs do one bounded step per message and send their next step.
-
-### J4. Mail-out delivery on a queue (mail-out's owner)
-- **Builds:** one delivery message per outgoing message and recipient
-  domain, retries as delayed messages, a dead-letter queue that becomes
-  the bounce.
-
-### J5. Retire HTTP push in Lambda form (one small session, last)
-- **Builds:** Lambda form uses only queues; native keeps HTTP push; EVENTS
-  and OPERATIONS updated.
-
-### Order
-J0 now. After the owner's answers and a passing J0: J1 (after K7), then
-J2, J3 and J4, then J5. ECS waits for Q15.
+Wave 10 (J0 to J5: Floci SQS and SNS for events, EventBridge Scheduler
+for jobs, a mail-out queue) was proposed on 2026-11-14 and rejected the
+same day by the owner: Mesail's app jobs do not move to queues, and
+Mesail must be assumed to run on-premise (ADR 0013 "Rejection", ADR 0007
+"Affirmed 2026-11-14"). No J slice started. Events keep the outbox with
+HTTP push (EVENTS.md), jobs keep the local scheduler, and K6 and K7
+finish as planned. The Floci queue the owner wants is for build, test
+and CI jobs on the Mac, owned by TACHYON's planning session.
 
 ## Later (after the first release)
 

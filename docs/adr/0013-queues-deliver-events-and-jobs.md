@@ -1,12 +1,39 @@
 # ADR 0013: Queues deliver events and jobs (SQS, SNS, EventBridge Scheduler)
 
-- Status: proposed (2026-11-14); waits for the owner's answers (section 6)
-  and for probe slice J0
+- Status: **Rejected** (2026-11-14, the owner). Kept as a record; nothing
+  in it is built. Slice J0 never started.
 - Deciders: the owner ("use Floci's SQS, SNS, ECS to facilitate a queuing
   system for jobs"), architecture (the design)
 - Related: ADR 0004 (Lambda in Floci, one writer per FYLO root), ADR 0007
   (on-premise), EVENTS.md sections 2 and 4 (the outbox, drain on write,
   scheduled work), SLICES K6, K7, K8, K10, K12
+
+## Rejection (2026-11-14)
+
+The owner's answers, in their words:
+- "Should Mesail's own app jobs also move to Floci SQS/SNS queues?":
+  "No, build jobs only". The Floci queue the owner wants is for build,
+  test and CI jobs on the Mac; TACHYON's planning session owns that, not
+  Mesail.
+- Q14: "app jobs are not moving to queues, for this project we have to
+  assume the app will run on-premise".
+- Q15: "again we have to assume this app will run on-premise".
+- Q16: "again on-premise".
+
+So:
+- Events keep today's design: the outbox in the producer's own document,
+  drain on write over HTTP, the relay route for what is left, and the
+  requeue route for dead letters (EVENTS.md sections 2 and 4).
+- Jobs keep the local scheduler and the call-again loop (`more: true`),
+  with K6's bounded steps and K7's fix for slow subscribers.
+- Mesail uses no SQS, SNS, EventBridge Scheduler, Pipes or ECS, in Floci
+  or elsewhere. `kit/queue` is not built. Wave 10 (J0 to J5) is removed
+  from SLICES.md.
+- The owner's statement that Mesail must be assumed to run on-premise is
+  recorded in [ADR 0007](0007-on-premise-first.md) ("Affirmed
+  2026-11-14").
+
+The rest of this ADR is the proposal as written, for the record.
 
 ## Context
 
@@ -32,7 +59,7 @@ receives queue batches. TACHYON has no queue client and no queue marker;
 the Lambda Web Adapter passes non-HTTP events (an SQS batch) to an HTTP
 route of the app (`/events`), so receiving may need no TACHYON change.
 
-## Proposed decision
+## Proposed decision (rejected)
 
 1. **The outbox stays the record; queues deliver.** A producer still
    stages each event in its own document, in the same write (FYLO has no

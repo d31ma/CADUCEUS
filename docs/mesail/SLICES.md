@@ -1783,6 +1783,18 @@ TACHYON's T15 slice (ADR 0008). The Keycloak and identity parts may be built bef
   builds its apps with its own host.
 - **Depends on:** PK4, TACHYON T14.
 
+### PK7. The passkey PRF never leaves the device (identity's owner, small)
+Found from TACHYON's P1-P3 plan (2026-11-14): TACHYON's passkey client puts
+the WebAuthn PRF result into `credentialJson`, and `identity` forwards
+`credentialJson` to Keycloak as it is (`AccountController` sign-in and
+confirm). The PRF result can unlock the chat backup (ADR 0011).
+- **Builds:** `identity` removes `clientExtensionResults.prf` (results and
+  inputs) from `credentialJson` before it forwards it, for sign-in and for
+  adding a passkey, and never logs `credentialJson`; a test with a PRF
+  part shows Keycloak never receives it. PK4 (the web client) removes it
+  too before sending.
+- **Depends on:** nothing; any time (before PK4 and G7 use PRF).
+
 ### PK6. Biometric unlock of the device copy (SPEC Q22 decided yes; AC-OF-20)
 - **Builds:** sealed tables with `"unlock": "userPresence"` (TACHYON T15)
   for the device copy in the installed apps, the "Unlock with Touch ID"
@@ -1907,6 +1919,18 @@ block MS0001-MS0499, not from one app's block.
 - **Depends on:** K5 and K7 merged (both change `kit/events` or
   `kit/outbox`); E11 makes the check.
 - **Done when:** gates pass for every app that syncs the kit.
+
+### E13. Client checks, part two (one small session, after E10)
+From E10's hand-over (2026-11-14).
+- **Owns:** `tools/clientviews/**`, the 5 web-admin view lines and their
+  services.
+- **Builds:** the check also refuses text built with `+` in a component
+  view, and moves today's 5 lines in the web-admin account and member
+  dialogs into service fields; it also refuses `dependencies.check:
+  false` in any `server/application.json` and `TAC_DEPENDENCIES_CHECK`
+  turned off in any `.env` or `.env.example`.
+- **Done when:** the check has tests; the responsive tests show the same
+  pages; gates pass.
 
 ### Requests to TACHYON (ADR 0009)
 - **Y1:** let `@ErrorHandler` shape the answers TACHYON makes itself (no

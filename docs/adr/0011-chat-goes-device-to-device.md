@@ -155,6 +155,39 @@ it as an SVG image shown through a `data:` address, which TACHYON's
 content security policy allows (`img-src 'self' data:`). Scanning needs a
 camera (request P4).
 
+## Points from TACHYON's approved plan for P1 to P3 (2026-11-14)
+
+- **Where keys live.** MLS libraries do their own HPKE, AES-GCM and HKDF
+  with raw key bytes. So MLS group secrets and HPKE leaf keys live in the
+  client service's memory and are stored in the sealed tables (T6/T7),
+  not in TACHYON's `Crypto`. `Crypto` holds the device identity key
+  (Ed25519, never exported), the backup key (from the recovery code, or
+  the passkey PRF later) and the backup encryption.
+- **Signing is asynchronous.** Every `Crypto` answer is an event, not a
+  return value. The MLS library must accept an outside signer that may
+  wait (in Go, a goroutine blocks on a channel while the page runs). G0
+  confirms this when it picks the library; a library that cannot is
+  rejected.
+- **Recovery code.** A random code of at least 128 bits (shown as groups
+  of letters and digits), turned into the backup key with PBKDF2-SHA-256
+  at 600,000 rounds (no Argon2id). That is safe because the code is
+  random, not chosen by the person.
+- **Saved keys on the web** are non-extractable CryptoKeys in IndexedDB.
+- **TURN.** The TURN addresses are in the manifest; the app passes
+  short-lived TURN credentials when it opens a connection (G3 issues
+  them). `relayOnly` (send everything through the relay, which hides
+  each device's network address from the other device) is an owner
+  choice (section 10, Q12).
+- **Linux.** TACHYON's `Peers` answers `unsupported` in the Linux desktop
+  app at first, so that app cannot do device-to-device chat or calls
+  until TACHYON adds it (section 10, Q13).
+- **Passkey PRF must stay on the device.** TACHYON's passkey client puts
+  the PRF result into `credentialJson`. The PRF result can unlock the
+  backup, so Mesail never sends it to a server: the client removes it
+  before sending, and `identity` also removes any
+  `clientExtensionResults.prf` before it forwards `credentialJson` to
+  Keycloak, and never logs it (slice PK7).
+
 ## Requests to TACHYON
 
 - **P1, peer connections.** A `Peers` client for Tac services in every
@@ -172,8 +205,8 @@ camera (request P4).
 - **P2, encryption on the device.** A `Crypto` client: make X25519 and
   Ed25519 key pairs; X25519 key agreement; Ed25519 sign and verify;
   AES-256-GCM encrypt and decrypt; HKDF-SHA-256; SHA-256; a slow key
-  derivation from a recovery code (Argon2id, or PBKDF2-SHA-256 with a high
-  count); secure random bytes. Private keys are created inside the client
+  derivation from a recovery code (PBKDF2-SHA-256 at 600,000 rounds, as
+  TACHYON's plan approved); secure random bytes. Private keys are created inside the client
   and cannot be exported; they are kept in the sealed tables (T6b) or in
   the OS key store (Keychain, Android Keystore, Windows Hello), and they
   are deleted with the device copy. In browsers and native shells.
@@ -219,6 +252,13 @@ camera (request P4).
   channels?": "Up to 50, no big channels (Recommended)" (decision 9).
 - Q7 "Should the first release wait for device-to-device chat?": "Yes,
   wait (Recommended)" (decision 10).
+
+## 10. Open owner choices (2026-11-14)
+
+- Q12: direct device connections when possible, or always through the
+  relay (hides network addresses).
+- Q13: what the Linux desktop app does until TACHYON supports `Peers`
+  there.
 
 ## 9. The owner's suggestion
 

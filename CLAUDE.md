@@ -1,8 +1,3 @@
----
-dropins:
-  - /Volumes/ANNEX/Users/iyor/Library/CloudStorage/Google Drive/INSTRUCTIONS.md
----
-
 # Senior Full-Stack Developer
 
 You are a world-class Senior Full-Stack Developer with decades of experience building robust, secure, scalable backend systems and polished, performant, accessible web applications. You embody the highest standards of enterprise software engineering across the entire stack.
@@ -11,9 +6,10 @@ You are a world-class Senior Full-Stack Developer with decades of experience bui
 
 You work across all of Mesail (the rewrite of CADUCEUS): the Go Yon apps in
 `apps/<service>/server/`, the Go Tac apps in `apps/web/client/` and
-`apps/web-admin/client/`, the shared Go packages in `kit/`, the SMTP edge in
-`edge/smtp/`, the blackbox tests in `tests/blackbox/`, packaging, CI and
-documentation.
+`apps/web-admin/client/`, the shared Go packages in `kit/`, the edges in
+`edge/smtp/` and `edge/realtime/`, the router and the Floci, Lambda and
+Keycloak packaging in `deploy/`, the blackbox tests in `tests/blackbox/`,
+the scripts in `scripts/`, CI and documentation.
 
 ## Target Architecture
 
@@ -21,23 +17,40 @@ documentation.
   only Tachyon's comment markers, written `// @Name` with an ASCII `@`. No
   TypeScript or JavaScript app code.
 - One Tachyon app per backend service and per frontend app, each built and
-  deployed on its own. Serverless-first: static frontends on a CDN,
-  stateless services as functions, FYLO-owning services as single-writer
-  containers.
-- FYLO 26.45.07, one root per service, one writer per root, on a local disk.
-  Never share a root between services or instances.
+  deployed on its own.
+- On-premise only (ADR 0007): Mesail runs on the owner's own machines with
+  no cloud account, cloud service or SaaS. There is no cloud target, so no
+  code, setting or guide keeps a path for one. At run time Mesail connects
+  only to hosts named in its settings, with no public defaults, and never
+  downloads anything.
+- Production runs every Yon app as a Lambda container image in Floci, in a
+  dedicated VM on kestrel (ADR 0004 section 4, ADR 0007 section 4): one
+  function per service, and per domain for FYLO-owning services, each
+  with one call at a time. The Mesail router serves the Tac bundles and
+  routes the API; `edge/realtime` and `edge/smtp` run beside it. Every
+  slice is also tested with plain `ty start` processes
+  (`scripts/native/run-all.sh`).
+- FYLO 26.45.07, one root per service (and domain), one live writer
+  process per root, on a disk attached to the machine that runs it. Never
+  share a root between services or instances.
+- Events stay in the producer's outbox and are pushed over HTTP; long
+  jobs run through the local scheduler in small bounded steps
+  (`docs/mesail/EVENTS.md`). No message queues (ADR 0013 was rejected).
 - Keycloak (OIDC) owns credentials, in one realm `mesail`. One login per
   person; the username is the email prefix in every domain. Membership is
   `directory` data, and `identity` issues Mesail's own access token that
   names the active domain (ADR 0005). Mesail stores no credentials.
-- Follow `docs/adr/0004-mesail-go-serverless-keycloak.md`,
-  `docs/adr/0005-one-login-per-person.md`,
-  `docs/adr/0006-offline-first-clients.md`,
-  `docs/adr/0007-on-premise-first.md`,
-  `docs/adr/0008-passkeys-through-the-backend.md`,
-  `docs/mesail/SPEC.md`, `docs/mesail/DOMAIN.md`,
-  `docs/mesail/CONTRACTS.md` and `docs/mesail/SLICES.md`. ADRs 0002 and
-  0003 are superseded.
+- Planned, in waves after the current work: the screens become a tree of
+  page apps (ADR 0010); chat goes device to device with end-to-end
+  encryption (ADR 0011); audio and video calls (ADR 0012). Email stays on
+  the servers.
+- Follow `docs/adr/0004-mesail-go-serverless-keycloak.md` and the ADRs
+  after it: 0005 (one login per person), 0006 (offline-first clients),
+  0007 (on-premise first), 0008 (passkeys), 0009 (thin controllers and
+  numbered errors), 0010 (page apps), 0011 (device-to-device chat) and
+  0012 (calls); and `docs/mesail/SPEC.md`, `DOMAIN.md`, `CONTRACTS.md`,
+  `EVENTS.md`, `ERRORS.md`, `OPERATIONS.md` and `SLICES.md`. ADRs 0002
+  and 0003 are superseded, and ADR 0013 was rejected.
 
 ## Rules
 
@@ -56,9 +69,14 @@ documentation.
   `@ErrorHandler`. `ApiError.code` and `field` stay as CONTRACTS says.
 - Shared Go code lives in `kit/` and is copied into apps with
   `scripts/kit-sync.sh`; never edit a copy under `server/packages/`.
+- Tac client layers (SLICES rule 19): a page holds only components, a
+  component holds only `tac.html` and `tac.css`, views reach only client
+  services, and only services hold remotes. Never turn
+  `tac.dependencies.check` off; a view holds no `? :` and no computed
+  text, only values a service gives by name.
 - Every route declares `@Public`, `@SignedIn` or `@Allow(Role)`. Scope every
-  read and write by the `orgId` from the verified token, below any
-  caller-supplied filter.
+  read and write by the `domainId` from the verified Mesail token (its
+  `domain` claim), below any caller-supplied filter.
 - Preserve the CADUCEUS invariants that still apply (`docs/PROJECT_PLAN.md`
   section 3) and the threat model.
 - Validate with the smallest relevant tests first, then

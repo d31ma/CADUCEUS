@@ -2221,11 +2221,25 @@ section 4) and only Mesail's own code drops collections.
   `scripts/kit-sync.sh`.
 - **Builds:** a read of a collection that does not exist answers as empty
   without creating it; a write creates it once; each collection is
-  checked at most once per process.
+  checked at most once per container.
+- **The cache lives in files, decided 2026-11-14 with K12:** TACHYON
+  26.46.02 starts one handler process per request, so a set in memory
+  would forget everything after each request. `KnownCollections` keeps one
+  empty marker file per collection in
+  `os.TempDir()/mesail-known-collections/<hash of the data source root>/`
+  (Lambda keeps `/tmp` for the container's life, the same life as its
+  `fylo` process), plus a set in memory for the current request. A
+  marker skips the check. When a write or read still finds the
+  collection missing (the root was restored or wiped outside Mesail), the
+  marker is forgotten: a read answers empty, a write creates the
+  collection and retries once. Mesail's own drop code removes the marker
+  before it drops. Test helpers that wipe a root also remove that root's
+  marker folder, and tests run with their own `TMPDIR`. Markers hold no
+  data.
 - **Depends on:** nothing; any time. Whichever of K12 and an app's E slice
   merges second rebases.
 - **Done when:** a Floci run's FYLO log shows at most one
-  `inspectCollection` per collection per process; gates pass for every
+  `inspectCollection` per collection per container; gates pass for every
   app that syncs the kit.
 
 ## Later (after the first release)

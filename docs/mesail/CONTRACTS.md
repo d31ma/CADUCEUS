@@ -803,9 +803,10 @@ or close callback and has no timer):
   `RealtimeEvent{type: "hello"}`. The client answers with `auth`. The
   server sends no other event before an accepted `auth`; without one within
   10 seconds it sends `auth.expired` and closes with 4401.
-- Client frames: `RealtimeClientMessage{type, token?, conversationId?,
-  state?, doNotDisturbUntil?}` with `type` one of `auth` (`token`: the
-  access token; the first message, within 10 seconds), `typing`
+- Client frames: `RealtimeClientMessage{type, token?, deviceId?,
+  conversationId?, state?, doNotDisturbUntil?}` with `type` one of `auth`
+  (`token`: the access token; `deviceId`: see "Signalling and calls";
+  the first message, within 10 seconds), `typing`
   (`conversationId`), `presence` (`state`, `doNotDisturbUntil?`) and
   `ping` (keeps an idle socket open; send one every 5 minutes).
 - After each accepted `auth` the server sends
@@ -882,6 +883,58 @@ Socket frames, added to `RealtimeClientMessage` and `RealtimeEvent`:
 - `realtime` asks `notify` for the call pushes with `POST
   /api/v1/notify/call-pushes` (Allow(Service): `CallPush{toPersonIds[],
   kind: incoming|missed}`), no names, no call content.
+
+Decided 2026-11-14 with G2 and G11:
+
+- **Which device is on a socket.** The `auth` frame gets `deviceId`
+  (optional; required before any `signal`, `pairing.*` or `call.*`
+  frame). On the first `auth` that names a device, `realtime` asks
+  `directory` `POST /devices/owners` (a service token for the token's
+  domain). The device is **linked** when its owner is the token's person.
+  A device id owned by another person ends the socket (`auth.expired`,
+  4401). A device id that `directory` does not know is **unlinked**: it
+  may use only `pairing.*`, and `signal` only to its ready pairing peer
+  (and that peer may signal it). A later `auth` on the same socket must
+  name the same device (otherwise 4401). `realtime` checks the owner
+  again on a re-auth when its last check is more than 5 minutes old, so
+  a removed device loses the socket within about 5 minutes.
+  `fromDeviceId` is the socket's device; `fromPersonId` is the token's
+  person.
+- **Frame sizes.** `edge/realtime` takes client frames and pushes events
+  of up to 96 KiB (it was 16 KiB and 64 KiB; larger frames still close
+  with 1009 or are refused). The limits above stay: `signal` ciphertext at
+  most 64 KiB before base64url, at most 200 `toDeviceIds`, `invite` at
+  most 16 KiB.
+- **Call state** is `realtime` data in the domain's root:
+  `Call{callId, domainId, group, media, createdBy (device), devices[],
+  lastChangeAt}`.
+  - `call.create` stores the call with the creator's device in it.
+  - `call.join` adds the device and answers `call.joined{joinToken?}`
+    (the token only for a group call). A linked device of any member of
+    the domain may join. When 50 different people are already in the call
+    and the joiner's person is not one of them, it answers an error
+    `call_full` (a new number in realtime's block).
+  - `call.leave` removes the device; the call is deleted when no device
+    is left.
+  - Only a device in the call may send `call.ring` and `call.ring.end`.
+  - A socket that closes does not leave the call (the device reconnects).
+    The existing sweep job deletes a call with no join or leave for 12
+    hours.
+- **Call pushes.** `realtime` calls `notify`'s `call-pushes` itself,
+  with a service token, AFTER it sent `call.ringing` (or
+  `call.ring.ended`) to the online devices, with a short time limit
+  (2 seconds). A failure is logged and not returned to the ringer (the
+  ringer cannot fix it), and it is not retried (a late ring is useless).
+  The `notify` slice builds the route; until it lands the call fails and
+  is logged.
+- **Join token keys.** `realtime` signs with the setting
+  `YON_REALTIME_CALLS_KEY` and keeps `YON_REALTIME_CALLS_PREVIOUS` in the
+  JWKS during a key change (the same format as `identity`'s signing key).
+  `GET /api/v1/realtime/calls/keys` is Public (public keys only). The
+  claims are as in "calls" below.
+- New errors take the next free numbers of realtime's block
+  (`docs/mesail/ERRORS.md`); when two slices take the same number, the
+  one that merges second renumbers.
 
 ## calls (from G10; ADR 0012)
 

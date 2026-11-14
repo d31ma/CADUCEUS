@@ -1771,7 +1771,10 @@ TACHYON's T15 slice (ADR 0008). The Keycloak and identity parts may be built bef
   decide whether "Sign in with a passkey" and Settings > Sign-in show
   passkeys; `create` and `get` are called directly from the button's click
   handler, never after an await or a timer; `offer` for the username
-  field's autofill; every `PasskeyFailed` reason has a line (PU).
+  field's autofill; every `PasskeyFailed` reason has a line (PU); before
+  it sends `credentialJson` (sign-in and adding a passkey), the client
+  removes `clientExtensionResults.prf` (results and inputs): the PRF
+  result never leaves the device (ADR 0011, PK7).
 - **Depends on:** PU, PK2, TACHYON T13 in a release Mesail uses.
 
 ### PK5. Apps: passkeys in the native shells (P1's successor, with the web app's owner)

@@ -304,6 +304,12 @@ and T14 (apps).
 - Labels are 1 to 64 characters, default the device kind ("Mac",
   "iPhone"). Credential ids, public keys, challenges and assertions never
   appear in logs.
+- The PRF result stays on the device (ADR 0011, PK7): `identity` removes
+  `clientExtensionResults.prf` from `credentialJson` before it forwards
+  it (sign-in and adding a passkey), and refuses a `credentialJson` that
+  is not a JSON object, or whose `clientExtensionResults` is not an
+  object, without calling Keycloak: `401 unauthenticated` for sign-in,
+  `400 invalid_passkey` for adding.
 - Labels are unique per person (Keycloak refuses a duplicate, PK1). When
   adding, `identity` makes the label unique itself: if "Mac" is taken it
   stores "Mac 2", then "Mac 3", cutting the base so the result stays

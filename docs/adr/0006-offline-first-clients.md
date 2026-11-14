@@ -256,7 +256,9 @@ The owner approved TACHYON's plan for T1 to T12 (the TACHYON section's
   N2.)
 - **Blobs (T2, wave 2, ADR 0126).** Attachments in the copy use the
   `Blobs` client (IndexedDB, quota from the manifest). TACHYON never
-  deletes a blob itself; Mesail's budget code does (section 6).
+  deletes a blob itself; Mesail's budget code does (section 6). Built on
+  TACHYON `develop` c515d1d6f (2026-11-14, TACHYON ADR 0134; tests pass on
+  macOS, Linux and Windows), not released yet. No change to this plan.
 - **Tabs (T11, wave 2, ADR 0127).** Store changes reach the other tabs
   (`StoreChanged`), and a `Locks` client lets one tab send the queue. The
   native apps have one window each; several windows of one native app are

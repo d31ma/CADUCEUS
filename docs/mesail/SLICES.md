@@ -1531,7 +1531,10 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
   `<personId>/<domainId>/<conversationId>`, eager tables for the
   conversation list, cursors, queue and drafts, load and unload of
   partitions, `StoreWriteFailed` handling; attachments through `Blobs`
-  (T2) with AC-OF-2's full window; every table and the blob store sealed
+  (T2, on TACHYON `develop` c515d1d6f, ADR 0134, not released yet; O3
+  checks that its blobs can be sealed with T6b, and sends a TACHYON
+  request through the coordinator if not) with AC-OF-2's full window;
+  every table and the blob store sealed
   with `"sealed": "whenAvailable"` (TACHYON T6b, in wave 3 with sealed
   tables), the warning of SPEC AC-OF-18 on the fallback event, and the
   plain-to-sealed refill when a device can seal later; `StorageSpace.persist()` and
@@ -2189,8 +2192,10 @@ section 8.)
   the order):** P2a, the web `Crypto` client (TACHYON develop 8cc7c444f,
   TACHYON ADR 0132), works in Chromium, Firefox and WebKit. It RETURNS
   each request id (the caller does not pass one in), so G7's services
-  keep the returned id. `sign` and `verify` refuse empty data for now
-  (WebKit cannot verify an empty Ed25519 message). Mesail never signs
+  keep the returned id. `sign` and `verify` refused empty data for a
+  while (WebKit could not verify an empty Ed25519 message); TACHYON
+  `develop` 1b91d8ae5 (TACHYON ADR 0133) accepts it again on every
+  engine. Mesail never signs
   empty data (a device signature covers `deviceId` and both keys; MLS
   signs non-empty structures), but G7 refuses empty input itself, with a
   numbered error, before it calls `Crypto`, so the behaviour does not

@@ -504,7 +504,8 @@ usage() {
   echo "                  folder falls back to \$TMPDIR/go-build-mesail-fallback; under" >&2
   echo "                  MESAIL_GOCACHE_MIN_FREE_GB (35) GiB free, entries unused for over 1 hour" >&2
   echo "                  are removed before the run; over MESAIL_GOCACHE_MAX_GB (10) GiB, the same," >&2
-  echo "                  then go clean -cache if it is still over" >&2
+  echo "                  then entries unused for over 10 minutes if it is still over (never a full" >&2
+  echo "                  clean: other sessions share the cache)" >&2
   return 2
 }
 

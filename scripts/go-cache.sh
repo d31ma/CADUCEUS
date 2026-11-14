@@ -43,7 +43,7 @@ mesail_go_cache_over_maximum() {
 }
 
 mesail_remove_old_go_cache_entries() {
-  find "$1/" -mindepth 2 -maxdepth 2 -type f -name '*-[ad]' -mmin +60 -print -delete | wc -l | tr -d ' '
+  find "$1/" -mindepth 2 -maxdepth 2 -type f -name '*-[ad]' -mmin "+${2:-60}" -print -delete | wc -l | tr -d ' '
 }
 
 mesail_trim_for_free_space() {
@@ -64,10 +64,10 @@ mesail_trim_for_size() {
 }
 
 mesail_clean_when_still_over() {
-  local folder="$1"
+  local folder="$1" removed
   if ! mesail_go_cache_over_maximum "$folder"; then return 0; fi
-  GOCACHE="$folder" go clean -cache
-  echo "=== go cache: still over $(mesail_go_cache_maximum_gib) GiB; ran go clean -cache on $folder; now $(($(mesail_go_cache_kib "$folder") / 1024)) MiB" >&2
+  removed="$(mesail_remove_old_go_cache_entries "$folder" 10)"
+  echo "=== go cache: still over $(mesail_go_cache_maximum_gib) GiB; removed $removed entries unused for over 10 minutes; now $(($(mesail_go_cache_kib "$folder") / 1024)) MiB" >&2
 }
 
 mesail_trim_go_cache() {

@@ -870,6 +870,49 @@ How it works:
   `domainId` for events. A notification of another member or domain
   answers `404`.
 
+## devicebox (from G6; ADR 0011)
+
+The encrypted mailbox for chat between devices. The server stores and
+hands out ciphertext; it never reads it. Draft by G0 (2026-11-14); G6
+builds it. Device ids and their owners come from `directory`'s device
+list (G1); until G1 merges, G6 tests use a fake of that port.
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `POST /api/v1/devicebox/envelopes` | SignedIn (a member of the token's domain) | `EnvelopePut{envelopeId, senderDeviceId, toDeviceIds[], kind, ciphertext}` | `201 EnvelopeReceipt{envelopeId, expiresAt}`; `400 invalid_request`; `404 not_found` when a device is not a device of a member of this domain; `409 duplicate` when `envelopeId` exists with other content; `413 too_large`; `429 box_full` |
+| `GET /api/v1/devicebox/devices/{deviceId}/envelopes?after=&limit=` | SignedIn (only the device's person) | - | `200 EnvelopePage{envelopes[], next}` oldest first; `404 not_found` for another person's device |
+| `DELETE /api/v1/devicebox/devices/{deviceId}/envelopes` | SignedIn (only the device's person) | `EnvelopeAck{envelopeIds[]}` (at most 100) | `204`; ids not waiting for this device are ignored |
+| `POST /api/v1/devicebox/jobs/expire` | Allow(Service) | - | `200 ExpireReport{writes, more}`: drops envelopes older than 30 days and leaves a `kind: "undelivered"` envelope (no ciphertext, only the `envelopeId`) for the sender's device |
+| `GET /api/v1/devicebox/health` | Public | - | `200 Health` |
+
+- `envelopeId`: a client-made UUID; a put with the same id and the same
+  content is answered like the first (idempotent).
+- `senderDeviceId` must be a device of the caller's person in this domain.
+- `toDeviceIds`: 1 to 200 devices of members of this domain (a group of
+  50 members with their devices). MLS encrypts a group message once, so
+  ONE envelope serves every receiving device; a device's fetch and
+  acknowledgement remove only that device from the envelope's list, and
+  the envelope is deleted when the list is empty.
+- `kind`: `message` (chat), `group` (MLS changes: add, remove, keys),
+  `linking` (device linking, ADR 0011), `undelivered` (from the expiry
+  job only).
+- `ciphertext`: base64url, at most 256 KiB decoded, so every stored
+  document stays under 512 KiB (DOMAIN "Every document stays under 512
+  KiB"). Files go through `attachments` as encrypted blobs, with their
+  key inside the message.
+- A device's box holds at most 10,000 waiting envelopes (`429 box_full`).
+- `EnvelopePage.envelopes[]`: `{envelopeId, senderDeviceId,
+  senderPersonId, kind, ciphertext, storedAt}`; `limit` 1 to 100, default
+  50.
+- Storage: one FYLO root per domain (ADR 0004); a put costs at most a few
+  writes whatever the number of receiving devices (rule 9). G6 checks how
+  FYLO finds "envelopes waiting for device X" without a scan of all
+  envelopes, and records it in DOMAIN.
+- Events: a put stages `envelope.stored` (EVENTS section 7) for each
+  receiving device's person; `realtime` tells an online device "you have
+  mail", and `notify` sends a push with no text ("New message").
+- Errors use the MS6000 block (ERRORS.md).
+
 ## search
 
 | Route | Rule | Request | Response |

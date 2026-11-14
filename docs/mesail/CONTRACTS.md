@@ -844,7 +844,17 @@ every reconnect, because events sent while it was away are not replayed.
 `message.deleted`, `reaction.changed` (`state` = the emoji),
 `read.moved` (only to the reader's own connections), `presence.changed`,
 `typing`, `notification`, `hello`, `reauth`, `auth.accepted` and
-`auth.expired`.
+`auth.expired`, plus the frames of "Signalling and calls" and
+`devicebox.waiting` (below).
+
+**Waiting envelopes** (decided 2026-11-14, slice G13): `realtime`
+consumes `envelope.stored` (EVENTS section 7). For each socket whose
+device (from `auth.deviceId`, linked to `toPersonId`) is in
+`toDeviceIds`, it sends `RealtimeEvent{type: "devicebox.waiting",
+state: <kind>}`, with no envelope id, sender or content. The device then
+fetches its box (`GET /api/v1/devicebox/devices/{deviceId}/envelopes`).
+Sockets without a device id get nothing. A device that is offline learns
+of it from `notify`'s push (G5) or at its next start.
 
 Internal routes between the gateway and the Yon app (never routed
 publicly; shared secret in the header `X-Realtime-Gateway`):

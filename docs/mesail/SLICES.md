@@ -2262,12 +2262,38 @@ AC-CL is written.
   "not available on this device" state, as for a phone. No Linux-only
   code in Mesail.
 
+### G13. Waiting envelopes reach notify and realtime (one small session)
+Found by G5 (2026-11-14, hand-over
+`~/Library/Logs/local/CADUCEUS/mesail/slice-g5-handover.md`): `devicebox`
+stages `envelope.stored` but its `application.json` has `"subscribers":
+[]`, so in a real install neither `notify` nor `realtime` gets it and no
+"New message" push is sent. `realtime` has no handler for it yet either.
+- **Owns, for this change only:** `apps/devicebox/server/application.json`
+  (the subscribers), `realtime`'s event handling for `envelope.stored`
+  (its `events` route, the consumed types, a small service that finds the
+  linked sockets of the listed devices) and its tests, and the matching
+  entries in the native runner and the Floci stack if they set
+  subscribers per run.
+- **Builds:** `devicebox` lists `notify`
+  (`http://127.0.0.1:8107/api/v1/notify/events`) and `realtime`
+  (`http://127.0.0.1:8106/api/v1/realtime/events`), like `messaging`;
+  `realtime` sends `devicebox.waiting` as CONTRACTS "Waiting envelopes"
+  says; `notify`'s handling is G5's.
+- **Depends on:** G5 merged (notify consumes `envelope.stored`). Not at the
+  same time as another slice changing `apps/realtime` (E4) or
+  `apps/devicebox` (K13).
+- **Done when:** gates pass for `devicebox` and `realtime`; a native run
+  shows an envelope put reaching `notify` (a push request with no text)
+  and a linked socket of a listed device getting `devicebox.waiting`,
+  while another person's socket and a socket without a device id get
+  nothing.
+
 ### Order
 G0 now. G1 to G5 (and G6 if wanted) when their app's E slice is merged.
 G9 and CU now (the owner answered); G10 and G11 after G9's contracts;
 G12 after TACHYON P5 and P7 and G7. All of Wave 9 is in the first release
 (ADR 0011 Q7, ADR 0012 Q8).
-G6 any time (a new app). G7 after TACHYON P1, P2 and P4 are released and
+G6 any time (a new app). G13 after G5, not beside E4 or K13. G7 after TACHYON P1, P2 and P4 are released and
 the pin moves. G8 last, before the first release (Q7). The first release
 also waits for TACHYON P8 (the Linux desktop app, ADR 0011 Q13), which
 waits for WebKitGTK 2.56 (about March 2027): the first release is expected

@@ -2,7 +2,6 @@ package adapters
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"mesail.dev/packages/core"
@@ -41,7 +40,7 @@ func (trigger RelayTrigger) answer(status int) error {
 	if status/trigger.classSize() == trigger.successClass() {
 		return nil
 	}
-	return &core.Unavailable{Message: "the outbox relay route answered " + strconv.Itoa(status)}
+	return core.Unavailable{}.RelayAnswered(status)
 }
 
 func (RelayTrigger) classSize() int {

@@ -21,7 +21,7 @@ func (service *CallerService) ServiceCaller(authorization string) (oidc.Caller, 
 
 func (service *CallerService) refusal(failure error) error {
 	if failure != nil {
-		return &Unauthenticated{Message: "the access token was refused"}
+		return Unauthenticated{}.TokenRefused()
 	}
 	return nil
 }
@@ -30,14 +30,14 @@ func (service *CallerService) chatRefusal(roles []string) error {
 	if slices.ContainsFunc(roles, service.chatRole) {
 		return nil
 	}
-	return &Forbidden{Message: "only members of a domain use its conversations"}
+	return Forbidden{}.NotADomainMember()
 }
 
 func (service *CallerService) serviceRefusal(roles []string) error {
 	if slices.Contains(roles, service.serviceRole()) {
 		return nil
 	}
-	return &Forbidden{Message: "only a caller with the Service role may use this route"}
+	return Forbidden{}.NotAService()
 }
 
 func (service *CallerService) chatRole(role string) bool {

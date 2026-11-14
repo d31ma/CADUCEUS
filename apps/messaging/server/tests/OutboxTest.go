@@ -15,7 +15,7 @@ func (test *OutboxTest) TestARefusedEventBecomesADeadLetterThatTheOperatorCanReq
 	world := StorageTestSetup{}.World()
 	world.Pusher.FailFor("search", outbox.DeliveryFailure{Subscriber: "search", Status: 400, Permanent: true, Detail: "bad"})
 	id := test.stagedMessage(world)
-	controller := &OutboxController{relay: world.Relay}
+	controller := &OutboxController{outbox: &OutboxRouteService{relay: world.Relay}}
 	operator := world.Bearer(world.InstallWide)
 	dead := test.deadFor(world, controller, operator, id)
 	Assert.Equals(1, len(dead))
@@ -31,14 +31,17 @@ func (test *OutboxTest) TestARefusedEventBecomesADeadLetterThatTheOperatorCanReq
 
 func (test *OutboxTest) TestADomainServiceTokenCannotUseTheOutboxRoutes() {
 	world := StorageTestSetup{}.World()
-	controller := &OutboxController{relay: world.Relay}
+	controller := &OutboxController{outbox: &OutboxRouteService{relay: world.Relay}}
 	domain := world.Bearer(world.Home)
 	_, relayError := controller.PostRelay(domain)
 	_, deadError := controller.GetDead(domain)
 	retryError := controller.PostRetry(domain, RetryRequest{})
 	Assert.IsTrue(world.IsForbidden(relayError), "relay must be refused")
+	Assert.Equals(1504, world.Number(relayError))
 	Assert.IsTrue(world.IsForbidden(deadError), "dead must be refused")
+	Assert.Equals(1504, world.Number(deadError))
 	Assert.IsTrue(world.IsForbidden(retryError), "requeue must be refused")
+	Assert.Equals(1504, world.Number(retryError))
 }
 
 func (test *OutboxTest) TestTheSweepRetriesAfterAFailure() {
@@ -61,8 +64,11 @@ func (test *OutboxTest) TestUnknownCollectionsLettersAndDocumentsAreNotFound() {
 	store := world.OutboxStore()
 	_, missing := store.Load(outbox.Ref{Collection: collection, Id: "00000000000000"})
 	Assert.IsTrue(world.IsNotFound(unknownCollection), "want NotFound for the collection")
+	Assert.Equals(1543, world.Number(unknownCollection))
 	Assert.IsTrue(world.IsNotFound(unknownLetter), "want NotFound for the letter")
+	Assert.Equals(1544, world.Number(unknownLetter))
 	Assert.IsTrue(world.IsNotFound(missing), "want NotFound for the document")
+	Assert.Equals(1542, world.Number(missing))
 	Assert.IsTrue(world.IsNotFound(world.Registry().Check("not-a-collection")), "want NotFound from the registry")
 	Assert.IsTrue(world.IsNotFound(store.Save(outbox.Ref{Collection: "not-a-collection", Id: id}, outbox.Fields{})), "want NotFound on save")
 }
@@ -74,6 +80,7 @@ func (test *OutboxTest) TestMissingOutboxSettingsAreUnavailable() {
 	_, runError := world.Relay.RunOnce()
 	world.Storage.Storage().Outbox().Drain(outbox.Ref{Collection: world.Names.Messages(world.Domain, "202611"), Id: "00000000000000"})
 	Assert.IsTrue(world.IsUnavailable(settingsError), "want Unavailable settings")
+	Assert.Equals(1562, world.Number(settingsError))
 	Assert.IsTrue(world.IsUnavailable(runError), "want Unavailable relay")
 	Assert.Equals("", world.Settings.Settings().RelayUrl)
 }

@@ -36,7 +36,7 @@ func (service *EventsService) receiver() events.Receiver {
 
 func (service *EventsService) domainRefusal(caller oidc.Caller, domainId string) error {
 	if slices.Contains(caller.Roles, service.serviceRole()) && !strings.EqualFold(caller.DomainId, domainId) {
-		return &NotFound{Message: "no such domain"}
+		return NotFound{}.OtherDomain()
 	}
 	return nil
 }

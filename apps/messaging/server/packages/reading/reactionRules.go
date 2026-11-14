@@ -13,7 +13,7 @@ func (rules reactionRules) check(reaction string) error {
 
 func (reactionRules) refusal(failure error) error {
 	if failure != nil {
-		return &core.InvalidRequest{Message: "the reaction is not a known reaction name", Field: "reaction"}
+		return core.InvalidRequest{}.UnknownReaction()
 	}
 	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
 	"time"
 
 	"mesail.dev/packages/core"
@@ -70,7 +69,7 @@ func (call JsonCall) outcome(status int, decodeFailure error) error {
 	case status == http.StatusNotFound:
 		return nil
 	case !call.success(status):
-		return &core.Unavailable{Message: "the service answered " + strconv.Itoa(status)}
+		return core.Unavailable{}.ServiceAnswered(status)
 	case decodeFailure != nil:
 		return call.unavailable(decodeFailure)
 	default:
@@ -79,7 +78,7 @@ func (call JsonCall) outcome(status int, decodeFailure error) error {
 }
 
 func (JsonCall) unavailable(failure error) error {
-	return &core.Unavailable{Message: "the service is not available", Cause: failure}
+	return core.Unavailable{}.ServiceDown(failure)
 }
 
 func (JsonCall) maxResponseBytes() int64 {

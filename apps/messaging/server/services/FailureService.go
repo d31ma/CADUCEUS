@@ -14,7 +14,7 @@ type FailureService struct {
 func (service *FailureService) Known(failure error) error {
 	errorTree := service.flattened(failure)
 	first := service.picked(errorTree, slices.IndexFunc(errorTree, service.isKnown))
-	return cmp.Or(service.answered(first), service.unknown(failure))
+	return cmp.Or(service.coreAnswer(first), service.eventAnswer(first), first, service.unknown(failure))
 }
 
 func (service *FailureService) flattened(failure error) []error {
@@ -55,35 +55,47 @@ func (service *FailureService) picked(errorTree []error, index int) error {
 	return errorTree[index]
 }
 
-func (service *FailureService) answered(failure error) error {
+func (service *FailureService) coreAnswer(failure error) error {
 	switch known := failure.(type) {
 	case *core.InvalidRequest:
-		return &InvalidRequest{Message: known.Message, Field: known.Field}
-	case events.InvalidEnvelope, events.NotSubscribed, events.UnknownEventType, inbound.UnhandledEvent:
-		return &InvalidRequest{Message: known.Error()}
+		return &InvalidRequest{Message: known.Message, Field: known.Field, ErrorNumber: known.Number()}
 	case *core.Forbidden:
-		return &Forbidden{Message: known.Message}
-	case events.NotService:
-		return &Forbidden{Message: known.Error()}
+		return &Forbidden{Message: known.Message, ErrorNumber: known.Number()}
 	case *core.NotFound:
-		return &NotFound{Message: known.Message}
+		return &NotFound{Message: known.Message, ErrorNumber: known.Number()}
 	case *core.Conflict:
-		return &Conflict{Message: known.Message}
+		return &Conflict{Message: known.Message, ErrorNumber: known.Number()}
 	case *core.RecipientsChanged:
-		return &ChangedRecipients{Message: known.Error(), Addresses: known.Addresses}
+		return ChangedRecipients{}.Of(known.Addresses, known.Number())
 	case *core.ChatNotAllowed:
-		return &ChatNotAllowed{Message: known.Error(), Address: known.Address}
+		return &ChatNotAllowed{Message: known.Error(), Address: known.Address, ErrorNumber: known.Number()}
 	case *core.TooLarge:
-		return &TooLarge{Message: known.Message}
+		return &TooLarge{Message: known.Message, ErrorNumber: known.Number()}
 	case *core.Unavailable:
-		return &Unavailable{Message: known.Message}
+		return &Unavailable{Message: known.Message, ErrorNumber: known.Number()}
 	}
-	return failure
+	return nil
+}
+
+func (service *FailureService) eventAnswer(failure error) error {
+	switch known := failure.(type) {
+	case events.InvalidEnvelope:
+		return InvalidRequest{}.BadEnvelope(known.Error())
+	case events.NotSubscribed:
+		return InvalidRequest{}.NotSubscribed(known.Error())
+	case events.UnknownEventType:
+		return InvalidRequest{}.UnknownEventType(known.Error())
+	case inbound.UnhandledEvent:
+		return InvalidRequest{}.UnhandledEvent(known.Error())
+	case events.NotService:
+		return Forbidden{}.EventsNeedService(known.Error())
+	}
+	return nil
 }
 
 func (service *FailureService) unknown(failure error) error {
 	if failure != nil {
-		return &Unavailable{Message: "the messaging service is not available"}
+		return Unavailable{}.ServiceFailed()
 	}
 	return nil
 }

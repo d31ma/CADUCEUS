@@ -85,7 +85,7 @@ func (RecipientCheck) changedRefusal(changed []string) error {
 	if len(changed) == 0 {
 		return nil
 	}
-	return &core.RecipientsChanged{Addresses: changed}
+	return core.RecipientsChanged{}.Of(changed)
 }
 
 func (RecipientCheck) merged(choices []core.RecipientChoice, fresh map[string]core.Resolved) []Recipient {
@@ -115,14 +115,14 @@ func (check RecipientCheck) channelDeliveryRefusal(recipient Recipient, allowed 
 	if allowed || recipient.Kind != check.channelKind() {
 		return nil
 	}
-	return []error{Failures{}.recipients("a channel gets chat only: " + recipient.Address)}
+	return []error{core.InvalidRequest{}.ChannelEmail(recipient.Address)}
 }
 
 func (check RecipientCheck) chatRefusal(recipient Recipient, allowed bool) []error {
 	if allowed || recipient.Kind == check.channelKind() {
 		return nil
 	}
-	return []error{&core.ChatNotAllowed{Address: recipient.Address}}
+	return []error{core.ChatNotAllowed{}.For(recipient.Address)}
 }
 
 func (check RecipientCheck) channelPlacement(conversationId string, chosen []Recipient) []error {
@@ -141,7 +141,7 @@ func (RecipientCheck) channelAlone(conversationId string, chosen []Recipient, ch
 	if channelCount == 0 || (len(chosen) == 1 && chosen[0].Role == (core.RecipientRoles{}).To() && conversationId == "") {
 		return nil
 	}
-	return []error{Failures{}.recipients("a channel must be the only recipient of a new message, in To")}
+	return []error{core.InvalidRequest{}.ChannelNotAlone()}
 }
 
 func (RecipientCheck) channelKind() string {

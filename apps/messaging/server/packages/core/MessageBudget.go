@@ -28,7 +28,7 @@ func (MessageBudget) refusalUnless(fits bool) error {
 	if fits {
 		return nil
 	}
-	return &TooLarge{Message: "the message is too large to store; send a shorter body"}
+	return TooLarge{}.StoredMessage()
 }
 
 func (MessageBudget) encoded(text string) string {

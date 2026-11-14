@@ -53,7 +53,7 @@ func (FromAddress) refusal(owned bool) error {
 	if owned {
 		return nil
 	}
-	return Failures{}.invalid("the From address must be one of your own addresses", "fromAddress")
+	return core.InvalidRequest{}.ForeignFromAddress()
 }
 
 func (FromAddress) ownedKinds() []string {

@@ -21,12 +21,14 @@ func (test *CallerServiceTest) TestChatCallerRefusesAServiceToken() {
 	world := MessagingTestSetup{}.World()
 	_, err := (&CallerService{}).ChatCaller(world.ServiceBearer(world.Home))
 	Assert.IsTrue(world.IsForbidden(err), "want Forbidden")
+	Assert.Equals(1502, world.Number(err))
 }
 
 func (test *CallerServiceTest) TestChatCallerRefusesAForgedToken() {
 	world := MessagingTestSetup{}.World()
 	_, err := (&CallerService{}).ChatCaller("Bearer forged")
 	Assert.IsTrue(world.IsUnauthenticated(err), "want Unauthenticated")
+	Assert.Equals(1501, world.Number(err))
 }
 
 func (test *CallerServiceTest) TestServiceCallerAcceptsAServiceToken() {
@@ -40,10 +42,12 @@ func (test *CallerServiceTest) TestServiceCallerRefusesAMember() {
 	world := MessagingTestSetup{}.World()
 	_, err := (&CallerService{}).ServiceCaller(world.MemberBearer("bo"))
 	Assert.IsTrue(world.IsForbidden(err), "want Forbidden")
+	Assert.Equals(1503, world.Number(err))
 }
 
 func (test *CallerServiceTest) TestServiceCallerRefusesAMissingToken() {
 	world := MessagingTestSetup{}.World()
 	_, err := (&CallerService{}).ServiceCaller("")
 	Assert.IsTrue(world.IsUnauthenticated(err), "want Unauthenticated")
+	Assert.Equals(1501, world.Number(err))
 }

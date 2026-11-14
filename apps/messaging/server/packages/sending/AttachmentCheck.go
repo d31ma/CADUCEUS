@@ -46,14 +46,14 @@ func (check AttachmentCheck) knownRefusal(found bool, attachmentId string) error
 	if found {
 		return nil
 	}
-	return Failures{}.invalid("no such attachment: "+attachmentId, check.field())
+	return core.InvalidRequest{}.UnknownAttachment(attachmentId, check.field())
 }
 
 func (check AttachmentCheck) readyRefusal(info core.AttachmentInfo) error {
 	if info.State == check.readyState() {
 		return nil
 	}
-	return Failures{}.invalid("the attachment is not ready: "+info.AttachmentId, check.field())
+	return core.InvalidRequest{}.AttachmentNotReady(info.AttachmentId, check.field())
 }
 
 func (AttachmentCheck) total(infos []core.AttachmentInfo) int64 {
@@ -68,7 +68,7 @@ func (check AttachmentCheck) sizeRefusal(total int64) error {
 	if total <= check.messageLimit() {
 		return nil
 	}
-	return &core.TooLarge{Message: "the attachments of a message may have at most 50 MiB together"}
+	return core.TooLarge{}.AttachmentTotal()
 }
 
 func (AttachmentCheck) converted(infos []core.AttachmentInfo) []core.AttachmentRef {

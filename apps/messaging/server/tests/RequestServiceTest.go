@@ -28,12 +28,14 @@ func (test *RequestServiceTest) TestPageRefusesALimitAboveOneHundred() {
 	world := MessagingTestSetup{}.World()
 	_, err := (&RequestService{}).Page(world.Request("/x?limit=101", ""))
 	Assert.Equals("limit", world.InvalidField(err))
+	Assert.Equals(1506, world.Number(err))
 }
 
 func (test *RequestServiceTest) TestPageRefusesALimitOfZero() {
 	world := MessagingTestSetup{}.World()
 	_, err := (&RequestService{}).Page(world.Request("/x?limit=0", ""))
 	Assert.Equals("limit", world.InvalidField(err))
+	Assert.Equals(1506, world.Number(err))
 }
 
 func (test *RequestServiceTest) TestMessageQueryReadsTheThreadRoot() {

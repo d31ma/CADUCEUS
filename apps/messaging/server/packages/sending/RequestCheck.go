@@ -48,28 +48,28 @@ func (check RequestCheck) clientMessageId(clientMessageId string) []error {
 	if length >= 1 && length <= check.clientMessageIdLimit() {
 		return nil
 	}
-	return []error{Failures{}.invalid("clientMessageId must have 1 to 200 characters", "clientMessageId")}
+	return []error{core.InvalidRequest{}.BadClientMessageId()}
 }
 
 func (check RequestCheck) bodyLength(body string) []error {
 	if utf8.RuneCountInString(body) <= check.bodyLimit() {
 		return nil
 	}
-	return []error{Failures{}.invalid("the body may have at most 40000 characters", check.bodyField())}
+	return []error{core.InvalidRequest{}.BodyTooLong(check.bodyField())}
 }
 
 func (check RequestCheck) bodyPresent(request core.SendRequest) []error {
 	if strings.TrimSpace(request.Body) != "" || len(request.AttachmentIds) > 0 {
 		return nil
 	}
-	return []error{Failures{}.invalid("the message needs a body or an attachment", check.bodyField())}
+	return []error{core.InvalidRequest{}.EmptyMessage(check.bodyField())}
 }
 
 func (check RequestCheck) attachmentCount(attachmentIds []string) []error {
 	if len(attachmentIds) <= check.attachmentLimit() {
 		return nil
 	}
-	return []error{Failures{}.invalid("a message may have at most 10 attachments", check.attachmentField())}
+	return []error{core.InvalidRequest{}.TooManyAttachments(check.attachmentField())}
 }
 
 func (check RequestCheck) attachmentRefusals(attachmentIds []string) []error {
@@ -84,14 +84,14 @@ func (check RequestCheck) attachmentRefusal(attachmentId string) []error {
 	if strings.HasPrefix(attachmentId, check.attachmentPrefix()) {
 		return nil
 	}
-	return []error{Failures{}.invalid("an attachment id must start with att_", check.attachmentField())}
+	return []error{core.InvalidRequest{}.BadAttachmentId(check.attachmentField())}
 }
 
 func (check RequestCheck) recipientCount(choices []core.RecipientChoice) []error {
 	if len(choices) <= check.recipientLimit() {
 		return nil
 	}
-	return []error{Failures{}.recipients("a message may have at most 20 recipients")}
+	return []error{core.InvalidRequest{}.TooManyRecipients()}
 }
 
 func (check RequestCheck) recipientRefusals(choices []core.RecipientChoice) []error {
@@ -107,14 +107,14 @@ func (check RequestCheck) recipientShape(choice core.RecipientChoice) []error {
 	if choice.Address != "" && slices.Contains(check.roles(), choice.Role) && slices.Contains(check.deliveries(), choice.Delivery) && slices.Contains(check.kinds(), choice.ExpectedKind) {
 		return nil
 	}
-	return []error{Failures{}.recipients("each recipient needs an address, a role, a delivery and an expected kind")}
+	return []error{core.InvalidRequest{}.IncompleteRecipient()}
 }
 
 func (check RequestCheck) blindCopyShape(choice core.RecipientChoice) []error {
 	if choice.Role != (core.RecipientRoles{}).Bcc() || choice.Delivery == string(kit.Deliveries{}.Email()) {
 		return nil
 	}
-	return []error{Failures{}.recipients("a Bcc recipient gets email only")}
+	return []error{core.InvalidRequest{}.BccChat()}
 }
 
 func (check RequestCheck) duplicates(choices []core.RecipientChoice) []error {
@@ -131,21 +131,21 @@ func (check RequestCheck) duplicate(address string, seen map[string]bool) []erro
 		seen[address] = true
 		return nil
 	}
-	return []error{Failures{}.recipients("each address may appear only once")}
+	return []error{core.InvalidRequest{}.RepeatedAddress()}
 }
 
 func (check RequestCheck) recipientsNeeded(request core.SendRequest) []error {
 	if request.ConversationId != "" || len(request.Recipients) > 0 {
 		return nil
 	}
-	return []error{Failures{}.recipients("a new conversation needs recipients")}
+	return []error{core.InvalidRequest{}.NoRecipients()}
 }
 
 func (check RequestCheck) alsoToConversation(request core.SendRequest) []error {
 	if !request.AlsoToConversation || request.ThreadRootId != "" {
 		return nil
 	}
-	return []error{Failures{}.invalid("alsoToConversation is allowed only with threadRootId", "alsoToConversation")}
+	return []error{core.InvalidRequest{}.AlsoWithoutThread()}
 }
 
 func (RequestCheck) roles() []string {

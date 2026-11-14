@@ -1,5 +1,7 @@
 package sending
 
+import "mesail.dev/packages/core"
+
 type WriteBudget struct{}
 
 func (budget WriteBudget) planned(draft Draft) int {
@@ -11,7 +13,7 @@ func (budget WriteBudget) check(planned int) error {
 	if planned <= budget.limit() {
 		return nil
 	}
-	return Failures{}.recipients("this message needs too many writes; send it to fewer new recipients")
+	return core.InvalidRequest{}.TooManyWrites()
 }
 
 func (budget WriteBudget) remaining(planned int) int {

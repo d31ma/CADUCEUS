@@ -1,8 +1,6 @@
 package sending
 
 import (
-	"strconv"
-
 	"mesail.dev/packages/core"
 	"mesail.dev/packages/events"
 )
@@ -17,7 +15,7 @@ func (size DirectSize) refusal(conversationKind string, memberCount int) error {
 	if conversationKind != (core.ConversationKinds{}).Direct() || memberCount <= size.most() {
 		return nil
 	}
-	return Failures{}.recipients("a direct conversation has at most " + strconv.Itoa(size.most()) + " member participants")
+	return core.InvalidRequest{}.DirectTooLarge(size.most())
 }
 
 func (DirectSize) most() int {

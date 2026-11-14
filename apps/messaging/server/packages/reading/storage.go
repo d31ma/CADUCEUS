@@ -72,5 +72,5 @@ func (storage) wrapped(failure error) error {
 	if failure == nil {
 		return nil
 	}
-	return &core.Unavailable{Message: "the message store is not available", Cause: failure}
+	return core.Unavailable{}.Store(failure)
 }

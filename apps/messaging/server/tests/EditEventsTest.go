@@ -68,6 +68,7 @@ func (test *EditEventsTest) TestAnEditThatWouldPassTheDocumentCapIsUnavailable()
 	world.Must(world.Messages().Save(message))
 	_, err := service.Edit(test.member(world, "ana"), messageId, strings.Repeat("b", 39000))
 	Assert.IsTrue(world.IsUnavailable(err), fmt.Sprintf("the edit must be unavailable, got %v", err))
+	Assert.Equals(1507, world.Number(err))
 	Assert.Equals(message.Body, test.stored(world, messageId).Body)
 }
 

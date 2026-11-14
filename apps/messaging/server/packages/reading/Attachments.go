@@ -61,5 +61,5 @@ func (Attachments) notFound(failure error) bool {
 }
 
 func (Attachments) missing() error {
-	return &core.NotFound{Message: "no such attachment"}
+	return core.NotFound{}.NoAttachment()
 }

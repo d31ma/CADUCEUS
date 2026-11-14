@@ -33,7 +33,7 @@ func (client MailInClient) Original(domainId string, inboundId string) (core.Dow
 func (client MailInClient) fetch(domainId string, address string, target any) error {
 	authorization, err := client.tokens.Authorization(domainId)
 	if err != nil {
-		return &core.Unavailable{Message: "no service token for the domain", Cause: err}
+		return core.Unavailable{}.NoServiceToken(err)
 	}
 	found, err := client.call.Send(JsonRequest{Method: http.MethodGet, Url: address, Authorization: authorization}, target)
 	if err != nil {
@@ -50,7 +50,7 @@ func (MailInClient) missingUnless(found bool) error {
 	if found {
 		return nil
 	}
-	return &core.NotFound{Message: "no such inbound message"}
+	return core.NotFound{}.NoInboundMessage()
 }
 
 func (MailInClient) messagesPath() string {

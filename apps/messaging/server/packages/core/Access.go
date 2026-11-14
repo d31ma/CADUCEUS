@@ -88,30 +88,30 @@ func (access Access) readRefusal(allowed bool) error {
 	if allowed {
 		return nil
 	}
-	return &NotFound{Message: "no such conversation"}
+	return NotFound{}.NoConversation()
 }
 
 func (access Access) messageRefusal(allowed bool) error {
 	if allowed {
 		return nil
 	}
-	return &NotFound{Message: "no such message"}
+	return NotFound{}.NoMessage()
 }
 
 func (access Access) postRefusal(joined bool, archived bool) error {
 	if !joined {
-		return &NotFound{Message: "no such conversation"}
+		return NotFound{}.NoConversation()
 	}
 	return access.archivedRefusal(archived)
 }
 
 func (access Access) archivedRefusal(archived bool) error {
 	if archived {
-		return &Conflict{Message: "the channel is archived and read-only"}
+		return Conflict{}.ChannelArchived()
 	}
 	return nil
 }
 
 func (access Access) unavailable(failure error) error {
-	return &Unavailable{Message: "the message store is not available", Cause: failure}
+	return Unavailable{}.Store(failure)
 }

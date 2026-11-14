@@ -38,7 +38,7 @@ func (service *SettingsService) unavailable(failure error) error {
 	if failure == nil {
 		return nil
 	}
-	return &core.Unavailable{Message: "the outbox settings are missing", Cause: failure}
+	return core.Unavailable{}.OutboxSettings(failure)
 }
 
 func (service *SettingsService) variable() string {

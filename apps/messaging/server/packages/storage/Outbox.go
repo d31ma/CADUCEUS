@@ -53,7 +53,7 @@ func (relay Outbox) saveUnless(failure error, ref outbox.Ref, fields outbox.Fiel
 
 func (Outbox) missingLetter(failure error) error {
 	if failure != nil {
-		return &core.NotFound{Message: "no such dead event"}
+		return core.NotFound{}.NoDeadEvent()
 	}
 	return nil
 }

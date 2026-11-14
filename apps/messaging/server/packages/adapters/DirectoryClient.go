@@ -31,7 +31,7 @@ func (client DirectoryClient) Resolve(authorization string, addresses []string) 
 func (client DirectoryClient) Address(domainId string, address string) (core.AddressEntry, bool, error) {
 	authorization, err := client.tokens.Authorization(domainId)
 	if err != nil {
-		return core.AddressEntry{}, false, &core.Unavailable{Message: "no service token for the domain", Cause: err}
+		return core.AddressEntry{}, false, core.Unavailable{}.NoServiceToken(err)
 	}
 	entry := core.AddressEntry{}
 	request := JsonRequest{Method: http.MethodGet, Url: client.baseUrl + client.addressPath() + url.PathEscape(address), Authorization: authorization}
@@ -43,7 +43,7 @@ func (DirectoryClient) refusedUnless(found bool) error {
 	if found {
 		return nil
 	}
-	return &core.Unavailable{Message: "the directory does not know the resolve route"}
+	return core.Unavailable{}.NoResolveRoute()
 }
 
 func (DirectoryClient) sameDomain(found bool, entry core.AddressEntry, domainId string) bool {

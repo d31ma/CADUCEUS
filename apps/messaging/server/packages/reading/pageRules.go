@@ -35,7 +35,7 @@ func (rules pageRules) defaultedLimit(limit int) int {
 
 func (rules pageRules) checkedLimit(limit int) (int, error) {
 	if limit < 1 || limit > rules.largestLimit() {
-		return 0, &core.InvalidRequest{Message: "limit must be between 1 and 100", Field: "limit"}
+		return 0, core.InvalidRequest{}.LimitOutOfRange()
 	}
 	return limit, nil
 }
@@ -50,7 +50,7 @@ func (pageRules) cursorOr(cursor string, fallbackCursor string) string {
 func (pageRules) parsedCursor(cursor string) (int, error) {
 	value, err := strconv.Atoi(cursor)
 	if err != nil || value < 0 {
-		return 0, &core.InvalidRequest{Message: "the cursor is not valid", Field: "cursor"}
+		return 0, core.InvalidRequest{}.BadCursor()
 	}
 	return value, nil
 }

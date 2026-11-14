@@ -25,5 +25,5 @@ func (inbound *FakeInbound) missing(found bool) error {
 	if found {
 		return inbound.Failure
 	}
-	return &core.NotFound{Message: "no such original"}
+	return core.NotFound{}.NoInboundMessage()
 }

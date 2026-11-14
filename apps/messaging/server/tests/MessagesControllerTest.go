@@ -25,6 +25,7 @@ func (test *MessagesControllerTest) TestPostMessageAnswersRecipientsChanged() {
 	body := (&MessagingErrorHandler{}).RecipientsChanged(world.Changed(err))
 	Assert.Equals("recipients_changed", body.Code)
 	Assert.Equals([]string{"carol@partner.org"}, body.Addresses)
+	Assert.Equals("[MS1547]: the recipients changed", body.Message)
 }
 
 func (test *MessagesControllerTest) TestPostMessageAnswersChatNotAllowed() {
@@ -34,6 +35,7 @@ func (test *MessagesControllerTest) TestPostMessageAnswersChatNotAllowed() {
 	body := (&MessagingErrorHandler{}).ChatNotAllowed(world.NotAllowed(err))
 	Assert.Equals("chat_not_allowed", body.Code)
 	Assert.Equals("carol@partner.org", body.Field)
+	Assert.Equals("[MS1550]: chat is not allowed for carol@partner.org", body.Message)
 }
 
 func (test *MessagesControllerTest) TestPostMessageToAnotherDomainsConversationIsNotFound() {
@@ -42,6 +44,7 @@ func (test *MessagesControllerTest) TestPostMessageToAnotherDomainsConversationI
 	request := SendRequest{ClientMessageId: "c2", ConversationId: sent.Message.ConversationId, Body: "hi"}
 	_, err := world.Messages.PostMessage(world.StrangerBearer("ana"), request)
 	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
+	Assert.Equals(1538, world.Number(err))
 }
 
 func (test *MessagesControllerTest) TestPatchMessageChangesTheBody() {
@@ -88,6 +91,7 @@ func (test *MessagesControllerTest) TestPutReactionRefusesAnUnknownName() {
 	sent := world.ChatTo("bo", "c1", "hello")
 	err := world.Messages.PutReaction(world.MemberBearer("bo"), sent.Message.MessageId, "unicorn")
 	Assert.Equals("reaction", world.InvalidField(err))
+	Assert.Equals(1515, world.Number(err))
 }
 
 func (test *MessagesControllerTest) TestGetMessageAnswersOneMessage() {
@@ -105,6 +109,7 @@ func (test *MessagesControllerTest) TestGetMessageHidesTheMessageFromOthers() {
 	sent := world.ChatTo("bo", "c1", "hello")
 	_, err := world.Messages.GetMessage(world.MemberBearer("cy"), sent.Message.MessageId)
 	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
+	Assert.Equals(1539, world.Number(err))
 }
 
 func (test *MessagesControllerTest) TestAReplyAlsoSentToTheConversationIsListedThere() {
@@ -125,6 +130,7 @@ func (test *MessagesControllerTest) TestAlsoToConversationNeedsAThread() {
 	request := SendRequest{ClientMessageId: "c2", ConversationId: sent.Message.ConversationId, AlsoToConversation: true, Body: "reply"}
 	_, err := world.Messages.PostMessage(world.MemberBearer("ana"), request)
 	Assert.Equals("alsoToConversation", world.InvalidField(err))
+	Assert.Equals(1533, world.Number(err))
 }
 
 func (test *MessagesControllerTest) TestGetOriginalOfAChatMessageIsNotFound() {
@@ -132,6 +138,7 @@ func (test *MessagesControllerTest) TestGetOriginalOfAChatMessageIsNotFound() {
 	sent := world.ChatTo("bo", "c1", "hello")
 	_, err := world.Messages.GetOriginal(world.MemberBearer("bo"), sent.Message.MessageId)
 	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
+	Assert.Equals(1539, world.Number(err))
 }
 
 func (test *MessagesControllerTest) TestEveryRouteRefusesAMissingToken() {
@@ -144,18 +151,21 @@ func (test *MessagesControllerTest) TestEveryRouteRefusesAMissingToken() {
 	_, originalError := world.Messages.GetOriginal("", "msg_1")
 	_, messageError := world.Messages.GetMessage("", "msg_1")
 	Assert.IsTrue(world.IsUnauthenticated(sendError), "send: want Unauthenticated")
+	Assert.Equals(1501, world.Number(sendError))
 	Assert.IsTrue(world.IsUnauthenticated(editError), "edit: want Unauthenticated")
 	Assert.IsTrue(world.IsUnauthenticated(deleteError), "delete: want Unauthenticated")
 	Assert.IsTrue(world.IsUnauthenticated(putError), "react: want Unauthenticated")
 	Assert.IsTrue(world.IsUnauthenticated(takeBackError), "take back: want Unauthenticated")
 	Assert.IsTrue(world.IsUnauthenticated(originalError), "original: want Unauthenticated")
 	Assert.IsTrue(world.IsUnauthenticated(messageError), "message: want Unauthenticated")
+	Assert.Equals(1501, world.Number(messageError))
 }
 
 func (test *MessagesControllerTest) TestAServiceTokenIsForbiddenOnChatRoutes() {
 	world := MessagingTestSetup{}.World()
 	_, err := world.Messages.PostMessage(world.ServiceBearer(world.Home), SendRequest{ClientMessageId: "c1", Body: "hi"})
 	Assert.IsTrue(world.IsForbidden(err), "want Forbidden")
+	Assert.Equals(1502, world.Number(err))
 }
 
 func (test *MessagesControllerTest) TestPostMessageAnswersTheAttachmentDetails() {
@@ -169,6 +179,7 @@ func (test *MessagesControllerTest) TestPostMessageWithAnUnknownAttachmentIsInva
 	request := SendRequest{ClientMessageId: "c1", Body: "file", AttachmentIds: []string{"att_missing"}, Recipients: []RecipientChoice{{Address: world.Address("bo"), Role: "to", Delivery: "chat", ExpectedKind: "member"}}}
 	_, err := world.Messages.PostMessage(world.MemberBearer("ana"), request)
 	Assert.Equals("attachmentIds", world.InvalidField(err))
+	Assert.Equals(1518, world.Number(err))
 }
 
 func (test *MessagesControllerTest) TestPostMessageWithTooLargeAttachmentsAnswersTooLarge() {
@@ -178,4 +189,5 @@ func (test *MessagesControllerTest) TestPostMessageWithTooLargeAttachmentsAnswer
 	request := SendRequest{ClientMessageId: "c1", Body: "files", AttachmentIds: []string{"att_1", "att_2"}, Recipients: []RecipientChoice{{Address: world.Address("bo"), Role: "to", Delivery: "chat", ExpectedKind: "member"}}}
 	_, err := world.Messages.PostMessage(world.MemberBearer("ana"), request)
 	Assert.IsTrue(world.IsTooLarge(err), "the send must answer too_large")
+	Assert.Equals(1549, world.Number(err))
 }

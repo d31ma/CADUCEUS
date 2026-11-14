@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"mesail.dev/packages/apierrors"
 	"mesail.dev/packages/core"
 	"mesail.dev/packages/fakes"
 	"mesail.dev/packages/oidc"
@@ -40,11 +41,11 @@ func (MessagingTestSetup) World() *MessagingTestSetup {
 	callers := &CallerService{}
 	requests := &RequestService{}
 	wire := &WireService{}
-	world.Conversations = &ConversationsController{callers: callers, requests: requests, messaging: world.Service, wire: wire}
-	world.Messages = &MessagesController{callers: callers, messaging: world.Service, wire: wire}
-	world.Attachments = &AttachmentsController{callers: callers, messaging: world.Service}
-	world.Sources = &MessageSourceController{callers: callers, messaging: world.Service, wire: wire}
-	world.Events = &EventsController{callers: callers, events: world.EventsService(), wire: wire}
+	world.Conversations = &ConversationsController{conversations: &ConversationRouteService{callers: callers, requests: requests, messaging: world.Service, wire: wire}}
+	world.Messages = &MessagesController{messages: &MessageRouteService{callers: callers, messaging: world.Service, wire: wire}}
+	world.Attachments = &AttachmentsController{attachments: &AttachmentRouteService{callers: callers, messaging: world.Service}}
+	world.Sources = &MessageSourceController{sources: &SourceRouteService{callers: callers, messaging: world.Service, wire: wire}}
+	world.Events = &EventsController{events: &EventRouteService{callers: callers, events: world.EventsService(), wire: wire}}
 	world.AddMember("ana")
 	world.AddMember("bo")
 	return world
@@ -203,4 +204,12 @@ func (world *MessagingTestSetup) NotAllowed(err error) *ChatNotAllowed {
 	failure := &ChatNotAllowed{}
 	errors.As(err, &failure)
 	return failure
+}
+
+func (world *MessagingTestSetup) Number(err error) int {
+	var failure apierrors.Numbered
+	if !errors.As(err, &failure) {
+		return 0
+	}
+	return failure.Number()
 }

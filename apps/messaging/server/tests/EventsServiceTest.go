@@ -16,6 +16,7 @@ func (test *EventsServiceTest) TestReceiveRefusesAServiceOfAnotherDomain() {
 	envelope := events.Envelope{EventID: "evt_1", Type: "member.upserted", DomainId: world.OtherDomain(), Producer: "directory", OccurredAt: "2026-11-10T12:00:00Z", Payload: json.RawMessage(`{}`)}
 	_, err := world.EventsService().Receive(service, envelope)
 	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
+	Assert.Equals(1505, world.Number(err))
 }
 
 func (test *EventsServiceTest) TestReceiveRefusesACallerWithoutTheServiceRole() {
@@ -24,6 +25,7 @@ func (test *EventsServiceTest) TestReceiveRefusesACallerWithoutTheServiceRole() 
 	_, err := world.EventsService().Receive(world.Member("bo"), envelope)
 	Assert.IsTrue(world.IsForbidden(err), "want Forbidden")
 	Assert.Equals(events.NotService{}.Error(), err.Error())
+	Assert.Equals(1512, world.Number(err))
 }
 
 func (test *EventsServiceTest) TestReceiveRefusesAnEventThatMessagingDoesNotConsume() {
@@ -33,4 +35,5 @@ func (test *EventsServiceTest) TestReceiveRefusesAnEventThatMessagingDoesNotCons
 	_, err := world.EventsService().Receive(service, envelope)
 	Assert.Equals("", world.InvalidField(err))
 	Assert.Equals(events.NotSubscribed{Service: "messaging", Type: "message.created"}.Error(), err.Error())
+	Assert.Equals(1509, world.Number(err))
 }

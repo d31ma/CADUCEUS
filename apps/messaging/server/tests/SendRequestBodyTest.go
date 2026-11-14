@@ -43,9 +43,11 @@ func (test *SendRequestBodyTest) TestTheCoreStillJudgesMissingValues() {
 	blank := `{"clientMessageId":"c1","recipients":[{"address":"` + world.Address("bo") + `","role":"to","delivery":"chat","expectedKind":"member"}]}`
 	_, err := world.Messages.PostMessage(world.MemberBearer("ana"), test.decoded(world, blank))
 	Assert.Equals("body", world.InvalidField(err))
+	Assert.Equals(1525, world.Number(err))
 	noSubject := `{"clientMessageId":"c2","body":"hi","email":{},"recipients":[{"address":"carol@partner.org","role":"to","delivery":"email","expectedKind":"external"}]}`
 	_, err = world.Messages.PostMessage(world.MemberBearer("ana"), test.decoded(world, noSubject))
 	Assert.Equals("subject", world.InvalidField(err))
+	Assert.Equals(1521, world.Number(err))
 }
 
 func (test *SendRequestBodyTest) TestOnlyTheClientMessageIdIsRequired() {

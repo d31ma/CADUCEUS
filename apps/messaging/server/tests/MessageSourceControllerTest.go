@@ -16,6 +16,7 @@ func (test *MessageSourceControllerTest) TestGetSourceRefusesAMemberToken() {
 	sent := world.ChatTo("bo", "c1", "hello")
 	_, err := world.Sources.GetSource(world.MemberBearer("bo"), sent.Message.MessageId)
 	Assert.IsTrue(world.IsForbidden(err), "want Forbidden")
+	Assert.Equals(1503, world.Number(err))
 }
 
 func (test *MessageSourceControllerTest) TestGetSourceForAnotherDomainIsNotFound() {
@@ -23,4 +24,5 @@ func (test *MessageSourceControllerTest) TestGetSourceForAnotherDomainIsNotFound
 	sent := world.ChatTo("bo", "c1", "hello")
 	_, err := world.Sources.GetSource(world.ServiceBearer(world.Away), sent.Message.MessageId)
 	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
+	Assert.Equals(1539, world.Number(err))
 }

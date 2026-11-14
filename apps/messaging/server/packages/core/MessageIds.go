@@ -14,7 +14,7 @@ func (ids MessageIds) Wire(month string, storedId string) string {
 func (ids MessageIds) Parse(wireId string) (string, string, error) {
 	stored, err := ids.wire().Strip(ids.prefix(), wireId)
 	if err != nil {
-		return "", "", &NotFound{Message: "no such message"}
+		return "", "", NotFound{}.NoMessage()
 	}
 	return ids.split(stored)
 }
@@ -25,7 +25,7 @@ func (ids MessageIds) Month(at time.Time) string {
 
 func (ids MessageIds) split(stored string) (string, string, error) {
 	if len(stored) <= len(ids.monthLayout()) {
-		return "", "", &NotFound{Message: "no such message"}
+		return "", "", NotFound{}.NoMessage()
 	}
 	return stored[:len(ids.monthLayout())], stored[len(ids.monthLayout()):], nil
 }

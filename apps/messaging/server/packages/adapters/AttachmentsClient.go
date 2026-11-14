@@ -21,7 +21,7 @@ func NewAttachmentsClient(baseUrl string, tokens ServiceAuthorizer, call JsonCal
 func (client AttachmentsClient) Describe(domainId string, attachmentId string) (core.AttachmentInfo, bool, error) {
 	authorization, err := client.tokens.Authorization(domainId)
 	if err != nil {
-		return core.AttachmentInfo{}, false, &core.Unavailable{Message: "no service token for the domain", Cause: err}
+		return core.AttachmentInfo{}, false, core.Unavailable{}.NoServiceToken(err)
 	}
 	info := core.AttachmentInfo{}
 	request := JsonRequest{Method: http.MethodGet, Url: client.metaUrl(attachmentId), Authorization: authorization}

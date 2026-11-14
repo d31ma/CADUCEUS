@@ -7,6 +7,7 @@ func (test *ConversationsControllerTest) TestGetConversationsRefusesARequestWith
 	world := MessagingTestSetup{}.World()
 	_, err := world.Conversations.GetConversations(world.Request("/api/v1/messaging/conversations", ""))
 	Assert.IsTrue(world.IsUnauthenticated(err), "want Unauthenticated")
+	Assert.Equals(1501, world.Number(err))
 }
 
 func (test *ConversationsControllerTest) TestGetConversationsListsTheConversationOfTheRecipient() {
@@ -23,6 +24,7 @@ func (test *ConversationsControllerTest) TestGetConversationsRefusesALimitThatIs
 	world := MessagingTestSetup{}.World()
 	_, err := world.Conversations.GetConversations(world.Request("/api/v1/messaging/conversations?limit=many", world.MemberBearer("bo")))
 	Assert.Equals("limit", world.InvalidField(err))
+	Assert.Equals(1506, world.Number(err))
 }
 
 func (test *ConversationsControllerTest) TestGetMessagesListsTheNewestFirst() {
@@ -41,6 +43,7 @@ func (test *ConversationsControllerTest) TestGetMessagesOfAnotherDomainIsNotFoun
 	conversationId := sent.Message.ConversationId
 	_, err := world.Conversations.GetMessages(conversationId, world.Request("/api/v1/messaging/conversations/"+conversationId+"/messages", world.StrangerBearer("bo")))
 	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
+	Assert.Equals(1538, world.Number(err))
 }
 
 func (test *ConversationsControllerTest) TestPutReadClearsTheUnreadCount() {
@@ -56,4 +59,5 @@ func (test *ConversationsControllerTest) TestPutReadRefusesAForgedToken() {
 	world := MessagingTestSetup{}.World()
 	err := world.Conversations.PutRead("Bearer forged", "cnv_1", ReadRequest{MessageId: "msg_1"})
 	Assert.IsTrue(world.IsUnauthenticated(err), "want Unauthenticated")
+	Assert.Equals(1501, world.Number(err))
 }

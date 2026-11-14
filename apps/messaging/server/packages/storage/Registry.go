@@ -64,7 +64,7 @@ func (Registry) refusal(known bool) error {
 	if known {
 		return nil
 	}
-	return &core.NotFound{Message: "no such outbox collection"}
+	return core.NotFound{}.NoOutboxCollection()
 }
 
 func (Registry) nameField() string {

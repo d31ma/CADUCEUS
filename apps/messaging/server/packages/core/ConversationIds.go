@@ -24,7 +24,7 @@ func (ConversationIds) storedPart(conversation Conversation) string {
 
 func (ConversationIds) missing(failure error) error {
 	if failure != nil {
-		return &NotFound{Message: "no such conversation"}
+		return NotFound{}.NoConversation()
 	}
 	return nil
 }

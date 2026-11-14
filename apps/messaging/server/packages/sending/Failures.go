@@ -5,46 +5,34 @@ import "mesail.dev/packages/core"
 type Failures struct{}
 
 func (Failures) store(cause error) error {
-	return &core.Unavailable{Message: "the message store is not available", Cause: cause}
+	return core.Unavailable{}.Store(cause)
 }
 
 func (Failures) directory(cause error) error {
-	return &core.Unavailable{Message: "the directory is not available", Cause: cause}
+	return core.Unavailable{}.Directory(cause)
 }
 
 func (Failures) attachments(cause error) error {
-	return &core.Unavailable{Message: "the attachments service is not available", Cause: cause}
+	return core.Unavailable{}.AttachmentsService(cause)
 }
 
 func (Failures) renderer(cause error) error {
-	return &core.Unavailable{Message: "the text renderer is not available", Cause: cause}
+	return core.Unavailable{}.Renderer(cause)
 }
 
-func (Failures) invalid(message string, field string) error {
-	return &core.InvalidRequest{Message: message, Field: field}
-}
-
-func (failures Failures) recipients(message string) error {
-	return failures.invalid(message, "recipients")
-}
-
-func (failures Failures) missingSubject() error {
-	return failures.invalid("an email needs a subject", "subject")
-}
-
-func (failures Failures) subjectRefusal(subject string) error {
+func (Failures) subjectRefusal(subject string) error {
 	if subject != "" {
 		return nil
 	}
-	return failures.missingSubject()
+	return core.InvalidRequest{}.MissingSubject()
 }
 
 func (Failures) missingConversation() error {
-	return &core.NotFound{Message: "no such conversation"}
+	return core.NotFound{}.NoConversation()
 }
 
 func (Failures) missingMessage() error {
-	return &core.NotFound{Message: "no such message"}
+	return core.NotFound{}.NoMessage()
 }
 
 func (Failures) first(refusals []error) error {

@@ -89,7 +89,7 @@ func (ConversationPicker) extraRefusal(conversation core.Conversation, chosen []
 	if len(chosen) == 0 || conversation.Kind == (core.ConversationKinds{}).Direct() {
 		return nil
 	}
-	return Failures{}.recipients("recipients can be added only to a direct conversation")
+	return core.InvalidRequest{}.RecipientsOnlyInDirect()
 }
 
 func (ConversationPicker) channelRefusal(found bool) error {

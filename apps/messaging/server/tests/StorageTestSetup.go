@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"mesail.dev/packages/apierrors"
 	"mesail.dev/packages/core"
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/oidc"
@@ -226,4 +227,12 @@ func (world *StorageTestSetup) BudgetSlack() int {
 
 func (world *StorageTestSetup) MaxDocumentBytes() int {
 	return 512 << 10
+}
+
+func (world *StorageTestSetup) Number(err error) int {
+	var failure apierrors.Numbered
+	if !errors.As(err, &failure) {
+		return 0
+	}
+	return failure.Number()
 }

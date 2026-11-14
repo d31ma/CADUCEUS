@@ -11,6 +11,16 @@
   change. An error that no other handler method takes answers
   `500 unavailable` with `[MS4500]`. Every controller route now makes
   one Service call (new `HealthService`).
+- Changed `messaging`'s error answers (slice E8, ADR 0009): every error
+  answer that `messaging` shapes now has a numbered message,
+  `[MS<4 digits>]: <plain English message>`, from messaging's block
+  MS1500-MS1562 in `docs/mesail/ERRORS.md` (for example
+  `[MS1539]: no such message`). `code`, `field`, routes and statuses do
+  not change. The `409 recipients_changed` message no longer lists the
+  addresses (they stay in `addresses`). An error that no other handler
+  method takes answers `500 unavailable` with `[MS1500]`. The
+  controllers now make one Service call each (new route Services in
+  `server/services/`).
 - Changed `identity`'s error answers (slice E6, ADR 0009): every error
   answer that `identity` shapes now has a numbered message,
   `[MS<4 digits>]: <plain English message>`, from identity's block

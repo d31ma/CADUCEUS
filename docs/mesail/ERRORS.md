@@ -85,6 +85,68 @@ keeps its row, marked "retired".
 | MS0520 | identity | 503 | `unavailable` | The signing keys are not available now. Try again later. | `GET /jwks` without a usable signing key |
 | MS1000 | directory | 500 | `unavailable` | Something went wrong. | an unexpected error in `directory` |
 | MS1500 | messaging | 500 | `unavailable` | Something went wrong. | an unexpected error in `messaging` |
+| MS1501 | messaging | 401 | `unauthenticated` | the access token was refused | a messaging route could not verify the caller's token |
+| MS1502 | messaging | 403 | `forbidden` | only members of a domain use its conversations | a chat route called without the Member or DomainAdmin role |
+| MS1503 | messaging | 403 | `forbidden` | only a caller with the Service role may use this route | `POST /events` or `GET /messages/{id}/source` without the Service role |
+| MS1504 | messaging | 403 | `forbidden` | the outbox is managed with an install-wide token only | an outbox route called with a domain token |
+| MS1505 | messaging | 404 | `not_found` | no such domain | a service token of one domain delivered an event of another domain |
+| MS1506 | messaging | 400 | `invalid_request` | limit must be a whole number from 1 to 100 | a page `limit` that is not a whole number from 1 to 100; `field` `limit` |
+| MS1507 | messaging | 503 | `unavailable` | the messaging service is not available | a route failed with an error no other case names (also a full outbox document) |
+| MS1508 | messaging | 400 | `invalid_request` | (the event check's text) | `POST /events` with an envelope that is not valid (`kit/events`) |
+| MS1509 | messaging | 400 | `invalid_request` | (the event check's text) | `POST /events` with an event type messaging does not consume (`kit/events`) |
+| MS1510 | messaging | 400 | `invalid_request` | (the event check's text) | `POST /events` with an event type that is not in the catalog (`kit/events`) |
+| MS1511 | messaging | 400 | `invalid_request` | messaging does not handle the event type ... | `POST /events` with a consumed type that has no handler |
+| MS1512 | messaging | 403 | `forbidden` | only a caller with the Service role may deliver events | the event receiver refused a caller without the Service role (`kit/events`) |
+| MS1513 | messaging | 400 | `invalid_request` | limit must be between 1 and 100 | the reader got a page size outside 1 to 100; `field` `limit` |
+| MS1514 | messaging | 400 | `invalid_request` | the cursor is not valid | a page `cursor` that messaging did not make; `field` `cursor` |
+| MS1515 | messaging | 400 | `invalid_request` | the reaction is not a known reaction name | a reaction name outside the list; `field` `reaction` |
+| MS1516 | messaging | 400 | `invalid_request` | the body must have 1 to 40000 characters | an edit with an empty or too long body; `field` `body` |
+| MS1517 | messaging | 400 | `invalid_request` | recipients can be added only to a direct conversation | a reply in a channel that names recipients; `field` `recipients` |
+| MS1518 | messaging | 400 | `invalid_request` | no such attachment: ... | a send names an attachment the domain does not have; `field` `attachmentIds` |
+| MS1519 | messaging | 400 | `invalid_request` | the attachment is not ready: ... | a send names an attachment that is not uploaded yet; `field` `attachmentIds` |
+| MS1520 | messaging | 400 | `invalid_request` | a direct conversation has at most 100 member participants | a send would give a direct conversation a 101st member (K5); `field` `recipients` |
+| MS1521 | messaging | 400 | `invalid_request` | an email needs a subject | an email send without a subject; `field` `subject` |
+| MS1522 | messaging | 400 | `invalid_request` | this message needs too many writes; send it to fewer new recipients | a send over the write budget of one request; `field` `recipients` |
+| MS1523 | messaging | 400 | `invalid_request` | clientMessageId must have 1 to 200 characters | `field` `clientMessageId` |
+| MS1524 | messaging | 400 | `invalid_request` | the body may have at most 40000 characters | a send with a too long body; `field` `body` |
+| MS1525 | messaging | 400 | `invalid_request` | the message needs a body or an attachment | a send with neither; `field` `body` |
+| MS1526 | messaging | 400 | `invalid_request` | a message may have at most 10 attachments | `field` `attachmentIds` |
+| MS1527 | messaging | 400 | `invalid_request` | an attachment id must start with att_ | `field` `attachmentIds` |
+| MS1528 | messaging | 400 | `invalid_request` | a message may have at most 20 recipients | `field` `recipients` |
+| MS1529 | messaging | 400 | `invalid_request` | each recipient needs an address, a role, a delivery and an expected kind | `field` `recipients` |
+| MS1530 | messaging | 400 | `invalid_request` | a Bcc recipient gets email only | a Bcc recipient asked for chat; `field` `recipients` |
+| MS1531 | messaging | 400 | `invalid_request` | each address may appear only once | `field` `recipients` |
+| MS1532 | messaging | 400 | `invalid_request` | a new conversation needs recipients | a send with no conversation and no recipients; `field` `recipients` |
+| MS1533 | messaging | 400 | `invalid_request` | alsoToConversation is allowed only with threadRootId | `field` `alsoToConversation` |
+| MS1534 | messaging | 400 | `invalid_request` | the From address must be one of your own addresses | `field` `fromAddress` |
+| MS1535 | messaging | 400 | `invalid_request` | a channel gets chat only: ... | a channel recipient asked for email (one channel address); `field` `recipients` |
+| MS1536 | messaging | 400 | `invalid_request` | a channel must be the only recipient of a new message, in To | `field` `recipients` |
+| MS1537 | messaging | 403 | `forbidden` | only the author can change this message | an edit or delete by someone else |
+| MS1538 | messaging | 404 | `not_found` | no such conversation | the conversation does not exist or the caller is not in it |
+| MS1539 | messaging | 404 | `not_found` | no such message | the message does not exist or the caller cannot read it |
+| MS1540 | messaging | 404 | `not_found` | no such attachment | attachment access for an attachment the caller cannot read |
+| MS1541 | messaging | 404 | `not_found` | no such inbound message | `GET /messages/{id}/original` when mail-in has no original |
+| MS1542 | messaging | 404 | `not_found` | no such outbox document | a requeue names a document that does not exist |
+| MS1543 | messaging | 404 | `not_found` | no such outbox collection | a requeue names a collection that is not messaging's |
+| MS1544 | messaging | 404 | `not_found` | no such dead event | a requeue names an event that is not a dead letter |
+| MS1545 | messaging | 409 | `conflict` | the message is deleted | an edit or reaction on a deleted message |
+| MS1546 | messaging | 409 | `conflict` | the channel is archived and read-only | a send or change in an archived channel |
+| MS1547 | messaging | 409 | `recipients_changed` | the recipients changed | how a recipient gets the message changed since the client asked; the addresses are in `addresses` |
+| MS1548 | messaging | 413 | `too_large` | the message is too large to store; send a shorter body | the stored message would pass its size budget |
+| MS1549 | messaging | 413 | `too_large` | the attachments of a message may have at most 50 MiB together | a send whose attachments pass 50 MiB together |
+| MS1550 | messaging | 422 | `chat_not_allowed` | chat is not allowed for ... | a chat recipient that cannot get chat (one address); `field` the address |
+| MS1551 | messaging | 503 | `unavailable` | the message store is not available | FYLO failed |
+| MS1552 | messaging | 503 | `unavailable` | the directory is not available | `directory` failed during a send |
+| MS1553 | messaging | 503 | `unavailable` | the attachments service is not available | `attachments` failed during a send |
+| MS1554 | messaging | 503 | `unavailable` | the text renderer is not available | the rich text renderer failed |
+| MS1555 | messaging | 503 | `unavailable` | the messaging storage is not available | FYLO failed while an event was handled |
+| MS1556 | messaging | 503 | `unavailable` | ... is not stored yet | an event names a conversation or message messaging has not stored yet (the sender retries) |
+| MS1557 | messaging | 503 | `unavailable` | no service token for the domain | messaging could not get a service token to call another service |
+| MS1558 | messaging | 503 | `unavailable` | the service answered ... | another service answered with an unexpected status |
+| MS1559 | messaging | 503 | `unavailable` | the service is not available | another service could not be reached |
+| MS1560 | messaging | 503 | `unavailable` | the directory does not know the resolve route | `directory` answered 404 for its resolve route |
+| MS1561 | messaging | 503 | `unavailable` | the outbox relay route answered ... | the scheduled relay call got an unexpected status |
+| MS1562 | messaging | 503 | `unavailable` | the outbox settings are missing | the outbox settings in `application.json` cannot be read |
 | MS2000 | channels | 500 | `unavailable` | Something went wrong. | an unexpected error in `channels` |
 | MS2001 | channels | 401 | `unauthenticated` | the access token was refused | a channel route could not verify the caller's token |
 | MS2002 | channels | 403 | `forbidden` | only members of a domain use its channels | the caller's token has no member or admin role |

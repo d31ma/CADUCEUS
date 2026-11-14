@@ -1,17 +1,8 @@
-import (
-	"mesail.dev/packages/core"
-	"mesail.dev/packages/oidc"
-)
-
 // @RequestRoute("/api/v1/messaging/messages")
 // @Allow(Service)
 type MessageSourceController struct {
 	// @Needs
-	callers *CallerService
-	// @Needs
-	messaging *MessagingService
-	// @Needs
-	wire *WireService
+	sources *SourceRouteService
 }
 
 // @GetRoute("/{message_id}/source")
@@ -21,14 +12,5 @@ func (controller *MessageSourceController) GetSource(
 	// @FromPath("message_id")
 	messageId string,
 ) (MessageSource, error) {
-	caller, refused := controller.callers.ServiceCaller(authorization)
-	source, err := controller.source(caller, messageId, refused)
-	return controller.wire.MessageSource(source), err
-}
-
-func (controller *MessageSourceController) source(caller oidc.Caller, messageId string, failure error) (core.MessageSource, error) {
-	if failure != nil {
-		return core.MessageSource{}, failure
-	}
-	return controller.messaging.Source(caller, messageId)
+	return controller.sources.Source(authorization, messageId)
 }

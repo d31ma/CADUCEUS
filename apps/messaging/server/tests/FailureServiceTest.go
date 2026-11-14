@@ -16,42 +16,42 @@ func (test *FailureServiceTest) TestNoFailureStaysNone() {
 }
 
 func (test *FailureServiceTest) TestAJoinedFailureBecomesItsFirstKnownFailure() {
-	missing := &core.NotFound{Message: "no such message"}
-	known := (&FailureService{}).Known(errors.Join(errors.New("plain"), missing, &core.Conflict{Message: "later"}))
-	Assert.Equals(&NotFound{Message: "no such message"}, known)
+	known := (&FailureService{}).Known(errors.Join(errors.New("plain"), core.NotFound{}.NoMessage(), core.Conflict{}.MessageDeleted()))
+	Assert.Equals(&NotFound{Message: "no such message", ErrorNumber: 1539}, known)
 }
 
 func (test *FailureServiceTest) TestAnUnavailableFailureDropsItsKnownCause() {
-	failure := errors.Join(&core.Unavailable{Message: "the store is down", Cause: &core.Conflict{Message: "x"}}, &core.NotFound{Message: "no"})
+	failure := errors.Join(core.Unavailable{}.Store(core.Conflict{}.MessageDeleted()), core.NotFound{}.NoMessage())
 	known := (&FailureService{}).Known(failure)
-	Assert.Equals(&Unavailable{Message: "the store is down"}, known)
+	Assert.Equals(&Unavailable{Message: "the message store is not available", ErrorNumber: 1551}, known)
 }
 
 func (test *FailureServiceTest) TestAnUnknownFailureBecomesUnavailable() {
 	known := (&FailureService{}).Known(errors.New("socket closed"))
-	Assert.Equals(&Unavailable{Message: "the messaging service is not available"}, known)
+	Assert.Equals(&Unavailable{Message: "the messaging service is not available", ErrorNumber: 1507}, known)
 }
 
-func (test *FailureServiceTest) TestEventRefusalsBecomeInvalidRequests() {
+func (test *FailureServiceTest) TestEventRefusalsBecomeNumberedInvalidRequests() {
 	service := &FailureService{}
-	Assert.Equals(&InvalidRequest{Message: events.InvalidEnvelope{Reason: "x"}.Error()}, service.Known(events.InvalidEnvelope{Reason: "x"}))
-	Assert.Equals(&InvalidRequest{Message: events.NotSubscribed{Type: "x"}.Error()}, service.Known(events.NotSubscribed{Type: "x"}))
-	Assert.Equals(&InvalidRequest{Message: events.UnknownEventType{Type: "x"}.Error()}, service.Known(events.UnknownEventType{Type: "x"}))
-	Assert.Equals(&InvalidRequest{Message: inbound.UnhandledEvent{Type: "x"}.Error()}, service.Known(inbound.UnhandledEvent{Type: "x"}))
+	Assert.Equals(&InvalidRequest{Message: events.InvalidEnvelope{Reason: "x"}.Error(), ErrorNumber: 1508}, service.Known(events.InvalidEnvelope{Reason: "x"}))
+	Assert.Equals(&InvalidRequest{Message: events.NotSubscribed{Type: "x"}.Error(), ErrorNumber: 1509}, service.Known(events.NotSubscribed{Type: "x"}))
+	Assert.Equals(&InvalidRequest{Message: events.UnknownEventType{Type: "x"}.Error(), ErrorNumber: 1510}, service.Known(events.UnknownEventType{Type: "x"}))
+	Assert.Equals(&InvalidRequest{Message: inbound.UnhandledEvent{Type: "x"}.Error(), ErrorNumber: 1511}, service.Known(inbound.UnhandledEvent{Type: "x"}))
 }
 
 func (test *FailureServiceTest) TestANonServiceCallerIsForbidden() {
-	Assert.Equals(&Forbidden{Message: events.NotService{}.Error()}, (&FailureService{}).Known(events.NotService{}))
+	Assert.Equals(&Forbidden{Message: events.NotService{}.Error(), ErrorNumber: 1512}, (&FailureService{}).Known(events.NotService{}))
 }
 
-func (test *FailureServiceTest) TestCoreFailuresBecomeAnswerFailures() {
+func (test *FailureServiceTest) TestCoreFailuresKeepTheirNumbers() {
 	service := &FailureService{}
-	Assert.Equals(&Forbidden{Message: "no"}, service.Known(&core.Forbidden{Message: "no"}))
-	Assert.Equals(&InvalidRequest{Message: "bad", Field: "body"}, service.Known(&core.InvalidRequest{Message: "bad", Field: "body"}))
-	Assert.Equals(&Conflict{Message: "archived"}, service.Known(&core.Conflict{Message: "archived"}))
-	Assert.Equals(&ChangedRecipients{Message: "the recipients changed: a", Addresses: []string{"a"}}, service.Known(&core.RecipientsChanged{Addresses: []string{"a"}}))
-	Assert.Equals(&ChatNotAllowed{Message: "chat is not allowed for a", Address: "a"}, service.Known(&core.ChatNotAllowed{Address: "a"}))
-	Assert.Equals(&TooLarge{Message: "big"}, service.Known(&core.TooLarge{Message: "big"}))
+	Assert.Equals(&Forbidden{Message: "only the author can change this message", ErrorNumber: 1537}, service.Known(core.Forbidden{}.NotTheAuthor()))
+	Assert.Equals(&InvalidRequest{Message: "an email needs a subject", Field: "subject", ErrorNumber: 1521}, service.Known(core.InvalidRequest{}.MissingSubject()))
+	Assert.Equals(&Conflict{Message: "the channel is archived and read-only", ErrorNumber: 1546}, service.Known(core.Conflict{}.ChannelArchived()))
+	Assert.Equals(&ChangedRecipients{Message: "the recipients changed", Addresses: []string{"a"}, ErrorNumber: 1547}, service.Known(core.RecipientsChanged{}.Of([]string{"a"})))
+	Assert.Equals(&ChatNotAllowed{Message: "chat is not allowed for a", Address: "a", ErrorNumber: 1550}, service.Known(core.ChatNotAllowed{}.For("a")))
+	Assert.Equals(&TooLarge{Message: "the message is too large to store; send a shorter body", ErrorNumber: 1548}, service.Known(core.TooLarge{}.StoredMessage()))
+	Assert.Equals(&NotFound{Message: "no such conversation", ErrorNumber: 1538}, service.Known(core.NotFound{}.NoConversation()))
 }
 
 func (test *FailureServiceTest) TestAnswerFailuresKeepTheirPointers() {

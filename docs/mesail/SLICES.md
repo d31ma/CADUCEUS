@@ -801,7 +801,7 @@ an earlier slice text in this file says "realm of the domain",
 14. Now, before K1's Floci runs if they have not started (it needs the
     dev host; K3's series stopped): **K8**. Floci series are not reliable
     until K8 finds the store outage's cause.
-15. After K5: **K9**.
+15. ~~K9~~ dropped (ADR 0011).
 16. After K8 and the next TACHYON release (the owner approves it): **K10**.
 
 ### K5. Channel events without reader lists (messaging's, realtime's and notify's owners, one session)
@@ -836,7 +836,9 @@ limit and no owner question.
   - the realtime and notify tests show channel readers still get the
     message and mentioned members still get a notification; gates pass.
 
-### K9. A channel post reads no member list (messaging's owner, after K5)
+### K9. A channel post reads no member list (dropped 2026-11-14)
+Dropped: ADR 0011 limits groups to 50 members and retires the server chat
+path before the first release. Kept for the record.
 Found by K5 (2026-11-12): a post in a channel makes `messaging` read every
 participant row of the channel (`ConversationPicker.channel` calls
 `Participants.OfConversation`, for mentions and the delivery plan). At
@@ -1393,6 +1395,10 @@ sending); this wave adds the payload format and the browser side.
   stops further pushes.
 
 ## Wave 4: offline first (ADR 0006)
+
+Since ADR 0011 (2026-11-14), chat lives only on devices: Wave 4's chat
+parts (the chat sync log, the chat queue) are replaced by Wave 9's G7; its
+email parts and the device store stay.
 
 Starts after Wave 3 (one login) is merged; LU-style design work (OU) and
 the blackbox tests (O0) may start earlier. SPEC S15 to S17 and AC-OF-1 to
@@ -1987,21 +1993,27 @@ rerun with fresh tokens passed. The shared native Keycloak in
 ## Wave 9: chat goes device to device (ADR 0011)
 
 The owner's choice of 2026-11-12: full peer-to-peer chat inside a domain,
-for privacy; an encrypted backup; the admin limits accepted. Email does
-not change. The TACHYON requests are named P1 (peer connections), P2
+for privacy; an encrypted backup; the admin limits accepted; then (Q5 to
+Q7) an encrypted mailbox, groups of up to 50 with no big channels, and the
+first release waits for this. Devices link with a QR code first. Email
+does not change. The TACHYON requests are named P1 (peer connections), P2
 (encryption) and P3 (passkey unlock) in ADR 0011; they are not slice P1.
 The server chat path keeps working until G8's cut-over, so K5, K9, E3 and
 E8 finish as planned. Three owner questions are open (ADR 0011 section 8:
 Q5 mailbox, Q6 group size and big channels, Q7 first release); slices
-that depend on them say so.
+that depend on them say so. (Answered before 2026-11-14: see ADR 0011
+section 8.)
 
 ### G0. Design details and blackbox tests (architecture, `mesail-arch`)
 - **Owns:** `docs/**`, `tests/blackbox/**`.
 - **Builds:** the MLS library choice (a short spike: a Go MLS library that
   compiles to WebAssembly, or a TACHYON request); the encrypted message
   and group formats; the device and key list contract (`directory`); the
-  signalling messages (`realtime`); the backup contract; the TURN settings
-  for OPERATIONS.md; whether new members may receive older messages; the
+  signalling messages (`realtime`); the backup contract; the device
+  linking design (QR code first, CPace for typed codes, ADR 0011); the
+  `devicebox` contract; the group rules (up to 50 members, joins through
+  a member's device); the TURN settings for OPERATIONS.md; whether new
+  members may receive older messages; the
   CONTRACTS, EVENTS, DOMAIN and SPEC changes, marked "from G8"; blackbox
   tests for the server parts.
 - **Depends on:** nothing; starts now.
@@ -2009,7 +2021,9 @@ that depend on them say so.
 ### G1. Devices and public keys in `directory` (directory's owner, after E7)
 - **Builds:** each person's devices per domain with their public keys
   (add after a full sign-in, list, remove; removing a member removes their
-  devices from the domain), as G0's contract says.
+  devices from the domain), as G0's contract says. A new device key is
+  accepted only with a signature by one of the person's existing devices,
+  or by the backup's signing key after a restore (ADR 0011, linking).
 
 ### G2. Signalling on `realtime` (realtime's owner, after E4)
 - **Builds:** signalling messages (offer, answer, ICE candidates) carried
@@ -2033,16 +2047,26 @@ that depend on them say so.
   sender name unless G0 decides it is safe) to the devices of the
   members it names, checked against the domain's membership.
 
-### G6. Encrypted mailbox (only if the owner answers yes to Q5)
-- **Builds:** a store-and-forward box that keeps encrypted messages for a
-  device until it fetches them, with a time limit.
+### G6. Encrypted mailbox, `devicebox` (a new app; the owner chose it, Q5)
+- **Owns:** `apps/devicebox/**` (new Yon app, FYLO owner), its entry in
+  the stack files (with OP2's owner).
+- **Builds:** a box per device that keeps encrypted envelopes until the
+  device fetches them (put, list, fetch and delete; only members of the
+  domain may put, only the device's person may fetch), with a 30-day
+  limit and a size cap per envelope; a job that drops expired envelopes
+  and records "not delivered" for the sender; numbers from MS6000-MS6499
+  (ERRORS.md).
 
 ### G7. The chat client (the web apps' owner; after TACHYON P1 and P2)
-- **Builds:** device keys (P2), MLS groups, WebRTC transport (P1) through
-  G2 and G3, the device store's chat tables, sync between the person's
-  own devices, the backup and restore with the recovery code (G4), device
-  chat search (with O5), in the chat page app (Wave 8's W2 if it exists,
-  else `apps/web`). G0 splits it into smaller slices.
+- **Builds:** device keys (P2), MLS groups of up to 50, WebRTC transport
+  (P1) through G2 and G3, the mailbox (G6), the device store's chat
+  tables, linking a new device (QR code drawn in Go as an SVG `data:`
+  image, scanned with P4; the typed code; the backup restore), sync
+  between the person's own devices, the backup and restore with the
+  recovery code (G4), device chat search (with O5), in the chat page app
+  (Wave 8's W2 if it exists, else `apps/web`). G0 splits it into smaller
+  slices.
+- **Depends on:** TACHYON P1, P2 and P4 released and the pin moved.
 
 ### G8. Cut-over (one session, last)
 - **Builds:** the web apps use only device chat; `messaging` keeps email
@@ -2053,8 +2077,8 @@ that depend on them say so.
 
 ### Order
 G0 now. G1 to G5 (and G6 if wanted) when their app's E slice is merged.
-G7 after TACHYON P1 and P2 are released and the pin moves. G8 last.
-Q7 decides where the first release falls.
+G6 any time (a new app). G7 after TACHYON P1, P2 and P4 are released and
+the pin moves. G8 last, before the first release (Q7).
 
 ## Later (after the first release)
 

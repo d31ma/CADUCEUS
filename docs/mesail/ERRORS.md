@@ -22,7 +22,8 @@ keeps its row, marked "retired".
 | MS4500-MS4999 | `notify` | MS4500 |
 | MS5000-MS5499 | `realtime` | MS5000 |
 | MS5500-MS5999 | the router (`deploy/router`) | MS5500 |
-| MS6000-MS9999 | reserved; architecture assigns a new block | - |
+| MS6000-MS6499 | `devicebox` (ADR 0011, slice G6) | MS6000 |
+| MS6500-MS9999 | reserved; architecture assigns a new block | - |
 
 ## Rules
 

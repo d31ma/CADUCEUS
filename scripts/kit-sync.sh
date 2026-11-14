@@ -74,15 +74,74 @@ sync_app() {
   echo "kit-sync: $(tr '\n' ' ' < "$packages_dir/kit.list")-> ${packages_dir#"$root"/}"
 }
 
-main() {
-  local root mode=write list_file status=0
-  mesail_use_local_go_cache
-  root="$(repository_root)"
-  [ "${1:-}" = --check ] && mode=check
+kit_vendoring_modules() {
+  local root="$1"
+  find "$root" \( -name node_modules -o -name .git -o -name .tachyon -o -name dist \) -prune \
+    -o -type d -path '*/vendor/mesail.dev/packages' -print | sed 's|/vendor/mesail\.dev/packages$||' | sort
+}
+
+vendor_kit() {
+  local module="$1" output="$2"
+  (cd "$module" && GOFLAGS="${GOFLAGS:+$GOFLAGS }-mod=mod" go mod vendor -o "$output")
+}
+
+vendored_copy_matches() {
+  local module="$1" scratch="$2"
+  vendor_kit "$module" "$scratch/vendor" && diff -r "$scratch/vendor" "$module/vendor" > /dev/null
+}
+
+check_vendored_module() {
+  local root="$1" module="$2" scratch
+  scratch="$(mktemp -d)"
+  if vendored_copy_matches "$module" "$scratch"; then
+    rm -rf "$scratch"
+    return 0
+  fi
+  echo "kit-sync: ${module#"$root"/}/vendor is not what go mod vendor makes from kit/; run scripts/kit-sync.sh" >&2
+  diff -r -q "$scratch/vendor" "$module/vendor" >&2 || true
+  rm -rf "$scratch"
+  return 1
+}
+
+write_vendored_module() {
+  local root="$1" module="$2"
+  vendor_kit "$module" vendor
+  echo "kit-sync: go mod vendor -> ${module#"$root"/}/vendor"
+}
+
+sync_vendored_module() {
+  local root="$1" module="$2" mode="$3"
+  if [ "$mode" = check ]; then
+    check_vendored_module "$root" "$module"
+    return
+  fi
+  write_vendored_module "$root" "$module"
+}
+
+sync_apps() {
+  local root="$1" mode="$2" list_file status=0
   for list_file in "$root"/apps/*/server/packages/kit.list; do
     [ -f "$list_file" ] || continue
     sync_app "$root" "$(dirname "$list_file")" "$mode" || status=1
   done
+  return "$status"
+}
+
+sync_vendored_modules() {
+  local root="$1" mode="$2" module status=0
+  while IFS= read -r module; do
+    sync_vendored_module "$root" "$module" "$mode" || status=1
+  done < <(kit_vendoring_modules "$root")
+  return "$status"
+}
+
+main() {
+  local root mode=write status=0
+  mesail_use_local_go_cache
+  root="$(repository_root)"
+  [ "${1:-}" = --check ] && mode=check
+  sync_apps "$root" "$mode" || status=1
+  sync_vendored_modules "$root" "$mode" || status=1
   [ "$status" = 0 ] && echo "kit-sync: $mode ok"
   return "$status"
 }

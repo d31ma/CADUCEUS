@@ -26,7 +26,7 @@ func (realm *mesailRealm) addPasskey(writer http.ResponseWriter, request *http.R
 	added := PasskeyAddRequest{}
 	_ = json.NewDecoder(request.Body).Decode(&added)
 	realm.added = append(realm.added, added)
-	if added.CredentialJson == "too-many" {
+	if added.CredentialJson == `{"id":"too-many"}` {
 		passkeyProblem(writer, http.StatusConflict, "too_many")
 		return
 	}
@@ -63,7 +63,7 @@ func (realm *mesailRealm) removePasskey(writer http.ResponseWriter, request *htt
 
 func (realm *mesailRealm) passkeyGrant(writer http.ResponseWriter, form url.Values) {
 	realm.grants = append(realm.grants, form)
-	if form.Get("passkey_assertion") != passkeyAssertionFor("person-1") {
+	if !slices.Contains(goodPasskeyAssertions(), form.Get("passkey_assertion")) {
 		realm.refused(writer)
 		return
 	}
@@ -76,7 +76,19 @@ func passkeyProblem(writer http.ResponseWriter, status int, code string) {
 }
 
 func passkeyAssertionFor(personId string) string {
-	return `{"type":"public-key","response":{"userHandle":"` + base64.RawURLEncoding.EncodeToString([]byte(personId)) + `"}}`
+	return `{"response":{"userHandle":"` + base64.RawURLEncoding.EncodeToString([]byte(personId)) + `"},"type":"public-key"}`
+}
+
+func passkeyAssertionWithResults(personId string, results string) string {
+	return `{"clientExtensionResults":` + results + `,"response":{"userHandle":"` + base64.RawURLEncoding.EncodeToString([]byte(personId)) + `"},"type":"public-key"}`
+}
+
+func goodPasskeyAssertions() []string {
+	return []string{passkeyAssertionFor("person-1"), passkeyAssertionWithResults("person-1", `{"credProps":{"rk":true}}`)}
+}
+
+func prfResults() string {
+	return `{"credProps":{"rk":true},"prf":{"enabled":true,"results":{"first":"UFJGLXNlY3JldC1vbmU","second":"UFJGLXNlY3JldC10d28"}}}`
 }
 
 func passkeyRecord(passkeyId string, label string) PasskeyRecord {
@@ -142,7 +154,7 @@ func TestPasskeyAccountConfirmAnswersInvalidPasskeyForEveryKeycloakRefusal(t *te
 	realm := newMesailRealm(t)
 	account := realm.account(t).Passkeys()
 	setup, _ := account.Setup(realmCaller(), "right-password", "")
-	_, err := account.Confirm(realmCaller(), setup.SetupKey, "too-many", "Mac")
+	_, err := account.Confirm(realmCaller(), setup.SetupKey, `{"id":"too-many"}`, "Mac")
 	realmIs(t, err, InvalidPasskey{})
 }
 
@@ -263,4 +275,41 @@ func TestRealmSessionRefusesAHugeCredential(t *testing.T) {
 	challenge, _ := session.PasskeyChallenge()
 	_, err := session.PasskeySignIn(challenge.ChallengeKey, strings.Repeat("a", 64*1024+1))
 	realmIs(t, err, SignInRefused{})
+}
+
+func TestRealmSessionNeverSendsThePrfResultToKeycloak(t *testing.T) {
+	realm := newMesailRealm(t)
+	session := realm.session(t)
+	challenge, _ := session.PasskeyChallenge()
+	opened, err := session.PasskeySignIn(challenge.ChallengeKey, passkeyAssertionWithResults("person-1", prfResults()))
+	realmIs(t, err, nil)
+	realmEqual(t, "person", opened.PersonId, "person-1")
+	realmEqual(t, "assertion", realm.grants[0].Get("passkey_assertion"), passkeyAssertionWithResults("person-1", `{"credProps":{"rk":true}}`))
+}
+
+func TestRealmSessionRefusesACredentialThatIsNotJsonWithoutCallingKeycloak(t *testing.T) {
+	realm := newMesailRealm(t)
+	session := realm.session(t)
+	challenge, _ := session.PasskeyChallenge()
+	_, err := session.PasskeySignIn(challenge.ChallengeKey, `{"clientExtensionResults":{"prf":`)
+	realmIs(t, err, SignInRefused{})
+	realmEqual(t, "grants", len(realm.grants), 0)
+}
+
+func TestPasskeyAccountConfirmNeverSendsThePrfResultToKeycloak(t *testing.T) {
+	realm := newMesailRealm(t)
+	account := realm.account(t).Passkeys()
+	setup, _ := account.Setup(realmCaller(), "right-password", "")
+	_, err := account.Confirm(realmCaller(), setup.SetupKey, `{"clientExtensionResults":`+prfResults()+`,"id":"new"}`, "Mac")
+	realmIs(t, err, nil)
+	realmEqual(t, "credential", realm.added[0].CredentialJson, `{"clientExtensionResults":{"credProps":{"rk":true}},"id":"new"}`)
+}
+
+func TestPasskeyAccountConfirmRefusesACredentialThatIsNotJsonWithoutCallingKeycloak(t *testing.T) {
+	realm := newMesailRealm(t)
+	account := realm.account(t).Passkeys()
+	setup, _ := account.Setup(realmCaller(), "right-password", "")
+	_, err := account.Confirm(realmCaller(), setup.SetupKey, "not json", "Mac")
+	realmIs(t, err, InvalidPasskey{})
+	realmEqual(t, "added", len(realm.added), 0)
 }

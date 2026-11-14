@@ -84,7 +84,7 @@ func (setup OneRealmTestSetup) keycloak(writer http.ResponseWriter, request *htt
 		setup.passkeys(writer, request)
 	case strings.Contains(request.URL.Path, "/admin/"):
 		setup.admin(writer, request, locked)
-	case form.Get("passkey_assertion") == "good-assertion" && form.Get("passkey_origins") == "https://mail.mesail.test":
+	case form.Get("passkey_assertion") == setup.Credential("good-assertion") && form.Get("passkey_origins") == "https://mail.mesail.test":
 		setup.grant(writer, request, key)
 	case form.Get("username") == "ana" && form.Get("password") == "right" || form.Get("refresh_token") == "refresh-ana":
 		setup.grant(writer, request, key)
@@ -126,7 +126,7 @@ func (OneRealmTestSetup) admin(writer http.ResponseWriter, request *http.Request
 	}
 }
 
-func (OneRealmTestSetup) passkeys(writer http.ResponseWriter, request *http.Request) {
+func (setup OneRealmTestSetup) passkeys(writer http.ResponseWriter, request *http.Request) {
 	added := oidc.PasskeyAddRequest{}
 	_ = json.NewDecoder(request.Body).Decode(&added)
 	path := request.URL.Path
@@ -135,7 +135,7 @@ func (OneRealmTestSetup) passkeys(writer http.ResponseWriter, request *http.Requ
 		writer.WriteHeader(http.StatusForbidden)
 	case request.Method == http.MethodGet:
 		_, _ = writer.Write([]byte(`[{"passkeyId":"passkey-1","credentialId":"credential-1","label":"Mac","createdAt":1762905600000,"lastUsedAt":null}]`))
-	case request.Method == http.MethodPost && added.CredentialJson == "good-credential":
+	case request.Method == http.MethodPost && added.CredentialJson == setup.Credential("good-credential"):
 		writer.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(writer).Encode(oidc.PasskeyRecord{PasskeyId: "passkey-2", CredentialId: "credential-2", Label: added.Label, CreatedAt: 1762905600000})
 	case request.Method == http.MethodPost:
@@ -165,6 +165,14 @@ func (OneRealmTestSetup) directory(writer http.ResponseWriter, request *http.Req
 		return
 	}
 	_, _ = writer.Write([]byte(`{"personId":"person-ana","username":"ana","displayName":"Ana Example","domainIds":["example.com","example.org"],"adminDomainIds":["example.com"],"defaultDomainId":"example.com","state":"active"}`))
+}
+
+func (OneRealmTestSetup) Credential(id string) string {
+	return `{"clientExtensionResults":{},"id":"` + id + `"}`
+}
+
+func (OneRealmTestSetup) CredentialWithPrf(id string) string {
+	return `{"id":"` + id + `","clientExtensionResults":{"prf":{"enabled":true,"results":{"first":"UFJGLXNlY3JldC1vbmU","second":"UFJGLXNlY3JldC10d28"}}}}`
 }
 
 func (OneRealmTestSetup) Unconfigured() {

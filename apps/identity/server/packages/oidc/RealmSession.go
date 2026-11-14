@@ -67,9 +67,13 @@ func (session RealmSession) passkeySignIn(challengeKey string, credentialJson st
 	if err != nil {
 		return KeycloakSession{}, err
 	}
-	tokens, err := session.Sessions.keycloak().PasskeySignIn(credentialJson, challenge, ceremony.Origins.Field())
+	cleaned, err := PasskeyCredential{}.WithoutPrf(credentialJson, SignInRefused{})
 	if err != nil {
-		return KeycloakSession{}, session.Sessions.passkeyRefusal(credentialJson, err)
+		return KeycloakSession{}, err
+	}
+	tokens, err := session.Sessions.keycloak().PasskeySignIn(cleaned, challenge, ceremony.Origins.Field())
+	if err != nil {
+		return KeycloakSession{}, session.Sessions.passkeyRefusal(cleaned, err)
 	}
 	return session.opened(tokens)
 }

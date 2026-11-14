@@ -29,7 +29,7 @@ func (test *AccountPasskeyTest) TestPostChallengeAnswersRequestOptionsForTheInst
 func (test *AccountPasskeyTest) TestPostSessionSignsInWithAPasskey() {
 	OneRealmTestSetup{}.Start()
 	challenge, _ := OneRealmTestSetup{}.Account().PostPasskeyChallenge()
-	session, err := OneRealmTestSetup{}.Account().PostPasskeySession(PasskeySignIn{ChallengeKey: challenge.ChallengeKey, CredentialJson: "good-assertion"})
+	session, err := OneRealmTestSetup{}.Account().PostPasskeySession(PasskeySignIn{ChallengeKey: challenge.ChallengeKey, CredentialJson: OneRealmTestSetup{}.Credential("good-assertion")})
 	Assert.IsTrue(err == nil)
 	Assert.Equals("person-ana", session.Me.MemberId)
 	Assert.Equals("example.com", session.Me.DomainId)
@@ -38,7 +38,24 @@ func (test *AccountPasskeyTest) TestPostSessionSignsInWithAPasskey() {
 func (test *AccountPasskeyTest) TestPostSessionAnswersUnauthenticatedForAWrongPasskey() {
 	OneRealmTestSetup{}.Start()
 	challenge, _ := OneRealmTestSetup{}.Account().PostPasskeyChallenge()
-	_, err := OneRealmTestSetup{}.Account().PostPasskeySession(PasskeySignIn{ChallengeKey: challenge.ChallengeKey, CredentialJson: "bad-assertion"})
+	_, err := OneRealmTestSetup{}.Account().PostPasskeySession(PasskeySignIn{ChallengeKey: challenge.ChallengeKey, CredentialJson: OneRealmTestSetup{}.Credential("bad-assertion")})
+	var unauthenticated *Unauthenticated
+	Assert.IsTrue(errors.As(err, &unauthenticated))
+	Assert.Equals(501, unauthenticated.Number())
+}
+
+func (test *AccountPasskeyTest) TestPostSessionNeverSendsThePasskeyPrfToKeycloak() {
+	OneRealmTestSetup{}.Start()
+	challenge, _ := OneRealmTestSetup{}.Account().PostPasskeyChallenge()
+	session, err := OneRealmTestSetup{}.Account().PostPasskeySession(PasskeySignIn{ChallengeKey: challenge.ChallengeKey, CredentialJson: OneRealmTestSetup{}.CredentialWithPrf("good-assertion")})
+	Assert.IsTrue(err == nil)
+	Assert.Equals("person-ana", session.Me.MemberId)
+}
+
+func (test *AccountPasskeyTest) TestPostSessionAnswersUnauthenticatedForACredentialThatIsNotJson() {
+	OneRealmTestSetup{}.Start()
+	challenge, _ := OneRealmTestSetup{}.Account().PostPasskeyChallenge()
+	_, err := OneRealmTestSetup{}.Account().PostPasskeySession(PasskeySignIn{ChallengeKey: challenge.ChallengeKey, CredentialJson: "good-assertion"})
 	var unauthenticated *Unauthenticated
 	Assert.IsTrue(errors.As(err, &unauthenticated))
 	Assert.Equals(501, unauthenticated.Number())
@@ -47,7 +64,7 @@ func (test *AccountPasskeyTest) TestPostSessionAnswersUnauthenticatedForAWrongPa
 func (test *AccountPasskeyTest) TestPostSessionAnswersNotAMemberForAnotherDomain() {
 	OneRealmTestSetup{}.Start()
 	challenge, _ := OneRealmTestSetup{}.Account().PostPasskeyChallenge()
-	_, err := OneRealmTestSetup{}.Account().PostPasskeySession(PasskeySignIn{ChallengeKey: challenge.ChallengeKey, CredentialJson: "good-assertion", DomainId: "example.net"})
+	_, err := OneRealmTestSetup{}.Account().PostPasskeySession(PasskeySignIn{ChallengeKey: challenge.ChallengeKey, CredentialJson: OneRealmTestSetup{}.Credential("good-assertion"), DomainId: "example.net"})
 	var forbidden *Forbidden
 	Assert.IsTrue(errors.As(err, &forbidden))
 	Assert.Equals(505, forbidden.Number())
@@ -80,15 +97,23 @@ func (test *AccountPasskeyTest) TestPostSetupRefusesAWrongPassword() {
 func (test *AccountPasskeyTest) TestPostPasskeyNumbersATakenLabel() {
 	authorization := test.signedIn()
 	setup, _ := OneRealmTestSetup{}.Account().PostPasskeySetup(authorization, PasskeySetupRequest{CurrentPassword: "right"})
-	added, err := OneRealmTestSetup{}.Account().PostPasskey(authorization, PasskeyConfirm{SetupKey: setup.SetupKey, CredentialJson: "good-credential", Label: "Mac"})
+	added, err := OneRealmTestSetup{}.Account().PostPasskey(authorization, PasskeyConfirm{SetupKey: setup.SetupKey, CredentialJson: OneRealmTestSetup{}.Credential("good-credential"), Label: "Mac"})
 	Assert.IsTrue(err == nil)
 	Assert.Equals("Mac 2", added.Label)
+}
+
+func (test *AccountPasskeyTest) TestPostPasskeyNeverSendsThePasskeyPrfToKeycloak() {
+	authorization := test.signedIn()
+	setup, _ := OneRealmTestSetup{}.Account().PostPasskeySetup(authorization, PasskeySetupRequest{CurrentPassword: "right"})
+	added, err := OneRealmTestSetup{}.Account().PostPasskey(authorization, PasskeyConfirm{SetupKey: setup.SetupKey, CredentialJson: OneRealmTestSetup{}.CredentialWithPrf("good-credential"), Label: "Phone"})
+	Assert.IsTrue(err == nil)
+	Assert.Equals("Phone", added.Label)
 }
 
 func (test *AccountPasskeyTest) TestPostPasskeyAnswersInvalidPasskey() {
 	authorization := test.signedIn()
 	setup, _ := OneRealmTestSetup{}.Account().PostPasskeySetup(authorization, PasskeySetupRequest{CurrentPassword: "right"})
-	_, err := OneRealmTestSetup{}.Account().PostPasskey(authorization, PasskeyConfirm{SetupKey: setup.SetupKey, CredentialJson: "bad-credential", Label: "Phone"})
+	_, err := OneRealmTestSetup{}.Account().PostPasskey(authorization, PasskeyConfirm{SetupKey: setup.SetupKey, CredentialJson: OneRealmTestSetup{}.Credential("bad-credential"), Label: "Phone"})
 	var bad *BadRequest
 	Assert.IsTrue(errors.As(err, &bad))
 	Assert.Equals(513, bad.Number())

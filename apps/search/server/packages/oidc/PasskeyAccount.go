@@ -69,6 +69,10 @@ func (account PasskeyAccount) confirm(caller Caller, setupKey string, credential
 	if err != nil {
 		return PasskeyRecord{}, err
 	}
+	cleaned, err := PasskeyCredential{}.WithoutPrf(credentialJson, InvalidPasskey{})
+	if err != nil {
+		return PasskeyRecord{}, err
+	}
 	passkeys, err := account.keycloak()
 	if err != nil {
 		return PasskeyRecord{}, err
@@ -77,7 +81,7 @@ func (account PasskeyAccount) confirm(caller Caller, setupKey string, credential
 	if err != nil {
 		return PasskeyRecord{}, err
 	}
-	request := PasskeyAddRequest{CredentialJson: credentialJson, Challenge: challenge, Origins: ceremony.Origins.List(), Label: PasskeyLabels{}.Unique(label, records)}
+	request := PasskeyAddRequest{CredentialJson: cleaned, Challenge: challenge, Origins: ceremony.Origins.List(), Label: PasskeyLabels{}.Unique(label, records)}
 	added, err := passkeys.Add(caller.MemberId, request)
 	return added, account.addFailure(err)
 }

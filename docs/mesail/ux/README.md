@@ -4,7 +4,7 @@
 - Date: 2026-11-10 (one login, ADR 0005, offline first, ADR 0006, and browser push, AC-PN-3: 2026-11-11;
   passkeys and the app lock, ADR 0008: 2026-11-12; audio and video calls, ADR 0012: 2026-11-14)
 - Owner: Senior UX/UI Designer (Mesail rewrite)
-- Product spec: [../SPEC.md](../SPEC.md) (scenarios S1-S18, acceptance criteria AC-*; one login: AC-ID-1 to AC-ID-14; offline first: AC-OF-1 to AC-OF-20, section 15; passkeys and the app lock: AC-ID-15 to AC-ID-19, AC-OF-20, section 17; calls: AC-CL-1 to AC-CL-9, section 18)
+- Product spec: [../SPEC.md](../SPEC.md) (scenarios S1-S18, acceptance criteria AC-*; one login: AC-ID-1 to AC-ID-14; offline first: AC-OF-1 to AC-OF-20, section 15; passkeys and the app lock: AC-ID-15 to AC-ID-19, AC-OF-20, section 17; calls: AC-CL-1 to AC-CL-13, section 18)
 - Design tokens: [TOKENS.md](TOKENS.md)
 - Component inventory and Tac mapping: [COMPONENTS.md](COMPONENTS.md)
 - Mockups: [mockups/index.html](mockups/index.html) (open the file in a browser; add
@@ -456,14 +456,13 @@ Questions from the screen work (product owner to decide; none blocks the first s
   `400 invalid_passkey`. (d) **Design choices confirmed:** without passkey support the Passkeys row still shows
   when the account has passkeys (Remove works, Add is hidden); the passkey button opens the default domain
   (AC-ID-16); the locked screen shows no counts; Rename needs no password.
-- **Calls (slice CU): sent to mesail-arch on 2026-11-14; the mockups show the proposal in brackets.**
+- **Calls (slice CU): all answered by mesail-arch on 2026-11-14 as proposed; now SPEC AC-CL-9 to AC-CL-13.**
   (a) How long devices ring before `call.ring.end` [45 s]. (b) Do calls of two need the frame-transform hook? [no:
   a browser without it says "Group calls are not available in this browser" and calls of two work]. (c) Do not
   disturb [the card shows with no sound; no "Incoming call" push; the missed-call row still comes]. (d) More than
   one recorder at once [allowed; one banner lists every name]. (e) A declined call of two [the "Missed call" row].
   (f) A recording that fails part way [the part already written stays in the file]. (g) Switching domain during a
-  call [asks "Leave the call and switch?"]. Also: SPEC section 6 still lists "End-to-end encryption" as out of
-  scope, which contradicts ADR 0011, ADR 0012 and AC-CL-3.
+  call [asks "Leave the call and switch?"]. SPEC section 6 now leaves out only end-to-end encryption of email.
 - **Settings.** Does the job title come from Keycloak, like the name? Is "Always show images from
   people I have emailed" allowed (AC-IN-5 speaks of one sender at a time)? Is auto-reply out of the
   first release (the mockup shows it as "Later release")?
@@ -823,6 +822,10 @@ header ("End-to-end encrypted", lock icon). Email conversations have no calls.
 | AC-CL-7 Screen sharing on computers | 18.3; `call-layouts.html` V6-V8, V10; `call-states.html` P5 |
 | AC-CL-8 Recording with the banner | 18.5; `call-recording.html` W1-W13; `call-incoming.html` R3; `call-view.html` |
 | AC-CL-9 Not supported | 18.1, 18.7; `call-buttons.html` B9-B10; `call-incoming.html` R10; `call-states.html` P7; `call-controls.html` K5 (recording) |
+| AC-CL-10 Ringing time and answers | 18.2; `call-incoming.html` R1, R9, C2; `call-history.html` H1-H2 |
+| AC-CL-11 Do not disturb | 18.2; `call-incoming.html` R7 |
+| AC-CL-12 Several recorders, failed recording | 18.5; `call-recording.html` W9, W12 |
+| AC-CL-13 One domain per call | 18.7; `call-states.html` P15 |
 
 ### 18.1 Where calls start (AC-CL-1, AC-CL-9)
 
@@ -838,12 +841,13 @@ header ("End-to-end encrypted", lock icon). Email conversations have no calls.
 - **One call at a time.** Calling while in another call asks "Leave your call in #design?" with **Stay in
   #design** and **Leave and call Bo Lee**.
 - **Email conversations:** no buttons at all (nothing to explain; email contacts cannot be called).
-- **Not supported (AC-CL-9):** where TACHYON answers "unsupported" (the Linux app at first), the buttons stay in
-  place, dimmed, focusable, with names that end "Calls are not available on this device". Pressing one opens a
-  popover "Calls are not available on this device" with where calls do work ("The Mesail app for Linux cannot
-  make calls yet. Use Mesail in a browser on this computer, or on your phone."). A partial case: a browser that
-  cannot encrypt group calls (no encoded-transform hook) says "Group calls are not available in this browser"
-  on group buttons, and calls of two work (waiting for mesail-arch, section 14).
+- **Not supported (AC-CL-9):** where TACHYON answers "unsupported" (for example a browser with WebRTC turned off;
+  the Linux app must make calls before the first release, ADR 0011 Q13, TACHYON P8), the buttons stay in place,
+  dimmed, focusable, with names that end "Calls are not available on this device". Pressing one opens a popover
+  "Calls are not available on this device" with where calls do work ("This device cannot make audio or video
+  calls in Mesail. Use Mesail in an up-to-date browser, or on your phone."). A partial case: calls of two need no
+  frame encryption hook, group calls do, so a browser without the hook says "Group calls are not available in this
+  browser" on group buttons ("Calls of two work.").
 - **Offline:** the buttons stay; pressing one shows "You are offline. Calls need the network."
 
 ### 18.2 Ringing (AC-CL-4)
@@ -857,8 +861,8 @@ header ("End-to-end encrypted", lock icon). Email conversations have no calls.
 - **A recording already runs:** the card shows the red "Recording by Chen Wu" line before the person joins.
 - **Phones:** the whole screen, the caller large, **Decline** and **Accept**, and a text button **Answer without
   video**. A real phone call screen on the lock screen comes later (TACHYON P6); until then the push opens the app.
-- **Sound:** a ring for up to 45 seconds (ring time to confirm with mesail-arch). Do not disturb: the card shows
-  with "No sound: Do not disturb is on", and no push goes to other devices.
+- **Sound:** a ring for 45 seconds (AC-CL-10). Do not disturb (AC-CL-11): the card shows with "No sound: Do not
+  disturb is on", no "Incoming call" push goes to other devices, and the missed-call row still comes.
 - **While in another call:** a compact card with **Decline** and **Leave and answer**.
 - **Ends:** answered or declined on another of the person's devices: the card closes with "Answered on your other
   device."; nobody answered or the caller stopped: a status "Missed call from Bo Lee" with **Call back**, and the
@@ -870,7 +874,7 @@ header ("End-to-end encrypted", lock icon). Email conversations have no calls.
   ended meanwhile says "This call has ended." with **Call back**.
 - **The caller's side:** a call of two shows "Calling Bo Lee…" and "Ringing" with the caller's own camera small,
   and **Cancel** in place of Leave. No answer and a decline use the same words, "Bo Lee did not answer", with
-  **Call again** and **Close** (a decline is not shown as a refusal). A group caller is in the call at once:
+  **Call again** and **Close** (AC-CL-10: a decline is not shown as a decline). A group caller is in the call at once:
   "Waiting for others to join" and "23 people are being rung. Anyone in #design can join."
 
 ### 18.3 The call view (AC-CL-2, AC-CL-7)
@@ -944,7 +948,7 @@ header ("End-to-end encrypted", lock icon). Email conversations have no calls.
   close button** while the recording runs. Others: "Recording by Ana Ruiz" and "The recording is saved only on Ana
   Ruiz's device. Mesail does not keep it." The recorder: "You are recording this call", "Saved only on this computer ·
   08:12 · 96 MB written" and **Stop recording**. Phones: the same, shorter. Two recorders: one banner, "Recording by
-  Ana Ruiz and Chen Wu". It is a `role="status"` line: heard once when it appears ("Ana Ruiz is recording this
+  Ana Ruiz and Chen Wu" (AC-CL-12). It is a `role="status"` line: heard once when it appears ("Ana Ruiz is recording this
   call."), then it stays first in the reading order.
 - **People who join later** see it before they join (on the ringing card and on the call row next to Join) and in
   the call from the first second: the recorder's device sends the current state to each device that joins.
@@ -955,7 +959,7 @@ header ("End-to-end encrypted", lock icon). Email conversations have no calls.
   for everyone with "Ana Ruiz's recording ended: Ana left the call." Back in the call, recording does not resume by
   itself: they start again and everyone is told again.
 - **Write failure** (disk full, P7 `failed`): "Recording stopped. Mesail could not write the file; the disk may be
-  full. The file holds what was recorded until 10:42." (`role="alert"`).
+  full. The file holds what was recorded until 10:42." (`role="alert"`; AC-CL-12).
 
 ### 18.6 Call history in the chat (AC-CL-4, AC-CL-5)
 
@@ -1000,7 +1004,7 @@ header ("End-to-end encrypted", lock icon). Email conversations have no calls.
   someone leaves."; "This call has ended."
 - **Removed from the conversation (AC-CL-3):** out at once: "You left the call in #design. You are no longer a member
   of #design, so you cannot be in its calls. Later calls in #design do not ring for you."
-- **Switching domain during a call:** "Leave the call and switch to example.org?" ("Calls stay inside one domain.");
+- **Switching domain during a call (AC-CL-13):** "Leave the call and switch to example.org?" ("Calls stay inside one domain.");
   the sign-out confirmation adds "Signing out also ends your call."
 - **Phones in the background:** sound goes on where TACHYON P5 allows; the camera pauses and others see "Camera
   paused"; where the phone stopped the sound too: "Your phone paused the call while Mesail was in the background."

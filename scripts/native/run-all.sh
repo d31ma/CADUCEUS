@@ -265,7 +265,7 @@ realtime_upstream() {
 
 start_gateway() {
   if [ -z "$(realtime_upstream)" ]; then echo "realtime is not running; no gateway"; return 0; fi
-  (cd "$(mesail_root)/edge/realtime" && GOFLAGS=-buildvcs=false go build -o "$(run_folder)/realtime-gateway" .)
+  (cd "$(mesail_root)/edge/realtime" && GOFLAGS="${GOFLAGS:-} -buildvcs=false" go build -o "$(run_folder)/realtime-gateway" .)
   mesail_load_secrets
   MESAIL_REALTIME_GATEWAY_SECRET="$MESAIL_REALTIME_GATEWAY_SECRET" MESAIL_REALTIME_BACKEND="$(realtime_upstream)" \
     MESAIL_REALTIME_ORIGINS="$(router_base)" MESAIL_REALTIME_LISTEN="127.0.0.1:$(gateway_port public)" \
@@ -377,7 +377,7 @@ blob_settings() {
 
 start_router() {
   local settings
-  (cd "$(mesail_root)/deploy/router" && GOFLAGS=-buildvcs=false go build -o "$(run_folder)/mesail-router" .)
+  (cd "$(mesail_root)/deploy/router" && GOFLAGS="${GOFLAGS:-} -buildvcs=false" go build -o "$(run_folder)/mesail-router" .)
   read -ra settings <<< "$({ blob_settings; dev_dns_settings; } | tr '\n' ' ')"
   env ${settings[@]+"${settings[@]}"} MESAIL_ROUTER_LISTEN="127.0.0.1:$(cat "$(run_folder)/router-port")" \
     MESAIL_ROUTER_UPSTREAMS="$(joined "$(run_folder)/upstreams")" MESAIL_ROUTER_STATIC_FOLDERS="$(joined "$(run_folder)/static")" \
@@ -536,7 +536,7 @@ fresh_tokens() {
 go_blackbox() {
   # shellcheck disable=SC1091
   . "$(run_folder)/env"
-  (cd "$(mesail_root)/tests/blackbox" && GOFLAGS=-buildvcs=false \
+  (cd "$(mesail_root)/tests/blackbox" && GOFLAGS="${GOFLAGS:-} -buildvcs=false" \
     go test -tags blackbox -count=1 -v -run "$1" ./...)
 }
 

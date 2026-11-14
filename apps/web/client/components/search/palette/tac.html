@@ -5,7 +5,7 @@
     <div class="search-divided flex min-h-13 items-center gap-2 py-2 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))]">
       <w-icon-btn icon="arrow-left" class="flex-none sm:hidden" aria-label="Close search" on:click="search.closePalette()"></w-icon-btn>
       <form class="flex min-w-0 flex-1 items-center gap-2" method="dialog" role="search" aria-labelledby="palette-title" on:submit="search.searchPaletteFor($event.target.elements.query.value)">
-        <w-text-field class="min-w-0 flex-1" type="search" name="query" single-line hide-details autocomplete="off" autofocus :label="'Search messages in ' + sessionAccount.currentDomain" placeholder="Search messages" :value="search.paletteQuery"><w-icon slot="prepend-inner" name="search" size="small"></w-icon></w-text-field>
+        <w-text-field class="min-w-0 flex-1" type="search" name="query" single-line hide-details autocomplete="off" autofocus :label="sessionAccount.searchMessagesLabel" placeholder="Search messages" :value="search.paletteQuery"><w-icon slot="prepend-inner" name="search" size="small"></w-icon></w-text-field>
         <logic :if="search.paletteQuery != ''">
           <button type="button" class="search-clear grid size-10 flex-none place-items-center pointer-coarse:size-11 max-sm:size-11" aria-label="Clear search text" on:click="search.clearPaletteQuery()"><w-icon name="close" size="small"></w-icon></button>
         </logic>
@@ -62,7 +62,7 @@
         </case>
         <case :when="'session'">
           <div class="p-2">
-            <w-alert type="warning" title="Your session ended" :text="'Sign in to ' + sessionAccount.currentDomain + ' again to search.'">
+            <w-alert type="warning" title="Your session ended" :text="sessionAccount.searchSignInText">
               <div class="mt-3 flex flex-wrap items-center gap-3"><w-btn on:click="session.signInAgain()">Sign in again</w-btn></div>
             </w-alert>
           </div>

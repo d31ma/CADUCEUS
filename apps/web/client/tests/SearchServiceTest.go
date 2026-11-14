@@ -167,6 +167,7 @@ func (test *SearchServiceTest) TestScopeToSearchesOneConversation() {
 	search.ScopeTo(SearchHitScopeRequested{ConversationId: "c-1", Title: "support"})
 	Assert.Equals("c-1", search.pageFilter().ConversationId)
 	Assert.Equals("support", search.ConversationTitle)
+	Assert.Equals("Search every conversation, not only support", search.ScopeClearLabel)
 	Assert.Equals("results", search.PageState)
 }
 
@@ -176,6 +177,7 @@ func (test *SearchServiceTest) TestClearScopeSearchesEveryConversation() {
 	search.ClearScope()
 	Assert.Equals("", search.ConversationId)
 	Assert.Equals("", search.ConversationTitle)
+	Assert.Equals("Search every conversation, not only ", search.ScopeClearLabel)
 }
 
 func (test *SearchServiceTest) TestToggleAttachmentTurnsTheFilterOnAndOff() {

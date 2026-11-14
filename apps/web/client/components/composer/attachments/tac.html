@@ -7,7 +7,7 @@
           <span class="composer-attach-name truncate">{upload.fileName}</span>
           <span class="composer-attach-size">{upload.sizeText}</span>
           <logic :if="upload.state == 'uploading'">
-            <w-progress-linear class="composer-attach-progress w-12" indeterminate :aria-label="'Uploading ' + upload.fileName"></w-progress-linear>
+            <w-progress-linear class="composer-attach-progress w-12" indeterminate :aria-label="upload.uploadingLabel"></w-progress-linear>
           </logic>
           <switch :value="upload.problem">
             <case :when="'fileTooLarge'">
@@ -19,9 +19,9 @@
           </switch>
           <logic :if="upload.state == 'failed'">
             <span class="composer-attach-problem">{upload.fileName} did not finish uploading.</span>
-            <button type="button" class="composer-attach-action px-2" :aria-label="'Retry ' + upload.fileName" on:click="composer.retryUpload(upload.fileName)">Retry</button>
+            <button type="button" class="composer-attach-action px-2" :aria-label="upload.retryLabel" on:click="composer.retryUpload(upload.fileName)">Retry</button>
           </logic>
-          <button type="button" class="composer-attach-remove inline-flex items-center justify-center" :aria-label="'Remove ' + upload.fileName" on:click="composer.removeUpload(upload.fileName)">
+          <button type="button" class="composer-attach-remove inline-flex items-center justify-center" :aria-label="upload.removeLabel" on:click="composer.removeUpload(upload.fileName)">
             <svg class="composer-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </button>
         </li>

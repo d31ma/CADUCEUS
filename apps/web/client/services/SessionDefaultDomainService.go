@@ -2,6 +2,7 @@
 type SessionDefaultDomainService struct {
 	Problem       string
 	ProblemDomain string
+	ProblemText   string
 	Saved         string
 	// @Needs
 	directory *DirectoryClient
@@ -18,6 +19,7 @@ func (service *SessionDefaultDomainService) SaveWith(domainId string) {
 	_, answerFailure := service.directory.SetDefaultDomain("Bearer "+accessToken, SessionDefaultDomain{DomainId: domainId})
 	service.Problem = service.problems.OfDefaultDomain(service.firstFailure(failure, answerFailure))
 	service.ProblemDomain = domainId
+	service.ProblemText = "You are no longer a member of " + domainId + ". Choose another domain."
 	service.Saved = ""
 	service.keepWhenClear(domainId)
 	service.removeWhenGone(domainId)

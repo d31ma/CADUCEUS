@@ -58,7 +58,7 @@
         </logic>
       </div>
       <logic :if="sessionDefaultDomain.problem == 'notMember'">
-        <w-select class="w-full flex-none sm:w-64" label="Default domain" aria-describedby="default-domain-help" :items="sessionAccount.domainList()" :value="sessionAccount.default().domainId" :error="'You are no longer a member of ' + sessionDefaultDomain.problemDomain + '. Choose another domain.'" on:change="sessionDefaultDomain.saveWith($event.detail.value)"></w-select>
+        <w-select class="w-full flex-none sm:w-64" label="Default domain" aria-describedby="default-domain-help" :items="sessionAccount.domainList()" :value="sessionAccount.default().domainId" :error="sessionDefaultDomain.problemText" on:change="sessionDefaultDomain.saveWith($event.detail.value)"></w-select>
       </logic>
       <logic else>
         <w-select class="w-full flex-none sm:w-64" label="Default domain" aria-describedby="default-domain-help" :items="sessionAccount.domainList()" :value="sessionAccount.default().domainId" on:change="sessionDefaultDomain.saveWith($event.detail.value)"></w-select>

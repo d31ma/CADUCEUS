@@ -510,3 +510,9 @@ func (test *ConversationViewServiceTest) TestEditingMarksTheMessage() {
 func (test *ConversationViewServiceTest) TestActionsLabelNamesTheAuthorAndTime() {
 	Assert.Equals("Actions for the message from Ana Ruiz at 14:05", test.one(test.mine("m1", "2026-11-10T14:05:00Z")).ActionsLabel)
 }
+
+func (test *ConversationViewServiceTest) TestTheViewNamesTheMessageAndItsActions() {
+	view := test.one(test.mine("m1", "2026-11-10T14:05:00Z"))
+	Assert.Equals("Ana Ruiz, 14:05", view.TimeLabel)
+	Assert.Equals("actions-m1", view.ActionsId)
+}

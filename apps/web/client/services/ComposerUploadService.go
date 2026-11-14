@@ -51,7 +51,7 @@ func (uploads *ComposerUploadService) UsedText() string {
 }
 
 func (uploads *ComposerUploadService) itemOf(picked UploadPicked) UploadItem {
-	return UploadItem{FileName: picked.FileName, MediaType: picked.MediaType, Size: picked.Size, Sha256: picked.Sha256, SizeText: uploads.megabytes(picked.Size), State: uploads.stateUploading()}
+	return UploadItem{FileName: picked.FileName, MediaType: picked.MediaType, Size: picked.Size, Sha256: picked.Sha256, SizeText: uploads.megabytes(picked.Size), State: uploads.stateUploading(), UploadingLabel: "Uploading " + picked.FileName, RetryLabel: "Retry " + picked.FileName, RemoveLabel: "Remove " + picked.FileName}
 }
 
 func (uploads *ComposerUploadService) limitProblem(size int64, used int64) string {

@@ -17,6 +17,9 @@ func (test *SessionAccountServiceTest) applied() *SessionAccountService {
 func (test *SessionAccountServiceTest) TestApplyMakesTheActiveDomainCurrent() {
 	accounts := test.applied()
 	Assert.Equals("example.org", accounts.CurrentDomain)
+	Assert.Equals("Search example.org", accounts.SearchLabel)
+	Assert.Equals("Search messages in example.org", accounts.SearchMessagesLabel)
+	Assert.Equals("Sign in to example.org again to search.", accounts.SearchSignInText)
 	Assert.Equals("example.org", accounts.Current().DomainId)
 	Assert.IsTrue(accounts.Current().Current)
 }
@@ -101,5 +104,6 @@ func (test *SessionAccountServiceTest) TestClearForgetsEverything() {
 	accounts.Clear()
 	Assert.Equals(0, len(accounts.Accounts))
 	Assert.Equals("", accounts.CurrentDomain)
+	Assert.Equals("Search ", accounts.SearchLabel)
 	Assert.Equals("", accounts.Username)
 }

@@ -3,6 +3,7 @@ import "strings"
 // @Service
 type ComposerThreadService struct {
 	Target         SendThreadTarget
+	SendToLabel    string
 	Body           string
 	SendToExternal bool
 	DomainId       string
@@ -22,6 +23,7 @@ type ComposerThreadService struct {
 // @OnEvent
 func (thread *ComposerThreadService) Open(target SendThreadTarget) {
 	thread.Target = target
+	thread.SendToLabel = "Send to " + target.ExternalAddress
 	thread.clear()
 	thread.refresh()
 }

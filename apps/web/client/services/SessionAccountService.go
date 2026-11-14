@@ -5,11 +5,14 @@ import (
 
 // @Service
 type SessionAccountService struct {
-	Accounts      []SessionAccount
-	CurrentDomain string
-	Username      string
-	DisplayName   string
-	seen          []string
+	Accounts            []SessionAccount
+	CurrentDomain       string
+	SearchLabel         string
+	SearchMessagesLabel string
+	SearchSignInText    string
+	Username            string
+	DisplayName         string
+	seen                []string
 }
 
 func (service *SessionAccountService) Apply(session Session) {
@@ -17,6 +20,7 @@ func (service *SessionAccountService) Apply(session Session) {
 	service.Username = session.Me.Username
 	service.DisplayName = session.Me.DisplayName
 	service.CurrentDomain = session.Me.DomainId
+	service.writeSearchLabels(session.Me.DomainId)
 	service.Accounts = service.defaultFirst(service.accountsOf(session))
 	service.label()
 }
@@ -41,10 +45,17 @@ func (service *SessionAccountService) MarkSeen() {
 	service.clearNew()
 }
 
+func (service *SessionAccountService) writeSearchLabels(domainId string) {
+	service.SearchLabel = "Search " + domainId
+	service.SearchMessagesLabel = "Search messages in " + domainId
+	service.SearchSignInText = "Sign in to " + domainId + " again to search."
+}
+
 func (service *SessionAccountService) Clear() {
 	service.seen = []string{}
 	service.Accounts = []SessionAccount{}
 	service.CurrentDomain = ""
+	service.writeSearchLabels("")
 	service.Username = ""
 	service.DisplayName = ""
 }

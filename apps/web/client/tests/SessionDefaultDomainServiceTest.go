@@ -27,6 +27,7 @@ func (test *SessionDefaultDomainServiceTest) TestSaveWithARemovedDomainSaysSoAnd
 	service.SaveWith("gone.example")
 	Assert.Equals("notMember", service.Problem)
 	Assert.Equals("gone.example", service.ProblemDomain)
+	Assert.Equals("You are no longer a member of gone.example. Choose another domain.", service.ProblemText)
 	Assert.Equals("", service.Saved)
 	Assert.Equals(2, len(service.accounts.Accounts))
 	Assert.Equals("example.com", service.accounts.Default().DomainId)

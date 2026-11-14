@@ -114,4 +114,6 @@ func (test *ThreadRowServiceTest) TestPendingRowShowsMyNameAndText() {
 	Assert.Equals("AR", row.Initials)
 	Assert.Equals("Thanks", row.Body)
 	Assert.Equals("Ana Ruiz", row.Label)
+	Assert.Equals("Ana Ruiz, sending", row.SendingLabel)
+	Assert.Equals("Ana Ruiz, not sent", row.NotSentLabel)
 }

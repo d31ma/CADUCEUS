@@ -4,4 +4,6 @@ type RecipientRow struct {
 	Placeholder string      `json:"placeholder"`
 	Recipients  []Recipient `json:"recipients"`
 	Shown       bool        `json:"shown"`
+	RowId       string      `json:"rowId"`
+	InputId     string      `json:"inputId"`
 }

@@ -17,6 +17,9 @@ func (test *ComposerUploadServiceTest) TestPickCreatesTheUpload() {
 	Assert.Equals("uploading", uploads.Items[0].State)
 	Assert.Equals("att-plan.pdf", uploads.Items[0].AttachmentId)
 	Assert.Equals("2.0 MB", uploads.Items[0].SizeText)
+	Assert.Equals("Uploading plan.pdf", uploads.Items[0].UploadingLabel)
+	Assert.Equals("Retry plan.pdf", uploads.Items[0].RetryLabel)
+	Assert.Equals("Remove plan.pdf", uploads.Items[0].RemoveLabel)
 }
 
 func (test *ComposerUploadServiceTest) TestPickRefusesAFileOverTheFileLimit() {

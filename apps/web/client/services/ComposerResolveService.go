@@ -46,6 +46,9 @@ func (resolve *ComposerResolveService) Labelled(recipient Recipient) Recipient {
 func (resolve *ComposerResolveService) labelled(recipient Recipient) Recipient {
 	recipient.Label = resolve.words.ChipLabel(recipient)
 	recipient.AriaLabel = resolve.words.ChipAriaLabel(recipient)
+	recipient.ChipId = "composer-chip-" + recipient.Role + "-" + recipient.Address
+	recipient.DeliveryLabel = "How " + recipient.DisplayName + " gets this"
+	recipient.RemoveLabel = "Remove " + recipient.DisplayName
 	return recipient
 }
 

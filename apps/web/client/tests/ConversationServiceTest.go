@@ -41,6 +41,10 @@ func (test *ConversationServiceTest) general() *ConversationService {
 	return test.opened("cnv_general", "channels")
 }
 
+func (test *ConversationServiceTest) TestOpenedNamesTheTimeline() {
+	Assert.Equals("Messages in general", test.general().MessagesLabel)
+}
+
 func (test *ConversationServiceTest) TestStartIsIdle() {
 	service := test.build()
 	Assert.Equals("idle", service.State)

@@ -1,6 +1,6 @@
 <section class="@container/search min-w-0" aria-label="Search">
   <div class="mx-auto grid w-full max-w-2xl gap-3 pt-4 pb-10 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] @xl/search:px-5">
-    <form class="contents" method="dialog" role="search" :aria-label="'Search ' + sessionAccount.currentDomain" on:submit="search.searchWith($event.target.elements.query.value, $event.target.elements.author.value, $event.target.elements.from.value, $event.target.elements.to.value)">
+    <form class="contents" method="dialog" role="search" :aria-label="sessionAccount.searchLabel" on:submit="search.searchWith($event.target.elements.query.value, $event.target.elements.author.value, $event.target.elements.from.value, $event.target.elements.to.value)">
       <div class="flex items-center gap-2">
         <w-text-field class="min-w-0 flex-1" type="search" name="query" hide-details autocomplete="off" label="Search messages" :value="search.query"><w-icon slot="prepend-inner" name="search" size="small"></w-icon></w-text-field>
         <logic :if="search.query != ''">
@@ -20,7 +20,7 @@
         <span class="search-scope-chip inline-flex min-w-0 max-w-full flex-none items-center gap-1 pl-3">
           <w-icon name="hash" size="small"></w-icon>
           <span class="min-w-0 truncate">In {search.conversationTitle}</span>
-          <w-icon-btn icon="close" size="small" :aria-label="'Search every conversation, not only ' + search.conversationTitle" on:click="search.clearScope()"></w-icon-btn>
+          <w-icon-btn icon="close" size="small" :aria-label="search.scopeClearLabel" on:click="search.clearScope()"></w-icon-btn>
         </span>
       </logic>
       <w-chip class="search-chip" :selected="search.hasAttachment" on:click="search.toggleAttachment()"><w-icon slot="prepend" name="paperclip" size="small"></w-icon>Has file</w-chip>
@@ -89,7 +89,7 @@
         </w-alert>
       </case>
       <case :when="'session'">
-        <w-alert type="warning" title="Your session ended" :text="'Sign in to ' + sessionAccount.currentDomain + ' again to search.'">
+        <w-alert type="warning" title="Your session ended" :text="sessionAccount.searchSignInText">
           <div class="mt-3 flex flex-wrap items-center gap-3"><w-btn on:click="session.signInAgain()">Sign in again</w-btn></div>
         </w-alert>
       </case>

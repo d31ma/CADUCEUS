@@ -10,6 +10,7 @@ type ConversationService struct {
 	DomainId        string
 	ConversationId  string
 	Title           string
+	MessagesLabel   string
 	Section         string
 	State           string
 	Messages        []MessageView
@@ -216,6 +217,7 @@ func (service *ConversationService) open(opened ConversationOpened) {
 	service.DomainId = opened.DomainId
 	service.ConversationId = opened.ConversationId
 	service.Title = opened.Title
+	service.MessagesLabel = service.messagesLabel(opened.Title)
 	service.Section = opened.Section
 	service.unreadCount = opened.UnreadCount
 	service.State = service.stateLoading()
@@ -413,10 +415,15 @@ func (service *ConversationService) resetWhenNewMessage(conversationId string) {
 	service.reset()
 }
 
+func (service *ConversationService) messagesLabel(title string) string {
+	return "Messages in " + title
+}
+
 func (service *ConversationService) reset() {
 	service.DomainId = ""
 	service.ConversationId = ""
 	service.Title = ""
+	service.MessagesLabel = service.messagesLabel("")
 	service.Section = ""
 	service.State = service.stateIdle()
 	service.Messages = []MessageView{}

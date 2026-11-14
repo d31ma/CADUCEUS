@@ -1,6 +1,6 @@
 <section class="composer-thread flex min-w-0 flex-col" aria-label="Reply in thread" :data-email="composerThread.sendToExternal">
   <div class="composer-thread-choice px-3 pt-2" :hidden="!composerThread.target.externalAddress">
-    <w-checkbox class="composer-thread-check" name="sendToExternal" :label="'Send to ' + composerThread.target.externalAddress" :checked="composerThread.sendToExternal" on:change="composerThread.chooseExternal($event.target.checked)"></w-checkbox>
+    <w-checkbox class="composer-thread-check" name="sendToExternal" :label="composerThread.sendToLabel" :checked="composerThread.sendToExternal" on:change="composerThread.chooseExternal($event.target.checked)"></w-checkbox>
     <p class="composer-thread-note composer-thread-note-email m-0 mt-1 flex items-start gap-2 px-3 py-2" :hidden="!composerThread.sendToExternal">
       <svg class="composer-thread-icon mt-0.5" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16v12H4z" /><path d="M4 7l8 6 8-6" /></svg>
       <span class="min-w-0">This reply also goes to {composerThread.target.externalAddress} as an email.</span>

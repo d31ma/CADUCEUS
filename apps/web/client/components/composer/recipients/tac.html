@@ -1,11 +1,11 @@
 <div class="composer-recipients" :hidden="!composer.newConversation">
   <loop :for="row of composer.rows">
-    <div class="composer-row-block" :id="'composer-row-' + row.role" :hidden="!row.shown">
+    <div class="composer-row-block" :id="row.rowId" :hidden="!row.shown">
       <div class="composer-row flex flex-wrap items-center gap-2 px-3 py-1" role="group" :aria-label="row.label">
         <span class="composer-row-label w-14 shrink-0" aria-hidden="true">{row.label}</span>
         <loop :for="item of row.recipients">
           <span class="composer-chip inline-flex max-w-full items-center" :data-state="item.state" :data-delivery="item.delivery" :data-kind="item.kind">
-            <button type="button" class="composer-chip-main inline-flex min-w-0 items-center" :id="'composer-chip-' + item.role + '-' + item.address">
+            <button type="button" class="composer-chip-main inline-flex min-w-0 items-center" :id="item.chipId">
               <span class="sr-only">{item.ariaLabel}</span>
               <span class="inline-flex min-w-0 items-center gap-1.5" aria-hidden="true">
                 <logic :if="item.displayName == item.address">
@@ -28,7 +28,7 @@
                 </span>
               </span>
             </button>
-            <w-menu class="composer-chip-menu" location="bottom-start" :activator="'composer-chip-' + item.role + '-' + item.address">
+            <w-menu class="composer-chip-menu" location="bottom-start" :activator="item.chipId">
               <div class="composer-menu-head flex items-center gap-2 px-3 py-2" aria-hidden="true">
                 <span class="grid min-w-0 gap-0.5">
                   <span class="composer-menu-name truncate">{item.displayName}</span>
@@ -45,7 +45,7 @@
               </div>
 
               <logic :if="item.state == 'ready'">
-                <div class="grid gap-0.5" role="group" :aria-label="'How ' + item.displayName + ' gets this'">
+                <div class="grid gap-0.5" role="group" :aria-label="item.deliveryLabel">
                   <p class="w-menu-label" aria-hidden="true">How {item.displayName} gets this</p>
 
                   <button type="button" class="w-menu-item composer-menu-item items-start" role="menuitemradio" :aria-checked="shell.flag(item.delivery == 'chat')" :aria-disabled="shell.flag(!item.chatAllowed)" on:click="composer.choose(item.address, item.role, 'chat')">
@@ -118,13 +118,13 @@
                 <span>Remove {item.displayName}</span>
               </button>
             </w-menu>
-            <button type="button" class="composer-chip-remove inline-flex items-center justify-center" :aria-label="'Remove ' + item.displayName" on:click="composer.remove(item.address, item.role)">
+            <button type="button" class="composer-chip-remove inline-flex items-center justify-center" :aria-label="item.removeLabel" on:click="composer.remove(item.address, item.role)">
               <svg class="composer-icon composer-icon-small" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
           </span>
         </loop>
-        <label class="sr-only" :for="'composer-input-' + row.role">{row.label}</label>
-        <input class="composer-row-input min-w-32 flex-1" type="text" :id="'composer-input-' + row.role" :name="row.role" inputmode="email" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" :placeholder="row.placeholder" :value="''" on:change="composer.addTyped(row.role, $event.target.value)">
+        <label class="sr-only" :for="row.inputId">{row.label}</label>
+        <input class="composer-row-input min-w-32 flex-1" type="text" :id="row.inputId" :name="row.role" inputmode="email" autocomplete="off" autocapitalize="none" spellcheck="false" enterkeyhint="done" :placeholder="row.placeholder" :value="''" on:change="composer.addTyped(row.role, $event.target.value)">
         <logic :if="row.role == 'to'">
           <span class="ml-auto inline-flex items-center gap-1">
             <button type="button" class="composer-row-toggle px-2" aria-controls="composer-row-cc" :aria-expanded="shell.flag(composer.showCc)" on:click="composer.toggleCc()">Cc</button>

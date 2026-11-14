@@ -23,6 +23,8 @@ func (test *ComposerServiceTest) TestStartOpensANewConversationWithAToRow() {
 	Assert.IsTrue(composer.Rows[0].Shown)
 	Assert.IsTrue(!composer.Rows[1].Shown)
 	Assert.Equals("Name, channel or email address", composer.Rows[0].Placeholder)
+	Assert.Equals("composer-row-to", composer.Rows[0].RowId)
+	Assert.Equals("composer-input-to", composer.Rows[0].InputId)
 	Assert.Equals("Required", composer.SubjectHint)
 }
 

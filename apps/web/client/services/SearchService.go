@@ -24,6 +24,7 @@ type SearchService struct {
 	ConversationId string
 	// @SessionState
 	ConversationTitle string
+	ScopeClearLabel   string
 	// @SessionState
 	Author string
 	// @SessionState
@@ -122,6 +123,7 @@ func (search *SearchService) LoadMore() {
 func (search *SearchService) ScopeTo(requested SearchHitScopeRequested) {
 	search.ConversationId = requested.ConversationId
 	search.ConversationTitle = requested.Title
+	search.ScopeClearLabel = search.scopeClearLabel(requested.Title)
 	search.Search()
 }
 
@@ -142,6 +144,7 @@ func (search *SearchService) ToggleEmail() {
 func (search *SearchService) ClearFilters() {
 	search.ConversationId = ""
 	search.ConversationTitle = ""
+	search.ScopeClearLabel = search.scopeClearLabel("")
 	search.Author = ""
 	search.From = ""
 	search.To = ""
@@ -168,6 +171,7 @@ func (search *SearchService) clearWhenMoved(previous string, current string) {
 	search.PageState = search.stateIdle()
 	search.ConversationId = ""
 	search.ConversationTitle = ""
+	search.ScopeClearLabel = search.scopeClearLabel("")
 }
 
 func (search *SearchService) paletteFilter() SearchHitFilter {
@@ -244,4 +248,8 @@ func (search *SearchService) stateIdle() string {
 
 func (search *SearchService) messageTitle() string {
 	return "Message"
+}
+
+func (search *SearchService) scopeClearLabel(title string) string {
+	return "Search every conversation, not only " + title
 }

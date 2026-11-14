@@ -116,7 +116,7 @@
         </loop>
 
         <logic :if="thread.sendStatus == 'sending'">
-          <article class="ms-msg ms-msg--pending" :aria-label="thread.pending.label + ', sending'">
+          <article class="ms-msg ms-msg--pending" :aria-label="thread.pending.sendingLabel">
             <w-avatar :text="thread.pending.initials" size="36" alt=""></w-avatar>
             <div class="min-w-0">
               <div class="ms-msg__meta"><span class="ms-msg__author">{thread.pending.authorName}</span><span class="ms-msg__time">Sending…</span></div>
@@ -126,7 +126,7 @@
         </logic>
 
         <logic :if="thread.sendStatus == 'failed'">
-          <article class="ms-msg ms-msg--failed" :aria-label="thread.pending.label + ', not sent'">
+          <article class="ms-msg ms-msg--failed" :aria-label="thread.pending.notSentLabel">
             <w-avatar :text="thread.pending.initials" size="36" alt=""></w-avatar>
             <div class="min-w-0">
               <div class="ms-msg__meta"><span class="ms-msg__author">{thread.pending.authorName}</span><span class="ms-msg__failed"><w-icon name="alert"></w-icon>Not sent</span></div>

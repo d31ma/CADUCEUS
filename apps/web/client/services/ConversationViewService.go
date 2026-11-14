@@ -156,6 +156,8 @@ func (service *ConversationViewService) addActions(view *MessageView, message Me
 	view.CanEdit = service.allTrue(view.Mine, !view.Deleted, message.Email == nil)
 	view.CanDelete = service.allTrue(view.Mine, !view.Deleted)
 	view.ActionsLabel = "Actions for the message from " + view.AuthorName + " at " + view.Time
+	view.ActionsId = "actions-" + view.MessageId
+	view.TimeLabel = view.AuthorName + service.listSeparator() + view.Time
 }
 
 func (service *ConversationViewService) visible(message Message) Message {

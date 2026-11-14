@@ -27,6 +27,13 @@ func (test *ComposerResolveServiceTest) TestCheckingAndInvalidChips() {
 	Assert.Equals("Not valid", resolve.Pending("x@y", "to", "invalid").Label)
 }
 
+func (test *ComposerResolveServiceTest) TestLabelledNamesTheChipAndItsActions() {
+	recipient := test.resolve().Labelled(Recipient{DisplayName: "Bo Lee", Address: "bo@example.com", Role: "cc", Kind: "member", Delivery: "both", State: "ready"})
+	Assert.Equals("composer-chip-cc-bo@example.com", recipient.ChipId)
+	Assert.Equals("How Bo Lee gets this", recipient.DeliveryLabel)
+	Assert.Equals("Remove Bo Lee", recipient.RemoveLabel)
+}
+
 func (test *ComposerResolveServiceTest) TestLabelledWritesTheChipText() {
 	recipient := test.resolve().Labelled(Recipient{DisplayName: "Bo Lee", Address: "bo@example.com", Kind: "member", Delivery: "both", State: "ready"})
 	Assert.Equals("Chat + email", recipient.Label)

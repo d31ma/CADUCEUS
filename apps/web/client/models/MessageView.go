@@ -31,4 +31,6 @@ type MessageView struct {
 	CanDelete       bool              `json:"canDelete"`
 	Editing         bool              `json:"editing"`
 	ActionsLabel    string            `json:"actionsLabel"`
+	ActionsId       string            `json:"actionsId"`
+	TimeLabel       string            `json:"timeLabel"`
 }

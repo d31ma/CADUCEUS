@@ -179,10 +179,16 @@ func (composer *ComposerService) subjectHintFor(newConversation bool) string {
 
 func (composer *ComposerService) rows() []RecipientRow {
 	return []RecipientRow{
-		{Role: composer.roleTo(), Label: "To", Placeholder: composer.toPlaceholder(), Recipients: composer.To, Shown: composer.NewConversation},
-		{Role: composer.roleCc(), Label: "Cc", Placeholder: "Add people who get a copy", Recipients: composer.Cc, Shown: composer.shownWithNew(composer.ShowCc)},
-		{Role: composer.roleBlindCopy(), Label: "Bcc", Placeholder: "Hidden from everyone else", Recipients: composer.BlindCopy, Shown: composer.shownWithNew(composer.ShowBlindCopy)},
+		composer.named(RecipientRow{Role: composer.roleTo(), Label: "To", Placeholder: composer.toPlaceholder(), Recipients: composer.To, Shown: composer.NewConversation}),
+		composer.named(RecipientRow{Role: composer.roleCc(), Label: "Cc", Placeholder: "Add people who get a copy", Recipients: composer.Cc, Shown: composer.shownWithNew(composer.ShowCc)}),
+		composer.named(RecipientRow{Role: composer.roleBlindCopy(), Label: "Bcc", Placeholder: "Hidden from everyone else", Recipients: composer.BlindCopy, Shown: composer.shownWithNew(composer.ShowBlindCopy)}),
 	}
+}
+
+func (composer *ComposerService) named(row RecipientRow) RecipientRow {
+	row.RowId = "composer-row-" + row.Role
+	row.InputId = "composer-input-" + row.Role
+	return row
 }
 
 func (composer *ComposerService) rowShown(shown bool, recipients []Recipient) bool {

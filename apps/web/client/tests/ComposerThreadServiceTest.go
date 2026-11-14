@@ -14,6 +14,7 @@ func (test *ComposerThreadServiceTest) TestOpenShowsAnInternalReplyByDefault() {
 	Assert.IsTrue(!thread.SendToExternal)
 	Assert.Equals("Send reply", thread.SendLabel)
 	Assert.Equals("example.com", thread.DomainId)
+	Assert.Equals("Send to carol@partner.org", thread.SendToLabel)
 }
 
 func (test *ComposerThreadServiceTest) TestChooseExternalAlsoSendsTheEmail() {

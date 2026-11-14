@@ -46,7 +46,10 @@ func (rows *ThreadRowService) RepliesLabel(root Message, shown int) string {
 }
 
 func (rows *ThreadRowService) PendingRow(name string, body string) ThreadRow {
-	return rows.Row(Message{Author: Author{DisplayName: name}, Body: body})
+	row := rows.Row(Message{Author: Author{DisplayName: name}, Body: body})
+	row.SendingLabel = row.Label + ", sending"
+	row.NotSentLabel = row.Label + ", not sent"
+	return row
 }
 
 func (rows *ThreadRowService) rootRows(root Message) []ThreadRow {

@@ -93,6 +93,26 @@
   --ms-new-divider: var(--w-error);
   --ms-quote-rule: var(--w-border);
   --ms-code-bg: var(--w-surface-container-high);
+
+  /* Calls (slice CU, ADR 0012): the call stage is dark in every theme, like a video player, so video and
+   * screens look the same in light and dark. Every pair is checked in TOKENS.md "Calls". */
+  --ms-call-stage: #0b1417;
+  --ms-on-call-stage: #eef6f8;
+  --ms-call-stage-subtle: #a9bcc2;
+  --ms-call-tile: #17262b;
+  --ms-call-control: #26363b;
+  --ms-call-control-hover: #32464c;
+  --ms-call-control-border: #5d7178;
+  --ms-call-control-off: #eef6f8;
+  --ms-on-call-control-off: #0b1417;
+  --ms-call-leave: #c4302b;
+  --ms-on-call-leave: #ffffff;
+  --ms-call-accept: #1e7d3a;
+  --ms-on-call-accept: #ffffff;
+  --ms-call-speaking: #5fd4a8;
+  --ms-recording-bg: #b3261e;
+  --ms-on-recording: #ffffff;
+  --ms-recording-dot: #ff6b61;
 }
 
 [w-theme="light"] {
@@ -186,4 +206,19 @@
   --ms-rail-tile-active: #ffffff;
   --ms-on-rail-tile-active: #000000;
   --ms-msg-hover: #eef2f1;
+  /* Calls: pure black stage, white borders on every control. */
+  --ms-call-stage: #000000;
+  --ms-on-call-stage: #ffffff;
+  --ms-call-stage-subtle: #d6d6d6;
+  --ms-call-tile: #141414;
+  --ms-call-control: #000000;
+  --ms-call-control-hover: #1f1f1f;
+  --ms-call-control-border: #ffffff;
+  --ms-call-control-off: #ffffff;
+  --ms-on-call-control-off: #000000;
+  --ms-call-leave: #a00000;
+  --ms-call-accept: #005a1f;
+  --ms-call-speaking: #ffd400;
+  --ms-recording-bg: #8c1d18;
+  --ms-recording-dot: #ff6b61;
 }

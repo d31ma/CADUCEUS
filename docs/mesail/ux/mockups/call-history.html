@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: call history in the chat</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/call.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#h1">Skip to the first state</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-3xl px-1 text-center text-sm text-subtle">History rows (SPEC AC-CL-4, AC-CL-5; ADR 0012 decision 6). The caller&rsquo;s device adds &ldquo;Call started&rdquo;, &ldquo;Call ended&rdquo; and &ldquo;Missed call&rdquo; as encrypted chat messages, so they sync and back up like messages; each device writes the words for its own person (&ldquo;Missed call from Ana Ruiz&rdquo; for Bo, &ldquo;Bo Lee did not answer&rdquo; for Ana). A declined call shows as missed. Rows are system rows, not messages: no reactions, no thread, no edit.</p>
+    <!-- Mockup: labelled states side by side. -->
+    <main class="grid w-full max-w-[110rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,30rem),1fr))]">
+      <section class="grid w-full max-w-content content-start gap-3" id="h1" aria-label="H1 &middot; Call of two, as Bo sees it: started, ended with the time it lasted, missed">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">H1 &middot; Call of two, as Bo sees it: started, ended with the time it lasted, missed</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider"><h2 class="flex min-w-0 items-center gap-2 text-lg font-bold"><w-avatar text="BL" size="24" style="--h:20" alt="" ></w-avatar><span class="truncate">Bo Lee</span></h2></div>
+          <div class="grid gap-1 py-3" role="log" aria-label="Messages"><div class="ms-day"><span>Today</span></div><article class="ms-call-row ms-call-row--live" aria-label="Ana Ruiz started a video call at 09:30. Join"><span class="ms-call-row__icon"><w-icon name="phone" class="" aria-hidden="true"></w-icon></span><span class="grid min-w-0 gap-0.5"><span class="ms-call-row__title truncate">Ana Ruiz started a call</span><span class="text-xs text-subtle">Video call &middot; 09:30 &middot; You and Ana are in it</span></span><w-btn variant="outlined" size="small" prepend-icon="phone">Join</w-btn></article><article class="ms-call-row ms-call-row--done" aria-label="Call ended &amp;middot; 12 min"><span class="ms-call-row__icon"><w-icon name="phone" class="" aria-hidden="true"></w-icon></span><span class="grid min-w-0 gap-0.5"><span class="ms-call-row__title truncate">Call ended &middot; 12 min</span><span class="text-xs text-subtle">09:30 to 09:42</span></span><span></span></article><article class="ms-call-row ms-call-row--missed" aria-label="Missed video call from Ana Ruiz at 11:05. Call back"><span class="ms-call-row__icon"><w-icon name="phone-missed" class="" aria-hidden="true"></w-icon></span><span class="grid min-w-0 gap-0.5"><span class="ms-call-row__title truncate">Missed call from Ana Ruiz</span><span class="text-xs text-subtle">Video call &middot; 11:05</span></span><w-btn variant="outlined" size="small" prepend-icon="phone">Call back</w-btn></article></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content content-start gap-3" id="h2" aria-label="H2 &middot; The same missed call, as Ana (the caller) sees it">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">H2 &middot; The same missed call, as Ana (the caller) sees it</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider"><h2 class="flex min-w-0 items-center gap-2 text-lg font-bold"><w-avatar text="BL" size="24" style="--h:20" alt="" ></w-avatar><span class="truncate">Bo Lee</span></h2></div>
+          <div class="grid gap-1 py-3" role="log" aria-label="Messages"><div class="ms-day"><span>Today</span></div><article class="ms-call-row ms-call-row--missed" aria-label="Bo Lee did not answer"><span class="ms-call-row__icon"><w-icon name="phone-missed" class="" aria-hidden="true"></w-icon></span><span class="grid min-w-0 gap-0.5"><span class="ms-call-row__title truncate">Bo Lee did not answer</span><span class="text-xs text-subtle">Video call &middot; 11:05</span></span><w-btn variant="outlined" size="small" prepend-icon="phone">Call again</w-btn></article></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content content-start gap-3" id="h3" aria-label="H3 &middot; Group: started (with who is in it), ended; a group call nobody joined is a missed call">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">H3 &middot; Group: started (with who is in it), ended; a group call nobody joined is a missed call</p>
+        <div class="w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider"><h2 class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="lock" class="ms-icon-sm" role="img" aria-label="Private group"></w-icon><span class="truncate">design</span></h2></div>
+          <div class="grid gap-1 py-3" role="log" aria-label="Messages"><div class="ms-day"><span>Today</span></div><article class="ms-call-row ms-call-row--live" aria-label="Chen Wu started a call"><span class="ms-call-row__icon"><w-icon name="phone" class="" aria-hidden="true"></w-icon></span><span class="grid min-w-0 gap-0.5"><span class="ms-call-row__title truncate">Chen Wu started a call</span><span class="text-xs text-subtle">Audio call &middot; 14:00 &middot; 6 in the call</span></span><w-btn variant="outlined" size="small" prepend-icon="phone">Join</w-btn></article><article class="ms-call-row ms-call-row--done" aria-label="Call ended &amp;middot; 1 h 05 min"><span class="ms-call-row__icon"><w-icon name="phone" class="" aria-hidden="true"></w-icon></span><span class="grid min-w-0 gap-0.5"><span class="ms-call-row__title truncate">Call ended &middot; 1 h 05 min</span><span class="text-xs text-subtle">14:00 to 15:05 &middot; 9 people joined</span></span><span></span></article><article class="ms-call-row ms-call-row--missed" aria-label="Missed call from Chen Wu"><span class="ms-call-row__icon"><w-icon name="phone-missed" class="" aria-hidden="true"></w-icon></span><span class="grid min-w-0 gap-0.5"><span class="ms-call-row__title truncate">Missed call from Chen Wu</span><span class="text-xs text-subtle">Video call &middot; 16:20 &middot; Nobody joined</span></span><w-btn variant="outlined" size="small" prepend-icon="phone">Call back</w-btn></article></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" id="h4" aria-label="H4 &middot; How long a call lasted: the words used">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">H4 &middot; How long a call lasted: the words used</p>
+        <table class="w-full rounded-xl border border-border bg-surface text-sm"><caption class="sr-only">Duration words</caption>
+          <thead><tr class="text-left text-subtle [&_th]:px-3 [&_th]:py-2"><th scope="col">Call time</th><th scope="col">Row says</th><th scope="col">Screen reader says</th></tr></thead>
+          <tbody class="[&_td]:px-3 [&_td]:py-2 [&_tr]:border-t [&_tr]:border-divider">
+            <tr><td>40 seconds</td><td>Call ended &middot; less than 1 min</td><td>less than 1 minute</td></tr>
+            <tr><td>12 minutes 10 seconds</td><td>Call ended &middot; 12 min</td><td>12 minutes</td></tr>
+            <tr><td>65 minutes</td><td>Call ended &middot; 1 h 05 min</td><td>1 hour 5 minutes</td></tr>
+          </tbody></table>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" id="h5" aria-label="H5 &middot; Sidebar: a missed call makes the row unread; a running call shows a phone mark">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">H5 &middot; Sidebar: a missed call makes the row unread; a running call shows a phone mark</p>
+        <div class="w-full max-w-[19rem] rounded-xl border border-border bg-sidebar p-2">
+          <w-list nav density="compact" lines="two" aria-label="Direct messages">
+            <w-list-item href="#" title="Bo Lee" subtitle="Missed call" class="ms-unread"><w-avatar slot="prepend" text="BL" size="20" status="online" style="--h:20" alt="Bo Lee, active"></w-avatar><w-badge slot="append" content="1" inline label="1 unread: missed call"></w-badge></w-list-item>
+            <w-list-item href="#" title="design" subtitle="Call &middot; 6 people"><w-icon slot="prepend" name="lock" role="img" aria-label="Private group"></w-icon><w-icon slot="append" name="phone" class="ms-icon-sm text-[color:var(--ms-call-accept)]" role="img" aria-label="Call in progress"></w-icon></w-list-item>
+          </w-list>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" id="h6" aria-label="H6 &middot; Activity: a missed call is an item with Call back">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">H6 &middot; Activity: a missed call is an item with Call back</p>
+        <div class="w-full rounded-xl border border-border bg-surface p-2">
+          <article class="flex items-start gap-3 rounded-lg p-2 hover:bg-hover" aria-label="Missed call from Bo Lee, 11:05">
+            <span class="ms-call-row__icon flex-none bg-error-container text-on-error-container"><w-icon name="phone-missed" class="" aria-hidden="true"></w-icon></span>
+            <span class="grid min-w-0 flex-1 gap-0.5"><span class="text-sm"><strong>Missed call from Bo Lee</strong></span><span class="text-xs text-subtle">Video call &middot; Direct message &middot; 11:05</span></span>
+            <w-btn variant="outlined" size="small" prepend-icon="phone">Call back</w-btn>
+          </article>
+        </div>
+      </section>
+      <section class="grid w-full max-w-auth content-start gap-3" id="h7" aria-label="H7 &middot; Narrow lists (phones, under 22rem): the button goes under the words">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">H7 &middot; Narrow lists (phones, under 22rem): the button goes under the words</p>
+        <div class="w-full max-w-[20rem] overflow-hidden rounded-xl border border-border bg-surface">
+          <div class="grid gap-1 py-2" role="log" aria-label="Messages"><article class="ms-call-row ms-call-row--missed" aria-label="Missed call from Ana Ruiz"><span class="ms-call-row__icon"><w-icon name="phone-missed" class="" aria-hidden="true"></w-icon></span><span class="grid min-w-0 gap-0.5"><span class="ms-call-row__title truncate">Missed call from Ana Ruiz</span><span class="text-xs text-subtle">Video call &middot; 11:05</span></span><w-btn variant="outlined" size="small" prepend-icon="phone">Call back</w-btn></article><article class="ms-call-row ms-call-row--done" aria-label="Call ended &amp;middot; 12 min"><span class="ms-call-row__icon"><w-icon name="phone" class="" aria-hidden="true"></w-icon></span><span class="grid min-w-0 gap-0.5"><span class="ms-call-row__title truncate">Call ended &middot; 12 min</span><span class="text-xs text-subtle">09:30 to 09:42</span></span><span></span></article></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="sr-only" aria-live="polite" id="announcer"></div>
+</body>
+</html>

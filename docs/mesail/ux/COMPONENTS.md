@@ -187,6 +187,27 @@ is T15 with T15b. Neither DuVay nor Mesail has a passkey element: these are DuVa
 | Unlock setting ("Unlock with Touch ID" per platform; on, off, asking, not confirmed, locked out, not enrolled) | `app-lock.html` L1-L7, `settings-device.html#unlock` | `components/settings/device-unlock/tac.html` + `DeviceUnlockService.go` (`StorageLock.require`, `unlock`) (PK6) | `w-switch`, Mesail notice box |
 | Locked screen (asking, cancelled, failed, locked out, relocked), `keyLost` dialog, "Cannot unlock? Sign out" dialog | `app-lock.html` S1-S11 | `components/app/app-locked/tac.html` + `DeviceUnlockService.go` (PK6; the shell shows it before any page while `StorageLock.state()` is locked) | `w-btn`, `w-avatar`, `w-dialog` |
 
+## Calls (G12; ADR 0012, SPEC AC-CL)
+
+README section 18. Built by G12 in the chat page app, on TACHYON `Peers` (P1), `Media` with `media-view` (P5) and
+`Recorder` (P7). The stage, tiles, control faces, recording banner, ringing card and call rows are Mesail classes in
+`mockups/assets/screens/call.css` (no DuVay element draws a video stage); they move into the components' `tac.css`.
+Generic parts stay DuVay.
+
+| Component | Mesail class | Mockups | Tac target | DuVay element(s) |
+| --- | --- | --- | --- | --- |
+| Call buttons in the conversation header (audio, video; group question; Join; Return to call; not supported; offline) | `.ms-call-unavailable` | `call-buttons.html` B1-B11 | `components/conversation/call-buttons/tac.html` + `CallService.go` (`Media.supported()`, `call.create`) | `w-icon-btn`, `w-btn`, `w-popover` |
+| Ringing card (computer), full-screen ringing (phone), compact card in a call, "cannot call here" card | `.ms-ring-card`, `.ms-ring-pulse`, `.ms-answer--*` | `call-incoming.html` R1-R10 | `components/calls/ringing/tac.html` + `CallRingService.go` (`call.ringing`, `call.ring.ended`) | `w-avatar`, `w-btn` (text), native buttons for the round answers |
+| Call view: header, grid (at most 9, speaker first, you, "+N more"), tiles, own small picture | `.ms-call`, `.ms-call-grid[data-tiles]`, `.ms-call-tile*`, `.ms-call-self`, `.ms-call-more` | `call-view.html`, `call-layouts.html` V1-V4, V9 | `pages/call/tac.html`, `components/calls/grid/tac.html`, `components/calls/tile/tac.html` (holds `media-view`) + `CallViewService.go` | `w-avatar`, `w-icon` |
+| Control bar (Mute, Camera off, Share screen, Speaker on phones, People, More, Leave) | `.ms-call-bar`, `.ms-call-btn*` | `call-controls.html` K1-K3, K11 | `components/calls/controls/tac.html` + `CallMediaService.go` (mute, camera, share) | none fits: native `<button aria-pressed>` (DuVay `w-btn-toggle` cannot swap the icon and keep one name) |
+| More menu, Choose devices, keyboard shortcuts | none (DuVay and Tailwind) | `call-controls.html` K4-K10 | `components/calls/more/tac.html`, `components/calls/devices/tac.html` + `CallDeviceService.go` (device lists and changes) | `w-menu`, `w-dialog` (sheet on phones), `w-select`, `w-progress-linear`, `w-hotkey` |
+| People panel (in the call, not in the call, Ring again) | none (DuVay and Tailwind) | `call-layouts.html` V5, `call-view.html` | `components/calls/people/tac.html` | `w-avatar`, `w-btn`, `w-icon-btn` |
+| Screen sharing view and notes | `.ms-call-note` | `call-layouts.html` V6-V8, V10 | inside `pages/call/tac.html` | `w-btn` |
+| Call bar outside the call view | `.ms-call-mini` | `call-layouts.html` V11 | `components/calls/mini-bar/tac.html` (in the app shell) | native buttons as in the bar |
+| Recording: ask dialog, telling everyone, banner (recorder and others), stop, saved, failures | `.ms-rec-banner*` | `call-recording.html` W1-W13 | `components/calls/recording/tac.html`, `components/calls/rec-banner/tac.html` + `CallRecordingService.go` (P7 `Recorder`, the notice `signal`) | `w-dialog`, `w-btn`, `w-snackbar` |
+| Call rows in the timeline, sidebar mark, Activity item | `.ms-call-row*` | `call-history.html` H1-H7 | `components/conversation/call-row/tac.html`; sidebar and Activity rows get a call variant | `w-btn`, `w-list-item`, `w-badge` |
+| Permission, not supported and connection states | `.ms-call-note--warn`, `.ms-call-btn__mark`, `.ms-call-tile__badge` | `call-states.html` P1-P16 | inside the call components + `CallService.go` | Mesail notice boxes, `w-progress-circular`, `w-dialog` |
+
 ## Settings (new group: no slice owns it yet)
 
 | Component | Mockups | Tac target | DuVay element(s) |

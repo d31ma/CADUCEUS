@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en" w-theme="light" w-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mesail mockup: call buttons in a conversation</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/screens/call.css">
+<script src="assets/vendor/duvay-mesail.js" defer></script>
+<script src="assets/mockup.js" defer></script>
+</head>
+<body class="bg-surface-low text-text">
+<a class="ms-skip-link" href="#b1">Skip to the first state</a>
+<div class="min-h-dvh safe-t safe-b safe-l safe-r" style="--ms-edge: 1rem">
+  <div class="grid min-h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_auto_1fr] justify-items-center gap-6 py-8 short:gap-3 short:py-3">
+    <header><p class="inline-flex items-center gap-2"><span class="ms-wordmark__mark relative size-8 rounded-lg bg-rail" aria-hidden="true"></span><span class="text-xl font-bold tracking-tight">Mesail</span></p></header>
+    <p class="max-w-3xl px-1 text-center text-sm text-subtle">Where calls start (SPEC AC-CL-1, AC-CL-9; ADR 0012). Calls exist only in chat conversations of one domain: a direct conversation, a group, or a channel (all up to 50 members). The buttons sit in the conversation header, before Details. Keyboard: Tab reaches them like any header button; their names say who is called.</p>
+    <!-- Mockup: labelled states side by side. -->
+    <main class="grid w-full max-w-[110rem] items-start justify-items-center gap-x-6 gap-y-10 short:gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,36rem),1fr))]">
+      <section class="grid w-full max-w-content content-start gap-3" id="b1" aria-label="B1 &middot; Direct conversation: audio and video buttons left of Details">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B1 &middot; Direct conversation: audio and video buttons left of Details</p>
+        <div class="@container/main w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider">
+            <h2 class="flex min-w-0 items-center gap-2 text-lg font-bold"><w-avatar text="BL" size="24" status="online" style="--h:20" alt="Bo Lee, active"></w-avatar><span class="truncate">Bo Lee</span></h2>
+            <div class="ml-auto flex items-center gap-1"><w-icon-btn icon="phone" class="" aria-label="Audio call Bo Lee" ></w-icon-btn><w-icon-btn icon="video" class="" aria-label="Video call Bo Lee" ></w-icon-btn><span class="mx-1 h-5 w-px bg-divider" role="presentation"></span><w-icon-btn icon="info" aria-label="Details"></w-icon-btn></div>
+          </div>
+          <div class="grid gap-1 py-3" role="log" aria-label="Messages"><p class="px-4 text-sm text-subtle">Pressing either button starts the call at once and rings Bo Lee&rsquo;s devices (no question first for a call of two).</p></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content content-start gap-3" id="b2" aria-label="B2 &middot; Group of 3 (Bo, Chen, Dara): the same two buttons">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B2 &middot; Group of 3 (Bo, Chen, Dara): the same two buttons</p>
+        <div class="@container/main w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider">
+            <h2 class="flex min-w-0 items-center gap-2 text-lg font-bold"><w-avatar text="3" size="24" alt=""></w-avatar><span class="truncate">Bo, Chen, Dara</span></h2>
+            <div class="ml-auto flex items-center gap-1"><w-icon-btn icon="phone" class="" aria-label="Audio call Bo, Chen and Dara" ></w-icon-btn><w-icon-btn icon="video" class="" aria-label="Video call Bo, Chen and Dara" ></w-icon-btn><span class="mx-1 h-5 w-px bg-divider" role="presentation"></span><w-icon-btn icon="info" aria-label="Details"></w-icon-btn></div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content content-start gap-3" id="b3" aria-label="B3 &middot; Group of 3 or more: one question before everyone is rung">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B3 &middot; Group of 3 or more: one question before everyone is rung</p>
+        <div class="@container/main w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider">
+            <h2 class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="lock" class="ms-icon-sm" role="img" aria-label="Private group"></w-icon><span class="truncate">design</span></h2>
+            <div class="ml-auto flex items-center gap-1"><w-icon-btn icon="phone" aria-label="Audio call everyone in #design"></w-icon-btn><w-icon-btn icon="video" aria-label="Video call everyone in #design" aria-expanded="true" aria-haspopup="dialog" class="[&_.w-icon-btn]:bg-selected"></w-icon-btn><span class="mx-1 h-5 w-px bg-divider" role="presentation"></span><w-icon-btn icon="info" aria-label="Details"></w-icon-btn></div>
+          </div>
+          <div class="flex justify-end p-3">
+            <div role="dialog" aria-modal="false" aria-labelledby="b3-title" class="w-full max-w-sm rounded-xl border border-border bg-surface-high p-4 shadow-xl">
+              <h3 id="b3-title" class="text-base font-semibold">Start a video call in #design?</h3>
+              <p class="mt-1 text-sm">Everyone in #design is rung: 24 people. Anyone in #design can join while the call lasts.</p>
+              <div class="mt-4 flex flex-wrap justify-end gap-2 max-sm:[&>*]:flex-1"><w-btn variant="text">Cancel</w-btn><w-btn variant="filled" prepend-icon="video">Start video call</w-btn></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content content-start gap-3" id="b4" aria-label="B4 &middot; Email conversation: no call buttons (email contacts cannot be called, AC-CL-1)">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B4 &middot; Email conversation: no call buttons (email contacts cannot be called, AC-CL-1)</p>
+        <div class="@container/main w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider">
+            <h2 class="flex min-w-0 items-center gap-2 text-lg font-bold"><w-avatar text="CD" size="24" class="ms-external" alt="Carol Diaz, outside example.com"></w-avatar><span class="truncate">Carol Diaz</span></h2>
+            <div class="ml-auto flex items-center gap-1"><w-icon-btn icon="info" aria-label="Details"></w-icon-btn></div>
+          </div>
+          <div class="grid gap-1 py-3" role="log" aria-label="Messages"><p class="px-4 text-sm text-subtle">The buttons are left out, not disabled: there is nothing to explain, because people outside example.com are reached by email only.</p></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content content-start gap-3" id="b5" aria-label="B5 &middot; A call is running in this conversation: Join replaces the two buttons">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B5 &middot; A call is running in this conversation: Join replaces the two buttons</p>
+        <div class="@container/main w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider">
+            <h2 class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="lock" class="ms-icon-sm" role="img" aria-label="Private group"></w-icon><span class="truncate">design</span></h2>
+            <div class="ml-auto flex items-center gap-1"><w-btn variant="filled" size="small" prepend-icon="phone" class="[&_.w-btn]:bg-[color:var(--ms-call-accept)] [&_.w-btn]:border-[color:var(--ms-call-accept)]" aria-label="Join the call in #design, 3 people, 04:12">Join</w-btn><span class="mx-1 h-5 w-px bg-divider" role="presentation"></span><w-icon-btn icon="info" aria-label="Details"></w-icon-btn></div>
+          </div>
+          <div class="grid gap-1 py-3" role="log" aria-label="Messages"><article class="ms-call-row ms-call-row--live" aria-label="Chen Wu started a call"><span class="ms-call-row__icon"><w-icon name="phone" class="" aria-hidden="true"></w-icon></span><span class="grid min-w-0 gap-0.5"><span class="ms-call-row__title truncate">Chen Wu started a call</span><span class="flex items-center gap-1 text-xs text-subtle"><w-avatar-group role="group" aria-label="In the call: Chen Wu, Bo Lee, Dara Okafor"><w-avatar text="CW" size="20" style="--h:280" alt="" ></w-avatar><w-avatar text="BL" size="20" style="--h:20" alt="" ></w-avatar><w-avatar text="DO" size="20" style="--h:140" alt="" ></w-avatar></w-avatar-group><span>3 in the call &middot; 04:12</span></span></span><w-btn variant="outlined" size="small" prepend-icon="phone">Join</w-btn></article></div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content content-start gap-3" id="b6" aria-label="B6 &middot; You are in this call (from another view): Return to call">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B6 &middot; You are in this call (from another view): Return to call</p>
+        <div class="@container/main w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider">
+            <h2 class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="lock" class="ms-icon-sm" role="img" aria-label="Private group"></w-icon><span class="truncate">design</span></h2>
+            <div class="ml-auto flex items-center gap-1"><w-btn variant="tonal" size="small" prepend-icon="picture-in-picture">Return to call</w-btn><span class="mx-1 h-5 w-px bg-divider" role="presentation"></span><w-icon-btn icon="info" aria-label="Details"></w-icon-btn></div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-dialog content-start gap-3" id="b7" aria-label="B7 &middot; Already in another call: leave it first?">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B7 &middot; Already in another call: leave it first?</p>
+        <div role="dialog" aria-modal="false" aria-labelledby="b7d-title" data-duvay="w-dialog" class="@container/dialog w-full rounded-xl border border-border bg-surface shadow-xl">
+          <div class="flex items-start gap-3 px-4 pt-5 pb-2 sm:px-6"><span class="grid size-10 flex-none place-items-center rounded-full bg-surface-high text-text" aria-hidden="true"><w-icon name="phone"></w-icon></span><h2 id="b7d-title" class="min-w-0 flex-1 pt-1.5 text-xl font-semibold">Leave your call in #design?</h2></div>
+          <div class="grid gap-3 px-4 pb-2 sm:px-6">
+            <p>You can be in one call at a time. To call Bo Lee, Mesail first takes you out of the call in #design. The call there goes on without you.</p>
+          </div>
+          <div class="flex flex-wrap-reverse items-center justify-end gap-2 px-4 pt-4 pb-5 sm:px-6 max-sm:[&>*]:flex-1">
+            <w-btn variant="text">Stay in #design</w-btn><w-btn variant="filled" prepend-icon="phone">Leave and call Bo Lee</w-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content content-start gap-3" id="b8" aria-label="B8 &middot; Phone header (under 768 px): 44 px buttons, the details button moves into the title">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B8 &middot; Phone header (under 768 px): 44 px buttons, the details button moves into the title</p>
+        <div class="w-full max-w-[23.4375rem] justify-self-center overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-1 min-h-13 px-2 border-b border-divider">
+            <w-icon-btn icon="arrow-left" aria-label="Back to conversations" class="[&_.w-icon-btn]:min-h-11 [&_.w-icon-btn]:min-w-11"></w-icon-btn>
+            <button type="button" class="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left" aria-label="Bo Lee, active. Show details"><w-avatar text="BL" size="24" style="--h:20" alt="" ></w-avatar><span class="truncate text-base font-bold">Bo Lee</span></button>
+            <w-icon-btn icon="phone" aria-label="Audio call Bo Lee" class="[&_.w-icon-btn]:min-h-11 [&_.w-icon-btn]:min-w-11"></w-icon-btn>
+            <w-icon-btn icon="video" aria-label="Video call Bo Lee" class="[&_.w-icon-btn]:min-h-11 [&_.w-icon-btn]:min-w-11"></w-icon-btn>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content content-start gap-3" id="b9" aria-label="B9 &middot; Not supported here (AC-CL-9, e.g. the Linux app): the buttons stay, dimmed, and explain">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B9 &middot; Not supported here (AC-CL-9, e.g. the Linux app): the buttons stay, dimmed, and explain</p>
+        <div class="@container/main w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider">
+            <h2 class="flex min-w-0 items-center gap-2 text-lg font-bold"><w-avatar text="BL" size="24" status="online" style="--h:20" alt="Bo Lee, active"></w-avatar><span class="truncate">Bo Lee</span></h2>
+            <div class="ml-auto flex items-center gap-1"><w-icon-btn icon="phone" class="ms-call-unavailable" aria-label="Audio call Bo Lee. Calls are not available on this device" ></w-icon-btn><w-icon-btn icon="video" class="ms-call-unavailable" aria-label="Video call Bo Lee. Calls are not available on this device" ></w-icon-btn><span class="mx-1 h-5 w-px bg-divider" role="presentation"></span><w-icon-btn icon="info" aria-label="Details"></w-icon-btn></div>
+          </div>
+          <div class="flex justify-end p-3">
+            <div role="dialog" aria-modal="false" aria-labelledby="b9-title" class="w-full max-w-sm rounded-xl border border-border bg-surface-high p-4 shadow-xl">
+              <h3 id="b9-title" class="flex items-center gap-2 text-base font-semibold"><w-icon name="info" class="" aria-hidden="true"></w-icon>Calls are not available on this device</h3>
+              <p class="mt-1 text-sm">The Mesail app for Linux cannot make calls yet. Use Mesail in a browser on this computer, or on your phone.</p>
+              <div class="mt-4 flex justify-end"><w-btn variant="filled">OK</w-btn></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content content-start gap-3" id="b10" aria-label="B10 &middot; Group calls not available in this browser (no frame encryption); calls of two still work">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B10 &middot; Group calls not available in this browser (no frame encryption); calls of two still work</p>
+        <div class="@container/main w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider">
+            <h2 class="flex min-w-0 items-center gap-1 text-lg font-bold"><w-icon name="lock" class="ms-icon-sm" role="img" aria-label="Private group"></w-icon><span class="truncate">design</span></h2>
+            <div class="ml-auto flex items-center gap-1"><w-icon-btn icon="phone" class="ms-call-unavailable" aria-label="Audio call everyone in #design. Group calls are not available in this browser" ></w-icon-btn><w-icon-btn icon="video" class="ms-call-unavailable" aria-label="Video call everyone in #design. Group calls are not available in this browser" ></w-icon-btn><span class="mx-1 h-5 w-px bg-divider" role="presentation"></span><w-icon-btn icon="info" aria-label="Details"></w-icon-btn></div>
+          </div>
+          <div class="flex justify-end p-3">
+            <div role="dialog" aria-modal="false" aria-labelledby="b10-title" class="w-full max-w-sm rounded-xl border border-border bg-surface-high p-4 shadow-xl">
+              <h3 id="b10-title" class="flex items-center gap-2 text-base font-semibold"><w-icon name="info" class="" aria-hidden="true"></w-icon>Group calls are not available in this browser</h3>
+              <p class="mt-1 text-sm">This browser cannot encrypt group calls the way Mesail needs. Update it, or use the Mesail app. Calls with one person work here.</p>
+              <div class="mt-4 flex justify-end"><w-btn variant="filled">OK</w-btn></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="grid w-full max-w-content content-start gap-3" id="b11" aria-label="B11 &middot; Offline: pressing a call button explains instead of calling">
+        <p class="justify-self-start rounded-full border border-dashed border-outline bg-surface px-3 py-1 text-xs font-semibold text-subtle">B11 &middot; Offline: pressing a call button explains instead of calling</p>
+        <div class="@container/main w-full overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
+          <div class="flex items-center gap-2 min-h-13 px-4 border-b border-divider">
+            <h2 class="flex min-w-0 items-center gap-2 text-lg font-bold"><w-avatar text="BL" size="24" status="" style="--h:20" alt="Bo Lee, offline"></w-avatar><span class="truncate">Bo Lee</span></h2>
+            <div class="ml-auto flex items-center gap-1"><w-icon-btn icon="phone" class="" aria-label="Audio call Bo Lee" ></w-icon-btn><w-icon-btn icon="video" class="" aria-label="Video call Bo Lee" ></w-icon-btn><span class="mx-1 h-5 w-px bg-divider" role="presentation"></span><w-icon-btn icon="info" aria-label="Details"></w-icon-btn></div>
+          </div>
+          <div class="grid p-3"><p class="flex items-center gap-2 justify-self-center rounded-lg bg-inverse px-4 py-2 text-sm text-on-inverse" role="status"><w-icon name="wifi-off" class="ms-icon-sm" aria-hidden="true"></w-icon>You are offline. Calls need the network.</p></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="sr-only" aria-live="polite" id="announcer"></div>
+</body>
+</html>

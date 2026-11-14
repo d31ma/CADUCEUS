@@ -2,9 +2,9 @@
 
 - Status: Draft for implementation
 - Date: 2026-11-10 (one login, ADR 0005, offline first, ADR 0006, and browser push, AC-PN-3: 2026-11-11;
-  passkeys and the app lock, ADR 0008: 2026-11-12)
+  passkeys and the app lock, ADR 0008: 2026-11-12; audio and video calls, ADR 0012: 2026-11-14)
 - Owner: Senior UX/UI Designer (Mesail rewrite)
-- Product spec: [../SPEC.md](../SPEC.md) (scenarios S1-S18, acceptance criteria AC-*; one login: AC-ID-1 to AC-ID-14; offline first: AC-OF-1 to AC-OF-20, section 15; passkeys and the app lock: AC-ID-15 to AC-ID-19, AC-OF-20, section 17)
+- Product spec: [../SPEC.md](../SPEC.md) (scenarios S1-S18, acceptance criteria AC-*; one login: AC-ID-1 to AC-ID-14; offline first: AC-OF-1 to AC-OF-20, section 15; passkeys and the app lock: AC-ID-15 to AC-ID-19, AC-OF-20, section 17; calls: AC-CL-1 to AC-CL-9, section 18)
 - Design tokens: [TOKENS.md](TOKENS.md)
 - Component inventory and Tac mapping: [COMPONENTS.md](COMPONENTS.md)
 - Mockups: [mockups/index.html](mockups/index.html) (open the file in a browser; add
@@ -456,6 +456,14 @@ Questions from the screen work (product owner to decide; none blocks the first s
   `400 invalid_passkey`. (d) **Design choices confirmed:** without passkey support the Passkeys row still shows
   when the account has passkeys (Remove works, Add is hidden); the passkey button opens the default domain
   (AC-ID-16); the locked screen shows no counts; Rename needs no password.
+- **Calls (slice CU): sent to mesail-arch on 2026-11-14; the mockups show the proposal in brackets.**
+  (a) How long devices ring before `call.ring.end` [45 s]. (b) Do calls of two need the frame-transform hook? [no:
+  a browser without it says "Group calls are not available in this browser" and calls of two work]. (c) Do not
+  disturb [the card shows with no sound; no "Incoming call" push; the missed-call row still comes]. (d) More than
+  one recorder at once [allowed; one banner lists every name]. (e) A declined call of two [the "Missed call" row].
+  (f) A recording that fails part way [the part already written stays in the file]. (g) Switching domain during a
+  call [asks "Leave the call and switch?"]. Also: SPEC section 6 still lists "End-to-end encryption" as out of
+  scope, which contradicts ADR 0011, ADR 0012 and AC-CL-3.
 - **Settings.** Does the job title come from Keycloak, like the name? Is "Always show images from
   people I have emailed" allowed (AC-IN-5 speaks of one sender at a time)? Is auto-reply out of the
   first release (the mockup shows it as "Later release")?
@@ -788,3 +796,228 @@ keeps a copy; browsers and the Linux app never show it (`StorageUnlockUnavailabl
   it to the app's icon set). Every new target is at least 44 px on touch and under 768 px. Checked in headless
   Chromium at 320, 375, 768, 1024, 1440 and 2560 px, light and dark, coarse pointer at 375, 768 and 1024: no
   sideways scroll, no small targets.
+
+## 18. Audio and video calls (ADR 0012, SPEC AC-CL, slice CU)
+
+Mockups: `call-view.html` (a group call in place, full window, responsive), `call-buttons.html` (where calls
+start), `call-incoming.html` (ringing and the caller's side), `call-layouts.html` (two people, groups, screen
+sharing, phones, the call bar), `call-controls.html`, `call-recording.html`, `call-history.html`,
+`call-states.html` (permissions, not supported, connection problems). Server side: CONTRACTS "Signalling and
+calls" (`call.create`, `call.join`, `call.ring`, `call.ring.end`, `call.leave`, `signal` of kind `call`) and
+"calls" (`409 call_full`). Client side: TACHYON `Peers` (P1), `Media` (P5), `Recorder` (P7); the call client is
+slice G12.
+
+**What a call is.** A call belongs to one chat conversation of one domain: a direct conversation, a group or a
+channel, all with at most 50 members (ADR 0011). Two people go device to device; three or more go through the
+`calls` server, which cannot read the media. Every call is end-to-end encrypted, and the call view says so in its
+header ("End-to-end encrypted", lock icon). Email conversations have no calls.
+
+| Rule | Screens and states |
+| --- | --- |
+| AC-CL-1 Starting | 18.1; `call-buttons.html` B1-B7, `call-incoming.html` C1-C3, `call-history.html` H1, H3 (Join) |
+| AC-CL-2 Size (50, 9 videos, speaker first) | 18.3; `call-view.html`, `call-layouts.html` V3-V5, V9; `call-states.html` P13 (full) |
+| AC-CL-3 Private | header "End-to-end encrypted" in every call view; `call-states.html` P14 (removed from the conversation) |
+| AC-CL-4 Ringing, push, missed | 18.2; `call-incoming.html` R1-R12; `call-history.html` H1-H3, H5-H6 |
+| AC-CL-5 History rows | 18.6; `call-history.html` H1-H7 |
+| AC-CL-6 Controls, last one out ends it | 18.4; `call-controls.html` K1-K11; `call-layouts.html` V12-V13 |
+| AC-CL-7 Screen sharing on computers | 18.3; `call-layouts.html` V6-V8, V10; `call-states.html` P5 |
+| AC-CL-8 Recording with the banner | 18.5; `call-recording.html` W1-W13; `call-incoming.html` R3; `call-view.html` |
+| AC-CL-9 Not supported | 18.1, 18.7; `call-buttons.html` B9-B10; `call-incoming.html` R10; `call-states.html` P7; `call-controls.html` K5 (recording) |
+
+### 18.1 Where calls start (AC-CL-1, AC-CL-9)
+
+- **Two buttons in the conversation header**, before Details: **Audio call** (`phone`) and **Video call**
+  (`video`). Their accessible names say who is called ("Video call Bo Lee", "Video call everyone in #design").
+  Phones keep both as 44 px icon buttons.
+- **A call of two starts at once.** For three or more members, a small popover asks first: "Start a video call
+  in #design?" with "Everyone in #design is rung: 24 people. Anyone in #design can join while the call lasts."
+  and **Start video call** / **Cancel** (design choice: ringing 50 people by a slip of the mouse is worse than
+  one extra click).
+- **A running call** replaces the two buttons with a green **Join** ("Join the call in #design, 3 people, 04:12");
+  when this device is already in it, **Return to call**. A call row in the timeline also has **Join** (18.6).
+- **One call at a time.** Calling while in another call asks "Leave your call in #design?" with **Stay in
+  #design** and **Leave and call Bo Lee**.
+- **Email conversations:** no buttons at all (nothing to explain; email contacts cannot be called).
+- **Not supported (AC-CL-9):** where TACHYON answers "unsupported" (the Linux app at first), the buttons stay in
+  place, dimmed, focusable, with names that end "Calls are not available on this device". Pressing one opens a
+  popover "Calls are not available on this device" with where calls do work ("The Mesail app for Linux cannot
+  make calls yet. Use Mesail in a browser on this computer, or on your phone."). A partial case: a browser that
+  cannot encrypt group calls (no encoded-transform hook) says "Group calls are not available in this browser"
+  on group buttons, and calls of two work (waiting for mesail-arch, section 14).
+- **Offline:** the buttons stay; pressing one shows "You are offline. Calls need the network."
+
+### 18.2 Ringing (AC-CL-4)
+
+- **Computers:** a dark card at the top right of the window, over everything, `role="alertdialog"` that does
+  **not** take focus (the person may be typing). Screen readers hear once, assertively: "Bo Lee is calling,
+  video call. Press Control Shift A to accept, Control Shift D to decline." F6 moves focus into the card.
+  Contents: the picture with a pulsing ring (still with reduced motion), the name, "Video call" or "Audio call",
+  and the domain; for a group: "#design", "Chen Wu is calling · video call", "3 people are in the call". Buttons
+  (56 px round): **Decline**, **Audio only** (video calls only), **Accept**. Esc does not decline.
+- **A recording already runs:** the card shows the red "Recording by Chen Wu" line before the person joins.
+- **Phones:** the whole screen, the caller large, **Decline** and **Accept**, and a text button **Answer without
+  video**. A real phone call screen on the lock screen comes later (TACHYON P6); until then the push opens the app.
+- **Sound:** a ring for up to 45 seconds (ring time to confirm with mesail-arch). Do not disturb: the card shows
+  with "No sound: Do not disturb is on", and no push goes to other devices.
+- **While in another call:** a compact card with **Decline** and **Leave and answer**.
+- **Ends:** answered or declined on another of the person's devices: the card closes with "Answered on your other
+  device."; nobody answered or the caller stopped: a status "Missed call from Bo Lee" with **Call back**, and the
+  chat gets the missed-call row.
+- **Devices that cannot call** are told, not rung: "Bo Lee is calling. Calls are not available on this device.
+  Answer on your phone or in a browser." with **Dismiss**.
+- **Push (no names):** "Incoming call" / "Open Mesail to answer." and "Missed call" / "Open Mesail to see it."
+  Opening it shows "Opening the call…" while the app decrypts the invitation, then the ringing card; a call that
+  ended meanwhile says "This call has ended." with **Call back**.
+- **The caller's side:** a call of two shows "Calling Bo Lee…" and "Ringing" with the caller's own camera small,
+  and **Cancel** in place of Leave. No answer and a decline use the same words, "Bo Lee did not answer", with
+  **Call again** and **Close** (a decline is not shown as a refusal). A group caller is in the call at once:
+  "Waiting for others to join" and "23 people are being rung. Anyone in #design can join."
+
+### 18.3 The call view (AC-CL-2, AC-CL-7)
+
+- **The stage is dark in every theme** (`--ms-call-*` tokens), like a video player, so video and shared screens
+  look the same in light and dark mode. The view covers the whole window; the back arrow returns to the
+  conversation while the call goes on (18.5). Header: conversation name, "25 people · example.com", "End-to-end
+  encrypted" with the lock (the words hide under 600 px, the lock stays), and the call time.
+- **Call of two, video:** the other person fills the stage; your own picture is small at the bottom right.
+  Audio: both pictures in two tiles.
+- **Groups:** a grid of at most 9 tiles. The person speaking is first (top left); the others follow by who spoke
+  last (the `calls` server forwards the 9 most recent speakers). You are one of the tiles ("You"). When more
+  people are in the call than fit, the last tile is "+17 more", which opens People. Columns follow the stage's own
+  width: 1 or 2 columns up to 30rem, 2 up to 48rem, 3 from 48rem. A tile does not move for someone who speaks
+  under 2 seconds, so the grid stays calm.
+- **Phones (stage under 30rem):** 4 taller tiles (3:4): the speaker, one more person, you, "+22 more".
+- **Tiles:** video, or the person's picture when the camera is off. A name label at the bottom left. The person
+  speaking has a 3 px ring (`--ms-call-speaking`) **and** a sound-lines icon; muted people a slashed microphone;
+  a weak connection a "Weak connection" badge. Each tile's accessible name says the same ("Bo Lee, muted").
+- **People** (button with the count; docked at the right from 1280 px, a sheet below): "In the call (25)" with
+  microphone state and notes ("Speaking · recording", "Sharing their screen"), then "Not in the call (2)" with
+  **Ring again** per person.
+- **Screen sharing (computers only, one person at a time):** the shared screen takes the large area and 4 speakers
+  sit beside it (below it under 48rem); a note says "Ana Ruiz is sharing their screen". The sharer sees "You are
+  sharing your whole screen. Everyone in the call sees it." with **Stop sharing**, and a tip to close private
+  windows. While someone shares, Share screen says "Dara Okafor is sharing their screen. One person shares at a
+  time." Phones see the shared screen across the width ("turn the phone for a bigger picture") and have no Share
+  button. The system's own picker chooses what to share.
+
+### 18.4 Controls (AC-CL-6, AC-CL-7)
+
+- **The bar:** Mute, Camera off, Share screen (computers), People, More, Leave. Phones: Mute, Camera off,
+  Speaker (loudspeaker on or off), People, More, Leave. Each is a real `<button>` with a caption under a 48 px
+  face; the caption is the accessible name. Toggles use `aria-pressed`: pressed means OFF (muted, camera off), drawn
+  as an inverted face **and** a slashed icon. Leave is red and wider. Under 25rem of stage the captions hide (names
+  stay for screen readers) and faces shrink to the 44 px touch floor so all six fit at 320 px.
+- **More:** Choose devices…, Record this call… ("Saved only on this device"), Keyboard shortcuts. Where recording
+  is not possible, the item is disabled with "Recording is not available on this device".
+- **Choose devices** (a dialog; a bottom sheet on phones): Microphone with a live level meter ("Speak to test it"),
+  Camera with a preview, Speaker with **Play a test sound**; "Echo cancellation and noise reduction are on.
+  Changes apply at once, in this call and the next ones on this device." Where the system decides the sound
+  output (phones), the Speaker list is replaced by "Sound plays where your phone sends it. To use a headset or the
+  car, choose it in the phone's own sound controls."
+- **Device changes:** a status line, e.g. "AirPods Pro connected. Sound and microphone now use them." or "Your
+  USB microphone was unplugged. Mesail now uses MacBook Pro Microphone."
+- **Talking while muted:** "You are muted. Press Control Shift M, or Mute, to talk." for 4 seconds, at most once a
+  minute (detected on the device; nothing is sent).
+- **Leave** never asks, except while you record (18.5). In a group the call goes on ("You left the call. It goes
+  on with 24 people." with **Rejoin**); the others hear a short tone and see "Bo Lee left" for 3 seconds. There is no
+  "end for everyone": the call ends when the last person leaves ("Call ended · 12 min").
+- **Shortcuts** (Cmd instead of Control on Apple; shown in Keyboard shortcuts and as `aria-keyshortcuts`):
+  Control+Shift+M mute, +O camera, +E share, +H leave, +A accept with video, +S accept with audio only, +D decline;
+  F6 moves between the stage, the bar and the people list.
+- **The call bar outside the call view:** when the person opens another conversation, a dark bar sits on top of
+  the main pane: "#design · 25 people · 12:04", Mute, Return to call, Leave (44 px on touch).
+
+### 18.5 Recording on the device (AC-CL-8)
+
+1. **More > Record this call…** opens "Record this call on this device?": the file is saved only on this device in
+   a file the person chooses; it holds everyone's sound and the main picture (the speaker, or a shared screen);
+   "Everyone in the call sees "Recording by Ana Ruiz" while it runs, people who join later too. Ask the others
+   first."; "No server gets the recording. Mesail cannot stop other tools from recording a call." **Choose where
+   to save…** / **Cancel**.
+2. The system's save dialog (suggested name `design-call-2026-11-14-1004.webm`). Cancelled: "Not recording. No file
+   was chosen."
+3. "Telling everyone in the call that you will record…" while the notice goes to every device in the call
+   (`signal` of kind `call`); recording starts only when `signal.result.offline` is empty for the devices in the
+   call. If not: "Not recording. Mesail could not tell everyone in the call: 1 device did not get the notice.
+   Nothing was recorded." with **Try again**.
+- **The banner** (`.ms-rec-banner`, `--ms-recording-bg`): full width under the call header, for everyone, with **no
+  close button** while the recording runs. Others: "Recording by Ana Ruiz" and "The recording is saved only on Ana
+  Ruiz's device. Mesail does not keep it." The recorder: "You are recording this call", "Saved only on this computer ·
+  08:12 · 96 MB written" and **Stop recording**. Phones: the same, shorter. Two recorders: one banner, "Recording by
+  Ana Ruiz and Chen Wu". It is a `role="status"` line: heard once when it appears ("Ana Ruiz is recording this
+  call."), then it stays first in the reading order.
+- **People who join later** see it before they join (on the ringing card and on the call row next to Join) and in
+  the call from the first second: the recorder's device sends the current state to each device that joins.
+- **Stop:** the recorder gets "Recording saved: design-call-2026-11-14-1004.webm (412 MB)" with **Show in Finder**
+  (Show in folder on Windows, Open on phones); everyone else sees the banner go and "Ana Ruiz stopped recording."
+- **Leaving while recording** asks "Leave and stop recording?" ("Mesail saves what was recorded in …") with
+  **Stay in the call** / **Leave and stop**. A recorder whose device drops out ends the recording; the banner goes
+  for everyone with "Ana Ruiz's recording ended: Ana left the call." Back in the call, recording does not resume by
+  itself: they start again and everyone is told again.
+- **Write failure** (disk full, P7 `failed`): "Recording stopped. Mesail could not write the file; the disk may be
+  full. The file holds what was recorded until 10:42." (`role="alert"`).
+
+### 18.6 Call history in the chat (AC-CL-4, AC-CL-5)
+
+- Three system rows, written by the caller's device as encrypted chat messages; each device words them for its
+  own person. An icon tile, a title, a detail line and one button:
+  - **Started** (green tile, while the call runs): "Ana Ruiz started a call", "Video call · 09:30 · You and Ana are
+    in it", **Join**.
+  - **Ended:** "Call ended · 12 min", "09:30 to 09:42" (groups add "9 people joined").
+  - **Missed** (red tile, `phone-missed`): the person rung sees "Missed call from Ana Ruiz" with **Call back**; the
+    caller sees "Bo Lee did not answer" with **Call again**. A group call nobody joined: "Missed call from Chen Wu",
+    "Nobody joined". A declined call shows as missed.
+- Duration words: "less than 1 min", "12 min", "1 h 05 min" (screen readers: "12 minutes", "1 hour 5 minutes").
+- Rows are not messages: no reactions, threads or edits. In lists under 22rem the button moves under the words.
+- **Sidebar:** a missed call makes the conversation unread ("Missed call" as its second line, a count of 1); a
+  running call shows a green phone mark ("Call in progress"). **Activity** lists "Missed call from Bo Lee" with
+  **Call back**.
+
+### 18.7 Permissions, not supported, connection problems (AC-CL-3, AC-CL-9, AC-UI-4)
+
+- **Before the browser asks** (first call in this browser): "Mesail needs your microphone and camera for this call.
+  Your browser now asks. Choose Allow." Mesail asks only when a call starts or is accepted, never on page load.
+- **Blocked microphone:** the call goes on (listening); the Mute button keeps a warning mark and its description
+  points at a box "Mesail cannot use your microphone. It is blocked in this browser's settings. Others cannot hear
+  you. To allow it: select the icon left of the address, then Microphone, then Allow." with **Check again**.
+- **Blocked camera:** the call goes on with sound; "… so the others see your picture instead. You can still talk."
+- **In the apps** the words name the system's own setting (macOS System Settings > Privacy & Security >
+  Microphone / Camera / Screen & System Audio Recording, then quit and open Mesail again for the screen; Windows
+  Settings > Privacy & security > Microphone; iPhone and iPad Settings > Mesail; Android Settings > Apps > Mesail >
+  Permissions), with **Open settings** where the system can open that page.
+- **Screen sharing:** nothing chosen in the picker: "Not sharing. Nothing was chosen." (info); refused by the system:
+  "Mesail cannot share your screen." with where to allow it.
+- **No device / in use:** "No microphone found. Plug one in, or stay in the call to listen."; "Your camera is in use
+  by another app. Close that app, then choose Camera off again to turn it on."
+- **Not supported (AC-CL-9):** a link or button into a call opens "Calls are not available on this device" with where
+  calls work and **Back to #design**.
+- **Connection:** "Joining the call…"; "Reconnecting… Your network dropped. You are still in the call." (tiles freeze
+  and dim; 30 seconds); "Your connection is weak, so others may not see your video." with **Turn camera off**;
+  "Could not connect to the call. Your network may block calls. Try again. If it keeps failing, ask your admin to
+  check that the network allows Mesail calls." with **Try again** / **Leave**; after reconnecting fails: "You left
+  the call because the connection was lost. The call in #design goes on." with **Rejoin**.
+- **Full or ended:** `409 call_full`: "This call is full. 50 people are in it, the most a call can hold. Try again when
+  someone leaves."; "This call has ended."
+- **Removed from the conversation (AC-CL-3):** out at once: "You left the call in #design. You are no longer a member
+  of #design, so you cannot be in its calls. Later calls in #design do not ring for you."
+- **Switching domain during a call:** "Leave the call and switch to example.org?" ("Calls stay inside one domain.");
+  the sign-out confirmation adds "Signing out also ends your call."
+- **Phones in the background:** sound goes on where TACHYON P5 allows; the camera pauses and others see "Camera
+  paused"; where the phone stopped the sound too: "Your phone paused the call while Mesail was in the background."
+
+### 18.8 Rules for every call screen
+
+- **Accessibility:** the call view is a `main` landmark with an `h1`; tiles are `role="img"` with names that carry
+  their state; the bar is a `role="toolbar"`; F6 moves between regions; a skip link jumps to the controls. New
+  people joining and leaving are announced politely and batched ("Bo Lee joined", at most one line every 3
+  seconds). No state is colour alone: speaker ring plus icon, muted slash, recording dot plus words, inverted plus
+  slashed control faces.
+- **Contrast:** every pair on the stage is checked in TOKENS.md "Calls" (stage text 17:1, controls' borders 3.6:1,
+  Leave 5.5:1, recording banner 6.5:1; high contrast: black stage, white borders, yellow speaker ring).
+- **Motion:** the ringing pulse and the recording dot stop with `prefers-reduced-motion`.
+- **Sizes:** controls 48 px faces (44 px floor on touch and under 768 px); answer buttons 56 px; every new target at
+  least 44 px on touch. Checked in headless Chromium at 320, 375, 768, 1024, 1440 and 2560 px, light, dark and high
+  contrast, coarse pointer at 375, 768 and 1024: no sideways scroll, no small target, every icon known.
+- **New icons** in `mockups/build/mesail-icons.js` (the same 2 px stroke on the 24 px grid): `phone`, `phone-off`,
+  `phone-incoming`, `phone-missed`, `video`, `video-off`, `mic`, `mic-off`, `screen-share`, `screen-share-stop`,
+  `record`, `stop`, `volume`, `audio-lines`, `signal-low`, `layout-grid`, `picture-in-picture`.

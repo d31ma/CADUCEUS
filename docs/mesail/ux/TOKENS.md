@@ -199,6 +199,26 @@ cue. Screen readers get the state as text ("Bo Lee, active").
 | `--ms-radius-chip` / `-card` / `-tile` | pill / 12 px (`--w-radius-xl`) / 12 px |
 | `--ms-duration` / `--ms-duration-panel` | 120 ms / 200 ms, `--ms-ease` standard curve; all off with reduced motion |
 
+### Calls (slice CU, `screens/call.css`)
+The call stage is dark in every theme, like a video player. Light and dark use the same values; high contrast
+has its own. Values with WCAG contrast (computed 2026-11-14):
+
+| Token | Light and dark | High contrast | Use and contrast |
+| --- | --- | --- | --- |
+| `--ms-call-stage` / `--ms-on-call-stage` | `#0b1417` / `#eef6f8` | `#000000` / `#ffffff` | stage and its text (17.0:1; HC 21:1) |
+| `--ms-call-stage-subtle` | `#a9bcc2` | `#d6d6d6` | second lines on the stage (9.5:1 on stage, 7.9:1 on a tile) |
+| `--ms-call-tile` | `#17262b` | `#141414` | tile without video (text 14.2:1) |
+| `--ms-call-control` / `-hover` / `-border` | `#26363b` / `#32464c` / `#5d7178` | `#000000` / `#1f1f1f` / `#ffffff` | control faces; the border gives 3.6:1 against the stage (WCAG 1.4.11), text 11.5:1 |
+| `--ms-call-control-off` / `--ms-on-call-control-off` | `#eef6f8` / `#0b1417` | white / black | pressed (muted, camera off) faces, with a slashed icon (17.0:1) |
+| `--ms-call-leave` / `--ms-on-call-leave` | `#c4302b` / white | `#a00000` / white | Leave, Decline (5.5:1; HC 8.4:1) |
+| `--ms-call-accept` / `--ms-on-call-accept` | `#1e7d3a` / white | `#005a1f` / white | Accept, Join (5.2:1; HC 8.5:1) |
+| `--ms-call-speaking` | `#5fd4a8` | `#ffd400` | the speaker's 3 px ring and sound-lines icon (10.2:1 on stage; HC 14.7:1) |
+| `--ms-recording-bg` / `--ms-on-recording` | `#b3261e` / white | `#8c1d18` / white | "Recording by" banner and tags (6.5:1; HC 9.1:1) |
+| `--ms-recording-dot` | `#ff6b61` | same | the record icon on the stage (6.7:1) |
+
+Name labels on video use black at 66 % under white text (at least 7:1 over any picture). Notes on the stage reuse
+DuVay's inverse pair and the warning container pair.
+
 ## Checked contrast (WCAG 2.2 AA)
 
 Computed with the WCAG formula on 2026-11-10: email text 7.0:1 (light) and 8.7:1 (dark) on the

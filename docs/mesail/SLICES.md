@@ -1531,9 +1531,14 @@ AC-OF-17; CONTRACTS "messaging" (Sync), "identity" (kept devices,
   `<personId>/<domainId>/<conversationId>`, eager tables for the
   conversation list, cursors, queue and drafts, load and unload of
   partitions, `StoreWriteFailed` handling; attachments through `Blobs`
-  (T2, on TACHYON `develop` c515d1d6f, ADR 0134, not released yet; O3
-  checks that its blobs can be sealed with T6b, and sends a TACHYON
-  request through the coordinator if not) with AC-OF-2's full window;
+  (T2, on TACHYON `develop` c515d1d6f, ADR 0134, not released yet; its
+  blobs are sealed through a seal hook that T6b installs next to the
+  table seal (TACHYON's answer, 2026-11-14): until then blobs are kept
+  plain with an empty key id, and a sealed blob that no seal can open
+  fails with `unavailable`, never as plain bytes. Each read of a sealed
+  blob opens the whole blob, so a 25 MiB attachment is read whole. No
+  TACHYON request is needed; O3's blob part waits for T6b) with AC-OF-2's
+  full window;
   every table and the blob store sealed
   with `"sealed": "whenAvailable"` (TACHYON T6b, in wave 3 with sealed
   tables), the warning of SPEC AC-OF-18 on the fallback event, and the

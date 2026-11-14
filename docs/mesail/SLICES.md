@@ -1145,7 +1145,17 @@ FYLO owner's design choice; Mesail does not need it.
     (K8's logging step);
   - nothing else: the slices that wait for T1, T13 and other TACHYON
     features use them in their own changes.
-- **Depends on:** K8 merged; the TACHYON release approved by the owner.
+- **TACHYON's follow-up** (TACHYON `develop` 272faa1ce, commits
+  85e0370b0, dab716c14 and 272faa1ce; TACHYON ADR 0128 amendment 2; not
+  released): all store calls of one handler for one answer share one
+  deadline from the first store call (the wait for an old `fylo`, the
+  lock wait and the 2 second `EROOTLOCKED` wait count); a call after the
+  deadline fails before FYLO is called; streams and sockets keep one
+  deadline per call, and a scroll's first page keeps 30 seconds; every
+  deadline failure names the FYLO operation. Tested on Mac, Linux (with a
+  frozen-disk proof) and Windows.
+- **Depends on:** K8 merged; K12 merged before the 1-hour run; the TACHYON
+  release approved by the owner.
 - **Done when:** gates pass on the new pin; the K2 sign-in check passes 10
   runs in a row on Floci; a 1-hour Floci run under K3's sign-in load shows
   no "store is not available" answer, or the owner accepts a written
@@ -2176,6 +2186,30 @@ G6 any time (a new app). G7 after TACHYON P1, P2 and P4 are released and
 the pin moves. G8 last, before the first release (Q7). The first release
 also waits for TACHYON P8 (the Linux desktop app, ADR 0011 Q13); devices
 connect directly when they can (Q12, `relayOnly` false).
+
+### K12. Collections are checked once per process (one session; with each app's owner)
+Found by TACHYON (2026-11-14): TACHYON sends FYLO's `inspectCollection`
+only for `dataSource.collectionExists(name)`, never for document reads. So
+the extra `inspectCollection` on reads that K8 saw comes from Mesail's own
+code, which asks `CollectionExists` before reads and writes (`kit/search`,
+`kit/realtime`, `kit/mailin`, `kit/attachments`, `kit/channels`,
+`messaging` storage, and the `DocumentsService` of `directory` and
+`notify`). TACHYON does not cache it, because another server could drop a
+collection; Mesail can, because one live process owns each root (ADR 0004
+section 4) and only Mesail's own code drops collections.
+- **Owns:** a small helper in `kit/collections` (architecture's package,
+  given to this slice): a per-process set of collections known to exist,
+  filled by the first check or by creating; the code that drops a
+  collection removes it from the set; the call sites above use it, through
+  `scripts/kit-sync.sh`.
+- **Builds:** a read of a collection that does not exist answers as empty
+  without creating it; a write creates it once; each collection is
+  checked at most once per process.
+- **Depends on:** nothing; any time. Whichever of K12 and an app's E slice
+  merges second rebases.
+- **Done when:** a Floci run's FYLO log shows at most one
+  `inspectCollection` per collection per process; gates pass for every
+  app that syncs the kit.
 
 ## Later (after the first release)
 

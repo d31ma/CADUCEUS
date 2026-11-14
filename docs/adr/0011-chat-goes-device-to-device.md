@@ -186,7 +186,13 @@ camera (request P4).
   backup, so Mesail never sends it to a server: the client removes it
   before sending, and `identity` also removes any
   `clientExtensionResults.prf` before it forwards `credentialJson` to
-  Keycloak, and never logs it (slice PK7).
+  Keycloak, and never logs it (slice PK7). TACHYON's fix is on its
+  `develop` (c9eb126a6, its ADR 0126 amendment; not released): the
+  passkey client no longer puts `clientExtensionResults.prf.results`
+  (first and second) in `credentialJson`, and keeps only `prf.enabled`;
+  P3 will give the PRF result as a `Crypto` key handle, never as bytes.
+  `identity` keeps its own removal as a second guard and accepts
+  `prf.enabled`.
 
 ## Requests to TACHYON
 

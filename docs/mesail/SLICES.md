@@ -1806,7 +1806,9 @@ TACHYON's T15 slice (ADR 0008). The Keycloak and identity parts may be built bef
   field's autofill; every `PasskeyFailed` reason has a line (PU); before
   it sends `credentialJson` (sign-in and adding a passkey), the client
   removes `clientExtensionResults.prf` (results and inputs): the PRF
-  result never leaves the device (ADR 0011, PK7).
+  result never leaves the device (ADR 0011, PK7). TACHYON's passkey
+  client already leaves the PRF results out from its `develop` c9eb126a6
+  (keeping only `prf.enabled`); PK4 keeps its own removal anyway.
 - **Depends on:** PU, PK2, TACHYON T13 in a release Mesail uses.
 
 ### PK5. Apps: passkeys in the native shells (P1's successor, with the web app's owner)

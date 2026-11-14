@@ -817,6 +817,62 @@ publicly; shared secret in the header `X-Realtime-Gateway`):
 the gateway's management API `POST` / `DELETE /@connections/{connectionId}`
 (API Gateway's `@connections`). Details: `edge/realtime/README.md`.
 
+### Signalling and calls (from G2 and G11; ADR 0011, ADR 0012)
+
+Draft by G0 and G9 (2026-11-14). The servers know domains, people and
+devices, but not chat groups: groups live on devices (ADR 0011). So
+`realtime` checks only that both ends are devices of members of the
+token's domain; who belongs to a conversation is enforced by the keys
+(MLS and SFrame), not by the server. Every payload is ciphertext.
+
+Socket frames, added to `RealtimeClientMessage` and `RealtimeEvent`:
+
+| Frame (client to server) | Fields | Server action and answer |
+| --- | --- | --- |
+| `signal` | `toDeviceIds[]` (1 to 200), `kind` (`rtc`, `call`, `linking`), `ciphertext` (base64url, at most 64 KiB) | forwards `signal{fromDeviceId, fromPersonId, kind, ciphertext}` to each online target; answers `signal.result{delivered[], offline[]}`; `not_found` when a target is not a device of a member of this domain |
+| `pairing.open` | `pairingId` (from the QR code) | holds the pairing for 2 minutes for the caller's person |
+| `pairing.join` | `pairingId` | when the caller is the SAME person as the opener, both get `pairing.ready{pairingId, peerDeviceId}` and may `signal` each other before the new device is in `directory`; otherwise `not_found` |
+| `call.create` | `media` (`audio`, `video`), `group` (bool) | answers `call.created{callId, joinToken?}`; `joinToken` (for the `calls` app) only for a group call |
+| `call.join` | `callId` | answers `call.joined{joinToken}` for a group call; any device of a member of the call's domain may ask; the media keys decide who can hear |
+| `call.ring` | `callId`, `toPersonIds[]` (at most 49), `invite` (ciphertext, at most 16 KiB) | online devices of those people get `call.ringing{callId, fromPersonId, invite}`; the others get a push "Incoming call" with no names (`notify`, G11) |
+| `call.ring.end` | `callId`, `missed` (person ids that did not join) | online devices stop ringing (`call.ring.ended`); missed people get a push "Missed call" with no names |
+| `call.leave` | `callId` | answers `call.left`; the call ends when the last device leaves |
+
+- Recording notice (AC-CL-8): a `signal` of kind `call` to every device in
+  the call; the recorder's app starts recording only when
+  `signal.result.offline` is empty for the devices in the call.
+- `joinToken`: signed by `realtime` (its keys at `GET
+  /api/v1/realtime/calls/keys`, a JWKS), holding `callId`, `deviceId`,
+  `domainId` and an expiry of 60 seconds.
+- Limits: 50 people per call; a device may create 10 calls per minute.
+- `realtime` asks `notify` for the call pushes with `POST
+  /api/v1/notify/call-pushes` (Allow(Service): `CallPush{toPersonIds[],
+  kind: incoming|missed}`), no names, no call content.
+
+## calls (from G10; ADR 0012)
+
+The forwarding server for group calls (an SFU on Pion). A long-running
+container like `realtime`'s gateway, not a Lambda: it holds media. It
+never has the media keys: every frame is SFrame-encrypted by the sending
+device.
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `POST /api/v1/calls/{callId}/offer` | a valid `joinToken` for this call (header `X-Mesail-Join`) | `CallOffer{sdp}` | `200 CallAnswer{sdp}`; `401` bad or expired token; `409 call_full` with 50 people |
+| `POST /api/v1/calls/{callId}/candidates` | the same token | `CallCandidates{candidates[]}` | `204` |
+| `POST /api/v1/calls/{callId}/leave` | the same token | - | `204` |
+| `GET /api/v1/calls/health` | Public | - | `200 Health` |
+
+- Media on ONE public UDP port shared by every call (OPERATIONS.md), with
+  the TURN relay as the fallback (ADR 0011).
+- Forwarding: each receiving device gets at most 9 videos, the people
+  speaking most recently first (by the audio level the sender marks in
+  each packet's header extension, which is not encrypted), plus the shared
+  screen; simulcast layers by the receiver's bandwidth.
+- `calls` keeps only who is connected to which call, in memory; it loses
+  nothing when it restarts but the calls themselves (devices reconnect).
+- Errors use the MS6500 block (ERRORS.md).
+
 ## notify
 
 | Route | Rule | Request | Response |

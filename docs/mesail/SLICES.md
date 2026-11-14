@@ -1128,7 +1128,10 @@ FYLO owner's design choice; Mesail does not need it.
     cold-start writes took 9.5 and 18 seconds, so 5 seconds turns them
     into failures; a shorter deadline does not free the store sooner,
     because the next call waits for the stuck `fylo` to exit anyway;
-    `directory` gets the same value). Since the owner's approval of
+    `directory` gets the same value; so does the `realtime` container in
+    the Floci stack and on kestrel, added 2026-11-14 after K7 found every
+    `realtime` 503 took 5.01 to 5.08 s, the 5 second limit, during cold
+    starts and disk stalls). Since the owner's approval of
     2026-11-12, TACHYON's budget is for ALL store calls of one HTTP
     request together (the wait for an old `fylo` and the `EROOTLOCKED`
     wait included), not per call. Checked: 15 seconds per request is far
@@ -2446,6 +2449,28 @@ Found by K12 (2026-11-14). Two places still bypass `KnownCollections`:
   after E8) and `notify`'s month collections that never got a
   notification (up to 16 checks each; `notify`'s owner, after E5).
   Reads still never create.
+
+### K14. kit-sync keeps vendored kit copies in step (one small session)
+Found by PK7 (2026-11-14, hand-over
+`~/Library/Logs/local/CADUCEUS/mesail/slice-pk7-handover.md`):
+`edge/calls` vendors the kit with `go mod vendor` (`replace
+mesail.dev/packages => ../../kit`), and `scripts/kit-sync.sh` does not
+update that copy. So a slice that changes a vendored kit package (for
+example `kit/oidc`) breaks `edge/calls`' `TestVendoredKitMatchesKit`
+unless it also runs `go mod vendor` there. Until K14 lands, that manual
+step stays in every such slice's card (E12's card carries it).
+- **Owns, for this change only:** `scripts/kit-sync.sh`.
+- **Builds:** kit-sync finds every Go module that vendors the kit (a
+  `vendor/mesail.dev/packages` folder; today only `edge/calls`) and runs
+  `go mod vendor` there with `GOFLAGS=-mod=mod GOPROXY=off`. `--check`
+  vendors into a temporary copy and fails, naming the module, when the
+  committed copy differs. The script prints each module it updates.
+- **Depends on:** the script freeze ends (E1, E2, E8, K7, PK7 and K6
+  merged; the coordinator says when). Any time after that.
+- **Done when:** changing a file in `kit/oidc` and running
+  `scripts/kit-sync.sh` updates `edge/calls/vendor`;
+  `scripts/kit-sync.sh --check` fails before and passes after;
+  `scripts/gates.sh --shared-only` passes.
 
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 

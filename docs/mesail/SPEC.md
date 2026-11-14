@@ -417,7 +417,26 @@ stable; tests name them.
   recording. Mesail cannot stop recording with other tools.
 - **AC-CL-9 Not supported.** Where a device cannot make calls (TACHYON
   answers "unsupported"), the call buttons say "Calls are not available
-  on this device".
+  on this device". Calls of two need no frame encryption hook (their
+  media is encrypted between the two devices, with keys checked through
+  the encrypted signalling); group calls do. So a browser without that
+  hook says "Group calls are not available in this browser. Calls of two
+  work."
+- **AC-CL-10 Ringing time and answers** (decided 2026-11-14 with CU). A
+  call rings for 45 seconds. A call of two that is declined or not
+  answered gives the "Missed call" row: the caller sees "<name> did not
+  answer" (a decline is not shown as a decline), the callee sees "Missed
+  call from <name>".
+- **AC-CL-11 Do not disturb.** While a person has "do not disturb" on
+  (AC-PN), an incoming call shows the in-app ring card with no sound and
+  sends no "Incoming call" push; the "Missed call" row is still added.
+- **AC-CL-12 Several recorders.** More than one person may record at once;
+  the banner names every recorder ("Recording by Chen Wu and Ana Ruiz").
+  If a recording fails part way (for example a full disk), the file keeps
+  what was recorded until then, and the recorder is told so.
+- **AC-CL-13 One domain per call.** A call belongs to one domain. Switching
+  to another domain in a window with a running call asks "Leave the call
+  and switch?" first.
 
 ### Channels of a domain (AC-CH)
 - **AC-CH-1** A member can create a public channel in their domain, join
@@ -832,7 +851,8 @@ recent data, works offline, and syncs when it is back online.
   sync. The Go code for them stays in `internal/` and is ported after the
   first release.
 - In-browser translation models. The UI is localizable from the start.
-- End-to-end encryption.
+- End-to-end encryption of EMAIL. (Chat and calls ARE end-to-end
+  encrypted: ADR 0011, ADR 0012, AC-CL-3.)
 - Migrating CADUCEUS user credentials. Users enrol again in the Keycloak
   realm `mesail`; mail data is migrated by a separate tool.
 

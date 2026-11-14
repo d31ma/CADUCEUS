@@ -324,14 +324,13 @@ needs `scripts/kit-sync.sh` and the copies in the same commit.
 
 ## 7. Payloads
 
-- `envelope.stored` -> EnvelopeStored (from G6, ADR 0011): `domainId`,
+The Go types are in `kit/events`, one file per type. All ids are wire id strings, times RFC 3339 UTC strings, no `domainId` (the envelope has it). No `omitempty`: every key is always present (empty string / empty list when unset).
+
+- `envelope.stored` -> EnvelopeStored (from G6, ADR 0011):
   `toPersonId`, `toDeviceIds[]` (that person's devices only), `kind`,
   `envelopeId`. No ciphertext, no sender. Producer: `devicebox`.
   Consumers: `realtime` (a notice to an online device), `notify` (a push
   with no text). Replace key: none.
-
-The Go types are in `kit/events`, one file per type. All ids are wire id strings, times RFC 3339 UTC strings, no `domainId` (the envelope has it). No `omitempty`: every key is always present (empty string / empty list when unset).
-
 - `member.upserted` -> MemberUpserted: `memberId` (the person id, the same in every domain), `displayName`, `primaryAddress` (`<username>@<domain>`), `state` (active|disabled|removed). Published into each affected domain when a member is added, changed or removed, or when the person is renamed, disabled or deleted (ADR 0005). On `removed`: channels removes the member from every channel of the domain (publishing `channel.member.removed`), realtime closes the member's connections in the domain, notify deletes the member's push subscriptions and settings in the domain, messaging and search keep the history.
 - `channel.created` -> ChannelCreated: `channelId`, `conversationId` (the channel's one conversation; messaging creates it with this id), `name`, `topic`, `visibility` (public|private), `emailAddress` ("" when none), `createdBy` (member id).
 - `channel.member.added` -> ChannelMemberAdded: `channelId`, `conversationId`, `memberId`, `joinedAt`.

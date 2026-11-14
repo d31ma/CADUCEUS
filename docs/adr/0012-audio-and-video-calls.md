@@ -121,6 +121,24 @@ signalling on `realtime`'s socket, a TURN relay and MLS groups of up to
   and ConnectionService (Android), with VoIP push, so a call rings like a
   phone call when the app is closed.
 
+## TACHYON's approved plan for P5 and P7 (2026-11-14)
+
+- Media on Apple runs on the same web path inside WKWebView (macOS checked;
+  iOS checked in TACHYON's first slice).
+- **SFrame** (RFC 9605) with AES-128-GCM is TACHYON's transform. Video uses
+  **VP8**; TACHYON keeps the VP8 codec header in clear so `calls` can
+  switch simulcast layers. Audio uses Opus. The SFrame keys are P2
+  `Crypto` key handles: the client turns each call's MLS exporter secret
+  into a non-extractable key handle (ADR 0011 keeps the MLS secrets
+  themselves in the client's sealed tables).
+- The Recorder (P7) is MediaRecorder in the web view; native code only
+  saves the file.
+- Screen sharing on phones is not in TACHYON's first slices (the owner
+  chose computers first). Linux comes through P8.
+- TACHYON's order: M0 probes; M1 devices, capture and `media-view` (no
+  `Peers` needed); M2 sending on `Peers` (after P1a); M3 SFrame (after
+  P2a); M4 background audio on phones; M5 Recorder.
+
 ## Servers and on-premise
 
 - New app `calls` (the SFU), stateless for media, with a list of active

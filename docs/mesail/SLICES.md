@@ -2148,6 +2148,15 @@ AC-CL is written.
   answer, decline, leave, end) for members of the conversation; G5's
   pushes extended with "Incoming call" and "Missed call" (no names).
 
+### G12a. Call devices and preview (the web apps' owner; after TACHYON M1 and CU)
+- **Builds:** the parts of the call client that need no `Peers`: choosing
+  the microphone, camera and speaker, a camera and microphone preview with
+  `media-view`, the permission and "not available on this device" states
+  (AC-CL-9), in `apps/web` (moved with the chat page app in Wave 8), as CU
+  draws them.
+- **Depends on:** TACHYON's M1 (devices, capture and `media-view`) released
+  and the pin moved; CU merged.
+
 ### G12. The call client (after TACHYON P1, P2, P5; with G7)
 - **Builds:** calls of two device to device, group calls through `calls`
   with SFrame keys from the MLS group, screen sharing on computers,

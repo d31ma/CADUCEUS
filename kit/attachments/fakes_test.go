@@ -20,6 +20,7 @@ type memoryDocuments struct {
 }
 
 func newMemory() *memoryDocuments {
+	isolateKnownCollections()
 	return &memoryDocuments{collections: map[string]map[string][]byte{}}
 }
 
@@ -58,6 +59,9 @@ func (memory *memoryDocuments) FindById(collection string, id string, target any
 }
 
 func (memory *memoryDocuments) Patch(collection string, id string, fields any, target any) (bool, error) {
+	if memory.collections[collection] == nil {
+		return false, errors.New("collection not found")
+	}
 	current := map[string]any{}
 	json.Unmarshal(memory.collections[collection][id], &current)
 	changes, _ := json.Marshal(fields)

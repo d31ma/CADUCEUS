@@ -19,6 +19,22 @@
   routes and statuses do not change. An error that no other handler
   method takes answers `500 unavailable` with `[MS0500]`. The
   controllers now make one Service call each (new `server/services/`).
+- Changed the collection checks (slice K12): each collection is now
+  checked with the store at most once per container, not before every
+  read and write. `kit/collections` `KnownCollections` keeps one empty
+  marker file per known collection in
+  `os.TempDir()/mesail-known-collections/<hash of YON_APPLICATION_JSON>/`
+  (a Yon handler cannot see its FYLO root path, so the app's settings
+  name the folder). A read of a missing collection answers empty and no
+  longer creates it (attachments lookup, notify `Find` and `Matching`,
+  directory `All` and `FindOne` created it before). A write creates the
+  collection once. When the root was wiped or restored outside Mesail, a
+  read that fails on a missing collection forgets the marker and answers
+  empty, and a write creates the collection and retries once. Directory's
+  `Drop` removes the marker first. Test helpers that wipe a root clear
+  the markers. Used by `kit/search`, `kit/realtime`, `kit/mailin`,
+  `kit/attachments`, `kit/channels`, messaging's storage and the
+  `DocumentsService` of `directory` and `notify`.
 - Added `DELETE /api/v1/directory/people/{personId}/passkeys` to
   `directory` (slice PK3, ADR 0008): an Operator, or an admin of every
   domain of the person, removes all of the person's passkeys. Other

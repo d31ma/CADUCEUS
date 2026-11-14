@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"mesail.dev/packages/collections"
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
@@ -25,6 +26,7 @@ func (JobsTestSetup) FreshRegistries() {
 	names := &CollectionNamesService{}
 	DataSource{}.DropCollection(names.OutboxCollections())
 	DataSource{}.DropCollection(names.Domains())
+	collections.KnownCollections{}.ForgetAll()
 }
 
 func (JobsTestSetup) Configure(execution *BehaviorExecution) (*BehaviorConfiguration, error) {

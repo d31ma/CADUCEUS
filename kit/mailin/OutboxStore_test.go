@@ -65,7 +65,7 @@ func TestDeadKeepsRowsWithDeadLetters(t *testing.T) {
 
 func TestPendingReportsAFailedRegistry(t *testing.T) {
 	memory, store := seededStore(t)
-	memory.failOn = "exists"
+	memory.failOn = "page"
 	documents, err := store.Pending(10)
 	check(t, err != nil && len(documents) == 0, "want an error and no rows")
 }

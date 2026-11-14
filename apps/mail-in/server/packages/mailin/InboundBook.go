@@ -21,9 +21,9 @@ func (book InboundBook) Find(domainId string, inboundId string) (InboundRaw, err
 		return InboundRaw{}, err
 	}
 	collection := book.Collection(domainId)
-	exists, err := book.Storage.Documents.CollectionExists(collection)
+	exists, err := book.Storage.Exists(collection)
 	if err != nil {
-		return InboundRaw{}, Unavailable{Operation: "collection check"}
+		return InboundRaw{}, err
 	}
 	return book.inCollection(collection, exists, storedId)
 }

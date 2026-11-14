@@ -277,7 +277,7 @@ func TestIndexerIsUnavailableWhenStorageFails(t *testing.T) {
 		method   string
 		skip     int
 	}{
-		{"create location lookup", fresh, "CollectionExists", 0},
+		{"create location lookup", fresh, "Command", 0},
 		{"create month lookup", fresh, "Command", 1},
 		{"create document insert", fresh, "Insert", 0},
 		{"edit location lookup", edited, "Command", 0},

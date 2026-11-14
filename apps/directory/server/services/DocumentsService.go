@@ -1,28 +1,35 @@
 import (
 	"cmp"
 	"encoding/json"
+
+	"mesail.dev/packages/collections"
 )
 
 // @Service
 type DocumentsService struct {
 	// @Needs
 	dataSource DataSource
+	known      collections.KnownCollections
 }
 
 func (documents *DocumentsService) Ensure(collection string) error {
-	exists, failure := documents.dataSource.CollectionExists(collection)
-	return cmp.Or(failure, documents.createUnless(exists, collection))
+	return documents.known.Ensure(documents.dataSource, collection)
 }
 
 func (documents *DocumentsService) Drop(collection string) error {
+	documents.known.Forget(collection)
 	_, failure := documents.dataSource.DropCollection(collection)
 	return failure
 }
 
 func (documents *DocumentsService) Insert(collection string, document any) (string, error) {
-	ensureFailure := documents.Ensure(collection)
-	id, failure := documents.dataSource.Insert(collection, document)
-	return id, cmp.Or(ensureFailure, failure)
+	id := ""
+	failure := documents.known.Write(documents.dataSource, collection, func() error {
+		var insertFailure error
+		id, insertFailure = documents.dataSource.Insert(collection, document)
+		return insertFailure
+	})
+	return id, failure
 }
 
 func (documents *DocumentsService) ById(collection string, id string, target any) (bool, error) {
@@ -46,17 +53,23 @@ func (documents *DocumentsService) page(request PageRequest, target any) (string
 }
 
 func (documents *DocumentsService) All(collection string, where map[string]any, target any) error {
-	ensureFailure := documents.Ensure(collection)
-	rows, failure := documents.collect(collection, where)
+	rows := []json.RawMessage{}
+	failure := documents.known.Read(documents.dataSource, collection, func() error {
+		var readFailure error
+		rows, readFailure = documents.collect(collection, where)
+		return readFailure
+	})
 	encoded, _ := json.Marshal(rows)
-	return cmp.Or(ensureFailure, failure, json.Unmarshal(encoded, target))
+	return cmp.Or(failure, json.Unmarshal(encoded, target))
 }
 
 func (documents *DocumentsService) FindOne(collection string, where map[string]any, target any) (bool, error) {
-	ensureFailure := documents.Ensure(collection)
 	rows := []json.RawMessage{}
-	_, failure := documents.page(PageRequest{Collection: collection, Where: where, Size: documents.batch()}, &rows)
-	return documents.decodeFirst(rows, target), cmp.Or(ensureFailure, failure)
+	failure := documents.known.Read(documents.dataSource, collection, func() error {
+		_, readFailure := documents.page(PageRequest{Collection: collection, Where: where, Size: documents.batch()}, &rows)
+		return readFailure
+	})
+	return documents.decodeFirst(rows, target), failure
 }
 
 func (documents *DocumentsService) collect(collection string, where map[string]any) ([]json.RawMessage, error) {
@@ -77,13 +90,6 @@ func (documents *DocumentsService) decodeFirst(rows []json.RawMessage, target an
 		return false
 	}
 	return json.Unmarshal(rows[0], target) == nil
-}
-
-func (documents *DocumentsService) createUnless(exists bool, collection string) error {
-	if exists {
-		return nil
-	}
-	return documents.dataSource.CreateCollection(collection)
 }
 
 func (documents *DocumentsService) batch() int {

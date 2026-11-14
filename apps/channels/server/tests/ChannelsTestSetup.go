@@ -10,6 +10,7 @@ import (
 
 	"mesail.dev/packages/apierrors"
 	"mesail.dev/packages/channels"
+	"mesail.dev/packages/collections"
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
@@ -128,6 +129,7 @@ func (world *ChannelsTestSetup) drop(collection string) {
 		source.DeleteById(channels.Names{}.Registry(), record.Id)
 	}
 	source.DropCollection(collection)
+	collections.KnownCollections{}.ForgetAll()
 }
 
 func (world *ChannelsTestSetup) RandomText() string {

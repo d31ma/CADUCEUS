@@ -3,32 +3,42 @@ package mailin
 import (
 	"encoding/json"
 	"math"
+
+	"mesail.dev/packages/collections"
 )
 
 type Storage struct {
 	Documents Documents
 	Pages     PageReader
+	Known     collections.KnownCollections
 }
 
 func (storage Storage) Ensure(collection string) error {
-	exists, err := storage.Documents.CollectionExists(collection)
+	_, err := storage.Exists(collection)
 	if err != nil {
-		return Unavailable{Operation: "collection check"}
+		return err
 	}
-	if exists {
-		return nil
-	}
-	return storage.failure("create collection", storage.Documents.CreateCollection(collection))
+	return storage.failure("create collection", storage.Known.Ensure(storage.Documents, collection))
+}
+
+func (storage Storage) Exists(collection string) (bool, error) {
+	exists, err := storage.Known.Exists(storage.Documents, collection)
+	return exists, storage.failure("collection check", err)
 }
 
 func (storage Storage) Insert(collection string, document any) (string, error) {
-	id, err := storage.Documents.Insert(collection, document)
+	id := ""
+	err := storage.Known.Write(storage.Documents, collection, func() error {
+		var failure error
+		id, failure = storage.Documents.Insert(collection, document)
+		return failure
+	})
 	return id, storage.failure("insert", err)
 }
 
 func (storage Storage) Find(collection string, id string, target any) (bool, error) {
 	found, err := storage.Documents.FindById(collection, id, target)
-	return found, storage.failure("find", err)
+	return found, storage.failure("find", storage.Known.ReadFailure(storage.Documents, collection, err))
 }
 
 func (storage Storage) Replace(collection string, id string, document any) error {
@@ -42,6 +52,7 @@ func (storage Storage) All(collection string, where map[string]any, target any) 
 
 func (storage Storage) First(collection string, where map[string]any, limit int, target any) error {
 	rows, err := storage.rows(collection, where, limit)
+	err = storage.Known.ReadFailure(storage.Documents, collection, err)
 	if err != nil {
 		return Unavailable{Operation: "scroll"}
 	}

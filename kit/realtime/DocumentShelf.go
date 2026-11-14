@@ -1,22 +1,24 @@
 package realtime
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"mesail.dev/packages/collections"
+)
 
 type DocumentShelf struct {
 	Storage Storage
+	Known   collections.KnownCollections
 }
 
 func (shelf DocumentShelf) Open(collection string) error {
-	exists, err := shelf.Storage.Documents.CollectionExists(collection)
-	if err != nil {
-		return err
-	}
-	return shelf.create(collection, exists)
+	return shelf.Known.Ensure(shelf.Storage.Documents, collection)
 }
 
 func (shelf DocumentShelf) First(collection string, where map[string]any, target any) (bool, error) {
 	found := []json.RawMessage{}
 	_, err := shelf.Storage.Page(Query{Collection: collection, Where: where, Size: 1}, &found)
+	err = shelf.Known.ReadFailure(shelf.Storage.Documents, collection, err)
 	if err != nil {
 		return false, err
 	}
@@ -32,7 +34,9 @@ func (shelf DocumentShelf) Every(collection string, where map[string]any, target
 }
 
 func (shelf DocumentShelf) Put(collection string, id string, document any) error {
-	return shelf.write(collection, id, document)
+	return shelf.Known.Write(shelf.Storage.Documents, collection, func() error {
+		return shelf.write(collection, id, document)
+	})
 }
 
 func (shelf DocumentShelf) write(collection string, id string, document any) error {
@@ -42,13 +46,6 @@ func (shelf DocumentShelf) write(collection string, id string, document any) err
 	}
 	_, err := shelf.Storage.Documents.Patch(collection, id, document, nil)
 	return err
-}
-
-func (shelf DocumentShelf) create(collection string, exists bool) error {
-	if exists {
-		return nil
-	}
-	return shelf.Storage.Documents.CreateCollection(collection)
 }
 
 func (DocumentShelf) decodeFirst(found []json.RawMessage, target any) error {

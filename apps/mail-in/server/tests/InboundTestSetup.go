@@ -140,6 +140,7 @@ func (world *InboundTestSetup) ifDocument(event DeadEvent, documentId string) []
 func (world *InboundTestSetup) Cleanup() {
 	world.Forget(world.Collection())
 	DataSource{}.DropCollection(mailin.ContentShelf{}.Collection(mailin.InboundRaw{DomainId: world.Domain, ReceivedAt: time.Now().UTC().Format(time.RFC3339Nano)}))
+	collections.KnownCollections{}.ForgetAll()
 	world.stopServices()
 }
 
@@ -363,6 +364,7 @@ func (world *InboundTestSetup) Forget(collection string) {
 		world.Must(err)
 	}
 	DataSource{}.DropCollection(collection)
+	collections.KnownCollections{}.ForgetAll()
 }
 
 func (world *InboundTestSetup) RegistryRecords(collection string) []mailin.CollectionRecord {

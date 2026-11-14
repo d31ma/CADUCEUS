@@ -27,6 +27,7 @@ type memoryDocuments struct {
 }
 
 func newMemory() *memoryDocuments {
+	isolateKnownCollections()
 	return &memoryDocuments{collections: map[string][]string{}, rows: map[string]map[string]map[string]any{}, pageReads: map[string]int{}}
 }
 

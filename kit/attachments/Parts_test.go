@@ -46,15 +46,28 @@ func TestUploadRulesRefuseControlCharactersAndLongNames(t *testing.T) {
 }
 
 func TestRecordBookReportsStorageFailures(t *testing.T) {
-	for _, operation := range []string{"exists", "create", "find"} {
+	cases := []struct {
+		operation string
+		failing   func(book RecordBook) error
+	}{
+		{"exists", func(book RecordBook) error { _, err := book.Insert(Record{DomainId: "example.com"}); return err }},
+		{"exists", func(book RecordBook) error { _, err := book.Lookup("example.com", "att_D1"); return err }},
+		{"create", func(book RecordBook) error { _, err := book.Insert(Record{DomainId: "example.com"}); return err }},
+		{"insert", func(book RecordBook) error { _, err := book.Insert(Record{DomainId: "example.com"}); return err }},
+		{"find", func(book RecordBook) error { _, err := book.Lookup("example.org", "att_D1"); return err }},
+		{"patch", func(book RecordBook) error {
+			_, err := book.SetState(Record{DomainId: "example.org", ID: "D1"}, "ready")
+			return err
+		}},
+	}
+	for _, test := range cases {
 		memory := newMemory()
-		memory.failOn = operation
 		book := RecordBook{Documents: memory, Now: fixedNow}
-		_, lookupErr := book.Lookup("example.com", "att_D1")
-		_, stateErr := book.SetState(Record{DomainId: "example.com", ID: "D1"}, "ready")
+		book.Insert(Record{DomainId: "example.org"})
+		memory.failOn = test.operation
 		var unavailable Unavailable
-		if !errors.As(lookupErr, &unavailable) || (operation != "find" && !errors.As(stateErr, &unavailable)) {
-			t.Fatalf("%s: got %v and %v", operation, lookupErr, stateErr)
+		if err := test.failing(book); !errors.As(err, &unavailable) {
+			t.Fatalf("%s: got %v", test.operation, err)
 		}
 	}
 }
@@ -62,11 +75,21 @@ func TestRecordBookReportsStorageFailures(t *testing.T) {
 func TestRecordBookCreatesEachCollectionOnce(t *testing.T) {
 	memory := newMemory()
 	book := RecordBook{Documents: memory, Now: fixedNow}
-	first, _ := book.Collection("example.com")
-	second, _ := book.Collection("example.com")
-	other, _ := book.Collection("example.org")
-	if first != second || first == other || memory.created != 2 || !strings.HasPrefix(first, "attachments-") {
-		t.Fatalf("got %s, %s, %s after %d creations", first, second, other, memory.created)
+	book.Insert(Record{DomainId: "example.com", FileName: "a.txt"})
+	book.Insert(Record{DomainId: "example.com", FileName: "b.txt"})
+	book.Insert(Record{DomainId: "example.org", FileName: "c.txt"})
+	first, other := book.Collection("example.com"), book.Collection("example.org")
+	if first == other || memory.created != 2 || !strings.HasPrefix(first, "attachments-") {
+		t.Fatalf("got %s, %s after %d creations", first, other, memory.created)
+	}
+}
+
+func TestRecordBookLookupInANewDomainCreatesNothing(t *testing.T) {
+	memory := newMemory()
+	book := RecordBook{Documents: memory, Now: fixedNow}
+	_, err := book.Lookup("example.com", "att_A1")
+	if !errors.As(err, &Missing{}) || memory.created != 0 {
+		t.Fatalf("got %v after %d creations", err, memory.created)
 	}
 }
 

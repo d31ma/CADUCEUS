@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"mesail.dev/packages/collections"
 	"mesail.dev/packages/events"
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
@@ -28,6 +29,7 @@ func (NotifyTestSetup) FreshRegistries() {
 	names := &CollectionNamesService{}
 	DataSource{}.DropCollection(names.OutboxCollections())
 	DataSource{}.DropCollection(names.Domains())
+	collections.KnownCollections{}.ForgetAll()
 }
 
 func (NotifyTestSetup) Name(base string) string {

@@ -19,6 +19,7 @@ type memoryStorage struct {
 }
 
 func newMemoryStorage() *memoryStorage {
+	isolateKnownCollections()
 	return &memoryStorage{collections: map[string]map[string]map[string]any{}}
 }
 

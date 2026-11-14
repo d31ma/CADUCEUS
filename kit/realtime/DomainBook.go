@@ -11,6 +11,7 @@ func (book DomainBook) Remember(domainId string) error {
 	}
 	found := []DomainRecord{}
 	_, err = book.Storage.Page(Query{Collection: book.collection(), Where: map[string]any{"domainId": domainId}, Size: 1}, &found)
+	err = book.keeper().ReadFailure(book.collection(), err)
 	if err != nil {
 		return Unavailable{Operation: "domain find"}
 	}
@@ -28,6 +29,7 @@ func (book DomainBook) List(cursor string, limit int) ([]string, string, error) 
 func (book DomainBook) page(cursor string, limit int) ([]string, string, error) {
 	found := []DomainRecord{}
 	next, err := book.Storage.Page(Query{Collection: book.collection(), Cursor: cursor, Size: min(max(limit, 1), book.maximumPageSize())}, &found)
+	err = book.keeper().ReadFailure(book.collection(), err)
 	if err != nil {
 		return nil, "", Unavailable{Operation: "domain scroll"}
 	}
@@ -46,7 +48,10 @@ func (book DomainBook) insertUnless(found []DomainRecord, domainId string) error
 	if len(found) > 0 {
 		return nil
 	}
-	_, err := book.Storage.Documents.Insert(book.collection(), DomainRecord{DomainId: domainId})
+	err := book.keeper().Write(book.collection(), func() error {
+		_, failure := book.Storage.Documents.Insert(book.collection(), DomainRecord{DomainId: domainId})
+		return failure
+	})
 	if err != nil {
 		return Unavailable{Operation: "domain insert"}
 	}

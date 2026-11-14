@@ -16,6 +16,7 @@ type memoryCommander struct {
 }
 
 func newMemoryCommander() *memoryCommander {
+	isolateKnownCollections()
 	return &memoryCommander{memory: NewMemoryDocuments()}
 }
 

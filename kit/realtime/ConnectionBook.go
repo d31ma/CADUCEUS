@@ -91,9 +91,16 @@ func (book ConnectionBook) read(collection string, where map[string]any) ([]Conn
 		page := []Connection{}
 		next, err := book.Storage.Page(Query{Collection: collection, Where: where, Cursor: cursor, Size: book.pageSize()}, &page)
 		if err != nil {
-			return nil, Unavailable{Operation: "connection scroll"}
+			return book.unreadable(collection, found, err)
 		}
 		found, cursor, more = append(found, page...), next, next != ""
+	}
+	return found, nil
+}
+
+func (book ConnectionBook) unreadable(collection string, found []Connection, err error) ([]Connection, error) {
+	if book.keeper().ReadFailure(collection, err) != nil {
+		return nil, Unavailable{Operation: "connection scroll"}
 	}
 	return found, nil
 }
@@ -104,7 +111,10 @@ func (book ConnectionBook) insertUnless(collection string, found []Connection, c
 		return book.replace(collection, found[0].ID, connection)
 	}
 	connection.ID = ""
-	_, err := book.Storage.Documents.Insert(collection, connection)
+	err := book.keeper().Write(collection, func() error {
+		_, failure := book.Storage.Documents.Insert(collection, connection)
+		return failure
+	})
 	return book.failure("connection insert", err)
 }
 

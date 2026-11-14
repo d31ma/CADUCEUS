@@ -13,25 +13,21 @@ import (
 type RecordBook struct {
 	Documents Documents
 	Now       func() time.Time
+	Known     collections.KnownCollections
 }
 
-func (book RecordBook) Collection(domainId string) (string, error) {
-	collection := collections.CollectionName{}.ForDomain("attachments", domainId)
-	exists, err := book.Documents.CollectionExists(collection)
-	if err != nil {
-		return "", Unavailable{Operation: "collection check"}
-	}
-	return collection, book.create(collection, exists)
+func (book RecordBook) Collection(domainId string) string {
+	return collections.CollectionName{}.ForDomain("attachments", domainId)
 }
 
 func (book RecordBook) Insert(record Record) (Record, error) {
-	collection, err := book.Collection(record.DomainId)
-	if err != nil {
-		return Record{}, err
-	}
+	collection := book.Collection(record.DomainId)
 	record.CreatedAt = book.Now().UTC().Format(time.RFC3339Nano)
-	id, err := book.Documents.Insert(collection, record)
-	record.ID = id
+	err := book.Known.Write(book.Documents, collection, func() error {
+		id, failure := book.Documents.Insert(collection, record)
+		record.ID = id
+		return failure
+	})
 	return record, book.failure("insert", err)
 }
 
@@ -40,12 +36,14 @@ func (book RecordBook) Lookup(domainId string, attachmentId string) (Record, err
 	if err != nil {
 		return Record{}, err
 	}
-	collection, err := book.Collection(domainId)
-	if err != nil {
-		return Record{}, err
-	}
+	collection := book.Collection(domainId)
 	record := Record{}
-	exists, err := book.Documents.FindById(collection, storedId, &record)
+	exists := false
+	err = book.Known.Read(book.Documents, collection, func() error {
+		var failure error
+		exists, failure = book.Documents.FindById(collection, storedId, &record)
+		return failure
+	})
 	if err != nil {
 		return Record{}, Unavailable{Operation: "find"}
 	}
@@ -54,11 +52,8 @@ func (book RecordBook) Lookup(domainId string, attachmentId string) (Record, err
 }
 
 func (book RecordBook) SetState(record Record, state string) (Record, error) {
-	collection, err := book.Collection(record.DomainId)
-	if err != nil {
-		return Record{}, err
-	}
-	_, err = book.Documents.Patch(collection, record.ID, StatePatch{State: state}, nil)
+	collection := book.Collection(record.DomainId)
+	_, err := book.Documents.Patch(collection, record.ID, StatePatch{State: state}, nil)
 	record.State = state
 	return record, book.failure("state", err)
 }
@@ -82,13 +77,6 @@ func (book RecordBook) storedId(attachmentId string) (string, error) {
 		return "", Missing{}
 	}
 	return storedId, nil
-}
-
-func (book RecordBook) create(collection string, exists bool) error {
-	if exists {
-		return nil
-	}
-	return book.failure("create collection", book.Documents.CreateCollection(collection))
 }
 
 func (RecordBook) owned(record Record, exists bool, domainId string) error {

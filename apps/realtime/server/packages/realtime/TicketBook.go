@@ -26,7 +26,10 @@ func (book TicketBook) Issue(grant Grant) (Ticket, error) {
 	}
 	expiresAt := book.Now().UTC().Add(book.lifetime()).Format(time.RFC3339)
 	record := TicketRecord{TicketHash: book.hash(ticket), DomainId: grant.DomainId, MemberId: grant.MemberId, ExpiresAt: expiresAt, TokenExpiresAt: grant.ExpiresAt}
-	_, err = book.Storage.Documents.Insert(book.collection(), record)
+	err = book.keeper().Write(book.collection(), func() error {
+		_, failure := book.Storage.Documents.Insert(book.collection(), record)
+		return failure
+	})
 	if err != nil {
 		return Ticket{}, Unavailable{Operation: "ticket insert"}
 	}
@@ -80,6 +83,7 @@ func (book TicketBook) read() ([]TicketRecord, error) {
 	for pages := 0; more && pages < book.maximumPages(); pages++ {
 		page := []TicketRecord{}
 		next, err := book.Storage.Page(Query{Collection: book.collection(), Cursor: cursor, Size: book.pageSize()}, &page)
+		err = book.keeper().ReadFailure(book.collection(), err)
 		if err != nil {
 			return nil, Unavailable{Operation: "ticket scroll"}
 		}
@@ -110,6 +114,7 @@ func (book TicketBook) find(ticketHash string) (TicketRecord, error) {
 	}
 	found := []TicketRecord{}
 	_, err = book.Storage.Page(Query{Collection: book.collection(), Where: map[string]any{"ticketHash": ticketHash}, Size: 1}, &found)
+	err = book.keeper().ReadFailure(book.collection(), err)
 	if err != nil {
 		return TicketRecord{}, Unavailable{Operation: "ticket find"}
 	}

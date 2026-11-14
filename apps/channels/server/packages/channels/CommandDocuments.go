@@ -1,9 +1,14 @@
 package channels
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"mesail.dev/packages/collections"
+)
 
 type CommandDocuments struct {
 	source Commander
+	known  collections.KnownCollections
 }
 
 func NewCommandDocuments(source Commander) CommandDocuments {
@@ -11,12 +16,18 @@ func NewCommandDocuments(source Commander) CommandDocuments {
 }
 
 func (documents CommandDocuments) Ensure(collection string) error {
+	return documents.known.Ensure(documents, collection)
+}
+
+func (documents CommandDocuments) CollectionExists(collection string) (bool, error) {
 	exists := false
 	err := documents.into(documents.command("collectionExists", collection), &exists)
-	if err != nil {
-		return err
-	}
-	return documents.createUnless(exists, collection)
+	return exists, err
+}
+
+func (documents CommandDocuments) CreateCollection(collection string) error {
+	_, err := documents.call(documents.command("createCollection", collection))
+	return err
 }
 
 func (documents CommandDocuments) Insert(collection string, document any) (string, error) {
@@ -25,7 +36,9 @@ func (documents CommandDocuments) Insert(collection string, document any) (strin
 		return "", err
 	}
 	saved := insertAnswer{}
-	err = documents.into(command, &saved)
+	err = documents.known.Write(documents, collection, func() error {
+		return documents.into(command, &saved)
+	})
 	return saved.Id, err
 }
 
@@ -33,6 +46,7 @@ func (documents CommandDocuments) Find(collection string, id string, target any)
 	command := documents.command("findById", collection)
 	command["id"] = id
 	answer, err := documents.call(command)
+	err = documents.known.ReadFailure(documents, collection, err)
 	if err != nil || answer == nil {
 		return false, err
 	}
@@ -57,6 +71,7 @@ func (documents CommandDocuments) All(collection string, where map[string]any, t
 		window, err = documents.scroll(collection, where, window.NextCursor)
 		rows = append(rows, window.Content...)
 	}
+	err = documents.known.ReadFailure(documents, collection, err)
 	if err != nil {
 		return err
 	}
@@ -76,14 +91,6 @@ func (CommandDocuments) withCursor(command map[string]any, cursor string) {
 	if cursor != "" {
 		command["cursor"] = cursor
 	}
-}
-
-func (documents CommandDocuments) createUnless(exists bool, collection string) error {
-	if exists {
-		return nil
-	}
-	_, err := documents.call(documents.command("createCollection", collection))
-	return err
 }
 
 func (documents CommandDocuments) withValue(command map[string]any, document any) (map[string]any, error) {

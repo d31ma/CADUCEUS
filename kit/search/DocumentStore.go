@@ -3,26 +3,26 @@ package search
 import (
 	"encoding/json"
 	"errors"
+
+	"mesail.dev/packages/collections"
 )
 
 type DocumentStore struct {
 	Documents Documents
+	Known     collections.KnownCollections
 }
 
 func (store DocumentStore) Ensure(collection string) error {
-	exists, err := store.Documents.CollectionExists(collection)
-	if err != nil {
-		return store.unavailable(err)
-	}
-	return store.createUnless(exists, collection)
+	return store.unavailable(store.Known.Ensure(store.Documents, collection))
 }
 
 func (store DocumentStore) Insert(collection string, document any) (string, error) {
-	err := store.Ensure(collection)
-	if err != nil {
-		return "", err
-	}
-	id, err := store.Documents.Insert(collection, document)
+	id := ""
+	err := store.Known.Write(store.Documents, collection, func() error {
+		var failure error
+		id, failure = store.Documents.Insert(collection, document)
+		return failure
+	})
 	return id, store.unavailable(err)
 }
 
@@ -37,23 +37,17 @@ func (store DocumentStore) Replace(collection string, id string, document any) e
 }
 
 func (store DocumentStore) All(collection string, where map[string]any, target any) error {
-	exists, err := store.Documents.CollectionExists(collection)
+	rows := []json.RawMessage{}
+	err := store.Known.Read(store.Documents, collection, func() error {
+		var failure error
+		rows, failure = store.rows(collection, where)
+		return failure
+	})
 	if err != nil {
 		return store.unavailable(err)
 	}
-	rows, err := store.rowsWhen(exists, collection, where)
-	if err != nil {
-		return err
-	}
 	encoded, _ := json.Marshal(rows)
 	return store.unavailable(json.Unmarshal(encoded, target))
-}
-
-func (store DocumentStore) rowsWhen(exists bool, collection string, where map[string]any) ([]json.RawMessage, error) {
-	if !exists {
-		return []json.RawMessage{}, nil
-	}
-	return store.rows(collection, where)
 }
 
 func (store DocumentStore) rows(collection string, where map[string]any) ([]json.RawMessage, error) {
@@ -63,7 +57,7 @@ func (store DocumentStore) rows(collection string, where map[string]any) ([]json
 		page, cursor, err = store.scroll(collection, where, cursor)
 		rows = append(rows, page...)
 	}
-	return rows, store.unavailable(err)
+	return rows, err
 }
 
 func (store DocumentStore) scroll(collection string, where map[string]any, cursor string) ([]json.RawMessage, string, error) {
@@ -80,13 +74,6 @@ func (store DocumentStore) scrollCommand(collection string, where map[string]any
 		command["cursor"] = cursor
 	}
 	return command
-}
-
-func (store DocumentStore) createUnless(exists bool, collection string) error {
-	if exists {
-		return nil
-	}
-	return store.unavailable(store.Documents.CreateCollection(collection))
 }
 
 func (DocumentStore) unavailable(failure error) error {

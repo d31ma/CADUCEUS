@@ -26,6 +26,7 @@ type fakeDocuments struct {
 }
 
 func newFakeDocuments() *fakeDocuments {
+	isolateKnownCollections()
 	return &fakeDocuments{exists: map[string]bool{}, rows: map[string][]*fakeRow{}, failures: map[string]int{}}
 }
 

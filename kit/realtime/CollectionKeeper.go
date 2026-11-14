@@ -1,36 +1,32 @@
 package realtime
 
+import "mesail.dev/packages/collections"
+
 type CollectionKeeper struct {
 	Documents Documents
+	Known     collections.KnownCollections
 }
 
 func (keeper CollectionKeeper) Exists(name string) (bool, error) {
-	exists, err := keeper.Documents.CollectionExists(name)
-	if err != nil {
-		return false, Unavailable{Operation: "collection check"}
-	}
-	return exists, nil
+	exists, err := keeper.Known.Exists(keeper.Documents, name)
+	return exists, keeper.failure("collection check", err)
 }
 
 func (keeper CollectionKeeper) Ensure(name string) error {
-	exists, err := keeper.Exists(name)
+	return keeper.failure("create collection", keeper.Known.Ensure(keeper.Documents, name))
+}
+
+func (keeper CollectionKeeper) Write(name string, write func() error) error {
+	return keeper.Known.Write(keeper.Documents, name, write)
+}
+
+func (keeper CollectionKeeper) ReadFailure(name string, err error) error {
+	return keeper.Known.ReadFailure(keeper.Documents, name, err)
+}
+
+func (CollectionKeeper) failure(operation string, err error) error {
 	if err != nil {
-		return err
-	}
-	return keeper.create(name, exists)
-}
-
-func (keeper CollectionKeeper) create(name string, exists bool) error {
-	if exists {
-		return nil
-	}
-	return keeper.settled(name, keeper.Documents.CreateCollection(name))
-}
-
-func (keeper CollectionKeeper) settled(name string, failure error) error {
-	exists, err := keeper.Documents.CollectionExists(name)
-	if failure != nil && (err != nil || !exists) {
-		return Unavailable{Operation: "create collection"}
+		return Unavailable{Operation: operation}
 	}
 	return nil
 }

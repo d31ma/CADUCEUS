@@ -69,7 +69,7 @@ func TestEnsureAcceptsACollectionMadeByAnotherRequest(t *testing.T) {
 	memory := newMemoryStorage()
 	memory.CreateCollection("realtime-domains")
 	keeper := CollectionKeeper{Documents: failingWrites{memory}}
-	if err := keeper.settled("realtime-domains", errors.New("already exists")); err != nil {
+	if err := keeper.Ensure("realtime-domains"); err != nil {
 		t.Fatalf("got %v", err)
 	}
 	if err := keeper.Ensure("other-collection"); !errors.As(err, &Unavailable{}) {

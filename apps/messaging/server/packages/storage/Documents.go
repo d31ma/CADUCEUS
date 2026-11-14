@@ -5,22 +5,23 @@ import (
 	"cmp"
 	"encoding/json"
 
+	"mesail.dev/packages/collections"
 	"mesail.dev/packages/core"
 )
 
 type Documents struct {
 	Source DataSource
 	Scroll Scroll
+	Known  collections.KnownCollections
 }
 
 func (documents Documents) Exists(collection string) (bool, error) {
-	exists, failure := documents.Source.CollectionExists(collection)
+	exists, failure := documents.Known.Exists(documents.Source, collection)
 	return exists, documents.unavailable(failure)
 }
 
 func (documents Documents) Ensure(collection string) error {
-	exists, failure := documents.Source.CollectionExists(collection)
-	return documents.unavailable(cmp.Or(failure, documents.createUnless(exists, failure, collection)))
+	return documents.unavailable(documents.Known.Ensure(documents.Source, collection))
 }
 
 func (documents Documents) Insert(collection string, document any) (string, error) {
@@ -32,6 +33,7 @@ func (documents Documents) Insert(collection string, document any) (string, erro
 func (documents Documents) Find(collection string, id string, target any) (bool, error) {
 	content := json.RawMessage{}
 	found, failure := documents.Source.FindById(collection, id, &content)
+	failure = documents.Known.ReadFailure(documents.Source, collection, failure)
 	decoded, decodeFailure := documents.decodeWithId(documents.readable(found, failure), content, id, target)
 	return decoded, documents.unavailable(cmp.Or(failure, decodeFailure))
 }
@@ -48,6 +50,7 @@ func (documents Documents) Delete(collection string, id string) error {
 
 func (documents Documents) All(collection string, where map[string]any, target any) error {
 	rows, failure := documents.collect(collection, where)
+	failure = documents.Known.ReadFailure(documents.Source, collection, failure)
 	encoded, _ := json.Marshal(rows)
 	return documents.unavailable(cmp.Or(failure, json.Unmarshal(encoded, target)))
 }
@@ -106,7 +109,17 @@ func (documents Documents) insertUnless(failure error, collection string, fields
 	if failure != nil {
 		return "", nil
 	}
-	return documents.Source.Insert(collection, fields)
+	return documents.insert(collection, fields)
+}
+
+func (documents Documents) insert(collection string, fields map[string]any) (string, error) {
+	id := ""
+	failure := documents.Known.Write(documents.Source, collection, func() error {
+		var insertFailure error
+		id, insertFailure = documents.Source.Insert(collection, fields)
+		return insertFailure
+	})
+	return id, failure
 }
 
 func (documents Documents) patchUnless(failure error, collection string, id string, fields map[string]any) error {
@@ -115,13 +128,6 @@ func (documents Documents) patchUnless(failure error, collection string, id stri
 	}
 	_, patchFailure := documents.Source.Patch(collection, id, fields, nil)
 	return patchFailure
-}
-
-func (documents Documents) createUnless(exists bool, failure error, collection string) error {
-	if exists || failure != nil {
-		return nil
-	}
-	return documents.Source.CreateCollection(collection)
 }
 
 func (Documents) unavailable(failure error) error {

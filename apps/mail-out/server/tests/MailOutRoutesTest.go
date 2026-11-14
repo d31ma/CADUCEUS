@@ -46,6 +46,7 @@ func (test *MailOutRoutesTest) start() (*httptest.Server, *sink.Sink) {
 		}
 		test.writeKey(domainId)
 	}
+	collections.KnownCollections{}.ForgetAll()
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/v1/mail-in/messages", test.mailIn)
 	mux.HandleFunc("GET /api/v1/directory/domains/{domainId}", test.directory)

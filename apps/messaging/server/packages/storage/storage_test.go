@@ -21,6 +21,7 @@ type memorySource struct {
 }
 
 func newMemorySource() *memorySource {
+	isolateKnownCollections()
 	return &memorySource{collections: map[string]map[string]map[string]any{}, order: map[string][]string{}}
 }
 

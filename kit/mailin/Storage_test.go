@@ -60,12 +60,14 @@ func TestAllOfAnEmptyCollectionIsAnEmptyList(t *testing.T) {
 
 func TestAllReportsAFailedPage(t *testing.T) {
 	memory := newMemory()
+	memory.storage().Ensure("letters")
 	memory.failOn = "page"
 	check(t, isUnavailable(memory.storage().All("letters", map[string]any{}, &[]CollectionRecord{}), "scroll"), "want scroll")
 }
 
 func TestAllReportsUnreadableContent(t *testing.T) {
 	memory := newMemory()
+	memory.storage().Ensure("letters")
 	memory.badContent = true
 	check(t, isUnavailable(memory.storage().All("letters", map[string]any{}, &[]CollectionRecord{}), "scroll"), "want scroll")
 }
@@ -80,4 +82,12 @@ func TestAllReportsATargetThatDoesNotFit(t *testing.T) {
 
 func TestUnavailableNamesTheOperation(t *testing.T) {
 	check(t, Unavailable{Operation: "insert"}.Error() == "inbound storage failed: insert", "wrong text")
+}
+
+func TestAllOfAMissingCollectionAnswersEmptyEvenWhenTheReadFails(t *testing.T) {
+	memory := newMemory()
+	memory.failOn = "page"
+	records := []CollectionRecord{}
+	err := memory.storage().All("letters", map[string]any{}, &records)
+	check(t, err == nil && len(records) == 0, "want an empty list")
 }

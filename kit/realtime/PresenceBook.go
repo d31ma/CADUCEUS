@@ -84,6 +84,7 @@ func (book PresenceBook) dueInState(collection string, state string, rule Presen
 	for page := 0; book.morePages(page, cursor, len(due), limit); page++ {
 		records := []PresenceRecord{}
 		next, err := book.Storage.Page(Query{Collection: collection, Where: map[string]any{"state": state}, Cursor: cursor, Size: book.pageSize()}, &records)
+		err = CollectionKeeper{Documents: book.Storage.Documents}.ReadFailure(collection, err)
 		if err != nil {
 			return nil, err
 		}

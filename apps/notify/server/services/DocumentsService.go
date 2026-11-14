@@ -1,18 +1,25 @@
 import (
 	"cmp"
 	"encoding/json"
+
+	"mesail.dev/packages/collections"
 )
 
 // @Service
 type DocumentsService struct {
 	// @Needs
 	dataSource DataSource
+	known      collections.KnownCollections
 }
 
 func (documents *DocumentsService) Find(collection string, id string, target any) (bool, error) {
-	ensured := documents.ensure(collection)
-	found, failure := documents.dataSource.FindById(collection, id, target)
-	return found, cmp.Or(ensured, documents.unavailable("find", failure))
+	found := false
+	failure := documents.known.Read(documents.dataSource, collection, func() error {
+		var findFailure error
+		found, findFailure = documents.dataSource.FindById(collection, id, target)
+		return findFailure
+	})
+	return found, documents.unavailable("find", failure)
 }
 
 func (documents *DocumentsService) Patch(collection string, id string, fields any) error {
@@ -26,9 +33,14 @@ func (documents *DocumentsService) Delete(collection string, id string) error {
 }
 
 func (documents *DocumentsService) Matching(collection string, where map[string]any, limit int, target any) error {
-	rows, failure := documents.collect(documents.ensure(collection), collection, where, limit)
+	rows := []json.RawMessage{}
+	failure := documents.known.Read(documents.dataSource, collection, func() error {
+		var readFailure error
+		rows, readFailure = documents.collect(nil, collection, where, limit)
+		return readFailure
+	})
 	decodeFailure := documents.decode(rows, target)
-	return cmp.Or(failure, documents.unavailable("decode", decodeFailure))
+	return cmp.Or(documents.unavailable("read", failure), documents.unavailable("decode", decodeFailure))
 }
 
 func (documents *DocumentsService) InsertIfAbsent(collection string, where map[string]any, document any) (string, error) {
@@ -43,21 +55,14 @@ func (documents *DocumentsService) Upsert(collection string, where map[string]an
 	return documents.writeUnless(failure, collection, documents.firstId(existing), documents.choice(existing, document, patch))
 }
 
-func (documents *DocumentsService) ensure(collection string) error {
-	exists, failure := documents.dataSource.CollectionExists(collection)
-	return documents.unavailable("create collection", documents.createUnless(exists, failure, collection))
-}
-
 func (documents *DocumentsService) insert(collection string, document any) (string, error) {
-	id, failure := documents.dataSource.Insert(collection, document)
+	id := ""
+	failure := documents.known.Write(documents.dataSource, collection, func() error {
+		var insertFailure error
+		id, insertFailure = documents.dataSource.Insert(collection, document)
+		return insertFailure
+	})
 	return id, documents.unavailable("insert", failure)
-}
-
-func (documents *DocumentsService) createUnless(exists bool, failure error, collection string) error {
-	if failure != nil || exists {
-		return failure
-	}
-	return documents.dataSource.CreateCollection(collection)
 }
 
 func (documents *DocumentsService) collect(failure error, collection string, where map[string]any, limit int) ([]json.RawMessage, error) {

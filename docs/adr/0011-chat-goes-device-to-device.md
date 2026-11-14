@@ -289,6 +289,18 @@ camera (request P4).
   release?": "Wait for Linux support": the first release waits until
   TACHYON supports device-to-device connections, calls and recording in
   the Linux app (request P8).
+- **Expected date (TACHYON, 2026-11-14):** no Linux WebKitGTK has WebRTC
+  today (2.52.6 to 2.54.2 probed on Debian 13 and testing, Ubuntu 24.04
+  and 26.04, Fedora 43 and 45). WebKitGTK 2.56, planned for about March
+  2027, turns WebRTC on, and distributions usually ship it within about
+  two weeks. The owner chose to wait for it (TACHYON decision 1A) rather
+  than put a WebRTC engine in the Linux shell (1C). So Mesail's first
+  release is expected about April 2027, and only if the distributions
+  keep WebRTC on. Already working on Linux: the camera, microphone and
+  screen sharing through the portals, MediaRecorder, WebCrypto X25519 and
+  Ed25519, and the Secret Service. TACHYON's Linux order: L1 scanner and
+  camera after P4, L2 Crypto after P2a, L3 media after P5 M1, L4 recorder
+  after P5 M5.
 
 ## 9. The owner's suggestion
 

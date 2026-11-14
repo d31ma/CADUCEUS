@@ -78,7 +78,7 @@ func (desk OutboxDesk) relayEach(documents []outbox.Document) (SweepReport, erro
 	failures := []error{}
 	index := 0
 	for ; index < len(documents) && desk.now().Sub(started) < desk.timeBudget(); index++ {
-		part, err := relay.RelayDocument(documents[index].Ref)
+		part, err := relay.SweepDocument(documents[index].Ref)
 		report, failures = report.Plus(part), append(failures, err)
 	}
 	report.More = desk.stoppedEarly(index, len(documents))

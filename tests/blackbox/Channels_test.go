@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"slices"
 	"testing"
+	"time"
 )
 
 type channel struct {
@@ -49,4 +50,24 @@ func TestPublicChannelIsVisibleOnlyInsideItsDomain(t *testing.T) {
 		t.Fatalf("Eve in another domain sees channel %s", channelId)
 	}
 	stack.Call(t, http.MethodPost, "/api/v1/channels/"+channelId+"/join", eve, nil).Expect(t, http.StatusNotFound)
+}
+
+func TestK7FiftyChannelCreationsEachAnswerWithinFiveSeconds(t *testing.T) {
+	stack := NewStack(t)
+	operator := operatorToken(t, stack)
+	domainId := createDomain(t, stack, operator)
+	username := freshPrefix()
+	added(t, stack, operatorAddReply(t, stack, operator, domainId, username, false))
+	member := signIn(t, stack, username, firstPassword(username))
+	slowest := time.Duration(0)
+	for count := 1; count <= 50; count++ {
+		started := time.Now()
+		createPublicChannel(t, stack, member.AccessToken, uniqueClientId("k7"))
+		took := time.Since(started)
+		if took >= 5*time.Second {
+			t.Errorf("channel creation %d took %v", count, took)
+		}
+		slowest = max(slowest, took)
+	}
+	t.Logf("slowest of 50 channel creations: %v", slowest)
 }

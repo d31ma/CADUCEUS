@@ -1,8 +1,13 @@
 package outbox
 
-import "mesail.dev/packages/events"
+import (
+	"sync"
+
+	"mesail.dev/packages/events"
+)
 
 type RecordingPusher struct {
+	mutex     sync.Mutex
 	attempted []Push
 	pushed    []Push
 	failures  map[string]error
@@ -13,6 +18,8 @@ func NewRecordingPusher() *RecordingPusher {
 }
 
 func (pusher *RecordingPusher) Push(subscriber Subscriber, envelope events.Envelope) error {
+	pusher.mutex.Lock()
+	defer pusher.mutex.Unlock()
 	push := Push{Subscriber: subscriber.Name, Envelope: envelope}
 	pusher.attempted = append(pusher.attempted, push)
 	err := pusher.failures[subscriber.Name]
@@ -24,14 +31,20 @@ func (pusher *RecordingPusher) Push(subscriber Subscriber, envelope events.Envel
 }
 
 func (pusher *RecordingPusher) Pushed() []Push {
+	pusher.mutex.Lock()
+	defer pusher.mutex.Unlock()
 	return append([]Push{}, pusher.pushed...)
 }
 
 func (pusher *RecordingPusher) Attempted() []Push {
+	pusher.mutex.Lock()
+	defer pusher.mutex.Unlock()
 	return append([]Push{}, pusher.attempted...)
 }
 
 func (pusher *RecordingPusher) PushedTo(subscriber string) []events.Envelope {
+	pusher.mutex.Lock()
+	defer pusher.mutex.Unlock()
 	return pusher.envelopesTo(subscriber)
 }
 
@@ -44,10 +57,14 @@ func (pusher *RecordingPusher) envelopesTo(subscriber string) []events.Envelope 
 }
 
 func (pusher *RecordingPusher) FailFor(subscriber string, err error) {
+	pusher.mutex.Lock()
+	defer pusher.mutex.Unlock()
 	pusher.failures[subscriber] = err
 }
 
 func (pusher *RecordingPusher) Recover(subscriber string) {
+	pusher.mutex.Lock()
+	defer pusher.mutex.Unlock()
 	delete(pusher.failures, subscriber)
 }
 

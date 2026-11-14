@@ -280,6 +280,15 @@ outbound delivery queue, retries, email summaries, cleanup):
    waits for a slow subscriber. Found by K3: `POST /channels` took 16.6
    seconds, pushing to `messaging`, `realtime` (`503` after 5 seconds),
    `search` and `realtime` again one after another.
+   In `kit/outbox`: `Relay.RelayDocument(ref)` is the drain on write with
+   this budget, for one written document (a route that writes two
+   documents drains each one; `POST /channels` writes the channel and the
+   creator's membership, one event each, so it waits at most about 2 x 2
+   seconds). A push not answered in time is left as it was (no attempt
+   counted, no retry delay), so the next relay run pushes it again. A
+   relay route that relays one document at a time calls
+   `Relay.SweepDocument(ref)`, which keeps the pusher's own timeout and
+   pushes one after another, like `RunOnce` and `RunWithin`.
 
 **Service tokens** (`kit/oidc`, documented in
 `docs/mesail/SERVICE-TOKENS.md`; changed by ADR 0005 on 2026-11-11):

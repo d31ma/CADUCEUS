@@ -38,11 +38,19 @@ func (relay Relay) RunWithin(limit int, budget time.Duration) (Report, error) {
 }
 
 func (relay Relay) RelayDocument(ref Ref) (Report, error) {
+	return relay.relayLoaded(ref, relay.drainedRun)
+}
+
+func (relay Relay) SweepDocument(ref Ref) (Report, error) {
+	return relay.relayLoaded(ref, relay.directRun)
+}
+
+func (relay Relay) relayLoaded(ref Ref, newRun func([]PendingEvent) *documentRun) (Report, error) {
 	fields, err := relay.store.Load(ref)
 	if err != nil {
 		return Report{}, err
 	}
-	return relay.relayOne(Document{Ref: ref, Fields: fields})
+	return relay.relayWith(Document{Ref: ref, Fields: fields}, newRun)
 }
 
 func (relay Relay) relayAll(documents []Document) (Report, error) {
@@ -79,11 +87,15 @@ func (Relay) more(report Report, found int, limit int) bool {
 }
 
 func (relay Relay) relayOne(document Document) (Report, error) {
+	return relay.relayWith(document, relay.directRun)
+}
+
+func (relay Relay) relayWith(document Document, newRun func([]PendingEvent) *documentRun) (Report, error) {
 	state, err := Codec{}.Read(document.Fields)
 	if err != nil {
 		return Report{}, err
 	}
-	outcome := relay.newRun().deliver(state.Pending)
+	outcome := newRun(state.Pending).deliver(state.Pending)
 	fresh, err := relay.store.Load(document.Ref)
 	if err != nil {
 		return outcome.report, err
@@ -95,13 +107,30 @@ func (relay Relay) relayOne(document Document) (Report, error) {
 	return outcome.report, relay.store.Save(document.Ref, merged)
 }
 
-func (relay Relay) newRun() *documentRun {
+func (relay Relay) directRun(pending []PendingEvent) *documentRun {
+	return relay.newRun(directPushes{pusher: relay.pusher, subscribers: relay.settings.subscriberMap()}, relay.now())
+}
+
+func (relay Relay) drainedRun(pending []PendingEvent) *documentRun {
+	now := relay.now()
+	drain := timedDrain{pusher: relay.pusher, subscribers: relay.settings.subscriberMap(), now: now, pushTimeout: relay.pushTimeout(), drainTimeout: relay.drainTimeout()}
+	return relay.newRun(drain.answers(pending), now)
+}
+
+func (relay Relay) newRun(pushes pushSource, now time.Time) *documentRun {
 	return &documentRun{
-		pusher:      relay.pusher,
-		policy:      relay.policy,
-		subscribers: relay.settings.subscriberMap(),
-		now:         relay.now(),
-		blocked:     map[string]bool{},
-		outcome:     runOutcome{updated: map[string]PendingEvent{}, deadLetters: []DeadLetter{}, report: Report{Documents: 1}},
+		pushes:  pushes,
+		policy:  relay.policy,
+		now:     now,
+		blocked: map[string]bool{},
+		outcome: runOutcome{updated: map[string]PendingEvent{}, deadLetters: []DeadLetter{}, report: Report{Documents: 1}},
 	}
+}
+
+func (Relay) pushTimeout() time.Duration {
+	return 2 * time.Second
+}
+
+func (Relay) drainTimeout() time.Duration {
+	return 3 * time.Second
 }

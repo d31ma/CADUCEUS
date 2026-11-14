@@ -53,7 +53,7 @@ services:
     image: mesail-router:dev
     environment:
       <<: *dev-credentials
-      MESAIL_ROUTER_SERVICES: identity,directory,channels,messaging,attachments,notify,search,mail-in,mail-out
+      MESAIL_ROUTER_SERVICES: identity,directory,channels,messaging,attachments,notify,search,mail-in,mail-out,devicebox
       MESAIL_ROUTER_PASSTHROUGH: /api/v1/realtime/socket=http://realtime:8116,/api/v1/realtime/stream=http://realtime:8116,/api/v1/realtime/=http://realtime:8106
       MESAIL_ROUTER_LAMBDA_ENDPOINT: http://floci:4566
       MESAIL_ROUTER_STATIC_BUCKET: mesail-static

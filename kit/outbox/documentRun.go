@@ -3,12 +3,11 @@ package outbox
 import "time"
 
 type documentRun struct {
-	pusher      Pusher
-	policy      RetryPolicy
-	subscribers map[string]Subscriber
-	now         time.Time
-	blocked     map[string]bool
-	outcome     runOutcome
+	pushes  pushSource
+	policy  RetryPolicy
+	now     time.Time
+	blocked map[string]bool
+	outcome runOutcome
 }
 
 func (run *documentRun) deliver(pending []PendingEvent) runOutcome {
@@ -54,8 +53,7 @@ func (run *documentRun) attempt(event PendingEvent, name string, due bool) pushA
 	if !run.isOpen(name, due) {
 		return pushAttempt{subscriber: name, skipped: true}
 	}
-	subscriber := Subscriber{Name: name, URL: run.subscribers[name].URL}
-	return pushAttempt{subscriber: name, err: run.pusher.Push(subscriber, event.Envelope)}
+	return run.pushes.push(event, name)
 }
 
 func (run *documentRun) isOpen(name string, due bool) bool {
@@ -76,7 +74,7 @@ func (run *documentRun) reschedule(event PendingEvent, groups attemptGroups) Pen
 }
 
 func (run *documentRun) failedAgain(event PendingEvent, lastError string) PendingEvent {
-	event.Attempts = event.Attempts + 1
+	event.Attempts += 1
 	event.NextAttemptAt = run.stamp(run.now.Add(run.policy.Delay(event.Attempts)))
 	event.LastError = lastError
 	return event

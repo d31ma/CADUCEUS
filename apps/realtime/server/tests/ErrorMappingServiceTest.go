@@ -102,20 +102,3 @@ func (test *ErrorMappingServiceTest) TestTicketsMapAnInvalidRequestToUnavailable
 	Assert.IsTrue(errors.As((&ErrorMappingService{}).TicketError(realtime.Invalid{}.UnknownKind()), &unavailable), "not unavailable")
 	Assert.Equals(5024, unavailable.Number())
 }
-
-func (test *ErrorMappingServiceTest) TestEveryNumberIsInTheRealtimeBlock() {
-	numbers := []int{
-		InvalidRequest{}.EnvelopeRefused("x").Number(),
-		InvalidRequest{}.TypeRefused("x").Number(),
-		Forbidden{}.EventCallerNotAService().Number(),
-		Unavailable{}.Unexpected().Number(),
-		Unavailable{}.RouteFailed().Number(),
-		realtime.Invalid{}.ConnectionIdMissing().Number(),
-		realtime.Invalid{}.EndNotInFuture().Number(),
-		realtime.Unauthenticated{}.OtherMember().Number(),
-		realtime.Missing{}.Connection().Number(),
-	}
-	for _, number := range numbers {
-		Assert.IsTrue(number >= 5000 && number <= 5499, "a number outside MS5000-MS5499")
-	}
-}

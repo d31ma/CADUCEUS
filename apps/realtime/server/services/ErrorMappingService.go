@@ -1,4 +1,5 @@
 import (
+	"cmp"
 	"errors"
 
 	"mesail.dev/packages/events"
@@ -30,18 +31,20 @@ func (service *ErrorMappingService) TicketError(failed error) error {
 }
 
 func (service *ErrorMappingService) answer(failed error, rules []func(error) error) error {
-	if failed == nil {
-		return nil
-	}
-	return service.firstAnswer(failed, rules)
+	return cmp.Or(service.answers(failed, rules)...)
 }
 
-func (service *ErrorMappingService) firstAnswer(failed error, rules []func(error) error) error {
-	for _, rule := range rules {
-		answer := rule(failed)
-		if answer != nil {
-			return answer
-		}
+func (service *ErrorMappingService) answers(failed error, rules []func(error) error) []error {
+	answers := []error{}
+	for _, rule := range append(rules, service.unexpected) {
+		answers = append(answers, rule(failed))
+	}
+	return answers
+}
+
+func (service *ErrorMappingService) unexpected(failed error) error {
+	if failed == nil {
+		return nil
 	}
 	return Unavailable{}.RouteFailed()
 }

@@ -51,11 +51,42 @@ run_blackbox() {
   return "$code"
 }
 
+signed_in_once() {
+  "$(dirname "$0")/tokens.sh" | grep '^export MESAIL_TOKEN_ANA=' | grep -qv "=''\$"
+}
+
+warm_up_once() {
+  mesail_seed_directory "$MESAIL_ROUTER_URL" && signed_in_once
+}
+
+seconds_since() {
+  echo $(($(date +%s) - $1))
+}
+
+warm_up() {
+  local seconds="$1" started
+  started="$(date +%s)"
+  until warm_up_once; do
+    if [ "$(seconds_since "$started")" -ge "$seconds" ]; then
+      echo "warm-up did not pass within $seconds s (a cold start, the K8/K10 class; not a test result)"
+      return 1
+    fi
+    echo "warm-up: the seed or the first sign-in failed; trying again in 15 s"
+    sleep 15
+  done
+  echo "warm-up passed after $(seconds_since "$started") s"
+}
+
+seed_directory() {
+  if [ -z "${MESAIL_WARMUP_SECONDS:-}" ]; then mesail_seed_directory "$MESAIL_ROUTER_URL"; return; fi
+  warm_up "$MESAIL_WARMUP_SECONDS"
+}
+
 main() {
   mesail_load_settings
   mesail_load_secrets
   mesail_step warm-functions warm_functions
-  mesail_step seed-directory mesail_seed_directory "$MESAIL_ROUTER_URL"
+  mesail_step seed-directory seed_directory
   load_tokens
   mesail_step blackbox run_blackbox
 }

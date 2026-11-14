@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 // @Test(DirectoryTestSetup, {"partition":"tests"})
@@ -212,6 +213,6 @@ func (test *DomainServiceTest) reset(domainId string) string {
 	domains := &DomainStorageService{documents: documents, names: names}
 	old, _, _ := domains.Find(domainId)
 	domains.Delete(old)
-	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId)
+	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId, &WriteBudget{Left: 2, Deadline: time.Now().Add(time.Minute)})
 	return domainId
 }

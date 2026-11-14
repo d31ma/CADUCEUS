@@ -113,9 +113,9 @@ func (service *OutboxRelayService) missingLetter(failure error) error {
 }
 
 func (service *OutboxRelayService) timeBudget() time.Duration {
-	return 3 * time.Second
+	return time.Second
 }
 
 func (service *OutboxRelayService) sweepSize() int {
-	return 10
+	return 3
 }

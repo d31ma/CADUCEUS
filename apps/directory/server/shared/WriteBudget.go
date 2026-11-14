@@ -17,6 +17,10 @@ func (budget *WriteBudget) Spend(writes int, step func() error) error {
 	return budget.stepWhen(budget.Take(writes), step)
 }
 
+func (budget *WriteBudget) MoreLater() {
+	budget.Short = true
+}
+
 func (budget *WriteBudget) Report() RemovalReport {
 	return RemovalReport{Writes: budget.Used, More: budget.Short}
 }

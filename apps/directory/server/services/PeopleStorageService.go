@@ -35,6 +35,18 @@ func (storage *PeopleStorageService) Store(person PersonDocument) (PersonDocumen
 	return storage.insertOrReplace(person)
 }
 
+func (storage *PeopleStorageService) Ids(people []PersonDocument) []string {
+	return storage.ids(people)
+}
+
+func (storage *PeopleStorageService) ids(people []PersonDocument) []string {
+	ids := []string{}
+	for _, person := range people {
+		ids = append(ids, person.PersonId)
+	}
+	return ids
+}
+
 func (storage *PeopleStorageService) findWhere(field string, value string) (PersonDocument, bool, error) {
 	person := PersonDocument{}
 	found, failure := storage.documents.FindOne(storage.names.People(), map[string]any{field: value}, &person)

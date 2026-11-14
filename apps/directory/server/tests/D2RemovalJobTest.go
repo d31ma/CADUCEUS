@@ -52,13 +52,13 @@ func (test *D2RemovalJobTest) TestDeletingAPersonInFiveDomainsRemovesEveryMember
 	Assert.IsTrue(strings.Contains(calls(), "DELETE /idp/admin/realms/mesail/users/"+person.PersonId), "want the account deleted")
 	Assert.Equals("deleted", marked.State)
 	Assert.Equals(5, len(marked.DomainIds))
-	Assert.IsTrue(test.largest(reports) <= 10, "a batch wrote more than 10 times")
+	Assert.IsTrue(test.largest(reports) <= 3, "a batch wrote more than 3 times")
 	Assert.Equals("removed,removed,removed,removed,removed", test.memberStates(domains, person.PersonId))
 	Assert.Equals(0, len(stored.DomainIds))
 	Assert.Equals("deleted", stored.State)
 }
 
-func (test *D2RemovalJobTest) TestOneRemovalJobCallStopsAfterTenWritesAndReportsMore() {
+func (test *D2RemovalJobTest) TestOneRemovalJobCallStopsAfterThreeWritesAndReportsMore() {
 	domains := []string{test.hosted(), test.hosted(), test.hosted(), test.hosted(), test.hosted()}
 	defer test.forget(domains...)
 	person := test.joined(test.person(), domains)
@@ -69,18 +69,18 @@ func (test *D2RemovalJobTest) TestOneRemovalJobCallStopsAfterTenWritesAndReports
 	reports := test.runUntilDone()
 	stored, _, _ := test.peopleStorage().ByPersonId(person.PersonId)
 	Assert.Equals("<nil>", fmt.Sprint(err))
-	Assert.IsTrue(first.Writes <= 10, "the first call wrote more than 10 times")
+	Assert.IsTrue(first.Writes <= 3, "the first call wrote more than 3 times")
 	Assert.IsTrue(first.More, "want more work reported after the first call")
-	Assert.IsTrue(test.largest(reports) <= 10, "a later call wrote more than 10 times")
+	Assert.IsTrue(test.largest(reports) <= 3, "a later call wrote more than 3 times")
 	Assert.Equals(0, len(stored.DomainIds))
 }
 
-func (test *D2RemovalJobTest) TestARemovalJobCallStopsAfterThreeSeconds() {
-	Assert.Equals(3*time.Second, test.job().timeLimit())
-	Assert.Equals(10, test.job().writeLimit())
+func (test *D2RemovalJobTest) TestARemovalJobCallStopsAfterOneSecondAndThreeWrites() {
+	Assert.Equals(time.Second, test.job().timeLimit())
+	Assert.Equals(3, test.job().writeLimit())
 }
 
-func (test *D2RemovalJobTest) TestPersonLeavingStopsWhenTheBudgetRunsOutAndContinuesLater() {
+func (test *D2RemovalJobTest) TestPersonLeavingTakesOneDomainStepPerBudgetAndFinishesLater() {
 	domains := []string{test.hosted(), test.hosted(), test.hosted()}
 	defer test.forget(domains...)
 	person := test.joined(test.person(), domains)
@@ -91,14 +91,32 @@ func (test *D2RemovalJobTest) TestPersonLeavingStopsWhenTheBudgetRunsOutAndConti
 	err := test.leaving().leaveEachDomain(person, budget)
 	partial, _, _ := test.peopleStorage().ByPersonId(person.PersonId)
 	report := budget.Report()
-	finishErr := test.leaving().leaveEachDomain(partial, &WriteBudget{Left: 25, Deadline: time.Now().Add(time.Minute)})
+	partialStates := test.memberStates(domains, person.PersonId)
+	calls := test.leaveUntilDone(person.PersonId)
 	stored, _, _ := test.peopleStorage().ByPersonId(person.PersonId)
 	Assert.Equals("<nil>", fmt.Sprint(err))
-	Assert.Equals("<nil>", fmt.Sprint(finishErr))
-	Assert.Equals(8, report.Writes)
+	Assert.Equals(6, report.Writes)
 	Assert.IsTrue(report.More, "want more work reported")
-	Assert.Equals(domains[2], strings.Join(partial.DomainIds, ","))
+	Assert.Equals(3, len(partial.DomainIds))
+	Assert.Equals("removed,removed,active", partialStates)
+	Assert.IsTrue(calls <= 4, fmt.Sprintf("leaving took %d more calls", calls))
 	Assert.Equals(0, len(stored.DomainIds))
+	Assert.Equals("removed,removed,removed", test.memberStates(domains, person.PersonId))
+}
+
+func (test *D2RemovalJobTest) TestACallThatLeavesADomainReportsMoreForThePersonStore() {
+	domain := test.hosted()
+	defer test.forget(domain)
+	person := test.joined(test.person(), []string{domain})
+	defer test.forgetPeople([]PersonDocument{person})
+	person.State = "deleted"
+	person = test.stored(person)
+	budget := &WriteBudget{Left: 3, Deadline: time.Now().Add(time.Minute)}
+	err := test.leaving().leaveEachDomain(person, budget)
+	stored, _, _ := test.peopleStorage().ByPersonId(person.PersonId)
+	Assert.Equals("<nil>", fmt.Sprint(err))
+	Assert.Equals(RemovalReport{Writes: 3, More: true}, budget.Report())
+	Assert.Equals(domain, strings.Join(stored.DomainIds, ","))
 }
 
 func (test *D2RemovalJobTest) TestABudgetPastItsDeadlineTakesNothing() {
@@ -175,9 +193,20 @@ func (test *D2RemovalJobTest) TestBatchUtilsRunsEveryStepAndKeepsEveryFailure() 
 	Assert.Equals("step 0 failed\nstep 1 failed\nstep 2 failed", err.Error())
 }
 
+func (test *D2RemovalJobTest) leaveUntilDone(personId string) int {
+	for calls := range 10 {
+		person, _, _ := test.peopleStorage().ByPersonId(personId)
+		if len(person.DomainIds) == 0 {
+			return calls
+		}
+		Assert.Equals("<nil>", fmt.Sprint(test.leaving().leaveEachDomain(person, &WriteBudget{Left: 3, Deadline: time.Now().Add(time.Minute)})))
+	}
+	return 10
+}
+
 func (test *D2RemovalJobTest) runUntilDone() []RemovalReport {
 	reports := []RemovalReport{}
-	for range 40 {
+	for range 60 {
 		report, err := test.job().RunOnce()
 		Assert.Equals("<nil>", fmt.Sprint(err))
 		reports = append(reports, report)
@@ -255,7 +284,7 @@ func (test *D2RemovalJobTest) forget(domainIds ...string) {
 		if found {
 			test.domains().Delete(domain)
 		}
-		(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId)
+		(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId, &WriteBudget{Left: 2, Deadline: time.Now().Add(time.Minute)})
 	}
 }
 

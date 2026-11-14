@@ -1,5 +1,4 @@
 import (
-	"cmp"
 	"errors"
 	"slices"
 )
@@ -12,10 +11,9 @@ type PersonLeavingService struct {
 	writer *MemberWriterService
 }
 
-func (service *PersonLeavingService) Continue(budget *WriteBudget) error {
+func (service *PersonLeavingService) Continue(offset int, budget *WriteBudget) error {
 	people, failure := service.people.Leaving()
-	left := BatchUtils{}.Each(len(people), func(index int) error { return service.leaveEachDomain(people[index], budget) })
-	return cmp.Or(failure, left)
+	return TurnUtils{}.Visit(service.people.Ids(people), failure, offset, func(index int) error { return service.leaveEachDomain(people[index], budget) })
 }
 
 func (service *PersonLeavingService) leaveEachDomain(person PersonDocument, budget *WriteBudget) error {
@@ -29,24 +27,39 @@ func (service *PersonLeavingService) leaveEachDomain(person PersonDocument, budg
 }
 
 func (service *PersonLeavingService) leave(person PersonDocument, domainId string, budget *WriteBudget) (PersonDocument, error) {
-	if !budget.Take(service.leaveWrites()) {
-		return person, nil
-	}
-	return service.leaveAndStore(person, domainId)
+	gone, failure := service.writer.Gone(person.PersonId, domainId)
+	return service.nextStep(gone, failure, PersonLeave{Person: person, DomainId: domainId}, budget)
 }
 
-func (service *PersonLeavingService) leaveAndStore(person PersonDocument, domainId string) (PersonDocument, error) {
-	failure := service.writer.LeaveDomain(person.PersonId, domainId)
-	return service.storeUnless(failure, PersonRules{}.Without(person, domainId))
+func (service *PersonLeavingService) nextStep(gone bool, failure error, leave PersonLeave, budget *WriteBudget) (PersonDocument, error) {
+	switch {
+	case failure != nil:
+		return leave.Person, failure
+	case gone:
+		return service.storeWithin(leave, budget)
+	}
+	return leave.Person, budget.Spend(service.leaveWrites(), func() error { return service.leaveNow(leave, budget) })
 }
 
-func (service *PersonLeavingService) storeUnless(failure error, person PersonDocument) (PersonDocument, error) {
-	if failure != nil {
-		return person, failure
-	}
-	return service.people.Store(person)
+func (service *PersonLeavingService) leaveNow(leave PersonLeave, budget *WriteBudget) error {
+	budget.MoreLater()
+	return service.writer.LeaveDomain(leave.Person.PersonId, leave.DomainId)
+}
+
+func (service *PersonLeavingService) storeWithin(leave PersonLeave, budget *WriteBudget) (PersonDocument, error) {
+	result := leave.Person
+	failure := budget.Spend(service.storeWrites(), func() error {
+		stored, storeFailure := service.people.Store(PersonRules{}.Without(leave.Person, leave.DomainId))
+		result = stored
+		return storeFailure
+	})
+	return result, failure
 }
 
 func (service *PersonLeavingService) leaveWrites() int {
-	return 4
+	return 3
+}
+
+func (service *PersonLeavingService) storeWrites() int {
+	return 1
 }

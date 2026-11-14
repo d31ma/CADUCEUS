@@ -161,6 +161,7 @@ Settings (environment, or a `.env` file copied from `.env.example`):
 | `MESAIL_TEST_RUN` | `go test -run` filter for `tests/blackbox`. |
 | `MESAIL_SKIP_STATIC=1` | Skip the Tac bundles and the static upload. |
 | `MESAIL_SKIP_BUILD=1` | Reuse the images that are already built. |
+| `MESAIL_WARMUP_SECONDS=<n>` | Before the tests, repeat the directory seed and one sign-in (`ana`) every 15 s until both pass, for up to `<n>` seconds (300 for slice K6's runs). A first FYLO call after a cold start can pass the 5 s store deadline until slice K10; a failure here is that known class, not a test result. Unset: seed once. |
 | `MESAIL_VM` | `mesail` (default, the dev host) or `colima`. |
 
 ## The pieces
@@ -471,9 +472,18 @@ In Lambda form no `@Schedule` worker runs, so the `scheduler` container
 curl image) calls every route in `stack.json` `schedules` through the router
 every `scheduleSeconds` (60). Its token is an install-wide service token from
 `identity` (`http://router:8080/api/v1/identity/service-token`, domain `*`,
-secret `MESAIL_SERVICE_CLIENT_SECRET`). It logs only the path and the status
-code. In AWS this becomes EventBridge Scheduler rules with a small
-token-fetching trigger.
+secret `MESAIL_SERVICE_CLIENT_SECRET`). In each tick it calls every route
+once, then calls again at once each route that answered `200` with `more:
+true`, one call at a time per route and the routes in turn (EVENTS.md
+section 4 item 5, slice K6). It stops calling a route on `more: false`, on
+any other answer or on a timeout, and stops repeating at the longer of
+the tick length minus 10 seconds and half the tick (50 s for 60 s ticks,
+5 s for 10 s ticks). It logs one line per call (the
+path and the status code) and, at the end of each tick, the number of calls
+per route (`calls this tick: <path>=<n> ...`). The next tick starts
+`scheduleSeconds` after the last one started. Under `ty start` the
+scheduler's 10 s ticks repeat for 5 s. In AWS this becomes EventBridge Scheduler rules with a
+small token-fetching trigger.
 
 ## Ports on the Mac (127.0.0.1 only)
 

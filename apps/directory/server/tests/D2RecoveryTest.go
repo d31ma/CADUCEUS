@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"mesail.dev/packages/oidc"
+	"time"
 )
 
 // @Test(DirectoryTestSetup, {"partition":"tests"})
@@ -215,7 +216,7 @@ func (test *D2RecoveryTest) hosted() string {
 func (test *D2RecoveryTest) forget(domainId string) {
 	domain, _, _ := test.domains().Find(domainId)
 	test.domains().Delete(domain)
-	(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId)
+	(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId, &WriteBudget{Left: 2, Deadline: time.Now().Add(time.Minute)})
 }
 
 func (test *D2RecoveryTest) forgetPerson(person PersonDocument) {

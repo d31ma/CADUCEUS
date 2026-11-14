@@ -17,6 +17,8 @@ Settings (environment):
   MESAIL_TEST_RUN    go test -run filter for tests/blackbox
   MESAIL_SKIP_STATIC 1 skips the Tac bundles and the static upload
   MESAIL_SKIP_BUILD  1 reuses the images already built
+  MESAIL_WARMUP_SECONDS  repeat the seed and one sign-in (ana) until both pass, for up to this many
+                     seconds, before the tests (cold starts until slice K10; unset: seed once)
   MESAIL_VM          mesail (default: the mesail dev host and its Floci) or colima
 Logs: ~/Library/Logs/local/CADUCEUS/<owner>/floci-<time>/
 TEXT

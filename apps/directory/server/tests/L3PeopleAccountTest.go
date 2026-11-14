@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"mesail.dev/packages/oidc"
+	"time"
 )
 
 // @Test(DirectoryTestSetup, {"partition":"tests"})
@@ -314,7 +315,7 @@ func (test *L3PeopleAccountTest) forget(domainIds []string, people ...PersonDocu
 	for _, domainId := range domainIds {
 		domain, _, _ := test.domains().Find(domainId)
 		test.domains().Delete(domain)
-		(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId)
+		(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId, &WriteBudget{Left: 2, Deadline: time.Now().Add(time.Minute)})
 	}
 }
 

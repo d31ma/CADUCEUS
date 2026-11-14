@@ -14,10 +14,9 @@ type DomainRemovalService struct {
 	collections *TenantCollectionsService
 }
 
-func (service *DomainRemovalService) Continue(budget *WriteBudget) error {
+func (service *DomainRemovalService) Continue(budget *WriteBudget, offset int) error {
 	domains, failure := service.domains.Removing()
-	finished := BatchUtils{}.Each(len(domains), func(index int) error { return service.finish(domains[index], budget) })
-	return cmp.Or(failure, finished)
+	return TurnUtils{}.Visit(service.domains.Ids(domains), failure, offset, func(index int) error { return service.finish(domains[index], budget) })
 }
 
 func (service *DomainRemovalService) finish(domain DomainDocument, budget *WriteBudget) error {
@@ -48,24 +47,19 @@ func (service *DomainRemovalService) releaseAddresses(domainId string, budget *W
 }
 
 func (service *DomainRemovalService) dropUnless(failure error, domain DomainDocument, budget *WriteBudget) error {
-	switch {
-	case failure != nil:
+	if failure != nil {
 		return failure
-	case !budget.Take(service.dropWrites()):
-		return nil
 	}
-	return service.drop(domain)
+	return service.dropInParts(domain, budget)
 }
 
-func (service *DomainRemovalService) drop(domain DomainDocument) error {
-	failure := service.collections.Drop(domain.DomainId)
-	return Steps{}.Unless(failure, func() error { return service.domains.Delete(domain) })
+func (service *DomainRemovalService) dropInParts(domain DomainDocument, budget *WriteBudget) error {
+	failure := service.collections.Drop(domain.DomainId, budget)
+	return Steps{}.Unless(failure, func() error {
+		return budget.Spend(service.oneWrite(), func() error { return service.domains.Delete(domain) })
+	})
 }
 
 func (service *DomainRemovalService) oneWrite() int {
 	return 1
-}
-
-func (service *DomainRemovalService) dropWrites() int {
-	return 3
 }

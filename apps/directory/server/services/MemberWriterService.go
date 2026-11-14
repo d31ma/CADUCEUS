@@ -39,6 +39,15 @@ func (writer *MemberWriterService) Leave(member MemberDocument) error {
 	return writer.deleteOwn(cmp.Or(failure, readFailure), found, address, member.MemberId)
 }
 
+func (writer *MemberWriterService) Gone(personId string, domainId string) (bool, error) {
+	member, found, failure := writer.members.Find(domainId, personId)
+	return writer.gone(found, member), failure
+}
+
+func (writer *MemberWriterService) gone(found bool, member MemberDocument) bool {
+	return !found || member.State == writer.removed()
+}
+
 func (writer *MemberWriterService) LeaveDomain(personId string, domainId string) error {
 	member, found, failure := writer.members.Find(domainId, personId)
 	return writer.leaveFound(found, failure, member)

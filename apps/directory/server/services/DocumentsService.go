@@ -16,6 +16,10 @@ func (documents *DocumentsService) Ensure(collection string) error {
 	return documents.known.Ensure(documents.dataSource, collection)
 }
 
+func (documents *DocumentsService) Exists(collection string) (bool, error) {
+	return documents.dataSource.CollectionExists(collection)
+}
+
 func (documents *DocumentsService) Drop(collection string) error {
 	documents.known.Forget(collection)
 	_, failure := documents.dataSource.DropCollection(collection)

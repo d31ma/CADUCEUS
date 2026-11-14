@@ -44,6 +44,10 @@ func (storage *DomainStorageService) Delete(domain DomainDocument) error {
 	return storage.documents.Delete(storage.names.Domains(), domain.Id)
 }
 
+func (storage *DomainStorageService) Ids(domains []DomainDocument) []string {
+	return storage.ids(domains)
+}
+
 func (storage *DomainStorageService) ids(domains []DomainDocument) []string {
 	ids := []string{}
 	for _, domain := range domains {

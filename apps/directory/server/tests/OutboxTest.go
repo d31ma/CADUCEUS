@@ -115,19 +115,19 @@ func (test *OutboxTest) TestTheOutboxRoutesHideThemselvesFromAMailDomainServiceT
 	Assert.IsTrue(errors.As(err, &missing), "want NotFound")
 }
 
-func (test *OutboxTest) TestOneRelayCallRelaysAtMostTenDocumentsAndReportsMore() {
+func (test *OutboxTest) TestOneRelayCallRelaysAtMostThreeDocumentsAndReportsMore() {
 	relay, _, _ := test.world()
 	test.pendingMembers("outbox-unit.test", 11)
 	report, err := relay.RunOnce()
 	Assert.Equals("<nil>", fmt.Sprint(err))
-	Assert.IsTrue(report.Documents <= 10, fmt.Sprintf("one call relayed %d documents", report.Documents))
+	Assert.IsTrue(report.Documents <= 3, fmt.Sprintf("one call relayed %d documents", report.Documents))
 	Assert.IsTrue(report.More, "want more work reported")
 }
 
-func (test *OutboxTest) TestARelayCallStopsAfterThreeSeconds() {
+func (test *OutboxTest) TestARelayCallStopsAfterOneSecondAndThreeDocuments() {
 	relay, _, _ := test.world()
-	Assert.Equals(3*time.Second, relay.timeBudget())
-	Assert.Equals(10, relay.sweepSize())
+	Assert.Equals(time.Second, relay.timeBudget())
+	Assert.Equals(3, relay.sweepSize())
 }
 
 func (test *OutboxTest) pendingMembers(domainId string, count int) {
@@ -170,6 +170,6 @@ func (test *OutboxTest) reset(domainId string) string {
 	domains := &DomainStorageService{documents: documents, names: names}
 	old, _, _ := domains.Find(domainId)
 	domains.Delete(old)
-	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId)
+	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId, &WriteBudget{Left: 2, Deadline: time.Now().Add(time.Minute)})
 	return domainId
 }

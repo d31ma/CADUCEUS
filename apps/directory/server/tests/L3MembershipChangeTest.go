@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"mesail.dev/packages/oidc"
+	"time"
 )
 
 // @Test(DirectoryTestSetup, {"partition":"tests"})
@@ -191,7 +192,7 @@ func (test *L3MembershipChangeTest) hosted() string {
 func (test *L3MembershipChangeTest) dropDomain(domainId string) {
 	domain, _, _ := test.domains().Find(domainId)
 	test.domains().Delete(domain)
-	(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId)
+	(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId, &WriteBudget{Left: 2, Deadline: time.Now().Add(time.Minute)})
 }
 
 func (test *L3MembershipChangeTest) operator(domain string) oidc.Caller {

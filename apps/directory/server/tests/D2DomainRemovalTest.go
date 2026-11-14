@@ -3,6 +3,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // @Test(DirectoryTestSetup, {"partition":"tests"})
@@ -10,10 +11,10 @@ type D2DomainRemovalTest struct {
 	behaviors *BehaviorContext
 }
 
-func (test *D2DomainRemovalTest) TestRemovingADomainWith200MembersFinishesInBatchesOfAtMost25Writes() {
+func (test *D2DomainRemovalTest) TestRemovingADomainWith80MembersFinishesInBatchesOfAtMost3Writes() {
 	removed, kept := test.hosted(), test.hosted()
 	defer test.forget(kept)
-	people := test.people(removed, kept, 200)
+	people := test.people(removed, kept, 80)
 	defer test.forgetPeople(people)
 	alias := test.reserveAlias(removed)
 	shared := test.reserveAlias(removed, kept)
@@ -22,9 +23,9 @@ func (test *D2DomainRemovalTest) TestRemovingADomainWith200MembersFinishesInBatc
 	reports := test.runUntilDone()
 	_, domainFound, _ := test.domains().Find(removed)
 	Assert.Equals("<nil>", fmt.Sprint(err))
-	Assert.IsTrue(len(reports) >= 9, "want at least 9 batches for 200 people")
-	Assert.IsTrue(test.largest(reports) <= 25, "a batch wrote more than 25 times")
-	Assert.Equals("0 200", test.stillIn(people, removed, kept))
+	Assert.IsTrue(len(reports) >= 27, "want at least 27 batches for 80 people")
+	Assert.IsTrue(test.largest(reports) <= 3, "a batch wrote more than 3 times")
+	Assert.Equals("0 80", test.stillIn(people, removed, kept))
 	Assert.IsTrue(!domainFound, "the removed domain is still stored")
 	Assert.Equals(0, test.membersOf(removed))
 	Assert.Equals("", test.localPart(alias).LocalPart)
@@ -70,7 +71,7 @@ func (test *D2DomainRemovalTest) stillIn(people []PersonDocument, removed string
 
 func (test *D2DomainRemovalTest) membersOf(domainId string) int {
 	members, _ := test.memberStorage().All(domainId)
-	(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId)
+	(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId, &WriteBudget{Left: 2, Deadline: time.Now().Add(time.Minute)})
 	return len(members)
 }
 
@@ -121,7 +122,7 @@ func (test *D2DomainRemovalTest) hosted() string {
 func (test *D2DomainRemovalTest) forget(domainId string) {
 	domain, _, _ := test.domains().Find(domainId)
 	test.domains().Delete(domain)
-	(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId)
+	(&TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}).Drop(domainId, &WriteBudget{Left: 2, Deadline: time.Now().Add(time.Minute)})
 }
 
 func (test *D2DomainRemovalTest) forgetPeople(people []PersonDocument) {
@@ -134,9 +135,13 @@ func (test *D2DomainRemovalTest) forgetLocalPart(localPart string) {
 	test.localParts().Delete(test.localPart(localPart))
 }
 
-func (test *D2DomainRemovalTest) job() *RemovalJobService {
+func (test *D2DomainRemovalTest) removal() *DomainRemovalService {
 	collections := &TenantCollectionsService{documents: test.documents(), names: &CollectionNamesService{}}
-	removal := &DomainRemovalService{domains: test.domains(), people: test.peopleStorage(), localParts: test.localParts(), reservations: test.reservations(), collections: collections}
+	return &DomainRemovalService{domains: test.domains(), people: test.peopleStorage(), localParts: test.localParts(), reservations: test.reservations(), collections: collections}
+}
+
+func (test *D2DomainRemovalTest) job() *RemovalJobService {
+	removal := test.removal()
 	store := &OutboxStoreService{domains: test.domains(), members: test.memberStorage(), names: &CollectionNamesService{}}
 	relay := &OutboxRelayService{store: store, settings: &SettingsService{}, domains: test.domains()}
 	addresses := &AddressStorageService{documents: test.documents(), names: &CollectionNamesService{}}

@@ -64,6 +64,17 @@ domains; chat never does.
   directory's removal job works; every sign-in must answer 200 within 5
   seconds. Filling 200 members takes a few minutes on Floci, so the test
   skips itself unless the variable is set.
+  The same variable turns on
+  `TestK6ASmallDomainIsGoneSoonWhileABigOneIsRemovedInMinutes` (slice K6):
+  the Operator fills a big domain with that many members and a small one
+  with one member, removes the big one, then the small one, and `ana` signs
+  in a loop (each sign-in 200 within 5 seconds) until the small domain is
+  gone (within 2 minutes) and the big one is gone (within 5 minutes). On
+  Floci this needs the scheduler's calls again while `more: true`. Until
+  slices K7 and K10 merge, its fill retries a member add once after a
+  client timeout (a retry answered `409 duplicate` counts as added); it logs
+  each retry, prints the count, and fails when more than 5% of the adds
+  needed a retry.
 
 The one-login tests (`SignIn_test.go`, `DomainSwitch_test.go`,
 `Tokens_test.go`, `Members_test.go`, `People_test.go`; slice L0) create

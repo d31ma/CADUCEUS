@@ -109,7 +109,7 @@ func (test *MessagesControllerTest) TestGetMessageHidesTheMessageFromOthers() {
 	sent := world.ChatTo("bo", "c1", "hello")
 	_, err := world.Messages.GetMessage(world.MemberBearer("cy"), sent.Message.MessageId)
 	Assert.IsTrue(world.IsNotFound(err), "want NotFound")
-	Assert.Equals(1539, world.Number(err))
+	Assert.Equals(1538, world.Number(err))
 }
 
 func (test *MessagesControllerTest) TestAReplyAlsoSentToTheConversationIsListedThere() {

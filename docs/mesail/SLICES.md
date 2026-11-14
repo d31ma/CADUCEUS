@@ -2270,8 +2270,10 @@ section 4) and only Mesail's own code drops collections.
   26.46.02 starts one handler process per request, so a set in memory
   would forget everything after each request. `KnownCollections` keeps one
   empty marker file per collection in
-  `os.TempDir()/mesail-known-collections/<hash of the data source root>/`
-  (Lambda keeps `/tmp` for the container's life, the same life as its
+  `os.TempDir()/mesail-known-collections/<hash of YON_APPLICATION_JSON>/`
+  (a Yon handler gets only `PATH`, `LANG`, `LC_ALL`, `TMPDIR` and
+  `YON_APPLICATION_JSON`, not the root's path; the settings name the
+  data source, so each root still gets its own folder) (Lambda keeps `/tmp` for the container's life, the same life as its
   `fylo` process), plus a set in memory for the current request. A
   marker skips the check. When a write or read still finds the
   collection missing (the root was restored or wiped outside Mesail), the
@@ -2280,11 +2282,24 @@ section 4) and only Mesail's own code drops collections.
   before it drops. Test helpers that wipe a root also remove that root's
   marker folder, and tests run with their own `TMPDIR`. Markers hold no
   data.
+- **Missing collections are not cached (decided 2026-11-14, choice A,
+  after K12's Floci run).** A collection that exists is checked once per
+  container and never again (measured: 0 repeat checks after any create,
+  read or write). A collection that does not exist yet is checked on each
+  read until something creates it, because a cached "missing" would make
+  a collection created outside this process (a restore, a test helper)
+  read as empty with no error. Measured worst cases: `messaging`'s
+  `mentions-<domain>` (read on every list, 82 checks in one run) and
+  `notify`'s month collections that never got a notification (up to 16
+  checks each). Reads still do not create collections. Follow-up for each
+  app's owner, not K12: where a hot read path keeps asking for a missing
+  collection, create it on that app's write path (for example `messaging`
+  creates `mentions-<domain>` with the domain's other collections).
 - **Depends on:** nothing; any time. Whichever of K12 and an app's E slice
   merges second rebases.
 - **Done when:** a Floci run's FYLO log shows at most one
-  `inspectCollection` per collection per container; gates pass for every
-  app that syncs the kit.
+  `inspectCollection` per existing collection per container (missing
+  collections: see above); gates pass for every app that syncs the kit.
 
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 

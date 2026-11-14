@@ -115,6 +115,8 @@ signalling on `realtime`'s socket, a TURN relay and MLS groups of up to
   Foundation on Windows); events for started, stopped, failed and the
   bytes written; `supported()` says where it is missing. The recording is
   never uploaded by TACHYON.
+- **Linux:** calls, screen sharing and recording must work in the Linux
+  desktop app before the first release (ADR 0011 Q13, TACHYON request P8).
 - **P6 (later), native call screen.** Incoming calls through CallKit (iOS)
   and ConnectionService (Android), with VoIP push, so a call rings like a
   phone call when the app is closed.

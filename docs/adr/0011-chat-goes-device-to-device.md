@@ -175,12 +175,12 @@ camera (request P4).
 - **Saved keys on the web** are non-extractable CryptoKeys in IndexedDB.
 - **TURN.** The TURN addresses are in the manifest; the app passes
   short-lived TURN credentials when it opens a connection (G3 issues
-  them). `relayOnly` (send everything through the relay, which hides
-  each device's network address from the other device) is an owner
-  choice (section 10, Q12).
-- **Linux.** TACHYON's `Peers` answers `unsupported` in the Linux desktop
-  app at first, so that app cannot do device-to-device chat or calls
-  until TACHYON adds it (section 10, Q13).
+  them). `relayOnly` stays `false`: devices connect directly when they
+  can, and use the relay only when they must (the owner's answer to Q12;
+  the other device can see a device's network address).
+- **Linux.** TACHYON's `Peers` answered `unsupported` in the Linux desktop
+  app in its first plan. The owner chose that the first release waits for
+  Linux (Q13): TACHYON request P8 below.
 - **Passkey PRF must stay on the device.** TACHYON's passkey client puts
   the PRF result into `credentialJson`. The PRF result can unlock the
   backup, so Mesail never sends it to a server: the client removes it
@@ -223,6 +223,26 @@ camera (request P4).
   AVFoundation on Apple, CameraX with a QR decoder on Android, the Windows
   camera APIs on Windows), with the camera permission text from the
   manifest. Where no camera exists, `supported()` is false.
+- **P8, the Linux desktop app** (needed for the first release, Q13). The
+  Linux shell (WebKitGTK) supports `Peers` (P1), `Crypto` (P2),
+  `CodeScanner` (P4), `Media` (P5) and `Recorder` (P7) with the same API
+  as the other platforms:
+  - data channels, audio and video tracks, simulcast and statistics,
+    through WebKitGTK's WebRTC (GStreamer) or, where that is missing or too
+    old, a WebRTC engine inside the shell;
+  - the encoded-frame transform hook for SFrame (group calls); if WebKitGTK
+    cannot give it, the shell's own WebRTC engine must;
+  - the camera and microphone through PipeWire and the desktop portals
+    (`org.freedesktop.portal.Camera`), with the permission text from the
+    manifest; device lists and changes;
+  - screen sharing through the ScreenCast portal (PipeWire);
+  - recording to a file the person picks (the FileChooser portal),
+    written as it runs;
+  - private keys in the Secret Service (libsecret) or the sealed tables,
+    never exported;
+  - QR scanning with the camera portal and a built-in decoder.
+  Where a Linux system lacks a portal or PipeWire, `supported()` says
+  so, and the app shows its "not available on this device" state.
 - **P3, passkey unlock (later).** The WebAuthn PRF extension on
   `Passkeys.get` (TACHYON T13), so a passkey can unlock the encrypted
   backup without a recovery code.
@@ -253,12 +273,16 @@ camera (request P4).
 - Q7 "Should the first release wait for device-to-device chat?": "Yes,
   wait (Recommended)" (decision 10).
 
-## 10. Open owner choices (2026-11-14)
+## 10. The owner's answers (2026-11-14)
 
-- Q12: direct device connections when possible, or always through the
-  relay (hides network addresses).
-- Q13: what the Linux desktop app does until TACHYON supports `Peers`
-  there.
+- Q12 "In chat and calls between two people, should devices connect
+  directly, or always through Mesail's relay server?": "Directly when
+  possible (Recommended)".
+- Q13 "TACHYON cannot do device-to-device connections in the Linux
+  desktop app at first. What should the Linux app do in the first
+  release?": "Wait for Linux support": the first release waits until
+  TACHYON supports device-to-device connections, calls and recording in
+  the Linux app (request P8).
 
 ## 9. The owner's suggestion
 

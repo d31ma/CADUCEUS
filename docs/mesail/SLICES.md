@@ -2147,7 +2147,9 @@ G9 and CU now (the owner answered); G10 and G11 after G9's contracts;
 G12 after TACHYON P5 and P7 and G7. All of Wave 9 is in the first release
 (ADR 0011 Q7, ADR 0012 Q8).
 G6 any time (a new app). G7 after TACHYON P1, P2 and P4 are released and
-the pin moves. G8 last, before the first release (Q7).
+the pin moves. G8 last, before the first release (Q7). The first release
+also waits for TACHYON P8 (the Linux desktop app, ADR 0011 Q13); devices
+connect directly when they can (Q12, `relayOnly` false).
 
 ## Later (after the first release)
 

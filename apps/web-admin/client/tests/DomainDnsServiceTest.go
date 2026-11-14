@@ -21,6 +21,7 @@ func (test *DomainDnsServiceTest) TestOpenedShowsThePendingDomain() {
 	dns := test.opened("new.example.net")
 	Assert.Equals("ready", dns.Step)
 	Assert.Equals("new.example.net", dns.Name)
+	Assert.Equals("@new.example.net", dns.AddressSuffix)
 	Assert.Equals("Pending", dns.StateText)
 	Assert.Equals("warning", dns.StateColor)
 	Assert.Equals("clock", dns.StateIcon)

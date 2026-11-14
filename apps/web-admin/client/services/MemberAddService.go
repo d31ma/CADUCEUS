@@ -16,6 +16,11 @@ type MemberAddService struct {
 	AddedAddress    string
 	AddedFirstName  string
 	ExistingPerson  bool
+	AddHeading      string
+	AddressSuffix   string
+	AdminLabel      string
+	CreateHeading   string
+	AddedHeading    string
 	// @Needs
 	session *AdminSessionService
 	// @Needs
@@ -44,6 +49,7 @@ func (add *MemberAddService) NameFirstAdmin(domainId string, username string) {
 
 func (add *MemberAddService) AddWith(username string, admin bool) {
 	add.Username = add.rules.Cleaned(username)
+	add.CreateHeading = "Create an account for " + add.Username
 	add.Admin = admin
 	add.Problem = ""
 	add.UsernameProblem = add.firstOf(add.rules.Problem(username), add.rules.ListedProblem(add.Username, add.listedDomain()))
@@ -75,6 +81,9 @@ func (add *MemberAddService) Close() {
 
 func (add *MemberAddService) start(domainId string, firstAdmin bool, username string) {
 	add.DomainId = domainId
+	add.AddHeading = "Add a member to " + domainId
+	add.AddressSuffix = "@" + domainId
+	add.AdminLabel = "Make this person an admin of " + domainId
 	add.FirstAdmin = firstAdmin
 	add.Username = username
 	add.Admin = firstAdmin
@@ -165,6 +174,7 @@ func (add *MemberAddService) showAdded(answer AddedMember, problem string) {
 		return
 	}
 	add.AddedName = answer.Member.DisplayName
+	add.AddedHeading = answer.Member.DisplayName + " was added"
 	add.AddedAddress = answer.Member.PrimaryAddress
 	add.AddedFirstName = strings.Fields(answer.Member.DisplayName + " " + add.Username)[0]
 	add.ExistingPerson = answer.ExistingPerson

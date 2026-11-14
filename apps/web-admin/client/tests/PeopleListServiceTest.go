@@ -22,6 +22,9 @@ func (test *PeopleListServiceTest) TestOpenedListsEveryPerson() {
 	Assert.Equals("3 people", people.Heading)
 	Assert.Equals("Ana Ruiz", people.Rows[0].Name)
 	Assert.Equals("ana", people.Rows[0].Username)
+	Assert.Equals("Actions for Ana Ruiz", people.Rows[0].ActionsLabel)
+	Assert.Equals("Account of Ana Ruiz, in every domain", people.Rows[0].AccountLabel)
+	Assert.Equals("Domains of Ana Ruiz", people.Rows[0].DomainsLabel)
 	Assert.Equals(2, len(people.Rows[0].DomainIds))
 	Assert.Equals("AR", people.Rows[0].Initials)
 }

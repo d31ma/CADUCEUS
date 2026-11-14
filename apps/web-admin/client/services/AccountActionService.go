@@ -2,19 +2,26 @@ import "strings"
 
 // @Service
 type AccountActionService struct {
-	Dialog          string
-	PersonId        string
-	Name            string
-	FirstName       string
-	Username        string
-	Busy            bool
-	PasswordProblem string
-	NameProblem     string
-	ConfirmProblem  string
-	DoneTitle       string
-	DoneText        string
-	Notice          string
-	Problem         string
+	Dialog           string
+	PersonId         string
+	Name             string
+	FirstName        string
+	Username         string
+	Busy             bool
+	PasswordProblem  string
+	NameProblem      string
+	ConfirmProblem   string
+	DoneTitle        string
+	DoneText         string
+	Notice           string
+	Problem          string
+	ResetHeading     string
+	TwoStepHeading   string
+	TurnOffHeading   string
+	RenameHeading    string
+	DeleteHeading    string
+	ForbiddenHeading string
+	ConfirmLabel     string
 	// @Needs
 	session *AdminSessionService
 	// @Needs
@@ -31,6 +38,7 @@ func (account *AccountActionService) Ask(dialog string, personId string, name st
 	account.Name = name
 	account.FirstName = strings.Fields(name + " " + username)[0]
 	account.Username = username
+	account.writeHeadings(name, username)
 	account.PasswordProblem = ""
 	account.NameProblem = ""
 	account.ConfirmProblem = ""
@@ -76,7 +84,7 @@ func (account *AccountActionService) RenameWith(displayName string) {
 		_, failure := account.directoryClient.ChangePerson(account.session.Authorization(), account.PersonId, PersonChange{DisplayName: cleaned})
 		return failure
 	})
-	account.done("Name changed", "Everyone now sees "+cleaned+", in every domain of "+account.FirstName+".")
+	account.done("Name changed", account.sentence("Everyone now sees "+cleaned+", in every domain of "+account.FirstName))
 }
 
 func (account *AccountActionService) DeleteWith(typed string) {
@@ -90,6 +98,24 @@ func (account *AccountActionService) DeleteWith(typed string) {
 
 func (account *AccountActionService) Close() {
 	account.Dialog = ""
+}
+
+func (account *AccountActionService) writeHeadings(name string, username string) {
+	account.ResetHeading = account.question("Reset the password of " + name)
+	account.TwoStepHeading = account.question("Remove the 2-step code of " + name)
+	account.TurnOffHeading = account.question("Turn off the account of " + name)
+	account.RenameHeading = "Change the name of " + name
+	account.DeleteHeading = account.question("Delete " + name)
+	account.ForbiddenHeading = "You cannot change the account of " + name
+	account.ConfirmLabel = "Type " + username + " to confirm"
+}
+
+func (account *AccountActionService) question(text string) string {
+	return text + "?"
+}
+
+func (account *AccountActionService) sentence(text string) string {
+	return text + "."
 }
 
 func (account *AccountActionService) changeState(state string) {
@@ -153,7 +179,7 @@ func (account *AccountActionService) confirmProblem(typed string) string {
 	if typed == account.Username {
 		return ""
 	}
-	return "Type " + account.Username + " to confirm."
+	return account.sentence(account.ConfirmLabel)
 }
 
 func (account *AccountActionService) announce(problem string) {

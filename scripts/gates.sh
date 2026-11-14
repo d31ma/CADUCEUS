@@ -313,6 +313,9 @@ app_gates() {
   if app_kind_has_server "$app"; then
     run_step "$name controllers" "$log" controller_check "$app" || status=1
   fi
+  if ! app_kind_has_client "$app"; then
+    run_step "$name settings" "$log" client_view_check "$app" || status=1
+  fi
   run_step "$name migrate check" "$log" "$ty" migrate check "$app" || status=1
   run_step "$name test" "$log" "$ty" test "$app" --coverage || status=1
   if has_local_packages "$app"; then
@@ -490,7 +493,9 @@ usage() {
   echo "                 (a backend app's steps start with tools/controllers, ADR 0009, unless the app" >&2
   echo "                 is still in tools/controllers/unconverted.list)" >&2
   echo "                 (a Tac app's steps include tools/clientviews, SLICES rule 19: the manifest keeps" >&2
-  echo "                 tac.dependencies.check on, and no tac.html view holds a ? : expression)" >&2
+  echo "                 tac.dependencies.check on, and no tac.html view holds a ? : expression or" >&2
+  echo "                 builds a value with +; every app's steps check that server/application.json keeps" >&2
+  echo "                 dependencies.check on and .env and .env.example never turn TAC_DEPENDENCIES_CHECK off)" >&2
   echo "  every run also checks docs/mesail/ERRORS.md against the error numbers in code" >&2
   echo "  (tools/errornumbers, ADR 0009; apps in tools/controllers/unconverted.list are skipped)" >&2
   echo "  MESAIL_GOCACHE  the Go build cache (default on macOS: ~/Library/Caches/go-build-mesail," >&2

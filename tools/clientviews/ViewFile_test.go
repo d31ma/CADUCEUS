@@ -2,6 +2,7 @@ package main
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -69,6 +70,29 @@ func TestATernaryInATextValueIsAProblem(t *testing.T) {
 func TestEachTernaryIsReportedOnItsOwnLine(t *testing.T) {
 	problems := ViewFile{Name: "tac.html", Source: "<a :x=\"a ? b : c\"></a>\n<b>ok</b>\n<a :y=\"d ? e : f\"></a>\n"}.Problems()
 	if len(problems) != 2 || problems[0].Line != 1 || problems[1].Line != 3 {
+		t.Fatalf("got %v", problems)
+	}
+}
+
+func TestABoundAttributeThatBuildsTextIsAProblem(t *testing.T) {
+	source := "<div>\n  <w-dialog :heading=\"'Delete ' + accountAction.name + '?'\"></w-dialog>\n</div>"
+	problems := ViewFile{Name: "tac.html", Source: source}.Problems()
+	if len(problems) != 1 || problems[0].Line != 2 || !strings.Contains(problems[0].Reason, "with +") {
+		t.Fatalf("got %v", problems)
+	}
+}
+
+func TestATextValueThatBuildsTextIsAProblem(t *testing.T) {
+	problems := ViewFile{Name: "tac.html", Source: "<p>{row.first + ' ' + row.last}</p>"}.Problems()
+	if len(problems) != 1 {
+		t.Fatalf("got %v", problems)
+	}
+}
+
+func TestAPlusInAPlainAttributeIsNotAProblem(t *testing.T) {
+	source := `<div class="min-h-[calc(var(--a)+var(--b))]" :aria-label="row.label">{row.title}</div>`
+	problems := ViewFile{Name: "tac.html", Source: source}.Problems()
+	if len(problems) != 0 {
 		t.Fatalf("got %v", problems)
 	}
 }

@@ -24,6 +24,9 @@ func (test *MemberAddServiceTest) TestOpenAsksForTheUsername() {
 	add := test.opened()
 	Assert.Equals("username", add.Step)
 	Assert.Equals("example.com", add.DomainId)
+	Assert.Equals("Add a member to example.com", add.AddHeading)
+	Assert.Equals("@example.com", add.AddressSuffix)
+	Assert.Equals("Make this person an admin of example.com", add.AdminLabel)
 	Assert.Equals(false, add.FirstAdmin)
 }
 
@@ -40,6 +43,7 @@ func (test *MemberAddServiceTest) TestAnExistingPersonIsAddedAsTheyAre() {
 	Assert.Equals("added", add.Step)
 	Assert.Equals(true, add.ExistingPerson)
 	Assert.Equals("Eve Park", add.AddedName)
+	Assert.Equals("Eve Park was added", add.AddedHeading)
 	Assert.Equals("Eve", add.AddedFirstName)
 	Assert.Equals("eve@example.com", add.AddedAddress)
 }
@@ -48,6 +52,7 @@ func (test *MemberAddServiceTest) TestANewUsernameAsksForANameAndAPassword() {
 	add := test.opened()
 	add.AddWith("dan", true)
 	Assert.Equals("details", add.Step)
+	Assert.Equals("Create an account for dan", add.CreateHeading)
 	Assert.Equals(true, add.Admin)
 	Assert.Equals("", add.UsernameProblem)
 }

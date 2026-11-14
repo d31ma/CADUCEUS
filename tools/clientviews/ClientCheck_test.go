@@ -124,3 +124,90 @@ func TestAComponentsFolderThatCannotBeListedIsAnError(t *testing.T) {
 		t.Fatal("want a walk error")
 	}
 }
+
+const cleanApplication = `{"server": {"port": 8104}}`
+
+func writeAppFile(t *testing.T, app string, name string, source string) {
+	t.Helper()
+	path := filepath.Join(app, name)
+	if err := errors.Join(os.MkdirAll(filepath.Dir(path), 0o755), os.WriteFile(path, []byte(source), 0o644)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func serverApp(t *testing.T, app string) string {
+	t.Helper()
+	writeAppFile(t, app, "server/application.json", cleanApplication)
+	writeAppFile(t, app, ".env.example", "YON_DATASOURCE_DRIVER=fylo\n")
+	return app
+}
+
+func TestACleanServerAppHasNoProblems(t *testing.T) {
+	problems, err := ClientCheck{}.Apps([]string{serverApp(t, t.TempDir())})
+	if err != nil || len(problems) != 0 {
+		t.Fatalf("got %v, %v", problems, err)
+	}
+}
+
+func TestApplicationSettingsThatTurnTheDependencyCheckOffAreReported(t *testing.T) {
+	app := serverApp(t, t.TempDir())
+	writeAppFile(t, app, "server/application.json", `{"dependencies": {"check": false}}`)
+	problems, err := ClientCheck{}.Apps([]string{app})
+	if err != nil || len(problems) != 1 || problems[0].File != filepath.Join(app, "server", "application.json") {
+		t.Fatalf("got %v, %v", problems, err)
+	}
+}
+
+func TestAnEnvironmentExampleThatTurnsTheCheckOffIsReported(t *testing.T) {
+	app := serverApp(t, t.TempDir())
+	writeAppFile(t, app, ".env.example", "TAC_DEPENDENCIES_CHECK=false\n")
+	problems, err := ClientCheck{}.Apps([]string{app})
+	if err != nil || len(problems) != 1 || problems[0].File != filepath.Join(app, ".env.example") {
+		t.Fatalf("got %v, %v", problems, err)
+	}
+}
+
+func TestAnEnvironmentFileOfATacAppThatTurnsTheCheckOffIsReported(t *testing.T) {
+	app := cleanApp(t, t.TempDir())
+	writeAppFile(t, app, ".env", "TAC_DEPENDENCIES_CHECK=0\n")
+	problems, err := ClientCheck{}.Apps([]string{app})
+	if err != nil || len(problems) != 1 || problems[0].File != filepath.Join(app, ".env") {
+		t.Fatalf("got %v, %v", problems, err)
+	}
+}
+
+func TestTextBuiltInAComponentViewIsReported(t *testing.T) {
+	app := cleanApp(t, t.TempDir())
+	writeClientFile(t, app, "components/admin/account-dialogs/tac.html", `<w-dialog :heading="'Delete ' + accountAction.name + '?'"></w-dialog>`)
+	problems, err := ClientCheck{}.Apps([]string{app})
+	if err != nil || len(problems) != 1 || problems[0].File != filepath.Join(app, "client", "components", "admin", "account-dialogs", "tac.html") {
+		t.Fatalf("got %v, %v", problems, err)
+	}
+}
+
+func TestApplicationSettingsThatAreNotJsonStopTheCheck(t *testing.T) {
+	app := serverApp(t, t.TempDir())
+	writeAppFile(t, app, "server/application.json", "{")
+	if _, err := (ClientCheck{}).Apps([]string{app}); err == nil {
+		t.Fatal("want an error")
+	}
+}
+
+func TestAnEnvironmentFileThatCannotBeReadStopsTheCheck(t *testing.T) {
+	app := serverApp(t, t.TempDir())
+	if err := os.Chmod(filepath.Join(app, ".env.example"), 0o000); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := (ClientCheck{}).Apps([]string{app}); err == nil {
+		t.Fatal("want a read error")
+	}
+}
+
+func TestAServerAppWithAClientFolderNeedsItsManifest(t *testing.T) {
+	app := serverApp(t, t.TempDir())
+	writeClientFile(t, app, "pages/tac.html", "<app-root />")
+	_, err := ClientCheck{}.Apps([]string{app})
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("got %v", err)
+	}
+}

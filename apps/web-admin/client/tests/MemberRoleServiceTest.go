@@ -29,6 +29,7 @@ func (test *MemberRoleServiceTest) TestTheLastAdminKeepsTheRole() {
 	Assert.Equals("lastAdmin", role.Dialog)
 	Assert.Equals("role", role.LastAdminFor)
 	Assert.Equals("example.com", role.DomainId)
+	Assert.Equals("example.com needs an admin", role.LastAdminHeading)
 }
 
 func (test *MemberRoleServiceTest) TestAskRemoveOpensTheConfirmation() {
@@ -36,6 +37,8 @@ func (test *MemberRoleServiceTest) TestAskRemoveOpensTheConfirmation() {
 	role.AskRemove("dan-id", "Dan Example", "dan@example.com")
 	Assert.Equals("remove", role.Dialog)
 	Assert.Equals("dan@example.com", role.Address)
+	Assert.Equals("Remove Dan Example from example.com?", role.RemoveHeading)
+	Assert.Equals("Dan Example was removed from example.com", role.RemovedHeading)
 }
 
 func (test *MemberRoleServiceTest) TestRemoveRemovesTheMember() {

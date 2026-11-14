@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestAPlainValueHasNoChoice(t *testing.T) {
 	if (ViewExpression{Text: "row.ariaCurrent"}).HasChoice() {
@@ -67,5 +70,36 @@ func TestAProblemNamesTheFileTheLineAndTheExpression(t *testing.T) {
 	want := "tac.html:7: the view holds a ? : expression (a ? b : c); give the result a service field and show that field"
 	if problem.String() != want {
 		t.Fatalf("got %q", problem.String())
+	}
+}
+
+func TestAPlainValueHasNoJoin(t *testing.T) {
+	if (ViewExpression{Text: "accountAction.deleteHeading"}).HasJoin() {
+		t.Fatal("want no join")
+	}
+}
+
+func TestTextBuiltWithAPlusHasAJoin(t *testing.T) {
+	if !(ViewExpression{Text: "'Delete ' + accountAction.name + '?'"}).HasJoin() {
+		t.Fatal("want a join")
+	}
+}
+
+func TestTwoFieldsJoinedWithoutSpacesHaveAJoin(t *testing.T) {
+	if !(ViewExpression{Text: "row.first+row.last"}).HasJoin() {
+		t.Fatal("want a join")
+	}
+}
+
+func TestAPlusInsideAStringHasNoJoin(t *testing.T) {
+	if (ViewExpression{Text: "list.open('a+b')"}).HasJoin() {
+		t.Fatal("want no join")
+	}
+}
+
+func TestAJoinProblemNamesTheExpression(t *testing.T) {
+	problem := ViewExpression{Text: " 'Remove ' + item.name ", Line: 4}.JoinProblem("view/tac.html")
+	if problem.Line != 4 || !strings.Contains(problem.Reason, "builds a value with + ('Remove ' + item.name)") {
+		t.Fatalf("got %v", problem)
 	}
 }

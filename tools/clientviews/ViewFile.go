@@ -11,7 +11,8 @@ type ViewFile struct {
 }
 
 func (file ViewFile) Problems() []Problem {
-	return file.choiceProblems(file.expressions())
+	expressions := file.expressions()
+	return append(file.choiceProblems(expressions), file.joinProblems(expressions)...)
 }
 
 func (file ViewFile) expressions() []ViewExpression {
@@ -57,4 +58,19 @@ func (file ViewFile) choiceProblem(expression ViewExpression) []Problem {
 		return nil
 	}
 	return []Problem{expression.Problem(file.Name)}
+}
+
+func (file ViewFile) joinProblems(expressions []ViewExpression) []Problem {
+	problems := []Problem{}
+	for _, expression := range expressions {
+		problems = append(problems, file.joinProblem(expression)...)
+	}
+	return problems
+}
+
+func (file ViewFile) joinProblem(expression ViewExpression) []Problem {
+	if !expression.HasJoin() {
+		return nil
+	}
+	return []Problem{expression.JoinProblem(file.Name)}
 }

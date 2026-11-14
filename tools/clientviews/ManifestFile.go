@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 )
@@ -17,19 +16,7 @@ func (file ManifestFile) Problems() ([]Problem, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", file.Name, err)
 	}
-	return file.dependencyProblems(settings.Tac.Dependencies), nil
-}
-
-func (file ManifestFile) dependencyProblems(dependencies DependencySettings) []Problem {
-	if !dependencies.TurnedOff() {
-		return []Problem{}
-	}
-	return []Problem{{File: file.Name, Line: file.dependenciesLine(), Reason: file.turnedOffReason()}}
-}
-
-func (file ManifestFile) dependenciesLine() int {
-	start := max(bytes.Index(file.Source, []byte(`"dependencies"`)), 0)
-	return bytes.Count(file.Source[:start], []byte("\n")) + 1
+	return DependencySwitch{Name: file.Name, Source: file.Source, Reason: file.turnedOffReason()}.Problems(settings.Tac.Dependencies), nil
 }
 
 func (ManifestFile) turnedOffReason() string {

@@ -14,6 +14,7 @@ type MemberListService struct {
 	Heading       string
 	AdminCount    string
 	HasMore       bool
+	RoleLabel     string
 	// @Needs
 	session *AdminSessionService
 	// @Needs
@@ -29,6 +30,7 @@ type MemberListService struct {
 // @InBackground
 func (list *MemberListService) Opened(opened AdminViewOpened) {
 	list.DomainId = opened.DomainId
+	list.RoleLabel = "Role in " + opened.DomainId
 	list.Query = ""
 	list.load()
 	list.applicationEventPublisher.PublishEvent(AdminViewLoaded{View: opened.View, Message: list.Heading}, false)
@@ -100,6 +102,9 @@ func (list *MemberListService) rowOf(item MemberSummary) MemberRow {
 		Admin:          item.Admin,
 		AccountManaged: item.AccountManaged,
 		You:            item.Username != "" && item.Username == list.session.Username,
+		MenuId:         "member-menu-" + item.MemberId,
+		ActionsLabel:   "Actions for " + item.DisplayName,
+		AccountLabel:   "Account of " + item.DisplayName + ", in every domain",
 	}
 }
 

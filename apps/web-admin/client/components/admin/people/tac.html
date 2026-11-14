@@ -45,7 +45,7 @@
                     </div>
                   </td>
                   <td data-label="Domains" class="px-4 py-2 @max-2xl/page:flex @max-2xl/page:items-center @max-2xl/page:gap-3 @max-2xl/page:px-0 @max-2xl/page:py-1">
-                    <ul class="flex flex-wrap gap-1" :aria-label="'Domains of ' + row.name">
+                    <ul class="flex flex-wrap gap-1" :aria-label="row.domainsLabel">
                       <loop :for="domainId of row.domainIds"><li><span class="tag" data-variant="outlined">{domainId}</span></li></loop>
                     </ul>
                     <logic :if="row.noDomains"><span class="meta">None</span></logic>
@@ -58,9 +58,9 @@
                       <span class="sr-only">No actions</span>
                     </logic>
                     <logic else>
-                      <w-icon-btn icon="more" class="row-action" :id="'person-menu-' + row.personId" :aria-label="'Actions for ' + row.name" aria-haspopup="menu"></w-icon-btn>
-                      <w-menu class="member-menu" location="bottom-end" :activator="'person-menu-' + row.personId">
-                        <div class="grid" role="group" :aria-label="'Account of ' + row.name + ', in every domain'">
+                      <w-icon-btn icon="more" class="row-action" :id="row.menuId" :aria-label="row.actionsLabel" aria-haspopup="menu"></w-icon-btn>
+                      <w-menu class="member-menu" location="bottom-end" :activator="row.menuId">
+                        <div class="grid" role="group" :aria-label="row.accountLabel">
                           <p class="w-menu-label">Account (all domains)</p>
                           <button type="button" class="w-menu-item member-menu-item" aria-haspopup="dialog" on:click="accountAction.ask('reset', row.personId, row.name, row.username)"><w-icon name="key" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Reset password&hellip;</span><span class="member-menu-text">A new one is chosen at the next sign-in</span></span></button>
                           <button type="button" class="w-menu-item member-menu-item" aria-haspopup="dialog" on:click="accountAction.ask('totp', row.personId, row.name, row.username)"><w-icon name="shield" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Remove 2-step code&hellip;</span><span class="member-menu-text">For a lost phone</span></span></button>

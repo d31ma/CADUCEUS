@@ -23,6 +23,17 @@ func (test *AccountActionServiceTest) TestAskOpensTheDialogForThePerson() {
 	Assert.Equals("dan", account.Username)
 }
 
+func (test *AccountActionServiceTest) TestAskNamesThePersonInEveryDialog() {
+	account := test.asked("reset", "dan-id")
+	Assert.Equals("Reset the password of Dan Example?", account.ResetHeading)
+	Assert.Equals("Remove the 2-step code of Dan Example?", account.TwoStepHeading)
+	Assert.Equals("Turn off the account of Dan Example?", account.TurnOffHeading)
+	Assert.Equals("Change the name of Dan Example", account.RenameHeading)
+	Assert.Equals("Delete Dan Example?", account.DeleteHeading)
+	Assert.Equals("You cannot change the account of Dan Example", account.ForbiddenHeading)
+	Assert.Equals("Type dan to confirm", account.ConfirmLabel)
+}
+
 func (test *AccountActionServiceTest) TestResetWithSetsAFirstPassword() {
 	account := test.asked("reset", "dan-id")
 	account.ResetWith("a long first password")

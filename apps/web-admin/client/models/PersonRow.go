@@ -12,4 +12,8 @@ type PersonRow struct {
 	Deleting       bool     `json:"deleting"`
 	Disabled       bool     `json:"disabled"`
 	AccountManaged bool     `json:"accountManaged"`
+	MenuId         string   `json:"menuId"`
+	ActionsLabel   string   `json:"actionsLabel"`
+	AccountLabel   string   `json:"accountLabel"`
+	DomainsLabel   string   `json:"domainsLabel"`
 }

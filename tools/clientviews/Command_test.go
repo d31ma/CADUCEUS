@@ -33,3 +33,13 @@ func TestRunAnswersTwoWhenAnAppCannotBeRead(t *testing.T) {
 		t.Fatalf("got %d, %q", code, output.String())
 	}
 }
+
+func TestRunAnswersOneForAServerAppThatTurnsTheCheckOff(t *testing.T) {
+	app := serverApp(t, t.TempDir())
+	writeAppFile(t, app, "server/application.json", `{"dependencies": {"check": false}}`)
+	var output bytes.Buffer
+	code := Command{Output: &output}.Run([]string{app})
+	if code != 1 || !strings.Contains(output.String(), "application.json:1: sets dependencies.check to false") {
+		t.Fatalf("got %d, %q", code, output.String())
+	}
+}

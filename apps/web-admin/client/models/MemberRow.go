@@ -7,4 +7,7 @@ type MemberRow struct {
 	Admin          bool   `json:"admin"`
 	AccountManaged bool   `json:"accountManaged"`
 	You            bool   `json:"you"`
+	MenuId         string `json:"menuId"`
+	ActionsLabel   string `json:"actionsLabel"`
+	AccountLabel   string `json:"accountLabel"`
 }

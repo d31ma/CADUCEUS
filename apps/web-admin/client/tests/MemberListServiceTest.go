@@ -22,6 +22,10 @@ func (test *MemberListServiceTest) TestOpenedListsTheMembersOfTheDomain() {
 	Assert.Equals("Ana Ruiz", list.Rows[0].Name)
 	Assert.Equals("ana@example.com", list.Rows[0].Address)
 	Assert.Equals("ana-id", list.Rows[0].MemberId)
+	Assert.Equals("member-menu-ana-id", list.Rows[0].MenuId)
+	Assert.Equals("Actions for Ana Ruiz", list.Rows[0].ActionsLabel)
+	Assert.Equals("Account of Ana Ruiz, in every domain", list.Rows[0].AccountLabel)
+	Assert.Equals("Role in example.com", list.RoleLabel)
 }
 
 func (test *MemberListServiceTest) TestOpenedCountsTheMembers() {

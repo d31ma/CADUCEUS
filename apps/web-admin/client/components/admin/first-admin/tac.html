@@ -12,10 +12,10 @@
     </logic>
     <form method="dialog" class="grid grid-cols-1 items-start gap-3 @lg/page:grid-cols-[minmax(0,1fr)_auto]" aria-label="Name an admin" on:submit="memberAdd.nameFirstAdmin(domainDns.domainId, $event.target.elements.username.value)">
       <logic :if="memberAdd.firstAdmin && memberAdd.usernameProblem != ''">
-        <w-text-field label="Username" name="username" placeholder="dan" :suffix="'@' + domainDns.name" autocomplete="off" autocapitalize="none" spellcheck="false" required :value="memberAdd.username" :error="memberAdd.usernameProblem"></w-text-field>
+        <w-text-field label="Username" name="username" placeholder="dan" :suffix="domainDns.addressSuffix" autocomplete="off" autocapitalize="none" spellcheck="false" required :value="memberAdd.username" :error="memberAdd.usernameProblem"></w-text-field>
       </logic>
       <logic else>
-        <w-text-field label="Username" name="username" placeholder="dan" :suffix="'@' + domainDns.name" autocomplete="off" autocapitalize="none" spellcheck="false" required hint="The part before @. For a person who already uses Mesail in another domain, type the same username." persistent-hint></w-text-field>
+        <w-text-field label="Username" name="username" placeholder="dan" :suffix="domainDns.addressSuffix" autocomplete="off" autocapitalize="none" spellcheck="false" required hint="The part before @. For a person who already uses Mesail in another domain, type the same username." persistent-hint></w-text-field>
       </logic>
       <logic :if="memberAdd.firstAdmin && memberAdd.step == 'busy'">
         <w-btn variant="flat" class="first-admin-action" loading disabled>Naming&hellip;</w-btn>

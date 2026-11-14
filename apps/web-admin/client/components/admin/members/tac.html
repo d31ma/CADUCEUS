@@ -50,9 +50,9 @@
                   <logic else><span class="meta">Member</span></logic>
                 </td>
                 <td class="member-actions px-2 py-1">
-                  <w-icon-btn icon="more" class="row-action" :id="'member-menu-' + row.memberId" :aria-label="'Actions for ' + row.name" aria-haspopup="menu"></w-icon-btn>
-                  <w-menu class="member-menu" location="bottom-end" :activator="'member-menu-' + row.memberId">
-                    <div class="grid" role="group" :aria-label="'Role in ' + memberList.domainId">
+                  <w-icon-btn icon="more" class="row-action" :id="row.menuId" :aria-label="row.actionsLabel" aria-haspopup="menu"></w-icon-btn>
+                  <w-menu class="member-menu" location="bottom-end" :activator="row.menuId">
+                    <div class="grid" role="group" :aria-label="memberList.roleLabel">
                       <p class="w-menu-label">Role in {memberList.domainId}</p>
                       <button type="button" class="w-menu-item member-menu-item" role="menuitemradio" :aria-checked="adminShell.flag(!row.admin)" on:click="memberRole.setRole(row.memberId, row.name, false)">
                         <span class="grid min-w-0 flex-1 gap-0.5"><span>Member</span><span class="member-menu-text">Chats and sends email in {memberList.domainId}</span></span>
@@ -63,7 +63,7 @@
                         <w-icon name="check" class="member-menu-check" aria-hidden="true"></w-icon>
                       </button>
                     </div>
-                    <div class="member-menu-group grid" role="group" :aria-label="'Account of ' + row.name + ', in every domain'">
+                    <div class="member-menu-group grid" role="group" :aria-label="row.accountLabel">
                       <p class="w-menu-label">Account (all domains)</p>
                       <logic :if="row.accountManaged">
                         <button type="button" class="w-menu-item member-menu-item" aria-haspopup="dialog" on:click="accountAction.ask('reset', row.memberId, row.name, row.username)"><w-icon name="key" aria-hidden="true"></w-icon><span class="grid min-w-0 flex-1 gap-0.5"><span>Reset password&hellip;</span><span class="member-menu-text">A new one is chosen at the next sign-in</span></span></button>

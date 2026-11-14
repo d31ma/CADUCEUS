@@ -2,21 +2,22 @@ import "slices"
 
 // @Service
 type DomainDnsService struct {
-	Step         string
-	DomainId     string
-	Name         string
-	StateText    string
-	StateColor   string
-	StateVariant string
-	StateIcon    string
-	Pending      bool
-	Waiting      string
-	Status       string
-	Records      []DnsRecord
-	Checking     bool
-	CheckProblem string
-	ProblemText  string
-	domain       Domain
+	Step          string
+	DomainId      string
+	Name          string
+	AddressSuffix string
+	StateText     string
+	StateColor    string
+	StateVariant  string
+	StateIcon     string
+	Pending       bool
+	Waiting       string
+	Status        string
+	Records       []DnsRecord
+	Checking      bool
+	CheckProblem  string
+	ProblemText   string
+	domain        Domain
 	// @Needs
 	session *AdminSessionService
 	// @Needs
@@ -63,6 +64,7 @@ func (dns *DomainDnsService) show(domain Domain) {
 	view := dns.domainRows.View(domain)
 	dns.domain = domain
 	dns.Name = dns.firstOf(domain.Name, dns.DomainId)
+	dns.AddressSuffix = "@" + dns.Name
 	dns.StateText = view.StateText
 	dns.StateColor = view.StateColor
 	dns.StateVariant = view.StateVariant

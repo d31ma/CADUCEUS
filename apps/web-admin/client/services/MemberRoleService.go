@@ -1,13 +1,16 @@
 // @Service
 type MemberRoleService struct {
-	Dialog       string
-	MemberId     string
-	Name         string
-	Address      string
-	DomainId     string
-	Busy         bool
-	LastAdminFor string
-	Problem      string
+	Dialog           string
+	MemberId         string
+	Name             string
+	Address          string
+	DomainId         string
+	Busy             bool
+	LastAdminFor     string
+	Problem          string
+	RemoveHeading    string
+	RemovedHeading   string
+	LastAdminHeading string
 	// @Needs
 	session *AdminSessionService
 	// @Needs
@@ -47,6 +50,13 @@ func (role *MemberRoleService) pick(memberId string, name string, address string
 	role.Address = address
 	role.DomainId = role.session.DomainId
 	role.Problem = ""
+	role.writeHeadings(name, role.DomainId)
+}
+
+func (role *MemberRoleService) writeHeadings(name string, domainId string) {
+	role.RemoveHeading = "Remove " + name + " from " + domainId + "?"
+	role.RemovedHeading = name + " was removed from " + domainId
+	role.LastAdminHeading = domainId + " needs an admin"
 }
 
 func (role *MemberRoleService) finish(problem string, change string, doneDialog string) {

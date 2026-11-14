@@ -115,6 +115,10 @@ func (people *PeopleListService) rowOf(item PersonSummary) PersonRow {
 		Deleting:       state == people.deleting(),
 		Disabled:       item.State == people.disabled(),
 		AccountManaged: item.State != people.deleted(),
+		MenuId:         "person-menu-" + item.PersonId,
+		ActionsLabel:   "Actions for " + item.DisplayName,
+		AccountLabel:   "Account of " + item.DisplayName + ", in every domain",
+		DomainsLabel:   "Domains of " + item.DisplayName,
 	}
 }
 

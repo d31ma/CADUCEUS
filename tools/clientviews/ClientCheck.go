@@ -15,7 +15,7 @@ func (check ClientCheck) Apps(appFolders []string) ([]Problem, error) {
 func (check ClientCheck) appsProblems(appFolders []string) ([]Problem, error) {
 	problems := []Problem{}
 	for _, folder := range appFolders {
-		found, err := check.appProblems(filepath.Join(folder, "client"))
+		found, err := check.appProblems(folder)
 		if err != nil {
 			return nil, err
 		}
@@ -24,7 +24,35 @@ func (check ClientCheck) appsProblems(appFolders []string) ([]Problem, error) {
 	return problems, nil
 }
 
-func (check ClientCheck) appProblems(client string) ([]Problem, error) {
+func (check ClientCheck) appProblems(folder string) ([]Problem, error) {
+	clientProblems, err := check.clientProblems(folder)
+	if err != nil {
+		return nil, err
+	}
+	settingProblems, err := SettingsCheck{}.App(folder)
+	if err != nil {
+		return nil, err
+	}
+	return append(clientProblems, settingProblems...), nil
+}
+
+func (check ClientCheck) clientProblems(folder string) ([]Problem, error) {
+	if check.serverOnly(folder) {
+		return []Problem{}, nil
+	}
+	return check.tacProblems(filepath.Join(folder, "client"))
+}
+
+func (check ClientCheck) serverOnly(folder string) bool {
+	return check.exists(filepath.Join(folder, "server")) && !check.exists(filepath.Join(folder, "client"))
+}
+
+func (ClientCheck) exists(name string) bool {
+	_, err := os.Stat(name)
+	return err == nil
+}
+
+func (check ClientCheck) tacProblems(client string) ([]Problem, error) {
 	manifestProblems, err := check.manifestProblems(filepath.Join(client, "manifest.json"))
 	if err != nil {
 		return nil, err

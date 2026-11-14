@@ -386,6 +386,39 @@ stable; tests name them.
   in the installed apps for macOS, iOS, Windows and Android once TACHYON
   supports them (requests T13, T14). Linux apps keep password sign-in.
 
+### Calls (AC-CL; ADR 0012, decided 2026-11-14)
+- **AC-CL-1 Starting.** Any member of a direct conversation or a group (up
+  to 50 members, ADR 0011) can start an audio or a video call from it. The
+  other members' devices ring; any member can join while the call lasts.
+  Calls exist only between members of one domain; email contacts cannot
+  be called.
+- **AC-CL-2 Size.** A call holds up to 50 people. At most 9 videos show at
+  once, the person speaking first; the others show their name and
+  picture.
+- **AC-CL-3 Private.** Calls are encrypted end to end; no server can see or
+  hear them. A member removed from the conversation cannot join or
+  decrypt its later calls.
+- **AC-CL-4 Ringing.** Devices that are online ring in the app. Others get
+  a notification "Incoming call" with no names. A call nobody answers is a
+  "Missed call" notification (no names) and a row in the conversation.
+- **AC-CL-5 History.** "Call started", "Call ended (duration)" and "Missed
+  call" are rows in the conversation, synced and backed up like messages.
+- **AC-CL-6 Controls.** Mute, camera off, choose the microphone, camera and
+  speaker, leave. The call ends when the last person leaves.
+- **AC-CL-7 Screen sharing.** On computers (browsers and the desktop
+  apps), one person shares a screen at a time; everyone in the call sees
+  it, phones included. Phones cannot share their screen in the first
+  release.
+- **AC-CL-8 Recording.** A person may record a call only on their own
+  device, to a file saved there. Before it starts, every person in the
+  call sees "Recording by <name>", which cannot be closed while it runs;
+  people who join later see it too. If the notice cannot reach the
+  others, the recording does not start. No server receives the
+  recording. Mesail cannot stop recording with other tools.
+- **AC-CL-9 Not supported.** Where a device cannot make calls (TACHYON
+  answers "unsupported"), the call buttons say "Calls are not available
+  on this device".
+
 ### Channels of a domain (AC-CH)
 - **AC-CH-1** A member can create a public channel in their domain, join
   and leave any public channel of the domain, and is invited to private
@@ -780,9 +813,10 @@ recent data, works offline, and syncs when it is back online.
 
 ## 6. Out of scope for the first release
 
-- Voice and video calls and screen sharing moved INTO scope on
-  2026-11-14 (ADR 0012); which of them are in the first release waits for
-  the owner's answers (ADR 0012 section 6).
+- Screen sharing on phones (calls, group calls and screen sharing on
+  computers ARE in the first release: AC-CL, ADR 0012).
+- A native phone call screen (CallKit, ConnectionService) for incoming
+  calls (ADR 0012, TACHYON P6).
 - Chat between domains of any kind: shared channels, cross-domain DMs or
   shared presence (Slack Connect style). Domains talk to each other by
   email only. This is a product rule, not only a first-release limit.

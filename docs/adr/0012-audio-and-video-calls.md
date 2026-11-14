@@ -1,7 +1,7 @@
 # ADR 0012: Audio and video calls
 
-- Status: accepted (2026-11-14) as the direction; the choices in section
-  6 wait for the owner's answers
+- Status: accepted (2026-11-14); the owner answered Q8 to Q11 the same
+  day (section 6)
 - Deciders: the owner ("can you make sure the messaging has audio/video
   capabilities"), architecture (the design)
 - Builds on: ADR 0011 (chat goes device to device: device keys, MLS
@@ -56,6 +56,26 @@ signalling on `realtime`'s socket, a TURN relay and MLS groups of up to
    number of videos at once with the speaker first. Calls keep working
    when the screen locks on phones only where the native shell allows it
    (TACHYON P5).
+9. **Size, scope and release** (the owner's answers). Every call kind is in
+   the first release: calls of two and group calls. A call holds up to 50
+   people (the whole group); at most 9 videos show at once, the person
+   speaking first. Screen sharing is on computers (browsers and the
+   desktop apps), one shared screen at a time; phones later.
+10. **Recording on the recorder's own device only** (the owner's answer).
+   - The recorder's device records the call as it is shown to the
+     recorder: every person's audio mixed, and the main video (the person
+     speaking, or the shared screen). The file is saved on that device
+     only, through the save dialog; no server ever receives it.
+   - Before recording starts, the recorder's device sends an encrypted
+     call message "recording started by <name>" to every participant and
+     waits until the call's other devices received it; if it cannot, it
+     does not record. Every participant's app then shows a "Recording"
+     banner with the recorder's name that cannot be closed while the
+     recording runs; people who join later get the current state when
+     they join. Stopping sends "recording stopped".
+   - Limit, written in SPEC: Mesail cannot stop someone from recording
+     with another tool (a second phone, a modified app); the notice comes
+     from the honest Mesail app.
 8. **No change to email.** Email has no calls.
 
 ## Requests to TACHYON
@@ -84,6 +104,17 @@ signalling on `realtime`'s socket, a TURN relay and MLS groups of up to
     (Tac components hold no script, ADR 0030);
   - on phones, keep a call's audio running in the background (iOS audio
     session, Android foreground service).
+- **P7, recording on the device.** A `Recorder` in the `Media` client:
+  record a set of local and remote tracks (TACHYON mixes the audio tracks
+  into one and records one video track the app chooses, which it may
+  switch during the recording, for example to the person speaking or the
+  shared screen), pause, resume and stop; write the recording as it runs
+  (not all in memory) to a file the person picks in a save dialog, behind
+  the `files` grant (WebM or MP4, whichever the platform makes; MediaRecorder
+  in browsers, AVAssetWriter on Apple, MediaMuxer on Android, Media
+  Foundation on Windows); events for started, stopped, failed and the
+  bytes written; `supported()` says where it is missing. The recording is
+  never uploaded by TACHYON.
 - **P6 (later), native call screen.** Incoming calls through CallKit (iOS)
   and ConnectionService (Android), with VoIP push, so a call rings like a
   phone call when the app is closed.
@@ -100,12 +131,16 @@ signalling on `realtime`'s socket, a TURN relay and MLS groups of up to
   network; the grid shows a limited number of videos (section 6, Q9) and
   uses simulcast so phones receive smaller videos.
 
-## 6. Choices for the owner
+## 6. The owner's answers (2026-11-14)
 
-- Q8: are calls in the first release (all, or only calls of two)?
-- Q9: the largest call, and how many videos show at once.
-- Q10: screen sharing: where, or not at all.
-- Q11: recording: none, or on the recorder's own device with a notice.
+- Q8 "Should audio and video calls be in Mesail's first release?": "All
+  calls" (calls of two and group calls, all in the first release).
+- Q9 "How many people can be in one call?": "Up to 50 (Recommended)" (at
+  most 9 videos shown at once, the person speaking first).
+- Q10 "Should people be able to share their screen in calls?": "Computers
+  first (Recommended)" (browsers and desktop apps; phones later).
+- Q11 "Can calls be recorded?": "On own device" (only on the recorder's
+  own device, and everyone in the call sees a "Recording" notice).
 
 ## Consequences
 

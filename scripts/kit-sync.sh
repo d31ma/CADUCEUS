@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# shellcheck source-path=SCRIPTDIR
+source "$(cd "$(dirname "$0")" && pwd)/go-cache.sh"
 
 repository_root() {
   cd "$(dirname "$0")/.." && pwd
@@ -74,6 +76,7 @@ sync_app() {
 
 main() {
   local root mode=write list_file status=0
+  mesail_use_local_go_cache
   root="$(repository_root)"
   [ "${1:-}" = --check ] && mode=check
   for list_file in "$root"/apps/*/server/packages/kit.list; do

@@ -13,6 +13,7 @@ blackbox tests, then removes the stack. With service names, only those functions
 
 Settings (environment):
   MESAIL_OWNER       lock owner and log folder name (default: floci-run-all)
+  MESAIL_GOCACHE     the Go build cache (default on macOS: ~/Library/Caches/go-build-mesail)
   MESAIL_TEST_RUN    go test -run filter for tests/blackbox
   MESAIL_SKIP_STATIC 1 skips the Tac bundles and the static upload
   MESAIL_SKIP_BUILD  1 reuses the images already built

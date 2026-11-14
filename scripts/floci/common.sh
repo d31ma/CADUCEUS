@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
+# shellcheck source-path=SCRIPTDIR/..
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/go-cache.sh"
 
 mesail_root() {
   cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd
@@ -15,6 +17,7 @@ mesail_stack() {
 
 mesail_load_settings() {
   local file
+  mesail_use_local_go_cache
   file="$(mesail_root)/.env"
   # shellcheck disable=SC1090
   if [ -f "$file" ]; then set -a; . "$file"; set +a; fi

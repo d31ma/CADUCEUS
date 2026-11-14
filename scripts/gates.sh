@@ -2,6 +2,8 @@
 set -uo pipefail
 
 source "$(cd "$(dirname "$0")" && pwd)/ci/tool-lock.sh"
+# shellcheck source-path=SCRIPTDIR
+source "$(cd "$(dirname "$0")" && pwd)/go-cache.sh"
 
 repository_root() {
   cd "$(dirname "$0")/.." && pwd
@@ -491,6 +493,8 @@ usage() {
   echo "                 tac.dependencies.check on, and no tac.html view holds a ? : expression)" >&2
   echo "  every run also checks docs/mesail/ERRORS.md against the error numbers in code" >&2
   echo "  (tools/errornumbers, ADR 0009; apps in tools/controllers/unconverted.list are skipped)" >&2
+  echo "  MESAIL_GOCACHE  the Go build cache (default on macOS: ~/Library/Caches/go-build-mesail," >&2
+  echo "                  on the internal disk, not the ANVIL NFS link of ~/Library/Caches/go-build)" >&2
   return 2
 }
 
@@ -523,6 +527,7 @@ run_gates() {
 
 main() {
   local root folder only status
+  mesail_use_local_go_cache
   if has_unknown_option "$@"; then usage; return; fi
   root="$(repository_root)"
   if has_flag --list-apps "$@"; then list_apps "$root"; return; fi

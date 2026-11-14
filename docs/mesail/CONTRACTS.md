@@ -504,6 +504,34 @@ is not hosted for recipients, for `mail-out`'s hand-off inside the install
 or for `GET /addresses/{address}`, so mail to it goes out as `external`
 mail. Members of a `pending` domain may still sign in and set it up.
 
+### Devices and their public keys (from G1; ADR 0011)
+
+Draft by G0 (2026-11-14). A device belongs to one person and serves all
+the person's domains; a caller sees the devices of a person only when that
+person is a member of the caller's token's domain.
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `POST /api/v1/directory/devices` | SignedIn | `DeviceAdd{deviceId, name, identityKey, agreementKey, signerDeviceId?, signature?}` | `201 Device`; `400 invalid_request`; `403 forbidden` when the person already has a device and the signature does not verify; `409 duplicate` |
+| `GET /api/v1/directory/devices?personIds=` | SignedIn | - | `200 []Device` of those people who are members of the token's domain (at most 50 people per call) |
+| `DELETE /api/v1/directory/devices/{deviceId}` | SignedIn (the device's person) | - | `204`; `404 not_found` |
+| `POST /api/v1/directory/devices/owners` | Allow(Service) | `DeviceOwnersQuery{domainId, deviceIds[]}` (at most 200) | `200 DeviceOwners{owners: {deviceId: personId}}`, only devices of members of that domain; others are left out |
+
+- `deviceId`: a client-made UUID. `identityKey` (Ed25519) and
+  `agreementKey` (X25519): base64url public keys. `name` (1 to 64
+  characters) is shown only to the device's own person; others see
+  `Device{deviceId, personId, identityKey, agreementKey, addedAt}`.
+- The first device of a person needs no signature. Every later device is
+  added only with `signature` (Ed25519 over `deviceId`, `identityKey` and
+  `agreementKey`) by `signerDeviceId`, one of the person's devices, or by
+  the backup's signing key after a restore (`signerDeviceId: "backup"`,
+  the backup key listed at the first device; ADR 0011 "Linking").
+- An admin's account actions (AC-ID-13: disable, delete) remove the
+  person's devices; removing a member from a domain hides the devices
+  there.
+- `devicebox` uses `devices/owners` (its `DeviceDirectory.Owners` port);
+  `realtime` uses it for `signal` and calls.
+
 ## channels
 
 Retired at Wave 9's cut-over (G8, ADR 0011): chat moves to devices. Until
@@ -937,7 +965,7 @@ list (G1); until G1 merges, G6 tests use a fake of that port.
 | --- | --- | --- | --- |
 | `POST /api/v1/devicebox/envelopes` | SignedIn (a member of the token's domain) | `EnvelopePut{envelopeId, senderDeviceId, toDeviceIds[], kind, ciphertext}` | `201 EnvelopeReceipt{envelopeId, expiresAt}`; `400 invalid_request`; `404 not_found` when a device is not a device of a member of this domain; `409 duplicate` when `envelopeId` exists with other content; `413 too_large`; `429 box_full` |
 | `GET /api/v1/devicebox/devices/{deviceId}/envelopes?after=&limit=` | SignedIn (only the device's person) | - | `200 EnvelopePage{envelopes[], next}` oldest first; `404 not_found` for another person's device |
-| `DELETE /api/v1/devicebox/devices/{deviceId}/envelopes` | SignedIn (only the device's person) | `EnvelopeAck{envelopeIds[]}` (at most 100) | `204`; ids not waiting for this device are ignored |
+| `DELETE /api/v1/devicebox/devices/{deviceId}/envelopes` | SignedIn (only the device's person) | `EnvelopeAck{envelopeIds[]}` (at most 10, so an ack stays inside rule 9's 25 writes) | `204`; ids not waiting for this device are ignored |
 | `POST /api/v1/devicebox/jobs/expire` | Allow(Service) | - | `200 ExpireReport{writes, more}`: drops envelopes older than 30 days and leaves a `kind: "undelivered"` envelope (no ciphertext, only the `envelopeId`) for the sender's device |
 | `GET /api/v1/devicebox/health` | Public | - | `200 Health` |
 
@@ -959,7 +987,16 @@ list (G1); until G1 merges, G6 tests use a fake of that port.
 - A device's box holds at most 10,000 waiting envelopes (`429 box_full`).
 - `EnvelopePage.envelopes[]`: `{envelopeId, senderDeviceId,
   senderPersonId, kind, ciphertext, storedAt}`; `limit` 1 to 100, default
-  50.
+  50. `after` and `next` are an opaque cursor text; `next` is "" on the
+  last page. A page also stops at 4 MiB of ciphertext, so it may hold
+  fewer than `limit` envelopes with `next` set.
+- Storage (G6's FYLO probe, 2026-11-14): FYLO's `$eq` does not match
+  inside lists and TACHYON's scroll field names allow no dots, so each
+  envelope has a small "slip" with `waiting: {d<hash of deviceId>:
+  true}` (a nested object FYLO indexes), and a device's box is read with
+  that key in pages by a numeric cursor; the box count lives in a few
+  count documents per domain and may drift after a crash (DOMAIN notes
+  it).
 - Storage: one FYLO root per domain (ADR 0004); a put costs at most a few
   writes whatever the number of receiving devices (rule 9). G6 checks how
   FYLO finds "envelopes waiting for device X" without a scan of all

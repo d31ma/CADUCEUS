@@ -1177,7 +1177,9 @@ seconds). Decided in EVENTS.md section 4, item 5; no owner question.
   - the Floci scheduler follows EVENTS.md section 4 item 5: it calls a
     route again at once while the answer is `200` with `more: true` (read
     from the body), one call at a time per route, routes in turn, and
-    stops at the deadline (`MESAIL_SCHEDULER_SECONDS` minus 10), on `more:
+    stops at the deadline (the longer of `MESAIL_SCHEDULER_SECONDS` minus
+    10 and half of it: 50 s for Floci's 60 s tick, 5 s for the native 10 s
+    tick; decided 2026-11-14, EVENTS section 4 item 5), on `more:
     false`, on another answer or on a timeout; it logs each call as now,
     and the number of calls per route in each tick;
   - `directory`'s removal job gives every removing domain a fair share:
@@ -1186,6 +1188,13 @@ seconds). Decided in EVENTS.md section 4, item 5; no owner question.
     no write for it, and a small domain is picked about every second call
     next to a big one (changed 2026-11-14 from a stored cursor, because
     rule 9's 3 writes left no room for it);
+  - the two removal queues share each call fairly (decided 2026-11-14,
+    after K6's native run: with 56 deleted people waiting, about 110
+    person steps ran before any domain step, and D2's domain removal timed
+    out): each call starts with the domain queue or the person queue, chosen
+    by the call's random start (even or odd), and uses what is left of the
+    3 writes on the other queue. Neither queue waits for the other to
+    empty. D2's wait stays 150 s;
   - steps larger than 3 writes are split into parts that each fit: a
     person leaving a domain is `LeaveDomain` (3 writes; a member already
     removed is skipped) then the person store (1); dropping a domain is 3

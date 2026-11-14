@@ -259,8 +259,11 @@ outbound delivery queue, retries, email summaries, cleanup):
      call;
    - when several routes have work, it takes them in turn (one call each
      per round), so one long job does not hold back the others;
-   - it stops at the tick's deadline, the tick length minus 10 seconds (50
-     seconds for the 60 second Floci schedule), so ticks never overlap;
+   - it stops at the tick's deadline, the longer of the tick length minus
+     10 seconds and half the tick length (50 seconds for the 60 second
+     Floci schedule, 5 seconds for the 10 second native schedule; changed
+     2026-11-14 so short native ticks also repeat), so ticks never
+     overlap;
    - it stops calling a route on `more: false`, on any answer other than
      `200` (a `429` or `503` waits for the next tick), or on a timeout.
    This is safe because the router lets every waiting user request go

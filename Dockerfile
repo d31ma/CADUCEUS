@@ -130,6 +130,20 @@ USER 10001:10001
 EXPOSE 8080
 ENTRYPOINT ["/mesail-router"]
 
+FROM ${GOLANG_IMAGE} AS calls-build
+WORKDIR /src/edge/calls
+COPY edge/calls/ ./
+RUN rm -f ./*_test.go ./*/*_test.go \
+ && GOTOOLCHAIN=local GOPROXY=off GOFLAGS=-mod=vendor CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags="-s -w" -o /out/mesail-calls .
+
+FROM scratch AS calls
+COPY --from=calls-build /out/mesail-calls /mesail-calls
+USER 10001:10001
+ENV MESAIL_CALLS_LISTEN=0.0.0.0:8120 \
+    MESAIL_CALLS_MEDIA_LISTEN=0.0.0.0:8121
+EXPOSE 8120 8121/udp
+ENTRYPOINT ["/mesail-calls"]
+
 FROM ${GOLANG_IMAGE} AS realtime-gateway-build
 WORKDIR /src/edge/realtime
 COPY edge/realtime/ ./

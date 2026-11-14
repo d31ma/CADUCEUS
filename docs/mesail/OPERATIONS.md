@@ -24,6 +24,7 @@ In that VM:
 | Router | The one public web address: the API, the web apps, Keycloak under `/idp`, and the signed file links under `/blobs`. |
 | Scheduler | Calls the relay and job routes on a timer. |
 | `realtime` | The realtime service and its connection gateway (WebSockets and event streams). |
+| `calls` **(planned deployment, with OP2's successor)** | The forwarding server for group calls (ADR 0012, `edge/calls`). It forwards end-to-end encrypted audio and video, holds no keys and keeps no data. |
 | SMTP edge **(planned deployment)** | Receives mail on port 25 and hands it to `mail-in`. |
 | Keycloak | Passwords, 2-step codes and sessions (one realm, `mesail`), on SQLite. |
 | Egress container **(planned)** | The only way out of the install (section 4). |
@@ -44,6 +45,7 @@ engine through its socket, which is the same as root on that engine.
 | An NTP server for the host and the VM | Tokens live 60 seconds; 2-step codes, DKIM and file links depend on the clock | Mesail makes no time requests of its own. |
 | Secret files, readable only by the install | Client secrets, signing keys, DKIM keys, VAPID keys | Section 5. |
 | Backups | FYLO roots, files, Keycloak's database, secrets | Section 7. |
+| One public UDP port to the `calls` container (default 8121), and the address devices reach it on | Group calls of 3 or more people (ADR 0012) | Set the address in `MESAIL_CALLS_PUBLIC_IPS`. Devices that cannot reach the port use the TURN relay (ADR 0011). |
 
 ## 3. Settings you set
 
@@ -108,6 +110,15 @@ that folder with the data.
 | `YON_NOTIFY_VAPID_PUBLIC_KEY`, `YON_NOTIFY_VAPID_PRIVATE_KEY`, `YON_NOTIFY_VAPID_SUBJECT` | The VAPID keys and contact, from secret files. |
 | `notify.push.hosts` | The push service hosts allowed (Google FCM, Mozilla, Apple, Microsoft). |
 
+**Calls (`edge/calls`, planned deployment)**
+
+| Setting | Meaning |
+| --- | --- |
+| `MESAIL_CALLS_KEYS_URL` | Required. realtime's call keys inside the install, for example `http://realtime:8106/api/v1/realtime/calls/keys`. |
+| `MESAIL_CALLS_LISTEN` | The HTTP address of the calls routes (the image sets `0.0.0.0:8120`); the router sends `/api/v1/calls/` here. |
+| `MESAIL_CALLS_MEDIA_LISTEN` | The one UDP address for all call media (the image sets `0.0.0.0:8121`). |
+| `MESAIL_CALLS_PUBLIC_IPS` | The public IP addresses of that UDP port, comma separated. Without it devices are told the container's own address. |
+
 ## 4. Traffic that leaves the install
 
 Floci, the functions, Keycloak and `realtime` are on a network with no
@@ -120,7 +131,9 @@ only to:
 | Your mail relay, or any mail server on port 25 | Sending mail outside | Relay, or `mailout.directenabled` |
 | The push services in `notify.push.hosts` | Browser push | Only when `notify.push.enabled` is `true` |
 
-Inbound: the router's HTTPS port and the SMTP edge's port 25. Floci's API
+Inbound: the router's HTTPS port, the SMTP edge's port 25 and the calls
+server's UDP media port **(planned)**. `calls` makes no outbound calls; it
+reads only realtime's keys inside the install. Floci's API
 port is published on no interface; anyone who reaches it controls every
 function and data volume.
 

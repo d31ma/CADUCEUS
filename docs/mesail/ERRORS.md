@@ -177,3 +177,16 @@ keeps its row, marked "retired".
 | MS6029 | devicebox | 503 | `unavailable` | The outbox is not available. | an outbox route failed in a way no other number covers |
 | MS6030 | devicebox | 503 | `unavailable` | The outbox fields cannot be read. | a document's outbox fields could not be read or written |
 | MS6031 | devicebox | 503 | `unavailable` | The device list gave an answer that cannot be read. | `directory`'s owners answer is not JSON or has no `owners` |
+| MS6500 | calls | 500 | `unavailable` | Something went wrong. | an unexpected error in `calls` |
+| MS6501 | calls | 401 | `unauthenticated` | The join token is missing. | an offer, candidates or leave without the `X-Mesail-Join` header |
+| MS6502 | calls | 401 | `unauthenticated` | The join token is not valid. | a join token that is not a signed JWT of `realtime`'s call keys, has another audience, or lacks the device or domain |
+| MS6503 | calls | 401 | `unauthenticated` | The join token has expired. | an offer with a join token past its expiry |
+| MS6504 | calls | 401 | `unauthenticated` | The join token is for another call. | a join token whose `callId` is not the call in the path |
+| MS6505 | calls | 401 | `unauthenticated` | The join token is for another domain. | a join token whose domain is not the call's domain |
+| MS6506 | calls | 409 | `call_full` | The call is full. | an offer to a call that already has 50 devices |
+| MS6507 | calls | 400 | `invalid_request` | The request body is not valid JSON. | a body that is not the route's JSON model |
+| MS6508 | calls | 413 | `too_large` | The request is too large. | a body over the route's size limit |
+| MS6509 | calls | 400 | `invalid_request` | The offer is not valid. | an offer SDP that cannot be used (field `sdp`) |
+| MS6510 | calls | 400 | `invalid_request` | A candidate is not valid. | an ICE candidate that cannot be added, or too many (field `candidates`) |
+| MS6511 | calls | 404 | `not_found` | This device is not in the call. | candidates or leave from a device with no session in the call |
+| MS6512 | calls | 503 | `unavailable` | The call cannot be checked now. Try again soon. | `realtime`'s call keys cannot be loaded |

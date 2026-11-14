@@ -3,6 +3,7 @@
 !deploy/
 !kit/
 !edge/realtime/
+!edge/calls/
 **/.tachyon
 **/dist
 **/data

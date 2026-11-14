@@ -935,6 +935,22 @@ Decided 2026-11-14 with G2 and G11:
 - New errors take the next free numbers of realtime's block
   (`docs/mesail/ERRORS.md`); when two slices take the same number, the
   one that merges second renumbers.
+- **Refusals reach the sender** (decided 2026-11-14 with G2, gap 5).
+  `edge/realtime` only logs a refused frame, so for `signal`,
+  `pairing.*` and `call.*` frames `realtime` also pushes
+  `RealtimeEvent{type: "refused", requestType, requestId?, state,
+  message}` to the sending connection: `requestType` is the frame's type,
+  `state` the code (`not_found`, `forbidden`, `call_full`,
+  `rate_limited`, `invalid_request`), and `message` is
+  `[MS50nn]: <plain English>` as in `ApiError`. A frame too large for the
+  gateway still closes the socket with 1009. `typing`, `presence` and
+  `ping` stay without answers.
+- **Request ids.** Each `signal`, `pairing.*` and `call.*` frame may carry
+  `requestId` (client-made, 1 to 64 characters). `realtime` echoes it in
+  `signal.result`, `call.created`, `call.joined`, `call.left`,
+  `pairing.ready` (to the caller only) and `refused`, so a device that
+  sends several frames at once can match the answers. `realtime` does not
+  store it and does not check that it is unique.
 
 ## calls (from G10; ADR 0012)
 

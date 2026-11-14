@@ -899,7 +899,29 @@ device.
   screen; simulcast layers by the receiver's bandwidth.
 - `calls` keeps only who is connected to which call, in memory; it loses
   nothing when it restarts but the calls themselves (devices reconnect).
-- Errors use the MS6500 block (ERRORS.md).
+- Errors use the MS6500 block (ERRORS.md): `ApiError` with `[MS65nn]: `
+  messages, written by the handlers (it is not a Yon app): `500
+  unavailable` (MS6500), `401 unauthenticated` (bad or expired join
+  token), `409 call_full`, `400 invalid_request` (a bad offer or
+  candidate), `404 not_found` (leave or candidates with no session).
+- Form (decided 2026-11-14 with G10): a plain Go module in `edge/calls`,
+  like `edge/realtime` and `edge/smtp` (Pion vendored, `kit` through a
+  `replace`), so the gates treat it as a shared Go module; not in `apps/`.
+- Join token: a compact JWS, ES256, `kid` in the header, claims `callId`,
+  `deviceId`, `domainId`, `iat`, `exp` (60 seconds) and `aud: "calls"`.
+  `offer` needs an unexpired token; `candidates` and `leave` also accept
+  an expired one, only while that device still has a session in that
+  call.
+- Fixed slots (no server-to-client offers): a device offers 1 audio send,
+  1 video send (simulcast `q`, `h`, `f`), 1 optional screen send, and
+  receive-only slots: 9 video, 1 screen and up to 49 audio. The server
+  fills them, the people who spoke most recently first, the screen in its
+  own slot, and tells the device over a data channel named `calls` which
+  device is in which slot and the speaking order. SFrame's key id picks
+  the decryption key. On a simulcast switch the server asks the sender
+  for a keyframe (PLI) and switches at the next frame start; devices send
+  the frame-marking and audio-level header extensions (not encrypted) so
+  the switch is clean.
 
 ## notify
 

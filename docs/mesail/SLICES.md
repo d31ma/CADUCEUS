@@ -2123,8 +2123,9 @@ AC-CL is written.
   AC-CL).
 
 ### G10. The `calls` app, a forwarding server that cannot read media (after G9)
-- **Owns:** `apps/calls/**` (new Go app on Pion), its stack entry and its
-  public UDP port (with OP2's successor), OPERATIONS.md's call lines.
+- **Owns:** `edge/calls/**` (a new plain Go module on Pion, like
+  `edge/realtime`; not a Yon app), its stack entry and its public UDP port
+  (with OP2's successor), OPERATIONS.md's call lines.
 - **Builds:** admission of devices that `realtime` admitted to a call of
   their domain, forwarding of encrypted frames with simulcast, one shared
   UDP port with the TURN relay as fallback, numbers MS6500-MS6999.

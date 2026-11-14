@@ -2185,6 +2185,17 @@ section 8.)
   (Wave 8's W2 if it exists, else `apps/web`). G0 splits it into smaller
   slices.
 - **Depends on:** TACHYON P1, P2 and P4 released and the pin moved.
+- **TACHYON notes (2026-11-14, not released yet; no change to the plan or
+  the order):** P2a, the web `Crypto` client (TACHYON develop 8cc7c444f,
+  TACHYON ADR 0132), works in Chromium, Firefox and WebKit. It RETURNS
+  each request id (the caller does not pass one in), so G7's services
+  keep the returned id. `sign` and `verify` refuse empty data for now
+  (WebKit cannot verify an empty Ed25519 message). Mesail never signs
+  empty data (a device signature covers `deviceId` and both keys; MLS
+  signs non-empty structures), but G7 refuses empty input itself, with a
+  numbered error, before it calls `Crypto`, so the behaviour does not
+  depend on TACHYON's fix. Native `Crypto` on Linux (TACHYON P8 L2) is
+  not done yet; the Linux app waits for it (ADR 0011 section 10).
 
 ### G8. Cut-over (one session, last)
 - **Builds:** the web apps use only device chat; `messaging` keeps email
@@ -2244,6 +2255,12 @@ AC-CL is written.
   recording on the device with the notice (TACHYON P7), the call history
   messages, the call screens of CU, in the chat page app.
 - **Depends on:** TACHYON P1, P2, P5 and P7; G7.
+- **Linux screen sharing (TACHYON P8, develop 023f3a47c, 2026-11-14):**
+  `Media.supported('screen')` is false on Linux without the screen grant
+  or a ScreenCast portal (for example some window managers without
+  xdg-desktop-portal). The screen-share button then shows the AC-CL-9
+  "not available on this device" state, as for a phone. No Linux-only
+  code in Mesail.
 
 ### Order
 G0 now. G1 to G5 (and G6 if wanted) when their app's E slice is merged.

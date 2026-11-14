@@ -30,13 +30,49 @@ mesail_free_gib() {
   df -Pk "$1/" | awk 'NR == 2 { print int($4 / 1048576) }'
 }
 
-mesail_trim_go_cache() {
+mesail_go_cache_maximum_gib() {
+  echo "${MESAIL_GOCACHE_MAX_GB:-10}"
+}
+
+mesail_go_cache_kib() {
+  du -sk "$1/" | awk '{ print $1 }'
+}
+
+mesail_go_cache_over_maximum() {
+  [ "$(mesail_go_cache_kib "$1")" -gt "$(($(mesail_go_cache_maximum_gib) * 1048576))" ]
+}
+
+mesail_remove_old_go_cache_entries() {
+  find "$1/" -mindepth 2 -maxdepth 2 -type f -name '*-[ad]' -mmin +60 -print -delete | wc -l | tr -d ' '
+}
+
+mesail_trim_for_free_space() {
   local folder="$1" free minimum removed
   free="$(mesail_free_gib "$folder")"
   minimum="$(mesail_go_cache_minimum_free_gib)"
   if [ "$free" -ge "$minimum" ]; then return 0; fi
-  removed="$(find "$folder/" -mindepth 2 -maxdepth 2 -type f -name '*-[ad]' -mmin +60 -print -delete | wc -l | tr -d ' ')"
+  removed="$(mesail_remove_old_go_cache_entries "$folder")"
   echo "=== go cache: $free GiB free (under $minimum GiB); removed $removed entries unused for over 1 hour from $folder; now $(mesail_free_gib "$folder") GiB free" >&2
+}
+
+mesail_trim_for_size() {
+  local folder="$1" removed
+  if ! mesail_go_cache_over_maximum "$folder"; then return 0; fi
+  removed="$(mesail_remove_old_go_cache_entries "$folder")"
+  echo "=== go cache: over $(mesail_go_cache_maximum_gib) GiB; removed $removed entries unused for over 1 hour; now $(($(mesail_go_cache_kib "$folder") / 1024)) MiB" >&2
+  mesail_clean_when_still_over "$folder"
+}
+
+mesail_clean_when_still_over() {
+  local folder="$1"
+  if ! mesail_go_cache_over_maximum "$folder"; then return 0; fi
+  GOCACHE="$folder" go clean -cache
+  echo "=== go cache: still over $(mesail_go_cache_maximum_gib) GiB; ran go clean -cache on $folder; now $(($(mesail_go_cache_kib "$folder") / 1024)) MiB" >&2
+}
+
+mesail_trim_go_cache() {
+  mesail_trim_for_size "$1"
+  mesail_trim_for_free_space "$1"
 }
 
 mesail_add_trimpath() {

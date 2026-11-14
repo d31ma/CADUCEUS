@@ -92,4 +92,8 @@ JSON. The origin in its client data is `https://<rp id>`;
 (by `ana`) with one passkey labelled `Mac`. `MESAIL_PASSKEY_EXPIRY_TEST`
 (any value) turns on the expired-challenge test, which waits 125 seconds.
 
+Fixture tokens live 60 seconds. A test that waits longer than about 45
+seconds (a removal, a membership change) takes its token from
+`RenewingToken`, which signs in again when the token is 45 seconds old.
+
 A missing variable skips the test.

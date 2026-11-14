@@ -1212,6 +1212,12 @@ seconds). Decided in EVENTS.md section 4, item 5; no owner question.
   while the K2 sign-in check runs with every sign-in under 5 seconds; a
   small domain removed while a big one is still removing is gone within 2
   minutes; gates pass.
+- **The blackbox clean-up's removals** (K11's finding, 2026-11-14): since
+  a7fb947 every blackbox test deletes the domains and new people it made,
+  so a native full run leaves many removals queued, and D2's removal test
+  can pass 2 minutes 30 seconds there while it passes alone in 11 seconds.
+  K6 owns D2's timing: measure D2 with the queue present, and if the
+  queue alone explains it, raise D2's wait in the test, not the budget.
 - **Cold starts, until K10** (decided 2026-11-12, from K6's runs 1 and 2):
   a run starts only after a warm-up passes (every function answers its
   health route and one sign-in passes; retry the warm-up for up to 5
@@ -1903,7 +1909,7 @@ Every E slice below:
 ### E5. `notify` (after K5)
 ### E6. `identity` (after PK2 and K1; before O2 if O2 has not started)
 ### E7. `directory` (after PK3 and K8; not at the same time as K6)
-### E8. `messaging` (after K5, K8 and K9; K4's test stays)
+### E8. `messaging` (after K5 and K8; K9 was dropped; K4's test stays)
 ### E9. The router's answers (`deploy/router`; after K8, not at the same time as OP2)
 - **Builds:** the router's own answers (`429`, `502`, `503`, `504`) as
   `ApiError` with numbers from MS5500-MS5999.

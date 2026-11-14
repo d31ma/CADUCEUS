@@ -30,8 +30,9 @@ func TestD2RemovingADomainAnswers202AndFinishesLater(t *testing.T) {
 	if removing.DomainId != domainId || removing.State != "removing" {
 		t.Fatalf("want %s removing, got %+v", domainId, removing)
 	}
+	renewing := NewRenewingToken(t, stack, "OPERATOR")
 	stack.Eventually(t, 150*time.Second, "the removed domain is gone", func() bool {
-		return stack.Call(t, http.MethodGet, "/api/v1/directory/domains/"+domainId, operator, nil).Status == http.StatusNotFound
+		return stack.Call(t, http.MethodGet, "/api/v1/directory/domains/"+domainId, renewing.Get(t), nil).Status == http.StatusNotFound
 	})
 }
 
@@ -41,7 +42,8 @@ func TestD2DeletingAPersonAnswers202AndRemovesTheMembershipLater(t *testing.T) {
 	dan := createPerson(t, stack, ana.AccessToken)
 	stack.Call(t, http.MethodDelete, "/api/v1/directory/people/"+dan.Id, operatorToken(t, stack), nil).Expect(t, http.StatusAccepted)
 	signInReply(t, stack, dan.Username, dan.Password).Expect(t, http.StatusUnauthorized)
+	renewing := NewRenewingToken(t, stack, "ANA")
 	stack.Eventually(t, 150*time.Second, "the deleted person leaves the member list", func() bool {
-		return membersMatching(t, stack, ana.AccessToken, dan.Username) == 0
+		return membersMatching(t, stack, renewing.Get(t), dan.Username) == 0
 	})
 }

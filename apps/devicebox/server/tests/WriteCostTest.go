@@ -9,12 +9,7 @@ func (test *WriteCostTest) TestOnePutForTwoHundredDevicesStaysWithinAFewWrites()
 	world := DeviceboxTestSetup{}.World()
 	defer world.Close()
 	world.Owns("ana", "a1")
-	devices := []string{}
-	for index := 0; index < 200; index++ {
-		device := fmt.Sprintf("p%02d-d%d", index/4, index%4)
-		world.Owns(fmt.Sprintf("person-%02d", index/4), device)
-		devices = append(devices, device)
-	}
+	devices := world.Group(50, 4)
 	world.Put("ana", "a1", devices...)
 	world.Storage.Reset()
 	world.Put("ana", "a1", devices...)
@@ -28,9 +23,7 @@ func (test *WriteCostTest) TestListingOneDeviceReadsOnlyItsOwnEnvelopes() {
 	world.Owns("ana", "a1")
 	world.Owns("bo", "b1")
 	world.Owns("cy", "c1")
-	for index := 0; index < 25; index++ {
-		world.Put("ana", "a1", "c1")
-	}
+	world.PutMany(25, "ana", "a1", "c1")
 	mine := world.Put("ana", "a1", "b1")
 	world.Storage.Reset()
 	Assert.Equals([]string{mine}, world.Listed("bo", "b1"))

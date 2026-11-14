@@ -116,6 +116,22 @@ func (world *DeviceboxTestSetup) Listed(personId string, device string) []string
 	return ids
 }
 
+func (world *DeviceboxTestSetup) Group(people int, devicesEach int) []string {
+	devices := []string{}
+	for index := 0; index < people*devicesEach; index++ {
+		device := fmt.Sprintf("p%02d-d%d", index/devicesEach, index%devicesEach)
+		world.Owns(fmt.Sprintf("person-%02d", index/devicesEach), device)
+		devices = append(devices, device)
+	}
+	return devices
+}
+
+func (world *DeviceboxTestSetup) PutMany(count int, personId string, sender string, to ...string) {
+	for index := 0; index < count; index++ {
+		world.Put(personId, sender, to...)
+	}
+}
+
 func (world *DeviceboxTestSetup) EnvelopeId() string {
 	text := world.RandomText() + world.RandomText()
 	return text[0:8] + "-" + text[8:12] + "-" + text[12:16] + "-" + text[16:20] + "-" + text[20:32]
@@ -136,10 +152,9 @@ func (world *DeviceboxTestSetup) Close() {
 func (world *DeviceboxTestSetup) drop(domain string) {
 	names := devicebox.Names{}
 	source := DataSource{}
-	rows, _ := source.Query("SELECT name FROM "+names.Registry()+" WHERE name = $1 LIMIT 10", []any{names.Bodies(domain)})
-	encoded, _ := json.Marshal(rows)
+	window, _ := source.Scroll(names.Registry(), map[string]any{"name": names.Bodies(domain)}, "", 10)
 	records := []devicebox.RegistryRecord{}
-	json.Unmarshal(encoded, &records)
+	window.Decode(&records)
 	for _, record := range records {
 		source.DeleteById(names.Registry(), record.Id)
 	}

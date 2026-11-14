@@ -365,7 +365,9 @@ by domain (`kit/collections` `ForDomain`):
   ciphertext, expiresUs}` plus the six outbox fields (EVENTS.md 2.1). The
   `envelope.stored` events (one per receiving person) are staged here, in
   the same write as the ciphertext. At most 256 KiB of ciphertext (about
-  342 KiB as base64url) plus the events stays under 512 KiB.
+  342 KiB as base64url) plus the events stays under 512 KiB: at the
+  limits (256 KiB, 200 devices, 50 people, all 50 events waiting) the body
+  is 381,052 bytes and the slip 6,970 bytes (measured, `Cost_test.go`).
 - **Box count** (`devicebox-counts-<domainKey>`): 8 documents per domain,
   `{bucket: b0..b7, counts: {deviceKey: waiting envelopes}}`; a device's
   key picks its bucket. They make the 10,000 limit a read, not a query.

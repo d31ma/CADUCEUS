@@ -108,10 +108,10 @@ func TestOnlyTheDevicesPersonMayListOrAcknowledgeItsBox(t *testing.T) {
 	w.directory.Owns(w.domain, "bo", "b1")
 	id := w.mustPut("ana", "a1", "b1")
 	_, listError := w.mailbox.List(w.member("ana"), "b1", "", "")
-	ackError := w.mailbox.Ack(w.member("ana"), "b1", []string{id})
+	acknowledgeError := w.mailbox.Acknowledge(w.member("ana"), "b1", []string{id})
 	_, strangerError := w.mailbox.List("other.org bo Member", "b1", "", "")
 	_, badIdError := w.mailbox.List(w.member("bo"), "b 1", "", "")
-	for _, err := range []error{listError, ackError, strangerError, badIdError} {
+	for _, err := range []error{listError, acknowledgeError, strangerError, badIdError} {
 		if numberOf(err) != 6014 {
 			t.Fatalf("got %v", err)
 		}
@@ -125,10 +125,10 @@ func TestCallersMustBeSignedInMembers(t *testing.T) {
 	w := newWorld(t)
 	_, err := w.mailbox.Put("garbage", PutRequest{})
 	_, serviceError := w.mailbox.List(w.service(), "b1", "", "")
-	ackError := w.mailbox.Ack("garbage", "b1", nil)
+	acknowledgeError := w.mailbox.Acknowledge("garbage", "b1", nil)
 	_, expireError := w.expiry.Run("garbage")
-	if numberOf(err) != 6001 || numberOf(serviceError) != 6002 || numberOf(ackError) != 6001 || numberOf(expireError) != 6001 {
-		t.Fatalf("got %v %v %v %v", err, serviceError, ackError, expireError)
+	if numberOf(err) != 6001 || numberOf(serviceError) != 6002 || numberOf(acknowledgeError) != 6001 || numberOf(expireError) != 6001 {
+		t.Fatalf("got %v %v %v %v", err, serviceError, acknowledgeError, expireError)
 	}
 }
 
@@ -171,7 +171,7 @@ func TestAnAcknowledgementRemovesOnlyThatDeviceAndTheLastOneDeletesTheEnvelope(t
 	w.directory.Owns(w.domain, "ana", "a1")
 	w.directory.Owns(w.domain, "bo", "b1", "b2")
 	id := w.mustPut("ana", "a1", "b1", "b2")
-	if err := w.mailbox.Ack(w.member("bo"), "b1", []string{id}); err != nil {
+	if err := w.mailbox.Acknowledge(w.member("bo"), "b1", []string{id}); err != nil {
 		t.Fatal(err)
 	}
 	if len(w.list("bo", "b1").Envelopes) != 0 || len(w.list("bo", "b2").Envelopes) != 1 {
@@ -180,7 +180,7 @@ func TestAnAcknowledgementRemovesOnlyThatDeviceAndTheLastOneDeletesTheEnvelope(t
 	if w.countRows(Names{}.Slips(w.domain), "envelopeId", id) != 1 || w.countRows(Names{}.Bodies(w.domain), "envelopeId", id) != 1 {
 		t.Fatal("the envelope was deleted while a device still waits")
 	}
-	if err := w.mailbox.Ack(w.member("bo"), "b2", []string{strings.ToUpper(id), id}); err != nil {
+	if err := w.mailbox.Acknowledge(w.member("bo"), "b2", []string{strings.ToUpper(id), id}); err != nil {
 		t.Fatal(err)
 	}
 	if w.countRows(Names{}.Slips(w.domain), "envelopeId", id) != 0 || w.countRows(Names{}.Bodies(w.domain), "envelopeId", id) != 0 {
@@ -192,13 +192,13 @@ func TestAcknowledgingIdsThatDoNotWaitChangesNothing(t *testing.T) {
 	w := newWorld(t)
 	w.directory.Owns(w.domain, "ana", "a1")
 	w.directory.Owns(w.domain, "bo", "b1")
-	if err := w.mailbox.Ack(w.member("bo"), "b1", []string{w.envelopeId()}); err != nil {
+	if err := w.mailbox.Acknowledge(w.member("bo"), "b1", []string{w.envelopeId()}); err != nil {
 		t.Fatalf("an empty domain answered %v", err)
 	}
 	w.directory.Owns(w.domain, "cy", "c1")
 	id := w.mustPut("ana", "a1", "c1")
 	w.storage.Reset()
-	if err := w.mailbox.Ack(w.member("bo"), "b1", []string{id, w.envelopeId()}); err != nil {
+	if err := w.mailbox.Acknowledge(w.member("bo"), "b1", []string{id, w.envelopeId()}); err != nil {
 		t.Fatal(err)
 	}
 	if w.storage.Writes() != 0 || len(w.list("cy", "c1").Envelopes) != 1 {
@@ -221,7 +221,7 @@ func TestTheBoxCountFollowsPutsAndAcknowledgements(t *testing.T) {
 	if read() != 2 {
 		t.Fatalf("got %d", read())
 	}
-	w.mailbox.Ack(w.member("bo"), "b1", []string{id})
+	w.mailbox.Acknowledge(w.member("bo"), "b1", []string{id})
 	if read() != 1 {
 		t.Fatalf("got %d", read())
 	}

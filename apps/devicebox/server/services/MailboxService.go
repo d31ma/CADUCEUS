@@ -28,8 +28,8 @@ func (service *MailboxService) List(authorization string, device string, after s
 	return page, service.failures.Mailbox(err)
 }
 
-func (service *MailboxService) Ack(authorization string, device string, request EnvelopeAck) error {
-	err := service.assembly().Mailbox().Ack(authorization, device, request.EnvelopeIds)
+func (service *MailboxService) Acknowledge(authorization string, device string, request EnvelopeAcknowledgement) error {
+	err := service.assembly().Mailbox().Acknowledge(authorization, device, request.EnvelopeIds)
 	return service.failures.Mailbox(err)
 }
 

@@ -40,7 +40,7 @@ func (controller *EnvelopesController) DeleteEnvelopes(
 	// @FromPath("device")
 	device string,
 	// @FromBody
-	request EnvelopeAck,
+	request EnvelopeAcknowledgement,
 ) error {
-	return controller.mailbox.Ack(authorization, device, request)
+	return controller.mailbox.Acknowledge(authorization, device, request)
 }

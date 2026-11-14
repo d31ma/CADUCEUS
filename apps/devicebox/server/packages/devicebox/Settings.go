@@ -3,8 +3,9 @@ package devicebox
 import "mesail.dev/packages/outbox"
 
 type Settings struct {
-	Outbox      outbox.Settings
-	OutboxError error
+	Outbox       outbox.Settings
+	OutboxError  error
+	DirectoryUrl string
 }
 
 func (settings Settings) Checked() error {

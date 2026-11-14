@@ -85,9 +85,9 @@ func TestPageCheckReadsTheCursorAndTheSize(t *testing.T) {
 	}
 }
 
-func TestAckCheckTakesOneToTenUuids(t *testing.T) {
+func TestAcknowledgementCheckTakesOneToTenUuids(t *testing.T) {
 	ids := []string{"0F8FAD5B-D9CB-469F-A165-70867728950E", "0f8fad5b-d9cb-469f-a165-70867728950e"}
-	checked, err := AckCheck{}.Checked(ids)
+	checked, err := AcknowledgementCheck{}.Checked(ids)
 	if err != nil || len(checked) != 1 || checked[0] != "0f8fad5b-d9cb-469f-a165-70867728950e" {
 		t.Fatalf("got %v %v", checked, err)
 	}
@@ -95,13 +95,13 @@ func TestAckCheckTakesOneToTenUuids(t *testing.T) {
 	for index := range eleven {
 		eleven[index] = ids[1]
 	}
-	if _, err := (AckCheck{}).Checked(eleven); numberOf(err) != 6017 {
+	if _, err := (AcknowledgementCheck{}).Checked(eleven); numberOf(err) != 6017 {
 		t.Fatalf("got %v", err)
 	}
-	if _, err := (AckCheck{}).Checked(nil); numberOf(err) != 6017 {
+	if _, err := (AcknowledgementCheck{}).Checked(nil); numberOf(err) != 6017 {
 		t.Fatalf("got %v", err)
 	}
-	if _, err := (AckCheck{}).Checked([]string{"x"}); numberOf(err) != 6018 {
+	if _, err := (AcknowledgementCheck{}).Checked([]string{"x"}); numberOf(err) != 6018 {
 		t.Fatalf("got %v", err)
 	}
 }

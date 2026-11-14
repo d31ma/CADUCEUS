@@ -1,6 +1,8 @@
 package devicebox
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 )
@@ -55,5 +57,41 @@ func TestListingOneDeviceReadsOnlyItsOwnEnvelopesThroughTheIndex(t *testing.T) {
 	first, _ := access[0].(map[string]any)
 	if first["kind"] != "prefix-index" || first["field"] != "waiting/"+(DeviceKey{}).Of("b1") {
 		t.Fatalf("FYLO would not use the index: %v", plan)
+	}
+}
+
+func TestTheLargestPutStaysUnder512KiBPerDocument(t *testing.T) {
+	w := newWorld(t)
+	w.directory.Owns(w.domain, "ana", "a1")
+	devices := []string{}
+	for person := 0; person < 50; person++ {
+		for device := 0; device < 4; device++ {
+			id := fmt.Sprintf("0f8fad5b-d9cb-469f-a165-%04d%08d", person, device)
+			w.directory.Owns(w.domain, fmt.Sprintf("3e5a11d0-0000-4000-8000-%012d", person), id)
+			devices = append(devices, id)
+		}
+	}
+	w.pusher.FailFor("realtime", errors.New("down"))
+	w.pusher.FailFor("notify", errors.New("down"))
+	id := w.envelopeId()
+	_, err := w.mailbox.Put(w.member("ana"), PutRequest{EnvelopeId: id, SenderDeviceId: "a1", ToDeviceIds: devices, Kind: "message", Ciphertext: w.ciphertext(256 * 1024)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, collection := range []string{Names{}.Bodies(w.domain), Names{}.Slips(w.domain)} {
+		rows := []map[string]any{}
+		statement, _ := SqlText{}.firstWhere(collection, "envelopeId", id)
+		NewDocuments(w.fylo).Rows(statement, &rows)
+		encoded, _ := json.Marshal(rows[0])
+		t.Logf("%s: %d bytes", collection, len(encoded))
+		if len(encoded) >= 512*1024 {
+			t.Fatalf("%s is %d bytes", collection, len(encoded))
+		}
+	}
+	bodies := []Body{}
+	statement, _ := SqlText{}.firstWhere(Names{}.Bodies(w.domain), "envelopeId", id)
+	NewDocuments(w.fylo).Rows(statement, &bodies)
+	if bodies[0].OutboxPending != 50 || len(bodies[0].PendingEvents) != 50 {
+		t.Fatalf("got %d waiting events", bodies[0].OutboxPending)
 	}
 }

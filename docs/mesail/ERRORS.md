@@ -120,8 +120,8 @@ keeps its row, marked "retired".
 | MS6016 | devicebox | 400 | `invalid_request` | The page size must be 1 to 100. | `limit` is not a number from 1 to 100 (field `limit`) |
 | MS6017 | devicebox | 400 | `invalid_request` | Acknowledge 1 to 10 envelopes at a time. | `envelopeIds` has 0 or more than 10 ids (field `envelopeIds`) |
 | MS6018 | devicebox | 400 | `invalid_request` | Every acknowledged envelope id must be a UUID. | an `envelopeIds` entry is not a UUID (field `envelopeIds`) |
-| MS6019 | devicebox | 503 | `unavailable` | The device list is not available. | the `directory` device list failed |
-| MS6020 | devicebox | 503 | `unavailable` | The device list is not connected yet. | the device list port has no adapter yet (until slice G1) |
+| MS6019 | devicebox | 503 | `unavailable` | The device list is not available. | `directory`'s `POST /api/v1/directory/devices/owners` failed or answered other than 200 (until G1 ships it, every call) |
+| MS6020 | devicebox | 503 | `unavailable` | The device list is not connected yet. | `devicebox.directoryurl` is not set, so the device list cannot be asked |
 | MS6021 | devicebox | 503 | `unavailable` | The mailbox store is not available. | a FYLO command or query failed |
 | MS6022 | devicebox | 503 | `unavailable` | The mailbox store gave an answer that cannot be read. | a FYLO answer could not be decoded |
 | MS6023 | devicebox | 503 | `unavailable` | The outbox settings are missing. | `outbox` is missing from the app settings |
@@ -132,3 +132,4 @@ keeps its row, marked "retired".
 | MS6028 | devicebox | 503 | `unavailable` | The mailbox is not available. | a mailbox or job route failed in a way no other number covers |
 | MS6029 | devicebox | 503 | `unavailable` | The outbox is not available. | an outbox route failed in a way no other number covers |
 | MS6030 | devicebox | 503 | `unavailable` | The outbox fields cannot be read. | a document's outbox fields could not be read or written |
+| MS6031 | devicebox | 503 | `unavailable` | The device list gave an answer that cannot be read. | `directory`'s owners answer is not JSON or has no `owners` |

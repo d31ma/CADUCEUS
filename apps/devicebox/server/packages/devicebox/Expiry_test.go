@@ -11,7 +11,7 @@ func TestExpiryDropsOldEnvelopesAndLeavesAnUndeliveredNoticeForTheSender(t *test
 	w.directory.Owns(w.domain, "ana", "a1")
 	w.directory.Owns(w.domain, "bo", "b1", "b2")
 	id := w.mustPut("ana", "a1", "b1", "b2")
-	w.mailbox.Ack(w.member("bo"), "b1", []string{id})
+	w.mailbox.Acknowledge(w.member("bo"), "b1", []string{id})
 	w.clock = w.clock.Add(24 * time.Hour)
 	young := w.mustPut("ana", "a1", "b1")
 	w.clock = w.clock.Add(29*24*time.Hour - time.Second)

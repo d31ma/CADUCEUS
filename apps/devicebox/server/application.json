@@ -17,5 +17,8 @@
     "hosts": [
       "127.0.0.1"
     ]
+  },
+  "devicebox": {
+    "directoryurl": "http://127.0.0.1:8102"
   }
 }

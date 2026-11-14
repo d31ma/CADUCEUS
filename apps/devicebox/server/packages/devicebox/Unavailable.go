@@ -34,6 +34,10 @@ func (Unavailable) OutboxUnreadable(cause error) *Unavailable {
 	return &Unavailable{Message: "The outbox fields cannot be read.", ErrorNumber: 6030, Cause: cause}
 }
 
+func (Unavailable) DirectoryUnreadable(cause error) *Unavailable {
+	return &Unavailable{Message: "The device list gave an answer that cannot be read.", ErrorNumber: 6031, Cause: cause}
+}
+
 func (failure *Unavailable) Error() string {
 	return failure.Message
 }

@@ -20,7 +20,7 @@ func (Limits) Lifetime() time.Duration {
 	return 30 * 24 * time.Hour
 }
 
-func (Limits) MaxAck() int {
+func (Limits) MaxAcknowledged() int {
 	return 10
 }
 
@@ -42,4 +42,8 @@ func (Limits) WriteBudget() int {
 
 func (Limits) TimeBudget() time.Duration {
 	return 20 * time.Second
+}
+
+func (Limits) DirectoryTimeout() time.Duration {
+	return 10 * time.Second
 }

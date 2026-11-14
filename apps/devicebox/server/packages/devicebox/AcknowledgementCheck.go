@@ -2,9 +2,9 @@ package devicebox
 
 import "slices"
 
-type AckCheck struct{}
+type AcknowledgementCheck struct{}
 
-func (check AckCheck) Checked(envelopeIds []string) ([]string, error) {
+func (check AcknowledgementCheck) Checked(envelopeIds []string) ([]string, error) {
 	err := check.count(envelopeIds)
 	if err != nil {
 		return nil, err
@@ -16,26 +16,26 @@ func (check AckCheck) Checked(envelopeIds []string) ([]string, error) {
 	return check.normalized(envelopeIds), nil
 }
 
-func (AckCheck) count(envelopeIds []string) error {
-	if len(envelopeIds) < 1 || len(envelopeIds) > (Limits{}).MaxAck() {
-		return InvalidRequest{}.AckCount()
+func (AcknowledgementCheck) count(envelopeIds []string) error {
+	if len(envelopeIds) < 1 || len(envelopeIds) > (Limits{}).MaxAcknowledged() {
+		return InvalidRequest{}.AcknowledgedCount()
 	}
 	return nil
 }
 
-func (check AckCheck) formats(envelopeIds []string) error {
+func (check AcknowledgementCheck) formats(envelopeIds []string) error {
 	if slices.ContainsFunc(envelopeIds, check.invalid) {
-		return InvalidRequest{}.AckId()
+		return InvalidRequest{}.AcknowledgedId()
 	}
 	return nil
 }
 
-func (AckCheck) invalid(envelopeId string) bool {
+func (AcknowledgementCheck) invalid(envelopeId string) bool {
 	_, valid := Formats{}.EnvelopeId(envelopeId)
 	return !valid
 }
 
-func (AckCheck) normalized(envelopeIds []string) []string {
+func (AcknowledgementCheck) normalized(envelopeIds []string) []string {
 	normalized := []string{}
 	for _, envelopeId := range envelopeIds {
 		lowered, _ := Formats{}.EnvelopeId(envelopeId)

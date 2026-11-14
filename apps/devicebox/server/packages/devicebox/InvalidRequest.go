@@ -38,11 +38,11 @@ func (InvalidRequest) Limit() *InvalidRequest {
 	return &InvalidRequest{Message: "The page size must be 1 to 100.", Field: "limit", ErrorNumber: 6016}
 }
 
-func (InvalidRequest) AckCount() *InvalidRequest {
+func (InvalidRequest) AcknowledgedCount() *InvalidRequest {
 	return &InvalidRequest{Message: "Acknowledge 1 to 10 envelopes at a time.", Field: "envelopeIds", ErrorNumber: 6017}
 }
 
-func (InvalidRequest) AckId() *InvalidRequest {
+func (InvalidRequest) AcknowledgedId() *InvalidRequest {
 	return &InvalidRequest{Message: "Every acknowledged envelope id must be a UUID.", Field: "envelopeIds", ErrorNumber: 6018}
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
+	"mesail.dev/packages/transport"
 )
 
 type Assembly struct {
@@ -19,7 +20,7 @@ func (assembly Assembly) Mailbox() Mailbox {
 	parts := assembly.parts()
 	return Mailbox{
 		callers:   TokenCallers{},
-		ownership: NewOwnership(assembly.directory()),
+		ownership: NewOwnership(assembly.directory(SettingsSource{}.FromEnvironment())),
 		store:     parts.Store,
 		counts:    parts.Counts,
 		staging:   parts.Staging,
@@ -59,11 +60,18 @@ func (assembly Assembly) pusher() outbox.Pusher {
 	return outbox.NewDomainHTTPPusher(source, outbox.HTTPPusher{}.DefaultTimeout())
 }
 
-func (assembly Assembly) directory() DeviceDirectory {
+func (assembly Assembly) directory(settings Settings) DeviceDirectory {
 	if assembly.Directory != nil {
 		return assembly.Directory
 	}
-	return UnwiredDirectory{}
+	return assembly.directoryAt(settings.DirectoryUrl)
+}
+
+func (Assembly) directoryAt(directoryUrl string) DeviceDirectory {
+	if directoryUrl == "" {
+		return UnwiredDirectory{}
+	}
+	return NewDirectoryClient(directoryUrl, oidc.ServiceTokensFactory{}.Configured(), transport.SingleUseTransport{}.Client(Limits{}.DirectoryTimeout()))
 }
 
 func (assembly Assembly) clock() func() time.Time {

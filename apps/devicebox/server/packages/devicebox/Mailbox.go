@@ -64,12 +64,12 @@ func (mailbox Mailbox) List(authorization string, deviceId string, after string,
 	return NewPageBuilder(mailbox.store).Page(caller.DomainId, rows, size)
 }
 
-func (mailbox Mailbox) Ack(authorization string, deviceId string, envelopeIds []string) error {
+func (mailbox Mailbox) Acknowledge(authorization string, deviceId string, envelopeIds []string) error {
 	caller, err := mailbox.callers.Member(authorization)
 	if err != nil {
 		return err
 	}
-	checked, err := AckCheck{}.Checked(envelopeIds)
+	checked, err := AcknowledgementCheck{}.Checked(envelopeIds)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (mailbox Mailbox) Ack(authorization string, deviceId string, envelopeIds []
 		return err
 	}
 	deviceKey := DeviceKey{}.Of(deviceId)
-	removed, err := NewAckRun(mailbox.store).Remove(caller.DomainId, deviceKey, checked)
+	removed, err := NewAcknowledgementRun(mailbox.store).Remove(caller.DomainId, deviceKey, checked)
 	if err != nil {
 		return err
 	}

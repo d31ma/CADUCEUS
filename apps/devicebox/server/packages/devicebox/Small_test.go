@@ -70,7 +70,7 @@ func TestStoreAndCountsPassStorageFailuresOn(t *testing.T) {
 	if _, err := store.Domains(); err == nil {
 		t.Fatal("want a failure")
 	}
-	if _, err := NewAckRun(store).Remove("example.com", "k", []string{"x"}); err == nil {
+	if _, err := NewAcknowledgementRun(store).Remove("example.com", "k", []string{"x"}); err == nil {
 		t.Fatal("want a failure")
 	}
 	if err := NewBoxCounts(NewDocuments(brokenStorage{})).Room("example.com", []string{DeviceKey{}.Of("b1")}); err == nil {
@@ -189,5 +189,18 @@ func TestMemoryAndUnwiredDirectories(t *testing.T) {
 	}
 	if _, err := (UnwiredDirectory{}).Owners("example.com", nil); numberOf(err) != 6020 {
 		t.Fatalf("got %v", err)
+	}
+}
+
+func TestTheAssemblyWiresTheDirectoryFromItsSettings(t *testing.T) {
+	if _, unwired := (Assembly{}).directoryAt("").(UnwiredDirectory); !unwired {
+		t.Fatal("no address should mean the unwired directory")
+	}
+	if _, client := (Assembly{}).directoryAt("http://127.0.0.1:8102").(DirectoryClient); !client {
+		t.Fatal("an address should mean the HTTP client")
+	}
+	settings := SettingsSource{}.FromSnapshot(`{"yon":{"devicebox":{"directoryurl":"http://127.0.0.1:8102"},"outbox":{"producer":"devicebox","subscribers":[]}}}`)
+	if settings.DirectoryUrl != "http://127.0.0.1:8102" || settings.Checked() != nil {
+		t.Fatalf("got %+v", settings)
 	}
 }

@@ -23,7 +23,7 @@ scripts/floci/test.sh renews them before each test file).
 Settings (environment):
   MESAIL_OWNER        your slice, for example slice-m3 (lock owner, FYLO roots, logs)
   MESAIL_GOCACHE      the Go build cache (default on macOS: ~/Library/Caches/go-build-mesail,
-                      on the internal disk, not the ANVIL NFS link of ~/Library/Caches/go-build)
+                      a local disk (on this Mac a link to HANGAR), not the ANVIL NFS link of ~/Library/Caches/go-build)
   MESAIL_TEST_RUN     go test -run filter for tests/blackbox: one go test run with one set of
                       tokens, instead of one run per test
   MESAIL_SKIP_STATIC  1 skips the Tac bundles

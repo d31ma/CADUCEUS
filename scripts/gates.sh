@@ -499,7 +499,7 @@ usage() {
   echo "  every run also checks docs/mesail/ERRORS.md against the error numbers in code" >&2
   echo "  (tools/errornumbers, ADR 0009; apps in tools/controllers/unconverted.list are skipped)" >&2
   echo "  MESAIL_GOCACHE  the Go build cache (default on macOS: ~/Library/Caches/go-build-mesail," >&2
-  echo "                  on the internal disk, not the ANVIL NFS link of ~/Library/Caches/go-build)" >&2
+  echo "                  a local disk (on this Mac a link to HANGAR), not the ANVIL NFS link of ~/Library/Caches/go-build)" >&2
   echo "                  Go runs with -trimpath, so worktrees share cache entries; an unusable cache" >&2
   echo "                  folder falls back to \$TMPDIR/go-build-mesail-fallback; under" >&2
   echo "                  MESAIL_GOCACHE_MIN_FREE_GB (35) GiB free, entries unused for over 1 hour" >&2

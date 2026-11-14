@@ -287,6 +287,11 @@ app_not_converted() {
   grep -qx "$(basename "$1")" "$(unconverted_list)"
 }
 
+error_number_check() {
+  local root="$1"
+  (cd "$root/tools/errornumbers" && go run . "$root")
+}
+
 controller_check() {
   local app="$1"
   if app_not_converted "$app"; then
@@ -484,6 +489,8 @@ usage() {
   echo "                 is still in tools/controllers/unconverted.list)" >&2
   echo "                 (a Tac app's steps include tools/clientviews, SLICES rule 19: the manifest keeps" >&2
   echo "                 tac.dependencies.check on, and no tac.html view holds a ? : expression)" >&2
+  echo "  every run also checks docs/mesail/ERRORS.md against the error numbers in code" >&2
+  echo "  (tools/errornumbers, ADR 0009; apps in tools/controllers/unconverted.list are skipped)" >&2
   return 2
 }
 
@@ -508,6 +515,7 @@ run_gates() {
   fylo="$(fylo_binary)"
   run_step "versions" "$folder/versions.log" check_versions "$ty" "$fylo" || return 1
   use_pinned_tools "$ty" "$fylo"
+  run_step "error numbers" "$folder/error-numbers.log" error_number_check "$root" || status=1
   if wanted --apps-only "$@"; then shared_gates "$root" "$ty" "$folder" || status=1; fi
   if wanted --shared-only "$@"; then all_app_gates "$root" "$ty" "$folder" "$only" || status=1; fi
   return "$status"

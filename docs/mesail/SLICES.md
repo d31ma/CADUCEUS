@@ -1181,10 +1181,19 @@ seconds). Decided in EVENTS.md section 4, item 5; no owner question.
     stops at the deadline (`MESAIL_SCHEDULER_SECONDS` minus 10), on `more:
     false`, on another answer or on a timeout; it logs each call as now,
     and the number of calls per route in each tick;
-  - `directory`'s removal job takes removing domains in turn: each call
-    works on the removing domain after the one the last call worked on (a
-    cursor in the job's state), so a big domain does not hold back a small
-    one; the person-deletion job too, if it has the same order;
+  - `directory`'s removal job gives every removing domain a fair share:
+    each call starts at a RANDOM removing domain (and a random deleted
+    person for the person-deletion job), so it needs no stored cursor and
+    no write for it, and a small domain is picked about every second call
+    next to a big one (changed 2026-11-14 from a stored cursor, because
+    rule 9's 3 writes left no room for it);
+  - steps larger than 3 writes are split into parts that each fit: a
+    person leaving a domain is `LeaveDomain` (3 writes; a member already
+    removed is skipped) then the person store (1); dropping a domain is 3
+    single-write parts (dropping a missing collection is harmless); every
+    part is idempotent;
+  - `directory`'s outbox relay handles at most 3 documents and 1 second
+    per call (rule 9);
   - CONTRACTS: the removal row says 3 writes and 1 second (rule 9, as
     lowered in K6), and that the trigger calls again while `more: true`;
   - the sign-in path's job and relay calls use rule 9's 3 writes and 1

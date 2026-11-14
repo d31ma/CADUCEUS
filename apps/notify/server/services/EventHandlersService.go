@@ -4,6 +4,8 @@ import "mesail.dev/packages/events"
 type EventHandlersService struct {
 	// @Needs
 	handlers *NotificationEventsService
+	// @Needs
+	chats *ChatPushesService
 }
 
 func (service *EventHandlersService) Dispatch(envelope events.Envelope) error {
@@ -21,6 +23,8 @@ func (service *EventHandlersService) route(envelope events.Envelope) error {
 		return service.handlers.MessageCreated(envelope)
 	case types.MessageDeleted():
 		return service.handlers.MessageDeleted(envelope)
+	case types.EnvelopeStored():
+		return service.chats.EnvelopeStored(envelope)
 	case types.MessageEdited(), types.ReactionChanged():
 		return nil
 	}

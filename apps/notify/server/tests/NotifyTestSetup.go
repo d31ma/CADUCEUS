@@ -222,7 +222,8 @@ func (setup NotifyTestSetup) EventActions() *NotificationEventsService {
 }
 
 func (setup NotifyTestSetup) Handlers() *EventHandlersService {
-	return &EventHandlersService{handlers: setup.EventActions()}
+	chats := &ChatPushesService{members: &MembershipService{settings: setup.SettingsStore()}, pushes: &ContentFreePushService{targets: &PushTargetsService{settings: &NotifySettingsService{}, client: &http.Client{}}, presence: &PresenceService{settings: &NotifySettingsService{}}, sender: &PushSenderService{subscriptions: setup.PushStore()}}}
+	return &EventHandlersService{handlers: setup.EventActions(), chats: chats}
 }
 
 func (setup NotifyTestSetup) Events() *EventsService {

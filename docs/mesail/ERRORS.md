@@ -235,8 +235,8 @@ keeps its row, marked "retired".
 | MS4500 | notify | 500 | `unavailable` | Something went wrong. | an unexpected error in `notify` |
 | MS4501 | notify | 401 | `unauthenticated` | Sign in again. | a notify route could not verify the caller's token |
 | MS4502 | notify | 404 | `not_found` | The install-wide route was not found. | an operator-only route (jobs, outbox) called with a token that is not install-wide |
-| MS4503 | notify | 403 | `forbidden` | Only another Mesail service may call this route. | `POST /events` with a token that has no `Service` role |
-| MS4504 | notify | 404 | `not_found` | The domain was not found. | an event for another domain than the calling service's own |
+| MS4503 | notify | 403 | `forbidden` | Only another Mesail service may call this route. | `POST /events` or `POST /call-pushes` with a token that has no `Service` role |
+| MS4504 | notify | 404 | `not_found` | The domain was not found. | an event for another domain than the calling service's own, or `POST /call-pushes` with an install-wide token |
 | MS4505 | notify | 400 | `invalid_request` | (the event check's text) | `kit/events` refused the event envelope (`field` `envelope`) |
 | MS4506 | notify | 400 | `invalid_request` | notify does not handle events of type ... | an event type notify does not handle (`field` `type`) |
 | MS4507 | notify | 400 | `invalid_request` | the time is not an RFC 3339 time | a time in an event payload is not RFC 3339 (`field` `time`) |
@@ -255,6 +255,8 @@ keeps its row, marked "retired".
 | MS4520 | notify | 404 | `not_found` | The outbox document was not found. | the outbox document to retry does not exist |
 | MS4521 | notify | 404 | `not_found` | The outbox collection was not found. | the collection named in a retry is not an outbox collection |
 | MS4522 | notify | 404 | `not_found` | The dead letter was not found. | the dead letter to retry is not in the outbox document |
+| MS4523 | notify | 400 | `invalid_request` | the kind must be incoming or missed | `POST /call-pushes` with another `kind` (`field` `kind`; slice G11) |
+| MS4524 | notify | 400 | `invalid_request` | toPersonIds needs 1 to 49 ids of 1 to 64 characters | `POST /call-pushes` with no person, more than 49, or an empty or too long id (`field` `toPersonIds`; slice G11) |
 | MS5000 | realtime | 500 | `unavailable` | Something went wrong. | an unexpected error in `realtime` |
 | MS5001 | realtime | 400 | `invalid_request` | a connection id is required | the gateway connects a connection with no `connectionId` (field `connectionId`) |
 | MS5002 | realtime | 400 | `invalid_request` | the kind is socket or stream | the gateway connects a connection whose `kind` is not `socket` or `stream` (field `kind`) |

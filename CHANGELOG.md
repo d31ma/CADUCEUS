@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Added content-free pushes to `notify` (slices G5 and G11, ADR 0011,
+  ADR 0012): `envelope.stored` events of kind `message` from `devicebox`
+  push "New message", and the new `POST /api/v1/notify/call-pushes`
+  (Allow(Service), a domain token) pushes "Incoming call" or "Missed
+  call" to the people `realtime` names. Pushes hold no message text, no
+  name and no ids; only active members of the domain get them (others
+  are counted as skipped). New numbers MS4523-MS4524. Browser push stays
+  off by default (Q19).
 - Changed `notify`'s error answers (slice E5, ADR 0009): every error
   answer that `notify` shapes now has a numbered message,
   `[MS<4 digits>]: <plain English message>`, from notify's block

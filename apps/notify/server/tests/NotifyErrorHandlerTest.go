@@ -144,3 +144,16 @@ func (test *NotifyErrorHandlerTest) TestMissingDeadLetterIsNumbered() {
 	answer := test.handler().Missing(NotFound{}.DeadLetter())
 	Assert.Equals("[MS4522]: The dead letter was not found.", answer.Message)
 }
+
+func (test *NotifyErrorHandlerTest) TestBadCallKindIsNumbered() {
+	answer := test.handler().Invalid(InvalidRequest{}.BadCallKind())
+	Assert.Equals("invalid_request", answer.Code)
+	Assert.Equals("kind", answer.Field)
+	Assert.Equals("[MS4523]: the kind must be incoming or missed", answer.Message)
+}
+
+func (test *NotifyErrorHandlerTest) TestBadPersonListIsNumbered() {
+	answer := test.handler().Invalid(InvalidRequest{}.BadPersonList())
+	Assert.Equals("toPersonIds", answer.Field)
+	Assert.Equals("[MS4524]: toPersonIds needs 1 to 49 ids of 1 to 64 characters", answer.Message)
+}

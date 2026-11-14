@@ -1071,6 +1071,7 @@ device.
 | `DELETE /api/v1/notify/push-subscriptions` | SignedIn | `PushSubscriptionRequest` (only `endpoint` is used) | `204`; only the caller's own subscription |
 | `GET /api/v1/notify/push-key` | SignedIn | - | `PushKey{publicKey}` (the VAPID public key for `pushManager.subscribe`); `503 unavailable` when not configured or when `notify.push.enabled` is `false` (the web app then hides push; ADR 0007, SPEC Q19) |
 | `POST /api/v1/notify/events` | Allow(Service) | `Envelope` | `EventReceipt` (EVENTS.md) |
+| `POST /api/v1/notify/call-pushes` | Allow(Service), a domain token | `CallPush{toPersonIds[] (1 to 49), kind: incoming\|missed}` | `200 CallPushReport{pushed, skipped}` (a person who is not an active member of the token's domain gets no push and counts in `skipped`); `400 invalid_request` (MS4523 `kind`, MS4524 `toPersonIds`); `403 forbidden` MS4503 without the `Service` role; `404 not_found` MS4504 for an install-wide token (slices G5 and G11) |
 | `POST /api/v1/notify/outbox/relay` | Allow(Service) | - | `OutboxReport` |
 | `POST /api/v1/notify/jobs/run` | Allow(Service), install-wide (domain `*`) | - | `JobReport{domains, fannedOut, pushed, skipped, summarized, more}` |
 | `GET /api/v1/notify/messages/{messageId}/source` | Allow(Service) | - | `MessageSource{messageId, domainId, body, attachmentIds[]}` of an email summary (`sum_` id) |
@@ -1109,6 +1110,28 @@ How it works:
   `notifications@<domain>` to the member's primary address (producer
   `notify`). mail-out reads its body from
   `GET /api/v1/<envelope producer>/messages/{messageId}/source`.
+- Content-free pushes (slices G5 and G11, ADR 0011, ADR 0012). Device
+  chat and calls get pushes with no message text, no name and no id of a
+  person, message, envelope or call. "New message" comes from
+  `envelope.stored` (EVENTS section 7) of `kind` `message` only (not
+  `group`, `linking` or `undelivered`); "Incoming call" and "Missed call"
+  come from `realtime` through `POST /call-pushes`. The push goes to every
+  push subscription of the person in that domain, only while the person
+  is an active member (`member.upserted` state `active`); anyone else
+  gets no push and is counted in `skipped` (`realtime` does not check
+  membership, and one person who left the domain must not stop the push
+  for the others). An event for such a person is applied with no push. The payload: `title` "New message", "Incoming call" or
+  "Missed call"; `body` "You have a new message in <domainId>.", "Someone
+  is calling you in <domainId>." or "You missed a call in <domainId>.";
+  `tag` `<domainId>/chat` or `<domainId>/call` (a missed call replaces the
+  incoming call); `url` `/conversations`; `kind` `chat.message`,
+  `call.incoming` or `call.missed`; `notificationId`, `conversationId` and
+  `messageId` are "". The same rules as other pushes apply: nothing while
+  push is off (Q19), while the person is `active` or in `dnd` (AC-CL-11),
+  or when presence cannot be read; a gone subscription is deleted (at most
+  20 deletes per request). No notification row is stored and nothing is
+  retried: devicebox keeps the envelope, and `realtime` rings online
+  devices.
 - Everything is per domain: the caller's domain for routes, the envelope's
   `domainId` for events. A notification of another member or domain
   answers `404`.

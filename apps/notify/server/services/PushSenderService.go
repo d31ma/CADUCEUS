@@ -13,8 +13,17 @@ type PushSenderService struct {
 }
 
 func (service *PushSenderService) Send(record NotificationRecord, targets map[string]webpush.Target, deleteLimit int) (PushSendResult, error) {
-	subscriptions, failure := service.subscriptions.ListForMember(record.DomainId, record.MemberId)
-	result, problem := service.sendAll(record, service.usable(subscriptions, failure), targets, deleteLimit)
+	delivery := PushDelivery{DomainId: record.DomainId, MemberId: record.MemberId, Message: service.message(record)}
+	return service.deliver(delivery, targets, deleteLimit)
+}
+
+func (service *PushSenderService) SendMessage(delivery PushDelivery, targets map[string]webpush.Target, deleteLimit int) (PushSendResult, error) {
+	return service.deliver(delivery, targets, deleteLimit)
+}
+
+func (service *PushSenderService) deliver(delivery PushDelivery, targets map[string]webpush.Target, deleteLimit int) (PushSendResult, error) {
+	subscriptions, failure := service.subscriptions.ListForMember(delivery.DomainId, delivery.MemberId)
+	result, problem := service.sendAll(delivery.Message, service.usable(subscriptions, failure), targets, deleteLimit)
 	return result, cmp.Or(failure, problem)
 }
 
@@ -25,8 +34,7 @@ func (service *PushSenderService) usable(subscriptions []PushSubscriptionRecord,
 	return subscriptions[:min(len(subscriptions), service.subscriptionLimit())]
 }
 
-func (service *PushSenderService) sendAll(record NotificationRecord, subscriptions []PushSubscriptionRecord, targets map[string]webpush.Target, deleteLimit int) (PushSendResult, error) {
-	message := service.message(record)
+func (service *PushSenderService) sendAll(message webpush.Message, subscriptions []PushSubscriptionRecord, targets map[string]webpush.Target, deleteLimit int) (PushSendResult, error) {
 	result := PushSendResult{Outcomes: []string{}}
 	failures := []error{}
 	for _, subscription := range subscriptions {

@@ -11,7 +11,7 @@ import (
 func TestReceiveRefusesAMissingToken(t *testing.T) {
 	desk := presenceEventDesk(newMemoryStorage(), newRecordingGateway())
 	_, err := desk.Receive("", presenceEnvelope("evt_1", "channel.archived", "example.com", events.ChannelArchived{}))
-	if !errors.Is(err, Unauthenticated{}) {
+	if !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("got %v", err)
 	}
 }

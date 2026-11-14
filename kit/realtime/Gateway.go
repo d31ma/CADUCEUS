@@ -34,9 +34,9 @@ func (gateway Gateway) Disconnect(request GatewayDisconnect) error {
 func (gateway Gateway) checked(request GatewayConnect) error {
 	switch {
 	case request.ConnectionId == "":
-		return Invalid{Field: "connectionId", Reason: "a connection id is required"}
+		return Invalid{}.ConnectionIdMissing()
 	case request.Kind != gateway.Sessions.socketKind() && request.Kind != gateway.Sessions.streamKind():
-		return Invalid{Field: "kind", Reason: "the kind is socket or stream"}
+		return Invalid{}.UnknownKind()
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func (gateway Gateway) route(request GatewayMessage, message ClientMessage) (Gat
 	case gateway.presenceType():
 		return gateway.presence(request, message)
 	}
-	return GatewayReply{}, Invalid{Field: "type", Reason: "unknown message type"}
+	return GatewayReply{}, Invalid{}.UnknownMessageType()
 }
 
 func (gateway Gateway) answered(connectionId string, reply GatewayReply, err error) (GatewayReply, error) {
@@ -107,7 +107,7 @@ func (gateway Gateway) connection(request GatewayMessage) (Connection, error) {
 
 func (Gateway) signedIn(domainId string) error {
 	if domainId == "" {
-		return Unauthenticated{}
+		return Unauthenticated{}.NotSignedIn()
 	}
 	return nil
 }
@@ -115,7 +115,7 @@ func (Gateway) signedIn(domainId string) error {
 func (gateway Gateway) current(connection Connection) error {
 	expiresAt, _ := time.Parse(time.RFC3339, connection.ExpiresAt)
 	if !gateway.Connections.Now().Before(expiresAt) {
-		return Unauthenticated{}
+		return Unauthenticated{}.SignInEnded()
 	}
 	return nil
 }

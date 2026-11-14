@@ -19,7 +19,7 @@ func presenceSweeper(memory *memoryStorage, gateway *recordingGateway) Sweeper {
 
 func TestSweepRefusesAMissingToken(t *testing.T) {
 	_, err := presenceSweeper(newMemoryStorage(), newRecordingGateway()).Run("")
-	if !errors.Is(err, Unauthenticated{}) {
+	if !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("got %v", err)
 	}
 }
@@ -33,7 +33,7 @@ func TestSweepAnswersMissingForADomainServiceToken(t *testing.T) {
 
 func TestSweepRefusesAnOperatorsCallerWithoutTheServiceRole(t *testing.T) {
 	_, err := presenceSweeper(newMemoryStorage(), newRecordingGateway()).Run("Bearer operator")
-	if !errors.Is(err, Forbidden{}) {
+	if !errors.As(err, &Forbidden{}) {
 		t.Fatalf("got %v", err)
 	}
 }

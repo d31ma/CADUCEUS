@@ -120,19 +120,19 @@ func (TicketBook) unknown(err error) error {
 	if err != nil {
 		return err
 	}
-	return Unauthenticated{}
+	return Unauthenticated{}.TicketRefused()
 }
 
 func (TicketBook) first(found []TicketRecord) (TicketRecord, error) {
 	if len(found) == 0 {
-		return TicketRecord{}, Unauthenticated{}
+		return TicketRecord{}, Unauthenticated{}.TicketRefused()
 	}
 	return found[0], nil
 }
 
 func (book TicketBook) usable(record TicketRecord, now time.Time) error {
 	if record.UsedAt != "" || !now.Before(book.moment(record.ExpiresAt)) || !now.Before(book.moment(record.TokenExpiresAt)) {
-		return Unauthenticated{}
+		return Unauthenticated{}.TicketRefused()
 	}
 	return nil
 }

@@ -40,7 +40,7 @@ func (desk EventDesk) Handle(envelope events.Envelope) error {
 
 func (EventDesk) sameDomain(caller oidc.Caller, envelope events.Envelope) error {
 	if caller.DomainId != envelope.DomainId {
-		return Missing{What: "domain"}
+		return Missing{}.EventDomain()
 	}
 	return nil
 }

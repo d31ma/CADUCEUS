@@ -120,6 +120,30 @@ keeps its row, marked "retired".
 | MS4000 | search | 500 | `unavailable` | Something went wrong. | an unexpected error in `search` |
 | MS4500 | notify | 500 | `unavailable` | Something went wrong. | an unexpected error in `notify` |
 | MS5000 | realtime | 500 | `unavailable` | Something went wrong. | an unexpected error in `realtime` |
+| MS5001 | realtime | 400 | `invalid_request` | a connection id is required | the gateway connects a connection with no `connectionId` (field `connectionId`) |
+| MS5002 | realtime | 400 | `invalid_request` | the kind is socket or stream | the gateway connects a connection whose `kind` is not `socket` or `stream` (field `kind`) |
+| MS5003 | realtime | 400 | `invalid_request` | unknown message type | a client message whose `type` is not `auth`, `ticket`, `ping`, `typing` or `presence` (field `type`) |
+| MS5004 | realtime | 400 | `invalid_request` | a conversation id is required | a `typing` message with no `conversationId` (field `conversationId`) |
+| MS5005 | realtime | 400 | `invalid_request` | must name 1 to 100 members | `GET /presence` with no `memberIds` or more than 100 (field `memberIds`) |
+| MS5006 | realtime | 400 | `invalid_request` | must be an RFC 3339 time | the sweep asked for presence due at a time that is not RFC 3339 (field `now`); the sweep route answers it as MS5024 |
+| MS5007 | realtime | 400 | `invalid_request` | must be active, idle or dnd | a presence `state` that is not `active`, `idle` or `dnd` (field `state`) |
+| MS5008 | realtime | 400 | `invalid_request` | must be an RFC 3339 time in the future | `dnd` with a `doNotDisturbUntil` that is missing or not in the future (field `doNotDisturbUntil`) |
+| MS5009 | realtime | 400 | `invalid_request` | Why the envelope is refused, for example "the payload is not a JSON object of the expected shape". | an event envelope refused by the shared `kit/events` (field `envelope`); retired when slice E12 numbers `kit/events` |
+| MS5010 | realtime | 400 | `invalid_request` | Why the type is refused, for example "the service realtime does not consume events of type member.upserted". | an event type `realtime` does not consume, or one not in the catalog, refused by the shared `kit/events` (field `type`); retired when slice E12 numbers `kit/events` |
+| MS5011 | realtime | 401 | `unauthenticated` | Sign in again. | the bearer token of a presence, tickets, events or sweep request is missing, forged or expired |
+| MS5012 | realtime | 401 | `unauthenticated` | Sign in again. | a ticket or socket sign-in with a token that is not a valid member token (for example a service token) |
+| MS5013 | realtime | 401 | `unauthenticated` | Sign in again. | a stream sign-in with a ticket that is unknown, already used or expired; the gateway closes the connection with 4401 |
+| MS5014 | realtime | 401 | `unauthenticated` | Sign in again. | a `typing` or `presence` message, or a renewal, from a connection that is not signed in; the gateway closes the connection with 4401 |
+| MS5015 | realtime | 401 | `unauthenticated` | Sign in again. | a message from a connection whose sign-in has ended; the gateway closes the connection with 4401 |
+| MS5016 | realtime | 401 | `unauthenticated` | Sign in again. | a renewal with a token of another person or domain; the gateway closes the connection with 4401 |
+| MS5017 | realtime | 403 | `forbidden` | This caller may not use this route. | the sweep caller has no `Service` role |
+| MS5018 | realtime | 403 | `forbidden` | This caller may not use this route. | the events caller is not a service (refused by the shared `kit/events`); retired when slice E12 numbers `kit/events` |
+| MS5019 | realtime | 404 | `not_found` | Nothing was found. | the event's domain is not the caller's domain |
+| MS5020 | realtime | 404 | `not_found` | Nothing was found. | the sweep caller is not install-wide |
+| MS5021 | realtime | 404 | `not_found` | Nothing was found. | `GET /presence` for members of whom none has presence |
+| MS5022 | realtime | 404 | `not_found` | Nothing was found. | `typing` in a conversation the person is not a member of |
+| MS5023 | realtime | 404 | `not_found` | Nothing was found. | a connection that is not known; the gateway routes answer it as MS5014 and close the connection with 4401 |
+| MS5024 | realtime | 503 | `unavailable` | Realtime is not available right now. Try again later. | realtime's storage or the connection gateway failed, or a route met an error it does not name |
 | MS5500 | router | 502 | `unavailable` | Something went wrong. | an unexpected error in the router |
 | MS6000 | devicebox | 500 | `unavailable` | Something went wrong. | an unexpected error in `devicebox` |
 | MS6001 | devicebox | 401 | `unauthenticated` | Sign in again. | the token is missing, forged or expired (a token TACHYON lets through but `kit/oidc` refuses) |

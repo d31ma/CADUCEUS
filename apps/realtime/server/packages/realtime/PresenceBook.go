@@ -119,7 +119,7 @@ func (book PresenceBook) open(domainId string) (string, error) {
 func (PresenceBook) time(now string) (time.Time, error) {
 	at, err := time.Parse(time.RFC3339, now)
 	if err != nil {
-		return at, Invalid{Field: "now", Reason: "must be an RFC 3339 time"}
+		return at, Invalid{}.NowNotATime()
 	}
 	return at, nil
 }

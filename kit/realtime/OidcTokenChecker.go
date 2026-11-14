@@ -20,14 +20,14 @@ func (checker OidcTokenChecker) Grant(token string, now time.Time) (Grant, error
 
 func (checker OidcTokenChecker) member(claims oidc.Claims) error {
 	if claims.Subject == "" || !slices.Contains(oidc.RoleMap{}.MesailRoles(claims), checker.memberRole()) {
-		return Unauthenticated{}
+		return Unauthenticated{}.MemberTokenRefused()
 	}
 	return nil
 }
 
 func (OidcTokenChecker) checked(grant Grant, failure error) (Grant, error) {
 	if failure != nil {
-		return Grant{}, Unauthenticated{}
+		return Grant{}, Unauthenticated{}.MemberTokenRefused()
 	}
 	return grant, nil
 }

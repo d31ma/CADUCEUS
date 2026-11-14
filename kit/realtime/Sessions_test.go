@@ -28,17 +28,17 @@ func TestAuthenticateOpensAStreamWithATicket(t *testing.T) {
 	if err != nil || reply.DomainId != "example.com" || stored.MemberId != "ben" || stored.Kind != "stream" {
 		t.Fatalf("got %+v, %+v, %v", reply, stored, err)
 	}
-	if _, err := sessions.Authenticate(GatewayMessage{ConnectionId: "s2"}, ClientMessage{Type: "ticket", Ticket: ticket.Ticket}); !errors.Is(err, Unauthenticated{}) {
+	if _, err := sessions.Authenticate(GatewayMessage{ConnectionId: "s2"}, ClientMessage{Type: "ticket", Ticket: ticket.Ticket}); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("reused ticket: got %v", err)
 	}
 }
 
 func TestAuthenticateRefusesABadTokenAndOtherTypes(t *testing.T) {
 	sessions := newGatewayFixture().gateway.Sessions
-	if _, err := sessions.Authenticate(GatewayMessage{ConnectionId: "c1"}, ClientMessage{Type: "auth", Token: "forged"}); !errors.Is(err, Unauthenticated{}) {
+	if _, err := sessions.Authenticate(GatewayMessage{ConnectionId: "c1"}, ClientMessage{Type: "auth", Token: "forged"}); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("forged: got %v", err)
 	}
-	if _, err := sessions.Authenticate(GatewayMessage{ConnectionId: "c1"}, ClientMessage{Type: "typing", Token: "ana-token"}); !errors.Is(err, Unauthenticated{}) {
+	if _, err := sessions.Authenticate(GatewayMessage{ConnectionId: "c1"}, ClientMessage{Type: "typing", Token: "ana-token"}); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("typing: got %v", err)
 	}
 	if _, err := sessions.Connections.Find("example.com", "c1"); !errors.As(err, &Missing{}) {
@@ -61,7 +61,7 @@ func TestAuthenticateRefusesARenewalWithAnotherMembersToken(t *testing.T) {
 	sessions.Authenticate(GatewayMessage{ConnectionId: "c1"}, ClientMessage{Type: "auth", Token: "ana-token"})
 	_, err := sessions.Authenticate(GatewayMessage{ConnectionId: "c1", DomainId: "example.com"}, ClientMessage{Type: "auth", Token: "ben-token"})
 	stored, _ := sessions.Connections.Find("example.com", "c1")
-	if !errors.Is(err, Unauthenticated{}) || stored.MemberId != "ana" {
+	if !errors.As(err, &Unauthenticated{}) || stored.MemberId != "ana" {
 		t.Fatalf("got %+v, %v", stored, err)
 	}
 }
@@ -69,14 +69,14 @@ func TestAuthenticateRefusesARenewalWithAnotherMembersToken(t *testing.T) {
 func TestAuthenticateRefusesARenewalFromAnotherDomain(t *testing.T) {
 	sessions := newGatewayFixture().gateway.Sessions
 	sessions.Authenticate(GatewayMessage{ConnectionId: "c1"}, ClientMessage{Type: "auth", Token: "ana-token"})
-	if _, err := sessions.Authenticate(GatewayMessage{ConnectionId: "c1", DomainId: "example.com"}, ClientMessage{Type: "auth", Token: "other-token"}); !errors.Is(err, Unauthenticated{}) {
+	if _, err := sessions.Authenticate(GatewayMessage{ConnectionId: "c1", DomainId: "example.com"}, ClientMessage{Type: "auth", Token: "other-token"}); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("got %v", err)
 	}
 }
 
 func TestAuthenticateRefusesARenewalOfAnUnknownConnection(t *testing.T) {
 	sessions := newGatewayFixture().gateway.Sessions
-	if _, err := sessions.Authenticate(GatewayMessage{ConnectionId: "c9", DomainId: "example.com"}, ClientMessage{Type: "auth", Token: "ana-token"}); !errors.Is(err, Unauthenticated{}) {
+	if _, err := sessions.Authenticate(GatewayMessage{ConnectionId: "c9", DomainId: "example.com"}, ClientMessage{Type: "auth", Token: "ana-token"}); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("got %v", err)
 	}
 }

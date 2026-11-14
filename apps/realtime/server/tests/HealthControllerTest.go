@@ -4,9 +4,13 @@ type HealthControllerTest struct {
 }
 
 func (test *HealthControllerTest) TestGetHealthNamesTheService() {
-	Assert.Equals("realtime", (&HealthController{}).GetHealth().Service)
+	Assert.Equals("realtime", test.controller().GetHealth().Service)
 }
 
 func (test *HealthControllerTest) TestGetHealthSaysOk() {
-	Assert.Equals("ok", (&HealthController{}).GetHealth().Status)
+	Assert.Equals("ok", test.controller().GetHealth().Status)
+}
+
+func (test *HealthControllerTest) controller() *HealthController {
+	return &HealthController{health: &HealthService{}}
 }

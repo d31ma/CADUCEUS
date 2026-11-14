@@ -15,7 +15,7 @@ type Tickets struct {
 func (tickets Tickets) Issue(authorization string) (Ticket, error) {
 	token, err := oidc.BearerToken{}.FromHeader(authorization)
 	if err != nil {
-		return Ticket{}, Unauthenticated{}
+		return Ticket{}, Unauthenticated{}.TokenRefused()
 	}
 	grant, err := tickets.Tokens.Grant(token, tickets.Now())
 	if err != nil {

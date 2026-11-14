@@ -23,10 +23,10 @@ func TestIssueGivesATicketForTheMember(t *testing.T) {
 
 func TestIssueRefusesAMissingOrBadToken(t *testing.T) {
 	tickets := ticketsFixture()
-	if _, err := tickets.Issue(""); !errors.Is(err, Unauthenticated{}) {
+	if _, err := tickets.Issue(""); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("missing: got %v", err)
 	}
-	if _, err := tickets.Issue("Bearer forged"); !errors.Is(err, Unauthenticated{}) {
+	if _, err := tickets.Issue("Bearer forged"); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("forged: got %v", err)
 	}
 }

@@ -53,7 +53,7 @@ func TestGrantRefusesAServiceToken(t *testing.T) {
 	realm, checker := tokenRealm(t)
 	now := time.Now()
 	grant, err := checker.Grant(signedToken(t, realm, []string{"mesail-service"}, now.Unix()+60), now)
-	if !errors.Is(err, Unauthenticated{}) || grant != (Grant{}) {
+	if !errors.As(err, &Unauthenticated{}) || grant != (Grant{}) {
 		t.Fatalf("got %+v, %v", grant, err)
 	}
 }
@@ -61,14 +61,14 @@ func TestGrantRefusesAServiceToken(t *testing.T) {
 func TestGrantRefusesAnExpiredToken(t *testing.T) {
 	realm, checker := tokenRealm(t)
 	now := time.Now()
-	if _, err := checker.Grant(signedToken(t, realm, []string{"mesail-member"}, now.Unix()-120), now); !errors.Is(err, Unauthenticated{}) {
+	if _, err := checker.Grant(signedToken(t, realm, []string{"mesail-member"}, now.Unix()-120), now); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("got %v", err)
 	}
 }
 
 func TestGrantRefusesAForgedToken(t *testing.T) {
 	_, checker := tokenRealm(t)
-	if _, err := checker.Grant("eyJhbGciOiJub25lIn0.eyJzdWIiOiJhbmEifQ.", time.Now()); !errors.Is(err, Unauthenticated{}) {
+	if _, err := checker.Grant("eyJhbGciOiJub25lIn0.eyJzdWIiOiJhbmEifQ.", time.Now()); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("got %v", err)
 	}
 }

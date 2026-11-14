@@ -128,7 +128,7 @@ func (book ConnectionBook) deleteAll(collection string, found []Connection) (Con
 
 func (ConnectionBook) first(found []Connection) (Connection, error) {
 	if len(found) == 0 {
-		return Connection{}, Missing{What: "connection"}
+		return Connection{}, Missing{}.Connection()
 	}
 	return found[0], nil
 }

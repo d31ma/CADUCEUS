@@ -16,7 +16,7 @@ func (check PresenceRequestCheck) Check(request PresenceRequest) error {
 
 func (PresenceRequestCheck) state(state string) error {
 	if !slices.Contains(PresenceStates{}.Online(), state) {
-		return Invalid{Field: "state", Reason: "must be active, idle or dnd"}
+		return Invalid{}.UnknownState()
 	}
 	return nil
 }
@@ -24,7 +24,7 @@ func (PresenceRequestCheck) state(state string) error {
 func (check PresenceRequestCheck) end(request PresenceRequest) error {
 	until := TimeText{}.At(request.DoNotDisturbUntil)
 	if request.State == (PresenceStates{}).DoNotDisturb() && !until.After(check.Now) {
-		return Invalid{Field: "doNotDisturbUntil", Reason: "must be an RFC 3339 time in the future"}
+		return Invalid{}.EndNotInFuture()
 	}
 	return nil
 }

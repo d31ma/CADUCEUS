@@ -37,14 +37,14 @@ func (sweeper Sweeper) Run(authorization string) (SweepReport, error) {
 
 func (sweeper Sweeper) requireOperators(caller oidc.Caller) error {
 	if caller.DomainId != sweeper.installWide() {
-		return Missing{What: "domain"}
+		return Missing{}.SweepDomain()
 	}
 	return nil
 }
 
 func (sweeper Sweeper) requireService(caller oidc.Caller) error {
 	if !slices.Contains(caller.Roles, sweeper.serviceRole()) {
-		return Forbidden{}
+		return Forbidden{}.NotAService()
 	}
 	return nil
 }

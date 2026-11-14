@@ -12,7 +12,7 @@ func presenceDesk(memory *memoryStorage) PresenceDesk {
 func TestPresenceDeskRefusesAMissingToken(t *testing.T) {
 	desk := presenceDesk(newMemoryStorage())
 	_, err := desk.Query("", "ana")
-	if !errors.Is(err, Unauthenticated{}) || !errors.Is(desk.Set("Bearer nobody", PresenceRequest{State: "idle"}), Unauthenticated{}) {
+	if !errors.As(err, &Unauthenticated{}) || !errors.As(desk.Set("Bearer nobody", PresenceRequest{State: "idle"}), &Unauthenticated{}) {
 		t.Fatalf("got %v", err)
 	}
 }

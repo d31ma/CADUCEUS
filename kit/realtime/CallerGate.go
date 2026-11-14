@@ -13,7 +13,7 @@ func (gate CallerGate) Caller(authorization string) (oidc.Caller, error) {
 
 func (CallerGate) refusal(err error) error {
 	if err != nil {
-		return Unauthenticated{}
+		return Unauthenticated{}.TokenRefused()
 	}
 	return nil
 }

@@ -146,14 +146,14 @@ func (keeper PresenceKeeper) announce(domainId string, record PresenceRecord, an
 func (keeper PresenceKeeper) checkedIds(memberIds []string) ([]string, error) {
 	unique := MemberSet{}.Without(memberIds, "")
 	if len(unique) == 0 || len(unique) > keeper.maximumIds() {
-		return nil, Invalid{Field: "memberIds", Reason: "must name 1 to 100 members"}
+		return nil, Invalid{}.WrongMemberCount()
 	}
 	return unique, nil
 }
 
 func (PresenceKeeper) requireSome(records []PresenceRecord) error {
 	if len(records) == 0 {
-		return Missing{What: "presence"}
+		return Missing{}.Presence()
 	}
 	return nil
 }

@@ -31,7 +31,7 @@ func (sessions Sessions) grant(message ClientMessage) (Grant, string, error) {
 		grant, err := sessions.Tickets.Redeem(message.Ticket)
 		return grant, sessions.streamKind(), err
 	}
-	return Grant{}, "", Unauthenticated{}
+	return Grant{}, "", Unauthenticated{}.NotSignedIn()
 }
 
 func (sessions Sessions) record(request GatewayMessage, grant Grant, kind string) error {
@@ -68,14 +68,14 @@ func (sessions Sessions) renew(request GatewayMessage, grant Grant) error {
 
 func (Sessions) unknown(err error) error {
 	if errors.As(err, &Missing{}) {
-		return Unauthenticated{}
+		return Unauthenticated{}.NotSignedIn()
 	}
 	return err
 }
 
 func (Sessions) sameOwner(connection Connection, grant Grant) error {
 	if connection.DomainId != grant.DomainId || connection.MemberId != grant.MemberId {
-		return Unauthenticated{}
+		return Unauthenticated{}.OtherMember()
 	}
 	return nil
 }

@@ -4,3 +4,4 @@ outbox
 collections
 transport
 realtime
+apierrors

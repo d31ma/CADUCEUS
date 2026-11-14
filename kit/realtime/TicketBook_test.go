@@ -40,7 +40,7 @@ func TestRedeemGivesTheGrantOnlyOnce(t *testing.T) {
 	if err != nil || grant != ticketTestGrant() {
 		t.Fatalf("got %+v, %v", grant, err)
 	}
-	if _, err := book.Redeem(ticket.Ticket); !errors.Is(err, Unauthenticated{}) {
+	if _, err := book.Redeem(ticket.Ticket); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("second redeem: got %v", err)
 	}
 }
@@ -49,7 +49,7 @@ func TestRedeemRefusesAnExpiredTicket(t *testing.T) {
 	memory := newMemoryStorage()
 	ticket, _ := ticketTestBook(memory, connectionTestTime()).Issue(ticketTestGrant())
 	later := ticketTestBook(memory, connectionTestTime().Add(30*time.Second))
-	if _, err := later.Redeem(ticket.Ticket); !errors.Is(err, Unauthenticated{}) {
+	if _, err := later.Redeem(ticket.Ticket); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("got %v", err)
 	}
 }
@@ -59,18 +59,18 @@ func TestRedeemRefusesATicketWhoseTokenEnded(t *testing.T) {
 	grant := ticketTestGrant()
 	grant.ExpiresAt = "2026-11-10T12:00:00Z"
 	ticket, _ := book.Issue(grant)
-	if _, err := book.Redeem(ticket.Ticket); !errors.Is(err, Unauthenticated{}) {
+	if _, err := book.Redeem(ticket.Ticket); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("got %v", err)
 	}
 }
 
 func TestRedeemRefusesAnUnknownTicket(t *testing.T) {
 	book := ticketTestBook(newMemoryStorage(), connectionTestTime())
-	if _, err := book.Redeem("unknown"); !errors.Is(err, Unauthenticated{}) {
+	if _, err := book.Redeem("unknown"); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("no collection: got %v", err)
 	}
 	book.Issue(ticketTestGrant())
-	if _, err := book.Redeem("unknown"); !errors.Is(err, Unauthenticated{}) {
+	if _, err := book.Redeem("unknown"); !errors.As(err, &Unauthenticated{}) {
 		t.Fatalf("got %v", err)
 	}
 }

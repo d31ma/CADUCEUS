@@ -26,14 +26,14 @@ func (typing Typing) Typing(connection Connection, conversationId string) error 
 
 func (Typing) named(conversationId string) error {
 	if conversationId == "" {
-		return Invalid{Field: "conversationId", Reason: "a conversation id is required"}
+		return Invalid{}.ConversationIdMissing()
 	}
 	return nil
 }
 
 func (Typing) member(memberIds []string, memberId string) error {
 	if !slices.Contains(memberIds, memberId) {
-		return Missing{What: "conversation"}
+		return Missing{}.Conversation()
 	}
 	return nil
 }

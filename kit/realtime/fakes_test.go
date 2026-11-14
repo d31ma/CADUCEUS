@@ -202,7 +202,7 @@ type fixedTokens struct {
 func (tokens fixedTokens) Grant(token string, now time.Time) (Grant, error) {
 	grant, found := tokens.grants[token]
 	if !found {
-		return Grant{}, Unauthenticated{}
+		return Grant{}, Unauthenticated{}.MemberTokenRefused()
 	}
 	return grant, nil
 }

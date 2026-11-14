@@ -1,15 +1,25 @@
+import "errors"
+
 // @Test(HealthTestSetup, {"partition":"tests"})
 type PresenceControllerTest struct {
 	behaviors *BehaviorContext
 }
 
 func (test *PresenceControllerTest) TestPutPresenceRefusesAMissingToken() {
-	failure := (&PresenceController{}).PutPresence("", PresenceRequest{State: "idle"})
-	Assert.IsTrue(failure != nil, "presence was set without a token")
+	failure := test.controller().PutPresence("", PresenceRequest{State: "idle"})
+	refused := &Unauthenticated{}
+	Assert.IsTrue(errors.As(failure, &refused), "presence was set without a token")
+	Assert.Equals(5011, refused.Number())
 }
 
 func (test *PresenceControllerTest) TestGetPresenceRefusesAMissingToken() {
-	found, failure := (&PresenceController{}).GetPresence("", "ana")
-	Assert.IsTrue(failure != nil, "presence was read without a token")
+	found, failure := test.controller().GetPresence("", "ana")
+	refused := &Unauthenticated{}
+	Assert.IsTrue(errors.As(failure, &refused), "presence was read without a token")
+	Assert.Equals(5011, refused.Number())
 	Assert.Equals(0, len(found))
+}
+
+func (test *PresenceControllerTest) controller() *PresenceController {
+	return &PresenceController{presence: &PresenceService{failures: &ErrorMappingService{}}}
 }

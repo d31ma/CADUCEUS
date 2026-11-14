@@ -1147,7 +1147,17 @@ FYLO owner's design choice; Mesail does not need it.
     `apps/notify` `OutboxRelayService`, and any other job's own limit) and
     rule 9 itself; the sign-in path's 3 seconds stays;
   - the store error handlers log the TACHYON storage code with `YonLog`
-    (K8's logging step);
+    (K8's logging step). TACHYON already writes one
+    `handler.storage_failed` line to `ty`'s standard error for every
+    failed store command (since 52145f09f, TACHYON ADR 0128), with the
+    `request_id` and the diagnostic code and message (for example TY2160
+    "FYLO operation failed (EROOTLOCKED)"); since 85e0370b0 (amendment 2)
+    a deadline failure also names the FYLO operation. Mesail's `YonLog`
+    line adds what TACHYON cannot know (the service, the domain, the
+    collection and the step) and carries the same `request_id`, so the
+    two lines can be joined. FYLO's own full error text is not in
+    TACHYON's line; TACHYON has a low-priority ticket for it, not a
+    blocker (checked on TACHYON `develop` 1e9b6b57f, 2026-11-14);
   - nothing else: the slices that wait for T1, T13 and other TACHYON
     features use them in their own changes.
 - **TACHYON's follow-up** (TACHYON `develop` 272faa1ce, commits

@@ -22,5 +22,5 @@ func (service *SweepService) sweeper() realtime.Sweeper {
 }
 
 func (service *SweepService) report(report realtime.SweepReport) SweepReport {
-	return SweepReport{ClosedConnections: report.ClosedConnections, OfflineMembers: report.OfflineMembers, EndedDoNotDisturb: report.EndedDoNotDisturb, DeletedTickets: report.DeletedTickets, Writes: report.Writes, More: report.More}
+	return SweepReport{ClosedConnections: report.ClosedConnections, OfflineMembers: report.OfflineMembers, EndedDoNotDisturb: report.EndedDoNotDisturb, DeletedTickets: report.DeletedTickets, EndedCalls: report.EndedCalls, Writes: report.Writes, More: report.More}
 }

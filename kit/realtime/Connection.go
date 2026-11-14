@@ -8,4 +8,7 @@ type Connection struct {
 	Kind         string `json:"kind"`
 	ConnectedAt  string `json:"connectedAt"`
 	ExpiresAt    string `json:"expiresAt"`
+	DeviceId     string `json:"deviceId,omitempty"`
+	Linked       bool   `json:"linked,omitempty"`
+	CheckedAt    string `json:"deviceCheckedAt,omitempty"`
 }

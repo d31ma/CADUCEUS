@@ -8,6 +8,7 @@ func (SweepReports) Sum(first SweepReport, second SweepReport) SweepReport {
 		OfflineMembers:    first.OfflineMembers + second.OfflineMembers,
 		EndedDoNotDisturb: first.EndedDoNotDisturb + second.EndedDoNotDisturb,
 		DeletedTickets:    first.DeletedTickets + second.DeletedTickets,
+		EndedCalls:        first.EndedCalls + second.EndedCalls,
 		Writes:            first.Writes + second.Writes,
 		More:              SweepReports{}.either(first.More, second.More),
 	}

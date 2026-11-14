@@ -1,0 +1,18 @@
+{
+  "callId": "call_FIXTURE",
+  "keys": {
+    "keys": [
+      {
+        "kty": "EC",
+        "kid": "CzmZCjlx6sQE_3R2_Ret2yGJN1az7k_4g3rB1-uyxvA",
+        "alg": "ES256",
+        "use": "sig",
+        "crv": "P-256",
+        "x": "LkO-pmZNg93SeaJ8mCtFYYVc9-87QFniDK4z4XRkVos",
+        "y": "7b6YIcYMRBhMr8WvKpnqi3H_l97Ls_c6tTax_8mkVHo"
+      }
+    ]
+  },
+  "now": 1794312000,
+  "token": "eyJhbGciOiJFUzI1NiIsImtpZCI6IkN6bVpDamx4NnNRRV8zUjJfUmV0MnlHSk4xYXo3a180ZzNyQjEtdXl4dkEiLCJ0eXAiOiJKV1QifQ.eyJjYWxsSWQiOiJjYWxsX0ZJWFRVUkUiLCJkZXZpY2VJZCI6ImRldmljZS0xIiwiZG9tYWluSWQiOiJleGFtcGxlLmNvbSIsImF1ZCI6ImNhbGxzIiwiZXhwIjoxNzk0MzEyMDYwLCJpYXQiOjE3OTQzMTIwMDB9.djAg2FyVcBXCI-ltzugOoMBn4flFkGKvVO4sWZdZWt2OiYTH5Hyf1glnhLGlQiCQtPFRbD7TM4DgUeEcgPWYAw"
+}

@@ -232,10 +232,18 @@ func TestPushRefusesBodyThatIsNotJson(t *testing.T) {
 	}
 }
 
-func TestPushRefusesEventOver64KiB(t *testing.T) {
+func TestPushRefusesEventOver96KiB(t *testing.T) {
 	harness := newHarness(t, defaults)
-	event := `{"text":"` + strings.Repeat("a", 65536) + `"}`
+	event := `{"text":"` + strings.Repeat("a", 98304) + `"}`
 	if status := harness.push("any", event); status != http.StatusRequestEntityTooLarge {
+		t.Fatalf("status %d", status)
+	}
+}
+
+func TestPushAcceptsAnEventOf96KiB(t *testing.T) {
+	harness := newHarness(t, defaults)
+	event := `{"text":"` + strings.Repeat("a", 98304-12) + `"}`
+	if status := harness.push("any", event); status == http.StatusRequestEntityTooLarge {
 		t.Fatalf("status %d", status)
 	}
 }
@@ -252,10 +260,10 @@ func TestBinaryFrameClosesWith1003(t *testing.T) {
 	harness.disconnectFor(connectionId)
 }
 
-func TestFrameOver16KiBClosesWith1009(t *testing.T) {
+func TestFrameOver96KiBClosesWith1009(t *testing.T) {
 	harness := newHarness(t, func(settings *connections.SessionSettings) { settings.AuthWindow = time.Minute })
 	connection, _ := harness.open()
-	harness.send(connection, strings.Repeat("a", 16385))
+	harness.send(connection, strings.Repeat("a", 98305))
 	if code := harness.closeCode(connection); code != 1009 {
 		t.Fatalf("close code %d", code)
 	}
@@ -264,11 +272,11 @@ func TestFrameOver16KiBClosesWith1009(t *testing.T) {
 	}
 }
 
-func TestFrameOfExactly16KiBIsForwarded(t *testing.T) {
+func TestFrameOfExactly96KiBIsForwarded(t *testing.T) {
 	harness := newHarness(t, func(settings *connections.SessionSettings) { settings.AuthWindow = time.Minute })
 	connection, _ := harness.open()
-	harness.sendAndWait(connection, strings.Repeat("a", 16384))
-	if body := harness.backend.messagesSnapshot()[0].Body; len(body) != 16384 {
+	harness.sendAndWait(connection, strings.Repeat("a", 98304))
+	if body := harness.backend.messagesSnapshot()[0].Body; len(body) != 98304 {
 		t.Fatalf("body length %d", len(body))
 	}
 }

@@ -28,6 +28,18 @@ func (Unauthenticated) OtherMember() Unauthenticated {
 	return Unauthenticated{ErrorNumber: 5016}
 }
 
+func (Unauthenticated) DeviceOfAnotherPerson() Unauthenticated {
+	return Unauthenticated{ErrorNumber: 5027}
+}
+
+func (Unauthenticated) OtherDevice() Unauthenticated {
+	return Unauthenticated{ErrorNumber: 5046}
+}
+
+func (Unauthenticated) DeviceRemoved() Unauthenticated {
+	return Unauthenticated{ErrorNumber: 5047}
+}
+
 func (Unauthenticated) Error() string {
 	return "the access token is missing, expired or not valid"
 }

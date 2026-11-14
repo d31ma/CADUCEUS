@@ -119,6 +119,15 @@ that folder with the data.
 | `MESAIL_CALLS_MEDIA_LISTEN` | The one UDP address for all call media (the image sets `0.0.0.0:8121`). |
 | `MESAIL_CALLS_PUBLIC_IPS` | The public IP addresses of that UDP port, comma separated. Without it devices are told the container's own address. |
 
+**Signalling and calls on `realtime`** (G2, G11)
+
+| Setting | Meaning |
+| --- | --- |
+| `YON_REALTIME_CALLS_KEY` | The P-256 key that signs group call join tokens (base64 of its PKCS #8 DER, one line, from a secret file; make one like `identity`'s signing key). Without it `GET /realtime/calls/keys` and group calls answer `503` (MS5042); two-person calls still work. |
+| `YON_REALTIME_CALLS_PREVIOUS` | Only during a rotation: the key that signed before. Keep it at least 70 seconds after the switch (join tokens live 60 seconds, `calls` caches the keys 10 minutes but fetches again for an unknown key). |
+| `realtime.directoryurl` (`YON_REALTIME_DIRECTORYURL`) | `directory` inside the install (default `http://127.0.0.1:8102`); `realtime` asks it who owns a device. |
+| `realtime.notifyurl` (`YON_REALTIME_NOTIFYURL`) | `notify` inside the install (default `http://127.0.0.1:8107`); `realtime` asks it for the "Incoming call" and "Missed call" pushes. |
+
 ## 4. Traffic that leaves the install
 
 Floci, the functions, Keycloak and `realtime` are on a network with no
@@ -146,13 +155,13 @@ Secrets are files on the host, mounted into the VM and passed to the
 functions; nothing reads a cloud secret store. Keep them readable only by
 the install, back them up separately from data, and never put them in a
 log. The full list (client secrets, the link secret, the realtime gateway
-secret, `identity`'s signing key, DKIM keys under `MESAIL_SECRET_*` (one
+secret, `identity`'s signing key, `realtime`'s call key, DKIM keys under `MESAIL_SECRET_*` (one
 per hosted domain; `scripts/onprem/dkim-key.sh <domain>` **(planned, OP2)**
 makes the key and prints the DNS record), VAPID
 keys, the relay login) is in `deploy/floci/README.md` "Keycloak, secrets
 and test users" and `stack.json` `secrets`.
 
-Rotation: client secrets and `identity`'s signing key take a current and a
+Rotation: client secrets, `identity`'s signing key and `realtime`'s call key take a current and a
 previous value (CONTRACTS.md "identity"); set the new value as current and
 the old as previous, restart, then remove the previous value.
 

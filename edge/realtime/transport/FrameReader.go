@@ -29,7 +29,7 @@ func (reader FrameReader) Next() (string, int) {
 	return string(body), reader.firstProblem(reader.typeProblem(messageType), reader.sizeProblem(body))
 }
 
-func (FrameReader) MaxFrameBytes() int64 { return 16384 }
+func (FrameReader) MaxFrameBytes() int64 { return 98304 }
 
 func (FrameReader) peerCode(err error) int {
 	code := int(websocket.CloseStatus(err))

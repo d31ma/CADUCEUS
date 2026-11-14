@@ -9,7 +9,7 @@ import (
 
 func presenceDomainSweep(memory *memoryStorage, gateway *recordingGateway) DomainSweep {
 	keeper := presenceKeeper(memory, gateway)
-	return DomainSweep{Book: DomainBook{Storage: memory.storage()}, Connections: keeper.Connections, Pushes: gateway, Presence: keeper}
+	return DomainSweep{Book: DomainBook{Storage: memory.storage()}, Connections: keeper.Connections, Pushes: gateway, Presence: keeper, Calls: CallSweep{Calls: CallBook{Storage: memory.storage()}, Seats: SeatBook{Storage: memory.storage()}}}
 }
 
 func presenceSweeper(memory *memoryStorage, gateway *recordingGateway) Sweeper {

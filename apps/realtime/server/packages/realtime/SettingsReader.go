@@ -15,8 +15,8 @@ func (reader SettingsReader) Read() Settings {
 	if err != nil {
 		return Settings{}
 	}
-	gateway := snapshot.Yon.Realtime.Gateway
-	return Settings{GatewayUrl: strings.TrimSuffix(gateway.Url, "/"), GatewaySecret: gateway.Secret}
+	realtime := snapshot.Yon.Realtime
+	return Settings{GatewayUrl: strings.TrimSuffix(realtime.Gateway.Url, "/"), GatewaySecret: realtime.Gateway.Secret, DirectoryUrl: realtime.DirectoryUrl, NotifyUrl: realtime.NotifyUrl, CallKeys: realtime.Calls}
 }
 
 func (SettingsReader) variable() string {

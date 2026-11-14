@@ -90,7 +90,7 @@ func TestSweepClosesAnExpiredConnectionWithAWarning(t *testing.T) {
 	keeper := fixture.gateway.Presence
 	keeper.Connections = connections
 	keeper.Now = connections.Now
-	domains := DomainSweep{Book: DomainBook{Storage: fixture.memory.storage()}, Connections: connections, Pushes: fixture.pushes, Presence: keeper}
+	domains := DomainSweep{Book: DomainBook{Storage: fixture.memory.storage()}, Connections: connections, Pushes: fixture.pushes, Presence: keeper, Calls: CallSweep{Calls: CallBook{Storage: fixture.memory.storage()}, Seats: SeatBook{Storage: fixture.memory.storage()}}}
 	sweeper := Sweeper{Gate: presenceGate(), Domains: domains, Tickets: TicketSweep{Book: ticketTestBook(fixture.memory, connectionTestTime())}}
 	report, err := sweeper.Run("Bearer operators")
 	_, missing := connections.Find("example.com", "c1")

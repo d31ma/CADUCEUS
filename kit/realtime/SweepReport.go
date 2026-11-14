@@ -5,6 +5,7 @@ type SweepReport struct {
 	OfflineMembers    int
 	EndedDoNotDisturb int
 	DeletedTickets    int
+	EndedCalls        int
 	Writes            int
 	More              bool
 }

@@ -33,12 +33,12 @@ func (book ConnectionBook) Find(domainId string, connectionId string) (Connectio
 	return book.first(found)
 }
 
-func (book ConnectionBook) Renew(domainId string, connectionId string, expiresAt string) error {
+func (book ConnectionBook) Renew(domainId string, connectionId string, renewal ConnectionRenewal) error {
 	connection, err := book.Find(domainId, connectionId)
 	if err != nil {
 		return err
 	}
-	_, err = book.Storage.Documents.Patch(book.collection(domainId), connection.ID, ConnectionRenewal{ExpiresAt: expiresAt}, nil)
+	_, err = book.Storage.Documents.Patch(book.collection(domainId), connection.ID, renewal, nil)
 	return book.failure("connection renew", err)
 }
 

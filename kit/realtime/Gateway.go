@@ -13,6 +13,7 @@ type Gateway struct {
 	Presence    PresenceKeeper
 	Connections ConnectionBook
 	Pushes      ConnectionGateway
+	Signalling  Signalling
 }
 
 func (gateway Gateway) Connect(request GatewayConnect) error {
@@ -61,7 +62,18 @@ func (gateway Gateway) route(request GatewayMessage, message ClientMessage) (Gat
 	case gateway.presenceType():
 		return gateway.presence(request, message)
 	}
-	return GatewayReply{}, Invalid{}.UnknownMessageType()
+	return gateway.signalling(request, message)
+}
+
+func (gateway Gateway) signalling(request GatewayMessage, message ClientMessage) (GatewayReply, error) {
+	if !gateway.Signalling.Handles(message.Type) {
+		return GatewayReply{}, Invalid{}.UnknownMessageType()
+	}
+	connection, err := gateway.connection(request)
+	if err != nil {
+		return gateway.refused(request.ConnectionId, err)
+	}
+	return GatewayReply{}, gateway.Signalling.Handle(connection, message)
 }
 
 func (gateway Gateway) answered(connectionId string, reply GatewayReply, err error) (GatewayReply, error) {

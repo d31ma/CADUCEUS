@@ -158,13 +158,14 @@ func matches(fields map[string]any, where map[string]any) bool {
 type recordingGateway struct {
 	mutex  sync.Mutex
 	pushes map[string][]Event
+	frames map[string][]map[string]any
 	closes map[string]int
 	gone   map[string]bool
 	down   bool
 }
 
 func newRecordingGateway() *recordingGateway {
-	return &recordingGateway{pushes: map[string][]Event{}, closes: map[string]int{}, gone: map[string]bool{}}
+	return &recordingGateway{pushes: map[string][]Event{}, frames: map[string][]map[string]any{}, closes: map[string]int{}, gone: map[string]bool{}}
 }
 
 func (gateway *recordingGateway) Push(connectionId string, event Event) error {
@@ -178,6 +179,25 @@ func (gateway *recordingGateway) Push(connectionId string, event Event) error {
 	}
 	gateway.pushes[connectionId] = append(gateway.pushes[connectionId], event)
 	return nil
+}
+
+func (gateway *recordingGateway) Send(connectionId string, frame any) error {
+	gateway.mutex.Lock()
+	defer gateway.mutex.Unlock()
+	if gateway.down {
+		return Unavailable{Operation: "send"}
+	}
+	if gateway.gone[connectionId] {
+		return Gone{ConnectionId: connectionId}
+	}
+	gateway.frames[connectionId] = append(gateway.frames[connectionId], toFields(frame))
+	return nil
+}
+
+func (gateway *recordingGateway) framesOf(connectionId string) []map[string]any {
+	gateway.mutex.Lock()
+	defer gateway.mutex.Unlock()
+	return append([]map[string]any{}, gateway.frames[connectionId]...)
 }
 
 func (gateway *recordingGateway) Close(connectionId string, code int) error {

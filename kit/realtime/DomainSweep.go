@@ -10,6 +10,7 @@ type DomainSweep struct {
 	Connections ConnectionBook
 	Pushes      ConnectionGateway
 	Presence    PresenceKeeper
+	Calls       CallSweep
 }
 
 func (sweep DomainSweep) Sweep() (SweepReport, error) {
@@ -60,7 +61,12 @@ func (sweep DomainSweep) sweepDomain(domainId string, report SweepReport, now ti
 		return report, err
 	}
 	settled, err := sweep.Presence.Settle(domainId, nowText, sweep.Remaining(report))
-	return SweepReports{}.Sum(report, settled), err
+	report = SweepReports{}.Sum(report, settled)
+	if err != nil {
+		return report, err
+	}
+	ended, err := sweep.Calls.Clean(domainId, now, sweep.Remaining(report))
+	return SweepReports{}.Sum(report, ended), err
 }
 
 func (sweep DomainSweep) expired(domainId string, now string, limit int) ([]Connection, error) {

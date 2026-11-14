@@ -36,7 +36,7 @@ whether it worked.
     it. 20 s before that time the gateway sends `{"type":"reauth",...}`.
     At that time the gateway sends
     `{"type":"auth.expired",...,"state":"4401"}` and closes with 4401.
-  - Binary frame: close 1003. Frame over 16 KiB: close 1009. 64 events
+  - Binary frame: close 1003. Frame over 96 KiB: close 1009 (96 KiB fits a `signal` with 64 KiB of ciphertext, CONTRACTS "Signalling and calls"). 64 events
     waiting for a slow reader: close 1013. Backend `connect` failed: close
     1011. Shutdown: close 1001. Ping every 30 s.
 - `GET /api/v1/realtime/stream?ticket=...`: server-sent events. The ticket goes
@@ -52,7 +52,7 @@ Every request needs the header `X-Realtime-Gateway` with the shared secret,
 else 401.
 
 - `POST /@connections/{connectionId}`: the body is the event JSON (at most
-  64 KiB). Answers 200, or 410 when the connection is gone or its queue is
+  96 KiB). Answers 200, or 410 when the connection is gone or its queue is
   full.
 - `DELETE /@connections/{connectionId}?code=4401`: closes the connection with
   that code (default 1000; only 1000 or 4000-4999). Answers 204, or 410.

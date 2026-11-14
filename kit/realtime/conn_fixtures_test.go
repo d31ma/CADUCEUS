@@ -30,6 +30,7 @@ func testGrants() map[string]Grant {
 		"ben-token":   {DomainId: "example.com", MemberId: "ben", ExpiresAt: "2026-11-10T12:01:00Z"},
 		"ben-later":   {DomainId: "example.com", MemberId: "ben", ExpiresAt: "2026-11-10T12:05:00Z"},
 		"other-token": {DomainId: "example.org", MemberId: "ana", ExpiresAt: "2026-11-10T12:01:00Z"},
+		"cara-token":  {DomainId: "example.com", MemberId: "cara", ExpiresAt: "2026-11-10T12:01:00Z"},
 	}
 }
 

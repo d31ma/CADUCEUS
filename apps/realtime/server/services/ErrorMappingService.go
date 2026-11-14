@@ -30,6 +30,10 @@ func (service *ErrorMappingService) TicketError(failed error) error {
 	return service.answer(failed, []func(error) error{service.unauthenticated})
 }
 
+func (service *ErrorMappingService) CallKeysError(failed error) error {
+	return service.answer(failed, []func(error) error{service.signingOff})
+}
+
 func (service *ErrorMappingService) answer(failed error, rules []func(error) error) error {
 	return cmp.Or(service.answers(failed, rules)...)
 }
@@ -93,6 +97,14 @@ func (service *ErrorMappingService) forbidden(failed error) error {
 		return nil
 	}
 	return &Forbidden{ErrorNumber: refused.Number()}
+}
+
+func (service *ErrorMappingService) signingOff(failed error) error {
+	refused := realtime.SignalRefusal{}
+	if !errors.As(failed, &refused) {
+		return nil
+	}
+	return &Unavailable{Message: refused.Text, ErrorNumber: refused.Number()}
 }
 
 func (service *ErrorMappingService) missing(failed error) error {

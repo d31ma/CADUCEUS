@@ -32,3 +32,11 @@ func TestReadGivesEmptySettingsForBadJson(t *testing.T) {
 		t.Fatalf("got %+v", settings)
 	}
 }
+
+func TestReadTakesTheDirectoryNotifyAndCallKeySettings(t *testing.T) {
+	settings := settingsFrom(`{"yon":{"realtime":{"directoryurl":"http://127.0.0.1:8102","notifyurl":"http://127.0.0.1:8107","calls":{"key":"k","previous":"p"}}}}`)
+	want := Settings{DirectoryUrl: "http://127.0.0.1:8102", NotifyUrl: "http://127.0.0.1:8107", CallKeys: CallKeySettings{Key: "k", Previous: "p"}}
+	if settings != want {
+		t.Fatalf("got %+v", settings)
+	}
+}

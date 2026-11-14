@@ -105,4 +105,4 @@ func (handler ManagementHandler) pattern(method string) string {
 
 func (ManagementHandler) idName() string { return "connectionId" }
 
-func (ManagementHandler) maxEventBytes() int64 { return 65536 }
+func (ManagementHandler) maxEventBytes() int64 { return 98304 }

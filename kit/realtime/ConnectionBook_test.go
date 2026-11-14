@@ -40,12 +40,12 @@ func TestFindDoesNotLookInAnotherDomain(t *testing.T) {
 func TestRenewMovesTheExpiry(t *testing.T) {
 	book := connectionTestBook(newMemoryStorage())
 	book.Add(testConnection("example.com", "ana", "c1"))
-	err := book.Renew("example.com", "c1", "2026-11-10T12:05:00Z")
+	err := book.Renew("example.com", "c1", ConnectionRenewal{ExpiresAt: "2026-11-10T12:05:00Z"})
 	found, _ := book.Find("example.com", "c1")
 	if err != nil || found.ExpiresAt != "2026-11-10T12:05:00Z" {
 		t.Fatalf("got %+v, %v", found, err)
 	}
-	if err := book.Renew("example.com", "c9", "2026-11-10T12:05:00Z"); !errors.As(err, &Missing{}) {
+	if err := book.Renew("example.com", "c9", ConnectionRenewal{ExpiresAt: "2026-11-10T12:05:00Z"}); !errors.As(err, &Missing{}) {
 		t.Fatalf("unknown connection: got %v", err)
 	}
 }
@@ -158,7 +158,7 @@ func TestConnectionBookReportsFailedWrites(t *testing.T) {
 	book := connectionTestBook(memory)
 	book.Add(testConnection("example.com", "ana", "c1"))
 	book.Storage.Documents = failingWrites{memory}
-	if err := book.Renew("example.com", "c1", "2026-11-10T12:05:00Z"); !errors.As(err, &Unavailable{}) {
+	if err := book.Renew("example.com", "c1", ConnectionRenewal{ExpiresAt: "2026-11-10T12:05:00Z"}); !errors.As(err, &Unavailable{}) {
 		t.Fatalf("renew: got %v", err)
 	}
 	if _, err := book.Remove("example.com", "c1"); !errors.As(err, &Unavailable{}) {

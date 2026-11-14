@@ -144,7 +144,7 @@ keeps its row, marked "retired".
 | MS5000 | realtime | 500 | `unavailable` | Something went wrong. | an unexpected error in `realtime` |
 | MS5001 | realtime | 400 | `invalid_request` | a connection id is required | the gateway connects a connection with no `connectionId` (field `connectionId`) |
 | MS5002 | realtime | 400 | `invalid_request` | the kind is socket or stream | the gateway connects a connection whose `kind` is not `socket` or `stream` (field `kind`) |
-| MS5003 | realtime | 400 | `invalid_request` | unknown message type | a client message whose `type` is not `auth`, `ticket`, `ping`, `typing` or `presence` (field `type`) |
+| MS5003 | realtime | 400 | `invalid_request` | unknown message type | a client message whose `type` is not `auth`, `ticket`, `ping`, `typing`, `presence`, `signal`, `pairing.open`, `pairing.join`, `call.create`, `call.join`, `call.ring`, `call.ring.end` or `call.leave` (field `type`) |
 | MS5004 | realtime | 400 | `invalid_request` | a conversation id is required | a `typing` message with no `conversationId` (field `conversationId`) |
 | MS5005 | realtime | 400 | `invalid_request` | must name 1 to 100 members | `GET /presence` with no `memberIds` or more than 100 (field `memberIds`) |
 | MS5006 | realtime | 400 | `invalid_request` | must be an RFC 3339 time | the sweep asked for presence due at a time that is not RFC 3339 (field `now`); the sweep route answers it as MS5024 |
@@ -166,6 +166,29 @@ keeps its row, marked "retired".
 | MS5022 | realtime | 404 | `not_found` | Nothing was found. | `typing` in a conversation the person is not a member of |
 | MS5023 | realtime | 404 | `not_found` | Nothing was found. | a connection that is not known; the gateway routes answer it as MS5014 and close the connection with 4401 |
 | MS5024 | realtime | 503 | `unavailable` | Realtime is not available right now. Try again later. | realtime's storage or the connection gateway failed, or a route met an error it does not name |
+| MS5025 | realtime | 400 | `invalid_request` | the socket's auth must name this device | a `signal`, `pairing.*` or `call.*` frame from a socket whose `auth` had no `deviceId` (field `deviceId`); sent as a `refused` frame |
+| MS5026 | realtime | 400 | `invalid_request` | must be 1 to 64 letters, digits, - or _ | an `auth` whose `deviceId` is not 1 to 64 letters, digits, `-` or `_` (field `deviceId`); the socket gets no `auth.accepted` |
+| MS5027 | realtime | 401 | `unauthenticated` | Sign in again. | an `auth` whose `deviceId` belongs to another person in `directory`; the gateway closes the connection with 4401 |
+| MS5028 | realtime | 400 | `invalid_request` | must name 1 to 200 devices | a `signal` with no `toDeviceIds`, more than 200, or an id that is not 1 to 64 letters, digits, `-` or `_` (field `toDeviceIds`); sent as a `refused` frame |
+| MS5029 | realtime | 400 | `invalid_request` | must be rtc, call or linking | a `signal` whose `kind` is not `rtc`, `call` or `linking` (field `kind`); sent as a `refused` frame |
+| MS5030 | realtime | 400 | `invalid_request` | must be base64url text of 1 to 65536 bytes | a `signal` whose `ciphertext` is not base64url or is empty or over 64 KiB once decoded (field `ciphertext`); sent as a `refused` frame |
+| MS5031 | realtime | 404 | `not_found` | Nothing was found. | a `signal` to a device that is not a device of a member of this domain (by `directory`), or, from a device not in `directory` yet, to any device but its pairing peer (field `toDeviceIds`); sent as a `refused` frame and to nobody |
+| MS5032 | realtime | 400 | `invalid_request` | must be 16 to 64 letters, digits, - or _ | a `pairing.open` or `pairing.join` whose `pairingId` is not 16 to 64 letters, digits, `-` or `_` (field `pairingId`); sent as a `refused` frame |
+| MS5033 | realtime | 404 | `not_found` | Nothing was found. | a `pairing.join` of a pairing that does not exist, has ended (2 minutes), belongs to another person, was opened by this device, or was joined by another device; or a `pairing.open` of an id another person or device holds (field `pairingId`); sent as a `refused` frame |
+| MS5034 | realtime | 400 | `invalid_request` | must be audio or video | a `call.create` whose `media` is not `audio` or `video` (field `media`); sent as a `refused` frame |
+| MS5035 | realtime | 404 | `not_found` | Nothing was found. | a `call.*` frame for a call that does not exist or has ended, or whose `callId` is not 1 to 64 letters, digits, `-` or `_` (field `callId`); sent as a `refused` frame |
+| MS5036 | realtime | 404 | `not_found` | Nothing was found. | a `call.ring` or `call.ring.end` from a device that is not in the call (field `callId`); sent as a `refused` frame |
+| MS5037 | realtime | 409 | `call_full` | The call already has 50 people. | a `call.join` by a new person when 50 people are in the call (field `callId`); sent as a `refused` frame |
+| MS5038 | realtime | 400 | `invalid_request` | must name 1 to 49 people | a `call.ring` with no `toPersonIds`, more than 49, or a bad id (field `toPersonIds`); sent as a `refused` frame |
+| MS5039 | realtime | 400 | `invalid_request` | must be base64url text of 1 to 16384 bytes | a `call.ring` whose `invite` is not base64url or is empty or over 16 KiB once decoded (field `invite`); sent as a `refused` frame |
+| MS5040 | realtime | 400 | `invalid_request` | must name at most 49 people | a `call.ring.end` with more than 49 `missed` people or a bad id (field `missed`); sent as a `refused` frame |
+| MS5041 | realtime | 429 | `rate_limited` | This device started 10 calls in the last minute. Wait a minute and try again. | the 11th `call.create` of one device within a minute; sent as a `refused` frame |
+| MS5042 | realtime | 503 | `unavailable` | Group calls are not available right now. | `GET /calls/keys`, or a group `call.create`, when `YON_REALTIME_CALLS_KEY` (or `..._PREVIOUS`) is missing or not a P-256 PKCS #8 key; the frame gets a `refused` frame |
+| MS5043 | realtime | 400 | `invalid_request` | must be 1 to 64 characters | a signalling or call frame whose `requestId` is longer than 64 characters (field `requestId`); sent as a `refused` frame |
+| MS5044 | realtime | 403 | `forbidden` | This device is not linked yet. | a `call.create` or `call.join` from a device that is not in `directory` (field `deviceId`); sent as a `refused` frame |
+| MS5045 | realtime | 503 | `unavailable` | Realtime is not available right now. Try again later. | a signalling or call frame met a failure of realtime's storage, the connection gateway or `directory` (or an error it does not name); sent as a `refused` frame |
+| MS5046 | realtime | 401 | `unauthenticated` | Sign in again. | a re-`auth` on a socket that names another `deviceId` (or none) than its first `auth`; the gateway closes the connection with 4401 |
+| MS5047 | realtime | 401 | `unauthenticated` | Sign in again. | a re-`auth` more than 5 minutes after the last owner check, when `directory` no longer lists the linked device for this person; the gateway closes the connection with 4401 |
 | MS5500 | router | 502 | `unavailable` | Something went wrong. | an unexpected error in the router |
 | MS6000 | devicebox | 500 | `unavailable` | Something went wrong. | an unexpected error in `devicebox` |
 | MS6001 | devicebox | 401 | `unauthenticated` | Sign in again. | the token is missing, forged or expired (a token TACHYON lets through but `kit/oidc` refuses) |

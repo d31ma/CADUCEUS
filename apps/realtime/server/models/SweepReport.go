@@ -3,6 +3,7 @@ type SweepReport struct {
 	OfflineMembers    int  `json:"offlineMembers"`
 	EndedDoNotDisturb int  `json:"endedDoNotDisturb"`
 	DeletedTickets    int  `json:"deletedTickets"`
+	EndedCalls        int  `json:"endedCalls"`
 	Writes            int  `json:"writes"`
 	More              bool `json:"more"`
 }

@@ -38,6 +38,10 @@ func (Invalid) EndNotInFuture() Invalid {
 	return Invalid{Field: "doNotDisturbUntil", Reason: "must be an RFC 3339 time in the future", ErrorNumber: 5008}
 }
 
+func (Invalid) DeviceIdInvalid() Invalid {
+	return Invalid{Field: "deviceId", Reason: "must be 1 to 64 letters, digits, - or _", ErrorNumber: 5026}
+}
+
 func (failure Invalid) Error() string {
 	return "invalid " + failure.Field + ": " + failure.Reason
 }

@@ -16,7 +16,11 @@ type HttpConnectionGateway struct {
 }
 
 func (gateway HttpConnectionGateway) Push(connectionId string, event Event) error {
-	body, err := json.Marshal(event)
+	return gateway.Send(connectionId, event)
+}
+
+func (gateway HttpConnectionGateway) Send(connectionId string, frame any) error {
+	body, err := json.Marshal(frame)
 	if err != nil {
 		return err
 	}

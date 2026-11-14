@@ -795,7 +795,8 @@ Gateway WebSocket API. The other routes are the `realtime` Yon app.
 | `PUT /api/v1/realtime/presence` | SignedIn | `PresenceRequest{state: active|idle|dnd, doNotDisturbUntil?}` | `204` |
 | `GET /api/v1/realtime/presence?memberIds=` | SignedIn | - | `[]Presence{memberId, state, doNotDisturbUntil?, lastSeenAt}` |
 | `POST /api/v1/realtime/events` | Service (the envelope's domain) | `events.Envelope` | `EventReceipt{eventId, status}` |
-| `POST /api/v1/realtime/jobs/sweep` | Service (install-wide, domain `*`) | - | `SweepReport{closedConnections, offlineMembers, endedDoNotDisturb, deletedTickets, writes, more}` (also deletes used or expired stream tickets with the writes left of its 25) |
+| `GET /api/v1/realtime/calls/keys` | Public | - | `CallKeys{keys[]}`, a JWKS of `CallKey{kty: EC, kid, alg: ES256, use: sig, crv: P-256, x, y}` (the current call key, then the previous one during a rotation); `503 unavailable` (MS5042) when no call key is set (from G11) |
+| `POST /api/v1/realtime/jobs/sweep` | Service (install-wide, domain `*`) | - | `SweepReport{closedConnections, offlineMembers, endedDoNotDisturb, deletedTickets, endedCalls, writes, more}` (also deletes used or expired stream tickets, and calls with no join or leave for 12 hours, with the writes left of its 25) |
 
 Socket protocol (agreed with slice F2: a Go Tac socket client gets no open
 or close callback and has no timer):
@@ -854,35 +855,80 @@ the gateway's management API `POST` / `DELETE /@connections/{connectionId}`
 
 ### Signalling and calls (from G2 and G11; ADR 0011, ADR 0012)
 
-Draft by G0 and G9 (2026-11-14). The servers know domains, people and
-devices, but not chat groups: groups live on devices (ADR 0011). So
-`realtime` checks only that both ends are devices of members of the
-token's domain; who belongs to a conversation is enforced by the keys
-(MLS and SFrame), not by the server. Every payload is ciphertext.
+Built by G2 and G11 (2026-11-14) from G0's and G9's draft. The servers
+know domains, people and devices, but not chat groups: groups live on
+devices (ADR 0011). So `realtime` checks only that both ends are devices
+of members of the token's domain; who belongs to a conversation is
+enforced by the keys (MLS and SFrame), not by the server. Every payload is
+ciphertext; `realtime` never reads or keeps it.
 
-Socket frames, added to `RealtimeClientMessage` and `RealtimeEvent`:
+The device of a socket: the `auth` frame carries `deviceId` (the device's
+client-made id). On the first `auth` of a socket `realtime` asks
+`directory` (`POST /devices/owners`, a service token of the domain) who
+owns it:
+- owned by the token's person: the device is **linked**;
+- not in `directory` (a new device before linking): the socket opens, but
+  the device may only use `pairing.*` and `signal` its ready pairing peer;
+- owned by another person: the socket is closed with 4401 (MS5027).
+A socket without `deviceId` works as before (typing, presence) but gets
+MS5025 for every frame below. `directory` down: the `auth` fails (no
+`auth.accepted`; the client reconnects). A later `auth` on the same socket
+must name the same device (else 4401, MS5046). On a re-`auth` more than 5
+minutes after the last check `realtime` asks `directory` again: a linked
+device that is no longer the person's ends the socket (4401, MS5047); an
+unlinked device that is now in `directory` becomes linked.
+
+Socket frames, added to `RealtimeClientMessage` and `RealtimeEvent`. Every
+frame below may carry `requestId` (at most 64 characters, chosen by the
+client); the answers to the sender repeat it.
 
 | Frame (client to server) | Fields | Server action and answer |
 | --- | --- | --- |
-| `signal` | `toDeviceIds[]` (1 to 200), `kind` (`rtc`, `call`, `linking`), `ciphertext` (base64url, at most 64 KiB) | forwards `signal{fromDeviceId, fromPersonId, kind, ciphertext}` to each online target; answers `signal.result{delivered[], offline[]}`; `not_found` when a target is not a device of a member of this domain |
-| `pairing.open` | `pairingId` (from the QR code) | holds the pairing for 2 minutes for the caller's person |
-| `pairing.join` | `pairingId` | when the caller is the SAME person as the opener, both get `pairing.ready{pairingId, peerDeviceId}` and may `signal` each other before the new device is in `directory`; otherwise `not_found` |
-| `call.create` | `media` (`audio`, `video`), `group` (bool) | answers `call.created{callId, joinToken?}`; `joinToken` (for the `calls` app) only for a group call |
-| `call.join` | `callId` | answers `call.joined{joinToken}` for a group call; any device of a member of the call's domain may ask; the media keys decide who can hear |
-| `call.ring` | `callId`, `toPersonIds[]` (at most 49), `invite` (ciphertext, at most 16 KiB) | online devices of those people get `call.ringing{callId, fromPersonId, invite}`; the others get a push "Incoming call" with no names (`notify`, G11) |
-| `call.ring.end` | `callId`, `missed` (person ids that did not join) | online devices stop ringing (`call.ring.ended`); missed people get a push "Missed call" with no names |
-| `call.leave` | `callId` | answers `call.left`; the call ends when the last device leaves |
+| `signal` | `toDeviceIds[]` (1 to 200), `kind` (`rtc`, `call`, `linking`), `ciphertext` (base64url, at most 64 KiB decoded) | forwards `signal{fromDeviceId, fromPersonId, kind, ciphertext}` to every online socket of each target; answers `signal.result{requestId?, delivered[], offline[]}`; when any target is not a linked device of a member of this domain (and not the sender's pairing peer), `refused` `not_found` (MS5031) and nothing is sent to anyone |
+| `pairing.open` | `pairingId` (16 to 64 letters, digits, `-`, `_`; from the QR code) | holds the pairing for 2 minutes for the caller's person and device; answers `pairing.opened{requestId?, pairingId}`; an id held by another person or device: `not_found` (MS5033) |
+| `pairing.join` | `pairingId` | when the caller is the SAME person as the opener, from another device, and nobody else joined: the opener's device gets `pairing.ready{pairingId, peerDeviceId}` and the caller `pairing.ready{requestId?, pairingId, peerDeviceId}`; both may `signal` each other until the pairing ends (2 minutes after `pairing.open`), before the new device is in `directory`; otherwise `not_found` (MS5033) |
+| `call.create` | `media` (`audio`, `video`), `group` (bool) | linked devices only (MS5044); the caller's device is in the call; answers `call.created{requestId?, callId, joinToken?}`; `joinToken` (for the `calls` app) only for a group call |
+| `call.join` | `callId` | linked devices of members of the call's domain; answers `call.joined{requestId?, callId, joinToken?}` (a token for a group call); joining again keeps one place; a new person when 50 people are in: `call_full` (MS5037); the media keys decide who can hear |
+| `call.ring` | `callId`, `toPersonIds[]` (1 to 49), `invite` (base64url ciphertext, at most 16 KiB decoded) | only a device in the call (MS5036); every online socket of those people gets `call.ringing{callId, fromPersonId, invite}`; the people with no online socket get a push "Incoming call" with no names (`notify`); no answer on success |
+| `call.ring.end` | `callId`, `missed[]` (person ids that did not join, at most 49) | only a device in the call; the sockets of the missed people and of the people in the call get `call.ring.ended{callId}`; the missed people get a push "Missed call" with no names |
+| `call.leave` | `callId` | removes the caller's device; answers `call.left{requestId?, callId}`; the call ends (is deleted) when the last device leaves; a closed socket does not leave; the sweep job deletes a call with no join or leave for 12 hours |
 
+- Refusals: the gateway only logs an error answer of
+  `/gateway/message`, so for these frames `realtime` sends the sender
+  `refused{requestType, requestId?, state, field?, message}` (`state` is
+  the error code, for example `not_found`; `message` is
+  `[MS50nn]: text`, ERRORS.md) and answers the gateway `200`. Only a frame
+  from a socket that is not signed in (or whose sign-in ended) closes it
+  with 4401, as before. `state` is one of `not_found`, `forbidden`,
+  `call_full`, `rate_limited`, `invalid_request`, and `unavailable` when
+  realtime's storage, the gateway or `directory` failed (MS5045).
 - Recording notice (AC-CL-8): a `signal` of kind `call` to every device in
   the call; the recorder's app starts recording only when
   `signal.result.offline` is empty for the devices in the call.
-- `joinToken`: signed by `realtime` (its keys at `GET
-  /api/v1/realtime/calls/keys`, a JWKS), holding `callId`, `deviceId`,
-  `domainId` and an expiry of 60 seconds.
-- Limits: 50 people per call; a device may create 10 calls per minute.
+- `joinToken`: a compact JWS signed by `realtime` with ES256 and `kid` in
+  the header, claims `callId`, `deviceId`, `domainId`, `aud: "calls"`,
+  `iat` and `exp` (`iat` + 60 seconds); the keys at `GET
+  /api/v1/realtime/calls/keys`. The key is `YON_REALTIME_CALLS_KEY`, with
+  `YON_REALTIME_CALLS_PREVIOUS` during a rotation (OPERATIONS.md).
+- Limits: 50 people per call; a device may create 10 calls per minute
+  (`rate_limited`, MS5041).
 - `realtime` asks `notify` for the call pushes with `POST
-  /api/v1/notify/call-pushes` (Allow(Service): `CallPush{toPersonIds[],
-  kind: incoming|missed}`), no names, no call content.
+  /api/v1/notify/call-pushes` (Allow(Service), a service token of the
+  call's domain): `CallPush{toPersonIds[], kind: incoming|missed}`, no
+  names, no call content. It is sent AFTER the online sockets were told,
+  with a 2 second limit; a failure is logged (a JSON line
+  `realtime.call_push_failed` with the domain, the kind and the error on
+  stderr), not retried and not sent to the ringer. Until `notify` has that
+  route (G5+G11) every push fails and is logged.
+- Storage (per domain): `pairings-<domain>`, `calls-<domain>`
+  (`Call{callId, group, media, createdByDevice, createdByPerson,
+  createdAt, lastChangeAt}`), `callseats-<domain>` (one `Seat{callId,
+  deviceId, personId, joinedAt}` per device in a call: the call's
+  `devices[]` of the decision below, kept as one record per device so two
+  devices joining at once never overwrite each other) and
+  `callstarts-<domain>` (each device's call starts of the last minute).
+- Frame sizes: `edge/realtime` takes client frames and pushed events of up
+  to 96 KiB (decision below).
 
 Decided 2026-11-14 with G2 and G11:
 

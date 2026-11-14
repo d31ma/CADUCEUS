@@ -233,7 +233,8 @@ Decisions:
     The router queues calls to a busy function instead of failing them,
     user requests before background calls (events, relay, jobs), and a
     service on the sign-in path keeps each background call to 10 writes
-    and 3 seconds (2026-11-12, SLICES K3 and rule 9). A read cannot skip
+    and 3 seconds (2026-11-12, SLICES K3 and rule 9; since 2026-11-14, slice
+    K6: 3 writes and 1 second). A read cannot skip
     the queue: in Lambda form the function runs one call at a time.
   - **One live process per root** (2026-11-12, SLICES K8; FYLO's report):
     `fylo exec --loop` holds the root's exclusive lease from its first

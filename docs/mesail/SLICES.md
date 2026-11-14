@@ -88,8 +88,11 @@ wave run at the same time.
    use a 30 s timeout and at most 3 retries with backoff. **Services on the
    sign-in path** (`directory`, which `identity` reads on every sign-in,
    refresh and switch) use a smaller budget for job and relay calls: at
-   most 10 writes and 3 seconds of work per call, so a user request never
-   waits long behind background work (decided 2026-11-12, slice K3).
+   most 3 writes and 1 second of work per call, so a sign-in waits at
+   most about 1 second behind background work, even when the trigger
+   calls again at once (decided 2026-11-12 in K3 as 10 writes and 3
+   seconds; lowered 2026-11-14 in K6, whose repeat calls kept the removal
+   job busy so often that K2's 2 second sign-in failed).
 10. **Collection names.** Build every FYLO collection name with
    `kit/collections` (`CollectionName{}.ForDomain` or `.ForDomainMonth`).
    FYLO accepts only lowercase letters, digits and `-`; the domain becomes a
@@ -1182,8 +1185,18 @@ seconds). Decided in EVENTS.md section 4, item 5; no owner question.
     works on the removing domain after the one the last call worked on (a
     cursor in the job's state), so a big domain does not hold back a small
     one; the person-deletion job too, if it has the same order;
-  - CONTRACTS: the removal row says 10 writes and 3 seconds (rule 9, K3),
-    and that the trigger calls again while `more: true`.
+  - CONTRACTS: the removal row says 3 writes and 1 second (rule 9, as
+    lowered in K6), and that the trigger calls again while `more: true`;
+  - the sign-in path's job and relay calls use rule 9's 3 writes and 1
+    second (decided 2026-11-14 from K6's runs: K2's 2 second sign-in
+    stays the bar). A 200-member domain then needs about 140 calls,
+    still inside the 5 minutes below;
+  - test only, until K7 and K10 merge: the K6 test's member fill may retry
+    a member add ONCE after a client timeout; a retry that answers `409
+    duplicate` counts as added; every retry is logged with `t.Logf`, the
+    test prints the count, and it fails when more than 5% of adds needed
+    a retry. K10 removes the retry (tests/blackbox is architecture's; K6
+    may change only that fill helper).
 - **Depends on:** K3 merged (its queue order is what makes the extra calls
   safe).
 - **Done when:** on Floci, a 200-member domain is removed within 5 minutes

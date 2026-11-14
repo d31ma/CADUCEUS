@@ -1967,20 +1967,13 @@ From E10's hand-over (2026-11-14).
   false` in any `server/application.json` and `TAC_DEPENDENCIES_CHECK`
   turned off in any `.env` or `.env.example`.
 - **Scope, decided 2026-11-14** (E13 found 55 lines, not 5): E13 moves
-  all 32 lines in `apps/web-admin`; the check refuses `+` everywhere but
-  reads `tools/clientviews/allowed-joins.list`, which lists the 8
-  `apps/web` views not moved yet (23 lines). E14 empties the list.
+  all 55 (32 in `apps/web-admin`, 23 in `apps/web`), with a test for each
+  new field, and the check refuses `+` everywhere with no allow list.
 - **Done when:** the check has tests; the responsive tests show the same
   pages; gates pass.
 
-### E14. Text joins out of the web app's views (one small session, after E13)
-- **Owns:** the 8 `apps/web` views on E13's list and their services.
-- **Builds:** moves the 23 `+` text joins into service fields, empties and
-  removes `tools/clientviews/allowed-joins.list`.
-- **Depends on:** E13 merged; not at the same time as a slice that edits
-  those views.
-- **Done when:** the check runs with no list; the responsive tests show
-  the same pages; gates pass.
+### E14. Dropped (2026-11-14)
+E13 moved all 55 text joins, so no allow list and no E14 are needed.
 
 ### Requests to TACHYON (ADR 0009)
 - **Y1:** let `@ErrorHandler` shape the answers TACHYON makes itself (no

@@ -923,7 +923,13 @@ device.
   receive-only slots: 9 video, 1 screen and up to 49 audio. The server
   fills them, the people who spoke most recently first, the screen in its
   own slot, and tells the device over a data channel named `calls` which
-  device is in which slot and the speaking order. SFrame's key id picks
+  device is in which slot and the speaking order. The order of the offer's
+  media lines decides the slots, counted per kind and direction: the
+  first `sendonly` video is the camera and the second the screen; the
+  FIRST `recvonly` video is the screen slot and the next ones (up to 9)
+  are the video slots, so a device that wants fewer videos (a phone)
+  offers fewer lines. Details: `edge/calls/README.md`, "What a device
+  offers". SFrame's key id picks
   the decryption key. On a simulcast switch the server asks the sender
   for a keyframe (PLI) and switches at the next frame start; devices send
   the frame-marking and audio-level header extensions (not encrypted) so

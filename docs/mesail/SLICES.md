@@ -1160,6 +1160,24 @@ FYLO owner's design choice; Mesail does not need it.
     blocker (checked on TACHYON `develop` 1e9b6b57f, 2026-11-14);
   - nothing else: the slices that wait for T1, T13 and other TACHYON
     features use them in their own changes.
+- **While K10 waits** (noted 2026-11-14: the owner chose that the next
+  TACHYON release waits for every TACHYON session, so K10 is weeks away).
+  No stopgap slice:
+  - TACHYON 26.46.02 has no setting for the store limit: it is a fixed
+    5 seconds per store call (`OPERATION_TIMEOUT` in its `storage.rs`), so
+    no Mesail change can raise it before the pin moves, and Mesail does
+    not pin an unreleased TACHYON build.
+  - The 5 second `503` answers are rare: K7's Floci run had none in 102
+    `realtime` pushes; the ones seen came within about 2 minutes of a cold
+    start or during a disk stall (K8).
+  - Events lose nothing: a `503` push is retried by the producer's outbox
+    relay (K7). A user request gets `503` and the client retries (ADR
+    0006's queue); every write is idempotent.
+  - Floci test runs already warm every function first (L5). A run that
+    fails on one of these `503`s is run again. If that becomes frequent,
+    the stopgap is in `tests/blackbox` only: the test client retries a
+    `503` once after 2 seconds (after the script freeze; the owner of
+    `tests/blackbox` adds it), never in the services.
 - **TACHYON's follow-up** (TACHYON `develop` 272faa1ce, commits
   85e0370b0, dab716c14 and 272faa1ce; TACHYON ADR 0128 amendment 2; not
   released): all store calls of one handler for one answer share one

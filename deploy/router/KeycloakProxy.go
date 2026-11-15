@@ -11,7 +11,7 @@ type KeycloakProxy struct {
 }
 
 func (proxy KeycloakProxy) Handler() http.Handler {
-	return &httputil.ReverseProxy{Rewrite: proxy.rewrite}
+	return &httputil.ReverseProxy{Rewrite: proxy.rewrite, ErrorHandler: ProxyFailure{Problem: Problems{}.KeycloakFailed()}.Answer}
 }
 
 func (proxy KeycloakProxy) rewrite(request *httputil.ProxyRequest) {

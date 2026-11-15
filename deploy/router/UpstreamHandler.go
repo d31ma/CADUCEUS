@@ -50,5 +50,5 @@ func (UpstreamHandler) proxy(address string) (http.Handler, error) {
 	if err != nil {
 		return nil, InvalidSetting{Name: "MESAIL_ROUTER_UPSTREAMS", Reason: err.Error()}
 	}
-	return &httputil.ReverseProxy{Rewrite: UpstreamTarget{Target: target}.Rewrite}, nil
+	return &httputil.ReverseProxy{Rewrite: UpstreamTarget{Target: target}.Rewrite, ErrorHandler: ProxyFailure{Problem: Problems{}.UpstreamFailed()}.Answer}, nil
 }

@@ -54,5 +54,5 @@ func (Passthroughs) proxy(address string) (http.Handler, error) {
 	if err != nil {
 		return nil, InvalidSetting{Name: "MESAIL_ROUTER_PASSTHROUGH", Reason: err.Error()}
 	}
-	return &httputil.ReverseProxy{Rewrite: UpstreamTarget{Target: target}.Rewrite, FlushInterval: -1}, nil
+	return &httputil.ReverseProxy{Rewrite: UpstreamTarget{Target: target}.Rewrite, FlushInterval: -1, ErrorHandler: ProxyFailure{Problem: Problems{}.PassthroughFailed()}.Answer}, nil
 }

@@ -88,7 +88,7 @@ func TestDevDnsMissingAnswerLeavesOutTheAnswerList(t *testing.T) {
 
 func TestDevDnsAllowsOnlyGet(t *testing.T) {
 	reply := call(t, devDnsHandler(t, devDnsSettings()), http.MethodPost, "/_dev/dns-query?name=example.test&type=MX", "")
-	if reply.Code != http.StatusMethodNotAllowed || !strings.Contains(reply.Body.String(), "only GET") {
+	if reply.Code != http.StatusMethodNotAllowed || !strings.Contains(reply.Body.String(), "[MS5513]: Only GET is allowed here.") {
 		t.Fatalf("got %d %s", reply.Code, reply.Body.String())
 	}
 }

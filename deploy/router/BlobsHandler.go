@@ -12,7 +12,7 @@ func (handler BlobsHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 
 func (handler BlobsHandler) choose(method string) http.Handler {
 	if method != http.MethodGet && method != http.MethodPut {
-		return ProblemHandler{Err: Problem{Status: http.StatusMethodNotAllowed, Code: "method-not-allowed", Message: "only GET and PUT are allowed here"}}
+		return ProblemHandler{Err: Problems{}.OnlyGetAndPut()}
 	}
 	return handler.Next
 }

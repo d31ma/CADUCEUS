@@ -36,7 +36,7 @@ func (handler StaticHandler) fetch(request *http.Request) (Reply, error) {
 
 func (StaticHandler) checkMethod(method string) error {
 	if method != http.MethodGet && method != http.MethodHead {
-		return Problems{}.MethodNotAllowed()
+		return Problems{}.OnlyGetAndHead()
 	}
 	return nil
 }

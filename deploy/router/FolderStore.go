@@ -43,7 +43,7 @@ func (FolderStore) read(folder string, name string) ([]byte, error) {
 
 func (FolderStore) problem(err error) error {
 	if err != nil && (errors.Is(err, fs.ErrNotExist) || errors.Is(err, fs.ErrInvalid) || strings.Contains(err.Error(), "is a directory")) {
-		return Problems{}.NotFound()
+		return Problems{}.MissingFile()
 	}
 	return err
 }

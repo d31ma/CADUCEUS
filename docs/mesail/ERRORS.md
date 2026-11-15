@@ -319,7 +319,24 @@ keeps its row, marked "retired".
 | MS5045 | realtime | 503 | `unavailable` | Realtime is not available right now. Try again later. | a signalling or call frame met a failure of realtime's storage, the connection gateway or `directory` (or an error it does not name); sent as a `refused` frame |
 | MS5046 | realtime | 401 | `unauthenticated` | Sign in again. | a re-`auth` on a socket that names another `deviceId` (or none) than its first `auth`; the gateway closes the connection with 4401 |
 | MS5047 | realtime | 401 | `unauthenticated` | Sign in again. | a re-`auth` more than 5 minutes after the last owner check, when `directory` no longer lists the linked device for this person; the gateway closes the connection with 4401 |
-| MS5500 | router | 502 | `unavailable` | Something went wrong. | an unexpected error in the router |
+| MS5500 | router | 502 | `function-error` | Something went wrong. | an unexpected error in the router: the Lambda endpoint did not answer, a function's answer is not a valid result, the caller left while waiting for a slot, or another error no other number names |
+| MS5501 | router | 502 | `function-error` | The service failed to answer. Try again later. | Lambda answered a function call with a status other than 200 and 429, or with `X-Amz-Function-Error` |
+| MS5502 | router | 429 | `function-busy` | The service is busy. Try again later. | an event push (a `POST` to a service's events route), which never waits, found every one of the function's slots in use |
+| MS5503 | router | 429 | `function-busy` | The service is busy. Try again later. | Lambda answered a function call with 429 (`TooManyRequestsException`) |
+| MS5504 | router | 429 | `too-many-requests` | Too many attempts. Wait and try again. | a limited route (`MESAIL_ROUTER_LIMITED_ROUTES`) was called too often from one client address; the answer has `Retry-After` |
+| MS5505 | router | 404 | `unknown-service` | No service has this name. | `/api/v1/<name>/...` where `<name>` is not a known service |
+| MS5506 | router | 413 | `body-too-large` | The request body is too large. | an API request body is over the router's body limit |
+| MS5507 | router | 502 | `upstream-error` | The storage failed to answer. Try again later. | the static bucket (S3) answered a status other than 200, 403 and 404 |
+| MS5508 | router | 404 | `not-found` | Nothing is at this path. | a static file is not in the static folder (native mode) |
+| MS5509 | router | 404 | `not-found` | Nothing is at this path. | the static bucket (S3) answered 404 or 403 |
+| MS5510 | router | 404 | `not-found` | Nothing is at this path. | a blocked path, or a path of a part that is off (Keycloak, blobs or dev DNS not set) |
+| MS5511 | router | 400 | `bad-path` | This path is not allowed. | a static path that is not a plain file path (for example one with `..`) |
+| MS5512 | router | 405 | `method-not-allowed` | Only GET and HEAD are allowed here. | a static file asked with another method |
+| MS5513 | router | 405 | `method-not-allowed` | Only GET is allowed here. | the dev DNS path asked with another method |
+| MS5514 | router | 405 | `method-not-allowed` | Only GET and PUT are allowed here. | a blob link used with another method |
+| MS5515 | router | 502 | `upstream-error` | The service failed to answer. Try again later. | a native service server (`MESAIL_ROUTER_UPSTREAMS`) could not be reached |
+| MS5516 | router | 502 | `upstream-error` | Live updates are not available now. Try again later. | a passthrough target (`MESAIL_ROUTER_PASSTHROUGH`, the realtime gateway) could not be reached |
+| MS5517 | router | 502 | `upstream-error` | Sign-in is not available now. Try again later. | Keycloak could not be reached through `/idp/` |
 | MS6000 | devicebox | 500 | `unavailable` | Something went wrong. | an unexpected error in `devicebox` |
 | MS6001 | devicebox | 401 | `unauthenticated` | Sign in again. | the token is missing, forged or expired (a token TACHYON lets through but `kit/oidc` refuses) |
 | MS6002 | devicebox | 403 | `forbidden` | Only members of this domain can use the mailbox. | a mailbox route called with a token that is neither `Member` nor `DomainAdmin` |

@@ -38,9 +38,9 @@ func (client S3Client) checked(response *http.Response, body []byte) (Reply, err
 	case http.StatusOK:
 		return Reply{Status: http.StatusOK, Header: client.kept(response.Header), Body: body}, nil
 	case http.StatusNotFound, http.StatusForbidden:
-		return Reply{}, Problems{}.NotFound()
+		return Reply{}, Problems{}.MissingObject()
 	default:
-		return Reply{}, Problems{}.UpstreamFailed()
+		return Reply{}, Problems{}.StorageFailed()
 	}
 }
 

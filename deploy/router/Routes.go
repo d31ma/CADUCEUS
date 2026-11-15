@@ -26,7 +26,7 @@ func (routes Routes) Service(path string) (string, error) {
 
 func (routes Routes) known(service string) (string, error) {
 	if !routes.Known[service] {
-		return "", Problems{}.UnknownService(service)
+		return "", Problems{}.UnknownService()
 	}
 	return service, nil
 }

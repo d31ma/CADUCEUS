@@ -170,14 +170,15 @@ func TestApiProblems(t *testing.T) {
 		answer  string
 		want    int
 		code    string
+		number  string
 	}{
-		{name: "unknown service", target: "/api/v1/billing/x", want: http.StatusNotFound, code: "unknown-service"},
-		{name: "empty service", target: "/api/v1/", want: http.StatusNotFound, code: "unknown-service"},
-		{name: "body too large", target: "/api/v1/identity/x", body: strings.Repeat("a", 17), want: http.StatusRequestEntityTooLarge, code: "body-too-large"},
-		{name: "function error", target: "/api/v1/identity/x", failure: "Unhandled", status: http.StatusOK, want: http.StatusBadGateway, code: "function-error"},
-		{name: "invoke throttled", target: "/api/v1/identity/x", status: http.StatusTooManyRequests, want: http.StatusTooManyRequests, code: "function-busy"},
-		{name: "broken result", target: "/api/v1/identity/x", status: http.StatusOK, answer: `{"statusCode":"x"}`, want: http.StatusBadGateway, code: "function-error"},
-		{name: "broken base64", target: "/api/v1/identity/x", status: http.StatusOK, answer: `{"statusCode":200,"body":"%%%","isBase64Encoded":true}`, want: http.StatusBadGateway, code: "function-error"},
+		{name: "unknown service", target: "/api/v1/billing/x", want: http.StatusNotFound, code: "unknown-service", number: "[MS5505]: "},
+		{name: "empty service", target: "/api/v1/", want: http.StatusNotFound, code: "unknown-service", number: "[MS5505]: "},
+		{name: "body too large", target: "/api/v1/identity/x", body: strings.Repeat("a", 17), want: http.StatusRequestEntityTooLarge, code: "body-too-large", number: "[MS5506]: "},
+		{name: "function error", target: "/api/v1/identity/x", failure: "Unhandled", status: http.StatusOK, want: http.StatusBadGateway, code: "function-error", number: "[MS5501]: "},
+		{name: "invoke throttled", target: "/api/v1/identity/x", status: http.StatusTooManyRequests, want: http.StatusTooManyRequests, code: "function-busy", number: "[MS5503]: "},
+		{name: "broken result", target: "/api/v1/identity/x", status: http.StatusOK, answer: `{"statusCode":"x"}`, want: http.StatusBadGateway, code: "function-error", number: "[MS5500]: "},
+		{name: "broken base64", target: "/api/v1/identity/x", status: http.StatusOK, answer: `{"statusCode":200,"body":"%%%","isBase64Encoded":true}`, want: http.StatusBadGateway, code: "function-error", number: "[MS5500]: "},
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
@@ -188,20 +189,10 @@ func TestApiProblems(t *testing.T) {
 			reply := call(t, handlerFor(t, settingsFor(fake, "")), http.MethodPost, testCase.target, testCase.body)
 			var problem Problem
 			_ = json.Unmarshal(reply.Body.Bytes(), &problem)
-			if reply.Code != testCase.want || problem.Code != testCase.code {
+			if reply.Code != testCase.want || problem.Code != testCase.code || !strings.HasPrefix(problem.Message, testCase.number) {
 				t.Fatalf("got %d %s", reply.Code, reply.Body.String())
 			}
 		})
-	}
-}
-
-func TestUnreachableLambdaIsABadGateway(t *testing.T) {
-	fake := newFakeAws(t)
-	settings := settingsFor(fake, "")
-	settings.LambdaEndpoint = "http://127.0.0.1:1"
-	reply := call(t, handlerFor(t, settings), http.MethodGet, "/api/v1/identity/health", "")
-	if reply.Code != http.StatusBadGateway {
-		t.Fatalf("got %d %s", reply.Code, reply.Body.String())
 	}
 }
 

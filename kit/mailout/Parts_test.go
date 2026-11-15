@@ -145,8 +145,7 @@ func TestStatesMapExpiredToFailedEvents(t *testing.T) {
 func TestDocumentStoreReadsEveryPage(t *testing.T) {
 	documents := newMemoryDocuments()
 	store := DocumentStore{Documents: documents}
-	collection, err := store.Ready("outbound-queue", "example.com")
-	equal(t, nil, err)
+	collection := store.Name("outbound-queue", "example.com")
 	for range 150 {
 		_, _ = documents.Insert(collection, Item{State: "queued"})
 	}
@@ -165,7 +164,7 @@ func TestDocumentStoreReportsBadAnswers(t *testing.T) {
 }
 
 func TestStoresReportStorageFailures(t *testing.T) {
-	for _, method := range []string{"CreateCollection", "Insert", "FindById", "Patch", "Command"} {
+	for _, method := range []string{"CollectionExists", "CreateCollection", "Insert", "FindById", "Patch", "Command"} {
 		t.Run(method, func(t *testing.T) {
 			documents := newMemoryDocuments()
 			store := DocumentStore{Documents: documents}
@@ -300,6 +299,10 @@ type failingCollections struct {
 	*memoryDocuments
 }
 
+func (failingCollections) CollectionExists(string) (bool, error) {
+	return false, errors.New("storage down")
+}
+
 func (failingCollections) CreateCollection(string) error { return errors.New("storage down") }
 
 func TestASuppressionIsStoredOnce(t *testing.T) {
@@ -309,8 +312,7 @@ func TestASuppressionIsStoredOnce(t *testing.T) {
 
 	equal(t, nil, list.Add(suppression))
 	equal(t, nil, list.Add(suppression))
-	collection, _ := list.Store.Ready(list.base(), "example.com")
-	equal(t, 1, documents.count(collection))
+	equal(t, 1, documents.count(list.Store.Name(list.base(), "example.com")))
 }
 
 func TestRegisterReportsStorageFailures(t *testing.T) {

@@ -1,9 +1,14 @@
 package devicebox
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"mesail.dev/packages/collections"
+)
 
 type Documents struct {
 	source Storage
+	known  collections.KnownCollections
 }
 
 func NewDocuments(source Storage) Documents {
@@ -11,20 +16,39 @@ func NewDocuments(source Storage) Documents {
 }
 
 func (documents Documents) Ensure(collection string) error {
-	exists, err := documents.Exists(collection)
-	if err != nil {
-		return err
-	}
-	return documents.createUnless(exists, collection)
+	return documents.known.Ensure(documents, collection)
 }
 
 func (documents Documents) Exists(collection string) (bool, error) {
+	return documents.known.Exists(documents, collection)
+}
+
+func (documents Documents) Read(collection string, read func() error) error {
+	return documents.known.Read(documents, collection, read)
+}
+
+func (documents Documents) CollectionExists(collection string) (bool, error) {
 	exists := false
 	err := documents.into(documents.command("collectionExists", collection), &exists)
 	return exists, err
 }
 
+func (documents Documents) CreateCollection(collection string) error {
+	_, err := documents.call(documents.command("createCollection", collection))
+	return err
+}
+
 func (documents Documents) Insert(collection string, document any) (string, error) {
+	id := ""
+	err := documents.known.Write(documents, collection, func() error {
+		var failure error
+		id, failure = documents.insert(collection, document)
+		return failure
+	})
+	return id, err
+}
+
+func (documents Documents) insert(collection string, document any) (string, error) {
 	command, err := documents.withValue(documents.command("insert", collection), document)
 	if err != nil {
 		return "", err
@@ -74,14 +98,6 @@ func (Documents) listOrEmpty(answer any) any {
 		return []any{}
 	}
 	return answer
-}
-
-func (documents Documents) createUnless(exists bool, collection string) error {
-	if exists {
-		return nil
-	}
-	_, err := documents.call(documents.command("createCollection", collection))
-	return err
 }
 
 func (documents Documents) withValue(command map[string]any, document any) (map[string]any, error) {

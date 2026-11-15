@@ -12,18 +12,12 @@ func (SeenEvents) base() string { return "events-seen" }
 func (SeenEvents) eventField() string { return "eventId" }
 
 func (seen SeenEvents) Seen(domainId string, eventId string) (bool, error) {
-	collection, err := seen.Store.Ready(seen.base(), domainId)
-	if err != nil {
-		return false, err
-	}
+	collection := seen.Store.Name(seen.base(), domainId)
 	return seen.Store.Exists(collection, map[string]any{seen.eventField(): eventId})
 }
 
 func (seen SeenEvents) Remember(domainId string, eventId string) error {
-	collection, err := seen.Store.Ready(seen.base(), domainId)
-	if err != nil {
-		return err
-	}
-	_, err = seen.Store.Documents.Insert(collection, SeenEvent{DomainId: domainId, EventId: eventId, SeenAt: Clock{}.Format(seen.Now())})
+	collection := seen.Store.Name(seen.base(), domainId)
+	_, err := seen.Store.Insert(collection, SeenEvent{DomainId: domainId, EventId: eventId, SeenAt: Clock{}.Format(seen.Now())})
 	return err
 }

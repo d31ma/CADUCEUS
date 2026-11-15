@@ -16,10 +16,24 @@ type memoryDocuments struct {
 	collections map[string][]map[string]any
 	next        int
 	failures    map[string]error
+	checks      map[string]int
+	creates     map[string]int
 }
 
 func newMemoryDocuments() *memoryDocuments {
-	return &memoryDocuments{collections: map[string][]map[string]any{}, failures: map[string]error{}}
+	isolateKnownCollections()
+	return &memoryDocuments{collections: map[string][]map[string]any{}, failures: map[string]error{}, checks: map[string]int{}, creates: map[string]int{}}
+}
+
+func (documents *memoryDocuments) CollectionExists(name string) (bool, error) {
+	documents.lock.Lock()
+	defer documents.lock.Unlock()
+	documents.checks[name]++
+	if err := documents.failures["CollectionExists"]; err != nil {
+		return false, err
+	}
+	_, found := documents.collections[name]
+	return found, nil
 }
 
 func (documents *memoryDocuments) fail(method string, err error) {
@@ -31,6 +45,7 @@ func (documents *memoryDocuments) fail(method string, err error) {
 func (documents *memoryDocuments) CreateCollection(name string) error {
 	documents.lock.Lock()
 	defer documents.lock.Unlock()
+	documents.creates[name]++
 	if err := documents.failures["CreateCollection"]; err != nil {
 		return err
 	}
@@ -110,6 +125,12 @@ func (documents *memoryDocuments) Command(command map[string]any) (any, error) {
 		next = strconv.Itoa(end)
 	}
 	return map[string]any{"content": matches[start:end], "nextCursor": next}, nil
+}
+
+func (documents *memoryDocuments) calls(collection string) (int, int) {
+	documents.lock.Lock()
+	defer documents.lock.Unlock()
+	return documents.checks[collection], documents.creates[collection]
 }
 
 func (documents *memoryDocuments) count(collection string) int {

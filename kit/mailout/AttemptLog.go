@@ -9,19 +9,13 @@ func (AttemptLog) base() string { return "delivery-attempts" }
 func (AttemptLog) itemField() string { return "itemId" }
 
 func (log AttemptLog) Record(attempt DeliveryAttempt) error {
-	collection, err := log.Store.Ready(log.base(), attempt.DomainId)
-	if err != nil {
-		return err
-	}
-	_, err = log.Store.Documents.Insert(collection, attempt)
+	collection := log.Store.Name(log.base(), attempt.DomainId)
+	_, err := log.Store.Insert(collection, attempt)
 	return err
 }
 
 func (log AttemptLog) ForItem(domainId string, itemId string) ([]DeliveryAttempt, error) {
-	collection, err := log.Store.Ready(log.base(), domainId)
-	if err != nil {
-		return nil, err
-	}
+	collection := log.Store.Name(log.base(), domainId)
 	documents, err := log.Store.All(collection, map[string]any{log.itemField(): itemId})
 	if err != nil {
 		return nil, err

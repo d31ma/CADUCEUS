@@ -14,7 +14,7 @@ func (test *EnvelopesRoutesTest) TestAPutIsListedForEachDeviceAndAcknowledgedOne
 	receipt, err := world.Envelopes.PostEnvelope(world.Member("ana"), request)
 	Assert.IsTrue(err == nil, "put failed")
 	Assert.Equals(request.EnvelopeId, receipt.EnvelopeId)
-	page, err := world.Envelopes.GetEnvelopes(world.Member("bo"), "b1", "", "")
+	page, err := world.Envelopes.GetEnvelopes(world.Member("bo"), "b1", nil, nil)
 	Assert.IsTrue(err == nil, "list failed")
 	Assert.Equals(1, len(page.Envelopes))
 	Assert.Equals(request.Ciphertext, page.Envelopes[0].Ciphertext)
@@ -53,7 +53,7 @@ func (test *EnvelopesRoutesTest) TestAnotherDomainsMemberCannotUseTheBox() {
 	world.Owns("ana", "a1")
 	world.Owns("bo", "b1")
 	id := world.Put("ana", "a1", "b1")
-	_, listError := world.Envelopes.GetEnvelopes(world.Stranger("bo"), "b1", "", "")
+	_, listError := world.Envelopes.GetEnvelopes(world.Stranger("bo"), "b1", nil, nil)
 	acknowledgeError := world.Envelopes.DeleteEnvelopes(world.Stranger("bo"), "b1", EnvelopeAcknowledgement{EnvelopeIds: []string{id}})
 	_, putError := world.Envelopes.PostEnvelope(world.Stranger("ana"), world.Request("a1", "b1"))
 	Assert.Equals(6014, world.NumberOf(listError))
@@ -70,7 +70,7 @@ func (test *EnvelopesRoutesTest) TestLimitsAnswerTheirNumbers() {
 	large := world.Request("a1", "b1")
 	large.Ciphertext = world.Ciphertext(256*1024 + 1)
 	_, tooLarge := world.Envelopes.PostEnvelope(world.Member("ana"), large)
-	_, badLimit := world.Envelopes.GetEnvelopes(world.Member("bo"), "b1", "", "101")
+	_, badLimit := world.Envelopes.GetEnvelopes(world.Member("bo"), "b1", nil, world.Text("101"))
 	tooMany := world.Envelopes.DeleteEnvelopes(world.Member("bo"), "b1", EnvelopeAcknowledgement{EnvelopeIds: make([]string, 11)})
 	Assert.Equals(6009, world.NumberOf(tooLarge))
 	Assert.Equals(6016, world.NumberOf(badLimit))
@@ -96,8 +96,41 @@ func (test *EnvelopesRoutesTest) TestTheExpiryJobLeavesAnUndeliveredNoticeForThe
 	Assert.IsTrue(report.Writes > 0, "the job wrote nothing")
 	Assert.IsTrue(!report.More, "the job wants more calls")
 	Assert.Equals(0, len(world.Listed("bo", "b1")))
-	page, _ := world.Envelopes.GetEnvelopes(world.Member("ana"), "a1", "", "")
+	page, _ := world.Envelopes.GetEnvelopes(world.Member("ana"), "a1", nil, nil)
 	Assert.Equals(1, len(page.Envelopes))
 	Assert.Equals(id, page.Envelopes[0].EnvelopeId)
 	Assert.Equals("undelivered", page.Envelopes[0].Kind)
+}
+
+func (test *EnvelopesRoutesTest) TestNoAfterAndNoLimitListTheFirstPage() {
+	world := DeviceboxTestSetup{}.World()
+	defer world.Close()
+	world.Owns("ana", "a1")
+	world.Owns("bo", "b1")
+	first := world.Put("ana", "a1", "b1")
+	second := world.Put("ana", "a1", "b1")
+	page, err := world.Envelopes.GetEnvelopes(world.Member("bo"), "b1", nil, nil)
+	Assert.IsTrue(err == nil, "list without after and limit failed")
+	Assert.Equals(2, len(page.Envelopes))
+	Assert.Equals(first, page.Envelopes[0].EnvelopeId)
+	Assert.Equals(second, page.Envelopes[1].EnvelopeId)
+}
+
+func (test *EnvelopesRoutesTest) TestAnEmptyAfterAndLimitListTheFirstPage() {
+	world := DeviceboxTestSetup{}.World()
+	defer world.Close()
+	world.Owns("ana", "a1")
+	world.Owns("bo", "b1")
+	id := world.Put("ana", "a1", "b1")
+	page, err := world.Envelopes.GetEnvelopes(world.Member("bo"), "b1", world.Text(""), world.Text(""))
+	Assert.IsTrue(err == nil, "list with empty after and limit failed")
+	Assert.Equals([]string{id}, world.IdsOf(page))
+}
+
+func (test *EnvelopesRoutesTest) TestABadAfterIsRefused() {
+	world := DeviceboxTestSetup{}.World()
+	defer world.Close()
+	world.Owns("bo", "b1")
+	_, err := world.Envelopes.GetEnvelopes(world.Member("bo"), "b1", world.Text("not-a-cursor"), nil)
+	Assert.Equals(6015, world.NumberOf(err))
 }

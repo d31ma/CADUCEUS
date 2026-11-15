@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- Changed the last direct collection calls (slice K13): `kit/mailout`'s
+  `DocumentStore` and `devicebox`'s `Documents` now go through
+  `kit/collections` `KnownCollections`, so each collection is checked
+  with FYLO at most once per container. mail-out no longer calls
+  `createCollection` on every call: a write creates its collection once,
+  and a read of a missing collection (suppressions, the outbox registry)
+  answers empty without creating it. devicebox's registry read no longer
+  creates the registry, and its test helper forgets a collection's
+  marker before it drops it. `DocumentStore.Ready` is replaced by `Name`
+  and `Insert`.
+- Fixed `GET /api/v1/devicebox/devices/{deviceId}/envelopes` (slice K13):
+  `after` and `limit` are optional, as CONTRACTS says. With no `after`
+  the route answers the first page, and with no `limit` up to 50
+  envelopes; TACHYON refused the request before ("The query value
+  'after' is required."). A bad `after` still answers 400 MS6015.
 - Added devices and their public keys to `directory` (slice G1, ADR 0011):
   `POST/GET /api/v1/directory/devices`, `DELETE .../devices/{deviceId}`
   and `POST .../devices/owners` (for `devicebox` and `realtime`). A

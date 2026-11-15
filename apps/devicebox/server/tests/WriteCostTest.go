@@ -28,6 +28,6 @@ func (test *WriteCostTest) TestListingOneDeviceReadsOnlyItsOwnEnvelopes() {
 	world.Storage.Reset()
 	Assert.Equals([]string{mine}, world.Listed("bo", "b1"))
 	Assert.Equals(1, world.Storage.Queries())
-	Assert.Equals(2, world.Storage.Reads())
+	Assert.Equals(1, world.Storage.Reads())
 	Assert.Equals(0, world.Storage.Writes())
 }

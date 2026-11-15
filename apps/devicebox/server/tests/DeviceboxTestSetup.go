@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"mesail.dev/packages/apierrors"
+	"mesail.dev/packages/collections"
 	"mesail.dev/packages/devicebox"
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
@@ -107,13 +108,21 @@ func (world *DeviceboxTestSetup) Put(personId string, sender string, to ...strin
 }
 
 func (world *DeviceboxTestSetup) Listed(personId string, device string) []string {
-	page, err := world.Envelopes.GetEnvelopes(world.Member(personId), device, "", "")
+	page, err := world.Envelopes.GetEnvelopes(world.Member(personId), device, nil, nil)
 	world.Must(err)
+	return world.IdsOf(page)
+}
+
+func (world *DeviceboxTestSetup) IdsOf(page devicebox.EnvelopePage) []string {
 	ids := []string{}
 	for _, envelope := range page.Envelopes {
 		ids = append(ids, envelope.EnvelopeId)
 	}
 	return ids
+}
+
+func (world *DeviceboxTestSetup) Text(value string) *string {
+	return &value
 }
 
 func (world *DeviceboxTestSetup) Group(people int, devicesEach int) []string {
@@ -159,6 +168,7 @@ func (world *DeviceboxTestSetup) drop(domain string) {
 		source.DeleteById(names.Registry(), record.Id)
 	}
 	for _, collection := range []string{names.Slips(domain), names.Bodies(domain), names.Counts(domain)} {
+		collections.KnownCollections{}.Forget(collection)
 		source.DropCollection(collection)
 	}
 }

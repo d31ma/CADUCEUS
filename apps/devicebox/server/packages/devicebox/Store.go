@@ -88,16 +88,13 @@ func (store Store) ExpiredBodies(domainId string, nowUs int64, limit int) ([]Bod
 }
 
 func (store Store) Domains() ([]RegistryRecord, error) {
-	err := store.documents.Ensure(Names{}.Registry())
-	if err != nil {
-		return nil, err
-	}
 	statement, err := SqlText{}.Registry(Names{}.Registry())
 	if err != nil {
 		return nil, err
 	}
 	records := []RegistryRecord{}
-	return records, store.documents.Rows(statement, &records)
+	err = store.documents.Read(Names{}.Registry(), func() error { return store.documents.Rows(statement, &records) })
+	return records, err
 }
 
 func (store Store) waitingIn(exists bool, domainId string, deviceKey string, afterUs int64, limit int) ([]WaitingRow, error) {

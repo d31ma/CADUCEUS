@@ -48,18 +48,23 @@ type world struct {
 }
 
 func newWorld(t *testing.T) *world {
+	t.Setenv("TMPDIR", t.TempDir())
 	t.Setenv("YON_APPLICATION_JSON", `{"yon":{"outbox":{"producer":"devicebox","subscribers":[`+
 		`{"name":"realtime","url":"http://127.0.0.1:1/api/v1/realtime/events"},`+
 		`{"name":"notify","url":"http://127.0.0.1:1/api/v1/notify/events"}]}}}`)
 	fylo := newFyloStorage(t)
 	w := &world{t: t, fylo: fylo, storage: NewCountingStorage(fylo), directory: NewMemoryDirectory(), pusher: outbox.NewRecordingPusher(), clock: time.Date(2026, 11, 14, 9, 0, 0, 0, time.UTC), domain: "example.com"}
-	assembly := Assembly{Source: w.storage, Pusher: w.pusher, Directory: w.directory, Now: w.now}
+	w.wire(w.storage)
+	return w
+}
+
+func (w *world) wire(source Storage) {
+	assembly := Assembly{Source: source, Pusher: w.pusher, Directory: w.directory, Now: w.now}
 	w.mailbox = assembly.Mailbox()
 	w.mailbox.callers = fakeCallers{}
 	w.expiry = assembly.Expiry()
 	w.expiry.callers = fakeCallers{}
 	w.desk = assembly.Desk()
-	return w
 }
 
 func (w *world) now() time.Time {

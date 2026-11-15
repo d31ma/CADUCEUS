@@ -24,11 +24,8 @@ func (queue Queue) Ref(item Item) outbox.Ref {
 }
 
 func (queue Queue) Insert(item Item, envelope events.Envelope) (Item, error) {
-	collection, err := queue.Store.Ready(queue.Base(), item.DomainId)
-	if err != nil {
-		return Item{}, err
-	}
-	err = queue.Registry.Register(queue.Base(), item.DomainId)
+	collection := queue.Store.Name(queue.Base(), item.DomainId)
+	err := queue.Registry.Register(queue.Base(), item.DomainId)
 	if err != nil {
 		return Item{}, err
 	}
@@ -38,7 +35,7 @@ func (queue Queue) Insert(item Item, envelope events.Envelope) (Item, error) {
 	}
 	item = item.WithOutbox(fields)
 	item.Id = ""
-	item.Id, err = queue.Store.Documents.Insert(collection, item)
+	item.Id, err = queue.Store.Insert(collection, item)
 	return item, err
 }
 
@@ -71,10 +68,7 @@ func (queue Queue) Claim(item Item, now time.Time) (Item, bool, error) {
 }
 
 func (queue Queue) FindBy(domainId string, field string, value string) (Item, bool, error) {
-	collection, err := queue.Store.Ready(queue.Base(), domainId)
-	if err != nil {
-		return Item{}, false, err
-	}
+	collection := queue.Store.Name(queue.Base(), domainId)
 	documents, _, err := queue.Store.Page(collection, map[string]any{field: value}, "", 1)
 	if err != nil {
 		return Item{}, false, err
@@ -83,10 +77,7 @@ func (queue Queue) FindBy(domainId string, field string, value string) (Item, bo
 }
 
 func (queue Queue) Due(domainId string, now time.Time) ([]Item, error) {
-	collection, err := queue.Store.Ready(queue.Base(), domainId)
-	if err != nil {
-		return nil, err
-	}
+	collection := queue.Store.Name(queue.Base(), domainId)
 	waiting, err := queue.waiting(collection)
 	if err != nil {
 		return nil, err

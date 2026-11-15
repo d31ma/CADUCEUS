@@ -8,21 +8,33 @@ import (
 
 type DocumentStore struct {
 	Documents Documents
+	Known     collections.KnownCollections
 }
 
 func (DocumentStore) pageSize() int { return 100 }
 
-func (store DocumentStore) Ready(base string, domainId string) (string, error) {
-	name := collections.CollectionName{}.ForDomain(base, domainId)
-	return name, store.Documents.CreateCollection(name)
+func (DocumentStore) Name(base string, domainId string) string {
+	return collections.CollectionName{}.ForDomain(base, domainId)
+}
+
+func (store DocumentStore) Insert(collection string, document any) (string, error) {
+	id := ""
+	err := store.Known.Write(store.Documents, collection, func() error {
+		var failure error
+		id, failure = store.Documents.Insert(collection, document)
+		return failure
+	})
+	return id, err
 }
 
 func (store DocumentStore) Page(collection string, where any, cursor string, size int) ([]json.RawMessage, string, error) {
-	answer, err := store.Documents.Command(store.scroll(collection, where, cursor, size))
-	if err != nil {
-		return nil, "", err
-	}
-	return store.window(answer)
+	documents, next := []json.RawMessage{}, ""
+	err := store.Known.Read(store.Documents, collection, func() error {
+		var failure error
+		documents, next, failure = store.read(collection, where, cursor, size)
+		return failure
+	})
+	return documents, next, err
 }
 
 func (store DocumentStore) All(collection string, where any) ([]json.RawMessage, error) {
@@ -36,6 +48,14 @@ func (store DocumentStore) All(collection string, where any) ([]json.RawMessage,
 func (store DocumentStore) Exists(collection string, where any) (bool, error) {
 	documents, _, err := store.Page(collection, where, "", 1)
 	return len(documents) > 0, err
+}
+
+func (store DocumentStore) read(collection string, where any, cursor string, size int) ([]json.RawMessage, string, error) {
+	answer, err := store.Documents.Command(store.scroll(collection, where, cursor, size))
+	if err != nil {
+		return nil, "", err
+	}
+	return store.window(answer)
 }
 
 func (DocumentStore) scroll(collection string, where any, cursor string, size int) map[string]any {

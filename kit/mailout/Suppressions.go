@@ -20,10 +20,7 @@ func (Suppressions) Hash(address string) string {
 }
 
 func (list Suppressions) Contains(domainId string, address string) (bool, error) {
-	collection, err := list.Store.Ready(list.base(), domainId)
-	if err != nil {
-		return false, err
-	}
+	collection := list.Store.Name(list.base(), domainId)
 	return list.Store.Exists(collection, map[string]any{list.hashField(): list.Hash(address)})
 }
 
@@ -43,11 +40,8 @@ func (list Suppressions) insertUnlessKnown(known bool, suppression Suppression) 
 }
 
 func (list Suppressions) insert(suppression Suppression) error {
-	collection, err := list.Store.Ready(list.base(), suppression.DomainId)
-	if err != nil {
-		return err
-	}
+	collection := list.Store.Name(list.base(), suppression.DomainId)
 	suppression.AddressHash = list.Hash(suppression.Address)
-	_, err = list.Store.Documents.Insert(collection, suppression)
+	_, err := list.Store.Insert(collection, suppression)
 	return err
 }

@@ -23,8 +23,8 @@ func (service *MailboxService) Put(authorization string, request EnvelopePut) (d
 	return receipt, service.failures.Mailbox(err)
 }
 
-func (service *MailboxService) List(authorization string, device string, after string, limit string) (devicebox.EnvelopePage, error) {
-	page, err := service.assembly().Mailbox().List(authorization, device, after, limit)
+func (service *MailboxService) List(authorization string, device string, after *string, limit *string) (devicebox.EnvelopePage, error) {
+	page, err := service.assembly().Mailbox().List(authorization, device, service.textOrEmpty(after), service.textOrEmpty(limit))
 	return page, service.failures.Mailbox(err)
 }
 
@@ -36,6 +36,13 @@ func (service *MailboxService) Acknowledge(authorization string, device string, 
 func (service *MailboxService) Expire(authorization string) (devicebox.ExpireReport, error) {
 	report, err := service.assembly().Expiry().Run(authorization)
 	return report, service.failures.Mailbox(err)
+}
+
+func (service *MailboxService) textOrEmpty(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }
 
 func (service *MailboxService) assembly() devicebox.Assembly {

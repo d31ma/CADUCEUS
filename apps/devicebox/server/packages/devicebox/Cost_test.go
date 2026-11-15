@@ -48,7 +48,7 @@ func TestListingOneDeviceReadsOnlyItsOwnEnvelopesThroughTheIndex(t *testing.T) {
 	if len(page.Envelopes) != 2 || page.Envelopes[0].EnvelopeId != mine[0] {
 		t.Fatalf("got %+v", page)
 	}
-	if w.storage.Queries() != 1 || w.storage.Reads() != 3 || w.storage.Writes() != 0 {
+	if w.storage.Queries() != 1 || w.storage.Reads() != 2 || w.storage.Writes() != 0 {
 		t.Fatalf("queries %d, reads %d, writes %d", w.storage.Queries(), w.storage.Reads(), w.storage.Writes())
 	}
 	statement, _ := SqlText{}.WaitingFor(Names{}.Slips(w.domain), DeviceKey{}.Of("b1"), 0, 50)

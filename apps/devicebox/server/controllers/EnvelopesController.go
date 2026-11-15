@@ -25,9 +25,9 @@ func (controller *EnvelopesController) GetEnvelopes(
 	// @FromPath("device")
 	device string,
 	// @FromQuery("after")
-	after string,
+	after *string,
 	// @FromQuery("limit")
-	limit string,
+	limit *string,
 ) (devicebox.EnvelopePage, error) {
 	return controller.mailbox.List(authorization, device, after, limit)
 }

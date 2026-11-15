@@ -175,7 +175,7 @@ Settings (environment, or a `.env` file copied from `.env.example`):
 | `deploy/lambda/` | Image helpers: tool install with checksums, the Lambda profile, the Lambda start script and the realtime start script (`realtime-start.sh`). |
 | `deploy/floci/stack.json` | The Floci description: functions, memory, timeouts, FYLO owners, containers (`"kind": "container"`), file system, bucket, Keycloak realm and image, secrets, dev settings (`appSettings`), people, domains and schedules. |
 | `docker-compose.yml` | Floci, Keycloak, the realtime container, the router and the two schedulers (`scheduler`, `scheduler-daily`) on the network `mesail_floci_backend`. |
-| `deploy/floci/compose.blobs.yaml` | Added by `blobs.sh` only: mounts the blob folder's EFS volume into the router and sets `MESAIL_ROUTER_BLOBS_*`. |
+| `deploy/floci/compose.blobs.yaml` | Used by `blobs.sh` only: makes the `blobs` folder in the shared EFS volume and mounts only that folder into the router, with `MESAIL_ROUTER_BLOBS_*`. |
 | `scripts/floci/*.sh` | `build`, `up`, `deploy`, `blobs`, `tokens`, `test`, `down`, `stack`, `run-all`. |
 
 ### Lambda image (`Dockerfile` target `lambda`)
@@ -312,18 +312,24 @@ Settings (environment, or a `.env` file copied from `.env.example`):
   so the link works for a client there; it assumes the default router port
   18080.
 - **The router's `/blobs` on Floci** (`scripts/floci/blobs.sh`, run by
-  `stack.sh` after `deploy.sh`): Floci makes an access point's Docker
-  volume only when a function that uses it first starts. So `blobs.sh`
-  calls `attachments`' health route once, reads the volume mounted at
-  `/mnt/data` in the running `attachments` container, and re-creates only
-  the router with `deploy/floci/compose.blobs.yaml`: the volume at `/data`,
-  `MESAIL_ROUTER_BLOBS_FOLDER=/data/blobs`, `_BASE`
+  `stack.sh` after `deploy.sh`; the steps are in OPERATIONS.md section 3):
+  it finds the `mail` access point's id with `describe-access-points`, then
+  the one Docker volume named `...efs-<that id>-...`. Floci makes that
+  volume only when a function that uses it first starts, so when none
+  exists yet the script wakes `attachments` once and prints a warning; none
+  or several volumes after that stop the run. It checks that Docker Engine
+  is 26 or newer, then runs `deploy/floci/compose.blobs.yaml` for two
+  services only: `blobs-folder` (one-shot, makes `blobs` in the volume,
+  owned by uid 10001) and the router, re-created with only that folder
+  mounted at `/blobs` (compose `subpath: blobs`, read-write for uploads),
+  `MESAIL_ROUTER_BLOBS_FOLDER=/blobs`, `_BASE`
   `http://127.0.0.1:<router port>/blobs` and `_SECRET` `MESAIL_LINK_SECRET`.
-  The router and the functions both run as uid 10001, and the Lambda start
-  script gives `/mnt/data` to that user, so the router can write and read
-  the files. When `attachments` is not deployed, `blobs.sh` does nothing and
-  `/blobs` answers 404. `down.sh` keeps the volume; in Colima it removes
-  every `floci-aws-efs-*` volume after the router is gone.
+  The router never sees the FYLO roots in the same volume. When
+  `attachments` is not deployed, `blobs.sh` does nothing and `/blobs`
+  answers 404. The dev host's supervisor repairs only its own project
+  `mesail-floci`, so it never re-creates this router. `down.sh` keeps the
+  volume; in Colima it removes every `floci-aws-efs-*` volume after the
+  router is gone.
 - In Floci the access point's root directory and user are not applied: each
   access point is its own Docker volume `floci-aws-efs-<id>-<hash>`.
 - **A fresh data set without removing anything.** The FYLO data in the dev
@@ -495,7 +501,8 @@ section 4 item 5, slice K6). It stops calling a route on `more: false`, on
 any other answer or on a timeout, and stops repeating at the longer of
 the tick length minus 10 seconds and half the tick (50 s for 60 s ticks,
 5 s for 10 s ticks). It logs one line per call (the
-path and the status code) and, at the end of each tick, the number of calls
+path, the status code and the first 200 characters of the answer, such as
+`{"dropped":2,"more":false}`) and, at the end of each tick, the number of calls
 per route (`calls this tick: <path>=<n> ...`). The next tick starts
 `scheduleSeconds` after the last one started. Under `ty start` the
 scheduler's 10 s ticks repeat for 5 s. When it gets no token (the stack is

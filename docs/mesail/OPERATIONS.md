@@ -104,6 +104,30 @@ that folder with the data.
 | `YON_ATTACHMENTS_LINK_BASE`, `YON_ATTACHMENTS_LINK_SECRET` | The `/blobs` address and the link signing secret (32 characters or more); the router's `MESAIL_ROUTER_BLOBS_*` use the same values. |
 | Removed S3 settings | The S3 blob adapter was removed (ADR 0007, slice OP6). A setting that still names the adapter `s3` or a `bucket` for `attachments` or `mail-in` makes every file call fail (`attachments` answers `503` `[MS3513]`, `mail-in` `503` `[MS2514]`); the service log names the setting. An environment variable whose name starts with `MESAIL_RAW_STORE_S3` stops the SMTP edge at startup. |
 
+**The blob folder and the router on Floci** (slice OP7). A Lambda gets one
+file system, so `attachments`, `mail-in` and `mail-out` share one access
+point (`"fileSystemShare": "mail"`): each keeps its own FYLO root
+(`/mnt/data/<service>`) and all use `/mnt/data/blobs`. Floci keeps each
+access point in one Docker volume, named `...efs-<access point id>-<hash>`.
+The router mounts only the blob folder of that volume, never the FYLO roots:
+
+1. Find the access point id with Floci's EFS API: `describe-access-points`,
+   the access point whose client token is `<creationToken>-mail`.
+2. Find the volume: `docker volume ls --filter name=efs-<access point id>-`.
+   Exactly one must match; none or several is an error. Floci makes the
+   volume only when a function that uses it first starts, so on a fresh
+   engine start one such function first (the Floci scripts wake
+   `attachments` once and print a warning).
+3. Make the folder `blobs` in that volume, owned by uid 10001 (a one-shot
+   container that mounts the volume).
+4. Mount it into the router with compose's long volume syntax and
+   `subpath: blobs` (Docker Engine 26 or newer), read-write because the
+   router takes the signed uploads (`PUT`), and set
+   `MESAIL_ROUTER_BLOBS_FOLDER` to that mount.
+
+The router and the functions both run as uid 10001. The Floci form of
+these steps is `scripts/floci/blobs.sh` with `deploy/floci/compose.blobs.yaml`.
+
 **Browser push** (off by default, SPEC Q19)
 
 | Setting | Meaning |

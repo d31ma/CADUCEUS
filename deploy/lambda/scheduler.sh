@@ -32,11 +32,15 @@ clock() {
   date -u +%H:%M:%S
 }
 
+answer_summary() {
+  head -c 200 "$1" 2> /dev/null | tr -d '\n'
+}
+
 call_route() {
   token="$1" path="$2" body="$3"
   code="$(curl --silent --output "$body" --write-out '%{http_code}' --max-time 120 --request POST \
     --header "Authorization: Bearer $token" "$MESAIL_SCHEDULER_BASE$path" || true)"
-  echo "$(clock) POST $path -> ${code:-000}"
+  echo "$(clock) POST $path -> ${code:-000} $(answer_summary "$body")"
   [ "${code:-000}" = 200 ] && grep -qs '"more" *: *true' "$body"
 }
 

@@ -77,14 +77,14 @@ func (test *L3MembershipReservationTest) TestUsernameWithASpaceIsInvalid() {
 	_, err := test.reservations().Username("ana example")
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("username", invalid.Field)
+	Assert.Equals("username", invalid.Field())
 }
 
 func (test *L3MembershipReservationTest) TestUsernameThatIsARoleNameIsInvalid() {
 	_, err := test.reservations().Username("abuse")
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("username", invalid.Field)
+	Assert.Equals("username", invalid.Field())
 }
 
 func (test *L3MembershipReservationTest) TestCurrentOfAFreeNameIsEmpty() {
@@ -127,7 +127,7 @@ func (test *L3MembershipReservationTest) TestForPersonOfARoleNameIsInvalid() {
 	err := test.reservations().ForPerson("hostmaster", "kc-hostmaster")
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("username", invalid.Field)
+	Assert.Equals("username", invalid.Field())
 }
 
 func (test *L3MembershipReservationTest) TestForAddressCollectsTheDomainsOfTheName() {
@@ -147,7 +147,7 @@ func (test *L3MembershipReservationTest) TestForAddressWithoutAnAtIsInvalid() {
 	err := test.reservations().ForAddress("not-an-address")
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("address", invalid.Field)
+	Assert.Equals("address", invalid.Field())
 }
 
 func (test *L3MembershipReservationTest) TestForAddressOfAPersonsNameIsADuplicate() {

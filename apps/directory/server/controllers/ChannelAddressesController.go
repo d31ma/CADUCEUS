@@ -2,9 +2,7 @@
 // @Allow(DomainAdmin)
 type ChannelAddressesController struct {
 	// @Needs
-	admission *AdmissionService
-	// @Needs
-	channels *ChannelAddressService
+	channels *ChannelAddressRouteService
 }
 
 // @PostRoute
@@ -15,7 +13,7 @@ func (controller *ChannelAddressesController) PostChannelAddress(
 	// @FromBody
 	request ChannelAddressRequest,
 ) (Address, error) {
-	return controller.channels.Add(controller.admission.Admit(authorization), request)
+	return controller.channels.Add(authorization, request)
 }
 
 // @DeleteRoute("/{address}")
@@ -26,5 +24,5 @@ func (controller *ChannelAddressesController) DeleteChannelAddress(
 	// @FromPath
 	address string,
 ) error {
-	return controller.channels.Remove(controller.admission.Admit(authorization), address)
+	return controller.channels.Remove(authorization, address)
 }

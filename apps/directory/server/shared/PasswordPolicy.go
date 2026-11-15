@@ -1,7 +1,7 @@
 type PasswordPolicy struct {
-	Message string
+	ErrorCase
 }
 
-func (failure *PasswordPolicy) Error() string {
-	return failure.Message
+func (PasswordPolicy) Refused(rule string) *PasswordPolicy {
+	return &PasswordPolicy{ErrorCase{1031, "password_policy", "password", rule}}
 }

@@ -98,7 +98,7 @@ func (test *L3MembershipRulesTest) TestPageSizeRefusesALimitAboveOneHundred() {
 	_, err := PageWindow{}.Size(101)
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("limit", invalid.Field)
+	Assert.Equals("limit", invalid.Field())
 }
 
 func (test *L3MembershipRulesTest) TestPageSizeRefusesANegativeLimit() {
@@ -123,7 +123,7 @@ func (test *L3MembershipRulesTest) TestACursorThatIsNotANumberIsRefused() {
 	_, err := PageWindow{}.Offset("abc")
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("cursor", invalid.Field)
+	Assert.Equals("cursor", invalid.Field())
 }
 
 func (test *L3MembershipRulesTest) TestANegativeCursorIsRefused() {
@@ -155,7 +155,7 @@ func (test *L3MembershipRulesTest) TestQueryRefusesALimitThatIsNotANumber() {
 	_, err := PageWindow{}.Query(url.Values{"limit": {"many"}})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("limit", invalid.Field)
+	Assert.Equals("limit", invalid.Field())
 }
 
 func (test *L3MembershipRulesTest) TestPlainSummaryHidesTheUsernameAndAdminFlag() {

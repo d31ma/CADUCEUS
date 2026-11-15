@@ -1,16 +1,10 @@
-import (
-	"cmp"
-
-	"mesail.dev/packages/outbox"
-)
+import "mesail.dev/packages/outbox"
 
 // @RequestRoute("/api/v1/directory/outbox")
 // @Allow(Service)
 type OutboxController struct {
 	// @Needs
-	callers *CallerService
-	// @Needs
-	relay *OutboxRelayService
+	relay *OutboxRouteService
 }
 
 // @PostRoute("/relay")
@@ -18,7 +12,7 @@ func (controller *OutboxController) PostRelay(
 	// @FromHeader("authorization")
 	authorization string,
 ) (outbox.Report, error) {
-	return controller.relayUnless(controller.installWide(authorization))
+	return controller.relay.Relay(authorization)
 }
 
 // @GetRoute("/dead")
@@ -26,7 +20,7 @@ func (controller *OutboxController) GetDead(
 	// @FromHeader("authorization")
 	authorization string,
 ) ([]DeadEvent, error) {
-	return controller.deadUnless(controller.installWide(authorization))
+	return controller.relay.Dead(authorization)
 }
 
 // @PostRoute("/dead/requeue")
@@ -37,31 +31,5 @@ func (controller *OutboxController) PostRetry(
 	// @FromBody
 	request RetryRequest,
 ) error {
-	return controller.retryUnless(controller.installWide(authorization), request)
-}
-
-func (controller *OutboxController) installWide(authorization string) error {
-	caller, refused := controller.callers.Caller(authorization)
-	return cmp.Or(refused, controller.callers.InstallWide(caller))
-}
-
-func (controller *OutboxController) relayUnless(refused error) (outbox.Report, error) {
-	if refused != nil {
-		return outbox.Report{}, refused
-	}
-	return controller.relay.RunOnce()
-}
-
-func (controller *OutboxController) deadUnless(refused error) ([]DeadEvent, error) {
-	if refused != nil {
-		return nil, refused
-	}
-	return controller.relay.DeadEvents()
-}
-
-func (controller *OutboxController) retryUnless(refused error, request RetryRequest) error {
-	if refused != nil {
-		return refused
-	}
-	return controller.relay.Retry(request)
+	return controller.relay.Retry(authorization, request)
 }

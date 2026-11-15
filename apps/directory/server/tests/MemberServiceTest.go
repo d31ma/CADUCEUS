@@ -40,7 +40,7 @@ func (test *MemberServiceTest) TestSearchRefusesALimitAboveOneHundred() {
 	_, err := test.lister().Search(Admission{Caller: test.caller(domain, "Bo")}, MemberQuery{Limit: 101}, nil)
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("limit", invalid.Field)
+	Assert.Equals("limit", invalid.Field())
 }
 
 func (test *MemberServiceTest) TestSearchPagesWithACursor() {
@@ -60,7 +60,7 @@ func (test *MemberServiceTest) TestSearchRefusesACursorItDidNotGiveOut() {
 	_, err := test.lister().Search(Admission{Caller: test.caller(domain, "Bo")}, MemberQuery{Cursor: "abc"}, nil)
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("cursor", invalid.Field)
+	Assert.Equals("cursor", invalid.Field())
 }
 
 func (test *MemberServiceTest) TestSummaryOfAMemberOfTheCallersDomain() {
@@ -83,7 +83,7 @@ func (test *MemberServiceTest) TestSummaryOfAMemberOfAnotherDomainIsNotFound() {
 
 func (test *MemberServiceTest) TestSummaryForARefusedCallerIsTheRefusal() {
 	_, _, domain := test.world()
-	_, err := test.lister().Summary(Admission{Caller: test.caller(domain, "Bo"), Refusal: &Unauthenticated{}}, "bo-id")
+	_, err := test.lister().Summary(Admission{Caller: test.caller(domain, "Bo"), Refusal: Unauthenticated{}.TokenRefused()}, "bo-id")
 	var refused *Unauthenticated
 	Assert.IsTrue(errors.As(err, &refused), "want Unauthenticated")
 }

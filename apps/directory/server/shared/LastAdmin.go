@@ -1,7 +1,7 @@
 type LastAdmin struct {
-	Message string
+	ErrorCase
 }
 
-func (failure *LastAdmin) Error() string {
-	return failure.Message
+func (LastAdmin) LastAdmin() *LastAdmin {
+	return &LastAdmin{ErrorCase{1034, "last_admin", "", "a domain must keep at least one admin"}}
 }

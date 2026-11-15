@@ -100,14 +100,14 @@ func (service *OutboxRelayService) unsaved(ref outbox.Ref) error {
 
 func (service *OutboxRelayService) missingSettings(failure error) error {
 	if failure != nil {
-		return &Unavailable{Message: "the outbox is not configured", Cause: failure}
+		return Unavailable{}.OutboxSettings(failure)
 	}
 	return nil
 }
 
 func (service *OutboxRelayService) missingLetter(failure error) error {
 	if failure != nil {
-		return &NotFound{Message: "no such dead event"}
+		return NotFound{}.DeadEvent()
 	}
 	return nil
 }

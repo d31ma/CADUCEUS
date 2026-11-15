@@ -43,7 +43,7 @@ func (test *L3MembershipAccountTest) TestCreateWithAPasswordThePolicyRefusesIsAP
 	_, err := test.accounts().Create("ana", "short", "")
 	var policy *PasswordPolicy
 	Assert.IsTrue(errors.As(err, &policy), "want PasswordPolicy")
-	Assert.IsTrue(strings.Contains(policy.Message, "refused by the fake"), "want the reason of Keycloak")
+	Assert.IsTrue(strings.Contains(policy.Error(), "refused by the fake"), "want the reason of Keycloak")
 }
 
 func (test *L3MembershipAccountTest) TestCreateWhenKeycloakFailsIsUnavailable() {

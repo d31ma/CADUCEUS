@@ -1,6 +1,6 @@
 package dnscheck
 
 type recordType struct {
-	name   string
-	number int
+	name      string
+	typeValue int
 }

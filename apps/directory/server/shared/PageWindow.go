@@ -26,7 +26,7 @@ func (window PageWindow) checkedSize(limit int) (int, error) {
 	case limit == 0:
 		return window.defaultLimit(), nil
 	case limit < 1, limit > window.maximumLimit():
-		return 0, &InvalidRequest{Field: "limit", Message: "limit must be between 1 and 100"}
+		return 0, InvalidRequest{}.LimitOutOfRange()
 	}
 	return limit, nil
 }
@@ -36,7 +36,7 @@ func (window PageWindow) checkedOffset(cursor string, value int, failure error) 
 	case cursor == "":
 		return 0, nil
 	case failure != nil, value < 0:
-		return 0, &InvalidRequest{Field: "cursor", Message: "the cursor is not one this service gave out"}
+		return 0, InvalidRequest{}.BadCursor()
 	}
 	return value, nil
 }
@@ -57,7 +57,7 @@ func (window PageWindow) Query(values url.Values) (MemberQuery, error) {
 
 func (window PageWindow) checkedQuery(query MemberQuery, raw string, failure error) (MemberQuery, error) {
 	if raw != "" && failure != nil {
-		return MemberQuery{}, &InvalidRequest{Field: window.limitName(), Message: "limit must be a whole number"}
+		return MemberQuery{}, InvalidRequest{}.LimitNotNumber()
 	}
 	return query, nil
 }

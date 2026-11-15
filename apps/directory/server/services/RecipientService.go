@@ -42,9 +42,9 @@ func (service *RecipientService) each(raw []string) ([]string, error) {
 func (service *RecipientService) refusal(count int, invalid error) error {
 	switch {
 	case count > service.maxAddresses():
-		return &InvalidRequest{Field: service.addressesField(), Message: "at most 100 addresses can be resolved at once"}
+		return InvalidRequest{}.TooManyAddresses()
 	case invalid != nil:
-		return &InvalidRequest{Field: service.addressesField(), Message: invalid.Error()}
+		return InvalidRequest{}.BadAddresses(invalid.Error())
 	}
 	return nil
 }
@@ -65,10 +65,6 @@ func (service *RecipientService) resolveAll(callerDomainId string, addresses []s
 		failure = cmp.Or(failure, lookupFailure)
 	}
 	return resolved, failure
-}
-
-func (service *RecipientService) addressesField() string {
-	return "addresses"
 }
 
 func (service *RecipientService) maxAddresses() int {

@@ -2,9 +2,7 @@
 // @SignedIn
 type RecipientsController struct {
 	// @Needs
-	admission *AdmissionService
-	// @Needs
-	recipients *RecipientService
+	recipients *RecipientRouteService
 }
 
 // @PostRoute("/resolve")
@@ -14,5 +12,5 @@ func (controller *RecipientsController) PostResolve(
 	// @FromBody
 	request ResolveRequest,
 ) (ResolveResponse, error) {
-	return controller.recipients.Resolve(controller.admission.Admit(authorization), request)
+	return controller.recipients.Resolve(authorization, request)
 }

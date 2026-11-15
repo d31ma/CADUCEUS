@@ -50,7 +50,7 @@ func (test *L3SeedTest) TestSeedRefusesMoreThanTwoDomainsInOneCall() {
 	_, found, _ := test.members().Find(domain, seed.PersonId)
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("memberships", invalid.Field)
+	Assert.Equals("memberships", invalid.Field())
 	Assert.IsTrue(!found, "no member may be written")
 }
 
@@ -90,7 +90,7 @@ func (test *L3SeedTest) TestSeedNeedsAPersonIdAndADisplayName() {
 	_, err := test.service().Seed(seed)
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("displayName", invalid.Field)
+	Assert.Equals("displayName", invalid.Field())
 }
 
 func (test *L3SeedTest) TestSeedWithoutAPersonIdIsRefused() {
@@ -101,11 +101,11 @@ func (test *L3SeedTest) TestSeedWithoutAPersonIdIsRefused() {
 	_, err := test.service().Seed(seed)
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("personId", invalid.Field)
+	Assert.Equals("personId", invalid.Field())
 }
 
 func (test *L3SeedTest) TestTheSeedRouteRefusesARequestWithoutAValidToken() {
-	controller := &PeopleController{callers: &CallerService{}, seeds: test.service()}
+	controller := &PeopleController{people: &PersonRouteService{callers: &CallerService{}, seeds: test.service()}}
 	_, err := controller.PostSeed("Bearer forged", PersonSeed{})
 	var refused *Unauthenticated
 	Assert.IsTrue(errors.As(err, &refused), "want Unauthenticated")

@@ -49,7 +49,7 @@ func (test *RecipientInputTest) TestInvalidAddressIsRefused() {
 	_, err := service.Resolve(Admission{Caller: caller}, ResolveRequest{Addresses: []string{"not an address"}})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("addresses", invalid.Field)
+	Assert.Equals("addresses", invalid.Field())
 }
 
 func (test *RecipientInputTest) TestMoreThanOneHundredAddressesAreRefused() {

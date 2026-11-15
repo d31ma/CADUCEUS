@@ -2,9 +2,7 @@
 // @Allow(DomainAdmin)
 type AliasesController struct {
 	// @Needs
-	admission *AdmissionService
-	// @Needs
-	aliases *AliasService
+	aliases *AliasRouteService
 }
 
 // @PostRoute
@@ -15,5 +13,5 @@ func (controller *AliasesController) PostAlias(
 	// @FromBody
 	request CreateAliasRequest,
 ) (Address, error) {
-	return controller.aliases.Add(controller.admission.Admit(authorization), request)
+	return controller.aliases.Add(authorization, request)
 }

@@ -84,7 +84,7 @@ func (test *OutboxTest) TestACollectionThatIsNotAMembersCollectionIsRefused() {
 }
 
 func (test *OutboxTest) TestTheOutboxRoutesRefuseAnUnverifiedCaller() {
-	controller := &OutboxController{callers: &CallerService{}}
+	controller := &OutboxController{relay: &OutboxRouteService{callers: &CallerService{}}}
 	_, relayErr := controller.PostRelay("Bearer forged")
 	_, deadErr := controller.GetDead("Bearer forged")
 	retryErr := controller.PostRetry("Bearer forged", RetryRequest{})
@@ -99,7 +99,7 @@ func (test *OutboxTest) TestTheDeadEventsRouteListsForAnInstallWideServiceToken(
 	setup := DirectoryTestSetup{}
 	realm := setup.SignedRealm()
 	os.Setenv("YON_APPLICATION_JSON", setup.ApplicationJson(realm, "http://127.0.0.1:1"))
-	controller := &OutboxController{callers: &CallerService{}, relay: relay}
+	controller := &OutboxController{relay: &OutboxRouteService{callers: &CallerService{}, relay: relay}}
 	dead, err := controller.GetDead(setup.ServiceBearer(realm, "*"))
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.IsTrue(slices.ContainsFunc(dead, func(event DeadEvent) bool { return event.EventId == eventId }), "dead event not listed")
@@ -109,7 +109,7 @@ func (test *OutboxTest) TestTheOutboxRoutesHideThemselvesFromAMailDomainServiceT
 	setup := DirectoryTestSetup{}
 	realm := setup.SignedRealm()
 	os.Setenv("YON_APPLICATION_JSON", setup.ApplicationJson(realm, "http://127.0.0.1:1"))
-	controller := &OutboxController{callers: &CallerService{}}
+	controller := &OutboxController{relay: &OutboxRouteService{callers: &CallerService{}}}
 	_, err := controller.PostRelay(setup.ServiceBearer(realm, "outbox-unit.test"))
 	var missing *NotFound
 	Assert.IsTrue(errors.As(err, &missing), "want NotFound")

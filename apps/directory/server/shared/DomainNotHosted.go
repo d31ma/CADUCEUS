@@ -1,7 +1,7 @@
 type DomainNotHosted struct {
-	Message string
+	ErrorCase
 }
 
-func (failure *DomainNotHosted) Error() string {
-	return failure.Message
+func (DomainNotHosted) Address() *DomainNotHosted {
+	return &DomainNotHosted{ErrorCase{1014, "domain_not_hosted", "", "this domain is not hosted here"}}
 }

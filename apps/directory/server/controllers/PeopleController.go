@@ -1,26 +1,27 @@
-import (
-	"cmp"
-	"net/http"
-
-	"mesail.dev/packages/oidc"
-)
+import "net/http"
 
 // @RequestRoute("/api/v1/directory/people")
 // @Allow(Operator)
 type PeopleController struct {
 	// @Needs
-	callers *CallerService
-	// @Needs
-	people *PersonService
-	// @Needs
-	seeds *PersonSeedService
+	people *PersonRouteService
 }
 
 // @GetRoute
 func (controller *PeopleController) GetPeople(request *http.Request) (PersonPage, error) {
-	caller, refused := controller.callers.Caller(request.Header.Get(controller.authorizationHeader()))
-	query, invalid := PageWindow{}.Query(request.URL.Query())
-	return controller.searchUnless(cmp.Or(refused, controller.callers.Operator(caller), invalid), query)
+	return controller.people.Search(request)
+}
+
+// @DeleteRoute("/{person_id}/totp")
+// @Allow(DomainAdmin, Operator)
+// @ResponseStatus(204)
+func (controller *PeopleController) DeleteTotp(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromPath("person_id")
+	personId string,
+) error {
+	return controller.people.RemoveTotp(authorization, personId)
 }
 
 // @GetRoute("/{person_id}")
@@ -31,34 +32,7 @@ func (controller *PeopleController) GetPerson(
 	// @FromPath("person_id")
 	personId string,
 ) (PersonRecord, error) {
-	caller, refused := controller.callers.Caller(authorization)
-	return controller.recordUnless(cmp.Or(refused, controller.callers.InstallWide(caller)), personId)
-}
-
-// @PostRoute("/seed")
-// @Allow(Service)
-func (controller *PeopleController) PostSeed(
-	// @FromHeader("authorization")
-	authorization string,
-	// @FromBody
-	seed PersonSeed,
-) (PersonRecord, error) {
-	caller, refused := controller.callers.Caller(authorization)
-	return controller.seedUnless(cmp.Or(refused, controller.callers.InstallWide(caller)), seed)
-}
-
-// @PatchRoute("/{person_id}")
-// @Allow(DomainAdmin, Operator)
-func (controller *PeopleController) PatchPerson(
-	// @FromHeader("authorization")
-	authorization string,
-	// @FromPath("person_id")
-	personId string,
-	// @FromBody
-	change PersonChange,
-) (PersonSummary, error) {
-	caller, refused := controller.callers.Caller(authorization)
-	return controller.changeUnless(refused, caller, personId, change)
+	return controller.people.Record(authorization, personId)
 }
 
 // @PostRoute("/{person_id}/password")
@@ -72,21 +46,7 @@ func (controller *PeopleController) PostPassword(
 	// @FromBody
 	reset PasswordReset,
 ) error {
-	caller, refused := controller.callers.Caller(authorization)
-	return controller.resetUnless(refused, caller, personId, reset)
-}
-
-// @DeleteRoute("/{person_id}/totp")
-// @Allow(DomainAdmin, Operator)
-// @ResponseStatus(204)
-func (controller *PeopleController) DeleteTotp(
-	// @FromHeader("authorization")
-	authorization string,
-	// @FromPath("person_id")
-	personId string,
-) error {
-	caller, refused := controller.callers.Caller(authorization)
-	return controller.removeTotpUnless(refused, caller, personId)
+	return controller.people.ResetPassword(authorization, personId, reset)
 }
 
 // @DeleteRoute("/{person_id}/passkeys")
@@ -98,8 +58,20 @@ func (controller *PeopleController) DeletePasskeys(
 	// @FromPath("person_id")
 	personId string,
 ) error {
-	caller, refused := controller.callers.Caller(authorization)
-	return controller.removePasskeysUnless(refused, caller, personId)
+	return controller.people.RemovePasskeys(authorization, personId)
+}
+
+// @PatchRoute("/{person_id}")
+// @Allow(DomainAdmin, Operator)
+func (controller *PeopleController) PatchPerson(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromPath("person_id")
+	personId string,
+	// @FromBody
+	change PersonChange,
+) (PersonSummary, error) {
+	return controller.people.Change(authorization, personId, change)
 }
 
 // @DeleteRoute("/{person_id}")
@@ -110,69 +82,16 @@ func (controller *PeopleController) DeletePerson(
 	// @FromPath("person_id")
 	personId string,
 ) error {
-	caller, refused := controller.callers.Caller(authorization)
-	return controller.deleteUnless(cmp.Or(refused, controller.callers.Operator(caller)), personId)
+	return controller.people.Delete(authorization, personId)
 }
 
-func (controller *PeopleController) searchUnless(refused error, query MemberQuery) (PersonPage, error) {
-	switch {
-	case refused != nil:
-		return PersonPage{Items: []PersonSummary{}}, refused
-	}
-	return controller.people.Search(query)
-}
-
-func (controller *PeopleController) recordUnless(refused error, personId string) (PersonRecord, error) {
-	switch {
-	case refused != nil:
-		return PersonRecord{DomainIds: []string{}, AdminDomainIds: []string{}}, refused
-	}
-	return controller.people.Record(personId)
-}
-
-func (controller *PeopleController) seedUnless(refused error, seed PersonSeed) (PersonRecord, error) {
-	switch {
-	case refused != nil:
-		return PersonRecord{DomainIds: []string{}, AdminDomainIds: []string{}}, refused
-	}
-	return controller.seeds.Seed(seed)
-}
-
-func (controller *PeopleController) changeUnless(refused error, caller oidc.Caller, personId string, change PersonChange) (PersonSummary, error) {
-	if refused != nil {
-		return PersonSummary{}, refused
-	}
-	return controller.people.Change(caller, personId, change)
-}
-
-func (controller *PeopleController) resetUnless(refused error, caller oidc.Caller, personId string, reset PasswordReset) error {
-	if refused != nil {
-		return refused
-	}
-	return controller.people.ResetPassword(caller, personId, reset)
-}
-
-func (controller *PeopleController) removeTotpUnless(refused error, caller oidc.Caller, personId string) error {
-	if refused != nil {
-		return refused
-	}
-	return controller.people.RemoveTotp(caller, personId)
-}
-
-func (controller *PeopleController) removePasskeysUnless(refused error, caller oidc.Caller, personId string) error {
-	if refused != nil {
-		return refused
-	}
-	return controller.people.RemovePasskeys(caller, personId)
-}
-
-func (controller *PeopleController) deleteUnless(refused error, personId string) error {
-	if refused != nil {
-		return refused
-	}
-	return controller.people.Delete(personId)
-}
-
-func (controller *PeopleController) authorizationHeader() string {
-	return "Authorization"
+// @PostRoute("/seed")
+// @Allow(Service)
+func (controller *PeopleController) PostSeed(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromBody
+	seed PersonSeed,
+) (PersonRecord, error) {
+	return controller.people.Seed(authorization, seed)
 }

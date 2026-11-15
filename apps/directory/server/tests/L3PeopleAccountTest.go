@@ -39,7 +39,7 @@ func (test *L3PeopleAccountTest) TestAnEmptyPasswordIsRefused() {
 	err := test.personService().ResetPassword(test.operator(), person.PersonId, PasswordReset{NewPassword: "   "})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("newPassword", invalid.Field)
+	Assert.Equals("newPassword", invalid.Field())
 }
 
 func (test *L3PeopleAccountTest) TestAPasswordTheIdentityServerRefusesBreaksThePasswordPolicy() {
@@ -52,7 +52,7 @@ func (test *L3PeopleAccountTest) TestAPasswordTheIdentityServerRefusesBreaksTheP
 	err := test.personService().ResetPassword(test.operator(), person.PersonId, PasswordReset{NewPassword: "short"})
 	var policy *PasswordPolicy
 	Assert.IsTrue(errors.As(err, &policy), "want PasswordPolicy")
-	Assert.Equals("the password is too short", policy.Message)
+	Assert.Equals("the password is too short", policy.Error())
 }
 
 func (test *L3PeopleAccountTest) TestResetPasswordOfAnUnknownPersonIsNotFound() {

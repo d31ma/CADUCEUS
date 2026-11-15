@@ -42,12 +42,12 @@ func (service *AliasService) knownMember(found bool) error {
 	if found {
 		return nil
 	}
-	return &NotFound{Message: "no such member in your domain"}
+	return NotFound{}.Member()
 }
 
 func (service *AliasService) free(taken bool, address string) error {
 	if taken {
-		return &Duplicate{Message: address + " is already in use"}
+		return Duplicate{}.AddressInUse(address)
 	}
 	return nil
 }

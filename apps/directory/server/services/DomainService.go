@@ -58,14 +58,14 @@ func (service *DomainService) existing(domainId string) (DomainDocument, error) 
 func (service *DomainService) name(raw string) (string, error) {
 	domainId, invalid := recipients.DomainNames{}.Normalize(raw)
 	if invalid != nil {
-		return "", &InvalidRequest{Field: "name", Message: invalid.Error()}
+		return "", InvalidRequest{}.BadDomainName(invalid.Error())
 	}
 	return domainId, nil
 }
 
 func (service *DomainService) duplicate(found bool, domainId string) error {
 	if found {
-		return &Duplicate{Message: domainId + " is already hosted"}
+		return Duplicate{}.DomainHosted(domainId)
 	}
 	return nil
 }
@@ -74,7 +74,7 @@ func (service *DomainService) missing(found bool, domainId string) error {
 	if found {
 		return nil
 	}
-	return &NotFound{Message: "no hosted domain " + domainId}
+	return NotFound{}.Domain(domainId)
 }
 
 func (service *DomainService) unless(failure error, step func() error) error {

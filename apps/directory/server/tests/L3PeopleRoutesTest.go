@@ -39,7 +39,7 @@ func (test *L3PeopleRoutesTest) TestPutDefaultDomainRefusesARequestWithoutAValid
 }
 
 func (test *L3PeopleRoutesTest) TestMemberChangesRefuseARequestWithoutAValidToken() {
-	controller := &MembersController{admission: test.admission()}
+	controller := &MembersController{members: &MemberRouteService{admission: test.admission()}}
 	_, addErr := controller.PostMember("Bearer forged", AddMemberRequest{Username: "bo"})
 	_, changeErr := controller.PatchMember("Bearer forged", "bo-id", MemberChange{Admin: true})
 	removeErr := controller.DeleteMember("Bearer forged", "bo-id")
@@ -57,7 +57,7 @@ func (test *L3PeopleRoutesTest) TestMemberChangesRefuseAnAdminWhoIsNotAMemberOfT
 	admin := test.admin(first)
 	defer test.forget([]string{first, second}, admin)
 	authorization := test.bearer(realm, admin.PersonId, second, "mesail-admin")
-	controller := &MembersController{admission: test.admission()}
+	controller := &MembersController{members: &MemberRouteService{admission: test.admission()}}
 	_, addErr := controller.PostMember(authorization, AddMemberRequest{Username: "bo"})
 	_, changeErr := controller.PatchMember(authorization, "bo-id", MemberChange{Admin: true})
 	removeErr := controller.DeleteMember(authorization, "bo-id")
@@ -67,7 +67,7 @@ func (test *L3PeopleRoutesTest) TestMemberChangesRefuseAnAdminWhoIsNotAMemberOfT
 }
 
 func (test *L3PeopleRoutesTest) TestAddingAMemberToANamedDomainRefusesARequestWithoutAValidToken() {
-	_, err := (&DomainsController{callers: &CallerService{}}).PostMember("Bearer forged", "example.com", AddMemberRequest{Username: "bo"})
+	_, err := (&DomainsController{domains: &DomainRouteService{callers: &CallerService{}}}).PostMember("Bearer forged", "example.com", AddMemberRequest{Username: "bo"})
 	Assert.IsTrue(test.unauthenticated(err), "want Unauthenticated")
 }
 
@@ -77,25 +77,25 @@ func (test *L3PeopleRoutesTest) TestAddingAMemberToANamedDomainRefusesADomainAdm
 	defer closeServer()
 	test.configure(realm, base)
 	authorization := test.bearer(realm, "admin-"+test.unique(), "example.com", "mesail-admin")
-	_, err := (&DomainsController{callers: &CallerService{}}).PostMember(authorization, "example.com", AddMemberRequest{Username: "bo"})
+	_, err := (&DomainsController{domains: &DomainRouteService{callers: &CallerService{}}}).PostMember(authorization, "example.com", AddMemberRequest{Username: "bo"})
 	Assert.IsTrue(test.forbidden(err), "want Forbidden")
 }
 
 func (test *L3PeopleRoutesTest) TestAPasswordPolicyFailureNamesThePassword() {
-	answer := (&DirectoryErrorHandler{}).PasswordPolicy(&PasswordPolicy{Message: "the password is too short"})
+	answer := (&DirectoryErrorHandler{}).PasswordPolicy(PasswordPolicy{}.Refused("the password is too short"))
 	Assert.Equals("password_policy", answer.Code)
 	Assert.Equals("password", answer.Field)
-	Assert.Equals("the password is too short", answer.Message)
+	Assert.Equals("[MS1031]: the password is too short", answer.Message)
 }
 
 func (test *L3PeopleRoutesTest) TestRemovingTheLastAdminIsALastAdminConflict() {
-	answer := (&DirectoryErrorHandler{}).LastAdmin(&LastAdmin{Message: "a domain must keep at least one admin"})
+	answer := (&DirectoryErrorHandler{}).LastAdmin(LastAdmin{}.LastAdmin())
 	Assert.Equals("last_admin", answer.Code)
-	Assert.Equals("a domain must keep at least one admin", answer.Message)
+	Assert.Equals("[MS1034]: a domain must keep at least one admin", answer.Message)
 }
 
 func (test *L3PeopleRoutesTest) meController() *MeController {
-	return &MeController{callers: &CallerService{}, people: test.personService()}
+	return &MeController{me: &MeRouteService{callers: &CallerService{}, people: test.personService()}}
 }
 
 func (test *L3PeopleRoutesTest) unauthenticated(err error) bool {

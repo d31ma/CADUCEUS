@@ -58,7 +58,7 @@ func (test *L3PeopleChangeTest) TestAnUnknownStateIsRefused() {
 	_, err := test.personService().Change(test.operator(), person.PersonId, PersonChange{State: "deleted"})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("state", invalid.Field)
+	Assert.Equals("state", invalid.Field())
 }
 
 func (test *L3PeopleChangeTest) TestChangingAStateWithoutAnIdentityServerIsUnavailable() {

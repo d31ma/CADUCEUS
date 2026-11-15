@@ -156,7 +156,7 @@ func (test *D2RemovalJobTest) TestReleaseDomainNeverReleasesAPersonsPrefix() {
 }
 
 func (test *D2RemovalJobTest) TestTheRemovalsRouteRefusesARequestWithoutAValidToken() {
-	controller := &JobsController{callers: &CallerService{}}
+	controller := &JobsController{jobs: &JobRouteService{callers: &CallerService{}}}
 	_, err := controller.PostRemovals("Bearer forged")
 	var refused *Unauthenticated
 	Assert.IsTrue(errors.As(err, &refused), "want Unauthenticated")
@@ -168,7 +168,7 @@ func (test *D2RemovalJobTest) TestTheRemovalsRouteRunsTheJobForAnInstallWideServ
 	base, _, closeServer := test.keycloak()
 	defer closeServer()
 	os.Setenv("YON_APPLICATION_JSON", setup.ApplicationJson(realm, base))
-	controller := &JobsController{callers: &CallerService{}, removals: test.job()}
+	controller := &JobsController{jobs: &JobRouteService{callers: &CallerService{}, removals: test.job()}}
 	_, err := controller.PostRemovals(setup.ServiceBearer(realm, "*"))
 	Assert.Equals("<nil>", fmt.Sprint(err))
 }
@@ -177,7 +177,7 @@ func (test *D2RemovalJobTest) TestTheRemovalsRouteHidesItselfFromAMailDomainServ
 	setup := DirectoryTestSetup{}
 	realm := setup.SignedRealm()
 	os.Setenv("YON_APPLICATION_JSON", setup.ApplicationJson(realm, "http://127.0.0.1:1"))
-	controller := &JobsController{callers: &CallerService{}, removals: test.job()}
+	controller := &JobsController{jobs: &JobRouteService{callers: &CallerService{}, removals: test.job()}}
 	_, err := controller.PostRemovals(setup.ServiceBearer(realm, "example.com"))
 	var missing *NotFound
 	Assert.IsTrue(errors.As(err, &missing), "want NotFound")

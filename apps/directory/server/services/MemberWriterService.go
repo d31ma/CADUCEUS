@@ -178,7 +178,7 @@ func (writer *MemberWriterService) stateOf(person PersonDocument) string {
 func (writer *MemberWriterService) present(found bool, state string) error {
 	switch {
 	case !found, state == writer.removed():
-		return &NotFound{Message: "no such member in your domain"}
+		return NotFound{}.Member()
 	}
 	return nil
 }
@@ -199,7 +199,7 @@ func (writer *MemberWriterService) anotherAdmin(found bool) error {
 	if found {
 		return nil
 	}
-	return &LastAdmin{Message: "a domain must keep at least one admin"}
+	return LastAdmin{}.LastAdmin()
 }
 
 func (writer *MemberWriterService) memberKind() string {

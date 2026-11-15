@@ -9,6 +9,16 @@
   `RealtimeEvent{type: "devicebox.waiting", state: <kind>}` to the linked
   sockets of the listed devices of that person only; sockets without a
   device id, of other devices or of other people get nothing.
+- Changed `directory`'s error answers (slice E7, ADR 0009): every error
+  answer that `directory` shapes now has a numbered message,
+  `[MS<4 digits>]: <plain English message>`, from directory's block
+  MS1000-MS1048 in `docs/mesail/ERRORS.md` (for example
+  `[MS1017]: no such member in your domain`). `code`, `field`, routes,
+  statuses and the message texts after the number do not change. An
+  error that no other handler method takes answers `500 unavailable`
+  with `[MS1000]`. Every controller route now makes one Service call
+  (new route Services in `apps/directory/server/services/`, and a
+  `HealthService`); no app is left in `tools/controllers/unconverted.list`.
 - Added content-free pushes to `notify` (slices G5 and G11, ADR 0011,
   ADR 0012): `envelope.stored` events of kind `message` from `devicebox`
   push "New message", and the new `POST /api/v1/notify/call-pushes`

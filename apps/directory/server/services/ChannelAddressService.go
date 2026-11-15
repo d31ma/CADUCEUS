@@ -33,7 +33,7 @@ func (service *ChannelAddressService) storeUnless(failure error, found bool, exi
 	case service.same(existing, channel):
 		return nil
 	case found:
-		return &Duplicate{Message: channel.Address + " is already in use"}
+		return Duplicate{}.AddressInUse(channel.Address)
 	}
 	return service.addresses.Insert(channel)
 }
@@ -48,14 +48,14 @@ func (service *ChannelAddressService) deleteUnless(failure error, existing Addre
 func (service *ChannelAddressService) channelOnly(found bool, kind string) error {
 	switch {
 	case !found, kind != service.channelKind():
-		return &NotFound{Message: "no such channel address"}
+		return NotFound{}.ChannelAddress()
 	}
 	return nil
 }
 
 func (service *ChannelAddressService) channelNamed(channelId string) error {
 	if channelId == "" {
-		return &InvalidRequest{Field: "channelId", Message: "a channel id is required"}
+		return InvalidRequest{}.NoChannelId()
 	}
 	return nil
 }

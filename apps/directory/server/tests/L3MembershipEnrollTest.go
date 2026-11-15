@@ -78,7 +78,7 @@ func (test *L3MembershipEnrollTest) TestAReservationWithoutAStoredPersonStillNee
 	_, _, err := test.enroll().Enroll(AddMemberRequest{Username: username})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("displayName", invalid.Field)
+	Assert.Equals("displayName", invalid.Field())
 }
 
 func (test *L3MembershipEnrollTest) TestANameUsedByAnAliasIsADuplicate() {
@@ -98,7 +98,7 @@ func (test *L3MembershipEnrollTest) TestANewPersonNeedsADisplayName() {
 	_, _, err := test.enroll().Enroll(AddMemberRequest{Username: test.username(), DisplayName: "  ", FirstPassword: "first-password"})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("displayName", invalid.Field)
+	Assert.Equals("displayName", invalid.Field())
 	Assert.Equals("", calls())
 }
 
@@ -108,7 +108,7 @@ func (test *L3MembershipEnrollTest) TestANewPersonNeedsAFirstPassword() {
 	_, _, err := test.enroll().Enroll(AddMemberRequest{Username: test.username(), DisplayName: "Ana", FirstPassword: " "})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("firstPassword", invalid.Field)
+	Assert.Equals("firstPassword", invalid.Field())
 	Assert.Equals("", calls())
 }
 
@@ -118,7 +118,7 @@ func (test *L3MembershipEnrollTest) TestAUsernameWithASpaceIsInvalid() {
 	_, _, err := test.enroll().Enroll(AddMemberRequest{Username: "ana example", DisplayName: "Ana", FirstPassword: "first-password"})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("username", invalid.Field)
+	Assert.Equals("username", invalid.Field())
 }
 
 func (test *L3MembershipEnrollTest) TestARoleNameIsNotAUsername() {
@@ -127,7 +127,7 @@ func (test *L3MembershipEnrollTest) TestARoleNameIsNotAUsername() {
 	_, _, err := test.enroll().Enroll(AddMemberRequest{Username: "Postmaster", DisplayName: "Ana", FirstPassword: "first-password"})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("username", invalid.Field)
+	Assert.Equals("username", invalid.Field())
 }
 
 func (test *L3MembershipEnrollTest) TestAnAccountThatKeycloakAlreadyHasIsNeverTakenOver() {

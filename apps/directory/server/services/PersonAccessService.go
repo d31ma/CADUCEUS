@@ -54,7 +54,7 @@ func (service *PersonAccessService) operator(caller oidc.Caller) bool {
 }
 
 func (service *PersonAccessService) forbidden() error {
-	return &Forbidden{Message: "only an Operator or an admin of every domain of this person may change the account"}
+	return Forbidden{}.NotAccountManager()
 }
 
 func (service *PersonAccessService) operatorRole() string {

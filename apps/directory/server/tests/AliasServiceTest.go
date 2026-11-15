@@ -35,7 +35,7 @@ func (test *AliasServiceTest) TestAnAliasInAnotherDomainIsRefused() {
 	_, err := service.Add(Admission{Caller: caller}, CreateAliasRequest{Address: "sales@example.org"})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("address", invalid.Field)
+	Assert.Equals("address", invalid.Field())
 }
 
 func (test *AliasServiceTest) TestAMemberOfAnotherDomainIsNotFound() {
@@ -54,7 +54,7 @@ func (test *AliasServiceTest) TestAnAddressInUseIsADuplicate() {
 
 func (test *AliasServiceTest) TestARefusedCallerAddsNothing() {
 	service, caller, domain := test.world()
-	_, err := service.Add(Admission{Caller: caller, Refusal: &Unauthenticated{}}, CreateAliasRequest{Address: "refused@" + domain})
+	_, err := service.Add(Admission{Caller: caller, Refusal: Unauthenticated{}.TokenRefused()}, CreateAliasRequest{Address: "refused@" + domain})
 	_, taken, _ := service.addresses.Find("refused@" + domain)
 	var refused *Unauthenticated
 	Assert.IsTrue(errors.As(err, &refused), "want Unauthenticated")

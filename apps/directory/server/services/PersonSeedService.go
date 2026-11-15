@@ -31,7 +31,7 @@ func (service *PersonSeedService) Seed(seed PersonSeed) (PersonRecord, error) {
 
 func (service *PersonSeedService) enabled() error {
 	if service.settings.Settings().DevelopmentSeed != "true" {
-		return &NotFound{Message: "not found"}
+		return NotFound{}.SeedTurnedOff()
 	}
 	return nil
 }
@@ -39,11 +39,11 @@ func (service *PersonSeedService) enabled() error {
 func (service *PersonSeedService) complete(seed PersonSeed) error {
 	switch {
 	case strings.TrimSpace(seed.PersonId) == "":
-		return &InvalidRequest{Field: "personId", Message: "a person id is required"}
+		return InvalidRequest{}.NoPersonId()
 	case strings.TrimSpace(seed.DisplayName) == "":
-		return &InvalidRequest{Field: "displayName", Message: "a display name is required"}
+		return InvalidRequest{}.NoDisplayName()
 	case len(seed.Memberships) > service.mostMemberships():
-		return &InvalidRequest{Field: "memberships", Message: "a seed call adds at most 2 domains; seed the person again for more"}
+		return InvalidRequest{}.TooManyMemberships()
 	}
 	return nil
 }

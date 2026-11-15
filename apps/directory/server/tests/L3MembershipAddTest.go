@@ -76,7 +76,7 @@ func (test *L3MembershipAddTest) TestAddWithoutADisplayNameIsInvalid() {
 	_, err := test.membership().Add(test.operator(domain), domain, AddMemberRequest{Username: test.username(), FirstPassword: "first-password"})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("displayName", invalid.Field)
+	Assert.Equals("displayName", invalid.Field())
 }
 
 func (test *L3MembershipAddTest) TestAddingTheSameMemberTwiceIsADuplicate() {

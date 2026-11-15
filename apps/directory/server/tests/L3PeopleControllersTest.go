@@ -54,7 +54,7 @@ func (test *L3PeopleControllersTest) TestGetPeopleRefusesALimitThatIsNotANumber(
 	_, err := test.peopleController().GetPeople(request)
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("limit", invalid.Field)
+	Assert.Equals("limit", invalid.Field())
 }
 
 func (test *L3PeopleControllersTest) TestGetPersonGivesAnInstallWideServiceTheRecord() {
@@ -199,7 +199,7 @@ func (test *L3PeopleControllersTest) TestPeopleRoutesRefuseARequestWithoutAValid
 }
 
 func (test *L3PeopleControllersTest) peopleController() *PeopleController {
-	return &PeopleController{callers: &CallerService{}, people: test.personService()}
+	return &PeopleController{people: &PersonRouteService{callers: &CallerService{}, people: test.personService()}}
 }
 
 func (test *L3PeopleControllersTest) request(target string, authorization string) *http.Request {

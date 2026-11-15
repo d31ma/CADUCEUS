@@ -5,3 +5,4 @@ outbox
 recipients
 collections
 addresses
+apierrors

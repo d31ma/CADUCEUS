@@ -3,9 +3,9 @@ package dnscheck
 type recordTypes struct{}
 
 func (recordTypes) mx() recordType {
-	return recordType{name: "MX", number: 15}
+	return recordType{name: "MX", typeValue: 15}
 }
 
 func (recordTypes) txt() recordType {
-	return recordType{name: "TXT", number: 16}
+	return recordType{name: "TXT", typeValue: 16}
 }

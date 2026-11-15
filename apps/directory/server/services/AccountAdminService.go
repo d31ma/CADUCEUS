@@ -74,15 +74,11 @@ func (service *AccountAdminService) madeByThisAdd(refused error, sameTag bool) e
 	case sameTag:
 		return nil
 	}
-	return &Duplicate{Message: service.taken()}
+	return Duplicate{}.UsernameTaken()
 }
 
 func (service *AccountAdminService) sameTag(tag string, addRequest string) bool {
 	return tag != "" && tag == addRequest
-}
-
-func (service *AccountAdminService) taken() string {
-	return "this username is already taken"
 }
 
 func (service *AccountAdminService) users() keycloak.Users {
@@ -97,13 +93,13 @@ func (service *AccountAdminService) translated(failure error) error {
 	case failure == nil:
 		return nil
 	case errors.As(failure, &refused):
-		return &PasswordPolicy{Message: cmp.Or(refused.Message, "the password does not meet the password policy")}
+		return PasswordPolicy{}.Refused(cmp.Or(refused.Message, "the password does not meet the password policy"))
 	case errors.As(failure, &keycloak.UserExists{}):
-		return &Duplicate{Message: service.taken()}
+		return Duplicate{}.UsernameTaken()
 	case errors.As(failure, &keycloak.UserMissing{}):
-		return &NotFound{Message: "no such account"}
+		return NotFound{}.Account()
 	}
-	return &Unavailable{Message: "the identity server is not available", Cause: failure}
+	return Unavailable{}.IdentityServer(failure)
 }
 
 func (service *AccountAdminService) timeout() time.Duration {

@@ -123,35 +123,35 @@ func (service *PersonService) visible(person PersonDocument, removing []string) 
 
 func (service *PersonService) validState(state string) error {
 	if !slices.Contains([]string{service.active(), service.disabled()}, state) {
-		return &InvalidRequest{Field: "state", Message: "state must be active or disabled"}
+		return InvalidRequest{}.BadState()
 	}
 	return nil
 }
 
 func (service *PersonService) passwordGiven(password string) error {
 	if strings.TrimSpace(password) == "" {
-		return &InvalidRequest{Field: "newPassword", Message: "a new password is required"}
+		return InvalidRequest{}.NoNewPassword()
 	}
 	return nil
 }
 
 func (service *PersonService) memberOf(person PersonDocument, domainId string) error {
 	if !(PersonRules{}).Member(person, domainId) {
-		return &NotFound{Message: "you are not a member of " + domainId}
+		return NotFound{}.NotMemberOf(domainId)
 	}
 	return nil
 }
 
 func (service *PersonService) present(found bool) error {
 	if !found {
-		return &NotFound{Message: "no such person"}
+		return NotFound{}.Person()
 	}
 	return nil
 }
 
 func (service *PersonService) notDeleted(person PersonDocument) error {
 	if person.State == service.deleted() {
-		return &NotFound{Message: "this person was deleted"}
+		return NotFound{}.PersonDeleted()
 	}
 	return nil
 }

@@ -44,7 +44,7 @@ func (service *MemberService) memberUnless(admission Admission, memberId string)
 func (service *MemberService) knownActive(found bool, state string) error {
 	switch {
 	case !found, state != service.active():
-		return &NotFound{Message: "no such member in your domain"}
+		return NotFound{}.Member()
 	}
 	return nil
 }

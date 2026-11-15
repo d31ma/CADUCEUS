@@ -112,7 +112,7 @@ func (service *MembershipService) withDomain(person PersonDocument, domainId str
 
 func (service *MembershipService) notYetMember(person PersonDocument, domainId string) error {
 	if (PersonRules{}).Member(person, domainId) {
-		return &Duplicate{Message: person.Username + " is already a member of " + domainId}
+		return Duplicate{}.AlreadyMember(person.Username, domainId)
 	}
 	return nil
 }

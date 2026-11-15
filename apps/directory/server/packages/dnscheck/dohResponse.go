@@ -17,7 +17,7 @@ func (response dohResponse) check(name string) error {
 func (response dohResponse) values(kind recordType) []string {
 	values := []string{}
 	for _, answer := range response.Answer {
-		values = append(values, answer.dataIfType(kind.number)...)
+		values = append(values, answer.dataIfType(kind.typeValue)...)
 	}
 	return values
 }

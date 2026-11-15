@@ -1,7 +1,7 @@
 type Unauthenticated struct {
-	Message string
+	ErrorCase
 }
 
-func (failure *Unauthenticated) Error() string {
-	return failure.Message
+func (Unauthenticated) TokenRefused() *Unauthenticated {
+	return &Unauthenticated{ErrorCase{1001, "unauthenticated", "", "the access token was refused"}}
 }

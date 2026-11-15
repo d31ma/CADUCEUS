@@ -122,9 +122,9 @@ func (service *ReservationService) translated(failure error, field string) error
 	case failure == nil:
 		return nil
 	case errors.As(failure, &addresses.Taken{}):
-		return &Duplicate{Message: failure.Error()}
+		return Duplicate{}.NameTaken(failure.Error())
 	}
-	return &InvalidRequest{Field: field, Message: failure.Error()}
+	return InvalidRequest{}.BadName(field, failure.Error())
 }
 
 func (service *ReservationService) usernameField() string {

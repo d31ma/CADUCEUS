@@ -37,14 +37,14 @@ func (service *AddressService) notHosted(active bool) error {
 	if active {
 		return nil
 	}
-	return &DomainNotHosted{Message: "this domain is not hosted here"}
+	return DomainNotHosted{}.Address()
 }
 
 func (service *AddressService) missing(found bool) error {
 	if found {
 		return nil
 	}
-	return &NotFound{Message: "no such address"}
+	return NotFound{}.Address()
 }
 
 func (service *AddressService) activeState() string {

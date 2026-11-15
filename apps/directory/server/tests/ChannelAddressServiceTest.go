@@ -51,7 +51,7 @@ func (test *ChannelAddressServiceTest) TestAnAddressInAnotherDomainIsRefused() {
 	_, err := service.Add(admission, ChannelAddressRequest{Address: "team@example.org", ChannelId: "ch_team"})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("address", invalid.Field)
+	Assert.Equals("address", invalid.Field())
 }
 
 func (test *ChannelAddressServiceTest) TestAChannelIdIsRequired() {
@@ -59,7 +59,7 @@ func (test *ChannelAddressServiceTest) TestAChannelIdIsRequired() {
 	_, err := service.Add(admission, ChannelAddressRequest{Address: "team@" + domain})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("channelId", invalid.Field)
+	Assert.Equals("channelId", invalid.Field())
 }
 
 func (test *ChannelAddressServiceTest) TestARemovedChannelAddressIsGone() {
@@ -82,7 +82,7 @@ func (test *ChannelAddressServiceTest) TestAMemberAddressCannotBeRemovedAsAChann
 
 func (test *ChannelAddressServiceTest) TestARefusedCallerChangesNothing() {
 	service, admission, domain := test.world()
-	admission.Refusal = &Unauthenticated{}
+	admission.Refusal = Unauthenticated{}.TokenRefused()
 	_, addErr := service.Add(admission, ChannelAddressRequest{Address: "team@" + domain, ChannelId: "ch_team"})
 	removeErr := service.Remove(admission, "ana@"+domain)
 	_, found, _ := service.addresses.Find("team@" + domain)

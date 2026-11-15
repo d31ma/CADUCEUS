@@ -1,9 +1,11 @@
 // @RequestRoute("/api/v1/directory/health")
 // @Public
 type HealthController struct {
+	// @Needs
+	health *HealthService
 }
 
 // @GetRoute
 func (controller *HealthController) GetHealth() Health {
-	return Health{Service: "directory", Status: "ok"}
+	return controller.health.Health()
 }

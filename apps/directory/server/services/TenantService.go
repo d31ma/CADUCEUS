@@ -26,7 +26,7 @@ func (service *TenantService) inactive(domain DomainDocument) bool {
 func (service *TenantService) refusal(found bool, state string) error {
 	switch {
 	case !found, state == service.disabled(), state == service.removing():
-		return &Forbidden{Message: "this domain is not hosted here"}
+		return Forbidden{}.DomainNotServed()
 	}
 	return nil
 }

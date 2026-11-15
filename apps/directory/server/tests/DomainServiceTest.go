@@ -48,7 +48,7 @@ func (test *DomainServiceTest) TestANameWithoutADotIsRefused() {
 	_, err := service.Add(CreateDomainRequest{Name: "intranet"})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("name", invalid.Field)
+	Assert.Equals("name", invalid.Field())
 }
 
 func (test *DomainServiceTest) TestVerifyWithEveryRecordRightMakesTheDomainActive() {

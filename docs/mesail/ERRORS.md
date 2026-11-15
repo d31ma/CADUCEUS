@@ -98,6 +98,54 @@ keeps its row, marked "retired".
 | MS0519 | identity | 503 | `unavailable` | Service tokens are not available now. Try again later. | `POST /service-token` failed for another reason |
 | MS0520 | identity | 503 | `unavailable` | The signing keys are not available now. Try again later. | `GET /jwks` without a usable signing key |
 | MS1000 | directory | 500 | `unavailable` | Something went wrong. | an unexpected error in `directory` |
+| MS1001 | directory | 401 | `unauthenticated` | the access token was refused | a directory route could not verify the caller's token |
+| MS1002 | directory | 403 | `forbidden` | only an Operator may do this | a domains or people route that only an Operator may call |
+| MS1003 | directory | 404 | `not_found` | not found | a service route for another domain, or an install-wide route called with a domain token |
+| MS1004 | directory | 403 | `forbidden` | you are not a member of this domain | the caller is not an active member of the token's domain |
+| MS1005 | directory | 403 | `forbidden` | this domain is not hosted here | the token's domain is missing, disabled or being removed |
+| MS1006 | directory | 403 | `forbidden` | only an Operator or an admin of every domain of this person may change the account | an account change by someone who does not manage every domain of the person |
+| MS1007 | directory | 400 | `invalid_request` | limit must be between 1 and 100 | a page `limit` outside 1 to 100; `field` `limit` |
+| MS1008 | directory | 400 | `invalid_request` | limit must be a whole number | a page `limit` that is not a number; `field` `limit` |
+| MS1009 | directory | 400 | `invalid_request` | the cursor is not one this service gave out | a page `cursor` this service did not give out; `field` `cursor` |
+| MS1010 | directory | 404 | `not_found` | no hosted domain ... | a domain id that is not hosted |
+| MS1011 | directory | 400 | `invalid_request` | (the domain name rule) | a new domain name that is not a valid domain name; `field` `name` |
+| MS1012 | directory | 409 | `duplicate` | ... is already hosted | add a domain that is already hosted |
+| MS1013 | directory | 503 | `unavailable` | the DNS lookup failed | the DNS check of a domain failed |
+| MS1014 | directory | 404 | `domain_not_hosted` | this domain is not hosted here | an address lookup for a domain that is not active here |
+| MS1015 | directory | 404 | `not_found` | no such address | an address lookup for an address nobody owns |
+| MS1016 | directory | 400 | `invalid_request` | the address must be in your own domain | an alias or channel address outside the caller's domain; `field` `address` |
+| MS1017 | directory | 404 | `not_found` | no such member in your domain | a member id that is not an active member of the caller's domain |
+| MS1018 | directory | 409 | `duplicate` | ... is already in use | an alias or channel address that another owner uses |
+| MS1019 | directory | 400 | `invalid_request` | (the name rule) | a username or address name that breaks the name rules; `field` `username` or `address` |
+| MS1020 | directory | 409 | `duplicate` | (the reservation text) | a username or address name reserved by someone else |
+| MS1021 | directory | 404 | `not_found` | no such channel address | remove a channel address that does not exist or is not a channel's |
+| MS1022 | directory | 400 | `invalid_request` | a channel id is required | a channel address without a channel id; `field` `channelId` |
+| MS1023 | directory | 400 | `invalid_request` | at most 100 addresses can be resolved at once | resolve more than 100 addresses; `field` `addresses` |
+| MS1024 | directory | 400 | `invalid_request` | (the address rule) | resolve an address that is not valid; `field` `addresses` |
+| MS1025 | directory | 409 | `duplicate` | ... is used by an alias or a channel address | add a member whose username an alias or channel address uses |
+| MS1026 | directory | 400 | `invalid_request` | a display name is required for a new person | add a new person without a display name; `field` `displayName` |
+| MS1027 | directory | 400 | `invalid_request` | a first password is required for a new person | add a new person without a first password; `field` `firstPassword` |
+| MS1028 | directory | 409 | `duplicate` | ... belonged to a deleted person and is never reused | add a member with the username of a deleted person |
+| MS1029 | directory | 409 | `duplicate` | ... is already a member of ... | add a person to a domain they are already in |
+| MS1030 | directory | 409 | `duplicate` | this username is already taken | Keycloak already has an account with this username |
+| MS1031 | directory | 400 | `password_policy` | (Keycloak's rule text) | Keycloak refused the password; `field` `password` |
+| MS1032 | directory | 404 | `not_found` | no such account | Keycloak has no account for the person |
+| MS1033 | directory | 503 | `unavailable` | the identity server is not available | Keycloak failed or did not answer |
+| MS1034 | directory | 409 | `last_admin` | a domain must keep at least one admin | a change or removal would leave the domain without an admin |
+| MS1035 | directory | 400 | `invalid_request` | state must be active or disabled | a person change with another state; `field` `state` |
+| MS1036 | directory | 400 | `invalid_request` | a new password is required | a password reset without a password; `field` `newPassword` |
+| MS1037 | directory | 404 | `not_found` | you are not a member of ... | set a default domain the caller is not a member of |
+| MS1038 | directory | 404 | `not_found` | no such person | a person id that does not exist |
+| MS1039 | directory | 404 | `not_found` | this person was deleted | a person id of a deleted person |
+| MS1040 | directory | 404 | `not_found` | not found | the development seed route when the seed is turned off |
+| MS1041 | directory | 400 | `invalid_request` | a person id is required | a seed without a person id; `field` `personId` |
+| MS1042 | directory | 400 | `invalid_request` | a display name is required | a seed without a display name; `field` `displayName` |
+| MS1043 | directory | 400 | `invalid_request` | a seed call adds at most 2 domains; seed the person again for more | a seed with more than 2 domains; `field` `memberships` |
+| MS1044 | directory | 503 | `unavailable` | the outbox is not configured | the outbox settings cannot be read |
+| MS1045 | directory | 404 | `not_found` | no such dead event | requeue a dead event that does not exist |
+| MS1046 | directory | 404 | `not_found` | no such outbox collection | the outbox store names a collection it does not know |
+| MS1047 | directory | 404 | `not_found` | no such outbox document | the outbox store cannot find its document |
+| MS1048 | directory | 503 | `unavailable` | the directory store is not available | the directory store (FYLO) failed |
 | MS1500 | messaging | 500 | `unavailable` | Something went wrong. | an unexpected error in `messaging` |
 | MS1501 | messaging | 401 | `unauthenticated` | the access token was refused | a messaging route could not verify the caller's token |
 | MS1502 | messaging | 403 | `forbidden` | only members of a domain use its conversations | a chat route called without the Member or DomainAdmin role |

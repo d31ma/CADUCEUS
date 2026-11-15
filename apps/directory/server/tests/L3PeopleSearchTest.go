@@ -66,14 +66,14 @@ func (test *L3PeopleSearchTest) TestSearchRefusesALimitAboveOneHundred() {
 	_, err := test.personService().Search(MemberQuery{Limit: 101})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("limit", invalid.Field)
+	Assert.Equals("limit", invalid.Field())
 }
 
 func (test *L3PeopleSearchTest) TestSearchRefusesACursorItDidNotGiveOut() {
 	_, err := test.personService().Search(MemberQuery{Cursor: "abc"})
 	var invalid *InvalidRequest
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
-	Assert.Equals("cursor", invalid.Field)
+	Assert.Equals("cursor", invalid.Field())
 }
 
 func (test *L3PeopleSearchTest) TestAnAdminSeesUsernamesAdminFlagsAndManagedAccounts() {

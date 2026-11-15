@@ -34,7 +34,7 @@ func (service *PersonEnrollService) byOwner(failure error, reservation addresses
 	case failure != nil:
 		return PersonDocument{}, false, failure
 	case reservation.Owner == addresses.Owners{}.Addresses():
-		return PersonDocument{}, false, &Duplicate{Message: request.Username + " is used by an alias or a channel address"}
+		return PersonDocument{}, false, Duplicate{}.UsernameIsAddress(request.Username)
 	case reservation.Owner == addresses.Owners{}.Person():
 		return service.reserved(reservation.PersonId, request)
 	}
@@ -99,21 +99,21 @@ func (service *PersonEnrollService) fresh(personId string, request AddMemberRequ
 
 func (service *PersonEnrollService) named(displayName string) error {
 	if displayName == "" {
-		return &InvalidRequest{Field: "displayName", Message: "a display name is required for a new person"}
+		return InvalidRequest{}.NoNewPersonName()
 	}
 	return nil
 }
 
 func (service *PersonEnrollService) passwordGiven(password string) error {
 	if strings.TrimSpace(password) == "" {
-		return &InvalidRequest{Field: "firstPassword", Message: "a first password is required for a new person"}
+		return InvalidRequest{}.NoFirstPassword()
 	}
 	return nil
 }
 
 func (service *PersonEnrollService) usable(person PersonDocument) error {
 	if person.State == service.deleted() {
-		return &Duplicate{Message: person.Username + " belonged to a deleted person and is never reused"}
+		return Duplicate{}.UsernameRetired(person.Username)
 	}
 	return nil
 }

@@ -12,7 +12,7 @@ func (rules *AddressRulesService) OwnAddress(domainId string, raw string) (strin
 func (rules *AddressRulesService) owned(address string, invalid error, domainId string) (string, error) {
 	switch {
 	case invalid != nil, (recipients.Addresses{}).Domain(address) != domainId:
-		return "", &InvalidRequest{Field: "address", Message: "the address must be in your own domain"}
+		return "", InvalidRequest{}.AddressOutsideDomain()
 	}
 	return address, nil
 }

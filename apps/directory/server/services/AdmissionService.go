@@ -38,7 +38,7 @@ func (service *AdmissionService) memberRefusal(person PersonDocument, domainId s
 func (service *AdmissionService) member(person PersonDocument, domainId string) error {
 	switch {
 	case person.State != service.active(), !(PersonRules{}).Member(person, domainId):
-		return &Forbidden{Message: "you are not a member of this domain"}
+		return Forbidden{}.NotMember()
 	}
 	return nil
 }

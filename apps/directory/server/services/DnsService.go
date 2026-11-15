@@ -30,7 +30,7 @@ func (service *DnsService) unavailable(failure error) error {
 	if failure == nil {
 		return nil
 	}
-	return &Unavailable{Message: "the DNS lookup failed", Cause: failure}
+	return Unavailable{}.Dns(failure)
 }
 
 func (service *DnsService) timeout() time.Duration {

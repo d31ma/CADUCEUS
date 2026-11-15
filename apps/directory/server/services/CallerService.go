@@ -35,12 +35,12 @@ func (service *CallerService) notFoundUnless(allowed bool) error {
 	if allowed {
 		return nil
 	}
-	return &NotFound{Message: "not found"}
+	return NotFound{}.Hidden()
 }
 
 func (service *CallerService) refusal(failure error) error {
 	if failure != nil {
-		return &Unauthenticated{Message: "the access token was refused"}
+		return Unauthenticated{}.TokenRefused()
 	}
 	return nil
 }
@@ -49,7 +49,7 @@ func (service *CallerService) operatorRefusal(operator bool) error {
 	if operator {
 		return nil
 	}
-	return &Forbidden{Message: "only an Operator may do this"}
+	return Forbidden{}.NotOperator()
 }
 
 func (service *CallerService) operatorRole() string {

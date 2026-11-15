@@ -82,12 +82,12 @@ func (store *OutboxStoreService) unknown(known bool) error {
 	if known {
 		return nil
 	}
-	return &NotFound{Message: "no such outbox collection"}
+	return NotFound{}.OutboxCollection()
 }
 
 func (store *OutboxStoreService) missing(found bool) error {
 	if found {
 		return nil
 	}
-	return &NotFound{Message: "no such outbox document"}
+	return NotFound{}.OutboxDocument()
 }

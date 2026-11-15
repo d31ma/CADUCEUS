@@ -2710,6 +2710,60 @@ apps started together sweep in the same second. TACHYON 26.46.02's
   1,000-edit storm, run natively, shows no edit over 1 s at the tick and
   no router 502.
 
+### K18. Gate start-up survives a dead disk or a restart (one tiny session, mesail-arch)
+Found by PLAT-1 (2026-11-15):
+- the Mesail nightly hung 2 h 24 min in `gates.sh`'s first step.
+  `mesail_go_cache_usable` (`scripts/go-cache.sh`) ran `mkdir -p` and
+  `[ -w ]` on `~/Library/Caches/go-build-mesail`, which links to HANGAR.
+  HANGAR did not answer any process, so the call waited in the kernel with
+  no time limit, and the `$TMPDIR` fallback was never reached.
+  `kit-sync.sh` and `scripts/floci/common.sh` use the same function.
+- after the Mac restarted at 09:22, the FYLO test image
+  (`/Volumes/ATLAS/Mesail/mesail-fylo-test.sparsebundle`, mounted at
+  `~/Developer/AtlasFylo/mesail`) was not attached, so every app gate
+  failed at "fylo root" until it was attached by hand. A LaunchAgent cannot
+  attach it, because macOS does not let a launchd-started shell read
+  network volumes; `gates.sh` runs inside the jobq worker, which can.
+- **Owns, for this change only:** `scripts/go-cache.sh`, new
+  `scripts/time-limit.sh`, new `scripts/fylo-image.sh`, their tests
+  `scripts/go-cache_test.sh` and `scripts/fylo-image_test.sh`, and in
+  `scripts/gates.sh` the sources, two shared steps, `atlas_image_attached`
+  and the usage text.
+- **Builds:**
+  - `scripts/time-limit.sh`: `mesail_finishes_within <seconds> <what>
+    <command>` runs a command in a background process with its output on
+    `/dev/null`, checks it with `kill -0` every 0.1 s, and returns 2 with
+    a warning line when it does not finish in time. Plain shell, not
+    `timeout`: a process stuck in a file call cannot be killed, and
+    `timeout` would still wait for it. It never waits for a stuck process.
+  - the Go cache: the first touch of the cache folder goes through that
+    limit (`MESAIL_GO_CACHE_PROBE_SECONDS`, 10). A folder that fails or
+    does not answer falls back to `$TMPDIR/go-build-mesail-fallback` with a
+    warning; after that, `df`, `du` and the trim's `find` run only on the
+    chosen folder.
+  - the FYLO test image: when an app gate needs a FYLO folder under the
+    mount point and the image is not mounted, `gates.sh` attaches it
+    (`diskutil image attach --mountOptions nobrowse`). It first checks that
+    the image file can be read within `MESAIL_FYLO_IMAGE_CHECK_SECONDS` (10),
+    so a dead ATLAS fails at once with a clear message, and the attach
+    itself has a limit (`MESAIL_FYLO_IMAGE_ATTACH_SECONDS`, 120). A mkdir
+    lock (`~/Library/Caches/mac-locks/mesail-fylo-image.lock`, with the
+    owner's pid; a lock whose owner is gone is removed) keeps two gates
+    from attaching at once, and the mount is checked again after the lock
+    is taken. The "is it mounted" check reads `mount` and resolves only the
+    mount point's parent folder, never the mounted volume itself. A
+    `--shared-only` run never needs the image, so it never attaches.
+  - `gates.sh` runs both tests as shared steps ("go cache probe", "fylo
+    image attach"). The image test makes its own 20 MB image under
+    `$TMPDIR` and never detaches the shared one (other gates and native
+    runs may be using it).
+- **Done when:** both tests pass (usable, unusable and stuck cache folders;
+  a missing mount attached, a mounted image kept, two gates at once with one
+  attach, a dead ATLAS failing in under 3 s, a missing image file);
+  `scripts/gates.sh --shared-only` and one app gate pass; the next nightly
+  after a restart attaches the image by itself, and a dead HANGAR shows the
+  warning line instead of a hang.
+
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 
 Wave 10 (J0 to J5: Floci SQS and SNS for events, EventBridge Scheduler

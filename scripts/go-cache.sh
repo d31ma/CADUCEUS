@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
+# shellcheck source-path=SCRIPTDIR
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/time-limit.sh"
 
 mesail_default_go_cache() {
   if [ "$(uname -s)" = Darwin ]; then echo "$HOME/Library/Caches/go-build-mesail"; fi
@@ -17,11 +19,19 @@ mesail_go_cache_usable() {
   mkdir -p "$1" 2> /dev/null && [ -d "$1" ] && [ -w "$1" ]
 }
 
+mesail_go_cache_probe_seconds() {
+  echo "${MESAIL_GO_CACHE_PROBE_SECONDS:-10}"
+}
+
+mesail_go_cache_answers() {
+  mesail_finishes_within "$(mesail_go_cache_probe_seconds)" "go cache: $1" mesail_go_cache_usable "$1"
+}
+
 mesail_choose_go_cache() {
   local folder="$1" fallback
-  if mesail_go_cache_usable "$folder"; then echo "$folder"; return 0; fi
+  if mesail_go_cache_answers "$folder"; then echo "$folder"; return 0; fi
   fallback="$(mesail_fallback_go_cache)"
-  echo "=== go cache: $folder is not usable (disk not mounted or link broken); using $fallback" >&2
+  echo "=== go cache: $folder is not usable or did not answer (disk not mounted or link broken); using $fallback" >&2
   mkdir -p "$fallback"
   echo "$fallback"
 }

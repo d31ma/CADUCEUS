@@ -4,6 +4,8 @@ set -uo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/ci/tool-lock.sh"
 # shellcheck source-path=SCRIPTDIR
 source "$(cd "$(dirname "$0")" && pwd)/go-cache.sh"
+# shellcheck source-path=SCRIPTDIR
+source "$(cd "$(dirname "$0")" && pwd)/fylo-image.sh"
 
 repository_root() {
   cd "$(dirname "$0")/.." && pwd
@@ -242,9 +244,9 @@ ensure_app_env() {
 atlas_image_attached() {
   local mount_point
   mount_point="$(atlas_mount_point)"
-  mount | grep -q " on $mount_point " && return 0
-  echo "the FYLO test image is not attached at $mount_point; attach it:"
-  echo "diskutil image attach --mountOptions nobrowse --mountPoint $mount_point /Volumes/ATLAS/Mesail/mesail-fylo-test.sparsebundle"
+  MESAIL_FYLO_IMAGE_MOUNT="$mount_point" mesail_fylo_image_ready && return 0
+  echo "the FYLO test image is not attached at $mount_point and could not be attached; attach it by hand:"
+  echo "diskutil image attach --mountOptions nobrowse --mountPoint $mount_point $(mesail_fylo_image_file)"
   return 1
 }
 
@@ -456,6 +458,8 @@ shared_gates() {
   run_step "doctor" "$folder/doctor.log" "$ty" doctor "$root/apps/web" || status=1
   run_step "gofmt role files" "$folder/gofmt.log" role_files_formatted "$root" || status=1
   run_step "kit sync" "$folder/kit-sync.log" "$root/scripts/kit-sync.sh" --check || status=1
+  run_step "go cache probe" "$folder/go-cache.log" "$root/scripts/go-cache_test.sh" || status=1
+  run_step "fylo image attach" "$folder/fylo-image.log" "$root/scripts/fylo-image_test.sh" || status=1
   module_gates "$root" "$folder" || status=1
   return "$status"
 }
@@ -597,7 +601,8 @@ usage() {
   echo "  MESAIL_GOCACHE  the Go build cache (default on macOS: ~/Library/Caches/go-build-mesail," >&2
   echo "                  a local disk (on this Mac a link to HANGAR), not the ANVIL NFS link of ~/Library/Caches/go-build)" >&2
   echo "                  Go runs with -trimpath, so worktrees share cache entries; an unusable cache" >&2
-  echo "                  folder falls back to \$TMPDIR/go-build-mesail-fallback; under" >&2
+  echo "                  folder, or one that does not answer within MESAIL_GO_CACHE_PROBE_SECONDS (10)," >&2
+  echo "                  falls back to \$TMPDIR/go-build-mesail-fallback; under" >&2
   echo "                  MESAIL_GOCACHE_MIN_FREE_GB (35) GiB free, entries unused for over 1 hour" >&2
   echo "                  are removed before the run; over MESAIL_GOCACHE_MAX_GB (10) GiB, the same," >&2
   echo "                  then entries unused for over 10 minutes if it is still over (never a full" >&2

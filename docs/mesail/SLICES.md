@@ -2563,6 +2563,51 @@ step stays in every such slice's card (E12's card carries it).
   `scripts/kit-sync.sh --check` fails before and passes after;
   `scripts/gates.sh --shared-only` passes.
 
+### K15. Gates test only the apps a change touches (one session, after the .tachyon fix)
+Hub decision (user delegated, 2026-11-14), from Platform's Mac time study:
+Mesail used 20.4 job hours that day, 13.9 of them tests, often every app
+for every gate. Expected saving: about 4.5 hours a day.
+- **Owns, for this change only:** `scripts/gates.sh` (the app selection
+  and its usage text), a new Go module `tools/gateplan/**` (the selection
+  logic, so it has unit tests), and a new `scripts/ci/nightly-full.sh`.
+- **Builds:**
+  - `tools/gateplan` reads the changed files (`git diff --name-only
+    origin/develop...HEAD` plus uncommitted changes) and prints the apps
+    to test, one line each with the reason: the app's own files
+    (`apps/<app>/**`); an app whose `server/packages/kit.list` names a
+    changed `kit/<package>`; every app that lists `events` when
+    `kit/events` (the `Catalog`) changes; and the shared modules whose
+    files changed (for example `edge/calls`, which vendors the kit).
+  - **Everything runs** when a change touches `scripts/gates.sh`,
+    `scripts/go-cache.sh`, `scripts/kit-sync.sh`, `scripts/ci/**`,
+    `tools/**`, any `go.mod` or `go.sum`, or `.github/**`, and when the
+    selection cannot be worked out (no `origin/develop`, a failed diff):
+    it fails toward the full run, never toward fewer tests.
+  - A change to docs only runs the shared checks that read docs (the
+    error number check of ERRORS.md) and no app.
+  - `scripts/gates.sh` prints `=== apps chosen: <app> (<reason>), ...`
+    before the app steps. `--all` (or `MESAIL_GATES_ALL=1`) forces every
+    app; `--app <name>` still runs exactly that app.
+  - `scripts/ci/nightly-full.sh` makes a fresh worktree of
+    `origin/develop`, runs `scripts/gates.sh --all` through `mac-heavy`
+    (coordinator `caduceus-build`), writes a short summary next to its
+    log in `~/Library/Logs/local/CADUCEUS/nightly/`, and removes the
+    worktree. It catches what a narrow gate missed (for example two apps
+    that meet only through HTTP; the blackbox runs cover those too).
+  - **Who starts it:** a LaunchAgent owned by the Platform Coordinator
+    (machine set-up is Platform's), once a day at a quiet time (03:30),
+    so it never competes with the day's gates. K15 asks Platform for it
+    through the coordinator and the hub. The hub's 5-minute check is not
+    used for it.
+- **Depends on:** the `.tachyon` fix (it also changes `scripts/gates.sh`)
+  merged. It changes no app.
+- **Done when:** `tools/gateplan`'s tests cover each rule above (own app,
+  kit package through `kit.list`, `kit/events`, vendored module, the
+  full-run triggers, docs only, a failed diff); a gate on a one-app
+  change runs only that app and prints why; `--all` runs every app;
+  `scripts/gates.sh --shared-only` passes; the nightly script runs once
+  by hand and leaves no worktree behind.
+
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 
 Wave 10 (J0 to J5: Floci SQS and SNS for events, EventBridge Scheduler

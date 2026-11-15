@@ -2569,7 +2569,8 @@ Mesail used 20.4 job hours that day, 13.9 of them tests, often every app
 for every gate. Expected saving: about 4.5 hours a day.
 - **Owns, for this change only:** `scripts/gates.sh` (the app selection
   and its usage text), a new Go module `tools/gateplan/**` (the selection
-  logic, so it has unit tests), and a new `scripts/ci/nightly-full.sh`.
+  logic, so it has unit tests), and a new `scripts/ci/nightly-full.sh`
+  (the command Platform's nightly scheduler calls).
 - **Builds:**
   - `tools/gateplan` reads the changed files (`git diff --name-only
     origin/develop...HEAD` plus uncommitted changes) and prints the apps
@@ -2588,17 +2589,23 @@ for every gate. Expected saving: about 4.5 hours a day.
   - `scripts/gates.sh` prints `=== apps chosen: <app> (<reason>), ...`
     before the app steps. `--all` (or `MESAIL_GATES_ALL=1`) forces every
     app; `--app <name>` still runs exactly that app.
-  - `scripts/ci/nightly-full.sh` makes a fresh worktree of
-    `origin/develop`, runs `scripts/gates.sh --all` through `mac-heavy`
-    (coordinator `caduceus-build`), writes a short summary next to its
-    log in `~/Library/Logs/local/CADUCEUS/nightly/`, and removes the
+  - `scripts/ci/nightly-full.sh` makes a fresh detached worktree of
+    `origin/develop` from the shared clone, runs `scripts/gates.sh --all`
+    in it with `MESAIL_SLICE=nightly`, writes the commit, the rc and the
+    first failing app next to its log in
+    `~/Library/Logs/local/CADUCEUS/nightly/<date>/`, and removes the
     worktree. It catches what a narrow gate missed (for example two apps
     that meet only through HTTP; the blackbox runs cover those too).
-  - **Who starts it:** a LaunchAgent owned by the Platform Coordinator
-    (machine set-up is Platform's), once a day at a quiet time (03:30),
-    so it never competes with the day's gates. K15 asks Platform for it
-    through the coordinator and the hub. The hub's 5-minute check is not
-    used for it.
+  - **Who starts it** (hub decision, 2026-11-14): Platform's one nightly
+    scheduler for all products, from about 03:00, runs
+    `MAC_HEAVY_COORDINATOR=caduceus-build mac-heavy --owner
+    mesail-nightly -- scripts/ci/nightly-full.sh` through jobq. So the
+    script runs inside that `mac-heavy` job: it does not call `mac-heavy`
+    itself (a nested one does not lock again anyway), and it needs no
+    LaunchAgent. Gates only: no dev host, no Floci or native blackbox run
+    at night. Until K15 lands, Platform runs the plain command it was
+    sent on 2026-11-14 (a fresh worktree and `scripts/gates.sh`, which
+    still tests every app).
 - **Depends on:** the `.tachyon` fix (it also changes `scripts/gates.sh`)
   merged. It changes no app.
 - **Done when:** `tools/gateplan`'s tests cover each rule above (own app,
@@ -2606,7 +2613,9 @@ for every gate. Expected saving: about 4.5 hours a day.
   full-run triggers, docs only, a failed diff); a gate on a one-app
   change runs only that app and prints why; `--all` runs every app;
   `scripts/gates.sh --shared-only` passes; the nightly script runs once
-  by hand and leaves no worktree behind.
+  by hand inside `mac-heavy --owner mesail-nightly` and leaves no worktree
+  behind; K15 tells Platform (PLAT-1) to call it with `--all` semantics
+  from then on.
 
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 

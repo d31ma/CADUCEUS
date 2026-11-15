@@ -26,6 +26,7 @@ In that VM:
 | `realtime` | The realtime service and its connection gateway (WebSockets and event streams). |
 | `calls` **(planned deployment, with OP2's successor)** | The forwarding server for group calls (ADR 0012, `edge/calls`). It forwards end-to-end encrypted audio and video, holds no keys and keeps no data. |
 | SMTP edge **(planned deployment)** | Receives mail on port 25 and hands it to `mail-in`. |
+| TURN relay **(planned, G3)** | coturn, pinned by digest: relays the encrypted traffic of devices that cannot connect directly (ADR 0011). It cannot read what it relays. |
 | Keycloak | Passwords, 2-step codes and sessions (one realm, `mesail`), on SQLite. |
 | Egress container **(planned)** | The only way out of the install (section 4). |
 | Registry **(planned)** | Holds Floci and every Mesail image, so nothing is downloaded at start. |
@@ -46,6 +47,7 @@ engine through its socket, which is the same as root on that engine.
 | Secret files, readable only by the install | Client secrets, signing keys, DKIM keys, VAPID keys | Section 5. |
 | Backups | FYLO roots, files, Keycloak's database, secrets | Section 7. |
 | One public UDP port to the `calls` container (default 8121), and the address devices reach it on | Group calls of 3 or more people (ADR 0012) | Set the address in `MESAIL_CALLS_PUBLIC_IPS`. Devices that cannot reach the port use the TURN relay (ADR 0011). |
+| Public ports to the TURN relay: UDP and TCP 3478, TCP 5349 (TLS), and a UDP relay range (default 49160-49200), and the relay's public address | Chat and two-person calls between devices that cannot connect directly (ADR 0011) | Section 3, "TURN relay". Plan about 1 port of the range per relayed connection. |
 
 ## 3. Settings you set
 
@@ -127,6 +129,20 @@ that folder with the data.
 | `YON_REALTIME_CALLS_PREVIOUS` | Only during a rotation: the key that signed before. Keep it at least 70 seconds after the switch (join tokens live 60 seconds, `calls` caches the keys 10 minutes but fetches again for an unknown key). |
 | `realtime.directoryurl` (`YON_REALTIME_DIRECTORYURL`) | `directory` inside the install (default `http://127.0.0.1:8102`); `realtime` asks it who owns a device. |
 | `realtime.notifyurl` (`YON_REALTIME_NOTIFYURL`) | `notify` inside the install (default `http://127.0.0.1:8107`); `realtime` asks it for the "Incoming call" and "Missed call" pushes. |
+
+**TURN relay (planned, G3)**
+
+| Setting | Meaning |
+| --- | --- |
+| `MESAIL_TURN_URLS` | The addresses devices use, comma separated, for example `turn:turn.example.org:3478?transport=udp,turn:turn.example.org:3478?transport=tcp,turns:turn.example.org:5349`. `realtime` hands them out with the credentials. |
+| `MESAIL_TURN_SECRET` | The shared secret of coturn's `use-auth-secret` (from a secret file, at least 32 characters); `realtime` (`YON_REALTIME_TURN_SECRET`) and the relay get the same value. |
+| `MESAIL_TURN_PUBLIC_IP`, `MESAIL_TURN_RELAY_PORTS` | The relay's public address (coturn `external-ip`) and its UDP relay range (default `49160-49200`). |
+| `realtime.turn.seconds` | How long credentials last (default 43,200 seconds). |
+| `MESAIL_TURN_ALLOWED_PEERS` | Empty by default. The relay refuses to relay to private and local addresses (10/8, 172.16/12, 192.168/16, 127/8, 169.254/16, ::1, fc00::/7, fe80::/10) so nobody can use it to reach the install's own network; list address ranges here only to allow one on purpose. |
+
+The relay also runs with `no-cli`, `no-multicast-peers`, a quota of 10
+allocations per user, the TLS certificate files of section 2, and its
+log on standard output (it never sees message content).
 
 ## 4. Traffic that leaves the install
 

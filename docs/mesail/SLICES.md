@@ -2240,6 +2240,9 @@ section 8.)
   content.
 
 ### G3. The TURN relay on-premise (OP2's successor)
+- **Contract ready** (2026-11-14): CONTRACTS "realtime" ("TURN
+  credentials", `GET /api/v1/realtime/turn`) and OPERATIONS section 3
+  "TURN relay". Depends on OP2 (the deploy files).
 - **Builds:** a TURN relay in the install (for example coturn, pinned by
   digest), with short-lived credentials that `identity` or `realtime`
   hands to signed-in devices; its public ports (UDP and TCP 3478, TLS
@@ -2248,7 +2251,19 @@ section 8.)
 
 ### G4. Encrypted backups (attachments' owner, after E1)
 - **Builds:** a store for each person's encrypted backup blobs (upload,
-  download, replace, delete; size limits), unreadable by the server.
+  download, replace, delete; size limits), unreadable by the server, as
+  CONTRACTS "Encrypted chat backups" says (ready 2026-11-14); and the
+  removal on `member.upserted` `removed` (attachments subscribes to it in
+  `directory`'s subscriber list).
+- **Owns, for this change only:** `apps/attachments/**` (backup routes,
+  services, the `backups` collection, tests, its ERRORS rows), the
+  `attachments` entry in `directory`'s subscribers, and a blackbox test
+  `tests/blackbox/Backups_test.go` (put, complete, download, version
+  conflict, another person gets `404`, removal on member removal).
+- **Depends on:** E1 (merged). Not at the same time as OP7 (both test
+  attachments on Floci) or a slice changing `apps/attachments`; it may
+  run beside E7 and G1 only if they do not touch `directory`'s
+  subscriber list at the same time.
 
 ### G5. Content-free chat pushes (notify's owner, after E5)
 - **Builds:** a route a device calls to push "New message" (no text, no

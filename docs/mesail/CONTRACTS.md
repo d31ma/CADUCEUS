@@ -781,6 +781,55 @@ An attachment in another domain answers `404`.
   (`PUT` answers `200`; a bad or expired signature `403`; a wrong size
   `400`).
 
+### Encrypted chat backups (from G0 for G4; ADR 0011 section 6)
+
+Decided 2026-11-14. Each person has at most one backup per domain: the
+chat history and keys of that domain, encrypted on the device. The server
+stores bytes it cannot read, and only the person can reach them.
+
+| Route | Rule | Request | Response |
+| --- | --- | --- | --- |
+| `GET /api/v1/attachments/backups/mine` | SignedIn (the token's person and domain) | - | `200 Backup{version, size, sha256, keySlots[], updatedAt, updatedByDeviceId}`; `404 not_found` when there is none |
+| `PUT /api/v1/attachments/backups/mine` | SignedIn | `BackupStart{expectedVersion, size, sha256, keySlots[], deviceId}` | `201 BackupUpload{version, uploadUrl, expiresAt}`; `409 conflict` (field `expectedVersion`) when the current version is another; `413 too_large`; `400 invalid_request` with `field` |
+| `POST /api/v1/attachments/backups/mine/complete` | SignedIn | `BackupComplete{version}` | `200 Backup`; `409 conflict` (fields `file`, `size`, `sha256` as for attachments, or `expectedVersion` when another version became current meanwhile) |
+| `GET /api/v1/attachments/backups/mine/download` | SignedIn | - | `200 Download{url, expiresAt}`; `404 not_found` |
+| `DELETE /api/v1/attachments/backups/mine` | SignedIn | - | `204` (also when there is none) |
+
+- **Envelope encryption.** The device encrypts the backup with a random
+  256-bit data key (AES-256-GCM). Each `keySlots[]` entry wraps that data
+  key for one way to unlock it: `{kind: recovery|passkey, salt, rounds,
+  credentialId?, wrappedKey}` (base64url strings; `rounds` 600,000 for
+  `recovery`, PBKDF2-SHA-256 from the recovery code; `passkey` uses the
+  PRF result of the passkey `credentialId`, later, TACHYON P3). So a
+  passkey slot can be added later without encrypting the history again.
+  The server stores the slots as given and never sees a key: at most 10
+  slots, each at most 1 KiB.
+- **Versions.** `version` is a number that grows by one with each
+  completed backup; 0 means none. A device sends the version it last saw
+  as `expectedVersion`; when another device of the person replaced the
+  backup meanwhile, the server answers `409` and the device downloads the
+  new one, merges, and tries again. A started upload that is not
+  completed within the link's life is dropped; the current backup stays
+  until a new one completes.
+- **Upload and download** use signed links as for attachments (the bytes
+  never pass a Yon route): `attachments.backup.link.seconds` (default
+  1,800, because a backup can be large); the download link answers with
+  `Content-Disposition: attachment` and type `application/octet-stream`.
+  No type sniffing and no `blocked` state: the bytes are ciphertext.
+- **Limits.** `size` 1 byte to `attachments.backup.limit.bytes` (default
+  256 MiB; files sent in chat are not in the backup, only their ids and
+  keys). A device replaces its backup at most once every 15 minutes, and
+  at once after linking a new device or changing a key slot (G7's rule;
+  the server does not count).
+- **Storage.** The record is in the domain's `attachments` root,
+  collection `backups`, one document per person; the bytes are in the
+  shared blob folder under `<domainId>/backups/<personId>/<version>`.
+  After a version completes, the previous version's bytes are removed.
+- **Removal.** When `member.upserted` says `removed` (also when a person is
+  deleted, ADR 0005), `attachments` deletes that person's backup in that
+  domain. An admin can remove a person's access, never read the backup.
+- New errors take the next numbers of attachments' block (ERRORS.md).
+
 ## realtime
 
 The browser-facing socket and event stream are served by the connection
@@ -794,6 +843,7 @@ Gateway WebSocket API. The other routes are the `realtime` Yon app.
 | `POST /api/v1/realtime/tickets` | SignedIn | - | `Ticket{ticket, expiresAt}` (single use, 30 seconds) |
 | `PUT /api/v1/realtime/presence` | SignedIn | `PresenceRequest{state: active|idle|dnd, doNotDisturbUntil?}` | `204` |
 | `GET /api/v1/realtime/presence?memberIds=` | SignedIn | - | `[]Presence{memberId, state, doNotDisturbUntil?, lastSeenAt}` |
+| `GET /api/v1/realtime/turn` | SignedIn | - | `200 TurnCredentials{urls[], username, credential, expiresAt}` (G3); `503 unavailable` when no TURN relay is set |
 | `POST /api/v1/realtime/events` | Service (the envelope's domain) | `events.Envelope` | `EventReceipt{eventId, status}` |
 | `GET /api/v1/realtime/calls/keys` | Public | - | `CallKeys{keys[]}`, a JWKS of `CallKey{kty: EC, kid, alg: ES256, use: sig, crv: P-256, x, y}` (the current call key, then the previous one during a rotation); `503 unavailable` (MS5042) when no call key is set (from G11) |
 | `POST /api/v1/realtime/jobs/sweep` | Service (install-wide, domain `*`) | - | `SweepReport{closedConnections, offlineMembers, endedDoNotDisturb, deletedTickets, endedCalls, writes, more}` (also deletes used or expired stream tickets, and calls with no join or leave for 12 hours, with the writes left of its 25) |
@@ -991,6 +1041,17 @@ Decided 2026-11-14 with G2 and G11:
 - New errors take the next free numbers of realtime's block
   (`docs/mesail/ERRORS.md`); when two slices take the same number, the
   one that merges second renumbers.
+- **TURN credentials** (decided 2026-11-14 from G0, built by G3).
+  `GET /api/v1/realtime/turn` gives a signed-in member short-lived
+  credentials for the install's TURN relay, in the TURN REST style that
+  coturn's `use-auth-secret` checks: `username` is
+  `<expiry unix seconds>:<personId>`, `credential` is base64 of
+  HMAC-SHA1(shared secret, username), and they last
+  `realtime.turn.seconds` (default 43,200: a long call refreshes its
+  allocation with the same credentials). `urls[]` are the relay's
+  addresses from settings (`turn:` UDP and TCP 3478, `turns:` TLS 5349).
+  A device asks for fresh credentials for each new connection; it passes
+  them to TACHYON's `Peers` with `relayOnly: false` (ADR 0011).
 - **Refusals reach the sender** (decided 2026-11-14 with G2, gap 5).
   `edge/realtime` only logs a refused frame, so for `signal`,
   `pairing.*` and `call.*` frames `realtime` also pushes

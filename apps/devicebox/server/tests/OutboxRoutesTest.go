@@ -22,7 +22,7 @@ func (test *OutboxRoutesTest) TestARelayCallDeliversWhatWaitedAndDeadLettersCanB
 	world.Pusher.Recover("notify")
 	retry := world.Outbox.PostRetry(RetryRequest{Collection: dead[0].Collection, DocumentId: dead[0].DocumentId, EventId: dead[0].EventId, Subscriber: "notify"})
 	Assert.IsTrue(retry == nil, "requeue failed")
-	_, err = world.Outbox.PostRelay()
+	err = world.RelayUntilDone()
 	Assert.IsTrue(err == nil, "relay failed")
 	Assert.Equals(1, len(world.Pusher.PushedTo("notify")))
 }

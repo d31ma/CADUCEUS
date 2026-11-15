@@ -25,7 +25,7 @@ func (test *DrainBudgetTest) TestCreatingAChannelDoesNotWaitForASlowSubscriberAn
 	Assert.Equals(0, len(world.Published("realtime", "channel.created", created.ChannelId)))
 	sweep := test.slowFor(world.Pusher, "realtime", 2500*time.Millisecond, released)
 	world.Outbox = &OutboxController{outbox: &OutboxService{dataSource: DataSource{}, failures: &ErrorMappingService{}, pusher: sweep}}
-	_, err := world.Outbox.PostRelay()
+	err := world.RelayUntilDone()
 	Assert.IsTrue(err == nil, "relay failed")
 	Assert.Equals(1, len(world.Published("realtime", "channel.created", created.ChannelId)))
 }

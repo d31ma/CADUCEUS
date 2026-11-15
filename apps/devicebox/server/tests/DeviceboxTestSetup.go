@@ -197,3 +197,19 @@ func (world *DeviceboxTestSetup) numberOrZero(numbered apierrors.Numbered) int {
 	}
 	return numbered.Number()
 }
+
+func (world *DeviceboxTestSetup) RelayUntilDone() error {
+	failures := []error{}
+	for round := 0; round < world.relayRounds(); round++ {
+		report, failure := world.Outbox.PostRelay()
+		failures = append(failures, failure)
+		if !report.More {
+			break
+		}
+	}
+	return errors.Join(failures...)
+}
+
+func (*DeviceboxTestSetup) relayRounds() int {
+	return 10
+}

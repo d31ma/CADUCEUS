@@ -38,7 +38,7 @@ func (test *OutboxRelayServiceTest) TestRunOnceRelaysPendingDocuments() {
 	_, installWide := setup.Realms(domainId)
 	setup.SummaryStore().InsertIfAbsent(setup.StagedSummary(domainId))
 	pusher := outbox.NewRecordingPusher()
-	report, err := setup.Relay(pusher).RunOnce(setup.Service(installWide))
+	report, err := test.relayUntilDone(setup.Relay(pusher), setup.Service(installWide))
 	Assert.IsTrue(err == nil, "run failed")
 	Assert.IsTrue(report.Delivered >= 1, "nothing delivered")
 }
@@ -87,4 +87,22 @@ func (test *OutboxRelayServiceTest) letterOf(dead []DeadEvent, documentId string
 		}
 	}
 	return DeadEvent{}
+}
+
+func (test *OutboxRelayServiceTest) relayUntilDone(relay *OutboxRelayService, authorization string) (OutboxReport, error) {
+	total := OutboxReport{}
+	failures := []error{}
+	for round := 0; round < test.relayRounds(); round++ {
+		report, failure := relay.RunOnce(authorization)
+		total.Documents, total.Delivered, total.Retried, total.DeadLettered = total.Documents+report.Documents, total.Delivered+report.Delivered, total.Retried+report.Retried, total.DeadLettered+report.DeadLettered
+		failures = append(failures, failure)
+		if !report.More {
+			break
+		}
+	}
+	return total, errors.Join(failures...)
+}
+
+func (*OutboxRelayServiceTest) relayRounds() int {
+	return 10
 }

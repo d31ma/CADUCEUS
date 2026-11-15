@@ -18,7 +18,7 @@ type OutboxTest struct {
 
 func (test *OutboxTest) TestTheRelayRetriesAPendingMemberEventWhileServiceTokensAreMissing() {
 	relay, ref, _ := test.world()
-	report, err := relay.RunOnce()
+	report, err := test.relayUntilDone(relay)
 	fields, loadErr := relay.store.Load(ref)
 	state, readErr := outbox.Codec{}.Read(fields)
 	Assert.Equals("<nil>", fmt.Sprint(err))
@@ -29,7 +29,7 @@ func (test *OutboxTest) TestTheRelayRetriesAPendingMemberEventWhileServiceTokens
 
 func (test *OutboxTest) TestAnEventThatIsNotDueIsLeftForTheNextSweep() {
 	relay, _, _ := test.world()
-	relay.RunOnce()
+	test.relayUntilDone(relay)
 	due, err := relay.store.PendingIn("outbox-unit.test", 20)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(0, len(due))
@@ -172,4 +172,22 @@ func (test *OutboxTest) reset(domainId string) string {
 	domains.Delete(old)
 	(&TenantCollectionsService{documents: documents, names: names}).Drop(domainId, &WriteBudget{Left: 2, Deadline: time.Now().Add(time.Minute)})
 	return domainId
+}
+
+func (test *OutboxTest) relayUntilDone(relay *OutboxRelayService) (outbox.Report, error) {
+	total := outbox.Report{}
+	failures := []error{}
+	for round := 0; round < test.relayRounds(); round++ {
+		report, failure := relay.RunOnce()
+		total.Documents, total.Delivered, total.Retried, total.DeadLettered = total.Documents+report.Documents, total.Delivered+report.Delivered, total.Retried+report.Retried, total.DeadLettered+report.DeadLettered
+		failures = append(failures, failure)
+		if !report.More {
+			break
+		}
+	}
+	return total, errors.Join(failures...)
+}
+
+func (*OutboxTest) relayRounds() int {
+	return 10
 }

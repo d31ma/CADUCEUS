@@ -20,7 +20,7 @@ func (test *OutboxTest) TestARefusedEventBecomesADeadLetterThatCanBeRetried() {
 	Assert.Equals("channel.created", dead[0].Type)
 	world.Pusher.Recover("search")
 	err := world.Outbox.PostRetry(RetryRequest{Collection: dead[0].Collection, DocumentId: dead[0].DocumentId, EventId: dead[0].EventId, Subscriber: "search"})
-	_, relayError := world.Outbox.PostRelay()
+	relayError := world.RelayUntilDone()
 	Assert.IsTrue(err == nil, "retry failed")
 	Assert.IsTrue(relayError == nil, "relay failed")
 	Assert.Equals(1, len(world.Published("search", "channel.created", created.ChannelId)))

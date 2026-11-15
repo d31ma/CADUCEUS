@@ -104,6 +104,7 @@ main() {
   build_images "$@"
   "$(dirname "$0")/up.sh"
   "$(dirname "$0")/deploy.sh" "$@"
+  "$(dirname "$0")/blobs.sh"
   start_writer_guard
   "$(dirname "$0")/test.sh"
 }

@@ -36,22 +36,11 @@ wait_for_devhost_floci() {
   mesail_wait_for "the dev host's Floci at $MESAIL_FLOCI_URL" 120 floci_ready
 }
 
-single_writers() {
-  mesail_stack '[.services[] | select(.fylo and (.kind // "lambda") == "lambda") | .name] | join(",")'
-}
-
 main() {
   local profile
   mesail_load_settings
   mesail_load_secrets
-  MESAIL_SINGLE_WRITERS="$(single_writers)"
-  MESAIL_SCHEDULER_PATHS="$(mesail_stack '[.schedules[].path] | join(",")')"
-  MESAIL_SCHEDULER_SECONDS="$(mesail_stack .scheduleSeconds)"
-  MESAIL_DEV_DNS_DOMAINS="$(mesail_stack '.hostedDomains | join(",")')"
-  MESAIL_DEV_DNS_MAIL_HOST="$(jq -r '.directory.mailhost' "$(mesail_root)/apps/directory/server/application.json")"
-  MESAIL_DEV_DNS_SPF="$(jq -r '.directory.spfmechanism' "$(mesail_root)/apps/directory/server/application.json")"
-  export MESAIL_SINGLE_WRITERS MESAIL_SCHEDULER_PATHS MESAIL_SCHEDULER_SECONDS
-  export MESAIL_DEV_DNS_DOMAINS MESAIL_DEV_DNS_MAIL_HOST MESAIL_DEV_DNS_SPF
+  mesail_load_compose_settings
   mesail_step wait-devhost-floci wait_for_devhost_floci
   profile="$(compose_options)"
   echo "$profile" > "$(mesail_log_dir)/compose-profile"

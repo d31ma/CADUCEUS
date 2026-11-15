@@ -70,9 +70,13 @@ call_until_done() {
   done
 }
 
+retry_seconds() {
+  if [ "$(tick_seconds)" -gt 60 ]; then echo 60; else tick_seconds; fi
+}
+
 run_tick() {
   token="$(service_token || true)"
-  if [ -z "$token" ]; then echo "$(clock) no service token yet"; return 0; fi
+  if [ -z "$token" ]; then echo "$(clock) no service token yet; trying again in $(retry_seconds) s"; return 1; fi
   deadline=$(($(now_seconds) + $(repeat_seconds)))
   work="$(mktemp -d)"
   : > "$work/calls"
@@ -82,7 +86,7 @@ run_tick() {
 }
 
 wait_for_next_tick() {
-  left=$(($1 + $(tick_seconds) - $(now_seconds)))
+  left=$(($1 + $2 - $(now_seconds)))
   if [ "$left" -gt 0 ]; then sleep "$left"; fi
 }
 
@@ -90,8 +94,7 @@ main() {
   echo "scheduler: every $(tick_seconds) s, calls again while more: true until $(repeat_seconds) s: $MESAIL_SCHEDULER_PATHS"
   while true; do
     started="$(now_seconds)"
-    run_tick
-    wait_for_next_tick "$started"
+    if run_tick; then wait_for_next_tick "$started" "$(tick_seconds)"; else wait_for_next_tick "$started" "$(retry_seconds)"; fi
   done
 }
 

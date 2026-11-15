@@ -174,8 +174,9 @@ Settings (environment, or a `.env` file copied from `.env.example`):
 | `Dockerfile` target `router` | The public origin (`deploy/router`). |
 | `deploy/lambda/` | Image helpers: tool install with checksums, the Lambda profile, the Lambda start script and the realtime start script (`realtime-start.sh`). |
 | `deploy/floci/stack.json` | The Floci description: functions, memory, timeouts, FYLO owners, containers (`"kind": "container"`), file system, bucket, Keycloak realm and image, secrets, dev settings (`appSettings`), people, domains and schedules. |
-| `docker-compose.yml` | Floci, Keycloak, the realtime container and the router on the network `mesail_floci_backend`. |
-| `scripts/floci/*.sh` | `build`, `up`, `deploy`, `tokens`, `test`, `down`, `stack`, `run-all`. |
+| `docker-compose.yml` | Floci, Keycloak, the realtime container, the router and the two schedulers (`scheduler`, `scheduler-daily`) on the network `mesail_floci_backend`. |
+| `deploy/floci/compose.blobs.yaml` | Added by `blobs.sh` only: mounts the blob folder's EFS volume into the router and sets `MESAIL_ROUTER_BLOBS_*`. |
+| `scripts/floci/*.sh` | `build`, `up`, `deploy`, `blobs`, `tokens`, `test`, `down`, `stack`, `run-all`. |
 
 ### Lambda image (`Dockerfile` target `lambda`)
 
@@ -302,6 +303,27 @@ Settings (environment, or a `.env` file copied from `.env.example`):
   `/mnt/data/blobs`: mail-out writes the signed message there and mail-in
   copies it on the hand-off (`stack.json` `lambdaSettings`, Floci only).
   Without it every email between hosted domains stops at mail-out or mail-in.
+- `attachments` uses the same access point (slice OP7), with its own FYLO
+  root `/mnt/data/attachments` and the same blob folder:
+  `YON_ATTACHMENTS_ADAPTER=local`, `YON_ATTACHMENTS_FOLDER=/mnt/data/blobs`,
+  `YON_ATTACHMENTS_LINK_BASE=http://127.0.0.1:18080/blobs` (`stack.json`
+  `lambdaSettings`) and the shared `MESAIL_LINK_SECRET`. No bucket and no
+  S3 setting (ADR 0007 section 7). The link base is the router on the Mac,
+  so the link works for a client there; it assumes the default router port
+  18080.
+- **The router's `/blobs` on Floci** (`scripts/floci/blobs.sh`, run by
+  `stack.sh` after `deploy.sh`): Floci makes an access point's Docker
+  volume only when a function that uses it first starts. So `blobs.sh`
+  calls `attachments`' health route once, reads the volume mounted at
+  `/mnt/data` in the running `attachments` container, and re-creates only
+  the router with `deploy/floci/compose.blobs.yaml`: the volume at `/data`,
+  `MESAIL_ROUTER_BLOBS_FOLDER=/data/blobs`, `_BASE`
+  `http://127.0.0.1:<router port>/blobs` and `_SECRET` `MESAIL_LINK_SECRET`.
+  The router and the functions both run as uid 10001, and the Lambda start
+  script gives `/mnt/data` to that user, so the router can write and read
+  the files. When `attachments` is not deployed, `blobs.sh` does nothing and
+  `/blobs` answers 404. `down.sh` keeps the volume; in Colima it removes
+  every `floci-aws-efs-*` volume after the router is gone.
 - In Floci the access point's root directory and user are not applied: each
   access point is its own Docker volume `floci-aws-efs-<id>-<hash>`.
 - **A fresh data set without removing anything.** The FYLO data in the dev
@@ -357,13 +379,14 @@ Limits at the router:
   starves. A read cannot skip the queue: the function runs one call at a
   time. A caller that stops waiting leaves its queue.
 - **Event pushes never wait:** `POST /api/v1/<service>/events` to a
-  FYLO-owning function that is busy gets 429 `function-busy` at once, as a
-  throttled Lambda does. The producer's outbox keeps the event and
+  FYLO-owning function that is busy gets 429 `function-busy` `[MS5502]` at
+  once, as a throttled Lambda does. The producer's outbox keeps the event and
   the relay schedule sends it again. Without this, drain on write deadlocks:
   a send in `messaging` pushes to `mail-out/events`, mail-out's intake
   pushes `email.queued` back to `messaging/events`, and that push would wait
   for the slot the send still holds. Floci's own throttle (429
-  `TooManyRequestsException`) is also answered as 429 `function-busy`.
+  `TooManyRequestsException`) is also answered as 429 `function-busy`
+  `[MS5503]`. Both numbers are in `docs/mesail/ERRORS.md`.
 - **An event handler never calls back into its producer:** the router
   cannot break that cycle. A producer holds its own slot while it pushes,
   so a handler that calls the producer waits until the push times out
@@ -475,7 +498,20 @@ the tick length minus 10 seconds and half the tick (50 s for 60 s ticks,
 path and the status code) and, at the end of each tick, the number of calls
 per route (`calls this tick: <path>=<n> ...`). The next tick starts
 `scheduleSeconds` after the last one started. Under `ty start` the
-scheduler's 10 s ticks repeat for 5 s.
+scheduler's 10 s ticks repeat for 5 s. When it gets no token (the stack is
+still starting), it tries again after the tick, or after 60 s when the tick
+is longer.
+
+A schedule with `"daily": true` goes to the second container,
+`scheduler-daily` (same image, ticks of 86,400 s): today only messaging's
+change-log cleanup, `POST /api/v1/messaging/jobs/changes-cleanup` (slice O1).
+Its first call comes as soon as `identity` gives a token, then once a day.
+The route drops at most 12 old month collections per call and answers
+`CleanupReport{dropped, more}`; the scheduler calls again while `more` is
+`true` (for up to 86,390 s). It needs an install-wide token: a domain token
+gets `403 [MS1566]`. It has `"native": false`, because under `ty start` the
+messaging worker `changes-cleanup` runs it daily itself (first run 600 s
+after start). The router counts it as a background call (`/jobs/<job>`).
 
 ## Ports on the Mac (127.0.0.1 only)
 
@@ -489,7 +525,10 @@ scheduler's 10 s ticks repeat for 5 s.
 
 - Native app targets of the Tac apps (macOS, Windows, Linux, iOS, Android).
 - EventBridge schedules that call each service's `/outbox/relay` and
-  `/jobs/<job>` routes in Lambda form.
+  `/jobs/<job>` routes in Lambda form. Until then the `scheduler` and
+  `scheduler-daily` containers stand in; a rule made from `stack.json`
+  `schedules` should use `rate(1 minute)` for the others and `rate(1 day)`
+  for `"daily": true`, and repeat a call while it answers `more: true`.
 - The SMTP edge container (`edge/smtp`, slice M1) and `MESAIL_SMTP_ADDR`.
 - Event relay schedules (EventBridge) and the realtime WebSocket API.
 - Deployment to kestrel through PaaS.

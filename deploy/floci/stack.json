@@ -52,7 +52,8 @@
       "name": "attachments",
       "fylo": true,
       "memory": 1024,
-      "timeout": 60
+      "timeout": 60,
+      "fileSystemShare": "mail"
     },
     {
       "name": "realtime",
@@ -160,6 +161,11 @@
       "native": true
     },
     {
+      "path": "/api/v1/messaging/jobs/changes-cleanup",
+      "native": false,
+      "daily": true
+    },
+    {
       "path": "/api/v1/messaging/outbox/relay",
       "native": true
     },
@@ -254,6 +260,11 @@
     }
   ],
   "lambdaSettings": {
+    "attachments": {
+      "YON_ATTACHMENTS_ADAPTER": "local",
+      "YON_ATTACHMENTS_FOLDER": "/mnt/data/blobs",
+      "YON_ATTACHMENTS_LINK_BASE": "http://127.0.0.1:18080/blobs"
+    },
     "mail-out": {
       "YON_MAILOUT_BLOBFOLDER": "/mnt/data/blobs"
     },

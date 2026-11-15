@@ -1,0 +1,13 @@
+services:
+  router:
+    environment:
+      MESAIL_ROUTER_BLOBS_FOLDER: /data/blobs
+      MESAIL_ROUTER_BLOBS_BASE: http://127.0.0.1:${MESAIL_ROUTER_PORT:-18080}/blobs
+      MESAIL_ROUTER_BLOBS_SECRET: ${MESAIL_LINK_SECRET:?run scripts/floci/run-all.sh}
+    volumes:
+      - blobs:/data
+
+volumes:
+  blobs:
+    name: ${MESAIL_BLOBS_VOLUME:?run scripts/floci/blobs.sh}
+    external: true

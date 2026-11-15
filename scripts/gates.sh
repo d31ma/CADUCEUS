@@ -28,7 +28,7 @@ fylo_binary() {
 log_folder() {
   local base="${LOG_ROOT:-$HOME/Library/Logs/local}"
   local folder
-  folder="$base/CADUCEUS/gates-$(date +%Y%m%d-%H%M%S)-$$"
+  folder="$base/MESAIL/gates-$(date +%Y%m%d-%H%M%S)-$$"
   mkdir -p "$folder"
   echo "$folder"
 }

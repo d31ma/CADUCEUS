@@ -170,7 +170,7 @@ kit/            shared plain Go packages (source of truth)
 
 
 Measured by the `mesail-serverless` spike on 2026-11-10 (report
-`~/Library/Logs/local/CADUCEUS/mesail/serverless-report.md`, Floci recipe
+`~/Library/Logs/local/MESAIL/mesail/serverless-report.md`, Floci recipe
 `floci-recipe.md`):
 - FYLO on ext4 on the ATLAS raw disk (the dev host and kestrel/FitNest
   pattern) writes at 109 ms p50 (346 ms p95, stalls up to 10.9 s) against

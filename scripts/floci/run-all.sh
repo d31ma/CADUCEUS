@@ -20,7 +20,7 @@ Settings (environment):
   MESAIL_WARMUP_SECONDS  repeat the seed and one sign-in (ana) until both pass, for up to this many
                      seconds, before the tests (cold starts until slice K10; unset: seed once)
   MESAIL_VM          mesail (default: the mesail dev host and its Floci) or colima
-Logs: ~/Library/Logs/local/CADUCEUS/<owner>/floci-<time>/
+Logs: ~/Library/Logs/local/MESAIL/<owner>/floci-<time>/
 TEXT
 }
 

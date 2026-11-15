@@ -105,7 +105,7 @@ MESAIL_OWNER=slice-m3 scripts/native/run-all.sh --down                   # stop 
 - The FYLO test image must be attached at `~/Developer/AtlasFylo/mesail`;
   the script says how when it is not.
 - A whole run with ten apps takes about 25 seconds once warm.
-- Logs: `~/Library/Logs/local/CADUCEUS/<owner>/native-<time>/`
+- Logs: `~/Library/Logs/local/MESAIL/<owner>/native-<time>/`
   (`app-<app>.log`, `prepare-<app>.log`, `router.log`).
 
 ## Floci (integration)
@@ -151,7 +151,7 @@ scripts/floci/run-all.sh identity directory    # build and deploy only these fun
    No script ever removes the realtime data volume `mesail-realtime-data`. An image that fails to build is a warning: that function is
    not deployed and its tests fail.
 
-Logs: `~/Library/Logs/local/CADUCEUS/<MESAIL_OWNER>/floci-<time>/`, one file
+Logs: `~/Library/Logs/local/MESAIL/<MESAIL_OWNER>/floci-<time>/`, one file
 per step. Set `MESAIL_OWNER` to your slice name (for example `slice-m3`).
 
 Settings (environment, or a `.env` file copied from `.env.example`):

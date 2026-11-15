@@ -36,7 +36,7 @@ mesail_load_settings() {
 
 mesail_log_dir() {
   if [ -n "${MESAIL_LOG_DIR:-}" ]; then echo "$MESAIL_LOG_DIR"; return; fi
-  MESAIL_LOG_DIR="$HOME/Library/Logs/local/CADUCEUS/${MESAIL_OWNER:-floci}/floci-$(date +%Y%m%d-%H%M%S)"
+  MESAIL_LOG_DIR="$HOME/Library/Logs/local/MESAIL/${MESAIL_OWNER:-floci}/floci-$(date +%Y%m%d-%H%M%S)"
   mkdir -p "$MESAIL_LOG_DIR"
   export MESAIL_LOG_DIR
   echo "$MESAIL_LOG_DIR"

@@ -741,7 +741,7 @@ an earlier slice text in this file says "realm of the domain",
   old realms beside `mesail`. L5 stops setting it (`docker-compose.yml`,
   `scripts/floci/up.sh`, the native scripts); then `mesail-keycloak`
   deletes the transition files (see
-  `~/Library/Logs/local/CADUCEUS/mesail/keycloak-l2-note.md`).
+  `~/Library/Logs/local/MESAIL/mesail/keycloak-l2-note.md`).
 - **Depends on:** L1, L2, L3, L4 on `develop`. The coordinator asks the
   owners of the apps listed above to merge nothing during the switch
   (about one working session).
@@ -1348,7 +1348,7 @@ log for that window.
   a row on Floci, and the cause is written in the slice's hand-over.
 
 ### K1. Clean-up after the token switch (one small session)
-Open items from L5 (`~/Library/Logs/local/CADUCEUS/mesail/l5-switch-note.md`).
+Open items from L5 (`~/Library/Logs/local/MESAIL/mesail/l5-switch-note.md`).
 None needs the owner. The messaging and mail-in call cycle has its own fix
 session; S3 blobs for `mail-out` is a later cloud-form item (ADR 0007
 section 7).
@@ -1398,7 +1398,7 @@ section 7).
 
 ### D2. Directory: long operations in batches, and repairs (L3's successor)
 Open items from L3 (develop 3d984bc, hand-over
-`~/Library/Logs/local/CADUCEUS/mesail/l3-directory-note.md`). None needs
+`~/Library/Logs/local/MESAIL/mesail/l3-directory-note.md`). None needs
 the owner.
 - **Owns:** `apps/directory/**` (except kit copies).
 - **Builds:**
@@ -1462,7 +1462,7 @@ sending); this wave adds the payload format and the browser side.
     /notify/push-key` answers `503` (push turned off with
     `notify.push.enabled`, or not configured; OP1).
   - The screens are merged (develop a360499; handover
-    `~/Library/Logs/local/CADUCEUS/mesail/n2-push-ux-handover.md`): the
+    `~/Library/Logs/local/MESAIL/mesail/n2-push-ux-handover.md`): the
     toggle, the suggestion (hidden for good after "Not now" or closing),
     the prompt moment, the denied state, the iPhone and iPad Home Screen
     hint, and a click that opens the first unread message.
@@ -1840,7 +1840,7 @@ except for the items below.
 
 ### OP7. Attachments end to end on Floci (one small session, after OP6)
 Found by OP6 (2026-11-14, hand-over
-`~/Library/Logs/local/CADUCEUS/mesail/slice-op6-handover.md`): on Floci,
+`~/Library/Logs/local/MESAIL/mesail/slice-op6-handover.md`): on Floci,
 `attachments` is checked only by its health route. `stack.json` gives it
 no blob folder (OP1 left this for OP2), and no blackbox test uploads or
 downloads an attachment.
@@ -2436,7 +2436,7 @@ AC-CL is written.
 
 ### G13. Waiting envelopes reach notify and realtime (one small session)
 Found by G5 (2026-11-14, hand-over
-`~/Library/Logs/local/CADUCEUS/mesail/slice-g5-handover.md`): `devicebox`
+`~/Library/Logs/local/MESAIL/mesail/slice-g5-handover.md`): `devicebox`
 stages `envelope.stored` but its `application.json` has `"subscribers":
 []`, so in a real install neither `notify` nor `realtime` gets it and no
 "New message" push is sent. `realtime` has no handler for it yet either.
@@ -2527,7 +2527,7 @@ section 4) and only Mesail's own code drops collections.
   `inspectCollection` per existing collection per container (missing
   collections: see above); gates pass for every app that syncs the kit.
 - **Landed** (develop 8717ad4, 2026-11-14; hand-over
-  `~/Library/Logs/local/CADUCEUS/mesail/slice-k12-handover.md`). Its
+  `~/Library/Logs/local/MESAIL/mesail/slice-k12-handover.md`). Its
   follow-ups are K13 (devicebox and `kit/mailout`) and the "busiest
   collections" note in K13.
 
@@ -2575,7 +2575,7 @@ Found by K12 (2026-11-14). Two places still bypass `KnownCollections`:
 
 ### K14. kit-sync keeps vendored kit copies in step (one small session)
 Found by PK7 (2026-11-14, hand-over
-`~/Library/Logs/local/CADUCEUS/mesail/slice-pk7-handover.md`):
+`~/Library/Logs/local/MESAIL/mesail/slice-pk7-handover.md`):
 `edge/calls` vendors the kit with `go mod vendor` (`replace
 mesail.dev/packages => ../../kit`), and `scripts/kit-sync.sh` does not
 update that copy. So a slice that changes a vendored kit package (for
@@ -2633,7 +2633,7 @@ for every gate. Expected saving: about 4.5 hours a day.
     `MAC_HEAVY_COORDINATOR=caduceus-build mac-heavy --owner mesail-nightly
     -- env MESAIL_SLICE=nightly LOG_ROOT=<log dir> scripts/gates.sh
     $MESAIL_GATES_ARGS` through jobq, and removes the worktree. The log dir
-    is `~/Library/Logs/local/CADUCEUS/nightly/<YYYYMMDD>-<sha7>/`
+    is `~/Library/Logs/local/MESAIL/nightly/<YYYYMMDD>-<sha7>/`
     (`commit.txt`, `gates.log`, `nightly.log`). A night is skipped when
     `develop` equals the last passing night's commit. It catches what a
     narrow gate missed (for example two apps that meet only through HTTP).
@@ -2661,7 +2661,7 @@ for every gate. Expected saving: about 4.5 hours a day.
 
 ### K16. Spread scheduled work (one small session, after batch 3)
 Found by O1's native run (2026-11-14, hand-over
-`~/Library/Logs/local/CADUCEUS/mesail/slice-o1-handover.md`): in a storm
+`~/Library/Logs/local/MESAIL/mesail/slice-o1-handover.md`): in a storm
 of 1,000 edits, edits stalled 2-10 s exactly at the 60 s tick, and one
 PATCH got the router's 502 at 10 s. The outbox-relay workers of
 `channels`, `devicebox`, `directory`, `mail-in` and `messaging` all

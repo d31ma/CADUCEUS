@@ -28,7 +28,7 @@ It is behind the `responsive` build tag, so `go test ./...` and
 On the shared Mac, run it through the lock and keep the log:
 
     MAC_HEAVY_COORDINATOR=caduceus-build mac-heavy --owner <name> --light -- \
-      go test -tags responsive -count=1 -v ./... 2>&1 | tee ~/Library/Logs/local/CADUCEUS/<run>/responsive.log
+      go test -tags responsive -count=1 -v ./... 2>&1 | tee ~/Library/Logs/local/MESAIL/<run>/responsive.log
 
 Settings (environment variables):
 

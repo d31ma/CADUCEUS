@@ -51,7 +51,7 @@ deploy/keycloak files. Realm changes (deploy/keycloak/realm) need no rebuild:
 each run imports the realm from the checkout.
 
 FYLO roots: ~/Developer/AtlasFylo/mesail/<owner>/native/<service> (emptied at each start).
-Logs: ~/Library/Logs/local/CADUCEUS/<owner>/native-<time>/
+Logs: ~/Library/Logs/local/MESAIL/<owner>/native-<time>/
 TEXT
 }
 
@@ -584,7 +584,7 @@ start_test_stop() {
 
 main() {
   export MESAIL_OWNER="${MESAIL_OWNER:-native}"
-  export MESAIL_LOG_DIR="${MESAIL_LOG_DIR:-$HOME/Library/Logs/local/CADUCEUS/$MESAIL_OWNER/native-$(date +%Y%m%d-%H%M%S)}"
+  export MESAIL_LOG_DIR="${MESAIL_LOG_DIR:-$HOME/Library/Logs/local/MESAIL/$MESAIL_OWNER/native-$(date +%Y%m%d-%H%M%S)}"
   mkdir -p "$MESAIL_LOG_DIR"
   mesail_load_settings
   case "${1:-}" in

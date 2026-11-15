@@ -27,8 +27,8 @@ func (test *FailureServiceTest) TestAConflictKeepsItsCaseNumber() {
 func (test *FailureServiceTest) TestOtherFailuresKeepTheirTypes() {
 	failures := &FailureService{}
 	Assert.Equals(&AttachmentTooLarge{Limit: 9, ErrorNumber: 24}, failures.Translated(blobs.TooLarge{Limit: 9}))
-	Assert.Equals(&AttachmentNotFound{}, failures.Translated(attachments.Missing{}))
-	Assert.Equals(&Forbidden{Message: "Only a service may read attachment details."}, failures.Translated(attachments.Forbidden{}))
+	Assert.Equals(&AttachmentNotFound{ErrorNumber: 3507}, failures.Translated(attachments.Missing{}))
+	Assert.Equals(&Forbidden{Message: "Only a service may read attachment details.", ErrorNumber: 3506}, failures.Translated(attachments.Forbidden{}))
 	Assert.Equals(&Unauthenticated{}, failures.Translated(attachments.Unauthenticated{}))
 	Assert.Equals(&StorageUnavailable{Operation: "boom"}, failures.Translated(errors.New("boom")))
 }

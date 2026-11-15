@@ -74,3 +74,13 @@ func (test *AttachmentsErrorHandlerTest) TestErrorsDescribeThemselves() {
 	Assert.Equals("no", (&Forbidden{Message: "no"}).Error())
 	Assert.Equals("an unexpected error", (&UnexpectedFailure{}).Error())
 }
+
+func (test *AttachmentsErrorHandlerTest) TestMissingKeepsAGivenMessageAndNumber() {
+	answer := (&AttachmentsErrorHandler{}).Missing(&AttachmentNotFound{Message: "No backup was found.", ErrorNumber: 3514})
+	Assert.Equals(ApiError{Code: "not_found", Message: "[MS3514]: No backup was found."}, answer)
+}
+
+func (test *AttachmentsErrorHandlerTest) TestForbiddenKeepsAGivenNumber() {
+	answer := (&AttachmentsErrorHandler{}).Forbidden(&Forbidden{Message: "no", ErrorNumber: 3521})
+	Assert.Equals(ApiError{Code: "forbidden", Message: "[MS3521]: no"}, answer)
+}

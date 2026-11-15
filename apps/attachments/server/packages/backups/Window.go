@@ -1,0 +1,8 @@
+package backups
+
+import "encoding/json"
+
+type Window struct {
+	Content    json.RawMessage
+	NextCursor string
+}

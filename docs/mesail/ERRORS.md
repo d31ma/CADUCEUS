@@ -343,6 +343,16 @@ keeps its row, marked "retired".
 | MS3511 | attachments | 409 | `conflict` | The attachment is not ready to download. | a download before the upload is complete; `field` is `state` |
 | MS3512 | attachments | 413 | `too_large` | the file is larger than N bytes | retired (E12): now MS0024; was: an upload larger than the limit; `field` is `size` |
 | MS3513 | attachments | 503 | `unavailable` | Attachment storage is not available. Try again later. | the attachment store or link signing failed, or a setting still names the removed S3 adapter or a bucket (slice OP6; the log names the setting) |
+| MS3514 | attachments | 404 | `not_found` | No backup was found. | the caller has no completed chat backup in the token's domain (G4) |
+| MS3515 | attachments | 400 | `invalid_request` | Give the backup version you saw last, 0 or more. | a backup start with a negative `expectedVersion`; `field` is `expectedVersion` |
+| MS3516 | attachments | 400 | `invalid_request` | A backup must have at least one byte. | a backup start with a size below one byte; `field` is `size` |
+| MS3517 | attachments | 400 | `invalid_request` | Give 1 to 10 key slots of at most 1 KiB each, of kind recovery or passkey, with base64url values. | a backup start with missing, too many or malformed key slots (a `recovery` slot needs 600,000 rounds or more and no `credentialId`; a `passkey` slot needs a `credentialId`); `field` is `keySlots` |
+| MS3518 | attachments | 400 | `invalid_request` | Give the id of the device that made the backup: 1 to 128 letters, digits, - or _. | a backup start with a bad `deviceId`; `field` is `deviceId` |
+| MS3519 | attachments | 409 | `conflict` | Another device replaced the backup. Download it, merge, and try again. | a backup start whose `expectedVersion` is not the current version, or a complete for a version that is no longer the newest; `field` is `expectedVersion` |
+| MS3520 | attachments | 409 | `conflict` | No upload of this backup version is waiting, or its link has expired. Start the backup again. | a backup complete with no started upload of that version, or after the upload link's life plus one more link life; `field` is `file` |
+| MS3521 | attachments | 403 | `forbidden` | Only a service may send events. | a caller without the Service role posts to `/api/v1/attachments/events` |
+| MS3522 | attachments | 403 | `forbidden` | A service may send events only for its own domain. | a domain service token posts an event of another domain |
+| MS3523 | attachments | 400 | `invalid_request` | The event is not valid. | a malformed envelope or payload, or an event type `attachments` does not take; `field` is `envelope` |
 | MS4000 | search | 500 | `unavailable` | Something went wrong. | an unexpected error in `search` |
 | MS4001 | search | 400 | `invalid_request` | the search text is too long | a search with too long a text; `field` is `q` |
 | MS4002 | search | 400 | `invalid_request` | from must be a date or an RFC 3339 time | a search with a bad date filter; `field` is `from` or `to` |

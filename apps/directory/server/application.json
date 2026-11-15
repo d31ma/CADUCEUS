@@ -13,6 +13,10 @@
     "producer": "directory",
     "subscribers": [
       {
+        "name": "attachments",
+        "url": "http://127.0.0.1:8105/api/v1/attachments/events"
+      },
+      {
         "name": "messaging",
         "url": "http://127.0.0.1:8104/api/v1/messaging/events"
       },

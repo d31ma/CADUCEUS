@@ -27,9 +27,9 @@ func (service *FailureService) translated(failed error) error {
 	case errors.As(failed, &large):
 		return &AttachmentTooLarge{Limit: large.Limit, ErrorNumber: large.Number()}
 	case errors.Is(failed, attachments.Missing{}):
-		return &AttachmentNotFound{}
+		return &AttachmentNotFound{ErrorNumber: 3507}
 	case errors.Is(failed, attachments.Forbidden{}):
-		return &Forbidden{Message: "Only a service may read attachment details."}
+		return &Forbidden{Message: "Only a service may read attachment details.", ErrorNumber: 3506}
 	case errors.Is(failed, attachments.Unauthenticated{}):
 		return &Unauthenticated{}
 	}

@@ -37,7 +37,7 @@ func (Catalog) table() map[string]Route {
 	messageConsumers := []string{services.Realtime(), services.Notify(), services.Search()}
 	activityConsumers := []string{services.Realtime(), services.Notify()}
 	return map[string]Route{
-		types.MemberUpserted():       {Producer: services.Directory(), Consumers: []string{services.Messaging(), services.Notify(), services.Search()}},
+		types.MemberUpserted():       {Producer: services.Directory(), Consumers: []string{services.Attachments(), services.Messaging(), services.Notify(), services.Search()}},
 		types.ChannelCreated():       {Producer: services.Channels(), Consumers: channelConsumers},
 		types.ChannelMemberAdded():   {Producer: services.Channels(), Consumers: channelConsumers},
 		types.ChannelMemberRemoved(): {Producer: services.Channels(), Consumers: channelConsumers},

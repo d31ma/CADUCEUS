@@ -1,5 +1,8 @@
+import "cmp"
+
 type Forbidden struct {
-	Message string
+	Message     string
+	ErrorNumber int
 }
 
 func (failure *Forbidden) Error() string {
@@ -7,5 +10,5 @@ func (failure *Forbidden) Error() string {
 }
 
 func (failure *Forbidden) Number() int {
-	return 3506
+	return cmp.Or(failure.ErrorNumber, 3506)
 }

@@ -1,4 +1,8 @@
-import "mesail.dev/packages/apierrors"
+import (
+	"cmp"
+
+	"mesail.dev/packages/apierrors"
+)
 
 // @ErrorHandler
 type AttachmentsErrorHandler struct {
@@ -25,7 +29,7 @@ func (handler *AttachmentsErrorHandler) Forbidden(failure *Forbidden) ApiError {
 // @HandlesError
 // @ResponseStatus(404)
 func (handler *AttachmentsErrorHandler) Missing(failure *AttachmentNotFound) ApiError {
-	return ApiError{Code: "not_found", Message: handler.message(failure, "The attachment was not found.")}
+	return ApiError{Code: "not_found", Message: handler.message(failure, cmp.Or(failure.Message, "The attachment was not found."))}
 }
 
 // @HandlesError

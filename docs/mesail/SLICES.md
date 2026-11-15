@@ -1158,6 +1158,9 @@ FYLO owner's design choice; Mesail does not need it.
     two lines can be joined. FYLO's own full error text is not in
     TACHYON's line; TACHYON has a low-priority ticket for it, not a
     blocker (checked on TACHYON `develop` 1e9b6b57f, 2026-11-14);
+  - every call of `Passkeys.create`, `get` or `offer` passes the new
+    `prfKey` argument (TACHYON develop 8777d0ed7): empty everywhere until
+    G7 names a key for its backup slot;
   - nothing else: the slices that wait for T1, T13 and other TACHYON
     features use them in their own changes.
 - **While K10 waits** (noted 2026-11-14: the owner chose that the next
@@ -1950,6 +1953,13 @@ TACHYON's T15 slice (ADR 0008). The Keycloak and identity parts may be built bef
   result never leaves the device (ADR 0011, PK7). TACHYON's passkey
   client already leaves the PRF results out from its `develop` c9eb126a6
   (keeping only `prf.enabled`); PK4 keeps its own removal anyway.
+- **TACHYON P3 (develop 8777d0ed7, ADR 0126 amendment, not released):**
+  `Passkeys.create`, `get` and `offer` take a new required argument,
+  `prfKey`. With a key name and the `crypto` grant, the PRF output
+  becomes a `Crypto` "derive" key of that name (and `<name>.second`)
+  that is not kept; the raw PRF bytes never reach service code or the
+  server. An empty name keeps the old behaviour. PK4's sign-in and
+  settings pass an empty `prfKey`; only G7's backup key slot names one.
 - **Depends on:** PU, PK2, TACHYON T13 in a release Mesail uses.
 
 ### PK5. Apps: passkeys in the native shells (P1's successor, with the web app's owner)
@@ -2295,6 +2305,14 @@ section 8.)
   (Wave 8's W2 if it exists, else `apps/web`). G0 splits it into smaller
   slices.
 - **Depends on:** TACHYON P1, P2 and P4 released and the pin moved.
+- **Passkey PRF for the backup slot (TACHYON P3, develop 8777d0ed7, not
+  released):** G7 calls `Passkeys.get` with a `prfKey` name such as
+  `mesail.backup.prf` and the `crypto` grant. `Crypto` then holds the PRF
+  output as a "derive" key that is not kept, and G7 derives the key that
+  wraps the backup's data key from it (CONTRACTS "Encrypted chat
+  backups", `kind: passkey` slot). The raw PRF bytes never reach Mesail's
+  code or a server. Native apps still answer passkeys `unsupported`, so a
+  passkey slot is web-only until TACHYON T14.
 - **TACHYON notes (2026-11-14, not released yet; no change to the plan or
   the order):** P2a, the web `Crypto` client (TACHYON develop 8cc7c444f,
   TACHYON ADR 0132), works in Chromium, Firefox and WebKit. It RETURNS

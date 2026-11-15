@@ -460,9 +460,70 @@ shared_gates() {
   return "$status"
 }
 
+gates_all_wanted() {
+  [ "${MESAIL_GATES_ALL:-}" = 1 ] || has_flag --all "$@"
+}
+
+app_selection() {
+  local only
+  only="$(option_value --app "$@")"
+  if [ -n "$only" ]; then echo "app:$only"; return; fi
+  if gates_all_wanted "$@"; then echo all; return; fi
+  echo changed
+}
+
+plan_base() {
+  echo "${MESAIL_GATES_BASE:-origin/develop}"
+}
+
+changed_app_plan() {
+  local root="$1" plan
+  if plan="$(cd "$root/tools/gateplan" && go run . --root "$root" --base "$(plan_base)")" && [ -n "$plan" ]; then
+    echo "$plan"
+    return
+  fi
+  printf '*\ttools/gateplan failed, so every app runs\n'
+}
+
+app_plan() {
+  local root="$1" selection="$2"
+  case "$selection" in
+    app:*) printf '%s\t--app\n' "${selection#app:}" ;;
+    all) printf '*\t--all\n' ;;
+    *) changed_app_plan "$root" ;;
+  esac
+}
+
+plan_summary() {
+  awk -F '\t' '{ name = $1; if (name == "*") name = "every app"; if (name == "-") name = "none"; printf "%s%s (%s)", (NR > 1 ? ", " : ""), name, $2 } END { print "" }'
+}
+
+planned_app() {
+  local root="$1" name="$2"
+  case "$name" in
+    '*') selected_apps "$root" "" ;;
+    -) ;;
+    *) existing_app "$root/apps/$name" ;;
+  esac
+}
+
+planned_apps() {
+  local root="$1" plan="$2" name
+  while IFS="$(printf '\t')" read -r name _; do
+    planned_app "$root" "$name" || return 1
+  done <<< "$plan"
+}
+
+show_app_plan() {
+  local root="$1" selection="$2"
+  echo "=== apps chosen: $(app_plan "$root" "$selection" | plan_summary)"
+}
+
 all_app_gates() {
-  local root="$1" ty="$2" folder="$3" only="$4" apps app status=0
-  apps="$(selected_apps "$root" "$only")" || return 1
+  local root="$1" ty="$2" folder="$3" selection="$4" plan apps app status=0
+  plan="$(app_plan "$root" "$selection")"
+  echo "=== apps chosen: $(echo "$plan" | plan_summary)"
+  apps="$(planned_apps "$root" "$plan")" || return 1
   for app in $apps; do
     app_gates "$ty" "$app" "$folder/$(basename "$app").log" || status=1
   done
@@ -491,7 +552,7 @@ has_unknown_option() {
   local argument previous=""
   for argument in "$@"; do
     case "$argument" in
-      --app | --shared-only | --apps-only | --list-apps) ;;
+      --app | --all | --plan | --shared-only | --apps-only | --list-apps) ;;
       *) [ "$previous" = --app ] || { echo "gates: unknown option $argument" >&2; return 0; } ;;
     esac
     previous="$argument"
@@ -500,7 +561,20 @@ has_unknown_option() {
 }
 
 usage() {
-  echo "usage: scripts/gates.sh [--app <name>] [--shared-only | --apps-only] | --list-apps" >&2
+  echo "usage: scripts/gates.sh [--app <name> | --all] [--shared-only | --apps-only] | --plan | --list-apps" >&2
+  echo "  the app steps run only for the apps the change touches (tools/gateplan, SLICES K15)," >&2
+  echo "  found from the files that differ from origin/develop (committed since the branch point," >&2
+  echo "  uncommitted, or new; MESAIL_GATES_BASE names another base), printed first as" >&2
+  echo "  '=== apps chosen: <app> (<reason>), ...'. An app is chosen for its own files (apps/<app>/**)" >&2
+  echo "  and for a changed kit/<package> that its server/packages/kit.list names; web also for" >&2
+  echo "  tests/responsive. Every app runs when scripts/gates.sh, go-cache.sh, kit-sync.sh, scripts/ci," >&2
+  echo "  scripts/vendor, tools, .github, any go.mod or go.sum, or a path the plan does not know" >&2
+  echo "  changed, when no file differs, and when the changed files cannot be listed. Docs and" >&2
+  echo "  shared code (edge, deploy, tests, kit files no app copies) choose no app." >&2
+  echo "  --all          every app (also MESAIL_GATES_ALL=1); the nightly full run uses it" >&2
+  echo "  --app <name>   exactly that app" >&2
+  echo "  --plan         print the apps the run would choose, and stop" >&2
+  echo "  --list-apps    print every app's name (the CI matrix)" >&2
   echo "  --shared-only  versions, doctor, gofmt of role files, kit sync, and in every Go module" >&2
   echo "                 outside apps/ (found by its go.mod): gofmt, go vet (with the module's" >&2
   echo "                 build tags), go test; modules outside tests/ and tools/ also pass CRAP <= 15" >&2
@@ -545,7 +619,7 @@ wanted() {
 }
 
 run_gates() {
-  local root="$1" folder="$2" only="$3"
+  local root="$1" folder="$2" selection="$3"
   shift 3
   local ty fylo status=0
   ty="$(tachyon_binary)"
@@ -554,20 +628,21 @@ run_gates() {
   use_pinned_tools "$ty" "$fylo"
   run_step "error numbers" "$folder/error-numbers.log" error_number_check "$root" || status=1
   if wanted --apps-only "$@"; then shared_gates "$root" "$ty" "$folder" || status=1; fi
-  if wanted --shared-only "$@"; then all_app_gates "$root" "$ty" "$folder" "$only" || status=1; fi
+  if wanted --shared-only "$@"; then all_app_gates "$root" "$ty" "$folder" "$selection" || status=1; fi
   return "$status"
 }
 
 main() {
-  local root folder only status
+  local root folder selection status
   mesail_use_local_go_cache
   if has_unknown_option "$@"; then usage; return; fi
   root="$(repository_root)"
   if has_flag --list-apps "$@"; then list_apps "$root"; return; fi
-  only="$(option_value --app "$@")"
+  selection="$(app_selection "$@")"
+  if has_flag --plan "$@"; then show_app_plan "$root" "$selection"; return; fi
   folder="$(log_folder)"
   echo "gates: logs in $folder"
-  run_gates "$root" "$folder" "$only" "$@"
+  run_gates "$root" "$folder" "$selection" "$@"
   status=$?
   echo "=== gates rc=$status"
   return "$status"

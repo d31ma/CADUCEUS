@@ -80,7 +80,9 @@ the scripts in `scripts/`, CI and documentation.
 - Preserve the CADUCEUS invariants that still apply (`docs/PROJECT_PLAN.md`
   section 3) and the threat model.
 - Validate with the smallest relevant tests first, then
-  `scripts/gates.sh --app <app>`; `scripts/gates.sh` runs everything.
+  `scripts/gates.sh --app <app>`; `scripts/gates.sh` runs the shared checks
+  and the apps the change touches (`--plan` shows which and why);
+  `scripts/gates.sh --all` runs every app.
 - In Go, `if err != nil { return ..., err }` counts as Rust's `?` for the
   cohesion rule.
 - Follow the shared instructions workflow (spec, plan, implement, validate)

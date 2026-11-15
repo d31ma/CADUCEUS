@@ -38,15 +38,23 @@ apps/web-admin/client/   the admin UI (Go Tac)
 kit/                     shared plain Go packages, copied into apps by scripts/kit-sync.sh
 tests/blackbox/          acceptance tests over HTTP and SMTP (build tag blackbox)
 tools/crap/              CRAP score gate for plain Go packages
+tools/gateplan/          chooses the apps a gate run tests from the changed files
 scripts/gates.sh         every local gate
 ```
 
 ## Gates
 
 ```sh
-scripts/gates.sh                  # every app
+scripts/gates.sh                  # the apps the change touches (tools/gateplan)
+scripts/gates.sh --plan           # which apps that is, and why
+scripts/gates.sh --all            # every app
 scripts/gates.sh --app messaging  # one app plus the shared checks
 ```
+
+An app is chosen for its own files and for any `kit/<package>` its
+`server/packages/kit.list` names. Every app runs when the gate scripts,
+`tools/`, `.github/`, a `go.mod` or `go.sum` changed, or when the changed
+files cannot be found. `scripts/gates.sh --help` lists the rules.
 
 `scripts/gates.sh` needs `ty` 26.46.02 (set `MESAIL_TY` to its path if it is
 not the pinned copy), Go 1.27 or newer, and TinyGo with Binaryen for small

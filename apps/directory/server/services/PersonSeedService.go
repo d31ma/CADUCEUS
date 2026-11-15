@@ -26,7 +26,7 @@ func (service *PersonSeedService) Seed(seed PersonSeed) (PersonRecord, error) {
 	existing, _, readFailure := service.people.ByPersonId(seed.PersonId)
 	stored, failure := service.storeUnless(cmp.Or(failure, readFailure), service.seeded(existing, seed, username))
 	failure = Steps{}.Unless(failure, func() error { return service.joinAll(stored, seed.Memberships) })
-	return PersonRecord{PersonId: stored.PersonId, Username: stored.Username, DisplayName: stored.DisplayName, DomainIds: stored.DomainIds, AdminDomainIds: stored.AdminDomainIds, DefaultDomainId: stored.DefaultDomainId, State: stored.State}, failure
+	return PersonRecord{PersonId: stored.PersonId, Username: stored.Username, DisplayName: stored.DisplayName, DomainIds: stored.DomainIds, AdminDomainIds: stored.AdminDomainIds, DefaultDomainId: stored.DefaultDomainId, State: stored.State, SessionsEndedAt: stored.SessionsEndedAt}, failure
 }
 
 func (service *PersonSeedService) enabled() error {

@@ -2,6 +2,7 @@ import (
 	"cmp"
 	"slices"
 	"strings"
+	"time"
 
 	"mesail.dev/packages/oidc"
 )
@@ -24,7 +25,7 @@ func (service *PersonService) Record(personId string) (PersonRecord, error) {
 	found, failure := service.known(personId)
 	removing, removingFailure := service.domains.RemovingIds()
 	person := service.visible(found, removing)
-	return PersonRecord{PersonId: person.PersonId, Username: person.Username, DisplayName: person.DisplayName, DomainIds: service.list(person.DomainIds), AdminDomainIds: service.list(person.AdminDomainIds), DefaultDomainId: person.DefaultDomainId, State: person.State}, cmp.Or(failure, removingFailure)
+	return PersonRecord{PersonId: person.PersonId, Username: person.Username, DisplayName: person.DisplayName, DomainIds: service.list(person.DomainIds), AdminDomainIds: service.list(person.AdminDomainIds), DefaultDomainId: person.DefaultDomainId, State: person.State, SessionsEndedAt: person.SessionsEndedAt}, cmp.Or(failure, removingFailure)
 }
 
 func (service *PersonService) Search(query MemberQuery) (PersonPage, error) {
@@ -41,23 +42,31 @@ func (service *PersonService) Change(caller oidc.Caller, personId string, change
 	person, failure := service.managed(caller, personId)
 	changed, invalid := service.changed(person, change)
 	failure = service.enableUnless(cmp.Or(failure, invalid), person.State, changed)
-	stored, failure := service.storeUnless(failure, changed)
+	stored, failure := service.storeUnless(failure, service.endedWhenDisabled(person.State, changed))
 	return service.summary(stored), Steps{}.Unless(failure, func() error { return service.writer.MirrorAll(stored) })
 }
 
 func (service *PersonService) ResetPassword(caller oidc.Caller, personId string, reset PasswordReset) error {
 	person, failure := service.managed(caller, personId)
-	return Steps{}.Unless(cmp.Or(failure, service.passwordGiven(reset.NewPassword)), func() error { return service.accounts.ResetPassword(person.PersonId, reset.NewPassword) })
+	failure = Steps{}.Unless(cmp.Or(failure, service.passwordGiven(reset.NewPassword)), func() error { return service.accounts.ResetPassword(person.PersonId, reset.NewPassword) })
+	return service.endedUnless(failure, person)
 }
 
 func (service *PersonService) RemoveTotp(caller oidc.Caller, personId string) error {
 	person, failure := service.managed(caller, personId)
-	return Steps{}.Unless(failure, func() error { return service.accounts.RemoveTotp(person.PersonId) })
+	failure = Steps{}.Unless(failure, func() error { return service.accounts.RemoveTotp(person.PersonId) })
+	return service.endedUnless(failure, person)
 }
 
 func (service *PersonService) RemovePasskeys(caller oidc.Caller, personId string) error {
 	person, failure := service.managed(caller, personId)
-	return Steps{}.Unless(failure, func() error { return service.accounts.RemovePasskeys(person.PersonId) })
+	failure = Steps{}.Unless(failure, func() error { return service.accounts.RemovePasskeys(person.PersonId) })
+	return service.endedUnless(failure, person)
+}
+
+func (service *PersonService) EndSessions(personId string) error {
+	person, failure := service.known(personId)
+	return service.endedUnless(failure, person)
 }
 
 func (service *PersonService) Delete(personId string) error {
@@ -111,6 +120,23 @@ func (service *PersonService) leavingPerson(person PersonDocument) PersonDocumen
 	person.AdminDomainIds = []string{}
 	person.DefaultDomainId = ""
 	person.State = service.deleted()
+	return service.ended(person)
+}
+
+func (service *PersonService) endedUnless(failure error, person PersonDocument) error {
+	_, failure = service.storeUnless(failure, service.ended(person))
+	return failure
+}
+
+func (service *PersonService) endedWhenDisabled(before string, person PersonDocument) PersonDocument {
+	if before == person.State || person.State != service.disabled() {
+		return person
+	}
+	return service.ended(person)
+}
+
+func (service *PersonService) ended(person PersonDocument) PersonDocument {
+	person.SessionsEndedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	return person
 }
 

@@ -51,6 +51,11 @@ func (service *PersonRouteService) RemovePasskeys(authorization string, personId
 	return service.removePasskeysUnless(refused, caller, personId)
 }
 
+func (service *PersonRouteService) EndSessions(authorization string, personId string) error {
+	caller, refused := service.callers.Caller(authorization)
+	return service.endSessionsUnless(cmp.Or(refused, service.callers.InstallWide(caller)), personId)
+}
+
 func (service *PersonRouteService) Delete(authorization string, personId string) error {
 	caller, refused := service.callers.Caller(authorization)
 	return service.deleteUnless(cmp.Or(refused, service.callers.Operator(caller)), personId)
@@ -103,6 +108,13 @@ func (service *PersonRouteService) removePasskeysUnless(refused error, caller oi
 		return refused
 	}
 	return service.people.RemovePasskeys(caller, personId)
+}
+
+func (service *PersonRouteService) endSessionsUnless(refused error, personId string) error {
+	if refused != nil {
+		return refused
+	}
+	return service.people.EndSessions(personId)
 }
 
 func (service *PersonRouteService) deleteUnless(refused error, personId string) error {

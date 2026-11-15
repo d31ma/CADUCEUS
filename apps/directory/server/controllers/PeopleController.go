@@ -61,6 +61,18 @@ func (controller *PeopleController) DeletePasskeys(
 	return controller.people.RemovePasskeys(authorization, personId)
 }
 
+// @PostRoute("/{person_id}/sessions-ended")
+// @Allow(Service)
+// @ResponseStatus(204)
+func (controller *PeopleController) PostSessionsEnded(
+	// @FromHeader("authorization")
+	authorization string,
+	// @FromPath("person_id")
+	personId string,
+) error {
+	return controller.people.EndSessions(authorization, personId)
+}
+
 // @PatchRoute("/{person_id}")
 // @Allow(DomainAdmin, Operator)
 func (controller *PeopleController) PatchPerson(

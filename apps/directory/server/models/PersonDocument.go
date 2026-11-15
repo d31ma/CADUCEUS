@@ -7,4 +7,5 @@ type PersonDocument struct {
 	AdminDomainIds  []string `json:"adminDomainIds"`
 	DefaultDomainId string   `json:"defaultDomainId"`
 	State           string   `json:"state"`
+	SessionsEndedAt string   `json:"sessionsEndedAt"`
 }

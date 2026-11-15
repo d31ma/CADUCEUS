@@ -1862,6 +1862,10 @@ downloads an attachment.
     that another domain's member gets `404` for the same id, and that an
     expired or changed link is refused. The test removes what it made
     (tests/blackbox README rule) and passes natively too.
+  - a daily EventBridge schedule in `deploy/floci` for `POST
+    /api/v1/messaging/jobs/changes-cleanup` (O1's change-log cleanup,
+    install-wide token). The job answers `more: true` while collections
+    remain; call it again until `more` is false.
 - **Depends on:** OP6 merged. Not at the same time as OP2 (OP2 owns
   `deploy/**`) or a slice changing `apps/attachments` (E1); it changes no
   `mail-out` or `devicebox` file, so K13 and G13 may run beside it. If the
@@ -2276,6 +2280,10 @@ section 8.)
   devices from the domain), as G0's contract says. A new device key is
   accepted only with a signature by one of the person's existing devices,
   or by the backup's signing key after a restore (ADR 0011, linking).
+- **Done when:** gates pass for `directory`; and a native run with G13
+  merged shows a linked socket of a listed device getting
+  `devicebox.waiting` while another person's socket gets nothing (moved
+  here from G13).
 
 ### G2. Signalling on `realtime` (realtime's owner, after E4)
 - **Builds:** signalling messages (offer, answer, ICE candidates) carried
@@ -2446,11 +2454,13 @@ stages `envelope.stored` but its `application.json` has `"subscribers":
 - **Depends on:** G5 merged (notify consumes `envelope.stored`). Not at the
   same time as another slice changing `apps/realtime` (E4) or
   `apps/devicebox` (K13).
-- **Done when:** gates pass for `devicebox` and `realtime`; a native run
-  shows an envelope put reaching `notify` (a push request with no text)
-  and a linked socket of a listed device getting `devicebox.waiting`,
-  while another person's socket and a socket without a device id get
-  nothing.
+- **Done when:** gates pass for `devicebox` and `realtime` (their tests
+  stub `directory`'s `devices/owners`); a native run shows an envelope
+  put reaching `notify` (a push request with no text) and a socket
+  without a device id getting nothing. The native check that a linked
+  socket of a listed device gets `devicebox.waiting` and another
+  person's socket gets nothing moves to G1 (decided 2026-11-14:
+  `directory`'s device routes are G1's, so before G1 they answer 405).
 
 ### Order
 G0 now. G1 to G5 (and G6 if wanted) when their app's E slice is merged.
@@ -2537,10 +2547,23 @@ Found by K12 (2026-11-14). Two places still bypass `KnownCollections`:
   create; a read of a missing collection answers empty without creating);
   `devicebox` calls `Forget` before every drop. Unit tests show one check
   per collection per process.
+- **Also builds** (found by G13's native run, decided 2026-11-14): the
+  contract is right and the route is wrong. `GET
+  /api/v1/devicebox/devices/{deviceId}/envelopes` must accept no `after`
+  (the first page) and no `limit` (50). `EnvelopesController` declares
+  both as plain `@FromQuery` strings, and TACHYON 26.46.02 refuses a
+  missing query value unless the parameter is optional ("The query value
+  'after' is required."). Declare both optional; the service already
+  treats "" as the first page and the default limit. Add a controller
+  test: no `after` and no `limit` gives 200 with the first page; a bad
+  `after` still gives 400 number 6015. List in the hand-over any other
+  Mesail controller with an optional query value declared as a plain
+  `string`; fix only devicebox's. Until then, clients send `after=0`.
 - **Depends on:** K12 (merged). Not at the same time as a slice changing
   `mail-out` (E2) or `devicebox`.
 - **Done when:** gates pass for `devicebox`, `mail-out` and `kit`; a Floci
-  run's FYLO log shows no repeated `createCollection` from `mail-out`.
+  run's FYLO log shows no repeated `createCollection` from `mail-out`;
+  the envelope list answers 200 with no `after` and no `limit`.
 - **Busiest collections (optional, each app's owner, no card):** after
   K12's choice A, a read of a collection that was never created checks
   FYLO each time. An app owner may create its busiest such collection on
@@ -2635,6 +2658,36 @@ for every gate. Expected saving: about 4.5 hours a day.
   `scripts/gates.sh --shared-only` passes; the `=== <name> rc=N` lines
   are unchanged; PLAT-1 confirms `MESAIL_GATES_ARGS=--all` is set before
   the next night.
+
+### K16. Spread scheduled work (one small session, after batch 3)
+Found by O1's native run (2026-11-14, hand-over
+`~/Library/Logs/local/CADUCEUS/mesail/slice-o1-handover.md`): in a storm
+of 1,000 edits, edits stalled 2-10 s exactly at the 60 s tick, and one
+PATCH got the router's 502 at 10 s. The outbox-relay workers of
+`channels`, `devicebox`, `directory`, `mail-in` and `messaging` all
+declare `@Schedule({"fixedDelaySeconds":60,"initialDelaySeconds":30})`,
+and `devicebox-expiry` and `directory-removals` both start at 45, so
+apps started together sweep in the same second. TACHYON 26.46.02's
+`@Schedule` has no jitter field.
+- **Owns, for this change only:** each app's `server/workers/*.go`
+  `@Schedule` line, the scheduled sweep's use of `kit/outbox` (with its
+  copies, `scripts/kit-sync.sh`), OPERATIONS (a schedule table), and,
+  after OP7, the schedule rules in `deploy/floci`.
+- **Builds:**
+  - every worker gets its own `initialDelaySeconds`, so no two start in
+    the same 5-second window of the period; OPERATIONS lists them.
+  - the scheduled sweep uses `Relay.RunWithin` with a short time budget
+    (about 2 s) and a page limit, so a sweep never holds an app's single
+    FYLO writer for long; `more` continues at the next tick.
+  - on Floci, EventBridge `rate(1 minute)` has no seconds offset, so the
+    time budget is the protection there; OPERATIONS says so.
+- **Not now:** a `jitterSeconds` field on TACHYON's `@Schedule`; fixed
+  offsets are enough.
+- **Depends on:** batch 3 merged (O1 changes `messaging`). After OP7 for
+  the Floci part.
+- **Done when:** gates pass for the changed apps and `kit`; O1's
+  1,000-edit storm, run natively, shows no edit over 1 s at the tick and
+  no router 502.
 
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 

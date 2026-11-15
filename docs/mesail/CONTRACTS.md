@@ -816,7 +816,11 @@ stores bytes it cannot read, and only the person can reach them.
   the server does not count).
 - **Storage.** The record is in the domain's `attachments` root,
   collection `backups`, one document per person; the bytes are in the
-  shared blob folder under `<domainId>/backups/<personId>/<version>`.
+  shared blob folder as `<domainId>/backup-<hash of personId>-<version>-<random>`
+  (`kit/blobs` names are `<domainId>/<name>`, and a name may not hold
+  "/"; the hash keeps the person id out of the name). `keySlots[]` is
+  stored as JSON text, because FYLO stores no arrays of objects (DOMAIN),
+  and is turned back into objects on the wire.
   After a version completes, the previous version's bytes are removed.
 - **Removal.** When `member.upserted` says `removed` (also when a person is
   deleted, ADR 0005), `attachments` deletes that person's backup in that

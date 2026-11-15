@@ -1881,6 +1881,20 @@ downloads an attachment.
 - **Done when:** the Floci run (`scripts/floci/run-all.sh attachments` or
   the full run) and the native run pass the new test; gates pass for
   `tests/blackbox`.
+- **Built** (branch `feat/op7-attachments-e2e`): `attachments` joins the
+  `mail` access point with the local adapter at `/mnt/data/blobs`. The
+  router had no blob folder on Floci, so `scripts/floci/blobs.sh` finds the
+  access point's volume (`describe-access-points`, then exactly one
+  `efs-<id>-` volume) and re-creates the router with only the `blobs`
+  subfolder mounted (`deploy/floci/compose.blobs.yaml`, compose `subpath`,
+  Docker Engine 26+); steps in OPERATIONS section 3 for OP2. The cleanup
+  route is a `"daily": true` schedule run by a second container,
+  `scheduler-daily` (86,400 s), which calls again while `more: true`.
+  `tests/blackbox/Attachments_test.go` (`^TestOp7`, 3 tests). No
+  attachment delete route exists, so the test's attachment stays (its
+  person is removed). Extra files, with the coordinator's OK:
+  `docker-compose.yml`, `scripts/floci/{up,stack,common,blobs}.sh`,
+  `deploy/lambda/scheduler.sh`, `docs/mesail/OPERATIONS.md`.
 
 ### OP8. The SMTP edge in the Floci test stack (one small session, after OP7)
 Also found by OP6: the SMTP edge has no deployment in the Floci stack, so

@@ -201,7 +201,7 @@ worktree_slice() {
   name="$(basename "$1")"
   case "$name" in
     slice-*) echo "${name#slice-}" ;;
-    *) echo "gates: set MESAIL_SLICE or MESAIL_FYLO_ROOT; $name is not a slice-<id> worktree" >&2; return 1 ;;
+    *) echo "$name" | tr -c 'A-Za-z0-9._\n-' '-' ;;
   esac
 }
 
@@ -303,7 +303,22 @@ controller_check() {
   (cd "$(repository_root)/tools/controllers" && go run . "$app")
 }
 
+remove_app_build_output() {
+  local app="$1"
+  if [ -n "${MESAIL_KEEP_TACHYON:-}" ]; then return 0; fi
+  if [ ! -d "$app/.tachyon" ]; then return 0; fi
+  echo "=== $(basename "$app"): removing $(du -sh "$app/.tachyon" | cut -f1) of build output in $app/.tachyon"
+  rm -rf "$app/.tachyon"
+}
+
 app_gates() {
+  local ty="$1" app="$2" log="$3" status=0
+  app_gate_steps "$ty" "$app" "$log" || status=1
+  remove_app_build_output "$app" | tee -a "$log"
+  return "$status"
+}
+
+app_gate_steps() {
   local ty="$1" app="$2" log="$3"
   local name status=0
   name="$(basename "$app")"
@@ -496,6 +511,13 @@ usage() {
   echo "                 tac.dependencies.check on, and no tac.html view holds a ? : expression or" >&2
   echo "                 builds a value with +; every app's steps check that server/application.json keeps" >&2
   echo "                 dependencies.check on and .env and .env.example never turn TAC_DEPENDENCIES_CHECK off)" >&2
+  echo "  FYLO roots go under ~/Developer/AtlasFylo/mesail/slice-<id>: <id> is MESAIL_SLICE when set, else" >&2
+  echo "  the worktree folder's name without a slice- prefix (e12-kit-errors -> slice-e12-kit-errors);" >&2
+  echo "  MESAIL_FYLO_ROOT overrides the whole folder. A worktree that set MESAIL_SLICE before keeps" >&2
+  echo "  its folder only while it still sets it; otherwise the old slice-<id> folder is left behind," >&2
+  echo "  and its owner removes it after the merge (native runs keep \$TMPDIR/mesail-native/<owner>)" >&2
+  echo "  each app's build output (apps/<app>/.tachyon) is removed when its steps end, pass or fail;" >&2
+  echo "  MESAIL_KEEP_TACHYON=1 keeps it (for debugging)" >&2
   echo "  every run also checks docs/mesail/ERRORS.md against the error numbers in code" >&2
   echo "  (tools/errornumbers, ADR 0009; apps in tools/controllers/unconverted.list are skipped)" >&2
   echo "  MESAIL_GOCACHE  the Go build cache (default on macOS: ~/Library/Caches/go-build-mesail," >&2

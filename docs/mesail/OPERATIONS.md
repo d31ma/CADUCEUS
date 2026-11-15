@@ -82,10 +82,15 @@ on. So a sweep never holds an app's single FYLO writer for long. Events
 still go out right after each write (the relay's drain); the sweep only
 retries what the drain missed.
 
-**On Floci** the scheduler calls every route in `deploy/floci/stack.json`
-`schedules` once a minute (`scheduleSeconds`), one after another. A
-one-minute schedule (EventBridge `rate(1 minute)` too) has no seconds
-offset, so there the time budget is the protection, not the start times.
+**On Floci** no `@Schedule` worker runs. The `scheduler` container calls
+every route in `deploy/floci/stack.json` `schedules` once a minute
+(`scheduleSeconds`), one route at a time, and `scheduler-daily` calls the
+`"daily": true` routes once a day. A one-minute schedule (EventBridge
+`rate(1 minute)` too) has no seconds offset, so there the time budget is
+the protection, not the start times: the router runs one call at a time
+per FYLO app and lets a waiting user request go before a background call,
+so a user waits at most for the one sweep that is running, about
+2 seconds (`deploy/floci/README.md` "Scheduler (Floci)").
 
 ## 2. What you provide
 

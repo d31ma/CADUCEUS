@@ -517,8 +517,18 @@ The route drops at most 12 old month collections per call and answers
 `CleanupReport{dropped, more}`; the scheduler calls again while `more` is
 `true` (for up to 86,390 s). It needs an install-wide token: a domain token
 gets `403 [MS1566]`. It has `"native": false`, because under `ty start` the
-messaging worker `changes-cleanup` runs it daily itself (first run 600 s
+messaging worker `changes-cleanup` runs it daily itself (first run 613 s
 after start). The router counts it as a background call (`/jobs/<job>`).
+
+How long a user waits behind a sweep (slice K16): the scheduler calls one
+route at a time, so two apps never sweep at the same moment, and the router
+lets a waiting user request go before any background call (above). So at a
+tick a user request waits at most for the one background call that is
+running. Every scheduled outbox sweep stops starting new documents after
+2 seconds (1 second in `directory`) and answers `more: true`, so that wait is
+about 2 seconds. A one-minute rule has no seconds offset, so the scheduler
+needs no start times of its own: the `@Schedule` start times in
+OPERATIONS "Scheduled work" are for `ty start` only.
 
 ## Ports on the Mac (127.0.0.1 only)
 
@@ -536,6 +546,8 @@ after start). The router counts it as a background call (`/jobs/<job>`).
   `scheduler-daily` containers stand in; a rule made from `stack.json`
   `schedules` should use `rate(1 minute)` for the others and `rate(1 day)`
   for `"daily": true`, and repeat a call while it answers `more: true`.
+  Such rules all fire in the same second; the one-call-at-a-time queue per
+  FYLO function and the 2-second sweep budget (slice K16) keep that short.
 - The SMTP edge container (`edge/smtp`, slice M1) and `MESAIL_SMTP_ADDR`.
 - Event relay schedules (EventBridge) and the realtime WebSocket API.
 - Deployment to kestrel through PaaS.

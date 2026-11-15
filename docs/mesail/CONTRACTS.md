@@ -752,6 +752,7 @@ chat|email, status, detail?}`.
 | `POST /api/v1/attachments/{attachmentId}/complete` | SignedIn | - | `Attachment{attachmentId, fileName, mediaType, size, sha256, state}` |
 | `GET /api/v1/attachments/{attachmentId}` | SignedIn | - | `Download{url, expiresAt}` (short-lived signed URL) |
 | `GET /api/v1/attachments/{attachmentId}/meta` | Service | - | `Attachment{attachmentId, fileName, mediaType, size, sha256, state}` |
+| `POST /api/v1/attachments/events` | Allow(Service) | `Envelope` | `EventReceipt{eventId, status}` (`applied` or `duplicate`; EVENTS.md). Consumes only `member.upserted`: `removed` deletes that person's encrypted chat backup in the domain ("Encrypted chat backups", G4) |
 
 An attachment in another domain answers `404`.
 

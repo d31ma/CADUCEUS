@@ -7,6 +7,7 @@ import (
 	"maps"
 	"strconv"
 	"testing"
+	"time"
 
 	"mesail.dev/packages/core"
 	"mesail.dev/packages/events"
@@ -328,7 +329,7 @@ func TestUnknownOutboxRowsAreNotFound(t *testing.T) {
 
 func TestMissingSettingsStopTheRelay(t *testing.T) {
 	storage := newStorage(newMemorySource())
-	_, err := storage.Outbox().RunOnce(5)
+	_, err := storage.Outbox().RunWithin(5, time.Minute)
 	storage.Outbox().Drain(outbox.Ref{Collection: "messages-x", Id: "1"})
 	if err == nil || err.Error() != "no outbox settings" {
 		t.Fatalf("want the settings failure, got %v", err)
@@ -339,7 +340,7 @@ func TestTheRelayRunsWithSettings(t *testing.T) {
 	source := newMemorySource()
 	storage := Storage{Source: source, Scroll: source.Scroll, Pusher: &countingPusher{}}
 	storage.tenant().InsertTracked("messages-x", map[string]any{"domainId": "a.test"}, 1)
-	report, err := storage.Outbox().RunOnce(5)
+	report, err := storage.Outbox().RunWithin(5, time.Minute)
 	dead, _ := storage.Outbox().Dead()
 	if err != nil || report.Documents != 0 || len(dead) != 0 {
 		t.Fatalf("want an empty run, got %v %v", report, err)

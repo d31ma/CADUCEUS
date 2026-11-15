@@ -26,12 +26,27 @@ func TestASweepStopsAfterTwentyFiveDocumentsAndSaysThereIsMore(t *testing.T) {
 }
 
 func TestASweepStopsWhenItsTimeIsUsedUp(t *testing.T) {
-	documents := outboxDocumentsForTest{{}, {}}
-	calls := 0
-	clock := time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC)
-	desk := OutboxDesk{now: func() time.Time { calls++; return clock.Add(time.Duration(calls) * 25 * time.Second) }}
-	report, err := desk.relayEach(documents.refs())
+	w := newWorld(t)
+	w.configure(`{"yon":{"outbox":{"producer":"channels","subscribers":[{"name":"search","url":"http://127.0.0.1:1/s"}]}}}`)
+	w.pusher.FailFor("search", storageDown{})
+	w.create("Bearer ana", "c0", "public")
+	w.create("Bearer ana", "c1", "public")
+	w.pusher.Recover("search")
+	w.desk.now = steppingClock(w.clock.Add(time.Hour), 3*time.Second)
+	report, err := w.desk.RunOnce()
 	wantNoError(t, err)
 	wantEqual(t, report.Documents, 0)
 	wantEqual(t, report.More, true)
+}
+
+func TestASweepHasTwoSecondsToRelay(t *testing.T) {
+	wantEqual(t, OutboxDesk{}.timeBudget(), 2*time.Second)
+}
+
+func steppingClock(start time.Time, step time.Duration) func() time.Time {
+	calls := 0
+	return func() time.Time {
+		calls++
+		return start.Add(time.Duration(calls) * step)
+	}
 }

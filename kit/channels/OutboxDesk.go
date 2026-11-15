@@ -23,11 +23,8 @@ func (desk OutboxDesk) RunOnce() (SweepReport, error) {
 	if err != nil {
 		return SweepReport{}, err
 	}
-	documents, err := desk.store.Pending(desk.sweepSize())
-	if err != nil {
-		return SweepReport{}, err
-	}
-	return desk.relayEach(documents)
+	report, err := desk.relay().RunWithin(desk.sweepSize(), desk.timeBudget())
+	return SweepReport{More: report.More}.Plus(report), err
 }
 
 func (desk OutboxDesk) Drain(collection string, id string) {
@@ -70,23 +67,6 @@ func (desk OutboxDesk) drainWhen(configured bool, ref outbox.Ref) {
 	if configured {
 		_, _ = desk.relay().RelayDocument(ref)
 	}
-}
-
-func (desk OutboxDesk) relayEach(documents []outbox.Document) (SweepReport, error) {
-	relay, started := desk.relay(), desk.now()
-	report := SweepReport{}
-	failures := []error{}
-	index := 0
-	for ; index < len(documents) && desk.now().Sub(started) < desk.timeBudget(); index++ {
-		part, err := relay.SweepDocument(documents[index].Ref)
-		report, failures = report.Plus(part), append(failures, err)
-	}
-	report.More = desk.stoppedEarly(index, len(documents))
-	return report, errors.Join(failures...)
-}
-
-func (desk OutboxDesk) stoppedEarly(relayed int, found int) bool {
-	return relayed < found || found == desk.sweepSize()
 }
 
 func (desk OutboxDesk) relay() outbox.Relay {
@@ -134,5 +114,5 @@ func (OutboxDesk) waitingLimit() int {
 }
 
 func (OutboxDesk) timeBudget() time.Duration {
-	return 20 * time.Second
+	return 2 * time.Second
 }

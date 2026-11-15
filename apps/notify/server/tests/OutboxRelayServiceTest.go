@@ -1,5 +1,6 @@
 import (
 	"errors"
+	"time"
 
 	"mesail.dev/packages/outbox"
 )
@@ -40,6 +41,10 @@ func (test *OutboxRelayServiceTest) TestRunOnceRelaysPendingDocuments() {
 	report, err := setup.Relay(pusher).RunOnce(setup.Service(installWide))
 	Assert.IsTrue(err == nil, "run failed")
 	Assert.IsTrue(report.Delivered >= 1, "nothing delivered")
+}
+
+func (test *OutboxRelayServiceTest) TestASweepHasTwoSecondsToRelay() {
+	Assert.Equals(2*time.Second, NotifyTestSetup{}.Relay(outbox.NewRecordingPusher()).timeLimit())
 }
 
 func (test *OutboxRelayServiceTest) TestDeadEventsListsALetterAndRetryDeadMovesItBack() {

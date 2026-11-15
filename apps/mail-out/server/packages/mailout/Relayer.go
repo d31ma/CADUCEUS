@@ -15,7 +15,7 @@ type Relayer struct {
 }
 
 func (relayer Relayer) RunOnce(limit int) (outbox.Report, error) {
-	return relayer.relay().RunOnce(limit)
+	return relayer.relay().RunWithin(limit, relayer.Budget())
 }
 
 func (relayer Relayer) RelayDocument(ref outbox.Ref, domainId string) (outbox.Report, error) {
@@ -65,4 +65,8 @@ func (Relayer) letters(documents []outbox.Document) ([]outbox.DeadLetter, error)
 		letters, failures = append(letters, listed...), append(failures, err)
 	}
 	return letters, errors.Join(failures...)
+}
+
+func (Relayer) Budget() time.Duration {
+	return 2 * time.Second
 }

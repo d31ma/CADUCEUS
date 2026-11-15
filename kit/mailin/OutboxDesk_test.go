@@ -2,6 +2,7 @@ package mailin
 
 import (
 	"testing"
+	"time"
 
 	"mesail.dev/packages/outbox"
 )
@@ -80,4 +81,8 @@ func TestDrainWithoutSettingsPushesNothing(t *testing.T) {
 
 func TestTheSweepSizeIsOneHundred(t *testing.T) {
 	check(t, OutboxDesk{}.SweepSize() == 100, "want 100")
+}
+
+func TestTheSweepHasTwoSecondsToRelay(t *testing.T) {
+	check(t, OutboxDesk{}.Budget() == 2*time.Second, "want 2s")
 }

@@ -204,3 +204,9 @@ func TestTheAssemblyWiresTheDirectoryFromItsSettings(t *testing.T) {
 		t.Fatalf("got %+v", settings)
 	}
 }
+
+func TestTheRelaySweepHasTwoSecondsAndTheExpiryJobKeepsTwenty(t *testing.T) {
+	if (Limits{}).SweepBudget() != 2*time.Second || (Limits{}).TimeBudget() != 20*time.Second {
+		t.Fatalf("sweep %s, expiry %s", Limits{}.SweepBudget(), Limits{}.TimeBudget())
+	}
+}

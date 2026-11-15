@@ -17,11 +17,11 @@ type Outbox struct {
 	Now             func() time.Time
 }
 
-func (relay Outbox) RunOnce(limit int) (outbox.Report, error) {
+func (relay Outbox) RunWithin(limit int, budget time.Duration) (outbox.Report, error) {
 	if relay.SettingsFailure != nil {
 		return outbox.Report{}, relay.SettingsFailure
 	}
-	return relay.relay().RunOnce(limit)
+	return relay.relay().RunWithin(limit, budget)
 }
 
 func (relay Outbox) Drain(ref outbox.Ref) {

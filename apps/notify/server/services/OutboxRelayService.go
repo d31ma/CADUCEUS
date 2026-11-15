@@ -155,5 +155,5 @@ func (service *OutboxRelayService) writeLimit() int {
 }
 
 func (service *OutboxRelayService) timeLimit() time.Duration {
-	return 20 * time.Second
+	return 2 * time.Second
 }

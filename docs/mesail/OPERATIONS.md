@@ -34,6 +34,59 @@ In that VM:
 Nothing else should run on that VM's Docker engine: Floci controls the
 engine through its socket, which is the same as root on that engine.
 
+### Scheduled work
+
+Each app runs its own scheduled workers (`@Schedule` in
+`server/workers/`). TACHYON runs a worker `initialDelaySeconds` after the
+app starts, then again `fixedDelaySeconds` after each run ends. Apps that
+start together used to sweep in the same second, and edits stalled at that
+second (slice K16). So each worker has its own start time:
+
+- each 60-second worker starts in its own 5-second window of the minute;
+- each 60-second worker starts at least 3 seconds away from every 15- and
+  30-second worker. Fifteen starts a minute do not fit in twelve 5-second
+  windows, so three 60-second workers share a window with a shorter one.
+
+| Worker | Runs every | First run after the start | Second of the minute |
+| --- | --- | --- | --- |
+| `realtime` `sweep` | 15 s | 17 s | 02, 17, 32, 47 |
+| `devicebox` `outbox-relay` | 60 s | 67 s | 07 |
+| `mail-out` `deliver` (jobs, then the outbox relay) | 30 s | 10 s | 10, 40 |
+| `messaging` `changes-cleanup` | 1 day | 613 s | 13 |
+| `channels` `outbox-relay` | 60 s | 82 s | 22 |
+| `notify` `notify-jobs` (jobs, then the outbox relay) | 30 s | 25 s | 25, 55 |
+| `directory` `directory-removals` | 60 s | 88 s | 28 |
+| `messaging` `outbox-relay` | 60 s | 37 s | 37 |
+| `directory` `outbox-relay` | 60 s | 43 s | 43 |
+| `mail-in` `outbox-relay` | 60 s | 52 s | 52 |
+| `devicebox` `devicebox-expiry` | 60 s | 58 s | 58 |
+
+"Second of the minute" counts from the moment the apps start. TACHYON
+waits after a run ends, so each run's length moves the later runs: the
+times hold best right after a start and slowly move apart after that.
+TACHYON's `@Schedule` has no random offset (jitter); fixed times are
+enough. A new worker takes a free second and is added to this table.
+
+**Time budget.** A scheduled outbox sweep stops starting new documents
+after a short time and reads at most one page of waiting documents:
+
+| App | Time | Page |
+| --- | --- | --- |
+| `channels`, `devicebox`, `messaging` | 2 s | 25, 25, 20 documents |
+| `mail-in`, `mail-out` | 2 s | 100 documents |
+| `notify` | 2 s | 25 documents |
+| `directory` | 1 s | 3 documents |
+
+A sweep that stops early answers `"more": true`, and the next run goes
+on. So a sweep never holds an app's single FYLO writer for long. Events
+still go out right after each write (the relay's drain); the sweep only
+retries what the drain missed.
+
+**On Floci** the scheduler calls every route in `deploy/floci/stack.json`
+`schedules` once a minute (`scheduleSeconds`), one after another. A
+one-minute schedule (EventBridge `rate(1 minute)` too) has no seconds
+offset, so there the time budget is the protection, not the start times.
+
 ## 2. What you provide
 
 | You provide | Why | Notes |

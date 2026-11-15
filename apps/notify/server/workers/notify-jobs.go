@@ -7,7 +7,7 @@ import (
 	"mesail.dev/packages/transport"
 )
 
-// @Schedule({"fixedDelaySeconds":30})
+// @Schedule({"fixedDelaySeconds":30,"initialDelaySeconds":25})
 type Handler struct{}
 
 func (handler Handler) POST() {

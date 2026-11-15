@@ -4,7 +4,7 @@ import (
 	"mesail.dev/packages/devicebox"
 )
 
-// @Schedule({"fixedDelaySeconds":60,"initialDelaySeconds":45})
+// @Schedule({"fixedDelaySeconds":60,"initialDelaySeconds":58})
 type Handler struct{}
 
 func (handler Handler) POST() {

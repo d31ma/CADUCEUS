@@ -1,5 +1,6 @@
 import (
 	"os"
+	"time"
 
 	"mesail.dev/packages/core"
 	"mesail.dev/packages/events"
@@ -9,6 +10,12 @@ import (
 // @Test(StorageTestSetup, {"partition":"tests"})
 type OutboxTest struct {
 	behaviors *BehaviorContext
+}
+
+func (test *OutboxTest) TestASweepHasTwoSecondsAndTwentyDocuments() {
+	world := StorageTestSetup{}.World()
+	Assert.Equals(2*time.Second, world.Relay.sweepBudget())
+	Assert.Equals(20, world.Relay.sweepSize())
 }
 
 func (test *OutboxTest) TestARefusedEventBecomesADeadLetterThatTheOperatorCanRequeue() {

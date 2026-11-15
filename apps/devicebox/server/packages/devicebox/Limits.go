@@ -44,6 +44,10 @@ func (Limits) TimeBudget() time.Duration {
 	return 20 * time.Second
 }
 
+func (Limits) SweepBudget() time.Duration {
+	return 2 * time.Second
+}
+
 func (Limits) DirectoryTimeout() time.Duration {
 	return 10 * time.Second
 }

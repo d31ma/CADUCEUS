@@ -61,7 +61,7 @@ func (OutboxDesk) SweepSize() int {
 }
 
 func (OutboxDesk) Budget() time.Duration {
-	return 20 * time.Second
+	return 2 * time.Second
 }
 
 func (desk OutboxDesk) relay() (outbox.Relay, error) {

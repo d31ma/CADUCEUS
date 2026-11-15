@@ -1,6 +1,7 @@
 import (
 	"cmp"
 	"errors"
+	"time"
 
 	"mesail.dev/packages/outbox"
 )
@@ -14,7 +15,7 @@ type OutboxRelayService struct {
 }
 
 func (service *OutboxRelayService) RunOnce() (outbox.Report, error) {
-	report, failure := service.storage.Storage().Outbox().RunOnce(service.sweepSize())
+	report, failure := service.storage.Storage().Outbox().RunWithin(service.sweepSize(), service.sweepBudget())
 	return report, service.failures.Known(failure)
 }
 
@@ -49,4 +50,8 @@ func (service *OutboxRelayService) views(ref outbox.Ref, letters []outbox.DeadLe
 
 func (service *OutboxRelayService) sweepSize() int {
 	return 20
+}
+
+func (service *OutboxRelayService) sweepBudget() time.Duration {
+	return 2 * time.Second
 }

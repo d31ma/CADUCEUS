@@ -23,7 +23,7 @@ func (desk OutboxDesk) RunOnce() (outbox.Report, error) {
 	if err != nil {
 		return outbox.Report{}, err
 	}
-	return desk.relay().RunWithin(desk.sweepSize(), Limits{}.TimeBudget())
+	return desk.relay().RunWithin(desk.sweepSize(), Limits{}.SweepBudget())
 }
 
 func (desk OutboxDesk) Drain(collection string, id string) {

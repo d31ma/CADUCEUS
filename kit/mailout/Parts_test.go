@@ -354,3 +354,7 @@ func TestBuilderReportsAnUnreachableDirectory(t *testing.T) {
 	equal(t, "no token", err.Error())
 	equal(t, "i", prepared.Item.Id)
 }
+
+func TestTheRelaySweepHasTwoSecondsToRelay(t *testing.T) {
+	equal(t, 2*time.Second, Relayer{}.Budget())
+}

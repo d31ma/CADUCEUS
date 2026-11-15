@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Spread scheduled work (slice K16): every `@Schedule` worker has its own
+  `initialDelaySeconds`, so apps that start together no longer sweep in
+  the same second (OPERATIONS "Scheduled work" lists the times). The
+  scheduled outbox sweeps of `channels`, `devicebox`, `mail-in`,
+  `mail-out`, `messaging` and `notify` now stop starting new documents
+  after 2 seconds (20 seconds before; `messaging` and `mail-out` had no
+  limit) and answer `"more": true`; the next run goes on. Routes, fields
+  and error numbers do not change.
 - Changed the last direct collection calls (slice K13): `kit/mailout`'s
   `DocumentStore` and `devicebox`'s `Documents` now go through
   `kit/collections` `KnownCollections`, so each collection is checked

@@ -4,7 +4,7 @@ import (
 	"mesail.dev/packages/realtime"
 )
 
-// @Schedule({"fixedDelaySeconds":15,"initialDelaySeconds":15})
+// @Schedule({"fixedDelaySeconds":15,"initialDelaySeconds":17})
 type Handler struct{}
 
 func (Handler) POST() error {

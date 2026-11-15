@@ -4,7 +4,7 @@ import (
 	"mesail.dev/packages/trigger"
 )
 
-// @Schedule({"fixedDelaySeconds":60,"initialDelaySeconds":45})
+// @Schedule({"fixedDelaySeconds":60,"initialDelaySeconds":88})
 type Handler struct{}
 
 func (handler Handler) POST() {

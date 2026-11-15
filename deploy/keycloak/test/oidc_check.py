@@ -16,6 +16,7 @@ class MesailRealmCheck:
     DIRECTORY_CLIENT = "mesail-directory"
     REMOVED_CLIENTS = ["mesail-service", "mesail-api"]
     OPERATOR_ROLE = "mesail-operator"
+    OFFLINE_ROLE = "offline_access"
     OLD_ROLES = ["mesail-member", "mesail-admin", "mesail-service"]
     MUST_CHANGE_ATTRIBUTE = "mesail.mustChangePassword"
     MUST_CHANGE_CLAIM = "mesail_must_change_password"
@@ -143,7 +144,7 @@ class MesailRealmCheck:
             self.expect(f"client {client} does not exist (HTTP, error)", (reply.status, reply.json().get("error")), (401, "invalid_client"))
         for client, secret in [(self.ACCOUNT_CLIENT, self.account_secret), (self.DIRECTORY_CLIENT, self.directory_secret)]:
             claims = self.verifier.claims(self.require_ok(self.client_credentials(client, secret), f"{client} token")["access_token"])
-            self.expect(f"{client}: service token has no realm role", self.roles(claims), [])
+            self.expect(f"{client}: service token has no realm role but offline_access", sorted(set(self.roles(claims)) - {self.OFFLINE_ROLE}), [])
             self.expect(f"{client}: service token is not for mesail-identity", self.IDENTITY_CLIENT in self.as_list(claims.get("aud")), False)
 
     def check_directory(self) -> None:

@@ -17,7 +17,7 @@
       "email": "ana@example.com",
       "emailVerified": true,
       "realmRoles": [
-        "default-roles-mesail"
+        "offline_access"
       ]
     },
     {
@@ -36,7 +36,7 @@
       "email": "bo@example.com",
       "emailVerified": true,
       "realmRoles": [
-        "default-roles-mesail"
+        "offline_access"
       ]
     },
     {
@@ -55,7 +55,7 @@
       "email": "eve@example.org",
       "emailVerified": true,
       "realmRoles": [
-        "default-roles-mesail"
+        "offline_access"
       ]
     },
     {
@@ -74,7 +74,7 @@
       "email": "carol@partner.test",
       "emailVerified": true,
       "realmRoles": [
-        "default-roles-mesail"
+        "offline_access"
       ]
     },
     {
@@ -92,7 +92,7 @@
       ],
       "realmRoles": [
         "mesail-operator",
-        "default-roles-mesail"
+        "offline_access"
       ]
     }
   ]

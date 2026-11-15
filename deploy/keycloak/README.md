@@ -71,8 +71,9 @@ Operator explicitly. The default role `default-roles-mesail` holds only
 Keycloak's `offline_access` (kept devices, below), so a person's token and
 the two service accounts' tokens carry no other realm role. `mesail-member`,
 `mesail-admin` and `mesail-service` are roles of Mesail's own token, set by
-the identity service. The dev users list `default-roles-mesail` in their
-`realmRoles`, because Keycloak does not give imported users the default role.
+the identity service. The dev users list only `offline_access` in their
+`realmRoles` (Keycloak gives imported users no default role, and the whole
+default role would also add Keycloak's `account` client roles and audience).
 
 **Kept devices** (ADR 0006, slice O2). When a person ticks "Keep me signed in
 on this device", the identity service asks for the scope `offline_access`
@@ -465,7 +466,7 @@ VM lock) and `python3` and `openssl` on the host. It:
    introspection (a tampered token is not active); refresh token rotation; no
    browser login offered; no client-credentials grant for `mesail-identity`;
    no `mesail-service` or `mesail-api` client; the service tokens of
-   `mesail-account` and `mesail-directory` carry no realm role; the directory
+   `mesail-account` and `mesail-directory` carry no realm role but `offline_access`; a kept sign-in gets an offline refresh token that stops working after the sign-out everywhere; the directory
    client creates a person (username given in capitals, stored in
    lowercase) with `mesail.addRequest` and reads it back, refuses a second
    one with the same prefix and six bad usernames, sets `mesail.mustChangePassword` (the claim appears; `account`

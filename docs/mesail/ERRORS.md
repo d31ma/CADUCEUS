@@ -53,6 +53,20 @@ keeps its row, marked "retired".
 - Shared kit packages that are copied into one app only (for example
   `kit/channels`) use that app's block, and their error types carry the
   numbers, one constructor per case.
+- **Keeping constructor lists short** (from E7, 2026-11-14). TACHYON's
+  duplicate check (TY1315) flags any block of about 100 tokens over 10
+  lines that repeats, and a long list of near-identical constructors
+  trips it. Write each case's constructor on one line that reads its
+  text from a table of plain literals in the same error type (number,
+  code, field, text), and keep the constructors in number order. G1, O2
+  and later slices add their cases the same way.
+- **What `tools/errornumbers` (E11) reads today**, until E15 makes it
+  type-aware: once a type has a `Number()` method, the tool reads every
+  keyed `number:` field in that package as an error number, and it finds
+  number builders by method name only. So: never name a field `number`
+  in a package with error types unless it is an error number (E7 renamed
+  `dnscheck`'s DNS record field to `typeValue`), and give each error
+  type's builder its own method name.
 - Answers that TACHYON makes itself (`401` without identity, `403` without
   a role, `422` `@Check` rejections, a malformed body, an error no handler
   takes) have no number until TACHYON request Y1 (ADR 0009).

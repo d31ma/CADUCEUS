@@ -2126,6 +2126,25 @@ From E10's hand-over (2026-11-14).
 ### E14. Dropped (2026-11-14)
 E13 moved all 55 text joins, so no allow list and no E14 are needed.
 
+### E15. A type-aware error number check (one small session, low priority)
+Found by E7 (2026-11-14). `tools/errornumbers` matches by names: any
+keyed `number:` field in a package whose types have `Number()`, and
+number builders by method name. That made E7 rename a DNS record field
+and forces one builder name per error type (ERRORS.md "What
+`tools/errornumbers` reads today").
+- **Owns:** `tools/errornumbers/**` only.
+- **Builds:** the tool loads each package with `go/packages` and
+  `go/types`, and reads a `number:` value only in a composite literal
+  whose type has the error number method, and a builder call only when
+  its receiver is an error type. Its tests keep every case the current
+  tool finds, plus a field named `number` on another type that it must
+  ignore. The ERRORS.md note above then shrinks to one line.
+- **Depends on:** nothing; any time. It changes no app, so it may run
+  beside any slice; only a slice adding error numbers at the same time
+  re-runs the check after a rebase.
+- **Done when:** `scripts/gates.sh --shared-only` passes on develop with
+  the new tool, with the same numbers found in every app.
+
 ### Requests to TACHYON (ADR 0009)
 - **Y1:** let `@ErrorHandler` shape the answers TACHYON makes itself (no
   identity, missing role, identity provider failure, `@Check` rejection,

@@ -99,3 +99,56 @@ func TestToConnectionPushesToThatConnection(t *testing.T) {
 		t.Fatalf("got %v %+v", err, pushes.pushes)
 	}
 }
+
+func deviceConnection(domainId string, memberId string, connectionId string, deviceId string, linked bool) Connection {
+	connection := testConnection(domainId, memberId, connectionId)
+	connection.DeviceId = deviceId
+	connection.Linked = linked
+	return connection
+}
+
+func waitingFixture() (*recordingGateway, FanOut) {
+	memory := newMemoryStorage()
+	pushes := newRecordingGateway()
+	book := connectionTestBook(memory)
+	book.Add(deviceConnection("example.com", "ana", "a-listed", "dev_a1", true))
+	book.Add(deviceConnection("example.com", "ana", "a-listed-again", "dev_a1", true))
+	book.Add(deviceConnection("example.com", "ana", "a-other-device", "dev_a2", true))
+	book.Add(deviceConnection("example.com", "ana", "a-not-linked", "dev_a3", false))
+	book.Add(deviceConnection("example.com", "ana", "a-no-device", "", false))
+	book.Add(deviceConnection("example.com", "ben", "b-listed-id", "dev_a1", true))
+	book.Add(deviceConnection("example.org", "ana", "a-other-domain", "dev_a1", true))
+	return pushes, FanOut{Connections: book, Gateway: pushes}
+}
+
+func TestToDevicesReachesTheLinkedSocketsOfTheListedDevices(t *testing.T) {
+	pushes, fanOut := waitingFixture()
+	err := fanOut.ToDevices("example.com", "ana", []string{"dev_a1", "dev_a3"}, Event{Type: "devicebox.waiting", State: "message"})
+	if err != nil || len(pushes.eventsOf("a-listed")) != 1 || len(pushes.eventsOf("a-listed-again")) != 1 {
+		t.Fatalf("got %v %+v", err, pushes.pushes)
+	}
+}
+
+func TestToDevicesSkipsOtherDevicesUnlinkedSocketsAndSocketsWithoutADevice(t *testing.T) {
+	pushes, fanOut := waitingFixture()
+	err := fanOut.ToDevices("example.com", "ana", []string{"dev_a1", "dev_a3"}, Event{Type: "devicebox.waiting", State: "message"})
+	if err != nil || len(pushes.eventsOf("a-other-device")) != 0 || len(pushes.eventsOf("a-not-linked")) != 0 || len(pushes.eventsOf("a-no-device")) != 0 {
+		t.Fatalf("got %v %+v", err, pushes.pushes)
+	}
+}
+
+func TestToDevicesSkipsAnotherPersonAndAnotherDomainWithTheSameDeviceId(t *testing.T) {
+	pushes, fanOut := waitingFixture()
+	err := fanOut.ToDevices("example.com", "ana", []string{"dev_a1"}, Event{Type: "devicebox.waiting", State: "message"})
+	if err != nil || len(pushes.eventsOf("b-listed-id")) != 0 || len(pushes.eventsOf("a-other-domain")) != 0 {
+		t.Fatalf("got %v %+v", err, pushes.pushes)
+	}
+}
+
+func TestToDevicesWithNoListedDeviceReachesNobody(t *testing.T) {
+	pushes, fanOut := waitingFixture()
+	err := fanOut.ToDevices("example.com", "ana", []string{}, Event{Type: "devicebox.waiting", State: "message"})
+	if err != nil || len(pushes.pushes) != 0 {
+		t.Fatalf("got %v %+v", err, pushes.pushes)
+	}
+}

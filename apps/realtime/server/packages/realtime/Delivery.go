@@ -5,4 +5,6 @@ type Delivery struct {
 	MemberIds             []string
 	ToDomain              bool
 	ChannelConversationId string
+	PersonId              string
+	DeviceIds             []string
 }

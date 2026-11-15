@@ -140,7 +140,7 @@ func (setup GatewayTestSetup) routes(frames chan string) *http.ServeMux {
 		io.WriteString(writer, `{"accessToken":"service-token","expiresIn":300}`)
 	})
 	routes.HandleFunc("POST /api/v1/directory/devices/owners", func(writer http.ResponseWriter, request *http.Request) {
-		io.WriteString(writer, `{"owners":{"device-1":"member-1","device-2":"member-2"}}`)
+		io.WriteString(writer, `{"owners":{"device-1":"member-1","device-2":"member-2","device-w1":"member-w1","device-w2":"member-w2"}}`)
 	})
 	return routes
 }

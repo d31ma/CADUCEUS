@@ -25,6 +25,7 @@ func (plan DeliveryPlan) builders() map[string]func(string, EventPayload) Delive
 		types.ReactionChanged():   plan.reaction,
 		types.ReadPositionMoved(): plan.readMoved,
 		types.PresenceChanged():   plan.presence,
+		types.EnvelopeStored():    plan.waiting,
 	}
 }
 
@@ -54,10 +55,19 @@ func (DeliveryPlan) presence(eventType string, payload EventPayload) Delivery {
 	return Delivery{Event: Event{Type: eventType, MemberId: payload.MemberId, State: payload.State}, ToDomain: true}
 }
 
+func (plan DeliveryPlan) waiting(eventType string, payload EventPayload) Delivery {
+	event := Event{Type: plan.waitingType(), State: payload.Kind}
+	return Delivery{Event: event, MemberIds: []string{}, PersonId: payload.ToPersonId, DeviceIds: payload.ToDeviceIds}
+}
+
 func (DeliveryPlan) nobody(eventType string, payload EventPayload) Delivery {
 	return Delivery{MemberIds: []string{}}
 }
 
 func (DeliveryPlan) readMovedType() string {
 	return "read.moved"
+}
+
+func (DeliveryPlan) waitingType() string {
+	return "devicebox.waiting"
 }

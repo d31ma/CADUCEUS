@@ -102,6 +102,8 @@ func (EventDesk) unchanged(domainId string, payload EventPayload) error {
 
 func (desk EventDesk) deliver(domainId string, delivery Delivery) error {
 	switch {
+	case delivery.PersonId != "":
+		return desk.FanOut.ToDevices(domainId, delivery.PersonId, delivery.DeviceIds, delivery.Event)
 	case delivery.ToDomain:
 		return desk.FanOut.ToDomain(domainId, delivery.Event)
 	case delivery.ChannelConversationId != "":

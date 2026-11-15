@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Added "you have mail" for waiting envelopes (slice G13, ADR 0011):
+  `devicebox` now sends `envelope.stored` to `realtime` and `notify`
+  (its outbox subscribers were empty, so no "New message" push went out
+  in a real install). `realtime` sends
+  `RealtimeEvent{type: "devicebox.waiting", state: <kind>}` to the linked
+  sockets of the listed devices of that person only; sockets without a
+  device id, of other devices or of other people get nothing.
 - Added content-free pushes to `notify` (slices G5 and G11, ADR 0011,
   ADR 0012): `envelope.stored` events of kind `message` from `devicebox`
   push "New message", and the new `POST /api/v1/notify/call-pushes`

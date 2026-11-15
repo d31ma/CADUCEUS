@@ -904,7 +904,12 @@ device (from `auth.deviceId`, linked to `toPersonId`) is in
 state: <kind>}`, with no envelope id, sender or content. The device then
 fetches its box (`GET /api/v1/devicebox/devices/{deviceId}/envelopes`).
 Sockets without a device id get nothing. A device that is offline learns
-of it from `notify`'s push (G5) or at its next start.
+of it from `notify`'s push (G5) or at its next start. Built by G13
+(2026-11-14): only sockets whose device `directory` linked to
+`toPersonId` count (a socket of a device that is not linked yet, or of
+another person with the same device id, gets nothing); `conversationId`
+and `messageId` are "". `devicebox` lists `realtime` and `notify` as its
+outbox subscribers in `apps/devicebox/server/application.json`.
 
 Internal routes between the gateway and the Yon app (never routed
 publicly; shared secret in the header `X-Realtime-Gateway`):

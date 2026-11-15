@@ -26,6 +26,14 @@ func (fanOut FanOut) ToMembersExcept(domainId string, memberIds []string, except
 	return fanOut.deliver(domainId, fanOut.without(found, exceptMemberId), event)
 }
 
+func (fanOut FanOut) ToDevices(domainId string, personId string, deviceIds []string, event Event) error {
+	found, err := fanOut.Connections.ForMembers(domainId, []string{personId})
+	if err != nil {
+		return err
+	}
+	return fanOut.deliver(domainId, fanOut.linkedTo(found, deviceIds), event)
+}
+
 func (fanOut FanOut) ToDomain(domainId string, event Event) error {
 	found, err := fanOut.Connections.InDomain(domainId)
 	if err != nil {
@@ -70,6 +78,12 @@ func (FanOut) complete(found []Connection) []Connection {
 func (FanOut) without(found []Connection, exceptMemberId string) []Connection {
 	return slices.DeleteFunc(found, func(connection Connection) bool {
 		return connection.MemberId == exceptMemberId
+	})
+}
+
+func (FanOut) linkedTo(found []Connection, deviceIds []string) []Connection {
+	return slices.DeleteFunc(found, func(connection Connection) bool {
+		return !connection.Linked || !slices.Contains(deviceIds, connection.DeviceId)
 	})
 }
 

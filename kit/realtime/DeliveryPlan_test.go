@@ -55,3 +55,12 @@ func TestChannelEventsAreDeliveredToNobody(t *testing.T) {
 		t.Fatalf("got %+v", delivery)
 	}
 }
+
+func TestEnvelopeStoredGoesToTheListedDevicesOfThatPersonWithTheKindOnly(t *testing.T) {
+	payload := EventPayload{ToPersonId: "ana", ToDeviceIds: []string{"dev_a1"}, Kind: "message"}
+	delivery := DeliveryPlan{}.For("envelope.stored", payload)
+	want := Delivery{Event: Event{Type: "devicebox.waiting", State: "message"}, MemberIds: []string{}, PersonId: "ana", DeviceIds: []string{"dev_a1"}}
+	if !reflect.DeepEqual(delivery, want) {
+		t.Fatalf("got %+v", delivery)
+	}
+}

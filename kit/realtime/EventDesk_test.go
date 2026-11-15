@@ -118,3 +118,18 @@ func TestHandlePassesAStorageFailureOn(t *testing.T) {
 		t.Fatal("a failing storage was not reported")
 	}
 }
+
+func TestReceiveTellsOnlyTheListedLinkedDevicesThatAnEnvelopeWaits(t *testing.T) {
+	memory := newMemoryStorage()
+	gateway := newRecordingGateway()
+	desk := presenceEventDesk(memory, gateway)
+	desk.FanOut.Connections.Add(deviceConnection("example.com", "ana", "a-listed", "dev_a1", true))
+	desk.FanOut.Connections.Add(deviceConnection("example.com", "ana", "a-no-device", "", false))
+	desk.FanOut.Connections.Add(deviceConnection("example.com", "ben", "b-other", "dev_b1", true))
+	stored := events.EnvelopeStored{ToPersonId: "ana", ToDeviceIds: []string{"dev_a1"}, Kind: "message", EnvelopeId: "env_secret"}
+	receipt, err := desk.Receive("Bearer service", presenceEnvelope("evt_w", "envelope.stored", "example.com", stored))
+	want := []Event{{Type: "devicebox.waiting", State: "message"}}
+	if err != nil || receipt.Status != "applied" || !reflect.DeepEqual(gateway.eventsOf("a-listed"), want) || len(gateway.eventsOf("a-no-device")) != 0 || len(gateway.eventsOf("b-other")) != 0 {
+		t.Fatalf("got %+v %v %+v", receipt, err, gateway.pushes)
+	}
+}

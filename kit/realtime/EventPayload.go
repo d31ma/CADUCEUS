@@ -13,6 +13,9 @@ type EventPayload struct {
 	Emoji            string   `json:"emoji"`
 	State            string   `json:"state"`
 	MemberIds        []string `json:"memberIds"`
+	ToPersonId       string   `json:"toPersonId"`
+	ToDeviceIds      []string `json:"toDeviceIds"`
+	Kind             string   `json:"kind"`
 }
 
 func (payload EventPayload) FromChannel() bool {

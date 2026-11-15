@@ -2260,7 +2260,9 @@ section 8.)
   `kit/events`, so whichever merges second runs kit-sync again).
 - **Owns, for this change only:** `apps/attachments/**` (backup routes,
   services, the `backups` collection, tests, its ERRORS rows), the
-  `attachments` entry in `directory`'s subscribers, and a blackbox test
+  `member.upserted` consumer line in `kit/events/Catalog.go` with its
+  kit-sync copies, the `attachments` entry in `directory`'s subscribers,
+  and a blackbox test
   `tests/blackbox/Backups_test.go` (put, complete, download, version
   conflict, another person gets `404`, removal on member removal).
 - **Depends on:** E1 (merged). Not at the same time as OP7 (both test

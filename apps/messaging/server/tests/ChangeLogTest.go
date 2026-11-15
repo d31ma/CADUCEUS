@@ -17,7 +17,7 @@ func (test *ChangeLogTest) TestTheRelayLogsAChangeBeforeItPushes() {
 	message.OutboxFields = world.Staged(message.OutboxFields, "message.edited", events.MessageEdited{ConversationId: conversationId, MessageId: "msg_202611" + world.RandomText(), MemberIds: []string{"ana"}})
 	_, err := world.Messages().Insert(message)
 	world.Must(err)
-	_, err = world.Relay.RunOnce()
+	err = world.RelayUntilDone(world.Relay.RunOnce)
 	world.Must(err)
 	rows, err := world.Stores().Changes.OfConversation(world.Domain, core.MessageIds{}.Month(time.Now()), conversationId)
 	world.Must(err)

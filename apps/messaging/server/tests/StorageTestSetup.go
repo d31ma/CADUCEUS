@@ -246,3 +246,19 @@ func (world *StorageTestSetup) Number(err error) int {
 	}
 	return failure.Number()
 }
+
+func (world *StorageTestSetup) RelayUntilDone(relay func() (outbox.Report, error)) error {
+	failures := []error{}
+	for round := 0; round < world.relayRounds(); round++ {
+		report, failure := relay()
+		failures = append(failures, failure)
+		if !report.More {
+			break
+		}
+	}
+	return errors.Join(failures...)
+}
+
+func (*StorageTestSetup) relayRounds() int {
+	return 10
+}

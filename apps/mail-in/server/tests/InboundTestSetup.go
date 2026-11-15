@@ -400,3 +400,19 @@ func (world *InboundTestSetup) IsInvalid(err error) bool {
 	var failure *InvalidEnvelope
 	return errors.As(err, &failure)
 }
+
+func (world *InboundTestSetup) RelayUntilDone(relay func() (outbox.Report, error)) error {
+	failures := []error{}
+	for round := 0; round < world.relayRounds(); round++ {
+		report, failure := relay()
+		failures = append(failures, failure)
+		if !report.More {
+			break
+		}
+	}
+	return errors.Join(failures...)
+}
+
+func (*InboundTestSetup) relayRounds() int {
+	return 10
+}

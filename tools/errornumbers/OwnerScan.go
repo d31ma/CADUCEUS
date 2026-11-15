@@ -4,29 +4,45 @@ import (
 	"errors"
 	"go/ast"
 	"go/token"
+	"go/types"
 	"io/fs"
 	"path/filepath"
 	"strings"
 )
 
 type OwnerScan struct {
-	Root  string
-	Owner Owner
-	Kit   Owner
+	Root     string
+	Owner    Owner
+	Kit      Owner
+	Standard types.Importer
 }
 
 func (scan OwnerScan) Numbers() ([]UsedNumber, error) {
-	files, err := scan.goFiles()
-	if err != nil {
-		return nil, err
-	}
 	positions := token.NewFileSet()
-	syntax, err := scan.parse(positions, files)
+	checked, err := scan.checked(positions)
 	if err != nil {
 		return nil, err
 	}
 	copies, err := NameList{}.Read(filepath.Join(scan.Root, scan.Owner.Folder, "packages", "kit.list"))
-	return scan.kept(NumberReader{Positions: positions, Files: syntax}.Numbers(), copies), err
+	return scan.kept(NumberReader{Positions: positions, Packages: checked}.Numbers(), copies), err
+}
+
+func (scan OwnerScan) checked(positions *token.FileSet) ([]CheckedPackage, error) {
+	sources, err := scan.sources(positions)
+	loader := PackageLoader{Positions: positions, Sources: sources, Standard: scan.Standard, Checked: map[string]*CheckedPackage{}}
+	return loader.All(), err
+}
+
+func (scan OwnerScan) sources(positions *token.FileSet) (map[string][]*ast.File, error) {
+	files, err := scan.goFiles()
+	if err != nil {
+		return nil, err
+	}
+	parsed, err := scan.parse(positions, files)
+	if err != nil {
+		return nil, err
+	}
+	return SourcePackages{Root: scan.Root, Owner: scan.Owner}.Group(parsed)
 }
 
 func (scan OwnerScan) goFiles() ([]string, error) {
@@ -37,17 +53,17 @@ func (scan OwnerScan) goFiles() ([]string, error) {
 	return files, err
 }
 
-func (scan OwnerScan) parse(positions *token.FileSet, files []string) ([]*ast.File, error) {
-	syntax := []*ast.File{}
+func (scan OwnerScan) parse(positions *token.FileSet, files []string) ([]SourceFile, error) {
+	parsed := []SourceFile{}
 	source := GoSource{Root: scan.Root, Positions: positions}
 	for _, name := range files {
 		file, err := source.Parse(name)
 		if err != nil {
 			return nil, err
 		}
-		syntax = append(syntax, file)
+		parsed = append(parsed, file)
 	}
-	return syntax, nil
+	return parsed, nil
 }
 
 func (scan OwnerScan) kept(numbers []UsedNumber, copies map[string]bool) []UsedNumber {

@@ -60,13 +60,9 @@ keeps its row, marked "retired".
   text from a table of plain literals in the same error type (number,
   code, field, text), and keep the constructors in number order. G1, O2
   and later slices add their cases the same way.
-- **What `tools/errornumbers` (E11) reads today**, until E15 makes it
-  type-aware: once a type has a `Number()` method, the tool reads every
-  keyed `number:` field in that package as an error number, and it finds
-  number builders by method name only. So: never name a field `number`
-  in a package with error types unless it is an error number (E7 renamed
-  `dnscheck`'s DNS record field to `typeValue`), and give each error
-  type's builder its own method name.
+- **What `tools/errornumbers` reads** (type-aware since E15): number
+  literals that reach a `Number() int` method; same-named fields and
+  methods of other types are ignored.
 - **Kit numbers** (slice E12, 2026-11-14). Every error type of a kit
   package copied into more than one app (`kit/events`, `kit/outbox`,
   `kit/ids`, `kit/blobs`, `kit/recipients`, `kit/mime`, `kit/addresses`)

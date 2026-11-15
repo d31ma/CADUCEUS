@@ -3,47 +3,58 @@ package main
 import (
 	"go/ast"
 	"go/token"
+	"go/types"
+	"sort"
 )
 
 type NumberReader struct {
 	Positions *token.FileSet
-	Files     []*ast.File
+	Packages  []CheckedPackage
 }
 
 func (reader NumberReader) Numbers() []UsedNumber {
 	functions := reader.functions()
 	methods := reader.numberMethods(functions)
-	fields := NumberFields{Fields: reader.numberFields(methods), Positions: StructFields{Files: reader.Files}.Positions(methods)}
+	fields := reader.numberFields(functions, methods)
 	used := reader.literalResults(methods)
 	used = append(used, reader.fieldValues(functions, fields)...)
-	return append(used, reader.passedValues(reader.numberParameters(functions, fields))...)
+	used = append(used, reader.passedValues(reader.numberParameters(functions, fields))...)
+	return reader.sorted(used)
 }
 
-func (reader NumberReader) functions() []*ast.FuncDecl {
-	functions := []*ast.FuncDecl{}
-	for _, file := range reader.Files {
-		functions = append(functions, reader.fileFunctions(file)...)
+func (reader NumberReader) functions() []CheckedFunction {
+	functions := []CheckedFunction{}
+	for _, checked := range reader.Packages {
+		functions = append(functions, reader.packageFunctions(checked)...)
 	}
 	return functions
 }
 
-func (reader NumberReader) fileFunctions(file *ast.File) []*ast.FuncDecl {
-	functions := []*ast.FuncDecl{}
+func (reader NumberReader) packageFunctions(checked CheckedPackage) []CheckedFunction {
+	functions := []CheckedFunction{}
+	for _, file := range checked.Files {
+		functions = append(functions, reader.fileFunctions(file, checked.Info)...)
+	}
+	return functions
+}
+
+func (reader NumberReader) fileFunctions(file *ast.File, info *types.Info) []CheckedFunction {
+	functions := []CheckedFunction{}
 	for _, declaration := range file.Decls {
-		functions = append(functions, reader.function(declaration)...)
+		functions = append(functions, reader.function(declaration, info)...)
 	}
 	return functions
 }
 
-func (NumberReader) function(declaration ast.Decl) []*ast.FuncDecl {
+func (NumberReader) function(declaration ast.Decl, info *types.Info) []CheckedFunction {
 	function, isFunction := declaration.(*ast.FuncDecl)
-	if !isFunction || function.Body == nil {
+	if !isFunction || function.Body == nil || info.Defs[function.Name] == nil {
 		return nil
 	}
-	return []*ast.FuncDecl{function}
+	return []CheckedFunction{{Declaration: function, Info: info}}
 }
 
-func (reader NumberReader) numberMethods(functions []*ast.FuncDecl) []NumberMethod {
+func (reader NumberReader) numberMethods(functions []CheckedFunction) []NumberMethod {
 	methods := []NumberMethod{}
 	for _, function := range functions {
 		methods = append(methods, reader.numberMethod(function)...)
@@ -51,8 +62,8 @@ func (reader NumberReader) numberMethods(functions []*ast.FuncDecl) []NumberMeth
 	return methods
 }
 
-func (NumberReader) numberMethod(function *ast.FuncDecl) []NumberMethod {
-	method := NumberMethod{Declaration: function}
+func (NumberReader) numberMethod(function CheckedFunction) []NumberMethod {
+	method := NumberMethod{Function: function}
 	if !method.Is() {
 		return nil
 	}
@@ -67,19 +78,33 @@ func (reader NumberReader) literalResults(methods []NumberMethod) []UsedNumber {
 	return used
 }
 
-func (reader NumberReader) numberFields(methods []NumberMethod) map[string]bool {
-	fields := map[string]bool{}
-	for _, method := range methods {
-		fields[method.Field()] = method.Field() != ""
+func (reader NumberReader) numberFields(functions []CheckedFunction, methods []NumberMethod) NumberFields {
+	fields := NumberFields{Fields: reader.returnedFields(methods)}
+	for reader.addCopiedFields(functions, fields) {
 	}
 	return fields
 }
 
-func (reader NumberReader) fieldValues(functions []*ast.FuncDecl, fields NumberFields) []UsedNumber {
+func (NumberReader) returnedFields(methods []NumberMethod) map[*types.Var]bool {
+	fields := map[*types.Var]bool{}
+	for _, method := range methods {
+		NumberFields{Fields: fields}.AddAll(method.Fields())
+	}
+	return fields
+}
+
+func (NumberReader) addCopiedFields(functions []CheckedFunction, fields NumberFields) bool {
+	added := false
+	for _, function := range functions {
+		added = fields.AddCopied(function) || added
+	}
+	return added
+}
+
+func (reader NumberReader) fieldValues(functions []CheckedFunction, fields NumberFields) []UsedNumber {
 	used := []UsedNumber{}
 	for _, function := range functions {
-		fields.Function = function
-		used = append(used, reader.integers(fields.Values())...)
+		used = append(used, reader.integers(fields.Values(function))...)
 	}
 	return used
 }
@@ -92,32 +117,60 @@ func (reader NumberReader) integers(values []ast.Expr) []UsedNumber {
 	return used
 }
 
-func (reader NumberReader) numberParameters(functions []*ast.FuncDecl, fields NumberFields) []NumberParameter {
-	parameters := []NumberParameter{}
+func (reader NumberReader) numberParameters(functions []CheckedFunction, fields NumberFields) map[NumberParameter]bool {
+	parameters := map[NumberParameter]bool{}
 	for _, function := range functions {
-		fields.Function = function
-		parameters = append(parameters, fields.Parameters()...)
+		reader.addParameters(parameters, function.Parameters(fields.Values(function)))
 	}
 	return parameters
 }
 
-func (reader NumberReader) passedValues(parameters []NumberParameter) []UsedNumber {
+func (NumberReader) addParameters(parameters map[NumberParameter]bool, found []NumberParameter) {
+	for _, parameter := range found {
+		parameters[parameter] = true
+	}
+}
+
+func (reader NumberReader) passedValues(parameters map[NumberParameter]bool) []UsedNumber {
 	used := []UsedNumber{}
-	for _, parameter := range parameters {
-		used = append(used, reader.callValues(parameter)...)
+	for _, checked := range reader.Packages {
+		used = append(used, reader.packageCalls(checked, parameters)...)
 	}
 	return used
 }
 
-func (reader NumberReader) callValues(parameter NumberParameter) []UsedNumber {
+func (reader NumberReader) packageCalls(checked CheckedPackage, parameters map[NumberParameter]bool) []UsedNumber {
 	used := []UsedNumber{}
-	for _, file := range reader.Files {
+	for _, file := range checked.Files {
 		ast.Inspect(file, func(node ast.Node) bool {
-			used = append(used, reader.integer(parameter.Argument(node))...)
+			used = append(used, reader.callValues(node, CalledFunction{Info: checked.Info}, parameters)...)
 			return true
 		})
 	}
 	return used
+}
+
+func (reader NumberReader) callValues(node ast.Node, called CalledFunction, parameters map[NumberParameter]bool) []UsedNumber {
+	call, isCall := node.(*ast.CallExpr)
+	if !isCall {
+		return nil
+	}
+	return reader.arguments(call, called.Of(call), parameters)
+}
+
+func (reader NumberReader) arguments(call *ast.CallExpr, function *types.Func, parameters map[NumberParameter]bool) []UsedNumber {
+	used := []UsedNumber{}
+	for index, argument := range call.Args {
+		used = append(used, reader.passed(parameters[NumberParameter{Function: function, Index: index}], argument)...)
+	}
+	return used
+}
+
+func (reader NumberReader) passed(isNumber bool, argument ast.Expr) []UsedNumber {
+	if !isNumber {
+		return nil
+	}
+	return reader.integer(argument)
 }
 
 func (reader NumberReader) integer(expression ast.Expr) []UsedNumber {
@@ -127,4 +180,11 @@ func (reader NumberReader) integer(expression ast.Expr) []UsedNumber {
 	}
 	position := reader.Positions.Position(expression.Pos())
 	return []UsedNumber{{Number: value, File: position.Filename, Line: position.Line}}
+}
+
+func (NumberReader) sorted(used []UsedNumber) []UsedNumber {
+	sort.SliceStable(used, func(first int, second int) bool {
+		return UsedNumber{}.Before(used[first], used[second])
+	})
+	return used
 }

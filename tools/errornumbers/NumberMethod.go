@@ -1,30 +1,25 @@
 package main
 
-import "go/ast"
+import (
+	"go/ast"
+	"go/types"
+)
 
 type NumberMethod struct {
-	Declaration *ast.FuncDecl
+	Function CheckedFunction
 }
 
 func (method NumberMethod) Is() bool {
-	declaration := method.Declaration
-	return declaration.Recv != nil && declaration.Name.Name == "Number" && declaration.Body != nil && method.returnsOneValue(declaration.Body.List)
+	declaration := method.Function.Declaration
+	return declaration.Recv != nil && declaration.Name.Name == "Number" && method.returnsOneValue(declaration.Body.List) && method.returnsAnInteger()
 }
 
 func (method NumberMethod) Result() ast.Expr {
-	return method.Declaration.Body.List[0].(*ast.ReturnStmt).Results[0]
+	return method.Function.Declaration.Body.List[0].(*ast.ReturnStmt).Results[0]
 }
 
-func (method NumberMethod) ReceiverType() string {
-	return TypeName{Expression: method.Declaration.Recv.List[0].Type}.String()
-}
-
-func (method NumberMethod) Field() string {
-	selector, isSelector := method.Result().(*ast.SelectorExpr)
-	if !isSelector {
-		return ""
-	}
-	return selector.Sel.Name
+func (method NumberMethod) Fields() []*types.Var {
+	return SelectedField{Info: method.Function.Info}.In(method.Result())
 }
 
 func (NumberMethod) returnsOneValue(statements []ast.Stmt) bool {
@@ -33,4 +28,14 @@ func (NumberMethod) returnsOneValue(statements []ast.Stmt) bool {
 	}
 	result, isReturn := statements[0].(*ast.ReturnStmt)
 	return isReturn && len(result.Results) == 1
+}
+
+func (method NumberMethod) returnsAnInteger() bool {
+	signature := method.Function.Object().Signature()
+	return signature.Params().Len() == 0 && signature.Results().Len() == 1 && method.isInteger(signature.Results().At(0).Type())
+}
+
+func (NumberMethod) isInteger(result types.Type) bool {
+	basic, isBasic := result.Underlying().(*types.Basic)
+	return isBasic && basic.Info()&types.IsInteger != 0
 }

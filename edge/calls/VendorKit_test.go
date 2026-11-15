@@ -18,7 +18,7 @@ func TestVendoredKitMatchesKit(t *testing.T) {
 		copied, _ := os.ReadFile(file)
 		original, err := os.ReadFile(filepath.Join("..", "..", "kit", relative))
 		if err != nil || !bytes.Equal(copied, original) {
-			t.Fatalf("vendor/mesail.dev/packages/%s differs from kit/%s; run go mod vendor in apps/calls", relative, relative)
+			t.Fatalf("vendor/mesail.dev/packages/%s differs from kit/%s; run scripts/kit-sync.sh", relative, relative)
 		}
 	}
 }

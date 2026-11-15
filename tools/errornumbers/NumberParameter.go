@@ -1,16 +1,8 @@
 package main
 
-import "go/ast"
+import "go/types"
 
 type NumberParameter struct {
-	Function string
+	Function *types.Func
 	Index    int
-}
-
-func (parameter NumberParameter) Argument(node ast.Node) ast.Expr {
-	call, isCall := node.(*ast.CallExpr)
-	if !isCall || (TypeName{Expression: call.Fun}).String() != parameter.Function || len(call.Args) <= parameter.Index {
-		return nil
-	}
-	return call.Args[parameter.Index]
 }

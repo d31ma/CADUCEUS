@@ -132,6 +132,52 @@ func TestRunLeavesKitNumbersInAppCopiesToTheKit(t *testing.T) {
 	}
 }
 
+func TestRunReadsANumberThatAnAppErrorCopiesFromItsPackages(t *testing.T) {
+	root := newRepository(t, errorsHead+"| MS2001 | channels | 400 |\n")
+	writeFile(t, root, "apps/channels/server/packages/go.mod", "module mesail.dev/packages\n\ngo 1.27\n")
+	writeFile(t, root, "apps/channels/server/packages/channels/Invalid.go", `package channels
+
+type Invalid struct {
+	Field       string
+	ErrorNumber int
+}
+
+func (Invalid) Name() Invalid {
+	return Invalid{Field: "name", ErrorNumber: 2001}
+}
+`)
+	writeFile(t, root, "apps/channels/server/packages/lookup/Record.go", `package lookup
+
+type Record struct {
+	number int
+	value  string
+}
+
+func (Record) Mail() Record {
+	return Record{number: 15, value: "mail.example.com"}
+}
+`)
+	writeFile(t, root, "apps/channels/server/shared/InvalidRequest.go", `import "mesail.dev/packages/channels"
+
+type InvalidRequest struct {
+	Field       string
+	ErrorNumber int
+}
+
+func (InvalidRequest) From(invalid channels.Invalid) *InvalidRequest {
+	return &InvalidRequest{Field: invalid.Field, ErrorNumber: invalid.ErrorNumber}
+}
+
+func (failure *InvalidRequest) Number() int {
+	return failure.ErrorNumber
+}
+`)
+	code, output := run(t, root)
+	if code != 0 {
+		t.Fatalf("got %d, %q", code, output)
+	}
+}
+
 func TestRunSkipsTestFiles(t *testing.T) {
 	root := newRepository(t, errorsHead+"| MS2001 | channels | 409 |\n")
 	writeFile(t, root, "apps/channels/server/shared/Conflict.go", conflictType)

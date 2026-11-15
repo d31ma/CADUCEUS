@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"go/importer"
+	"go/token"
 	"os"
 	"path/filepath"
 )
@@ -39,8 +41,9 @@ func (NumberCheck) table(root string) (ErrorsTable, error) {
 
 func (NumberCheck) used(root string, owners Owners, kit Owner) ([]OwnerNumbers, error) {
 	used := []OwnerNumbers{}
+	standard := importer.ForCompiler(token.NewFileSet(), "source", nil)
 	for _, owner := range owners {
-		numbers, err := OwnerScan{Root: root, Owner: owner, Kit: kit}.Numbers()
+		numbers, err := OwnerScan{Root: root, Owner: owner, Kit: kit, Standard: standard}.Numbers()
 		if err != nil {
 			return nil, err
 		}

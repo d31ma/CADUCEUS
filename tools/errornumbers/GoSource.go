@@ -1,7 +1,6 @@
 package main
 
 import (
-	"go/ast"
 	"go/parser"
 	"go/token"
 	"os"
@@ -13,16 +12,23 @@ type GoSource struct {
 	Positions *token.FileSet
 }
 
-func (source GoSource) Parse(name string) (*ast.File, error) {
+func (source GoSource) Parse(name string) (SourceFile, error) {
 	text, err := os.ReadFile(filepath.Join(source.Root, name))
 	if err != nil {
-		return nil, err
+		return SourceFile{}, err
 	}
-	return parser.ParseFile(source.Positions, name, source.withPackageClause(name, text), 0)
+	framework := !source.hasPackageClause(name, text)
+	syntax, err := parser.ParseFile(source.Positions, name, source.withPackageClause(name, text, framework), 0)
+	return SourceFile{Name: name, Syntax: syntax, Framework: framework}, err
 }
 
-func (GoSource) withPackageClause(name string, text []byte) []byte {
-	if _, err := parser.ParseFile(token.NewFileSet(), name, text, parser.PackageClauseOnly); err == nil {
+func (GoSource) hasPackageClause(name string, text []byte) bool {
+	_, err := parser.ParseFile(token.NewFileSet(), name, text, parser.PackageClauseOnly)
+	return err == nil
+}
+
+func (GoSource) withPackageClause(name string, text []byte, framework bool) []byte {
+	if !framework {
 		return text
 	}
 	header := "package tachyon\n//line " + filepath.Base(name) + ":1\n"

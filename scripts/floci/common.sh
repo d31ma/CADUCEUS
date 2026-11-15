@@ -190,11 +190,21 @@ mesail_person_seed() {
     | {personId, username, displayName, memberships: [.memberships[] | {domainId, admin}]}' "$(mesail_stack_file)"
 }
 
+mesail_error_summary() {
+  local answer="$1" status="$2"
+  if [[ "$status" == 2* ]]; then return 0; fi
+  jq -r '" code=\(.code // "none") number=\((.message // "") | capture("^\\[(?<number>[A-Z]+[0-9]+)\\]").number // "none")"' \
+    "$answer" 2> /dev/null || echo " answer=not-json"
+}
+
 mesail_directory_call() {
-  local base="$1" token="$2" method="$3" path="$4" body="${5:-}"
-  curl --silent --output /dev/null --write-out '%{http_code}' --request "$method" \
+  local base="$1" token="$2" method="$3" path="$4" body="${5:-}" answer result
+  answer="$(mktemp "${TMPDIR:-/tmp}/mesail-answer.XXXXXX")"
+  result="$(curl --silent --output "$answer" --write-out '%{http_code} time=%{time_total}s' --request "$method" \
     --header "Authorization: Bearer $token" --header 'Content-Type: application/json' \
-    ${body:+--data "$body"} "$base/api/v1/directory$path"
+    ${body:+--data "$body"} "$base/api/v1/directory$path")"
+  echo "$result$(mesail_error_summary "$answer" "${result%% *}")"
+  rm -f "$answer"
 }
 
 mesail_add_domain() {
@@ -209,10 +219,10 @@ mesail_seed_domain() {
 }
 
 mesail_seed_person() {
-  local base="$1" token="$2" username="$3" code
-  code="$(mesail_directory_call "$base" "$token" POST /people/seed "$(mesail_person_seed "$username")")"
-  echo "seed person $username: $code"
-  if [ "$code" != 200 ]; then echo "warning: the directory did not seed $username, so its tests fail"; fi
+  local base="$1" token="$2" username="$3" result
+  result="$(mesail_directory_call "$base" "$token" POST /people/seed "$(mesail_person_seed "$username")")"
+  echo "seed person $username: $result"
+  if [ "${result%% *}" != 200 ]; then echo "warning: the directory did not seed $username, so its tests fail"; fi
 }
 
 mesail_require_token() {

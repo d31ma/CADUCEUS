@@ -9,3 +9,7 @@ type WrongIdPrefix struct {
 func (wrong WrongIdPrefix) Error() string {
 	return fmt.Sprintf("the id does not start with %q", wrong.Expected)
 }
+
+func (WrongIdPrefix) Number() int {
+	return 20
+}

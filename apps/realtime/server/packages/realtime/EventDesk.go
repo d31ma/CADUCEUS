@@ -49,7 +49,7 @@ func (EventDesk) payload(envelope events.Envelope) (EventPayload, error) {
 	payload := EventPayload{MemberIds: []string{}}
 	err := json.Unmarshal(envelope.Payload, &payload)
 	if err != nil {
-		return payload, events.InvalidEnvelope{Reason: "the payload is not a JSON object of the expected shape"}
+		return payload, events.InvalidEnvelope{}.PayloadShape()
 	}
 	return payload, nil
 }

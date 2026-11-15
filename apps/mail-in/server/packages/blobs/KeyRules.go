@@ -14,14 +14,14 @@ func (rules KeyRules) Check(key Key) error {
 
 func (rules KeyRules) checkDomain(domainId string) error {
 	if len(domainId) > rules.longestDomain() || !regexp.MustCompile(rules.domainPattern()).MatchString(domainId) {
-		return BadKey{Part: "domain", Value: domainId}
+		return BadKey{}.Domain(domainId)
 	}
 	return nil
 }
 
 func (rules KeyRules) checkName(name string) error {
 	if !regexp.MustCompile(rules.namePattern()).MatchString(name) {
-		return BadKey{Part: "name", Value: name}
+		return BadKey{}.Name(name)
 	}
 	return nil
 }

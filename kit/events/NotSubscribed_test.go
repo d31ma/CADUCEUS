@@ -8,3 +8,9 @@ func TestNotSubscribedMessage(t *testing.T) {
 		t.Fatalf("unexpected message %q", message)
 	}
 }
+
+func TestNotSubscribedNumber(t *testing.T) {
+	if (NotSubscribed{}).Number() != 13 {
+		t.Fatalf("got %d", NotSubscribed{}.Number())
+	}
+}

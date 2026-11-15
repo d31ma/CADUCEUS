@@ -118,13 +118,16 @@ func (service *ReservationService) normal(reservation addresses.Reservation) add
 }
 
 func (service *ReservationService) translated(failure error, field string) error {
+	taken, invalid := addresses.Taken{}, addresses.InvalidName{}
 	switch {
 	case failure == nil:
 		return nil
-	case errors.As(failure, &addresses.Taken{}):
-		return Duplicate{}.NameTaken(failure.Error())
+	case errors.As(failure, &taken):
+		return Duplicate{}.NameTaken(taken.Error(), taken.Number())
+	case errors.As(failure, &invalid):
+		return InvalidRequest{}.BadName(field, invalid.Error(), invalid.Number())
 	}
-	return InvalidRequest{}.BadName(field, failure.Error())
+	return InvalidRequest{}.OtherNameFailure(field, failure.Error())
 }
 
 func (service *ReservationService) usernameField() string {

@@ -11,3 +11,7 @@ func (BadSignature) Error() string {
 func (BadSignature) HttpStatus() int {
 	return http.StatusForbidden
 }
+
+func (BadSignature) Number() int {
+	return 26
+}

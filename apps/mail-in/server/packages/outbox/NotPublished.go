@@ -10,3 +10,7 @@ type NotPublished struct {
 func (failure NotPublished) Error() string {
 	return fmt.Sprintf("expected exactly one staged %s event, found %d", failure.Type, failure.Count)
 }
+
+func (NotPublished) Number() int {
+	return 19
+}

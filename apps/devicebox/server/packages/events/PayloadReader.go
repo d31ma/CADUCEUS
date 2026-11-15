@@ -19,7 +19,7 @@ func (reader PayloadReader) Read(envelope Envelope, target any) error {
 
 func (PayloadReader) requireEnd(decoder *json.Decoder) error {
 	if decoder.More() {
-		return InvalidEnvelope{Reason: "payload holds data after its JSON value"}
+		return InvalidEnvelope{}.DataAfterPayload()
 	}
 	return nil
 }

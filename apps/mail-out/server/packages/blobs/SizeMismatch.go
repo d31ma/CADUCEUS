@@ -17,3 +17,7 @@ func (mismatch SizeMismatch) Error() string {
 func (SizeMismatch) HttpStatus() int {
 	return http.StatusBadRequest
 }
+
+func (SizeMismatch) Number() int {
+	return 25
+}

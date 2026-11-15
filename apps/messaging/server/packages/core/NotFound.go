@@ -33,6 +33,10 @@ func (NotFound) NoDeadEvent() *NotFound {
 	return &NotFound{Message: "no such dead event", ErrorNumber: 1544}
 }
 
+func (NotFound) Kit(message string, number int) *NotFound {
+	return &NotFound{Message: message, ErrorNumber: number}
+}
+
 func (failure *NotFound) Error() string {
 	return failure.Message
 }

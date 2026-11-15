@@ -12,8 +12,8 @@ type MailOutPartsTest struct {
 }
 
 func (test *MailOutPartsTest) TestRejectedAnswersInvalidRequestWithTheNumber() {
-	answer := (&MailOutErrorHandler{}).Rejected(RejectedEvent{}.EventRule("the event envelope is not valid: eventId must not be empty"))
-	Assert.Equals(ApiError{Code: "invalid_request", Message: "[MS3001]: the event envelope is not valid: eventId must not be empty"}, answer)
+	answer := (&MailOutErrorHandler{}).Rejected(RejectedEvent{}.Kit("the event envelope is not valid: eventId must not be empty", 1))
+	Assert.Equals(ApiError{Code: "invalid_request", Message: "[MS0001]: the event envelope is not valid: eventId must not be empty"}, answer)
 }
 
 func (test *MailOutPartsTest) TestRejectedAnswersTheNumberOfASendRequestCase() {
@@ -22,8 +22,8 @@ func (test *MailOutPartsTest) TestRejectedAnswersTheNumberOfASendRequestCase() {
 }
 
 func (test *MailOutPartsTest) TestForbiddenAnswersForbiddenWithTheNumber() {
-	answer := (&MailOutErrorHandler{}).Forbidden(&ForbiddenCaller{})
-	Assert.Equals(ApiError{Code: "forbidden", Message: "[MS3002]: Only a caller with the Service role may deliver events."}, answer)
+	answer := (&MailOutErrorHandler{}).Forbidden(&ForbiddenCaller{ErrorNumber: 12})
+	Assert.Equals(ApiError{Code: "forbidden", Message: "[MS0012]: Only a caller with the Service role may deliver events."}, answer)
 }
 
 func (test *MailOutPartsTest) TestUnknownAnswersNotFoundWithTheNumber() {

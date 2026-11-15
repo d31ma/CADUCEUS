@@ -46,8 +46,8 @@ func (InvalidRequest) MissingFields() InvalidRequest {
 	return InvalidRequest{Message: "the value does not have the expected fields", Field: "body", ErrorNumber: 4010}
 }
 
-func (InvalidRequest) BadEnvelope(message string) InvalidRequest {
-	return InvalidRequest{Message: message, Field: "envelope", ErrorNumber: 4011}
+func (InvalidRequest) Kit(message string, field string, number int) InvalidRequest {
+	return InvalidRequest{Message: message, Field: field, ErrorNumber: number}
 }
 
 func (failure InvalidRequest) Error() string {

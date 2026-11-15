@@ -105,13 +105,13 @@ func TestMissingOutboxSettingsMakeStagingAndTheRelayUnavailable(t *testing.T) {
 }
 
 func TestAFullOutboxIsUnavailableAndOtherFailuresAreUnreadable(t *testing.T) {
-	if numberOf(EventStaging{}.outboxError(outbox.OutboxFull{})) != 6024 {
-		t.Fatal("want 6024")
+	if numberOf(EventStaging{}.outboxError(outbox.OutboxFull{})) != 17 {
+		t.Fatal("want the kit number 17")
 	}
 	if numberOf(EventStaging{}.outboxError(errors.New("bad"))) != 6030 {
 		t.Fatal("want 6030")
 	}
-	if numberOf(OutboxDesk{}.letterError(outbox.NotFound{})) != 6025 || numberOf(OutboxDesk{}.letterError(errors.New("bad"))) != 6030 {
+	if numberOf(OutboxDesk{}.letterError(outbox.NotFound{}.DeadLetter("evt_1 for realtime"))) != 15 || numberOf(OutboxDesk{}.letterError(errors.New("bad"))) != 6030 {
 		t.Fatal("letter errors")
 	}
 	if (ExpiryRun{}).firstError(nil, errors.New("second")).Error() != "second" {
@@ -137,7 +137,7 @@ func TestTheRelayDeliversEventsThatWaitedAndRequeuesDeadLetters(t *testing.T) {
 	if err != nil || report.Delivered != 1 {
 		t.Fatalf("got %+v %v", report, err)
 	}
-	if err := w.desk.RetryDead(outbox.Ref{Collection: dead[0].Collection, Id: dead[0].DocumentId}, "evt_none", "realtime"); numberOf(err) != 6025 {
+	if err := w.desk.RetryDead(outbox.Ref{Collection: dead[0].Collection, Id: dead[0].DocumentId}, "evt_none", "realtime"); numberOf(err) != 15 {
 		t.Fatalf("got %v", err)
 	}
 	if err := w.desk.RetryDead(outbox.Ref{Collection: "elsewhere", Id: "X"}, "evt_none", "realtime"); numberOf(err) != 6027 {

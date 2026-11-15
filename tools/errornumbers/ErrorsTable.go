@@ -30,6 +30,10 @@ func (table ErrorsTable) Lists(number int) bool {
 	return slices.ContainsFunc(table.Rows, ListedNumber{Number: number}.SameNumber)
 }
 
+func (table ErrorsTable) Retires(number int) bool {
+	return slices.ContainsFunc(table.Rows, ListedNumber{Number: number, Retired: true}.SameRetiredNumber)
+}
+
 func (ErrorsTable) sectionStart(lines []string, heading string) int {
 	for index, line := range lines {
 		if strings.TrimSpace(line) == heading {
@@ -73,16 +77,24 @@ func (table ErrorsTable) rows(lines []string, start int, end int) []ListedNumber
 	pattern := regexp.MustCompile(`^\| MS(\d{4}) \| ([^|]*?) \|`)
 	rows := []ListedNumber{}
 	for index := start; index < end; index++ {
-		rows = append(rows, table.row(pattern.FindStringSubmatch(lines[index]), index+1)...)
+		rows = append(rows, table.row(pattern.FindStringSubmatch(lines[index]), index+1, table.retired(lines[index]))...)
 	}
 	return rows
 }
 
-func (table ErrorsTable) row(match []string, line int) []ListedNumber {
+func (table ErrorsTable) row(match []string, line int, retired bool) []ListedNumber {
 	if match == nil {
 		return nil
 	}
-	return []ListedNumber{{Number: table.number(match[1]), App: match[2], Line: line}}
+	return []ListedNumber{{Number: table.number(match[1]), App: match[2], Line: line, Retired: retired}}
+}
+
+func (table ErrorsTable) retired(line string) bool {
+	return slices.ContainsFunc(strings.Split(line, "|"), table.retiredCell)
+}
+
+func (ErrorsTable) retiredCell(cell string) bool {
+	return strings.HasPrefix(strings.TrimSpace(cell), "retired")
 }
 
 func (table ErrorsTable) outsideBlockProblems() []Problem {

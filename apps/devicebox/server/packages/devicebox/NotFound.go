@@ -17,8 +17,8 @@ func (NotFound) Box() *NotFound {
 	return &NotFound{Message: "This device is not one of your devices in this domain.", ErrorNumber: 6014}
 }
 
-func (NotFound) OutboxLetter() *NotFound {
-	return &NotFound{Message: "There is no such dead letter.", ErrorNumber: 6025}
+func (NotFound) OutboxLetter(message string, number int) *NotFound {
+	return &NotFound{Message: message, ErrorNumber: number}
 }
 
 func (NotFound) OutboxDocument() *NotFound {

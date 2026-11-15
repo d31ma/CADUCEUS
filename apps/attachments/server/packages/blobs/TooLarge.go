@@ -16,3 +16,7 @@ func (large TooLarge) Error() string {
 func (TooLarge) HttpStatus() int {
 	return http.StatusRequestEntityTooLarge
 }
+
+func (TooLarge) Number() int {
+	return 24
+}

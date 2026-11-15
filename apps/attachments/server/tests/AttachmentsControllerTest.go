@@ -76,6 +76,7 @@ func (test *AttachmentsControllerTest) TestPostAttachmentRefusesAFileOverTheLimi
 	large := &AttachmentTooLarge{}
 	Assert.IsTrue(errors.As(err, &large), "large file accepted")
 	Assert.Equals(int64(100), large.Limit)
+	Assert.Equals(24, large.Number())
 }
 
 func (test *AttachmentsControllerTest) TestPostAttachmentFailsClosedWithoutAValidToken() {

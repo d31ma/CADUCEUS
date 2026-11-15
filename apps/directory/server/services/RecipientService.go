@@ -1,7 +1,9 @@
 import (
 	"cmp"
+	"errors"
 	"slices"
 
+	"mesail.dev/packages/apierrors"
 	"mesail.dev/packages/recipients"
 )
 
@@ -44,9 +46,15 @@ func (service *RecipientService) refusal(count int, invalid error) error {
 	case count > service.maxAddresses():
 		return InvalidRequest{}.TooManyAddresses()
 	case invalid != nil:
-		return InvalidRequest{}.BadAddresses(invalid.Error())
+		return InvalidRequest{}.BadAddresses(invalid.Error(), service.kitNumber(invalid))
 	}
 	return nil
+}
+
+func (service *RecipientService) kitNumber(invalid error) int {
+	var numbered apierrors.Numbered
+	errors.As(invalid, &numbered)
+	return numbered.Number()
 }
 
 func (service *RecipientService) validOnly(refusal error, addresses []string) []string {

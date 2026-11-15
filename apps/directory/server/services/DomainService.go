@@ -58,7 +58,7 @@ func (service *DomainService) existing(domainId string) (DomainDocument, error) 
 func (service *DomainService) name(raw string) (string, error) {
 	domainId, invalid := recipients.DomainNames{}.Normalize(raw)
 	if invalid != nil {
-		return "", InvalidRequest{}.BadDomainName(invalid.Error())
+		return "", InvalidRequest{}.BadDomainName(invalid.Error(), recipients.InvalidDomainName{}.Number())
 	}
 	return domainId, nil
 }

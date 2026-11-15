@@ -80,15 +80,15 @@ func (service *FailureService) coreAnswer(failure error) error {
 func (service *FailureService) eventAnswer(failure error) error {
 	switch known := failure.(type) {
 	case events.InvalidEnvelope:
-		return InvalidRequest{}.BadEnvelope(known.Error())
+		return InvalidRequest{}.Kit(known.Error(), known.Number())
 	case events.NotSubscribed:
-		return InvalidRequest{}.NotSubscribed(known.Error())
+		return InvalidRequest{}.Kit(known.Error(), known.Number())
 	case events.UnknownEventType:
-		return InvalidRequest{}.UnknownEventType(known.Error())
+		return InvalidRequest{}.Kit(known.Error(), known.Number())
 	case inbound.UnhandledEvent:
 		return InvalidRequest{}.UnhandledEvent(known.Error())
 	case events.NotService:
-		return Forbidden{}.EventsNeedService(known.Error())
+		return Forbidden{}.Kit(known.Error(), known.Number())
 	}
 	return nil
 }

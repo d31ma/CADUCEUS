@@ -34,7 +34,7 @@ func TestRetryOfAnUnknownLetterIsMissing(t *testing.T) {
 	_, _, inbox := deadLetterInbox(t)
 	collection, _ := inbox.Collection("example.com")
 	err := inbox.Outbox.Retry(RetryRequest{Collection: collection, DocumentId: "D1", EventId: "evt_missing", Subscriber: "messaging"})
-	check(t, missingCase(err) == Missing{}.NoDeadLetter(), "want Missing{}.NoDeadLetter")
+	check(t, missingCase(err) == Missing{}.NoDeadLetter("the dead letter evt_missing for messaging was not found", 15), "want the kit dead letter case")
 }
 
 func TestRetryOfAnUnknownCollectionIsMissing(t *testing.T) {

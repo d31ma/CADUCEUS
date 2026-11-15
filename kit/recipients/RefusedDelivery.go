@@ -10,3 +10,7 @@ type RefusedDelivery struct {
 func (refused RefusedDelivery) Error() string {
 	return fmt.Sprintf("delivery %q is not allowed for a %s recipient", refused.Wanted, refused.Kind)
 }
+
+func (RefusedDelivery) Number() int {
+	return 32
+}

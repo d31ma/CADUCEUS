@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Changed the error numbers of shared kit errors (slice E12, ADR 0009):
+  every error of a kit package that several apps copy (`kit/events`,
+  `kit/outbox`, `kit/ids`, `kit/blobs`, `kit/recipients`, `kit/mime`,
+  `kit/addresses`) now has its own number in the kit block MS0001-MS0046,
+  and an app that passes such an error on as it is answers that number
+  (for example `[MS0012]: only a caller with the Service role may
+  deliver events` from any events route). The app numbers that stood for
+  "a shared check refused it" are retired in `docs/mesail/ERRORS.md` (for
+  example mail-out's MS3001 and MS3002). `code`, `field`, routes and
+  statuses do not change. `kit/oidc` keeps no kit numbers, so identity
+  still answers every sign-in refusal with MS0501. `tools/errornumbers`
+  accepts retired rows and refuses code that still uses one.
 - Added "you have mail" for waiting envelopes (slice G13, ADR 0011):
   `devicebox` now sends `envelope.stored` to `realtime` and `notify`
   (its outbox subscribers were empty, so no "New message" push went out

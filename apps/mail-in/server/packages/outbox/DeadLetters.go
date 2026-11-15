@@ -33,7 +33,7 @@ func (letters DeadLetters) positions(dead []DeadLetter) map[string]int {
 func (letters DeadLetters) position(byKey map[string]int, eventId string, subscriber string) (int, error) {
 	position, found := byKey[letters.key(eventId, subscriber)]
 	if !found {
-		return 0, NotFound{Kind: letters.kind(), Key: eventId + " for " + subscriber}
+		return 0, NotFound{}.DeadLetter(eventId + " for " + subscriber)
 	}
 	return position, nil
 }
@@ -57,8 +57,4 @@ func (DeadLetters) requeued(pending []PendingEvent, byEventId map[string]int, le
 
 func (DeadLetters) key(eventId string, subscriber string) string {
 	return eventId + "\n" + subscriber
-}
-
-func (DeadLetters) kind() string {
-	return "dead letter"
 }

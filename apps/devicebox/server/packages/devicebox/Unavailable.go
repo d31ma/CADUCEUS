@@ -1,5 +1,7 @@
 package devicebox
 
+import "mesail.dev/packages/outbox"
+
 type Unavailable struct {
 	Message     string
 	ErrorNumber int
@@ -26,8 +28,8 @@ func (Unavailable) OutboxSettingsMissing(cause error) *Unavailable {
 	return &Unavailable{Message: "The outbox settings are missing.", ErrorNumber: 6023, Cause: cause}
 }
 
-func (Unavailable) OutboxFull(cause error) *Unavailable {
-	return &Unavailable{Message: "Too many events are waiting. Try again later.", ErrorNumber: 6024, Cause: cause}
+func (Unavailable) OutboxFull(full outbox.OutboxFull) *Unavailable {
+	return &Unavailable{Message: "Too many events are waiting. Try again later.", ErrorNumber: full.Number(), Cause: full}
 }
 
 func (Unavailable) OutboxUnreadable(cause error) *Unavailable {

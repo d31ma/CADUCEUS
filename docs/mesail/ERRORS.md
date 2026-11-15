@@ -67,6 +67,25 @@ keeps its row, marked "retired".
   in a package with error types unless it is an error number (E7 renamed
   `dnscheck`'s DNS record field to `typeValue`), and give each error
   type's builder its own method name.
+- **Kit numbers** (slice E12, 2026-11-14). Every error type of a kit
+  package copied into more than one app (`kit/events`, `kit/outbox`,
+  `kit/ids`, `kit/blobs`, `kit/recipients`, `kit/mime`, `kit/addresses`)
+  carries a number from MS0001-MS0499, one constructor per case (or a
+  `Number()` method for a type with one case). When an app answers such an
+  error as it is, its error handler answers the kit number; it never maps
+  it to a number of its own block. When an app turns the kit error into a
+  case of its own (for example a missing blob that means "the file is not
+  uploaded yet"), it keeps its own number. Kit errors of `kit/apierrors`
+  report problems in this file to tests and have no number.
+- **`kit/oidc` has no kit numbers** (decided 2026-11-14). Its sign-in,
+  passkey, account and session errors are raised only in `identity`, which
+  answers them with its own numbers; MS0501 answers every sign-in refusal
+  with one number on purpose, so the answer never shows which step failed
+  (it stops account probing). Every other app answers a refused token with
+  its own "sign in again" number.
+- A retired row keeps its number, and its last column starts with
+  "retired" and names the number that replaced it. The gate check skips a
+  retired row, and refuses code that still uses a retired number.
 - Answers that TACHYON makes itself (`401` without identity, `403` without
   a role, `422` `@Check` rejections, a malformed body, an error no handler
   takes) have no number until TACHYON request Y1 (ADR 0009).
@@ -76,6 +95,52 @@ keeps its row, marked "retired".
 | Number | App | Status | `code` | Message | Case |
 | --- | --- | --- | --- | --- | --- |
 | MS0000 | kit | 500 | `unavailable` | Something went wrong. | an unexpected error in shared code |
+| MS0001 | kit | 400 | `invalid_request` | the event envelope is not valid: eventId must not be empty | `kit/events`: an event envelope without `eventId` |
+| MS0002 | kit | 400 | `invalid_request` | the event envelope is not valid: domainId is longer than 253 characters | `kit/events`: an envelope `domainId` over 253 characters |
+| MS0003 | kit | 400 | `invalid_request` | the event envelope is not valid: domainId may only hold the characters a-z, 0-9, - and . | `kit/events`: an envelope `domainId` with another character |
+| MS0004 | kit | 400 | `invalid_request` | the event envelope is not valid: domainId must hold at least one dot | `kit/events`: an envelope `domainId` without a dot |
+| MS0005 | kit | 400 | `invalid_request` | the event envelope is not valid: domainId must not hold an empty label | `kit/events`: an envelope `domainId` with an empty label |
+| MS0006 | kit | 400 | `invalid_request` | the event type ... is not in the Mesail event catalog | `kit/events`: an event type that is not in the catalog (`UnknownEventType`, also inside an envelope check) |
+| MS0007 | kit | 400 | `invalid_request` | the event envelope is not valid: the producer ... does not produce this event type; ... does | `kit/events`: an envelope from a producer the catalog does not list for its type |
+| MS0008 | kit | 400 | `invalid_request` | the event envelope is not valid: occurredAt must be an RFC 3339 time | `kit/events`: an envelope `occurredAt` that is not RFC 3339 |
+| MS0009 | kit | 400 | `invalid_request` | the event envelope is not valid: payload must not be empty | `kit/events`: an envelope without a payload |
+| MS0010 | kit | 400 | `invalid_request` | the event envelope is not valid: payload holds data after its JSON value | `kit/events`: a payload with more data after its JSON value |
+| MS0011 | kit | 400 | `invalid_request` | the event envelope is not valid: the payload is not a JSON object of the expected shape | `kit/events`: a payload that does not have the shape its type needs (raised by `realtime`) |
+| MS0012 | kit | 403 | `forbidden` | only a caller with the Service role may deliver events | `kit/events`: an events route called without the `Service` role (`realtime` answers its fixed forbidden text) |
+| MS0013 | kit | 400 | `invalid_request` | the service ... does not consume events of type ... | `kit/events`: an event type the receiving service does not consume |
+| MS0014 | kit | 404 | `not_found` | the document ... was not found | `kit/outbox`: an outbox document that does not exist (the memory store, and mail-out's outbound items) |
+| MS0015 | kit | 404 | `not_found` | the dead letter ... for ... was not found | `kit/outbox`: a requeue names an event and subscriber that is not a dead letter |
+| MS0016 | kit | 503 | `unavailable` | the application JSON has no "outbox" settings | `kit/outbox`: `outbox` is missing from the app settings (apps answer their own settings number, which also covers a file that cannot be read) |
+| MS0017 | kit | 503 | `unavailable` | the document's waiting events would take ... bytes, over the ... byte document cap; try again later | `kit/outbox`: staging an event would pass the document cap (`OutboxFull`; `devicebox` answers its own text) |
+| MS0018 | kit | - | - | delivery to ... failed (status ..., permanent ...): ... | `kit/outbox`: a push to a subscriber failed; kept as a dead letter's `lastError`, never an answer |
+| MS0019 | kit | - | - | expected exactly one staged ... event, found ... | `kit/outbox`: the test helper `Published` found no single staged event; never an answer |
+| MS0020 | kit | 404 | `not_found` | the id does not start with "..." | `kit/ids`: a wire id with another prefix (apps turn it into their own not found) |
+| MS0021 | kit | 404 | `not_found` | the blob key domain "..." is not allowed | `kit/blobs`: a blob key with a bad domain |
+| MS0022 | kit | 404 | `not_found` | the blob key name "..." is not allowed | `kit/blobs`: a blob key with a bad name |
+| MS0023 | kit | 404 | `not_found` | no blob is stored at "..." | `kit/blobs`: no blob under the key (apps turn it into their own case) |
+| MS0024 | kit | 413 | `too_large` | the blob is larger than N bytes | `kit/blobs`: a blob or upload over the size limit; `attachments` answers it with `field` `size` |
+| MS0025 | kit | 400 | `invalid_request` | expected N bytes but received M | `kit/blobs`: a stored blob has another size than promised |
+| MS0026 | kit | 403 | `forbidden` | the blob link signature is not valid | `kit/blobs`: a signed blob link with a bad signature |
+| MS0027 | kit | 403 | `forbidden` | the blob link has expired | `kit/blobs`: a signed blob link past its expiry |
+| MS0028 | kit | 502 | `unavailable` | the S3 ... request answered HTTP ... | retired (OP6 removed the S3 store, so `kit/blobs` has no `S3Failure`); was: `kit/blobs`: the S3 store answered an unexpected status |
+| MS0029 | kit | 503 | `unavailable` | the S3 blob store needs an endpoint setting ... | retired (OP6 removed the S3 store, so `kit/blobs` has no `MissingEndpoint`); was: `kit/blobs`: the S3 store has no endpoint setting (at start-up) |
+| MS0030 | kit | 400 | `invalid_request` | "..." is not a valid domain name | `kit/recipients`: a recipient domain name that is not valid |
+| MS0031 | kit | 400 | `invalid_request` | "..." is not a valid email address | `kit/recipients`: a recipient address that is not valid |
+| MS0032 | kit | 422 | `invalid_request` | delivery "..." is not allowed for a ... recipient | `kit/recipients`: a delivery the recipient kind does not allow |
+| MS0033 | kit | 400 | `invalid_request` | the message header block cannot be read | `kit/mime`: a message whose header block cannot be read |
+| MS0034 | kit | 413 | `too_large` | the message or its header block is larger than the size limit | `kit/mime`: a message or header block over its limit |
+| MS0035 | kit | 400 | `invalid_request` | the message has more nested parts than the depth limit | `kit/mime`: a message nested deeper than the limit |
+| MS0036 | kit | 400 | `invalid_request` | the message has more parts than the part limit | `kit/mime`: a message with more parts than the limit |
+| MS0037 | kit | 400 | `invalid_request` | ... must hold only ASCII characters | `kit/addresses`: a name with a character that is not ASCII |
+| MS0038 | kit | 400 | `invalid_request` | address must hold an @ between the local part and the domain | `kit/addresses`: an address without `@` |
+| MS0039 | kit | 400 | `invalid_request` | domain must be at most 253 characters | `kit/addresses`: a domain over 253 characters |
+| MS0040 | kit | 400 | `invalid_request` | domain must be labels of 1 to 63 characters ... | `kit/addresses`: a domain with a bad label |
+| MS0041 | kit | 400 | `invalid_request` | ... must be 1 to 64 characters | `kit/addresses`: a local part or username that is empty or over 64 characters |
+| MS0042 | kit | 400 | `invalid_request` | ... may only hold a-z, 0-9, ., _ and - | `kit/addresses`: a local part or username with another character |
+| MS0043 | kit | 400 | `invalid_request` | ... must start and end with a letter or digit | `kit/addresses`: a local part or username that starts or ends with `.`, `_` or `-` |
+| MS0044 | kit | 400 | `invalid_request` | ... must not hold two dots in a row | `kit/addresses`: a local part or username with `..` |
+| MS0045 | kit | 400 | `invalid_request` | username must not be a role name | `kit/addresses`: a username that is a role name |
+| MS0046 | kit | 409 | `conflict` | the local part ... is already in use | `kit/addresses`: a local part another member, alias or channel holds |
 | MS0500 | identity | 500 | `unavailable` | Something went wrong. | an unexpected error in `identity` |
 | MS0501 | identity | 401 | `unauthenticated` | Sign-in failed. Check your details and try again. | a sign-in, session key, password, 2-step or passkey step was refused (one number, so a wrong passkey looks like a wrong password) |
 | MS0502 | identity | 401 | `unauthenticated` | Your sign-in has ended. Sign in again. | `GET /me` with a refused access token |
@@ -108,7 +173,7 @@ keeps its row, marked "retired".
 | MS1008 | directory | 400 | `invalid_request` | limit must be a whole number | a page `limit` that is not a number; `field` `limit` |
 | MS1009 | directory | 400 | `invalid_request` | the cursor is not one this service gave out | a page `cursor` this service did not give out; `field` `cursor` |
 | MS1010 | directory | 404 | `not_found` | no hosted domain ... | a domain id that is not hosted |
-| MS1011 | directory | 400 | `invalid_request` | (the domain name rule) | a new domain name that is not a valid domain name; `field` `name` |
+| MS1011 | directory | 400 | `invalid_request` | (the domain name rule) | retired (E12): now MS0030; was: a new domain name that is not a valid domain name; `field` `name` |
 | MS1012 | directory | 409 | `duplicate` | ... is already hosted | add a domain that is already hosted |
 | MS1013 | directory | 503 | `unavailable` | the DNS lookup failed | the DNS check of a domain failed |
 | MS1014 | directory | 404 | `domain_not_hosted` | this domain is not hosted here | an address lookup for a domain that is not active here |
@@ -116,12 +181,12 @@ keeps its row, marked "retired".
 | MS1016 | directory | 400 | `invalid_request` | the address must be in your own domain | an alias or channel address outside the caller's domain; `field` `address` |
 | MS1017 | directory | 404 | `not_found` | no such member in your domain | a member id that is not an active member of the caller's domain |
 | MS1018 | directory | 409 | `duplicate` | ... is already in use | an alias or channel address that another owner uses |
-| MS1019 | directory | 400 | `invalid_request` | (the name rule) | a username or address name that breaks the name rules; `field` `username` or `address` |
-| MS1020 | directory | 409 | `duplicate` | (the reservation text) | a username or address name reserved by someone else |
+| MS1019 | directory | 400 | `invalid_request` | (the name rule) | a username or address name check failed for a reason that is not a `kit/addresses` name rule; `field` `username` or `address` (the name rules answer MS0037-MS0045 since E12) |
+| MS1020 | directory | 409 | `duplicate` | (the reservation text) | retired (E12): now MS0046; was: a username or address name reserved by someone else |
 | MS1021 | directory | 404 | `not_found` | no such channel address | remove a channel address that does not exist or is not a channel's |
 | MS1022 | directory | 400 | `invalid_request` | a channel id is required | a channel address without a channel id; `field` `channelId` |
 | MS1023 | directory | 400 | `invalid_request` | at most 100 addresses can be resolved at once | resolve more than 100 addresses; `field` `addresses` |
-| MS1024 | directory | 400 | `invalid_request` | (the address rule) | resolve an address that is not valid; `field` `addresses` |
+| MS1024 | directory | 400 | `invalid_request` | (the address rule) | retired (E12): now MS0030 or MS0031; was: resolve an address that is not valid; `field` `addresses` |
 | MS1025 | directory | 409 | `duplicate` | ... is used by an alias or a channel address | add a member whose username an alias or channel address uses |
 | MS1026 | directory | 400 | `invalid_request` | a display name is required for a new person | add a new person without a display name; `field` `displayName` |
 | MS1027 | directory | 400 | `invalid_request` | a first password is required for a new person | add a new person without a first password; `field` `firstPassword` |
@@ -142,7 +207,7 @@ keeps its row, marked "retired".
 | MS1042 | directory | 400 | `invalid_request` | a display name is required | a seed without a display name; `field` `displayName` |
 | MS1043 | directory | 400 | `invalid_request` | a seed call adds at most 2 domains; seed the person again for more | a seed with more than 2 domains; `field` `memberships` |
 | MS1044 | directory | 503 | `unavailable` | the outbox is not configured | the outbox settings cannot be read |
-| MS1045 | directory | 404 | `not_found` | no such dead event | requeue a dead event that does not exist |
+| MS1045 | directory | 404 | `not_found` | no such dead event | requeue a dead event in a document whose outbox fields cannot be read (a missing dead event answers MS0015 since E12) |
 | MS1046 | directory | 404 | `not_found` | no such outbox collection | the outbox store names a collection it does not know |
 | MS1047 | directory | 404 | `not_found` | no such outbox document | the outbox store cannot find its document |
 | MS1048 | directory | 503 | `unavailable` | the directory store is not available | the directory store (FYLO) failed |
@@ -154,11 +219,11 @@ keeps its row, marked "retired".
 | MS1505 | messaging | 404 | `not_found` | no such domain | a service token of one domain delivered an event of another domain |
 | MS1506 | messaging | 400 | `invalid_request` | limit must be a whole number from 1 to 100 | a page `limit` that is not a whole number from 1 to 100; `field` `limit` |
 | MS1507 | messaging | 503 | `unavailable` | the messaging service is not available | a route failed with an error no other case names (also a full outbox document) |
-| MS1508 | messaging | 400 | `invalid_request` | (the event check's text) | `POST /events` with an envelope that is not valid (`kit/events`) |
-| MS1509 | messaging | 400 | `invalid_request` | (the event check's text) | `POST /events` with an event type messaging does not consume (`kit/events`) |
-| MS1510 | messaging | 400 | `invalid_request` | (the event check's text) | `POST /events` with an event type that is not in the catalog (`kit/events`) |
+| MS1508 | messaging | 400 | `invalid_request` | (the event check's text) | retired (E12): now MS0001-MS0011; was: `POST /events` with an envelope that is not valid (`kit/events`) |
+| MS1509 | messaging | 400 | `invalid_request` | (the event check's text) | retired (E12): now MS0013; was: `POST /events` with an event type messaging does not consume (`kit/events`) |
+| MS1510 | messaging | 400 | `invalid_request` | (the event check's text) | retired (E12): now MS0006; was: `POST /events` with an event type that is not in the catalog (`kit/events`) |
 | MS1511 | messaging | 400 | `invalid_request` | messaging does not handle the event type ... | `POST /events` with a consumed type that has no handler |
-| MS1512 | messaging | 403 | `forbidden` | only a caller with the Service role may deliver events | the event receiver refused a caller without the Service role (`kit/events`) |
+| MS1512 | messaging | 403 | `forbidden` | only a caller with the Service role may deliver events | retired (E12): now MS0012; was: the event receiver refused a caller without the Service role (`kit/events`) |
 | MS1513 | messaging | 400 | `invalid_request` | limit must be between 1 and 100 | the reader got a page size outside 1 to 100; `field` `limit` |
 | MS1514 | messaging | 400 | `invalid_request` | the cursor is not valid | a page `cursor` that messaging did not make; `field` `cursor` |
 | MS1515 | messaging | 400 | `invalid_request` | the reaction is not a known reaction name | a reaction name outside the list; `field` `reaction` |
@@ -190,7 +255,7 @@ keeps its row, marked "retired".
 | MS1541 | messaging | 404 | `not_found` | no such inbound message | `GET /messages/{id}/original` when mail-in has no original |
 | MS1542 | messaging | 404 | `not_found` | no such outbox document | a requeue names a document that does not exist |
 | MS1543 | messaging | 404 | `not_found` | no such outbox collection | a requeue names a collection that is not messaging's |
-| MS1544 | messaging | 404 | `not_found` | no such dead event | a requeue names an event that is not a dead letter |
+| MS1544 | messaging | 404 | `not_found` | no such dead event | a requeue whose outbox document cannot be read (a missing dead letter answers MS0015 since E12) |
 | MS1545 | messaging | 409 | `conflict` | the message is deleted | an edit or reaction on a deleted message |
 | MS1546 | messaging | 409 | `conflict` | the channel is archived and read-only | a send or change in an archived channel |
 | MS1547 | messaging | 409 | `recipients_changed` | the recipients changed | how a recipient gets the message changed since the client asked; the addresses are in `addresses` |
@@ -233,7 +298,7 @@ keeps its row, marked "retired".
 | MS2021 | channels | 503 | `unavailable` | the channel service is not available | the channel store answered something unreadable |
 | MS2022 | channels | 503 | `unavailable` | the channel service is not available / the outbox is not available | the outbox settings are missing |
 | MS2023 | channels | 503 | `unavailable` | the outbox is not available | an outbox document cannot be read |
-| MS2024 | channels | 404 | `not_found` | (the outbox's own text) | the dead letter to retry is not in the outbox document |
+| MS2024 | channels | 404 | `not_found` | (the outbox's own text) | retired (E12): now MS0015; was: the dead letter to retry is not in the outbox document |
 | MS2025 | channels | 404 | `not_found` | no such outbox document | the outbox document to retry does not exist |
 | MS2026 | channels | 404 | `not_found` | no such outbox collection | the collection named in a retry is not an outbox collection |
 | MS2027 | channels | 503 | `unavailable` | the channel service is not available | any other failure in a channel route |
@@ -250,12 +315,12 @@ keeps its row, marked "retired".
 | MS2509 | mail-in | 401 | `unauthenticated` | The access token was refused. | the caller's token for the original or the content of a message is not valid |
 | MS2510 | mail-in | 404 | `not_found` | no such outbox collection | an outbox route names a collection mail-in does not have |
 | MS2511 | mail-in | 404 | `not_found` | no such inbound message | the inbound message does not exist or is in another domain |
-| MS2512 | mail-in | 404 | `not_found` | no such dead letter | a requeue names a dead letter that does not exist |
+| MS2512 | mail-in | 404 | `not_found` | no such dead letter | retired (E12): now MS0015; was: a requeue names a dead letter that does not exist |
 | MS2513 | mail-in | 404 | `not_found` | no such outbox document | a requeue names an outbox document that does not exist |
 | MS2514 | mail-in | 503 | `unavailable` | Inbound storage is not available. Try again later. | the inbound store, the blob store or the directory failed, or a blob setting still names the removed S3 adapter or a bucket (slice OP6; the log names the setting) |
 | MS3000 | mail-out | 500 | `unavailable` | Something went wrong. | an unexpected error in `mail-out` |
-| MS3001 | mail-out | 400 | `invalid_request` | Why the event is refused, for example "the event envelope is not valid: eventId must not be empty". | a refused event by a rule of the shared `kit/events` (bad envelope, wrong producer, a type mail-out does not consume); retired when slice E12 numbers `kit/events` |
-| MS3002 | mail-out | 403 | `forbidden` | Only a caller with the Service role may deliver events. | the caller of the events route is not a service |
+| MS3001 | mail-out | 400 | `invalid_request` | Why the event is refused, for example "the event envelope is not valid: eventId must not be empty". | retired (E12): now MS0001-MS0011 and MS0013; was: a refused event by a rule of the shared `kit/events` (bad envelope, wrong producer, a type mail-out does not consume) |
+| MS3002 | mail-out | 403 | `forbidden` | Only a caller with the Service role may deliver events. | retired (E12): now MS0012; was: the caller of the events route is not a service |
 | MS3003 | mail-out | 404 | `not_found` | Not found. | the event's domain is not the caller's domain |
 | MS3004 | mail-out | 400 | `invalid_request` | the event envelope is not valid: <the JSON error> | the events body is not a JSON event envelope |
 | MS3005 | mail-out | 400 | `invalid_request` | the email.send.requested field producer is missing or not valid | `email.send.requested` from a producer mail-out does not read messages from |
@@ -276,7 +341,7 @@ keeps its row, marked "retired".
 | MS3509 | attachments | 409 | `conflict` | The uploaded file is smaller than the size you gave. | the uploaded file has another size; `field` is `size` |
 | MS3510 | attachments | 409 | `conflict` | The uploaded file does not match the SHA-256 you gave. | the uploaded file has another checksum; `field` is `sha256` |
 | MS3511 | attachments | 409 | `conflict` | The attachment is not ready to download. | a download before the upload is complete; `field` is `state` |
-| MS3512 | attachments | 413 | `too_large` | the file is larger than N bytes | an upload larger than the limit; `field` is `size` |
+| MS3512 | attachments | 413 | `too_large` | the file is larger than N bytes | retired (E12): now MS0024; was: an upload larger than the limit; `field` is `size` |
 | MS3513 | attachments | 503 | `unavailable` | Attachment storage is not available. Try again later. | the attachment store or link signing failed, or a setting still names the removed S3 adapter or a bucket (slice OP6; the log names the setting) |
 | MS4000 | search | 500 | `unavailable` | Something went wrong. | an unexpected error in `search` |
 | MS4001 | search | 400 | `invalid_request` | the search text is too long | a search with too long a text; `field` is `q` |
@@ -289,17 +354,17 @@ keeps its row, marked "retired".
 | MS4008 | search | 400 | `invalid_request` | the event payload does not match its type | an event whose payload does not match its type; `field` is `payload` |
 | MS4009 | search | 400 | `invalid_request` | the value cannot be written as JSON | a value that cannot be written as JSON; `field` is `body` |
 | MS4010 | search | 400 | `invalid_request` | the value does not have the expected fields | a body without the expected fields; `field` is `body` |
-| MS4011 | search | 400 | `invalid_request` | (the envelope problem) | an event with a bad envelope, or of a type `search` does not take; `field` is `envelope` (slice E12 may move it to a shared number) |
+| MS4011 | search | 400 | `invalid_request` | (the envelope problem) | retired (E12): now MS0001-MS0011 and MS0013; was: an event with a bad envelope, or of a type `search` does not take; `field` is `envelope` |
 | MS4012 | search | 401 | `unauthenticated` | Sign in again. | the access token was refused |
 | MS4013 | search | 403 | `forbidden` | only members of a domain search its messages | a caller that is not a member searches |
-| MS4014 | search | 403 | `forbidden` | (the reason) | an event from a caller that is not a service |
+| MS4014 | search | 403 | `forbidden` | (the reason) | retired (E12): now MS0012; was: an event from a caller that is not a service |
 | MS4015 | search | 503 | `unavailable` | Search is not available. Try again later. | the search index or the membership check failed |
 | MS4500 | notify | 500 | `unavailable` | Something went wrong. | an unexpected error in `notify` |
 | MS4501 | notify | 401 | `unauthenticated` | Sign in again. | a notify route could not verify the caller's token |
 | MS4502 | notify | 404 | `not_found` | The install-wide route was not found. | an operator-only route (jobs, outbox) called with a token that is not install-wide |
-| MS4503 | notify | 403 | `forbidden` | Only another Mesail service may call this route. | `POST /events` or `POST /call-pushes` with a token that has no `Service` role |
+| MS4503 | notify | 403 | `forbidden` | Only another Mesail service may call this route. | `POST /call-pushes` with a token that has no `Service` role (`POST /events` answers MS0012 since E12) |
 | MS4504 | notify | 404 | `not_found` | The domain was not found. | an event for another domain than the calling service's own, or `POST /call-pushes` with an install-wide token |
-| MS4505 | notify | 400 | `invalid_request` | (the event check's text) | `kit/events` refused the event envelope (`field` `envelope`) |
+| MS4505 | notify | 400 | `invalid_request` | (the event check's text) | an event payload notify cannot read, or another event failure no other number names (`field` `envelope`; `kit/events` refusals answer their kit numbers since E12) |
 | MS4506 | notify | 400 | `invalid_request` | notify does not handle events of type ... | an event type notify does not handle (`field` `type`) |
 | MS4507 | notify | 400 | `invalid_request` | the time is not an RFC 3339 time | a time in an event payload is not RFC 3339 (`field` `time`) |
 | MS4508 | notify | 400 | `invalid_request` | limit must be a whole number from 1 to 100 | `GET /notifications` with a bad `limit` (`field` `limit`) |
@@ -316,7 +381,7 @@ keeps its row, marked "retired".
 | MS4519 | notify | 503 | `unavailable` | Notification storage is not available. Try again later. | the outbox relay failed for another reason |
 | MS4520 | notify | 404 | `not_found` | The outbox document was not found. | the outbox document to retry does not exist |
 | MS4521 | notify | 404 | `not_found` | The outbox collection was not found. | the collection named in a retry is not an outbox collection |
-| MS4522 | notify | 404 | `not_found` | The dead letter was not found. | the dead letter to retry is not in the outbox document |
+| MS4522 | notify | 404 | `not_found` | The dead letter was not found. | retired (E12): now MS0015; was: the dead letter to retry is not in the outbox document |
 | MS4523 | notify | 400 | `invalid_request` | the kind must be incoming or missed | `POST /call-pushes` with another `kind` (`field` `kind`; slice G11) |
 | MS4524 | notify | 400 | `invalid_request` | toPersonIds needs 1 to 49 ids of 1 to 64 characters | `POST /call-pushes` with no person, more than 49, or an empty or too long id (`field` `toPersonIds`; slice G11) |
 | MS5000 | realtime | 500 | `unavailable` | Something went wrong. | an unexpected error in `realtime` |
@@ -328,8 +393,8 @@ keeps its row, marked "retired".
 | MS5006 | realtime | 400 | `invalid_request` | must be an RFC 3339 time | the sweep asked for presence due at a time that is not RFC 3339 (field `now`); the sweep route answers it as MS5024 |
 | MS5007 | realtime | 400 | `invalid_request` | must be active, idle or dnd | a presence `state` that is not `active`, `idle` or `dnd` (field `state`) |
 | MS5008 | realtime | 400 | `invalid_request` | must be an RFC 3339 time in the future | `dnd` with a `doNotDisturbUntil` that is missing or not in the future (field `doNotDisturbUntil`) |
-| MS5009 | realtime | 400 | `invalid_request` | Why the envelope is refused, for example "the payload is not a JSON object of the expected shape". | an event envelope refused by the shared `kit/events` (field `envelope`); retired when slice E12 numbers `kit/events` |
-| MS5010 | realtime | 400 | `invalid_request` | Why the type is refused, for example "the service realtime does not consume events of type member.upserted". | an event type `realtime` does not consume, or one not in the catalog, refused by the shared `kit/events` (field `type`); retired when slice E12 numbers `kit/events` |
+| MS5009 | realtime | 400 | `invalid_request` | Why the envelope is refused, for example "the payload is not a JSON object of the expected shape". | retired (E12): now MS0001-MS0011; was: an event envelope refused by the shared `kit/events` (field `envelope`) |
+| MS5010 | realtime | 400 | `invalid_request` | Why the type is refused, for example "the service realtime does not consume events of type member.upserted". | retired (E12): now MS0006 and MS0013; was: an event type `realtime` does not consume, or one not in the catalog, refused by the shared `kit/events` (field `type`) |
 | MS5011 | realtime | 401 | `unauthenticated` | Sign in again. | the bearer token of a presence, tickets, events or sweep request is missing, forged or expired |
 | MS5012 | realtime | 401 | `unauthenticated` | Sign in again. | a ticket or socket sign-in with a token that is not a valid member token (for example a service token) |
 | MS5013 | realtime | 401 | `unauthenticated` | Sign in again. | a stream sign-in with a ticket that is unknown, already used or expired; the gateway closes the connection with 4401 |
@@ -337,7 +402,7 @@ keeps its row, marked "retired".
 | MS5015 | realtime | 401 | `unauthenticated` | Sign in again. | a message from a connection whose sign-in has ended; the gateway closes the connection with 4401 |
 | MS5016 | realtime | 401 | `unauthenticated` | Sign in again. | a renewal with a token of another person or domain; the gateway closes the connection with 4401 |
 | MS5017 | realtime | 403 | `forbidden` | This caller may not use this route. | the sweep caller has no `Service` role |
-| MS5018 | realtime | 403 | `forbidden` | This caller may not use this route. | the events caller is not a service (refused by the shared `kit/events`); retired when slice E12 numbers `kit/events` |
+| MS5018 | realtime | 403 | `forbidden` | This caller may not use this route. | retired (E12): now MS0012; was: the events caller is not a service (refused by the shared `kit/events`) |
 | MS5019 | realtime | 404 | `not_found` | Nothing was found. | the event's domain is not the caller's domain |
 | MS5020 | realtime | 404 | `not_found` | Nothing was found. | the sweep caller is not install-wide |
 | MS5021 | realtime | 404 | `not_found` | Nothing was found. | `GET /presence` for members of whom none has presence |
@@ -409,8 +474,8 @@ keeps its row, marked "retired".
 | MS6021 | devicebox | 503 | `unavailable` | The mailbox store is not available. | a FYLO command or query failed |
 | MS6022 | devicebox | 503 | `unavailable` | The mailbox store gave an answer that cannot be read. | a FYLO answer could not be decoded |
 | MS6023 | devicebox | 503 | `unavailable` | The outbox settings are missing. | `outbox` is missing from the app settings |
-| MS6024 | devicebox | 503 | `unavailable` | Too many events are waiting. Try again later. | `kit/outbox` refused to stage an event (`OutboxFull`) |
-| MS6025 | devicebox | 404 | `not_found` | There is no such dead letter. | requeue names an event and subscriber that is not a dead letter |
+| MS6024 | devicebox | 503 | `unavailable` | Too many events are waiting. Try again later. | retired (E12): now MS0017; was: `kit/outbox` refused to stage an event (`OutboxFull`) |
+| MS6025 | devicebox | 404 | `not_found` | There is no such dead letter. | retired (E12): now MS0015; was: requeue names an event and subscriber that is not a dead letter |
 | MS6026 | devicebox | 404 | `not_found` | There is no such outbox document. | requeue names a document that does not exist |
 | MS6027 | devicebox | 404 | `not_found` | There is no such outbox collection. | requeue names a collection that is not in `outbox-collections` |
 | MS6028 | devicebox | 503 | `unavailable` | The mailbox is not available. | a mailbox or job route failed in a way no other number covers |

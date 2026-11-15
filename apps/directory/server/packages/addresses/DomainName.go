@@ -34,14 +34,14 @@ func (DomainName) labels() *regexp.Regexp {
 
 func (name DomainName) checkLength(value string) error {
 	if len(value) > name.maximumLength() {
-		return InvalidName{Kind: NameKinds{}.Domain(), Reason: "must be at most 253 characters"}
+		return InvalidName{}.DomainTooLong()
 	}
 	return nil
 }
 
 func (name DomainName) checkLabels(value string) error {
 	if !name.labels().MatchString(value) {
-		return InvalidName{Kind: NameKinds{}.Domain(), Reason: "must be labels of 1 to 63 characters from a-z, 0-9 and - joined by single dots, with no - at the start or end of a label"}
+		return InvalidName{}.DomainLabels()
 	}
 	return nil
 }

@@ -22,13 +22,15 @@ func (service *EventService) failure(failed error) error {
 	case failed == nil:
 		return nil
 	case errors.As(failed, &notService):
-		return &ForbiddenCaller{}
+		return &ForbiddenCaller{ErrorNumber: notService.Number()}
 	case errors.As(failed, &mismatch):
 		return &UnknownDomain{ErrorNumber: mismatch.Number()}
 	case errors.As(failed, &refused):
 		return RejectedEvent{}.SendRequest(refused.Error(), refused.Number())
-	case errors.As(failed, &invalid), errors.As(failed, &unsubscribed):
-		return RejectedEvent{}.EventRule(failed.Error())
+	case errors.As(failed, &invalid):
+		return RejectedEvent{}.Kit(invalid.Error(), invalid.Number())
+	case errors.As(failed, &unsubscribed):
+		return RejectedEvent{}.Kit(unsubscribed.Error(), unsubscribed.Number())
 	default:
 		return failed
 	}

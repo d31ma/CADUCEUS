@@ -16,6 +16,10 @@ func (Problem) NotUsed(listed ListedNumber) Problem {
 	return Problem{File: Problem{}.errorsFile(), Line: listed.Line, Text: fmt.Sprintf("MS%04d (%s) is listed but no code of %s uses it", listed.Number, listed.App, listed.App)}
 }
 
+func (Problem) UsedRetired(used UsedNumber) Problem {
+	return Problem{File: used.File, Line: used.Line, Text: fmt.Sprintf("MS%04d is used in code but its row in %s is marked retired; a number is never reused", used.Number, Problem{}.errorsFile())}
+}
+
 func (Problem) UsedOutsideBlock(used UsedNumber, owner Owner) Problem {
 	return Problem{File: used.File, Line: used.Line, Text: fmt.Sprintf("MS%04d is outside the block of %s", used.Number, owner.Block())}
 }

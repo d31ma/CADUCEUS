@@ -14,6 +14,10 @@ func (NotFound) DeadEvent() *NotFound        { return NotFound{}.missing(1045) }
 func (NotFound) OutboxCollection() *NotFound { return NotFound{}.missing(1046) }
 func (NotFound) OutboxDocument() *NotFound   { return NotFound{}.missing(1047) }
 
+func (NotFound) Kit(text string, number int) *NotFound {
+	return &NotFound{ErrorCase{number, "not_found", "", text}}
+}
+
 func (NotFound) Domain(domainId string) *NotFound {
 	return NotFound{}.missingWith(1010, "no hosted domain "+domainId)
 }

@@ -50,14 +50,14 @@ func (LocalPart) twoDots() string {
 
 func (part LocalPart) checkLength(kind string, value string) error {
 	if value == "" || len(value) > part.maximumLength() {
-		return InvalidName{Kind: kind, Reason: "must be 1 to 64 characters"}
+		return InvalidName{}.LocalPartLength(kind)
 	}
 	return nil
 }
 
 func (part LocalPart) checkCharacters(kind string, value string) error {
 	if strings.ContainsFunc(value, part.notAllowed) {
-		return InvalidName{Kind: kind, Reason: "may only hold a-z, 0-9, ., _ and -"}
+		return InvalidName{}.LocalPartCharacters(kind)
 	}
 	return nil
 }
@@ -68,14 +68,14 @@ func (part LocalPart) notAllowed(character rune) bool {
 
 func (part LocalPart) checkEnds(kind string, value string) error {
 	if strings.Trim(value, part.punctuation()) != value {
-		return InvalidName{Kind: kind, Reason: "must start and end with a letter or digit"}
+		return InvalidName{}.LocalPartEnds(kind)
 	}
 	return nil
 }
 
 func (part LocalPart) checkDots(kind string, value string) error {
 	if strings.Contains(value, part.twoDots()) {
-		return InvalidName{Kind: kind, Reason: "must not hold two dots in a row"}
+		return InvalidName{}.LocalPartDots(kind)
 	}
 	return nil
 }

@@ -40,7 +40,7 @@ func TestEveryErrorCaseHasItsOwnNumber(t *testing.T) {
 		{err: Unavailable{}.StoreUnreadable(cause), number: 2021, text: "the channel store answered something unreadable"},
 		{err: Unavailable{}.OutboxSettingsMissing(cause), number: 2022, text: "the outbox settings are missing"},
 		{err: Unavailable{}.OutboxUnreadable(cause), number: 2023, text: "the outbox document cannot be read"},
-		{err: NotFound{}.OutboxLetter("gone"), number: 2024, text: "gone"},
+		{err: NotFound{}.OutboxLetter("gone", 15), number: 15, text: "gone"},
 		{err: NotFound{}.OutboxDocument(), number: 2025, text: "no such outbox document"},
 		{err: NotFound{}.OutboxCollection(), number: 2026, text: "no such outbox collection"},
 	}

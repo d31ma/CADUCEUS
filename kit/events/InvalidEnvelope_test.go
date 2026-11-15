@@ -8,3 +8,16 @@ func TestInvalidEnvelopeMessage(t *testing.T) {
 		t.Fatalf("unexpected message %q", message)
 	}
 }
+
+func TestInvalidEnvelopeCarriesTheNumberOfItsCase(t *testing.T) {
+	if (InvalidEnvelope{}).PayloadShape().Number() != 11 {
+		t.Fatalf("got %d", InvalidEnvelope{}.PayloadShape().Number())
+	}
+}
+
+func TestInvalidEnvelopeForAnUnknownTypeCarriesTheCatalogNumber(t *testing.T) {
+	refused := InvalidEnvelope{}.UnknownType(UnknownEventType{Type: "x"})
+	if refused.Number() != 6 || refused.Reason != (UnknownEventType{Type: "x"}).Error() {
+		t.Fatalf("got %+v", refused)
+	}
+}

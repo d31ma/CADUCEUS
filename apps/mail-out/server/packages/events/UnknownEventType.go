@@ -7,3 +7,7 @@ type UnknownEventType struct {
 func (failure UnknownEventType) Error() string {
 	return "the event type " + failure.Type + " is not in the Mesail event catalog"
 }
+
+func (UnknownEventType) Number() int {
+	return 6
+}

@@ -101,8 +101,9 @@ func (desk OutboxDesk) settingsError() error {
 }
 
 func (OutboxDesk) letterError(failure error) error {
-	if errors.As(failure, &outbox.NotFound{}) {
-		return NotFound{}.OutboxLetter(failure.Error())
+	missing := outbox.NotFound{}
+	if errors.As(failure, &missing) {
+		return NotFound{}.OutboxLetter(missing.Error(), missing.Number())
 	}
 	return Unavailable{}.OutboxUnreadable(failure)
 }

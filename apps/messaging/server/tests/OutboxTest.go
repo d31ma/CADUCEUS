@@ -66,7 +66,7 @@ func (test *OutboxTest) TestUnknownCollectionsLettersAndDocumentsAreNotFound() {
 	Assert.IsTrue(world.IsNotFound(unknownCollection), "want NotFound for the collection")
 	Assert.Equals(1543, world.Number(unknownCollection))
 	Assert.IsTrue(world.IsNotFound(unknownLetter), "want NotFound for the letter")
-	Assert.Equals(1544, world.Number(unknownLetter))
+	Assert.Equals(15, world.Number(unknownLetter))
 	Assert.IsTrue(world.IsNotFound(missing), "want NotFound for the document")
 	Assert.Equals(1542, world.Number(missing))
 	Assert.IsTrue(world.IsNotFound(world.Registry().Check("not-a-collection")), "want NotFound from the registry")

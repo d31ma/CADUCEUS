@@ -26,6 +26,6 @@ func (NotFound) OutboxCollection() *NotFound {
 	return &NotFound{ErrorCase{4521, "not_found", "", "The outbox collection was not found."}}
 }
 
-func (NotFound) DeadLetter() *NotFound {
-	return &NotFound{ErrorCase{4522, "not_found", "", "The dead letter was not found."}}
+func (NotFound) Kit(text string, number int) *NotFound {
+	return &NotFound{ErrorCase{number, "not_found", "", text}}
 }

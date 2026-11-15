@@ -24,7 +24,7 @@ func (name Username) check(value string) error {
 
 func (Username) checkRole(value string) error {
 	if (RoleNames{}).Contains(value) {
-		return InvalidName{Kind: NameKinds{}.Username(), Reason: "must not be a role name"}
+		return InvalidName{}.RoleName()
 	}
 	return nil
 }

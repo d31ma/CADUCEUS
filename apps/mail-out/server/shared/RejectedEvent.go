@@ -3,8 +3,8 @@ type RejectedEvent struct {
 	ErrorNumber int
 }
 
-func (RejectedEvent) EventRule(reason string) *RejectedEvent {
-	return &RejectedEvent{Reason: reason, ErrorNumber: 3001}
+func (RejectedEvent) Kit(reason string, number int) *RejectedEvent {
+	return &RejectedEvent{Reason: reason, ErrorNumber: number}
 }
 
 func (RejectedEvent) SendRequest(reason string, number int) *RejectedEvent {

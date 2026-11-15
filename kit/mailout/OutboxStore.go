@@ -40,7 +40,7 @@ func (store OutboxStore) item(ref outbox.Ref) (Item, error) {
 
 func (OutboxStore) foundItem(item Item, found bool, ref outbox.Ref) (Item, error) {
 	if !found {
-		return Item{}, outbox.NotFound{Kind: "outbound item", Key: ref.Collection + "/" + ref.Id}
+		return Item{}, outbox.NotFound{}.Document("outbound item", ref.Collection+"/"+ref.Id)
 	}
 	return item, nil
 }

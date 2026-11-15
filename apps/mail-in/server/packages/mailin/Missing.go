@@ -13,8 +13,8 @@ func (Missing) NoInboundMessage() Missing {
 	return Missing{Message: "no such inbound message", ErrorNumber: 2511}
 }
 
-func (Missing) NoDeadLetter() Missing {
-	return Missing{Message: "no such dead letter", ErrorNumber: 2512}
+func (Missing) NoDeadLetter(message string, number int) Missing {
+	return Missing{Message: message, ErrorNumber: number}
 }
 
 func (Missing) NoOutboxDocument() Missing {

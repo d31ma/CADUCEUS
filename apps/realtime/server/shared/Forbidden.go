@@ -2,8 +2,8 @@ type Forbidden struct {
 	ErrorNumber int
 }
 
-func (Forbidden) EventCallerNotAService() *Forbidden {
-	return &Forbidden{ErrorNumber: 5018}
+func (Forbidden) EventCallerNotAService(number int) *Forbidden {
+	return &Forbidden{ErrorNumber: number}
 }
 
 func (failure *Forbidden) Error() string {

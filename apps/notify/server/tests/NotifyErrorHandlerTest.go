@@ -28,7 +28,13 @@ func (test *NotifyErrorHandlerTest) TestInstallWideRouteIsNumbered() {
 	Assert.Equals("[MS4502]: The install-wide route was not found.", answer.Message)
 }
 
-func (test *NotifyErrorHandlerTest) TestServiceOnlyIsNumbered() {
+func (test *NotifyErrorHandlerTest) TestNotServiceAnswersTheKitNumber() {
+	answer := test.handler().Forbidden(NotService{}.Kit("only a caller with the Service role may deliver events", 12))
+	Assert.Equals("forbidden", answer.Code)
+	Assert.Equals("[MS0012]: only a caller with the Service role may deliver events", answer.Message)
+}
+
+func (test *NotifyErrorHandlerTest) TestCallPushesServiceOnlyIsNumbered() {
 	answer := test.handler().Forbidden(NotService{}.ServiceOnly())
 	Assert.Equals("forbidden", answer.Code)
 	Assert.Equals("[MS4503]: Only another Mesail service may call this route.", answer.Message)
@@ -140,9 +146,9 @@ func (test *NotifyErrorHandlerTest) TestMissingOutboxCollectionIsNumbered() {
 	Assert.Equals("[MS4521]: The outbox collection was not found.", answer.Message)
 }
 
-func (test *NotifyErrorHandlerTest) TestMissingDeadLetterIsNumbered() {
-	answer := test.handler().Missing(NotFound{}.DeadLetter())
-	Assert.Equals("[MS4522]: The dead letter was not found.", answer.Message)
+func (test *NotifyErrorHandlerTest) TestMissingDeadLetterAnswersTheKitNumber() {
+	answer := test.handler().Missing(NotFound{}.Kit("the dead letter evt_1 for mail-out was not found", 15))
+	Assert.Equals("[MS0015]: the dead letter evt_1 for mail-out was not found", answer.Message)
 }
 
 func (test *NotifyErrorHandlerTest) TestBadCallKindIsNumbered() {

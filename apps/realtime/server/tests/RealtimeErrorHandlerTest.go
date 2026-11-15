@@ -19,9 +19,9 @@ func (test *RealtimeErrorHandlerTest) TestUnauthenticatedAsksToSignInAgain() {
 }
 
 func (test *RealtimeErrorHandlerTest) TestRefusedIsForbidden() {
-	answer := (&RealtimeErrorHandler{}).Refused(Forbidden{}.EventCallerNotAService())
+	answer := (&RealtimeErrorHandler{}).Refused(Forbidden{}.EventCallerNotAService(12))
 	Assert.Equals("forbidden", answer.Code)
-	Assert.Equals("[MS5018]: This caller may not use this route.", answer.Message)
+	Assert.Equals("[MS0012]: This caller may not use this route.", answer.Message)
 }
 
 func (test *RealtimeErrorHandlerTest) TestMissingIsNotFound() {

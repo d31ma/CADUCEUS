@@ -88,7 +88,7 @@ func (store *MemoryStore) documentsOf(refs []Ref) []Document {
 func (store *MemoryStore) find(ref Ref) (Fields, error) {
 	fields, found := store.documents[ref]
 	if !found {
-		return Fields{}, NotFound{Kind: store.documentKind(), Key: ref.Collection + "/" + ref.Id}
+		return Fields{}, NotFound{}.Document(store.documentKind(), ref.Collection+"/"+ref.Id)
 	}
 	return fields, nil
 }

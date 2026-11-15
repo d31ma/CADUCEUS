@@ -47,6 +47,21 @@ func TestRunFindsAListedNumberNoCodeUses(t *testing.T) {
 	expectProblem(t, root, "docs/mesail/ERRORS.md:17: MS2002 (channels) is listed but no code of channels uses it")
 }
 
+func TestRunAcceptsARetiredRowNoCodeUses(t *testing.T) {
+	root := newRepository(t, errorsHead+"| MS2001 | channels | 409 |\n| MS2002 | channels | retired (now MS0012) |\n")
+	writeFile(t, root, "apps/channels/server/shared/Conflict.go", conflictType)
+	code, output := run(t, root)
+	if code != 0 {
+		t.Fatalf("got %d, %q", code, output)
+	}
+}
+
+func TestRunFindsARetiredNumberThatCodeStillUses(t *testing.T) {
+	root := newRepository(t, errorsHead+"| MS2001 | channels | 409 | retired (now MS0012) |\n")
+	writeFile(t, root, "apps/channels/server/shared/Conflict.go", conflictType)
+	expectProblem(t, root, "apps/channels/server/shared/Conflict.go:7: MS2001 is used in code but its row in docs/mesail/ERRORS.md is marked retired")
+}
+
 func TestRunFindsANumberInCodeOutsideTheAppsBlock(t *testing.T) {
 	root := newRepository(t, errorsHead)
 	writeFile(t, root, "apps/channels/server/shared/Conflict.go", strings.Replace(conflictType, "2001", "2600", 1))

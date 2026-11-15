@@ -12,8 +12,8 @@ func (Duplicate) AddressInUse(address string) *Duplicate {
 	return Duplicate{}.takenWith(1018, address+" is already in use")
 }
 
-func (Duplicate) NameTaken(reason string) *Duplicate {
-	return Duplicate{}.takenWith(1020, reason)
+func (Duplicate) NameTaken(reason string, number int) *Duplicate {
+	return Duplicate{}.takenWith(number, reason)
 }
 
 func (Duplicate) UsernameIsAddress(username string) *Duplicate {

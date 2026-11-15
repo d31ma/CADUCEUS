@@ -72,7 +72,7 @@ func (test *OutboxRelayServiceTest) TestRetryDeadRefusesAnUnknownLetter() {
 	err := setup.Relay(outbox.NewRecordingPusher()).RetryDead(setup.Service(installWide), RetryRequest{Collection: setup.SummaryStore().Collection(domainId), DocumentId: stored.Id, EventId: "evt_none", Subscriber: "mail-out"})
 	missing := &NotFound{}
 	Assert.IsTrue(errors.As(err, &missing))
-	Assert.Equals(4522, missing.Number())
+	Assert.Equals(15, missing.Number())
 }
 
 func (test *OutboxRelayServiceTest) letterOf(dead []DeadEvent, documentId string) DeadEvent {

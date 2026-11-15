@@ -46,7 +46,7 @@ func (test *SearchRoutesTest) TestEventRouteRefusesACallerWithoutAServiceToken()
 	_, err := SearchTestSetup{}.EventsController().PostEvent("", test.envelope(envelope))
 	forbidden := &Forbidden{}
 	Assert.IsTrue(errors.As(err, &forbidden), "the route accepted a caller without a token")
-	Assert.Equals(4014, forbidden.Number())
+	Assert.Equals(12, forbidden.Number())
 }
 
 func (test *SearchRoutesTest) TestEventRouteIndexesAMessageFromAServiceToken() {
@@ -83,8 +83,7 @@ func (test *SearchRoutesTest) TestEveryNumberIsUsedOnceInsideTheSearchBlock() {
 		search.InvalidRequest{}.BadLimit().ErrorNumber, search.InvalidRequest{}.NotATime("createdAt").ErrorNumber,
 		search.InvalidRequest{}.MissingIds().ErrorNumber, search.InvalidRequest{}.PayloadMismatch().ErrorNumber,
 		search.InvalidRequest{}.NotWritable().ErrorNumber, search.InvalidRequest{}.MissingFields().ErrorNumber,
-		search.InvalidRequest{}.BadEnvelope("").ErrorNumber, (&Unauthenticated{}).Number(),
-		search.Forbidden{}.MembersOnly().ErrorNumber, search.Forbidden{}.ServicesOnly("").ErrorNumber, (&Unavailable{}).Number(),
+		(&Unauthenticated{}).Number(), search.Forbidden{}.MembersOnly().ErrorNumber, (&Unavailable{}).Number(),
 	}
 	block := apierrors.NumberBlock{First: 4000, Last: 4499}
 	Assert.Equals([]int{}, SearchTestSetup{}.OutsideBlock(block, numbers))
@@ -99,7 +98,7 @@ func (test *SearchRoutesTest) TestEventRouteRefusesABadEnvelope() {
 	_, err := SearchTestSetup{}.EventsController().PostEvent(token, envelope)
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As(err, &invalid), "expected invalid request")
-	Assert.Equals(4011, invalid.Number())
+	Assert.Equals(1, invalid.Number())
 }
 
 func (test *SearchRoutesTest) TestSearchRouteRefusesABadLimit() {

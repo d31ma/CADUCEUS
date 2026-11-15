@@ -12,29 +12,29 @@ type ErrorMappingServiceTest struct {
 
 func (test *ErrorMappingServiceTest) TestEventsMapsAnInvalidEnvelopeToBadRequest() {
 	invalid := &InvalidRequest{}
-	Assert.IsTrue(errors.As((&ErrorMappingService{}).EventError(events.InvalidEnvelope{Reason: "no id"}), &invalid), "not a bad request")
-	Assert.Equals(5009, invalid.Number())
+	Assert.IsTrue(errors.As((&ErrorMappingService{}).EventError(events.InvalidEnvelope{}.EmptyEventId()), &invalid), "not a bad request")
+	Assert.Equals(1, invalid.Number())
 	Assert.Equals("envelope", invalid.Field)
-	Assert.Equals("no id", invalid.Message)
+	Assert.Equals("eventId must not be empty", invalid.Message)
 }
 
 func (test *ErrorMappingServiceTest) TestEventsMapsAnUnsubscribedTypeToBadRequest() {
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As((&ErrorMappingService{}).EventError(events.NotSubscribed{Service: "realtime", Type: "member.upserted"}), &invalid), "not a bad request")
-	Assert.Equals(5010, invalid.Number())
+	Assert.Equals(13, invalid.Number())
 	Assert.Equals("type", invalid.Field)
 }
 
 func (test *ErrorMappingServiceTest) TestEventsMapsAnUnknownTypeToBadRequest() {
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As((&ErrorMappingService{}).EventError(events.UnknownEventType{Type: "dance"}), &invalid), "not a bad request")
-	Assert.Equals(5010, invalid.Number())
+	Assert.Equals(6, invalid.Number())
 }
 
 func (test *ErrorMappingServiceTest) TestEventsMapsAMemberCallerToForbidden() {
 	forbidden := &Forbidden{}
 	Assert.IsTrue(errors.As((&ErrorMappingService{}).EventError(events.NotService{}), &forbidden), "not forbidden")
-	Assert.Equals(5018, forbidden.Number())
+	Assert.Equals(12, forbidden.Number())
 }
 
 func (test *ErrorMappingServiceTest) TestEventsMapsAnotherDomainToNotFound() {

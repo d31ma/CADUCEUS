@@ -11,3 +11,7 @@ func (Expired) Error() string {
 func (Expired) HttpStatus() int {
 	return http.StatusForbidden
 }
+
+func (Expired) Number() int {
+	return 27
+}

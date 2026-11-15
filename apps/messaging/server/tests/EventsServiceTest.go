@@ -25,7 +25,7 @@ func (test *EventsServiceTest) TestReceiveRefusesACallerWithoutTheServiceRole() 
 	_, err := world.EventsService().Receive(world.Member("bo"), envelope)
 	Assert.IsTrue(world.IsForbidden(err), "want Forbidden")
 	Assert.Equals(events.NotService{}.Error(), err.Error())
-	Assert.Equals(1512, world.Number(err))
+	Assert.Equals(12, world.Number(err))
 }
 
 func (test *EventsServiceTest) TestReceiveRefusesAnEventThatMessagingDoesNotConsume() {
@@ -35,5 +35,5 @@ func (test *EventsServiceTest) TestReceiveRefusesAnEventThatMessagingDoesNotCons
 	_, err := world.EventsService().Receive(service, envelope)
 	Assert.Equals("", world.InvalidField(err))
 	Assert.Equals(events.NotSubscribed{Service: "messaging", Type: "message.created"}.Error(), err.Error())
-	Assert.Equals(1509, world.Number(err))
+	Assert.Equals(13, world.Number(err))
 }

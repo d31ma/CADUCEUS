@@ -37,14 +37,14 @@ func (DomainName) dot() string {
 
 func (name DomainName) checkLength(domainId string) error {
 	if len(domainId) > name.maximumLength() {
-		return InvalidEnvelope{Reason: "domainId is longer than 253 characters"}
+		return InvalidEnvelope{}.DomainTooLong()
 	}
 	return nil
 }
 
 func (name DomainName) checkCharacters(domainId string) error {
 	if strings.ContainsFunc(domainId, name.notAllowed) {
-		return InvalidEnvelope{Reason: "domainId may only hold the characters a-z, 0-9, - and ."}
+		return InvalidEnvelope{}.DomainCharacters()
 	}
 	return nil
 }
@@ -55,14 +55,14 @@ func (name DomainName) notAllowed(character rune) bool {
 
 func (name DomainName) checkDot(domainId string) error {
 	if !strings.Contains(domainId, name.dot()) {
-		return InvalidEnvelope{Reason: "domainId must hold at least one dot"}
+		return InvalidEnvelope{}.DomainWithoutDot()
 	}
 	return nil
 }
 
 func (name DomainName) checkLabels(domainId string) error {
 	if slices.Contains(strings.Split(domainId, name.dot()), "") {
-		return InvalidEnvelope{Reason: "domainId must not hold an empty label"}
+		return InvalidEnvelope{}.DomainEmptyLabel()
 	}
 	return nil
 }

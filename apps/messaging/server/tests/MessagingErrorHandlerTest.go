@@ -25,11 +25,10 @@ func (test *MessagingErrorHandlerTest) TestAccessRefusalsHaveTheirCodesAndNumber
 
 func (test *MessagingErrorHandlerTest) TestEventRefusalsHaveTheirNumbers() {
 	handler := &MessagingErrorHandler{}
-	Assert.Equals("[MS1508]: bad envelope", handler.Invalid(InvalidRequest{}.BadEnvelope("bad envelope")).Message)
-	Assert.Equals("[MS1509]: not consumed", handler.Invalid(InvalidRequest{}.NotSubscribed("not consumed")).Message)
-	Assert.Equals("[MS1510]: unknown type", handler.Invalid(InvalidRequest{}.UnknownEventType("unknown type")).Message)
+	Assert.Equals("[MS0009]: bad envelope", handler.Invalid(InvalidRequest{}.Kit("bad envelope", 9)).Message)
+	Assert.Equals("[MS0013]: not consumed", handler.Invalid(InvalidRequest{}.Kit("not consumed", 13)).Message)
 	Assert.Equals("[MS1511]: no handler", handler.Invalid(InvalidRequest{}.UnhandledEvent("no handler")).Message)
-	Assert.Equals("[MS1512]: not a service", handler.Forbidden(Forbidden{}.EventsNeedService("not a service")).Message)
+	Assert.Equals("[MS0012]: not a service", handler.Forbidden(Forbidden{}.Kit("not a service", 12)).Message)
 }
 
 func (test *MessagingErrorHandlerTest) TestConflictsHaveTheirCodesAndNumbers() {

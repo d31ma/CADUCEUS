@@ -185,8 +185,8 @@ func (test *MailOutRoutesTest) TestTheEventsRouteRefusesBadCallersAndEvents() {
 	_, otherDomain := events.PostEvent(test.bearer("example.org"), envelope)
 	_, senderErr := events.PostEvent(test.bearer("example.com"), foreignSender)
 
-	Assert.Equals(&ForbiddenCaller{}, withoutToken)
-	Assert.Equals(3002, withoutToken.(*ForbiddenCaller).Number())
+	Assert.Equals(&ForbiddenCaller{ErrorNumber: 12}, withoutToken)
+	Assert.Equals(12, withoutToken.(*ForbiddenCaller).Number())
 	Assert.Equals(&UnknownDomain{ErrorNumber: 3003}, otherDomain)
 	Assert.IsTrue(strings.Contains(senderErr.Error(), "from is missing or not valid"), senderErr.Error())
 	Assert.Equals(3010, senderErr.(*RejectedEvent).Number())

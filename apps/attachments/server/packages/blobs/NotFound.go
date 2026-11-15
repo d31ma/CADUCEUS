@@ -16,3 +16,7 @@ func (missing NotFound) Error() string {
 func (NotFound) HttpStatus() int {
 	return http.StatusNotFound
 }
+
+func (NotFound) Number() int {
+	return 23
+}

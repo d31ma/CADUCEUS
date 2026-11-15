@@ -66,11 +66,41 @@ func (service *EventsService) dispatchUnless(failure error, envelope events.Enve
 }
 
 func (service *EventsService) translated(failure error) error {
+	return cmp.Or(service.notService(failure), service.refusedEnvelope(failure), service.unsubscribedType(failure), service.ownFailure(failure))
+}
+
+func (service *EventsService) envelopeField() string {
+	return "envelope"
+}
+
+func (service *EventsService) notService(failure error) error {
+	refused := events.NotService{}
+	if !errors.As(failure, &refused) {
+		return nil
+	}
+	return NotService{}.Kit(refused.Error(), refused.Number())
+}
+
+func (service *EventsService) refusedEnvelope(failure error) error {
+	invalid := events.InvalidEnvelope{}
+	if !errors.As(failure, &invalid) {
+		return nil
+	}
+	return InvalidRequest{}.Kit(service.envelopeField(), invalid.Error(), invalid.Number())
+}
+
+func (service *EventsService) unsubscribedType(failure error) error {
+	unsubscribed := events.NotSubscribed{}
+	if !errors.As(failure, &unsubscribed) {
+		return nil
+	}
+	return InvalidRequest{}.Kit(service.envelopeField(), unsubscribed.Error(), unsubscribed.Number())
+}
+
+func (service *EventsService) ownFailure(failure error) error {
 	switch {
 	case failure == nil:
 		return nil
-	case errors.As(failure, &events.NotService{}):
-		return NotService{}.ServiceOnly()
 	case errors.As(failure, new(*Unauthenticated)), errors.As(failure, new(*NotFound)), errors.As(failure, new(*StorageUnavailable)):
 		return failure
 	}

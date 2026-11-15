@@ -2,6 +2,7 @@ package storage
 
 import (
 	"cmp"
+	"errors"
 	"time"
 
 	"mesail.dev/packages/core"
@@ -51,7 +52,19 @@ func (relay Outbox) saveUnless(failure error, ref outbox.Ref, fields outbox.Fiel
 	return relay.Store.Save(ref, fields)
 }
 
-func (Outbox) missingLetter(failure error) error {
+func (relay Outbox) missingLetter(failure error) error {
+	return cmp.Or(relay.kitMissing(failure), relay.unreadableLetters(failure))
+}
+
+func (Outbox) kitMissing(failure error) error {
+	missing := outbox.NotFound{}
+	if !errors.As(failure, &missing) {
+		return nil
+	}
+	return core.NotFound{}.Kit(missing.Error(), missing.Number())
+}
+
+func (Outbox) unreadableLetters(failure error) error {
 	if failure != nil {
 		return core.NotFound{}.NoDeadEvent()
 	}

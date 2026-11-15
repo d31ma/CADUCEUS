@@ -106,6 +106,6 @@ func TestEveryInvalidCaseHasItsOwnMailInNumber(t *testing.T) {
 func TestEveryMissingCaseHasItsOwnMailInNumber(t *testing.T) {
 	check(t, Missing{}.NoOutboxCollection().Number() == 2510, "want 2510")
 	check(t, Missing{}.NoInboundMessage().Number() == 2511, "want 2511")
-	check(t, Missing{}.NoDeadLetter().Number() == 2512, "want 2512")
+	check(t, Missing{}.NoDeadLetter("gone", 15).Number() == 15, "want the kit number")
 	check(t, Missing{}.NoOutboxDocument().Number() == 2513, "want 2513")
 }

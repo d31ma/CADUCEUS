@@ -36,8 +36,8 @@ func (test *AttachmentsErrorHandlerTest) TestConflictingNamesTheField() {
 }
 
 func (test *AttachmentsErrorHandlerTest) TestLargeNamesTheLimit() {
-	answer := (&AttachmentsErrorHandler{}).Large(&AttachmentTooLarge{Limit: 9})
-	Assert.Equals(ApiError{Code: "too_large", Message: "[MS3512]: the file is larger than 9 bytes", Field: "size"}, answer)
+	answer := (&AttachmentsErrorHandler{}).Large(&AttachmentTooLarge{Limit: 9, ErrorNumber: 24})
+	Assert.Equals(ApiError{Code: "too_large", Message: "[MS0024]: the file is larger than 9 bytes", Field: "size"}, answer)
 }
 
 func (test *AttachmentsErrorHandlerTest) TestUnavailableAsksToTryAgain() {
@@ -58,7 +58,7 @@ func (test *AttachmentsErrorHandlerTest) TestEveryNumberIsUsedOnceInsideTheAttac
 		(&Unauthenticated{}).Number(), (&Forbidden{}).Number(), (&AttachmentNotFound{}).Number(),
 		attachments.Conflict{}.NotUploaded().ErrorNumber, attachments.Conflict{}.SizeMismatch().ErrorNumber,
 		attachments.Conflict{}.Sha256Mismatch().ErrorNumber, attachments.Conflict{}.NotReady().ErrorNumber,
-		(&AttachmentTooLarge{}).Number(), (&StorageUnavailable{}).Number(),
+		(&StorageUnavailable{}).Number(),
 	}
 	block := apierrors.NumberBlock{First: 3500, Last: 3999}
 	Assert.Equals([]int{}, AttachmentsTestSetup{}.OutsideBlock(block, numbers))

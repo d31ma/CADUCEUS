@@ -15,8 +15,8 @@ func (Forbidden) NotInstallWide() *Forbidden {
 	return &Forbidden{Message: "the outbox is managed with an install-wide token only", ErrorNumber: 1504}
 }
 
-func (Forbidden) EventsNeedService(message string) *Forbidden {
-	return &Forbidden{Message: message, ErrorNumber: 1512}
+func (Forbidden) Kit(message string, number int) *Forbidden {
+	return &Forbidden{Message: message, ErrorNumber: number}
 }
 
 func (failure *Forbidden) Error() string {

@@ -4,12 +4,12 @@ type InvalidRequest struct {
 	ErrorNumber int
 }
 
-func (InvalidRequest) EnvelopeRefused(reason string) *InvalidRequest {
-	return &InvalidRequest{Message: reason, Field: "envelope", ErrorNumber: 5009}
+func (InvalidRequest) EnvelopeRefused(reason string, number int) *InvalidRequest {
+	return &InvalidRequest{Message: reason, Field: "envelope", ErrorNumber: number}
 }
 
-func (InvalidRequest) TypeRefused(reason string) *InvalidRequest {
-	return &InvalidRequest{Message: reason, Field: "type", ErrorNumber: 5010}
+func (InvalidRequest) TypeRefused(reason string, number int) *InvalidRequest {
+	return &InvalidRequest{Message: reason, Field: "type", ErrorNumber: number}
 }
 
 func (failure *InvalidRequest) Error() string {

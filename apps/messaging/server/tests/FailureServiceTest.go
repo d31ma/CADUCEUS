@@ -31,16 +31,16 @@ func (test *FailureServiceTest) TestAnUnknownFailureBecomesUnavailable() {
 	Assert.Equals(&Unavailable{Message: "the messaging service is not available", ErrorNumber: 1507}, known)
 }
 
-func (test *FailureServiceTest) TestEventRefusalsBecomeNumberedInvalidRequests() {
+func (test *FailureServiceTest) TestEventRefusalsAnswerTheirKitNumbers() {
 	service := &FailureService{}
-	Assert.Equals(&InvalidRequest{Message: events.InvalidEnvelope{Reason: "x"}.Error(), ErrorNumber: 1508}, service.Known(events.InvalidEnvelope{Reason: "x"}))
-	Assert.Equals(&InvalidRequest{Message: events.NotSubscribed{Type: "x"}.Error(), ErrorNumber: 1509}, service.Known(events.NotSubscribed{Type: "x"}))
-	Assert.Equals(&InvalidRequest{Message: events.UnknownEventType{Type: "x"}.Error(), ErrorNumber: 1510}, service.Known(events.UnknownEventType{Type: "x"}))
+	Assert.Equals(&InvalidRequest{Message: events.InvalidEnvelope{}.EmptyPayload().Error(), ErrorNumber: 9}, service.Known(events.InvalidEnvelope{}.EmptyPayload()))
+	Assert.Equals(&InvalidRequest{Message: events.NotSubscribed{Type: "x"}.Error(), ErrorNumber: 13}, service.Known(events.NotSubscribed{Type: "x"}))
+	Assert.Equals(&InvalidRequest{Message: events.UnknownEventType{Type: "x"}.Error(), ErrorNumber: 6}, service.Known(events.UnknownEventType{Type: "x"}))
 	Assert.Equals(&InvalidRequest{Message: inbound.UnhandledEvent{Type: "x"}.Error(), ErrorNumber: 1511}, service.Known(inbound.UnhandledEvent{Type: "x"}))
 }
 
 func (test *FailureServiceTest) TestANonServiceCallerIsForbidden() {
-	Assert.Equals(&Forbidden{Message: events.NotService{}.Error(), ErrorNumber: 1512}, (&FailureService{}).Known(events.NotService{}))
+	Assert.Equals(&Forbidden{Message: events.NotService{}.Error(), ErrorNumber: 12}, (&FailureService{}).Known(events.NotService{}))
 }
 
 func (test *FailureServiceTest) TestCoreFailuresKeepTheirNumbers() {

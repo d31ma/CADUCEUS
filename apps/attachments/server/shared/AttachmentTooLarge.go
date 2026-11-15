@@ -1,7 +1,8 @@
 import "fmt"
 
 type AttachmentTooLarge struct {
-	Limit int64
+	Limit       int64
+	ErrorNumber int
 }
 
 func (failure *AttachmentTooLarge) Error() string {
@@ -9,5 +10,5 @@ func (failure *AttachmentTooLarge) Error() string {
 }
 
 func (failure *AttachmentTooLarge) Number() int {
-	return 3512
+	return failure.ErrorNumber
 }

@@ -129,8 +129,9 @@ func (service *OutboxRelayService) wire(report outbox.Report) OutboxReport {
 }
 
 func (service *OutboxRelayService) missingLetter(failure error) error {
-	if errors.As(failure, &outbox.NotFound{}) {
-		return NotFound{}.DeadLetter()
+	missing := outbox.NotFound{}
+	if errors.As(failure, &missing) {
+		return NotFound{}.Kit(missing.Error(), missing.Number())
 	}
 	return failure
 }

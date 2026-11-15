@@ -10,7 +10,7 @@ type nameText struct{}
 func (text nameText) lowered(kind string, input string) (string, error) {
 	value := strings.TrimSpace(input)
 	if strings.ContainsFunc(value, text.notASCII) {
-		return "", InvalidName{Kind: kind, Reason: "must hold only ASCII characters"}
+		return "", InvalidName{}.NotAscii(kind)
 	}
 	return strings.ToLower(value), nil
 }

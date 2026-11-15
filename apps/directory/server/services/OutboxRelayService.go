@@ -106,6 +106,18 @@ func (service *OutboxRelayService) missingSettings(failure error) error {
 }
 
 func (service *OutboxRelayService) missingLetter(failure error) error {
+	return cmp.Or(service.kitMissingLetter(failure), service.unreadableLetters(failure))
+}
+
+func (service *OutboxRelayService) kitMissingLetter(failure error) error {
+	missing := outbox.NotFound{}
+	if !errors.As(failure, &missing) {
+		return nil
+	}
+	return NotFound{}.Kit(missing.Error(), missing.Number())
+}
+
+func (service *OutboxRelayService) unreadableLetters(failure error) error {
 	if failure != nil {
 		return NotFound{}.DeadEvent()
 	}

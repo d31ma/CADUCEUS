@@ -46,7 +46,7 @@ func (test *OutboxControllerTest) TestRetryOfAnUnknownLetterIsNotFound() {
 	world.Must(err)
 	missing := world.Outbox.PostRetry(RetryRequest{Collection: world.Collection(), DocumentId: world.Stored(key).ID, EventId: "evt_missing", Subscriber: "messaging"})
 	Assert.IsTrue(world.IsNotFound(missing), "want NotFound")
-	Assert.Equals(2512, world.ErrorNumber(missing))
+	Assert.Equals(15, world.ErrorNumber(missing))
 }
 
 func (test *OutboxControllerTest) TestRetryOfAMissingDocumentIsNotFound() {

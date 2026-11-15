@@ -52,7 +52,7 @@ func (test *EventsServiceTest) TestReceiveRefusesAMember() {
 	_, err := setup.Events().Receive(setup.Member(member, "member-1"), envelope)
 	forbidden := &NotService{}
 	Assert.IsTrue(errors.As(err, &forbidden))
-	Assert.Equals(4503, forbidden.Number())
+	Assert.Equals(12, forbidden.Number())
 }
 
 func (test *EventsServiceTest) TestReceiveRefusesAnEventNotifyDoesNotConsume() {
@@ -63,7 +63,7 @@ func (test *EventsServiceTest) TestReceiveRefusesAnEventNotifyDoesNotConsume() {
 	_, err := setup.Events().Receive(setup.Service(member), envelope)
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As(err, &invalid))
-	Assert.Equals(4505, invalid.Number())
+	Assert.Equals(13, invalid.Number())
 }
 
 func (test *EventsServiceTest) TestReceiveRegistersTheDomain() {

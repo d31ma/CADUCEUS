@@ -17,8 +17,8 @@ func (NotFound) MemberOutsideDomain() *NotFound {
 	return &NotFound{Message: "no such member in this domain", ErrorNumber: 2011}
 }
 
-func (NotFound) OutboxLetter(message string) *NotFound {
-	return &NotFound{Message: message, ErrorNumber: 2024}
+func (NotFound) OutboxLetter(message string, number int) *NotFound {
+	return &NotFound{Message: message, ErrorNumber: number}
 }
 
 func (NotFound) OutboxDocument() *NotFound {

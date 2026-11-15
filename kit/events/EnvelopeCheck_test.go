@@ -19,12 +19,12 @@ func validEnvelope() Envelope {
 	}
 }
 
-func checkEnvelopeRefused(t *testing.T, envelope Envelope) {
+func checkEnvelopeRefused(t *testing.T, envelope Envelope, number int) {
 	t.Helper()
 	var invalid InvalidEnvelope
 	err := EnvelopeCheck{}.Check(envelope)
-	if !errors.As(err, &invalid) {
-		t.Fatalf("expected InvalidEnvelope, got %v", err)
+	if !errors.As(err, &invalid) || invalid.Number() != number {
+		t.Fatalf("expected InvalidEnvelope number %d, got %v", number, err)
 	}
 }
 
@@ -38,37 +38,37 @@ func TestEnvelopeCheckAcceptsValidEnvelope(t *testing.T) {
 func TestEnvelopeCheckRefusesEmptyEventId(t *testing.T) {
 	envelope := validEnvelope()
 	envelope.EventID = ""
-	checkEnvelopeRefused(t, envelope)
+	checkEnvelopeRefused(t, envelope, 1)
 }
 
 func TestEnvelopeCheckRefusesBadDomain(t *testing.T) {
 	envelope := validEnvelope()
 	envelope.DomainId = "example"
-	checkEnvelopeRefused(t, envelope)
+	checkEnvelopeRefused(t, envelope, 4)
 }
 
 func TestEnvelopeCheckRefusesUnknownType(t *testing.T) {
 	envelope := validEnvelope()
 	envelope.Type = "message.exploded"
-	checkEnvelopeRefused(t, envelope)
+	checkEnvelopeRefused(t, envelope, 6)
 }
 
 func TestEnvelopeCheckRefusesWrongProducer(t *testing.T) {
 	envelope := validEnvelope()
 	envelope.Producer = Services{}.Channels()
-	checkEnvelopeRefused(t, envelope)
+	checkEnvelopeRefused(t, envelope, 7)
 }
 
 func TestEnvelopeCheckRefusesBadTime(t *testing.T) {
 	envelope := validEnvelope()
 	envelope.OccurredAt = "yesterday"
-	checkEnvelopeRefused(t, envelope)
+	checkEnvelopeRefused(t, envelope, 8)
 }
 
 func TestEnvelopeCheckRefusesEmptyPayload(t *testing.T) {
 	envelope := validEnvelope()
 	envelope.Payload = nil
-	checkEnvelopeRefused(t, envelope)
+	checkEnvelopeRefused(t, envelope, 9)
 }
 
 func TestEnvelopeCheckAcceptsTheOtherListedProducer(t *testing.T) {

@@ -8,3 +8,9 @@ func TestNotServiceMessage(t *testing.T) {
 		t.Fatalf("unexpected message %q", message)
 	}
 }
+
+func TestNotServiceNumber(t *testing.T) {
+	if (NotService{}).Number() != 12 {
+		t.Fatalf("got %d", NotService{}.Number())
+	}
+}

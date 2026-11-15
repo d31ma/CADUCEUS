@@ -16,16 +16,20 @@ func (request InvalidRequest) NoPersonId() *InvalidRequest           { return re
 func (request InvalidRequest) NoDisplayName() *InvalidRequest        { return request.invalid(1042) }
 func (request InvalidRequest) TooManyMemberships() *InvalidRequest   { return request.invalid(1043) }
 
-func (InvalidRequest) BadDomainName(reason string) *InvalidRequest {
-	return InvalidRequest{}.invalidWith(1011, "name", reason)
+func (InvalidRequest) BadDomainName(reason string, number int) *InvalidRequest {
+	return InvalidRequest{}.invalidWith(number, "name", reason)
 }
 
-func (InvalidRequest) BadName(field string, reason string) *InvalidRequest {
+func (InvalidRequest) BadName(field string, reason string, number int) *InvalidRequest {
+	return InvalidRequest{}.invalidWith(number, field, reason)
+}
+
+func (InvalidRequest) OtherNameFailure(field string, reason string) *InvalidRequest {
 	return InvalidRequest{}.invalidWith(1019, field, reason)
 }
 
-func (InvalidRequest) BadAddresses(reason string) *InvalidRequest {
-	return InvalidRequest{}.invalidWith(1024, "addresses", reason)
+func (InvalidRequest) BadAddresses(reason string, number int) *InvalidRequest {
+	return InvalidRequest{}.invalidWith(number, "addresses", reason)
 }
 
 func (InvalidRequest) invalid(number int) *InvalidRequest {

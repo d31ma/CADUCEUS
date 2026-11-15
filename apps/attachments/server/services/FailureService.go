@@ -25,7 +25,7 @@ func (service *FailureService) translated(failed error) error {
 	case errors.As(failed, &conflict):
 		return &AttachmentConflict{Field: conflict.Field, Reason: conflict.Reason, ErrorNumber: conflict.ErrorNumber}
 	case errors.As(failed, &large):
-		return &AttachmentTooLarge{Limit: large.Limit}
+		return &AttachmentTooLarge{Limit: large.Limit, ErrorNumber: large.Number()}
 	case errors.Is(failed, attachments.Missing{}):
 		return &AttachmentNotFound{}
 	case errors.Is(failed, attachments.Forbidden{}):

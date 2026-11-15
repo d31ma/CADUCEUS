@@ -68,8 +68,9 @@ func (EventStaging) ifOwnedBy(ownerId string, personId string, deviceId string) 
 }
 
 func (EventStaging) outboxError(failure error) error {
-	if errors.As(failure, &outbox.OutboxFull{}) {
-		return Unavailable{}.OutboxFull(failure)
+	full := outbox.OutboxFull{}
+	if errors.As(failure, &full) {
+		return Unavailable{}.OutboxFull(full)
 	}
 	return Unavailable{}.OutboxUnreadable(failure)
 }

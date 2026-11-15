@@ -9,3 +9,7 @@ type InvalidDomainName struct {
 func (invalid InvalidDomainName) Error() string {
 	return fmt.Sprintf("%q is not a valid domain name", invalid.Name)
 }
+
+func (InvalidDomainName) Number() int {
+	return 30
+}

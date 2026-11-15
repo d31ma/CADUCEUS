@@ -34,7 +34,7 @@ func TestPayloadReaderRefusesTrailingData(t *testing.T) {
 	var payload messagePayload
 	var invalid InvalidEnvelope
 	err := PayloadReader{}.Read(envelope, &payload)
-	if !errors.As(err, &invalid) {
-		t.Fatalf("expected InvalidEnvelope, got %v", err)
+	if !errors.As(err, &invalid) || invalid.Number() != 10 {
+		t.Fatalf("expected InvalidEnvelope number 10, got %v", err)
 	}
 }

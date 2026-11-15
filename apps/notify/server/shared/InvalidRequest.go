@@ -6,6 +6,10 @@ func (InvalidRequest) BadEnvelope(reason string) *InvalidRequest {
 	return &InvalidRequest{ErrorCase{4505, "invalid_request", "envelope", reason}}
 }
 
+func (InvalidRequest) Kit(field string, reason string, number int) *InvalidRequest {
+	return &InvalidRequest{ErrorCase{number, "invalid_request", field, reason}}
+}
+
 func (InvalidRequest) UnknownEventType(eventType string) *InvalidRequest {
 	return &InvalidRequest{ErrorCase{4506, "invalid_request", "type", "notify does not handle events of type " + eventType}}
 }

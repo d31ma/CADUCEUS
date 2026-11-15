@@ -11,7 +11,7 @@ type ErrorMappingService struct {
 }
 
 func (service *ErrorMappingService) EventError(failed error) error {
-	return service.answer(failed, []func(error) error{service.envelope, service.eventType, service.invalid, service.unauthenticated, service.notService, service.forbidden, service.missing})
+	return service.answer(failed, []func(error) error{service.envelope, service.unsubscribed, service.unknownType, service.invalid, service.unauthenticated, service.notService, service.forbidden, service.missing})
 }
 
 func (service *ErrorMappingService) GatewayError(failed error) error {
@@ -58,14 +58,23 @@ func (service *ErrorMappingService) envelope(failed error) error {
 	if !errors.As(failed, &refused) {
 		return nil
 	}
-	return InvalidRequest{}.EnvelopeRefused(refused.Reason)
+	return InvalidRequest{}.EnvelopeRefused(refused.Reason, refused.Number())
 }
 
-func (service *ErrorMappingService) eventType(failed error) error {
-	if !errors.As(failed, &events.NotSubscribed{}) && !errors.As(failed, &events.UnknownEventType{}) {
+func (service *ErrorMappingService) unsubscribed(failed error) error {
+	refused := events.NotSubscribed{}
+	if !errors.As(failed, &refused) {
 		return nil
 	}
-	return InvalidRequest{}.TypeRefused(failed.Error())
+	return InvalidRequest{}.TypeRefused(refused.Error(), refused.Number())
+}
+
+func (service *ErrorMappingService) unknownType(failed error) error {
+	refused := events.UnknownEventType{}
+	if !errors.As(failed, &refused) {
+		return nil
+	}
+	return InvalidRequest{}.TypeRefused(refused.Error(), refused.Number())
 }
 
 func (service *ErrorMappingService) invalid(failed error) error {
@@ -77,10 +86,11 @@ func (service *ErrorMappingService) invalid(failed error) error {
 }
 
 func (service *ErrorMappingService) notService(failed error) error {
-	if !errors.Is(failed, events.NotService{}) {
+	refused := events.NotService{}
+	if !errors.As(failed, &refused) {
 		return nil
 	}
-	return Forbidden{}.EventCallerNotAService()
+	return Forbidden{}.EventCallerNotAService(refused.Number())
 }
 
 func (service *ErrorMappingService) unauthenticated(failed error) error {

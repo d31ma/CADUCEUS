@@ -43,6 +43,8 @@ func (comparison CodeComparison) usedProblem(owner Owner, used UsedNumber, seen 
 		return []Problem{Problem{}.UsedTwice(used, earlier)}
 	case !comparison.Table.Lists(used.Number):
 		return []Problem{Problem{}.NotListed(used)}
+	case comparison.Table.Retires(used.Number):
+		return []Problem{Problem{}.UsedRetired(used)}
 	}
 	return nil
 }
@@ -68,7 +70,7 @@ func (CodeComparison) rowProblem(row ListedNumber, owned []OwnerNumbers) []Probl
 	switch {
 	case len(owned) == 0:
 		return nil
-	case !owned[0].Owner.Holds(row.Number) || row.Number == owned[0].Owner.First || owned[0].Uses(row.Number):
+	case row.Retired || !owned[0].Owner.Holds(row.Number) || row.Number == owned[0].Owner.First || owned[0].Uses(row.Number):
 		return nil
 	}
 	return []Problem{Problem{}.NotUsed(row)}

@@ -12,3 +12,7 @@ type DeliveryFailure struct {
 func (failure DeliveryFailure) Error() string {
 	return fmt.Sprintf("delivery to %s failed (status %d, permanent %t): %s", failure.Subscriber, failure.Status, failure.Permanent, failure.Detail)
 }
+
+func (DeliveryFailure) Number() int {
+	return 18
+}

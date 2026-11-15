@@ -43,7 +43,7 @@ func (Address) SameExternal(first string, second string) bool {
 
 func (Address) checkFound(found bool) error {
 	if !found {
-		return InvalidName{Kind: NameKinds{}.Address(), Reason: "must hold an @ between the local part and the domain"}
+		return InvalidName{}.AddressWithoutAt()
 	}
 	return nil
 }

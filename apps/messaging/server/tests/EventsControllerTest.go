@@ -38,5 +38,5 @@ func (test *EventsControllerTest) TestPostEventRefusesAnEnvelopeWithoutAnEventId
 	invalid := &InvalidRequest{}
 	Assert.IsTrue(errors.As(err, &invalid), "want InvalidRequest")
 	Assert.Equals("the event envelope is not valid: eventId must not be empty", invalid.Message)
-	Assert.Equals(1508, world.Number(err))
+	Assert.Equals(1, world.Number(err))
 }

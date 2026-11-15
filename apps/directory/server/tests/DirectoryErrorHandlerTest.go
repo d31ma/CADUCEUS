@@ -90,10 +90,10 @@ func (test *DirectoryErrorHandlerTest) TestMissingDomainIsNumbered() {
 }
 
 func (test *DirectoryErrorHandlerTest) TestBadDomainNameIsNumbered() {
-	answer := test.handler().Invalid(InvalidRequest{}.BadDomainName("not a domain name"))
+	answer := test.handler().Invalid(InvalidRequest{}.BadDomainName("not a domain name", 30))
 	Assert.Equals("invalid_request", answer.Code)
 	Assert.Equals("name", answer.Field)
-	Assert.Equals("[MS1011]: not a domain name", answer.Message)
+	Assert.Equals("[MS0030]: not a domain name", answer.Message)
 }
 
 func (test *DirectoryErrorHandlerTest) TestDomainHostedIsNumbered() {
@@ -146,17 +146,23 @@ func (test *DirectoryErrorHandlerTest) TestAddressInUseIsNumbered() {
 }
 
 func (test *DirectoryErrorHandlerTest) TestBadNameIsNumbered() {
-	answer := test.handler().Invalid(InvalidRequest{}.BadName("username", "too short"))
+	answer := test.handler().Invalid(InvalidRequest{}.BadName("username", "too short", 41))
 	Assert.Equals("invalid_request", answer.Code)
 	Assert.Equals("username", answer.Field)
-	Assert.Equals("[MS1019]: too short", answer.Message)
+	Assert.Equals("[MS0041]: too short", answer.Message)
+}
+
+func (test *DirectoryErrorHandlerTest) TestOtherNameFailureIsNumbered() {
+	answer := test.handler().Invalid(InvalidRequest{}.OtherNameFailure("username", "the name could not be checked"))
+	Assert.Equals("username", answer.Field)
+	Assert.Equals("[MS1019]: the name could not be checked", answer.Message)
 }
 
 func (test *DirectoryErrorHandlerTest) TestNameTakenIsNumbered() {
-	answer := test.handler().Duplicate(Duplicate{}.NameTaken("sales is taken"))
+	answer := test.handler().Duplicate(Duplicate{}.NameTaken("sales is taken", 46))
 	Assert.Equals("duplicate", answer.Code)
 	Assert.Equals("", answer.Field)
-	Assert.Equals("[MS1020]: sales is taken", answer.Message)
+	Assert.Equals("[MS0046]: sales is taken", answer.Message)
 }
 
 func (test *DirectoryErrorHandlerTest) TestMissingChannelAddressIsNumbered() {
@@ -181,10 +187,10 @@ func (test *DirectoryErrorHandlerTest) TestTooManyAddressesIsNumbered() {
 }
 
 func (test *DirectoryErrorHandlerTest) TestBadAddressesIsNumbered() {
-	answer := test.handler().Invalid(InvalidRequest{}.BadAddresses("bad address"))
+	answer := test.handler().Invalid(InvalidRequest{}.BadAddresses("bad address", 31))
 	Assert.Equals("invalid_request", answer.Code)
 	Assert.Equals("addresses", answer.Field)
-	Assert.Equals("[MS1024]: bad address", answer.Message)
+	Assert.Equals("[MS0031]: bad address", answer.Message)
 }
 
 func (test *DirectoryErrorHandlerTest) TestUsernameIsAddressIsNumbered() {
@@ -332,6 +338,11 @@ func (test *DirectoryErrorHandlerTest) TestMissingDeadEventIsNumbered() {
 	Assert.Equals("not_found", answer.Code)
 	Assert.Equals("", answer.Field)
 	Assert.Equals("[MS1045]: no such dead event", answer.Message)
+}
+
+func (test *DirectoryErrorHandlerTest) TestMissingDeadLetterAnswersTheKitNumber() {
+	answer := test.handler().Missing(NotFound{}.Kit("the dead letter evt_1 for search was not found", 15))
+	Assert.Equals("[MS0015]: the dead letter evt_1 for search was not found", answer.Message)
 }
 
 func (test *DirectoryErrorHandlerTest) TestMissingOutboxCollectionIsNumbered() {

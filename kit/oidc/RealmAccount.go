@@ -16,9 +16,13 @@ func (account RealmAccount) TotpEnabled(caller Caller) (bool, error) {
 	return enabled, AccountErrors{}.Normalized(err)
 }
 
-func (account RealmAccount) ChangePassword(caller Caller, current string, next string, oneTimeCode string) (KeycloakSession, error) {
-	checked, err := account.changePassword(caller, current, next, oneTimeCode)
+func (account RealmAccount) ChangePassword(caller Caller, check PasswordCheck, next string) (KeycloakSession, error) {
+	checked, err := account.changePassword(caller, check, next)
 	return checked, AccountErrors{}.Normalized(err)
+}
+
+func (account RealmAccount) EndAllSessions(caller Caller) error {
+	return AccountErrors{}.Normalized(account.endAllSessions(caller))
 }
 
 func (account RealmAccount) SetupTotp(caller Caller, current string) (TotpSetup, error) {
@@ -47,12 +51,12 @@ func (account RealmAccount) totpEnabled(caller Caller) (bool, error) {
 	return slices.ContainsFunc(credentials, account.manager().isOtp), err
 }
 
-func (account RealmAccount) changePassword(caller Caller, current string, next string, oneTimeCode string) (KeycloakSession, error) {
+func (account RealmAccount) changePassword(caller Caller, check PasswordCheck, next string) (KeycloakSession, error) {
 	admin, err := account.Session.admin()
 	if err != nil {
 		return KeycloakSession{}, err
 	}
-	checked, err := account.checkedPassword(caller, current, oneTimeCode)
+	checked, err := account.checkedPassword(caller, check)
 	if err != nil {
 		return KeycloakSession{}, err
 	}
@@ -68,7 +72,7 @@ func (account RealmAccount) changePassword(caller Caller, current string, next s
 }
 
 func (account RealmAccount) setupTotp(caller Caller, current string) (TotpSetup, error) {
-	checked, err := account.checkedPassword(caller, current, "")
+	checked, err := account.checkedPassword(caller, PasswordCheck{Password: current})
 	if err != nil {
 		return TotpSetup{}, err
 	}
@@ -99,7 +103,7 @@ func (account RealmAccount) removeTotp(caller Caller, current string, oneTimeCod
 	if err != nil {
 		return err
 	}
-	checked, err := account.checkedPassword(caller, current, oneTimeCode)
+	checked, err := account.checkedPassword(caller, PasswordCheck{Password: current, OneTimeCode: oneTimeCode})
 	if err != nil {
 		return err
 	}
@@ -111,12 +115,24 @@ func (account RealmAccount) removeTotp(caller Caller, current string, oneTimeCod
 	return account.manager().deleteOtp(admin, caller.MemberId, slices.DeleteFunc(credentials, account.manager().isNotOtp))
 }
 
-func (account RealmAccount) checkedPassword(caller Caller, password string, oneTimeCode string) (KeycloakSession, error) {
+func (account RealmAccount) endAllSessions(caller Caller) error {
+	admin, err := account.Session.admin()
+	if err != nil {
+		return err
+	}
+	err = admin.SignOutEverywhere(caller.MemberId)
+	if err != nil {
+		return err
+	}
+	return admin.RevokeOfflineSessions(caller.MemberId, account.Session.Sessions.clientId())
+}
+
+func (account RealmAccount) checkedPassword(caller Caller, check PasswordCheck) (KeycloakSession, error) {
 	keycloak, err := account.Session.keycloak()
 	if err != nil {
 		return KeycloakSession{}, err
 	}
-	tokens, err := keycloak.SignIn(caller.Username, password, oneTimeCode)
+	tokens, err := keycloak.SignIn(caller.Username, check.Password, check.OneTimeCode, check.Kept)
 	if err != nil {
 		return KeycloakSession{}, err
 	}

@@ -8,8 +8,8 @@ type RealmSessions struct {
 	Gate    oidc.Gate
 }
 
-func (sessions RealmSessions) SignIn(login string, password string, oneTimeCode string) (Grant, error) {
-	return sessions.Logins.SignIn(login, password, oneTimeCode)
+func (sessions RealmSessions) SignIn(login string, password string, oneTimeCode string, kept bool) (Grant, error) {
+	return sessions.Logins.SignIn(login, password, oneTimeCode, kept)
 }
 
 func (sessions RealmSessions) Refresh(sessionKey string) (Grant, error) {
@@ -24,20 +24,33 @@ func (sessions RealmSessions) SignOut(sessionKey string) error {
 	return sessions.Logins.SignOut(sessionKey)
 }
 
+func (sessions RealmSessions) SignOutEverywhere(authorization string) error {
+	caller, err := sessions.Gate.Identify(authorization)
+	if err != nil {
+		return err
+	}
+	err = sessions.Logins.EndSessions(caller.MemberId)
+	if err != nil {
+		return err
+	}
+	return sessions.Account.EndAllSessions(caller)
+}
+
 func (sessions RealmSessions) Identify(authorization string) (oidc.Caller, error) {
 	return sessions.Gate.Identify(authorization)
 }
 
-func (sessions RealmSessions) ChangePassword(authorization string, current string, next string, oneTimeCode string) (Grant, error) {
+func (sessions RealmSessions) ChangePassword(authorization string, change PasswordChange) (Grant, error) {
 	caller, err := sessions.Gate.Identify(authorization)
 	if err != nil {
 		return Grant{}, err
 	}
-	opened, err := sessions.Account.ChangePassword(caller, current, next, oneTimeCode)
+	check := oidc.PasswordCheck{Password: change.CurrentPassword, OneTimeCode: change.OneTimeCode, Kept: change.Kept}
+	opened, err := sessions.Account.ChangePassword(caller, check, change.NewPassword)
 	if err != nil {
 		return Grant{}, err
 	}
-	return sessions.Logins.Reopened(opened, caller.DomainId)
+	return sessions.Logins.Restarted(opened, caller.DomainId, change.Kept)
 }
 
 func (sessions RealmSessions) TotpEnabled(authorization string) (bool, error) {
@@ -76,8 +89,8 @@ func (sessions RealmSessions) PasskeyChallenge() (oidc.PasskeyChallenge, error) 
 	return sessions.Logins.Realm.PasskeyChallenge()
 }
 
-func (sessions RealmSessions) PasskeySignIn(challengeKey string, credentialJson string, domainId string) (Grant, error) {
-	return sessions.Logins.PasskeySignIn(challengeKey, credentialJson, domainId)
+func (sessions RealmSessions) PasskeySignIn(challengeKey string, credentialJson string, domainId string, kept bool) (Grant, error) {
+	return sessions.Logins.PasskeySignIn(challengeKey, credentialJson, domainId, kept)
 }
 
 func (sessions RealmSessions) Passkeys(authorization string) ([]oidc.Passkey, error) {
@@ -117,9 +130,10 @@ func (sessions RealmSessions) RemovePasskey(authorization string, passkeyId stri
 	if err != nil {
 		return Grant{}, err
 	}
-	checked, err := sessions.Account.Passkeys().Remove(caller, passkeyId, removal.CurrentPassword, removal.OneTimeCode)
+	check := oidc.PasswordCheck{Password: removal.CurrentPassword, OneTimeCode: removal.OneTimeCode, Kept: removal.Kept}
+	checked, err := sessions.Account.Passkeys().Remove(caller, passkeyId, check)
 	if err != nil {
 		return Grant{}, err
 	}
-	return sessions.Logins.Reopened(checked, caller.DomainId)
+	return sessions.Logins.Restarted(checked, caller.DomainId, removal.Kept)
 }

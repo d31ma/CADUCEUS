@@ -27,7 +27,7 @@ func directoryUrl(t *testing.T, sessions RealmSessions) string {
 
 func unavailable(t *testing.T, sessions Sessions) {
 	t.Helper()
-	_, err := sessions.SignIn("ana", "password", "")
+	_, err := sessions.SignIn("ana", "password", "", false)
 	same(t, "unavailable", errors.Is(err, oidc.SessionUnavailable{}), true)
 }
 

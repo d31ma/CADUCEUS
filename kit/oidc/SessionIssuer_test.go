@@ -15,7 +15,7 @@ func TestSessionIssuerFactoryNeedsTheSessionKey(t *testing.T) {
 func TestAnUnconfiguredRealmSessionIsUnavailable(t *testing.T) {
 	t.Setenv("YON_APPLICATION_JSON", "{}")
 	session := RealmSessionFactory{}.Configured()
-	_, signInErr := session.SignIn("ana", "right", "123456")
+	_, signInErr := session.SignIn("ana", "right", "123456", false)
 	_, refreshErr := session.Refresh("refresh")
 	signOutErr := session.SignOut("refresh")
 	if !errors.Is(signInErr, SessionUnavailable{}) || !errors.Is(refreshErr, SessionUnavailable{}) || !errors.Is(signOutErr, SessionUnavailable{}) {

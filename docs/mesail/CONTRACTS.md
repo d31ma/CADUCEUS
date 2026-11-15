@@ -108,7 +108,10 @@ true when the sign-in asked `keepSignedIn` (ADR 0006 section 2): the
 `sessionKey` then seals a Keycloak offline session (scope
 `offline_access`, idle 30 days, at most 90 days), and the client stores it
 in its device copy instead of `@SessionState`. A refresh, a switch and
-`DELETE /session` keep `kept` as it was. `domains` lists every
+`DELETE /session` keep `kept` as it was. The fresh session of a password
+change or a passkey removal is kept when that request has `keepSignedIn`
+(the access token does not say whether the device is kept; decided
+2026-11-14 for slice O2). `domains` lists every
 domain of the person, for the domain switcher, in `people.domainIds` order.
 `default` is `true` on exactly one entry: the person's
 `PersonRecord.defaultDomainId` (when that domain is gone, the first entry,
@@ -199,6 +202,14 @@ Sessions:
   by the admin actions of SPEC AC-ID-13 (password reset, 2-step code
   removal, disable, delete). A client deletes every device copy of the
   person on `403 access_revoked`, and keeps it (locked) on `401`.
+  `signedInAt` and `sessionsEndedAt` are RFC 3339 UTC times with
+  fractions of a second; a session started at the same instant is not
+  ended. A `sessionKey` sealed before slice O2 has no `signedInAt` and
+  counts as started before any `sessionsEndedAt`; a `sessionsEndedAt`
+  that cannot be read ends every session. `identity` records the time
+  first (`POST /directory/people/{personId}/sessions-ended`; a `404`
+  there counts as done) and then ends the Keycloak sessions, so a
+  failure in between still revokes.
 - **Refresh** refreshes the Keycloak session, reads the person again, and
   answers `403 not_a_member` when the active domain is no longer in
   `domainIds`. So removing a member cuts their access to that domain within
@@ -265,7 +276,7 @@ and T14 (apps).
 | `POST /api/v1/identity/passkeys/setup` | SignedIn | `PasskeySetupRequest{currentPassword, oneTimeCode?}` | `200 PasskeySetup{optionsJson, setupKey}` (creation options: user id = the person id, user name = the username, resident key required, user verification required, exclude the person's existing passkeys); `401` wrong password or code; `409 too_many` with 10 passkeys |
 | `POST /api/v1/identity/passkeys` | SignedIn | `PasskeyConfirm{setupKey, credentialJson, label}` | `201 Passkey`; `400 setup_expired` when the `setupKey` is older than 10 minutes (start again with `setup`); `400 invalid_passkey` for every other failure |
 | `PATCH /api/v1/identity/passkeys/{passkeyId}` | SignedIn | `PasskeyRename{label}` | `200 Passkey`; `400 invalid_request` (field `label`, 1 to 64 characters); `409 label_exists` when another of the person's passkeys has that label; `404 not_found` for another person's passkey. No password: a label is not a secret and changes no access |
-| `DELETE /api/v1/identity/passkeys/{passkeyId}` | SignedIn | `PasskeyRemove{currentPassword, oneTimeCode?}` | `200 Session` (fresh tokens, like a password change: its own fresh session starts after `sessionsEndedAt`); ends every other session of the person (`sessionsEndedAt`); `401`; `404 not_found` for another person's passkey |
+| `DELETE /api/v1/identity/passkeys/{passkeyId}` | SignedIn | `PasskeyRemove{currentPassword, oneTimeCode?, keepSignedIn?}` | `200 Session` (fresh tokens, like a password change: its own fresh session starts after `sessionsEndedAt`, and is kept when `keepSignedIn`); ends every other session of the person (`sessionsEndedAt`); `401`; `404 not_found` for another person's passkey |
 
 - `identity` checks the sealed challenge and its expiry, then calls
   Keycloak's token endpoint through the passkey direct-grant flow of the
@@ -330,7 +341,7 @@ change the person's one account, so they apply to every domain:
 
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
-| `POST /api/v1/identity/password` | SignedIn | `PasswordChange{currentPassword, newPassword, oneTimeCode?}` | `200 Session` (fresh tokens); `401` wrong current password or code; `400 password_policy` with `ApiError.message` naming the failed rule |
+| `POST /api/v1/identity/password` | SignedIn | `PasswordChange{currentPassword, newPassword, oneTimeCode?, keepSignedIn?}` | `200 Session` (fresh tokens; its own fresh session starts after `sessionsEndedAt` and is kept when `keepSignedIn`: a kept device sends it, so it stays kept); `401` wrong current password or code; `400 password_policy` with `ApiError.message` naming the failed rule |
 | `GET /api/v1/identity/totp` | SignedIn | - | `200 TotpStatus{enabled}`: whether the caller's account has an OTP credential (read through the `mesail-account` client; `Me` stays token-only) |
 | `POST /api/v1/identity/totp/setup` | SignedIn | `TotpSetupRequest{currentPassword}` (no `oneTimeCode`: setup is only for an account without a 2-step code; to replace a code, `DELETE /totp` first) | `200 TotpSetup{secret, otpauthUri, qrImage, setupKey}`; `401` wrong password, or the account already has a 2-step code |
 | `POST /api/v1/identity/totp/confirm` | SignedIn | `TotpConfirm{setupKey, code}` | `204`; `400 invalid_code` |

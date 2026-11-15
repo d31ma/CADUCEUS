@@ -38,6 +38,7 @@ func (setup OneRealmTestSetup) Start() oidc.SigningKey {
 		`"identity":{"issuer":"` + setup.Issuer() + `","client":{"secret":"client-secret"},"account":{"secret":"account-secret"},"session":{"key":"` + sessionKey + `"},"signing":{"key":"` + signingText + `"},"passkeyorigins":"https://mail.mesail.test"},` +
 		`"directory":{"url":"` + directory.URL + `"},"service":{"client":{"secret":"service-secret"}}}}`
 	os.Setenv("YON_APPLICATION_JSON", document)
+	os.Setenv(setup.EndedVariable(), "")
 	return signingKey
 }
 
@@ -159,12 +160,21 @@ func (OneRealmTestSetup) grant(writer http.ResponseWriter, request *http.Request
 	_ = json.NewEncoder(writer).Encode(map[string]any{"access_token": token, "refresh_token": "refresh-ana", "expires_in": 60})
 }
 
-func (OneRealmTestSetup) directory(writer http.ResponseWriter, request *http.Request) {
-	if request.URL.Path != "/api/v1/directory/people/person-ana" || !strings.HasPrefix(request.Header.Get("Authorization"), "Bearer ") {
+func (setup OneRealmTestSetup) directory(writer http.ResponseWriter, request *http.Request) {
+	switch {
+	case !strings.HasPrefix(request.Header.Get("Authorization"), "Bearer "):
+		writer.WriteHeader(http.StatusUnauthorized)
+	case request.Method == http.MethodPost && request.URL.Path == "/api/v1/directory/people/person-ana/sessions-ended":
+		writer.WriteHeader(http.StatusNoContent)
+	case request.URL.Path == "/api/v1/directory/people/person-ana":
+		_, _ = writer.Write([]byte(`{"personId":"person-ana","username":"ana","displayName":"Ana Example","domainIds":["example.com","example.org"],"adminDomainIds":["example.com"],"defaultDomainId":"example.com","state":"active","sessionsEndedAt":"` + os.Getenv(setup.EndedVariable()) + `"}`))
+	default:
 		writer.WriteHeader(http.StatusNotFound)
-		return
 	}
-	_, _ = writer.Write([]byte(`{"personId":"person-ana","username":"ana","displayName":"Ana Example","domainIds":["example.com","example.org"],"adminDomainIds":["example.com"],"defaultDomainId":"example.com","state":"active"}`))
+}
+
+func (OneRealmTestSetup) EndedVariable() string {
+	return "IDENTITY_TEST_SESSIONS_ENDED_AT"
 }
 
 func (OneRealmTestSetup) Credential(id string) string {

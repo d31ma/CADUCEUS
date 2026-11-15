@@ -67,6 +67,7 @@ class MesailRealmCheck:
         self.guarded("clients", self.check_clients)
         self.guarded("directory", self.check_directory)
         self.guarded("account", self.check_account_settings)
+        self.guarded("kept devices", self.check_kept_devices)
         self.guarded("otp", self.check_otp)
         self.guarded("lockout", self.check_lockout)
         self.guarded("passkeys", PasskeyCheck(self).run)
@@ -212,6 +213,18 @@ class MesailRealmCheck:
         self.expect("account: logs carol out everywhere (HTTP)", account.logout(user_id), 204)
         self.expect("refresh after the logout (HTTP)", self.refresh_reply(refresh_token).status, 400)
 
+    def check_kept_devices(self) -> None:
+        account = self.admin_client(self.ACCOUNT_CLIENT, self.account_secret)
+        user_id = account.user_id("carol")
+        kept = self.require_ok(self.password_reply("carol", self.PEOPLE["carol"], scope="openid offline_access"), "kept sign-in for carol")
+        self.expect("kept sign-in gives an offline refresh token", self.verifier.claims(kept["refresh_token"]).get("typ"), "Offline")
+        renewed = self.refresh_reply(kept["refresh_token"])
+        self.expect("kept refresh (HTTP)", renewed.status, 200)
+        self.expect("account: logs carol out everywhere (HTTP)", account.logout(user_id), 204)
+        revoked = account.call("DELETE", f"/{self.REALM}/users/{user_id}/consents/{self.IDENTITY_CLIENT}").status
+        self.expect("account: ends carol's offline sessions (HTTP 204, or 404 when none was left)", revoked in (204, 404), True)
+        self.expect("kept refresh after sign-out everywhere (HTTP)", self.refresh_reply(renewed.json().get("refresh_token", "")).status, 400)
+
     def check_otp(self) -> None:
         username, password = self.OTP_PERSON, self.PEOPLE[self.OTP_PERSON]
         account = self.admin_client(self.ACCOUNT_CLIENT, self.account_secret)
@@ -336,10 +349,10 @@ class MesailRealmCheck:
     def password_grant(self, username: str, password: str) -> dict:
         return self.require_ok(self.password_reply(username, password), f"password grant for {username}")
 
-    def password_reply(self, username: str, password: str, totp: str | None = None) -> Reply:
+    def password_reply(self, username: str, password: str, totp: str | None = None, scope: str = "openid") -> Reply:
         fields = {
             "grant_type": "password", "client_id": self.IDENTITY_CLIENT, "client_secret": self.identity_secret,
-            "username": username, "password": password, "scope": "openid",
+            "username": username, "password": password, "scope": scope,
         }
         if totp is not None:
             fields["totp"] = totp

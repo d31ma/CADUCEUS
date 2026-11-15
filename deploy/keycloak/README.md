@@ -67,10 +67,28 @@ own `account-console` and `security-admin-console` clients still exist
 (Keycloak always creates them), but nothing routes browsers to them.
 
 **Roles.** The only Mesail realm role is `mesail-operator`, given to each
-Operator explicitly. The default role `default-roles-mesail` is empty, so a
-person's token and the two service accounts' tokens carry no other realm
-role. `mesail-member`, `mesail-admin` and `mesail-service` are roles of
-Mesail's own token, set by the identity service.
+Operator explicitly. The default role `default-roles-mesail` holds only
+Keycloak's `offline_access` (kept devices, below), so a person's token and
+the two service accounts' tokens carry no other realm role. `mesail-member`,
+`mesail-admin` and `mesail-service` are roles of Mesail's own token, set by
+the identity service. The dev users list `default-roles-mesail` in their
+`realmRoles`, because Keycloak does not give imported users the default role.
+
+**Kept devices** (ADR 0006, slice O2). When a person ticks "Keep me signed in
+on this device", the identity service asks for the scope `offline_access`
+(a default optional scope of every client, `mesail-identity` included) and
+gets an offline session: idle at most 30 days (`offlineSessionIdleTimeout`
+2592000) and at most 90 days in all (`offlineSessionMaxLifespanEnabled`,
+`offlineSessionMaxLifespan` 7776000). A person needs the role
+`offline_access` for it; everyone made through the admin API gets it from
+the default role. "Sign out on all devices" calls `POST
+.../users/<id>/logout` and `DELETE .../users/<id>/consents/mesail-identity`
+with the `mesail-account` service account (`manage-users`), which ends the
+person's sessions and offline sessions. **An existing realm** keeps its old
+settings, because the import runs only when the realm does not exist: set
+the three offline values in the realm settings ("Sessions" tab) and add
+`offline_access` to the default roles ("Realm settings", "User registration")
+by hand, or import the realm again on a new database.
 
 **Fixed dev ids.** A person's id is their Keycloak `sub`, and it never
 changes: `directory` never links a person to a new `sub` (ADR 0005, DOMAIN

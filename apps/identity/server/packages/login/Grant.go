@@ -12,4 +12,5 @@ type Grant struct {
 	ExpiresIn          int64
 	SessionKey         string
 	MustChangePassword bool
+	Kept               bool
 }

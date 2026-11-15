@@ -5,4 +5,5 @@ type Session struct {
 	ExpiresIn          int64          `json:"expiresIn"`
 	SessionKey         string         `json:"sessionKey"`
 	MustChangePassword bool           `json:"mustChangePassword"`
+	Kept               bool           `json:"kept"`
 }

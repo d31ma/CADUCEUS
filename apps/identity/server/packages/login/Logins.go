@@ -2,6 +2,7 @@ package login
 
 import (
 	"cmp"
+	"time"
 
 	"mesail.dev/packages/addresses"
 	"mesail.dev/packages/oidc"
@@ -11,26 +12,27 @@ type Logins struct {
 	Realm  Realm
 	People People
 	Signer Signer
+	Now    func() time.Time
 }
 
-func (logins Logins) SignIn(login string, password string, oneTimeCode string) (Grant, error) {
+func (logins Logins) SignIn(login string, password string, oneTimeCode string, kept bool) (Grant, error) {
 	parts, err := logins.parsed(login)
 	if err != nil {
 		return Grant{}, err
 	}
-	opened, err := logins.Realm.SignIn(parts.Username, password, oneTimeCode)
+	opened, err := logins.Realm.SignIn(parts.Username, password, oneTimeCode, kept)
 	if err != nil {
 		return Grant{}, err
 	}
-	return logins.signedIn(opened, parts.DomainId)
+	return logins.signedIn(opened, parts.DomainId, kept)
 }
 
-func (logins Logins) PasskeySignIn(challengeKey string, credentialJson string, wanted string) (Grant, error) {
-	opened, err := logins.Realm.PasskeySignIn(challengeKey, credentialJson)
+func (logins Logins) PasskeySignIn(challengeKey string, credentialJson string, wanted string, kept bool) (Grant, error) {
+	opened, err := logins.Realm.PasskeySignIn(challengeKey, credentialJson, kept)
 	if err != nil {
 		return Grant{}, err
 	}
-	return logins.signedIn(opened, wanted)
+	return logins.signedIn(opened, wanted, kept)
 }
 
 func (logins Logins) Refresh(sessionKey string) (Grant, error) {
@@ -39,6 +41,10 @@ func (logins Logins) Refresh(sessionKey string) (Grant, error) {
 		return Grant{}, err
 	}
 	person, err := logins.People.Person(content.PersonId)
+	if err != nil {
+		return Grant{}, err
+	}
+	err = EndedSessions{}.Check(person, content.SignedInAt)
 	if err != nil {
 		return Grant{}, err
 	}
@@ -58,6 +64,10 @@ func (logins Logins) Switch(sessionKey string, wanted string) (Grant, error) {
 	if err != nil {
 		return Grant{}, err
 	}
+	err = EndedSessions{}.Check(person, content.SignedInAt)
+	if err != nil {
+		return Grant{}, err
+	}
 	domainId, err := DomainRules{}.ForSwitch(person, wanted)
 	if err != nil {
 		return Grant{}, err
@@ -73,15 +83,23 @@ func (logins Logins) SignOut(sessionKey string) error {
 	return logins.Realm.SignOut(content.RefreshToken)
 }
 
-func (logins Logins) Reopened(opened oidc.KeycloakSession, domainId string) (Grant, error) {
+func (logins Logins) EndSessions(personId string) error {
+	return logins.People.EndSessions(personId)
+}
+
+func (logins Logins) Restarted(opened oidc.KeycloakSession, domainId string, kept bool) (Grant, error) {
+	err := logins.People.EndSessions(opened.PersonId)
+	if err != nil {
+		return Grant{}, logins.closed(opened, err)
+	}
 	person, err := logins.People.Person(opened.PersonId)
 	if err != nil {
 		return Grant{}, err
 	}
-	return logins.granted(opened, person, domainId)
+	return logins.granted(opened, person, domainId, logins.started(kept))
 }
 
-func (logins Logins) signedIn(opened oidc.KeycloakSession, wanted string) (Grant, error) {
+func (logins Logins) signedIn(opened oidc.KeycloakSession, wanted string, kept bool) (Grant, error) {
 	person, err := logins.People.Person(opened.PersonId)
 	if err != nil {
 		return Grant{}, logins.closed(opened, err)
@@ -90,7 +108,11 @@ func (logins Logins) signedIn(opened oidc.KeycloakSession, wanted string) (Grant
 	if err != nil {
 		return Grant{}, logins.closed(opened, err)
 	}
-	return logins.granted(opened, person, domainId)
+	return logins.granted(opened, person, domainId, logins.started(kept))
+}
+
+func (logins Logins) started(kept bool) SessionStart {
+	return SessionStart{Kept: kept, SignedInAt: logins.Now().UTC().Format(time.RFC3339Nano)}
 }
 
 func (logins Logins) refreshedInto(content oidc.SessionContent, person Person, domainId string) (Grant, error) {
@@ -106,10 +128,10 @@ func (logins Logins) refreshedInto(content oidc.SessionContent, person Person, d
 	if err != nil {
 		return Grant{}, err
 	}
-	return logins.granted(opened, person, domainId)
+	return logins.granted(opened, person, domainId, SessionStart{Kept: content.Kept, SignedInAt: content.SignedInAt})
 }
 
-func (logins Logins) granted(opened oidc.KeycloakSession, person Person, domainId string) (Grant, error) {
+func (logins Logins) granted(opened oidc.KeycloakSession, person Person, domainId string, start SessionStart) (Grant, error) {
 	realmRoles := DomainRules{}.Roles(person, opened.Operator, domainId)
 	token := oidc.MesailToken{
 		Subject:         opened.PersonId,
@@ -125,7 +147,7 @@ func (logins Logins) granted(opened oidc.KeycloakSession, person Person, domainI
 	if err != nil {
 		return Grant{}, err
 	}
-	sessionKey, err := logins.Realm.Seal(oidc.SessionContent{Domain: domainId, RefreshToken: opened.RefreshToken, PersonId: opened.PersonId})
+	sessionKey, err := logins.Realm.Seal(oidc.SessionContent{Domain: domainId, RefreshToken: opened.RefreshToken, PersonId: opened.PersonId, Kept: start.Kept, SignedInAt: start.SignedInAt})
 	return Grant{
 		PersonId:           opened.PersonId,
 		DomainId:           domainId,
@@ -138,6 +160,7 @@ func (logins Logins) granted(opened oidc.KeycloakSession, person Person, domainI
 		ExpiresIn:          issued.ExpiresIn,
 		SessionKey:         sessionKey,
 		MustChangePassword: opened.MustChangePassword,
+		Kept:               start.Kept,
 	}, err
 }
 

@@ -9,7 +9,7 @@ type SessionService struct {
 }
 
 func (service *SessionService) SignIn(request SignInRequest) (Session, error) {
-	grant, failed := login.SessionsFactory{}.Configured().SignIn(request.Login, request.Password, request.OneTimeCode)
+	grant, failed := login.SessionsFactory{}.Configured().SignIn(request.Login, request.Password, request.OneTimeCode, request.KeepSignedIn)
 	return service.grants.Session(grant), service.failures.Failure(failed)
 }
 
@@ -27,7 +27,12 @@ func (service *SessionService) SignOut(request RefreshRequest) error {
 	return service.failures.Failure(login.SessionsFactory{}.Configured().SignOut(request.SessionKey))
 }
 
+func (service *SessionService) SignOutEverywhere(authorization string) error {
+	return service.failures.Failure(login.SessionsFactory{}.Configured().SignOutEverywhere(authorization))
+}
+
 func (service *SessionService) ChangePassword(authorization string, request PasswordChange) (Session, error) {
-	grant, failed := login.SessionsFactory{}.Configured().ChangePassword(authorization, request.CurrentPassword, request.NewPassword, request.OneTimeCode)
+	change := login.PasswordChange{CurrentPassword: request.CurrentPassword, NewPassword: request.NewPassword, OneTimeCode: request.OneTimeCode, Kept: request.KeepSignedIn}
+	grant, failed := login.SessionsFactory{}.Configured().ChangePassword(authorization, change)
 	return service.grants.Session(grant), service.failures.Failure(failed)
 }

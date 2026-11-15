@@ -3,6 +3,7 @@ package oidc
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -25,6 +26,22 @@ func (admin KeycloakAdmin) Sessions(userId string) ([]UserSession, error) {
 
 func (admin KeycloakAdmin) EndSession(sessionId string) error {
 	return admin.send(http.MethodDelete, "/sessions/"+url.PathEscape(sessionId), nil, nil)
+}
+
+func (admin KeycloakAdmin) SignOutEverywhere(userId string) error {
+	return admin.send(http.MethodPost, admin.user(userId)+"/logout", nil, nil)
+}
+
+func (admin KeycloakAdmin) RevokeOfflineSessions(userId string, clientId string) error {
+	err := admin.send(http.MethodDelete, admin.user(userId)+"/consents/"+url.PathEscape(clientId), nil, nil)
+	return admin.noneLeft(err)
+}
+
+func (KeycloakAdmin) noneLeft(err error) error {
+	if errors.Is(err, SignInRefused{}) {
+		return nil
+	}
+	return err
 }
 
 func (admin KeycloakAdmin) Credentials(userId string) ([]UserCredential, error) {

@@ -47,7 +47,7 @@ func realmAccountUnavailable(t *testing.T, account RealmAccount) {
 	t.Helper()
 	caller := realmCaller()
 	_, enabledErr := account.TotpEnabled(caller)
-	_, changeErr := account.ChangePassword(caller, "right-password", "a-new-long-password", "")
+	_, changeErr := account.ChangePassword(caller, PasswordCheck{Password: "right-password"}, "a-new-long-password")
 	_, setupErr := account.SetupTotp(caller, "right-password")
 	confirmErr := account.ConfirmTotp(caller, "key", "123456")
 	removeErr := account.RemoveTotp(caller, "right-password", "")
@@ -75,7 +75,7 @@ func TestRealmAccountTotpIsOnWithAnOtpCredential(t *testing.T) {
 
 func TestRealmAccountChangesThePassword(t *testing.T) {
 	realm := newMesailRealm(t)
-	checked, err := realm.account(t).ChangePassword(realmCaller(), "right-password", "a-new-long-password", "")
+	checked, err := realm.account(t).ChangePassword(realmCaller(), PasswordCheck{Password: "right-password"}, "a-new-long-password")
 	realmIs(t, err, nil)
 	realmEqual(t, "session", checked, KeycloakSession{PersonId: "person-1", SessionId: "session-a", Username: "ana", DisplayName: "Ana Example", RefreshToken: "refresh-1"})
 	realmEqual(t, "password", realm.password, "a-new-long-password")
@@ -86,7 +86,7 @@ func TestRealmAccountChangesThePassword(t *testing.T) {
 
 func TestRealmAccountRefusesAWrongCurrentPassword(t *testing.T) {
 	realm := newMesailRealm(t)
-	_, err := realm.account(t).ChangePassword(realmCaller(), "wrong", "a-new-long-password", "")
+	_, err := realm.account(t).ChangePassword(realmCaller(), PasswordCheck{Password: "wrong"}, "a-new-long-password")
 	realmIs(t, err, SignInRefused{})
 	realmEqual(t, "password", realm.password, "right-password")
 	realmList(t, "ended sessions", realm.ended, nil)
@@ -95,7 +95,7 @@ func TestRealmAccountRefusesAWrongCurrentPassword(t *testing.T) {
 
 func TestRealmAccountNamesTheFailedPasswordPolicy(t *testing.T) {
 	realm := newMesailRealm(t)
-	_, err := realm.account(t).ChangePassword(realmCaller(), "right-password", "short", "")
+	_, err := realm.account(t).ChangePassword(realmCaller(), PasswordCheck{Password: "right-password"}, "short")
 	realmIs(t, err, AdminRefused{Message: "Invalid password: minimum length 12."})
 	realmEqual(t, "password", realm.password, "right-password")
 	realmList(t, "ended sessions", realm.ended, nil)
@@ -104,7 +104,7 @@ func TestRealmAccountNamesTheFailedPasswordPolicy(t *testing.T) {
 func TestRealmAccountReportsAFailedRemoveAttribute(t *testing.T) {
 	realm := newMesailRealm(t)
 	caller := Caller{MemberId: "person-2", Username: "ana", DomainId: "example.com"}
-	_, err := realm.account(t).ChangePassword(caller, "right-password", "a-new-long-password", "")
+	_, err := realm.account(t).ChangePassword(caller, PasswordCheck{Password: "right-password"}, "a-new-long-password")
 	realmIs(t, err, SignInRefused{})
 	realmList(t, "ended sessions", realm.ended, nil)
 }

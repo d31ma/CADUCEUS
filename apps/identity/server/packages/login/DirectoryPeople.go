@@ -18,18 +18,26 @@ type DirectoryPeople struct {
 }
 
 func (people DirectoryPeople) Person(personId string) (Person, error) {
-	caller, cancel := context.WithTimeout(context.Background(), people.totalTime())
-	defer cancel()
-	first := people.try(caller, personId)
-	return people.answer(people.againWhen(first.Retryable(), first, caller, personId), personId)
+	return people.answer(people.reply(DirectoryCall{Method: http.MethodGet, Path: people.path() + url.PathEscape(personId)}), personId)
 }
 
-func (people DirectoryPeople) againWhen(retry bool, first DirectoryReply, caller context.Context, personId string) DirectoryReply {
+func (people DirectoryPeople) EndSessions(personId string) error {
+	return people.ended(people.reply(DirectoryCall{Method: http.MethodPost, Path: people.path() + url.PathEscape(personId) + people.endedPath()}))
+}
+
+func (people DirectoryPeople) reply(call DirectoryCall) DirectoryReply {
+	caller, cancel := context.WithTimeout(context.Background(), people.totalTime())
+	defer cancel()
+	first := people.try(caller, call)
+	return people.againWhen(first.Retryable(), first, caller, call)
+}
+
+func (people DirectoryPeople) againWhen(retry bool, first DirectoryReply, caller context.Context, call DirectoryCall) DirectoryReply {
 	if !retry {
 		return first
 	}
 	people.wait(caller)
-	return people.try(caller, personId)
+	return people.try(caller, call)
 }
 
 func (people DirectoryPeople) wait(caller context.Context) {
@@ -39,8 +47,8 @@ func (people DirectoryPeople) wait(caller context.Context) {
 	}
 }
 
-func (people DirectoryPeople) try(caller context.Context, personId string) DirectoryReply {
-	request, err := people.request(caller, personId)
+func (people DirectoryPeople) try(caller context.Context, call DirectoryCall) DirectoryReply {
+	request, err := people.request(caller, call)
 	if err != nil {
 		return DirectoryReply{Failed: err}
 	}
@@ -64,12 +72,12 @@ func (people DirectoryPeople) read(response *http.Response) DirectoryReply {
 	return DirectoryReply{Status: response.StatusCode, Body: body}
 }
 
-func (people DirectoryPeople) request(caller context.Context, personId string) (*http.Request, error) {
+func (people DirectoryPeople) request(caller context.Context, call DirectoryCall) (*http.Request, error) {
 	issued, err := people.Signer.Sign(ServiceTokenIssuer{}.InstallWideToken(oidc.InstallWide{}.DomainId()))
 	if err != nil {
 		return nil, oidc.SessionUnavailable{}
 	}
-	request, err := http.NewRequestWithContext(caller, http.MethodGet, people.BaseUrl+people.path()+url.PathEscape(personId), nil)
+	request, err := http.NewRequestWithContext(caller, call.Method, people.BaseUrl+call.Path, nil)
 	if err != nil {
 		return nil, oidc.SessionUnavailable{}
 	}
@@ -97,6 +105,20 @@ func (people DirectoryPeople) decoded(reply DirectoryReply) (Person, error) {
 		return Person{}, oidc.SessionUnavailable{}
 	}
 	return person, nil
+}
+
+func (DirectoryPeople) ended(reply DirectoryReply) error {
+	switch {
+	case reply.Failed != nil:
+		return reply.Failed
+	case reply.Status == http.StatusNoContent, reply.Status == http.StatusNotFound:
+		return nil
+	}
+	return oidc.SessionUnavailable{}
+}
+
+func (DirectoryPeople) endedPath() string {
+	return "/sessions-ended"
 }
 
 func (DirectoryPeople) path() string {

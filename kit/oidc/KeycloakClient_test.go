@@ -34,7 +34,7 @@ func (fake *keycloakFake) client() KeycloakClient {
 
 func TestSignInPostsAPasswordGrant(t *testing.T) {
 	fake := newKeycloakFake(t, http.StatusOK, `{"access_token":"a","refresh_token":"r","expires_in":60,"refresh_expires_in":1800}`)
-	grant, err := fake.client().SignIn("ana@example.com", "pw", "123456")
+	grant, err := fake.client().SignIn("ana@example.com", "pw", "123456", false)
 	form := fake.forms[0]
 	if err != nil || grant.AccessToken != "a" || grant.RefreshToken != "r" || grant.ExpiresIn != 60 {
 		t.Fatalf("got %+v, %v", grant, err)
@@ -46,7 +46,7 @@ func TestSignInPostsAPasswordGrant(t *testing.T) {
 
 func TestSignInReportsWrongCredentials(t *testing.T) {
 	fake := newKeycloakFake(t, http.StatusUnauthorized, `{"error":"invalid_grant"}`)
-	_, err := fake.client().SignIn("ana@example.com", "wrong", "")
+	_, err := fake.client().SignIn("ana@example.com", "wrong", "", false)
 	if !errors.Is(err, SignInRefused{}) {
 		t.Fatalf("got %v", err)
 	}
@@ -54,7 +54,7 @@ func TestSignInReportsWrongCredentials(t *testing.T) {
 
 func TestSignInReportsABadRequestAsARefusal(t *testing.T) {
 	fake := newKeycloakFake(t, http.StatusBadRequest, `{"error":"invalid_grant"}`)
-	_, err := fake.client().SignIn("ana@example.com", "pw", "")
+	_, err := fake.client().SignIn("ana@example.com", "pw", "", false)
 	if !errors.Is(err, SignInRefused{}) {
 		t.Fatalf("got %v", err)
 	}
@@ -62,7 +62,7 @@ func TestSignInReportsABadRequestAsARefusal(t *testing.T) {
 
 func TestSignInReportsAKeycloakFailure(t *testing.T) {
 	fake := newKeycloakFake(t, http.StatusBadGateway, "")
-	_, err := fake.client().SignIn("ana@example.com", "pw", "")
+	_, err := fake.client().SignIn("ana@example.com", "pw", "", false)
 	var unavailable KeycloakUnavailable
 	if !errors.As(err, &unavailable) || unavailable.Status != http.StatusBadGateway || unavailable.Error() == "" {
 		t.Fatalf("got %v", err)
@@ -73,7 +73,7 @@ func TestSignInReportsAnUnreachableKeycloak(t *testing.T) {
 	fake := newKeycloakFake(t, http.StatusOK, "")
 	client := fake.client()
 	fake.server.Close()
-	_, err := client.SignIn("ana@example.com", "pw", "")
+	_, err := client.SignIn("ana@example.com", "pw", "", false)
 	var unavailable KeycloakUnavailable
 	if !errors.As(err, &unavailable) {
 		t.Fatalf("got %v", err)
@@ -99,7 +99,7 @@ func TestSignOutPostsToTheLogoutEndpoint(t *testing.T) {
 
 func TestSignInCannotTellALockedAccountFromAWrongPassword(t *testing.T) {
 	fake := newKeycloakFake(t, http.StatusBadRequest, `{"error":"invalid_grant","error_description":"Invalid user credentials"}`)
-	_, err := fake.client().SignIn("ana@example.com", "pw", "")
+	_, err := fake.client().SignIn("ana@example.com", "pw", "", false)
 	if !errors.Is(err, SignInRefused{}) || (AccountLocked{}).Error() == "" {
 		t.Fatalf("got %v", err)
 	}
@@ -107,7 +107,7 @@ func TestSignInCannotTellALockedAccountFromAWrongPassword(t *testing.T) {
 
 func TestSignInReportsAnUnknownRealmAsARefusal(t *testing.T) {
 	fake := newKeycloakFake(t, http.StatusNotFound, `{"error":"Realm does not exist"}`)
-	_, err := fake.client().SignIn("ana@nowhere.example", "pw", "")
+	_, err := fake.client().SignIn("ana@nowhere.example", "pw", "", false)
 	if !errors.Is(err, SignInRefused{}) {
 		t.Fatalf("got %v", err)
 	}

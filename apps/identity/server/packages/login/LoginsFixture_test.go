@@ -22,10 +22,12 @@ type fakeRealm struct {
 	usernames  []string
 	signedOut  []string
 	sealed     []oidc.SessionContent
+	kept       []bool
 }
 
-func (realm *fakeRealm) SignIn(username string, password string, oneTimeCode string) (oidc.KeycloakSession, error) {
+func (realm *fakeRealm) SignIn(username string, password string, oneTimeCode string, kept bool) (oidc.KeycloakSession, error) {
 	*realm.events = append(*realm.events, "sign-in "+username)
+	realm.kept = append(realm.kept, kept)
 	realm.usernames = append(realm.usernames, username)
 	return realm.session, realm.signInErr
 }
@@ -57,15 +59,22 @@ func (realm *fakeRealm) PasskeyChallenge() (oidc.PasskeyChallenge, error) {
 	return oidc.PasskeyChallenge{OptionsJson: "{}", ChallengeKey: "challenge-key"}, nil
 }
 
-func (realm *fakeRealm) PasskeySignIn(challengeKey string, credentialJson string) (oidc.KeycloakSession, error) {
+func (realm *fakeRealm) PasskeySignIn(challengeKey string, credentialJson string, kept bool) (oidc.KeycloakSession, error) {
 	*realm.events = append(*realm.events, "passkey "+challengeKey)
+	realm.kept = append(realm.kept, kept)
 	return realm.session, realm.signInErr
 }
 
 type fakePeople struct {
-	events *[]string
-	people map[string]Person
-	err    error
+	events   *[]string
+	people   map[string]Person
+	err      error
+	endedErr error
+}
+
+func (people *fakePeople) EndSessions(personId string) error {
+	*people.events = append(*people.events, "sessions-ended "+personId)
+	return people.endedErr
 }
 
 func (people *fakePeople) Person(personId string) (Person, error) {
@@ -108,7 +117,7 @@ func newLoginWorld(t *testing.T) *loginWorld {
 }
 
 func (world *loginWorld) logins() Logins {
-	return Logins{Realm: world.realm, People: world.people, Signer: world.signer}
+	return Logins{Realm: world.realm, People: world.people, Signer: world.signer, Now: fixedNow}
 }
 
 func (world *loginWorld) setPerson(person Person) {
@@ -121,6 +130,14 @@ func (world *loginWorld) lastSealed(t *testing.T) oidc.SessionContent {
 		t.Fatalf("nothing was sealed")
 	}
 	return world.realm.sealed[len(world.realm.sealed)-1]
+}
+
+func fixedNow() time.Time {
+	return time.Date(2026, 11, 14, 20, 0, 0, 123456789, time.UTC)
+}
+
+func signedInText() string {
+	return "2026-11-14T20:00:00.123456789Z"
 }
 
 func anaSession() oidc.KeycloakSession {

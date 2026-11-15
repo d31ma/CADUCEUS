@@ -26,8 +26,8 @@ func (account PasskeyAccount) Rename(caller Caller, passkeyId string, label stri
 	return renamed.Passkey(), AccountErrors{}.Normalized(err)
 }
 
-func (account PasskeyAccount) Remove(caller Caller, passkeyId string, current string, oneTimeCode string) (KeycloakSession, error) {
-	checked, err := account.remove(caller, passkeyId, current, oneTimeCode)
+func (account PasskeyAccount) Remove(caller Caller, passkeyId string, check PasswordCheck) (KeycloakSession, error) {
+	checked, err := account.remove(caller, passkeyId, check)
 	return checked, AccountErrors{}.Normalized(err)
 }
 
@@ -44,7 +44,7 @@ func (account PasskeyAccount) setup(caller Caller, current string, oneTimeCode s
 	if err != nil {
 		return PasskeySetup{}, err
 	}
-	checked, err := account.Account.checkedPassword(caller, current, oneTimeCode)
+	checked, err := account.Account.checkedPassword(caller, PasswordCheck{Password: current, OneTimeCode: oneTimeCode})
 	if err != nil {
 		return PasskeySetup{}, err
 	}
@@ -99,12 +99,12 @@ func (account PasskeyAccount) rename(caller Caller, passkeyId string, label stri
 	return renamed, account.renameFailure(err)
 }
 
-func (account PasskeyAccount) remove(caller Caller, passkeyId string, current string, oneTimeCode string) (KeycloakSession, error) {
+func (account PasskeyAccount) remove(caller Caller, passkeyId string, check PasswordCheck) (KeycloakSession, error) {
 	passkeys, err := account.keycloak()
 	if err != nil {
 		return KeycloakSession{}, err
 	}
-	checked, err := account.Account.checkedPassword(caller, current, oneTimeCode)
+	checked, err := account.Account.checkedPassword(caller, check)
 	if err != nil {
 		return KeycloakSession{}, err
 	}

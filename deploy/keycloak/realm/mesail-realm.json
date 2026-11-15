@@ -39,6 +39,9 @@
   "accessTokenLifespan": 60,
   "ssoSessionIdleTimeout": 1800,
   "ssoSessionMaxLifespan": 36000,
+  "offlineSessionIdleTimeout": 2592000,
+  "offlineSessionMaxLifespanEnabled": true,
+  "offlineSessionMaxLifespan": 7776000,
   "revokeRefreshToken": true,
   "refreshTokenMaxReuse": 0,
   "adminEventsEnabled": true,
@@ -129,11 +132,17 @@
         "description": "Runs the Mesail installation. Given to each operator explicitly."
       },
       {
+        "name": "offline_access",
+        "description": "May keep a device signed in with an offline session (ADR 0006): idle 30 days, at most 90 days."
+      },
+      {
         "name": "default-roles-mesail",
-        "description": "No roles: membership and domain admin rights are directory data (ADR 0005).",
+        "description": "Only offline_access, for kept devices (ADR 0006). Membership and domain admin rights are directory data (ADR 0005).",
         "composite": true,
         "composites": {
-          "realm": []
+          "realm": [
+            "offline_access"
+          ]
         }
       }
     ]

@@ -195,7 +195,7 @@ func TestPasskeyAccountRenameMapsKeycloakAnswers(t *testing.T) {
 func TestPasskeyAccountRemoveEndsTheOtherSessions(t *testing.T) {
 	realm := newMesailRealm(t)
 	realm.passkeys = []PasskeyRecord{passkeyRecord("passkey-1", "Mac")}
-	checked, err := realm.account(t).Passkeys().Remove(realmCaller(), "passkey-1", "right-password", "")
+	checked, err := realm.account(t).Passkeys().Remove(realmCaller(), "passkey-1", PasswordCheck{Password: "right-password"})
 	realmIs(t, err, nil)
 	realmEqual(t, "kept session", checked.SessionId, "session-a")
 	realmList(t, "ended", realm.ended, []string{"session-b"})
@@ -204,7 +204,7 @@ func TestPasskeyAccountRemoveEndsTheOtherSessions(t *testing.T) {
 
 func TestPasskeyAccountRemoveOfAnUnknownPasskeyClosesTheCheckSession(t *testing.T) {
 	realm := newMesailRealm(t)
-	_, err := realm.account(t).Passkeys().Remove(realmCaller(), "passkey-9", "right-password", "")
+	_, err := realm.account(t).Passkeys().Remove(realmCaller(), "passkey-9", PasswordCheck{Password: "right-password"})
 	realmIs(t, err, PasskeyNotFound{})
 	realmEqual(t, "session signed out", realm.signOuts, 1)
 	realmEqual(t, "ended", len(realm.ended), 0)
@@ -213,7 +213,7 @@ func TestPasskeyAccountRemoveOfAnUnknownPasskeyClosesTheCheckSession(t *testing.
 func TestPasskeyAccountRemoveNeedsTheCurrentPassword(t *testing.T) {
 	realm := newMesailRealm(t)
 	realm.passkeys = []PasskeyRecord{passkeyRecord("passkey-1", "Mac")}
-	_, err := realm.account(t).Passkeys().Remove(realmCaller(), "passkey-1", "wrong", "")
+	_, err := realm.account(t).Passkeys().Remove(realmCaller(), "passkey-1", PasswordCheck{Password: "wrong"})
 	realmIs(t, err, SignInRefused{})
 	realmEqual(t, "passkeys left", len(realm.passkeys), 1)
 }
@@ -223,7 +223,7 @@ func TestRealmSessionSignsInWithAPasskey(t *testing.T) {
 	session := realm.session(t)
 	challenge, err := session.PasskeyChallenge()
 	realmIs(t, err, nil)
-	opened, err := session.PasskeySignIn(challenge.ChallengeKey, passkeyAssertionFor("person-1"))
+	opened, err := session.PasskeySignIn(challenge.ChallengeKey, passkeyAssertionFor("person-1"), false)
 	realmIs(t, err, nil)
 	options := PasskeyRequestOptions{}
 	_ = json.Unmarshal([]byte(challenge.OptionsJson), &options)
@@ -237,7 +237,7 @@ func TestRealmSessionRefusesAWrongPasskey(t *testing.T) {
 	realm := newMesailRealm(t)
 	session := realm.session(t)
 	challenge, _ := session.PasskeyChallenge()
-	_, err := session.PasskeySignIn(challenge.ChallengeKey, passkeyAssertionFor("person-2"))
+	_, err := session.PasskeySignIn(challenge.ChallengeKey, passkeyAssertionFor("person-2"), false)
 	realmIs(t, err, SignInRefused{})
 }
 
@@ -246,7 +246,7 @@ func TestRealmSessionReportsALockedPasskeyOwner(t *testing.T) {
 	realm.locked = true
 	session := realm.session(t)
 	challenge, _ := session.PasskeyChallenge()
-	_, err := session.PasskeySignIn(challenge.ChallengeKey, `{"response":{"userHandle":"`+base64.RawURLEncoding.EncodeToString([]byte("person-1"))+`","signature":"x"}}`)
+	_, err := session.PasskeySignIn(challenge.ChallengeKey, `{"response":{"userHandle":"`+base64.RawURLEncoding.EncodeToString([]byte("person-1"))+`","signature":"x"}}`, false)
 	realmIs(t, err, AccountLocked{})
 }
 
@@ -254,7 +254,7 @@ func TestRealmSessionRefusesATamperedChallengeKeyWithoutCallingKeycloak(t *testi
 	realm := newMesailRealm(t)
 	session := realm.session(t)
 	challenge, _ := session.PasskeyChallenge()
-	_, err := session.PasskeySignIn(challenge.ChallengeKey+"x", passkeyAssertionFor("person-1"))
+	_, err := session.PasskeySignIn(challenge.ChallengeKey+"x", passkeyAssertionFor("person-1"), false)
 	realmIs(t, err, SignInRefused{})
 	realmEqual(t, "grants", len(realm.grants), 0)
 }
@@ -264,7 +264,7 @@ func TestRealmSessionRefusesAnExpiredChallenge(t *testing.T) {
 	session := realm.session(t)
 	challenge, _ := session.PasskeyChallenge()
 	session.Now = func() time.Time { return time.Now().Add(121 * time.Second) }
-	_, err := session.PasskeySignIn(challenge.ChallengeKey, passkeyAssertionFor("person-1"))
+	_, err := session.PasskeySignIn(challenge.ChallengeKey, passkeyAssertionFor("person-1"), false)
 	realmIs(t, err, SignInRefused{})
 	realmEqual(t, "grants", len(realm.grants), 0)
 }
@@ -273,7 +273,7 @@ func TestRealmSessionRefusesAHugeCredential(t *testing.T) {
 	realm := newMesailRealm(t)
 	session := realm.session(t)
 	challenge, _ := session.PasskeyChallenge()
-	_, err := session.PasskeySignIn(challenge.ChallengeKey, strings.Repeat("a", 64*1024+1))
+	_, err := session.PasskeySignIn(challenge.ChallengeKey, strings.Repeat("a", 64*1024+1), false)
 	realmIs(t, err, SignInRefused{})
 }
 
@@ -281,7 +281,7 @@ func TestRealmSessionNeverSendsThePrfResultToKeycloak(t *testing.T) {
 	realm := newMesailRealm(t)
 	session := realm.session(t)
 	challenge, _ := session.PasskeyChallenge()
-	opened, err := session.PasskeySignIn(challenge.ChallengeKey, passkeyAssertionWithResults("person-1", prfResults()))
+	opened, err := session.PasskeySignIn(challenge.ChallengeKey, passkeyAssertionWithResults("person-1", prfResults()), false)
 	realmIs(t, err, nil)
 	realmEqual(t, "person", opened.PersonId, "person-1")
 	realmEqual(t, "assertion", realm.grants[0].Get("passkey_assertion"), passkeyAssertionWithResults("person-1", `{"credProps":{"rk":true}}`))
@@ -291,7 +291,7 @@ func TestRealmSessionRefusesACredentialThatIsNotJsonWithoutCallingKeycloak(t *te
 	realm := newMesailRealm(t)
 	session := realm.session(t)
 	challenge, _ := session.PasskeyChallenge()
-	_, err := session.PasskeySignIn(challenge.ChallengeKey, `{"clientExtensionResults":{"prf":`)
+	_, err := session.PasskeySignIn(challenge.ChallengeKey, `{"clientExtensionResults":{"prf":`, false)
 	realmIs(t, err, SignInRefused{})
 	realmEqual(t, "grants", len(realm.grants), 0)
 }

@@ -46,6 +46,15 @@ func (controller *AccountController) DeleteSession(
 	return controller.sessions.SignOut(request)
 }
 
+// @DeleteRoute("/sessions")
+// @ResponseStatus(204)
+func (controller *AccountController) DeleteSessions(
+	// @FromHeader("Authorization")
+	authorization string,
+) error {
+	return controller.sessions.SignOutEverywhere(authorization)
+}
+
 // @PostRoute("/password")
 func (controller *AccountController) PostPassword(
 	// @FromHeader("Authorization")

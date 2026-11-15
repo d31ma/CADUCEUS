@@ -9,7 +9,7 @@ import (
 func signInAs(t *testing.T, login string) (*loginWorld, Grant) {
 	t.Helper()
 	world := newLoginWorld(t)
-	grant, err := world.logins().SignIn(login, "right-password", "")
+	grant, err := world.logins().SignIn(login, "right-password", "", false)
 	failOn(t, err)
 	return world, grant
 }
@@ -17,7 +17,7 @@ func signInAs(t *testing.T, login string) (*loginWorld, Grant) {
 func refusedLogin(t *testing.T, login string) {
 	t.Helper()
 	world := newLoginWorld(t)
-	_, err := world.logins().SignIn(login, "right-password", "")
+	_, err := world.logins().SignIn(login, "right-password", "", false)
 	isError(t, err, oidc.SignInRefused{})
 	same(t, "events", world.events, []string(nil))
 }
@@ -65,7 +65,7 @@ func TestSignInRefusesAnEmptyDomain(t *testing.T) {
 func TestSignInPassesARealmRefusalThrough(t *testing.T) {
 	world := newLoginWorld(t)
 	world.realm.signInErr = oidc.AccountLocked{}
-	_, err := world.logins().SignIn("ana", "wrong", "")
+	_, err := world.logins().SignIn("ana", "wrong", "", false)
 	isError(t, err, oidc.AccountLocked{})
 	same(t, "events", world.events, []string{"sign-in ana"})
 }
@@ -78,7 +78,7 @@ func TestSignInWithTheUsernameOpensTheDefaultDomain(t *testing.T) {
 func TestSignInWithTheUsernameOpensTheFirstDomainWhenTheDefaultIsGone(t *testing.T) {
 	world := newLoginWorld(t)
 	world.setPerson(withDomains(anaPerson(), []string{"example.com", "example.org"}, "gone.example"))
-	grant, err := world.logins().SignIn("ana", "right-password", "")
+	grant, err := world.logins().SignIn("ana", "right-password", "", false)
 	failOn(t, err)
 	same(t, "domain", grant.DomainId, "example.com")
 }
@@ -90,7 +90,7 @@ func TestSignInWithAnAddressOpensItsDomain(t *testing.T) {
 
 func TestSignInRefusesAnAddressOfAnotherDomain(t *testing.T) {
 	world := newLoginWorld(t)
-	_, err := world.logins().SignIn("ana@other.example", "right-password", "")
+	_, err := world.logins().SignIn("ana@other.example", "right-password", "", false)
 	isError(t, err, NotAMember{})
 	same(t, "signed out", world.realm.signedOut, []string{"refresh-1"})
 }
@@ -98,7 +98,7 @@ func TestSignInRefusesAnAddressOfAnotherDomain(t *testing.T) {
 func TestSignInRefusesAPersonWithoutDomains(t *testing.T) {
 	world := newLoginWorld(t)
 	world.setPerson(withDomains(anaPerson(), nil, ""))
-	_, err := world.logins().SignIn("ana", "right-password", "")
+	_, err := world.logins().SignIn("ana", "right-password", "", false)
 	isError(t, err, NoDomain{})
 	same(t, "signed out", world.realm.signedOut, []string{"refresh-1"})
 }
@@ -107,7 +107,7 @@ func TestSignInGivesAnOperatorWithoutDomainsTheWholeInstall(t *testing.T) {
 	world := newLoginWorld(t)
 	world.realm.session.Operator = true
 	world.setPerson(withDomains(anaPerson(), nil, ""))
-	grant, err := world.logins().SignIn("ana", "right-password", "")
+	grant, err := world.logins().SignIn("ana", "right-password", "", false)
 	failOn(t, err)
 	claims := signedClaims(t, grant.AccessToken)
 	same(t, "domain", grant.DomainId, "*")
@@ -121,7 +121,7 @@ func TestSignInGivesAnOperatorWithoutDomainsTheWholeInstall(t *testing.T) {
 func TestSignInRefusesADisabledPerson(t *testing.T) {
 	world := newLoginWorld(t)
 	world.setPerson(withState(anaPerson(), "disabled"))
-	_, err := world.logins().SignIn("ana", "right-password", "")
+	_, err := world.logins().SignIn("ana", "right-password", "", false)
 	isError(t, err, oidc.SignInRefused{})
 	same(t, "signed out", world.realm.signedOut, []string{"refresh-1"})
 }
@@ -129,7 +129,7 @@ func TestSignInRefusesADisabledPerson(t *testing.T) {
 func TestSignInRefusesADeletedPerson(t *testing.T) {
 	world := newLoginWorld(t)
 	world.setPerson(withState(anaPerson(), "deleted"))
-	_, err := world.logins().SignIn("ana", "right-password", "")
+	_, err := world.logins().SignIn("ana", "right-password", "", false)
 	isError(t, err, oidc.SignInRefused{})
 	same(t, "signed out", world.realm.signedOut, []string{"refresh-1"})
 }
@@ -137,7 +137,7 @@ func TestSignInRefusesADeletedPerson(t *testing.T) {
 func TestSignInReturnsADirectoryFailure(t *testing.T) {
 	world := newLoginWorld(t)
 	world.people.err = oidc.SessionUnavailable{}
-	_, err := world.logins().SignIn("ana", "right-password", "")
+	_, err := world.logins().SignIn("ana", "right-password", "", false)
 	isError(t, err, oidc.SessionUnavailable{})
 	same(t, "signed out", world.realm.signedOut, []string{"refresh-1"})
 }
@@ -145,7 +145,7 @@ func TestSignInReturnsADirectoryFailure(t *testing.T) {
 func TestSignInReturnsASignerFailure(t *testing.T) {
 	world := newLoginWorld(t)
 	world.signer = brokenSigner()
-	_, err := world.logins().SignIn("ana", "right-password", "")
+	_, err := world.logins().SignIn("ana", "right-password", "", false)
 	isError(t, err, oidc.NotConfigured{})
 	same(t, "sealed", world.realm.sealed, []oidc.SessionContent(nil))
 }
@@ -153,14 +153,14 @@ func TestSignInReturnsASignerFailure(t *testing.T) {
 func TestSignInReturnsASealFailure(t *testing.T) {
 	world := newLoginWorld(t)
 	world.realm.sealErr = oidc.SessionUnavailable{}
-	_, err := world.logins().SignIn("ana", "right-password", "")
+	_, err := world.logins().SignIn("ana", "right-password", "", false)
 	isError(t, err, oidc.SessionUnavailable{})
 }
 
 func TestGrantNamesTheAdminDomain(t *testing.T) {
 	world := newLoginWorld(t)
 	world.realm.session.MustChangePassword = true
-	grant, err := world.logins().SignIn("ana@example.org", "right-password", "")
+	grant, err := world.logins().SignIn("ana@example.org", "right-password", "", false)
 	failOn(t, err)
 	same(t, "grant", grant, Grant{
 		PersonId:           "person-1",
@@ -175,7 +175,7 @@ func TestGrantNamesTheAdminDomain(t *testing.T) {
 		SessionKey:         "sealed-key",
 		MustChangePassword: true,
 	})
-	same(t, "sealed", world.lastSealed(t), oidc.SessionContent{Domain: "example.org", RefreshToken: "refresh-1", PersonId: "person-1"})
+	same(t, "sealed", world.lastSealed(t), oidc.SessionContent{Domain: "example.org", RefreshToken: "refresh-1", PersonId: "person-1", SignedInAt: signedInText()})
 }
 
 func TestGrantTokenNamesThePersonAndDomain(t *testing.T) {
@@ -194,7 +194,7 @@ func TestGrantTokenNamesThePersonAndDomain(t *testing.T) {
 func TestGrantAddsTheOperatorRoleFromTheRealm(t *testing.T) {
 	world := newLoginWorld(t)
 	world.realm.session.Operator = true
-	grant, err := world.logins().SignIn("ana@example.com", "right-password", "")
+	grant, err := world.logins().SignIn("ana@example.com", "right-password", "", false)
 	failOn(t, err)
 	same(t, "roles", grant.Roles, []string{"Member", "Operator"})
 	same(t, "token roles", signedClaims(t, grant.AccessToken).RealmRoles, []string{"mesail-member", "mesail-operator"})
@@ -205,7 +205,7 @@ func TestGrantFallsBackToTheRealmName(t *testing.T) {
 	person := anaPerson()
 	person.DisplayName = ""
 	world.setPerson(person)
-	grant, err := world.logins().SignIn("ana", "right-password", "")
+	grant, err := world.logins().SignIn("ana", "right-password", "", false)
 	failOn(t, err)
 	same(t, "name", grant.DisplayName, "Ana Realm")
 	same(t, "token name", signedClaims(t, grant.AccessToken).Name, "Ana Realm")
@@ -378,19 +378,19 @@ func TestSignOutRefusesABadKey(t *testing.T) {
 	same(t, "signed out", world.realm.signedOut, []string(nil))
 }
 
-func TestReopenedGrantsTheGivenDomain(t *testing.T) {
+func TestRestartedGrantsTheGivenDomain(t *testing.T) {
 	world := newLoginWorld(t)
-	grant, err := world.logins().Reopened(anaSession(), "example.com")
+	grant, err := world.logins().Restarted(anaSession(), "example.com", false)
 	failOn(t, err)
-	same(t, "events", world.events, []string{"person person-1", "seal"})
+	same(t, "events", world.events, []string{"sessions-ended person-1", "person person-1", "seal"})
 	same(t, "domain", grant.DomainId, "example.com")
 	same(t, "name", grant.DisplayName, "Ana Example")
 }
 
-func TestReopenedPassesADirectoryFailureThrough(t *testing.T) {
+func TestRestartedPassesADirectoryFailureThrough(t *testing.T) {
 	world := newLoginWorld(t)
 	world.people.err = oidc.SessionUnavailable{}
-	_, err := world.logins().Reopened(anaSession(), "example.com")
+	_, err := world.logins().Restarted(anaSession(), "example.com", false)
 	isError(t, err, oidc.SessionUnavailable{})
 	same(t, "sealed", world.realm.sealed, []oidc.SessionContent(nil))
 }

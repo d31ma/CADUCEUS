@@ -15,7 +15,10 @@
         }
       ],
       "email": "ana@example.com",
-      "emailVerified": true
+      "emailVerified": true,
+      "realmRoles": [
+        "default-roles-mesail"
+      ]
     },
     {
       "id": "3e5a11d0-0000-4000-8000-000000000002",
@@ -31,7 +34,10 @@
         }
       ],
       "email": "bo@example.com",
-      "emailVerified": true
+      "emailVerified": true,
+      "realmRoles": [
+        "default-roles-mesail"
+      ]
     },
     {
       "id": "3e5a11d0-0000-4000-8000-000000000003",
@@ -47,7 +53,10 @@
         }
       ],
       "email": "eve@example.org",
-      "emailVerified": true
+      "emailVerified": true,
+      "realmRoles": [
+        "default-roles-mesail"
+      ]
     },
     {
       "id": "3e5a11d0-0000-4000-8000-000000000004",
@@ -63,7 +72,10 @@
         }
       ],
       "email": "carol@partner.test",
-      "emailVerified": true
+      "emailVerified": true,
+      "realmRoles": [
+        "default-roles-mesail"
+      ]
     },
     {
       "id": "3e5a11d0-0000-4000-8000-000000000005",
@@ -79,7 +91,8 @@
         }
       ],
       "realmRoles": [
-        "mesail-operator"
+        "mesail-operator",
+        "default-roles-mesail"
       ]
     }
   ]

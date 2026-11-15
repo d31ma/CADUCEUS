@@ -36,7 +36,7 @@ func (factory SessionsFactory) realm(document string) RealmSessions {
 	signer := oidc.TokenSignerFactory{}.FromJson(document)
 	verifier := oidc.ExactIssuerVerifier{Issuer: settings.Issuer, Jwks: settings.Jwks, Keys: SignerKeys{Signer: signer}, Rules: oidc.MesailClaimRules{Audience: settings.Audience}}
 	people := DirectoryPeople{Client: transport.SingleUseTransport{}.Client(factory.timeout()), BaseUrl: factory.loginSettings(document).Directory.Url, Signer: signer}
-	logins := Logins{Realm: oidc.RealmSessionFactory{}.FromJson(document), People: people, Signer: signer}
+	logins := Logins{Realm: oidc.RealmSessionFactory{}.FromJson(document), People: people, Signer: signer, Now: time.Now}
 	return RealmSessions{Logins: logins, Account: oidc.RealmAccountFactory{}.FromJson(document), Gate: oidc.NewGate(verifier, time.Now)}
 }
 

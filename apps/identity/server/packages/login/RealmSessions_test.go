@@ -10,17 +10,22 @@ import (
 )
 
 type fakeKeycloak struct {
-	server  *httptest.Server
-	ended   []string
-	resets  int
-	updates int
+	server    *httptest.Server
+	ended     []string
+	resets    int
+	updates   int
+	loggedOut int
+	revoked   []string
+	scopes    []string
 }
 
 func newFakeKeycloak(t *testing.T) *fakeKeycloak {
 	t.Helper()
 	keycloak := &fakeKeycloak{}
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /token", keycloak.answer(`{"access_token":"keycloak-access","refresh_token":"refresh-new","expires_in":300}`))
+	mux.HandleFunc("POST /token", keycloak.token)
+	mux.HandleFunc("POST /admin/users/person-1/logout", keycloak.logout)
+	mux.HandleFunc("DELETE /admin/users/person-1/consents/{client}", keycloak.revoke)
 	mux.HandleFunc("PUT /admin/users/person-1/reset-password", keycloak.reset)
 	mux.HandleFunc("GET /admin/users/person-1", keycloak.answer(`{"id":"person-1","attributes":{"mesail.mustChangePassword":["true"]}}`))
 	mux.HandleFunc("PUT /admin/users/person-1", keycloak.update)
@@ -36,6 +41,22 @@ func (keycloak *fakeKeycloak) answer(body string) http.HandlerFunc {
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(body))
 	}
+}
+
+func (keycloak *fakeKeycloak) token(writer http.ResponseWriter, request *http.Request) {
+	_ = request.ParseForm()
+	keycloak.scopes = append(keycloak.scopes, request.PostForm.Get("scope"))
+	keycloak.answer(`{"access_token":"keycloak-access","refresh_token":"refresh-new","expires_in":300}`)(writer, request)
+}
+
+func (keycloak *fakeKeycloak) logout(writer http.ResponseWriter, request *http.Request) {
+	keycloak.loggedOut++
+	writer.WriteHeader(http.StatusNoContent)
+}
+
+func (keycloak *fakeKeycloak) revoke(writer http.ResponseWriter, request *http.Request) {
+	keycloak.revoked = append(keycloak.revoked, request.PathValue("client"))
+	writer.WriteHeader(http.StatusNoContent)
 }
 
 func (keycloak *fakeKeycloak) reset(writer http.ResponseWriter, request *http.Request) {
@@ -81,7 +102,7 @@ func (world *loginWorld) authorization(t *testing.T) string {
 
 func TestRealmSessionsSignsIn(t *testing.T) {
 	world := newLoginWorld(t)
-	grant, err := world.sessions(unavailableAccount()).SignIn("ana", "right-password", "")
+	grant, err := world.sessions(unavailableAccount()).SignIn("ana", "right-password", "", false)
 	failOn(t, err)
 	same(t, "domain", grant.DomainId, "example.org")
 }
@@ -119,24 +140,24 @@ func TestRealmSessionsIdentifiesTheCaller(t *testing.T) {
 func TestRealmSessionsChangesThePassword(t *testing.T) {
 	world := newLoginWorld(t)
 	keycloak := newFakeKeycloak(t)
-	grant, err := world.sessions(keycloak.account()).ChangePassword(world.authorization(t), "right-password", "a-new-long-password", "")
+	grant, err := world.sessions(keycloak.account()).ChangePassword(world.authorization(t), PasswordChange{CurrentPassword: "right-password", NewPassword: "a-new-long-password"})
 	failOn(t, err)
 	same(t, "domain", grant.DomainId, "example.com")
 	same(t, "person", grant.PersonId, "person-1")
-	same(t, "sealed", world.lastSealed(t), oidc.SessionContent{Domain: "example.com", RefreshToken: "refresh-new", PersonId: "person-1"})
+	same(t, "sealed", world.lastSealed(t), oidc.SessionContent{Domain: "example.com", RefreshToken: "refresh-new", PersonId: "person-1", SignedInAt: signedInText()})
 	same(t, "resets", keycloak.resets, 1)
 	same(t, "ended", keycloak.ended, []string{"session-2"})
 }
 
 func TestRealmSessionsChangePasswordRefusesABadHeader(t *testing.T) {
 	world := newLoginWorld(t)
-	_, err := world.sessions(unavailableAccount()).ChangePassword("Basic abc", "right-password", "a-new-long-password", "")
+	_, err := world.sessions(unavailableAccount()).ChangePassword("Basic abc", PasswordChange{CurrentPassword: "right-password", NewPassword: "a-new-long-password"})
 	isError(t, err, oidc.MissingBearerToken{})
 }
 
 func TestRealmSessionsChangePasswordPassesAnAccountFailureThrough(t *testing.T) {
 	world := newLoginWorld(t)
-	_, err := world.sessions(unavailableAccount()).ChangePassword(world.authorization(t), "right-password", "a-new-long-password", "")
+	_, err := world.sessions(unavailableAccount()).ChangePassword(world.authorization(t), PasswordChange{CurrentPassword: "right-password", NewPassword: "a-new-long-password"})
 	isError(t, err, oidc.SessionUnavailable{})
 	same(t, "sealed", world.realm.sealed, []oidc.SessionContent(nil))
 }

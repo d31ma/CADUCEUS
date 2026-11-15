@@ -15,21 +15,21 @@ type KeycloakClient struct {
 	ClientSecret string
 }
 
-func (keycloak KeycloakClient) SignIn(username string, password string, oneTimeCode string) (TokenGrant, error) {
+func (keycloak KeycloakClient) SignIn(username string, password string, oneTimeCode string, kept bool) (TokenGrant, error) {
 	form := keycloak.form("password")
 	form.Set("username", username)
 	form.Set("password", password)
 	form.Set("totp", oneTimeCode)
-	form.Set("scope", "openid")
+	form.Set("scope", SignInScope{}.For(kept))
 	return keycloak.grant(form)
 }
 
-func (keycloak KeycloakClient) PasskeySignIn(credentialJson string, challenge string, origins string) (TokenGrant, error) {
+func (keycloak KeycloakClient) PasskeySignIn(credentialJson string, challenge string, origins string, kept bool) (TokenGrant, error) {
 	form := keycloak.form("password")
 	form.Set("passkey_assertion", credentialJson)
 	form.Set("passkey_challenge", challenge)
 	form.Set("passkey_origins", origins)
-	form.Set("scope", "openid")
+	form.Set("scope", SignInScope{}.For(kept))
 	return keycloak.grant(form)
 }
 

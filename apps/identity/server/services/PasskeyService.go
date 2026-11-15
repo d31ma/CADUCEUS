@@ -17,7 +17,7 @@ func (service *PasskeyService) Challenge() (PasskeyChallenge, error) {
 }
 
 func (service *PasskeyService) SignIn(request PasskeySignIn) (Session, error) {
-	grant, failed := login.SessionsFactory{}.Configured().PasskeySignIn(request.ChallengeKey, request.CredentialJson, request.DomainId)
+	grant, failed := login.SessionsFactory{}.Configured().PasskeySignIn(request.ChallengeKey, request.CredentialJson, request.DomainId, request.KeepSignedIn)
 	return service.grants.Session(grant), service.failures.Failure(failed)
 }
 
@@ -42,7 +42,7 @@ func (service *PasskeyService) Rename(authorization string, passkeyId string, re
 }
 
 func (service *PasskeyService) Remove(authorization string, passkeyId string, request PasskeyRemove) (Session, error) {
-	removal := login.PasskeyRemoval{CurrentPassword: request.CurrentPassword, OneTimeCode: request.OneTimeCode}
+	removal := login.PasskeyRemoval{CurrentPassword: request.CurrentPassword, OneTimeCode: request.OneTimeCode, Kept: request.KeepSignedIn}
 	grant, failed := login.SessionsFactory{}.Configured().RemovePasskey(authorization, passkeyId, removal)
 	return service.grants.Session(grant), service.failures.Failure(failed)
 }

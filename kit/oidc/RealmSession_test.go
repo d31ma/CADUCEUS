@@ -35,6 +35,10 @@ type mesailRealm struct {
 	passkeys  []PasskeyRecord
 	added     []PasskeyAddRequest
 	grants    []url.Values
+	scopes    []string
+	loggedOut int
+	revoked   []string
+	consents  bool
 }
 
 func newMesailRealm(t *testing.T) *mesailRealm {
@@ -46,6 +50,8 @@ func newMesailRealm(t *testing.T) *mesailRealm {
 	admin.HandleFunc("PUT /admin/realms/mesail/users/{id}/reset-password", realm.resetPassword)
 	admin.HandleFunc("GET /admin/realms/mesail/users/person-1/sessions", realm.userSessions)
 	admin.HandleFunc("DELETE /admin/realms/mesail/sessions/{id}", realm.endSession)
+	admin.HandleFunc("POST /admin/realms/mesail/users/person-1/logout", realm.logoutEverywhere)
+	admin.HandleFunc("DELETE /admin/realms/mesail/users/person-1/consents/{client}", realm.revokeConsent)
 	admin.HandleFunc("GET /admin/realms/mesail/users/person-1/credentials", realm.credentials)
 	admin.HandleFunc("DELETE /admin/realms/mesail/users/person-1/credentials/{id}", realm.deleteCredential)
 	admin.HandleFunc("GET /admin/realms/mesail/users/person-1", realm.readUser)
@@ -164,6 +170,7 @@ func (realm *mesailRealm) token(writer http.ResponseWriter, request *http.Reques
 
 func (realm *mesailRealm) passwordGrant(writer http.ResponseWriter, form url.Values) {
 	realm.usernames = append(realm.usernames, form.Get("username"))
+	realm.scopes = append(realm.scopes, form.Get("scope"))
 	codeOk := realm.otpSecret == "" || (Totp{}).Matches(realm.otpSecret, form.Get("totp"), time.Now())
 	switch {
 	case form.Has("passkey_assertion"):
@@ -227,6 +234,20 @@ func (realm *mesailRealm) userSessions(writer http.ResponseWriter, request *http
 
 func (realm *mesailRealm) endSession(writer http.ResponseWriter, request *http.Request) {
 	realm.ended = append(realm.ended, request.PathValue("id"))
+	writer.WriteHeader(http.StatusNoContent)
+}
+
+func (realm *mesailRealm) logoutEverywhere(writer http.ResponseWriter, request *http.Request) {
+	realm.loggedOut++
+	writer.WriteHeader(http.StatusNoContent)
+}
+
+func (realm *mesailRealm) revokeConsent(writer http.ResponseWriter, request *http.Request) {
+	realm.revoked = append(realm.revoked, request.PathValue("client"))
+	if !realm.consents {
+		writer.WriteHeader(http.StatusNotFound)
+		return
+	}
 	writer.WriteHeader(http.StatusNoContent)
 }
 
@@ -294,7 +315,7 @@ func realmList(t *testing.T, name string, got []string, want []string) {
 
 func realmUnavailable(t *testing.T, session RealmSession) {
 	t.Helper()
-	_, signInErr := session.SignIn("ana", "right-password", "")
+	_, signInErr := session.SignIn("ana", "right-password", "", false)
 	_, refreshErr := session.Refresh("refresh-1")
 	signOutErr := session.SignOut("refresh-1")
 	_, sealErr := session.Seal(SessionContent{Domain: "mesail", RefreshToken: "refresh-1"})
@@ -306,7 +327,7 @@ func realmUnavailable(t *testing.T, session RealmSession) {
 
 func TestRealmSessionSignsInByUsername(t *testing.T) {
 	realm := newMesailRealm(t)
-	opened, err := realm.session(t).SignIn("ana", "right-password", "")
+	opened, err := realm.session(t).SignIn("ana", "right-password", "", false)
 	realmIs(t, err, nil)
 	realmEqual(t, "session", opened, KeycloakSession{PersonId: "person-1", SessionId: "session-a", Username: "ana", DisplayName: "Ana Example", RefreshToken: "refresh-1"})
 	realmList(t, "usernames", realm.usernames, []string{"ana"})
@@ -316,21 +337,21 @@ func TestRealmSessionReadsTheOperatorRoleAndThePasswordFlag(t *testing.T) {
 	realm := newMesailRealm(t)
 	realm.change("realm_access", map[string]any{"roles": []string{"mesail-member", "mesail-operator"}})
 	realm.change("mesail_must_change_password", true)
-	opened, err := realm.session(t).SignIn("ana", "right-password", "")
+	opened, err := realm.session(t).SignIn("ana", "right-password", "", false)
 	realmIs(t, err, nil)
 	realmEqual(t, "session", opened, KeycloakSession{PersonId: "person-1", SessionId: "session-a", Username: "ana", DisplayName: "Ana Example", Operator: true, MustChangePassword: true, RefreshToken: "refresh-1"})
 }
 
 func TestRealmSessionRefusesAWrongPassword(t *testing.T) {
 	realm := newMesailRealm(t)
-	opened, err := realm.session(t).SignIn("ana", "wrong", "")
+	opened, err := realm.session(t).SignIn("ana", "wrong", "", false)
 	realmIs(t, err, SignInRefused{})
 	realmEqual(t, "session", opened, KeycloakSession{})
 }
 
 func TestRealmSessionReportsTheLockedAccount(t *testing.T) {
 	realm := newMesailRealm(t)
-	_, err := realm.session(t).SignIn("ana", "locked", "")
+	_, err := realm.session(t).SignIn("ana", "locked", "", false)
 	realmIs(t, err, AccountLocked{})
 }
 
@@ -338,21 +359,21 @@ func TestRealmSessionIsUnavailableWhenKeycloakIsDown(t *testing.T) {
 	realm := newMesailRealm(t)
 	session := realm.session(t)
 	realm.server.Close()
-	_, err := session.SignIn("ana", "right-password", "")
+	_, err := session.SignIn("ana", "right-password", "", false)
 	realmIs(t, err, SessionUnavailable{})
 }
 
 func TestRealmSessionRefusesATokenForAnotherAudience(t *testing.T) {
 	realm := newMesailRealm(t)
 	realm.change("aud", []string{"mesail-api"})
-	_, err := realm.session(t).SignIn("ana", "right-password", "")
+	_, err := realm.session(t).SignIn("ana", "right-password", "", false)
 	realmIs(t, err, SignInRefused{})
 }
 
 func TestRealmSessionRefusesATokenFromAnotherIssuer(t *testing.T) {
 	realm := newMesailRealm(t)
 	realm.change("iss", "https://id.mesail.test/realms/mesail")
-	_, err := realm.session(t).SignIn("ana", "right-password", "")
+	_, err := realm.session(t).SignIn("ana", "right-password", "", false)
 	realmIs(t, err, SignInRefused{})
 }
 
@@ -410,7 +431,7 @@ func TestRealmSessionFactoryReadsTheEnvironment(t *testing.T) {
 	t.Setenv("YON_APPLICATION_JSON", realm.document())
 	session := RealmSessionFactory{}.Configured()
 	session.Sessions.Client = realm.server.Client()
-	opened, err := session.SignIn("ana", "right-password", "")
+	opened, err := session.SignIn("ana", "right-password", "", false)
 	realmIs(t, err, nil)
 	realmEqual(t, "person", opened.PersonId, "person-1")
 }

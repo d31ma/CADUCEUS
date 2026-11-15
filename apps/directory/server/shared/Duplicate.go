@@ -4,6 +4,10 @@ type Duplicate struct {
 
 func (Duplicate) UsernameTaken() *Duplicate { return Duplicate{}.taken(1030) }
 
+func (Duplicate) DeviceInUse() *Duplicate {
+	return Duplicate{}.takenWith(1057, "this device id is already in use")
+}
+
 func (Duplicate) DomainHosted(domainId string) *Duplicate {
 	return Duplicate{}.takenWith(1012, domainId+" is already hosted")
 }

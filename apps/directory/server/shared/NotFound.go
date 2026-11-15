@@ -13,6 +13,7 @@ func (NotFound) SeedTurnedOff() *NotFound    { return NotFound{}.missing(1040) }
 func (NotFound) DeadEvent() *NotFound        { return NotFound{}.missing(1045) }
 func (NotFound) OutboxCollection() *NotFound { return NotFound{}.missing(1046) }
 func (NotFound) OutboxDocument() *NotFound   { return NotFound{}.missing(1047) }
+func (NotFound) Device() *NotFound           { return NotFound{}.missing(1058) }
 
 func (NotFound) Kit(text string, number int) *NotFound {
 	return &NotFound{ErrorCase{number, "not_found", "", text}}
@@ -47,5 +48,6 @@ func (NotFound) texts() map[int]string {
 		1045: "no such dead event",
 		1046: "no such outbox collection",
 		1047: "no such outbox document",
+		1058: "no such device",
 	}
 }

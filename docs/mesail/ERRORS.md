@@ -211,6 +211,17 @@ keeps its row, marked "retired".
 | MS1046 | directory | 404 | `not_found` | no such outbox collection | the outbox store names a collection it does not know |
 | MS1047 | directory | 404 | `not_found` | no such outbox document | the outbox store cannot find its document |
 | MS1048 | directory | 503 | `unavailable` | the directory store is not available | the directory store (FYLO) failed |
+| MS1049 | directory | 400 | `invalid_request` | deviceId must be a UUID | add a device whose id is not a lower-case UUID (field `deviceId`) |
+| MS1050 | directory | 400 | `invalid_request` | name must be 1 to 64 characters | add a device with an empty or too long name (field `name`) |
+| MS1051 | directory | 400 | `invalid_request` | identityKey must be a base64url Ed25519 public key of 32 bytes | add a device with a bad identity key (field `identityKey`) |
+| MS1052 | directory | 400 | `invalid_request` | agreementKey must be a base64url X25519 public key of 32 bytes | add a device with a bad agreement key (field `agreementKey`) |
+| MS1053 | directory | 400 | `invalid_request` | backupKey must be a base64url Ed25519 public key of 32 bytes | add a device with a bad backup key (field `backupKey`) |
+| MS1054 | directory | 400 | `invalid_request` | personIds must name 1 to 50 people | list devices of no person or of more than 50 people (field `personIds`) |
+| MS1055 | directory | 400 | `invalid_request` | deviceIds must name 1 to 200 devices | ask for the owners of no device or of more than 200 devices (field `deviceIds`) |
+| MS1056 | directory | 403 | `forbidden` | a new device must be signed by one of your devices or by your backup key | add a later device with no signature, a wrong one, or a signer that is not one of the person's devices or backup key |
+| MS1057 | directory | 409 | `duplicate` | this device id is already in use | add a device whose id is already listed (for anyone) |
+| MS1058 | directory | 404 | `not_found` | no such device | remove a device that does not exist or belongs to another person |
+| MS1059 | directory | 400 | `invalid_request` | a device added with the backup key cannot change the backup key | add a device signed by `backup` that also sends `backupKey` (field `backupKey`) |
 | MS1500 | messaging | 500 | `unavailable` | Something went wrong. | an unexpected error in `messaging` |
 | MS1501 | messaging | 401 | `unauthenticated` | the access token was refused | a messaging route could not verify the caller's token |
 | MS1502 | messaging | 403 | `forbidden` | only members of a domain use its conversations | a chat route called without the Member or DomainAdmin role |

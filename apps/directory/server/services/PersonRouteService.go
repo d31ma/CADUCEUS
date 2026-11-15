@@ -13,6 +13,8 @@ type PersonRouteService struct {
 	people *PersonService
 	// @Needs
 	seeds *PersonSeedService
+	// @Needs
+	devices *DeviceService
 }
 
 func (service *PersonRouteService) Search(request *http.Request) (PersonPage, error) {
@@ -33,7 +35,8 @@ func (service *PersonRouteService) Seed(authorization string, seed PersonSeed) (
 
 func (service *PersonRouteService) Change(authorization string, personId string, change PersonChange) (PersonSummary, error) {
 	caller, refused := service.callers.Caller(authorization)
-	return service.changeUnless(refused, caller, personId, change)
+	summary, failure := service.changeUnless(refused, caller, personId, change)
+	return summary, Steps{}.Unless(failure, func() error { return service.devicesAfter(summary) })
 }
 
 func (service *PersonRouteService) ResetPassword(authorization string, personId string, reset PasswordReset) error {
@@ -58,7 +61,8 @@ func (service *PersonRouteService) EndSessions(authorization string, personId st
 
 func (service *PersonRouteService) Delete(authorization string, personId string) error {
 	caller, refused := service.callers.Caller(authorization)
-	return service.deleteUnless(cmp.Or(refused, service.callers.Operator(caller)), personId)
+	failure := service.deleteUnless(cmp.Or(refused, service.callers.Operator(caller)), personId)
+	return Steps{}.Unless(failure, func() error { return service.devices.Forget(personId) })
 }
 
 func (service *PersonRouteService) searchUnless(refused error, query MemberQuery) (PersonPage, error) {
@@ -122,6 +126,17 @@ func (service *PersonRouteService) deleteUnless(refused error, personId string) 
 		return refused
 	}
 	return service.people.Delete(personId)
+}
+
+func (service *PersonRouteService) devicesAfter(summary PersonSummary) error {
+	if summary.State != service.disabled() {
+		return nil
+	}
+	return service.devices.RemoveAll(summary.PersonId)
+}
+
+func (service *PersonRouteService) disabled() string {
+	return "disabled"
 }
 
 func (service *PersonRouteService) emptyRecord() PersonRecord {

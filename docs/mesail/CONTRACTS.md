@@ -529,23 +529,56 @@ person is a member of the caller's token's domain.
 
 | Route | Rule | Request | Response |
 | --- | --- | --- | --- |
-| `POST /api/v1/directory/devices` | SignedIn | `DeviceAdd{deviceId, name, identityKey, agreementKey, signerDeviceId?, signature?}` | `201 Device`; `400 invalid_request`; `403 forbidden` when the person already has a device and the signature does not verify; `409 duplicate` |
-| `GET /api/v1/directory/devices?personIds=` | SignedIn | - | `200 []Device` of those people who are members of the token's domain (at most 50 people per call) |
-| `DELETE /api/v1/directory/devices/{deviceId}` | SignedIn (the device's person) | - | `204`; `404 not_found` |
-| `POST /api/v1/directory/devices/owners` | Allow(Service) | `DeviceOwnersQuery{domainId, deviceIds[]}` (at most 200) | `200 DeviceOwners{owners: {deviceId: personId}}`, only devices of members of that domain; others are left out |
+| `POST /api/v1/directory/devices` | SignedIn | `DeviceAdd{deviceId, name, identityKey, agreementKey, backupKey?, signerDeviceId?, signature?}` | `201 Device`; `400 invalid_request` (MS1049-MS1053; MS1059 for `backupKey` on an add signed by `backup`); `403 forbidden` when the person already has a device and the signature does not verify (MS1056); `409 duplicate` (MS1057) |
+| `GET /api/v1/directory/devices?personIds=` | SignedIn | - | `200 []Device` of those people who are members of the token's domain (at most 50 people per call); `400 invalid_request` (MS1054) |
+| `DELETE /api/v1/directory/devices/{deviceId}` | SignedIn (the device's person) | - | `204`; `404 not_found` (MS1058) |
+| `POST /api/v1/directory/devices/owners` | Allow(Service) | `DeviceOwnersQuery{domainId, deviceIds[]}` (at most 200) | `200 DeviceOwners{owners: {deviceId: personId}}`, only devices of members of that domain; others are left out; `400 invalid_request` (MS1055) |
 
-- `deviceId`: a client-made UUID. `identityKey` (Ed25519) and
-  `agreementKey` (X25519): base64url public keys. `name` (1 to 64
-  characters) is shown only to the device's own person; others see
+- `deviceId`: a client-made UUID in lower case (MS1049 otherwise).
+  `identityKey` (Ed25519), `agreementKey` (X25519) and `backupKey`
+  (Ed25519): 32-byte public keys in base64url without padding. `name`
+  (1 to 64 characters after trimming) is shown only to the device's own
+  person (`Device.name`); others see
   `Device{deviceId, personId, identityKey, agreementKey, addedAt}`.
+  `addedAt` is RFC 3339 in UTC with fractions. `personIds` is a
+  comma-separated list.
 - The first device of a person needs no signature. Every later device is
-  added only with `signature` (Ed25519 over `deviceId`, `identityKey` and
-  `agreementKey`) by `signerDeviceId`, one of the person's devices, or by
-  the backup's signing key after a restore (`signerDeviceId: "backup"`,
-  the backup key listed at the first device; ADR 0011 "Linking").
+  added only with `signature` (Ed25519, base64url without padding) by
+  `signerDeviceId`, one of the person's devices, or by the backup key
+  after a restore (`signerDeviceId: "backup"`; ADR 0011 "Linking").
+- **Signed bytes (built by G1; confirmed by mesail-arch 2026-11-14):**
+  the UTF-8 text `mesail-device-v1` + LF + `deviceId` + LF +
+  `identityKey` + LF + `agreementKey` + LF + `backupKey` (`""` when
+  absent), with no LF at the end. `directory` verifies over the strings
+  exactly as received, with no case change or other normalisation.
+  `signature` is the base64url text of the 64-byte Ed25519 signature;
+  any other length, or a signature that does not verify, gets
+  `403 forbidden` (MS1056).
+- **The backup key (built by G1; confirmed by mesail-arch 2026-11-14):**
+  1. A "trusted add" is the person's first device (no devices stored
+     now) or an add signed by one of the person's stored devices. Only a
+     trusted add may set or replace `backupKey`. A trusted add without
+     `backupKey` keeps the stored one; it does not clear it.
+  2. An add with `signerDeviceId: "backup"` is checked against the
+     stored `backupKey`; with none stored it gets `403 forbidden`
+     (MS1056). Such an add never changes `backupKey`: one that sends
+     `backupKey` gets `400 invalid_request` (MS1059).
+  3. `backupKey` stays when the person's device count goes to zero (a
+     person who lost every device can still restore). Account disable
+     (AC-ID-13) removes the devices and keeps `backupKey`, because the
+     person may come back; account delete removes both. `Device`
+     answers never include `backupKey`.
+- No outbox event is sent for a device add or removal. A removed device
+  stops working at the next `devices/owners` call (`devicebox`'s box
+  check answers 404); the person's other devices learn about it from
+  `GET devices` and remove it from their groups (G7).
 - An admin's account actions (AC-ID-13: disable, delete) remove the
   person's devices; removing a member from a domain hides the devices
-  there.
+  there. A disabled or deleted person is never an owner in
+  `devices/owners`, and their devices are never listed.
+- When the person has no device left (all removed, or removed by a
+  disable), the next device is a first device again and needs no
+  signature.
 - `devicebox` uses `devices/owners` (its `DeviceDirectory.Owners` port);
   `realtime` uses it for `signal` and calls.
 

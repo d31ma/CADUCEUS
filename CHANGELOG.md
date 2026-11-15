@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added devices and their public keys to `directory` (slice G1, ADR 0011):
+  `POST/GET /api/v1/directory/devices`, `DELETE .../devices/{deviceId}`
+  and `POST .../devices/owners` (for `devicebox` and `realtime`). A
+  person's first device needs no signature; every later device must be
+  signed by one of their devices or by their backup key. Disabling or
+  deleting a person removes their devices. New errors MS1049-MS1059.
 - Added sync to `messaging` (slice O1, ADR 0006): the outbox relay writes
   one change row per `message.created`, `message.edited`,
   `message.deleted` and `reaction.changed` (and for the thread root of a

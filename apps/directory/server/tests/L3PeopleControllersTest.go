@@ -199,7 +199,12 @@ func (test *L3PeopleControllersTest) TestPeopleRoutesRefuseARequestWithoutAValid
 }
 
 func (test *L3PeopleControllersTest) peopleController() *PeopleController {
-	return &PeopleController{people: &PersonRouteService{callers: &CallerService{}, people: test.personService()}}
+	return &PeopleController{people: &PersonRouteService{callers: &CallerService{}, people: test.personService(), devices: test.deviceService()}}
+}
+
+func (test *L3PeopleControllersTest) deviceService() *DeviceService {
+	names := &CollectionNamesService{}
+	return &DeviceService{devices: &DeviceStorageService{documents: test.documents(), names: names}, backupKeys: &BackupKeyStorageService{documents: test.documents(), names: names}, people: test.people()}
 }
 
 func (test *L3PeopleControllersTest) request(target string, authorization string) *http.Request {

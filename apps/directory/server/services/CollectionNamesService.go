@@ -12,6 +12,14 @@ func (names *CollectionNamesService) People() string {
 	return "people"
 }
 
+func (names *CollectionNamesService) Devices() string {
+	return "devices"
+}
+
+func (names *CollectionNamesService) BackupKeys() string {
+	return "device-backup-keys"
+}
+
 func (names *CollectionNamesService) LocalParts() string {
 	return "local-parts"
 }

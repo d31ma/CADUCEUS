@@ -15,6 +15,19 @@ func (request InvalidRequest) NoNewPassword() *InvalidRequest        { return re
 func (request InvalidRequest) NoPersonId() *InvalidRequest           { return request.invalid(1041) }
 func (request InvalidRequest) NoDisplayName() *InvalidRequest        { return request.invalid(1042) }
 func (request InvalidRequest) TooManyMemberships() *InvalidRequest   { return request.invalid(1043) }
+func (request InvalidRequest) BackupKeyLocked() *InvalidRequest      { return request.invalid(1059) }
+
+func (request InvalidRequest) BadDevice(field string) *InvalidRequest {
+	return map[string]*InvalidRequest{
+		"deviceId":     request.invalid(1049),
+		"name":         request.invalid(1050),
+		"identityKey":  request.invalid(1051),
+		"agreementKey": request.invalid(1052),
+		"backupKey":    request.invalid(1053),
+		"personIds":    request.invalid(1054),
+		"deviceIds":    request.invalid(1055),
+	}[field]
+}
 
 func (InvalidRequest) BadDomainName(reason string, number int) *InvalidRequest {
 	return InvalidRequest{}.invalidWith(number, "name", reason)
@@ -56,5 +69,13 @@ func (InvalidRequest) fieldsAndTexts() map[int][2]string {
 		1041: {"personId", "a person id is required"},
 		1042: {"displayName", "a display name is required"},
 		1043: {"memberships", "a seed call adds at most 2 domains; seed the person again for more"},
+		1049: {"deviceId", "deviceId must be a UUID"},
+		1050: {"name", "name must be 1 to 64 characters"},
+		1051: {"identityKey", "identityKey must be a base64url Ed25519 public key of 32 bytes"},
+		1052: {"agreementKey", "agreementKey must be a base64url X25519 public key of 32 bytes"},
+		1053: {"backupKey", "backupKey must be a base64url Ed25519 public key of 32 bytes"},
+		1054: {"personIds", "personIds must name 1 to 50 people"},
+		1055: {"deviceIds", "deviceIds must name 1 to 200 devices"},
+		1059: {"backupKey", "a device added with the backup key cannot change the backup key"},
 	}
 }

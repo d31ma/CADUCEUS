@@ -17,5 +17,10 @@ func (Forbidden) texts() map[int]string {
 		1004: "you are not a member of this domain",
 		1005: "this domain is not hosted here",
 		1006: "only an Operator or an admin of every domain of this person may change the account",
+		1056: "a new device must be signed by one of your devices or by your backup key",
 	}
+}
+
+func (Forbidden) DeviceNotSigned() *Forbidden {
+	return Forbidden{}.refused(1056)
 }

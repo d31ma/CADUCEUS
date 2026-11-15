@@ -492,7 +492,7 @@ email's content because `messaging` must not call `mail-in` back while
 
 | Event | Producer | Consumers |
 | --- | --- | --- |
-| `member.upserted` (also for a removed member: `state: removed`) | directory | channels, messaging, notify, realtime, search |
+| `member.upserted` (also for a removed member: `state: removed`) | directory | attachments (G4: deletes a removed member's chat backup), channels, messaging, notify, realtime, search |
 | `channel.created`, `channel.member.added`, `channel.member.removed`, `channel.archived` | channels | messaging, realtime, search |
 | `message.created`, `message.edited`, `message.deleted` | messaging | realtime, notify, search |
 | `reaction.changed`, `read-position.moved` | messaging | realtime, notify |

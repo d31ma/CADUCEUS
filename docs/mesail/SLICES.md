@@ -2253,8 +2253,11 @@ section 8.)
 - **Builds:** a store for each person's encrypted backup blobs (upload,
   download, replace, delete; size limits), unreadable by the server, as
   CONTRACTS "Encrypted chat backups" says (ready 2026-11-14); and the
-  removal on `member.upserted` `removed` (attachments subscribes to it in
-  `directory`'s subscriber list).
+  removal on `member.upserted` `removed` (`attachments` added as a
+  consumer of `member.upserted` in `kit/events` `Catalog`, synced to every
+  app with `scripts/kit-sync.sh`, approved 2026-11-14; without it
+  `directory`'s outbox filters the event out; E12 also changes
+  `kit/events`, so whichever merges second runs kit-sync again).
 - **Owns, for this change only:** `apps/attachments/**` (backup routes,
   services, the `backups` collection, tests, its ERRORS rows), the
   `attachments` entry in `directory`'s subscribers, and a blackbox test

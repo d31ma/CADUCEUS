@@ -32,7 +32,7 @@ func (test *MessagingServiceTest) TestMoveReadPositionClearsUnread() {
 func (test *MessagingServiceTest) TestEditAndDelete() {
 	world := MessagingTestSetup{}.World()
 	sent := world.ChatTo("bo", "c1", "helo")
-	view, editError := world.Service.Edit(world.Member("ana"), sent.Message.MessageId, "hello")
+	view, editError := world.Service.Edit(world.Member("ana"), sent.Message.MessageId, "hello", 0)
 	deleteError := world.Service.Delete(world.Member("ana"), sent.Message.MessageId)
 	Assert.IsTrue(editError == nil && deleteError == nil, "a change failed")
 	Assert.Equals("hello", view.Message.Body)

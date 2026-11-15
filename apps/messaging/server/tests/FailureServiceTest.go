@@ -47,7 +47,7 @@ func (test *FailureServiceTest) TestCoreFailuresKeepTheirNumbers() {
 	service := &FailureService{}
 	Assert.Equals(&Forbidden{Message: "only the author can change this message", ErrorNumber: 1537}, service.Known(core.Forbidden{}.NotTheAuthor()))
 	Assert.Equals(&InvalidRequest{Message: "an email needs a subject", Field: "subject", ErrorNumber: 1521}, service.Known(core.InvalidRequest{}.MissingSubject()))
-	Assert.Equals(&Conflict{Message: "the channel is archived and read-only", ErrorNumber: 1546}, service.Known(core.Conflict{}.ChannelArchived()))
+	Assert.Equals(&Conflict{Code: "conflict", Message: "the channel is archived and read-only", ErrorNumber: 1546}, service.Known(core.Conflict{}.ChannelArchived()))
 	Assert.Equals(&ChangedRecipients{Message: "the recipients changed", Addresses: []string{"a"}, ErrorNumber: 1547}, service.Known(core.RecipientsChanged{}.Of([]string{"a"})))
 	Assert.Equals(&ChatNotAllowed{Message: "chat is not allowed for a", Address: "a", ErrorNumber: 1550}, service.Known(core.ChatNotAllowed{}.For("a")))
 	Assert.Equals(&TooLarge{Message: "the message is too large to store; send a shorter body", ErrorNumber: 1548}, service.Known(core.TooLarge{}.StoredMessage()))

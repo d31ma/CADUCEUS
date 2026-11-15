@@ -42,12 +42,18 @@ func (views conversationViews) lookup(domainId string, conversationId string) (c
 
 func (views conversationViews) view(caller oidc.Caller, participant core.Participant, conversation core.Conversation, mentions []core.Mention) (core.ConversationView, error) {
 	title, err := views.titles.of(caller, conversation)
+	if err != nil {
+		return core.ConversationView{}, err
+	}
+	head, err := views.storage.changeHead(conversation.DomainId, core.ConversationIds{}.Wire(conversation))
 	return core.ConversationView{
 		Conversation:   conversation,
 		ConversationId: core.ConversationIds{}.Wire(conversation),
 		Title:          title,
 		UnreadCount:    max(0, conversation.MessageCount-participant.ReadSequence),
 		MentionCount:   views.mentionCount(mentions, participant),
+		LastChangeId:   head.LastChangeId,
+		ReadMessageId:  participant.ReadMessageId,
 	}, err
 }
 

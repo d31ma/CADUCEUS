@@ -6,4 +6,6 @@ type ConversationView struct {
 	Title          string
 	UnreadCount    int
 	MentionCount   int
+	LastChangeId   string
+	ReadMessageId  string
 }

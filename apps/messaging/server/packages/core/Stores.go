@@ -9,4 +9,6 @@ type Stores struct {
 	Mentions       MentionStore
 	Members        MemberStore
 	AttachmentUses AttachmentUseStore
+	Changes        ChangeStore
+	ChangeHeads    ChangeHeadStore
 }

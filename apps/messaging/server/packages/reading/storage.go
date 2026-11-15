@@ -51,6 +51,11 @@ func (storage storage) attachmentUses(domainId string, attachmentId string) ([]c
 	return rows, storage.wrapped(err)
 }
 
+func (storage storage) changeHead(domainId string, conversationId string) (core.ChangeHead, error) {
+	head, _, err := storage.stores.ChangeHeads.Find(domainId, conversationId)
+	return head, storage.wrapped(err)
+}
+
 func (storage storage) saveMessage(message core.Message) error {
 	return storage.wrapped(storage.stores.Messages.Save(message))
 }

@@ -42,6 +42,10 @@ func (reactions Reactions) change(caller oidc.Caller, request reactionRequest) e
 	if err != nil {
 		return err
 	}
+	err = changeRules{}.present(message)
+	if err != nil {
+		return err
+	}
 	row, found, err := reactions.current(reactions.fresh(caller, message, request.reaction))
 	if err != nil {
 		return err

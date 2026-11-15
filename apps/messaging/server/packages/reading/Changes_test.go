@@ -14,7 +14,7 @@ import (
 func TestTheAuthorEditsAMessage(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
-	view, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text")
+	view, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text", 0)
 	wantNoError(t, err)
 	stored := s.stored(message)
 	got := fmt.Sprint(view.Message.Body, view.Blocks[0].Spans[0].Text, stored.Body, stored.EditedAt, stored.BlocksJson != "")
@@ -26,7 +26,7 @@ func TestTheAuthorEditsAMessage(t *testing.T) {
 func TestAnEditStagesMessageEdited(t *testing.T) {
 	s := newScene(t)
 	conversation, message := s.chat()
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text", 0)
 	wantNoError(t, err)
 	envelopes := staged(t, s.stored(message).OutboxFields, events.Types{}.MessageEdited())
 	payload := events.MessageEdited{}
@@ -40,7 +40,7 @@ func TestAnEditStagesMessageEdited(t *testing.T) {
 func TestOnlyTheAuthorEdits(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("bo"), msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("bo"), msgId(message), "new text", 0)
 	wantError[*core.Forbidden](t, err)
 }
 
@@ -49,28 +49,28 @@ func TestADeletedMessageCannotBeEdited(t *testing.T) {
 	_, message := s.chat()
 	message.DeletedAt = "2026-11-10T11:00:00Z"
 	s.world.Stores.Messages.Save(message)
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text", 0)
 	wantError[*core.Conflict](t, err)
 }
 
 func TestAnEditNeedsABody(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "  \n ")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "  \n ", 0)
 	wantInvalid(t, err, "body")
 }
 
 func TestAnEditBodyHasAtMostFortyThousandCharacters(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), strings.Repeat("é", 40001))
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), strings.Repeat("é", 40001), 0)
 	wantInvalid(t, err, "body")
 }
 
 func TestAnEditOfFortyThousandCharactersIsAccepted(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), strings.Repeat("é", 40000))
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), strings.Repeat("é", 40000), 0)
 	wantNoError(t, err)
 }
 
@@ -79,7 +79,7 @@ func TestAnEditInAnotherDomainIsNotFound(t *testing.T) {
 	_, message := s.chat()
 	caller := s.caller("ana")
 	caller.DomainId = "example.org"
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(caller, msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(caller, msgId(message), "new text", 0)
 	wantError[*core.NotFound](t, err)
 }
 
@@ -87,7 +87,7 @@ func TestAnEditReportsARendererFailure(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
 	s.world.Renderer.Failure = errors.New("renderer down")
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text", 0)
 	if err == nil || s.stored(message).Body != "hello" {
 		t.Fatalf("got %v", err)
 	}
@@ -97,7 +97,7 @@ func TestAnEditReportsABrokenSave(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
 	s.breaker.broken["messages.save"] = true
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text", 0)
 	wantError[*core.Unavailable](t, err)
 }
 
@@ -105,7 +105,7 @@ func TestAnEditReportsABrokenParticipantList(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
 	s.breaker.broken["participants.ofConversation"] = true
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text", 0)
 	wantError[*core.Unavailable](t, err)
 }
 
@@ -114,7 +114,7 @@ func TestAnEditReportsABrokenOutbox(t *testing.T) {
 	_, message := s.chat()
 	message.OutboxFields = corrupt()
 	s.world.Stores.Messages.Save(message)
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text", 0)
 	if err == nil || s.stored(message).Body != "hello" {
 		t.Fatalf("got %v", err)
 	}
@@ -124,7 +124,7 @@ func TestAnEditReportsABrokenView(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
 	s.breaker.broken["reactions.ofConversation"] = true
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text", 0)
 	wantError[*core.Unavailable](t, err)
 }
 
@@ -205,7 +205,7 @@ func TestADeleteReportsABrokenParticipantList(t *testing.T) {
 func TestAnEditOverTheStorageBudgetIsRefused(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), strings.Repeat("<", 40000))
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), strings.Repeat("<", 40000), 0)
 	wantError[*core.TooLarge](t, err)
 	if s.stored(message).Body != message.Body {
 		t.Fatal("the refused edit was stored")

@@ -27,6 +27,7 @@ func TestInvalidRequestsNameTheField(t *testing.T) {
 		{"long client id", func(r *core.SendRequest) { r.ClientMessageId = strings.Repeat("x", 201) }, "clientMessageId"},
 		{"long body", func(r *core.SendRequest) { r.Body = strings.Repeat("é", 40001) }, "body"},
 		{"blank body", func(r *core.SendRequest) { r.Body = " \n " }, "body"},
+		{"written at", func(r *core.SendRequest) { r.WrittenAt = "yesterday" }, "writtenAt"},
 		{"bad attachment", func(r *core.SendRequest) { r.AttachmentIds = []string{"file_1"} }, "attachmentIds"},
 		{"many attachments", func(r *core.SendRequest) { r.AttachmentIds = manyAttachments }, "attachmentIds"},
 		{"many recipients", func(r *core.SendRequest) { r.Recipients = manyRecipients }, "recipients"},

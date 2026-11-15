@@ -12,5 +12,7 @@ func (MemoryStores) New() Stores {
 		Mentions:       NewMemoryMentions(),
 		Members:        NewMemoryMembers(),
 		AttachmentUses: NewMemoryAttachmentUses(),
+		Changes:        NewMemoryChanges(),
+		ChangeHeads:    NewMemoryChangeHeads(),
 	}
 }

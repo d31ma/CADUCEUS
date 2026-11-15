@@ -1,8 +1,11 @@
 import (
+	"time"
+
 	"mesail.dev/packages/adapters"
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/outbox"
 	"mesail.dev/packages/storage"
+	"mesail.dev/packages/syncing"
 )
 
 // @Service
@@ -16,7 +19,9 @@ type StorageService struct {
 
 func (service *StorageService) Storage() storage.Storage {
 	settings, failure := service.settings.Outbox()
-	return storage.Storage{Source: service.dataSource, Scroll: service.scroll, Pusher: service.pusherOrDefault(), Settings: settings, SettingsFailure: failure}
+	plain := storage.Storage{Source: service.dataSource, Scroll: service.scroll, Settings: settings, SettingsFailure: failure}
+	plain.Pusher = syncing.NewChangeLog(service.pusherOrDefault(), plain.Stores(), time.Now)
+	return plain
 }
 
 func (service *StorageService) scroll(collection string, where map[string]any, cursor string, size int) (storage.Window, error) {

@@ -1,6 +1,7 @@
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -9,8 +10,10 @@ import (
 
 	"mesail.dev/packages/apierrors"
 	"mesail.dev/packages/core"
+	"mesail.dev/packages/events"
 	"mesail.dev/packages/fakes"
 	"mesail.dev/packages/oidc"
+	"mesail.dev/packages/syncing"
 )
 
 // @TestSetup
@@ -26,6 +29,7 @@ type MessagingTestSetup struct {
 	Sources       *MessageSourceController
 	Attachments   *AttachmentsController
 	Events        *EventsController
+	Sync          *SyncController
 }
 
 func (MessagingTestSetup) Configure(execution *BehaviorExecution) (*BehaviorConfiguration, error) {
@@ -37,7 +41,7 @@ func (MessagingTestSetup) World() *MessagingTestSetup {
 	world.Domain = "m3-" + world.RandomText() + ".test"
 	world.Home, world.Away = world.SignedRealms()
 	world.Core = &CoreService{fixedStores: &world.Fakes.Stores, fixedPorts: &world.Fakes.Ports}
-	world.Service = &MessagingService{core: world.Core, failures: &FailureService{}}
+	world.Service = &MessagingService{core: world.Core, failures: &FailureService{wire: &WireService{}}}
 	callers := &CallerService{}
 	requests := &RequestService{}
 	wire := &WireService{}
@@ -45,6 +49,7 @@ func (MessagingTestSetup) World() *MessagingTestSetup {
 	world.Messages = &MessagesController{messages: &MessageRouteService{callers: callers, messaging: world.Service, wire: wire}}
 	world.Attachments = &AttachmentsController{attachments: &AttachmentRouteService{callers: callers, messaging: world.Service}}
 	world.Sources = &MessageSourceController{sources: &SourceRouteService{callers: callers, messaging: world.Service, wire: wire}}
+	world.Sync = &SyncController{sync: &SyncRouteService{callers: callers, messaging: world.Service, wire: wire}}
 	world.Events = &EventsController{events: &EventRouteService{callers: callers, events: world.EventsService(), wire: wire}}
 	world.AddMember("ana")
 	world.AddMember("bo")
@@ -202,6 +207,29 @@ func (world *MessagingTestSetup) Changed(err error) *ChangedRecipients {
 
 func (world *MessagingTestSetup) NotAllowed(err error) *ChatNotAllowed {
 	failure := &ChatNotAllowed{}
+	errors.As(err, &failure)
+	return failure
+}
+
+func (world *MessagingTestSetup) LogCreated(result SendResult) {
+	payload, err := json.Marshal(events.MessageCreated{MessageId: result.Message.MessageId, ConversationId: result.Message.ConversationId})
+	world.Must(err)
+	envelope := events.Envelope{EventID: "event-" + result.Message.MessageId, Type: events.Types{}.MessageCreated(), DomainId: world.Domain, OccurredAt: world.Fakes.Clock.Now().Format(time.RFC3339Nano), Payload: payload}
+	world.Must(syncing.NewChangeLog(nil, world.Fakes.Stores, world.Fakes.Clock.Now).Record(envelope))
+}
+
+func (world *MessagingTestSetup) CursorBefore(step time.Duration) string {
+	return core.ChangeCursor{At: world.Fakes.Clock.Now().Add(-step), RowId: "0"}.Text()
+}
+
+func (world *MessagingTestSetup) EditConflictOf(err error) *ChangedMessage {
+	failure := &ChangedMessage{}
+	errors.As(err, &failure)
+	return failure
+}
+
+func (world *MessagingTestSetup) ConflictOf(err error) *Conflict {
+	failure := &Conflict{}
 	errors.As(err, &failure)
 	return failure
 }

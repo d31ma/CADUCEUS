@@ -70,6 +70,13 @@ func (source *memorySource) DeleteById(collection string, id string) (bool, erro
 	return found, source.failure
 }
 
+func (source *memorySource) DropCollection(name string) (bool, error) {
+	_, found := source.collections[name]
+	delete(source.collections, name)
+	delete(source.order, name)
+	return found, source.failure
+}
+
 func (source *memorySource) Scroll(collection string, where map[string]any, cursor string, size int) (Window, error) {
 	if source.failure != nil {
 		return Window{}, source.failure

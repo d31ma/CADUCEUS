@@ -1,4 +1,8 @@
-import "mesail.dev/packages/apierrors"
+import (
+	"cmp"
+
+	"mesail.dev/packages/apierrors"
+)
 
 // @ErrorHandler
 type MessagingErrorHandler struct {
@@ -31,7 +35,13 @@ func (handler *MessagingErrorHandler) Missing(failure *NotFound) ApiError {
 // @HandlesError
 // @ResponseStatus(409)
 func (handler *MessagingErrorHandler) Conflict(failure *Conflict) ApiError {
-	return handler.answer("conflict", failure, failure.Message)
+	return handler.answer(cmp.Or(failure.Code, "conflict"), failure, failure.Message)
+}
+
+// @HandlesError
+// @ResponseStatus(409)
+func (handler *MessagingErrorHandler) EditConflict(failure *ChangedMessage) EditConflict {
+	return EditConflict{Code: "edit_conflict", Message: handler.message(failure, failure.Message), Current: failure.Current}
 }
 
 // @HandlesError

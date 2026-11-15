@@ -95,6 +95,21 @@ func TestUnavailableCasesHaveTheirNumbers(t *testing.T) {
 	wantCase(t, Unavailable{}.OutboxSettings(cause), 1562, "the outbox settings are missing")
 }
 
+func TestSyncCasesHaveTheirNumbers(t *testing.T) {
+	wantCase(t, EditConflict{}.Of(MessageView{}), 1563, "the message changed since you read it")
+	wantCase(t, InvalidRequest{}.SyncCursorCount(), 1564, "a sync takes 1 to 50 cursors")
+	wantField(t, InvalidRequest{}.SyncCursorCount(), "cursors")
+	wantCase(t, InvalidRequest{}.WrittenAtFormat(), 1565, "writtenAt must be a date and time like 2026-11-14T08:12:00Z")
+	wantField(t, InvalidRequest{}.WrittenAtFormat(), "writtenAt")
+}
+
+func TestConflictsNameTheirCode(t *testing.T) {
+	codes := Conflict{}.MessageDeleted().Code + " " + Conflict{}.ChannelArchived().Code
+	if codes != "message_deleted conflict" {
+		t.Fatalf("got the codes %s", codes)
+	}
+}
+
 func TestAnUnavailableCaseKeepsItsCause(t *testing.T) {
 	cause := errors.New("cause")
 	if !errors.Is(Unavailable{}.Store(cause), cause) {

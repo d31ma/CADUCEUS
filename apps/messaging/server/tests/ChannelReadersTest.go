@@ -23,7 +23,7 @@ func (test *ChannelReadersTest) TestAPostInAChannelOfAThousandMembersKeepsEveryD
 	test.down(world, "realtime", "notify", "search")
 	conversation := test.channel(world, 1000)
 	messageId := test.posted(world, service, "@m00042 the build is green")
-	_, editError := service.Edit(test.member(world, "ana"), messageId, "@m00042 the build is green again")
+	_, editError := service.Edit(test.member(world, "ana"), messageId, "@m00042 the build is green again", 0)
 	reactionError := service.AddReaction(test.member(world, "m00007"), messageId, "thumbs_up")
 	message := test.stored(world, messageId)
 	created := test.created(world, message)

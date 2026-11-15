@@ -3,6 +3,7 @@ import (
 	"mesail.dev/packages/oidc"
 	"mesail.dev/packages/reading"
 	"mesail.dev/packages/sending"
+	"mesail.dev/packages/syncing"
 )
 
 // @Service
@@ -41,8 +42,13 @@ func (service *MessagingService) Send(caller oidc.Caller, authorization string, 
 	return result, service.failures.Known(err)
 }
 
-func (service *MessagingService) Edit(caller oidc.Caller, messageId string, body string) (core.MessageView, error) {
-	result, err := reading.NewChanges(service.core.Stores(), service.core.Ports()).Edit(caller, messageId, body)
+func (service *MessagingService) Edit(caller oidc.Caller, messageId string, body string, ifVersion int) (core.MessageView, error) {
+	result, err := reading.NewChanges(service.core.Stores(), service.core.Ports()).Edit(caller, messageId, body, ifVersion)
+	return result, service.failures.Known(err)
+}
+
+func (service *MessagingService) Sync(caller oidc.Caller, cursors []core.SyncCursor) ([]core.ConversationSync, error) {
+	result, err := syncing.NewSync(service.core.Stores(), service.core.Ports()).Run(caller, cursors)
 	return result, service.failures.Known(err)
 }
 

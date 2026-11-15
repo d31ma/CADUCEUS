@@ -104,6 +104,14 @@ func (InvalidRequest) ChannelNotAlone() *InvalidRequest {
 	return &InvalidRequest{Message: "a channel must be the only recipient of a new message, in To", Field: "recipients", ErrorNumber: 1536}
 }
 
+func (InvalidRequest) SyncCursorCount() *InvalidRequest {
+	return &InvalidRequest{Message: "a sync takes 1 to 50 cursors", Field: "cursors", ErrorNumber: 1564}
+}
+
+func (InvalidRequest) WrittenAtFormat() *InvalidRequest {
+	return &InvalidRequest{Message: "writtenAt must be a date and time like 2026-11-14T08:12:00Z", Field: "writtenAt", ErrorNumber: 1565}
+}
+
 func (failure *InvalidRequest) Error() string {
 	return failure.Message
 }

@@ -1,4 +1,5 @@
 type Conflict struct {
+	Code        string
 	Message     string
 	ErrorNumber int
 }

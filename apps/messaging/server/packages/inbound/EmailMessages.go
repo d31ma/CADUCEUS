@@ -34,6 +34,7 @@ func (messages EmailMessages) New(email ReceivedEmail, placement Placement, cont
 		Email:              messages.meta(email),
 		Deliveries:         []string{},
 		CreatedAt:          Timestamps{}.Of(now),
+		Version:            core.Versions{}.First(),
 	}), nil
 }
 

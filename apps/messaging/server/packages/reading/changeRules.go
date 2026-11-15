@@ -29,6 +29,13 @@ func (changeRules) present(message core.Message) error {
 	return nil
 }
 
+func (changeRules) sameVersion(message core.Message, ifVersion int) bool {
+	if ifVersion == 0 {
+		return true
+	}
+	return ifVersion == core.Versions{}.Current(message)
+}
+
 func (rules changeRules) body(body string) error {
 	if strings.TrimSpace(body) == "" || utf8.RuneCountInString(body) > rules.longestBody() {
 		return core.InvalidRequest{}.EditedBodySize()

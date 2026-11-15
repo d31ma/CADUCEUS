@@ -17,5 +17,7 @@ type Message struct {
 	EditedAt           string           `json:"editedAt,omitempty"`
 	DeletedAt          string           `json:"deletedAt,omitempty"`
 	CreatedAt          string           `json:"createdAt"`
+	Version            int              `json:"version"`
+	WrittenAt          string           `json:"writtenAt,omitempty"`
 	Deliveries         []DeliveryStatus `json:"deliveries"`
 }

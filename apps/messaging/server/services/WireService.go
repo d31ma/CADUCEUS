@@ -3,6 +3,7 @@ import (
 
 	"mesail.dev/packages/core"
 	"mesail.dev/packages/events"
+	"mesail.dev/packages/storage"
 )
 
 // @Service
@@ -42,6 +43,8 @@ func (service *WireService) Message(view core.MessageView) Message {
 		EditedAt:           message.EditedAt,
 		DeletedAt:          message.DeletedAt,
 		CreatedAt:          message.CreatedAt,
+		Version:            core.Versions{}.Current(message),
+		WrittenAt:          message.WrittenAt,
 		Deliveries:         service.deliveries(view.Deliveries),
 	}
 }
@@ -56,6 +59,7 @@ func (service *WireService) SendRequest(request SendRequest) core.SendRequest {
 		AttachmentIds:      service.texts(request.AttachmentIds),
 		Recipients:         service.choices(request.Recipients),
 		Email:              service.emailOptions(request.Email),
+		WrittenAt:          request.WrittenAt,
 	}
 }
 
@@ -69,6 +73,34 @@ func (service *WireService) Envelope(envelope EventEnvelope) events.Envelope {
 
 func (service *WireService) Download(download core.Download) Download {
 	return Download{Url: download.Url, ExpiresAt: download.ExpiresAt}
+}
+
+func (service *WireService) SyncCursors(request SyncRequest) []core.SyncCursor {
+	return service.cursors(request.Cursors)
+}
+
+func (service *WireService) SyncResponse(answers []core.ConversationSync) SyncResponse {
+	return SyncResponse{Conversations: service.syncAnswers(answers)}
+}
+
+func (service *WireService) cursors(wired []SyncCursor) []core.SyncCursor {
+	cursors := []core.SyncCursor{}
+	for _, cursor := range wired {
+		cursors = append(cursors, core.SyncCursor{ConversationId: cursor.ConversationId, After: cursor.After})
+	}
+	return cursors
+}
+
+func (service *WireService) syncAnswers(answers []core.ConversationSync) []ConversationSync {
+	conversations := []ConversationSync{}
+	for _, answer := range answers {
+		conversations = append(conversations, ConversationSync{ConversationId: answer.ConversationId, State: answer.State, Messages: service.messages(answer.Messages), Next: answer.Next, More: answer.More})
+	}
+	return conversations
+}
+
+func (service *WireService) CleanupReport(report storage.CleanupReport) CleanupReport {
+	return CleanupReport{Dropped: report.Dropped, More: report.More}
 }
 
 func (service *WireService) conversations(views []core.ConversationView) []ConversationSummary {
@@ -88,6 +120,8 @@ func (service *WireService) conversation(view core.ConversationView) Conversatio
 		UnreadCount:    view.UnreadCount,
 		MentionCount:   view.MentionCount,
 		LastMessageAt:  view.Conversation.LastMessageAt,
+		LastChangeId:   view.LastChangeId,
+		ReadMessageId:  view.ReadMessageId,
 	}
 }
 

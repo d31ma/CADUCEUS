@@ -27,6 +27,8 @@ func (storage Storage) Stores() core.Stores {
 		Mentions:       Mentions{Tenant: tenant, Names: names},
 		Members:        Members{Tenant: tenant, Names: names},
 		AttachmentUses: AttachmentUses{Tenant: tenant, Names: names},
+		Changes:        storage.ChangeStore(),
+		ChangeHeads:    ChangeHeads{Tenant: tenant, Names: names},
 	}
 }
 
@@ -37,6 +39,18 @@ func (storage Storage) Seen() SeenEvents {
 func (storage Storage) Outbox() Outbox {
 	store := OutboxStore{Documents: storage.documents(), Registry: storage.registry()}
 	return Outbox{Store: store, Pusher: storage.Pusher, Settings: storage.Settings, SettingsFailure: storage.SettingsFailure, Now: time.Now}
+}
+
+func (storage Storage) ChangeStore() Changes {
+	return Changes{Tenant: storage.tenant(), Names: CollectionNames{}, Logs: storage.ChangeLogs()}
+}
+
+func (storage Storage) ChangeHeadStore() ChangeHeads {
+	return ChangeHeads{Tenant: storage.tenant(), Names: CollectionNames{}}
+}
+
+func (storage Storage) ChangeLogs() ChangeLogs {
+	return ChangeLogs{Documents: storage.documents(), Source: storage.Source, Names: CollectionNames{}}
 }
 
 func (storage Storage) Registry() Registry {

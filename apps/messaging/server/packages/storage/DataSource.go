@@ -7,4 +7,5 @@ type DataSource interface {
 	FindById(collection string, id string, target any) (bool, error)
 	Patch(collection string, id string, fields any, target any) (bool, error)
 	DeleteById(collection string, id string) (bool, error)
+	DropCollection(name string) (bool, error)
 }

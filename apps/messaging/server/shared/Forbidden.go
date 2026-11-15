@@ -19,6 +19,10 @@ func (Forbidden) Kit(message string, number int) *Forbidden {
 	return &Forbidden{Message: message, ErrorNumber: number}
 }
 
+func (Forbidden) JobsNotInstallWide() *Forbidden {
+	return &Forbidden{Message: "scheduled jobs run with an install-wide token only", ErrorNumber: 1566}
+}
+
 func (failure *Forbidden) Error() string {
 	return failure.Message
 }

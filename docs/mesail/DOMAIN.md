@@ -295,14 +295,29 @@ The sync log of a domain (ADR 0006 section 3). Append-only.
 | `id` | TTID | The change id and the sync cursor. Time-ordered; rows are appended by the one writer of the domain's root, in order. |
 | `domainId`, `conversationId` | string | `conversationId` is indexed. |
 | `messageId` | string | the message whose current state the sync answer carries |
-| `eventId` | string | indexed; the event that caused the row, so a repeated relay adds no second row |
+| `eventId` | string | indexed; the event that caused the row. A relay of an event older than 10 seconds (a retry) first looks for its rows and adds none twice; a relay in the event's first 10 seconds (drain on write) skips that lookup, so two relays racing on a new event may add one repeated row, which changes nothing in a sync answer |
+| `month` | `YYYYMM` | the month of the collection the row is in |
+| `loggedAt` | time | the server time the row was written, with nanoseconds; the sync cursor is `loggedAt` and `id` together (opaque to clients), so the 5-second overlap is measured on it |
 
-Written by `messaging`'s outbox relay for every `message.created`,
+Written by `messaging`'s outbox relay (a pusher that wraps every push, so
+also the drain on write) for every `message.created`,
 `message.edited`, `message.deleted` and `reaction.changed` (and a thread
 root whose reply count changed), before the event is pushed. Kept at least
 30 days: the collections of the current and the two previous months; a
 scheduled job deletes older months. A cursor older than that answers
-`reset`.
+`reset`. Each month's collection is listed in the install-wide
+`change-collections` registry (`{name, month}`) when it is first written,
+so the daily job `POST /api/v1/messaging/jobs/changes-cleanup` drops the
+collections before the oldest kept month (at most 12 per call, `more: true`
+when others remain).
+
+### ChangeHead (`messaging/change-heads`)
+One per conversation: `{domainId, conversationId (indexed), lastChangeId}`,
+the cursor of the newest change row. Written by the same relay step after
+its rows, only when it moves forward. The conversation list answers it as
+`lastChangeId` and `POST /sync` answers it as `next` for `reset`. Never
+deleted, so a conversation whose rows were cleaned up keeps its
+`lastChangeId`.
 
 ### Delivery (stored on the message)
 One entry per recipient per message, kept on the Message document as one

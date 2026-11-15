@@ -9,6 +9,8 @@ import (
 
 // @Service
 type FailureService struct {
+	// @Needs
+	wire *WireService
 }
 
 func (service *FailureService) Known(failure error) error {
@@ -40,7 +42,7 @@ func (service *FailureService) children(failure error) []error {
 func (service *FailureService) isKnown(failure error) bool {
 	switch failure.(type) {
 	case *Unauthenticated, *Forbidden, *NotFound, *InvalidRequest, *Conflict, *Unavailable, *ChangedRecipients, *ChatNotAllowed,
-		*TooLarge, *core.Forbidden, *core.Unavailable, *core.InvalidRequest, *core.NotFound, *core.Conflict, *core.RecipientsChanged,
+		*TooLarge, *ChangedMessage, *core.EditConflict, *core.Forbidden, *core.Unavailable, *core.InvalidRequest, *core.NotFound, *core.Conflict, *core.RecipientsChanged,
 		*core.ChatNotAllowed, *core.TooLarge, events.NotService, events.InvalidEnvelope, events.NotSubscribed, events.UnknownEventType,
 		inbound.UnhandledEvent:
 		return true
@@ -64,7 +66,9 @@ func (service *FailureService) coreAnswer(failure error) error {
 	case *core.NotFound:
 		return &NotFound{Message: known.Message, ErrorNumber: known.Number()}
 	case *core.Conflict:
-		return &Conflict{Message: known.Message, ErrorNumber: known.Number()}
+		return &Conflict{Code: known.Code, Message: known.Message, ErrorNumber: known.Number()}
+	case *core.EditConflict:
+		return ChangedMessage{}.Of(known.Error(), service.wire.Message(known.Current), known.Number())
 	case *core.RecipientsChanged:
 		return ChangedRecipients{}.Of(known.Addresses, known.Number())
 	case *core.ChatNotAllowed:

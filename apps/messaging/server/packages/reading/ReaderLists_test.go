@@ -31,7 +31,7 @@ func readersOf(t *testing.T, fields core.OutboxFields, eventType string) []strin
 func TestAnEditInAChannelListsNoReaders(t *testing.T) {
 	s := newScene(t)
 	_, message := s.channelChat()
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text", 0)
 	wantNoError(t, err)
 	readers := readersOf(t, s.stored(message).OutboxFields, events.Types{}.MessageEdited())
 	if readers == nil || len(readers) != 0 {
@@ -62,7 +62,7 @@ func TestAReactionInAChannelListsNoReaders(t *testing.T) {
 func TestAnEditInADirectConversationListsItsMembers(t *testing.T) {
 	s := newScene(t)
 	_, message := s.chat()
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text", 0)
 	wantNoError(t, err)
 	readers := readersOf(t, s.stored(message).OutboxFields, events.Types{}.MessageEdited())
 	if len(readers) != 2 {
@@ -76,7 +76,7 @@ func TestChangesInAChannelOfTenThousandMembersKeepEveryDocumentSmall(t *testing.
 	for index := range 10000 {
 		s.join(conversation, core.Participant{MemberId: fmt.Sprintf("%08d-0000-4000-8000-000000000000", index)})
 	}
-	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text")
+	_, err := reading.NewChanges(s.stores, s.world.Ports).Edit(s.caller("ana"), msgId(message), "new text", 0)
 	wantNoError(t, err)
 	wantNoError(t, reading.NewReactions(s.stores, s.world.Ports).Add(s.caller("bo"), msgId(message), "thumbs_up"))
 	edited, _ := json.Marshal(s.stored(message))

@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Added sync to `messaging` (slice O1, ADR 0006): the outbox relay writes
+  one change row per `message.created`, `message.edited`,
+  `message.deleted` and `reaction.changed` (and for the thread root of a
+  reply) before it pushes; the new `POST /api/v1/messaging/sync` answers
+  `changed`, `unchanged`, `reset` or `gone` for up to 50 conversations,
+  200 messages per page, with a 5-second overlap. The conversation list
+  gains `lastChangeId` and `readMessageId`. `Message` gains `version`
+  and `writtenAt`; an edit may send `ifVersion` and gets
+  `409 edit_conflict` with the current message when it is older. An edit
+  or reaction on a deleted message now answers `409 message_deleted`
+  (MS1545's code was `conflict`). A daily job,
+  `POST /api/v1/messaging/jobs/changes-cleanup`, drops change collections
+  older than the current and two previous months. New numbers
+  MS1563-MS1566.
 - Changed the error numbers of shared kit errors (slice E12, ADR 0009):
   every error of a kit package that several apps copy (`kit/events`,
   `kit/outbox`, `kit/ids`, `kit/blobs`, `kit/recipients`, `kit/mime`,

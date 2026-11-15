@@ -626,6 +626,7 @@ receives `channel.created`.
 | `PUT /api/v1/messaging/messages/{messageId}/reactions/{reaction}` | SignedIn | - | `204` (also when the caller already has it); `409 message_deleted` |
 | `DELETE /api/v1/messaging/messages/{messageId}/reactions/{reaction}` | SignedIn | - | `204` (also when the caller does not have it); `409 message_deleted` |
 | `PUT /api/v1/messaging/conversations/{conversationId}/read` | SignedIn | `ReadRequest{messageId}` | `204`; a position older than the stored one changes nothing (read positions only move forward) |
+| `POST /api/v1/messaging/jobs/changes-cleanup` | Service (install-wide token) | - | `200 CleanupReport{dropped, more}`; drops the change-log collections older than the current and the two previous months, at most 12 per call (rule 13; a daily `@Schedule` worker calls it) |
 | `GET /api/v1/messaging/attachments/{attachmentId}/access` | SignedIn | - | `204` when the caller can read a message of its domain that carries the attachment, else `404` (called by `attachments` with the caller's own token). messaging answers it from one `attachment-uses` row per attachment of a message, so a message carries at most 10 attachments; more answers `400 invalid_request` with `field: attachmentIds` |
 
 `SendRequest{clientMessageId, conversationId?, threadRootId?,
@@ -722,7 +723,17 @@ for order.
   a change row committed late is never missed and a repeated one changes
   nothing.
 - Cursors are opaque strings. A client compares `lastChangeId` with its
-  cursor only for equality.
+  cursor only for equality. A cursor the server did not make answers
+  `reset`, like an empty one. `next` for `unchanged` is the cursor sent;
+  for `reset` it is `lastChangeId` (`""` when the conversation has no
+  change row yet). A conversation is `changed` only when a row is newer
+  than `after`; the 5-second overlap then adds the messages of rows up to
+  5 seconds before `after`, and a page counts at most 200 messages from
+  rows newer than `after`.
+- `version` is 1 for messages stored before versions existed. `ifVersion`
+  is optional: an edit without it is never a conflict. An edit of a
+  deleted message answers `409 message_deleted` before `ifVersion` is
+  compared.
 - The realtime events `message.*` and `reaction.changed` are only a sign
   that a conversation changed: the client calls `POST /sync` for it
   rather than trusting the event (see "realtime"). `AttachmentRef{attachmentId, fileName, mediaType, size}`.

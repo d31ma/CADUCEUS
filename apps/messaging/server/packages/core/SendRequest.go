@@ -9,4 +9,5 @@ type SendRequest struct {
 	AttachmentIds      []string
 	Recipients         []RecipientChoice
 	Email              EmailOptions
+	WrittenAt          string
 }

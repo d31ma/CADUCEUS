@@ -30,5 +30,7 @@ type Message struct {
 	EditedAt           string    `json:"editedAt"`
 	DeletedAt          string    `json:"deletedAt"`
 	CreatedAt          string    `json:"createdAt"`
+	Version            int       `json:"version"`
+	WrittenAt          string    `json:"writtenAt"`
 	OutboxFields
 }

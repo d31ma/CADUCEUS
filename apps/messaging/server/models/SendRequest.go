@@ -7,4 +7,5 @@ type SendRequest struct {
 	AttachmentIds      []string          `json:"attachmentIds,omitempty"`
 	Recipients         []RecipientChoice `json:"recipients,omitempty"`
 	Email              *EmailOptions     `json:"email,omitempty"`
+	WrittenAt          string            `json:"writtenAt,omitempty"`
 }

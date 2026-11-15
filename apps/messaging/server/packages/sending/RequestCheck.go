@@ -30,6 +30,7 @@ func (check RequestCheck) Check(request core.SendRequest) error {
 		check.duplicates(request.Recipients),
 		check.recipientsNeeded(request),
 		check.alsoToConversation(request),
+		WrittenAt{}.check(request.WrittenAt),
 	)
 	return Failures{}.first(refusals)
 }

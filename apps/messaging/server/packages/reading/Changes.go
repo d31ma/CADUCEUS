@@ -27,12 +27,16 @@ func NewChanges(stores core.Stores, ports core.Ports) Changes {
 	}
 }
 
-func (changes Changes) Edit(caller oidc.Caller, messageId string, body string) (core.MessageView, error) {
+func (changes Changes) Edit(caller oidc.Caller, messageId string, body string, ifVersion int) (core.MessageView, error) {
 	message, conversation, err := changes.access.Message(caller, messageId)
 	if err != nil {
 		return core.MessageView{}, err
 	}
 	err = changes.rules.editable(caller, message, body)
+	if err != nil {
+		return core.MessageView{}, err
+	}
+	err = changes.current(caller, message, conversation, ifVersion)
 	if err != nil {
 		return core.MessageView{}, err
 	}
@@ -63,12 +67,24 @@ func (changes Changes) Delete(caller oidc.Caller, messageId string) error {
 	return changes.erasedOnce(message)
 }
 
+func (changes Changes) current(caller oidc.Caller, message core.Message, conversation core.Conversation, ifVersion int) error {
+	if changes.rules.sameVersion(message, ifVersion) {
+		return nil
+	}
+	view, err := changes.views.single(caller, message, conversation)
+	if err != nil {
+		return err
+	}
+	return core.EditConflict{}.Of(view)
+}
+
 func (changes Changes) rewritten(message core.Message, body string) (core.Message, error) {
 	rich, err := changes.ports.Renderer.Markdown(body)
 	message.Body = body
 	message.BlocksJson = messageBlocks{}.encoded(rich.Blocks)
 	message.Truncated = rich.Truncated
 	message.EditedAt = clock{now: changes.ports.Now}.stamp()
+	message.Version = core.Versions{}.Next(message)
 	return message, err
 }
 
@@ -87,6 +103,7 @@ func (changes Changes) erased(message core.Message) core.Message {
 	message.AttachmentIds = []string{}
 	message.AttachmentsJson = core.AttachmentCodec{}.Encode(nil)
 	message.DeletedAt = clock{now: changes.ports.Now}.stamp()
+	message.Version = core.Versions{}.Next(message)
 	return message
 }
 

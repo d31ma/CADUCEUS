@@ -256,7 +256,7 @@ keeps its row, marked "retired".
 | MS1542 | messaging | 404 | `not_found` | no such outbox document | a requeue names a document that does not exist |
 | MS1543 | messaging | 404 | `not_found` | no such outbox collection | a requeue names a collection that is not messaging's |
 | MS1544 | messaging | 404 | `not_found` | no such dead event | a requeue whose outbox document cannot be read (a missing dead letter answers MS0015 since E12) |
-| MS1545 | messaging | 409 | `conflict` | the message is deleted | an edit or reaction on a deleted message |
+| MS1545 | messaging | 409 | `message_deleted` | the message is deleted | an edit, or a reaction added or removed, on a deleted message |
 | MS1546 | messaging | 409 | `conflict` | the channel is archived and read-only | a send or change in an archived channel |
 | MS1547 | messaging | 409 | `recipients_changed` | the recipients changed | how a recipient gets the message changed since the client asked; the addresses are in `addresses` |
 | MS1548 | messaging | 413 | `too_large` | the message is too large to store; send a shorter body | the stored message would pass its size budget |
@@ -274,6 +274,10 @@ keeps its row, marked "retired".
 | MS1560 | messaging | 503 | `unavailable` | the directory does not know the resolve route | `directory` answered 404 for its resolve route |
 | MS1561 | messaging | 503 | `unavailable` | the outbox relay route answered ... | the scheduled relay call got an unexpected status |
 | MS1562 | messaging | 503 | `unavailable` | the outbox settings are missing | the outbox settings in `application.json` cannot be read |
+| MS1563 | messaging | 409 | `edit_conflict` | the message changed since you read it | an edit whose `ifVersion` is not the message's `version`; the current message is in `current` |
+| MS1564 | messaging | 400 | `invalid_request` | a sync takes 1 to 50 cursors | `POST /sync` with no cursor or more than 50; `field` `cursors` |
+| MS1565 | messaging | 400 | `invalid_request` | writtenAt must be a date and time like 2026-11-14T08:12:00Z | a send whose `writtenAt` is not an RFC 3339 time; `field` `writtenAt` |
+| MS1566 | messaging | 403 | `forbidden` | scheduled jobs run with an install-wide token only | `POST /jobs/changes-cleanup` with a domain token |
 | MS2000 | channels | 500 | `unavailable` | Something went wrong. | an unexpected error in `channels` |
 | MS2001 | channels | 401 | `unauthenticated` | the access token was refused | a channel route could not verify the caller's token |
 | MS2002 | channels | 403 | `forbidden` | only members of a domain use its channels | the caller's token has no member or admin role |

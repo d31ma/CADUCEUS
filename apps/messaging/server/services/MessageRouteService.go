@@ -27,7 +27,7 @@ func (service *MessageRouteService) Message(authorization string, messageId stri
 
 func (service *MessageRouteService) Edit(authorization string, messageId string, request EditRequest) (Message, error) {
 	caller, refused := service.callers.ChatCaller(authorization)
-	view, err := service.edit(caller, messageId, request.Body, refused)
+	view, err := service.edit(caller, messageId, request, refused)
 	return service.wire.Message(view), err
 }
 
@@ -66,11 +66,11 @@ func (service *MessageRouteService) message(caller oidc.Caller, messageId string
 	return service.messaging.Message(caller, messageId)
 }
 
-func (service *MessageRouteService) edit(caller oidc.Caller, messageId string, body string, failure error) (core.MessageView, error) {
+func (service *MessageRouteService) edit(caller oidc.Caller, messageId string, request EditRequest, failure error) (core.MessageView, error) {
 	if failure != nil {
 		return core.MessageView{}, failure
 	}
-	return service.messaging.Edit(caller, messageId, body)
+	return service.messaging.Edit(caller, messageId, request.Body, request.IfVersion)
 }
 
 func (service *MessageRouteService) deleteMessage(caller oidc.Caller, messageId string, failure error) error {

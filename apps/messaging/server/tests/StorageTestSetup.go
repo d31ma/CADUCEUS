@@ -143,6 +143,16 @@ func (world *StorageTestSetup) countIf(matches bool) int {
 	return 0
 }
 
+func (world *StorageTestSetup) CleanedUp(controller *JobsController) CleanupReport {
+	total := CleanupReport{More: true}
+	for calls := 0; calls < 20 && total.More; calls++ {
+		report, err := controller.PostChangesCleanup(world.Bearer(world.InstallWide))
+		world.Must(err)
+		total = CleanupReport{Dropped: total.Dropped + report.Dropped, More: report.More}
+	}
+	return total
+}
+
 func (world *StorageTestSetup) RandomText() string {
 	random := make([]byte, 8)
 	rand.Read(random)

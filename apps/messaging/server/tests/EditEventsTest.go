@@ -66,7 +66,7 @@ func (test *EditEventsTest) TestAnEditThatWouldPassTheDocumentCapIsUnavailable()
 	message.OutboxFields = world.Staged(message.OutboxFields, "message.created", map[string]string{"messageId": "msg_other_1", "body": large})
 	message.OutboxFields = world.Staged(message.OutboxFields, "message.created", map[string]string{"messageId": "msg_other_2", "body": large})
 	world.Must(world.Messages().Save(message))
-	_, err := service.Edit(test.member(world, "ana"), messageId, strings.Repeat("b", 39000))
+	_, err := service.Edit(test.member(world, "ana"), messageId, strings.Repeat("b", 39000), 0)
 	Assert.IsTrue(world.IsUnavailable(err), fmt.Sprintf("the edit must be unavailable, got %v", err))
 	Assert.Equals(1507, world.Number(err))
 	Assert.Equals(message.Body, test.stored(world, messageId).Body)
@@ -109,7 +109,7 @@ func (test *EditEventsTest) edited(world *StorageTestSetup, service *MessagingSe
 	last := ""
 	for index := 0; index < count; index++ {
 		last = fmt.Sprintf("edit %04d %s", index, filler)
-		_, err := service.Edit(test.member(world, "ana"), messageId, last)
+		_, err := service.Edit(test.member(world, "ana"), messageId, last, 0)
 		world.Must(err)
 	}
 	return last

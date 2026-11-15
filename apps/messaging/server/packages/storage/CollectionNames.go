@@ -40,6 +40,18 @@ func (CollectionNames) Seen(domainId string) string {
 	return collections.CollectionName{}.ForDomain("events-seen", domainId)
 }
 
+func (CollectionNames) Changes(domainId string, month string) string {
+	return collections.CollectionName{}.ForDomainMonth("changes", domainId, month)
+}
+
+func (CollectionNames) ChangeHeads(domainId string) string {
+	return collections.CollectionName{}.ForDomain("change-heads", domainId)
+}
+
+func (CollectionNames) ChangeLogs() string {
+	return "change-collections"
+}
+
 func (CollectionNames) Registry() string {
 	return "outbox-collections"
 }

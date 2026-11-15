@@ -117,6 +117,8 @@ func (writer MessageWriter) message(caller oidc.Caller, draft Draft, conversatio
 		Email:              draft.Email,
 		Deliveries:         core.DeliveryCodec{}.Encode(draft.Rows),
 		CreatedAt:          Months{}.stamp(writer.now),
+		Version:            core.Versions{}.First(),
+		WrittenAt:          WrittenAt{}.kept(draft.Request.WrittenAt, writer.now),
 	}
 }
 

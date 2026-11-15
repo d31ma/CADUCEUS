@@ -6,4 +6,6 @@ type ConversationSummary struct {
 	UnreadCount    int    `json:"unreadCount"`
 	MentionCount   int    `json:"mentionCount"`
 	LastMessageAt  string `json:"lastMessageAt"`
+	LastChangeId   string `json:"lastChangeId"`
+	ReadMessageId  string `json:"readMessageId"`
 }

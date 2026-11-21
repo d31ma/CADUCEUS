@@ -524,7 +524,9 @@ image is unchanged). Then:
   of this container runs yet): a read-only tar of the root and its owner
   files `.<root>.fylo-root-owner.lock*` to `/tmp/fylo-root-at-start.tar`,
   and one line (UTC time, bytes, seconds) to `/tmp/fylo-trace-start.log`.
-  A root over 200 MB is skipped, and the line says so.
+  A root over 200 MB is skipped, and the line says so. With
+  `MESAIL_FYLO_TRACE=1`, the start snapshot delays a cold start: 15 s was
+  seen for directory's 12 MB root under Mac memory pressure (2026-11-21).
 - `build.sh` runs `deploy/lambda/fylo-trace_test.sh` in the `directory`
   image (`trace-wrapper-check.log`): same pid, hidden arguments, stderr
   only to the log, and no fylo left after a SIGKILL.

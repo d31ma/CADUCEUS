@@ -401,12 +401,12 @@ func (world *InboundTestSetup) IsInvalid(err error) bool {
 	return errors.As(err, &failure)
 }
 
-func (world *InboundTestSetup) RelayUntilDone(relay func() (outbox.Report, error)) error {
+func (world *InboundTestSetup) RelayUntil(relay func() (outbox.Report, error), done func() bool) error {
 	failures := []error{}
 	for round := 0; round < world.relayRounds(); round++ {
 		report, failure := relay()
 		failures = append(failures, failure)
-		if !report.More {
+		if !report.More || done() {
 			break
 		}
 	}

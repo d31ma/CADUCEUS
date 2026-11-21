@@ -18,7 +18,7 @@ type OutboxTest struct {
 
 func (test *OutboxTest) TestTheRelayRetriesAPendingMemberEventWhileServiceTokensAreMissing() {
 	relay, ref, _ := test.world()
-	report, err := test.relayUntilDone(relay)
+	report, err := test.relayUntil(relay, func() bool { return test.attempted(relay, ref) })
 	fields, loadErr := relay.store.Load(ref)
 	state, readErr := outbox.Codec{}.Read(fields)
 	Assert.Equals("<nil>", fmt.Sprint(err))
@@ -29,7 +29,7 @@ func (test *OutboxTest) TestTheRelayRetriesAPendingMemberEventWhileServiceTokens
 
 func (test *OutboxTest) TestAnEventThatIsNotDueIsLeftForTheNextSweep() {
 	relay, _, _ := test.world()
-	test.relayUntilDone(relay)
+	test.relayUntil(relay, func() bool { return test.noneDue(relay) })
 	due, err := relay.store.PendingIn("outbox-unit.test", 20)
 	Assert.Equals("<nil>", fmt.Sprint(err))
 	Assert.Equals(0, len(due))
@@ -174,14 +174,14 @@ func (test *OutboxTest) reset(domainId string) string {
 	return domainId
 }
 
-func (test *OutboxTest) relayUntilDone(relay *OutboxRelayService) (outbox.Report, error) {
+func (test *OutboxTest) relayUntil(relay *OutboxRelayService, done func() bool) (outbox.Report, error) {
 	total := outbox.Report{}
 	failures := []error{}
 	for round := 0; round < test.relayRounds(); round++ {
 		report, failure := relay.RunOnce()
 		total.Documents, total.Delivered, total.Retried, total.DeadLettered = total.Documents+report.Documents, total.Delivered+report.Delivered, total.Retried+report.Retried, total.DeadLettered+report.DeadLettered
 		failures = append(failures, failure)
-		if !report.More {
+		if !report.More || done() {
 			break
 		}
 	}
@@ -190,4 +190,15 @@ func (test *OutboxTest) relayUntilDone(relay *OutboxRelayService) (outbox.Report
 
 func (*OutboxTest) relayRounds() int {
 	return 10
+}
+
+func (test *OutboxTest) attempted(relay *OutboxRelayService, ref outbox.Ref) bool {
+	fields, _ := relay.store.Load(ref)
+	state, _ := outbox.Codec{}.Read(fields)
+	return len(state.Pending) > 0 && state.Pending[0].Attempts > 0
+}
+
+func (test *OutboxTest) noneDue(relay *OutboxRelayService) bool {
+	due, _ := relay.store.PendingIn("outbox-unit.test", 20)
+	return len(due) == 0
 }

@@ -247,12 +247,12 @@ func (world *StorageTestSetup) Number(err error) int {
 	return failure.Number()
 }
 
-func (world *StorageTestSetup) RelayUntilDone(relay func() (outbox.Report, error)) error {
+func (world *StorageTestSetup) RelayUntil(relay func() (outbox.Report, error), done func() bool) error {
 	failures := []error{}
 	for round := 0; round < world.relayRounds(); round++ {
 		report, failure := relay()
 		failures = append(failures, failure)
-		if !report.More {
+		if !report.More || done() {
 			break
 		}
 	}

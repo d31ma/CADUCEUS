@@ -23,7 +23,7 @@ func (test *OutboxControllerTest) TestARefusedEventBecomesADeadLetterThatTheRela
 	Assert.Equals(world.Collection(), dead[0].Collection)
 	world.Pusher.Recover("messaging")
 	retried := world.Outbox.PostRetry(RetryRequest{Collection: dead[0].Collection, DocumentId: dead[0].DocumentId, EventId: dead[0].EventId, Subscriber: "messaging"})
-	relayed := world.RelayUntilDone(world.Outbox.PostRelay)
+	relayed := world.RelayUntil(world.Outbox.PostRelay, func() bool { return world.Stored(key).OutboxPending == 0 })
 	Assert.IsTrue(retried == nil, "retry failed")
 	Assert.IsTrue(relayed == nil, "relay failed")
 	Assert.Equals(1, len(world.PushedToMessaging()))

@@ -17,7 +17,7 @@ func (test *ChangeLogTest) TestTheRelayLogsAChangeBeforeItPushes() {
 	message.OutboxFields = world.Staged(message.OutboxFields, "message.edited", events.MessageEdited{ConversationId: conversationId, MessageId: "msg_202611" + world.RandomText(), MemberIds: []string{"ana"}})
 	_, err := world.Messages().Insert(message)
 	world.Must(err)
-	err = world.RelayUntilDone(world.Relay.RunOnce)
+	err = world.RelayUntil(world.Relay.RunOnce, func() bool { return test.logged(world, conversationId) })
 	world.Must(err)
 	rows, err := world.Stores().Changes.OfConversation(world.Domain, core.MessageIds{}.Month(time.Now()), conversationId)
 	world.Must(err)
@@ -47,4 +47,9 @@ func (test *ChangeLogTest) TestADomainTokenCannotRunTheCleanup() {
 	_, err := controller.PostChangesCleanup(world.Bearer(world.Home))
 	Assert.IsTrue(world.IsForbidden(err), "want Forbidden")
 	Assert.Equals(1566, world.Number(err))
+}
+
+func (test *ChangeLogTest) logged(world *StorageTestSetup, conversationId string) bool {
+	rows, _ := world.Stores().Changes.OfConversation(world.Domain, core.MessageIds{}.Month(time.Now()), conversationId)
+	return len(rows) > 0
 }

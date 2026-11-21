@@ -30,7 +30,7 @@ func (test *OutboxTest) TestARefusedEventBecomesADeadLetterThatTheOperatorCanReq
 	world.Pusher.Recover("search")
 	err := controller.PostRetry(operator, RetryRequest{Collection: dead[0].Collection, DocumentId: id, EventId: dead[0].EventId, Subscriber: "search"})
 	Assert.IsTrue(err == nil, "the requeue failed")
-	err = world.RelayUntilDone(func() (outbox.Report, error) { return controller.PostRelay(operator) })
+	err = world.RelayUntil(func() (outbox.Report, error) { return controller.PostRelay(operator) }, func() bool { return test.relayed(world, id) })
 	Assert.IsTrue(err == nil, "the relay failed")
 	Assert.Equals(1, world.Pushed("search", "message.edited"))
 	Assert.Equals(0, len(test.deadFor(world, controller, operator, id)))
@@ -55,7 +55,7 @@ func (test *OutboxTest) TestTheSweepRetriesAfterAFailure() {
 	world := StorageTestSetup{}.World()
 	world.Pusher.FailFor("realtime", outbox.DeliveryFailure{Subscriber: "realtime", Detail: "down"})
 	id := test.stagedMessage(world)
-	err := world.RelayUntilDone(world.Relay.RunOnce)
+	err := world.RelayUntil(world.Relay.RunOnce, func() bool { return world.Pushed("search", "message.edited") > 0 })
 	Assert.IsTrue(err == nil, "the sweep failed")
 	message, _, _ := world.Messages().Find(world.Domain, "202611", id)
 	Assert.Equals(1, message.OutboxPending)
@@ -90,6 +90,11 @@ func (test *OutboxTest) TestMissingOutboxSettingsAreUnavailable() {
 	Assert.Equals(1562, world.Number(settingsError))
 	Assert.IsTrue(world.IsUnavailable(runError), "want Unavailable relay")
 	Assert.Equals("", world.Settings.Settings().RelayUrl)
+}
+
+func (test *OutboxTest) relayed(world *StorageTestSetup, id string) bool {
+	message, _, _ := world.Messages().Find(world.Domain, "202611", id)
+	return message.OutboxPending == 0
 }
 
 func (test *OutboxTest) stagedMessage(world *StorageTestSetup) string {

@@ -31,6 +31,10 @@ created_list() {
   echo /tmp/capture-created.txt
 }
 
+planned_list() {
+  echo /tmp/capture-planned.txt
+}
+
 allowed_path() {
   local path="$1" name="$2"
   [ "$path" = "/mnt/data/$name" ] || [[ "$path" == "/mnt/data/.$name.fylo-root-owner.lock"* ]]
@@ -62,12 +66,24 @@ top_level_paths() {
   tar -tf "$tar_file" | cut -d/ -f1 | sort -u | sed 's|^|/mnt/data/|'
 }
 
+owner_files_now() {
+  local name="$1" file
+  for file in "/mnt/data/.$name.fylo-root-owner.lock"*; do
+    if [ -e "$file" ]; then echo "$file"; fi
+  done
+}
+
+remember_owner_files() {
+  owner_files_now "$1" >> "$(created_list)"
+}
+
 check_free() {
   local name="$1" path
+  owner_files_now "$name" >> "$(planned_list)"
   while IFS= read -r path; do
     if ! allowed_path "$path" "$name"; then echo "refused: the copy holds $path, not only the root and its owner files"; return 1; fi
     if [ -e "$path" ]; then echo "refused: $path already exists in the scratch volume (an earlier capture was not cleaned)"; return 1; fi
-  done < "$(created_list)"
+  done < "$(planned_list)"
 }
 
 unpack() {
@@ -75,8 +91,9 @@ unpack() {
   check_marker "$volume" || return 1
   started="$(now_ms)"
   cat > "$tar_file"
-  top_level_paths "$tar_file" > "$(created_list)"
+  top_level_paths "$tar_file" > "$(planned_list)"
   check_free "$name" || return 1
+  cp "$(planned_list)" "$(created_list)"
   tar -x -C /mnt/data -f "$tar_file"
   rm -f "$tar_file"
   echo "unpack ms=$(($(now_ms) - started)) root=/mnt/data/$name files=$(find "/mnt/data/$name" -type f | wc -l)"
@@ -135,10 +152,12 @@ main() {
   local name="$1" volume="$2" steps="$3"
   if [[ ! "$name" =~ ^[a-z][a-z-]{0,31}$ ]]; then echo "refused: root name $name"; return 1; fi
   : > "$(created_list)"
-  trap 'remove_copy "$name" "$volume"' EXIT
+  # shellcheck disable=SC2064
+  trap "remove_copy '$name' '$volume'" EXIT
   echo "fylo $("$(fylo_binary)" --version 2>&1 | head -1), user $(id -u):$(id -g), FYLO_ variables: $(env | grep -c '^FYLO_')"
   unpack "$name" "$volume" || return 1
   time_fylo "$name" "$steps" || echo "timing stopped early (see the line above)"
+  remember_owner_files "$name"
   fylo_stderr
 }
 

@@ -126,13 +126,21 @@ module_vetted() {
   go vet $(module_vet_options) ./...
 }
 
+module_reads_repository_files() {
+  [ "$1" = tests/kitsync ]
+}
+
+module_cache_option() {
+  if module_reads_repository_files "$1"; then echo "-count=1"; fi
+}
+
 module_tested() {
   local root="$1" module="$2" profile="$3"
   if is_production_module "$module"; then
     go test -coverprofile="$profile" ./... && crap_from_tool "$root" "$profile" "$root/$module"
     return
   fi
-  go test $(module_test_options) ./...
+  go test $(module_test_options) $(module_cache_option "$module") ./...
 }
 
 module_checks() {

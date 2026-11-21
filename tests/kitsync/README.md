@@ -6,7 +6,8 @@ the kit when it has a `vendor/mesail.dev/packages` folder; today only
 `edge/calls` does.
 
 Each test builds a small repository in a temporary folder: a copy of
-`scripts/kit-sync.sh` and `scripts/go-cache.sh`, a one-package kit, and one
+`scripts/kit-sync.sh`, `scripts/go-cache.sh` and `scripts/time-limit.sh` (which
+`go-cache.sh` sources), a one-package kit, and one
 module that vendors it. It needs no network. The tests check that:
 
 - `kit-sync.sh --check` passes while the vendored copy is current;

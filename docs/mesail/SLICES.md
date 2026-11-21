@@ -2764,6 +2764,33 @@ Found by PLAT-1 (2026-11-15):
   after a restart attaches the image by itself, and a dead HANGAR shows the
   warning line instead of a hang.
 
+### K21. The nightly gate survives a read-only FYLO image and checks kitsync for real (mesail-arch, 2026-11-21)
+Found by the nightly on develop 8b824749 (failed 11-16 to 11-21).
+- **The FYLO test image was attached read-only.** On 11-16 at 03:00 the
+  nightly attached `mesail-fylo-test.sparsebundle` (the Mac had rebooted on
+  11-15). macOS could not open the bundle for writing on the ATLAS NFS mount
+  (errno 13), logged "Keeping RO mode" and attached it read-only, yet
+  `diskutil` returned 0. K18's step saw the mount and went on; every app's
+  `fylo root` step then failed with "Read-only file system". After the ATLAS
+  remount on 11-17 the image helper also kept old NFS handles and got I/O
+  errors (Platform's reading).
+- **Builds:** `scripts/fylo-image.sh` checks with a write probe in the
+  mount, after an attach and when the image is already mounted. A mount that
+  cannot be written stops the gate at once with a clear message; gates.sh
+  never re-attaches a read-only image (Platform's call). Only when the probe
+  gets an I/O error (old handles) does it detach and attach again, under the
+  attach lock and only when a bounded `lsof +D`
+  (`MESAIL_FYLO_IMAGE_BUSY_SECONDS`, default 30) shows nothing uses it;
+  otherwise it stops and lists the processes. `scripts/fylo-image_test.sh`
+  covers these cases and removes its own test image on every exit (a failed
+  run on 11-15 had left one attached).
+- **The kitsync test copies `time-limit.sh`,** which `go-cache.sh` sources
+  since K18. Its earlier passes were cached Go test results: the test reads
+  `scripts/`, which lies outside its module, so Go does not see changes
+  there. `scripts/gates.sh` now runs `tests/kitsync` with `-count=1`.
+- **Done when:** `scripts/gates.sh --shared-only` and one app pass; the
+  image test passes all checks and leaves no image attached.
+
 ## Wave 10: removed (ADR 0013 rejected, 2026-11-14)
 
 Wave 10 (J0 to J5: Floci SQS and SNS for events, EventBridge Scheduler

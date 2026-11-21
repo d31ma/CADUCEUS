@@ -70,6 +70,7 @@ func newFixture(t *testing.T) string {
 	fixture := t.TempDir()
 	copyScript(t, fixture, "kit-sync.sh")
 	copyScript(t, fixture, "go-cache.sh")
+	copyScript(t, fixture, "time-limit.sh")
 	writeKit(t, fixture)
 	writeVendoringModule(t, fixture)
 	return fixture

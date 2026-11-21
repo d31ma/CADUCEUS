@@ -16,21 +16,18 @@ fylo_binary() {
   command -v fylo
 }
 
-unpack_folder() {
-  echo "/mnt/data/.$1-unpack"
-}
-
 created_list() {
   echo /tmp/capture-created.txt
 }
 
-remember() {
-  echo "$1" >> "$(created_list)"
+allowed_path() {
+  local path="$1" name="$2"
+  [ "$path" = "/mnt/data/$name" ] || [[ "$path" == "/mnt/data/.$name.fylo-root-owner.lock"* ]]
 }
 
 delete_path() {
-  local path="$1"
-  if [[ "$path" != /mnt/data/capture-* && "$path" != /mnt/data/.capture-* ]]; then echo "refused to delete $path"; return; fi
+  local path="$1" name="$2"
+  if ! allowed_path "$path" "$name"; then echo "refused to delete $path"; return; fi
   if [ ! -e "$path" ]; then return; fi
   rm -rf -- "$path"
   echo "deleted $path"
@@ -40,45 +37,41 @@ volume_report() {
   echo "scratch volume after cleanup: $(du -sb /mnt/data | cut -f1) bytes, $(find /mnt/data -mindepth 1 | wc -l) entries"
 }
 
-remove_scratch() {
-  local path
+remove_copy() {
+  local name="$1" path
   while IFS= read -r path; do
-    delete_path "$path"
-  done < <(sort -r -u "$(created_list)" 2> /dev/null)
+    delete_path "$path" "$name"
+  done < <(sort -u "$(created_list)" 2> /dev/null)
   volume_report
 }
 
-rename_owner_file() {
-  local file="$1" name="$2" scratch="$3" suffix
-  suffix="${file##*/."$name"}"
-  remember "/mnt/data/.$scratch$suffix"
-  mv "$file" "/mnt/data/.$scratch$suffix"
+top_level_paths() {
+  local tar_file="$1"
+  tar -tf "$tar_file" | cut -d/ -f1 | sort -u | sed 's|^|/mnt/data/|'
 }
 
-move_owner_files() {
-  local folder="$1" name="$2" scratch="$3" file
-  for file in "$folder/.$name.fylo-root-owner.lock"*; do
-    if [ -e "$file" ]; then rename_owner_file "$file" "$name" "$scratch"; fi
-  done
+check_free() {
+  local name="$1" path
+  while IFS= read -r path; do
+    if ! allowed_path "$path" "$name"; then echo "refused: the copy holds $path, not only the root and its owner files"; return 1; fi
+    if [ -e "$path" ]; then echo "refused: $path already exists in the scratch volume (an earlier capture was not cleaned)"; return 1; fi
+  done < "$(created_list)"
 }
 
 unpack() {
-  local name="$1" scratch="$2" folder started
-  folder="$(unpack_folder "$scratch")"
+  local name="$1" tar_file=/tmp/capture-copy.tar started
   started="$(now_ms)"
-  remember "$folder"
-  mkdir "$folder"
-  tar -x -C "$folder"
-  remember "/mnt/data/$scratch"
-  mv "$folder/$name" "/mnt/data/$scratch"
-  move_owner_files "$folder" "$name" "$scratch"
-  rmdir "$folder"
-  echo "unpack ms=$(($(now_ms) - started)) root=/mnt/data/$scratch files=$(find "/mnt/data/$scratch" -type f | wc -l)"
+  cat > "$tar_file"
+  top_level_paths "$tar_file" > "$(created_list)"
+  check_free "$name" || return 1
+  tar -x -C /mnt/data -f "$tar_file"
+  rm -f "$tar_file"
+  echo "unpack ms=$(($(now_ms) - started)) root=/mnt/data/$name files=$(find "/mnt/data/$name" -type f | wc -l)"
 }
 
 start_fylo() {
-  local scratch="$1"
-  coproc FYLO { exec "$(fylo_binary)" exec --loop --root "/mnt/data/$scratch" --max-request-bytes 1048576 --max-response-bytes 8388608 2>> /tmp/fylo-capture-stderr.log; }
+  local name="$1"
+  coproc FYLO { exec "$(fylo_binary)" exec --loop --root "/mnt/data/$name" --max-request-bytes 1048576 --max-response-bytes 8388608 2>> /tmp/fylo-capture-stderr.log; }
 }
 
 ask() {
@@ -110,9 +103,9 @@ stop_fylo() {
 }
 
 time_fylo() {
-  local scratch="$1" steps="$2" started
+  local name="$1" steps="$2" started
   started="$(now_ms)"
-  start_fylo "$scratch"
+  start_fylo "$name"
   timed_step "start+handshake" '{"op":"handshake"}' || return 1
   echo "start+handshake total ms=$(($(now_ms) - started))"
   store_steps "$steps"
@@ -126,12 +119,13 @@ fylo_stderr() {
 }
 
 main() {
-  local name="$1" scratch="$2" steps="$3"
-  if [[ ! "$scratch" =~ ^capture-[0-9]{6}$ ]]; then echo "refused: scratch root name $scratch"; return 1; fi
-  trap remove_scratch EXIT
+  local name="$1" steps="$2"
+  if [[ ! "$name" =~ ^[a-z][a-z-]{0,31}$ ]]; then echo "refused: root name $name"; return 1; fi
+  : > "$(created_list)"
+  trap 'remove_copy "$name"' EXIT
   echo "fylo $("$(fylo_binary)" --version 2>&1 | head -1), user $(id -u):$(id -g), FYLO_ variables: $(env | grep -c '^FYLO_')"
-  unpack "$name" "$scratch" || return 1
-  time_fylo "$scratch" "$steps" || echo "timing stopped early (see the line above)"
+  unpack "$name" || return 1
+  time_fylo "$name" "$steps" || echo "timing stopped early (see the line above)"
   fylo_stderr
 }
 

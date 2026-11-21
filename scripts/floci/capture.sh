@@ -14,9 +14,10 @@ example MS1048), BEFORE any retry or other call to that app
   2. writes <log dir>/capture-<time>/: containers.txt, fylo-trace/ (the start
      snapshot and trace logs, when the image has MESAIL_FYLO_TRACE=1),
      root-after.tar and owner-files/ (read through a READ-ONLY mount);
-  3. times fylo on a scratch copy /mnt/data/capture-<time> in its own volume
-     (stack.json captureVolume, never the app's volume) with no 5 s limit
-     (timing.txt), then removes only that copy (the volume stays);
+  3. times fylo on a copy at /mnt/data/<service> (the app's own names) in
+     its own volume (stack.json captureVolume, never the app's volume) with
+     no 5 s limit (timing.txt), then deletes only the paths the copy made
+     (the volume stays);
   4. starts the scheduler services again.
 TEXT
 }
@@ -171,12 +172,12 @@ prepare_scratch_volume() {
 }
 
 time_fylo() {
-  local service="$1" source="$2" scratch="$3" environment
+  local service="$1" source="$2" environment
   prepare_scratch_volume "$service" || return 1
   environment="$(fylo_environment_file "$service")"
   docker run --rm -i --network none --user 10001:10001 --env-file "$environment" --volume "$(scratch_volume):/mnt/data" \
     --entrypoint /bin/bash "$(app_image "$service")" \
-    -c "$(cat "$(dirname "$0")/capture-timing.sh")" capture-timing "$service" "$scratch" \
+    -c "$(cat "$(dirname "$0")/capture-timing.sh")" capture-timing "$service" \
     "$(jq -c --arg service "$service" '.captureSteps[$service] // []' "$(mesail_stack_file)")" < "$source" || true
   rm -f "$environment"
 }
@@ -188,8 +189,8 @@ write_timing() {
   {
     echo "capture $stamp of $service; timed on: $(snapshot_label "$source" "$folder")"
     echo "same image $(app_image "$service"), same fylo options as TACHYON 26.46.02, the app's FYLO_ variables (values not shown), no 5 s limit"
-    echo "scratch root in the volume $(scratch_volume) (ext4 data disk of the dev host), never in the app's volume"
-    time_fylo "$service" "$source" "capture-$stamp"
+    echo "copy at /mnt/data/$service (same names as the app) in the volume $(scratch_volume) (ext4 data disk of the dev host), never in the app's volume"
+    time_fylo "$service" "$source"
   } > "$folder/timing.txt" 2>&1
   cat "$folder/timing.txt"
 }

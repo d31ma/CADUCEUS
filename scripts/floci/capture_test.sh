@@ -148,10 +148,14 @@ capture_test_capture_before_retry() {
   capture_test_expect_file "start snapshot copied" "$folder/fylo-trace/floci-aws-mesail-directory-1a2b3c4d/fylo-root-at-start.tar"
   capture_test_expect_file "trace log copied" "$folder/fylo-trace/floci-aws-mesail-directory-1a2b3c4d/fylo-trace-42.log"
   capture_test_expect_contains "timing on the start snapshot" "start snapshot floci-aws-mesail-directory-1a2b3c4d/fylo-root-at-start.tar" "$folder/timing.txt"
-  capture_test_expect_contains "volume mounted read only" "floci-aws-efs-fsap-1-abc:/data:ro" "$work/calls.log"
+  capture_test_expect_contains "volume mounted read only" "floci-aws-efs-fsap-1-abc:/source:ro" "$work/calls.log"
   capture_test_expect_contains "scratch volume made with volume create" "docker volume create mesail-op8-capture" "$work/calls.log"
   capture_test_expect_contains "scratch root in its own volume" "mesail-op8-capture:/mnt/data --entrypoint /bin/bash" "$work/calls.log"
-  if grep -q 'floci-aws-efs-fsap-1-abc:/mnt/data' "$work/calls.log"; then capture_test_fail "app volume never written" "mounted read-write"; fi
+  if grep -q 'floci-aws-efs-fsap-1-abc:/mnt/data' "$work/calls.log"; then capture_test_fail "app volume never at /mnt/data" "mounted at /mnt/data"; fi
+  echo "ok   app volume never at /mnt/data"
+  if grep 'mesail-op8-capture:/mnt/data' "$work/calls.log" | grep -q 'floci-aws-efs'; then capture_test_fail "separate mounts" "one container mounts both"; fi
+  echo "ok   no container mounts both volumes"
+  capture_test_expect_contains "marker checked before the copy" "marker mesail-op8-capture" "$work/calls.log"
   capture_test_expect_contains "scheduler started again" "start scheduler scheduler-daily" "$work/calls.log"
   if grep -q 'mail-in' "$work/calls.log"; then capture_test_fail "only the app's containers" "a mail-in container was touched"; fi
   if grep -q 'hidden' "$work/seed.log" "$folder/timing.txt"; then capture_test_fail "no FYLO values in logs" "a FYLO_ value was written"; fi

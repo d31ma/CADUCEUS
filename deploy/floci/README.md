@@ -559,7 +559,13 @@ or other call to that app:
    answer), and times start plus handshake apart from the failed request's
    store steps in order (`stack.json` `captureSteps`; for `directory`: read
    `local-parts`, write `local-parts`, find in `people`, write `people`),
-   then fylo's stderr. It deletes only the paths the copy made (each
+   then fylo's stderr. Two guards keep the copy away from the real data,
+   whose names are the same: no container that writes or deletes at
+   `/mnt/data` mounts the app's volume (the read-only tar mounts it at
+   `/source`), and the unpack and the delete steps first check that
+   `/mnt/data/.mesail-op8-capture-marker` holds `mesail-op8-capture`
+   (written when the volume is new and empty, then never deleted), and
+   refuse otherwise. It deletes only the paths the copy made (each
    logged as `deleted <path>`), refuses to start when one of them is
    already there, and prints the volume's size; the volume stays (no
    script removes dev host volumes, so it is not an anonymous `--rm`

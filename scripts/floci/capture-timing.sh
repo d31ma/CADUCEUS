@@ -16,6 +16,17 @@ fylo_binary() {
   command -v fylo
 }
 
+marker_file() {
+  echo /mnt/data/.mesail-op8-capture-marker
+}
+
+check_marker() {
+  local volume="$1"
+  if [ -f "$(marker_file)" ] && [ "$(cat "$(marker_file)")" = "$volume" ]; then return 0; fi
+  echo "refused: $(marker_file) does not hold $volume, so /mnt/data is not the scratch volume; nothing written or deleted"
+  return 1
+}
+
 created_list() {
   echo /tmp/capture-created.txt
 }
@@ -38,7 +49,8 @@ volume_report() {
 }
 
 remove_copy() {
-  local name="$1" path
+  local name="$1" volume="$2" path
+  check_marker "$volume" || return 1
   while IFS= read -r path; do
     delete_path "$path" "$name"
   done < <(sort -u "$(created_list)" 2> /dev/null)
@@ -59,7 +71,8 @@ check_free() {
 }
 
 unpack() {
-  local name="$1" tar_file=/tmp/capture-copy.tar started
+  local name="$1" volume="$2" tar_file=/tmp/capture-copy.tar started
+  check_marker "$volume" || return 1
   started="$(now_ms)"
   cat > "$tar_file"
   top_level_paths "$tar_file" > "$(created_list)"
@@ -119,12 +132,12 @@ fylo_stderr() {
 }
 
 main() {
-  local name="$1" steps="$2"
+  local name="$1" volume="$2" steps="$3"
   if [[ ! "$name" =~ ^[a-z][a-z-]{0,31}$ ]]; then echo "refused: root name $name"; return 1; fi
   : > "$(created_list)"
-  trap 'remove_copy "$name"' EXIT
+  trap 'remove_copy "$name" "$volume"' EXIT
   echo "fylo $("$(fylo_binary)" --version 2>&1 | head -1), user $(id -u):$(id -g), FYLO_ variables: $(env | grep -c '^FYLO_')"
-  unpack "$name" || return 1
+  unpack "$name" "$volume" || return 1
   time_fylo "$name" "$steps" || echo "timing stopped early (see the line above)"
   fylo_stderr
 }

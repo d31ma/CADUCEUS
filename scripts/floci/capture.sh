@@ -133,8 +133,8 @@ app_image() {
 
 save_root_after() {
   local service="$1" volume="$2" folder="$3"
-  docker run --rm --network none --user 0:0 --volume "$volume:/data:ro" --entrypoint /bin/sh "$(app_image "$service")" \
-    -c 'cd /data && tar -cf - "$1" $(find . -maxdepth 1 -name ".$1.fylo-root-owner.lock*" | sed "s|^\./||")' _ "$service" \
+  docker run --rm --network none --user 0:0 --volume "$volume:/source:ro" --entrypoint /bin/sh "$(app_image "$service")" \
+    -c 'cd /source && tar -cf - "$1" $(find . -maxdepth 1 -name ".$1.fylo-root-owner.lock*" | sed "s|^\./||")' _ "$service" \
     > "$folder/root-after.tar"
   echo "root-after.tar: $(wc -c < "$folder/root-after.tar" | tr -d ' ') bytes, $(tar -tf "$folder/root-after.tar" | grep -c .) entries"
 }
@@ -164,11 +164,25 @@ scratch_volume() {
   mesail_stack .captureVolume
 }
 
+marker_script() {
+  cat << 'SCRIPT'
+marker=/mnt/data/.mesail-op8-capture-marker
+if [ -f "$marker" ]; then
+  [ "$(cat "$marker")" = "$1" ] || { echo "refused: the marker in /mnt/data does not name $1"; exit 1; }
+elif [ -n "$(ls -A /mnt/data)" ]; then
+  echo "refused: /mnt/data has files but no marker, so it is not the volume $1"; exit 1
+else
+  echo "$1" > "$marker"; chmod 444 "$marker"; echo "marker written in the new volume $1"
+fi
+chown 10001:10001 /mnt/data
+SCRIPT
+}
+
 prepare_scratch_volume() {
   local service="$1"
   docker volume create "$(scratch_volume)" > /dev/null
-  docker run --rm --network none --user 0:0 --volume "$(scratch_volume):/mnt/data" --entrypoint chown \
-    "$(app_image "$service")" 10001:10001 /mnt/data
+  docker run --rm --network none --user 0:0 --volume "$(scratch_volume):/mnt/data" --entrypoint /bin/sh \
+    "$(app_image "$service")" -c "$(marker_script)" marker "$(scratch_volume)"
 }
 
 time_fylo() {
@@ -177,7 +191,7 @@ time_fylo() {
   environment="$(fylo_environment_file "$service")"
   docker run --rm -i --network none --user 10001:10001 --env-file "$environment" --volume "$(scratch_volume):/mnt/data" \
     --entrypoint /bin/bash "$(app_image "$service")" \
-    -c "$(cat "$(dirname "$0")/capture-timing.sh")" capture-timing "$service" \
+    -c "$(cat "$(dirname "$0")/capture-timing.sh")" capture-timing "$service" "$(scratch_volume)" \
     "$(jq -c --arg service "$service" '.captureSteps[$service] // []' "$(mesail_stack_file)")" < "$source" || true
   rm -f "$environment"
 }

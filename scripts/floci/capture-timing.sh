@@ -20,16 +20,38 @@ unpack_folder() {
   echo "/mnt/data/.$1-unpack"
 }
 
+created_list() {
+  echo /tmp/capture-created.txt
+}
+
+remember() {
+  echo "$1" >> "$(created_list)"
+}
+
+delete_path() {
+  local path="$1"
+  if [[ "$path" != /mnt/data/capture-* && "$path" != /mnt/data/.capture-* ]]; then echo "refused to delete $path"; return; fi
+  if [ ! -e "$path" ]; then return; fi
+  rm -rf -- "$path"
+  echo "deleted $path"
+}
+
+volume_report() {
+  echo "scratch volume after cleanup: $(du -sb /mnt/data | cut -f1) bytes, $(find /mnt/data -mindepth 1 | wc -l) entries"
+}
+
 remove_scratch() {
-  local scratch="$1"
-  rm -rf "/mnt/data/${scratch:?}" "$(unpack_folder "$scratch")"
-  rm -f "/mnt/data/.$scratch.fylo-root-owner.lock"*
-  echo "scratch root /mnt/data/$scratch removed"
+  local path
+  while IFS= read -r path; do
+    delete_path "$path"
+  done < <(sort -r -u "$(created_list)" 2> /dev/null)
+  volume_report
 }
 
 rename_owner_file() {
   local file="$1" name="$2" scratch="$3" suffix
   suffix="${file##*/."$name"}"
+  remember "/mnt/data/.$scratch$suffix"
   mv "$file" "/mnt/data/.$scratch$suffix"
 }
 
@@ -44,8 +66,10 @@ unpack() {
   local name="$1" scratch="$2" folder started
   folder="$(unpack_folder "$scratch")"
   started="$(now_ms)"
+  remember "$folder"
   mkdir "$folder"
   tar -x -C "$folder"
+  remember "/mnt/data/$scratch"
   mv "$folder/$name" "/mnt/data/$scratch"
   move_owner_files "$folder" "$name" "$scratch"
   rmdir "$folder"
@@ -104,7 +128,7 @@ fylo_stderr() {
 main() {
   local name="$1" scratch="$2" steps="$3"
   if [[ ! "$scratch" =~ ^capture-[0-9]{6}$ ]]; then echo "refused: scratch root name $scratch"; return 1; fi
-  trap 'remove_scratch "$scratch"' EXIT
+  trap remove_scratch EXIT
   echo "fylo $("$(fylo_binary)" --version 2>&1 | head -1), user $(id -u):$(id -g), FYLO_ variables: $(env | grep -c '^FYLO_')"
   unpack "$name" "$scratch" || return 1
   time_fylo "$scratch" "$steps" || echo "timing stopped early (see the line above)"

@@ -165,6 +165,7 @@ scratch_volume() {
 
 prepare_scratch_volume() {
   local service="$1"
+  docker volume create "$(scratch_volume)" > /dev/null
   docker run --rm --network none --user 0:0 --volume "$(scratch_volume):/mnt/data" --entrypoint chown \
     "$(app_image "$service")" 10001:10001 /mnt/data
 }

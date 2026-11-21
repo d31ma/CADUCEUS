@@ -149,6 +149,7 @@ capture_test_capture_before_retry() {
   capture_test_expect_file "trace log copied" "$folder/fylo-trace/floci-aws-mesail-directory-1a2b3c4d/fylo-trace-42.log"
   capture_test_expect_contains "timing on the start snapshot" "start snapshot floci-aws-mesail-directory-1a2b3c4d/fylo-root-at-start.tar" "$folder/timing.txt"
   capture_test_expect_contains "volume mounted read only" "floci-aws-efs-fsap-1-abc:/data:ro" "$work/calls.log"
+  capture_test_expect_contains "scratch volume made with volume create" "docker volume create mesail-op8-capture" "$work/calls.log"
   capture_test_expect_contains "scratch root in its own volume" "mesail-op8-capture:/mnt/data --entrypoint /bin/bash" "$work/calls.log"
   if grep -q 'floci-aws-efs-fsap-1-abc:/mnt/data' "$work/calls.log"; then capture_test_fail "app volume never written" "mounted read-write"; fi
   capture_test_expect_contains "scheduler started again" "start scheduler scheduler-daily" "$work/calls.log"
